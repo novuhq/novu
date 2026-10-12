@@ -56,6 +56,7 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
     isOnTrial: plan.isOnTrial,
     onDemandLimit: workflowRuns.onDemandLimit,
     onDemandPricePer1k: usage.onDemandPricePer1k,
+    included: usage.included,
   });
 
   const onSubmit = async (values: UsageLimitsFormValues) => {

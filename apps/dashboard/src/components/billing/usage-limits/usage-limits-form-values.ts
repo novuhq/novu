@@ -33,9 +33,25 @@ const wholeUsdFormatter = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
 });
+const compactUsdFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  notation: 'compact',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1,
+});
 
 export function formatWholeUsd(amount: number): string {
   return wholeUsdFormatter.format(amount);
+}
+
+/** `$250` stays whole; `$147,778` becomes `$147.8k`. */
+export function formatCompactUsd(amount: number): string {
+  if (Math.abs(amount) < 1_000) {
+    return formatWholeUsd(amount);
+  }
+
+  return compactUsdFormatter.format(amount).toLowerCase();
 }
 
 /** Usage at which new workflow runs pause; null when they never pause. */
@@ -53,16 +69,30 @@ export function getOnDemandCost(onDemandLimit: number | null, onDemandPricePer1k
     return null;
   }
 
-  return usdFormatter.format(getOnDemandSpend(onDemandLimit, onDemandPricePer1k));
+  const spend = getOnDemandSpend(onDemandLimit, onDemandPricePer1k);
+
+  if (spend >= 1_000) {
+    return formatCompactUsd(spend);
+  }
+
+  return usdFormatter.format(spend);
 }
 
 /** `monthlyCost` is the plan price plus on-demand, at the limit or so far this cycle depending on the caller. */
-export type TierSuggestion = { kind: 'upgrade_to_teams' | 'contact_sales'; monthlyCost: number };
+export type TierSuggestion =
+  | { kind: 'upgrade_to_teams'; monthlyCost: number; teamsCost: number }
+  | { kind: 'contact_sales'; monthlyCost: number; fromPlan: 'PRO' | 'TEAM' };
 
 export const CONTACT_SALES_MONTHLY_COST_THRESHOLD = 600;
 
-export const TEAMS_MONTHLY_COST = getFeatureForTierAsNumber(
+const TEAMS_MONTHLY_COST = getFeatureForTierAsNumber(
   FeatureNameEnum.PLATFORM_MONTHLY_COST,
+  ApiServiceLevelEnum.BUSINESS,
+  false
+);
+
+const TEAMS_INCLUDED_RUNS = getFeatureForTierAsNumber(
+  FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
   ApiServiceLevelEnum.BUSINESS,
   false
 );
@@ -72,26 +102,33 @@ function getMonthlyCost(apiServiceLevel: ApiServiceLevelEnum, onDemandSpend: num
   return getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MONTHLY_COST, apiServiceLevel, false) + onDemandSpend;
 }
 
-/** Next step up once the plan price plus on-demand at the limit reaches it; never on a trial or without a positive limit. */
+/**
+ * Suggests Team when Team's price at this run volume is lower by at least a dollar and still under $600.
+ * Once the cost reaches $600, suggests Enterprise. Never on a trial or without a positive limit.
+ */
 export function getTierSuggestion({
   apiServiceLevel,
   isOnTrial,
   onDemandLimit,
   onDemandPricePer1k,
+  included,
 }: {
   apiServiceLevel: ApiServiceLevelEnum;
   isOnTrial: boolean;
   onDemandLimit: number | null;
   onDemandPricePer1k: number | null;
+  included: number;
 }): TierSuggestion | null {
   if (isOnTrial || onDemandLimit === null || onDemandLimit <= 0 || onDemandPricePer1k === null) {
     return null;
   }
 
-  return suggestTierForMonthlyCost(
+  return suggestTierForMonthlyCost({
     apiServiceLevel,
-    getMonthlyCost(apiServiceLevel, getOnDemandSpend(onDemandLimit, onDemandPricePer1k))
-  );
+    monthlyCost: getMonthlyCost(apiServiceLevel, getOnDemandSpend(onDemandLimit, onDemandPricePer1k)),
+    totalRuns: included + onDemandLimit,
+    onDemandPricePer1k,
+  });
 }
 
 /** Same thresholds as `getTierSuggestion`, priced on the runs used so far this cycle. */
@@ -112,23 +149,57 @@ export function getUsageTierSuggestion({
     return null;
   }
 
-  return suggestTierForMonthlyCost(
+  return suggestTierForMonthlyCost({
     apiServiceLevel,
-    getMonthlyCost(apiServiceLevel, getOnDemandSpend(current - included, onDemandPricePer1k))
-  );
+    monthlyCost: getMonthlyCost(apiServiceLevel, getOnDemandSpend(current - included, onDemandPricePer1k)),
+    totalRuns: current,
+    onDemandPricePer1k,
+  });
 }
 
-export function getTeamsSavings(monthlyCost: number): number {
-  return monthlyCost - TEAMS_MONTHLY_COST;
+export function getTeamsSavings(monthlyCost: number, teamsCost: number): number {
+  return monthlyCost - teamsCost;
 }
 
-/** Teams needs to save at least a whole dollar, so the copy never claims a $0 saving. */
-function suggestTierForMonthlyCost(apiServiceLevel: ApiServiceLevelEnum, monthlyCost: number): TierSuggestion | null {
+/** Team list price plus on-demand above Team's included runs, at the same per-1k rate. */
+function getTeamsMonthlyCost(totalRuns: number, onDemandPricePer1k: number): number {
+  const onDemandRuns = Math.max(0, totalRuns - TEAMS_INCLUDED_RUNS);
+
+  return TEAMS_MONTHLY_COST + getOnDemandSpend(onDemandRuns, onDemandPricePer1k);
+}
+
+function suggestTierForMonthlyCost({
+  apiServiceLevel,
+  monthlyCost,
+  totalRuns,
+  onDemandPricePer1k,
+}: {
+  apiServiceLevel: ApiServiceLevelEnum;
+  monthlyCost: number;
+  totalRuns: number;
+  onDemandPricePer1k: number;
+}): TierSuggestion | null {
   switch (apiServiceLevel) {
-    case ApiServiceLevelEnum.PRO:
-      return Math.round(getTeamsSavings(monthlyCost)) >= 1 ? { kind: 'upgrade_to_teams', monthlyCost } : null;
+    case ApiServiceLevelEnum.PRO: {
+      const teamsCost = getTeamsMonthlyCost(totalRuns, onDemandPricePer1k);
+      const teamsSavesADollar = Math.round(getTeamsSavings(monthlyCost, teamsCost)) >= 1;
+
+      if (teamsSavesADollar && teamsCost < CONTACT_SALES_MONTHLY_COST_THRESHOLD) {
+        return { kind: 'upgrade_to_teams', monthlyCost, teamsCost };
+      }
+
+      if (monthlyCost >= CONTACT_SALES_MONTHLY_COST_THRESHOLD) {
+        return { kind: 'contact_sales', monthlyCost, fromPlan: 'PRO' };
+      }
+
+      return null;
+    }
     case ApiServiceLevelEnum.BUSINESS:
-      return monthlyCost >= CONTACT_SALES_MONTHLY_COST_THRESHOLD ? { kind: 'contact_sales', monthlyCost } : null;
+      if (monthlyCost >= CONTACT_SALES_MONTHLY_COST_THRESHOLD) {
+        return { kind: 'contact_sales', monthlyCost, fromPlan: 'TEAM' };
+      }
+
+      return null;
     case ApiServiceLevelEnum.FREE:
     case ApiServiceLevelEnum.ENTERPRISE:
     case ApiServiceLevelEnum.UNLIMITED:

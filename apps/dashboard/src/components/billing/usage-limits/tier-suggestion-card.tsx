@@ -10,7 +10,7 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { ContactSalesButton } from '../contact-sales-button';
-import { formatWholeUsd, getTeamsSavings, TEAMS_MONTHLY_COST, type TierSuggestion } from './usage-limits-form-values';
+import { formatCompactUsd, getTeamsSavings, type TierSuggestion } from './usage-limits-form-values';
 import type { UsageLimitsPlan } from './usage-limits-view';
 
 type BillingInterval = UsageLimitsPlan['billingInterval'];
@@ -53,32 +53,37 @@ type SuggestionCopy = {
   cardCost: ReactNode;
 };
 
-function getSuggestionCopy({ kind, monthlyCost }: TierSuggestion): SuggestionCopy {
-  switch (kind) {
-    case 'upgrade_to_teams':
+function getSuggestionCopy(suggestion: TierSuggestion): SuggestionCopy {
+  switch (suggestion.kind) {
+    case 'upgrade_to_teams': {
+      const savings = formatCompactUsd(getTeamsSavings(suggestion.monthlyCost, suggestion.teamsCost));
+
       return {
         from: 'PRO',
         to: 'TEAM',
-        toPrice: `${formatWholeUsd(TEAMS_MONTHLY_COST)}/mo`,
+        toPrice: `${formatCompactUsd(suggestion.teamsCost)}/mo`,
         cardTitle: 'Team would cost less',
-        bannerTitle: `Team would have saved you ${formatWholeUsd(getTeamsSavings(monthlyCost))} this cycle`,
+        bannerTitle: `Team would have saved you ${savings} this cycle`,
         cardCost: (
           <span className={cn(MONO_PRICE_CLASS_NAME, 'text-text-soft line-through')}>
-            {formatWholeUsd(monthlyCost)}
+            {formatCompactUsd(suggestion.monthlyCost)}
           </span>
         ),
       };
+    }
     case 'contact_sales':
       return {
-        from: 'TEAM',
+        from: suggestion.fromPlan,
         to: 'ENTERPRISE',
         toPrice: null,
         cardTitle: 'Eligible for volume pricing',
         bannerTitle: 'Your usage qualifies for volume pricing',
-        cardCost: <span className="text-label-xs text-neutral-500">up to {formatWholeUsd(monthlyCost)}</span>,
+        cardCost: (
+          <span className="text-label-xs text-neutral-500">up to {formatCompactUsd(suggestion.monthlyCost)}</span>
+        ),
       };
     default: {
-      const exhaustiveCheck: never = kind;
+      const exhaustiveCheck: never = suggestion.kind;
 
       return exhaustiveCheck;
     }
@@ -267,7 +272,7 @@ export function TierSuggestionBanner({
       <div aria-hidden className="bg-stroke-soft h-3.5 w-px shrink-0" />
       <PlanLine
         copy={copy}
-        cost={<span className="text-label-xs text-neutral-500">{formatWholeUsd(suggestion.monthlyCost)} so far</span>}
+        cost={<span className="text-label-xs text-neutral-500">{formatCompactUsd(suggestion.monthlyCost)} so far</span>}
       />
       <div className="min-w-0 flex-1" />
       <LinkButton
