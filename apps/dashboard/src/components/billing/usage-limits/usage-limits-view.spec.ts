@@ -9,12 +9,16 @@ import {
 
 type SubscriptionOverrides = {
   apiServiceLevel?: ApiServiceLevelEnum;
+  billingInterval?: GetSubscriptionDto['billingInterval'];
+  isOnTrial?: boolean;
   events?: Partial<GetSubscriptionDto['events']>;
   usageLimits?: Partial<NonNullable<GetSubscriptionDto['usageLimits']>> | null;
 };
 
 function buildSubscription({
   apiServiceLevel = ApiServiceLevelEnum.PRO,
+  billingInterval = 'month',
+  isOnTrial = false,
   events,
   usageLimits,
 }: SubscriptionOverrides = {}): GetSubscriptionDto {
@@ -25,7 +29,7 @@ function buildSubscription({
     status: 'active',
     currentPeriodStart: '2026-10-01T00:00:00.000Z',
     currentPeriodEnd: '2026-10-31T00:00:00.000Z',
-    billingInterval: 'month',
+    billingInterval,
     events: { current: 1000, included: 30000, limit: null, isPaused: false, ...events },
     usageLimits:
       usageLimits === null
@@ -40,7 +44,7 @@ function buildSubscription({
             },
             ...usageLimits,
           },
-    trial: { isActive: false, start: null, end: null, daysTotal: 0 },
+    trial: { isActive: isOnTrial, start: null, end: null, daysTotal: 0 },
     cancelAt: null,
   };
 }
@@ -228,6 +232,21 @@ describe('getUsageLimitsView', () => {
     expect(isNearingOverageLimit(requireView(atOverride))).toBe(false);
     expect(isNearingOverageLimit(requireView(underPause))).toBe(false);
     expect(isNearingOverageLimit(requireView(nearingPause))).toBe(true);
+  });
+
+  it('describes the plan, defaulting to monthly billing when the interval is unknown', () => {
+    expect(getUsageLimitsView(buildSubscription(), true)?.plan).toEqual({
+      apiServiceLevel: ApiServiceLevelEnum.PRO,
+      isOnTrial: false,
+      billingInterval: 'month',
+    });
+    expect(
+      getUsageLimitsView(
+        buildSubscription({ apiServiceLevel: ApiServiceLevelEnum.BUSINESS, billingInterval: 'year', isOnTrial: true }),
+        true
+      )?.plan
+    ).toEqual({ apiServiceLevel: ApiServiceLevelEnum.BUSINESS, isOnTrial: true, billingInterval: 'year' });
+    expect(getUsageLimitsView(buildSubscription({ billingInterval: null }), true)?.plan.billingInterval).toBe('month');
   });
 
   it('picks the paused experience by plan', () => {
