@@ -38,6 +38,7 @@ import { HumanDeliveryService } from './services/human-delivery.service';
 import { HumanInboxService } from './services/human-inbox.service';
 import { HumanInviteTokenService } from './services/human-invite-token.service';
 import { HumanKeylessCapService } from './services/human-keyless-cap.service';
+import { HumanMessageQuotaService } from './services/human-message-quota.service';
 import { HumanOperatorService } from './services/human-operator.service';
 import { HumanVerificationRateLimitService } from './services/human-verification-rate-limit.service';
 import { HumanVerificationTokenService } from './services/human-verification-token.service';
@@ -110,6 +111,7 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     McpConnectionRepository,
     HumanDeliveryService,
     HumanKeylessCapService,
+    HumanMessageQuotaService,
     CreateInteraction,
     GetInteraction,
     ListInteractions,
