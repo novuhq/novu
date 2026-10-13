@@ -1,0 +1,46 @@
+name: Type-check playground
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
+# playground/ is in .nxignore, so `nx affected` never selects it; these are its workspace dependencies.
+on:
+  pull_request:
+    paths:
+      - "playground/nextjs/**"
+      - "packages/agent-toolkit/**"
+      - "packages/chat-adapter/**"
+      - "packages/framework/**"
+      - "packages/js/**"
+      - "packages/nextjs/**"
+      - "packages/react/**"
+      - "packages/shared/**"
+      - "libs/internal-sdk/**"
+      - ".github/workflows/playground-typecheck.yml"
+
+jobs:
+  typecheck:
+    name: Type-check playground/nextjs
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - uses: ./.github/actions/setup-project
+        with:
+          slim: "true"
+
+      - name: Build the workspace packages the playground imports
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+        run: |
+          projects=$(jq -r '.dependencies | to_entries[] | select(.value | startswith("workspace:")) | .key' playground/nextjs/package.json | paste -sd, -)
+          pnpm nx run-many -t build --projects="$projects"
+
+      - name: Type-check
+        run: pnpm --filter nextjs typecheck

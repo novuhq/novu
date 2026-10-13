@@ -2,7 +2,7 @@ import type { ContextPayload } from '@novu/shared';
 
 type ChannelConnectionLike = {
   identifier?: string;
-  providerId?: string;
+  providerId?: string | null;
   contextKeys?: string[];
 };
 

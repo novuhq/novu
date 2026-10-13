@@ -5,7 +5,9 @@ import { buildRefundTools } from '../lib/toolkit';
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
-  const tools = (await buildRefundTools()) as ToolSet;
+  // In this monorepo the toolkit's types resolve its own `ai` devDependency, a different major than this app's;
+  // comparing the two `ToolSet`s is "excessively deep" (TS2589). Customers' installs resolve one `ai`.
+  const tools = (await buildRefundTools()) as unknown as ToolSet;
 
   const result = streamText({
     model: openai('gpt-4o-mini'),
