@@ -35,6 +35,8 @@ export interface IUsageLimitsCopy {
   button: { label: string; path: string };
 }
 
+const PAUSED_BLOCKED_EMAIL_SUBJECT = '[URGENT] - Novu usage limits reached, notifications are not delivered';
+
 const UPGRADE_PLAN_BUTTON = { label: 'Upgrade plan', path: BILLING_SETTINGS_PATH };
 const VIEW_USAGE_BUTTON = { label: 'View usage', path: BILLING_SETTINGS_PATH };
 const REVIEW_USAGE_LIMITS_BUTTON = { label: 'Review usage limits', path: USAGE_LIMITS_DASHBOARD_PATH };
@@ -114,7 +116,7 @@ const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) =
   },
   free_paused: ({ organizationName, planName, limit }) => ({
     email: {
-      subject: 'Monthly event limit reached: notifications are paused',
+      subject: PAUSED_BLOCKED_EMAIL_SUBJECT,
       preview: `${organizationName} has reached its ${formatCount(limit)}-event monthly limit.`,
       heading: 'Notifications are paused',
       summary: `${organizationName} has used all ${formatCount(limit)} monthly events included on the ${planName} plan.`,
@@ -280,7 +282,7 @@ const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) =
 
     return {
       email: {
-        subject: 'Usage limit reached: workflow runs are paused',
+        subject: PAUSED_BLOCKED_EMAIL_SUBJECT,
         preview: `${organizationName} reached its ${formatCount(limit)}-run usage limit. Update your limit to resume.`,
         heading: 'Workflow runs are paused',
         summary: pausedSummary(figures),
