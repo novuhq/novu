@@ -38,8 +38,8 @@ import {
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
 } from '@novu/shared';
-import Ajv, { ValidateFunction } from 'ajv';
-import addFormats from 'ajv-formats';
+import { ValidateFunction } from 'ajv';
+import { createSchemaValidationAjv } from '@novu/application-generic';
 import { generateTransactionId } from '../../../shared/helpers/generate-transaction-id';
 import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
 import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
@@ -49,13 +49,6 @@ import {
   ParseEventRequestMulticastCommand,
   TriggerWorkflow,
 } from './parse-event-request.command';
-
-const ajv = new Ajv({
-  allErrors: true,
-  useDefaults: true,
-  strict: false,
-});
-addFormats(ajv);
 
 function getSchemaHash(schema: object): string {
   return createHash('sha256').update(JSON.stringify(schema)).digest('hex');
@@ -619,7 +612,7 @@ export class ParseEventRequest {
     let validate = this.inMemoryLRUCacheService.getIfCached(InMemoryLRUCacheStore.VALIDATOR, hash) as ValidateFunction;
 
     if (!validate) {
-      validate = ajv.compile(schema);
+      validate = createSchemaValidationAjv({ schema, useDefaults: true }).compile(schema);
       this.inMemoryLRUCacheService.set(InMemoryLRUCacheStore.VALIDATOR, hash, validate);
     }
 
