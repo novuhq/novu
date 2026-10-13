@@ -105,6 +105,50 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     );
   }
 
+  /** The interactions behind the cards of an inbox thread, by their public identifiers. */
+  async findByIdentifiers(
+    environmentId: string,
+    organizationId: string,
+    identifiers: string[]
+  ): Promise<HumanInteractionEntity[]> {
+    if (identifiers.length === 0) {
+      return [];
+    }
+
+    return this.find(
+      { _environmentId: environmentId, _organizationId: organizationId, identifier: { $in: identifiers } },
+      '*'
+    );
+  }
+
+  /**
+   * Questions still waiting on a person in any of the given conversations, oldest first. Expiry is
+   * lazy, so an overdue row can still say pending; `nowIso` leaves those out.
+   */
+  async findPendingByConversations(
+    environmentId: string,
+    organizationId: string,
+    conversationIds: string[],
+    nowIso: string
+  ): Promise<Pick<HumanInteractionEntity, 'subscriberIds' | 'anyoneMayAnswer' | '_conversationId'>[]> {
+    if (conversationIds.length === 0) {
+      return [];
+    }
+
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _conversationId: { $in: conversationIds },
+        status: HumanInteractionStatusEnum.PENDING,
+        kind: { $ne: HumanInteractionKindEnum.TELL },
+        expiresAt: { $gte: nowIso },
+      },
+      ['subscriberIds', 'anyoneMayAnswer', '_conversationId'],
+      { sort: { createdAt: 1 } }
+    );
+  }
+
   async stampDelivery(
     environmentId: string,
     id: string,

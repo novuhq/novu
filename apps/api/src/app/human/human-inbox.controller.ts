@@ -20,15 +20,18 @@ import { UserSession } from '../shared/framework/user.decorator';
 import {
   GetInboxThreadQueryDto,
   type GetInboxThreadResponseDto,
+  type InboxCountsResponseDto,
   InboxThreadActionQueryDto,
   type InboxThreadDto,
+  InboxViewQueryDto,
   ListInboxQueryDto,
   type ListInboxResponseDto,
 } from './dtos/human-inbox.dto';
+import { CountInboxThreads } from './usecases/count-inbox-threads/count-inbox-threads.usecase';
 import { GetInboxThreadCommand } from './usecases/get-inbox-thread/get-inbox-thread.command';
 import { GetInboxThread } from './usecases/get-inbox-thread/get-inbox-thread.usecase';
 import { InboxThreadCommand } from './usecases/inbox-thread.command';
-import { ListInboxThreadsCommand } from './usecases/list-inbox-threads/list-inbox-threads.command';
+import { InboxViewCommand, ListInboxThreadsCommand } from './usecases/list-inbox-threads/list-inbox-threads.command';
 import { ListInboxThreads } from './usecases/list-inbox-threads/list-inbox-threads.usecase';
 import { MarkInboxRead } from './usecases/mark-inbox-read/mark-inbox-read.usecase';
 import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbox-thread.usecase';
@@ -46,6 +49,7 @@ import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbo
 export class HumanInboxController {
   constructor(
     private readonly listInboxThreadsUsecase: ListInboxThreads,
+    private readonly countInboxThreadsUsecase: CountInboxThreads,
     private readonly getInboxThreadUsecase: GetInboxThread,
     private readonly markInboxReadUsecase: MarkInboxRead,
     private readonly resolveInboxThreadUsecase: ResolveInboxThread
@@ -67,9 +71,35 @@ export class HumanInboxController {
         filter: query.filter,
         status: query.status,
         senders: query.senders,
+        tab: query.tab,
+        channel: query.channel,
+        search: query.search,
         limit: query.limit,
         after: query.after,
         waitSeconds: query.wait,
+        agentIdentifier: query.agentIdentifier,
+      })
+    );
+  }
+
+  // Declared before `/:identifier`, which would otherwise take `counts` for a thread.
+  @Get('/counts')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  countInboxThreads(
+    @UserSession() user: UserSessionData,
+    @Query() query: InboxViewQueryDto
+  ): Promise<InboxCountsResponseDto> {
+    return this.countInboxThreadsUsecase.execute(
+      InboxViewCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        senders: query.senders,
+        tab: query.tab,
+        channel: query.channel,
+        search: query.search,
         agentIdentifier: query.agentIdentifier,
       })
     );
@@ -92,6 +122,7 @@ export class HumanInboxController {
         identifier,
         limit: query.limit,
         before: query.before,
+        include: query.include,
         agentIdentifier: query.agentIdentifier,
       })
     );

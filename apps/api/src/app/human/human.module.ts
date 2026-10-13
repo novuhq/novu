@@ -45,6 +45,7 @@ import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
 import { ConnectHumanInviteChannel } from './usecases/connect-human-invite-channel/connect-human-invite-channel.usecase';
+import { CountInboxThreads } from './usecases/count-inbox-threads/count-inbox-threads.usecase';
 import { CreateHumanInvite } from './usecases/create-human-invite/create-human-invite.usecase';
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
 import { DeclineHumanInvite } from './usecases/decline-human-invite/decline-human-invite.usecase';
@@ -149,6 +150,7 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     GetKeylessClaimToken,
     HumanInboxService,
     ListInboxThreads,
+    CountInboxThreads,
     GetInboxThread,
     MarkInboxRead,
     ResolveInboxThread,

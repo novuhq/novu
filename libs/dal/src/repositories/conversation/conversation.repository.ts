@@ -257,6 +257,8 @@ export class ConversationRepository extends BaseRepositoryV2<
     agentId: string;
     read?: 'unread' | 'read';
     status?: ConversationStatusEnum;
+    /** Platform slug of the thread's channel, such as `telegram`. */
+    channel?: string;
     limit: number;
     after?: string;
   }): Promise<{ data: ConversationEntity[]; next: string | null }> {
@@ -266,6 +268,11 @@ export class ConversationRepository extends BaseRepositoryV2<
 
     if (params.status) {
       query.status = params.status;
+    }
+
+    if (params.channel) {
+      // A thread lives on one channel, and that is its first one.
+      query['channels.0.platform'] = params.channel;
     }
 
     if (params.read === 'unread') {
