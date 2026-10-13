@@ -479,7 +479,7 @@ async function start() {
     `${JSON.stringify({ at: new Date().toISOString(), command: 'start', step: 'api+worker healthy', seconds })}\n`
   );
   log(`box ready in ${seconds.toFixed(1)}s`);
-  // The workflows ship in the image, so a new image may bring new ones.
+  // The API keeps the workflows and agents of the last sync; sync again so they match the bridge running now.
   if (fs.existsSync(BRIDGE_SECRET))
     await syncBridge().catch((error) => log(`WARN: bridge sync failed: ${error.message}`));
   if (env.NOVU_MANAGED_CLAUDE_API_KEY) {

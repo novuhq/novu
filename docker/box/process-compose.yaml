@@ -204,8 +204,14 @@ processes:
       restart: on_failure
       backoff_seconds: 2
 
+  # The Cloudflare workers are bundled once per start and served with --no-bundle: wrangler's own bundling keeps
+  # an esbuild watch running, which polls the sources (~4% of a core per worker at idle). -c keeps wrangler on
+  # this config; it otherwise looks for one next to the bundle.
   socket:
-    command: node_modules/.bin/wrangler dev --env local --ip 0.0.0.0 --port 8887 --inspector-port 9329 --log-level warn
+    command: >-
+      WRANGLER_LOG=warn node_modules/.bin/wrangler deploy --dry-run --env local --outdir /data/run/workers/socket &&
+      exec node_modules/.bin/wrangler dev /data/run/workers/socket/index.js -c wrangler.jsonc --no-bundle
+      --env local --ip 0.0.0.0 --port 8887 --inspector-port 9329 --log-level warn
     working_dir: /data/novu/enterprise/workers/socket
     environment:
       - NODE_OPTIONS=
@@ -256,7 +262,10 @@ processes:
   # Managed agents only: `box start` starts it when NOVU_MANAGED_CLAUDE_API_KEY is set.
   thalamus:
     disabled: true
-    command: node_modules/.bin/wrangler dev --env local --ip 0.0.0.0 --port 8788 --inspector-port 9330 --log-level warn
+    command: >-
+      WRANGLER_LOG=warn node_modules/.bin/wrangler deploy --dry-run --env local --outdir /data/run/workers/thalamus &&
+      exec node_modules/.bin/wrangler dev /data/run/workers/thalamus/index.js -c wrangler.jsonc --no-bundle
+      --env local --ip 0.0.0.0 --port 8788 --inspector-port 9330 --log-level warn
     working_dir: /data/novu/enterprise/workers/thalamus-observer
     environment:
       - NODE_OPTIONS=
