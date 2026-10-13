@@ -112,6 +112,7 @@
     "entities": "^7.0.0",
     "envalid": "^8.2.0",
     "es-toolkit": "^1.47.0",
+    "eventsource-parser": "^3.1.0",
     "express": "^5.2.1",
     "handlebars": "^4.7.10",
     "helmet": "^8.2.0",
