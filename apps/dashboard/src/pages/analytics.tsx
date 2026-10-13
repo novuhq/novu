@@ -22,6 +22,7 @@ import {
 import { ActiveSubscribersTrendChart } from '../components/analytics/charts/active-subscribers-trend-chart';
 import { ProvidersByVolume } from '../components/analytics/charts/providers-by-volume';
 import { WorkflowRunsTrendChart } from '../components/analytics/charts/workflow-runs-trend-chart';
+import type { ComparePlansLocationState } from '../components/billing/plan';
 import { UsageTierSuggestionBanner } from '../components/billing/usage-limits/usage-tier-suggestion-banner';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { PageMeta } from '../components/page-meta';
@@ -183,10 +184,14 @@ export function AnalyticsPage() {
             )}
           </motion.div>
 
-          <motion.div variants={ANIMATION_VARIANTS.section} className="empty:hidden">
+          <motion.div variants={ANIMATION_VARIANTS.section} className="mb-1.5 mt-2.5 empty:hidden">
             <UsageTierSuggestionBanner
               source="usage_page_tier_suggestion"
-              onComparePlans={() => navigate(ROUTES.SETTINGS_BILLING)}
+              onComparePlans={() =>
+                navigate(ROUTES.SETTINGS_BILLING, {
+                  state: { scrollToComparePlans: true } satisfies ComparePlansLocationState,
+                })
+              }
             />
           </motion.div>
 
