@@ -6,11 +6,15 @@ concurrency:
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
-# playground/ is in .nxignore, so `nx affected` never selects it; these are its workspace dependencies.
+# playground/ is in .nxignore, so `nx affected` never selects it; these are its workspace dependencies
+# and the root files that decide its installed versions.
 on:
   pull_request:
     paths:
       - "playground/nextjs/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
       - "packages/agent-toolkit/**"
       - "packages/chat-adapter/**"
       - "packages/framework/**"
