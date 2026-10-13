@@ -614,6 +614,14 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
 
       expect((await listInbox({ search: 'invoice', tab: 'resolved' })).data).to.deep.equal([]);
       expect((await listInbox({ search: 'invoice', after: 'conv_not_a_thread' })).data).to.deep.equal([]);
+
+      // The last thread of a page stops matching: the next page still goes on from where it was.
+      await conversationRepository.update(
+        { identifier: firstPage.next, _environmentId: session.environment._id },
+        { $set: { title: 'Renamed' } }
+      );
+      const afterRename = await listInbox({ search: 'invoice', limit: 2, after: firstPage.next });
+      expect(afterRename.data.map((thread) => thread.id)).to.deep.equal(secondPage.data.map((thread) => thread.id));
     });
 
     it('goes by what a thread shows now: edits, deletes, card subtitles and posted cards', async () => {

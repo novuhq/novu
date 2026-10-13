@@ -95,6 +95,8 @@ const INBOX_SCAN_LIMIT = 500;
 /** Threads read for the counts or a search, newest first, and whether older ones were left out. */
 type InboxScan = { conversations: ConversationEntity[]; capped: boolean };
 
+type InboxPage = { data: ConversationEntity[]; next: string | null };
+
 const PREVIEW_MAX_LENGTH = 200;
 
 /** The channels the inbox page always offers, also while no thread is on them. */
@@ -272,24 +274,14 @@ export class HumanInboxService {
   ): Promise<{ data: InboxThreadDto[]; next: string | null }> {
     const threads: InboxThreadDto[] = [];
     let after = filters.after;
-    // A search has already loaded the threads it found, so its pages are cut from those.
-    const found = filters.search ? (await this.searchThreads(scope, agent, filters.search)).conversations : undefined;
+    const loadPage = await this.threadPager(scope, agent, filters);
+
+    if (!loadPage) {
+      return { data: [], next: null };
+    }
 
     for (let scan = 0; scan < MAX_CONTACT_FILTER_SCANS; scan += 1) {
-      const page = found
-        ? pageOf(found, { status: filters.status, channel: filters.channel, limit: filters.limit, after })
-        : await this.conversationRepository.findInboxThreads({
-            ...scope,
-            agentId: agent._id,
-            // The query tells read from unread by time alone, so a thread whose only new message was
-            // deleted looks unread to it. It narrows `unread` to candidates; the count below decides, and
-            // decides alone for `read`, so every thread is in exactly one of the two.
-            read: filters.read === 'unread' ? 'unread' : undefined,
-            status: filters.status,
-            channel: filters.channel,
-            limit: filters.limit,
-            after,
-          });
+      const page = await loadPage(after);
       const pageThreads = await this.toThreads(scope, page.data);
       const matching = pageThreads.filter(
         (thread) =>
@@ -317,6 +309,59 @@ export class HumanInboxService {
 
     // The scan stopped before the page filled. Hand back where it stopped, so the next call goes on from there.
     return { data: threads, next: after ?? null };
+  }
+
+  /**
+   * What loads the candidate threads of a page, given the identifier of the last thread of the page
+   * before. Null when `filters.after` is not a thread of this agent.
+   */
+  private async threadPager(
+    scope: InboxScope,
+    agent: InboxRelayAgent,
+    filters: InboxListFilters
+  ): Promise<((after?: string) => Promise<InboxPage>) | null> {
+    const { status, channel, limit } = filters;
+
+    if (!filters.search) {
+      return (after) =>
+        this.conversationRepository.findInboxThreads({
+          ...scope,
+          agentId: agent._id,
+          // The query tells read from unread by time alone, so a thread whose only new message was
+          // deleted looks unread to it. It narrows `unread` to candidates; the count in `listThreads`
+          // decides, and decides alone for `read`, so every thread is in exactly one of the two.
+          read: filters.read === 'unread' ? 'unread' : undefined,
+          status,
+          channel,
+          limit,
+          after,
+        });
+    }
+
+    // A search has already loaded the threads it found, so its pages are cut from those. The last
+    // thread of the page before may match the search no longer, so it is looked up on its own.
+    const { conversations: found } = await this.searchThreads(scope, agent, filters.search);
+    const firstCursor = filters.after
+      ? await this.conversationRepository.findByAgentAndIdentifier(
+          scope.environmentId,
+          scope.organizationId,
+          agent._id,
+          filters.after
+        )
+      : undefined;
+
+    if (firstCursor === null) {
+      return null;
+    }
+
+    return async (after) =>
+      pageOf(found, {
+        status,
+        channel,
+        limit,
+        // Past the first scan the cursor is a thread the search found.
+        after: found.find(({ identifier }) => identifier === after) ?? firstCursor,
+      });
   }
 
   /**
@@ -728,28 +773,30 @@ function hasContact(conversation: ConversationEntity, people: InboxPeople): bool
 
 /**
  * One page out of threads that are already loaded, newest first: what `findInboxThreads` does in the
- * database. `after` is the identifier of the last thread of the previous page.
+ * database. `after` is the last thread of the previous page, which need not be one of `conversations`.
  */
 function pageOf(
   conversations: ConversationEntity[],
-  params: { status?: ConversationStatusEnum; channel?: string; limit: number; after?: string }
-): { data: ConversationEntity[]; next: string | null } {
-  const cursorAt = params.after ? conversations.findIndex(({ identifier }) => identifier === params.after) : -1;
-
-  if (params.after && cursorAt === -1) {
-    return { data: [], next: null };
-  }
-
-  const rest = conversations
-    .slice(cursorAt + 1)
-    .filter(
-      (conversation) =>
-        (!params.status || conversation.status === params.status) &&
-        (!params.channel || channelOf(conversation) === params.channel)
-    );
+  params: { status?: ConversationStatusEnum; channel?: string; limit: number; after?: ConversationEntity }
+): InboxPage {
+  const { after } = params;
+  const rest = conversations.filter(
+    (conversation) =>
+      (!after || isListedAfter(conversation, after)) &&
+      (!params.status || conversation.status === params.status) &&
+      (!params.channel || channelOf(conversation) === params.channel)
+  );
   const data = rest.slice(0, params.limit);
 
   return { data, next: rest.length > params.limit ? (data[data.length - 1]?.identifier ?? null) : null };
+}
+
+/** Whether `conversation` comes after `cursor` in the inbox: older activity, and on a tie the older thread. */
+function isListedAfter(conversation: ConversationEntity, cursor: ConversationEntity): boolean {
+  const activityAt = new Date(conversation.lastActivityAt).getTime();
+  const cursorActivityAt = new Date(cursor.lastActivityAt).getTime();
+
+  return activityAt < cursorActivityAt || (activityAt === cursorActivityAt && conversation._id < cursor._id);
 }
 
 function channelOf(conversation: ConversationEntity): string {
