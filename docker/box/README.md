@@ -62,7 +62,8 @@ preview-only values. A box runs PR code, and that code can read its environment,
 | `BULL_MQ_PRO_NPM_TOKEN` (optional) | Taskforce.sh registry | Bake; without it the box runs open-source BullMQ |
 | `NOVU_MANAGED_CLAUDE_API_KEY` (optional) | Anthropic, a workspace with a monthly spend limit | Start (runs thalamus and seeds the `box-managed` agent), API, bridge app (real models for its agents) |
 
-The dashboard signs in as `agent@novu.co` / `Agent123!@#` (a Clerk test user, `*@novu.co` only). All boxes share
+The dashboard signs in as `agent+clerk_test@novu.co` / `Agent123!@#` (a Clerk test user, `*@novu.co` only). If
+Clerk asks for an email code, it's `424242`: `+clerk_test` addresses never get a real email. All boxes share
 the Clerk development instance and its one seed org, and every bake re-links that org to the new box. Older
 boxes stop signing in correctly after a newer bake.
 
