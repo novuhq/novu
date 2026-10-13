@@ -34,7 +34,7 @@ type HitlToolApprovalChrome = {
   extraActions?: Array<{ id: string; label: string }>;
 };
 
-export function managedTrustExtraActions(request: ToolApprovalRequestPayloadDto): Array<{ id: string; label: string }> {
+function managedTrustExtraActions(request: ToolApprovalRequestPayloadDto): Array<{ id: string; label: string }> {
   const isManagedGate =
     Boolean(request.mcpServerName) ||
     request.approveActionId?.startsWith(`${MCP_TOOL_APPROVAL_ACTION_PREFIX}:`) ||
