@@ -68,13 +68,12 @@ export function Plan() {
   const track = useTelemetry();
   const location = useLocation();
   const { currentOrganization } = useAuth();
-  const { subscription: data, isLoading } = useFetchSubscription();
+  const { subscription: data } = useFetchSubscription();
   const [selectedBillingInterval, setSelectedBillingInterval] = useState<'month' | 'year'>(
     data?.billingInterval || 'month'
   );
   const plans = getPlansConfig(selectedBillingInterval as StripeBillingIntervalEnum);
   const comparePlansRef = useRef<HTMLDivElement>(null);
-  const scrolledForLocationKey = useRef<string | null>(null);
 
   useEffect(() => {
     const checkoutResult = new URLSearchParams(window.location.search).get('result');
@@ -119,19 +118,18 @@ export function Plan() {
   }, [data?.apiServiceLevel, data?.trial?.isActive, selectedBillingInterval, track]);
 
   useEffect(() => {
-    const state = location.state as ComparePlansLocationState | null;
+    const shouldScroll = (location.state as ComparePlansLocationState | null)?.scrollToComparePlans === true;
 
-    if (!state?.scrollToComparePlans || isLoading || scrolledForLocationKey.current === location.key) {
+    if (!shouldScroll) {
       return;
     }
 
     const frame = requestAnimationFrame(() => {
       scrollToComparePlans(comparePlansRef.current);
-      scrolledForLocationKey.current = location.key;
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [isLoading, location.key, location.state]);
+  }, [location.key, location.state]);
 
   const handleBillingIntervalChange = (interval: StripeBillingIntervalEnum) => {
     track(TelemetryEvent.BILLING_INTERVAL_CHANGED, {
