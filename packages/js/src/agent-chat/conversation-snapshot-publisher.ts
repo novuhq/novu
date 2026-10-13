@@ -2,6 +2,7 @@ import type { AgentConversationStatus, AgentConversationTyping, AgentMessage } f
 import { isStreamingChange } from './is-streaming-change';
 import type { AgentChatChange } from './types';
 
+// reachr probe B1 1013-1152
 export type ConversationSnapshot = {
   messages: AgentMessage[];
   isRunning: boolean;
