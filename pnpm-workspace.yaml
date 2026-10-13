@@ -419,9 +419,13 @@ overrides:
   '@codemirror/autocomplete': 6.18.3
   # GHSA-w9m9-85wc-3x92: postcss-selector-parser 6.1.0-6.1.2 allows DoS via
   # uncontrolled AST recursion in nested pseudo-selectors. Patched in 6.1.3.
-  # Pulled transitively via tailwindcss, postcss-preset-env, and cssnano.
-  postcss-selector-parser@>=6.1.0 <6.1.3: ^6.1.3
-  postcss-selector-parser@>=7.0.0 <7.1.6: ^7.1.6
+  # GHSA-rj75-hqrm-r3gf (moderate): quadratic complexity in flat selector
+  # parsing (CPU exhaustion). The fix only ships in the 7.x line (>=7.1.6);
+  # the 6.x line has no patched release, so route both 6.x and <7.1.6 to the
+  # 7.1.x patch branch. v7 only drops Node <4 and legacy iteration helpers,
+  # which tailwindcss/postcss/cssnano consumers don't use. Pulled transitively
+  # via tailwindcss, postcss-preset-env, cssnano, and @tailwindcss/typography.
+  postcss-selector-parser@<7.1.6: ^7.1.6
   # GHSA-2wm5-q62r-hmrv: colord slow rejection of oversized malformed color
   # strings (DoS via CPU). Patched in 2.9.4. Only pulled transitively via
   # cssnano (postcss-colormin / postcss-minify-gradients) in packages/js.
