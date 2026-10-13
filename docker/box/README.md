@@ -101,7 +101,12 @@ GITHUB_TOKEN=$(gh auth token) docker exec -e GITHUB_TOKEN novu-box node /opt/box
 reinstalls if the lockfile changed, builds the projects `nx affected` reports, redeploys the API and worker,
 runs migrations and restarts what changed. A PR that changes `@novu/framework`, `@novu/agent-toolkit` or
 `playground/nextjs` also rebuilds the bridge app (about 45 s), restarts it and syncs it again, so the PR's
-workflows and agents run on the PR's framework.
+workflows and agents run on the PR's framework. It logs the plan before it runs it, for example
+`plan: install no, build @novu/worker, restart worker` (about 20 s for that one).
+
+Add `--full` to install, build and restart everything, as a bake does (about 5 minutes), when the box behaves in a
+way the PR doesn't explain. `apply-pr` also logs the PR's `PR Checks Passed` result from GitHub, and a `WARN` if
+CI failed: the box skips type checks, so it can run code CI rejects.
 
 Run the smoke test from the host (38 checks, 43 with the Anthropic key, about 2 minutes; writes `smoke.json` to
 the directory given):

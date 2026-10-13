@@ -43,6 +43,12 @@ const PROJECT_PROCESSES = {
   '@novu/framework': 'bridge',
   '@novu/agent-toolkit': 'bridge',
 };
+// Processes no nx project maps to: the workers have no nx build, and playground/ is in .nxignore.
+const PATH_PROCESSES = {
+  'enterprise/workers/socket/': 'socket',
+  'enterprise/workers/thalamus-observer/': 'thalamus',
+  'playground/nextjs/': 'bridge',
+};
 const DEPLOYED_APPS = { api: '@novu/api-service', worker: '@novu/worker' };
 
 const env = loadEnv();
@@ -900,10 +906,10 @@ async function migrate() {
   fs.writeFileSync(MIGRATED, head);
 }
 
-// Sorts the diff the way the README describes: dependencies -> install, migrations -> migrate,
-// code -> nx affected build, then restart only the processes whose project was rebuilt.
-async function applyPr(ref) {
-  if (!ref) throw new Error('usage: box apply-pr <pr-number|sha>');
+// Merges the PR onto the baked commit, plans what its diff needs, then applies the plan. `--full` plans everything,
+// like a bake, for when the incremental plan is in doubt.
+async function applyPr(ref, { full = false } = {}) {
+  if (!ref) throw new Error('usage: box apply-pr <pr-number|branch|sha> [--full]');
   const base = (readJson(APPLIED) ?? readJson(BAKED)).sha;
   let prHead;
   let head;
@@ -916,70 +922,120 @@ async function applyPr(ref) {
   log(`${files.length} files changed between ${base.slice(0, 10)} and ${head.slice(0, 10)}`);
   if (files.some((file) => file.startsWith('docker/box/')))
     log('WARN: docker/box changed; this PR needs a new base image');
-
-  const restart = new Set();
+  await logCiResult(prHead);
   await step('checkout', () => {
     run('git', ['checkout', '--force', '--detach', head]);
     if (files.includes('.source')) gitWithToken(['submodule', 'update', '--init', '--depth', '1', '.source']);
   });
-  const dependenciesChanged = files.some(
-    (file) => file === 'pnpm-lock.yaml' || file.endsWith('package.json') || file === '.source'
-  );
-  if (dependenciesChanged) {
-    await step('pnpm install', pnpmInstall);
-    APPS.forEach((name) => restart.add(name));
-  }
 
-  let affected;
-  await step('nx affected', () => {
-    // Not --base/--head: nx diffs from their merge base, which for two box merge commits is an older bake.
-    affected = files.length
-      ? JSON.parse(
-          output('pnpm', ['-s', 'nx', 'show', 'projects', '--affected', `--files=${files.join(',')}`, '--json'])
-        ).filter((project) => PROJECT_PROCESSES[project])
-      : [];
-    if (!dependenciesChanged && !dashboardBundleChanged(files))
-      affected = affected.filter((project) => project !== '@novu/dashboard');
-    // nx can't see inside the submodule, so a `.source` bump affects nothing; the enterprise code runs in the API and worker.
-    if (files.includes('.source'))
-      for (const project of ['@novu/api-service', '@novu/worker']) if (!affected.includes(project)) affected.push(project);
+  let plan;
+  await step('plan', () => {
+    plan = full ? fullPlan() : planFor(files);
   });
-  affected.forEach((project) => restart.add(PROJECT_PROCESSES[project]));
-  if (files.some((file) => file.startsWith('enterprise/workers/socket/'))) restart.add('socket');
-  if (env.NOVU_MANAGED_CLAUDE_API_KEY && files.some((file) => file.startsWith('enterprise/workers/thalamus-observer/')))
-    restart.add('thalamus');
-  // playground/ is in .nxignore, so nx never lists the bridge app itself.
-  if (files.some((file) => file.startsWith('playground/nextjs/'))) restart.add('bridge');
-  // Building next to the running apps gets OOM-killed in 8 GB. The dashboard is static files, so it keeps serving.
-  const stop = [...restart].filter((name) => name !== 'dashboard');
-  if (stop.length) await step(`stop ${stop.join(' ')}`, () => pc(['process', 'stop', ...stop]));
-  const enterprise = dependenciesChanged || files.some((file) => file.startsWith('enterprise/packages/'));
-  if (affected.length) await step(`build ${affected.join(' ')}`, () => build(affected, { enterprise }));
-  if (restart.has('bridge')) await step('build bridge', buildBridge);
-  const redeploy = Object.keys(DEPLOYED_APPS).filter((name) => restart.has(name));
-  if (redeploy.length)
-    await step(`deploy ${redeploy.join(' ')}`, () =>
-      redeploy.forEach((name) => deployApp(name, { dependenciesChanged }))
-    );
-  await step('migrate', migrate);
+  log(
+    `plan: install ${plan.install ? 'yes' : 'no'}, build ${plan.build.join(' ') || 'nothing'}, restart ${plan.restart.join(' ') || 'nothing'}`
+  );
+  await applyPlan(plan);
 
   fs.writeFileSync(
     APPLIED,
-    JSON.stringify({ ref, sha: head, prHead, base, files: files.length, at: new Date().toISOString() }, null, 2)
+    JSON.stringify({ ref, sha: head, prHead, base, files: files.length, full, at: new Date().toISOString() }, null, 2)
   );
-  await step(`restart ${[...restart].join(' ') || 'nothing'}`, () => {
-    if (restart.delete('dashboard')) prepareDashboard();
-    else
-      fs.writeFileSync(
-        `${RUN}/dashboard/__box.json`,
-        JSON.stringify({ baked: readJson(BAKED), applied: readJson(APPLIED) })
-      );
-    for (const name of restart) pc(['process', 'restart', name]);
-  });
+  fs.writeFileSync(
+    `${RUN}/dashboard/__box.json`,
+    JSON.stringify({ baked: readJson(BAKED), applied: readJson(APPLIED) })
+  );
+  log(`applied ${ref} at ${head}`);
+}
+
+// What a diff needs: new dependencies -> install and restart everything; code -> build the apps nx says are
+// affected; files under PATH_PROCESSES -> restart that process. The enterprise packages rebuild only when they or
+// the dependencies changed, because nx can't tell (their src links into the nxignored submodule).
+function planFor(files) {
+  const install = files.some(
+    (file) => file === 'pnpm-lock.yaml' || file.endsWith('package.json') || file === '.source'
+  );
+  const build = affectedApps(files, { install });
+  const restart = new Set(install ? APPS : build.map((project) => PROJECT_PROCESSES[project]));
+  for (const [prefix, name] of Object.entries(PATH_PROCESSES))
+    if (files.some((file) => file.startsWith(prefix))) restart.add(name);
+
+  return {
+    install,
+    build,
+    enterprise: install || files.some((file) => file.startsWith('enterprise/packages/')),
+    restart: runnable(restart),
+  };
+}
+
+function fullPlan() {
+  return {
+    install: true,
+    build: Object.keys(PROJECT_PROCESSES),
+    enterprise: true,
+    restart: runnable(new Set([...APPS, ...Object.values(PATH_PROCESSES)])),
+  };
+}
+
+// Thalamus only runs with the managed-agent key (see `box start`).
+function runnable(processes) {
+  if (!env.NOVU_MANAGED_CLAUDE_API_KEY) processes.delete('thalamus');
+
+  return [...processes];
+}
+
+function affectedApps(files, { install }) {
+  if (!files.length) return [];
+  // Not --base/--head: nx diffs from their merge base, which for two box merge commits is an older bake.
+  let apps = JSON.parse(
+    output('pnpm', ['-s', 'nx', 'show', 'projects', '--affected', `--files=${files.join(',')}`, '--json'])
+  ).filter((project) => PROJECT_PROCESSES[project]);
+  if (!install && !dashboardBundleChanged(files)) apps = apps.filter((project) => project !== '@novu/dashboard');
+  // nx can't see inside the submodule, so a `.source` bump affects nothing; the enterprise code runs in the API and worker.
+  if (files.includes('.source')) apps = [...new Set([...apps, '@novu/api-service', '@novu/worker'])];
+
+  return apps;
+}
+
+async function applyPlan({ install, build: projects, enterprise, restart }) {
+  // Building next to the running apps gets OOM-killed in 8 GB. The dashboard is static files, so it keeps serving.
+  const stop = restart.filter((name) => name !== 'dashboard');
+  if (stop.length) await step(`stop ${stop.join(' ')}`, () => pc(['process', 'stop', ...stop]));
+  if (install) await step('pnpm install', pnpmInstall);
+  if (projects.length) await step(`build ${projects.join(' ')}`, () => build(projects, { enterprise }));
+  if (restart.includes('bridge')) await step('build bridge', buildBridge);
+  const redeploy = Object.keys(DEPLOYED_APPS).filter((name) => restart.includes(name));
+  if (redeploy.length)
+    await step(`deploy ${redeploy.join(' ')}`, () => {
+      for (const name of redeploy) deployApp(name, { dependenciesChanged: install });
+    });
+  await step('migrate', migrate);
+  if (restart.includes('dashboard')) prepareDashboard();
+  if (stop.length)
+    await step(`restart ${stop.join(' ')}`, () => {
+      for (const name of stop) pc(['process', 'restart', name]);
+    });
   await waitForHttp('http://127.0.0.1:3000/v1/health-check', 300);
   // A new framework can discover the same workflows differently (schemas, step options).
-  if (restart.has('bridge')) await step('sync bridge', syncBridge);
-  log(`applied ${ref} at ${head}`);
+  if (restart.includes('bridge')) await step('sync bridge', syncBridge);
+}
+
+// The box runs code CI may have rejected (it skips type checks, for one), so it says what CI concluded.
+// `PR Checks Passed` is the required check that gates every other job in on-pr.yml.
+async function logCiResult(sha) {
+  const repo = REPO_URL.replace(/^https:\/\/github\.com\//, '').replace(/\.git$/, '');
+  const url = `https://api.github.com/repos/${repo}/commits/${sha}/check-runs?check_name=PR%20Checks%20Passed`;
+  try {
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${env.GITHUB_TOKEN}` } });
+    if (!response.ok) throw new Error(`GitHub answered ${response.status}`);
+    const [check] = (await response.json()).check_runs;
+    if (!check) log(`CI: no "PR Checks Passed" result for ${sha.slice(0, 10)}`);
+    else if (check.status !== 'completed') log(`CI: still running on ${sha.slice(0, 10)}`);
+    else if (check.conclusion === 'success') log(`CI: passed on ${sha.slice(0, 10)}`);
+    else log(`WARN: CI ${check.conclusion} on ${sha.slice(0, 10)}; the box may run code CI rejects: ${check.html_url}`);
+  } catch (error) {
+    log(`WARN: couldn't read the CI result: ${error.message}`);
+  }
 }
 
 async function quiesce() {
@@ -991,7 +1047,11 @@ const commands = {
   bake: () => bake(process.argv[3]),
   start,
   migrate,
-  'apply-pr': () => applyPr(process.argv[3]),
+  'apply-pr': () =>
+    applyPr(
+      process.argv.slice(3).find((arg) => !arg.startsWith('--')),
+      { full: process.argv.includes('--full') }
+    ),
   quiesce,
   status: () => pc(['process', 'list']),
 };
