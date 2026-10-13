@@ -157,10 +157,6 @@ export class CreateInteraction {
     let emailCapError: HttpException | undefined;
 
     try {
-      if (!isKeylessOrganization(command.organizationId)) {
-        messageCredits = await this.messageQuota.reserveCredits(command.organizationId, resolved.length);
-      }
-
       if (emailCount > 0) {
         try {
           credits = await this.inboxQuota.reserveCredits(command.organizationId, emailCount);
@@ -173,6 +169,13 @@ export class CreateInteraction {
 
           emailCapError = err;
         }
+      }
+
+      if (!isKeylessOrganization(command.organizationId)) {
+        // Capped email recipients are not delivered, so they stay out of this
+        // hold. Counting them would reject the other channels when one credit remains.
+        const messageCount = emailCapError ? resolved.length - emailCount : resolved.length;
+        messageCredits = await this.messageQuota.reserveCredits(command.organizationId, messageCount);
       }
 
       const interaction = await this.humanInteractionRepository.create(

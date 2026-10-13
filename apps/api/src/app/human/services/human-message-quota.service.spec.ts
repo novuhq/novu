@@ -68,6 +68,7 @@ function applyRelease(store: CounterStore, keys: string[], args: Array<string | 
 
 describe('HumanMessageQuotaService', () => {
   const organizationId = 'org-1';
+  const originalSelfHosted = process.env.IS_SELF_HOSTED;
   let store: CounterStore;
   let cacheEnabled: boolean;
   let evalStub: sinon.SinonStub;
@@ -92,6 +93,14 @@ describe('HumanMessageQuotaService', () => {
       { findById: sinon.stub().resolves({ apiServiceLevel: ApiServiceLevelEnum.FREE }) } as never,
       { setContext: sinon.stub(), warn: sinon.stub() } as never
     );
+  });
+
+  afterEach(() => {
+    if (originalSelfHosted === undefined) {
+      delete process.env.IS_SELF_HOSTED;
+    } else {
+      process.env.IS_SELF_HOSTED = originalSelfHosted;
+    }
   });
 
   it('reserves under the cap and rejects the exact daily and monthly boundaries', async () => {

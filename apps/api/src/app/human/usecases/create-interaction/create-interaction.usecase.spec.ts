@@ -812,8 +812,16 @@ describe('CreateInteraction', () => {
   });
 
   it('still delivers Telegram when the email slice of a fan-out is over the cap', async () => {
-    const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository, inboxQuota } =
-      setup();
+    const {
+      usecase,
+      command,
+      created,
+      agentRepository,
+      deliveryService,
+      humanInteractionRepository,
+      inboxQuota,
+      messageQuota,
+    } = setup();
     agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
     deliveryService.resolveChannel.onFirstCall().resolves({
       integrationIdentifier: 'inbox',
@@ -834,6 +842,8 @@ describe('CreateInteraction', () => {
 
     expect(deliveryService.deliver.calledOnce).to.equal(true);
     expect(deliveryService.deliver.firstCall.args[1].platform).to.equal('telegram');
+    expect(messageQuota.reserveCredits.calledOnce).to.equal(true);
+    expect(messageQuota.reserveCredits.firstCall.args).to.deep.equal(['org1', 1]);
     expect(result.failedTo).to.deep.equal(['sub-1']);
     expect(result.to).to.deep.equal(['sub-2']);
   });
