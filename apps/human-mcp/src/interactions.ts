@@ -12,6 +12,8 @@ export type Interaction = {
   content?: { cardChrome?: { options?: Option[] } };
   response?: { type: 'text' | 'option'; text?: string; optionId?: string; respondedBy?: string };
   failedTo?: string[];
+  /** Threads the send landed in. Sending marks each one read; `unreadBefore` is what was unread then. */
+  threads?: Array<{ id: string; unreadBefore: number }>;
 };
 
 export type Card = {
@@ -53,13 +55,32 @@ export async function resolveRecipient(api: HumanApi, to: string | undefined): P
 
 export async function sendInteraction(
   api: HumanApi,
-  input: { kind: InteractionKind; card: Card; to?: string; from?: string }
+  input: {
+    kind: InteractionKind;
+    card: Card;
+    to?: string;
+    from?: string;
+    /** Reply in an existing inbox thread (`conv_...`). When set, `to` is optional. */
+    thread?: string;
+    /** Let anyone in the thread answer — needed for stranger threads with no contact. */
+    anyoneMayAnswer?: boolean;
+  }
 ): Promise<Interaction> {
-  const to = await resolveRecipient(api, input.to);
+  const thread = input.thread?.trim();
+  // A thread send must not invent a `to`: the API routes by the conversation, and a defaulted
+  // operator would trip contact checks on stranger threads.
+  const to = thread ? input.to?.trim() || undefined : await resolveRecipient(api, input.to);
   const created = await api
     .post<Interaction>(
       '/v1/human/interactions',
-      { kind: input.kind, card: input.card, to, ...(input.from ? { from: input.from } : {}) },
+      {
+        kind: input.kind,
+        card: input.card,
+        ...(to ? { to } : {}),
+        ...(thread ? { thread } : {}),
+        ...(input.anyoneMayAnswer ? { anyoneMayAnswer: true } : {}),
+        ...(input.from ? { from: input.from } : {}),
+      },
       SEND_TIMEOUT_MS
     )
     .catch((error) => {
@@ -131,25 +152,44 @@ export async function waitForAnswer(
 export function describeOutcome(interaction: Interaction): string {
   const { id, status, response } = interaction;
   const by = response?.respondedBy ? ` by ${response.respondedBy}` : '';
+  const threadNote = describeThreads(interaction.threads);
 
   switch (status) {
     case 'pending':
-      return `No answer yet. The request is still open: call the wait tool with id "${id}" to keep waiting. Do not go ahead without the answer.`;
+      return `No answer yet. The request is still open: call the wait tool with id "${id}" to keep waiting. Do not go ahead without the answer.${threadNote}`;
     case 'approved':
-      return `Approved${by}.${answerOf(interaction)}`;
+      return `Approved${by}.${answerOf(interaction)}${threadNote}`;
     case 'denied':
-      return `Denied${by}. Do not go ahead.${answerOf(interaction)}`;
+      return `Denied${by}. Do not go ahead.${answerOf(interaction)}${threadNote}`;
     case 'answered':
-      return `Answered${by}.${answerOf(interaction)}`;
+      return `Answered${by}.${answerOf(interaction)}${threadNote}`;
     case 'delivered':
-      return 'Delivered.';
+      return `Delivered.${threadNote}`;
     case 'expired':
       return 'Nobody answered in time, so the request expired. Treat it as not approved.';
     case 'canceled':
       return 'The request was canceled. Treat it as not approved.';
     default:
-      return `The request is ${status}.`;
+      return `The request is ${status}.${threadNote}`;
   }
+}
+
+function describeThreads(threads: Interaction['threads']): string {
+  if (!threads?.length) {
+    return '';
+  }
+
+  return threads
+    .map((thread) => {
+      if (thread.unreadBefore > 0) {
+        return ` That thread (${thread.id}) had ${thread.unreadBefore} unread message${
+          thread.unreadBefore === 1 ? '' : 's'
+        }, which are now marked read — read them with inbox_show.`;
+      }
+
+      return ` Sent in thread ${thread.id}.`;
+    })
+    .join('');
 }
 
 function answerOf({ content, response }: Interaction): string {
