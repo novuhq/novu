@@ -83,7 +83,7 @@ function getSuggestionCopy(suggestion: TierSuggestion): SuggestionCopy {
         ),
       };
     default: {
-      const exhaustiveCheck: never = suggestion.kind;
+      const exhaustiveCheck: never = suggestion;
 
       return exhaustiveCheck;
     }
@@ -267,31 +267,38 @@ export function TierSuggestionBanner({
 
   return (
     <SuggestionShell layout="inline">
-      <SuggestionSparkle layout="inline" />
-      <p className={TITLE_CLASS_NAME}>{copy.bannerTitle}</p>
-      <div aria-hidden className="bg-stroke-soft h-3.5 w-px shrink-0" />
-      <PlanLine
-        copy={copy}
-        cost={<span className="text-label-xs text-neutral-500">{formatCompactUsd(suggestion.monthlyCost)} so far</span>}
-      />
-      <div className="min-w-0 flex-1" />
-      <LinkButton
-        variant="modifiable"
-        size="sm"
-        className="text-label-xs text-text-soft hover:text-text-sub"
-        onClick={onComparePlans}
-      >
-        Compare plans
-      </LinkButton>
-      <TierSuggestionCta kind={suggestion.kind} billingInterval={billingInterval} source={source} />
-      <CompactButton
-        variant="ghost"
-        size="sm"
-        icon={RiCloseLine}
-        className="text-text-soft"
-        aria-label="Dismiss"
-        onClick={onDismiss}
-      />
+      <div className="@container flex w-full min-w-0 flex-wrap items-center gap-x-3.5 gap-y-2">
+        <div className="flex max-w-full shrink-0 flex-wrap items-center gap-x-3.5 gap-y-1">
+          <SuggestionSparkle layout="inline" />
+          <p className={TITLE_CLASS_NAME}>{copy.bannerTitle}</p>
+          <div aria-hidden className="bg-stroke-soft hidden h-3.5 w-px shrink-0 @min-[40rem]:block" />
+          <PlanLine
+            copy={copy}
+            cost={
+              <span className="text-label-xs text-neutral-500">{formatCompactUsd(suggestion.monthlyCost)} so far</span>
+            }
+          />
+        </div>
+        <div className="ml-auto flex shrink-0 items-center gap-3.5">
+          <LinkButton
+            variant="modifiable"
+            size="sm"
+            className="text-label-xs text-text-soft hover:text-text-sub"
+            onClick={onComparePlans}
+          >
+            Compare plans
+          </LinkButton>
+          <TierSuggestionCta kind={suggestion.kind} billingInterval={billingInterval} source={source} />
+          <CompactButton
+            variant="ghost"
+            size="sm"
+            icon={RiCloseLine}
+            className="text-text-soft"
+            aria-label="Dismiss"
+            onClick={onDismiss}
+          />
+        </div>
+      </div>
     </SuggestionShell>
   );
 }
