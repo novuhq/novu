@@ -411,7 +411,9 @@ function openPinnedRequest(params: PinnedRequestParams): Promise<http.IncomingMe
     }
 
     let activeTimeoutMs = timeoutMs;
+    let response: http.IncomingMessage | undefined;
     const req = transport.request(requestOptions, (res) => {
+      response = res;
       if (idleTimeoutMs !== undefined) {
         activeTimeoutMs = idleTimeoutMs;
         req.setTimeout(idleTimeoutMs);
@@ -428,6 +430,8 @@ function openPinnedRequest(params: PinnedRequestParams): Promise<http.IncomingMe
       // Tag the error so callers (e.g. HttpClientService retry logic) can treat
       // socket timeouts as a retryable transport failure, matching the `got` path.
       timeoutError.code = 'ETIMEDOUT';
+      // Once headers arrived the caller reads the body, so the timeout must surface there.
+      response?.destroy(timeoutError);
       req.destroy(timeoutError);
     });
     req.on('error', reject);
