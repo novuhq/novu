@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { ROUTES } from '@/utils/routes';
+import { AUTOCOMPLETE_PASSWORD_MANAGERS_ON } from '@/utils/constants';
 import { authClient } from '../client';
 import { buildSsoSignInPath } from '../sso-redirect';
 import { useAuthConfig } from '../use-auth-config';
@@ -86,8 +87,11 @@ export function ResetPassword() {
             New Password
           </label>
           <Input
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             type="password"
+            name="newPassword"
             id="newPassword"
+            autoComplete="new-password"
             value={newPassword}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
             placeholder="Enter new password"
@@ -101,8 +105,11 @@ export function ResetPassword() {
             Confirm Password
           </label>
           <Input
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             type="password"
+            name="confirmPassword"
             id="confirmPassword"
+            autoComplete="new-password"
             value={confirmPassword}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
             placeholder="Confirm new password"

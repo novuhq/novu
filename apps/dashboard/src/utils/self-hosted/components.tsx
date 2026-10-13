@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/primitives/button';
 import { Input } from '../../components/primitives/input';
 import { API_HOSTNAME } from '../../config';
+import { AUTOCOMPLETE_PASSWORD_MANAGERS_ON } from '../constants';
 
 const JWT_STORAGE_KEY = 'self-hosted-jwt';
 
@@ -69,8 +70,11 @@ export function SignIn() {
             Email
           </label>
           <Input
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             type="email"
+            name="email"
             id="email"
+            autoComplete="email"
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="user@example.com"
@@ -83,8 +87,11 @@ export function SignIn() {
             Password
           </label>
           <Input
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             type="password"
+            name="password"
             id="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             placeholder="Password"
@@ -228,8 +235,11 @@ export function SignUp() {
             First Name <span className="text-red-600">*</span>
           </label>
           <Input
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             type="text"
+            name="firstName"
             id="firstName"
+            autoComplete="given-name"
             value={firstName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
             placeholder="John"
@@ -242,8 +252,11 @@ export function SignUp() {
             Last Name
           </label>
           <Input
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             type="text"
+            name="lastName"
             id="lastName"
+            autoComplete="family-name"
             value={lastName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
             placeholder="Doe"
@@ -255,8 +268,11 @@ export function SignUp() {
             Email <span className="text-red-600">*</span>
           </label>
           <Input
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             type="email"
+            name="email"
             id="email"
+            autoComplete="email"
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="user@example.com"
@@ -269,8 +285,11 @@ export function SignUp() {
             Password <span className="text-red-600">*</span>
           </label>
           <Input
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             type="password"
+            name="password"
             id="password"
+            autoComplete="new-password"
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setIsSubmitted(false);
@@ -291,8 +310,11 @@ export function SignUp() {
             Organization Name <span className="text-red-600">*</span>
           </label>
           <Input
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             type="text"
+            name="organizationName"
             id="organizationName"
+            autoComplete="organization"
             value={organizationName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOrganizationName(e.target.value)}
             placeholder="Your Company"
