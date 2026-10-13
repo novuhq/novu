@@ -185,7 +185,7 @@ function saveSetupConfig(
   info(`Saved config to ${configPath()}.`);
 
   if (channel && defaultChannel && defaultChannel !== channel) {
-    info(`Your default channel is still ${pc.bold(defaultChannel)} — switch with: human channels --default ${channel}`);
+    info(`Your default channel is still ${pc.bold(defaultChannel)} — switch with: human channel default ${channel}`);
   }
 }
 
@@ -202,7 +202,7 @@ async function confirmLinkedChannel(
   await createInteraction(client, {
     kind: 'tell',
     card: {
-      title: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`human approve "Deploy to production?"\`.`,
+      title: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`human inbox approve "Deploy to production?"\`.`,
     },
     to: provisioned.subscriberId,
     via: channel,
@@ -211,9 +211,9 @@ async function confirmLinkedChannel(
 
   process.stdout.write(
     `\n${pc.green('✔')} ${channel} connected. Agents on this machine can now run:\n` +
-      `  ${pc.bold('human ask "Which environment should I target?"')}\n` +
-      `  ${pc.bold('human approve "Deploy to production?"')}\n` +
-      `  ${pc.bold('human tell "Build finished."')}\n`
+      `  ${pc.bold('human inbox ask "Which environment should I target?"')}\n` +
+      `  ${pc.bold('human inbox approve "Deploy to production?"')}\n` +
+      `  ${pc.bold('human inbox tell "Build finished."')}\n`
   );
 }
 
