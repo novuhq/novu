@@ -230,6 +230,33 @@ describe('waiting for an answer', () => {
     expect(outcome).toContain('They chose: Canary');
   });
 
+  it('keeps the unread warning after a check that does not return threads', async () => {
+    const api = {
+      get: vi.fn(async () => ({
+        id: 'hi_1',
+        kind: 'ask',
+        status: 'answered',
+        response: { type: 'text', text: 'Sure', respondedBy: 'Pat' },
+      })),
+      post: vi.fn(),
+    };
+    const sent: Interaction = {
+      id: 'hi_1',
+      kind: 'ask',
+      status: 'pending',
+      threads: [{ id: 'conv_1', unreadBefore: 2 }],
+    };
+
+    const interaction = await waitForAnswer(api as never, sent, 5, async () => undefined);
+    const outcome = describeOutcome(interaction);
+
+    expect(api.get).toHaveBeenCalled();
+    expect(outcome).toContain('Answered by Pat');
+    expect(outcome).toContain('conv_1');
+    expect(outcome).toContain('2 unread');
+    expect(outcome).toContain('inbox_show');
+  });
+
   it('surfaces unread messages that a send into a thread marked read', () => {
     const outcome = describeOutcome({
       id: 'hi_1',

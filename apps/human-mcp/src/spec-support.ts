@@ -193,7 +193,6 @@ function answerInteractions(
         kind: 'ask',
         status: 'answered',
         response: { type: 'text', text: 'Sure', respondedBy: 'Pat' },
-        threads: [{ id: 'conv_stranger_1', unreadBefore: 2 }],
         ...interaction,
       },
     });

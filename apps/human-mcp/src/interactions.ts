@@ -139,13 +139,23 @@ export async function waitForAnswer(
     await sleep(POLL_EVERY_MS);
 
     try {
-      interaction = await check();
+      // GET does not include `threads`. Those exist only on the send response, and sending
+      // has already marked the thread read, so a later check must not drop them.
+      interaction = keepSentThreads(await check(), sent);
     } catch {
       // One missed check is not an answer: keep what is known and try again while there is time.
     }
   }
 
   return interaction;
+}
+
+function keepSentThreads(latest: Interaction, sent: Interaction | string): Interaction {
+  if (typeof sent === 'string' || latest.threads?.length || !sent.threads?.length) {
+    return latest;
+  }
+
+  return { ...latest, threads: sent.threads };
 }
 
 /** What to tell the AI tool about an interaction, in words it can act on. */
