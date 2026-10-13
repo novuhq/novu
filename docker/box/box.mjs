@@ -946,6 +946,8 @@ async function applyPr(ref) {
   });
   affected.forEach((project) => restart.add(PROJECT_PROCESSES[project]));
   if (files.some((file) => file.startsWith('enterprise/workers/socket/'))) restart.add('socket');
+  if (env.NOVU_MANAGED_CLAUDE_API_KEY && files.some((file) => file.startsWith('enterprise/workers/thalamus-observer/')))
+    restart.add('thalamus');
   // playground/ is in .nxignore, so nx never lists the bridge app itself.
   if (files.some((file) => file.startsWith('playground/nextjs/'))) restart.add('bridge');
   // Building next to the running apps gets OOM-killed in 8 GB. The dashboard is static files, so it keeps serving.
