@@ -71,7 +71,8 @@ export class SetupHumanRelayRequestDto {
   agentDescription?: string;
 
   @ApiPropertyOptional({
-    description: 'Accepted for older clients. Ignored — an email is stored only after it is verified.',
+    description:
+      'The operator’s email, stored unverified. It is never a delivery address — only a way to recognize mail they send to the agent inbox.',
   })
   @IsOptional()
   @IsEmail()

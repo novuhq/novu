@@ -50,6 +50,7 @@ describe('UpdateIntegration - step integration overrides', () => {
     integrationRepository.findOne.callsFake(async (query) =>
       'identifier' in query ? null : ({ ...existingIntegration } as IntegrationEntity)
     );
+    integrationRepository.withTransaction.callsFake(async (callback) => callback(null));
     integrationRepository.update.resolves({ matched: 1, modified: 1 });
     controlValuesRepository.find.resolves([{ _stepId: 'step-a' }, { _stepId: 'step-b' }] as ControlValuesEntity[]);
     controlValuesRepository.delete.resolves({ acknowledged: true, deletedCount: 0 });

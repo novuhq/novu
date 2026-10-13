@@ -108,10 +108,10 @@ export async function linkAgentIntegration(
 }
 
 /**
- * `providerId: 'novu-email-agent'` triggers the server's special-case branch
- * that auto-creates a per-agent Novu Email integration with a unique shared
+ * `providerId: 'agent-email-inbox'` triggers the server's special-case branch
+ * that auto-creates a per-agent Agent Email Inbox with a unique shared
  * inbound address (e.g. `human-relay-abc@agentconnect.sh`) and links it in
- * one shot.
+ * one shot. Human-only — dashboard agents keep `novu-email-agent`.
  */
 export async function addAgentEmailIntegration(
   client: HumanApiClient,
@@ -119,7 +119,7 @@ export async function addAgentEmailIntegration(
 ): Promise<AgentIntegrationLink> {
   const res = await client.axios.post<{ data?: AgentIntegrationLink } | AgentIntegrationLink>(
     `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`,
-    { providerId: 'novu-email-agent' }
+    { providerId: 'agent-email-inbox' }
   );
 
   return unwrap(res.data);

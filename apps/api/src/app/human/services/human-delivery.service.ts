@@ -21,6 +21,7 @@ import {
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card.builder';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
+import { KeylessEmailGateService } from '../../keyless/keyless-email-gate.service';
 import { maskEmail } from './mask-email';
 
 export interface ResolvedHumanTarget {
@@ -32,7 +33,7 @@ export interface ResolvedHumanTarget {
 const VIA_PROVIDER_IDS: Record<HumanChannelViaEnum, readonly string[]> = {
   [HumanChannelViaEnum.TELEGRAM]: [ChatProviderIdEnum.Telegram],
   [HumanChannelViaEnum.SLACK]: [ChatProviderIdEnum.Slack, ChatProviderIdEnum.Novu],
-  [HumanChannelViaEnum.EMAIL]: [EmailProviderIdEnum.NovuAgent, EmailProviderIdEnum.Novu],
+  [HumanChannelViaEnum.EMAIL]: [EmailProviderIdEnum.AgentEmailInbox],
 };
 
 function viaForProviderId(providerId: string): HumanChannelViaEnum | null {
@@ -69,6 +70,8 @@ export type InviteChannelDescription = {
   connected: boolean;
   isDefault: boolean;
   status: HumanAddressVerificationStateEnum;
+  /** False when a keyless setup cannot offer this channel. */
+  available: boolean;
   /** Masked address for address-based channels. */
   address?: string;
   verifiedAt?: string;
@@ -145,7 +148,8 @@ export class HumanDeliveryService {
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly humanContactRepository: HumanContactRepository,
-    private readonly outboundGateway: OutboundGateway
+    private readonly outboundGateway: OutboundGateway,
+    private readonly keylessEmailGate: KeylessEmailGateService
   ) {}
 
   async resolveChannel(params: {
@@ -177,6 +181,12 @@ export class HumanDeliveryService {
     const deliverable = await this.findReachableTargets(params, candidates);
 
     if (deliverable.length === 0) {
+      // A keyless org can never reach email, so an email-only agent is a gate
+      // problem (403 with a claim link), not a missing endpoint (404).
+      if (candidates.every((integration) => integration.channel === ChannelTypeEnum.EMAIL)) {
+        await this.keylessEmailGate.assertAllowed(params);
+      }
+
       if (params.via === HumanChannelViaEnum.EMAIL) {
         throw new NotFoundException(await this.emailUnreachableMessage(params));
       }
@@ -235,18 +245,24 @@ export class HumanDeliveryService {
 
     return channels.map((channel) => {
       if (channel.via === HumanChannelViaEnum.EMAIL) {
-        const email = describeStoredEmail(contact?.addresses?.[HumanChannelViaEnum.EMAIL]);
+        const described = describeEmailInviteChannel(
+          channel,
+          describeStoredEmail(contact?.addresses?.[HumanChannelViaEnum.EMAIL]),
+          defaultVia
+        );
 
-        return {
-          ...channel,
-          connected: email.connected,
-          isDefault: email.connected && defaultVia === channel.via,
-          status: email.status,
-          ...(email.address ? { address: email.address } : {}),
-          ...(email.verifiedAt ? { verifiedAt: email.verifiedAt } : {}),
-          ...(email.verifiedRequestedAt ? { verifiedRequestedAt: email.verifiedRequestedAt } : {}),
-          ...(email.requestedAt ? { requestedAt: email.requestedAt } : {}),
-        };
+        // Keyless can prove the address, but still cannot send. Keep the stored
+        // verification state so setup can see the link was used.
+        if (this.keylessEmailGate.isBlocked(params.organizationId)) {
+          return {
+            ...described,
+            connected: false,
+            isDefault: false,
+            available: false,
+          };
+        }
+
+        return described;
       }
 
       const connected = targets.some((target) => target.integrationIdentifier === channel.integrationIdentifier);
@@ -254,6 +270,7 @@ export class HumanDeliveryService {
       return {
         ...channel,
         connected,
+        available: true,
         isDefault: connected && defaultVia === channel.via,
         status: connected ? HumanAddressVerificationStateEnum.VERIFIED : HumanAddressVerificationStateEnum.UNVERIFIED,
       };
@@ -357,9 +374,11 @@ export class HumanDeliveryService {
       ),
     ]);
     const savedDefaults = new Map(contacts.map((contact) => [contact.subscriberId, contact.defaultVia]));
+    // Keyless orgs cannot send email, so no address counts as reachable here.
+    const emailBlocked = this.keylessEmailGate.isBlocked(params.organizationId);
     const verifiedEmails = new Map(
       contacts.flatMap((contact) => {
-        const verified = contact.addresses?.[HumanChannelViaEnum.EMAIL]?.verified;
+        const verified = emailBlocked ? undefined : contact.addresses?.[HumanChannelViaEnum.EMAIL]?.verified;
         if (!verified) {
           return [];
         }
@@ -520,6 +539,10 @@ export class HumanDeliveryService {
     }
 
     if (integration.channel === ChannelTypeEnum.EMAIL) {
+      if (this.keylessEmailGate.isBlocked(params.organizationId)) {
+        return null;
+      }
+
       const verified = await this.humanContactRepository.findVerifiedAddress(
         params.environmentId,
         params.agentId,
@@ -573,6 +596,24 @@ export class HumanDeliveryService {
       connectedAt: endpoint.createdAt,
     };
   }
+}
+
+function describeEmailInviteChannel(
+  channel: { via: HumanInviteVia; integrationIdentifier: string },
+  email: ReturnType<typeof describeStoredEmail>,
+  defaultVia: HumanChannelViaEnum | undefined
+): InviteChannelDescription {
+  return {
+    ...channel,
+    connected: email.connected,
+    isDefault: email.connected && defaultVia === channel.via,
+    status: email.status,
+    available: true,
+    ...(email.address ? { address: email.address } : {}),
+    ...(email.verifiedAt ? { verifiedAt: email.verifiedAt } : {}),
+    ...(email.verifiedRequestedAt ? { verifiedRequestedAt: email.verifiedRequestedAt } : {}),
+    ...(email.requestedAt ? { requestedAt: email.requestedAt } : {}),
+  };
 }
 
 function describeStoredEmail(slot: HumanContactChannelAddresses | undefined): {

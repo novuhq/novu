@@ -7,6 +7,7 @@ import {
   isValidAgentEmailSlugPrefix,
   isValidAgentInboxRoutingKey,
   parseAgentSharedInboxLocalPart,
+  resolvePublishedAgentEmailSlug,
 } from './agent-shared-inbox';
 
 const ENV_KEY = 'NOVU_AGENT_SHARED_INBOUND_DOMAIN';
@@ -283,6 +284,28 @@ describe('agent-shared-inbox helpers', () => {
       expect(isValidAgentEmailSlugPrefix('a'.repeat(33))).toBe(false);
       expect(isValidAgentEmailSlugPrefix('has space')).toBe(false);
       expect(isValidAgentEmailSlugPrefix('has.dot')).toBe(false);
+    });
+  });
+
+  describe('resolvePublishedAgentEmailSlug', () => {
+    it('keeps a valid stored prefix', () => {
+      expect(resolvePublishedAgentEmailSlug('custom-slug', { identifier: 'wine-bot', name: 'Wine Bot' })).toBe(
+        'custom-slug'
+      );
+    });
+
+    it('falls back to the agent identifier when the stored prefix is missing', () => {
+      expect(resolvePublishedAgentEmailSlug(undefined, { identifier: 'wine-bot', name: 'Wine Bot' })).toBe('wine-bot');
+    });
+
+    it('falls back to the agent name when the identifier is empty', () => {
+      expect(resolvePublishedAgentEmailSlug(undefined, { identifier: '', name: 'Wine Bot' })).toBe('wine-bot');
+    });
+
+    it('falls back when the stored prefix is not a valid slug', () => {
+      expect(resolvePublishedAgentEmailSlug('Not A Slug', { identifier: 'wine-bot', name: 'Wine Bot' })).toBe(
+        'wine-bot'
+      );
     });
   });
 });

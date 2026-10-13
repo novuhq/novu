@@ -50,15 +50,20 @@ describe('AgentEmailSender', () => {
   let integrationRepository: { findOne: sinon.SinonStub };
   let handlerSend: sinon.SinonStub;
   let getHandler: sinon.SinonStub;
+  let beginSend: sinon.SinonStub;
+  let acceptSend: sinon.SinonStub;
 
   function buildSender(): AgentEmailSender {
     const logger = { setContext: sinon.stub(), warn: sinon.stub(), error: sinon.stub(), info: sinon.stub() };
+    acceptSend = sinon.stub();
+    beginSend = sinon.stub().resolves({ accept: acceptSend, release: sinon.stub().resolves() });
 
     return new AgentEmailSender(
       logger as never,
       integrationRepository as never,
       { execute: sinon.stub().resolves(null) } as never,
-      { create: sinon.stub().resolves() } as never
+      { create: sinon.stub().resolves() } as never,
+      { beginSend } as never
     );
   }
 
@@ -116,6 +121,56 @@ describe('AgentEmailSender', () => {
       const address = buildSender().resolveSharedInboxAddress(makeConfig({ inboxRoutingKey: 'NOT-VALID' }));
 
       expect(address).to.equal(undefined);
+    });
+  });
+
+  describe('inbox quota at the sender', () => {
+    const mail = {
+      from: 'human-relay-abc12345@agentconnect.sh',
+      to: 'person@example.com',
+      subject: 'Hello',
+      html: '<p>Hello</p>',
+    };
+
+    it('does not count a dashboard Novu Email send', async () => {
+      const config = makeConfig();
+      config.providerId = EmailProviderIdEnum.NovuAgent;
+
+      await buildSender().buildSendEmailCallback(config, OUTBOUND_INTEGRATION_ID)(mail);
+
+      expect(beginSend.called).to.equal(false);
+      expect(handlerSend.calledOnce).to.equal(true);
+    });
+
+    it('counts an Agent Email Inbox send only after the provider accepts it', async () => {
+      const config = makeConfig();
+      config.providerId = EmailProviderIdEnum.AgentEmailInbox;
+
+      await buildSender().buildSendEmailCallback(config, OUTBOUND_INTEGRATION_ID)(mail);
+
+      expect(beginSend.calledOnce).to.equal(true);
+      expect(beginSend.firstCall.args[0]).to.equal('org-id');
+      expect(acceptSend.calledOnce).to.equal(true);
+    });
+
+    it('releases the reserved credit when the provider rejects the send', async () => {
+      const release = sinon.stub().resolves();
+      const sender = buildSender();
+      beginSend.resolves({ accept: acceptSend, release });
+      handlerSend.rejects(new Error('smtp down'));
+      const config = makeConfig();
+      config.providerId = EmailProviderIdEnum.AgentEmailInbox;
+
+      let error: unknown;
+      try {
+        await sender.buildSendEmailCallback(config, OUTBOUND_INTEGRATION_ID)(mail);
+      } catch (err) {
+        error = err;
+      }
+
+      expect(error).to.be.instanceOf(Error);
+      expect(acceptSend.called).to.equal(false);
+      expect(release.calledOnce).to.equal(true);
     });
   });
 
@@ -187,6 +242,33 @@ describe('AgentEmailSender', () => {
       expect((error as Error).message).to.match(/No agent address found for thread/);
       expect(integrationRepository.findOne.called).to.equal(false);
       expect(handlerSend.called).to.equal(false);
+    });
+
+    it('does not count dashboard Novu Email sends against the Human inbox cap', async () => {
+      const config = makeConfig();
+      config.providerId = EmailProviderIdEnum.NovuAgent;
+      const { adapter, state } = createRegistryWiredAdapter(config);
+      await adapter.initialize({ getState: () => state, processMessage: sinon.stub() } as never);
+
+      const threadId = await adapter.openDM!('person@example.com');
+      await adapter.postMessage(threadId, { markdown: 'hello' });
+
+      expect(beginSend.called).to.equal(false);
+      expect(handlerSend.called).to.equal(true);
+    });
+
+    it('counts an Agent Email Inbox send that was not reserved', async () => {
+      const config = makeConfig();
+      config.providerId = EmailProviderIdEnum.AgentEmailInbox;
+      const { adapter, state } = createRegistryWiredAdapter(config);
+      await adapter.initialize({ getState: () => state, processMessage: sinon.stub() } as never);
+
+      const threadId = await adapter.openDM!('person@example.com');
+      await adapter.postMessage(threadId, { markdown: 'hello' });
+
+      expect(beginSend.calledOnce).to.equal(true);
+      expect(beginSend.firstCall.args[0]).to.equal('org-id');
+      expect(acceptSend.calledOnce).to.equal(true);
     });
 
     it('rejects an inactive outbound integration before sending', async () => {

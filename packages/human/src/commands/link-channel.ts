@@ -14,6 +14,9 @@ import { pollUntil, sleep } from '../poll';
 export const HUMAN_CHANNELS = ['telegram', 'slack', 'email'] as const;
 export type HumanChannel = (typeof HUMAN_CHANNELS)[number];
 
+/** The channels that need a connect dance. Email is verified on the inbox instead. */
+export type ChatChannel = Exclude<HumanChannel, 'email'>;
+
 export const CHANNEL_POLL_INTERVAL_MS = 2_000;
 export const CHANNEL_POLL_TIMEOUT_MS = 5 * 60_000;
 /**
@@ -38,8 +41,7 @@ export function viaForProviderId(providerId: string): HumanChannel | null {
     case 'slack':
     case 'novu-slack':
       return 'slack';
-    case 'novu-email-agent':
-    case 'novu-email':
+    case 'agent-email-inbox':
       return 'email';
     default:
       return null;
@@ -53,7 +55,7 @@ export function providerIdsForVia(via: HumanChannel): readonly string[] {
     case 'slack':
       return ['slack', 'novu-slack'];
     case 'email':
-      return ['novu-email-agent', 'novu-email'];
+      return ['agent-email-inbox'];
     default: {
       const exhaustive: never = via;
 

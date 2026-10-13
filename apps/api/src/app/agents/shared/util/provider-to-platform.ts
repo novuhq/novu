@@ -6,6 +6,7 @@ const PROVIDER_TO_PLATFORM: Partial<Record<string, AgentPlatformEnum>> = {
   [ChatProviderIdEnum.MsTeams]: AgentPlatformEnum.TEAMS,
   [ChatProviderIdEnum.WhatsAppBusiness]: AgentPlatformEnum.WHATSAPP,
   [EmailProviderIdEnum.NovuAgent]: AgentPlatformEnum.EMAIL,
+  [EmailProviderIdEnum.AgentEmailInbox]: AgentPlatformEnum.EMAIL,
   [ChatProviderIdEnum.Telegram]: AgentPlatformEnum.TELEGRAM,
   [ChatProviderIdEnum.Sendblue]: AgentPlatformEnum.SENDBLUE,
   [ChatProviderIdEnum.PhotonImessage]: AgentPlatformEnum.PHOTON_IMESSAGE,

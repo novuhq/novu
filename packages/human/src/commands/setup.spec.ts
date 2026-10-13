@@ -23,16 +23,30 @@ vi.mock('../api/setup', () => ({
   getSubscriberEmail: vi.fn(),
 }));
 
+vi.mock('../api/human', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  requestAddressVerification: vi.fn(),
+}));
+
+vi.mock('./link-channel', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  waitForVerifiedEmail: vi.fn(),
+}));
+
+vi.mock('../spinner', () => ({ startWaitIndicator: vi.fn(() => () => undefined) }));
+
 vi.mock('../qr', () => ({ renderQR: vi.fn((text: string) => `<QR ${text}>`) }));
 vi.mock('../cli-io', () => ({ info: vi.fn(), promptLine: vi.fn(), promptSecret: vi.fn() }));
 
 const api = await import('../api/setup');
-const {
-  connectSlack: connectSlackImplementation,
-  connectTelegram: connectTelegramImplementation,
-  resolveOperatorName,
-  reusableAuth,
-} = await import('./setup');
+const humanApi = await import('../api/human');
+const linkChannel = await import('./link-channel');
+const { info } = await import('../cli-io');
+const { AgentInboxProvisioningError, connectEmail } = await import('./setup/email');
+const { connectSlack: connectSlackImplementation } = await import('./setup/slack');
+const { connectTelegram: connectTelegramImplementation } = await import('./setup/telegram');
+const { resolveOperatorEmail, resolveOperatorName, reusableAuth } = await import('./setup/operator');
+const { channelLinkedBySetup } = await import('./setup');
 
 function connectTelegram(
   client: Parameters<typeof connectTelegramImplementation>[0],
@@ -438,6 +452,81 @@ describe('connectSlack', () => {
     );
   });
 });
+describe('resolveOperatorEmail', () => {
+  const io = (answers: string[]) => {
+    const prompt = vi.fn();
+    for (const answer of answers) {
+      prompt.mockResolvedValueOnce(answer);
+    }
+
+    return { isTTY: true, prompt };
+  };
+
+  it('uses --email without prompting', async () => {
+    const prompt = vi.fn();
+
+    await expect(resolveOperatorEmail({ email: 'Ada@Example.com' }, true, { isTTY: true, prompt })).resolves.toBe(
+      'ada@example.com'
+    );
+    expect(prompt).not.toHaveBeenCalled();
+  });
+
+  it('requires an address for a keyless setup', async () => {
+    await expect(resolveOperatorEmail({}, true, io(['', 'not-an-email', 'ada@example.com']))).resolves.toBe(
+      'ada@example.com'
+    );
+  });
+
+  it('lets an account skip the prompt', async () => {
+    await expect(resolveOperatorEmail({}, false, io(['']))).resolves.toBeUndefined();
+  });
+
+  it('refuses a non-interactive keyless setup that has no --email', async () => {
+    await expect(resolveOperatorEmail({}, true, { isTTY: false, prompt: vi.fn() })).rejects.toThrow('--email');
+  });
+});
+
+describe('connectEmail', () => {
+  it('verifies the operator address for a keyless setup and points at the claim link', async () => {
+    vi.mocked(api.addAgentEmailIntegration).mockResolvedValue({
+      integration: { identifier: 'email-1', providerId: 'agent-email-inbox', sharedInboundAddress: 'box@agent.test' },
+    } as never);
+    vi.mocked(humanApi.requestAddressVerification).mockResolvedValue({
+      address: 'a***@example.com',
+      requestedAt: 'req-1',
+    } as never);
+    vi.mocked(linkChannel.waitForVerifiedEmail).mockResolvedValue(undefined as never);
+
+    const identifier = await connectEmail({ isKeyless: true } as never, 'human-relay', 'sub-1', {
+      email: 'ada@example.com',
+    });
+
+    expect(identifier).toBe('email-1');
+    expect(humanApi.requestAddressVerification).toHaveBeenCalledWith(expect.anything(), {
+      subscriberId: 'sub-1',
+      agentIdentifier: 'human-relay',
+      via: 'email',
+      address: 'ada@example.com',
+    });
+    const printed = vi
+      .mocked(info)
+      .mock.calls.map((call) => String(call[0]))
+      .join('\n');
+    expect(printed).toContain('box@agent.test');
+    expect(printed).toContain('claim this setup');
+  });
+
+  it('reports inbox provisioning failures before verification starts', async () => {
+    vi.mocked(humanApi.requestAddressVerification).mockClear();
+    vi.mocked(api.addAgentEmailIntegration).mockRejectedValue(new Error('email is disabled'));
+
+    await expect(
+      connectEmail({ isKeyless: true } as never, 'human-relay', 'sub-1', { email: 'ada@example.com' })
+    ).rejects.toBeInstanceOf(AgentInboxProvisioningError);
+    expect(humanApi.requestAddressVerification).not.toHaveBeenCalled();
+  });
+});
+
 describe('resolveOperatorName', () => {
   it('uses --name without prompting', async () => {
     const prompt = vi.fn();
@@ -480,6 +569,17 @@ describe('resolveOperatorName', () => {
     await expect(resolveOperatorName({}, true, { isTTY: true, prompt })).resolves.toBeUndefined();
     await expect(resolveOperatorName({}, false, { isTTY: false, prompt })).resolves.toBeUndefined();
     expect(prompt).not.toHaveBeenCalled();
+  });
+});
+
+describe('channelLinkedBySetup', () => {
+  it('does not save keyless email as the default', () => {
+    expect(channelLinkedBySetup(undefined, true, true)).toBeUndefined();
+  });
+
+  it('saves a verified account email, and prefers chat when both were linked', () => {
+    expect(channelLinkedBySetup(undefined, true, false)).toBe('email');
+    expect(channelLinkedBySetup('telegram', true, true)).toBe('telegram');
   });
 });
 

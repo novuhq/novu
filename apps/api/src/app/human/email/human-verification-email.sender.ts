@@ -1,9 +1,10 @@
 import { BadGatewayException, Injectable, NotFoundException } from '@nestjs/common';
-import { MailFactory, PinoLogger } from '@novu/application-generic';
+import { AgentEmailInboxQuotaService, MailFactory, PinoLogger } from '@novu/application-generic';
 import { AgentRepository, SubscriberRepository } from '@novu/dal';
 import type { IEmailOptions } from '@novu/shared';
 
 import type { ResolvedAgentOutboundEmail } from '../../agents/email/resolve-agent-outbound-email';
+import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import { resolveHumanDashboardBaseUrl } from '../../shared/helpers/resolve-human-dashboard-base-url';
 import { HumanOperatorService } from '../services/human-operator.service';
 import { buildRelayOwnerName, resolveRelaySender } from '../services/relay-owner-name';
@@ -20,6 +21,7 @@ export class HumanVerificationEmailSender {
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly operatorService: HumanOperatorService,
+    private readonly inboxQuota: AgentEmailInboxQuotaService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -34,6 +36,8 @@ export class HumanVerificationEmailSender {
     token: string;
     expiresAt: string;
     outbound: ResolvedAgentOutboundEmail;
+    /** Keyless setups only: the operator can claim the setup from the same email. */
+    claimUrl?: string;
   }): Promise<void> {
     const agent = await this.agentRepository.findOne(
       {
@@ -76,6 +80,7 @@ export class HumanVerificationEmailSender {
       inviteeName,
       verifyUrl,
       expiresAt: params.expiresAt,
+      claimUrl: params.claimUrl,
     });
 
     const mailFactory = new MailFactory();
@@ -89,17 +94,30 @@ export class HumanVerificationEmailSender {
       senderName,
     };
 
-    await handler.send(mailOptions).catch((err) => {
+    // Same choke point as every other Agent Email Inbox send: the credit is
+    // consumed only once the provider accepts the message. Keyless orgs share
+    // one organization id, so they stay on the per-address verification cap.
+    const attempt = isKeylessOrganization(params.organizationId)
+      ? undefined
+      : await this.inboxQuota.beginSend(params.organizationId);
+
+    try {
+      await handler.send(mailOptions);
+      attempt?.accept();
+    } catch (err) {
+      await attempt?.release();
+
       const base = err instanceof Error ? err.message : String(err);
       const body = (err as { response?: { body?: { errors?: Array<{ message?: string }>; message?: string } } })
         ?.response?.body;
       const detail = Array.isArray(body?.errors) ? body.errors[0]?.message : body?.message;
       this.logger.warn({ err, address: params.address, agentId: params.agentId }, 'Failed to send verification email');
+
       throw new BadGatewayException({
         error: 'delivery_failed',
         message: detail ? `${base}: ${detail}` : base,
       });
-    });
+    }
   }
 }
 

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
+  AgentEmailInboxQuotaService,
   areNovuEmailCredentialsSet,
   buildAgentSharedInbox,
   CalculateLimitNovuIntegration,
@@ -10,7 +11,8 @@ import {
   PinoLogger,
 } from '@novu/application-generic';
 import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions, isAgentInboxProvider } from '@novu/shared';
+import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { captureAgentWarning } from '../shared/errors/capture-agent-sentry';
 import { toDeliveryError } from '../shared/util/delivery-error.util';
@@ -54,7 +56,8 @@ export class AgentEmailSender {
     private readonly logger: PinoLogger,
     private readonly integrationRepository: IntegrationRepository,
     private readonly calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
-    private readonly messageRepository: MessageRepository
+    private readonly messageRepository: MessageRepository,
+    private readonly inboxQuota: AgentEmailInboxQuotaService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -97,9 +100,9 @@ export class AgentEmailSender {
       );
     }
 
-    if (integration.providerId === EmailProviderIdEnum.NovuAgent) {
+    if (isAgentInboxProvider(integration.providerId)) {
       throw new BadRequestException(
-        `Integration ${outboundIntegrationId} is the inbound NovuAgent provider and cannot be used as an outbound sender`
+        `Integration ${outboundIntegrationId} is an inbound agent inbox and cannot be used as an outbound sender`
       );
     }
 
@@ -134,9 +137,11 @@ export class AgentEmailSender {
 
     const mailFactory = new MailFactory();
     const handler = mailFactory.getHandler({ ...integration, credentials: decrypted }, effectiveFrom);
-    const result = await handler
-      .send(this.buildMailOptions(params, effectiveFrom, replyToHeader, resolveAgentEmailSenderName(config)))
-      .catch(toDeliveryError);
+    const result = await this.accountInboxSend(config, () =>
+      handler
+        .send(this.buildMailOptions(params, effectiveFrom, replyToHeader, resolveAgentEmailSenderName(config)))
+        .catch(toDeliveryError)
+    );
 
     return { messageId: result?.id || params.messageId || '' };
   }
@@ -315,7 +320,7 @@ export class AgentEmailSender {
       },
     };
 
-    const result = await handler.send(mailOptions).catch(toDeliveryError);
+    const result = await this.accountInboxSend(config, () => handler.send(mailOptions).catch(toDeliveryError));
 
     const messageIdForReturn = result?.id || params.messageId || '';
 
@@ -349,5 +354,30 @@ export class AgentEmailSender {
     }
 
     return { messageId: messageIdForReturn };
+  }
+
+  /**
+   * Agent Email Inbox credits are counted only when the outbound provider
+   * accepts the message. Dashboard Novu Email sends do not enter this path.
+   * Keyless orgs share one organization id, so the org-wide counters would
+   * pool every demo together — the claim reply is metered on its own.
+   */
+  private async accountInboxSend<T>(config: ResolvedAgentConfig, send: () => Promise<T>): Promise<T> {
+    if (config.providerId !== EmailProviderIdEnum.AgentEmailInbox || isKeylessOrganization(config.organizationId)) {
+      return send();
+    }
+
+    const attempt = await this.inboxQuota.beginSend(config.organizationId);
+
+    try {
+      const result = await send();
+      attempt.accept();
+
+      return result;
+    } catch (err) {
+      await attempt.release();
+
+      throw err;
+    }
   }
 }

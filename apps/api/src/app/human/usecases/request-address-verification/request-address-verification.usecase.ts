@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { AgentEmailInboxQuotaService, InstrumentUsecase } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -7,9 +7,10 @@ import {
   HumanContactRepository,
   IntegrationRepository,
 } from '@novu/dal';
-import { HumanChannelViaEnum } from '@novu/shared';
+import { EmailProviderIdEnum, HumanChannelViaEnum } from '@novu/shared';
 import { resolveAgentOutboundEmail } from '../../../agents/email/resolve-agent-outbound-email';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../../agents/shared/util/email-normalization';
+import { KeylessEmailGateService } from '../../../keyless/keyless-email-gate.service';
 import { HumanVerificationEmailSender } from '../../email/human-verification-email.sender';
 import { HumanVerificationRateLimitService } from '../../services/human-verification-rate-limit.service';
 import {
@@ -46,7 +47,9 @@ export class RequestAddressVerification {
     private readonly humanContactRepository: HumanContactRepository,
     private readonly rateLimit: HumanVerificationRateLimitService,
     private readonly verificationTokens: HumanVerificationTokenService,
-    private readonly emailSender: HumanVerificationEmailSender
+    private readonly emailSender: HumanVerificationEmailSender,
+    private readonly inboxQuota: AgentEmailInboxQuotaService,
+    private readonly keylessEmailGate: KeylessEmailGateService
   ) {}
 
   @InstrumentUsecase()
@@ -87,6 +90,14 @@ export class RequestAddressVerification {
     via: HumanChannelViaEnum;
     address: string;
   }): Promise<RequestAddressVerificationResult> {
+    const { claimUrl } = await this.keylessEmailGate.assertOperatorVerificationAllowed({
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentId: params.agentId,
+      subscriberId: params.subscriberId,
+      address: params.address,
+    });
+
     const agent = await this.agentRepository.findOne(
       {
         _id: params.agentId,
@@ -106,6 +117,7 @@ export class RequestAddressVerification {
         organizationId: params.organizationId,
         agentId: agent._id,
         agentName: agent.name,
+        providerId: EmailProviderIdEnum.AgentEmailInbox,
         integrationRepository: this.integrationRepository,
         agentIntegrationRepository: this.agentIntegrationRepository,
       });
@@ -117,18 +129,20 @@ export class RequestAddressVerification {
       throw err;
     }
 
-    const verified = await this.humanContactRepository.findVerifiedAddress(
-      params.environmentId,
-      params.agentId,
-      params.subscriberId,
-      params.via
-    );
-    const previousPending = await this.humanContactRepository.findPendingAddress(
-      params.environmentId,
-      params.agentId,
-      params.subscriberId,
-      params.via
-    );
+    const [verified, previousPending] = await Promise.all([
+      this.humanContactRepository.findVerifiedAddress(
+        params.environmentId,
+        params.agentId,
+        params.subscriberId,
+        params.via
+      ),
+      this.humanContactRepository.findPendingAddress(
+        params.environmentId,
+        params.agentId,
+        params.subscriberId,
+        params.via
+      ),
+    ]);
 
     const { retryAfterSeconds, reservation } = await this.rateLimit.assertAndRecord({
       environmentId: params.environmentId,
@@ -139,48 +153,60 @@ export class RequestAddressVerification {
 
     let written: HumanContactPendingAddress | undefined;
     try {
-      written = await this.humanContactRepository.upsertPendingAddress({
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-        agentId: params.agentId,
-        subscriberId: params.subscriberId,
-        via: params.via,
-        address: params.address,
-      });
-
-      let issued: { token: string; expiresAt: string };
-      try {
-        issued = await this.verificationTokens.issue({
-          env: params.environmentId,
-          org: params.organizationId,
+      // The credit is spent by the sender, not here: an unsent mail releases it.
+      // Keyless environments share one organization id, so this org-wide counter
+      // would pool every demo. Their own per-address cooldown and daily cap remain.
+      const send = async (): Promise<RequestAddressVerificationResult> => {
+        written = await this.humanContactRepository.upsertPendingAddress({
+          environmentId: params.environmentId,
+          organizationId: params.organizationId,
           agentId: params.agentId,
           subscriberId: params.subscriberId,
           via: params.via,
           address: params.address,
-          requestedAt: written.requestedAt,
         });
-      } catch (err) {
-        throw toVerificationHttpError(err);
+
+        let issued: { token: string; expiresAt: string };
+        try {
+          issued = await this.verificationTokens.issue({
+            env: params.environmentId,
+            org: params.organizationId,
+            agentId: params.agentId,
+            subscriberId: params.subscriberId,
+            via: params.via,
+            address: params.address,
+            requestedAt: written.requestedAt,
+          });
+        } catch (err) {
+          throw toVerificationHttpError(err);
+        }
+
+        await this.emailSender.send({
+          environmentId: params.environmentId,
+          organizationId: params.organizationId,
+          agentId: params.agentId,
+          subscriberId: params.subscriberId,
+          address: params.address,
+          token: issued.token,
+          expiresAt: issued.expiresAt,
+          outbound,
+          claimUrl,
+        });
+
+        return {
+          address: maskEmail(params.address),
+          requestedAt: written.requestedAt,
+          expiresAt: issued.expiresAt,
+          retryAfterSeconds,
+          replacesVerifiedAddress: Boolean(verified && verified.address !== params.address),
+        };
+      };
+
+      if (this.keylessEmailGate.isBlocked(params.organizationId)) {
+        return await send();
       }
 
-      await this.emailSender.send({
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-        agentId: params.agentId,
-        subscriberId: params.subscriberId,
-        address: params.address,
-        token: issued.token,
-        expiresAt: issued.expiresAt,
-        outbound,
-      });
-
-      return {
-        address: maskEmail(params.address),
-        requestedAt: written.requestedAt,
-        expiresAt: issued.expiresAt,
-        retryAfterSeconds,
-        replacesVerifiedAddress: Boolean(verified && verified.address !== params.address),
-      };
+      return await this.inboxQuota.withCredits(params.organizationId, 1, send);
     } catch (err) {
       await this.compensateFailedSend({ ...params, reservation }, written, previousPending);
 

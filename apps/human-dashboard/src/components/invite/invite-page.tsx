@@ -313,11 +313,17 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
             <ChannelRow
               key={channel.via}
               channel={channel}
-              description={channelDescription(channel, telegramBot)}
+              description={
+                !channel.available ? 'Not available on this setup yet' : channelDescription(channel, telegramBot)
+              }
               connecting={connectingVia === channel.via}
               settingDefault={defaultingVia === channel.via}
-              disabled={busy}
+              disabled={busy || !channel.available}
               onConnect={() => {
+                if (!channel.available) {
+                  return;
+                }
+
                 // Telegram needs its link before there is anything to show; Slack mints its
                 // link on the next card, inside the click that opens the tab.
                 if (channel.via === 'telegram') {

@@ -68,12 +68,13 @@ export class GetHumanInviteStatus {
       ...(inviterName ? { inviterName } : {}),
       inviteeName: displayName || payload.subscriberId,
       expiresAt: invite.expiresAt,
-      channels: channels.map(({ via, connected, isDefault, status, address }) => ({
+      channels: channels.map(({ via, connected, isDefault, status, address, available }) => ({
         via,
         connected,
         isDefault,
         status,
         ...(address ? { address } : {}),
+        ...(available === false ? { available: false } : {}),
       })),
     };
   }

@@ -1,5 +1,13 @@
-import { BadGatewayException, BadRequestException, HttpException, NotFoundException } from '@nestjs/common';
-import { HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
+import {
+  BadGatewayException,
+  BadRequestException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  NotFoundException,
+} from '@nestjs/common';
+import { AgentEmailInboxQuotaExceededException } from '@novu/application-generic';
+import { HumanChannelViaEnum, HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { HumanKeylessCapService } from '../../services/human-keyless-cap.service';
@@ -46,6 +54,14 @@ describe('CreateInteraction', () => {
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
     const activityRecorder = { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() };
+    const credits = {
+      run: sinon.stub().callsFake((fn: () => Promise<unknown>) => fn()),
+      release: sinon.stub().resolves(),
+    };
+    const inboxQuota = {
+      reserveCredits: sinon.stub().resolves(credits),
+      credits,
+    };
     const conversation = {
       _id: 'conv1',
       _agentId: 'agent-relay',
@@ -75,6 +91,7 @@ describe('CreateInteraction', () => {
     const createConversationInteraction = {
       execute: sinon.stub().resolves({ ...created, _conversationId: 'conv1', subscriberIds: ['sub-1', 'sub-2'] }),
     };
+    const keylessEmailGate = { assertAllowed: sinon.stub().resolves() };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
@@ -82,6 +99,7 @@ describe('CreateInteraction', () => {
       connectClaimTokenService as any,
       logger as any,
       activityRecorder as any,
+      inboxQuota as any,
       new HumanKeylessCapService(
         humanInteractionRepository as any,
         deliveryService as any,
@@ -90,7 +108,8 @@ describe('CreateInteraction', () => {
       ),
       inbox as any,
       conversationService as any,
-      createConversationInteraction as any
+      createConversationInteraction as any,
+      keylessEmailGate as any
     );
     const command = {
       userId: 'user1',
@@ -110,9 +129,11 @@ describe('CreateInteraction', () => {
       deliveryService,
       humanInteractionRepository,
       connectClaimTokenService,
+      inboxQuota,
       inbox,
       conversationService,
       createConversationInteraction,
+      keylessEmailGate,
     };
   }
 
@@ -186,6 +207,26 @@ describe('CreateInteraction', () => {
       expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(false);
       expect(inbox.findStrangers.called).to.equal(false);
       expect(result.threads).to.deep.equal([{ id: 'conv_abc', unreadBefore: 1 }]);
+    });
+
+    it('refuses a keyless reply into an email thread before it is sent', async () => {
+      const { usecase, command, agentRepository, inbox, createConversationInteraction, keylessEmailGate, inboxQuota } =
+        setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      inbox.primaryChannel.returns({ platform: 'email', platformThreadId: 'email:ada@example.com' });
+      keylessEmailGate.assertAllowed.rejects(
+        new ForbiddenException({ code: 'KEYLESS_EMAIL_REQUIRES_ACCOUNT', message: 'Outbound email needs an account.' })
+      );
+
+      try {
+        await usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any);
+        expect.fail('expected ForbiddenException');
+      } catch (err) {
+        expect(err).to.be.instanceOf(ForbiddenException);
+      }
+
+      expect(createConversationInteraction.execute.called).to.equal(false);
+      expect(inboxQuota.reserveCredits.called).to.equal(false);
     });
 
     it('lets anyone in the thread answer when asked to', async () => {
@@ -492,6 +533,28 @@ describe('CreateInteraction', () => {
     expect(humanInteractionRepository.create.called).to.equal(false);
   });
 
+  it('surfaces a keyless email refusal before reserving a send', async () => {
+    const { usecase, command, agentRepository, deliveryService, humanInteractionRepository, inboxQuota } = setup();
+    agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+    deliveryService.resolveChannel.rejects(
+      new ForbiddenException({
+        code: 'KEYLESS_EMAIL_REQUIRES_ACCOUNT',
+        message: 'Outbound email needs a Human account.',
+      })
+    );
+
+    try {
+      await usecase.execute(command);
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(ForbiddenException);
+      expect((err as ForbiddenException).getResponse()).to.include({ code: 'KEYLESS_EMAIL_REQUIRES_ACCOUNT' });
+    }
+
+    expect(inboxQuota.reserveCredits.called).to.equal(false);
+    expect(humanInteractionRepository.create.called).to.equal(false);
+  });
+
   it('keeps the row, stamps successful deliveries, and returns failedTo when some fan-out sends fail', async () => {
     const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository } = setup();
     agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
@@ -713,5 +776,51 @@ describe('CreateInteraction', () => {
       expect(humanInteractionRepository.create.calledOnce).to.equal(true);
       expect(connectClaimTokenService.isEnvironmentClaimed.called).to.equal(false);
     });
+  });
+
+  it('rejects an email-only interaction with 429 and does not create it when the inbox cap is exhausted', async () => {
+    const { usecase, command, agentRepository, deliveryService, humanInteractionRepository, inboxQuota } = setup();
+    agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+    deliveryService.resolveChannel.resolves({
+      integrationIdentifier: 'inbox',
+      platform: HumanChannelViaEnum.EMAIL,
+      platformUserId: 'ada@example.com',
+    });
+    inboxQuota.reserveCredits.rejects(
+      new AgentEmailInboxQuotaExceededException('daily', 50, 3600, '2026-10-12T00:00:00.000Z')
+    );
+
+    const thrown = (await usecase.execute(command as any).catch((error) => error)) as HttpException;
+
+    expect(thrown.getStatus()).to.equal(HttpStatus.TOO_MANY_REQUESTS);
+    expect(humanInteractionRepository.create.called).to.equal(false);
+    expect(deliveryService.deliver.called).to.equal(false);
+  });
+
+  it('still delivers Telegram when the email slice of a fan-out is over the cap', async () => {
+    const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository, inboxQuota } =
+      setup();
+    agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+    deliveryService.resolveChannel.onFirstCall().resolves({
+      integrationIdentifier: 'inbox',
+      platform: HumanChannelViaEnum.EMAIL,
+      platformUserId: 'ada@example.com',
+    });
+    deliveryService.resolveChannel.onSecondCall().resolves({
+      integrationIdentifier: 'telegram-main',
+      platform: 'telegram',
+      platformUserId: '777',
+    });
+    humanInteractionRepository.create.resolves({ ...created, subscriberIds: ['sub-1', 'sub-2'] });
+    inboxQuota.reserveCredits.rejects(
+      new AgentEmailInboxQuotaExceededException('monthly', 300, 86400, '2026-11-01T00:00:00.000Z')
+    );
+
+    const result = await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any);
+
+    expect(deliveryService.deliver.calledOnce).to.equal(true);
+    expect(deliveryService.deliver.firstCall.args[1].platform).to.equal('telegram');
+    expect(result.failedTo).to.deep.equal(['sub-1']);
+    expect(result.to).to.deep.equal(['sub-2']);
   });
 });

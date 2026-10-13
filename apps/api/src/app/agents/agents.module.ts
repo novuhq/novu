@@ -236,6 +236,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     HumanInteractionSettlementService,
     SyncAgentEmailSenderName,
     HumanInteractionActivityRecorder,
+    NovuEmailProvisioningService,
     AgentConversationService,
     CreateConversationInteraction,
   ],

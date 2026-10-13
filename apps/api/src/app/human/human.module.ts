@@ -19,6 +19,7 @@ import { ConnectModule } from '../connect/connect.module';
 import { GenerateUniqueApiKey } from '../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { RegenerateApiKeys } from '../environments-v1/usecases/regenerate-api-keys/regenerate-api-keys.usecase';
 import { IntegrationModule } from '../integrations/integrations.module';
+import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
 import { RemoveSubscriber } from '../subscribers-v2/usecases/remove-subscriber/remove-subscriber.usecase';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
@@ -82,6 +83,7 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     AgentsModule,
     CliAuthModule,
     ConnectModule,
+    KeylessModule,
     TelegramLinkingModule,
     forwardRef(() => IntegrationModule),
   ],

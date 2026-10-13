@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AgentIntegrationRepository, IntegrationRepository } from '@novu/dal';
-import { EmailProviderIdEnum } from '@novu/shared';
+import { AGENT_INBOX_PROVIDER_IDS } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
 
 /**
@@ -39,7 +39,7 @@ export class SyncAgentEmailSenderName {
         _id: { $in: integrationIds },
         _environmentId: agent.environmentId,
         _organizationId: agent.organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
+        providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
       },
       { $set: { 'credentials.senderName': senderName } },
       session ? { session } : {}

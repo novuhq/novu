@@ -3,8 +3,9 @@
 **An inbox for your agent.** Agents are connected to everything — except the humans they work for. `human` gives any agent an inbox on Telegram, Slack and email: people write to it, and it can ask a real person a question and block until they answer.
 
 ```bash
-# One-time, by the human (interactive picker, or name the channel):
+# One-time, by the human. Asks for your name and email, creates the inbox, then offers Telegram or Slack:
 npx @novu/human setup
+# Also link a chat channel, or verify email on an account:
 npx @novu/human setup telegram
 npx @novu/human setup slack
 npx @novu/human setup email
