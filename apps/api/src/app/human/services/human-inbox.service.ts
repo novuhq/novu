@@ -92,6 +92,9 @@ const MAX_CONTACT_FILTER_SCANS = 5;
  */
 const INBOX_SCAN_LIMIT = 500;
 
+/** Threads read for the counts or a search, newest first, and whether older ones were left out. */
+type InboxScan = { conversations: ConversationEntity[]; capped: boolean };
+
 const PREVIEW_MAX_LENGTH = 200;
 
 /** The channels the inbox page always offers, also while no thread is on them. */
@@ -269,26 +272,24 @@ export class HumanInboxService {
   ): Promise<{ data: InboxThreadDto[]; next: string | null }> {
     const threads: InboxThreadDto[] = [];
     let after = filters.after;
-    const conversationIds = filters.search ? (await this.searchThreadIds(scope, agent, filters.search)).ids : undefined;
-
-    if (conversationIds?.length === 0) {
-      return { data: [], next: null };
-    }
+    // A search has already loaded the threads it found, so its pages are cut from those.
+    const found = filters.search ? (await this.searchThreads(scope, agent, filters.search)).conversations : undefined;
 
     for (let scan = 0; scan < MAX_CONTACT_FILTER_SCANS; scan += 1) {
-      const page = await this.conversationRepository.findInboxThreads({
-        ...scope,
-        agentId: agent._id,
-        // The query tells read from unread by time alone, so a thread whose only new message was
-        // deleted looks unread to it. It narrows `unread` to candidates; the count below decides, and
-        // decides alone for `read`, so every thread is in exactly one of the two.
-        read: filters.read === 'unread' ? 'unread' : undefined,
-        status: filters.status,
-        channel: filters.channel,
-        conversationIds,
-        limit: filters.limit,
-        after,
-      });
+      const page = found
+        ? pageOf(found, { status: filters.status, channel: filters.channel, limit: filters.limit, after })
+        : await this.conversationRepository.findInboxThreads({
+            ...scope,
+            agentId: agent._id,
+            // The query tells read from unread by time alone, so a thread whose only new message was
+            // deleted looks unread to it. It narrows `unread` to candidates; the count below decides, and
+            // decides alone for `read`, so every thread is in exactly one of the two.
+            read: filters.read === 'unread' ? 'unread' : undefined,
+            status: filters.status,
+            channel: filters.channel,
+            limit: filters.limit,
+            after,
+          });
       const pageThreads = await this.toThreads(scope, page.data);
       const matching = pageThreads.filter(
         (thread) =>
@@ -334,25 +335,15 @@ export class HumanInboxService {
     }
 
     // A search only looks at the newest threads, so its counts are a lower bound once there are more.
-    const search = filters.search ? await this.searchThreadIds(scope, agent, filters.search) : undefined;
-    const conversationIds = search?.ids;
-
-    if (conversationIds?.length === 0) {
-      return { tabs, channels, capped: search?.capped ?? false };
-    }
-
-    const page = await this.conversationRepository.findInboxThreads({
-      ...scope,
-      agentId: agent._id,
-      conversationIds,
-      limit: INBOX_SCAN_LIMIT,
-    });
+    const { conversations, capped } = filters.search
+      ? await this.searchThreads(scope, agent, filters.search)
+      : await this.newestThreads(scope, agent);
     const [standings, people] = await Promise.all([
-      this.resolveStandings(scope, page.data),
-      this.loadPeople(scope, [...new Set(page.data.flatMap(subscriberIdsOf))]),
+      this.resolveStandings(scope, conversations),
+      this.loadPeople(scope, [...new Set(conversations.flatMap(subscriberIdsOf))]),
     ]);
 
-    for (const conversation of page.data) {
+    for (const conversation of conversations) {
       if (filters.senders === 'contacts' && !hasContact(conversation, people)) {
         continue;
       }
@@ -372,7 +363,7 @@ export class HumanInboxService {
       }
     }
 
-    return { tabs, channels, capped: page.next !== null || (search?.capped ?? false) };
+    return { tabs, channels, capped };
   }
 
   async toThreads(scope: InboxScope, conversations: ConversationEntity[]): Promise<InboxThreadDto[]> {
@@ -530,21 +521,23 @@ export class HumanInboxService {
     );
   }
 
-  /**
-   * The threads, out of the newest `INBOX_SCAN_LIMIT`, whose subject, people or messages contain
-   * `text`. Returned as conversation `_id`s for the list query. `capped` tells that older threads
-   * were not looked at.
-   */
-  private async searchThreadIds(
-    scope: InboxScope,
-    agent: InboxRelayAgent,
-    text: string
-  ): Promise<{ ids: string[]; capped: boolean }> {
-    const { data: conversations, next } = await this.conversationRepository.findInboxThreads({
+  /** The newest `INBOX_SCAN_LIMIT` threads, newest first. `capped` tells that there are older ones. */
+  private async newestThreads(scope: InboxScope, agent: InboxRelayAgent): Promise<InboxScan> {
+    const { data, next } = await this.conversationRepository.findInboxThreads({
       ...scope,
       agentId: agent._id,
       limit: INBOX_SCAN_LIMIT,
     });
+
+    return { conversations: data, capped: next !== null };
+  }
+
+  /**
+   * The threads, out of the newest `INBOX_SCAN_LIMIT`, whose subject, people or messages contain
+   * `text`, newest first. `capped` tells that older threads were not looked at.
+   */
+  private async searchThreads(scope: InboxScope, agent: InboxRelayAgent, text: string): Promise<InboxScan> {
+    const { conversations, capped } = await this.newestThreads(scope, agent);
     const [people, withText] = await Promise.all([
       this.loadPeople(scope, [...new Set(conversations.flatMap(subscriberIdsOf))]),
       this.activityRepository.findConversationIdsWithText({
@@ -554,15 +547,16 @@ export class HumanInboxService {
       }),
     ]);
     const needle = text.toLowerCase();
-    const byHeader = conversations
-      .filter((conversation) =>
+    const idsWithText = new Set(withText);
+    const found = conversations.filter(
+      (conversation) =>
+        idsWithText.has(conversation._id) ||
         [conversation.title, fromLabel(peopleOf(conversation, people))].some((value) =>
           value?.toLowerCase().includes(needle)
         )
-      )
-      .map((conversation) => conversation._id);
+    );
 
-    return { ids: [...new Set([...byHeader, ...withText])], capped: next !== null };
+    return { conversations: found, capped };
   }
 
   /**
@@ -730,6 +724,32 @@ function peopleOf(conversation: ConversationEntity, people: InboxPeople): InboxP
 
 function hasContact(conversation: ConversationEntity, people: InboxPeople): boolean {
   return subscriberIdsOf(conversation).some((subscriberId) => people.get(subscriberId)?.kind === 'contact');
+}
+
+/**
+ * One page out of threads that are already loaded, newest first: what `findInboxThreads` does in the
+ * database. `after` is the identifier of the last thread of the previous page.
+ */
+function pageOf(
+  conversations: ConversationEntity[],
+  params: { status?: ConversationStatusEnum; channel?: string; limit: number; after?: string }
+): { data: ConversationEntity[]; next: string | null } {
+  const cursorAt = params.after ? conversations.findIndex(({ identifier }) => identifier === params.after) : -1;
+
+  if (params.after && cursorAt === -1) {
+    return { data: [], next: null };
+  }
+
+  const rest = conversations
+    .slice(cursorAt + 1)
+    .filter(
+      (conversation) =>
+        (!params.status || conversation.status === params.status) &&
+        (!params.channel || channelOf(conversation) === params.channel)
+    );
+  const data = rest.slice(0, params.limit);
+
+  return { data, next: rest.length > params.limit ? (data[data.length - 1]?.identifier ?? null) : null };
 }
 
 function channelOf(conversation: ConversationEntity): string {

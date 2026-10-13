@@ -586,6 +586,36 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
       expect(counts.channels).to.include({ all: 1, telegram: 1, slack: 0 });
     });
 
+    it('pages through what a search found, within the chosen channel', async () => {
+      await sendMessageToRelay('Where is my invoice?');
+      const telegramThreadId = await soleThreadId();
+      const slackThreadIds = [
+        (await seedSlackThread('Invoice one')).identifier,
+        (await seedSlackThread('Invoice two')).identifier,
+        (await seedSlackThread('Invoice three')).identifier,
+      ];
+      await seedSlackThread('Lunch plans');
+
+      const firstPage = await listInbox({ search: 'invoice', limit: 2 });
+      expect(firstPage.data).to.have.length(2);
+      expect(firstPage.next).to.equal(firstPage.data[1].id);
+
+      const secondPage = await listInbox({ search: 'invoice', limit: 2, after: firstPage.next });
+      expect(secondPage.next).to.equal(null);
+      expect([...firstPage.data, ...secondPage.data].map((thread) => thread.id)).to.have.members([
+        telegramThreadId,
+        ...slackThreadIds,
+      ]);
+
+      const onSlack = await listInbox({ search: 'invoice', channel: 'slack', limit: 2 });
+      const restOnSlack = await listInbox({ search: 'invoice', channel: 'slack', limit: 2, after: onSlack.next });
+      expect([...onSlack.data, ...restOnSlack.data].map((thread) => thread.id)).to.have.members(slackThreadIds);
+      expect(restOnSlack.next).to.equal(null);
+
+      expect((await listInbox({ search: 'invoice', tab: 'resolved' })).data).to.deep.equal([]);
+      expect((await listInbox({ search: 'invoice', after: 'conv_not_a_thread' })).data).to.deep.equal([]);
+    });
+
     it('goes by what a thread shows now: edits, deletes, card subtitles and posted cards', async () => {
       // The first message names the thread, so the one that gets edited comes second.
       await sendMessageToRelay('Morning');
