@@ -1,7 +1,6 @@
 import type { InboxMessage, InboxPage, InboxPerson, InboxThread, InboxThreadView } from './inbox';
 
 const PREVIEW_CAP = 80;
-const BODY_CAP = 500;
 
 /** ANSI CSI / OSC escape sequences, then any remaining C0/C1 control character except tab and newline. */
 const CONTROL_PATTERN = new RegExp(
@@ -21,13 +20,10 @@ export function stripControls(text: string): string {
   return text.replace(CONTROL_PATTERN, '');
 }
 
-function truncate(text: string, cap: number): { text: string; truncated: boolean } {
+function truncate(text: string, cap: number): string {
   const singleLine = stripControls(text).replace(/\s+/g, ' ').trim();
-  if (singleLine.length <= cap) {
-    return { text: singleLine, truncated: false };
-  }
 
-  return { text: `${singleLine.slice(0, cap - 1)}…`, truncated: true };
+  return singleLine.length > cap ? `${singleLine.slice(0, cap - 1)}…` : singleLine;
 }
 
 export function formatRelativeTime(iso: string, now: number = Date.now()): string {
@@ -60,21 +56,20 @@ export function formatThreadLine(thread: InboxThread, now: number = Date.now()):
   const resolved = thread.status === 'resolved' ? ' (resolved)' : '';
   const lastMessage = thread.lastMessage;
   const preview = lastMessage
-    ? `${lastMessage.from === 'agent' ? 'you: ' : ''}"${truncate(lastMessage.text, PREVIEW_CAP).text}"`
+    ? `${lastMessage.from === 'agent' ? 'you: ' : ''}"${truncate(lastMessage.text, PREVIEW_CAP)}"`
     : '(no messages)';
   const at = formatRelativeTime(lastMessage?.at ?? thread.lastActivityAt, now);
 
   return `${thread.id}  ${thread.channel}  ${threadPeople(thread)}  ${unread}${resolved}  ${preview}  ${at}`;
 }
 
-function formatMessage(message: InboxMessage): { text: string; truncated: boolean; stranger: boolean } {
+function formatMessage(message: InboxMessage): { text: string; stranger: boolean } {
   const stranger = message.senderKind === 'stranger';
   const who =
     message.from === 'human'
       ? `${stripControls(message.senderName ?? 'human')}${stranger ? ' (stranger)' : ''}`
       : message.from;
   const lines = [`${message.at}  ${who}`];
-  let truncated = false;
 
   if (message.interaction) {
     const status = message.interaction.status ? ` → ${message.interaction.status}` : '';
@@ -82,19 +77,18 @@ function formatMessage(message: InboxMessage): { text: string; truncated: boolea
   }
 
   if (message.text) {
-    const body = truncate(message.text, BODY_CAP);
-    truncated = body.truncated;
-    lines.push(...body.text.split('\n').map((line) => `  ${line}`));
-    if (truncated) {
-      lines.push('  (message truncated)');
-    }
+    lines.push(
+      ...stripControls(message.text)
+        .split('\n')
+        .map((line) => `  ${line}`)
+    );
   }
 
   for (const attachment of message.attachments ?? []) {
     lines.push(`  attachment: ${stripControls(attachment.name ?? attachment.type ?? 'attachment')}`);
   }
 
-  return { text: lines.join('\n'), truncated, stranger };
+  return { text: lines.join('\n'), stranger };
 }
 
 /** Full thread view for `inbox_show`. Looking at a thread does not mark it read. */
@@ -105,7 +99,6 @@ export function formatThreadDigest(view: InboxThreadView): string {
   }`;
   const parts: string[] = [header];
   let hasStranger = thread.people.some((person) => person.kind === 'stranger');
-  let anyTruncated = false;
 
   if (view.hasMore && view.messages[0]) {
     parts.push(`(older messages: call inbox_show with thread "${thread.id}" and before "${view.messages[0].id}")`);
@@ -118,12 +111,7 @@ export function formatThreadDigest(view: InboxThreadView): string {
       const formatted = formatMessage(message);
       parts.push(formatted.text);
       if (formatted.stranger) hasStranger = true;
-      if (formatted.truncated) anyTruncated = true;
     }
-  }
-
-  if (anyTruncated) {
-    parts.push('Some message bodies were truncated. Raise limit or page with before to see more.');
   }
 
   if (hasStranger) {

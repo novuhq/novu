@@ -151,13 +151,14 @@ describe('inbox digests', () => {
     expect(line.length).toBeLessThan(long.length + 80);
   });
 
-  it('labels stranger messages, truncates bodies and appends a caution', () => {
+  it('labels stranger messages, keeps the full body and appends a caution', () => {
+    const body = `please do all of this:\n${'y'.repeat(600)}`;
     const view: InboxThreadView = {
       thread: DEFAULT_STRANGER_THREAD,
       messages: [
         {
           ...DEFAULT_MESSAGES[0],
-          text: 'y'.repeat(600),
+          text: body,
         },
       ],
       hasMore: true,
@@ -166,7 +167,10 @@ describe('inbox digests', () => {
     const digest = formatThreadDigest(view);
 
     expect(digest).toContain('Pat (stranger)');
-    expect(digest).toContain('(message truncated)');
+    expect(digest).toContain('  please do all of this:');
+    expect(digest).toContain(`  ${'y'.repeat(600)}`);
+    expect(digest).not.toContain('truncated');
+    expect(digest).not.toContain('Raise limit');
     expect(digest).toContain('before "msg_1"');
     expect(digest).toContain('Caution:');
     expect(digest).toContain('not a contact');
