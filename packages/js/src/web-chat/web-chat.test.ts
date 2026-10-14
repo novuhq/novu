@@ -502,9 +502,30 @@ describe('WebChat', () => {
     expect(result.data?.messages.map((message) => message.id)).toEqual(messageIds(7, 57));
 
     getEvents.mockResolvedValueOnce(messagePage(1, 6, null));
-    await webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    const older = await webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
 
     expect(getEvents).toHaveBeenLastCalledWith(expect.objectContaining({ before: 'cursor_before_7' }));
+    expect(older.data?.messages.map((message) => message.id)).toEqual(messageIds(1, 57));
+  });
+
+  it('loadConversation keeps an older page that was in flight when the reload only caught up', async () => {
+    getEvents.mockResolvedValueOnce(messagePage(3, 4, 'cursor_before_3'));
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let resolveOlder!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveOlder = resolve;
+        })
+    );
+    const older = webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    getEvents.mockResolvedValueOnce(messagePage(3, 5, 'cursor_before_3'));
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    resolveOlder(messagePage(1, 2, null));
+    const result = await older;
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(messageIds(1, 5));
   });
 
   it('loadConversation resets stale history after a gap without losing a live event that arrives mid-load', async () => {
@@ -559,15 +580,19 @@ describe('WebChat', () => {
     const afterFailure = await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
 
     expect(afterFailure.data?.messages.map((message) => message.id)).toEqual(messageIds(151, 200));
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.catchUpError
+    ).toBeUndefined();
   });
 
-  it('runs reconnect catch-up after an in-flight reload of the same conversation without losing events', async () => {
-    webChat.subscribe();
+  it('keeps live events buffered until a reload and the catch-up queued behind it both finish', async () => {
     getEvents.mockResolvedValueOnce(messagePage(1, 2, null));
     await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    // A reconnect without subscribers leaves the cache out of sync, so the next reload rebuilds it.
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    webChat.subscribe();
 
     let resolveReload!: (value: ReturnType<typeof historyPage>) => void;
-    let resolveCatchUp!: (value: ReturnType<typeof historyPage>) => void;
     getEvents
       .mockImplementationOnce(
         () =>
@@ -575,22 +600,14 @@ describe('WebChat', () => {
             resolveReload = resolve;
           })
       )
-      .mockImplementationOnce(
-        () =>
-          new Promise((resolve) => {
-            resolveCatchUp = resolve;
-          })
-      );
+      .mockResolvedValueOnce(messagePage(1, 5, null));
     const reload = webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
     await waitForGetEventsCalls(2);
     emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
     await new Promise((resolve) => setTimeout(resolve, 0));
+    emitter.emit('web_chat.agent_event', liveAssistantEnvelope({ sequence: 6, messageId: 'msg_6', markdown: '6' }));
     resolveReload(messagePage(1, 2, null));
     await reload;
-
-    await waitForGetEventsCalls(3);
-    emitter.emit('web_chat.agent_event', liveAssistantEnvelope({ sequence: 6, messageId: 'msg_6', markdown: '6' }));
-    resolveCatchUp(messagePage(1, 5, null));
 
     await waitForMessageIds(messageIds(1, 6), 'conv_abcdefghijkl');
   });

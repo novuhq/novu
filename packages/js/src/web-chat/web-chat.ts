@@ -55,12 +55,18 @@ function sortBySequence(envelopes: AgentEventEnvelope[]): AgentEventEnvelope[] {
   return [...envelopes].sort((left, right) => left.sequence - right.sequence);
 }
 
-/** True when a page sorted oldest first starts at or before `knownThrough`, so no event between them is missing. */
-function pageReachesSequence(sortedEnvelopes: AgentEventEnvelope[], knownThrough: number): boolean {
-  const oldestInPage = sortedEnvelopes[0]?.sequence;
-
-  return knownThrough > 0 && oldestInPage !== undefined && oldestInPage <= knownThrough;
+/** True when the page starts at or before `knownThrough`, so no event between them is missing. */
+function pageReachesSequence(envelopes: AgentEventEnvelope[], knownThrough: number): boolean {
+  return knownThrough > 0 && envelopes.some((envelope) => envelope.sequence <= knownThrough);
 }
+
+/** Syncs of one conversation (history reloads and reconnect catch-ups) that are queued or running. */
+type ConversationSyncQueue = {
+  tail: Promise<void>;
+  pending: number;
+  /** Live envelopes held back until the last queued sync finishes. */
+  liveBuffer: AgentEventEnvelope[];
+};
 
 /**
  * Headless Web Chat client. Load it with `await novu.loadWebChat()` or `loadWebChat(novu)`,
@@ -72,14 +78,8 @@ export class WebChat extends BaseModule {
   #socket: Pick<BaseSocketInterface, 'connect'>;
   #liveSubscriberCount = 0;
   #runtimes = new Map<string, AgentConversationRuntime>();
-  /**
-   * Per-conversation live envelope buffers while reconnect catch-up or a history reload is in flight.
-   * Map key means a sync is in flight; only those conversations buffer live envelopes.
-   */
-  #catchUpBuffers = new Map<string, AgentEventEnvelope[]>();
-  #catchUpChain: Promise<void> = Promise.resolve();
-  /** Tail of each conversation's sync queue. Two syncs of one conversation would share its buffer. */
-  #syncLocks = new Map<string, Promise<void>>();
+  /** Map key means a sync of that conversation is queued or running, so its live envelopes are buffered. */
+  #syncQueues = new Map<string, ConversationSyncQueue>();
 
   constructor({
     inboxServiceInstance,
@@ -134,7 +134,7 @@ export class WebChat extends BaseModule {
     }
 
     this.#store.clear();
-    this.#catchUpBuffers.clear();
+    this.#syncQueues.clear();
     this.#runtimes.clear();
   }
 
@@ -318,61 +318,72 @@ export class WebChat extends BaseModule {
 
   /** @internal Prefer {@link AgentConversationRuntime.load}. */
   async loadConversation(args: LoadConversationArgs): Result<LoadConversationResult> {
-    return this.callWithSession(() => this.#withSyncLock(args.conversationId, () => this.#loadConversation(args)));
+    return this.callWithSession(async () => {
+      try {
+        const entry = await this.#enqueueSync(args.conversationId, () => this.#reloadHistory(args));
+
+        return {
+          data: {
+            conversationId: args.conversationId,
+            messages: entry.messages,
+            hasMore: entry.olderCursor != null,
+          },
+        };
+      } catch (error) {
+        return { error: new NovuError('Failed to load web chat conversation', error) };
+      }
+    });
   }
 
-  #withSyncLock<T>(conversationId: string, sync: () => Promise<T>): Promise<T> {
-    const run = (this.#syncLocks.get(conversationId) ?? Promise.resolve()).then(sync);
-    this.#syncLocks.set(
-      conversationId,
-      run.then(
-        () => undefined,
-        () => undefined
-      )
+  /**
+   * Run syncs of one conversation one at a time.
+   * Live envelopes stay buffered from the first request until the last queued sync finishes:
+   * a sync that applied them early would raise `lastSequence` past events a queued sync still has to fetch.
+   */
+  #enqueueSync<T>(conversationId: string, sync: () => Promise<T>): Promise<T> {
+    const queue = this.#syncQueues.get(conversationId) ?? { tail: Promise.resolve(), pending: 0, liveBuffer: [] };
+    this.#syncQueues.set(conversationId, queue);
+    queue.pending += 1;
+
+    const run = queue.tail.then(sync).finally(() => {
+      queue.pending -= 1;
+      if (queue.pending > 0 || this.#syncQueues.get(conversationId) !== queue) {
+        return;
+      }
+
+      this.#syncQueues.delete(conversationId);
+      for (const envelope of queue.liveBuffer) {
+        this.#applyLiveEnvelope(envelope);
+      }
+    });
+    queue.tail = run.then(
+      () => undefined,
+      () => undefined
     );
 
     return run;
   }
 
-  async #loadConversation(args: LoadConversationArgs): Result<LoadConversationResult> {
-    // Live events wait until the page applies. The sequence gate would otherwise drop page events older than them.
-    this.#catchUpBuffers.set(args.conversationId, []);
-    let entry: ConversationEntry;
+  async #reloadHistory(args: LoadConversationArgs): Promise<ConversationEntry> {
+    const page = await this.#webChatService.getEvents({
+      conversationId: args.conversationId,
+    });
+    const entry = this.#store.getOrCreate({
+      agentId: args.agentId,
+      key: args.conversationId,
+      conversationId: args.conversationId,
+    });
 
-    try {
-      const page = await this.#webChatService.getEvents({
-        conversationId: args.conversationId,
-      });
-
-      entry = this.#store.getOrCreate({
-        agentId: args.agentId,
-        key: args.conversationId,
-        conversationId: args.conversationId,
-      });
-      const events = sortBySequence(page.events);
-      if (entry.historyInSync && pageReachesSequence(events, entry.lastSequence)) {
-        // The cache already holds every event up to lastSequence, so only newer ones are missing.
-        for (const envelope of events) {
-          this.#store.applyLiveEnvelope(entry, envelope);
-        }
-      } else {
-        this.#store.absorbHistoryPage(entry, page.events, page.olderCursor);
+    if (entry.historyInSync && pageReachesSequence(page.events, entry.lastSequence)) {
+      // The cache already holds every event up to lastSequence, so only newer ones are missing.
+      for (const envelope of sortBySequence(page.events)) {
+        this.#store.applyLiveEnvelope(entry, envelope);
       }
-    } catch (error) {
-      return { error: new NovuError('Failed to load web chat conversation', error) };
-    } finally {
-      for (const envelope of this.#takeLiveBuffer(args.conversationId)) {
-        this.#applyLiveEnvelope(envelope);
-      }
+    } else {
+      this.#store.absorbHistoryPage(entry, page.events, page.olderCursor);
     }
 
-    return {
-      data: {
-        conversationId: args.conversationId,
-        messages: entry.messages,
-        hasMore: entry.olderCursor != null,
-      },
-    };
+    return entry;
   }
 
   /** @internal Prefer {@link AgentConversationRuntime.fetchMore}. */
@@ -706,9 +717,9 @@ export class WebChat extends BaseModule {
       return;
     }
 
-    if (this.#catchUpBuffers.has(conversationId)) {
-      const buffer = this.#catchUpBuffers.get(conversationId);
-      buffer?.push(envelope);
+    const syncQueue = this.#syncQueues.get(conversationId);
+    if (syncQueue) {
+      syncQueue.liveBuffer.push(envelope);
 
       return;
     }
@@ -729,32 +740,13 @@ export class WebChat extends BaseModule {
   }
 
   #requestCatchUp(): void {
-    if (this.#liveSubscriberCount === 0) {
-      this.#markClaimedOutOfSync();
-
-      return;
-    }
-
-    // Keep the chain alive after a rejected run so later reconnects still catch up.
-    this.#catchUpChain = this.#catchUpChain.catch(() => undefined).then(() => this.#catchUpOpenConversations());
-  }
-
-  /** Skipped catch-up leaves missed events unrecovered, so the next reload of each conversation must rebuild it. */
-  #markClaimedOutOfSync(): void {
-    for (const entry of this.#store.listClaimed()) {
-      this.#store.markHistoryOutOfSync(entry);
-    }
-  }
-
-  async #catchUpOpenConversations(): Promise<void> {
-    if (this.#liveSubscriberCount === 0 || !this._inboxService.isSessionInitialized) {
-      this.#markClaimedOutOfSync();
-
-      return;
-    }
-
     const claimed = this.#store.listClaimed();
-    if (claimed.length === 0) {
+    if (this.#liveSubscriberCount === 0 || !this._inboxService.isSessionInitialized) {
+      // Nobody recovers the missed events, so the next reload of each conversation must rebuild it.
+      for (const entry of claimed) {
+        this.#store.markHistoryOutOfSync(entry);
+      }
+
       return;
     }
 
@@ -765,11 +757,9 @@ export class WebChat extends BaseModule {
       byConversationId.set(entry.conversationId, holders);
     }
 
-    await Promise.all(
-      [...byConversationId.entries()].map(([conversationId, holders]) =>
-        this.#withSyncLock(conversationId, () => this.#catchUpConversation(conversationId, holders))
-      )
-    );
+    for (const [conversationId, holders] of byConversationId) {
+      void this.#enqueueSync(conversationId, () => this.#catchUpConversation(conversationId, holders));
+    }
   }
 
   #emitMessagesUpdated(entry: ConversationEntry, change: WebChatChange): void {
@@ -798,12 +788,9 @@ export class WebChat extends BaseModule {
       return;
     }
 
-    this.#catchUpBuffers.set(conversationId, []);
     for (const entry of activeHolders) {
       this.#store.setRecoveryState(entry, { isRecovering: true });
     }
-
-    let discardBufferedEnvelopes = false;
 
     try {
       const knownThrough = Math.min(...activeHolders.map((entry) => entry.lastSequence));
@@ -811,14 +798,15 @@ export class WebChat extends BaseModule {
 
       if (!missed) {
         // On catch-up failure the conversation stays stale and errored rather than showing messages across a known gap.
-        discardBufferedEnvelopes = true;
-        const catchUpError = new NovuError(
-          'Web Chat reconnect catch-up exceeded the safety page limit; conversation history may be incomplete',
-          new Error('catch_up_limit_exceeded')
+        this.#syncQueues.get(conversationId)?.liveBuffer.splice(0);
+        this.#failCatchUp(
+          conversationId,
+          activeHolders,
+          new NovuError(
+            'Web Chat reconnect catch-up exceeded the safety page limit; conversation history may be incomplete',
+            new Error('catch_up_limit_exceeded')
+          )
         );
-        for (const entry of activeHolders) {
-          this.#store.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError });
-        }
 
         return;
       }
@@ -830,21 +818,23 @@ export class WebChat extends BaseModule {
         }
       }
     } catch (error) {
-      const catchUpError = new NovuError('Failed to recover web chat conversation after reconnect', error);
-      for (const entry of this.#currentHolders(conversationId, activeHolders)) {
-        this.#store.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError });
-      }
+      this.#failCatchUp(
+        conversationId,
+        activeHolders,
+        new NovuError('Failed to recover web chat conversation after reconnect', error)
+      );
     } finally {
-      const buffered = this.#takeLiveBuffer(conversationId);
       for (const entry of this.#currentHolders(conversationId, activeHolders)) {
         this.#store.setRecoveryState(entry, { isRecovering: false, catchUpError: entry.catchUpError });
       }
+    }
+  }
 
-      if (!discardBufferedEnvelopes) {
-        for (const envelope of buffered) {
-          this.#applyLiveEnvelope(envelope);
-        }
-      }
+  /** The missed events stay unrecovered, so the next reload of this conversation must rebuild it. */
+  #failCatchUp(conversationId: string, holders: ConversationEntry[], catchUpError: NovuError): void {
+    for (const entry of this.#currentHolders(conversationId, holders)) {
+      this.#store.markHistoryOutOfSync(entry);
+      this.#store.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError });
     }
   }
 
@@ -880,12 +870,5 @@ export class WebChat extends BaseModule {
     return holders
       .map((holder) => this.#store.get(holder.key))
       .filter((entry): entry is ConversationEntry => entry != null && entry.conversationId === conversationId);
-  }
-
-  #takeLiveBuffer(conversationId: string): AgentEventEnvelope[] {
-    const buffered = this.#catchUpBuffers.get(conversationId) ?? [];
-    this.#catchUpBuffers.delete(conversationId);
-
-    return buffered;
   }
 }

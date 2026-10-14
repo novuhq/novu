@@ -361,6 +361,7 @@ export class WebChatStore {
       messages: this.#overlayMessages(entry, [...folded.messages, ...localOnly]),
     });
     entry.historyInSync = true;
+    entry.catchUpError = undefined;
     entry.olderCursor = olderCursor;
     entry.paginationEpoch += 1;
     entry.paginationStatus = 'idle';
@@ -448,9 +449,6 @@ export class WebChatStore {
     entry.isRecovering = state.isRecovering;
     if ('catchUpError' in state) {
       entry.catchUpError = state.catchUpError;
-    }
-    if (state.catchUpError) {
-      entry.historyInSync = false;
     }
     this.#publish(entry, { kind: 'local' }, []);
 
