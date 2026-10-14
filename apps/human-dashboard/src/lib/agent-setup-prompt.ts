@@ -66,16 +66,19 @@ export function buildSetupPrompt(context: PromptContext, operator: SetupOperator
 }
 
 /**
- * What the operator hands their agent in a channel's setup drawer ("Let your agent set this up"): one
- * sentence that names the CLI command and leaves the steps in Telegram or Slack to the agent and the operator.
- * No API key in it either.
+ * What the operator hands their agent in a channel's setup drawer ("Let your agent set this up"): a few
+ * sentences that name the CLI commands and leave the steps in Telegram or Slack to the agent and the
+ * operator. No API key in it either: a computer that isn't logged in yet logs in first, since `channel add`
+ * needs the login, and the operator may have set the agent up in the browser or through an MCP host.
  */
 export function buildChannelPrompt(context: PromptContext, via: 'telegram' | 'slack', handle: string): string {
-  const command = `${CLI} channel add ${via}${apiUrlFlag(context)}`;
+  const api = apiUrlFlag(context);
+  const command = `${CLI} channel add ${via}${api}`;
+  const login = `If Agent Inbox isn't logged in on this computer yet, first run ${CLI} login${api} and wait until I approve it in my browser.`;
 
   return via === 'telegram'
-    ? `Set up Telegram for ${handle}: run ${command}, then walk me through creating the bot with @BotFather and paste the token back.`
-    : `Set up Slack for ${handle}: run ${command}, then walk me through creating the app from the manifest and installing it.`;
+    ? `Set up Telegram for ${handle}. ${login} Then run ${command}, walk me through creating the bot with @BotFather and paste the token back.`
+    : `Set up Slack for ${handle}. ${login} Then run ${command}, walk me through creating the app from the manifest and installing it.`;
 }
 
 function channelSteps(channels: Via[], api: string): string[] {

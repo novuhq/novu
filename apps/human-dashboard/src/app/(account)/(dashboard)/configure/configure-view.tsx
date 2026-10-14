@@ -78,7 +78,9 @@ export function ConfigureView({
   });
 
   const connected = (via: ChannelVia) => channels.some((channel) => channel.via === via && channel.connected);
-  const email = connected('email') ? agent.address : null;
+  // The address the email channel really has. `agent.address` falls back to one made from the handle, which
+  // nothing receives when the inbox couldn't be set up, so it's never shown, copied or put in the QR code.
+  const email = channels.find((channel) => channel.via === 'email' && channel.connected)?.handles[0]?.value ?? null;
   const telegramBot = connected('telegram') && 'botUsername' in telegramSetup ? telegramSetup.botUsername : '';
   const slack = connected('slack') ? describeSlack(slackSetup) : null;
   const state: AgentState = !agent.active ? 'paused' : agent.hostConnected ? 'active' : 'waiting';
@@ -89,14 +91,14 @@ export function ConfigureView({
         <IdentityCard
           name={agent.name}
           handle={agent.handle}
-          address={agent.address}
+          address={email}
           cardLink={agent.cardLink}
           pictureUrl={agent.pictureUrl}
           createdAt={agent.createdAt}
           operatorName={operatorName}
           state={state}
           hostConnected={agent.hostConnected}
-          telegram={telegramBot ? `@${telegramBot}` : null}
+          telegram={connected('telegram') ? { bot: telegramBot ? `@${telegramBot}` : null } : null}
           slack={slack && (joinDefined([slack.appName, slack.workspace], ' · ') || 'Connected')}
         />
 

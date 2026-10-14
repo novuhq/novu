@@ -87,8 +87,13 @@ export function SlackSetup({ setup, agentName, handle, prompt, open, onOpenChang
 
   const check = useCallback(async () => {
     setStep('checking');
-    show(await loadSlackSetupAction().catch((): SlackSetupState => ({ step: 'unknown' })));
-  }, [show]);
+    const next = await loadSlackSetupAction().catch((): SlackSetupState => ({ step: 'unknown' }));
+    show(next);
+    // The page couldn't tell in time: when the drawer finds it connected, the card and the row catch up.
+    if (next.step === 'connected') {
+      router.refresh();
+    }
+  }, [show, router]);
 
   // The refresh button of a finished install: reads the workspace again, without leaving the steps.
   async function recheck() {
@@ -97,6 +102,10 @@ export function SlackSetup({ setup, agentName, handle, prompt, open, onOpenChang
       toast('We couldn’t check your Slack app just now. Please try again.', 'error');
     } else {
       show(next);
+      // Found connected here first: the page's card and channel row catch up, as after the poll.
+      if (next.step === 'connected' && setup.step !== 'connected') {
+        router.refresh();
+      }
     }
   }
 

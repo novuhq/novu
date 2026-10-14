@@ -86,8 +86,13 @@ export function TelegramSetup({ setup, handle, prompt, open, onOpenChange }: Tel
 
   const check = useCallback(async () => {
     setStep('checking');
-    show(await loadTelegramSetupAction().catch((): TelegramSetupState => ({ step: 'unknown' })));
-  }, [show]);
+    const next = await loadTelegramSetupAction().catch((): TelegramSetupState => ({ step: 'unknown' }));
+    show(next);
+    // The page couldn't tell in time: when the drawer finds it connected, the card and the row catch up.
+    if (next.step === 'connected') {
+      router.refresh();
+    }
+  }, [show, router]);
 
   // The refresh button of a saved token: asks Telegram who the bot is again, without leaving the steps.
   async function recheck() {
@@ -96,6 +101,10 @@ export function TelegramSetup({ setup, handle, prompt, open, onOpenChange }: Tel
       toast('We couldn’t check your Telegram bot just now. Please try again.', 'error');
     } else {
       show(next);
+      // Found connected here first: the page's card and channel row catch up, as after the poll.
+      if (next.step === 'connected' && setup.step !== 'connected') {
+        router.refresh();
+      }
     }
   }
 

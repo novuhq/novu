@@ -28,7 +28,8 @@ export type IdentityCardProps = {
   name: string;
   /** Its address without the domain, as the CLI and the public card know it. */
   handle: string;
-  address: string;
+  /** The agent's email address, or `null` while its email channel has none. */
+  address: string | null;
   /** The public card's address, written out without `https://`. */
   cardLink: string;
   pictureUrl?: string;
@@ -38,8 +39,11 @@ export type IdentityCardProps = {
   state: AgentState;
   /** A host reads the agent's mail: a CLI login was approved, a connector signed in, or it came from a terminal. */
   hostConnected: boolean;
-  /** `@username` of its Telegram bot, once Telegram is connected. */
-  telegram: string | null;
+  /**
+   * Telegram, once connected: its bot's `@username`, or `null` when the bot's name couldn't be read just
+   * now, which still shows as connected.
+   */
+  telegram: { bot: string | null } | null;
   /** Its Slack app and the workspace it's installed in, once Slack is connected. */
   slack: string | null;
 };
@@ -76,8 +80,9 @@ export function IdentityCard(props: IdentityCardProps) {
       <ul className="flex flex-col px-3 pb-2">
         <CardLine
           icon={<ChannelLogo via="email" size={16} />}
-          label={address}
-          end={<CopyLine value={address} label="Copy the email address" />}
+          label={address ?? 'No address yet'}
+          live={Boolean(address)}
+          end={address ? <CopyLine value={address} label="Copy the email address" /> : <Pending />}
         />
         <CardLine
           icon={
@@ -92,9 +97,17 @@ export function IdentityCard(props: IdentityCardProps) {
         />
         <CardLine
           icon={<ChannelLogo via="telegram" size={16} />}
-          label={telegram ?? 'Not set up'}
+          label={telegram ? (telegram.bot ?? 'Connected') : 'Not set up'}
           live={Boolean(telegram)}
-          end={telegram ? <CopyLine value={telegram} label="Copy the Telegram bot handle" /> : <Pending />}
+          end={
+            telegram?.bot ? (
+              <CopyLine value={telegram.bot} label="Copy the Telegram bot handle" />
+            ) : telegram ? (
+              <Dot className="bg-success" />
+            ) : (
+              <Pending />
+            )
+          }
         />
         <CardLine
           icon={<ChannelLogo via="slack" size={16} />}
@@ -170,16 +183,18 @@ function Portrait({ handle, address, pictureUrl, state }: IdentityCardProps) {
       <p className="absolute bottom-2 left-4 max-w-55 truncate font-mono text-[10px] leading-3.5 text-muted">
         fig. {handle}
       </p>
-      {/* Light on the dark portrait, 44px, 16px from the right and 14px from the bottom. */}
-      <QRCode
-        value={`mailto:${address}`}
-        size={44}
-        level="L"
-        bgColor="transparent"
-        fgColor="#ebe2d6"
-        aria-label={`QR code that starts an email to ${address}`}
-        className="absolute right-4 bottom-3.5"
-      />
+      {/* Light on the dark portrait, 44px, 16px from the right and 14px from the bottom; only with an address. */}
+      {address && (
+        <QRCode
+          value={`mailto:${address}`}
+          size={44}
+          level="L"
+          bgColor="transparent"
+          fgColor="#ebe2d6"
+          aria-label={`QR code that starts an email to ${address}`}
+          className="absolute right-4 bottom-3.5"
+        />
+      )}
     </div>
   );
 }
