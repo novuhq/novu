@@ -83,19 +83,27 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
   describe('the sign-up webhook and the first page at the same time', () => {
     const SECRET = 'e2e-human-dashboard-secret';
     let finishFirstSetup: () => void = () => undefined;
+    // The requests a test sent, and whether it has ended, so nothing it started outlives it.
+    let inFlight: Promise<unknown>[] = [];
+    let ended = false;
 
     beforeEach(() => {
       process.env.HUMAN_DASHBOARD_API_SECRET = SECRET;
+      inFlight = [];
+      ended = false;
     });
 
-    afterEach(() => {
-      // A test that failed halfway still lets the held setup end, so its lock doesn't outlive the test.
+    afterEach(async () => {
+      // A test that failed halfway still lets the held setup end, and both requests finish before the stubs
+      // go: neither may reach the real setup, and Clerk with it, afterwards.
+      ended = true;
       finishFirstSetup();
+      await Promise.allSettled(inFlight);
       sinon.restore();
     });
 
     async function waitUntil(condition: () => boolean) {
-      while (!condition()) {
+      while (!condition() && !ended) {
         await new Promise((resolve) => setTimeout(resolve, 10));
       }
     }
@@ -118,12 +126,19 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
       const ensureCalls = sinon.spy(testServer.getService(EnsureBackingOrganization), 'execute');
 
       const answered = new Set<string>();
-      const ensure = (caller: string) =>
-        ensureAccount({ [HUMAN_DASHBOARD_SECRET_HEADER]: SECRET }, { humanUserId, firstName: 'Ada' }).then((res) => {
+      const ensure = (caller: string) => {
+        const request = ensureAccount(
+          { [HUMAN_DASHBOARD_SECRET_HEADER]: SECRET },
+          { humanUserId, firstName: 'Ada' }
+        ).then((res) => {
           answered.add(caller);
 
           return res;
         });
+        inFlight.push(request);
+
+        return request;
+      };
 
       // The webhook gets there first, and its setup stays in Clerk until the test lets it finish.
       const webhook = ensure('webhook');

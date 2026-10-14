@@ -1,4 +1,3 @@
-import { setTimeout as delay } from 'node:timers/promises';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { CacheService } from '@novu/application-generic';
@@ -20,6 +19,19 @@ const LOCK_TTL_SECONDS = 60;
 const LOCK_CHECK_MS = 200;
 /** Past the lock's own expiry, so a lock whose request died has been dropped by Redis before the wait gives up. */
 const LOCK_GRACE_MS = 5000;
+/** How long a request waits for the lock at most: the lock's own expiry and the grace above. */
+export const LOCK_WAIT_MS = LOCK_TTL_SECONDS * 1000 + LOCK_GRACE_MS;
+
+function pause(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function accountBusy(): ConflictException {
+  return new ConflictException({
+    message: 'This Human account is being set up. Please try again in a moment.',
+    code: 'human_account_busy',
+  });
+}
 
 function pickDevelopmentEnvironment(environments: EnvironmentEntity[]): EnvironmentEntity | undefined {
   return environments.find((env) => env.type === EnvironmentTypeEnum.DEV && !env._parentId);
@@ -75,7 +87,8 @@ export class EnsureBackingOrganization {
    *
    * The wait ends with the setup it waits for, not after a set time: the lock is let go when that setup is
    * done or fails, or Redis drops it after LOCK_TTL_SECONDS if its request died. Still not getting it once
-   * that much time has gone by means the cache isn't answering, so the request says "busy" instead of waiting forever.
+   * that much time has gone by (LOCK_WAIT_MS) means the cache isn't answering, so the request says "busy"
+   * instead of waiting forever, also when a call to the cache itself hangs.
    * Without a cache we skip the lock; Clerk's unique email and slug still prevent duplicates there.
    */
   private async waitForLock(lockKey: string): Promise<boolean> {
@@ -83,19 +96,56 @@ export class EnsureBackingOrganization {
       return false;
     }
 
-    const giveUpAt = Date.now() + LOCK_TTL_SECONDS * 1000 + LOCK_GRACE_MS;
-    while ((await this.cacheService.setIfNotExist(lockKey, '1', { ttl: LOCK_TTL_SECONDS })) !== 'OK') {
-      if (Date.now() >= giveUpAt) {
-        throw new ConflictException({
-          message: 'This Human account is being set up. Please try again in a moment.',
-          code: 'human_account_busy',
-        });
+    const giveUpAt = Date.now() + LOCK_WAIT_MS;
+
+    for (;;) {
+      const left = giveUpAt - Date.now();
+      if (left <= 0) {
+        throw accountBusy();
       }
 
-      await delay(LOCK_CHECK_MS);
-    }
+      if (await this.tryLock(lockKey, left)) {
+        return true;
+      }
 
-    return true;
+      await pause(Math.min(LOCK_CHECK_MS, Math.max(0, giveUpAt - Date.now())));
+    }
+  }
+
+  /**
+   * One try at the lock that waits no longer than `withinMs` for the cache to answer: a connection that drops
+   * mid-call can keep a call pending forever. A lock that call still takes after the request stopped waiting
+   * is given back at once, so it doesn't block the account until it runs out.
+   */
+  private tryLock(lockKey: string, withinMs: number): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      let gaveUp = false;
+      const timer = setTimeout(() => {
+        gaveUp = true;
+        resolve(false);
+      }, withinMs);
+
+      this.cacheService.setIfNotExist(lockKey, '1', { ttl: LOCK_TTL_SECONDS }).then(
+        (result) => {
+          if (gaveUp) {
+            if (result === 'OK') {
+              this.cacheService.del(lockKey).catch(() => undefined);
+            }
+
+            return;
+          }
+
+          clearTimeout(timer);
+          resolve(result === 'OK');
+        },
+        (error) => {
+          if (!gaveUp) {
+            clearTimeout(timer);
+            reject(error);
+          }
+        }
+      );
+    });
   }
 
   private async ensureNovuOrganization(
