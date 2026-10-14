@@ -153,10 +153,11 @@ export async function completeChecklistItemAction(item: string): Promise<void> {
     return;
   }
 
+  const now = new Date().toISOString();
   await updateOnboardingState((state) => {
-    const done = state.checklist?.done ?? [];
+    const done = state.checklist?.done ?? {};
 
-    return done.includes(item) ? state : { ...state, checklist: { ...state.checklist, done: [...done, item] } };
+    return done[item] ? state : { ...state, checklist: { ...state.checklist, done: { ...done, [item]: now } } };
   });
   refresh();
 }

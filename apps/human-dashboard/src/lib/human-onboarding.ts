@@ -267,7 +267,7 @@ export async function loadSetupSummary(
     telegramConnected: channels.telegram,
     wentThroughSteps: wasMadeInTheSteps(agent, state),
     doneBannerDismissed: state.doneBannerDismissed === true,
-    checklist: { done: state.checklist?.done ?? [], hidden: state.checklist?.hidden === true },
+    checklist: { done: Object.keys(state.checklist?.done ?? {}), hidden: state.checklist?.hidden === true },
   };
 }
 

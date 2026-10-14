@@ -40,8 +40,12 @@ export type OnboardingState = {
   finishedAt?: string;
   /** The "is set up" banner on Configure was dismissed. */
   doneBannerDismissed?: boolean;
-  /** The "Put your agent to work" list on the Inbox page: what was done, and whether it's hidden. */
-  checklist?: { done?: string[]; hidden?: boolean };
+  /**
+   * The "Put your agent to work" list on the Inbox page: when each item was ticked off, and whether it's
+   * hidden. One key per item, because Clerk merges nested keys: two ticks saved at the same moment, from
+   * two tabs, both stay. A list would be replaced whole by the second.
+   */
+  checklist?: { done?: Record<string, string>; hidden?: boolean };
 };
 
 const METADATA_KEY = 'onboarding';

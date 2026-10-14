@@ -17,7 +17,7 @@ export const ONBOARDING_PATH = '/onboarding';
 export const AGENT_DOMAIN = 'agentinbox.md';
 
 /** As long as the API lets an agent's name be (`AGENT_NAME_MAX_LENGTH` in `@novu/shared`). */
-export const AGENT_NAME_MAX_LENGTH = 64;
+export const AGENT_NAME_MAX_LENGTH = 60;
 
 /** The part of an address before the `@` stays short enough to say out loud. */
 export const HANDLE_MAX_LENGTH = 32;
