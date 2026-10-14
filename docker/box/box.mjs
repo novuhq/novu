@@ -400,10 +400,21 @@ function prepareRuntime() {
   env.STRIPE_CONNECT_SECRET = output('stripe', ['listen', '--print-secret', '--skip-update']);
 
   // The SSRF guards reject localhost and literal private IPs, so Mailpit, the sink and the bridge app are
-  // reached by names in NOVU_SAFE_OUTBOUND_ALLOW.
+  // reached by names in NOVU_SAFE_OUTBOUND_ALLOW. Cloudflare mounts /etc/hosts read-only, so there a writable copy
+  // is bound over it (the container has CAP_SYS_ADMIN); the mount lasts until the container stops.
   const hosts = fs.readFileSync('/etc/hosts', 'utf8');
-  for (const host of [MAIL_HOST, new URL(SINK_URL).hostname, new URL(BRIDGE_URL).hostname]) {
-    if (!hosts.includes(` ${host}`)) fs.appendFileSync('/etc/hosts', `127.0.0.1 ${host}\n`);
+  const missing = [MAIL_HOST, new URL(SINK_URL).hostname, new URL(BRIDGE_URL).hostname].filter(
+    (host) => !hosts.includes(` ${host}`)
+  );
+  if (missing.length) {
+    const lines = missing.map((host) => `127.0.0.1 ${host}\n`).join('');
+    try {
+      fs.appendFileSync('/etc/hosts', lines);
+    } catch (error) {
+      if (error.code !== 'EROFS') throw error;
+      fs.writeFileSync(`${RUN}/hosts`, hosts + lines);
+      run('mount', ['--bind', `${RUN}/hosts`, '/etc/hosts']);
+    }
   }
 
   prepareDashboard();

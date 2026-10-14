@@ -1,22 +1,25 @@
 #!/usr/bin/env node
 // Novu Box from your machine: start a box, put your checkout on it, check it, read its logs. Plain Node, no npm
-// dependencies. It runs the box's own commands (`box.mjs`) inside the box, which today is a local Docker container.
+// dependencies. It runs the box's own commands (`box.mjs`) inside the box: a local Docker container, or with
+// `--cloud` a Cloudflare container (cloud/target.mjs).
 //
-//   node docker/box/cli.mjs up                start the box, baking `next` into its volume first if it has none
+//   node docker/box/cli.mjs up                start the box, baking `next` first if it has never been baked
 //   node docker/box/cli.mjs sync [--full]     put this checkout, committed or not, on the box; rebuild what it changes
 //   node docker/box/cli.mjs doctor            whether the box is fit to test on, as JSON; exits 1 if not
 //   node docker/box/cli.mjs logs <process>    a process's last lines (--tail <n>, default 200)
 //   node docker/box/cli.mjs exec -- <cmd...>  run a command in the box's checkout (/data/novu)
-//   node docker/box/cli.mjs down              stop the box; its volume, and so its data, stays
+//   node docker/box/cli.mjs down              stop the box; its data stays (local: its volume; cloud: its snapshot)
 //
-// Every command takes --box <name> (default novu-box); its volume is <name>-data. Local boxes publish the same host
-// ports, so one runs at a time.
+// --box <name>  local: default novu-box, its volume is <name>-data; local boxes publish the same host ports, so one
+//               runs at a time. Cloud: default the current branch; the box is https://novu-box-<name>.<workers.dev>.
+// --cloud       the Cloudflare box. `up --cloud --deploy` redeploys its Worker (after a change to docker/box).
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
+import { cloudTarget } from './cloud/target.mjs';
 
 const HERE = new URL('.', import.meta.url).pathname;
 const IMAGE = 'novu-box:dev';
@@ -29,13 +32,16 @@ const SYNC_REF = 'refs/worktree/box-sync';
 const MAX_BUNDLE_MB = 25;
 const HEALTHY_WITHIN_SECONDS = 240;
 
-const USAGE = 'usage: node docker/box/cli.mjs up|sync|doctor|logs|exec|down [--box <name>]; exec -- <cmd> for flags';
+const USAGE =
+  'usage: node docker/box/cli.mjs up|sync|doctor|logs|exec|down [--box <name>] [--cloud]; exec -- <cmd> for flags';
 let options;
 let positionals;
 try {
   ({ values: options, positionals } = parseArgs({
     options: {
-      box: { type: 'string', default: 'novu-box' },
+      box: { type: 'string' },
+      cloud: { type: 'boolean', default: false },
+      deploy: { type: 'boolean', default: false },
       full: { type: 'boolean', default: false },
       tail: { type: 'string', default: '200' },
     },
@@ -45,8 +51,22 @@ try {
   console.error(`${error.message}\n${USAGE}`);
   process.exit(2);
 }
-const BOX = options.box;
+const BOX = options.box ?? (options.cloud ? branchBox() : 'novu-box');
 const [command, ...args] = positionals;
+
+// The current branch as a box name: lowercase letters, digits and dashes, short enough for a workers.dev name.
+function branchBox() {
+  const branch = spawnSync('git', ['branch', '--show-current'], { encoding: 'utf8' }).stdout.trim();
+  const name = branch
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 50)
+    .replace(/-$/, '');
+  if (!name) throw new Error('not on a branch; pass --box <name>');
+
+  return name;
+}
 
 function log(message) {
   console.error(`[cli] ${message}`);
@@ -196,11 +216,11 @@ function down() {
 // Puts this checkout on the box as the box would put a PR on it: the checkout becomes one commit (HEAD plus every
 // change, committed or not, new files included; see `snapshot`), which the box merges onto its baked commit. It travels as a
 // git bundle, so it arrives exactly as it is here: binaries, file modes, deletions.
-function sync() {
-  requireRunning();
+async function sync() {
+  await target.ready();
   const root = output('git', ['rev-parse', '--show-toplevel']);
   const git = (gitArgs, opts = {}) => output('git', gitArgs, { cwd: root, ...opts });
-  const { baked } = JSON.parse(inBox(['state'], { capture: true }));
+  const { baked } = JSON.parse(await target.box(['state'], { capture: true }));
   if (!succeeds('git', ['cat-file', '-e', `${baked.sha}^{commit}`], { cwd: root })) {
     log(`fetching the box's baked commit ${baked.sha.slice(0, 10)}`);
     git(['fetch', '--no-tags', 'origin', baked.sha]);
@@ -224,14 +244,14 @@ function sync() {
         `the sync is ${(kb / 1024).toFixed(0)} MB, over ${MAX_BUNDLE_MB} MB; the biggest changed files: ${biggest.join(', ')}`
       );
     }
-    log(`sending ${kb.toFixed(0)} KB to ${BOX}`);
-    output('docker', ['cp', bundle, `${BOX}:${BUNDLE_IN_BOX}`]);
+    log(`sending ${kb.toFixed(0)} KB to ${target.name}`);
+    await target.put(bundle, BUNDLE_IN_BOX);
   } finally {
     spawnSync('git', ['update-ref', '-d', SYNC_REF], { cwd: root });
     fs.rmSync(bundle, { force: true });
   }
 
-  return inBox(['apply', '--bundle', BUNDLE_IN_BOX, ...(options.full ? ['--full'] : [])], { withToken: true });
+  return target.box(['apply', '--bundle', BUNDLE_IN_BOX, ...(options.full ? ['--full'] : [])], { github: true });
 }
 
 // The checkout as a commit on HEAD, built in a copy of the index so your own index and staging stay as they are.
@@ -286,31 +306,41 @@ function countByFolder(files) {
     .join(', ');
 }
 
-// --- the rest ---
+// --- where the box runs ---
 
-function exec() {
-  requireRunning();
-  if (!args.length) throw new Error('usage: cli.mjs exec <command...>');
-  const tty = process.stdin.isTTY ? ['-it'] : ['-i'];
-
-  return run('docker', ['exec', ...tty, '-w', '/data/novu', BOX, ...args]);
-}
+// The local box: a Docker container. cloud/target.mjs is the same interface over HTTPS.
+const docker = {
+  name: BOX,
+  up,
+  down,
+  ready: async () => requireRunning(),
+  box: async (boxArgs, { github = false, capture = false } = {}) => inBox(boxArgs, { withToken: github, capture }),
+  exec: async (cmd) =>
+    run('docker', ['exec', ...(process.stdin.isTTY ? ['-it'] : ['-i']), '-w', '/data/novu', BOX, ...cmd]),
+  put: async (file, path) => output('docker', ['cp', file, `${BOX}:${path}`]),
+};
+const target = options.cloud ? cloudTarget({ box: BOX, log, githubToken }) : docker;
 
 const commands = {
-  up,
+  up: () => target.up({ deploy: options.deploy }),
   sync,
-  doctor: () => {
-    requireRunning();
+  doctor: async () => {
+    await target.ready();
 
-    return inBox(['doctor']);
+    return target.box(['doctor']);
   },
-  logs: () => {
-    requireRunning();
+  logs: async () => {
+    await target.ready();
 
-    return inBox(['logs', ...args, '--tail', options.tail]);
+    return target.box(['logs', ...args, '--tail', options.tail]);
   },
-  exec,
-  down,
+  exec: async () => {
+    if (!args.length) throw new Error('usage: cli.mjs exec -- <command...>');
+    await target.ready();
+
+    return target.exec(args);
+  },
+  down: () => target.down(),
 };
 
 if (!commands[command]) {

@@ -161,6 +161,35 @@ machine; `sync` names them in its first line. `sync` stops before sending more t
 reach, and names the biggest changed files. It sends the enterprise submodule's commit, not uncommitted changes
 inside `.source`.
 
+### On Cloudflare: `--cloud`
+
+The same commands with `--cloud` run the box on Cloudflare Containers. Each box is its own Worker,
+`novu-box-<box>` (`cloud/worker.js`), at `https://novu-box-<box>.cli-shortener.workers.dev`; `--box` defaults to
+the current branch. The Worker serves the box's one address (port 18080, see Ports), so the dashboard calls the
+API same-origin there: unlike production, CORS isn't exercised.
+
+You need `npx wrangler login` on the Novu Cloudflare account, `gh` signed in as someone with push access to
+`novuhq/novu` (the Worker checks it on every control call), and `docker/box/.env`: `up` uploads its secrets to the
+box's Worker. `up --cloud` builds the image for amd64, pushes it once per change, deploys the Worker if it isn't
+there (or with `--deploy`), then wakes the box from its snapshot or, the first time, bakes `next`.
+
+After an hour without requests the box saves itself to a snapshot and stops; the next request gets a "waking up"
+page and the box is back with its data. Measured on `novu-box-hosting-test` (standard-4):
+
+| Step | Time |
+|---|---|
+| First `up` (deploy, then bake `next`) | about 16 min |
+| `down` (stop apps and databases, snapshot, stop) | about 3 min |
+| Wake, from the first browser request to a healthy API | 36 s |
+| `up --deploy` on a sleeping box (redeploy, then wake) | 112 s |
+| `sync`, an API change | 83 s |
+| Smoke over the public address (box baked from `next`) | 19/20; the bridge check needs this branch's playground |
+
+Limits for now: each sleep leaves a snapshot image (about 3.5 GB) in the account's registry that nothing deletes
+yet (`npx wrangler containers images list`); the GitHub token reaches the bake's and `sync`'s environment, as it
+does locally; requests the box makes to its own public address go out through the internet. Delete a box with
+`npx wrangler delete --name novu-box-<box>`.
+
 Run the smoke test from the host (38 checks, 43 with the Anthropic key, about 2 minutes; writes `smoke.json` to
 the directory given):
 
