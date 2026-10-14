@@ -74,6 +74,8 @@ export enum FeatureNameEnum {
   AGENT_EMAIL_INTEGRATION = 'agentEmailIntegration',
   AGENT_EMAIL_INBOX_DAILY_LIMIT = 'agentEmailInboxDailyLimit',
   AGENT_EMAIL_INBOX_MONTHLY_LIMIT = 'agentEmailInboxMonthlyLimit',
+  HUMAN_MESSAGE_DAILY_LIMIT = 'humanMessageDailyLimit',
+  HUMAN_MESSAGE_MONTHLY_LIMIT = 'humanMessageMonthlyLimit',
   AGENT_MAX_AGENTS = 'agentMaxAgents',
   AGENT_MAX_ACTIVE_CHANNELS = 'agentMaxActiveChannels',
   AGENT_MAX_CUSTOM_EMAIL_DOMAINS = 'agentMaxCustomEmailDomains',
@@ -533,6 +535,22 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.BUSINESS]: { label: '300 emails per month', value: 300 },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: '300 emails per month', value: 300 },
     [ApiServiceLevelEnum.UNLIMITED]: { label: '300 emails per month', value: 300 },
+  },
+  // Beta abuse ceilings for signed-up Human messages, not a plan perk. Every
+  // current tier shares them; a later tier can diverge by editing this table.
+  [FeatureNameEnum.HUMAN_MESSAGE_DAILY_LIMIT]: {
+    [ApiServiceLevelEnum.FREE]: { label: '50 messages per day', value: 50 },
+    [ApiServiceLevelEnum.PRO]: { label: '50 messages per day', value: 50 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '50 messages per day', value: 50 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: '50 messages per day', value: 50 },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: '50 messages per day', value: 50 },
+  },
+  [FeatureNameEnum.HUMAN_MESSAGE_MONTHLY_LIMIT]: {
+    [ApiServiceLevelEnum.FREE]: { label: '300 messages per month', value: 300 },
+    [ApiServiceLevelEnum.PRO]: { label: '300 messages per month', value: 300 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '300 messages per month', value: 300 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: '300 messages per month', value: 300 },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: '300 messages per month', value: 300 },
   },
   [FeatureNameEnum.AGENT_MAX_AGENTS]: {
     [ApiServiceLevelEnum.FREE]: { label: '2 agents', value: 2 },

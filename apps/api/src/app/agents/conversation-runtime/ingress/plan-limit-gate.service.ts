@@ -76,6 +76,8 @@ function buildUpgradeRequiredCard(
  * enforces identical semantics:
  *   - Keyless/demo orgs are governed by their own caps (KeylessAbuseGuard) and
  *     are never gated here.
+ *   - The Human relay skips this gate. Its traffic is not a Novu plan agent,
+ *     channel, or conversation.
  *   - Limit evaluation fails open (`checkRuntimeLimits` is contractually
  *     non-throwing) so a transient error never disables a paying customer's agent.
  *   - The upgrade card's own CTA is a link-button; clicking it emits another
@@ -105,7 +107,7 @@ export class PlanLimitGateService {
     config: ResolvedAgentConfig,
     params: { isNewThread: boolean; conversationId?: string }
   ): Promise<{ reason: PlanLimitBlockReason; message: string } | null> {
-    if (config.isKeyless) {
+    if (config.isKeyless || config.isHumanRelay) {
       return null;
     }
 
@@ -145,7 +147,7 @@ export class PlanLimitGateService {
     thread: Thread,
     { action, postCard = true }: { action?: AgentAction; postCard?: boolean } = {}
   ): Promise<boolean> {
-    if (config.isKeyless) {
+    if (config.isKeyless || config.isHumanRelay) {
       return false;
     }
 
@@ -180,7 +182,7 @@ export class PlanLimitGateService {
     thread: Thread,
     conversation?: ConversationEntity
   ): Promise<boolean> {
-    if (config.isKeyless) {
+    if (config.isKeyless || config.isHumanRelay) {
       return false;
     }
 
