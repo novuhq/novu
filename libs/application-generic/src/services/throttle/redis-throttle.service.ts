@@ -9,7 +9,6 @@ const LOG_CONTEXT = 'RedisThrottleService';
 @Injectable()
 export class RedisThrottleService implements OnModuleDestroy {
   private reserveScriptSha: string | null = null;
-  private releaseScriptSha: string | null = null;
   private readonly ttlBufferMs: number;
   /** Opened only when BullMQ's Redis is absent, so throttle stays on ElastiCache. */
   private cacheInMemoryProviderService?: CacheInMemoryProviderService;
@@ -61,31 +60,6 @@ export class RedisThrottleService implements OnModuleDestroy {
 
     local ttl = redis.call('TTL', setKey)
     return {1, count, ttl}
-  `;
-
-  private readonly releaseScript = `
-    -- KEYS[1] = setKey
-    -- ARGV[1] = jobId
-    -- Returns: {removed (0/1), countAfter, ttlSecRemaining}
-    local setKey = KEYS[1]
-    local jobId = ARGV[1]
-    
-    -- Manual TTL check: if key exists but has expired, clean it up
-    local currentTtl = redis.call('TTL', setKey)
-    if currentTtl == 0 then
-      -- Key exists but has no TTL (should not happen) or has expired
-      redis.call('DEL', setKey)
-      return {0, 0, 0}
-    elseif currentTtl == -1 then
-      -- Key exists but has no expiry set (should not happen with our logic)
-      redis.call('DEL', setKey)
-      return {0, 0, 0}
-    end
-    
-    local removed = redis.call('SREM', setKey, jobId)
-    local count = redis.call('SCARD', setKey)
-    local ttl = redis.call('TTL', setKey)
-    return {removed, count, ttl}
   `;
 
   constructor(private workflowInMemoryProviderService: WorkflowInMemoryProviderService) {
@@ -150,9 +124,6 @@ export class RedisThrottleService implements OnModuleDestroy {
     try {
       if (!this.reserveScriptSha) {
         this.reserveScriptSha = (await client.script('LOAD', this.reserveScript)) as string;
-      }
-      if (!this.releaseScriptSha) {
-        this.releaseScriptSha = (await client.script('LOAD', this.releaseScript)) as string;
       }
     } catch (error) {
       Logger.error('Failed to load Lua scripts', error, LOG_CONTEXT);
