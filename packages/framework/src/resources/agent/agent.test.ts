@@ -3134,11 +3134,23 @@ describe('tool approval', () => {
   });
 
   it.each([
-    [true, ['tc']],
+    [
+      true,
+      [
+        {
+          type: 'tool-use-result',
+          toolUseId: 'tc',
+          content: [
+            { type: 'text', text: 'Tool "get_weather" approved' },
+            { type: 'json', value: null },
+          ],
+        },
+      ],
+    ],
     [false, []],
   ])(
     'records a tool result for agent() only when the gated tool was approved (approved=%s)',
-    async (approved, toolUseIds) => {
+    async (approved, expectedResults) => {
       const posts: any[] = [];
       vi.stubGlobal(
         'fetch',
@@ -3174,8 +3186,10 @@ describe('tool approval', () => {
 
       const results = posts
         .flatMap((post) => post.events ?? [])
-        .filter((envelope) => envelope.event.type === 'tool-use-result');
-      expect(results.map((envelope) => envelope.event.toolUseId)).toEqual(toolUseIds);
+        .filter((envelope) => envelope.event.type === 'tool-use-result')
+        .map((envelope) => envelope.event);
+      // The reply text ('Sunny in Berlin') must not leak into the recorded tool output.
+      expect(results).toEqual(expectedResults);
     }
   );
 

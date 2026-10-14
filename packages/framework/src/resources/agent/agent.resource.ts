@@ -22,20 +22,21 @@ export function agent(agentId: string, handlers: AgentHandlers): Agent {
   }
 
   // The handler runs the approved tool itself; without a recorded result Novu treats the approval as orphaned.
+  // The tool's real output is not observable here, so the recorded result only closes the approval.
   const recordingHandlers: AgentHandlers = {
     ...handlers,
     onToolApproval: async (decision, ctx) => {
-      const result = await onToolApproval(decision, ctx);
+      const reply = await onToolApproval(decision, ctx);
       if (decision.approved) {
         requireRuntimeContext(ctx).emitToolResult({
           toolCallId: decision.toolCall.id,
           toolName: decision.toolCall.name,
-          output: typeof result === 'string' ? result : null,
-          preview: `Tool "${decision.toolCall.name}" ran`,
+          output: null,
+          preview: `Tool "${decision.toolCall.name}" approved`,
         });
       }
 
-      return result;
+      return reply;
     },
   };
 
