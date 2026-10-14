@@ -243,6 +243,54 @@
   }
 }
 
+/*
+ * The Inbox's thread rows when a refresh changes the list (`thread-list.tsx`): a new thread rises in,
+ * one that left fades out, and the others slide to their new places, their content crossfading.
+ */
+::view-transition-group(.inbox-row),
+::view-transition-group(.inbox-row-enter),
+::view-transition-group(.inbox-row-exit) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+::view-transition-new(.inbox-row-enter):only-child {
+  animation: inbox-row-in 320ms ease-out both;
+}
+
+::view-transition-old(.inbox-row-exit):only-child {
+  animation: inbox-row-out 200ms ease-in both;
+}
+
+/* Clicks during a transition reach the page instead of its snapshot. */
+::view-transition {
+  pointer-events: none;
+}
+
+@keyframes inbox-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes inbox-row-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* No motion at all: the rows' own animations are named again, as they'd win over the catch-all. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-new(.inbox-row-enter):only-child,
+  ::view-transition-old(.inbox-row-exit):only-child {
+    animation: none;
+  }
+}
+
 /* Swells up to the dither's own opacity, whatever `--dither-opacity` sets it to, from half of it. */
 @keyframes dither-breathe {
   from {
@@ -257,5 +305,35 @@
   button,
   a {
     @apply focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent;
+  }
+
+  /* Thin scrollbars in the colour of the borders, on a clear track, wherever something scrolls. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+  }
+
+  /* The same for browsers without `scrollbar-color` (Safari), which style the scrollbar's parts instead. */
+  @supports not (scrollbar-color: auto) {
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track,
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      border: 2px solid transparent;
+      border-radius: 9999px;
+      background-color: var(--color-border-strong);
+      background-clip: padding-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: var(--color-muted);
+    }
   }
 }

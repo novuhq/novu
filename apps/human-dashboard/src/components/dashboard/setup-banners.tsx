@@ -111,7 +111,8 @@ export function SetupDoneBanner({ handle }: { handle: string }) {
   return (
     <FoldsAway action={dismissDoneBannerAction}>
       <section className="dither-side flex animate-rise-in flex-wrap items-center gap-3 rounded-lg border border-border-strong bg-subtle px-3.5 py-3 [--dither-opacity:0.75] motion-reduce:animate-none">
-        <MascotFace art="idle" mood="happy" className="size-7" />
+        {/* An icon here, not a character: it doesn't follow the pointer. */}
+        <MascotFace art="idle" mood="happy" still className="size-7" />
         <div className="flex min-w-56 flex-1 flex-col gap-px">
           <h2 className="text-[13px] leading-4.5 font-medium text-foreground">{handle} is set up</h2>
           <p className="text-xs leading-4 text-secondary">
