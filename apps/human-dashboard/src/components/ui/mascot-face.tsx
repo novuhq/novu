@@ -289,3 +289,34 @@ function settle(progress: number): number {
 function randomBetween(min: number, max: number): number {
   return min + Math.random() * (max - min);
 }
+
+/** How long the mascot beams at a time, and how long it looks ahead with open eyes in between. */
+const BEAMS_FOR_MS = { min: 1600, max: 3000 };
+const BEAMS_EVERY_MS = { min: 4000, max: 9000 };
+
+/**
+ * Whether the mascot beams right now, for `mood={beaming ? 'happy' : 'awake'}`. While `on`, it starts out
+ * beaming, then goes back and forth at random between open eyes and happy ones. For anyone who prefers
+ * reduced motion it keeps the happy face.
+ */
+export function useBeaming(on: boolean): boolean {
+  const [beaming, setBeaming] = useState(true);
+
+  useEffect(() => {
+    if (!on || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
+    let timer = 0;
+    const turn = (to: boolean) => {
+      setBeaming(to);
+      const { min, max } = to ? BEAMS_FOR_MS : BEAMS_EVERY_MS;
+      timer = window.setTimeout(() => turn(!to), randomBetween(min, max));
+    };
+    turn(true);
+
+    return () => window.clearTimeout(timer);
+  }, [on]);
+
+  return on && beaming;
+}

@@ -5,11 +5,11 @@ import { type ReactNode, useTransition } from 'react';
 
 import { finishOnboardingAction } from '@/app/(account)/onboarding/actions';
 import { ChannelIcon } from '@/components/channels/channel-icon';
+import { shareCard } from '@/components/dashboard/share-card';
 import { Eyebrow, StepTitle } from '@/components/onboarding/onboarding-shell';
 import { ClockTime } from '@/components/onboarding/parts';
 import { Badge } from '@/components/ui/badge';
 import { Button, SMALL_BUTTON } from '@/components/ui/button';
-import { toast } from '@/components/ui/toast';
 import { HOST_LABELS, type HostVia } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
@@ -170,16 +170,4 @@ function ReachRow({ icon, title, description, connected = false, action, onActio
       )}
     </li>
   );
-}
-
-/** Until the Share dialog exists (NV-9035), sharing the card means copying its link. */
-async function shareCard(handle: string, cardLink: string) {
-  const url = `https://${cardLink}`;
-
-  try {
-    await navigator.clipboard.writeText(url);
-    toast(`Copied the link to ${handle}’s card`);
-  } catch {
-    toast(`Couldn't copy. The link is: ${url}`, 'error');
-  }
 }

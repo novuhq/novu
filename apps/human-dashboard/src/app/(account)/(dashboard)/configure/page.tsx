@@ -1,27 +1,26 @@
 import type { Metadata } from 'next';
 
-import { ChannelsTable } from '@/components/channels/channels-table';
-import { CONFIGURE_PATH, DOCS_URL } from '@/components/dashboard/nav';
+import { CONFIGURE_DRAWER_PARAM, CONFIGURE_PATH, configureChannelPath, DOCS_URL } from '@/components/dashboard/nav';
 import { ResumeSetupCard, SetupDoneBanner } from '@/components/dashboard/setup-banners';
 import {
-  buildFinishSetupPrompt,
+  buildChannelPrompt,
   buildSetupCommand,
   buildSetupPrompt,
   maskSetupCommand,
   type SetupContext,
 } from '@/lib/agent-setup-prompt';
-import { findCurrentUser } from '@/lib/auth-page';
 import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
 import { agentDisplayName } from '@/lib/human-agent-api';
 import { describeAgentStatus } from '@/lib/human-agent-status';
 import { readApiKey } from '@/lib/human-api-key';
+import type { ChannelVia } from '@/lib/human-channels-api';
 import { loadChannelsOverview } from '@/lib/human-channels-overview';
 import { isSetupUnfinished, loadSetupSummary, requireSetUpAgent } from '@/lib/human-onboarding';
 import { listConnectedTools, readMcpUrl } from '@/lib/human-tools-api';
 import { resolveNovuApiUrl } from '@/lib/novu-api';
 
 import { AgentStatusPoll } from './agent-status-poll';
-import { AgentView } from './agent-view';
+import { ConfigureView } from './configure-view';
 
 export const metadata: Metadata = {
   title: 'Configure',
@@ -31,28 +30,37 @@ export const metadata: Metadata = {
 const CHANNELS_POLL_MS = 5000;
 
 /**
- * The operator's agent and how people see it. The agent is made in the onboarding, which is where an
- * operator without one is sent; what the onboarding leaves behind shows across the top here.
+ * The operator's agent: its card, its channels and the agent behind it. The agent is made in the
+ * onboarding, which is where an operator without one is sent; what the onboarding leaves behind shows
+ * across the top here.
  *
- * Agent and Channels were two pages; until the Configure page of the new design lands (NV-9034), the
- * channels table sits under the agent so nothing it does is lost.
+ * Whether a host reads the agent's mail comes from the onboarding's record of it, the same one its banners
+ * and the sidebar's dot go by: an approved CLI login, a connector that signed in, an agent that came from a
+ * terminal, and until NV-9037 the onboarding's stand-in after its prompt is copied. The API has no word
+ * for it yet.
+ *
+ * `?setup=telegram` (`configureChannelPath`) opens with that channel's drawer, for links such as the
+ * Inbox checklist's "Add Telegram".
  */
-export default async function AgentPage() {
-  const account = await requireHumanAccount({ returnTo: CONFIGURE_PATH });
+export default async function ConfigurePage(props: PageProps<'/configure'>) {
+  const openDrawer = readDrawerParam((await props.searchParams)[CONFIGURE_DRAWER_PARAM]);
+  const account = await requireHumanAccount({
+    returnTo: openDrawer ? configureChannelPath(openDrawer) : CONFIGURE_PATH,
+  });
   const progress = await requireSetUpAgent(account);
-  const { agent } = progress;
+  const { agent, user } = progress;
   const mcpUrl = readMcpUrl();
-  const [setup, secretKey, user, connectedTools, { rows, telegramSetup, slackSetup }] = await Promise.all([
+  const [setup, secretKey, connectedTools, { rows, telegramSetup, slackSetup }] = await Promise.all([
     loadSetupSummary(account, progress),
     loadApiKey(account),
-    findCurrentUser(),
     mcpUrl ? listConnectedTools(account) : [],
     loadChannelsOverview(account),
   ]);
 
   const context: SetupContext = { secretKey, apiUrl: resolveNovuApiUrl(account.region) };
   const command = buildSetupCommand(context);
-  const missing = rows.filter((row) => !row.connected).map((row) => row.via);
+  const operatorName = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
+  const { handle } = setup.agent;
   // With Telegram or Slack connected the setup is done, and there is nothing left to wait for.
   const settingUp = !rows.some((row) => row.via !== 'email' && row.connected);
   const status = describeAgentStatus(agent.id, rows);
@@ -61,42 +69,41 @@ export default async function AgentPage() {
     <>
       {settingUp && <AgentStatusPoll status={status} everyMs={CHANNELS_POLL_MS} />}
       {isSetupUnfinished(setup.step) ? (
-        <ResumeSetupCard handle={setup.agent.handle} step={setup.step} waiting={setup.waiting} />
+        <ResumeSetupCard handle={handle} step={setup.step} waiting={setup.waiting} />
       ) : (
-        setup.wentThroughSteps && !setup.doneBannerDismissed && <SetupDoneBanner handle={setup.agent.handle} />
+        setup.wentThroughSteps && !setup.doneBannerDismissed && <SetupDoneBanner handle={handle} />
       )}
-      <AgentView
-        agent={{
-          id: agent.id,
-          name: agentDisplayName(agent),
-          active: agent.active,
-          pictureUrl: agent.pictureUrl,
-          createdAt: agent.createdAt,
-        }}
+      <ConfigureView
+        initialDrawer={openDrawer}
+        agent={{ ...setup.agent, active: agent.active, hostConnected: !isSetupUnfinished(setup.step) }}
+        operatorName={operatorName}
         channels={rows}
         telegramSetup={telegramSetup}
         slackSetup={slackSetup}
+        slackAppName={agentDisplayName(agent)}
+        channelPrompts={{
+          telegram: buildChannelPrompt(context, 'telegram', handle),
+          slack: buildChannelPrompt(context, 'slack', handle),
+        }}
         setup={{
-          command,
-          commandDisplay: maskSetupCommand(command, secretKey),
           prompt: buildSetupPrompt(context, {
-            name: [user?.firstName, user?.lastName].filter(Boolean).join(' ') || undefined,
+            name: operatorName || undefined,
             email: user?.primaryEmailAddress?.emailAddress,
           }),
-          finishPrompt: buildFinishSetupPrompt(context, missing),
+          command,
+          commandDisplay: maskSetupCommand(command, secretKey),
         }}
         docsUrl={DOCS_URL}
         mcpUrl={mcpUrl}
         connectedTools={connectedTools}
       />
-      <ChannelsTable
-        rows={rows}
-        telegramSetup={telegramSetup}
-        slackSetup={slackSetup}
-        agentName={agentDisplayName(agent)}
-      />
     </>
   );
+}
+
+/** The channel whose drawer a link asked for, when it names one this page has a drawer for. */
+function readDrawerParam(value: string | string[] | undefined): ChannelVia | null {
+  return value === 'email' || value === 'telegram' || value === 'slack' ? value : null;
 }
 
 /** Without the key the page still explains the setup; the command then logs in from the terminal instead. */
@@ -104,7 +111,7 @@ async function loadApiKey(account: HumanAccount): Promise<string | null> {
   try {
     return await readApiKey(account);
   } catch (error) {
-    console.error('Failed to load the API key for the Agent page', error);
+    console.error('Failed to load the API key for the Configure page', error);
 
     return null;
   }

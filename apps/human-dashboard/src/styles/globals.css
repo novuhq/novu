@@ -299,6 +299,23 @@
 }
 
 @layer base {
+  /*
+   * The scrollbar's room is kept at all times, so a page that grows taller than the window (a section
+   * folding open, a longer list) doesn't shift sideways when the scrollbar shows up.
+   */
+  html {
+    scrollbar-gutter: stable;
+  }
+
+  /*
+   * A drawer locks the page's scroll and makes up for the scrollbar it hides with a margin. The room is
+   * kept already, so that margin would shift the page instead. Overrides the lock's own `!important`.
+   */
+  html body[data-scroll-locked] {
+    /* biome-ignore lint/complexity/noImportantStyles: only an important rule wins over the scroll lock's */
+    margin-right: 0 !important;
+  }
+
   body {
     @apply bg-background font-sans text-foreground antialiased;
   }
