@@ -56,19 +56,23 @@ export function cardLinkOf(handle: string): string {
 }
 
 /*
- * The commands below are the ones in the design. The CLI gets these names with NV-9033 and the
- * one-time code with NV-9037; until then they show what the operator will run, not what works today.
+ * The commands below are the CLI's (`packages/agentinbox`), except `connect` with its one-time code,
+ * which comes with NV-9037; until then that one shows what the operator will run, not what works today.
  */
 
-/** The CLI's package on npm. Installed, its command is `inbox`. */
+/** The CLI's package on npm. Installed with `npm install -g`, its command is `agentinbox`. */
 const CLI_PACKAGE = '@agentinbox/cli';
+const CLI = 'agentinbox';
+
+/** A command copied on its own runs through npx, which needs nothing installed first. */
+const NPX_CLI = `npx ${CLI_PACKAGE}`;
 
 /** The terminal's way to do step 1. */
 export function setupCommand(handle: string): string {
-  return `npx ${CLI_PACKAGE} setup --name ${handle}`;
+  return `${NPX_CLI} setup --agent-name ${handle}`;
 }
 
-export const INSTALL_SKILLS_COMMAND = 'inbox skills add';
+export const INSTALL_SKILLS_COMMAND = `${NPX_CLI} skill install`;
 
 type ConnectDetails = {
   handle: string;
@@ -81,9 +85,9 @@ type ConnectDetails = {
 export function connectCommands({ handle, code }: Pick<ConnectDetails, 'handle' | 'code'>) {
   return [
     { label: 'Install the CLI:', command: `npm install -g ${CLI_PACKAGE}` },
-    { label: 'Connect:', command: `inbox connect ${handle} --code ${code}` },
-    { label: 'Add the skill:', command: INSTALL_SKILLS_COMMAND },
-    { label: 'Check it works:', command: 'inbox list' },
+    { label: 'Connect:', command: `${CLI} connect ${handle} --code ${code}` },
+    { label: 'Add the skill:', command: `${CLI} skill install` },
+    { label: 'Check it works:', command: `${CLI} inbox list` },
   ];
 }
 
@@ -107,7 +111,11 @@ export function connectPrompt(details: ConnectDetails): PromptSpan[][] {
       { text: command, tone: 'strong' },
     ]),
     [],
-    [{ text: 'From now on, run ' }, { text: 'inbox unread', tone: 'strong' }, { text: ' at the start of every task.' }],
+    [
+      { text: 'From now on, run ' },
+      { text: `${CLI} inbox list --filter unread`, tone: 'strong' },
+      { text: ' at the start of every task.' },
+    ],
     [{ text: 'Reply in the same thread. ' }, { text: 'Ask me before you message anyone new.', tone: 'accent' }],
   ];
 }

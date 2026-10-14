@@ -175,7 +175,7 @@ export function ConnectStep({ handle, address, code, waiting }: ConnectStepProps
   );
 }
 
-/** Until the skills can be downloaded from here (NV-9033), the button hands over the command that adds them. */
+/** Until the skills can be downloaded from here, the button hands over the command that installs them. */
 async function installSkills() {
   try {
     await navigator.clipboard.writeText(INSTALL_SKILLS_COMMAND);

@@ -42,7 +42,7 @@ away with its ticket:
 | Choosing the address, "available" / "taken", and the address offered instead. The API assigns its own. | NV-9032 |
 | The test email, and its reply landing a few seconds later. | NV-9032 |
 | The one-time code, and a host connecting a few seconds after the prompt is copied. An approved CLI login and a connector that signed in count for real. | NV-9037 |
-| The commands in the steps (`npx @agentinbox/cli`, `inbox …`) are the ones in the design. | NV-9033 |
+| `agentinbox connect … --code …` on step 3. The other commands are the CLI's; today a host connects with `login`. | NV-9037 |
 | "Share card" copies the link. | NV-9035 |
 
 ## Develop

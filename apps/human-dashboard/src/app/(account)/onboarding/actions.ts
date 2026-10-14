@@ -33,7 +33,7 @@ export async function checkAddressAction(handle: string): Promise<AddressCheck |
 }
 
 /**
- * Step 1: makes the agent under the name the operator gave it. The same call as `human setup`, so running
+ * Step 1: makes the agent under the name the operator gave it. The same call as `setup`, so running
  * it for an agent a terminal made in the meantime only names that one.
  */
 export async function createInboxAction(input: { name: string; handle: string }): Promise<CreateInboxResult> {
