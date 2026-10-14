@@ -33,7 +33,7 @@ export class UpdateHumanAgent {
     );
 
     if (!existing || existing.runtime !== 'human_relay') {
-      throw new NotFoundException('There is no Human agent yet. Run `human setup` first.');
+      throw new NotFoundException('There is no agent yet. Run `npx @agentinbox/cli setup` first.');
     }
 
     const agent = await this.humanAgentIdentity.apply(existing, {

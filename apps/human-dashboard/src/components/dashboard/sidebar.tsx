@@ -13,7 +13,7 @@ export type SidebarAgent = {
   name: string;
   /** The line under the name: "Not set up" before the first setup, then "Your agent". */
   status: string;
-  /** Whether `human setup` has made the agent yet. Its picture sleeps until then. */
+  /** Whether `setup` has made the agent yet. Its picture sleeps until then. */
   setUp: boolean;
   /** The picture the operator gave the agent, when there is one. */
   pictureUrl?: string;

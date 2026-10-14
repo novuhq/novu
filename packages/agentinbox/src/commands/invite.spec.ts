@@ -8,6 +8,7 @@ const issueTelegramSubscriberLink = vi.fn();
 const setupRelay = vi.fn();
 const createInvite = vi.fn();
 const getContact = vi.fn();
+const listContacts = vi.fn();
 const requestAddressVerification = vi.fn();
 const saveConfig = vi.fn();
 const clientFromConfig = vi.fn();
@@ -23,6 +24,7 @@ vi.mock('../api/agent-inbox', () => ({
   setupRelay: (...args: unknown[]) => setupRelay(...args),
   createInvite: (...args: unknown[]) => createInvite(...args),
   getContact: (...args: unknown[]) => getContact(...args),
+  listContacts: async (...args: unknown[]) => (await listContacts(...args)) ?? { data: [], next: null },
   requestAddressVerification: (...args: unknown[]) => requestAddressVerification(...args),
 }));
 
@@ -97,6 +99,7 @@ function resetMocks() {
   setupRelay.mockReset();
   createInvite.mockReset();
   getContact.mockReset();
+  listContacts.mockReset();
   requestAddressVerification.mockReset();
   saveConfig.mockReset();
   clientFromConfig.mockReset();
@@ -356,6 +359,23 @@ describe('runInvite with --via', () => {
 
     expect(result.alreadyLinked).toBe(false);
     expect(stdoutText()).toContain('A different address is already verified');
+  });
+
+  it('does not send again when the address given is the one already verified', async () => {
+    listAgentIntegrations.mockResolvedValue([emailLink()]);
+    getContact.mockResolvedValue({
+      id: 'carol',
+      channels: [{ via: 'email', status: 'verified', address: 'c***@acme.com' }],
+    });
+    listContacts.mockResolvedValue({
+      data: [{ id: 'carol', channels: [{ via: 'email', status: 'verified', address: 'carol@acme.com' }] }],
+      next: null,
+    });
+
+    const result = await runInvite('carol', { via: 'email', email: 'carol@acme.com', async: true });
+
+    expect(result).toEqual({ contactId: 'carol', linkedOn: ['email'], alreadyLinked: true });
+    expect(requestAddressVerification).not.toHaveBeenCalled();
   });
 
   it('returns immediately with --async after sending the verification email', async () => {

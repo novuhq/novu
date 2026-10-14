@@ -37,7 +37,7 @@ const loadHumanAccount = cache(async (): Promise<HumanAccount | null> => {
 /**
  * What the sign-up webhook runs for a new operator (`app/api/webhooks/clerk`): the account, remembered on
  * the Clerk user. A dashboard visit that got there first leaves nothing to do. The agent is not made
- * here: the operator creates it with `human setup`, as the Agent page asks them to.
+ * here: the operator creates it with `setup`, as the Agent page asks them to.
  */
 export async function ensureAccountForSignUp(humanUserId: string): Promise<void> {
   const clerk = await clerkClient();
@@ -93,7 +93,7 @@ export function readStoredBackingAccount(user: User): StoredBackingAccount | nul
  * once the account is remembered. The API call is safe to repeat, so a webhook that is late, or can't
  * reach a local dashboard at all, leaves nothing missing.
  *
- * The account starts without an agent. `human setup` creates it, or a claim brings its own.
+ * The account starts without an agent. `setup` creates it, or a claim brings its own.
  */
 export async function ensureStoredBackingAccount(user: User, regionForNewAccount: HumanRegion) {
   const stored = readStoredBackingAccount(user);

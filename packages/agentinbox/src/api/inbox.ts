@@ -37,6 +37,17 @@ export interface Conversation {
   lastActivityAt: string;
 }
 
+/** What became of a sent card, ready to show. */
+export interface InboxCardState {
+  status: string;
+  /** e.g. "waiting for Maya", "Approved by Omer in Slack". */
+  label: string;
+  /** The picked option or pressed button. */
+  optionLabel?: string;
+  /** The reply to an `ask`. */
+  text?: string;
+}
+
 export interface InboxMessage {
   id: string;
   from: InboxSender;
@@ -46,6 +57,8 @@ export interface InboxMessage {
   text: string;
   attachments?: Array<{ type?: string; name?: string; mimeType?: string }>;
   interaction?: { id: string; kind: string; status?: string };
+  /** Set on the row a question or message the agent sent has: what became of it. */
+  card?: { kind: string; state?: InboxCardState };
   at: string;
 }
 
@@ -58,6 +71,8 @@ export interface ConversationView {
   conversation: Conversation;
   messages: InboxMessage[];
   hasMore: boolean;
+  /** The conversation's summary block, printed as is with `--json`. */
+  details?: Record<string, unknown>;
 }
 
 export interface ListInboxQuery {
@@ -90,11 +105,20 @@ export async function getConversation(
   id: string,
   query: { limit?: number; before?: string; agentIdentifier?: string }
 ): Promise<ConversationView> {
-  type ApiView = Omit<ConversationView, 'conversation'> & { thread: Conversation };
+  type ApiView = Omit<ConversationView, 'conversation'> & {
+    thread: Conversation;
+    details?: { threadId?: string } & Record<string, unknown>;
+  };
   const res = await client.axios.get<{ data?: ApiView } | ApiView>(conversationPath(id), { params: query });
-  const { thread, ...view } = unwrap<ApiView>(res.data);
+  const { thread, details, ...view } = unwrap<ApiView>(res.data);
 
-  return { conversation: thread, ...view };
+  if (!details) {
+    return { conversation: thread, ...view };
+  }
+
+  const { threadId, ...rest } = details;
+
+  return { conversation: thread, ...view, details: { conversationId: threadId, ...rest } };
 }
 
 export async function markConversationRead(

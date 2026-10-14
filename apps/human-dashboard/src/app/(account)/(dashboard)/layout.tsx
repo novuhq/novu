@@ -49,7 +49,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 }
 
 /**
- * Who the sidebar says the agent is: "Not set up" until the operator has run `human setup`. The account
+ * Who the sidebar says the agent is: "Not set up" until the operator has run `setup`. The account
  * comes from the sign-up webhook, but the first page after signing up usually loads before that webhook
  * has run. So the shell asks for the account the same way the pages do, which creates it on the spot
  * when it isn't there yet.

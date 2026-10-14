@@ -6,7 +6,7 @@ import { info, promptLine } from '../cli-io';
 import { CLI_COMMAND } from '../config';
 import { renderQR } from '../qr';
 import { startWaitIndicator } from '../spinner';
-import { contactIdFromEmail, isEmailAddress, resolveEmailContact } from './email-contact';
+import { contactIdFromEmail, findContactByEmail, isEmailAddress, resolveEmailContact } from './email-contact';
 import { clientFromConfig, handleError } from './interact';
 import {
   CHANNEL_NAMES,
@@ -355,7 +355,11 @@ async function inviteEmail(
   const contact = await getContact(client, contactId, agentIdentifier).catch(() => null);
   const emailChannel = contact?.channels?.find((channel) => channel.via === 'email');
   const verified = emailChannel?.status === 'verified';
-  const sameAddress = options.email?.trim().toLowerCase() === emailChannel?.address?.toLowerCase();
+  // A single contact only shows its address masked, so the exact address is checked on the contact list.
+  const sameAddress =
+    verified && options.email !== undefined
+      ? (await findContactByEmail(client, agentIdentifier, options.email))?.id === contactId
+      : false;
 
   if (verified && (!options.email || sameAddress)) {
     info(`${contactId} is already verified on email (${emailChannel?.address ?? contact?.email}).`);

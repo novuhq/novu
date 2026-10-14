@@ -183,8 +183,16 @@ function formatInboxMessage(message: InboxMessage): string {
   const lines = [`${at}  ${who}`];
 
   if (message.interaction) {
-    const status = message.interaction.status ? ` → ${message.interaction.status}` : '';
-    lines.push(pc.yellow(`  [${message.interaction.kind} ${message.interaction.id}${status}]`));
+    const state = message.card?.state;
+    const status = state?.label ?? message.interaction.status;
+    lines.push(pc.yellow(`  [${message.interaction.kind} ${message.interaction.id}${status ? ` → ${status}` : ''}]`));
+
+    // The answer, so a question that was left with --async or a timeout can be read here.
+    if (state?.optionLabel) {
+      lines.push(pc.green(`  chose "${stripTerminalControls(state.optionLabel)}"`));
+    } else if (state?.text) {
+      lines.push(pc.green(`  answered: ${stripTerminalControls(state.text)}`));
+    }
   }
 
   if (message.text) {

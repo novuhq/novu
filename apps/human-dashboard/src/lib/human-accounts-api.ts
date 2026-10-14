@@ -41,7 +41,7 @@ export function claimKeylessSetup(
 }
 
 /**
- * Approves the `human login` waiting for this code, so that CLI gets the account's Development key. With the
+ * Approves the `login` waiting for this code, so that CLI gets the account's Development key. With the
  * claim token of the CLI's keyless setup, the setup moves into the account first. Creates the backing
  * organization when the account has none yet.
  */
@@ -61,7 +61,7 @@ export function approveCliLogin(
   });
 }
 
-/** A `human login` that is still waiting to be approved or denied. */
+/** A `login` that is still waiting to be approved or denied. */
 export type PendingCliLogin = {
   userCode: string;
   /** Name of the computer the CLI runs on, as the CLI reported it. Not verified: only ever render it as text. */
@@ -69,7 +69,7 @@ export type PendingCliLogin = {
 };
 
 /**
- * The `human login` waiting for this code. Throws a `HumanApiError` with the code `cli_login_not_found`
+ * The `login` waiting for this code. Throws a `HumanApiError` with the code `cli_login_not_found`
  * once it was approved, denied or ran out.
  */
 export function findCliLogin(region: HumanRegion, userCode: string): Promise<PendingCliLogin> {
@@ -77,7 +77,7 @@ export function findCliLogin(region: HumanRegion, userCode: string): Promise<Pen
 }
 
 /**
- * Ends the `human login` waiting for this code. `denied` is false when it was already gone, which says nothing
+ * Ends the `login` waiting for this code. `denied` is false when it was already gone, which says nothing
  * about how: it may have been approved. Throws `cli_login_being_approved` while an approval is at work on it.
  */
 export function denyCliLogin(region: HumanRegion, userCode: string): Promise<{ denied: boolean }> {

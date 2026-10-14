@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { type Contact, getContact, listContacts } from '../api/agent-inbox';
 import { type ApiClient, ApiError } from '../api/client';
+import { CLI_COMMAND } from '../config';
 import { parseEmailAddress } from './link-channel';
 
 /** Enough pages to cover every contact the API lets one environment list (100 per page). */
@@ -33,79 +34,106 @@ export function contactIdFromEmail(email: string, withSuffix = false): string {
   return `${base}-${createHash('sha256').update(address).digest('hex').slice(0, 6)}`;
 }
 
-function hasAddress(contact: Contact, email: string): boolean {
+/** Matches the API's `maskEmail`: a single contact's email channel only ever shows the address like this. */
+export function maskEmail(email: string): string {
+  const address = email.trim();
+  const at = address.indexOf('@');
+
+  return at <= 0 ? '***' : `${address.charAt(0)}***@${address.slice(at + 1)}`;
+}
+
+/**
+ * Only an email channel this relay verified binds an address to a contact. The profile email is a shared
+ * field anyone can set, so it is never taken as proof that the contact owns the mailbox.
+ */
+function hasVerifiedAddress(contact: Contact, email: string): boolean {
   const address = email.trim().toLowerCase();
 
-  return (
-    contact.email?.toLowerCase() === address ||
-    (contact.channels ?? []).some((channel) => channel.via === 'email' && channel.address?.toLowerCase() === address)
+  return (contact.channels ?? []).some(
+    (channel) => channel.via === 'email' && channel.address?.toLowerCase() === address
   );
 }
 
-/** The contact that already has this email address, on its profile or as its email channel. */
+/** The contact this relay verified the address for. More than one is ambiguous, so it refuses to pick. */
 export async function findContactByEmail(
   client: ApiClient,
   agentIdentifier: string,
   email: string
 ): Promise<Contact | null> {
+  const matches: Contact[] = [];
   let after: string | undefined;
 
   for (let page = 0; page < MAX_CONTACT_PAGES; page++) {
     const result = await listContacts(client, { limit: 100, agentIdentifier, ...(after ? { after } : {}) });
-    const match = result.data.find((contact) => hasAddress(contact, email));
-
-    if (match) {
-      return match;
-    }
+    matches.push(...result.data.filter((contact) => hasVerifiedAddress(contact, email)));
 
     if (!result.next) {
-      return null;
+      break;
     }
 
     after = result.next;
   }
 
-  return null;
+  if (matches.length > 1) {
+    throw new Error(
+      `${email} is verified for more than one contact (${matches.map((contact) => contact.id).join(', ')}). Pass the contact id instead.`
+    );
+  }
+
+  return matches[0] ?? null;
 }
 
-async function contactExists(client: ApiClient, id: string, agentIdentifier: string): Promise<boolean> {
+/**
+ * Whether a new contact for `email` may use `id`: nobody has it yet, or it is the contact an earlier invite
+ * made for this same address and is still waiting for the click. Then the invite is sent to it again
+ * instead of making a second contact.
+ */
+async function idFitsNewcomer(client: ApiClient, id: string, agentIdentifier: string, email: string): Promise<boolean> {
+  let contact: Contact;
   try {
-    await getContact(client, id, agentIdentifier);
-
-    return true;
+    contact = await getContact(client, id, agentIdentifier);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
-      return false;
+      return true;
     }
 
     throw err;
   }
+
+  const channel = contact.channels?.find((candidate) => candidate.via === 'email');
+
+  return channel !== undefined && channel.status !== 'verified' && channel.address === maskEmail(email);
 }
 
 export interface EmailContact {
   id: string;
-  /** False when no contact has this address yet, so `id` is the one a new contact gets. */
+  /** False when this relay has not verified the address for anyone, so `id` is the one to invite. */
   exists: boolean;
 }
 
 /**
- * Who an email address stands for: the contact that has it, or the id a new contact for it gets.
- * The plain id from the address is used unless another contact already has it.
+ * Who an email address stands for: the contact this relay verified it for, or the id to invite it as.
+ * The plain id from the address is used unless it belongs to someone else, or `reserved` holds it
+ * (another new address in the same command).
  */
 export async function resolveEmailContact(
   client: ApiClient,
   agentIdentifier: string,
-  email: string
+  email: string,
+  reserved: ReadonlySet<string> = new Set()
 ): Promise<EmailContact> {
   const existing = await findContactByEmail(client, agentIdentifier, email);
   if (existing) {
     return { id: existing.id, exists: true };
   }
 
-  const id = contactIdFromEmail(email);
-  if (!(await contactExists(client, id, agentIdentifier))) {
-    return { id, exists: false };
+  for (const id of [contactIdFromEmail(email), contactIdFromEmail(email, true)]) {
+    if (!reserved.has(id) && (await idFitsNewcomer(client, id, agentIdentifier, email))) {
+      return { id, exists: false };
+    }
   }
 
-  return { id: contactIdFromEmail(email, true), exists: false };
+  throw new Error(
+    `Could not pick a contact id for ${email}. Choose one: ${CLI_COMMAND} contact invite <id> --via email --email ${email}`
+  );
 }

@@ -386,7 +386,7 @@ describe('CreateInteraction', () => {
       expect.fail('should have thrown');
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
-      expect((err as NotFoundException).message).to.include('human setup');
+      expect((err as NotFoundException).message).to.include('npx @agentinbox/cli setup');
     }
   });
 
@@ -750,7 +750,7 @@ describe('CreateInteraction', () => {
       }
 
       expect(thrown?.getStatus()).to.equal(403);
-      expect(thrown?.message).to.include('human login');
+      expect(thrown?.message).to.include('npx @agentinbox/cli login');
       expect(agentRepository.findOne.called).to.equal(false);
     });
 
@@ -762,7 +762,7 @@ describe('CreateInteraction', () => {
       const thrown = (await usecase.execute(command as any).catch((error) => error)) as HttpException;
 
       expect(thrown.getStatus()).to.equal(403);
-      expect(thrown.message).to.include('human setup --secret-key');
+      expect(thrown.message).to.include('npx @agentinbox/cli setup --secret-key');
     });
 
     it('ignores the cap for non-keyless organizations', async () => {

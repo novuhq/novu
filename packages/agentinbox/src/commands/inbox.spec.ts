@@ -305,6 +305,29 @@ describe('formatters', () => {
     expect(out).toContain('[approve hint_1 → approved]');
     expect(out).toContain('--before act_1');
   });
+
+  it('shows the answer to a question, so one left with --async or a timeout can be read later', () => {
+    const asked = (id: string, kind: string, state: Record<string, string>) => ({
+      id,
+      from: 'agent' as const,
+      text: '',
+      interaction: { id: `hint_${id}`, kind, status: 'answered' },
+      card: { kind, state: { status: 'answered', ...state } },
+      at: '2026-10-09T11:51:00.000Z',
+    });
+    const out = formatConversationView({
+      conversation: conversation(),
+      hasMore: false,
+      messages: [
+        asked('c', 'choose', { label: 'Chosen by Ada in Telegram', optionLabel: 'Staging' }),
+        asked('a', 'ask', { label: 'Answered by Ada in Telegram', text: 'prod, after 6pm' }),
+      ],
+    });
+
+    expect(out).toContain('[choose hint_c → Chosen by Ada in Telegram]');
+    expect(out).toContain('chose "Staging"');
+    expect(out).toContain('answered: prod, after 6pm');
+  });
 });
 
 describe('inbox commands', () => {

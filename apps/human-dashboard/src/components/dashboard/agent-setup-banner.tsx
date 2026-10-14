@@ -7,7 +7,7 @@ import { buttonClassName } from '@/components/ui/button';
 
 /**
  * The banner at the top of a page that has nothing to work with until the agent exists. It sends the
- * operator to the Configure page, which walks them through `human setup`.
+ * operator to the Configure page, which walks them through `setup`.
  */
 export function AgentSetupBanner({ children }: { children: ReactNode }) {
   return (

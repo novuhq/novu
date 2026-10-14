@@ -295,7 +295,9 @@ export async function resolveEmailRecipients(
       continue;
     }
 
-    const contact = await resolveEmailContact(client, agentIdentifier, value);
+    // Two new addresses in one command must not end up as the same contact.
+    const reserved = new Set(newcomers.map((newcomer) => newcomer.id));
+    const contact = await resolveEmailContact(client, agentIdentifier, value, reserved);
     if (contact.exists) {
       resolved.push(contact.id);
     } else if (isReply) {
@@ -307,7 +309,7 @@ export async function resolveEmailRecipients(
 
   if (newcomers.length > 0) {
     for (const newcomer of newcomers) {
-      await runInvite(newcomer.id, { via: 'email', email: newcomer.email, async: true });
+      await runInvite(newcomer.id, { via: 'email', email: newcomer.email, async: true, apiUrl: client.apiUrl });
     }
 
     const who = newcomers.map((newcomer) => newcomer.email).join(', ');
