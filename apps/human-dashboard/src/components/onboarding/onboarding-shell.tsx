@@ -7,7 +7,7 @@ import { ONBOARDING_STEPS, type OnboardingStep, STEP_LABELS } from '@/lib/onboar
 import { cn } from '@/lib/utils';
 
 type OnboardingShellProps = {
-  /** The right end of the top bar: who is signed in, or the way out of the steps. */
+  /** The right end of the top bar: who is signed in, and the way to sign out. */
   aside: ReactNode;
   children: ReactNode;
 };
@@ -20,10 +20,7 @@ export function OnboardingShell({ aside, children }: OnboardingShellProps) {
   return (
     <div className="relative isolate flex min-h-dvh flex-col overflow-x-clip">
       <Pattern />
-      {/*
-        A set height. What stands at its right end changes with the step, and the button of steps 2 and 3
-        is taller than the words of the others: a header that grew with it would shift the card below.
-      */}
+      {/* A set height, as in the design, so the card below starts at the same place on every step. */}
       <header className="flex h-16.5 shrink-0 items-center gap-4 px-4 md:px-10">
         <Brand />
         <div className="ml-auto flex min-w-0 items-center gap-4">{aside}</div>

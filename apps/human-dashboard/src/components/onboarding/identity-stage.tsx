@@ -2,6 +2,7 @@
 
 import { Bot, Pencil, Terminal } from 'lucide-react';
 import { type ReactNode, useEffect, useState } from 'react';
+import QRCode from 'react-qr-code';
 
 import { ChannelIcon } from '@/components/channels/channel-icon';
 import { CornerTicks } from '@/components/onboarding/onboarding-shell';
@@ -40,7 +41,9 @@ type IdentityStageProps = {
 };
 
 /**
- * Where the card sits on the stage and how far it leans: it straightens up as the setup moves on.
+ * Where the card sits on the stage and how far it leans: 2° through the first three steps, straight once
+ * a host has connected. The design leans the draft 4°; it leans like the next two here, around the same
+ * middle, so it doesn't turn as it moves on.
  *
  * The design places a leaning card by the box around it (66px from the top while it is a draft, 111px
  * once issued, 130px while waiting). The card here turns around its own middle, so `top` and `left` are
@@ -52,7 +55,7 @@ type IdentityStageProps = {
  * The slot above the card and the ring behind it are placed the same way.
  */
 const CARD_POSE: Record<IdentityState, string> = {
-  draft: 'top-[calc(var(--mid)-222px)] left-[33.5px] rotate-4',
+  draft: 'top-[calc(var(--mid)-222px)] left-[33.5px] rotate-2',
   issued: 'top-[calc(var(--mid)-221px)] left-[38px] rotate-2',
   waiting: 'top-[calc(var(--mid)-186px)] left-[41px] rotate-2',
   connected: 'top-[calc(var(--mid)-170px)] left-[39px]',
@@ -152,7 +155,7 @@ export function IdentityStage({
             CARD_LOOK[state]
           )}
         >
-          <Portrait state={state} name={name} gotMail={gotMail} />
+          <Portrait state={state} name={name} address={address} gotMail={gotMail} />
 
           <div className="flex flex-col items-center gap-1 px-5 pt-4 pb-3 text-center">
             <p className="flex max-w-full items-center">
@@ -273,8 +276,13 @@ function useBeaming(connected: boolean): boolean {
  */
 const FACE = 'absolute top-10 left-1/2 size-30 -translate-x-1/2';
 
-/** The top of the card: the mascot on its dither, with the labels of an ID photo around it. */
-function Portrait({ state, name, gotMail }: { state: IdentityState; name: string; gotMail: boolean }) {
+type PortraitProps = Pick<IdentityStageProps, 'state' | 'name' | 'address'> & { gotMail: boolean };
+
+/**
+ * The top of the card: the mascot on its dither, with the labels of an ID photo around it, and a code to
+ * scan that starts an email to the agent once it has its address.
+ */
+function Portrait({ state, name, address, gotMail }: PortraitProps) {
   const draft = state === 'draft';
   const connected = state === 'connected';
   const beaming = useBeaming(connected);
@@ -305,9 +313,6 @@ function Portrait({ state, name, gotMail }: { state: IdentityState; name: string
       <p className="absolute top-3.5 left-4 font-mono text-[10px] leading-3.5 font-medium tracking-[0.8px] text-muted">
         AGENT CARD
       </p>
-      <PortraitChip shown={draft} dot="bg-muted">
-        draft
-      </PortraitChip>
       <PortraitChip shown={state === 'connected'} dot="bg-success">
         active
       </PortraitChip>
@@ -346,6 +351,18 @@ function Portrait({ state, name, gotMail }: { state: IdentityState; name: string
             className={cn(FACE, FADES, mood === 'asleep' && FADED_OUT)}
           />
         </>
+      )}
+      {/* Light on the dark portrait, as in the design: `Icon · 44×44`, 16px from the right, 4px from the bottom. */}
+      {!draft && (
+        <QRCode
+          value={`mailto:${address}`}
+          size={44}
+          level="L"
+          bgColor="transparent"
+          fgColor="#ebe2d6"
+          aria-label={`QR code that starts an email to ${address}`}
+          className="absolute right-4 bottom-1 animate-overlay-in motion-reduce:animate-none"
+        />
       )}
       {caption && (
         <p

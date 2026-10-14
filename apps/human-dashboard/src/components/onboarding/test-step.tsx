@@ -2,15 +2,13 @@
 
 import { ArrowDown, ArrowRight, Check, Send } from 'lucide-react';
 import { useTransition } from 'react';
-import QRCode from 'react-qr-code';
 
 import { leaveTestAction, sendTestEmailAction } from '@/app/(account)/onboarding/actions';
 import { ChannelIcon } from '@/components/channels/channel-icon';
 import { Eyebrow, StepLead, StepTitle } from '@/components/onboarding/onboarding-shell';
 import { ClockTime, Refresh, Spinner } from '@/components/onboarding/parts';
-import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
+import { Button, SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
-import { Dialog, DialogClose, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 type TestStepProps = {
@@ -59,29 +57,6 @@ export function TestStep({ handle, address, operatorEmail, sentAt, replyAt }: Te
       <div className="flex min-h-13.5 items-center gap-3 rounded-[10px] border border-border-strong bg-subtle py-3 pr-3 pl-4">
         <ChannelIcon via="email" className="size-5 [&>svg]:size-2.75" />
         <p className="min-w-0 flex-1 truncate font-mono text-base leading-5.5 font-medium text-foreground">{address}</p>
-        <Dialog>
-          <DialogTrigger className={buttonClassName('quiet', SMALL_BUTTON)}>Show QR</DialogTrigger>
-          <DialogContent
-            title={`Write to ${handle}`}
-            description="Scan the code with your phone to start an email to this address."
-            className="max-w-90"
-            footer={<DialogClose className={buttonClassName('secondary')}>Done</DialogClose>}
-          >
-            <div className="flex flex-col items-center gap-3">
-              <div className="rounded-md bg-foreground p-3">
-                <QRCode
-                  value={`mailto:${address}`}
-                  size={168}
-                  level="M"
-                  bgColor="#ebe2d6"
-                  fgColor="#0a0908"
-                  aria-label={`QR code that starts an email to ${address}`}
-                />
-              </div>
-              <p className="font-mono text-xs leading-4 break-all text-default">{address}</p>
-            </div>
-          </DialogContent>
-        </Dialog>
         <CopyButton value={address} label="Copy the address" variant="secondary" className={SMALL_BUTTON}>
           Copy
         </CopyButton>

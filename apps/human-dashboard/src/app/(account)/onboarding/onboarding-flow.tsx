@@ -1,7 +1,7 @@
 'use client';
 
 import { useClerk } from '@clerk/nextjs';
-import { type ReactNode, useState, useTransition } from 'react';
+import { useState } from 'react';
 
 import { AddressStep, type AgentDraft } from '@/components/onboarding/address-step';
 import { ConnectStep } from '@/components/onboarding/connect-step';
@@ -10,7 +10,6 @@ import { OnboardingShell, SetupCard, StepRail } from '@/components/onboarding/on
 import { TimeAgo } from '@/components/onboarding/parts';
 import { ReachStep } from '@/components/onboarding/reach-step';
 import { TestStep } from '@/components/onboarding/test-step';
-import { Button, SMALL_BUTTON } from '@/components/ui/button';
 import { StatusPoll } from '@/components/ui/status-poll';
 import { toast } from '@/components/ui/toast';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
@@ -19,7 +18,7 @@ import type { OnboardingView } from '@/lib/human-onboarding';
 import { addressOf, cardLinkOf, type OnboardingStep, PLACEHOLDER_HANDLE } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
-import { readOnboardingStatusAction, skipForNowAction } from './actions';
+import { readOnboardingStatusAction } from './actions';
 
 const IDENTITY_STATE: Record<OnboardingStep, IdentityState> = {
   address: 'draft',
@@ -67,7 +66,7 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
   const testPassed = step === 'test' && Boolean(test.replyAt);
 
   return (
-    <OnboardingShell aside={<Aside step={step} email={operator.email} />}>
+    <OnboardingShell aside={<Aside email={operator.email} />}>
       <SetupCard
         stage={
           <IdentityStage
@@ -154,48 +153,13 @@ function describeFigure(step: OnboardingStep, draft: AgentDraft): string {
   return step === 'reach' ? 'fig. 04  issued and connected' : 'fig. 02  issued';
 }
 
-/**
- * The right end of the top bar: who is signed in on step 1, the way out on steps 2 and 3, and nothing to
- * do on 4. Each of the three fades in when its turn comes; steps 2 and 3 share theirs, so it stays put.
- */
-function Aside({ step, email }: { step: OnboardingStep; email: string | null }) {
-  const shows = step === 'address' ? 'account' : step === 'reach' ? 'done' : 'way-out';
-
+/** The right end of the top bar, the same on every step: who is signed in, and the way to sign out. */
+function Aside({ email }: { email: string | null }) {
   return (
-    <div key={shows} className="flex min-w-0 animate-overlay-in items-center gap-4 motion-reduce:animate-none">
-      {shows === 'account' && (
-        <>
-          {email && <AsideNote>{email}</AsideNote>}
-          <SignOutButton />
-        </>
-      )}
-      {shows === 'done' && <AsideNote>Setup complete</AsideNote>}
-      {shows === 'way-out' && (
-        <>
-          <AsideNote className="hidden sm:block">You can finish this anytime</AsideNote>
-          <SkipButton />
-        </>
-      )}
-    </div>
-  );
-}
-
-function AsideNote({ className, children }: { className?: string; children: ReactNode }) {
-  return <p className={`min-w-0 truncate font-mono text-xs leading-4 text-muted ${className ?? ''}`}>{children}</p>;
-}
-
-function SkipButton() {
-  const [leaving, startLeaving] = useTransition();
-
-  return (
-    <Button
-      variant="quiet"
-      className={SMALL_BUTTON}
-      pending={leaving}
-      onClick={() => startLeaving(() => skipForNowAction())}
-    >
-      Skip for now
-    </Button>
+    <>
+      {email && <p className="min-w-0 truncate font-mono text-xs leading-4 text-muted">{email}</p>}
+      <SignOutButton />
+    </>
   );
 }
 

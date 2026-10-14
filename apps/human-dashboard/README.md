@@ -25,8 +25,9 @@ Each Human account is backed by a hidden Novu organization that the Novu API cre
 
 An operator gets an agent in one of two ways, and both end in the dashboard:
 
-- **Sign-up in the dashboard.** `/onboarding` walks them through the four steps. "Skip for now" opens
-  the dashboard early; banners on Inbox and Configure lead back to the step that was left.
+- **Sign-up in the dashboard.** `/onboarding` walks them through the four steps. "Later" on step 2 and
+  the connector link on step 3 open the dashboard early; banners on Inbox and Configure lead back to the
+  step that was left.
 - **Claim from the CLI.** The agent was made in a terminal and comes with the claim (`/claim`, or
   `/cli/login` with a setup to keep). It has its address and its host, so its operator skips the steps.
 

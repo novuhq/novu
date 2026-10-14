@@ -23,8 +23,8 @@ function describeWaiting(waiting: number, verb: (plural: boolean) => string): st
 }
 
 /**
- * The line across the top of the Inbox page while no host reads the agent's mail: the operator chose
- * "Skip for now" in the onboarding, and this is the way back to the step they left.
+ * The line across the top of the Inbox page while no host reads the agent's mail: the operator left the
+ * onboarding before a host connected, and this is the way back to the step they left.
  */
 export function SetupNotFinishedBanner({ handle, waiting }: UnfinishedSetup) {
   const waitingNote = describeWaiting(waiting, (plural) => (plural ? 'are waiting.' : 'is waiting.'));
