@@ -7,6 +7,7 @@ import { ensureStoredBackingAccount, readStoredBackingAccount } from '@/lib/huma
 import { claimKeylessSetup, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
 import { HumanApiError } from '@/lib/human-api-error';
 import { claimPastSignUp, isAccountAgentInUse } from '@/lib/human-claim';
+import { noteAgentClaimed } from '@/lib/human-onboarding';
 
 export type ClaimFormState = { error?: string };
 
@@ -49,6 +50,9 @@ export async function claimSetupAction(_previous: ClaimFormState, formData: Form
 
     return { error: describeClaimError(error) };
   }
+
+  // The claimed agent has its address and its host already: its operator skips the onboarding steps.
+  await noteAgentClaimed(user);
 
   // Back to the claim page, which now says the agent is claimed and where to go next.
   redirect('/claim?claimed=1');

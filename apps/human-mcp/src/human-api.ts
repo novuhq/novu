@@ -18,12 +18,23 @@ type Query = Record<string, string | number | undefined>;
 export type HumanApi = {
   /** `timeoutMs` replaces the usual limit on how long the call may take. */
   get<T>(path: string, query?: Query, timeoutMs?: number): Promise<T>;
+  /**
+   * Like `get`, but keeps the JSON body as the API sent it. Use for paginated list responses that
+   * already carry `{ data, next }`: unwrapping would throw `next` away.
+   */
+  getRaw<T>(path: string, query?: Query, timeoutMs?: number): Promise<T>;
   post<T>(path: string, body: unknown, timeoutMs?: number): Promise<T>;
 };
 
 /** The Human endpoints of the Novu API, called as the account. The same calls the `human` CLI makes. */
 export function createHumanApi(account: Account): HumanApi {
-  async function send<T>(method: 'GET' | 'POST', path: string, body?: unknown, timeoutMs?: number): Promise<T> {
+  async function send<T>(
+    method: 'GET' | 'POST',
+    path: string,
+    body: unknown | undefined,
+    timeoutMs: number | undefined,
+    unwrap: boolean
+  ): Promise<T> {
     let response: Response;
     try {
       response = await fetch(`${account.apiUrl}${path}`, {
@@ -45,12 +56,17 @@ export function createHumanApi(account: Account): HumanApi {
       );
     }
 
+    if (!unwrap) {
+      return json as T;
+    }
+
     return (json && typeof json === 'object' && 'data' in json ? json.data : json) as T;
   }
 
   return {
-    get: (path, query, timeoutMs) => send('GET', `${path}${toQueryString(query)}`, undefined, timeoutMs),
-    post: (path, body, timeoutMs) => send('POST', path, body, timeoutMs),
+    get: (path, query, timeoutMs) => send('GET', `${path}${toQueryString(query)}`, undefined, timeoutMs, true),
+    getRaw: (path, query, timeoutMs) => send('GET', `${path}${toQueryString(query)}`, undefined, timeoutMs, false),
+    post: (path, body, timeoutMs) => send('POST', path, body, timeoutMs, true),
   };
 }
 

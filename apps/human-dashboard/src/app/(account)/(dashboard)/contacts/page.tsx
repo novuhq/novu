@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
-import { AgentSetupBanner } from '@/components/dashboard/agent-setup-banner';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { requireHumanAccount } from '@/lib/human-account';
-import { DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from '@/lib/human-agent-api';
+import { DEFAULT_AGENT_NAME, type RelayAgent } from '@/lib/human-agent-api';
 import { type Contact, listContactsPage } from '@/lib/human-contacts-api';
+import { requireSetUpAgent } from '@/lib/human-onboarding';
 import { findOperatorContactId } from '@/lib/human-operator';
 
 import { ContactsTable } from './contacts-table';
@@ -26,8 +26,8 @@ const CURSOR_PATTERN = /^[a-f0-9]{24}$/i;
  * `?after=` holds the cursor of every page opened so far: the last one is the page shown, and
  * "Previous" drops it.
  *
- * Until `setup` has made the agent, nobody can be asked or invited: the list stays empty and a
- * banner sends the operator to the Agent page.
+ * Without an agent nobody can be asked or invited, so an operator who has none yet is sent to the
+ * onboarding, which makes it.
  */
 export default async function ContactsPage(props: PageProps<'/contacts'>) {
   const account = await requireHumanAccount({ returnTo: CONTACTS_PATH });
@@ -36,27 +36,7 @@ export default async function ContactsPage(props: PageProps<'/contacts'>) {
     (cursor): cursor is string => typeof cursor === 'string' && CURSOR_PATTERN.test(cursor)
   );
 
-  const agent = await getRelayAgent(account);
-  if (!agent) {
-    return (
-      <>
-        <PageHeader title="Contacts" description="People your agent can ask." />
-        <AgentSetupBanner>
-          Contacts are the people your agent can ask. Once it&apos;s set up, you&apos;re the first one and you invite
-          the others here.
-        </AgentSetupBanner>
-        <ContactsTable
-          contacts={[]}
-          operatorContactId={null}
-          agentName="your agent"
-          rangeLabel={describeRange(0, 0, false)}
-          previousHref={null}
-          nextHref={null}
-        />
-      </>
-    );
-  }
-
+  const { agent } = await requireSetUpAgent(account);
   const agentName = sentenceName(agent);
   const [page, operatorContactId] = await Promise.all([
     listContactsPage(account, { after: cursors.at(-1), limit: PAGE_SIZE }),

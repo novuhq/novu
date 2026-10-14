@@ -46,8 +46,16 @@ export async function ensureAccountForSignUp(humanUserId: string): Promise<void>
   await ensureStoredBackingAccount(user, DEFAULT_REGION);
 }
 
-/** How long to wait for an account that the sign-up webhook is creating at this very moment. */
-const BUSY_RETRIES = 5;
+/**
+ * How long to wait for an account that the sign-up webhook is creating at this very moment: up to 20
+ * seconds. The webhook and the new operator's first page arrive within the same second, and creating
+ * the account (a Clerk user and organization, then Novu's own setup) takes six to seven seconds. A wait
+ * shorter than that gives up just before the account is there and shows the operator an error as the
+ * very first thing. The API lets go of an account by itself after 60 seconds.
+ *
+ * A wait of a set length is a stopgap: NV-9049 is to replace it with something that doesn't guess a time.
+ */
+const BUSY_RETRIES = 20;
 const BUSY_RETRY_MS = 1000;
 
 /**
