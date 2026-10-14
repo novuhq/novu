@@ -248,6 +248,16 @@ overrides:
   mdast-util-to-hast@>=13.0.0 <13.2.1: ^13.2.1
   webpack@>=5.49.0 <5.104.1: ^5.104.1
   micromatch@>=4.0.0 <4.0.8: ^4.0.8
+  # GHSA-238p-pmpm-9mq7 (low): KaTeX pre-existing prototype pollution can bypass
+  # trust restrictions. Patched in 0.18.2. Transitive via @streamdown/math
+  # (rehype-katex, micromark-extension-math) and @streamdown/mermaid > mermaid
+  # across apps/dashboard and playground/nextjs. Consumers declare `katex: ^0.16.0`
+  # but only use the public katex.render/renderToString APIs, which are stable
+  # across the 0.17/0.18 line, so forcing the override is safe. Pin to 0.18.10
+  # exactly: 0.18.11 was deprecated for accidental breaking changes, and 0.19.0
+  # ships the same strict-callback break with a proper major-ish bump that we
+  # don't need yet.
+  katex@>=0.11.0 <0.18.2: 0.18.10
   # GHSA-mh99-v99m-4gvg / CVE-2026-14257, GHSA-rgw5-rvv9-x895, GHSA-qhr7-859c-m2p7,
   # GHSA-6j4f-fj2g-mc7p (high) and GHSA-q2hr-2g5m-vwhr (moderate): brace-expansion
   # DoS via unbounded intermediate arrays, uncontrolled recursion in
