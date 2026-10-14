@@ -169,4 +169,103 @@ describe('BirdEmailProvider', () => {
       });
     });
   });
+
+  describe('webhook events', () => {
+    const deliveredEvent = {
+      type: 'email.delivered',
+      timestamp: '2026-07-23T14:51:47.107Z',
+      data: { email_id: 'em_aaa', recipient_id: 'er_aaa', recipient: 'to@acme.com' },
+    };
+    const bouncedEvent = {
+      type: 'email.bounced',
+      timestamp: '2026-07-23T14:52:00.000Z',
+      data: {
+        email_id: 'em_bbb',
+        bounce_code: 550,
+        bounce_description: 'Invalid recipient',
+      },
+    };
+
+    it('extracts every email id from a batch', () => {
+      const provider = new BirdEmailProvider(mockConfig);
+
+      expect(provider.getMessageId([deliveredEvent, bouncedEvent] as never)).toEqual(['em_aaa', 'em_bbb']);
+    });
+
+    it('maps a delivered event', () => {
+      const provider = new BirdEmailProvider(mockConfig);
+
+      expect(provider.parseEventBody(deliveredEvent as never, 'em_aaa')).toEqual({
+        status: 'delivered',
+        date: '2026-07-23T14:51:47.107Z',
+        externalId: 'em_aaa',
+        row: JSON.stringify(deliveredEvent),
+      });
+    });
+
+    it('maps a bounced event with the description as response', () => {
+      const provider = new BirdEmailProvider(mockConfig);
+
+      expect(provider.parseEventBody(bouncedEvent as never, 'em_bbb')).toEqual({
+        status: 'bounced',
+        date: '2026-07-23T14:52:00.000Z',
+        externalId: 'em_bbb',
+        response: 'Invalid recipient',
+        row: JSON.stringify(bouncedEvent),
+      });
+    });
+
+    it('falls back to the bounce code when there is no description', () => {
+      const provider = new BirdEmailProvider(mockConfig);
+      const event = {
+        type: 'email.bounced',
+        timestamp: '2026-07-23T14:52:00.000Z',
+        data: { email_id: 'em_ccc', bounce_code: 550 },
+      };
+
+      expect(provider.parseEventBody(event as never, 'em_ccc')?.response).toBe('550');
+    });
+
+    it('maps a rejection reason', () => {
+      const provider = new BirdEmailProvider(mockConfig);
+      const event = {
+        type: 'email.rejected',
+        timestamp: '2026-07-23T14:52:00.000Z',
+        data: { email_id: 'em_ddd', rejection_reason: 'recipient_suppressed' },
+      };
+
+      const parsed = provider.parseEventBody(event as never, 'em_ddd');
+      expect(parsed?.status).toBe('rejected');
+      expect(parsed?.response).toBe('recipient_suppressed');
+    });
+
+    it.each([
+      ['email.accepted', 'sent'],
+      ['email.processed', 'sent'],
+      ['email.deferred', 'delayed'],
+      ['email.out_of_band_bounce', 'bounced'],
+      ['email.complained', 'complaint'],
+      ['email.opened', 'opened'],
+      ['email.clicked', 'clicked'],
+      ['email.unsubscribed', 'unsubscribed'],
+      ['email.list_unsubscribed', 'unsubscribed'],
+    ])('maps %s to status "%s"', (type, expected) => {
+      const provider = new BirdEmailProvider(mockConfig);
+      const event = { type, timestamp: '2026-07-23T14:52:00.000Z', data: { email_id: 'em_x' } };
+
+      expect(provider.parseEventBody(event as never, 'em_x')?.status).toBe(expected);
+    });
+
+    it('returns undefined for an unknown identifier or event type', () => {
+      const provider = new BirdEmailProvider(mockConfig);
+
+      expect(provider.parseEventBody(deliveredEvent as never, 'em_missing')).toBeUndefined();
+      expect(
+        provider.parseEventBody(
+          { type: 'email.scheduled', timestamp: 'now', data: { email_id: 'em_x' } } as never,
+          'em_x'
+        )
+      ).toBeUndefined();
+    });
+  });
 });

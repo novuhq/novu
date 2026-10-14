@@ -2,8 +2,10 @@ import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   CheckIntegrationResponseEnum,
+  EmailEventStatusEnum,
   IAttachmentOptions,
   ICheckIntegrationResponse,
+  IEmailEventBody,
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
@@ -173,6 +175,70 @@ function stripInlineContentForTemplate(body: Record<string, unknown>): void {
   delete body.text;
 }
 
+interface BirdEmailWebhookEvent {
+  type: string;
+  timestamp?: string;
+  occurred_at?: string;
+  data?: {
+    email_id?: string;
+    bounce_code?: number | string;
+    bounce_description?: string;
+    rejection_reason?: string;
+    defer_reason?: string;
+  } & Record<string, unknown>;
+}
+
+const BIRD_EMAIL_STATUS_MAP: Record<string, EmailEventStatusEnum> = {
+  'email.accepted': EmailEventStatusEnum.SENT,
+  'email.processed': EmailEventStatusEnum.SENT,
+  'email.delivered': EmailEventStatusEnum.DELIVERED,
+  'email.deferred': EmailEventStatusEnum.DELAYED,
+  'email.bounced': EmailEventStatusEnum.BOUNCED,
+  'email.out_of_band_bounce': EmailEventStatusEnum.BOUNCED,
+  'email.rejected': EmailEventStatusEnum.REJECTED,
+  'email.complained': EmailEventStatusEnum.COMPLAINT,
+  'email.opened': EmailEventStatusEnum.OPENED,
+  'email.clicked': EmailEventStatusEnum.CLICKED,
+  'email.unsubscribed': EmailEventStatusEnum.UNSUBSCRIBED,
+  'email.list_unsubscribed': EmailEventStatusEnum.UNSUBSCRIBED,
+};
+
+function extractBirdEmailEvents(body: unknown): BirdEmailWebhookEvent[] {
+  if (Array.isArray(body)) {
+    return body as BirdEmailWebhookEvent[];
+  }
+
+  if (body && typeof body === 'object' && Array.isArray((body as { events?: unknown }).events)) {
+    return (body as { events: BirdEmailWebhookEvent[] }).events;
+  }
+
+  return body ? [body as BirdEmailWebhookEvent] : [];
+}
+
+function birdEmailEventResponse(data: BirdEmailWebhookEvent['data']): string | undefined {
+  if (!data || typeof data !== 'object') {
+    return undefined;
+  }
+
+  if (typeof data.bounce_description === 'string' && data.bounce_description.length > 0) {
+    return data.bounce_description;
+  }
+
+  if (typeof data.bounce_code === 'number' || typeof data.bounce_code === 'string') {
+    return String(data.bounce_code);
+  }
+
+  if (typeof data.rejection_reason === 'string' && data.rejection_reason.length > 0) {
+    return data.rejection_reason;
+  }
+
+  if (typeof data.defer_reason === 'string' && data.defer_reason.length > 0) {
+    return data.defer_reason;
+  }
+
+  return undefined;
+}
+
 export class BirdEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Bird;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
@@ -244,5 +310,38 @@ export class BirdEmailProvider extends BaseProvider implements IEmailProvider {
         code: CheckIntegrationResponseEnum.FAILED,
       };
     }
+  }
+
+  getMessageId(body: BirdEmailWebhookEvent | BirdEmailWebhookEvent[]): string[] {
+    return extractBirdEmailEvents(body)
+      .map((event) => event?.data?.email_id)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0);
+  }
+
+  parseEventBody(
+    body: BirdEmailWebhookEvent | BirdEmailWebhookEvent[],
+    identifier: string
+  ): IEmailEventBody | undefined {
+    const event = extractBirdEmailEvents(body).find((item) => item?.data?.email_id === identifier);
+
+    if (!event) {
+      return undefined;
+    }
+
+    const status = BIRD_EMAIL_STATUS_MAP[event.type];
+
+    if (!status) {
+      return undefined;
+    }
+
+    const response = birdEmailEventResponse(event.data);
+
+    return {
+      status,
+      date: event.timestamp || event.occurred_at || new Date().toISOString(),
+      externalId: identifier,
+      ...(response ? { response } : {}),
+      row: JSON.stringify(event),
+    };
   }
 }

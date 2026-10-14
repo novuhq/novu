@@ -116,4 +116,71 @@ describe('BirdSmsProvider', () => {
 
     expect(vi.mocked(axios.post).mock.calls[0][0]).toBe('http://localhost:8080/v1/sms/messages');
   });
+
+  describe('webhook events', () => {
+    const deliveredEvent = {
+      type: 'sms.delivered',
+      timestamp: '2026-06-10T14:30:00Z',
+      data: { sms_id: 'sms_aaa', to: '+15551234567', from: '+12025550188' },
+    };
+    const failedEvent = {
+      type: 'sms.failed',
+      timestamp: '2026-06-10T14:31:00Z',
+      data: {
+        sms_id: 'sms_bbb',
+        error: { code: 'unreachable', description: 'The handset is off' },
+      },
+    };
+
+    it('extracts every SMS id from a batch', () => {
+      const provider = new BirdSmsProvider(mockConfig);
+
+      expect(provider.getMessageId([deliveredEvent, failedEvent] as never)).toEqual(['sms_aaa', 'sms_bbb']);
+    });
+
+    it('maps a delivered event', () => {
+      const provider = new BirdSmsProvider(mockConfig);
+
+      expect(provider.parseEventBody(deliveredEvent as never, 'sms_aaa')).toEqual({
+        status: 'delivered',
+        date: '2026-06-10T14:30:00Z',
+        externalId: 'sms_aaa',
+        row: JSON.stringify(deliveredEvent),
+      });
+    });
+
+    it('maps a failed event with the error description as response', () => {
+      const provider = new BirdSmsProvider(mockConfig);
+
+      expect(provider.parseEventBody(failedEvent as never, 'sms_bbb')).toEqual({
+        status: 'failed',
+        date: '2026-06-10T14:31:00Z',
+        externalId: 'sms_bbb',
+        response: 'The handset is off',
+        row: JSON.stringify(failedEvent),
+      });
+    });
+
+    it.each([
+      ['sms.accepted', 'accepted'],
+      ['sms.sent', 'sent'],
+      ['sms.undelivered', 'undelivered'],
+      ['sms.rejected', 'rejected'],
+      ['sms.expired', 'failed'],
+    ])('maps %s to status "%s"', (type, expected) => {
+      const provider = new BirdSmsProvider(mockConfig);
+      const event = { type, timestamp: '2026-06-10T14:30:00Z', data: { sms_id: 'sms_x' } };
+
+      expect(provider.parseEventBody(event as never, 'sms_x')?.status).toBe(expected);
+    });
+
+    it('returns undefined for an unknown identifier or event type', () => {
+      const provider = new BirdSmsProvider(mockConfig);
+
+      expect(provider.parseEventBody(deliveredEvent as never, 'sms_missing')).toBeUndefined();
+      expect(
+        provider.parseEventBody({ type: 'sms.received', timestamp: 'now', data: { sms_id: 'sms_x' } } as never, 'sms_x')
+      ).toBeUndefined();
+    });
+  });
 });

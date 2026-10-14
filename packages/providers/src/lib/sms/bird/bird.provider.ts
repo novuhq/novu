@@ -1,5 +1,12 @@
 import { SmsProviderIdEnum } from '@novu/shared';
-import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
+import {
+  ChannelTypeEnum,
+  ISendMessageSuccessResponse,
+  ISMSEventBody,
+  ISmsOptions,
+  ISmsProvider,
+  SmsEventStatusEnum,
+} from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
@@ -23,6 +30,59 @@ export function resolveBirdSmsBaseUrl(apiKey: string, baseUrl?: string): string 
 interface BirdSmsResponse {
   id: string;
   created_at?: string;
+}
+
+interface BirdSmsWebhookEvent {
+  type: string;
+  timestamp?: string;
+  occurred_at?: string;
+  data?: {
+    sms_id?: string;
+    error?: {
+      code?: string;
+      description?: string;
+    };
+  } & Record<string, unknown>;
+}
+
+const BIRD_SMS_STATUS_MAP: Record<string, SmsEventStatusEnum> = {
+  'sms.accepted': SmsEventStatusEnum.ACCEPTED,
+  'sms.sent': SmsEventStatusEnum.SENT,
+  'sms.delivered': SmsEventStatusEnum.DELIVERED,
+  'sms.undelivered': SmsEventStatusEnum.UNDELIVERED,
+  'sms.failed': SmsEventStatusEnum.FAILED,
+  'sms.rejected': SmsEventStatusEnum.REJECTED,
+  'sms.expired': SmsEventStatusEnum.FAILED,
+};
+
+function extractBirdSmsEvents(body: unknown): BirdSmsWebhookEvent[] {
+  if (Array.isArray(body)) {
+    return body as BirdSmsWebhookEvent[];
+  }
+
+  if (body && typeof body === 'object' && Array.isArray((body as { events?: unknown }).events)) {
+    return (body as { events: BirdSmsWebhookEvent[] }).events;
+  }
+
+  return body ? [body as BirdSmsWebhookEvent] : [];
+}
+
+function birdSmsEventResponse(data: BirdSmsWebhookEvent['data']): string | undefined {
+  const error = data?.error;
+
+  if (!error || typeof error !== 'object') {
+    return undefined;
+  }
+
+  if (typeof error.description === 'string' && error.description.length > 0) {
+    return error.description;
+  }
+
+  if (typeof error.code === 'string' && error.code.length > 0) {
+    return error.code;
+  }
+
+  return undefined;
 }
 
 function getBridgeField<T>(bridgeProviderData: WithPassthrough<Record<string, unknown>>, key: string): T | undefined {
@@ -124,6 +184,36 @@ export class BirdSmsProvider extends BaseProvider implements ISmsProvider {
     return {
       id: data.id,
       date: data.created_at || new Date().toISOString(),
+    };
+  }
+
+  getMessageId(body: BirdSmsWebhookEvent | BirdSmsWebhookEvent[]): string[] {
+    return extractBirdSmsEvents(body)
+      .map((event) => event?.data?.sms_id)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0);
+  }
+
+  parseEventBody(body: BirdSmsWebhookEvent | BirdSmsWebhookEvent[], identifier: string): ISMSEventBody | undefined {
+    const event = extractBirdSmsEvents(body).find((item) => item?.data?.sms_id === identifier);
+
+    if (!event) {
+      return undefined;
+    }
+
+    const status = BIRD_SMS_STATUS_MAP[event.type];
+
+    if (!status) {
+      return undefined;
+    }
+
+    const response = birdSmsEventResponse(event.data);
+
+    return {
+      status,
+      date: event.timestamp || event.occurred_at || new Date().toISOString(),
+      externalId: identifier,
+      ...(response ? { response } : {}),
+      row: JSON.stringify(event),
     };
   }
 }
