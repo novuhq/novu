@@ -29,13 +29,15 @@ export function StatusPill({ state, waitingOn, className }: StatusPillProps) {
 
   return (
     <span
+      title={label}
       className={cn(
         'inline-flex shrink-0 items-center rounded px-1.75 py-0.5 font-mono text-[11px] leading-4 whitespace-nowrap',
         PILL_TONES[tone],
         className
       )}
     >
-      {label}
+      {/* Its own box, so a long name can end in an ellipsis where the pill is given less room. */}
+      <span className="min-w-0 truncate">{label}</span>
     </span>
   );
 }

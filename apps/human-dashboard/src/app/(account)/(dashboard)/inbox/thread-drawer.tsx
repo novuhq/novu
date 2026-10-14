@@ -78,7 +78,8 @@ export function ThreadDrawer({
               </DialogPrimitive.Title>
               {thread && <p className="truncate text-xs leading-4 text-secondary">{describeWho(thread)}</p>}
             </div>
-            {thread && <StatusPill state={thread.state} waitingOn={thread.waitingOn} />}
+            {/* At most half the row, so a long "waiting on …" name can't push Close out of the drawer. */}
+            {thread && <StatusPill state={thread.state} waitingOn={thread.waitingOn} className="max-w-[50%] shrink" />}
             <DialogPrimitive.Close aria-label="Close" className={buttonClassName('ghost', 'text-foreground')}>
               <X aria-hidden="true" className="size-4" />
             </DialogPrimitive.Close>
@@ -102,7 +103,8 @@ export function ThreadDrawer({
                     agentName={agentName}
                   />
                 </div>
-                <div className="shrink-0 px-5 py-4">
+                {/* On a short screen Details takes at most 45% of it and scrolls, so the messages keep room. */}
+                <div className="max-h-[45dvh] shrink-0 overflow-y-auto px-5 py-4">
                   <Details details={load.view.details} thread={load.view.thread} />
                 </div>
               </div>

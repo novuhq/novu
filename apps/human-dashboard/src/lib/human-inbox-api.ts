@@ -53,15 +53,15 @@ const loadCounts = cache(
  * How many threads have something the agent hasn't read: the number on Inbox in the sidebar. The sidebar
  * goes without it rather than fail the page.
  */
-export async function countUnreadThreads(account: HumanAccount): Promise<number> {
+export async function countUnreadThreads(account: HumanAccount): Promise<{ count: number; capped: boolean }> {
   try {
     const counts = await countInboxThreads(account, { tab: 'all' });
 
-    return counts.tabs?.unread ?? 0;
+    return { count: counts.tabs?.unread ?? 0, capped: counts.capped === true };
   } catch (error) {
     console.error('Failed to count the unread threads', error);
 
-    return 0;
+    return { count: 0, capped: false };
   }
 }
 

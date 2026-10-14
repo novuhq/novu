@@ -14,6 +14,7 @@ import {
 } from '@/components/dashboard/nav';
 import { Brand } from '@/components/site/brand';
 import { AgentAvatar } from '@/components/ui/agent-avatar';
+import { formatInboxCount } from '@/lib/inbox';
 import { cn } from '@/lib/utils';
 
 export type SidebarAgent = {
@@ -26,8 +27,8 @@ export type SidebarAgent = {
   pictureUrl?: string;
   /** The operator left the onboarding before a host was connected. Configure is where they pick it up. */
   setupUnfinished?: boolean;
-  /** Threads with something the agent hasn't read: the number on Inbox. */
-  unreadThreads?: number;
+  /** Threads with something the agent hasn't read: the number on Inbox, "at least" when `capped`. */
+  unreadThreads?: { count: number; capped: boolean };
 };
 
 export function Sidebar({ agent }: { agent: SidebarAgent }) {
@@ -56,7 +57,11 @@ export function Sidebar({ agent }: { agent: SidebarAgent }) {
           items={MAIN_NAV}
           current={current}
           flagged={agent.setupUnfinished ? CONFIGURE_PATH : undefined}
-          counts={{ [DASHBOARD_HOME]: agent.unreadThreads ?? 0 }}
+          counts={{
+            [DASHBOARD_HOME]: agent.unreadThreads
+              ? formatInboxCount(agent.unreadThreads.count, agent.unreadThreads.capped)
+              : '',
+          }}
         />
         <NavList items={FOOTER_NAV} current={current} />
       </nav>
@@ -69,8 +74,8 @@ type NavListProps = {
   current: NavItem | undefined;
   /** The page that has something waiting for the operator: its link gets a dot. */
   flagged?: string;
-  /** A number to show on a page's link, by its address. None shows for zero. */
-  counts?: Record<string, number>;
+  /** A number to show on a page's link, by its address, as written (`formatInboxCount`). None shows for zero. */
+  counts?: Record<string, string>;
 };
 
 function NavList({ items, current, flagged, counts }: NavListProps) {
@@ -85,7 +90,7 @@ function NavList({ items, current, flagged, counts }: NavListProps) {
   );
 }
 
-type NavLinkProps = { item: NavItem; active: boolean; flagged: boolean; count?: number };
+type NavLinkProps = { item: NavItem; active: boolean; flagged: boolean; count?: string };
 
 function NavLink({ item, active, flagged, count }: NavLinkProps) {
   const Icon = item.icon;
@@ -128,7 +133,7 @@ function NavLink({ item, active, flagged, count }: NavLinkProps) {
           <span className="sr-only">(setup not finished)</span>
         </>
       )}
-      {count !== undefined && count > 0 && (
+      {count && count !== '0' && (
         <span className="rounded bg-accent/14 px-1.5 py-px font-mono text-[11px] leading-3.5 font-medium text-accent">
           {count}
           <span className="sr-only"> unread</span>

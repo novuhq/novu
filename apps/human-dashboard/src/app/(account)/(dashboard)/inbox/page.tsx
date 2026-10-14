@@ -37,7 +37,12 @@ export default async function InboxPage(props: PageProps<'/inbox'>) {
     threadId ? loadInitialThread(account, threadId) : null,
   ]);
   const { agent } = setup;
-  const empty = hasNoThreads(view, counts) ? { listening: await countListeningChannels(account) } : null;
+  // The list and the counts are read side by side, so a first thread can make it into the list after the
+  // counts came back at zero: the empty inbox only shows when the list is empty too.
+  const empty =
+    page.threads.length === 0 && hasNoThreads(view, counts)
+      ? { listening: await countListeningChannels(account) }
+      : null;
 
   return (
     <>

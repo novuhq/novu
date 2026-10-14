@@ -84,8 +84,8 @@ function MessageItems({
 }
 
 /**
- * The last message from a person that the agent read. The read cursor is the time of that message, so it
- * is matched to the second too, for a message whose time was stored a moment apart from it.
+ * The last message from a person that the agent read. The read cursor is that message's own time (the API
+ * takes it from the message), so no message after it counts as read. None when no shown message is that old.
  */
 function findReadUpTo(messages: InboxMessage[], lastReadAt: string | null): number {
   if (!lastReadAt) {
@@ -93,11 +93,8 @@ function findReadUpTo(messages: InboxMessage[], lastReadAt: string | null): numb
   }
 
   const readAt = Date.parse(lastReadAt);
-  const lastWithin = (slack: number) =>
-    messages.findLastIndex((message) => message.from === 'human' && Date.parse(message.at) <= readAt + slack);
-  const exact = lastWithin(0);
 
-  return exact >= 0 ? exact : lastWithin(999);
+  return messages.findLastIndex((message) => message.from === 'human' && Date.parse(message.at) <= readAt);
 }
 
 function MessageRow({ message, agentName, arrivedLater }: ArrivalProps & { message: InboxMessage; agentName: string }) {

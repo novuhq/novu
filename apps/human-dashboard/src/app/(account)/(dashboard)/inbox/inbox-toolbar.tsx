@@ -7,6 +7,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
   channelName,
+  formatInboxCount,
   INBOX_CHANNELS,
   INBOX_SEARCH_MAX_LENGTH,
   INBOX_TAB_LABELS,
@@ -66,7 +67,7 @@ function tabCount(tab: InboxTab, counts: InboxCounts): { value: string; accent: 
   const value = counts.tabs[tab] ?? 0;
 
   return {
-    value: `${value}${counts.capped && value > 0 ? '+' : ''}`,
+    value: formatInboxCount(value, counts.capped),
     accent: value > 0 && tab !== 'unread',
   };
 }
@@ -113,6 +114,15 @@ function SearchField({ search, onSearch }: { search: string; onSearch: (search: 
   useEffect(() => {
     latestOnSearch.current = onSearch;
   });
+
+  // Back and Forward change the search the page applies: the field follows. A search it sent itself comes
+  // back as what it last sent, so typing that is still waiting to be sent goes on.
+  useEffect(() => {
+    if (search !== sent.current.trim()) {
+      sent.current = search;
+      setText(search);
+    }
+  }, [search]);
 
   useEffect(() => {
     if (text.trim() === sent.current.trim()) {
@@ -179,7 +189,7 @@ function ChannelMenu({ view, counts, onChange }: InboxToolbarProps) {
             value={ALL_CHANNELS}
             icon={<Inbox aria-hidden="true" className="size-4 text-secondary" />}
             label="All channels"
-            count={counts.channels.all ?? 0}
+            count={formatInboxCount(counts.channels.all ?? 0, counts.capped)}
           />
           {INBOX_CHANNELS.map((channel) => (
             <ChannelItem
@@ -187,7 +197,7 @@ function ChannelMenu({ view, counts, onChange }: InboxToolbarProps) {
               value={channel}
               icon={<ChannelLogo channel={channel} size={16} />}
               label={channelName(channel)}
-              count={counts.channels[channel] ?? 0}
+              count={formatInboxCount(counts.channels[channel] ?? 0, counts.capped)}
             />
           ))}
         </DropdownMenuPrimitive.RadioGroup>
@@ -202,7 +212,7 @@ function ChannelMenu({ view, counts, onChange }: InboxToolbarProps) {
   );
 }
 
-type ChannelItemProps = { value: string; icon: ReactNode; label: string; count: number };
+type ChannelItemProps = { value: string; icon: ReactNode; label: string; count: string };
 
 function ChannelItem({ value, icon, label, count }: ChannelItemProps) {
   return (

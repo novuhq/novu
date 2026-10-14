@@ -88,6 +88,11 @@ export type InboxCounts = {
   capped: boolean;
 };
 
+/** A count as the page shows it, with a "+" when the API stopped counting, so it reads as "at least". */
+export function formatInboxCount(value: number, capped: boolean): string {
+  return `${value}${capped && value > 0 ? '+' : ''}`;
+}
+
 export type InboxSender = 'human' | 'agent' | 'system';
 
 export type InboxAttachment = {

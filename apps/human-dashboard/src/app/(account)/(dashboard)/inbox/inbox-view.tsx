@@ -84,6 +84,23 @@ export function InboxView({ view: serverView, page, counts, agent, empty, initia
   const openSummary =
     threads.find((thread) => thread.id === openId) ?? (openLoad?.status === 'ready' ? openLoad.view.thread : null);
 
+  // The address can change under the drawer: Back and Forward, and a refresh that reads the open thread
+  // again. The drawer follows the thread the server rendered for it, and closes when there is none.
+  const [syncedThread, setSyncedThread] = useState(initialThread);
+  if (initialThread !== syncedThread) {
+    setSyncedThread(initialThread);
+    if (initialThread) {
+      setOpenId(initialThread.id);
+      setDrawerOpen(true);
+      setLoads((previous) => ({
+        ...previous,
+        [initialThread.id]: withEarlier(previous[initialThread.id], initialThread.load),
+      }));
+    } else {
+      setDrawerOpen(false);
+    }
+  }
+
   function changeView(next: InboxViewState, history: 'push' | 'replace') {
     setSwitchingView(true);
     startNavigation(() => {
@@ -100,17 +117,11 @@ export function InboxView({ view: serverView, page, counts, agent, empty, initia
     }));
 
     const result = await loadThreadAction(threadId);
+    const fresh: ThreadLoad = result.ok
+      ? { status: 'ready', view: result.view }
+      : { status: 'error', error: result.error };
 
-    setLoads((previous) => {
-      const current = previous[threadId];
-      if (result.ok) {
-        return { ...previous, [threadId]: { status: 'ready', view: result.view } };
-      }
-
-      return current?.status === 'ready'
-        ? previous
-        : { ...previous, [threadId]: { status: 'error', error: result.error } };
-    });
+    setLoads((previous) => ({ ...previous, [threadId]: withEarlier(previous[threadId], fresh) }));
   }
 
   async function fetchEarlier(threadId: string) {
@@ -127,6 +138,12 @@ export function InboxView({ view: serverView, page, counts, agent, empty, initia
       const latest = previous[threadId];
       if (latest?.status !== 'ready') {
         return previous;
+      }
+
+      // The thread was read again meanwhile and starts at another message now: this page no longer joins
+      // up with it, so it's dropped, and "Show earlier messages" reads from the new first message.
+      if (latest.view.messages[0]?.id !== oldest) {
+        return { ...previous, [threadId]: { ...latest, earlier: undefined } };
       }
 
       if (!result.ok) {
@@ -229,4 +246,33 @@ export function InboxView({ view: serverView, page, counts, agent, empty, initia
       />
     </InboxClock>
   );
+}
+
+/**
+ * A thread read again over what the drawer already has. The fresh page wins, and the older messages loaded
+ * before it ("Show earlier messages") stay above it where the two meet. A failed read keeps what was there.
+ */
+function withEarlier(current: ThreadLoad | undefined, fresh: ThreadLoad): ThreadLoad {
+  if (current?.status !== 'ready') {
+    return fresh;
+  }
+
+  if (fresh.status !== 'ready') {
+    return current;
+  }
+
+  const first = fresh.view.messages[0];
+  const meet = first ? current.view.messages.findIndex((message) => message.id === first.id) : -1;
+  if (meet <= 0) {
+    return fresh;
+  }
+
+  const messages = [...current.view.messages.slice(0, meet), ...fresh.view.messages];
+
+  // The first message is the same, so a page of older ones on its way still joins up.
+  return {
+    status: 'ready',
+    view: { ...fresh.view, messages, hasMore: current.view.hasMore },
+    earlier: current.earlier,
+  };
 }
