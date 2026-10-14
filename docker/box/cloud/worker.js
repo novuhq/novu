@@ -19,7 +19,7 @@ const PUBLIC_PORT = 18080;
 const INSTANCE = 'standard-4';
 const IDLE_MS = 60 * 60 * 1000;
 const ALARM_MS = 60 * 1000;
-// Stops the container when the alarms stop: the alarms are what keeps the Durable Object, and so it, active.
+// Each alarm renews it, so it only stops the container (without a snapshot) when the alarms stop.
 const BACKSTOP_MS = 10 * 60 * 1000;
 const SECRETS = [
   'CLERK_SECRET_KEY',
@@ -179,6 +179,7 @@ export class Box extends DurableObject {
   // Every 60 s while the box runs: after an hour without requests, and with no bake or apply running, it sleeps.
   async alarm() {
     if (!this.ctx.container.running) return;
+    await this.ctx.container.setInactivityTimeout(BACKSTOP_MS);
     await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
     const last = Math.max(this.lastActivity ?? 0, (await this.ctx.storage.get('lastActivity')) ?? 0);
     if (Date.now() - last < IDLE_MS || (await this.busy())) return;
