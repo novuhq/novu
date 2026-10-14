@@ -30,7 +30,7 @@ export const DEFAULT_RELAY_AGENT_IDENTIFIER = 'human-relay';
  * `api.novu.co`, so self-hosted / local APIs fall back to the URL the server
  * itself returns (that deployment's own dashboard page).
  */
-export const HUMAN_SETUP_PAGE_ORIGIN = 'https://www.gethuman.md';
+export const HUMAN_SETUP_PAGE_ORIGIN = 'https://www.agentinbox.md';
 
 export const SUPPORTED_CHANNELS = ['telegram', 'slack', 'email'] as const;
 

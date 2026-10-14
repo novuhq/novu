@@ -60,6 +60,11 @@ export const serve = (
             headers,
           });
         },
+        transformStreamResponse: ({ body, status, headers }): Response => {
+          const Res = getResponse();
+
+          return new Res(body, { status, headers });
+        },
       };
     },
   });

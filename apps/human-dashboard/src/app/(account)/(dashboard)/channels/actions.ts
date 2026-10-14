@@ -26,7 +26,7 @@ import { readSlackSetup, type SlackSetupState } from '@/lib/human-slack-setup';
 import { readTelegramSetup, type TelegramSetupState } from '@/lib/human-telegram-setup';
 import { validateSlackAppName, validateSlackConfigToken } from '@/lib/slack-app';
 
-const CHANNELS_PATH = '/channels';
+const CHANNELS_PATH = '/configure';
 
 /** What BotFather hands out: the bot's numeric id, a colon, then the secret. */
 const BOT_TOKEN_PATTERN = /^\d+:[\w-]+$/;

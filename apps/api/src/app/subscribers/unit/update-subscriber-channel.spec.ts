@@ -425,10 +425,10 @@ describe('Update Subscriber channel credentials', () => {
   it('should update deviceTokens without duplication on channel creation (addChannelToSubscriber)', async () => {
     const subscriberId = SubscriberRepository.createObjectId();
     const test = await subscriberRepository.create({
-      firstName: faker.name.firstName(),
-      lastName: faker.name.lastName(),
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
       email: faker.internet.email(),
-      phone: faker.phone.phoneNumber(),
+      phone: faker.phone.number(),
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
       subscriberId,

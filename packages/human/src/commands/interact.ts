@@ -16,6 +16,10 @@ import { startWaitIndicator } from '../spinner';
 
 export interface InteractOptions {
   to?: string;
+  /** Inbox thread to send into, instead of starting a new one with `to`. */
+  thread?: string;
+  /** With `thread`: anyone in it may answer, not only the contact it belongs to. */
+  anyone?: boolean;
   via?: string;
   from?: string;
   option?: string[];
@@ -107,15 +111,7 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
   try {
     const { client, config } = clientFromConfig(options.apiUrl);
 
-    const to = resolveTo(config, options.to);
-
-    if (!to) {
-      fail(NOT_SET_UP_MESSAGE);
-    }
-
-    // `--via` always wins. Otherwise only the defaults that fit the recipients
-    // apply; omit via and the API uses each human's own default channel.
-    const via = resolveVia(config, options.via, channelDefaultsFor(config, options.to, to));
+    const address = resolveAddress(config, options);
 
     const parsedOptions = options.option?.map(parseIdLabelOption);
     const extraActions = options.extraAction?.map(parseIdLabelOption);
@@ -133,8 +129,7 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
     const input: CreateInteractionInput = {
       kind,
       card,
-      to,
-      ...(via ? { via } : {}),
+      ...address,
       agentIdentifier: config.relayAgentIdentifier,
       ...(options.from ? { from: options.from } : {}),
       ...(options.ttl ? { ttlSeconds: parseDuration(options.ttl) } : {}),
@@ -146,6 +141,10 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
       process.stderr.write(`warning: delivered to some recipients but failed for: ${created.failedTo.join(', ')}\n`);
     }
 
+    if (!options.json) {
+      reportThreads(created, Boolean(options.thread));
+    }
+
     if (kind === 'tell' || options.async) {
       process.exit(emitResult(created, Boolean(options.json)));
     }
@@ -153,6 +152,78 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
     process.exit(await waitForResolution(client, created, options));
   } catch (err) {
     handleError(err);
+  }
+}
+
+/**
+ * Where a send goes. `--thread` continues a thread; its contact may answer, unless `--to` names
+ * someone else or `--anyone` opens it to everyone there. Without `--thread`, the message starts a
+ * new thread with `--to`, or with you when nobody is named.
+ */
+export function resolveAddress(
+  config: HumanCliConfig,
+  options: Pick<InteractOptions, 'to' | 'thread' | 'via' | 'anyone'>
+): Pick<CreateInteractionInput, 'to' | 'thread' | 'via' | 'anyoneMayAnswer'> {
+  if (options.anyone && options.thread === undefined) {
+    fail('`--anyone` needs `--thread`: it is about who may answer in a thread.');
+  }
+
+  if (options.thread !== undefined) {
+    const thread = options.thread.trim();
+
+    if (!thread) {
+      fail('`--thread` needs a thread id. List threads with: human inbox list');
+    }
+
+    if (options.via) {
+      fail('`--via` cannot be combined with `--thread`: a thread already lives on one channel.');
+    }
+
+    if (options.anyone && options.to) {
+      fail('`--anyone` cannot be combined with `--to`: name who may answer, or let anyone.');
+    }
+
+    return {
+      thread,
+      ...(options.to ? { to: parseHumanToOption(options.to) } : {}),
+      ...(options.anyone ? { anyoneMayAnswer: true } : {}),
+    };
+  }
+
+  const to = resolveTo(config, options.to);
+
+  if (!to) {
+    fail(NOT_SET_UP_MESSAGE);
+  }
+
+  // `--via` always wins. Otherwise only the defaults that fit the recipients
+  // apply; omit via and the API uses each human's own default channel.
+  const via = resolveVia(config, options.via, channelDefaultsFor(config, options.to, to));
+
+  return { to, ...(via ? { via } : {}) };
+}
+
+/** One line per thread a send landed in; on stderr so stdout stays the outcome alone. */
+export function formatThreadReport(interaction: Pick<Interaction, 'threads'>, sentIntoThread: boolean): string[] {
+  return (interaction.threads ?? []).flatMap((thread) => {
+    const lines = [`thread: ${thread.id}`];
+
+    // A host that answers in a thread has read it. One that writes to a contact may not know they wrote first.
+    if (!sentIntoThread && thread.unreadBefore > 0) {
+      lines.push(
+        `warning: thread ${thread.id} had ${thread.unreadBefore} unread ${
+          thread.unreadBefore === 1 ? 'message' : 'messages'
+        }, now marked read. See ${thread.unreadBefore === 1 ? 'it' : 'them'} with: human inbox show ${thread.id}`
+      );
+    }
+
+    return lines;
+  });
+}
+
+function reportThreads(interaction: Interaction, sentIntoThread: boolean): void {
+  for (const line of formatThreadReport(interaction, sentIntoThread)) {
+    process.stderr.write(`${line}\n`);
   }
 }
 
@@ -166,7 +237,7 @@ export async function waitForResolution(
 
   const stopIndicator = startWaitIndicator(
     `Waiting for a human on ${interaction.platform} (${interaction.id})`,
-    `Ctrl-C detaches; resume with: human wait ${interaction.id}`
+    `Ctrl-C detaches; resume with: human interaction wait ${interaction.id}`
   );
 
   let current = interaction;
@@ -176,10 +247,10 @@ export async function waitForResolution(
       if (Date.now() >= deadline) {
         stopIndicator();
         if (options.json) {
-          process.stdout.write(`${JSON.stringify(current, null, 2)}\n`);
+          process.stdout.write(`${JSON.stringify(keepThreads(current, interaction), null, 2)}\n`);
         } else {
           process.stdout.write(
-            `Timed out waiting. Interaction ${current.id} is still pending — resume with: human wait ${current.id}\n`
+            `Timed out waiting. Interaction ${current.id} is still pending — resume with: human interaction wait ${current.id}\n`
           );
         }
 
@@ -195,7 +266,12 @@ export async function waitForResolution(
     stopIndicator();
   }
 
-  return emitResult(current, Boolean(options.json));
+  return emitResult(keepThreads(current, interaction), Boolean(options.json));
+}
+
+/** Only the create response says which threads a message landed in, so later reads keep them for a follow-up send. */
+export function keepThreads(current: Interaction, created: Pick<Interaction, 'threads'>): Interaction {
+  return created.threads ? { ...current, threads: created.threads } : current;
 }
 
 /** `id:label` keeps a stable id; a bare label is minted as `opt_N` server-side. */
@@ -212,7 +288,7 @@ export function parseIdLabelOption(raw: string): HumanOptionInput {
   return raw;
 }
 
-function buildInteractionCard(params: {
+export function buildInteractionCard(params: {
   title: string;
   icon?: string;
   subtitle?: string;
@@ -251,12 +327,17 @@ export function parseDuration(value: string): number {
 /** Matches the API's `KEYLESS_HUMAN_CAP_REACHED_CODE`. The CLI cannot import `apps/api`. */
 const KEYLESS_CAP_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
 
-export interface KeylessCapDetails {
+/** Matches the API's `KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE`. */
+const KEYLESS_EMAIL_CODE = 'KEYLESS_EMAIL_REQUIRES_ACCOUNT';
+
+interface KeylessBlock {
   claimUrl?: string;
-  cap?: number;
   /** The API has `human login` (the Human dashboard); self-hosted and older APIs need a secret key instead. */
-  browserLogin?: boolean;
+  browserLogin: boolean;
 }
+
+/** The two ways a keyless demo stops an interaction: out of messages, or email is not included. */
+export type KeylessCapDetails = (KeylessBlock & { reason: 'cap'; cap?: number }) | (KeylessBlock & { reason: 'email' });
 
 /**
  * The keyless demo cap: a 429 whose body carries `code: KEYLESS_HUMAN_CAP_REACHED`
@@ -264,7 +345,7 @@ export interface KeylessCapDetails {
  * the same claim link on their channel; the agent just needs to stop retrying.
  */
 export function getKeylessCapDetails(err: unknown): KeylessCapDetails | null {
-  if (!(err instanceof HumanApiError) || err.status !== 429) {
+  if (!(err instanceof HumanApiError)) {
     return null;
   }
 
@@ -274,19 +355,34 @@ export function getKeylessCapDetails(err: unknown): KeylessCapDetails | null {
     cap?: unknown;
     browserLogin?: unknown;
   };
+  const claimUrl = typeof body.claimUrl === 'string' ? body.claimUrl : undefined;
+  const browserLogin = body.browserLogin === true;
+
+  if (err.status === 403 && body.code === KEYLESS_EMAIL_CODE) {
+    return { claimUrl, browserLogin, reason: 'email' };
+  }
+
+  if (err.status !== 429) {
+    return null;
+  }
 
   if (body.code !== KEYLESS_CAP_CODE && !/keyless demo/i.test(err.message)) {
     return null;
   }
 
   return {
-    claimUrl: typeof body.claimUrl === 'string' ? body.claimUrl : undefined,
+    claimUrl,
     cap: typeof body.cap === 'number' ? body.cap : undefined,
-    browserLogin: body.browserLogin === true,
+    browserLogin,
+    reason: 'cap',
   };
 }
 
 export function formatKeylessCapMessage(details: KeylessCapDetails): string {
+  if (details.reason === 'email') {
+    return formatKeylessEmailMessage(details);
+  }
+
   const count = details.cap ? `${details.cap} free messages` : 'free messages';
   const lines = [`You've used the ${count} of this keyless demo.`];
 
@@ -310,6 +406,28 @@ export function formatKeylessCapMessage(details: KeylessCapDetails): string {
     '(We also sent this link to you on your linked channel.)',
     'After signing up, run: human setup --secret-key <key>   or set NOVU_SECRET_KEY'
   );
+
+  return lines.join('\n');
+}
+
+function formatKeylessEmailMessage(details: KeylessCapDetails): string {
+  if (details.browserLogin) {
+    const lines = ['Outbound email needs a Human account.', 'To claim this setup and send email, run: human login'];
+
+    if (details.claimUrl) {
+      lines.push(`(Or sign up from this link, then run \`human login\`: ${details.claimUrl})`);
+    }
+
+    return lines.join('\n');
+  }
+
+  const lines = [
+    'Outbound email needs a Novu account.',
+    details.claimUrl
+      ? `Sign up to claim this setup: ${details.claimUrl}`
+      : 'Sign up for a free Novu account to claim this setup.',
+    'After signing up, run: human setup --secret-key <key>   or set NOVU_SECRET_KEY',
+  ];
 
   return lines.join('\n');
 }

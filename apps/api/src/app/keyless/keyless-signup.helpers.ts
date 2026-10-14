@@ -20,6 +20,11 @@ export function buildConnectClaimUrl(token: string): string {
   return `${resolveConnectClaimBaseUrl()}/connect/claim?token=${encodeURIComponent(token)}`;
 }
 
+/** `human login` is approved on the Human dashboard, so it only works where one is configured. */
+export function isHumanBrowserLoginAvailable(): boolean {
+  return Boolean(process.env.HUMAN_DASHBOARD_URL?.trim());
+}
+
 /**
  * Human keyless setups are claimed on the Human dashboard when one is configured,
  * and on the dashboard otherwise (self-hosted, or before the website is live).
@@ -86,6 +91,40 @@ export function buildKeylessSignupCard(claimUrl: string): CardElement {
  * Sent on the human's linked channel *instead of* the agent's message once a
  * keyless `@novu/human` environment hits its interaction cap.
  */
+/**
+ * The only outbound email a keyless inbox sends: a reply to the owner telling
+ * them to claim the setup. Inbound replies from the agent never follow it.
+ */
+export function buildKeylessEmailClaimCard(claimUrl: string): CardElement {
+  return {
+    type: 'card',
+    children: [
+      {
+        type: 'text',
+        content:
+          'This inbox can receive email, but it cannot send any until you claim this setup. Claiming it is free.',
+      },
+      {
+        type: 'text',
+        content:
+          'Your agent can then email the people you invite — 50 a day and 300 a month. The five-message demo cap is lifted. Your agents, channels, and contacts move into an account you own and can reach from any machine.',
+      },
+      { type: 'divider' },
+      {
+        type: 'actions',
+        children: [
+          {
+            type: 'link-button',
+            label: 'Sign up free',
+            url: claimUrl,
+            style: 'primary',
+          },
+        ],
+      },
+    ],
+  };
+}
+
 export function buildKeylessHumanSignupCard(claimUrl: string): CardElement {
   return {
     type: 'card',

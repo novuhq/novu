@@ -1,7 +1,7 @@
 import { AIMessage, type BaseMessage, isAIMessage, isBaseMessage } from '@langchain/core/messages';
 import { type AgentMiddleware, createAgent } from 'langchain';
 import type { AgentRuntimeContext } from '../../resources/agent/agent.runtime';
-import type { ToolApprovalConfig } from '../../resources/agent/agent.types';
+import type { ReplyStream, ToolApprovalConfig } from '../../resources/agent/agent.types';
 import { isCardElement } from '../../resources/agent/guards';
 import { toLangChainMessages } from '../history-mapper';
 import { hydrateUnreachableAttachmentUrls } from '../history-mapper/hydrate-attachment-urls';
@@ -9,14 +9,11 @@ import {
   createApprovalMiddleware,
   executeApprovedTools,
   findToolApprovalRequired,
+  type NovuToolApprovalRequired,
   postApprovalCard,
 } from '../tool-approval';
 import type { LangChainAgentConfig, LangChainInvokeResult, LangChainResult } from '../types';
 import { emitExecutedToolResults } from './collect-results';
-
-interface AgentInvokeResult {
-  messages: BaseMessage[];
-}
 
 // ─── Guards ───────────────────────────────────────────────────────────────────
 
@@ -86,6 +83,81 @@ async function deliverText(
 
 // ─── Config path (Novu-managed approval loop) ───────────────────────────────────
 
+/** Node `createAgent` runs model calls in; other nodes (e.g. middleware) may call models too. */
+const MODEL_NODE = 'model_request';
+
+function modelChunkText(message: BaseMessage, metadata: Record<string, unknown> | undefined): string {
+  if (metadata?.langgraph_node !== MODEL_NODE || !isAIMessage(message)) return '';
+
+  return textFromContent(message.content);
+}
+
+/**
+ * Replies with the model's text, model calls separated as paragraphs: as it streams, or whole once
+ * `formatReply` formatted it. A gated tool ends the run: the text before it is kept, then the
+ * approval card is posted.
+ */
+async function replyAgentText(
+  agent: ReturnType<typeof createAgent>,
+  messages: BaseMessage[],
+  config: LangChainAgentConfig,
+  ctx: AgentRuntimeContext,
+  approvalConfig: ToolApprovalConfig | undefined,
+  executed: Set<string>
+): Promise<void> {
+  const outcome: { approval?: NovuToolApprovalRequired } = {};
+
+  async function* modelText(): ReplyStream {
+    let finalMessages: BaseMessage[] = [];
+    let lastMessageId: string | undefined;
+    let wroteText = false;
+
+    try {
+      const stream = await agent.stream(
+        { messages },
+        { ...config.invokeConfig, streamMode: ['messages', 'values'] as const }
+      );
+
+      for await (const [mode, chunk] of stream) {
+        if (mode === 'values') {
+          finalMessages = chunk.messages;
+          continue;
+        }
+
+        const [message, metadata] = chunk;
+        const text = modelChunkText(message, metadata);
+        if (!text) continue;
+        if (wroteText && message.id !== lastMessageId) yield '\n\n';
+        lastMessageId = message.id;
+        wroteText = true;
+        yield text;
+      }
+    } catch (error) {
+      outcome.approval = findToolApprovalRequired(error);
+      if (!outcome.approval) throw error;
+
+      return;
+    }
+
+    // Queued before the reply is sent, so the results are recorded ahead of it.
+    emitExecutedToolResults(finalMessages, ctx, executed);
+  }
+
+  if (config.formatReply) {
+    let text = '';
+    for await (const delta of modelText()) {
+      text += delta;
+    }
+    await deliverText(text.trim(), ctx, config.formatReply);
+  } else {
+    await ctx.reply(modelText());
+  }
+
+  if (outcome.approval) {
+    await postApprovalCard(ctx, outcome.approval, approvalConfig);
+  }
+}
+
 async function runAgentConfig(
   config: LangChainAgentConfig,
   ctx: AgentRuntimeContext,
@@ -109,22 +181,7 @@ async function runAgentConfig(
     ...(middleware.length > 0 ? { middleware } : {}),
   });
 
-  let result: AgentInvokeResult;
-  try {
-    result = (await agent.invoke({ messages }, config.invokeConfig)) as AgentInvokeResult;
-  } catch (error) {
-    const approval = findToolApprovalRequired(error);
-    if (approval) {
-      await postApprovalCard(ctx, approval, approvalConfig);
-
-      return;
-    }
-
-    throw error;
-  }
-
-  emitExecutedToolResults(result.messages, ctx, new Set(freshResults.keys()));
-  await deliverText(finalText(result.messages), ctx, config.formatReply);
+  await replyAgentText(agent, messages, config, ctx, approvalConfig, new Set(freshResults.keys()));
 }
 
 // ─── Router ─────────────────────────────────────────────────────────────────────

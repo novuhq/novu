@@ -1,4 +1,5 @@
-import { BadRequestException, HttpException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, HttpException } from '@nestjs/common';
+import { AgentEmailInboxQuotaExceededException } from '@novu/application-generic';
 import { ConversationParticipantTypeEnum } from '@novu/dal';
 import { HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -63,6 +64,22 @@ describe('CreateConversationInteraction', () => {
 
     expect(humanInteractionRepository.create.firstCall.args[0].content).to.deep.equal({ card });
     expect(outboundGateway.deliver.firstCall.args[1]).to.deep.equal({ card });
+  });
+
+  it('returns the inbox cap instead of a gateway error when the thread send is over quota', async () => {
+    const { usecase, command, outboundGateway, humanInteractionRepository } = setup();
+    const cap = new AgentEmailInboxQuotaExceededException('daily', 50, 3600, '2026-10-13T00:00:00.000Z');
+    outboundGateway.deliver.rejects(cap);
+
+    try {
+      await usecase.execute(command as any);
+      expect.fail('expected the inbox cap');
+    } catch (err) {
+      expect(err).to.equal(cap);
+      expect(err).to.not.be.instanceOf(BadGatewayException);
+    }
+
+    expect(humanInteractionRepository.delete.calledOnce).to.equal(true);
   });
 
   it('persists a posted choose card without requiring chrome options', async () => {

@@ -111,6 +111,11 @@ export const serve = (options: ServeHandlerOptions): ((c: Context) => Promise<Re
             headers,
           });
         },
+        transformStreamResponse: ({ body, status, headers }): Response => {
+          const Res = getResponse();
+
+          return new Res(body, { status, headers });
+        },
       };
     },
   });

@@ -8,6 +8,14 @@ import {
   humanInteractionRecipientIds,
 } from '@novu/shared';
 
+export class InteractionThreadDto {
+  @ApiProperty({ description: 'Inbox thread identifier, as `human inbox list` shows it.' })
+  id: string;
+
+  @ApiProperty({ description: 'Messages in the thread that were unread when this was sent.' })
+  unreadBefore: number;
+}
+
 export class InteractionResponseDto {
   @ApiProperty({ description: 'Public interaction id (`hi_...`).' })
   id: string;
@@ -46,6 +54,13 @@ export class InteractionResponseDto {
   })
   failedTo?: string[];
 
+  @ApiPropertyOptional({
+    description:
+      'Present on create: the inbox thread each message landed in. Sending marks the thread read, so `unreadBefore` says how many messages in it had not been read.',
+    type: () => [InteractionThreadDto],
+  })
+  threads?: InteractionThreadDto[];
+
   @ApiProperty()
   expiresAt: string;
 
@@ -55,7 +70,8 @@ export class InteractionResponseDto {
 
 export function toInteractionResponse(
   entity: HumanInteractionEntity,
-  failedSubscriberIds?: string[]
+  failedSubscriberIds?: string[],
+  threads?: InteractionThreadDto[]
 ): InteractionResponseDto {
   const primary = primaryHumanInteractionDelivery(entity);
 
@@ -70,6 +86,7 @@ export function toInteractionResponse(
     platform: primary?.platform ?? '',
     response: entity.response,
     ...(failedSubscriberIds && failedSubscriberIds.length > 0 ? { failedTo: failedSubscriberIds } : {}),
+    ...(threads && threads.length > 0 ? { threads } : {}),
     expiresAt: entity.expiresAt,
     createdAt: entity.createdAt,
   };

@@ -67,7 +67,7 @@ function telegramLink() {
 }
 
 function emailLink() {
-  return { integration: { identifier: 'email-1', providerId: 'novu-email-agent', active: true } };
+  return { integration: { identifier: 'email-1', providerId: 'agent-email-inbox', active: true } };
 }
 
 function pageInvite(connected: { telegram?: boolean; slack?: boolean } = {}) {

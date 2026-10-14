@@ -1,7 +1,9 @@
 import { ArrowRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { ChannelIcon } from '@/components/channels/channel-icon';
 import { Brand } from '@/components/site/brand';
+import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { cn } from '@/lib/utils';
 
 /**
@@ -11,11 +13,17 @@ import { cn } from '@/lib/utils';
  * Both halves sit in one column as wide as the design (1728px), centered on wider screens, so they stay
  * next to each other instead of drifting apart. The two halves are always the same width.
  */
-export function AuthShell({ children }: { children: ReactNode }) {
+type AuthShellProps = {
+  /** Signing up from a claim link: the panel is about the agent that's waiting to be claimed. */
+  claiming?: boolean;
+  children: ReactNode;
+};
+
+export function AuthShell({ claiming = false, children }: AuthShellProps) {
   return (
     <div className="flex min-h-dvh justify-center overflow-x-clip">
       <div className="flex w-full max-w-432">
-        <BrandPanel />
+        <BrandPanel claiming={claiming} />
         <main className="flex min-w-0 flex-1 flex-col">
           <div className="px-6 py-9 xl:hidden">
             <Brand className="w-fit" />
@@ -27,19 +35,35 @@ export function AuthShell({ children }: { children: ReactNode }) {
   );
 }
 
-function BrandPanel() {
+function BrandPanel({ claiming }: { claiming: boolean }) {
   return (
     // On screens wider than the column, the panel's color carries on to the left edge of the screen.
     <aside className="relative hidden w-1/2 shrink-0 flex-col justify-between border-r border-border bg-subtle px-12 py-9 before:absolute before:inset-y-0 before:right-full before:w-screen before:bg-subtle xl:flex">
       <Brand className="w-fit" />
       <div className="flex flex-col items-center gap-5.5">
-        <p className="font-mono text-[11px] leading-4 text-accent">the human API for agents</p>
+        {!claiming && <p className="font-mono text-[11px] leading-4 text-accent">the inbox API for agents</p>}
         <h2 className="text-center text-[30px] leading-9.5 tracking-[-0.75px] text-foreground">
-          Your agents can reach everything <em className="font-display text-accent">except you</em>
+          {claiming ? (
+            <>
+              Claim <em className="font-display text-accent">your agent’s</em> inbox
+            </>
+          ) : (
+            <>
+              Give your agent an inbox on <em className="font-display text-accent">every channel</em>
+            </>
+          )}
         </h2>
-        <ConversationFigure />
+        <InboxFigure />
         <p className="flex items-center font-mono text-[11px] leading-4 whitespace-pre text-muted">
-          [ agent <MonoArrow /> decision request <MonoArrow /> human ]
+          {claiming ? (
+            <>
+              [ unclaimed <MonoArrow /> your account ]
+            </>
+          ) : (
+            <>
+              [ email · telegram · slack <MonoArrow /> inbox <MonoArrow /> your agent ]
+            </>
+          )}
         </p>
       </div>
       <a
@@ -59,53 +83,77 @@ function MonoArrow() {
   return <ArrowRight aria-label="to" className="h-4 w-[1ch]" strokeWidth={1.5} />;
 }
 
-/** The agent asking and the human answering, over the dithered picture of the two. Decoration only. */
-function ConversationFigure() {
+/** Messages from two channels arriving at the agent's address, and the agent's reply. Decoration only. */
+function InboxFigure() {
   return (
     // Drawn at 620px. Where the panel is narrower than that, the whole figure is scaled down with it.
     <div aria-hidden="true" className="relative h-90 w-155 shrink-0 xl:[zoom:0.8] 2xl:[zoom:1]">
-      <img src="/illustrations/hero-agent-human.svg" alt="" width={620} height={360} className="absolute inset-0" />
-      <ChatBubble
-        from="Agent"
-        avatar={{ src: '/illustrations/avatar-agent.svg', width: 12 }}
-        className="top-17.5 left-[0.5px] w-67.25 border border-border bg-raised text-foreground [animation-delay:300ms]"
+      <img src="/illustrations/hero-mailbox.svg" alt="" width={620} height={360} className="absolute inset-0" />
+      <MessageCard
+        icon={<ChannelIcon via="email" className="size-3 [&>svg]:size-1.5" />}
+        label="Email · Stripe"
+        time="09:12"
+        className="top-[98.5px] left-[49px] w-50.5 rotate-2 [animation-delay:300ms]"
       >
-        The next step needs your decision.
-        <br />
-        Should I continue?
-      </ChatBubble>
-      <ChatBubble
-        from="Human"
-        avatar={{ src: '/illustrations/avatar-human.svg', width: 10.15 }}
-        className="top-47.5 left-97.5 w-55 bg-foreground text-background [animation-delay:1200ms]"
+        Your code is 482 913
+      </MessageCard>
+      <MessageCard
+        icon={<ChannelIcon via="telegram" className="size-3 [&>svg]:size-[6.75px]" />}
+        label="Telegram · Maya"
+        time="10:02"
+        className="top-[203.5px] left-[35px] w-50.5 -rotate-[1.5deg] [animation-delay:700ms]"
       >
-        Approved! Keep going.
-      </ChatBubble>
+        Can you send last month’s invoice?
+      </MessageCard>
+      <MessageCard
+        reply
+        icon={<AgentAvatar still className="size-3.5 rounded-full" />}
+        label={
+          <>
+            Atlas <MonoArrow /> Maya
+          </>
+        }
+        time="10:03"
+        className="top-[160.5px] left-[391px] w-48.5 rotate-[1.5deg] [animation-delay:1300ms]"
+      >
+        Here it is. Invoice #2041 attached.
+      </MessageCard>
+      <p className="absolute top-86.5 left-[225.5px] flex items-center gap-1.5 rounded-sm border border-border-strong bg-subtle px-2 py-1 font-mono text-[11px] leading-3.5 text-default">
+        <span className="size-1.5 rounded-full bg-success" />
+        atlas@agentinbox.md
+      </p>
     </div>
   );
 }
 
-type ChatBubbleProps = {
-  from: string;
-  avatar: { src: string; width: number };
+type MessageCardProps = {
+  /** The agent's own message: the light card. The others are messages that came in. */
+  reply?: boolean;
+  icon: ReactNode;
+  label: ReactNode;
+  time: string;
   className: string;
   children: ReactNode;
 };
 
-function ChatBubble({ from, avatar, className, children }: ChatBubbleProps) {
+function MessageCard({ reply = false, icon, label, time, className, children }: MessageCardProps) {
   return (
     <div
       className={cn(
-        // Slower than the usual rise: the two take their turns, like a question and its answer.
-        'absolute flex animate-rise-in flex-col gap-1 rounded-md px-3 py-2.5 shadow-[0_8px_24px_rgb(0_0_0/0.35)] [animation-duration:700ms] motion-reduce:animate-none',
+        // Slower than the usual rise: the messages come in one after another, and then the reply.
+        'absolute flex animate-rise-in flex-col gap-1 rounded-lg px-3 py-2.5 shadow-[0_12px_28px_rgb(0_0_0/0.5)] [animation-duration:700ms] motion-reduce:animate-none',
+        reply ? 'bg-[#e8e0d4]' : 'border border-border-strong bg-subtle',
         className
       )}
     >
-      <div className="flex items-center gap-1.5">
-        <img src={avatar.src} alt="" width={avatar.width} height={12} className="h-3" />
-        <span className="font-mono text-[11px] leading-4 text-accent">{from}</span>
+      <div className="flex items-center gap-1.5 font-mono text-[10px] leading-3.5">
+        {icon}
+        <span className="flex items-center font-medium tracking-[0.3px] whitespace-pre text-accent uppercase [&>svg]:h-3.5 [&>svg]:stroke-2">
+          {label}
+        </span>
+        <span className={cn('ml-auto', reply ? 'text-[#736b61]' : 'text-muted')}>{time}</span>
       </div>
-      <p className="text-[13px] leading-4.5">{children}</p>
+      <p className={cn('text-xs leading-4.25', reply ? 'text-[#1f1a17]' : 'text-foreground')}>{children}</p>
     </div>
   );
 }

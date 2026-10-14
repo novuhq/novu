@@ -175,7 +175,7 @@ export function registerTools(server: McpServer, api: HumanApi): void {
           { limit: 100 }
         );
         if (!contacts?.length) {
-          return 'There is nobody to reach yet. Set up Human on gethuman.md, or use the invite tool.';
+          return 'There is nobody to reach yet. Set up Human on agentinbox.md, or use the invite tool.';
         }
 
         return contacts

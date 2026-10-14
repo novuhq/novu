@@ -33,6 +33,7 @@ import {
 import { WebChatResumeAuthorizationService } from '../../web-chat/web-chat-resume-authorization.service';
 import { WebChatSessionVerifier } from '../../web-chat/web-chat-session.verifier';
 import { AgentActionTokenService } from '../action-token/agent-action-token.service';
+import { parseEmailThreadAddress } from './email-thread-id';
 import type { InboundReactionEvent } from './inbound-turn.handler';
 import { PlanLimitGateService } from './plan-limit-gate.service';
 import { rehydrateInboundAttachments } from './rehydrate-inbound-attachments';
@@ -140,12 +141,12 @@ export interface CachedChat {
  * for subscriber resolution on the click handler side.
  */
 function extractRecipientFromThreadId(threadId: string): string {
-  const parts = threadId.split(':');
-  if (parts.length !== 3 || parts[0] !== 'email' || !parts[1]) {
+  const address = parseEmailThreadAddress(threadId);
+  if (!address) {
     throw new Error(`Cannot extract recipient from invalid email thread id: ${threadId}`);
   }
 
-  return decodeURIComponent(parts[1]);
+  return address;
 }
 
 const MAX_CACHED_INSTANCES = 200;

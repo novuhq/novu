@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { compileJsonControlValues } from './compile-json-control-values';
+import { compileJsonControlValues, parseLiquidControlValue } from './compile-json-control-values';
+import { createLiquidEngine } from './liquid.utils';
 
 describe('compileJsonControlValues', () => {
   it('round-trips whitespace and a literal backslash-n', async () => {
@@ -41,5 +42,27 @@ describe('compileJsonControlValues', () => {
     );
 
     expect(result.body).toBe('Hi Alice\nBob');
+  });
+});
+
+describe('parseLiquidControlValue', () => {
+  const engine = createLiquidEngine();
+
+  it('accepts single quotes and tags that span lines', () => {
+    expect(() => parseLiquidControlValue(engine, "{{ payload.name | append: '!' }}")).not.toThrow();
+    expect(() => parseLiquidControlValue(engine, '{% if payload.a\n  and payload.b %}x{% endif %}')).not.toThrow();
+  });
+
+  it('rejects double quotes inside Liquid, which compile cannot render', async () => {
+    const body = '{{ payload.name | append: "!" }}';
+
+    expect(() => parseLiquidControlValue(engine, body)).toThrow();
+    await expect(compileJsonControlValues({ body }, { payload: { name: 'A' } })).rejects.toThrow();
+  });
+
+  it('reads a JSON string control value at one level of escaping', () => {
+    const maily = JSON.stringify({ type: 'doc', content: [{ type: 'text', text: "{{ payload.a | append: '!' }}" }] });
+
+    expect(() => parseLiquidControlValue(engine, maily)).not.toThrow();
   });
 });

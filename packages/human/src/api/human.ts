@@ -61,8 +61,15 @@ export interface Interaction {
     respondedAt: string;
   };
   failedTo?: string[];
+  /** On create: the inbox thread each message landed in, and how many messages in it were unread. */
+  threads?: InteractionThread[];
   expiresAt: string;
   createdAt: string;
+}
+
+export interface InteractionThread {
+  id: string;
+  unreadBefore: number;
 }
 
 export function isInteractionChrome(content: InteractionContent): content is { cardChrome: InteractionCard } {
@@ -121,7 +128,12 @@ export function interactionOptions(interaction: Interaction): HumanInteractionOp
 export interface CreateInteractionInput {
   kind: InteractionKind;
   card: CreateInteractionCard;
-  to: string | string[];
+  /** Starts a new thread with each contact; with `thread`, limits who may answer. */
+  to?: string | string[];
+  /** Inbox thread to send into. */
+  thread?: string;
+  /** With `thread` and no `to`: anyone in the thread may answer. */
+  anyoneMayAnswer?: boolean;
   via?: string;
   agentIdentifier?: string;
   from?: string;
@@ -293,6 +305,10 @@ export type ContactChannel = {
   verifiedRequestedAt?: string;
   /** Set while a newer request is still pending. */
   requestedAt?: string;
+  /** On a contact from the list: when they connected the channel. Absent for email. */
+  connectedAt?: string;
+  /** On a contact from the list: whether a message that names no channel goes here. */
+  isDefault?: boolean;
 };
 
 /** A contact is a subscriber in the environment — `id` is the subscriberId `--to` addresses. */
@@ -303,9 +319,12 @@ export interface Contact {
   email?: string;
   phone?: string;
   data?: Record<string, unknown>;
+  /** Channels the agent can reach the contact on. */
+  channels?: ContactChannel[];
+  /** Channel used when a message to the contact names none. */
+  defaultVia?: string;
   createdAt: string;
   updatedAt: string;
-  channels?: ContactChannel[];
 }
 
 export interface ContactsPage {
@@ -315,7 +334,7 @@ export interface ContactsPage {
 
 export async function listContacts(
   client: HumanApiClient,
-  params: { limit?: number; after?: string } = {}
+  params: { limit?: number; after?: string; subscriberId?: string; agentIdentifier?: string } = {}
 ): Promise<ContactsPage> {
   const res = await client.axios.get<{ data?: Contact[]; next?: string | null }>('/v1/human/contacts', { params });
   const body = res.data;

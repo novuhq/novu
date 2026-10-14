@@ -19,6 +19,7 @@ import { ConnectModule } from '../connect/connect.module';
 import { GenerateUniqueApiKey } from '../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { RegenerateApiKeys } from '../environments-v1/usecases/regenerate-api-keys/regenerate-api-keys.usecase';
 import { IntegrationModule } from '../integrations/integrations.module';
+import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
 import { RemoveSubscriber } from '../subscribers-v2/usecases/remove-subscriber/remove-subscriber.usecase';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
@@ -26,6 +27,7 @@ import { HumanVerificationEmailSender } from './email/human-verification-email.s
 import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
 import { HumanAccountsController } from './human-accounts.controller';
 import { HumanAgentPicturesPublicController } from './human-agent-pictures-public.controller';
+import { HumanInboxController } from './human-inbox.controller';
 import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanInvitesPublicController, HumanVerifyPublicController } from './human-invites-public.controller';
 import { HumanAccountAgentService } from './services/human-account-agent.service';
@@ -33,7 +35,9 @@ import { HumanAgentIdentityService } from './services/human-agent-identity.servi
 import { HumanAgentPictureService } from './services/human-agent-picture.service';
 import { HumanBackingAccounts } from './services/human-backing-accounts.service';
 import { HumanDeliveryService } from './services/human-delivery.service';
+import { HumanInboxService } from './services/human-inbox.service';
 import { HumanInviteTokenService } from './services/human-invite-token.service';
+import { HumanKeylessCapService } from './services/human-keyless-cap.service';
 import { HumanOperatorService } from './services/human-operator.service';
 import { HumanVerificationRateLimitService } from './services/human-verification-rate-limit.service';
 import { HumanVerificationTokenService } from './services/human-verification-token.service';
@@ -41,6 +45,7 @@ import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
 import { ConnectHumanInviteChannel } from './usecases/connect-human-invite-channel/connect-human-invite-channel.usecase';
+import { CountInboxThreads } from './usecases/count-inbox-threads/count-inbox-threads.usecase';
 import { CreateHumanInvite } from './usecases/create-human-invite/create-human-invite.usecase';
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
 import { DeclineHumanInvite } from './usecases/decline-human-invite/decline-human-invite.usecase';
@@ -51,13 +56,17 @@ import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backi
 import { GetContact } from './usecases/get-contact/get-contact.usecase';
 import { GetHumanCliLogin } from './usecases/get-human-cli-login/get-human-cli-login.usecase';
 import { GetHumanInviteStatus } from './usecases/get-human-invite-status/get-human-invite-status.usecase';
+import { GetInboxThread } from './usecases/get-inbox-thread/get-inbox-thread.usecase';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
+import { ListInboxThreads } from './usecases/list-inbox-threads/list-inbox-threads.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
+import { MarkInboxRead } from './usecases/mark-inbox-read/mark-inbox-read.usecase';
 import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
+import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbox-thread.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
@@ -75,11 +84,13 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     AgentsModule,
     CliAuthModule,
     ConnectModule,
+    KeylessModule,
     TelegramLinkingModule,
     forwardRef(() => IntegrationModule),
   ],
   controllers: [
     HumanInteractionsController,
+    HumanInboxController,
     HumanInvitesPublicController,
     HumanVerifyPublicController,
     HumanAgentPicturesPublicController,
@@ -98,6 +109,7 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     AgentMcpServerRepository,
     McpConnectionRepository,
     HumanDeliveryService,
+    HumanKeylessCapService,
     CreateInteraction,
     GetInteraction,
     ListInteractions,
@@ -136,6 +148,12 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     GetHumanCliLogin,
     DenyHumanCliLogin,
     GetKeylessClaimToken,
+    HumanInboxService,
+    ListInboxThreads,
+    CountInboxThreads,
+    GetInboxThread,
+    MarkInboxRead,
+    ResolveInboxThread,
   ],
 })
 export class HumanModule {}

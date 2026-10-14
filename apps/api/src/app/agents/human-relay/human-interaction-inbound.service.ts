@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, FeatureFlagsService, PinoLogger, shortId } from '@novu/application-generic';
-import { ChannelEndpointRepository, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
+import {
+  ChannelEndpointRepository,
+  ConversationRepository,
+  HumanInteractionEntity,
+  HumanInteractionRepository,
+} from '@novu/dal';
 import { parseApprovalActionId } from '@novu/framework/internal';
 import {
   buildToolApprovalRequestId,
@@ -13,6 +18,7 @@ import {
   humanInteractionRecipientIds,
 } from '@novu/shared';
 import { isKnownHumanContentOption } from '../../human/services/human-interaction-lifecycle';
+import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
@@ -46,7 +52,9 @@ export class HumanInteractionInboundService {
     private readonly cacheService: CacheService,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly logger: PinoLogger,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly featureFlagsService: FeatureFlagsService,
+    private readonly conversationRepository: ConversationRepository,
+    private readonly conversationService: AgentConversationService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -266,6 +274,54 @@ export class HumanInteractionInboundService {
   }
 
   async tryHandleMessage(turn: ConversationTurn, mode: HumanInboundMode): Promise<HumanInboundResult> {
+    const result = await this.handleMessage(turn, mode);
+
+    if (result.outcome !== 'ignored' && turn.conversation?._id) {
+      await this.markHandledMessageRead(turn);
+    }
+
+    return result;
+  }
+
+  /**
+   * A message this service handled (a card answer, a disambiguation, a rejected responder) is already
+   * delivered, so it should not show up as unread in the Human inbox. The cursor moves only up to that
+   * message, and only when nothing else is unread before it, so unrelated messages are never hidden:
+   * not older ones, and not one that arrives while the answer is still being settled.
+   */
+  private async markHandledMessageRead(turn: ConversationTurn): Promise<void> {
+    const { environmentId, organizationId } = turn.config;
+    const conversationId = turn.conversation._id;
+    const [conversation, handled] = await Promise.all([
+      this.conversationRepository.findOne(
+        { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+        ['lastReadAt', 'lastHumanMessageAt'],
+        { readPreference: 'primary' }
+      ),
+      turn.message?.id
+        ? this.conversationService.findByPlatformMessageId(environmentId, conversationId, turn.message.id)
+        : null,
+    ]);
+    if (!conversation?.lastHumanMessageAt) {
+      return;
+    }
+
+    const readUpTo = handled?.createdAt ? new Date(handled.createdAt).toISOString() : conversation.lastHumanMessageAt;
+    const unread = await this.conversationService.countInboundMessagesSince({
+      environmentId,
+      organizationId,
+      conversationId,
+      since: conversation.lastReadAt,
+      until: readUpTo,
+    });
+    if (unread > 1) {
+      return;
+    }
+
+    await this.conversationRepository.markRead(environmentId, organizationId, conversationId, readUpTo);
+  }
+
+  private async handleMessage(turn: ConversationTurn, mode: HumanInboundMode): Promise<HumanInboundResult> {
     const text = turn.message?.text?.trim();
     if (!text) {
       return { outcome: 'ignored' };
@@ -291,13 +347,8 @@ export class HumanInteractionInboundService {
     const askAddressing = await Promise.all(pendingAsks.map((ask) => this.isAddressedHuman(turn, ask)));
     const addressedAsks = pendingAsks.filter((_ask, index) => askAddressing[index]);
 
+    // Free text that answers nothing stays unread in the Human inbox for the agent to pick up.
     if (addressedAsks.length === 0) {
-      if (mode === 'relay') {
-        await this.replyOnThread(turn, 'Nothing is waiting for your reply right now.');
-
-        return { outcome: 'consumed' };
-      }
-
       return { outcome: 'ignored' };
     }
 
@@ -307,15 +358,15 @@ export class HumanInteractionInboundService {
       return settled ? { outcome: 'settled', settled } : { outcome: 'consumed' };
     }
 
-    const subscriberId = turn.subscriber?.subscriberId;
-    if (!subscriberId) {
+    const responderId = this.responderIdOf(turn);
+    if (!responderId) {
       return { outcome: 'ignored' };
     }
 
     const answerId = this.resolveDisambiguationAnswerId(turn);
     await this.cacheService.set(
       this.disambiguationCacheKey(turn.conversation._id, answerId),
-      JSON.stringify({ text, subscriberId }),
+      JSON.stringify({ text, subscriberId: responderId }),
       { ttl: DISAMBIGUATION_CACHE_TTL_SECONDS }
     );
 
@@ -345,12 +396,25 @@ export class HumanInteractionInboundService {
       );
     }
 
+    // Asks addressed to this person, plus asks sent into this thread for anyone in it to answer.
+    // The second kind is the only one a stranger can have, since a stranger is not a subscriber.
     const subscriberId = turn.subscriber?.subscriberId;
-    if (!subscriberId) {
+    const none: HumanInteractionEntity[] = [];
+    const [addressed, inThread] = await Promise.all([
+      subscriberId ? this.humanInteractionRepository.findPendingAsks(environmentId, subscriberId) : none,
+      turn.conversation?._id
+        ? this.humanInteractionRepository.findPendingAsksByConversation(environmentId, turn.conversation._id)
+        : none,
+    ]);
+    const openInThread = inThread.filter(
+      (ask) => ask.anyoneMayAnswer && !addressed.some((mine) => mine._id === ask._id)
+    );
+
+    if (!subscriberId && openInThread.length === 0) {
       return null;
     }
 
-    return this.expireOverdue(await this.humanInteractionRepository.findPendingAsks(environmentId, subscriberId));
+    return this.expireOverdue([...addressed, ...openInThread]);
   }
 
   private async handleDisambiguationPick(
@@ -381,7 +445,7 @@ export class HumanInteractionInboundService {
     }
 
     const payload = JSON.parse(cached) as { text?: string; subscriberId?: string };
-    if (!payload.text || payload.subscriberId !== turn.subscriber?.subscriberId) {
+    if (!payload.text || payload.subscriberId !== this.responderIdOf(turn)) {
       await this.rejectForeignResponder(turn, interaction);
 
       return null;
@@ -443,6 +507,18 @@ export class HumanInteractionInboundService {
     return { ...partial, respondedAt: new Date().toISOString() };
   }
 
+  /**
+   * Who wrote the message, for telling a later "which question?" pick apart from someone else's.
+   * A stranger is not a subscriber, so theirs is the channel's own id, as on the thread's participants.
+   */
+  private responderIdOf(turn: ConversationTurn): string | undefined {
+    if (turn.subscriber?.subscriberId) {
+      return turn.subscriber.subscriberId;
+    }
+
+    return turn.platformUserId ? `${turn.config.platform}:${turn.platformUserId}` : undefined;
+  }
+
   private resolveResponder(turn: ConversationTurn): string | undefined {
     const firstName = turn.subscriber?.firstName?.trim();
     if (firstName) {
@@ -458,6 +534,11 @@ export class HumanInteractionInboundService {
   }
 
   private async isAddressedHuman(turn: ConversationTurn, interaction: HumanInteractionEntity): Promise<boolean> {
+    // Sent into this thread for anyone in it to answer.
+    if (interaction.anyoneMayAnswer && interaction._conversationId === turn.conversation?._id) {
+      return true;
+    }
+
     const responder = turn.subscriber?.subscriberId;
     if (!responder) {
       return false;

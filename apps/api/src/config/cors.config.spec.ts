@@ -88,7 +88,7 @@ describe('CORS Configuration', () => {
         '/v1/agents/public/slack/setup',
       ];
 
-      for (const humanOrigin of ['https://www.gethuman.md', 'https://gethuman.md']) {
+      for (const humanOrigin of ['https://www.agentinbox.md', 'https://agentinbox.md']) {
         for (const url of setupRoutes) {
           const callbackSpy = spy();
 
@@ -145,7 +145,7 @@ describe('CORS Configuration', () => {
     });
 
     describe('Human dashboard invite page', () => {
-      const humanDashboardOrigin = 'https://gethuman.md';
+      const humanDashboardOrigin = 'https://agentinbox.md';
 
       afterEach(() => {
         delete process.env.HUMAN_DASHBOARD_URL;
@@ -161,13 +161,13 @@ describe('CORS Configuration', () => {
       }
 
       it('allows the Human dashboard on the public invite routes', () => {
-        process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md/';
+        process.env.HUMAN_DASHBOARD_URL = 'https://agentinbox.md/';
 
         expect(originsFor('/v1/human/invites/status?token=abc')).to.include(humanDashboardOrigin);
         expect(originsFor('/v1/human/invites/connect')).to.include(humanDashboardOrigin);
       });
 
-      it('falls back to gethuman.md when HUMAN_DASHBOARD_URL is not set', () => {
+      it('falls back to agentinbox.md when HUMAN_DASHBOARD_URL is not set', () => {
         expect(originsFor('/v1/human/invites/decline')).to.include(humanDashboardOrigin);
       });
 
