@@ -74,7 +74,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
       expect.fail('should have thrown');
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
-      expect((err as NotFoundException).message).to.include('human setup');
+      expect((err as NotFoundException).message).to.include('npx @agentinbox/cli setup');
       expect((err as NotFoundException).message).to.not.include('human contact invite');
     }
   });

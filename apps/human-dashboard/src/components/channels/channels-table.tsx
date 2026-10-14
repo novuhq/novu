@@ -31,7 +31,7 @@ export type ChannelHandle = {
   label: string;
 };
 
-/** Channels whose setup drawer exists. The others are still set up with `human setup`. */
+/** Channels whose setup drawer exists. The others are still set up with `setup`. */
 const HAS_SETUP: Partial<Record<ChannelVia, true>> = { telegram: true, slack: true };
 
 type ChannelsTableProps = {
@@ -177,7 +177,7 @@ function RowAction({ row, hasSetup, disabled, onOpen }: RowActionProps) {
         variant="secondary"
         className={SMALL_BUTTON}
         disabled
-        title="Coming soon. For now, run human setup in your terminal."
+        title={`Coming soon. For now, run npx @agentinbox/cli channel add ${row.via} in your terminal.`}
       >
         Set up
       </Button>

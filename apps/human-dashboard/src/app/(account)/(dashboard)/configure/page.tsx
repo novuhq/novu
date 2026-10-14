@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   title: 'Configure',
 };
 
-/** How often the page asks whether `human setup` has made the agent yet. */
+/** How often the page asks whether `setup` has made the agent yet. */
 const SETUP_POLL_MS = 3000;
 
 /** Slower once the agent is there and only its channels can still change. */
@@ -33,7 +33,7 @@ const CHANNELS_POLL_MS = 5000;
 
 /**
  * The operator's agent and how people see it. An account starts without an agent, so the page opens on
- * how to make one with `human setup`, and switches by itself once that has run.
+ * how to make one with `setup`, and switches by itself once that has run.
  *
  * Agent and Channels were two pages; until the Configure page of the new design lands (NV-9034), the
  * channels table sits under the agent so nothing it does is lost.

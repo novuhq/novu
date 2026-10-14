@@ -26,7 +26,7 @@ const CURSOR_PATTERN = /^[a-f0-9]{24}$/i;
  * `?after=` holds the cursor of every page opened so far: the last one is the page shown, and
  * "Previous" drops it.
  *
- * Until `human setup` has made the agent, nobody can be asked or invited: the list stays empty and a
+ * Until `setup` has made the agent, nobody can be asked or invited: the list stays empty and a
  * banner sends the operator to the Agent page.
  */
 export default async function ContactsPage(props: PageProps<'/contacts'>) {

@@ -6,10 +6,10 @@ import type { HumanAccount } from './human-account';
 import { isHumanApiNotFound } from './human-api-error';
 import { requestForAccount } from './human-api-key';
 
-/** The relay agent `human setup` creates; the claim keeps its identifier. */
+/** The relay agent `setup` creates; the claim keeps its identifier. */
 export const RELAY_AGENT_IDENTIFIER = 'human-relay';
 
-/** The name `human setup` and the dashboard give a relay agent until the operator picks one (NV-8914). */
+/** The name `setup` and the dashboard give a relay agent until the operator picks one (NV-8914). */
 export const DEFAULT_AGENT_NAME = 'Human';
 
 export type RelayAgent = {
@@ -22,7 +22,7 @@ export type RelayAgent = {
   description?: string;
   /** Where the picture the operator gave it can be loaded. Missing when it has none. */
   pictureUrl?: string;
-  /** ISO timestamp of the `human setup` that made it. */
+  /** ISO timestamp of the `setup` that made it. */
   createdAt?: string;
 };
 
@@ -30,7 +30,7 @@ type ApiAgent = Omit<RelayAgent, 'id' | 'pictureUrl'> & { _id: string };
 
 /**
  * The agent that carries messages between the operator's agents and their contacts, or `null` until
- * `human setup` has made it. An account starts without one.
+ * `setup` has made it. An account starts without one.
  *
  * The shell and the page of one request share a single lookup.
  */

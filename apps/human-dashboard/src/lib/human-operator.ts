@@ -7,7 +7,7 @@ type OperatorName = { firstName?: string | null; lastName?: string | null };
 
 /**
  * The operator's own contact: the "you" row in Contacts, and who a channel is tried out on while it's
- * being set up. The API keeps track of it, so it's the same contact `human setup` uses. `null` before
+ * being set up. The API keeps track of it, so it's the same contact `setup` uses. `null` before
  * anything was set up.
  */
 export async function findOperatorContactId(account: HumanAccount): Promise<string | null> {
@@ -18,7 +18,7 @@ export async function findOperatorContactId(account: HumanAccount): Promise<stri
 
 /**
  * Makes sure the relay agent and the operator's contact exist, and returns the contact's id. It's what
- * `human setup` runs first, and running it again changes nothing. A name that's passed replaces the
+ * `setup` runs first, and running it again changes nothing. A name that's passed replaces the
  * contact's; leaving it out keeps it.
  */
 export async function ensureOperatorContact(account: HumanAccount, name: OperatorName = {}): Promise<string> {

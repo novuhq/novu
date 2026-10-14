@@ -163,7 +163,7 @@ export class HumanAgentPictureService {
     );
 
     if (!agent || agent.runtime !== 'human_relay') {
-      throw new NotFoundException('There is no Human agent yet. Run `human setup` first.');
+      throw new NotFoundException('There is no agent yet. Run `npx @agentinbox/cli setup` first.');
     }
 
     return agent;

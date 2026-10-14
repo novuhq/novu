@@ -3854,7 +3854,7 @@ importers:
         specifier: ^3.23.3
         version: 3.23.3(zod@3.25.20)
 
-  packages/human:
+  packages/agentinbox:
     dependencies:
       axios:
         specifier: ^1.20.0

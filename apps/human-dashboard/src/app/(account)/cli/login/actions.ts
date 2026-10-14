@@ -49,7 +49,7 @@ const SESSION_ENDED = 'Your session has ended. Reload this page and sign in agai
 const BEING_APPROVED = 'This login is being approved somewhere else right now. Try again in a moment.';
 
 /**
- * Approves the `human login` waiting for the code, so that CLI gets the key of the signed-in person's Human
+ * Approves the `login` waiting for the code, so that CLI gets the key of the signed-in person's Human
  * account. Only ever runs from the Approve button: the code in the link shows which login this is, it doesn't
  * approve it. With a claim token, the CLI's setup made without an account first moves into the Human account,
  * so the CLI carries on with the same contacts and channels. The API checks the code before it creates or
@@ -68,7 +68,7 @@ export async function approveCliLoginAction(request: CliLoginRequest): Promise<A
 
   const claim = String(request.claim ?? '');
   if (claim && !CLAIM_TOKEN_PATTERN.test(claim)) {
-    return { status: 'error', message: 'This link isn’t valid. Run human login again for a new one.' };
+    return { status: 'error', message: 'This link isn’t valid. Run npx @agentinbox/cli login again for a new one.' };
   }
 
   const region: HumanRegion = request.region === 'eu' ? 'eu' : 'us';
@@ -76,7 +76,7 @@ export async function approveCliLoginAction(request: CliLoginRequest): Promise<A
   if (stored && stored.region !== region) {
     return {
       status: 'error',
-      message: `Your human CLI uses the ${REGION_NAMES[region]} region, but your Agent Inbox account is in the ${REGION_NAMES[stored.region]} region. Point the CLI at the ${REGION_NAMES[stored.region]} API and run human login again.`,
+      message: `Your Agent Inbox CLI uses the ${REGION_NAMES[region]} region, but your Agent Inbox account is in the ${REGION_NAMES[stored.region]} region. Point the CLI at the ${REGION_NAMES[stored.region]} API and run npx @agentinbox/cli login again.`,
     };
   }
 
@@ -110,7 +110,7 @@ export async function approveCliLoginAction(request: CliLoginRequest): Promise<A
 }
 
 /**
- * Ends the `human login` waiting for the code: the code stops working and the terminal is told it was denied.
+ * Ends the `login` waiting for the code: the code stops working and the terminal is told it was denied.
  * Nothing is created or moved. A login that is already gone is not reported as denied: it may be gone because
  * it was approved in another tab, and then the terminal was let in.
  */

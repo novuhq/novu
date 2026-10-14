@@ -149,7 +149,8 @@ export class ApproveHumanCliLogin {
 
 function loginNotFound(): NotFoundException {
   return new NotFoundException({
-    message: 'No login is waiting for this code. Check the code in your terminal, or run `human login` again.',
+    message:
+      'No login is waiting for this code. Check the code in your terminal, or run `npx @agentinbox/cli login` again.',
     code: CLI_LOGIN_NOT_FOUND_CODE,
   });
 }
