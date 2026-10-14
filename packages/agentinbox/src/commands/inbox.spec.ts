@@ -328,6 +328,26 @@ describe('formatters', () => {
     expect(out).toContain('chose "Staging"');
     expect(out).toContain('answered: prod, after 6pm');
   });
+
+  it('cleans terminal controls out of the answer label, which carries chat names', () => {
+    const out = formatConversationView({
+      conversation: conversation(),
+      hasMore: false,
+      messages: [
+        {
+          id: 'c',
+          from: 'agent',
+          text: '',
+          interaction: { id: 'hint_c', kind: 'approve', status: 'approved' },
+          card: { kind: 'approve', state: { status: 'approved', label: 'Approved by \u001b[2JMallory' } },
+          at: '2026-10-09T11:51:00.000Z',
+        },
+      ],
+    });
+
+    expect(out).toContain('[approve hint_c → Approved by Mallory]');
+    expect(out).not.toContain('\u001b[2J');
+  });
 });
 
 describe('inbox commands', () => {

@@ -6,7 +6,7 @@ import { info, promptLine } from '../cli-io';
 import { CLI_COMMAND } from '../config';
 import { renderQR } from '../qr';
 import { startWaitIndicator } from '../spinner';
-import { contactIdFromEmail, findContactByEmail, isEmailAddress, resolveEmailContact } from './email-contact';
+import { contactIdFromEmail, hasVerifiedEmail, isEmailAddress, resolveEmailContact } from './email-contact';
 import { clientFromConfig, handleError } from './interact';
 import {
   CHANNEL_NAMES,
@@ -358,7 +358,7 @@ async function inviteEmail(
   // A single contact only shows its address masked, so the exact address is checked on the contact list.
   const sameAddress =
     verified && options.email !== undefined
-      ? (await findContactByEmail(client, agentIdentifier, options.email))?.id === contactId
+      ? await hasVerifiedEmail(client, agentIdentifier, contactId, options.email)
       : false;
 
   if (verified && (!options.email || sameAddress)) {

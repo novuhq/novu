@@ -184,7 +184,8 @@ function formatInboxMessage(message: InboxMessage): string {
 
   if (message.interaction) {
     const state = message.card?.state;
-    const status = state?.label ?? message.interaction.status;
+    // The label carries chat names, which people choose, so it is cleaned like any text they wrote.
+    const status = stripTerminalControls(state?.label ?? message.interaction.status ?? '');
     lines.push(pc.yellow(`  [${message.interaction.kind} ${message.interaction.id}${status ? ` → ${status}` : ''}]`));
 
     // The answer, so a question that was left with --async or a timeout can be read here.

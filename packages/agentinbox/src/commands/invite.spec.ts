@@ -376,6 +376,11 @@ describe('runInvite with --via', () => {
 
     expect(result).toEqual({ contactId: 'carol', linkedOn: ['email'], alreadyLinked: true });
     expect(requestAddressVerification).not.toHaveBeenCalled();
+    // Only the named contact is looked at, so another contact with the same address does not get in the way.
+    expect(listContacts).toHaveBeenCalledWith(expect.anything(), {
+      subscriberId: 'carol',
+      agentIdentifier: 'human-relay',
+    });
   });
 
   it('returns immediately with --async after sending the verification email', async () => {

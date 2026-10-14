@@ -34,6 +34,12 @@ export function contactIdFromEmail(email: string, withSuffix = false): string {
   return `${base}-${createHash('sha256').update(address).digest('hex').slice(0, 6)}`;
 }
 
+function localPart(email: string): string {
+  const address = email.trim().toLowerCase();
+
+  return address.slice(0, address.indexOf('@'));
+}
+
 /** Matches the API's `maskEmail`: a single contact's email channel only ever shows the address like this. */
 export function maskEmail(email: string): string {
   const address = email.trim();
@@ -52,6 +58,18 @@ function hasVerifiedAddress(contact: Contact, email: string): boolean {
   return (contact.channels ?? []).some(
     (channel) => channel.via === 'email' && channel.address?.toLowerCase() === address
   );
+}
+
+/** Whether this relay verified exactly this address for the named contact. Others with it don't matter. */
+export async function hasVerifiedEmail(
+  client: ApiClient,
+  agentIdentifier: string,
+  contactId: string,
+  email: string
+): Promise<boolean> {
+  const { data } = await listContacts(client, { subscriberId: contactId, agentIdentifier });
+
+  return data.some((contact) => contact.id === contactId && hasVerifiedAddress(contact, email));
 }
 
 /** The contact this relay verified the address for. More than one is ambiguous, so it refuses to pick. */
@@ -86,7 +104,8 @@ export async function findContactByEmail(
 /**
  * Whether a new contact for `email` may use `id`: nobody has it yet, or it is the contact an earlier invite
  * made for this same address and is still waiting for the click. Then the invite is sent to it again
- * instead of making a second contact.
+ * instead of making a second contact. A single contact shows its address only masked, so the mask stands
+ * in for the address; that is safe because only an address whose own name is the plain id is offered it.
  */
 async function idFitsNewcomer(client: ApiClient, id: string, agentIdentifier: string, email: string): Promise<boolean> {
   let contact: Contact;
@@ -127,7 +146,13 @@ export async function resolveEmailContact(
     return { id: existing.id, exists: true };
   }
 
-  for (const id of [contactIdFromEmail(email), contactIdFromEmail(email, true)]) {
+  // The plain id goes only to an address whose name is already a clean id (`alice`, not `bob+dev`), so the
+  // plain id and the mask together point at one address. Any other address gets the id with its hash.
+  const plainId = contactIdFromEmail(email);
+  const candidates =
+    plainId === localPart(email) ? [plainId, contactIdFromEmail(email, true)] : [contactIdFromEmail(email, true)];
+
+  for (const id of candidates) {
     if (!reserved.has(id) && (await idFitsNewcomer(client, id, agentIdentifier, email))) {
       return { id, exists: false };
     }

@@ -177,7 +177,7 @@ function RowAction({ row, hasSetup, disabled, onOpen }: RowActionProps) {
         variant="secondary"
         className={SMALL_BUTTON}
         disabled
-        title="Coming soon. For now, run npx @agentinbox/cli channel add in your terminal."
+        title={`Coming soon. For now, run npx @agentinbox/cli channel add ${row.via} in your terminal.`}
       >
         Set up
       </Button>

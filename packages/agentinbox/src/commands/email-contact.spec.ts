@@ -137,6 +137,15 @@ describe('resolveEmailContact', () => {
     expect(result).toEqual({ id: contactIdFromEmail('alice@gmail.com', true), exists: false });
   });
 
+  it('gives an address whose name is not a clean id the id with its hash, even when the plain one is free', async () => {
+    // `bob+dev` and `bob-dev` share the plain id and the mask, so only the hash tells them apart.
+    await expect(resolveEmailContact(client, 'human-relay', 'bob+dev@acme.com')).resolves.toEqual({
+      id: contactIdFromEmail('bob+dev@acme.com', true),
+      exists: false,
+    });
+    expect(getContact).not.toHaveBeenCalledWith(client, 'bob-dev', 'human-relay');
+  });
+
   it('skips an id another new address in the same command took', async () => {
     const result = await resolveEmailContact(client, 'human-relay', 'alice@gmail.com', new Set(['alice']));
 
