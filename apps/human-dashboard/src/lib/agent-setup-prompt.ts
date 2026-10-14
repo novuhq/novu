@@ -66,23 +66,17 @@ export function buildSetupPrompt(context: PromptContext, operator: SetupOperator
 }
 
 /**
- * The prompt for an agent that exists already: it connects the channels that are still missing. No API
- * key in it either; a computer that isn't logged in yet logs in first.
+ * What the operator hands their agent in a channel's setup drawer ("Let your agent set this up"): one
+ * sentence that names the CLI command and leaves the steps in Telegram or Slack to the agent and the operator.
+ * No API key in it either.
  */
-export function buildFinishSetupPrompt(context: PromptContext, missing: Via[]): string {
-  const api = apiUrlFlag(context);
+export function buildChannelPrompt(context: PromptContext, via: 'telegram' | 'slack', handle: string): string {
+  const command = `${CLI} channel add ${via}${apiUrlFlag(context)}`;
 
-  return [
-    'Connect more channels to my agent inbox, so I can answer you where I already am.',
-    '',
-    `If Agent Inbox isn't logged in on this computer yet, first run \`${CLI} login${api}\`, show me the link it prints and wait until I approve it in my browser.`,
-    '',
-    `Ask me which of these I want: ${missing.map((via) => CHANNEL_NAMES[via]).join(', ')}. Connect only what I say yes to:`,
-    ...channelSteps(missing, api),
-  ].join('\n');
+  return via === 'telegram'
+    ? `Set up Telegram for ${handle}: run ${command}, then walk me through creating the bot with @BotFather and paste the token back.`
+    : `Set up Slack for ${handle}: run ${command}, then walk me through creating the app from the manifest and installing it.`;
 }
-
-const CHANNEL_NAMES: Record<Via, string> = { email: 'Email', telegram: 'Telegram', slack: 'Slack' };
 
 function channelSteps(channels: Via[], api: string): string[] {
   const steps: Record<Via, string> = {
