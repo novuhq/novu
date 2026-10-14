@@ -147,4 +147,34 @@ describe('ConnectClaimTokenService', () => {
     expect(issued.token).to.equal(legacyToken);
     expect(cacheService.set.callCount).to.equal(0);
   });
+
+  it('issues env tokens with the default 7 day TTL on both keys', async () => {
+    const { service, cacheService } = makeService();
+
+    const issued = await service.issueOrGetForEnvironment(payload);
+
+    const ttls = cacheService.set.getCalls().map((call) => [call.args[0], call.args[2]]);
+    expect(ttls).to.deep.equal([
+      [`connect_claim_link:{${issued.token}}`, { ttl: CONNECT_CLAIM_TOKEN_TTL_SECONDS }],
+      [`connect_claim_link_env:{${payload.env}}`, { ttl: CONNECT_CLAIM_TOKEN_TTL_SECONDS }],
+    ]);
+  });
+
+  it('applies a ttlSeconds override to the token and the env key', async () => {
+    const { service, cacheService, cacheStore } = makeService();
+
+    const issued = await service.issueOrGetForEnvironment(payload, { ttlSeconds: 3600 });
+
+    const ttls = cacheService.set.getCalls().map((call) => [call.args[0], call.args[2]]);
+    expect(ttls).to.deep.equal([
+      [`connect_claim_link:{${issued.token}}`, { ttl: 3600 }],
+      [`connect_claim_link_env:{${payload.env}}`, { ttl: 3600 }],
+    ]);
+
+    const expectedExpiresAtMs = Date.now() + 3600 * 1000;
+    expect(Math.abs(Date.parse(issued.expiresAt) - expectedExpiresAtMs)).to.be.below(1500);
+
+    const stored = JSON.parse(cacheStore.get(`connect_claim_link:{${issued.token}}`) as string);
+    expect(Math.abs(stored.expiresAt * 1000 - expectedExpiresAtMs)).to.be.below(1500);
+  });
 });

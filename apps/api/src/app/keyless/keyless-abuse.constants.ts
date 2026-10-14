@@ -35,6 +35,31 @@ export function resolveKeylessHumanInteractionCap(): number {
   return parsePositiveIntEnv(process.env.KEYLESS_HUMAN_INTERACTION_CAP, KEYLESS_HUMAN_INTERACTION_CAP_DEFAULT);
 }
 
+export const KEYLESS_AGENT_ENV_CREATE_CAP_PER_IP_PER_DAY_DEFAULT = 10;
+export const KEYLESS_AGENT_ENV_CREATE_GLOBAL_CAP_PER_DAY_DEFAULT = 2000;
+export const KEYLESS_AGENT_TRIGGER_CAP_PER_ENV_PER_DAY_DEFAULT = 200;
+
+export function resolveKeylessAgentEnvCreateCapPerIpPerDay(): number {
+  return parsePositiveIntEnv(
+    process.env.KEYLESS_AGENT_ENV_CREATE_CAP_PER_IP_PER_DAY,
+    KEYLESS_AGENT_ENV_CREATE_CAP_PER_IP_PER_DAY_DEFAULT
+  );
+}
+
+export function resolveKeylessAgentEnvCreateGlobalCapPerDay(): number {
+  return parsePositiveIntEnv(
+    process.env.KEYLESS_AGENT_ENV_CREATE_GLOBAL_CAP_PER_DAY,
+    KEYLESS_AGENT_ENV_CREATE_GLOBAL_CAP_PER_DAY_DEFAULT
+  );
+}
+
+export function resolveKeylessAgentTriggerCapPerEnvPerDay(): number {
+  return parsePositiveIntEnv(
+    process.env.KEYLESS_AGENT_TRIGGER_CAP_PER_ENV_PER_DAY,
+    KEYLESS_AGENT_TRIGGER_CAP_PER_ENV_PER_DAY_DEFAULT
+  );
+}
+
 export const KEYLESS_DAILY_COUNTER_TTL_SECONDS = 86_400;
 
 export const INCR_WITH_EXPIRE_SCRIPT = `

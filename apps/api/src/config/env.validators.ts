@@ -191,6 +191,10 @@ export const envValidators = {
       KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY: num({ default: 15 }),
       KEYLESS_GENERATE_CAP_PER_IP_PER_DAY: num({ default: 5 }),
       KEYLESS_MAX_AGENTS_PER_ENV: num({ default: 2 }),
+      KEYLESS_AGENT_ENVIRONMENT_RETENTION_HOURS: num({ default: 72 }),
+      KEYLESS_AGENT_ENV_CREATE_CAP_PER_IP_PER_DAY: num({ default: 10 }),
+      KEYLESS_AGENT_ENV_CREATE_GLOBAL_CAP_PER_DAY: num({ default: 2000 }),
+      KEYLESS_AGENT_TRIGGER_CAP_PER_ENV_PER_DAY: num({ default: 200 }),
       // ClickHouse
       CLICK_HOUSE_URL: str({ default: '' }),
       CLICK_HOUSE_DATABASE: str({ default: '' }),

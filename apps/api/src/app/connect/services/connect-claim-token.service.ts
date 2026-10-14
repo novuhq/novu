@@ -64,7 +64,14 @@ export class ConnectClaimTokenService {
     return this.tokens.issue(payload);
   }
 
-  async issueOrGetForEnvironment(payload: ConnectClaimTokenPayload): Promise<IssuedConnectClaimToken> {
+  /**
+   * `ttlSeconds` only applies when a new token is minted; a still-active token
+   * for the environment is reused with its original expiry.
+   */
+  async issueOrGetForEnvironment(
+    payload: ConnectClaimTokenPayload,
+    options?: { ttlSeconds?: number }
+  ): Promise<IssuedConnectClaimToken> {
     this.assertCacheAvailable('issueOrGetForEnvironment');
 
     const envKey = `${ENV_TOKEN_KEY_PREFIX}{${payload.env}}`;
@@ -78,8 +85,9 @@ export class ConnectClaimTokenService {
       }
     }
 
-    const issued = await this.issue(payload);
-    await this.cacheService.set(envKey, issued.token, { ttl: CONNECT_CLAIM_TOKEN_TTL_SECONDS });
+    const ttlSeconds = options?.ttlSeconds ?? CONNECT_CLAIM_TOKEN_TTL_SECONDS;
+    const issued = await this.tokens.issue(payload, { ttlSeconds });
+    await this.cacheService.set(envKey, issued.token, { ttl: ttlSeconds });
 
     return issued;
   }
