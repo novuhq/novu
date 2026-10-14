@@ -1,6 +1,6 @@
 /** What the Worker is configured with. See `wrangler.jsonc` and the README. */
 export type Env = {
-  /** The Human Clerk app, which signs people in: `https://clerk.gethuman.md`. Empty turns sign-in off. */
+  /** The Human Clerk app, which signs people in: `https://clerk.agentinbox.md`. Empty turns sign-in off. */
   CLERK_OAUTH_ISSUER?: string;
   /** The secret the Human dashboard shares with the Novu API. It lets this server act for an account. */
   HUMAN_DASHBOARD_API_SECRET?: string;

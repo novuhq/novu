@@ -532,7 +532,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       const emailIntegration = await integrationRepository.create({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
-        providerId: 'novu-email' as never,
+        providerId: 'agent-email-inbox' as never,
         channel: ChannelTypeEnum.EMAIL,
         credentials: {},
         active: true,

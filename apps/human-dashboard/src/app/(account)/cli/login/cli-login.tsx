@@ -222,12 +222,12 @@ function Authorize({ userCode, machineName, region, claim, cannotKeepSetup, onDo
       </div>
       <div className="flex flex-col gap-2">
         {keepsSetup && (
-          <Note>The setup you made without an account moves into your Human account when you approve.</Note>
+          <Note>The setup you made without an account moves into your Agent Inbox account when you approve.</Note>
         )}
         {cannotKeepSetup && (
           <Note>
-            Your Human account’s agent is already in use, so the setup on your computer can’t be moved into it. You can
-            still approve: the CLI then uses your account’s agent, and that setup stays behind.
+            Your Agent Inbox account’s agent is already in use, so the setup on your computer can’t be moved into it.
+            You can still approve: the CLI then uses your account’s agent, and that setup stays behind.
           </Note>
         )}
         <Note>The CLI saves a key on this machine. Nothing to copy or paste.</Note>
@@ -255,7 +255,7 @@ function SignedIn({ email, view }: { email?: string; view: Extract<View, { name:
       <StateMark glyph="success" />
       <h1 className={TITLE}>You&apos;re signed in</h1>
       <p className={DESCRIPTION}>
-        {view.keptSetup && 'Your setup is now in your Human account. '}
+        {view.keptSetup && 'Your setup is now in your Agent Inbox account. '}
         Head back to your terminal. It already has the key, so you can close this tab.
         {view.accountPageBehind &&
           ' Your dashboard couldn’t be updated just now, so it may not show your setup until you log in again.'}
@@ -272,7 +272,7 @@ function SignedIn({ email, view }: { email?: string; view: Extract<View, { name:
           mark={<ArrowRight aria-hidden="true" className="h-5 w-[1ch]" strokeWidth={1.5} />}
           markClassName="text-muted"
         >
-          Try: human approve &quot;Ship it?&quot;
+          Try: human inbox approve &quot;Ship it?&quot;
         </TerminalLine>
       </div>
       <div className="flex flex-wrap gap-2">

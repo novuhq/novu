@@ -50,6 +50,7 @@ export class ListContacts {
       organizationId: command.organizationId,
       limit: command.limit ?? DEFAULT_CONTACTS_LIMIT,
       after: command.after,
+      subscriberId: command.subscriberId,
       sortBy: '_id',
       sortDirection: DirectionEnum.DESC,
     });

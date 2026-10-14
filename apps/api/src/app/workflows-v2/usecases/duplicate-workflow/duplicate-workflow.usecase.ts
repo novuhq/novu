@@ -111,6 +111,7 @@ export class DuplicateWorkflowUseCase {
       type: step.type,
       controlValues: step.controls?.values ?? null,
       providerOverrides: step.providerOverrides ?? null,
+      integrationOverrides: step.integrationOverrides ?? null,
       stepId: step.stepId,
       slug: step.slug,
     }));

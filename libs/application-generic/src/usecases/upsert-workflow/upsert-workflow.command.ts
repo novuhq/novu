@@ -4,6 +4,7 @@ import {
   MAX_NAME_LENGTH,
   ResourceOriginEnum,
   SeverityLevelEnum,
+  type StepIntegrationOverrides,
   type StepProviderOverrides,
   StepTypeEnum,
   WorkflowCreationSourceEnum,
@@ -80,6 +81,10 @@ export class UpsertStepDataCommand {
   @IsOptional()
   @IsObject()
   providerOverrides?: StepProviderOverrides | null;
+
+  @IsOptional()
+  @IsObject()
+  integrationOverrides?: StepIntegrationOverrides | null;
 
   @IsOptional()
   @IsString()

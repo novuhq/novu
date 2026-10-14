@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
-import { DOCS_URL } from '@/components/dashboard/nav';
+import { ChannelsTable } from '@/components/channels/channels-table';
+import { CONFIGURE_PATH, DOCS_URL } from '@/components/dashboard/nav';
 import {
   buildFinishSetupPrompt,
   buildSetupCommand,
@@ -21,7 +22,7 @@ import { AgentStatusPoll } from './agent-status-poll';
 import { AgentView } from './agent-view';
 
 export const metadata: Metadata = {
-  title: 'Agent',
+  title: 'Configure',
 };
 
 /** How often the page asks whether `human setup` has made the agent yet. */
@@ -31,11 +32,14 @@ const SETUP_POLL_MS = 3000;
 const CHANNELS_POLL_MS = 5000;
 
 /**
- * The dashboard's home: the operator's agent and how people see it. An account starts without an agent,
- * so the page opens on how to make one with `human setup`, and switches by itself once that has run.
+ * The operator's agent and how people see it. An account starts without an agent, so the page opens on
+ * how to make one with `human setup`, and switches by itself once that has run.
+ *
+ * Agent and Channels were two pages; until the Configure page of the new design lands (NV-9034), the
+ * channels table sits under the agent so nothing it does is lost.
  */
 export default async function AgentPage() {
-  const account = await requireHumanAccount({ returnTo: '/agent' });
+  const account = await requireHumanAccount({ returnTo: CONFIGURE_PATH });
   const mcpUrl = readMcpUrl();
   const [agent, secretKey, user, connectedTools] = await Promise.all([
     getRelayAgent(account),
@@ -81,6 +85,14 @@ export default async function AgentPage() {
         mcpUrl={mcpUrl}
         connectedTools={connectedTools}
       />
+      {agent && (
+        <ChannelsTable
+          rows={rows}
+          telegramSetup={telegramSetup}
+          slackSetup={slackSetup}
+          agentName={agentDisplayName(agent)}
+        />
+      )}
     </>
   );
 }

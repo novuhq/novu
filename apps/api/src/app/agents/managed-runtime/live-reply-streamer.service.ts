@@ -1,12 +1,12 @@
 import { setTimeout as delay } from 'node:timers/promises';
 import { Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
+import type { LiveReply } from '@novu/thalamus/durable';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { ConversationActivationService } from '../conversation-runtime/conversation/conversation-activation.service';
 import { type ConversationTarget, OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import type { AgentEventContext } from '../shared/agent-event-sink.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
-import { ManagedAgentProviderFactory } from './managed-agent-provider-factory.service';
 
 /** Teams buffers posts made outside an inbound turn, so it would show no preview. */
 const STREAMING_PLATFORMS = new Set<AgentPlatformEnum>([
@@ -15,6 +15,10 @@ const STREAMING_PLATFORMS = new Set<AgentPlatformEnum>([
   AgentPlatformEnum.WEB_CHAT,
 ]);
 
+export function streamsLiveReplies(platform: AgentPlatformEnum): boolean {
+  return STREAMING_PLATFORMS.has(platform);
+}
+
 /** How long a streamed `message` webhook waits for its live reader to deliver the reply. */
 const READER_DELIVERY_TIMEOUT_MS = 10_000;
 const READER_DELIVERY_POLL_MS = 500;
@@ -22,13 +26,16 @@ const READER_DELIVERY_POLL_MS = 500;
 /** Delivers a reply through the normal reply path; with a preview id it edits the preview. */
 export type DeliverStreamedReply = (text: string, previewMessageId?: string) => Promise<unknown>;
 
+/** Opens a reply's live text: the managed observer's `/live` stream, or a bridge's SSE response. */
+export type OpenLiveReply = (signal: AbortSignal) => LiveReply;
+
 /**
- * Streams a managed agent reply into its channel while the model writes it.
+ * Streams an agent reply into its channel while the model writes it.
  *
- * The observer's `/live` stream yields preview text and settles the final `agent.message` text.
- * This reader then delivers the reply by editing the preview. The reply's `message` webhook
- * (marked `streamed`) waits for that and delivers the reply itself if the reader did not; the
- * activity claim on the Anthropic message id lets only one of them deliver.
+ * The live source (the managed observer's `/live` stream, or a bridge's SSE response) yields
+ * preview text and settles the final text. This reader then delivers the reply by editing the
+ * preview. The reply's durable `message` (marked `streamed`) waits for that and delivers the reply
+ * itself if the reader did not; the activity claim on the message id lets only one of them deliver.
  */
 @Injectable()
 export class LiveReplyStreamer implements OnApplicationShutdown {
@@ -36,7 +43,6 @@ export class LiveReplyStreamer implements OnApplicationShutdown {
   private readonly running = new Set<Promise<void>>();
 
   constructor(
-    private readonly providerFactory: ManagedAgentProviderFactory,
     private readonly conversationService: AgentConversationService,
     private readonly conversationActivation: ConversationActivationService,
     private readonly outboundGateway: OutboundGateway,
@@ -45,8 +51,9 @@ export class LiveReplyStreamer implements OnApplicationShutdown {
     this.logger.setContext(this.constructor.name);
   }
 
-  start(context: AgentEventContext, messageId: string, deliver: DeliverStreamedReply): void {
-    const run = this.stream(context, messageId, deliver).catch((err) => {
+  /** `open` must end its reply once `signal` aborts, so shutdown does not wait on a silent source. */
+  start(context: AgentEventContext, messageId: string, deliver: DeliverStreamedReply, open: OpenLiveReply): void {
+    const run = this.stream(context, messageId, deliver, open).catch((err) => {
       this.logger.warn({ err, messageId, sessionId: context.sessionId }, 'Streaming a reply failed');
     });
     this.running.add(run);
@@ -75,9 +82,14 @@ export class LiveReplyStreamer implements OnApplicationShutdown {
     await Promise.allSettled(this.running);
   }
 
-  private async stream(context: AgentEventContext, messageId: string, deliver: DeliverStreamedReply): Promise<void> {
-    const { sessionId, environmentId, organizationId, conversationId } = context;
-    if (!sessionId || context.suppressReply || !context.platform || !STREAMING_PLATFORMS.has(context.platform)) {
+  private async stream(
+    context: AgentEventContext,
+    messageId: string,
+    deliver: DeliverStreamedReply,
+    open: OpenLiveReply
+  ): Promise<void> {
+    const { environmentId, organizationId, conversationId } = context;
+    if (context.suppressReply || !context.platform || !STREAMING_PLATFORMS.has(context.platform)) {
       return;
     }
 
@@ -86,7 +98,7 @@ export class LiveReplyStreamer implements OnApplicationShutdown {
       return;
     }
 
-    const live = this.providerFactory.getObserver().live(sessionId, messageId, { signal: this.shutdown.signal });
+    const live = open(this.shutdown.signal);
     const chunks = live[Symbol.asyncIterator]();
     const first = await chunks.next();
     if (first.done) {

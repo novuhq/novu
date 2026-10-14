@@ -4,6 +4,7 @@ import { EnforceEnvOrOrgIds, isDuplicateKeyError } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
 import {
   HumanContactDBModel,
+  HumanContactDeclaredAddress,
   HumanContactDefaultSetBy,
   HumanContactEntity,
   HumanContactPendingAddress,
@@ -85,7 +86,7 @@ export class HumanContactRepository extends BaseRepositoryV2<
   }
 
   /**
-   * Saves the human's default channel. An inviter's pick (`human invite --via`)
+   * Saves the human's default channel. An inviter's pick (`human contact invite --via`)
    * never replaces a default the person chose themselves on the invite page.
    */
   async setDefaultVia(params: {
@@ -285,5 +286,48 @@ export class HumanContactRepository extends BaseRepositoryV2<
     const contact = await this.findContact(environmentId, agentId, subscriberId);
 
     return contact?.addresses?.[via]?.pending ?? null;
+  }
+
+  /**
+   * Records an unverified address the person typed. Does not touch pending or
+   * verified, so it cannot make the address deliverable.
+   */
+  async setDeclaredAddress(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    subscriberId: string;
+    via: HumanChannelViaEnum;
+    address: string;
+  }): Promise<HumanContactDeclaredAddress> {
+    const filter = {
+      _environmentId: params.environmentId,
+      _agentId: params.agentId,
+      subscriberId: params.subscriberId,
+    };
+    const declared: HumanContactDeclaredAddress = {
+      address: params.address,
+      declaredAt: new Date().toISOString(),
+    };
+    const declaredPath = `addresses.${params.via}.declared`;
+
+    try {
+      await this.findOneAndUpdate(
+        filter,
+        {
+          $set: { [declaredPath]: declared },
+          $setOnInsert: { _organizationId: params.organizationId },
+        },
+        { upsert: true }
+      );
+    } catch (err) {
+      if (!isDuplicateKeyError(err)) {
+        throw err;
+      }
+
+      await this.findOneAndUpdate(filter, { $set: { [declaredPath]: declared } });
+    }
+
+    return declared;
   }
 }

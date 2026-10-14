@@ -2,12 +2,12 @@ import { ArrowRight, Bot } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { DASHBOARD_HOME } from '@/components/dashboard/nav';
+import { CONFIGURE_PATH } from '@/components/dashboard/nav';
 import { buttonClassName } from '@/components/ui/button';
 
 /**
  * The banner at the top of a page that has nothing to work with until the agent exists. It sends the
- * operator to the Agent page, which walks them through `human setup`.
+ * operator to the Configure page, which walks them through `human setup`.
  */
 export function AgentSetupBanner({ children }: { children: ReactNode }) {
   return (
@@ -22,8 +22,8 @@ export function AgentSetupBanner({ children }: { children: ReactNode }) {
         <h2 className="text-[13px] leading-4.5 font-medium text-foreground">Set up your agent first</h2>
         <p className="text-xs leading-4 text-secondary">{children}</p>
       </div>
-      <Link href={DASHBOARD_HOME} className={buttonClassName('primary', 'h-9')}>
-        Go to Agent
+      <Link href={CONFIGURE_PATH} className={buttonClassName('primary', 'h-9')}>
+        Go to Configure
         <ArrowRight aria-hidden="true" className="size-4" />
       </Link>
     </section>

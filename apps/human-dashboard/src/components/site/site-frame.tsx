@@ -4,7 +4,7 @@ import { Brand } from '@/components/site/brand';
 import { cn } from '@/lib/utils';
 
 /**
- * Page chrome shared with the gethuman.md landing page: a centered 896px column framed by
+ * Page chrome shared with the agentinbox.md landing page: a centered 896px column framed by
  * vertical rails, with the brand bar on top and the Novu credit at the bottom.
  */
 export function SiteFrame({ children, className }: { children: ReactNode; className?: string }) {

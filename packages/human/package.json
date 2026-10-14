@@ -47,6 +47,6 @@
     "@types/qrcode": "^1.5.5",
     "rimraf": "^3.0.2",
     "typescript": "5.6.2",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.11"
   }
 }

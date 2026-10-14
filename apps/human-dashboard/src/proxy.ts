@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-const isDashboardRoute = createRouteMatcher(['/agent(.*)', '/channels(.*)', '/contacts(.*)', '/settings(.*)']);
+const isDashboardRoute = createRouteMatcher(['/configure(.*)', '/contacts(.*)', '/inbox(.*)', '/settings(.*)']);
 
 /**
  * Clerk only runs on the Human account pages. The dashboard is protected here, so a signed-out
@@ -19,11 +19,11 @@ export default clerkMiddleware(
 
 export const config = {
   matcher: [
-    '/agent/:path*',
-    '/channels/:path*',
     '/claim/:path*',
     '/cli/:path*',
+    '/configure/:path*',
     '/contacts/:path*',
+    '/inbox/:path*',
     '/settings/:path*',
     '/sign-in/:path*',
     '/sign-up/:path*',

@@ -24,6 +24,7 @@ import type { CardElement, EmojiValue, Message, MessageContext, MessageDeletedEv
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
+import { KeylessEmailGateService, keylessEmailClaimCtaKey } from '../../../keyless/keyless-email-gate.service';
 import { buildConnectClaimUrl, buildKeylessSignupCard } from '../../../keyless/keyless-signup.helpers';
 import { LinkTelegramChatToSubscriberCommand } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
@@ -45,6 +46,7 @@ import { parseApprovalReplyVerdict } from '../../shared/tool-approval/reply-base
 import { getResolvedSubscriberId, type SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
 import { buildMentionRequiredNoticeReply } from '../../shared/util/agent-inbound-replies';
+import { isValidEmailForLookup, normalizeEmailForLookup } from '../../shared/util/email-normalization';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
 import { type AutoProvisionPlatform, shouldAutoProvisionInbound } from '../../shared/util/platform-endpoint-config';
 import { asRecord } from '../../shared/util/raw-record';
@@ -62,6 +64,7 @@ import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../runtime/platform-thread.util';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
+import { parseEmailThreadAddress } from './email-thread-id';
 import { InboundDispatcher } from './inbound.dispatcher';
 import { InboundConnectionContextResolver } from './inbound-connection-context.resolver';
 import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.service';
@@ -259,6 +262,18 @@ function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknow
   });
 }
 
+/** The address that mailed the agent, or undefined when the thread id is not a usable one. */
+function senderAddressFromEmailThread(threadId: string): string | undefined {
+  const raw = parseEmailThreadAddress(threadId);
+  if (!raw) {
+    return undefined;
+  }
+
+  const address = normalizeEmailForLookup(raw);
+
+  return isValidEmailForLookup(address) ? address : undefined;
+}
+
 function extractStoredAttachments(sourceActivity: ConversationActivityEntity | null): StoredAttachment[] | undefined {
   if (!sourceActivity) {
     return undefined;
@@ -309,7 +324,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly replyApprovalInterceptor: ReplyApprovalInterceptor,
     private readonly workflowOriginService: WorkflowOriginService,
     private readonly humanConversationInbound: HumanConversationInboundInterceptor,
-    private readonly agentConfigResolver: AgentConfigResolver
+    private readonly agentConfigResolver: AgentConfigResolver,
+    private readonly keylessEmailGate: KeylessEmailGateService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -455,6 +471,15 @@ export class AgentInboundHandler implements OnModuleInit {
     });
 
     if (await this.maybeStopKeylessInbound(agentId, config, thread, conversation)) {
+      // Email has no other copy of the message. Save it, and skip the agent.
+      if (config.platform === AgentPlatformEnum.EMAIL) {
+        await this.recordKeylessInboundEmail(agentId, config, conversation, message, {
+          subscriberId,
+          platformThreadId,
+          event,
+        });
+      }
+
       return;
     }
 
@@ -969,6 +994,14 @@ export class AgentInboundHandler implements OnModuleInit {
       return false;
     }
 
+    if (config.platform === AgentPlatformEnum.EMAIL) {
+      if (postCard) {
+        await this.postKeylessEmailClaim(agentId, config, thread);
+      }
+
+      return true;
+    }
+
     const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
 
     if (!aiEnabled) {
@@ -992,6 +1025,24 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     return false;
+  }
+
+  /** Persist a keyless inbound email without dispatching a turn. */
+  private async recordKeylessInboundEmail(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    conversation: ConversationEntity,
+    message: Message,
+    context: { subscriberId: string | null; platformThreadId: string; event: AgentEventEnum }
+  ): Promise<void> {
+    const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
+    const isFirstMessage = !this.conversationService.getPrimaryChannel(conversation).firstPlatformMessageId;
+
+    await this.recordInboundMessage(agentId, config, conversation, message, {
+      ...context,
+      storedAttachments,
+      isFirstMessage,
+    });
   }
 
   /** Telegram `/start <code>` is control input; when present it is always consumed here. */
@@ -1528,6 +1579,48 @@ export class AgentInboundHandler implements OnModuleInit {
     const agentReplies = await this.conversationService.countAgentMessages(config.environmentId, conversationId);
 
     return agentReplies >= KEYLESS_DEMO_REPLY_CAP;
+  }
+
+  /**
+   * The only email a keyless inbox sends. Anyone but the declared operator, and
+   * every message after the first, gets silence. The turn is not dispatched.
+   */
+  private async postKeylessEmailClaim(agentId: string, config: ResolvedAgentConfig, thread: Thread): Promise<void> {
+    const sender = senderAddressFromEmailThread(thread.id);
+    if (!sender) {
+      return;
+    }
+
+    const ctaKey = keylessEmailClaimCtaKey(config.environmentId);
+    let claimed = false;
+
+    try {
+      const card = await this.keylessEmailGate.resolveOperatorClaimCard({
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        agentId,
+        sender,
+      });
+
+      if (!card) {
+        return;
+      }
+
+      // The gate already holds the once-flag. Give it back if this send does not land.
+      claimed = true;
+      await this.outboundGateway.replyOnThreadWithCard(thread, card);
+    } catch (err) {
+      if (claimed) {
+        await this.connectClaimTokenService.releaseSignupCtaPosted(ctaKey).catch(() => undefined);
+      }
+
+      this.logger.warn(err, `[agent:${agentId}] Failed to send the keyless email claim`);
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'post-keyless-email-claim',
+        agentId,
+      });
+    }
   }
 
   private async postKeylessSignupCta(

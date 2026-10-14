@@ -78,7 +78,7 @@ describe('EnsureBackingOrganization', () => {
     expect(syncExternalOrganization.execute.firstCall.args[0]).to.deep.include({
       userId: 'novu_user',
       externalId: 'clerk_org',
-      email: 'user_2abc@users.gethuman.md',
+      email: 'user_2abc@users.agentinbox.md',
     });
     expect(result).to.deep.equal({
       organizationId: 'novu_org',

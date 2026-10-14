@@ -14,8 +14,9 @@ import { formatToolInputSummary } from '../conversation-runtime/reply/handle-pla
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { DemoClaudeQuotaPolicy } from '../managed-runtime/demo-claude-quota-policy.service';
-import { LiveReplyStreamer } from '../managed-runtime/live-reply-streamer.service';
+import { LiveReplyStreamer, type OpenLiveReply } from '../managed-runtime/live-reply-streamer.service';
 import { buildErrorMessage } from '../managed-runtime/managed-agent-errors';
+import { ManagedAgentProviderFactory } from '../managed-runtime/managed-agent-provider-factory.service';
 import { HandlePendingToolApprovalsCommand } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
 import { WebChatLiveActivityPublisher } from '../web-chat/web-chat-live-activity.publisher';
@@ -77,6 +78,7 @@ export class AgentEventSink {
     private readonly mcpConnectionErrorHandler: McpConnectionErrorHandler,
     private readonly webChatLiveActivityPublisher: WebChatLiveActivityPublisher,
     private readonly liveReplyStreamer: LiveReplyStreamer,
+    private readonly providerFactory: ManagedAgentProviderFactory,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -104,6 +106,24 @@ export class AgentEventSink {
 
       await this.dispatchEvent(envelope, context, event);
     }
+  }
+
+  /** The streamer delivers the reply through this path, so its `message` is skipped. */
+  startLiveReply(context: AgentEventContext, runId: string, messageId: string, open: OpenLiveReply): void {
+    const baseFields = this.buildBaseFields(context);
+    this.liveReplyStreamer.start(
+      context,
+      messageId,
+      (text, previewMessageId) =>
+        this.handleMessageEvent(
+          { type: 'message', role: 'assistant', messageId, content: { markdown: text } },
+          baseFields,
+          context,
+          runId,
+          previewMessageId
+        ),
+      open
+    );
   }
 
   private async dispatchEvent(
@@ -196,16 +216,10 @@ export class AgentEventSink {
         return 'accepted';
 
       case 'message-start':
-        if (context.source === 'managed') {
-          // The streamer delivers the reply through this path; its `message` webhook is skipped.
-          this.liveReplyStreamer.start(context, event.messageId, (text, previewMessageId) =>
-            this.handleMessageEvent(
-              { type: 'message', role: 'assistant', messageId: event.messageId, content: { markdown: text } },
-              baseFields,
-              context,
-              envelope.runId,
-              previewMessageId
-            )
+        if (context.source === 'managed' && context.sessionId) {
+          const { sessionId } = context;
+          this.startLiveReply(context, envelope.runId, event.messageId, (signal) =>
+            this.providerFactory.getObserver().live(sessionId, event.messageId, { signal })
           );
         }
 

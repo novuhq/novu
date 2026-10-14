@@ -23,6 +23,7 @@ import { EnvironmentRepository, NotificationTemplateEntity, NotificationTemplate
 import {
   ChatProviderIdEnum,
   CronExpressionEnum,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
   RedirectTargetEnum,
   SECRET_MASK,
   StepTypeEnum,
@@ -1548,6 +1549,160 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         severity: 'warning',
         links: [{ href: 'https://example.com', text: 'Runbook' }],
       });
+    });
+
+    it('tool: should echo Liquid-rendered integrationOverrides in the preview response', async () => {
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Tool Integration Override Preview Workflow',
+        workflowId: `tool-integration-override-preview-${randomUUID()}`,
+        description: 'Tool integrationOverrides preview coverage',
+        active: true,
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            alertType: { type: 'string' },
+            service: { type: 'string' },
+          },
+        },
+        steps: [
+          {
+            name: 'Tool Test Step',
+            type: StepTypeEnum.TOOL,
+            controlValues: {
+              body: 'default text as',
+            },
+          },
+        ],
+      });
+      expect(createResponse.status).to.equal(201);
+
+      const workflowId = createResponse.body.data._id as string;
+      const stepDatabaseId = createResponse.body.data.steps[0]._id as string;
+
+      const requestDto = {
+        controlValues: {
+          body: 'default text as',
+          providerOverrides: {
+            [ToolProviderIdEnum.Webhook]: {
+              alert_type: 'default',
+            },
+          },
+          integrationOverrides: {
+            [ToolProviderIdEnum.Webhook]: {
+              'prod-alerts': {
+                alert_type: '{{payload.alertType}}',
+                summary: 'Prod {{payload.service}}',
+              },
+            },
+            [ToolProviderIdEnum.Opsgenie]: {
+              'ops-primary': {
+                message: '{{payload.service}} is down',
+              },
+            },
+          },
+        },
+        previewPayload: {
+          payload: {
+            alertType: 'incident',
+            service: 'checkout',
+          },
+        },
+      };
+
+      const previewResponse = await session.testAgent
+        .post(`/v2/workflows/${workflowId}/step/${stepDatabaseId}/preview`)
+        .send(requestDto);
+      expect(previewResponse.status).to.be.oneOf([200, 201]);
+
+      const previewResponseDto = previewResponse.body.data as GeneratePreviewResponseDto;
+      const preview = previewResponseDto.result!.preview as {
+        body?: string;
+        providerOverrides?: Record<string, Record<string, unknown>>;
+        integrationOverrides?: Record<string, Record<string, Record<string, unknown>>>;
+      };
+
+      expect(previewResponseDto.result!.type).to.equal(StepTypeEnum.TOOL);
+      expect(preview.body).to.equal('default text as');
+      expect(preview.integrationOverrides).to.deep.equal({
+        [ToolProviderIdEnum.Webhook]: {
+          'prod-alerts': {
+            alert_type: 'incident',
+            summary: 'Prod checkout',
+          },
+        },
+        [ToolProviderIdEnum.Opsgenie]: {
+          'ops-primary': {
+            message: 'checkout is down',
+          },
+        },
+      });
+      expect(preview.providerOverrides).to.deep.equal({
+        [ToolProviderIdEnum.Webhook]: {
+          alert_type: 'default',
+        },
+      });
+      for (const providerOverride of Object.values(preview.providerOverrides ?? {})) {
+        expect(providerOverride).to.not.have.property(INTEGRATION_OVERRIDES_OUTPUT_KEY);
+      }
+    });
+
+    it('tool: should preview persisted integrationOverrides when the request has no control values', async () => {
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Tool Persisted Integration Override Preview Workflow',
+        workflowId: `tool-persisted-integration-override-preview-${randomUUID()}`,
+        active: true,
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            alertType: { type: 'string' },
+          },
+        },
+        steps: [
+          {
+            name: 'Tool Test Step',
+            type: StepTypeEnum.TOOL,
+            controlValues: {
+              body: 'default text as',
+            },
+            integrationOverrides: {
+              [ToolProviderIdEnum.Webhook]: {
+                'prod-alerts': {
+                  alert_type: '{{payload.alertType}}',
+                },
+              },
+            },
+          },
+        ],
+      });
+      expect(createResponse.status).to.equal(201);
+
+      const workflowId = createResponse.body.data._id as string;
+      const stepDatabaseId = createResponse.body.data.steps[0]._id as string;
+
+      const previewResponse = await session.testAgent
+        .post(`/v2/workflows/${workflowId}/step/${stepDatabaseId}/preview`)
+        .send({ previewPayload: { payload: { alertType: 'incident' } } });
+      expect(previewResponse.status).to.be.oneOf([200, 201]);
+
+      const previewResponseDto = previewResponse.body.data as GeneratePreviewResponseDto;
+      const preview = previewResponseDto.result!.preview as {
+        body?: string;
+        providerOverrides?: Record<string, Record<string, unknown>>;
+        integrationOverrides?: Record<string, Record<string, Record<string, unknown>>>;
+      };
+
+      expect(previewResponseDto.result!.type).to.equal(StepTypeEnum.TOOL);
+      expect(preview.body).to.equal('default text as');
+      expect(preview.integrationOverrides).to.deep.equal({
+        [ToolProviderIdEnum.Webhook]: {
+          'prod-alerts': {
+            alert_type: 'incident',
+          },
+        },
+      });
+      expect(preview.providerOverrides).to.equal(undefined);
     });
 
     it('chat: should echo providerOverrides fields in the preview response', async () => {

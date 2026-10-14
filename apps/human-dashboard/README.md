@@ -1,7 +1,7 @@
 # @novu/human-dashboard
 
-Next.js app for [gethuman.md](https://gethuman.md). It serves the invite page for
-[`@novu/human`](../../packages/human) and Human accounts (proof of concept, NV-8909); the gethuman.md
+Next.js app for [agentinbox.md](https://agentinbox.md). It serves the invite page for
+[`@novu/human`](../../packages/human) and Human accounts (proof of concept, NV-8909); the agentinbox.md
 landing page moves in here later.
 
 | Route             | What it is                                                                                  |
@@ -11,8 +11,8 @@ landing page moves in here later.
 | `/sign-up`, `/sign-in` | Human accounts, signed in with the Human Clerk app (not the Novu dashboard's).         |
 | `/claim`          | Opened from the link an agent gets when its keyless setup runs out of free messages. Moves that setup into the operator's Human account. |
 | `/cli/login`      | Opened by `human login`. The operator types the code their terminal shows, and that CLI gets the account's key; a keyless setup on that computer moves into the account on the way. |
-| `/agent`, `/channels`, `/contacts` | The dashboard: the operator's agent, its channels and the people it can ask.  |
-| `/settings`       | The operator, their API key (show, copy, regenerate), the plan, log out and delete account. |
+| `/inbox`, `/configure`, `/contacts` | The dashboard: the agent's inbox, the agent with its channels, and the people it can ask. |
+| `/settings`, `/settings/billing` | The operator, their API key (show, copy, regenerate), the plan and billing, log out and delete account. |
 | `/`               | Placeholder until the landing page moves in.                                               |
 
 Each Human account is backed by a hidden Novu organization that the Novu API creates through private
@@ -36,7 +36,7 @@ Human accounts also need:
 - a Clerk application for Human (development instance is fine), with its keys in `.env.local`;
 - the same `HUMAN_DASHBOARD_API_SECRET` here and in the API's `.env`;
 - an API running with the Clerk-backed enterprise auth and keyless enabled;
-- if Novu's Clerk instance has an allowlist (the development one does), `*@users.gethuman.md` on it. The
+- if Novu's Clerk instance has an allowlist (the development one does), `*@users.agentinbox.md` on it. The
   hidden Novu users get made-up addresses there, and otherwise Clerk refuses them with `not_allowed_access`.
 
 To try a claim, set `KEYLESS_HUMAN_INTERACTION_CAP=1` on the API, run `human setup` without a key against

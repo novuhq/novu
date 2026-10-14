@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { isClerkEnabled } from '@novu/shared';
 
-export const HUMAN_BACKING_EMAIL_DOMAIN = 'users.gethuman.md';
+export const HUMAN_BACKING_EMAIL_DOMAIN = 'users.agentinbox.md';
 
 export interface HumanBackingAccount {
   clerkUserId: string;

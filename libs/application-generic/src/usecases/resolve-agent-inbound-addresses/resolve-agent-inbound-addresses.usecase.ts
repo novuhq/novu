@@ -8,11 +8,11 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { DomainRouteTypeEnum, EmailProviderIdEnum, slugify, type WorkflowAgentConfig } from '@novu/shared';
+import { DomainRouteTypeEnum, EmailProviderIdEnum, type WorkflowAgentConfig } from '@novu/shared';
 import {
   buildAgentSharedInbox,
   isAgentSharedInboxEnabled,
-  isValidAgentEmailSlugPrefix,
+  resolvePublishedAgentEmailSlug,
 } from '../../utils/agent-shared-inbox';
 
 export type ResolveAgentInboundAddressesParams = {
@@ -364,11 +364,10 @@ export class ResolveAgentInboundAddresses {
       return undefined;
     }
 
-    const rawSlug = novuAgent.credentials?.emailSlugPrefix;
-    const slug =
-      rawSlug && isValidAgentEmailSlugPrefix(rawSlug)
-        ? rawSlug
-        : deriveFallbackSlug(params.agentIdentifier, params.agentName);
+    const slug = resolvePublishedAgentEmailSlug(novuAgent.credentials?.emailSlugPrefix, {
+      identifier: params.agentIdentifier,
+      name: params.agentName,
+    });
 
     if (!slug) {
       return undefined;
@@ -439,13 +438,4 @@ function pickEffectiveReplyTo(agent: WorkflowAgentConfig, addresses: string[]): 
   }
 
   return addresses[0];
-}
-
-function deriveFallbackSlug(identifier: string, name: string): string | undefined {
-  const candidate = slugify(identifier || name || '')
-    .slice(0, 32)
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
-
-  return isValidAgentEmailSlugPrefix(candidate) ? candidate : undefined;
 }

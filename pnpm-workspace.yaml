@@ -21,12 +21,23 @@ minimumReleaseAge: 4320
 # (see https://github.com/pnpm/pnpm/issues/11238). Falling back to non-strict
 # matches the pre-v11.0.4 behavior.
 minimumReleaseAgeStrict: false
+# First-party packages are published by us and consumed right away, so they skip the age gate.
+minimumReleaseAgeExclude:
+  - '@novu/*'
 
 # Settings migrated from .npmrc (pnpm v11 reads only auth/registry settings from .npmrc).
 autoInstallPeers: true
 strictPeerDependencies: false
 fetchRetryMaxtimeout: 10000
 enablePrePostScripts: true
+
+# pnpm >= 11.28 resolves debug's optional supports-color peer per project, and that suffix
+# spreads up to @nestjs/common/core, so apps and libs load different Nest copies and DI
+# breaks. Giving debug its own supports-color removes the peer variant. 8.x is the last CJS major.
+packageExtensions:
+  debug:
+    dependencies:
+      supports-color: ^8.1.1
 
 # Settings migrated from package.json#pnpm (pnpm v11 no longer reads the `pnpm` field).
 overrides:
@@ -175,7 +186,7 @@ overrides:
   jws@>=4.0.0 <4.0.1: ^4.0.1
   validator@<13.15.22: ^13.15.22
   msgpackr: ^1.10.1
-  multer@<2.3.0: ^2.3.0
+  multer@<2.4.0: ^2.4.0
   jws@<3.2.3: ^3.2.3
   svgo@>=3.0.0 <3.3.5: ^3.3.5
   flatted@<3.4.2: ^3.4.2
@@ -207,6 +218,13 @@ overrides:
   # transitively via apps/human-mcp, enterprise/workers/thalamus-observer,
   # packages/novu > @anthropic-ai/claude-agent-sdk, and playground/web-chat.
   '@modelcontextprotocol/sdk@>=1.12.0 <1.31.0': ^1.31.0
+  # GHSA-6qxp-vccf-f47h (high): the v2 OAuth client can send stored
+  # credentials to an authorization server chosen by the MCP server. Patched
+  # in 2.2.0. agents@0.21.0 peers @modelcontextprotocol/client at exactly
+  # 2.0.0 for enterprise/workers/thalamus-observer. Pin 2.2.0 rather than
+  # floating ^2.2.0: 2.3.0 changes cross-origin redirect handling, and 2.2.0
+  # (published 2026-09-28) already satisfies minimumReleaseAge.
+  '@modelcontextprotocol/client@>=2.0.0 <2.2.0': 2.2.0
   '@babel/runtime@<7.26.10': ^7.26.10
   altcha-lib@<1.4.1: ^1.4.1
   lodash-es@<=4.17.23: ^4.18.0
@@ -230,6 +248,16 @@ overrides:
   mdast-util-to-hast@>=13.0.0 <13.2.1: ^13.2.1
   webpack@>=5.49.0 <5.104.1: ^5.104.1
   micromatch@>=4.0.0 <4.0.8: ^4.0.8
+  # GHSA-238p-pmpm-9mq7 (low): KaTeX pre-existing prototype pollution can bypass
+  # trust restrictions. Patched in 0.18.2. Transitive via @streamdown/math
+  # (rehype-katex, micromark-extension-math) and @streamdown/mermaid > mermaid
+  # across apps/dashboard and playground/nextjs. Consumers declare `katex: ^0.16.0`
+  # but only use the public katex.render/renderToString APIs, which are stable
+  # across the 0.17/0.18 line, so forcing the override is safe. Pin to 0.18.10
+  # exactly: 0.18.11 was deprecated for accidental breaking changes, and 0.19.0
+  # ships the same strict-callback break with a proper major-ish bump that we
+  # don't need yet.
+  katex@>=0.11.0 <0.18.2: 0.18.10
   # GHSA-mh99-v99m-4gvg / CVE-2026-14257, GHSA-rgw5-rvv9-x895, GHSA-qhr7-859c-m2p7,
   # GHSA-6j4f-fj2g-mc7p (high) and GHSA-q2hr-2g5m-vwhr (moderate): brace-expansion
   # DoS via unbounded intermediate arrays, uncontrolled recursion in
@@ -266,7 +294,7 @@ overrides:
   # via the Accept header. Patched in 2.70.2 (patch bump within the 2.x line).
   '@sveltejs/kit@<2.70.2': ^2.70.2
   langsmith@<0.6.0: ^0.6.3
-  devalue@<5.8.1: ^5.8.1
+  devalue@<5.9.3: ^5.9.3
   picomatch@<2.3.2: ^2.3.2
   picomatch@>=4.0.0 <4.0.4: ^4.0.4
   yaml@>=1.0.0 <1.10.3: ^1.10.3
@@ -401,8 +429,13 @@ overrides:
   '@codemirror/autocomplete': 6.18.3
   # GHSA-w9m9-85wc-3x92: postcss-selector-parser 6.1.0-6.1.2 allows DoS via
   # uncontrolled AST recursion in nested pseudo-selectors. Patched in 6.1.3.
-  # Pulled transitively via tailwindcss, postcss-preset-env, and cssnano.
-  postcss-selector-parser@>=6.1.0 <6.1.3: ^6.1.3
+  # GHSA-rj75-hqrm-r3gf (moderate): quadratic complexity in flat selector
+  # parsing (CPU exhaustion). The fix only ships in the 7.x line (>=7.1.6);
+  # the 6.x line has no patched release, so route both 6.x and <7.1.6 to the
+  # 7.1.x patch branch. v7 only drops Node <4 and legacy iteration helpers,
+  # which tailwindcss/postcss/cssnano consumers don't use. Pulled transitively
+  # via tailwindcss, postcss-preset-env, cssnano, and @tailwindcss/typography.
+  postcss-selector-parser@<7.1.6: ^7.1.6
   # GHSA-2wm5-q62r-hmrv: colord slow rejection of oversized malformed color
   # strings (DoS via CPU). Patched in 2.9.4. Only pulled transitively via
   # cssnano (postcss-colormin / postcss-minify-gradients) in packages/js.

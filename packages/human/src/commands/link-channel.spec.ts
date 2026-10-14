@@ -43,8 +43,8 @@ describe('viaForProviderId', () => {
     expect(viaForProviderId('telegram')).toBe('telegram');
     expect(viaForProviderId('slack')).toBe('slack');
     expect(viaForProviderId('novu-slack')).toBe('slack');
-    expect(viaForProviderId('novu-email-agent')).toBe('email');
-    expect(viaForProviderId('novu-email')).toBe('email');
+    expect(viaForProviderId('agent-email-inbox')).toBe('email');
+    expect(viaForProviderId('novu-email-agent')).toBe(null);
     expect(viaForProviderId('whatsapp-business')).toBeNull();
   });
 });

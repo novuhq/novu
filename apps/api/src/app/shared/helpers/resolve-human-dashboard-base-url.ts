@@ -2,11 +2,11 @@ export type HumanRegion = 'us' | 'eu';
 
 /**
  * Base URL of the Human dashboard (`apps/human-dashboard`), which hosts the pages
- * that `human invite` links point to. `HUMAN_DASHBOARD_URL` wins, falling back
- * to gethuman.md. The trailing slash is stripped so callers can append paths.
+ * that `human contact invite` links point to. `HUMAN_DASHBOARD_URL` wins, falling back
+ * to agentinbox.md. The trailing slash is stripped so callers can append paths.
  */
 export function resolveHumanDashboardBaseUrl(): string {
-  return (process.env.HUMAN_DASHBOARD_URL || 'https://gethuman.md').replace(/\/$/, '');
+  return (process.env.HUMAN_DASHBOARD_URL || 'https://agentinbox.md').replace(/\/$/, '');
 }
 
 /**

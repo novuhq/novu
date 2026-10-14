@@ -22,15 +22,24 @@ describe('SetupHumanRelay', () => {
       findOne: sinon.stub().resolves({ subscriberId: 'alice' }),
       update: sinon.stub(),
     };
-    const humanContactRepository = { setDefaultVia: sinon.stub().resolves() };
+    const humanContactRepository = {
+      setDefaultVia: sinon.stub().resolves(),
+      setDeclaredAddress: sinon
+        .stub()
+        .resolves({ address: 'alice@example.com', declaredAt: '2026-10-01T00:00:00.000Z' }),
+    };
     const humanOperator = { resolve: sinon.stub().resolves('dima') };
     const humanAgentIdentity = { apply: sinon.stub().callsFake(async (agent: unknown) => agent) };
+    const findOrCreateNovuEmail = { execute: sinon.stub().resolves({ provisionedNewLink: true }) };
+    const logger = { setContext: sinon.stub(), warn: sinon.stub() };
     const usecase = new SetupHumanRelay(
       agentRepository as never,
       subscriberRepository as never,
       humanContactRepository as never,
       humanOperator as never,
-      humanAgentIdentity as never
+      humanAgentIdentity as never,
+      findOrCreateNovuEmail as never,
+      logger as never
     );
 
     return {
@@ -40,6 +49,8 @@ describe('SetupHumanRelay', () => {
       humanOperator,
       humanAgentIdentity,
       subscriberRepository,
+      findOrCreateNovuEmail,
+      logger,
     };
   }
 
@@ -81,8 +92,8 @@ describe('SetupHumanRelay', () => {
     expect(subscriberRepository.findOne.firstCall.args[0].subscriberId).to.equal('dima');
   });
 
-  it('does not write email during setup — verification owns Subscriber.email', async () => {
-    const { usecase, subscriberRepository } = setup();
+  it('does not write Subscriber.email during setup — the declared slot is unverified', async () => {
+    const { usecase, subscriberRepository, humanContactRepository } = setup();
     subscriberRepository.findOne.onFirstCall().resolves(null);
     subscriberRepository.create = sinon.stub().resolves({ subscriberId: 'alice' });
 
@@ -90,6 +101,56 @@ describe('SetupHumanRelay', () => {
 
     expect(subscriberRepository.create.firstCall.args[0]).to.not.have.property('email');
     expect(subscriberRepository.update.called).to.equal(false);
+    expect(humanContactRepository.setDeclaredAddress.firstCall.args[0]).to.include({
+      subscriberId: 'alice',
+      address: 'alice@example.com',
+      via: HumanChannelViaEnum.EMAIL,
+    });
+  });
+
+  it('provisions an agent email inbox when the shared inbox is enabled, and still succeeds when that throws', async () => {
+    const previous = {
+      enterprise: process.env.NOVU_ENTERPRISE,
+      selfHosted: process.env.IS_SELF_HOSTED,
+      domain: process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN,
+    };
+    process.env.NOVU_ENTERPRISE = 'true';
+    process.env.IS_SELF_HOSTED = 'false';
+    process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = 'agent.test';
+
+    try {
+      const { usecase, findOrCreateNovuEmail, logger } = setup();
+      findOrCreateNovuEmail.execute.rejects(new Error('no outbound'));
+
+      const result = await usecase.execute(SetupHumanRelayCommand.create(base));
+
+      expect(result.agentId).to.equal('relay1');
+      expect(findOrCreateNovuEmail.execute.calledOnce).to.equal(true);
+      expect(findOrCreateNovuEmail.execute.firstCall.args[3]).to.equal('agent-email-inbox');
+      expect(logger.warn.calledOnce).to.equal(true);
+    } finally {
+      restoreEnv('NOVU_ENTERPRISE', previous.enterprise);
+      restoreEnv('IS_SELF_HOSTED', previous.selfHosted);
+      restoreEnv('NOVU_AGENT_SHARED_INBOUND_DOMAIN', previous.domain);
+    }
+  });
+
+  it('skips the inbox when the shared inbox is disabled', async () => {
+    const previous = {
+      enterprise: process.env.NOVU_ENTERPRISE,
+      eeTest: process.env.CI_EE_TEST,
+    };
+    delete process.env.NOVU_ENTERPRISE;
+    delete process.env.CI_EE_TEST;
+    const { usecase, findOrCreateNovuEmail } = setup();
+
+    try {
+      await usecase.execute(SetupHumanRelayCommand.create(base));
+      expect(findOrCreateNovuEmail.execute.called).to.equal(false);
+    } finally {
+      restoreEnv('NOVU_ENTERPRISE', previous.enterprise);
+      restoreEnv('CI_EE_TEST', previous.eeTest);
+    }
   });
 
   it('never asks who the operator is for anyone else', async () => {
@@ -134,3 +195,13 @@ describe('SetupHumanRelay', () => {
     expect(humanAgentIdentity.apply.firstCall.args[1]).to.deep.equal({ name: 'Deploy bot', description: undefined });
   });
 });
+
+function restoreEnv(name: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[name];
+
+    return;
+  }
+
+  process.env[name] = value;
+}

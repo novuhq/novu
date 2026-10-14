@@ -14,6 +14,42 @@ _Avoid_: owner, user, inviter
 Anyone an operator's agents can reach, including the operator.
 _Avoid_: subscriber, recipient
 
+**Stranger**:
+A person or service that writes to an agent without being one of its contacts.
+_Avoid_: unknown sender, guest, anonymous
+
+### Agents
+
+**Agent**:
+The identity contacts see and talk to: one name, one picture, one presence on each channel.
+_Avoid_: relay, bot
+
+**Host**:
+The program that acts as an agent for an operator, such as Claude Code or a scheduled routine; each agent has one host.
+_Avoid_: caller, client, AI agent
+
+### Inbox
+
+**Inbox**:
+All the threads of one agent.
+_Avoid_: mailbox, queue
+
+**Thread**:
+Everything said between an agent and the people in one place on one channel; it can hold several contacts and strangers.
+_Avoid_: conversation, chat, ticket
+
+**Unread**:
+A thread where someone said something that did not answer a question from the agent, and the agent has not responded since; looking at a thread is not a response.
+_Avoid_: new, pending
+
+**Open**:
+A thread whose current matter is not finished, whether or not it is unread.
+_Avoid_: active, in progress
+
+**Resolved**:
+A thread the host has declared finished; it becomes open again when anyone says something in it.
+_Avoid_: closed, archived, done
+
 ### Accounts
 
 **Human account**:

@@ -179,12 +179,18 @@ describe('keyless cap errors', () => {
       claimUrl: 'https://gethuman.md/claim?token=t',
       cap: 5,
       browserLogin: true,
+      reason: 'cap',
     });
   });
 
   it('falls back to the message wording when the body has no code', () => {
     const err = capError({}, 429, "You've used the 5 free messages of this keyless demo.");
-    expect(getKeylessCapDetails(err)).toEqual({ claimUrl: undefined, cap: undefined, browserLogin: false });
+    expect(getKeylessCapDetails(err)).toEqual({
+      claimUrl: undefined,
+      cap: undefined,
+      browserLogin: false,
+      reason: 'cap',
+    });
   });
 
   it('ignores other 429s and non-API errors', () => {
@@ -210,6 +216,29 @@ describe('keyless cap errors', () => {
     expect(text).toContain('https://dash/connect/claim?token=t');
     expect(text).toContain('human setup --secret-key');
     expect(text).not.toContain('human login');
+  });
+
+  it('sends an outbound-email refusal to human login with the claim link', () => {
+    const err = capError(
+      {
+        code: 'KEYLESS_EMAIL_REQUIRES_ACCOUNT',
+        claimUrl: 'https://gethuman.md/claim?token=t',
+        browserLogin: true,
+      },
+      403,
+      'Outbound email needs a Human account.'
+    );
+    const details = getKeylessCapDetails(err);
+
+    expect(details).toEqual({
+      claimUrl: 'https://gethuman.md/claim?token=t',
+      browserLogin: true,
+      reason: 'email',
+    });
+    const text = formatKeylessCapMessage(details!);
+    expect(text).toContain('run: human login');
+    expect(text).toContain('https://gethuman.md/claim?token=t');
+    expect(text).not.toContain('free messages');
   });
 
   it('routes the cap error through fail with the claim link', () => {

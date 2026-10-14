@@ -20,7 +20,7 @@ export type GetContactResult = {
 
 /**
  * Single-contact lookup for the CLI (polling after invite, and richer
- * `human contacts` output). Channel status comes from HumanDeliveryService —
+ * `human contact list` output). Channel status comes from HumanDeliveryService —
  * never from public subscriber APIs, and never from `Subscriber.email` alone.
  */
 @Injectable()
