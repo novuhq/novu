@@ -1,74 +1,114 @@
-/**
- * Every helper here resolves routing through `resolveExclusiveRoutingKeys`, the same way
- * `FcmPushProvider.readRouting` does, so the channel the worker selects and the destination the
- * provider addresses cannot disagree. That includes honouring `_passthrough.body` as the top of the
- * override chain for routing exactly as it is for content: without it, a passthrough `topic` would
- * leave a token-less subscriber skipped before the provider ever ran.
- */
-
 import {
-  FCM_ROUTING_KEYS,
   getProviderOverrideConfig,
+  IChannelCredentials,
   PushProviderIdEnum,
   resolveExclusiveRoutingKeys,
-  type TriggerOverrides,
+  TriggerOverrides,
+  unpackProviderOverrideOutput,
 } from '@novu/shared';
 import { combineProviderOverrides } from './send-message.base';
+import { SendMessageChannelCommand } from './send-message-channel.command';
 
-export type PushProviderOverride = {
-  providerId: PushProviderIdEnum;
-  overrides: Record<string, unknown>;
-};
+export interface PushOverrideSource {
+  bridgeData?: SendMessageChannelCommand['bridgeData'];
+  overrides?: TriggerOverrides;
+  step?: {
+    stepId?: string;
+  };
+}
 
-export type PushRoutingCredentials = {
-  deviceTokens?: string[];
+export interface PushRoutingCredentials extends IChannelCredentials {
   topic?: string;
-};
-
-/** FCM topic/condition sends are broadcast — they must not fan out per subscriber device token. */
-export function isFcmBroadcastRoutingOverride(overrides: Record<string, unknown> | null | undefined): boolean {
-  const routing = resolveExclusiveRoutingKeys(overrides, [FCM_ROUTING_KEYS]);
-
-  return 'topic' in routing || 'condition' in routing;
 }
 
 /**
- * True when the merged overrides claim one of the provider's exclusive routing keys
- * (FCM: `token` / `tokens` / `topic` / `condition`). A claimed key *is* the destination —
- * `FcmPushProvider.resolveSendPlan` ignores the subscriber targets — so such a send needs no stored
- * device token and must not fan out over them.
+ * Single unified interface representing the resolved routing and provider override
+ * state for a push channel (either a subscriber's bound integration channel or a
+ * synthetic override channel).
  */
+export interface ResolvedPushRoute {
+  providerId: PushProviderIdEnum;
+  integrationIdentifier?: string;
+  bridgeProviderData: Record<string, unknown>;
+  credentials: PushRoutingCredentials | null;
+  hasDestinationOverride: boolean;
+  isBroadcast: boolean;
+  isIntegrationScoped?: boolean;
+  broadcastKey?: string;
+}
+
+export interface PushChannelCandidate {
+  route: ResolvedPushRoute;
+  isMissingDeviceTokens: boolean;
+}
+
+export interface PushDeliveryTargets {
+  targetDeviceTokens: string[];
+  recordedDeviceTokens: string[] | undefined;
+}
+
+const FCM_ROUTING_KEYS: readonly string[] =
+  getProviderOverrideConfig(PushProviderIdEnum.FCM)?.exclusiveKeyGroups?.[0] ?? [];
+
+const FCM_BROADCAST_KEYS: ReadonlySet<string> = new Set(['topic', 'condition']);
+
+/**
+ * Topic and condition address a broadcast target rather than a subscriber's devices,
+ * so one send delivers to every recipient and subscriber device fan-out does not apply.
+ */
+export function isFcmBroadcastRoutingOverride(overrides: Record<string, unknown>): boolean {
+  const resolved = resolveExclusiveRoutingKeys(overrides, [FCM_ROUTING_KEYS]);
+
+  return Object.keys(resolved).some((key) => FCM_BROADCAST_KEYS.has(key));
+}
+
 export function hasDestinationRoutingOverride(
   providerId: PushProviderIdEnum,
-  overrides: Record<string, unknown> | null | undefined
+  overrides: Record<string, unknown>
 ): boolean {
-  const groups = getProviderOverrideConfig(providerId)?.exclusiveKeyGroups ?? [];
+  const groups = getProviderOverrideConfig(providerId)?.exclusiveKeyGroups;
+  if (!groups?.length) {
+    return false;
+  }
 
-  return Object.keys(resolveExclusiveRoutingKeys(overrides, groups)).length > 0;
+  const resolved = resolveExclusiveRoutingKeys(overrides, groups);
+
+  return Object.keys(resolved).length > 0;
 }
 
 /**
- * Maps FCM routing overrides onto channel credentials used for token-less send selection.
- * `resolveExclusiveRoutingKeys` already returns at most one routing key (`FCM_ROUTING_KEYS` order).
- * `token` / `condition` only need an empty deviceTokens marker — the provider reads them from bridge data.
+ * Maps the single winning FCM routing key into the `IChannelCredentials` shape that
+ * `SendMessagePush` attaches to synthetic override channels.
+ *
+ * Non-string entries in `tokens` are dropped so untrusted trigger overrides cannot feed
+ * Mongo query-operator objects into `removeInvalidDeviceToken`'s `$pull` filter.
+ *
+ * `condition` and singular `token` are read by the provider handler from the merged
+ * overrides (`bridgeProviderData`), so an empty `deviceTokens` list is enough to create
+ * the channel and trigger a single send.
  */
 export function extractFcmRoutingCredentials(overrides: Record<string, unknown>): PushRoutingCredentials | null {
-  const routing = resolveExclusiveRoutingKeys(overrides, [FCM_ROUTING_KEYS]);
+  const resolved = resolveExclusiveRoutingKeys(overrides, [FCM_ROUTING_KEYS]);
 
-  if (typeof routing.token === 'string') {
+  if (typeof resolved.topic === 'string') {
+    return { topic: resolved.topic };
+  }
+
+  if (typeof resolved.condition === 'string') {
     return { deviceTokens: [] };
   }
 
-  if (typeof routing.topic === 'string') {
-    return { topic: routing.topic };
-  }
-
-  if (typeof routing.condition === 'string') {
+  if (typeof resolved.token === 'string') {
     return { deviceTokens: [] };
   }
 
-  if (Array.isArray(routing.tokens)) {
-    return { deviceTokens: routing.tokens };
+  if (Array.isArray(resolved.tokens)) {
+    const validTokens = resolved.tokens.filter(
+      (entry): entry is string => typeof entry === 'string' && entry.length > 0
+    );
+    if (validTokens.length > 0) {
+      return { deviceTokens: validTokens };
+    }
   }
 
   return null;
@@ -76,60 +116,235 @@ export function extractFcmRoutingCredentials(overrides: Record<string, unknown>)
 
 export function extractPushRoutingCredentials(
   providerId: PushProviderIdEnum,
-  overrides: Record<string, unknown> | null | undefined
+  overrides: Record<string, unknown>
 ): PushRoutingCredentials | null {
-  if (!overrides) {
-    return null;
+  if (providerId === PushProviderIdEnum.FCM) {
+    return extractFcmRoutingCredentials(overrides);
   }
 
-  switch (providerId) {
-    case PushProviderIdEnum.FCM:
-      return extractFcmRoutingCredentials(overrides);
-    default:
-      return null;
+  return null;
+}
+
+function getIntegrationOverridesMap(
+  source: PushOverrideSource,
+  providerId: PushProviderIdEnum
+): Record<string, Record<string, unknown>> {
+  const rawBridge = (source.bridgeData?.providers as Record<string, unknown> | undefined)?.[providerId];
+  const { integrationOverrides } = unpackProviderOverrideOutput(rawBridge);
+
+  return integrationOverrides;
+}
+
+function hasIntegrationScopedRoutingOverride(
+  source: PushOverrideSource,
+  providerId: PushProviderIdEnum,
+  integrationIdentifier?: string
+): boolean {
+  if (!integrationIdentifier) {
+    return false;
   }
+
+  const integrationOverride = getIntegrationOverridesMap(source, providerId)[integrationIdentifier];
+
+  return Boolean(integrationOverride && hasDestinationRoutingOverride(providerId, integrationOverride));
 }
 
 /**
- * Upserts fully-merged overrides for push providers with exclusive routing key groups
- * so content-override routing keys participate in synthetic channel construction.
+ * Resolves the effective push route and merged `bridgeProviderData` for a given
+ * provider and optional integration identifier in one place.
  */
-export function upsertMergedRoutingOverrides(
-  result: PushProviderOverride[],
-  command: {
-    bridgeData?: Record<string, unknown> | null;
-    overrides?: TriggerOverrides;
-    step?: { stepId?: string };
-  },
-  pushProviderIds: readonly PushProviderIdEnum[]
-): void {
-  for (const providerId of pushProviderIds) {
-    const exclusiveKeyGroups = getProviderOverrideConfig(providerId)?.exclusiveKeyGroups;
+export function resolvePushRoute(
+  source: PushOverrideSource,
+  providerId: PushProviderIdEnum,
+  integrationIdentifier?: string
+): ResolvedPushRoute {
+  const bridgeProviderData = combineProviderOverrides(
+    source.bridgeData,
+    source.overrides as TriggerOverrides | undefined,
+    source.step?.stepId,
+    providerId,
+    integrationIdentifier
+  );
+  const credentials = extractPushRoutingCredentials(providerId, bridgeProviderData);
+  const hasDestinationOverride = credentials !== null;
+  const isBroadcast = providerId === PushProviderIdEnum.FCM && isFcmBroadcastRoutingOverride(bridgeProviderData);
+  const isIntegrationScoped = hasIntegrationScopedRoutingOverride(source, providerId, integrationIdentifier);
 
-    if (!exclusiveKeyGroups?.length) {
-      continue;
-    }
+  return {
+    providerId,
+    integrationIdentifier,
+    bridgeProviderData,
+    credentials,
+    hasDestinationOverride,
+    isBroadcast,
+    ...(hasDestinationOverride && { isIntegrationScoped }),
+    ...(isBroadcast && {
+      broadcastKey: isIntegrationScoped ? `${providerId}:${integrationIdentifier}` : providerId,
+    }),
+  };
+}
 
-    const mergedOverrides = combineProviderOverrides(
-      command.bridgeData,
-      command.overrides,
-      command.step?.stepId,
-      providerId
-    );
+export function createUnroutedPushRoute(providerId: PushProviderIdEnum): ResolvedPushRoute {
+  return {
+    providerId,
+    bridgeProviderData: {},
+    credentials: null,
+    hasDestinationOverride: false,
+    isBroadcast: false,
+  };
+}
 
-    if (!hasDestinationRoutingOverride(providerId, mergedOverrides)) {
-      continue;
-    }
+/**
+ * Returns the candidate integration targets (`undefined` for provider/trigger-level
+ * overrides, and specific integration `identifier` strings for `integrationOverrides`
+ * entries) that carry a destination routing override for `providerId`.
+ */
+export function getCandidatePushRouteTargets(
+  source: PushOverrideSource,
+  providerId: PushProviderIdEnum
+): Array<string | undefined> {
+  const targets: Array<string | undefined> = [];
 
-    const existingIndex = result.findIndex((item) => item.providerId === providerId);
+  if (resolvePushRoute(source, providerId).hasDestinationOverride) {
+    targets.push(undefined);
+  }
 
-    if (existingIndex >= 0) {
-      result[existingIndex].overrides = mergedOverrides;
-    } else {
-      result.push({
-        providerId,
-        overrides: mergedOverrides,
-      });
+  const integrationOverrides = getIntegrationOverridesMap(source, providerId);
+  for (const identifier of Object.keys(integrationOverrides)) {
+    if (resolvePushRoute(source, providerId, identifier).hasDestinationOverride) {
+      targets.push(identifier);
     }
   }
+
+  return targets;
+}
+
+/**
+ * Checks whether the command carries any candidate destination routing override for
+ * `providerId` — either at the provider/trigger level or inside `integrationOverrides` —
+ * so the caller can avoid querying the database when no routing override exists.
+ */
+export function hasCandidatePushRoutingOverride(source: PushOverrideSource, providerId: PushProviderIdEnum): boolean {
+  return getCandidatePushRouteTargets(source, providerId).length > 0;
+}
+
+function getRouteScopeKey(route: ResolvedPushRoute): string {
+  if (route.isIntegrationScoped && route.integrationIdentifier) {
+    return `${route.providerId}:${route.integrationIdentifier}`;
+  }
+
+  return route.providerId;
+}
+
+interface PushSelectionContext {
+  overrideProviderIds: ReadonlySet<PushProviderIdEnum>;
+  populatedRoutedProviders: ReadonlySet<PushProviderIdEnum>;
+  providerWideBroadcastIds: ReadonlySet<PushProviderIdEnum>;
+  seenBroadcastKeys: Set<string>;
+  seenTokenlessOverrideKeys: Set<string>;
+}
+
+function shouldSelectTokenlessCandidate(channel: PushChannelCandidate, context: PushSelectionContext): boolean {
+  const { route } = channel;
+
+  if (!route.hasDestinationOverride) {
+    return !context.overrideProviderIds.has(route.providerId);
+  }
+
+  if (!route.isIntegrationScoped && context.populatedRoutedProviders.has(route.providerId)) {
+    return false;
+  }
+
+  const scopeKey = getRouteScopeKey(route);
+  if (context.seenTokenlessOverrideKeys.has(scopeKey)) {
+    return false;
+  }
+
+  context.seenTokenlessOverrideKeys.add(scopeKey);
+
+  return true;
+}
+
+function shouldSelectPushCandidate(channel: PushChannelCandidate, context: PushSelectionContext): boolean {
+  const { route } = channel;
+
+  if (route.isBroadcast) {
+    const key = route.broadcastKey ?? getRouteScopeKey(route);
+    if (context.seenBroadcastKeys.has(key)) {
+      return false;
+    }
+
+    context.seenBroadcastKeys.add(key);
+
+    return true;
+  }
+
+  if (!route.hasDestinationOverride && context.providerWideBroadcastIds.has(route.providerId)) {
+    return false;
+  }
+
+  if (channel.isMissingDeviceTokens) {
+    return shouldSelectTokenlessCandidate(channel, context);
+  }
+
+  return true;
+}
+
+/**
+ * Reusable channel selection and deduplication across subscriber push channels and
+ * synthetic override push channels using their already-resolved `ResolvedPushRoute`.
+ *
+ * - Provider-wide broadcast routes (`broadcastKey === providerId`) collapse subscriber
+ *   fan-out for that provider into a single broadcast send, while explicit
+ *   integration-scoped broadcast routes (`broadcastKey === `${providerId}:${identifier}``)
+ *   deduplicate per integration so distinct integrations can each broadcast.
+ * - Token-less subscriber channels without a destination override are dropped when a
+ *   synthetic override channel for the same provider can deliver instead.
+ */
+export function selectPushChannels<T extends PushChannelCandidate>(
+  subscriberChannels: T[],
+  overrideChannels: T[]
+): T[] {
+  const allCandidates = [...subscriberChannels, ...overrideChannels];
+
+  const context: PushSelectionContext = {
+    overrideProviderIds: new Set(
+      allCandidates.filter((c) => c.route.hasDestinationOverride).map((c) => c.route.providerId)
+    ),
+    populatedRoutedProviders: new Set(
+      subscriberChannels
+        .filter((c) => !c.isMissingDeviceTokens && c.route.hasDestinationOverride)
+        .map((c) => c.route.providerId)
+    ),
+    providerWideBroadcastIds: new Set(
+      allCandidates
+        .filter((c) => c.route.isBroadcast && c.route.broadcastKey === c.route.providerId)
+        .map((c) => c.route.providerId)
+    ),
+    seenBroadcastKeys: new Set<string>(),
+    seenTokenlessOverrideKeys: new Set<string>(),
+  };
+
+  return allCandidates.filter((channel) => shouldSelectPushCandidate(channel, context));
+}
+
+/**
+ * Resolves the per-channel device token loop targets and the tokens recorded on the
+ * persisted `MessageEntity` from a channel's `ResolvedPushRoute`.
+ */
+export function resolvePushDeliveryTargets(
+  route: ResolvedPushRoute,
+  subscriberTarget: string[] | undefined
+): PushDeliveryTargets {
+  if (route.hasDestinationOverride) {
+    return {
+      targetDeviceTokens: [''],
+      recordedDeviceTokens: route.credentials?.deviceTokens,
+    };
+  }
+
+  return {
+    targetDeviceTokens: subscriberTarget || [],
+    recordedDeviceTokens: subscriberTarget,
+  };
 }

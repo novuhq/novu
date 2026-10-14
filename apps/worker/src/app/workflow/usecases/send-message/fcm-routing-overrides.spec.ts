@@ -1,9 +1,14 @@
-import { PushProviderIdEnum } from '@novu/shared';
+import { INTEGRATION_OVERRIDES_OUTPUT_KEY, PushProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import {
+  createUnroutedPushRoute,
   extractFcmRoutingCredentials,
+  hasCandidatePushRoutingOverride,
   hasDestinationRoutingOverride,
   isFcmBroadcastRoutingOverride,
+  resolvePushDeliveryTargets,
+  resolvePushRoute,
+  selectPushChannels,
 } from './fcm-routing-overrides';
 
 describe('isFcmBroadcastRoutingOverride', () => {
@@ -129,5 +134,161 @@ describe('extractFcmRoutingCredentials', () => {
     expect(
       extractFcmRoutingCredentials({ topic: 'news_updates', _passthrough: { body: { tokens: [{ $exists: true }] } } })
     ).to.deep.equal({ topic: 'news_updates' });
+  });
+});
+
+describe('resolvePushRoute & reusable channel routing helpers', () => {
+  it('resolves an integration-scoped topic override into a broadcast route', () => {
+    const route = resolvePushRoute(
+      {
+        bridgeData: {
+          providers: {
+            [PushProviderIdEnum.FCM]: {
+              [INTEGRATION_OVERRIDES_OUTPUT_KEY]: {
+                'fcm-main': { topic: 'updates' },
+              },
+            },
+          },
+        } as never,
+      },
+      PushProviderIdEnum.FCM,
+      'fcm-main'
+    );
+
+    expect(route).to.deep.equal({
+      providerId: PushProviderIdEnum.FCM,
+      integrationIdentifier: 'fcm-main',
+      bridgeProviderData: { topic: 'updates' },
+      credentials: { topic: 'updates' },
+      hasDestinationOverride: true,
+      isBroadcast: true,
+      isIntegrationScoped: true,
+      broadcastKey: 'fcm:fcm-main',
+    });
+  });
+
+  it('ignores integration overrides that target a different integration identifier', () => {
+    const route = resolvePushRoute(
+      {
+        bridgeData: {
+          providers: {
+            [PushProviderIdEnum.FCM]: {
+              [INTEGRATION_OVERRIDES_OUTPUT_KEY]: {
+                'fcm-other': { topic: 'updates' },
+              },
+            },
+          },
+        } as never,
+      },
+      PushProviderIdEnum.FCM,
+      'fcm-main'
+    );
+
+    expect(route.hasDestinationOverride).to.equal(false);
+    expect(route.isBroadcast).to.equal(false);
+    expect(route.credentials).to.equal(null);
+    expect(route.bridgeProviderData).to.deep.equal({});
+  });
+
+  it('detects candidate routing overrides packed inside integrationOverrides', () => {
+    const sourceWithIntegrationOverride = {
+      bridgeData: {
+        providers: {
+          [PushProviderIdEnum.FCM]: {
+            [INTEGRATION_OVERRIDES_OUTPUT_KEY]: {
+              'fcm-main': { topic: 'updates' },
+            },
+          },
+        },
+      } as never,
+    };
+
+    const sourceWithContentOnly = {
+      bridgeData: {
+        providers: {
+          [PushProviderIdEnum.FCM]: {
+            [INTEGRATION_OVERRIDES_OUTPUT_KEY]: {
+              'fcm-main': { notification: { title: 'hi' } },
+            },
+          },
+        },
+      } as never,
+    };
+
+    expect(hasCandidatePushRoutingOverride(sourceWithIntegrationOverride, PushProviderIdEnum.FCM)).to.equal(true);
+    expect(hasCandidatePushRoutingOverride(sourceWithContentOnly, PushProviderIdEnum.FCM)).to.equal(false);
+  });
+
+  it('selectPushChannels keeps per-integration routes without dropping sibling integrations', () => {
+    const unroutedCandidate = {
+      id: 'sub-main',
+      route: createUnroutedPushRoute(PushProviderIdEnum.FCM),
+      isMissingDeviceTokens: false,
+    };
+    const broadcastCandidate = {
+      id: 'sub-alerts',
+      route: {
+        providerId: PushProviderIdEnum.FCM,
+        integrationIdentifier: 'fcm-alerts',
+        bridgeProviderData: { topic: 'alerts' },
+        credentials: { topic: 'alerts' },
+        hasDestinationOverride: true,
+        isBroadcast: true,
+        broadcastKey: 'fcm:fcm-alerts',
+      },
+      isMissingDeviceTokens: false,
+    };
+
+    const selected = selectPushChannels([unroutedCandidate, broadcastCandidate], []);
+    expect(selected.map((c) => c.id)).to.deep.equal(['sub-main', 'sub-alerts']);
+  });
+
+  it('selectPushChannels keeps distinct integrations when both configure explicit integration-scoped broadcasts to the same topic', () => {
+    const source = {
+      bridgeData: {
+        providers: {
+          [PushProviderIdEnum.FCM]: {
+            [INTEGRATION_OVERRIDES_OUTPUT_KEY]: {
+              'fcm-ios': { topic: 'breaking-news' },
+              'fcm-android': { topic: 'breaking-news' },
+            },
+          },
+        },
+      } as never,
+    };
+
+    const iosCandidate = {
+      id: 'ios',
+      route: resolvePushRoute(source, PushProviderIdEnum.FCM, 'fcm-ios'),
+      isMissingDeviceTokens: false,
+    };
+    const androidCandidate = {
+      id: 'android',
+      route: resolvePushRoute(source, PushProviderIdEnum.FCM, 'fcm-android'),
+      isMissingDeviceTokens: false,
+    };
+
+    const selected = selectPushChannels([iosCandidate, androidCandidate], []);
+    expect(selected.map((c) => c.id)).to.deep.equal(['ios', 'android']);
+  });
+
+  it('resolvePushDeliveryTargets collapses device fan-out when route has a destination override', () => {
+    const topicRoute = {
+      providerId: PushProviderIdEnum.FCM,
+      bridgeProviderData: { topic: 'updates' },
+      credentials: { topic: 'updates' },
+      hasDestinationOverride: true,
+      isBroadcast: true,
+    };
+    const unrouted = createUnroutedPushRoute(PushProviderIdEnum.FCM);
+
+    expect(resolvePushDeliveryTargets(topicRoute, ['d1', 'd2'])).to.deep.equal({
+      targetDeviceTokens: [''],
+      recordedDeviceTokens: undefined,
+    });
+    expect(resolvePushDeliveryTargets(unrouted, ['d1', 'd2'])).to.deep.equal({
+      targetDeviceTokens: ['d1', 'd2'],
+      recordedDeviceTokens: ['d1', 'd2'],
+    });
   });
 });
