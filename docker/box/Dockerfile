@@ -76,6 +76,6 @@ ENV COREPACK_HOME=/data/corepack \
 
 COPY --link . /opt/box/
 
-EXPOSE 3000 4200 4566 8025 8887
+EXPOSE 3000 4200 4566 8025 8887 18080
 ENTRYPOINT ["tini", "--", "node", "/opt/box/box.mjs"]
 CMD ["start"]

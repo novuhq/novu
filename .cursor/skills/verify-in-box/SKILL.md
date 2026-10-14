@@ -43,7 +43,7 @@ Exercise the change the way a user reaches it, on the path the change touches:
 - **API or worker:** call `http://localhost:13000`. The Development environment's secret key is
   `node docker/box/cli.mjs exec -- cat /data/bridge/secret-key`; send it as `Authorization: ApiKey <key>`.
 - **Dashboard:** open `http://localhost:14200` in a browser and sign in with the seed user from the README.
-- **Email, SMS, push, chat:** trigger the workflow, then read Mailpit at `http://localhost:18025`; the sink delivers
+- **Email, SMS, push, chat:** trigger the workflow, then read Mailpit at `http://localhost:18025/mail`; the sink delivers
   the SMS, push and chat messages there too.
 - **Bridge workflows and agents:** they live in `playground/nextjs`; the box syncs them on every apply that changes
   the framework or the playground.

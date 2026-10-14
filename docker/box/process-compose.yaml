@@ -100,7 +100,7 @@ processes:
       restart: on_failure
 
   mail:
-    command: mailpit --smtp 127.0.0.1:1025 --listen :8025 --database /data/mail/mailpit.db
+    command: mailpit --smtp 127.0.0.1:1025 --listen :8025 --webroot /mail --database /data/mail/mailpit.db
     readiness_probe:
       exec:
         command: bash -c '</dev/tcp/127.0.0.1/1025'

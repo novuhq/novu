@@ -22,7 +22,7 @@ import { findSeedUser, SEED, seedUserToken } from './clerk.mjs';
 const API = process.env.BOX_API_URL ?? 'http://localhost:13000';
 const DASHBOARD = process.env.BOX_DASHBOARD_URL ?? 'http://localhost:14200';
 const SOCKET = process.env.BOX_SOCKET_URL ?? 'ws://localhost:18887';
-const MAIL = process.env.BOX_MAIL_URL ?? 'http://localhost:18025';
+const MAIL = process.env.BOX_MAIL_URL ?? 'http://localhost:18025/mail';
 const OUT = process.argv[2] ?? `.scratch/box-run/smoke-${Date.now()}`;
 const TIMEOUT_MS = 60_000;
 

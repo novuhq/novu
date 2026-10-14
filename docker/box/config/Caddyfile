@@ -4,13 +4,7 @@
 	persist_config off
 }
 
-# API_ROOT_URL is the browser-facing URL (host port 13000), but the thalamus observer and self-hosted agents
-# inside the box call it too, so the same port must reach the API here.
-:13000 {
-	reverse_proxy 127.0.0.1:3000
-}
-
-:4200 {
+(dashboard) {
 	encode gzip
 	header X-XSS-Protection "1; mode=block"
 	header Referrer-Policy "no-referrer-when-downgrade"
@@ -33,4 +27,45 @@
 		try_files {path} /index.html
 		file_server
 	}
+}
+
+# API_ROOT_URL is the browser-facing URL (host port 13000), but the thalamus observer and self-hosted agents
+# inside the box call it too, so the same port must reach the API here.
+:13000 {
+	reverse_proxy 127.0.0.1:3000
+}
+
+:4200 {
+	import dashboard
+}
+
+# Everything the browser reaches on one address, routed by path, for hosts that give a box only one name
+# (Cloudflare workers.dev). Locally each part keeps its own port, so the dashboard calls the API cross-origin
+# as it does in production. The port is the same inside and outside the box, like 13000 above.
+:18080 {
+	@api path /v1/* /v2/* /.well-known/*
+	handle @api {
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	# The socket worker serves its WebSocket at /.
+	@socket path /ws /ws/*
+	handle @socket {
+		uri strip_prefix /ws
+		reverse_proxy 127.0.0.1:8887
+	}
+
+	# The bucket's own path, unchanged: presigned URLs sign the path and the host, which Caddy passes through.
+	@s3 path /{$S3_BUCKET_NAME} /{$S3_BUCKET_NAME}/*
+	handle @s3 {
+		reverse_proxy 127.0.0.1:4566
+	}
+
+	# Mailpit runs with --webroot /mail.
+	@mail path /mail /mail/*
+	handle @mail {
+		reverse_proxy 127.0.0.1:8025
+	}
+
+	import dashboard
 }

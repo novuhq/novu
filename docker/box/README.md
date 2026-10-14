@@ -44,8 +44,9 @@ Settings shared by every box are in `config/box.env`. Secrets come only from the
 | 4200 | 14200 | Dashboard |
 | 3000 | 13000 | API |
 | 8887 | 18887 | Socket worker (Inbox realtime) |
-| 8025 | 18025 | Mailpit UI and API |
+| 8025 | 18025 | Mailpit UI and API, under `/mail` |
 | 4566 | 4566 | S3 (presigned upload URLs point here) |
+| 18080 | 18080 | All of the above on one address, by path: `/v1` `/v2` `/.well-known` API, `/ws` socket, `/novu-box` S3, `/mail` Mailpit, the rest the dashboard. Cloudflare boxes use it, because `workers.dev` gives a box one name |
 
 ## Secrets
 
@@ -107,7 +108,7 @@ docker run -d --name novu-box --env-file docker/box/.env -v novu-box-data:/data 
   -p 13000:3000 -p 14200:4200 -p 18887:8887 -p 4566:4566 -p 18025:8025 novu-box:dev
 ```
 
-Open the dashboard at http://localhost:14200 and Mailpit at http://localhost:18025.
+Open the dashboard at http://localhost:14200 and Mailpit at http://localhost:18025/mail.
 
 Put a PR (or a branch, or a full SHA) on the running box:
 

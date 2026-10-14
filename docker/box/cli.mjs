@@ -116,8 +116,9 @@ async function up() {
     run('docker', ['start', BOX]);
   } else create();
   await waitUntilHealthy();
-  for (const [name, port] of Object.entries({ dashboard: PORTS.dashboard, api: PORTS.api, mailpit: PORTS.mailpit }))
-    console.log(`${name}: http://localhost:${port}`);
+  console.log(`dashboard: http://localhost:${PORTS.dashboard}`);
+  console.log(`api: http://localhost:${PORTS.api}`);
+  console.log(`mailpit: http://localhost:${PORTS.mailpit}/mail`);
 
   return 0;
 }

@@ -13,7 +13,7 @@
 import http from 'node:http';
 
 const PORT = Number(process.env.SINK_PORT ?? 8026);
-const MAILPIT = process.env.SINK_MAILPIT_URL ?? 'http://127.0.0.1:8025';
+const MAILPIT = process.env.SINK_MAILPIT_URL ?? 'http://127.0.0.1:8025/mail';
 
 const channels = {
   sms: (body) => ({
@@ -58,7 +58,9 @@ const server = http.createServer(async (req, res) => {
     body = { raw };
   }
   const message = toMessage(body);
-  const headers = Object.fromEntries(Object.entries(req.headers).filter(([key]) => !['host', 'content-length', 'connection'].includes(key)));
+  const headers = Object.fromEntries(
+    Object.entries(req.headers).filter(([key]) => !['host', 'content-length', 'connection'].includes(key))
+  );
   const text = `${message.text ?? ''}\n\n--- request Novu sent to the ${channel} provider ---\n${JSON.stringify({ headers, body }, null, 2)}\n`;
 
   const sent = await fetch(`${MAILPIT}/api/v1/send`, {
@@ -81,7 +83,9 @@ const server = http.createServer(async (req, res) => {
   }
   const { ID } = await sent.json();
   console.log(`${channel}: ${message.subject} -> mailpit ${ID}`);
-  res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ id: ID, date: new Date().toISOString() }));
+  res
+    .writeHead(200, { 'Content-Type': 'application/json' })
+    .end(JSON.stringify({ id: ID, date: new Date().toISOString() }));
 });
 
 server.listen(PORT, '127.0.0.1', () => console.log(`sink listening on 127.0.0.1:${PORT}`));
