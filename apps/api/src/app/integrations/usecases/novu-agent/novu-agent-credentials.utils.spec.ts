@@ -15,8 +15,19 @@ describe('sanitizeAgentInboxCredentialsForCreate', () => {
     });
 
     expect(result.inboxRoutingKey).to.equal(undefined);
+    expect(result.inboxDomain).to.equal(undefined);
     expect(result.secretKey).to.equal(undefined);
     expect(result.sharedInboxDisabled).to.equal(undefined);
+    expect(result.senderName).to.equal('Ops');
+  });
+
+  it('strips a client-supplied inbox domain on create', () => {
+    const result = sanitizeAgentInboxCredentialsForCreate(EmailProviderIdEnum.AgentEmailInbox, {
+      inboxDomain: 'evil.example',
+      senderName: 'Ops',
+    });
+
+    expect(result.inboxDomain).to.equal(undefined);
     expect(result.senderName).to.equal('Ops');
   });
 
@@ -72,6 +83,28 @@ describe('mergeAgentInboxCredentialsForUpdate', () => {
     );
 
     expect(result.emailSlugPrefix).to.equal('renamed-bot');
+  });
+
+  it('keeps the stored inbox domain and ignores a client change', () => {
+    const result = mergeAgentInboxCredentialsForUpdate(
+      EmailProviderIdEnum.AgentEmailInbox,
+      { inboxDomain: 'evil.example', senderName: 'Ops' },
+      { inboxDomain: 'inbox.agentinbox.md', inboxRoutingKey: 'stored01' }
+    );
+
+    expect(result.inboxDomain).to.equal('inbox.agentinbox.md');
+    expect(result.senderName).to.equal('Ops');
+  });
+
+  it('drops a client inbox domain when nothing is stored yet', () => {
+    const result = mergeAgentInboxCredentialsForUpdate(
+      EmailProviderIdEnum.NovuAgent,
+      { inboxDomain: 'evil.example' },
+      { inboxRoutingKey: 'stored01' }
+    );
+
+    expect(result.inboxDomain).to.equal(undefined);
+    expect(result.inboxRoutingKey).to.equal('stored01');
   });
 
   it('keeps a stored `sharedInboxDisabled: false` rather than dropping it', () => {

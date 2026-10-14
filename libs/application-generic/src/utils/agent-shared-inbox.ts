@@ -12,7 +12,11 @@ import { customAlphabet } from 'nanoid';
  *                          under a partial index on NovuAgent rows)
  *
  * The address shape is `{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`.
- * The inbound worker resolves the agent by looking up the NovuAgent integration
+ * Connect agents use `NOVU_AGENT_SHARED_INBOUND_DOMAIN`. Agent Inbox (Human)
+ * agents use `NOVU_AGENT_INBOX_INBOUND_DOMAIN` when it is set, and the chosen
+ * domain is pinned on the integration as `credentials.inboxDomain`. A row
+ * without that pin keeps the Connect domain, so existing addresses do not move.
+ * The inbound worker resolves the agent by looking up the inbox integration
  * whose `credentials.inboxRoutingKey` matches the trailing segment, then joining
  * through `AgentIntegration` — see
  * `apps/worker/src/app/workflow/usecases/inbound-email-parse/strategies/domain-route.strategy.ts`.
@@ -23,6 +27,7 @@ import { customAlphabet } from 'nanoid';
  */
 
 const SHARED_AGENT_DOMAIN_ENV = 'NOVU_AGENT_SHARED_INBOUND_DOMAIN';
+const AGENT_INBOX_DOMAIN_ENV = 'NOVU_AGENT_INBOX_INBOUND_DOMAIN';
 
 /**
  * Routing-key alphabet — lowercase letters + digits. Lowercase-only so the
@@ -99,10 +104,11 @@ export function getSharedAgentDomain(): string {
  */
 const SHARED_DOMAIN_REGEX = /^(?=.{1,253}$)(?!-)[a-z0-9-]{1,63}(?<!-)(\.(?!-)[a-z0-9-]{1,63}(?<!-))+$/i;
 
-function getSharedAgentDomainOrNull(): string | null {
-  const raw = process.env[SHARED_AGENT_DOMAIN_ENV];
+function readConfiguredDomain(raw: string | null | undefined): string | null {
   const trimmed = raw?.trim();
-  if (!trimmed) return null;
+  if (!trimmed) {
+    return null;
+  }
 
   const normalized = trimmed.toLowerCase();
   if (!SHARED_DOMAIN_REGEX.test(normalized)) {
@@ -110,6 +116,59 @@ function getSharedAgentDomainOrNull(): string | null {
   }
 
   return normalized;
+}
+
+function getSharedAgentDomainOrNull(): string | null {
+  return readConfiguredDomain(process.env[SHARED_AGENT_DOMAIN_ENV]);
+}
+
+/**
+ * Agent Inbox (Human) shared domain, e.g. `inbox.agentinbox.md`.
+ * Unset or invalid means Human agents fall back to the Connect domain.
+ * This never gates `isAgentSharedInboxEnabled()` — the Connect domain does.
+ */
+export function getAgentInboxSharedDomainOrNull(): string | null {
+  return readConfiguredDomain(process.env[AGENT_INBOX_DOMAIN_ENV]);
+}
+
+/**
+ * Domain written onto a newly provisioned inbox integration.
+ * Agent Email Inbox prefers the Human domain and falls back to the Connect
+ * domain when that env var is missing. Every other provider stays on the
+ * Connect domain.
+ */
+export function defaultInboxDomainForProvider(providerId: string): string {
+  if (providerId === EmailProviderIdEnum.AgentEmailInbox) {
+    return getAgentInboxSharedDomainOrNull() ?? getSharedAgentDomain();
+  }
+
+  return getSharedAgentDomain();
+}
+
+/**
+ * Domain an existing inbox actually publishes and accepts mail on.
+ * A valid stored pin wins. Anything else — missing, blank, or not a hostname —
+ * stays on the Connect domain so rows created before the pin keep working.
+ */
+export function resolveAgentInboxDomain(credentials: { inboxDomain?: unknown } | null | undefined): string {
+  const pinned = typeof credentials?.inboxDomain === 'string' ? readConfiguredDomain(credentials.inboxDomain) : null;
+  if (pinned) {
+    return pinned;
+  }
+
+  return getSharedAgentDomain();
+}
+
+/**
+ * Every shared domain this deployment currently accepts inbound mail for.
+ * Deduped, so a deployment that has not split the domains still matches once.
+ */
+export function getConfiguredSharedInboxDomains(): string[] {
+  const domains = [getSharedAgentDomainOrNull(), getAgentInboxSharedDomainOrNull()].filter((domain): domain is string =>
+    Boolean(domain)
+  );
+
+  return [...new Set(domains)];
 }
 
 /**
@@ -135,7 +194,7 @@ export function isValidAgentInboxRoutingKey(key: string): boolean {
  * single dash; the trailing `inboxRoutingKey` is the routing key the inbound
  * worker uses to resolve the NovuAgent integration.
  */
-export function buildAgentSharedInbox(emailSlugPrefix: string, inboxRoutingKey: string): string {
+export function buildAgentSharedInbox(emailSlugPrefix: string, inboxRoutingKey: string, domain?: string): string {
   if (!isValidAgentInboxRoutingKey(inboxRoutingKey)) {
     throw new Error(
       `Invalid inboxRoutingKey "${inboxRoutingKey}" — expected ${ROUTING_KEY_LENGTH} lowercase alnum chars.`
@@ -144,7 +203,7 @@ export function buildAgentSharedInbox(emailSlugPrefix: string, inboxRoutingKey: 
 
   const slug = sanitizeSlugForAddress(emailSlugPrefix);
 
-  return `${slug}-${inboxRoutingKey}@${getSharedAgentDomain()}`;
+  return `${slug}-${inboxRoutingKey}@${domain ?? getSharedAgentDomain()}`;
 }
 
 /**

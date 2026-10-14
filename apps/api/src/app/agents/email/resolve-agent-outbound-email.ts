@@ -1,5 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
-import { buildAgentSharedInbox, decryptCredentials, isAgentSharedInboxEnabled } from '@novu/application-generic';
+import {
+  buildAgentSharedInbox,
+  decryptCredentials,
+  isAgentSharedInboxEnabled,
+  resolveAgentInboxDomain,
+} from '@novu/application-generic';
 import { AgentIntegrationRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { type AgentInboxProviderId, ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 
@@ -83,7 +88,7 @@ function resolveAgentInboundFrom(emailIntegration: IntegrationEntity): string | 
   }
 
   try {
-    return buildAgentSharedInbox(slug, inboxRoutingKey);
+    return buildAgentSharedInbox(slug, inboxRoutingKey, resolveAgentInboxDomain(emailIntegration.credentials));
   } catch {
     return undefined;
   }

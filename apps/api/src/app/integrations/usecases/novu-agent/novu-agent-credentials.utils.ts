@@ -10,6 +10,8 @@ import { type ICredentials, isAgentInboxProvider } from '@novu/shared';
  *                           rotating it is the moral equivalent of changing
  *                           the integration's email address and should only
  *                           happen through an explicit server-side flow.
+ * - `inboxDomain`         — domain the address was pinned to at provision
+ *                           time. A client save must not repoint or erase it.
  * - `secretKey`           — HMAC secret used to sign inbound webhook
  *                           payloads. Same property as on other agent
  *                           providers: minted at provision time and never
@@ -39,6 +41,7 @@ export function sanitizeAgentInboxCredentialsForCreate(providerId: string, next:
   // Nothing is provisioned yet, so every managed field is the server's to mint.
   const created: ICredentials = { ...next };
   delete created.inboxRoutingKey;
+  delete created.inboxDomain;
   delete created.secretKey;
   delete created.sharedInboxDisabled;
 
@@ -64,6 +67,12 @@ export function mergeAgentInboxCredentialsForUpdate(
     merged.inboxRoutingKey = existing.inboxRoutingKey;
   } else {
     delete merged.inboxRoutingKey;
+  }
+
+  if (existing?.inboxDomain) {
+    merged.inboxDomain = existing.inboxDomain;
+  } else {
+    delete merged.inboxDomain;
   }
 
   if (existing?.secretKey) {

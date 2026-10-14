@@ -53,6 +53,7 @@ describe('NovuEmailProvisioningService', () => {
   let savedNovuEnterprise: string | undefined;
   let savedSelfHosted: string | undefined;
   let savedSharedDomain: string | undefined;
+  let savedInboxDomain: string | undefined;
 
   function buildUsecase() {
     return new NovuEmailProvisioningService(
@@ -67,10 +68,12 @@ describe('NovuEmailProvisioningService', () => {
     savedNovuEnterprise = process.env.NOVU_ENTERPRISE;
     savedSelfHosted = process.env.IS_SELF_HOSTED;
     savedSharedDomain = process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN;
+    savedInboxDomain = process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN;
 
     process.env.NOVU_ENTERPRISE = 'true';
     delete process.env.IS_SELF_HOSTED;
     process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = 'agentconnect.sh';
+    process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = 'inbox.agentinbox.md';
 
     integrationRepo = {
       find: stub().resolves([]),
@@ -108,6 +111,9 @@ describe('NovuEmailProvisioningService', () => {
 
     if (savedSharedDomain === undefined) delete process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN;
     else process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = savedSharedDomain;
+
+    if (savedInboxDomain === undefined) delete process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN;
+    else process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = savedInboxDomain;
 
     restore();
   });
@@ -150,7 +156,33 @@ describe('NovuEmailProvisioningService', () => {
       expect(createArg.credentials.outboundIntegrationId).to.equal('sendgrid-id');
       expect(createArg.credentials.emailSlugPrefix).to.be.a('string');
       expect(createArg.credentials.inboxRoutingKey).to.be.a('string');
+      expect(createArg.credentials.inboxDomain).to.equal('agentconnect.sh');
       expect(createArg.credentials.senderName).to.equal('My Agent');
+    });
+
+    it('pins an Agent Email Inbox to the Agent Inbox domain', async () => {
+      integrationRepo.findOne.onFirstCall().resolves({
+        _id: 'sendgrid-id',
+        providerId: 'sendgrid',
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+        primary: true,
+      } as IntegrationEntity);
+      integrationRepo.create.resolves({
+        _id: 'agent-inbox-int-id',
+        providerId: EmailProviderIdEnum.AgentEmailInbox,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'agent-email-inbox-xxx',
+        name: 'Agent Email Inbox',
+        active: true,
+        credentials: {},
+      });
+
+      await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID, EmailProviderIdEnum.AgentEmailInbox);
+
+      const createArg = integrationRepo.create.firstCall.args[0];
+      expect(createArg.providerId).to.equal(EmailProviderIdEnum.AgentEmailInbox);
+      expect(createArg.credentials.inboxDomain).to.equal('inbox.agentinbox.md');
     });
 
     it("falls back to the env's Novu demo email integration when no primary custom integration exists", async () => {
@@ -267,6 +299,7 @@ describe('NovuEmailProvisioningService', () => {
       // needed) while isAgentSharedInboxEnabled() is false (IS_SELF_HOSTED).
       process.env.IS_SELF_HOSTED = 'true';
       delete process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN;
+      delete process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN;
     });
 
     it('provisions without a routing key and persists sharedInboxDisabled, using a custom provider for outbound', async () => {
@@ -296,6 +329,7 @@ describe('NovuEmailProvisioningService', () => {
       expect(createArg.providerId).to.equal(EmailProviderIdEnum.NovuAgent);
       expect(createArg.credentials.sharedInboxDisabled).to.equal(true);
       expect(createArg.credentials.inboxRoutingKey).to.equal(undefined);
+      expect(createArg.credentials.inboxDomain).to.equal(undefined);
       expect(createArg.credentials.outboundIntegrationId).to.equal('ses-id');
       expect(createArg.credentials.emailSlugPrefix).to.be.a('string');
     });

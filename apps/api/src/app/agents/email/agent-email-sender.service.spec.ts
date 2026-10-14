@@ -9,6 +9,7 @@ import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentEmailSender, resolveAgentEmailSenderName } from './agent-email-sender.service';
 
 const SHARED_DOMAIN = 'agentconnect.sh';
+const AGENT_INBOX_DOMAIN = 'inbox.agentinbox.md';
 const OUTBOUND_INTEGRATION_ID = 'outbound-integration-id';
 const SIGNING_SECRET = 'email-webhook-secret';
 
@@ -45,6 +46,7 @@ describe('AgentEmailSender', () => {
     NOVU_ENTERPRISE: process.env.NOVU_ENTERPRISE,
     IS_SELF_HOSTED: process.env.IS_SELF_HOSTED,
     NOVU_AGENT_SHARED_INBOUND_DOMAIN: process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN,
+    NOVU_AGENT_INBOX_INBOUND_DOMAIN: process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN,
   };
 
   let integrationRepository: { findOne: sinon.SinonStub };
@@ -71,6 +73,7 @@ describe('AgentEmailSender', () => {
     process.env.NOVU_ENTERPRISE = 'true';
     delete process.env.IS_SELF_HOSTED;
     process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = SHARED_DOMAIN;
+    process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = AGENT_INBOX_DOMAIN;
 
     integrationRepository = { findOne: sinon.stub().resolves(makeSendGridIntegration()) };
     handlerSend = sinon.stub().resolves({ id: 'provider-message-id' });
@@ -94,6 +97,12 @@ describe('AgentEmailSender', () => {
       const address = buildSender().resolveSharedInboxAddress(makeConfig());
 
       expect(address).to.equal(`human-relay-abc12345@${SHARED_DOMAIN}`);
+    });
+
+    it('builds the address on the domain pinned to the integration', () => {
+      const address = buildSender().resolveSharedInboxAddress(makeConfig({ inboxDomain: AGENT_INBOX_DOMAIN }));
+
+      expect(address).to.equal(`human-relay-abc12345@${AGENT_INBOX_DOMAIN}`);
     });
 
     it('returns undefined when the agent opted out of the shared inbox', () => {
@@ -121,6 +130,31 @@ describe('AgentEmailSender', () => {
       const address = buildSender().resolveSharedInboxAddress(makeConfig({ inboxRoutingKey: 'NOT-VALID' }));
 
       expect(address).to.equal(undefined);
+    });
+  });
+
+  describe('pinned inbox domain', () => {
+    it('sends from the override and uses the pinned address as Reply-To', async () => {
+      const config = makeConfig({
+        inboxDomain: AGENT_INBOX_DOMAIN,
+        useFromAddressOverride: true,
+        fromAddressOverride: 'ops@customer.example',
+      });
+      const pinned = `human-relay-abc12345@${AGENT_INBOX_DOMAIN}`;
+
+      await buildSender().buildSendEmailCallback(
+        config,
+        OUTBOUND_INTEGRATION_ID
+      )({
+        from: `human-relay-abc12345@${SHARED_DOMAIN}`,
+        to: 'person@example.com',
+        subject: 'Hello',
+        html: '<p>Hello</p>',
+      });
+
+      const mailOptions = handlerSend.firstCall.args[0];
+      expect(mailOptions.from).to.equal('ops@customer.example');
+      expect(mailOptions.replyTo).to.equal(pinned);
     });
   });
 

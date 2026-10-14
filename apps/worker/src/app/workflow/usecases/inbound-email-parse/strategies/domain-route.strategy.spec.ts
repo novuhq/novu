@@ -342,14 +342,15 @@ describe('DomainRouteStrategy', () => {
 
   describe('shared agent domain branch', () => {
     const SHARED_DOMAIN = 'agentconnect.sh';
+    const AGENT_INBOX_DOMAIN = 'inbox.agentinbox.md';
     const AGENT_ID = '65a3f1d2b8e4c7a9f3b2c1d0';
     const INTEGRATION_ID = '65a3f1d2b8e4c7a9f3b2c1ff';
     const ROUTING_KEY = 'a1b2c3d4';
 
-    function makeSharedCommand(localPart: string): InboundEmailParseCommand {
+    function makeSharedCommand(localPart: string, domain = SHARED_DOMAIN): InboundEmailParseCommand {
       return {
         ...makeCommand('ignored'),
-        to: [{ address: `${localPart}@${SHARED_DOMAIN}`, name: '' }],
+        to: [{ address: `${localPart}@${domain}`, name: '' }],
       } as InboundEmailParseCommand;
     }
 
@@ -376,7 +377,12 @@ describe('DomainRouteStrategy', () => {
         credentials: {
           inboxRoutingKey: ROUTING_KEY,
           emailSlugPrefix: 'wine-bot',
-        } as { inboxRoutingKey: string; emailSlugPrefix: string; sharedInboxDisabled?: boolean },
+        } as {
+          inboxRoutingKey: string;
+          emailSlugPrefix: string;
+          inboxDomain?: string;
+          sharedInboxDisabled?: boolean;
+        },
       };
     }
 
@@ -385,20 +391,24 @@ describe('DomainRouteStrategy', () => {
     }
 
     const sharedEnvKey = 'NOVU_AGENT_SHARED_INBOUND_DOMAIN';
+    const inboxDomainEnvKey = 'NOVU_AGENT_INBOX_INBOUND_DOMAIN';
     const enterpriseKey = 'NOVU_ENTERPRISE';
     const selfHostedKey = 'IS_SELF_HOSTED';
     const apiRootKey = 'API_ROOT_URL';
     let prevShared: string | undefined;
+    let prevInboxDomain: string | undefined;
     let prevEnterprise: string | undefined;
     let prevSelfHosted: string | undefined;
     let prevApiRoot: string | undefined;
 
     beforeEach(() => {
       prevShared = process.env[sharedEnvKey];
+      prevInboxDomain = process.env[inboxDomainEnvKey];
       prevEnterprise = process.env[enterpriseKey];
       prevSelfHosted = process.env[selfHostedKey];
       prevApiRoot = process.env[apiRootKey];
       process.env[sharedEnvKey] = SHARED_DOMAIN;
+      process.env[inboxDomainEnvKey] = AGENT_INBOX_DOMAIN;
       process.env[enterpriseKey] = 'true';
       process.env[selfHostedKey] = 'false';
       process.env[apiRootKey] = 'http://localhost:3000';
@@ -407,6 +417,8 @@ describe('DomainRouteStrategy', () => {
     afterEach(() => {
       if (prevShared === undefined) delete process.env[sharedEnvKey];
       else process.env[sharedEnvKey] = prevShared;
+      if (prevInboxDomain === undefined) delete process.env[inboxDomainEnvKey];
+      else process.env[inboxDomainEnvKey] = prevInboxDomain;
       if (prevEnterprise === undefined) delete process.env[enterpriseKey];
       else process.env[enterpriseKey] = prevEnterprise;
       if (prevSelfHosted === undefined) delete process.env[selfHostedKey];
@@ -429,6 +441,48 @@ describe('DomainRouteStrategy', () => {
       expect(call.args[0].domain.name).to.equal(SHARED_DOMAIN);
       sinon.assert.calledOnceWithExactly(integrationRepository.findAgentInboundByInboxRoutingKey as any, ROUTING_KEY);
       sinon.assert.notCalled(domainRepository.findByName as any);
+    });
+
+    it('delivers mail on the Agent Inbox domain when the integration is pinned there', async () => {
+      const integration = makeIntegration();
+      integration.credentials = { ...integration.credentials, inboxDomain: AGENT_INBOX_DOMAIN };
+      integrationRepository.findAgentInboundByInboxRoutingKey.resolves(integration as any);
+      agentIntegrationRepository.findOne.resolves(makeLink() as any);
+      agentRepository.findByIdForWebhook.resolves(makeAgent() as any);
+
+      await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`, AGENT_INBOX_DOMAIN));
+
+      sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
+      expect(inboundDomainRouteDelivery.deliverToAgent.getCall(0).args[0].domain.name).to.equal(AGENT_INBOX_DOMAIN);
+    });
+
+    it('still delivers on agentconnect.sh when the integration is pinned there', async () => {
+      const integration = makeIntegration();
+      integration.credentials = { ...integration.credentials, inboxDomain: SHARED_DOMAIN };
+      integrationRepository.findAgentInboundByInboxRoutingKey.resolves(integration as any);
+      agentIntegrationRepository.findOne.resolves(makeLink() as any);
+      agentRepository.findByIdForWebhook.resolves(makeAgent() as any);
+
+      await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+
+      sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
+      expect(inboundDomainRouteDelivery.deliverToAgent.getCall(0).args[0].domain.name).to.equal(SHARED_DOMAIN);
+    });
+
+    it('drops mail when the address domain does not match the pinned domain', async () => {
+      const integration = makeIntegration();
+      integration.credentials = { ...integration.credentials, inboxDomain: AGENT_INBOX_DOMAIN };
+      integrationRepository.findAgentInboundByInboxRoutingKey.resolves(integration as any);
+
+      try {
+        await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+        throw new Error('Expected InboundParseDroppedError');
+      } catch (error) {
+        expect(error).to.be.instanceOf(InboundParseDroppedError);
+      }
+
+      sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
+      sinon.assert.notCalled(agentIntegrationRepository.findOne as any);
     });
 
     it('strips a +nv reply token before shared-inbox routing and forwards originToken', async () => {
