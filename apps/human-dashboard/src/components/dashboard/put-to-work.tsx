@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 import { completeChecklistItemAction, hideChecklistAction } from '@/app/(account)/onboarding/actions';
 import { FoldAwayButton, FoldsAway } from '@/components/dashboard/folds-away';
-import { CONFIGURE_PATH } from '@/components/dashboard/nav';
+import { configureChannelPath } from '@/components/dashboard/nav';
 import { buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { cn } from '@/lib/utils';
@@ -17,18 +17,20 @@ type PutToWorkProps = {
   cardLink: string;
   /** The items the operator has ticked off by doing them (`address`, `card`). */
   done: string[];
-  telegramConnected: boolean;
+  /** A channel besides email is connected (Telegram or Slack), so the agent needs no second one. */
+  secondChannelConnected: boolean;
 };
 
 /**
- * "Put atlas to work": three things worth doing with a freshly set up agent, on the Inbox page until the
- * operator hides the list, which folds it away. Copying is what ticks the first two off; the third is done
- * once the agent has Telegram.
+ * "Put atlas to work": things worth doing with a freshly set up agent, on the Inbox page until the operator
+ * hides the list, which folds it away. Copying is what ticks the first two off. The third, a second channel,
+ * shows only while the agent has none besides email; "Add Telegram" opens Telegram's drawer on Configure.
  */
-export function PutToWork({ handle, address, cardLink, done, telegramConnected }: PutToWorkProps) {
+export function PutToWork({ handle, address, cardLink, done, secondChannelConnected }: PutToWorkProps) {
   const addressDone = done.includes('address');
   const cardDone = done.includes('card');
-  const doneCount = [addressDone, cardDone, telegramConnected].filter(Boolean).length;
+  const doneCount = [addressDone, cardDone].filter(Boolean).length;
+  const itemCount = secondChannelConnected ? 2 : 3;
   const ask = `Sign up for Linear with ${address}.`;
 
   return (
@@ -41,7 +43,7 @@ export function PutToWork({ handle, address, cardLink, done, telegramConnected }
             key={doneCount}
             className="animate-overlay-in font-mono text-[11px] leading-4 text-muted motion-reduce:animate-none"
           >
-            {doneCount} of 3
+            {doneCount} of {itemCount}
           </p>
           <FoldAwayButton className={buttonClassName('quiet', cn(SMALL_BUTTON, 'ml-auto'))}>Hide</FoldAwayButton>
         </div>
@@ -80,18 +82,18 @@ export function PutToWork({ handle, address, cardLink, done, telegramConnected }
               </CopyButton>
             }
           />
-          <Item
-            done={telegramConnected}
-            title={`Give ${handle} a second channel`}
-            description="People who’d rather text can reach it on Telegram."
-            action={
-              !telegramConnected && (
-                <Link href={CONFIGURE_PATH} className={buttonClassName('secondary', SMALL_BUTTON)}>
+          {!secondChannelConnected && (
+            <Item
+              done={false}
+              title={`Give ${handle} a second channel`}
+              description="People who’d rather text can reach it on Telegram."
+              action={
+                <Link href={configureChannelPath('telegram')} className={buttonClassName('secondary', SMALL_BUTTON)}>
                   Add Telegram
                 </Link>
-              )
-            }
-          />
+              }
+            />
+          )}
         </ul>
       </section>
     </FoldsAway>

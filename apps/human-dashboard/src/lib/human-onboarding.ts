@@ -246,7 +246,8 @@ export type SetupSummary = {
   agent: AgentIdentity;
   /** Messages nobody has read yet. They wait for the host. */
   waiting: number;
-  telegramConnected: boolean;
+  /** A channel besides email is connected: Telegram or Slack. */
+  secondChannelConnected: boolean;
   /** The operator went through the steps, as opposed to bringing an agent from a terminal. */
   wentThroughSteps: boolean;
   doneBannerDismissed: boolean;
@@ -264,7 +265,7 @@ export async function loadSetupSummary(
     step,
     agent: describeAgentIdentity(agent, state, channels.emailAddress),
     waiting,
-    telegramConnected: channels.telegram,
+    secondChannelConnected: channels.telegram || channels.slack,
     wentThroughSteps: wasMadeInTheSteps(agent, state),
     doneBannerDismissed: state.doneBannerDismissed === true,
     checklist: { done: Object.keys(state.checklist?.done ?? {}), hidden: state.checklist?.hidden === true },

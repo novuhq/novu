@@ -12,6 +12,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { findCurrentUser } from '@/lib/auth-page';
 import { requireHumanAccount } from '@/lib/human-account';
 import { agentDisplayName } from '@/lib/human-agent-api';
+import { countUnreadThreads } from '@/lib/human-inbox-api';
 import { describeProgress, isSetupUnfinished, loadSetupProgress } from '@/lib/human-onboarding';
 
 const AGENT_NOT_SET_UP: SidebarAgent = { name: 'Your agent', status: 'Not set up', setUp: false };
@@ -47,7 +48,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         <Sidebar agent={agent} />
         <div className="flex min-w-0 flex-1 flex-col">
           <TopBar user={{ name, email, imageUrl: user.hasImage ? user.imageUrl : null }} />
-          <main className="mx-auto flex w-full max-w-300 flex-1 flex-col gap-5 px-6 pt-7 pb-20 md:px-10">
+          {/* A page drawn to the full width, like the inbox, marks itself `data-full-width`. */}
+          <main className="mx-auto flex w-full max-w-300 flex-1 flex-col gap-5 px-6 pt-7 pb-20 has-data-full-width:max-w-none md:px-10">
             {children}
           </main>
         </div>
@@ -88,6 +90,7 @@ async function loadSidebarAgent(): Promise<{ agent: SidebarAgent; setupStatus: s
         setUp: true,
         pictureUrl: agent.pictureUrl,
         setupUnfinished,
+        unreadThreads: await countUnreadThreads(account),
       },
       setupStatus: setupUnfinished ? describeProgress(progress) : null,
     };
