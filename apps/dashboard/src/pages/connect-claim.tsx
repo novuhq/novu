@@ -15,7 +15,7 @@ import { useFetchEnvironments } from '@/context/environment/hooks';
 import { BOOTSTRAP_ORG_CACHE_KEY } from '@/context/environment/use-bootstrap-organization';
 import { appendRedirectUrlParam } from '@/utils/cli-auth-pending';
 import { clearConnectProvisioning } from '@/utils/connect';
-import { getConnectClaimErrorMessage, isTerminalConnectClaimError } from '@/utils/connect-claim-errors';
+import { type ConnectClaimError, getConnectClaimError } from '@/utils/connect-claim-errors';
 import {
   clearPendingConnectClaim,
   parseConnectClaimToken,
@@ -25,11 +25,6 @@ import {
 import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 
 const ENV_READY_TIMEOUT_MS = 60_000;
-
-type ClaimError = {
-  message: string;
-  isTerminal: boolean;
-};
 
 export const ConnectClaimPage = () => {
   const { isLoaded, isSignedIn } = useClerkAuth();
@@ -115,7 +110,7 @@ function ConnectClaimContent({ token }: { token: string | null }) {
   }, [isEnvironmentReady, environmentSetupError]);
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimResult, setClaimResult] = useState<ClaimKeylessEnvironmentResponse | null>(null);
-  const [claimError, setClaimError] = useState<ClaimError | null>(null);
+  const [claimError, setClaimError] = useState<ConnectClaimError | null>(null);
   const hasAttemptedRef = useRef(false);
 
   const tokenOk = Boolean(token);
@@ -134,9 +129,9 @@ function ConnectClaimContent({ token }: { token: string | null }) {
       setClaimResult(result);
     } catch (error) {
       console.error('Connect claim failed', error);
-      const message = getConnectClaimErrorMessage(error);
-      showErrorToast(message, 'Claim failed');
-      setClaimError({ message, isTerminal: isTerminalConnectClaimError(error) });
+      const claimFailure = getConnectClaimError(error);
+      showErrorToast(claimFailure.message, 'Claim failed');
+      setClaimError(claimFailure);
     } finally {
       setIsClaiming(false);
     }
@@ -223,8 +218,7 @@ function ConnectClaimContent({ token }: { token: string | null }) {
             }}
             onRetryClaim={handleRetry}
             onVisitDashboard={handleVisitDashboard}
-            onGoToWorkflows={() => navigateInEnvironment(ROUTES.WORKFLOWS)}
-            onOpenApiKeys={() => navigateInEnvironment(ROUTES.API_KEYS)}
+            onNavigate={navigateInEnvironment}
           />
         </div>
       </div>
@@ -236,12 +230,11 @@ type ClaimStateProps = {
   reason: string | null;
   setupError: string | null;
   claimResult: ClaimKeylessEnvironmentResponse | null;
-  claimError: ClaimError | null;
+  claimError: ConnectClaimError | null;
   onRetrySetup: () => void;
   onRetryClaim: () => void;
   onVisitDashboard: () => void;
-  onGoToWorkflows: () => void;
-  onOpenApiKeys: () => void;
+  onNavigate: (route: string) => void;
 };
 
 function ClaimState({
@@ -252,8 +245,7 @@ function ClaimState({
   onRetrySetup,
   onRetryClaim,
   onVisitDashboard,
-  onGoToWorkflows,
-  onOpenApiKeys,
+  onNavigate,
 }: ClaimStateProps) {
   if (reason) {
     return <ClaimNotice message={reason} />;
@@ -264,14 +256,7 @@ function ClaimState({
   }
 
   if (claimResult) {
-    return (
-      <ClaimSuccess
-        result={claimResult}
-        onVisitDashboard={onVisitDashboard}
-        onGoToWorkflows={onGoToWorkflows}
-        onOpenApiKeys={onOpenApiKeys}
-      />
-    );
+    return <ClaimSuccess result={claimResult} onVisitDashboard={onVisitDashboard} onNavigate={onNavigate} />;
   }
 
   if (claimError) {
@@ -308,13 +293,11 @@ function ClaimNotice({ message, onRetry }: { message: string; onRetry?: () => vo
 function ClaimSuccess({
   result,
   onVisitDashboard,
-  onGoToWorkflows,
-  onOpenApiKeys,
+  onNavigate,
 }: {
   result: ClaimKeylessEnvironmentResponse;
   onVisitDashboard: () => void;
-  onGoToWorkflows: () => void;
-  onOpenApiKeys: () => void;
+  onNavigate: (route: string) => void;
 }) {
   switch (result.kind) {
     case 'agent-environment':
@@ -331,11 +314,18 @@ function ClaimSuccess({
             mode="gradient"
             size="xs"
             className="w-full"
-            onClick={onGoToWorkflows}
+            onClick={() => onNavigate(ROUTES.WORKFLOWS)}
           >
             Go to workflows
           </Button>
-          <Button type="button" variant="secondary" mode="ghost" size="xs" className="w-full" onClick={onOpenApiKeys}>
+          <Button
+            type="button"
+            variant="secondary"
+            mode="ghost"
+            size="xs"
+            className="w-full"
+            onClick={() => onNavigate(ROUTES.API_KEYS)}
+          >
             Open API Keys
           </Button>
         </div>

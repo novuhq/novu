@@ -13,7 +13,7 @@ import { upsertEnvFile } from './env-file';
 
 export const DEFAULT_KEYLESS_API_URL = 'https://api.novu.co';
 
-export const KeylessExitCode = {
+const KeylessExitCode = {
   OK: 0,
   ERROR: 1,
   CLAIMED: 3,
@@ -81,10 +81,7 @@ export async function keylessStatus(options: KeylessStatusOptions): Promise<numb
   const cwd = options.cwd ?? process.cwd();
 
   if (!options.secretKey) {
-    return reportError(
-      new KeylessApiError('No secret key found. Pass --secret-key or set NOVU_SECRET_KEY.', 0),
-      options.json
-    );
+    return fail('No secret key found. Pass --secret-key or set NOVU_SECRET_KEY.', KeylessExitCode.ERROR, options.json);
   }
 
   let environment: KeylessEnvironmentStatus;
@@ -122,7 +119,10 @@ export async function keylessClaim(options: KeylessClaimOptions): Promise<number
       });
       claimUrl = environment.claimUrl;
     } catch (error) {
-      if (!(error instanceof KeylessApiError) || exitCodeFor(error) !== KeylessExitCode.ERROR || !breadcrumb) {
+      const canFallBackToBreadcrumb =
+        error instanceof KeylessApiError && exitCodeFor(error) === KeylessExitCode.ERROR && breadcrumb;
+
+      if (!canFallBackToBreadcrumb) {
         return reportError(error);
       }
     }
@@ -130,12 +130,9 @@ export async function keylessClaim(options: KeylessClaimOptions): Promise<number
 
   if (!claimUrl && breadcrumb) {
     if (Date.parse(breadcrumb.expiresAt) <= Date.now()) {
-      return reportError(
-        new KeylessApiError(
-          `This keyless environment expired on ${breadcrumb.expiresAt}. Run \`novu keyless create\` to start a new one.`,
-          0,
-          'keyless_environment_expired'
-        )
+      return fail(
+        `This keyless environment expired on ${breadcrumb.expiresAt}. Run \`novu keyless create\` to start a new one.`,
+        KeylessExitCode.EXPIRED
       );
     }
 
@@ -143,7 +140,7 @@ export async function keylessClaim(options: KeylessClaimOptions): Promise<number
   }
 
   if (!claimUrl) {
-    return reportError(new KeylessApiError('No keyless environment found here. Run `novu keyless create` first.', 0));
+    return fail('No keyless environment found here. Run `novu keyless create` first.', KeylessExitCode.ERROR);
   }
 
   console.log(`Open this link to keep this setup in your Novu account: ${cyan(claimUrl)}`);
@@ -179,13 +176,17 @@ function reportError(error: unknown, json?: boolean): number {
     throw error;
   }
 
+  return fail(error.message, exitCodeFor(error), json, { status: error.status, code: error.code });
+}
+
+function fail(message: string, exitCode: number, json?: boolean, details?: { status: number; code?: string }): number {
   if (json) {
-    console.log(JSON.stringify({ error: { status: error.status, code: error.code, message: error.message } }));
+    console.log(JSON.stringify({ error: { ...details, message } }));
   } else {
-    console.error(red(error.message));
+    console.error(red(message));
   }
 
-  return exitCodeFor(error);
+  return exitCode;
 }
 
 function toEnvVars(environment: CreatedKeylessEnvironment): Record<string, string> {
