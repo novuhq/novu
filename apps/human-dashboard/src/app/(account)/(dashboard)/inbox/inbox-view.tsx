@@ -267,7 +267,14 @@ function withEarlier(current: ThreadLoad | undefined, fresh: ThreadLoad): Thread
     return fresh;
   }
 
-  const messages = [...current.view.messages.slice(0, meet), ...fresh.view.messages];
+  // A card's answer changes the card where it is, and the fresh page doesn't reach that far back. Older
+  // messages with a card still waiting are dropped, so "Show earlier messages" reads them as they are now.
+  const older = current.view.messages.slice(0, meet);
+  if (older.some((message) => message.card?.state.status === 'pending')) {
+    return fresh;
+  }
+
+  const messages = [...older, ...fresh.view.messages];
 
   // The first message is the same, so a page of older ones on its way still joins up.
   return {
