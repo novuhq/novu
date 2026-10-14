@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { BirdEmailProvider, resolveBirdBaseUrl } from './bird.provider';
+import { resolveBirdBaseUrl } from '../../../utils/bird-base-url';
+import { BirdEmailProvider } from './bird.provider';
 
 vi.mock('axios');
 
