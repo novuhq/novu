@@ -1,5 +1,5 @@
+import { agent, Client, NovuRequestHandler } from '@novu/framework';
 import axios from 'axios';
-import { createHmac } from 'crypto';
 import { afterEach, describe, expect, it, MockedFunction, vi } from 'vitest';
 
 import { buildSignature, sync } from './sync';
@@ -9,6 +9,7 @@ vi.mock('axios', () => {
     default: {
       post: vi.fn(),
       get: vi.fn(),
+      put: vi.fn(),
     },
   };
 });
@@ -42,17 +43,42 @@ describe('sync command', () => {
       expect(response).toEqual(syncData);
     });
 
-    it('signs agent discovery so bridges with strict authentication accept it', async () => {
+    it('sets the production bridge URL for agents served by a bridge with strict authentication', async () => {
+      const bridgeUrl = 'https://bridge.novu.co';
       const secretKey = 'your-api-key';
+      const apiUrl = 'https://api.novu.co';
+
+      const bridge = new NovuRequestHandler({
+        frameworkName: 'test',
+        agents: [agent('support-bot', { onMessage: async () => {} })],
+        client: new Client({ secretKey, strictAuthentication: true }),
+        handler: (url: string, headers: Record<string, string>) => ({
+          body: () => ({}),
+          headers: (key: string) => headers[key] ?? null,
+          method: () => 'GET',
+          url: () => new URL(url),
+          transformResponse: (res) => res,
+        }),
+      }).createHandler();
+
       (axios.post as MockedFunction<typeof axios.post>).mockResolvedValueOnce({ data: {} });
-      (axios.get as MockedFunction<typeof axios.get>).mockResolvedValueOnce({ data: { workflows: [] } });
+      (axios.get as MockedFunction<typeof axios.get>).mockImplementationOnce(async (url, config) => {
+        const res = await bridge(url, (config?.headers ?? {}) as Record<string, string>);
+        if (res.status !== 200) {
+          throw new Error(res.body);
+        }
 
-      await sync('https://bridge.novu.co', secretKey, 'https://api.novu.co');
+        return { data: JSON.parse(res.body) };
+      });
+      (axios.put as MockedFunction<typeof axios.put>).mockResolvedValueOnce({ data: {} });
 
-      const [url, config] = (axios.get as MockedFunction<typeof axios.get>).mock.calls[0];
-      const [, timestamp, hmac] = config?.headers?.['novu-signature'].match(/^t=(\d+),v1=([0-9a-f]{64})$/);
-      expect(url).toBe('https://bridge.novu.co?action=discover');
-      expect(hmac).toBe(createHmac('sha256', secretKey).update(`${timestamp}.{}`).digest('hex'));
+      await sync(bridgeUrl, secretKey, apiUrl);
+
+      expect(axios.put).toHaveBeenCalledWith(
+        `${apiUrl}/v1/agents/support-bot/bridge`,
+        { bridgeUrl },
+        expect.objectContaining({ headers: expect.objectContaining({ Authorization: `ApiKey ${secretKey}` }) })
+      );
     });
 
     it('syncState - network error on sync', async () => {
