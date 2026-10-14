@@ -1,4 +1,5 @@
 export * from './anypost.handler';
+export * from './bird.handler';
 export * from './braze.handler';
 export * from './email-webhook.handler';
 export * from './emailjs.handler';
