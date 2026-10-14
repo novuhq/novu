@@ -13,6 +13,7 @@
 // --box <name>  local: default novu-box, its volume is <name>-data; local boxes publish the same host ports, so one
 //               runs at a time. Cloud: default the current branch; the box is https://novu-box-<name>.<workers.dev>.
 // --cloud       the Cloudflare box. `up --cloud --deploy` redeploys its Worker (after a change to docker/box).
+//               `up --cloud --from <box>` starts a new box from that box's latest snapshot instead of baking.
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -42,6 +43,7 @@ try {
       box: { type: 'string' },
       cloud: { type: 'boolean', default: false },
       deploy: { type: 'boolean', default: false },
+      from: { type: 'string' },
       full: { type: 'boolean', default: false },
       tail: { type: 'string', default: '200' },
     },
@@ -322,7 +324,7 @@ const docker = {
 const target = options.cloud ? cloudTarget({ box: BOX, log, githubToken }) : docker;
 
 const commands = {
-  up: () => target.up({ deploy: options.deploy }),
+  up: () => target.up({ deploy: options.deploy, from: options.from }),
   sync,
   doctor: async () => {
     await target.ready();

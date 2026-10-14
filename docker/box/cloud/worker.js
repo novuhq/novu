@@ -143,17 +143,22 @@ export class Box extends DurableObject {
 
     return {
       running: this.ctx.container.running,
-      snapshot: snapshot ? { name: snapshot.name, gigabytes: +(snapshot.size / 1e9).toFixed(2) } : null,
+      snapshot: snapshot
+        ? { id: snapshot.id, name: snapshot.name, gigabytes: snapshot.size ? +(snapshot.size / 1e9).toFixed(2) : null }
+        : null,
       lastActivity: new Date(this.lastActivity ?? (await this.ctx.storage.get('lastActivity')) ?? 0).toISOString(),
       origin: await this.ctx.storage.get('origin'),
     };
   }
 
-  // Wakes the box from its snapshot, or, the first time, bakes `ref` into it. The GitHub token of the caller is
-  // in the bake's environment only, and `box start` runs without it.
+  // Wakes the box from its snapshot. The first time, it starts from another box's snapshot (`from`, its id) or
+  // bakes `ref`. The GitHub token of the caller is in the bake's environment only; `box start` runs without it.
   async up(url, request) {
     await this.ctx.storage.put('origin', url.origin);
     if (this.ctx.container.running) return { state: 'running' };
+    const from = url.searchParams.get('from');
+    if (from && !(await this.ctx.storage.get('snapshot')))
+      await this.ctx.storage.put('snapshot', { id: from, name: `from ${from}` });
     if (await this.ctx.storage.get('snapshot')) {
       await this.wake(url.origin);
 

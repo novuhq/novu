@@ -140,7 +140,18 @@ export function cloudTarget({ box, log, githubToken }) {
   return {
     name: worker,
 
-    async up({ deploy: redeploy = false, ref = 'next' } = {}) {
+    // `from`: the first start begins from that box's latest snapshot instead of a bake.
+    async up({ deploy: redeploy = false, ref = 'next', from } = {}) {
+      const query = new URLSearchParams({ ref });
+      if (from) {
+        const source = await (
+          await fetch(`https://novu-box-${from}.${DOMAIN}/__box/state`, {
+            headers: { Authorization: `Bearer ${githubToken()}` },
+          })
+        ).json();
+        if (!source.snapshot?.id) throw new Error(`novu-box-${from} has no snapshot to start from`);
+        query.set('from', source.snapshot.id);
+      }
       if (redeploy || !(await state())) {
         deploy();
         // A new workers.dev name answers 404 for a few seconds.
@@ -149,7 +160,7 @@ export function cloudTarget({ box, log, githubToken }) {
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       }
-      const { state: started } = await (await call(`/up?ref=${encodeURIComponent(ref)}`, { method: 'POST' })).json();
+      const { state: started } = await (await call(`/up?${query}`, { method: 'POST' })).json();
       log(`${worker}: ${started}${started === 'baking' ? ` ${ref} (11 to 14 minutes)` : ''}`);
       await waitUntilReady(READY_WITHIN_SECONDS[started]);
       log(`${worker} is ready`);

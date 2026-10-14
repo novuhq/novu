@@ -185,6 +185,17 @@ shorter wait, to test the sleep; the next deploy without it goes back to 60. Mea
 | `up --deploy` on a sleeping box (redeploy, then wake) | 112 s |
 | `sync`, an API change | 83 s |
 | Smoke over the public address (box baked from `next`) | 19/20; the bridge check needs this branch's playground |
+| `up --from hosting-test` for a new box (new Worker, then wake from that box's snapshot, no bake) | about 6.5 min, mostly creating the Worker |
+| Wake of that new box from its own snapshot (which builds on the other box's) | 51 s; its snapshot was 0.03 GB |
+
+`up --cloud --box <new> --from <box>` starts a new box from another box's latest snapshot instead of baking. It
+works across Workers, which Cloudflare doesn't document (it documents sharing within one Durable Object class), so
+it may change while snapshots are in beta; the fallback is a bake.
+
+**When Novu has a domain for boxes, move to the documented setup:** one Worker for all boxes with one Durable
+Object per box, routed by hostname (`pr-123.<domain>`, `pr-123-api.<domain>`, ...), so a base snapshot can be shared
+the way Cloudflare documents (within one Durable Object class) and the dashboard calls the API cross-origin, as in
+production. One Worker per box on workers.dev is the workaround for having no domain.
 
 Limits for now: each sleep leaves a snapshot image (about 3.5 GB) in the account's registry that nothing deletes
 yet (`npx wrangler containers images list`); the GitHub token reaches the bake's and `sync`'s environment, as it

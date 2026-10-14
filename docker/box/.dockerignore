@@ -3,3 +3,6 @@
 
 # The Cloudflare Worker and its CLI code run outside the box.
 cloud/
+
+# Docs are not needed in the box, and a doc edit would otherwise make a new image to push.
+*.md
