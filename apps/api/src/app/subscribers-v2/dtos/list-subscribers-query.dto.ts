@@ -5,7 +5,7 @@ import { CursorPaginationQueryDto } from './cursor-pagination-query.dto';
 
 export class ListSubscribersQueryDto extends CursorPaginationQueryDto<SubscriberResponseDto, 'updatedAt' | '_id'> {
   @ApiProperty({
-    description: 'Email address of the subscriber to filter results.',
+    description: 'Exact email address of the subscriber. The value must match the stored email field.',
     type: String,
     required: false,
   })

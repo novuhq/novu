@@ -18386,7 +18386,7 @@
             "name": "email",
             "required": false,
             "in": "query",
-            "description": "Email address of the subscriber to filter results.",
+            "description": "Exact email address of the subscriber. The value must match the stored email field.",
             "schema": {
               "type": "string"
             }

@@ -70,7 +70,7 @@ describe('Subscriber Controller E2E API Testing #novu-v2', () => {
           expectedArraySize: 1,
         });
 
-        expect(subscribers[0].email).to.contain(uuid);
+        expect(subscribers[0].email).to.equal(`test-${uuid}@subscriber.com`);
       });
 
       it('should find subscriber by exact phone', async () => {
@@ -125,17 +125,17 @@ describe('Subscriber Controller E2E API Testing #novu-v2', () => {
         expect(subscribers[0].subscriberId).to.equal(`test-subscriber-${uuid}`);
       });
 
-      it('should find subscriber by partial email match', async () => {
+      it('should not find subscriber by partial email match', async () => {
         const uuid = generateUUID();
         await createSubscriberAndValidate(uuid);
 
         const subscribers = await getAllAndValidate({
           searchParams: { email: `test-${uuid.substring(0, 5)}` },
-          expectedTotalResults: 1,
-          expectedArraySize: 1,
+          expectedTotalResults: 0,
+          expectedArraySize: 0,
         });
 
-        expect(subscribers[0].email).to.contain(uuid);
+        expect(subscribers).to.be.empty;
       });
 
       it('should not find subscriber by partial phone match', async () => {

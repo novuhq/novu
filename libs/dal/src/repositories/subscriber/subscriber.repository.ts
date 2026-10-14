@@ -295,10 +295,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
         $and: [
           {
             ...(query.email && {
-              email: {
-                $regex: regExpEscape(query.email),
-                $options: 'i',
-              },
+              email: query.email,
             }),
             ...(query.phone && {
               phone: query.phone,
