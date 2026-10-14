@@ -88,8 +88,19 @@ export function createPublicApiClient(apiUrl: string): AxiosInstance {
   return createAxios(apiUrl.replace(/\/$/, ''));
 }
 
+/**
+ * Matches the API's `AGENT_INBOX_VIA_HEADER`. Tells the API a request comes from this CLI, so reading the
+ * inbox counts as a host checking it, and the dashboard can say the agent was last checked through the CLI.
+ */
+export const AGENT_INBOX_VIA_HEADER = 'Agent-Inbox-Via';
+
 function createAxios(baseURL: string, headers: Record<string, string> = {}): AxiosInstance {
-  const instance = axios.create({ baseURL, headers, timeout: 60_000, httpsAgent: loopbackHttpsAgent(baseURL) });
+  const instance = axios.create({
+    baseURL,
+    headers: { [AGENT_INBOX_VIA_HEADER]: 'cli', ...headers },
+    timeout: 60_000,
+    httpsAgent: loopbackHttpsAgent(baseURL),
+  });
 
   instance.interceptors.response.use(
     (response) => response,

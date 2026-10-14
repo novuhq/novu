@@ -93,6 +93,8 @@ describe('the Human MCP server', () => {
 
     const created = calls.find((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST');
     expect(created?.headers.get('Authorization')).toBe('ApiKey account-key');
+    // The CLI holds the same key: this is how the API tells an inbox check here from one in a terminal.
+    expect(created?.headers.get('Agent-Inbox-Via')).toBe('mcp');
     expect(created?.body).toMatchObject({
       kind: 'approve',
       to: 'operator_1',
