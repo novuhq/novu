@@ -5,7 +5,6 @@ import { redirect } from 'next/navigation';
 import { cache } from 'react';
 
 import { ensureBackingAccount, type HumanRegion } from './human-accounts-api';
-import { HumanApiError } from './human-api-error';
 
 /** Where the operator's backing organization lives, kept in the Human Clerk user's private metadata. */
 export type StoredBackingAccount = {
@@ -47,21 +46,9 @@ export async function ensureAccountForSignUp(humanUserId: string): Promise<void>
 }
 
 /**
- * How long to wait for an account that the sign-up webhook is creating at this very moment: up to 20
- * seconds. The webhook and the new operator's first page arrive within the same second, and creating
- * the account (a Clerk user and organization, then Novu's own setup) takes six to seven seconds. A wait
- * shorter than that gives up just before the account is there and shows the operator an error as the
- * very first thing. The API lets go of an account by itself after 60 seconds.
- *
- * A wait of a set length is a stopgap: NV-9049 is to replace it with something that doesn't guess a time.
- */
-const BUSY_RETRIES = 20;
-const BUSY_RETRY_MS = 1000;
-
-/**
  * The signed-in operator's backing account. It's there from sign-up; a first visit that gets ahead of
- * the sign-up webhook creates it itself, so the dashboard never opens on a missing one. Sends signed-out
- * visitors to `/sign-in`, and back to `returnTo` afterwards.
+ * the sign-up webhook creates it itself, or waits for the webhook to finish creating it, so the dashboard
+ * never opens on a missing one. Sends signed-out visitors to `/sign-in`, and back to `returnTo` afterwards.
  *
  * Server components of one request share a single lookup, so each of them can call this.
  */
@@ -101,6 +88,10 @@ export function readStoredBackingAccount(user: User): StoredBackingAccount | nul
  * once the account is remembered. The API call is safe to repeat, so a webhook that is late, or can't
  * reach a local dashboard at all, leaves nothing missing.
  *
+ * The webhook and the first page usually call at the same moment. The API sets an account up for one
+ * request at a time and holds the other until that setup is done, then answers both with the same account,
+ * so nothing here retries or guesses how long a setup takes.
+ *
  * The account starts without an agent. `setup` creates it, or a claim brings its own.
  */
 export async function ensureStoredBackingAccount(user: User, regionForNewAccount: HumanRegion) {
@@ -109,7 +100,7 @@ export async function ensureStoredBackingAccount(user: User, regionForNewAccount
     return stored;
   }
 
-  const created = await ensureBackingAccountWhenFree(regionForNewAccount, {
+  const created = await ensureBackingAccount(regionForNewAccount, {
     humanUserId: user.id,
     firstName: user.firstName,
     lastName: user.lastName,
@@ -121,21 +112,6 @@ export async function ensureStoredBackingAccount(user: User, regionForNewAccount
   };
 
   return storeBackingAccount(user.id, account);
-}
-
-/** The API answers "busy" while another request, usually the webhook, is creating the same account. */
-async function ensureBackingAccountWhenFree(...args: Parameters<typeof ensureBackingAccount>) {
-  for (let attempt = 1; ; attempt += 1) {
-    try {
-      return await ensureBackingAccount(...args);
-    } catch (error) {
-      if (!(error instanceof HumanApiError) || error.code !== 'human_account_busy' || attempt > BUSY_RETRIES) {
-        throw error;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, BUSY_RETRY_MS));
-    }
-  }
 }
 
 /** Remembers where the operator's backing organization lives, for the dashboard. */

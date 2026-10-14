@@ -71,6 +71,14 @@ export class ApproveHumanCliLogin {
     command: ApproveHumanCliLoginCommand,
     hold: CliDeviceSessionApprovalHold
   ): Promise<HumanAccountCliLoginResponseDto> {
+    // Kept for the whole approval before the account is prepared: preparing it can wait up to a minute for
+    // another request setting the same account up (`EnsureBackingOrganization`), longer than a hold lasts, and
+    // a move of a setup can't be undone. From here nothing else answers the login until this approval does,
+    // and a failure gives it back (`execute`).
+    if (!(await this.cliDeviceSessionService.keepApprovalHold(hold))) {
+      throw loginNotFound();
+    }
+
     const account = await this.ensureBackingOrganization.execute(
       EnsureBackingOrganizationCommand.create({
         humanUserId: command.humanUserId,
@@ -80,12 +88,6 @@ export class ApproveHumanCliLogin {
     );
 
     if (command.claimToken) {
-      // A moved setup can't be moved back. So the move only starts while the login is still held for this
-      // approval, and from here the hold is kept: nothing else answers the login until this approval does.
-      if (!(await this.cliDeviceSessionService.keepApprovalHold(hold))) {
-        throw loginNotFound();
-      }
-
       await this.keepSetup(command.claimToken, account, { firstName: command.firstName, lastName: command.lastName });
     }
 
