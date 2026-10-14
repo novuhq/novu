@@ -1,13 +1,72 @@
 export class DurationUtils {
   static isISO8601(value: string): boolean {
-    const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z?$/;
-    if (!iso8601Regex.test(value)) {
+    const iso8601Regex = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d{1,3})?(Z)?$/;
+
+    const match = value.match(iso8601Regex);
+
+    if (!match) {
+      return false;
+    }
+
+    const [, year, month, day, hour, minute, second, , timezone] = match;
+    const yearNumber = Number(year);
+    const monthNumber = Number(month);
+    const dayNumber = Number(day);
+    const hourNumber = Number(hour);
+    const minuteNumber = Number(minute);
+    const secondNumber = Number(second);
+
+    if (hourNumber > 24 || (hourNumber === 24 && (minuteNumber !== 0 || secondNumber !== 0))) {
+      return false;
+    }
+
+    const isUTC = timezone === 'Z';
+
+    const dateOnly = new Date(0);
+
+    if (isUTC) {
+      dateOnly.setUTCFullYear(yearNumber, monthNumber - 1, dayNumber);
+      dateOnly.setUTCHours(0, 0, 0, 0);
+    } else {
+      dateOnly.setFullYear(yearNumber, monthNumber - 1, dayNumber);
+      dateOnly.setHours(0, 0, 0, 0);
+    }
+
+    if (isUTC) {
+      if (
+        dateOnly.getUTCFullYear() !== yearNumber ||
+        dateOnly.getUTCMonth() + 1 !== monthNumber ||
+        dateOnly.getUTCDate() !== dayNumber
+      ) {
+        return false;
+      }
+    } else if (
+      dateOnly.getFullYear() !== yearNumber ||
+      dateOnly.getMonth() + 1 !== monthNumber ||
+      dateOnly.getDate() !== dayNumber
+    ) {
       return false;
     }
 
     const date = new Date(value);
 
-    return !Number.isNaN(date.getTime());
+    if (Number.isNaN(date.getTime())) {
+      return false;
+    }
+
+    if (hourNumber === 24) {
+      return true;
+    }
+
+    if (isUTC) {
+      return (
+        date.getUTCFullYear() === yearNumber &&
+        date.getUTCMonth() + 1 === monthNumber &&
+        date.getUTCDate() === dayNumber
+      );
+    }
+
+    return date.getFullYear() === yearNumber && date.getMonth() + 1 === monthNumber && date.getDate() === dayNumber;
   }
 
   static convertToMilliseconds(amount: number, unit: string): number {
