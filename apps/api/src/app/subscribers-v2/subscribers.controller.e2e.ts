@@ -73,14 +73,22 @@ describe('Subscriber Controller E2E API Testing #novu-v2', () => {
         expect(subscribers[0].email).to.contain(uuid);
       });
 
-      it('should find subscriber by phone', async () => {
+      it('should find subscriber by exact phone', async () => {
         const uuid = generateUUID();
         await createSubscriberAndValidate(uuid);
 
         const subscribers = await getAllAndValidate({
-          searchParams: { phone: '1234567' },
+          searchParams: { phone: '+1234567890' },
           expectedTotalResults: 1,
           expectedArraySize: 1,
+        });
+
+        expect(subscribers[0].phone).to.equal('+1234567890');
+
+        await getAllAndValidate({
+          searchParams: { phone: '1234567' },
+          expectedTotalResults: 0,
+          expectedArraySize: 0,
         });
 
         await getAllAndValidate({
@@ -88,15 +96,6 @@ describe('Subscriber Controller E2E API Testing #novu-v2', () => {
           expectedTotalResults: 0,
           expectedArraySize: 0,
         });
-
-        const subscribers3 = await getAllAndValidate({
-          searchParams: { phone: '+1234567890' },
-          expectedTotalResults: 1,
-          expectedArraySize: 1,
-        });
-
-        expect(subscribers[0].phone).to.equal('+1234567890');
-        expect(subscribers3[0].phone).to.equal('+1234567890');
       });
 
       it('should find subscriber by full name', async () => {
@@ -139,17 +138,17 @@ describe('Subscriber Controller E2E API Testing #novu-v2', () => {
         expect(subscribers[0].email).to.contain(uuid);
       });
 
-      it('should find subscriber by partial phone match', async () => {
+      it('should not find subscriber by partial phone match', async () => {
         const uuid = generateUUID();
         await createSubscriberAndValidate(uuid);
 
         const subscribers = await getAllAndValidate({
           searchParams: { phone: '123456' },
-          expectedTotalResults: 1,
-          expectedArraySize: 1,
+          expectedTotalResults: 0,
+          expectedArraySize: 0,
         });
 
-        expect(subscribers[0].phone).to.equal('+1234567890');
+        expect(subscribers).to.be.empty;
       });
 
       it('should find subscriber by partial name match', async () => {

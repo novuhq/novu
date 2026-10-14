@@ -23,7 +23,7 @@ export class ListSubscribersQueryDto extends CursorPaginationQueryDto<Subscriber
   name?: string;
 
   @ApiProperty({
-    description: 'Phone number of the subscriber to filter results.',
+    description: 'Exact phone number of the subscriber. The value must match the stored phone field.',
     type: String,
     required: false,
   })

@@ -18404,7 +18404,7 @@
             "name": "phone",
             "required": false,
             "in": "query",
-            "description": "Phone number of the subscriber to filter results.",
+            "description": "Exact phone number of the subscriber. The value must match the stored phone field.",
             "schema": {
               "type": "string"
             }
