@@ -15,14 +15,27 @@ type CopyButtonProps = {
   label: string;
   /** Visible text next to the icon. Without it the button is icon only. */
   children?: ReactNode;
-  variant?: 'ghost' | 'secondary' | 'primary';
+  variant?: 'ghost' | 'quiet' | 'secondary' | 'primary';
   className?: string;
   /** Size of the icon, when the default 14px doesn't fit. */
   iconClassName?: string;
+  /** Leaves the icon out, for a button the design draws with its label alone. The label then says "Copied". */
+  labelOnly?: boolean;
+  /** Runs once the value is on the clipboard, for a page that keeps track of what was copied. */
+  onCopy?: () => void;
 };
 
 /** Copies `value` to the clipboard and shows a check mark for a moment. */
-export function CopyButton({ value, label, children, variant, className, iconClassName }: CopyButtonProps) {
+export function CopyButton({
+  value,
+  label,
+  children,
+  variant,
+  className,
+  iconClassName,
+  labelOnly = false,
+  onCopy,
+}: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -39,6 +52,7 @@ export function CopyButton({ value, label, children, variant, className, iconCla
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
+      onCopy?.();
     } catch {
       toast("Couldn't copy. Select the text and copy it yourself.", 'error');
     }
@@ -52,8 +66,8 @@ export function CopyButton({ value, label, children, variant, className, iconCla
       title={children ? undefined : label}
       className={buttonClassName(variant ?? (children ? 'secondary' : 'ghost'), className)}
     >
-      <CopiedIcon icon={Copy} copied={copied} className={iconClassName ?? 'size-3.5'} />
-      {children}
+      {!labelOnly && <CopiedIcon icon={Copy} copied={copied} className={iconClassName ?? 'size-3.5'} />}
+      {labelOnly && copied ? 'Copied' : children}
       <span aria-live="polite" className="sr-only">
         {copied ? 'Copied' : ''}
       </span>

@@ -25,10 +25,22 @@ export async function ensureOperatorContact(account: HumanAccount, name: Operato
   return (await ensureRelay(account, name)).contactId;
 }
 
-/** The same setup, for a caller that also needs the relay agent's own id, as creating a Slack app does. */
+/** What the onboarding knows when it makes the agent: its name, and where its operator gets mail. */
+type RelayDetails = {
+  /** What the agent is called from now on. Left out, a new agent is called "Human" and an old one keeps its name. */
+  agentName?: string;
+  /** The operator's own address, so mail they send to the agent is recognized as theirs. */
+  operatorEmail?: string;
+};
+
+/**
+ * The same setup, for a caller that also needs the relay agent's own id, as creating a Slack app does,
+ * or that names the agent, as the first step of the onboarding does.
+ */
 export async function ensureRelay(
   account: HumanAccount,
-  name: OperatorName = {}
+  name: OperatorName = {},
+  { agentName, operatorEmail }: RelayDetails = {}
 ): Promise<{ agentId: string; contactId: string }> {
   const setup = await requestForAccount<{ agentId: string; subscriberId: string }>(account, '/v1/human/setup', {
     method: 'POST',
@@ -36,6 +48,8 @@ export async function ensureRelay(
       operator: true,
       ...(name.firstName ? { firstName: name.firstName } : {}),
       ...(name.lastName ? { lastName: name.lastName } : {}),
+      ...(agentName ? { agentName } : {}),
+      ...(operatorEmail ? { email: operatorEmail } : {}),
     },
   });
 

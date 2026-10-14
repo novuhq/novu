@@ -11,7 +11,8 @@ landing page moves in here later.
 | `/sign-up`, `/sign-in` | Human accounts, signed in with the Human Clerk app (not the Novu dashboard's).         |
 | `/claim`          | Opened from the link an agent gets when its keyless setup runs out of free messages. Moves that setup into the operator's Human account. |
 | `/cli/login`      | Opened by `human login`. The operator types the code their terminal shows, and that CLI gets the account's key; a keyless setup on that computer moves into the account on the way. |
-| `/inbox`, `/configure`, `/contacts` | The dashboard: the agent's inbox, the agent with its channels, and the people it can ask. |
+| `/onboarding`     | Where a new operator lands after signing up: four steps (Address, Test, Connect, Reach) that make the agent and connect it to a host. One address; the step comes from how far the setup got. |
+| `/inbox`, `/configure`, `/contacts` | The dashboard: the agent's inbox, the agent with its channels, and the people it can ask. An operator without an agent is sent to `/onboarding`. |
 | `/settings`, `/settings/billing` | The operator, their API key (show, copy, regenerate), the plan and billing, log out and delete account. |
 | `/`               | Placeholder until the landing page moves in.                                               |
 
@@ -19,6 +20,30 @@ Each Human account is backed by a hidden Novu organization that the Novu API cre
 `/v1/human/accounts` endpoints. See
 [the ADR](../../packages/human/docs/adr/0001-separate-clerk-app-with-backing-organizations.md) and the
 [Human glossary](../../packages/human/CONTEXT.md).
+
+## Onboarding
+
+An operator gets an agent in one of two ways, and both end in the dashboard:
+
+- **Sign-up in the dashboard.** `/onboarding` walks them through the four steps. "Skip for now" opens
+  the dashboard early; banners on Inbox and Configure lead back to the step that was left.
+- **Claim from the CLI.** The agent was made in a terminal and comes with the claim (`/claim`, or
+  `/cli/login` with a setup to keep). It has its address and its host, so its operator skips the steps.
+
+How far an operator got is kept in the private metadata of their Clerk user (`lib/onboarding-state.ts`).
+An agent that is older than its operator's first visit to step 1 never goes through the steps: it was in
+use before, however the operator came to see that step.
+
+Some of what the steps show has no API yet and is faked in `lib/onboarding-mocks.ts`. Each part goes
+away with its ticket:
+
+| Faked today | Ticket |
+| ----------- | ------ |
+| Choosing the address, "available" / "taken", and the address offered instead. The API assigns its own. | NV-9032 |
+| The test email, and its reply landing a few seconds later. | NV-9032 |
+| The one-time code, and a host connecting a few seconds after the prompt is copied. An approved CLI login and a connector that signed in count for real. | NV-9037 |
+| The commands in the steps (`npx @agentinbox/cli`, `inbox …`) are the ones in the design. | NV-9033 |
+| "Share card" copies the link. | NV-9035 |
 
 ## Develop
 

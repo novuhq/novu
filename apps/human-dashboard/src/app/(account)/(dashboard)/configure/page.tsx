@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { ChannelsTable } from '@/components/channels/channels-table';
 import { CONFIGURE_PATH, DOCS_URL } from '@/components/dashboard/nav';
+import { ResumeSetupCard, SetupDoneBanner } from '@/components/dashboard/setup-banners';
 import {
   buildFinishSetupPrompt,
   buildSetupCommand,
@@ -11,10 +12,11 @@ import {
 } from '@/lib/agent-setup-prompt';
 import { findCurrentUser } from '@/lib/auth-page';
 import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
-import { agentDisplayName, getRelayAgent } from '@/lib/human-agent-api';
+import { agentDisplayName } from '@/lib/human-agent-api';
 import { describeAgentStatus } from '@/lib/human-agent-status';
 import { readApiKey } from '@/lib/human-api-key';
-import { channelsBeforeSetup, loadChannelsOverview } from '@/lib/human-channels-overview';
+import { loadChannelsOverview } from '@/lib/human-channels-overview';
+import { isSetupUnfinished, loadSetupSummary, requireSetUpAgent } from '@/lib/human-onboarding';
 import { listConnectedTools, readMcpUrl } from '@/lib/human-tools-api';
 import { resolveNovuApiUrl } from '@/lib/novu-api';
 
@@ -25,50 +27,52 @@ export const metadata: Metadata = {
   title: 'Configure',
 };
 
-/** How often the page asks whether `human setup` has made the agent yet. */
-const SETUP_POLL_MS = 3000;
-
-/** Slower once the agent is there and only its channels can still change. */
+/** How often the page asks whether a channel got connected in the operator's terminal. */
 const CHANNELS_POLL_MS = 5000;
 
 /**
- * The operator's agent and how people see it. An account starts without an agent, so the page opens on
- * how to make one with `human setup`, and switches by itself once that has run.
+ * The operator's agent and how people see it. The agent is made in the onboarding, which is where an
+ * operator without one is sent; what the onboarding leaves behind shows across the top here.
  *
  * Agent and Channels were two pages; until the Configure page of the new design lands (NV-9034), the
  * channels table sits under the agent so nothing it does is lost.
  */
 export default async function AgentPage() {
   const account = await requireHumanAccount({ returnTo: CONFIGURE_PATH });
+  const progress = await requireSetUpAgent(account);
+  const { agent } = progress;
   const mcpUrl = readMcpUrl();
-  const [agent, secretKey, user, connectedTools] = await Promise.all([
-    getRelayAgent(account),
+  const [setup, secretKey, user, connectedTools, { rows, telegramSetup, slackSetup }] = await Promise.all([
+    loadSetupSummary(account, progress),
     loadApiKey(account),
     findCurrentUser(),
     mcpUrl ? listConnectedTools(account) : [],
+    loadChannelsOverview(account),
   ]);
-  const { rows, telegramSetup, slackSetup } = agent ? await loadChannelsOverview(account) : channelsBeforeSetup();
 
   const context: SetupContext = { secretKey, apiUrl: resolveNovuApiUrl(account.region) };
   const command = buildSetupCommand(context);
   const missing = rows.filter((row) => !row.connected).map((row) => row.via);
   // With Telegram or Slack connected the setup is done, and there is nothing left to wait for.
   const settingUp = !rows.some((row) => row.via !== 'email' && row.connected);
-  const status = describeAgentStatus(agent?.id ?? null, rows);
+  const status = describeAgentStatus(agent.id, rows);
 
   return (
     <>
-      {settingUp && <AgentStatusPoll status={status} everyMs={agent ? CHANNELS_POLL_MS : SETUP_POLL_MS} />}
+      {settingUp && <AgentStatusPoll status={status} everyMs={CHANNELS_POLL_MS} />}
+      {isSetupUnfinished(setup.step) ? (
+        <ResumeSetupCard handle={setup.agent.handle} step={setup.step} waiting={setup.waiting} />
+      ) : (
+        setup.wentThroughSteps && !setup.doneBannerDismissed && <SetupDoneBanner handle={setup.agent.handle} />
+      )}
       <AgentView
-        agent={
-          agent && {
-            id: agent.id,
-            name: agentDisplayName(agent),
-            active: agent.active,
-            pictureUrl: agent.pictureUrl,
-            createdAt: agent.createdAt,
-          }
-        }
+        agent={{
+          id: agent.id,
+          name: agentDisplayName(agent),
+          active: agent.active,
+          pictureUrl: agent.pictureUrl,
+          createdAt: agent.createdAt,
+        }}
         channels={rows}
         telegramSetup={telegramSetup}
         slackSetup={slackSetup}
@@ -85,14 +89,12 @@ export default async function AgentPage() {
         mcpUrl={mcpUrl}
         connectedTools={connectedTools}
       />
-      {agent && (
-        <ChannelsTable
-          rows={rows}
-          telegramSetup={telegramSetup}
-          slackSetup={slackSetup}
-          agentName={agentDisplayName(agent)}
-        />
-      )}
+      <ChannelsTable
+        rows={rows}
+        telegramSetup={telegramSetup}
+        slackSetup={slackSetup}
+        agentName={agentDisplayName(agent)}
+      />
     </>
   );
 }

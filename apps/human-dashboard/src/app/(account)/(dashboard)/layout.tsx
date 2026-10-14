@@ -9,7 +9,8 @@ import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { findCurrentUser } from '@/lib/auth-page';
 import { requireHumanAccount } from '@/lib/human-account';
-import { agentDisplayName, getRelayAgent } from '@/lib/human-agent-api';
+import { agentDisplayName } from '@/lib/human-agent-api';
+import { isSetupUnfinished, loadSetupProgress } from '@/lib/human-onboarding';
 
 const AGENT_NOT_SET_UP: SidebarAgent = { name: 'Your agent', status: 'Not set up', setUp: false };
 
@@ -49,10 +50,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 }
 
 /**
- * Who the sidebar says the agent is: "Not set up" until the operator has run `human setup`. The account
- * comes from the sign-up webhook, but the first page after signing up usually loads before that webhook
- * has run. So the shell asks for the account the same way the pages do, which creates it on the spot
- * when it isn't there yet.
+ * Who the sidebar says the agent is: "Not set up" until the onboarding has made it, which only Settings
+ * is open before. The account comes from the sign-up webhook, but the first page after signing up
+ * usually loads before that webhook has run. So the shell asks for the account the same way the pages
+ * do, which creates it on the spot when it isn't there yet.
  *
  * A failure shows the agent as not set up instead of taking the whole dashboard down: an error in a
  * layout has no error page of its own.
@@ -60,12 +61,18 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 async function loadSidebarAgent(): Promise<SidebarAgent> {
   try {
     const account = await requireHumanAccount({ returnTo: DASHBOARD_HOME });
-    const agent = await getRelayAgent(account);
+    const { agent, step } = await loadSetupProgress(account);
     if (!agent) {
       return AGENT_NOT_SET_UP;
     }
 
-    return { name: agentDisplayName(agent), status: 'Your agent', setUp: true, pictureUrl: agent.pictureUrl };
+    return {
+      name: agentDisplayName(agent),
+      status: 'Your agent',
+      setUp: true,
+      pictureUrl: agent.pictureUrl,
+      setupUnfinished: isSetupUnfinished(step),
+    };
   } catch (error) {
     // A redirect to sign-in travels as an error and has to keep going.
     unstable_rethrow(error);
