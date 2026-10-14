@@ -141,9 +141,11 @@ commit and runs the same plan. Your own index and staging stay as they are. Meas
 | An API file, plus a new untracked file | build the API | about 55 s |
 | A library (`@novu/application-generic`) | build the API and worker | about 55 s |
 
-`sync` stops when the checkout has more than 500 untracked files, which is scratch output rather than code, and
-names their folders. Add those folders to `.git/info/exclude` (git ignores them without a `.gitignore` change).
-It sends the enterprise submodule's commit, not uncommitted changes inside `.source`.
+Untracked files are sent only inside the top-level folders the repo already has (`apps`, `libs`, `packages`, ...).
+Untracked files elsewhere, such as scratch folders, tool state, or a screenshot or `.env` at the root, stay on your
+machine; `sync` names them in its first line. `sync` stops before sending more than 25 MB, which code changes never
+reach, and names the biggest changed files. It sends the enterprise submodule's commit, not uncommitted changes
+inside `.source`.
 
 Run the smoke test from the host (38 checks, 43 with the Anthropic key, about 2 minutes; writes `smoke.json` to
 the directory given):

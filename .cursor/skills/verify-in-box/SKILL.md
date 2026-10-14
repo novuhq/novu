@@ -21,8 +21,9 @@ Done when `sync` exits 0 and ends with `applied sync <branch> at <sha>`. Keep it
 rebuilt and restarted, which is part of the evidence.
 
 - `up` on a box with no data bakes `next` first (about 12 minutes); on an existing box it takes seconds.
-- `sync` stops on more than 500 untracked files and names their folders. Ask the user before adding them to
-  `.git/info/exclude`; it changes what their `git status` shows.
+- `sync` sends new files only inside the repo's existing top-level folders. A new file at the root or in a new
+  top-level folder isn't sent; commit it or move it if the box needs it.
+- `sync` stops over 25 MB and names the biggest changed files. Ask the user before deleting or ignoring any of them.
 - A conflict with the box's baked commit stops `sync` before it touches the box. Merge or rebase onto `next`, then
   sync again.
 

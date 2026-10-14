@@ -25,8 +25,8 @@ const PORTS = { api: 13000, dashboard: 14200, socket: 18887, s3: 4566, mailpit: 
 const PORT_FLAGS = ['13000:3000', '14200:4200', '18887:8887', '4566:4566', '18025:8025'].flatMap((map) => ['-p', map]);
 const BUNDLE_IN_BOX = '/data/run/sync.bundle';
 const SYNC_REF = 'refs/worktree/box-sync';
-// More untracked files than this is almost always scratch output, not code; see `snapshot`.
-const MAX_UNTRACKED = 500;
+// Code changes bundle to kilobytes; a bundle this big holds build output or media nobody meant to send.
+const MAX_BUNDLE_MB = 25;
 const HEALTHY_WITHIN_SECONDS = 240;
 
 const USAGE = 'usage: node docker/box/cli.mjs up|sync|doctor|logs|exec|down [--box <name>]; exec -- <cmd> for flags';
@@ -193,7 +193,7 @@ function down() {
 // --- sync ---
 
 // Puts this checkout on the box as the box would put a PR on it: the checkout becomes one commit (HEAD plus every
-// change, committed or not, untracked files included), which the box merges onto its baked commit. It travels as a
+// change, committed or not, new files included; see `snapshot`), which the box merges onto its baked commit. It travels as a
 // git bundle, so it arrives exactly as it is here: binaries, file modes, deletions.
 function sync() {
   requireRunning();
@@ -205,13 +205,25 @@ function sync() {
     git(['fetch', '--no-tags', 'origin', baked.sha]);
   }
 
-  const { commit, summary } = snapshot(root, git);
+  const { commit, changed, summary } = snapshot(root, git);
   log(summary);
   const bundle = join(os.tmpdir(), `box-sync-${process.pid}.bundle`);
   try {
     git(['update-ref', SYNC_REF, commit]);
     git(['bundle', 'create', '--quiet', bundle, SYNC_REF, `^${baked.sha}`]);
-    log(`sending ${(fs.statSync(bundle).size / 1024).toFixed(0)} KB to ${BOX}`);
+    const kb = fs.statSync(bundle).size / 1024;
+    if (kb > MAX_BUNDLE_MB * 1024) {
+      const biggest = changed
+        .filter((file) => fs.statSync(join(root, file), { throwIfNoEntry: false })?.isFile())
+        .map((file) => [file, fs.statSync(join(root, file)).size])
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([file, size]) => `${file} (${(size / 1024 / 1024).toFixed(1)} MB)`);
+      throw new Error(
+        `the sync is ${(kb / 1024).toFixed(0)} MB, over ${MAX_BUNDLE_MB} MB; the biggest changed files: ${biggest.join(', ')}`
+      );
+    }
+    log(`sending ${kb.toFixed(0)} KB to ${BOX}`);
     output('docker', ['cp', bundle, `${BOX}:${BUNDLE_IN_BOX}`]);
   } finally {
     spawnSync('git', ['update-ref', '-d', SYNC_REF], { cwd: root });
@@ -222,23 +234,15 @@ function sync() {
 }
 
 // The checkout as a commit on HEAD, built in a copy of the index so your own index and staging stay as they are.
-// Untracked files count as changes, because new code starts untracked; ignored files don't. Thousands of untracked
-// files are scratch output, not code, so it stops and names their folders instead of sending them.
+// New code starts untracked, so untracked files are sent too, but only inside the top-level folders the repo
+// already has (apps, libs, packages, ...). Untracked files elsewhere (scratch folders, tool state, a stray
+// screenshot or .env at the root) stay on your machine, and the summary names them. Ignored files are never sent.
 function snapshot(root, git) {
   const head = git(['rev-parse', 'HEAD']);
+  const repoFolders = new Set(git(['ls-tree', '-d', '--name-only', 'HEAD']).split('\n'));
   const untracked = git(['ls-files', '--others', '--exclude-standard']).split('\n').filter(Boolean);
-  if (untracked.length > MAX_UNTRACKED) {
-    const folders = {};
-    for (const file of untracked) folders[file.split('/')[0]] = (folders[file.split('/')[0]] ?? 0) + 1;
-    const top = Object.entries(folders)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([folder, count]) => `${folder} (${count})`);
-    throw new Error(
-      `${untracked.length} untracked files, mostly in ${top.join(', ')}. Add the ones that aren't code to ` +
-        `${resolve(root, git(['rev-parse', '--git-path', 'info/exclude']))}, or commit or delete them, then sync again.`
-    );
-  }
+  const sent = new Set(untracked.filter((file) => file.includes('/') && repoFolders.has(file.split('/')[0])));
+  const skipped = untracked.filter((file) => !sent.has(file));
 
   const index = join(os.tmpdir(), `box-sync-${process.pid}.index`);
   const ownIndex = resolve(root, git(['rev-parse', '--git-path', 'index']));
@@ -247,7 +251,12 @@ function snapshot(root, git) {
     // Starting from the real index (when there is one) keeps its file stats, so `add` doesn't re-read every file.
     if (fs.existsSync(ownIndex)) fs.copyFileSync(ownIndex, index);
     else git(['read-tree', head], scratch);
-    git(['add', '--all'], scratch);
+    git(['add', '--update'], scratch);
+    if (sent.size)
+      git(['--literal-pathspecs', 'add', '--pathspec-from-file=-', '--pathspec-file-nul'], {
+        ...scratch,
+        input: [...sent].join('\0'),
+      });
     const tree = git(['write-tree'], scratch);
     const changed = git(['diff', '--name-only', head, tree]).split('\n').filter(Boolean);
     const branch = git(['branch', '--show-current']) || 'a detached HEAD';
@@ -256,12 +265,24 @@ function snapshot(root, git) {
     const commit = git(['commit-tree', tree, '-p', head, '-m', label], {
       env: { ...process.env, ...identity, GIT_COMMITTER_NAME: 'box sync', GIT_COMMITTER_EMAIL: 'box@box.internal' },
     });
-    const untrackedNote = untracked.length ? `, ${untracked.length} untracked: ${untracked.slice(0, 5).join(' ')}` : '';
+    const sentNote = sent.size ? `, ${sent.size} of them untracked: ${[...sent].slice(0, 5).join(' ')}` : '';
+    const skippedNote = skipped.length ? `; not sent, outside the repo's folders: ${countByFolder(skipped)}` : '';
 
-    return { commit, summary: `${label}: ${changed.length} files differ from HEAD${untrackedNote}` };
+    return { commit, changed, summary: `${label}: ${changed.length} files differ from HEAD${sentNote}${skippedNote}` };
   } finally {
     fs.rmSync(index, { force: true });
   }
+}
+
+function countByFolder(files) {
+  const counts = {};
+  for (const file of files) counts[file.split('/')[0]] = (counts[file.split('/')[0]] ?? 0) + 1;
+
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([folder, count]) => (count > 1 ? `${folder} (${count} files)` : folder))
+    .join(', ');
 }
 
 // --- the rest ---
