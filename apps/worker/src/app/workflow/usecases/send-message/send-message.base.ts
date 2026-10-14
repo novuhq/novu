@@ -123,14 +123,12 @@ export function combineProviderOverrides(
   providerId: string,
   integrationIdentifier?: string
 ): Record<string, unknown> {
-  const { providerOverride, integrationOverrides } = unpackProviderOverrideOutput(bridgeData?.providers?.[providerId]);
-  const integrationOverride = integrationIdentifier ? (integrationOverrides[integrationIdentifier] ?? {}) : {};
-  const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
-  const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
-
-  const [providerLayer, integrationLayer, workflowLayer, stepLayer] = applyExclusiveKeyGroups(
-    [providerOverride, integrationOverride, workflowGlobalProviderOverrides, stepScopedOverrides],
-    resolveExclusiveKeyGroups(providerId)
+  const [providerLayer, integrationLayer, workflowLayer, stepLayer] = resolveOverrideLayers(
+    bridgeData,
+    overrides,
+    stepId,
+    providerId,
+    integrationIdentifier
   );
 
   const combined: Record<string, unknown> = mergeWith(
@@ -144,6 +142,40 @@ export function combineProviderOverrides(
   delete combined[INTEGRATION_OVERRIDES_OUTPUT_KEY];
 
   return combined;
+}
+
+/**
+ * True when the sending integration's own override still holds an exclusive key group after
+ * precedence, i.e. it chose the destination rather than a provider-wide or trigger layer.
+ */
+export function integrationOverrideClaimsExclusiveKeys(
+  bridgeData: BridgeProviderOverrides | null | undefined,
+  overrides: TriggerOverrides | undefined,
+  stepId: string | undefined,
+  providerId: string,
+  integrationIdentifier: string
+): boolean {
+  const [, integrationLayer] = resolveOverrideLayers(bridgeData, overrides, stepId, providerId, integrationIdentifier);
+
+  return resolveExclusiveKeyGroups(providerId).some((group) => layerClaimsExclusiveGroup(integrationLayer, group));
+}
+
+function resolveOverrideLayers(
+  bridgeData: BridgeProviderOverrides | null | undefined,
+  overrides: TriggerOverrides | undefined,
+  stepId: string | undefined,
+  providerId: string,
+  integrationIdentifier?: string
+): Record<string, unknown>[] {
+  const { providerOverride, integrationOverrides } = unpackProviderOverrideOutput(bridgeData?.providers?.[providerId]);
+  const integrationOverride = integrationIdentifier ? (integrationOverrides[integrationIdentifier] ?? {}) : {};
+  const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
+  const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
+
+  return applyExclusiveKeyGroups(
+    [providerOverride, integrationOverride, workflowGlobalProviderOverrides, stepScopedOverrides],
+    resolveExclusiveKeyGroups(providerId)
+  );
 }
 
 export abstract class SendMessageBase extends SendMessageType {

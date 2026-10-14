@@ -8,13 +8,11 @@
 
 import {
   FCM_ROUTING_KEYS,
-  getProviderOverrideConfig,
   PushProviderIdEnum,
-  type ResolvedExclusiveRouting,
   resolveExclusiveRoutingKeys,
   unpackProviderOverrideOutput,
 } from '@novu/shared';
-import { combineProviderOverrides } from './send-message.base';
+import { combineProviderOverrides, integrationOverrideClaimsExclusiveKeys } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 
 export type PushRoutingCredentials = {
@@ -25,14 +23,15 @@ export type PushRoutingCredentials = {
 type PushOverrideSource = Pick<SendMessageChannelCommand, 'bridgeData' | 'overrides' | 'step'>;
 
 /**
- * `destination` is the claimed routing key (FCM: `token` / `tokens` / `topic` / `condition`), empty when
- * none is set. A claimed key *is* the destination — `FcmPushProvider.resolveSendPlan` ignores the
- * subscriber targets — so such a send needs no stored device token and must not fan out over them.
+ * `credentials` is set when a routing key (FCM: `token` / `tokens` / `topic` / `condition`) is claimed.
+ * A claimed key *is* the destination — `FcmPushProvider.resolveSendPlan` ignores the subscriber
+ * targets — so such a send needs no stored device token and must not fan out over them.
+ * `isIntegrationScoped` is true when the integration's own override claimed it, not a provider-wide layer.
  */
 export type ResolvedPushRoute = {
   bridgeProviderData: Record<string, unknown>;
-  destination: ResolvedExclusiveRouting;
   credentials: PushRoutingCredentials | null;
+  isIntegrationScoped: boolean;
 };
 
 /** FCM topic/condition sends are broadcast — they must not fan out per subscriber device token. */
@@ -95,19 +94,23 @@ export function resolvePushRoute(
   providerId: PushProviderIdEnum,
   integrationIdentifier?: string
 ): ResolvedPushRoute {
+  const { bridgeData, overrides, step } = source;
   const bridgeProviderData = combineProviderOverrides(
-    source.bridgeData,
-    source.overrides,
-    source.step?.stepId,
+    bridgeData,
+    overrides,
+    step?.stepId,
     providerId,
     integrationIdentifier
   );
-  const groups = getProviderOverrideConfig(providerId)?.exclusiveKeyGroups ?? [];
+  const credentials = extractPushRoutingCredentials(providerId, bridgeProviderData);
 
   return {
     bridgeProviderData,
-    destination: resolveExclusiveRoutingKeys(bridgeProviderData, groups),
-    credentials: extractPushRoutingCredentials(providerId, bridgeProviderData),
+    credentials,
+    isIntegrationScoped:
+      credentials !== null &&
+      integrationIdentifier !== undefined &&
+      integrationOverrideClaimsExclusiveKeys(bridgeData, overrides, step?.stepId, providerId, integrationIdentifier),
   };
 }
 

@@ -45,7 +45,6 @@ import {
 } from '@novu/shared';
 import { IPushOptions } from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
-import { isEqual } from 'lodash';
 import { PlatformException } from '../../../shared/utils';
 import {
   getIntegrationOverrideIdentifiers,
@@ -417,8 +416,8 @@ export class SendMessagePush extends SendMessageBase {
   /**
    * A provider-wide routing override (trigger, step or bridge provider layer) is sent through the
    * integration `selectIntegration` picks. A subscriber integration keeps its own send only while its
-   * resolved destination differs from the provider-wide one, i.e. its `__nvIntegrationOverrides__`
-   * entry won the routing; integration entries the subscriber has no channel for get a synthetic channel.
+   * `__nvIntegrationOverrides__` entry wins the routing; integration entries the subscriber has no
+   * channel for get a synthetic channel.
    */
   private async resolvePushChannelTargets(
     pushChannels: IChannelSettings[],
@@ -445,11 +444,11 @@ export class SendMessagePush extends SendMessageBase {
     for (const [providerId, providerRoute] of providerRoutes) {
       const lookups: Array<string | undefined> = getIntegrationOverrideIdentifiers(command, providerId).filter(
         (identifier) =>
-          !usedIdentifiers.has(identifier) &&
-          !isEqual(resolvePushRoute(command, providerId, identifier).destination, providerRoute.destination)
+          !usedIdentifiers.has(identifier) && resolvePushRoute(command, providerId, identifier).isIntegrationScoped
       );
       const providerSendCovered = targets.some(
-        (target) => target.channel.providerId === providerId && this.followsProviderRoute(target, providerRoute)
+        (target) =>
+          target.channel.providerId === providerId && target.route !== undefined && !target.route.isIntegrationScoped
       );
 
       if (providerRoute.credentials && !providerSendCovered) {
@@ -472,16 +471,12 @@ export class SendMessagePush extends SendMessageBase {
     return targets;
   }
 
-  private followsProviderRoute(target: PushChannelTarget, providerRoute: ResolvedPushRoute): boolean {
-    return !target.route || isEqual(target.route.destination, providerRoute.destination);
-  }
-
   /**
    * Under a provider-wide destination, a broadcast replaces the whole provider fan-out, while
    * token/tokens keep one send per populated channel and drop the token-less ones.
    */
   private keepSubscriberTarget(target: PushChannelTarget, providerRoute: ResolvedPushRoute | undefined): boolean {
-    if (!providerRoute?.credentials || !this.followsProviderRoute(target, providerRoute)) {
+    if (!providerRoute?.credentials || target.route?.isIntegrationScoped) {
       return true;
     }
 
@@ -506,7 +501,8 @@ export class SendMessagePush extends SendMessageBase {
       filterData: this.getIntegrationFilterData(command),
     });
 
-    if (!selection) {
+    // Identifier lookups in `SelectIntegration` do not filter by provider.
+    if (!selection || selection.integration.providerId !== providerId) {
       return undefined;
     }
 

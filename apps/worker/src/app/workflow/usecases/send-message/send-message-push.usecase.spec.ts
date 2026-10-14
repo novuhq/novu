@@ -875,5 +875,71 @@ describe('SendMessagePush - provider content overrides', () => {
       sinon.assert.calledOnce(sendStub);
       expect(getHandlerStub.firstCall.args[0]).to.include({ _id: fcmIntegration._id });
     });
+
+    it('keeps an integration broadcast that repeats the provider-wide topic on another integration', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      const getHandlerStub = sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const otherIntegration = { ...fcmIntegration, _id: '507f1f77bcf86cd799439055', identifier: 'fcm-other' };
+      const selectIntegrationExecute = sinon.stub().resolves({ integration: fcmIntegration });
+      selectIntegrationExecute
+        .withArgs(sinon.match({ id: otherIntegration._id }))
+        .resolves({ integration: otherIntegration });
+
+      const result = await buildUsecase(undefined, selectIntegrationExecute).execute(
+        buildCommand({
+          channels: [fcmChannelWithTokens, { ...fcmChannelWithTokens, _integrationId: otherIntegration._id }],
+          providerOverrides: {
+            topic: 'news',
+            [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { [otherIntegration.identifier]: { topic: 'news' } },
+          },
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      sinon.assert.calledTwice(sendStub);
+      sinon.assert.calledWith(getHandlerStub, sinon.match({ _id: fcmIntegration._id }));
+      sinon.assert.calledWith(getHandlerStub, sinon.match({ _id: otherIntegration._id }));
+    });
+
+    it('falls back to the selected integration when the subscriber channel integration is inactive', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      const getHandlerStub = sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const inactiveIntegrationId = '507f1f77bcf86cd799439066';
+      const selectIntegrationExecute = sinon.stub().resolves({ integration: fcmIntegration });
+      selectIntegrationExecute.withArgs(sinon.match({ id: inactiveIntegrationId })).resolves(undefined);
+
+      const result = await buildUsecase(undefined, selectIntegrationExecute).execute(
+        buildCommand({
+          channels: [{ ...fcmChannelWithTokens, _integrationId: inactiveIntegrationId }],
+          providerOverrides: { tokens: ['override-token-1'] },
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      sinon.assert.calledOnce(sendStub);
+      expect(getHandlerStub.firstCall.args[0]).to.include({ _id: fcmIntegration._id });
+    });
+
+    it('ignores an integration override whose identifier belongs to another provider', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const expoIntegration = { ...fcmIntegration, identifier: 'expo-main', providerId: PushProviderIdEnum.EXPO };
+      const selectIntegrationExecute = sinon.stub().resolves({ integration: expoIntegration });
+
+      const result = await buildUsecase(undefined, selectIntegrationExecute).execute(
+        buildCommand({
+          channels: [],
+          providerOverrides: {
+            [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { [expoIntegration.identifier]: { topic: 'updates' } },
+          },
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SKIPPED);
+      sinon.assert.notCalled(sendStub);
+    });
   });
 });

@@ -51,11 +51,11 @@ describe('resolvePushRoute', () => {
   }
 
   it('detects a schematized routing key', () => {
-    expect(routeFor({ topic: 'news_updates' }).destination).to.deep.equal({ topic: 'news_updates' });
+    expect(routeFor({ topic: 'news_updates' }).credentials).to.deep.equal({ topic: 'news_updates' });
   });
 
   it('detects a routing key set only in _passthrough.body', () => {
-    expect(routeFor({ _passthrough: { body: { topic: 'news_updates' } } }).destination).to.deep.equal({
+    expect(routeFor({ _passthrough: { body: { topic: 'news_updates' } } }).credentials).to.deep.equal({
       topic: 'news_updates',
     });
   });
@@ -66,22 +66,21 @@ describe('resolvePushRoute', () => {
       _passthrough: { body: { android: { priority: 'high' } } },
     });
 
-    expect(route.destination).to.deep.equal({});
     expect(route.credentials).to.equal(null);
   });
 
   it('detects token and tokens, which choose the destination instead of the stored device tokens', () => {
-    expect(routeFor({ token: 'abc' }).destination).to.deep.equal({ token: 'abc' });
-    expect(routeFor({ tokens: ['a', 'b'] }).destination).to.deep.equal({ tokens: ['a', 'b'] });
+    expect(routeFor({ token: 'abc' }).credentials).to.deep.equal({ deviceTokens: [] });
+    expect(routeFor({ tokens: ['a', 'b'] }).credentials).to.deep.equal({ deviceTokens: ['a', 'b'] });
   });
 
   it('ignores routing keys with no usable value', () => {
-    expect(routeFor({ topic: '' }).destination).to.deep.equal({});
-    expect(routeFor({ tokens: [] }).destination).to.deep.equal({});
+    expect(routeFor({ topic: '' }).credentials).to.equal(null);
+    expect(routeFor({ tokens: [] }).credentials).to.equal(null);
   });
 
   it('returns no destination for providers without exclusive routing groups', () => {
-    expect(routeFor({ topic: 'news_updates' }, PushProviderIdEnum.EXPO).destination).to.deep.equal({});
+    expect(routeFor({ topic: 'news_updates' }, PushProviderIdEnum.EXPO).credentials).to.equal(null);
   });
 
   it('applies the integration override only for the matching integration identifier', () => {
@@ -89,11 +88,36 @@ describe('resolvePushRoute', () => {
 
     expect(routeFor(providerOverride, PushProviderIdEnum.FCM, 'fcm-main')).to.deep.equal({
       bridgeProviderData: { topic: 'updates' },
-      destination: { topic: 'updates' },
       credentials: { topic: 'updates' },
+      isIntegrationScoped: true,
     });
-    expect(routeFor(providerOverride, PushProviderIdEnum.FCM, 'fcm-other').destination).to.deep.equal({});
-    expect(routeFor(providerOverride).destination).to.deep.equal({});
+    expect(routeFor(providerOverride, PushProviderIdEnum.FCM, 'fcm-other').credentials).to.equal(null);
+    expect(routeFor(providerOverride).credentials).to.equal(null);
+  });
+
+  it('is integration-scoped when the integration override repeats the provider-wide topic', () => {
+    const providerOverride = { topic: 'news', [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'fcm-main': { topic: 'news' } } };
+
+    expect(routeFor(providerOverride, PushProviderIdEnum.FCM, 'fcm-main').isIntegrationScoped).to.equal(true);
+    expect(routeFor(providerOverride, PushProviderIdEnum.FCM, 'fcm-other').isIntegrationScoped).to.equal(false);
+  });
+
+  it('is not integration-scoped when a trigger override evicts the integration topic', () => {
+    const route = resolvePushRoute(
+      {
+        bridgeData: {
+          providers: {
+            [PushProviderIdEnum.FCM]: { [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'fcm-main': { topic: 'a' } } },
+          },
+        },
+        overrides: { providers: { [PushProviderIdEnum.FCM]: { topic: 'b' } } },
+      } as never,
+      PushProviderIdEnum.FCM,
+      'fcm-main'
+    );
+
+    expect(route.credentials).to.deep.equal({ topic: 'b' });
+    expect(route.isIntegrationScoped).to.equal(false);
   });
 });
 
