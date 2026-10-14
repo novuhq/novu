@@ -68,8 +68,9 @@ preview-only values. A box runs PR code, and that code can read its environment,
 | `NOVU_MANAGED_CLAUDE_API_KEY` (optional) | Anthropic, a workspace with a monthly spend limit | Start (runs thalamus and seeds the `box-managed` agent), API, bridge app (real models for its agents) |
 
 The dashboard signs in as `agent@novu.co` with `BOX_SEED_PASSWORD`. All boxes share the Clerk
-development instance and its one seed org, and every bake re-links that org to the new box. Older boxes stop
-signing in correctly after a newer bake.
+development instance and its one seed org. Every bake gives that org the same Novu ID (`SEED.novuOrgId` in
+`clerk.mjs`), so the Clerk org links to it in every box, older bakes included. Boxes also share its Stripe
+customer, so a billing change made in one box reaches the others through their `stripe` process.
 
 Box URLs are public, like staging's. Anyone with a `@novu.co` address can sign up (the allowlist) and gets their own
 org; the code Clerk emails them proves they own the address. The seed org stays behind the password. That holds
@@ -233,7 +234,7 @@ Other commands, run with `docker exec novu-box node /opt/box/box.mjs <command>`:
 
 - **The bake fails at "first boot" with ClickHouse `NOT_ENOUGH_SPACE`:** Docker's disk is full. A baked volume
   is about 6 GB; remove old box volumes and dangling images.
-- **The dashboard signs in but shows the wrong org, or none:** a newer bake re-linked the shared Clerk org.
-  Use the newest box.
+- **The dashboard signs in but shows the wrong org, or none:** the box was baked before the seed org had a fixed
+  ID (October 2026). Bake it again.
 - **Mailpit has no SMS, push or chat:** check `sink` in `status`, and that the step's integration is one of
   the `Box ... (sink)` ones.

@@ -6,6 +6,8 @@ export const SEED = {
   firstName: 'Agent',
   lastName: 'User',
   orgName: 'Agent Organization',
+  // The seed org's Novu ID, the same in every box, so the Clerk org they share links to each of them.
+  novuOrgId: '5eedb0c5eedb0c5eedb0c5ee',
 };
 
 export async function clerk(path, { method = 'GET', body } = {}) {

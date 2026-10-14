@@ -530,8 +530,8 @@ async function api(path, { headers = {}, ...init } = {}) {
 }
 
 // The API creates the Novu user and org from the Clerk ones on their first request, as in production.
-// A bake starts with an empty Mongo, so the org link left by the previous bake is dropped first; boxes
-// from an older bake then lose the seeded org. The user keeps its Novu ID, which Clerk still holds.
+// The user keeps the Novu ID Clerk holds for it. The org gets a random one, and the Clerk org every box shares
+// would then link to this box only, so the seed moves it to SEED.novuOrgId, which is the same in every box.
 // The password is set on every bake, so BOX_SEED_PASSWORD is the one place it changes.
 async function seedClerk() {
   let { user, org } = await findSeedUser();
@@ -550,15 +550,78 @@ async function seedClerk() {
       },
     });
   org ??= await clerk('/organizations', { method: 'POST', body: { name: SEED.orgName, created_by: user.id } });
-  await clerk(`/organizations/${org.id}/metadata`, {
-    method: 'PATCH',
-    body: { public_metadata: { externalOrgId: null } },
-  });
-  const token = await seedUserToken({ userId: user.id, orgId: org.id });
-  const { body } = await api('/v1/organizations/me', { headers: { Authorization: `Bearer ${token}` } });
-  log(`seeded ${SEED.email} in ${body.data.name} (${body.data._id})`);
+  const linkOrg = (externalOrgId) =>
+    clerk(`/organizations/${org.id}/metadata`, { method: 'PATCH', body: { public_metadata: { externalOrgId } } });
+  const me = async () => {
+    const token = await seedUserToken({ userId: user.id, orgId: org.id });
+    const { body } = await api('/v1/organizations/me', { headers: { Authorization: `Bearer ${token}` } });
 
-  return token;
+    return { token, org: body.data };
+  };
+  // The API trusts a link in the token without looking the org up, so it only creates the org without one.
+  // Meanwhile other boxes find theirs by the Clerk org ID.
+  await linkOrg(null);
+  const created = await me();
+  await step('move the seed org to its fixed ID', () => moveSeedOrg(created.org._id));
+  await linkOrg(SEED.novuOrgId);
+  const seeded = await me();
+  if (seeded.org._id !== SEED.novuOrgId) throw new Error(`the seed org is ${seeded.org._id}, not ${SEED.novuOrgId}`);
+  log(`seeded ${SEED.email} in ${seeded.org.name} (${seeded.org._id})`);
+
+  return seeded.token;
+}
+
+// The bake's Mongo holds only what creating the org wrote, and every reference to the org in it is its ObjectId
+// or that ID as a string. The org's Stripe customer is found by its metadata, so it moves too, or the box reuses
+// the one an earlier bake moved. Redis may cache the old ID, and the API and worker have nothing else in it yet.
+async function moveSeedOrg(oldId) {
+  pc(['process', 'stop', 'api', 'worker']);
+  const { MongoClient, ObjectId } = createRequire(`${REPO}/libs/dal/package.json`)('mongoose').mongo;
+  const from = new ObjectId(oldId);
+  const to = new ObjectId(SEED.novuOrgId);
+  let found = 0;
+  const swap = (value) => {
+    if (value?._bsontype === 'ObjectId') return value.equals(from) ? (found++, to) : value;
+    if (value === oldId) return found++, SEED.novuOrgId;
+    if (Array.isArray(value)) return value.map(swap);
+    if (value?.constructor === Object)
+      return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, swap(item)]));
+
+    return value;
+  };
+  const client = await MongoClient.connect(env.MONGO_URL);
+  try {
+    const db = client.db();
+    let moved = 0;
+    for (const { name } of await db.listCollections({ type: 'collection' }, { nameOnly: true }).toArray()) {
+      const collection = db.collection(name);
+      for (const doc of await collection.find().toArray()) {
+        found = 0;
+        const next = swap(doc);
+        if (!found) continue;
+        if (from.equals(doc._id)) {
+          await collection.deleteOne({ _id: from });
+          await collection.insertOne(next);
+        } else await collection.replaceOne({ _id: doc._id }, next);
+        moved++;
+      }
+    }
+    const organizations = db.collection('organizations');
+    const query = encodeURIComponent(`metadata['organizationId']:'${SEED.novuOrgId}'`);
+    const [previous] = (await stripe(`/customers/search?query=${query}`)).data;
+    const { stripeCustomerId } = await organizations.findOne({ _id: to });
+    if (previous) await organizations.updateOne({ _id: to }, { $set: { stripeCustomerId: previous.id } });
+    else if (stripeCustomerId)
+      await stripe(`/customers/${stripeCustomerId}`, { 'metadata[organizationId]': SEED.novuOrgId });
+    const customer = previous ? `${previous.id} (from an earlier bake)` : (stripeCustomerId ?? 'none yet');
+    log(`moved ${moved} documents from ${oldId} to ${SEED.novuOrgId}; Stripe customer ${customer}`);
+  } finally {
+    await client.close();
+  }
+  for (const port of REDIS_PORTS) redis(port, ['flushall']);
+  for (const name of ['api', 'worker']) pc(['process', 'start', name]);
+  await waitForHttp('http://127.0.0.1:3000/v1/health-check', 300);
+  await waitForHttp('http://127.0.0.1:3004/v1/health-check', 300);
 }
 
 // Every environment of the seeded org sends email through Mailpit (UI on :8025).
@@ -859,12 +922,14 @@ async function initReplicaSet(MongoClient) {
   }
 }
 
+function redis(port, args) {
+  return output('redis-cli', ['--tls', '--cacert', `${REDIS_TLS}/box.crt`, '-p', String(port), ...args], { cwd: RUN });
+}
+
 async function createRedisCluster() {
-  const cli = (port, args) =>
-    output('redis-cli', ['--tls', '--cacert', `${REDIS_TLS}/box.crt`, '-p', String(port), ...args], { cwd: RUN });
-  if (/cluster_slots_assigned:0\b/.test(cli(REDIS_PORTS[0], ['cluster', 'info']))) {
+  if (/cluster_slots_assigned:0\b/.test(redis(REDIS_PORTS[0], ['cluster', 'info']))) {
     log('creating Redis Cluster');
-    cli(REDIS_PORTS[0], [
+    redis(REDIS_PORTS[0], [
       '--cluster',
       'create',
       ...REDIS_PORTS.map((port) => `127.0.0.1:${port}`),
@@ -873,7 +938,7 @@ async function createRedisCluster() {
       '--cluster-yes',
     ]);
   }
-  for (let attempt = 0; !/cluster_state:ok/.test(cli(REDIS_PORTS[0], ['cluster', 'info'])); attempt++) {
+  for (let attempt = 0; !/cluster_state:ok/.test(redis(REDIS_PORTS[0], ['cluster', 'info'])); attempt++) {
     if (attempt === 60) throw new Error('Redis Cluster not ok after 30s');
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
