@@ -51,15 +51,6 @@ function entryPagination(entry: ConversationEntry): WebChatPagination {
 /** Max HTTP pages for reconnect recovery when a sequence checkpoint exists. */
 const CATCH_UP_PAGE_LIMIT = 20;
 
-function sortBySequence(envelopes: AgentEventEnvelope[]): AgentEventEnvelope[] {
-  return [...envelopes].sort((left, right) => left.sequence - right.sequence);
-}
-
-/** True when the page starts at or before `knownThrough`, so no event between them is missing. */
-function pageReachesSequence(envelopes: AgentEventEnvelope[], knownThrough: number): boolean {
-  return knownThrough > 0 && envelopes.some((envelope) => envelope.sequence <= knownThrough);
-}
-
 /** Syncs of one conversation (history reloads and reconnect catch-ups) that are queued or running. */
 type ConversationSyncQueue = {
   tail: Promise<void>;
@@ -374,16 +365,7 @@ export class WebChat extends BaseModule {
       conversationId: args.conversationId,
     });
 
-    if (entry.historyInSync && pageReachesSequence(page.events, entry.lastSequence)) {
-      // The cache already holds every event up to lastSequence, so only newer ones are missing.
-      for (const envelope of sortBySequence(page.events)) {
-        this.#store.applyLiveEnvelope(entry, envelope);
-      }
-    } else {
-      this.#store.absorbHistoryPage(entry, page.events, page.olderCursor);
-    }
-
-    return entry;
+    return this.#store.absorbHistoryPage(entry, page.events, page.olderCursor);
   }
 
   /** @internal Prefer {@link AgentConversationRuntime.fetchMore}. */
@@ -740,18 +722,12 @@ export class WebChat extends BaseModule {
   }
 
   #requestCatchUp(): void {
-    const claimed = this.#store.listClaimed();
     if (this.#liveSubscriberCount === 0 || !this._inboxService.isSessionInitialized) {
-      // Nobody recovers the missed events, so the next reload of each conversation must rebuild it.
-      for (const entry of claimed) {
-        this.#store.markHistoryOutOfSync(entry);
-      }
-
       return;
     }
 
     const byConversationId = new Map<string, ConversationEntry[]>();
-    for (const entry of claimed) {
+    for (const entry of this.#store.listClaimed()) {
       const holders = byConversationId.get(entry.conversationId) ?? [];
       holders.push(entry);
       byConversationId.set(entry.conversationId, holders);
@@ -830,10 +806,8 @@ export class WebChat extends BaseModule {
     }
   }
 
-  /** The missed events stay unrecovered, so the next reload of this conversation must rebuild it. */
   #failCatchUp(conversationId: string, holders: ConversationEntry[], catchUpError: NovuError): void {
     for (const entry of this.#currentHolders(conversationId, holders)) {
-      this.#store.markHistoryOutOfSync(entry);
       this.#store.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError });
     }
   }
@@ -852,11 +826,14 @@ export class WebChat extends BaseModule {
         conversationId,
         ...(before ? { before } : {}),
       });
-      const envelopes = sortBySequence(page.events);
+      const envelopes = [...page.events].sort((left, right) => left.sequence - right.sequence);
       missed.push(...envelopes);
 
-      if (page.olderCursor == null || envelopes.length === 0 || pageReachesSequence(envelopes, knownThrough)) {
-        return sortBySequence(missed);
+      const oldestInPage = envelopes[0]?.sequence;
+      const reachedKnown = knownThrough > 0 && oldestInPage != null && oldestInPage <= knownThrough;
+      if (page.olderCursor == null || oldestInPage == null || reachedKnown) {
+        // Apply oldest→newest so message order stays chronological across pages.
+        return missed.sort((left, right) => left.sequence - right.sequence);
       }
 
       before = page.olderCursor;

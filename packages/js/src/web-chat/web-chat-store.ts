@@ -34,11 +34,6 @@ export type ConversationEntry = AgentConversationState & {
    */
   olderCursor: string | null;
   /**
-   * True when a history page rebuilt the timeline and no events were missed since.
-   * `lastSequence` is only the highest sequence seen, so a reload may skip to newer events only while this holds.
-   */
-  historyInSync: boolean;
-  /**
    * Actions already reported as new. An action id is never raised twice,
    * so a resolved action must not fall out and be reported again.
    */
@@ -247,7 +242,6 @@ export class WebChatStore {
       conversationId: args.conversationId,
       key: args.key,
       olderCursor: null,
-      historyInSync: false,
       reportedActionIds: new Set(),
       mcpConnectionResults: new Map(),
       messageMutations: new Map(),
@@ -360,8 +354,6 @@ export class WebChatStore {
       ...folded,
       messages: this.#overlayMessages(entry, [...folded.messages, ...localOnly]),
     });
-    entry.historyInSync = true;
-    entry.catchUpError = undefined;
     entry.olderCursor = olderCursor;
     entry.paginationEpoch += 1;
     entry.paginationStatus = 'idle';
@@ -453,11 +445,6 @@ export class WebChatStore {
     this.#publish(entry, { kind: 'local' }, []);
 
     return entry;
-  }
-
-  /** The timeline may have a gap, so the next history reload must rebuild it. */
-  markHistoryOutOfSync(entry: ConversationEntry): void {
-    entry.historyInSync = false;
   }
 
   /**

@@ -435,9 +435,7 @@ describe('WebChat', () => {
     expect(snapshot?.messages).toEqual(result.data?.messages);
   });
 
-  it('loadConversation rebuilds a cache that never loaded history, keeping failed sends', async () => {
-    webChat.subscribe();
-    getEvents.mockResolvedValueOnce(historyPage([], null));
+  it('loadConversation drops cached sent messages the newest page does not reach and keeps failed sends', async () => {
     sendMessage.mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_local000001' });
     await webChat.sendMessage({
       agentId: 'agent_1',
@@ -455,10 +453,6 @@ describe('WebChat', () => {
     const failedId = webChat
       .getConversation({ agentId: 'agent_1', key: 'conv_abcdefghijkl' })
       ?.messages.find((message) => message.status === 'failed')?.id;
-    emitter.emit(
-      'web_chat.agent_event',
-      liveAssistantEnvelope({ sequence: 60, messageId: 'msg_server00001', markdown: 'from server', role: 'user' })
-    );
 
     getEvents.mockResolvedValue({
       events: [
@@ -491,105 +485,36 @@ describe('WebChat', () => {
     expect(result.data?.hasMore).toBe(true);
   });
 
-  it('loadConversation keeps cached history above the newest page when a long conversation is reopened', async () => {
+  it('loadConversation shows a reopened long conversation in order and keeps a live event that arrives mid-load', async () => {
     getEvents.mockResolvedValueOnce(messagePage(7, 56, 'cursor_before_7'));
     await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
     emitter.emit('web_chat.agent_event', liveAssistantEnvelope({ sequence: 57, messageId: 'msg_57', markdown: '57' }));
 
-    getEvents.mockResolvedValueOnce(messagePage(8, 57, 'cursor_before_8'));
-    const result = await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-
-    expect(result.data?.messages.map((message) => message.id)).toEqual(messageIds(7, 57));
-
-    getEvents.mockResolvedValueOnce(messagePage(1, 6, null));
-    const older = await webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-
-    expect(getEvents).toHaveBeenLastCalledWith(expect.objectContaining({ before: 'cursor_before_7' }));
-    expect(older.data?.messages.map((message) => message.id)).toEqual(messageIds(1, 57));
-  });
-
-  it('loadConversation keeps an older page that was in flight when the reload only caught up', async () => {
-    getEvents.mockResolvedValueOnce(messagePage(3, 4, 'cursor_before_3'));
-    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-
-    let resolveOlder!: (value: ReturnType<typeof historyPage>) => void;
+    let resolveReload!: (value: ReturnType<typeof historyPage>) => void;
     getEvents.mockImplementationOnce(
       () =>
         new Promise((resolve) => {
-          resolveOlder = resolve;
-        })
-    );
-    const older = webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-    getEvents.mockResolvedValueOnce(messagePage(3, 5, 'cursor_before_3'));
-    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-    resolveOlder(messagePage(1, 2, null));
-    const result = await older;
-
-    expect(result.data?.messages.map((message) => message.id)).toEqual(messageIds(1, 5));
-  });
-
-  it('loadConversation resets stale history after a gap without losing a live event that arrives mid-load', async () => {
-    getEvents.mockResolvedValueOnce(messagePage(1, 50, null));
-    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-
-    let resolveEvents!: (value: ReturnType<typeof historyPage>) => void;
-    getEvents.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          resolveEvents = resolve;
+          resolveReload = resolve;
         })
     );
     const reopen = webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
     await waitForGetEventsCalls(2);
-    emitter.emit(
-      'web_chat.agent_event',
-      liveAssistantEnvelope({ sequence: 111, messageId: 'msg_111', markdown: '111' })
-    );
-    resolveEvents(messagePage(61, 110, 'cursor_before_61'));
+    emitter.emit('web_chat.agent_event', liveAssistantEnvelope({ sequence: 58, messageId: 'msg_58', markdown: '58' }));
+    resolveReload(messagePage(8, 57, 'cursor_before_8'));
     const result = await reopen;
 
-    expect(result.data?.messages.map((message) => message.id)).toEqual(messageIds(61, 111));
-    expect(result.data?.hasMore).toBe(true);
-  });
+    expect(result.data?.messages.map((message) => message.id)).toEqual(messageIds(8, 58));
 
-  it('loadConversation rebuilds the timeline when reconnect catch-up was skipped or failed', async () => {
-    getEvents.mockResolvedValueOnce(messagePage(1, 50, null));
-    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    getEvents.mockResolvedValueOnce(messagePage(1, 7, null));
+    const older = await webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
 
-    // No subscriber, so catch-up is skipped.
-    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
-    emitter.emit(
-      'web_chat.agent_event',
-      liveAssistantEnvelope({ sequence: 120, messageId: 'msg_120', markdown: '120' })
-    );
-    getEvents.mockResolvedValueOnce(messagePage(71, 120, 'cursor_before_71'));
-    const afterSkip = await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-
-    expect(afterSkip.data?.messages.map((message) => message.id)).toEqual(messageIds(71, 120));
-    expect(afterSkip.data?.hasMore).toBe(true);
-
-    webChat.subscribe();
-    getEvents.mockRejectedValueOnce(new Error('network'));
-    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
-    await waitForGetEventsCalls(3);
-    emitter.emit(
-      'web_chat.agent_event',
-      liveAssistantEnvelope({ sequence: 200, messageId: 'msg_200', markdown: '200' })
-    );
-    getEvents.mockResolvedValueOnce(messagePage(151, 200, 'cursor_before_151'));
-    const afterFailure = await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-
-    expect(afterFailure.data?.messages.map((message) => message.id)).toEqual(messageIds(151, 200));
-    expect(
-      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.catchUpError
-    ).toBeUndefined();
+    expect(getEvents).toHaveBeenLastCalledWith(expect.objectContaining({ before: 'cursor_before_8' }));
+    expect(older.data?.messages.map((message) => message.id)).toEqual(messageIds(1, 58));
   });
 
   it('keeps live events buffered until a reload and the catch-up queued behind it both finish', async () => {
     getEvents.mockResolvedValueOnce(messagePage(1, 2, null));
     await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-    // A reconnect without subscribers leaves the cache out of sync, so the next reload rebuilds it.
-    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
     webChat.subscribe();
 
     let resolveReload!: (value: ReturnType<typeof historyPage>) => void;
@@ -2655,7 +2580,8 @@ describe('WebChat', () => {
     await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
     await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
 
-    expect(changes.flatMap((change) => change.newActions).map(pendingActionKey)).toEqual(['approval_000001']);
+    expect(changes[0]?.newActions.map(pendingActionKey)).toEqual(['approval_000001']);
+    expect(changes[1]?.newActions).toEqual([]);
   });
 
   it('reports a live approval on the fold that raises it, adding no message', async () => {
@@ -2823,10 +2749,7 @@ describe('WebChat', () => {
     ).toBe('loading');
 
     getEvents.mockResolvedValueOnce(
-      historyPage(
-        [{ sequence: 60, messageId: 'msg_newest00001', role: 'user', markdown: 'after a gap' }],
-        'act_page0002'
-      )
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
     );
     await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
     expect(getEvents).toHaveBeenCalledTimes(3);
@@ -2834,7 +2757,7 @@ describe('WebChat', () => {
     rejectOlderPage(new Error('network'));
     const staleResult = await older;
     expect(staleResult.error).toBeUndefined();
-    expect(staleResult.data?.messages.map((message) => message.id)).toEqual(['msg_newest00001']);
+    expect(staleResult.data?.messages.map((message) => message.id)).toEqual(['msg_new0000001']);
     expect(
       webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
     ).toBe('idle');
@@ -2876,10 +2799,7 @@ describe('WebChat', () => {
     const older = webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
 
     getEvents.mockResolvedValueOnce(
-      historyPage(
-        [{ sequence: 60, messageId: 'msg_newest00001', role: 'user', markdown: 'after a gap' }],
-        'act_page0002'
-      )
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
     );
     await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
 
@@ -2892,7 +2812,7 @@ describe('WebChat', () => {
       webChat
         .getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })
         ?.messages.map((message) => message.id)
-    ).toEqual(['msg_newest00001']);
+    ).toEqual(['msg_new0000001']);
   });
 
   it('does not let a stale fetchMore finalizer clear a fresh pagination claim after reload', async () => {
@@ -2912,10 +2832,7 @@ describe('WebChat', () => {
     const stale = webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
 
     getEvents.mockResolvedValueOnce(
-      historyPage(
-        [{ sequence: 60, messageId: 'msg_newest00001', role: 'user', markdown: 'after a gap' }],
-        'act_page0002'
-      )
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
     );
     await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
 
