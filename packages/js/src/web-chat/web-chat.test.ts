@@ -512,6 +512,25 @@ describe('WebChat', () => {
     expect(older.data?.messages.map((message) => message.id)).toEqual(messageIds(1, 58));
   });
 
+  it('loadConversation clears a stale catch-up error once history is rebuilt', async () => {
+    getEvents.mockResolvedValueOnce(messagePage(1, 2, null));
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    webChat.subscribe();
+    getEvents.mockRejectedValueOnce(new Error('network'));
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.catchUpError
+    ).toBeDefined();
+
+    getEvents.mockResolvedValueOnce(messagePage(1, 3, null));
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.catchUpError
+    ).toBeUndefined();
+  });
+
   it('keeps live events buffered until a reload and the catch-up queued behind it both finish', async () => {
     getEvents.mockResolvedValueOnce(messagePage(1, 2, null));
     await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });

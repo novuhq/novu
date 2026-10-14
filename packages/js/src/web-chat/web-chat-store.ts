@@ -354,6 +354,7 @@ export class WebChatStore {
       ...folded,
       messages: this.#overlayMessages(entry, [...folded.messages, ...localOnly]),
     });
+    entry.catchUpError = undefined;
     entry.olderCursor = olderCursor;
     entry.paginationEpoch += 1;
     entry.paginationStatus = 'idle';
