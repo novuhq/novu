@@ -45,14 +45,13 @@ import {
 } from '@novu/shared';
 import { IPushOptions } from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
+import { isEqual } from 'lodash';
 import { PlatformException } from '../../../shared/utils';
 import {
-  createUnroutedPushRoute,
-  getCandidatePushRouteTargets,
-  type PushChannelCandidate,
-  resolvePushDeliveryTargets,
+  getIntegrationOverrideIdentifiers,
+  isFcmBroadcastRoutingOverride,
+  type ResolvedPushRoute,
   resolvePushRoute,
-  selectPushChannels,
 } from './fcm-routing-overrides';
 import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
@@ -108,10 +107,10 @@ interface ApnsPushOverrides {
   [key: string]: unknown;
 }
 
-interface ResolvedPushChannel extends PushChannelCandidate {
+interface PushChannelTarget {
   channel: IChannelSettings;
   selection?: IntegrationSelectionResult;
-  integrationLookupFailed?: boolean;
+  route?: ResolvedPushRoute;
 }
 
 @Injectable()
@@ -198,9 +197,7 @@ export class SendMessagePush extends SendMessageBase {
     const pushChannels =
       subscriber.channels?.filter((chan) => this.pushProviderIds.includes(chan.providerId as PushProviderIdEnum)) || [];
 
-    const subscriberChannels = await this.resolveSubscriberPushChannels(pushChannels, command);
-    const overrideChannels = await this.resolveOverridePushChannels(subscriberChannels, command);
-    const allPushChannels = selectPushChannels(subscriberChannels, overrideChannels);
+    const allPushChannels = await this.resolvePushChannelTargets(pushChannels, command);
 
     if (!allPushChannels.length) {
       await this.createExecutionDetails.execute(
@@ -227,10 +224,9 @@ export class SendMessagePush extends SendMessageBase {
     delete messagePayload.attachments;
 
     let status: SendMessageResult['status'] = SendMessageStatus.FAILED;
-    for (const resolvedChannel of allPushChannels) {
-      const { channel, selection, route, isMissingDeviceTokens, integrationLookupFailed } = resolvedChannel;
+    for (const { channel, selection, route } of allPushChannels) {
       const { deviceTokens } = channel.credentials || {};
-      const noDeviceTokensAndNoOverrides = isMissingDeviceTokens && !route.hasDestinationOverride;
+      const noDeviceTokensAndNoOverrides = this.channelMissingDeviceTokens(channel) && !route?.credentials;
 
       if (noDeviceTokensAndNoOverrides) {
         await this.createExecutionDetails.execute(
@@ -251,15 +247,8 @@ export class SendMessagePush extends SendMessageBase {
         }
       }
 
-      if (!selection) {
-        if (!integrationLookupFailed) {
-          await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION, command.job);
-        }
-
-        continue;
-      }
-
-      if (noDeviceTokensAndNoOverrides) {
+      // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
+      if (noDeviceTokensAndNoOverrides || !selection || !route) {
         continue;
       }
 
@@ -282,7 +271,13 @@ export class SendMessagePush extends SendMessageBase {
         overrides = await this.updateOverridesWithInboxUnreadCount(command, overrides, subscriber, inboxCountType);
       }
 
-      const { targetDeviceTokens, recordedDeviceTokens } = resolvePushDeliveryTargets(route, target);
+      /**
+       * A claimed routing override is the destination, so this channel sends once with a dummy
+       * target — stored device tokens are never addressed. Recorded tokens are only those the
+       * override actually targets (empty for token/topic/condition).
+       */
+      const targetDeviceTokens = route.credentials ? [''] : target || [];
+      const recordedDeviceTokens = route.credentials ? route.credentials.deviceTokens : target;
 
       for (const deviceToken of targetDeviceTokens) {
         const message = await this.createMessage({
@@ -419,118 +414,144 @@ export class SendMessagePush extends SendMessageBase {
     return !deviceTokens || (Array.isArray(deviceTokens) && deviceTokens.length === 0);
   }
 
-  private async resolveSubscriberPushChannels(
+  /**
+   * A provider-wide routing override (trigger, step or bridge provider layer) is sent through the
+   * integration `selectIntegration` picks. A subscriber integration keeps its own send only while its
+   * resolved destination differs from the provider-wide one, i.e. its `__nvIntegrationOverrides__`
+   * entry won the routing; integration entries the subscriber has no channel for get a synthetic channel.
+   */
+  private async resolvePushChannelTargets(
     pushChannels: IChannelSettings[],
     command: SendMessageChannelCommand
-  ): Promise<ResolvedPushChannel[]> {
-    const resolved: ResolvedPushChannel[] = [];
+  ): Promise<PushChannelTarget[]> {
+    const providerRoutes = new Map(
+      this.pushProviderIds.map((providerId) => [providerId, resolvePushRoute(command, providerId)])
+    );
+    const targets: PushChannelTarget[] = [];
 
     for (const channel of pushChannels) {
       const providerId = channel.providerId as PushProviderIdEnum;
-      const isMissingDeviceTokens = this.channelMissingDeviceTokens(channel);
+      const selection = await this.getSubscriberIntegration(channel, command);
+      const route = selection && resolvePushRoute(command, providerId, selection.integration.identifier);
+      const target = { channel, selection, route };
 
-      let selection: IntegrationSelectionResult | undefined;
-      let integrationLookupFailed = false;
-
-      try {
-        selection = await this.getIntegration({
-          id: channel._integrationId,
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.PUSH,
-          providerId: channel.providerId,
-          userId: command.userId,
-          filterData: this.getIntegrationFilterData(command),
-        });
-      } catch (error) {
-        integrationLookupFailed = true;
-        Logger.error(
-          { jobId: command.jobId },
-          `Unexpected error while processing channel for jobId ${command.jobId} ${error.message || error.toString()}`,
-          LOG_CONTEXT
-        );
+      if (this.keepSubscriberTarget(target, providerRoutes.get(providerId))) {
+        targets.push(target);
       }
-
-      const route = selection
-        ? resolvePushRoute(command, providerId, selection.integration.identifier)
-        : createUnroutedPushRoute(providerId);
-
-      resolved.push({
-        channel,
-        selection,
-        route,
-        isMissingDeviceTokens,
-        integrationLookupFailed,
-      });
     }
 
-    return resolved;
+    const usedIdentifiers = new Set(targets.flatMap((target) => target.selection?.integration.identifier ?? []));
+
+    for (const [providerId, providerRoute] of providerRoutes) {
+      const lookups: Array<string | undefined> = getIntegrationOverrideIdentifiers(command, providerId).filter(
+        (identifier) =>
+          !usedIdentifiers.has(identifier) &&
+          !isEqual(resolvePushRoute(command, providerId, identifier).destination, providerRoute.destination)
+      );
+      const providerSendCovered = targets.some(
+        (target) => target.channel.providerId === providerId && this.followsProviderRoute(target, providerRoute)
+      );
+
+      if (providerRoute.credentials && !providerSendCovered) {
+        lookups.unshift(undefined);
+      }
+
+      for (const identifier of lookups) {
+        const target = await this.selectOverrideTarget(command, providerId, identifier);
+        const selectedIdentifier = target?.selection?.integration.identifier;
+
+        if (!target || !selectedIdentifier || usedIdentifiers.has(selectedIdentifier)) {
+          continue;
+        }
+
+        usedIdentifiers.add(selectedIdentifier);
+        targets.push(target);
+      }
+    }
+
+    return targets;
   }
 
-  private async resolveOverridePushChannels(
-    subscriberChannels: ResolvedPushChannel[],
-    command: SendMessageChannelCommand
-  ): Promise<ResolvedPushChannel[]> {
-    const overrideChannels: ResolvedPushChannel[] = [];
+  private followsProviderRoute(target: PushChannelTarget, providerRoute: ResolvedPushRoute): boolean {
+    return !target.route || isEqual(target.route.destination, providerRoute.destination);
+  }
 
-    for (const providerId of this.pushProviderIds) {
-      const candidateTargets = getCandidatePushRouteTargets(command, providerId);
-
-      for (const targetIdentifier of candidateTargets) {
-        const alreadyCovered = [...subscriberChannels, ...overrideChannels].some((item) => {
-          if (!item.selection || !item.route.hasDestinationOverride || item.route.providerId !== providerId) {
-            return false;
-          }
-
-          return targetIdentifier ? item.selection.integration.identifier === targetIdentifier : true;
-        });
-
-        if (alreadyCovered) {
-          continue;
-        }
-
-        const selection = await this.getIntegration({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.PUSH,
-          providerId,
-          ...(targetIdentifier && { identifier: targetIdentifier }),
-          userId: command.userId,
-          filterData: this.getIntegrationFilterData(command),
-        });
-
-        if (!selection || selection.integration.providerId !== providerId) {
-          continue;
-        }
-
-        const duplicateIntegration = [...subscriberChannels, ...overrideChannels].some(
-          (item) => item.selection?.integration._id === selection.integration._id && item.route.hasDestinationOverride
-        );
-
-        if (duplicateIntegration) {
-          continue;
-        }
-
-        const route = resolvePushRoute(command, providerId, selection.integration.identifier);
-
-        if (!route.hasDestinationOverride || !route.credentials) {
-          continue;
-        }
-
-        overrideChannels.push({
-          channel: {
-            _integrationId: selection.integration._id,
-            providerId,
-            credentials: route.credentials,
-          },
-          selection,
-          route,
-          isMissingDeviceTokens: true,
-        });
-      }
+  /**
+   * Under a provider-wide destination, a broadcast replaces the whole provider fan-out, while
+   * token/tokens keep one send per populated channel and drop the token-less ones.
+   */
+  private keepSubscriberTarget(target: PushChannelTarget, providerRoute: ResolvedPushRoute | undefined): boolean {
+    if (!providerRoute?.credentials || !this.followsProviderRoute(target, providerRoute)) {
+      return true;
     }
 
-    return overrideChannels;
+    return (
+      !isFcmBroadcastRoutingOverride(providerRoute.bridgeProviderData) &&
+      !this.channelMissingDeviceTokens(target.channel)
+    );
+  }
+
+  private async selectOverrideTarget(
+    command: SendMessageChannelCommand,
+    providerId: PushProviderIdEnum,
+    identifier?: string
+  ): Promise<PushChannelTarget | undefined> {
+    const selection = await this.getIntegration({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      channelType: ChannelTypeEnum.PUSH,
+      providerId,
+      identifier,
+      userId: command.userId,
+      filterData: this.getIntegrationFilterData(command),
+    });
+
+    if (!selection) {
+      return undefined;
+    }
+
+    const route = resolvePushRoute(command, providerId, selection.integration.identifier);
+
+    if (!route.credentials) {
+      return undefined;
+    }
+
+    return {
+      channel: { _integrationId: selection.integration._id, providerId, credentials: route.credentials },
+      selection,
+      route,
+    };
+  }
+
+  private async getSubscriberIntegration(
+    channel: IChannelSettings,
+    command: SendMessageChannelCommand
+  ): Promise<IntegrationSelectionResult | undefined> {
+    try {
+      const selection = await this.getIntegration({
+        id: channel._integrationId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.PUSH,
+        providerId: channel.providerId,
+        userId: command.userId,
+        filterData: this.getIntegrationFilterData(command),
+      });
+
+      if (!selection) {
+        await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION, command.job);
+      }
+
+      return selection;
+    } catch (error) {
+      Logger.error(
+        { jobId: command.jobId },
+        `Unexpected error while processing channel for jobId ${command.jobId} ${error.message || error.toString()}`,
+        LOG_CONTEXT
+      );
+
+      return undefined;
+    }
   }
 
   private async createExecutionDetailsError(

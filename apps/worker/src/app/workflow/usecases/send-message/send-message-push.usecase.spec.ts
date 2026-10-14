@@ -91,13 +91,16 @@ describe('SendMessagePush - provider content overrides', () => {
     };
   }
 
-  function buildUsecase(messageRepository = buildMessageRepository()) {
+  function buildUsecase(
+    messageRepository = buildMessageRepository(),
+    selectIntegrationExecute = sinon.stub().resolves({ integration: fcmIntegration })
+  ) {
     const usecase = new SendMessagePush(
       {} as never, // subscriberRepository
       messageRepository as never,
       { execute: sinon.stub().resolves(undefined) } as never, // createExecutionDetails
       {} as never, // compileTemplate
-      { execute: sinon.stub().resolves({ integration: fcmIntegration }) } as never, // selectIntegration
+      { execute: selectIntegrationExecute } as never, // selectIntegration
       {} as never, // getNovuProviderCredentials
       { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never, // selectVariant
       {
@@ -821,6 +824,56 @@ describe('SendMessagePush - provider content overrides', () => {
 
       expect(result.status).to.equal(SendMessageStatus.SUCCESS);
       sinon.assert.calledTwice(sendStub);
+    });
+
+    it('broadcasts a trigger topic once when it evicts the topics of two integration overrides', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const androidIntegration = { ...fcmIntegration, _id: '507f1f77bcf86cd799439022', identifier: 'fcm-android' };
+      const selectIntegrationExecute = sinon.stub().resolves({ integration: fcmIntegration });
+      selectIntegrationExecute
+        .withArgs(sinon.match({ id: androidIntegration._id }))
+        .resolves({ integration: androidIntegration });
+
+      const result = await buildUsecase(undefined, selectIntegrationExecute).execute(
+        buildCommand({
+          channels: [fcmChannelWithTokens, { ...fcmChannelWithTokens, _integrationId: androidIntegration._id }],
+          providerOverrides: {
+            [INTEGRATION_OVERRIDES_OUTPUT_KEY]: {
+              [fcmIntegration.identifier]: { topic: 'ios-news' },
+              [androidIntegration.identifier]: { topic: 'android-news' },
+            },
+          },
+          overrides: { providers: { [PushProviderIdEnum.FCM]: { topic: 'breaking-news' } } } as never,
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      sinon.assert.calledOnce(sendStub);
+      expect(sendStub.firstCall.args[0].bridgeProviderData).to.deep.equal({ topic: 'breaking-news' });
+    });
+
+    it('sends a provider-wide topic through the selected integration, not the subscriber-bound one', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      const getHandlerStub = sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const legacyIntegration = { ...fcmIntegration, _id: '507f1f77bcf86cd799439044', identifier: 'fcm-legacy' };
+      const selectIntegrationExecute = sinon.stub().resolves({ integration: fcmIntegration });
+      selectIntegrationExecute
+        .withArgs(sinon.match({ id: legacyIntegration._id }))
+        .resolves({ integration: legacyIntegration });
+
+      const result = await buildUsecase(undefined, selectIntegrationExecute).execute(
+        buildCommand({
+          channels: [{ ...fcmChannelWithTokens, _integrationId: legacyIntegration._id }],
+          providerOverrides: { topic: 'orders' },
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      sinon.assert.calledOnce(sendStub);
+      expect(getHandlerStub.firstCall.args[0]).to.include({ _id: fcmIntegration._id });
     });
   });
 });
