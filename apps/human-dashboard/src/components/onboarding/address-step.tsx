@@ -184,7 +184,7 @@ export function AddressStep({ onDraftChange }: AddressStepProps) {
                 </p>
               )}
               <span className="ml-auto flex shrink-0 items-center gap-2.5">
-                <AvailabilityNote asked={asked} answer={answer} />
+                <AvailabilityNote asked={asked} answer={answer} named={Boolean(name.trim())} />
                 <button
                   type="button"
                   // Keeps the field's blur from closing it a moment before this click would.
@@ -194,7 +194,8 @@ export function AddressStep({ onDraftChange }: AddressStepProps) {
                     setOwnHandle(handle);
                     setEditing(!editing);
                   }}
-                  disabled={!handle && !editing}
+                  // A name with nothing an address can hold, such as one in Cyrillic, still gets one this way.
+                  disabled={!name.trim() && !handle && !editing}
                   className="rounded-sm text-xs leading-4 text-default hover:text-foreground disabled:opacity-50"
                 >
                   {editing ? 'Done' : 'Edit'}
@@ -268,9 +269,17 @@ function RowLabel({ children }: { children: string }) {
   );
 }
 
-function AvailabilityNote({ asked, answer }: { asked: string; answer: Availability }) {
+function AvailabilityNote({ asked, answer, named }: { asked: string; answer: Availability; named: boolean }) {
   if (!asked) {
-    return null;
+    // The name has none of the letters an address takes: Edit, next to this, is where to type one.
+    return named ? (
+      <span
+        key="none"
+        className="animate-overlay-in font-mono text-[11px] leading-3.5 text-warning motion-reduce:animate-none"
+      >
+        a–z and 0–9 only
+      </span>
+    ) : null;
   }
 
   // A key each, so the answer fades in over "checking" instead of the words changing in place.

@@ -67,9 +67,12 @@ const CLI = 'agentinbox';
 /** A command copied on its own runs through npx, which needs nothing installed first. */
 const NPX_CLI = `npx ${CLI_PACKAGE}`;
 
-/** The terminal's way to do step 1. */
+/**
+ * The terminal's way to do step 1. It logs in first, which the operator approves in this browser: on its
+ * own, `setup` makes an inbox without an account, apart from the one this page waits for.
+ */
 export function setupCommand(handle: string): string {
-  return `${NPX_CLI} setup --agent-name ${handle}`;
+  return `${NPX_CLI} login && ${NPX_CLI} setup --agent-name ${handle}`;
 }
 
 export const INSTALL_SKILLS_COMMAND = `${NPX_CLI} skill install`;
