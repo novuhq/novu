@@ -127,13 +127,11 @@ export class BirdSmsProvider extends BaseProvider implements ISmsProvider {
       delete payload.text;
       delete payload.category;
 
-      // Built-in templates select their sender; Bird rejects an explicit from.
+      // Built-in templates select their sender and Bird rejects an explicit
+      // from, no matter whether it came from the integration, the message, or
+      // a bridge override.
       if (isBuiltInTemplate) {
-        const bridgeFrom = getBridgeField<string>(bridgeProviderData, 'from');
-
-        if (!options.from && !bridgeFrom) {
-          delete payload.from;
-        }
+        delete payload.from;
       }
 
       const { data } = await this.httpClient.post<BirdSmsResponse>(`${this.getBaseUrl()}/v1/sms/messages`, payload, {

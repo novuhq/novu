@@ -104,6 +104,23 @@ describe('BirdSmsProvider', () => {
     expect(payload.category).toBeUndefined();
   });
 
+  it('omits from for built-in templates even when the worker passes the integration sender', async () => {
+    const provider = new BirdSmsProvider({ apiKey: 'bk_us1_testkey123', from: '+15557654321' });
+    vi.mocked(axios.post).mockResolvedValue({ data: { id: 'sms_builtin' } });
+
+    await provider.sendMessage(
+      { to: '+14155550100', content: 'ignored', from: '+15557654321' },
+      {
+        _passthrough: {
+          body: { template: { slug: 'bird_otp_verification', parameters: { code: '493021' } } },
+        },
+      }
+    );
+
+    const payload = vi.mocked(axios.post).mock.calls[0][1] as Record<string, unknown>;
+    expect(payload.from).toBeUndefined();
+  });
+
   it('uses an explicit baseUrl override', async () => {
     const provider = new BirdSmsProvider({
       apiKey: 'bk_us1_testkey123',

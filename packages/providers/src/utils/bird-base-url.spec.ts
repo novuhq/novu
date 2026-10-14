@@ -14,6 +14,13 @@ describe('resolveBirdBaseUrl', () => {
     expect(resolveBirdBaseUrl('bk_eu1_abc', 'http://localhost:8080/')).toBe('http://localhost:8080');
   });
 
+  it.each(['bk_127.0.0.1/#_x', 'bk_evil.example/_x', 'bk_x@127.0.0.1/_y', 'bk_a?b_c', 'bk_a\\b_c', 'bk__x'])(
+    'rejects a crafted API key %s instead of building an attacker host',
+    (apiKey) => {
+      expect(() => resolveBirdBaseUrl(apiKey)).toThrow(/Could not infer Bird region/);
+    }
+  );
+
   it('throws when the region cannot be inferred and no baseUrl is given', () => {
     expect(() => resolveBirdBaseUrl('invalid-key')).toThrow(/Could not infer Bird region/);
   });
