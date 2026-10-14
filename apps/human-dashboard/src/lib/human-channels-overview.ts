@@ -72,18 +72,6 @@ export async function loadChannelsOverview(account: HumanAccount): Promise<Chann
 }
 
 /**
- * The same three channels for an account whose agent isn't set up yet: none of them exists, and there
- * is nothing to ask the API for.
- */
-export function channelsBeforeSetup(): ChannelsOverview {
-  return {
-    rows: [EMAIL, TELEGRAM, SLACK].map((channel) => ({ ...channel, handles: [], connected: false })),
-    telegramSetup: { step: 'create' },
-    slackSetup: { step: 'name' },
-  };
-}
-
-/**
  * Reading a setup can hang (Telegram's asks Telegram who the bot is); the page settles for `unknown`
  * instead.
  */

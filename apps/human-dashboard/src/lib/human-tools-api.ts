@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { cache } from 'react';
+
 import { isToolId, type ToolId } from './ai-tools';
 import type { HumanAccount } from './human-account';
 
@@ -21,8 +23,11 @@ const CONNECTIONS_TIMEOUT_MS = 4_000;
  *
  * Nothing reads as connected when the server isn't configured or can't be asked: a tile that says
  * "Connect" for a connected tool is a smaller mistake than one that says "Connected" for none.
+ *
+ * The onboarding's progress and the Configure page of one request share a single lookup, so a server
+ * that doesn't answer holds the page up once, not twice.
  */
-export async function listConnectedTools(account: HumanAccount): Promise<ToolId[]> {
+export const listConnectedTools = cache(async (account: HumanAccount): Promise<ToolId[]> => {
   const mcpUrl = readMcpUrl();
   const secret = process.env.HUMAN_DASHBOARD_API_SECRET;
   if (!mcpUrl || !secret) {
@@ -45,4 +50,4 @@ export async function listConnectedTools(account: HumanAccount): Promise<ToolId[
   } catch {
     return [];
   }
-}
+});

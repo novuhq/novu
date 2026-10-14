@@ -4,7 +4,14 @@ import { ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { DASHBOARD_HOME, FOOTER_NAV, findNavItem, MAIN_NAV, type NavItem } from '@/components/dashboard/nav';
+import {
+  CONFIGURE_PATH,
+  DASHBOARD_HOME,
+  FOOTER_NAV,
+  findNavItem,
+  MAIN_NAV,
+  type NavItem,
+} from '@/components/dashboard/nav';
 import { Brand } from '@/components/site/brand';
 import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { cn } from '@/lib/utils';
@@ -17,6 +24,8 @@ export type SidebarAgent = {
   setUp: boolean;
   /** The picture the operator gave the agent, when there is one. */
   pictureUrl?: string;
+  /** The operator left the onboarding before a host was connected. Configure is where they pick it up. */
+  setupUnfinished?: boolean;
 };
 
 export function Sidebar({ agent }: { agent: SidebarAgent }) {
@@ -41,26 +50,33 @@ export function Sidebar({ agent }: { agent: SidebarAgent }) {
         aria-label="Dashboard"
         className="flex flex-1 flex-row flex-wrap gap-1 md:flex-col md:flex-nowrap md:justify-between"
       >
-        <NavList items={MAIN_NAV} current={current} />
+        <NavList items={MAIN_NAV} current={current} flagged={agent.setupUnfinished ? CONFIGURE_PATH : undefined} />
         <NavList items={FOOTER_NAV} current={current} />
       </nav>
     </aside>
   );
 }
 
-function NavList({ items, current }: { items: NavItem[]; current: NavItem | undefined }) {
+type NavListProps = {
+  items: NavItem[];
+  current: NavItem | undefined;
+  /** The page that has something waiting for the operator: its link gets a dot. */
+  flagged?: string;
+};
+
+function NavList({ items, current, flagged }: NavListProps) {
   return (
     <ul className="flex flex-row flex-wrap gap-1 md:flex-col md:flex-nowrap">
       {items.map((item) => (
         <li key={item.href}>
-          <NavLink item={item} active={item === current} />
+          <NavLink item={item} active={item === current} flagged={item.href === flagged} />
         </li>
       ))}
     </ul>
   );
 }
 
-function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+function NavLink({ item, active, flagged }: { item: NavItem; active: boolean; flagged: boolean }) {
   const Icon = item.icon;
   const className = cn(
     'flex h-8 items-center gap-2.5 rounded px-2 text-sm tracking-tight transition-colors motion-reduce:transition-none',
@@ -95,6 +111,12 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   return (
     <Link href={item.href} aria-current={active ? 'page' : undefined} className={className}>
       {content}
+      {flagged && (
+        <>
+          <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-accent" />
+          <span className="sr-only">(setup not finished)</span>
+        </>
+      )}
     </Link>
   );
 }

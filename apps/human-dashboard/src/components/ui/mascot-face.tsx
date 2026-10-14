@@ -40,6 +40,9 @@ const DOUBLE_BLINK_CHANCE = 0.3;
 const DOUBLE_BLINK_PAUSE_MS = 90;
 const BLINK_MS = BLINK_CLOSE_MS + BLINK_OPEN_MS;
 
+/** How long the eyes take to turn from open to happy, or back: long enough to see one become the other. */
+const TURNS_HAPPY_IN_MS = 420;
+
 /**
  * The drawings exported from the design, by size and mood. One of them shows until the canvas has
  * painted, so the mascot is there from the first frame; the other combinations simply start a frame later.
@@ -53,10 +56,21 @@ const EXPORTED: Partial<Record<`${MascotArt}-${MascotMood}`, string>> = {
 
 type MascotFaceProps = {
   art: MascotArt;
-  /** `awake` by default. A happy mascot doesn't blink, and a sleeping one doesn't move at all. */
+  /**
+   * `awake` by default. A happy mascot doesn't blink, and a sleeping one doesn't move at all. Going from
+   * `awake` to `happy` or back, the eyes turn from one shape into the other.
+   */
   mood?: MascotMood;
+  /** Faces straight ahead at rest, where the awake drawing looks a touch to the right: see `MascotLook`. */
+  ahead?: boolean;
   /** Stands still: no turning towards the pointer and no blinking. */
   still?: boolean;
+  /**
+   * Leaves the exported drawing out, and lets the drawn mascot fade in once it is there. The two differ
+   * by a pixel here and there, so one giving way to the other shows as a twitch where the reader is
+   * looking right at the mascot when the page loads.
+   */
+  drawnOnly?: boolean;
   className?: string;
 };
 
@@ -66,11 +80,29 @@ type MascotFaceProps = {
  * together, and lets it blink. It stands still when asked to, when asleep, and for anyone who prefers
  * reduced motion.
  */
-export function MascotFace({ art, mood = 'awake', still = false, className }: MascotFaceProps) {
+export function MascotFace({
+  art,
+  mood = 'awake',
+  still = false,
+  drawnOnly = false,
+  ahead = false,
+  className,
+}: MascotFaceProps) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [painted, setPainted] = useState(false);
+  // The mood asked for, where the drawing reads it. A change from awake to happy or back doesn't start
+  // the drawing over: the mascot keeps looking where it looks, and its eyes turn into the other ones.
+  const wanted = useRef(mood);
+  // Draws the mood asked for at once. Only there while the mascot stands still, with nothing else to draw it.
+  const redraw = useRef<(() => void) | null>(null);
   const { grid, radius } = ART[art];
-  const exported = EXPORTED[`${art}-${mood}`];
+  const asleep = mood === 'asleep';
+  const exported = drawnOnly ? undefined : EXPORTED[`${art}-${mood}`];
+
+  useEffect(() => {
+    wanted.current = mood;
+    redraw.current?.();
+  }, [mood]);
 
   useEffect(() => {
     const element = canvas.current;
@@ -80,18 +112,21 @@ export function MascotFace({ art, mood = 'awake', still = false, className }: Ma
     }
 
     const image = context.createImageData(grid, grid);
-    const pose: MascotPose = { ...MASCOT_AT_REST };
+    const pose: MascotPose = { ...MASCOT_AT_REST, joy: wanted.current === 'happy' ? 1 : 0 };
     const target = { yaw: 0, pitch: 0 };
     let drawn: MascotPose | null = null;
     let frame = 0;
     let idle = 0;
+    // How far the eyes have turned happy, at an even pace. `pose.joy` is this with its ends eased.
+    let turned = pose.joy;
+    let last = performance.now();
     // Where it was looking when it started to turn back, and when that was.
     let turningBack: { yaw: number; pitch: number; since: number } | null = null;
     let blinkAt = performance.now() + randomBetween(BLINK_EVERY_MS.min, BLINK_EVERY_MS.max);
     let blinks = pickBlinks();
 
     const paint = () => {
-      drawMascot(image.data, grid, pose, radius, mood);
+      drawMascot(image.data, grid, pose, radius, asleep ? 'asleep' : 'awake', { ahead });
       context.putImageData(image, 0, 0);
       drawn = { ...pose };
     };
@@ -99,26 +134,57 @@ export function MascotFace({ art, mood = 'awake', still = false, className }: Ma
     paint();
     setPainted(true);
 
-    if (still || mood === 'asleep' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
+    if (still || asleep || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      redraw.current = () => {
+        pose.joy = wanted.current === 'happy' ? 1 : 0;
+        paint();
+      };
+
+      return () => {
+        redraw.current = null;
+      };
     }
 
-    const tick = (now: number) => {
-      if (turningBack) {
-        // On its way back to facing forward: a set stretch of time, fast at first and slowing to a stop.
-        const progress = Math.min(1, (now - turningBack.since) / TURNS_BACK_IN_MS);
-        const left = 1 - settle(progress);
-        pose.yaw = turningBack.yaw * left;
-        pose.pitch = turningBack.pitch * left;
-        if (progress === 1) {
-          turningBack = null;
-        }
-      } else {
+    // The eyes turn happy, or back to open, at an even pace.
+    const turnEyes = (now: number) => {
+      const happy = wanted.current === 'happy' ? 1 : 0;
+      // A blink that is under way finishes first: an eye that is half shut has no way to turn happy.
+      const blinking = turned === 0 && pose.blink > 0;
+      if (turned !== happy && !blinking) {
+        const step = (now - last) / TURNS_HAPPY_IN_MS;
+        turned = happy > turned ? Math.min(1, turned + step) : Math.max(0, turned - step);
+        pose.joy = ease(turned);
+      }
+      last = now;
+    };
+
+    const turnHead = (now: number) => {
+      if (!turningBack) {
         pose.yaw += (target.yaw - pose.yaw) * EASE;
         pose.pitch += (target.pitch - pose.pitch) * EASE;
+
+        return;
       }
 
-      const sinceBlink = mood === 'awake' ? now - blinkAt : 0;
+      // On its way back to facing forward: a set stretch of time, fast at first and slowing to a stop.
+      const progress = Math.min(1, (now - turningBack.since) / TURNS_BACK_IN_MS);
+      const left = 1 - settle(progress);
+      pose.yaw = turningBack.yaw * left;
+      pose.pitch = turningBack.pitch * left;
+      if (progress === 1) {
+        turningBack = null;
+      }
+    };
+
+    const blink = (now: number) => {
+      // Happy eyes don't blink, and the next blink waits until they have been open again for a while.
+      if (turned > 0) {
+        blinkAt = now + randomBetween(BLINK_EVERY_MS.min, BLINK_EVERY_MS.max);
+
+        return;
+      }
+
+      const sinceBlink = now - blinkAt;
       if (sinceBlink > blinks * BLINK_MS + (blinks - 1) * DOUBLE_BLINK_PAUSE_MS) {
         blinkAt = now + randomBetween(BLINK_EVERY_MS.min, BLINK_EVERY_MS.max);
         blinks = pickBlinks();
@@ -131,14 +197,21 @@ export function MascotFace({ art, mood = 'awake', still = false, className }: Ma
             ? ease(within / BLINK_CLOSE_MS)
             : 1 - ease(Math.min(1, (within - BLINK_CLOSE_MS) / BLINK_OPEN_MS));
       }
+    };
 
-      // The grid is coarse: a pose that moved less than this paints the very same pixels.
-      const moved =
-        !drawn ||
-        Math.abs(pose.yaw - drawn.yaw) > 0.002 ||
-        Math.abs(pose.pitch - drawn.pitch) > 0.002 ||
-        Math.abs(pose.blink - drawn.blink) > 0.01;
-      if (moved) {
+    // The grid is coarse: a pose that moved less than this paints the very same pixels.
+    const hasMoved = () =>
+      !drawn ||
+      Math.abs(pose.yaw - drawn.yaw) > 0.002 ||
+      Math.abs(pose.pitch - drawn.pitch) > 0.002 ||
+      Math.abs(pose.blink - drawn.blink) > 0.01 ||
+      Math.abs(pose.joy - drawn.joy) > 0.01;
+
+    const tick = (now: number) => {
+      turnEyes(now);
+      turnHead(now);
+      blink(now);
+      if (hasMoved()) {
         paint();
       }
 
@@ -175,7 +248,7 @@ export function MascotFace({ art, mood = 'awake', still = false, className }: Ma
       window.removeEventListener('pointermove', follow);
       document.documentElement.removeEventListener('pointerleave', rest);
     };
-  }, [still, mood, grid, radius]);
+  }, [still, asleep, ahead, grid, radius]);
 
   return (
     <span aria-hidden="true" className={cn('relative block shrink-0', className)}>
@@ -184,7 +257,11 @@ export function MascotFace({ art, mood = 'awake', still = false, className }: Ma
         ref={canvas}
         width={grid}
         height={grid}
-        className={cn('absolute inset-0 size-full [image-rendering:pixelated]', !painted && 'invisible')}
+        className={cn(
+          'absolute inset-0 size-full [image-rendering:pixelated]',
+          !painted && 'invisible',
+          painted && drawnOnly && 'animate-overlay-in motion-reduce:animate-none'
+        )}
       />
     </span>
   );

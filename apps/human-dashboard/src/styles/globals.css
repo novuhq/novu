@@ -29,7 +29,7 @@
   --color-pending: #ff8547;
   --color-pending-subtle: #311d12;
   --color-info: #3b82ff;
-  --color-warning: #f2ae40;
+  --color-warning: #f2a838;
   --color-danger: #fb3748;
   --color-danger-strong: #d0312d;
   --color-danger-border: #6a1c22;
@@ -49,6 +49,8 @@
   --animate-overlay-out: overlay-out 220ms ease-in forwards;
   --animate-rise-in: rise-in 300ms ease-out both;
   --animate-breathe: breathe 4s ease-in-out infinite alternate;
+  --animate-draw-around: draw-around 900ms ease-in-out both;
+  --animate-grow-down: grow-down 400ms ease-out both;
 
   @keyframes terminal-cursor {
     50% {
@@ -109,6 +111,26 @@
     }
     to {
       opacity: 1;
+    }
+  }
+
+  /*
+   * A line that draws itself along its whole path, for a shape with `pathLength="1"`. Where on the path
+   * it starts is the shape's `stroke-dashoffset`, as a share of the way round and negative.
+   */
+  @keyframes draw-around {
+    from {
+      stroke-dasharray: 0 1;
+    }
+    to {
+      stroke-dasharray: 1 0;
+    }
+  }
+
+  /* A line that grows downwards from its top end. Give it `transform-origin: top`. */
+  @keyframes grow-down {
+    from {
+      transform: scaleY(0);
     }
   }
 }
