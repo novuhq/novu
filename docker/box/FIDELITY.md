@@ -81,6 +81,19 @@ with the Development secret key, through the same SSRF guard as a customer's bri
 | Custom domains (`DOMAIN_CONNECT_PRIVATE_KEY`) | Domain Connect fails | No key; could generate a box-only one |
 | Monitoring and marketing (New Relic, Sentry, Segment, Mixpanel, HubSpot, Intercom, Plain) | Off; `/v1/telemetry/measure` returns 404 | Box traffic must not reach real dashboards |
 
+## Hosting on Cloudflare (`cli.mjs --cloud`)
+
+What differs, or is still a workaround, when the box runs on Cloudflare (`cloud/worker.js`) instead of locally.
+
+| Area | Staging / production | Box on Cloudflare | What a PR tester misses | To close it |
+|---|---|---|---|---|
+| Addresses | Dashboard and API on separate hosts (`dashboard.novu.co`, `api.novu.co`) | One `workers.dev` address per box; the box routes by path (Caddy `:18080`) | CORS and cross-origin cookie behavior | A domain with a host per part (NV-9059) |
+| New boxes | - | One Worker per box; `up --from <box>` starts from another Worker's snapshot, which Cloudflare doesn't document | Nothing while it works; if Cloudflare stops allowing it, new boxes bake (about 16 min) | One Worker for all boxes, sharing a base snapshot within one Durable Object class (NV-9059) |
+| GitHub token | Not in the app's environment | The caller's token is in the environment of `bake` and `sync`, so PR code (install scripts) can read it | - | The Worker adds the token to requests to GitHub on the way out |
+| Calls to its own address | Internal | `API_ROOT_URL` and S3 links are the public address, so the box's calls to itself go out to the internet and back | Extra latency on those calls | Route them back inside the Worker |
+| Uptime | Always on | Sleeps after 1 h without requests and wakes in 35 to 50 s; a Cloudflare host restart loses changes since the last save | The first request after a sleep waits | - |
+| Snapshot storage | - | Each box keeps its snapshots until 30 days after its last use; unknown whether they count toward the 50 GB account image limit, or what they cost | - | Ask Cloudflare |
+
 ## Bugs found while building the box
 
 - `subscribers` declares two indexes named `unique_subscriber_per_environment` with different key orders; `syncIndexes`
