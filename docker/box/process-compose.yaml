@@ -84,8 +84,10 @@ processes:
       restart: on_failure
 
   # SQS API for QUEUE_BACKEND=sqs_bullmq; queues and their settings are in config/elasticmq.conf.
+  # The amd64 binary is static glibc: without user.home and user.name it looks up the user through NSS,
+  # loads Ubuntu's libnss and segfaults at start.
   sqs:
-    command: elasticmq -Dconfig.file=/opt/box/config/elasticmq.conf
+    command: elasticmq -Duser.home=/root -Duser.name=root -Dconfig.file=/opt/box/config/elasticmq.conf
     readiness_probe:
       exec:
         command: bash -c '</dev/tcp/127.0.0.1/9324'
