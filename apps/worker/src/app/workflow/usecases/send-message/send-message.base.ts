@@ -34,7 +34,7 @@ import {
 } from '@novu/shared';
 import { format } from 'date-fns';
 import i18next from 'i18next';
-import { cloneDeep, mergeWith } from 'lodash';
+import { cloneDeep, isPlainObject, mergeWith } from 'lodash';
 import { PlatformException, TRANSLATIONS_SERVICE } from '../../../shared/utils';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
@@ -160,17 +160,24 @@ export function integrationOverrideClaimsExclusiveKeys(
   integrationIdentifier: string
 ): boolean {
   const layers = resolveOverrideLayers(bridgeData, overrides, stepId, providerId, integrationIdentifier);
+  const mergedPassthroughBody = mergeWith({}, ...layers.map(readPassthroughBody), replaceArrays);
 
   return resolveExclusiveKeyGroups(providerId).some((group) => {
-    const passthroughClaims = layers.map(
-      (layer) => Object.keys(resolveExclusiveRoutingKeys({ _passthrough: layer._passthrough }, [group])).length > 0
+    const [passthroughKey] = Object.keys(
+      resolveExclusiveRoutingKeys({ _passthrough: { body: mergedPassthroughBody } }, [group])
     );
-    const claims = passthroughClaims.includes(true)
-      ? passthroughClaims
+    const claims = passthroughKey
+      ? layers.map((layer) => layerClaimsExclusiveGroup(readPassthroughBody(layer), [passthroughKey]))
       : layers.map((layer) => layerClaimsExclusiveGroup(layer, group));
 
     return claims.lastIndexOf(true) === INTEGRATION_LAYER_INDEX;
   });
+}
+
+function readPassthroughBody(layer: Record<string, unknown>): Record<string, unknown> {
+  const body = (layer._passthrough as { body?: unknown } | undefined)?.body;
+
+  return isPlainObject(body) ? (body as Record<string, unknown>) : {};
 }
 
 function resolveOverrideLayers(
