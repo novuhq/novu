@@ -192,11 +192,6 @@ shorter wait, to test the sleep; the next deploy without it goes back to 60. Mea
 works across Workers, which Cloudflare doesn't document (it documents sharing within one Durable Object class), so
 it may change while snapshots are in beta; the fallback is a bake.
 
-**When Novu has a domain for boxes, move to the documented setup:** one Worker for all boxes with one Durable
-Object per box, routed by hostname (`pr-123.<domain>`, `pr-123-api.<domain>`, ...), so a base snapshot can be shared
-the way Cloudflare documents (within one Durable Object class) and the dashboard calls the API cross-origin, as in
-production. One Worker per box on workers.dev is the workaround for having no domain.
-
 Limits for now: each sleep leaves a snapshot image (about 3.5 GB) in the account's registry that nothing deletes
 yet (`npx wrangler containers images list`); the GitHub token reaches the bake's and `sync`'s environment, as it
 does locally; requests the box makes to its own public address go out through the internet. Delete a box with
