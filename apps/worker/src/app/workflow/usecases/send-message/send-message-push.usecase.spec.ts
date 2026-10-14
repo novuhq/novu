@@ -573,6 +573,26 @@ describe('SendMessagePush - provider content overrides', () => {
       expect(sendStub.firstCall.args[0].bridgeProviderData).to.deep.equal({ topic: 'updates' });
     });
 
+    it('sends when subscriber has no push channels and integration override sets topic in _passthrough.body', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const result = await buildUsecase().execute(
+        buildCommand({
+          channels: [],
+          providerOverrides: {
+            [INTEGRATION_OVERRIDES_OUTPUT_KEY]: {
+              [fcmIntegration.identifier]: { _passthrough: { body: { topic: 'updates' } } },
+            },
+          },
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      sinon.assert.calledOnce(sendStub);
+      expect(sendStub.firstCall.args[0].target).to.deep.equal(['']);
+    });
+
     it('sends instead of skipping when subscriber FCM channel has empty deviceTokens and integration override sets topic', async () => {
       const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
       sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);

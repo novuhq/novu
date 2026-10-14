@@ -102,6 +102,18 @@ describe('resolvePushRoute', () => {
     expect(routeFor(providerOverride, PushProviderIdEnum.FCM, 'fcm-other').isIntegrationScoped).to.equal(false);
   });
 
+  it('is integration-scoped when the integration override sets the topic in _passthrough.body', () => {
+    const providerOverride = {
+      tokens: ['provider-token'],
+      [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'fcm-main': { _passthrough: { body: { topic: 'updates' } } } },
+    };
+
+    const route = routeFor(providerOverride, PushProviderIdEnum.FCM, 'fcm-main');
+
+    expect(route.credentials).to.deep.equal({ topic: 'updates' });
+    expect(route.isIntegrationScoped).to.equal(true);
+  });
+
   it('is not integration-scoped when a trigger override evicts the integration topic', () => {
     const route = resolvePushRoute(
       {

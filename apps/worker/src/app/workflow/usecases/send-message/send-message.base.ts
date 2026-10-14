@@ -27,6 +27,7 @@ import {
   layerClaimsExclusiveGroup,
   ProvidersIdEnum,
   providers,
+  resolveExclusiveRoutingKeys,
   SmsProviderIdEnum,
   TriggerOverrides,
   unpackProviderOverrideOutput,
@@ -144,9 +145,12 @@ export function combineProviderOverrides(
   return combined;
 }
 
+const INTEGRATION_LAYER_INDEX = 1;
+
 /**
- * True when the sending integration's own override still holds an exclusive key group after
- * precedence, i.e. it chose the destination rather than a provider-wide or trigger layer.
+ * True when the sending integration's own override supplies the winning exclusive key group, i.e. it
+ * chose the destination rather than a provider-wide or trigger layer. Mirrors
+ * `resolveExclusiveRoutingKeys`: a `_passthrough.body` claim on any layer outranks top-level keys.
  */
 export function integrationOverrideClaimsExclusiveKeys(
   bridgeData: BridgeProviderOverrides | null | undefined,
@@ -155,9 +159,18 @@ export function integrationOverrideClaimsExclusiveKeys(
   providerId: string,
   integrationIdentifier: string
 ): boolean {
-  const [, integrationLayer] = resolveOverrideLayers(bridgeData, overrides, stepId, providerId, integrationIdentifier);
+  const layers = resolveOverrideLayers(bridgeData, overrides, stepId, providerId, integrationIdentifier);
 
-  return resolveExclusiveKeyGroups(providerId).some((group) => layerClaimsExclusiveGroup(integrationLayer, group));
+  return resolveExclusiveKeyGroups(providerId).some((group) => {
+    const passthroughClaims = layers.map(
+      (layer) => Object.keys(resolveExclusiveRoutingKeys({ _passthrough: layer._passthrough }, [group])).length > 0
+    );
+    const claims = passthroughClaims.includes(true)
+      ? passthroughClaims
+      : layers.map((layer) => layerClaimsExclusiveGroup(layer, group));
+
+    return claims.lastIndexOf(true) === INTEGRATION_LAYER_INDEX;
+  });
 }
 
 function resolveOverrideLayers(
