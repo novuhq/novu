@@ -101,6 +101,7 @@ function viewsFromAgentChild(child: AgentCardChild): CardChildView[] {
         .filter(Boolean)
         .map((content) => ({ type: 'text' as const, content }));
     case 'table':
+    case 'chart':
       return [];
   }
 }
