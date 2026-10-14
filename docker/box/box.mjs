@@ -1,19 +1,25 @@
 #!/usr/bin/env node
-// Novu Box CLI. Plain Node, no npm dependencies.
+// Novu Box, the commands that run inside the box. Plain Node, no npm dependencies. From your machine, use
+// `cli.mjs`, which calls these.
 //
-//   box bake [ref]      clone ref (default next), install, build, migrate, seed  -> golden /data
-//   box start           boot every process (the image's default command)
-//   box apply-pr <ref>  on a running box: check out a PR number or SHA, rebuild and restart what changed
-//   box quiesce         stop apps, then databases, leaving the supervisor up for a snapshot
-//   box status          list processes
-//   box migrate         replica set, Redis Cluster, Mongo indexes, ClickHouse migrations, S3 bucket
-//                       (run by process-compose before the apps)
+//   box bake [ref]              clone ref (default next), install, build, migrate, seed  -> golden /data
+//   box start                   boot every process (the image's default command)
+//   box apply <pr|branch|sha>   on a running box: merge a PR onto the baked commit, rebuild and restart what changed
+//   box apply --bundle <file>   the same for a bundle from `cli.mjs sync` (a checkout's changes)
+//   box state                   the baked and applied commits, as JSON
+//   box doctor                  whether the box is fit to test on, as JSON; exits 1 if not
+//   box logs <process>          a process's last lines (--tail <n>, default 200)
+//   box quiesce                 stop apps, then databases, leaving the supervisor up for a snapshot
+//   box status                  list processes
+//   box migrate                 replica set, Redis Cluster, Mongo indexes, ClickHouse migrations, S3 bucket
+//                               (run by process-compose before the apps)
 
 import { spawn, spawnSync } from 'node:child_process';
 import { createHmac, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, relative } from 'node:path';
+import { parseArgs } from 'node:util';
 import { clerk, findSeedUser, SEED, seedUserToken } from './clerk.mjs';
 
 const BOX = process.env.BOX_HOME ?? '/opt/box';
@@ -21,8 +27,11 @@ const DATA = '/data';
 const REPO = `${DATA}/novu`;
 const BAKED = `${DATA}/.baked.json`;
 const APPLIED = `${DATA}/.applied.json`;
+// Written before an apply checks out its commit and removed when it succeeds; see `apply`.
+const APPLYING = `${DATA}/.applying.json`;
 const MIGRATED = `${DATA}/.migrated`;
 const RUN = `${DATA}/run`;
+const APPLY_LOCK = `${RUN}/apply.lock`;
 const PC_SOCKET = `${RUN}/process-compose.sock`;
 const DEPLOY = `${DATA}/deploy`;
 const BULLMQ_PRO = `${DATA}/bullmq-pro`;
@@ -104,6 +113,12 @@ function pc(args, options) {
   run('process-compose', [...args, '--use-uds', '--unix-socket', PC_SOCKET], { cwd: RUN, ...options });
 }
 
+function processList() {
+  return JSON.parse(
+    output('process-compose', ['process', 'list', '-o', 'json', '--use-uds', '--unix-socket', PC_SOCKET], { cwd: RUN })
+  );
+}
+
 // GITHUB_TOKEN is only read from the environment of this command; it is never written to disk.
 function gitWithToken(args) {
   if (!env.GITHUB_TOKEN) throw new Error('GITHUB_TOKEN is required to fetch the private enterprise submodule');
@@ -144,6 +159,16 @@ function mergeOntoBaked(ref, prHead) {
   return output('git', ['commit-tree', tree, '-p', baked, '-p', prHead, '-m', `box: ${ref} on ${baked.slice(0, 10)}`], {
     env: { ...env, ...identity },
   });
+}
+
+// A bundle from `cli.mjs sync` holds one commit: a snapshot of a checkout, committed or not, on top of its HEAD.
+// Its prerequisites are in the baked commit's history, which the box always has.
+function unbundle(file) {
+  const [head, ...others] = output('git', ['bundle', 'unbundle', file]).split('\n');
+  if (others.length) throw new Error(`${file} has ${others.length + 1} heads; expected the one from cli.mjs sync`);
+  const sha = head.split(' ')[0];
+
+  return { sha, subject: output('git', ['log', '-1', '--format=%s', sha]) };
 }
 
 function pnpmInstall() {
@@ -906,46 +931,87 @@ async function migrate() {
   fs.writeFileSync(MIGRATED, head);
 }
 
-// Merges the PR onto the baked commit, plans what its diff needs, then applies the plan. `--full` plans everything,
-// like a bake, for when the incremental plan is in doubt.
-async function applyPr(ref, { full = false } = {}) {
-  if (!ref) throw new Error('usage: box apply-pr <pr-number|branch|sha> [--full]');
-  const base = (readJson(APPLIED) ?? readJson(BAKED)).sha;
-  let prHead;
-  let head;
-  let files;
-  await step('fetch', () => {
-    prHead = fetchRef(ref);
-    head = mergeOntoBaked(ref, prHead);
-    files = output('git', ['diff', '--name-only', base, head]).split('\n').filter(Boolean);
-  });
-  log(`${files.length} files changed between ${base.slice(0, 10)} and ${head.slice(0, 10)}`);
-  if (files.some((file) => file.startsWith('docker/box/')))
-    log('WARN: docker/box changed; this PR needs a new base image');
-  await logCiResult(prHead);
-  await step('checkout', () => {
-    run('git', ['checkout', '--force', '--detach', head]);
-    if (files.includes('.source')) gitWithToken(['submodule', 'update', '--init', '--depth', '1', '.source']);
-  });
+// Puts changes on a running box: a PR, branch or SHA from GitHub, or a bundle from `cli.mjs sync` (a checkout's
+// changes). Either is merged onto the baked commit, then the same steps run: diff against what the box runs, plan,
+// build, restart. `--full` plans everything, like a bake, for when the incremental plan is in doubt.
+//
+// An apply that fails after its checkout leaves APPLYING behind. The next apply then also plans for the files the
+// failed one changed, so nothing it half-built stays in place.
+async function apply({ ref, bundle, full = false }) {
+  if (!ref === !bundle) throw new Error('usage: box apply <pr-number|branch|sha> | --bundle <file> [--full]');
+  const releaseLock = lockApply();
+  try {
+    const base = (readJson(APPLIED) ?? readJson(BAKED)).sha;
+    const interrupted = readJson(APPLYING)?.sha;
+    const target = await step('fetch', () => {
+      const fetched = bundle ? unbundle(bundle) : { sha: fetchRef(ref), subject: ref };
 
-  let plan;
-  await step('plan', () => {
-    plan = full ? fullPlan() : planFor(files);
-  });
-  log(
-    `plan: install ${plan.install ? 'yes' : 'no'}, build ${plan.build.join(' ') || 'nothing'}, restart ${plan.restart.join(' ') || 'nothing'}`
-  );
-  await applyPlan(plan);
+      return {
+        ref: fetched.subject,
+        source: bundle ? 'sync' : 'github',
+        head: fetched.sha,
+        sha: mergeOntoBaked(fetched.subject, fetched.sha),
+      };
+    });
+    const changed = (to) => output('git', ['diff', '--name-only', base, to]).split('\n').filter(Boolean);
+    const files = [...new Set([...changed(target.sha), ...(interrupted ? changed(interrupted) : [])])];
+    log(`${files.length} files changed between ${base.slice(0, 10)} and ${target.sha.slice(0, 10)}`);
+    if (interrupted) log(`the last apply (${interrupted.slice(0, 10)}) didn't finish; its files are planned too`);
+    if (files.some((file) => file.startsWith('docker/box/')))
+      log("WARN: docker/box changed; the box keeps running its image's copy until the image is rebuilt");
+    if (target.source === 'github') await logCiResult(target.head);
 
-  fs.writeFileSync(
-    APPLIED,
-    JSON.stringify({ ref, sha: head, prHead, base, files: files.length, full, at: new Date().toISOString() }, null, 2)
-  );
-  fs.writeFileSync(
-    `${RUN}/dashboard/__box.json`,
-    JSON.stringify({ baked: readJson(BAKED), applied: readJson(APPLIED) })
-  );
-  log(`applied ${ref} at ${head}`);
+    fs.writeFileSync(APPLYING, JSON.stringify({ sha: target.sha, at: new Date().toISOString() }));
+    await step('checkout', () => {
+      run('git', ['checkout', '--force', '--detach', target.sha]);
+      if (files.includes('.source')) gitWithToken(['submodule', 'update', '--init', '--depth', '1', '.source']);
+    });
+    const plan = await step('plan', () => (full ? fullPlan() : planFor(files)));
+    log(
+      `plan: install ${plan.install ? 'yes' : 'no'}, build ${plan.build.join(' ') || 'nothing'}, restart ${plan.restart.join(' ') || 'nothing'}`
+    );
+    await applyPlan(plan);
+
+    fs.writeFileSync(
+      APPLIED,
+      JSON.stringify({ ...target, base, files: files.length, full, at: new Date().toISOString() }, null, 2)
+    );
+    fs.rmSync(APPLYING);
+    fs.writeFileSync(
+      `${RUN}/dashboard/__box.json`,
+      JSON.stringify({ baked: readJson(BAKED), applied: readJson(APPLIED) })
+    );
+    log(`applied ${target.ref} at ${target.sha}`);
+  } finally {
+    releaseLock();
+  }
+}
+
+// One apply at a time: a PR push and a sync landing together would build over each other's checkout. A lock whose
+// process is gone (a killed apply) is taken over, and the APPLYING it left makes the next apply redo its files.
+function lockApply() {
+  fs.mkdirSync(RUN, { recursive: true });
+  try {
+    fs.writeFileSync(APPLY_LOCK, String(process.pid), { flag: 'wx' });
+  } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+    const holder = Number(fs.readFileSync(APPLY_LOCK, 'utf8'));
+    if (isAlive(holder)) throw new Error(`another apply is running (pid ${holder}); wait for it to finish`);
+    log(`taking over the lock of apply ${holder}, which is gone`);
+    fs.writeFileSync(APPLY_LOCK, String(process.pid));
+  }
+
+  return () => fs.rmSync(APPLY_LOCK, { force: true });
+}
+
+function isAlive(pid) {
+  try {
+    process.kill(pid, 0);
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // What a diff needs: new dependencies -> install and restart everything; code -> build the apps nx says are
@@ -999,8 +1065,16 @@ function affectedApps(files, { install }) {
 
 async function applyPlan({ install, build: projects, enterprise, restart }) {
   // Building next to the running apps gets OOM-killed in 8 GB. The dashboard is static files, so it keeps serving.
+  // An apply killed mid-build leaves some of them stopped, and process-compose fails to stop a stopped process;
+  // `restart` below starts those too.
   const stop = restart.filter((name) => name !== 'dashboard');
-  if (stop.length) await step(`stop ${stop.join(' ')}`, () => pc(['process', 'stop', ...stop]));
+  const running = new Set(
+    processList()
+      .filter((entry) => entry.is_running)
+      .map((entry) => entry.name)
+  );
+  const stopRunning = stop.filter((name) => running.has(name));
+  if (stopRunning.length) await step(`stop ${stopRunning.join(' ')}`, () => pc(['process', 'stop', ...stopRunning]));
   if (install) await step('pnpm install', pnpmInstall);
   if (projects.length) await step(`build ${projects.join(' ')}`, () => build(projects, { enterprise }));
   if (restart.includes('bridge')) await step('build bridge', buildBridge);
@@ -1038,6 +1112,54 @@ async function logCiResult(sha) {
   }
 }
 
+// Whether the box is fit to test on, as JSON: no apply running or left half done, every process up (and ready, if it
+// has a probe), and the API, dashboard and bridge app answering. `problems` says what isn't; it exits 1 if any.
+async function doctor() {
+  const problems = [];
+  const lock = fs.existsSync(APPLY_LOCK) ? Number(fs.readFileSync(APPLY_LOCK, 'utf8')) : null;
+  if (lock && isAlive(lock)) problems.push(`an apply is running (pid ${lock})`);
+  const applying = readJson(APPLYING);
+  if (applying && !(lock && isAlive(lock)))
+    problems.push(`the apply of ${applying.sha.slice(0, 10)} didn't finish; apply again to finish it`);
+
+  const processes = processList()
+    .filter((entry) => entry.status !== 'Disabled')
+    .map(({ name, status, is_ready: ready, exit_code: exitCode, restarts }) => ({
+      name,
+      status,
+      ready,
+      exitCode,
+      restarts,
+    }));
+  for (const { name, status, ready, exitCode } of processes) {
+    const healthy = status === 'Completed' ? exitCode === 0 : status === 'Running' && ready !== 'Not Ready';
+    if (!healthy) problems.push(`${name} is ${status === 'Running' ? 'not ready' : status}`);
+  }
+
+  const http = {};
+  const urls = {
+    api: 'http://127.0.0.1:3000/v1/health-check',
+    dashboard: 'http://127.0.0.1:4200/',
+    bridge: 'http://127.0.0.1:4000/api/novu',
+  };
+  for (const [name, url] of Object.entries(urls)) {
+    http[name] = await fetch(url, { signal: AbortSignal.timeout(5000) }).then(
+      (response) => response.status,
+      () => 0
+    );
+    if (http[name] !== 200) problems.push(`${name} answered ${http[name] || 'nothing'} at ${url}`);
+  }
+
+  console.log(
+    JSON.stringify(
+      { ok: !problems.length, problems, baked: readJson(BAKED), applied: readJson(APPLIED), http, processes },
+      null,
+      2
+    )
+  );
+  if (problems.length) process.exitCode = 1;
+}
+
 async function quiesce() {
   await step('stop apps', () => pc(['process', 'stop', ...APPS]));
   await step('stop databases', () => pc(['process', 'stop', ...DATABASES]));
@@ -1047,11 +1169,28 @@ const commands = {
   bake: () => bake(process.argv[3]),
   start,
   migrate,
-  'apply-pr': () =>
-    applyPr(
-      process.argv.slice(3).find((arg) => !arg.startsWith('--')),
-      { full: process.argv.includes('--full') }
-    ),
+  apply: () => {
+    const { values, positionals } = parseArgs({
+      args: process.argv.slice(3),
+      options: { bundle: { type: 'string' }, full: { type: 'boolean' } },
+      allowPositionals: true,
+    });
+
+    return apply({ ref: positionals[0], ...values });
+  },
+  state: () =>
+    console.log(JSON.stringify({ baked: readJson(BAKED), applied: readJson(APPLIED), applying: readJson(APPLYING) })),
+  doctor,
+  logs: () => {
+    const { values, positionals } = parseArgs({
+      args: process.argv.slice(3),
+      options: { tail: { type: 'string', default: '200' } },
+      allowPositionals: true,
+    });
+    if (!positionals[0])
+      throw new Error('usage: box logs <process> [--tail <lines>]; `box status` lists the processes');
+    pc(['process', 'logs', positionals[0], '--tail', values.tail]);
+  },
   quiesce,
   status: () => pc(['process', 'list']),
 };

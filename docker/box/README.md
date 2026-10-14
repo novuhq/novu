@@ -9,7 +9,11 @@ The image holds tools only. The Novu checkout, `node_modules`, builds and databa
 
 1. `box bake` builds a "golden" `/data` from a ref (about 12 minutes).
 2. `box start` boots from it (about 20 seconds to a healthy API).
-3. `box apply-pr <n>` puts a PR on a running box and rebuilds only what it changed (about 1 to 6 minutes).
+3. `box apply` puts a PR, or your checkout's changes, on a running box and rebuilds only what they change (about
+   20 seconds to 6 minutes).
+
+`box.mjs` holds these commands and runs inside the box. `cli.mjs` runs on your machine and drives a box: start
+it, sync your checkout to it, check it, read its logs (see "From your machine" below).
 
 ## What runs inside
 
@@ -58,7 +62,7 @@ preview-only values. A box runs PR code, and that code can read its environment,
 | `LAUNCH_DARKLY_SDK_KEY` | LaunchDarkly project `default`, environment `dev` (staging's) | API, worker |
 | `CLERK_SECRET_KEY` | Clerk app `novu-box`, development instance | Bake (seeds the user and org), API, `smoke.mjs` |
 | `STRIPE_API_KEY` | Stripe sandbox `Novu Box` | Bake (puts the org on Team), `stripe listen`, API |
-| `GITHUB_TOKEN` | GitHub, read access to `novuhq/novu` and the enterprise submodule | `bake` and `apply-pr` only; pass it with `-e`, it's never written to disk |
+| `GITHUB_TOKEN` | GitHub, read access to `novuhq/novu` and the enterprise submodule | `bake` and `apply` only; pass it with `-e`, it's never written to disk (`cli.mjs` takes it from `gh auth token`) |
 | `BULL_MQ_PRO_NPM_TOKEN` (optional) | Taskforce.sh registry | Bake; without it the box runs open-source BullMQ |
 | `NOVU_MANAGED_CLAUDE_API_KEY` (optional) | Anthropic, a workspace with a monthly spend limit | Start (runs thalamus and seeds the `box-managed` agent), API, bridge app (real models for its agents) |
 
@@ -92,13 +96,13 @@ docker run -d --name novu-box --env-file docker/box/.env -v novu-box-data:/data 
 
 Open the dashboard at http://localhost:14200 and Mailpit at http://localhost:18025.
 
-Put a PR on the running box:
+Put a PR (or a branch, or a full SHA) on the running box:
 
 ```sh
-GITHUB_TOKEN=$(gh auth token) docker exec -e GITHUB_TOKEN novu-box node /opt/box/box.mjs apply-pr 12821
+GITHUB_TOKEN=$(gh auth token) docker exec -e GITHUB_TOKEN novu-box node /opt/box/box.mjs apply 12821
 ```
 
-`apply-pr` merges the PR onto the baked commit (like CI's merge ref) and stops if the two conflict. It then
+`apply` merges the PR onto the baked commit (like CI's merge ref) and stops if the two conflict. It then
 reinstalls if the lockfile changed, builds the projects `nx affected` reports, redeploys the API and worker,
 runs migrations and restarts what changed. A PR that changes `@novu/framework`, `@novu/agent-toolkit` or
 `playground/nextjs` also rebuilds the bridge app (about 45 s), restarts it and syncs it again, so the PR's
@@ -106,8 +110,40 @@ workflows and agents run on the PR's framework. It logs the plan before it runs 
 `plan: install no, build @novu/worker, restart worker` (about 20 s for that one).
 
 Add `--full` to install, build and restart everything, as a bake does (about 5 minutes), when the box behaves in a
-way the PR doesn't explain. `apply-pr` also logs the PR's `PR Checks Passed` result from GitHub, and a `WARN` if
+way the PR doesn't explain. `apply` also logs the PR's `PR Checks Passed` result from GitHub, and a `WARN` if
 CI failed: the box skips type checks, so it can run code CI rejects.
+
+One apply runs at a time; a second one stops with `another apply is running`. An apply that fails or is killed
+after its checkout leaves `/data/.applying.json`, `doctor` reports it, and the next apply rebuilds what that one
+touched as well as its own changes.
+
+### From your machine: `cli.mjs`
+
+`cli.mjs` drives a box from your checkout. Run it from anywhere in the checkout; `--box <name>` picks the box
+(default `novu-box`, with the volume `novu-box-data`). Local boxes publish the same host ports, so one runs at a time.
+
+| Command | What it does |
+|---|---|
+| `node docker/box/cli.mjs up` | Starts the box: creates it if needed, after baking `next` into an empty volume (about 12 minutes). Waits until `doctor` passes |
+| `node docker/box/cli.mjs sync` | Puts this checkout on the box, committed or not, and rebuilds what it changes. `--full` as for `apply` |
+| `node docker/box/cli.mjs doctor` | Whether the box is fit to test on, as JSON; `problems` says what isn't, and it exits 1 if any |
+| `node docker/box/cli.mjs logs <process>` | A process's last 200 lines (`--tail <n>`); `doctor` lists the processes |
+| `node docker/box/cli.mjs exec -- <command>` | Runs a command in the box's checkout (`/data/novu`) |
+| `node docker/box/cli.mjs down` | Stops the box. Its volume, and so its data, stays; `up` starts it again |
+
+`sync` puts the checkout on the box as `apply` puts a PR: it commits HEAD plus every change, untracked files
+included and ignored files not, into one commit, and sends it as a git bundle. The box merges it onto the baked
+commit and runs the same plan. Your own index and staging stay as they are. Measured on a running box:
+
+| Change | Plan | Time |
+|---|---|---|
+| None since the last sync | nothing | 2 s |
+| An API file, plus a new untracked file | build the API | about 55 s |
+| A library (`@novu/application-generic`) | build the API and worker | about 55 s |
+
+`sync` stops when the checkout has more than 500 untracked files, which is scratch output rather than code, and
+names their folders. Add those folders to `.git/info/exclude` (git ignores them without a `.gitignore` change).
+It sends the enterprise submodule's commit, not uncommitted changes inside `.source`.
 
 Run the smoke test from the host (38 checks, 43 with the Anthropic key, about 2 minutes; writes `smoke.json` to
 the directory given):
@@ -152,6 +188,8 @@ org per month instead of the default 10, see FIDELITY.md). Each run uses 2 conve
 Other commands, run with `docker exec novu-box node /opt/box/box.mjs <command>`:
 
 - `status` lists processes. Logs are in `/data/logs/process-compose.log`.
+- `doctor` and `logs <process>`, which `cli.mjs` runs.
+- `state` prints the baked and applied commits, and an unfinished apply, as JSON.
 - `quiesce` stops the apps, then the databases, leaving the supervisor up for a snapshot.
 
 ## What the bake seeds
