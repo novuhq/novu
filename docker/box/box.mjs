@@ -20,7 +20,7 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, relative } from 'node:path';
 import { parseArgs } from 'node:util';
-import { clerk, findSeedUser, SEED, seedUserToken } from './clerk.mjs';
+import { clerk, findSeedUser, SEED, seedPassword, seedUserToken } from './clerk.mjs';
 
 const BOX = process.env.BOX_HOME ?? '/opt/box';
 const DATA = '/data';
@@ -532,19 +532,23 @@ async function api(path, { headers = {}, ...init } = {}) {
 // The API creates the Novu user and org from the Clerk ones on their first request, as in production.
 // A bake starts with an empty Mongo, so the org link left by the previous bake is dropped first; boxes
 // from an older bake then lose the seeded org. The user keeps its Novu ID, which Clerk still holds.
+// The password is set on every bake, so BOX_SEED_PASSWORD is the one place it changes.
 async function seedClerk() {
   let { user, org } = await findSeedUser();
-  user ??= await clerk('/users', {
-    method: 'POST',
-    body: {
-      email_address: [SEED.email],
-      password: SEED.password,
-      first_name: SEED.firstName,
-      last_name: SEED.lastName,
-      skip_password_checks: true,
-      skip_legal_checks: true,
-    },
-  });
+  const password = seedPassword();
+  if (user) await clerk(`/users/${user.id}`, { method: 'PATCH', body: { password, skip_password_checks: true } });
+  else
+    user = await clerk('/users', {
+      method: 'POST',
+      body: {
+        email_address: [SEED.email],
+        password,
+        first_name: SEED.firstName,
+        last_name: SEED.lastName,
+        skip_password_checks: true,
+        skip_legal_checks: true,
+      },
+    });
   org ??= await clerk('/organizations', { method: 'POST', body: { name: SEED.orgName, created_by: user.id } });
   await clerk(`/organizations/${org.id}/metadata`, {
     method: 'PATCH',

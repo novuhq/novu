@@ -61,15 +61,26 @@ preview-only values. A box runs PR code, and that code can read its environment,
 |---|---|---|
 | `LAUNCH_DARKLY_SDK_KEY` | LaunchDarkly project `default`, environment `dev` (staging's) | API, worker |
 | `CLERK_SECRET_KEY` | Clerk app `novu-box`, development instance | Bake (seeds the user and org), API, `smoke.mjs` |
+| `BOX_SEED_PASSWORD` | The seed user's dashboard password, from the password manager | Bake (sets it on the Clerk user) |
 | `STRIPE_API_KEY` | Stripe sandbox `Novu Box` | Bake (puts the org on Team), `stripe listen`, API |
 | `GITHUB_TOKEN` | GitHub, read access to `novuhq/novu` and the enterprise submodule | `bake` and `apply` only; pass it with `-e`, it's never written to disk (`cli.mjs` takes it from `gh auth token`) |
 | `BULL_MQ_PRO_NPM_TOKEN` (optional) | Taskforce.sh registry | Bake; without it the box runs open-source BullMQ |
 | `NOVU_MANAGED_CLAUDE_API_KEY` (optional) | Anthropic, a workspace with a monthly spend limit | Start (runs thalamus and seeds the `box-managed` agent), API, bridge app (real models for its agents) |
 
-The dashboard signs in as `agent+clerk_test@novu.co` / `Agent123!@#` (a Clerk test user, `*@novu.co` only). If
-Clerk asks for an email code, it's `424242`: `+clerk_test` addresses never get a real email. All boxes share
-the Clerk development instance and its one seed org, and every bake re-links that org to the new box. Older
-boxes stop signing in correctly after a newer bake.
+The dashboard signs in as `agent+clerk_test@novu.co` with `BOX_SEED_PASSWORD`. If Clerk then asks for an email
+code, it's `424242`: `+clerk_test` addresses never get a real email. All boxes share the Clerk development
+instance and its one seed org, and every bake re-links that org to the new box. Older boxes stop signing in
+correctly after a newer bake.
+
+Box URLs are public, like staging's, so the password is what keeps people out. That holds only while the Clerk
+instance has these two settings, because anyone can type `424242` for any `+clerk_test` address:
+
+1. **Email → Sign-in with email verification code: off.** Sign-in starts with the password.
+2. **Restrictions → Sign-up mode: Restricted.** Nobody can create an account; the bake creates the seed user
+   through the Backend API, which isn't affected.
+
+Check them with `curl -s https://electric-sponge-6737.clerk.accounts.dev/v1/environment`: `email_address` must not
+list `email_code` in `first_factors`, and `sign_up.mode` must be `restricted`.
 
 ## Use it
 

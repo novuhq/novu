@@ -1,10 +1,10 @@
 // The seeded user and org live in the `novu-box` Clerk app that every box shares. The seed and the smoke test
 // get session tokens through the Clerk Backend API, which only a development instance allows.
-// `+clerk_test` makes it a Clerk test address: any email code Clerk asks for is 424242, and none is sent.
+// `+clerk_test` makes it a Clerk test address: any email code Clerk asks for is 424242, and none is sent. That is
+// only safe because the instance signs in with a password first and has sign-up turned off (README, "Clerk").
 
 export const SEED = {
   email: 'agent+clerk_test@novu.co',
-  password: 'Agent123!@#',
   firstName: 'Agent',
   lastName: 'User',
   orgName: 'Agent Organization',
@@ -23,6 +23,13 @@ export async function clerk(path, { method = 'GET', body } = {}) {
   return text ? JSON.parse(text) : null;
 }
 
+// Box URLs are public, so the password is a secret: never in the repo, never logged.
+export function seedPassword() {
+  if (!process.env.BOX_SEED_PASSWORD) throw new Error('BOX_SEED_PASSWORD is not set; pass --env-file docker/box/.env');
+
+  return process.env.BOX_SEED_PASSWORD;
+}
+
 export async function findSeedUser() {
   const [user] = await clerk(`/users?email_address=${encodeURIComponent(SEED.email)}`);
   if (!user) return {};
@@ -33,7 +40,10 @@ export async function findSeedUser() {
 
 // A token for the seeded user with the seeded org active, like the dashboard sends after sign-in.
 export async function seedUserToken({ userId, orgId }) {
-  const session = await clerk('/sessions', { method: 'POST', body: { user_id: userId, active_organization_id: orgId } });
+  const session = await clerk('/sessions', {
+    method: 'POST',
+    body: { user_id: userId, active_organization_id: orgId },
+  });
   const { jwt } = await clerk(`/sessions/${session.id}/tokens`, { method: 'POST', body: { expires_in_seconds: 600 } });
 
   return jwt;
