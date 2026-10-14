@@ -1,4 +1,4 @@
-import { createHash, randomInt } from 'node:crypto';
+import { randomInt } from 'node:crypto';
 import {
   ConflictException,
   GoneException,
@@ -286,12 +286,12 @@ return n
 
 /**
  * Which key an environment has right now, without the key itself: a code remembers it, so a code made
- * with a key that was replaced since can't hand out the new one.
+ * with a key that was replaced since can't hand out the new one. It is the start of the hash Novu already
+ * keeps of every key to look it up by. A key from before keys had a hash has none, so it reads as empty,
+ * and every key that replaces it has one.
  */
-export function keyFingerprint(apiKey: Pick<IApiKey, 'key' | 'hash'> | undefined): string {
-  const source = apiKey?.hash || (typeof apiKey?.key === 'string' ? apiKey.key : JSON.stringify(apiKey?.key ?? ''));
-
-  return createHash('sha256').update(source).digest('hex').slice(0, 32);
+export function keyFingerprint(apiKey: Pick<IApiKey, 'hash'> | undefined): string {
+  return apiKey?.hash?.slice(0, 32) ?? '';
 }
 
 function currentCodeKey(agentId: string): string {
@@ -308,7 +308,7 @@ function parseRecord(raw: string): ConnectCodeRecord | null {
       !parsed.agentId ||
       !parsed.handle ||
       !parsed.expiresAt ||
-      !parsed.keyFingerprint
+      typeof parsed.keyFingerprint !== 'string'
     ) {
       return null;
     }
