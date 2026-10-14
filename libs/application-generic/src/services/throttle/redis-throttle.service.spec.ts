@@ -34,6 +34,25 @@ describe('RedisThrottleService SQS cache client', () => {
     'THROTTLE_REDIS_TTL_BUFFER_MS',
   ] as const;
   const originalEnv = Object.fromEntries(envKeys.map((key) => [key, process.env[key]]));
+  const reservationParams = {
+    environmentId: 'env-1',
+    subscriberId: 'sub-1',
+    workflowId: 'wf-1',
+    stepId: 'step-1',
+    jobId: 'job-1',
+    windowMs: 60_000,
+    limit: 2,
+    nowMs: 1_700_000_000_000,
+  };
+
+  beforeEach(() => {
+    process.env.QUEUE_BACKEND = 'sqs';
+    process.env.IS_SELF_HOSTED = 'true';
+    process.env.NOVU_ENTERPRISE = 'false';
+    process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+    process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+    delete process.env.THROTTLE_REDIS_TTL_BUFFER_MS;
+  });
 
   afterEach(() => {
     for (const key of envKeys) {
@@ -47,32 +66,17 @@ describe('RedisThrottleService SQS cache client', () => {
     }
 
     jest.clearAllMocks();
+    mockEvalsha.mockImplementation(async () => [1, 1, 90]);
   });
 
   it('reserves a throttle slot through the cache client and shuts it down', async () => {
-    process.env.QUEUE_BACKEND = 'sqs';
-    process.env.IS_SELF_HOSTED = 'true';
-    process.env.NOVU_ENTERPRISE = 'false';
-    process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-    process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-    delete process.env.THROTTLE_REDIS_TTL_BUFFER_MS;
-
     const workflowInMemoryProviderService = new WorkflowInMemoryProviderService();
     expect(workflowInMemoryProviderService.getClient()).toBeUndefined();
 
     const throttleService = new RedisThrottleService(workflowInMemoryProviderService);
     expect(CacheInMemoryProviderService).not.toHaveBeenCalled();
 
-    const result = await throttleService.reserveThrottleSlot({
-      environmentId: 'env-1',
-      subscriberId: 'sub-1',
-      workflowId: 'wf-1',
-      stepId: 'step-1',
-      jobId: 'job-1',
-      windowMs: 60_000,
-      limit: 2,
-      nowMs: 1_700_000_000_000,
-    });
+    const result = await throttleService.reserveThrottleSlot(reservationParams);
 
     expect(result).toEqual({
       granted: true,
@@ -98,25 +102,10 @@ describe('RedisThrottleService SQS cache client', () => {
   });
 
   it('runs the script with EVAL when the node owning the key never got SCRIPT LOAD (Redis Cluster)', async () => {
-    process.env.QUEUE_BACKEND = 'sqs';
-    process.env.IS_SELF_HOSTED = 'true';
-    process.env.NOVU_ENTERPRISE = 'false';
-    process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-    process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-    delete process.env.THROTTLE_REDIS_TTL_BUFFER_MS;
     mockEvalsha.mockRejectedValue(new Error('NOSCRIPT No matching script. Please use EVAL.'));
 
     const throttleService = new RedisThrottleService(new WorkflowInMemoryProviderService());
-    const result = await throttleService.reserveThrottleSlot({
-      environmentId: 'env-1',
-      subscriberId: 'sub-1',
-      workflowId: 'wf-1',
-      stepId: 'step-1',
-      jobId: 'job-1',
-      windowMs: 60_000,
-      limit: 2,
-      nowMs: 1_700_000_000_000,
-    });
+    const result = await throttleService.reserveThrottleSlot(reservationParams);
 
     expect(result.granted).toBe(true);
     expect(mockEval).toHaveBeenCalledWith(
@@ -128,7 +117,6 @@ describe('RedisThrottleService SQS cache client', () => {
       'job-1'
     );
 
-    mockEvalsha.mockReset();
     await throttleService.onModuleDestroy();
   });
 });
