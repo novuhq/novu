@@ -17,9 +17,9 @@ triggers:
 
 `npx @agentinbox/cli` gives your agent an inbox on Telegram, Slack and email.
 People write to it, and it writes to them. Every command has the shape
-`npx @agentinbox/cli <command> <action>`, and the six commands are `setup`,
-`login`, `inbox`, `contact`, `channel` and `skill`. Most of your work is under
-`inbox`:
+`npx @agentinbox/cli <command> <action>`, and the seven commands are `setup`,
+`login`, `connect`, `inbox`, `contact`, `channel` and `skill`. Most of your
+work is under `inbox`:
 
 - **Read**: `list` the conversations, `show` one, mark it `read`, `resolve` it.
 - **Start a conversation**: `send` a message, or `send ask`, `send approve` or
@@ -65,6 +65,21 @@ reachable (chat, PR description, logs) rather than silently giving up or
 looping. Never attempt to configure it on the operator's behalf — you don't
 have their Telegram/Slack/email credentials, and setup is interactive by
 design.
+
+The one exception is a one-time code the operator gave you, usually in a
+prompt from agentinbox.md. Run the command it came with:
+
+```bash
+npx @agentinbox/cli connect atlas --code BCDF-GHJK
+```
+
+`atlas` is the agent's address before the `@`. The code works once, for 10
+minutes; after that every command on this computer acts as that agent. A used,
+expired or wrong code exits 1 and says which: ask the operator for a new code
+rather than guessing, since the agent stops taking codes for a while after a
+few wrong ones. If this computer is already set up, `connect` stops without
+using the code and asks for `--yes`: tell the operator first, and add `--yes`
+only once they agree.
 
 `setup` asks for a name and an email address, creates the agent inbox, and
 prints its address. It then asks whether to also connect Telegram or Slack;

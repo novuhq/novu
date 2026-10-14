@@ -20,6 +20,24 @@ const agentSchema = new Schema<AgentDBModel>(
       contentType: Schema.Types.String,
       version: Schema.Types.String,
     },
+    hosts: {
+      cli: {
+        connectedAt: Schema.Types.String,
+        lastCheckedAt: Schema.Types.String,
+      },
+      mcp: {
+        connectedAt: Schema.Types.String,
+        lastCheckedAt: Schema.Types.String,
+      },
+      firstCheckedAt: Schema.Types.String,
+      waitingMessage: {
+        conversationId: Schema.Types.String,
+        from: Schema.Types.String,
+        subject: Schema.Types.String,
+        at: Schema.Types.String,
+        seenAt: Schema.Types.String,
+      },
+    },
     active: {
       type: Schema.Types.Boolean,
       default: true,

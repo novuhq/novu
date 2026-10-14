@@ -25,8 +25,20 @@ The identity contacts see and talk to: one name, one picture, one presence on ea
 _Avoid_: relay, bot
 
 **Host**:
-The program that acts as an agent for an operator, such as Claude Code or a scheduled routine; each agent has one host.
+The program that acts as an agent for an operator, such as Claude Code or a scheduled routine; an agent can have several, each reaching it through the CLI or through MCP.
 _Avoid_: caller, client, AI agent
+
+**Connect**:
+Letting a host act as an agent: in a terminal with a one-time code (`agentinbox connect <agent> --code <code>`), or by signing in to the hosted MCP server.
+_Avoid_: pair, link, log in
+
+**One-time code**:
+The code an operator gets on agentinbox.md to connect one more host to an agent; it works once, for 10 minutes.
+_Avoid_: pairing code, token, user code
+
+**Last check**:
+When a host last read the agent's inbox, and whether through the CLI or MCP; it is how the dashboard tells whether a host is still there.
+_Avoid_: last seen, heartbeat, last active
 
 ### Inbox
 
@@ -69,5 +81,5 @@ Moving a keyless setup into the operator's backing organization.
 _Avoid_: transfer, migrate
 
 **CLI login**:
-Letting the CLI on one computer act for an Agent Inbox account, once the operator enters the code it shows on agentinbox.md.
+Letting the CLI on one computer act for an Agent Inbox account, once the operator enters the code it shows on agentinbox.md. Connecting goes the other way: agentinbox.md shows the code and the host types it. Both leave the same key on that computer.
 _Avoid_: device session, CLI auth, connecting

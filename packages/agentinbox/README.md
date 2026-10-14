@@ -13,6 +13,9 @@ npx @agentinbox/cli channel add email
 # Keep it in an Agent Inbox account: sign in or up on agentinbox.md, no secret key to copy:
 npx @agentinbox/cli login
 
+# Connect one more host (Claude Code, Cursor, a routine) to your agent, with a code from agentinbox.md:
+npx @agentinbox/cli connect atlas --code BCDF-GHJK
+
 # Forever after, by any agent on the machine:
 npx @agentinbox/cli inbox send ask "Which environment should I deploy to?"
 npx @agentinbox/cli inbox send approve "Delete 342 stale records from prod?"
@@ -70,10 +73,11 @@ npx @agentinbox/cli inbox resolve conv_123              # finished; opens again 
 - Telegram is a private bot only you control. On a terminal, `channel add telegram` asks whether to paste the BotFather token here or finish on a page at [agentinbox.md](https://www.agentinbox.md) (QR or browser). Without a terminal it prints that page and waits. The CLI finishes as soon as you tap **Start** (up to 15 minutes). Running it again resumes at whatever step is left. `--telegram-bot-token <token>` skips the choice.
 - Slack works the same way: paste an App Configuration Token (`xoxe.xoxp-…`) in the terminal, or open the setup page and then click **Add to Slack**. `--slack-config-token <token>` skips the choice.
 - `login` opens agentinbox.md, where you sign in (or sign up), check that the page shows the same code as your terminal, and approve; the CLI then saves your Agent Inbox account's key. Deny there stops the login. A keyless setup made on this computer moves into the account on the same page, so your channels keep working. After logging in, the CLI saves the contact your account has for you as who agents reach by default, so you are the same person here, on the dashboard and on any other computer, on the channels you already connected. When the account has no such contact yet, it asks who you are and makes one.
+- `connect <agent> --code <code>` is the other way round from `login`: agentinbox.md shows a one-time code, and the host types it in its terminal. No browser is needed on that computer, so it suits an agent you hand a prompt to. `<agent>` is the agent's address before the `@`. The code works once, for 10 minutes; a used, expired or wrong code fails with a message that says which, and an agent takes only a few wrong codes at a time. The CLI saves the same key `login` does, so every command on that computer then acts as the agent. When the computer already has a setup, `connect` asks before replacing it (without a terminal it stops and says to pass `--yes`); the code isn't used until you agree. Each agent can have several hosts; the dashboard shows when each way in (CLI or MCP) last checked the inbox.
 - `contact invite` gives you a link to share with a **different** person — nothing is sent for you. Without `--via` it opens a page (valid for 3 days) where they connect any channel you set up — Telegram, Slack, and/or Email — and pick their default. With `--via telegram|slack` you get the direct connect link instead (a Slack authorize URL or Telegram deep link, valid for minutes). Pass an email address instead of an id (or `--via email --email <address>`) and a verification email is sent; they must click **Verify this email** before the agent can message that address. The contact's id comes from the address (`alice@acme.com` becomes `alice`, with a short suffix when `alice` is taken). Then `--to alice` reaches them on their default channel. Pass `--name "Alice Chen"` so they show up by name.
 - `contact list` lists the contacts — every person `--to` can address — so an agent can check who exists before coordinating between people. It's a directory, not a reachability check: if delivery fails with "no linked endpoint", `contact invite` them on that channel.
 - Agents stay channel-blind: routing is the person's preference — the default they picked on the invite page, or the first channel they connected. `--via telegram|slack|email` on `send` is a rare per-call **delivery** override, not how you onboard someone.
-- Every command has the shape `<command> <action>`: `setup`, `login`, `inbox`, `contact`, `channel`, `skill`.
+- Every command has the shape `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`, `skill`.
 - `ask`, `approve` and `choose` deliver a one-off message (with action buttons where relevant) and **block** until the person answers, the `--ttl` expires, or `--timeout` elapses.
 - Answers flow back through button clicks or plain replies; the CLI prints the answer and your agent continues.
 
@@ -103,7 +107,7 @@ npx @agentinbox/cli inbox resolve conv_123              # finished; opens again 
 
 ## Auth & headless use
 
-`login` and `setup` store credentials in `~/.agentinbox/config.json`; `setup` reuses a saved login. On a self-hosted deployment, pass `setup --secret-key <key>` or set `INBOX_SECRET_KEY` (and optionally `INBOX_API_URL`) for an existing environment. `INBOX_SECRET_KEY` takes priority over the saved login.
+`login`, `connect` and `setup` store credentials in `~/.agentinbox/config.json`; `setup` reuses a saved login. On a self-hosted deployment, pass `setup --secret-key <key>` or set `INBOX_SECRET_KEY` (and optionally `INBOX_API_URL`) for an existing environment. `INBOX_SECRET_KEY` takes priority over the saved login.
 
 Without a login, `setup` creates a keyless environment: a free demo with a small message allowance. Run `login` anytime to keep it; your channels and relay move into your Agent Inbox account. Once the allowance is used up, the next command exits `1` and asks you to run `login` instead of delivering the message (a sign-up link is also sent to you on your linked channel; if you use it, run `login` afterwards).
 
