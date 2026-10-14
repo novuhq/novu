@@ -435,14 +435,24 @@ describe('WebChat', () => {
     expect(snapshot?.messages).toEqual(result.data?.messages);
   });
 
-  it('loadConversation merges history with local-only messages by messageId', async () => {
-    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_local000001' });
+  it('loadConversation drops cached sent messages the newest page does not reach and keeps failed sends', async () => {
+    sendMessage.mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_local000001' });
     await webChat.sendMessage({
       agentId: 'agent_1',
       text: 'ack locally',
       key: 'conv_abcdefghijkl',
       conversationId: 'conv_abcdefghijkl',
     });
+    sendMessage.mockRejectedValueOnce(new Error('network'));
+    await webChat.sendMessage({
+      agentId: 'agent_1',
+      text: 'never delivered',
+      key: 'conv_abcdefghijkl',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    const failedId = webChat
+      .getConversation({ agentId: 'agent_1', key: 'conv_abcdefghijkl' })
+      ?.messages.find((message) => message.status === 'failed')?.id;
 
     getEvents.mockResolvedValue({
       events: [
@@ -453,7 +463,7 @@ describe('WebChat', () => {
           agentId: 'agent_1',
           runId: 'history',
           turnId: 't1',
-          sequence: 1,
+          sequence: 60,
           timestamp: '2026-08-06T12:00:00.000Z',
           event: {
             type: 'message',
@@ -471,7 +481,8 @@ describe('WebChat', () => {
       conversationId: 'conv_abcdefghijkl',
     });
 
-    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_server00001', 'msg_local000001']);
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_server00001', failedId]);
+    expect(result.data?.hasMore).toBe(true);
   });
 
   it('loadConversation dedupes when history already contains the ack’d messageId', async () => {

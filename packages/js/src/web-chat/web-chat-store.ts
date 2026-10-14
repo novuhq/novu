@@ -5,10 +5,10 @@ import {
   type AgentMessage,
   createInitialAgentConversationState,
 } from './agent-message.types';
-import { derivePendingActions, pendingActionKey } from './derive-pending-actions';
 import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
+import { derivePendingActions, pendingActionKey } from './derive-pending-actions';
 import { mintClientId } from './idempotency';
-import type { WebChatChange, WebChatChangeSource, WebChatPaginationStatus, FetchMoreResult } from './types';
+import type { FetchMoreResult, WebChatChange, WebChatChangeSource, WebChatPaginationStatus } from './types';
 
 type McpConnectionResult = {
   status: 'connected' | 'failed';
@@ -174,10 +174,8 @@ export class WebChatStore {
       return messages;
     }
 
-    return applyEnvelopes(
-      { ...createInitialAgentConversationState(), messages },
-      [...entry.messageMutations.values()]
-    ).messages;
+    return applyEnvelopes({ ...createInitialAgentConversationState(), messages }, [...entry.messageMutations.values()])
+      .messages;
   }
 
   #overlayMessages(entry: ConversationEntry, messages: AgentMessage[]): AgentMessage[] {
@@ -336,8 +334,9 @@ export class WebChatStore {
   }
 
   /**
-   * Merge a history page into this session.
-   * Server message ids win. Local-only messages stay on the session.
+   * Merge the newest history page into this session.
+   * Server message ids win. Cached messages older than the page stay above it,
+   * and local-only messages stay at the end.
    */
   absorbHistoryPage(
     entry: ConversationEntry,
@@ -349,13 +348,25 @@ export class WebChatStore {
     this.#recordMessageMutations(entry, envelopes);
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const serverIds = new Set(folded.messages.map((message) => message.id));
-    const localOnly = previous.filter((message) => !serverIds.has(message.id));
+    const firstOnPage = previous.findIndex((message) => serverIds.has(message.id));
+    const splitAt = firstOnPage === -1 ? previous.length : firstOnPage;
+    const older = previous.slice(0, splitAt);
+    // History pages hold only the newest events.
+    // Without overlap, cached history sits behind a gap that fetchMore reloads.
+    const olderCached = firstOnPage === -1 ? [] : older.filter((message) => message.status === 'sent');
+    const localOnly = [
+      ...older.filter((message) => message.status !== 'sent'),
+      ...previous.slice(splitAt).filter((message) => !serverIds.has(message.id)),
+    ];
 
     applyState(entry, {
       ...folded,
-      messages: this.#overlayMessages(entry, [...folded.messages, ...localOnly]),
+      messages: this.#overlayMessages(entry, [...olderCached, ...folded.messages, ...localOnly]),
     });
-    entry.olderCursor = olderCursor;
+    // The existing cursor already points before the oldest cached message.
+    if (olderCached.length === 0) {
+      entry.olderCursor = olderCursor;
+    }
     entry.paginationEpoch += 1;
     entry.paginationStatus = 'idle';
     entry.pendingFetchMore = undefined;
