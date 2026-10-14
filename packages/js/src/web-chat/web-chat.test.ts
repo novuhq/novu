@@ -435,7 +435,9 @@ describe('WebChat', () => {
     expect(snapshot?.messages).toEqual(result.data?.messages);
   });
 
-  it('loadConversation drops cached sent messages the newest page does not reach and keeps failed sends', async () => {
+  it('loadConversation rebuilds a cache that never loaded history, keeping failed sends', async () => {
+    webChat.subscribe();
+    getEvents.mockResolvedValueOnce(historyPage([], null));
     sendMessage.mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_local000001' });
     await webChat.sendMessage({
       agentId: 'agent_1',
@@ -453,6 +455,10 @@ describe('WebChat', () => {
     const failedId = webChat
       .getConversation({ agentId: 'agent_1', key: 'conv_abcdefghijkl' })
       ?.messages.find((message) => message.status === 'failed')?.id;
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({ sequence: 60, messageId: 'msg_server00001', markdown: 'from server', role: 'user' })
+    );
 
     getEvents.mockResolvedValue({
       events: [
@@ -523,6 +529,70 @@ describe('WebChat', () => {
 
     expect(result.data?.messages.map((message) => message.id)).toEqual(messageIds(61, 111));
     expect(result.data?.hasMore).toBe(true);
+  });
+
+  it('loadConversation rebuilds the timeline when reconnect catch-up was skipped or failed', async () => {
+    getEvents.mockResolvedValueOnce(messagePage(1, 50, null));
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    // No subscriber, so catch-up is skipped.
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({ sequence: 120, messageId: 'msg_120', markdown: '120' })
+    );
+    getEvents.mockResolvedValueOnce(messagePage(71, 120, 'cursor_before_71'));
+    const afterSkip = await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    expect(afterSkip.data?.messages.map((message) => message.id)).toEqual(messageIds(71, 120));
+    expect(afterSkip.data?.hasMore).toBe(true);
+
+    webChat.subscribe();
+    getEvents.mockRejectedValueOnce(new Error('network'));
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(3);
+    emitter.emit(
+      'web_chat.agent_event',
+      liveAssistantEnvelope({ sequence: 200, messageId: 'msg_200', markdown: '200' })
+    );
+    getEvents.mockResolvedValueOnce(messagePage(151, 200, 'cursor_before_151'));
+    const afterFailure = await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    expect(afterFailure.data?.messages.map((message) => message.id)).toEqual(messageIds(151, 200));
+  });
+
+  it('runs reconnect catch-up after an in-flight reload of the same conversation without losing events', async () => {
+    webChat.subscribe();
+    getEvents.mockResolvedValueOnce(messagePage(1, 2, null));
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let resolveReload!: (value: ReturnType<typeof historyPage>) => void;
+    let resolveCatchUp!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveReload = resolve;
+          })
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveCatchUp = resolve;
+          })
+      );
+    const reload = webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    await waitForGetEventsCalls(2);
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    resolveReload(messagePage(1, 2, null));
+    await reload;
+
+    await waitForGetEventsCalls(3);
+    emitter.emit('web_chat.agent_event', liveAssistantEnvelope({ sequence: 6, messageId: 'msg_6', markdown: '6' }));
+    resolveCatchUp(messagePage(1, 5, null));
+
+    await waitForMessageIds(messageIds(1, 6), 'conv_abcdefghijkl');
   });
 
   it('loadConversation dedupes when history already contains the ack’d messageId', async () => {

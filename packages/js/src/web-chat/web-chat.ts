@@ -51,6 +51,17 @@ function entryPagination(entry: ConversationEntry): WebChatPagination {
 /** Max HTTP pages for reconnect recovery when a sequence checkpoint exists. */
 const CATCH_UP_PAGE_LIMIT = 20;
 
+function sortBySequence(envelopes: AgentEventEnvelope[]): AgentEventEnvelope[] {
+  return [...envelopes].sort((left, right) => left.sequence - right.sequence);
+}
+
+/** True when a page sorted oldest first starts at or before `knownThrough`, so no event between them is missing. */
+function pageReachesSequence(sortedEnvelopes: AgentEventEnvelope[], knownThrough: number): boolean {
+  const oldestInPage = sortedEnvelopes[0]?.sequence;
+
+  return knownThrough > 0 && oldestInPage !== undefined && oldestInPage <= knownThrough;
+}
+
 /**
  * Headless Web Chat client. Load it with `await novu.loadWebChat()` or `loadWebChat(novu)`,
  * then call {@link WebChat.conversation} for each thread.
@@ -66,8 +77,9 @@ export class WebChat extends BaseModule {
    * Map key means a sync is in flight; only those conversations buffer live envelopes.
    */
   #catchUpBuffers = new Map<string, AgentEventEnvelope[]>();
-  /** Runs syncs one at a time so two never share a conversation buffer. */
   #catchUpChain: Promise<void> = Promise.resolve();
+  /** Tail of each conversation's sync queue. Two syncs of one conversation would share its buffer. */
+  #syncLocks = new Map<string, Promise<void>>();
 
   constructor({
     inboxServiceInstance,
@@ -306,15 +318,17 @@ export class WebChat extends BaseModule {
 
   /** @internal Prefer {@link AgentConversationRuntime.load}. */
   async loadConversation(args: LoadConversationArgs): Result<LoadConversationResult> {
-    return this.callWithSession(() => this.#enqueueSync(() => this.#loadConversation(args)));
+    return this.callWithSession(() => this.#withSyncLock(args.conversationId, () => this.#loadConversation(args)));
   }
 
-  #enqueueSync<T>(sync: () => Promise<T>): Promise<T> {
-    const run = this.#catchUpChain.then(sync);
-    // Keep the chain alive after a rejected run so later syncs still run.
-    this.#catchUpChain = run.then(
-      () => undefined,
-      () => undefined
+  #withSyncLock<T>(conversationId: string, sync: () => Promise<T>): Promise<T> {
+    const run = (this.#syncLocks.get(conversationId) ?? Promise.resolve()).then(sync);
+    this.#syncLocks.set(
+      conversationId,
+      run.then(
+        () => undefined,
+        () => undefined
+      )
     );
 
     return run;
@@ -335,7 +349,15 @@ export class WebChat extends BaseModule {
         key: args.conversationId,
         conversationId: args.conversationId,
       });
-      this.#store.absorbHistoryPage(entry, page.events, page.olderCursor);
+      const events = sortBySequence(page.events);
+      if (entry.historyInSync && pageReachesSequence(events, entry.lastSequence)) {
+        // The cache already holds every event up to lastSequence, so only newer ones are missing.
+        for (const envelope of events) {
+          this.#store.applyLiveEnvelope(entry, envelope);
+        }
+      } else {
+        this.#store.absorbHistoryPage(entry, page.events, page.olderCursor);
+      }
     } catch (error) {
       return { error: new NovuError('Failed to load web chat conversation', error) };
     } finally {
@@ -708,14 +730,26 @@ export class WebChat extends BaseModule {
 
   #requestCatchUp(): void {
     if (this.#liveSubscriberCount === 0) {
+      this.#markClaimedOutOfSync();
+
       return;
     }
 
-    void this.#enqueueSync(() => this.#catchUpOpenConversations());
+    // Keep the chain alive after a rejected run so later reconnects still catch up.
+    this.#catchUpChain = this.#catchUpChain.catch(() => undefined).then(() => this.#catchUpOpenConversations());
+  }
+
+  /** Skipped catch-up leaves missed events unrecovered, so the next reload of each conversation must rebuild it. */
+  #markClaimedOutOfSync(): void {
+    for (const entry of this.#store.listClaimed()) {
+      this.#store.markHistoryOutOfSync(entry);
+    }
   }
 
   async #catchUpOpenConversations(): Promise<void> {
     if (this.#liveSubscriberCount === 0 || !this._inboxService.isSessionInitialized) {
+      this.#markClaimedOutOfSync();
+
       return;
     }
 
@@ -733,7 +767,7 @@ export class WebChat extends BaseModule {
 
     await Promise.all(
       [...byConversationId.entries()].map(([conversationId, holders]) =>
-        this.#catchUpConversation(conversationId, holders)
+        this.#withSyncLock(conversationId, () => this.#catchUpConversation(conversationId, holders))
       )
     );
   }
@@ -828,13 +862,11 @@ export class WebChat extends BaseModule {
         conversationId,
         ...(before ? { before } : {}),
       });
-      const envelopes = [...page.events].sort((left, right) => left.sequence - right.sequence);
+      const envelopes = sortBySequence(page.events);
       missed.push(...envelopes);
 
-      const oldestInPage = envelopes[0]?.sequence;
-      const reachedKnown = knownThrough > 0 && oldestInPage != null && oldestInPage <= knownThrough;
-      if (page.olderCursor == null || oldestInPage == null || reachedKnown) {
-        return missed.sort((left, right) => left.sequence - right.sequence);
+      if (page.olderCursor == null || envelopes.length === 0 || pageReachesSequence(envelopes, knownThrough)) {
+        return sortBySequence(missed);
       }
 
       before = page.olderCursor;

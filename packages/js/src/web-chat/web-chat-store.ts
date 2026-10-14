@@ -33,8 +33,11 @@ export type ConversationEntry = AgentConversationState & {
    * exhausted, or before any history load.
    */
   olderCursor: string | null;
-  /** True once a history page replaced the timeline. Later reloads then only catch up on newer events. */
-  historyLoaded: boolean;
+  /**
+   * True when a history page rebuilt the timeline and no events were missed since.
+   * `lastSequence` is only the highest sequence seen, so a reload may skip to newer events only while this holds.
+   */
+  historyInSync: boolean;
   /**
    * Actions already reported as new. An action id is never raised twice,
    * so a resolved action must not fall out and be reported again.
@@ -244,7 +247,7 @@ export class WebChatStore {
       conversationId: args.conversationId,
       key: args.key,
       olderCursor: null,
-      historyLoaded: false,
+      historyInSync: false,
       reportedActionIds: new Set(),
       mcpConnectionResults: new Map(),
       messageMutations: new Map(),
@@ -337,26 +340,14 @@ export class WebChatStore {
   }
 
   /**
-   * Bring this session up to date with the newest history page.
-   * When the page reaches the cached timeline, only newer events apply, so older history and `olderCursor` stay.
-   * Otherwise the page replaces the cached server history. Unconfirmed local messages stay at the end.
+   * Rebuild this session's timeline from the newest history page.
+   * Server message ids win. Unconfirmed local messages stay at the end.
    */
   absorbHistoryPage(
     entry: ConversationEntry,
     envelopes: AgentEventEnvelope[],
     olderCursor: string | null
   ): ConversationEntry {
-    const ordered = [...envelopes].sort((left, right) => left.sequence - right.sequence);
-    const oldestInPage = ordered[0]?.sequence;
-    const reachesCache = olderCursor == null || (oldestInPage !== undefined && oldestInPage <= entry.lastSequence);
-    if (entry.historyLoaded && reachesCache) {
-      for (const envelope of ordered) {
-        this.applyLiveEnvelope(entry, envelope);
-      }
-
-      return entry;
-    }
-
     const previous = entry.messages;
     this.#recordMcpConnectionResults(entry, envelopes);
     this.#recordMessageMutations(entry, envelopes);
@@ -369,7 +360,7 @@ export class WebChatStore {
       ...folded,
       messages: this.#overlayMessages(entry, [...folded.messages, ...localOnly]),
     });
-    entry.historyLoaded = true;
+    entry.historyInSync = true;
     entry.olderCursor = olderCursor;
     entry.paginationEpoch += 1;
     entry.paginationStatus = 'idle';
@@ -458,9 +449,17 @@ export class WebChatStore {
     if ('catchUpError' in state) {
       entry.catchUpError = state.catchUpError;
     }
+    if (state.catchUpError) {
+      entry.historyInSync = false;
+    }
     this.#publish(entry, { kind: 'local' }, []);
 
     return entry;
+  }
+
+  /** The timeline may have a gap, so the next history reload must rebuild it. */
+  markHistoryOutOfSync(entry: ConversationEntry): void {
+    entry.historyInSync = false;
   }
 
   /**
