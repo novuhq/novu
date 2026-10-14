@@ -144,4 +144,7 @@ export interface ICredentials {
    * when the verification side (e.g. AWS KMS) holds the key as binary material.
    */
   hmacSecretKeyEncoding?: 'text' | 'base64' | 'hex';
+  serviceId?: string;
+  servicePassword?: string;
+  spaceId?: string;
 }
