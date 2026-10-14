@@ -684,7 +684,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       // The keyless env is now empty; the CLI must be told to re-auth, not to run setup again.
       const after = await createInteraction({ kind: 'tell', prompt: 'Still here?' });
       expect(after.status).to.equal(403, JSON.stringify(after.body));
-      expect(after.body.message).to.include('human login');
+      expect(after.body.message).to.include('npx @agentinbox/cli login');
     });
 
     it('hands `human login` the claim token of a keyless setup until it is claimed', async () => {

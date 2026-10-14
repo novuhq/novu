@@ -1,13 +1,13 @@
 # @novu/human-dashboard
 
 Next.js app for [agentinbox.md](https://agentinbox.md). It serves the invite page for
-[`@novu/human`](../../packages/human) and Human accounts (proof of concept, NV-8909); the agentinbox.md
+[`@agentinbox/cli`](../../packages/agentinbox) and Human accounts (proof of concept, NV-8909); the agentinbox.md
 landing page moves in here later.
 
 | Route             | What it is                                                                                  |
 | ----------------- | ------------------------------------------------------------------------------------------- |
 | `/invite/[token]` | Page opened from a `human invite` link. The person connects Telegram or Slack and picks their default app. |
-| `/connect`        | Page opened from `human setup telegram` or `human setup slack` when credentials are pasted in the browser. The setup token stays in the URL fragment. |
+| `/connect`        | Page opened from `channel add telegram` or `channel add slack` when credentials are pasted in the browser. The setup token stays in the URL fragment. |
 | `/sign-up`, `/sign-in` | Human accounts, signed in with the Human Clerk app (not the Novu dashboard's).         |
 | `/claim`          | Opened from the link an agent gets when its keyless setup runs out of free messages. Moves that setup into the operator's Human account. |
 | `/cli/login`      | Opened by `human login`. The operator types the code their terminal shows, and that CLI gets the account's key; a keyless setup on that computer moves into the account on the way. |
@@ -18,8 +18,8 @@ landing page moves in here later.
 
 Each Human account is backed by a hidden Novu organization that the Novu API creates through private
 `/v1/human/accounts` endpoints. See
-[the ADR](../../packages/human/docs/adr/0001-separate-clerk-app-with-backing-organizations.md) and the
-[Human glossary](../../packages/human/CONTEXT.md).
+[the ADR](../../packages/agentinbox/docs/adr/0001-separate-clerk-app-with-backing-organizations.md) and the
+[Agent Inbox glossary](../../packages/agentinbox/CONTEXT.md).
 
 ## Onboarding
 

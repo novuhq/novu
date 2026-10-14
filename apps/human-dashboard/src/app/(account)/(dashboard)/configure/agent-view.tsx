@@ -36,7 +36,7 @@ export type AgentSummary = {
   active: boolean;
   /** The picture the operator gave it, when there is one. */
   pictureUrl?: string;
-  /** ISO timestamp of the `human setup` that made it. */
+  /** ISO timestamp of the `setup` that made it. */
   createdAt?: string;
 };
 
@@ -52,7 +52,7 @@ export type AgentSetupTexts = {
 };
 
 type AgentViewProps = {
-  /** `null` until `human setup` has made the agent. */
+  /** `null` until `setup` has made the agent. */
   agent: AgentSummary | null;
   channels: ChannelRow[];
   telegramSetup: TelegramSetupState;
@@ -274,7 +274,7 @@ const CHANNEL_PITCH: Record<ChannelVia, string> = {
   slack: 'Its own app, so people reply in Slack.',
 };
 
-/** Channels whose setup drawer exists. Email is still set up with `human setup email`. */
+/** Channels whose setup drawer exists. Email is still set up with `channel add email`. */
 const HAS_SETUP: Partial<Record<ChannelVia, true>> = { telegram: true, slack: true };
 
 type ChannelCardsProps = {
@@ -344,7 +344,7 @@ function ChannelCard({ channel, onSetUp }: { channel: ChannelRow; onSetUp: () =>
               variant="secondary"
               className={SMALL_BUTTON}
               disabled
-              title={`Coming soon. For now, run human setup ${channel.via} in your terminal.`}
+              title={`Coming soon. For now, run npx @agentinbox/cli channel add ${channel.via} in your terminal.`}
             >
               <Plus aria-hidden="true" className="size-3.5" />
               Set up

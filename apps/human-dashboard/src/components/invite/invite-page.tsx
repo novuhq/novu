@@ -37,7 +37,7 @@ type InactiveReason = 'expired' | 'declined' | 'invalid';
 type InviteView = 'channels' | InviteChannelVia | 'done';
 
 /**
- * Public page opened by someone invited with `human contact invite`. The token in the link is the
+ * Public page opened by someone invited with `contact invite`. The token in the link is the
  * only credential. The person picks which of the inviter's channels (Email, Telegram, Slack) the agent
  * may reach them on and which one is their default. The status refreshes while the page is
  * open, so a card flips to "Connected" once they finish in Telegram or Slack.

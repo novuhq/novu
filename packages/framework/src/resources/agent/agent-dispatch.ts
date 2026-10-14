@@ -15,9 +15,11 @@ import type {
   AgentResolveContext,
   AgentToolCall,
   MessageContent,
+  ReplyStream,
   ToolApprovalDecision,
 } from './agent.types';
 import { AgentEventEnum, isAgentErrorSuppress, isAgentHandlerReply, PendingApproval } from './agent.types';
+import type { AgentLiveStream } from './agent-live-stream';
 import { isCardElement } from './guards';
 import { parseApprovalActionId, type ToolApprovalRequestPayload } from './tool-approval/action-id';
 
@@ -62,7 +64,7 @@ async function dispatchHandlerReply(ctx: AgentContextImpl, result: AgentHandlerR
 
 async function dispatchReplyResult(
   ctx: AgentContextImpl,
-  result: MessageContent | AgentHandlerReply | PendingApproval | void | undefined
+  result: MessageContent | ReplyStream | AgentHandlerReply | PendingApproval | void | undefined
 ): Promise<void> {
   if (result instanceof PendingApproval || result === undefined) {
     return;
@@ -122,10 +124,17 @@ export interface DispatchAgentEventOptions {
   bridge: AgentBridgeRequest;
   secretKey: string;
   logger?: { error: (...args: unknown[]) => void };
+  /** Bridge response body that streamed replies are written to; closed when the turn ends. */
+  live?: AgentLiveStream;
 }
 
 export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Promise<void> {
-  const ctx = new AgentContextImpl(options.bridge, options.secretKey, options.agent.handlers.toolApproval);
+  const ctx = new AgentContextImpl(
+    options.bridge,
+    options.secretKey,
+    options.agent.handlers.toolApproval,
+    options.live
+  );
   const { agent, event, logger } = options;
 
   try {
@@ -164,6 +173,7 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
     } catch {
       // cosmetic — never mask the original failure; also swallows secondary delivery errors.
     }
+    options.live?.close();
   }
 }
 

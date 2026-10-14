@@ -54,10 +54,10 @@ import { CreateInteractionCommand } from './create-interaction.command';
  */
 function keylessHumanClaimedMessage(): string {
   if (isHumanBrowserLoginAvailable()) {
-    return 'This setup was moved into your Human account. Run `human login` to keep using it.';
+    return 'This setup was moved into your Agent Inbox account. Run `npx @agentinbox/cli login` to keep using it.';
   }
 
-  return 'This demo workspace was claimed into your Novu account. Run `human setup --secret-key <your Development environment key>` (or set NOVU_SECRET_KEY) to continue.';
+  return 'This demo workspace was claimed into your Novu account. Run `npx @agentinbox/cli setup --secret-key <your Development environment key>` (or set INBOX_SECRET_KEY) to continue.';
 }
 
 @Injectable()
@@ -411,7 +411,9 @@ export class CreateInteraction {
 
     if (!agent) {
       if (identifier === DEFAULT_HUMAN_RELAY_IDENTIFIER) {
-        throw new NotFoundException(`Relay agent "${identifier}" was not found. Run \`human setup\` first.`);
+        throw new NotFoundException(
+          `Relay agent "${identifier}" was not found. Run \`npx @agentinbox/cli setup\` first.`
+        );
       }
 
       throw new NotFoundException(`Agent "${identifier}" was not found.`);
