@@ -8,12 +8,9 @@ import {
   InstrumentUsecase,
   ResolveAgentInboundAddresses,
   SendWebhookMessage,
-  StepResponseDto,
-  UpsertStepDataCommand,
   UpsertWorkflowCommand,
   UpsertWorkflowDataCommand,
   UpsertWorkflowUseCase,
-  WorkflowPreferencesDto,
   WorkflowResponseDto,
 } from '@novu/application-generic';
 import {
@@ -32,7 +29,6 @@ import {
   StepTypeEnum,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
-  WorkflowCreationSourceEnum,
 } from '@novu/shared';
 import {
   SyncAgentToEnvironment,
@@ -47,6 +43,7 @@ import {
   SyncStepResolverToEnvironmentUsecase,
 } from '../../../step-resolvers/usecases/sync-step-resolver-to-environment';
 import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
+import { mapWorkflowToCreateWorkflowDto, mapWorkflowToUpdateWorkflowDto } from './map-workflow-to-upsert-dto';
 import { SyncToEnvironmentCommand } from './sync-to-environment.command';
 
 export const SYNCABLE_WORKFLOW_ORIGINS = [ResourceOriginEnum.NOVU_CLOUD];
@@ -272,10 +269,10 @@ export class SyncToEnvironmentUseCase {
     targetWorkflow?: WorkflowResponseDto
   ): Promise<UpsertWorkflowDataCommand> {
     if (targetWorkflow) {
-      return await this.mapWorkflowToUpdateWorkflowDto(sourceWorkflow, targetWorkflow, preferencesToClone);
+      return mapWorkflowToUpdateWorkflowDto(sourceWorkflow, targetWorkflow, preferencesToClone);
     }
 
-    return await this.mapWorkflowToCreateWorkflowDto(sourceWorkflow, preferencesToClone);
+    return mapWorkflowToCreateWorkflowDto(sourceWorkflow, preferencesToClone);
   }
 
   @Instrument()
@@ -293,90 +290,6 @@ export class SyncToEnvironmentUseCase {
     } catch (error) {
       return undefined;
     }
-  }
-
-  private async mapWorkflowToCreateWorkflowDto(
-    sourceWorkflow: WorkflowResponseDto,
-    preferences: PreferencesEntity[]
-  ): Promise<UpsertWorkflowDataCommand> {
-    return {
-      workflowId: sourceWorkflow.workflowId,
-      payloadSchema: sourceWorkflow.payloadSchema || null,
-      validatePayload: sourceWorkflow.validatePayload,
-      isTranslationEnabled: sourceWorkflow.isTranslationEnabled,
-      origin: ResourceOriginEnum.NOVU_CLOUD,
-      name: sourceWorkflow.name,
-      active: sourceWorkflow.active,
-      tags: sourceWorkflow.tags,
-      description: sourceWorkflow.description,
-      __source: WorkflowCreationSourceEnum.DASHBOARD,
-      severity: sourceWorkflow.severity,
-      agent: sourceWorkflow.agent ?? null,
-      steps: await this.mapStepsToCreateOrUpdateDto(sourceWorkflow.steps),
-      preferences: this.mapPreferences(preferences),
-    };
-  }
-
-  private async mapWorkflowToUpdateWorkflowDto(
-    sourceWorkflow: WorkflowResponseDto,
-    existingTargetEnvWorkflow: WorkflowResponseDto | undefined,
-    preferencesToClone: PreferencesEntity[]
-  ): Promise<UpsertWorkflowDataCommand> {
-    return {
-      origin: ResourceOriginEnum.NOVU_CLOUD,
-      payloadSchema: sourceWorkflow.payloadSchema || null,
-      validatePayload: sourceWorkflow.validatePayload,
-      workflowId: sourceWorkflow.workflowId,
-      isTranslationEnabled: sourceWorkflow.isTranslationEnabled,
-      name: sourceWorkflow.name,
-      active: sourceWorkflow.active,
-      tags: sourceWorkflow.tags,
-      description: sourceWorkflow.description,
-      severity: sourceWorkflow.severity,
-      agent: sourceWorkflow.agent ?? null,
-      steps: await this.mapStepsToCreateOrUpdateDto(sourceWorkflow.steps, existingTargetEnvWorkflow?.steps),
-      preferences: this.mapPreferences(preferencesToClone),
-    };
-  }
-
-  private async mapStepsToCreateOrUpdateDto(
-    sourceSteps: StepResponseDto[],
-    targetEnvSteps?: StepResponseDto[]
-  ): Promise<UpsertStepDataCommand[]> {
-    return sourceSteps.map((sourceStep) => {
-      // if we find matching step in target environment, we are updating
-      const targetStepInternalId = targetEnvSteps?.find((targetStep) => targetStep.stepId === sourceStep.stepId)?._id;
-
-      return this.buildStepCreateOrUpdateDto(sourceStep, targetStepInternalId);
-    });
-  }
-
-  private buildStepCreateOrUpdateDto(
-    sourceStep: StepResponseDto,
-    targetStepInternalId?: string
-  ): UpsertStepDataCommand {
-    return {
-      ...(targetStepInternalId && { _id: targetStepInternalId }),
-      stepId: sourceStep.stepId,
-      name: sourceStep.name ?? '',
-      type: sourceStep.type,
-      controlValues: sourceStep.controls?.values ?? {},
-      providerOverrides: sourceStep.providerOverrides ?? null,
-      integrationOverrides: sourceStep.integrationOverrides ?? null,
-    };
-  }
-
-  private mapPreferences(preferences: PreferencesEntity[]): {
-    user: WorkflowPreferencesDto | null;
-    workflow: WorkflowPreferencesDto | null;
-  } {
-    // we can typecast the preferences to WorkflowPreferences because user and workflow preferences are always full set
-    return {
-      user: preferences.find((pref) => pref.type === PreferencesTypeEnum.USER_WORKFLOW)
-        ?.preferences as WorkflowPreferencesDto | null,
-      workflow: preferences.find((pref) => pref.type === PreferencesTypeEnum.WORKFLOW_RESOURCE)
-        ?.preferences as WorkflowPreferencesDto | null,
-    };
   }
 
   private async getWorkflowPreferences(
