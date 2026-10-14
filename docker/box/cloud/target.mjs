@@ -105,6 +105,8 @@ export function cloudTarget({ box, log, githubToken }) {
           durable_objects: { bindings: [{ name: 'BOX', class_name: 'Box' }] },
           exports: { Box: { type: 'durable-object', storage: 'sqlite' } },
           observability: { enabled: true },
+          // Minutes without requests before the box saves itself and stops; default 60 (worker.js).
+          ...(process.env.BOX_IDLE_MINUTES && { vars: { IDLE_MINUTES: process.env.BOX_IDLE_MINUTES } }),
         })
       );
       const env = readEnvFile(join(BOX_DIR, '.env'));

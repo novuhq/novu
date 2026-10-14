@@ -174,7 +174,8 @@ box's Worker. `up --cloud` builds the image for amd64, pushes it once per change
 there (or with `--deploy`), then wakes the box from its snapshot or, the first time, bakes `next`.
 
 After an hour without requests the box saves itself to a snapshot and stops; the next request gets a "waking up"
-page and the box is back with its data. Measured on `novu-box-hosting-test` (standard-4):
+page and the box is back with its data. `BOX_IDLE_MINUTES=4 node docker/box/cli.mjs up --cloud --deploy` sets a
+shorter wait, to test the sleep; the next deploy without it goes back to 60. Measured on `novu-box-hosting-test` (standard-4):
 
 | Step | Time |
 |---|---|

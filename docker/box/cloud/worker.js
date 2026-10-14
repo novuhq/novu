@@ -17,10 +17,18 @@ import { DurableObject } from 'cloudflare:workers';
 
 const PUBLIC_PORT = 18080;
 const INSTANCE = 'standard-4';
-const IDLE_MS = 60 * 60 * 1000;
 const ALARM_MS = 60 * 1000;
-// Each alarm renews it, so it only stops the container (without a snapshot) when the alarms stop.
-const BACKSTOP_MS = 10 * 60 * 1000;
+
+// How long the box waits without requests before it saves itself and stops (the IDLE_MINUTES var, default 60).
+// The backstop, Cloudflare's inactivity timeout, is shorter, as in its autosave recipe: each alarm renews it, so it
+// only stops the container (without a snapshot) when the alarms stop.
+function idleMs(env) {
+  return Number(env.IDLE_MINUTES ?? 60) * 60 * 1000;
+}
+
+function backstopMs(env) {
+  return Math.min(10 * 60 * 1000, idleMs(env) / 2);
+}
 const SECRETS = [
   'CLERK_SECRET_KEY',
   'BOX_SEED_PASSWORD',
@@ -171,7 +179,7 @@ export class Box extends DurableObject {
       env: await this.boxEnv(origin),
       ...options,
     });
-    await this.ctx.container.setInactivityTimeout(BACKSTOP_MS);
+    await this.ctx.container.setInactivityTimeout(backstopMs(this.env));
     await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
     this.touch();
   }
@@ -179,10 +187,10 @@ export class Box extends DurableObject {
   // Every 60 s while the box runs: after an hour without requests, and with no bake or apply running, it sleeps.
   async alarm() {
     if (!this.ctx.container.running) return;
-    await this.ctx.container.setInactivityTimeout(BACKSTOP_MS);
+    await this.ctx.container.setInactivityTimeout(backstopMs(this.env));
     await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
     const last = Math.max(this.lastActivity ?? 0, (await this.ctx.storage.get('lastActivity')) ?? 0);
-    if (Date.now() - last < IDLE_MS || (await this.busy())) return;
+    if (Date.now() - last < idleMs(this.env) || (await this.busy())) return;
     await this.sleep('idle');
   }
 
