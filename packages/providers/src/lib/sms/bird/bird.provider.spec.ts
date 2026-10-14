@@ -134,6 +134,19 @@ describe('BirdSmsProvider', () => {
     expect(vi.mocked(axios.post).mock.calls[0][0]).toBe('http://localhost:8080/v1/sms/messages');
   });
 
+  it('preserves user-cased template parameters from direct bridge data', async () => {
+    const provider = new BirdSmsProvider(mockConfig);
+    vi.mocked(axios.post).mockResolvedValue({ data: { id: 'sms_tpl' } });
+
+    await provider.sendMessage(
+      { to: '+14155550100', content: 'ignored' },
+      { template: { slug: 'welcome', parameters: { firstName: 'Ada' } } }
+    );
+
+    const payload = vi.mocked(axios.post).mock.calls[0][1] as Record<string, unknown>;
+    expect(payload.template).toEqual({ slug: 'welcome', parameters: { firstName: 'Ada' } });
+  });
+
   describe('webhook events', () => {
     const deliveredEvent = {
       type: 'sms.delivered',
@@ -198,6 +211,30 @@ describe('BirdSmsProvider', () => {
       expect(
         provider.parseEventBody({ type: 'sms.received', timestamp: 'now', data: { sms_id: 'sms_x' } } as never, 'sms_x')
       ).toBeUndefined();
+    });
+
+    it('selects each repeated event by index', () => {
+      const provider = new BirdSmsProvider(mockConfig);
+      const sentEvent = {
+        type: 'sms.sent',
+        timestamp: '2026-06-10T14:29:00Z',
+        data: { sms_id: 'sms_rrr' },
+      };
+      const laterDeliveredEvent = {
+        type: 'sms.delivered',
+        timestamp: '2026-06-10T14:30:00Z',
+        data: { sms_id: 'sms_rrr' },
+      };
+      const batch = [sentEvent, laterDeliveredEvent] as never;
+
+      expect(provider.getMessageId(batch)).toEqual(['sms_rrr', 'sms_rrr']);
+      expect(provider.parseEventBody(batch, 'sms_rrr')?.status).toBe('sent');
+      expect(provider.parseEventBody(batch, 'sms_rrr', 1)).toEqual({
+        status: 'delivered',
+        date: '2026-06-10T14:30:00Z',
+        externalId: 'sms_rrr',
+        row: JSON.stringify(laterDeliveredEvent),
+      });
     });
   });
 });

@@ -12,6 +12,7 @@ import {
 } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { resolveBirdBaseUrl } from '../../../utils/bird-base-url';
+import { restoreBirdOpaqueKeys, splitBirdBridgeData } from '../../../utils/bird-bridge-data';
 import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -28,7 +29,7 @@ interface BirdEmailResponse {
 }
 
 function toBase64(file: Buffer | string | Uint8Array | null | undefined): string | undefined {
-  if (!file) {
+  if (file === null || file === undefined) {
     return undefined;
   }
 
@@ -42,7 +43,7 @@ function toBase64(file: Buffer | string | Uint8Array | null | undefined): string
 function toBirdAttachment(attachment: IAttachmentOptions): BirdEmailAttachment | undefined {
   const content = toBase64(attachment.file);
 
-  if (!content) {
+  if (content === undefined) {
     return undefined;
   }
 
@@ -254,9 +255,12 @@ export class BirdEmailProvider extends BaseProvider implements IEmailProvider {
     const template = getBridgeTemplate(bridgeProviderData);
     const attachments = mapBirdEmailAttachments(options.attachments);
     const triggerData = buildBirdEmailTriggerData(options, fromAddress, senderName, template, attachments);
-    const { body } = this.transform(bridgeProviderData, triggerData);
+    const { known, opaque } = splitBirdBridgeData(bridgeProviderData);
+    const { body } = this.transform(known, triggerData);
+    const payload = body as Record<string, unknown>;
 
-    stripInlineContentForTemplate(body as Record<string, unknown>);
+    restoreBirdOpaqueKeys(payload, opaque);
+    stripInlineContentForTemplate(payload);
 
     const { data } = await this.httpClient.post<BirdEmailResponse>(`${this.getBaseUrl()}/v1/email/messages`, body, {
       headers: {
@@ -305,9 +309,11 @@ export class BirdEmailProvider extends BaseProvider implements IEmailProvider {
 
   parseEventBody(
     body: BirdEmailWebhookEvent | BirdEmailWebhookEvent[],
-    identifier: string
+    identifier: string,
+    eventIndex = 0
   ): IEmailEventBody | undefined {
-    const event = extractBirdEmailEvents(body).find((item) => item?.data?.email_id === identifier);
+    const matches = extractBirdEmailEvents(body).filter((item) => item?.data?.email_id === identifier);
+    const event = matches[eventIndex];
 
     if (!event) {
       return undefined;

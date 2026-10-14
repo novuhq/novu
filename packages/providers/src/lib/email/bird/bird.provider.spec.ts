@@ -141,6 +141,50 @@ describe('BirdEmailProvider', () => {
 
       expect((vi.mocked(axios.post).mock.calls[0][1] as Record<string, unknown>).subject).toBe('Overridden');
     });
+
+    it('preserves user-cased template parameters from direct bridge data', async () => {
+      const provider = new BirdEmailProvider(mockConfig);
+      vi.mocked(axios.post).mockResolvedValue({ data: { id: 'em_tpl' } });
+
+      await provider.sendMessage(
+        { to: ['to@acme.com'], subject: 'Ignored', html: '<p>Ignored</p>' },
+        { template: { slug: 'welcome-email', parameters: { firstName: 'Ada' } } }
+      );
+
+      const payload = vi.mocked(axios.post).mock.calls[0][1] as Record<string, unknown>;
+      expect(payload.template).toEqual({ slug: 'welcome-email', parameters: { firstName: 'Ada' } });
+      expect((payload.template as Record<string, unknown>).parameters).not.toHaveProperty('first_name');
+    });
+
+    it('preserves custom header names from direct bridge data', async () => {
+      const provider = new BirdEmailProvider(mockConfig);
+      vi.mocked(axios.post).mockResolvedValue({ data: { id: 'em_hdr' } });
+
+      await provider.sendMessage(
+        { to: ['to@acme.com'], subject: 'Hi', html: '<p>Hi</p>' },
+        { headers: { 'X-Custom': 'abc' } }
+      );
+
+      expect((vi.mocked(axios.post).mock.calls[0][1] as Record<string, unknown>).headers).toEqual({
+        'X-Custom': 'abc',
+      });
+    });
+
+    it('preserves zero-byte attachments instead of dropping them', async () => {
+      const provider = new BirdEmailProvider(mockConfig);
+      vi.mocked(axios.post).mockResolvedValue({ data: { id: 'em_empty' } });
+
+      await provider.sendMessage({
+        to: ['to@acme.com'],
+        subject: 'Hi',
+        html: '<p>Hi</p>',
+        attachments: [{ mime: 'text/plain', file: Buffer.alloc(0), name: 'empty.txt' }],
+      });
+
+      expect((vi.mocked(axios.post).mock.calls[0][1] as Record<string, unknown>).attachments).toEqual([
+        { filename: 'empty.txt', content: '', content_type: 'text/plain' },
+      ]);
+    });
   });
 
   describe('checkIntegration', () => {
@@ -267,6 +311,30 @@ describe('BirdEmailProvider', () => {
           'em_x'
         )
       ).toBeUndefined();
+    });
+
+    it('selects each repeated event by index', () => {
+      const provider = new BirdEmailProvider(mockConfig);
+      const processedEvent = {
+        type: 'email.processed',
+        timestamp: '2026-07-23T14:50:00.000Z',
+        data: { email_id: 'em_rrr' },
+      };
+      const laterDeliveredEvent = {
+        type: 'email.delivered',
+        timestamp: '2026-07-23T14:51:47.107Z',
+        data: { email_id: 'em_rrr' },
+      };
+      const batch = [processedEvent, laterDeliveredEvent] as never;
+
+      expect(provider.getMessageId(batch)).toEqual(['em_rrr', 'em_rrr']);
+      expect(provider.parseEventBody(batch, 'em_rrr')?.status).toBe('sent');
+      expect(provider.parseEventBody(batch, 'em_rrr', 1)).toEqual({
+        status: 'delivered',
+        date: '2026-07-23T14:51:47.107Z',
+        externalId: 'em_rrr',
+        row: JSON.stringify(laterDeliveredEvent),
+      });
     });
   });
 });

@@ -9,6 +9,7 @@ import {
 } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { resolveBirdBaseUrl } from '../../../utils/bird-base-url';
+import { restoreBirdOpaqueKeys, splitBirdBridgeData } from '../../../utils/bird-bridge-data';
 import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -120,8 +121,11 @@ export class BirdSmsProvider extends BaseProvider implements ISmsProvider {
         ...(from ? { from } : {}),
       };
 
-      const { body } = this.transform(bridgeProviderData, triggerData);
+      const { known, opaque } = splitBirdBridgeData(bridgeProviderData);
+      const { body } = this.transform(known, triggerData);
       const payload = body as Record<string, unknown>;
+
+      restoreBirdOpaqueKeys(payload, opaque);
 
       // A template send supplies its own body and category.
       delete payload.text;
@@ -150,12 +154,15 @@ export class BirdSmsProvider extends BaseProvider implements ISmsProvider {
     const from = options.from || this.config.from;
     const category = getBridgeField<string>(bridgeProviderData, 'category') || 'transactional';
 
-    const { body } = this.transform(bridgeProviderData, {
+    const { known, opaque } = splitBirdBridgeData(bridgeProviderData);
+    const { body } = this.transform(known, {
       to: options.to,
       ...(from ? { from } : {}),
       text: options.content,
       category,
     });
+
+    restoreBirdOpaqueKeys(body as Record<string, unknown>, opaque);
 
     const { data } = await this.httpClient.post<BirdSmsResponse>(`${this.getBaseUrl()}/v1/sms/messages`, body, {
       headers: {
@@ -176,8 +183,13 @@ export class BirdSmsProvider extends BaseProvider implements ISmsProvider {
       .filter((id): id is string => typeof id === 'string' && id.length > 0);
   }
 
-  parseEventBody(body: BirdSmsWebhookEvent | BirdSmsWebhookEvent[], identifier: string): ISMSEventBody | undefined {
-    const event = extractBirdSmsEvents(body).find((item) => item?.data?.sms_id === identifier);
+  parseEventBody(
+    body: BirdSmsWebhookEvent | BirdSmsWebhookEvent[],
+    identifier: string,
+    eventIndex = 0
+  ): ISMSEventBody | undefined {
+    const matches = extractBirdSmsEvents(body).filter((item) => item?.data?.sms_id === identifier);
+    const event = matches[eventIndex];
 
     if (!event) {
       return undefined;
