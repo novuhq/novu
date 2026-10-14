@@ -1,3 +1,4 @@
+import { setTimeout as delay } from 'node:timers/promises';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { CacheService } from '@novu/application-generic';
@@ -15,6 +16,10 @@ import { EnsureBackingOrganizationCommand } from './ensure-backing-organization.
 
 const LOCK_KEY_PREFIX = 'human_backing_account_lock:';
 const LOCK_TTL_SECONDS = 60;
+/** How often a request that waits for the lock looks again. It sets how soon the wait ends, never whether it does. */
+const LOCK_CHECK_MS = 200;
+/** Past the lock's own expiry, so a lock whose request died has been dropped by Redis before the wait gives up. */
+const LOCK_GRACE_MS = 5000;
 
 function pickDevelopmentEnvironment(environments: EnvironmentEntity[]): EnvironmentEntity | undefined {
   return environments.find((env) => env.type === EnvironmentTypeEnum.DEV && !env._parentId);
@@ -45,7 +50,7 @@ export class EnsureBackingOrganization {
 
   async execute(command: EnsureBackingOrganizationCommand): Promise<HumanAccountResponseDto> {
     const lockKey = `${LOCK_KEY_PREFIX}{${command.humanUserId}}`;
-    const locked = await this.acquireLock(lockKey);
+    const locked = await this.waitForLock(lockKey);
 
     try {
       const account = await this.humanBackingAccounts.findOrCreate({
@@ -64,20 +69,30 @@ export class EnsureBackingOrganization {
   }
 
   /**
-   * Two tabs finishing sign-up at once would otherwise both run the organization setup.
+   * One request at a time sets an account up. The sign-up webhook and the operator's first page arrive
+   * together, and the setup takes several seconds, so whichever comes second waits here for its turn instead
+   * of failing. By then the account is ready, and its turn only finds it and returns it.
+   *
+   * The wait ends with the setup it waits for, not after a set time: the lock is let go when that setup is
+   * done or fails, or Redis drops it after LOCK_TTL_SECONDS if its request died. Still not getting it once
+   * that much time has gone by means the cache isn't answering, so the request says "busy" instead of waiting forever.
    * Without a cache we skip the lock; Clerk's unique email and slug still prevent duplicates there.
    */
-  private async acquireLock(lockKey: string): Promise<boolean> {
+  private async waitForLock(lockKey: string): Promise<boolean> {
     if (!this.cacheService.cacheEnabled()) {
       return false;
     }
 
-    const acquired = await this.cacheService.setIfNotExist(lockKey, '1', { ttl: LOCK_TTL_SECONDS });
-    if (acquired !== 'OK') {
-      throw new ConflictException({
-        message: 'This Human account is being set up. Please try again in a moment.',
-        code: 'human_account_busy',
-      });
+    const giveUpAt = Date.now() + LOCK_TTL_SECONDS * 1000 + LOCK_GRACE_MS;
+    while ((await this.cacheService.setIfNotExist(lockKey, '1', { ttl: LOCK_TTL_SECONDS })) !== 'OK') {
+      if (Date.now() >= giveUpAt) {
+        throw new ConflictException({
+          message: 'This Human account is being set up. Please try again in a moment.',
+          code: 'human_account_busy',
+        });
+      }
+
+      await delay(LOCK_CHECK_MS);
     }
 
     return true;

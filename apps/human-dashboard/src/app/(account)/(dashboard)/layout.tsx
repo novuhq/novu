@@ -61,8 +61,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 /**
  * Who the sidebar says the agent is: "Not set up" until the onboarding has made it, which only Settings
  * is open before. The account comes from the sign-up webhook, but the first page after signing up
- * usually loads before that webhook has run. So the shell asks for the account the same way the pages
- * do, which creates it on the spot when it isn't there yet.
+ * usually loads before that webhook is done. So the shell asks for the account the same way the pages
+ * do, which creates it on the spot, or waits for the webhook's setup to finish, when it isn't there yet.
  *
  * While the setup is unfinished, `setupStatus` is its `describeProgress`. The shell keeps asking for it,
  * so a host that connects elsewhere clears the banners and the sidebar's dot without a reload.

@@ -1,4 +1,3 @@
-import { ConflictException } from '@nestjs/common';
 import { EnvironmentTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -39,10 +38,19 @@ describe('EnsureBackingOrganization', () => {
           : []
       ),
     };
+    // Takes and lets go of locks the way Redis `SET NX` and `DEL` do, so requests at the same time contend for them.
+    const heldLocks = new Set<string>();
     const cacheService = {
       cacheEnabled: sinon.stub().returns(true),
-      setIfNotExist: sinon.stub().resolves('OK'),
-      del: sinon.stub().resolves(),
+      setIfNotExist: sinon.stub().callsFake(async (key: string) => {
+        if (heldLocks.has(key)) {
+          return null;
+        }
+        heldLocks.add(key);
+
+        return 'OK';
+      }),
+      del: sinon.stub().callsFake(async (key: string) => heldLocks.delete(key)),
     };
     const syncExternalOrganization = { execute: sinon.stub().resolves({ _id: 'novu_org' }) };
     const moduleRef = { resolve: sinon.stub().resolves(syncExternalOrganization) };
@@ -55,8 +63,24 @@ describe('EnsureBackingOrganization', () => {
       moduleRef as never
     );
 
-    return { usecase, humanBackingAccounts, syncExternalOrganization, cacheService, communityOrganizationRepository };
+    return {
+      usecase,
+      humanBackingAccounts,
+      syncExternalOrganization,
+      cacheService,
+      heldLocks,
+      communityOrganizationRepository,
+    };
   }
+
+  /** The Novu organization is there once a setup has made it, as it would be in the database. */
+  function findOrganizationOnceMade({ communityOrganizationRepository, syncExternalOrganization }: Setup) {
+    communityOrganizationRepository.findOne.callsFake(async () =>
+      syncExternalOrganization.execute.called ? { _id: 'novu_org' } : null
+    );
+  }
+
+  type Setup = ReturnType<typeof setup>;
 
   const command = EnsureBackingOrganizationCommand.create({
     humanUserId: 'user_2AbC',
@@ -111,15 +135,38 @@ describe('EnsureBackingOrganization', () => {
     expect(result).to.include({ organizationId: 'novu_org', environmentId: 'dev_env' });
   });
 
-  it('refuses while another request is setting the same account up', async () => {
-    const { usecase, cacheService, humanBackingAccounts } = setup();
-    cacheService.setIfNotExist.resolves(null);
+  it('sets the account up once when the sign-up webhook and the first visit arrive together', async () => {
+    const context = setup();
+    const { usecase, humanBackingAccounts, syncExternalOrganization, heldLocks } = context;
+    findOrganizationOnceMade(context);
 
-    const error = await usecase.execute(command).catch((caught) => caught);
+    const [webhook, firstVisit] = await Promise.all([usecase.execute(command), usecase.execute(command)]);
 
-    expect(error).to.be.instanceOf(ConflictException);
-    expect(humanBackingAccounts.findOrCreate.called).to.equal(false);
-    expect(cacheService.del.called).to.equal(false);
+    // The second one waited for the first setup instead of failing, and found the account it made.
+    expect(firstVisit).to.deep.equal(webhook);
+    expect(webhook).to.include({ organizationId: 'novu_org', environmentId: 'dev_env' });
+    expect(syncExternalOrganization.execute.calledOnce).to.equal(true);
+    expect(
+      humanBackingAccounts.findOrCreate.secondCall.calledAfter(syncExternalOrganization.execute.firstCall)
+    ).to.equal(true);
+    expect(heldLocks.size).to.equal(0);
+  });
+
+  it('runs the setup for the request that waited when the one it waited for fails', async () => {
+    const context = setup();
+    const { usecase, humanBackingAccounts, syncExternalOrganization } = context;
+    findOrganizationOnceMade(context);
+    humanBackingAccounts.findOrCreate.onFirstCall().rejects(new Error('Clerk is down'));
+
+    const [webhook, firstVisit] = await Promise.allSettled([usecase.execute(command), usecase.execute(command)]);
+
+    expect(webhook.status).to.equal('rejected');
+    expect(firstVisit.status).to.equal('fulfilled');
+    expect(firstVisit.status === 'fulfilled' && firstVisit.value).to.include({
+      organizationId: 'novu_org',
+      environmentId: 'dev_env',
+    });
+    expect(syncExternalOrganization.execute.calledOnce).to.equal(true);
   });
 
   it('releases the lock when the setup fails', async () => {

@@ -5,6 +5,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { ConnectClaimTokenService } from '../../connect/services/connect-claim-token.service';
 import { HUMAN_DASHBOARD_SECRET_HEADER } from '../guards/human-dashboard-secret.guard';
+import { HumanBackingAccounts } from '../services/human-backing-accounts.service';
 import { EnsureBackingOrganization } from '../usecases/ensure-backing-organization/ensure-backing-organization.usecase';
 
 /**
@@ -77,6 +78,79 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
 
     const dashboardSession = await session.testAgent.post('/v1/human/accounts/user_e2e/secret-key/regenerate');
     expect(dashboardSession.status).to.equal(401, JSON.stringify(dashboardSession.body));
+  });
+
+  describe('the sign-up webhook and the first page at the same time', () => {
+    const SECRET = 'e2e-human-dashboard-secret';
+    let finishFirstSetup: () => void = () => undefined;
+
+    beforeEach(() => {
+      process.env.HUMAN_DASHBOARD_API_SECRET = SECRET;
+    });
+
+    afterEach(() => {
+      // A test that failed halfway still lets the held setup end, so its lock doesn't outlive the test.
+      finishFirstSetup();
+      sinon.restore();
+    });
+
+    async function waitUntil(condition: () => boolean) {
+      while (!condition()) {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+    }
+
+    it('gives both the account, set up once, instead of telling one to try again', async () => {
+      // A new ID each run, so a lock that an earlier run left behind can't hold this one up.
+      const humanUserId = `user_e2e_${Date.now()}`;
+      // The test session's own organization stands in for the backing organization, so Clerk isn't needed.
+      const backingAccount = {
+        clerkUserId: 'user_backing_e2e',
+        clerkOrganizationId: session.organization.externalId,
+        novuUserId: session.user._id,
+      };
+      const setup = sinon.stub(testServer.getService(HumanBackingAccounts), 'findOrCreate').resolves(backingAccount);
+      setup.onFirstCall().returns(
+        new Promise((resolve) => {
+          finishFirstSetup = () => resolve(backingAccount);
+        })
+      );
+      const ensureCalls = sinon.spy(testServer.getService(EnsureBackingOrganization), 'execute');
+
+      const answered = new Set<string>();
+      const ensure = (caller: string) =>
+        ensureAccount({ [HUMAN_DASHBOARD_SECRET_HEADER]: SECRET }, { humanUserId, firstName: 'Ada' }).then((res) => {
+          answered.add(caller);
+
+          return res;
+        });
+
+      // The webhook gets there first, and its setup stays in Clerk until the test lets it finish.
+      const webhook = ensure('webhook');
+      await waitUntil(() => setup.called || answered.has('webhook'));
+      expect(setup.called).to.equal(true, 'the webhook was answered before it got to the setup');
+
+      // The first page arrives in the middle of it. It used to be told at once that the account was busy;
+      // a second is far longer than that answer takes, and the page must still be waiting after it.
+      const firstPage = ensure('first page');
+      await waitUntil(() => ensureCalls.calledTwice || answered.has('first page'));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      expect(answered.has('first page')).to.equal(false, 'the first page did not wait for the setup under way');
+      expect(setup.calledOnce).to.equal(true, 'the first page started a second setup alongside the webhook');
+
+      finishFirstSetup();
+      const [webhookRes, firstPageRes] = await Promise.all([webhook, firstPage]);
+
+      expect(webhookRes.status).to.equal(200, JSON.stringify(webhookRes.body));
+      expect(firstPageRes.status).to.equal(200, JSON.stringify(firstPageRes.body));
+      expect(firstPageRes.body.data).to.deep.equal(webhookRes.body.data);
+      expect(webhookRes.body.data).to.deep.include({
+        organizationId: session.organization._id,
+        environmentId: session.environment._id,
+      });
+      // The first page took its turn once the webhook was done, and found the account the webhook made.
+      expect(setup.calledTwice).to.equal(true);
+    });
   });
 
   describe('human login', () => {
