@@ -1,7 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { EnvironmentRepository } from '@novu/dal';
 import { isKeylessOrganization } from '../../../keyless/keyless-organization.helpers';
 import type { ConnectCodeResponseDto } from '../../dtos/human-host.dto';
-import { HumanConnectCodeService } from '../../services/human-connect-code.service';
+import { HumanConnectCodeService, keyFingerprint } from '../../services/human-connect-code.service';
 import { HumanInboxService } from '../../services/human-inbox.service';
 import { CreateConnectCodeCommand } from './create-connect-code.command';
 
@@ -14,7 +15,8 @@ import { CreateConnectCodeCommand } from './create-connect-code.command';
 export class CreateConnectCode {
   constructor(
     private readonly inbox: HumanInboxService,
-    private readonly connectCodes: HumanConnectCodeService
+    private readonly connectCodes: HumanConnectCodeService,
+    private readonly environmentRepository: EnvironmentRepository
   ) {}
 
   async execute(command: CreateConnectCodeCommand): Promise<ConnectCodeResponseDto> {
@@ -25,13 +27,24 @@ export class CreateConnectCode {
     }
 
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
-    const agent = await this.inbox.resolveRelayAgent(scope, command.agentIdentifier);
+    const [agent, environment] = await Promise.all([
+      this.inbox.resolveRelayAgent(scope, command.agentIdentifier),
+      this.environmentRepository.findOne(
+        { _id: scope.environmentId, _organizationId: scope.organizationId },
+        'apiKeys'
+      ),
+    ]);
+    if (!environment) {
+      throw new NotFoundException('This environment no longer exists.');
+    }
 
     return this.connectCodes.issue({
       ...scope,
       agentId: agent._id,
       agentIdentifier: agent.identifier,
       handle: command.handle,
+      // The code only hands out the key that is current now: one replaced since makes it stale.
+      keyFingerprint: keyFingerprint(environment.apiKeys?.[0]),
     });
   }
 }

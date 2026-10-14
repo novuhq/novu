@@ -1,8 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '@novu/application-generic';
-import { AgentRepository } from '@novu/dal';
+import { GoneException, Injectable, NotFoundException } from '@nestjs/common';
+import { decryptApiKey } from '@novu/application-generic';
+import { AgentRepository, EnvironmentRepository } from '@novu/dal';
 import type { ConnectHostResponseDto } from '../../dtos/human-host.dto';
-import { HumanConnectCodeService } from '../../services/human-connect-code.service';
+import {
+  CONNECT_CODE_EXPIRED,
+  HumanConnectCodeService,
+  keyFingerprint,
+} from '../../services/human-connect-code.service';
 import { HumanHostStatusService } from '../../services/human-host-status.service';
 import { ConnectHostCommand } from './connect-host.command';
 
@@ -20,12 +24,12 @@ export class ConnectHost {
   constructor(
     private readonly connectCodes: HumanConnectCodeService,
     private readonly agentRepository: AgentRepository,
-    private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
+    private readonly environmentRepository: EnvironmentRepository,
     private readonly hostStatus: HumanHostStatusService
   ) {}
 
   async execute(command: ConnectHostCommand): Promise<ConnectHostResponseDto> {
-    const target = await this.connectCodes.redeem(command.agent, command.code);
+    const target = await this.connectCodes.redeem(command.agent, command.code, command.clientIp);
     const scope = { environmentId: target.environmentId, organizationId: target.organizationId };
     const agent = await this.agentRepository.findOne(
       { _id: target.agentId, _environmentId: scope.environmentId, _organizationId: scope.organizationId },
@@ -39,7 +43,21 @@ export class ConnectHost {
       });
     }
 
-    const apiKey = await this.getDecryptedSecretKey.execute(GetDecryptedSecretKeyCommand.create(scope));
+    // The key is read once and checked against the one the code was made with: after the key was replaced,
+    // say by someone cutting a host off, an older code must not hand out the new one.
+    const environment = await this.environmentRepository.findOne(
+      { _id: scope.environmentId, _organizationId: scope.organizationId },
+      'apiKeys'
+    );
+    const current = environment?.apiKeys?.[0];
+    if (!current || keyFingerprint(current) !== target.keyFingerprint) {
+      throw new GoneException({
+        message: 'This code was made before the account’s key changed. Ask for a new code on agentinbox.md.',
+        code: CONNECT_CODE_EXPIRED,
+      });
+    }
+
+    const apiKey = decryptApiKey(current.key);
     await this.hostStatus.recordConnected(scope, agent._id, 'cli');
 
     return {

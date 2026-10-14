@@ -96,8 +96,13 @@ export class HumanHostStatusService {
         return;
       }
 
+      // The minute is checked again in the write itself: of checks that arrive together only one writes,
+      // and a late one can't put an older time over a newer one. ISO times in UTC compare as strings.
+      const field = `hosts.${via}.lastCheckedAt`;
+      const cutoff = new Date(now.getTime() - CHECK_WRITE_INTERVAL_MS).toISOString();
+
       await this.agentRepository.update(
-        agentQuery(scope, agent._id),
+        { ...agentQuery(scope, agent._id), $or: [{ [field]: { $exists: false } }, { [field]: { $lte: cutoff } }] },
         {
           $set: { [`hosts.${via}.lastCheckedAt`]: now.toISOString() },
           $min: { [`hosts.${via}.connectedAt`]: now.toISOString() },

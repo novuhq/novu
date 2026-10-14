@@ -1,4 +1,4 @@
-import { randomInt } from 'node:crypto';
+import { createHash, randomInt } from 'node:crypto';
 import {
   ConflictException,
   GoneException,
@@ -9,16 +9,21 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
+import type { IApiKey } from '@novu/dal';
 import { CLI_USER_CODE_ALPHABET } from '@novu/shared';
 
 /** How long a one-time code connects a host. */
 export const CONNECT_CODE_TTL_SECONDS = 10 * 60;
 
 /**
- * Wrong codes one agent takes in `CONNECT_CODE_FAILURE_WINDOW_SECONDS` before it takes none, right ones
- * included. A code is eight letters out of twenty (2.6e10 of them), so ten guesses get nowhere.
+ * Wrong codes one network (client IP) can send for an agent in `CONNECT_CODE_FAILURE_WINDOW_SECONDS`
+ * before that network gets none for it, right ones included; and wrong codes one network can send for any
+ * agents together. They are counted per network, so a stranger who knows an agent's handle can't lock its
+ * host out. What stops guessing is the code itself: eight letters out of twenty (2.6e10 of them) that work
+ * for ten minutes.
  */
 export const CONNECT_CODE_MAX_FAILURES = 10;
+export const CONNECT_CODE_MAX_FAILURES_PER_NETWORK = 30;
 export const CONNECT_CODE_FAILURE_WINDOW_SECONDS = 10 * 60;
 
 /** A code is still known this long after it ran out or was used, so a late try is told which of the two it was. */
@@ -46,6 +51,8 @@ export type ConnectCodeTarget = {
   agentId: string;
   agentIdentifier: string;
   handle: string;
+  /** Which of the environment's keys was current when the code was made (`keyFingerprint`). */
+  keyFingerprint: string;
 };
 
 type ConnectCodeRecord = ConnectCodeTarget & {
@@ -57,10 +64,10 @@ type ConnectCodeRecord = ConnectCodeTarget & {
 export type IssuedConnectCode = { code: string; handle: string; expiresAt: string };
 
 /**
- * Takes the code once: refuses every try while the agent has had too many wrong ones, counts a wrong one,
- * and marks a right one used, keeping it around so a second try is told it was used.
- * KEYS: the code, the agent's wrong tries. ARGV: now (epoch seconds), max wrong tries, their window, how long a
- * code is kept.
+ * Takes the code once: refuses every try while this network has sent too many wrong ones for the agent,
+ * counts a wrong one, and marks a right one used, keeping it around so a second try is told it was used.
+ * KEYS: the code, this network's wrong tries for the agent. ARGV: now (epoch seconds), max wrong tries,
+ * their window, how long a code is kept.
  */
 const REDEEM_SCRIPT = `
 local failures = tonumber(redis.call('get', KEYS[2]) or '0')
@@ -141,7 +148,7 @@ export class HumanConnectCodeService {
    * Uses the code: what it connects to, once. Throws a 404 for a code that never existed (or names another
    * agent), a 410 for one that ran out, a 409 for one used before and a 429 while the agent takes no codes.
    */
-  async redeem(handleInput: string, codeInput: string): Promise<ConnectCodeTarget> {
+  async redeem(handleInput: string, codeInput: string, clientIp?: string): Promise<ConnectCodeTarget> {
     const handle = normalizeHandle(handleInput);
     const code = normalizeCode(codeInput);
 
@@ -153,9 +160,15 @@ export class HumanConnectCodeService {
       throw codesUnavailable();
     }
 
+    const network = clientIp?.trim() || 'unknown';
+    const networkKey = networkFailuresKey(network);
+    if (Number(await this.cacheService.get(networkKey)) >= CONNECT_CODE_MAX_FAILURES_PER_NETWORK) {
+      throw tooManyTries();
+    }
+
     const result = await this.cacheService.eval<string | null>(
       REDEEM_SCRIPT,
-      [connectCodeKey(handle, code), failuresKey(handle)],
+      [connectCodeKey(handle, code), failuresKey(handle, network)],
       [
         Math.floor(Date.now() / 1000),
         CONNECT_CODE_MAX_FAILURES,
@@ -164,9 +177,13 @@ export class HumanConnectCodeService {
       ]
     );
 
+    if (result === 'INVALID') {
+      await this.cacheService.eval(COUNT_SCRIPT, [networkKey], [CONNECT_CODE_FAILURE_WINDOW_SECONDS]);
+    }
+
     switch (result) {
       case 'TOO_MANY_TRIES':
-        throw tooManyTries(handle);
+        throw tooManyTries();
       case 'USED':
         throw new ConflictException({
           message: 'This code was used already, and each code works once. Ask for a new one on agentinbox.md.',
@@ -189,6 +206,7 @@ export class HumanConnectCodeService {
           agentId: record.agentId,
           agentIdentifier: record.agentIdentifier,
           handle: record.handle,
+          keyFingerprint: record.keyFingerprint,
         };
       }
     }
@@ -249,8 +267,31 @@ export function connectCodeKey(handle: string, code: string): string {
   return `agent-inbox-connect:{${handle}}:code:${code}`;
 }
 
-function failuresKey(handle: string): string {
-  return `agent-inbox-connect:{${handle}}:failures`;
+/** One network's wrong tries for one agent, in the agent's slot so the script can count them. */
+function failuresKey(handle: string, network: string): string {
+  return `agent-inbox-connect:{${handle}}:failures:${network}`;
+}
+
+/** One network's wrong tries for any agents together: a key of its own, counted outside the script. */
+function networkFailuresKey(network: string): string {
+  return `agent-inbox-connect-network:{${network}}:failures`;
+}
+
+/** Counts one more on a key that runs out `ARGV[1]` seconds after its first count. */
+const COUNT_SCRIPT = `
+local n = redis.call('incr', KEYS[1])
+if n == 1 then redis.call('expire', KEYS[1], ARGV[1]) end
+return n
+`;
+
+/**
+ * Which key an environment has right now, without the key itself: a code remembers it, so a code made
+ * with a key that was replaced since can't hand out the new one.
+ */
+export function keyFingerprint(apiKey: Pick<IApiKey, 'key' | 'hash'> | undefined): string {
+  const source = apiKey?.hash || (typeof apiKey?.key === 'string' ? apiKey.key : JSON.stringify(apiKey?.key ?? ''));
+
+  return createHash('sha256').update(source).digest('hex').slice(0, 32);
 }
 
 function currentCodeKey(agentId: string): string {
@@ -261,7 +302,14 @@ function parseRecord(raw: string): ConnectCodeRecord | null {
   try {
     const parsed = JSON.parse(raw) as Partial<ConnectCodeRecord>;
 
-    if (!parsed?.environmentId || !parsed.organizationId || !parsed.agentId || !parsed.handle || !parsed.expiresAt) {
+    if (
+      !parsed?.environmentId ||
+      !parsed.organizationId ||
+      !parsed.agentId ||
+      !parsed.handle ||
+      !parsed.expiresAt ||
+      !parsed.keyFingerprint
+    ) {
       return null;
     }
 
@@ -287,10 +335,11 @@ function invalidCode(): NotFoundException {
   });
 }
 
-function tooManyTries(handle: string): HttpException {
+function tooManyTries(): HttpException {
   return new HttpException(
     {
-      message: `${handle} got too many wrong codes. Wait 10 minutes, then ask for a new code on agentinbox.md.`,
+      message:
+        'Too many wrong codes came from this network. Wait 10 minutes, then try again with a new code from agentinbox.md.',
       code: CONNECT_CODE_TOO_MANY_TRIES,
       retryAfterSeconds: CONNECT_CODE_FAILURE_WINDOW_SECONDS,
     },

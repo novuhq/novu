@@ -6,6 +6,7 @@ import {
   ConversationParticipantTypeEnum,
   ConversationRepository,
   ConversationStatusEnum,
+  EnvironmentRepository,
 } from '@novu/dal';
 import { CLI_USER_CODE_PATTERN } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
@@ -24,6 +25,12 @@ import { AGENT_INBOX_VIA_HEADER } from '../services/human-host-status.service';
 const agentRepository = new AgentRepository();
 const conversationRepository = new ConversationRepository();
 const conversationActivityRepository = new ConversationActivityRepository();
+const environmentRepository = new EnvironmentRepository();
+
+/** A network address of its own for each test (from a benchmarking range), as wrong codes are counted per network. */
+function randomNetwork(): string {
+  return `198.18.${Math.floor(Math.random() * 256)}.${1 + Math.floor(Math.random() * 254)}`;
+}
 
 const OPERATOR_ID = 'ada';
 
@@ -34,12 +41,14 @@ const OPERATOR_ID = 'ada';
 describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
   let session: UserSession;
   let handle: string;
+  let network: string;
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
     // Wrong codes are counted per handle and kept in Redis across tests, so every test has its own.
     handle = `atlas-${Math.random().toString(36).slice(2, 10)}`;
+    network = randomNetwork();
 
     const setupRes = await session.testAgent
       .post('/v1/human/setup')
@@ -59,9 +68,13 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
     return res.body.data;
   }
 
-  /** `agentinbox connect`: no credentials, only the agent and the code. */
-  function connect(agent: string, code: string) {
-    return session.testAgent.post('/v1/human/connect').set('Authorization', '').send({ agent, code });
+  /** `agentinbox connect`: no credentials, only the agent and the code, from this test's network by default. */
+  function connect(agent: string, code: string, from: string = network) {
+    return session.testAgent
+      .post('/v1/human/connect')
+      .set('Authorization', '')
+      .set('X-Forwarded-For', from)
+      .send({ agent, code });
   }
 
   async function hostStatus(): Promise<Record<string, any>> {
@@ -158,7 +171,7 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
       expect((await connect(handle, code)).status).to.equal(200);
     });
 
-    it('bounds guessing: after too many wrong codes the agent takes none for a while, the right one included', async () => {
+    it('bounds guessing: after too many wrong codes a network gets none for the agent, the right one included', async () => {
       const { code } = await issueCode();
 
       for (let attempt = 0; attempt < CONNECT_CODE_MAX_FAILURES; attempt++) {
@@ -171,6 +184,36 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
       expect(locked.status).to.equal(429, JSON.stringify(locked.body));
       expect(locked.body.code).to.equal(CONNECT_CODE_TOO_MANY_TRIES);
       expect(locked.body.data).to.equal(undefined);
+    });
+
+    it('does not let wrong codes from one network lock the agent for another', async () => {
+      const { code } = await issueCode();
+
+      for (let attempt = 0; attempt < CONNECT_CODE_MAX_FAILURES; attempt++) {
+        await connect(handle, otherCodeThan(code));
+      }
+      expect((await connect(handle, code)).status).to.equal(429);
+
+      // Someone who knows the handle can't keep the agent's own host from connecting.
+      const host = await connect(handle, code, randomNetwork());
+      expect(host.status).to.equal(200, JSON.stringify(host.body));
+      expect(host.body.data.apiKey).to.equal(session.apiKey);
+    });
+
+    it('is stale once the account key changed after it was made', async () => {
+      const { code } = await issueCode();
+      // As when the key is regenerated: the environment's current key is another one now.
+      await environmentRepository.update(
+        { _id: session.environment._id, _organizationId: session.organization._id },
+        { $set: { 'apiKeys.0.hash': `replaced-${Date.now()}` } }
+      );
+
+      const res = await connect(handle, code);
+
+      expect(res.status).to.equal(410, JSON.stringify(res.body));
+      expect(res.body.code).to.equal(CONNECT_CODE_EXPIRED);
+      expect(res.body.message).to.contain('key changed');
+      expect(res.body.data).to.equal(undefined);
     });
 
     it('is only issued for an agent that exists, under a handle that can be typed', async () => {

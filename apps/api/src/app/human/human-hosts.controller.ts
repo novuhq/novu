@@ -7,11 +7,14 @@ import {
   HttpStatus,
   Post,
   Query,
+  Req,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import type { Request } from 'express';
+import { getClientIp } from 'request-ip';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -89,7 +92,7 @@ export class HumanHostsController {
 
 /**
  * Public: `agentinbox connect` trades a one-time code for the key of the agent's account. The code is the
- * only credential. Each one works once, and every agent takes only so many wrong codes at a time.
+ * only credential. Each one works once, and each network can send only so many wrong codes at a time.
  */
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -101,7 +104,9 @@ export class HumanConnectPublicController {
   @Post('/')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Connect a host to an agent with a one-time code from agentinbox.md' })
-  connect(@Body() body: ConnectHostRequestDto): Promise<ConnectHostResponseDto> {
-    return this.connectHostUsecase.execute(ConnectHostCommand.create({ agent: body.agent, code: body.code }));
+  connect(@Body() body: ConnectHostRequestDto, @Req() request: Request): Promise<ConnectHostResponseDto> {
+    return this.connectHostUsecase.execute(
+      ConnectHostCommand.create({ agent: body.agent, code: body.code, clientIp: getClientIp(request) ?? undefined })
+    );
   }
 }
