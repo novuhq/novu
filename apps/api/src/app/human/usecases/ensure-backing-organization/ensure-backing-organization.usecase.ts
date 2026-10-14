@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { CacheService } from '@novu/application-generic';
@@ -21,6 +22,15 @@ const LOCK_CHECK_MS = 200;
 const LOCK_GRACE_MS = 5000;
 /** How long a request waits for the lock at most: the lock's own expiry and the grace above. */
 export const LOCK_WAIT_MS = LOCK_TTL_SECONDS * 1000 + LOCK_GRACE_MS;
+
+/**
+ * Lets go of a lock only while it is still this request's. A lock that ran out and was taken by another
+ * request since is that request's to let go of. KEYS: the lock. ARGV: this request's token.
+ */
+const RELEASE_LOCK_SCRIPT = `
+if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) end
+return 0
+`;
 
 function pause(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -62,7 +72,7 @@ export class EnsureBackingOrganization {
 
   async execute(command: EnsureBackingOrganizationCommand): Promise<HumanAccountResponseDto> {
     const lockKey = `${LOCK_KEY_PREFIX}{${command.humanUserId}}`;
-    const locked = await this.waitForLock(lockKey);
+    const lockToken = await this.waitForLock(lockKey);
 
     try {
       const account = await this.humanBackingAccounts.findOrCreate({
@@ -74,8 +84,8 @@ export class EnsureBackingOrganization {
 
       return { organizationId, userId: account.novuUserId, environmentId, region: resolveHumanRegion() };
     } finally {
-      if (locked) {
-        await this.cacheService.del(lockKey);
+      if (lockToken) {
+        await this.releaseLock(lockKey, lockToken);
       }
     }
   }
@@ -90,12 +100,16 @@ export class EnsureBackingOrganization {
    * that much time has gone by (LOCK_WAIT_MS) means the cache isn't answering, so the request says "busy"
    * instead of waiting forever, also when a call to the cache itself hangs.
    * Without a cache we skip the lock; Clerk's unique email and slug still prevent duplicates there.
+   *
+   * The lock holds a token of this request's own (returned, or null without a cache), so it is only ever let
+   * go of by the request that holds it.
    */
-  private async waitForLock(lockKey: string): Promise<boolean> {
+  private async waitForLock(lockKey: string): Promise<string | null> {
     if (!this.cacheService.cacheEnabled()) {
-      return false;
+      return null;
     }
 
+    const token = randomUUID();
     const giveUpAt = Date.now() + LOCK_WAIT_MS;
 
     for (;;) {
@@ -104,8 +118,8 @@ export class EnsureBackingOrganization {
         throw accountBusy();
       }
 
-      if (await this.tryLock(lockKey, left)) {
-        return true;
+      if (await this.tryLock(lockKey, token, left)) {
+        return token;
       }
 
       await pause(Math.min(LOCK_CHECK_MS, Math.max(0, giveUpAt - Date.now())));
@@ -115,9 +129,10 @@ export class EnsureBackingOrganization {
   /**
    * One try at the lock that waits no longer than `withinMs` for the cache to answer: a connection that drops
    * mid-call can keep a call pending forever. A lock that call still takes after the request stopped waiting
-   * is given back at once, so it doesn't block the account until it runs out.
+   * is given back at once, so it doesn't block the account until it runs out; by its token, so a lock another
+   * request took meanwhile stays.
    */
-  private tryLock(lockKey: string, withinMs: number): Promise<boolean> {
+  private tryLock(lockKey: string, token: string, withinMs: number): Promise<boolean> {
     return new Promise((resolve, reject) => {
       let gaveUp = false;
       const timer = setTimeout(() => {
@@ -125,11 +140,11 @@ export class EnsureBackingOrganization {
         resolve(false);
       }, withinMs);
 
-      this.cacheService.setIfNotExist(lockKey, '1', { ttl: LOCK_TTL_SECONDS }).then(
+      this.cacheService.setIfNotExist(lockKey, token, { ttl: LOCK_TTL_SECONDS }).then(
         (result) => {
           if (gaveUp) {
             if (result === 'OK') {
-              this.cacheService.del(lockKey).catch(() => undefined);
+              this.releaseLock(lockKey, token).catch(() => undefined);
             }
 
             return;
@@ -146,6 +161,10 @@ export class EnsureBackingOrganization {
         }
       );
     });
+  }
+
+  private async releaseLock(lockKey: string, token: string): Promise<void> {
+    await this.cacheService.eval(RELEASE_LOCK_SCRIPT, [lockKey], [token]);
   }
 
   private async ensureNovuOrganization(

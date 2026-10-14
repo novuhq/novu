@@ -40,22 +40,29 @@ describe('EnsureBackingOrganization', () => {
       ),
     };
     /*
-     * Takes and lets go of locks the way Redis `SET NX EX` and `DEL` do, so requests at the same time contend
-     * for them, and a lock nobody lets go of runs out after its TTL. By lock, when it runs out.
+     * Takes and lets go of locks the way Redis `SET NX EX` and the release script do, so requests at the same
+     * time contend for them, a lock nobody lets go of runs out after its TTL, and only its holder lets go of it.
      */
-    const heldLocks = new Map<string, number>();
+    const heldLocks = new Map<string, { token: string; until: number }>();
     const cacheService = {
       cacheEnabled: sinon.stub().returns(true),
-      setIfNotExist: sinon.stub().callsFake(async (key: string, _value: string, options?: { ttl?: number }) => {
-        const until = heldLocks.get(key);
-        if (until !== undefined && until > Date.now()) {
+      setIfNotExist: sinon.stub().callsFake(async (key: string, token: string, options?: { ttl?: number }) => {
+        const held = heldLocks.get(key);
+        if (held && held.until > Date.now()) {
           return null;
         }
-        heldLocks.set(key, Date.now() + (options?.ttl ?? 60) * 1000);
+        heldLocks.set(key, { token, until: Date.now() + (options?.ttl ?? 60) * 1000 });
 
         return 'OK';
       }),
-      del: sinon.stub().callsFake(async (key: string) => heldLocks.delete(key)),
+      eval: sinon.stub().callsFake(async (_script: string, [key]: string[], [token]: string[]) => {
+        if (heldLocks.get(key)?.token !== token) {
+          return 0;
+        }
+        heldLocks.delete(key);
+
+        return 1;
+      }),
     };
     const syncExternalOrganization = { execute: sinon.stub().resolves({ _id: 'novu_org' }) };
     const moduleRef = { resolve: sinon.stub().resolves(syncExternalOrganization) };
@@ -119,13 +126,14 @@ describe('EnsureBackingOrganization', () => {
 
   it('reuses the organization on later visits', async () => {
     process.env.NOVU_REGION = 'eu-central-1';
-    const { usecase, syncExternalOrganization, cacheService } = setup({ existingOrganization: 'complete' });
+    const { usecase, syncExternalOrganization, cacheService, heldLocks } = setup({ existingOrganization: 'complete' });
 
     const result = await usecase.execute(command);
 
     expect(syncExternalOrganization.execute.called).to.equal(false);
     expect(result).to.include({ organizationId: 'novu_org', environmentId: 'dev_env', region: 'eu' });
-    expect(cacheService.del.calledOnceWith('human_backing_account_lock:{user_2AbC}')).to.equal(true);
+    expect(cacheService.eval.firstCall.args[1]).to.deep.equal(['human_backing_account_lock:{user_2AbC}']);
+    expect(heldLocks.size).to.equal(0);
   });
 
   it('starts the setup over when an earlier attempt stopped before the environments', async () => {
@@ -175,13 +183,14 @@ describe('EnsureBackingOrganization', () => {
   });
 
   it('releases the lock when the setup fails', async () => {
-    const { usecase, cacheService, humanBackingAccounts } = setup();
+    const { usecase, cacheService, humanBackingAccounts, heldLocks } = setup();
     humanBackingAccounts.findOrCreate.rejects(new Error('Clerk is down'));
 
     const error = await usecase.execute(command).catch((caught) => caught);
 
     expect(error.message).to.equal('Clerk is down');
-    expect(cacheService.del.calledOnce).to.equal(true);
+    expect(cacheService.eval.calledOnce).to.equal(true);
+    expect(heldLocks.size).to.equal(0);
   });
 
   describe('when the lock is not let go', () => {
@@ -199,7 +208,7 @@ describe('EnsureBackingOrganization', () => {
     it('takes the lock over once the lock of a request that died runs out', async () => {
       const { usecase, heldLocks, syncExternalOrganization } = setup();
       // A request took the lock and died: nobody lets it go, so it lasts until Redis drops it.
-      heldLocks.set(lockKey, Date.now() + 60_000);
+      heldLocks.set(lockKey, { token: 'a_request_that_died', until: Date.now() + 60_000 });
 
       const pending = usecase.execute(command);
       await clock.tickAsync(59_000);
@@ -223,7 +232,7 @@ describe('EnsureBackingOrganization', () => {
     });
 
     it('says busy when the cache stops answering, and gives back a lock it takes after that', async () => {
-      const { usecase, cacheService, humanBackingAccounts } = setup();
+      const { usecase, cacheService, humanBackingAccounts, heldLocks } = setup();
       let answer: (result: string) => void = () => undefined;
       cacheService.setIfNotExist.returns(
         new Promise((resolve) => {
@@ -238,10 +247,18 @@ describe('EnsureBackingOrganization', () => {
       expect(error).to.be.instanceOf(ConflictException);
       expect(humanBackingAccounts.findOrCreate.called).to.equal(false);
 
-      // The call comes back after all, with the lock: it is let go at once.
+      // Meanwhile the lock it would have taken ran out, and another request took the key.
+      heldLocks.set(lockKey, { token: 'another_request', until: Date.now() + 60_000 });
+
+      // The call comes back after all, with the lock: it is let go at once, by this request's token only.
       answer('OK');
       await clock.tickAsync(0);
-      expect(cacheService.del.calledOnceWith(lockKey)).to.equal(true);
+      expect(cacheService.eval.calledOnce).to.equal(true);
+      expect(cacheService.eval.firstCall.args.slice(1)).to.deep.equal([
+        [lockKey],
+        [cacheService.setIfNotExist.firstCall.args[1]],
+      ]);
+      expect(heldLocks.get(lockKey)?.token).to.equal('another_request');
     });
   });
 });
