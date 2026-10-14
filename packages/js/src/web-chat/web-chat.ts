@@ -6,7 +6,12 @@ import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
 import type { BaseSocketInterface } from '../ws/base-socket';
 import { AgentConversationRuntime } from './agent-conversation-runtime';
-import { type AgentApprovalPart, type AgentConversationError, type AgentMessage, derivePendingActions } from './agent-message.types';
+import {
+  type AgentApprovalPart,
+  type AgentConversationError,
+  type AgentMessage,
+  derivePendingActions,
+} from './agent-message.types';
 import type { ConversationArgs } from './conversation-runtime.types';
 import { createActionIdempotencyKeyForScope, createMessageIdempotencyKey } from './idempotency';
 import { runtimeCacheKey } from './runtime-cache-key';
@@ -57,10 +62,11 @@ export class WebChat extends BaseModule {
   #liveSubscriberCount = 0;
   #runtimes = new Map<string, AgentConversationRuntime>();
   /**
-   * Per-conversation live envelope buffers while reconnect catch-up is in flight.
-   * Map key means catch-up is in flight; only those conversations buffer live envelopes.
+   * Per-conversation live envelope buffers while reconnect catch-up or a history reload is in flight.
+   * Map key means a sync is in flight; only those conversations buffer live envelopes.
    */
   #catchUpBuffers = new Map<string, AgentEventEnvelope[]>();
+  /** Runs syncs one at a time so two never share a conversation buffer. */
   #catchUpChain: Promise<void> = Promise.resolve();
 
   constructor({
@@ -300,30 +306,51 @@ export class WebChat extends BaseModule {
 
   /** @internal Prefer {@link AgentConversationRuntime.load}. */
   async loadConversation(args: LoadConversationArgs): Result<LoadConversationResult> {
-    return this.callWithSession(async () => {
-      try {
-        const page = await this.#webChatService.getEvents({
-          conversationId: args.conversationId,
-        });
+    return this.callWithSession(() => this.#enqueueSync(() => this.#loadConversation(args)));
+  }
 
-        const entry = this.#store.getOrCreate({
-          agentId: args.agentId,
-          key: args.conversationId,
-          conversationId: args.conversationId,
-        });
-        const next = this.#store.absorbHistoryPage(entry, page.events, page.olderCursor);
+  #enqueueSync<T>(sync: () => Promise<T>): Promise<T> {
+    const run = this.#catchUpChain.then(sync);
+    // Keep the chain alive after a rejected run so later syncs still run.
+    this.#catchUpChain = run.then(
+      () => undefined,
+      () => undefined
+    );
 
-        return {
-          data: {
-            conversationId: args.conversationId,
-            messages: next.messages,
-            hasMore: next.olderCursor != null,
-          },
-        };
-      } catch (error) {
-        return { error: new NovuError('Failed to load web chat conversation', error) };
+    return run;
+  }
+
+  async #loadConversation(args: LoadConversationArgs): Result<LoadConversationResult> {
+    // Live events wait until the page applies. The sequence gate would otherwise drop page events older than them.
+    this.#catchUpBuffers.set(args.conversationId, []);
+    let entry: ConversationEntry;
+
+    try {
+      const page = await this.#webChatService.getEvents({
+        conversationId: args.conversationId,
+      });
+
+      entry = this.#store.getOrCreate({
+        agentId: args.agentId,
+        key: args.conversationId,
+        conversationId: args.conversationId,
+      });
+      this.#store.absorbHistoryPage(entry, page.events, page.olderCursor);
+    } catch (error) {
+      return { error: new NovuError('Failed to load web chat conversation', error) };
+    } finally {
+      for (const envelope of this.#takeLiveBuffer(args.conversationId)) {
+        this.#applyLiveEnvelope(envelope);
       }
-    });
+    }
+
+    return {
+      data: {
+        conversationId: args.conversationId,
+        messages: entry.messages,
+        hasMore: entry.olderCursor != null,
+      },
+    };
   }
 
   /** @internal Prefer {@link AgentConversationRuntime.fetchMore}. */
@@ -348,13 +375,16 @@ export class WebChat extends BaseModule {
         };
       }
 
+      const conversationId = entry.conversationId;
+      const olderCursor = entry.olderCursor;
+
       return this.#store.withFetchMoreClaim(entry, async () => {
         const epochAtStart = entry.paginationEpoch;
 
         try {
           const page = await this.#webChatService.getEvents({
-            conversationId: entry.conversationId!,
-            before: entry.olderCursor!,
+            conversationId,
+            before: olderCursor,
           });
 
           if (epochAtStart !== entry.paginationEpoch) {
@@ -681,8 +711,7 @@ export class WebChat extends BaseModule {
       return;
     }
 
-    // Keep the chain alive after a rejected run so later reconnects still catch up.
-    this.#catchUpChain = this.#catchUpChain.catch(() => undefined).then(() => this.#catchUpOpenConversations());
+    void this.#enqueueSync(() => this.#catchUpOpenConversations());
   }
 
   async #catchUpOpenConversations(): Promise<void> {
@@ -730,10 +759,7 @@ export class WebChat extends BaseModule {
   }
 
   async #catchUpConversation(conversationId: string, holders: ConversationEntry[]): Promise<void> {
-    const activeHolders = holders
-      .map((holder) => this.#store.get(holder.key))
-      .filter((entry): entry is ConversationEntry => entry != null && entry.conversationId === conversationId);
-
+    const activeHolders = this.#currentHolders(conversationId, holders);
     if (activeHolders.length === 0) {
       return;
     }
@@ -746,40 +772,10 @@ export class WebChat extends BaseModule {
     let discardBufferedEnvelopes = false;
 
     try {
-      // Page toward older events until we reach already-known sequence territory.
-      // One newest page is not enough when the offline gap exceeds the server page size.
       const knownThrough = Math.min(...activeHolders.map((entry) => entry.lastSequence));
-      const missed: AgentEventEnvelope[] = [];
-      let before: string | undefined;
-      let completed = false;
+      const missed = await this.#fetchEventsSince(conversationId, knownThrough);
 
-      for (let pageIndex = 0; ; pageIndex += 1) {
-        if (knownThrough > 0 && pageIndex >= CATCH_UP_PAGE_LIMIT) {
-          break;
-        }
-
-        const page = await this.#webChatService.getEvents({
-          conversationId,
-          ...(before ? { before } : {}),
-        });
-        const envelopes = [...page.events].sort((left, right) => left.sequence - right.sequence);
-        missed.push(...envelopes);
-
-        const oldestInPage = envelopes[0]?.sequence;
-        if (page.olderCursor == null || oldestInPage == null) {
-          completed = true;
-          break;
-        }
-
-        if (knownThrough > 0 && oldestInPage <= knownThrough) {
-          completed = true;
-          break;
-        }
-
-        before = page.olderCursor;
-      }
-
-      if (!completed) {
+      if (!missed) {
         // On catch-up failure the conversation stays stale and errored rather than showing messages across a known gap.
         discardBufferedEnvelopes = true;
         const catchUpError = new NovuError(
@@ -793,15 +789,7 @@ export class WebChat extends BaseModule {
         return;
       }
 
-      // Apply oldest→newest so message order stays chronological across pages.
-      missed.sort((left, right) => left.sequence - right.sequence);
-
-      for (const holder of activeHolders) {
-        const entry = this.#store.get(holder.key);
-        if (!entry || entry.conversationId !== conversationId) {
-          continue;
-        }
-
+      for (const entry of this.#currentHolders(conversationId, activeHolders)) {
         this.#store.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError: undefined });
         for (const envelope of missed) {
           this.#store.applyLiveEnvelope(entry, envelope);
@@ -809,24 +797,12 @@ export class WebChat extends BaseModule {
       }
     } catch (error) {
       const catchUpError = new NovuError('Failed to recover web chat conversation after reconnect', error);
-      for (const holder of activeHolders) {
-        const entry = this.#store.get(holder.key);
-        if (!entry || entry.conversationId !== conversationId) {
-          continue;
-        }
-
+      for (const entry of this.#currentHolders(conversationId, activeHolders)) {
         this.#store.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError });
       }
     } finally {
-      const buffered = this.#catchUpBuffers.get(conversationId) ?? [];
-      this.#catchUpBuffers.delete(conversationId);
-
-      for (const holder of activeHolders) {
-        const entry = this.#store.get(holder.key);
-        if (!entry || entry.conversationId !== conversationId) {
-          continue;
-        }
-
+      const buffered = this.#takeLiveBuffer(conversationId);
+      for (const entry of this.#currentHolders(conversationId, activeHolders)) {
         this.#store.setRecoveryState(entry, { isRecovering: false, catchUpError: entry.catchUpError });
       }
 
@@ -836,5 +812,48 @@ export class WebChat extends BaseModule {
         }
       }
     }
+  }
+
+  /**
+   * Page toward older events until reaching already-known sequences.
+   * One newest page is not enough when the offline gap exceeds the server page size.
+   * Returns missed events oldest first, or null when the safety page limit is hit first.
+   */
+  async #fetchEventsSince(conversationId: string, knownThrough: number): Promise<AgentEventEnvelope[] | null> {
+    const missed: AgentEventEnvelope[] = [];
+    let before: string | undefined;
+
+    for (let pageIndex = 0; knownThrough <= 0 || pageIndex < CATCH_UP_PAGE_LIMIT; pageIndex += 1) {
+      const page = await this.#webChatService.getEvents({
+        conversationId,
+        ...(before ? { before } : {}),
+      });
+      const envelopes = [...page.events].sort((left, right) => left.sequence - right.sequence);
+      missed.push(...envelopes);
+
+      const oldestInPage = envelopes[0]?.sequence;
+      const reachedKnown = knownThrough > 0 && oldestInPage != null && oldestInPage <= knownThrough;
+      if (page.olderCursor == null || oldestInPage == null || reachedKnown) {
+        return missed.sort((left, right) => left.sequence - right.sequence);
+      }
+
+      before = page.olderCursor;
+    }
+
+    return null;
+  }
+
+  /** Holders still stored under this conversation. A clear can drop them while a request is in flight. */
+  #currentHolders(conversationId: string, holders: ConversationEntry[]): ConversationEntry[] {
+    return holders
+      .map((holder) => this.#store.get(holder.key))
+      .filter((entry): entry is ConversationEntry => entry != null && entry.conversationId === conversationId);
+  }
+
+  #takeLiveBuffer(conversationId: string): AgentEventEnvelope[] {
+    const buffered = this.#catchUpBuffers.get(conversationId) ?? [];
+    this.#catchUpBuffers.delete(conversationId);
+
+    return buffered;
   }
 }

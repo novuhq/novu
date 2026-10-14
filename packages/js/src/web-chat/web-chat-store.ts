@@ -33,6 +33,8 @@ export type ConversationEntry = AgentConversationState & {
    * exhausted, or before any history load.
    */
   olderCursor: string | null;
+  /** True once a history page replaced the timeline. Later reloads then only catch up on newer events. */
+  historyLoaded: boolean;
   /**
    * Actions already reported as new. An action id is never raised twice,
    * so a resolved action must not fall out and be reported again.
@@ -242,6 +244,7 @@ export class WebChatStore {
       conversationId: args.conversationId,
       key: args.key,
       olderCursor: null,
+      historyLoaded: false,
       reportedActionIds: new Set(),
       mcpConnectionResults: new Map(),
       messageMutations: new Map(),
@@ -334,39 +337,40 @@ export class WebChatStore {
   }
 
   /**
-   * Merge the newest history page into this session.
-   * Server message ids win. Cached messages older than the page stay above it,
-   * and local-only messages stay at the end.
+   * Bring this session up to date with the newest history page.
+   * When the page reaches the cached timeline, only newer events apply, so older history and `olderCursor` stay.
+   * Otherwise the page replaces the cached server history. Unconfirmed local messages stay at the end.
    */
   absorbHistoryPage(
     entry: ConversationEntry,
     envelopes: AgentEventEnvelope[],
     olderCursor: string | null
   ): ConversationEntry {
+    const ordered = [...envelopes].sort((left, right) => left.sequence - right.sequence);
+    const oldestInPage = ordered[0]?.sequence;
+    const reachesCache = olderCursor == null || (oldestInPage !== undefined && oldestInPage <= entry.lastSequence);
+    if (entry.historyLoaded && reachesCache) {
+      for (const envelope of ordered) {
+        this.applyLiveEnvelope(entry, envelope);
+      }
+
+      return entry;
+    }
+
     const previous = entry.messages;
     this.#recordMcpConnectionResults(entry, envelopes);
     this.#recordMessageMutations(entry, envelopes);
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const serverIds = new Set(folded.messages.map((message) => message.id));
-    const firstOnPage = previous.findIndex((message) => serverIds.has(message.id));
-    const splitAt = firstOnPage === -1 ? previous.length : firstOnPage;
-    const older = previous.slice(0, splitAt);
-    // History pages hold only the newest events.
-    // Without overlap, cached history sits behind a gap that fetchMore reloads.
-    const olderCached = firstOnPage === -1 ? [] : older.filter((message) => message.status === 'sent');
-    const localOnly = [
-      ...older.filter((message) => message.status !== 'sent'),
-      ...previous.slice(splitAt).filter((message) => !serverIds.has(message.id)),
-    ];
+    // Confirmed messages missing from the page are older history that fetchMore reloads in order.
+    const localOnly = previous.filter((message) => !serverIds.has(message.id) && message.status !== 'sent');
 
     applyState(entry, {
       ...folded,
-      messages: this.#overlayMessages(entry, [...olderCached, ...folded.messages, ...localOnly]),
+      messages: this.#overlayMessages(entry, [...folded.messages, ...localOnly]),
     });
-    // The existing cursor already points before the oldest cached message.
-    if (olderCached.length === 0) {
-      entry.olderCursor = olderCursor;
-    }
+    entry.historyLoaded = true;
+    entry.olderCursor = olderCursor;
     entry.paginationEpoch += 1;
     entry.paginationStatus = 'idle';
     entry.pendingFetchMore = undefined;
