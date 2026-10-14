@@ -1,7 +1,6 @@
 // The seeded user and org live in the `novu-box` Clerk app that every box shares. The seed and the smoke test
 // get session tokens through the Clerk Backend API, which only a development instance allows.
-// `+clerk_test` makes it a Clerk test address: any email code Clerk asks for is 424242, and none is sent. That is
-// only safe because the instance signs in with a password first and has sign-up turned off (README, "Clerk").
+// The instance has test mode off, so `+clerk_test` is a plain address here: no 424242 code (README, "Secrets").
 
 export const SEED = {
   email: 'agent+clerk_test@novu.co',

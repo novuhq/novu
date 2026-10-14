@@ -67,20 +67,21 @@ preview-only values. A box runs PR code, and that code can read its environment,
 | `BULL_MQ_PRO_NPM_TOKEN` (optional) | Taskforce.sh registry | Bake; without it the box runs open-source BullMQ |
 | `NOVU_MANAGED_CLAUDE_API_KEY` (optional) | Anthropic, a workspace with a monthly spend limit | Start (runs thalamus and seeds the `box-managed` agent), API, bridge app (real models for its agents) |
 
-The dashboard signs in as `agent+clerk_test@novu.co` with `BOX_SEED_PASSWORD`. If Clerk then asks for an email
-code, it's `424242`: `+clerk_test` addresses never get a real email. All boxes share the Clerk development
-instance and its one seed org, and every bake re-links that org to the new box. Older boxes stop signing in
-correctly after a newer bake.
+The dashboard signs in as `agent+clerk_test@novu.co` with `BOX_SEED_PASSWORD`. All boxes share the Clerk
+development instance and its one seed org, and every bake re-links that org to the new box. Older boxes stop
+signing in correctly after a newer bake.
 
-Box URLs are public, like staging's, so the password is what keeps people out. That holds only while the Clerk
-instance has these two settings, because anyone can type `424242` for any `+clerk_test` address:
+Box URLs are public, like staging's. Anyone with a `@novu.co` address can sign up (the allowlist) and gets their own
+org; the code Clerk emails them proves they own the address. The seed org stays behind the password. That holds
+only while the Clerk instance has these two settings:
 
-1. **Email → Sign-in with email verification code: off.** Sign-in starts with the password.
-2. **Restrictions → Sign-up mode: Restricted.** Nobody can create an account; the bake creates the seed user
-   through the Backend API, which isn't affected.
+1. **User & authentication → Email → Sign-in with email → Email verification code: off.** Sign-in needs the
+   password.
+2. **Settings → Test mode: off.** With it on, Clerk accepts `424242` as the code for any made-up
+   `+clerk_test@novu.co` address, so anyone could sign up.
 
 Check them with `curl -s https://electric-sponge-6737.clerk.accounts.dev/v1/environment`: `email_address` must not
-list `email_code` in `first_factors`, and `sign_up.mode` must be `restricted`.
+list `email_code` in `first_factors`, and `auth_config.test_mode` must be `false`.
 
 ## Use it
 
