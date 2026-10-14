@@ -1,7 +1,7 @@
 # @novu/human-dashboard
 
 Next.js app for [agentinbox.md](https://agentinbox.md). It serves the invite page for
-[`@novu/human`](../../packages/human) and Human accounts (proof of concept, NV-8909); the agentinbox.md
+[`@agentinbox/cli`](../../packages/agentinbox) and Human accounts (proof of concept, NV-8909); the agentinbox.md
 landing page moves in here later.
 
 | Route             | What it is                                                                                  |
@@ -17,8 +17,8 @@ landing page moves in here later.
 
 Each Human account is backed by a hidden Novu organization that the Novu API creates through private
 `/v1/human/accounts` endpoints. See
-[the ADR](../../packages/human/docs/adr/0001-separate-clerk-app-with-backing-organizations.md) and the
-[Human glossary](../../packages/human/CONTEXT.md).
+[the ADR](../../packages/agentinbox/docs/adr/0001-separate-clerk-app-with-backing-organizations.md) and the
+[Agent Inbox glossary](../../packages/agentinbox/CONTEXT.md).
 
 ## Develop
 

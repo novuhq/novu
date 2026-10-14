@@ -18,7 +18,7 @@ import { normalizeUserCode } from './user-code';
 const LOGIN_COMMAND = 'human login';
 
 /** Where "Read the quickstart" goes: the package page, whose readme is the quickstart. */
-const QUICKSTART_URL = 'https://www.npmjs.com/package/@novu/human';
+const QUICKSTART_URL = 'https://www.npmjs.com/package/@agentinbox/cli';
 
 type CliLoginProps = {
   /** The code from the link, already checked to be a code. Empty for links from older CLIs: it's typed then. */
