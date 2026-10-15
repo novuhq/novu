@@ -195,7 +195,7 @@ function RegenerateDialogContent({ onRegenerated }: { onRegenerated: (apiKey: st
       description={
         <>
           CI, VMs and automations using the current key stop working until you paste the new one. On your own machine,
-          run <span className="font-mono text-default">human login</span> again.
+          run <span className="font-mono text-default">npx @agentinbox/cli login</span> again.
         </>
       }
       footer={

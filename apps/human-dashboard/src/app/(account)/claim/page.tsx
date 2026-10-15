@@ -60,7 +60,7 @@ export default async function ClaimPage(props: PageProps<'/claim'>) {
             <p className="flex gap-2">
               {/* Drawn: the mono font's subset has no arrow, and the fallback's is two letters wide. */}
               <ArrowRight aria-hidden="true" className="h-5 w-[1ch] shrink-0 text-muted" strokeWidth={1.5} />
-              <span className="min-w-0 wrap-anywhere">Next: human login, then human contact invite maya</span>
+              <span className="min-w-0 wrap-anywhere">Next: npx @agentinbox/cli login, then contact invite maya</span>
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

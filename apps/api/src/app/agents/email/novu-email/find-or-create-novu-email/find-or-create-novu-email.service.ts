@@ -20,9 +20,11 @@ import {
   AgentRepository,
   CommunityOrganizationRepository,
   IntegrationEntity,
+  type IntegrationQuery,
   IntegrationRepository,
 } from '@novu/dal';
 import {
+  type AgentInboxProviderId,
   ApiServiceLevelEnum,
   ChannelTypeEnum,
   EmailProviderIdEnum,
@@ -71,7 +73,12 @@ export class NovuEmailProvisioningService {
    * Find the agent's existing NovuAgent integration link, or create a new
    * Integration + link atomically. Idempotent — safe to call concurrently.
    */
-  async execute(agentId: string, environmentId: string, organizationId: string): Promise<FindOrCreateNovuEmailResult> {
+  async execute(
+    agentId: string,
+    environmentId: string,
+    organizationId: string,
+    providerId: AgentInboxProviderId = EmailProviderIdEnum.NovuAgent
+  ): Promise<FindOrCreateNovuEmailResult> {
     await this.enforceEmailTier(organizationId);
 
     const agent = await this.agentRepository.findOne(
@@ -83,20 +90,24 @@ export class NovuEmailProvisioningService {
       throw new NotFoundException(`Agent "${agentId}" was not found.`);
     }
 
-    const existing = await this.findExistingLink(agent, environmentId, organizationId);
+    const existing = await this.findExistingLink(agent, environmentId, organizationId, providerId);
     if (existing) return { response: existing, provisionedNewLink: false };
 
     const emailSlugPrefix = this.deriveEmailSlugPrefix(agent);
     const defaultOutboundIntegrationId = await this.resolveDefaultOutboundIntegrationId(environmentId, organizationId);
 
     return this.agentIntegrationRepository.withTransaction(async (session) => {
-      const recheck = await this.findExistingLink(agent, environmentId, organizationId);
+      const recheck = await this.findExistingLink(agent, environmentId, organizationId, providerId);
       if (recheck) return { response: recheck, provisionedNewLink: false };
 
-      const displayName = providers.find((p) => p.id === EmailProviderIdEnum.NovuAgent)?.displayName ?? 'Novu Email';
+      let displayName = providers.find((provider) => provider.id === providerId)?.displayName;
+      if (!displayName) {
+        displayName = providerId === EmailProviderIdEnum.AgentEmailInbox ? 'Agent Email Inbox' : 'Novu Email';
+      }
       const identifier = `${slugify(displayName)}-${shortid.generate()}`;
 
       const integration = await this.createNovuAgentIntegration({
+        providerId,
         displayName,
         identifier,
         emailSlugPrefix,
@@ -129,6 +140,7 @@ export class NovuEmailProvisioningService {
    * here and assigned later via the agent email setup guide.
    */
   private async createNovuAgentIntegration({
+    providerId,
     displayName,
     identifier,
     emailSlugPrefix,
@@ -138,6 +150,7 @@ export class NovuEmailProvisioningService {
     organizationId,
     session,
   }: {
+    providerId: AgentInboxProviderId;
     displayName: string;
     identifier: string;
     emailSlugPrefix: string;
@@ -155,22 +168,18 @@ export class NovuEmailProvisioningService {
     };
 
     // The create envelope is identical across both branches; only `credentials`
-    // varies (shared-inbox routing key vs. self-hosted disabled flag). Build it
-    // once so the lone `as any` (a pre-existing DAL signature wart) lives in a
-    // single place. The cast is needed because the repository's `create` accepts
-    // a query type rather than a plain document.
-    const buildPayload = (credentials: Record<string, unknown>) =>
-      ({
-        providerId: EmailProviderIdEnum.NovuAgent,
-        channel: ChannelTypeEnum.EMAIL,
-        credentials,
-        configurations: {},
-        name: displayName,
-        identifier,
-        active: true,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      }) as any;
+    // varies (shared-inbox routing key vs. self-hosted disabled flag).
+    const buildPayload = (credentials: Record<string, unknown>): IntegrationQuery => ({
+      providerId,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials,
+      configurations: {},
+      name: displayName,
+      identifier,
+      active: true,
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+    });
 
     // Self-hosted: no shared domain to route against, so skip routing-key minting
     // (and its collision loop) and persist the disabled flag. Inbound is wired
@@ -234,7 +243,7 @@ export class NovuEmailProvisioningService {
       channel: ChannelTypeEnum.EMAIL,
       active: true,
       primary: true,
-      providerId: { $nin: NOVU_PROVIDERS } as unknown as string,
+      providerId: { $nin: NOVU_PROVIDERS },
     });
     if (primaryCustom) return primaryCustom._id;
 
@@ -284,7 +293,8 @@ export class NovuEmailProvisioningService {
   private async findExistingLink(
     agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>,
     environmentId: string,
-    organizationId: string
+    organizationId: string,
+    providerId: AgentInboxProviderId
   ): Promise<AgentIntegrationResponseDto | null> {
     const agentId = agent._id;
     const links = await this.agentIntegrationRepository.find(
@@ -299,10 +309,10 @@ export class NovuEmailProvisioningService {
     // from `emailSlugPrefix`. The field is plaintext (no decryption needed).
     const emailIntegration = await this.integrationRepository.findOne(
       {
-        _id: { $in: linkedIntegrationIds } as unknown as string,
+        _id: { $in: linkedIntegrationIds },
         _environmentId: environmentId,
         _organizationId: organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
+        providerId,
       },
       '_id identifier name providerId channel active credentials'
     );

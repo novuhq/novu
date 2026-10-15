@@ -51,7 +51,7 @@ export function Step({
       aria-current={open ? 'step' : undefined}
       className={cn('overflow-hidden rounded-[10px] border border-border bg-background', glow && open && 'dot-glow')}
     >
-      <div className="flex items-start gap-3 px-4.5 py-4">
+      <div className="flex items-center gap-3 px-4.5 py-4">
         <StepMarker index={index} status={status} />
         <div className="flex min-w-0 flex-1 flex-col">
           <h3

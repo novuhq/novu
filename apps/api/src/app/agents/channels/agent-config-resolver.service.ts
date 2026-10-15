@@ -20,7 +20,7 @@ import {
   type AgentAnalyticsSource,
   AgentReplyPolicyEnum,
   AgentSubscriberAccessEnum,
-  EmailProviderIdEnum,
+  isAgentInboxProvider,
 } from '@novu/shared';
 import axios from 'axios';
 import type { WellKnownEmoji } from 'chat';
@@ -61,6 +61,11 @@ export interface ResolvedAgentConfig {
   environmentId: string;
   organizationId: string;
   isKeyless: boolean;
+  /**
+   * The Human relay is delivery infrastructure. Inbound turns skip Novu plan
+   * limits so a signed-up Human user never sees an upgrade card.
+   */
+  isHumanRelay: boolean;
   isManaged: boolean;
   agentId: string;
   agentIdentifier: string;
@@ -250,7 +255,7 @@ export class AgentConfigResolver {
     // ("Enable email inbox" toggle in the dashboard). When false the email channel
     // for this agent is disabled - reject resolve here so both inbound webhook and
     // outbound chat paths fail fast with a clear error.
-    if (integration.providerId === EmailProviderIdEnum.NovuAgent && integration.active === false) {
+    if (isAgentInboxProvider(integration.providerId) && integration.active === false) {
       throw new UnprocessableEntityException(`Email channel is disabled for agent ${agentId}`);
     }
 
@@ -333,6 +338,8 @@ export class AgentConfigResolver {
     // now recorded only when a genuine, non-bot user message is dispatched, in
     // `AgentInboundHandler.handle` (after the bot-author filter).
 
+    const isHumanRelay = agent.runtime === 'human_relay';
+
     return {
       platform,
       credentials,
@@ -340,6 +347,7 @@ export class AgentConfigResolver {
       environmentId,
       organizationId,
       isKeyless: isKeylessOrganization(organizationId),
+      isHumanRelay,
       isManaged: agent.runtime === 'managed' && !!agent.managedRuntime,
       agentId: agent._id,
       agentIdentifier: agent.identifier,
@@ -349,7 +357,7 @@ export class AgentConfigResolver {
       providerId: integration.providerId,
       // Human-relay messages are utility traffic between a person and their own
       // agents — never consumer-facing web chat — so they always ship unbranded.
-      removeNovuBranding: agent.runtime === 'human_relay' ? true : await this.resolveRemoveNovuBranding(organizationId),
+      removeNovuBranding: isHumanRelay ? true : await this.resolveRemoveNovuBranding(organizationId),
       acknowledgeOnReceived: agent.behavior?.acknowledgeOnReceived !== false,
       reactionOnResolved: await resolveReaction(
         agent.behavior?.reactionOnResolved,

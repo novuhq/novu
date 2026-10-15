@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AgentIntegrationRepository, DomainEntity, DomainRouteEntity, IntegrationRepository } from '@novu/dal';
 import {
+  AGENT_INBOX_PROVIDER_IDS,
   ChannelTypeEnum,
-  EmailProviderIdEnum,
   EmailWebhookPayload,
   FeatureFlagsKeysEnum,
   InboundEmailAttachment,
@@ -15,6 +15,7 @@ import { PinoLogger } from '../../logging';
 import { FeatureFlagsService } from '../../services/feature-flags';
 import { HttpClientService } from '../../services/http-client/http-client.service';
 import { getNovuServiceCa } from '../../services/tls';
+import { pickAgentInboxIntegration } from '../../utils/agent-shared-inbox';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { normalizeReferences } from '../../utils/inbound-email-references';
 import type { InboundEmailWebhookObject } from '../../webhooks/dtos/inbound-email-webhook.dto';
@@ -190,6 +191,12 @@ export class InboundDomainRouteDelivery {
     toAddress: string;
     /** Decoded Novu Message._id from a trailing `+nv{base36}` Reply-To token. */
     originToken?: string;
+    /**
+     * Shared-inbox path: the integration already matched by routing key.
+     * Without this, an agent linked to both inboxes would sign the webhook
+     * with whichever row Mongo returned first.
+     */
+    integrationId?: string;
   }): Promise<{ httpStatus: number; body: unknown; latencyMs: number }> {
     this.logger.info({ toAddress: params.toAddress }, 'Delivering inbound email to agent');
 
@@ -203,7 +210,8 @@ export class InboundDomainRouteDelivery {
     const { identifier: integrationIdentifier, secretKey } = await this.resolveIntegration(
       agentId,
       params.domain._environmentId,
-      params.domain._organizationId
+      params.domain._organizationId,
+      params.integrationId
     );
 
     const payload = this.buildAgentEmailWebhookPayload(params.mail, {
@@ -329,7 +337,8 @@ export class InboundDomainRouteDelivery {
   private async resolveIntegration(
     agentId: string,
     environmentId: string,
-    organizationId: string
+    organizationId: string,
+    integrationId?: string
   ): Promise<{ identifier: string; secretKey: string }> {
     const links = await this.agentIntegrationRepository.findLinksForAgents({
       organizationId,
@@ -343,18 +352,21 @@ export class InboundDomainRouteDelivery {
       this.throwError(`No integration linked to agent ${agentId}`);
     }
 
-    const [integration] = await this.integrationRepository.find(
+    const integrations = await this.integrationRepository.find(
       {
         _id: { $in: integrationIds },
         _environmentId: environmentId,
         _organizationId: organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
+        providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
         channel: ChannelTypeEnum.EMAIL,
         active: true,
       },
-      'identifier credentials active',
-      { limit: 1 }
+      'identifier credentials active providerId'
     );
+
+    const integration = integrationId
+      ? integrations.find((item) => String(item._id) === String(integrationId))
+      : pickAgentInboxIntegration(integrations);
 
     if (!integration) {
       this.throwError(`No active NovuAgent email integration found for agent ${agentId}`);

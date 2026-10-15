@@ -2,6 +2,7 @@ import { getHeader, getQuery, H3Event, readBody, send, setHeaders } from 'h3';
 
 import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
 import { type SupportedFrameworkName } from '../types';
+import { pipeToNodeResponse } from '../utils';
 
 /*
  * Re-export all top level exports from the main package.
@@ -44,6 +45,7 @@ export const serve = (options: ServeHandlerOptions) => {
 
         return send(event, actionRes.body);
       },
+      transformStreamResponse: (streamResponse) => pipeToNodeResponse(event.node.res, streamResponse),
     }),
   });
 

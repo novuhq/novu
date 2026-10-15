@@ -106,9 +106,9 @@ from novu_py import Novu
 import os
 
 async def main():
-async with Novu(
-secret_key=os.getenv("NOVU_SECRET_KEY", ""),
-) as novu:
+    async with Novu(
+        secret_key=os.getenv("NOVU_SECRET_KEY", ""),
+    ) as novu:
 
         res = await novu.trigger_async(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
             workflow_id="workflow_identifier",

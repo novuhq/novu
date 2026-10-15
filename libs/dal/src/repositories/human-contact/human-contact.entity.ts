@@ -22,13 +22,25 @@ export interface HumanContactVerifiedAddress {
 }
 
 /**
+ * An address the operator typed during setup. It is not opted in and must never
+ * be used as a delivery target — only to recognize mail they send to the inbox.
+ */
+export interface HumanContactDeclaredAddress {
+  /** Normalized address (lowercase email). */
+  address: string;
+  declaredAt: string;
+}
+
+/**
  * Address-based channel binding (email today; SMS/WhatsApp later).
  * Chat bindings stay on ChannelEndpoint. Each channel has at most one pending
- * and one verified slot, so a promote is a single write.
+ * and one verified slot, so a promote is a single write. `declared` is separate
+ * and is never promoted into `verified`.
  */
 export interface HumanContactChannelAddresses {
   pending?: HumanContactPendingAddress;
   verified?: HumanContactVerifiedAddress;
+  declared?: HumanContactDeclaredAddress;
 }
 
 /**

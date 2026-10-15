@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import {
+  AgentEmailInboxQuotaService,
   analyticsService,
   BulkCreateExecutionDetails,
   ComputeJobWaitDurationService,
@@ -44,6 +45,7 @@ import {
 } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
+  CommunityOrganizationRepository,
   ControlValuesRepository,
   DalService,
   EnvironmentRepository,
@@ -71,6 +73,7 @@ import { ActiveJobsMetricService } from '../workflow/services';
 
 const DAL_MODELS = [
   AgentIntegrationRepository,
+  CommunityOrganizationRepository,
   EnvironmentRepository,
   EnvironmentVariableRepository,
   ExecutionDetailsRepository,
@@ -124,6 +127,7 @@ const ANALYTICS_PROVIDERS = [
 ];
 
 const PROVIDERS = [
+  AgentEmailInboxQuotaService,
   analyticsService,
   BulkCreateExecutionDetails,
   cacheService,

@@ -1,7 +1,8 @@
-import { BadGatewayException } from '@nestjs/common';
+import { BadGatewayException, ForbiddenException } from '@nestjs/common';
 import { ChannelTypeEnum, EmailProviderIdEnum, HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE } from '../../../keyless/keyless-email-gate.service';
 import { RequestAddressVerificationCommand } from './request-address-verification.command';
 import { RequestAddressVerification } from './request-address-verification.usecase';
 
@@ -31,6 +32,13 @@ describe('RequestAddressVerification', () => {
     const emailSender = {
       send: sinon.stub().resolves(),
     };
+    const inboxQuota = {
+      withCredits: sinon.stub().callsFake((_org: string, _count: number, fn: () => Promise<unknown>) => fn()),
+    };
+    const keylessEmailGate = {
+      assertOperatorVerificationAllowed: sinon.stub().resolves({}),
+      isBlocked: sinon.stub().returns(false),
+    };
     const usecase = new RequestAddressVerification(
       { execute: sinon.stub() } as never,
       {
@@ -43,7 +51,7 @@ describe('RequestAddressVerification', () => {
         find: sinon.stub().resolves([
           {
             _id: 'email-int',
-            providerId: EmailProviderIdEnum.NovuAgent,
+            providerId: EmailProviderIdEnum.AgentEmailInbox,
             channel: ChannelTypeEnum.EMAIL,
             credentials: { outboundIntegrationId: 'out-1' },
           },
@@ -59,10 +67,20 @@ describe('RequestAddressVerification', () => {
       humanContactRepository as never,
       rateLimit as never,
       verificationTokens as never,
-      emailSender as never
+      emailSender as never,
+      inboxQuota as never,
+      keylessEmailGate as never
     );
 
-    return { usecase, humanContactRepository, rateLimit, emailSender, verificationTokens };
+    return {
+      usecase,
+      humanContactRepository,
+      rateLimit,
+      emailSender,
+      verificationTokens,
+      inboxQuota,
+      keylessEmailGate,
+    };
   }
 
   function command() {
@@ -77,7 +95,7 @@ describe('RequestAddressVerification', () => {
   }
 
   it('restores the previous pending address and releases the rate limit when send fails', async () => {
-    const { usecase, humanContactRepository, rateLimit, emailSender } = setup();
+    const { usecase, humanContactRepository, rateLimit, emailSender, inboxQuota } = setup();
     emailSender.send.rejects(
       new BadGatewayException({ error: 'delivery_failed', message: 'Unauthorized: bad sender' })
     );
@@ -97,21 +115,56 @@ describe('RequestAddressVerification', () => {
       replaced: writtenPending,
       pending: previousPending,
     });
+    expect(inboxQuota.withCredits.calledOnce).to.equal(true);
     expect(rateLimit.release.calledOnce).to.equal(true);
     expect(rateLimit.release.firstCall.args[0]).to.deep.include({ reservation: 'res-1' });
     expect(rateLimit.release.calledAfter(humanContactRepository.restorePendingAddress)).to.equal(true);
   });
 
   it('returns the requestedAt of the pending slot it wrote', async () => {
-    const { usecase, verificationTokens } = setup();
+    const { usecase, verificationTokens, inboxQuota } = setup();
 
     const result = await usecase.execute(command());
 
+    expect(inboxQuota.withCredits.calledOnce).to.equal(true);
     expect(result.requestedAt).to.equal(writtenPending.requestedAt);
     expect(result.address).to.equal('n***@example.com');
     expect(verificationTokens.issue.firstCall.args[0]).to.include({
       address: writtenPending.address,
       requestedAt: writtenPending.requestedAt,
     });
+  });
+
+  it('passes the keyless claim link to the verification email without the shared inbox budget', async () => {
+    const { usecase, keylessEmailGate, emailSender, inboxQuota } = setup();
+    keylessEmailGate.isBlocked.returns(true);
+    keylessEmailGate.assertOperatorVerificationAllowed.resolves({ claimUrl: 'https://gethuman.md/claim?token=t' });
+
+    await usecase.execute(command());
+
+    expect(emailSender.send.firstCall.args[0]).to.include({ claimUrl: 'https://gethuman.md/claim?token=t' });
+    expect(inboxQuota.withCredits.called).to.equal(false);
+  });
+
+  it('refuses a keyless org before any reservation or pending write', async () => {
+    const { usecase, keylessEmailGate, rateLimit, inboxQuota, humanContactRepository } = setup();
+    keylessEmailGate.assertOperatorVerificationAllowed.rejects(
+      new ForbiddenException({
+        code: KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE,
+        message: 'Outbound email needs a Human account.',
+      })
+    );
+
+    try {
+      await usecase.execute(command());
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(ForbiddenException);
+      expect((err as ForbiddenException).getResponse()).to.include({ code: KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE });
+    }
+
+    expect(rateLimit.assertAndRecord.called).to.equal(false);
+    expect(inboxQuota.withCredits.called).to.equal(false);
+    expect(humanContactRepository.upsertPendingAddress.called).to.equal(false);
   });
 });

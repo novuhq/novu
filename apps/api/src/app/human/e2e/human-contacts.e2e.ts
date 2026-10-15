@@ -377,7 +377,10 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       await setup({ subscriberId: emailId, email: 'erin@example.com' });
 
       const telegram = await linkTelegram(agentId);
-      await linkIntegration(agentId, { providerId: EmailProviderIdEnum.NovuAgent, channel: ChannelTypeEnum.EMAIL });
+      await linkIntegration(agentId, {
+        providerId: EmailProviderIdEnum.AgentEmailInbox,
+        channel: ChannelTypeEnum.EMAIL,
+      });
       await connectTelegram(joinedId, telegram.identifier);
       const invite = await createInvite(invitedId);
 

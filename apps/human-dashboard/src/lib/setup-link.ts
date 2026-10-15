@@ -45,9 +45,9 @@ export function parseTelegramCredential(draft: string): { credential: string | n
 export function rerunCommand(channel: SetupChannel): string {
   switch (channel) {
     case 'telegram':
-      return 'human setup telegram';
+      return 'npx @agentinbox/cli channel add telegram';
     case 'slack':
-      return 'human setup slack';
+      return 'npx @agentinbox/cli channel add slack';
     default: {
       const exhaustive: never = channel;
 

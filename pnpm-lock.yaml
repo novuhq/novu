@@ -112,6 +112,7 @@ overrides:
   mdast-util-to-hast@>=13.0.0 <13.2.1: ^13.2.1
   webpack@>=5.49.0 <5.104.1: ^5.104.1
   micromatch@>=4.0.0 <4.0.8: ^4.0.8
+  katex@>=0.11.0 <0.18.2: 0.18.10
   brace-expansion@<2.1.6: ^2.1.6
   brace-expansion@>=3.0.0 <3.0.3: ^3.0.3
   brace-expansion@>=4.0.0 <5.0.11: ^5.0.11
@@ -193,8 +194,7 @@ overrides:
   decode-uri-component@<0.5.0: ^0.5.0
   '@codemirror/state': 6.6.0
   '@codemirror/autocomplete': 6.18.3
-  postcss-selector-parser@>=6.1.0 <6.1.3: ^6.1.3
-  postcss-selector-parser@>=7.0.0 <7.1.6: ^7.1.6
+  postcss-selector-parser@<7.1.6: ^7.1.6
   colord@<2.9.4: ^2.9.4
   '@ai-sdk/provider-utils@>=4.0.0 <4.0.33': ^4.0.33
   moment@>=2.29.2 <2.31.0: ^2.31.0
@@ -578,6 +578,9 @@ importers:
       es-toolkit:
         specifier: ^1.47.0
         version: 1.47.0
+      eventsource-parser:
+        specifier: ^3.1.0
+        version: 3.1.0
       express:
         specifier: ^5.2.1
         version: 5.2.1
@@ -3851,7 +3854,7 @@ importers:
         specifier: ^3.23.3
         version: 3.23.3(zod@3.25.20)
 
-  packages/human:
+  packages/agentinbox:
     dependencies:
       axios:
         specifier: ^1.20.0
@@ -7914,13 +7917,13 @@ packages:
     resolution: {integrity: sha512-uWvSaeRcHyeNenKg8tp17EVDRkpflmdyvbE0DHo6D/GdBb6PDnCYYU6gRpXhtICMGMcahQmj2zGxwFM/WC8hCg==}
     engines: {node: ^14 || ^16 || >=18}
     peerDependencies:
-      postcss-selector-parser: ^6.1.3
+      postcss-selector-parser: ^7.1.6
 
   '@csstools/selector-specificity@3.1.1':
     resolution: {integrity: sha512-a7cxGcJ2wIlMFLlh8z2ONm+715QkPHiyJcxwQlKOz/03GPw1COpfhcmC9wm4xlZfp//jWHNNMwzjtqHXVWU9KA==}
     engines: {node: ^14 || ^16 || >=18}
     peerDependencies:
-      postcss-selector-parser: ^6.1.3
+      postcss-selector-parser: ^7.1.6
 
   '@csstools/utilities@1.0.0':
     resolution: {integrity: sha512-tAgvZQe/t2mlvpNosA4+CkMiZ2azISW5WPAcdSalZlEjQvUfghHxfQcrCiK/7/CrfAWVxyM88kGFYO82heIGDg==}
@@ -19162,6 +19165,10 @@ packages:
     resolution: {integrity: sha512-H+y0Jo/T1RZ9qPP4Eh1pkcQcLRglraJaSLoyOtHxu6AapkjWVCy2Sit1QQ4x3Dng8qDlSsZEet7g5Pq06MvTgw==}
     engines: {node: '>=20'}
 
+  commander@15.0.0:
+    resolution: {integrity: sha512-z67u4ZhzCL/Tydu1lJARtEZYWbWaN7oYLHbsuzocr6y4N6WZAagG3RQ4FW61V1/0+jImpj293XfrcYnd1qxtPg==}
+    engines: {node: '>=22.12.0'}
+
   commander@2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
 
@@ -23250,12 +23257,8 @@ packages:
     resolution: {integrity: sha512-C3iHfuGUXK2u8/ipq9LfjFfXFxAZMQJJq7vLS45r3D9Y2xQ/m4S8zaR4zMLFWh9AsNPXmcFfUDhTEO8UIC/V6Q==}
     engines: {node: '>=12.0.0'}
 
-  katex@0.16.28:
-    resolution: {integrity: sha512-YHzO7721WbmAL6Ov1uzN/l5mY5WWWhJBSW+jq4tkfZfsxmo1hu6frS0EOswvjBUnWE6NtjEs48SFn5CQESRLZg==}
-    hasBin: true
-
-  katex@0.16.47:
-    resolution: {integrity: sha512-Eeo8Ys1doU1z+x8AZsPpQu+p/QcZBI5PeOo7QGQdy2x2m0MU/hYagBbGOmXwr5KVbEfVuWv9LpnQWeehogurjg==}
+  katex@0.18.10:
+    resolution: {integrity: sha512-/B6p9eY9DX7aHBfpkHdpirDTZ5QH9xTwL9y837PWuzuv41O5jFdqNQwVQEQsimY0/iVNkwBY4+4hMfhQ7d4Dbw==}
     hasBin: true
 
   keyv@4.5.4:
@@ -26346,14 +26349,6 @@ packages:
     engines: {node: ^14 || ^16 || >=18}
     peerDependencies:
       postcss: ^8.5.23
-
-  postcss-selector-parser@6.0.10:
-    resolution: {integrity: sha512-IQ7TZdoaqbT+LCpShg46jnZVlhWD2w6iQYAcYXfHARZ7X1t/UGhhceQDs5X0cGqKvYlHNOuv7Oa1xmb0oQuA3w==}
-    engines: {node: '>=4'}
-
-  postcss-selector-parser@6.1.4:
-    resolution: {integrity: sha512-bIoJLOmjCO1S9XdY/DcnR5hJxvrDir1PbGChrzXG3vw0/FOliy/fA3dmdhQ441kah4gKv+TwckGzex6wNS5cnQ==}
-    engines: {node: '>=4'}
 
   postcss-selector-parser@7.1.6:
     resolution: {integrity: sha512-7qASPzhKF2l2KLboRZux8CCTRMdGiV08vWmyKzPz22qZ7ZjQBOeY7rNzNoCLSUiftJ7HUq0GERHmxw/t0dCdMw==}
@@ -35612,9 +35607,9 @@ snapshots:
 
   '@csstools/postcss-cascade-layers@4.0.6(postcss@8.5.25)':
     dependencies:
-      '@csstools/selector-specificity': 3.1.1(postcss-selector-parser@6.1.4)
+      '@csstools/selector-specificity': 3.1.1(postcss-selector-parser@7.1.6)
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   '@csstools/postcss-color-function@3.0.19(postcss@8.5.25)':
     dependencies:
@@ -35685,9 +35680,9 @@ snapshots:
 
   '@csstools/postcss-is-pseudo-class@4.0.8(postcss@8.5.25)':
     dependencies:
-      '@csstools/selector-specificity': 3.1.1(postcss-selector-parser@6.1.4)
+      '@csstools/selector-specificity': 3.1.1(postcss-selector-parser@7.1.6)
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   '@csstools/postcss-light-dark-function@1.0.8(postcss@8.5.25)':
     dependencies:
@@ -35772,7 +35767,7 @@ snapshots:
   '@csstools/postcss-scope-pseudo-class@3.0.1(postcss@8.5.25)':
     dependencies:
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   '@csstools/postcss-stepped-value-functions@3.0.10(postcss@8.5.25)':
     dependencies:
@@ -35798,13 +35793,13 @@ snapshots:
     dependencies:
       postcss: 8.5.25
 
-  '@csstools/selector-resolve-nested@1.1.0(postcss-selector-parser@6.1.4)':
+  '@csstools/selector-resolve-nested@1.1.0(postcss-selector-parser@7.1.6)':
     dependencies:
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
-  '@csstools/selector-specificity@3.1.1(postcss-selector-parser@6.1.4)':
+  '@csstools/selector-specificity@3.1.1(postcss-selector-parser@7.1.6)':
     dependencies:
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   '@csstools/utilities@1.0.0(postcss@8.5.25)':
     dependencies:
@@ -46944,14 +46939,14 @@ snapshots:
 
   '@streamdown/math@1.0.1(react@18.3.1)':
     dependencies:
-      katex: 0.16.28
+      katex: 0.18.10
       react: 18.3.1
       rehype-katex: 7.0.1
       remark-math: 6.0.0
 
   '@streamdown/math@1.0.1(react@19.2.3)':
     dependencies:
-      katex: 0.16.28
+      katex: 0.18.10
       react: 19.2.3
       rehype-katex: 7.0.1
       remark-math: 6.0.0
@@ -47429,7 +47424,7 @@ snapshots:
 
   '@tailwindcss/typography@0.5.19(tailwindcss@3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.23))(@types/node@22.15.13)(typescript@5.6.2)))':
     dependencies:
-      postcss-selector-parser: 6.0.10
+      postcss-selector-parser: 7.1.6
       tailwindcss: 3.4.16(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.23))(@types/node@22.15.13)(typescript@5.6.2))
 
   '@tanstack/query-core@5.100.11': {}
@@ -51219,6 +51214,8 @@ snapshots:
 
   commander@14.0.3: {}
 
+  commander@15.0.0: {}
+
   commander@2.20.3: {}
 
   commander@3.0.2: {}
@@ -51560,7 +51557,7 @@ snapshots:
   css-blank-pseudo@6.0.2(postcss@8.5.25):
     dependencies:
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   css-declaration-sorter@7.2.0(postcss@8.5.25):
     dependencies:
@@ -51568,9 +51565,9 @@ snapshots:
 
   css-has-pseudo@6.0.5(postcss@8.5.25):
     dependencies:
-      '@csstools/selector-specificity': 3.1.1(postcss-selector-parser@6.1.4)
+      '@csstools/selector-specificity': 3.1.1(postcss-selector-parser@7.1.6)
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
       postcss-value-parser: 4.2.0
 
   css-prefers-color-scheme@9.0.1(postcss@8.5.25):
@@ -56538,13 +56535,9 @@ snapshots:
 
   kareem@2.6.3: {}
 
-  katex@0.16.28:
+  katex@0.18.10:
     dependencies:
-      commander: 8.3.0
-
-  katex@0.16.47:
-    dependencies:
-      commander: 8.3.0
+      commander: 15.0.0
 
   keyv@4.5.4:
     dependencies:
@@ -57664,7 +57657,7 @@ snapshots:
       dayjs: 1.11.21
       dompurify: 3.4.16
       es-toolkit: 1.47.0
-      katex: 0.16.47
+      katex: 0.18.10
       khroma: 2.1.0
       marked: 16.4.2
       roughjs: 4.6.6
@@ -57793,7 +57786,7 @@ snapshots:
     dependencies:
       '@types/katex': 0.16.8
       devlop: 1.1.0
-      katex: 0.16.28
+      katex: 0.18.10
       micromark-factory-space: 2.0.0
       micromark-util-character: 2.1.1
       micromark-util-symbol: 2.0.1
@@ -59749,12 +59742,12 @@ snapshots:
   postcss-attribute-case-insensitive@6.0.3(postcss@8.5.25):
     dependencies:
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   postcss-calc@10.0.1(postcss@8.5.25):
     dependencies:
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
       postcss-value-parser: 4.2.0
 
   postcss-clamp@4.1.0(postcss@8.5.25):
@@ -59820,17 +59813,17 @@ snapshots:
       '@csstools/css-parser-algorithms': 2.7.1(@csstools/css-tokenizer@2.4.1)
       '@csstools/css-tokenizer': 2.4.1
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   postcss-dir-pseudo-class@8.0.1(postcss@8.5.25):
     dependencies:
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   postcss-discard-comments@7.0.1(postcss@8.5.25):
     dependencies:
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   postcss-discard-duplicates@7.0.0(postcss@8.5.25):
     dependencies:
@@ -59854,12 +59847,12 @@ snapshots:
   postcss-focus-visible@9.0.1(postcss@8.5.25):
     dependencies:
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   postcss-focus-within@8.0.1(postcss@8.5.25):
     dependencies:
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   postcss-font-variant@5.0.0(postcss@8.5.25):
     dependencies:
@@ -59948,7 +59941,7 @@ snapshots:
       caniuse-api: 3.0.0
       cssnano-utils: 5.0.0(postcss@8.5.25)
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   postcss-minify-font-values@7.0.0(postcss@8.5.25):
     dependencies:
@@ -59973,19 +59966,19 @@ snapshots:
     dependencies:
       cssesc: 3.0.0
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   postcss-nested@6.2.0(postcss@8.5.25):
     dependencies:
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   postcss-nesting@12.1.5(postcss@8.5.25):
     dependencies:
-      '@csstools/selector-resolve-nested': 1.1.0(postcss-selector-parser@6.1.4)
-      '@csstools/selector-specificity': 3.1.1(postcss-selector-parser@6.1.4)
+      '@csstools/selector-resolve-nested': 1.1.0(postcss-selector-parser@7.1.6)
+      '@csstools/selector-specificity': 3.1.1(postcss-selector-parser@7.1.6)
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   postcss-normalize-charset@7.0.0(postcss@8.5.25):
     dependencies:
@@ -60127,7 +60120,7 @@ snapshots:
   postcss-pseudo-class-any-link@9.0.2(postcss@8.5.25):
     dependencies:
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   postcss-reduce-initial@7.0.1(postcss@8.5.25):
     dependencies:
@@ -60153,17 +60146,7 @@ snapshots:
   postcss-selector-not@7.0.2(postcss@8.5.25):
     dependencies:
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
-
-  postcss-selector-parser@6.0.10:
-    dependencies:
-      cssesc: 3.0.0
-      util-deprecate: 1.0.2
-
-  postcss-selector-parser@6.1.4:
-    dependencies:
-      cssesc: 3.0.0
-      util-deprecate: 1.0.2
+      postcss-selector-parser: 7.1.6
 
   postcss-selector-parser@7.1.6:
     dependencies:
@@ -60179,7 +60162,7 @@ snapshots:
   postcss-unique-selectors@7.0.1(postcss@8.5.25):
     dependencies:
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   postcss-value-parser@4.2.0: {}
 
@@ -61303,7 +61286,7 @@ snapshots:
       '@types/katex': 0.16.8
       hast-util-from-html-isomorphic: 2.0.0
       hast-util-to-text: 4.0.2
-      katex: 0.16.28
+      katex: 0.18.10
       unist-util-visit-parents: 6.0.1
       vfile: 6.0.2
 
@@ -62760,7 +62743,7 @@ snapshots:
     dependencies:
       browserslist: 4.28.8
       postcss: 8.5.25
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
 
   stylis@4.1.3: {}
 
@@ -63027,7 +63010,7 @@ snapshots:
       postcss-js: 4.0.1(postcss@8.5.25)
       postcss-load-config: 4.0.2(postcss@8.5.25)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.23))(@types/node@22.15.13)(typescript@5.6.2))
       postcss-nested: 6.2.0(postcss@8.5.25)
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 7.1.6
       resolve: 1.22.8
       sucrase: 3.35.0
     transitivePeerDependencies:

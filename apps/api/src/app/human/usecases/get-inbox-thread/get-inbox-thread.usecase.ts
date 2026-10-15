@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { ConversationActivityRepository } from '@novu/dal';
 import type { GetInboxThreadResponseDto } from '../../dtos/human-inbox.dto';
+import { HumanHostStatusService } from '../../services/human-host-status.service';
 import { HumanInboxService } from '../../services/human-inbox.service';
 import { GetInboxThreadCommand } from './get-inbox-thread.command';
 
@@ -12,7 +13,8 @@ const DEFAULT_LIMIT = 20;
 export class GetInboxThread {
   constructor(
     private readonly inbox: HumanInboxService,
-    private readonly activityRepository: ConversationActivityRepository
+    private readonly activityRepository: ConversationActivityRepository,
+    private readonly hostStatus: HumanHostStatusService
   ) {}
 
   @InstrumentUsecase()
@@ -26,12 +28,19 @@ export class GetInboxThread {
       conversationId: conversation._id,
       limit: command.limit ?? DEFAULT_LIMIT,
       before: command.before,
+      includeSystem: command.include === 'system',
     });
+    const thread = await this.inbox.toThread(scope, conversation);
+
+    if (command.hostVia) {
+      await this.hostStatus.recordCheck(scope, agent, command.hostVia, [thread]);
+    }
 
     return {
-      thread: await this.inbox.toThread(scope, conversation),
-      messages: await this.inbox.toMessages(scope, page.data),
+      thread,
+      messages: await this.inbox.toMessages(scope, agent, page.data),
       hasMore: page.hasMore,
+      details: await this.inbox.toDetails(scope, agent, conversation, thread),
     };
   }
 }

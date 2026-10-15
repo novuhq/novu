@@ -35,6 +35,20 @@ const humanContactVerifiedAddressSchema = new Schema(
   { _id: false }
 );
 
+const humanContactDeclaredAddressSchema = new Schema(
+  {
+    address: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    declaredAt: {
+      type: Schema.Types.String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 const humanContactChannelAddressesSchema = new Schema(
   {
     pending: {
@@ -42,6 +56,9 @@ const humanContactChannelAddressesSchema = new Schema(
     },
     verified: {
       type: humanContactVerifiedAddressSchema,
+    },
+    declared: {
+      type: humanContactDeclaredAddressSchema,
     },
   },
   { _id: false }

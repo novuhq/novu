@@ -37,7 +37,7 @@ type InactiveReason = 'expired' | 'declined' | 'invalid';
 type InviteView = 'channels' | InviteChannelVia | 'done';
 
 /**
- * Public page opened by someone invited with `human contact invite`. The token in the link is the
+ * Public page opened by someone invited with `contact invite`. The token in the link is the
  * only credential. The person picks which of the inviter's channels (Email, Telegram, Slack) the agent
  * may reach them on and which one is their default. The status refreshes while the page is
  * open, so a card flips to "Connected" once they finish in Telegram or Slack.
@@ -313,11 +313,17 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
             <ChannelRow
               key={channel.via}
               channel={channel}
-              description={channelDescription(channel, telegramBot)}
+              description={
+                !channel.available ? 'Not available on this setup yet' : channelDescription(channel, telegramBot)
+              }
               connecting={connectingVia === channel.via}
               settingDefault={defaultingVia === channel.via}
-              disabled={busy}
+              disabled={busy || !channel.available}
               onConnect={() => {
+                if (!channel.available) {
+                  return;
+                }
+
                 // Telegram needs its link before there is anything to show; Slack mints its
                 // link on the next card, inside the click that opens the tab.
                 if (channel.via === 'telegram') {

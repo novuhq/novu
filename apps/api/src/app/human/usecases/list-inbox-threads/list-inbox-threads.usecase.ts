@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { ConversationStatusEnum } from '@novu/dal';
-import type { InboxStatusFilter, ListInboxResponseDto } from '../../dtos/human-inbox.dto';
+import type { InboxStatusFilter, InboxTab, ListInboxResponseDto } from '../../dtos/human-inbox.dto';
+import { HumanHostStatusService } from '../../services/human-host-status.service';
 import {
   HumanInboxService,
   type InboxListFilters,
@@ -21,6 +22,14 @@ const STATUS_BY_FILTER: Record<InboxStatusFilter, ConversationStatusEnum | undef
   all: undefined,
 };
 
+/** What each tab of the inbox page lists, in the terms of the other filters. */
+const FILTERS_BY_TAB: Record<InboxTab, Pick<InboxListFilters, 'read' | 'status' | 'waiting'>> = {
+  all: {},
+  unread: { read: 'unread', status: ConversationStatusEnum.ACTIVE },
+  waiting: { waiting: true, status: ConversationStatusEnum.ACTIVE },
+  resolved: { status: ConversationStatusEnum.RESOLVED },
+};
+
 /**
  * Lists the relay agent's threads: open ones from contacts unless the filters say otherwise. With
  * `waitSeconds`, holds the request until at least one thread matches or the time is up, so an
@@ -28,17 +37,31 @@ const STATUS_BY_FILTER: Record<InboxStatusFilter, ConversationStatusEnum | undef
  */
 @Injectable()
 export class ListInboxThreads {
-  constructor(private readonly inbox: HumanInboxService) {}
+  constructor(
+    private readonly inbox: HumanInboxService,
+    private readonly hostStatus: HumanHostStatusService
+  ) {}
 
   @InstrumentUsecase()
   async execute(command: ListInboxThreadsCommand): Promise<ListInboxResponseDto> {
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
     const agent = await this.inbox.resolveRelayAgent(scope, command.agentIdentifier);
     const deadline = Date.now() + (command.waitSeconds ?? 0) * 1000;
+
+    if (command.tab && (command.filter || command.status)) {
+      throw new BadRequestException('`tab` cannot be combined with `filter` or `status`: a tab already says both.');
+    }
+
     const filters: InboxListFilters = {
-      read: command.filter === 'unread' || command.filter === 'read' ? command.filter : undefined,
-      status: STATUS_BY_FILTER[command.status ?? 'open'],
+      ...(command.tab
+        ? FILTERS_BY_TAB[command.tab]
+        : {
+            read: command.filter === 'unread' || command.filter === 'read' ? command.filter : undefined,
+            status: STATUS_BY_FILTER[command.status ?? 'open'],
+          }),
       senders: command.senders ?? 'contacts',
+      channel: command.channel,
+      search: command.search?.trim() || undefined,
       limit: command.limit ?? DEFAULT_LIMIT,
       after: command.after,
     };
@@ -47,6 +70,10 @@ export class ListInboxThreads {
     while (page.data.length === 0 && Date.now() + INBOX_WAIT_POLL_INTERVAL_MS <= deadline) {
       await sleep(INBOX_WAIT_POLL_INTERVAL_MS);
       page = await this.firstPageWithThreads(scope, agent, filters);
+    }
+
+    if (command.hostVia) {
+      await this.hostStatus.recordCheck(scope, agent, command.hostVia, page.data);
     }
 
     return page;
