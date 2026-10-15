@@ -25,6 +25,11 @@ type DialogContentProps = {
   className?: string;
   /** For the icon, title and description block, such as a tighter gap. */
   headerClassName?: string;
+  /**
+   * The step on show is on its way out (`useSwap`): its content fades before the next step takes its place,
+   * so one crossfades into the other.
+   */
+  leaving?: boolean;
   children?: ReactNode;
 };
 
@@ -43,6 +48,7 @@ export function DialogContent({
   locked = false,
   className,
   headerClassName,
+  leaving = false,
   children,
 }: DialogContentProps) {
   const [openedWith] = useState(title);
@@ -79,7 +85,11 @@ export function DialogContent({
         <div ref={ref}>
           <div
             key={title}
-            className={cn('flex flex-col gap-5 p-6', stepped && 'animate-rise-in motion-reduce:animate-none')}
+            className={cn(
+              'flex flex-col gap-5 p-6 transition-opacity duration-150 ease-out motion-reduce:transition-none',
+              stepped && 'animate-rise-in motion-reduce:animate-none',
+              leaving && 'opacity-0'
+            )}
           >
             <div className={cn('flex flex-col gap-3', headerClassName)}>
               {icon}
@@ -99,8 +109,9 @@ export function DialogContent({
               <div
                 key={title}
                 className={cn(
-                  'flex items-center justify-end gap-2',
-                  stepped && 'animate-overlay-in motion-reduce:animate-none'
+                  'flex items-center justify-end gap-2 transition-opacity duration-150 ease-out motion-reduce:transition-none',
+                  stepped && 'animate-overlay-in motion-reduce:animate-none',
+                  leaving && 'opacity-0'
                 )}
               >
                 {footer}

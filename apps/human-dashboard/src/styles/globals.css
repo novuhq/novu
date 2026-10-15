@@ -51,6 +51,7 @@
   --animate-breathe: breathe 4s ease-in-out infinite alternate;
   --animate-draw-around: draw-around 900ms ease-in-out both;
   --animate-grow-down: grow-down 400ms ease-out both;
+  --animate-fold-open: fold-open 300ms ease-out both;
 
   @keyframes terminal-cursor {
     50% {
@@ -131,6 +132,17 @@
   @keyframes grow-down {
     from {
       transform: scaleY(0);
+    }
+  }
+
+  /*
+   * Something new unfolding into its place, such as a row that joins a list: give it to a one-row grid
+   * (`grid grid-rows-[1fr]`) whose child has `min-h-0` and hides its overflow while it opens.
+   */
+  @keyframes fold-open {
+    from {
+      grid-template-rows: 0fr;
+      opacity: 0;
     }
   }
 }

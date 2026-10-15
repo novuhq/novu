@@ -47,6 +47,7 @@ import { HumanVerificationRateLimitService } from './services/human-verification
 import { HumanVerificationTokenService } from './services/human-verification-token.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
+import { ChangeOperatorEmail } from './usecases/change-operator-email/change-operator-email.usecase';
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
 import { ConnectHost } from './usecases/connect-host/connect-host.usecase';
 import { ConnectHumanInviteChannel } from './usecases/connect-human-invite-channel/connect-human-invite-channel.usecase';
@@ -74,6 +75,7 @@ import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase'
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
 import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbox-thread.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
+import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 import { VerifyAddress } from './usecases/verify-address/verify-address.usecase';
@@ -129,6 +131,8 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     GetContact,
     RemoveContact,
     RemoveSubscriber,
+    SetOperatorDefaultChannel,
+    ChangeOperatorEmail,
     HumanInviteTokenService,
     HumanVerificationTokenService,
     HumanVerificationRateLimitService,

@@ -35,6 +35,11 @@ import {
   RequestAddressVerificationDto,
   RequestAddressVerificationResponseDto,
 } from './dtos/human-invite.dto';
+import {
+  ChangeOperatorEmailRequestDto,
+  SetOperatorDefaultChannelRequestDto,
+  SetOperatorDefaultChannelResponseDto,
+} from './dtos/human-operator-contact.dto';
 import { InteractionResponseDto } from './dtos/interaction-response.dto';
 import type { KeylessClaimTokenResponseDto } from './dtos/keyless-claim-token.dto';
 import { ListContactsQueryDto, ListContactsResponseDto, RemoveContactResponseDto } from './dtos/list-contacts.dto';
@@ -52,6 +57,8 @@ import {
 import { HumanOperatorService } from './services/human-operator.service';
 import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-interaction.command';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
+import { ChangeOperatorEmailCommand } from './usecases/change-operator-email/change-operator-email.command';
+import { ChangeOperatorEmail } from './usecases/change-operator-email/change-operator-email.usecase';
 import { CreateHumanInviteCommand } from './usecases/create-human-invite/create-human-invite.command';
 import { CreateHumanInvite } from './usecases/create-human-invite/create-human-invite.usecase';
 import { CreateInteractionCommand } from './usecases/create-interaction/create-interaction.command';
@@ -70,6 +77,8 @@ import { RemoveContactCommand } from './usecases/remove-contact/remove-contact.c
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
 import { RequestAddressVerificationCommand } from './usecases/request-address-verification/request-address-verification.command';
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
+import { SetOperatorDefaultChannelCommand } from './usecases/set-operator-default-channel/set-operator-default-channel.command';
+import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelayCommand } from './usecases/setup-human-relay/setup-human-relay.command';
 import {
   DEFAULT_HUMAN_RELAY_IDENTIFIER,
@@ -98,7 +107,9 @@ export class HumanInteractionsController {
     private readonly getKeylessClaimTokenUsecase: GetKeylessClaimToken,
     private readonly humanOperator: HumanOperatorService,
     private readonly updateHumanAgentUsecase: UpdateHumanAgent,
-    private readonly humanAgentPicture: HumanAgentPictureService
+    private readonly humanAgentPicture: HumanAgentPictureService,
+    private readonly setOperatorDefaultChannelUsecase: SetOperatorDefaultChannel,
+    private readonly changeOperatorEmailUsecase: ChangeOperatorEmail
   ) {}
 
   @Post('/interactions')
@@ -393,6 +404,53 @@ export class HumanInteractionsController {
     });
 
     return subscriberId ? { subscriberId } : {};
+  }
+
+  /**
+   * The operator picks which of their connected channels agents use when a message names none. It is their
+   * own choice, so an inviter's `--via` never replaces it.
+   */
+  @Put('/operator/default-channel')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  setOperatorDefaultChannel(
+    @UserSession() user: UserSessionData,
+    @Body() body: SetOperatorDefaultChannelRequestDto
+  ): Promise<SetOperatorDefaultChannelResponseDto> {
+    return this.setOperatorDefaultChannelUsecase.execute(
+      SetOperatorDefaultChannelCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        via: body.via,
+        agentIdentifier: body.agentIdentifier,
+      })
+    );
+  }
+
+  /**
+   * Sends a confirmation link to a new address for the operator, or to the one they signed up with. Agents
+   * keep emailing a verified address until the new one is confirmed. The default channel stays as it is.
+   */
+  @Post('/operator/email')
+  @HttpCode(HttpStatus.OK)
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  changeOperatorEmail(
+    @UserSession() user: UserSessionData,
+    @Body() body: ChangeOperatorEmailRequestDto
+  ): Promise<RequestAddressVerificationResponseDto> {
+    return this.changeOperatorEmailUsecase.execute(
+      ChangeOperatorEmailCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        address: body.address,
+        agentIdentifier: body.agentIdentifier,
+      })
+    );
   }
 
   /**
