@@ -197,7 +197,7 @@ Once the environment is claimed or expired, this endpoint returns `401` with `ke
 | --- | --- |
 | Lifetime | 72 hours after creation. The claim link expires at the same time. After that, the key stops working and the setup can't be claimed. |
 | Creation | 10 environments per IP address per day |
-| Triggers | 200 recipients per environment per day. Each event counts once per recipient in `to`; a broadcast counts once per subscriber in the environment. |
+| Triggers | 200 recipients per environment per day. Each event counts once per recipient in `to`, a topic in `to` counts once per subscriber of the topic, and a broadcast counts once per subscriber in the environment. Provider overrides that add recipients (`to`, `cc`, `bcc`) are rejected. |
 | Email | Novu's built-in email provider, with its usual monthly cap |
 
 ### APIs a keyless key can call
