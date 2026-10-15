@@ -7,8 +7,8 @@ import * as tls from 'node:tls';
 import { expect } from 'chai';
 import got from 'got';
 import {
-  applyNovuTlsTrust,
   assertNovuTlsCoversLoopback,
+  getNovuServiceCa,
   isNovuTlsEnabled,
   loadNovuTlsConfig,
   toNovuTlsServerOptions,
@@ -262,19 +262,23 @@ describe('novu-tls', () => {
     });
   });
 
-  describe('applyNovuTlsTrust', () => {
-    let defaultCertificates: string[];
-
-    beforeEach(() => {
-      defaultCertificates = tls.getCACertificates('default');
+  describe('getNovuServiceCa', () => {
+    it('returns undefined when TLS is not enabled', () => {
+      expect(getNovuServiceCa()).to.equal(undefined);
     });
 
-    afterEach(() => {
-      // The trust store is process-global, so it must not leak into other suites.
-      tls.setDefaultCACertificates(defaultCertificates);
+    it('bundles the private CA with the default roots without touching the process trust store', () => {
+      enableWithBase64();
+      const defaultCertificates = tls.getCACertificates('default');
+
+      const bundle = getNovuServiceCa();
+
+      expect(bundle).to.have.length(defaultCertificates.length + 1);
+      expect(bundle).to.include(pem('ca.pem'));
+      expect(tls.getCACertificates('default')).to.not.include(pem('ca.pem'));
     });
 
-    it('makes a privately signed certificate verifiable while keeping the public roots', async () => {
+    it('verifies a Novu service only on requests that opt in, so other outbound calls ignore the private CA', async () => {
       enableWithBase64();
       const config = loadNovuTlsConfig();
       if (!config) {
@@ -287,13 +291,12 @@ describe('novu-tls', () => {
       });
       await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', () => resolve()));
       const { port } = server.address() as { port: number };
-
-      // `got` is what HttpClientService issues its requests through, so this is the
-      // same trust path the services use, with verification left on.
-      const request = () =>
+      // Same `got` options HttpClientService builds, with verification left on.
+      const request = (certificateAuthority?: string[]) =>
         got(`https://localhost:${port}/`, {
-          responseType: 'json',
-          https: { rejectUnauthorized: true },
+          https: certificateAuthority
+            ? { rejectUnauthorized: true, certificateAuthority }
+            : { rejectUnauthorized: true },
           retry: 0,
         }).json<{ status: string }>();
 
@@ -304,15 +307,10 @@ describe('novu-tls', () => {
         } catch {
           rejected = true;
         }
-        expect(rejected, 'private CA must not be trusted before applyNovuTlsTrust').to.equal(true);
+        expect(rejected, 'a request without the Novu CA bundle must not trust the private CA').to.equal(true);
 
-        applyNovuTlsTrust(config);
-
-        const response = await request();
+        const response = await request(getNovuServiceCa());
         expect(response.status).to.equal('ok');
-
-        // Public roots are still present, so outbound provider calls keep working.
-        expect(tls.getCACertificates('default').length).to.be.at.least(defaultCertificates.length);
       } finally {
         await new Promise<void>((resolve) => server.close(() => resolve()));
       }

@@ -6,8 +6,9 @@ import { parseBooleanString } from '../secrets-manager/secrets-manager.service';
 /**
  * Opt-in end-to-end TLS for enterprise self-hosted images. Certificate material is
  * supplied through the environment (inline base64 or a mounted file) and fed to the
- * Nest HTTP server, while the private CA is appended to the Node trust store so
- * Novu services can verify each other.
+ * Nest HTTP server. The private CA is only trusted on requests addressed to Novu
+ * itself (see `getNovuServiceCa`); the process-wide trust store is left alone so
+ * provider, webhook, and external bridge calls keep verifying against public roots.
  *
  * Every variable is optional: with `NOVU_TLS_ENABLED` unset the loader returns
  * `undefined` and each service keeps listening on plain HTTP exactly as before.
@@ -17,14 +18,6 @@ export interface NovuTlsConfig {
   key: string;
   ca: string;
   passphrase?: string;
-}
-
-/**
- * `setDefaultCACertificates` landed in Node 22.19 and is missing from the
- * @types/node version this monorepo pins, so the signature is declared here.
- */
-declare module 'node:tls' {
-  function setDefaultCACertificates(certs: string[]): void;
 }
 
 /**
@@ -90,9 +83,9 @@ export function loadNovuTlsConfig(): NovuTlsConfig | undefined {
 
   assertEnterpriseSelfHosted();
 
-  if (typeof tls.setDefaultCACertificates !== 'function') {
+  if (typeof tls.getCACertificates !== 'function') {
     throw new Error(
-      `NOVU_TLS_ENABLED requires tls.setDefaultCACertificates (Node 22.19 or newer). Running on ${process.version}.`
+      `NOVU_TLS_ENABLED requires tls.getCACertificates (Node 22.15 or newer). Running on ${process.version}.`
     );
   }
 
@@ -117,16 +110,28 @@ export function loadNovuTlsConfig(): NovuTlsConfig | undefined {
   return { cert, key, ca, passphrase };
 }
 
+let serviceCaCache: { source: string; bundle: string[] } | undefined;
+
 /**
- * Appends the private CA to the Node trust store so every Node TLS client in the
- * process (got, axios, node:https) verifies Novu's own certificates without
- * per-call options. The public roots are preserved so outbound provider calls keep
- * working.
+ * CA bundle for requests whose destination Novu builds from its own configuration
+ * (preview loopback, API_INTERNAL_ORIGIN, API_ROOT_URL). Returns `undefined` when
+ * TLS is off. Never pass it for tenant-controlled URLs: the private CA must not be
+ * able to vouch for provider APIs, webhooks, or external bridges.
  *
- * Must run before the first HTTPS request, because the agent caches TLS sessions.
+ * The default store is included because API_ROOT_URL may sit behind an ingress
+ * with a publicly issued certificate.
  */
-export function applyNovuTlsTrust(config: NovuTlsConfig): void {
-  tls.setDefaultCACertificates([...tls.getCACertificates('default'), config.ca]);
+export function getNovuServiceCa(): string[] | undefined {
+  if (!isNovuTlsEnabled()) {
+    return undefined;
+  }
+
+  const source = `${process.env.NOVU_TLS_CA_BASE64 ?? ''}\n${process.env.NOVU_TLS_CA_FILE ?? ''}`;
+  if (serviceCaCache?.source !== source) {
+    serviceCaCache = { source, bundle: [...tls.getCACertificates('default'), readMaterial('NOVU_TLS_CA')] };
+  }
+
+  return serviceCaCache.bundle;
 }
 
 /**

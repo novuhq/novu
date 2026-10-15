@@ -14,6 +14,7 @@ import { decryptSecret } from '../../encryption/encrypt-provider';
 import { PinoLogger } from '../../logging';
 import { FeatureFlagsService } from '../../services/feature-flags';
 import { HttpClientService } from '../../services/http-client/http-client.service';
+import { getNovuServiceCa } from '../../services/tls';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { normalizeReferences } from '../../utils/inbound-email-references';
 import type { InboundEmailWebhookObject } from '../../webhooks/dtos/inbound-email-webhook.dto';
@@ -225,6 +226,7 @@ export class InboundDomainRouteDelivery {
       body: payload,
       headers: { 'novu-signature': signature, 'content-type': 'application/json' },
       timeout: 30_000,
+      ca: getNovuServiceCa(),
     });
 
     return {

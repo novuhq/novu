@@ -19,7 +19,7 @@ import {
   HttpClientService,
   RETRYABLE_ERROR_CODES,
 } from '../../services/http-client';
-import { isNovuTlsEnabled } from '../../services/tls';
+import { getNovuServiceCa, isNovuTlsEnabled } from '../../services/tls';
 import { BRIDGE_EXECUTION_ERROR, buildNovuSignatureHeader } from '../../utils';
 import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '../get-decrypted-secret-key';
 import { BridgeError, ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from './execute-bridge-request.command';
@@ -117,6 +117,7 @@ export class ExecuteFrameworkRequest {
       command.enforceSsrfProtection === true ||
       !!command.statelessBridgeUrl ||
       command.workflowOrigin === ResourceOriginEnum.EXTERNAL;
+    const isNovuHostedBridge = !command.statelessBridgeUrl && command.workflowOrigin === ResourceOriginEnum.NOVU_CLOUD;
 
     try {
       const response = await this.httpClient.request<ExecuteBridgeRequestDto<T>>({
@@ -130,12 +131,13 @@ export class ExecuteFrameworkRequest {
         },
         /*
          * A Novu-hosted bridge is this API calling itself, so once TLS is on the
-         * certificate must verify no matter what the environment is called.
-         * Externally hosted bridges keep the existing per-environment behaviour.
+         * certificate must verify against the private CA no matter what the
+         * environment is called. Externally hosted bridges keep the existing
+         * per-environment behaviour and never see the private CA.
          */
         rejectUnauthorized:
-          environment.name.toLowerCase() === 'production' ||
-          (isNovuTlsEnabled() && command.workflowOrigin === ResourceOriginEnum.NOVU_CLOUD),
+          environment.name.toLowerCase() === 'production' || (isNovuTlsEnabled() && isNovuHostedBridge),
+        ca: isNovuHostedBridge ? getNovuServiceCa() : undefined,
         // DNS-pinned SSRF guard for user- or environment-controlled bridge
         // targets (stateless bridgeUrl, EXTERNAL origin, or explicit opt-in).
         // The safe outbound layer pins the connection to a validated public IP
