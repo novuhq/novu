@@ -209,15 +209,31 @@ describe('CopyKeylessWorkflows', () => {
       upsertWorkflowUseCase.execute.onSecondCall().rejects(new Error('controls write failed'));
       notificationTemplateRepository.findOne.resolves({ _id: 'partial_welcome' });
 
+      const before = new Date();
       await usecase.copy({ ...scope, user: claimer, workflowIds: ['order-shipped', 'welcome'] }).catch(() => undefined);
 
-      expect(notificationTemplateRepository.findOne.firstCall.args[0]).to.deep.equal({
+      const { createdAt, ...query } = notificationTemplateRepository.findOne.firstCall.args[0];
+      expect(query).to.deep.equal({
         _environmentId: 'dev_env',
         _organizationId: 'target_org',
+        _creatorId: 'claimer',
         'triggers.identifier': 'welcome',
       });
+      expect(createdAt.$gte.getTime()).to.be.at.least(before.getTime());
       expect(deleteWorkflowUseCase.execute.getCalls().map((call) => call.args[0].workflowIdOrInternalId)).to.deep.equal(
         ['copy_of_order-shipped', 'partial_welcome']
+      );
+    });
+
+    it('does not look for a partial copy when the copy fails before the upsert starts', async () => {
+      const { usecase, getWorkflowUseCase, deleteWorkflowUseCase, notificationTemplateRepository } = setup();
+      getWorkflowUseCase.execute.onSecondCall().rejects(new Error('source workflow was deleted'));
+
+      await usecase.copy({ ...scope, user: claimer, workflowIds: ['order-shipped', 'welcome'] }).catch(() => undefined);
+
+      expect(notificationTemplateRepository.findOne.called).to.equal(false);
+      expect(deleteWorkflowUseCase.execute.getCalls().map((call) => call.args[0].workflowIdOrInternalId)).to.deep.equal(
+        ['copy_of_order-shipped']
       );
     });
 

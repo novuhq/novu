@@ -1,6 +1,12 @@
 import { CallHandler, ExecutionContext, HttpStatus, Injectable, NestInterceptor } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { EnvironmentEntity, EnvironmentRepository, SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
+import {
+  EnvironmentEntity,
+  EnvironmentRepository,
+  SubscriberRepository,
+  TopicSubscribersRepository,
+  Types,
+} from '@novu/dal';
 import { ApiAuthSchemeEnum, UserSessionData } from '@novu/shared';
 import { Observable } from 'rxjs';
 
@@ -216,19 +222,19 @@ export class KeylessScopeInterceptor implements NestInterceptor {
       occurrences.set(topicKey, (occurrences.get(topicKey) ?? 0) + 1);
     }
 
-    const counts = await Promise.all(
-      [...occurrences].map(async ([topicKey, times]) => {
-        const subscriptions = await this.topicSubscribersRepository.count({
-          _environmentId: environment._id,
-          _organizationId: environment._organizationId,
-          topicKey,
-        });
+    // One grouped query: the topic keys come from the request body, so a query per key would let one request fan out.
+    const subscriptionCounts: Array<{ _id: string; count: number }> = await this.topicSubscribersRepository.aggregate([
+      {
+        $match: {
+          _environmentId: new Types.ObjectId(environment._id),
+          _organizationId: new Types.ObjectId(environment._organizationId),
+          topicKey: { $in: [...occurrences.keys()] },
+        },
+      },
+      { $group: { _id: '$topicKey', count: { $sum: 1 } } },
+    ]);
 
-        return subscriptions * times;
-      })
-    );
-
-    return counts.reduce((total, count) => total + count, 0);
+    return subscriptionCounts.reduce((total, { _id, count }) => total + count * (occurrences.get(_id) ?? 0), 0);
   }
 
   private async resolveClaimUrl(environment: EnvironmentEntity): Promise<string | undefined> {

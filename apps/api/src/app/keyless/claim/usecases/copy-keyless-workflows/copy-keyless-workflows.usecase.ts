@@ -100,12 +100,15 @@ export class CopyKeylessWorkflows {
     const result: CopyKeylessWorkflowsResult = { copiedInternalIds: [], copied: [], skipped: [] };
 
     for (const workflowId of command.workflowIds) {
+      const attempt: CopyAttempt = {};
       try {
-        const copiedInternalId = await this.copyOne(command, workflowId);
+        const copiedInternalId = await this.copyOne(command, workflowId, attempt);
         result.copiedInternalIds.push(copiedInternalId);
         result.copied.push(workflowId);
       } catch (error) {
-        const partialCopyIds = await this.findPartialCopyIds(command, workflowId);
+        const partialCopyIds = attempt.upsertStartedAt
+          ? await this.findPartialCopyIds(command, workflowId, attempt.upsertStartedAt)
+          : [];
 
         if (workflowId !== KEYLESS_WORKFLOW_IDENTIFIER) {
           await this.compensate({ ...command, copiedInternalIds: [...result.copiedInternalIds, ...partialCopyIds] });
@@ -147,15 +150,22 @@ export class CopyKeylessWorkflows {
 
   /**
    * The upsert creates the workflow before writing its controls, so a failed copy can leave it behind.
-   * Preflight only lets through identifiers the target lacked, so any match is that partial copy.
+   * Only a workflow this claimer created after this attempt's upsert started can be that partial copy;
+   * anything else with the identifier belongs to someone else and must survive the cleanup.
    */
-  private async findPartialCopyIds(command: CopyKeylessWorkflowsCommand, workflowId: string): Promise<string[]> {
+  private async findPartialCopyIds(
+    command: CopyKeylessWorkflowsCommand,
+    workflowId: string,
+    upsertStartedAt: Date
+  ): Promise<string[]> {
     try {
       const partialCopy = await this.notificationTemplateRepository.findOne(
         {
           _environmentId: command.targetEnvironmentId,
           _organizationId: command.targetOrganizationId,
+          _creatorId: command.user._id,
           'triggers.identifier': workflowId,
+          createdAt: { $gte: upsertStartedAt },
         },
         '_id'
       );
@@ -171,7 +181,11 @@ export class CopyKeylessWorkflows {
     }
   }
 
-  private async copyOne(command: CopyKeylessWorkflowsCommand, workflowId: string): Promise<string> {
+  private async copyOne(
+    command: CopyKeylessWorkflowsCommand,
+    workflowId: string,
+    attempt: CopyAttempt
+  ): Promise<string> {
     const sourceUser = asUserIn(command.user, command.sourceOrganizationId, command.sourceEnvironmentId);
     const sourceWorkflow = await this.getWorkflowUseCase.execute(
       GetWorkflowCommand.create({ user: sourceUser, workflowIdOrInternalId: workflowId })
@@ -182,6 +196,7 @@ export class CopyKeylessWorkflows {
       type: { $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW] },
     });
 
+    attempt.upsertStartedAt = new Date();
     const upserted = await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
         preserveWorkflowId: true,
@@ -192,6 +207,11 @@ export class CopyKeylessWorkflows {
 
     return upserted._id;
   }
+}
+
+/** Set once the upsert starts, so a failure before it (e.g. reading the source) never looks for a partial copy. */
+interface CopyAttempt {
+  upsertStartedAt?: Date;
 }
 
 function asUserIn(user: UserSessionData, organizationId: string, environmentId: string): UserSessionData {

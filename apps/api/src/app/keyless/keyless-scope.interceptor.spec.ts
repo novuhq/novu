@@ -11,8 +11,8 @@ import { hashApiKey, KEYLESS_AGENT_ENVIRONMENT_NAME_PREFIX } from './keyless-age
 import { KeylessScopeInterceptor } from './keyless-scope.interceptor';
 import { KeylessTriggerCapService } from './keyless-trigger-cap.service';
 
-const KEYLESS_ORG_ID = 'keyless-org-id';
-const ENV_ID = 'keyless-env-id';
+const KEYLESS_ORG_ID = '6a0000000000000000000001';
+const ENV_ID = '6a0000000000000000000002';
 const SECRET_KEY = 'sk_test_secret';
 
 const MANAGED_ENV_KEYS = [
@@ -381,8 +381,8 @@ describe('KeylessScopeInterceptor', () => {
       expect(triggerCapService.consume.firstCall.args).to.deep.equal([ENV_ID, 350]);
     });
 
-    it('meters topic recipients by the number of subscriptions to those topics', async () => {
-      topicSubscribersRepository.count.resolves(500);
+    it('meters topic recipients by the number of subscriptions to those topics in one grouped query', async () => {
+      topicSubscribersRepository.aggregate.resolves([{ _id: 'all', count: 500 }]);
 
       await run({
         method: 'POST',
@@ -390,17 +390,18 @@ describe('KeylessScopeInterceptor', () => {
         body: { to: ['a', { type: 'Topic', topicKey: 'all' }, { type: 'Topic', topicKey: 'all' }] },
       });
 
-      expect(topicSubscribersRepository.count.calledOnce).to.equal(true);
-      expect(topicSubscribersRepository.count.firstCall.args[0]).to.deep.equal({
-        _environmentId: ENV_ID,
-        _organizationId: KEYLESS_ORG_ID,
-        topicKey: 'all',
-      });
+      expect(topicSubscribersRepository.aggregate.calledOnce).to.equal(true);
+      const [match] = topicSubscribersRepository.aggregate.firstCall.args[0] as Array<{
+        $match?: Record<string, unknown>;
+      }>;
+      expect(String(match.$match?._environmentId)).to.equal(ENV_ID);
+      expect(String(match.$match?._organizationId)).to.equal(KEYLESS_ORG_ID);
+      expect(match.$match?.topicKey).to.deep.equal({ $in: ['all'] });
       expect(triggerCapService.consume.firstCall.args).to.deep.equal([ENV_ID, 501]);
     });
 
     it('charges a topic once per bulk event that targets it', async () => {
-      topicSubscribersRepository.count.resolves(100);
+      topicSubscribersRepository.aggregate.resolves([{ _id: 'all', count: 100 }]);
       const topic = { type: 'Topic', topicKey: 'all' };
 
       await run({
@@ -409,8 +410,19 @@ describe('KeylessScopeInterceptor', () => {
         body: { events: Array.from({ length: 100 }, () => ({ to: topic })) },
       });
 
-      expect(topicSubscribersRepository.count.calledOnce).to.equal(true);
+      expect(topicSubscribersRepository.aggregate.calledOnce).to.equal(true);
       expect(triggerCapService.consume.firstCall.args).to.deep.equal([ENV_ID, 10_000]);
+    });
+
+    it('queries the database once however many distinct topic keys a request names', async () => {
+      topicSubscribersRepository.aggregate.resolves([]);
+      const to = Array.from({ length: 1000 }, (_, index) => ({ type: 'Topic', topicKey: `topic-${index}` }));
+
+      await run({ method: 'POST', path: '/v1/events/trigger', body: { to } });
+
+      expect(topicSubscribersRepository.aggregate.calledOnce).to.equal(true);
+      expect(topicSubscribersRepository.count.called).to.equal(false);
+      expect(triggerCapService.consume.firstCall.args).to.deep.equal([ENV_ID, 0]);
     });
 
     it('rejects with keyless_unavailable when the cap cannot be checked', async () => {
@@ -425,7 +437,7 @@ describe('KeylessScopeInterceptor', () => {
     it('does not query topics for triggers without topic recipients', async () => {
       await run({ method: 'POST', path: '/v1/events/trigger', body: { to: ['a'] } });
 
-      expect(topicSubscribersRepository.count.called).to.equal(false);
+      expect(topicSubscribersRepository.aggregate.called).to.equal(false);
     });
 
     it('does not meter non-trigger routes', async () => {
