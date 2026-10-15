@@ -22,7 +22,8 @@ export class ResourceToPublishDto {
 
 export class PublishEnvironmentRequestDto {
   @ApiPropertyOptional({
-    description: 'Development environment id to publish from, Using any other environment id will result in an error',
+    description:
+      'Source environment ID. Only the Development environment is currently supported; defaults to Development if omitted.',
     example: '507f1f77bcf86cd799439011',
   })
   @IsOptional()
