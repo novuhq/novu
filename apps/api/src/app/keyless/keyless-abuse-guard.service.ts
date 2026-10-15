@@ -8,7 +8,10 @@ import {
   KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY,
   KEYLESS_GENERATE_CAP_PER_IP_PER_DAY,
   KEYLESS_MAX_AGENTS_PER_ENV,
+  resolveKeylessAgentEnvCreateCapPerIpPerDay,
+  resolveKeylessAgentEnvCreateGlobalCapPerDay,
 } from './keyless-abuse.constants';
+import { KeylessAgentErrorCodeEnum } from './keyless-agent-environment';
 import { isKeylessOrganization } from './keyless-organization.helpers';
 
 const ENV_CREATE_LIMIT_MESSAGE =
@@ -23,6 +26,17 @@ const MANAGED_AGENT_CAP_MESSAGE =
   'This keyless demo environment has reached its agent limit. Sign up for a free Novu account to create more agents.';
 
 const MISSING_CLIENT_IP_MESSAGE = 'Unable to verify request origin for this demo request.';
+
+const AGENT_ENV_RATE_LIMITED_MESSAGE =
+  'Daily keyless environment limit reached for this network. Sign up for a free Novu account or try again tomorrow.';
+
+const AGENT_ENV_CAPACITY_MESSAGE =
+  'Keyless environment creation is at capacity for today. Sign up for a free Novu account or try again tomorrow.';
+
+const AGENT_ENV_UNAVAILABLE_MESSAGE =
+  'Keyless environment creation is temporarily unavailable. Sign up for a free Novu account or try again later.';
+
+type DailyCounterKind = 'env_create' | 'generate' | 'agent_env_create';
 
 @Injectable()
 export class KeylessAbuseGuardService {
@@ -43,6 +57,40 @@ export class KeylessAbuseGuardService {
 
   async assertGenerateAllowed(clientIp?: string): Promise<void> {
     await this.assertWithinDailyCap('generate', clientIp, KEYLESS_GENERATE_CAP_PER_IP_PER_DAY, GENERATE_LIMIT_MESSAGE);
+  }
+
+  /**
+   * Fails closed (unlike the inbox demo caps): this path hands out a secret key, so it never runs uncapped.
+   */
+  async assertAgentEnvCreationAllowed(clientIp?: string): Promise<void> {
+    if (!this.cacheService.cacheEnabled()) {
+      throw agentEnvCreationError(KeylessAgentErrorCodeEnum.UNAVAILABLE);
+    }
+
+    if (!clientIp) {
+      throw agentEnvCreationError(KeylessAgentErrorCodeEnum.RATE_LIMITED);
+    }
+
+    let perIpCount: number;
+    let globalCount = 0;
+
+    try {
+      perIpCount = await this.incrementDailyCounter(this.dailyCounterKey('agent_env_create', clientIp));
+
+      if (perIpCount <= resolveKeylessAgentEnvCreateCapPerIpPerDay()) {
+        globalCount = await this.incrementDailyCounter(this.dailyCounterKey('agent_env_create', 'global'));
+      }
+    } catch {
+      throw agentEnvCreationError(KeylessAgentErrorCodeEnum.UNAVAILABLE);
+    }
+
+    if (perIpCount > resolveKeylessAgentEnvCreateCapPerIpPerDay()) {
+      throw agentEnvCreationError(KeylessAgentErrorCodeEnum.RATE_LIMITED);
+    }
+
+    if (globalCount > resolveKeylessAgentEnvCreateGlobalCapPerDay()) {
+      throw agentEnvCreationError(KeylessAgentErrorCodeEnum.CAPACITY_REACHED);
+    }
   }
 
   async isKeylessAgentAiEnabled(organizationId: string): Promise<boolean> {
@@ -81,7 +129,7 @@ export class KeylessAbuseGuardService {
   }
 
   private async assertWithinDailyCap(
-    kind: 'env_create' | 'generate',
+    kind: DailyCounterKind,
     clientIp: string | undefined,
     cap: number,
     limitMessage: string
@@ -101,10 +149,10 @@ export class KeylessAbuseGuardService {
     }
   }
 
-  private dailyCounterKey(kind: 'env_create' | 'generate', clientIp: string): string {
+  private dailyCounterKey(kind: DailyCounterKind, scope: string): string {
     const date = new Date().toISOString().slice(0, 10);
 
-    return `keyless:${kind}:${date}:${clientIp}`;
+    return `keyless:${kind}:${date}:${scope}`;
   }
 
   private async incrementDailyCounter(key: string): Promise<number> {
@@ -116,4 +164,30 @@ export class KeylessAbuseGuardService {
 
     return result ?? 0;
   }
+}
+
+type AgentEnvCreationErrorCode =
+  | KeylessAgentErrorCodeEnum.RATE_LIMITED
+  | KeylessAgentErrorCodeEnum.CAPACITY_REACHED
+  | KeylessAgentErrorCodeEnum.UNAVAILABLE;
+
+const AGENT_ENV_CREATION_ERRORS: Record<AgentEnvCreationErrorCode, { status: HttpStatus; message: string }> = {
+  [KeylessAgentErrorCodeEnum.RATE_LIMITED]: {
+    status: HttpStatus.TOO_MANY_REQUESTS,
+    message: AGENT_ENV_RATE_LIMITED_MESSAGE,
+  },
+  [KeylessAgentErrorCodeEnum.CAPACITY_REACHED]: {
+    status: HttpStatus.SERVICE_UNAVAILABLE,
+    message: AGENT_ENV_CAPACITY_MESSAGE,
+  },
+  [KeylessAgentErrorCodeEnum.UNAVAILABLE]: {
+    status: HttpStatus.SERVICE_UNAVAILABLE,
+    message: AGENT_ENV_UNAVAILABLE_MESSAGE,
+  },
+};
+
+function agentEnvCreationError(code: AgentEnvCreationErrorCode): HttpException {
+  const { status, message } = AGENT_ENV_CREATION_ERRORS[code];
+
+  return new HttpException({ statusCode: status, message, code }, status);
 }

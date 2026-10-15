@@ -2,22 +2,16 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
   CreateOrUpdateSubscriberUseCase,
-  FeatureFlagsService,
   GetSubscriberSchedule,
   PinoLogger,
   SelectIntegration,
-  UpsertControlValuesUseCase,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
-  CommunityUserRepository,
   ContextRepository,
   EnvironmentRepository,
   IntegrationRepository,
   MessageRepository,
-  MessageTemplateRepository,
-  NotificationTemplateRepository,
-  PreferencesRepository,
 } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
@@ -29,13 +23,13 @@ import {
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AuthService } from '../../../auth/services/auth.service';
-import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
-import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import * as encryption from '../../utils/encryption';
+import { KeylessEnvironmentPurposeEnum } from '../create-keyless-environment/create-keyless-environment.command';
+import { CreateKeylessEnvironment } from '../create-keyless-environment/create-keyless-environment.usecase';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { SessionCommand } from './session.command';
@@ -73,22 +67,14 @@ describe('Session', () => {
   let notificationsCount: sinon.SinonStubbedInstance<NotificationsCount>;
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   let organizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
-  let communityOrganizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
   let contextRepository: sinon.SinonStubbedInstance<ContextRepository>;
-  let generateUniqueApiKey: sinon.SinonStubbedInstance<GenerateUniqueApiKey>;
-  let createNovuIntegrationsUsecase: sinon.SinonStubbedInstance<CreateNovuIntegrations>;
-  let communityUserRepository: sinon.SinonStubbedInstance<CommunityUserRepository>;
-  let notificationTemplateRepository: sinon.SinonStubbedInstance<NotificationTemplateRepository>;
-  let messageTemplateRepository: sinon.SinonStubbedInstance<MessageTemplateRepository>;
-  let preferencesRepository: sinon.SinonStubbedInstance<PreferencesRepository>;
-  let upsertControlValuesUseCase: sinon.SinonStubbedInstance<UpsertControlValuesUseCase>;
   let getOrganizationSettingsUsecase: sinon.SinonStubbedInstance<GetOrganizationSettings>;
   let logger: sinon.SinonStubbedInstance<PinoLogger>;
-  let featureFlagsService: sinon.SinonStubbedInstance<FeatureFlagsService>;
   let messageRepository: sinon.SinonStubbedInstance<MessageRepository>;
   let getSubscriberSchedule: sinon.SinonStubbedInstance<GetSubscriberSchedule>;
   let updatePreferencesUsecase: sinon.SinonStubbedInstance<UpdatePreferences>;
   let keylessAbuseGuard: sinon.SinonStubbedInstance<KeylessAbuseGuardService>;
+  let createKeylessEnvironment: sinon.SinonStubbedInstance<CreateKeylessEnvironment>;
 
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
@@ -99,22 +85,14 @@ describe('Session', () => {
     notificationsCount = sinon.createStubInstance(NotificationsCount);
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
     organizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
-    communityOrganizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
     contextRepository = sinon.createStubInstance(ContextRepository);
-    generateUniqueApiKey = sinon.createStubInstance(GenerateUniqueApiKey);
-    createNovuIntegrationsUsecase = sinon.createStubInstance(CreateNovuIntegrations);
-    communityUserRepository = sinon.createStubInstance(CommunityUserRepository);
-    notificationTemplateRepository = sinon.createStubInstance(NotificationTemplateRepository);
-    messageTemplateRepository = sinon.createStubInstance(MessageTemplateRepository);
-    preferencesRepository = sinon.createStubInstance(PreferencesRepository);
-    upsertControlValuesUseCase = sinon.createStubInstance(UpsertControlValuesUseCase);
     getOrganizationSettingsUsecase = sinon.createStubInstance(GetOrganizationSettings);
     logger = sinon.createStubInstance(PinoLogger);
-    featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
     messageRepository = sinon.createStubInstance(MessageRepository);
     getSubscriberSchedule = sinon.createStubInstance(GetSubscriberSchedule);
     updatePreferencesUsecase = sinon.createStubInstance(UpdatePreferences);
     keylessAbuseGuard = sinon.createStubInstance(KeylessAbuseGuardService);
+    createKeylessEnvironment = sinon.createStubInstance(CreateKeylessEnvironment);
 
     session = new Session(
       environmentRepository as any,
@@ -125,22 +103,14 @@ describe('Session', () => {
       notificationsCount as any,
       integrationRepository as any,
       organizationRepository as any,
-      communityOrganizationRepository as any,
       contextRepository as any,
-      generateUniqueApiKey as any,
-      createNovuIntegrationsUsecase as any,
-      communityUserRepository as any,
-      notificationTemplateRepository as any,
-      messageTemplateRepository as any,
       messageRepository as any,
-      preferencesRepository as any,
-      upsertControlValuesUseCase as any,
       getOrganizationSettingsUsecase as any,
       logger as any,
-      featureFlagsService as any,
       getSubscriberSchedule as any,
       updatePreferencesUsecase as any,
-      keylessAbuseGuard as any
+      keylessAbuseGuard as any,
+      createKeylessEnvironment as any
     );
 
     messageRepository.getCountBySeverity.resolves(mockSeverityCounts);
@@ -475,7 +445,6 @@ describe('Session', () => {
       removeNovuBranding: false,
       defaultLocale: 'en_US',
     });
-    featureFlagsService.getFlag.resolves(true);
     contextRepository.findOrCreateContextsFromPayload.resolves(mockContexts as any);
 
     const response: SubscriberSessionResponseDto = await session.execute(command);
@@ -525,7 +494,6 @@ describe('Session', () => {
       removeNovuBranding: false,
       defaultLocale: 'en_US',
     });
-    featureFlagsService.getFlag.resolves(true);
     contextRepository.findOrCreateContextsFromPayload.resolves(mockContexts as any);
 
     const validateHmacEncryptionStub = sinon.stub(encryption, 'validateHmacEncryption');
@@ -577,12 +545,40 @@ describe('Session', () => {
       removeNovuBranding: false,
       defaultLocale: 'en_US',
     });
-    featureFlagsService.getFlag.resolves(true);
 
     const response: SubscriberSessionResponseDto = await session.execute(command);
 
     expect(contextRepository.findOrCreateContextsFromPayload.called).to.be.false;
 
     expect(response.contextKeys).to.deep.equal([]);
+  });
+
+  it('should delegate keyless initialization to CreateKeylessEnvironment with the inbox-demo purpose', async () => {
+    const keylessIdentifier = 'pk_keyless_abc_1234';
+    const environment = {
+      _id: 'env-id',
+      _organizationId: 'org-id',
+      identifier: keylessIdentifier,
+      name: 'Keyless 2026-10-14T20:00:00.000Z',
+      apiKeys: [{ key: 'api-key' }],
+    };
+    createKeylessEnvironment.execute.resolves({ environment: environment as any, secretKey: 'sk_secret' });
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    organizationRepository.findById.resolves({ _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE } as any);
+    selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });
+    createSubscriber.execute.resolves({ _id: 'subscriber-id' } as any);
+    notificationsCount.execute.resolves({ data: [{ count: 0, filter: {} }] });
+    authService.getSubscriberWidgetToken.resolves('token');
+    getOrganizationSettingsUsecase.execute.resolves({ removeNovuBranding: false, defaultLocale: 'en_US' });
+
+    const response = await session.execute({ requestData: {}, clientIp: '203.0.113.1' });
+
+    expect(keylessAbuseGuard.assertEnvCreationAllowed.calledOnceWith('203.0.113.1')).to.be.true;
+    expect(createKeylessEnvironment.execute.calledOnce).to.be.true;
+    expect(createKeylessEnvironment.execute.firstCall.args[0].purpose).to.equal(
+      KeylessEnvironmentPurposeEnum.INBOX_DEMO
+    );
+    expect(environmentRepository.findEnvironmentByIdentifier.calledWith(keylessIdentifier)).to.be.true;
+    expect(response.applicationIdentifier).to.equal(keylessIdentifier);
   });
 });
