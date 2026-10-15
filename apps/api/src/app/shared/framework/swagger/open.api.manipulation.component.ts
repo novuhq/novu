@@ -72,7 +72,6 @@ function unwrapDataAttribute(inputDocument: OpenAPIObject) {
 }
 
 function filterBearerOnlyIfExternal(isForInternalSdk: boolean, inputDocument: OpenAPIObject) {
-  let openAPIObject: OpenAPIObject;
   if (isForInternalSdk) {
     return inputDocument;
   } else {
@@ -80,11 +79,63 @@ function filterBearerOnlyIfExternal(isForInternalSdk: boolean, inputDocument: Op
   }
 }
 
+/**
+ * @nestjs/swagger wraps a `$ref` that has sibling keywords (description, default...) in `allOf`.
+ * Speakeasy turns an `allOf`-wrapped enum into a new inline enum named after the property,
+ * so the SDK would lose the shared enum types (e.g. `UiComponentEnum`). Reference enums directly.
+ *
+ * Speakeasy ignores keywords next to a `$ref`, so a property `default` is moved onto the enum
+ * schema when every reference to that enum uses the same default (e.g. `__source`).
+ */
+function unwrapEnumReferences(inputDocument: OpenAPIObject) {
+  const schemas = inputDocument.components?.schemas ?? {};
+  const getEnumSchema = (ref: string) => {
+    const schema = schemas[ref.replace('#/components/schemas/', '')];
+
+    return schema && 'enum' in schema ? schema : undefined;
+  };
+  const defaultsByRef = new Map<string, unknown[]>();
+
+  const visit = (node: unknown) => {
+    if (!node || typeof node !== 'object') {
+      return;
+    }
+
+    const schema = node as Record<string, unknown>;
+    const { allOf } = schema;
+    const wrappedRef = Array.isArray(allOf) && allOf.length === 1 ? allOf[0]?.$ref : undefined;
+    const ref = typeof wrappedRef === 'string' ? wrappedRef : schema.$ref;
+    if (typeof ref === 'string' && getEnumSchema(ref)) {
+      if (ref === wrappedRef) {
+        schema.$ref = ref;
+        delete schema.allOf;
+      }
+      defaultsByRef.set(ref, [...(defaultsByRef.get(ref) ?? []), schema.default]);
+    }
+
+    for (const child of Object.values(schema)) {
+      visit(child);
+    }
+  };
+
+  visit(inputDocument);
+
+  for (const [ref, defaults] of defaultsByRef) {
+    const enumSchema = getEnumSchema(ref);
+    const [firstDefault] = defaults;
+    if (enumSchema && firstDefault !== undefined && defaults.every((value) => value === firstDefault)) {
+      enumSchema.default = firstDefault;
+    }
+  }
+}
+
 export function overloadDocumentForSdkGeneration(inputDocument: OpenAPIObject, isForInternalSdk: boolean = false) {
   unwrapDataAttribute(inputDocument);
   const openAPIObject = filterBearerOnlyIfExternal(isForInternalSdk, inputDocument);
+  const sdkDocument = addIdempotencyKeyHeader(openAPIObject) as OpenAPIObject;
+  unwrapEnumReferences(sdkDocument);
 
-  return addIdempotencyKeyHeader(openAPIObject) as OpenAPIObject;
+  return sdkDocument;
 }
 
 function addIdempotencyKeyHeader<T>(openApiDocument: T): T {
@@ -161,7 +212,7 @@ export function sortOpenAPIDocument(openApiDoc: OpenAPIObject): OpenAPIObject {
     });
 
     // Reconstruct paths with sorted keys and sorted methods within each path
-    sortedPathKeys.forEach((pathKey) => {
+    for (const pathKey of sortedPathKeys) {
       const pathItem = sortedDoc.paths[pathKey];
 
       // Define method order priority
@@ -186,7 +237,7 @@ export function sortOpenAPIDocument(openApiDoc: OpenAPIObject): OpenAPIObject {
             })
         ),
       };
-    });
+    }
 
     sortedDoc.paths = sortedPaths;
   }
