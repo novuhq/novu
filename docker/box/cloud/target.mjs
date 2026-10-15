@@ -11,6 +11,7 @@ const HERE = new URL('.', import.meta.url).pathname;
 const BOX_DIR = join(HERE, '..');
 const WRANGLER = ['npx', '--yes', 'wrangler@4.150.0'];
 const HOST = 'novu-box-host';
+const ROUTER = 'novu-box-slack';
 const COMPATIBILITY_DATE = '2026-09-29';
 // The Novu account's workers.dev subdomain.
 const DOMAIN = process.env.BOX_CLOUD_DOMAIN ?? 'cli-shortener.workers.dev';
@@ -23,6 +24,10 @@ const SECRETS = [
   'BULL_MQ_PRO_NPM_TOKEN',
 ];
 const EXIT_MARK = '__BOX_EXIT__';
+// Novu Bot's credentials, for the router only (never a box): SLACK_BOT_TOKEN and SLACK_SIGNING_SECRET.
+const SLACK_ENV = process.env.BOX_SLACK_ENV ?? join(os.homedir(), '.config/novu-box/slack.env');
+// #novu-box, the one channel the router posts in besides DMs.
+const SLACK_CHANNEL = process.env.BOX_SLACK_CHANNEL ?? 'C0C9PHBUDR6';
 // A first bake takes 11 to 14 minutes on Cloudflare; a wake about 35 s.
 const READY_WITHIN_SECONDS = { baking: 25 * 60, waking: 5 * 60, running: 5 * 60 };
 
@@ -100,9 +105,18 @@ export function cloudTarget({ box, log, githubToken }) {
     return `${repository}@${digest}`;
   }
 
-  // The image, the secrets and the idle time belong to the host, so they apply to every box.
-  function deployHost() {
-    const image = pushImage();
+  // The image, the secrets and the idle time belong to the host, so they apply to every box. A box's snapshot only
+  // restores on the image it was taken on, and an image built in another checkout differs even for the same files
+  // (its layer holds their times), so BOX_IMAGE=<image@digest> redeploys the Worker code alone on that image.
+  // With Novu Bot's credentials (SLACK_ENV), the Slack router deploys first; it reaches boxes through the host's
+  // Box class, so a host's very first deploy goes without it, and the next one adds it.
+  async function deployHost() {
+    const image = process.env.BOX_IMAGE ?? pushImage();
+    // A new workers.dev name can take a minute to answer, so a router deployed here counts without asking.
+    let slack = await routerExists();
+    if (fs.existsSync(SLACK_ENV) && (await hostExists())) slack = deployRouter(log);
+    if (!slack)
+      log(`${ROUTER} isn't deployed, so boxes get no Slack; it deploys with the host when ${SLACK_ENV} exists`);
     withTempDir(HOST, (dir) => {
       const config = join(dir, 'wrangler.json');
       const secrets = join(dir, 'secrets.json');
@@ -118,8 +132,12 @@ export function cloudTarget({ box, log, githubToken }) {
           durable_objects: { bindings: [{ name: 'BOX', class_name: 'Box' }] },
           exports: { Box: { type: 'durable-object', storage: 'sqlite' } },
           observability: { enabled: true },
-          // Minutes without requests before a box saves itself and stops; default 60 (worker.js).
-          ...(process.env.BOX_IDLE_MINUTES && { vars: { IDLE_MINUTES: process.env.BOX_IDLE_MINUTES } }),
+          ...(slack && { services: [{ binding: 'SLACK', service: ROUTER, entrypoint: 'Registry' }] }),
+          vars: {
+            // Minutes without requests before a box saves itself and stops; default 60 (worker.js).
+            ...(process.env.BOX_IDLE_MINUTES && { IDLE_MINUTES: process.env.BOX_IDLE_MINUTES }),
+            ...(slack && { SLACK_API_URL: `https://${ROUTER}.${DOMAIN}/api/` }),
+          },
         })
       );
       const env = readEnvFile(join(BOX_DIR, '.env'));
@@ -207,7 +225,7 @@ export function cloudTarget({ box, log, githubToken }) {
       const snapshot = await startingSnapshot({ from, fromBase, ref });
       if (snapshot) query.set('from', snapshot);
       // --deploy: a change to docker/box (image or Worker code) goes to the host, so to every box.
-      if (redeploy || !(await hostExists())) deployHost();
+      if (redeploy || !(await hostExists())) await deployHost();
       if (redeploy || !(await state())) deployBoxWorker();
       const { state: started } = await (await call(`/up?${query}`, { method: 'POST' })).json();
       log(`${worker}: ${started}${started === 'baking' ? ` ${ref} (11 to 14 minutes)` : ''}`);
@@ -220,8 +238,14 @@ export function cloudTarget({ box, log, githubToken }) {
     },
 
     async down() {
-      log(`${worker}: saving to its snapshot and stopping (about 3 minutes); the next request wakes it`);
-      console.log(JSON.stringify(await (await call('/down', { method: 'POST' })).json()));
+      log(`${worker}: saving to its snapshot and stopping (3 to 6 minutes); the next request wakes it`);
+      await call('/down', { method: 'POST' });
+      const deadline = Date.now() + 15 * 60_000;
+      while ((await state())?.running) {
+        if (Date.now() > deadline) throw new Error(`${worker} is still saving after 15 minutes`);
+        await new Promise((resolve) => setTimeout(resolve, 10_000));
+      }
+      console.log(JSON.stringify({ state: 'asleep', snapshot: (await state())?.snapshot?.id }));
 
       return 0;
     },
@@ -256,6 +280,52 @@ export function cloudTarget({ box, log, githubToken }) {
       await call(`/file?path=${encodeURIComponent(path)}`, { method: 'PUT', body: fs.readFileSync(file) });
     },
   };
+}
+
+// The Slack router (slack-router.js), one for every box: Novu Bot's events, interactivity and /novu-box come to
+// https://novu-box-slack.<workers.dev>/slack.
+function deployRouter(log) {
+  const env = readEnvFile(SLACK_ENV);
+  for (const name of ['SLACK_BOT_TOKEN', 'SLACK_SIGNING_SECRET'])
+    if (!env[name]) throw new Error(`${SLACK_ENV} has no ${name}`);
+  const origin = `https://${ROUTER}.${DOMAIN}`;
+  withTempDir(ROUTER, (dir) => {
+    const config = join(dir, 'wrangler.json');
+    const secrets = join(dir, 'secrets.json');
+    fs.writeFileSync(
+      config,
+      JSON.stringify({
+        name: ROUTER,
+        main: join(HERE, 'slack-router.js'),
+        compatibility_date: COMPATIBILITY_DATE,
+        workers_dev: true,
+        durable_objects: {
+          bindings: [
+            { name: 'ROUTER', class_name: 'Router' },
+            { name: 'BOX', class_name: 'Box', script_name: HOST },
+          ],
+        },
+        exports: { Router: { type: 'durable-object', storage: 'sqlite' } },
+        vars: { ORIGIN: origin, CHANNEL: SLACK_CHANNEL },
+        observability: { enabled: true },
+      })
+    );
+    fs.writeFileSync(
+      secrets,
+      JSON.stringify({ SLACK_BOT_TOKEN: env.SLACK_BOT_TOKEN, SLACK_SIGNING_SECRET: env.SLACK_SIGNING_SECRET }),
+      { mode: 0o600 }
+    );
+    log(`deploying ${ROUTER}; Novu Bot's request URL is ${origin}/slack`);
+    run(WRANGLER[0], [...WRANGLER.slice(1), 'deploy', '-c', config, '--secrets-file', secrets]);
+  });
+
+  return true;
+}
+
+async function routerExists() {
+  const response = await fetch(`https://${ROUTER}.${DOMAIN}/`).catch(() => null);
+
+  return response?.ok && (await response.text()).startsWith(ROUTER);
 }
 
 function withTempDir(name, fn) {

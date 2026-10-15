@@ -175,7 +175,8 @@ You need `npx wrangler login` on the Novu Cloudflare account, `gh` signed in as 
 `up --cloud` deploys the host if it isn't there (building the image for amd64 and pushing it once per change) and
 the box's Worker if it isn't there, then wakes the box from its snapshot or, the first time, bakes `next`.
 `up --cloud --deploy` redeploys the host (after a change to `docker/box`), which applies to every box; with the
-same image, running boxes keep running. `delete --cloud` stops a box and deletes its snapshot reference and Worker.
+same image, running boxes usually keep running, but once a box's container restarted from its last snapshot
+minutes after a deploy, losing what wasn't saved (an applied PR): `down` a box worth keeping before deploying. `delete --cloud` stops a box and deletes its snapshot reference and Worker.
 
 After an hour without requests the box saves itself to a snapshot and stops; the next request gets a "waking up"
 page and the box is back with its data. `BOX_IDLE_MINUTES=4 node docker/box/cli.mjs up --cloud --deploy` sets a
@@ -185,13 +186,13 @@ state (`/__box/state`) doesn't count as a request. Measured on standard-4:
 | Step | Time |
 |---|---|
 | First `up` of a box (bake `next`) | about 16 min |
-| `down` (stop apps and databases, snapshot, stop) | 18 s to 3 min |
+| `down` (stop apps and databases, snapshot, stop) | 18 s to 6 min (the box saves on its own; `down` waits) |
 | Wake, from the first browser request to a healthy API | 33 to 36 s |
 | `sync`, an API change | 83 s |
 | Smoke over the public address (box baked from `next`) | 19/20; the bridge check needs this branch's playground |
 | `up --from base` for a new box (deploy its Worker, then wake from base's snapshot, no bake) | 106 s: 29 s deploy, 8 s until the address answers, 43 s wake |
 | The same, the first time a snapshot is restored | 4 to 6 min (inside the start), once per snapshot |
-| `up --deploy` of the host with the same image | about 1 min; running boxes keep running |
+| `up --deploy` of the host with the same image | about 1 min; running boxes usually keep running (see above) |
 
 `up --cloud --box <new> --from <box>` starts a new box from another box's latest snapshot instead of baking: all
 boxes share one Durable Object class, which is how Cloudflare documents snapshot sharing. Keep a `base` box, baked
@@ -203,7 +204,42 @@ doesn't contain `base`'s commit may conflict; rebase it on `next`.
 Limits for now: each sleep leaves a snapshot image in the account's registry that nothing deletes yet
 (`npx wrangler containers images list`); the GitHub token reaches the bake's and `sync`'s environment, as it does
 locally; requests the box makes to its own public address go out through the internet; a host redeploy with a new
-image is untested with boxes running.
+image is untested with boxes running. A `sync` whose rebuild runs longer than 5 minutes (a playground change, with
+`pnpm install`) ends with `fetch failed` and leaves the bundle unapplied; apply it in the background and follow
+its log:
+`node docker/box/cli.mjs exec --cloud -- sh -c 'nohup node /opt/box/box.mjs apply --bundle /data/run/sync.bundle > /data/logs/apply-sync.log 2>&1 &'`.
+
+#### Slack: Novu Bot in `#novu-box`
+
+Cloud boxes' agents can be used from the company Slack through one app, Novu Bot, in `#novu-box` and in DMs with
+the bot. One router Worker, `novu-box-slack` (`cloud/slack-router.js`, one Durable Object for its state), holds
+the real bot token and signing secret and stands between Slack and every box; no box ever sees them.
+
+- `up --cloud --deploy` deploys the router with the host when `~/.config/novu-box/slack.env` (`SLACK_BOT_TOKEN`,
+  `SLACK_SIGNING_SECRET`) is on your machine; they become the router's Worker secrets. The host is bound to it
+  (`SLACK`) and gives every box `SLACK_API_URL`, the router's `/api/`. Novu Bot's Events, Interactivity and
+  `/novu-box` request URLs are the router's `/slack`.
+- Once a box is up, and again when its agents change (a `sync`), the host gives each of the bridge app's agents a
+  Slack integration (`box-slack-<agent>`) and a workspace connection through the box's API, with a bot token
+  and signing secret the router made up for that box. The router posts "<box> ready · Talk to: …" in
+  `#novu-box`; `delete --cloud` removes it and the box's tokens.
+- In Slack, pick a box and agent with a Talk to button (or `/novu-box <box> [agent]`, or the bot's Home tab),
+  then @mention Novu Bot in `#novu-box` or DM it. A thread keeps its box and agent; the main DM follows your
+  pick. Replies show as "<box> · <agent>". The agents answer only people linked to a subscriber, so the first
+  time someone writes to a box's agent, the router has the host link them as subscriber `slack-<user id>`.
+  Start a thread with a mention; `custom-code-agent` reads the first word, so `@Novu Bot card` gets its command
+  list, and `card` as a reply in the thread (or in a DM) gets the card. For a sleeping box the router answers Slack at once, posts
+  "Waking <box> (about 40 s)…" in the thread, and delivers the message when the box is up (it retries for 8
+  minutes).
+- The router passes only the Slack methods the agents use, only to `#novu-box` and DMs a person started, and
+  edits only a box's own messages; anything else gets `ok: false` with a `…_by_novu_box` error. A token it
+  didn't make (a Slack app you connect in the box's dashboard) goes to Slack unchanged.
+
+A host deploy from another checkout builds a new image even when `docker/box` is the same (the image keeps file
+times), and Cloudflare ties each snapshot to the image it came from. To deploy only Worker changes, keep the
+running image:
+`BOX_IMAGE=registry.cloudflare.com/<account>/novu-box@sha256:<digest> node docker/box/cli.mjs up --cloud --deploy`
+(the digest is in `npx wrangler versions view <id> --name novu-box-host --json`).
 
 Run the smoke test from the host (38 checks, 43 with the Anthropic key, about 2 minutes; writes `smoke.json` to
 the directory given):
