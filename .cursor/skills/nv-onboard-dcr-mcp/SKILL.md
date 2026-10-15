@@ -1,6 +1,7 @@
 ---
 name: nv-onboard-dcr-mcp
 description: Onboard a new DCR OAuth MCP catalog entry with provider-doc vetting and curl probes. Use when adding or changing `mode: dcr` entries in MCP_SERVERS. Abort if the provider requires whitelist or manual approval.
+disable-model-invocation: true
 ---
 
 # Onboard DCR MCP
