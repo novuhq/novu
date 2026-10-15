@@ -1,14 +1,14 @@
-import { HttpStatus, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
 
 import { ConnectClaimTokenService } from '../../../../connect/services/connect-claim-token.service';
 import { resolveKeylessAgentClaimUrl } from '../../../keyless-agent-claim-url';
 import {
-  getKeylessAgentEnvironmentExpiresAt,
   isKeylessAgentEnvironment,
   isKeylessAgentEnvironmentExpired,
   KeylessAgentErrorCodeEnum,
 } from '../../../keyless-agent-environment';
+import { createKeylessEnvironmentExpiredException } from '../../../keyless-agent-errors';
 import { GetKeylessEnvironmentResponseDto } from '../../dtos';
 import { GetAgentKeylessEnvironmentCommand } from './get-agent-keyless-environment.command';
 
@@ -34,11 +34,7 @@ export class GetAgentKeylessEnvironment {
     }
 
     if (isKeylessAgentEnvironmentExpired(environment.createdAt)) {
-      throw new UnauthorizedException({
-        statusCode: HttpStatus.UNAUTHORIZED,
-        message: `This keyless environment expired on ${getKeylessAgentEnvironmentExpiresAt(environment.createdAt).toISOString()}. Create a new one or sign up at https://dashboard.novu.co.`,
-        code: KeylessAgentErrorCodeEnum.ENVIRONMENT_EXPIRED,
-      });
+      throw createKeylessEnvironmentExpiredException(environment.createdAt);
     }
 
     const { claimUrl, expiresAt } = await resolveKeylessAgentClaimUrl(this.connectClaimTokenService, {

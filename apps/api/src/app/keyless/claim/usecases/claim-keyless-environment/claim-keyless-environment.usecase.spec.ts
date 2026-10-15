@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException } from '@nestjs/common';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -180,8 +180,9 @@ describe('ClaimKeylessEnvironment', () => {
 
     const error = await usecase.execute(command).catch((caught) => caught);
 
-    expect(error).to.be.instanceOf(BadRequestException);
-    expect((error as BadRequestException).getResponse()).to.include({ code: 'keyless_environment_expired' });
+    expect(error).to.be.instanceOf(HttpException);
+    expect((error as HttpException).getStatus()).to.equal(400);
+    expect((error as HttpException).getResponse()).to.include({ code: 'keyless_environment_expired' });
     expect(copyKeylessWorkflows.preflight.called).to.equal(false);
   });
 

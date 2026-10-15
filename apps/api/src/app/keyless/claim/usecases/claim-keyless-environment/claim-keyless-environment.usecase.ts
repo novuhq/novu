@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { AnalyticsService, CacheService, PinoLogger } from '@novu/application-generic';
 import { EnvironmentEntity, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, UserSessionData } from '@novu/shared';
@@ -13,13 +13,13 @@ import {
 } from '../../../../connect/usecases/claim-keyless-connect/claim-keyless-connect.usecase';
 import { readKeylessAgentSource, writeKeylessAgentClaimedTombstone } from '../../../keyless-agent-cache';
 import {
-  getKeylessAgentEnvironmentExpiresAt,
   isKeylessAgentEnvironment,
   isKeylessAgentEnvironmentExpired,
   KEYLESS_AGENT_DEFAULT_SOURCE,
   KeylessAgentAnalyticsEventEnum,
   KeylessAgentErrorCodeEnum,
 } from '../../../keyless-agent-environment';
+import { createKeylessEnvironmentExpiredException } from '../../../keyless-agent-errors';
 import { isKeylessOrganization } from '../../../keyless-organization.helpers';
 import { KeylessWorkflowCopyScope } from '../copy-keyless-workflows/copy-keyless-workflows.command';
 import { CopyKeylessWorkflows } from '../copy-keyless-workflows/copy-keyless-workflows.usecase';
@@ -137,12 +137,7 @@ export class ClaimKeylessEnvironment {
     // Timestamps always set `createdAt`; a missing one is treated as expired rather than as never expiring.
     const createdAt = keylessEnvironment.createdAt ?? new Date(0).toISOString();
     if (isKeylessAgentEnvironmentExpired(createdAt)) {
-      const expiresAt = getKeylessAgentEnvironmentExpiresAt(createdAt).toISOString();
-
-      throw new BadRequestException({
-        message: `This keyless environment expired on ${expiresAt}. Create a new one or sign up at https://dashboard.novu.co.`,
-        code: KeylessAgentErrorCodeEnum.ENVIRONMENT_EXPIRED,
-      });
+      throw createKeylessEnvironmentExpiredException(createdAt, HttpStatus.BAD_REQUEST);
     }
 
     const scope: KeylessWorkflowCopyScope = {
