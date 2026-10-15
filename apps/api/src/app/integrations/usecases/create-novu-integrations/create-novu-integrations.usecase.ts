@@ -116,8 +116,8 @@ export class CreateNovuIntegrations {
   }
 
   private async createManagedClaudeIntegration(command: CreateNovuIntegrationsCommand) {
-    const isDevelopmentEnvironment = command.name === EnvironmentEnum.DEVELOPMENT;
-    if (!areNovuManagedClaudeCredentialsSet() || (!isDevelopmentEnvironment && !command.includeManagedClaude)) {
+    const includeManagedClaude = command.includeManagedClaude ?? command.name === EnvironmentEnum.DEVELOPMENT;
+    if (!areNovuManagedClaudeCredentialsSet() || !includeManagedClaude) {
       return;
     }
 

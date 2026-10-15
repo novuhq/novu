@@ -10,6 +10,7 @@ export class CreateNovuIntegrationsCommand extends EnvironmentWithUserCommand {
   @IsEnum(ChannelTypeEnum, { each: true })
   readonly channels?: ChannelTypeEnum[];
 
+  /** Defaults to true for the Development environment only; `false` opts out even there. */
   @IsOptional()
   @IsBoolean()
   readonly includeManagedClaude?: boolean;
