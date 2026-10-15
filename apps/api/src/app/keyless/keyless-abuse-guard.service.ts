@@ -71,24 +71,11 @@ export class KeylessAbuseGuardService {
       throw agentEnvCreationError(KeylessAgentErrorCodeEnum.RATE_LIMITED);
     }
 
-    let perIpCount: number;
-    let globalCount = 0;
-
-    try {
-      perIpCount = await this.incrementDailyCounter(this.dailyCounterKey('agent_env_create', clientIp));
-
-      if (perIpCount <= resolveKeylessAgentEnvCreateCapPerIpPerDay()) {
-        globalCount = await this.incrementDailyCounter(this.dailyCounterKey('agent_env_create', 'global'));
-      }
-    } catch {
-      throw agentEnvCreationError(KeylessAgentErrorCodeEnum.UNAVAILABLE);
-    }
-
-    if (perIpCount > resolveKeylessAgentEnvCreateCapPerIpPerDay()) {
+    if ((await this.incrementAgentEnvCreateCounter(clientIp)) > resolveKeylessAgentEnvCreateCapPerIpPerDay()) {
       throw agentEnvCreationError(KeylessAgentErrorCodeEnum.RATE_LIMITED);
     }
 
-    if (globalCount > resolveKeylessAgentEnvCreateGlobalCapPerDay()) {
+    if ((await this.incrementAgentEnvCreateCounter('global')) > resolveKeylessAgentEnvCreateGlobalCapPerDay()) {
       throw agentEnvCreationError(KeylessAgentErrorCodeEnum.CAPACITY_REACHED);
     }
   }
@@ -155,6 +142,14 @@ export class KeylessAbuseGuardService {
     return `keyless:${kind}:${date}:${scope}`;
   }
 
+  private async incrementAgentEnvCreateCounter(scope: string): Promise<number> {
+    try {
+      return await this.incrementDailyCounter(this.dailyCounterKey('agent_env_create', scope));
+    } catch {
+      throw agentEnvCreationError(KeylessAgentErrorCodeEnum.UNAVAILABLE);
+    }
+  }
+
   private async incrementDailyCounter(key: string): Promise<number> {
     const result = await this.cacheService.eval<number>(
       INCR_WITH_EXPIRE_SCRIPT,
@@ -166,7 +161,7 @@ export class KeylessAbuseGuardService {
   }
 }
 
-type AgentEnvCreationErrorCode =
+export type AgentEnvCreationErrorCode =
   | KeylessAgentErrorCodeEnum.RATE_LIMITED
   | KeylessAgentErrorCodeEnum.CAPACITY_REACHED
   | KeylessAgentErrorCodeEnum.UNAVAILABLE;
@@ -186,7 +181,7 @@ const AGENT_ENV_CREATION_ERRORS: Record<AgentEnvCreationErrorCode, { status: Htt
   },
 };
 
-function agentEnvCreationError(code: AgentEnvCreationErrorCode): HttpException {
+export function agentEnvCreationError(code: AgentEnvCreationErrorCode): HttpException {
   const { status, message } = AGENT_ENV_CREATION_ERRORS[code];
 
   return new HttpException({ statusCode: status, message, code }, status);

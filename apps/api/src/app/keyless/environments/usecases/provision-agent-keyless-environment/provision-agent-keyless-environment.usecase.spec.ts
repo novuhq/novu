@@ -196,14 +196,6 @@ describe('ProvisionAgentKeylessEnvironment', () => {
     });
   }
 
-  it('returns 503 keyless_unavailable when the cache is disabled, before creating anything', async () => {
-    cacheService.cacheEnabled.returns(false);
-
-    await expectHttpError(HttpStatus.SERVICE_UNAVAILABLE, KeylessAgentErrorCodeEnum.UNAVAILABLE);
-    expect(abuseGuard.assertAgentEnvCreationAllowed.called).to.be.false;
-    expect(createKeylessEnvironment.execute.called).to.be.false;
-  });
-
   it('returns 503 keyless_unavailable when the claim token cannot be issued', async () => {
     claimTokenService.issueOrGetForEnvironment.rejects(new ConnectClaimTokenCacheUnavailableError('issue'));
 

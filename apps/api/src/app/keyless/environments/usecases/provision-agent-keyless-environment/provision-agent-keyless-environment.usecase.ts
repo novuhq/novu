@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, CacheService, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
@@ -12,7 +12,7 @@ import {
   KeylessEnvironmentPurposeEnum,
 } from '../../../../inbox/usecases/create-keyless-environment/create-keyless-environment.command';
 import { CreateKeylessEnvironment } from '../../../../inbox/usecases/create-keyless-environment/create-keyless-environment.usecase';
-import { KeylessAbuseGuardService } from '../../../keyless-abuse-guard.service';
+import { agentEnvCreationError, KeylessAbuseGuardService } from '../../../keyless-abuse-guard.service';
 import { writeKeylessAgentSource } from '../../../keyless-agent-cache';
 import { resolveKeylessAgentClaimUrl } from '../../../keyless-agent-claim-url';
 import {
@@ -27,9 +27,6 @@ import { ProvisionAgentKeylessEnvironmentCommand } from './provision-agent-keyle
 
 const DEFAULT_API_URL = 'https://api.novu.co';
 const DISABLED_MESSAGE = 'Keyless environments are not available on this deployment.';
-const UNAVAILABLE_MESSAGE =
-  'Keyless environment creation is temporarily unavailable. Sign up for a free Novu account or try again later.';
-
 @Injectable()
 export class ProvisionAgentKeylessEnvironment {
   constructor(
@@ -47,10 +44,6 @@ export class ProvisionAgentKeylessEnvironment {
 
   async execute(command: ProvisionAgentKeylessEnvironmentCommand): Promise<CreateKeylessEnvironmentResponseDto> {
     await this.assertCreationEnabled();
-
-    if (!this.cacheService.cacheEnabled()) {
-      throw unavailableError();
-    }
 
     await this.keylessAbuseGuard.assertAgentEnvCreationAllowed(command.clientIp);
 
@@ -92,13 +85,13 @@ export class ProvisionAgentKeylessEnvironment {
   }
 
   private async assertCreationEnabled(): Promise<void> {
-    if (!isKeylessAgentEnvironmentsSupported()) {
+    const keylessOrganizationId = process.env.KEYLESS_ORGANIZATION_ID;
+
+    if (!isKeylessAgentEnvironmentsSupported() || !keylessOrganizationId) {
       throw disabledError();
     }
 
-    const organization = await this.communityOrganizationRepository.findById(
-      process.env.KEYLESS_ORGANIZATION_ID as string
-    );
+    const organization = await this.communityOrganizationRepository.findById(keylessOrganizationId);
 
     if (!organization) {
       throw disabledError();
@@ -132,7 +125,7 @@ export class ProvisionAgentKeylessEnvironment {
     } catch (error) {
       if (error instanceof ConnectClaimTokenCacheUnavailableError) {
         this.logger.error({ environmentId, err: error }, 'Failed to issue keyless agent claim token');
-        throw unavailableError();
+        throw agentEnvCreationError(KeylessAgentErrorCodeEnum.UNAVAILABLE);
       }
 
       throw error;
@@ -152,15 +145,4 @@ function disabledError(): NotFoundException {
     message: DISABLED_MESSAGE,
     code: KeylessAgentErrorCodeEnum.DISABLED,
   });
-}
-
-function unavailableError(): HttpException {
-  return new HttpException(
-    {
-      statusCode: HttpStatus.SERVICE_UNAVAILABLE,
-      message: UNAVAILABLE_MESSAGE,
-      code: KeylessAgentErrorCodeEnum.UNAVAILABLE,
-    },
-    HttpStatus.SERVICE_UNAVAILABLE
-  );
 }

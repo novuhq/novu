@@ -18,6 +18,7 @@ import {
   NotificationTemplateRepository,
   OrganizationEntity,
   PreferencesRepository,
+  UserEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -157,7 +158,7 @@ export class CreateKeylessEnvironment {
     return organization;
   }
 
-  private async findKeylessUser() {
+  private async findKeylessUser(): Promise<UserEntity> {
     const keylessUserEmail = process.env.KEYLESS_USER_EMAIL;
     if (!keylessUserEmail) {
       throw new InternalServerErrorException('Keyless User email is not configured');
