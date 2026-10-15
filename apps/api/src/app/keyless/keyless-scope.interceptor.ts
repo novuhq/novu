@@ -1,25 +1,26 @@
-import { CallHandler, ExecutionContext, HttpException, HttpStatus, Injectable, NestInterceptor } from '@nestjs/common';
+import { CallHandler, ExecutionContext, HttpStatus, Injectable, NestInterceptor } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
+import { EnvironmentEntity, EnvironmentRepository, SubscriberRepository } from '@novu/dal';
 import { ApiAuthSchemeEnum, UserSessionData } from '@novu/shared';
 import { Observable } from 'rxjs';
 
 import { ConnectClaimTokenService } from '../connect/services/connect-claim-token.service';
+import { KEYLESS_ENVIRONMENT_PREFIX } from '../inbox/utils/keyless.constants';
 import { resolveKeylessAgentClaimUrl } from './keyless-agent-claim-url';
 import {
-  getKeylessAgentEnvironmentExpiresAt,
   hashApiKey,
   isKeylessAgentEnvironment,
   isKeylessAgentEnvironmentExpired,
   KeylessAgentErrorCodeEnum,
 } from './keyless-agent-environment';
+import {
+  createKeylessEnvironmentClaimedException,
+  createKeylessEnvironmentExpiredException,
+  keylessHttpException,
+} from './keyless-agent-errors';
 import { isKeylessOrganization } from './keyless-organization.helpers';
-import { computeKeylessTriggerCost, isKeylessApiKeyRouteAllowed } from './keyless-scope.allowlist';
-import { resolveConnectClaimBaseUrl } from './keyless-signup.helpers';
+import { computeKeylessTriggerCost, isKeylessApiKeyRouteAllowed, KeylessTriggerCost } from './keyless-scope.allowlist';
 import { KeylessTriggerCapService } from './keyless-trigger-cap.service';
-
-const KEYLESS_ENVIRONMENT_CLAIMED_MESSAGE =
-  'This environment was claimed. Use the Development secret key from your Novu dashboard (API Keys).';
 
 const API_KEY_HEADER_PREFIX = `${ApiAuthSchemeEnum.API_KEY} `;
 
@@ -42,6 +43,7 @@ interface KeylessScopedRequest {
 export class KeylessScopeInterceptor implements NestInterceptor {
   constructor(
     private readonly environmentRepository: EnvironmentRepository,
+    private readonly subscriberRepository: SubscriberRepository,
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly keylessTriggerCapService: KeylessTriggerCapService,
     private readonly logger: PinoLogger
@@ -57,21 +59,44 @@ export class KeylessScopeInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest<KeylessScopedRequest>();
     const { user } = request;
 
-    if (!user || !isApiKeyRequest(request, user) || !isKeylessOrganization(user.organizationId)) {
+    if (!user || !isKeylessOrganization(user.organizationId)) {
       return next.handle();
     }
 
-    await this.assertKeylessApiKeyRequestAllowed(request, user);
+    if (isAuthenticatedWith(ApiAuthSchemeEnum.KEYLESS, request, user)) {
+      await this.assertKeylessSchemeEnvironment(user);
+    } else if (isAuthenticatedWith(ApiAuthSchemeEnum.API_KEY, request, user)) {
+      await this.assertKeylessApiKeyRequestAllowed(request, user);
+    }
 
     return next.handle();
+  }
+
+  /**
+   * The `Keyless` scheme authenticates with a public application identifier, which is
+   * only acceptable for `pk_keyless_` demo environments. Any other environment of the
+   * keyless organization (agent environments, the owner's own) must present its secret key.
+   */
+  private async assertKeylessSchemeEnvironment(user: UserSessionData): Promise<void> {
+    const environment = await this.environmentRepository.findOne(
+      { _id: user.environmentId, _organizationId: user.organizationId },
+      'identifier'
+    );
+
+    if (!environment?.identifier.startsWith(KEYLESS_ENVIRONMENT_PREFIX)) {
+      throw keylessHttpException(HttpStatus.UNAUTHORIZED, {
+        code: KeylessAgentErrorCodeEnum.REQUIRES_ACCOUNT,
+        message: 'This environment requires its secret key. Authenticate with `Authorization: ApiKey <secretKey>`.',
+      });
+    }
   }
 
   private async assertKeylessApiKeyRequestAllowed(request: KeylessScopedRequest, user: UserSessionData): Promise<void> {
     const environment = await this.findEnvironmentHoldingKey(request, user);
     const isAgentEnvironment = isKeylessAgentEnvironment(environment);
 
-    if (isAgentEnvironment) {
-      assertAgentEnvironmentNotExpired(environment);
+    if (isAgentEnvironment && (!environment.createdAt || isKeylessAgentEnvironmentExpired(environment.createdAt))) {
+      throw createKeylessEnvironmentExpiredException(environment.createdAt);
     }
 
     await this.assertRouteAllowed(request, environment, isAgentEnvironment);
@@ -128,7 +153,8 @@ export class KeylessScopeInterceptor implements NestInterceptor {
       return;
     }
 
-    const { allowed, cap } = await this.keylessTriggerCapService.consume(environment._id, triggerCost);
+    const units = await this.resolveTriggerUnits(triggerCost, environment);
+    const { allowed, cap } = await this.keylessTriggerCapService.consume(environment._id, units);
 
     if (allowed) {
       return;
@@ -143,6 +169,23 @@ export class KeylessScopeInterceptor implements NestInterceptor {
         : `This keyless environment reached its daily limit of ${cap} notification recipients. Try again tomorrow.`,
       claimUrl,
     });
+  }
+
+  private async resolveTriggerUnits(cost: KeylessTriggerCost, environment: EnvironmentEntity): Promise<number> {
+    switch (cost.type) {
+      case 'recipients':
+        return cost.units;
+      case 'broadcast':
+        return this.subscriberRepository.count({
+          _environmentId: environment._id,
+          _organizationId: environment._organizationId,
+        });
+      default: {
+        const exhaustiveCheck: never = cost;
+
+        return exhaustiveCheck;
+      }
+    }
   }
 
   private async resolveClaimUrl(environment: EnvironmentEntity): Promise<string | undefined> {
@@ -166,8 +209,8 @@ export class KeylessScopeInterceptor implements NestInterceptor {
   }
 }
 
-function isApiKeyRequest(request: KeylessScopedRequest, user: UserSessionData): boolean {
-  return user.scheme === ApiAuthSchemeEnum.API_KEY || request.authScheme === ApiAuthSchemeEnum.API_KEY;
+function isAuthenticatedWith(scheme: ApiAuthSchemeEnum, request: KeylessScopedRequest, user: UserSessionData): boolean {
+  return user.scheme === scheme || request.authScheme === scheme;
 }
 
 function extractApiKey(authorization: string | string[] | undefined): string {
@@ -176,37 +219,4 @@ function extractApiKey(authorization: string | string[] | undefined): string {
   }
 
   return authorization.slice(API_KEY_HEADER_PREFIX.length);
-}
-
-function assertAgentEnvironmentNotExpired(environment: EnvironmentEntity): void {
-  if (environment.createdAt && !isKeylessAgentEnvironmentExpired(environment.createdAt)) {
-    return;
-  }
-
-  const expiresAt = environment.createdAt
-    ? getKeylessAgentEnvironmentExpiresAt(environment.createdAt).toISOString()
-    : undefined;
-  const expiredOn = expiresAt ? ` on ${expiresAt}` : '';
-
-  throw keylessHttpException(HttpStatus.UNAUTHORIZED, {
-    code: KeylessAgentErrorCodeEnum.ENVIRONMENT_EXPIRED,
-    message: `This keyless environment expired${expiredOn}. Create a new one or sign up at ${resolveConnectClaimBaseUrl()}.`,
-    expiresAt,
-  });
-}
-
-function keylessHttpException(
-  status: HttpStatus,
-  body: { code: KeylessAgentErrorCodeEnum; message: string; claimUrl?: string; expiresAt?: string }
-): HttpException {
-  const extras = Object.fromEntries(Object.entries(body).filter(([, value]) => value !== undefined));
-
-  return new HttpException({ statusCode: status, ...extras }, status);
-}
-
-export function createKeylessEnvironmentClaimedException(): HttpException {
-  return keylessHttpException(HttpStatus.UNAUTHORIZED, {
-    code: KeylessAgentErrorCodeEnum.ENVIRONMENT_CLAIMED,
-    message: KEYLESS_ENVIRONMENT_CLAIMED_MESSAGE,
-  });
 }

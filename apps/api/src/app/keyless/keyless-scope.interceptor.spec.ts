@@ -1,6 +1,6 @@
 import { CallHandler, ExecutionContext, HttpException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { EnvironmentRepository } from '@novu/dal';
+import { EnvironmentRepository, SubscriberRepository } from '@novu/dal';
 import { ApiAuthSchemeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { lastValueFrom, of } from 'rxjs';
@@ -79,6 +79,7 @@ function agentEnvironment(overrides: Record<string, unknown> = {}) {
 describe('KeylessScopeInterceptor', () => {
   const originalEnv: Record<string, string | undefined> = {};
   let environmentRepository: sinon.SinonStubbedInstance<EnvironmentRepository>;
+  let subscriberRepository: sinon.SinonStubbedInstance<SubscriberRepository>;
   let connectClaimTokenService: sinon.SinonStubbedInstance<ConnectClaimTokenService>;
   let triggerCapService: sinon.SinonStubbedInstance<KeylessTriggerCapService>;
   let interceptor: KeylessScopeInterceptor;
@@ -95,6 +96,7 @@ describe('KeylessScopeInterceptor', () => {
 
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
     environmentRepository.findOne.resolves(agentEnvironment() as never);
+    subscriberRepository = sinon.createStubInstance(SubscriberRepository);
     connectClaimTokenService = sinon.createStubInstance(ConnectClaimTokenService);
     connectClaimTokenService.issueOrGetForEnvironment.resolves({
       token: 'nvct_token',
@@ -106,6 +108,7 @@ describe('KeylessScopeInterceptor', () => {
 
     interceptor = new KeylessScopeInterceptor(
       environmentRepository,
+      subscriberRepository,
       connectClaimTokenService,
       triggerCapService,
       logger as unknown as PinoLogger
@@ -150,10 +153,6 @@ describe('KeylessScopeInterceptor', () => {
     const passThroughCases: Array<[string, RequestOverrides]> = [
       ['Bearer (dashboard) requests', { authScheme: ApiAuthSchemeEnum.BEARER, scheme: ApiAuthSchemeEnum.BEARER }],
       [
-        'Keyless (pk_keyless_ inbox / Connect) requests',
-        { authScheme: ApiAuthSchemeEnum.KEYLESS, scheme: ApiAuthSchemeEnum.KEYLESS },
-      ],
-      [
         'subscriber JWT requests',
         { authScheme: ApiAuthSchemeEnum.BEARER, scheme: ApiAuthSchemeEnum.BEARER, path: '/v1/inbox/notifications' },
       ],
@@ -173,6 +172,34 @@ describe('KeylessScopeInterceptor', () => {
 
       expect(await run({ path: '/v1/environments' })).to.equal('handled');
       expect(environmentRepository.findOne.called).to.equal(false);
+    });
+  });
+
+  describe('Keyless scheme', () => {
+    const keylessScheme = { authScheme: ApiAuthSchemeEnum.KEYLESS, scheme: ApiAuthSchemeEnum.KEYLESS };
+
+    it('lets pk_keyless_ demo environments through on any route', async () => {
+      environmentRepository.findOne.resolves({ identifier: 'pk_keyless_abc_1234' } as never);
+
+      expect(await run({ path: '/v1/environments', ...keylessScheme })).to.equal('handled');
+    });
+
+    it('rejects agent environments reached through their public identifier', async () => {
+      environmentRepository.findOne.resolves({ identifier: 'Xk3m9QpL2aZt' } as never);
+
+      const error = await runExpectingError({ path: '/v1/events/trigger', ...keylessScheme });
+
+      expect(error.getStatus()).to.equal(401);
+      expect(errorBody(error).code).to.equal('keyless_requires_account');
+      expect(handler.handle).to.have.property('called', false);
+    });
+
+    it('rejects when the environment no longer exists', async () => {
+      environmentRepository.findOne.resolves(null);
+
+      const error = await runExpectingError({ ...keylessScheme });
+
+      expect(error.getStatus()).to.equal(401);
     });
   });
 
@@ -199,6 +226,7 @@ describe('KeylessScopeInterceptor', () => {
       ['GET', '/v2/layouts'],
       ['GET', '/v1/workflows'],
       ['PUT', '/v1/environments/me'],
+      ['PUT', '/v2/workflows/order-shipped/sync'],
     ]) {
       it(`rejects ${method} ${path} with keyless_requires_account and a claim URL`, async () => {
         const error = await runExpectingError({ method, path });
@@ -319,6 +347,18 @@ describe('KeylessScopeInterceptor', () => {
         code: 'keyless_trigger_limit_reached',
         claimUrl: 'https://dashboard.example.com/connect/claim?token=nvct_token',
       });
+    });
+
+    it('meters a broadcast by the number of subscribers in the environment', async () => {
+      subscriberRepository.count.resolves(350);
+
+      await run({ method: 'POST', path: '/v1/events/trigger/broadcast', body: { name: 'wf' } });
+
+      expect(subscriberRepository.count.firstCall.args[0]).to.deep.equal({
+        _environmentId: ENV_ID,
+        _organizationId: KEYLESS_ORG_ID,
+      });
+      expect(triggerCapService.consume.firstCall.args).to.deep.equal([ENV_ID, 350]);
     });
 
     it('does not meter non-trigger routes', async () => {

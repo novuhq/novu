@@ -120,6 +120,27 @@ describe('Keyless API key scope #novu-v2', () => {
     expect(claimed.body.code).to.equal('keyless_environment_claimed');
   });
 
+  it('rejects syncing a workflow into another environment of the shared keyless organization', async () => {
+    const { secretKey } = await createFixture();
+    const { environment: otherEnvironment } = await createFixture();
+    const api = withKey(secretKey);
+
+    const workflow = await api.post('/v2/workflows', {
+      name: 'Order shipped',
+      workflowId: 'order-shipped',
+      steps: [{ name: 'In-App', type: 'in_app', controlValues: { body: 'Your order shipped' } }],
+    });
+    expect(workflow.status).to.equal(201, JSON.stringify(workflow.body));
+
+    const sync = await request(keylessOwner.serverUrl)
+      .put('/v2/workflows/order-shipped/sync')
+      .set('Authorization', `ApiKey ${secretKey}`)
+      .send({ targetEnvironmentId: otherEnvironment._id });
+
+    expect(sync.status).to.equal(403, JSON.stringify(sync.body));
+    expect(sync.body.code).to.equal('keyless_requires_account');
+  });
+
   it('leaves API keys of regular organizations unscoped', async () => {
     const regular = new UserSession();
     await regular.initialize();

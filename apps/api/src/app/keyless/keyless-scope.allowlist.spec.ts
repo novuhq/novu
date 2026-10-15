@@ -50,6 +50,9 @@ describe('isKeylessApiKeyRouteAllowed', () => {
     ['GET', '/v1/events-other'],
     ['GET', '/v2/workflowsfoo'],
     ['GET', '/v3/workflows'],
+    ['PUT', '/v2/workflows/order-shipped/sync'],
+    ['PUT', '/v2/workflows/:workflowId/sync'],
+    ['PUT', '/V2/Workflows/order-shipped/Sync/'],
     ['GET', '/'],
     ['GET', ''],
   ];
@@ -62,6 +65,8 @@ describe('isKeylessApiKeyRouteAllowed', () => {
 });
 
 describe('computeKeylessTriggerCost', () => {
+  const recipients = (units: number) => ({ type: 'recipients', units });
+
   it('is null for routes that are not triggers', () => {
     expect(computeKeylessTriggerCost('GET', '/v1/events/trigger', {})).to.equal(null);
     expect(computeKeylessTriggerCost('DELETE', '/v1/events/trigger/txn-1', {})).to.equal(null);
@@ -69,31 +74,37 @@ describe('computeKeylessTriggerCost', () => {
   });
 
   it('counts a single recipient as one unit', () => {
-    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger', { to: 'user-1' })).to.equal(1);
-    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger', { to: { subscriberId: 'user-1' } })).to.equal(1);
+    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger', { to: 'user-1' })).to.deep.equal(recipients(1));
+    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger', { to: { subscriberId: 'user-1' } })).to.deep.equal(
+      recipients(1)
+    );
   });
 
   it('counts each recipient of a `to` array', () => {
     expect(
       computeKeylessTriggerCost('POST', '/v1/events/trigger/', { to: ['a', 'b', { subscriberId: 'c' }] })
-    ).to.equal(3);
+    ).to.deep.equal(recipients(3));
   });
 
   it('sums the recipients of every bulk event', () => {
     const body = { events: [{ to: ['a', 'b'] }, { to: 'c' }, { to: [{ subscriberId: 'd' }] }] };
 
-    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger/bulk', body)).to.equal(4);
+    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger/bulk', body)).to.deep.equal(recipients(4));
   });
 
   it('counts a bulk body without an events array as one unit', () => {
-    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger/bulk', { events: 'nope' })).to.equal(1);
+    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger/bulk', { events: 'nope' })).to.deep.equal(
+      recipients(1)
+    );
   });
 
-  it('counts a broadcast as one unit', () => {
-    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger/broadcast', { name: 'wf' })).to.equal(1);
+  it('marks a broadcast so its cost is resolved against the environment subscribers', () => {
+    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger/broadcast', { name: 'wf' })).to.deep.equal({
+      type: 'broadcast',
+    });
   });
 
   it('counts a missing body as one unit', () => {
-    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger', undefined)).to.equal(1);
+    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger', undefined)).to.deep.equal(recipients(1));
   });
 });

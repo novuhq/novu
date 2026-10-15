@@ -18,9 +18,15 @@ export const KEYLESS_API_KEY_ALLOWED_PATH_PREFIXES = [
 
 const KEYLESS_API_KEY_ALLOWED_GET_PATHS = ['/v1/environments/me'] as const;
 
+/** Allowlisted routes that write into another environment of the shared organization. */
+const KEYLESS_API_KEY_DENIED_PATHS = [/^\/v2\/workflows\/[^/]+\/sync$/] as const;
+
 const TRIGGER_PATH = '/v1/events/trigger';
 const BULK_TRIGGER_PATH = '/v1/events/trigger/bulk';
 const BROADCAST_TRIGGER_PATH = '/v1/events/trigger/broadcast';
+
+/** A broadcast reaches every subscriber of the environment, so its cost is resolved against the database. */
+export type KeylessTriggerCost = { type: 'recipients'; units: number } | { type: 'broadcast' };
 
 /** Express routing is case-insensitive and tolerates a trailing slash, so match the same way. */
 function normalizePath(path: string): string {
@@ -36,6 +42,10 @@ function matchesPrefix(path: string, prefix: string): boolean {
 export function isKeylessApiKeyRouteAllowed(method: string, path: string): boolean {
   const normalized = normalizePath(path);
 
+  if (KEYLESS_API_KEY_DENIED_PATHS.some((pattern) => pattern.test(normalized))) {
+    return false;
+  }
+
   if (KEYLESS_API_KEY_ALLOWED_PATH_PREFIXES.some((prefix) => matchesPrefix(normalized, prefix))) {
     return true;
   }
@@ -50,7 +60,7 @@ function recipientUnits(event: unknown): number {
 }
 
 /** Daily recipient units a trigger request costs, or `null` when the request is not a trigger. */
-export function computeKeylessTriggerCost(method: string, path: string, body: unknown): number | null {
+export function computeKeylessTriggerCost(method: string, path: string, body: unknown): KeylessTriggerCost | null {
   if (method.toUpperCase() !== 'POST') {
     return null;
   }
@@ -58,21 +68,18 @@ export function computeKeylessTriggerCost(method: string, path: string, body: un
   const normalized = normalizePath(path);
 
   if (normalized === TRIGGER_PATH) {
-    return recipientUnits(body);
+    return { type: 'recipients', units: recipientUnits(body) };
   }
 
   if (normalized === BULK_TRIGGER_PATH) {
     const events = (body as { events?: unknown } | null | undefined)?.events;
+    const units = Array.isArray(events) ? events.reduce<number>((total, event) => total + recipientUnits(event), 0) : 1;
 
-    if (!Array.isArray(events)) {
-      return 1;
-    }
-
-    return events.reduce<number>((total, event) => total + recipientUnits(event), 0);
+    return { type: 'recipients', units };
   }
 
   if (normalized === BROADCAST_TRIGGER_PATH) {
-    return 1;
+    return { type: 'broadcast' };
   }
 
   return null;

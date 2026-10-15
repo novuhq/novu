@@ -12,7 +12,7 @@ import { ApiAuthSchemeEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 import { readKeylessAgentClaimedTombstone } from '../../../keyless/keyless-agent-cache';
 import { isKeylessAgentEnvironmentsSupported } from '../../../keyless/keyless-agent-environment';
-import { createKeylessEnvironmentClaimedException } from '../../../keyless/keyless-scope.interceptor';
+import { createKeylessEnvironmentClaimedException } from '../../../keyless/keyless-agent-errors';
 import { AuthService } from '../auth.service';
 import { addNewRelicTraceAttributes } from './newrelic.util';
 
