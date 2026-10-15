@@ -132,8 +132,8 @@ export class ClaimKeylessConnect {
           { session }
         );
 
-        const keyOwnerId = keylessEnvironment.apiKeys?.[0]?._userId;
-        if (moveOptions.revokeKeylessApiKeys && keyOwnerId) {
+        if (moveOptions.revokeKeylessApiKeys) {
+          const keyOwnerId = keylessEnvironment.apiKeys?.[0]?._userId ?? command.userId;
           await this.environmentRepository.update(
             { _id: keylessEnvironment._id, _organizationId: keylessOrganizationId },
             { $set: { apiKeys: [buildUnusableApiKey(keyOwnerId)] } },

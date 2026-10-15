@@ -210,6 +210,17 @@ describe('ClaimKeylessConnect', () => {
     expect(replacement.key).to.be.a('string').and.not.equal('enc');
   });
 
+  it('still revokes the keys when the existing key has no owner', async () => {
+    const { usecase, environmentRepository } = setup();
+    environmentRepository.findOne.resolves({ _id: 'keyless_env', apiKeys: [{ key: 'enc', hash: 'old_hash' }] });
+
+    await usecase.execute(command, { beforeMove: sinon.stub().resolves({ revokeKeylessApiKeys: true }) });
+
+    const [, update] = environmentRepository.update.firstCall.args;
+    expect(update.$set.apiKeys[0].hash).to.not.equal('old_hash');
+    expect(update.$set.apiKeys[0]._userId).to.equal(command.userId);
+  });
+
   it('keeps the integration filter unchanged when the hook excludes no providers', async () => {
     const { usecase, integrationRepository, environmentRepository } = setup();
 
