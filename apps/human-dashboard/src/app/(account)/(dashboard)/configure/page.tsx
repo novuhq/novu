@@ -96,6 +96,7 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
         docsUrl={DOCS_URL}
         mcpUrl={mcpUrl}
         connectedTools={connectedTools}
+        settings={agent.settings}
       />
     </>
   );

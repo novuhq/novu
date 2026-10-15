@@ -6,6 +6,7 @@ import { useEffect, useOptimistic, useState, useTransition } from 'react';
 
 import { buttonClassName } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
+import type { AgentPause } from '@/lib/agent-settings';
 import {
   INBOX_UNREAD_COMMAND,
   INBOX_WATCH_COMMAND,
@@ -22,6 +23,7 @@ import { HeaderCommand } from './command-chip';
 import { InboxEmpty } from './inbox-empty';
 import { InboxClock } from './inbox-time';
 import { InboxToolbar } from './inbox-toolbar';
+import { PausedBanner, PausedStatus, usePausedAgent } from './paused-banner';
 import { ThreadDrawer, type ThreadLoad } from './thread-drawer';
 import { ThreadList } from './thread-list';
 
@@ -30,7 +32,8 @@ type InboxViewProps = {
   /** The first page of threads in the view. */
   page: InboxThreadsPage;
   counts: InboxCounts;
-  agent: { handle: string; address: string };
+  /** `paused` is set while the agent is paused: the banner above the header, and the header's status. */
+  agent: { handle: string; address: string; paused?: AgentPause | null };
   /** Set while the agent has no threads at all: how many channels it listens on, when that could be read. */
   empty: { listening: number | null } | null;
   /** The thread the page's address opens, read along with the page. */
@@ -55,6 +58,7 @@ type MoreThreads = {
  */
 export function InboxView({ view: serverView, page, counts, agent, empty, initialThread, renderedAt }: InboxViewProps) {
   const router = useRouter();
+  const pausedAgent = usePausedAgent(agent.paused ?? null);
   const [view, setOptimisticView] = useOptimistic(serverView);
   const [navigating, startNavigation] = useTransition();
   const [refreshing, startRefresh] = useTransition();
@@ -195,12 +199,14 @@ export function InboxView({ view: serverView, page, counts, agent, empty, initia
   return (
     <InboxClock renderedAt={renderedAt}>
       <div data-full-width className="flex flex-col gap-4">
+        <PausedBanner agent={pausedAgent} />
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-xl leading-7 font-medium tracking-[-0.3px] text-foreground">Inbox</h1>
           <span className="rounded border border-border bg-subtle px-2 py-0.75 font-mono text-xs leading-4 text-default">
             {agent.address}
           </span>
           <span aria-hidden="true" className="flex-1" />
+          <PausedStatus agent={pausedAgent} renderedAt={renderedAt} />
           <Tooltip label="Refresh">
             <button
               type="button"

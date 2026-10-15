@@ -5,12 +5,14 @@ import { useState } from 'react';
 import { SlackSetup } from '@/components/channels/slack-setup';
 import { TelegramSetup } from '@/components/channels/telegram-setup';
 import { CONFIGURE_DRAWER_PARAM } from '@/components/dashboard/nav';
+import type { AgentSettings } from '@/lib/agent-settings';
 import type { ToolId } from '@/lib/ai-tools';
 import type { ChannelVia } from '@/lib/human-channels-api';
 import type { ChannelRow } from '@/lib/human-channels-overview';
 import type { SlackSetupState } from '@/lib/human-slack-setup';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 
+import { AgentSettingsCard } from './agent-settings';
 import { AgentSetup, type AgentSetupTexts } from './agent-setup';
 import { ChannelList } from './channel-list';
 import { EmailDrawer } from './email-drawer';
@@ -46,6 +48,8 @@ type ConfigureViewProps = {
   docsUrl: string;
   mcpUrl: string | null;
   connectedTools: ToolId[];
+  /** Who can reach the agent and whether it is paused: the SETTINGS block. `null` when they couldn't be read. */
+  settings: AgentSettings | null;
 };
 
 /**
@@ -65,6 +69,7 @@ export function ConfigureView({
   docsUrl,
   mcpUrl,
   connectedTools,
+  settings,
 }: ConfigureViewProps) {
   const [openDrawer, setOpenDrawer] = useState<ChannelVia | null>(initialDrawer);
   const drawerProps = (via: ChannelVia) => ({
@@ -126,7 +131,7 @@ export function ConfigureView({
             mcpUrl={mcpUrl}
             connectedTools={connectedTools}
           />
-          {/* The Settings card (NV-9039) goes here, 20px under Agent setup. */}
+          <AgentSettingsCard handle={agent.handle} settings={settings} />
         </div>
       </div>
 

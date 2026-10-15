@@ -66,6 +66,7 @@ npx @agentinbox/cli inbox resolve conv_123              # finished; opens again 
 - `--to` also takes an email address. A contact with that address is used. An address nobody has yet becomes a new contact and gets a verification email; the command exits `1` without sending, and you send again once they have verified.
 - A plain message is sent as text. It becomes a card when you pass `--subtitle`, `--body` or `--icon`.
 - Every send prints the conversation it landed in, and warns when that conversation had unread messages.
+- Who can reach your agent, pausing it and deleting it are settings on [agentinbox.md](https://www.agentinbox.md), not commands. While the agent is paused, every command that reads the inbox or sends exits `1` with an error that says so; messages people send meanwhile wait in the inbox.
 
 ## How it works
 

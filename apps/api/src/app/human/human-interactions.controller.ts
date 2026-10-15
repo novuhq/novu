@@ -6,6 +6,7 @@ import {
   Delete,
   ForbiddenException,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -14,6 +15,7 @@ import {
   Put,
   Query,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
@@ -44,6 +46,8 @@ import {
   SetupHumanRelayRequestDto,
   SetupHumanRelayResponseDto,
 } from './dtos/setup-human-relay.dto';
+import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
+import { assertFromHumanDashboard } from './guards/human-dashboard-secret.guard';
 import {
   AGENT_PICTURE_FIELD,
   AGENT_PICTURE_MAX_BYTES,
@@ -56,6 +60,8 @@ import { CreateHumanInviteCommand } from './usecases/create-human-invite/create-
 import { CreateHumanInvite } from './usecases/create-human-invite/create-human-invite.usecase';
 import { CreateInteractionCommand } from './usecases/create-interaction/create-interaction.command';
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
+import { DeleteHumanAgentCommand } from './usecases/delete-human-agent/delete-human-agent.command';
+import { DeleteHumanAgent } from './usecases/delete-human-agent/delete-human-agent.usecase';
 import { GetContactCommand } from './usecases/get-contact/get-contact.command';
 import { GetContact, type GetContactResult } from './usecases/get-contact/get-contact.usecase';
 import { GetInteractionCommand } from './usecases/get-interaction/get-interaction.command';
@@ -98,6 +104,7 @@ export class HumanInteractionsController {
     private readonly getKeylessClaimTokenUsecase: GetKeylessClaimToken,
     private readonly humanOperator: HumanOperatorService,
     private readonly updateHumanAgentUsecase: UpdateHumanAgent,
+    private readonly deleteHumanAgentUsecase: DeleteHumanAgent,
     private readonly humanAgentPicture: HumanAgentPictureService
   ) {}
 
@@ -105,6 +112,7 @@ export class HumanInteractionsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseGuards(HumanAgentPausedGuard)
   createInteraction(
     @UserSession() user: UserSessionData,
     @Body(new ValidationPipe({ transform: true, whitelist: true, forbidUnknownValues: false }))
@@ -132,6 +140,7 @@ export class HumanInteractionsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
+  @UseGuards(HumanAgentPausedGuard)
   listInteractions(
     @UserSession() user: UserSessionData,
     @Query() query: ListInteractionsQueryDto
@@ -153,6 +162,7 @@ export class HumanInteractionsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
+  @UseGuards(HumanAgentPausedGuard)
   getInteraction(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string
@@ -172,6 +182,7 @@ export class HumanInteractionsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseGuards(HumanAgentPausedGuard)
   cancelInteraction(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string
@@ -309,8 +320,9 @@ export class HumanInteractionsController {
   }
 
   /**
-   * Renames or describes the relay agent `human setup` made. People see the change on the invite page,
-   * in emails and on the agent's Telegram bot.
+   * Changes the relay agent `human setup` made: renames or describes it (people see that on the invite
+   * page, in emails and on the agent's Telegram bot), sets who can reach it, and pauses or resumes it.
+   * Who can reach it and pausing are the operator's, on the dashboard; a host gets 403 `dashboard_only`.
    */
   @Patch('/agent')
   @KeylessAccessible()
@@ -318,8 +330,13 @@ export class HumanInteractionsController {
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   updateAgent(
     @UserSession() user: UserSessionData,
-    @Body() body: UpdateHumanAgentRequestDto
+    @Body() body: UpdateHumanAgentRequestDto,
+    @Headers() headers: Record<string, unknown>
   ): Promise<HumanAgentResponseDto> {
+    if (body.reach !== undefined || body.paused !== undefined) {
+      assertFromHumanDashboard(headers);
+    }
+
     return this.updateHumanAgentUsecase.execute(
       UpdateHumanAgentCommand.create({
         environmentId: user.environmentId,
@@ -328,11 +345,43 @@ export class HumanInteractionsController {
         agentIdentifier: body.agentIdentifier,
         name: body.name,
         description: body.description,
+        reach: body.reach,
+        paused: body.paused,
       })
     );
   }
 
-  /** The relay agent with its name, description and picture. A 404 before `human setup` has made it. */
+  /**
+   * Deletes the relay agent for good: its address, channels, conversations and what hosts it had, so the
+   * address can be taken again. Contacts and the account stay. Afterwards `GET /human/agent` answers 404,
+   * as it does before `human setup`. Only the operator's dashboard may; a host gets 403 `dashboard_only`.
+   */
+  @Delete('/agent')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  async deleteAgent(
+    @UserSession() user: UserSessionData,
+    @Query() query: HumanAgentQueryDto,
+    @Headers() headers: Record<string, unknown>
+  ): Promise<void> {
+    assertFromHumanDashboard(headers);
+
+    await this.deleteHumanAgentUsecase.execute(
+      DeleteHumanAgentCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        agentIdentifier: query.agentIdentifier,
+      })
+    );
+  }
+
+  /**
+   * The relay agent with its name, description, picture, who can reach it and whether it is paused. A 404
+   * before `human setup` has made it.
+   */
   @Get('/agent')
   @KeylessAccessible()
   @ExternalApiAccessible()
