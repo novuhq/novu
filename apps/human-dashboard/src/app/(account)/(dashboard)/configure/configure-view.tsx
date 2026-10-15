@@ -16,6 +16,7 @@ import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 import { AgentSetup } from './agent-setup';
 import { ChannelList } from './channel-list';
 import { EmailDrawer } from './email-drawer';
+import { useLastHostCheck } from './host-check-poll';
 import { type AgentState, IdentityCard } from './identity-card';
 
 export type ConfigureAgent = {
@@ -92,7 +93,8 @@ export function ConfigureView({
   const slack = connected('slack') ? describeSlack(slackSetup) : null;
   // A host reads its mail while one checked the inbox within the last day.
   const now = useNow(renderedAt);
-  const hostConnected = hostLiveness(hostStatus?.lastCheckedAt, now) === 'live';
+  const lastCheckedAt = useLastHostCheck(hostStatus?.lastCheckedAt ?? null, now);
+  const hostConnected = hostLiveness(lastCheckedAt, now) === 'live';
   const state: AgentState = !agent.active ? 'paused' : hostConnected ? 'active' : 'waiting';
 
   return (
@@ -133,7 +135,7 @@ export function ConfigureView({
             handle={agent.handle}
             address={email}
             apiUrl={apiUrl}
-            hostStatus={hostStatus}
+            lastCheckedAt={lastCheckedAt}
             renderedAt={renderedAt}
             docsUrl={docsUrl}
             mcpUrl={mcpUrl}

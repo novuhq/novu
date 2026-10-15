@@ -10,7 +10,6 @@ import { CodeBlock } from '@/components/ui/code-block';
 import { CopyField } from '@/components/ui/copy-field';
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
 import { MascotFace } from '@/components/ui/mascot-face';
-import { useHostBaseline } from '@/hooks/use-host-baseline';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { useSwap } from '@/hooks/use-swap';
 import { type AiTool, cursorInstallLink, cursorMcpConfig } from '@/lib/ai-tools';
@@ -35,13 +34,13 @@ type ConnectToolDrawerProps = {
   onDone?: () => void;
   /** Opened from another drawer, which it covers: the page behind stays as dim as it was. */
   nested?: boolean;
-  api: Pick<ConnectApi, 'readHosts' | 'isToolSignedIn'>;
+  api: Pick<ConnectApi, 'isToolSignedIn'>;
 };
 
 /**
  * The drawer that walks through connecting a chat app to the agent's inbox (`4c.1 · ChatGPT`): the app adds
- * the MCP server, and its first use opens a sign-in window. While it's open it asks whether the app has
- * signed in, or whether a host came in through the MCP server, and the steps then give way to
+ * the MCP server, and its first use opens a sign-in window. While it's open it asks whether this app has
+ * signed in, as the MCP server records for each app, and the steps then give way to
  * "<app> is now <agent>" (`4c.2`). Only ChatGPT's is drawn; Claude's and Cursor's follow it with their own steps.
  */
 export function ConnectToolDrawer({
@@ -59,15 +58,12 @@ export function ConnectToolDrawer({
   // Known before the page has been reloaded with it.
   const [signedIn, setSignedIn] = useState(false);
   const isConnected = connected || signedIn;
-  const hosts = useHostBaseline(api.readHosts, open && !isConnected);
 
   useConnectionPoll({
     waiting: open && !isConnected,
-    check: async () => {
-      const [appSignedIn, newHost] = await Promise.all([api.isToolSignedIn(tool.id).catch(() => false), hosts.check()]);
-
-      return appSignedIn || newHost === 'mcp' || null;
-    },
+    // Only this app's own sign-in counts: the MCP server is shared by every chat app, so a check through it
+    // could be another app's.
+    check: async () => (await api.isToolSignedIn(tool.id).catch(() => false)) || null,
     onConnected: () => {
       setSignedIn(true);
       router.refresh();

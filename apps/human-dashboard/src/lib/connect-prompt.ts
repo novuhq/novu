@@ -1,4 +1,3 @@
-import { apiUrlFlag } from './agent-setup-prompt';
 import { AGENT_DOMAIN, type PromptSpan } from './onboarding';
 
 /** How people run the CLI (`CLI_COMMAND` in `packages/agentinbox`): through npx, with nothing installed first. */
@@ -11,7 +10,7 @@ export type ConnectDetails = {
   address: string | null;
   /** The one-time code that lets a host connect as this agent. */
   code: string;
-  /** The API the account lives on. `connect` names it when it isn't the CLI's default (`apiUrlFlag`). */
+  /** The API the account lives on. `connect` always names it. */
   apiUrl: string;
 };
 
@@ -19,11 +18,13 @@ export type ConnectDetails = {
  * What a host runs to connect with a one-time code, in order. The connect drawer's CLI tab lists them, and
  * its prompt numbers them. `--yes` lets `connect` replace a setup already on the host's computer instead
  * of asking, which an agent without a terminal can't answer. Only `connect` names the API: it saves it,
- * and the commands after it go there by themselves.
+ * and the commands after it go there by themselves. It names it even when it's the CLI's default, since
+ * the CLI prefers `INBOX_API_URL` or an API saved by an earlier setup over its default, and a code works
+ * only on the API that made it.
  */
 export function connectCommands({ handle, code, apiUrl }: Omit<ConnectDetails, 'address'>) {
   return [
-    { label: 'Connect:', command: `${CLI} connect ${handle} --code ${code} --yes${apiUrlFlag({ apiUrl })}` },
+    { label: 'Connect:', command: `${CLI} connect ${handle} --code ${code} --yes --api-url=${apiUrl}` },
     { label: 'Add the skill:', command: `${CLI} skill install` },
     { label: 'Check it works:', command: `${CLI} inbox list` },
   ];

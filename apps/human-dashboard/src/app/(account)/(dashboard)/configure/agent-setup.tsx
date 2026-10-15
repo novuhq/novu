@@ -8,7 +8,7 @@ import { Button, SMALL_BUTTON } from '@/components/ui/button';
 import { Fold } from '@/components/ui/stepper';
 import { useNow } from '@/hooks/use-now';
 import type { ToolId } from '@/lib/ai-tools';
-import { type ConnectApi, formatCheckedAgo, type HostStatus, hostLiveness } from '@/lib/host-status';
+import { type ConnectApi, formatCheckedAgo, hostLiveness } from '@/lib/host-status';
 import { cn } from '@/lib/utils';
 
 import { checkToolConnectedAction, createConnectCodeAction, readHostStatusAction } from './actions';
@@ -28,8 +28,11 @@ type AgentSetupProps = {
   address: string | null;
   /** The API the account lives on. */
   apiUrl: string;
-  /** Whether a host reads the agent's mail, or `null` when that couldn't be read: it then reads as not connected. */
-  hostStatus: HostStatus | null;
+  /**
+   * When a host last checked the inbox, kept up to date while the page is open (`useLastHostCheck`). `null`
+   * when none did, or when that couldn't be read: it then reads as not connected.
+   */
+  lastCheckedAt: string | null;
   /** When the server rendered the page, so "2m ago" starts out as the server said it. */
   renderedAt: string;
   docsUrl: string;
@@ -44,10 +47,9 @@ type AgentSetupProps = {
  * when one last checked, and "Show setup", which opens "Connect another agent". A host counts as
  * connected while one checked the inbox within the last day; until one does, the page reloads once it has.
  */
-export function AgentSetup({ hostStatus, renderedAt, ...drawer }: AgentSetupProps) {
+export function AgentSetup({ lastCheckedAt, renderedAt, ...drawer }: AgentSetupProps) {
   const [open, setOpen] = useState(false);
   const now = useNow(renderedAt);
-  const lastCheckedAt = hostStatus?.lastCheckedAt ?? null;
   const connected = hostLiveness(lastCheckedAt, now) === 'live';
 
   return (

@@ -1,7 +1,7 @@
 'use client';
 
 import { Copy, TriangleAlert } from 'lucide-react';
-import { type CSSProperties, useLayoutEffect, useRef, useState } from 'react';
+import { type CSSProperties, type KeyboardEvent, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import { Button, SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
@@ -49,8 +49,6 @@ type ConnectPromptBoxProps = {
   /** The one-time code (`useConnectCode`). */
   code: ConnectCodeState;
   onRetry: () => void;
-  /** Runs once the prompt or the commands are on the clipboard. */
-  onCopy?: () => void;
   /** The tab the box opens on. */
   initialTab?: ConnectTab;
 };
@@ -67,10 +65,11 @@ export function ConnectPromptBox({
   apiUrl,
   code,
   onRetry,
-  onCopy,
   initialTab = 'prompt',
 }: ConnectPromptBoxProps) {
   const [tab, setTab] = useState<ConnectTab>(initialTab);
+  // Ties each tab to the panel it shows, for screen readers.
+  const tabsId = useId();
   const ready = code.status === 'ready' ? code.code : null;
   const details = { handle: ready?.handle ?? handle, address, code: ready?.code ?? '', apiUrl };
   const prompt = connectPrompt(details);
@@ -83,14 +82,13 @@ export function ConnectPromptBox({
   return (
     <div className="overflow-hidden rounded-[10px] border border-border-strong bg-subtle">
       <div className="flex items-center gap-2.5 bg-raised p-2">
-        <Tabs tab={tab} onChange={setTab} />
+        <Tabs tab={tab} onChange={setTab} idPrefix={tabsId} />
         {ready ? (
           <CopyButton
             value={tab === 'prompt' ? promptText(prompt) : commands.join('\n')}
             label={current.copyLabel}
             variant="primary"
             className={cn(SMALL_BUTTON, 'ml-auto')}
-            onCopy={onCopy}
           >
             <Label text={current.copy} />
           </CopyButton>
@@ -104,13 +102,18 @@ export function ConnectPromptBox({
 
       {/* The views differ in height; the box follows while one fades into the next. */}
       <div
+        id={`${tabsId}-panel`}
+        role="tabpanel"
+        aria-labelledby={`${tabsId}-${tab}`}
+        // Nothing in it takes focus, so the panel does: the keyboard reaches what it shows after the tabs.
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: a tab panel without focusable content takes focus itself (WAI-ARIA tabs pattern)
+        tabIndex={0}
         style={{ height }}
-        className="overflow-hidden transition-[height] duration-300 ease-out motion-reduce:transition-none"
+        className="overflow-hidden rounded-b-[10px] transition-[height] duration-300 ease-out focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent motion-reduce:transition-none"
       >
         <div ref={ref}>
           <div
             key={shown}
-            role={ready ? 'tabpanel' : undefined}
             className={cn(
               leaving
                 ? 'opacity-0 transition-opacity duration-150 ease-in motion-reduce:transition-none'
@@ -147,10 +150,26 @@ function Label({ text }: { text: string }) {
   );
 }
 
-type TabsProps = { tab: ConnectTab; onChange: (tab: ConnectTab) => void };
+type TabsProps = {
+  tab: ConnectTab;
+  onChange: (tab: ConnectTab) => void;
+  /** Each tab is `<idPrefix>-<tab>`, and the panel they control `<idPrefix>-panel`. */
+  idPrefix: string;
+};
 
-/** Prompt and CLI, with the raised tile under the chosen one sliding across when it changes. */
-function Tabs({ tab, onChange }: TabsProps) {
+/** Where the arrow keys, Home and End take the choice, from the tab chosen now. */
+const TAB_KEYS: Record<string, (index: number) => number> = {
+  ArrowRight: (index) => index + 1,
+  ArrowLeft: (index) => index - 1,
+  Home: () => 0,
+  End: () => TABS.length - 1,
+};
+
+/**
+ * Prompt and CLI, with the raised tile under the chosen one sliding across when it changes. One stop for
+ * Tab: the arrow keys, Home and End move between them and choose as they go, as tabs do.
+ */
+function Tabs({ tab, onChange, idPrefix }: TabsProps) {
   const buttons = useRef<Partial<Record<ConnectTab, HTMLButtonElement | null>>>({});
   const [tile, setTile] = useState<CSSProperties | null>(null);
 
@@ -161,10 +180,24 @@ function Tabs({ tab, onChange }: TabsProps) {
     }
   }, [tab]);
 
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const move = TAB_KEYS[event.key];
+    if (!move) {
+      return;
+    }
+
+    event.preventDefault();
+    const index = TABS.findIndex(({ id }) => id === tab);
+    const next = TABS[(move(index) + TABS.length) % TABS.length].id;
+    onChange(next);
+    buttons.current[next]?.focus();
+  }
+
   return (
     <div
       role="tablist"
       aria-label="How to connect"
+      onKeyDown={handleKeyDown}
       className="relative flex gap-0.5 rounded-[7px] border border-border-strong/50 bg-background p-0.5"
     >
       {tile && (
@@ -182,7 +215,10 @@ function Tabs({ tab, onChange }: TabsProps) {
           }}
           type="button"
           role="tab"
+          id={`${idPrefix}-${id}`}
           aria-selected={tab === id}
+          aria-controls={`${idPrefix}-panel`}
+          tabIndex={tab === id ? 0 : -1}
           onClick={() => onChange(id)}
           className={cn(
             'relative rounded-[5px] border px-2.5 py-0.75 text-xs leading-4 transition-colors duration-200 ease-out motion-reduce:transition-none',

@@ -54,9 +54,9 @@ type ConnectAgentDrawerProps = {
  * commands for a terminal, the skills, and the chat apps that connect through the MCP server, each with
  * its own drawer over this one. A fresh code is asked for every time it opens.
  *
- * While it's open it watches for a host that comes in: a way in that's new, or one that came back after a
- * day without checks, or the code on screen getting used. The drawer then says so, and the page reloads
- * so the agent's card and the Agent setup row show it.
+ * For as long as it's open it watches for a host that comes in: a way in that's new, or one that came back
+ * after a day without checks, or the code on screen getting used. The drawer then says so, and the page
+ * reloads so the agent's card and the Agent setup row show it.
  */
 export function ConnectAgentDrawer({
   handle,
@@ -92,13 +92,21 @@ export function ConnectAgentDrawer({
   const watching = open && !newHost;
   const createCode = useCallback(() => api.createCode(handle), [api, handle]);
   const { state: code, take, retry } = useConnectCode(createCode, watching);
-  // A chat app's drawer watches for its own host while it covers this one.
+  // A chat app's drawer watches for its own sign-in while it covers this one.
   const hosts = useHostBaseline(api.readHosts, watching && openTool === null);
   const checks = useRef(0);
 
-  const { keepWaiting } = useConnectionPoll<HostVia>({
+  useConnectionPoll<HostVia>({
     waiting: watching && openTool === null,
+    // It watches for as long as it's open: the code on screen is renewed before it runs out, so a host can
+    // come in with it at any time, from a copy made long after the drawer opened.
+    giveUpAfterMs: null,
     check: async () => {
+      // A tab out of sight asks nothing; it picks up again as soon as the operator comes back to it.
+      if (document.visibilityState === 'hidden') {
+        return null;
+      }
+
       const via = await hosts.check();
       if (via) {
         return via;
@@ -172,8 +180,6 @@ export function ConnectAgentDrawer({
                     apiUrl={apiUrl}
                     code={code}
                     onRetry={retry}
-                    // Copying is the moment a host is on its way: the drawer watches again if it had stopped.
-                    onCopy={keepWaiting}
                     initialTab={initialTab}
                   />
                   <div className="flex flex-wrap items-center gap-2 text-xs leading-4 text-muted">

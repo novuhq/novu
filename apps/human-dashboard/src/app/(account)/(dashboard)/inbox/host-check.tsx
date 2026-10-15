@@ -4,7 +4,7 @@ import { useNow } from '@/hooks/use-now';
 import { formatCheckedAgo, hostLiveness } from '@/lib/host-status';
 import { cn } from '@/lib/utils';
 
-import { HostCheckPoll } from '../configure/host-check-poll';
+import { HostCheckPoll, useLastHostCheck } from '../configure/host-check-poll';
 
 type HostCheckProps = {
   /** When a host last checked the inbox, or `null` if none ever did. */
@@ -16,10 +16,12 @@ type HostCheckProps = {
 /**
  * The header's word on the agent's host (`Agent checked` in the design): "agent checked 2m ago" in green
  * while a host checked within the last day, and "no agent connected" in grey otherwise. While none counts
- * as connected, the page reloads once one checks the inbox.
+ * as connected, the page reloads once one checks the inbox; while one does, the time of its last check is
+ * read again once a minute, so the words stay true.
  */
-export function HostCheck({ lastCheckedAt, renderedAt }: HostCheckProps) {
+export function HostCheck({ lastCheckedAt: rendered, renderedAt }: HostCheckProps) {
   const now = useNow(renderedAt);
+  const lastCheckedAt = useLastHostCheck(rendered, now);
   const connected = hostLiveness(lastCheckedAt, now) === 'live';
 
   return (

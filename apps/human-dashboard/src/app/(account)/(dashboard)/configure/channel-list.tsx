@@ -58,7 +58,8 @@ export function ChannelList({ handle, channels, details, onOpen }: ChannelListPr
             onOpen={() => onOpen(channel.via)}
           />
         ))}
-        <li className="flex items-center gap-2.5 px-4 py-2.75">
+        {/* On a narrow screen the chips wrap, and "Request access" goes under them, still on the right. */}
+        <li className="flex flex-wrap items-center gap-2.5 px-4 py-2.75">
           <p className="shrink-0 text-xs leading-4 text-muted">Coming soon</p>
           {COMING_SOON.map(({ via, name }) => (
             <span
