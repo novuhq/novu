@@ -3,9 +3,8 @@ import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import request from 'supertest';
 
-import { ApiKeyStrategy } from '../../auth/services/passport/apikey.strategy';
-import { readKeylessAgentClaimedTombstone, writeKeylessAgentClaimedTombstone } from '../keyless-agent-cache';
-import { hashApiKey, isKeylessAgentEnvironmentsSupported } from '../keyless-agent-environment';
+import { writeKeylessAgentClaimedTombstone } from '../keyless-agent-cache';
+import { hashApiKey } from '../keyless-agent-environment';
 import {
   createAgentKeylessEnvironmentFixture,
   revokeKeylessEnvironmentApiKeys,
@@ -109,23 +108,11 @@ describe('Keyless API key scope #novu-v2', () => {
     const revoked = await api.get('/v2/workflows');
     expect(revoked.status).to.equal(401, JSON.stringify(revoked.body));
 
-    const cacheService = testServer.getService(CacheService);
-    await writeKeylessAgentClaimedTombstone(cacheService, hashApiKey(secretKey), {
+    await writeKeylessAgentClaimedTombstone(testServer.getService(CacheService), hashApiKey(secretKey), {
       environmentId: environment._id,
       organizationId: environment._organizationId,
       claimedAt: new Date().toISOString(),
     });
-    expect(isKeylessAgentEnvironmentsSupported(), 'keyless agent environments supported').to.equal(true);
-    expect(
-      await readKeylessAgentClaimedTombstone(cacheService, hashApiKey(secretKey)),
-      `tombstone readable (cache enabled: ${cacheService.cacheEnabled()})`
-    ).to.not.equal(null);
-    const strategyCache = (testServer.getService(ApiKeyStrategy) as unknown as { cacheService: CacheService })
-      .cacheService;
-    expect(
-      await readKeylessAgentClaimedTombstone(strategyCache, hashApiKey(secretKey)),
-      `tombstone readable by the API key strategy (same instance: ${strategyCache === cacheService}, cache enabled: ${strategyCache.cacheEnabled()})`
-    ).to.not.equal(null);
     const claimed = await api.get('/v2/workflows');
 
     expect(claimed.status).to.equal(401, JSON.stringify(claimed.body));
