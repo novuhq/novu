@@ -459,6 +459,6 @@ function relayOf(user: UserSessionData, agentIdentifier?: string) {
 /** A setup without an account is a free demo anyone can start, so it can't publish files. */
 function assertHasAccount(user: UserSessionData): void {
   if (isResolvedKeylessAuthScheme(user.scheme)) {
-    throw new ForbiddenException('A picture needs a Human account. Run `human login` first.');
+    throw new ForbiddenException('A picture needs an Agent Inbox account. Run `npx @agentinbox/cli login` first.');
   }
 }

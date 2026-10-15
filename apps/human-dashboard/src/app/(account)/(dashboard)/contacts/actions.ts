@@ -34,7 +34,7 @@ export async function createInviteAction(input: { contactId: string; name: strin
   }
 
   try {
-    // The API would make the agent for an invite. An account only gets its agent from `human setup`.
+    // The API would make the agent for an invite. An account only gets its agent from `setup`.
     if (!(await getRelayAgent(account))) {
       return { ok: false, error: AGENT_NOT_SET_UP_MESSAGE };
     }

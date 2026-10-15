@@ -85,7 +85,7 @@ describe('CreateHumanInvite', () => {
     const err = await usecase.execute(command).catch((error) => error);
 
     expect(err).to.be.instanceOf(NotFoundException);
-    expect((err as NotFoundException).message).to.include('human setup');
+    expect((err as NotFoundException).message).to.include('npx @agentinbox/cli setup');
     expect(inviteTokens.issue.called).to.equal(false);
   });
 });

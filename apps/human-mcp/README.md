@@ -15,8 +15,14 @@ It is a Cloudflare Worker and is for Novu Cloud only: it needs the Human Clerk a
 | `wait` | Keeps waiting for an answer that had not come yet. |
 | `invite` | Returns a link for another person to connect their chat app. |
 | `contacts` | Lists the people that can be reached. |
+| `inbox_list` | Lists inbox threads (unread/read, open/resolved, contacts/all). |
+| `inbox_show` | Shows a thread's messages. Does not mark the thread read. |
+| `inbox_read` | Marks a thread read without sending a reply. |
+| `inbox_resolve` | Marks a thread resolved; it reopens when anyone writes in it. |
 
 AI tools give up on a call after about a minute. So `ask`, `approve` and `choose` wait up to 50 seconds; with no answer by then they return the request's id, and `wait` picks it up.
+
+A person may message the agent first. The send tools (`ask`, `approve`, `choose`, `tell`) take an optional `thread` id from `inbox_list` so a host can reply in that conversation. Threads and messages are labelled contact or stranger the same way the CLI does: a contact is someone the operator added; a stranger wrote without being one. Showing a thread does not mark it read; any send into it does.
 
 ## How sign-in works
 

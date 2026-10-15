@@ -78,7 +78,7 @@ describe('HumanAgentPictureService', () => {
   it('refuses when there is no Human agent', async () => {
     const { service } = setup(null);
 
-    await expectRejection(service.save(scope, PNG), 'human setup');
+    await expectRejection(service.save(scope, PNG), 'npx @agentinbox/cli setup');
   });
 
   it('removes the picture from the agent, the storage and the Telegram bots', async () => {

@@ -81,8 +81,8 @@ describe('ApproveHumanCliLogin', () => {
       approvalHoldId: 'this_approval',
     });
     expect(claimKeylessConnect.execute.called).to.equal(false);
-    // Nothing here can't be undone, so the hold is not kept past its minute.
-    expect(cliDeviceSessionService.keepApprovalHold.called).to.equal(false);
+    // Kept for the whole approval: preparing the account can wait longer than a hold lasts.
+    expect(cliDeviceSessionService.keepApprovalHold.args).to.deep.equal([[hold]]);
     // Approved, so there's nothing to give back.
     expect(cliDeviceSessionService.releaseApprovalHold.called).to.equal(false);
   });
@@ -133,23 +133,29 @@ describe('ApproveHumanCliLogin', () => {
     expect(cliDeviceSessionService.holdForApprovalByUserCode.calledBefore(ensureBackingOrganization.execute)).to.equal(
       true
     );
-    // Before the move, the one step that can't be taken back, the hold is kept: from there on the login can't
-    // be denied or go to another approval, however long the move takes.
+    // Before the account is prepared, the hold is kept: from there on the login can't be denied or go to
+    // another approval, however long preparing the account and the move take.
     expect(cliDeviceSessionService.keepApprovalHold.args).to.deep.equal([[hold]]);
-    expect(cliDeviceSessionService.keepApprovalHold.calledAfter(ensureBackingOrganization.execute)).to.equal(true);
-    expect(cliDeviceSessionService.keepApprovalHold.calledBefore(claimKeylessConnect.execute)).to.equal(true);
+    expect(cliDeviceSessionService.keepApprovalHold.calledBefore(ensureBackingOrganization.execute)).to.equal(true);
     expect(approveCliDeviceSession.execute.firstCall.args[0]).to.deep.include({ approvalHoldId: 'this_approval' });
   });
 
-  it('moves nothing when the login is no longer held for this approval', async () => {
-    const { usecase, cliDeviceSessionService, claimKeylessConnect, approveCliDeviceSession } = setup();
-    // The hold ran out while the account was prepared, and the login was denied or approved elsewhere since.
+  it('prepares and moves nothing when the login is no longer held for this approval', async () => {
+    const {
+      usecase,
+      cliDeviceSessionService,
+      ensureBackingOrganization,
+      claimKeylessConnect,
+      approveCliDeviceSession,
+    } = setup();
+    // The login was denied or approved elsewhere since it was held.
     cliDeviceSessionService.keepApprovalHold.resolves(false);
 
     const error = await usecase.execute(command({ claimToken: 'claim_token' })).catch((caught) => caught);
 
     expect(error).to.be.instanceOf(NotFoundException);
     expect((error as NotFoundException).getResponse()).to.deep.include({ code: CLI_LOGIN_NOT_FOUND_CODE });
+    expect(ensureBackingOrganization.execute.called).to.equal(false);
     expect(claimKeylessConnect.execute.called).to.equal(false);
     expect(approveCliDeviceSession.execute.called).to.equal(false);
   });

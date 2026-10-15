@@ -2,6 +2,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -27,6 +28,7 @@ import {
   ListInboxQueryDto,
   type ListInboxResponseDto,
 } from './dtos/human-inbox.dto';
+import { AGENT_INBOX_VIA_HEADER, readHostVia } from './services/human-host-status.service';
 import { CountInboxThreads } from './usecases/count-inbox-threads/count-inbox-threads.usecase';
 import { GetInboxThreadCommand } from './usecases/get-inbox-thread/get-inbox-thread.command';
 import { GetInboxThread } from './usecases/get-inbox-thread/get-inbox-thread.usecase';
@@ -61,7 +63,8 @@ export class HumanInboxController {
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   listInboxThreads(
     @UserSession() user: UserSessionData,
-    @Query() query: ListInboxQueryDto
+    @Query() query: ListInboxQueryDto,
+    @Headers(AGENT_INBOX_VIA_HEADER) via?: string
   ): Promise<ListInboxResponseDto> {
     return this.listInboxThreadsUsecase.execute(
       ListInboxThreadsCommand.create({
@@ -78,6 +81,7 @@ export class HumanInboxController {
         after: query.after,
         waitSeconds: query.wait,
         agentIdentifier: query.agentIdentifier,
+        hostVia: readHostVia(via),
       })
     );
   }
@@ -112,7 +116,8 @@ export class HumanInboxController {
   getInboxThread(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
-    @Query() query: GetInboxThreadQueryDto
+    @Query() query: GetInboxThreadQueryDto,
+    @Headers(AGENT_INBOX_VIA_HEADER) via?: string
   ): Promise<GetInboxThreadResponseDto> {
     return this.getInboxThreadUsecase.execute(
       GetInboxThreadCommand.create({
@@ -124,6 +129,7 @@ export class HumanInboxController {
         before: query.before,
         include: query.include,
         agentIdentifier: query.agentIdentifier,
+        hostVia: readHostVia(via),
       })
     );
   }

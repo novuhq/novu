@@ -45,6 +45,39 @@ export interface AgentPicture {
   version: string;
 }
 
+/** How a host reaches an Agent Inbox agent: the `agentinbox` CLI, or the hosted MCP server. */
+export type AgentHostVia = 'cli' | 'mcp';
+
+/** The hosts that came in one way. Every time is an ISO timestamp. */
+export interface AgentHostEntry {
+  /** The first time a host came in this way: it used a one-time code, or checked the inbox. */
+  connectedAt?: string;
+  /** The last time a host checked the inbox this way. */
+  lastCheckedAt?: string;
+}
+
+/** The newest unread conversation a host found the first time any host checked the inbox. */
+export interface AgentHostWaitingMessage {
+  conversationId: string;
+  /** Who wrote in it, as the inbox lists them. */
+  from: string;
+  subject: string;
+  /** When its newest message arrived. */
+  at: string;
+  /** When a host first saw it: in that first check. */
+  seenAt: string;
+}
+
+/** Which hosts act as an Agent Inbox agent, and when they last checked its inbox. */
+export interface AgentHosts {
+  cli?: AgentHostEntry;
+  mcp?: AgentHostEntry;
+  /** The first time any host checked the inbox. */
+  firstCheckedAt?: string;
+  /** Missing when nothing unread was waiting at the first check. */
+  waitingMessage?: AgentHostWaitingMessage;
+}
+
 export class AgentEntity {
   _id: string;
 
@@ -56,6 +89,9 @@ export class AgentEntity {
 
   /** Set for Human relay agents only (`human agent update --picture`). */
   picture?: AgentPicture;
+
+  /** Set for Human relay agents only, once a host has connected or checked the inbox. */
+  hosts?: AgentHosts;
 
   active: boolean;
 
