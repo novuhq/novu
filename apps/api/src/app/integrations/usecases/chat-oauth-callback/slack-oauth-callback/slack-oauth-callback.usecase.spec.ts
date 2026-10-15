@@ -79,6 +79,7 @@ function createSlackOauthCallbackHarness() {
   const getNovuProviderCredentials = sinon.createStubInstance(GetNovuProviderCredentials);
   const agentIntegrationRepository = sinon.createStubInstance(AgentIntegrationRepository);
   const agentRepository = sinon.createStubInstance(AgentRepository);
+  agentIntegrationRepository.find.resolves([]);
 
   const usecase = new SlackOauthCallback(
     integrationRepository as any,
@@ -409,7 +410,7 @@ describe('SlackOauthCallback — Agent Inbox result page', () => {
     harness.channelConnectionRepository.findOne.resolves(null);
     harness.channelConnectionRepository.buildContextExactMatchQuery.returns({});
     harness.contextRepository.findOrCreateContextsFromPayload.resolves([]);
-    harness.agentIntegrationRepository.findOne.resolves(null);
+    harness.agentIntegrationRepository.find.resolves([]);
     harness.createChannelConnection.execute.resolves({ identifier: 'conn-abc' } as any);
 
     sinon.stub(axios, 'post').resolves({ data: buildSlackAuthResponse() });
@@ -444,8 +445,8 @@ describe('SlackOauthCallback — Agent Inbox result page', () => {
   }
 
   it('sends an Agent Inbox Slack app to the public result page', async () => {
-    harness.agentIntegrationRepository.findOne.resolves({ _agentId: 'agent-1' } as any);
-    harness.agentRepository.findOne.resolves({ runtime: 'human_relay' } as any);
+    harness.agentIntegrationRepository.find.resolves([{ _agentId: 'agent-1' }] as any);
+    harness.agentRepository.findOne.resolves({ _id: 'agent-1' } as any);
     harness.integrationRepository.findOne.resolves(
       buildMockIntegration({
         credentials: {
@@ -482,9 +483,34 @@ describe('SlackOauthCallback — Agent Inbox result page', () => {
     expect(result.result).to.equal('https://example.com/done');
   });
 
+  it('sends a shared Slack app to the public result page when any linked agent is Agent Inbox', async () => {
+    harness.agentIntegrationRepository.find.resolves([
+      { _agentId: 'agent-regular' },
+      { _agentId: 'agent-human' },
+    ] as any);
+    harness.agentRepository.findOne.resolves({ _id: 'agent-human' } as any);
+    harness.integrationRepository.findOne.resolves(
+      buildMockIntegration({
+        credentials: {
+          clientId: MOCK_CLIENT_ID,
+          secretKey: MOCK_SECRET_KEY,
+          redirectUrl: 'https://example.com/done',
+        },
+      })
+    );
+
+    const result = await harness.usecase.execute(connectCommand());
+
+    expect(result.type).to.equal(ResponseTypeEnum.URL);
+    expect(result.result).to.equal('https://agentinbox.md/connect/slack/result?status=connected');
+    const query = harness.agentRepository.findOne.firstCall.args[0];
+    expect(query.runtime).to.equal('human_relay');
+    expect(query._id.$in).to.deep.equal(['agent-regular', 'agent-human']);
+  });
+
   it('sends a failed Agent Inbox install to the error result page', async () => {
-    harness.agentIntegrationRepository.findOne.resolves({ _agentId: 'agent-1' } as any);
-    harness.agentRepository.findOne.resolves({ runtime: 'human_relay' } as any);
+    harness.agentIntegrationRepository.find.resolves([{ _agentId: 'agent-1' }] as any);
+    harness.agentRepository.findOne.resolves({ _id: 'agent-1' } as any);
     const command = connectCommand();
 
     const redirectUrl = await harness.usecase.resolveHumanRelayErrorRedirect(command.state);

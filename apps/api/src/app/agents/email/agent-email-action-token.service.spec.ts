@@ -73,4 +73,23 @@ describe('AgentEmailActionTokenService action URLs', () => {
 
     expect(await mintedPageUrl()).to.equal('https://api.example.com/v1/agents/email/actions/preview');
   });
+
+  it('refuses a plaintext Agent Inbox URL on a public host', async () => {
+    process.env.API_ROOT_URL = 'https://api.novu.co';
+    process.env.HUMAN_DASHBOARD_URL = 'http://agentinbox.example';
+
+    try {
+      await mintedPageUrl();
+      expect.fail('expected plaintext dashboard URL to be rejected');
+    } catch (error) {
+      expect((error as Error).message).to.contain('HUMAN_DASHBOARD_URL must use https://');
+    }
+  });
+
+  it('allows a loopback Agent Inbox URL over HTTP', async () => {
+    process.env.API_ROOT_URL = 'https://api.novu.co';
+    process.env.HUMAN_DASHBOARD_URL = 'http://127.0.0.1:4173';
+
+    expect(await mintedPageUrl()).to.equal('http://127.0.0.1:4173/v1/agents/email/actions/preview');
+  });
 });

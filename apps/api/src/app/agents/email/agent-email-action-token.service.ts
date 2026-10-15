@@ -136,22 +136,31 @@ export class AgentEmailActionTokenService {
       throw new Error('API_ROOT_URL is not configured — cannot build email action URL');
     }
 
+    return this.assertActionUrlUsesHttps(baseRaw, 'API_ROOT_URL');
+  }
+
+  /**
+   * The action token is bearer authority. Plaintext HTTP is only acceptable on loopback,
+   * where the link never leaves the machine. The same rule applies to whichever host
+   * actually appears in the email.
+   */
+  private assertActionUrlUsesHttps(baseUrl: string, envName: string): string {
     let parsed: URL;
     try {
-      parsed = new URL(baseRaw);
+      parsed = new URL(baseUrl);
     } catch {
-      throw new Error(`API_ROOT_URL is not a valid URL: ${baseRaw}`);
+      throw new Error(`${envName} is not a valid URL: ${baseUrl}`);
     }
 
     const isLoopback = LOOPBACK_HOSTS.has(parsed.hostname);
     if (parsed.protocol !== 'https:' && !(parsed.protocol === 'http:' && isLoopback)) {
       throw new Error(
-        `API_ROOT_URL must use https:// (got ${parsed.protocol}//${parsed.hostname}). ` +
+        `${envName} must use https:// (got ${parsed.protocol}//${parsed.hostname}). ` +
           'Email action tokens grant action-execution authority and must not travel over plaintext HTTP.'
       );
     }
 
-    return baseRaw;
+    return baseUrl;
   }
 
   /**
@@ -162,7 +171,7 @@ export class AgentEmailActionTokenService {
   private resolveActionPageBaseUrl(): string {
     const apiBase = this.resolveApiBaseUrl();
     if (new URL(apiBase).hostname === US_CLOUD_API_HOST) {
-      return resolveHumanDashboardBaseUrl();
+      return this.assertActionUrlUsesHttps(resolveHumanDashboardBaseUrl(), 'HUMAN_DASHBOARD_URL');
     }
 
     return apiBase;

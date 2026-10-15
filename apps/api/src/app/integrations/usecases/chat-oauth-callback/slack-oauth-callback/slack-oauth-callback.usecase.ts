@@ -141,12 +141,16 @@ export class SlackOauthCallback {
     }
   }
 
-  /** Agent Inbox installs always return to the public result page, including ones already in a workspace. */
+  /**
+   * Agent Inbox installs always return to the public result page, including ones already
+   * in a workspace. A Slack app can be linked to more than one agent, so any `human_relay`
+   * link is enough — picking a single link can miss the Agent Inbox agent.
+   */
   private async humanRelayResultUrl(
     integration: IntegrationEntity,
     status: 'connected' | 'error'
   ): Promise<string | null> {
-    const link = await this.agentIntegrationRepository.findOne(
+    const links = await this.agentIntegrationRepository.find(
       {
         _integrationId: integration._id,
         _environmentId: integration._environmentId,
@@ -154,19 +158,21 @@ export class SlackOauthCallback {
       },
       ['_agentId']
     );
-    if (!link?._agentId) {
+    const agentIds = links.flatMap((link) => (link._agentId ? [link._agentId] : []));
+    if (agentIds.length === 0) {
       return null;
     }
 
-    const agent = await this.agentRepository.findOne(
+    const humanRelay = await this.agentRepository.findOne(
       {
-        _id: link._agentId,
+        _id: { $in: agentIds },
+        runtime: 'human_relay',
         _environmentId: integration._environmentId,
         _organizationId: integration._organizationId,
       },
-      ['runtime']
+      ['_id']
     );
-    if (agent?.runtime !== 'human_relay') {
+    if (!humanRelay) {
       return null;
     }
 
@@ -303,7 +309,7 @@ export class SlackOauthCallback {
   private async createIncomingWebhookEndpoint(
     stateData: StateData,
     integration: IntegrationEntity,
-    authData: SlackOAuthAuthData
+    authData: SlackOAuthAuthData & { incoming_webhook: { url: string } }
   ): Promise<void> {
     if (!stateData.subscriberId) {
       throw new BadRequestException('subscriberId is required for incoming webhook');
