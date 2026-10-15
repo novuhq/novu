@@ -21,8 +21,7 @@ export class GetSubscriberNotificationsQueryDto
   @Transform(({ value }) => parseTagsQueryValue(value))
   @IsTagsFilter()
   @ApiPropertyOptional({
-    description:
-      'Filter by workflow tags. Plain string[] is OR. Use { and: [{ or: string[] }, ...] } for AND of OR-groups (same as inbox).',
+    description: 'Filter by workflow tags. Returns notifications that have any of the given tags.',
     type: [String],
   })
   tags?: TagsFilter;
