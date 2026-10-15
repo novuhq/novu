@@ -87,6 +87,40 @@ describe('isKeylessApiKeyRequestBodyAllowed', () => {
       true
     );
   });
+
+  const recipientOverrides = [
+    { email: { bcc: ['victim@example.com'] } },
+    { email: { to: ['victim@example.com'], replaceToRecipient: true } },
+    { 'novu-email': { cc: ['victim@example.com'] } },
+    { providers: { 'novu-email': { bcc: ['victim@example.com'] } } },
+    { steps: { 'email-step': { providers: { 'novu-email': { BCC: ['victim@example.com'] } } } } },
+  ];
+
+  for (const overrides of recipientOverrides) {
+    it(`blocks trigger recipient overrides ${JSON.stringify(overrides)}`, () => {
+      expect(isKeylessApiKeyRequestBodyAllowed('POST', '/v1/events/trigger', { name: 'wf', overrides })).to.equal(
+        false
+      );
+      expect(isKeylessApiKeyRequestBodyAllowed('POST', '/v1/events/trigger/broadcast', { overrides })).to.equal(false);
+      expect(
+        isKeylessApiKeyRequestBodyAllowed('POST', '/v1/events/trigger/bulk', {
+          events: [{ name: 'wf' }, { name: 'wf', overrides }],
+        })
+      ).to.equal(false);
+    });
+  }
+
+  it('allows triggers whose overrides add no recipients', () => {
+    const overrides = { email: { subject: 'Hi' }, providers: { sendgrid: { ipPoolName: 'pool' } } };
+
+    expect(
+      isKeylessApiKeyRequestBodyAllowed('POST', '/v1/events/trigger', { name: 'wf', to: 'a', overrides })
+    ).to.equal(true);
+    expect(isKeylessApiKeyRequestBodyAllowed('POST', '/v1/events/trigger/bulk', { events: [{ overrides }] })).to.equal(
+      true
+    );
+    expect(isKeylessApiKeyRequestBodyAllowed('POST', '/v1/events/trigger/bulk', { events: 'nope' })).to.equal(true);
+  });
 });
 
 describe('computeKeylessTriggerCost', () => {

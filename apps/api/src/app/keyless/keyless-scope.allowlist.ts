@@ -39,6 +39,9 @@ const TRIGGER_PATH = '/v1/events/trigger';
 const BULK_TRIGGER_PATH = '/v1/events/trigger/bulk';
 const BROADCAST_TRIGGER_PATH = '/v1/events/trigger/broadcast';
 
+const RECIPIENT_OVERRIDE_KEYS: readonly string[] = ['to', 'cc', 'bcc'];
+const MAX_OVERRIDES_DEPTH = 5;
+
 type RecipientCost = { units: number; topicKeys: string[] };
 
 /**
@@ -74,13 +77,47 @@ export function isKeylessApiKeyRouteAllowed(method: string, path: string): boole
 }
 
 export function isKeylessApiKeyRequestBodyAllowed(method: string, path: string, body: unknown): boolean {
-  if (method.toUpperCase() !== 'POST' || normalizePath(path) !== INTEGRATIONS_PATH) {
+  if (method.toUpperCase() !== 'POST') {
+    return true;
+  }
+
+  const normalized = normalizePath(path);
+
+  if (normalized === TRIGGER_PATH || normalized === BROADCAST_TRIGGER_PATH) {
+    return !hasEventRecipientOverride(body);
+  }
+
+  if (normalized === BULK_TRIGGER_PATH) {
+    const events = (body as { events?: unknown } | null | undefined)?.events;
+
+    return !Array.isArray(events) || !events.some(hasEventRecipientOverride);
+  }
+
+  if (normalized !== INTEGRATIONS_PATH) {
     return true;
   }
 
   const providerId = (body as { providerId?: unknown } | null | undefined)?.providerId;
 
   return typeof providerId !== 'string' || !KEYLESS_DENIED_INTEGRATION_PROVIDER_IDS.includes(providerId.toLowerCase());
+}
+
+function hasEventRecipientOverride(event: unknown): boolean {
+  return hasRecipientOverride((event as { overrides?: unknown } | null | undefined)?.overrides);
+}
+
+/**
+ * Provider overrides (`email`, `<providerId>`, `providers.<id>`, `steps.<id>.providers.<id>`)
+ * can add `to` / `cc` / `bcc` recipients, including on the seeded Novu Email integration.
+ */
+function hasRecipientOverride(value: unknown, depth = 0): boolean {
+  if (!value || typeof value !== 'object' || depth > MAX_OVERRIDES_DEPTH) {
+    return false;
+  }
+
+  return Object.entries(value).some(
+    ([key, nested]) => RECIPIENT_OVERRIDE_KEYS.includes(key.toLowerCase()) || hasRecipientOverride(nested, depth + 1)
+  );
 }
 
 function topicKeyOf(recipient: unknown): string | null {
