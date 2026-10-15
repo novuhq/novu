@@ -1,66 +1,37 @@
-import { createHash } from 'node:crypto';
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import {
   AnalyticsService,
-  areNovuManagedClaudeCredentialsSet,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
-  encryptApiKey,
-  FeatureFlagsService,
   GetSubscriberSchedule,
   GetSubscriberScheduleCommand,
-  generateTimestampHex,
   LogDecorator,
   PinoLogger,
   SelectIntegration,
   SelectIntegrationCommand,
-  shortId,
-  UpsertControlValuesCommand,
-  UpsertControlValuesUseCase,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
-  CommunityUserRepository,
   ContextRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationRepository,
   MessageRepository,
-  MessageTemplateRepository,
-  NotificationTemplateRepository,
-  PreferencesRepository,
   SubscriberEntity,
 } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
   ChannelTypeEnum,
   ContextPayload,
-  ControlValuesLevelEnum,
   CustomDataType,
-  EnvironmentEnum,
   EnvironmentTypeEnum,
-  FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
   InAppProviderIdEnum,
   PreferenceLevelEnum,
-  PreferencesTypeEnum,
-  ResourceOriginEnum,
-  ResourceTypeEnum,
   Schedule,
-  StepTypeEnum,
 } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
-import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
-import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
-import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
-import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
@@ -68,14 +39,14 @@ import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
-import {
-  AnalyticsEventsEnum,
-  KEYLESS_ENVIRONMENT_PREFIX,
-  KEYLESS_SUBSCRIBER_ID,
-  KEYLESS_WORKFLOW_IDENTIFIER,
-} from '../../utils';
+import { AnalyticsEventsEnum, KEYLESS_ENVIRONMENT_PREFIX, KEYLESS_SUBSCRIBER_ID } from '../../utils';
 import { validateContextHmacEncryption, validateHmacEncryption } from '../../utils/encryption';
 import { isKeylessEnvironmentExpired } from '../../utils/keyless-expiry';
+import {
+  CreateKeylessEnvironmentCommand,
+  KeylessEnvironmentPurposeEnum,
+} from '../create-keyless-environment/create-keyless-environment.command';
+import { CreateKeylessEnvironment } from '../create-keyless-environment/create-keyless-environment.usecase';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { UpdatePreferencesCommand } from '../update-preferences/update-preferences.command';
@@ -98,22 +69,14 @@ export class Session {
     private notificationsCount: NotificationsCount,
     private integrationRepository: IntegrationRepository,
     private organizationRepository: CommunityOrganizationRepository,
-    private communityOrganizationRepository: CommunityOrganizationRepository,
     private contextRepository: ContextRepository,
-    private generateUniqueApiKey: GenerateUniqueApiKey,
-    private createNovuIntegrationsUsecase: CreateNovuIntegrations,
-    private communityUserRepository: CommunityUserRepository,
-    private notificationTemplateRepository: NotificationTemplateRepository,
-    private messageTemplateRepository: MessageTemplateRepository,
     private messageRepository: MessageRepository,
-    private preferencesRepository: PreferencesRepository,
-    private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private getOrganizationSettingsUsecase: GetOrganizationSettings,
     private logger: PinoLogger,
-    private featureFlagsService: FeatureFlagsService,
     private getSubscriberSchedule: GetSubscriberSchedule,
     private updatePreferencesUsecase: UpdatePreferences,
-    private keylessAbuseGuard: KeylessAbuseGuardService
+    private keylessAbuseGuard: KeylessAbuseGuardService,
+    private createKeylessEnvironment: CreateKeylessEnvironment
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -422,7 +385,9 @@ export class Session {
 
     if (isKeylessInitialize || isKeylessExpired) {
       await this.keylessAbuseGuard.assertEnvCreationAllowed(clientIp);
-      const environment = await this.processKeyless();
+      const { environment } = await this.createKeylessEnvironment.execute(
+        CreateKeylessEnvironmentCommand.create({ purpose: KeylessEnvironmentPurposeEnum.INBOX_DEMO })
+      );
 
       return environment.identifier;
     }
@@ -464,419 +429,5 @@ export class Session {
     );
 
     return tierLimitMs / 1000 / 60 / 60;
-  }
-
-  async processKeyless(): Promise<EnvironmentResponseDto> {
-    if (process.env.NOVU_ENTERPRISE !== 'true') {
-      throw new BadRequestException('Keyless is not supported in community edition');
-    }
-
-    const keylessOrganizationId = process.env.KEYLESS_ORGANIZATION_ID;
-    if (!keylessOrganizationId) {
-      throw new InternalServerErrorException('Keyless Organization ID is not configured');
-    }
-
-    const organization = await this.communityOrganizationRepository.findById(keylessOrganizationId);
-
-    if (!organization) {
-      this.logger.error('Keyless Organization not found');
-      throw new InternalServerErrorException('Keyless Organization not found');
-    }
-
-    const isKeylessEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED,
-      defaultValue: false,
-      organization,
-    });
-
-    if (!isKeylessEnabled) {
-      throw new BadRequestException('Keyless environment creation is currently disabled.');
-    }
-
-    if (!areNovuManagedClaudeCredentialsSet()) {
-      throw new BadRequestException(
-        'Keyless Connect requires NOVU_MANAGED_CLAUDE_API_KEY to be configured on the API server.'
-      );
-    }
-
-    const isDemoManagedClaudeEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_DEMO_MANAGED_CLAUDE_ENABLED,
-      defaultValue: false,
-      organization,
-    });
-
-    if (!isDemoManagedClaudeEnabled) {
-      throw new BadRequestException(
-        'Keyless Connect requires the IS_DEMO_MANAGED_CLAUDE_ENABLED feature flag to be enabled on the API server.'
-      );
-    }
-
-    const keylessUserEmail = process.env.KEYLESS_USER_EMAIL;
-    if (!keylessUserEmail) {
-      throw new InternalServerErrorException('Keyless User email is not configured');
-    }
-
-    const user = await this.communityUserRepository.findByEmail(keylessUserEmail);
-
-    if (!user) {
-      throw new InternalServerErrorException('Keyless User not found');
-    }
-
-    const key = `sk_${await this.generateUniqueApiKey.execute()}`;
-    const encryptedApiKey = encryptApiKey(key);
-    const hashedApiKey = createHash('sha256').update(key).digest('hex');
-
-    const encodedDate = generateTimestampHex();
-    const identifier = `${this.KEYLESS_ENVIRONMENT_PREFIX}${encodedDate}_${shortId(4)}`;
-    const environment = await this.environmentRepository.create({
-      _organizationId: organization._id,
-      name: `Keyless ${new Date().toISOString()}`,
-      identifier,
-      type: EnvironmentTypeEnum.DEV,
-      apiKeys: [
-        {
-          key: encryptedApiKey,
-          _userId: user._id,
-          hash: hashedApiKey,
-        },
-      ],
-    });
-
-    await this.createNovuIntegrationsUsecase.execute(
-      CreateNovuIntegrationsCommand.create({
-        environmentId: environment._id,
-        organizationId: environment._organizationId,
-        userId: user._id,
-        name: EnvironmentEnum.DEVELOPMENT,
-        channels: [ChannelTypeEnum.IN_APP, ChannelTypeEnum.EMAIL],
-        includeManagedClaude: true,
-        environmentType: EnvironmentTypeEnum.DEV,
-      })
-    );
-
-    await this.createWorkflowsUsecase(environment._id, environment._organizationId, user._id);
-
-    const environmentDto = this.convertEnvironmentEntityToDto(environment);
-
-    this.logger.info('Keyless environment created successfully');
-
-    return environmentDto;
-  }
-
-  async createWorkflowsUsecase(environmentId: string, organizationId: string, userId: string) {
-    const inAppTemplate = await this.messageTemplateRepository.create({
-      type: StepTypeEnum.IN_APP,
-      content: '',
-      avatar: 'https://dashboard.novu.co/images/info.svg',
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      _creatorId: userId,
-      active: true,
-      name: 'In-App Notification',
-      controls: {
-        schema: {
-          type: 'object',
-          properties: {
-            subject: {
-              type: 'string',
-            },
-            body: {
-              type: 'string',
-            },
-            skip: {
-              type: 'object',
-            },
-            disableOutputSanitization: {
-              type: 'boolean',
-            },
-            avatar: {
-              type: 'string',
-              pattern:
-                '^(?:\\{\\{[^}]*\\}\\}.*|(?!mailto:)(?:https?:\\/\\/[^\\s/$.?#][^\\s]*(?:\\{\\{[^}]*\\}\\})*[^\\s]*)|\\/[^\\s]*(?:\\{\\{[^}]*\\}\\})*[^\\s]*)$',
-            },
-            primaryAction: {
-              type: 'object',
-              properties: {
-                label: {
-                  type: 'string',
-                },
-                redirect: {
-                  type: 'object',
-                  properties: {
-                    url: {
-                      type: 'string',
-                      pattern:
-                        '^(?:\\{\\{[^}]*\\}\\}.*|(?!mailto:)(?:https?:\\/\\/[^\\s/$.?#][^\\s]*(?:\\{\\{[^}]*\\}\\})*[^\\s]*)|\\/[^\\s]*(?:\\{\\{[^}]*\\}\\})*[^\\s]*)$',
-                    },
-                    target: {
-                      type: 'string',
-                      enum: ['_self', '_blank', '_parent', '_top', '_unfencedTop'],
-                    },
-                  },
-                  required: ['url', 'target'],
-                  additionalProperties: false,
-                },
-              },
-              required: ['label'],
-              additionalProperties: false,
-            },
-            secondaryAction: {
-              type: 'object',
-              properties: {
-                label: {
-                  type: 'string',
-                },
-                redirect: {
-                  type: 'object',
-                  properties: {
-                    url: {
-                      type: 'string',
-                      pattern:
-                        '^(?:\\{\\{[^}]*\\}\\}.*|(?!mailto:)(?:https?:\\/\\/[^\\s/$.?#][^\\s]*(?:\\{\\{[^}]*\\}\\})*[^\\s]*)|\\/[^\\s]*(?:\\{\\{[^}]*\\}\\})*[^\\s]*)$',
-                    },
-                    target: {
-                      type: 'string',
-                      enum: ['_self', '_blank', '_parent', '_top', '_unfencedTop'],
-                    },
-                  },
-                  required: ['url', 'target'],
-                  additionalProperties: false,
-                },
-              },
-              required: ['label'],
-              additionalProperties: false,
-            },
-            data: {
-              type: 'object',
-            },
-            redirect: {
-              type: 'object',
-              properties: {
-                url: {
-                  type: 'string',
-                  pattern:
-                    '^(?:\\{\\{[^}]*\\}\\}.*|(?!mailto:)(?:https?:\\/\\/[^\\s/$.?#][^\\s]*(?:\\{\\{[^}]*\\}\\})*[^\\s]*)|\\/[^\\s]*(?:\\{\\{[^}]*\\}\\})*[^\\s]*)$',
-                },
-                target: {
-                  type: 'string',
-                  enum: ['_self', '_blank', '_parent', '_top', '_unfencedTop'],
-                },
-              },
-              required: ['url', 'target'],
-              additionalProperties: false,
-            },
-          },
-          additionalProperties: false,
-        },
-        uiSchema: {
-          group: 'IN_APP',
-          properties: {
-            body: {
-              component: 'IN_APP_BODY',
-              placeholder: '',
-            },
-            avatar: {
-              component: 'IN_APP_AVATAR',
-              placeholder: 'https://dashboard.novu.co/images/info.svg',
-            },
-            subject: {
-              component: 'IN_APP_PRIMARY_SUBJECT',
-              placeholder: '',
-            },
-            primaryAction: {
-              component: 'IN_APP_BUTTON_DROPDOWN',
-              placeholder: null,
-            },
-            secondaryAction: {
-              component: 'IN_APP_BUTTON_DROPDOWN',
-              placeholder: null,
-            },
-            redirect: {
-              component: 'URL_TEXT_BOX',
-              placeholder: {
-                url: {
-                  placeholder: '',
-                },
-                target: {
-                  placeholder: '_self',
-                },
-              },
-            },
-            skip: {
-              component: 'QUERY_EDITOR',
-            },
-            disableOutputSanitization: {
-              component: 'IN_APP_DISABLE_SANITIZATION_SWITCH',
-              placeholder: false,
-            },
-            data: {
-              component: 'DATA',
-              placeholder: null,
-            },
-          },
-        },
-      },
-    });
-
-    const workflow = await this.notificationTemplateRepository.create({
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      _creatorId: userId,
-      name: 'Hello World!',
-      description: 'A hello world workflow',
-      active: true,
-      draft: false,
-      critical: false,
-      tags: [],
-      type: ResourceTypeEnum.BRIDGE,
-      origin: ResourceOriginEnum.NOVU_CLOUD,
-      steps: [
-        {
-          name: 'In-App Notification',
-          template: inAppTemplate,
-          active: true,
-          stepId: 'in-app-step',
-          filters: [],
-          _templateId: inAppTemplate._id,
-          _id: inAppTemplate._id,
-        },
-      ],
-      triggers: [
-        {
-          type: 'event',
-          identifier: KEYLESS_WORKFLOW_IDENTIFIER,
-          variables: [
-            { name: 'subject', type: 'string' },
-            { name: 'body', type: 'string' },
-          ],
-        },
-      ],
-    });
-
-    await this.preferencesRepository.create({
-      _templateId: workflow._id,
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      _userId: userId,
-      type: PreferencesTypeEnum.USER_WORKFLOW,
-      preferences: {
-        all: {
-          enabled: true,
-          readOnly: false,
-        },
-        channels: {
-          [ChannelTypeEnum.IN_APP]: {
-            enabled: true,
-            readOnly: false,
-          },
-          [ChannelTypeEnum.EMAIL]: {
-            enabled: true,
-            readOnly: false,
-          },
-          [ChannelTypeEnum.SMS]: {
-            enabled: true,
-            readOnly: false,
-          },
-          [ChannelTypeEnum.PUSH]: {
-            enabled: true,
-            readOnly: false,
-          },
-          [ChannelTypeEnum.CHAT]: {
-            enabled: true,
-            readOnly: false,
-          },
-        },
-      },
-    });
-
-    await this.preferencesRepository.create({
-      _templateId: workflow._id,
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      _userId: userId,
-      type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
-      preferences: {
-        all: {
-          enabled: true,
-          readOnly: false,
-        },
-        channels: {
-          [ChannelTypeEnum.IN_APP]: {
-            enabled: true,
-            readOnly: false,
-          },
-          [ChannelTypeEnum.EMAIL]: {
-            enabled: true,
-            readOnly: false,
-          },
-          [ChannelTypeEnum.SMS]: {
-            enabled: true,
-            readOnly: false,
-          },
-          [ChannelTypeEnum.PUSH]: {
-            enabled: true,
-            readOnly: false,
-          },
-          [ChannelTypeEnum.CHAT]: {
-            enabled: true,
-            readOnly: false,
-          },
-        },
-      },
-    });
-
-    await this.upsertControlValuesUseCase.execute(
-      UpsertControlValuesCommand.create({
-        organizationId,
-        environmentId,
-        stepId: workflow.steps[0]._templateId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-        workflowId: workflow._id,
-        newControlValues: {
-          body: '{{payload.body}}',
-          avatar: 'https://dashboard.novu.co/images/avatar.svg',
-          subject: '{{payload.subject}}',
-          primaryAction: {
-            label: '{{payload.primaryActionText}}',
-            redirect: {
-              url: '{{payload.primaryActionUrl}}',
-              target: '_blank',
-            },
-          },
-          secondaryAction: {
-            label: '{{payload.secondaryActionText}}',
-            redirect: {
-              url: '{{payload.secondaryActionUrl}}',
-              target: '_blank',
-            },
-          },
-          redirect: null,
-          disableOutputSanitization: false,
-          data: null,
-        },
-      })
-    );
-
-    return workflow;
-  }
-
-  private convertEnvironmentEntityToDto(environment: EnvironmentEntity) {
-    const dto = new EnvironmentResponseDto();
-
-    dto._id = environment._id;
-    dto.name = environment.name;
-    dto._organizationId = environment._organizationId;
-    dto.identifier = environment.identifier;
-    dto._parentId = environment._parentId;
-
-    if (environment.apiKeys && environment.apiKeys.length > 0) {
-      dto.apiKeys = environment.apiKeys.map((apiKey) => ({
-        key: apiKey.key,
-        hash: apiKey.hash,
-        _userId: apiKey._userId,
-      }));
-    }
-
-    return dto;
   }
 }
