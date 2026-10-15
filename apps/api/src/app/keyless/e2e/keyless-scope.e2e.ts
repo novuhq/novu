@@ -3,8 +3,8 @@ import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import request from 'supertest';
 
-import { writeKeylessAgentClaimedTombstone } from '../keyless-agent-cache';
-import { hashApiKey } from '../keyless-agent-environment';
+import { readKeylessAgentClaimedTombstone, writeKeylessAgentClaimedTombstone } from '../keyless-agent-cache';
+import { hashApiKey, isKeylessAgentEnvironmentsSupported } from '../keyless-agent-environment';
 import {
   createAgentKeylessEnvironmentFixture,
   revokeKeylessEnvironmentApiKeys,
@@ -108,11 +108,17 @@ describe('Keyless API key scope #novu-v2', () => {
     const revoked = await api.get('/v2/workflows');
     expect(revoked.status).to.equal(401, JSON.stringify(revoked.body));
 
-    await writeKeylessAgentClaimedTombstone(testServer.getService(CacheService), hashApiKey(secretKey), {
+    const cacheService = testServer.getService(CacheService);
+    await writeKeylessAgentClaimedTombstone(cacheService, hashApiKey(secretKey), {
       environmentId: environment._id,
       organizationId: environment._organizationId,
       claimedAt: new Date().toISOString(),
     });
+    expect(isKeylessAgentEnvironmentsSupported(), 'keyless agent environments supported').to.equal(true);
+    expect(
+      await readKeylessAgentClaimedTombstone(cacheService, hashApiKey(secretKey)),
+      `tombstone readable (cache enabled: ${cacheService.cacheEnabled()})`
+    ).to.not.equal(null);
     const claimed = await api.get('/v2/workflows');
 
     expect(claimed.status).to.equal(401, JSON.stringify(claimed.body));
