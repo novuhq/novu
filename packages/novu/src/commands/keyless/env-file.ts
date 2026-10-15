@@ -7,18 +7,25 @@ export function upsertEnvFile(filePath: string, values: Record<string, string>):
   const existing = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
   const lines = existing ? existing.replace(/\n$/, '').split('\n') : [];
   const pending = new Map(Object.entries(values));
+  const keys = new Set(pending.keys());
+  const written = new Set<string>();
 
-  const updated = lines.map((line) => {
+  // A sourced file keeps the last assignment, so later duplicates of a written key are dropped.
+  const updated = lines.flatMap((line) => {
     const key = ENV_LINE_KEY.exec(line)?.[1];
 
-    if (!key || !pending.has(key)) {
-      return line;
+    if (!key || !keys.has(key)) {
+      return [line];
     }
 
-    const value = pending.get(key);
+    if (written.has(key)) {
+      return [];
+    }
+
+    written.add(key);
     pending.delete(key);
 
-    return `${key}=${value}`;
+    return [`${key}=${values[key]}`];
   });
 
   for (const [key, value] of pending) {

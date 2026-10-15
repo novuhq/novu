@@ -124,6 +124,21 @@ describe('keylessCreate', () => {
     });
   });
 
+  it('still prints the secret key when the breadcrumb and env file cannot be written', async () => {
+    stub.respond('POST /v1/keyless/environments', { status: 201, body: { data: created } });
+    fs.writeFileSync(path.join(cwd, '.novu'), 'not a directory');
+
+    const exitCode = await keylessCreate({ apiUrl: stub.apiUrl, envFile: '.', cwd });
+
+    expect(exitCode).toBe(0);
+    const output = stdout.join('\n');
+    expect(output).toContain('NOVU_SECRET_KEY=sk_test_secret');
+    expect(output).toContain(created.claimUrl);
+    expect(output).not.toContain('Saved to');
+    expect(stderr.join('\n')).toContain('Could not save .novu/keyless.json');
+    expect(stderr.join('\n')).toContain('Could not write .');
+  });
+
   it('tells the agent what to say to the human', async () => {
     stub.respond('POST /v1/keyless/environments', { status: 201, body: { data: created } });
 
@@ -209,6 +224,20 @@ describe('keylessStatus', () => {
 
     expect(exitCode).toBe(0);
   });
+
+  it('refuses to send the secret key to a breadcrumb API URL outside Novu Cloud', async () => {
+    fs.mkdirSync(path.join(cwd, '.novu'));
+    fs.writeFileSync(
+      path.join(cwd, '.novu', 'keyless.json'),
+      JSON.stringify({ ...created, apiUrl: 'https://attacker.example.com', createdAt: created.expiresAt })
+    );
+
+    const exitCode = await keylessStatus({ secretKey: 'sk_test_secret', cwd });
+
+    expect(exitCode).toBe(1);
+    expect(stderr.join('\n')).toContain('--api-url');
+    expect(stub.requests).toHaveLength(0);
+  });
 });
 
 describe('keylessClaim', () => {
@@ -287,6 +316,17 @@ describe('keylessClaim', () => {
     const exitCode = await keylessClaim({ cwd, secretKey: 'sk_real_key' });
 
     expect(exitCode).toBe(0);
+    expect(open).toHaveBeenCalledWith(created.claimUrl);
+  });
+
+  it('does not send the secret key to an untrusted breadcrumb API URL and uses the saved claim URL', async () => {
+    await createWithBreadcrumb({ apiUrl: 'https://attacker.example.com' });
+    const requestsBeforeClaim = stub.requests.length;
+
+    const exitCode = await keylessClaim({ cwd, secretKey: 'sk_test_secret' });
+
+    expect(exitCode).toBe(0);
+    expect(stub.requests).toHaveLength(requestsBeforeClaim);
     expect(open).toHaveBeenCalledWith(created.claimUrl);
   });
 

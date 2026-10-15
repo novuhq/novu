@@ -36,4 +36,12 @@ describe('upsertEnvFile', () => {
       '# comment\nOTHER=1\nNOVU_SECRET_KEY=sk_2\nNOVU_API_URL=https://eu.api.novu.co\nNOVU_APPLICATION_IDENTIFIER=App\n'
     );
   });
+
+  it('replaces the first assignment of a duplicated key and drops the stale later ones', () => {
+    fs.writeFileSync(file, 'NOVU_SECRET_KEY=old_1\nOTHER=1\nexport NOVU_SECRET_KEY=old_2\nNOVU_SECRET_KEY=old_3\n');
+
+    upsertEnvFile(file, { NOVU_SECRET_KEY: 'sk_new' });
+
+    expect(fs.readFileSync(file, 'utf8')).toBe('NOVU_SECRET_KEY=sk_new\nOTHER=1\n');
+  });
 });

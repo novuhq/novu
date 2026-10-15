@@ -13,6 +13,11 @@ import { upsertEnvFile } from './env-file';
 
 export const DEFAULT_KEYLESS_API_URL = 'https://api.novu.co';
 
+const NOVU_CLOUD_DOMAIN = 'novu.co';
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+const UNTRUSTED_BREADCRUMB_API_URL_MESSAGE =
+  '.novu/keyless.json points at an API URL outside Novu Cloud. Pass --api-url (or set NOVU_API_URL) to use it.';
+
 const KeylessExitCode = {
   OK: 0,
   ERROR: 1,
@@ -55,26 +60,60 @@ export async function keylessCreate(options: KeylessCreateOptions): Promise<numb
     return reportError(error, options.json);
   }
 
-  writeKeylessBreadcrumb(cwd, {
-    environmentId: environment.environmentId,
-    applicationIdentifier: environment.applicationIdentifier,
-    apiUrl: environment.apiUrl,
-    claimUrl: environment.claimUrl,
-    expiresAt: environment.expiresAt,
-    createdAt: new Date().toISOString(),
-  });
-
-  if (options.envFile) {
-    upsertEnvFile(path.resolve(cwd, options.envFile), toEnvVars(environment));
-  }
+  const saveFailures = saveLocally(cwd, environment, options.envFile);
+  const savedEnvFile = saveFailures.some((failure) => failure.target === 'env-file') ? undefined : options.envFile;
 
   if (options.json) {
     console.log(JSON.stringify(environment));
   } else {
-    printCreated(environment, options.envFile);
+    printCreated(environment, savedEnvFile);
+  }
+
+  for (const failure of saveFailures) {
+    console.error(red(failure.message));
   }
 
   return KeylessExitCode.OK;
+}
+
+type LocalSaveFailure = { target: 'breadcrumb' | 'env-file'; message: string };
+
+/** Best-effort: the secret key is only returned once, so a local write failure must never hide it. */
+function saveLocally(cwd: string, environment: CreatedKeylessEnvironment, envFile?: string): LocalSaveFailure[] {
+  const failures: LocalSaveFailure[] = [];
+
+  try {
+    writeKeylessBreadcrumb(cwd, {
+      environmentId: environment.environmentId,
+      applicationIdentifier: environment.applicationIdentifier,
+      apiUrl: environment.apiUrl,
+      claimUrl: environment.claimUrl,
+      expiresAt: environment.expiresAt,
+      createdAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    failures.push({
+      target: 'breadcrumb',
+      message: `Could not save .novu/keyless.json (${errorMessage(error)}). Keep the claim URL above.`,
+    });
+  }
+
+  if (envFile) {
+    try {
+      upsertEnvFile(path.resolve(cwd, envFile), toEnvVars(environment));
+    } catch (error) {
+      failures.push({
+        target: 'env-file',
+        message: `Could not write ${envFile} (${errorMessage(error)}). Copy the values above instead.`,
+      });
+    }
+  }
+
+  return failures;
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 export async function keylessStatus(options: KeylessStatusOptions): Promise<number> {
@@ -84,12 +123,14 @@ export async function keylessStatus(options: KeylessStatusOptions): Promise<numb
     return fail('No secret key found. Pass --secret-key or set NOVU_SECRET_KEY.', KeylessExitCode.ERROR, options.json);
   }
 
+  const apiUrl = resolveApiUrl(options.apiUrl, cwd);
+  if (!apiUrl) {
+    return fail(UNTRUSTED_BREADCRUMB_API_URL_MESSAGE, KeylessExitCode.ERROR, options.json);
+  }
+
   let environment: KeylessEnvironmentStatus;
   try {
-    environment = await getKeylessEnvironment({
-      apiUrl: resolveApiUrl(options.apiUrl, cwd),
-      secretKey: options.secretKey,
-    });
+    environment = await getKeylessEnvironment({ apiUrl, secretKey: options.secretKey });
   } catch (error) {
     return reportError(error, options.json);
   }
@@ -110,13 +151,11 @@ export async function keylessClaim(options: KeylessClaimOptions): Promise<number
   const breadcrumb = readKeylessBreadcrumb(cwd);
 
   let claimUrl: string | undefined;
+  const apiUrl = resolveApiUrl(options.apiUrl, cwd);
 
-  if (options.secretKey) {
+  if (options.secretKey && apiUrl) {
     try {
-      const environment = await getKeylessEnvironment({
-        apiUrl: resolveApiUrl(options.apiUrl, cwd),
-        secretKey: options.secretKey,
-      });
+      const environment = await getKeylessEnvironment({ apiUrl, secretKey: options.secretKey });
       claimUrl = environment.claimUrl;
     } catch (error) {
       const canFallBackToBreadcrumb =
@@ -156,8 +195,39 @@ export async function keylessClaim(options: KeylessClaimOptions): Promise<number
   return KeylessExitCode.OK;
 }
 
-function resolveApiUrl(apiUrl: string | undefined, cwd: string): string {
-  return apiUrl ?? readKeylessBreadcrumb(cwd)?.apiUrl ?? DEFAULT_KEYLESS_API_URL;
+/**
+ * The breadcrumb lives in the project, so it can be planted by whoever controls the repository.
+ * Its API URL is only trusted for Novu Cloud and loopback hosts; anything else must be passed explicitly.
+ * Returns null when the breadcrumb names an untrusted host.
+ */
+function resolveApiUrl(apiUrl: string | undefined, cwd: string): string | null {
+  if (apiUrl) {
+    return apiUrl;
+  }
+
+  const breadcrumbApiUrl = readKeylessBreadcrumb(cwd)?.apiUrl;
+  if (!breadcrumbApiUrl) {
+    return DEFAULT_KEYLESS_API_URL;
+  }
+
+  return isTrustedBreadcrumbApiUrl(breadcrumbApiUrl) ? breadcrumbApiUrl : null;
+}
+
+function isTrustedBreadcrumbApiUrl(value: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+
+  if (LOOPBACK_HOSTS.has(url.hostname)) {
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  }
+
+  return (
+    url.protocol === 'https:' && (url.hostname === NOVU_CLOUD_DOMAIN || url.hostname.endsWith(`.${NOVU_CLOUD_DOMAIN}`))
+  );
 }
 
 function exitCodeFor(error: KeylessApiError): number {
