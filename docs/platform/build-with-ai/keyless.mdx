@@ -207,7 +207,7 @@ Once the environment is claimed or expired, this endpoint returns `401` with `ke
 | Triggers | `/v1/events/*` (trigger, bulk, broadcast, cancel) |
 | Workflows | `/v2/workflows/*`, except sync to another environment |
 | Subscribers | `/v1/subscribers/*`, `/v2/subscribers/*` |
-| Integrations | `/v1/integrations/*` |
+| Integrations | `/v1/integrations/*`, except creating Novu-managed demo providers (`novu-email`, `novu-sms`, `novu-slack`) |
 | Activity | `/v1/notifications/*`, `/v1/messages/*`, `/v1/activity/*`, `/v1/execution-details/*` |
 | Environment | `GET /v1/environments/me`, `GET /v1/keyless/environments/me` |
 
