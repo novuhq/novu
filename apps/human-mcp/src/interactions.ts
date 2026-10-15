@@ -176,9 +176,9 @@ export async function waitForAnswer(
     await sleep(POLL_EVERY_MS);
 
     try {
-      // GET does not include `threads`. Those exist only on the send response, and sending
-      // has already marked the thread read, so a later check must not drop them.
-      interaction = keepSentThreads(await check(), sent);
+      // GET omits `threads` and `failedTo`. Both exist only on the create response, so a
+      // later check must not drop the unread warning or which contacts missed the message.
+      interaction = keepCreateDetails(await check(), sent);
     } catch {
       // One missed check is not an answer: keep what is known and try again while there is time.
     }
@@ -187,12 +187,22 @@ export async function waitForAnswer(
   return interaction;
 }
 
-function keepSentThreads(latest: Interaction, sent: Interaction | string): Interaction {
-  if (typeof sent === 'string' || latest.threads?.length || !sent.threads?.length) {
+function keepCreateDetails(latest: Interaction, sent: Interaction | string): Interaction {
+  if (typeof sent === 'string') {
     return latest;
   }
 
-  return { ...latest, threads: sent.threads };
+  const threads = latest.threads?.length ? undefined : sent.threads;
+  const failedTo = latest.failedTo?.length ? undefined : sent.failedTo;
+  if (!threads?.length && !failedTo?.length) {
+    return latest;
+  }
+
+  return {
+    ...latest,
+    ...(threads?.length ? { threads } : {}),
+    ...(failedTo?.length ? { failedTo } : {}),
+  };
 }
 
 /** What to tell the AI tool about an interaction, in words it can act on. */

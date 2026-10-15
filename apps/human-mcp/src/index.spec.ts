@@ -103,6 +103,41 @@ describe('the Human MCP server', () => {
     });
   });
 
+  it('accepts a question lifetime up to five days', async () => {
+    const calls = stubBackends();
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(
+      rpc('tools/call', {
+        name: 'inbox_send',
+        arguments: { kind: 'ask', message: 'Still there?', ttl_seconds: 345_600, wait_seconds: 0 },
+      }),
+      env,
+      ctx
+    );
+    const { result } = (await response.json()) as { result: { isError?: boolean } };
+
+    expect(result.isError).toBeFalsy();
+    const created = calls.find((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST');
+    expect(created?.body).toMatchObject({ ttlSeconds: 345_600 });
+  });
+
+  it('rejects a question lifetime past five days', async () => {
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(
+      rpc('tools/call', {
+        name: 'inbox_send',
+        arguments: { kind: 'ask', message: 'Still there?', ttl_seconds: 5 * 24 * 60 * 60 + 1, wait_seconds: 0 },
+      }),
+      env,
+      ctx
+    );
+    const { result } = (await response.json()) as { result: { isError?: boolean } };
+
+    expect(result.isError).toBe(true);
+  });
+
   it('passes the full send card and delivery options to the Human API', async () => {
     const calls = stubBackends();
     const { env, ctx } = setup();
@@ -474,6 +509,26 @@ describe('waiting for an answer', () => {
     });
 
     expect(outcome).toContain('They chose: Canary');
+  });
+
+  it('keeps a partial delivery warning after a check that does not return failedTo', async () => {
+    const api = {
+      get: vi.fn(async () => ({ id: 'hi_1', kind: 'ask', status: 'pending' })),
+      post: vi.fn(),
+    };
+    const sent: Interaction = {
+      id: 'hi_1',
+      kind: 'ask',
+      status: 'pending',
+      failedTo: ['bob'],
+    };
+
+    const interaction = await waitForAnswer(api as never, sent, 5, async () => undefined);
+    const outcome = describeOutcome(interaction);
+
+    expect(api.get).toHaveBeenCalled();
+    expect(outcome).toContain('still open');
+    expect(outcome).toContain('delivery failed for bob');
   });
 
   it('keeps the unread warning after a check that does not return threads', async () => {

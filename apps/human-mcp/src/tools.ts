@@ -66,13 +66,15 @@ const icon = z
   .optional()
   .describe('Slack-only card icon: MCP catalog id, display name, or an HTTPS URL. Ignored on other channels.');
 const from = z.string().max(80).optional().describe('Attribution label shown to the person, such as "deploy-bot".');
+/** Matches `HUMAN_INTERACTION_MAX_TTL_SECONDS` in `@novu/shared`. Card action tokens last five days. */
+const MAX_TTL_SECONDS = 5 * 24 * 60 * 60;
 const ttlSeconds = z
   .number()
   .int()
   .min(60)
-  .max(259_200)
+  .max(MAX_TTL_SECONDS)
   .optional()
-  .describe('How long a question remains answerable, in seconds (default 86400, max 259200).');
+  .describe(`How long a question remains answerable, in seconds (default 86400, max ${MAX_TTL_SECONDS}).`);
 const options = z
   .array(optionInput)
   .min(2)
