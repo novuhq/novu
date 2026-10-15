@@ -29,7 +29,7 @@ import z from 'zod';
 export const MODEL = 'claude-haiku-4-5';
 export const SYSTEM = [
   'You are the Novu playground agent.',
-  'Use your tools to show cards, remember notes, send notifications, send files, react, quote, show progress,',
+  'Use your tools to show cards, remember notes, send notifications, send files, react, quote, show progress, delete messages,',
   'emit events, close the conversation and check the weather.',
   'When the user attaches an image or a PDF, describe or summarize it.',
   'Keep answers to one or two short sentences.',
@@ -187,9 +187,15 @@ export function agentTools(ctx: AgentMessageContext, message: AgentMessage): Rec
     show_progress: defineTool('Show a typing indicator, then a reply that gets edited', z.object({}), () =>
       showProgress(ctx)
     ),
+    delete_message: defineTool('Send a message, then delete it', z.object({}), () => replyThenDelete(ctx)),
     send_file: defineTool('Send the user a CSV report file', z.object({}), () => sendFile(ctx)),
-    quote_message: defineTool("Reply quoting the user's message", z.object({}), () => quote(ctx, message)),
-    react: defineTool("React to the user's message with a thumbs up", z.object({}), () => react(ctx, message)),
+    // After a tool approval the adapters resume with an empty message, which has no ID to quote or react to.
+    ...(message.platformMessageId
+      ? {
+          quote_message: defineTool("Reply quoting the user's message", z.object({}), () => quote(ctx, message)),
+          react: defineTool("React to the user's message with a thumbs up", z.object({}), () => react(ctx, message)),
+        }
+      : {}),
     emit_progress: defineTool('Emit a custom progress event to the client app', z.object({}), () =>
       emitProgress(ctx)
     ),

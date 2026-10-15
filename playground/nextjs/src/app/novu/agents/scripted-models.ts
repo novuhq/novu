@@ -9,7 +9,7 @@ import { MockLanguageModelV4 } from 'ai/test';
  * a tool result becomes the final answer. Anything else gets `NO_KEY`.
  */
 const NO_KEY = 'No ANTHROPIC_API_KEY, so I can only check the weather. custom-code-agent has every feature without a model.';
-const cityOf = (text: string) => text.match(/weather(?: in)? ([\p{L}-]+)/iu)?.[1] ?? 'Berlin';
+const cityOf = (text: string) => text.match(/weather(?: in)? ([\p{L}\s-]+)/iu)?.[1].trim() ?? 'Berlin';
 
 const usage = {
   inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 },

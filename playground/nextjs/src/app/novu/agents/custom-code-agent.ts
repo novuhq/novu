@@ -13,13 +13,19 @@ const HELP = [
   '- `quote <text>` — a reply quoting your message',
   '- `react` — a 👍 on your message',
   '- `emit` — a custom `progress` event for the client app',
-  '- `approve` / `multi-approve` — `ctx.approve(...)`, the second one to `alice` and `bob`',
+  '- `approve` / `multi-approve` — `ctx.approve(...)`, the second one to `NEXT_PUBLIC_HITL_SENT_TO`',
   '- `custom-approve` / `custom-chrome-approve` — `ctx.approve({ render })` / `ctx.approve({ card })`',
   '- `ask` / `choose` / `tell` — `ctx.ask(...)` / `ctx.choose(...)` / `ctx.tell(...)`',
   '- `weather <city>` — a `get_weather` tool call gated by `ctx.toolApproval`',
 ].join('\n');
 
 const DEPLOY_QUESTION = 'Deploy v2.4.1 to production?';
+
+// Without it, the approval goes to the subscriber who asked.
+const HITL_RECIPIENTS = (process.env.NEXT_PUBLIC_HITL_SENT_TO ?? '')
+  .split(',')
+  .map((id) => id.trim())
+  .filter((id) => id.length > 0);
 
 // HITL lives here only: plain `agent()` handles the answer itself in onAction/onMessage.
 function approve(ctx: AgentMessageContext, to?: string[]) {
@@ -113,7 +119,7 @@ export const customCodeAgent = agent('custom-code-agent', {
       case 'approve':
         return approve(ctx);
       case 'multi-approve':
-        return approve(ctx, ['alice', 'bob']);
+        return approve(ctx, HITL_RECIPIENTS.length > 0 ? HITL_RECIPIENTS : undefined);
       case 'custom-approve':
         return approveWithCustomCard(ctx);
       case 'custom-chrome-approve':
