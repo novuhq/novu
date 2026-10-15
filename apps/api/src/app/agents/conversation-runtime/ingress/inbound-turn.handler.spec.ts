@@ -1,4 +1,6 @@
 import {
+  AGENT_PLATFORM_PROVISION_SOURCE,
+  AGENT_PROVISION_DATA_KEYS,
   AGENT_REPLY_METADATA_KEYS,
   AgentReplyPolicyEnum,
   AgentSubscriberAccessEnum,
@@ -1350,6 +1352,77 @@ describe('AgentInboundHandler', () => {
       expect(humanRelayRuntime.dispatch.calledOnce).to.equal(true);
     });
 
+    describe('an Agent Inbox agent open to contacts only', () => {
+      const contactsOnly = { ...config, isHumanRelay: true, inboxReach: 'contacts' };
+      const relayAgent = () => sinon.stub().resolves({ _id: 'agent1', runtime: 'human_relay' });
+
+      async function receive(handler: AgentInboundHandler, agentConfig: Record<string, unknown> = contactsOnly) {
+        const thread = makeSlackDmThread();
+
+        await handler.handle(
+          'agent1',
+          agentConfig as any,
+          thread as any,
+          makeSlackDmMessage() as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        return thread;
+      }
+
+      it('drops a message from someone who is not a contact before anything about it is saved', async () => {
+        const { handler, conversationService, humanRelayRuntime, agentIntegrationRepository } = makeHandler({
+          agentFindOne: relayAgent(),
+        });
+
+        const thread = await receive(handler);
+
+        expect(conversationService.createOrGetConversation.called).to.equal(false);
+        expect(conversationService.persistInboundMessage.called).to.equal(false);
+        expect(agentIntegrationRepository.updateOne.called).to.equal(false);
+        expect(humanRelayRuntime.dispatch.called).to.equal(false);
+        expect(thread.post.called).to.equal(false);
+      });
+
+      it('drops a message from a subscriber an agent made up for an unknown sender', async () => {
+        const { handler, conversationService, humanRelayRuntime } = makeHandler({
+          agentFindOne: relayAgent(),
+          subscriberResolve: sinon.stub().resolves('stranger1'),
+          subscriberFindById: sinon.stub().resolves({
+            _id: 'subscriber-mongo-2',
+            subscriberId: 'stranger1',
+            data: { [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE },
+          }),
+        });
+
+        await receive(handler);
+
+        expect(conversationService.createOrGetConversation.called).to.equal(false);
+        expect(humanRelayRuntime.dispatch.called).to.equal(false);
+      });
+
+      it('takes a message from a contact', async () => {
+        const { handler, conversationService, humanRelayRuntime } = makeHandler({
+          agentFindOne: relayAgent(),
+          ...makeResolvedSubscriberOverrides('ada'),
+        });
+
+        await receive(handler);
+
+        expect(conversationService.createOrGetConversation.calledOnce).to.equal(true);
+        expect(humanRelayRuntime.dispatch.calledOnce).to.equal(true);
+      });
+
+      it('takes a message from anyone while anyone can reach the agent', async () => {
+        const { handler, conversationService, humanRelayRuntime } = makeHandler({ agentFindOne: relayAgent() });
+
+        await receive(handler, { ...contactsOnly, inboxReach: 'anyone' });
+
+        expect(conversationService.createOrGetConversation.calledOnce).to.equal(true);
+        expect(humanRelayRuntime.dispatch.calledOnce).to.equal(true);
+      });
+    });
+
     it('should post no-bridge Slack DM auto-replies with the message-rooted platform thread id', async () => {
       const { handler } = makeHandler({ bridgeError: new NoBridgeUrlError('support-agent') });
       const thread = makeSlackDmThread();
@@ -2697,6 +2770,23 @@ describe('AgentInboundHandler', () => {
       expect(humanInteractionInbound.tryHandleAction.called).to.equal(false);
       expect(bridgeExecutor.execute.called).to.equal(false);
       expect(humanRelayRuntime.dispatch.calledOnce).to.equal(true);
+    });
+
+    it('should drop a click from someone who is not a contact when an Agent Inbox agent takes contacts only', async () => {
+      const { handler, conversationService, humanRelayRuntime } = makeHandler({
+        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'human_relay' }),
+      });
+
+      await handler.handleAction(
+        'agent1',
+        { ...config, isHumanRelay: true, inboxReach: 'contacts' } as any,
+        makeActionThread() as any,
+        { id: 'human:hi_1:approve', value: undefined } as any,
+        'user1'
+      );
+
+      expect(conversationService.createOrGetConversation.called).to.equal(false);
+      expect(humanRelayRuntime.dispatch.called).to.equal(false);
     });
 
     it('should hydrate workflow origin when an action is the first interaction on the thread', async () => {
