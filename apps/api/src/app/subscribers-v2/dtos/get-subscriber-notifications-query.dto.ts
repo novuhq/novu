@@ -23,6 +23,7 @@ export class GetSubscriberNotificationsQueryDto
   @ApiPropertyOptional({
     description:
       'Filter by workflow tags. Plain string[] is OR. Use { and: [{ or: string[] }, ...] } for AND of OR-groups (same as inbox).',
+    type: [String],
   })
   tags?: TagsFilter;
 
