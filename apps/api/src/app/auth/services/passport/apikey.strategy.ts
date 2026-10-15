@@ -11,11 +11,8 @@ import {
 import { ApiAuthSchemeEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 import { readKeylessAgentClaimedTombstone } from '../../../keyless/keyless-agent-cache';
-import {
-  isKeylessAgentEnvironmentsSupported,
-  KeylessAgentErrorCodeEnum,
-} from '../../../keyless/keyless-agent-environment';
-import { KEYLESS_ENVIRONMENT_CLAIMED_MESSAGE } from '../../../keyless/keyless-scope.interceptor';
+import { isKeylessAgentEnvironmentsSupported } from '../../../keyless/keyless-agent-environment';
+import { createKeylessEnvironmentClaimedException } from '../../../keyless/keyless-scope.interceptor';
 import { AuthService } from '../auth.service';
 import { addNewRelicTraceAttributes } from './newrelic.util';
 
@@ -84,11 +81,7 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
     const tombstone = await readKeylessAgentClaimedTombstone(this.cacheService, hashedApiKey);
 
     if (tombstone) {
-      throw new UnauthorizedException({
-        statusCode: 401,
-        code: KeylessAgentErrorCodeEnum.ENVIRONMENT_CLAIMED,
-        message: KEYLESS_ENVIRONMENT_CLAIMED_MESSAGE,
-      });
+      throw createKeylessEnvironmentClaimedException();
     }
   }
 

@@ -18,14 +18,10 @@ import { computeKeylessTriggerCost, isKeylessApiKeyRouteAllowed } from './keyles
 import { resolveConnectClaimBaseUrl } from './keyless-signup.helpers';
 import { KeylessTriggerCapService } from './keyless-trigger-cap.service';
 
-export const KEYLESS_ENVIRONMENT_CLAIMED_MESSAGE =
+const KEYLESS_ENVIRONMENT_CLAIMED_MESSAGE =
   'This environment was claimed. Use the Development secret key from your Novu dashboard (API Keys).';
 
 const API_KEY_HEADER_PREFIX = `${ApiAuthSchemeEnum.API_KEY} `;
-
-type ScopedEnvironment = Pick<EnvironmentEntity, '_id' | '_organizationId' | 'identifier' | 'name' | 'createdAt'> & {
-  apiKeys?: Array<{ hash?: string }>;
-};
 
 interface KeylessScopedRequest {
   method: string;
@@ -71,43 +67,62 @@ export class KeylessScopeInterceptor implements NestInterceptor {
   }
 
   private async assertKeylessApiKeyRequestAllowed(request: KeylessScopedRequest, user: UserSessionData): Promise<void> {
-    const environment = (await this.environmentRepository.findOne(
-      { _id: user.environmentId, _organizationId: user.organizationId },
-      '_id _organizationId identifier name createdAt apiKeys.hash'
-    )) as ScopedEnvironment | null;
-
-    const presentedKeyHash = hashApiKey(extractApiKey(request.headers.authorization));
-
-    if (!environment?.apiKeys?.some((apiKey) => apiKey.hash === presentedKeyHash)) {
-      throw keylessHttpException(HttpStatus.UNAUTHORIZED, {
-        code: KeylessAgentErrorCodeEnum.ENVIRONMENT_CLAIMED,
-        message: KEYLESS_ENVIRONMENT_CLAIMED_MESSAGE,
-      });
-    }
-
+    const environment = await this.findEnvironmentHoldingKey(request, user);
     const isAgentEnvironment = isKeylessAgentEnvironment(environment);
 
     if (isAgentEnvironment) {
       assertAgentEnvironmentNotExpired(environment);
     }
 
-    const matchedPaths = [request.path, request.route?.path].filter((path): path is string => Boolean(path));
+    await this.assertRouteAllowed(request, environment, isAgentEnvironment);
 
-    if (!matchedPaths.every((path) => isKeylessApiKeyRouteAllowed(request.method, path))) {
-      const claimUrl = isAgentEnvironment ? await this.resolveClaimUrl(environment) : undefined;
+    if (isAgentEnvironment) {
+      await this.consumeTriggerCap(request, environment);
+    }
+  }
 
-      throw keylessHttpException(HttpStatus.FORBIDDEN, {
-        code: KeylessAgentErrorCodeEnum.REQUIRES_ACCOUNT,
-        message: claimUrl
-          ? `This API is not available to keyless environments. Claim this environment to unlock it: ${claimUrl}`
-          : 'This API is not available to keyless environments. Sign up for a free Novu account to use it.',
-        claimUrl,
-      });
+  /** The database is the source of truth: a key removed by a claim must stop working immediately. */
+  private async findEnvironmentHoldingKey(
+    request: KeylessScopedRequest,
+    user: UserSessionData
+  ): Promise<EnvironmentEntity> {
+    const environment = await this.environmentRepository.findOne(
+      { _id: user.environmentId, _organizationId: user.organizationId },
+      '_id _organizationId identifier name createdAt apiKeys.hash'
+    );
+    const presentedKeyHash = hashApiKey(extractApiKey(request.headers.authorization));
+
+    if (!environment?.apiKeys?.some((apiKey) => apiKey.hash === presentedKeyHash)) {
+      throw createKeylessEnvironmentClaimedException();
     }
 
-    const triggerCost = isAgentEnvironment
-      ? computeKeylessTriggerCost(request.method, request.path, request.body)
-      : null;
+    return environment;
+  }
+
+  private async assertRouteAllowed(
+    request: KeylessScopedRequest,
+    environment: EnvironmentEntity,
+    isAgentEnvironment: boolean
+  ): Promise<void> {
+    const matchedPaths = [request.path, request.route?.path].filter((path): path is string => Boolean(path));
+
+    if (matchedPaths.every((path) => isKeylessApiKeyRouteAllowed(request.method, path))) {
+      return;
+    }
+
+    const claimUrl = isAgentEnvironment ? await this.resolveClaimUrl(environment) : undefined;
+
+    throw keylessHttpException(HttpStatus.FORBIDDEN, {
+      code: KeylessAgentErrorCodeEnum.REQUIRES_ACCOUNT,
+      message: claimUrl
+        ? `This API is not available to keyless environments. Claim this environment to unlock it: ${claimUrl}`
+        : 'This API is not available to keyless environments. Sign up for a free Novu account to use it.',
+      claimUrl,
+    });
+  }
+
+  private async consumeTriggerCap(request: KeylessScopedRequest, environment: EnvironmentEntity): Promise<void> {
+    const triggerCost = computeKeylessTriggerCost(request.method, request.path, request.body);
 
     if (triggerCost === null) {
       return;
@@ -115,20 +130,22 @@ export class KeylessScopeInterceptor implements NestInterceptor {
 
     const { allowed, cap } = await this.keylessTriggerCapService.consume(environment._id, triggerCost);
 
-    if (!allowed) {
-      const claimUrl = await this.resolveClaimUrl(environment);
-
-      throw keylessHttpException(HttpStatus.TOO_MANY_REQUESTS, {
-        code: KeylessAgentErrorCodeEnum.TRIGGER_LIMIT_REACHED,
-        message: claimUrl
-          ? `This keyless environment reached its daily limit of ${cap} notification recipients. Claim it to keep sending: ${claimUrl}`
-          : `This keyless environment reached its daily limit of ${cap} notification recipients. Try again tomorrow.`,
-        claimUrl,
-      });
+    if (allowed) {
+      return;
     }
+
+    const claimUrl = await this.resolveClaimUrl(environment);
+
+    throw keylessHttpException(HttpStatus.TOO_MANY_REQUESTS, {
+      code: KeylessAgentErrorCodeEnum.TRIGGER_LIMIT_REACHED,
+      message: claimUrl
+        ? `This keyless environment reached its daily limit of ${cap} notification recipients. Claim it to keep sending: ${claimUrl}`
+        : `This keyless environment reached its daily limit of ${cap} notification recipients. Try again tomorrow.`,
+      claimUrl,
+    });
   }
 
-  private async resolveClaimUrl(environment: ScopedEnvironment): Promise<string | undefined> {
+  private async resolveClaimUrl(environment: EnvironmentEntity): Promise<string | undefined> {
     if (!environment.createdAt) {
       return undefined;
     }
@@ -161,7 +178,7 @@ function extractApiKey(authorization: string | string[] | undefined): string {
   return authorization.slice(API_KEY_HEADER_PREFIX.length);
 }
 
-function assertAgentEnvironmentNotExpired(environment: ScopedEnvironment): void {
+function assertAgentEnvironmentNotExpired(environment: EnvironmentEntity): void {
   if (environment.createdAt && !isKeylessAgentEnvironmentExpired(environment.createdAt)) {
     return;
   }
@@ -185,4 +202,11 @@ function keylessHttpException(
   const extras = Object.fromEntries(Object.entries(body).filter(([, value]) => value !== undefined));
 
   return new HttpException({ statusCode: status, ...extras }, status);
+}
+
+export function createKeylessEnvironmentClaimedException(): HttpException {
+  return keylessHttpException(HttpStatus.UNAUTHORIZED, {
+    code: KeylessAgentErrorCodeEnum.ENVIRONMENT_CLAIMED,
+    message: KEYLESS_ENVIRONMENT_CLAIMED_MESSAGE,
+  });
 }

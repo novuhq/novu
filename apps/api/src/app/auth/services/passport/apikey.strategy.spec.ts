@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { HttpException, UnauthorizedException } from '@nestjs/common';
 import { CacheService, FeatureFlagsService, InMemoryLRUCacheService } from '@novu/application-generic';
 import { ApiAuthSchemeEnum, UserSessionData } from '@novu/shared';
 import { expect } from 'chai';
@@ -80,8 +80,9 @@ describe('ApiKeyStrategy', () => {
       await strategy.validate(SECRET_KEY);
       expect.fail('Expected UnauthorizedException');
     } catch (error) {
-      expect(error).to.be.instanceOf(UnauthorizedException);
-      expect((error as UnauthorizedException).getResponse()).to.include({
+      expect(error).to.be.instanceOf(HttpException);
+      expect((error as HttpException).getStatus()).to.equal(401);
+      expect((error as HttpException).getResponse()).to.include({
         statusCode: 401,
         code: 'keyless_environment_claimed',
       });
