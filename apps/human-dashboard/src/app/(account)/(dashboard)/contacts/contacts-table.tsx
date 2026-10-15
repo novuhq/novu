@@ -88,6 +88,13 @@ export function ContactsTable({
   const [removing, setRemoving] = useState<{ contact: Contact; opening: number } | null>(null);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [leaving, setLeaving] = useState<ReadonlySet<string>>(new Set());
+  // A removed row stays folded only until the refreshed list leaves it out: the same id can be invited again.
+  const [listed, setListed] = useState(contacts);
+  if (contacts !== listed) {
+    setListed(contacts);
+    const ids = new Set(contacts.map((contact) => contact.id));
+    setLeaving((previous) => new Set([...previous].filter((id) => ids.has(id))));
+  }
   const [cardOpen, setCardOpen] = useState(Boolean(cardStart));
   // Whose card opens: the operator's, unless a row of someone who joined was picked.
   const [cardContactId, setCardContactId] = useState<string | null>(null);

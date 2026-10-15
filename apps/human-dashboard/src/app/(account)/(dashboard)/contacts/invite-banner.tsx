@@ -104,7 +104,7 @@ function InviteDialogContent({ start }: { start?: InviteDialogStart }) {
         icon={<DialogMark glyph="check" />}
         title="Invite link ready"
         headerClassName="gap-2.5"
-        description={`Send it to ${created.name} however you like. It works once and expires in 3 days.`}
+        description={`Send it to ${created.name} however you like. It expires in 3 days.`}
         footer={
           <DialogClose asChild>
             <Button variant="secondary">Done</Button>
@@ -171,7 +171,7 @@ function InviteDialogContent({ start }: { start?: InviteDialogStart }) {
           label="ID"
           required
           requiredMark="plain"
-          hint="Lowercase, no spaces. Your agent uses it, like inbox send john."
+          hint="Lowercase, no spaces. Your agent uses it, like agentinbox inbox send Hello --to john."
           error={fieldErrors.contactId}
         >
           {(field) => (
