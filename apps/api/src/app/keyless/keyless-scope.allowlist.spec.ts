@@ -1,6 +1,10 @@
 import { expect } from 'chai';
 
-import { computeKeylessTriggerCost, isKeylessApiKeyRouteAllowed } from './keyless-scope.allowlist';
+import {
+  computeKeylessTriggerCost,
+  isKeylessApiKeyRequestBodyAllowed,
+  isKeylessApiKeyRouteAllowed,
+} from './keyless-scope.allowlist';
 
 describe('isKeylessApiKeyRouteAllowed', () => {
   const allowed: Array<[string, string]> = [
@@ -62,6 +66,27 @@ describe('isKeylessApiKeyRouteAllowed', () => {
       expect(isKeylessApiKeyRouteAllowed(method, path)).to.equal(false);
     });
   }
+});
+
+describe('isKeylessApiKeyRequestBodyAllowed', () => {
+  for (const providerId of ['novu-email', 'novu-sms', 'novu-slack', 'NOVU-EMAIL']) {
+    it(`blocks creating a ${providerId} integration`, () => {
+      expect(isKeylessApiKeyRequestBodyAllowed('POST', '/v1/integrations/', { providerId })).to.equal(false);
+    });
+  }
+
+  it('allows creating integrations of other providers', () => {
+    expect(isKeylessApiKeyRequestBodyAllowed('POST', '/v1/integrations', { providerId: 'telegram' })).to.equal(true);
+    expect(isKeylessApiKeyRequestBodyAllowed('POST', '/v1/integrations', { providerId: 'novu' })).to.equal(true);
+    expect(isKeylessApiKeyRequestBodyAllowed('POST', '/v1/integrations', undefined)).to.equal(true);
+  });
+
+  it('ignores other routes and methods', () => {
+    expect(isKeylessApiKeyRequestBodyAllowed('PUT', '/v1/integrations', { providerId: 'novu-email' })).to.equal(true);
+    expect(isKeylessApiKeyRequestBodyAllowed('POST', '/v1/events/trigger', { providerId: 'novu-email' })).to.equal(
+      true
+    );
+  });
 });
 
 describe('computeKeylessTriggerCost', () => {

@@ -19,7 +19,12 @@ import {
   keylessHttpException,
 } from './keyless-agent-errors';
 import { isKeylessOrganization } from './keyless-organization.helpers';
-import { computeKeylessTriggerCost, isKeylessApiKeyRouteAllowed, KeylessTriggerCost } from './keyless-scope.allowlist';
+import {
+  computeKeylessTriggerCost,
+  isKeylessApiKeyRequestBodyAllowed,
+  isKeylessApiKeyRouteAllowed,
+  KeylessTriggerCost,
+} from './keyless-scope.allowlist';
 import { KeylessTriggerCapService } from './keyless-trigger-cap.service';
 
 const API_KEY_HEADER_PREFIX = `${ApiAuthSchemeEnum.API_KEY} `;
@@ -131,7 +136,11 @@ export class KeylessScopeInterceptor implements NestInterceptor {
   ): Promise<void> {
     const matchedPaths = [request.path, request.route?.path].filter((path): path is string => Boolean(path));
 
-    if (matchedPaths.every((path) => isKeylessApiKeyRouteAllowed(request.method, path))) {
+    const isAllowed =
+      matchedPaths.every((path) => isKeylessApiKeyRouteAllowed(request.method, path)) &&
+      isKeylessApiKeyRequestBodyAllowed(request.method, request.path, request.body);
+
+    if (isAllowed) {
       return;
     }
 

@@ -248,6 +248,23 @@ describe('KeylessScopeInterceptor', () => {
       expect(error.getStatus()).to.equal(403);
     });
 
+    it('rejects creating a Novu-managed delivery integration', async () => {
+      const error = await runExpectingError({
+        method: 'POST',
+        path: '/v1/integrations',
+        body: { providerId: 'novu-email', channel: 'email' },
+      });
+
+      expect(error.getStatus()).to.equal(403);
+      expect(handler.handle).to.have.property('called', false);
+    });
+
+    it('lets other integrations be created', async () => {
+      const body = { providerId: 'telegram', channel: 'chat' };
+
+      expect(await run({ method: 'POST', path: '/v1/integrations', body })).to.equal('handled');
+    });
+
     it('omits the claim URL for environments that are not agent environments', async () => {
       environmentRepository.findOne.resolves(agentEnvironment({ name: 'Development' }) as never);
 
