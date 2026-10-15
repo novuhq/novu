@@ -16,7 +16,7 @@ Use the same Okta application you created for SAML. Okta pushes create, update, 
 
 - The [Okta Workforce SSO](/platform/account/sso/okta) connection exists. It does not have to be activated yet. Until it is activated, Okta can provision people and they cannot sign in.
 - The email domain is verified on that connection. Users outside that domain are ignored.
-- An Okta admin who can open the app's **Provisioning** tab.
+- An Okta admin who can edit the SAML app's **General** settings. The **Provisioning** tab is not on that app until SCIM is enabled.
 - The **SCIM endpoint URL** and **bearer token** from the Security tab. Select **Start configuration**. The provider is Okta because the SSO connection is Okta. You do not choose it again.
 
 <Warning>
@@ -28,17 +28,25 @@ There is no separate activate button. After you save the URL and token in Okta a
 ## Configure provisioning in Okta
 
 <Steps>
-  <Step title="Open API integration">
-    In the Okta app, open the **Provisioning** tab. Select **Configure API Integration** and enable **Enable API integration**.
+  <Step title="Enable SCIM on the SAML app">
+    The app from [Okta Workforce SSO](/platform/account/sso/okta) is a custom SAML integration. Okta hides **Provisioning** on that app until SCIM is turned on.
+
+    Open the app's **General** tab. In **App Settings**, select **Edit**. In **Provisioning**, select **SCIM**, then **Save**. The **Provisioning** tab appears after the save.
+
+    If **Provisioning** is not in **App Settings**, SCIM is not enabled for this Okta org. Okta support has to turn that feature on before this app can push users.
   </Step>
   <Step title="Enter the SCIM credentials">
-    | Okta field | Value from Novu |
-    | --- | --- |
-    | SCIM connector base URL | SCIM endpoint URL |
-    | Unique identifier field for users | `userName` |
-    | API Token | Bearer token |
+    Open the **Provisioning** tab. Under **Settings** > **Integration**, select **Edit**.
 
-    Select **Test API Credentials**, then **Save**. If the test fails, check that the base URL has no extra space and that the token is the current one.
+    | Okta field | Value |
+    | --- | --- |
+    | SCIM connector base URL | SCIM endpoint URL from Novu |
+    | Unique identifier field for users | `userName` |
+    | Supported provisioning actions | **Push New Users** and **Push Profile Updates**. Add **Push Groups** only if you need groups stored. Leave **Import New Users and Profile Updates** off. That option imports people into Okta. |
+    | Authentication Mode | **HTTP Header** |
+    | Authorization | Bearer token from Novu |
+
+    Save. If Okta offers a credential test on this screen, run it before you save. A failure here is the base URL or the token, including a token copied with extra spaces or replaced after the 10-minute overlap.
   </Step>
   <Step title="Choose what Okta pushes">
     Under **To App**, enable:
@@ -94,8 +102,8 @@ If they were also invited from **Settings** > **Team**, that invited membership 
 ## If Okta provisioning fails
 
 <AccordionGroup>
-  <Accordion title="Test API Credentials fails">
-    The base URL or the bearer token does not match what the Security tab shows. Generate a new token if the 10-minute window has passed, paste it into **API Token**, and test again.
+  <Accordion title="The Integration credential test fails">
+    The base URL or the bearer token does not match what the Security tab shows. Generate a new token if the 10-minute window has passed, paste it into **Authorization**, and test again. **Authentication Mode** has to be **HTTP Header**.
   </Accordion>
   <Accordion title="Okta reports a provisioning error for email">
     Map `email` (`user.email`) as well as `userName`. Both have to be sent.

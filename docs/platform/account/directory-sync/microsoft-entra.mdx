@@ -42,20 +42,22 @@ Saving the URL and token does not by itself start the schedule. You also set **P
     Select **Test Connection**, then **Save**. Do not turn provisioning on until this test succeeds.
   </Step>
   <Step title="Check the attribute mappings">
-    Expand **Mappings** and confirm mappings exist for:
+    Expand **Mappings** and open **Provision Microsoft Entra ID Users**. Confirm these targets:
 
-    - `userName`
-    - `name.givenName`
-    - `name.familyName`
-    - `email`
-    - `active`
+    | SCIM target | Entra source |
+    | --- | --- |
+    | `userName` | Usually `userPrincipalName` |
+    | `name.givenName` | `givenName` |
+    | `name.familyName` | `surname` |
+    | `emails[type eq "work"].value` | `mail` |
+    | `active` | Account enabled state |
 
-    `email` has to be the person's mail address. Novu reads SCIM `emails` and does not fall back to `userName` when `userName` happens to look like an email. `active` is what marks the account enabled or deactivated.
+    There is no target named `email`. `emails[type eq "work"].value` is the row that fills the SCIM `emails` value Novu reads. Its source has to be `mail`, the person's primary mail address. Novu does not fall back to `userName` when that value looks like an email. If `mail` is empty, provisioning fails for that user. `active` is what marks the account enabled or deactivated.
   </Step>
   <Step title="Assign who is provisioned and turn it on">
-    Assign the users and groups that should be provisioned. This can be the same assignment you made for SAML. Under **Settings**, set **Provisioning Status** to **On** and select **Save**.
+    Assign the users and groups that should be provisioned. This can be the same assignment you made for SAML. Under **Settings**, set **Scope** to **Sync only assigned users and groups**. Then set **Provisioning Status** to **On** and select **Save**.
 
-    Entra only provisions accounts that are in scope for this application. An account that exists in the tenant and is not assigned will not appear in Novu.
+    With that scope, an account that exists in the tenant and is not assigned is not provisioned. **Sync all users and groups** ignores the assignment and can push the rest of the directory.
   </Step>
 </Steps>
 
@@ -64,7 +66,7 @@ Saving the URL and token does not by itself start the schedule. You also set **P
 | SCIM attribute | Novu user field |
 | --- | --- |
 | `userName` | Username / primary identifier |
-| `emails[0].value` | Email address |
+| `emails[0].value` | Email address. Entra sends this as `emails[type eq "work"].value`. |
 | `name.givenName` | First name |
 | `name.familyName` | Last name |
 | `active` | Enabled or deactivated |
@@ -92,7 +94,7 @@ If they were also invited from **Settings** > **Team**, that membership remains 
     Compare **Tenant URL** and **Secret Token** with the Security tab. Generate a new token if you left the page or the 10-minute overlap has ended.
   </Accordion>
   <Accordion title="Provisioning is on and the user never appears">
-    Confirm they are assigned to this enterprise application, their mail is on a verified domain, and the `email` mapping is present. Then wait for Microsoft's cycle. The provisioning logs on the Entra application show the skip reason.
+    Confirm they are assigned to this enterprise application, their `mail` address is on a verified domain, and `emails[type eq "work"].value` is mapped from `mail`. Then wait for Microsoft's cycle. The provisioning logs on the Entra application show the skip reason.
   </Accordion>
   <Accordion title="The user was removed and can still sign in to Novu">
     The cycle may not have run. After it has, check **Settings** > **Team** for an invited membership that directory sync does not remove.
