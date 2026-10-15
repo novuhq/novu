@@ -25,6 +25,8 @@ import { clerk, findSeedUser, SEED, seedPassword, seedUserToken } from './clerk.
 const BOX = process.env.BOX_HOME ?? '/opt/box';
 const DATA = '/data';
 const REPO = `${DATA}/novu`;
+// nx itself, not through `pnpm nx`, which adds a pnpm start to every call.
+const NX = 'node_modules/.bin/nx';
 const BAKED = `${DATA}/.baked.json`;
 const APPLIED = `${DATA}/.applied.json`;
 // Written before an apply checks out its commit and removed when it succeeds; see `apply`.
@@ -81,6 +83,16 @@ function log(message) {
 function run(cmd, args, options = {}) {
   const result = spawnSync(cmd, args, { stdio: 'inherit', env, cwd: REPO, ...options });
   if (result.status !== 0) throw new Error(`${cmd} ${args.join(' ')} exited with ${result.status ?? result.signal}`);
+}
+
+function runAsync(cmd, args, options = {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, { stdio: 'inherit', env, cwd: REPO, ...options });
+    child.on('error', reject);
+    child.on('exit', (code, signal) =>
+      code === 0 ? resolve() : reject(new Error(`${cmd} ${args.join(' ')} exited with ${code ?? signal}`))
+    );
+  });
 }
 
 function output(cmd, args, options = {}) {
@@ -182,8 +194,11 @@ function pnpmInstall() {
 // vite's peak from ~4 GB to ~2.5 GB). Their dependencies build once, in the first run. nx can't hash the enterprise
 // packages (their src links into the nxignored submodule), so it rebuilds them every time (~25 s); without
 // `enterprise` they are left out and their last dist is reused.
-function build(projects, { enterprise = true } = {}) {
-  const nx = (args) => run('pnpm', ['nx', ...args], { env: { ...env, NODE_OPTIONS: '' } });
+// Libraries first, 4 at a time (the box has 4 vCPUs; peak memory measured 4.2 of 12 GiB). Then the worker, and the
+// API's metadata and build, at the same time.
+async function build(projects, { enterprise = true } = {}) {
+  const nxEnv = { env: { ...env, NODE_OPTIONS: '' } };
+  const nx = (args) => run(NX, args, nxEnv);
   const graph = projectGraph();
   const own = ['@novu/api-service', '@novu/worker', '@novu/dashboard'].filter((project) => projects.includes(project));
   const first = new Set(projects.filter((project) => !own.includes(project)));
@@ -205,13 +220,35 @@ function build(projects, { enterprise = true } = {}) {
       (enterprise || !graph.nodes[project].data.root.startsWith('enterprise/packages/'))
   );
   if (libs.length)
-    nx(['run-many', '-t', 'build', `--projects=${libs.join(',')}`, '--excludeTaskDependencies', '--parallel=2']);
+    nx(['run-many', '-t', 'build', `--projects=${libs.join(',')}`, '--excludeTaskDependencies', '--parallel=4']);
+  const apps = [];
   if (own.includes('@novu/worker'))
-    nx(['run', '@novu/worker:build', '--excludeTaskDependencies', '--', '-c', nestConfigWithoutTypeCheck('worker')]);
-  if (own.includes('@novu/api-service')) {
-    nx(['run', '@novu/api-service:build-metadata', '--excludeTaskDependencies']);
-    nx(['run', '@novu/api-service:build', '--excludeTaskDependencies', '--', '-c', nestConfigWithoutTypeCheck('api')]);
-  }
+    apps.push(
+      runAsync(
+        NX,
+        ['run', '@novu/worker:build', '--excludeTaskDependencies', '--', '-c', nestConfigWithoutTypeCheck('worker')],
+        nxEnv
+      )
+    );
+  if (own.includes('@novu/api-service'))
+    apps.push(
+      (async () => {
+        await runAsync(NX, ['run', '@novu/api-service:build-metadata', '--excludeTaskDependencies'], nxEnv);
+        await runAsync(
+          NX,
+          [
+            'run',
+            '@novu/api-service:build',
+            '--excludeTaskDependencies',
+            '--',
+            '-c',
+            nestConfigWithoutTypeCheck('api'),
+          ],
+          nxEnv
+        );
+      })()
+    );
+  await Promise.all(apps);
   if (own.includes('@novu/dashboard'))
     nx(['run', '@novu/dashboard:build', '--excludeTaskDependencies', '--', '--sourcemap', 'false']);
 }
@@ -239,7 +276,7 @@ function buildBridge() {
 function projectGraph() {
   const file = `${RUN}/nx-graph.json`;
   fs.mkdirSync(RUN, { recursive: true });
-  output('pnpm', ['-s', 'nx', 'graph', `--file=${file}`]);
+  output(NX, ['graph', `--file=${file}`]);
 
   return readJson(file).graph;
 }
@@ -1133,9 +1170,9 @@ function runnable(processes) {
 function affectedApps(files, { install }) {
   if (!files.length) return [];
   // Not --base/--head: nx diffs from their merge base, which for two box merge commits is an older bake.
-  let apps = JSON.parse(
-    output('pnpm', ['-s', 'nx', 'show', 'projects', '--affected', `--files=${files.join(',')}`, '--json'])
-  ).filter((project) => PROJECT_PROCESSES[project]);
+  let apps = JSON.parse(output(NX, ['show', 'projects', '--affected', `--files=${files.join(',')}`, '--json'])).filter(
+    (project) => PROJECT_PROCESSES[project]
+  );
   if (!install && !dashboardBundleChanged(files)) apps = apps.filter((project) => project !== '@novu/dashboard');
   // nx can't see inside the submodule, so a `.source` bump affects nothing; the enterprise code runs in the API and worker.
   if (files.includes('.source')) apps = [...new Set([...apps, '@novu/api-service', '@novu/worker'])];
