@@ -164,10 +164,17 @@ export class KeylessScopeInterceptor implements NestInterceptor {
     }
 
     const units = await this.resolveTriggerUnits(triggerCost, environment);
-    const { allowed, cap } = await this.keylessTriggerCapService.consume(environment._id, units);
+    const { allowed, cap, unavailable } = await this.keylessTriggerCapService.consume(environment._id, units);
 
     if (allowed) {
       return;
+    }
+
+    if (unavailable) {
+      throw keylessHttpException(HttpStatus.SERVICE_UNAVAILABLE, {
+        code: KeylessAgentErrorCodeEnum.UNAVAILABLE,
+        message: 'Keyless triggers are temporarily unavailable. Try again shortly.',
+      });
     }
 
     const claimUrl = await this.resolveClaimUrl(environment);
@@ -188,14 +195,7 @@ export class KeylessScopeInterceptor implements NestInterceptor {
           return cost.units;
         }
 
-        return (
-          cost.units +
-          (await this.topicSubscribersRepository.count({
-            _environmentId: environment._id,
-            _organizationId: environment._organizationId,
-            topicKey: { $in: [...new Set(cost.topicKeys)] },
-          }))
-        );
+        return cost.units + (await this.countTopicRecipients(cost.topicKeys, environment));
       case 'broadcast':
         return this.subscriberRepository.count({
           _environmentId: environment._id,
@@ -207,6 +207,28 @@ export class KeylessScopeInterceptor implements NestInterceptor {
         return exhaustiveCheck;
       }
     }
+  }
+
+  /** Each occurrence of a topic key is a separate fan-out, so a topic's subscribers are charged once per occurrence. */
+  private async countTopicRecipients(topicKeys: string[], environment: EnvironmentEntity): Promise<number> {
+    const occurrences = new Map<string, number>();
+    for (const topicKey of topicKeys) {
+      occurrences.set(topicKey, (occurrences.get(topicKey) ?? 0) + 1);
+    }
+
+    const counts = await Promise.all(
+      [...occurrences].map(async ([topicKey, times]) => {
+        const subscriptions = await this.topicSubscribersRepository.count({
+          _environmentId: environment._id,
+          _organizationId: environment._organizationId,
+          topicKey,
+        });
+
+        return subscriptions * times;
+      })
+    );
+
+    return counts.reduce((total, count) => total + count, 0);
   }
 
   private async resolveClaimUrl(environment: EnvironmentEntity): Promise<string | undefined> {

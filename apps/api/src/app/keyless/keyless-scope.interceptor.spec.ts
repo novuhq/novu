@@ -105,7 +105,7 @@ describe('KeylessScopeInterceptor', () => {
       expiresAt: new Date().toISOString(),
     });
     triggerCapService = sinon.createStubInstance(KeylessTriggerCapService);
-    triggerCapService.consume.resolves({ allowed: true });
+    triggerCapService.consume.resolves({ allowed: true, cap: 200 });
     const logger = sinon.createStubInstance(PinoLogger);
 
     interceptor = new KeylessScopeInterceptor(
@@ -390,12 +390,36 @@ describe('KeylessScopeInterceptor', () => {
         body: { to: ['a', { type: 'Topic', topicKey: 'all' }, { type: 'Topic', topicKey: 'all' }] },
       });
 
+      expect(topicSubscribersRepository.count.calledOnce).to.equal(true);
       expect(topicSubscribersRepository.count.firstCall.args[0]).to.deep.equal({
         _environmentId: ENV_ID,
         _organizationId: KEYLESS_ORG_ID,
-        topicKey: { $in: ['all'] },
+        topicKey: 'all',
       });
       expect(triggerCapService.consume.firstCall.args).to.deep.equal([ENV_ID, 501]);
+    });
+
+    it('charges a topic once per bulk event that targets it', async () => {
+      topicSubscribersRepository.count.resolves(100);
+      const topic = { type: 'Topic', topicKey: 'all' };
+
+      await run({
+        method: 'POST',
+        path: '/v1/events/trigger/bulk',
+        body: { events: Array.from({ length: 100 }, () => ({ to: topic })) },
+      });
+
+      expect(topicSubscribersRepository.count.calledOnce).to.equal(true);
+      expect(triggerCapService.consume.firstCall.args).to.deep.equal([ENV_ID, 10_000]);
+    });
+
+    it('rejects with keyless_unavailable when the cap cannot be checked', async () => {
+      triggerCapService.consume.resolves({ allowed: false, cap: 200, unavailable: true });
+
+      const error = await runExpectingError({ method: 'POST', path: '/v1/events/trigger', body: { to: 'a' } });
+
+      expect(error.getStatus()).to.equal(503);
+      expect(errorBody(error)).to.include({ statusCode: 503, code: 'keyless_unavailable' });
     });
 
     it('does not query topics for triggers without topic recipients', async () => {

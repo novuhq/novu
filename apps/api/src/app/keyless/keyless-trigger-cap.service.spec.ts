@@ -52,20 +52,21 @@ describe('KeylessTriggerCapService', () => {
     expect(await service.consume('env-1', 201)).to.deep.equal({ allowed: false, cap: 200 });
   });
 
-  it('fails open when the cache errors', async () => {
+  it('fails closed when the cache errors', async () => {
     cacheService.eval.rejects(new Error('redis down'));
 
-    expect((await service.consume('env-1', 1)).allowed).to.equal(true);
+    expect(await service.consume('env-1', 1)).to.deep.equal({ allowed: false, cap: 200, unavailable: true });
   });
 
-  it('fails open when the cache is disabled', async () => {
+  it('fails closed when the cache is disabled', async () => {
     cacheService.cacheEnabled.returns(false);
 
-    expect((await service.consume('env-1', 1)).allowed).to.equal(true);
+    expect(await service.consume('env-1', 1)).to.deep.equal({ allowed: false, cap: 200, unavailable: true });
     expect(cacheService.eval.called).to.equal(false);
   });
 
-  it('skips metering when the cap is 0 or the cost is 0', async () => {
+  it('skips metering when the cap is 0 or the cost is 0, even with the cache disabled', async () => {
+    cacheService.cacheEnabled.returns(false);
     expect((await service.consume('env-1', 0)).allowed).to.equal(true);
     process.env.KEYLESS_AGENT_TRIGGER_CAP_PER_ENV_PER_DAY = '0';
     expect((await service.consume('env-1', 10)).allowed).to.equal(true);

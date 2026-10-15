@@ -26,6 +26,13 @@ end
 return next
 `;
 
+export interface KeylessTriggerCapResult {
+  allowed: boolean;
+  cap: number;
+  /** Set when the counter could not be checked, as opposed to the cap being reached. */
+  unavailable?: boolean;
+}
+
 @Injectable()
 export class KeylessTriggerCapService {
   constructor(
@@ -35,11 +42,19 @@ export class KeylessTriggerCapService {
     this.logger.setContext(this.constructor.name);
   }
 
-  async consume(environmentId: string, cost: number): Promise<{ allowed: boolean; cap: number }> {
+  /**
+   * Fails closed: a counter that cannot be read or written is never treated as under the cap.
+   * A cap of 0 is the operator bypass.
+   */
+  async consume(environmentId: string, cost: number): Promise<KeylessTriggerCapResult> {
     const cap = resolveKeylessAgentTriggerCapPerEnvPerDay();
 
-    if (cap === 0 || cost <= 0 || !this.cacheService.cacheEnabled()) {
+    if (cap === 0 || cost <= 0) {
       return { allowed: true, cap };
+    }
+
+    if (!this.cacheService.cacheEnabled()) {
+      return { allowed: false, cap, unavailable: true };
     }
 
     try {
@@ -51,9 +66,9 @@ export class KeylessTriggerCapService {
 
       return { allowed: result !== REJECTED, cap };
     } catch (error) {
-      this.logger.warn({ err: error, environmentId }, 'Keyless trigger cap check failed, allowing the request');
+      this.logger.warn({ err: error, environmentId }, 'Keyless trigger cap check failed, rejecting the request');
 
-      return { allowed: true, cap };
+      return { allowed: false, cap, unavailable: true };
     }
   }
 

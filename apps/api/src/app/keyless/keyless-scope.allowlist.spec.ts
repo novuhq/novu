@@ -165,6 +165,15 @@ describe('computeKeylessTriggerCost', () => {
     ).to.deep.equal(recipients(1, ['all-users']));
   });
 
+  it('keeps a topic once per bulk event that targets it, since each event fans out separately', () => {
+    const topic = { type: 'Topic', topicKey: 'all-users' };
+    const body = { events: [{ to: [topic, topic] }, { to: topic }, { to: [topic, 'a'] }] };
+
+    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger/bulk', body)).to.deep.equal(
+      recipients(1, ['all-users', 'all-users', 'all-users'])
+    );
+  });
+
   it('counts a bulk body without an events array as one unit', () => {
     expect(computeKeylessTriggerCost('POST', '/v1/events/trigger/bulk', { events: 'nope' })).to.deep.equal(
       recipients(1)

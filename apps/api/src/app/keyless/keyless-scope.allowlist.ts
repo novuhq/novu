@@ -47,7 +47,7 @@ type RecipientCost = { units: number; topicKeys: string[] };
 /**
  * A broadcast reaches every subscriber of the environment, and a topic every subscriber of
  * the topic (Inbox sessions can subscribe any number of subscribers), so both are resolved
- * against the database.
+ * against the database. `topicKeys` holds one entry per event that targets the topic.
  */
 export type KeylessTriggerCost = ({ type: 'recipients' } & RecipientCost) | { type: 'broadcast' };
 
@@ -126,9 +126,11 @@ function topicKeyOf(recipient: unknown): string | null {
   return type === TriggerRecipientsTypeEnum.TOPIC && typeof topicKey === 'string' ? topicKey : null;
 }
 
+/** Topic keys are deduplicated per event only: each bulk event fans out to its topics separately. */
 function addRecipientCost(cost: RecipientCost, event: unknown): void {
   const to = (event as { to?: unknown } | null | undefined)?.to;
   const recipients = Array.isArray(to) ? to : [to];
+  const eventTopicKeys = new Set<string>();
 
   for (const recipient of recipients) {
     const topicKey = topicKeyOf(recipient);
@@ -136,9 +138,11 @@ function addRecipientCost(cost: RecipientCost, event: unknown): void {
     if (topicKey === null) {
       cost.units += 1;
     } else {
-      cost.topicKeys.push(topicKey);
+      eventTopicKeys.add(topicKey);
     }
   }
+
+  cost.topicKeys.push(...eventTopicKeys);
 }
 
 /** Daily recipient units a trigger request costs, or `null` when the request is not a trigger. */
