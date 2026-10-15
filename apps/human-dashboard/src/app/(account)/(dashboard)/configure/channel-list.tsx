@@ -9,7 +9,7 @@ import type { ChannelVia } from '@/lib/human-channels-api';
 import type { ChannelRow } from '@/lib/human-channels-overview';
 import { cn } from '@/lib/utils';
 
-import { ChannelLogo, type ComingSoonVia } from './channel-logo';
+import { ChannelLogo, ComingSoonLogo, type ComingSoonVia } from './channel-logo';
 
 /** The section labels of the Configure page: CHANNELS, and SETTINGS once it's there (NV-9039). */
 export const SECTION_LABEL = 'font-mono text-[11px] leading-4 font-medium tracking-[0.66px] text-muted uppercase';
@@ -18,6 +18,13 @@ const ROW = 'relative flex items-center gap-3 border-b border-border px-4 py-3 l
 
 /** The button that opens a row's drawer reaches over the whole row, so the row is the bigger target for a pointer. */
 const WHOLE_ROW = 'after:absolute after:inset-0 after:content-[""]';
+
+/** What a channel gives the agent, under its name until it has handles of its own. */
+const PLACEHOLDERS: Record<ChannelVia, (handle: string) => string> = {
+  email: () => 'Its own email address',
+  telegram: (handle) => `People DM ${handle}’s bot.`,
+  slack: () => 'Its own app in your workspace',
+};
 
 const COMING_SOON: { via: ComingSoonVia; name: string }[] = [
   { via: 'whatsapp', name: 'WhatsApp' },
@@ -46,27 +53,37 @@ export function ChannelList({ handle, channels, details, onOpen }: ChannelListPr
           <ChannelListRow
             key={channel.via}
             channel={channel}
+            placeholder={PLACEHOLDERS[channel.via](handle)}
             detail={details[channel.via]}
             onOpen={() => onOpen(channel.via)}
           />
         ))}
-        {COMING_SOON.map(({ via, name }) => (
-          <li key={via} className={ROW}>
-            <ChannelLogo via={via} size={24} />
-            <RowText name={name} dim>
-              <p className="truncate text-xs leading-4 text-secondary">Coming soon</p>
-            </RowText>
-            <Button
-              variant="secondary"
-              className={SMALL_BUTTON}
-              // Nothing records the request yet: the toast is all there is until the product has a place for it.
-              onClick={() => toast('Access requested', 'success', 'We’ll email you when this channel is available.')}
+        <li className="flex items-center gap-2.5 px-4 py-2.75">
+          <p className="shrink-0 text-xs leading-4 text-muted">Coming soon</p>
+          {COMING_SOON.map(({ via, name }) => (
+            <span
+              key={via}
+              className="flex shrink-0 items-center gap-1.5 rounded border border-border-strong px-2 py-0.75 text-xs leading-4 text-default"
             >
-              Request access
-              <span className="sr-only"> to {name}</span>
-            </Button>
-          </li>
-        ))}
+              <ComingSoonLogo via={via} size={14} />
+              {name}
+            </span>
+          ))}
+          <button
+            type="button"
+            className="ml-auto shrink-0 cursor-pointer text-xs leading-4 text-default transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
+            // Nothing records the request yet: the toast is all there is until the product has a place for it.
+            onClick={() =>
+              toast(
+                'Access requested',
+                'success',
+                `We’ll email you when ${COMING_SOON.map(({ name }) => name).join(' and ')} are available.`
+              )
+            }
+          >
+            Request access <span aria-hidden="true">→</span>
+          </button>
+        </li>
       </ul>
     </section>
   );
@@ -74,11 +91,12 @@ export function ChannelList({ handle, channels, details, onOpen }: ChannelListPr
 
 type ChannelListRowProps = {
   channel: ChannelRow;
+  placeholder: string;
   detail?: string;
   onOpen: () => void;
 };
 
-function ChannelListRow({ channel, detail, onOpen }: ChannelListRowProps) {
+function ChannelListRow({ channel, placeholder, detail, onOpen }: ChannelListRowProps) {
   const { connected, name } = channel;
 
   return (
@@ -93,7 +111,7 @@ function ChannelListRow({ channel, detail, onOpen }: ChannelListRowProps) {
             connected && 'font-mono'
           )}
         >
-          {connected ? (detail ?? channel.placeholder) : channel.placeholder}
+          {connected ? (detail ?? placeholder) : placeholder}
         </p>
       </RowText>
       {connected ? (

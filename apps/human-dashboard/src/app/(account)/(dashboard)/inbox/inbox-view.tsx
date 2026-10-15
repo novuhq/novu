@@ -6,6 +6,7 @@ import { useEffect, useOptimistic, useState, useTransition } from 'react';
 
 import { buttonClassName } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
+import type { HostStatus } from '@/lib/host-status';
 import {
   INBOX_UNREAD_COMMAND,
   INBOX_WATCH_COMMAND,
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils';
 
 import { loadMoreThreadsAction, loadThreadAction } from './actions';
 import { HeaderCommand } from './command-chip';
+import { HostCheck } from './host-check';
 import { InboxEmpty } from './inbox-empty';
 import { InboxClock } from './inbox-time';
 import { InboxToolbar } from './inbox-toolbar';
@@ -35,6 +37,8 @@ type InboxViewProps = {
   empty: { listening: number | null } | null;
   /** The thread the page's address opens, read along with the page. */
   initialThread: { id: string; load: ThreadLoad } | null;
+  /** Whether a host reads the agent's mail, or `null` when that couldn't be read: the header then leaves it out. */
+  hostStatus: HostStatus | null;
   /** When the server rendered this: "now" until the browser takes over, and new on every render. */
   renderedAt: string;
 };
@@ -53,7 +57,16 @@ type MoreThreads = {
  * The view lives in the page's address, so the server lists its threads; the drawer only changes the
  * address in place and reads its thread itself.
  */
-export function InboxView({ view: serverView, page, counts, agent, empty, initialThread, renderedAt }: InboxViewProps) {
+export function InboxView({
+  view: serverView,
+  page,
+  counts,
+  agent,
+  empty,
+  initialThread,
+  hostStatus,
+  renderedAt,
+}: InboxViewProps) {
   const router = useRouter();
   const [view, setOptimisticView] = useOptimistic(serverView);
   const [navigating, startNavigation] = useTransition();
@@ -201,6 +214,7 @@ export function InboxView({ view: serverView, page, counts, agent, empty, initia
             {agent.address}
           </span>
           <span aria-hidden="true" className="flex-1" />
+          {hostStatus && <HostCheck lastCheckedAt={hostStatus.lastCheckedAt} renderedAt={renderedAt} />}
           <Tooltip label="Refresh">
             <button
               type="button"

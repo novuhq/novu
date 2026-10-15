@@ -5,13 +5,15 @@ import { useState } from 'react';
 import { SlackSetup } from '@/components/channels/slack-setup';
 import { TelegramSetup } from '@/components/channels/telegram-setup';
 import { CONFIGURE_DRAWER_PARAM } from '@/components/dashboard/nav';
+import { useNow } from '@/hooks/use-now';
 import type { ToolId } from '@/lib/ai-tools';
+import { type HostStatus, hostLiveness } from '@/lib/host-status';
 import type { ChannelVia } from '@/lib/human-channels-api';
 import type { ChannelRow } from '@/lib/human-channels-overview';
 import type { SlackSetupState } from '@/lib/human-slack-setup';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 
-import { AgentSetup, type AgentSetupTexts } from './agent-setup';
+import { AgentSetup } from './agent-setup';
 import { ChannelList } from './channel-list';
 import { EmailDrawer } from './email-drawer';
 import { type AgentState, IdentityCard } from './identity-card';
@@ -25,8 +27,6 @@ export type ConfigureAgent = {
   pictureUrl?: string;
   createdAt?: string;
   active: boolean;
-  /** A host reads its mail, as far as the dashboard can tell today (see `page.tsx`). */
-  hostConnected: boolean;
 };
 
 type ConfigureViewProps = {
@@ -42,7 +42,12 @@ type ConfigureViewProps = {
   slackAppName: string;
   /** What the operator hands their own agent in each chat app's drawer. */
   channelPrompts: Record<'telegram' | 'slack', string>;
-  setup: AgentSetupTexts;
+  /** Whether a host reads the agent's mail, or `null` when that couldn't be read: it then reads as not connected. */
+  hostStatus: HostStatus | null;
+  /** When the server rendered the page, so "2m ago" starts out as the server said it. */
+  renderedAt: string;
+  /** The API the account lives on, which the CLI is pointed at when it isn't its default. */
+  apiUrl: string;
   docsUrl: string;
   mcpUrl: string | null;
   connectedTools: ToolId[];
@@ -61,7 +66,9 @@ export function ConfigureView({
   slackSetup,
   slackAppName,
   channelPrompts,
-  setup,
+  hostStatus,
+  renderedAt,
+  apiUrl,
   docsUrl,
   mcpUrl,
   connectedTools,
@@ -83,7 +90,10 @@ export function ConfigureView({
   const email = channels.find((channel) => channel.via === 'email' && channel.connected)?.handles[0]?.value ?? null;
   const telegramBot = connected('telegram') && 'botUsername' in telegramSetup ? telegramSetup.botUsername : '';
   const slack = connected('slack') ? describeSlack(slackSetup) : null;
-  const state: AgentState = !agent.active ? 'paused' : agent.hostConnected ? 'active' : 'waiting';
+  // A host reads its mail while one checked the inbox within the last day.
+  const now = useNow(renderedAt);
+  const hostConnected = hostLiveness(hostStatus?.lastCheckedAt, now) === 'live';
+  const state: AgentState = !agent.active ? 'paused' : hostConnected ? 'active' : 'waiting';
 
   return (
     <>
@@ -97,7 +107,7 @@ export function ConfigureView({
           createdAt={agent.createdAt}
           operatorName={operatorName}
           state={state}
-          hostConnected={agent.hostConnected}
+          hostConnected={hostConnected}
           telegram={connected('telegram') ? { bot: telegramBot ? `@${telegramBot}` : null } : null}
           slack={slack && (joinDefined([slack.appName, slack.workspace], ' · ') || 'Connected')}
         />
@@ -107,7 +117,7 @@ export function ConfigureView({
             <h1 className="text-xl leading-7 font-medium tracking-[-0.3px] text-foreground">
               Configure {agent.handle}
             </h1>
-            <p className="text-[13px] leading-4.5 text-secondary">Your card, its channels and settings.</p>
+            <p className="text-[13px] leading-4.5 text-secondary">Channels, agents and settings.</p>
           </header>
           <ChannelList
             handle={agent.handle}
@@ -120,8 +130,11 @@ export function ConfigureView({
             onOpen={setOpenDrawer}
           />
           <AgentSetup
-            connected={agent.hostConnected}
-            setup={setup}
+            handle={agent.handle}
+            address={email}
+            apiUrl={apiUrl}
+            hostStatus={hostStatus}
+            renderedAt={renderedAt}
             docsUrl={docsUrl}
             mcpUrl={mcpUrl}
             connectedTools={connectedTools}
