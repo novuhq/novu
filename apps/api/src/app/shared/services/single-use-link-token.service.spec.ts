@@ -164,7 +164,7 @@ describe('SingleUseTokenCache', () => {
     expect(setArgs[0]).to.equal(`test_link:{${token}}`);
     const parsed = JSON.parse(setArgs[1] as string);
     expect(parsed.payload).to.deep.equal(payload);
-    expect(setArgs[2]).to.deep.equal({ ttl: TTL_SECONDS });
+    expect(setArgs[2]).to.deep.equal({ ttl: TTL_SECONDS, jitter: false });
   });
 
   it('peek returns the entry without consuming the token', async () => {

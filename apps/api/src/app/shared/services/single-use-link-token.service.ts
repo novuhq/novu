@@ -122,8 +122,10 @@ export class SingleUseTokenCache<TPayload> {
     const expiresAtEpoch = mintedAt + ttlSeconds;
     const entry: StoredTokenEntry<TPayload> = { payload, expiresAt: expiresAtEpoch };
 
+    // No jitter: the stored entry must live exactly until the advertised `expiresAt`.
     await this.options.cacheService.set(this.storageKey(token), JSON.stringify(entry), {
       ttl: ttlSeconds,
+      jitter: false,
     });
 
     return { token, expiresAt: new Date(expiresAtEpoch * 1000).toISOString() };

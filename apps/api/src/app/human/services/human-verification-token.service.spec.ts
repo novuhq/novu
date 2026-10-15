@@ -67,7 +67,10 @@ describe('HumanVerificationTokenService', () => {
       1500
     );
     expect(cacheService.set.firstCall.args[0]).to.equal(`human_verify:{${token}}`);
-    expect(cacheService.set.firstCall.args[2]).to.deep.equal({ ttl: HUMAN_VERIFICATION_LINK_TTL_SECONDS });
+    expect(cacheService.set.firstCall.args[2]).to.deep.equal({
+      ttl: HUMAN_VERIFICATION_LINK_TTL_SECONDS,
+      jitter: false,
+    });
   });
 
   it('rejects a link that is not bound to the request that sent it', async () => {
