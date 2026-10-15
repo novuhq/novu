@@ -94,6 +94,17 @@ describe('ClaimKeylessConnect', () => {
     expect(connectClaimTokenService.claim.calledOnce).to.equal(true);
   });
 
+  it('rejects a malformed token as an invalid link without taking the claim lock', async () => {
+    const { usecase, connectClaimTokenService } = setup();
+    const malformed = ClaimKeylessConnectCommand.create({ ...command, token: 'bogus-token-123' });
+
+    const error = await usecase.execute(malformed).catch((caught) => caught);
+
+    expect(error).to.be.instanceOf(BadRequestException);
+    expect((error as BadRequestException).getResponse()).to.include({ code: 'claim_link_invalid' });
+    expect(connectClaimTokenService.tryAcquireClaimLock.called).to.equal(false);
+  });
+
   it('refuses a target that already has an agent with the same identifier', async () => {
     const { usecase, agentRepository, connectClaimTokenService } = setup();
     agentRepository.findOne.onFirstCall().resolves({ identifier: 'human-relay' });

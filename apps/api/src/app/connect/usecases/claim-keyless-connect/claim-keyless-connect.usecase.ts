@@ -23,7 +23,7 @@ import {
   McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum, EnvironmentTypeEnum, HumanChannelViaEnum } from '@novu/shared';
+import { ChannelTypeEnum, EnvironmentTypeEnum, HumanChannelViaEnum, isConnectClaimTokenFormat } from '@novu/shared';
 import { KEYLESS_SUBSCRIBER_ID } from '../../../inbox/utils/keyless.constants';
 import {
   ConnectClaimTokenCacheUnavailableError,
@@ -67,6 +67,10 @@ export class ClaimKeylessConnect {
     const keylessOrganizationId = process.env.KEYLESS_ORGANIZATION_ID;
     if (!keylessOrganizationId) {
       throw new BadRequestException('Keyless mode is not enabled on this deployment.');
+    }
+
+    if (!isConnectClaimTokenFormat(command.token)) {
+      throw claimLinkError('Invalid claim token.', ClaimLinkErrorCodeEnum.INVALID);
     }
 
     const lockAcquired = await this.connectClaimTokenService.tryAcquireClaimLock(command.token);
