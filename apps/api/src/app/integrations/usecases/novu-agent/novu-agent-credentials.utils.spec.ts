@@ -89,10 +89,10 @@ describe('mergeAgentInboxCredentialsForUpdate', () => {
     const result = mergeAgentInboxCredentialsForUpdate(
       EmailProviderIdEnum.AgentEmailInbox,
       { inboxDomain: 'evil.example', senderName: 'Ops' },
-      { inboxDomain: 'inbox.agentinbox.md', inboxRoutingKey: 'stored01' }
+      { inboxDomain: 'agentinbox.md', inboxRoutingKey: 'stored01' }
     );
 
-    expect(result.inboxDomain).to.equal('inbox.agentinbox.md');
+    expect(result.inboxDomain).to.equal('agentinbox.md');
     expect(result.senderName).to.equal('Ops');
   });
 

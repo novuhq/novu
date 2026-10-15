@@ -240,9 +240,7 @@ describe('agent-shared-inbox helpers', () => {
 
     it('uses an explicit domain instead of the Connect domain', () => {
       withEnv({ [ENV_KEY]: 'agentconnect.sh' }, () => {
-        expect(buildAgentSharedInbox('wine-bot', 'a1b2c3d4', 'inbox.agentinbox.md')).toBe(
-          'wine-bot-a1b2c3d4@inbox.agentinbox.md'
-        );
+        expect(buildAgentSharedInbox('wine-bot', 'a1b2c3d4', 'agentinbox.md')).toBe('wine-bot-a1b2c3d4@agentinbox.md');
       });
     });
   });
@@ -258,8 +256,8 @@ describe('agent-shared-inbox helpers', () => {
     });
 
     it('pins Agent Email Inbox to the Agent Inbox domain and everyone else to the Connect domain', () => {
-      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'inbox.agentinbox.md' }, () => {
-        expect(defaultInboxDomainForProvider(EmailProviderIdEnum.AgentEmailInbox)).toBe('inbox.agentinbox.md');
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'agentinbox.md' }, () => {
+        expect(defaultInboxDomainForProvider(EmailProviderIdEnum.AgentEmailInbox)).toBe('agentinbox.md');
         expect(defaultInboxDomainForProvider(EmailProviderIdEnum.NovuAgent)).toBe('agentconnect.sh');
       });
     });
@@ -271,8 +269,8 @@ describe('agent-shared-inbox helpers', () => {
     });
 
     it('keeps a valid stored pin and falls back to the Connect domain otherwise', () => {
-      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'inbox.agentinbox.md' }, () => {
-        expect(resolveAgentInboxDomain({ inboxDomain: 'Inbox.AgentInbox.MD' })).toBe('inbox.agentinbox.md');
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'agentinbox.md' }, () => {
+        expect(resolveAgentInboxDomain({ inboxDomain: 'AgentInbox.MD' })).toBe('agentinbox.md');
         expect(resolveAgentInboxDomain({})).toBe('agentconnect.sh');
         expect(resolveAgentInboxDomain({ inboxDomain: 'not a domain' })).toBe('agentconnect.sh');
         expect(resolveAgentInboxDomain(undefined)).toBe('agentconnect.sh');
@@ -280,8 +278,8 @@ describe('agent-shared-inbox helpers', () => {
     });
 
     it('lists both configured domains once', () => {
-      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'inbox.agentinbox.md' }, () => {
-        expect(getConfiguredSharedInboxDomains()).toEqual(['agentconnect.sh', 'inbox.agentinbox.md']);
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'agentinbox.md' }, () => {
+        expect(getConfiguredSharedInboxDomains()).toEqual(['agentconnect.sh', 'agentinbox.md']);
       });
       withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'agentconnect.sh' }, () => {
         expect(getConfiguredSharedInboxDomains()).toEqual(['agentconnect.sh']);

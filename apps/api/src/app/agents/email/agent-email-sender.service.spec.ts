@@ -9,7 +9,7 @@ import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentEmailSender, resolveAgentEmailSenderName } from './agent-email-sender.service';
 
 const SHARED_DOMAIN = 'agentconnect.sh';
-const AGENT_INBOX_DOMAIN = 'inbox.agentinbox.md';
+const AGENT_INBOX_DOMAIN = 'agentinbox.md';
 const OUTBOUND_INTEGRATION_ID = 'outbound-integration-id';
 const SIGNING_SECRET = 'email-webhook-secret';
 

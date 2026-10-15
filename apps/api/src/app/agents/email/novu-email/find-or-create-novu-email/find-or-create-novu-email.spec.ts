@@ -73,7 +73,7 @@ describe('NovuEmailProvisioningService', () => {
     process.env.NOVU_ENTERPRISE = 'true';
     delete process.env.IS_SELF_HOSTED;
     process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = 'agentconnect.sh';
-    process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = 'inbox.agentinbox.md';
+    process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = 'agentinbox.md';
 
     integrationRepo = {
       find: stub().resolves([]),
@@ -182,7 +182,7 @@ describe('NovuEmailProvisioningService', () => {
 
       const createArg = integrationRepo.create.firstCall.args[0];
       expect(createArg.providerId).to.equal(EmailProviderIdEnum.AgentEmailInbox);
-      expect(createArg.credentials.inboxDomain).to.equal('inbox.agentinbox.md');
+      expect(createArg.credentials.inboxDomain).to.equal('agentinbox.md');
     });
 
     it("falls back to the env's Novu demo email integration when no primary custom integration exists", async () => {

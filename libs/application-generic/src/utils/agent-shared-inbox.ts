@@ -123,7 +123,7 @@ function getSharedAgentDomainOrNull(): string | null {
 }
 
 /**
- * Agent Inbox (Human) shared domain, e.g. `inbox.agentinbox.md`.
+ * Agent Inbox (Human) shared domain, e.g. `agentinbox.md`.
  * Unset or invalid means Human agents fall back to the Connect domain.
  * This never gates `isAgentSharedInboxEnabled()` — the Connect domain does.
  */

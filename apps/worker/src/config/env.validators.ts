@@ -82,7 +82,7 @@ export const envValidators = {
    */
   NOVU_AGENT_SHARED_INBOUND_DOMAIN: str({ default: undefined }),
   /**
-   * Shared inbound domain for Agent Inbox (Human) agents, e.g. `inbox.agentinbox.md`.
+   * Shared inbound domain for Agent Inbox (Human) agents, e.g. `agentinbox.md`.
    * The worker accepts mail for both domains. When unset, only the Connect domain
    * is recognized. US only.
    */

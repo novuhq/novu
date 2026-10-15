@@ -342,7 +342,7 @@ describe('DomainRouteStrategy', () => {
 
   describe('shared agent domain branch', () => {
     const SHARED_DOMAIN = 'agentconnect.sh';
-    const AGENT_INBOX_DOMAIN = 'inbox.agentinbox.md';
+    const AGENT_INBOX_DOMAIN = 'agentinbox.md';
     const AGENT_ID = '65a3f1d2b8e4c7a9f3b2c1d0';
     const INTEGRATION_ID = '65a3f1d2b8e4c7a9f3b2c1ff';
     const ROUTING_KEY = 'a1b2c3d4';
