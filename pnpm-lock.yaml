@@ -4680,7 +4680,7 @@ importers:
 
   playground/nextjs:
     dependencies:
-      '@ai-sdk/openai':
+      '@ai-sdk/anthropic':
         specifier: 4.0.34
         version: 4.0.34(zod@4.4.3)
       '@ai-sdk/react':
@@ -4698,9 +4698,6 @@ importers:
       '@langchain/core':
         specifier: ^1.1.48
         version: 1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.223.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0)
-      '@langchain/openai':
-        specifier: ^1.2.4
-        version: 1.2.4(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.223.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0))(ws@8.21.0)
       '@novu/agent-toolkit':
         specifier: workspace:*
         version: link:../../packages/agent-toolkit
@@ -4977,6 +4974,12 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
+  '@ai-sdk/anthropic@4.0.34':
+    resolution: {integrity: sha512-k3cj4AQ2calM6idUodma1cYlQuEeRxBjzyc2IBO+5kx+yAI8x0fku/Fq+DBKdOgSwNoBbv7lO1CsmmEkBBFbmw==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
   '@ai-sdk/gateway@3.0.14':
     resolution: {integrity: sha512-udVpkDaQ00jMcBvtGGvmkEBU31XidsHB4E8HIF9l7/H7lyjOS/EtXzN2adoupDg5j1/VjjSI3Ny5P1zHUvLyMA==}
     engines: {node: '>=18'}
@@ -5026,12 +5029,6 @@ packages:
   '@ai-sdk/openai@3.0.10':
     resolution: {integrity: sha512-G6HJORN0rKuCFrqIUiYchjl2b4UjzKvv3VcNuW7xwQIdI8EcdB9Pr8ZaR9nEImK9E639nM8gCfvFEUM1xwGaCA==}
     engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/openai@4.0.34':
-    resolution: {integrity: sha512-DPGehPPwuTmnWxCDxeWZJgGLn7Lh+QfiiN20tvqnEQMUwCmuadZ3FLlRtTkTpeEa2l+Lsa/sWVkBwShWGjGmKA==}
-    engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
@@ -30517,6 +30514,12 @@ snapshots:
       '@ai-sdk/provider-utils': 4.0.51(zod@3.25.76)
       zod: 3.25.76
 
+  '@ai-sdk/anthropic@4.0.34(zod@4.4.3)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.6
+      '@ai-sdk/provider-utils': 5.0.23(zod@4.4.3)
+      zod: 4.4.3
+
   '@ai-sdk/gateway@3.0.14(zod@4.3.5)':
     dependencies:
       '@ai-sdk/provider': 3.0.3
@@ -30594,12 +30597,6 @@ snapshots:
       '@ai-sdk/provider': 3.0.3
       '@ai-sdk/provider-utils': 4.0.51(zod@3.25.20)
       zod: 3.25.20
-
-  '@ai-sdk/openai@4.0.34(zod@4.4.3)':
-    dependencies:
-      '@ai-sdk/provider': 4.0.6
-      '@ai-sdk/provider-utils': 5.0.23(zod@4.4.3)
-      zod: 4.4.3
 
   '@ai-sdk/provider-utils@4.0.51(zod@3.25.20)':
     dependencies:
@@ -37551,15 +37548,6 @@ snapshots:
   '@langchain/openai@1.2.4(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.223.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0))(ws@8.21.0)':
     dependencies:
       '@langchain/core': 1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.223.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0)
-      js-tiktoken: 1.0.21
-      openai: 6.17.0(ws@8.21.0)(zod@3.25.76)
-      zod: 3.25.76
-    transitivePeerDependencies:
-      - ws
-
-  '@langchain/openai@1.2.4(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.223.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0))(ws@8.21.0)':
-    dependencies:
-      '@langchain/core': 1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.223.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0)
       js-tiktoken: 1.0.21
       openai: 6.17.0(ws@8.21.0)(zod@3.25.76)
       zod: 3.25.76
