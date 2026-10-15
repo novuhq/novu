@@ -728,7 +728,7 @@ describe('SendMessagePush - provider content overrides', () => {
       expect(messageRepository.create.firstCall.args[0].deviceTokens).to.deep.equal(['vip-token-1']);
     });
 
-    it('resolves non-primary integration by identifier when subscriber has no channel for that integration', async () => {
+    it('applies an integration override only through the integration selection picks, never by identifier lookup', async () => {
       const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
       sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
 
@@ -740,11 +740,7 @@ describe('SendMessagePush - provider content overrides', () => {
         credentials: {},
       };
 
-      const selectIntegrationExecute = sinon.stub();
-      selectIntegrationExecute
-        .withArgs(sinon.match({ identifier: alertsIntegration.identifier }))
-        .resolves({ integration: alertsIntegration });
-      selectIntegrationExecute.resolves({ integration: fcmIntegration });
+      const selectIntegrationExecute = sinon.stub().resolves({ integration: alertsIntegration });
 
       const usecase = new SendMessagePush(
         {} as never,
@@ -777,8 +773,27 @@ describe('SendMessagePush - provider content overrides', () => {
 
       expect(result.status).to.equal(SendMessageStatus.SUCCESS);
       sinon.assert.calledOnce(sendStub);
-      sinon.assert.calledWithMatch(selectIntegrationExecute, { identifier: 'fcm-alerts' });
+      sinon.assert.neverCalledWithMatch(selectIntegrationExecute, { identifier: sinon.match.string });
       expect(sendStub.firstCall.args[0].bridgeProviderData).to.deep.equal({ topic: 'alerts' });
+    });
+
+    it('does not add a send for an integration override when the subscriber already has a usable channel', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const result = await buildUsecase().execute(
+        buildCommand({
+          channels: [{ ...fcmChannelWithTokens, credentials: { deviceTokens: ['d1'] } }],
+          providerOverrides: {
+            [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'fcm-alerts': { topic: 'alerts' } },
+          },
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      sinon.assert.calledOnce(sendStub);
+      expect(sendStub.firstCall.args[0].target).to.deep.equal(['d1']);
+      expect(sendStub.firstCall.args[0].bridgeProviderData).to.deep.equal({});
     });
 
     it('sends once per integration when two integrations configure explicit integration-scoped topic overrides with the same topic', async () => {
@@ -940,26 +955,6 @@ describe('SendMessagePush - provider content overrides', () => {
       expect(result.status).to.equal(SendMessageStatus.SUCCESS);
       sinon.assert.calledOnce(sendStub);
       expect(getHandlerStub.firstCall.args[0]).to.include({ _id: fcmIntegration._id });
-    });
-
-    it('ignores an integration override whose identifier belongs to another provider', async () => {
-      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
-      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
-
-      const expoIntegration = { ...fcmIntegration, identifier: 'expo-main', providerId: PushProviderIdEnum.EXPO };
-      const selectIntegrationExecute = sinon.stub().resolves({ integration: expoIntegration });
-
-      const result = await buildUsecase(undefined, selectIntegrationExecute).execute(
-        buildCommand({
-          channels: [],
-          providerOverrides: {
-            [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { [expoIntegration.identifier]: { topic: 'updates' } },
-          },
-        })
-      );
-
-      expect(result.status).to.equal(SendMessageStatus.SKIPPED);
-      sinon.assert.notCalled(sendStub);
     });
   });
 });

@@ -416,8 +416,8 @@ export class SendMessagePush extends SendMessageBase {
   /**
    * A provider-wide routing override (trigger, step or bridge provider layer) is sent through the
    * integration `selectIntegration` picks. A subscriber integration keeps its own send only while its
-   * `__nvIntegrationOverrides__` entry wins the routing; integration entries the subscriber has no
-   * channel for get a synthetic channel.
+   * `__nvIntegrationOverrides__` entry wins the routing. A subscriber without a usable channel for the
+   * provider falls back to the selected integration, which sends if its own entry sets a destination.
    */
   private async resolvePushChannelTargets(
     pushChannels: IChannelSettings[],
@@ -442,28 +442,23 @@ export class SendMessagePush extends SendMessageBase {
     const usedIdentifiers = new Set(targets.flatMap((target) => target.selection?.integration.identifier ?? []));
 
     for (const [providerId, providerRoute] of providerRoutes) {
-      const lookups: Array<string | undefined> = getIntegrationOverrideIdentifiers(command, providerId).filter(
-        (identifier) =>
-          !usedIdentifiers.has(identifier) && resolvePushRoute(command, providerId, identifier).isIntegrationScoped
-      );
-      const providerSendCovered = targets.some(
-        (target) =>
-          target.channel.providerId === providerId && target.route !== undefined && !target.route.isIntegrationScoped
-      );
+      const providerTargets = targets.filter((target) => target.channel.providerId === providerId && target.route);
+      const needsProviderSend =
+        providerRoute.credentials && providerTargets.every((target) => target.route?.isIntegrationScoped);
+      const needsIntegrationSend =
+        providerTargets.length === 0 &&
+        getIntegrationOverrideIdentifiers(command, providerId).some(
+          (identifier) => resolvePushRoute(command, providerId, identifier).isIntegrationScoped
+        );
 
-      if (providerRoute.credentials && !providerSendCovered) {
-        lookups.unshift(undefined);
+      if (!needsProviderSend && !needsIntegrationSend) {
+        continue;
       }
 
-      for (const identifier of lookups) {
-        const target = await this.selectOverrideTarget(command, providerId, identifier);
-        const selectedIdentifier = target?.selection?.integration.identifier;
+      const target = await this.selectOverrideTarget(command, providerId);
+      const selectedIdentifier = target?.selection?.integration.identifier;
 
-        if (!target || !selectedIdentifier || usedIdentifiers.has(selectedIdentifier)) {
-          continue;
-        }
-
-        usedIdentifiers.add(selectedIdentifier);
+      if (target && selectedIdentifier && !usedIdentifiers.has(selectedIdentifier)) {
         targets.push(target);
       }
     }
@@ -488,21 +483,18 @@ export class SendMessagePush extends SendMessageBase {
 
   private async selectOverrideTarget(
     command: SendMessageChannelCommand,
-    providerId: PushProviderIdEnum,
-    identifier?: string
+    providerId: PushProviderIdEnum
   ): Promise<PushChannelTarget | undefined> {
     const selection = await this.getIntegration({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       channelType: ChannelTypeEnum.PUSH,
       providerId,
-      identifier,
       userId: command.userId,
       filterData: this.getIntegrationFilterData(command),
     });
 
-    // Identifier lookups in `SelectIntegration` do not filter by provider.
-    if (!selection || selection.integration.providerId !== providerId) {
+    if (!selection) {
       return undefined;
     }
 
