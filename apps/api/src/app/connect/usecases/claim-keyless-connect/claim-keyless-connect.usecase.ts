@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from 'node:crypto';
 import {
   BadRequestException,
   ConflictException,
@@ -5,7 +6,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { encryptApiKey, PinoLogger } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentMcpServerRepository,
@@ -30,6 +31,7 @@ import {
   InvalidConnectClaimTokenError,
 } from '../../services/connect-claim-token.service';
 import { ClaimKeylessConnectCommand } from './claim-keyless-connect.command';
+import { ClaimKeylessConnectHooks, ClaimLinkErrorCodeEnum } from './claim-keyless-connect.types';
 
 export interface ClaimKeylessConnectResult {
   environmentId: string;
@@ -58,7 +60,10 @@ export class ClaimKeylessConnect {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(command: ClaimKeylessConnectCommand): Promise<ClaimKeylessConnectResult> {
+  async execute(
+    command: ClaimKeylessConnectCommand,
+    hooks: ClaimKeylessConnectHooks = {}
+  ): Promise<ClaimKeylessConnectResult> {
     const keylessOrganizationId = process.env.KEYLESS_ORGANIZATION_ID;
     if (!keylessOrganizationId) {
       throw new BadRequestException('Keyless mode is not enabled on this deployment.');
@@ -78,7 +83,7 @@ export class ClaimKeylessConnect {
       }
 
       if (payload.org !== keylessOrganizationId) {
-        throw new BadRequestException('Invalid claim token.');
+        throw claimLinkError('Invalid claim token.', ClaimLinkErrorCodeEnum.INVALID);
       }
 
       const keylessEnvironment = await this.environmentRepository.findOne({
@@ -98,11 +103,18 @@ export class ClaimKeylessConnect {
       await this.assertNoAgentIdentifierClash(sourceAgents, target);
       await this.assertOperatorEmailVerified(keylessEnvironment._id);
 
+      const moveOptions = (await hooks.beforeMove?.({ keylessEnvironment, targetEnvironment })) ?? {};
+      const excludedProviderIds = moveOptions.excludeIntegrationProviderIds ?? [];
+
       await this.moveIntoTarget(async (session) => {
         await this.agentRepository.update(sourceScope, { $set: target }, { session });
         await this.agentIntegrationRepository.update(sourceScope, { $set: target }, { session });
         await this.integrationRepository.update(
-          { ...sourceScope, channel: { $ne: ChannelTypeEnum.IN_APP } },
+          {
+            ...sourceScope,
+            channel: { $ne: ChannelTypeEnum.IN_APP },
+            ...(excludedProviderIds.length > 0 && { providerId: { $nin: excludedProviderIds } }),
+          },
           { $set: target },
           { session }
         );
@@ -119,6 +131,15 @@ export class ClaimKeylessConnect {
           { $set: target },
           { session }
         );
+
+        const keyOwnerId = keylessEnvironment.apiKeys?.[0]?._userId;
+        if (moveOptions.revokeKeylessApiKeys && keyOwnerId) {
+          await this.environmentRepository.update(
+            { _id: keylessEnvironment._id, _organizationId: keylessOrganizationId },
+            { $set: { apiKeys: [buildUnusableApiKey(keyOwnerId)] } },
+            { session }
+          );
+        }
       });
 
       const migratedAgentId = sourceAgents[0]?._id;
@@ -213,14 +234,14 @@ export class ClaimKeylessConnect {
   private rethrowConnectClaimTokenError(error: unknown): never {
     if (error instanceof InvalidConnectClaimTokenError) {
       if (error.reason === 'used') {
-        throw new BadRequestException('This claim link has already been used.');
+        throw claimLinkError('This claim link has already been used.', ClaimLinkErrorCodeEnum.USED);
       }
 
       if (error.reason === 'expired') {
-        throw new BadRequestException('This claim link has expired.');
+        throw claimLinkError('This claim link has expired.', ClaimLinkErrorCodeEnum.EXPIRED);
       }
 
-      throw new BadRequestException('Invalid claim token.');
+      throw claimLinkError('Invalid claim token.', ClaimLinkErrorCodeEnum.INVALID);
     }
 
     if (error instanceof ConnectClaimTokenCacheUnavailableError) {
@@ -243,4 +264,23 @@ export class ClaimKeylessConnect {
 
     return development;
   }
+}
+
+function claimLinkError(message: string, code: ClaimLinkErrorCodeEnum): BadRequestException {
+  // Keeps the `error` field Nest adds for string messages, so existing response bodies only gain `code`.
+  return new BadRequestException({ message, error: 'Bad Request', code });
+}
+
+/**
+ * `apiKeys.key` is uniquely indexed and an empty array indexes as null, so only one environment could ever have
+ * no keys. Revoke by swapping in a key whose secret is discarded instead.
+ */
+function buildUnusableApiKey(userId: string): { key: string; hash: string; _userId: string } {
+  const secret = randomBytes(32).toString('hex');
+
+  return {
+    key: encryptApiKey(secret),
+    hash: createHash('sha256').update(secret).digest('hex'),
+    _userId: userId,
+  };
 }
