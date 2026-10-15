@@ -1,7 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AGENT_INBOX_REACHES, type AgentInboxReach } from '@novu/dal';
 import { AGENT_NAME_MAX_LENGTH } from '@novu/shared';
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsBoolean, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 import { AGENT_DESCRIPTION_MAX_LENGTH, trimmed } from './setup-human-relay.dto';
 
 /** Which relay agent a call is about, for a setup made with its own `--agent-identifier`. */
@@ -35,6 +36,23 @@ export class UpdateHumanAgentRequestDto extends HumanAgentQueryDto {
   @Transform(trimmed)
   @MaxLength(AGENT_DESCRIPTION_MAX_LENGTH)
   description?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Who can write to the agent: `anyone`, or only its `contacts`. Missing leaves it as it is. The operator’s dashboard only.',
+    enum: [...AGENT_INBOX_REACHES],
+  })
+  @IsOptional()
+  @IsIn(AGENT_INBOX_REACHES)
+  reach?: AgentInboxReach;
+
+  @ApiPropertyOptional({
+    description:
+      'Pauses (`true`) or resumes (`false`) the agent. Paused, messages keep arriving but its hosts can’t read the inbox or send. The operator’s dashboard only.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  paused?: boolean;
 }
 
 export class HumanAgentResponseDto {
@@ -58,4 +76,13 @@ export class HumanAgentResponseDto {
 
   @ApiPropertyOptional({ description: 'When `human setup` made the agent.' })
   createdAt?: string;
+
+  @ApiProperty({ description: 'Who can write to the agent.', enum: [...AGENT_INBOX_REACHES] })
+  reach: AgentInboxReach;
+
+  @ApiProperty({ description: 'Whether the operator paused the agent.' })
+  paused: boolean;
+
+  @ApiPropertyOptional({ description: 'When the agent was paused. Missing while it isn’t.' })
+  pausedAt?: string;
 }

@@ -1,11 +1,14 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
+import { revalidatePath } from 'next/cache';
 
+import { CONFIGURE_PATH } from '@/components/dashboard/nav';
 import { type HumanAccount, readHumanAccount } from '@/lib/human-account';
-import { isHumanApiNotFound } from '@/lib/human-api-error';
+import { AGENT_NOT_SET_UP_MESSAGE, updateAgentSettings } from '@/lib/human-agent-api';
+import { isHumanApiNotFound, isHumanApiRefusal } from '@/lib/human-api-error';
 import { getInboxThread, listInboxThreads } from '@/lib/human-inbox-api';
-import { type InboxThreadsPage, type InboxThreadView, type InboxView, parseInboxParams } from '@/lib/inbox';
+import { INBOX_PATH, type InboxThreadsPage, type InboxThreadView, type InboxView, parseInboxParams } from '@/lib/inbox';
 
 const SESSION_ENDED = 'Your session has ended. Sign in again to continue.';
 
@@ -15,6 +18,8 @@ const MAX_ID_LENGTH = 200;
 export type LoadThreadResult = { ok: true; view: InboxThreadView } | { ok: false; error: string };
 
 export type LoadThreadsResult = { ok: true; page: InboxThreadsPage } | { ok: false; error: string };
+
+export type ResumeAgentResult = { ok: true } | { ok: false; error: string };
 
 /**
  * A thread for the drawer, or the page of messages before `before`. Only reads: the thread stays unread
@@ -63,6 +68,34 @@ export async function loadMoreThreadsAction(view: InboxView, after: string): Pro
     console.error('Failed to load more inbox threads', error);
 
     return { ok: false, error: 'We couldn’t load more threads. Try again in a moment.' };
+  }
+}
+
+/** "Resume" on the paused banner: the agent's hosts can read the inbox and send again. */
+export async function resumeAgentAction(): Promise<ResumeAgentResult> {
+  const account = await readSignedInAccount();
+  if (!account) {
+    return { ok: false, error: SESSION_ENDED };
+  }
+
+  try {
+    await updateAgentSettings(account, { paused: false });
+    revalidatePath(INBOX_PATH);
+    revalidatePath(CONFIGURE_PATH);
+
+    return { ok: true };
+  } catch (error) {
+    if (isHumanApiNotFound(error)) {
+      return { ok: false, error: AGENT_NOT_SET_UP_MESSAGE };
+    }
+
+    if (isHumanApiRefusal(error)) {
+      return { ok: false, error: (error as Error).message };
+    }
+
+    console.error('Failed to resume the agent', error);
+
+    return { ok: false, error: 'We couldn’t resume the agent. Try again in a moment.' };
   }
 }
 

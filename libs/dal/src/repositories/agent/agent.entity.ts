@@ -68,6 +68,11 @@ export interface AgentHostWaitingMessage {
   seenAt: string;
 }
 
+/** Who can write to an Agent Inbox agent: anyone, or only its contacts. */
+export const AGENT_INBOX_REACHES = ['anyone', 'contacts'] as const;
+
+export type AgentInboxReach = (typeof AGENT_INBOX_REACHES)[number];
+
 /** Which hosts act as an Agent Inbox agent, and when they last checked its inbox. */
 export interface AgentHosts {
   cli?: AgentHostEntry;
@@ -92,6 +97,15 @@ export class AgentEntity {
 
   /** Set for Human relay agents only, once a host has connected or checked the inbox. */
   hosts?: AgentHosts;
+
+  /** Set for Human relay agents only, once the operator chose on the dashboard. Missing reads as `anyone`. */
+  reach?: AgentInboxReach;
+
+  /**
+   * Set for Human relay agents only, while the operator has paused them on the dashboard (ISO timestamp).
+   * Messages keep arriving, but hosts can't read the inbox or send until the operator resumes the agent.
+   */
+  pausedAt?: string;
 
   active: boolean;
 
