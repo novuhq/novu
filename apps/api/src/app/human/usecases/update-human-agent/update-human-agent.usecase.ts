@@ -7,8 +7,6 @@ import { HumanAgentPictureService } from '../../services/human-agent-picture.ser
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
 import { UpdateHumanAgentCommand } from './update-human-agent.command';
 
-type SettingsSet = Partial<Pick<AgentEntity, 'reach' | 'pausedAt'>>;
-
 /**
  * Changes the relay agent after `human setup` made it: who it is to the people it talks to (its name and
  * description), who can write to it, and whether it is paused. The agents API refuses to touch a relay
@@ -54,28 +52,36 @@ export class UpdateHumanAgent {
     return this.humanAgentPicture.describe(await this.applySettings(agent, command));
   }
 
-  /** Saves who can reach the agent and whether it is paused, when they differ, and returns the agent as it is now. */
+  /**
+   * Saves who can reach the agent and whether it is paused, when they differ, and returns the agent as it is
+   * stored now. A pause is only written while the agent isn't paused yet, so two pauses at once keep the
+   * first one's time.
+   */
   private async applySettings(agent: AgentEntity, command: UpdateHumanAgentCommand): Promise<AgentEntity> {
-    const set: SettingsSet = {
-      ...(command.reach !== undefined && command.reach !== (agent.reach ?? 'anyone') ? { reach: command.reach } : {}),
-      ...(command.paused === true && !agent.pausedAt ? { pausedAt: new Date().toISOString() } : {}),
-    };
+    const changesReach = command.reach !== undefined && command.reach !== (agent.reach ?? 'anyone');
+    const pauses = command.paused === true && !agent.pausedAt;
     const resumes = command.paused === false && Boolean(agent.pausedAt);
 
-    if (Object.keys(set).length === 0 && !resumes) {
+    if (!changesReach && !pauses && !resumes) {
       return agent;
     }
 
-    await this.agentRepository.updateOne(
-      { _id: agent._id, _environmentId: agent._environmentId, _organizationId: agent._organizationId },
-      {
-        ...(Object.keys(set).length > 0 ? { $set: set } : {}),
+    const scope = { _id: agent._id, _environmentId: agent._environmentId, _organizationId: agent._organizationId };
+
+    if (changesReach || resumes) {
+      await this.agentRepository.updateOne(scope, {
+        ...(changesReach ? { $set: { reach: command.reach } } : {}),
         ...(resumes ? { $unset: { pausedAt: 1 } } : {}),
-      }
-    );
+      });
+    }
 
-    const { pausedAt: _pausedAt, ...unpaused } = agent;
+    if (pauses) {
+      await this.agentRepository.updateOne(
+        { ...scope, pausedAt: { $exists: false } },
+        { $set: { pausedAt: new Date().toISOString() } }
+      );
+    }
 
-    return { ...(resumes ? unpaused : agent), ...set };
+    return (await this.agentRepository.findOne(scope, '*')) ?? agent;
   }
 }

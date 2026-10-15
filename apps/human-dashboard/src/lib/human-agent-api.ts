@@ -25,8 +25,8 @@ export type RelayAgent = {
   pictureUrl?: string;
   /** ISO timestamp of the `setup` that made it. */
   createdAt?: string;
-  /** Who can reach it and whether it is paused. The defaults when they couldn't be read just now. */
-  settings: AgentSettings;
+  /** Who can reach it and whether it is paused. `null` when they couldn't be read just now. */
+  settings: AgentSettings | null;
 };
 
 type ApiAgent = Omit<RelayAgent, 'id' | 'pictureUrl' | 'settings'> & { _id: string };
@@ -62,7 +62,7 @@ export const getRelayAgent = cache(async (account: HumanAccount): Promise<RelayA
       description: agent.description,
       pictureUrl: details?.pictureUrl,
       createdAt: agent.createdAt,
-      settings: details ? toSettings(details) : DEFAULT_AGENT_SETTINGS,
+      settings: details ? toSettings(details) : null,
     };
   } catch (error) {
     if (isHumanApiNotFound(error)) {
@@ -75,7 +75,7 @@ export const getRelayAgent = cache(async (account: HumanAccount): Promise<RelayA
 
 /**
  * The picture and the settings. Neither may take a page down: without them the agent is shown with the
- * mascot, open to anyone and not paused, and changing a setting answers with what the API really has.
+ * mascot, and its settings as unknown rather than as defaults that may not be what is saved.
  */
 async function loadHumanDetails(account: HumanAccount): Promise<HumanApiAgent | null> {
   try {

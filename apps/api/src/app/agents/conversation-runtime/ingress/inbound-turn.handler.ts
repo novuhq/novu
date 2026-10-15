@@ -1727,6 +1727,11 @@ export class AgentInboundHandler implements OnModuleInit {
 
     const resolution = await this.resolveEventSubscriber(agentId, config, platformUserId, 'message-updated');
 
+    // Contacts only: a stranger can't change the inbox by editing a message either.
+    if (await this.isKeptOutOfAgentInbox(agentId, config, getResolvedSubscriberId(resolution))) {
+      return;
+    }
+
     const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
     const richContent = Array.isArray(message.attachments)
       ? {
@@ -1828,6 +1833,11 @@ export class AgentInboundHandler implements OnModuleInit {
     const platformUserId = previousAuthor?.userId ?? current?.senderId;
     const resolution = await this.resolveEventSubscriber(agentId, config, platformUserId, 'message-deleted');
 
+    // Contacts only: a stranger can't change the inbox by deleting a message either.
+    if (await this.isKeptOutOfAgentInbox(agentId, config, getResolvedSubscriberId(resolution))) {
+      return;
+    }
+
     if (event.messageId) {
       await this.conversationService.deleteInboundMessage({
         conversationId: conversation._id,
@@ -1908,6 +1918,12 @@ export class AgentInboundHandler implements OnModuleInit {
     const thread = event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread);
 
     const resolution = await this.resolveEventSubscriber(agentId, config, platformUserId, 'reaction');
+
+    // Contacts only: a stranger can't change the inbox by reacting either.
+    if (await this.isKeptOutOfAgentInbox(agentId, config, getResolvedSubscriberId(resolution))) {
+      return;
+    }
+
     const reaction = await this.recordInboundReaction(config, conversation, event, resolution);
 
     if (

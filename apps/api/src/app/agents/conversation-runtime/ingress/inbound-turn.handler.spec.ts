@@ -3184,4 +3184,69 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_MESSAGE_DELETED);
     });
   });
+
+  describe('edits, deletes and reactions on an Agent Inbox agent open to contacts only', () => {
+    const contactsOnly = { ...config, isHumanRelay: true, inboxReach: 'contacts' };
+    const author = { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false };
+
+    async function editDeleteAndReact(handler: AgentInboundHandler) {
+      await handler.handleMessageUpdated(
+        'agent1',
+        contactsOnly as any,
+        { id: 'thread1', isDM: true } as any,
+        { id: 'msg-1', text: 'replaced text', author, raw: {} } as any
+      );
+      await handler.handleMessageDeleted(
+        'agent1',
+        contactsOnly as any,
+        {
+          messageId: 'msg-1',
+          threadId: 'thread1',
+          channelId: 'C1',
+          previousMessage: { id: 'msg-1', text: 'hello', author },
+          raw: {},
+        } as any
+      );
+      await handler.handleReaction('agent1', contactsOnly as any, { ...makeReactionEvent(), user: author } as any);
+    }
+
+    it('keeps someone who is not a contact from changing what the inbox holds', async () => {
+      const { handler, conversationService, bridgeExecutor, humanRelayRuntime } = makeHandler();
+
+      await editDeleteAndReact(handler);
+
+      expect(conversationService.updateInboundMessage.called).to.equal(false);
+      expect(conversationService.deleteInboundMessage.called).to.equal(false);
+      expect(conversationService.persistInboundReaction.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+      expect(humanRelayRuntime.dispatch.called).to.equal(false);
+    });
+
+    it('keeps out a subscriber an agent made up for an unknown sender', async () => {
+      const { handler, conversationService } = makeHandler({
+        subscriberResolve: sinon.stub().resolves('stranger1'),
+        subscriberFindById: sinon.stub().resolves({
+          _id: 'subscriber-mongo-2',
+          subscriberId: 'stranger1',
+          data: { [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE },
+        }),
+      });
+
+      await editDeleteAndReact(handler);
+
+      expect(conversationService.updateInboundMessage.called).to.equal(false);
+      expect(conversationService.deleteInboundMessage.called).to.equal(false);
+      expect(conversationService.persistInboundReaction.called).to.equal(false);
+    });
+
+    it('still takes them from a contact', async () => {
+      const { handler, conversationService } = makeHandler(makeResolvedSubscriberOverrides('ada'));
+
+      await editDeleteAndReact(handler);
+
+      expect(conversationService.updateInboundMessage.calledOnce).to.equal(true);
+      expect(conversationService.deleteInboundMessage.calledOnce).to.equal(true);
+      expect(conversationService.findSourceActivity.called).to.equal(true);
+    });
+  });
 });

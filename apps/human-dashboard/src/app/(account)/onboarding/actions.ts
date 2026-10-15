@@ -78,7 +78,9 @@ export async function createInboxAction(input: { name: string; handle: string })
     };
   }
 
-  await updateOnboardingState((state) => ({ ...state, startedAt: state.startedAt ?? now, handle }));
+  // A new agent starts its steps from here: progress left over from one that was deleted (when forgetting it
+  // then failed) must not take this one past its test and its host.
+  await updateOnboardingState((state) => ({ startedAt: state.startedAt ?? now, handle }));
   refresh();
 
   return { ok: true };

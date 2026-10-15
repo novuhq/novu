@@ -15,7 +15,12 @@ import {
 import { Button, SMALL_BUTTON } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
 import { Fold } from '@/components/ui/stepper';
-import type { AgentReach, AgentSettings, AgentSettingsChange } from '@/lib/agent-settings';
+import {
+  type AgentReach,
+  type AgentSettings,
+  type AgentSettingsChange,
+  DEFAULT_AGENT_SETTINGS,
+} from '@/lib/agent-settings';
 import { ONBOARDING_PATH } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
@@ -58,7 +63,8 @@ const MOTION = 'duration-200 ease-out motion-reduce:transition-none';
 type AgentSettingsCardProps = {
   /** How the agent is called in a sentence: its address without the domain. */
   handle: string;
-  settings: AgentSettings;
+  /** `null` when the page couldn't read them: the two controls then wait, and the block says so. */
+  settings: AgentSettings | null;
 };
 
 type SettingRow = 'reach' | 'pause';
@@ -66,16 +72,18 @@ type SettingRow = 'reach' | 'pause';
 /**
  * SETTINGS on the Configure page (`1.6` / `4.1 · Configure`): who can reach the agent, pausing it, and
  * deleting it. A change shows at once and is saved behind it; when saving fails the control goes back to
- * what was saved, and the row says what went wrong.
+ * what was saved, and the row says what went wrong. Settings the page couldn't read aren't shown as if they
+ * were saved: the controls can't be used until a reload reads them.
  */
 export function AgentSettingsCard({ handle, settings }: AgentSettingsCardProps) {
   const actions = useContext(AgentSettingsActionsContext);
+  const unavailable = settings === null;
   // What was saved last: the page's settings, or what a save answered with before the page caught up.
-  const [saved, setSaved] = useState(settings);
+  const [saved, setSaved] = useState(settings ?? DEFAULT_AGENT_SETTINGS);
   const [syncedSettings, setSyncedSettings] = useState(settings);
   if (settings !== syncedSettings) {
     setSyncedSettings(settings);
-    setSaved(settings);
+    setSaved(settings ?? DEFAULT_AGENT_SETTINGS);
   }
 
   const [shown, showChange] = useOptimistic(saved, applyChange);
@@ -104,6 +112,11 @@ export function AgentSettingsCard({ handle, settings }: AgentSettingsCardProps) 
     <section className="overflow-hidden rounded-[10px] border border-border">
       <header className="flex items-center gap-2 border-b border-border bg-subtle px-4 py-3">
         <h2 className={SECTION_LABEL}>Settings</h2>
+        {unavailable && (
+          <p role="alert" className="ml-auto text-xs leading-4 text-danger">
+            We couldn’t load these settings. Reload the page to try again.
+          </p>
+        )}
       </header>
       <ul>
         <li className={ROW}>
@@ -117,6 +130,7 @@ export function AgentSettingsCard({ handle, settings }: AgentSettingsCardProps) 
             labelledBy={`${reachId}-title`}
             value={shown.reach}
             busy={reachSaving}
+            disabled={unavailable}
             onChange={(reach) => save('reach', { reach }, startReachSave)}
           />
         </li>
@@ -132,6 +146,7 @@ export function AgentSettingsCard({ handle, settings }: AgentSettingsCardProps) 
             describedBy={`${pauseId}-hint`}
             on={Boolean(shown.paused)}
             busy={pauseSaving}
+            disabled={unavailable}
             onChange={(paused) => save('pause', { paused }, startPauseSave)}
           />
         </li>
@@ -200,6 +215,8 @@ type ReachControlProps = {
   value: AgentReach;
   /** A change is being saved: the control takes no other until it is. */
   busy: boolean;
+  /** The setting couldn't be read, so it can't be changed either. */
+  disabled?: boolean;
   onChange: (value: AgentReach) => void;
 };
 
@@ -208,7 +225,7 @@ type ReachControlProps = {
  * options are radio buttons, hidden behind their labels, so the arrow keys move between them. Until the
  * browser has measured the options, the picked one carries the raised look itself.
  */
-function ReachControl({ labelledBy, value, busy, onChange }: ReachControlProps) {
+function ReachControl({ labelledBy, value, busy, disabled = false, onChange }: ReachControlProps) {
   const name = useId();
   const options = useRef(new Map<AgentReach, HTMLLabelElement>());
   const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);
@@ -234,7 +251,12 @@ function ReachControl({ labelledBy, value, busy, onChange }: ReachControlProps) 
       role="radiogroup"
       aria-labelledby={labelledBy}
       aria-busy={busy || undefined}
-      className="relative flex shrink-0 gap-0.5 rounded-[7px] border border-border-strong/50 bg-background p-0.5"
+      aria-disabled={disabled || undefined}
+      className={cn(
+        'relative flex shrink-0 gap-0.5 rounded-[7px] border border-border-strong/50 bg-background p-0.5 transition-opacity',
+        MOTION,
+        disabled && 'opacity-60'
+      )}
     >
       {indicator && (
         <span
@@ -260,9 +282,10 @@ function ReachControl({ labelledBy, value, busy, onChange }: ReachControlProps) 
               }
             }}
             className={cn(
-              'relative cursor-pointer rounded-[5px] border px-2.5 py-1.25 text-xs leading-4 transition-colors has-focus-visible:ring-1 has-focus-visible:ring-accent',
+              'relative rounded-[5px] border px-2.5 py-1.25 text-xs leading-4 transition-colors has-focus-visible:ring-1 has-focus-visible:ring-accent',
               MOTION,
-              selected ? 'font-medium text-foreground' : 'text-secondary hover:text-foreground',
+              disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+              selected ? 'font-medium text-foreground' : cn('text-secondary', !disabled && 'hover:text-foreground'),
               selected && !indicator ? 'border-border-strong bg-raised' : 'border-transparent'
             )}
           >
@@ -271,6 +294,7 @@ function ReachControl({ labelledBy, value, busy, onChange }: ReachControlProps) 
               name={name}
               value={option.value}
               checked={selected}
+              disabled={disabled}
               // While a change is being saved the picked option stays as it is.
               onChange={() => !busy && onChange(option.value)}
               className="sr-only"
@@ -295,6 +319,8 @@ type SwitchProps = {
   describedBy: string;
   on: boolean;
   busy: boolean;
+  /** The setting couldn't be read, so it can't be changed either. */
+  disabled?: boolean;
   onChange: (on: boolean) => void;
 };
 
@@ -302,7 +328,7 @@ type SwitchProps = {
  * The toggle of the design: off, a grey knob on the left of a bordered track; on, a larger dark knob on
  * the right of an orange one. The knob slides and grows, and the track changes colour, together.
  */
-function Switch({ labelledBy, describedBy, on, busy, onChange }: SwitchProps) {
+function Switch({ labelledBy, describedBy, on, busy, disabled = false, onChange }: SwitchProps) {
   return (
     <button
       type="button"
@@ -311,9 +337,10 @@ function Switch({ labelledBy, describedBy, on, busy, onChange }: SwitchProps) {
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
       aria-busy={busy || undefined}
+      disabled={disabled}
       onClick={() => !busy && onChange(!on)}
       className={cn(
-        'relative h-5 w-9 shrink-0 cursor-pointer rounded-[10px] transition-[background-color,box-shadow]',
+        'relative h-5 w-9 shrink-0 cursor-pointer rounded-[10px] transition-[background-color,box-shadow,opacity] disabled:cursor-not-allowed disabled:opacity-60',
         MOTION,
         on ? 'bg-accent' : 'bg-raised ring-1 ring-border-strong ring-inset'
       )}

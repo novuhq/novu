@@ -250,6 +250,17 @@ describe('Agent Inbox agent settings (who can reach, pause, delete) #novu-v2', (
       const plainKey = await session.testAgent.get('/v1/human/inbox').set('Authorization', `ApiKey ${session.apiKey}`);
       expect(plainKey.status).to.equal(403, JSON.stringify(plainKey.body));
 
+      // Naming another agent, or a malformed one, doesn't get a host past the pause either.
+      for (const agentIdentifier of ['no-such-agent', '$where']) {
+        const decoy = await asHost('get', '/v1/human/inbox').query({ agentIdentifier });
+        expect(decoy.status).to.equal(403, `${agentIdentifier}: ${JSON.stringify(decoy.body)}`);
+        expect(decoy.body.code).to.equal(AGENT_PAUSED);
+      }
+      const decoySend = await asHost('post', '/v1/human/interactions')
+        .query({ agentIdentifier: 'no-such-agent' })
+        .send({ kind: 'tell', card: { title: 'hi' } });
+      expect(decoySend.status).to.equal(403, JSON.stringify(decoySend.body));
+
       await sendMessageToRelay('are you there?', CONTACT_CHAT_ID);
 
       // The operator still reads everything, and the host still sees that the agent is paused.

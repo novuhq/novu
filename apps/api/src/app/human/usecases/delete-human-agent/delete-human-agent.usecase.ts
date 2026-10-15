@@ -12,7 +12,7 @@ import {
   HumanInteractionRepository,
   IntegrationRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, HumanChannelViaEnum } from '@novu/shared';
 import { HumanAgentPictureService } from '../../services/human-agent-picture.service';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
 import { DeleteHumanAgentCommand } from './delete-human-agent.command';
@@ -20,6 +20,11 @@ import { DeleteHumanAgentCommand } from './delete-human-agent.command';
 type Scope = { _environmentId: string; _organizationId: string };
 
 type OwnChannels = { ids: string[]; identifiers: string[] };
+
+/** Every confirmation link that can be out for a contact's address, one per channel. */
+const PENDING_ADDRESSES = Object.fromEntries(
+  Object.values(HumanChannelViaEnum).map((via) => [`addresses.${via}.pending`, 1])
+);
 
 /**
  * Deletes the relay agent for good, so the account is back to having no agent and its address can be taken
@@ -31,8 +36,8 @@ type OwnChannels = { ids: string[]; identifiers: string[] };
  * connects (`ConnectHost` looks the agent up). Its invite links stop working the same way.
  *
  * Stays: the contacts themselves, the account, its key, and the operator's own contact record, so the
- * operator is still "you" when they set up the next agent. A channel another agent also uses stays too,
- * only unlinked from this one.
+ * operator is still "you" when they set up the next agent; a confirmation link still out for their address
+ * stops working, though. A channel another agent also uses stays too, only unlinked from this one.
  *
  * Everything is removed in one transaction, like deleting a Human account.
  */
@@ -64,16 +69,26 @@ export class DeleteHumanAgent {
       throw new NotFoundException('There is no agent yet. Run `npx @agentinbox/cli setup` first.');
     }
 
-    // Read before the delete: afterwards nothing tells which channels and conversations were the agent's.
+    // Read before the delete: afterwards nothing tells which channels were the agent's.
     const channels = await this.findOwnChannels(scope, agent._id);
-    const conversations = await this.conversationRepository.find({ ...scope, _agentId: agent._id }, ['_id']);
-    const conversationIds = conversations.map((conversation) => conversation._id);
 
     await this.agentRepository.withTransaction(async (session) => {
-      // One after the other: operations of a transaction can't run in parallel.
+      // One after the other: operations of a transaction can't run in parallel. The conversations are read
+      // in the transaction, so the messages deleted are those of exactly the conversations deleted below.
+      const conversations = await this.conversationRepository.find({ ...scope, _agentId: agent._id }, ['_id'], {
+        session,
+      });
+      const conversationIds = conversations.map((conversation) => conversation._id);
+
       await this.humanInteractionRepository.delete({ ...scope, _agentId: agent._id }, { session });
       await this.humanContactRepository.delete(
         { ...scope, _agentId: agent._id, isOperator: { $ne: true } },
+        { session }
+      );
+      // A confirmation link sent for this agent would otherwise still change the operator's email later.
+      await this.humanContactRepository.update(
+        { ...scope, _agentId: agent._id, isOperator: true },
+        { $unset: PENDING_ADDRESSES },
         { session }
       );
 
@@ -116,9 +131,10 @@ export class DeleteHumanAgent {
   }
 
   /**
-   * The channels linked to the agent, or once linked and disconnected, that no other agent uses: their ids,
-   * and the identifiers of those not deleted yet, which their chats and connections are kept under. A link
-   * that was disconnected is skipped by a plain find, so it is asked for on its own.
+   * The channels linked to the agent, or once linked and disconnected, that no other agent uses, linked or
+   * disconnected (a disconnected link can be revived): their ids, and the identifiers of those not deleted
+   * yet, which their chats and connections are kept under. A plain find skips disconnected links, so they
+   * are asked for on their own.
    */
   private async findOwnChannels(scope: Scope, agentId: string): Promise<OwnChannels> {
     const [links, disconnectedLinks] = await Promise.all([
@@ -133,11 +149,12 @@ export class DeleteHumanAgent {
       return { ids: [], identifiers: [] };
     }
 
-    const usedElsewhere = await this.agentIntegrationRepository.find(
-      { ...scope, _integrationId: { $in: linkedIds }, _agentId: { $ne: agentId } },
-      ['_integrationId']
-    );
-    const sharedIds = new Set(usedElsewhere.map((link) => String(link._integrationId)));
+    const otherAgents = { ...scope, _integrationId: { $in: linkedIds }, _agentId: { $ne: agentId } };
+    const [usedElsewhere, disconnectedElsewhere] = await Promise.all([
+      this.agentIntegrationRepository.find(otherAgents, ['_integrationId']),
+      this.agentIntegrationRepository.find({ ...otherAgents, disconnectedAt: { $ne: null } }, ['_integrationId']),
+    ]);
+    const sharedIds = new Set([...usedElsewhere, ...disconnectedElsewhere].map((link) => String(link._integrationId)));
     const ids = linkedIds.filter((id) => !sharedIds.has(id));
 
     if (ids.length === 0) {

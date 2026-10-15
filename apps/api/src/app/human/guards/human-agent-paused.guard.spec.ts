@@ -22,8 +22,9 @@ describe('HumanAgentPausedGuard', () => {
     }
   });
 
-  function setup(agent: Record<string, unknown> | null = { runtime: 'human_relay', pausedAt: PAUSED_AT }) {
-    const agentRepository = { findOne: sinon.stub().resolves(agent) };
+  /** The paused relay agent of the environment, or `null` while none is paused. */
+  function setup(paused: Record<string, unknown> | null = { pausedAt: PAUSED_AT }) {
+    const agentRepository = { findOne: sinon.stub().resolves(paused) };
 
     return { guard: new HumanAgentPausedGuard(agentRepository as never), agentRepository };
   }
@@ -41,7 +42,13 @@ describe('HumanAgentPausedGuard', () => {
     };
   }
 
-  it('refuses a host while the agent is paused, with a code and the time it was paused', async () => {
+  async function refusal(request: Record<string, unknown>, paused?: Record<string, unknown> | null) {
+    return (await setup(paused)
+      .guard.canActivate(contextOf(request))
+      .catch((caught: unknown) => caught)) as HttpException | boolean;
+  }
+
+  it('refuses a host while a relay agent is paused, with a code and the time it was paused', async () => {
     const { guard, agentRepository } = setup();
 
     const error = (await guard
@@ -49,33 +56,33 @@ describe('HumanAgentPausedGuard', () => {
       .catch((caught: unknown) => caught)) as HttpException;
 
     expect(error.getStatus()).to.equal(403);
-    expect(error.getResponse()).to.include({
-      code: AGENT_PAUSED,
-      pausedAt: PAUSED_AT,
-    });
+    expect(error.getResponse()).to.include({ code: AGENT_PAUSED, pausedAt: PAUSED_AT });
     expect(agentRepository.findOne.firstCall.args[0]).to.deep.equal({
-      identifier: 'human-relay',
       _environmentId: 'env1',
       _organizationId: 'org1',
+      runtime: 'human_relay',
+      pausedAt: { $exists: true, $ne: null },
     });
   });
 
   it('refuses a call with the key that names no host too', async () => {
-    const { guard } = setup();
+    const error = await refusal(hostRequest({ headers: {} }));
 
-    const error = await guard.canActivate(contextOf(hostRequest({ headers: {} }))).catch((caught: Error) => caught);
-
-    expect((error as { status?: number }).status).to.equal(403);
+    expect((error as HttpException).getStatus()).to.equal(403);
   });
 
-  it('checks the relay agent the call names, in its query or its body', async () => {
-    const { guard, agentRepository } = setup(null);
+  it('refuses a host however the call names the agent: another one, a malformed name or none', async () => {
+    for (const request of [
+      hostRequest({ query: { agentIdentifier: 'no-such-agent' } }),
+      hostRequest({ body: { agentIdentifier: 'deploy-relay' } }),
+      hostRequest({ query: { agentIdentifier: '$where' } }),
+      hostRequest({ query: { agentIdentifier: { $ne: 'human-relay' } } }),
+      hostRequest({ query: undefined }),
+    ]) {
+      const error = await refusal(request);
 
-    await guard.canActivate(contextOf(hostRequest({ query: { agentIdentifier: 'ops-relay' } })));
-    await guard.canActivate(contextOf(hostRequest({ body: { agentIdentifier: 'deploy-relay' } })));
-
-    expect(agentRepository.findOne.firstCall.args[0].identifier).to.equal('ops-relay');
-    expect(agentRepository.findOne.secondCall.args[0].identifier).to.equal('deploy-relay');
+      expect((error as HttpException).getStatus()).to.equal(403);
+    }
   });
 
   it('lets the operator’s dashboard read a paused agent’s inbox', async () => {
@@ -90,33 +97,18 @@ describe('HumanAgentPausedGuard', () => {
   });
 
   it('treats a wrong dashboard secret as a host', async () => {
-    const { guard } = setup();
+    const error = await refusal(hostRequest({ headers: { [HUMAN_DASHBOARD_SECRET_HEADER]: 'guess' } }));
 
-    const error = await guard
-      .canActivate(contextOf(hostRequest({ headers: { [HUMAN_DASHBOARD_SECRET_HEADER]: 'guess' } })))
-      .catch((caught: Error) => caught);
-
-    expect((error as { status?: number }).status).to.equal(403);
+    expect((error as HttpException).getStatus()).to.equal(403);
   });
 
   it('lets a person signed in to Novu through', async () => {
-    const { guard } = setup();
     const request = hostRequest({ user: { environmentId: 'env1', organizationId: 'org1', scheme: 'Bearer' } });
 
-    expect(await guard.canActivate(contextOf(request))).to.equal(true);
+    expect(await refusal(request)).to.equal(true);
   });
 
-  it('lets hosts through while the agent is not paused, or is not there', async () => {
-    expect(await setup({ runtime: 'human_relay' }).guard.canActivate(contextOf(hostRequest()))).to.equal(true);
-    expect(await setup(null).guard.canActivate(contextOf(hostRequest()))).to.equal(true);
-  });
-
-  it('leaves a malformed agent identifier to the endpoint’s own validation', async () => {
-    const { guard, agentRepository } = setup();
-
-    const allowed = await guard.canActivate(contextOf(hostRequest({ query: { agentIdentifier: '$where' } })));
-
-    expect(allowed).to.equal(true);
-    expect(agentRepository.findOne.called).to.equal(false);
+  it('lets hosts through while no relay agent is paused', async () => {
+    expect(await refusal(hostRequest(), null)).to.equal(true);
   });
 });

@@ -14,6 +14,7 @@ describe('DeleteHumanAgent', () => {
       links?: string[];
       disconnectedLinks?: string[];
       usedByOtherAgents?: string[];
+      disconnectedByOtherAgents?: string[];
     } = {}
   ) {
     const steps: string[] = [];
@@ -36,7 +37,9 @@ describe('DeleteHumanAgent', () => {
     const agentIntegrationRepository = {
       find: sinon.stub().callsFake(async (query: Record<string, unknown>) => {
         if (query._agentId && typeof query._agentId === 'object') {
-          return (options.usedByOtherAgents ?? []).map((id) => ({ _integrationId: id }));
+          const others = 'disconnectedAt' in query ? options.disconnectedByOtherAgents : options.usedByOtherAgents;
+
+          return (others ?? []).map((id) => ({ _integrationId: id }));
         }
 
         const ids = 'disconnectedAt' in query ? options.disconnectedLinks : options.links;
@@ -54,12 +57,15 @@ describe('DeleteHumanAgent', () => {
       _model: { deleteMany: sinon.stub().callsFake(record('integration')) },
     };
     const conversationRepository = {
-      find: sinon.stub().resolves([{ _id: 'conv1' }, { _id: 'conv2' }]),
+      find: sinon.stub().callsFake(record('conversationFind', [{ _id: 'conv1' }, { _id: 'conv2' }])),
       delete: sinon.stub().callsFake(record('conversation')),
     };
     const repositories = Object.fromEntries(
       ['channelConnection', 'channelEndpoint', 'conversationActivity', 'humanInteraction', 'humanContact'].map(
-        (name) => [name, { delete: sinon.stub().callsFake(record(name)) }]
+        (name) => [
+          name,
+          { delete: sinon.stub().callsFake(record(name)), update: sinon.stub().callsFake(record(`${name}Update`)) },
+        ]
       )
     );
     const domainRouteRepository = { removeByDestination: sinon.stub().callsFake(record('domainRoute')) };
@@ -105,6 +111,9 @@ describe('DeleteHumanAgent', () => {
       { ...scope, _agentId: 'relay1' },
       { session: 'session' },
     ]);
+    // The conversations are read in the transaction, so their messages go with exactly those conversations.
+    expect(conversationRepository.find.firstCall.args[2]).to.deep.equal({ session: 'session' });
+    expect(steps.indexOf('conversationFind')).to.be.greaterThan(steps.indexOf('transaction'));
     expect(repositories.conversationActivity.delete.firstCall.args[0]).to.deep.equal({
       ...scope,
       _conversationId: { $in: ['conv1', 'conv2'] },
@@ -157,6 +166,32 @@ describe('DeleteHumanAgent', () => {
     ]);
     // Every link of the agent goes, the one to a shared channel too.
     expect(agentIntegrationRepository.delete.firstCall.args[0]).to.deep.equal({ ...scope, _agentId: 'relay1' });
+  });
+
+  it('clears a confirmation link still out for the operator’s address, so it can’t change their email later', async () => {
+    const { usecase, repositories } = setup();
+
+    await usecase.execute(command);
+
+    expect(repositories.humanContact.update.firstCall.args).to.deep.equal([
+      { ...scope, _agentId: 'relay1', isOperator: true },
+      {
+        $unset: { 'addresses.telegram.pending': 1, 'addresses.slack.pending': 1, 'addresses.email.pending': 1 },
+      },
+      { session: 'session' },
+    ]);
+  });
+
+  it('keeps a channel another agent was disconnected from, since that link can be revived', async () => {
+    const { usecase, integrationRepository, repositories } = setup({
+      links: ['slack1'],
+      disconnectedByOtherAgents: ['slack1'],
+    });
+
+    await usecase.execute(command);
+
+    expect(integrationRepository._model.deleteMany.called).to.equal(false);
+    expect(repositories.channelEndpoint.delete.called).to.equal(false);
   });
 
   it('touches no channel when the agent has none', async () => {

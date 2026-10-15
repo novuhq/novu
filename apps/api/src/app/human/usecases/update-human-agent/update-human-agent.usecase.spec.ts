@@ -14,10 +14,24 @@ describe('UpdateHumanAgent', () => {
     _organizationId: 'org1',
   };
 
+  /** The agent as the database keeps it: updates apply to it, honouring a "not paused yet" filter. */
   function setup(agent: Record<string, unknown> | null = relay) {
+    const db: { agent: Record<string, unknown> | null } = { agent: agent ? { ...agent } : null };
     const agentRepository = {
-      findOne: sinon.stub().resolves(agent),
-      updateOne: sinon.stub().resolves({ matched: 1, modified: 1 }),
+      findOne: sinon.stub().callsFake(async () => (db.agent ? { ...db.agent } : null)),
+      updateOne: sinon.stub().callsFake(async (query: Record<string, any>, update: Record<string, any>) => {
+        if (!db.agent || (query.pausedAt?.$exists === false && db.agent.pausedAt)) {
+          return { matched: 0, modified: 0 };
+        }
+
+        const next: Record<string, unknown> = { ...db.agent, ...update.$set };
+        for (const key of Object.keys(update.$unset ?? {})) {
+          delete next[key];
+        }
+        db.agent = next;
+
+        return { matched: 1, modified: 1 };
+      }),
     };
     const humanAgentIdentity = { apply: sinon.stub().callsFake(async (existing) => existing) };
     const humanAgentPicture = { describe: sinon.stub().callsFake((described) => described) };
@@ -27,7 +41,7 @@ describe('UpdateHumanAgent', () => {
       humanAgentPicture as never
     );
 
-    return { usecase, agentRepository, humanAgentIdentity };
+    return { usecase, agentRepository, humanAgentIdentity, db };
   }
 
   function command(fields: Partial<UpdateHumanAgentCommand>) {
@@ -60,10 +74,24 @@ describe('UpdateHumanAgent', () => {
     const { usecase, agentRepository } = setup();
 
     const updated = await usecase.execute(command({ paused: true }));
-    const { $set } = agentRepository.updateOne.firstCall.args[1];
+    const [filter, { $set }] = agentRepository.updateOne.firstCall.args;
 
+    expect(filter).to.include({ _id: 'relay1' });
+    expect(filter.pausedAt).to.deep.equal({ $exists: false });
     expect(Date.parse($set.pausedAt)).to.be.closeTo(Date.now(), 5000);
     expect(updated).to.include({ pausedAt: $set.pausedAt });
+  });
+
+  it('keeps the first pause when another pause got in between, and answers with it', async () => {
+    const { usecase, agentRepository, db } = setup();
+    // Read as not paused yet; meanwhile another request paused it.
+    agentRepository.findOne.onFirstCall().resolves({ ...relay });
+    db.agent = { ...relay, pausedAt: '2026-10-15T08:00:00.000Z' };
+
+    const updated = await usecase.execute(command({ paused: true }));
+
+    expect(db.agent.pausedAt).to.equal('2026-10-15T08:00:00.000Z');
+    expect(updated).to.include({ pausedAt: '2026-10-15T08:00:00.000Z' });
   });
 
   it('keeps the first pause when a paused agent is paused again', async () => {
@@ -90,8 +118,8 @@ describe('UpdateHumanAgent', () => {
     await usecase.execute(command({ name: 'Deploy bot', reach: 'contacts', paused: true }));
 
     expect(humanAgentIdentity.apply.firstCall.args[1]).to.deep.equal({ name: 'Deploy bot', description: undefined });
-    expect(agentRepository.updateOne.firstCall.args[1].$set).to.include({ reach: 'contacts' });
-    expect(agentRepository.updateOne.firstCall.args[1].$set).to.have.property('pausedAt');
+    expect(agentRepository.updateOne.firstCall.args[1]).to.deep.equal({ $set: { reach: 'contacts' } });
+    expect(agentRepository.updateOne.secondCall.args[1].$set).to.have.property('pausedAt');
   });
 
   it('refuses a call that changes nothing', async () => {
