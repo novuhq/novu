@@ -17,19 +17,21 @@ import {
   describeOutcome,
   type InteractionKind,
   MAX_WAIT_SECONDS,
+  type OptionInput,
   sendInteraction,
   waitForAnswer,
 } from './interactions';
+import { resolveEmailRecipients } from './recipients';
 
 type ToolResult = { content: Array<{ type: 'text'; text: string }>; isError?: boolean };
 
+const recipient = z.string().min(1).max(320);
 const to = z
-  .string()
-  .max(128)
+  .union([recipient, z.array(recipient).min(1).max(50)])
   .optional()
-  .describe('Id of the person to reach, from the contacts tool. Leave out to reach the owner of the account.');
-
-const details = z.string().max(2000).optional().describe('More context, shown under the main line.');
+  .describe(
+    'Contact id, email address, or up to 50 of them. With inbox_send, omit to reach the account owner. With inbox_reply, these are the only contacts who may answer.'
+  );
 
 const waitSeconds = z
   .number()
@@ -38,15 +40,6 @@ const waitSeconds = z
   .max(MAX_WAIT_SECONDS)
   .optional()
   .describe(`How long to wait for the answer now, in seconds (default ${DEFAULT_WAIT_SECONDS}).`);
-
-const thread = z
-  .string()
-  .min(1)
-  .max(128)
-  .optional()
-  .describe(
-    'Inbox thread id (conv_...) from inbox_list. Reply in that thread instead of starting a new one. Check inbox_list for unread threads before you send.'
-  );
 
 const anyoneMayAnswer = z
   .boolean()
@@ -58,116 +51,212 @@ const anyoneMayAnswer = z
 const CHECK_INBOX_HINT =
   ' Before you send, call inbox_list with filter "unread" so you do not miss a thread a person started.';
 
-/** The tools an AI tool gets: ways to reach a person, read the inbox, and wait for what they say. */
-export function registerTools(server: McpServer, api: HumanApi): void {
-  /** Sends one message and waits a while for the answer. A later `wait` picks up where this stops. */
-  async function interact(
-    kind: Exclude<InteractionKind, 'tell'>,
-    input: {
-      card: Parameters<typeof sendInteraction>[1]['card'];
-      to?: string;
-      thread?: string;
-      anyone_may_answer?: boolean;
-      wait_seconds?: number;
-    }
-  ): Promise<string> {
-    const since = Date.now();
-    const created = await sendInteraction(api, {
-      kind,
-      card: input.card,
-      to: input.to,
-      thread: input.thread,
-      anyoneMayAnswer: input.anyone_may_answer,
-    });
+const interactionKind = z
+  .enum(['ask', 'approve', 'choose', 'tell'])
+  .describe('ask: free-text answer; approve: Approve/Deny buttons; choose: one of options; tell: no answer needed.');
+const optionInput = z.union([
+  z.string().min(1).max(200),
+  z.object({ id: z.string().min(1).max(128), label: z.string().min(1).max(200) }),
+]);
+const message = z.string().min(1).max(4000).describe('The main message or question.');
+const body = z.string().max(4000).optional().describe('Supporting details under the subtitle.');
+const subtitle = z.string().max(4000).optional().describe('Secondary line under the message.');
+const icon = z
+  .string()
+  .optional()
+  .describe('Slack-only card icon: MCP catalog id, display name, or an HTTPS URL. Ignored on other channels.');
+const from = z.string().max(80).optional().describe('Attribution label shown to the person, such as "deploy-bot".');
+const ttlSeconds = z
+  .number()
+  .int()
+  .min(60)
+  .max(259_200)
+  .optional()
+  .describe('How long a question remains answerable, in seconds (default 86400, max 259200).');
+const options = z
+  .array(optionInput)
+  .min(2)
+  .max(10)
+  .optional()
+  .describe('Required for choose. Each choice is a label or an object with a stable id and label.');
+const approveLabel = z.string().max(80).optional().describe('Approve button label (approve only).');
+const denyLabel = z.string().max(80).optional().describe('Deny button label (approve only).');
+const extraActions = z
+  .array(optionInput)
+  .max(4)
+  .optional()
+  .describe('Extra approve buttons after Approve and Deny (approve only, max 4).');
 
-    return describeOutcome(
-      await waitForAnswer(api, created, input.wait_seconds ?? DEFAULT_WAIT_SECONDS, undefined, since)
-    );
+type SendToolInput = {
+  kind: InteractionKind;
+  message: string;
+  to?: string | string[];
+  via?: 'telegram' | 'slack' | 'email';
+  from?: string;
+  ttl_seconds?: number;
+  wait_seconds?: number;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approve_label?: string;
+  deny_label?: string;
+  extra_actions?: OptionInput[];
+  options?: OptionInput[];
+};
+
+type ReplyToolInput = Omit<SendToolInput, 'via'> & {
+  thread: string;
+  anyone_may_answer?: boolean;
+};
+
+function parseIdLabelOption(option: OptionInput): OptionInput {
+  if (typeof option !== 'string') {
+    return option;
   }
 
+  const colon = option.indexOf(':');
+  if (colon > 0) {
+    const id = option.slice(0, colon).trim();
+    const label = option.slice(colon + 1).trim();
+    if (id && label && !/\s/.test(id)) {
+      return { id, label };
+    }
+  }
+
+  return option;
+}
+
+function normalizeTo(value: string | string[] | undefined): string[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const raw = Array.isArray(value) ? value : value.split(',');
+  const recipients = [...new Set(raw.map((item) => item.trim()).filter(Boolean))];
+  if (recipients.length === 0) {
+    throw new HumanApiError(400, 'to must name at least one contact or email address.');
+  }
+  if (recipients.length > 50) {
+    throw new HumanApiError(400, 'to supports at most 50 contacts.');
+  }
+
+  return recipients;
+}
+
+function assertKindOptions(input: SendToolInput): void {
+  if (input.kind === 'choose' && !input.options?.length) {
+    throw new HumanApiError(400, 'kind "choose" requires 2-10 options.');
+  }
+  if (input.kind !== 'choose' && input.options?.length) {
+    throw new HumanApiError(400, 'options only work with kind "choose".');
+  }
+  if (
+    input.kind !== 'approve' &&
+    (input.approve_label !== undefined || input.deny_label !== undefined || input.extra_actions?.length)
+  ) {
+    throw new HumanApiError(400, 'approve_label, deny_label, and extra_actions only work with kind "approve".');
+  }
+  if (input.kind === 'tell' && input.wait_seconds !== undefined) {
+    throw new HumanApiError(400, 'wait_seconds only applies to ask, approve, and choose.');
+  }
+}
+
+async function sendOrReply(api: HumanApi, input: SendToolInput | ReplyToolInput): Promise<string> {
+  assertKindOptions(input);
+  const since = Date.now();
+  const isReply = 'thread' in input;
+  if (isReply && input.anyone_may_answer && input.to !== undefined) {
+    throw new HumanApiError(400, 'anyone_may_answer cannot be combined with to.');
+  }
+
+  const requestedRecipients = normalizeTo(input.to);
+  const resolvedRecipients = requestedRecipients
+    ? await resolveEmailRecipients(api, requestedRecipients, isReply)
+    : undefined;
+  const card = {
+    title: input.message,
+    ...(input.icon ? { icon: input.icon } : {}),
+    ...(input.subtitle ? { subtitle: input.subtitle } : {}),
+    ...(input.body ? { body: input.body } : {}),
+    ...(input.approve_label ? { approveLabel: input.approve_label } : {}),
+    ...(input.deny_label ? { denyLabel: input.deny_label } : {}),
+    ...(input.extra_actions?.length ? { extraActions: input.extra_actions.map(parseIdLabelOption) } : {}),
+    ...(input.options?.length ? { options: input.options.map(parseIdLabelOption) } : {}),
+  };
+  const created = await sendInteraction(api, {
+    kind: input.kind,
+    card,
+    ...(resolvedRecipients ? { to: resolvedRecipients } : {}),
+    ...(isReply ? { thread: input.thread } : {}),
+    ...(isReply && input.anyone_may_answer ? { anyoneMayAnswer: true } : {}),
+    ...(!isReply && input.via ? { via: input.via } : {}),
+    ...(input.from ? { from: input.from } : {}),
+    ...(input.ttl_seconds !== undefined ? { ttlSeconds: input.ttl_seconds } : {}),
+  });
+
+  if (input.kind === 'tell') {
+    return describeOutcome({ ...created, status: 'delivered' });
+  }
+
+  return describeOutcome(
+    await waitForAnswer(api, created, input.wait_seconds ?? DEFAULT_WAIT_SECONDS, undefined, since)
+  );
+}
+
+/** The tools an AI tool gets: ways to reach a person, read the inbox, and wait for what they say. */
+export function registerTools(server: McpServer, api: HumanApi): void {
   server.registerTool(
-    'ask',
+    'inbox_send',
     {
-      title: 'Ask a person',
-      description: `Ask a person an open question and get their answer in their own words. They are messaged on the chat app or email they connected. Use it when you need information only a person has.${CHECK_INBOX_HINT}`,
+      title: 'Send an inbox message',
+      description: `Start a conversation with one or more contacts. Use kind ask, approve, or choose to wait for an answer; tell sends without waiting.${CHECK_INBOX_HINT}`,
       inputSchema: {
-        question: z.string().min(1).max(500),
-        details,
+        kind: interactionKind,
+        message,
         to,
-        thread,
-        anyone_may_answer: anyoneMayAnswer,
+        via: z.enum(['telegram', 'slack', 'email']).optional().describe("Override each contact's default channel."),
+        from,
+        ttl_seconds: ttlSeconds,
         wait_seconds: waitSeconds,
+        icon,
+        subtitle,
+        body,
+        approve_label: approveLabel,
+        deny_label: denyLabel,
+        extra_actions: extraActions,
+        options,
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     },
-    ({ question, details: body, ...rest }) => run(() => interact('ask', { card: { title: question, body }, ...rest }))
+    (input) => run(() => sendOrReply(api, input))
   );
 
   server.registerTool(
-    'approve',
+    'inbox_reply',
     {
-      title: 'Ask for approval',
-      description: `Ask a person to approve or deny something before you do it: a deploy, a deletion, a payment, a message sent in their name. They get Approve and Deny buttons. Only go ahead when the result says Approved.${CHECK_INBOX_HINT}`,
+      title: 'Reply in an inbox thread',
+      description:
+        'Send into an existing inbox thread. Use kind ask, approve, or choose to wait for an answer; tell sends without waiting. A reply uses the thread channel, so it has no via option.',
       inputSchema: {
-        request: z.string().min(1).max(500).describe('What you want to do, as a yes-or-no question.'),
-        details,
-        approve_label: z.string().max(40).optional().describe('Text of the approve button (default "Approve").'),
-        deny_label: z.string().max(40).optional().describe('Text of the deny button (default "Deny").'),
+        thread: z.string().min(1).max(128).describe('Thread id (conv_...) from inbox_list.'),
+        kind: interactionKind,
+        message,
         to,
-        thread,
         anyone_may_answer: anyoneMayAnswer,
+        from,
+        ttl_seconds: ttlSeconds,
         wait_seconds: waitSeconds,
+        icon,
+        subtitle,
+        body,
+        approve_label: approveLabel,
+        deny_label: denyLabel,
+        extra_actions: extraActions,
+        options,
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     },
-    ({ request, details: body, approve_label, deny_label, ...rest }) =>
-      run(() =>
-        interact('approve', {
-          card: { title: request, body, approveLabel: approve_label, denyLabel: deny_label },
-          ...rest,
-        })
-      )
-  );
-
-  server.registerTool(
-    'choose',
-    {
-      title: 'Let a person choose',
-      description: `Ask a person to pick one of a few options. They get one button per option.${CHECK_INBOX_HINT}`,
-      inputSchema: {
-        question: z.string().min(1).max(500),
-        options: z.array(z.string().min(1).max(60)).min(2).max(10).describe('The choices, as short labels.'),
-        details,
-        to,
-        thread,
-        anyone_may_answer: anyoneMayAnswer,
-        wait_seconds: waitSeconds,
-      },
-      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
-    },
-    ({ question, options, details: body, ...rest }) =>
-      run(() => interact('choose', { card: { title: question, body, options }, ...rest }))
-  );
-
-  server.registerTool(
-    'tell',
-    {
-      title: 'Tell a person',
-      description: `Send a person a message that needs no answer, such as "The build finished".${CHECK_INBOX_HINT}`,
-      inputSchema: { message: z.string().min(1).max(500), details, to, thread },
-      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
-    },
-    ({ message, details: body, to: recipient, thread: threadId }) =>
-      run(async () => {
-        const created = await sendInteraction(api, {
-          kind: 'tell',
-          card: { title: message, body },
-          to: recipient,
-          thread: threadId,
-        });
-
-        return describeOutcome({ ...created, status: 'delivered' });
-      })
+    (input) => run(() => sendOrReply(api, input))
   );
 
   server.registerTool(

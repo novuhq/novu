@@ -62,16 +62,14 @@ describe('the Human MCP server', () => {
 
     expect(result.tools.map((tool) => tool.name).sort()).toEqual(
       [
-        'approve',
-        'ask',
-        'choose',
         'contacts',
         'inbox_list',
         'inbox_read',
+        'inbox_reply',
         'inbox_resolve',
+        'inbox_send',
         'inbox_show',
         'invite',
-        'tell',
         'wait',
       ].sort()
     );
@@ -82,7 +80,10 @@ describe('the Human MCP server', () => {
     const { env, ctx } = setup();
 
     const response = await worker.fetch(
-      rpc('tools/call', { name: 'approve', arguments: { request: 'Deploy to production?' } }),
+      rpc('tools/call', {
+        name: 'inbox_send',
+        arguments: { kind: 'approve', message: 'Deploy to production?' },
+      }),
       env,
       ctx
     );
@@ -100,6 +101,209 @@ describe('the Human MCP server', () => {
       to: 'operator_1',
       card: { title: 'Deploy to production?' },
     });
+  });
+
+  it('passes the full send card and delivery options to the Human API', async () => {
+    const calls = stubBackends();
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(
+      rpc('tools/call', {
+        name: 'inbox_send',
+        arguments: {
+          kind: 'approve',
+          message: 'Deploy?',
+          to: ['alice', 'bob'],
+          via: 'slack',
+          from: 'deploy-bot',
+          ttl_seconds: 3600,
+          wait_seconds: 0,
+          icon: 'github',
+          subtitle: 'Production',
+          body: 'Release v4.2',
+          approve_label: 'Ship',
+          deny_label: 'Stop',
+          extra_actions: ['later:Later', { id: 'details', label: 'Show details' }],
+        },
+      }),
+      env,
+      ctx
+    );
+    const { result } = (await response.json()) as { result: { isError?: boolean } };
+
+    expect(result.isError).toBeFalsy();
+    const created = calls.find((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST');
+    expect(created?.body).toEqual({
+      kind: 'approve',
+      to: ['alice', 'bob'],
+      via: 'slack',
+      from: 'deploy-bot',
+      ttlSeconds: 3600,
+      card: {
+        title: 'Deploy?',
+        icon: 'github',
+        subtitle: 'Production',
+        body: 'Release v4.2',
+        approveLabel: 'Ship',
+        denyLabel: 'Stop',
+        extraActions: [
+          { id: 'later', label: 'Later' },
+          { id: 'details', label: 'Show details' },
+        ],
+      },
+    });
+  });
+
+  it('keeps stable choose option ids and parses id:label shorthand', async () => {
+    const calls = stubBackends();
+    const { env, ctx } = setup();
+
+    await worker.fetch(
+      rpc('tools/call', {
+        name: 'inbox_send',
+        arguments: {
+          kind: 'choose',
+          message: 'Strategy?',
+          options: ['canary:Canary', { id: 'all', label: 'All at once' }],
+          wait_seconds: 0,
+        },
+      }),
+      env,
+      ctx
+    );
+
+    const created = calls.find((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST');
+    expect(created?.body).toMatchObject({
+      card: {
+        options: [
+          { id: 'canary', label: 'Canary' },
+          { id: 'all', label: 'All at once' },
+        ],
+      },
+    });
+  });
+
+  it('requires an explicit kind', async () => {
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(
+      rpc('tools/call', { name: 'inbox_send', arguments: { message: 'Deploy?' } }),
+      env,
+      ctx
+    );
+    const { result } = (await response.json()) as { result: { isError?: boolean } };
+
+    expect(result.isError).toBe(true);
+  });
+
+  it('rejects more than 50 recipients and incompatible kind options', async () => {
+    const { env, ctx } = setup();
+    const call = (arguments_: Record<string, unknown>) =>
+      worker.fetch(rpc('tools/call', { name: 'inbox_send', arguments: arguments_ }), env, ctx);
+
+    const responses = await Promise.all([
+      call({ kind: 'tell', message: 'Hi', to: Array.from({ length: 51 }, (_, index) => `p${index}`) }),
+      call({ kind: 'choose', message: 'Pick' }),
+      call({ kind: 'ask', message: 'Pick', options: ['A', 'B'] }),
+      call({ kind: 'tell', message: 'Done', approve_label: 'Okay' }),
+      call({ kind: 'tell', message: 'Done', wait_seconds: 1 }),
+    ]);
+
+    for (const response of responses) {
+      const { result } = (await response.json()) as { result: { isError?: boolean } };
+      expect(result.isError).toBe(true);
+    }
+  });
+
+  it('rejects anyone_may_answer together with named reply contacts', async () => {
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(
+      rpc('tools/call', {
+        name: 'inbox_reply',
+        arguments: {
+          thread: 'conv_1',
+          kind: 'ask',
+          message: 'Who can answer?',
+          to: 'alice',
+          anyone_may_answer: true,
+        },
+      }),
+      env,
+      ctx
+    );
+    const { result } = (await response.json()) as { result: { isError?: boolean } };
+
+    expect(result.isError).toBe(true);
+  });
+
+  it('resolves a verified email address to its contact id', async () => {
+    const calls = stubBackends({
+      contactPages: {
+        '': {
+          data: [{ id: 'alice', channels: [{ via: 'email', address: 'alice@example.com' }] }],
+          next: null,
+        },
+      },
+    });
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(
+      rpc('tools/call', {
+        name: 'inbox_send',
+        arguments: { kind: 'tell', message: 'Hello', to: 'alice@example.com' },
+      }),
+      env,
+      ctx
+    );
+    const { result } = (await response.json()) as { result: { isError?: boolean } };
+
+    expect(result.isError).toBeFalsy();
+    const created = calls.find((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST');
+    expect(created?.body).toMatchObject({ to: ['alice'] });
+  });
+
+  it('starts verification for a new email address without sending the message', async () => {
+    const calls = stubBackends();
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(
+      rpc('tools/call', {
+        name: 'inbox_send',
+        arguments: { kind: 'tell', message: 'Hello', to: 'new@example.com' },
+      }),
+      env,
+      ctx
+    );
+    const { result } = (await response.json()) as {
+      result: { content: Array<{ text: string }>; isError?: boolean };
+    };
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('not verified yet');
+    expect(calls.some((call) => call.url.endsWith('/v1/human/verifications') && call.method === 'POST')).toBe(true);
+    expect(calls.some((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST')).toBe(false);
+  });
+
+  it('does not invite a new email address while replying', async () => {
+    const calls = stubBackends();
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(
+      rpc('tools/call', {
+        name: 'inbox_reply',
+        arguments: { thread: 'conv_1', kind: 'tell', message: 'Hello', to: 'new@example.com' },
+      }),
+      env,
+      ctx
+    );
+    const { result } = (await response.json()) as {
+      result: { content: Array<{ text: string }>; isError?: boolean };
+    };
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('not one of your contacts');
+    expect(calls.some((call) => call.url.endsWith('/v1/human/verifications'))).toBe(false);
   });
 
   it('remembers whose token it is, so the next call does not ask Clerk again', async () => {
@@ -209,6 +413,46 @@ describe('waiting for an answer', () => {
       sendInteraction(api as never, { kind: 'approve', card: { title: 'Deploy?' }, to: 'alice' })
     ).rejects.toThrow('do not send it again right away');
     expect(post.mock.calls[0][2]).toBeGreaterThan(15_000);
+  });
+
+  it('keeps a partial delivery and reports the contacts that failed', async () => {
+    const api = {
+      get: vi.fn(),
+      post: vi.fn(async () => ({
+        id: 'hi_1',
+        kind: 'tell',
+        status: 'delivered',
+        failedTo: ['bob'],
+      })),
+    };
+
+    const interaction = await sendInteraction(api as never, {
+      kind: 'tell',
+      card: { title: 'Done' },
+      to: ['alice', 'bob'],
+    });
+
+    expect(describeOutcome(interaction as Interaction)).toContain('delivery failed for bob');
+  });
+
+  it('fails when delivery failed for every recipient', async () => {
+    const api = {
+      get: vi.fn(),
+      post: vi.fn(async () => ({
+        id: 'hi_1',
+        kind: 'tell',
+        status: 'delivered',
+        failedTo: ['alice', 'bob'],
+      })),
+    };
+
+    await expect(
+      sendInteraction(api as never, {
+        kind: 'tell',
+        card: { title: 'Done' },
+        to: ['alice', 'bob'],
+      })
+    ).rejects.toThrow('could not be delivered');
   });
 
   it('counts the wait from when the call began, so a slow send does not add to it', async () => {
