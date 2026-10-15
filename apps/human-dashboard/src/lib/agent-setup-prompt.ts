@@ -66,23 +66,20 @@ export function buildSetupPrompt(context: PromptContext, operator: SetupOperator
 }
 
 /**
- * The prompt for an agent that exists already: it connects the channels that are still missing. No API
- * key in it either; a computer that isn't logged in yet logs in first.
+ * What the operator hands their agent in a channel's setup drawer ("Let your agent set this up"): a few
+ * sentences that name the CLI commands and leave the steps in Telegram or Slack to the agent and the
+ * operator. No API key in it either: a computer that isn't logged in yet logs in first, since `channel add`
+ * needs the login, and the operator may have set the agent up in the browser or through an MCP host.
  */
-export function buildFinishSetupPrompt(context: PromptContext, missing: Via[]): string {
+export function buildChannelPrompt(context: PromptContext, via: 'telegram' | 'slack', handle: string): string {
   const api = apiUrlFlag(context);
+  const command = `${CLI} channel add ${via}${api}`;
+  const login = `If Agent Inbox isn't logged in on this computer yet, first run ${CLI} login${api} and wait until I approve it in my browser.`;
 
-  return [
-    'Connect more channels to my agent inbox, so I can answer you where I already am.',
-    '',
-    `If Agent Inbox isn't logged in on this computer yet, first run \`${CLI} login${api}\`, show me the link it prints and wait until I approve it in my browser.`,
-    '',
-    `Ask me which of these I want: ${missing.map((via) => CHANNEL_NAMES[via]).join(', ')}. Connect only what I say yes to:`,
-    ...channelSteps(missing, api),
-  ].join('\n');
+  return via === 'telegram'
+    ? `Set up Telegram for ${handle}. ${login} Then run ${command}, walk me through creating the bot with @BotFather and paste the token back.`
+    : `Set up Slack for ${handle}. ${login} Then run ${command}, walk me through creating the app from the manifest and installing it.`;
 }
-
-const CHANNEL_NAMES: Record<Via, string> = { email: 'Email', telegram: 'Telegram', slack: 'Slack' };
 
 function channelSteps(channels: Via[], api: string): string[] {
   const steps: Record<Via, string> = {

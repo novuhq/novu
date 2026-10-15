@@ -2,6 +2,7 @@
 import { Command } from 'commander';
 import { version } from '../package.json';
 import { channelAddCommand, channelDefaultCommand, channelListCommand } from './commands/channels';
+import { connectCommand } from './commands/connect';
 import { contactsCommand } from './commands/contacts';
 import { inboxListCommand, inboxReadCommand, inboxResolveCommand, inboxShowCommand } from './commands/inbox';
 import { runSend } from './commands/interact';
@@ -17,7 +18,7 @@ program
   .name(CLI_COMMAND)
   .description(
     'An inbox for your agent. People write to it on Telegram, Slack or email; it reads, asks and answers.\n\n' +
-      'Every command is `<command> <action>`: setup, login, inbox, contact, channel, skill.\n\n' +
+      'Every command is `<command> <action>`: setup, login, connect, inbox, contact, channel, skill.\n\n' +
       'Exit codes: 0 answered/approved · 10 denied · 11 timed out (the answer shows up in the conversation) · 12 expired/canceled · 1 error'
   )
   .version(version);
@@ -197,7 +198,7 @@ channel
   .description('Set the channel used when a message goes to you')
   .action(channelDefaultCommand);
 
-// --- setup, login, skill ---
+// --- setup, login, connect, skill ---
 
 program
   .command('setup')
@@ -227,6 +228,15 @@ program
     'Log in with your Agent Inbox account in the browser, so you never copy a secret key (keeps a setup made without an account)'
   )
   .action(loginCommand);
+
+program
+  .command('connect')
+  .argument('<agent>', 'the agent to act as: its address before the @, e.g. atlas')
+  .requiredOption('--code <code>', 'the one-time code from agentinbox.md, e.g. BCDF-GHJK (works once, for 10 minutes)')
+  .option('--yes', 'replace a setup already on this computer without asking')
+  .option('--api-url <url>', 'API URL override')
+  .description('Connect this computer to an agent with a one-time code from agentinbox.md')
+  .action(connectCommand);
 
 const skill = program
   .command('skill')

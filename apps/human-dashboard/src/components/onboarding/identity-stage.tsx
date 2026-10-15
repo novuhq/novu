@@ -1,14 +1,14 @@
 'use client';
 
 import { Bot, Pencil, Terminal } from 'lucide-react';
-import { type ReactNode, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import QRCode from 'react-qr-code';
 
 import { ChannelIcon } from '@/components/channels/channel-icon';
 import { CornerTicks } from '@/components/onboarding/onboarding-shell';
 import { SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
-import { MascotFace } from '@/components/ui/mascot-face';
+import { MascotFace, useBeaming } from '@/components/ui/mascot-face';
 import { AI_TOOLS } from '@/lib/ai-tools';
 import { HOST_LABELS, type HostVia, PLACEHOLDER_NAME } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
@@ -237,37 +237,6 @@ export function IdentityStage({
  * awake, and happy for a moment every now and then: see `useBeaming`.
  */
 const MASCOT_MOOD = { draft: 'awake', issued: 'asleep', waiting: 'asleep', connected: 'awake' } as const;
-
-/** How long the mascot beams at a time, and how long it looks ahead with open eyes in between. */
-const BEAMS_FOR_MS = { min: 1600, max: 3000 };
-const BEAMS_EVERY_MS = { min: 4000, max: 9000 };
-
-/**
- * Whether the mascot beams right now. With a host connected it starts out beaming, which is the face of
- * that moment in the design, then goes back and forth at random between open eyes and happy ones. For
- * anyone who prefers reduced motion it keeps the happy face.
- */
-function useBeaming(connected: boolean): boolean {
-  const [beaming, setBeaming] = useState(true);
-
-  useEffect(() => {
-    if (!connected || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
-    }
-
-    let timer = 0;
-    const turn = (to: boolean) => {
-      setBeaming(to);
-      const { min, max } = to ? BEAMS_FOR_MS : BEAMS_EVERY_MS;
-      timer = window.setTimeout(() => turn(!to), min + Math.random() * (max - min));
-    };
-    turn(true);
-
-    return () => window.clearTimeout(timer);
-  }, [connected]);
-
-  return connected && beaming;
-}
 
 /**
  * Where the mascot stands in the portrait, 120px across: the size of its grid, so a cell is one pixel.

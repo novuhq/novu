@@ -13,6 +13,12 @@ export class HumanApiError extends Error {
 /** How long a call may take when the caller sets no limit of its own. */
 const REQUEST_TIMEOUT_MS = 15_000;
 
+/**
+ * Matches the API's `AGENT_INBOX_VIA_HEADER`. The account's key is the same one the CLI holds, so this is
+ * what tells the API that reading the inbox here is a host checking it through MCP.
+ */
+export const AGENT_INBOX_VIA_HEADER = 'Agent-Inbox-Via';
+
 type Query = Record<string, string | number | undefined>;
 
 export type HumanApi = {
@@ -39,7 +45,11 @@ export function createHumanApi(account: Account): HumanApi {
     try {
       response = await fetch(`${account.apiUrl}${path}`, {
         method,
-        headers: { Authorization: `ApiKey ${account.secretKey}`, 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `ApiKey ${account.secretKey}`,
+          'Content-Type': 'application/json',
+          [AGENT_INBOX_VIA_HEADER]: 'mcp',
+        },
         body: body === undefined ? undefined : JSON.stringify(body),
         signal: AbortSignal.timeout(Math.max(1, timeoutMs ?? REQUEST_TIMEOUT_MS)),
       });
