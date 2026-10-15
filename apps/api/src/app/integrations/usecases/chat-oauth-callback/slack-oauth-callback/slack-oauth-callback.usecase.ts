@@ -7,6 +7,8 @@ import {
   SLACK_OAUTH_ACCESS_URL,
 } from '@novu/application-generic';
 import {
+  AgentIntegrationRepository,
+  AgentRepository,
   ChannelConnectionEntity,
   ChannelConnectionRepository,
   ChannelTypeEnum,
@@ -24,6 +26,7 @@ import { UpdateChannelConnectionCommand } from '../../../../channel-connections/
 import { UpdateChannelConnection } from '../../../../channel-connections/usecases/update-channel-connection/update-channel-connection.usecase';
 import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { buildHumanDashboardUrl } from '../../../../shared/helpers/resolve-human-dashboard-base-url';
 import { renderConnectionResultPage } from '../../../../shared/html/connection-result-page';
 import { peekOAuthStatePayload } from '../../generate-chat-oath-url/chat-oauth-state.util';
 import {
@@ -32,6 +35,11 @@ import {
 } from '../../generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
 import { ChatOauthCallbackResult, ResponseTypeEnum } from '../chat-oauth-callback.response';
 import { SlackOauthCallbackCommand } from './slack-oauth-callback.command';
+
+type SlackOAuthAuthData = {
+  authed_user?: { id?: string };
+  incoming_webhook?: { url: string };
+};
 
 @Injectable()
 export class SlackOauthCallback {
@@ -43,7 +51,9 @@ export class SlackOauthCallback {
     private contextRepository: ContextRepository,
     private createChannelConnection: CreateChannelConnection,
     private updateChannelConnection: UpdateChannelConnection,
-    private createChannelEndpoint: CreateChannelEndpoint
+    private createChannelEndpoint: CreateChannelEndpoint,
+    private agentIntegrationRepository: AgentIntegrationRepository,
+    private agentRepository: AgentRepository
   ) {}
 
   async execute(command: SlackOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
@@ -90,6 +100,11 @@ export class SlackOauthCallback {
       }
     }
 
+    const humanRelayUrl = await this.humanRelayResultUrl(integration, 'connected');
+    if (humanRelayUrl) {
+      return { type: ResponseTypeEnum.URL, result: humanRelayUrl };
+    }
+
     if (credentials.redirectUrl) {
       return { type: ResponseTypeEnum.URL, result: credentials.redirectUrl };
     }
@@ -103,6 +118,59 @@ export class SlackOauthCallback {
         message: 'Your Slack workspace is connected and ready to use.',
       }),
     };
+  }
+
+  /**
+   * Where an Agent Inbox Slack install should land when the callback cannot finish.
+   * Returns null for every other Slack app, and for a state we cannot read, so those
+   * callers keep their existing error response.
+   */
+  async resolveHumanRelayErrorRedirect(state: string): Promise<string | null> {
+    try {
+      const preliminary = peekOAuthStatePayload<{ providerId?: ChatProviderIdEnum }>(state);
+      if (preliminary.providerId !== ChatProviderIdEnum.Slack && preliminary.providerId !== ChatProviderIdEnum.Novu) {
+        return null;
+      }
+
+      const stateData = await this.decodeSlackState(state);
+      const integration = await this.getIntegration(stateData);
+
+      return await this.humanRelayResultUrl(integration, 'error');
+    } catch {
+      return null;
+    }
+  }
+
+  /** Agent Inbox installs always return to the public result page, including ones already in a workspace. */
+  private async humanRelayResultUrl(
+    integration: IntegrationEntity,
+    status: 'connected' | 'error'
+  ): Promise<string | null> {
+    const link = await this.agentIntegrationRepository.findOne(
+      {
+        _integrationId: integration._id,
+        _environmentId: integration._environmentId,
+        _organizationId: integration._organizationId,
+      },
+      ['_agentId']
+    );
+    if (!link?._agentId) {
+      return null;
+    }
+
+    const agent = await this.agentRepository.findOne(
+      {
+        _id: link._agentId,
+        _environmentId: integration._environmentId,
+        _organizationId: integration._organizationId,
+      },
+      ['runtime']
+    );
+    if (agent?.runtime !== 'human_relay') {
+      return null;
+    }
+
+    return buildHumanDashboardUrl('/connect/slack/result', { status });
   }
 
   private async upsertWorkspaceConnection(
@@ -200,7 +268,11 @@ export class SlackOauthCallback {
     });
   }
 
-  private async linkUserEndpoint(stateData: StateData, integration: IntegrationEntity, authData: any): Promise<void> {
+  private async linkUserEndpoint(
+    stateData: StateData,
+    integration: IntegrationEntity,
+    authData: SlackOAuthAuthData
+  ): Promise<void> {
     if (!stateData.subscriberId) {
       throw new BadRequestException('subscriberId is required for link_user mode');
     }
@@ -231,7 +303,7 @@ export class SlackOauthCallback {
   private async createIncomingWebhookEndpoint(
     stateData: StateData,
     integration: IntegrationEntity,
-    authData: any
+    authData: SlackOAuthAuthData
   ): Promise<void> {
     if (!stateData.subscriberId) {
       throw new BadRequestException('subscriberId is required for incoming webhook');

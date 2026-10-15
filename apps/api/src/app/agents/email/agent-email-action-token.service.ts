@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
+import { resolveHumanDashboardBaseUrl } from '../../shared/helpers/resolve-human-dashboard-base-url';
 import {
   buildOpaqueStorageKey,
   mintRandomToken,
@@ -15,6 +16,8 @@ const TOKEN_BYTES = 32;
  *  loopback interface. Every other host must use https — the action token is bearer
  *  authority and intercepting it in transit is equivalent to dispatching the action. */
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+/** Cloud US is the only API whose email action pages are served from agentinbox.md. */
+const US_CLOUD_API_HOST = 'api.novu.co';
 
 /**
  * Action context forwarded to the agent's `onAction` handler when a recipient clicks an
@@ -115,7 +118,7 @@ export class AgentEmailActionTokenService {
 
     await this.cacheService.set(this.storageKey(token), JSON.stringify(entry), { ttl: this.ttlSeconds });
 
-    const url = `${this.resolveApiBaseUrl()}/v1/agents/email/actions/preview?t=${encodeURIComponent(token)}`;
+    const url = `${this.resolveActionPageBaseUrl()}/v1/agents/email/actions/preview?t=${encodeURIComponent(token)}`;
 
     return { token, url };
   }
@@ -149,6 +152,20 @@ export class AgentEmailActionTokenService {
     }
 
     return baseRaw;
+  }
+
+  /**
+   * Host of the page a recipient opens. US cloud links use the Agent Inbox site so the
+   * address bar never shows the API. EU, self-hosted, and local links stay on the API,
+   * which is where the confirmation page is actually rendered.
+   */
+  private resolveActionPageBaseUrl(): string {
+    const apiBase = this.resolveApiBaseUrl();
+    if (new URL(apiBase).hostname === US_CLOUD_API_HOST) {
+      return resolveHumanDashboardBaseUrl();
+    }
+
+    return apiBase;
   }
 
   /**

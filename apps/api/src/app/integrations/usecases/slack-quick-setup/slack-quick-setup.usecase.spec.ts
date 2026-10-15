@@ -60,8 +60,13 @@ function parseSentManifest(axiosPost: sinon.SinonStub): Record<string, any> {
 
 describe('SlackQuickSetup', () => {
   let axiosPost: sinon.SinonStub;
+  const originalEncryptionKey = process.env.STORE_ENCRYPTION_KEY;
 
   beforeEach(() => {
+    if (!process.env.STORE_ENCRYPTION_KEY) {
+      process.env.STORE_ENCRYPTION_KEY = '12345678901234567890123456789012';
+    }
+
     axiosPost = sinon.stub(axios, 'post').resolves({
       data: {
         ok: true,
@@ -78,6 +83,11 @@ describe('SlackQuickSetup', () => {
 
   afterEach(() => {
     sinon.restore();
+    if (originalEncryptionKey === undefined) {
+      delete process.env.STORE_ENCRYPTION_KEY;
+    } else {
+      process.env.STORE_ENCRYPTION_KEY = originalEncryptionKey;
+    }
   });
 
   it('always enables token rotation in the manifest', async () => {
@@ -102,6 +112,27 @@ describe('SlackQuickSetup', () => {
     const manifest = parseSentManifest(axiosPost);
     expect(manifest.display_information.description).to.equal('Asks before it ships.');
     expect(manifest.features.agent_view.agent_description).to.equal('Asks before it ships.');
+  });
+
+  it('uses Agent Inbox fallbacks when a Human agent has no description or usable name', async () => {
+    const { usecase, integrationRepository, agentRepository } = buildHarness();
+    integrationRepository.findOne.resolves({
+      _id: MOCK_INTEGRATION_ID,
+      _environmentId: MOCK_ENVIRONMENT_ID,
+      _organizationId: MOCK_ORGANIZATION_ID,
+      providerId: ChatProviderIdEnum.Slack,
+      identifier: 'slack-integration',
+      name: 'Slack',
+    });
+    agentRepository.findOne.resolves({ _id: MOCK_AGENT_ID, runtime: 'human_relay' });
+
+    await usecase.execute(buildCommand());
+
+    const manifest = parseSentManifest(axiosPost);
+    expect(manifest.display_information.name).to.equal('Agent');
+    expect(manifest.display_information.description).to.equal('AI agent');
+    expect(manifest.features.bot_user.display_name).to.equal('Agent');
+    expect(manifest.features.agent_view.agent_description).to.equal('AI agent');
   });
 
   it('keeps the default description for any other agent', async () => {
