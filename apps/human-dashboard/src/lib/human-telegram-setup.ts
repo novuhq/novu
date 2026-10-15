@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { HumanAccount } from './human-account';
 import { HumanApiError, isHumanApiRefusal } from './human-api-error';
-import { type Channel, issueTelegramStartLink } from './human-channels-api';
+import { type Channel, hasLinkedChannel, issueTelegramStartLink } from './human-channels-api';
 
 /**
  * Where the Telegram drawer opens: at the first step, at "say hi", or already done. `unknown` means it
@@ -34,11 +34,16 @@ export async function readTelegramSetup(
     return isHumanApiRefusal(error) ? ('no-token' as const) : unreadable(error);
   });
 
-  if (channel.connected) {
+  // Another contact can have pressed Start before the operator did; the operator still has theirs to do.
+  const linked = channel.connected
+    ? await hasLinkedChannel(account, channel.identifier, operatorContactId).catch(unreadable)
+    : false;
+
+  if (linked === true) {
     return { step: 'connected', botUsername: typeof link === 'object' ? link.botUsername : '' };
   }
 
-  if (link === 'unreadable') {
+  if (link === 'unreadable' || linked === 'unreadable') {
     return { step: 'unknown' };
   }
 
