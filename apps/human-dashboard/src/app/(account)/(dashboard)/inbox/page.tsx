@@ -55,7 +55,7 @@ export default async function InboxPage(props: PageProps<'/inbox'>) {
         view={view}
         page={page}
         counts={counts}
-        agent={{ handle: agent.handle, address: agent.address }}
+        agent={{ handle: agent.handle, address: agent.address, paused: setupProgress.agent.settings?.paused ?? null }}
         empty={empty}
         initialThread={initialThread}
         hostStatus={hostStatus}

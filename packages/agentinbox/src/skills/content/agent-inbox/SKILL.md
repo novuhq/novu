@@ -119,6 +119,18 @@ Stop retrying, surface the message where the operator will see it, and wait.
 The operator runs `login` themselves: it signs them in (or up) on
 agentinbox.md in the browser and keeps their channels. Don't run it for them.
 
+The operator can pause the agent on agentinbox.md. People's messages keep
+arriving and wait, but until the operator resumes it there, every command that
+reads the inbox or sends exits 1 with:
+
+```
+This agent is paused: it can’t read its inbox or send until its operator resumes it on agentinbox.md. Messages people send meanwhile wait in the inbox.
+```
+
+Stop retrying: the operator paused the agent on purpose. Tell whoever is
+reachable (chat, PR description, logs) that it is paused, and pick the inbox
+up again once they resume it.
+
 In sandboxes and containers with no config file, the CLI is fully operational
 when `INBOX_SECRET_KEY` and `INBOX_TO` are set in the environment (optionally
 `INBOX_VIA` for the channel). `--to`/`--via` flags still override the env
@@ -308,7 +320,9 @@ npx @agentinbox/cli inbox send choose "Which environment?" \
 ## The inbox: messages people send you first
 
 Anyone can message your agent without being asked — on Telegram, Slack, or
-email. Everything said in one place on one channel is one **conversation**.
+email — unless the operator lets only contacts reach it; then messages from
+strangers never arrive. Everything said in one place on one channel is one
+**conversation**.
 Nothing is lost while you're not looking: a message that doesn't answer a
 pending question stays unread, and the sender gets no automatic reply.
 

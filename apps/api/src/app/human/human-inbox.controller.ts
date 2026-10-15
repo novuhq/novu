@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
@@ -28,6 +29,7 @@ import {
   ListInboxQueryDto,
   type ListInboxResponseDto,
 } from './dtos/human-inbox.dto';
+import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
 import { AGENT_INBOX_VIA_HEADER, readHostVia } from './services/human-host-status.service';
 import { CountInboxThreads } from './usecases/count-inbox-threads/count-inbox-threads.usecase';
 import { GetInboxThreadCommand } from './usecases/get-inbox-thread/get-inbox-thread.command';
@@ -41,7 +43,7 @@ import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbo
 /**
  * The relay agent's conversations as one inbox across Telegram, Slack and email: list and read
  * threads, mark them read, and close them. Sending into a thread is `POST /human/interactions`
- * with `thread`.
+ * with `thread`. While the agent is paused its hosts get none of it; the operator's dashboard does.
  */
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @Controller('/human/inbox')
@@ -61,6 +63,7 @@ export class HumanInboxController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
+  @UseGuards(HumanAgentPausedGuard)
   listInboxThreads(
     @UserSession() user: UserSessionData,
     @Query() query: ListInboxQueryDto,
@@ -91,6 +94,7 @@ export class HumanInboxController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
+  @UseGuards(HumanAgentPausedGuard)
   countInboxThreads(
     @UserSession() user: UserSessionData,
     @Query() query: InboxViewQueryDto
@@ -113,6 +117,7 @@ export class HumanInboxController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
+  @UseGuards(HumanAgentPausedGuard)
   getInboxThread(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
@@ -139,6 +144,7 @@ export class HumanInboxController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseGuards(HumanAgentPausedGuard)
   markInboxRead(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
@@ -152,6 +158,7 @@ export class HumanInboxController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseGuards(HumanAgentPausedGuard)
   resolveInboxThread(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
