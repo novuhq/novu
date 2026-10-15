@@ -9,10 +9,12 @@
 //   node docker/box/cli.mjs logs <process>    a process's last lines (--tail <n>, default 200)
 //   node docker/box/cli.mjs exec -- <cmd...>  run a command in the box's checkout (/data/novu)
 //   node docker/box/cli.mjs down              stop the box; its data stays (local: its volume; cloud: its snapshot)
+//   node docker/box/cli.mjs delete --cloud    stop a Cloudflare box and delete it with its snapshot and Worker
 //
 // --box <name>  local: default novu-box, its volume is <name>-data; local boxes publish the same host ports, so one
 //               runs at a time. Cloud: default the current branch; the box is https://novu-box-<name>.<workers.dev>.
-// --cloud       the Cloudflare box. `up --cloud --deploy` redeploys its Worker (after a change to docker/box).
+// --cloud       the Cloudflare box. All boxes run in one host Worker; each has its own small Worker for its address.
+//               `up --cloud --deploy` redeploys the host (after a change to docker/box), which applies to every box.
 //               `up --cloud --from <box>` starts a new box from that box's latest snapshot instead of baking.
 
 import { spawnSync } from 'node:child_process';
@@ -34,7 +36,7 @@ const MAX_BUNDLE_MB = 25;
 const HEALTHY_WITHIN_SECONDS = 240;
 
 const USAGE =
-  'usage: node docker/box/cli.mjs up|sync|doctor|logs|exec|down [--box <name>] [--cloud]; exec -- <cmd> for flags';
+  'usage: node docker/box/cli.mjs up|sync|doctor|logs|exec|down|delete [--box <name>] [--cloud]; exec -- <cmd> for flags';
 let options;
 let positionals;
 try {
@@ -343,6 +345,11 @@ const commands = {
     return target.exec(args);
   },
   down: () => target.down(),
+  delete: () => {
+    if (!options.cloud) throw new Error('delete is for Cloudflare boxes (--cloud); a local box is its volume');
+
+    return target.delete();
+  },
 };
 
 if (!commands[command]) {

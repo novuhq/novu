@@ -1,5 +1,6 @@
-// cli.mjs `--cloud`: the box runs on Cloudflare as the Worker `novu-box-<box>` (worker.js), on workers.dev. The same
-// commands as for a local box, over HTTPS, signed in with your GitHub token (`gh auth token`).
+// cli.mjs `--cloud`: the box runs on Cloudflare in the host Worker `novu-box-host` (worker.js, shared by all boxes)
+// and is reached through its own thin Worker `novu-box-<box>` on workers.dev (thin.js). The same commands as for a
+// local box, over HTTPS, signed in with your GitHub token (`gh auth token`).
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -9,6 +10,8 @@ import { join } from 'node:path';
 const HERE = new URL('.', import.meta.url).pathname;
 const BOX_DIR = join(HERE, '..');
 const WRANGLER = ['npx', '--yes', 'wrangler@4.150.0'];
+const HOST = 'novu-box-host';
+const COMPATIBILITY_DATE = '2026-09-29';
 // The Novu account's workers.dev subdomain.
 const DOMAIN = process.env.BOX_CLOUD_DOMAIN ?? 'cli-shortener.workers.dev';
 const SECRETS = [
@@ -28,12 +31,21 @@ export function cloudTarget({ box, log, githubToken }) {
   const origin = `https://${worker}.${DOMAIN}`;
 
   async function call(path, init = {}) {
-    const response = await fetch(`${origin}/__box${path}`, {
-      ...init,
-      headers: { Authorization: `Bearer ${githubToken()}`, ...init.headers },
-    });
-    if (response.status === 404 && path === '/state' && !response.headers.get('content-type')?.includes('json'))
-      return null;
+    let response;
+    // The box answers JSON or plain text; an HTML page is Cloudflare's. Right after a deploy that is a 404 (the new
+    // workers.dev name isn't live everywhere yet) or error 1042 (the host's class isn't reachable yet), for up to a
+    // minute. A 404 on /state means the box doesn't exist (yet); anything else waits.
+    for (let attempt = 0; ; attempt++) {
+      response = await fetch(`${origin}/__box${path}`, {
+        ...init,
+        headers: { Authorization: `Bearer ${githubToken()}`, ...init.headers },
+      });
+      if (!response.headers.get('content-type')?.includes('text/html')) break;
+      if (path === '/state' && response.status === 404) return null;
+      if (attempt === 45)
+        throw new Error(`${origin}/__box${path} answers Cloudflare's ${response.status} page after 90 s`);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
     if (!response.ok && response.status !== 409)
       throw new Error(`${worker} ${path} -> ${response.status}: ${(await response.text()).slice(0, 300)}`);
 
@@ -72,7 +84,7 @@ export function cloudTarget({ box, log, githubToken }) {
     return output.trim();
   }
 
-  // The image is built for amd64 and pushed once per change; every box Worker pins it by digest.
+  // The image is built for amd64 and pushed once per change; the host Worker pins it by digest.
   function pushImage() {
     log('building the box image for linux/amd64 (cached after the first time)');
     run('docker', ['build', '--platform', 'linux/amd64', '-t', 'novu-box:cloud', BOX_DIR]);
@@ -88,24 +100,25 @@ export function cloudTarget({ box, log, githubToken }) {
     return `${repository}@${digest}`;
   }
 
-  function deploy() {
+  // The image, the secrets and the idle time belong to the host, so they apply to every box.
+  function deployHost() {
     const image = pushImage();
-    const dir = fs.mkdtempSync(join(os.tmpdir(), `${worker}-`));
-    const config = join(dir, 'wrangler.json');
-    const secrets = join(dir, 'secrets.json');
-    try {
+    withTempDir(HOST, (dir) => {
+      const config = join(dir, 'wrangler.json');
+      const secrets = join(dir, 'secrets.json');
       fs.writeFileSync(
         config,
         JSON.stringify({
-          name: worker,
+          name: HOST,
           main: join(HERE, 'worker.js'),
-          compatibility_date: '2026-09-29',
+          compatibility_date: COMPATIBILITY_DATE,
+          // Only so `hostExists` can ask cheaply; it answers 404 to everything.
           workers_dev: true,
           containers: [{ class_name: 'Box', scheduling_policy: 'durable_object', images: { box: { image } } }],
           durable_objects: { bindings: [{ name: 'BOX', class_name: 'Box' }] },
           exports: { Box: { type: 'durable-object', storage: 'sqlite' } },
           observability: { enabled: true },
-          // Minutes without requests before the box saves itself and stops; default 60 (worker.js).
+          // Minutes without requests before a box saves itself and stops; default 60 (worker.js).
           ...(process.env.BOX_IDLE_MINUTES && { vars: { IDLE_MINUTES: process.env.BOX_IDLE_MINUTES } }),
         })
       );
@@ -113,15 +126,38 @@ export function cloudTarget({ box, log, githubToken }) {
       fs.writeFileSync(
         secrets,
         JSON.stringify(Object.fromEntries(SECRETS.filter((k) => env[k]).map((k) => [k, env[k]]))),
-        {
-          mode: 0o600,
-        }
+        { mode: 0o600 }
       );
-      log(`deploying ${worker} with ${image.split('@')[1].slice(0, 19)}`);
+      log(`deploying ${HOST} with ${image.split('@')[1].slice(0, 19)}; this applies to every box`);
       run(WRANGLER[0], [...WRANGLER.slice(1), 'deploy', '-c', config, '--secrets-file', secrets]);
-    } finally {
-      fs.rmSync(dir, { recursive: true, force: true });
-    }
+    });
+  }
+
+  function deployBoxWorker() {
+    withTempDir(worker, (dir) => {
+      const config = join(dir, 'wrangler.json');
+      fs.writeFileSync(
+        config,
+        JSON.stringify({
+          name: worker,
+          main: join(HERE, 'thin.js'),
+          compatibility_date: COMPATIBILITY_DATE,
+          workers_dev: true,
+          durable_objects: { bindings: [{ name: 'BOX', class_name: 'Box', script_name: HOST }] },
+          vars: { BOX_NAME: box },
+          observability: { enabled: true },
+        })
+      );
+      log(`deploying ${worker}`);
+      run(WRANGLER[0], [...WRANGLER.slice(1), 'deploy', '-c', config]);
+    });
+  }
+
+  // The host answers its own plain-text 404; Cloudflare's 404 page (HTML) means it isn't deployed.
+  async function hostExists() {
+    const response = await fetch(`https://${HOST}.${DOMAIN}/`).catch(() => null);
+
+    return response?.status === 404 && response.headers.get('content-type')?.includes('text/plain');
   }
 
   async function waitUntilReady(seconds) {
@@ -152,14 +188,9 @@ export function cloudTarget({ box, log, githubToken }) {
         if (!source.snapshot?.id) throw new Error(`novu-box-${from} has no snapshot to start from`);
         query.set('from', source.snapshot.id);
       }
-      if (redeploy || !(await state())) {
-        deploy();
-        // A new workers.dev name answers 404 for a few seconds.
-        for (let attempt = 0; !(await state()); attempt++) {
-          if (attempt === 30) throw new Error(`${origin} doesn't answer a minute after the deploy`);
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-        }
-      }
+      // --deploy: a change to docker/box (image or Worker code) goes to the host, so to every box.
+      if (redeploy || !(await hostExists())) deployHost();
+      if (redeploy || !(await state())) deployBoxWorker();
       const { state: started } = await (await call(`/up?${query}`, { method: 'POST' })).json();
       log(`${worker}: ${started}${started === 'baking' ? ` ${ref} (11 to 14 minutes)` : ''}`);
       await waitUntilReady(READY_WITHIN_SECONDS[started]);
@@ -173,6 +204,18 @@ export function cloudTarget({ box, log, githubToken }) {
     async down() {
       log(`${worker}: saving to its snapshot and stopping (about 3 minutes); the next request wakes it`);
       console.log(JSON.stringify(await (await call('/down', { method: 'POST' })).json()));
+
+      return 0;
+    },
+
+    // Stops the box and forgets it (snapshot and settings), then deletes its Worker. Other boxes are untouched.
+    async delete() {
+      if (await state()) {
+        log(`${worker}: stopping and forgetting the box`);
+        await call('/destroy', { method: 'POST' });
+      }
+      log(`deleting ${worker}`);
+      run(WRANGLER[0], [...WRANGLER.slice(1), 'delete', '--name', worker, '--force']);
 
       return 0;
     },
@@ -195,6 +238,15 @@ export function cloudTarget({ box, log, githubToken }) {
       await call(`/file?path=${encodeURIComponent(path)}`, { method: 'PUT', body: fs.readFileSync(file) });
     },
   };
+}
+
+function withTempDir(name, fn) {
+  const dir = fs.mkdtempSync(join(os.tmpdir(), `${name}-`));
+  try {
+    fn(dir);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 function run(cmd, args) {

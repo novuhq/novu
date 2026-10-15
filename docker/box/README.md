@@ -163,39 +163,43 @@ inside `.source`.
 
 ### On Cloudflare: `--cloud`
 
-The same commands with `--cloud` run the box on Cloudflare Containers. Each box is its own Worker,
-`novu-box-<box>` (`cloud/worker.js`), at `https://novu-box-<box>.cli-shortener.workers.dev`; `--box` defaults to
-the current branch. The Worker serves the box's one address (port 18080, see Ports), so the dashboard calls the
-API same-origin there: unlike production, CORS isn't exercised.
+The same commands with `--cloud` run the box on Cloudflare Containers. Every box's container runs in one host
+Worker, `novu-box-host` (`cloud/worker.js`, one Durable Object per box), and each box has its own small Worker for
+its address, `novu-box-<box>` (`cloud/thin.js`, no container), at `https://novu-box-<box>.cli-shortener.workers.dev`;
+`--box` defaults to the current branch. That address is the box's one address (port 18080, see Ports), so the
+dashboard calls the API same-origin there: unlike production, CORS isn't exercised.
 
 You need `npx wrangler login` on the Novu Cloudflare account, `gh` signed in as someone with push access to
-`novuhq/novu` (the Worker checks it on every control call), and `docker/box/.env`: `up` uploads its secrets to the
-box's Worker. `up --cloud` builds the image for amd64, pushes it once per change, deploys the Worker if it isn't
-there (or with `--deploy`), then wakes the box from its snapshot or, the first time, bakes `next`.
+`novuhq/novu` (the box's Worker checks it on every control call), and `docker/box/.env`: its secrets go to the host.
+`up --cloud` deploys the host if it isn't there (building the image for amd64 and pushing it once per change) and
+the box's Worker if it isn't there, then wakes the box from its snapshot or, the first time, bakes `next`.
+`up --cloud --deploy` redeploys the host (after a change to `docker/box`), which applies to every box; with the
+same image, running boxes keep running. `delete --cloud` stops a box and deletes its snapshot reference and Worker.
 
 After an hour without requests the box saves itself to a snapshot and stops; the next request gets a "waking up"
 page and the box is back with its data. `BOX_IDLE_MINUTES=4 node docker/box/cli.mjs up --cloud --deploy` sets a
-shorter wait, to test the sleep; the next deploy without it goes back to 60. Measured on `novu-box-hosting-test` (standard-4):
+shorter wait for every box, to test the sleep; the next deploy without it goes back to 60. Asking a box for its
+state (`/__box/state`) doesn't count as a request. Measured on standard-4:
 
 | Step | Time |
 |---|---|
-| First `up` (deploy, then bake `next`) | about 16 min |
-| `down` (stop apps and databases, snapshot, stop) | about 3 min |
-| Wake, from the first browser request to a healthy API | 36 s |
-| `up --deploy` on a sleeping box (redeploy, then wake) | 112 s |
+| First `up` of a box (bake `next`) | about 16 min |
+| `down` (stop apps and databases, snapshot, stop) | 18 s to 3 min |
+| Wake, from the first browser request to a healthy API | 33 to 36 s |
 | `sync`, an API change | 83 s |
 | Smoke over the public address (box baked from `next`) | 19/20; the bridge check needs this branch's playground |
-| `up --from hosting-test` for a new box (new Worker, then wake from that box's snapshot, no bake) | about 6.5 min, mostly creating the Worker |
-| Wake of that new box from its own snapshot (which builds on the other box's) | 51 s; its snapshot was 0.03 GB |
+| `up --from base` for a new box (deploy its Worker, then wake from base's snapshot, no bake) | 106 s: 29 s deploy, 8 s until the address answers, 43 s wake |
+| The same, the first time a new snapshot is restored | about 5.7 min, once per snapshot |
+| `up --deploy` of the host with the same image | about 1 min; running boxes keep running |
 
-`up --cloud --box <new> --from <box>` starts a new box from another box's latest snapshot instead of baking. It
-works across Workers, which Cloudflare doesn't document (it documents sharing within one Durable Object class), so
-it may change while snapshots are in beta; the fallback is a bake.
+`up --cloud --box <new> --from <box>` starts a new box from another box's latest snapshot instead of baking: all
+boxes share one Durable Object class, which is how Cloudflare documents snapshot sharing. Keep a `base` box, baked
+from `next`, to start new boxes from.
 
-Limits for now: each sleep leaves a snapshot image (about 3.5 GB) in the account's registry that nothing deletes
-yet (`npx wrangler containers images list`); the GitHub token reaches the bake's and `sync`'s environment, as it
-does locally; requests the box makes to its own public address go out through the internet. Delete a box with
-`npx wrangler delete --name novu-box-<box>`.
+Limits for now: each sleep leaves a snapshot image in the account's registry that nothing deletes yet
+(`npx wrangler containers images list`); the GitHub token reaches the bake's and `sync`'s environment, as it does
+locally; requests the box makes to its own public address go out through the internet; a host redeploy with a new
+image is untested with boxes running.
 
 Run the smoke test from the host (38 checks, 43 with the Anthropic key, about 2 minutes; writes `smoke.json` to
 the directory given):

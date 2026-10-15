@@ -1,12 +1,16 @@
-// Novu Box on Cloudflare: one Worker per box (`novu-box-<box>` on workers.dev) with one Durable Object that owns the
-// box's container. `cli.mjs --cloud` deploys and drives it; browsers reach the box through it.
+// Novu Box on Cloudflare, the host Worker `novu-box-host`: the Box class, one Durable Object per box that owns the
+// box's container. Every box shares this class, its image and its secrets, so a new box starts from another box's
+// snapshot as Cloudflare documents it (within one class). The host's own address only answers 404; each box has a
+// thin Worker `novu-box-<box>` on workers.dev (thin.js) that checks /__box/* callers and forwards to Box(<box>).
+// `cli.mjs --cloud` deploys and drives them; browsers reach a box through its thin Worker.
 //
-//   /__box/*   control, for GitHub users with push access to novuhq/novu (Authorization: Bearer <GitHub token>)
-//     GET  /__box/state             the container and its snapshot
+//   /__box/*   control, for GitHub users with push access to novuhq/novu (checked by thin.js)
+//     GET  /__box/state             the container and its snapshot; doesn't count as activity
 //     POST /__box/up?ref=next       start the box: wake it from its snapshot, or bake `ref` into a new one
 //     POST /__box/exec              {cmd, cwd?, github?} run a command in the box and stream its output
 //     PUT  /__box/file?path=<file>  write the request body to a file in the box
 //     POST /__box/down              save the box to its snapshot and stop it
+//     POST /__box/destroy           stop the box and forget it (its snapshot and settings)
 //   anything else                   the box's one address (Caddy :18080): dashboard, API, socket, S3, Mailpit
 //
 // After an hour without requests the Durable Object saves the box to a snapshot and stops it; the next request
@@ -55,37 +59,16 @@ const START = ['tini', '--', ...BOX, 'start'];
 const EXIT_MARK = '__BOX_EXIT__';
 
 export default {
-  async fetch(request, env) {
-    if (new URL(request.url).pathname.startsWith('/__box/') && !(await authorize(request)))
-      return new Response('needs `Authorization: Bearer <GitHub token>` with push access to novuhq/novu\n', {
-        status: 401,
-      });
-
-    return env.BOX.get(env.BOX.idFromName('box')).fetch(request);
+  async fetch() {
+    return new Response('novu-box-host: reach a box through its own Worker, novu-box-<box>\n', { status: 404 });
   },
 };
-
-// Tokens checked in the last 5 minutes, by SHA-256; the token itself is never stored.
-const authorized = new Map();
-
-async function authorize(request) {
-  const token = bearer(request);
-  if (!token) return false;
-  const key = await sha256(token);
-  if (Date.now() - (authorized.get(key) ?? 0) < 5 * 60 * 1000) return true;
-  const response = await fetch('https://api.github.com/repos/novuhq/novu', {
-    headers: { Authorization: `Bearer ${token}`, 'User-Agent': 'novu-box' },
-  });
-  if (!response.ok || !(await response.json()).permissions?.push) return false;
-  authorized.set(key, Date.now());
-
-  return true;
-}
 
 export class Box extends DurableObject {
   async fetch(request) {
     const url = new URL(request.url);
-    this.touch();
+    // Asking for the state isn't using the box; a poller would otherwise keep it awake forever.
+    if (!(request.method === 'GET' && url.pathname === '/__box/state')) this.touch();
     try {
       return url.pathname.startsWith('/__box/') ? await this.control(request, url) : await this.serve(request, url);
     } catch (error) {
@@ -120,6 +103,7 @@ export class Box extends DurableObject {
     if (route === 'GET /__box/state') return json(await this.state());
     if (route === 'POST /__box/up') return json(await this.up(url, request));
     if (route === 'POST /__box/down') return json(await this.sleep('down'));
+    if (route === 'POST /__box/destroy') return json(await this.destroy());
     if (!this.ctx.container.running)
       return new Response('the box is not running: `cli.mjs up --cloud`\n', { status: 409 });
     if (route === 'POST /__box/exec') {
@@ -216,6 +200,15 @@ export class Box extends DurableObject {
     return { state: baked ? 'asleep' : 'stopped without a snapshot (never baked)' };
   }
 
+  // For a deleted box: the Durable Object's storage goes too, so the name starts from nothing if it's used again.
+  async destroy() {
+    if (this.ctx.container.running) await this.ctx.container.destroy('deleted');
+    await this.ctx.storage.deleteAlarm();
+    await this.ctx.storage.deleteAll();
+
+    return { state: 'deleted' };
+  }
+
   async busy() {
     const process = await this.run(['sh', '-c', 'ps -eo args | grep -c -E "^node /opt/box/box.mjs (bake|apply)"']);
     const { stdout } = await process.output();
@@ -289,12 +282,6 @@ function waking(request) {
 
 function bearer(request) {
   return request.headers.get('Authorization')?.match(/^Bearer (.+)$/)?.[1];
-}
-
-async function sha256(text) {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 function json(body, status = 200) {

@@ -88,11 +88,25 @@ What differs, or is still a workaround, when the box runs on Cloudflare (`cloud/
 | Area | Staging / production | Box on Cloudflare | What a PR tester misses | To close it |
 |---|---|---|---|---|
 | Addresses | Dashboard and API on separate hosts (`dashboard.novu.co`, `api.novu.co`) | One `workers.dev` address per box; the box routes by path (Caddy `:18080`) | CORS and cross-origin cookie behavior | A domain with a host per part (NV-9059) |
-| New boxes | - | One Worker per box; `up --from <box>` starts from another Worker's snapshot, which Cloudflare doesn't document | Nothing while it works; if Cloudflare stops allowing it, new boxes bake (about 16 min) | One Worker for all boxes, sharing a base snapshot within one Durable Object class (NV-9059) |
+| New boxes | - | All containers in one host Worker (`novu-box-host`); each box adds a small Worker for its `workers.dev` address (`novu-box-<box>`, about 30 s to deploy). A new box starts from another box's snapshot in about 2 min | - | Drop the per-box Workers once there's a domain (NV-9059) |
 | GitHub token | Not in the app's environment | The caller's token is in the environment of `bake` and `sync`, so PR code (install scripts) can read it | - | The Worker adds the token to requests to GitHub on the way out |
 | Calls to its own address | Internal | `API_ROOT_URL` and S3 links are the public address, so the box's calls to itself go out to the internet and back | Extra latency on those calls | Route them back inside the Worker |
 | Uptime | Always on | Sleeps after 1 h without requests and wakes in 35 to 50 s; a Cloudflare host restart loses changes since the last save | The first request after a sleep waits | - |
 | Snapshot storage | - | Each box keeps its snapshots until 30 days after its last use; unknown whether they count toward the 50 GB account image limit, or what they cost | - | Ask Cloudflare |
+
+### Target setup once boxes have a domain (NV-9059)
+
+The `workers.dev` setup is a workaround for having no domain. With one, the hosting becomes:
+
+1. **One Worker for everything.** The host Worker (`novu-box-host`) answers `<box>.<domain>` itself and routes by
+   hostname to the box's Durable Object, so the thin per-box Workers (`novu-box-<box>`) and their deploys go away.
+2. **A host per part,** one wildcard level deep for the free certificate: `<box>.<domain>` (dashboard),
+   `<box>-api.<domain>`, `<box>-ws.<domain>`, `<box>-s3.<domain>`, `<box>-mail.<domain>`. The dashboard then calls the
+   API cross-origin, as in production, so CORS and cookies are tested again; the path routing in the Caddyfile stays
+   only for local boxes.
+3. **One base snapshot** (`Box("base")`, baked from `next` weekly) that every new box starts from, within the one class.
+4. **Not** `novu.co` (production cookies), `novu.sh` (customer `npx novu dev` tunnels) or `novu-staging.co` (shares
+   a parent domain with staging, possible Clerk cookie clash).
 
 ## Bugs found while building the box
 
