@@ -7,6 +7,7 @@ import { useEffect, useOptimistic, useState, useTransition } from 'react';
 import { buttonClassName } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
 import type { AgentPause } from '@/lib/agent-settings';
+import type { HostStatus } from '@/lib/host-status';
 import {
   INBOX_UNREAD_COMMAND,
   INBOX_WATCH_COMMAND,
@@ -20,10 +21,11 @@ import { cn } from '@/lib/utils';
 
 import { loadMoreThreadsAction, loadThreadAction } from './actions';
 import { HeaderCommand } from './command-chip';
+import { HostCheck } from './host-check';
 import { InboxEmpty } from './inbox-empty';
 import { InboxClock } from './inbox-time';
 import { InboxToolbar } from './inbox-toolbar';
-import { PausedBanner, PausedStatus, usePausedAgent } from './paused-banner';
+import { type PausedAgent, PausedBanner, PausedStatus, usePausedAgent } from './paused-banner';
 import { ThreadDrawer, type ThreadLoad } from './thread-drawer';
 import { ThreadList } from './thread-list';
 
@@ -38,6 +40,8 @@ type InboxViewProps = {
   empty: { listening: number | null } | null;
   /** The thread the page's address opens, read along with the page. */
   initialThread: { id: string; load: ThreadLoad } | null;
+  /** Whether a host reads the agent's mail, or `null` when that couldn't be read: the header then leaves it out. */
+  hostStatus: HostStatus | null;
   /** When the server rendered this: "now" until the browser takes over, and new on every render. */
   renderedAt: string;
 };
@@ -56,7 +60,16 @@ type MoreThreads = {
  * The view lives in the page's address, so the server lists its threads; the drawer only changes the
  * address in place and reads its thread itself.
  */
-export function InboxView({ view: serverView, page, counts, agent, empty, initialThread, renderedAt }: InboxViewProps) {
+export function InboxView({
+  view: serverView,
+  page,
+  counts,
+  agent,
+  empty,
+  initialThread,
+  hostStatus,
+  renderedAt,
+}: InboxViewProps) {
   const router = useRouter();
   const pausedAgent = usePausedAgent(agent.paused ?? null);
   const [view, setOptimisticView] = useOptimistic(serverView);
@@ -206,7 +219,7 @@ export function InboxView({ view: serverView, page, counts, agent, empty, initia
             {agent.address}
           </span>
           <span aria-hidden="true" className="flex-1" />
-          <PausedStatus agent={pausedAgent} renderedAt={renderedAt} />
+          <AgentStatus hostStatus={hostStatus} pausedAgent={pausedAgent} renderedAt={renderedAt} />
           <Tooltip label="Refresh">
             <button
               type="button"
@@ -251,6 +264,40 @@ export function InboxView({ view: serverView, page, counts, agent, empty, initia
         onLoadEarlier={() => openId && fetchEarlier(openId)}
       />
     </InboxClock>
+  );
+}
+
+/**
+ * The header's one spot for the agent's state, left of Refresh: "paused by you 12m ago" while it's paused,
+ * otherwise whether a host checks the inbox. The two are stacked in place, so one fades in as the other
+ * fades out.
+ */
+function AgentStatus({
+  hostStatus,
+  pausedAgent,
+  renderedAt,
+}: {
+  hostStatus: HostStatus | null;
+  pausedAgent: PausedAgent;
+  renderedAt: string;
+}) {
+  const paused = Boolean(pausedAgent.paused);
+
+  return (
+    <span className="grid shrink-0 items-center justify-items-end *:col-start-1 *:row-start-1">
+      {hostStatus && (
+        <span
+          aria-hidden={paused || undefined}
+          className={cn(
+            'transition-opacity duration-300 ease-out motion-reduce:transition-none',
+            paused && 'opacity-0'
+          )}
+        >
+          <HostCheck lastCheckedAt={hostStatus.lastCheckedAt} renderedAt={renderedAt} />
+        </span>
+      )}
+      <PausedStatus agent={pausedAgent} renderedAt={renderedAt} />
+    </span>
   );
 }
 

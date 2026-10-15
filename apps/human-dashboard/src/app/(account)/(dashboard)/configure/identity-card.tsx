@@ -37,7 +37,7 @@ export type IdentityCardProps = {
   /** Who runs the agent: the operator's full name, when Clerk has one. */
   operatorName: string;
   state: AgentState;
-  /** A host reads the agent's mail: a CLI login was approved, a connector signed in, or it came from a terminal. */
+  /** A host reads the agent's mail: one checked the inbox within the last day. */
   hostConnected: boolean;
   /**
    * Telegram, once connected: its bot's `@username`, or `null` when the bot's name couldn't be read just
@@ -93,6 +93,7 @@ export function IdentityCard(props: IdentityCardProps) {
           label={hostConnected ? 'active' : 'Not connected'}
           live={hostConnected}
           highlighted
+          fades
           end={<Dot className={hostConnected ? 'bg-success' : 'bg-muted'} />}
         />
         <CardLine
@@ -161,7 +162,10 @@ function Portrait({ handle, address, pictureUrl, state }: IdentityCardProps) {
       </p>
       <p className="absolute top-3 right-3 flex items-center gap-1.5 rounded bg-background/70 px-2 py-0.75 font-mono text-[11px] leading-3.5 text-default">
         <Dot className={STATE_DOT[state]} />
-        {state}
+        {/* A new key when the agent's state changes, so the new word fades in. */}
+        <span key={state} className="animate-overlay-in motion-reduce:animate-none">
+          {state}
+        </span>
       </p>
 
       {/*
@@ -206,16 +210,23 @@ type CardLineProps = {
   live?: boolean;
   /** The line of the host, which the design sets apart. */
   highlighted?: boolean;
+  /** Fades the words in anew when they change, for a line that changes while the page is open. */
+  fades?: boolean;
   /** What ends the line: its copy button, or a dot for how it stands. */
   end: ReactNode;
 };
 
-function CardLine({ icon, label, live = true, highlighted = false, end }: CardLineProps) {
+function CardLine({ icon, label, live = true, highlighted = false, fades = false, end }: CardLineProps) {
   return (
     <li className={cn('flex h-8.5 items-center gap-2.5 rounded-md px-2', highlighted && 'bg-subtle')}>
       {icon}
       <span
-        className={cn('min-w-0 flex-1 truncate font-mono text-xs leading-4', live ? 'text-foreground' : 'text-muted')}
+        key={fades ? label : undefined}
+        className={cn(
+          'min-w-0 flex-1 truncate font-mono text-xs leading-4',
+          live ? 'text-foreground' : 'text-muted',
+          fades && 'animate-overlay-in motion-reduce:animate-none'
+        )}
       >
         {label}
       </span>
@@ -236,7 +247,15 @@ function CopyLine({ value, label }: { value: string; label: string }) {
 }
 
 function Dot({ className }: { className: string }) {
-  return <span aria-hidden="true" className={cn('size-1.5 shrink-0 rounded-full', className)} />;
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        'size-1.5 shrink-0 rounded-full transition-colors duration-200 motion-reduce:transition-none',
+        className
+      )}
+    />
+  );
 }
 
 /** The empty ring at the end of a line that has nothing to show yet. */

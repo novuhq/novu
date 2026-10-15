@@ -9,8 +9,6 @@ import { readTelegramSetup, type TelegramSetupState } from './human-telegram-set
 export type ChannelRow = {
   via: ChannelVia;
   name: string;
-  /** What the channel will give the agent, shown until it has handles of its own. */
-  placeholder: string;
   /** How the agent is known on the channel once it's connected. Each one can be copied on its own. */
   handles: ChannelHandle[];
   connected: boolean;
@@ -25,11 +23,11 @@ export type ChannelHandle = {
 /** A page doesn't wait longer than this for a channel's setup; its drawer then reads it when it opens. */
 const SETUP_TIMEOUT_MS = 4000;
 
-type ChannelLabels = Pick<ChannelRow, 'via' | 'name' | 'placeholder'>;
+type ChannelLabels = Pick<ChannelRow, 'via' | 'name'>;
 
-const EMAIL: ChannelLabels = { via: 'email', name: 'Email', placeholder: 'Its own email address' };
-const TELEGRAM: ChannelLabels = { via: 'telegram', name: 'Telegram', placeholder: 'Its own Telegram bot' };
-const SLACK: ChannelLabels = { via: 'slack', name: 'Slack', placeholder: 'Its own app in your workspace' };
+const EMAIL: ChannelLabels = { via: 'email', name: 'Email' };
+const TELEGRAM: ChannelLabels = { via: 'telegram', name: 'Telegram' };
+const SLACK: ChannelLabels = { via: 'slack', name: 'Slack' };
 
 export type ChannelsOverview = {
   rows: ChannelRow[];

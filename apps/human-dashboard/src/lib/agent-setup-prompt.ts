@@ -12,63 +12,11 @@ export type PromptContext = {
   apiUrl: string;
 };
 
-export type SetupContext = PromptContext & {
-  /** The account's API key. Without it the operator logs in from the terminal instead. */
-  secretKey: string | null;
-};
-
-export type SetupOperator = {
-  name?: string;
-  email?: string;
-};
-
-type Via = 'email' | 'telegram' | 'slack';
-
-/**
- * The line the operator runs themselves, in their own terminal. It carries their API key, which the page
- * shows cut short. `setup` then asks them which channel to start with.
- */
-export function buildSetupCommand(context: SetupContext): string {
-  if (!context.secretKey) {
-    return `${CLI} login${apiUrlFlag(context)} && ${CLI} setup`;
-  }
-
-  return `${CLI} setup${accountFlags(context)}`;
-}
-
-/** The same line with the key cut down to its end, for the screen. */
-export function maskSetupCommand(command: string, secretKey: string | null): string {
-  return secretKey ? command.replace(secretKey, `…${secretKey.slice(-4)}`) : command;
-}
-
-/**
- * What the operator pastes into Claude Code, Codex, Cursor or any other agent: it installs Agent Inbox, gives
- * the agent its own email address and asks before connecting anything else.
- *
- * The prompt never carries the account's API key. It ends up in another company's agent and its logs,
- * so the agent logs in with `login` instead, which the operator approves in their browser.
- */
-export function buildSetupPrompt(context: PromptContext, operator: SetupOperator): string {
-  const email = operator.email ? shellQuote(operator.email) : '<my email address>';
-  const name = operator.name ? ` --name ${shellQuote(operator.name)}` : '';
-  const api = apiUrlFlag(context);
-
-  return [
-    'Set up Agent Inbox for me. It is a CLI that lets you ask me questions and get my approval by email, Telegram or Slack while you work.',
-    '',
-    `1. Run \`${CLI} login${api}\`, show me the link it prints and wait until I approve it in my browser.`,
-    `2. ${operator.email ? 'Run' : 'Ask me for my email address, then run'} this. It creates my agent inbox with its own email address, and installs the skill that tells you when to use it:`,
-    `   ${CLI} setup email --email ${email}${name}${api} --skill`,
-    '3. Tell me the email address the agent got.',
-    '4. Ask me whether I also want Telegram or Slack. Connect only what I say yes to:',
-    ...channelSteps(['telegram', 'slack'], api).map((step) => `   ${step}`),
-  ].join('\n');
-}
-
 /**
  * What the operator hands their agent in a channel's setup drawer ("Let your agent set this up"): a few
  * sentences that name the CLI commands and leave the steps in Telegram or Slack to the agent and the
- * operator. No API key in it either: a computer that isn't logged in yet logs in first, since `channel add`
+ * operator. No API key in it: it ends up in another company's agent and its logs. A computer that isn't
+ * logged in yet logs in first, since `channel add`
  * needs the login, and the operator may have set the agent up in the browser or through an MCP host.
  */
 export function buildChannelPrompt(context: PromptContext, via: 'telegram' | 'slack', handle: string): string {
@@ -81,25 +29,7 @@ export function buildChannelPrompt(context: PromptContext, via: 'telegram' | 'sl
     : `Set up Slack for ${handle}. ${login} Then run ${command}, walk me through creating the app from the manifest and installing it.`;
 }
 
-function channelSteps(channels: Via[], api: string): string[] {
-  const steps: Record<Via, string> = {
-    email: `- Email: ask me for my email address, then run \`${CLI} channel add email --email <my email address>${api}\`.`,
-    telegram: `- Telegram: I create a bot with @BotFather and give you its token. Run \`${CLI} channel add telegram --telegram-bot-token <token>${api}\`, then show me the link it prints so I can press Start.`,
-    slack: `- Slack: I create an App Configuration Token at https://api.slack.com/apps and give it to you. Run \`${CLI} channel add slack --slack-config-token <token>${api}\`, then show me the install link it prints.`,
-  };
-
-  return channels.map((via) => steps[via]);
-}
-
-function accountFlags(context: SetupContext): string {
-  return `${context.secretKey ? ` --secret-key=${context.secretKey}` : ''}${apiUrlFlag(context)}`;
-}
-
-function apiUrlFlag({ apiUrl }: PromptContext): string {
+/** The API's flag for a command, when the account's API isn't the one the CLI goes to by itself. */
+export function apiUrlFlag({ apiUrl }: PromptContext): string {
   return apiUrl === CLI_DEFAULT_API_URL ? '' : ` --api-url=${apiUrl}`;
-}
-
-/** Single quotes keep a name such as O'Brien, or one with a `$` in it, from being read by the shell. */
-function shellQuote(value: string): string {
-  return `'${value.replace(/[\r\n]+/g, ' ').replace(/'/g, `'\\''`)}'`;
 }

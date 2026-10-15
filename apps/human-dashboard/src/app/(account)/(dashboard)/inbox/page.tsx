@@ -5,6 +5,7 @@ import { SetupNotFinishedBanner } from '@/components/dashboard/setup-banners';
 import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
 import { isHumanApiNotFound } from '@/lib/human-api-error';
 import { listChannels } from '@/lib/human-channels-api';
+import { loadHostStatus } from '@/lib/human-hosts-api';
 import { countInboxThreads, getInboxThread, listInboxThreads } from '@/lib/human-inbox-api';
 import { isSetupUnfinished, loadSetupSummary, requireSetUpAgent } from '@/lib/human-onboarding';
 import { INBOX_PATH, type InboxCounts, type InboxView as InboxViewState, parseInboxParams } from '@/lib/inbox';
@@ -30,11 +31,12 @@ export default async function InboxPage(props: PageProps<'/inbox'>) {
   const account = await requireHumanAccount({ returnTo: INBOX_PATH });
   const { view, threadId } = parseInboxParams(await props.searchParams);
   const setupProgress = await requireSetUpAgent(account);
-  const [setup, page, counts, initialThread] = await Promise.all([
+  const [setup, page, counts, initialThread, hostStatus] = await Promise.all([
     loadSetupSummary(account, setupProgress),
     listInboxThreads(account, view),
     countInboxThreads(account, view),
     threadId ? loadInitialThread(account, threadId) : null,
+    loadHostStatus(account),
   ]);
   const { agent } = setup;
   // The list and the counts are read side by side, so a first thread can make it into the list after the
@@ -56,6 +58,7 @@ export default async function InboxPage(props: PageProps<'/inbox'>) {
         agent={{ handle: agent.handle, address: agent.address, paused: setupProgress.agent.settings?.paused ?? null }}
         empty={empty}
         initialThread={initialThread}
+        hostStatus={hostStatus}
         renderedAt={new Date().toISOString()}
       />
       {!isSetupUnfinished(setup.step) && !setup.checklist.hidden && (
