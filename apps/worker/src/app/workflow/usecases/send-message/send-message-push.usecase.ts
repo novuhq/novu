@@ -445,8 +445,11 @@ export class SendMessagePush extends SendMessageBase {
       const providerTargets = targets.filter((target) => target.channel.providerId === providerId && target.route);
       const needsProviderSend =
         providerRoute.credentials && providerTargets.every((target) => target.route?.isIntegrationScoped);
+      const hasUsableTarget = providerTargets.some(
+        (target) => target.route?.credentials || !this.channelMissingDeviceTokens(target.channel)
+      );
       const needsIntegrationSend =
-        providerTargets.length === 0 &&
+        !hasUsableTarget &&
         getIntegrationOverrideIdentifiers(command, providerId).some(
           (identifier) => resolvePushRoute(command, providerId, identifier).isIntegrationScoped
         );
