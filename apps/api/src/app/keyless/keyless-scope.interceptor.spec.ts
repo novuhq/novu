@@ -1,6 +1,6 @@
 import { CallHandler, ExecutionContext, HttpException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { EnvironmentRepository, SubscriberRepository } from '@novu/dal';
+import { EnvironmentRepository, SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
 import { ApiAuthSchemeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { lastValueFrom, of } from 'rxjs';
@@ -80,6 +80,7 @@ describe('KeylessScopeInterceptor', () => {
   const originalEnv: Record<string, string | undefined> = {};
   let environmentRepository: sinon.SinonStubbedInstance<EnvironmentRepository>;
   let subscriberRepository: sinon.SinonStubbedInstance<SubscriberRepository>;
+  let topicSubscribersRepository: sinon.SinonStubbedInstance<TopicSubscribersRepository>;
   let connectClaimTokenService: sinon.SinonStubbedInstance<ConnectClaimTokenService>;
   let triggerCapService: sinon.SinonStubbedInstance<KeylessTriggerCapService>;
   let interceptor: KeylessScopeInterceptor;
@@ -97,6 +98,7 @@ describe('KeylessScopeInterceptor', () => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
     environmentRepository.findOne.resolves(agentEnvironment() as never);
     subscriberRepository = sinon.createStubInstance(SubscriberRepository);
+    topicSubscribersRepository = sinon.createStubInstance(TopicSubscribersRepository);
     connectClaimTokenService = sinon.createStubInstance(ConnectClaimTokenService);
     connectClaimTokenService.issueOrGetForEnvironment.resolves({
       token: 'nvct_token',
@@ -109,6 +111,7 @@ describe('KeylessScopeInterceptor', () => {
     interceptor = new KeylessScopeInterceptor(
       environmentRepository,
       subscriberRepository,
+      topicSubscribersRepository,
       connectClaimTokenService,
       triggerCapService,
       logger as unknown as PinoLogger
@@ -376,6 +379,29 @@ describe('KeylessScopeInterceptor', () => {
         _organizationId: KEYLESS_ORG_ID,
       });
       expect(triggerCapService.consume.firstCall.args).to.deep.equal([ENV_ID, 350]);
+    });
+
+    it('meters topic recipients by the number of subscriptions to those topics', async () => {
+      topicSubscribersRepository.count.resolves(500);
+
+      await run({
+        method: 'POST',
+        path: '/v1/events/trigger',
+        body: { to: ['a', { type: 'Topic', topicKey: 'all' }, { type: 'Topic', topicKey: 'all' }] },
+      });
+
+      expect(topicSubscribersRepository.count.firstCall.args[0]).to.deep.equal({
+        _environmentId: ENV_ID,
+        _organizationId: KEYLESS_ORG_ID,
+        topicKey: { $in: ['all'] },
+      });
+      expect(triggerCapService.consume.firstCall.args).to.deep.equal([ENV_ID, 501]);
+    });
+
+    it('does not query topics for triggers without topic recipients', async () => {
+      await run({ method: 'POST', path: '/v1/events/trigger', body: { to: ['a'] } });
+
+      expect(topicSubscribersRepository.count.called).to.equal(false);
     });
 
     it('does not meter non-trigger routes', async () => {

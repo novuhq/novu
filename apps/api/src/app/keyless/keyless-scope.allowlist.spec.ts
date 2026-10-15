@@ -90,7 +90,7 @@ describe('isKeylessApiKeyRequestBodyAllowed', () => {
 });
 
 describe('computeKeylessTriggerCost', () => {
-  const recipients = (units: number) => ({ type: 'recipients', units });
+  const recipients = (units: number, topicKeys: string[] = []) => ({ type: 'recipients', units, topicKeys });
 
   it('is null for routes that are not triggers', () => {
     expect(computeKeylessTriggerCost('GET', '/v1/events/trigger', {})).to.equal(null);
@@ -115,6 +115,20 @@ describe('computeKeylessTriggerCost', () => {
     const body = { events: [{ to: ['a', 'b'] }, { to: 'c' }, { to: [{ subscriberId: 'd' }] }] };
 
     expect(computeKeylessTriggerCost('POST', '/v1/events/trigger/bulk', body)).to.deep.equal(recipients(4));
+  });
+
+  it('collects topic recipients so their subscribers are resolved instead of counted as one', () => {
+    const topic = { type: 'Topic', topicKey: 'all-users' };
+
+    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger', { to: topic })).to.deep.equal(
+      recipients(0, ['all-users'])
+    );
+    expect(computeKeylessTriggerCost('POST', '/v1/events/trigger', { to: ['a', topic] })).to.deep.equal(
+      recipients(1, ['all-users'])
+    );
+    expect(
+      computeKeylessTriggerCost('POST', '/v1/events/trigger/bulk', { events: [{ to: [topic] }, { to: 'b' }] })
+    ).to.deep.equal(recipients(1, ['all-users']));
   });
 
   it('counts a bulk body without an events array as one unit', () => {

@@ -1,6 +1,6 @@
 import { CallHandler, ExecutionContext, HttpStatus, Injectable, NestInterceptor } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { EnvironmentEntity, EnvironmentRepository, SubscriberRepository } from '@novu/dal';
+import { EnvironmentEntity, EnvironmentRepository, SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
 import { ApiAuthSchemeEnum, UserSessionData } from '@novu/shared';
 import { Observable } from 'rxjs';
 
@@ -49,6 +49,7 @@ export class KeylessScopeInterceptor implements NestInterceptor {
   constructor(
     private readonly environmentRepository: EnvironmentRepository,
     private readonly subscriberRepository: SubscriberRepository,
+    private readonly topicSubscribersRepository: TopicSubscribersRepository,
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly keylessTriggerCapService: KeylessTriggerCapService,
     private readonly logger: PinoLogger
@@ -183,7 +184,18 @@ export class KeylessScopeInterceptor implements NestInterceptor {
   private async resolveTriggerUnits(cost: KeylessTriggerCost, environment: EnvironmentEntity): Promise<number> {
     switch (cost.type) {
       case 'recipients':
-        return cost.units;
+        if (cost.topicKeys.length === 0) {
+          return cost.units;
+        }
+
+        return (
+          cost.units +
+          (await this.topicSubscribersRepository.count({
+            _environmentId: environment._id,
+            _organizationId: environment._organizationId,
+            topicKey: { $in: [...new Set(cost.topicKeys)] },
+          }))
+        );
       case 'broadcast':
         return this.subscriberRepository.count({
           _environmentId: environment._id,

@@ -1,4 +1,4 @@
-import { ChatProviderIdEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, EmailProviderIdEnum, SmsProviderIdEnum, TriggerRecipientsTypeEnum } from '@novu/shared';
 
 /**
  * Routes a keyless-organization `ApiKey` may reach, matched on the full request
@@ -39,8 +39,14 @@ const TRIGGER_PATH = '/v1/events/trigger';
 const BULK_TRIGGER_PATH = '/v1/events/trigger/bulk';
 const BROADCAST_TRIGGER_PATH = '/v1/events/trigger/broadcast';
 
-/** A broadcast reaches every subscriber of the environment, so its cost is resolved against the database. */
-export type KeylessTriggerCost = { type: 'recipients'; units: number } | { type: 'broadcast' };
+type RecipientCost = { units: number; topicKeys: string[] };
+
+/**
+ * A broadcast reaches every subscriber of the environment, and a topic every subscriber of
+ * the topic (Inbox sessions can subscribe any number of subscribers), so both are resolved
+ * against the database.
+ */
+export type KeylessTriggerCost = ({ type: 'recipients' } & RecipientCost) | { type: 'broadcast' };
 
 /** Express routing is case-insensitive and tolerates a trailing slash, so match the same way. */
 function normalizePath(path: string): string {
@@ -77,10 +83,25 @@ export function isKeylessApiKeyRequestBodyAllowed(method: string, path: string, 
   return typeof providerId !== 'string' || !KEYLESS_DENIED_INTEGRATION_PROVIDER_IDS.includes(providerId.toLowerCase());
 }
 
-function recipientUnits(event: unknown): number {
-  const to = (event as { to?: unknown } | null | undefined)?.to;
+function topicKeyOf(recipient: unknown): string | null {
+  const { type, topicKey } = (recipient ?? {}) as { type?: unknown; topicKey?: unknown };
 
-  return Array.isArray(to) ? to.length : 1;
+  return type === TriggerRecipientsTypeEnum.TOPIC && typeof topicKey === 'string' ? topicKey : null;
+}
+
+function addRecipientCost(cost: RecipientCost, event: unknown): void {
+  const to = (event as { to?: unknown } | null | undefined)?.to;
+  const recipients = Array.isArray(to) ? to : [to];
+
+  for (const recipient of recipients) {
+    const topicKey = topicKeyOf(recipient);
+
+    if (topicKey === null) {
+      cost.units += 1;
+    } else {
+      cost.topicKeys.push(topicKey);
+    }
+  }
 }
 
 /** Daily recipient units a trigger request costs, or `null` when the request is not a trigger. */
@@ -92,14 +113,26 @@ export function computeKeylessTriggerCost(method: string, path: string, body: un
   const normalized = normalizePath(path);
 
   if (normalized === TRIGGER_PATH) {
-    return { type: 'recipients', units: recipientUnits(body) };
+    const cost: RecipientCost = { units: 0, topicKeys: [] };
+    addRecipientCost(cost, body);
+
+    return { type: 'recipients', ...cost };
   }
 
   if (normalized === BULK_TRIGGER_PATH) {
     const events = (body as { events?: unknown } | null | undefined)?.events;
-    const units = Array.isArray(events) ? events.reduce<number>((total, event) => total + recipientUnits(event), 0) : 1;
 
-    return { type: 'recipients', units };
+    if (!Array.isArray(events)) {
+      return { type: 'recipients', units: 1, topicKeys: [] };
+    }
+
+    const cost: RecipientCost = { units: 0, topicKeys: [] };
+
+    for (const event of events) {
+      addRecipientCost(cost, event);
+    }
+
+    return { type: 'recipients', ...cost };
   }
 
   if (normalized === BROADCAST_TRIGGER_PATH) {
