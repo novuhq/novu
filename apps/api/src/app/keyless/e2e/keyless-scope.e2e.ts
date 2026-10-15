@@ -3,6 +3,7 @@ import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import request from 'supertest';
 
+import { ApiKeyStrategy } from '../../auth/services/passport/apikey.strategy';
 import { readKeylessAgentClaimedTombstone, writeKeylessAgentClaimedTombstone } from '../keyless-agent-cache';
 import { hashApiKey, isKeylessAgentEnvironmentsSupported } from '../keyless-agent-environment';
 import {
@@ -118,6 +119,12 @@ describe('Keyless API key scope #novu-v2', () => {
     expect(
       await readKeylessAgentClaimedTombstone(cacheService, hashApiKey(secretKey)),
       `tombstone readable (cache enabled: ${cacheService.cacheEnabled()})`
+    ).to.not.equal(null);
+    const strategyCache = (testServer.getService(ApiKeyStrategy) as unknown as { cacheService: CacheService })
+      .cacheService;
+    expect(
+      await readKeylessAgentClaimedTombstone(strategyCache, hashApiKey(secretKey)),
+      `tombstone readable by the API key strategy (same instance: ${strategyCache === cacheService}, cache enabled: ${strategyCache.cacheEnabled()})`
     ).to.not.equal(null);
     const claimed = await api.get('/v2/workflows');
 
