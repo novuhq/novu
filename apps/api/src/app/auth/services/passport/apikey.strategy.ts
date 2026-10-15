@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import { HttpStatus, Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import {
   CacheService,
@@ -54,7 +54,7 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
         }
       );
     } catch (error) {
-      if (error instanceof UnauthorizedException) {
+      if (isUnauthorizedError(error)) {
         await this.assertKeyWasNotClaimed(hashedApiKey);
       }
 
@@ -98,4 +98,18 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
       throw new ServiceUnavailableException('Service temporarily unavailable for this organization');
     }
   }
+}
+
+/**
+ * The enterprise auth service can throw an `UnauthorizedException` from its own copy of `@nestjs/common`,
+ * which fails `instanceof`, so match on the HTTP status instead.
+ */
+function isUnauthorizedError(error: unknown): boolean {
+  if (error instanceof UnauthorizedException) {
+    return true;
+  }
+
+  const getStatus = (error as { getStatus?: unknown } | null)?.getStatus;
+
+  return typeof getStatus === 'function' && getStatus.call(error) === HttpStatus.UNAUTHORIZED;
 }

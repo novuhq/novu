@@ -116,7 +116,7 @@ describe('Keyless API key scope #novu-v2', () => {
     const claimed = await api.get('/v2/workflows');
 
     expect(claimed.status).to.equal(401, JSON.stringify(claimed.body));
-    expect(claimed.body.code).to.equal('keyless_environment_claimed');
+    expect(claimed.body.code).to.equal('keyless_environment_claimed', JSON.stringify(claimed.body));
   });
 
   it('rejects syncing a workflow into another environment of the shared keyless organization', async () => {

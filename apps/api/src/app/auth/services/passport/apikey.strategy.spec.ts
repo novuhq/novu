@@ -91,6 +91,17 @@ describe('ApiKeyStrategy', () => {
     expect(cacheService.get.firstCall.args[0]).to.equal(`keyless_agent_claimed_key:{${hashApiKey(SECRET_KEY)}}`);
   });
 
+  it('reads the tombstone for a 401 thrown by another copy of @nestjs/common', async () => {
+    const foreignUnauthorized = Object.assign(new Error('API Key not found'), { getStatus: () => 401 });
+    authService.getUserByApiKey.rejects(foreignUnauthorized);
+    cacheService.get.resolves(tombstone());
+
+    const error = await strategy.validate(SECRET_KEY).catch((caught) => caught);
+
+    expect(error).to.be.instanceOf(HttpException);
+    expect((error as HttpException).getResponse()).to.include({ code: 'keyless_environment_claimed' });
+  });
+
   it('keeps the original error for an unknown key without a tombstone', async () => {
     const original = new UnauthorizedException('API Key not found');
     authService.getUserByApiKey.rejects(original);
