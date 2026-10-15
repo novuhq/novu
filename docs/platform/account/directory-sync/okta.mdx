@@ -1,0 +1,111 @@
+---
+title: 'Okta directory sync'
+sidebarTitle: 'Okta'
+description: 'Push Okta Workforce users to Novu with SCIM 2.0, using the same SAML app, a SCIM base URL, and a bearer token.'
+---
+
+import DirectorySyncPauseAndRemove from "/snippets/directory-sync-pause-and-remove.mdx";
+
+<Note>
+  Directory sync is an Enterprise feature on [Novu Cloud](https://dashboard.novu.co). It sits under SSO on **Settings** > **Organization** > **Security**, which the organization **Owner** sees after we enable self-serve. Shared behavior, including offboarding and the bearer token, is on [Directory sync](/platform/account/directory-sync). The SAML app comes from [Okta Workforce SSO](/platform/account/sso/okta).
+</Note>
+
+Use the same Okta application you created for SAML. Okta pushes create, update, and deactivate events to a SCIM 2.0 endpoint. Novu does not poll Okta.
+
+## Before you start
+
+- The [Okta Workforce SSO](/platform/account/sso/okta) connection exists. It does not have to be activated yet. Until it is activated, Okta can provision people and they cannot sign in.
+- The email domain is verified on that connection. Users outside that domain are ignored.
+- An Okta admin who can open the app's **Provisioning** tab.
+- The **SCIM endpoint URL** and **bearer token** from the Security tab. Select **Start configuration**. The provider is Okta because the SSO connection is Okta. You do not choose it again.
+
+<Warning>
+  The bearer token is shown once, in the session that generates it. Paste it into Okta before you leave the page. If you lose it, select **Generate new token**. The previous token keeps working for 10 minutes. After that, Okta's **Test API Credentials** fails until you save the new token.
+</Warning>
+
+There is no separate activate button. After you save the URL and token in Okta and turn on the **To App** operations, Okta can start pushing.
+
+## Configure provisioning in Okta
+
+<Steps>
+  <Step title="Open API integration">
+    In the Okta app, open the **Provisioning** tab. Select **Configure API Integration** and enable **Enable API integration**.
+  </Step>
+  <Step title="Enter the SCIM credentials">
+    | Okta field | Value from Novu |
+    | --- | --- |
+    | SCIM connector base URL | SCIM endpoint URL |
+    | Unique identifier field for users | `userName` |
+    | API Token | Bearer token |
+
+    Select **Test API Credentials**, then **Save**. If the test fails, check that the base URL has no extra space and that the token is the current one.
+  </Step>
+  <Step title="Choose what Okta pushes">
+    Under **To App**, enable:
+
+    - **Create Users**
+    - **Update User Attributes**
+    - **Deactivate Users**
+
+    Select **Save**. Leave **Deactivate Users** on if you want a person who is unassigned or deactivated in Okta to lose their Novu session. Without it, Okta will not tell Novu to deactivate them.
+  </Step>
+  <Step title="Map the email attribute">
+    Under **Attribute Mappings**, confirm `email` (`user.email`) is mapped and is applied on create and update.
+
+    This is separate from `userName`. Novu reads the email from the SCIM `emails` attribute. Okta's `email` mapping is what fills that attribute. If `userName` is the email address and `email` is not mapped, provisioning fails. Novu does not copy `userName` into the email field.
+  </Step>
+  <Step title="Push groups only if you need them stored">
+    Open **Push Groups**, enable it, choose the groups, and save.
+
+    Pushed groups are stored. They do not change Novu roles (Owner, Admin, Author, Viewer). Ask us if you want a group to set a role. If we turn that on later, only direct membership counts.
+  </Step>
+</Steps>
+
+## What Novu stores
+
+These mappings are fixed on the Security tab:
+
+| SCIM attribute | Novu user field |
+| --- | --- |
+| `userName` | Username / primary identifier |
+| `emails[0].value` | Email address |
+| `name.givenName` | First name |
+| `name.familyName` | Last name |
+| `active` | Enabled or deactivated |
+
+Other Okta profile fields are not applied from this page.
+
+## Test a user
+
+Assign the app to someone whose email is on a verified domain, with **Create Users** enabled. On the Security tab, the test step lists recent activity with email, name, time, and **Active** or **Deprovisioned**.
+
+Okta's provisioning cycle is often several minutes. A user who never appears is usually on the wrong domain, missing `email`, or not assigned to the app.
+
+**Complete** closes the wizard. It does not turn provisioning on. Provisioning is already on once Okta has the URL, the token, and the **To App** operations.
+
+## When someone leaves
+
+Unassigning or deactivating them in Okta, with **Deactivate Users** enabled, deactivates the Novu account and revokes their sessions after Okta's next provisioning cycle. The Novu account is not deleted.
+
+If they were also invited from **Settings** > **Team**, that invited membership stays. Remove it there if they should lose the organization.
+
+<DirectorySyncPauseAndRemove />
+
+## If Okta provisioning fails
+
+<AccordionGroup>
+  <Accordion title="Test API Credentials fails">
+    The base URL or the bearer token does not match what the Security tab shows. Generate a new token if the 10-minute window has passed, paste it into **API Token**, and test again.
+  </Accordion>
+  <Accordion title="Okta reports a provisioning error for email">
+    Map `email` (`user.email`) as well as `userName`. Both have to be sent.
+  </Accordion>
+  <Accordion title="The user is assigned and still missing in Novu">
+    Wait for Okta's cycle, then confirm the email domain is verified on the SSO connection. Users on other domains are dropped.
+  </Accordion>
+  <Accordion title="They were deactivated in Okta and can still open Novu">
+    Confirm **Deactivate Users** is enabled and saved. Then wait for the next cycle. If they still have access, check for a membership created by invitation.
+  </Accordion>
+</AccordionGroup>
+
+Email [support@novu.co](mailto:support@novu.co) with the Okta provisioning error text if the API test succeeds and users still fail. Include the email address Okta tried to push.
