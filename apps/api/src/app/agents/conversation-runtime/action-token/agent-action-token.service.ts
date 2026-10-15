@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
+import { HUMAN_INTERACTION_MAX_TTL_SECONDS } from '@novu/shared';
 import type { ButtonElement, CardElement } from 'chat';
 import { callbackPayloadNeedsTokenization, forEachCallbackButton } from './card-callback-button.walker';
 import { buildOpaqueStorageKey, isMintedOpaqueActionId, mintRandomToken, parseTtlFromEnv } from './opaque-token.util';
@@ -7,7 +8,8 @@ import { buildOpaqueStorageKey, isMintedOpaqueActionId, mintRandomToken, parseTt
 export const AGENT_ACTION_TOKEN_PREFIX = 'at:' as const;
 
 const KEY_PREFIX = 'agent:action:';
-const DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 3;
+/** A tokenized button has to outlive the longest question the Human API will keep open. */
+const DEFAULT_TTL_SECONDS = HUMAN_INTERACTION_MAX_TTL_SECONDS;
 const TOKEN_BYTES = 16;
 
 export interface AgentActionTokenClaims {
