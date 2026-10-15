@@ -1,7 +1,7 @@
 import '../../src/config';
 
 import { getSharedAgentDomain } from '@novu/application-generic';
-import { IntegrationRepository } from '@novu/dal';
+import { DalService, IntegrationRepository } from '@novu/dal';
 import { AGENT_INBOX_PROVIDER_IDS } from '@novu/shared';
 
 type UpdateManyFn = (
@@ -34,16 +34,29 @@ export async function run() {
   const domain = getSharedAgentDomain();
   console.log(`Start migration - pin unset agent inbox domains to ${domain}`);
 
-  const integrationRepository = new IntegrationRepository();
-  const result = await pinUnsetAgentInboxDomains((filter, update) =>
-    integrationRepository._model.collection.updateMany(filter, update).then((written) => ({
-      matchedCount: written.matchedCount,
-      modifiedCount: written.modifiedCount,
-    }))
-  );
+  if (!process.env.MONGO_URL) {
+    throw new Error('MONGO_URL is not set');
+  }
 
-  console.log(`Pinned inboxDomain: matched ${result.matchedCount} modified ${result.modifiedCount}`);
-  console.log('End migration.');
+  const dalService = new DalService();
+  await dalService.connect(process.env.MONGO_URL);
+
+  try {
+    const integrationRepository = new IntegrationRepository();
+    const result = await pinUnsetAgentInboxDomains(
+      (filter, update) =>
+        integrationRepository._model.collection.updateMany(filter, update).then((written) => ({
+          matchedCount: written.matchedCount,
+          modifiedCount: written.modifiedCount,
+        })),
+      domain
+    );
+
+    console.log(`Pinned inboxDomain: matched ${result.matchedCount} modified ${result.modifiedCount}`);
+    console.log('End migration.');
+  } finally {
+    await dalService.disconnect();
+  }
 }
 
 if (require.main === module) {
