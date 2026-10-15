@@ -304,9 +304,8 @@ function ClaimSuccess({
       return (
         <div className="flex w-full flex-col gap-3">
           <ClaimSuccessMessage>
-            Your workflows and subscribers are in your Development environment. The secret key and application
-            identifier your agent used no longer work — switch your app to your Development secret key and application
-            identifier from API Keys.
+            Your workflows and subscribers are in your Development environment. The secret key your agent used no longer
+            works — switch your app to your Development secret key and application identifier from API Keys.
           </ClaimSuccessMessage>
           <Button
             type="button"
