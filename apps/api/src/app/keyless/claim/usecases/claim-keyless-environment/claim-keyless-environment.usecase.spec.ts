@@ -166,6 +166,15 @@ describe('ClaimKeylessEnvironment', () => {
     ]);
   });
 
+  it('copies nothing when looking up the target Novu Email fails', async () => {
+    const { usecase, integrationRepository, copyKeylessWorkflows } = setup();
+    integrationRepository.findOne.rejects(new Error('db down'));
+
+    await usecase.execute(command).catch(() => undefined);
+
+    expect(copyKeylessWorkflows.copy.called).to.equal(false);
+  });
+
   it('refuses an expired environment before checking workflows', async () => {
     const { usecase, copyKeylessWorkflows } = setup({ ...agentEnvironment, createdAt: new Date(0) });
 

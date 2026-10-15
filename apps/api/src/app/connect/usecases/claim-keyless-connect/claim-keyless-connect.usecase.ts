@@ -62,7 +62,7 @@ export class ClaimKeylessConnect {
 
   async execute(
     command: ClaimKeylessConnectCommand,
-    hooks?: ClaimKeylessConnectHooks
+    hooks: ClaimKeylessConnectHooks = {}
   ): Promise<ClaimKeylessConnectResult> {
     const keylessOrganizationId = process.env.KEYLESS_ORGANIZATION_ID;
     if (!keylessOrganizationId) {
@@ -103,7 +103,7 @@ export class ClaimKeylessConnect {
       await this.assertNoAgentIdentifierClash(sourceAgents, target);
       await this.assertOperatorEmailVerified(keylessEnvironment._id);
 
-      const moveOptions = (await hooks?.beforeMove?.({ keylessEnvironment, targetEnvironment })) ?? {};
+      const moveOptions = (await hooks.beforeMove?.({ keylessEnvironment, targetEnvironment })) ?? {};
       const excludedProviderIds = moveOptions.excludeIntegrationProviderIds ?? [];
 
       await this.moveIntoTarget(async (session) => {

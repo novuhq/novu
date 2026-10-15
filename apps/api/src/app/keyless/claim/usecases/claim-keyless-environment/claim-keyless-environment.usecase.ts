@@ -152,17 +152,20 @@ export class ClaimKeylessEnvironment {
       targetOrganizationId: user.organizationId,
     };
 
-    const preflight = await this.copyKeylessWorkflows.preflight(scope);
+    // Every read happens before the copy: nothing may fail between the copy and the move, or its copies would leak.
+    const [preflight, targetNovuEmail] = await Promise.all([
+      this.copyKeylessWorkflows.preflight(scope),
+      this.integrationRepository.findOne(
+        {
+          _environmentId: scope.targetEnvironmentId,
+          _organizationId: scope.targetOrganizationId,
+          channel: ChannelTypeEnum.EMAIL,
+          providerId: EmailProviderIdEnum.Novu,
+        },
+        '_id'
+      ),
+    ]);
     const copy = await this.copyKeylessWorkflows.copy({ ...scope, user, workflowIds: preflight.toCopy });
-    const targetNovuEmail = await this.integrationRepository.findOne(
-      {
-        _environmentId: scope.targetEnvironmentId,
-        _organizationId: scope.targetOrganizationId,
-        channel: ChannelTypeEnum.EMAIL,
-        providerId: EmailProviderIdEnum.Novu,
-      },
-      '_id'
-    );
 
     return {
       keylessEnvironment,
