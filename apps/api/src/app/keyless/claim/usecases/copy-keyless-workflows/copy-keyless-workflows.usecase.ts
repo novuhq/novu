@@ -105,12 +105,15 @@ export class CopyKeylessWorkflows {
         result.copiedInternalIds.push(copiedInternalId);
         result.copied.push(workflowId);
       } catch (error) {
+        const partialCopyIds = await this.findPartialCopyIds(command, workflowId);
+
         if (workflowId !== KEYLESS_WORKFLOW_IDENTIFIER) {
-          await this.compensate({ ...command, copiedInternalIds: result.copiedInternalIds });
+          await this.compensate({ ...command, copiedInternalIds: [...result.copiedInternalIds, ...partialCopyIds] });
 
           throw error;
         }
 
+        await this.compensate({ ...command, copiedInternalIds: partialCopyIds });
         this.logger.warn(
           { err: error, sourceEnvironmentId: command.sourceEnvironmentId, workflowId },
           'Skipped copying the keyless seed workflow'
@@ -139,6 +142,32 @@ export class CopyKeylessWorkflows {
           'Failed to delete a workflow copied during a failed keyless claim'
         );
       }
+    }
+  }
+
+  /**
+   * The upsert creates the workflow before writing its controls, so a failed copy can leave it behind.
+   * Preflight only lets through identifiers the target lacked, so any match is that partial copy.
+   */
+  private async findPartialCopyIds(command: CopyKeylessWorkflowsCommand, workflowId: string): Promise<string[]> {
+    try {
+      const partialCopy = await this.notificationTemplateRepository.findOne(
+        {
+          _environmentId: command.targetEnvironmentId,
+          _organizationId: command.targetOrganizationId,
+          'triggers.identifier': workflowId,
+        },
+        '_id'
+      );
+
+      return partialCopy ? [partialCopy._id] : [];
+    } catch (error) {
+      this.logger.error(
+        { err: error, targetEnvironmentId: command.targetEnvironmentId, workflowId },
+        'Failed to look up a partially copied workflow during a failed keyless claim'
+      );
+
+      return [];
     }
   }
 

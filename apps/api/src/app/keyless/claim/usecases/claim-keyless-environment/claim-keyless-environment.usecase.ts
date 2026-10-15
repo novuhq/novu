@@ -76,6 +76,7 @@ export class ClaimKeylessEnvironment {
     }
 
     let agentClaim: AgentEnvironmentClaim | undefined;
+    let moveCommitted = false;
     let result: ClaimKeylessConnectResult;
     try {
       result = await this.claimKeylessConnect.execute(
@@ -94,10 +95,14 @@ export class ClaimKeylessEnvironment {
 
             return agentClaim.moveOptions;
           },
+          onMoveCommitted: () => {
+            moveCommitted = true;
+          },
         }
       );
     } catch (error) {
-      if (agentClaim) {
+      // Once the move committed the copies belong to the claimed setup, so a later failure must not delete them.
+      if (agentClaim && !moveCommitted) {
         await this.copyKeylessWorkflows.compensate({
           user,
           targetEnvironmentId: agentClaim.scope.targetEnvironmentId,

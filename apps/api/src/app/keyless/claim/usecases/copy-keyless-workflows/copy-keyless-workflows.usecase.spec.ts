@@ -36,7 +36,7 @@ describe('CopyKeylessWorkflows', () => {
   }
 
   function setup() {
-    const notificationTemplateRepository = { find: sinon.stub() };
+    const notificationTemplateRepository = { find: sinon.stub(), findOne: sinon.stub().resolves(null) };
     notificationTemplateRepository.find.onFirstCall().resolves([]);
     notificationTemplateRepository.find.onSecondCall().resolves([]);
     const getWorkflowUseCase = {
@@ -202,6 +202,35 @@ describe('CopyKeylessWorkflows', () => {
         organizationId: 'target_org',
         workflowIdOrInternalId: 'copy_of_order-shipped',
       });
+    });
+
+    it('also deletes a workflow the failing upsert created before it threw', async () => {
+      const { usecase, upsertWorkflowUseCase, deleteWorkflowUseCase, notificationTemplateRepository } = setup();
+      upsertWorkflowUseCase.execute.onSecondCall().rejects(new Error('controls write failed'));
+      notificationTemplateRepository.findOne.resolves({ _id: 'partial_welcome' });
+
+      await usecase.copy({ ...scope, user: claimer, workflowIds: ['order-shipped', 'welcome'] }).catch(() => undefined);
+
+      expect(notificationTemplateRepository.findOne.firstCall.args[0]).to.deep.equal({
+        _environmentId: 'dev_env',
+        _organizationId: 'target_org',
+        'triggers.identifier': 'welcome',
+      });
+      expect(deleteWorkflowUseCase.execute.getCalls().map((call) => call.args[0].workflowIdOrInternalId)).to.deep.equal(
+        ['copy_of_order-shipped', 'partial_welcome']
+      );
+    });
+
+    it('deletes a partial hello-world copy before skipping it', async () => {
+      const { usecase, upsertWorkflowUseCase, deleteWorkflowUseCase, notificationTemplateRepository } = setup();
+      upsertWorkflowUseCase.execute.onFirstCall().rejects(new Error('controls write failed'));
+      notificationTemplateRepository.findOne.onFirstCall().resolves({ _id: 'partial_hello' });
+
+      const result = await usecase.copy({ ...scope, user: claimer, workflowIds: ['hello-world', 'order-shipped'] });
+
+      expect(result.skipped).to.deep.equal(['hello-world']);
+      expect(deleteWorkflowUseCase.execute.calledOnce).to.equal(true);
+      expect(deleteWorkflowUseCase.execute.firstCall.args[0].workflowIdOrInternalId).to.equal('partial_hello');
     });
   });
 

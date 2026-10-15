@@ -144,6 +144,35 @@ describe('ClaimKeylessConnect', () => {
     expect(connectClaimTokenService.releaseClaimLock.calledOnce).to.equal(true);
   });
 
+  it('refuses an agent keyless environment without the hooks that copy its workflows and revoke its key', async () => {
+    const { usecase, environmentRepository, agentRepository, connectClaimTokenService } = setup();
+    environmentRepository.findOne.resolves({
+      _id: 'keyless_env',
+      _organizationId: 'keyless_org',
+      identifier: 'Xk3m9QpL2aZt',
+      name: 'Keyless Agent 2026-10-14T20:00:00.000Z',
+    });
+
+    const error = await usecase.execute(command).catch((caught) => caught);
+
+    expect(error).to.be.instanceOf(BadRequestException);
+    expect((error as BadRequestException).getResponse()).to.include({ code: 'claim_link_requires_environment_claim' });
+    expect(agentRepository.withTransaction.called).to.equal(false);
+    expect(connectClaimTokenService.claim.called).to.equal(false);
+    expect(connectClaimTokenService.releaseClaimLock.calledOnce).to.equal(true);
+  });
+
+  it('signals the committed move before consuming the token', async () => {
+    const { usecase, agentRepository, connectClaimTokenService } = setup();
+    const onMoveCommitted = sinon.stub();
+
+    await usecase.execute(command, { onMoveCommitted });
+
+    expect(onMoveCommitted.calledOnce).to.equal(true);
+    expect(onMoveCommitted.calledAfter(agentRepository.withTransaction)).to.equal(true);
+    expect(onMoveCommitted.calledBefore(connectClaimTokenService.claim)).to.equal(true);
+  });
+
   it('without hooks, moves every non in-app integration and leaves the keyless environment untouched', async () => {
     const { usecase, integrationRepository, environmentRepository } = setup();
 

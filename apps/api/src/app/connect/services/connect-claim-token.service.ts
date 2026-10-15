@@ -10,7 +10,8 @@ const ENV_TOKEN_KEY_PREFIX = 'connect_claim_link_env:';
 const CTA_POSTED_KEY_PREFIX = 'connect_claim_cta_posted:';
 const CLAIM_LOCK_KEY_PREFIX = 'connect_claim_link_lock:';
 
-const CLAIM_LOCK_TTL_SECONDS = 60;
+/** Covers copying an agent environment's workflows inside the lock; the lock is released as soon as a claim ends. */
+const CLAIM_LOCK_TTL_SECONDS = 5 * 60;
 
 export interface ConnectClaimTokenPayload {
   env: string;
@@ -87,7 +88,7 @@ export class ConnectClaimTokenService {
 
     const ttlSeconds = options?.ttlSeconds ?? CONNECT_CLAIM_TOKEN_TTL_SECONDS;
     const issued = await this.tokens.issue(payload, { ttlSeconds });
-    await this.cacheService.set(envKey, issued.token, { ttl: ttlSeconds });
+    await this.cacheService.set(envKey, issued.token, { ttl: ttlSeconds, jitter: false });
 
     return issued;
   }

@@ -214,6 +214,19 @@ describe('ClaimKeylessEnvironment', () => {
     expect(cacheService.set.called).to.equal(false);
   });
 
+  it('keeps the copied workflows when the claim fails after the move committed', async () => {
+    const { usecase, claimKeylessConnect, copyKeylessWorkflows } = setup();
+    const lockFailure = new Error('lock release failed');
+    claimKeylessConnect.execute.callsFake(async (_command, hooks) => {
+      await hooks.beforeMove({ keylessEnvironment: agentEnvironment, targetEnvironment });
+      hooks.onMoveCommitted();
+      throw lockFailure;
+    });
+
+    expect(await usecase.execute(command).catch((caught) => caught)).to.equal(lockFailure);
+    expect(copyKeylessWorkflows.compensate.called).to.equal(false);
+  });
+
   it('tombstones every revoked key and records the claim in analytics', async () => {
     const { usecase, cacheService, analyticsService } = setup();
 

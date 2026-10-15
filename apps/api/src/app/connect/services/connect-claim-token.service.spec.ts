@@ -95,7 +95,7 @@ describe('ConnectClaimTokenService', () => {
     expect(setArgs[0]).to.equal(`connect_claim_link:{${token}}`);
     const parsed = JSON.parse(setArgs[1] as string);
     expect(parsed.payload).to.deep.equal(payload);
-    expect(setArgs[2]).to.deep.equal({ ttl: CONNECT_CLAIM_TOKEN_TTL_SECONDS });
+    expect(setArgs[2]).to.deep.equal({ ttl: CONNECT_CLAIM_TOKEN_TTL_SECONDS, jitter: false });
   });
 
   it('verifies and claims legacy base64url tokens', async () => {
@@ -155,8 +155,8 @@ describe('ConnectClaimTokenService', () => {
 
     const ttls = cacheService.set.getCalls().map((call) => [call.args[0], call.args[2]]);
     expect(ttls).to.deep.equal([
-      [`connect_claim_link:{${issued.token}}`, { ttl: CONNECT_CLAIM_TOKEN_TTL_SECONDS }],
-      [`connect_claim_link_env:{${payload.env}}`, { ttl: CONNECT_CLAIM_TOKEN_TTL_SECONDS }],
+      [`connect_claim_link:{${issued.token}}`, { ttl: CONNECT_CLAIM_TOKEN_TTL_SECONDS, jitter: false }],
+      [`connect_claim_link_env:{${payload.env}}`, { ttl: CONNECT_CLAIM_TOKEN_TTL_SECONDS, jitter: false }],
     ]);
   });
 
@@ -167,8 +167,8 @@ describe('ConnectClaimTokenService', () => {
 
     const ttls = cacheService.set.getCalls().map((call) => [call.args[0], call.args[2]]);
     expect(ttls).to.deep.equal([
-      [`connect_claim_link:{${issued.token}}`, { ttl: 3600 }],
-      [`connect_claim_link_env:{${payload.env}}`, { ttl: 3600 }],
+      [`connect_claim_link:{${issued.token}}`, { ttl: 3600, jitter: false }],
+      [`connect_claim_link_env:{${payload.env}}`, { ttl: 3600, jitter: false }],
     ]);
 
     const expectedExpiresAtMs = Date.now() + 3600 * 1000;

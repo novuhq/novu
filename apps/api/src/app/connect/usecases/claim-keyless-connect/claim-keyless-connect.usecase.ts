@@ -25,6 +25,7 @@ import {
 } from '@novu/dal';
 import { ChannelTypeEnum, EnvironmentTypeEnum, HumanChannelViaEnum, isConnectClaimTokenFormat } from '@novu/shared';
 import { KEYLESS_SUBSCRIBER_ID } from '../../../inbox/utils/keyless.constants';
+import { isKeylessAgentEnvironment } from '../../../keyless/keyless-agent-environment';
 import {
   ConnectClaimTokenCacheUnavailableError,
   ConnectClaimTokenService,
@@ -98,6 +99,13 @@ export class ClaimKeylessConnect {
         throw new NotFoundException('The keyless environment for this claim no longer exists.');
       }
 
+      if (!hooks.beforeMove && isKeylessAgentEnvironment(keylessEnvironment)) {
+        throw claimLinkError(
+          'This link claims a keyless environment. Open it in the Novu dashboard to claim it.',
+          ClaimLinkErrorCodeEnum.REQUIRES_ENVIRONMENT_CLAIM
+        );
+      }
+
       const targetEnvironment = await this.resolveDevelopmentEnvironment(command.organizationId);
 
       const sourceScope = { _environmentId: keylessEnvironment._id, _organizationId: keylessOrganizationId };
@@ -145,6 +153,7 @@ export class ClaimKeylessConnect {
           );
         }
       });
+      hooks.onMoveCommitted?.();
 
       const migratedAgentId = sourceAgents[0]?._id;
       const agent = migratedAgentId
