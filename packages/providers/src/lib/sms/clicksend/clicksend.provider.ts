@@ -26,6 +26,7 @@ export class ClicksendSmsProvider extends BaseProvider implements ISmsProvider {
     const data = this.transform(bridgeProviderData, {
       to: options.to,
       body: options.content,
+      from: options.from,
     });
     const response = await this.httpClient.post(
       'https://rest.clicksend.com/v3/sms/send',

@@ -58,7 +58,12 @@ export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
     } as RequestInit;
 
     const response = await providerFetch(TermiiSmsProvider.BASE_URL, opts);
-    const body = (await response.json()) as SmsJsonResponse;
+    // Error responses (e.g. a gateway HTML page) may not be JSON; fall through to the status-based error.
+    const body = (await response.json().catch(() => undefined)) as SmsJsonResponse | undefined;
+
+    if (!response.ok || !body?.message_id) {
+      throw new Error(`Termii error: ${body?.message ?? response.status}`);
+    }
 
     return {
       id: body.message_id,
