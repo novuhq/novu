@@ -141,7 +141,9 @@ await step.chat(
 );
 ```
 
-See [Providers overrides](/framework/typescript/steps#providers-overrides-object) and the [Chat channel](/platform/integrations/chat#provider-content-overrides) docs for Dashboard overrides.
+The `providers` object is keyed by provider id. Novu runs this `slack` function once for the step, and the returned object applies to any Slack integration that sends it. The Framework API cannot target one integration. A Chat step authored in the dashboard can store an [override for one integration](/platform/integrations/chat#overrides-for-one-integration).
+
+See [Providers overrides](/framework/typescript/steps#providers-overrides-object) for the complete code-first API.
 
 ## Chat step result
 
