@@ -3599,6 +3599,37 @@ importers:
         specifier: 5.6.2
         version: 5.6.2
 
+  packages/agentinbox:
+    dependencies:
+      axios:
+        specifier: ^1.20.0
+        version: 1.20.0(debug@4.4.3)
+      commander:
+        specifier: ^9.4.0
+        version: 9.5.0
+      picocolors:
+        specifier: 1.1.1
+        version: 1.1.1
+      qrcode:
+        specifier: ^1.5.4
+        version: 1.5.4
+    devDependencies:
+      '@types/node':
+        specifier: ^20.15.0
+        version: 20.19.10
+      '@types/qrcode':
+        specifier: ^1.5.5
+        version: 1.5.6
+      rimraf:
+        specifier: ^3.0.2
+        version: 3.0.2
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@20.19.10)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.3(@types/node@20.19.10)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+
   packages/chat-adapter:
     dependencies:
       '@chat-adapter/shared':
@@ -3853,37 +3884,6 @@ importers:
       zod-to-json-schema:
         specifier: ^3.23.3
         version: 3.23.3(zod@3.25.20)
-
-  packages/agentinbox:
-    dependencies:
-      axios:
-        specifier: ^1.20.0
-        version: 1.20.0(debug@4.4.3)
-      commander:
-        specifier: ^9.4.0
-        version: 9.5.0
-      picocolors:
-        specifier: 1.1.1
-        version: 1.1.1
-      qrcode:
-        specifier: ^1.5.4
-        version: 1.5.4
-    devDependencies:
-      '@types/node':
-        specifier: ^20.15.0
-        version: 20.19.10
-      '@types/qrcode':
-        specifier: ^1.5.5
-        version: 1.5.6
-      rimraf:
-        specifier: ^3.0.2
-        version: 3.0.2
-      typescript:
-        specifier: 5.6.2
-        version: 5.6.2
-      vitest:
-        specifier: ^4.1.11
-        version: 4.1.11(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@20.19.10)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.3(@types/node@20.19.10)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/js:
     dependencies:
@@ -4679,7 +4679,7 @@ importers:
 
   playground/nextjs:
     dependencies:
-      '@ai-sdk/openai':
+      '@ai-sdk/anthropic':
         specifier: 4.0.34
         version: 4.0.34(zod@4.4.3)
       '@ai-sdk/react':
@@ -4697,9 +4697,6 @@ importers:
       '@langchain/core':
         specifier: ^1.1.48
         version: 1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.223.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0)
-      '@langchain/openai':
-        specifier: ^1.2.4
-        version: 1.2.4(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.223.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0))(ws@8.21.0)
       '@novu/agent-toolkit':
         specifier: workspace:*
         version: link:../../packages/agent-toolkit
@@ -4976,6 +4973,12 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
+  '@ai-sdk/anthropic@4.0.34':
+    resolution: {integrity: sha512-k3cj4AQ2calM6idUodma1cYlQuEeRxBjzyc2IBO+5kx+yAI8x0fku/Fq+DBKdOgSwNoBbv7lO1CsmmEkBBFbmw==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
   '@ai-sdk/gateway@3.0.14':
     resolution: {integrity: sha512-udVpkDaQ00jMcBvtGGvmkEBU31XidsHB4E8HIF9l7/H7lyjOS/EtXzN2adoupDg5j1/VjjSI3Ny5P1zHUvLyMA==}
     engines: {node: '>=18'}
@@ -5025,12 +5028,6 @@ packages:
   '@ai-sdk/openai@3.0.10':
     resolution: {integrity: sha512-G6HJORN0rKuCFrqIUiYchjl2b4UjzKvv3VcNuW7xwQIdI8EcdB9Pr8ZaR9nEImK9E639nM8gCfvFEUM1xwGaCA==}
     engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/openai@4.0.34':
-    resolution: {integrity: sha512-DPGehPPwuTmnWxCDxeWZJgGLn7Lh+QfiiN20tvqnEQMUwCmuadZ3FLlRtTkTpeEa2l+Lsa/sWVkBwShWGjGmKA==}
-    engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
@@ -30509,6 +30506,12 @@ snapshots:
       '@ai-sdk/provider-utils': 4.0.51(zod@3.25.76)
       zod: 3.25.76
 
+  '@ai-sdk/anthropic@4.0.34(zod@4.4.3)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.6
+      '@ai-sdk/provider-utils': 5.0.23(zod@4.4.3)
+      zod: 4.4.3
+
   '@ai-sdk/gateway@3.0.14(zod@4.3.5)':
     dependencies:
       '@ai-sdk/provider': 3.0.3
@@ -30586,12 +30589,6 @@ snapshots:
       '@ai-sdk/provider': 3.0.3
       '@ai-sdk/provider-utils': 4.0.51(zod@3.25.20)
       zod: 3.25.20
-
-  '@ai-sdk/openai@4.0.34(zod@4.4.3)':
-    dependencies:
-      '@ai-sdk/provider': 4.0.6
-      '@ai-sdk/provider-utils': 5.0.23(zod@4.4.3)
-      zod: 4.4.3
 
   '@ai-sdk/provider-utils@4.0.51(zod@3.25.20)':
     dependencies:
@@ -37543,15 +37540,6 @@ snapshots:
   '@langchain/openai@1.2.4(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.223.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0))(ws@8.21.0)':
     dependencies:
       '@langchain/core': 1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.223.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0)
-      js-tiktoken: 1.0.21
-      openai: 6.17.0(ws@8.21.0)(zod@3.25.76)
-      zod: 3.25.76
-    transitivePeerDependencies:
-      - ws
-
-  '@langchain/openai@1.2.4(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.223.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0))(ws@8.21.0)':
-    dependencies:
-      '@langchain/core': 1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.223.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0)
       js-tiktoken: 1.0.21
       openai: 6.17.0(ws@8.21.0)(zod@3.25.76)
       zod: 3.25.76
