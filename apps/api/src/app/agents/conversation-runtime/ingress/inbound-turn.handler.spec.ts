@@ -1,3 +1,4 @@
+import { ConversationActivitySenderTypeEnum } from '@novu/dal';
 import {
   AGENT_PLATFORM_PROVISION_SOURCE,
   AGENT_PROVISION_DATA_KEYS,
@@ -3247,6 +3248,49 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.updateInboundMessage.calledOnce).to.equal(true);
       expect(conversationService.deleteInboundMessage.calledOnce).to.equal(true);
       expect(conversationService.findSourceActivity.called).to.equal(true);
+    });
+
+    function deleteWithoutAuthor(handler: AgentInboundHandler) {
+      return handler.handleMessageDeleted(
+        'agent1',
+        contactsOnly as any,
+        { messageId: 'msg-1', threadId: 'thread1', channelId: 'C1', raw: {} } as any
+      );
+    }
+
+    it('takes a delete with no author on the event from a contact, as the stored message names them', async () => {
+      const { handler, conversationService } = makeHandler({
+        history: [
+          {
+            platformMessageId: 'msg-1',
+            content: 'hello',
+            senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+            senderId: 'ada',
+          },
+        ],
+        subscriberFindById: sinon.stub().resolves({ _id: 'subscriber-mongo-1', subscriberId: 'ada' }),
+      });
+
+      await deleteWithoutAuthor(handler);
+
+      expect(conversationService.deleteInboundMessage.calledOnce).to.equal(true);
+    });
+
+    it('drops a delete with no author on the event when the stored message came from a stranger', async () => {
+      const { handler, conversationService } = makeHandler({
+        history: [
+          {
+            platformMessageId: 'msg-1',
+            content: 'hello',
+            senderType: ConversationActivitySenderTypeEnum.PLATFORM_USER,
+            senderId: 'slack:user1',
+          },
+        ],
+      });
+
+      await deleteWithoutAuthor(handler);
+
+      expect(conversationService.deleteInboundMessage.called).to.equal(false);
     });
   });
 });

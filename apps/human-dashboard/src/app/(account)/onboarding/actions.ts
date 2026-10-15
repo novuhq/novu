@@ -63,12 +63,13 @@ export async function createInboxAction(input: { name: string; handle: string })
   // Taken before the agent is made, so the agent is never older than the start of its own onboarding.
   const now = new Date().toISOString();
 
+  let agentId: string;
   try {
-    await ensureRelay(
+    ({ agentId } = await ensureRelay(
       account,
       { firstName: user.firstName, lastName: user.lastName },
       { agentName: name, operatorEmail: email }
-    );
+    ));
   } catch (error) {
     console.error('Failed to create the agent from the onboarding', error);
 
@@ -78,9 +79,14 @@ export async function createInboxAction(input: { name: string; handle: string })
     };
   }
 
-  // A new agent starts its steps from here: progress left over from one that was deleted (when forgetting it
+  // Step 1 again for the same agent (a retry, or a form left open in another tab) keeps how far it got. A
+  // new agent starts its steps from here: progress left over from one that was deleted (when forgetting it
   // then failed) must not take this one past its test and its host.
-  await updateOnboardingState((state) => ({ startedAt: state.startedAt ?? now, handle }));
+  await updateOnboardingState((state) =>
+    !state.agentId || state.agentId === agentId
+      ? { ...state, startedAt: state.startedAt ?? now, handle, agentId }
+      : { startedAt: state.startedAt ?? now, handle, agentId }
+  );
   refresh();
 
   return { ok: true };

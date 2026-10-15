@@ -1833,8 +1833,14 @@ export class AgentInboundHandler implements OnModuleInit {
     const platformUserId = previousAuthor?.userId ?? current?.senderId;
     const resolution = await this.resolveEventSubscriber(agentId, config, platformUserId, 'message-deleted');
 
-    // Contacts only: a stranger can't change the inbox by deleting a message either.
-    if (await this.isKeptOutOfAgentInbox(agentId, config, getResolvedSubscriberId(resolution))) {
+    // Contacts only: a stranger can't change the inbox by deleting a message either. With no author on the
+    // event, the stored message says who sent it: its `senderId` is a subscriber id, not a platform user id.
+    const senderSubscriberId = previousAuthor?.userId
+      ? getResolvedSubscriberId(resolution)
+      : current?.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER
+        ? current.senderId
+        : null;
+    if (await this.isKeptOutOfAgentInbox(agentId, config, senderSubscriberId)) {
       return;
     }
 
