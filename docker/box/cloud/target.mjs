@@ -177,16 +177,24 @@ export function cloudTarget({ box, log, githubToken }) {
     name: worker,
 
     // `from`: the first start begins from that box's latest snapshot instead of a bake.
-    async up({ deploy: redeploy = false, ref = 'next', from } = {}) {
+    // `fromBase`: a box that doesn't exist yet starts from the `base` box's snapshot when there is one, else bakes.
+    async up({ deploy: redeploy = false, ref = 'next', from, fromBase = false } = {}) {
       const query = new URLSearchParams({ ref });
+      const sourceSnapshot = async (name) => {
+        const response = await fetch(`https://novu-box-${name}.${DOMAIN}/__box/state`, {
+          headers: { Authorization: `Bearer ${githubToken()}` },
+        });
+
+        return response.headers.get('content-type')?.includes('json') ? (await response.json()).snapshot?.id : null;
+      };
       if (from) {
-        const source = await (
-          await fetch(`https://novu-box-${from}.${DOMAIN}/__box/state`, {
-            headers: { Authorization: `Bearer ${githubToken()}` },
-          })
-        ).json();
-        if (!source.snapshot?.id) throw new Error(`novu-box-${from} has no snapshot to start from`);
-        query.set('from', source.snapshot.id);
+        const id = await sourceSnapshot(from);
+        if (!id) throw new Error(`novu-box-${from} has no snapshot to start from`);
+        query.set('from', id);
+      } else if (fromBase && box !== 'base' && !(await state())) {
+        const id = await sourceSnapshot('base');
+        if (id) query.set('from', id);
+        log(id ? `${worker} is new: starting it from novu-box-base` : `no novu-box-base snapshot: baking ${ref}`);
       }
       // --deploy: a change to docker/box (image or Worker code) goes to the host, so to every box.
       if (redeploy || !(await hostExists())) deployHost();

@@ -3,7 +3,8 @@
 // dependencies. It runs the box's own commands (`box.mjs`) inside the box: a local Docker container, or with
 // `--cloud` a Cloudflare container (cloud/target.mjs).
 //
-//   node docker/box/cli.mjs up                start the box, baking `next` first if it has never been baked
+//   node docker/box/cli.mjs up                start the box, baking `next` first if it has never been baked;
+//                                             `up --cloud` without --box also puts this checkout on it (sync)
 //   node docker/box/cli.mjs sync [--full]     put this checkout, committed or not, on the box; rebuild what it changes
 //   node docker/box/cli.mjs doctor            whether the box is fit to test on, as JSON; exits 1 if not
 //   node docker/box/cli.mjs logs <process>    a process's last lines (--tail <n>, default 200)
@@ -16,6 +17,8 @@
 // --cloud       the Cloudflare box. All boxes run in one host Worker; each has its own small Worker for its address.
 //               `up --cloud --deploy` redeploys the host (after a change to docker/box), which applies to every box.
 //               `up --cloud --from <box>` starts a new box from that box's latest snapshot instead of baking.
+//               Without --box, `up --cloud` is this branch's box: a new one starts from `base` (when it has a
+//               snapshot), then gets this checkout, committed or not; `--no-sync` skips that.
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -47,6 +50,7 @@ try {
       deploy: { type: 'boolean', default: false },
       from: { type: 'string' },
       full: { type: 'boolean', default: false },
+      'no-sync': { type: 'boolean', default: false },
       tail: { type: 'string', default: '200' },
     },
     allowPositionals: true,
@@ -326,7 +330,13 @@ const docker = {
 const target = options.cloud ? cloudTarget({ box: BOX, log, githubToken }) : docker;
 
 const commands = {
-  up: () => target.up({ deploy: options.deploy, from: options.from }),
+  up: async () => {
+    // The branch's own box (no --box) is for this checkout: start it from base and put the checkout on it.
+    const ownBox = options.cloud && !options.box;
+    const code = await target.up({ deploy: options.deploy, from: options.from, fromBase: ownBox });
+
+    return code === 0 && ownBox && !options['no-sync'] ? sync() : code;
+  },
   sync,
   doctor: async () => {
     await target.ready();

@@ -189,12 +189,15 @@ state (`/__box/state`) doesn't count as a request. Measured on standard-4:
 | `sync`, an API change | 83 s |
 | Smoke over the public address (box baked from `next`) | 19/20; the bridge check needs this branch's playground |
 | `up --from base` for a new box (deploy its Worker, then wake from base's snapshot, no bake) | 106 s: 29 s deploy, 8 s until the address answers, 43 s wake |
-| The same, the first time a new snapshot is restored | about 5.7 min, once per snapshot |
+| The same, the first time a snapshot is restored | 4 to 6 min (inside the start), once per snapshot |
 | `up --deploy` of the host with the same image | about 1 min; running boxes keep running |
 
 `up --cloud --box <new> --from <box>` starts a new box from another box's latest snapshot instead of baking: all
 boxes share one Durable Object class, which is how Cloudflare documents snapshot sharing. Keep a `base` box, baked
-from `next`, to start new boxes from.
+from `next`, to start new boxes from, and leave it asleep: every sleep gives it a new snapshot, and the first box
+started from a new snapshot waits 4 to 6 minutes. `up --cloud` without `--box` is your branch's box: a new one
+starts from `base`, then gets your checkout, committed or not (as `sync`; `--no-sync` skips it). A branch that
+doesn't contain `base`'s commit may conflict; rebase it on `next`.
 
 Limits for now: each sleep leaves a snapshot image in the account's registry that nothing deletes yet
 (`npx wrangler containers images list`); the GitHub token reaches the bake's and `sync`'s environment, as it does
