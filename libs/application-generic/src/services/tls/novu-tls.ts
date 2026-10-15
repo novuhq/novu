@@ -1,3 +1,4 @@
+import { X509Certificate } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import * as tls from 'node:tls';
 import { parseBooleanString } from '../secrets-manager/secrets-manager.service';
@@ -126,6 +127,26 @@ export function loadNovuTlsConfig(): NovuTlsConfig | undefined {
  */
 export function applyNovuTlsTrust(config: NovuTlsConfig): void {
   tls.setDefaultCACertificates([...tls.getCACertificates('default'), config.ca]);
+}
+
+/**
+ * The API calls itself back for workflow previews, on `https://localhost` unless
+ * `API_INTERNAL_ORIGIN` is set, and that call verifies the certificate. A
+ * certificate scoped to the public hostname would otherwise fail every preview at
+ * runtime, so the API checks this at boot.
+ */
+export function assertNovuTlsCoversLoopback(config: NovuTlsConfig): void {
+  if (process.env.API_INTERNAL_ORIGIN) {
+    return;
+  }
+
+  if (new X509Certificate(config.cert).checkHost('localhost')) {
+    return;
+  }
+
+  throw new Error(
+    'NOVU_TLS_CERT does not cover localhost, which the API calls itself on for workflow previews. Add DNS:localhost to the certificate subjectAltName, or set API_INTERNAL_ORIGIN to an https origin the certificate covers.'
+  );
 }
 
 /**

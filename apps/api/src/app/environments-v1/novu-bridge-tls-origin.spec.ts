@@ -67,5 +67,26 @@ describe('Novu-hosted bridge origin', () => {
 
       expect(resolver().getApiUrl(PostActionEnum.EXECUTE)).to.equal('https://api:3000');
     });
+
+    it('applies API_CONTEXT_PATH to the HTTPS loopback, which reaches the server directly', () => {
+      process.env.API_CONTEXT_PATH = 'api';
+
+      expect(resolver().getApiUrl(PostActionEnum.PREVIEW)).to.equal('https://localhost:3000/api');
+    });
+
+    it('does not apply API_CONTEXT_PATH to API_INTERNAL_ORIGIN, matching non-preview actions', () => {
+      process.env.API_CONTEXT_PATH = 'api';
+      process.env.API_INTERNAL_ORIGIN = 'https://api:3000';
+
+      expect(resolver().getApiUrl(PostActionEnum.PREVIEW)).to.equal(resolver().getApiUrl(PostActionEnum.EXECUTE));
+    });
+  });
+
+  describe('API_CONTEXT_PATH with TLS disabled', () => {
+    it('keeps applying it to the plain-HTTP preview loopback', () => {
+      process.env.API_CONTEXT_PATH = 'api';
+
+      expect(resolver().getApiUrl(PostActionEnum.PREVIEW)).to.equal('http://localhost:3000/api');
+    });
   });
 });

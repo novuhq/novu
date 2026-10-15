@@ -212,23 +212,17 @@ export class ExecuteFrameworkRequest {
   }
 
   /**
-   * Preview calls the API back on its own port. With TLS the listener is HTTPS-only,
-   * so the plain-HTTP loopback would be refused: prefer an explicitly configured
-   * internal origin and otherwise keep loopback on the scheme the server speaks.
+   * Preview calls the API back on its own port, which serves under API_CONTEXT_PATH,
+   * while the configured origins already route to it. With TLS the listener is
+   * HTTPS-only, so preview prefers API_INTERNAL_ORIGIN when it is set and otherwise
+   * keeps the loopback on HTTPS. The API refuses to boot when the certificate would
+   * not verify for that loopback.
    */
-  private getLoopbackApiUrl(): string {
-    if (!isNovuTlsEnabled()) {
-      return `http://localhost:${process.env.PORT}`;
-    }
-
-    return process.env.API_INTERNAL_ORIGIN || `https://localhost:${process.env.PORT}`;
-  }
-
   private getApiUrl(action: PostActionEnum | GetActionEnum): string {
-    const baseUrl =
-      action === PostActionEnum.PREVIEW
-        ? this.getLoopbackApiUrl()
-        : process.env.API_INTERNAL_ORIGIN || process.env.API_ROOT_URL;
+    const tlsEnabled = isNovuTlsEnabled();
+    const useLoopback = action === PostActionEnum.PREVIEW && !(tlsEnabled && process.env.API_INTERNAL_ORIGIN);
+    const loopbackOrigin = `${tlsEnabled ? 'https' : 'http'}://localhost:${process.env.PORT}`;
+    const baseUrl = useLoopback ? loopbackOrigin : process.env.API_INTERNAL_ORIGIN || process.env.API_ROOT_URL;
 
     if (!baseUrl) {
       throw new Error('API URL is not properly configured');
@@ -236,10 +230,7 @@ export class ExecuteFrameworkRequest {
 
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 
-    const contextPath = [
-      process.env.GLOBAL_CONTEXT_PATH,
-      action === PostActionEnum.PREVIEW ? process.env.API_CONTEXT_PATH : undefined,
-    ]
+    const contextPath = [process.env.GLOBAL_CONTEXT_PATH, useLoopback ? process.env.API_CONTEXT_PATH : undefined]
       .filter(Boolean)
       .join('/');
 

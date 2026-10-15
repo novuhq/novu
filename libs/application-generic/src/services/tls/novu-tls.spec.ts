@@ -6,7 +6,13 @@ import { join } from 'node:path';
 import * as tls from 'node:tls';
 import { expect } from 'chai';
 import got from 'got';
-import { applyNovuTlsTrust, isNovuTlsEnabled, loadNovuTlsConfig, toNovuTlsServerOptions } from './novu-tls';
+import {
+  applyNovuTlsTrust,
+  assertNovuTlsCoversLoopback,
+  isNovuTlsEnabled,
+  loadNovuTlsConfig,
+  toNovuTlsServerOptions,
+} from './novu-tls';
 
 const TLS_VARIABLES = [
   'NOVU_TLS_ENABLED',
@@ -34,8 +40,35 @@ function openssl(args: string[]): void {
   execFileSync('openssl', args, { cwd: fixtureDir, stdio: 'pipe' });
 }
 
+function signLeaf(csr: string, out: string, subjectAltName: string): void {
+  execFileSync(
+    'openssl',
+    [
+      'x509',
+      '-req',
+      '-in',
+      csr,
+      '-CA',
+      'ca.pem',
+      '-CAkey',
+      'ca-key.pem',
+      '-CAcreateserial',
+      '-days',
+      '1',
+      '-out',
+      out,
+      '-extfile',
+      '/dev/stdin',
+    ],
+    { cwd: fixtureDir, input: `subjectAltName=${subjectAltName}`, stdio: 'pipe' }
+  );
+}
+
 describe('novu-tls', () => {
-  /** A private CA plus a leaf for `localhost`, mirroring what an operator supplies. */
+  /**
+   * A private CA plus a leaf for `localhost`, mirroring what an operator supplies,
+   * and a second leaf scoped to a public hostname only.
+   */
   beforeAll(() => {
     fixtureDir = mkdtempSync(join(tmpdir(), 'novu-tls-spec-'));
     openssl([
@@ -65,27 +98,10 @@ describe('novu-tls', () => {
       '-subj',
       '/CN=localhost',
     ]);
-    execFileSync(
-      'openssl',
-      [
-        'x509',
-        '-req',
-        '-in',
-        'leaf.csr',
-        '-CA',
-        'ca.pem',
-        '-CAkey',
-        'ca-key.pem',
-        '-CAcreateserial',
-        '-days',
-        '1',
-        '-out',
-        'leaf.pem',
-        '-extfile',
-        '/dev/stdin',
-      ],
-      { cwd: fixtureDir, input: 'subjectAltName=DNS:localhost,IP:127.0.0.1', stdio: 'pipe' }
-    );
+    signLeaf('leaf.csr', 'leaf.pem', 'DNS:localhost,IP:127.0.0.1');
+
+    openssl(['req', '-new', '-key', 'leaf-key.pem', '-out', 'public.csr', '-subj', '/CN=api.example.com']);
+    signLeaf('public.csr', 'public.pem', 'DNS:api.example.com');
   });
 
   afterAll(() => {
@@ -217,6 +233,32 @@ describe('novu-tls', () => {
       expect(Object.keys(options).sort()).to.deep.equal(['cert', 'key', 'passphrase']);
       expect(options).to.not.have.property('ca');
       expect(options.passphrase).to.equal('unused-here');
+    });
+  });
+
+  describe('assertNovuTlsCoversLoopback', () => {
+    function configFor(certificate: string) {
+      return { cert: pem(certificate), key: pem('leaf-key.pem'), ca: pem('ca.pem') };
+    }
+
+    beforeEach(() => {
+      delete process.env.API_INTERNAL_ORIGIN;
+    });
+
+    it('accepts a certificate that covers localhost', () => {
+      expect(() => assertNovuTlsCoversLoopback(configFor('leaf.pem'))).to.not.throw();
+    });
+
+    it('rejects a certificate scoped to a public hostname when previews would use localhost', () => {
+      expect(() => assertNovuTlsCoversLoopback(configFor('public.pem'))).to.throw(
+        'NOVU_TLS_CERT does not cover localhost'
+      );
+    });
+
+    it('accepts any certificate once API_INTERNAL_ORIGIN takes over the preview call', () => {
+      process.env.API_INTERNAL_ORIGIN = 'https://api.example.com';
+
+      expect(() => assertNovuTlsCoversLoopback(configFor('public.pem'))).to.not.throw();
     });
   });
 
