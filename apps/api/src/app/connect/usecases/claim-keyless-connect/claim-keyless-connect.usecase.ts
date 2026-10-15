@@ -6,7 +6,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { encryptApiKey, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, CacheService, encryptApiKey, PinoLogger } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentMcpServerRepository,
@@ -23,9 +23,16 @@ import {
   McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum, EnvironmentTypeEnum, HumanChannelViaEnum, isConnectClaimTokenFormat } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EnvironmentTypeEnum,
+  HumanChannelViaEnum,
+  isConnectClaimTokenFormat,
+  SIGNUP_ANALYTICS_EVENTS,
+} from '@novu/shared';
 import { KEYLESS_SUBSCRIBER_ID } from '../../../inbox/utils/keyless.constants';
 import { isKeylessAgentEnvironment } from '../../../keyless/keyless-agent-environment';
+import { resolveKeylessAttribution } from '../../../keyless/keyless-signup-analytics';
 import {
   ConnectClaimTokenCacheUnavailableError,
   ConnectClaimTokenService,
@@ -38,6 +45,8 @@ export interface ClaimKeylessConnectResult {
   environmentId: string;
   agentIdentifier?: string;
 }
+
+const MINUTE_MS = 60 * 1000;
 
 @Injectable()
 export class ClaimKeylessConnect {
@@ -56,6 +65,8 @@ export class ClaimKeylessConnect {
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly humanInteractionRepository: HumanInteractionRepository,
     private readonly humanContactRepository: HumanContactRepository,
+    private readonly cacheService: CacheService,
+    private readonly analyticsService: AnalyticsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -176,12 +187,43 @@ export class ClaimKeylessConnect {
         this.rethrowConnectClaimTokenError(error);
       }
 
+      await this.trackClaimed(command, keylessEnvironment, targetEnvironment, moveOptions.claimedEventProperties);
+
       return {
         environmentId: targetEnvironment._id,
         agentIdentifier: agent?.identifier,
       };
     } finally {
       await this.connectClaimTokenService.releaseClaimLock(command.token);
+    }
+  }
+
+  /** Runs after the token was consumed, so it fires once per successful claim and never fails it. */
+  private async trackClaimed(
+    command: ClaimKeylessConnectCommand,
+    keylessEnvironment: EnvironmentEntity,
+    targetEnvironment: EnvironmentEntity,
+    extraProperties: Record<string, string | number> = {}
+  ): Promise<void> {
+    try {
+      const attribution = await resolveKeylessAttribution(this.cacheService, keylessEnvironment);
+      const createdAt = keylessEnvironment.createdAt ? new Date(keylessEnvironment.createdAt).getTime() : undefined;
+
+      this.analyticsService.mixpanelTrack(SIGNUP_ANALYTICS_EVENTS.KEYLESS_ENVIRONMENT_CLAIMED, keylessEnvironment._id, {
+        ...extraProperties,
+        source: command.source ?? attribution.source,
+        ...(attribution.client && { client: attribution.client }),
+        environmentId: keylessEnvironment._id,
+        targetOrganizationId: command.organizationId,
+        targetEnvironmentId: targetEnvironment._id,
+        ...(createdAt !== undefined && { ageMinutes: Math.floor((Date.now() - createdAt) / MINUTE_MS) }),
+      });
+      this.analyticsService.alias(keylessEnvironment._id, command.userId);
+    } catch (error) {
+      this.logger.warn(
+        { err: error, keylessEnvironmentId: keylessEnvironment._id },
+        'Failed to record keyless environment claim analytics'
+      );
     }
   }
 

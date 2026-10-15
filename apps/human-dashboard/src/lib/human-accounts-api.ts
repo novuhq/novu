@@ -29,6 +29,11 @@ export function ensureBackingAccount(region: HumanRegion, identity: Identity): P
   return request(region, '/v1/human/accounts', { method: 'POST', body: toIdentityBody(identity) });
 }
 
+/** Records the `Signup Started` analytics event of a new Human Clerk user. */
+export async function trackSignupStarted(region: HumanRegion, humanUserId: string): Promise<void> {
+  await request(region, '/v1/human/accounts/signup-started', { method: 'POST', body: { humanUserId } });
+}
+
 export function claimKeylessSetup(
   region: HumanRegion,
   identity: Identity,

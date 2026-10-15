@@ -24,11 +24,6 @@ export enum KeylessAgentErrorCodeEnum {
   CLAIM_INTO_KEYLESS_ORG = 'claim_into_keyless_org',
 }
 
-export enum KeylessAgentAnalyticsEventEnum {
-  CREATED = 'Keyless Environment Created - [Agent]',
-  CLAIMED = 'Keyless Environment Claimed - [Agent]',
-}
-
 const KEYLESS_INBOX_DEMO_IDENTIFIER_PREFIX = 'pk_keyless_';
 const HOUR_MS = 60 * 60 * 1000;
 

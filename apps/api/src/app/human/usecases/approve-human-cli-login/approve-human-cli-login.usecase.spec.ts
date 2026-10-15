@@ -127,6 +127,7 @@ describe('ApproveHumanCliLogin', () => {
       token: 'claim_token',
       organizationId: 'novu_org',
       userId: 'novu_user',
+      source: 'human',
     });
     expect(claimKeylessConnect.execute.calledBefore(approveCliDeviceSession.execute)).to.equal(true);
     // The login is held before anything is created or moved, so it can't be denied halfway.

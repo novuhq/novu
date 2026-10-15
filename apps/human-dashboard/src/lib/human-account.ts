@@ -4,7 +4,7 @@ import { clerkClient, currentUser, type User } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
 
-import { ensureBackingAccount, type HumanRegion } from './human-accounts-api';
+import { ensureBackingAccount, type HumanRegion, trackSignupStarted } from './human-accounts-api';
 
 /** Where the operator's backing organization lives, kept in the Human Clerk user's private metadata. */
 export type StoredBackingAccount = {
@@ -43,6 +43,11 @@ export async function ensureAccountForSignUp(humanUserId: string): Promise<void>
   const user = await clerk.users.getUser(humanUserId);
 
   await ensureStoredBackingAccount(user, DEFAULT_REGION);
+}
+
+/** The `Signup Started` event of a new operator, recorded where the sign-up webhook creates their account. */
+export async function recordSignUpStarted(humanUserId: string): Promise<void> {
+  await trackSignupStarted(DEFAULT_REGION, humanUserId);
 }
 
 /**

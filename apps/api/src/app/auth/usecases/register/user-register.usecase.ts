@@ -5,6 +5,7 @@ import { normalizeEmail, SignUpOriginEnum } from '@novu/shared';
 import { hash } from 'bcrypt';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
 import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
+import { signupSourceForOrigin, trackSignupStarted } from '../../../shared/helpers/signup-analytics';
 import { AuthService } from '../../services/auth.service';
 import { UserRegisterCommand } from './user-register.command';
 
@@ -51,6 +52,10 @@ export class UserRegister {
       loginType: 'email',
       origin: command.origin || SignUpOriginEnum.WEB,
       wasInvited: Boolean(command.wasInvited),
+    });
+    trackSignupStarted(this.analyticsService, user._id, {
+      source: signupSourceForOrigin(command.origin),
+      loginType: 'email',
     });
 
     return {

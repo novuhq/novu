@@ -1,4 +1,5 @@
 import type { CacheService } from '@novu/application-generic';
+import { isKeylessCreationSource, type KeylessCreationSource } from '@novu/shared';
 
 export const KEYLESS_AGENT_CLAIMED_TOMBSTONE_TTL_SECONDS = 30 * 24 * 60 * 60;
 
@@ -14,6 +15,10 @@ function claimedTombstoneKey(keyHash: string): string {
 
 function sourceKey(environmentId: string): string {
   return `keyless_agent_source:{${environmentId}}`;
+}
+
+function creationSourceKey(environmentId: string): string {
+  return `keyless_environment_source:{${environmentId}}`;
 }
 
 async function bestEffortSet(cacheService: CacheService, key: string, value: string, ttl: number): Promise<void> {
@@ -74,6 +79,7 @@ export async function readKeylessAgentClaimedTombstone(
   }
 }
 
+/** The agent tool (`cursor`, `claude-code`, …) that created an agent keyless environment. */
 export async function writeKeylessAgentSource(
   cacheService: CacheService,
   environmentId: string,
@@ -88,4 +94,23 @@ export async function readKeylessAgentSource(
   environmentId: string
 ): Promise<string | null> {
   return bestEffortGet(cacheService, sourceKey(environmentId));
+}
+
+/** Who created a keyless environment, so its claim and the signup it leads to keep that attribution. */
+export async function writeKeylessCreationSource(
+  cacheService: CacheService,
+  environmentId: string,
+  source: KeylessCreationSource,
+  ttlSeconds: number
+): Promise<void> {
+  await bestEffortSet(cacheService, creationSourceKey(environmentId), source, ttlSeconds);
+}
+
+export async function readKeylessCreationSource(
+  cacheService: CacheService,
+  environmentId: string
+): Promise<KeylessCreationSource | null> {
+  const value = await bestEffortGet(cacheService, creationSourceKey(environmentId));
+
+  return isKeylessCreationSource(value) ? value : null;
 }

@@ -15,6 +15,8 @@ export interface ClaimKeylessConnectBeforeMoveContext {
 export interface ClaimKeylessConnectMoveOptions {
   excludeIntegrationProviderIds?: string[];
   revokeKeylessApiKeys?: boolean;
+  /** Extra properties for the `Keyless Environment Claimed` event, sent only once the claim succeeded. */
+  claimedEventProperties?: Record<string, string | number>;
 }
 
 export interface ClaimKeylessConnectHooks {

@@ -30,6 +30,7 @@ import {
   InAppProviderIdEnum,
   PreferenceLevelEnum,
   Schedule,
+  SignupSourceEnum,
 } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
@@ -37,6 +38,7 @@ import { GetOrganizationSettingsCommand } from '../../../organization/usecases/g
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
+import { trackSignupStarted } from '../../../shared/helpers/signup-analytics';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum, KEYLESS_ENVIRONMENT_PREFIX, KEYLESS_SUBSCRIBER_ID } from '../../utils';
@@ -388,6 +390,12 @@ export class Session {
       const { environment } = await this.createKeylessEnvironment.execute(
         CreateKeylessEnvironmentCommand.create({ purpose: KeylessEnvironmentPurposeEnum.INBOX_DEMO })
       );
+
+      trackSignupStarted(this.analyticsService, environment._id, {
+        source: SignupSourceEnum.INBOX,
+        environmentId: environment._id,
+        replacedExpiredEnvironment: isKeylessExpired,
+      });
 
       return environment.identifier;
     }

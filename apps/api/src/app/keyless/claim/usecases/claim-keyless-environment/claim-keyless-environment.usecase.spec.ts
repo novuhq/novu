@@ -2,7 +2,6 @@ import { BadRequestException, ConflictException, HttpException } from '@nestjs/c
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { KeylessAgentAnalyticsEventEnum } from '../../../keyless-agent-environment';
 import { ClaimKeylessEnvironmentCommand } from './claim-keyless-environment.command';
 import { ClaimKeylessEnvironment } from './claim-keyless-environment.usecase';
 
@@ -58,7 +57,6 @@ describe('ClaimKeylessEnvironment', () => {
       set: sinon.stub().resolves(),
       get: sinon.stub().resolves('cursor'),
     };
-    const analyticsService = { track: sinon.stub(), mixpanelTrack: sinon.stub(), alias: sinon.stub() };
     const logger = { setContext: sinon.stub(), warn: sinon.stub(), info: sinon.stub() };
 
     const usecase = new ClaimKeylessEnvironment(
@@ -66,7 +64,6 @@ describe('ClaimKeylessEnvironment', () => {
       copyKeylessWorkflows as never,
       integrationRepository as never,
       cacheService as never,
-      analyticsService as never,
       logger as never
     );
 
@@ -76,7 +73,6 @@ describe('ClaimKeylessEnvironment', () => {
       copyKeylessWorkflows,
       integrationRepository,
       cacheService,
-      analyticsService,
       moveOptions,
     };
   }
@@ -97,8 +93,7 @@ describe('ClaimKeylessEnvironment', () => {
   });
 
   it('passes Connect environments straight through to the existing claim', async () => {
-    const { usecase, claimKeylessConnect, copyKeylessWorkflows, cacheService, analyticsService, moveOptions } =
-      setup(connectEnvironment);
+    const { usecase, claimKeylessConnect, copyKeylessWorkflows, cacheService, moveOptions } = setup(connectEnvironment);
     claimKeylessConnect.execute.callsFake(async (_command, hooks) => {
       moveOptions.push(await hooks?.beforeMove?.({ keylessEnvironment: connectEnvironment, targetEnvironment }));
 
@@ -120,7 +115,6 @@ describe('ClaimKeylessEnvironment', () => {
     expect(moveOptions).to.deep.equal([undefined]);
     expect(copyKeylessWorkflows.preflight.called).to.equal(false);
     expect(cacheService.set.called).to.equal(false);
-    expect(analyticsService.track.called).to.equal(false);
   });
 
   it('copies the workflows, revokes the key and reports copied and skipped identifiers', async () => {
@@ -146,7 +140,13 @@ describe('ClaimKeylessEnvironment', () => {
       workflowIds: ['order-shipped'],
     });
     expect(copyKeylessWorkflows.copy.calledAfter(copyKeylessWorkflows.preflight)).to.equal(true);
-    expect(moveOptions).to.deep.equal([{ excludeIntegrationProviderIds: [], revokeKeylessApiKeys: true }]);
+    expect(moveOptions).to.deep.equal([
+      {
+        excludeIntegrationProviderIds: [],
+        revokeKeylessApiKeys: true,
+        claimedEventProperties: { workflowsCopied: 1, workflowsSkipped: 1 },
+      },
+    ]);
   });
 
   it('leaves the keyless Novu Email behind when the target already has one', async () => {
@@ -162,7 +162,11 @@ describe('ClaimKeylessEnvironment', () => {
       providerId: EmailProviderIdEnum.Novu,
     });
     expect(moveOptions).to.deep.equal([
-      { excludeIntegrationProviderIds: [EmailProviderIdEnum.Novu], revokeKeylessApiKeys: true },
+      {
+        excludeIntegrationProviderIds: [EmailProviderIdEnum.Novu],
+        revokeKeylessApiKeys: true,
+        claimedEventProperties: { workflowsCopied: 1, workflowsSkipped: 1 },
+      },
     ]);
   });
 
@@ -227,8 +231,8 @@ describe('ClaimKeylessEnvironment', () => {
     expect(copyKeylessWorkflows.compensate.called).to.equal(false);
   });
 
-  it('tombstones every revoked key and records the claim in analytics', async () => {
-    const { usecase, cacheService, analyticsService } = setup();
+  it('tombstones every revoked key', async () => {
+    const { usecase, cacheService } = setup();
 
     await usecase.execute(command);
 
@@ -239,35 +243,5 @@ describe('ClaimKeylessEnvironment', () => {
       environmentId: 'keyless_env',
       organizationId: 'keyless_org',
     });
-
-    const expectedEvent = {
-      environmentId: 'keyless_env',
-      targetOrganizationId: 'target_org',
-      targetEnvironmentId: 'dev_env',
-      source: 'cursor',
-      ageMinutes: 90,
-      workflowsCopied: 1,
-      workflowsSkipped: 1,
-    };
-    expect(analyticsService.track.firstCall.args).to.deep.equal([
-      KeylessAgentAnalyticsEventEnum.CLAIMED,
-      'keyless_env',
-      expectedEvent,
-    ]);
-    expect(analyticsService.mixpanelTrack.firstCall.args).to.deep.equal([
-      KeylessAgentAnalyticsEventEnum.CLAIMED,
-      'keyless_env',
-      expectedEvent,
-    ]);
-    expect(analyticsService.alias.firstCall.args).to.deep.equal(['keyless_env', 'claimer']);
-  });
-
-  it('reports an unknown source when none was recorded', async () => {
-    const { usecase, cacheService, analyticsService } = setup();
-    cacheService.get.resolves(null);
-
-    await usecase.execute(command);
-
-    expect(analyticsService.track.firstCall.args[2]).to.include({ source: 'unknown' });
   });
 });

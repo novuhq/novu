@@ -1,7 +1,7 @@
 import { verifyWebhook } from '@clerk/nextjs/webhooks';
 import type { NextRequest } from 'next/server';
 
-import { ensureAccountForSignUp } from '@/lib/human-account';
+import { ensureAccountForSignUp, recordSignUpStarted } from '@/lib/human-account';
 
 const SIGN_UP_EVENT = 'user.created';
 
@@ -28,6 +28,11 @@ export async function POST(request: NextRequest): Promise<Response> {
   if (event.type !== SIGN_UP_EVENT) {
     return Response.json({ handled: false });
   }
+
+  // Analytics never fail the sign-up; a redelivery after a failure records the same event once.
+  await recordSignUpStarted(event.data.id).catch((error) => {
+    console.error('Failed to record the start of a sign-up', error);
+  });
 
   try {
     await ensureAccountForSignUp(event.data.id);

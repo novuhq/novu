@@ -12,7 +12,7 @@ import {
 import { KeylessEnvironmentPurposeEnum } from '../../../../inbox/usecases/create-keyless-environment/create-keyless-environment.command';
 import { CreateKeylessEnvironment } from '../../../../inbox/usecases/create-keyless-environment/create-keyless-environment.usecase';
 import { KeylessAbuseGuardService } from '../../../keyless-abuse-guard.service';
-import { KeylessAgentAnalyticsEventEnum, KeylessAgentErrorCodeEnum } from '../../../keyless-agent-environment';
+import { KeylessAgentErrorCodeEnum } from '../../../keyless-agent-environment';
 import { ProvisionAgentKeylessEnvironmentCommand } from './provision-agent-keyless-environment.command';
 import { ProvisionAgentKeylessEnvironment } from './provision-agent-keyless-environment.usecase';
 
@@ -139,7 +139,7 @@ describe('ProvisionAgentKeylessEnvironment', () => {
     expect(response.apiUrl).to.equal('https://api.novu.co');
   });
 
-  it('stores the source and tracks the created event, defaulting the source to unknown', async () => {
+  it('stores the client and tracks Signup Started with source agent, defaulting the client to unknown', async () => {
     await execute();
 
     expect(cacheService.set.calledOnce).to.be.true;
@@ -147,18 +147,26 @@ describe('ProvisionAgentKeylessEnvironment', () => {
     expect(cacheService.set.firstCall.args[1]).to.equal('unknown');
     expect(cacheService.set.firstCall.args[2]).to.deep.equal({ ttl: 72 * 60 * 60 });
 
-    const expectedPayload = {
-      environmentId: 'env-id',
-      source: 'unknown',
-      userAgent: 'curl/8',
-      expiresAt: '2026-10-17T20:00:00.000Z',
-      createdAt: createdAt.toISOString(),
-    };
-    expect(analyticsService.track.calledOnceWith(KeylessAgentAnalyticsEventEnum.CREATED, 'env-id', expectedPayload)).to
-      .be.true;
-    expect(
-      analyticsService.mixpanelTrack.calledOnceWith(KeylessAgentAnalyticsEventEnum.CREATED, 'env-id', expectedPayload)
-    ).to.be.true;
+    expect(analyticsService.track.called).to.be.false;
+    expect(analyticsService.mixpanelTrack.calledOnce).to.be.true;
+    expect(analyticsService.mixpanelTrack.firstCall.args).to.deep.equal([
+      'Signup Started',
+      'env-id',
+      {
+        source: 'agent',
+        client: 'unknown',
+        environmentId: 'env-id',
+        userAgent: 'curl/8',
+        expiresAt: '2026-10-17T20:00:00.000Z',
+        createdAt: createdAt.toISOString(),
+      },
+    ]);
+  });
+
+  it('reports the requested source as the client of an agent signup', async () => {
+    await execute({ source: 'claude-code' });
+
+    expect(analyticsService.mixpanelTrack.firstCall.args[2]).to.include({ source: 'agent', client: 'claude-code' });
   });
 
   it('returns 404 keyless_disabled on community edition', async () => {
@@ -200,7 +208,7 @@ describe('ProvisionAgentKeylessEnvironment', () => {
     claimTokenService.issueOrGetForEnvironment.rejects(new ConnectClaimTokenCacheUnavailableError('issue'));
 
     await expectHttpError(HttpStatus.SERVICE_UNAVAILABLE, KeylessAgentErrorCodeEnum.UNAVAILABLE);
-    expect(analyticsService.track.called).to.be.false;
+    expect(analyticsService.mixpanelTrack.called).to.be.false;
   });
 
   it('does not create an environment when the abuse guard rejects', async () => {

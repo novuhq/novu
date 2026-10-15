@@ -75,6 +75,7 @@ import { RequestAddressVerification } from './usecases/request-address-verificat
 import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbox-thread.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
+import { TrackHumanSignupStarted } from './usecases/track-human-signup-started/track-human-signup-started.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 import { VerifyAddress } from './usecases/verify-address/verify-address.usecase';
 
@@ -147,6 +148,7 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     HumanBackingAccounts,
     HumanDashboardSecretGuard,
     EnsureBackingOrganization,
+    TrackHumanSignupStarted,
     ClaimForHumanAccount,
     GetBackingSecretKey,
     GenerateUniqueApiKey,

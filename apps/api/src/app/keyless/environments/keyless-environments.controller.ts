@@ -13,10 +13,14 @@ import { UserSession } from '../../shared/framework/user.decorator';
 import {
   CreateKeylessEnvironmentRequestDto,
   CreateKeylessEnvironmentResponseDto,
+  GetKeylessClaimSourceRequestDto,
+  GetKeylessClaimSourceResponseDto,
   GetKeylessEnvironmentResponseDto,
 } from './dtos';
 import { GetAgentKeylessEnvironmentCommand } from './usecases/get-agent-keyless-environment/get-agent-keyless-environment.command';
 import { GetAgentKeylessEnvironment } from './usecases/get-agent-keyless-environment/get-agent-keyless-environment.usecase';
+import { GetKeylessClaimSourceCommand } from './usecases/get-keyless-claim-source/get-keyless-claim-source.command';
+import { GetKeylessClaimSource } from './usecases/get-keyless-claim-source/get-keyless-claim-source.usecase';
 import { ProvisionAgentKeylessEnvironmentCommand } from './usecases/provision-agent-keyless-environment/provision-agent-keyless-environment.command';
 import { ProvisionAgentKeylessEnvironment } from './usecases/provision-agent-keyless-environment/provision-agent-keyless-environment.usecase';
 
@@ -28,7 +32,8 @@ import { ProvisionAgentKeylessEnvironment } from './usecases/provision-agent-key
 export class KeylessEnvironmentsController {
   constructor(
     private readonly provisionAgentKeylessEnvironmentUsecase: ProvisionAgentKeylessEnvironment,
-    private readonly getAgentKeylessEnvironmentUsecase: GetAgentKeylessEnvironment
+    private readonly getAgentKeylessEnvironmentUsecase: GetAgentKeylessEnvironment,
+    private readonly getKeylessClaimSourceUsecase: GetKeylessClaimSource
   ) {}
 
   @Post()
@@ -46,6 +51,16 @@ export class KeylessEnvironmentsController {
         userAgent: request.headers['user-agent'],
       })
     );
+  }
+
+  @Post('/claim-source')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get who created the keyless environment behind a claim token' })
+  @ApiResponse(GetKeylessClaimSourceResponseDto)
+  async getKeylessClaimSource(
+    @Body() body: GetKeylessClaimSourceRequestDto
+  ): Promise<GetKeylessClaimSourceResponseDto> {
+    return this.getKeylessClaimSourceUsecase.execute(GetKeylessClaimSourceCommand.create({ token: body.token }));
   }
 
   @Get('/me')

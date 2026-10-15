@@ -15,6 +15,7 @@ export * from './productFeatureEnabledForServiceLevel';
 export * from './providers';
 export * from './rate-limiting';
 export * from './severity';
+export * from './signup-analytics';
 export * from './sinch-sms-regions';
 export * from './slack-agent-manifest';
 export * from './slack-agent-oauth-scopes';

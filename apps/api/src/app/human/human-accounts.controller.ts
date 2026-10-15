@@ -14,6 +14,7 @@ import {
   type HumanCliLoginDeniedResponseDto,
   HumanCliLoginRequestDto,
   type HumanCliLoginResponseDto,
+  HumanSignupStartedRequestDto,
 } from './dtos/human-account.dto';
 import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
 import { ApproveHumanCliLoginCommand } from './usecases/approve-human-cli-login/approve-human-cli-login.command';
@@ -31,6 +32,8 @@ import { GetHumanCliLogin } from './usecases/get-human-cli-login/get-human-cli-l
 import { HumanCliLoginCommand } from './usecases/get-human-cli-login/human-cli-login.command';
 import { RegenerateBackingSecretKeyCommand } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.command';
 import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
+import { TrackHumanSignupStartedCommand } from './usecases/track-human-signup-started/track-human-signup-started.command';
+import { TrackHumanSignupStarted } from './usecases/track-human-signup-started/track-human-signup-started.usecase';
 
 /**
  * Private endpoints for the Human dashboard's server (agentinbox.md), which signs operators in with its
@@ -51,7 +54,8 @@ export class HumanAccountsController {
     private readonly deleteHumanAccountUsecase: DeleteHumanAccount,
     private readonly approveHumanCliLoginUsecase: ApproveHumanCliLogin,
     private readonly getHumanCliLoginUsecase: GetHumanCliLogin,
-    private readonly denyHumanCliLoginUsecase: DenyHumanCliLogin
+    private readonly denyHumanCliLoginUsecase: DenyHumanCliLogin,
+    private readonly trackHumanSignupStartedUsecase: TrackHumanSignupStarted
   ) {}
 
   @Post('/')
@@ -64,6 +68,15 @@ export class HumanAccountsController {
         firstName: body.firstName,
         lastName: body.lastName,
       })
+    );
+  }
+
+  @Post('/signup-started')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Record that someone signed up to the Human Clerk app' })
+  trackSignupStarted(@Body() body: HumanSignupStartedRequestDto): void {
+    this.trackHumanSignupStartedUsecase.execute(
+      TrackHumanSignupStartedCommand.create({ humanUserId: body.humanUserId })
     );
   }
 

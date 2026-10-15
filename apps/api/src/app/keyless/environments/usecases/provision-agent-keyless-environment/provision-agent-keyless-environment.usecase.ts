@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, CacheService, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, SignupSourceEnum } from '@novu/shared';
 
 import {
   ConnectClaimTokenCacheUnavailableError,
@@ -12,13 +12,13 @@ import {
   KeylessEnvironmentPurposeEnum,
 } from '../../../../inbox/usecases/create-keyless-environment/create-keyless-environment.command';
 import { CreateKeylessEnvironment } from '../../../../inbox/usecases/create-keyless-environment/create-keyless-environment.usecase';
+import { trackSignupStarted } from '../../../../shared/helpers/signup-analytics';
 import { agentEnvCreationError, KeylessAbuseGuardService } from '../../../keyless-abuse-guard.service';
 import { writeKeylessAgentSource } from '../../../keyless-agent-cache';
 import { resolveKeylessAgentClaimUrl } from '../../../keyless-agent-claim-url';
 import {
   isKeylessAgentEnvironmentsSupported,
   KEYLESS_AGENT_DEFAULT_SOURCE,
-  KeylessAgentAnalyticsEventEnum,
   KeylessAgentErrorCodeEnum,
   resolveKeylessAgentRetentionHours,
 } from '../../../keyless-agent-environment';
@@ -62,15 +62,14 @@ export class ProvisionAgentKeylessEnvironment {
       resolveKeylessAgentRetentionHours() * 60 * 60
     );
 
-    const analyticsPayload = {
+    trackSignupStarted(this.analyticsService, environment._id, {
+      source: SignupSourceEnum.AGENT,
+      client: source,
       environmentId: environment._id,
-      source,
       userAgent: command.userAgent,
       expiresAt,
       createdAt,
-    };
-    this.analyticsService.track(KeylessAgentAnalyticsEventEnum.CREATED, environment._id, analyticsPayload);
-    this.analyticsService.mixpanelTrack(KeylessAgentAnalyticsEventEnum.CREATED, environment._id, analyticsPayload);
+    });
 
     this.logger.info({ environmentId: environment._id, source }, 'Keyless agent environment created');
 

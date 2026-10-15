@@ -1,5 +1,5 @@
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
-import { AnalyticsService, CacheService, PinoLogger } from '@novu/application-generic';
+import { CacheService, PinoLogger } from '@novu/application-generic';
 import { EnvironmentEntity, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, UserSessionData } from '@novu/shared';
 import { ClaimKeylessConnectCommand } from '../../../../connect/usecases/claim-keyless-connect/claim-keyless-connect.command';
@@ -11,12 +11,10 @@ import {
   ClaimKeylessConnect,
   ClaimKeylessConnectResult,
 } from '../../../../connect/usecases/claim-keyless-connect/claim-keyless-connect.usecase';
-import { readKeylessAgentSource, writeKeylessAgentClaimedTombstone } from '../../../keyless-agent-cache';
+import { writeKeylessAgentClaimedTombstone } from '../../../keyless-agent-cache';
 import {
   isKeylessAgentEnvironment,
   isKeylessAgentEnvironmentExpired,
-  KEYLESS_AGENT_DEFAULT_SOURCE,
-  KeylessAgentAnalyticsEventEnum,
   KeylessAgentErrorCodeEnum,
 } from '../../../keyless-agent-environment';
 import { createKeylessEnvironmentExpiredException } from '../../../keyless-agent-errors';
@@ -37,15 +35,12 @@ export interface ClaimKeylessEnvironmentResult {
 
 interface AgentEnvironmentClaim {
   keylessEnvironment: EnvironmentEntity;
-  createdAt: string;
   scope: KeylessWorkflowCopyScope;
   copiedInternalIds: string[];
   copied: string[];
   skipped: string[];
   moveOptions: ClaimKeylessConnectMoveOptions;
 }
-
-const MINUTE_MS = 60 * 1000;
 
 /**
  * Claims any keyless environment into the claimer's Development environment.
@@ -59,7 +54,6 @@ export class ClaimKeylessEnvironment {
     private readonly copyKeylessWorkflows: CopyKeylessWorkflows,
     private readonly integrationRepository: IntegrationRepository,
     private readonly cacheService: CacheService,
-    private readonly analyticsService: AnalyticsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -124,7 +118,7 @@ export class ClaimKeylessEnvironment {
       };
     }
 
-    await this.recordAgentEnvironmentClaim(user, agentClaim);
+    await this.recordAgentEnvironmentClaim(agentClaim);
 
     return {
       kind: 'agent-environment',
@@ -166,25 +160,26 @@ export class ClaimKeylessEnvironment {
       ),
     ]);
     const copy = await this.copyKeylessWorkflows.copy({ ...scope, user, workflowIds: preflight.toCopy });
+    const skipped = [...preflight.skipped, ...copy.skipped];
 
     return {
       keylessEnvironment,
-      createdAt,
       scope,
       copiedInternalIds: copy.copiedInternalIds,
       copied: copy.copied,
-      skipped: [...preflight.skipped, ...copy.skipped],
+      skipped,
       moveOptions: {
         excludeIntegrationProviderIds: targetNovuEmail ? [EmailProviderIdEnum.Novu] : [],
         revokeKeylessApiKeys: true,
+        claimedEventProperties: { workflowsCopied: copy.copied.length, workflowsSkipped: skipped.length },
       },
     };
   }
 
-  /** Runs after the claim committed, so failures are logged and never fail the claim. */
-  private async recordAgentEnvironmentClaim(user: UserSessionData, claim: AgentEnvironmentClaim): Promise<void> {
-    const { keylessEnvironment, createdAt, scope } = claim;
-    const now = new Date();
+  /** Runs after the claim committed; tombstone writes are best-effort, so they never fail the claim. */
+  private async recordAgentEnvironmentClaim(claim: AgentEnvironmentClaim): Promise<void> {
+    const { keylessEnvironment } = claim;
+    const claimedAt = new Date().toISOString();
 
     for (const apiKey of keylessEnvironment.apiKeys ?? []) {
       if (!apiKey.hash) {
@@ -194,31 +189,8 @@ export class ClaimKeylessEnvironment {
       await writeKeylessAgentClaimedTombstone(this.cacheService, apiKey.hash, {
         environmentId: keylessEnvironment._id,
         organizationId: keylessEnvironment._organizationId,
-        claimedAt: now.toISOString(),
+        claimedAt,
       });
-    }
-
-    try {
-      const source =
-        (await readKeylessAgentSource(this.cacheService, keylessEnvironment._id)) ?? KEYLESS_AGENT_DEFAULT_SOURCE;
-      const event = {
-        environmentId: keylessEnvironment._id,
-        targetOrganizationId: scope.targetOrganizationId,
-        targetEnvironmentId: scope.targetEnvironmentId,
-        source,
-        ageMinutes: Math.floor((now.getTime() - new Date(createdAt).getTime()) / MINUTE_MS),
-        workflowsCopied: claim.copied.length,
-        workflowsSkipped: claim.skipped.length,
-      };
-
-      this.analyticsService.track(KeylessAgentAnalyticsEventEnum.CLAIMED, keylessEnvironment._id, event);
-      this.analyticsService.mixpanelTrack(KeylessAgentAnalyticsEventEnum.CLAIMED, keylessEnvironment._id, event);
-      this.analyticsService.alias(keylessEnvironment._id, user._id);
-    } catch (error) {
-      this.logger.warn(
-        { err: error, keylessEnvironmentId: keylessEnvironment._id },
-        'Failed to record keyless agent environment claim analytics'
-      );
     }
   }
 }

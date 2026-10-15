@@ -581,4 +581,53 @@ describe('Session', () => {
     expect(environmentRepository.findEnvironmentByIdentifier.calledWith(keylessIdentifier)).to.be.true;
     expect(response.applicationIdentifier).to.equal(keylessIdentifier);
   });
+
+  describe('Signup Started', () => {
+    const keylessIdentifier = 'pk_keyless_abc_1234';
+
+    beforeEach(() => {
+      const environment = {
+        _id: 'env-id',
+        _organizationId: 'org-id',
+        identifier: keylessIdentifier,
+        name: 'Keyless 2026-10-14T20:00:00.000Z',
+        apiKeys: [{ key: 'api-key' }],
+      };
+      createKeylessEnvironment.execute.resolves({ environment: environment as any, secretKey: 'sk_secret' });
+      environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+      organizationRepository.findById.resolves({ _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE } as any);
+      selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });
+      createSubscriber.execute.resolves({ _id: 'subscriber-id' } as any);
+      notificationsCount.execute.resolves({ data: [{ count: 0, filter: {} }] });
+      authService.getSubscriberWidgetToken.resolves('token');
+      getOrganizationSettingsUsecase.execute.resolves({ removeNovuBranding: false, defaultLocale: 'en_US' });
+    });
+
+    const signupStartedCalls = () =>
+      analyticsService.mixpanelTrack.getCalls().filter((call) => call.args[0] === 'Signup Started');
+
+    it('tracks an inbox signup when a keyless environment is created', async () => {
+      await session.execute({ requestData: {} });
+
+      expect(signupStartedCalls().map((call) => call.args)).to.deep.equal([
+        ['Signup Started', 'env-id', { source: 'inbox', environmentId: 'env-id', replacedExpiredEnvironment: false }],
+      ]);
+    });
+
+    it('tracks an inbox signup when an expired keyless identifier is replaced', async () => {
+      await session.execute({ requestData: { applicationIdentifier: 'pk_keyless_00000000_abcd' } });
+
+      expect(createKeylessEnvironment.execute.calledOnce).to.be.true;
+      expect(signupStartedCalls().map((call) => call.args)).to.deep.equal([
+        ['Signup Started', 'env-id', { source: 'inbox', environmentId: 'env-id', replacedExpiredEnvironment: true }],
+      ]);
+    });
+
+    it('does not track a signup for an existing application identifier', async () => {
+      await session.execute({ requestData: { applicationIdentifier: 'app-id', subscriber: { subscriberId: 's1' } } });
+
+      expect(createKeylessEnvironment.execute.called).to.be.false;
+      expect(signupStartedCalls()).to.have.length(0);
+    });
+  });
 });

@@ -21,6 +21,12 @@ export class EnsureHumanAccountRequestDto {
   lastName?: string;
 }
 
+export class HumanSignupStartedRequestDto {
+  @IsString()
+  @Matches(HUMAN_USER_ID_PATTERN)
+  humanUserId: string;
+}
+
 export class ClaimHumanAccountRequestDto extends EnsureHumanAccountRequestDto {
   @IsString()
   @IsNotEmpty()

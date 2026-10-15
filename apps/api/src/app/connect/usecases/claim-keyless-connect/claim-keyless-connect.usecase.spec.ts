@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
-import { ChannelTypeEnum, EnvironmentTypeEnum, HumanChannelViaEnum } from '@novu/shared';
+import { ChannelTypeEnum, EnvironmentTypeEnum, HumanChannelViaEnum, SignupSourceEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InvalidConnectClaimTokenError } from '../../services/connect-claim-token.service';
@@ -47,6 +47,12 @@ describe('ClaimKeylessConnect', () => {
       ...repository(),
       findOperatorInEnvironment: sinon.stub().resolves(null),
     };
+    const cache = new Map<string, string>();
+    const cacheService = {
+      cacheEnabled: sinon.stub().returns(true),
+      get: sinon.stub().callsFake(async (key: string) => cache.get(key) ?? null),
+    };
+    const analyticsService = { mixpanelTrack: sinon.stub(), alias: sinon.stub() };
 
     const usecase = new ClaimKeylessConnect(
       connectClaimTokenService as never,
@@ -63,6 +69,8 @@ describe('ClaimKeylessConnect', () => {
       repository() as never,
       repository() as never,
       humanContactRepository as never,
+      cacheService as never,
+      analyticsService as never,
       { setContext: sinon.stub(), info: sinon.stub(), warn: sinon.stub() } as never
     );
 
@@ -73,6 +81,8 @@ describe('ClaimKeylessConnect', () => {
       connectClaimTokenService,
       environmentRepository,
       integrationRepository,
+      cache,
+      analyticsService,
     };
   }
 
@@ -290,6 +300,140 @@ describe('ClaimKeylessConnect', () => {
       });
     });
   }
+
+  describe('Keyless Environment Claimed', () => {
+    const createdAt = new Date(Date.now() - 90 * 60 * 1000);
+    const inboxEnvironment = {
+      _id: 'keyless_env',
+      _organizationId: 'keyless_org',
+      identifier: 'pk_keyless_abc_123',
+      name: 'Keyless',
+      createdAt,
+    };
+    const agentEnvironment = {
+      ...inboxEnvironment,
+      identifier: 'Xk3m9QpL2aZt',
+      name: 'Keyless Agent 2026-10-14T20:00:00.000Z',
+    };
+    const claimedEvents = (analyticsService: { mixpanelTrack: sinon.SinonStub }) =>
+      analyticsService.mixpanelTrack.getCalls().filter((call) => call.args[0] === 'Keyless Environment Claimed');
+
+    it('tracks a successful inbox claim with its stored source, target and age', async () => {
+      const { usecase, environmentRepository, cache, analyticsService } = setup();
+      environmentRepository.findOne.resolves(inboxEnvironment);
+      cache.set('keyless_environment_source:{keyless_env}', 'inbox');
+
+      await usecase.execute(command);
+
+      expect(claimedEvents(analyticsService).map((call) => call.args)).to.deep.equal([
+        [
+          'Keyless Environment Claimed',
+          'keyless_env',
+          {
+            source: 'inbox',
+            environmentId: 'keyless_env',
+            targetOrganizationId: 'target_org',
+            targetEnvironmentId: 'dev_env',
+            ageMinutes: 90,
+          },
+        ],
+      ]);
+      expect(analyticsService.alias.firstCall.args).to.deep.equal(['keyless_env', 'user1']);
+    });
+
+    it('tracks an agent claim with its client and the hook properties', async () => {
+      const { usecase, environmentRepository, cache, analyticsService } = setup();
+      environmentRepository.findOne.resolves(agentEnvironment);
+      cache.set('keyless_environment_source:{keyless_env}', 'agent');
+      cache.set('keyless_agent_source:{keyless_env}', 'cursor');
+
+      await usecase.execute(command, {
+        beforeMove: sinon.stub().resolves({ claimedEventProperties: { workflowsCopied: 2, workflowsSkipped: 1 } }),
+      });
+
+      expect(claimedEvents(analyticsService)[0].args[2]).to.deep.equal({
+        workflowsCopied: 2,
+        workflowsSkipped: 1,
+        source: 'agent',
+        client: 'cursor',
+        environmentId: 'keyless_env',
+        targetOrganizationId: 'target_org',
+        targetEnvironmentId: 'dev_env',
+        ageMinutes: 90,
+      });
+    });
+
+    it('lets a Human claim attribute the setup to human over the stored inbox source', async () => {
+      const { usecase, environmentRepository, cache, analyticsService } = setup();
+      environmentRepository.findOne.resolves(inboxEnvironment);
+      cache.set('keyless_environment_source:{keyless_env}', 'inbox');
+
+      await usecase.execute(ClaimKeylessConnectCommand.create({ ...command, source: SignupSourceEnum.HUMAN }));
+
+      expect(claimedEvents(analyticsService)[0].args[2]).to.include({ source: 'human' });
+    });
+
+    for (const { name, environment, source } of [
+      { name: 'an inbox', environment: inboxEnvironment, source: 'inbox' },
+      { name: 'an agent', environment: agentEnvironment, source: 'agent' },
+    ]) {
+      it(`falls back to the shape of ${name} environment when the stored source is gone`, async () => {
+        const { usecase, environmentRepository, analyticsService } = setup();
+        environmentRepository.findOne.resolves(environment);
+
+        await usecase.execute(command, { beforeMove: sinon.stub().resolves(undefined) });
+
+        expect(claimedEvents(analyticsService)[0].args[2]).to.include({ source });
+        expect(claimedEvents(analyticsService)[0].args[2]).to.not.have.property('client');
+      });
+    }
+
+    it('does not track a claim whose move fails', async () => {
+      const { usecase, agentRepository, analyticsService } = setup();
+      agentRepository.withTransaction.rejects(new Error('db down'));
+
+      await usecase.execute(command).catch(() => undefined);
+
+      expect(claimedEvents(analyticsService)).to.have.length(0);
+    });
+
+    it('does not track a claim whose token can no longer be consumed', async () => {
+      const { usecase, connectClaimTokenService, analyticsService } = setup();
+      connectClaimTokenService.claim.rejects(new InvalidConnectClaimTokenError('used'));
+
+      await usecase.execute(command).catch(() => undefined);
+
+      expect(claimedEvents(analyticsService)).to.have.length(0);
+    });
+
+    it('does not track a repeated claim of a used link', async () => {
+      const { usecase, connectClaimTokenService, analyticsService } = setup();
+      connectClaimTokenService.verify.rejects(new InvalidConnectClaimTokenError('used'));
+
+      await usecase.execute(command).catch(() => undefined);
+
+      expect(claimedEvents(analyticsService)).to.have.length(0);
+    });
+
+    it('does not track a claim that is already in progress', async () => {
+      const { usecase, connectClaimTokenService, analyticsService } = setup();
+      connectClaimTokenService.tryAcquireClaimLock.resolves(false);
+
+      await usecase.execute(command).catch(() => undefined);
+
+      expect(claimedEvents(analyticsService)).to.have.length(0);
+    });
+
+    it('still completes the claim when analytics throw', async () => {
+      const { usecase, analyticsService } = setup();
+      analyticsService.mixpanelTrack.throws(new Error('mixpanel down'));
+
+      expect(await usecase.execute(command)).to.deep.equal({
+        environmentId: 'dev_env',
+        agentIdentifier: 'human-relay',
+      });
+    });
+  });
 
   it('reports a token issued for another organization as an invalid claim link', async () => {
     const { usecase, connectClaimTokenService } = setup();

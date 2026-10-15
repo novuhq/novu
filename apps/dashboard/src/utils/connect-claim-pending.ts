@@ -51,25 +51,30 @@ function storePendingConnectClaimFromPath(pathname: string, search = ''): boolea
   return true;
 }
 
-export function storePendingConnectClaimFromRedirectUrl(redirectUrl: string | null | undefined): boolean {
+export function readConnectClaimTokenFromRedirectUrl(redirectUrl: string | null | undefined): string | null {
   if (!redirectUrl || !isConnectClaimReturnUrl(redirectUrl)) {
-    return false;
+    return null;
   }
 
   try {
     const parsed = new URL(redirectUrl, typeof window !== 'undefined' ? window.location.origin : 'http://local');
-    const token = parseConnectClaimToken(parsed.search);
 
-    if (!token) {
-      return false;
-    }
-
-    storePendingConnectClaim(token);
-
-    return true;
+    return parseConnectClaimToken(parsed.search);
   } catch {
+    return null;
+  }
+}
+
+export function storePendingConnectClaimFromRedirectUrl(redirectUrl: string | null | undefined): boolean {
+  const token = readConnectClaimTokenFromRedirectUrl(redirectUrl);
+
+  if (!token) {
     return false;
   }
+
+  storePendingConnectClaim(token);
+
+  return true;
 }
 
 export function readPendingConnectClaim(): string | null {

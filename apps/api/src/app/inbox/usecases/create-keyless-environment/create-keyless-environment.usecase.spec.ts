@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { FeatureFlagsService, PinoLogger, UpsertControlValuesUseCase } from '@novu/application-generic';
+import { CacheService, FeatureFlagsService, PinoLogger, UpsertControlValuesUseCase } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   CommunityUserRepository,
@@ -41,6 +41,7 @@ describe('CreateKeylessEnvironment', () => {
   let preferencesRepository: sinon.SinonStubbedInstance<PreferencesRepository>;
   let upsertControlValues: sinon.SinonStubbedInstance<UpsertControlValuesUseCase>;
   let featureFlagsService: sinon.SinonStubbedInstance<FeatureFlagsService>;
+  let cacheService: sinon.SinonStubbedInstance<CacheService>;
   let usecase: CreateKeylessEnvironment;
 
   const execute = (purpose: KeylessEnvironmentPurposeEnum) =>
@@ -74,6 +75,8 @@ describe('CreateKeylessEnvironment', () => {
     preferencesRepository = sinon.createStubInstance(PreferencesRepository);
     upsertControlValues = sinon.createStubInstance(UpsertControlValuesUseCase);
     featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
+    cacheService = sinon.createStubInstance(CacheService);
+    cacheService.cacheEnabled.returns(true);
 
     organizationRepository.findById.resolves(organization as any);
     userRepository.findByEmail.resolves(user as any);
@@ -99,6 +102,7 @@ describe('CreateKeylessEnvironment', () => {
       preferencesRepository as any,
       upsertControlValues as any,
       featureFlagsService as any,
+      cacheService as any,
       sinon.createStubInstance(PinoLogger) as any
     );
   });
@@ -141,6 +145,17 @@ describe('CreateKeylessEnvironment', () => {
         'primaryAction',
         'secondaryAction'
       );
+    });
+
+    it('stores inbox as the creation source for as long as a claim link lives', async () => {
+      await execute(KeylessEnvironmentPurposeEnum.INBOX_DEMO);
+
+      expect(cacheService.set.calledOnce).to.be.true;
+      expect(cacheService.set.firstCall.args).to.deep.equal([
+        'keyless_environment_source:{env-id}',
+        'inbox',
+        { ttl: 7 * 24 * 60 * 60 },
+      ]);
     });
 
     it('requires the enterprise edition', async () => {
@@ -194,6 +209,15 @@ describe('CreateKeylessEnvironment', () => {
       const controls = upsertControlValues.execute.firstCall.args[0].newControlValues;
       expect(controls).to.include({ subject: '{{payload.subject}}', body: '{{payload.body}}' });
       expect(controls).to.not.have.any.keys('primaryAction', 'secondaryAction');
+    });
+
+    it('stores agent as the creation source', async () => {
+      await execute(KeylessEnvironmentPurposeEnum.AGENT);
+
+      expect(cacheService.set.firstCall.args.slice(0, 2)).to.deep.equal([
+        'keyless_environment_source:{env-id}',
+        'agent',
+      ]);
     });
 
     it('does not require the NOVU_ENTERPRISE flag (gated by the caller)', async () => {

@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import {
   areNovuManagedClaudeCredentialsSet,
+  CacheService,
   encryptApiKey,
   FeatureFlagsService,
   generateTimestampHex,
@@ -26,16 +27,20 @@ import {
   EnvironmentEnum,
   EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
+  type KeylessCreationSource,
   PreferencesTypeEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
+  SignupSourceEnum,
   StepTypeEnum,
 } from '@novu/shared';
 import { nanoid } from 'nanoid';
 import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
+import { writeKeylessCreationSource } from '../../../keyless/keyless-agent-cache';
 import { hashApiKey, KEYLESS_AGENT_ENVIRONMENT_NAME_PREFIX } from '../../../keyless/keyless-agent-environment';
+import { KEYLESS_CREATION_SOURCE_TTL_SECONDS } from '../../../keyless/keyless-signup-analytics';
 import { KEYLESS_ENVIRONMENT_PREFIX, KEYLESS_WORKFLOW_IDENTIFIER } from '../../utils';
 import { CreateKeylessEnvironmentCommand, KeylessEnvironmentPurposeEnum } from './create-keyless-environment.command';
 
@@ -50,6 +55,7 @@ interface KeylessEnvironmentProfile {
   includeManagedClaude: boolean;
   /** Inbox demo payload carries action labels/URLs; without them the rendered in-app step output is invalid. */
   includeDemoActions: boolean;
+  creationSource: KeylessCreationSource;
 }
 
 @Injectable()
@@ -65,6 +71,7 @@ export class CreateKeylessEnvironment {
     private preferencesRepository: PreferencesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private featureFlagsService: FeatureFlagsService,
+    private cacheService: CacheService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -118,6 +125,13 @@ export class CreateKeylessEnvironment {
       profile.includeDemoActions
     );
 
+    await writeKeylessCreationSource(
+      this.cacheService,
+      environment._id,
+      profile.creationSource,
+      KEYLESS_CREATION_SOURCE_TTL_SECONDS
+    );
+
     this.logger.info(
       { environmentId: environment._id, purpose: command.purpose },
       'Keyless environment created successfully'
@@ -136,6 +150,7 @@ export class CreateKeylessEnvironment {
           name: `Keyless ${createdAtIso}`,
           includeManagedClaude: true,
           includeDemoActions: true,
+          creationSource: SignupSourceEnum.INBOX,
         };
       case KeylessEnvironmentPurposeEnum.AGENT:
         return {
@@ -143,6 +158,7 @@ export class CreateKeylessEnvironment {
           name: `${KEYLESS_AGENT_ENVIRONMENT_NAME_PREFIX}${createdAtIso}`,
           includeManagedClaude: false,
           includeDemoActions: false,
+          creationSource: SignupSourceEnum.AGENT,
         };
       default: {
         const exhaustiveCheck: never = purpose;
