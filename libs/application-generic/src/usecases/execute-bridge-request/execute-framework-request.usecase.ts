@@ -19,6 +19,7 @@ import {
   HttpClientService,
   RETRYABLE_ERROR_CODES,
 } from '../../services/http-client';
+import { isNovuTlsEnabled } from '../../services/tls';
 import { BRIDGE_EXECUTION_ERROR, buildNovuSignatureHeader } from '../../utils';
 import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '../get-decrypted-secret-key';
 import { BridgeError, ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from './execute-bridge-request.command';
@@ -127,7 +128,14 @@ export class ExecuteFrameworkRequest {
         retry: {
           limit: retriesLimit,
         },
-        rejectUnauthorized: environment.name.toLowerCase() === 'production',
+        /*
+         * A Novu-hosted bridge is this API calling itself, so once TLS is on the
+         * certificate must verify no matter what the environment is called.
+         * Externally hosted bridges keep the existing per-environment behaviour.
+         */
+        rejectUnauthorized:
+          environment.name.toLowerCase() === 'production' ||
+          (isNovuTlsEnabled() && command.workflowOrigin === ResourceOriginEnum.NOVU_CLOUD),
         // DNS-pinned SSRF guard for user- or environment-controlled bridge
         // targets (stateless bridgeUrl, EXTERNAL origin, or explicit opt-in).
         // The safe outbound layer pins the connection to a validated public IP
@@ -203,10 +211,23 @@ export class ExecuteFrameworkRequest {
     }
   }
 
+  /**
+   * Preview calls the API back on its own port. With TLS the listener is HTTPS-only,
+   * so the plain-HTTP loopback would be refused: prefer an explicitly configured
+   * internal origin and otherwise keep loopback on the scheme the server speaks.
+   */
+  private getLoopbackApiUrl(): string {
+    if (!isNovuTlsEnabled()) {
+      return `http://localhost:${process.env.PORT}`;
+    }
+
+    return process.env.API_INTERNAL_ORIGIN || `https://localhost:${process.env.PORT}`;
+  }
+
   private getApiUrl(action: PostActionEnum | GetActionEnum): string {
     const baseUrl =
       action === PostActionEnum.PREVIEW
-        ? `http://localhost:${process.env.PORT}`
+        ? this.getLoopbackApiUrl()
         : process.env.API_INTERNAL_ORIGIN || process.env.API_ROOT_URL;
 
     if (!baseUrl) {
@@ -271,6 +292,7 @@ export class ExecuteFrameworkRequest {
   }
 
   @Instrument()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing; the switch over HttpClientErrorType scores 37 and is unchanged here.
   private async handleResponseError(
     error: unknown,
     url: string,
