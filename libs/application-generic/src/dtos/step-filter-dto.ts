@@ -129,14 +129,7 @@ export class StepFilterDto {
   value: BuilderGroupValues;
 
   @ApiProperty({
-    type: [
-      FieldFilterPartDto,
-      WebhookFilterPartDto,
-      RealtimeOnlineFilterPartDto,
-      OnlineInLastFilterPartDto,
-      PreviousStepFilterPartDto,
-      TenantFilterPartDto,
-    ],
+    type: [FieldFilterPartDto],
   })
   children: FilterPartsDto[];
 }

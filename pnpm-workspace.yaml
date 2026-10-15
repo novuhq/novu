@@ -205,6 +205,10 @@ overrides:
   qs@<6.16.0: ^6.16.0
   js-yaml@<3.15.2: ^3.15.2
   js-yaml@>=4.0.0 <4.3.2: ^4.3.2
+  # GHSA-r3ph-w7gj-g6xm (moderate): js-yaml maxTotalMergeKeys does not limit CPU
+  # use for empty merge sources. Patched in 5.4.1 (patch bump within the 5.x
+  # line). @nestjs/swagger 11.4.7 pins js-yaml to exactly 5.3.0.
+  js-yaml@>=5.0.0 <5.4.1: ^5.4.1
   # GHSA-r4xh-jqrq-34v2 (moderate): smol-toml parseKey quadratic-time
   # parse() rescanning that enables CPU exhaustion on large TOML inputs.
   # Patched in 1.8.1, but the npm release stream published 1.9.0 directly
@@ -470,6 +474,7 @@ allowBuilds:
   '@newrelic/fn-inspect': true
   '@newrelic/native-metrics': true
   '@novu/thalamus': true
+  '@scarf/scarf': false
   '@sentry/cli': true
   '@sentry/node-cpu-profiler': true
   '@sentry/profiling-node': true
