@@ -48,6 +48,8 @@ interface KeylessEnvironmentProfile {
   identifier: string;
   name: string;
   includeManagedClaude: boolean;
+  /** Inbox demo payload carries action labels/URLs; without them the rendered in-app step output is invalid. */
+  includeDemoActions: boolean;
 }
 
 @Injectable()
@@ -109,7 +111,12 @@ export class CreateKeylessEnvironment {
       })
     );
 
-    await this.createHelloWorldWorkflow(environment._id, environment._organizationId, user._id);
+    await this.createHelloWorldWorkflow(
+      environment._id,
+      environment._organizationId,
+      user._id,
+      profile.includeDemoActions
+    );
 
     this.logger.info(
       { environmentId: environment._id, purpose: command.purpose },
@@ -128,12 +135,14 @@ export class CreateKeylessEnvironment {
           identifier: `${KEYLESS_ENVIRONMENT_PREFIX}${generateTimestampHex()}_${shortId(4)}`,
           name: `Keyless ${createdAtIso}`,
           includeManagedClaude: true,
+          includeDemoActions: true,
         };
       case KeylessEnvironmentPurposeEnum.AGENT:
         return {
           identifier: nanoid(12),
           name: `${KEYLESS_AGENT_ENVIRONMENT_NAME_PREFIX}${createdAtIso}`,
           includeManagedClaude: false,
+          includeDemoActions: false,
         };
       default: {
         const exhaustiveCheck: never = purpose;
@@ -203,7 +212,12 @@ export class CreateKeylessEnvironment {
     }
   }
 
-  private async createHelloWorldWorkflow(environmentId: string, organizationId: string, userId: string) {
+  private async createHelloWorldWorkflow(
+    environmentId: string,
+    organizationId: string,
+    userId: string,
+    includeDemoActions: boolean
+  ) {
     const inAppTemplate = await this.messageTemplateRepository.create({
       type: StepTypeEnum.IN_APP,
       content: '',
@@ -476,20 +490,22 @@ export class CreateKeylessEnvironment {
           body: '{{payload.body}}',
           avatar: 'https://dashboard.novu.co/images/avatar.svg',
           subject: '{{payload.subject}}',
-          primaryAction: {
-            label: '{{payload.primaryActionText}}',
-            redirect: {
-              url: '{{payload.primaryActionUrl}}',
-              target: '_blank',
+          ...(includeDemoActions && {
+            primaryAction: {
+              label: '{{payload.primaryActionText}}',
+              redirect: {
+                url: '{{payload.primaryActionUrl}}',
+                target: '_blank',
+              },
             },
-          },
-          secondaryAction: {
-            label: '{{payload.secondaryActionText}}',
-            redirect: {
-              url: '{{payload.secondaryActionUrl}}',
-              target: '_blank',
+            secondaryAction: {
+              label: '{{payload.secondaryActionText}}',
+              redirect: {
+                url: '{{payload.secondaryActionUrl}}',
+                target: '_blank',
+              },
             },
-          },
+          }),
           redirect: null,
           disableOutputSanitization: false,
           data: null,

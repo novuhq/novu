@@ -137,6 +137,10 @@ describe('CreateKeylessEnvironment', () => {
         PreferencesTypeEnum.WORKFLOW_RESOURCE,
       ]);
       expect(upsertControlValues.execute.calledOnce).to.be.true;
+      expect(upsertControlValues.execute.firstCall.args[0].newControlValues).to.include.keys(
+        'primaryAction',
+        'secondaryAction'
+      );
     });
 
     it('requires the enterprise edition', async () => {
@@ -182,6 +186,14 @@ describe('CreateKeylessEnvironment', () => {
       expect(notificationTemplateRepository.create.firstCall.args[0].triggers?.[0].identifier).to.equal(
         KEYLESS_WORKFLOW_IDENTIFIER
       );
+    });
+
+    it('seeds hello-world with only subject and body so a subject/body payload renders', async () => {
+      await execute(KeylessEnvironmentPurposeEnum.AGENT);
+
+      const controls = upsertControlValues.execute.firstCall.args[0].newControlValues;
+      expect(controls).to.include({ subject: '{{payload.subject}}', body: '{{payload.body}}' });
+      expect(controls).to.not.have.any.keys('primaryAction', 'secondaryAction');
     });
 
     it('does not require the NOVU_ENTERPRISE flag (gated by the caller)', async () => {
