@@ -127,6 +127,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
    * @see https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/
    * @throws {ThrottlerException}
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing throttling orchestration is outside this change.
   protected async handleRequest({ context, throttler }: ThrottlerRequest): Promise<boolean> {
     const { req, res } = this.getRequestResponse(context);
     const clientIp = getClientIp(req) || undefined;

@@ -272,6 +272,7 @@ program
   )
   .addHelpText('after', CONNECT_HELP_TEXT)
   .showHelpAfterError('(run `novu connect --help` for the non-interactive contract and examples)')
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing connect command orchestration is outside this change.
   .action(async (positionalPrompt: string | undefined, options: ConnectCommandInput) => {
     analytics.track({
       identity: {

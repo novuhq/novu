@@ -1,15 +1,17 @@
 import { CacheService } from '@novu/application-generic';
-import { EnvironmentRepository } from '@novu/dal';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import request from 'supertest';
 
 import { writeKeylessAgentClaimedTombstone } from '../keyless-agent-cache';
 import { hashApiKey } from '../keyless-agent-environment';
-import { createAgentKeylessEnvironmentFixture, useKeylessOrganization } from './keyless-agent-test.helpers';
+import {
+  createAgentKeylessEnvironmentFixture,
+  revokeKeylessEnvironmentApiKeys,
+  useKeylessOrganization,
+} from './keyless-agent-test.helpers';
 
 describe('Keyless API key scope #novu-v2', () => {
-  const environmentRepository = new EnvironmentRepository();
   let keylessOwner: UserSession;
   let restoreKeylessOrganization: () => void;
   let originalRetention: string | undefined;
@@ -102,10 +104,7 @@ describe('Keyless API key scope #novu-v2', () => {
     const api = withKey(secretKey);
     expect((await api.get('/v2/workflows')).status).to.equal(200);
 
-    await environmentRepository.update(
-      { _id: environment._id, _organizationId: environment._organizationId },
-      { $set: { apiKeys: [] } }
-    );
+    await revokeKeylessEnvironmentApiKeys(environment, keylessOwner.user._id);
     const revoked = await api.get('/v2/workflows');
     expect(revoked.status).to.equal(401, JSON.stringify(revoked.body));
 

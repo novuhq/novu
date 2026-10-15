@@ -84,3 +84,20 @@ export async function createAgentKeylessEnvironmentFixture(
 
   return { environment, secretKey };
 }
+
+/**
+ * Removes the environment's working key. `apiKeys.key` is uniquely indexed and an empty array indexes as null,
+ * so the key is swapped for one whose secret is discarded instead of emptying the array.
+ */
+export async function revokeKeylessEnvironmentApiKeys(environment: EnvironmentEntity, userId: string): Promise<void> {
+  const discardedSecret = `sk_${randomBytes(32).toString('hex')}`;
+
+  await new EnvironmentRepository().update(
+    { _id: environment._id, _organizationId: environment._organizationId },
+    {
+      $set: {
+        apiKeys: [{ key: encryptApiKey(discardedSecret), _userId: userId, hash: hashApiKey(discardedSecret) }],
+      },
+    }
+  );
+}
