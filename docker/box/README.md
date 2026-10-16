@@ -12,8 +12,9 @@ The image holds tools only. The Novu checkout, `node_modules`, builds and databa
 3. `box apply` puts a PR, or your checkout's changes, on a running box and rebuilds only what they change (about
    20 seconds to 6 minutes).
 
-The box is a TypeScript package on [Effect](https://effect.website) with its own `package.json`, outside the pnpm
-workspace; Node runs the `.ts` files as they are. Run `npm ci --prefix docker/box` once.
+The box is plain TypeScript on Node's built-ins, with [zod](https://zod.dev) for the data that comes from outside,
+in its own `package.json`, outside the pnpm workspace; Node runs the `.ts` files as they are. Run
+`npm ci --prefix docker/box` once.
 
 | Folder | What it is |
 |---|---|
@@ -21,9 +22,10 @@ workspace; Node runs the `.ts` files as they are. Run `npm ci --prefix docker/bo
 | `src/cli` | The CLI on your machine (`src/cli/main.ts`), which drives a box locally or on Cloudflare (see "From your machine" below) |
 | `src/cloud` | The Cloudflare host Worker, box Workers and Slack router (see "On Cloudflare") |
 | `src/ci` | The pull request workflow's tasks (see "Per pull request") |
-| `src/shared` | What they share: names, the JSON they exchange (as Schemas), and the token check |
+| `src/shared` | What they share: names, the JSON they exchange (zod schemas, `contracts.ts`), and the token check |
+| `src/node` | What the Node sides share: child processes, `poll`, JSON over HTTP, the command table, `log` |
 | `image` | The image: `Dockerfile`, `process-compose.yaml`, `config/` |
-| `alchemy.run.ts` | The Cloudflare resources, deployed with [Alchemy](https://alchemy.run) |
+| `wrangler.jsonc` | The host Worker on Cloudflare (`box deploy`); `wrangler.slack.jsonc`, the Slack router's address |
 
 `npm run typecheck --prefix docker/box` type-checks all of it (CI does, for PRs that change `docker/box`).
 
@@ -183,7 +185,7 @@ inside `.source`.
 ### On Cloudflare: `--cloud`
 
 The same commands with `--cloud` run the box on Cloudflare Containers. Every box's container runs in one host
-Worker, `novu-box-core` (`src/cloud/host.ts`, one Durable Object per box), and each box has its own small Worker
+Worker, `novu-box-hub` (`src/cloud/host.ts`, one Durable Object per box), and each box has its own small Worker
 for its address, `novu-box-<box>` (`src/cloud/thin.ts`, no container), at `https://novu-box-<box>.cli-shortener.workers.dev`;
 `--box` defaults to the current branch. That address is the box's one address (port 18080, see Ports), so the
 dashboard calls the API same-origin there: unlike production, CORS isn't exercised.
@@ -194,12 +196,13 @@ and, to deploy the host, `~/.config/novu-box/cloudflare.env` (see "Per pull requ
 host if it isn't there, has the host create the box's Worker, then wakes the box from its snapshot or, the first
 time, bakes `next`.
 
-The host, its image, its secrets and the Slack router's address are an [Alchemy](https://alchemy.run) stack,
-`alchemy.run.ts`; the boxes aren't in it (the host creates their Workers at runtime). `box deploy` deploys it
-(`alchemy deploy --stage prod`) with your wrangler login's token (`npx wrangler@4.150.0 auth token`, never
-printed), or `CLOUDFLARE_API_TOKEN` when it's set. Alchemy keeps the stack's state in the account, so deploy from
-one machine at a time. It builds the image (for amd64) and pushes it to the account's registry only when the files
-`image/Dockerfile.dockerignore` lets in change.
+The host and its image are `wrangler.jsonc`, the Slack router's address `wrangler.slack.jsonc`; the boxes aren't in
+them (the host creates their Workers at runtime). `box deploy` runs `wrangler deploy` for both with your wrangler
+login, adding the secrets (from a file only you can read, removed after; never printed), the Slack settings and the
+thin Worker's bundle, which the host uploads for every box. It needs wrangler 4.150 (the package's own,
+`node_modules/.bin/wrangler`): 4.68 rejects this config's `exports` (Durable Objects on SQLite without
+`migrations`), the container's `images` and `scheduling_policy: "durable_object"`. wrangler builds the image (for
+amd64) from what `image/Dockerfile.dockerignore` lets in and pushes it only when it changed.
 `up --cloud --deploy` (or `box deploy`) redeploys the host (after a change to `docker/box`), which applies to every box; with the
 same image, running boxes usually keep running, but once a box's container restarted from its last snapshot
 minutes after a deploy, losing what wasn't saved (an applied PR). The likely cause: a deploy restarts every Durable
@@ -238,7 +241,8 @@ doesn't contain `base`'s commit may conflict; rebase it on `next`.
 
 Cloudflare deletes a snapshot 30 days after it was made or last restored, and nothing extends it. Wake `base`
 (`up --cloud --box base`, then `down`) at least every 30 days, or rebake it weekly (`delete --cloud --box base`, then
-`up --cloud --box base`). A box whose snapshot can't be restored forgets it and is `lost`; `up` says so, and the
+`up --cloud --box base`). The weekly rebake also moves `base` onto the current image, since a snapshot only restores
+on the image it was taken on. A box whose snapshot can't be restored forgets it and is `lost`; `up` says so, and the
 next `up` bakes.
 
 Limits for now: each sleep leaves a snapshot image in the account's registry that nothing deletes yet
@@ -277,13 +281,13 @@ GitHub's keys; issuer, audience, time, repository `novuhq/novu` and workflow `no
 push-capable GitHub tokens people use. Boxes' Workers are created and deleted only by the host
 (`src/cloud/boxes.ts`, which holds their bindings), not wrangler, at the host's own address:
 
-| Route on `novu-box-core` | What it does |
+| Route on `novu-box-hub` | What it does |
 |---|---|
 | `GET /__box/boxes` | Lists the boxes (every `novu-box-<name>` Worker but the host and the router) |
 | `PUT /__box/boxes/<box>` | Uploads the box's Worker (`thin.ts`, bundled into one module by `box deploy`, bound to the host's Box class) and puts it on workers.dev |
 | `DELETE /__box/boxes/<box>` | Stops the box and forgets it, then deletes its Worker; keeps the Worker (502) when the box didn't stop |
 
-The Slack router's Worker, `novu-box-slack`, is in the Alchemy stack and deploys with the host.
+The Slack router's Worker, `novu-box-slack` (`wrangler.slack.jsonc`), deploys with the host.
 
 The host holds two keys of its own, as Worker secrets that no box gets (they aren't in `SECRETS`).
 `box deploy` reads them, like Novu Bot's, from files on the machine that deploys the host:
@@ -332,8 +336,8 @@ Each box's `/__box/state` lists `slackEvents`, the last events its agents got, t
 
 Cloudflare ties each snapshot to the image it came from, so a new image means boxes bake or start from a snapshot of
 that image. To deploy only Worker changes on a given image:
-`BOX_IMAGE=registry.cloudflare.com/<account>/novu-box@sha256:<digest> node docker/box/src/cli/main.ts deploy`
-(the digest is in `npx wrangler versions view <id> --name novu-box-core --json`).
+`BOX_IMAGE=registry.cloudflare.com/<account>/<image>@sha256:<digest> node docker/box/src/cli/main.ts deploy`
+(the image is in `npx wrangler containers images list`).
 
 The playground (`playground/nextjs`) is the catalog of agent features: every new feature gets a demo there. It has
 one agent per `novu connect` runtime, all built on the same features
