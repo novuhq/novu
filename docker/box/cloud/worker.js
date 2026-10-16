@@ -167,12 +167,11 @@ export class Box extends DurableObject {
 
   async state() {
     const snapshot = await this.ctx.storage.get('snapshot');
+    const gigabytes = snapshot?.size ? +(snapshot.size / 1e9).toFixed(2) : null;
 
     return {
       running: this.ctx.container.running,
-      snapshot: snapshot
-        ? { id: snapshot.id, name: snapshot.name, gigabytes: snapshot.size ? +(snapshot.size / 1e9).toFixed(2) : null }
-        : null,
+      snapshot: snapshot ? { id: snapshot.id, name: snapshot.name, gigabytes } : null,
       lastActivity: new Date(this.lastActivity ?? (await this.ctx.storage.get('lastActivity')) ?? 0).toISOString(),
       // A `down` that hasn't saved yet (it waits for a bake or apply, or tries again), and why the last save failed.
       saving: Boolean(await this.ctx.storage.get('sleepNow')),

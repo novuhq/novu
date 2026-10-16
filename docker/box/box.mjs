@@ -1045,6 +1045,7 @@ async function seedTeamTier(token) {
     const { body } = await api('/v1/billing/subscription', auth);
     if (body.data.apiServiceLevel === 'business' && body.data.status === 'active') {
       log(`${SEED.orgName} is on Team (customer ${customer.id})`);
+
       return;
     }
     // The first event can go out before `stripe listen` is connected; any update sends a new one.
@@ -1128,6 +1129,7 @@ async function migrate() {
   const head = output('git', ['rev-parse', 'HEAD']);
   if (fs.existsSync(MIGRATED) && fs.readFileSync(MIGRATED, 'utf8') === head) {
     log(`already migrated at ${head.slice(0, 10)}`);
+
     return;
   }
   const requireDal = createRequire(`${REPO}/libs/dal/package.json`);
