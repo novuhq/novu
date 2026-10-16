@@ -498,12 +498,13 @@ function prepareRuntime() {
     fs.mkdirSync(`${DATA}/${dir}`, { recursive: true });
   }
 
-  // A filesystem snapshot keeps lock and socket files of processes that are no longer running.
+  // A filesystem snapshot keeps lock and socket files of processes that are no longer running. PIDs start over, so
+  // an apply lock from before it could name a live process.
   const pm2Homes = fs
     .readdirSync(RUN)
     .filter((name) => name.startsWith('pm2-'))
     .map((name) => `${RUN}/${name}`);
-  for (const file of [`${DATA}/mongo/mongod.lock`, `${DATA}/clickhouse/status`, PC_SOCKET, ...pm2Homes]) {
+  for (const file of [`${DATA}/mongo/mongod.lock`, `${DATA}/clickhouse/status`, PC_SOCKET, APPLY_LOCK, ...pm2Homes]) {
     fs.rmSync(file, { recursive: true, force: true });
   }
 
@@ -1199,14 +1200,23 @@ async function apply({ ref, bundle, full = false }) {
 // process is gone (a killed apply) is taken over, and the APPLYING it left makes the next apply redo its files.
 function lockApply() {
   fs.mkdirSync(RUN, { recursive: true });
+  const take = () => fs.writeFileSync(APPLY_LOCK, String(process.pid), { flag: 'wx' });
+  const running = (holder) => new Error(`another apply is running (pid ${holder}); wait for it to finish`);
   try {
-    fs.writeFileSync(APPLY_LOCK, String(process.pid), { flag: 'wx' });
+    take();
   } catch (error) {
     if (error.code !== 'EEXIST') throw error;
     const holder = Number(fs.readFileSync(APPLY_LOCK, 'utf8'));
-    if (isAlive(holder)) throw new Error(`another apply is running (pid ${holder}); wait for it to finish`);
+    if (isAlive(holder)) throw running(holder);
     log(`taking over the lock of apply ${holder}, which is gone`);
-    fs.writeFileSync(APPLY_LOCK, String(process.pid));
+    fs.rmSync(APPLY_LOCK, { force: true });
+    // Another apply that found the same dead holder may have taken the lock in between.
+    try {
+      take();
+    } catch (retryError) {
+      if (retryError.code !== 'EEXIST') throw retryError;
+      throw running(fs.readFileSync(APPLY_LOCK, 'utf8'));
+    }
   }
 
   return () => fs.rmSync(APPLY_LOCK, { force: true });
