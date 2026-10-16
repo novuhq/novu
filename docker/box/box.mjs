@@ -10,7 +10,8 @@
 //   box doctor                  whether the box is fit to test on, as JSON; exits 1 if not
 //   box logs [process]          the last lines of one process, or of all of them (--tail <n>, default 200;
 //                               --follow; --errors for warnings and errors only)
-//   box quiesce                 stop apps, then databases, leaving the supervisor up for a snapshot
+//   box quiesce                 stop every process, the data stores last, leaving the supervisor up for a snapshot
+//   box resume                  start again what quiesce stopped (when the snapshot failed)
 //   box status                  list processes
 //   box migrate                 replica set, Redis Cluster, Mongo indexes, ClickHouse migrations, S3 bucket
 //                               (run by process-compose before the apps)
@@ -46,22 +47,40 @@ const BRIDGE_URL = 'http://bridge.box.internal:4000/api/novu';
 const BRIDGE_SECRET = `${DATA}/bridge/secret-key`;
 const MANAGED_AGENT = 'box-managed';
 const REPO_URL = process.env.BOX_REPO_URL ?? 'https://github.com/novuhq/novu.git';
-const APPS = ['api', 'worker', 'socket', 'dashboard', 'bridge'];
-const DATABASES = ['mongo', ...REDIS_PORTS.map((port) => `redis-${port}`), 'clickhouse', 's3', 'mail'];
-const PROJECT_PROCESSES = {
-  '@novu/api-service': 'api',
-  '@novu/worker': 'worker',
-  '@novu/dashboard': 'dashboard',
-  '@novu/framework': 'bridge',
-  '@novu/agent-toolkit': 'bridge',
+// Every process in process-compose.yaml (`doctor` checks the two match). A store keeps data under /data: it stops
+// after everything else, so its files are whole in a snapshot. `projects`: the nx projects whose build it runs;
+// `paths`: files no nx project covers that change it (the workers have no nx build, and playground/ is in
+// .nxignore); `deploy`: the package `pnpm deploy` puts under /data/deploy for it.
+const PROCESSES = {
+  mongo: { kind: 'store' },
+  ...Object.fromEntries(REDIS_PORTS.map((port) => [`redis-${port}`, { kind: 'store' }])),
+  clickhouse: { kind: 'store' },
+  s3: { kind: 'store' },
+  sqs: { kind: 'store' },
+  mail: { kind: 'store' },
+  sink: { kind: 'app' },
+  migrate: { kind: 'app' },
+  api: { kind: 'app', projects: ['@novu/api-service'], deploy: '@novu/api-service' },
+  worker: { kind: 'app', projects: ['@novu/worker'], deploy: '@novu/worker' },
+  socket: { kind: 'app', paths: ['enterprise/workers/socket/'] },
+  dashboard: { kind: 'app', projects: ['@novu/dashboard'] },
+  stripe: { kind: 'app' },
+  bridge: { kind: 'app', projects: ['@novu/framework', '@novu/agent-toolkit'], paths: ['playground/nextjs/'] },
+  thalamus: { kind: 'app', paths: ['enterprise/workers/thalamus-observer/'] },
 };
-// Processes no nx project maps to: the workers have no nx build, and playground/ is in .nxignore.
-const PATH_PROCESSES = {
-  'enterprise/workers/socket/': 'socket',
-  'enterprise/workers/thalamus-observer/': 'thalamus',
-  'playground/nextjs/': 'bridge',
-};
-const DEPLOYED_APPS = { api: '@novu/api-service', worker: '@novu/worker' };
+const processesWhere = (test) => Object.keys(PROCESSES).filter((name) => test(PROCESSES[name]));
+const STORES = processesWhere((entry) => entry.kind === 'store');
+// The processes that run the checkout's code, which a new install restarts.
+const CODE_PROCESSES = processesWhere((entry) => entry.projects || entry.paths);
+const PROJECT_PROCESSES = Object.fromEntries(
+  Object.entries(PROCESSES).flatMap(([name, entry]) => (entry.projects ?? []).map((project) => [project, name]))
+);
+const PATH_PROCESSES = Object.fromEntries(
+  Object.entries(PROCESSES).flatMap(([name, entry]) => (entry.paths ?? []).map((path) => [path, name]))
+);
+const DEPLOYED_APPS = Object.fromEntries(
+  processesWhere((entry) => entry.deploy).map((name) => [name, PROCESSES[name].deploy])
+);
 
 const env = loadEnv();
 
@@ -1211,7 +1230,7 @@ function planFor(files) {
     (file) => file === 'pnpm-lock.yaml' || file.endsWith('package.json') || file === '.source'
   );
   const build = affectedApps(files, { install });
-  const restart = new Set(install ? APPS : build.map((project) => PROJECT_PROCESSES[project]));
+  const restart = new Set(install ? CODE_PROCESSES : build.map((project) => PROJECT_PROCESSES[project]));
   for (const [prefix, name] of Object.entries(PATH_PROCESSES))
     if (files.some((file) => file.startsWith(prefix))) restart.add(name);
 
@@ -1228,7 +1247,7 @@ function fullPlan() {
     install: true,
     build: Object.keys(PROJECT_PROCESSES),
     enterprise: true,
-    restart: runnable(new Set([...APPS, ...Object.values(PATH_PROCESSES)])),
+    restart: runnable(new Set(CODE_PROCESSES)),
   };
 }
 
@@ -1311,7 +1330,9 @@ async function doctor() {
   if (applying && !(lock && isAlive(lock)))
     problems.push(`the apply of ${applying.sha.slice(0, 10)} didn't finish; apply again to finish it`);
 
-  const processes = processList()
+  const list = processList();
+  problems.push(...processTableProblems(list.map((entry) => entry.name)));
+  const processes = list
     .filter((entry) => entry.status !== 'Disabled')
     .map(({ name, status, is_ready: ready, exit_code: exitCode, restarts }) => ({
       name,
@@ -1349,9 +1370,55 @@ async function doctor() {
   if (problems.length) process.exitCode = 1;
 }
 
+function processTableProblems(names) {
+  const unknown = names.filter((name) => !PROCESSES[name]);
+  const missing = Object.keys(PROCESSES).filter((name) => !names.includes(name));
+
+  return [
+    ...(unknown.length ? [`box.mjs's PROCESSES lacks ${unknown.join(', ')} from process-compose.yaml`] : []),
+    ...(missing.length ? [`process-compose.yaml lacks ${missing.join(', ')} from box.mjs's PROCESSES`] : []),
+  ];
+}
+
+function runningProcesses() {
+  return new Set(
+    processList()
+      .filter((entry) => entry.is_running)
+      .map((entry) => entry.name)
+  );
+}
+
+// Stops every process, the stores last, leaving the supervisor up for a snapshot. process-compose fails to stop a
+// process that isn't running (a failed apply leaves apps stopped), so it stops only the running ones.
 async function quiesce() {
-  await step('stop apps', () => pc(['process', 'stop', ...APPS]));
-  await step('stop databases', () => pc(['process', 'stop', ...DATABASES]));
+  const others = [...runningProcesses()].filter((name) => !STORES.includes(name));
+  if (others.length) await step(`stop ${others.join(' ')}`, () => pc(['process', 'stop', ...others]));
+  const running = runningProcesses();
+  const stores = STORES.filter((name) => running.has(name));
+  if (stores.length) await step(`stop ${stores.join(' ')}`, () => pc(['process', 'stop', ...stores]));
+  const left = [...runningProcesses()];
+  if (left.length) throw new Error(`still running after the stop: ${left.join(' ')}`);
+}
+
+// Starts again what `quiesce` stopped, when the box keeps running after all (saving it failed): the stores, then,
+// once they are ready, the rest. `migrate` already ran on this data.
+async function resume() {
+  const notRunning = (names) => {
+    const running = runningProcesses();
+
+    return names.filter((name) => !running.has(name));
+  };
+  for (const name of notRunning(STORES)) pc(['process', 'start', name]);
+  for (let attempt = 0; ; attempt++) {
+    const ready = processList().filter((entry) => STORES.includes(entry.name) && entry.is_ready === 'Ready');
+    if (ready.length === STORES.length) break;
+    if (attempt === 120) throw new Error('the stores are not ready after 120s');
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  const apps = runnable(new Set(processesWhere((entry) => entry.kind === 'app'))).filter((name) => name !== 'migrate');
+  for (const name of notRunning(apps)) pc(['process', 'start', name]);
+  await waitForHttp('http://127.0.0.1:3000/v1/health-check', 300);
+  log('resumed');
 }
 
 const commands = {
@@ -1384,6 +1451,7 @@ const commands = {
     return logs({ name: positionals[0], tail: Number(values.tail), follow: values.follow, errors: values.errors });
   },
   quiesce,
+  resume,
   status: () => pc(['process', 'list']),
 };
 
