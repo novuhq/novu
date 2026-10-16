@@ -81,6 +81,10 @@ npx @agentinbox/cli inbox resolve conv_123              # finished; opens again 
 - Every command has the shape `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`, `skill`.
 - `ask`, `approve` and `choose` deliver a one-off message (with action buttons where relevant) and **block** until the person answers, the `--ttl` expires, or `--timeout` elapses.
 - Answers flow back through button clicks or plain replies; the CLI prints the answer and your agent continues.
+- In a terminal, `setup`, `login` and `connect` (and `channel add`) draw one screen and keep it up to date in place: your agent's mascot in dots, the command, a list of what it did with a ✔ for each step done, and what it is waiting for. The mascot blinks while it waits for you, smiles once something is connected, and falls asleep when a wait runs out or something fails. Questions are asked below the screen, and your answers join the list. The screen is only drawn for a person at a terminal: never into a pipe, a file or CI, or with `NO_COLOR`, `FORCE_COLOR=0` or `TERM=dumb` set, or in a terminal narrower than 48 columns. There the commands print exactly what they always printed, so what agents read stays the same. The agent-facing commands (`inbox`, `contact`) never draw it. Three settings change how it looks:
+  - `AGENTINBOX_NO_ANIMATION=1` stands it still: the mascot's still faces, no blinking and no spinner.
+  - `AGENTINBOX_THEME=light` or `dark` says whether your terminal's background is light or dark, where the terminal can't be asked (the CLI asks it, then goes by `COLORFGBG`, then takes dark).
+  - `AGENTINBOX_MASCOT_ASPECT=1.2` says how tall a row of braille dots is for a dot's width (1 is square), where the mascot comes out oval because the terminal doesn't say how big its characters are.
 
 ## Exit codes (stable contract for agents)
 

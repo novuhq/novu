@@ -1,4 +1,5 @@
 import pc from 'picocolors';
+import { openedScreen } from './screen/opened';
 
 const FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
@@ -17,11 +18,41 @@ function formatElapsed(startedAt: number): string {
 }
 
 /**
+ * The message and hint cut down to one line of the terminal. A longer line wraps, and `\r` then only goes
+ * back to its last row, so every frame would leave a copy behind. The hint goes first, then the end of the
+ * message.
+ */
+export function fitToWidth(
+  message: string,
+  elapsed: string,
+  hint: string | undefined,
+  columns: number | undefined
+): { message: string; hint?: string } {
+  if (!columns) {
+    return { message, hint };
+  }
+
+  // The frame and the spaces either side of the message, and a column to spare so the cursor never wraps.
+  const room = columns - elapsed.length - 4;
+  if (hint && message.length + hint.length + 3 <= room) {
+    return { message, hint };
+  }
+
+  return { message: message.length <= room ? message : `${message.slice(0, Math.max(0, room - 1))}…` };
+}
+
+/**
  * Waiting indicator for blocking commands. Renders on stderr so stdout stays
  * a clean machine-readable channel for agents. On a TTY it's a live single
- * line (spinner + elapsed time); otherwise a single static log line.
+ * line (spinner + elapsed time); otherwise a single static log line. Where the
+ * command has a screen open, the screen shows the wait instead.
  */
 export function startWaitIndicator(message: string, hint?: string): () => void {
+  const screen = openedScreen();
+  if (screen) {
+    return screen.wait({ status: { text: message, hint } });
+  }
+
   if (!process.stderr.isTTY) {
     process.stderr.write(`${message}${hint ? ` (${hint})` : ''}\n`);
 
@@ -32,8 +63,10 @@ export function startWaitIndicator(message: string, hint?: string): () => void {
   let frame = 0;
 
   const render = () => {
-    const line = `${pc.cyan(FRAMES[frame % FRAMES.length])} ${message} ${pc.dim(`· ${formatElapsed(startedAt)}`)}${
-      hint ? pc.dim(` · ${hint}`) : ''
+    const elapsed = `· ${formatElapsed(startedAt)}`;
+    const fitted = fitToWidth(message, elapsed, hint, process.stderr.columns);
+    const line = `${pc.cyan(FRAMES[frame % FRAMES.length])} ${fitted.message} ${pc.dim(elapsed)}${
+      fitted.hint ? pc.dim(` · ${fitted.hint}`) : ''
     }`;
     frame += 1;
     process.stderr.write(`\r\x1b[2K${line}`);
