@@ -1,20 +1,21 @@
-// Novu Box on Cloudflare, the Slack router `novu-box-slack`: one Slack app (Novu Bot) for every box. It holds the
-// real bot token and signing secret; boxes get fake ones, minted here per box and agent, so PR code never sees the
-// real ones. One Durable Object, Router("router"), keeps the boxes, each person's selection, and who owns each
-// thread and message. Slack's events, interactivity and the /novu-box command all come to POST /slack.
+// Novu Box on Cloudflare, the Slack router: one Slack app (Novu Bot) for every box. It runs in the host Worker
+// (worker.js exports it), as one Durable Object, Router("router"), that keeps the boxes, each person's selection,
+// and who owns each thread and message. Its address is the Worker `novu-box-slack` (thin.js, bound to it). It holds
+// the real bot token and signing secret; boxes get fake ones, minted here per box and agent, so PR code never sees
+// the real ones. Slack's events, interactivity and the /novu-box command all come to POST /slack.
 //
-//   POST /slack          from Slack: check its signature, ack at once, then forward the event to the box that owns
-//                        it, re-signed with that box's fake secret (Box(<box>) in novu-box-host, so a sleeping box
-//                        wakes; the Durable Object retries until it answers)
+//   POST /slack          from Slack: check its signature, ack at once, then queue the event for the box that owns
+//                        it and hand it to Box(<box>), re-signed with that box's fake secret (a sleeping box wakes;
+//                        the queue retries until it answers)
 //   POST /api/<method>   from boxes (their SLACK_API_URL): a fake token gets the real one for the allowed methods,
 //                        only in #novu-box and in DMs people started; any other token goes to slack.com unchanged
 //   GET  /files/<path>   files.slack.com downloads (image and PDF input) with the real token
 //   POST /upload?url=    file uploads to the upload_url Slack returned, with the real token
 //
-// The host Worker registers its boxes through the `Registry` entrypoint (a service binding, so no shared secret):
-// `register` mints a box's credentials, `ready` posts its "ready" message, `unregister` deletes both.
+// Box(<box>) calls `register` for its credentials, `ready` once its agents are set up, and `unregister` when the
+// box is deleted.
 
-import { DurableObject, WorkerEntrypoint } from 'cloudflare:workers';
+import { DurableObject } from 'cloudflare:workers';
 
 const SLACK_API = 'https://slack.com/api/';
 const SLACK_FILES = 'https://files.slack.com/';
@@ -50,33 +51,6 @@ const METHODS = {
 // Only on the box's own messages, so one box can't change another's.
 const OWN_MESSAGE = new Set(['chat.update', 'chat.delete', 'chat.appendStream', 'chat.stopStream']);
 
-export default {
-  async fetch(request, env) {
-    if (request.method === 'GET' && new URL(request.url).pathname === '/')
-      return new Response('novu-box-slack: the Slack router for Novu Boxes\n');
-
-    return router(env).fetch(request);
-  },
-};
-
-export class Registry extends WorkerEntrypoint {
-  register(box, origin, agents) {
-    return router(this.env).register(box, origin, agents);
-  }
-
-  ready(box, agents) {
-    return router(this.env).ready(box, agents);
-  }
-
-  unregister(box) {
-    return router(this.env).unregister(box);
-  }
-}
-
-function router(env) {
-  return env.ROUTER.get(env.ROUTER.idFromName('router'));
-}
-
 export class Router extends DurableObject {
   async fetch(request) {
     const url = new URL(request.url);
@@ -99,40 +73,27 @@ export class Router extends DurableObject {
   // A box's credentials: one signing secret, and a bot token per agent, so the router knows which box and agent
   // every outbound call comes from. A box that registers again (every start) gets the same ones.
   async register(name, origin, identifiers) {
-    const box = (await this.get(`box:${name}`)) ?? { name, signingSecret: random(16), agents: [] };
+    const box = (await this.get(`box:${name}`)) ?? { name, signingSecret: random(16), tokens: {}, agents: [] };
     box.origin = origin;
-    for (const gone of box.agents.filter((agent) => !identifiers.includes(agent.identifier)))
-      await this.ctx.storage.delete(`token:${gone.token}`);
-    box.agents = box.agents.filter((agent) => identifiers.includes(agent.identifier));
-    for (const identifier of identifiers) {
-      if (box.agents.some((agent) => agent.identifier === identifier)) continue;
-      const token = `xoxb-novu-box-${random(18)}`;
-      box.agents.push({ identifier, token });
-      await this.put(`token:${token}`, { box: name, agent: identifier });
-    }
+    const tokens = {};
+    for (const identifier of identifiers) tokens[identifier] = box.tokens[identifier] ?? `xoxb-novu-box-${random(18)}`;
+    for (const [identifier, token] of Object.entries(box.tokens))
+      if (!tokens[identifier]) await this.ctx.storage.delete(`token:${token}`);
+    for (const [agent, token] of Object.entries(tokens)) await this.put(`token:${token}`, { box: name, agent });
+    box.tokens = tokens;
     await this.put(`box:${name}`, box);
-    // The box registers on every start, maybe from another snapshot whose database never saw these people.
-    await this.ctx.storage.delete([...(await this.ctx.storage.list({ prefix: `linked:${name}:` })).keys()]);
     const me = await this.identity();
 
-    return {
-      signingSecret: box.signingSecret,
-      tokens: Object.fromEntries(box.agents.map((agent) => [agent.identifier, agent.token])),
-      team: me.team,
-      botUserId: me.botUserId,
-    };
+    return { signingSecret: box.signingSecret, tokens, team: me.team, botUserId: me.botUserId };
   }
 
-  // The box's agents are seeded: they get their webhook IDs, and #novu-box gets (or keeps) the box's ready message.
-  async ready(name, ready) {
+  // The agents the box set up, with their webhook IDs, replace its list; #novu-box gets (or keeps) its ready message.
+  async ready(name, agents) {
     const box = await this.get(`box:${name}`);
     if (!box) throw new Error(`${name} isn't registered`);
-    box.agents = box.agents.map((agent) => ({
-      ...agent,
-      ...ready.find((item) => item.identifier === agent.identifier),
-    }));
+    box.agents = agents;
     const message = {
-      channel: this.env.CHANNEL,
+      channel: this.env.SLACK_CHANNEL,
       text: `${name} ready`,
       blocks: talkBlocks(box),
       username: ROUTER_NAME,
@@ -149,17 +110,14 @@ export class Router extends DurableObject {
     const box = await this.get(`box:${name}`);
     if (!box) return;
     if (box.message) await this.slack('chat.delete', box.message);
-    await this.ctx.storage.delete(box.agents.map((agent) => `token:${agent.token}`));
+    await this.ctx.storage.delete(Object.values(box.tokens).map((token) => `token:${token}`));
     for (const [key, selection] of await this.ctx.storage.list({ prefix: 'sel:' }))
       if (selection.box === name) await this.ctx.storage.delete(key);
-    await this.ctx.storage.delete([...(await this.ctx.storage.list({ prefix: `linked:${name}:` })).keys()]);
     await this.ctx.storage.delete(`box:${name}`);
   }
 
   async boxes() {
-    return [...(await this.ctx.storage.list({ prefix: 'box:' })).values()].filter((box) =>
-      box.agents.some((a) => a.id)
-    );
+    return [...(await this.ctx.storage.list({ prefix: 'box:' })).values()].filter((box) => box.agents.length);
   }
 
   // The real bot's workspace and user, which boxes need for mention detection (`<@U…>`).
@@ -192,55 +150,49 @@ export class Router extends DurableObject {
     }
     const form = new URLSearchParams(raw);
     if (form.get('command')) return Response.json(await this.command(form));
+    // Slack's ssl_check for the command URL has neither.
+    if (!form.get('payload')) return ack();
 
     return this.interaction(JSON.parse(form.get('payload')), raw);
   }
 
-  // New things (a top-level mention, a main-DM message) go to the sender's selection; continued ones (a thread
+  // New things (a mention in the channel, a main-DM message) go to the sender's selection; continued ones (a thread
   // reply, a reaction, an edit or delete of a known message) go to the box that owns the thread or message.
   async event(body) {
     const event = body.event;
-    const me = await this.identity();
     if (event.type === 'app_home_opened') {
       if (event.tab === 'home') this.later(this.publishHome(event.user));
 
       return;
     }
-    const reaction = event.type === 'reaction_added' || event.type === 'reaction_removed';
-    const edit = event.subtype === 'message_changed' || event.subtype === 'message_deleted';
-    const message = event.subtype === 'message_changed' ? event.message : (event.previous_message ?? event);
-    const user = reaction ? event.user : message?.user;
-    if (!user || user === me.botUserId || message?.bot_id) return;
-    const channel = reaction ? event.item?.channel : event.channel;
-    const dm = channel?.startsWith('D');
-    if (!dm && channel !== this.env.CHANNEL) return;
-    if (dm && event.type === 'message') await this.put(`dm:${channel}`, user);
-
+    const facts = classify(event, (await this.identity()).botUserId, this.env.SLACK_CHANNEL);
+    if (!facts) return;
+    if (facts.dm && facts.kind !== 'reaction') await this.put(`dm:${facts.channel}`, facts.user);
     const forward = {
+      id: body.event_id,
       contentType: 'application/json',
-      user,
-      body: JSON.stringify(body).replaceAll(SLACK_FILES, `${this.env.ORIGIN}/files/`),
-      notice: { channel, ts: message?.thread_ts ?? (dm ? undefined : (message?.ts ?? event.item?.ts)) },
+      user: facts.user,
+      body: JSON.stringify(body).replaceAll(SLACK_FILES, `${this.env.SLACK_ROUTER_URL}/files/`),
+      notice: { channel: facts.channel, ts: facts.thread ?? (facts.dm ? undefined : facts.ts) },
     };
-    if (reaction || edit) {
-      const ts = reaction ? event.item.ts : (message?.ts ?? event.deleted_ts);
-      const owner =
-        (await this.get(`msg:${channel}:${ts}`)) ??
-        (message?.thread_ts && (await this.threadOwner(channel, message.thread_ts))) ??
-        (reaction ? await this.get(`sel:${user}`) : null);
-      if (owner) this.later(this.forward(owner, forward));
+    if (facts.kind === 'reaction' || facts.kind === 'edit') return this.continued(facts, forward);
 
-      return;
-    }
-    if (
-      event.type !== 'app_mention' &&
-      !(event.type === 'message' && [undefined, 'file_share', 'thread_broadcast'].includes(event.subtype))
-    )
-      return;
+    return this.message(facts, forward);
+  }
 
-    const thread = event.thread_ts && event.thread_ts !== event.ts ? event.thread_ts : undefined;
-    const inbound = { channel, ts: event.ts, thread, dm, forward };
-    const owner = thread && (await this.threadOwner(channel, thread));
+  // A reaction, edit or delete goes to the box that owns the message or its thread; a reaction on anything else
+  // (the box's ready message) to the sender's selection.
+  async continued({ kind, user, channel, ts, thread }, forward) {
+    const owner =
+      (await this.ownerOf(channel, ts, thread)) ?? (kind === 'reaction' ? await this.get(`sel:${user}`) : null);
+    if (owner) this.later(this.forward(owner, forward));
+  }
+
+  async message({ kind, user, channel, ts, thread, dm }, forward) {
+    const inbound = { channel, ts, thread, dm, forward };
+    const owner = thread && (await this.get(`msg:${channel}:${thread}`));
+    // A mention in a thread a box owns also comes as a `message`, which goes to that box.
+    if (owner && kind === 'mention') return;
     if (owner) {
       await this.claim(owner, inbound);
       if (!dm) await this.noteOtherSelection(owner, user, channel, thread);
@@ -248,24 +200,23 @@ export class Router extends DurableObject {
 
       return;
     }
-    const mentioned = event.type === 'app_mention' || event.text?.includes(`<@${me.botUserId}>`);
-    if (!dm && !mentioned) return;
+    // In the channel only a mention starts something; a DM needs none.
+    if (kind === 'message' && !dm) return;
     const selection = await this.get(`sel:${user}`);
     if (!selection) return this.pick(user, inbound);
     await this.claim(selection, inbound);
     this.later(this.forward(selection, forward));
   }
 
-  async threadOwner(channel, ts) {
-    return (await this.get(`thread:${channel}:${ts}`)) ?? (await this.get(`msg:${channel}:${ts}`));
+  async ownerOf(channel, ts, thread) {
+    return (ts && (await this.get(`msg:${channel}:${ts}`))) ?? (thread && (await this.get(`msg:${channel}:${thread}`)));
   }
 
   // The first forwarded message of a thread decides its owner for good. The main DM has none: it follows the
   // person's selection, so switching boxes starts a new conversation on the new one.
-  async claim(owner, { channel, ts, thread, dm }) {
+  async claim(owner, { channel, ts, thread }) {
     await this.put(`msg:${channel}:${ts}`, owner);
-    const root = thread ?? (dm ? undefined : ts);
-    if (root && !(await this.get(`thread:${channel}:${root}`))) await this.put(`thread:${channel}:${root}`, owner);
+    if (thread && !(await this.get(`msg:${channel}:${thread}`))) await this.put(`msg:${channel}:${thread}`, owner);
   }
 
   async noteOtherSelection(owner, user, channel, thread) {
@@ -285,10 +236,7 @@ export class Router extends DurableObject {
   // Nobody picked a box yet: the message waits while the sender picks one.
   async pick(user, inbound) {
     const key = `pending:${inbound.channel}:${inbound.ts}`;
-    const pending = (await this.get(key)) ?? [];
-    pending.push(inbound);
-    await this.put(key, pending);
-    if (pending.length > 1) return;
+    await this.put(key, inbound);
     const boxes = await this.boxes();
     const thread_ts = inbound.thread ?? (inbound.dm ? undefined : inbound.ts);
     this.later(
@@ -297,7 +245,7 @@ export class Router extends DurableObject {
         user,
         boxes.length
           ? { thread_ts, text: 'Which box should answer?', blocks: boxes.flatMap((box) => talkBlocks(box, key)) }
-          : { thread_ts, text: 'No Novu Box is running: start one with `node docker/box/cli.mjs up --cloud`.' }
+          : { thread_ts, text: NO_BOX }
       )
     );
   }
@@ -311,10 +259,10 @@ export class Router extends DurableObject {
     const inView = payload.view?.id && (payload.type !== 'block_actions' || payload.container?.type === 'view');
     const owner = inView
       ? await this.get(`view:${payload.view.id}`)
-      : ((await this.get(`msg:${channel}:${ts}`)) ??
-        (payload.message?.thread_ts && (await this.threadOwner(channel, payload.message.thread_ts))));
+      : await this.ownerOf(channel, ts, payload.message?.thread_ts);
     if (!owner) return ack();
     const forward = {
+      id: payload.trigger_id ?? action?.action_ts,
       contentType: 'application/x-www-form-urlencoded',
       user: payload.user?.id,
       body: raw,
@@ -322,9 +270,11 @@ export class Router extends DurableObject {
     };
     // A modal submission and an options request answer with the box's response; there is no time to wake it.
     if (payload.type === 'view_submission' || payload.type === 'block_suggestion') {
-      const response = await this.deliver({ ...forward, box: owner.box, agent: owner.agent }, { answer: true });
+      const answer = await this.deliver({ ...forward, box: owner.box, agent: owner.agent }, 2500);
 
-      return response instanceof Response ? response : ack();
+      return answer?.ok && answer.text
+        ? new Response(answer.text, { headers: { 'content-type': answer.contentType } })
+        : ack();
     }
     this.later(this.forward(owner, forward));
 
@@ -337,9 +287,7 @@ export class Router extends DurableObject {
     const user = payload.user.id;
     const { box, agent, pending } = JSON.parse(action.value);
     const selection = await this.select(user, box, agent);
-    const text = selection
-      ? `You're talking to *${label(selection)}*. Mention <@${(await this.identity()).botUserId}> in <#${this.env.CHANNEL}>, or write to me here in a DM.`
-      : `${box} isn't running any more.`;
+    const text = selection ? await this.talkingTo(selection) : `${box} isn't running any more.`;
     if (payload.container?.type === 'view') this.later(this.publishHome(user));
     else if (payload.response_url)
       this.later(
@@ -349,13 +297,11 @@ export class Router extends DurableObject {
           body: JSON.stringify({ response_type: 'ephemeral', replace_original: Boolean(pending), text }),
         })
       );
-    if (selection && pending) {
-      const waiting = (await this.get(pending)) ?? [];
+    const waiting = selection && pending && (await this.get(pending));
+    if (waiting) {
       await this.ctx.storage.delete(pending);
-      for (const inbound of waiting) {
-        await this.claim(selection, inbound);
-        this.later(this.forward(selection, inbound.forward));
-      }
+      await this.claim(selection, waiting);
+      this.later(this.forward(selection, waiting.forward));
     }
 
     return ack();
@@ -364,9 +310,8 @@ export class Router extends DurableObject {
   async select(user, name, identifier) {
     const box = await this.get(`box:${name}`);
     const agent =
-      box?.agents.find(
-        (item) => item.id && (item.identifier === identifier || short(item.identifier) === identifier)
-      ) ?? (!identifier ? box?.agents.find((item) => item.id) : undefined);
+      box?.agents.find((item) => item.identifier === identifier || short(item.identifier) === identifier) ??
+      (identifier ? undefined : box?.agents[0]);
     if (!agent) return null;
     const selection = { box: name, agent: agent.identifier };
     await this.put(`sel:${user}`, selection);
@@ -374,29 +319,30 @@ export class Router extends DurableObject {
     return selection;
   }
 
+  async talkingTo(selection) {
+    return `You're talking to *${label(selection)}*. Mention <@${(await this.identity()).botUserId}> in <#${this.env.SLACK_CHANNEL}>, or write to me in a DM.`;
+  }
+
   // /novu-box [box [agent]]: lists the boxes, or talks to one (its first agent unless named).
   async command(form) {
     const [name, agent] = (form.get('text') ?? '').trim().split(/\s+/).filter(Boolean);
     const boxes = await this.boxes();
-    const running = boxes.map((box) => box.name).join(', ') || 'none';
+    const reply = (text, blocks) => ({ response_type: 'ephemeral', text, ...(blocks && { blocks }) });
     if (!name)
       return boxes.length
-        ? { response_type: 'ephemeral', text: 'Novu Boxes', blocks: boxes.flatMap((box) => talkBlocks(box)) }
-        : {
-            response_type: 'ephemeral',
-            text: 'No Novu Box is running: start one with `node docker/box/cli.mjs up --cloud`.',
-          };
+        ? reply(
+            'Novu Boxes',
+            boxes.flatMap((box) => talkBlocks(box))
+          )
+        : reply(NO_BOX);
     const selection = await this.select(form.get('user_id'), name, agent);
-    if (!selection)
-      return {
-        response_type: 'ephemeral',
-        text: `No box ${name}${agent ? ` with agent ${agent}` : ''}. Running: ${running}.`,
-      };
+    if (!selection) {
+      const running = boxes.map((box) => box.name).join(', ') || 'none';
 
-    return {
-      response_type: 'ephemeral',
-      text: `You're talking to *${label(selection)}*. Mention <@${(await this.identity()).botUserId}> in <#${this.env.CHANNEL}>, or write to me in a DM.`,
-    };
+      return reply(`No box ${name}${agent ? ` with agent ${agent}` : ''}. Running: ${running}.`);
+    }
+
+    return reply(await this.talkingTo(selection));
   }
 
   async publishHome(user) {
@@ -407,113 +353,98 @@ export class Router extends DurableObject {
       {
         type: 'context',
         elements: [
-          {
-            type: 'mrkdwn',
-            text: selection
-              ? `You're talking to *${label(selection)}*. Mention me in <#${this.env.CHANNEL}> or write to me in Messages.`
-              : 'Pick a box and an agent to talk to.',
-          },
+          { type: 'mrkdwn', text: selection ? await this.talkingTo(selection) : 'Pick a box and an agent to talk to.' },
         ],
       },
       ...(boxes.length
         ? boxes.flatMap((box) => [{ type: 'divider' }, ...talkBlocks(box)])
-        : [
-            {
-              type: 'section',
-              text: { type: 'mrkdwn', text: 'No box is running: `node docker/box/cli.mjs up --cloud`.' },
-            },
-          ]),
+        : [{ type: 'section', text: { type: 'mrkdwn', text: NO_BOX } }]),
     ];
     await this.slack('views.publish', { user_id: user, view: { type: 'home', blocks } });
   }
 
-  // Forwards now when the box answers; otherwise queues it behind the box's other waiting events and the alarm
-  // retries. Only a box that was asleep gets the "Waking" notice: a running box can miss once (its API restarting
-  // after an apply, a redeploy) and answers on the next try.
+  // Every event waits in its box's queue, so a box gets its events in order. Only a box that was asleep gets the
+  // "Waking" notice: a running box can miss once (its API restarting after an apply, a redeploy) and answers on
+  // the next try.
   async forward(owner, forward) {
     const item = { ...forward, box: owner.box, agent: owner.agent, at: Date.now() };
     const { running } = await this.env.BOX.get(this.env.BOX.idFromName(owner.box))
       .state()
       .catch(() => ({ running: true }));
     if (!running) await this.wakingNotice(item);
-    const waiting = (await this.ctx.storage.list({ prefix: `q:${owner.box}:`, limit: 1 })).size > 0;
-    if (!waiting && (await this.deliver(item))) {
-      if (!running) await this.endNotices(owner.box);
-
-      return;
-    }
     await this.put(`q:${owner.box}:${String(item.at).padStart(15, '0')}:${random(4)}`, item);
     if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + RETRY_MS);
+    await this.drain(owner.box);
   }
 
-  // True once the box took the event (or refused it for good); false while it's asleep or starting.
-  async deliver(item, { answer = false } = {}) {
-    const box = await this.get(`box:${item.box}`);
-    const agent = box?.agents.find((candidate) => candidate.identifier === item.agent && candidate.id);
-    if (!agent) {
-      console.log(`dropped an event for ${item.box} · ${item.agent}: not registered`);
-
-      return true;
+  // Hands a box its waiting events, oldest first, until it doesn't answer; the alarm tries again.
+  async drain(box) {
+    this.draining ??= new Set();
+    if (this.draining.has(box)) return;
+    this.draining.add(box);
+    try {
+      for (;;) {
+        const [entry] = await this.ctx.storage.list({ prefix: `q:${box}:`, limit: 1 });
+        if (!entry) return await this.endNotices(box);
+        const [key, item] = entry;
+        const late = Date.now() - item.at > GIVE_UP_MS;
+        if (late)
+          await this.endNotices(box, `${box} didn't wake within ${GIVE_UP_MS / 60000} minutes; try again later.`);
+        else if (!(await this.deliver(item))) return;
+        await this.ctx.storage.delete(key);
+      }
+    } finally {
+      this.draining.delete(box);
     }
-    const stub = this.env.BOX.get(this.env.BOX.idFromName(item.box));
-    // The agents answer only people linked to a subscriber in the box; the host links one on first contact.
-    const linked = `linked:${item.box}:${agent.integrationIdentifier}:${item.user}`;
-    if (item.user && !(await this.get(linked))) {
-      if (!(await stub.linkSlackUser(item.user, agent.integrationIdentifier).catch(() => false))) return false;
-      await this.put(linked, true);
+  }
+
+  async alarm() {
+    const boxes = new Set([...(await this.ctx.storage.list({ prefix: 'q:' })).values()].map((item) => item.box));
+    await Promise.all([...boxes].map((box) => this.drain(box)));
+    if ((await this.ctx.storage.list({ prefix: 'q:', limit: 1 })).size)
+      await this.ctx.storage.setAlarm(Date.now() + RETRY_MS);
+  }
+
+  // The box's answer once it took the event (an error answer counts: retrying won't help); null while it's asleep
+  // or starting. An event for a box or agent that's gone is dropped, and its sender told.
+  async deliver(item, timeoutMs) {
+    const box = await this.get(`box:${item.box}`);
+    const agent = box?.agents.find((candidate) => candidate.identifier === item.agent);
+    if (!agent) {
+      await this.gone(item);
+
+      return { ok: false, status: 410 };
     }
     const timestamp = String(Math.floor(Date.now() / 1000));
     const started = Date.now();
-    try {
-      const response = await stub.fetch(`${box.origin}/v1/agents/${agent.id}/webhook/${agent.integrationIdentifier}`, {
-        method: 'POST',
+    const answer = await this.env.BOX.get(this.env.BOX.idFromName(item.box))
+      .slackEvent({
+        id: item.id,
+        agent,
+        user: item.user,
         headers: {
           'content-type': item.contentType,
           'x-slack-request-timestamp': timestamp,
           'x-slack-signature': `v0=${await hmacHex(box.signingSecret, `v0:${timestamp}:${item.body}`)}`,
         },
         body: item.body,
-        ...(answer && { signal: AbortSignal.timeout(2500) }),
-      });
-      // 502 and 504 come from the box's proxy while the API restarts; 503 is the host's "waking up".
-      if ([502, 503, 504].includes(response.status)) return false;
-      const text = await response.text();
-      console.log(`${item.box} · ${item.agent} took the event in ${Date.now() - started} ms: ${response.status}`);
-      if (!response.ok) console.log(`${item.box} answered ${response.status}: ${text.slice(0, 300)}`);
-      if (answer && response.ok && text)
-        return new Response(text, {
-          headers: { 'content-type': response.headers.get('content-type') ?? 'application/json' },
-        });
+        timeoutMs,
+      })
+      .catch((error) => console.log(`${item.box} didn't answer: ${error}`));
+    if (!answer) return null;
+    console.log(`${label(item)} took the event in ${Date.now() - started} ms: ${answer.status}`);
+    if (!answer.ok) console.log(`${item.box} answered ${answer.status}: ${answer.text.slice(0, 300)}`);
 
-      return true;
-    } catch (error) {
-      console.log(`${item.box} didn't answer: ${error}`);
-
-      return false;
-    }
+    return answer;
   }
 
-  // Retries every waiting event, oldest first per box, until its box answers or GIVE_UP_MS passes.
-  async alarm() {
-    const byBox = new Map();
-    for (const [key, item] of await this.ctx.storage.list({ prefix: 'q:' }))
-      byBox.set(item.box, [...(byBox.get(item.box) ?? []), [key, item]]);
-    await Promise.all(
-      [...byBox].map(async ([box, entries]) => {
-        for (const [key, item] of entries) {
-          if (Date.now() - item.at > GIVE_UP_MS) {
-            await this.ctx.storage.delete(key);
-            await this.endNotices(box, `${box} didn't wake within ${GIVE_UP_MS / 60000} minutes; try again later.`);
-            continue;
-          }
-          if (!(await this.deliver(item))) return;
-          await this.ctx.storage.delete(key);
-        }
-        await this.endNotices(box);
-      })
-    );
-    if ((await this.ctx.storage.list({ prefix: 'q:', limit: 1 })).size)
-      await this.ctx.storage.setAlarm(Date.now() + RETRY_MS);
+  async gone(item) {
+    console.log(`dropped an event for ${label(item)}: not registered`);
+    if (!item.user || !item.notice?.channel) return;
+    await this.ephemeral(item.notice.channel, item.user, {
+      thread_ts: item.notice.ts,
+      text: `*${label(item)}* isn't running any more. Mention <@${(await this.identity()).botUserId}> in a new message to talk to another box.`,
+    });
   }
 
   async wakingNotice(item) {
@@ -544,47 +475,17 @@ export class Router extends DurableObject {
   async outbound(request, method) {
     const raw = await request.text();
     const json = request.headers.get('content-type')?.includes('json');
-    const params = json ? (raw ? JSON.parse(raw) : {}) : Object.fromEntries(new URLSearchParams(raw));
-    const token = bearer(request) ?? params.token;
-    const owner = token && (await this.get(`token:${token}`));
+    const params = json ? JSON.parse(raw || '{}') : Object.fromEntries(new URLSearchParams(raw));
+    const owner = await this.get(`token:${bearer(request) ?? params.token}`);
     // Not a token the router minted (a person's own Slack app, connected in the box's dashboard): Slack decides.
-    if (!owner) {
-      const headers = new Headers({
-        'content-type': request.headers.get('content-type') ?? 'application/x-www-form-urlencoded',
-      });
-      if (request.headers.get('authorization')) headers.set('authorization', request.headers.get('authorization'));
-
-      return fetch(`${SLACK_API}${method}${new URL(request.url).search}`, {
-        method: request.method,
-        headers,
-        body: request.method === 'GET' ? undefined : raw,
-      });
-    }
+    if (!owner) return passThrough(request, method, raw);
     delete params.token;
-    if (method === 'auth.test') {
-      const me = await this.identity();
+    if (method === 'auth.test') return Response.json(authTest(await this.identity()));
+    const refused = await this.refusal(method, params, owner);
+    if (refused) {
+      console.log(`refused ${method} from ${label(owner)}: ${refused}`);
 
-      return Response.json({
-        ok: true,
-        url: me.url,
-        team: me.team.name,
-        team_id: me.team.id,
-        user_id: me.botUserId,
-        bot_id: me.botId,
-      });
-    }
-    const refuse = (error) => {
-      console.log(`refused ${method} from ${label(owner)}: ${error}`);
-
-      return Response.json({ ok: false, error });
-    };
-    if (!(method in METHODS)) return refuse('method_not_allowed_by_novu_box');
-    const channelParam = METHODS[method];
-    const channel = channelParam && params[channelParam];
-    if (channelParam && !(await this.allowedChannel(channel))) return refuse('channel_not_allowed_by_novu_box');
-    if (OWN_MESSAGE.has(method)) {
-      const messageOwner = await this.get(`msg:${channel}:${params.ts}`);
-      if (messageOwner?.box !== owner.box) return refuse('message_not_owned_by_this_box');
+      return Response.json({ ok: false, error: refused });
     }
     if (method === 'chat.postMessage' || method === 'chat.postEphemeral') params.username = label(owner);
 
@@ -605,24 +506,31 @@ export class Router extends DurableObject {
     return new Response(JSON.stringify(body), { status: response.status, headers });
   }
 
+  async refusal(method, params, owner) {
+    if (!(method in METHODS)) return 'method_not_allowed_by_novu_box';
+    const channel = METHODS[method] && params[METHODS[method]];
+    if (METHODS[method] && !(await this.allowedChannel(channel))) return 'channel_not_allowed_by_novu_box';
+    if (OWN_MESSAGE.has(method) && (await this.get(`msg:${channel}:${params.ts}`))?.box !== owner.box)
+      return 'message_not_owned_by_this_box';
+
+    return null;
+  }
+
   async allowedChannel(channel) {
-    if (channel === this.env.CHANNEL) return true;
+    if (channel === this.env.SLACK_CHANNEL) return true;
 
     return Boolean(channel?.startsWith('D') && (await this.get(`dm:${channel}`)));
   }
 
   // Message and view owners, from what the box posted, so replies, reactions, edits and clicks find the box.
   async record(method, params, body, owner) {
-    if (method === 'chat.postMessage' || method === 'chat.startStream') {
+    if (method === 'chat.postMessage' || method === 'chat.startStream')
       await this.put(`msg:${body.channel}:${body.ts}`, owner);
-      if (!params.thread_ts && !body.channel.startsWith('D'))
-        await this.put(`thread:${body.channel}:${body.ts}`, owner);
-    }
     if (method === 'chat.postEphemeral' && body.message_ts)
       await this.put(`msg:${params.channel}:${body.message_ts}`, owner);
     if (method.startsWith('views.') && body.view?.id) await this.put(`view:${body.view.id}`, owner);
     if (method === 'files.getUploadURLExternal' && body.upload_url)
-      body.upload_url = `${this.env.ORIGIN}/upload?url=${encodeURIComponent(body.upload_url)}`;
+      body.upload_url = `${this.env.SLACK_ROUTER_URL}/upload?url=${encodeURIComponent(body.upload_url)}`;
   }
 
   async download(request, url) {
@@ -685,31 +593,69 @@ export class Router extends DurableObject {
   }
 }
 
-// "<box> ready · Talk to: custom-code | ai-sdk | langchain", with a link to its dashboard. `pending`: the picker,
-// which then forwards the waiting message.
-function talkBlocks(box, pending) {
-  const agents = box.agents.filter((agent) => agent.id);
+const NO_BOX = 'No Novu Box is running: start one with `node docker/box/cli.mjs up --cloud`.';
 
+// What an event is, or null for what the router ignores: the bot's own messages, other channels, and other
+// subtypes. `kind`: a reaction, an edit (or delete), a mention (`app_mention`, only in the channel), or a message.
+function classify(event, botUserId, home) {
+  const reaction = event.type === 'reaction_added' || event.type === 'reaction_removed';
+  const edit = event.subtype === 'message_changed' || event.subtype === 'message_deleted';
+  const message = event.subtype === 'message_changed' ? event.message : (event.previous_message ?? event);
+  const user = reaction ? event.user : message?.user;
+  const channel = reaction ? event.item?.channel : event.channel;
+  const dm = Boolean(channel?.startsWith('D'));
+  if (!user || user === botUserId || message?.bot_id || (!dm && channel !== home)) return null;
+  const facts = { user, channel, dm };
+  if (reaction) return { ...facts, kind: 'reaction', ts: event.item.ts };
+  if (edit) return { ...facts, kind: 'edit', ts: message?.ts ?? event.deleted_ts, thread: message?.thread_ts };
+  const thread = event.thread_ts && event.thread_ts !== event.ts ? event.thread_ts : undefined;
+  if (event.type === 'app_mention') return dm ? null : { ...facts, kind: 'mention', ts: event.ts, thread };
+  if (event.type === 'message' && [undefined, 'file_share', 'thread_broadcast'].includes(event.subtype))
+    return { ...facts, kind: 'message', ts: event.ts, thread };
+
+  return null;
+}
+
+// "<box> ready · Talk to: custom-code | ai-sdk | langchain", with a link to its dashboard. `pending`: the picker,
+// which then forwards the waiting message. Action IDs are unique per message and view, so they name the box.
+function talkBlocks(box, pending) {
   return [
     { type: 'section', text: { type: 'mrkdwn', text: `*${box.name}* ready · Talk to:` } },
     {
       type: 'actions',
       elements: [
-        ...agents.map((agent, index) => ({
+        ...box.agents.map((agent) => ({
           type: 'button',
-          action_id: `novubox_talk_${index}`,
+          action_id: `novubox_talk:${box.name}:${agent.identifier}`,
           text: { type: 'plain_text', text: short(agent.identifier) },
           value: JSON.stringify({ box: box.name, agent: agent.identifier, ...(pending && { pending }) }),
         })),
         {
           type: 'button',
-          action_id: 'novubox_open',
+          action_id: `novubox_open:${box.name}`,
           text: { type: 'plain_text', text: 'Open dashboard' },
           url: box.origin,
         },
       ],
     },
   ];
+}
+
+function passThrough(request, method, raw) {
+  const headers = new Headers({
+    'content-type': request.headers.get('content-type') ?? 'application/x-www-form-urlencoded',
+  });
+  if (request.headers.get('authorization')) headers.set('authorization', request.headers.get('authorization'));
+
+  return fetch(`${SLACK_API}${method}${new URL(request.url).search}`, {
+    method: request.method,
+    headers,
+    body: request.method === 'GET' ? undefined : raw,
+  });
+}
+
+function authTest(me) {
+  return { ok: true, url: me.url, team: me.team.name, team_id: me.team.id, user_id: me.botUserId, bot_id: me.botId };
 }
 
 function label({ box, agent }) {

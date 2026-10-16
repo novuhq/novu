@@ -108,15 +108,14 @@ export function cloudTarget({ box, log, githubToken }) {
   // The image, the secrets and the idle time belong to the host, so they apply to every box. A box's snapshot only
   // restores on the image it was taken on, and an image built in another checkout differs even for the same files
   // (its layer holds their times), so BOX_IMAGE=<image@digest> redeploys the Worker code alone on that image.
-  // With Novu Bot's credentials (SLACK_ENV), the Slack router deploys first; it reaches boxes through the host's
-  // Box class, so a host's very first deploy goes without it, and the next one adds it.
-  async function deployHost() {
+  // With Novu Bot's credentials (SLACK_ENV), the host runs the Slack router with them, and the router's address
+  // `novu-box-slack` (thin.js) deploys after it.
+  function deployHost() {
     const image = process.env.BOX_IMAGE ?? pushImage();
-    // A new workers.dev name can take a minute to answer, so a router deployed here counts without asking.
-    let slack = await routerExists();
-    if (fs.existsSync(SLACK_ENV) && (await hostExists())) slack = deployRouter(log);
-    if (!slack)
-      log(`${ROUTER} isn't deployed, so boxes get no Slack; it deploys with the host when ${SLACK_ENV} exists`);
+    const slack = fs.existsSync(SLACK_ENV) && readEnvFile(SLACK_ENV);
+    for (const name of ['SLACK_BOT_TOKEN', 'SLACK_SIGNING_SECRET'])
+      if (slack && !slack[name]) throw new Error(`${SLACK_ENV} has no ${name}`);
+    if (!slack) log(`no ${SLACK_ENV}, so boxes get no Slack`);
     withTempDir(HOST, (dir) => {
       const config = join(dir, 'wrangler.json');
       const secrets = join(dir, 'secrets.json');
@@ -129,46 +128,44 @@ export function cloudTarget({ box, log, githubToken }) {
           // Only so `hostExists` can ask cheaply; it answers 404 to everything.
           workers_dev: true,
           containers: [{ class_name: 'Box', scheduling_policy: 'durable_object', images: { box: { image } } }],
-          durable_objects: { bindings: [{ name: 'BOX', class_name: 'Box' }] },
-          exports: { Box: { type: 'durable-object', storage: 'sqlite' } },
+          durable_objects: {
+            bindings: [
+              { name: 'BOX', class_name: 'Box' },
+              { name: 'ROUTER', class_name: 'Router' },
+            ],
+          },
+          exports: {
+            Box: { type: 'durable-object', storage: 'sqlite' },
+            Router: { type: 'durable-object', storage: 'sqlite' },
+          },
           observability: { enabled: true },
-          ...(slack && { services: [{ binding: 'SLACK', service: ROUTER, entrypoint: 'Registry' }] }),
           vars: {
             // Minutes without requests before a box saves itself and stops; default 60 (worker.js).
             ...(process.env.BOX_IDLE_MINUTES && { IDLE_MINUTES: process.env.BOX_IDLE_MINUTES }),
-            ...(slack && { SLACK_API_URL: `https://${ROUTER}.${DOMAIN}/api/` }),
+            ...(slack && { SLACK_ROUTER_URL: `https://${ROUTER}.${DOMAIN}`, SLACK_CHANNEL }),
           },
         })
       );
       const env = readEnvFile(join(BOX_DIR, '.env'));
-      fs.writeFileSync(
-        secrets,
-        JSON.stringify(Object.fromEntries(SECRETS.filter((k) => env[k]).map((k) => [k, env[k]]))),
-        { mode: 0o600 }
-      );
+      const values = Object.fromEntries(SECRETS.filter((k) => env[k]).map((k) => [k, env[k]]));
+      if (slack)
+        Object.assign(values, {
+          SLACK_BOT_TOKEN: slack.SLACK_BOT_TOKEN,
+          SLACK_SIGNING_SECRET: slack.SLACK_SIGNING_SECRET,
+        });
+      fs.writeFileSync(secrets, JSON.stringify(values), { mode: 0o600 });
       log(`deploying ${HOST} with ${image.split('@')[1].slice(0, 19)}; this applies to every box`);
       run(WRANGLER[0], [...WRANGLER.slice(1), 'deploy', '-c', config, '--secrets-file', secrets]);
     });
+    if (slack) {
+      log(`deploying ${ROUTER}; Novu Bot's request URL is https://${ROUTER}.${DOMAIN}/slack`);
+      deployThin(ROUTER, { name: 'BOX', class_name: 'Router', script_name: HOST }, 'router');
+    }
   }
 
   function deployBoxWorker() {
-    withTempDir(worker, (dir) => {
-      const config = join(dir, 'wrangler.json');
-      fs.writeFileSync(
-        config,
-        JSON.stringify({
-          name: worker,
-          main: join(HERE, 'thin.js'),
-          compatibility_date: COMPATIBILITY_DATE,
-          workers_dev: true,
-          durable_objects: { bindings: [{ name: 'BOX', class_name: 'Box', script_name: HOST }] },
-          vars: { BOX_NAME: box },
-          observability: { enabled: true },
-        })
-      );
-      log(`deploying ${worker}`);
-      run(WRANGLER[0], [...WRANGLER.slice(1), 'deploy', '-c', config]);
-    });
+    log(`deploying ${worker}`);
+    deployThin(worker, { name: 'BOX', class_name: 'Box', script_name: HOST }, box);
   }
 
   async function snapshotOf(name) {
@@ -241,13 +238,17 @@ export function cloudTarget({ box, log, githubToken }) {
       log(`${worker}: saving to its snapshot and stopping (3 to 6 minutes); the next request wakes it`);
       await call('/down', { method: 'POST' });
       const deadline = Date.now() + 15 * 60_000;
-      while ((await state())?.running) {
+      for (;;) {
+        // `state` is null when a request fails, which doesn't mean the box stopped.
+        const current = await state();
+        if (current && !current.running) {
+          console.log(JSON.stringify({ state: 'asleep', snapshot: current.snapshot?.id }));
+
+          return 0;
+        }
         if (Date.now() > deadline) throw new Error(`${worker} is still saving after 15 minutes`);
         await new Promise((resolve) => setTimeout(resolve, 10_000));
       }
-      console.log(JSON.stringify({ state: 'asleep', snapshot: (await state())?.snapshot?.id }));
-
-      return 0;
     },
 
     // Stops the box and forgets it (snapshot and settings), then deletes its Worker. Other boxes are untouched.
@@ -282,50 +283,25 @@ export function cloudTarget({ box, log, githubToken }) {
   };
 }
 
-// The Slack router (slack-router.js), one for every box: Novu Bot's events, interactivity and /novu-box come to
-// https://novu-box-slack.<workers.dev>/slack.
-function deployRouter(log) {
-  const env = readEnvFile(SLACK_ENV);
-  for (const name of ['SLACK_BOT_TOKEN', 'SLACK_SIGNING_SECRET'])
-    if (!env[name]) throw new Error(`${SLACK_ENV} has no ${name}`);
-  const origin = `https://${ROUTER}.${DOMAIN}`;
-  withTempDir(ROUTER, (dir) => {
+// A Worker on workers.dev that forwards everything to one Durable Object in the host: a box's address, or the
+// Slack router's (Novu Bot's events, interactivity and /novu-box come to https://novu-box-slack.<workers.dev>/slack).
+function deployThin(name, binding, objectName) {
+  withTempDir(name, (dir) => {
     const config = join(dir, 'wrangler.json');
-    const secrets = join(dir, 'secrets.json');
     fs.writeFileSync(
       config,
       JSON.stringify({
-        name: ROUTER,
-        main: join(HERE, 'slack-router.js'),
+        name,
+        main: join(HERE, 'thin.js'),
         compatibility_date: COMPATIBILITY_DATE,
         workers_dev: true,
-        durable_objects: {
-          bindings: [
-            { name: 'ROUTER', class_name: 'Router' },
-            { name: 'BOX', class_name: 'Box', script_name: HOST },
-          ],
-        },
-        exports: { Router: { type: 'durable-object', storage: 'sqlite' } },
-        vars: { ORIGIN: origin, CHANNEL: SLACK_CHANNEL },
+        durable_objects: { bindings: [binding] },
+        vars: { BOX_NAME: objectName },
         observability: { enabled: true },
       })
     );
-    fs.writeFileSync(
-      secrets,
-      JSON.stringify({ SLACK_BOT_TOKEN: env.SLACK_BOT_TOKEN, SLACK_SIGNING_SECRET: env.SLACK_SIGNING_SECRET }),
-      { mode: 0o600 }
-    );
-    log(`deploying ${ROUTER}; Novu Bot's request URL is ${origin}/slack`);
-    run(WRANGLER[0], [...WRANGLER.slice(1), 'deploy', '-c', config, '--secrets-file', secrets]);
+    run(WRANGLER[0], [...WRANGLER.slice(1), 'deploy', '-c', config]);
   });
-
-  return true;
-}
-
-async function routerExists() {
-  const response = await fetch(`https://${ROUTER}.${DOMAIN}/`).catch(() => null);
-
-  return response?.ok && (await response.text()).startsWith(ROUTER);
 }
 
 function withTempDir(name, fn) {

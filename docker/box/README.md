@@ -212,13 +212,14 @@ its log:
 #### Slack: Novu Bot in `#novu-box`
 
 Cloud boxes' agents can be used from the company Slack through one app, Novu Bot, in `#novu-box` and in DMs with
-the bot. One router Worker, `novu-box-slack` (`cloud/slack-router.js`, one Durable Object for its state), holds
-the real bot token and signing secret and stands between Slack and every box; no box ever sees them.
+the bot. The Slack router (`cloud/slack-router.js`) runs in the host Worker as one more Durable Object, at its
+own address `novu-box-slack` (a small Worker like a box's); it holds the real bot token and signing secret and
+stands between Slack and every box; no box ever sees them.
 
-- `up --cloud --deploy` deploys the router with the host when `~/.config/novu-box/slack.env` (`SLACK_BOT_TOKEN`,
-  `SLACK_SIGNING_SECRET`) is on your machine; they become the router's Worker secrets. The host is bound to it
-  (`SLACK`) and gives every box `SLACK_API_URL`, the router's `/api/`. Novu Bot's Events, Interactivity and
-  `/novu-box` request URLs are the router's `/slack`.
+- `up --cloud --deploy` gives the host Novu Bot's credentials when `~/.config/novu-box/slack.env`
+  (`SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`) is on your machine (host secrets, which no box gets), deploys
+  `novu-box-slack`, and gives every box `SLACK_API_URL`, the router's `/api/`. Novu Bot's Events, Interactivity
+  and `/novu-box` request URLs are `https://novu-box-slack.cli-shortener.workers.dev/slack`.
 - Once a box is up, and again when its agents change (a `sync`), the host gives each of the bridge app's agents a
   Slack integration (`box-slack-<agent>`) and a workspace connection through the box's API, with a bot token
   and signing secret the router made up for that box. The router posts "<box> ready · Talk to: …" in
@@ -230,10 +231,24 @@ the real bot token and signing secret and stands between Slack and every box; no
   Start a thread with a mention; `custom-code-agent` reads the first word, so `@Novu Bot card` gets its command
   list, and `card` as a reply in the thread (or in a DM) gets the card. For a sleeping box the router answers Slack at once, posts
   "Waking <box> (about 40 s)…" in the thread, and delivers the message when the box is up (it retries for 8
-  minutes).
+  minutes). In a thread of a deleted box, the router tells you so and to start a new message.
 - The router passes only the Slack methods the agents use, only to `#novu-box` and DMs a person started, and
   edits only a box's own messages; anything else gets `ok: false` with a `…_by_novu_box` error. A token it
-  didn't make (a Slack app you connect in the box's dashboard) goes to Slack unchanged.
+  didn't make (a Slack app you connect in the box's dashboard) goes to Slack unchanged. It doesn't keep boxes
+  apart within those: a box's code can read every thread in `#novu-box` and any DM with the bot, which is fine
+  for a channel only Novu's developers and TesterArmy use.
+
+Check the routing with two boxes up (`up --cloud --box <name> --from base` makes a second one; about 90 s,
+writes `slack-check.json`):
+
+```sh
+node docker/box/slack-check.mjs <box> <other box> /tmp/slack-check
+```
+
+It sends the router the events Slack would send for the TesterArmy guest in `#novu-box`, signed with Novu Bot's
+signing secret, and reads from each box's `/__box/state` (`slackEvents`, the last events the box's agents got)
+that a mention reaches the box and agent picked with `/novu-box`, a thread reply stays with its thread's box, a
+mention in a reply arrives once, and the second box gets a reply after it is put to sleep (it wakes).
 
 A host deploy from another checkout builds a new image even when `docker/box` is the same (the image keeps file
 times), and Cloudflare ties each snapshot to the image it came from. To deploy only Worker changes, keep the

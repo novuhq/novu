@@ -17,10 +17,13 @@
 // wakes it (about 35 s). Cloudflare can't see what runs inside, so the Durable Object keeps the time itself, on a
 // one-minute alarm, as in Cloudflare's "save a sandbox automatically" recipe.
 //
-// With the Slack router deployed (slack-router.js, bound as SLACK), each start also connects the box's agents to
-// Slack through it (see `connectSlack`), and deleting the box disconnects them.
+// The Slack router (slack-router.js) runs here too, as the Router Durable Object. With its secrets and
+// SLACK_ROUTER_URL set, each start also connects the box's agents to Slack through it (see `connectSlack`), the
+// router hands the box its agents' Slack events (`slackEvent`), and deleting the box disconnects them.
 
 import { DurableObject } from 'cloudflare:workers';
+
+export { Router } from './slack-router.js';
 
 const PUBLIC_PORT = 18080;
 const INSTANCE = 'standard-4';
@@ -145,6 +148,8 @@ export class Box extends DurableObject {
         : null,
       lastActivity: new Date(this.lastActivity ?? (await this.ctx.storage.get('lastActivity')) ?? 0).toISOString(),
       origin: await this.ctx.storage.get('origin'),
+      // The last Slack events the router handed to the box's agents, newest last.
+      slackEvents: (await this.ctx.storage.get('slackEvents')) ?? [],
     };
   }
 
@@ -180,7 +185,8 @@ export class Box extends DurableObject {
   }
 
   async start(options, origin) {
-    this.slackConnected = null;
+    await this.ctx.storage.delete('slackConnected');
+    this.slackLinked = new Set();
     this.apiKey = null;
     this.ctx.container.start({
       instance: INSTANCE,
@@ -248,8 +254,10 @@ export class Box extends DurableObject {
   // For a deleted box: the Durable Object's storage goes too, so the name starts from nothing if it's used again.
   async destroy() {
     const origin = await this.ctx.storage.get('origin');
-    if (this.env.SLACK && origin)
-      await this.env.SLACK.unregister(boxName(origin)).catch((error) => console.log(`slack: ${error.message}`));
+    if (this.env.SLACK_ROUTER_URL && origin)
+      await this.router()
+        .unregister(boxName(origin))
+        .catch((error) => console.log(`slack: ${error.message}`));
     if (this.ctx.container.running) await this.ctx.container.destroy('deleted');
     await this.ctx.storage.deleteAlarm();
     await this.ctx.storage.deleteAll();
@@ -271,7 +279,7 @@ export class Box extends DurableObject {
   // snapshot it started from. A box started from another box's snapshot has that box's credentials until this
   // replaces them.
   async connectSlack() {
-    if (!this.env.SLACK) return;
+    if (!this.env.SLACK_ROUTER_URL) return;
     const origin = await this.ctx.storage.get('origin');
     const process = await this.run(['sh', '-c', 'test -f /data/.baked.json && node -e "$0"', DISCOVER]);
     const output = new TextDecoder().decode((await process.output()).stdout).trim();
@@ -281,9 +289,12 @@ export class Box extends DurableObject {
     const api = (path, init) => this.api(origin, path, init);
 
     const box = boxName(origin);
-    if (!served.length || served.join(',') === this.slackConnected) return;
+    // In storage: the Durable Object doesn't stay in memory between alarms.
+    if (!served.length || served.sort().join(',') === (await this.ctx.storage.get('slackConnected'))) return;
+    // An agent the bridge serves may not be in the API yet (a sync creates it); the next alarm connects it.
     const agents = (await api('/v1/agents?limit=50')).data.filter((agent) => served.includes(agent.identifier));
-    const slack = await this.env.SLACK.register(
+    const router = this.router();
+    const slack = await router.register(
       box,
       origin,
       agents.map((agent) => agent.identifier)
@@ -339,43 +350,76 @@ export class Box extends DurableObject {
         });
       ready.push({ identifier: agent.identifier, id: agent._id, integrationIdentifier: identifier });
     }
-    await this.env.SLACK.ready(box, ready);
-    this.slackConnected = served.join(',');
-    console.log(`slack: ${box} connected ${ready.map((agent) => agent.identifier).join(', ')}`);
+    await router.ready(box, ready);
+    const connected = ready
+      .map((agent) => agent.identifier)
+      .sort()
+      .join(',');
+    await this.ctx.storage.put('slackConnected', connected);
+    console.log(`slack: ${box} connected ${connected}`);
   }
 
-  // The Slack router calls this before it forwards a person's first event to an agent. The bridge agents answer
-  // only people linked to a subscriber (subscriberAccess `restricted`), so this links the Slack user to subscriber
-  // slack-<user> in the box, as a customer's app does with <ConnectChat>. False while the box is asleep (this wakes
-  // it) or still starting; the router retries.
-  async linkSlackUser(user, integrationIdentifier) {
+  // The Slack router hands the box an event for one of its agents, signed with the box's secret, and gets the
+  // agent's answer; null while the box is asleep (this wakes it) or starting, and the router tries again. The
+  // bridge agents answer only people linked to a subscriber (subscriberAccess `restricted`), so a person's first
+  // event links them to subscriber slack-<user> in the box, as a customer's app does with <ConnectChat>.
+  async slackEvent({ id, agent, user, headers, body, timeoutMs }) {
     this.touch();
     const origin = await this.ctx.storage.get('origin');
     if (!this.ctx.container.running) {
       if (await this.ctx.storage.get('snapshot')) await this.wake(origin);
 
-      return false;
+      return null;
     }
+    this.slackLinked ??= new Set();
+    const integrationIdentifier = agent.integrationIdentifier;
     try {
-      await this.api(origin, '/v1/channel-endpoints', {
-        method: 'POST',
-        body: JSON.stringify({
-          identifier: `${integrationIdentifier}-${user}`,
-          subscriberId: `slack-${user}`,
-          createSubscriberIfMissing: true,
-          integrationIdentifier,
-          connectionIdentifier: integrationIdentifier,
-          type: 'slack_user',
-          endpoint: { userId: user },
-        }),
-      });
+      if (user && !this.slackLinked.has(`${integrationIdentifier}:${user}`)) {
+        await this.api(origin, '/v1/channel-endpoints', {
+          method: 'POST',
+          body: JSON.stringify({
+            identifier: `${integrationIdentifier}-${user}`,
+            subscriberId: `slack-${user}`,
+            createSubscriberIfMissing: true,
+            integrationIdentifier,
+            connectionIdentifier: integrationIdentifier,
+            type: 'slack_user',
+            endpoint: { userId: user },
+          }),
+        });
+        this.slackLinked.add(`${integrationIdentifier}:${user}`);
+      }
+      const webhook = `${origin.replace(/^https:/, 'http:')}/v1/agents/${agent.id}/webhook/${integrationIdentifier}`;
+      const response = await this.ctx.container.getTcpPort(PUBLIC_PORT).fetch(
+        new Request(webhook, {
+          method: 'POST',
+          headers,
+          body,
+          ...(timeoutMs && { signal: AbortSignal.timeout(timeoutMs) }),
+        })
+      );
+      // From the box's proxy while the API restarts.
+      if (response.status === 502 || response.status === 504) return null;
+      const answer = {
+        ok: response.ok,
+        status: response.status,
+        contentType: response.headers.get('content-type') ?? 'application/json',
+        text: await response.text(),
+      };
+      const events = (await this.ctx.storage.get('slackEvents')) ?? [];
+      events.push({ id, agent: agent.identifier, user, status: answer.status, at: new Date().toISOString() });
+      await this.ctx.storage.put('slackEvents', events.slice(-20));
 
-      return true;
+      return answer;
     } catch (error) {
-      console.log(`slack: linking ${user} not yet: ${error.message}`);
+      console.log(`slack: ${agent.identifier} isn't answering yet: ${error.message}`);
 
-      return false;
+      return null;
     }
+  }
+
+  router() {
+    return this.env.ROUTER.get(this.env.ROUTER.idFromName('router'));
   }
 
   // The box's own API over its port, with the environment's secret key. 409 counts as done: the thing exists.
@@ -412,7 +456,7 @@ export class Box extends DurableObject {
   async boxEnv(origin) {
     const base = origin ?? (await this.ctx.storage.get('origin'));
     const secrets = Object.fromEntries(SECRETS.filter((name) => this.env[name]).map((name) => [name, this.env[name]]));
-    if (this.env.SLACK_API_URL) secrets.SLACK_API_URL = this.env.SLACK_API_URL;
+    if (this.env.SLACK_ROUTER_URL) secrets.SLACK_API_URL = `${this.env.SLACK_ROUTER_URL}/api/`;
     if (!base) return secrets;
 
     return {
