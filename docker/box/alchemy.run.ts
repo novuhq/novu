@@ -19,7 +19,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import * as Alchemy from 'alchemy';
-import * as Bundle from 'alchemy/Bundle';
 import * as Cloudflare from 'alchemy/Cloudflare';
 import { Effect, Redacted } from 'effect';
 import { parseEnvFile } from './src/shared/env-file.ts';
@@ -50,26 +49,6 @@ const secrets = Object.fromEntries(
   Object.entries({ ...box, ...slack, ...github, ...cloudflare }).map(([key, value]) => [key, Redacted.make(value)])
 );
 
-// thin.ts as one module, for the router's address below and for the host, which uploads it for every box.
-const thinPlugin = {
-  name: 'novu-box-thin',
-  resolveId: (id: string) => (id === 'virtual:thin' ? '\0virtual:thin' : null),
-  load: async (id: string) => {
-    if (id !== '\0virtual:thin') return null;
-    const bundle = await Effect.runPromise(
-      Bundle.build(
-        { input: path.join(HERE, 'src/cloud/thin.ts'), platform: 'neutral' },
-        { format: 'esm', minify: true }
-      )
-    );
-    const [file] = bundle.files;
-    if (!file) throw new Error('bundling src/cloud/thin.ts gave no file');
-    const source = typeof file.content === 'string' ? file.content : new TextDecoder().decode(file.content);
-
-    return `export default ${JSON.stringify(source)};`;
-  },
-};
-
 const BoxImage = process.env.BOX_IMAGE
   ? Cloudflare.Container('BoxImage', { schedulingPolicy: 'durable_object', image: process.env.BOX_IMAGE })
   : Cloudflare.Container('BoxImage', {
@@ -97,7 +76,6 @@ export default Alchemy.Stack(
         ...(slack && { SLACK_ROUTER_URL: `https://${ROUTER}.${DOMAIN}`, SLACK_CHANNEL }),
         ...secrets,
       },
-      build: { input: { plugins: [thinPlugin] } },
     });
     // Novu Bot's request URL is https://novu-box-slack.<DOMAIN>/slack. The Worker existed before this stack (the
     // wrangler-deployed host uploaded it), hence the adoption.

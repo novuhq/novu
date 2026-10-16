@@ -10,13 +10,13 @@
 //
 // The Slack router's address isn't here: alchemy.run.ts deploys it with the host.
 
-import thin from 'virtual:thin';
 import { Effect, Schema } from 'effect';
 import { FetchHttpClient, HttpClient, HttpClientRequest } from 'effect/http';
 import { authorize } from '../shared/auth.ts';
 import { boxWorker, COMPATIBILITY_DATE, HOST, ROUTER } from '../shared/names.ts';
 import type { HostEnv } from './env.ts';
 import { attempt, runPromise } from './run.ts';
+import thin from './thin.ts?worker';
 
 const NAME = /^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/;
 const RESERVED = [HOST, ROUTER];
@@ -83,7 +83,7 @@ const list = Effect.fn('list')(function* (env: HostEnv) {
     .sort();
 });
 
-// A Worker on workers.dev that forwards everything to Box(<box>) in the host (thin.ts, bundled by alchemy.run.ts):
+// A Worker on workers.dev that forwards everything to Box(<box>) in the host (thin.ts, bundled by Alchemy):
 // its module, the binding to the host's class, BOX_NAME, then the workers.dev address.
 const upload = Effect.fn('upload')(function* (env: HostEnv, box: string) {
   const form = new FormData();
