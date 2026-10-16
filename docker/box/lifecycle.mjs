@@ -50,15 +50,7 @@ import {
   WORKER_HEALTH,
   waitForHttp,
 } from './lib.mjs';
-import {
-  seedBridge,
-  seedChannels,
-  seedClerk,
-  seedEmailIntegration,
-  seedManagedAgent,
-  seedTeamTier,
-  syncBridge,
-} from './seed.mjs';
+import { seedBridge, seedChannels, seedClerk, seedManagedAgent, seedTeamTier, syncBridge } from './seed.mjs';
 
 // Bakes `ref` into an empty /data. `start`: boot the box once baked, as the Cloudflare Worker's bake does.
 export async function bake(ref, { token, start: thenStart = false }) {
@@ -89,8 +81,7 @@ export async function bake(ref, { token, start: thenStart = false }) {
     const supervisor = startSupervisor();
     await step('first boot', () => waitForHttp(API_HEALTH, 300));
     const userToken = await step('seed Clerk user and org', seedClerk);
-    await step('seed Mailpit email integration', () => seedEmailIntegration(userToken));
-    await step('seed SMS, push and chat (sink)', () => seedChannels(userToken));
+    await step('seed email (Mailpit), SMS, push and chat (sink)', () => seedChannels(userToken));
     await step('seed bridge app (framework)', () => seedBridge(userToken));
     await step('seed Team tier (Stripe)', () => seedTeamTier(userToken));
     await step('shutdown', async () => {

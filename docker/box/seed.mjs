@@ -131,49 +131,36 @@ async function moveSeedOrg(oldId) {
   await waitForHttp(WORKER_HEALTH, 300);
 }
 
-// Every environment of the seeded org sends email through Mailpit (UI on :8025).
-export async function seedEmailIntegration(token) {
-  const { body: environments } = await api('/v1/environments', { headers: { Authorization: `Bearer ${token}` } });
-  for (const environment of environments.data) {
-    const headers = { Authorization: `ApiKey ${environment.apiKeys[0].key}` };
-    const { body } = await api('/v1/integrations', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        providerId: 'nodemailer',
-        channel: 'email',
-        name: 'Mailpit',
-        identifier: 'mailpit',
-        active: true,
-        check: false,
-        credentials: {
-          host: MAIL_HOST,
-          port: '1025',
-          secure: false,
-          ignoreTls: true,
-          from: 'no-reply@novu-box.local',
-          senderName: 'Novu Box',
-        },
-      }),
-    });
-    await api(`/v1/integrations/${body.data._id}/set-primary`, { method: 'POST', headers });
-    log(`Mailpit is the primary email integration in ${environment.name}`);
-  }
-}
-
-// SMS, push and chat go to sink.mjs, which shows them in Mailpit. Every environment gets the three HTTP
-// providers, and the seeded user's subscriber (the default target of the dashboard's Test Workflow) gets
-// a phone number, a push device token and a chat webhook, so a test run reaches all channels.
+// Email goes to Mailpit (UI on :8025); SMS, push and chat go to sink.mjs, which shows them in Mailpit. Every
+// environment of the seeded org gets the four providers, and the seeded user's subscriber (the default target of the
+// dashboard's Test Workflow) gets a phone number, a push device token and a chat webhook, so a test run reaches all
+// channels.
 export async function seedChannels(token) {
   const auth = { Authorization: `Bearer ${token}` };
   const { body: me } = await api('/v1/users/me', { headers: auth });
   const { body: environments } = await api('/v1/environments', { headers: auth });
   const integrations = [
     {
+      providerId: 'nodemailer',
+      channel: 'email',
+      name: 'Mailpit',
+      identifier: 'mailpit',
+      primary: true,
+      credentials: {
+        host: MAIL_HOST,
+        port: '1025',
+        secure: false,
+        ignoreTls: true,
+        from: 'no-reply@novu-box.local',
+        senderName: 'Novu Box',
+      },
+    },
+    {
       providerId: 'generic-sms',
       channel: 'sms',
       name: 'Box SMS (sink)',
       identifier: 'box-sms',
+      primary: true,
       credentials: {
         baseUrl: `${SINK_URL}/sms`,
         apiKeyRequestHeader: 'x-box-key',
@@ -201,14 +188,13 @@ export async function seedChannels(token) {
 
   for (const environment of environments.data) {
     const headers = { Authorization: `ApiKey ${environment.apiKeys[0].key}` };
-    for (const integration of integrations) {
+    for (const { primary, ...integration } of integrations) {
       const { body } = await api('/v1/integrations', {
         method: 'POST',
         headers,
         body: JSON.stringify({ ...integration, active: true, check: false }),
       });
-      if (integration.channel === 'sms')
-        await api(`/v1/integrations/${body.data._id}/set-primary`, { method: 'POST', headers });
+      if (primary) await api(`/v1/integrations/${body.data._id}/set-primary`, { method: 'POST', headers });
     }
 
     const subscriberId = me.data._id;
@@ -233,7 +219,7 @@ export async function seedChannels(token) {
         body: JSON.stringify({ providerId, credentials }),
       });
     }
-    log(`SMS, push and chat go to the sink in ${environment.name}`);
+    log(`email goes to Mailpit, SMS, push and chat to the sink in ${environment.name}`);
   }
 }
 
