@@ -175,6 +175,7 @@ export function cloudTarget({ box, log, githubToken }) {
 
   return {
     name: worker,
+    mailUrl: `${origin}/mail`,
 
     // `from`: the first start begins from that box's latest snapshot instead of a bake.
     // `fromBase`: a box that doesn't exist yet starts from the `base` box's snapshot when there is one, else bakes.

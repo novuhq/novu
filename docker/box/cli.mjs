@@ -10,6 +10,9 @@
 //   node docker/box/cli.mjs logs [process]    the last lines of one process (api, worker, bridge, …) or of all of
 //                                             them (--tail <n>, default 200; --follow; --errors: problems only)
 //   node docker/box/cli.mjs exec -- <cmd...>  run a command in the box's checkout (/data/novu)
+//   node docker/box/cli.mjs mail [search|id]  what the box sent (email, SMS, push, chat): the newest, a search
+//                                             (to:a@b.c subject:Welcome tag:sms), or one message with its HTML check
+//                                             and view URL (--html, --check-links, --limit <n>); see mail.mjs
 //   node docker/box/cli.mjs down              stop the box; its data stays (local: its volume; cloud: its snapshot)
 //   node docker/box/cli.mjs delete --cloud    stop a Cloudflare box and delete it with its snapshot and Worker
 //
@@ -27,6 +30,7 @@ import os from 'node:os';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { cloudTarget } from './cloud/target.mjs';
+import { mail } from './mail.mjs';
 
 const HERE = new URL('.', import.meta.url).pathname;
 const IMAGE = 'novu-box:dev';
@@ -40,7 +44,7 @@ const MAX_BUNDLE_MB = 25;
 const HEALTHY_WITHIN_SECONDS = 240;
 
 const USAGE =
-  'usage: node docker/box/cli.mjs up|sync|doctor|logs|exec|down|delete [--box <name>] [--cloud]; exec -- <cmd> for flags';
+  'usage: node docker/box/cli.mjs up|sync|doctor|logs|exec|mail|down|delete [--box <name>] [--cloud]; exec -- <cmd> for flags';
 let options;
 let positionals;
 try {
@@ -53,6 +57,9 @@ try {
       full: { type: 'boolean', default: false },
       follow: { type: 'boolean', default: false },
       errors: { type: 'boolean', default: false },
+      html: { type: 'boolean', default: false },
+      'check-links': { type: 'boolean', default: false },
+      limit: { type: 'string', default: '20' },
       'no-sync': { type: 'boolean', default: false },
       tail: { type: 'string', default: '200' },
     },
@@ -322,6 +329,7 @@ function countByFolder(files) {
 // The local box: a Docker container. cloud/target.mjs is the same interface over HTTPS.
 const docker = {
   name: BOX,
+  mailUrl: `http://localhost:${PORTS.mailpit}/mail`,
   up,
   down,
   ready: async () => requireRunning(),
@@ -363,6 +371,17 @@ const commands = {
     await target.ready();
 
     return target.exec(args);
+  },
+  mail: async () => {
+    await target.ready();
+
+    return mail({
+      mailUrl: target.mailUrl,
+      args,
+      limit: Number(options.limit),
+      html: options.html,
+      checkLinks: options['check-links'],
+    });
   },
   down: () => target.down(),
   delete: () => {

@@ -26,6 +26,10 @@ rebuilt and restarted, which is part of the evidence.
 - `sync` stops over 25 MB and names the biggest changed files. Ask the user before deleting or ignoring any of them.
 - A conflict with the box's baked commit stops `sync` before it touches the box. Merge or rebase onto `next`, then
   sync again.
+- **On Cloudflare** (no Docker, or a box the user should open): add `--cloud` to every command here. `up --cloud`
+  without `--box` is your branch's box: a new one starts from `base` in about 2 minutes and gets your checkout. Its
+  one address, `https://novu-box-<branch>.cli-shortener.workers.dev`, replaces every `localhost` URL below
+  (dashboard, API under `/v1`, Mailpit under `/mail`).
 
 ## 2. Doctor
 
@@ -44,8 +48,16 @@ Exercise the change the way a user reaches it, on the path the change touches:
 - **API or worker:** call `http://localhost:13000`. The Development environment's secret key is
   `node docker/box/cli.mjs exec -- cat /data/bridge/secret-key`; send it as `Authorization: ApiKey <key>`.
 - **Dashboard:** open `http://localhost:14200` in a browser and sign in with the seed user from the README.
-- **Email, SMS, push, chat:** trigger the workflow, then read Mailpit at `http://localhost:18025/mail`; the sink delivers
-  the SMS, push and chat messages there too.
+- **Email, SMS, push, chat:** every email the box sends lands in its Mailpit, and the sink puts SMS, push and chat
+  messages there too. Trigger the workflow, then:
+  1. `node docker/box/cli.mjs mail to:<recipient>` (or `subject:<text>`, `tag:sms`; no argument lists the newest).
+     Done when the message is listed; if it isn't, `logs --errors` says why.
+  2. `node docker/box/cli.mjs mail <id>`: check the headers, the text and the links against what the change
+     should send, and read the `html check`: it names the CSS and HTML features that break in which email clients.
+     `--html` prints the source; `--check-links` requests every link (only when the links are safe to request).
+  3. For a template change, open the `view` URL it prints with the agent-browser skill and screenshot it at 600 px
+     and 375 px wide. That's the HTML alone, as a browser renders it, not Gmail or Outlook; the html check covers
+     those.
 - **Bridge workflows and agents:** they live in `playground/nextjs`; the box syncs them on every apply that changes
   the framework or the playground.
 - **Broad changes** (shared libraries, auth, queues): also run the smoke test from the README (about 2 minutes).
@@ -62,6 +74,7 @@ Report, for the user to reproduce:
 1. The `plan:` and `applied` lines from `sync`.
 2. The `doctor` result.
 3. Each check from Drive: the exact command or page, and what came back (status, response body, a screenshot path).
+   For a message: the `mail <id>` output (headers, html check) and the screenshot paths.
 4. The smoke test's `smoke.json` path and pass count, if you ran it.
 
 ## 5. Cleanup

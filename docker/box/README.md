@@ -141,6 +141,7 @@ touched as well as its own changes.
 | `node docker/box/cli.mjs up` | Starts the box: creates it if needed, after baking `next` into an empty volume (about 12 minutes). Waits until `doctor` passes |
 | `node docker/box/cli.mjs sync` | Puts this checkout on the box, committed or not, and rebuilds what it changes. `--full` as for `apply` |
 | `node docker/box/cli.mjs doctor` | Whether the box is fit to test on, as JSON; `problems` says what isn't, and it exits 1 if any |
+| `node docker/box/cli.mjs mail [search \| id]` | What the box sent, from its Mailpit: the newest messages (email, and SMS, push and chat from the sink), a search (`to:a@b.c`, `subject:Welcome`, `tag:sms`), or one message with its headers, links, Mailpit's HTML check (which email clients break on what) and a `view` URL to screenshot; `--html`, `--check-links`, `--limit <n>` |
 | `node docker/box/cli.mjs logs [process]` | The last 200 lines (`--tail <n>`) of one process, or of all of them merged, as `name \| LEVEL context: message`; `--errors` keeps warnings and errors, `--follow` streams new lines. An unknown name lists the processes |
 | `node docker/box/cli.mjs exec -- <command>` | Runs a command in the box's checkout (`/data/novu`) |
 | `node docker/box/cli.mjs down` | Stops the box. Its volume, and so its data, stays; `up` starts it again |
