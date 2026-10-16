@@ -1,0 +1,90 @@
+name: Novu Box
+
+# A Novu Box (docker/box on Cloudflare) per pull request, on demand: a member with write access adds the `box` label
+# and the PR gets https://novu-box-pr-<number>.cli-shortener.workers.dev, started from the `base` box; every push
+# applies the new head; closing the PR or removing the label deletes it. One PR comment, edited in place, says how
+# it went. No secrets: the box host trusts this workflow's OIDC token (docker/box/cloud/auth.mjs), and PRs from
+# forks get no box. See docker/box/README.md, "Per pull request".
+
+on:
+  pull_request:
+    types: [labeled, unlabeled, synchronize, reopened, closed]
+  schedule:
+    - cron: "17 3 * * *" # nightly: delete boxes whose PR is closed or no longer labeled
+    - cron: "17 4 * * 0" # Sundays: bake base again from next
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "cleanup: delete boxes whose PR is closed or unlabeled; rebake: bake base again from next"
+        type: choice
+        options: [cleanup, rebake]
+
+# One run per PR at a time, and a newer event cancels the older run (the newer run also stops the older apply in the
+# box). An event that doesn't concern the box (another label, a push to or close of a PR without it) gets a group of
+# its own, so it never cancels a box run.
+concurrency:
+  group: >-
+    ${{ github.event_name == 'pull_request'
+      && ((github.event.label.name == 'box'
+           || (github.event.action != 'labeled' && github.event.action != 'unlabeled'
+               && contains(github.event.pull_request.labels.*.name, 'box')))
+          && format('novu-box-pr-{0}', github.event.pull_request.number)
+          || format('novu-box-run-{0}', github.run_id))
+      || format('novu-box-{0}', inputs.task || (github.event.schedule == '17 4 * * 0' && 'rebake' || 'cleanup')) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions: {}
+
+jobs:
+  pr:
+    name: Box for this PR
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (github.event.label.name == 'box'
+          || (github.event.action != 'labeled' && github.event.action != 'unlabeled'
+              && contains(github.event.pull_request.labels.*.name, 'box')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - name: Checkout docker/box
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: docker/box
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+      - name: Start, update or delete the box
+        run: node docker/box/github/actions.mjs pr
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  maintenance:
+    name: ${{ inputs.task || (github.event.schedule == '17 4 * * 0' && 'Rebake base' || 'Clean up PR boxes') }}
+    if: github.event_name != 'pull_request' && github.repository == 'novuhq/novu'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - name: Checkout docker/box
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          sparse-checkout: docker/box
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+      - name: Run the task
+        run: node docker/box/github/actions.mjs "$TASK"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TASK: ${{ inputs.task || (github.event.schedule == '17 4 * * 0' && 'rebake' || 'cleanup') }}
