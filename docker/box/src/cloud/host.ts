@@ -144,7 +144,8 @@ type StartFrom =
 interface RunOptions {
   readonly cwd?: string | undefined;
   readonly github?: string | undefined;
-  readonly stdin?: ReadableStream | undefined;
+  // 'pipe': the caller writes stdin, and the command's output is dropped.
+  readonly stdin?: 'pipe' | undefined;
   readonly signal?: AbortSignal;
 }
 
@@ -714,7 +715,15 @@ export class Box extends DurableObject<HostEnv> {
   #file(request: Request, url: URL): Effect.Effect<Response, Failure> {
     return Effect.gen({ self: this }, function* () {
       const path = url.searchParams.get('path') ?? '';
-      const process = yield* this.#run(['sh', '-c', 'cat > "$0"', path], { stdin: request.body ?? undefined });
+      // An exec whose stdin is the request's body often never answers, though the file is written whole (October
+      // 2026: 12 of 16 tries); writing the bytes to a piped stdin answers every time.
+      const bytes = yield* attempt('the request', () => request.bytes());
+      const process = yield* this.#run(['sh', '-c', 'cat > "$0"', path], { stdin: 'pipe' });
+      yield* attempt('', async () => {
+        const writer = process.stdin?.getWriter();
+        await writer?.write(bytes);
+        await writer?.close();
+      });
       const exitCode = yield* attempt('', () => process.exitCode);
 
       return json({ path, exitCode }, exitCode === 0 ? 200 : 500);
@@ -754,9 +763,8 @@ export class Box extends DurableObject<HostEnv> {
       const process = yield* attempt('', () =>
         this.#container.exec([...cmd], {
           env,
-          stderr: 'combined',
+          ...(stdin ? { stdin, stdout: 'ignore', stderr: 'ignore' } : { stderr: 'combined' }),
           ...(cwd && { cwd }),
-          ...(stdin && { stdin }),
           ...(signal && { signal }),
         })
       );
