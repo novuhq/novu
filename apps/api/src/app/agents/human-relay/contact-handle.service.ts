@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ChannelEndpointRepository } from '@novu/dal';
+import { ChannelEndpointRepository, type SubscriberEntity } from '@novu/dal';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import { WebClient } from '@slack/web-api';
 import type { Message } from 'chat';
@@ -15,6 +15,7 @@ import {
   telegramHandleOf,
 } from '../../human/services/contact-handle';
 import { AgentConfigResolver, type ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
+import { isAgentProvisionedSubscriber } from '../conversation-runtime/conversation/agent-subscriber-resolver.service';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { asRecord } from '../shared/util/raw-record';
@@ -32,6 +33,8 @@ const HANDLE_ENDPOINTS = {
 export type ContactHandleSource = {
   config: ResolvedAgentConfig;
   subscriberId?: string | null;
+  /** The subscriber who wrote, when known: one an agent made up for an unknown sender is a stranger. */
+  subscriber?: Pick<SubscriberEntity, 'data'> | null;
   /** Their Telegram chat id or Slack user id. */
   platformUserId?: string;
   /** What they wrote, when they wrote. */
@@ -59,6 +62,7 @@ export class ContactHandleService {
     return this.refresh({
       config: turn.config,
       subscriberId: turn.subscriber?.subscriberId,
+      subscriber: turn.subscriber,
       platformUserId: turn.platformUserId,
       message: turn.message,
       actionRaw: turn.actionRaw,
@@ -70,6 +74,12 @@ export class ContactHandleService {
     const target = HANDLE_ENDPOINTS[config.platform as keyof typeof HANDLE_ENDPOINTS];
 
     if (!config.isHumanRelay || !target || !subscriberId || !platformUserId) {
+      return;
+    }
+
+    // Only contacts: someone the operator added. A stranger who wrote while Who can reach is Anyone gets a
+    // subscriber made up for them; their handle isn't kept, and Slack isn't asked about them.
+    if (source.subscriber && isAgentProvisionedSubscriber(source.subscriber)) {
       return;
     }
 
@@ -127,9 +137,14 @@ export class ContactHandleService {
     if (needsName || needsDomain) {
       const client = await this.slackClient(source);
       if (client) {
+        // Each lookup fails on its own, and is logged: the other one's answer is still kept.
         const [user, auth] = await Promise.all([
-          needsName ? client.users.info({ user: userId }).catch(() => undefined) : undefined,
-          needsDomain ? client.auth.test().catch(() => undefined) : undefined,
+          needsName
+            ? client.users.info({ user: userId }).catch((err: unknown) => this.slackLookupFailed('users.info', err))
+            : undefined,
+          needsDomain
+            ? client.auth.test().catch((err: unknown) => this.slackLookupFailed('auth.test', err))
+            : undefined,
         ]);
         displayName ??= slackDisplayNameOfUser(user?.user);
         workspaceDomain ??= slackWorkspaceDomainOfUrl(auth?.url);
@@ -141,6 +156,19 @@ export class ContactHandleService {
       ...(displayName ? { displayName } : {}),
       ...(workspaceDomain ? { workspaceDomain } : {}),
     };
+  }
+
+  /** Logs a Slack lookup that failed (a missing scope, a rate limit, a timeout) without its token. */
+  private slackLookupFailed(method: 'users.info' | 'auth.test', err: unknown): undefined {
+    const code = typeof err === 'object' && err !== null && 'code' in err ? String(err.code) : undefined;
+    const slackError = typeof err === 'object' && err !== null && 'data' in err ? asRecord(err.data)?.error : undefined;
+
+    this.logger.warn(
+      { method, code, slackError, err: err instanceof Error ? err.message : String(err) },
+      'Could not ask Slack for a contact’s handle; keeping what is known'
+    );
+
+    return undefined;
   }
 
   private async slackClient({ config, message, actionRaw }: ContactHandleSource): Promise<WebClient | undefined> {

@@ -1,4 +1,4 @@
-import { ENDPOINT_TYPES } from '@novu/shared';
+import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS, ENDPOINT_TYPES } from '@novu/shared';
 import { WebClient } from '@slack/web-api';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -177,9 +177,14 @@ describe('ContactHandleService', () => {
       });
     });
 
-    it("keeps what it has when Slack can't be asked", async () => {
-      apiCall.rejects(new Error('ratelimited'));
-      const { service, channelEndpointRepository } = setup({ endpoint: { userId: 'U1', displayName: 'dima' } });
+    it("keeps what it has when Slack can't be asked, and says why", async () => {
+      apiCall.rejects(
+        Object.assign(new Error('An API error occurred: ratelimited'), {
+          code: 'slack_webapi_platform_error',
+          data: { error: 'ratelimited' },
+        })
+      );
+      const { service, channelEndpointRepository, logger } = setup({ endpoint: { userId: 'U1', displayName: 'dima' } });
 
       await service.refresh({
         config: slackConfig as never,
@@ -190,6 +195,28 @@ describe('ContactHandleService', () => {
       });
 
       expect(channelEndpointRepository.update.called).to.equal(false);
+      expect(logger.warn.calledOnce).to.equal(true);
+      expect(logger.warn.firstCall.args[0]).to.include({
+        method: 'auth.test',
+        code: 'slack_webapi_platform_error',
+        slackError: 'ratelimited',
+      });
+    });
+
+    it('keeps nothing for a stranger, and asks Slack nothing about them', async () => {
+      const { service, channelEndpointRepository, agentConfigResolver } = setup({ endpoint: { userId: 'U9' } });
+
+      await service.refresh({
+        config: slackConfig as never,
+        subscriberId: 'stranger-1',
+        subscriber: { data: { [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE } } as never,
+        platformUserId: 'U9',
+        message: slackMessage('U9', 'U9') as never,
+      });
+
+      expect(channelEndpointRepository.findOne.called).to.equal(false);
+      expect(agentConfigResolver.resolveSlackBotToken.called).to.equal(false);
+      expect(apiCall.called).to.equal(false);
     });
   });
 
