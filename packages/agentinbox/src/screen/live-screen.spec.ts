@@ -198,6 +198,42 @@ describe('startLiveScreen', () => {
     expect(fake.terminal.screen().filter(Boolean).at(-1)).toMatch(/^ {8}─+$/);
   });
 
+  it('shows the cursor while a question waits for its answer, and hides it again after', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    fake.answers.push('Ada');
+    await drawnSoon();
+    const before = fake.writes.length;
+
+    await screen.ask('Your first name: ');
+    const asked = fake.writes.slice(before).join('');
+    expect(asked.indexOf(SHOW_CURSOR)).toBeGreaterThan(-1);
+    expect(asked.indexOf(SHOW_CURSOR)).toBeLessThan(asked.indexOf('Your first name: '));
+
+    await drawnSoon();
+    await drawnSoon();
+    const after = fake.writes.slice(before).join('');
+    expect(after.lastIndexOf(HIDE_CURSOR)).toBeGreaterThan(after.indexOf('Your first name: '));
+  });
+
+  it('prints a wait that no longer fits in place, with its link and code, once it stops drawing in place', async () => {
+    const fake = fakeHost({ rows: 24 });
+    const screen = startLiveScreen({ command: 'setup telegram' }, fake.host);
+    await drawnSoon();
+
+    screen.wait({
+      figure: Array.from({ length: 30 }, () => '█▀▀█'),
+      rows: [{ mark: 'next', value: 'https://t.me/atlas_bot?start=abc', whole: true }],
+      status: { text: 'Waiting for your /start on @atlas_bot' },
+    });
+    await drawnSoon();
+
+    const text = fake.writes.join('');
+    expect(text).toContain('https://t.me/atlas_bot?start=abc');
+    expect(text).toContain('Waiting for your /start on @atlas_bot');
+    expect(text.lastIndexOf(SHOW_CURSOR)).toBeGreaterThan(text.lastIndexOf(HIDE_CURSOR));
+  });
+
   it('keeps a secret answer as dots, and only the last answer to a question asked again', async () => {
     const fake = fakeHost();
     const screen = startLiveScreen({ command: 'setup' }, fake.host);

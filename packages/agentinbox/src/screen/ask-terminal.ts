@@ -18,6 +18,8 @@ export interface AnswerInput {
   pause: () => unknown;
   on: (event: 'data', listener: (chunk: Buffer | string) => void) => unknown;
   off: (event: 'data', listener: (chunk: Buffer | string) => void) => unknown;
+  /** Puts bytes back in front of what is read next, as Node's readable streams do. */
+  unshift?: (chunk: Buffer) => unknown;
 }
 
 export interface QuestionOutput {
@@ -32,6 +34,9 @@ const ANSWERS_WITHIN_MS = 250;
 const CELL_SIZE = /\x1b\[6;(\d+);(\d+)t/;
 
 /** The answer to `OSC 11 ; ?`: the background as `rgb:` and 1 to 4 hex digits a channel, then BEL or ST. */
+/** The terminal's own answers in what was read, to tell them from what the person typed meanwhile. */
+const TERMINAL_ANSWERS = /\x1b\[6;\d+;\d+t|\x1b\]11;[^\x07\x1b]*(?:\x07|\x1b\\)/g;
+
 const BACKGROUND = /\x1b\]11;rgb:([0-9a-f]{1,4})\/([0-9a-f]{1,4})\/([0-9a-f]{1,4})(?:\x07|\x1b\\)/i;
 
 /**
@@ -144,6 +149,11 @@ function readAnswers(
       clearTimeout(timer);
       input.off('data', read);
       setRawMode(wasRaw);
+      // Anything the person typed or pasted meanwhile goes back for the next question to read.
+      const typed = received.replace(TERMINAL_ANSWERS, '');
+      if (typed && !interrupted) {
+        input.unshift?.(Buffer.from(typed));
+      }
       input.pause();
       resolve();
       // Ctrl-C while raw mode was on arrives as a character instead of a signal; it is passed on as one.

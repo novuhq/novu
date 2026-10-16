@@ -1,5 +1,6 @@
 import pc from 'picocolors';
 import { openedScreen } from './screen/opened';
+import { charWidth, textWidth } from './screen/terminal';
 
 const FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
@@ -33,12 +34,28 @@ export function fitToWidth(
   }
 
   // The frame and the spaces either side of the message, and a column to spare so the cursor never wraps.
-  const room = columns - elapsed.length - 4;
-  if (hint && message.length + hint.length + 3 <= room) {
+  // Measured in columns: a wide character, as in Chinese or Japanese, takes two.
+  const room = columns - textWidth(elapsed) - 4;
+  if (hint && textWidth(message) + textWidth(hint) + 3 <= room) {
     return { message, hint };
   }
 
-  return { message: message.length <= room ? message : `${message.slice(0, Math.max(0, room - 1))}…` };
+  return { message: textWidth(message) <= room ? message : `${clipToColumns(message, room - 1)}…` };
+}
+
+/** The start of `text` that fits in `columns` columns. */
+function clipToColumns(text: string, columns: number): string {
+  let used = 0;
+  let clipped = '';
+  for (const char of text) {
+    used += charWidth(char.codePointAt(0) ?? 0);
+    if (used > columns) {
+      break;
+    }
+    clipped += char;
+  }
+
+  return clipped;
 }
 
 /**

@@ -12,6 +12,7 @@ function terminalAnswering(answer: string | null, delayMs = 5) {
     }),
     resume: vi.fn(),
     pause: vi.fn(),
+    unshift: vi.fn(),
   });
   const output = {
     isTTY: true,
@@ -120,6 +121,23 @@ describe('askTerminal', () => {
       aspect: 1,
       theme: 'dark',
     });
+  });
+
+  it('puts back what the person typed meanwhile, for the next question to read', async () => {
+    const { input, output } = terminalAnswering('y\x1b[6;36;18t\x1b]11;rgb:0000/0000/0000\x07\r');
+
+    await askTerminal(input, output, {});
+
+    expect(input.unshift).toHaveBeenCalledOnce();
+    expect(input.unshift.mock.calls[0][0].toString()).toBe('y\r');
+  });
+
+  it('puts nothing back when only the terminal answered', async () => {
+    const { input, output } = terminalAnswering('\x1b[6;36;18t\x1b]11;rgb:0000/0000/0000\x07');
+
+    await askTerminal(input, output, {});
+
+    expect(input.unshift).not.toHaveBeenCalled();
   });
 
   it('passes Ctrl-C typed meanwhile on as an interrupt, once the terminal is put back', async () => {

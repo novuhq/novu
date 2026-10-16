@@ -14,6 +14,15 @@ describe('fitToWidth', () => {
     expect(fitToWidth(MESSAGE, '· 3s', HINT, 80)).toEqual({ message: MESSAGE });
     expect(fitToWidth(MESSAGE, '· 3s', HINT, 30)).toEqual({ message: 'Waiting for you to ve…' });
   });
+
+  it('measures in columns, where a wide character takes two', () => {
+    const contact = '联'.repeat(30);
+    const { message } = fitToWidth(`Waiting for ${contact} to tap Start`, '· 3s', undefined, 80);
+
+    // 80 columns, less the frame, the elapsed time and a column to spare: 71 for the message.
+    expect([...message].reduce((columns, char) => columns + (char === '联' ? 2 : 1), 0)).toBeLessThanOrEqual(71);
+    expect(message.endsWith('…')).toBe(true);
+  });
 });
 
 describe('startWaitIndicator on a terminal', () => {
@@ -38,7 +47,7 @@ describe('startWaitIndicator on a terminal', () => {
 
     startWaitIndicator(MESSAGE, HINT)();
 
-    const line = written[0].replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').replace('\r', '');
+    const line = written[0].replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').replace(/\r/g, '');
     expect(line.startsWith(`⠋ ${MESSAGE} · 0s`)).toBe(true);
     expect(line.length).toBeLessThan(80);
   });

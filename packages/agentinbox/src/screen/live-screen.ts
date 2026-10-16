@@ -57,8 +57,11 @@ const STILL_SPINNER = '•';
 const SETTLES_WITHIN_MS = 3000;
 /** Shown for a secret answer, whatever its length. */
 const HIDDEN_ANSWER = '••••••••';
-/** Escapes other than colours and styles, which absorbed text has no use for. */
-const MOVES = /\x1b\[[0-?]*[ -/]*[@-ln-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g;
+/**
+ * Escapes other than colours and styles, which absorbed text has no use for: control sequences ending in
+ * anything but `m` (the colours), and OSC strings.
+ */
+const MOVES = /\x1b\[[0-?]*[ -/]*[@A-Za-ln-z[\\\]^_`{|}~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g;
 
 /** The host for a real run: the process's streams and clock, and `readline` to ask. */
 export function processHost(colors: ColorMode, { aspect, theme }: { aspect: number; theme: Theme }): ScreenHost {
@@ -192,7 +195,14 @@ export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, ho
     // Without room for a question below, the screen is drawn as it is anyway, and drawn anew below it after.
     const fit = fitScreen(shown, { ...size, reserve }) ?? (reserve > 0 ? fitScreen(shown, size) : null);
     if (!fit) {
+      // The last frame goes, and the screen as it stands now is printed once instead: a wait's link or code
+      // to scan that no longer fits in place is still there to read.
+      if (painted.length > 0 && !lostTrack) {
+        writeOut(`${BEGIN_FRAME}${CSI}${heightOf(painted, columns())}F${CSI}J${END_FRAME}`);
+      }
+      painted = [];
       stopDrawingInPlace();
+      snapshot();
 
       return;
     }
@@ -261,6 +271,7 @@ export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, ho
     }
 
     if (live) {
+      writeOut(HIDE_CURSOR);
       const reachable = !lostTrack && heightOf(painted, columns()) + below.rows + 1 <= (out.rows ?? 0);
       if (reachable) {
         writeOut(`${BEGIN_FRAME}${below.rows > 0 ? `${CSI}${below.rows}F` : '\r'}${CSI}J${END_FRAME}`);
@@ -542,6 +553,10 @@ export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, ho
       try {
         // Room for the question, a line for the answer, and the blank line above them.
         goBelow(rowsBelow(question) + (gap ? 2 : 1));
+        // The cursor shows where the answer goes while it is typed; it hides again when drawing resumes.
+        if (live) {
+          writeOut(SHOW_CURSOR);
+        }
         answer = await host.ask(question, secret);
       } finally {
         asking = false;
