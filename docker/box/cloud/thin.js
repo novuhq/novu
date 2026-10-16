@@ -4,6 +4,8 @@
 // A new box is only this Worker, which deploys in about 30 s instead of rolling out a container app. The Slack
 // router's address, `novu-box-slack`, is this Worker too, bound to Router("router") in the host (slack-router.js).
 
+import { bearer } from './shared.mjs';
+
 export default {
   async fetch(request, env) {
     if (new URL(request.url).pathname.startsWith('/__box/') && !(await authorize(request)))
@@ -19,7 +21,7 @@ export default {
 const authorized = new Map();
 
 async function authorize(request) {
-  const token = request.headers.get('Authorization')?.match(/^Bearer (.+)$/)?.[1];
+  const token = bearer(request);
   if (!token) return false;
   const key = await sha256(token);
   if (Date.now() - (authorized.get(key) ?? 0) < 5 * 60 * 1000) return true;

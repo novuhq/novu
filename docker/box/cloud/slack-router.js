@@ -16,6 +16,7 @@
 // box is deleted.
 
 import { DurableObject } from 'cloudflare:workers';
+import { bearer } from './shared.mjs';
 
 const SLACK_API = 'https://slack.com/api/';
 const SLACK_FILES = 'https://files.slack.com/';
@@ -684,10 +685,6 @@ function short(identifier) {
 
 function ack() {
   return new Response(null, { status: 200 });
-}
-
-function bearer(request) {
-  return request.headers.get('authorization')?.match(/^Bearer (.+)$/)?.[1];
 }
 
 function copyHeaders(headers) {

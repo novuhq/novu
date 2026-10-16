@@ -14,7 +14,8 @@
 import { spawnSync } from 'node:child_process';
 import { createHmac, randomBytes, randomInt } from 'node:crypto';
 import fs from 'node:fs';
-import { SLACK_CHANNEL as CHANNEL, DOMAIN, ROUTER as ROUTER_WORKER, readEnvFile, SLACK_ENV } from './cloud/target.mjs';
+import { ROUTER as ROUTER_WORKER } from './cloud/shared.mjs';
+import { SLACK_CHANNEL as CHANNEL, DOMAIN, readEnvFile, SLACK_ENV } from './cloud/target.mjs';
 
 const [A, B, OUT = `.scratch/box-run/slack-check-${Date.now()}`] = process.argv.slice(2);
 if (!A || !B) {

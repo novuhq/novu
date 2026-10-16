@@ -22,6 +22,7 @@
 // router hands the box its agents' Slack events (`slackEvent`), and deleting the box disconnects them.
 
 import { DurableObject } from 'cloudflare:workers';
+import { bearer, boxOfOrigin, EXIT_MARK, HOST, SECRETS } from './shared.mjs';
 
 export { Router } from './slack-router.js';
 
@@ -44,14 +45,6 @@ function idleMs(env) {
 function backstopMs(env) {
   return Math.min(10 * 60 * 1000, idleMs(env) / 2);
 }
-const SECRETS = [
-  'CLERK_SECRET_KEY',
-  'BOX_SEED_PASSWORD',
-  'STRIPE_API_KEY',
-  'LAUNCH_DARKLY_SDK_KEY',
-  'NOVU_MANAGED_CLAUDE_API_KEY',
-  'BULL_MQ_PRO_NPM_TOKEN',
-];
 // exec() passes only PATH from the image, so the rest of its ENV (docker/box/Dockerfile) is repeated here.
 const IMAGE_ENV = {
   PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
@@ -79,12 +72,10 @@ fetch('http://127.0.0.1:4000/api/novu?action=discover', {
   .then(({ agents = [] }) => console.log(JSON.stringify({ key, served: agents.map((agent) => agent.agentId) })));
 `;
 const START = ['tini', '--', ...BOX, 'start'];
-// The last line of a streamed command, with its exit code; cloud/target.mjs reads it.
-const EXIT_MARK = '__BOX_EXIT__';
 
 export default {
   async fetch() {
-    return new Response('novu-box-host: reach a box through its own Worker, novu-box-<box>\n', { status: 404 });
+    return new Response(`${HOST}: reach a box through its own Worker, novu-box-<box>\n`, { status: 404 });
   },
 };
 
@@ -359,7 +350,7 @@ export class Box extends DurableObject {
     const origin = await this.ctx.storage.get('origin');
     if (this.env.SLACK_ROUTER_URL && origin)
       await this.router()
-        .unregister(boxName(origin))
+        .unregister(boxOfOrigin(origin))
         .catch((error) => console.log(`slack: ${error.message}`));
     if (this.ctx.container.running) await this.ctx.container.destroy('deleted');
     await this.ctx.storage.deleteAlarm();
@@ -406,7 +397,7 @@ export class Box extends DurableObject {
     this.apiKey = key;
     const api = (path, init) => this.api(origin, path, init);
 
-    const box = boxName(origin);
+    const box = boxOfOrigin(origin);
     // In storage: the Durable Object doesn't stay in memory between alarms.
     if (!served.length || served.sort().join(',') === (await this.ctx.storage.get('slackConnected'))) return;
     // An agent the bridge serves may not be in the API yet (a sync creates it); the next alarm connects it.
@@ -640,15 +631,6 @@ function waking(request) {
     );
 
   return new Response('the box is waking up\n', { status: 503, headers: { 'Retry-After': '10' } });
-}
-
-// https://novu-box-<box>.<workers.dev subdomain> -> <box>
-function boxName(origin) {
-  return new URL(origin).hostname.split('.')[0].replace(/^novu-box-/, '');
-}
-
-function bearer(request) {
-  return request.headers.get('Authorization')?.match(/^Bearer (.+)$/)?.[1];
 }
 
 function json(body, status = 200) {

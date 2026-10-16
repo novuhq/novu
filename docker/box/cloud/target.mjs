@@ -6,24 +6,14 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import { join } from 'node:path';
+import { boxWorker, EXIT_MARK, HOST, ROUTER, SECRETS } from './shared.mjs';
 
 const HERE = new URL('.', import.meta.url).pathname;
 const BOX_DIR = join(HERE, '..');
 const WRANGLER = ['npx', '--yes', 'wrangler@4.150.0'];
-const HOST = 'novu-box-host';
-export const ROUTER = 'novu-box-slack';
 const COMPATIBILITY_DATE = '2026-09-29';
 // The Novu account's workers.dev subdomain.
 export const DOMAIN = process.env.BOX_CLOUD_DOMAIN ?? 'cli-shortener.workers.dev';
-const SECRETS = [
-  'CLERK_SECRET_KEY',
-  'BOX_SEED_PASSWORD',
-  'STRIPE_API_KEY',
-  'LAUNCH_DARKLY_SDK_KEY',
-  'NOVU_MANAGED_CLAUDE_API_KEY',
-  'BULL_MQ_PRO_NPM_TOKEN',
-];
-const EXIT_MARK = '__BOX_EXIT__';
 // Novu Bot's credentials, for the router only (never a box): SLACK_BOT_TOKEN and SLACK_SIGNING_SECRET.
 export const SLACK_ENV = process.env.BOX_SLACK_ENV ?? join(os.homedir(), '.config/novu-box/slack.env');
 // #novu-box, the one channel the router posts in besides DMs.
@@ -33,7 +23,7 @@ export const SLACK_CHANNEL = process.env.BOX_SLACK_CHANNEL ?? 'C0C9PHBUDR6';
 const READY_WITHIN_SECONDS = { baking: 25 * 60, waking: 8 * 60, running: 5 * 60 };
 
 export function cloudTarget({ box, log, githubToken }) {
-  const worker = `novu-box-${box}`;
+  const worker = boxWorker(box);
   const origin = `https://${worker}.${DOMAIN}`;
 
   async function call(path, init = {}) {
@@ -171,7 +161,7 @@ export function cloudTarget({ box, log, githubToken }) {
   }
 
   async function snapshotOf(name) {
-    const response = await fetch(`https://novu-box-${name}.${DOMAIN}/__box/state`, {
+    const response = await fetch(`https://${boxWorker(name)}.${DOMAIN}/__box/state`, {
       headers: { Authorization: `Bearer ${githubToken()}` },
     });
 
@@ -182,13 +172,15 @@ export function cloudTarget({ box, log, githubToken }) {
   async function startingSnapshot({ from, fromBase, ref }) {
     if (from) {
       const id = await snapshotOf(from);
-      if (!id) throw new Error(`novu-box-${from} has no snapshot to start from`);
+      if (!id) throw new Error(`${boxWorker(from)} has no snapshot to start from`);
 
       return id;
     }
     if (!fromBase || box === 'base' || (await state())) return null;
     const id = await snapshotOf('base');
-    log(id ? `${worker} is new: starting it from novu-box-base` : `no novu-box-base snapshot: baking ${ref}`);
+    log(
+      id ? `${worker} is new: starting it from ${boxWorker('base')}` : `no ${boxWorker('base')} snapshot: baking ${ref}`
+    );
 
     return id;
   }
