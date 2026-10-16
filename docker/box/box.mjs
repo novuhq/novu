@@ -14,6 +14,7 @@
 //                               --follow; --errors for warnings and errors only)
 //   box quiesce                 stop every process, the data stores last, leaving the supervisor up for a snapshot
 //   box resume                  start again what quiesce stopped (when the snapshot failed)
+//   box stop-apply              stop the apply that runs, and all it started (CI, for a newer push)
 //   box status                  list processes
 //   box migrate                 replica set, Redis Cluster, Mongo indexes, ClickHouse migrations, S3 bucket
 //                               (run by process-compose before the apps)
@@ -21,7 +22,7 @@
 import { parseArgs } from 'node:util';
 import { apply } from './apply.mjs';
 import { log, pc } from './lib.mjs';
-import { bake, doctor, quiesce, resume, start, state } from './lifecycle.mjs';
+import { bake, doctor, quiesce, resume, start, state, stopApply } from './lifecycle.mjs';
 import { logs } from './logs.mjs';
 import { migrate } from './migrate.mjs';
 
@@ -64,6 +65,7 @@ const commands = {
   },
   quiesce,
   resume,
+  'stop-apply': stopApply,
   status: () => pc(['process', 'list']),
 };
 

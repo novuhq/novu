@@ -25,7 +25,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { isOidc } from './auth.mjs';
 import { boxes } from './boxes.js';
-import { bearer, boxOfOrigin, EXIT_MARK, HOST, SECRETS } from './shared.mjs';
+import { BOX_CLI, bearer, boxOfOrigin, detached, EXIT_MARK, HOST, SECRETS } from './shared.mjs';
 
 export { Router } from './slack-router.js';
 
@@ -60,7 +60,6 @@ const IMAGE_ENV = {
   pnpm_config_verify_deps_before_run: 'false',
   BOX_HOME: '/opt/box',
 };
-const BOX = ['node', '/opt/box/box.mjs'];
 // Prints the API key and the agents the bridge app serves now, signed as box.mjs signs discover. An agent the
 // bridge no longer serves keeps its bridge URL in the API, so the API's list can't tell.
 const DISCOVER = `
@@ -74,7 +73,7 @@ fetch('http://127.0.0.1:4000/api/novu?action=discover', {
   .then((response) => response.json())
   .then(({ agents = [] }) => console.log(JSON.stringify({ key, served: agents.map((agent) => agent.agentId) })));
 `;
-const START = ['tini', '--', ...BOX, 'start'];
+const START = ['tini', '--', ...BOX_CLI, 'start'];
 
 export default {
   async fetch(request, env) {
@@ -208,8 +207,8 @@ export class Box extends DurableObject {
     const ref = url.searchParams.get('ref') ?? 'next';
     await this.ctx.storage.delete('lostSnapshot');
     await this.start({ image: this.ctx.container.images.box, entrypoint: ['tini', '--', 'sleep', 'infinity'] });
-    const bake = `mkdir -p /data/logs && nohup sh -c 'node /opt/box/box.mjs bake "$0" && exec env -u GITHUB_TOKEN node /opt/box/box.mjs start' "$0" > /data/logs/up.log 2>&1 &`;
-    await (await this.run(['sh', '-c', bake, ref], { github: readToken(request, this.env) })).exitCode;
+    const bake = detached([...BOX_CLI, 'bake', ref, '--start'], '/data/logs/up.log');
+    await (await this.run(bake, { github: readToken(request, this.env) })).exitCode;
 
     return { state: 'baking', ref };
   }
@@ -332,7 +331,7 @@ export class Box extends DurableObject {
         return { state: 'stopped without a snapshot (never baked)' };
       }
       quiesced = true;
-      const quiesce = await (await this.run([...BOX, 'quiesce'])).exitCode;
+      const quiesce = await (await this.run([...BOX_CLI, 'quiesce'])).exitCode;
       step(`quiesce exited ${quiesce}`);
       if (quiesce !== 0) throw new Error(`quiesce exited ${quiesce}`);
       const snapshot = await container.snapshotContainer({ name: 'box' });
@@ -350,7 +349,7 @@ export class Box extends DurableObject {
         if (quiesced) {
           const resumed = await within(
             10 * 60 * 1000,
-            this.run([...BOX, 'resume']).then((p) => p.exitCode),
+            this.run([...BOX_CLI, 'resume']).then((p) => p.exitCode),
             'resume'
           ).catch((resumeError) => resumeError.message);
           step(`resume exited ${resumed}`);
@@ -376,17 +375,11 @@ export class Box extends DurableObject {
     return { state: 'deleted' };
   }
 
-  // Whether a bake or apply runs; when the box doesn't say in time, it counts as busy, so nothing quiesces under one.
+  // Whether a bake or apply holds the box's lock; when the box doesn't say in time, it counts as busy, so nothing
+  // quiesces under one.
   async busy() {
-    const count = async () => {
-      const process = await this.run(['sh', '-c', 'ps -eo args | grep -c -E "^node /opt/box/box.mjs (bake|apply)"']);
-      const { stdout } = await process.output();
-
-      return Number(new TextDecoder().decode(stdout).trim());
-    };
-
-    return within(CALL_MS, count(), 'the busy check').then(
-      (running) => running > 0,
+    return within(CALL_MS, this.boxState(), 'the busy check').then(
+      ({ lock }) => Boolean(lock),
       (error) => {
         console.log(`${error.message}; counted as busy`);
 
@@ -563,6 +556,11 @@ export class Box extends DurableObject {
       throw new Error(`${init.method ?? 'GET'} ${path} -> ${response.status}: ${text.slice(0, 200)}`);
 
     return text ? JSON.parse(text) : null;
+  }
+
+  // What `box state` says: the baked and applied commits, and the bake or apply holding the lock.
+  async boxState() {
+    return JSON.parse(await this.output([...BOX_CLI, 'state']));
   }
 
   async output(cmd) {

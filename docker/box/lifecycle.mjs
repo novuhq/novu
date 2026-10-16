@@ -21,6 +21,7 @@ import {
   fetchRef,
   gitWithToken,
   holdLock,
+  isAlive,
   LOCK,
   lockHolder,
   log,
@@ -305,6 +306,23 @@ function processTableProblems(names) {
     ...(unknown.length ? [`lib.mjs's PROCESSES lacks ${unknown.join(', ')} from process-compose.yaml`] : []),
     ...(missing.length ? [`process-compose.yaml lacks ${missing.join(', ')} from lib.mjs's PROCESSES`] : []),
   ];
+}
+
+// Stops the apply that runs and everything it started, within a minute; CI calls it when a newer push supersedes
+// the one being applied. The apply was started detached (cloud/shared.mjs), so its pid is its process group. The
+// next apply takes over its lock and redoes its files (.applying.json).
+export async function stopApply() {
+  const holder = lockHolder();
+  if (holder?.command !== 'apply') return;
+  const signalGroup = (signal) => {
+    try {
+      process.kill(-holder.pid, signal);
+    } catch {}
+  };
+  signalGroup('SIGTERM');
+  await poll(60, () => !isAlive(-holder.pid), '').catch(() => signalGroup('SIGKILL'));
+  await poll(10, () => !isAlive(-holder.pid), `the apply's process group ${holder.pid} outlived SIGKILL`);
+  log(`stopped the apply of an older push (pid ${holder.pid})`);
 }
 
 // Stops every process, the stores last, leaving the supervisor up for a snapshot.

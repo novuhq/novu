@@ -12,7 +12,7 @@
 
 import fs from 'node:fs';
 import { OIDC_AUDIENCE } from '../cloud/auth.mjs';
-import { boxWorker } from '../cloud/shared.mjs';
+import { BOX_CLI, boxWorker, detached } from '../cloud/shared.mjs';
 import { cloudTarget, DOMAIN, hostBoxes } from '../cloud/target.mjs';
 import { githubToken } from '../node.mjs';
 
@@ -24,7 +24,6 @@ const APPLY_MINUTES = 30;
 const MARK = '<!-- novu-box -->';
 const RUN_URL =
   process.env.GITHUB_RUN_ID && `${process.env.GITHUB_SERVER_URL}/${REPO}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-const APPLY = '^node /opt/box/box.mjs apply';
 const started = Date.now();
 
 function log(message) {
@@ -212,52 +211,33 @@ async function applyHead(number, sha) {
   }
 }
 
-// A newer push cancels the run of the older one, but not that run's apply, which goes on in the box: stop it and
-// everything it started (its process group, see `apply`), within a minute. Its .applying.json makes the next apply
-// redo its files; a git lock it left would stop the next checkout. `sh` is dash, whose kill takes no `--`.
-const STOP_APPLY = `
-groups=""; pids=$(pgrep -f '${APPLY}')
-[ -z "$pids" ] && exit 0
-for pid in $pids; do
-  if [ "$(ps -o pgid= -p "$pid" | tr -d ' ')" = "$pid" ]; then groups="$groups $pid"; kill -TERM "-$pid"; else kill -TERM "$pid"; fi
-done
-for i in $(seq 60); do
-  [ -z "$(pgrep -f '${APPLY}'; for g in $groups; do pgrep -g "$g"; done)" ] && break
-  sleep 1
-done
-for g in $groups; do kill -KILL "-$g" 2>/dev/null; done
-pkill -KILL -f '${APPLY}'
-rm -f /data/novu/.git/index.lock
-echo "stopped the apply of an older push (pid $pids)"
-`;
-
+// A newer push cancels the run of the older one, but not that run's apply, which goes on in the box.
 async function stopApply(cloud) {
-  const stopped = await cloud.run(['sh', '-c', STOP_APPLY], { capture: true });
+  const stopped = await cloud.box(['stop-apply'], { capture: true });
   if (stopped) log(stopped);
 }
 
-// `box apply <sha>` on its own in the box (nohup, its own session, so STOP_APPLY can stop all of it): it outlives
-// this run when a newer push cancels it, and a stream that long would break (over 5 minutes, README). This waits
-// for it to end, then reads its log and the box's state. Returns its plan line.
+// `box apply <sha>` detached in the box: it outlives this run when a newer push cancels it, and a stream that long
+// would break (over 5 minutes, README). This waits while it holds the box's lock, then reads its log and the box's
+// state. Returns its plan line.
 async function apply(cloud, sha) {
   const file = `/data/logs/apply-${sha.slice(0, 12)}.log`;
   const fail = (message) => Object.assign(new Error(message), { log: file });
   log(`applying ${sha}; the box logs it to ${file}`);
-  await cloud.run(['sh', '-c', 'nohup setsid node /opt/box/box.mjs apply "$0" > "$1" 2>&1 &', sha, file], {
-    github: true,
-    capture: true,
-  });
+  await cloud.run(detached([...BOX_CLI, 'apply', sha], file), { github: true, capture: true });
   const deadline = Date.now() + APPLY_MINUTES * 60_000;
   let lastSeen = Date.now();
   for (;;) {
     await sleep(10_000);
     const running = await cloud
-      .run(['sh', '-c', `pgrep -f '${APPLY}' > /dev/null && tail -n 1 "$0" || echo __done__`, file], { capture: true })
-      .then((line) => {
+      .run(['sh', '-c', `${BOX_CLI.join(' ')} state && tail -n 1 "$0"`, file], { capture: true })
+      .then((text) => {
         lastSeen = Date.now();
-        if (line !== '__done__') log(`still applying: ${line.slice(0, 200)}`);
+        const [stateLine, ...last] = text.split('\n');
+        const applying = JSON.parse(stateLine).lock?.command === 'apply';
+        if (applying) log(`still applying: ${last.join(' ').slice(0, 200)}`);
 
-        return line !== '__done__';
+        return applying;
       })
       .catch((error) => {
         if (Date.now() - lastSeen > 3 * 60_000) throw fail(`the box stopped answering: ${error.message}`);

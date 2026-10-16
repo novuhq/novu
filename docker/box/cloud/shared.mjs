@@ -30,6 +30,16 @@ export const SECRETS = [
 // The last line of a streamed command, with its exit code.
 export const EXIT_MARK = '__BOX_EXIT__';
 
+// The box's own commands (box.mjs), as the image has them.
+export const BOX_CLI = ['node', '/opt/box/box.mjs'];
+
+// A command that runs on in the box after the request that started it, with its output in `log`: the host's bake
+// and CI's apply. In its own session (setsid execs it, so it keeps sh's child pid), its pid is also its process
+// group, which the bake-or-apply lock records, so `box stop-apply` stops all of it.
+export function detached(cmd, log) {
+  return ['sh', '-c', 'mkdir -p /data/logs && setsid nohup "$@" > "$0" 2>&1 < /dev/null &', log, ...cmd];
+}
+
 export function bearer(request) {
   return request.headers.get('Authorization')?.match(/^Bearer (.+)$/)?.[1];
 }

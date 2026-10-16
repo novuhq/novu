@@ -236,6 +236,8 @@ export function holdLock(command) {
     if (holder) throw taken(holder);
     log('taking over the lock of a bake or apply that is gone');
     fs.rmSync(LOCK, { force: true });
+    // Only a bake or apply runs git in the checkout, so an index.lock is one that the dead one left.
+    fs.rmSync(`${REPO}/.git/index.lock`, { force: true });
     // Another one that found the same dead holder may have taken the lock in between.
     try {
       take();
