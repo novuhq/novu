@@ -202,7 +202,10 @@ export function cloudTarget({ box, log, githubToken, viaHost = false }) {
 
       return id;
     }
-    if (!fromBase || box === 'base' || (await state())) return null;
+    // A box with neither container nor snapshot is new; for a few seconds after a delete, its old Worker still
+    // answers with that.
+    const current = await state();
+    if (!fromBase || box === 'base' || current?.running || current?.snapshot) return null;
     const id = await snapshotOf('base');
     log(
       id ? `${worker} is new: starting it from ${boxWorker('base')}` : `no ${boxWorker('base')} snapshot: baking ${ref}`
@@ -272,7 +275,9 @@ export function cloudTarget({ box, log, githubToken, viaHost = false }) {
       // --deploy: a change to docker/box (image or Worker code) goes to the host, so to every box.
       if (viaHost && !(await hostExists())) throw new Error(`${HOST} isn't deployed`);
       if (!viaHost && (redeploy || !(await hostExists()))) deployHost();
-      if (redeploy || !(await state())) await deployBoxWorker();
+      // Through the host the upload is idempotent and takes 2 s, so it never relies on state(), which a deleted
+      // box's Worker still answers for a few seconds.
+      if (viaHost || redeploy || !(await state())) await deployBoxWorker();
       const { state: started } = await (await call(`/up?${query}`, { method: 'POST' })).json();
       log(`${worker}: ${started}${started === 'baking' ? ` ${ref} (11 to 14 minutes)` : ''}`);
       await waitUntilReady(READY_WITHIN_SECONDS[started]);
