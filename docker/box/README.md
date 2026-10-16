@@ -255,9 +255,9 @@ For that the host holds two keys of its own, as Worker secrets that no box gets 
 | `~/.config/novu-box/github.env` | `GITHUB_READ_TOKEN`: fine-grained, `novuhq`, repositories `novu` and `packages-enterprise`, Contents and Checks read | Every box's git fetches and CI lookup, instead of the caller's token, so no push-capable token reaches a box. Without it, people's calls use their own token, and CI can't apply |
 | `~/.config/novu-box/cloudflare.env` | `CLOUDFLARE_API_TOKEN`: Account, Workers Scripts, Edit, on the Novu account only | The `/__box/boxes` routes |
 
-Until an org owner approves the GitHub token, it reads only public `novuhq/novu`: applying a PR works, but a
-bake (so the weekly rebake, and a box started when `base` has no snapshot) and an apply that moves `.source`
-fail at the enterprise submodule.
+A new fine-grained GitHub token needs an org owner's approval (the current one expires 2027-10-17). Until it's
+approved it reads only public `novuhq/novu`: applying a PR works, but a bake (so the weekly rebake, and a box
+started when `base` has no snapshot) and an apply that moves `.source` fail at the enterprise submodule.
 
 #### Slack: Novu Bot in `#novu-box`
 
