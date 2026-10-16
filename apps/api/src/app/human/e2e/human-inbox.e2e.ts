@@ -10,6 +10,7 @@ import {
   ConversationStatusEnum,
   HumanInteractionRepository,
   IntegrationRepository,
+  SubscriberRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES, HumanInteractionStatusEnum } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
@@ -27,9 +28,11 @@ const channelEndpointRepository = new ChannelEndpointRepository();
 const conversationRepository = new ConversationRepository();
 const conversationActivityRepository = new ConversationActivityRepository();
 const humanInteractionRepository = new HumanInteractionRepository();
+const subscriberRepository = new SubscriberRepository();
 
 const TELEGRAM_CHAT_ID = '777101';
 const STRANGER_CHAT_ID = '888202';
+const BOB_CHAT_ID = '777103';
 
 describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
   let session: UserSession;
@@ -306,6 +309,109 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
     // The question is one row, not the card plus a copy of it.
     expect(messages.filter((message) => message.text.includes('Which environment?'))).to.have.length(1);
     expect(messages.some((message) => message.interaction?.id === interactionId)).to.equal(true);
+  });
+
+  it('shows a send to two contacts in both threads, and the answer in the thread of whoever gave it', async () => {
+    const bobSubscriberId = `${subscriberId}-bob`;
+    await subscriberRepository.create({
+      subscriberId: bobSubscriberId,
+      firstName: 'Bob',
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    });
+    await channelEndpointRepository.create({
+      identifier: `ce-inbox-e2e-bob-${Date.now()}`,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      integrationIdentifier,
+      providerId: ChatProviderIdEnum.Telegram,
+      channel: ChannelTypeEnum.CHAT,
+      subscriberId: bobSubscriberId,
+      contextKeys: [],
+      type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+      endpoint: { chatId: BOB_CHAT_ID },
+    });
+
+    const askRes = await session.testAgent
+      .post('/v1/human/interactions')
+      .send({ kind: 'ask', card: { title: 'Which region?' }, to: [subscriberId, bobSubscriberId] });
+    expect(askRes.status).to.equal(201, JSON.stringify(askRes.body));
+    const interactionId = askRes.body.data.id as string;
+    const threadIds = (askRes.body.data.threads as Array<{ id: string }>).map((thread) => thread.id);
+    expect(threadIds).to.have.length(2);
+    const [adaThreadId, bobThreadId] = threadIds;
+    expect(bobThreadId).to.not.equal(adaThreadId);
+
+    async function showMessages(threadId: string) {
+      const res = await session.testAgent.get(`/v1/human/inbox/${threadId}`);
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+
+      return res.body.data.messages as Array<{ text: string; from: string; interaction?: { id: string } }>;
+    }
+
+    function questionsIn(messages: Awaited<ReturnType<typeof showMessages>>) {
+      return messages.filter((message) => message.interaction?.id === interactionId);
+    }
+
+    for (const threadId of threadIds) {
+      const questions = questionsIn(await showMessages(threadId));
+      expect(questions, `the question in thread ${threadId}`).to.have.length(1);
+      expect(questions[0].from).to.equal('agent');
+      expect(questions[0].text).to.include('Which region?');
+    }
+
+    await sendMessageToRelay('eu-west', BOB_CHAT_ID);
+
+    const getRes = await session.testAgent.get(`/v1/human/interactions/${interactionId}`);
+    expect(getRes.body.data.status).to.equal(HumanInteractionStatusEnum.ANSWERED);
+    expect(getRes.body.data.response.respondedBySubscriberId).to.equal(bobSubscriberId);
+
+    const bobMessages = await showMessages(bobThreadId);
+    expect(bobMessages.map((message) => message.text)).to.include('eu-west');
+    expect(questionsIn(bobMessages)).to.have.length(1);
+    const adaMessages = await showMessages(adaThreadId);
+    expect(adaMessages.map((message) => message.text)).to.not.include('eu-west');
+    expect(questionsIn(adaMessages)).to.have.length(1);
+
+    // Behind it: the question stored in each thread, and the answer once, in Bob's thread.
+    const [adaConversationId, bobConversationId] = await Promise.all(
+      threadIds.map(async (identifier) => {
+        const conversation = await conversationRepository.findOne(
+          { _environmentId: session.environment._id, identifier },
+          ['_id']
+        );
+
+        return String(conversation?._id);
+      })
+    );
+    const rows = await conversationActivityRepository.find(
+      {
+        _environmentId: session.environment._id,
+        'richContent.humanInteraction.interactionIdentifier': interactionId,
+      },
+      ['identifier', '_conversationId', 'type', 'senderId']
+    );
+    expect(
+      rows.map((row) => ({ identifier: row.identifier, conversationId: String(row._conversationId), type: row.type }))
+    ).to.have.deep.members([
+      {
+        identifier: `human:${interactionId}:request`,
+        conversationId: adaConversationId,
+        type: ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST,
+      },
+      {
+        identifier: `human:${interactionId}:${bobConversationId}:request`,
+        conversationId: bobConversationId,
+        type: ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST,
+      },
+      {
+        identifier: `human:${interactionId}:${bobConversationId}:response`,
+        conversationId: bobConversationId,
+        type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+      },
+    ]);
+    const answer = rows.find((row) => row.type === ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE);
+    expect(answer?.senderId).to.equal(bobSubscriberId);
   });
 
   it('shows a question once when the thread is read one message per page', async () => {
