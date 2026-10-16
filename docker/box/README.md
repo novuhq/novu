@@ -64,7 +64,7 @@ preview-only values. A box runs PR code, and that code can read its environment,
 | `CLERK_SECRET_KEY` | Clerk app `novu-box`, development instance | Bake (seeds the user and org), API, `smoke.mjs` |
 | `BOX_SEED_PASSWORD` | The seed user's dashboard password, from the password manager | Bake (sets it on the Clerk user) |
 | `STRIPE_API_KEY` | Stripe sandbox `Novu Box` | Bake (puts the org on Team), `stripe listen`, API |
-| `GITHUB_TOKEN` | GitHub, read access to `novuhq/novu` and the enterprise submodule | `bake` and `apply` only; pass it with `-e`, it's never written to disk (`cli.mjs` takes it from `gh auth token`) |
+| `GITHUB_TOKEN` | GitHub, read access to `novuhq/novu` and the enterprise submodule | `bake` and `apply` only; pass it with `-e`, it's never written to disk (`cli.mjs` takes it from `gh auth token`). Only the git fetches and the CI lookup get it, never the installs, builds or apps |
 | `BULL_MQ_PRO_NPM_TOKEN` (optional) | Taskforce.sh registry | Bake; without it the box runs open-source BullMQ |
 | `NOVU_MANAGED_CLAUDE_API_KEY` (optional) | Anthropic, a workspace with a monthly spend limit | Start (runs thalamus and seeds the `box-managed` agent), API, bridge app (real models for its agents) |
 
@@ -144,7 +144,7 @@ touched as well as its own changes.
 | `node docker/box/cli.mjs mail [search \| id]` | What the box sent, from its Mailpit: the newest messages (email, and SMS, push and chat from the sink), a search (`to:a@b.c`, `subject:Welcome`, `tag:sms`), or one message with its headers, links, Mailpit's HTML check (which email clients break on what) and a `view` URL to screenshot; `--html`, `--check-links`, `--limit <n>` |
 | `node docker/box/cli.mjs logs [process]` | The last 200 lines (`--tail <n>`) of one process, or of all of them merged, as `name \| LEVEL context: message`; `--errors` keeps warnings and errors, `--follow` streams new lines. An unknown name lists the processes |
 | `node docker/box/cli.mjs exec -- <command>` | Runs a command in the box's checkout (`/data/novu`) |
-| `node docker/box/cli.mjs down` | Stops the box. Its volume, and so its data, stays; `up` starts it again |
+| `node docker/box/cli.mjs down` | Stops the box, giving its processes up to 180 s to stop in order. Its volume, and so its data, stays; `up` starts it again |
 
 `sync` puts the checkout on the box as `apply` puts a PR: it commits HEAD plus every change, untracked files
 included and ignored files not, into one commit, and sends it as a git bundle. The box merges it onto the baked
@@ -188,7 +188,7 @@ state (`/__box/state`) doesn't count as a request. Measured on standard-4:
 | Step | Time |
 |---|---|
 | First `up` of a box (bake `next`) | 13 to 16 min |
-| `down` (stop apps and databases, snapshot, stop) | 18 s to 6 min (the box saves on its own; `down` waits) |
+| `down` (stop every process, snapshot, stop) | 18 s to 6 min (the box saves on its own; `down` waits, and fails unless a new snapshot is stored) |
 | Wake, from the first browser request to a healthy API | 33 to 36 s |
 | `sync`, an API change | 83 s |
 | Smoke over the public address (a box started from `base`) | 43/43 in about 70 s |
@@ -210,8 +210,7 @@ Cloudflare deletes a snapshot 30 days after it was made or last restored, and no
 `up` says so, and the next `up` bakes.
 
 Limits for now: each sleep leaves a snapshot image in the account's registry that nothing deletes yet
-(`npx wrangler containers images list`); the GitHub token reaches the bake's and `sync`'s environment, as it does
-locally; requests the box makes to its own public address go out through the internet; a host redeploy with a new
+(`npx wrangler containers images list`); requests the box makes to its own public address go out through the internet; a host redeploy with a new
 image is untested with boxes running. A `sync` whose rebuild runs longer than 5 minutes (a playground change, with
 `pnpm install`) ends with `fetch failed` and leaves the bundle unapplied; apply it in the background and follow
 its log:
@@ -311,7 +310,10 @@ Other commands, run with `docker exec novu-box node /opt/box/box.mjs <command>`:
 - `doctor` and `logs [process]`, which `cli.mjs` runs. `logs` reads `/data/logs/process-compose.log`, where
   process-compose writes every process's output.
 - `state` prints the baked and applied commits, and an unfinished apply, as JSON.
-- `quiesce` stops the apps, then the databases, leaving the supervisor up for a snapshot.
+- `quiesce` stops every running process, the data stores last, leaving the supervisor up for a snapshot; it fails
+  if anything still runs. `resume` starts again what it stopped (the Cloudflare Worker runs it when a save fails).
+- The processes are listed once, in `PROCESSES` at the top of `box.mjs`; `doctor` reports a process that
+  `process-compose.yaml` and that list don't both have.
 
 ## What the bake seeds
 
