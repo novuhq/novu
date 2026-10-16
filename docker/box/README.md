@@ -216,6 +216,49 @@ image is untested with boxes running. A `sync` whose rebuild runs longer than 5 
 its log:
 `node docker/box/cli.mjs exec --cloud -- sh -c 'nohup node /opt/box/box.mjs apply --bundle /data/run/sync.bundle > /data/logs/apply-sync.log 2>&1 &'`.
 
+#### Per pull request: the `box` label
+
+`.github/workflows/novu-box.yml` gives a PR in `novuhq/novu` its own box, `pr-<number>`, while we battle-test
+boxes on demand only:
+
+- Adding the `box` label starts the box from `base` (as `up --cloud --box pr-<n> --from base`; it bakes `next`
+  when `base` has no snapshot) and applies the PR's head commit. Only someone with write access to `novuhq/novu`
+  can start one: the workflow checks who added the label, on every run, and otherwise only says so in the PR. PRs
+  from forks get no box (`pull_request` gives them no OIDC token; the workflow doesn't use `pull_request_target`).
+- Every push applies the new head (`box apply <sha>`). One run per PR at a time: a newer push cancels the older
+  run, and the newer run stops the older run's apply in the box before it starts its own (the apply's marker makes
+  the next apply redo its files).
+- One comment on the PR, edited in place, says "applying", then the box's address, the applied commit, the apply's
+  plan line and how long it took, or what failed and where its log is.
+- Closing the PR or removing the label deletes the box. At most 30 PR boxes exist at once; over that, the comment
+  says so. Nightly, the workflow deletes `pr-*` boxes whose PR is closed or no longer labeled; on Sundays it
+  rebakes `base` from `next` and saves it, which also keeps its snapshot from expiring. Both run by hand with
+  "Run workflow" (`cleanup`, `rebake`).
+
+`github/actions.mjs` does all of it, through `cloud/target.mjs` as `cli.mjs --cloud` does. The workflow holds no
+secret. It signs in to the boxes with its GitHub Actions OIDC token (audience `novu-box`), which `cloud/auth.mjs`
+verifies in the Workers (RS256 against GitHub's keys; issuer, audience, time, repository `novuhq/novu` and
+workflow `novu-box.yml`), next to the push-capable GitHub tokens people use. A box's Worker is created by the
+host, not wrangler, at the host's own address:
+
+| Route on `novu-box-host` | What it does |
+|---|---|
+| `GET /__box/boxes` | Lists the boxes (every `novu-box-<name>` Worker but the host and the router) |
+| `PUT /__box/boxes/<box>` | Uploads the box's Worker (`thin.js`, `auth.mjs`, `shared.mjs`, bound to the host's Box class) and puts it on workers.dev |
+| `DELETE /__box/boxes/<box>` | Stops the box and forgets it, then deletes its Worker |
+
+For that the host holds two keys of its own, as Worker secrets that no box gets (they aren't in `SECRETS`).
+`up --cloud --deploy` reads them, like Novu Bot's, from files on the machine that deploys the host:
+
+| File | Key | What for |
+|---|---|---|
+| `~/.config/novu-box/github.env` | `GITHUB_READ_TOKEN`: fine-grained, `novuhq`, repositories `novu` and `packages-enterprise`, Contents and Checks read | Every box's git fetches and CI lookup, instead of the caller's token, so no push-capable token reaches a box. Without it, people's calls use their own token, and CI can't apply |
+| `~/.config/novu-box/cloudflare.env` | `CLOUDFLARE_API_TOKEN`: Account, Workers Scripts, Edit, on the Novu account only | The `/__box/boxes` routes |
+
+Until an org owner approves the GitHub token, it reads only public `novuhq/novu`: applying a PR works, but a
+bake (so the weekly rebake, and a box started when `base` has no snapshot) and an apply that moves `.source`
+fail at the enterprise submodule.
+
 #### Slack: Novu Bot in `#novu-box`
 
 Cloud boxes' agents can be used from the company Slack through one app, Novu Bot, in `#novu-box` and in DMs with
