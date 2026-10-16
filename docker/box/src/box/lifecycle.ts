@@ -269,9 +269,11 @@ export const doctor = Effect.gen(function* () {
       exitCode,
       restarts,
     }));
+  // Only migrate runs once; any other process that completed was stopped or exited, whatever its exit code.
   for (const { name, status, ready, exitCode } of processes) {
-    const healthy = status === 'Completed' ? exitCode === 0 : status === 'Running' && ready !== 'Not Ready';
-    if (!healthy) problems.push(`${name} is ${status === 'Running' ? 'not ready' : status}`);
+    if (status === 'Completed' && name !== 'migrate') problems.push(`${name} stopped (exit ${exitCode})`);
+    else if (status === 'Completed' ? exitCode !== 0 : status !== 'Running' || ready === 'Not Ready')
+      problems.push(`${name} is ${status === 'Running' ? 'not ready' : status}`);
   }
 
   const http: Record<string, number> = {};
