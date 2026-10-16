@@ -8,7 +8,7 @@
   },
   "scripts": {
     "box": "node src/cli/main.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src/cloud",
     "deploy": "alchemy deploy --stage prod"
   },
   "dependencies": {
