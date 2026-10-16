@@ -476,13 +476,27 @@ function runningProcesses() {
 // Stops every process, the stores last, leaving the supervisor up for a snapshot. process-compose fails to stop a
 // process that isn't running (a failed apply leaves apps stopped), so it stops only the running ones.
 async function quiesce() {
-  const others = [...runningProcesses()].filter((name) => !STORES.includes(name));
-  if (others.length) await step(`stop ${others.join(' ')}`, () => pc(['process', 'stop', ...others]));
+  const others = Object.keys(PROCESSES).filter((name) => !STORES.includes(name));
+  const runningOthers = others.filter((name) => runningProcesses().has(name));
+  if (runningOthers.length)
+    await step(`stop ${runningOthers.join(' ')}`, () => pc(['process', 'stop', ...runningOthers]));
+  await waitUntilStopped(others);
   const running = runningProcesses();
   const stores = STORES.filter((name) => running.has(name));
   if (stores.length) await step(`stop ${stores.join(' ')}`, () => pc(['process', 'stop', ...stores]));
-  const left = [...runningProcesses()];
-  if (left.length) throw new Error(`still running after the stop: ${left.join(' ')}`);
+  await waitUntilStopped(Object.keys(PROCESSES));
+}
+
+// `process stop` returns while the processes still terminate, and a terminating process isn't `is_running`.
+async function waitUntilStopped(names) {
+  for (let second = 0; ; second++) {
+    const left = processList()
+      .filter((entry) => names.includes(entry.name) && (entry.is_running || entry.status === 'Terminating'))
+      .map((entry) => entry.name);
+    if (!left.length) return;
+    if (second === 180) throw new Error(`still running 180s after the stop: ${left.join(' ')}`);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
 }
 
 // Starts again what `quiesce` stopped, when the box keeps running after all (saving it failed): the stores, then,
