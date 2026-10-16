@@ -1,7 +1,7 @@
 'use client';
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { type ReactNode, useState } from 'react';
+import { type CSSProperties, type ReactNode, useState } from 'react';
 
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { cn } from '@/lib/utils';
@@ -55,15 +55,98 @@ export function DialogContent({
   const stepped = title !== openedWith;
   const { ref, height } = useMeasuredHeight();
 
+  return (
+    <DialogPanel
+      locked={locked}
+      described={Boolean(description)}
+      // The border is part of the height; the measured content isn't.
+      style={height === undefined ? undefined : { height: height + 2 }}
+      className={cn(
+        'max-w-120 rounded-lg border border-border bg-subtle shadow-[0_16px_48px_rgb(0_0_0/0.5)] transition-[height] duration-300 ease-out motion-reduce:transition-none',
+        className
+      )}
+    >
+      <div ref={ref}>
+        <div
+          key={title}
+          className={cn(
+            'flex flex-col gap-5 p-6 transition-opacity duration-150 ease-out motion-reduce:transition-none',
+            stepped && 'animate-rise-in motion-reduce:animate-none',
+            leaving && 'opacity-0'
+          )}
+        >
+          <div className={cn('flex flex-col gap-3', headerClassName)}>
+            {icon}
+            <DialogPrimitive.Title className="text-base leading-6 font-medium text-foreground">
+              {title}
+            </DialogPrimitive.Title>
+            {description && (
+              <DialogPrimitive.Description className="text-[13px] leading-4.5 text-secondary">
+                {description}
+              </DialogPrimitive.Description>
+            )}
+          </div>
+          {children && <div className="flex flex-col gap-4">{children}</div>}
+        </div>
+        {footer && (
+          <div className="border-t border-border bg-background px-6 py-3.5">
+            <div
+              key={title}
+              className={cn(
+                'flex items-center justify-end gap-2 transition-opacity duration-150 ease-out motion-reduce:transition-none',
+                stepped && 'animate-overlay-in motion-reduce:animate-none',
+                leaving && 'opacity-0'
+              )}
+            >
+              {footer}
+            </div>
+          </div>
+        )}
+      </div>
+    </DialogPanel>
+  );
+}
+
+type DialogPanelProps = {
+  /** Keeps Escape and a click outside from closing it, as `DialogContent`'s `locked`. */
+  locked?: boolean;
+  /** Whether it renders a `DialogPrimitive.Description`. Radix wants to be told on purpose when it doesn't. */
+  described?: boolean;
+  /** Size, corners, border, surface and shadow: the panel itself only centres and animates. */
+  className?: string;
+  /** For the scrim behind it, such as a lighter one. */
+  overlayClassName?: string;
+  style?: CSSProperties;
+  children: ReactNode;
+};
+
+/**
+ * The bare modal under `DialogContent`: the scrim and a centred panel that animate in and out, without the
+ * title, content and footer layout. For a dialog the design lays out its own way, such as the Share dialog.
+ * It holds its own `DialogPrimitive.Title`.
+ */
+export function DialogPanel({
+  locked = false,
+  described = true,
+  className,
+  overlayClassName,
+  style,
+  children,
+}: DialogPanelProps) {
   // Radix links the description by itself; without one it wants to be told so on purpose.
   const describedBy: { 'aria-describedby'?: undefined } = {};
-  if (!description) {
+  if (!described) {
     describedBy['aria-describedby'] = undefined;
   }
 
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/62 data-[state=closed]:animate-overlay-out data-[state=open]:animate-overlay-in motion-reduce:animate-none!" />
+      <DialogPrimitive.Overlay
+        className={cn(
+          'fixed inset-0 z-50 bg-black/62 data-[state=closed]:animate-overlay-out data-[state=open]:animate-overlay-in motion-reduce:animate-none!',
+          overlayClassName
+        )}
+      />
       <DialogPrimitive.Content
         {...describedBy}
         // Focus lands on the first field. A dialog without one takes it itself: its first button would light
@@ -75,50 +158,13 @@ export function DialogContent({
         }}
         onEscapeKeyDown={(event) => locked && event.preventDefault()}
         onInteractOutside={(event) => locked && event.preventDefault()}
-        // The border is part of the height; the measured content isn't.
-        style={height === undefined ? undefined : { height: height + 2 }}
+        style={style}
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-120 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-lg border border-border bg-subtle shadow-[0_16px_48px_rgb(0_0_0/0.5)] outline-none transition-[height] duration-300 ease-out data-[state=closed]:animate-dialog-out data-[state=open]:animate-dialog-in motion-reduce:animate-none! motion-reduce:transition-none',
+          'fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden outline-none data-[state=closed]:animate-dialog-out data-[state=open]:animate-dialog-in motion-reduce:animate-none!',
           className
         )}
       >
-        <div ref={ref}>
-          <div
-            key={title}
-            className={cn(
-              'flex flex-col gap-5 p-6 transition-opacity duration-150 ease-out motion-reduce:transition-none',
-              stepped && 'animate-rise-in motion-reduce:animate-none',
-              leaving && 'opacity-0'
-            )}
-          >
-            <div className={cn('flex flex-col gap-3', headerClassName)}>
-              {icon}
-              <DialogPrimitive.Title className="text-base leading-6 font-medium text-foreground">
-                {title}
-              </DialogPrimitive.Title>
-              {description && (
-                <DialogPrimitive.Description className="text-[13px] leading-4.5 text-secondary">
-                  {description}
-                </DialogPrimitive.Description>
-              )}
-            </div>
-            {children && <div className="flex flex-col gap-4">{children}</div>}
-          </div>
-          {footer && (
-            <div className="border-t border-border bg-background px-6 py-3.5">
-              <div
-                key={title}
-                className={cn(
-                  'flex items-center justify-end gap-2 transition-opacity duration-150 ease-out motion-reduce:transition-none',
-                  stepped && 'animate-overlay-in motion-reduce:animate-none',
-                  leaving && 'opacity-0'
-                )}
-              >
-                {footer}
-              </div>
-            </div>
-          )}
-        </div>
+        {children}
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
   );

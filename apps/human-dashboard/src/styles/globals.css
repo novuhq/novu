@@ -256,6 +256,31 @@
 }
 
 /*
+ * The lit edge of the public agent card (`TiltCard`): the stretch of its border nearest the pointer glows
+ * orange, palest where the pointer is and fading along the edge either way. `--edge-angle` says where (0deg
+ * at the top, clockwise from the card's centre) and `--edge` how strongly, from 0 to 1. `edge-line` keeps it
+ * to the 1px border; blurred, the same light is the halo outside it.
+ */
+@utility edge-glow {
+  background: conic-gradient(
+    from calc(var(--edge-angle, 0deg) - 70deg),
+    transparent 0deg,
+    color-mix(in srgb, var(--color-accent) 60%, transparent) 40deg,
+    #ffc2ad 70deg,
+    color-mix(in srgb, var(--color-accent) 60%, transparent) 100deg,
+    transparent 140deg
+  );
+  opacity: var(--edge, 0);
+}
+
+@utility edge-line {
+  padding: 1px;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+
+/*
  * The Inbox's thread rows when a refresh changes the list (`thread-list.tsx`): a new thread rises in,
  * one that left fades out, and the others slide to their new places, their content crossfading.
  */

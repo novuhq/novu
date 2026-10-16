@@ -1,26 +1,29 @@
 'use client';
 
 import { Check, Share2, Terminal, Users } from 'lucide-react';
-import { type ReactNode, useTransition } from 'react';
+import { type ReactNode, useState, useTransition } from 'react';
 
 import { finishOnboardingAction } from '@/app/(account)/onboarding/actions';
 import { ChannelIcon } from '@/components/channels/channel-icon';
-import { shareCard } from '@/components/dashboard/share-card';
+import { ShareDialog } from '@/components/dashboard/share-dialog';
 import { Eyebrow, StepTitle } from '@/components/onboarding/onboarding-shell';
 import { ClockTime } from '@/components/onboarding/parts';
 import { Badge } from '@/components/ui/badge';
 import { Button, SMALL_BUTTON } from '@/components/ui/button';
+import type { AgentReach } from '@/lib/agent-settings';
 import { HOST_LABELS, type HostVia } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
 type ReachStepProps = {
   handle: string;
-  /** The public card's address, written out without `https://`. */
+  /** The public card's link, `https://agentinbox.md/p/atlas` (`cardLinkOf`). Shown as `writtenLink` writes it. */
   cardLink: string;
   host: { via: HostVia; connectedAt: string; readAt?: string };
   /** Who wrote the message the host read on its way in, when one was waiting: the operator's test reply. */
   readFrom: string | null;
   channels: { telegram: boolean; slack: boolean };
+  /** Who can reach the agent, for the Share dialog. */
+  reach: AgentReach | null;
 };
 
 type Destination = Parameters<typeof finishOnboardingAction>[0];
@@ -32,8 +35,9 @@ const TRACE_BEAT_MS = 140;
  * Step 4: a host is connected, and the setup is complete. What is left is optional: more ways for people
  * to reach the agent. Every way out of this step ends the onboarding.
  */
-export function ReachStep({ handle, cardLink, host, readFrom, channels }: ReachStepProps) {
+export function ReachStep({ handle, cardLink, host, readFrom, channels, reach }: ReachStepProps) {
   const [leaving, startLeaving] = useTransition();
+  const [sharing, setSharing] = useState(false);
   const leaveFor = (destination: Destination) => () => startLeaving(() => finishOnboardingAction(destination));
 
   return (
@@ -120,11 +124,13 @@ export function ReachStep({ handle, cardLink, host, readFrom, channels }: ReachS
         <Button pending={leaving} onClick={leaveFor('inbox')}>
           Open inbox
         </Button>
-        <Button variant="quiet" className="text-foreground" onClick={() => shareCard(handle, cardLink)}>
+        <Button variant="quiet" className="text-foreground" onClick={() => setSharing(true)}>
           <Share2 aria-hidden="true" className="size-3.5" />
           Share {handle}’s card
         </Button>
       </div>
+
+      <ShareDialog open={sharing} onOpenChange={setSharing} handle={handle} cardLink={cardLink} reach={reach} />
     </>
   );
 }
