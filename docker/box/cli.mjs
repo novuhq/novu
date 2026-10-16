@@ -42,6 +42,9 @@ const SYNC_REF = 'refs/worktree/box-sync';
 // Code changes bundle to kilobytes; a bundle this big holds build output or media nobody meant to send.
 const MAX_BUNDLE_MB = 25;
 const HEALTHY_WITHIN_SECONDS = 240;
+// process-compose stops the apps, then the stores, each with its own timeout (process-compose.yaml); Docker's default
+// 10 s would kill it halfway, and Redis (appendonly no) would lose what it hadn't saved.
+const STOP_SECONDS = 180;
 
 const USAGE =
   'usage: node docker/box/cli.mjs up|sync|doctor|logs|exec|mail|down|delete [--box <name>] [--cloud]; exec -- <cmd> for flags';
@@ -194,7 +197,19 @@ function create() {
       throw new Error(`the bake failed; its log is above, and the volume ${volume} keeps what it got to`);
   }
   log(`creating ${BOX}`);
-  output('docker', ['run', '-d', '--name', BOX, '--env-file', ENV_FILE, ...volumeArgs, ...PORT_FLAGS, IMAGE]);
+  output('docker', [
+    'run',
+    '-d',
+    '--name',
+    BOX,
+    '--stop-timeout',
+    String(STOP_SECONDS),
+    '--env-file',
+    ENV_FILE,
+    ...volumeArgs,
+    ...PORT_FLAGS,
+    IMAGE,
+  ]);
 }
 
 async function waitUntilHealthy() {
@@ -226,7 +241,7 @@ function doctorReport() {
 function down() {
   log(`stopping ${BOX}; \`cli.mjs up\` starts it again with the same data`);
 
-  return run('docker', ['stop', BOX]);
+  return run('docker', ['stop', '-t', String(STOP_SECONDS), BOX]);
 }
 
 // --- sync ---
