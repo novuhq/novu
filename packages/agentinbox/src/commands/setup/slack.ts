@@ -7,10 +7,11 @@ import {
   issueSlackSetupLink,
   slackQuickSetup,
 } from '../../api/setup';
-import { info } from '../../cli-io';
+import { info, success } from '../../cli-io';
 import { openInBrowser } from '../../open-browser';
 import { sleep } from '../../poll';
 import { renderQR } from '../../qr';
+import { openedScreen } from '../../screen/screen';
 import {
   buildSetupPageUrl,
   CREDENTIAL_PROPAGATION_TIMEOUT_MS,
@@ -49,7 +50,7 @@ export async function connectSlack(
   const integration = await resolveLinkedSlackIntegration(client, agentIdentifier, agent.name);
 
   if (await hasChannelEndpoint(client, integration.identifier, subscriberId)) {
-    info('Slack already connected.');
+    success('Slack already connected.');
 
     return integration.identifier;
   }
@@ -64,17 +65,28 @@ export async function connectSlack(
     io
   );
 
-  io.write(
-    `\nAuthorize the Slack app in your workspace` +
-      (io.isTTY ? ' (opening it in your browser; use the link if it does not open)' : '') +
-      `:\n\n  ${pc.underline(authorizeUrl)}\n\n`
-  );
+  const waitingFor = 'the Slack install to complete';
+  const screen = openedScreen();
+
+  if (!screen) {
+    io.write(
+      `\nAuthorize the Slack app in your workspace` +
+        (io.isTTY ? ' (opening it in your browser; use the link if it does not open)' : '') +
+        `:\n\n  ${pc.underline(authorizeUrl)}\n\n`
+    );
+  }
   if (io.isTTY) {
     io.openInBrowser(authorizeUrl);
   }
 
-  await waitForEndpoint(client, integration.identifier, subscriberId, 'the Slack install to complete');
-  info('Slack connected.');
+  const stopWaiting = screen?.wait({
+    subtitle: `Authorize the Slack app in your workspace${io.isTTY ? ' (opening it in your browser; use the link if it does not open)' : ''}.`,
+    rows: [{ mark: 'next', value: pc.underline(authorizeUrl), whole: true }],
+    status: { text: `Waiting for ${waitingFor}` },
+    said: 'Authorize the Slack app in your workspace.',
+  });
+  await waitForEndpoint(client, integration.identifier, subscriberId, waitingFor).finally(stopWaiting);
+  success('Slack connected.');
 
   return integration.identifier;
 }

@@ -2,9 +2,11 @@ import pc from 'picocolors';
 import { createInteraction } from '../api/agent-inbox';
 import { type ApiClient, createApiClient } from '../api/client';
 import { bootstrapKeylessSession } from '../api/setup';
-import { info, promptLine } from '../cli-io';
+import { info, promptLine, success, warn } from '../cli-io';
 import { type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
+import { openedScreen, openScreen } from '../screen/screen';
 import { installSkill, resolveSkillHosts } from '../skills/install-skills';
+import { failOnScreen } from './failure';
 import { handleError } from './interact';
 import { CHANNEL_NAMES, type ChannelName, type ChatChannel } from './link-channel';
 import { AgentInboxProvisioningError, announceAgentInbox, connectEmail } from './setup/email';
@@ -23,11 +25,22 @@ import { connectTelegram } from './setup/telegram';
 export type { SetupOptions } from './setup/operator';
 export { reusableAuth } from './setup/operator';
 
-export async function setupCommand(channelArg: string | undefined, options: SetupOptions): Promise<never> {
+/** `command` is how the screen names it: `setup`, `setup telegram`, or `channel add slack` when that runs it. */
+export async function setupCommand(
+  channelArg: string | undefined,
+  options: SetupOptions,
+  command = channelArg ? `setup ${channelArg}` : 'setup'
+): Promise<never> {
+  const screen = await openScreen({ command });
+
   try {
     await runSetup(parseSetupChannel(channelArg), options);
+    await screen?.done('happy');
     process.exit(0);
   } catch (err) {
+    if (screen) {
+      await failOnScreen(screen, err);
+    }
     handleError(err);
   }
 }
@@ -55,7 +68,7 @@ async function runSetup(channel: ChannelName | undefined, options: SetupOptions)
       throw err instanceof AgentInboxProvisioningError ? err.original : err;
     }
 
-    info(pc.yellow(`Could not set up the email inbox (${err.message}). Chat setup can continue.`));
+    warn(`Could not set up the email inbox (${err.message}). Chat setup can continue.`);
   }
   const chat = await resolveChatChannel(channel);
   if (chat) {
@@ -182,7 +195,7 @@ function saveSetupConfig(
     subscriberId: provisioned.subscriberId,
     ...(defaultChannel ? { defaultChannel } : {}),
   });
-  info(`Saved config to ${configPath()}.`);
+  success(`Saved config to ${configPath()}.`);
 
   if (channel && defaultChannel && defaultChannel !== channel) {
     info(
@@ -211,11 +224,24 @@ async function confirmLinkedChannel(
     agentIdentifier: provisioned.relay.agentIdentifier,
   });
 
+  const examples = [
+    'npx @agentinbox/cli inbox send ask "Which environment should I target?"',
+    'npx @agentinbox/cli inbox send approve "Deploy to production?"',
+    'npx @agentinbox/cli inbox send "Build finished."',
+  ];
+  const screen = openedScreen();
+
+  if (screen) {
+    screen.subtitle(`${channel[0].toUpperCase()}${channel.slice(1)} connected. Agents on this machine can now run:`);
+    screen.add(...examples.map((example) => ({ mark: 'next' as const, value: pc.bold(example) })));
+    screen.feel('happy');
+
+    return;
+  }
+
   process.stdout.write(
     `\n${pc.green('✔')} ${channel} connected. Agents on this machine can now run:\n` +
-      `  ${pc.bold('npx @agentinbox/cli inbox send ask "Which environment should I target?"')}\n` +
-      `  ${pc.bold('npx @agentinbox/cli inbox send approve "Deploy to production?"')}\n` +
-      `  ${pc.bold('npx @agentinbox/cli inbox send "Build finished."')}\n`
+      examples.map((example) => `  ${pc.bold(example)}\n`).join('')
   );
 }
 
@@ -247,12 +273,16 @@ async function maybeInstallSkill(options: SetupOptions): Promise<void> {
       return;
     }
 
-    info(`Installed the agent-inbox skill: ${installed.map((entry) => entry.destination).join(', ')}`);
+    success(`Installed the agent-inbox skill: ${installed.map((entry) => entry.destination).join(', ')}`);
   } catch (err) {
     // Non-fatal — setup itself already succeeded.
-    process.stdout.write(
-      `${pc.yellow('•')} Could not install the coding-agent skill (${err instanceof Error ? err.message : String(err)}). Run \`npx @agentinbox/cli skill install\` later.\n`
-    );
+    const message = `Could not install the coding-agent skill (${err instanceof Error ? err.message : String(err)}). Run \`npx @agentinbox/cli skill install\` later.`;
+    const screen = openedScreen();
+    if (screen) {
+      screen.add({ mark: 'failed', value: message });
+    } else {
+      process.stdout.write(`${pc.yellow('•')} ${message}\n`);
+    }
   }
 }
 

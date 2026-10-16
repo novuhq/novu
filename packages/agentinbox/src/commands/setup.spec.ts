@@ -36,7 +36,13 @@ vi.mock('./link-channel', async (importOriginal) => ({
 vi.mock('../spinner', () => ({ startWaitIndicator: vi.fn(() => () => undefined) }));
 
 vi.mock('../qr', () => ({ renderQR: vi.fn((text: string) => `<QR ${text}>`) }));
-vi.mock('../cli-io', () => ({ info: vi.fn(), promptLine: vi.fn(), promptSecret: vi.fn() }));
+vi.mock('../cli-io', () => ({
+  info: vi.fn(),
+  success: vi.fn(),
+  warn: vi.fn(),
+  promptLine: vi.fn(),
+  promptSecret: vi.fn(),
+}));
 
 const api = await import('../api/setup');
 const humanApi = await import('../api/agent-inbox');
