@@ -43,3 +43,13 @@ export function detached(cmd, log) {
 export function bearer(request) {
   return request.headers.get('Authorization')?.match(/^Bearer (.+)$/)?.[1];
 }
+
+// The container's commands take no abort signal, so a call that runs too long is left behind, not stopped.
+export function within(ms, promise, what) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${what} took over ${ms / 1000} s`)), ms);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
