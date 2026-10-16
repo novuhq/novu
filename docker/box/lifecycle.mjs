@@ -305,14 +305,17 @@ function processTableProblems(names) {
 export async function stopApply() {
   const holder = lockHolder();
   if (holder?.command !== 'apply') return;
-  const signalGroup = (signal) => {
-    try {
-      process.kill(-holder.pid, signal);
-    } catch {}
+  // An apply started without `setsid` (by hand) has no process group of its own: then only its pid.
+  const signal = (name) => {
+    for (const pid of [-holder.pid, holder.pid])
+      try {
+        process.kill(pid, name);
+      } catch {}
   };
-  signalGroup('SIGTERM');
-  await poll(60, () => !isAlive(-holder.pid), '').catch(() => signalGroup('SIGKILL'));
-  await poll(10, () => !isAlive(-holder.pid), `the apply's process group ${holder.pid} outlived SIGKILL`);
+  const gone = () => !isAlive(-holder.pid) && !isAlive(holder.pid);
+  signal('SIGTERM');
+  await poll(60, gone, '').catch(() => signal('SIGKILL'));
+  await poll(10, gone, `the apply ${holder.pid} outlived SIGKILL`);
   log(`stopped the apply of an older push (pid ${holder.pid})`);
 }
 
