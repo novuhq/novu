@@ -72,6 +72,9 @@ export class HumanAgentPictureService {
       ...(pictureUrl ? { pictureUrl } : {}),
       active: agent.active !== false,
       createdAt: agent.createdAt,
+      reach: agent.reach ?? 'anyone',
+      paused: Boolean(agent.pausedAt),
+      ...(agent.pausedAt ? { pausedAt: agent.pausedAt } : {}),
     };
   }
 
@@ -129,6 +132,13 @@ export class HumanAgentPictureService {
     return { ...agent, picture: undefined };
   }
 
+  /** Drops the stored picture of an agent that is being deleted. Never fails the delete. */
+  async forget(agent: Pick<AgentEntity, 'picture'>): Promise<void> {
+    if (agent.picture?.storageKey) {
+      await this.deleteFile(agent.picture.storageKey);
+    }
+  }
+
   /** The file behind a public picture address, or `null` when the address is not (or no longer) a picture. */
   async read(address: {
     environmentId: string;
@@ -163,7 +173,7 @@ export class HumanAgentPictureService {
     );
 
     if (!agent || agent.runtime !== 'human_relay') {
-      throw new NotFoundException('There is no Human agent yet. Run `human setup` first.');
+      throw new NotFoundException('There is no agent yet. Run `npx @agentinbox/cli setup` first.');
     }
 
     return agent;

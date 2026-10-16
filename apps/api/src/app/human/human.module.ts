@@ -6,6 +6,7 @@ import {
   ChannelEndpointRepository,
   ConversationActivityRepository,
   ConversationRepository,
+  DomainRouteRepository,
   HumanContactRepository,
   HumanInteractionRepository,
   IntegrationRepository,
@@ -24,9 +25,11 @@ import { SharedModule } from '../shared/shared.module';
 import { RemoveSubscriber } from '../subscribers-v2/usecases/remove-subscriber/remove-subscriber.usecase';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
 import { HumanVerificationEmailSender } from './email/human-verification-email.sender';
+import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
 import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
 import { HumanAccountsController } from './human-accounts.controller';
 import { HumanAgentPicturesPublicController } from './human-agent-pictures-public.controller';
+import { HumanConnectPublicController, HumanHostsController } from './human-hosts.controller';
 import { HumanInboxController } from './human-inbox.controller';
 import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanInvitesPublicController, HumanVerifyPublicController } from './human-invites-public.controller';
@@ -34,22 +37,29 @@ import { HumanAccountAgentService } from './services/human-account-agent.service
 import { HumanAgentIdentityService } from './services/human-agent-identity.service';
 import { HumanAgentPictureService } from './services/human-agent-picture.service';
 import { HumanBackingAccounts } from './services/human-backing-accounts.service';
+import { HumanConnectCodeService } from './services/human-connect-code.service';
 import { HumanDeliveryService } from './services/human-delivery.service';
+import { HumanHostStatusService } from './services/human-host-status.service';
 import { HumanInboxService } from './services/human-inbox.service';
 import { HumanInviteTokenService } from './services/human-invite-token.service';
 import { HumanKeylessCapService } from './services/human-keyless-cap.service';
+import { HumanMessageQuotaService } from './services/human-message-quota.service';
 import { HumanOperatorService } from './services/human-operator.service';
 import { HumanVerificationRateLimitService } from './services/human-verification-rate-limit.service';
 import { HumanVerificationTokenService } from './services/human-verification-token.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
+import { ChangeOperatorEmail } from './usecases/change-operator-email/change-operator-email.usecase';
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
+import { ConnectHost } from './usecases/connect-host/connect-host.usecase';
 import { ConnectHumanInviteChannel } from './usecases/connect-human-invite-channel/connect-human-invite-channel.usecase';
 import { CountInboxThreads } from './usecases/count-inbox-threads/count-inbox-threads.usecase';
+import { CreateConnectCode } from './usecases/create-connect-code/create-connect-code.usecase';
 import { CreateHumanInvite } from './usecases/create-human-invite/create-human-invite.usecase';
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
 import { DeclineHumanInvite } from './usecases/decline-human-invite/decline-human-invite.usecase';
 import { DeleteHumanAccount } from './usecases/delete-human-account/delete-human-account.usecase';
+import { DeleteHumanAgent } from './usecases/delete-human-agent/delete-human-agent.usecase';
 import { DenyHumanCliLogin } from './usecases/deny-human-cli-login/deny-human-cli-login.usecase';
 import { EnsureBackingOrganization } from './usecases/ensure-backing-organization/ensure-backing-organization.usecase';
 import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
@@ -68,6 +78,7 @@ import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase'
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
 import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbox-thread.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
+import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 import { VerifyAddress } from './usecases/verify-address/verify-address.usecase';
@@ -95,6 +106,8 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     HumanVerifyPublicController,
     HumanAgentPicturesPublicController,
     HumanAccountsController,
+    HumanHostsController,
+    HumanConnectPublicController,
   ],
   providers: [
     HumanInteractionRepository,
@@ -106,20 +119,25 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     SubscriberRepository,
     ConversationRepository,
     ConversationActivityRepository,
+    DomainRouteRepository,
     AgentMcpServerRepository,
     McpConnectionRepository,
     HumanDeliveryService,
     HumanKeylessCapService,
+    HumanMessageQuotaService,
     CreateInteraction,
     GetInteraction,
     ListInteractions,
     CancelInteraction,
     SetupHumanRelay,
     UpdateHumanAgent,
+    DeleteHumanAgent,
     ListContacts,
     GetContact,
     RemoveContact,
     RemoveSubscriber,
+    SetOperatorDefaultChannel,
+    ChangeOperatorEmail,
     HumanInviteTokenService,
     HumanVerificationTokenService,
     HumanVerificationRateLimitService,
@@ -137,6 +155,7 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     DeclineHumanInvite,
     HumanBackingAccounts,
     HumanDashboardSecretGuard,
+    HumanAgentPausedGuard,
     EnsureBackingOrganization,
     ClaimForHumanAccount,
     GetBackingSecretKey,
@@ -154,6 +173,10 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     GetInboxThread,
     MarkInboxRead,
     ResolveInboxThread,
+    HumanConnectCodeService,
+    HumanHostStatusService,
+    CreateConnectCode,
+    ConnectHost,
   ],
 })
 export class HumanModule {}

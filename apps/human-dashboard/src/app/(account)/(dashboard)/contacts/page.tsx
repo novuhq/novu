@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
-import { AgentSetupBanner } from '@/components/dashboard/agent-setup-banner';
 import { PageHeader } from '@/components/dashboard/page-header';
+import { buildChannelPrompt } from '@/lib/agent-setup-prompt';
 import { requireHumanAccount } from '@/lib/human-account';
-import { DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from '@/lib/human-agent-api';
+import { agentDisplayName } from '@/lib/human-agent-api';
 import { type Contact, listContactsPage } from '@/lib/human-contacts-api';
-import { findOperatorContactId } from '@/lib/human-operator';
+import { describeAgentIdentity, requireSetUpAgent } from '@/lib/human-onboarding';
+import { resolveNovuApiUrl } from '@/lib/novu-api';
 
 import { ContactsTable } from './contacts-table';
 import { InviteBanner } from './invite-banner';
@@ -22,12 +23,12 @@ const PAGE_SIZE = 50;
 const CURSOR_PATTERN = /^[a-f0-9]{24}$/i;
 
 /**
- * The people the operator's agent can ask. The API pages with a cursor that only goes forward, so
- * `?after=` holds the cursor of every page opened so far: the last one is the page shown, and
- * "Previous" drops it.
+ * The people the operator's agent can message (`5.1 · Contacts`), with their own row opening their contact
+ * card. The API pages with a cursor that only goes forward, so `?after=` holds the cursor of every page
+ * opened so far: the last one is the page shown, and "Previous" drops it.
  *
- * Until `human setup` has made the agent, nobody can be asked or invited: the list stays empty and a
- * banner sends the operator to the Agent page.
+ * Without an agent nobody can be asked or invited, so an operator who has none yet is sent to the
+ * onboarding, which makes it.
  */
 export default async function ContactsPage(props: PageProps<'/contacts'>) {
   const account = await requireHumanAccount({ returnTo: CONTACTS_PATH });
@@ -36,32 +37,9 @@ export default async function ContactsPage(props: PageProps<'/contacts'>) {
     (cursor): cursor is string => typeof cursor === 'string' && CURSOR_PATTERN.test(cursor)
   );
 
-  const agent = await getRelayAgent(account);
-  if (!agent) {
-    return (
-      <>
-        <PageHeader title="Contacts" description="People your agent can ask." />
-        <AgentSetupBanner>
-          Contacts are the people your agent can ask. Once it&apos;s set up, you&apos;re the first one and you invite
-          the others here.
-        </AgentSetupBanner>
-        <ContactsTable
-          contacts={[]}
-          operatorContactId={null}
-          agentName="your agent"
-          rangeLabel={describeRange(0, 0, false)}
-          previousHref={null}
-          nextHref={null}
-        />
-      </>
-    );
-  }
-
-  const agentName = sentenceName(agent);
-  const [page, operatorContactId] = await Promise.all([
-    listContactsPage(account, { after: cursors.at(-1), limit: PAGE_SIZE }),
-    findOperatorContactId(account),
-  ]);
+  const { agent, state, user } = await requireSetUpAgent(account);
+  const { handle } = describeAgentIdentity(agent, state);
+  const page = await listContactsPage(account, { after: cursors.at(-1), limit: PAGE_SIZE });
 
   // The API answers a cursor it no longer knows (that contact was removed since) with an empty page.
   // Step back a page rather than show an empty list while earlier contacts remain.
@@ -69,32 +47,33 @@ export default async function ContactsPage(props: PageProps<'/contacts'>) {
     redirect(pageHref(cursors.slice(0, -1)));
   }
 
+  const prompts = { apiUrl: resolveNovuApiUrl(account.region) };
+
   return (
     <>
-      <PageHeader title="Contacts" description={`People ${agentName} can ask. You're here by default.`} />
+      <PageHeader title="Contacts" description={`People ${handle} can message. Their messages skip screening.`} />
       <InviteBanner />
       <ContactsTable
-        contacts={operatorFirst(page.contacts, operatorContactId)}
-        operatorContactId={operatorContactId}
-        agentName={agentName}
+        contacts={operatorFirst(page.contacts)}
+        pageKey={cursors.at(-1) ?? 'first'}
+        agentHandle={handle}
         rangeLabel={describeRange(cursors.length, page.contacts.length, page.next !== null)}
         previousHref={cursors.length > 0 ? pageHref(cursors.slice(0, -1)) : null}
         nextHref={page.next ? pageHref([...cursors, page.next]) : null}
+        card={{
+          signInEmail: user?.primaryEmailAddress?.emailAddress ?? null,
+          telegramPrompt: buildChannelPrompt(prompts, 'telegram', handle),
+          slackPrompt: buildChannelPrompt(prompts, 'slack', handle),
+          slackAppName: agentDisplayName(agent),
+        }}
       />
     </>
   );
 }
 
-/** The agent's name inside a sentence: its own, or "your agent" until the operator names it. */
-function sentenceName(agent: RelayAgent): string {
-  const name = agent.name?.trim();
-
-  return name && name !== DEFAULT_AGENT_NAME ? name : 'your agent';
-}
-
 /** The API lists the newest contact first, which puts the operator last; their row leads the page it's on. */
-function operatorFirst(contacts: Contact[], operatorContactId: string | null): Contact[] {
-  return [...contacts].sort((a, b) => Number(b.id === operatorContactId) - Number(a.id === operatorContactId));
+function operatorFirst(contacts: Contact[]): Contact[] {
+  return [...contacts].sort((a, b) => Number(b.isOperator) - Number(a.isOperator));
 }
 
 /** "1–3 of 3" on the last page. Before it the API gives no total, so it reads "1–50 of 50+". */

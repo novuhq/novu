@@ -11,6 +11,7 @@ import {
   ChatProviderIdEnum,
   EmailProviderIdEnum,
   ENDPOINT_TYPES,
+  HumanChannelViaEnum,
   HumanInteractionStatusEnum,
 } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
@@ -109,6 +110,55 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       type: ENDPOINT_TYPES.TELEGRAM_CHAT,
       endpoint: { chatId: '777003' },
     });
+  }
+
+  function linkSlack(agentId: string) {
+    return linkIntegration(agentId, {
+      providerId: ChatProviderIdEnum.Slack,
+      channel: ChannelTypeEnum.CHAT,
+      credentials: { clientId: 'e2e-contacts-slack-client', secretKey: 'e2e-contacts-slack-secret' },
+    });
+  }
+
+  /** Stands in for the person finishing Slack's OAuth install. */
+  async function connectSlack(subscriberId: string, integrationIdentifier: string) {
+    await channelEndpointRepository.create({
+      identifier: `ce-contacts-e2e-slack-${subscriberId}-${Date.now()}`,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      integrationIdentifier,
+      providerId: ChatProviderIdEnum.Slack,
+      channel: ChannelTypeEnum.CHAT,
+      subscriberId,
+      contextKeys: [],
+      type: ENDPOINT_TYPES.SLACK_USER,
+      endpoint: { userId: `U${Date.now()}` },
+    });
+  }
+
+  /** Stands in for an email link the person asked for, and, with `verify`, used. */
+  async function storeEmail(agentId: string, subscriberId: string, address: string, { verify = false } = {}) {
+    const pending = await humanContactRepository.upsertPendingAddress({
+      environmentId: session.environment._id,
+      organizationId: session.organization._id,
+      agentId,
+      subscriberId,
+      via: HumanChannelViaEnum.EMAIL,
+      address,
+    });
+
+    if (verify) {
+      await humanContactRepository.promotePendingAddress({
+        environmentId: session.environment._id,
+        agentId,
+        subscriberId,
+        via: HumanChannelViaEnum.EMAIL,
+        address,
+        requestedAt: pending.requestedAt,
+      });
+    }
+
+    return pending;
   }
 
   function findTelegramEndpoint(subscriberId: string, integrationIdentifier: string) {
@@ -309,6 +359,13 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect(alice?.firstName).to.equal('Alice');
       expect(alice?.lastName).to.equal('Chen');
       expect(byId.get(`bob-${stamp}`)?.email).to.equal('bob@example.com');
+      // On the profile is not confirmed: agents can't email it.
+      expect(byId.get(`bob-${stamp}`)?.emailVerification).to.deep.equal({
+        address: 'bob@example.com',
+        status: 'unverified',
+      });
+      expect(alice).to.not.have.property('emailVerification');
+      expect(alice?.isOperator).to.equal(false);
 
       const carol = byId.get(`carol-${stamp}`);
       expect(carol?.phone).to.equal('+15550000000');
@@ -327,11 +384,13 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
         'firstName',
         'lastName',
         'email',
+        'emailVerification',
         'phone',
         'data',
         'channels',
         'defaultVia',
         'status',
+        'isOperator',
         'invite',
         'createdAt',
         'updatedAt',
@@ -405,6 +464,43 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect(emailContact?.channels).to.deep.equal([]);
       expect(emailContact).to.not.have.property('defaultVia');
       expect(emailContact).to.not.have.property('email');
+      // Typed during setup, never confirmed.
+      expect(emailContact?.emailVerification).to.deep.equal({ address: 'erin@example.com', status: 'unverified' });
+    });
+
+    it("marks the operator and reports their email's double opt-in", async () => {
+      const { subscriberId: operatorId, agentId } = await setup({
+        subscriberId: 'dima',
+        operator: true,
+        email: 'Dima@Example.com',
+      });
+      await setup({ subscriberId: 'maya' });
+
+      let contacts = await listContacts();
+      expect(contacts.get(operatorId)?.isOperator).to.equal(true);
+      expect(contacts.get('maya')?.isOperator).to.equal(false);
+      // The address the operator signed up with is known, but they never confirmed it here.
+      expect(contacts.get(operatorId)?.emailVerification).to.deep.equal({
+        address: 'dima@example.com',
+        status: 'unverified',
+      });
+
+      const pending = await storeEmail(agentId, operatorId, 'dima@example.com');
+      expect((await listContacts()).get(operatorId)?.emailVerification).to.deep.equal({
+        address: 'dima@example.com',
+        status: 'pending',
+        pending: { address: 'dima@example.com', requestedAt: pending.requestedAt },
+      });
+
+      await storeEmail(agentId, operatorId, 'dima@example.com', { verify: true });
+      const change = await storeEmail(agentId, operatorId, 'dima@new.example.com');
+
+      contacts = await listContacts();
+      const email = contacts.get(operatorId)?.emailVerification;
+      expect(email?.address).to.equal('dima@example.com');
+      expect(email?.status).to.equal('verified');
+      expect(email?.verifiedAt).to.be.a('string');
+      expect(email?.pending).to.deep.equal({ address: 'dima@new.example.com', requestedAt: change.requestedAt });
     });
 
     it('returns only the contact asked for by subscriberId', async () => {
@@ -434,6 +530,134 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect(decline.status).to.equal(200, JSON.stringify(decline.body));
 
       expect((await listContacts()).get(subscriberId)?.invite?.url).to.equal(older.url);
+    });
+  });
+
+  describe('PUT /v1/human/operator/default-channel', () => {
+    function setDefault(via: string) {
+      return session.testAgent.put('/v1/human/operator/default-channel').send({ via });
+    }
+
+    it("makes a connected channel the operator's default, and an inviter's --via does not replace it", async () => {
+      const { agentId } = await setup({ subscriberId: 'dima', operator: true });
+      const telegram = await linkTelegram(agentId);
+      const slack = await linkSlack(agentId);
+      await connectTelegram('dima', telegram.identifier);
+      await connectSlack('dima', slack.identifier);
+      expect((await listContacts()).get('dima')?.defaultVia).to.equal('telegram');
+
+      const res = await setDefault('slack');
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect(res.body.data).to.deep.equal({ defaultVia: 'slack' });
+
+      await setup({ subscriberId: 'dima', defaultVia: 'telegram' });
+
+      const dima = (await listContacts()).get('dima');
+      expect(dima?.defaultVia).to.equal('slack');
+      expect(
+        dima?.channels.map(({ via, isDefault }: { via: string; isDefault: boolean }) => ({ via, isDefault }))
+      ).to.have.deep.members([
+        { via: 'telegram', isDefault: false },
+        { via: 'slack', isDefault: true },
+      ]);
+    });
+
+    it('refuses a channel the operator is not connected on', async () => {
+      const { agentId } = await setup({ subscriberId: 'dima', operator: true });
+      const telegram = await linkTelegram(agentId);
+      // Someone else's Telegram doesn't make it the operator's.
+      await setup({ subscriberId: 'maya' });
+      await connectTelegram('maya', telegram.identifier);
+
+      const res = await setDefault('telegram');
+
+      expect(res.status).to.equal(400, JSON.stringify(res.body));
+      expect(res.body.code).to.equal('channel_not_connected');
+      expect((await listContacts()).get('dima')).to.not.have.property('defaultVia');
+    });
+
+    it('refuses a channel that does not exist', async () => {
+      await setup({ subscriberId: 'dima', operator: true });
+
+      const res = await setDefault('whatsapp');
+
+      expect(res.status).to.equal(422, JSON.stringify(res.body));
+    });
+
+    it('needs an agent and an operator', async () => {
+      const beforeSetup = await setDefault('telegram');
+      expect(beforeSetup.status).to.equal(404, JSON.stringify(beforeSetup.body));
+      expect(beforeSetup.body.code).to.equal('agent_not_found');
+
+      await setup({ subscriberId: 'maya' });
+
+      const withoutOperator = await setDefault('telegram');
+      expect(withoutOperator.status).to.equal(404, JSON.stringify(withoutOperator.body));
+      expect(withoutOperator.body.code).to.equal('operator_not_found');
+    });
+
+    it('needs a login', async () => {
+      await setup({ subscriberId: 'dima', operator: true });
+
+      const anonymous = axios.create({ baseURL: session.serverUrl, validateStatus: () => true });
+      const res = await anonymous.put('/v1/human/operator/default-channel', { via: 'telegram' });
+
+      expect(res.status).to.equal(401);
+    });
+  });
+
+  describe('POST /v1/human/operator/email', () => {
+    function changeEmail(address: string) {
+      return session.testAgent.post('/v1/human/operator/email').send({ address });
+    }
+
+    it('refuses the address that is already verified', async () => {
+      const { agentId } = await setup({ subscriberId: 'dima', operator: true });
+      await storeEmail(agentId, 'dima', 'dima@example.com', { verify: true });
+
+      const res = await changeEmail('Dima@Example.com');
+
+      expect(res.status).to.equal(409, JSON.stringify(res.body));
+      expect(res.body.code).to.equal('address_already_verified');
+    });
+
+    it('sends nothing and keeps the email as it was while the agent has no email channel', async () => {
+      const { agentId } = await setup({ subscriberId: 'dima', operator: true });
+      await storeEmail(agentId, 'dima', 'dima@example.com', { verify: true });
+
+      const res = await changeEmail('dima@new.example.com');
+
+      expect(res.status).to.equal(404, JSON.stringify(res.body));
+      expect((await listContacts()).get('dima')?.emailVerification).to.not.have.property('pending');
+    });
+
+    it('refuses something that is not an email address', async () => {
+      await setup({ subscriberId: 'dima', operator: true });
+
+      const res = await changeEmail('not-an-address');
+
+      expect(res.status).to.equal(422, JSON.stringify(res.body));
+    });
+
+    it('needs an agent and an operator', async () => {
+      const beforeSetup = await changeEmail('dima@example.com');
+      expect(beforeSetup.status).to.equal(404, JSON.stringify(beforeSetup.body));
+      expect(beforeSetup.body.code).to.equal('agent_not_found');
+
+      await setup({ subscriberId: 'maya' });
+
+      const withoutOperator = await changeEmail('dima@example.com');
+      expect(withoutOperator.status).to.equal(404, JSON.stringify(withoutOperator.body));
+      expect(withoutOperator.body.code).to.equal('operator_not_found');
+    });
+
+    it('needs a login', async () => {
+      await setup({ subscriberId: 'dima', operator: true });
+
+      const anonymous = axios.create({ baseURL: session.serverUrl, validateStatus: () => true });
+      const res = await anonymous.post('/v1/human/operator/email', { address: 'dima@example.com' });
+
+      expect(res.status).to.equal(401);
     });
   });
 

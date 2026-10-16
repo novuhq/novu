@@ -15,6 +15,14 @@ export const DASHBOARD_HOME = '/inbox';
 /** Where the agent is set up and its channels are connected. */
 export const CONFIGURE_PATH = '/configure';
 
+/** The query parameter that opens a channel's drawer on the Configure page. */
+export const CONFIGURE_DRAWER_PARAM = 'setup';
+
+/** The Configure page with a channel's drawer already open, for links that send the operator to set it up. */
+export function configureChannelPath(via: 'email' | 'telegram' | 'slack'): string {
+  return `${CONFIGURE_PATH}?${CONFIGURE_DRAWER_PARAM}=${via}`;
+}
+
 /** The pages of the dashboard, in sidebar order. */
 export const MAIN_NAV: NavItem[] = [
   { href: DASHBOARD_HOME, label: 'Inbox', icon: Inbox },
@@ -23,7 +31,7 @@ export const MAIN_NAV: NavItem[] = [
 ];
 
 // There is no docs site yet, so Docs points at the package page like the landing page does.
-export const DOCS_URL = 'https://www.npmjs.com/package/@novu/human';
+export const DOCS_URL = 'https://www.npmjs.com/package/@agentinbox/cli';
 
 /** Where Share feedback leads until the product has a feedback form of its own. */
 export const FEEDBACK_URL = 'mailto:support@novu.co?subject=Agent%20Inbox%20feedback';

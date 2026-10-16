@@ -6,6 +6,7 @@ import {
   Delete,
   ForbiddenException,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -14,6 +15,7 @@ import {
   Put,
   Query,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
@@ -35,6 +37,11 @@ import {
   RequestAddressVerificationDto,
   RequestAddressVerificationResponseDto,
 } from './dtos/human-invite.dto';
+import {
+  ChangeOperatorEmailRequestDto,
+  SetOperatorDefaultChannelRequestDto,
+  SetOperatorDefaultChannelResponseDto,
+} from './dtos/human-operator-contact.dto';
 import { InteractionResponseDto } from './dtos/interaction-response.dto';
 import type { KeylessClaimTokenResponseDto } from './dtos/keyless-claim-token.dto';
 import { ListContactsQueryDto, ListContactsResponseDto, RemoveContactResponseDto } from './dtos/list-contacts.dto';
@@ -44,6 +51,8 @@ import {
   SetupHumanRelayRequestDto,
   SetupHumanRelayResponseDto,
 } from './dtos/setup-human-relay.dto';
+import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
+import { assertFromHumanDashboard } from './guards/human-dashboard-secret.guard';
 import {
   AGENT_PICTURE_FIELD,
   AGENT_PICTURE_MAX_BYTES,
@@ -52,10 +61,14 @@ import {
 import { HumanOperatorService } from './services/human-operator.service';
 import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-interaction.command';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
+import { ChangeOperatorEmailCommand } from './usecases/change-operator-email/change-operator-email.command';
+import { ChangeOperatorEmail } from './usecases/change-operator-email/change-operator-email.usecase';
 import { CreateHumanInviteCommand } from './usecases/create-human-invite/create-human-invite.command';
 import { CreateHumanInvite } from './usecases/create-human-invite/create-human-invite.usecase';
 import { CreateInteractionCommand } from './usecases/create-interaction/create-interaction.command';
 import { CreateInteraction } from './usecases/create-interaction/create-interaction.usecase';
+import { DeleteHumanAgentCommand } from './usecases/delete-human-agent/delete-human-agent.command';
+import { DeleteHumanAgent } from './usecases/delete-human-agent/delete-human-agent.usecase';
 import { GetContactCommand } from './usecases/get-contact/get-contact.command';
 import { GetContact, type GetContactResult } from './usecases/get-contact/get-contact.usecase';
 import { GetInteractionCommand } from './usecases/get-interaction/get-interaction.command';
@@ -70,6 +83,8 @@ import { RemoveContactCommand } from './usecases/remove-contact/remove-contact.c
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
 import { RequestAddressVerificationCommand } from './usecases/request-address-verification/request-address-verification.command';
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
+import { SetOperatorDefaultChannelCommand } from './usecases/set-operator-default-channel/set-operator-default-channel.command';
+import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelayCommand } from './usecases/setup-human-relay/setup-human-relay.command';
 import {
   DEFAULT_HUMAN_RELAY_IDENTIFIER,
@@ -98,13 +113,17 @@ export class HumanInteractionsController {
     private readonly getKeylessClaimTokenUsecase: GetKeylessClaimToken,
     private readonly humanOperator: HumanOperatorService,
     private readonly updateHumanAgentUsecase: UpdateHumanAgent,
-    private readonly humanAgentPicture: HumanAgentPictureService
+    private readonly deleteHumanAgentUsecase: DeleteHumanAgent,
+    private readonly humanAgentPicture: HumanAgentPictureService,
+    private readonly setOperatorDefaultChannelUsecase: SetOperatorDefaultChannel,
+    private readonly changeOperatorEmailUsecase: ChangeOperatorEmail
   ) {}
 
   @Post('/interactions')
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseGuards(HumanAgentPausedGuard)
   createInteraction(
     @UserSession() user: UserSessionData,
     @Body(new ValidationPipe({ transform: true, whitelist: true, forbidUnknownValues: false }))
@@ -132,6 +151,7 @@ export class HumanInteractionsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
+  @UseGuards(HumanAgentPausedGuard)
   listInteractions(
     @UserSession() user: UserSessionData,
     @Query() query: ListInteractionsQueryDto
@@ -153,6 +173,7 @@ export class HumanInteractionsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
+  @UseGuards(HumanAgentPausedGuard)
   getInteraction(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string
@@ -172,6 +193,7 @@ export class HumanInteractionsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseGuards(HumanAgentPausedGuard)
   cancelInteraction(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string
@@ -309,8 +331,9 @@ export class HumanInteractionsController {
   }
 
   /**
-   * Renames or describes the relay agent `human setup` made. People see the change on the invite page,
-   * in emails and on the agent's Telegram bot.
+   * Changes the relay agent `human setup` made: renames or describes it (people see that on the invite
+   * page, in emails and on the agent's Telegram bot), sets who can reach it, and pauses or resumes it.
+   * Who can reach it and pausing are the operator's, on the dashboard; a host gets 403 `dashboard_only`.
    */
   @Patch('/agent')
   @KeylessAccessible()
@@ -318,8 +341,13 @@ export class HumanInteractionsController {
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   updateAgent(
     @UserSession() user: UserSessionData,
-    @Body() body: UpdateHumanAgentRequestDto
+    @Body() body: UpdateHumanAgentRequestDto,
+    @Headers() headers: Record<string, unknown>
   ): Promise<HumanAgentResponseDto> {
+    if (body.reach !== undefined || body.paused !== undefined) {
+      assertFromHumanDashboard(headers);
+    }
+
     return this.updateHumanAgentUsecase.execute(
       UpdateHumanAgentCommand.create({
         environmentId: user.environmentId,
@@ -328,11 +356,43 @@ export class HumanInteractionsController {
         agentIdentifier: body.agentIdentifier,
         name: body.name,
         description: body.description,
+        reach: body.reach,
+        paused: body.paused,
       })
     );
   }
 
-  /** The relay agent with its name, description and picture. A 404 before `human setup` has made it. */
+  /**
+   * Deletes the relay agent for good: its address, channels, conversations and what hosts it had, so the
+   * address can be taken again. Contacts and the account stay. Afterwards `GET /human/agent` answers 404,
+   * as it does before `human setup`. Only the operator's dashboard may; a host gets 403 `dashboard_only`.
+   */
+  @Delete('/agent')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  async deleteAgent(
+    @UserSession() user: UserSessionData,
+    @Query() query: HumanAgentQueryDto,
+    @Headers() headers: Record<string, unknown>
+  ): Promise<void> {
+    assertFromHumanDashboard(headers);
+
+    await this.deleteHumanAgentUsecase.execute(
+      DeleteHumanAgentCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        agentIdentifier: query.agentIdentifier,
+      })
+    );
+  }
+
+  /**
+   * The relay agent with its name, description, picture, who can reach it and whether it is paused. A 404
+   * before `human setup` has made it.
+   */
   @Get('/agent')
   @KeylessAccessible()
   @ExternalApiAccessible()
@@ -393,6 +453,53 @@ export class HumanInteractionsController {
     });
 
     return subscriberId ? { subscriberId } : {};
+  }
+
+  /**
+   * The operator picks which of their connected channels agents use when a message names none. It is their
+   * own choice, so an inviter's `--via` never replaces it.
+   */
+  @Put('/operator/default-channel')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  setOperatorDefaultChannel(
+    @UserSession() user: UserSessionData,
+    @Body() body: SetOperatorDefaultChannelRequestDto
+  ): Promise<SetOperatorDefaultChannelResponseDto> {
+    return this.setOperatorDefaultChannelUsecase.execute(
+      SetOperatorDefaultChannelCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        via: body.via,
+        agentIdentifier: body.agentIdentifier,
+      })
+    );
+  }
+
+  /**
+   * Sends a confirmation link to a new address for the operator, or to the one they signed up with. Agents
+   * keep emailing a verified address until the new one is confirmed. The default channel stays as it is.
+   */
+  @Post('/operator/email')
+  @HttpCode(HttpStatus.OK)
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  changeOperatorEmail(
+    @UserSession() user: UserSessionData,
+    @Body() body: ChangeOperatorEmailRequestDto
+  ): Promise<RequestAddressVerificationResponseDto> {
+    return this.changeOperatorEmailUsecase.execute(
+      ChangeOperatorEmailCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        address: body.address,
+        agentIdentifier: body.agentIdentifier,
+      })
+    );
   }
 
   /**
@@ -459,6 +566,6 @@ function relayOf(user: UserSessionData, agentIdentifier?: string) {
 /** A setup without an account is a free demo anyone can start, so it can't publish files. */
 function assertHasAccount(user: UserSessionData): void {
   if (isResolvedKeylessAuthScheme(user.scheme)) {
-    throw new ForbiddenException('A picture needs a Human account. Run `human login` first.');
+    throw new ForbiddenException('A picture needs an Agent Inbox account. Run `npx @agentinbox/cli login` first.');
   }
 }

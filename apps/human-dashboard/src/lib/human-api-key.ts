@@ -10,7 +10,7 @@ import { type HumanApiRequest, requestWithDashboardSecret, requestWithSecretKey 
 type SecretKeyResponse = { environmentId: string; secretKey: string };
 
 /**
- * The backing organization's Development secret key, the one `human login` hands to the CLI. It's read
+ * The backing organization's Development secret key, the one `login` hands to the CLI. It's read
  * once per request. The helpers below call the API with it and return only the answer, so the key stays
  * in this file for every page but Settings, which shows it to the operator (`readApiKey`).
  */
@@ -51,7 +51,7 @@ export function readApiKey(account: HumanAccount): Promise<string> {
 
 /**
  * Replaces the key and returns the new one. The old key stops working at once, everywhere it was pasted
- * and in the copy `human login` saved on the operator's computer.
+ * and in the copy `login` saved on the operator's computer.
  */
 export async function regenerateApiKey(account: HumanAccount): Promise<string> {
   const body = await requestWithDashboardSecret(account.region, `${secretKeyPath(account.humanUserId)}/regenerate`, {

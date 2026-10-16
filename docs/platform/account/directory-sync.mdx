@@ -1,0 +1,133 @@
+---
+title: 'Directory sync'
+description: 'Provision, update, and deprovision Novu organization members from your identity provider with SCIM 2.0 or Google Workspace directory sync.'
+---
+
+import DirectorySyncPauseAndRemove from "/snippets/directory-sync-pause-and-remove.mdx";
+
+<Note>
+  Directory sync is an Enterprise feature on [Novu Cloud](https://dashboard.novu.co), on the same **Security** tab as SSO. The organization **Owner** sees that tab only after we enable self-serve. Email [support@novu.co](mailto:support@novu.co) if you want us to configure it with you. SSO setup starts at [SAML SSO & SCIM](/platform/account/sso).
+</Note>
+
+Directory sync keeps Novu organization membership aligned with the identity provider. It is how you create dashboard users before they sign in, and how you remove their access when they leave, without waiting for the next login.
+
+This provisions the people who sign in to Novu. It does not create [subscribers](/platform/additional-resources/glossary#subscriber). Subscribers are the people your workflows notify.
+
+## What it does
+
+- **Create.** A person provisioned in the IdP gets a Novu account before they sign in. If that email already belongs to a Novu account, the directory links to that account instead of creating a second one.
+- **Update.** Name and email changes in the IdP are written onto that account.
+- **Deactivate.** When the IdP deactivates or removes the person, their Novu sessions are revoked and the account is deactivated. A SCIM delete does the same thing to that directory's link. It does not delete the Novu account.
+
+Okta and Microsoft Entra ID apply this on their own provisioning schedule, which is often several minutes later. Google Workspace is polled about every five minutes. You can also run **Sync now** for Google.
+
+Only email addresses on a verified domain for the SSO connection are processed. A test user on another domain never shows up.
+
+## SSO first
+
+Directory sync is attached to an SSO connection. It does not replace [SAML or OpenID Connect](/platform/account/sso).
+
+You can finish directory sync before you activate SSO. The wizard warns you that members can be provisioned immediately and cannot sign in until SSO is active. That is useful when you want the organization populated before you move everyone to the IdP.
+
+On the Security tab, **Start configuration** stays disabled and shows an **SSO Required** badge until an SSO connection exists. The connection does not have to be activated yet.
+
+The directory provider follows the SSO provider. You do not pick a second provider.
+
+| SSO connection | Directory guide | What you copy into the IdP |
+| --- | --- | --- |
+| [Okta Workforce](/platform/account/sso/okta) | [Okta directory sync](/platform/account/directory-sync/okta) | SCIM endpoint URL and bearer token |
+| [Microsoft Entra ID](/platform/account/sso/microsoft-entra) | [Entra directory sync](/platform/account/directory-sync/microsoft-entra) | SCIM endpoint URL and bearer token |
+| [Google Workspace](/platform/account/sso/google-workspace) | [Google Workspace directory sync](/platform/account/directory-sync/google-workspace) | Nothing. You upload a service account key. |
+| [Custom SAML](/platform/account/sso/custom-saml) or [OpenID Connect](/platform/account/sso/oidc) | [Custom SCIM](/platform/account/directory-sync/custom-scim) | SCIM endpoint URL and bearer token |
+
+Novu does not add a second activate button for SCIM. The IdP can push after the endpoint and token are saved and provisioning is turned on in the IdP. The provider pages name that switch. Google Workspace turns on when the service account credentials validate.
+
+## Bearer token
+
+<Warning>
+  For SCIM providers, the bearer token is shown once, in the session that generates it. Copy it into the IdP before you leave the page. If you lose it, select **Generate new token**. The previous token keeps working for 10 minutes so you can update the IdP without a gap. After those 10 minutes, the old token is rejected.
+</Warning>
+
+Google Workspace does not use this token.
+
+## Attributes
+
+On the **Review attributes** step, these mappings are already set and cannot be edited there:
+
+| Directory attribute | Novu user field |
+| --- | --- |
+| `userName` | Username / primary identifier |
+| `emails[0].value` | Email address |
+| `name.givenName` | First name |
+| `name.familyName` | Last name |
+
+Whether the account is enabled follows the SCIM `active` attribute. A SCIM delete is treated as a deactivation. Fields that are not in this table are not applied from the Security tab.
+
+<Warning>
+  Every SCIM user needs an email in the `emails` attribute. If `userName` is already the email address, you still have to send `emails`. Novu does not fall back to `userName`. Users without `emails` fail to provision. Google Workspace uses each person's primary email, so you do not configure this mapping there.
+</Warning>
+
+## Test provisioning
+
+Assign or push a user whose email is on a verified domain. While the test step is open, it lists recent activity with the email, name, time, and **Active** or **Deprovisioned** status.
+
+**Complete** closes the wizard. The directory is already active by then. **Complete** does not turn it on.
+
+Google has nothing to push. The test step shows the last sync result and **Sync now**, which reads the directory immediately instead of waiting for the next five-minute poll.
+
+## Offboarding
+
+Deactivation follows the IdP schedule described above. Check these cases before you treat a removal in the IdP as finished:
+
+- If the person was also invited from **Settings** > **Team**, outside directory sync, removing them in the IdP withdraws the directory's access and leaves the invited membership in place. Remove that membership by hand if they should lose the organization.
+- If more than one directory manages the same person, they stay active until every enabled directory has deprovisioned them. A paused directory does not count toward that.
+- Pausing or deleting the directory is not the same as deactivating a person in the IdP. That behavior is under [After setup](#after-setup).
+
+## Groups and roles
+
+The Security tab does not map IdP groups to Novu roles (Owner, Admin, Author, Viewer). You can push groups from Okta, and Google Workspace groups are read with the directory, but group membership does not change a role from this page.
+
+Ask us if you want a group to set a Novu role. If we turn that on, only direct membership counts. A person who is in a mapped group only because they belong to another group does not get that role.
+
+## After setup
+
+The section shows **Unconfigured**, **Active**, or **Inactive**. The menu then has:
+
+- **Edit.** Generate a new bearer token, or review recent provisioning. For Google, this is also where you replace the service account key or run a sync.
+- **Deactivate / Activate / Remove.** A Google directory cannot be activated until a service account key is stored.
+
+<DirectorySyncPauseAndRemove />
+
+## If provisioning fails
+
+<AccordionGroup>
+  <Accordion title="Start configuration is disabled">
+    There is no SSO connection yet. Create one with the matching [SSO guide](/platform/account/sso) first. It does not have to be activated.
+  </Accordion>
+  <Accordion title="The IdP rejects the token">
+    The bearer token was copied incompletely, or **Generate new token** was used and the 10-minute overlap has passed. Generate a token, paste the new value, and save in the IdP.
+  </Accordion>
+  <Accordion title="The push succeeds and the user never appears">
+    Their email is not on a verified domain for the connection, or the SCIM payload has no `emails` value. `userName` set to an email address is not enough.
+  </Accordion>
+  <Accordion title="Someone you removed can still open Novu">
+    Wait for the next cycle. Then check **Settings** > **Team** for a membership that was created by invitation rather than by the directory.
+  </Accordion>
+</AccordionGroup>
+
+The provider pages have the field names for each console:
+
+<CardGroup cols={2}>
+  <Card title="Okta" href="/platform/account/directory-sync/okta">
+    SCIM base URL, API token, and the email mapping beside userName.
+  </Card>
+  <Card title="Microsoft Entra ID" href="/platform/account/directory-sync/microsoft-entra">
+    Tenant URL, secret token, and provisioning status.
+  </Card>
+  <Card title="Google Workspace" href="/platform/account/directory-sync/google-workspace">
+    Service account JSON key and domain-wide delegation.
+  </Card>
+  <Card title="Custom SCIM" href="/platform/account/directory-sync/custom-scim">
+    Base URL, bearer token, and the emails attribute.
+  </Card>
+</CardGroup>

@@ -163,7 +163,7 @@ export class HumanDeliveryService {
 
     if (integrations.length === 0) {
       throw new NotFoundException(
-        `Agent has no linked channels. Connect telegram, slack, or email to this agent, or run \`human setup\`.`
+        `Agent has no linked channels. Connect telegram, slack, or email to this agent, or run \`npx @agentinbox/cli setup\`.`
       );
     }
 
@@ -174,7 +174,7 @@ export class HumanDeliveryService {
 
     if (params.via && candidates.length === 0) {
       throw new NotFoundException(
-        `No ${params.via} channel is linked to this agent. Connect ${params.via} or run \`human setup ${params.via}\`.`
+        `No ${params.via} channel is linked to this agent. Connect ${params.via} or run \`npx @agentinbox/cli channel add ${params.via}\`.`
       );
     }
 

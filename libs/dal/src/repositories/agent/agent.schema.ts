@@ -2,7 +2,7 @@ import { AGENT_ANALYTICS_SOURCES, AgentReplyPolicyEnum, AgentSubscriberAccessEnu
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
-import { AgentDBModel } from './agent.entity';
+import { AGENT_INBOX_REACHES, AgentDBModel } from './agent.entity';
 
 const agentSchema = new Schema<AgentDBModel>(
   {
@@ -20,6 +20,29 @@ const agentSchema = new Schema<AgentDBModel>(
       contentType: Schema.Types.String,
       version: Schema.Types.String,
     },
+    hosts: {
+      cli: {
+        connectedAt: Schema.Types.String,
+        lastCheckedAt: Schema.Types.String,
+      },
+      mcp: {
+        connectedAt: Schema.Types.String,
+        lastCheckedAt: Schema.Types.String,
+      },
+      firstCheckedAt: Schema.Types.String,
+      waitingMessage: {
+        conversationId: Schema.Types.String,
+        from: Schema.Types.String,
+        subject: Schema.Types.String,
+        at: Schema.Types.String,
+        seenAt: Schema.Types.String,
+      },
+    },
+    reach: {
+      type: Schema.Types.String,
+      enum: [...AGENT_INBOX_REACHES],
+    },
+    pausedAt: Schema.Types.String,
     active: {
       type: Schema.Types.Boolean,
       default: true,

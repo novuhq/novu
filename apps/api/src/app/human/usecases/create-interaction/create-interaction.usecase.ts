@@ -43,6 +43,7 @@ import {
   toStoredContent,
 } from '../../services/human-interaction-lifecycle';
 import { HumanKeylessCapService, isHumanBrowserLoginAvailable } from '../../services/human-keyless-cap.service';
+import { type HumanMessageCredits, HumanMessageQuotaService } from '../../services/human-message-quota.service';
 import { CreateConversationInteractionCommand } from '../create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../create-conversation-interaction/create-conversation-interaction.usecase';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
@@ -54,10 +55,10 @@ import { CreateInteractionCommand } from './create-interaction.command';
  */
 function keylessHumanClaimedMessage(): string {
   if (isHumanBrowserLoginAvailable()) {
-    return 'This setup was moved into your Human account. Run `human login` to keep using it.';
+    return 'This setup was moved into your Agent Inbox account. Run `npx @agentinbox/cli login` to keep using it.';
   }
 
-  return 'This demo workspace was claimed into your Novu account. Run `human setup --secret-key <your Development environment key>` (or set NOVU_SECRET_KEY) to continue.';
+  return 'This demo workspace was claimed into your Novu account. Run `npx @agentinbox/cli setup --secret-key <your Development environment key>` (or set INBOX_SECRET_KEY) to continue.';
 }
 
 @Injectable()
@@ -70,6 +71,7 @@ export class CreateInteraction {
     private readonly logger: PinoLogger,
     private readonly activityRecorder: HumanInteractionActivityRecorder,
     private readonly inboxQuota: AgentEmailInboxQuotaService,
+    private readonly messageQuota: HumanMessageQuotaService,
     private readonly keylessCap: HumanKeylessCapService,
     private readonly inbox: HumanInboxService,
     private readonly conversationService: AgentConversationService,
@@ -151,23 +153,31 @@ export class CreateInteraction {
     const resolved = await this.resolveTargets(command, agent, subscriberIds);
     const emailCount = resolved.filter((item) => item.target.platform === HumanChannelViaEnum.EMAIL).length;
     let credits: AgentEmailInboxCredits | undefined;
+    let messageCredits: HumanMessageCredits | undefined;
     let emailCapError: HttpException | undefined;
 
-    if (emailCount > 0) {
-      try {
-        credits = await this.inboxQuota.reserveCredits(command.organizationId, emailCount);
-      } catch (err) {
-        // Email-only interactions fail outright on the cap. When other channels
-        // can still be reached, they go out and the email recipients fail alone.
-        if (!isAgentEmailInboxQuotaExceeded(err) || emailCount === resolved.length) {
-          throw err;
-        }
-
-        emailCapError = err;
-      }
-    }
-
     try {
+      if (emailCount > 0) {
+        try {
+          credits = await this.inboxQuota.reserveCredits(command.organizationId, emailCount);
+        } catch (err) {
+          // Email-only interactions fail outright on the cap. When other channels
+          // can still be reached, they go out and the email recipients fail alone.
+          if (!isAgentEmailInboxQuotaExceeded(err) || emailCount === resolved.length) {
+            throw err;
+          }
+
+          emailCapError = err;
+        }
+      }
+
+      if (!isKeylessOrganization(command.organizationId)) {
+        // Capped email recipients are not delivered, so they stay out of this
+        // hold. Counting them would reject the other channels when one credit remains.
+        const messageCount = emailCapError ? resolved.length - emailCount : resolved.length;
+        messageCredits = await this.messageQuota.reserveCredits(command.organizationId, messageCount);
+      }
+
       const interaction = await this.humanInteractionRepository.create(
         buildPendingHumanInteraction({
           kind: command.kind,
@@ -195,6 +205,7 @@ export class CreateInteraction {
             }
 
             const sent = await this.deliveryService.deliver(interaction, target);
+            messageCredits?.accept();
             const thread = await this.landInThread(scope, interaction, subscriberId, target, sent.platformThreadId);
 
             if (thread) {
@@ -221,6 +232,7 @@ export class CreateInteraction {
       return toInteractionResponse(delivered.interaction, delivered.failedSubscriberIds, threads);
     } finally {
       await credits?.release();
+      await messageCredits?.release();
     }
   }
 
@@ -306,24 +318,35 @@ export class CreateInteraction {
     }
 
     const integrationIdentifier = await this.inbox.resolveIntegrationIdentifier(scope, channel);
-    const interaction = await this.createConversationInteraction.execute(
-      CreateConversationInteractionCommand.create({
-        ...scope,
-        userId: command.userId,
-        conversation,
-        channel,
-        agentIdentifier: relay.identifier,
-        agentName: relay.name,
-        integrationIdentifier,
-        kind: command.kind,
-        requestId: `inbox_${shortId(12)}`,
-        anyoneMayAnswer: command.anyoneMayAnswer === true,
-        card: command.card,
-        from: command.from,
-        ttlSeconds: command.ttlSeconds,
-        to: recipients,
-      })
-    );
+    let messageCredits: HumanMessageCredits | undefined;
+    if (!isKeylessOrganization(command.organizationId)) {
+      messageCredits = await this.messageQuota.reserveCredits(command.organizationId, recipients.length);
+    }
+
+    let interaction: Awaited<ReturnType<CreateConversationInteraction['execute']>>;
+    try {
+      interaction = await this.createConversationInteraction.execute(
+        CreateConversationInteractionCommand.create({
+          ...scope,
+          userId: command.userId,
+          conversation,
+          channel,
+          agentIdentifier: relay.identifier,
+          agentName: relay.name,
+          integrationIdentifier,
+          kind: command.kind,
+          requestId: `inbox_${shortId(12)}`,
+          anyoneMayAnswer: command.anyoneMayAnswer === true,
+          card: command.card,
+          from: command.from,
+          ttlSeconds: command.ttlSeconds,
+          to: recipients,
+        })
+      );
+      messageCredits?.accept(recipients.length);
+    } finally {
+      await messageCredits?.release();
+    }
 
     const unreadBefore = await this.inbox.markSentInto(scope, conversation);
 
@@ -411,7 +434,9 @@ export class CreateInteraction {
 
     if (!agent) {
       if (identifier === DEFAULT_HUMAN_RELAY_IDENTIFIER) {
-        throw new NotFoundException(`Relay agent "${identifier}" was not found. Run \`human setup\` first.`);
+        throw new NotFoundException(
+          `Relay agent "${identifier}" was not found. Run \`npx @agentinbox/cli setup\` first.`
+        );
       }
 
       throw new NotFoundException(`Agent "${identifier}" was not found.`);

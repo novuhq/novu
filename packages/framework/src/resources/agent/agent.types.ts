@@ -860,7 +860,7 @@ export interface AgentHandlers {
   onMessage: (
     message: AgentMessage,
     ctx: AgentMessageContext
-  ) => Awaitable<MessageContent | ReplyStream | AgentHandlerReply | void>;
+  ) => Awaitable<MessageContent | ReplyStream | AgentHandlerReply | PendingApproval | void>;
   /**
    * Fires when the user edits a previously sent message. Does not re-run `onMessage`.
    *
