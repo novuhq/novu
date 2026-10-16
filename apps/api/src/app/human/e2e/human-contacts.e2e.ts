@@ -17,8 +17,14 @@ import {
 import { testServer, UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
+import sinon from 'sinon';
+import { AgentConfigResolver } from '../../agents/channels/agent-config-resolver.service';
 import { ChatInstanceRegistry } from '../../agents/conversation-runtime/ingress/chat-instance.registry';
+import { AgentInboundHandler } from '../../agents/conversation-runtime/ingress/inbound-turn.handler';
 import { startTelegramApiStub, type TelegramApiStub } from '../../agents/e2e/helpers/telegram-api-stub';
+import { AgentEventEnum } from '../../agents/shared/enums/agent-event.enum';
+import { agentTelegramLinkScope } from '../../telegram-linking/telegram-link-scope';
+import { TelegramStartCodeService } from '../../telegram-linking/telegram-start-code.service';
 
 const subscriberRepository = new SubscriberRepository();
 const integrationRepository = new IntegrationRepository();
@@ -530,6 +536,175 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect(decline.status).to.equal(200, JSON.stringify(decline.body));
 
       expect((await listContacts()).get(subscriberId)?.invite?.url).to.equal(older.url);
+    });
+  });
+
+  describe("contacts' Telegram and Slack handles", () => {
+    const TELEGRAM_CHAT_ID = '777301';
+    const SLACK_USER_ID = 'U0HANDLE01';
+
+    function chatThread(id: string, channelId: string) {
+      return {
+        id,
+        channelId,
+        isDM: true,
+        toJSON: () => ({ id, channelId, isDM: true }),
+        startTyping: async () => {},
+        post: sinon.stub().resolves({ id: 'reply-1', threadId: id }),
+      };
+    }
+
+    /** A Telegram message as the chat SDK hands it over: the person's own `from` is in `raw`. */
+    function telegramMessage(chatId: string, text: string, from: Record<string, unknown>) {
+      return {
+        id: `${chatId}:${Math.floor(Math.random() * 1_000_000)}`,
+        threadId: `telegram:${chatId}`,
+        text,
+        author: { userId: chatId, fullName: 'Someone', userName: 'someone', isBot: false },
+        raw: {
+          message_id: 1,
+          chat: { id: Number(chatId), type: 'private' },
+          from: { id: Number(chatId), is_bot: false, ...from },
+          text,
+        },
+        attachments: [],
+      };
+    }
+
+    async function channelOf(subscriberId: string, via: string): Promise<Record<string, any> | undefined> {
+      const channels = (await listContacts()).get(subscriberId)?.channels as Array<Record<string, any>> | undefined;
+
+      return channels?.find((channel) => channel.via === via);
+    }
+
+    function resolveConfig(agentId: string, integrationIdentifier: string, source?: 'webhook_message') {
+      return testServer
+        .getService(AgentConfigResolver)
+        .resolve(agentId, integrationIdentifier, source ? { source } : {});
+    }
+
+    it('shows the @username the person linked Telegram with, and the new one once they write', async () => {
+      const subscriberId = `handle-tg-${Date.now()}`;
+      const { agentId } = await setup({ subscriberId });
+      const telegram = await linkTelegram(agentId);
+      const config = await resolveConfig(agentId, telegram.identifier, 'webhook_message');
+      const { code } = await testServer.getService(TelegramStartCodeService).issue({
+        environmentId: session.environment._id,
+        organizationId: session.organization._id,
+        linkScope: agentTelegramLinkScope(config.agentIdentifier),
+        integrationId: String(telegram._id),
+        subscriberId,
+      });
+      const inbound = testServer.getService(AgentInboundHandler);
+      const thread = chatThread(`telegram:${TELEGRAM_CHAT_ID}`, TELEGRAM_CHAT_ID);
+
+      await inbound.handle(
+        agentId,
+        config,
+        thread as any,
+        telegramMessage(TELEGRAM_CHAT_ID, `/start ${code}`, {
+          username: 'dima',
+          first_name: 'Dima',
+          last_name: 'Grossman',
+        }) as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(await channelOf(subscriberId, 'telegram')).to.deep.include({ via: 'telegram', handle: '@dima' });
+      const single = await session.testAgent.get(`/v1/human/contacts/${subscriberId}`);
+      expect(single.status).to.equal(200, JSON.stringify(single.body));
+      expect(
+        (single.body.data.channels as Array<Record<string, any>>).find((channel) => channel.via === 'telegram')
+      ).to.deep.include({ status: 'verified', handle: '@dima' });
+
+      await inbound.handle(
+        agentId,
+        config,
+        thread as any,
+        telegramMessage(TELEGRAM_CHAT_ID, 'New username, same me', {
+          username: 'dima_g',
+          first_name: 'Dima',
+          last_name: 'Grossman',
+        }) as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect((await channelOf(subscriberId, 'telegram'))?.handle).to.equal('@dima_g');
+    });
+
+    it('learns the name of someone linked before, from a button press, when they have no username', async () => {
+      const subscriberId = `handle-tg-old-${Date.now()}`;
+      const { agentId } = await setup({ subscriberId });
+      const telegram = await linkTelegram(agentId);
+      // Linked before handles were kept: the endpoint has only the chat id.
+      await connectTelegram(subscriberId, telegram.identifier);
+
+      expect(await channelOf(subscriberId, 'telegram')).to.not.have.property('handle');
+
+      const config = await resolveConfig(agentId, telegram.identifier, 'webhook_message');
+      await testServer
+        .getService(AgentInboundHandler)
+        .handleAction(
+          agentId,
+          config,
+          chatThread('telegram:777003', '777003') as any,
+          { id: 'contacts-e2e-press' },
+          '777003',
+          { id: 'callback-1', from: { id: 777003, is_bot: false, first_name: 'Maya', last_name: 'Levi' } }
+        );
+
+      expect((await channelOf(subscriberId, 'telegram'))?.handle).to.equal('Maya Levi');
+    });
+
+    it("shows a Slack contact's workspace from a button press and their name once they write", async () => {
+      const subscriberId = `handle-slack-${Date.now()}`;
+      const { agentId } = await setup({ subscriberId });
+      const slack = await linkSlack(agentId);
+      await channelEndpointRepository.create({
+        identifier: `ce-contacts-e2e-slack-handle-${Date.now()}`,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        integrationIdentifier: slack.identifier,
+        providerId: ChatProviderIdEnum.Slack,
+        channel: ChannelTypeEnum.CHAT,
+        subscriberId,
+        contextKeys: [],
+        type: ENDPOINT_TYPES.SLACK_USER,
+        endpoint: { userId: SLACK_USER_ID },
+      });
+      const config = await resolveConfig(agentId, slack.identifier);
+      const inbound = testServer.getService(AgentInboundHandler);
+      const thread = chatThread('slack:D0HANDLE:', 'slack:D0HANDLE');
+
+      await inbound.handleAction(agentId, config, thread as any, { id: 'contacts-e2e-press' }, SLACK_USER_ID, {
+        type: 'block_actions',
+        team: { id: 'T0HANDLE', domain: 'acme' },
+        user: { id: SLACK_USER_ID, username: 'dima', name: 'dima', team_id: 'T0HANDLE' },
+      });
+
+      const pressed = await channelOf(subscriberId, 'slack');
+      expect(pressed).to.deep.include({ via: 'slack', workspace: 'acme.slack.com' });
+      expect(pressed).to.not.have.property('handle');
+
+      await inbound.handle(
+        agentId,
+        config,
+        thread as any,
+        {
+          id: `slack-${Date.now()}`,
+          threadId: 'slack:D0HANDLE:',
+          text: 'Here now',
+          author: { userId: SLACK_USER_ID, fullName: 'Dima Grossman', userName: 'dima', isBot: false },
+          raw: { type: 'message', channel: 'D0HANDLE', user: SLACK_USER_ID, team: 'T0HANDLE', ts: '1.000' },
+          attachments: [],
+        } as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(await channelOf(subscriberId, 'slack')).to.deep.include({
+        handle: 'dima',
+        workspace: 'acme.slack.com',
+      });
     });
   });
 

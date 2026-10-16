@@ -19,11 +19,12 @@ import {
 import { Field, Input } from '@/components/ui/input';
 import { Fold } from '@/components/ui/stepper';
 import { toast } from '@/components/ui/toast';
-import type { Contact, ContactChannelVia } from '@/lib/human-contacts-api';
+import type { Contact, ContactChannel, ContactChannelVia } from '@/lib/human-contacts-api';
 import type { SlackSetupState } from '@/lib/human-slack-setup';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 import { cn } from '@/lib/utils';
 import { ChannelLogo } from '../configure/channel-logo';
+import { CrossFade } from '../inbox/cross-fade';
 import { sendEmailLinkAction, setDefaultChannelAction } from './actions';
 import { ContactAvatar } from './contact-avatar';
 import { ShortDate } from './short-date';
@@ -376,7 +377,7 @@ function IdCard({ contact, agentHandle, connected, defaultVia }: IdCardProps) {
             <Fold open appear={appearing.has(via)}>
               <ChannelLine
                 via={via}
-                value={via === 'email' && email ? email.address : CHANNEL_NAMES[via]}
+                value={via === 'email' ? (email?.address ?? CHANNEL_NAMES.email) : chatValue(via, contact.channels)}
                 copyLabel={via === 'email' ? `Copy ${contact.name}'s email` : undefined}
                 isDefault={via === defaultVia}
                 status={via === 'email' ? email?.status : undefined}
@@ -426,7 +427,12 @@ function ChannelLine({ via, value, copyLabel, isDefault, status }: ChannelLinePr
     >
       <ChannelLogo via={via} size={16} />
       <span className="flex min-w-0 flex-1 items-center gap-1.5">
-        <span className="truncate font-mono text-[13px] leading-4.5 text-foreground">{value}</span>
+        {/* A new value, such as a handle learned while the card is open, fades in where the old one fades out. */}
+        <CrossFade id={value} value={value}>
+          {(shown, className) => (
+            <span className={cn('truncate font-mono text-[13px] leading-4.5 text-foreground', className)}>{shown}</span>
+          )}
+        </CrossFade>
         {copyLabel && (
           <CopyButton value={value} label={copyLabel} className={CARD_COPY_CLASS_NAME} iconClassName="size-3" />
         )}
@@ -444,6 +450,19 @@ function ChannelLine({ via, value, copyLabel, isDefault, status }: ChannelLinePr
       </span>
     </div>
   );
+}
+
+/**
+ * What a chat line says: how the person shows on the app (`@dima`, `dima · acme.slack.com`), or the app's name
+ * until the agent has learned it.
+ */
+function chatValue(via: 'telegram' | 'slack', channels: ContactChannel[]): string {
+  const channel = channels.find((candidate) => candidate.via === via);
+  if (!channel?.handle) {
+    return CHANNEL_NAMES[via];
+  }
+
+  return channel.workspace ? `${channel.handle} · ${channel.workspace}` : channel.handle;
 }
 
 function EmailStatus({ status }: { status: 'verified' | 'pending' | 'unverified' }) {

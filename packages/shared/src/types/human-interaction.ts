@@ -259,6 +259,10 @@ export type HumanContactChannelStatus = {
   verifiedRequestedAt?: string;
   /** Set while a newer request is pending (the pending slot's `requestedAt`). */
   requestedAt?: string;
+  /** How the contact shows on a connected chat app: `@username` on Telegram (else their name), their name on Slack. */
+  handle?: string;
+  /** The Slack workspace the contact is in, such as `acme.slack.com`. */
+  workspace?: string;
 };
 
 /** Default lifetime of a pending interaction. */

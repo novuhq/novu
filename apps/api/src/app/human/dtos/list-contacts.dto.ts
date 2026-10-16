@@ -55,6 +55,18 @@ export class HumanContactChannelDto {
   })
   address?: string;
 
+  @ApiPropertyOptional({
+    description:
+      'How the contact shows on a chat channel: `@username` on Telegram (their name when they have no username), ' +
+      'their display name on Slack. Learned when they connect or write; absent until then, and for email.',
+  })
+  handle?: string;
+
+  @ApiPropertyOptional({
+    description: 'The Slack workspace the contact is in, such as `acme.slack.com`. Slack only, once known.',
+  })
+  workspace?: string;
+
   @ApiProperty({ description: 'Whether this is the channel used when an interaction doesn’t pass `via`.' })
   isDefault: boolean;
 }

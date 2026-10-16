@@ -38,6 +38,13 @@ export type ContactChannel = {
   via: ContactChannelVia;
   /** ISO timestamp when they connected it; for email, when the address was confirmed. */
   connectedAt?: string;
+  /**
+   * How they show on that app: `@username` on Telegram (their name when they have none), their name on Slack.
+   * Missing until the agent learns it, when they connect or write.
+   */
+  handle?: string;
+  /** The Slack workspace they're in, such as `acme.slack.com`. */
+  workspace?: string;
   isDefault: boolean;
 };
 
