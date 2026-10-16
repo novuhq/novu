@@ -72,6 +72,11 @@ try {
   console.error(`${error.message}\n${USAGE}`);
   process.exit(2);
 }
+const cloudOnly = ['from', 'deploy', 'no-sync'].filter((name) => options[name]);
+if (cloudOnly.length && !options.cloud) {
+  console.error(`${cloudOnly.map((name) => `--${name}`).join(', ')}: only with --cloud\n${USAGE}`);
+  process.exit(2);
+}
 const BOX = options.box ?? (options.cloud ? branchBox() : 'novu-box');
 const [command, ...args] = positionals;
 
