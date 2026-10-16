@@ -429,9 +429,11 @@ const exitWith = (effect: Effect.Effect<number, CliError, Services>) =>
         return 1;
       })
     ),
-    Effect.map((code) => {
-      process.exitCode = code;
-    })
+    Effect.flatMap((code) =>
+      Effect.sync(() => {
+        process.exitCode = code;
+      })
+    )
   );
 
 const ci = Command.make('ci').pipe(
