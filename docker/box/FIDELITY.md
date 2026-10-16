@@ -35,7 +35,7 @@ what a PR tester would miss, and what closing it would take. Keep this list curr
 | Channel | Box | Exercised | Not exercised |
 |---|---|---|---|
 | Email | `nodemailer` (SMTP) to Mailpit | Everything up to the provider; the real HTML email | SendGrid/SES/... adapters, bounces, delivery events |
-| SMS, push, chat | `generic-sms`, `push-webhook`, `chat-webhook` to `sink.mjs`, shown in Mailpit | Everything up to the provider: workflow, rendering, subscriber lookup, activity, retries | Twilio/FCM/APNs/Slack adapters, provider overrides, real errors and rate limits, delivery receipts, how the message looks on a device |
+| SMS, push, chat | `generic-sms`, `push-webhook`, `chat-webhook` to `src/box/sink.ts`, shown in Mailpit | Everything up to the provider: workflow, rendering, subscriber lookup, activity, retries | Twilio/FCM/APNs/Slack adapters, provider overrides, real errors and rate limits, delivery receipts, how the message looks on a device |
 | Novu demo providers | Absent (`NOVU_EMAIL_INTEGRATION_API_KEY`, `NOVU_SMS_INTEGRATION_*`) | - | The "Novu" email/SMS demo integrations |
 | Inbox | Real (socket worker, `VITE_WEBSOCKET_TYPE=cloud`) | Realtime, feed, preferences | - |
 
@@ -81,14 +81,14 @@ with the Development secret key, through the same SSRF guard as a customer's bri
 | Custom domains (`DOMAIN_CONNECT_PRIVATE_KEY`) | Domain Connect fails | No key; could generate a box-only one |
 | Monitoring and marketing (New Relic, Sentry, Segment, Mixpanel, HubSpot, Intercom, Plain) | Off; `/v1/telemetry/measure` returns 404 | Box traffic must not reach real dashboards |
 
-## Hosting on Cloudflare (`cli.mjs --cloud`)
+## Hosting on Cloudflare (`--cloud`)
 
-What differs, or is still a workaround, when the box runs on Cloudflare (`cloud/worker.js`) instead of locally.
+What differs, or is still a workaround, when the box runs on Cloudflare (`src/cloud/host.ts`) instead of locally.
 
 | Area | Staging / production | Box on Cloudflare | What a PR tester misses | To close it |
 |---|---|---|---|---|
 | Addresses | Dashboard and API on separate hosts (`dashboard.novu.co`, `api.novu.co`) | One `workers.dev` address per box; the box routes by path (Caddy `:18080`) | CORS and cross-origin cookie behavior | A domain with a host per part (NV-9059) |
-| New boxes | - | All containers in one host Worker (`novu-box-host`); each box adds a small Worker for its `workers.dev` address (`novu-box-<box>`, about 30 s to deploy). A new box starts from another box's snapshot in about 2 min | - | Drop the per-box Workers once there's a domain (NV-9059) |
+| New boxes | - | All containers in one host Worker (`novu-box-core`); each box adds a small Worker for its `workers.dev` address (`novu-box-<box>`, about 30 s to deploy). A new box starts from another box's snapshot in about 2 min | - | Drop the per-box Workers once there's a domain (NV-9059) |
 | GitHub token | Not in the app's environment | A bake or apply holds a token (on Cloudflare the host's read-only `GITHUB_READ_TOKEN`, locally the caller's) and gives it only to git's fetches, for github.com only. PR code runs as the same user while it installs, so a compromised dependency's install script in a PR could read the read-only token | - | Fetch in a step of its own before any PR code runs, or the Worker adds the token to requests to GitHub on the way out |
 | Calls to its own address | Internal | `API_ROOT_URL` and S3 links are the public address, so the box's calls to itself go out to the internet and back | Extra latency on those calls | Route them back inside the Worker |
 | Uptime | Always on | Sleeps after 1 h without requests and wakes in 35 to 50 s; a Cloudflare host restart loses changes since the last save | The first request after a sleep waits | - |
@@ -98,7 +98,7 @@ What differs, or is still a workaround, when the box runs on Cloudflare (`cloud/
 
 The `workers.dev` setup is a workaround for having no domain. With one, the hosting becomes:
 
-1. **One Worker for everything.** The host Worker (`novu-box-host`) answers `<box>.<domain>` itself and routes by
+1. **One Worker for everything.** The host Worker (`novu-box-core`) answers `<box>.<domain>` itself and routes by
    hostname to the box's Durable Object, so the thin per-box Workers (`novu-box-<box>`) and their deploys go away.
 2. **A host per part,** one wildcard level deep for the free certificate: `<box>.<domain>` (dashboard),
    `<box>-api.<domain>`, `<box>-ws.<domain>`, `<box>-s3.<domain>`, `<box>-mail.<domain>`. The dashboard then calls the
@@ -122,7 +122,7 @@ The `workers.dev` setup is a workaround for having no domain. With one, the host
 - `npx novu sync` never sets agent bridge URLs on a production bridge. `syncAgentBridgeUrls`
   (`packages/novu/src/commands/sync.ts`) calls `?action=discover` unsigned, and a bridge with
   `strictAuthentication` (the default outside development) answers 401, which the CLI swallows with a warning.
-  `seed.mjs` signs the request instead. Not fixed; to report.
+  The box's seed (`src/box/seed.ts`) signs the request instead. Not fixed; to report.
 - An approved tool on a plain `agent()` is recorded as denied on the next user message. After `onToolApproval`
   runs the tool, no tool result is recorded (`emitToolResult` is internal; only the AI SDK and LangChain
   adapters call it), so `findOrphanedApprovedToolApprovalRequests`
