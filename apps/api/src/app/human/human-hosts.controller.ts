@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   Query,
   Req,
@@ -24,6 +25,8 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { HumanAgentQueryDto } from './dtos/human-agent.dto';
 import {
   type ConnectCodeResponseDto,
+  ConnectCodeStatusQueryDto,
+  type ConnectCodeStatusResponseDto,
   ConnectHostRequestDto,
   type ConnectHostResponseDto,
   CreateConnectCodeRequestDto,
@@ -35,10 +38,12 @@ import { ConnectHostCommand } from './usecases/connect-host/connect-host.command
 import { ConnectHost } from './usecases/connect-host/connect-host.usecase';
 import { CreateConnectCodeCommand } from './usecases/create-connect-code/create-connect-code.command';
 import { CreateConnectCode } from './usecases/create-connect-code/create-connect-code.usecase';
+import { GetConnectCodeStatusCommand } from './usecases/get-connect-code-status/get-connect-code-status.command';
+import { GetConnectCodeStatus } from './usecases/get-connect-code-status/get-connect-code-status.usecase';
 
 /**
- * The hosts of the relay agent: a one-time code for one more host to connect with, and whether any host
- * is connected and when it last checked the inbox.
+ * The hosts of the relay agent: a one-time code for one more host to connect with, what became of such a
+ * code, and whether any host is connected and when it last checked the inbox.
  */
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller('/human/agent')
@@ -48,6 +53,7 @@ import { CreateConnectCode } from './usecases/create-connect-code/create-connect
 export class HumanHostsController {
   constructor(
     private readonly createConnectCodeUsecase: CreateConnectCode,
+    private readonly getConnectCodeStatusUsecase: GetConnectCodeStatus,
     private readonly inbox: HumanInboxService,
     private readonly hostStatus: HumanHostStatusService
   ) {}
@@ -71,6 +77,31 @@ export class HumanHostsController {
         userId: user._id,
         agentIdentifier: body.agentIdentifier,
         handle: body.handle,
+      })
+    );
+  }
+
+  /**
+   * What became of one of the agent's codes: `unused`, `used` or `expired`. The dashboard asks while it
+   * shows the code, to tell a host that used it. It only reads, so asking is never a wrong try; it takes the
+   * same right as asking for a code, and any code that isn't the agent's own is a 404.
+   */
+  @Get('/connect-codes/:code')
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.API_KEY_READ)
+  getConnectCodeStatus(
+    @UserSession() user: UserSessionData,
+    @Param('code') code: string,
+    @Query() query: ConnectCodeStatusQueryDto
+  ): Promise<ConnectCodeStatusResponseDto> {
+    return this.getConnectCodeStatusUsecase.execute(
+      GetConnectCodeStatusCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        agentIdentifier: query.agentIdentifier,
+        handle: query.handle,
+        code,
       })
     );
   }

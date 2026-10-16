@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { type ReactNode, useCallback, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useState } from 'react';
 
 import { useConnectionPoll } from '@/components/channels/setup-parts';
 import { ChatAppList } from '@/components/connect/chat-app-list';
@@ -12,23 +12,21 @@ import { ToolChips } from '@/components/onboarding/identity-stage';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
 import { MascotFace } from '@/components/ui/mascot-face';
+import { useCodeWatch } from '@/hooks/use-code-watch';
 import { useConnectCode } from '@/hooks/use-connect-code';
 import { useHostBaseline } from '@/hooks/use-host-baseline';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { useSwap } from '@/hooks/use-swap';
 import { AI_TOOLS, type AiTool, type ToolId } from '@/lib/ai-tools';
-import { type ConnectApi, wasCodeUsed } from '@/lib/host-status';
+import type { ConnectApi } from '@/lib/host-status';
 import type { HostVia } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
 /** How long the steps take to fade out before "connected" rises in. */
 const SWAP_MS = 200;
 
-/**
- * Every this many checks the drawer also asks for the code again: a different one back means the one on
- * screen was used. The API keeps no record of the host a code connected (`findNewHost` can miss it).
- */
-const CODE_CHECK_EVERY = 3;
+/** How often the drawer checks for a new host and asks about its codes, while it's open. */
+const CHECK_EVERY_MS = 5_000;
 
 type ConnectAgentDrawerProps = {
   /** The agent, as `connect` names it: its address before the `@`. */
@@ -55,8 +53,9 @@ type ConnectAgentDrawerProps = {
  * its own drawer over this one. A fresh code is asked for every time it opens.
  *
  * For as long as it's open it watches for a host that comes in: a way in that's new, or one that came back
- * after a day without checks, or the code on screen getting used. The drawer then says so, and the page
- * reloads so the agent's card and the Agent setup row show it.
+ * after a day without checks, or a code it showed getting used, which the API tells (`useCodeWatch`). The
+ * drawer then says so, and the page reloads so the agent's card and the Agent setup row show it. A code the
+ * API says ran out, or doesn't know, is swapped for a fresh one.
  */
 export function ConnectAgentDrawer({
   handle,
@@ -91,44 +90,36 @@ export function ConnectAgentDrawer({
 
   const watching = open && !newHost;
   const createCode = useCallback(() => api.createCode(handle), [api, handle]);
-  const { state: code, take, retry } = useConnectCode(createCode, watching);
+  const { state: code, renew, retry } = useConnectCode(createCode, watching);
   // A chat app's drawer watches for its own sign-in while it covers this one.
   const hosts = useHostBaseline(api.readHosts, watching && openTool === null);
-  const checks = useRef(0);
+  // The codes outlive a chat app's drawer: one used while it covered this one still counts.
+  const codes = useCodeWatch(api.readCodeStatus, code.status === 'ready' ? code.code : null, watching);
 
   useConnectionPoll<HostVia>({
     waiting: watching && openTool === null,
     // It watches for as long as it's open: the code on screen is renewed before it runs out, so a host can
     // come in with it at any time, from a copy made long after the drawer opened.
     giveUpAfterMs: null,
+    everyMs: CHECK_EVERY_MS,
     check: async () => {
       // A tab out of sight asks nothing; it picks up again as soon as the operator comes back to it.
       if (document.visibilityState === 'hidden') {
         return null;
       }
 
-      const via = await hosts.check();
+      const [via, codeWatch] = await Promise.all([hosts.check(), codes.check()]);
       if (via) {
         return via;
       }
 
-      checks.current += 1;
-      if (checks.current % CODE_CHECK_EVERY !== 0 || code.status !== 'ready') {
-        return null;
-      }
-
-      const current = await api.createCode(handle).catch(() => null);
-      if (!current?.ok) {
-        return null;
-      }
-
-      if (wasCodeUsed(code.code, current.code.code, Date.now())) {
+      // A code is only ever used by `agentinbox connect`.
+      if (codeWatch === 'used') {
         return 'cli';
       }
 
-      // The API swapped a code that was about to run out: the new one goes on screen.
-      if (current.code.code !== code.code.code) {
-        take(current);
+      if (codeWatch === 'renew') {
+        renew();
       }
 
       return null;

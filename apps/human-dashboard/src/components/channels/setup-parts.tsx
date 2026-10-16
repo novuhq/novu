@@ -41,6 +41,8 @@ type ConnectionPoll<Connection> = {
    * on, for a drawer that keeps what it waits on working, such as a code it renews.
    */
   giveUpAfterMs?: number | null;
+  /** How often it asks: every 2.5 seconds by default. */
+  everyMs?: number;
 };
 
 /**
@@ -53,6 +55,7 @@ export function useConnectionPoll<Connection>({
   check,
   onConnected,
   giveUpAfterMs = POLL_TIMEOUT_MS,
+  everyMs = POLL_INTERVAL_MS,
 }: ConnectionPoll<Connection>) {
   const [waitedTooLong, setWaitedTooLong] = useState(false);
   // The callbacks are new on every render; the timer below always calls the latest ones without restarting.
@@ -89,13 +92,13 @@ export function useConnectionPoll<Connection>({
         stale = true;
         latest.current.onConnected(connection);
       }
-    }, POLL_INTERVAL_MS);
+    }, everyMs);
 
     return () => {
       stale = true;
       clearInterval(timer);
     };
-  }, [waiting, waitedTooLong, giveUpAfterMs]);
+  }, [waiting, waitedTooLong, giveUpAfterMs, everyMs]);
 
   return { waitedTooLong, keepWaiting: () => setWaitedTooLong(false) };
 }

@@ -63,6 +63,7 @@ import { DeleteHumanAgent } from './usecases/delete-human-agent/delete-human-age
 import { DenyHumanCliLogin } from './usecases/deny-human-cli-login/deny-human-cli-login.usecase';
 import { EnsureBackingOrganization } from './usecases/ensure-backing-organization/ensure-backing-organization.usecase';
 import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
+import { GetConnectCodeStatus } from './usecases/get-connect-code-status/get-connect-code-status.usecase';
 import { GetContact } from './usecases/get-contact/get-contact.usecase';
 import { GetHumanCliLogin } from './usecases/get-human-cli-login/get-human-cli-login.usecase';
 import { GetHumanInviteStatus } from './usecases/get-human-invite-status/get-human-invite-status.usecase';
@@ -176,6 +177,7 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     HumanConnectCodeService,
     HumanHostStatusService,
     CreateConnectCode,
+    GetConnectCodeStatus,
     ConnectHost,
   ],
 })

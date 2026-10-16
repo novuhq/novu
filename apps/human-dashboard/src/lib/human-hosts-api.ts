@@ -2,8 +2,9 @@ import 'server-only';
 
 import { cache } from 'react';
 
-import type { ConnectCode, HostStatus } from './host-status';
+import type { ConnectCode, ConnectCodeCheck, HostStatus } from './host-status';
 import type { HumanAccount } from './human-account';
+import { isHumanApiNotFound } from './human-api-error';
 import { requestForAccount } from './human-api-key';
 
 /**
@@ -37,4 +38,29 @@ export function createConnectCode(account: HumanAccount, handle: string): Promis
     method: 'POST',
     body: { handle },
   });
+}
+
+/**
+ * What became of a code made for the agent `handle` names: unused, used by a host, or expired. Asking only
+ * reads it, so it never counts as a wrong try. `null` when the API doesn't know it for this agent (it lets a
+ * code go an hour after making it); any other failure throws.
+ */
+export async function readConnectCode(
+  account: HumanAccount,
+  handle: string,
+  code: string
+): Promise<ConnectCodeCheck | null> {
+  try {
+    return await requestForAccount<ConnectCodeCheck>(
+      account,
+      `/v1/human/agent/connect-codes/${encodeURIComponent(code)}`,
+      { query: { handle } }
+    );
+  } catch (error) {
+    if (isHumanApiNotFound(error)) {
+      return null;
+    }
+
+    throw error;
+  }
 }

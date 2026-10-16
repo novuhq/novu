@@ -97,6 +97,19 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
     return code === 'BCDF-GHJK' ? 'GHJK-BCDF' : 'BCDF-GHJK';
   }
 
+  /** What became of a code, as the dashboard asks while it shows one. */
+  function codeStatus(code: string, query: Record<string, string> = { handle }) {
+    return asAccount(`/v1/human/agent/connect-codes/${encodeURIComponent(code)}`).query(query);
+  }
+
+  /** Rewrites a code's record in Redis, as time passing would leave it. */
+  async function changeCode(code: string, change: (record: Record<string, any>) => Record<string, any>) {
+    const cache = testServer.getService(CacheService);
+    const key = connectCodeKey(handle, code);
+    const record = JSON.parse(await cache.get(key));
+    await cache.set(key, JSON.stringify(change(record)), { ttl: 60, jitter: false });
+  }
+
   describe('one-time code', () => {
     it('is issued for the agent and connects a host once, with the key login would save', async () => {
       const issued = await issueCode();
@@ -239,6 +252,119 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
 
       expect(res.status).to.equal(404, JSON.stringify(res.body));
       expect(res.body.data).to.equal(undefined);
+    });
+  });
+
+  describe('code status', () => {
+    it('tells an unused code, then the same code once a host used it, and asking is not a try', async () => {
+      const issued = await issueCode();
+
+      const unused = await codeStatus(issued.code);
+      expect(unused.status).to.equal(200, JSON.stringify(unused.body));
+      expect(unused.body.data).to.deep.equal({ code: issued.code, status: 'unused', expiresAt: issued.expiresAt });
+
+      // Asking left the code as it was: still the one handed out, and it still connects a host.
+      expect((await issueCode()).code).to.equal(issued.code);
+      expect((await connect(handle, issued.code)).status).to.equal(200);
+
+      // Taken in any case or spacing, as `connect` takes it.
+      const used = await codeStatus(issued.code.toLowerCase().replace('-', ' '));
+      expect(used.status).to.equal(200, JSON.stringify(used.body));
+      expect(used.body.data).to.include({ code: issued.code, status: 'used', expiresAt: issued.expiresAt });
+      expect(Math.abs(Date.parse(used.body.data.usedAt) - Date.now())).to.be.lessThan(60 * 1000);
+    });
+
+    it('tells a code used in its last two minutes as used, though a new code is handed out by then', async () => {
+      const issued = await issueCode();
+      await changeCode(issued.code, (record) => ({ ...record, expiresAt: Math.floor(Date.now() / 1000) + 90 }));
+
+      // With under two minutes left the dashboard is handed a new code, while the old one still works.
+      const next = await issueCode();
+      expect(next.code).to.not.equal(issued.code);
+      expect((await codeStatus(issued.code)).body.data.status).to.equal('unused');
+
+      expect((await connect(handle, issued.code)).status).to.equal(200);
+
+      const res = await codeStatus(issued.code);
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect(res.body.data.status).to.equal('used');
+      // The new code was not used.
+      expect((await codeStatus(next.code)).body.data.status).to.equal('unused');
+    });
+
+    it('tells a code that ran out as expired', async () => {
+      const { code } = await issueCode();
+      await changeCode(code, (record) => ({ ...record, expiresAt: Math.floor(Date.now() / 1000) - 1 }));
+
+      const res = await codeStatus(code);
+
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect(res.body.data.status).to.equal('expired');
+      expect(res.body.data).to.not.have.property('usedAt');
+    });
+
+    it('tells a code made before the account key changed as expired, and a new code is handed out', async () => {
+      const { code } = await issueCode();
+      await environmentRepository.update(
+        { _id: session.environment._id, _organizationId: session.organization._id },
+        { $set: { 'apiKeys.0.hash': `replaced-${Date.now()}` } }
+      );
+
+      const res = await codeStatus(code);
+
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect(res.body.data.status).to.equal('expired');
+      expect((await issueCode()).code).to.not.equal(code);
+    });
+
+    it('tells nothing of another account’s code, another agent’s, or one never made', async () => {
+      const { code } = await issueCode();
+
+      const other = new UserSession();
+      await other.initialize();
+      const otherSetup = await other.testAgent
+        .post('/v1/human/setup')
+        .send({ subscriberId: OPERATOR_ID, operator: true, firstName: 'Ada' });
+      expect(otherSetup.status).to.equal(200, JSON.stringify(otherSetup.body));
+      const otherAccount = await other.testAgent
+        .get(`/v1/human/agent/connect-codes/${code}`)
+        .query({ handle })
+        .set('Authorization', `ApiKey ${other.apiKey}`);
+      expect(otherAccount.status).to.equal(404, JSON.stringify(otherAccount.body));
+      expect(otherAccount.body.code).to.equal(CONNECT_CODE_INVALID);
+      expect(otherAccount.body.data).to.equal(undefined);
+
+      // A second relay agent in the same environment doesn't see the first one's codes either.
+      const secondSetup = await session.testAgent
+        .post('/v1/human/setup')
+        .send({ subscriberId: 'someone-else', operator: true, agentIdentifier: 'second-relay' });
+      expect(secondSetup.status).to.equal(200, JSON.stringify(secondSetup.body));
+      const otherAgent = await codeStatus(code, { handle, agentIdentifier: 'second-relay' });
+      expect(otherAgent.status).to.equal(404, JSON.stringify(otherAgent.body));
+
+      // Each answer is the same as for a code that was never made, or one asked for under another handle.
+      const neverMade = await codeStatus(otherCodeThan(code));
+      expect(neverMade.status).to.equal(404, JSON.stringify(neverMade.body));
+      expect(neverMade.body.code).to.equal(CONNECT_CODE_INVALID);
+      expect(otherAccount.body.message).to.equal(neverMade.body.message);
+      expect((await codeStatus(code, { handle: `not-${handle}` })).status).to.equal(404);
+      expect((await codeStatus('hello')).status).to.equal(404);
+
+      // The code is still the agent's own, unused.
+      expect((await codeStatus(code)).body.data.status).to.equal('unused');
+    });
+
+    it('takes only a handle that can be typed, and only with the right to ask for codes', async () => {
+      const { code } = await issueCode();
+
+      expect((await codeStatus(code, { handle: 'Atlas Prime' })).status).to.equal(422);
+      expect((await codeStatus(code, {})).status).to.equal(422);
+
+      const unauthenticated = await session.testAgent
+        .get(`/v1/human/agent/connect-codes/${code}`)
+        .query({ handle })
+        .set('Authorization', '');
+      expect(unauthenticated.status).to.equal(401, JSON.stringify(unauthenticated.body));
     });
   });
 

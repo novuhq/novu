@@ -6,18 +6,21 @@ import { revalidatePath } from 'next/cache';
 import { CONFIGURE_PATH, DASHBOARD_HOME } from '@/components/dashboard/nav';
 import { AGENT_REACHES, type AgentSettings, type AgentSettingsChange } from '@/lib/agent-settings';
 import { isToolId } from '@/lib/ai-tools';
-import { type ConnectCodeResult, type HostStatus, NEVER_CHECKED } from '@/lib/host-status';
+import { type CodeStatusResult, type ConnectCodeResult, type HostStatus, NEVER_CHECKED } from '@/lib/host-status';
 import { readHumanAccount, requireHumanAccount } from '@/lib/human-account';
 import { AGENT_NOT_SET_UP_MESSAGE, deleteAgent, updateAgentSettings } from '@/lib/human-agent-api';
 import { readAgentStatus } from '@/lib/human-agent-status';
 import { isHumanApiNotFound, isHumanApiRefusal } from '@/lib/human-api-error';
-import { createConnectCode, readHostStatus } from '@/lib/human-hosts-api';
+import { createConnectCode, readConnectCode, readHostStatus } from '@/lib/human-hosts-api';
 import { updateOnboardingState } from '@/lib/human-onboarding';
 import { listConnectedTools } from '@/lib/human-tools-api';
 import { HANDLE_MAX_LENGTH } from '@/lib/onboarding';
 
 /** What `connect` takes as the agent, as the API checks it (`AGENT_HANDLE_PATTERN`). */
 const HANDLE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** A one-time code as the API hands it out: two groups of four letters, as `BCDF-GHJK`. */
+const CODE_PATTERN = /^[A-Z]{4}-[A-Z]{4}$/;
 
 export type AgentSettingsResult = { ok: true; settings: AgentSettings } | { ok: false; error: string };
 
@@ -109,11 +112,10 @@ export async function deleteAgentAction(): Promise<DeleteAgentResult> {
 
 /**
  * A one-time code for "Connect another agent", for the agent as the page names it. The drawer asks when it
- * opens, again shortly before the code runs out, and now and then to learn whether it was used: the API
- * hands the same code back until then.
+ * opens, shortly before the code runs out, and when the API says the one it shows ran out.
  */
 export async function createConnectCodeAction(handle: string): Promise<ConnectCodeResult> {
-  if (typeof handle !== 'string' || handle.length > HANDLE_MAX_LENGTH || !HANDLE_PATTERN.test(handle)) {
+  if (!isHandle(handle)) {
     return { ok: false, error: 'This agent can’t be connected by name. Check its address on this page.' };
   }
 
@@ -131,6 +133,27 @@ export async function createConnectCodeAction(handle: string): Promise<ConnectCo
     console.error('Failed to get a connect code', error);
 
     return { ok: false, error: 'We couldn’t get a code just now.' };
+  }
+}
+
+/**
+ * What became of a code "Connect another agent" showed: the drawer asks every few seconds while it waits,
+ * as a host that comes in the way another one already did shows only in its code. `unknown` for a code the
+ * API doesn't know for this agent; `null` when it couldn't be asked, and the drawer simply asks again.
+ */
+export async function readConnectCodeStatusAction(handle: string, code: string): Promise<CodeStatusResult> {
+  if (!isHandle(handle) || typeof code !== 'string' || !CODE_PATTERN.test(code)) {
+    return 'unknown';
+  }
+
+  const account = await requireHumanAccount({ returnTo: '/configure' });
+
+  try {
+    return (await readConnectCode(account, handle, code))?.status ?? 'unknown';
+  } catch (error) {
+    console.error('Failed to read what became of a connect code', error);
+
+    return null;
   }
 }
 
@@ -160,6 +183,10 @@ export async function readHostCheckAction(): Promise<string> {
   }
 
   return (await readHostStatus(account)).lastCheckedAt ?? NEVER_CHECKED;
+}
+
+function isHandle(handle: unknown): handle is string {
+  return typeof handle === 'string' && handle.length <= HANDLE_MAX_LENGTH && HANDLE_PATTERN.test(handle);
 }
 
 function checkChange(change: AgentSettingsChange): AgentSettingsChange | null {

@@ -64,6 +64,26 @@ type ConnectCodeRecord = ConnectCodeTarget & {
 export type IssuedConnectCode = { code: string; handle: string; expiresAt: string };
 
 /**
+ * What became of a code: `unused` while it can still connect a host, `used` once a host connected with it,
+ * `expired` once it ran out, or once the account's key changed after it was made.
+ */
+export type ConnectCodeStatus = 'unused' | 'used' | 'expired';
+
+export type ConnectCodeState = {
+  code: string;
+  status: ConnectCodeStatus;
+  expiresAt: string;
+  /** When a host used it. Only on a `used` code. */
+  usedAt?: string;
+};
+
+/** Who asks about a code: the agent, its environment, and the key that environment has now (`keyFingerprint`). */
+export type ConnectCodeOwner = Pick<
+  ConnectCodeTarget,
+  'environmentId' | 'organizationId' | 'agentId' | 'keyFingerprint'
+>;
+
+/**
  * Takes the code once: refuses every try while this network has sent too many wrong ones for the agent,
  * counts a wrong one, and marks a right one used, keeping it around so a second try is told it was used.
  * KEYS: the code, this network's wrong tries for the agent. ARGV: now (epoch seconds), max wrong tries,
@@ -212,6 +232,45 @@ export class HumanConnectCodeService {
     }
   }
 
+  /**
+   * What became of one of the agent's codes, for the dashboard that shows it. It only reads: asking is not a
+   * try, and the code stays as it was. Null for a code never made under this handle, one let go since (an
+   * hour after it was made), and one of another agent's, so nothing shows of codes that aren't the owner's.
+   */
+  async describe(owner: ConnectCodeOwner, handleInput: string, codeInput: string): Promise<ConnectCodeState | null> {
+    const handle = normalizeHandle(handleInput);
+    const code = normalizeCode(codeInput);
+
+    if (!handle || !code) {
+      return null;
+    }
+
+    if (!this.cacheService.cacheEnabled()) {
+      throw codesUnavailable();
+    }
+
+    const raw = await this.cacheService.get(connectCodeKey(handle, code));
+    const record = raw ? parseRecord(raw) : null;
+
+    if (
+      !record ||
+      record.agentId !== owner.agentId ||
+      record.environmentId !== owner.environmentId ||
+      record.organizationId !== owner.organizationId
+    ) {
+      return null;
+    }
+
+    const status = statusOf(record, owner.keyFingerprint);
+
+    return {
+      code,
+      status,
+      expiresAt: toIso(record.expiresAt),
+      ...(status === 'used' && record.usedAt ? { usedAt: toIso(record.usedAt) } : {}),
+    };
+  }
+
   private async findReusable(target: ConnectCodeTarget): Promise<IssuedConnectCode | null> {
     const code = await this.cacheService.get(currentCodeKey(target.agentId));
     const raw = code ? await this.cacheService.get(connectCodeKey(target.handle, code)) : null;
@@ -223,6 +282,8 @@ export class HumanConnectCodeService {
       record.usedAt ||
       record.agentId !== target.agentId ||
       record.environmentId !== target.environmentId ||
+      // Made with a key that was replaced since, it can't connect anything (`ConnectHost`).
+      record.keyFingerprint !== target.keyFingerprint ||
       record.expiresAt - Math.floor(Date.now() / 1000) < CONNECT_CODE_REUSE_MIN_SECONDS
     ) {
       return null;
@@ -317,6 +378,23 @@ function parseRecord(raw: string): ConnectCodeRecord | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * As `connect` would find the code: one made with a key that was replaced since ran out, whether or not it
+ * was used before that (the host it connected was cut off with the old key). Otherwise a used one stays
+ * used past its end, as it can only be used while it works.
+ */
+function statusOf(record: ConnectCodeRecord, currentKeyFingerprint: string): ConnectCodeStatus {
+  if (record.keyFingerprint !== currentKeyFingerprint) {
+    return 'expired';
+  }
+
+  if (record.usedAt) {
+    return 'used';
+  }
+
+  return record.expiresAt <= Math.floor(Date.now() / 1000) ? 'expired' : 'unused';
 }
 
 function toIso(epochSeconds: number): string {
