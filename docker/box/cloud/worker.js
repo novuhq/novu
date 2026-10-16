@@ -116,7 +116,18 @@ export class Box extends DurableObject {
   }
 
   async life() {
-    return (await this.ctx.storage.get('life')) ?? { phase: 'new' };
+    return (await this.ctx.storage.get('life')) ?? (await this.lifeBeforePhases());
+  }
+
+  // A box stored before `life` existed keeps its snapshot (`snapshot`, `lostSnapshot`); `current` corrects the rest.
+  async lifeBeforePhases() {
+    const snapshot = await this.ctx.storage.get('snapshot');
+    const lost = await this.ctx.storage.get('lostSnapshot');
+    const running = this.ctx.container.running;
+    if (snapshot) return { phase: running ? 'running' : 'asleep', snapshot };
+    if (lost) return { phase: 'lost', lost };
+
+    return { phase: running ? 'running' : 'new' };
   }
 
   async setLife(changes) {
