@@ -4,27 +4,32 @@
 // Actions OIDC token, and has the host create and delete their Workers (cloud/boxes.js), so the workflow holds no
 // secret. Run by hand, it signs in with GITHUB_TOKEN or `gh auth token` instead.
 //
-//   node docker/box/github/actions.mjs pr       the pull_request event in GITHUB_EVENT_PATH: start the PR's box
+//   node docker/box/ci.mjs pr       the pull_request event in GITHUB_EVENT_PATH: start the PR's box
 //                                                pr-<number> from base and apply the PR's head, or delete the box;
 //                                                one sticky PR comment says how it went
-//   node docker/box/github/actions.mjs cleanup  delete pr-* boxes whose PR is closed or no longer labeled `box`
-//   node docker/box/github/actions.mjs rebake   bake base again from next and save it to its snapshot
+//   node docker/box/ci.mjs cleanup  delete pr-* boxes whose PR is closed or no longer labeled `box`
+//   node docker/box/ci.mjs rebake   bake base again from next and save it to its snapshot
 
 import fs from 'node:fs';
-import { OIDC_AUDIENCE } from '../cloud/auth.mjs';
-import { BOX_CLI, boxWorker, detached } from '../cloud/shared.mjs';
-import { cloudTarget, DOMAIN, hostBoxes } from '../cloud/target.mjs';
-import { githubToken } from '../node.mjs';
+import { OIDC_AUDIENCE } from './cloud/auth.mjs';
+import { BOX_CLI, boxWorker, detached } from './cloud/shared.mjs';
+import { cloudTarget, DOMAIN, hostBoxes } from './cloud/target.mjs';
+import { githubToken } from './node.mjs';
 
 const REPO = process.env.GITHUB_REPOSITORY ?? 'novuhq/novu';
 const LABEL = 'box';
 const MAX_BOXES = 30;
 // The longest an apply may take: a full one (install, every build) takes about 6 minutes.
-const APPLY_MINUTES = 30;
+const APPLY_MINUTES = 20;
+// How long the box may take to pass its doctor after an apply restarted its apps.
+const SETTLE_SECONDS = 3 * 60;
 const MARK = '<!-- novu-box -->';
 const RUN_URL =
   process.env.GITHUB_RUN_ID && `${process.env.GITHUB_SERVER_URL}/${REPO}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 const started = Date.now();
+// Every wait ends by then, so the run can still say why in the comment: 5 minutes before the job's timeout-minutes
+// (60, .github/workflows/novu-box.yml) ends it. The worst case (a save to wait out, a bake, a full apply) takes longer.
+const DEADLINE = started + 55 * 60_000;
 
 function log(message) {
   console.error(`[box] ${message}`);
@@ -54,7 +59,7 @@ async function boxToken() {
 }
 
 function target(box) {
-  return cloudTarget({ box, log, githubToken: boxToken, viaHost: true });
+  return cloudTarget({ box, log, githubToken: boxToken, mayDeployHost: false, deadline: DEADLINE });
 }
 
 // --- GitHub ---
@@ -143,6 +148,11 @@ async function pr() {
 
     return 0;
   }
+  if (pull.state !== 'open') {
+    log(`#${number} ${action}: the PR is ${pull.state}`);
+
+    return 0;
+  }
   const by = await labeler(event);
   if (!(await canWrite(by))) {
     await comment(
@@ -164,10 +174,10 @@ async function applyHead(number, sha) {
   const cloud = target(box);
   await comment(number, `⏳ Applying \`${short}\` to Novu Box \`${box}\`…${runLink}`);
   try {
-    const current = await cloud.state();
-    // Never started, or created by a run that was cancelled before the box first came up.
-    if (!current?.running && !current?.snapshot) {
-      const { boxes } = await hostBoxes('', { githubToken: boxToken });
+    const phase = (await cloud.state())?.phase ?? 'new';
+    // Never started, created by a run cancelled before the box first came up, its bake failed, or its snapshot is lost.
+    if (['new', 'lost'].includes(phase)) {
+      const { boxes } = await hostBoxes('boxes', { githubToken: boxToken, log });
       const others = boxes.filter((name) => /^pr-\d+$/.test(name) && name !== box);
       if (others.length >= MAX_BOXES) {
         await comment(
@@ -179,15 +189,27 @@ async function applyHead(number, sha) {
       }
       await cloud.up({ fromBase: true });
     } else {
-      if (current.running) await stopApply(cloud);
-      await cloud.ready({ applyPending: true });
+      // Waits out a save; a box that runs answers its doctor, whatever the doctor finds.
+      await cloud.ready({ reachable: true });
+      await stopApply(cloud);
     }
     const plan = await apply(cloud, sha);
+    const report = await cloud.settled(Math.min(SETTLE_SECONDS, (DEADLINE - Date.now()) / 1000));
     const seconds = Math.round((Date.now() - started) / 1000);
+    const problems = report?.ok ? [] : (report?.problems ?? ['the box gave no doctor report']);
     await comment(
       number,
       [
-        `✅ Novu Box ready: ${origin} (applied \`${short}\`, ${plan}, took ${seconds} s)`,
+        problems.length
+          ? `⚠️ Novu Box applied \`${short}\` but isn't healthy: ${origin} (${plan}, took ${seconds} s)`
+          : `✅ Novu Box ready: ${origin} (applied \`${short}\`, ${plan}, took ${seconds} s)`,
+        ...(problems.length
+          ? [
+              '',
+              `Problems (\`node docker/box/cli.mjs doctor --cloud --box ${box}\`):`,
+              ...problems.map((problem) => `- ${problem}`),
+            ]
+          : []),
         '',
         `- Mailpit: ${origin}/mail`,
         `- Sign in as \`agent@novu.co\` with the Novu Box seed password from the password manager, or sign up with your own \`@novu.co\` address.`,
@@ -225,7 +247,7 @@ async function apply(cloud, sha) {
   const fail = (message) => Object.assign(new Error(message), { log: file });
   log(`applying ${sha}; the box logs it to ${file}`);
   await cloud.run(detached([...BOX_CLI, 'apply', sha], file), { github: true, capture: true });
-  const deadline = Date.now() + APPLY_MINUTES * 60_000;
+  const deadline = Math.min(Date.now() + APPLY_MINUTES * 60_000, DEADLINE);
   let lastSeen = Date.now();
   for (;;) {
     await sleep(10_000);
@@ -245,7 +267,12 @@ async function apply(cloud, sha) {
         return true;
       });
     if (!running) break;
-    if (Date.now() > deadline) throw fail(`the apply runs for over ${APPLY_MINUTES} minutes`);
+    if (Date.now() > deadline)
+      throw fail(
+        deadline === DEADLINE
+          ? "the job's time ran out during the apply"
+          : `the apply runs for over ${APPLY_MINUTES} minutes`
+      );
   }
   const output = await cloud.run(['cat', file], { capture: true });
   console.log(output);
@@ -260,7 +287,7 @@ async function apply(cloud, sha) {
 // --- schedules ---
 
 async function cleanup() {
-  const { boxes } = await hostBoxes('', { githubToken: boxToken });
+  const { boxes } = await hostBoxes('boxes', { githubToken: boxToken, log });
   let failed = 0;
   for (const box of boxes.filter((name) => /^pr-\d+$/.test(name))) {
     const number = Number(box.slice(3));
@@ -270,7 +297,8 @@ async function cleanup() {
         throw error;
       });
       if (pull?.state === 'open' && pull.labels.some((label) => label.name === LABEL)) continue;
-      log(`${box}: the PR is ${pull ? (pull.state === 'open' ? `not labeled \`${LABEL}\`` : pull.state) : 'missing'}`);
+      const why = !pull ? 'missing' : pull.state !== 'open' ? pull.state : `not labeled \`${LABEL}\``;
+      log(`${box}: the PR is ${why}`);
       await target(box).delete();
       if (pull)
         await comment(
@@ -300,7 +328,7 @@ async function rebake() {
 const commands = { pr, cleanup, rebake };
 const command = commands[process.argv[2]];
 if (!command) {
-  console.error(`usage: node docker/box/github/actions.mjs ${Object.keys(commands).join('|')}`);
+  console.error(`usage: node docker/box/ci.mjs ${Object.keys(commands).join('|')}`);
   process.exit(2);
 }
 
