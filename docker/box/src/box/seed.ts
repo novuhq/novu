@@ -87,8 +87,17 @@ const moveSeedOrg = Effect.fn('moveSeedOrg')(function* (oldId: string) {
   const to = new ObjectId(SEED.novuOrgId);
   let found = 0;
   const swap = (value: Json): Json => {
-    if (value?._bsontype === 'ObjectId') return value.equals(from) ? (found++, to) : value;
-    if (value === oldId) return found++, SEED.novuOrgId;
+    if (value?._bsontype === 'ObjectId') {
+      if (!value.equals(from)) return value;
+      found++;
+
+      return to;
+    }
+    if (value === oldId) {
+      found++;
+
+      return SEED.novuOrgId;
+    }
     if (Array.isArray(value)) return value.map(swap);
     if (value?.constructor === Object)
       return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, swap(item)]));

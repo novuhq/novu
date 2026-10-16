@@ -63,9 +63,9 @@ export const build = Effect.fn('build')(function* (projects: ReadonlyArray<strin
   const visit = (project: string) => {
     if (closure.has(project) || !graph.nodes[project]) return;
     closure.add(project);
-    (graph.dependencies[project] ?? []).forEach(({ target }) => visit(target));
+    for (const { target } of graph.dependencies[project] ?? []) visit(target);
   };
-  first.forEach(visit);
+  for (const project of first) visit(project);
   const libs = [...closure].filter((project) => {
     const node = graph.nodes[project];
 
@@ -140,7 +140,7 @@ export const dashboardBundleChanged = Effect.fn('dashboardBundleChanged')(functi
     if (!dir || dirs.has(dir)) return;
     dirs.add(dir);
     const pkg = readRepoJson<{ dependencies?: object; devDependencies?: object }>(`${dir}/package.json`);
-    Object.keys({ ...pkg.dependencies, ...(isDashboard ? {} : pkg.devDependencies) }).forEach((dep) => visit(dep));
+    for (const dep of Object.keys({ ...pkg.dependencies, ...(isDashboard ? {} : pkg.devDependencies) })) visit(dep);
   };
   visit('@novu/dashboard', true);
 

@@ -269,12 +269,7 @@ export const doctor = Effect.gen(function* () {
       exitCode,
       restarts,
     }));
-  // Only migrate runs once; any other process that completed was stopped or exited, whatever its exit code.
-  for (const { name, status, ready, exitCode } of processes) {
-    if (status === 'Completed' && name !== 'migrate') problems.push(`${name} stopped (exit ${exitCode})`);
-    else if (status === 'Completed' ? exitCode !== 0 : status !== 'Running' || ready === 'Not Ready')
-      problems.push(`${name} is ${status === 'Running' ? 'not ready' : status}`);
-  }
+  problems.push(...processes.flatMap((entry) => processProblem(entry) ?? []));
 
   const http: Record<string, number> = {};
   const urls = { api: API_HEALTH, dashboard: 'http://127.0.0.1:4200/', bridge: 'http://127.0.0.1:4000/api/novu' };
@@ -287,6 +282,14 @@ export const doctor = Effect.gen(function* () {
   console.log(JSON.stringify(report, null, 2));
   if (problems.length) process.exitCode = 1;
 });
+
+// Only migrate runs once; any other process that completed was stopped or exited, whatever its exit code.
+function processProblem({ name, status, ready, exitCode }: DoctorReport['processes'][number]): string | undefined {
+  if (status === 'Completed' && name !== 'migrate') return `${name} stopped (exit ${exitCode})`;
+  if (status === 'Completed' ? exitCode !== 0 : status !== 'Running' || ready === 'Not Ready')
+    return `${name} is ${status === 'Running' ? 'not ready' : status}`;
+  return undefined;
+}
 
 function processTableProblems(names: ReadonlyArray<string>): Array<string> {
   const unknown = names.filter((name) => !PROCESSES[name]);
