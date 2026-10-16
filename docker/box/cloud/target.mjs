@@ -243,8 +243,10 @@ export function cloudTarget({ box, log, githubToken }) {
         const current = await state();
         if (current && !current.running) {
           console.log(JSON.stringify({ state: 'asleep', snapshot: current.snapshot?.id }));
+          if (current.snapshot?.id) return 0;
+          log(`${worker} stopped WITHOUT a snapshot: its next start bakes, or wakes from \`--from\`'s snapshot`);
 
-          return 0;
+          return 1;
         }
         if (Date.now() > deadline) throw new Error(`${worker} is still saving after 15 minutes`);
         await new Promise((resolve) => setTimeout(resolve, 10_000));

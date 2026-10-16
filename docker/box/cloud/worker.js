@@ -232,20 +232,35 @@ export class Box extends DurableObject {
   }
 
   // Stops the apps and databases so their files are whole, saves the disk to a snapshot, then stops the container.
-  // A box whose first bake never finished has nothing worth saving.
+  // A box whose first bake never finished has nothing worth saving. Anything that goes wrong keeps the box running
+  // (with its alarm, to try again): stopping without a snapshot loses everything since the last one.
   async sleep(reason) {
     const container = this.ctx.container;
     if (!container.running) return { state: 'stopped' };
+    const started = Date.now();
+    const step = (what) => console.log(`sleep(${reason}) ${what} at ${Math.round((Date.now() - started) / 1000)}s`);
     await this.ctx.storage.deleteAlarm();
-    const baked = (await (await this.run(['test', '-f', '/data/.baked.json'])).exitCode) === 0;
-    if (baked) {
-      await (await this.run([...BOX, 'quiesce'])).exitCode;
-      const snapshot = await container.snapshotContainer({ name: 'box' });
-      await this.ctx.storage.put('snapshot', snapshot);
-    }
-    await container.destroy(reason);
+    try {
+      // `test -f` exits 1 when the file is missing; any other result says nothing about the bake.
+      const bakedCheck = await (await this.run(['test', '-f', '/data/.baked.json'])).exitCode;
+      step(`baked check exited ${bakedCheck}`);
+      if (bakedCheck !== 0 && bakedCheck !== 1) throw new Error(`the baked check exited ${bakedCheck}`);
+      const baked = bakedCheck === 0;
+      if (baked) {
+        step(`quiesce exited ${await (await this.run([...BOX, 'quiesce'])).exitCode}`);
+        const snapshot = await container.snapshotContainer({ name: 'box' });
+        step(`snapshot ${snapshot.id} (${snapshot.size ?? '?'} bytes)`);
+        await this.ctx.storage.put('snapshot', snapshot);
+      }
+      await container.destroy(reason);
+      step('stopped');
 
-    return { state: baked ? 'asleep' : 'stopped without a snapshot (never baked)' };
+      return { state: baked ? 'asleep' : 'stopped without a snapshot (never baked)' };
+    } catch (error) {
+      step(`failed, the box keeps running: ${error.message}`);
+      if (container.running) await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
+      throw error;
+    }
   }
 
   // For a deleted box: the Durable Object's storage goes too, so the name starts from nothing if it's used again.

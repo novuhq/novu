@@ -185,19 +185,20 @@ state (`/__box/state`) doesn't count as a request. Measured on standard-4:
 
 | Step | Time |
 |---|---|
-| First `up` of a box (bake `next`) | about 16 min |
+| First `up` of a box (bake `next`) | 13 to 16 min |
 | `down` (stop apps and databases, snapshot, stop) | 18 s to 6 min (the box saves on its own; `down` waits) |
 | Wake, from the first browser request to a healthy API | 33 to 36 s |
 | `sync`, an API change | 83 s |
-| Smoke over the public address (box baked from `next`) | 19/20; the bridge check needs this branch's playground |
-| `up --from base` for a new box (deploy its Worker, then wake from base's snapshot, no bake) | 106 s: 29 s deploy, 8 s until the address answers, 43 s wake |
-| The same, the first time a snapshot is restored | 4 to 6 min (inside the start), once per snapshot |
+| Smoke over the public address (a box started from `base`) | 43/43 in about 70 s |
+| `up --from base` for a new box (deploy its Worker, then wake from base's snapshot, no bake) | 80 to 106 s: about 30 s deploy, a few seconds until the address answers, 40 s wake |
+| The same, seen twice on an older snapshot chain | 4 to 6 min (inside the start); cause unknown |
+| Slack check (`slack-check.mjs`, two boxes, one woken from Slack) | 6/6 in about 65 s; the wake about 50 s |
 | `up --deploy` of the host with the same image | about 1 min; running boxes usually keep running (see above) |
 
 `up --cloud --box <new> --from <box>` starts a new box from another box's latest snapshot instead of baking: all
 boxes share one Durable Object class, which is how Cloudflare documents snapshot sharing. Keep a `base` box, baked
-from `next`, to start new boxes from, and leave it asleep: every sleep gives it a new snapshot, and the first box
-started from a new snapshot waits 4 to 6 minutes. `up --cloud` without `--box` is your branch's box: a new one
+from `next`, to start new boxes from, and leave it asleep: every sleep gives it a new snapshot, and twice the first
+box started from a snapshot waited 4 to 6 minutes. `up --cloud` without `--box` is your branch's box: a new one
 starts from `base`, then gets your checkout, committed or not (as `sync`; `--no-sync` skips it). A branch that
 doesn't contain `base`'s commit may conflict; rebase it on `next`.
 
