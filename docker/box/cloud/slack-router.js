@@ -49,6 +49,9 @@ const METHODS = {
   'views.update': null,
   'views.push': null,
 };
+// Parameters that also name channels, which the router doesn't check, so a call with them is refused. @slack/web-api
+// sends files.uploadV2's `channels` as `channel_id`, so the agents never use this one.
+const UNCHECKED_CHANNELS = { 'files.completeUploadExternal': 'channels' };
 // Only on the box's own messages, so one box can't change another's.
 const OWN_MESSAGE = new Set(['chat.update', 'chat.delete', 'chat.appendStream', 'chat.stopStream']);
 
@@ -516,6 +519,7 @@ export class Router extends DurableObject {
 
   async refusal(method, params, owner) {
     if (!Object.hasOwn(METHODS, method)) return 'method_not_allowed_by_novu_box';
+    if (params[UNCHECKED_CHANNELS[method]]) return 'channel_not_allowed_by_novu_box';
     const channel = METHODS[method] && params[METHODS[method]];
     if (METHODS[method] && !(await this.allowedChannel(channel))) return 'channel_not_allowed_by_novu_box';
     if (OWN_MESSAGE.has(method) && (await this.get(`msg:${channel}:${params.ts}`))?.box !== owner.box)
