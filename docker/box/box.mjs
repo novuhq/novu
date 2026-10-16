@@ -577,7 +577,15 @@ function prepareDashboard() {
   const indexFile = `${target}/index.html`;
   const html = fs.readFileSync(indexFile, 'utf8').replace('<script type="module"', `${script}\n<script type="module"`);
   fs.writeFileSync(indexFile, html);
-  fs.writeFileSync(`${target}/__box.json`, JSON.stringify({ baked: readJson(BAKED), applied: readJson(APPLIED) }));
+  writeBoxJson();
+}
+
+// The baked and applied commits, for the dashboard (served at /__box.json).
+function writeBoxJson() {
+  fs.writeFileSync(
+    `${RUN}/dashboard/__box.json`,
+    JSON.stringify({ baked: readJson(BAKED), applied: readJson(APPLIED) })
+  );
 }
 
 function startSupervisor() {
@@ -891,11 +899,15 @@ async function seedBridge(token) {
   await syncBridge();
 }
 
+function bridgeKey() {
+  return fs.readFileSync(BRIDGE_SECRET, 'utf8').trim();
+}
+
 // Same requests as `npx novu sync`: the API discovers the workflows from the bridge and stores them, then
 // every agent the bridge serves gets the bridge URL. An agent the bridge serves for the first time (a PR can
 // add one) is created and published to web chat, as a customer does in the dashboard before syncing.
 async function syncBridge() {
-  const headers = { Authorization: `ApiKey ${fs.readFileSync(BRIDGE_SECRET, 'utf8').trim()}` };
+  const headers = { Authorization: `ApiKey ${bridgeKey()}` };
   const { agents = [] } = await discoverBridge();
   const { body } = await api('/v1/bridge/sync?source=box', {
     method: 'POST',
@@ -936,7 +948,7 @@ async function syncBridge() {
 async function seedManagedAgent() {
   pc(['process', 'start', 'thalamus']);
   await waitForHttp('http://127.0.0.1:8788/health', 120);
-  const headers = { Authorization: `ApiKey ${fs.readFileSync(BRIDGE_SECRET, 'utf8').trim()}` };
+  const headers = { Authorization: `ApiKey ${bridgeKey()}` };
   if (
     await api(`/v1/agents/${MANAGED_AGENT}`, { headers }).then(
       () => true,
@@ -990,9 +1002,7 @@ async function seedManagedAgent() {
 async function discoverBridge() {
   await waitForHttp(`${BRIDGE_URL}?action=health-check`, 120);
   const timestamp = Date.now();
-  const signature = createHmac('sha256', fs.readFileSync(BRIDGE_SECRET, 'utf8').trim())
-    .update(`${timestamp}.{}`)
-    .digest('hex');
+  const signature = createHmac('sha256', bridgeKey()).update(`${timestamp}.{}`).digest('hex');
   const res = await fetch(`${BRIDGE_URL}?action=discover`, {
     headers: { 'novu-signature': `t=${timestamp},v1=${signature}` },
   });
@@ -1199,10 +1209,7 @@ async function apply({ ref, bundle, full = false }) {
       JSON.stringify({ ...target, base, files: files.length, full, at: new Date().toISOString() }, null, 2)
     );
     fs.rmSync(APPLYING);
-    fs.writeFileSync(
-      `${RUN}/dashboard/__box.json`,
-      JSON.stringify({ baked: readJson(BAKED), applied: readJson(APPLIED) })
-    );
+    writeBoxJson();
     log(`applied ${target.ref} at ${target.sha}`);
   } finally {
     releaseLock();
