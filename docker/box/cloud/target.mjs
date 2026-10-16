@@ -211,6 +211,26 @@ export function cloudTarget({ box, log, githubToken }) {
     throw new Error(`${worker} isn't ready after ${seconds}s: ${report?.problems?.join('; ')}`);
   }
 
+  // 0 once the box stopped with a snapshot other than `previous`, 1 when it stopped without one.
+  async function waitUntilAsleep(previous) {
+    const deadline = Date.now() + 15 * 60_000;
+    for (;;) {
+      // A request that fails doesn't mean the box stopped; ask again.
+      const current = await state().catch(() => null);
+      if (current && !current.running) {
+        console.log(JSON.stringify({ state: 'asleep', snapshot: current.snapshot?.id }));
+        if (current.snapshot?.id && current.snapshot.id !== previous) return 0;
+        log(`${worker} stopped WITHOUT a new snapshot: its next start bakes, or wakes from an older snapshot`);
+
+        return 1;
+      }
+      if (current && !current.saving && current.saveError)
+        throw new Error(`${worker} couldn't save, so it keeps running: ${current.saveError.message}`);
+      if (Date.now() > deadline) throw new Error(`${worker} is still saving after 15 minutes`);
+      await new Promise((resolve) => setTimeout(resolve, 10_000));
+    }
+  }
+
   return {
     name: worker,
     mailUrl: `${origin}/mail`,
@@ -234,23 +254,20 @@ export function cloudTarget({ box, log, githubToken }) {
       return 0;
     },
 
+    // Done when the box stopped with a snapshot newer than the one it had.
     async down() {
-      log(`${worker}: saving to its snapshot and stopping (3 to 6 minutes); the next request wakes it`);
-      await call('/down', { method: 'POST' });
-      const deadline = Date.now() + 15 * 60_000;
-      for (;;) {
-        // `state` is null when a request fails, which doesn't mean the box stopped.
-        const current = await state();
-        if (current && !current.running) {
-          console.log(JSON.stringify({ state: 'asleep', snapshot: current.snapshot?.id }));
-          if (current.snapshot?.id) return 0;
-          log(`${worker} stopped WITHOUT a snapshot: its next start bakes, or wakes from \`--from\`'s snapshot`);
+      const before = await state();
+      if (before && !before.running) {
+        log(`${worker} is already asleep (snapshot ${before.snapshot?.id ?? 'none'})`);
 
-          return 1;
-        }
-        if (Date.now() > deadline) throw new Error(`${worker} is still saving after 15 minutes`);
-        await new Promise((resolve) => setTimeout(resolve, 10_000));
+        return before.snapshot?.id ? 0 : 1;
       }
+      log(
+        `${worker}: saving to its snapshot and stopping (3 to 6 minutes, after a bake or apply that runs); the next request wakes it`
+      );
+      await call('/down', { method: 'POST' });
+
+      return waitUntilAsleep(before?.snapshot?.id);
     },
 
     // Stops the box and forgets it (snapshot and settings), then deletes its Worker. Other boxes are untouched.

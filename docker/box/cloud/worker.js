@@ -28,6 +28,11 @@ export { Router } from './slack-router.js';
 const PUBLIC_PORT = 18080;
 const INSTANCE = 'standard-4';
 const ALARM_MS = 60 * 1000;
+// Past the longest save seen (over 6 minutes for a big disk): while the box saves, its alarm and inactivity timeout are
+// set this far ahead, so neither stops it half saved.
+const SAVE_MS = 20 * 60 * 1000;
+// What the alarm gives a call into the box (a command, its API): a hung bridge or API mustn't stall the idle check.
+const CALL_MS = 30 * 1000;
 
 // How long the box waits without requests before it saves itself and stops (the IDLE_MINUTES var, default 60).
 // The backstop, Cloudflare's inactivity timeout, is shorter, as in its autosave recipe: each alarm renews it, so it
@@ -66,7 +71,10 @@ const DISCOVER = `
 const key = require('fs').readFileSync('/data/bridge/secret-key', 'utf8').trim();
 const t = Date.now();
 const v1 = require('crypto').createHmac('sha256', key).update(t + '.{}').digest('hex');
-fetch('http://127.0.0.1:4000/api/novu?action=discover', { headers: { 'novu-signature': 't=' + t + ',v1=' + v1 } })
+fetch('http://127.0.0.1:4000/api/novu?action=discover', {
+  headers: { 'novu-signature': 't=' + t + ',v1=' + v1 },
+  signal: AbortSignal.timeout(20000),
+})
   .then((response) => response.json())
   .then(({ agents = [] }) => console.log(JSON.stringify({ key, served: agents.map((agent) => agent.agentId) })));
 `;
@@ -147,6 +155,9 @@ export class Box extends DurableObject {
         ? { id: snapshot.id, name: snapshot.name, gigabytes: snapshot.size ? +(snapshot.size / 1e9).toFixed(2) : null }
         : null,
       lastActivity: new Date(this.lastActivity ?? (await this.ctx.storage.get('lastActivity')) ?? 0).toISOString(),
+      // A `down` that hasn't saved yet (it waits for a bake or apply, or tries again), and why the last save failed.
+      saving: Boolean(await this.ctx.storage.get('sleepNow')),
+      saveError: (await this.ctx.storage.get('saveError')) ?? null,
       origin: await this.ctx.storage.get('origin'),
       // The last Slack events the router handed to the box's agents, newest last.
       slackEvents: (await this.ctx.storage.get('slackEvents')) ?? [],
@@ -196,69 +207,107 @@ export class Box extends DurableObject {
     this.touch();
   }
 
-  // Every 60 s while the box runs: after an hour without requests, and with no bake or apply running, it sleeps.
+  // Every 60 s while the box runs: after an hour without requests, and with no bake or apply running, it sleeps; after
+  // a `down`, it sleeps once no bake or apply runs. The alarm and the inactivity timeout are renewed first, so nothing
+  // below can leave the box to the timeout, which stops it without a snapshot.
   async alarm() {
+    if (!this.ctx.container.running) {
+      await this.ctx.storage.delete('sleepNow');
+
+      return;
+    }
+    await this.ctx.container.setInactivityTimeout(backstopMs(this.env));
+    await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
     const tries = await this.ctx.storage.get('sleepNow');
     if (tries) {
+      if (await this.busy()) {
+        console.log('down waits for the bake or apply that is running');
+
+        return;
+      }
       try {
         await this.sleep('down');
         await this.ctx.storage.delete('sleepNow');
       } catch (error) {
         console.log(`saving failed (try ${tries}): ${error.message}`);
-        if (tries < 5) await this.ctx.storage.put('sleepNow', tries + 1);
-        else await this.ctx.storage.delete('sleepNow');
-        await this.ctx.storage.setAlarm(Date.now() + 10_000);
+        if (tries < 5) {
+          await this.ctx.storage.put('sleepNow', tries + 1);
+          await this.ctx.storage.setAlarm(Date.now() + 10_000);
+        } else await this.ctx.storage.delete('sleepNow');
       }
 
       return;
     }
-    if (!this.ctx.container.running) return;
-    await this.ctx.container.setInactivityTimeout(backstopMs(this.env));
-    await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
-    await this.connectSlack().catch((error) => console.log(`slack not connected yet: ${error.message}`));
+    await within(4 * CALL_MS, this.connectSlack(), 'connecting Slack').catch((error) =>
+      console.log(`slack not connected yet: ${error.message}`)
+    );
     const last = Math.max(this.lastActivity ?? 0, (await this.ctx.storage.get('lastActivity')) ?? 0);
     if (Date.now() - last < idleMs(this.env) || (await this.busy())) return;
-    await this.sleep('idle');
+    await this.sleep('idle').catch((error) => console.log(`saving failed: ${error.message}`));
   }
 
   // Saving can outlast the request that asked for it (a big disk takes over 5 minutes), and a cancelled request
   // would stop the box without its snapshot; an alarm runs for up to 15 minutes on its own.
   async sleepSoon() {
     if (!this.ctx.container.running) return { state: 'stopped' };
+    await this.ctx.storage.delete('saveError');
     await this.ctx.storage.put('sleepNow', 1);
     await this.ctx.storage.setAlarm(Date.now() + 1000);
 
     return { state: 'saving' };
   }
 
-  // Stops the apps and databases so their files are whole, saves the disk to a snapshot, then stops the container.
-  // A box whose first bake never finished has nothing worth saving. Anything that goes wrong keeps the box running
-  // (with its alarm, to try again): stopping without a snapshot loses everything since the last one.
+  // Stops every process, the data stores last, so their files are whole, saves the disk to a snapshot, then stops the
+  // container. A box whose first bake never finished has nothing worth saving. Anything that goes wrong starts the
+  // stopped processes again and keeps the box running (with its alarm, to try again): stopping without a snapshot
+  // loses everything since the last one.
   async sleep(reason) {
     const container = this.ctx.container;
     if (!container.running) return { state: 'stopped' };
     const started = Date.now();
     const step = (what) => console.log(`sleep(${reason}) ${what} at ${Math.round((Date.now() - started) / 1000)}s`);
-    await this.ctx.storage.deleteAlarm();
+    // Kept set, not deleted: deleting the alarm inside alarm() can cancel its retry.
+    await this.ctx.storage.setAlarm(Date.now() + SAVE_MS);
+    await container.setInactivityTimeout(SAVE_MS);
+    let quiesced = false;
     try {
       // `test -f` exits 1 when the file is missing; any other result says nothing about the bake.
       const bakedCheck = await (await this.run(['test', '-f', '/data/.baked.json'])).exitCode;
       step(`baked check exited ${bakedCheck}`);
       if (bakedCheck !== 0 && bakedCheck !== 1) throw new Error(`the baked check exited ${bakedCheck}`);
-      const baked = bakedCheck === 0;
-      if (baked) {
-        step(`quiesce exited ${await (await this.run([...BOX, 'quiesce'])).exitCode}`);
-        const snapshot = await container.snapshotContainer({ name: 'box' });
-        step(`snapshot ${snapshot.id} (${snapshot.size ?? '?'} bytes)`);
-        await this.ctx.storage.put('snapshot', snapshot);
+      if (bakedCheck === 1) {
+        await container.destroy(reason);
+        step('stopped');
+
+        return { state: 'stopped without a snapshot (never baked)' };
       }
+      quiesced = true;
+      const quiesce = await (await this.run([...BOX, 'quiesce'])).exitCode;
+      step(`quiesce exited ${quiesce}`);
+      if (quiesce !== 0) throw new Error(`quiesce exited ${quiesce}`);
+      const snapshot = await container.snapshotContainer({ name: 'box' });
+      if (!snapshot?.id) throw new Error('the snapshot came back without an id');
+      step(`snapshot ${snapshot.id} (${snapshot.size ?? '?'} bytes)`);
+      await this.ctx.storage.put('snapshot', snapshot);
       await container.destroy(reason);
       step('stopped');
 
-      return { state: baked ? 'asleep' : 'stopped without a snapshot (never baked)' };
+      return { state: 'asleep', snapshot: snapshot.id };
     } catch (error) {
       step(`failed, the box keeps running: ${error.message}`);
-      if (container.running) await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
+      await this.ctx.storage.put('saveError', { at: new Date().toISOString(), message: error.message });
+      if (container.running) {
+        if (quiesced) {
+          const resumed = await within(
+            10 * 60 * 1000,
+            this.run([...BOX, 'resume']).then((p) => p.exitCode),
+            'resume'
+          ).catch((resumeError) => resumeError.message);
+          step(`resume exited ${resumed}`);
+        }
+        await container.setInactivityTimeout(backstopMs(this.env));
+        await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
+      }
       throw error;
     }
   }
@@ -277,11 +326,23 @@ export class Box extends DurableObject {
     return { state: 'deleted' };
   }
 
+  // Whether a bake or apply runs; when the box doesn't say in time, it counts as busy, so nothing quiesces under one.
   async busy() {
-    const process = await this.run(['sh', '-c', 'ps -eo args | grep -c -E "^node /opt/box/box.mjs (bake|apply)"']);
-    const { stdout } = await process.output();
+    const count = async () => {
+      const process = await this.run(['sh', '-c', 'ps -eo args | grep -c -E "^node /opt/box/box.mjs (bake|apply)"']);
+      const { stdout } = await process.output();
 
-    return Number(new TextDecoder().decode(stdout).trim()) > 0;
+      return Number(new TextDecoder().decode(stdout).trim());
+    };
+
+    return within(CALL_MS, count(), 'the busy check').then(
+      (running) => running > 0,
+      (error) => {
+        console.log(`${error.message}; counted as busy`);
+
+        return true;
+      }
+    );
   }
 
   // When the box is up, and again when the agents its bridge serves change (an apply): every one of them gets a
@@ -293,8 +354,11 @@ export class Box extends DurableObject {
   async connectSlack() {
     if (!this.env.SLACK_ROUTER_URL) return;
     const origin = await this.ctx.storage.get('origin');
-    const process = await this.run(['sh', '-c', 'test -f /data/.baked.json && node -e "$0"', DISCOVER]);
-    const output = new TextDecoder().decode((await process.output()).stdout).trim();
+    const output = await within(
+      CALL_MS,
+      this.output(['sh', '-c', 'test -f /data/.baked.json && node -e "$0"', DISCOVER]),
+      'discover'
+    );
     if (!origin || !output) return;
     const { key, served } = JSON.parse(output);
     this.apiKey = key;
@@ -436,14 +500,12 @@ export class Box extends DurableObject {
 
   // The box's own API over its port, with the environment's secret key. 409 counts as done: the thing exists.
   async api(origin, path, init = {}) {
-    if (!this.apiKey) {
-      const process = await this.run(['cat', '/data/bridge/secret-key']);
-      this.apiKey = new TextDecoder().decode((await process.output()).stdout).trim();
-    }
+    this.apiKey ||= await within(CALL_MS, this.output(['cat', '/data/bridge/secret-key']), 'reading the API key');
     const response = await this.ctx.container.getTcpPort(PUBLIC_PORT).fetch(
       new Request(`${origin.replace(/^https:/, 'http:')}${path}`, {
         ...init,
         headers: { Authorization: `ApiKey ${this.apiKey}`, 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(CALL_MS),
       })
     );
     const text = await response.text();
@@ -451,6 +513,12 @@ export class Box extends DurableObject {
       throw new Error(`${init.method ?? 'GET'} ${path} -> ${response.status}: ${text.slice(0, 200)}`);
 
     return text ? JSON.parse(text) : null;
+  }
+
+  async output(cmd) {
+    const process = await this.run(cmd);
+
+    return new TextDecoder().decode((await process.output()).stdout).trim();
   }
 
   async run(cmd, { cwd, github, stdin } = {}) {
@@ -507,6 +575,16 @@ function streamed(process) {
   finish().catch(() => {});
 
   return new Response(readable, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+}
+
+// The container's commands take no abort signal, so a call that runs too long is left behind, not stopped.
+function within(ms, promise, what) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${what} took over ${ms / 1000} s`)), ms);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
 function waking(request) {
