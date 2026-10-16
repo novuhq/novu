@@ -335,6 +335,120 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
     expect(texts).to.include('need a decision');
   });
 
+  describe('paging a thread back with `before` and on with `after`', () => {
+    async function readPage(threadId: string, query: Record<string, unknown>) {
+      const res = await session.testAgent.get(`/v1/human/inbox/${threadId}`).query(query);
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+
+      return res.body.data as {
+        thread: Record<string, any>;
+        messages: Array<{ id: string; text: string; card?: { state: { status: string } } }>;
+        hasMore: boolean;
+        details: Record<string, any>;
+      };
+    }
+
+    const textsOf = (page: { messages: Array<{ text: string }> }) => page.messages.map((message) => message.text);
+
+    it('reads older pages back and newer ones on, oldest first either way', async () => {
+      for (const text of ['m1', 'm2', 'm3', 'm4', 'm5']) {
+        await sendMessageToRelay(text);
+      }
+      const threadId = await soleThreadId();
+
+      const newest = await readPage(threadId, { limit: 2 });
+      expect(textsOf(newest)).to.deep.equal(['m4', 'm5']);
+      expect(newest.hasMore).to.equal(true);
+
+      const older = await readPage(threadId, { limit: 2, before: newest.messages[0].id });
+      expect(textsOf(older)).to.deep.equal(['m2', 'm3']);
+      expect(older.hasMore).to.equal(true);
+
+      const oldest = await readPage(threadId, { limit: 2, before: older.messages[0].id });
+      expect(textsOf(oldest)).to.deep.equal(['m1']);
+      expect(oldest.hasMore).to.equal(false);
+
+      // On from m2: the two after it, and more after those.
+      const on = await readPage(threadId, { limit: 2, after: older.messages[0].id });
+      expect(textsOf(on)).to.deep.equal(['m3', 'm4']);
+      expect(on.hasMore).to.equal(true);
+
+      const rest = await readPage(threadId, { limit: 2, after: on.messages[1].id });
+      expect(textsOf(rest)).to.deep.equal(['m5']);
+      expect(rest.hasMore).to.equal(false);
+    });
+
+    it('reads what came after the newest message, with the thread and its details as they are now', async () => {
+      await sendMessageToRelay('first');
+      const threadId = await soleThreadId();
+      const opened = await readPage(threadId, {});
+      const newestId = opened.messages[opened.messages.length - 1].id;
+
+      const nothingYet = await readPage(threadId, { after: newestId });
+      expect(nothingYet.messages).to.deep.equal([]);
+      expect(nothingYet.hasMore).to.equal(false);
+      expect(nothingYet.thread).to.include({ id: threadId, unreadCount: 1 });
+      expect(nothingYet.details).to.include({ threadId, messageCount: 1 });
+
+      await sendMessageToRelay('second');
+      await sendMessageToRelay('third');
+
+      const arrived = await readPage(threadId, { after: newestId });
+      expect(textsOf(arrived)).to.deep.equal(['second', 'third']);
+      expect(arrived.hasMore).to.equal(false);
+      expect(arrived.thread).to.include({ unreadCount: 3, state: 'unread', preview: 'third' });
+      expect(arrived.details.messageCount).to.equal(3);
+    });
+
+    it('reads a card again in place once it is answered', async () => {
+      await sendMessageToRelay('need a decision');
+      const threadId = await soleThreadId();
+      const askRes = await session.testAgent
+        .post('/v1/human/interactions')
+        .send({ kind: 'ask', card: { title: 'Which environment?' }, thread: threadId });
+      expect(askRes.status).to.equal(201, JSON.stringify(askRes.body));
+
+      const opened = await readPage(threadId, {});
+      const [question, card] = opened.messages;
+      expect(card.card?.state.status).to.equal('pending');
+      expect(opened.thread.state).to.equal('waiting_on_person');
+
+      await sendMessageToRelay('staging');
+
+      // The card is the one message after the question: reading one message on from it reads the card as it is now.
+      const again = await readPage(threadId, { after: question.id, limit: 1 });
+      expect(again.messages.map((message) => message.id)).to.deep.equal([card.id]);
+      expect(again.messages[0].card?.state.status).to.equal('answered');
+      expect(again.hasMore).to.equal(true);
+      expect(again.thread.state).to.not.equal('waiting_on_person');
+    });
+
+    it('rejects `before` together with `after`', async () => {
+      await sendMessageToRelay('hello');
+      const threadId = await soleThreadId();
+      const [message] = (await readPage(threadId, {})).messages;
+
+      const res = await session.testAgent
+        .get(`/v1/human/inbox/${threadId}`)
+        .query({ before: message.id, after: message.id });
+
+      expect(res.status).to.equal(400, JSON.stringify(res.body));
+    });
+
+    it('gives an empty page for a cursor that is no message of the thread', async () => {
+      await sendMessageToRelay('hello');
+      const threadId = await soleThreadId();
+
+      for (const cursor of [{ before: 'msg_doesnotexist' }, { after: 'msg_doesnotexist' }]) {
+        const page = await readPage(threadId, cursor);
+
+        expect(page.messages).to.deep.equal([]);
+        expect(page.hasMore).to.equal(false);
+        expect(page.thread.id).to.equal(threadId);
+      }
+    });
+  });
+
   it('refuses a question in a direct-message thread addressed to a contact who is not in it', async () => {
     await sendMessageToRelay('need a decision');
     const threadId = await soleThreadId();

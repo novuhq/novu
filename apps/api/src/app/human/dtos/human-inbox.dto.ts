@@ -118,6 +118,14 @@ export class GetInboxThreadQueryDto {
   before?: string;
 
   @ApiPropertyOptional({
+    description:
+      'Identifier of the newest message already read: the page is the messages that came after it, and `hasMore` says more came after those. Not together with `before`.',
+  })
+  @IsOptional()
+  @IsString()
+  after?: string;
+
+  @ApiPropertyOptional({
     enum: INBOX_THREAD_INCLUDES,
     description: '`system` adds the system lines of the thread, such as "resolved", between the messages.',
   })
@@ -273,7 +281,9 @@ export interface InboxThreadDetailsDto {
 
 export interface GetInboxThreadResponseDto {
   thread: InboxThreadDto;
+  /** Oldest first. */
   messages: InboxMessageDto[];
+  /** More messages lie past this page: older ones, or with `after`, newer ones. */
   hasMore: boolean;
   details: InboxThreadDetailsDto;
 }
