@@ -8,10 +8,8 @@ It is a Cloudflare Worker and is for Novu Cloud only: it needs the Human Clerk a
 
 | Tool | What it does |
 | --- | --- |
-| `ask` | Asks a person an open question and returns their answer. |
-| `approve` | Asks for a yes or no before something hard to undo. |
-| `choose` | Lets a person pick one of a few options. |
-| `tell` | Sends a message that needs no answer. |
+| `inbox_send` | Starts a conversation. Required `kind` is `ask`, `approve`, `choose`, or `tell`. |
+| `inbox_reply` | Sends into an existing inbox thread with the same kinds and card options. |
 | `wait` | Keeps waiting for an answer that had not come yet. |
 | `invite` | Returns a link for another person to connect their chat app. |
 | `contacts` | Lists the people that can be reached. |
@@ -20,9 +18,11 @@ It is a Cloudflare Worker and is for Novu Cloud only: it needs the Human Clerk a
 | `inbox_read` | Marks a thread read without sending a reply. |
 | `inbox_resolve` | Marks a thread resolved; it reopens when anyone writes in it. |
 
-AI tools give up on a call after about a minute. So `ask`, `approve` and `choose` wait up to 50 seconds; with no answer by then they return the request's id, and `wait` picks it up.
+AI tools give up on a call after about a minute. So `inbox_send` and `inbox_reply` wait up to 50 seconds for `ask`, `approve`, and `choose`; with no answer by then they return the request's id, and `wait` picks it up. The `tell` kind returns as soon as delivery is confirmed.
 
-A person may message the agent first. The send tools (`ask`, `approve`, `choose`, `tell`) take an optional `thread` id from `inbox_list` so a host can reply in that conversation. Threads and messages are labelled contact or stranger the same way the CLI does: a contact is someone the operator added; a stranger wrote without being one. Showing a thread does not mark it read; any send into it does.
+A person may message the agent first. Use the thread id from `inbox_list` with `inbox_reply` to answer in that conversation. Threads and messages are labelled contact or stranger the same way the CLI does: a contact is someone the operator added; a stranger wrote without being one. Showing a thread does not mark it read; any reply into it does.
+
+The send and reply tools mirror the Agent Inbox CLI: they support attribution, expiry, channel override on sends, full card chrome, custom approval actions, stable choice ids, up to 50 recipients, and contact email addresses. Sending to a new email address starts verification; the message must be retried after the recipient verifies it.
 
 ## How sign-in works
 

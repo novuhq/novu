@@ -56,10 +56,11 @@ describe('inbox tools — a host sees a thread, reads it, replies and resolves i
 
     const askResponse = await worker.fetch(
       rpc('tools/call', {
-        name: 'ask',
+        name: 'inbox_reply',
         arguments: {
-          question: 'How can I help?',
           thread: 'conv_stranger_1',
+          kind: 'ask',
+          message: 'How can I help?',
           anyone_may_answer: true,
           wait_seconds: 0,
         },

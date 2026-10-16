@@ -86,7 +86,7 @@ async function serveMcp(request: Request, env: Env, ctx: ExecutionContext): Prom
 
   const server = new McpServer(SERVER, {
     instructions:
-      'Human lets you reach a real person and wait for their answer. Use approve before anything that is hard to undo, ask when you need information only a person has, choose for a pick between options, and tell for news that needs no answer. A person may write to the agent first: call inbox_list with filter "unread" before you send, and reply in that thread with the thread parameter rather than starting a new one. Use inbox_show to read a thread (that does not mark it read), inbox_read to mark it read, and inbox_resolve when you are done. When a result says the request is still open, call wait with its id; never go ahead without the answer.',
+      'Human lets you reach a real person and wait for their answer. Use inbox_send to start a conversation and inbox_reply to continue an existing thread. Both require a kind: approve before anything hard to undo, ask for information only a person has, choose for a pick between options, and tell for news that needs no answer. A person may write to the agent first: call inbox_list with filter "unread" before you send, then use inbox_show and reply in that thread rather than starting a new one. inbox_show does not mark a thread read; use inbox_read when no reply is needed and inbox_resolve when you are done. When a result says the request is still open, call wait with its id; never go ahead without the answer.',
   });
   registerTools(server, createHumanApi(account));
 
