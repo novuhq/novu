@@ -89,6 +89,19 @@ export default {
 };
 
 export class Box extends DurableObject {
+  // The inactivity timeout doesn't survive a restart of this object, and every deploy restarts it: without this, a
+  // running box would be stopped without a snapshot before its next alarm. An alarm a restart cut off (a save sets it
+  // SAVE_MS ahead) is brought within a minute, since the timeout is shorter.
+  constructor(ctx, env) {
+    super(ctx, env);
+    if (ctx.container?.running)
+      ctx.blockConcurrencyWhile(async () => {
+        await ctx.container.setInactivityTimeout(backstopMs(env));
+        const alarm = await ctx.storage.getAlarm();
+        if (!alarm || alarm > Date.now() + ALARM_MS) await ctx.storage.setAlarm(Date.now() + ALARM_MS);
+      });
+  }
+
   async fetch(request) {
     const url = new URL(request.url);
     // Asking for the state isn't using the box; a poller would otherwise keep it awake forever.

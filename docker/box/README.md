@@ -176,7 +176,9 @@ You need `npx wrangler login` on the Novu Cloudflare account, `gh` signed in as 
 the box's Worker if it isn't there, then wakes the box from its snapshot or, the first time, bakes `next`.
 `up --cloud --deploy` redeploys the host (after a change to `docker/box`), which applies to every box; with the
 same image, running boxes usually keep running, but once a box's container restarted from its last snapshot
-minutes after a deploy, losing what wasn't saved (an applied PR): `down` a box worth keeping before deploying. `delete --cloud` stops a box and deletes its snapshot reference and Worker.
+minutes after a deploy, losing what wasn't saved (an applied PR). The likely cause: a deploy restarts every Durable
+Object, which drops the container's inactivity timeout until the next alarm; the Box now sets it again as it
+restarts. Until that is proven, `down` a box worth keeping before deploying. `delete --cloud` stops a box and deletes its snapshot reference and Worker.
 
 After an hour without requests the box saves itself to a snapshot and stops; the next request gets a "waking up"
 page and the box is back with its data. `BOX_IDLE_MINUTES=4 node docker/box/cli.mjs up --cloud --deploy` sets a
