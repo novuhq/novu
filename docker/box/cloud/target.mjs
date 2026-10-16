@@ -166,7 +166,7 @@ export function cloudTarget({ box, log, githubToken, mayDeployHost = true, deadl
             Router: { type: 'durable-object', storage: 'sqlite' },
           },
           observability: { enabled: true },
-          // The box Worker's modules, which the host uploads for a box CI creates (boxes.js).
+          // The box Worker's modules, which the host uploads for every box (boxes.js).
           define: {
             THIN_SOURCES: JSON.stringify(
               Object.fromEntries(THIN_MODULES.map((file) => [file, fs.readFileSync(join(HERE, file), 'utf8')]))

@@ -89,7 +89,7 @@ What differs, or is still a workaround, when the box runs on Cloudflare (`cloud/
 |---|---|---|---|---|
 | Addresses | Dashboard and API on separate hosts (`dashboard.novu.co`, `api.novu.co`) | One `workers.dev` address per box; the box routes by path (Caddy `:18080`) | CORS and cross-origin cookie behavior | A domain with a host per part (NV-9059) |
 | New boxes | - | All containers in one host Worker (`novu-box-host`); each box adds a small Worker for its `workers.dev` address (`novu-box-<box>`, about 30 s to deploy). A new box starts from another box's snapshot in about 2 min | - | Drop the per-box Workers once there's a domain (NV-9059) |
-| GitHub token | Not in the app's environment | The caller's token is in the environment of `bake` and `sync`, so PR code (install scripts) can read it | - | The Worker adds the token to requests to GitHub on the way out |
+| GitHub token | Not in the app's environment | A bake or apply holds a token (on Cloudflare the host's read-only `GITHUB_READ_TOKEN`, locally the caller's) and gives it only to git's fetches, for github.com only. PR code runs as the same user while it installs, so a compromised dependency's install script in a PR could read the read-only token | - | Fetch in a step of its own before any PR code runs, or the Worker adds the token to requests to GitHub on the way out |
 | Calls to its own address | Internal | `API_ROOT_URL` and S3 links are the public address, so the box's calls to itself go out to the internet and back | Extra latency on those calls | Route them back inside the Worker |
 | Uptime | Always on | Sleeps after 1 h without requests and wakes in 35 to 50 s; a Cloudflare host restart loses changes since the last save | The first request after a sleep waits | - |
 | Snapshot storage | - | Each box keeps its snapshots until 30 days after its last use; unknown whether they count toward the 50 GB account image limit, or what they cost | - | Ask Cloudflare |
@@ -122,7 +122,7 @@ The `workers.dev` setup is a workaround for having no domain. With one, the host
 - `npx novu sync` never sets agent bridge URLs on a production bridge. `syncAgentBridgeUrls`
   (`packages/novu/src/commands/sync.ts`) calls `?action=discover` unsigned, and a bridge with
   `strictAuthentication` (the default outside development) answers 401, which the CLI swallows with a warning.
-  `box.mjs` signs the request instead. Not fixed; to report.
+  `seed.mjs` signs the request instead. Not fixed; to report.
 - An approved tool on a plain `agent()` is recorded as denied on the next user message. After `onToolApproval`
   runs the tool, no tool result is recorded (`emitToolResult` is internal; only the AI SDK and LangChain
   adapters call it), so `findOrphanedApprovedToolApprovalRequests`

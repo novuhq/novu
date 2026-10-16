@@ -12,7 +12,8 @@ The image holds tools only. The Novu checkout, `node_modules`, builds and databa
 3. `box apply` puts a PR, or your checkout's changes, on a running box and rebuilds only what they change (about
    20 seconds to 6 minutes).
 
-`box.mjs` holds these commands and runs inside the box. `cli.mjs` runs on your machine and drives a box: start
+`box.mjs` maps these commands to the modules that run them inside the box (`lifecycle.mjs`, `apply.mjs`,
+`seed.mjs`, `migrate.mjs`, `logs.mjs`, sharing `lib.mjs`). `cli.mjs` runs on your machine and drives a box: start
 it, sync your checkout to it, check it, read its logs (see "From your machine" below).
 
 ## What runs inside
@@ -171,19 +172,29 @@ its address, `novu-box-<box>` (`cloud/thin.js`, no container), at `https://novu-
 dashboard calls the API same-origin there: unlike production, CORS isn't exercised.
 
 You need `npx wrangler login` on the Novu Cloudflare account, `gh` signed in as someone with push access to
-`novuhq/novu` (the box's Worker checks it on every control call), and `docker/box/.env`: its secrets go to the host.
-`up --cloud` deploys the host if it isn't there (building the image for amd64 and pushing it once per change) and
-the box's Worker if it isn't there, then wakes the box from its snapshot or, the first time, bakes `next`.
+`novuhq/novu` (the box's Worker checks it on every control call), `docker/box/.env` (its secrets go to the host)
+and, to deploy the host, `~/.config/novu-box/cloudflare.env` (see "Per pull request"). `up --cloud` deploys the
+host if it isn't there (building the image for amd64 and pushing it once per change), has the host create the box's
+Worker, then wakes the box from its snapshot or, the first time, bakes `next`. `cli.mjs` runs `wrangler@4.150.0`
+with npx rather than the repo's wrangler (4.68.1 in the lockfile), which rejects the host's config: its `exports`,
+the container's `images` and `scheduling_policy: "durable_object"`.
 `up --cloud --deploy` redeploys the host (after a change to `docker/box`), which applies to every box; with the
 same image, running boxes usually keep running, but once a box's container restarted from its last snapshot
 minutes after a deploy, losing what wasn't saved (an applied PR). The likely cause: a deploy restarts every Durable
 Object, which drops the container's inactivity timeout until the next alarm; the Box now sets it again as it
-restarts. Until that is proven, `down` a box worth keeping before deploying. `delete --cloud` stops a box and deletes its snapshot reference and Worker.
+restarts. Until that is proven, `down` a box worth keeping before deploying. A save that a deploy cuts off resumes
+the box at its next alarm. `delete --cloud` has the host stop a box, forget its snapshot and delete its Worker; when
+the box doesn't stop, its Worker stays and `delete` fails.
 
 After an hour without requests the box saves itself to a snapshot and stops; the next request gets a "waking up"
 page and the box is back with its data. `BOX_IDLE_MINUTES=4 node docker/box/cli.mjs up --cloud --deploy` sets a
 shorter wait for every box, to test the sleep; the next deploy without it goes back to 60. Asking a box for its
-state (`/__box/state`) doesn't count as a request. Measured on standard-4:
+state (`/__box/state`) doesn't count as a request. While a box saves, its address and every control call but
+`state`, `down` and `delete` answer 503 with `Retry-After` (the CLI waits); a `delete` during a save wins.
+
+`state` gives the box's `phase`, with `since` and the last `error`: `new` (never started, or its bake failed:
+`error` holds the end of `/data/logs/up.log`, and the next `up` bakes again), `baking`, `running`, `saving`,
+`asleep` (with its snapshot), or `lost` (its snapshot couldn't be restored). Measured on standard-4:
 
 | Step | Time |
 |---|---|
@@ -205,8 +216,8 @@ doesn't contain `base`'s commit may conflict; rebase it on `next`.
 
 Cloudflare deletes a snapshot 30 days after it was made or last restored, and nothing extends it. Wake `base`
 (`up --cloud --box base`, then `down`) at least every 30 days, or rebake it weekly (`delete --cloud --box base`, then
-`up --cloud --box base`). A box whose snapshot can't be restored forgets it, `state` shows it as `lostSnapshot`,
-`up` says so, and the next `up` bakes.
+`up --cloud --box base`). A box whose snapshot can't be restored forgets it and is `lost`; `up` says so, and the
+next `up` bakes.
 
 Limits for now: each sleep leaves a snapshot image in the account's registry that nothing deletes yet
 (`npx wrangler containers images list`); requests the box makes to its own public address go out through the internet; a host redeploy with a new
@@ -228,23 +239,28 @@ boxes on demand only:
   run, and the newer run stops the older run's apply in the box before it starts its own (the apply's marker makes
   the next apply redo its files).
 - One comment on the PR, edited in place, says "applying", then the box's address, the applied commit, the apply's
-  plan line and how long it took, or what failed and where its log is.
+  plan line and how long it took, or what failed and where its log is. When the apply ran but `doctor` then finds
+  problems (the PR broke the worker), the comment is ⚠️ with them, and the next push still applies.
+- Events on a closed PR create nothing. Every wait ends 5 minutes before the job's 60-minute timeout, so the
+  comment says the time ran out instead of staying on "applying".
 - Closing the PR or removing the label deletes the box. At most 30 PR boxes exist at once; over that, the comment
   says so. Nightly, the workflow deletes `pr-*` boxes whose PR is closed or no longer labeled; on Sundays it
   rebakes `base` from `next` and saves it, which also keeps its snapshot from expiring. Both run by hand with
   "Run workflow" (`cleanup`, `rebake`).
 
-`github/actions.mjs` does all of it, through `cloud/target.mjs` as `cli.mjs --cloud` does. The workflow holds no
+`docker/box/ci.mjs` does all of it, through `cloud/target.mjs` as `cli.mjs --cloud` does. The workflow holds no
 secret. It signs in to the boxes with its GitHub Actions OIDC token (audience `novu-box`), which `cloud/auth.mjs`
 verifies in the Workers (RS256 against GitHub's keys; issuer, audience, time, repository `novuhq/novu` and
-workflow `novu-box.yml`), next to the push-capable GitHub tokens people use. A box's Worker is created by the
-host, not wrangler, at the host's own address:
+workflow `novu-box.yml`), next to the push-capable GitHub tokens people use. Boxes' Workers, and the Slack
+router's, are created and deleted only by the host (`cloud/boxes.js`, which holds their bindings), not wrangler, at
+the host's own address:
 
 | Route on `novu-box-host` | What it does |
 |---|---|
 | `GET /__box/boxes` | Lists the boxes (every `novu-box-<name>` Worker but the host and the router) |
 | `PUT /__box/boxes/<box>` | Uploads the box's Worker (`thin.js`, `auth.mjs`, `shared.mjs`, bound to the host's Box class) and puts it on workers.dev |
-| `DELETE /__box/boxes/<box>` | Stops the box and forgets it, then deletes its Worker |
+| `DELETE /__box/boxes/<box>` | Stops the box and forgets it, then deletes its Worker; keeps the Worker (502) when the box didn't stop |
+| `PUT /__box/router` | Uploads the Slack router's Worker, `novu-box-slack` (`up --cloud --deploy` does, after the host) |
 
 For that the host holds two keys of its own, as Worker secrets that no box gets (they aren't in `SECRETS`).
 `up --cloud --deploy` reads them, like Novu Bot's, from files on the machine that deploys the host:
@@ -252,7 +268,7 @@ For that the host holds two keys of its own, as Worker secrets that no box gets 
 | File | Key | What for |
 |---|---|---|
 | `~/.config/novu-box/github.env` | `GITHUB_READ_TOKEN`: fine-grained, `novuhq`, repositories `novu` and `packages-enterprise`, Contents and Checks read | Every box's git fetches and CI lookup, instead of the caller's token, so no push-capable token reaches a box. Without it, people's calls use their own token, and CI can't apply |
-| `~/.config/novu-box/cloudflare.env` | `CLOUDFLARE_API_TOKEN`: Account, Workers Scripts, Edit, on the Novu account only | The `/__box/boxes` routes |
+| `~/.config/novu-box/cloudflare.env` | `CLOUDFLARE_API_TOKEN`: Account, Workers Scripts, Edit, on the Novu account only | The `/__box/boxes` and `/__box/router` routes; `up --cloud --deploy` fails without it |
 
 A new fine-grained GitHub token needs an org owner's approval (the current one expires 2027-10-17). Until it's
 approved it reads only public `novuhq/novu`: applying a PR works, but a bake (so the weekly rebake, and a box
@@ -262,7 +278,7 @@ started when `base` has no snapshot) and an apply that moves `.source` fail at t
 
 Cloud boxes' agents can be used from the company Slack through one app, Novu Bot, in `#novu-box` and in DMs with
 the bot. The Slack router (`cloud/slack-router.js`) runs in the host Worker as one more Durable Object, at its
-own address `novu-box-slack` (a small Worker like a box's); it holds the real bot token and signing secret and
+own address `novu-box-slack` (a small Worker like a box's, which the host uploads); it holds the real bot token and signing secret and
 stands between Slack and every box; no box ever sees them.
 
 - `up --cloud --deploy` gives the host Novu Bot's credentials when `~/.config/novu-box/slack.env`
@@ -322,10 +338,11 @@ Other commands, run with `docker exec novu-box node /opt/box/box.mjs <command>`:
 - `status` lists processes. Logs are in `/data/logs/process-compose.log`.
 - `doctor` and `logs [process]`, which `cli.mjs` runs. `logs` reads `/data/logs/process-compose.log`, where
   process-compose writes every process's output.
-- `state` prints the baked and applied commits, and an unfinished apply, as JSON.
+- `state` prints the baked and applied commits, an unfinished apply, and the bake or apply running now (`lock`,
+  `/data/run/box.lock`), as JSON. `stop-apply` stops that apply (CI does, before applying a newer push).
 - `quiesce` stops every running process, the data stores last, leaving the supervisor up for a snapshot; it fails
   if anything still runs. `resume` starts again what it stopped (the Cloudflare Worker runs it when a save fails).
-- The processes are listed once, in `PROCESSES` at the top of `box.mjs`; `doctor` reports a process that
+- The processes are listed once, in `PROCESSES` in `lib.mjs`; `doctor` reports a process that
   `process-compose.yaml` and that list don't both have.
 
 ## What the bake seeds
