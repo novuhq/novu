@@ -121,3 +121,52 @@ export const FileAnswer = Schema.Struct({ path: Schema.String, exitCode: Schema.
 export const BoxList = Schema.Struct({ boxes: Schema.Array(Schema.String) });
 export const BoxCreated = Schema.Struct({ box: Schema.String, origin: Schema.String });
 export const BoxDeleted = Schema.Struct({ box: Schema.String, state: Schema.Literal('deleted') });
+
+// --- Slack: the router (src/cloud/slack/router.ts) and a box's side of it (src/cloud/slack/box.ts), over RPC ---
+
+// What Router.register gives a box: one signing secret, a fake bot token per agent, the real bot's workspace and user.
+export const SlackCredentials = Schema.Struct({
+  signingSecret: Schema.String,
+  tokens: Schema.Record(Schema.String, Schema.String),
+  team: Schema.Struct({ id: Schema.String, name: Schema.String }),
+  botUserId: Schema.String,
+});
+export type SlackCredentials = typeof SlackCredentials.Type;
+
+// An agent the box set up (Router.ready): its identifier, its id in the box's API, its Slack integration.
+export const SlackAgent = Schema.Struct({
+  identifier: Schema.String,
+  id: Schema.String,
+  integrationIdentifier: Schema.String,
+});
+export type SlackAgent = typeof SlackAgent.Type;
+
+// Box.slackEvent: an event for one of the box's agents, signed with the box's secret.
+export const SlackEvent = Schema.Struct({
+  id: Schema.optional(Schema.String),
+  agent: SlackAgent,
+  user: Schema.optional(Schema.String),
+  headers: Schema.Record(Schema.String, Schema.String),
+  body: Schema.String,
+  timeoutMs: Schema.optional(Schema.Number),
+});
+export type SlackEvent = typeof SlackEvent.Type;
+
+// The agent's answer; Box.slackEvent gives null while the box is asleep, starting or saving.
+export const SlackAnswer = Schema.Struct({
+  ok: Schema.Boolean,
+  status: Schema.Number,
+  contentType: Schema.String,
+  text: Schema.String,
+});
+export type SlackAnswer = typeof SlackAnswer.Type;
+
+// The last Slack events the router handed to the box's agents, in GET /__box/state.
+export const SlackEventNote = Schema.Struct({
+  id: Schema.optional(Schema.String),
+  agent: Schema.String,
+  user: Schema.optional(Schema.String),
+  status: Schema.Number,
+  at: Schema.String,
+});
+export type SlackEventNote = typeof SlackEventNote.Type;
