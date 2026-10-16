@@ -204,6 +204,11 @@ box started from a snapshot waited 4 to 6 minutes. `up --cloud` without `--box` 
 starts from `base`, then gets your checkout, committed or not (as `sync`; `--no-sync` skips it). A branch that
 doesn't contain `base`'s commit may conflict; rebase it on `next`.
 
+Cloudflare deletes a snapshot 30 days after it was made or last restored, and nothing extends it. Wake `base`
+(`up --cloud --box base`, then `down`) at least every 30 days, or rebake it weekly (`delete --cloud --box base`, then
+`up --cloud --box base`). A box whose snapshot can't be restored forgets it, `state` shows it as `lostSnapshot`,
+`up` says so, and the next `up` bakes.
+
 Limits for now: each sleep leaves a snapshot image in the account's registry that nothing deletes yet
 (`npx wrangler containers images list`); the GitHub token reaches the bake's and `sync`'s environment, as it does
 locally; requests the box makes to its own public address go out through the internet; a host redeploy with a new

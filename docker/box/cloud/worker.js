@@ -116,6 +116,12 @@ export class Box extends DurableObject {
   async serve(request, url) {
     const container = this.ctx.container;
     if (!container.running) {
+      const lost = await this.ctx.storage.get('lostSnapshot');
+      if (lost && !(await this.ctx.storage.get('snapshot')))
+        return new Response(
+          `This box's snapshot ${lost.id} couldn't be restored (snapshots expire 30 days after they were made or last restored). Bake it again: run \`node docker/box/cli.mjs up --cloud\`.\n`,
+          { status: 503 }
+        );
       if (!(await this.ctx.storage.get('snapshot')))
         return new Response('This box is not set up yet: run `node docker/box/cli.mjs up --cloud`.\n', { status: 503 });
       await this.wake(url.origin);
@@ -171,6 +177,8 @@ export class Box extends DurableObject {
       // A `down` that hasn't saved yet (it waits for a bake or apply, or tries again), and why the last save failed.
       saving: Boolean(await this.ctx.storage.get('sleepNow')),
       saveError: (await this.ctx.storage.get('saveError')) ?? null,
+      // A snapshot that couldn't be restored (expired, or invalid); `up` bakes again.
+      lostSnapshot: (await this.ctx.storage.get('lostSnapshot')) ?? null,
       origin: await this.ctx.storage.get('origin'),
       // The last Slack events the router handed to the box's agents, newest last.
       slackEvents: (await this.ctx.storage.get('slackEvents')) ?? [],
@@ -191,6 +199,7 @@ export class Box extends DurableObject {
       return { state: 'waking' };
     }
     const ref = url.searchParams.get('ref') ?? 'next';
+    await this.ctx.storage.delete('lostSnapshot');
     await this.start({ image: this.ctx.container.images.box, entrypoint: ['tini', '--', 'sleep', 'infinity'] });
     const bake = `mkdir -p /data/logs && nohup sh -c 'node /opt/box/box.mjs bake "$0" && exec env -u GITHUB_TOKEN node /opt/box/box.mjs start' "$0" > /data/logs/up.log 2>&1 &`;
     await (await this.run(['sh', '-c', bake, ref], { github: bearer(request) })).exitCode;
@@ -200,7 +209,28 @@ export class Box extends DurableObject {
 
   async wake(origin) {
     if (this.ctx.container.running) return;
-    await this.start({ containerSnapshot: await this.ctx.storage.get('snapshot'), entrypoint: START }, origin);
+    const snapshot = await this.ctx.storage.get('snapshot');
+    await this.start({ containerSnapshot: snapshot, entrypoint: START }, origin);
+    this.watchRestore(snapshot);
+  }
+
+  // Snapshots expire 30 days after they were made or last restored, and nothing extends them. A restore that fails
+  // stops the container before the box ever answers, without an exit code; then the snapshot is forgotten (kept as
+  // `lostSnapshot`) so `up` bakes again instead of retrying a dead id forever. Once the box has answered (`run`), its
+  // snapshot was restored, and a later stop says nothing about it.
+  watchRestore(snapshot) {
+    this.restoring = snapshot.id;
+    this.ctx.container.monitor().catch(async (error) => {
+      if (this.restoring !== snapshot.id || !(error instanceof Error) || typeof error.exitCode === 'number') return;
+      if ((await this.ctx.storage.get('snapshot'))?.id !== snapshot.id) return;
+      console.log(`restoring snapshot ${snapshot.id} failed, so it is forgotten: ${error.message}`);
+      await this.ctx.storage.delete('snapshot');
+      await this.ctx.storage.put('lostSnapshot', {
+        id: snapshot.id,
+        at: new Date().toISOString(),
+        message: error.message,
+      });
+    });
   }
 
   async start(options, origin) {
@@ -535,12 +565,15 @@ export class Box extends DurableObject {
   }
 
   async run(cmd, { cwd, github, stdin } = {}) {
-    return this.ctx.container.exec(cmd, {
+    const process = await this.ctx.container.exec(cmd, {
       env: { ...IMAGE_ENV, ...(await this.boxEnv()), ...(github && { GITHUB_TOKEN: github }) },
       cwd,
       stderr: 'combined',
       ...(stdin && { stdin }),
     });
+    this.restoring = null;
+
+    return process;
   }
 
   // The secrets and the box's public URLs, for the box and for every command run in it (an apply that rebuilds the

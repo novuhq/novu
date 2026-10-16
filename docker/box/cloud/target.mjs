@@ -205,6 +205,11 @@ export function cloudTarget({ box, log, githubToken }) {
     let report;
     while (Date.now() < deadline) {
       await new Promise((resolve) => setTimeout(resolve, 10_000));
+      const current = await state().catch(() => null);
+      if (current?.lostSnapshot && !current.running && !current.snapshot)
+        throw new Error(
+          `${worker} couldn't restore snapshot ${current.lostSnapshot.id} (${current.lostSnapshot.message}); snapshots expire 30 days after they were made or last restored. Run \`up\` again to bake it`
+        );
       report = await stream({ cmd: ['node', '/opt/box/box.mjs', 'doctor'] }, { capture: true })
         .then(JSON.parse)
         .catch((error) => ({ ok: false, problems: [error.message.slice(0, 200)] }));
