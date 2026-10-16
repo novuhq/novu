@@ -50,9 +50,22 @@ export function addressOf(handle: string): string {
   return `${handle}@${AGENT_DOMAIN}`;
 }
 
-/** The agent's public card, as it is written out. Add `https://` to open or copy it. */
-export function cardLinkOf(handle: string): string {
-  return `${AGENT_DOMAIN}/${handle}`;
+/** Where an agent's public card lives on the site: `/p/atlas`. */
+export function cardPathOf(handle: string): string {
+  return `/p/${handle}`;
+}
+
+/**
+ * The agent's public card on the site `origin` names (`readSiteOrigin`): `https://agentinbox.md/p/atlas`, or
+ * `http://localhost:4300/p/atlas` locally. Shown as `writtenLink` writes it.
+ */
+export function cardLinkOf(origin: string, handle: string): string {
+  return `${origin}${cardPathOf(handle)}`;
+}
+
+/** A link as it is written out, without `https://` or `http://`: `agentinbox.md/p/atlas`. */
+export function writtenLink(url: string): string {
+  return url.replace(/^https?:\/\//, '');
 }
 
 /*

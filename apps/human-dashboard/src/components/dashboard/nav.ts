@@ -15,6 +15,9 @@ export const DASHBOARD_HOME = '/inbox';
 /** Where the agent is set up and its channels are connected. */
 export const CONFIGURE_PATH = '/configure';
 
+/** The signed-in operator's agent card as a share image (PNG), for the Share dialog's preview and download. */
+export const SHARE_IMAGE_PATH = `${CONFIGURE_PATH}/share-image`;
+
 /** The query parameter that opens a channel's drawer on the Configure page. */
 export const CONFIGURE_DRAWER_PARAM = 'setup';
 

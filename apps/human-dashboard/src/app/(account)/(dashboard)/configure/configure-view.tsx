@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { SlackSetup } from '@/components/channels/slack-setup';
 import { TelegramSetup } from '@/components/channels/telegram-setup';
 import { CONFIGURE_DRAWER_PARAM } from '@/components/dashboard/nav';
+import { ShareDialog } from '@/components/dashboard/share-dialog';
 import { useNow } from '@/hooks/use-now';
 import type { AgentSettings } from '@/lib/agent-settings';
 import type { ToolId } from '@/lib/ai-tools';
@@ -80,6 +81,7 @@ export function ConfigureView({
   settings,
 }: ConfigureViewProps) {
   const [openDrawer, setOpenDrawer] = useState<ChannelVia | null>(initialDrawer);
+  const [sharing, setSharing] = useState(false);
   const drawerProps = (via: ChannelVia) => ({
     open: openDrawer === via,
     onOpenChange: (open: boolean) => {
@@ -117,6 +119,7 @@ export function ConfigureView({
           hostConnected={hostConnected}
           telegram={connected('telegram') ? { bot: telegramBot ? `@${telegramBot}` : null } : null}
           slack={slack && (joinDefined([slack.appName, slack.workspace], ' · ') || 'Connected')}
+          onShare={() => setSharing(true)}
         />
 
         <div className="flex w-full min-w-0 flex-1 flex-col gap-5">
@@ -163,6 +166,14 @@ export function ConfigureView({
         handle={agent.handle}
         prompt={channelPrompts.slack}
         {...drawerProps('slack')}
+      />
+      <ShareDialog
+        open={sharing}
+        onOpenChange={setSharing}
+        handle={agent.handle}
+        cardLink={agent.cardLink}
+        reach={settings?.reach ?? null}
+        besideSidebar
       />
     </>
   );

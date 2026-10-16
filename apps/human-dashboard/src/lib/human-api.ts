@@ -38,7 +38,7 @@ export function requestWithSecretKey(
 }
 
 function dashboardSecretHeader(): Record<string, string> {
-  return { 'x-human-dashboard-secret': process.env.HUMAN_DASHBOARD_API_SECRET ?? '' };
+  return { 'x-human-dashboard-secret': process.env.AGENT_INBOX_DASHBOARD_API_SECRET ?? '' };
 }
 
 /** For what the API can't do yet, so the pages can be built against the final function names. */

@@ -7,7 +7,8 @@ import { buttonClassName } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 
-const COPIED_MS = 2000;
+/** How long a copy button shows its check mark. */
+export const COPIED_MS = 2000;
 
 type CopyButtonProps = {
   value: string;

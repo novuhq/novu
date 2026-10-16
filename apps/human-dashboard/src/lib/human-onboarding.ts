@@ -3,7 +3,7 @@ import 'server-only';
 import type { User } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
-
+import type { AgentReach } from './agent-settings';
 import { findCurrentUser } from './auth-page';
 import type { HumanAccount } from './human-account';
 import { DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from './human-agent-api';
@@ -13,6 +13,7 @@ import { listConnectedTools } from './human-tools-api';
 import { addressOf, cardLinkOf, type HostVia, ONBOARDING_PATH, type OnboardingStep, toHandle } from './onboarding';
 import { advanceMocks, connectCode } from './onboarding-mocks';
 import { type OnboardingState, readOnboardingState, writeOnboardingState } from './onboarding-state';
+import { readSiteOrigin } from './site-origin';
 
 /** Where an operator stands: on one of the four steps, or `done` with them. */
 export type SetupStep = OnboardingStep | 'done';
@@ -222,19 +223,30 @@ export type AgentIdentity = {
   createdAt?: string;
 };
 
+/** The part of the agent's address before the `@`: the one picked on step 1, or one made from its name. */
+export function handleOf(agent: RelayAgent, state: OnboardingState): string {
+  return state.handle || toHandle(agent.name) || 'agent';
+}
+
 /**
  * How the agent is addressed. The address is the one the API gave it; while the API can't take the one
- * picked on step 1 (NV-9032), an agent without an inbox of its own shows the picked one instead.
+ * picked on step 1 (NV-9032), an agent without an inbox of its own shows the picked one instead. Its card
+ * is on the site `origin` names (`readSiteOrigin`).
  */
-export function describeAgentIdentity(agent: RelayAgent, state: OnboardingState, emailAddress?: string): AgentIdentity {
+export function describeAgentIdentity(
+  agent: RelayAgent,
+  state: OnboardingState,
+  origin: string,
+  emailAddress?: string
+): AgentIdentity {
   const name = agent.name && agent.name !== DEFAULT_AGENT_NAME ? agent.name : 'Your agent';
-  const handle = state.handle || toHandle(agent.name) || 'agent';
+  const handle = handleOf(agent, state);
 
   return {
     name,
     handle,
     address: emailAddress ?? addressOf(handle),
-    cardLink: cardLinkOf(handle),
+    cardLink: cardLinkOf(origin, handle),
     pictureUrl: agent.pictureUrl,
     createdAt: agent.createdAt,
   };
@@ -259,11 +271,15 @@ export async function loadSetupSummary(
   progress: SetupProgress & { agent: RelayAgent }
 ): Promise<SetupSummary> {
   const { state, agent, step } = progress;
-  const [channels, waiting] = await Promise.all([loadChannelFacts(account), countWaitingMessages(account, state)]);
+  const [channels, waiting, origin] = await Promise.all([
+    loadChannelFacts(account),
+    countWaitingMessages(account, state),
+    readSiteOrigin(),
+  ]);
 
   return {
     step,
-    agent: describeAgentIdentity(agent, state, channels.emailAddress),
+    agent: describeAgentIdentity(agent, state, origin, channels.emailAddress),
     waiting,
     secondChannelConnected: channels.telegram || channels.slack,
     wentThroughSteps: wasMadeInTheSteps(agent, state),
@@ -285,6 +301,10 @@ export type OnboardingView = {
   /** The one-time code in the prompt of step 3. */
   connectCode: string;
   channels: { telegram: boolean; slack: boolean };
+  /** Who can reach the agent, for the Share dialog of step 4. `null` while there is no agent, or it couldn't be read. */
+  reach: AgentReach | null;
+  /** Where the dashboard is served (`readSiteOrigin`): the card link the steps show before there is an agent. */
+  origin: string;
 };
 
 /** What the onboarding page renders. `null` once there is nothing left to walk the operator through. */
@@ -298,17 +318,20 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
   const [channels, waiting] = agent
     ? await Promise.all([loadChannelFacts(account), countWaitingMessages(account, state)])
     : [{ telegram: false, slack: false, emailAddress: undefined }, 0];
+  const origin = await readSiteOrigin();
 
   return {
     step,
     status: describeProgress(progress),
     operator: { email: user.primaryEmailAddress?.emailAddress ?? null, firstName: user.firstName },
-    agent: agent && describeAgentIdentity(agent, state, channels.emailAddress),
+    agent: agent && describeAgentIdentity(agent, state, origin, channels.emailAddress),
     test: { sentAt: state.testSentAt, replyAt: state.testReplyAt },
     host: state.host ?? null,
     waiting,
     connectCode: connectCode(user.id),
     channels: { telegram: channels.telegram, slack: channels.slack },
+    reach: agent?.settings?.reach ?? null,
+    origin,
   };
 }
 
