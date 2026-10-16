@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CacheService, FeatureFlagsService, PinoLogger, shortId } from '@novu/application-generic';
 import {
   ChannelEndpointRepository,
+  ConversationEntity,
   ConversationRepository,
   HumanInteractionEntity,
   HumanInteractionRepository,
@@ -120,10 +121,17 @@ export class HumanInteractionInboundService {
       settled = await this.settlement.settle(
         current,
         parsed.type === 'approve' ? HumanInteractionStatusEnum.APPROVED : HumanInteractionStatusEnum.DENIED,
-        this.buildResponse({ type: 'option', optionId: parsed.type, respondedBy, respondedBySubscriberId })
+        this.buildResponse({ type: 'option', optionId: parsed.type, respondedBy, respondedBySubscriberId }),
+        turn.conversation
       );
     } else if (parsed.type === 'option') {
-      settled = await this.settleOptionClick(current, parsed.optionId, respondedBy, respondedBySubscriberId);
+      settled = await this.settleOptionClick(
+        current,
+        parsed.optionId,
+        respondedBy,
+        respondedBySubscriberId,
+        turn.conversation
+      );
     }
 
     if (!settled) {
@@ -142,7 +150,8 @@ export class HumanInteractionInboundService {
     current: HumanInteractionEntity,
     optionId: string,
     respondedBy: string | undefined,
-    respondedBySubscriberId: string | undefined
+    respondedBySubscriberId: string | undefined,
+    answeredIn: ConversationEntity
   ): Promise<HumanInteractionEntity | null> {
     switch (current.kind) {
       case HumanInteractionKindEnum.APPROVE:
@@ -164,7 +173,8 @@ export class HumanInteractionInboundService {
         return this.settlement.settle(
           current,
           status,
-          this.buildResponse({ type: 'option', optionId, respondedBy, respondedBySubscriberId })
+          this.buildResponse({ type: 'option', optionId, respondedBy, respondedBySubscriberId }),
+          answeredIn
         );
       }
       case HumanInteractionKindEnum.ASK:
@@ -226,7 +236,8 @@ export class HumanInteractionInboundService {
         optionId: click.optionId,
         respondedBy: this.resolveResponder(turn),
         respondedBySubscriberId: turn.subscriber?.subscriberId,
-      })
+      }),
+      turn.conversation
     );
 
     if (!settled) {
@@ -493,7 +504,8 @@ export class HumanInteractionInboundService {
         text,
         respondedBy: this.resolveResponder(turn),
         respondedBySubscriberId: turn.subscriber?.subscriberId,
-      })
+      }),
+      turn.conversation
     );
 
     if (settled && mode === 'relay') {

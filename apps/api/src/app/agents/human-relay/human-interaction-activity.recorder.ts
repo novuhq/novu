@@ -34,11 +34,19 @@ export class HumanInteractionActivityRecorder {
     await this.record(interaction, 'request');
   }
 
-  async recordResponse(interaction: HumanInteractionEntity): Promise<void> {
-    await this.record(interaction, 'response');
+  /**
+   * `answeredIn` is the conversation of the message or button press that carried the answer, and the
+   * answer is recorded there. An expiry or a cancel has none, and stays in the first thread.
+   */
+  async recordResponse(interaction: HumanInteractionEntity, answeredIn?: ConversationEntity): Promise<void> {
+    await this.record(interaction, 'response', answeredIn);
   }
 
-  private async record(interaction: HumanInteractionEntity, suffix: 'request' | 'response'): Promise<void> {
+  private async record(
+    interaction: HumanInteractionEntity,
+    suffix: 'request' | 'response',
+    answeredIn?: ConversationEntity
+  ): Promise<void> {
     if (!interaction._conversationId || parseToolApprovalRequestId(interaction.requestId) !== null) {
       return;
     }
@@ -58,7 +66,7 @@ export class HumanInteractionActivityRecorder {
         return;
       }
 
-      const first: InteractionThread = { conversation, delivery: primaryHumanInteractionDelivery(interaction) };
+      const first: InteractionThread = { conversation, delivery: deliveryInto(interaction, conversation) };
       const card = resolveHumanInteractionCard({ kind: interaction.kind, content: interaction.content });
       const title = humanInteractionCardTitle({ kind: interaction.kind, content: interaction.content });
       const contextIn = (thread: InteractionThread) => ({
@@ -98,7 +106,7 @@ export class HumanInteractionActivityRecorder {
       const respondedBy = interaction.response?.respondedBy?.trim();
       const respondedBySubscriberId = interaction.response?.respondedBySubscriberId;
       const isHuman = Boolean(respondedBySubscriberId || respondedBy);
-      const thread = (await this.answererThread(interaction, first)) ?? first;
+      const thread = answeredThread(interaction, first, answeredIn);
 
       await this.conversationService.persistHumanInteractionResponse({
         ...contextIn(thread),
@@ -123,51 +131,32 @@ export class HumanInteractionActivityRecorder {
   }
 
   /**
-   * The threads after the first that a send to several contacts landed in, one for each contact.
-   * A delivery does not keep its thread, so each one is found again from the chat it went to.
+   * The threads besides the first that a send to several contacts landed in, one for each contact. A
+   * delivery does not keep its thread, so each one is found again from the chat it went to; the first
+   * thread is the interaction's own conversation, whichever delivery that was.
    */
   private async otherThreads(
     interaction: HumanInteractionEntity,
     first: InteractionThread
   ): Promise<InteractionThread[]> {
+    const deliveries = interaction.deliveries ?? [];
+    if (deliveries.length < 2) {
+      return [];
+    }
+
     const threads: InteractionThread[] = [];
+    const seen = new Set([String(first.conversation._id)]);
 
-    for (const delivery of interaction.deliveries?.slice(1) ?? []) {
+    for (const delivery of deliveries) {
       const conversation = await this.findDeliveryThread(interaction, delivery);
-      const seen = [first, ...threads].map((thread) => String(thread.conversation._id));
 
-      if (conversation && !seen.includes(String(conversation._id))) {
+      if (conversation && !seen.has(String(conversation._id))) {
+        seen.add(String(conversation._id));
         threads.push({ conversation, delivery });
       }
     }
 
     return threads;
-  }
-
-  /**
-   * The thread of the contact who answered, when the send went to several and they are not the
-   * first. Nothing for an answer from the first contact, or an expiry or cancel nobody gave.
-   */
-  private async answererThread(
-    interaction: HumanInteractionEntity,
-    first: InteractionThread
-  ): Promise<InteractionThread | undefined> {
-    const answerer = interaction.response?.respondedBySubscriberId;
-    const delivery = answerer
-      ? interaction.deliveries?.slice(1).find((candidate) => candidate.subscriberId === answerer)
-      : undefined;
-
-    if (!delivery) {
-      return undefined;
-    }
-
-    const conversation = await this.findDeliveryThread(interaction, delivery);
-
-    if (!conversation || String(conversation._id) === String(first.conversation._id)) {
-      return undefined;
-    }
-
-    return { conversation, delivery };
   }
 
   /** The agent's thread on the chat a delivery went to. */
@@ -209,4 +198,37 @@ export class HumanInteractionActivityRecorder {
 
     return agent?.identifier;
   }
+}
+
+/** The delivery whose card went into `conversation`, by the chat thread they share, or else the first one. */
+function deliveryInto(
+  interaction: HumanInteractionEntity,
+  conversation: ConversationEntity
+): HumanInteractionDelivery | undefined {
+  const threads = new Set((conversation.channels ?? []).map((channel) => channel.platformThreadId));
+
+  return (
+    interaction.deliveries?.find((delivery) => threads.has(delivery.platformThreadId)) ??
+    primaryHumanInteractionDelivery(interaction)
+  );
+}
+
+/**
+ * Where an answer is recorded: the conversation it came in, when that is another of this agent's
+ * threads; otherwise the first thread, as for an expiry or a cancel.
+ */
+function answeredThread(
+  interaction: HumanInteractionEntity,
+  first: InteractionThread,
+  answeredIn: ConversationEntity | undefined
+): InteractionThread {
+  if (
+    !answeredIn ||
+    String(answeredIn._id) === String(first.conversation._id) ||
+    String(answeredIn._agentId) !== String(interaction._agentId)
+  ) {
+    return first;
+  }
+
+  return { conversation: answeredIn, delivery: deliveryInto(interaction, answeredIn) };
 }
