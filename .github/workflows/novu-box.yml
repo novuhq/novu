@@ -3,7 +3,7 @@ name: Novu Box
 # A Novu Box (docker/box on Cloudflare) per pull request, on demand: a member with write access adds the `box` label
 # and the PR gets https://novu-box-pr-<number>.cli-shortener.workers.dev, started from the `base` box; every push
 # applies the new head; closing the PR or removing the label deletes it. One PR comment, edited in place, says how
-# it went. No secrets: the box host trusts this workflow's OIDC token (docker/box/cloud/auth.mjs), and PRs from
+# it went. No secrets: the box host trusts this workflow's OIDC token (docker/box/src/shared/auth.ts), and PRs from
 # forks get no box. See docker/box/README.md, "Per pull request".
 
 on:
@@ -37,7 +37,7 @@ jobs:
       group: novu-box-pr-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     runs-on: ubuntu-latest
-    # docker/box/ci.mjs ends every wait 5 minutes before this, so it can still say why in the comment.
+    # docker/box/src/ci/ci.ts ends every wait 5 minutes before this, so it can still say why in the comment.
     timeout-minutes: 60
     permissions:
       contents: read
@@ -53,10 +53,48 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
+      - name: Install the box's dependencies
+        run: npm ci --prefix docker/box --omit=dev --omit=peer --ignore-scripts --no-fund --no-audit
       - name: Start, update or delete the box
-        run: node docker/box/ci.mjs pr
+        run: node docker/box/src/ci/ci.ts pr
         env:
           GITHUB_TOKEN: ${{ github.token }}
+
+  typecheck:
+    name: Typecheck docker/box
+    # Only PRs that change docker/box; the workflow's events can't filter by path without also filtering the box job.
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Does the PR change docker/box?
+        id: changes
+        run: |
+          if gh api --paginate "repos/$REPO/pulls/$NUMBER/files" --jq '.[].filename' | grep -q '^docker/box/'; then
+            echo "box=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+      - name: Checkout docker/box
+        if: steps.changes.outputs.box == 'true'
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: docker/box
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: steps.changes.outputs.box == 'true'
+        with:
+          node-version-file: .nvmrc
+      - name: tsc --noEmit (Node code and Workers)
+        if: steps.changes.outputs.box == 'true'
+        working-directory: docker/box
+        run: npm ci --ignore-scripts --no-fund --no-audit && npm run typecheck
 
   maintenance:
     name: Clean up PR boxes or rebake base
@@ -78,8 +116,10 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
+      - name: Install the box's dependencies
+        run: npm ci --prefix docker/box --omit=dev --omit=peer --ignore-scripts --no-fund --no-audit
       - name: Run the task
-        run: node docker/box/ci.mjs "$TASK"
+        run: node docker/box/src/ci/ci.ts "$TASK"
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TASK: ${{ inputs.task || (github.event.schedule == '17 4 * * 0' && 'rebake' || 'cleanup') }}
