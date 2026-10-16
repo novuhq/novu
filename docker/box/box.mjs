@@ -82,6 +82,10 @@ const DEPLOYED_APPS = Object.fromEntries(
   processesWhere((entry) => entry.deploy).map((name) => [name, PROCESSES[name].deploy])
 );
 
+// The caller's token can push to novuhq/novu, and the box runs PR code (install scripts, builds, the apps), so it is
+// taken out of the environment every child gets and passed only to the git calls that need it and the CI lookup.
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+delete process.env.GITHUB_TOKEN;
 const env = loadEnv();
 
 function loadEnv() {
@@ -222,18 +226,25 @@ function processList() {
   );
 }
 
-// GITHUB_TOKEN is only read from the environment of this command; it is never written to disk.
+// GITHUB_TOKEN is only read from the environment of this command; it is never written to disk. No hooks, so no
+// checked-out code runs with it.
 function gitWithToken(args) {
-  if (!env.GITHUB_TOKEN) throw new Error('GITHUB_TOKEN is required to fetch the private enterprise submodule');
-  run('git', [
-    '-c',
-    'url.https://github.com/.insteadOf=git@github.com:',
-    '-c',
-    'credential.helper=',
-    '-c',
-    'credential.helper=!f() { echo username=x-access-token; echo "password=$GITHUB_TOKEN"; }; f',
-    ...args,
-  ]);
+  if (!GITHUB_TOKEN) throw new Error('GITHUB_TOKEN is required to fetch the private enterprise submodule');
+  run(
+    'git',
+    [
+      '-c',
+      'core.hooksPath=/dev/null',
+      '-c',
+      'url.https://github.com/.insteadOf=git@github.com:',
+      '-c',
+      'credential.helper=',
+      '-c',
+      'credential.helper=!f() { echo username=x-access-token; echo "password=$GITHUB_TOKEN"; }; f',
+      ...args,
+    ],
+    { env: { ...env, GITHUB_TOKEN } }
+  );
 }
 
 function fetchRef(ref) {
@@ -1318,7 +1329,7 @@ async function logCiResult(sha) {
   const repo = REPO_URL.replace(/^https:\/\/github\.com\//, '').replace(/\.git$/, '');
   const url = `https://api.github.com/repos/${repo}/commits/${sha}/check-runs?check_name=PR%20Checks%20Passed`;
   try {
-    const response = await fetch(url, { headers: { Authorization: `Bearer ${env.GITHUB_TOKEN}` } });
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${GITHUB_TOKEN}` } });
     if (!response.ok) throw new Error(`GitHub answered ${response.status}`);
     const [check] = (await response.json()).check_runs;
     if (!check) log(`CI: no "PR Checks Passed" result for ${sha.slice(0, 10)}`);
