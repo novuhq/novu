@@ -1,30 +1,29 @@
 'use client';
 
-import { Send } from 'lucide-react';
+import type { ReactNode } from 'react';
 
-import { ChannelLogo } from '@/app/(account)/(dashboard)/configure/channel-logo';
-import { CardLine, CardName, CardPortrait, CopyLine } from '@/components/agent-card/card-parts';
-import { buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
+import { CardName, CardPortrait } from '@/components/agent-card/card-parts';
+import { CopyButton } from '@/components/ui/copy-button';
+import type { ChannelVia } from '@/lib/human-channels-api';
 import { writtenLink } from '@/lib/onboarding';
 import type { PublicAgentCard } from '@/lib/public-agent-card';
 
-import { GetAnInbox } from './get-an-inbox';
+import { ChannelMark } from './channel-mark';
 import { TiltCard } from './tilt-card';
 
 /**
- * The agent's public card (`4 · Public card · inbox.md/atlas`): the Configure page's card, 360px wide and
- * glowing, with only the ways to reach the agent, and "Message atlas", which starts an email to it. It
- * rises in once the page has loaded, and leans towards the pointer with a glare across it (`TiltCard`).
+ * The agent's public card (`Agent ID card` on `4 · Public card · visitor view`): the Configure page's card,
+ * with a line for each way to reach the agent and its link with a copy button. It rises in once the page has
+ * loaded, and leans towards the pointer with a glare across it and its edge lit (`TiltCard`).
  */
 export function PublicCard({ card }: { card: PublicAgentCard }) {
   return (
-    <div className="flex w-90 max-w-full animate-rise-in flex-col items-center gap-4 motion-reduce:animate-none">
+    <div className="w-full animate-rise-in motion-reduce:animate-none">
       <TiltCard
         aria-label={`${card.name}’s card`}
-        className="w-full overflow-hidden rounded-[14px] border border-border-strong bg-background shadow-[0_0_48px_0_rgb(255_92_48/0.2),0_28px_56px_0_rgb(0_0_0/0.55)]"
+        className="w-full overflow-hidden rounded-[14px] border border-border-strong bg-background"
       >
         <CardPortrait
-          wide
           handle={card.handle}
           address={card.address}
           pictureUrl={card.pictureUrl ?? undefined}
@@ -33,34 +32,39 @@ export function PublicCard({ card }: { card: PublicAgentCard }) {
 
         <CardName name={card.name} operatorName={card.operatorName} createdAt={card.issuedAt} />
 
-        <ul className="flex flex-col px-3 pb-2">
-          <CardLine
-            icon={<ChannelLogo via="email" size={16} />}
-            label={card.address}
-            end={<CopyLine value={card.address} label="Copy the email address" />}
-          />
-          {card.telegramBot && (
-            <CardLine
-              icon={<ChannelLogo via="telegram" size={16} />}
-              label={card.telegramBot}
-              end={<CopyLine value={card.telegramBot} label="Copy the Telegram bot handle" />}
-            />
-          )}
+        <ul className="flex flex-col gap-3 p-3">
+          <ReachLine via="email">{card.address}</ReachLine>
+          {card.telegramBot && <ReachLine via="telegram">{card.telegramBot}</ReachLine>}
         </ul>
 
-        <div className="flex items-center gap-2 border-t border-border px-3.5 py-3">
+        <div className="flex items-center gap-2 border-t border-border bg-subtle/90 px-3.5 py-3">
           <p className="min-w-0 flex-1 truncate font-mono text-xs leading-4 text-default">
             {writtenLink(card.cardLink)}
           </p>
-          <a href={`mailto:${card.address}`} className={buttonClassName('primary', SMALL_BUTTON)}>
-            <Send aria-hidden="true" className="size-3.5" />
-            Message {card.handle}
-          </a>
+          <CopyButton
+            value={card.cardLink}
+            label="Copy the link to the card"
+            variant="secondary"
+            className="size-7 px-0"
+            iconClassName="size-3.25"
+          />
         </div>
       </TiltCard>
-
-      <p className="text-center text-xs leading-4 text-secondary">Email, Telegram or Slack.</p>
-      <GetAnInbox />
     </div>
+  );
+}
+
+/**
+ * One way to reach the agent on the public card: the channel's logo and where to find the agent there, with
+ * nothing to press. The design draws these lines at 113%, hence their sizes.
+ */
+function ReachLine({ via, children }: { via: ChannelVia; children: ReactNode }) {
+  return (
+    <li className="flex h-4 items-center gap-[9.043px]">
+      <ChannelMark via={via} size="line" />
+      <span className="min-w-0 flex-1 truncate font-mono text-[12.435px] leading-[15.826px] text-default">
+        {children}
+      </span>
+    </li>
   );
 }

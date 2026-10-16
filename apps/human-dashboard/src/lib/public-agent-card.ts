@@ -22,7 +22,7 @@ export type PublicAgentCard = {
   operatorName: string;
   /** When the agent was made, as an ISO timestamp: "issued Oct 3". */
   issuedAt: string;
-  /** Its email address, which the card's code to scan and "Message atlas" start an email to. */
+  /** Its email address, which the card's code to scan and the page's Email start an email to. */
   address: string;
   /** Its Telegram bot's `@username`. `null` without Telegram: the card then leaves that line out. */
   telegramBot: string | null;
