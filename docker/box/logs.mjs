@@ -2,7 +2,7 @@
 
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
-import { PC_LOG, processList } from './box.mjs';
+import { PC_LOG, processList } from './lib.mjs';
 
 const PINO_LEVELS = { 10: 'TRACE', 20: 'DEBUG', 30: 'INFO', 40: 'WARN', 50: 'ERROR', 60: 'FATAL' };
 // For lines that aren't pino: what Mongo, Redis, ClickHouse, Caddy and the rest print for a problem.

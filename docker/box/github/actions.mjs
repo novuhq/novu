@@ -10,11 +10,11 @@
 //   node docker/box/github/actions.mjs cleanup  delete pr-* boxes whose PR is closed or no longer labeled `box`
 //   node docker/box/github/actions.mjs rebake   bake base again from next and save it to its snapshot
 
-import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import { OIDC_AUDIENCE } from '../cloud/auth.mjs';
 import { boxWorker } from '../cloud/shared.mjs';
 import { cloudTarget, DOMAIN, hostBoxes } from '../cloud/target.mjs';
+import { githubToken } from '../node.mjs';
 
 const REPO = process.env.GITHUB_REPOSITORY ?? 'novuhq/novu';
 const LABEL = 'box';
@@ -34,14 +34,6 @@ function log(message) {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // --- tokens ---
-
-function githubToken() {
-  if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
-  const result = spawnSync('gh', ['auth', 'token'], { encoding: 'utf8' });
-  if (result.status !== 0) throw new Error('needs GITHUB_TOKEN or a signed-in `gh` (gh auth login)');
-
-  return result.stdout.trim();
-}
 
 // What the host and the boxes accept from this run (cloud/auth.mjs): the workflow's OIDC token, fetched again a
 // minute before it expires; run by hand, the GitHub token.

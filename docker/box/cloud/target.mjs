@@ -2,10 +2,10 @@
 // and is reached through its own thin Worker `novu-box-<box>` on workers.dev (thin.js). The same commands as for a
 // local box, over HTTPS, signed in with your GitHub token (`gh auth token`).
 
-import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import { join } from 'node:path';
+import { output, readEnvFile, run } from '../node.mjs';
 import { boxWorker, COMPATIBILITY_DATE, EXIT_MARK, HOST, ROUTER, SECRETS, THIN_MODULES } from './shared.mjs';
 
 const HERE = new URL('.', import.meta.url).pathname;
@@ -108,7 +108,7 @@ export function cloudTarget({ box, log, githubToken, viaHost = false }) {
     const tag = `novu-box:${output('docker', ['image', 'inspect', 'novu-box:cloud', '--format', '{{.Id}}']).slice(7, 19)}`;
     output('docker', ['tag', 'novu-box:cloud', tag]);
     log(`pushing ${tag} to the Cloudflare registry (skipped when it's there)`);
-    const pushed = output(WRANGLER[0], [...WRANGLER.slice(1), 'containers', 'push', tag]);
+    const pushed = output(WRANGLER[0], [...WRANGLER.slice(1), 'containers', 'push', tag], { combined: true });
     // "<tag>: digest: sha256:<hex> size: …" then "Pushed image: registry.cloudflare.com/<account>/novu-box:<tag>".
     const digest = pushed.match(/digest: (sha256:[0-9a-f]{64})/)?.[1];
     const repository = pushed.match(/Pushed image: (\S+):[^:\s]+\s*$/m)?.[1];
@@ -381,19 +381,6 @@ function withTempDir(name, fn) {
   }
 }
 
-function run(cmd, args) {
-  const result = spawnSync(cmd, args, { stdio: 'inherit' });
-  if (result.status !== 0) throw new Error(`${cmd} ${args.join(' ')} exited with ${result.status ?? result.signal}`);
-}
-
-function output(cmd, args) {
-  const result = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-  if (result.status !== 0)
-    throw new Error(`${cmd} ${args.join(' ')} failed: ${(result.stderr || result.stdout).slice(-600)}`);
-
-  return `${result.stdout}\n${result.stderr}`.trim();
-}
-
 // The named keys from one of ~/.config/novu-box/*.env, or null when the file isn't there.
 function readKeys(file, names) {
   if (!fs.existsSync(file)) return null;
@@ -401,14 +388,4 @@ function readKeys(file, names) {
   for (const name of names) if (!keys[name]) throw new Error(`${file} has no ${name}`);
 
   return Object.fromEntries(names.map((name) => [name, keys[name]]));
-}
-
-export function readEnvFile(file) {
-  const entries = fs
-    .readFileSync(file, 'utf8')
-    .split('\n')
-    .map((line) => line.match(/^([A-Z0-9_]+)=(.*)$/))
-    .filter(Boolean);
-
-  return Object.fromEntries(entries.map((match) => [match[1], match[2]]));
 }

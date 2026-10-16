@@ -1,12 +1,12 @@
 // `box apply`: put a PR, branch, SHA or `cli.mjs sync` bundle on a running box, and rebuild and restart only what it
-// changes. bake builds and deploys with the same functions.
+// changes. bake builds and deploys with the same functions, and start prepares the dashboard with them.
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import { relative } from 'node:path';
 import {
+  API_HEALTH,
   APPLIED,
-  APPLY_LOCK,
   APPLYING,
   BAKED,
   BULLMQ_PRO,
@@ -16,26 +16,27 @@ import {
   DEPLOYED_APPS,
   env,
   fetchRef,
-  GITHUB_TOKEN,
   gitWithToken,
+  holdLock,
   log,
   NX,
   output,
   PATH_PROCESSES,
   PROJECT_PROCESSES,
   pc,
-  prepareDashboard,
-  processList,
+  poll,
   REPO,
   REPO_URL,
   RUN,
   readJson,
   run,
   runAsync,
+  runnable,
   step,
+  stopRunning,
+  storesReady,
   waitForHttp,
-  writeBoxJson,
-} from './box.mjs';
+} from './lib.mjs';
 import { migrate } from './migrate.mjs';
 import { syncBridge } from './seed.mjs';
 
@@ -256,16 +257,42 @@ function refreshWorkspacePackages(target) {
   }
 }
 
+// Same job as apps/dashboard/docker-entrypoint.sh: expose VITE_* runtime env as window._env_.
+export function prepareDashboard() {
+  const target = `${RUN}/dashboard`;
+  fs.rmSync(target, { recursive: true, force: true });
+  fs.cpSync(`${REPO}/apps/dashboard/dist`, target, { recursive: true });
+
+  const viteEnv = Object.fromEntries(Object.entries(env).filter(([key]) => key.startsWith('VITE_')));
+  const script = `<script>window._env_ = ${JSON.stringify(viteEnv).replace(/</g, '\\u003c')};</script>`;
+  const indexFile = `${target}/index.html`;
+  const html = fs.readFileSync(indexFile, 'utf8').replace('<script type="module"', `${script}\n<script type="module"`);
+  fs.writeFileSync(indexFile, html);
+  writeBoxJson();
+}
+
+// The baked and applied commits, for the dashboard (served at /__box.json).
+function writeBoxJson() {
+  fs.writeFileSync(
+    `${RUN}/dashboard/__box.json`,
+    JSON.stringify({ baked: readJson(BAKED), applied: readJson(APPLIED) })
+  );
+}
+
 // Puts changes on a running box: a PR, branch or SHA from GitHub, or a bundle from `cli.mjs sync` (a checkout's
 // changes). Either is merged onto the baked commit, then the same steps run: diff against what the box runs, plan,
 // build, restart. `--full` plans everything, like a bake, for when the incremental plan is in doubt.
 //
 // An apply that fails after its checkout leaves APPLYING behind. The next apply then also plans for the files the
 // failed one changed, so nothing it half-built stays in place.
-export async function apply({ ref, bundle, full = false }) {
+//
+// `token`: the GitHub token for the fetch of the enterprise submodule and the CI lookup, and nothing else.
+export async function apply({ ref, bundle, full = false, token }) {
   if (!ref === !bundle) throw new Error('usage: box apply <pr-number|branch|sha> | --bundle <file> [--full]');
-  const releaseLock = lockApply();
+  const releaseLock = holdLock('apply');
   try {
+    // A box that is still starting (woken for this apply) runs its own `migrate`; the plan stops and restarts apps.
+    await poll(300, storesReady, "the stores aren't ready, or migrate didn't finish, after 300s");
     const base = (readJson(APPLIED) ?? readJson(BAKED)).sha;
     const interrupted = readJson(APPLYING)?.sha;
     const target = await step('fetch', () => {
@@ -284,12 +311,12 @@ export async function apply({ ref, bundle, full = false }) {
     if (interrupted) log(`the last apply (${interrupted.slice(0, 10)}) didn't finish; its files are planned too`);
     if (files.some((file) => file.startsWith('docker/box/')))
       log("WARN: docker/box changed; the box keeps running its image's copy until the image is rebuilt");
-    if (target.source === 'github') await logCiResult(target.head);
+    if (target.source === 'github') await logCiResult(target.head, token);
 
     fs.writeFileSync(APPLYING, JSON.stringify({ sha: target.sha, at: new Date().toISOString() }));
     await step('checkout', () => {
       run('git', ['checkout', '--force', '--detach', target.sha]);
-      if (files.includes('.source')) gitWithToken(['submodule', 'update', '--init', '--depth', '1', '.source']);
+      if (files.includes('.source')) gitWithToken(token, ['submodule', 'update', '--init', '--depth', '1', '.source']);
     });
     const plan = await step('plan', () => (full ? fullPlan() : planFor(files)));
     log(
@@ -306,42 +333,6 @@ export async function apply({ ref, bundle, full = false }) {
     log(`applied ${target.ref} at ${target.sha}`);
   } finally {
     releaseLock();
-  }
-}
-
-// One apply at a time: a PR push and a sync landing together would build over each other's checkout. A lock whose
-// process is gone (a killed apply) is taken over, and the APPLYING it left makes the next apply redo its files.
-function lockApply() {
-  fs.mkdirSync(RUN, { recursive: true });
-  const take = () => fs.writeFileSync(APPLY_LOCK, String(process.pid), { flag: 'wx' });
-  const running = (holder) => new Error(`another apply is running (pid ${holder}); wait for it to finish`);
-  try {
-    take();
-  } catch (error) {
-    if (error.code !== 'EEXIST') throw error;
-    const holder = Number(fs.readFileSync(APPLY_LOCK, 'utf8'));
-    if (isAlive(holder)) throw running(holder);
-    log(`taking over the lock of apply ${holder}, which is gone`);
-    fs.rmSync(APPLY_LOCK, { force: true });
-    // Another apply that found the same dead holder may have taken the lock in between.
-    try {
-      take();
-    } catch (retryError) {
-      if (retryError.code !== 'EEXIST') throw retryError;
-      throw running(fs.readFileSync(APPLY_LOCK, 'utf8'));
-    }
-  }
-
-  return () => fs.rmSync(APPLY_LOCK, { force: true });
-}
-
-export function isAlive(pid) {
-  try {
-    process.kill(pid, 0);
-
-    return true;
-  } catch {
-    return false;
   }
 }
 
@@ -374,13 +365,6 @@ function fullPlan() {
   };
 }
 
-// Thalamus only runs with the managed-agent key (see `box start`).
-export function runnable(processes) {
-  if (!env.NOVU_MANAGED_CLAUDE_API_KEY) processes.delete('thalamus');
-
-  return [...processes];
-}
-
 function affectedApps(files, { install }) {
   if (!files.length) return [];
   // Not --base/--head: nx diffs from their merge base, which for two box merge commits is an older bake.
@@ -396,16 +380,9 @@ function affectedApps(files, { install }) {
 
 async function applyPlan({ install, build: projects, enterprise, restart }) {
   // Building next to the running apps gets OOM-killed in 8 GB. The dashboard is static files, so it keeps serving.
-  // An apply killed mid-build leaves some of them stopped, and process-compose fails to stop a stopped process;
-  // `restart` below starts those too.
+  // An apply killed mid-build leaves some of them stopped; `restart` below starts those too.
   const stop = restart.filter((name) => name !== 'dashboard');
-  const running = new Set(
-    processList()
-      .filter((entry) => entry.is_running)
-      .map((entry) => entry.name)
-  );
-  const stopRunning = stop.filter((name) => running.has(name));
-  if (stopRunning.length) await step(`stop ${stopRunning.join(' ')}`, () => pc(['process', 'stop', ...stopRunning]));
+  await stopRunning(stop);
   if (install) await step('pnpm install', pnpmInstall);
   if (projects.length) await step(`build ${projects.join(' ')}`, () => build(projects, { enterprise }));
   if (restart.includes('bridge')) await step('build bridge', buildBridge);
@@ -420,18 +397,18 @@ async function applyPlan({ install, build: projects, enterprise, restart }) {
     await step(`restart ${stop.join(' ')}`, () => {
       for (const name of stop) pc(['process', 'restart', name]);
     });
-  await waitForHttp('http://127.0.0.1:3000/v1/health-check', 300);
+  await waitForHttp(API_HEALTH, 300);
   // A new framework can discover the same workflows differently (schemas, step options).
   if (restart.includes('bridge')) await step('sync bridge', syncBridge);
 }
 
 // The box runs code CI may have rejected (it skips type checks, for one), so it says what CI concluded.
 // `PR Checks Passed` is the required check that gates every other job in on-pr.yml.
-async function logCiResult(sha) {
+async function logCiResult(sha, token) {
   const repo = REPO_URL.replace(/^https:\/\/github\.com\//, '').replace(/\.git$/, '');
   const url = `https://api.github.com/repos/${repo}/commits/${sha}/check-runs?check_name=PR%20Checks%20Passed`;
   try {
-    const response = await fetch(url, { headers: { Authorization: `Bearer ${GITHUB_TOKEN}` } });
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!response.ok) throw new Error(`GitHub answered ${response.status}`);
     const [check] = (await response.json()).check_runs;
     if (!check) log(`CI: no "PR Checks Passed" result for ${sha.slice(0, 10)}`);

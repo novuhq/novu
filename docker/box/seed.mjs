@@ -5,7 +5,9 @@ import { createHmac } from 'node:crypto';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname } from 'node:path';
+import { clerk, findSeedUser, SEED, seedPassword, seedUserToken } from './clerk.mjs';
 import {
+  API_HEALTH,
   BRIDGE_SECRET,
   BRIDGE_URL,
   env,
@@ -17,9 +19,10 @@ import {
   REPO,
   SINK_URL,
   step,
+  stopRunning,
+  WORKER_HEALTH,
   waitForHttp,
-} from './box.mjs';
-import { clerk, findSeedUser, SEED, seedPassword, seedUserToken } from './clerk.mjs';
+} from './lib.mjs';
 import { redis } from './migrate.mjs';
 
 export async function api(path, { headers = {}, ...init } = {}) {
@@ -79,7 +82,7 @@ export async function seedClerk() {
 // or that ID as a string. The org's Stripe customer is found by its metadata, so it moves too, or the box reuses
 // the one an earlier bake moved. Redis may cache the old ID, and the API and worker have nothing else in it yet.
 async function moveSeedOrg(oldId) {
-  pc(['process', 'stop', 'api', 'worker']);
+  await stopRunning(['api', 'worker']);
   const { MongoClient, ObjectId } = createRequire(`${REPO}/libs/dal/package.json`)('mongoose').mongo;
   const from = new ObjectId(oldId);
   const to = new ObjectId(SEED.novuOrgId);
@@ -124,8 +127,8 @@ async function moveSeedOrg(oldId) {
   }
   for (const port of REDIS_PORTS) redis(port, ['flushall']);
   for (const name of ['api', 'worker']) pc(['process', 'start', name]);
-  await waitForHttp('http://127.0.0.1:3000/v1/health-check', 300);
-  await waitForHttp('http://127.0.0.1:3004/v1/health-check', 300);
+  await waitForHttp(API_HEALTH, 300);
+  await waitForHttp(WORKER_HEALTH, 300);
 }
 
 // Every environment of the seeded org sends email through Mailpit (UI on :8025).

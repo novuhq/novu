@@ -3,7 +3,7 @@
 
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
-import { DATA, env, log, MIGRATED, output, REDIS_PORTS, REDIS_TLS, REPO, RUN, run } from './box.mjs';
+import { DATA, env, log, MIGRATED, output, poll, REDIS_PORTS, REDIS_TLS, REPO, RUN, run } from './lib.mjs';
 
 // Atlas runs a replica set even for one node; transactions and change streams need it.
 async function initReplicaSet(MongoClient) {
@@ -15,10 +15,8 @@ async function initReplicaSet(MongoClient) {
       log('initiating replica set rs0');
       await admin.command({ replSetInitiate: { _id: 'rs0', members: [{ _id: 0, host: '127.0.0.1:27017' }] } });
     });
-    for (let attempt = 0; !(await admin.command({ hello: 1 })).isWritablePrimary; attempt++) {
-      if (attempt === 120) throw new Error('replica set has no writable primary after 60s');
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
+    const primary = async () => (await admin.command({ hello: 1 })).isWritablePrimary;
+    await poll(60, primary, 'replica set has no writable primary after 60s', 500);
   } finally {
     await client.close();
   }
@@ -40,10 +38,8 @@ async function createRedisCluster() {
       '--cluster-yes',
     ]);
   }
-  for (let attempt = 0; !/cluster_state:ok/.test(redis(REDIS_PORTS[0], ['cluster', 'info'])); attempt++) {
-    if (attempt === 60) throw new Error('Redis Cluster not ok after 30s');
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
+  const ok = () => /cluster_state:ok/.test(redis(REDIS_PORTS[0], ['cluster', 'info']));
+  await poll(30, ok, 'Redis Cluster not ok after 30s', 500);
 }
 
 // Production runs with MONGO_AUTO_CREATE_INDEXES=false, so the box applies the indexes declared in

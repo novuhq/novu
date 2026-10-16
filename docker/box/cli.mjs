@@ -31,6 +31,7 @@ import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { cloudTarget } from './cloud/target.mjs';
 import { mail } from './mail.mjs';
+import { exitCode, githubToken, output } from './node.mjs';
 
 const HERE = new URL('.', import.meta.url).pathname;
 const IMAGE = 'novu-box:dev';
@@ -98,21 +99,6 @@ function log(message) {
   console.error(`[cli] ${message}`);
 }
 
-function run(cmd, cmdArgs, opts = {}) {
-  const result = spawnSync(cmd, cmdArgs, { stdio: 'inherit', ...opts });
-  if (result.error) throw result.error;
-
-  return result.status ?? 1;
-}
-
-function output(cmd, cmdArgs, opts = {}) {
-  const result = spawnSync(cmd, cmdArgs, { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, ...opts });
-  if (result.error) throw result.error;
-  if (result.status !== 0) throw new Error(`${cmd} ${cmdArgs.join(' ')} failed: ${result.stderr.trim()}`);
-
-  return result.stdout.trim();
-}
-
 function succeeds(cmd, cmdArgs, opts = {}) {
   return spawnSync(cmd, cmdArgs, { stdio: 'ignore', ...opts }).status === 0;
 }
@@ -130,15 +116,7 @@ function inBox(boxArgs, { withToken = false, capture = false } = {}) {
     ...boxArgs,
   ];
 
-  return capture ? output('docker', dockerArgs, { env }) : run('docker', dockerArgs, { env });
-}
-
-function githubToken() {
-  if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
-  const result = spawnSync('gh', ['auth', 'token'], { encoding: 'utf8' });
-  if (result.status !== 0) throw new Error('needs GITHUB_TOKEN or a signed-in `gh` (gh auth login)');
-
-  return result.stdout.trim();
+  return capture ? output('docker', dockerArgs, { env }) : exitCode('docker', dockerArgs, { env });
 }
 
 function containerStatus() {
@@ -159,7 +137,7 @@ async function up() {
   if (status === 'running') log(`${BOX} is already running`);
   else if (status) {
     log(`starting ${BOX}`);
-    run('docker', ['start', BOX]);
+    exitCode('docker', ['start', BOX]);
   } else create();
   await waitUntilHealthy();
   console.log(`dashboard: http://localhost:${PORTS.dashboard}`);
@@ -174,13 +152,13 @@ function create() {
     throw new Error(`${ENV_FILE} is missing; copy secrets.example.env there and fill it in`);
   if (!succeeds('docker', ['image', 'inspect', IMAGE])) {
     log(`building ${IMAGE}`);
-    if (run('docker', ['build', '-t', IMAGE, HERE]) !== 0) throw new Error('the image build failed');
+    if (exitCode('docker', ['build', '-t', IMAGE, HERE]) !== 0) throw new Error('the image build failed');
   }
   const volume = `${BOX}-data`;
   const volumeArgs = ['-v', `${volume}:/data`];
   if (!succeeds('docker', ['run', '--rm', ...volumeArgs, '--entrypoint', 'test', IMAGE, '-f', '/data/.baked.json'])) {
     log(`baking next into ${volume} (about 12 minutes)`);
-    const baked = run(
+    const baked = exitCode(
       'docker',
       [
         'run',
@@ -246,7 +224,7 @@ function doctorReport() {
 function down() {
   log(`stopping ${BOX}; \`cli.mjs up\` starts it again with the same data`);
 
-  return run('docker', ['stop', '-t', String(STOP_SECONDS), BOX]);
+  return exitCode('docker', ['stop', '-t', String(STOP_SECONDS), BOX]);
 }
 
 // --- sync ---
@@ -355,7 +333,7 @@ const docker = {
   ready: async () => requireRunning(),
   box: async (boxArgs, { github = false, capture = false } = {}) => inBox(boxArgs, { withToken: github, capture }),
   exec: async (cmd) =>
-    run('docker', ['exec', ...(process.stdin.isTTY ? ['-it'] : ['-i']), '-w', '/data/novu', BOX, ...cmd]),
+    exitCode('docker', ['exec', ...(process.stdin.isTTY ? ['-it'] : ['-i']), '-w', '/data/novu', BOX, ...cmd]),
   put: async (file, path) => output('docker', ['cp', file, `${BOX}:${path}`]),
 };
 const target = options.cloud ? cloudTarget({ box: BOX, log, githubToken }) : docker;
