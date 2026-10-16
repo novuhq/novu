@@ -2,7 +2,7 @@
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Copy, Download, FileText, LoaderCircle, X } from 'lucide-react';
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 import { SHARE_IMAGE_PATH } from '@/components/dashboard/nav';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
@@ -46,7 +46,8 @@ export function ShareDialog({ open, onOpenChange, besideSidebar = false, ...shee
       <DialogPanel
         overlayClassName="bg-black/55"
         className={cn(
-          'max-w-115 rounded-[14px] border border-border-strong bg-background shadow-[0_24px_60px_0_rgb(0_0_0/0.55)]',
+          // On a short screen, such as a phone on its side, it scrolls rather than lose its buttons off the edge.
+          'max-h-[calc(100dvh-2rem)] max-w-115 overflow-y-auto rounded-[14px] border border-border-strong bg-background shadow-[0_24px_60px_0_rgb(0_0_0/0.55)]',
           besideSidebar && 'md:left-[calc(50%+7.75rem)]'
         )}
       >
@@ -181,43 +182,60 @@ type ShareImageState = { status: 'loading' } | { status: 'ready'; src: string } 
 
 /**
  * Loads the share image once, as a file. The preview shows it from memory and Download saves it from
- * there; when it couldn't be loaded, Download asks for it once more.
+ * there; when it couldn't be loaded, Download asks for it once more, and the preview shows what that got.
  */
 function useShareImage(url: string) {
   const [state, setState] = useState<ShareImageState>({ status: 'loading' });
   const request = useRef<Promise<Blob> | null>(null);
+  // The address the preview shows the image at, given back when it is replaced or the sheet goes.
+  const shownAt = useRef<string | null>(null);
+  const live = useRef(false);
+
+  const show = useCallback((file: Blob) => {
+    if (!live.current) {
+      return;
+    }
+
+    if (shownAt.current) {
+      URL.revokeObjectURL(shownAt.current);
+    }
+    shownAt.current = URL.createObjectURL(file);
+    setState({ status: 'ready', src: shownAt.current });
+  }, []);
 
   useEffect(() => {
+    live.current = true;
     const controller = new AbortController();
-    let src: string | null = null;
     const blob = fetchImage(url, controller.signal);
     request.current = blob;
 
-    blob.then(
-      (file) => {
-        src = URL.createObjectURL(file);
-        setState({ status: 'ready', src });
-      },
-      (error) => {
-        if (!controller.signal.aborted) {
-          console.error('Failed to load the share image', error);
-          setState({ status: 'failed' });
-        }
+    blob.then(show, (error) => {
+      if (!controller.signal.aborted) {
+        console.error('Failed to load the share image', error);
+        setState({ status: 'failed' });
       }
-    );
+    });
 
     return () => {
+      live.current = false;
       controller.abort();
-      if (src) {
-        URL.revokeObjectURL(src);
+      if (shownAt.current) {
+        URL.revokeObjectURL(shownAt.current);
+        shownAt.current = null;
       }
     };
-  }, [url]);
+  }, [url, show]);
 
   /** The image the preview has, or is waiting for. A request that failed is made again. */
   function read(): Promise<Blob> {
     const pending = request.current ?? fetchImage(url);
-    const retried = pending.catch(() => fetchImage(url));
+    const retried = pending.catch(() => {
+      const again = fetchImage(url);
+      // A retry that gets the image shows it in the preview too.
+      again.then(show, () => {});
+
+      return again;
+    });
     request.current = retried;
 
     return retried;

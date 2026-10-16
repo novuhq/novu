@@ -3,13 +3,17 @@ import { notFound } from 'next/navigation';
 
 import { PublicCard } from '@/components/public-card/public-card';
 import { Stage } from '@/components/site/stage';
+import { Toaster } from '@/components/ui/toast';
 import { getPublicAgentCard } from '@/lib/public-agent-card';
+import { readSiteOrigin } from '@/lib/site-origin';
 
 export async function generateMetadata(props: PageProps<'/p/[handle]'>): Promise<Metadata> {
   const { handle } = await props.params;
   const result = await getPublicAgentCard(handle);
+  // The share image's address is made from this, so apps the link is shared in can load it.
+  const metadataBase = new URL(await readSiteOrigin());
   if (!result.available) {
-    return { title: 'Card not available', robots: { index: false, follow: false } };
+    return { metadataBase, title: 'Card not available', robots: { index: false, follow: false } };
   }
 
   const { card } = result;
@@ -17,6 +21,7 @@ export async function generateMetadata(props: PageProps<'/p/[handle]'>): Promise
   const description = `One link with every way to reach ${card.handle}.`;
 
   return {
+    metadataBase,
     title,
     description,
     robots: { index: false, follow: false },
@@ -38,8 +43,12 @@ export default async function Page(props: PageProps<'/p/[handle]'>) {
   }
 
   return (
-    <Stage glow="center">
-      <PublicCard card={result.card} />
-    </Stage>
+    <>
+      <Stage glow="center">
+        <PublicCard card={result.card} />
+      </Stage>
+      {/* Where a copy that the browser refused says so. */}
+      <Toaster />
+    </>
   );
 }

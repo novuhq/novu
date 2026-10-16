@@ -60,7 +60,7 @@ then run `human invite <id>` against the local API and open the printed link.
 Human accounts also need:
 
 - a Clerk application for Human (development instance is fine), with its keys in `.env.local`;
-- the same `AGENT_INBOX_DASHBOARD_API_SECRET` here and in the API's `.env`;
+- `AGENT_INBOX_DASHBOARD_API_SECRET` here, with the same value as `HUMAN_DASHBOARD_API_SECRET` in the API's `.env`;
 - an API running with the Clerk-backed enterprise auth and keyless enabled;
 - if Novu's Clerk instance has an allowlist (the development one does), `*@users.agentinbox.md` on it. The
   hidden Novu users get made-up addresses there, and otherwise Clerk refuses them with `not_allowed_access`.
@@ -79,7 +79,7 @@ the code it prints on `/cli/login` here. The API only offers the browser login w
 | `NEXT_PUBLIC_NOVU_API_URL_EU`       | `https://eu.api.novu.co` | API for links issued with `?region=eu`, and EU accounts.   |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | —                        | Human Clerk app. Only the account pages use it.            |
 | `CLERK_SECRET_KEY`                  | —                        | Human Clerk app, server only.                              |
-| `AGENT_INBOX_DASHBOARD_API_SECRET`          | —                        | Shared with the Novu API for `/v1/human/accounts`. Server only. |
+| `AGENT_INBOX_DASHBOARD_API_SECRET`  | —                        | The API's `HUMAN_DASHBOARD_API_SECRET`, for `/v1/human/accounts`. Server only. |
 
 `NEXT_PUBLIC_` values are inlined at build time. The API URL never comes from a link itself.
 
