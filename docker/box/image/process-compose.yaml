@@ -74,7 +74,7 @@ processes:
       restart: on_failure
 
   s3:
-    # Same keys as the API and Worker; box.mjs generates them on every start.
+    # Same keys as the API and Worker; `box start` generates them on every start.
     command: ROOT_ACCESS_KEY=$AWS_ACCESS_KEY_ID ROOT_SECRET_KEY=$AWS_SECRET_ACCESS_KEY exec versitygw --port :4566 posix /data/s3
     readiness_probe:
       exec:
@@ -110,9 +110,9 @@ processes:
     availability:
       restart: on_failure
 
-  # SMS, push and chat catcher (sink.mjs): forwards what Novu's HTTP providers send to Mailpit.
+  # SMS, push and chat catcher (src/box/sink.ts): forwards what Novu's HTTP providers send to Mailpit.
   sink:
-    command: node /opt/box/sink.mjs
+    command: node /opt/box/src/box/sink.ts
     depends_on:
       mail:
         condition: process_healthy
@@ -129,7 +129,7 @@ processes:
   # Data store setup: replica set, Redis Cluster, Mongo indexes, ClickHouse migrations, S3 bucket.
   # Waits for SQS too, so the API and Worker never start before their queues exist.
   migrate:
-    command: node /opt/box/box.mjs migrate
+    command: node /opt/box/src/box/main.ts migrate
     depends_on:
       mongo:
         condition: process_healthy
@@ -240,7 +240,7 @@ processes:
       restart: on_failure
 
   # Self-hosted Novu app: the playground's code-first workflows and agents on the checkout's @novu/framework,
-  # synced to the Development environment by box.mjs, which builds it. The signature check stays on.
+  # synced to the Development environment by the box, which builds it. The signature check stays on.
   # With the Anthropic key, its agents run on Claude.
   bridge:
     command: >-

@@ -4,7 +4,7 @@
 # builds and database files live under /data (a Cloudflare snapshot, or a named
 # volume locally), so this image changes rarely and every snapshot can share it.
 #
-#   docker build -t novu-box docker/box
+#   docker build -t novu-box -f docker/box/image/Dockerfile docker/box
 #   docker run --rm -v novu-box-data:/data -e GITHUB_TOKEN [-e BULL_MQ_PRO_NPM_TOKEN] novu-box bake
 #   docker run --rm -v novu-box-data:/data -p 14200:4200 -p 13000:3000 -p 18887:8887 -p 4566:4566 -p 18025:8025 novu-box
 
@@ -70,12 +70,19 @@ ENV COREPACK_HOME=/data/corepack \
     NX_NO_CLOUD=true \
     WRANGLER_SEND_METRICS=false \
     # `pnpm deploy --prod` marks the workspace prod-only, so pnpm would reinstall it without devDependencies
-    # before every script. box.mjs runs `pnpm install` itself when the lockfile or a package.json changes.
+    # before every script. The box runs `pnpm install` itself when the lockfile or a package.json changes.
     pnpm_config_verify_deps_before_run=false \
     BOX_HOME=/opt/box
 
-COPY --link . /opt/box/
+# The box's own commands are TypeScript that node runs as is; only their runtime dependencies are installed.
+# --omit=peer leaves out redis, a peer of @effect/platform-node for a module the box doesn't use.
+COPY --link package.json package-lock.json /opt/box/
+RUN cd /opt/box && npm ci --omit=dev --omit=peer --no-fund --no-audit --no-update-notifier
+COPY --link image/process-compose.yaml /opt/box/
+COPY --link image/config /opt/box/config
+COPY --link src/shared /opt/box/src/shared
+COPY --link src/box /opt/box/src/box
 
 EXPOSE 3000 4200 4566 8025 8887 18080
-ENTRYPOINT ["tini", "--", "node", "/opt/box/box.mjs"]
+ENTRYPOINT ["tini", "--", "node", "/opt/box/src/box/main.ts"]
 CMD ["start"]

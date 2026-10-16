@@ -1,8 +1,0 @@
-# Local runtime secrets; they are passed with --env-file and must never be in the image.
-.env
-
-# The Cloudflare Worker and its CLI code run outside the box.
-cloud/
-
-# Docs are not needed in the box, and a doc edit would otherwise make a new image to push.
-*.md

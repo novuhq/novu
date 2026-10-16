@@ -1,0 +1,9 @@
+# Only what runs inside the box. Secrets (.env), the Cloudflare and laptop code, CI and docs stay out, so none of
+# them is in the image and an edit to them doesn't make a new image to push.
+*
+!package.json
+!package-lock.json
+!image/process-compose.yaml
+!image/config
+!src/shared
+!src/box
