@@ -3,8 +3,9 @@ import type { HostVia } from './onboarding';
 
 /*
  * The hosts of the operator's agent, as `GET /v1/human/agent/hosts` describes them, and the one-time codes
- * a new host connects with (`POST /v1/human/agent/connect-codes`). The server reads them
- * (`human-hosts-api.ts`); what's here is what the pages work out from them, in the browser as well.
+ * a new host connects with (`POST /v1/human/agent/connect-codes`), with what became of each
+ * (`POST /v1/human/agent/connect-codes/status`). The server reads them (`human-hosts-api.ts`); what's here
+ * is what the pages work out from them, in the browser as well.
  */
 
 /** One way hosts came in: the `agentinbox` CLI, or the hosted MCP server the chat apps connect through. */
@@ -43,12 +44,35 @@ export type ConnectCode = {
 export type ConnectCodeResult = { ok: true; code: ConnectCode; expiresInMs: number } | { ok: false; error: string };
 
 /**
+ * What became of a code: `unused` while it can still connect a host, `used` once a host connected with it,
+ * `expired` once it ran out, or once the account's key changed after it was made.
+ */
+export type ConnectCodeStatus = 'unused' | 'used' | 'expired';
+
+/** A code as `POST /v1/human/agent/connect-codes/status` describes it. */
+export type ConnectCodeCheck = {
+  code: string;
+  status: ConnectCodeStatus;
+  expiresAt: string;
+  /** When a host used it. Only on a `used` code. */
+  usedAt?: string;
+};
+
+/**
+ * What a drawer learns about a code it showed: its status, `unknown` when the API doesn't know it for this
+ * agent (it lets a code go an hour after making it), or `null` when it couldn't be asked just now.
+ */
+export type CodeStatusResult = ConnectCodeStatus | 'unknown' | null;
+
+/**
  * What the connect drawers ask the server while they're open: the page hands them its server actions, and
  * a page with other ones (the onboarding) can hand them its own.
  */
 export type ConnectApi = {
   /** A one-time code for the agent `handle` names. */
   createCode: (handle: string) => Promise<ConnectCodeResult>;
+  /** What became of a code the drawer showed for the agent `handle` names (`useCodeWatch`). */
+  readCodeStatus: (handle: string, code: string) => Promise<CodeStatusResult>;
   /** The host status, or `null` when it can't be read just now. */
   readHosts: () => Promise<HostStatus | null>;
   /** Whether a chat app has signed in to the account through the MCP server. */
@@ -110,7 +134,8 @@ export function formatCheckedAgo(iso: string, now: number): string {
  * checking (`HOST_STALE_AFTER_MS`) and checked again.
  *
  * Another host on a way that is already in use doesn't show here: the API keeps when the first one came
- * in, and a check of the new one looks like a check of the old. `wasCodeUsed` tells that one apart.
+ * in, and a check of the new one looks like a check of the old. The code it used tells that one apart
+ * (`useCodeWatch`).
  */
 export function findNewHost(before: HostStatus, after: HostStatus): HostVia | null {
   for (const host of after.hosts) {
@@ -130,24 +155,4 @@ export function findNewHost(before: HostStatus, after: HostStatus): HostVia | nu
   }
 
   return null;
-}
-
-/**
- * The API hands the same code back while it's unused and has at least this long left, and a new one
- * after it was used or when it's about to run out (`CONNECT_CODE_REUSE_MIN_SECONDS`).
- */
-export const CONNECT_CODE_REUSE_MIN_MS = 2 * 60 * 1000;
-
-/** Leeway for the time a request takes and for the API's clock against the dashboard's. */
-const CODE_CLOCK_SLACK_MS = 20_000;
-
-/**
- * Whether a host connected with the code on screen, judged by the code the API hands out now: a different
- * one, while the one on screen still had time left, means it was used. A different one close to the end
- * means nothing: the API swaps a code that is about to run out.
- *
- * `deadline` is when the code on screen runs out by the browser's clock (see `useConnectCode`).
- */
-export function wasCodeUsed(shown: { code: string; deadline: number }, current: string, now: number): boolean {
-  return current !== shown.code && shown.deadline - now > CONNECT_CODE_REUSE_MIN_MS + CODE_CLOCK_SLACK_MS;
 }

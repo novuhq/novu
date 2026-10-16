@@ -11,12 +11,18 @@ import type { ToolId } from '@/lib/ai-tools';
 import { type ConnectApi, formatCheckedAgo, hostLiveness } from '@/lib/host-status';
 import { cn } from '@/lib/utils';
 
-import { checkToolConnectedAction, createConnectCodeAction, readHostStatusAction } from './actions';
+import {
+  checkToolConnectedAction,
+  createConnectCodeAction,
+  readConnectCodeStatusAction,
+  readHostStatusAction,
+} from './actions';
 import { HostCheckPoll } from './host-check-poll';
 
 /** What the connect drawers ask this page's server. */
 const CONNECT_API: ConnectApi = {
   createCode: createConnectCodeAction,
+  readCodeStatus: readConnectCodeStatusAction,
   readHosts: readHostStatusAction,
   isToolSignedIn: checkToolConnectedAction,
 };

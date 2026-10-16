@@ -22,8 +22,9 @@ const CODE_ERROR = 'We couldn’t get a code just now.';
 
 /**
  * The one-time code a connect drawer shows. A fresh one is asked for every time `active` turns on, and
- * swapped for a new one shortly before it runs out for as long as it stays on. `take` puts a code the
- * drawer got some other way on screen, and `retry` starts over after an error.
+ * swapped for a new one shortly before it runs out for as long as it stays on. `renew` swaps it at once,
+ * for a code the API says ran out or doesn't know (`useCodeWatch`): the one on screen stays until the new
+ * one is there, which then fades in where it was. `retry` starts over after an error.
  */
 export function useConnectCode(fetchCode: () => Promise<ConnectCodeResult>, active: boolean) {
   const [state, setState] = useState<ConnectCodeState>({ status: 'loading' });
@@ -73,14 +74,10 @@ export function useConnectCode(fetchCode: () => Promise<ConnectCodeResult>, acti
     return () => window.clearTimeout(timer);
   }, [active, deadline, load]);
 
-  const take = useCallback((result: Extract<ConnectCodeResult, { ok: true }>) => {
-    request.current++;
-    setState({ status: 'ready', code: hold(result) });
-  }, []);
-
+  const renew = useCallback(() => void load('refresh'), [load]);
   const retry = useCallback(() => void load('fresh'), [load]);
 
-  return { state, take, retry };
+  return { state, renew, retry };
 }
 
 function hold({ code, expiresInMs }: Extract<ConnectCodeResult, { ok: true }>): HeldCode {
