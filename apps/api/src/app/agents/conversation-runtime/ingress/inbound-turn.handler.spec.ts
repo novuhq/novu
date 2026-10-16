@@ -287,6 +287,7 @@ describe('AgentInboundHandler', () => {
       assertAllowed: sinon.stub().resolves(),
       resolveOperatorClaimCard: sinon.stub().resolves(undefined),
     };
+    const contactHandles = { refresh: sinon.stub().resolves() };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -311,7 +312,8 @@ describe('AgentInboundHandler', () => {
       workflowOriginService as any,
       humanConversationInbound,
       agentConfigResolver as any,
-      keylessEmailGate as any
+      keylessEmailGate as any,
+      contactHandles as any
     );
 
     return {
@@ -338,6 +340,7 @@ describe('AgentInboundHandler', () => {
       planLimitGate,
       connectClaimTokenService,
       keylessEmailGate,
+      contactHandles,
     };
   }
 
@@ -2435,6 +2438,35 @@ describe('AgentInboundHandler', () => {
       expect(thread.post.calledOnce).to.equal(true);
       expect(thread.post.firstCall.args[0]).to.match(/already connected/i);
       expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('keeps the handle of the person who linked, for the chat they linked', async () => {
+      const linkTelegramExecute = sinon.stub().resolves({
+        created: true,
+        subscriberId: 'ext-sub-1',
+        linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
+      });
+      const { handler, contactHandles } = makeHandler({
+        linkTelegramExecute,
+        startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: matchingStartPayload }),
+      });
+      const message = makeStartMessage('/start validcode');
+
+      await handler.handle(
+        'agent1',
+        telegramConfig as any,
+        makeTelegramThread() as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(contactHandles.refresh.calledOnce).to.equal(true);
+      expect(contactHandles.refresh.firstCall.args[0]).to.deep.equal({
+        config: telegramConfig,
+        subscriberId: 'ext-sub-1',
+        platformUserId: '42',
+        message,
+      });
     });
 
     it('does not mark the integration connected on /start alone for the dashboard test identity', async () => {

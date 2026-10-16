@@ -31,6 +31,7 @@ import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-tel
 import { agentTelegramLinkScope } from '../../../telegram-linking/telegram-link-scope';
 import { TelegramStartCodeService } from '../../../telegram-linking/telegram-start-code.service';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { ContactHandleService } from '../../human-relay/contact-handle.service';
 import { HumanConversationInboundInterceptor } from '../../human-relay/human-conversation-inbound.interceptor';
 import {
   trackAgentInboundAction,
@@ -326,7 +327,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly workflowOriginService: WorkflowOriginService,
     private readonly humanConversationInbound: HumanConversationInboundInterceptor,
     private readonly agentConfigResolver: AgentConfigResolver,
-    private readonly keylessEmailGate: KeylessEmailGateService
+    private readonly keylessEmailGate: KeylessEmailGateService,
+    private readonly contactHandles: ContactHandleService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -1341,6 +1343,14 @@ export class AgentInboundHandler implements OnModuleInit {
         // the next genuine inbound message (handled in `handle()`), matching Slack's
         // "install ≠ connected" split and the dashboard "Send a test message" step.
 
+        // An Agent Inbox contact's card shows their Telegram handle from the moment they connect.
+        await this.contactHandles.refresh({
+          config,
+          subscriberId: linkResult.subscriberId,
+          platformUserId: chatId,
+          message,
+        });
+
         const reply = linkResult.created ? SUBSCRIBER_LINK_SUCCESS_REPLY : SUBSCRIBER_LINK_DUPLICATE_REPLY;
         await this.safePostInboundReply(thread, reply, agentId, message);
       } catch (err) {
@@ -2303,6 +2313,7 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId,
       platformUserId: userId,
       action,
+      actionRaw: rawEvent,
       workflowOrigin: workflowOrigin ?? undefined,
     };
 

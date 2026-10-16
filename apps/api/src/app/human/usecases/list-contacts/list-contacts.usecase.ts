@@ -18,6 +18,7 @@ import {
   HumanContactEmailDto,
   ListContactsResponseDto,
 } from '../../dtos/list-contacts.dto';
+import { describeContactHandle } from '../../services/contact-handle';
 import { HumanDeliveryService, type ReachableHumanTarget } from '../../services/human-delivery.service';
 import { HumanInviteTokenService, type PendingHumanInvite } from '../../services/human-invite-token.service';
 import { HumanOperatorService } from '../../services/human-operator.service';
@@ -194,6 +195,7 @@ function toChannels(targets: ReachableHumanTarget[], defaultVia?: HumanChannelVi
       via: target.via,
       ...(target.connectedAt ? { connectedAt: target.connectedAt } : {}),
       ...(target.via === HumanChannelViaEnum.EMAIL ? { address: target.platformUserId } : {}),
+      ...describeContactHandle(target.via, target.handle),
       isDefault: target.via === defaultVia,
     });
   }
