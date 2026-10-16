@@ -525,7 +525,7 @@ export function formatKeylessCapMessage(details: KeylessCapDetails): string {
   lines.push(
     details.claimUrl
       ? `Sign up to keep your channels and continue: ${details.claimUrl}`
-      : 'Sign up for a free Novu account to keep your channels and continue.',
+      : 'Sign up for a free Agent Inbox account to keep your channels and continue.',
     '(We also sent this link to you on your linked channel.)',
     `After signing up, run: ${CLI_COMMAND} setup --secret-key <key>   or set INBOX_SECRET_KEY`
   );
@@ -548,10 +548,10 @@ function formatKeylessEmailMessage(details: KeylessCapDetails): string {
   }
 
   const lines = [
-    'Outbound email needs a Novu account.',
+    'Outbound email needs an Agent Inbox account.',
     details.claimUrl
       ? `Sign up to claim this setup: ${details.claimUrl}`
-      : 'Sign up for a free Novu account to claim this setup.',
+      : 'Sign up for a free Agent Inbox account to claim this setup.',
     `After signing up, run: ${CLI_COMMAND} setup --secret-key <key>   or set INBOX_SECRET_KEY`,
   ];
 

@@ -243,6 +243,19 @@ describe('keyless cap errors', () => {
     expect(text).not.toContain('--secret-key');
   });
 
+  it('names Agent Inbox when a self-hosted cap has no claim link', () => {
+    const text = formatKeylessCapMessage({ browserLogin: false, reason: 'cap' });
+    expect(text).toContain('Sign up for a free Agent Inbox account');
+    expect(text).not.toContain('Novu');
+  });
+
+  it('names Agent Inbox when outbound email has no claim link', () => {
+    const text = formatKeylessCapMessage({ browserLogin: false, reason: 'email' });
+    expect(text).toContain('Outbound email needs an Agent Inbox account.');
+    expect(text).toContain('Sign up for a free Agent Inbox account to claim this setup.');
+    expect(text).not.toContain('Novu');
+  });
+
   it('keeps the secret-key route where the API has no browser login (self-hosted)', () => {
     const text = formatKeylessCapMessage({
       claimUrl: 'https://dash/connect/claim?token=t',
