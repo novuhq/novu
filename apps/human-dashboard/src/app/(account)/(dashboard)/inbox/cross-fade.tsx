@@ -7,7 +7,9 @@ import { useSwap } from '@/hooks/use-swap';
 /** How long what was there takes to fade out before what replaces it fades in. */
 const SWAP_MS = 150;
 
-const FADE_OUT = 'opacity-0 transition-opacity duration-150 ease-in motion-reduce:transition-none';
+// Without motion what is there stays until it is swapped, rather than blinking out for the swap's length.
+const FADE_OUT =
+  'opacity-0 transition-opacity duration-150 ease-in motion-reduce:opacity-100 motion-reduce:transition-none';
 const FADE_IN = 'animate-overlay-in motion-reduce:animate-none';
 
 type CrossFadeProps<Value> = {

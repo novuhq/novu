@@ -108,7 +108,8 @@ export function ThreadDrawer({
                 key={load.view.thread.id}
                 className="flex min-h-0 flex-1 animate-overlay-in flex-col motion-reduce:animate-none"
               >
-                <div className="shrink-0 px-5 pt-4 pb-2">
+                {/* On a short screen Details takes at most 40% of it and scrolls, so the messages keep room. */}
+                <div className="max-h-[40dvh] shrink-0 overflow-y-auto px-5 pt-4 pb-2">
                   <Details details={load.view.details} thread={load.view.thread} />
                 </div>
                 <ThreadScroll view={load.view} older={load.earlier} agentName={agentName} onLoadOlder={onLoadOlder} />

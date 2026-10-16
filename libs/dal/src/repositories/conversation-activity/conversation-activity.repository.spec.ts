@@ -56,14 +56,18 @@ describe('ConversationActivityRepository', () => {
       conversationId: '66f000000000000000000001',
     };
 
-    /** Five messages a second apart, read through stubs that answer the way the database would. */
-    function setup() {
-      const rows = [1, 2, 3, 4, 5].map((n) => ({
-        _id: `66f00000000000000000010${n}`,
-        identifier: `m${n}`,
+    /**
+     * Messages at these seconds, oldest first, read through stubs that answer the way the database would:
+     * sorted by time and then id, and past a cursor by the same two. `dropped` are card copies, which the
+     * page leaves out. By default five messages a second apart.
+     */
+    function setup({ seconds = [1, 2, 3, 4, 5], dropped = [] }: { seconds?: number[]; dropped?: string[] } = {}) {
+      const rows = seconds.map((second, index) => ({
+        _id: `66f00000000000000000010${index + 1}`,
+        identifier: `m${index + 1}`,
         type: 'message',
         senderType: 'subscriber',
-        createdAt: new Date(Date.UTC(2026, 9, 15, 12, 0, n)).toISOString(),
+        createdAt: new Date(Date.UTC(2026, 9, 15, 12, 0, second)).toISOString(),
       }));
       const repository = new ConversationActivityRepository() as any;
       const finds: Array<{ query: any; options: any }> = [];
@@ -72,21 +76,26 @@ describe('ConversationActivityRepository', () => {
         rows.find((row) => row.identifier === query.identifier) ?? null;
       repository.find = async (query: any, _select: unknown, options: any) => {
         finds.push({ query, options });
-        const bound = query.$and?.[0].$or[0].createdAt;
+        const [byTime, byId] = query.$and?.[0].$or ?? [];
         const ascending = options.sort.createdAt === 1;
         const matching = rows.filter((row) => {
+          if (!byTime) return true;
+
+          const later = Boolean(byTime.createdAt.$gt);
           const at = new Date(row.createdAt).getTime();
+          const bound = (later ? byTime.createdAt.$gt : byTime.createdAt.$lt).getTime();
+          const id = String(later ? byId._id.$gt : byId._id.$lt);
 
-          if (bound?.$gt) return at > bound.$gt.getTime();
-          if (bound?.$lt) return at < bound.$lt.getTime();
+          if (at === bound) return later ? row._id > id : row._id < id;
 
-          return true;
+          return later ? at > bound : at < bound;
         });
         const sorted = ascending ? matching : [...matching].reverse();
 
         return sorted.slice(0, options.limit);
       };
-      repository.withoutInteractionCardCopies = async (_scope: unknown, batch: unknown[]) => batch;
+      repository.withoutInteractionCardCopies = async (_scope: unknown, batch: Array<{ identifier: string }>) =>
+        batch.filter((row) => !dropped.includes(row.identifier));
       repository.foldViewPage = async (_params: unknown, batch: unknown[]) => batch;
 
       return { repository, finds };
@@ -122,6 +131,28 @@ describe('ConversationActivityRepository', () => {
       expect(page.data.map((row: { identifier: string }) => row.identifier)).to.deep.equal(['m3', 'm2']);
       expect(page.hasMore).to.equal(true);
       expect(finds[0].options.sort).to.deep.equal({ createdAt: -1, _id: -1 });
+    });
+
+    it('loses no message that came at the same second as the cursor', async () => {
+      const { repository } = setup({ seconds: [1, 2, 2, 2, 3] });
+
+      const page = await repository.findInboxMessages({ ...scope, limit: 2, after: 'm2' });
+      const rest = await repository.findInboxMessages({ ...scope, limit: 5, after: 'm3' });
+
+      expect(page.data.map((row: { identifier: string }) => row.identifier)).to.deep.equal(['m4', 'm3']);
+      expect(page.hasMore).to.equal(true);
+      expect(rest.data.map((row: { identifier: string }) => row.identifier)).to.deep.equal(['m5', 'm4']);
+      expect(rest.hasMore).to.equal(false);
+    });
+
+    it('reads on past a batch of card copies to fill the page after `after`', async () => {
+      const { repository, finds } = setup({ seconds: [1, 2, 3, 4, 5, 6, 7], dropped: ['m2', 'm3', 'm4'] });
+
+      const page = await repository.findInboxMessages({ ...scope, limit: 2, after: 'm1' });
+
+      expect(page.data.map((row: { identifier: string }) => row.identifier)).to.deep.equal(['m6', 'm5']);
+      expect(page.hasMore).to.equal(true);
+      expect(finds).to.have.length(2);
     });
 
     it('gives an empty page for a cursor that is no message of the thread', async () => {
