@@ -98,8 +98,8 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
   }
 
   /** What became of a code, as the dashboard asks while it shows one. */
-  function codeStatus(code: string, query: Record<string, string> = { handle }) {
-    return asAccount(`/v1/human/agent/connect-codes/${encodeURIComponent(code)}`).query(query);
+  function codeStatus(code: string, fields: Record<string, string> = { handle }) {
+    return asAccount('/v1/human/agent/connect-codes/status', 'post').send({ ...fields, code });
   }
 
   /** Rewrites a code's record in Redis, as time passing would leave it. */
@@ -305,10 +305,9 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
 
     it('tells a code made before the account key changed as expired, and a new code is handed out', async () => {
       const { code } = await issueCode();
-      await environmentRepository.update(
-        { _id: session.environment._id, _organizationId: session.organization._id },
-        { $set: { 'apiKeys.0.hash': `replaced-${Date.now()}` } }
-      );
+      // Made with a key the environment no longer has. Replacing the environment's key instead would also
+      // shut out this test's own requests, which sign in with it.
+      await changeCode(code, (record) => ({ ...record, keyFingerprint: `replaced-${Date.now()}` }));
 
       const res = await codeStatus(code);
 
@@ -327,8 +326,8 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
         .send({ subscriberId: OPERATOR_ID, operator: true, firstName: 'Ada' });
       expect(otherSetup.status).to.equal(200, JSON.stringify(otherSetup.body));
       const otherAccount = await other.testAgent
-        .get(`/v1/human/agent/connect-codes/${code}`)
-        .query({ handle })
+        .post('/v1/human/agent/connect-codes/status')
+        .send({ handle, code })
         .set('Authorization', `ApiKey ${other.apiKey}`);
       expect(otherAccount.status).to.equal(404, JSON.stringify(otherAccount.body));
       expect(otherAccount.body.code).to.equal(CONNECT_CODE_INVALID);
@@ -361,8 +360,8 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
       expect((await codeStatus(code, {})).status).to.equal(422);
 
       const unauthenticated = await session.testAgent
-        .get(`/v1/human/agent/connect-codes/${code}`)
-        .query({ handle })
+        .post('/v1/human/agent/connect-codes/status')
+        .send({ handle, code })
         .set('Authorization', '');
       expect(unauthenticated.status).to.equal(401, JSON.stringify(unauthenticated.body));
     });

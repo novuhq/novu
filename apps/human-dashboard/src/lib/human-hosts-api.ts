@@ -51,11 +51,11 @@ export async function readConnectCode(
   code: string
 ): Promise<ConnectCodeCheck | null> {
   try {
-    return await requestForAccount<ConnectCodeCheck>(
-      account,
-      `/v1/human/agent/connect-codes/${encodeURIComponent(code)}`,
-      { query: { handle } }
-    );
+    // In the body, never the address: an unused code works as a key, and addresses end up in logs.
+    return await requestForAccount<ConnectCodeCheck>(account, '/v1/human/agent/connect-codes/status', {
+      method: 'POST',
+      body: { handle, code },
+    });
   } catch (error) {
     if (isHumanApiNotFound(error)) {
       return null;

@@ -31,7 +31,11 @@ export class ConnectCodeResponseDto {
   expiresAt: string;
 }
 
-export class ConnectCodeStatusQueryDto extends HumanAgentQueryDto {
+/**
+ * A code goes in the body, not the address: it works as a key until it is used or runs out, and addresses
+ * end up in logs.
+ */
+export class ConnectCodeStatusRequestDto extends HumanAgentQueryDto {
   @ApiProperty({
     description: 'The agent the code was made for, as it was asked for: the part of its address before the `@`.',
     maxLength: AGENT_HANDLE_MAX_LENGTH,
@@ -40,6 +44,12 @@ export class ConnectCodeStatusQueryDto extends HumanAgentQueryDto {
   @Matches(AGENT_HANDLE_PATTERN)
   @MaxLength(AGENT_HANDLE_MAX_LENGTH)
   handle: string;
+
+  @ApiProperty({ description: 'The one-time code, e.g. `BCDF-GHJK`, in any case or spacing.' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(32)
+  code: string;
 }
 
 export class ConnectCodeStatusResponseDto {

@@ -4,7 +4,7 @@ import type { HostVia } from './onboarding';
 /*
  * The hosts of the operator's agent, as `GET /v1/human/agent/hosts` describes them, and the one-time codes
  * a new host connects with (`POST /v1/human/agent/connect-codes`), with what became of each
- * (`GET /v1/human/agent/connect-codes/:code`). The server reads them (`human-hosts-api.ts`); what's here
+ * (`POST /v1/human/agent/connect-codes/status`). The server reads them (`human-hosts-api.ts`); what's here
  * is what the pages work out from them, in the browser as well.
  */
 
@@ -49,7 +49,7 @@ export type ConnectCodeResult = { ok: true; code: ConnectCode; expiresInMs: numb
  */
 export type ConnectCodeStatus = 'unused' | 'used' | 'expired';
 
-/** A code as `GET /v1/human/agent/connect-codes/:code` describes it. */
+/** A code as `POST /v1/human/agent/connect-codes/status` describes it. */
 export type ConnectCodeCheck = {
   code: string;
   status: ConnectCodeStatus;

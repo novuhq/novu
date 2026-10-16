@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Param,
   Post,
   Query,
   Req,
@@ -25,7 +24,7 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { HumanAgentQueryDto } from './dtos/human-agent.dto';
 import {
   type ConnectCodeResponseDto,
-  ConnectCodeStatusQueryDto,
+  ConnectCodeStatusRequestDto,
   type ConnectCodeStatusResponseDto,
   ConnectHostRequestDto,
   type ConnectHostResponseDto,
@@ -84,24 +83,25 @@ export class HumanHostsController {
   /**
    * What became of one of the agent's codes: `unused`, `used` or `expired`. The dashboard asks while it
    * shows the code, to tell a host that used it. It only reads, so asking is never a wrong try; it takes the
-   * same right as asking for a code, and any code that isn't the agent's own is a 404.
+   * same right as asking for a code, and any code that isn't the agent's own is a 404. A POST, so the code
+   * travels in the body: an unused one works as a key, and an address ends up in logs.
    */
-  @Get('/connect-codes/:code')
+  @Post('/connect-codes/status')
+  @HttpCode(HttpStatus.OK)
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.API_KEY_READ)
   getConnectCodeStatus(
     @UserSession() user: UserSessionData,
-    @Param('code') code: string,
-    @Query() query: ConnectCodeStatusQueryDto
+    @Body() body: ConnectCodeStatusRequestDto
   ): Promise<ConnectCodeStatusResponseDto> {
     return this.getConnectCodeStatusUsecase.execute(
       GetConnectCodeStatusCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        agentIdentifier: query.agentIdentifier,
-        handle: query.handle,
-        code,
+        agentIdentifier: body.agentIdentifier,
+        handle: body.handle,
+        code: body.code,
       })
     );
   }
