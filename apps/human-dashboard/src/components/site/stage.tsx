@@ -7,8 +7,8 @@ type StageProps = {
   /** Shown on the right of the top bar, such as the signed-in email. */
   aside?: ReactNode;
   /**
-   * Where the glow sits: against the bottom right corner, or centred behind the card as the public agent
-   * card draws it. On a 1728px wide screen the two are the same.
+   * Where the glow sits: against the bottom right corner, or centred behind the card, as on a card's link
+   * that shows no card. On a 1728px wide screen the two are the same.
    */
   glow?: 'corner' | 'center';
   children: ReactNode;
@@ -16,7 +16,8 @@ type StageProps = {
 
 /**
  * A full-screen page with only the brand bar and one card in the middle, over the dithered glow.
- * For screens outside the dashboard: authorizing the CLI, an expired link, page not found, a public card.
+ * For screens outside the dashboard: authorizing the CLI, an expired link, page not found, a card's link that
+ * shows no card.
  */
 export function Stage({ aside, glow = 'corner', children }: StageProps) {
   return (

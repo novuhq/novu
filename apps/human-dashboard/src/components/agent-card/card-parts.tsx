@@ -24,32 +24,20 @@ const STATE_DOT: Record<AgentState, string> = {
   paused: 'bg-muted',
 };
 
-/**
- * Where the portrait's pieces sit. The design places them for the card's width: 340 on the Configure page,
- * 360 on the public card, where everything is 10px further right.
- */
-const PORTRAIT_LAYOUT = {
-  configure: { dither: '-left-55', picture: 'left-26', mascot: 'left-27.5' },
-  public: { dither: '-left-50', picture: 'left-28.5', mascot: 'left-30' },
-} as const;
-
 type CardPortraitProps = {
   handle: string;
   /** The agent's email address, which the code to scan starts an email to. No code without one. */
   address: string | null;
   pictureUrl?: string;
   state: AgentState;
-  /** The public card, 360px wide; the Configure page's is 340. */
-  wide?: boolean;
 };
 
 /**
  * The top of the card, laid out like an ID photo: the agent on its dither, the labels around it, and a
  * code to scan that starts an email to it, as on the onboarding's card.
  */
-export function CardPortrait({ handle, address, pictureUrl, state, wide = false }: CardPortraitProps) {
+export function CardPortrait({ handle, address, pictureUrl, state }: CardPortraitProps) {
   const beaming = useBeaming(state !== 'paused');
-  const layout = PORTRAIT_LAYOUT[wide ? 'public' : 'configure'];
 
   return (
     <div className="relative isolate h-52.5 overflow-hidden bg-subtle">
@@ -59,10 +47,7 @@ export function CardPortrait({ handle, address, pictureUrl, state, wide = false 
         alt=""
         width={560}
         height={320}
-        className={cn(
-          'pointer-events-none absolute top-0 -z-10 h-80 w-140 max-w-none opacity-55 select-none',
-          layout.dither
-        )}
+        className="pointer-events-none absolute top-0 -left-55 -z-10 h-80 w-140 max-w-none opacity-55 select-none"
       />
       {/* What shows of `Deco/Corner ticks`: the corner the card's rounding doesn't cut away. */}
       <span aria-hidden="true" className="absolute bottom-0 left-0 h-px w-1.25 bg-border-strong" />
@@ -85,13 +70,13 @@ export function CardPortrait({ handle, address, pictureUrl, state, wide = false 
         its grid, centred where the design's 132px drawing is: at any other size one eye comes out wider.
       */}
       {pictureUrl ? (
-        <AgentAvatar src={pictureUrl} still className={cn('absolute top-10 size-33 rounded-full', layout.picture)} />
+        <AgentAvatar src={pictureUrl} still className="absolute top-10 left-26 size-33 rounded-full" />
       ) : (
         <MascotFace
           art="waiting"
           mood={state === 'paused' ? 'asleep' : beaming ? 'happy' : 'awake'}
           ahead
-          className={cn('absolute top-11.5 size-30', layout.mascot)}
+          className="absolute top-11.5 left-27.5 size-30"
         />
       )}
 

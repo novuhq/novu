@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-import { PublicCard } from '@/components/public-card/public-card';
-import { Stage } from '@/components/site/stage';
+import { PublicCardPage } from '@/components/public-card/public-card-page';
 import { Toaster } from '@/components/ui/toast';
 import { getPublicAgentCard } from '@/lib/public-agent-card';
 import { readSiteOrigin } from '@/lib/site-origin';
@@ -32,8 +31,9 @@ export async function generateMetadata(props: PageProps<'/p/[handle]'>): Promise
 
 /**
  * An agent's public card, at `/p/{handle}` on the dashboard's site (`readSiteOrigin`): anyone with the link
- * sees it, without signing in. Only what the card shows comes to the page (`PublicAgentCard`). A card that
- * isn't available, for whatever reason, shows `not-found.tsx` instead.
+ * sees the card and every way to reach the agent, without signing in (`PublicCardPage`). Only what the page
+ * shows comes to it (`PublicAgentCard`). A card that isn't available, for whatever reason, shows
+ * `not-found.tsx` instead.
  */
 export default async function Page(props: PageProps<'/p/[handle]'>) {
   const { handle } = await props.params;
@@ -44,10 +44,8 @@ export default async function Page(props: PageProps<'/p/[handle]'>) {
 
   return (
     <>
-      <Stage glow="center">
-        <PublicCard card={result.card} />
-      </Stage>
-      {/* Where a copy that the browser refused says so. */}
+      <PublicCardPage card={result.card} />
+      {/* Where a copy or a save that the browser refused says so. */}
       <Toaster />
     </>
   );

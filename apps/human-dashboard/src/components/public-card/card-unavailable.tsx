@@ -6,7 +6,7 @@ import { GetAnInbox } from './get-an-inbox';
 /**
  * What a card's link shows when there is no card to show: no agent has the handle, it was deleted, or only
  * its contacts can reach it. Which of these it is stays untold. Not in the design: the site's card for a
- * missing page, on the public card's page, with the line that leads to the product under it.
+ * missing page, with the line that leads to the product under it.
  */
 export function CardUnavailable() {
   return (
