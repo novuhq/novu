@@ -28,8 +28,9 @@ const EXIT_MARK = '__BOX_EXIT__';
 export const SLACK_ENV = process.env.BOX_SLACK_ENV ?? join(os.homedir(), '.config/novu-box/slack.env');
 // #novu-box, the one channel the router posts in besides DMs.
 export const SLACK_CHANNEL = process.env.BOX_SLACK_CHANNEL ?? 'C0C9PHBUDR6';
-// A first bake takes 11 to 14 minutes on Cloudflare; a wake about 35 s.
-const READY_WITHIN_SECONDS = { baking: 25 * 60, waking: 5 * 60, running: 5 * 60 };
+// A first bake takes 11 to 14 minutes on Cloudflare; a wake about 35 s, but the first restore of a snapshot 4 to 6
+// minutes (the Slack router waits as long).
+const READY_WITHIN_SECONDS = { baking: 25 * 60, waking: 8 * 60, running: 5 * 60 };
 
 export function cloudTarget({ box, log, githubToken }) {
   const worker = `novu-box-${box}`;
@@ -57,8 +58,9 @@ export function cloudTarget({ box, log, githubToken }) {
     return response;
   }
 
+  // null only when the box's Worker doesn't exist (Cloudflare's 404 page); a failed request throws.
   async function state() {
-    const response = await call('/state').catch(() => null);
+    const response = await call('/state');
 
     return response ? response.json() : null;
   }
@@ -270,7 +272,8 @@ export function cloudTarget({ box, log, githubToken }) {
       return waitUntilAsleep(before?.snapshot?.id);
     },
 
-    // Stops the box and forgets it (snapshot and settings), then deletes its Worker. Other boxes are untouched.
+    // Stops the box and forgets it (snapshot and settings), then deletes its Worker. Other boxes are untouched. When
+    // the box can't be asked, this stops before deleting the Worker, which would leave the box running unreachable.
     async delete() {
       if (await state()) {
         log(`${worker}: stopping and forgetting the box`);
