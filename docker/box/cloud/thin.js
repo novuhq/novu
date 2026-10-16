@@ -11,7 +11,7 @@ export default {
   async fetch(request, env) {
     if (new URL(request.url).pathname.startsWith('/__box/') && !(await authorize(request)))
       return new Response(
-        'needs `Authorization: Bearer <GitHub token>` with push access to novuhq/novu, or the Novu Box workflow\'s OIDC token\n',
+        "needs `Authorization: Bearer <GitHub token>` with push access to novuhq/novu, or the Novu Box workflow's OIDC token\n",
         { status: 401 }
       );
 

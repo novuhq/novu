@@ -34,7 +34,8 @@ export async function hostBoxes(path, { method = 'GET', githubToken }) {
     headers: { Authorization: `Bearer ${await githubToken()}` },
   });
   const body = await response.text();
-  if (!response.ok) throw new Error(`${method} ${HOST}/__box/boxes${path} -> ${response.status}: ${body.slice(0, 300)}`);
+  if (!response.ok)
+    throw new Error(`${method} ${HOST}/__box/boxes${path} -> ${response.status}: ${body.slice(0, 300)}`);
 
   return JSON.parse(body);
 }

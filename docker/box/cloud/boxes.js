@@ -15,7 +15,7 @@ const NAME = /^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/;
 const RESERVED = [HOST, ROUTER];
 
 export async function boxes(request, env, url) {
-  if (!(await authorize(request))) return text('needs the same Authorization as a box\'s /__box/*\n', 401);
+  if (!(await authorize(request))) return text("needs the same Authorization as a box's /__box/*\n", 401);
   if (!env.CLOUDFLARE_API_TOKEN || !env.CLOUDFLARE_ACCOUNT_ID)
     return text('the host has no CLOUDFLARE_API_TOKEN; deploy it with ~/.config/novu-box/cloudflare.env\n', 501);
   const box = url.pathname.slice('/__box/boxes/'.length);

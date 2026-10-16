@@ -54,7 +54,8 @@ async function boxToken() {
   const response = await fetch(`${url}&audience=${OIDC_AUDIENCE}`, {
     headers: { Authorization: `Bearer ${requestToken}` },
   });
-  if (!response.ok) throw new Error(`the OIDC token request answered ${response.status}; the job needs id-token: write`);
+  if (!response.ok)
+    throw new Error(`the OIDC token request answered ${response.status}; the job needs id-token: write`);
   const { value } = await response.json();
   oidc = { value, exp: JSON.parse(Buffer.from(value.split('.')[1], 'base64url')).exp };
 
@@ -78,7 +79,9 @@ async function github(path, init = {}) {
     },
   });
   if (!response.ok)
-    throw new Error(`GitHub ${init.method ?? 'GET'} ${path} -> ${response.status}: ${(await response.text()).slice(0, 200)}`);
+    throw new Error(
+      `GitHub ${init.method ?? 'GET'} ${path} -> ${response.status}: ${(await response.text()).slice(0, 200)}`
+    );
 
   return response.json();
 }
@@ -205,7 +208,9 @@ async function applyHead(number, sha) {
     return 0;
   } catch (error) {
     log(`ERROR: ${error.stack ?? error.message}`);
-    const where = error.log ? `; the apply's log: \`node docker/box/cli.mjs exec --cloud --box ${box} -- cat ${error.log}\`` : '';
+    const where = error.log
+      ? `; the apply's log: \`node docker/box/cli.mjs exec --cloud --box ${box} -- cat ${error.log}\``
+      : '';
     await comment(
       number,
       `❌ Novu Box failed on \`${short}\`: ${error.message.split('\n')[0].slice(0, 400)}\n\nLog: ${RUN_URL ?? 'this run'}${where}`
