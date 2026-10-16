@@ -3,6 +3,9 @@
 
 export const HOST = 'novu-box-host';
 export const ROUTER = 'novu-box-slack';
+export const COMPATIBILITY_DATE = '2026-09-29';
+// A box's Worker: thin.js and the modules it imports. The host uploads them for a box CI creates (boxes.js).
+export const THIN_MODULES = ['thin.js', 'auth.mjs', 'shared.mjs'];
 
 // A box's own Worker, its address on workers.dev.
 export function boxWorker(box) {

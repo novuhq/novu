@@ -2,9 +2,10 @@
 // box's container. Every box shares this class, its image and its secrets, so a new box starts from another box's
 // snapshot as Cloudflare documents it (within one class). The host's own address only answers 404; each box has a
 // thin Worker `novu-box-<box>` on workers.dev (thin.js) that checks /__box/* callers and forwards to Box(<box>).
-// `cli.mjs --cloud` deploys and drives them; browsers reach a box through its thin Worker.
+// `cli.mjs --cloud` deploys and drives them; browsers reach a box through its thin Worker. The host's address also
+// answers /__box/boxes, which lists, creates and deletes boxes' Workers for CI (boxes.js).
 //
-//   /__box/*   control, for GitHub users with push access to novuhq/novu (checked by thin.js)
+//   /__box/*   control, for GitHub users with push access to novuhq/novu and the Novu Box workflow (auth.mjs)
 //     GET  /__box/state             the container and its snapshot; doesn't count as activity
 //     POST /__box/up?ref=next       start the box: wake it from its snapshot, or bake `ref` into a new one
 //     POST /__box/exec              {cmd, cwd?, github?} run a command in the box and stream its output
@@ -22,6 +23,8 @@
 // router hands the box its agents' Slack events (`slackEvent`), and deleting the box disconnects them.
 
 import { DurableObject } from 'cloudflare:workers';
+import { isOidc } from './auth.mjs';
+import { boxes } from './boxes.js';
 import { bearer, boxOfOrigin, EXIT_MARK, HOST, SECRETS } from './shared.mjs';
 
 export { Router } from './slack-router.js';
@@ -74,10 +77,24 @@ fetch('http://127.0.0.1:4000/api/novu?action=discover', {
 const START = ['tini', '--', ...BOX, 'start'];
 
 export default {
-  async fetch() {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname === '/__box/boxes' || url.pathname.startsWith('/__box/boxes/'))
+      return boxes(request, env, url).catch((error) => new Response(`${error?.stack ?? error}\n`, { status: 500 }));
+
     return new Response(`${HOST}: reach a box through its own Worker, novu-box-<box>\n`, { status: 404 });
   },
 };
+
+// The GitHub token a box's git fetches and CI lookup get: the host's read-only GITHUB_READ_TOKEN when it has one, so
+// no caller's push-capable token reaches a box; else the caller's own. A workflow's OIDC token is no GitHub token.
+function readToken(request, env) {
+  if (env.GITHUB_READ_TOKEN) return env.GITHUB_READ_TOKEN;
+  const token = bearer(request);
+  if (isOidc(token)) throw new Error('the host has no GITHUB_READ_TOKEN; deploy it with ~/.config/novu-box/github.env');
+
+  return token;
+}
 
 export class Box extends DurableObject {
   // The inactivity timeout doesn't survive a restart of this object, and every deploy restarts it: without this, a
@@ -143,7 +160,7 @@ export class Box extends DurableObject {
     if (route === 'POST /__box/exec') {
       const { cmd, cwd, github } = await request.json();
 
-      return streamed(await this.run(cmd, { cwd, github: github ? bearer(request) : undefined }));
+      return streamed(await this.run(cmd, { cwd, github: github ? readToken(request, this.env) : undefined }));
     }
     if (route === 'PUT /__box/file') {
       const path = url.searchParams.get('path');
@@ -176,7 +193,7 @@ export class Box extends DurableObject {
   }
 
   // Wakes the box from its snapshot. The first time, it starts from another box's snapshot (`from`, its id) or
-  // bakes `ref`. The GitHub token of the caller is in the bake's environment only; `box start` runs without it.
+  // bakes `ref`. The GitHub token (readToken) is in the bake's environment only; `box start` runs without it.
   async up(url, request) {
     await this.ctx.storage.put('origin', url.origin);
     if (this.ctx.container.running) return { state: 'running' };
@@ -192,7 +209,7 @@ export class Box extends DurableObject {
     await this.ctx.storage.delete('lostSnapshot');
     await this.start({ image: this.ctx.container.images.box, entrypoint: ['tini', '--', 'sleep', 'infinity'] });
     const bake = `mkdir -p /data/logs && nohup sh -c 'node /opt/box/box.mjs bake "$0" && exec env -u GITHUB_TOKEN node /opt/box/box.mjs start' "$0" > /data/logs/up.log 2>&1 &`;
-    await (await this.run(['sh', '-c', bake, ref], { github: bearer(request) })).exitCode;
+    await (await this.run(['sh', '-c', bake, ref], { github: readToken(request, this.env) })).exitCode;
 
     return { state: 'baking', ref };
   }
