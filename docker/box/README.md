@@ -61,7 +61,7 @@ preview-only values. A box runs PR code, and that code can read its environment,
 | Secret | Service | Used by |
 |---|---|---|
 | `LAUNCH_DARKLY_SDK_KEY` | LaunchDarkly project `default`, environment `dev` (staging's) | API, worker |
-| `CLERK_SECRET_KEY` | Clerk app `novu-box`, development instance | Bake (seeds the user and org), API, `smoke.mjs` |
+| `CLERK_SECRET_KEY` | Clerk app `novu-box`, development instance | Bake (seeds the user and org), API |
 | `BOX_SEED_PASSWORD` | The seed user's dashboard password, from the password manager | Bake (sets it on the Clerk user) |
 | `STRIPE_API_KEY` | Stripe sandbox `Novu Box` | Bake (puts the org on Team), `stripe listen`, API |
 | `GITHUB_TOKEN` | GitHub, read access to `novuhq/novu` and the enterprise submodule | `bake` and `apply` only; pass it with `-e`, it's never written to disk (`cli.mjs` takes it from `gh auth token`). Only the git fetches and the CI lookup get it, never the installs, builds or apps |
@@ -194,7 +194,6 @@ state (`/__box/state`) doesn't count as a request. Measured on standard-4:
 | Smoke over the public address (a box started from `base`) | 43/43 in about 70 s |
 | `up --from base` for a new box (deploy its Worker, then wake from base's snapshot, no bake) | 80 to 106 s: about 30 s deploy, a few seconds until the address answers, 40 s wake |
 | The same, seen twice on an older snapshot chain | 4 to 6 min (inside the start); cause unknown |
-| Slack check (`slack-check.mjs`, two boxes, one woken from Slack) | 6/6 in about 65 s; the wake about 50 s |
 | `up --deploy` of the host with the same image | about 1 min; running boxes usually keep running (see above) |
 
 `up --cloud --box <new> --from <box>` starts a new box from another box's latest snapshot instead of baking: all
@@ -283,46 +282,19 @@ stands between Slack and every box; no box ever sees them.
   "Waking <box> (about 40 s)…" in the thread, and delivers the message when the box is up (it retries for 8
   minutes). In a thread of a deleted box, the router tells you so and to start a new message.
 - The router passes only the Slack methods the agents use, only to `#novu-box` and DMs a person started, and
-  edits only a box's own messages (checked by hand, not by `slack-check.mjs`); anything else gets `ok: false`
+  edits only a box's own messages; anything else gets `ok: false`
   with a `…_by_novu_box` error. A token it didn't make (a Slack app you connect in the box's dashboard) goes to
   Slack unchanged. It doesn't keep boxes
   apart within those: a box's code can read every thread in `#novu-box` and any DM with the bot, which is fine
   for a channel only Novu's developers and TesterArmy use.
 
-Check the routing with two boxes up (`up --cloud --box <name> --from base` makes a second one; about 90 s,
-writes `slack-check.json`):
-
-```sh
-node docker/box/slack-check.mjs <box> <other box> /tmp/slack-check
-```
-
-It sends the router the events Slack would send for the TesterArmy guest in `#novu-box`, signed with Novu Bot's
-signing secret, and reads from each box's `/__box/state` (`slackEvents`, the last events the box's agents got)
-that a mention reaches the box and agent picked with `/novu-box`, a thread reply stays with its thread's box, a
-mention in a reply arrives once, and the second box gets a reply after it is put to sleep (it wakes).
+Each box's `/__box/state` lists `slackEvents`, the last events its agents got, to check where a message went.
 
 A host deploy from another checkout builds a new image even when `docker/box` is the same (the image keeps file
 times), and Cloudflare ties each snapshot to the image it came from. To deploy only Worker changes, keep the
 running image:
 `BOX_IMAGE=registry.cloudflare.com/<account>/novu-box@sha256:<digest> node docker/box/cli.mjs up --cloud --deploy`
 (the digest is in `npx wrangler versions view <id> --name novu-box-host --json`).
-
-Run the smoke test from the host (38 checks, 43 with the Anthropic key, about 2 minutes; writes `smoke.json` to
-the directory given):
-
-```sh
-node --env-file=docker/box/.env docker/box/smoke.mjs /tmp/box-smoke
-```
-
-It signs in through Clerk, checks the Team plan, creates a workflow with in-app, email, SMS, push and chat
-steps, triggers it, and checks the activity feed (Mongo), the Inbox and its realtime event, the run log
-(ClickHouse), Mailpit for the email and the three sink messages, a delay step through SQS, and an S3 upload.
-Then it runs the bridge app's workflows: sync status, a preview with controls, every channel with a skipped step,
-a delay feeding a custom step's output into an email, a digest, Local mode discovery, the `localhost` guard,
-and a throttle. And it chats with the bridge app's agents over web chat: a card with a table, a chart and a
-button click, conversation metadata, a tool run after approval, a HITL approval, a workflow triggered by the
-agent, an edited and a deleted reply, a custom event, and resolving the conversation with its `onResolve`
-workflow, then a tool approval on the AI SDK and the LangChain agents.
 
 The playground (`playground/nextjs`) is the catalog of agent features: every new feature gets a demo there. It has
 one agent per `novu connect` runtime, all built on the same features
@@ -337,15 +309,13 @@ card-click handlers:
   `quote`, `react` and `multi-approve` need Slack (see `FIDELITY.md`, "Web chat limits").
 - `ai-sdk-agent` and `langchain-agent` get every other feature as a tool and, with
   `NOVU_MANAGED_CLAUDE_API_KEY`, run on Claude Haiku, which picks the tools from plain sentences and also reads
-  attached images and PDFs (this spends from the key's workspace, not Novu's managed-Claude quota). The smoke
-  test then adds 2 checks: a card from a tool on each. Without the key they run on scripted fakes that only know
-  the gated `get_weather` tool.
+  attached images and PDFs (this spends from the key's workspace, not Novu's managed-Claude quota). Without the
+  key they run on scripted fakes that only know the gated `get_weather` tool.
 
 With `NOVU_MANAGED_CLAUDE_API_KEY`, `start` also runs the thalamus observer and seeds `box-managed`, a managed
 agent on the Novu-managed Claude integration (Claude Haiku, only the `bash` tool, which asks before it runs).
-The smoke test then adds 3 checks: a reply, a `bash` run after approval, and the demo quota. They call Anthropic
-for real; Novu's own caps still apply (100,000 tokens per conversation, and 200 managed-Claude conversations per
-org per month instead of the default 10, see FIDELITY.md). Each run uses 2 conversations.
+It calls Anthropic for real; Novu's own caps still apply (100,000 tokens per conversation, and 200 managed-Claude
+conversations per org per month instead of the default 10, see FIDELITY.md).
 
 Other commands, run with `docker exec novu-box node /opt/box/box.mjs <command>`:
 

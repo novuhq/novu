@@ -60,7 +60,8 @@ Exercise the change the way a user reaches it, on the path the change touches:
      those.
 - **Bridge workflows and agents:** they live in `playground/nextjs`; the box syncs them on every apply that changes
   the framework or the playground.
-- **Broad changes** (shared libraries, auth, queues): also run the smoke test from the README (about 2 minutes).
+- **Broad changes** (shared libraries, auth, queues): also drive the main flows the change could break (sign-in,
+  trigger a workflow and check the message, an agent reply), not only the changed path.
 
 Done when the changed behaviour is observed working, and the behaviour beside it still works. One happy path is a
 _tracer_, not proof: drive at least one failure case the change handles.
@@ -75,7 +76,6 @@ Report, for the user to reproduce:
 2. The `doctor` result.
 3. Each check from Drive: the exact command or page, and what came back (status, response body, a screenshot path).
    For a message: the `mail <id>` output (headers, html check) and the screenshot paths.
-4. The smoke test's `smoke.json` path and pass count, if you ran it.
 
 ## 5. Cleanup
 

@@ -1,5 +1,5 @@
-// The seeded user and org live in the `novu-box` Clerk app that every box shares. The seed and the smoke test
-// get session tokens through the Clerk Backend API, which only a development instance allows.
+// The seeded user and org live in the `novu-box` Clerk app that every box shares. The seed
+// gets session tokens through the Clerk Backend API, which only a development instance allows.
 
 export const SEED = {
   email: 'agent@novu.co',
