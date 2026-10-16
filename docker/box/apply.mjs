@@ -283,18 +283,20 @@ function writeBoxJson() {
 // changes). Either is merged onto the baked commit, then the same steps run: diff against what the box runs, plan,
 // build, restart. `--full` plans everything, like a bake, for when the incremental plan is in doubt.
 //
-// An apply that fails after its checkout leaves APPLYING behind. The next apply then also plans for the files the
-// failed one changed, so nothing it half-built stays in place.
+// An apply that fails after its checkout leaves APPLYING behind with the files it planned for. The next apply plans
+// for those too (and for everything, if that one was --full), so nothing a chain of failed applies half-built stays
+// in place.
 //
 // `token`: the GitHub token for the fetch of the enterprise submodule and the CI lookup, and nothing else.
-export async function apply({ ref, bundle, full = false, token }) {
+export async function apply({ ref, bundle, full: fullAsked = false, token }) {
   if (!ref === !bundle) throw new Error('usage: box apply <pr-number|branch|sha> | --bundle <file> [--full]');
   const releaseLock = holdLock('apply');
   try {
     // A box that is still starting (woken for this apply) runs its own `migrate`; the plan stops and restarts apps.
     await poll(300, storesReady, "the stores aren't ready, or migrate didn't finish, after 300s");
     const base = (readJson(APPLIED) ?? readJson(BAKED)).sha;
-    const interrupted = readJson(APPLYING)?.sha;
+    const interrupted = readJson(APPLYING);
+    const full = fullAsked || Boolean(interrupted?.full);
     const target = await step('fetch', () => {
       const fetched = bundle ? unbundle(bundle) : { sha: fetchRef(ref), subject: ref };
 
@@ -306,14 +308,14 @@ export async function apply({ ref, bundle, full = false, token }) {
       };
     });
     const changed = (to) => output('git', ['diff', '--name-only', base, to]).split('\n').filter(Boolean);
-    const files = [...new Set([...changed(target.sha), ...(interrupted ? changed(interrupted) : [])])];
+    const files = [...new Set([...changed(target.sha), ...(interrupted?.files ?? [])])];
     log(`${files.length} files changed between ${base.slice(0, 10)} and ${target.sha.slice(0, 10)}`);
-    if (interrupted) log(`the last apply (${interrupted.slice(0, 10)}) didn't finish; its files are planned too`);
+    if (interrupted) log(`the last apply (${interrupted.sha.slice(0, 10)}) didn't finish; its files are planned too`);
     if (files.some((file) => file.startsWith('docker/box/')))
       log("WARN: docker/box changed; the box keeps running its image's copy until the image is rebuilt");
     if (target.source === 'github') await logCiResult(target.head, token);
 
-    fs.writeFileSync(APPLYING, JSON.stringify({ sha: target.sha, at: new Date().toISOString() }));
+    fs.writeFileSync(APPLYING, JSON.stringify({ sha: target.sha, files, full, at: new Date().toISOString() }));
     await step('checkout', () => {
       run('git', ['checkout', '--force', '--detach', target.sha]);
       if (files.includes('.source')) gitWithToken(token, ['submodule', 'update', '--init', '--depth', '1', '.source']);
