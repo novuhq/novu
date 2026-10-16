@@ -189,7 +189,9 @@ export class Router extends DurableObject {
   }
 
   async message(facts, envelope) {
-    const { kind, user, channel, thread, dm } = facts;
+    const { kind, user, channel, ts, thread, dm } = facts;
+    // A mention comes as both `app_mention` and `message`, in either order: the second one is the same message.
+    if (await this.get(`msg:${channel}:${ts}`)) return;
     const owner = thread && (await this.get(`msg:${channel}:${thread}`));
     // A mention in a thread a box owns also comes as a `message`, which goes to that box.
     if (owner && kind === 'mention') return;
