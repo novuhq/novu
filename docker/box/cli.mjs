@@ -7,7 +7,8 @@
 //                                             `up --cloud` without --box also puts this checkout on it (sync)
 //   node docker/box/cli.mjs sync [--full]     put this checkout, committed or not, on the box; rebuild what it changes
 //   node docker/box/cli.mjs doctor            whether the box is fit to test on, as JSON; exits 1 if not
-//   node docker/box/cli.mjs logs <process>    a process's last lines (--tail <n>, default 200)
+//   node docker/box/cli.mjs logs [process]    the last lines of one process (api, worker, bridge, …) or of all of
+//                                             them (--tail <n>, default 200; --follow; --errors: problems only)
 //   node docker/box/cli.mjs exec -- <cmd...>  run a command in the box's checkout (/data/novu)
 //   node docker/box/cli.mjs down              stop the box; its data stays (local: its volume; cloud: its snapshot)
 //   node docker/box/cli.mjs delete --cloud    stop a Cloudflare box and delete it with its snapshot and Worker
@@ -50,6 +51,8 @@ try {
       deploy: { type: 'boolean', default: false },
       from: { type: 'string' },
       full: { type: 'boolean', default: false },
+      follow: { type: 'boolean', default: false },
+      errors: { type: 'boolean', default: false },
       'no-sync': { type: 'boolean', default: false },
       tail: { type: 'string', default: '200' },
     },
@@ -346,7 +349,14 @@ const commands = {
   logs: async () => {
     await target.ready();
 
-    return target.box(['logs', ...args, '--tail', options.tail]);
+    return target.box([
+      'logs',
+      ...args,
+      '--tail',
+      options.tail,
+      ...(options.follow ? ['--follow'] : []),
+      ...(options.errors ? ['--errors'] : []),
+    ]);
   },
   exec: async () => {
     if (!args.length) throw new Error('usage: cli.mjs exec -- <command...>');

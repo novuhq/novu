@@ -21,11 +21,13 @@ processes:
     availability:
       restart: on_failure
 
+  # The probes run every second for as long as the box runs, so they speak each server's protocol: a bare TCP
+  # connect makes Redis (TLS) and ClickHouse log an error with every probe.
   redis-7000: &redis
     command: redis-server /opt/box/config/redis.conf --tls-port 7000 --dir /data/redis/7000
     readiness_probe:
       exec:
-        command: bash -c '</dev/tcp/127.0.0.1/7000'
+        command: redis-cli --tls --cacert /data/redis/tls/box.crt -p 7000 ping
       period_seconds: 1
       failure_threshold: 60
     shutdown:
@@ -39,7 +41,7 @@ processes:
     command: redis-server /opt/box/config/redis.conf --tls-port 7001 --dir /data/redis/7001
     readiness_probe:
       exec:
-        command: bash -c '</dev/tcp/127.0.0.1/7001'
+        command: redis-cli --tls --cacert /data/redis/tls/box.crt -p 7001 ping
       period_seconds: 1
       failure_threshold: 60
 
@@ -48,7 +50,7 @@ processes:
     command: redis-server /opt/box/config/redis.conf --tls-port 7002 --dir /data/redis/7002
     readiness_probe:
       exec:
-        command: bash -c '</dev/tcp/127.0.0.1/7002'
+        command: redis-cli --tls --cacert /data/redis/tls/box.crt -p 7002 ping
       period_seconds: 1
       failure_threshold: 60
 
@@ -59,11 +61,10 @@ processes:
     environment:
       - MALLOC_CONF=thp:never,percpu_arena:disabled,narenas:2,dirty_decay_ms:1000
       - CLICKHOUSE_WATCHDOG_ENABLE=0
+    # curl, not process-compose's http_get, whose connections ClickHouse logs as "Socket is not connected".
     readiness_probe:
-      http_get:
-        host: 127.0.0.1
-        port: 8123
-        path: /ping
+      exec:
+        command: curl -sf -o /dev/null http://127.0.0.1:8123/ping
       period_seconds: 1
       failure_threshold: 120
     shutdown:

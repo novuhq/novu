@@ -141,7 +141,7 @@ touched as well as its own changes.
 | `node docker/box/cli.mjs up` | Starts the box: creates it if needed, after baking `next` into an empty volume (about 12 minutes). Waits until `doctor` passes |
 | `node docker/box/cli.mjs sync` | Puts this checkout on the box, committed or not, and rebuilds what it changes. `--full` as for `apply` |
 | `node docker/box/cli.mjs doctor` | Whether the box is fit to test on, as JSON; `problems` says what isn't, and it exits 1 if any |
-| `node docker/box/cli.mjs logs <process>` | A process's last 200 lines (`--tail <n>`); `doctor` lists the processes |
+| `node docker/box/cli.mjs logs [process]` | The last 200 lines (`--tail <n>`) of one process, or of all of them merged, as `name \| LEVEL context: message`; `--errors` keeps warnings and errors, `--follow` streams new lines. An unknown name lists the processes |
 | `node docker/box/cli.mjs exec -- <command>` | Runs a command in the box's checkout (`/data/novu`) |
 | `node docker/box/cli.mjs down` | Stops the box. Its volume, and so its data, stays; `up` starts it again |
 
@@ -247,7 +247,8 @@ org per month instead of the default 10, see FIDELITY.md). Each run uses 2 conve
 Other commands, run with `docker exec novu-box node /opt/box/box.mjs <command>`:
 
 - `status` lists processes. Logs are in `/data/logs/process-compose.log`.
-- `doctor` and `logs <process>`, which `cli.mjs` runs.
+- `doctor` and `logs [process]`, which `cli.mjs` runs. `logs` reads `/data/logs/process-compose.log`, where
+  process-compose writes every process's output.
 - `state` prints the baked and applied commits, and an unfinished apply, as JSON.
 - `quiesce` stops the apps, then the databases, leaving the supervisor up for a snapshot.
 

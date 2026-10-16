@@ -34,7 +34,8 @@ node docker/box/cli.mjs doctor
 ```
 
 Done when it prints `"ok": true`. Otherwise read `problems`, then `node docker/box/cli.mjs logs <process>` for the
-process named. An unfinished apply is fixed by syncing again.
+process named. An unfinished apply is fixed by syncing again. `logs --errors` (no process) shows the warnings and
+errors of every process; `logs --follow` streams them while you drive the change.
 
 ## 3. Drive
 
