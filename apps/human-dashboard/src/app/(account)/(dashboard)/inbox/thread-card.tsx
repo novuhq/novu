@@ -1,6 +1,10 @@
+'use client';
+
+import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { channelName, firstName, type InboxCard, type InboxCardState } from '@/lib/inbox';
 import { cn } from '@/lib/utils';
 
+import { CrossFade } from './cross-fade';
 import { InboxTime } from './inbox-time';
 
 /** What became of a card, and the colour that says so. Only waiting, answered and "no reply needed" are drawn. */
@@ -31,13 +35,33 @@ function outcomeOf(state: InboxCardState): CardOutcome {
 /**
  * A `tell`, `ask`, `approve` or `choose` the agent sent, drawn the way the thread's channel shows it, with
  * what became of it at the bottom. Read-only: people answer on their channel, never here.
+ *
+ * The open thread keeps up with the card: when it is answered, approved or expires, the card as it was
+ * fades out in place, the new one fades in, and the room it takes grows or shrinks to it.
  */
 export function ThreadCard({ card }: { card: InboxCard }) {
+  const { ref, height } = useMeasuredHeight();
+
+  return (
+    <div
+      style={{ height }}
+      className="overflow-hidden transition-[height] duration-300 ease-out motion-reduce:transition-none"
+    >
+      <div ref={ref}>
+        <CrossFade id={JSON.stringify(card.state)} value={card}>
+          {(shown, className) => <CardFace card={shown} className={className} />}
+        </CrossFade>
+      </div>
+    </div>
+  );
+}
+
+function CardFace({ card, className }: { card: InboxCard; className?: string }) {
   const outcome = outcomeOf(card.state);
   const tone = OUTCOME_TONES[outcome];
 
   return (
-    <div className="flex flex-col rounded-lg border border-border-strong bg-subtle">
+    <div className={cn('flex flex-col rounded-lg border border-border-strong bg-subtle', className)}>
       <div className="flex items-center gap-2 border-b border-border px-3 py-2 font-mono text-[10px] leading-3.5">
         <span className="font-medium text-accent uppercase">{card.kind}</span>
         <span className="ml-auto text-muted">{card.presentation.label}</span>

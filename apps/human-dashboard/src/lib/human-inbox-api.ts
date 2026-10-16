@@ -4,12 +4,12 @@ import { cache } from 'react';
 
 import type { HumanAccount } from './human-account';
 import { requestForAccount, requestPageForAccount } from './human-api-key';
-import type { InboxCounts, InboxThread, InboxThreadsPage, InboxThreadView, InboxView } from './inbox';
+import type { InboxCounts, InboxThread, InboxThreadPage, InboxThreadsPage, InboxThreadView, InboxView } from './inbox';
 
 /** Threads on one page of the list. The API takes up to 100. */
 const PAGE_SIZE = 50;
 
-/** Messages the drawer reads at once, the most the API gives. Older ones load on request. */
+/** Messages the drawer reads at once, the most the API gives. Older ones load as the reader scrolls. */
 const MESSAGES_PAGE_SIZE = 100;
 
 /**
@@ -66,8 +66,8 @@ export async function countUnreadThreads(account: HumanAccount): Promise<{ count
 }
 
 /**
- * A thread with its messages, oldest first, its system lines and its Details. `before` is the oldest
- * message already shown, for the page before it.
+ * A thread with its messages, oldest first, its system lines and its Details: the newest messages, or with
+ * a cursor (`InboxThreadPage`) the page before a message or the messages that came after one.
  *
  * Reading a thread here doesn't mark it read, and the request doesn't say it comes from a host: the
  * operator looking at their agent's inbox is not the agent attending to it.
@@ -75,10 +75,10 @@ export async function countUnreadThreads(account: HumanAccount): Promise<{ count
 export async function getInboxThread(
   account: HumanAccount,
   threadId: string,
-  { before }: { before?: string } = {}
+  { before, after, limit = MESSAGES_PAGE_SIZE }: InboxThreadPage = {}
 ): Promise<InboxThreadView> {
   return requestForAccount<InboxThreadView>(account, `/v1/human/inbox/${encodeURIComponent(threadId)}`, {
-    query: { include: 'system', limit: MESSAGES_PAGE_SIZE, before },
+    query: { include: 'system', limit, before, after },
   });
 }
 

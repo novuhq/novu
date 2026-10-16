@@ -132,6 +132,7 @@ export class HumanInboxController {
         identifier,
         limit: query.limit,
         before: query.before,
+        after: query.after,
         include: query.include,
         agentIdentifier: query.agentIdentifier,
         hostVia: readHostVia(via),

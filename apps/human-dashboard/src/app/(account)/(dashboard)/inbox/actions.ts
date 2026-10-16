@@ -8,7 +8,15 @@ import { type HumanAccount, readHumanAccount } from '@/lib/human-account';
 import { AGENT_NOT_SET_UP_MESSAGE, updateAgentSettings } from '@/lib/human-agent-api';
 import { isHumanApiNotFound, isHumanApiRefusal } from '@/lib/human-api-error';
 import { getInboxThread, listInboxThreads } from '@/lib/human-inbox-api';
-import { INBOX_PATH, type InboxThreadsPage, type InboxThreadView, type InboxView, parseInboxParams } from '@/lib/inbox';
+import {
+  INBOX_PATH,
+  INBOX_THREAD_PAGE_MAX,
+  type InboxThreadPage,
+  type InboxThreadsPage,
+  type InboxThreadView,
+  type InboxView,
+  parseInboxParams,
+} from '@/lib/inbox';
 
 const SESSION_ENDED = 'Your session has ended. Sign in again to continue.';
 
@@ -22,21 +30,30 @@ export type LoadThreadsResult = { ok: true; page: InboxThreadsPage } | { ok: fal
 export type ResumeAgentResult = { ok: true } | { ok: false; error: string };
 
 /**
- * A thread for the drawer, or the page of messages before `before`. Only reads: the thread stays unread
- * for the agent, whatever the operator looks at.
+ * A thread for the drawer: its newest messages, the page before a message (scrolling down to older ones),
+ * or what came after one (the open drawer keeping up). Only reads: the thread stays unread for the agent,
+ * whatever the operator looks at.
  */
-export async function loadThreadAction(threadId: string, before?: string): Promise<LoadThreadResult> {
+export async function loadThreadAction(threadId: string, page: InboxThreadPage = {}): Promise<LoadThreadResult> {
   const account = await readSignedInAccount();
   if (!account) {
     return { ok: false, error: SESSION_ENDED };
   }
 
-  if (!isId(threadId) || (before !== undefined && !isId(before))) {
+  // The page comes from the browser, so it is checked before it goes on to the API.
+  const { before, after, limit } = page ?? {};
+  const validPage =
+    (before === undefined || isId(before)) &&
+    (after === undefined || isId(after)) &&
+    (before === undefined || after === undefined) &&
+    (limit === undefined || (Number.isInteger(limit) && limit >= 1 && limit <= INBOX_THREAD_PAGE_MAX));
+
+  if (!isId(threadId) || !validPage) {
     return { ok: false, error: 'This thread can’t be opened.' };
   }
 
   try {
-    return { ok: true, view: await getInboxThread(account, threadId, { before }) };
+    return { ok: true, view: await getInboxThread(account, threadId, { before, after, limit }) };
   } catch (error) {
     if (isHumanApiNotFound(error)) {
       return { ok: false, error: 'This thread is gone. It may have been deleted.' };
