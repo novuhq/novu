@@ -153,6 +153,29 @@ export function cloudTarget({ box, log, githubToken }) {
     });
   }
 
+  async function snapshotOf(name) {
+    const response = await fetch(`https://novu-box-${name}.${DOMAIN}/__box/state`, {
+      headers: { Authorization: `Bearer ${githubToken()}` },
+    });
+
+    return response.headers.get('content-type')?.includes('json') ? (await response.json()).snapshot?.id : null;
+  }
+
+  // The snapshot a new box starts from: `from`'s, or base's for a branch box that doesn't exist yet; none means bake.
+  async function startingSnapshot({ from, fromBase, ref }) {
+    if (from) {
+      const id = await snapshotOf(from);
+      if (!id) throw new Error(`novu-box-${from} has no snapshot to start from`);
+
+      return id;
+    }
+    if (!fromBase || box === 'base' || (await state())) return null;
+    const id = await snapshotOf('base');
+    log(id ? `${worker} is new: starting it from novu-box-base` : `no novu-box-base snapshot: baking ${ref}`);
+
+    return id;
+  }
+
   // The host answers its own plain-text 404; Cloudflare's 404 page (HTML) means it isn't deployed.
   async function hostExists() {
     const response = await fetch(`https://${HOST}.${DOMAIN}/`).catch(() => null);
@@ -181,22 +204,8 @@ export function cloudTarget({ box, log, githubToken }) {
     // `fromBase`: a box that doesn't exist yet starts from the `base` box's snapshot when there is one, else bakes.
     async up({ deploy: redeploy = false, ref = 'next', from, fromBase = false } = {}) {
       const query = new URLSearchParams({ ref });
-      const sourceSnapshot = async (name) => {
-        const response = await fetch(`https://novu-box-${name}.${DOMAIN}/__box/state`, {
-          headers: { Authorization: `Bearer ${githubToken()}` },
-        });
-
-        return response.headers.get('content-type')?.includes('json') ? (await response.json()).snapshot?.id : null;
-      };
-      if (from) {
-        const id = await sourceSnapshot(from);
-        if (!id) throw new Error(`novu-box-${from} has no snapshot to start from`);
-        query.set('from', id);
-      } else if (fromBase && box !== 'base' && !(await state())) {
-        const id = await sourceSnapshot('base');
-        if (id) query.set('from', id);
-        log(id ? `${worker} is new: starting it from novu-box-base` : `no novu-box-base snapshot: baking ${ref}`);
-      }
+      const snapshot = await startingSnapshot({ from, fromBase, ref });
+      if (snapshot) query.set('from', snapshot);
       // --deploy: a change to docker/box (image or Worker code) goes to the host, so to every box.
       if (redeploy || !(await hostExists())) deployHost();
       if (redeploy || !(await state())) deployBoxWorker();

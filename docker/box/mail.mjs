@@ -14,14 +14,19 @@ const ID = /^[A-Za-z0-9]{18,26}$/;
 export async function mail({ mailUrl, args, limit, html, checkLinks }) {
   const api = async (path) => {
     const response = await fetch(`${mailUrl}/api/v1${path}`);
-    if (!response.ok) throw new Error(`Mailpit ${path} -> ${response.status}: ${(await response.text()).slice(0, 200)}`);
+    if (!response.ok)
+      throw new Error(`Mailpit ${path} -> ${response.status}: ${(await response.text()).slice(0, 200)}`);
 
     return response.json();
   };
   const [first, ...rest] = args;
   if (first && !rest.length && ID.test(first)) return show({ api, mailUrl, id: first, html, checkLinks });
   const query = args.join(' ');
-  const { messages, messages_count: count, total } = query
+  const {
+    messages,
+    messages_count: count,
+    total,
+  } = query
     ? await api(`/search?query=${encodeURIComponent(query)}&limit=${limit}`)
     : await api(`/messages?limit=${limit}`);
   if (!messages.length) {
