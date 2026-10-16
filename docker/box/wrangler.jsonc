@@ -1,0 +1,34 @@
+// Novu Box on Cloudflare, the host Worker (src/cloud/host.ts): the Box Durable Object with its container, and the
+// Slack router's. Deploy with `box deploy` (src/cli/deploy.ts), which adds the secrets, the Slack settings and the
+// bundled thin Worker (THIN_WORKER); wrangler 4.150 or later (README.md says why).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "novu-box-hub",
+  "main": "src/cloud/host.ts",
+  "account_id": "33ec6e8088201ace372678be50170681",
+  "compatibility_date": "2026-09-29",
+  "workers_dev": true,
+  "preview_urls": false,
+  "minify": true,
+  "observability": { "enabled": true },
+  "containers": [
+    {
+      "class_name": "Box",
+      "scheduling_policy": "durable_object",
+      // The instance type is the Box's choice, at start (box.ts). A box's snapshot only restores on the image it was taken on; the weekly rebake (novu-box.yml) moves `base`
+      // to a new one.
+      "images": { "box": { "dockerfile": "image/Dockerfile", "build_context": "." } }
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "BOX", "class_name": "Box" },
+      { "name": "ROUTER", "class_name": "Router" }
+    ]
+  },
+  "exports": {
+    "Box": { "type": "durable-object", "storage": "sqlite" },
+    "Router": { "type": "durable-object", "storage": "sqlite" }
+  },
+  "vars": { "CLOUDFLARE_ACCOUNT_ID": "33ec6e8088201ace372678be50170681" }
+}

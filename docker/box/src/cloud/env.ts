@@ -1,8 +1,8 @@
-// The host Worker's bindings (alchemy.run.ts). Secrets are strings at runtime; the optional ones a host deployed
-// without them lacks.
+// The host Worker's bindings (wrangler.jsonc, and the secrets `box deploy` sends). Secrets are strings at runtime; the
+// optional ones a host deployed without them lacks.
 
 import type { SecretName } from '../shared/names.ts';
-import type { Box } from './host.ts';
+import type { Box } from './box.ts';
 import type { Router } from './slack/router.ts';
 
 export type HostEnv = {
@@ -21,3 +21,8 @@ export type HostEnv = {
   readonly SLACK_ROUTER_URL?: string;
   readonly SLACK_CHANNEL?: string;
 } & { readonly [name in SecretName]?: string };
+
+// The thin Worker's bundled source (thin.ts), which the host uploads for every box; `box deploy` defines it.
+declare global {
+  const THIN_WORKER: string;
+}

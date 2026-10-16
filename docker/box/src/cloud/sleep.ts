@@ -1,0 +1,126 @@
+// When a box sleeps, and its save: the processes stop, the disk goes to a snapshot, the container stops.
+
+import type { StateAnswer } from '../shared/contracts.ts';
+import { BOX_CLI } from '../shared/names.ts';
+import { boxState, exitCode, messageOf, type Shell, withTimeout } from './container.ts';
+import type { HostEnv } from './env.ts';
+import { alarmIn, type Life, lifeOf, note, type Saving, type Snapshot, setLife, snapshotOf, unsaved } from './life.ts';
+
+export const ALARM_MS = 60 * 1000;
+// Past the longest save seen (over 6 minutes for a big disk): while the box saves, its alarm and inactivity timeout are
+// set this far ahead, so neither stops it half saved.
+export const SAVE_MS = 20 * 60 * 1000;
+// A save runs in an alarm, which gets 15 minutes: a hung quiesce or snapshot must still leave time to resume the box.
+const SAVE_BUDGET_MS = 14 * 60 * 1000;
+const QUIESCE_MS = 5 * 60 * 1000;
+const SNAPSHOT_MS = 7 * 60 * 1000;
+const RESUME_MS = 10 * 60 * 1000;
+
+// How long the box waits without requests before it saves itself and stops (the IDLE_MINUTES var, default 60).
+// The backstop, Cloudflare's inactivity timeout, is shorter, as in its autosave recipe: each alarm renews it, so it
+// only stops the container (without a snapshot) when the alarms stop.
+export const idleMs = (env: HostEnv) => Number(env.IDLE_MINUTES ?? 60) * 60 * 1000;
+export const backstopMs = (env: HostEnv) => Math.min(10 * 60 * 1000, idleMs(env) / 2);
+
+export interface Sleeper {
+  readonly shell: Shell;
+  readonly storage: DurableObjectStorage;
+  readonly env: HostEnv;
+  // A `destroy` came in after the save began: from then on it writes nothing.
+  readonly destroyed: () => boolean;
+}
+
+// Stops every process, the data stores last, so their files are whole, saves the disk to a snapshot, then stops the
+// container. A bake or apply that runs puts it off (`busy`). A box whose first bake never finished has nothing
+// worth saving. Anything else that goes wrong (or takes too long) starts the stopped processes again and keeps the
+// box running (with its alarm, to try again): stopping without a snapshot loses everything since the last one.
+export async function save(box: Sleeper, reason: string): Promise<StateAnswer> {
+  const { shell, storage, destroyed } = box;
+  const { container } = shell;
+  const write = async (life: Life) => !destroyed() && Boolean(await setLife(storage, life));
+  const started = Date.now();
+  const step = (what: string) =>
+    console.log(`sleep(${reason}) ${what} at ${Math.round((Date.now() - started) / 1000)}s`);
+  // Kept set, not deleted: deleting the alarm inside alarm() can cancel its retry.
+  const keepRunning = async () => {
+    if (destroyed()) return;
+    await container.setInactivityTimeout(backstopMs(box.env));
+    await alarmIn(storage, ALARM_MS);
+  };
+  let quiesced = false;
+  let current: Saving | null = null;
+  try {
+    const before = await lifeOf(storage);
+    if (before.phase !== 'running' && before.phase !== 'baking') return { state: before.phase };
+    current = {
+      phase: 'saving',
+      since: Date.now(),
+      before: before.phase,
+      snapshot: snapshotOf(before),
+      saveTries: before.saveTries,
+    };
+    await setLife(storage, current);
+    await alarmIn(storage, SAVE_MS);
+    await container.setInactivityTimeout(SAVE_MS);
+    const state = await boxState(shell, 'the state check');
+    if (state.lock) {
+      await write(before);
+      await keepRunning();
+
+      return { state: 'busy' };
+    }
+    if (!state.baked) {
+      await container.destroy(reason);
+      await write({
+        phase: 'new',
+        since: Date.now(),
+        error: note('the bake never finished; stopped without a snapshot'),
+      });
+      step('stopped');
+
+      return { state: 'stopped without a snapshot (never baked)' };
+    }
+    quiesced = true;
+    const snapshot = await snapshotOfBox(shell, step);
+    if (!(await write({ phase: 'asleep', since: Date.now(), snapshot, error: null }))) return { state: 'deleted' };
+    await container.destroy(reason);
+    step('stopped');
+
+    return { state: 'asleep', snapshot: snapshot.id };
+  } catch (error) {
+    if (destroyed()) return { state: 'deleted' };
+    step(`failed, the box keeps running: ${messageOf(error)}`);
+    const left = Math.max(60_000, started + SAVE_BUDGET_MS - Date.now());
+    if (container.running && quiesced) step(`resume exited ${await resume(shell, left)}`);
+    if (current) await write(unsaved(current, note(messageOf(error))));
+    if (container.running) await keepRunning();
+    throw error;
+  }
+}
+
+async function snapshotOfBox(shell: Shell, step: (what: string) => void): Promise<Snapshot> {
+  const quiesce = await exitCode(shell, [...BOX_CLI, 'quiesce'], QUIESCE_MS, 'quiesce');
+  step(`quiesce exited ${quiesce}`);
+  if (quiesce !== 0) throw new Error(`quiesce exited ${quiesce}`);
+  // A bake or apply whose exec came in just before the save began holds its lock by now.
+  if ((await boxState(shell, 'the state check')).lock) throw new Error('a bake or apply started as the save began');
+  const snapshot = await withTimeout(shell.container.snapshotContainer({ name: 'box' }), SNAPSHOT_MS, 'the snapshot');
+  if (!snapshot?.id) throw new Error('the snapshot came back without an id');
+  step(`snapshot ${snapshot.id} (${snapshot.size ?? '?'} bytes)`);
+
+  return snapshot;
+}
+
+// A restart of this object (a deploy) cut a save off while the container ran: whatever the save had stopped
+// starts again, and the box runs on until its next save.
+export async function recoverSave(shell: Shell, storage: DurableObjectStorage, life: Saving): Promise<Life> {
+  console.log('a restart cut the save off; resuming the box');
+  const resumed = await resume(shell, RESUME_MS);
+
+  return setLife(storage, unsaved(life, note(`a restart cut the save off; resume exited ${resumed}`)));
+}
+
+// `box resume`'s exit code, or why it has none.
+function resume(shell: Shell, timeoutMs: number): Promise<number | string> {
+  return exitCode(shell, [...BOX_CLI, 'resume'], timeoutMs, 'resume').catch(messageOf);
+}
