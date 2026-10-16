@@ -6,23 +6,42 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import { join } from 'node:path';
-import { boxWorker, EXIT_MARK, HOST, ROUTER, SECRETS } from './shared.mjs';
+import { boxWorker, COMPATIBILITY_DATE, EXIT_MARK, HOST, ROUTER, SECRETS, THIN_MODULES } from './shared.mjs';
 
 const HERE = new URL('.', import.meta.url).pathname;
 const BOX_DIR = join(HERE, '..');
 const WRANGLER = ['npx', '--yes', 'wrangler@4.150.0'];
-const COMPATIBILITY_DATE = '2026-09-29';
-// The Novu account's workers.dev subdomain.
+// The Novu account and its workers.dev subdomain.
+const ACCOUNT_ID = '33ec6e8088201ace372678be50170681';
 export const DOMAIN = process.env.BOX_CLOUD_DOMAIN ?? 'cli-shortener.workers.dev';
 // Novu Bot's credentials, for the router only (never a box): SLACK_BOT_TOKEN and SLACK_SIGNING_SECRET.
 export const SLACK_ENV = process.env.BOX_SLACK_ENV ?? join(os.homedir(), '.config/novu-box/slack.env');
+// The host's own keys, which no box gets: GITHUB_READ_TOKEN (fine-grained, read-only: Contents and Checks on
+// novuhq/novu and novuhq/packages-enterprise), for the boxes' git fetches and CI lookups instead of the caller's
+// token; CLOUDFLARE_API_TOKEN (Workers Scripts: Edit on the Novu account), for /__box/boxes (boxes.js).
+const GITHUB_ENV = join(os.homedir(), '.config/novu-box/github.env');
+const CLOUDFLARE_ENV = join(os.homedir(), '.config/novu-box/cloudflare.env');
 // #novu-box, the one channel the router posts in besides DMs.
 export const SLACK_CHANNEL = process.env.BOX_SLACK_CHANNEL ?? 'C0C9PHBUDR6';
 // A first bake takes 11 to 14 minutes on Cloudflare; a wake about 35 s, but the first restore of a snapshot 4 to 6
 // minutes (the Slack router waits as long).
 const READY_WITHIN_SECONDS = { baking: 25 * 60, waking: 8 * 60, running: 5 * 60 };
 
-export function cloudTarget({ box, log, githubToken }) {
+// The host's /__box/boxes routes (boxes.js): list, create and delete boxes' Workers without wrangler.
+export async function hostBoxes(path, { method = 'GET', githubToken }) {
+  const response = await fetch(`https://${HOST}.${DOMAIN}/__box/boxes${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${await githubToken()}` },
+  });
+  const body = await response.text();
+  if (!response.ok) throw new Error(`${method} ${HOST}/__box/boxes${path} -> ${response.status}: ${body.slice(0, 300)}`);
+
+  return JSON.parse(body);
+}
+
+// `viaHost`: the box's Worker is created and deleted by the host (hostBoxes), not wrangler, and the host isn't
+// deployed from here; for CI, which has no Cloudflare credentials.
+export function cloudTarget({ box, log, githubToken, viaHost = false }) {
   const worker = boxWorker(box);
   const origin = `https://${worker}.${DOMAIN}`;
 
@@ -34,7 +53,7 @@ export function cloudTarget({ box, log, githubToken }) {
     for (let attempt = 0; ; attempt++) {
       response = await fetch(`${origin}/__box${path}`, {
         ...init,
-        headers: { Authorization: `Bearer ${githubToken()}`, ...init.headers },
+        headers: { Authorization: `Bearer ${await githubToken()}`, ...init.headers },
       });
       if (!response.headers.get('content-type')?.includes('text/html')) break;
       if (path === '/state' && response.status === 404) return null;
@@ -102,12 +121,15 @@ export function cloudTarget({ box, log, githubToken }) {
   // (its layer holds their times), so BOX_IMAGE=<image@digest> redeploys the Worker code alone on that image.
   // With Novu Bot's credentials (SLACK_ENV), the host runs the Slack router with them, and the router's address
   // `novu-box-slack` (thin.js) deploys after it.
+  // GITHUB_ENV and CLOUDFLARE_ENV go to the host the same way, as secrets outside SECRETS, so no box gets them.
   function deployHost() {
     const image = process.env.BOX_IMAGE ?? pushImage();
-    const slack = fs.existsSync(SLACK_ENV) && readEnvFile(SLACK_ENV);
-    for (const name of ['SLACK_BOT_TOKEN', 'SLACK_SIGNING_SECRET'])
-      if (slack && !slack[name]) throw new Error(`${SLACK_ENV} has no ${name}`);
+    const slack = readKeys(SLACK_ENV, ['SLACK_BOT_TOKEN', 'SLACK_SIGNING_SECRET']);
     if (!slack) log(`no ${SLACK_ENV}, so boxes get no Slack`);
+    const github = readKeys(GITHUB_ENV, ['GITHUB_READ_TOKEN']);
+    if (!github) log(`no ${GITHUB_ENV}, so boxes fetch with their caller's token, and CI can't apply`);
+    const cloudflare = readKeys(CLOUDFLARE_ENV, ['CLOUDFLARE_API_TOKEN']);
+    if (!cloudflare) log(`no ${CLOUDFLARE_ENV}, so the host can't create or delete boxes' Workers (CI)`);
     withTempDir(HOST, (dir) => {
       const config = join(dir, 'wrangler.json');
       const secrets = join(dir, 'secrets.json');
@@ -131,20 +153,23 @@ export function cloudTarget({ box, log, githubToken }) {
             Router: { type: 'durable-object', storage: 'sqlite' },
           },
           observability: { enabled: true },
+          // The box Worker's modules, which the host uploads for a box CI creates (boxes.js).
+          define: {
+            THIN_SOURCES: JSON.stringify(
+              Object.fromEntries(THIN_MODULES.map((file) => [file, fs.readFileSync(join(HERE, file), 'utf8')]))
+            ),
+          },
           vars: {
             // Minutes without requests before a box saves itself and stops; default 60 (worker.js).
             ...(process.env.BOX_IDLE_MINUTES && { IDLE_MINUTES: process.env.BOX_IDLE_MINUTES }),
             ...(slack && { SLACK_ROUTER_URL: `https://${ROUTER}.${DOMAIN}`, SLACK_CHANNEL }),
+            CLOUDFLARE_ACCOUNT_ID: ACCOUNT_ID,
           },
         })
       );
       const env = readEnvFile(join(BOX_DIR, '.env'));
       const values = Object.fromEntries(SECRETS.filter((k) => env[k]).map((k) => [k, env[k]]));
-      if (slack)
-        Object.assign(values, {
-          SLACK_BOT_TOKEN: slack.SLACK_BOT_TOKEN,
-          SLACK_SIGNING_SECRET: slack.SLACK_SIGNING_SECRET,
-        });
+      Object.assign(values, slack, github, cloudflare);
       fs.writeFileSync(secrets, JSON.stringify(values), { mode: 0o600 });
       log(`deploying ${HOST} with ${image.split('@')[1].slice(0, 19)}; this applies to every box`);
       run(WRANGLER[0], [...WRANGLER.slice(1), 'deploy', '-c', config, '--secrets-file', secrets]);
@@ -155,14 +180,15 @@ export function cloudTarget({ box, log, githubToken }) {
     }
   }
 
-  function deployBoxWorker() {
+  async function deployBoxWorker() {
     log(`deploying ${worker}`);
-    deployThin(worker, { name: 'BOX', class_name: 'Box', script_name: HOST }, box);
+    if (viaHost) await hostBoxes(`/${box}`, { method: 'PUT', githubToken });
+    else deployThin(worker, { name: 'BOX', class_name: 'Box', script_name: HOST }, box);
   }
 
   async function snapshotOf(name) {
     const response = await fetch(`https://${boxWorker(name)}.${DOMAIN}/__box/state`, {
-      headers: { Authorization: `Bearer ${githubToken()}` },
+      headers: { Authorization: `Bearer ${await githubToken()}` },
     });
 
     return response.headers.get('content-type')?.includes('json') ? (await response.json()).snapshot?.id : null;
@@ -192,7 +218,9 @@ export function cloudTarget({ box, log, githubToken }) {
     return response?.status === 404 && response.headers.get('content-type')?.includes('text/plain');
   }
 
-  async function waitUntilReady(seconds) {
+  // `applyPending`: an apply follows, so an unfinished apply (and the processes it stopped) is fine; the box only
+  // has to be up.
+  async function waitUntilReady(seconds, { applyPending = false } = {}) {
     const deadline = Date.now() + seconds * 1000;
     let report;
     while (Date.now() < deadline) {
@@ -202,10 +230,11 @@ export function cloudTarget({ box, log, githubToken }) {
         throw new Error(
           `${worker} couldn't restore snapshot ${current.lostSnapshot.id} (${current.lostSnapshot.message}); snapshots expire 30 days after they were made or last restored. Run \`up\` again to bake it`
         );
-      report = await stream({ cmd: ['node', '/opt/box/box.mjs', 'doctor'] }, { capture: true })
+      // doctor exits 1 with its report when the box isn't fit, and without one when the box isn't up yet.
+      report = await stream({ cmd: ['sh', '-c', 'node /opt/box/box.mjs doctor || true'] }, { capture: true })
         .then(JSON.parse)
         .catch((error) => ({ ok: false, problems: [error.message.slice(0, 200)] }));
-      if (report.ok) return;
+      if (report.ok || (applyPending && report.problems.some((problem) => /didn't finish/.test(problem)))) return;
     }
     throw new Error(`${worker} isn't ready after ${seconds}s: ${report?.problems?.join('; ')}`);
   }
@@ -241,8 +270,9 @@ export function cloudTarget({ box, log, githubToken }) {
       const snapshot = await startingSnapshot({ from, fromBase, ref });
       if (snapshot) query.set('from', snapshot);
       // --deploy: a change to docker/box (image or Worker code) goes to the host, so to every box.
-      if (redeploy || !(await hostExists())) deployHost();
-      if (redeploy || !(await state())) deployBoxWorker();
+      if (viaHost && !(await hostExists())) throw new Error(`${HOST} isn't deployed`);
+      if (!viaHost && (redeploy || !(await hostExists()))) deployHost();
+      if (redeploy || !(await state())) await deployBoxWorker();
       const { state: started } = await (await call(`/up?${query}`, { method: 'POST' })).json();
       log(`${worker}: ${started}${started === 'baking' ? ` ${ref} (11 to 14 minutes)` : ''}`);
       await waitUntilReady(READY_WITHIN_SECONDS[started]);
@@ -272,6 +302,12 @@ export function cloudTarget({ box, log, githubToken }) {
     // Stops the box and forgets it (snapshot and settings), then deletes its Worker. Other boxes are untouched. When
     // the box can't be asked, this stops before deleting the Worker, which would leave the box running unreachable.
     async delete() {
+      if (viaHost) {
+        log(`${worker}: stopping and forgetting the box, then deleting its Worker`);
+        await hostBoxes(`/${box}`, { method: 'DELETE', githubToken });
+
+        return 0;
+      }
       if (await state()) {
         log(`${worker}: stopping and forgetting the box`);
         await call('/destroy', { method: 'POST' });
@@ -282,14 +318,21 @@ export function cloudTarget({ box, log, githubToken }) {
       return 0;
     },
 
-    async ready() {
+    // `applyPending`: also waits for a running box to be up, and takes an unfinished apply as fine (waitUntilReady).
+    async ready({ applyPending = false } = {}) {
       const current = await state();
       if (!current) throw new Error(`${worker} doesn't exist: \`cli.mjs up --cloud --box ${box}\``);
-      if (current.running) return;
-      log(`${worker} is asleep; waking it`);
-      await call('/up', { method: 'POST' });
-      await waitUntilReady(READY_WITHIN_SECONDS.waking);
+      if (current.running && !applyPending) return;
+      if (!current.running) {
+        log(`${worker} is asleep; waking it`);
+        await call('/up', { method: 'POST' });
+      }
+      await waitUntilReady(READY_WITHIN_SECONDS[current.running ? 'running' : 'waking'], { applyPending });
     },
+
+    state,
+
+    run: (cmd, { github = false, capture = false } = {}) => stream({ cmd, github }, { capture }),
 
     box: (args, { github = false, capture = false } = {}) =>
       stream({ cmd: ['node', '/opt/box/box.mjs', ...args], github }, { capture }),
@@ -343,6 +386,15 @@ function output(cmd, args) {
     throw new Error(`${cmd} ${args.join(' ')} failed: ${(result.stderr || result.stdout).slice(-600)}`);
 
   return `${result.stdout}\n${result.stderr}`.trim();
+}
+
+// The named keys from one of ~/.config/novu-box/*.env, or null when the file isn't there.
+function readKeys(file, names) {
+  if (!fs.existsSync(file)) return null;
+  const keys = readEnvFile(file);
+  for (const name of names) if (!keys[name]) throw new Error(`${file} has no ${name}`);
+
+  return Object.fromEntries(names.map((name) => [name, keys[name]]));
 }
 
 export function readEnvFile(file) {
