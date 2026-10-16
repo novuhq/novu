@@ -143,14 +143,16 @@ export class BoxSlack {
   }
 
   // The Slack router hands the box an event for one of its agents, signed with the box's secret, and gets the
-  // agent's answer; null while the box is asleep (this wakes it) or starting, and the router tries again. The
-  // bridge agents answer only people linked to a subscriber (subscriberAccess `restricted`), so a person's first
+  // agent's answer; null while the box is asleep (this wakes it), starting or saving, and the router tries again.
+  // The bridge agents answer only people linked to a subscriber (subscriberAccess `restricted`), so a person's first
   // event links them to subscriber slack-<user> in the box, as a customer's app does with <ConnectChat>.
   async event({ id, agent, user, headers, body, timeoutMs }) {
     this.box.touch();
     const origin = await this.storage.get('origin');
+    const { phase } = await this.box.current();
+    if (phase === 'saving') return null;
     if (!this.box.ctx.container.running) {
-      if (await this.storage.get('snapshot')) await this.box.wake(origin);
+      if (phase === 'asleep') await this.box.wake(origin);
 
       return null;
     }
