@@ -25,5 +25,6 @@ export const BRIDGE_URL = 'http://bridge.box.internal:4000/api/novu';
 export const BRIDGE_SECRET = `${DATA}/bridge/secret-key`;
 export const MANAGED_AGENT = 'box-managed';
 export const REPO_URL = process.env.BOX_REPO_URL ?? 'https://github.com/novuhq/novu.git';
-export const API_HEALTH = 'http://127.0.0.1:3000/v1/health-check';
+export const API = 'http://127.0.0.1:3000';
+export const API_HEALTH = `${API}/v1/health-check`;
 export const WORKER_HEALTH = 'http://127.0.0.1:3004/v1/health-check';

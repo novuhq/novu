@@ -12,105 +12,81 @@
 // Replies { id, date } like a provider; a Mailpit failure becomes a 502 so the Novu step fails too.
 
 import http from 'node:http';
-import * as NodeHttpServer from '@effect/platform-node/NodeHttpServer';
-import * as NodeRuntime from '@effect/platform-node/NodeRuntime';
-import { Effect, Layer } from 'effect';
-import {
-  FetchHttpClient,
-  HttpClient,
-  HttpClientRequest,
-  HttpRouter,
-  HttpServerRequest,
-  HttpServerResponse,
-} from 'effect/http';
+import { text } from 'node:stream/consumers';
+import { fetchJson } from '../node/http.ts';
+import { fromJson, MailpitSent, ProviderRequest } from '../shared/contracts.ts';
 
 const PORT = Number(process.env.SINK_PORT ?? 8026);
 const MAILPIT = process.env.SINK_MAILPIT_URL ?? 'http://127.0.0.1:8025/mail';
 
-// biome-ignore lint/suspicious/noExplicitAny: whatever a Novu provider sent
-type Body = any;
-type Sent = { readonly ok: true; readonly id: string } | { readonly ok: false; readonly why: string };
+type Body = Record<string, unknown>;
 interface Message {
   readonly to: string;
   readonly subject: string;
-  readonly text: string | undefined;
+  readonly text: string;
 }
+
+const str = (value: unknown) => (value === undefined || value === null ? '' : String(value));
 
 const channels: Record<string, (body: Body) => Message> = {
   sms: (body) => ({
-    to: `phone-${String(body.to ?? 'unknown').replace(/[^0-9A-Za-z]/g, '')}@sms.box.local`,
+    to: `phone-${str(body.to ?? 'unknown').replace(/[^0-9A-Za-z]/g, '')}@sms.box.local`,
     subject: `SMS to ${body.to}`,
-    text: body.content,
+    text: str(body.content),
   }),
   push: (body) => ({
     to: 'push@push.box.local',
     subject: `Push: ${body.title ?? '(no title)'}`,
-    text: `${body.title ?? ''}\n${body.content ?? ''}\n\nDevice tokens: ${([] as Array<string>).concat(body.target ?? []).join(', ')}`,
+    text: `${str(body.title)}\n${str(body.content)}\n\nDevice tokens: ${[body.target ?? []].flat().join(', ')}`,
   }),
   chat: (body) => ({
     to: 'chat@chat.box.local',
-    subject: `Chat: ${String(body.content ?? '').slice(0, 80)}`,
-    text: body.content,
+    subject: `Chat: ${str(body.content).slice(0, 80)}`,
+    text: str(body.content),
   }),
 };
 
-const catchMessage = Effect.gen(function* () {
-  const request = yield* HttpServerRequest.HttpServerRequest;
-  const { channel = '' } = yield* HttpRouter.params;
-  const toMessage = channels[channel];
-  if (!toMessage) return HttpServerResponse.empty({ status: 404 });
-  const raw = yield* Effect.orElseSucceed(request.text, () => '');
-  let body: Body;
-  try {
-    body = JSON.parse(raw);
-  } catch {
-    body = { raw };
-  }
+async function catchMessage(
+  channel: string,
+  toMessage: (body: Body) => Message,
+  request: http.IncomingMessage
+): Promise<[number, object]> {
+  const raw = await text(request);
+  const body = fromJson(ProviderRequest).safeParse(raw).data ?? { raw };
   const message = toMessage(body);
   const headers = Object.fromEntries(
     Object.entries(request.headers).filter(([key]) => !['host', 'content-length', 'connection'].includes(key))
   );
-  const text = `${message.text ?? ''}\n\n--- request Novu sent to the ${channel} provider ---\n${JSON.stringify({ headers, body }, null, 2)}\n`;
+  const sent = JSON.stringify({ headers, body }, null, 2);
+  try {
+    const { ID } = await fetchJson(`${MAILPIT}/api/v1/send`, MailpitSent, {
+      method: 'POST',
+      json: {
+        From: { Email: `${channel}@novu-box.local`, Name: `Novu ${channel.toUpperCase()}` },
+        To: [{ Email: message.to }],
+        Subject: message.subject,
+        Text: `${message.text}\n\n--- request Novu sent to the ${channel} provider ---\n${sent}\n`,
+        Tags: [channel],
+      },
+    });
+    console.log(`${channel}: ${message.subject} -> mailpit ${ID}`);
 
-  const send = Effect.gen(function* () {
-    const response = yield* HttpClient.execute(
-      HttpClientRequest.post(`${MAILPIT}/api/v1/send`).pipe(
-        HttpClientRequest.bodyJsonUnsafe({
-          From: { Email: `${channel}@novu-box.local`, Name: `Novu ${channel.toUpperCase()}` },
-          To: [{ Email: message.to }],
-          Subject: message.subject,
-          Text: text,
-          Tags: [channel],
-        })
-      )
-    );
-    if (response.status < 200 || response.status >= 300) return { ok: false, why: `${response.status}` } as Sent;
-    const { ID } = (yield* response.json) as { ID: string };
+    return [200, { id: ID, date: new Date().toISOString() }];
+  } catch (error) {
+    console.error(`${channel}: Mailpit send failed: ${error instanceof Error ? error.message : error}`);
 
-    return { ok: true, id: ID } as Sent;
-  });
-  const sent = yield* send.pipe(
-    Effect.catch((error) => Effect.succeed<Sent>({ ok: false, why: error.message })),
-    Effect.provide(FetchHttpClient.layer)
-  );
-
-  if (!sent.ok) {
-    console.error(`${channel}: Mailpit send failed: ${sent.why}`);
-
-    return HttpServerResponse.jsonUnsafe({ error: 'mailpit send failed' }, { status: 502 });
+    return [502, { error: 'mailpit send failed' }];
   }
-  console.log(`${channel}: ${message.subject} -> mailpit ${sent.id}`);
+}
 
-  return HttpServerResponse.jsonUnsafe({ id: sent.id, date: new Date().toISOString() });
-});
-
-const Routes = Layer.mergeAll(
-  HttpRouter.add('GET', '/health', HttpServerResponse.text('ok')),
-  HttpRouter.add('POST', '/:channel', catchMessage)
-);
-
-HttpRouter.serve(Routes, { disableLogger: true }).pipe(
-  Layer.provide(NodeHttpServer.layer(() => http.createServer(), { port: PORT, host: '127.0.0.1' })),
-  Layer.launch,
-  NodeRuntime.runMain
-);
+http
+  .createServer(async (request, response) => {
+    const path = new URL(request.url ?? '/', 'http://sink').pathname;
+    if (request.method === 'GET' && path === '/health') return response.end('ok');
+    const channel = path.slice(1);
+    const toMessage = request.method === 'POST' ? channels[channel] : undefined;
+    if (!toMessage) return response.writeHead(404).end();
+    const [status, body] = await catchMessage(channel, toMessage, request);
+    response.writeHead(status, { 'Content-Type': 'application/json' }).end(JSON.stringify(body));
+  })
+  .listen(PORT, '127.0.0.1');

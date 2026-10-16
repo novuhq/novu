@@ -6,4 +6,5 @@
 !image/process-compose.yaml
 !image/config
 !src/shared
+!src/node
 !src/box
