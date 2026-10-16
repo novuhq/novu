@@ -1,13 +1,11 @@
-// What the box, the CLI, CI and the Workers share by name. No imports, so the thin Worker (thin.ts) can bundle it
-// without Effect.
+// What the box, the CLI, CI and the Workers share by name. No imports, so the thin Worker (thin.ts) can bundle it.
 
-// The host Worker: the Box and Router classes, the box image, the secrets (src/cloud/host.ts, alchemy.run.ts).
-export const HOST = 'novu-box-core';
-// The Slack router's address: Novu Bot's request URL is https://novu-box-slack.<DOMAIN>/slack.
+// The host Worker: the Box and Router classes, the box image, the secrets (src/cloud/host.ts, wrangler.jsonc).
+export const HOST = 'novu-box-hub';
+// The Slack router's address (wrangler.slack.jsonc): Novu Bot's request URL is https://novu-box-slack.<DOMAIN>/slack.
 export const ROUTER = 'novu-box-slack';
 export const COMPATIBILITY_DATE = '2026-09-29';
-// The Novu account and its workers.dev subdomain.
-export const ACCOUNT_ID = '33ec6e8088201ace372678be50170681';
+// The Novu account's workers.dev subdomain.
 export const DOMAIN = 'cli-shortener.workers.dev';
 // #novu-box, the one channel the router posts in besides DMs.
 export const SLACK_CHANNEL = 'C0C9PHBUDR6';

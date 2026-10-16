@@ -1,3 +1,4 @@
 node_modules/
-.alchemy/
+.wrangler/
+.wrangler.box-image.json
 !package-lock.json

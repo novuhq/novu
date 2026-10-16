@@ -8,17 +8,15 @@
   },
   "scripts": {
     "box": "node src/cli/main.ts",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p src/cloud",
-    "deploy": "alchemy deploy --stage prod"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src/cloud"
   },
   "dependencies": {
-    "@effect/platform-node": "4.0.5",
-    "effect": "4.0.5"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261016.1",
     "@types/node": "22.20.5",
-    "alchemy": "2.0.0-beta.83",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "wrangler": "4.150.0"
   }
 }

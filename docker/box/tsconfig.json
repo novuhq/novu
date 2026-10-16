@@ -16,5 +16,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["src/shared", "src/box", "src/cli", "src/ci", "alchemy.run.ts"]
+  "include": ["src/shared", "src/node", "src/box", "src/cli", "src/ci"]
 }

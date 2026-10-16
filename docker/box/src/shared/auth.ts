@@ -1,7 +1,7 @@
 // Who may call /__box/* (thin.ts, and the host's /__box/boxes in boxes.ts): a GitHub user with push access to
 // novuhq/novu, by their token, or the Novu Box workflow (.github/workflows/novu-box.yml) in novuhq/novu, by its
-// GitHub Actions OIDC token, so CI needs no stored secret. Plain TypeScript (WebCrypto, fetch), no Effect: the thin
-// Worker bundles it and the host uploads that for every box.
+// GitHub Actions OIDC token, so CI needs no stored secret. The thin Worker bundles it, and the host uploads that for
+// every box, so it checks GitHub's answers by hand rather than with zod.
 
 import { bearer, OIDC_AUDIENCE } from './names.ts';
 
@@ -9,21 +9,11 @@ const ISSUER = 'https://token.actions.githubusercontent.com';
 const REPOSITORY = 'novuhq/novu';
 const WORKFLOW = `${REPOSITORY}/.github/workflows/novu-box.yml@`;
 
-export interface OidcClaims {
-  readonly iss: string;
-  readonly aud: string | ReadonlyArray<string>;
-  readonly exp: number;
-  readonly nbf?: number;
-  readonly repository: string;
-  readonly workflow_ref?: string;
-  readonly [claim: string]: unknown;
-}
-
 export async function authorize(request: Request): Promise<boolean> {
   const token = bearer(request);
   if (!token) return false;
 
-  return isOidc(token) ? Boolean(await verifyOidc(token)) : canPush(token);
+  return isOidc(token) ? verifyOidc(token) : canPush(token);
 }
 
 export function isOidc(token: string | undefined): boolean {
@@ -39,21 +29,21 @@ async function canPush(token: string): Promise<boolean> {
   const response = await fetch(`https://api.github.com/repos/${REPOSITORY}`, {
     headers: { Authorization: `Bearer ${token}`, 'User-Agent': 'novu-box' },
   });
-  if (!response.ok || !((await response.json()) as { permissions?: { push?: boolean } }).permissions?.push)
-    return false;
+  const repo = response.ok ? JSON.parse(await response.text()) : null;
+  if (repo?.permissions?.push !== true) return false;
   pushers.set(key, Date.now());
 
   return true;
 }
 
-// The claims of a GitHub Actions OIDC token from the Novu Box workflow in novuhq/novu, or null: RS256 against
-// GitHub's published keys, then issuer, audience, time and workflow. A fork's pull_request run gets no such token.
-export async function verifyOidc(token: string): Promise<OidcClaims | null> {
+// Whether this is a GitHub Actions OIDC token from the Novu Box workflow in novuhq/novu: RS256 against GitHub's
+// published keys, then issuer, audience, time and workflow. A fork's pull_request run gets no such token.
+async function verifyOidc(token: string): Promise<boolean> {
   try {
     const [header = '', payload = '', signature = ''] = token.split('.');
-    const { alg, kid } = JSON.parse(text(header)) as { alg?: string; kid?: string };
-    const jwk = alg === 'RS256' && kid ? await githubKey(kid) : undefined;
-    if (!jwk) return null;
+    const { alg, kid } = JSON.parse(text(header));
+    const jwk = alg === 'RS256' && typeof kid === 'string' ? await githubKey(kid) : undefined;
+    if (!jwk) return false;
     const key = await crypto.subtle.importKey(
       'jwk',
       { kty: jwk.kty, n: jwk.n, e: jwk.e, alg: 'RS256', ext: true },
@@ -62,20 +52,22 @@ export async function verifyOidc(token: string): Promise<OidcClaims | null> {
       ['verify']
     );
     const signed = new TextEncoder().encode(`${header}.${payload}`);
-    if (!(await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, bytes(signature), signed))) return null;
-    const claims = JSON.parse(text(payload)) as OidcClaims;
+    if (!(await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, bytes(signature), signed))) return false;
+    const claims = JSON.parse(text(payload));
     const now = Date.now() / 1000;
-    const valid =
-      claims.iss === ISSUER &&
-      ([] as Array<string>).concat(claims.aud).includes(OIDC_AUDIENCE) &&
-      claims.exp > now &&
-      (claims.nbf ?? 0) <= now + 60 &&
-      claims.repository === REPOSITORY &&
-      Boolean(claims.workflow_ref?.startsWith(WORKFLOW));
 
-    return valid ? claims : null;
+    return (
+      claims.iss === ISSUER &&
+      [claims.aud].flat().includes(OIDC_AUDIENCE) &&
+      typeof claims.exp === 'number' &&
+      claims.exp > now &&
+      (typeof claims.nbf === 'number' ? claims.nbf : 0) <= now + 60 &&
+      claims.repository === REPOSITORY &&
+      typeof claims.workflow_ref === 'string' &&
+      claims.workflow_ref.startsWith(WORKFLOW)
+    );
   } catch {
-    return null;
+    return false;
   }
 }
 
@@ -93,10 +85,15 @@ async function githubKey(kid: string): Promise<Jwk | undefined> {
   const age = Date.now() - keys.at;
   if (age > 60 * 60 * 1000 || (age > 60 * 1000 && !keys.list.some((key) => key.kid === kid))) {
     const response = await fetch(`${ISSUER}/.well-known/jwks`, { headers: { 'User-Agent': 'novu-box' } });
-    if (response.ok) keys = { list: ((await response.json()) as { keys: Array<Jwk> }).keys, at: Date.now() };
+    const body = response.ok ? JSON.parse(await response.text()) : null;
+    if (Array.isArray(body?.keys)) keys = { list: body.keys.filter(isJwk), at: Date.now() };
   }
 
   return keys.list.find((key) => key.kid === kid);
+}
+
+function isJwk(key: Partial<Record<keyof Jwk, string>> | null): key is Jwk {
+  return [key?.kid, key?.kty, key?.n, key?.e].every((field) => typeof field === 'string');
 }
 
 function bytes(base64url: string): Uint8Array<ArrayBuffer> {

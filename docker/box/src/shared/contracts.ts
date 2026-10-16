@@ -1,172 +1,253 @@
-// Every contract between the parts of Novu Box, as Schemas: the files a box keeps in /data, the JSON its commands
-// print, the host's /__box/* bodies and answers, and what the Slack router and boxes send each other. Each side decodes
-// at its boundary. Only `effect` core.
+// What crosses a boundary, decoded where it comes in. Objects keep only the fields the box reads.
 
-import { Schema } from 'effect';
+import * as z from 'zod';
 
-// --- In the box: files under /data and what `box state` and `box doctor` print ---
+// `schema`, from JSON text.
+export function fromJson<T extends z.ZodType>(schema: T) {
+  return z
+    .string()
+    .transform((text, context) => {
+      try {
+        return JSON.parse(text);
+      } catch {
+        context.addIssue({ code: 'custom', message: `not JSON: ${text.slice(0, 200)}` });
 
-// /data/.baked.json: the commit the golden /data was baked from.
-export const Baked = Schema.Struct({ ref: Schema.String, sha: Schema.String, at: Schema.String });
-export type Baked = typeof Baked.Type;
+        return z.NEVER;
+      }
+    })
+    .pipe(schema);
+}
 
-// /data/.applied.json: the last apply that finished. `files`: how many changed; `source`: a GitHub ref or a sync bundle.
-export const Applied = Schema.Struct({
-  ref: Schema.String,
-  source: Schema.Literals(['github', 'sync']),
-  head: Schema.String,
-  sha: Schema.String,
-  base: Schema.String,
-  files: Schema.Number,
-  full: Schema.Boolean,
-  at: Schema.String,
+// --- The box's files under /data, and what `box state` and `box doctor` print ---
+
+export const Baked = z.object({ ref: z.string(), sha: z.string(), at: z.string() });
+export type Baked = z.infer<typeof Baked>;
+
+// The last apply that finished; `files`: how many changed.
+export const Applied = z.object({
+  ref: z.string(),
+  source: z.enum(['github', 'sync']),
+  head: z.string(),
+  sha: z.string(),
+  base: z.string(),
+  files: z.number(),
+  full: z.boolean(),
+  at: z.string(),
 });
-export type Applied = typeof Applied.Type;
+export type Applied = z.infer<typeof Applied>;
 
-// /data/.applying.json: written before an apply checks out its commit, removed when it succeeds. The next apply
-// plans for these files too (and for everything when `full`).
-export const Applying = Schema.Struct({
-  sha: Schema.String,
-  files: Schema.Array(Schema.String),
-  full: Schema.Boolean,
-  at: Schema.String,
+// Written before an apply checks out its commit, removed when it succeeds; the next apply plans for these files too.
+export const Applying = z.object({ sha: z.string(), files: z.array(z.string()), full: z.boolean(), at: z.string() });
+export type Applying = z.infer<typeof Applying>;
+
+export const LockHolder = z.object({ pid: z.number(), command: z.string(), at: z.string() });
+export type LockHolder = z.infer<typeof LockHolder>;
+
+export const BoxState = z.object({
+  baked: Baked.nullable(),
+  applied: Applied.nullable(),
+  applying: Applying.nullable(),
+  lock: LockHolder.nullable(),
 });
-export type Applying = typeof Applying.Type;
+export type BoxState = z.infer<typeof BoxState>;
 
-// /data/run/box.lock: the one bake or apply that runs.
-export const LockHolder = Schema.Struct({ pid: Schema.Number, command: Schema.String, at: Schema.String });
-export type LockHolder = typeof LockHolder.Type;
-
-// `box state`
-export const BoxState = Schema.Struct({
-  baked: Schema.NullOr(Baked),
-  applied: Schema.NullOr(Applied),
-  applying: Schema.NullOr(Applying),
-  lock: Schema.NullOr(LockHolder),
-});
-export type BoxState = typeof BoxState.Type;
-
-export const ProcessReport = Schema.Struct({
-  name: Schema.String,
-  status: Schema.String,
-  ready: Schema.String,
-  exitCode: Schema.Number,
-  restarts: Schema.Number,
-});
-
-// `box doctor`
-export const DoctorReport = Schema.Struct({
-  ok: Schema.Boolean,
-  problems: Schema.Array(Schema.String),
-  baked: Schema.NullOr(Baked),
-  applied: Schema.NullOr(Applied),
-  http: Schema.Record(Schema.String, Schema.Number),
-  processes: Schema.Array(ProcessReport),
-});
-export type DoctorReport = typeof DoctorReport.Type;
-
-// What an apply does, from the files it changes.
-export const ApplyPlan = Schema.Struct({
-  install: Schema.Boolean,
-  build: Schema.Array(Schema.String),
-  enterprise: Schema.Boolean,
-  restart: Schema.Array(Schema.String),
-});
-export type ApplyPlan = typeof ApplyPlan.Type;
-
-// --- The host's /__box/* routes (src/cloud/host.ts, boxes.ts) and their callers (src/cli, src/ci) ---
-
-export const Phase = Schema.Literals(['new', 'baking', 'running', 'saving', 'asleep', 'lost']);
-export type Phase = typeof Phase.Type;
-
-export const ErrorNote = Schema.Struct({ at: Schema.String, message: Schema.String });
-export const LostNote = Schema.Struct({ id: Schema.String, at: Schema.String, message: Schema.String });
-
-// GET /__box/state. The Slack part (src/cloud/slack/box.ts) adds its own keys, which callers may read loosely.
-export const BoxStatus = Schema.Struct({
-  phase: Phase,
-  since: Schema.NullOr(Schema.String),
-  running: Schema.Boolean,
-  snapshot: Schema.NullOr(
-    Schema.Struct({ id: Schema.String, name: Schema.optional(Schema.String), gigabytes: Schema.NullOr(Schema.Number) })
+export const DoctorReport = z.object({
+  ok: z.boolean(),
+  problems: z.array(z.string()),
+  baked: Baked.nullable(),
+  applied: Applied.nullable(),
+  lock: LockHolder.nullable(),
+  http: z.record(z.string(), z.number()),
+  processes: z.array(
+    z.object({ name: z.string(), status: z.string(), ready: z.string(), exitCode: z.number(), restarts: z.number() })
   ),
-  saveTries: Schema.Number,
-  error: Schema.NullOr(ErrorNote),
-  lost: Schema.NullOr(LostNote),
-  lastActivity: Schema.String,
-  origin: Schema.optional(Schema.NullOr(Schema.String)),
 });
-export type BoxStatus = typeof BoxStatus.Type;
+export type DoctorReport = z.infer<typeof DoctorReport>;
 
-// POST /__box/exec
-export const ExecRequest = Schema.Struct({
-  cmd: Schema.Array(Schema.String),
-  cwd: Schema.optional(Schema.String),
-  github: Schema.optional(Schema.Boolean),
+// One row of `process-compose process list -o json`.
+export const PcProcesses = z.array(
+  z.object({
+    name: z.string(),
+    status: z.string(),
+    is_ready: z.string(),
+    is_running: z.boolean(),
+    exit_code: z.number(),
+    restarts: z.number(),
+  })
+);
+export type PcProcess = z.infer<typeof PcProcesses>[number];
+
+// A line of process-compose's log, and an app's JSON log line inside its `message`: fields that aren't what `box
+// logs` expects are left out rather than failing the line.
+export const PcLogLine = z.object({
+  process: z.string().optional().catch(undefined),
+  message: z.unknown(),
+  level: z.string().optional().catch(undefined),
 });
-export type ExecRequest = typeof ExecRequest.Type;
-
-// POST /__box/up, /__box/down, /__box/destroy
-export const StateAnswer = Schema.Struct({
-  state: Schema.String,
-  ref: Schema.optional(Schema.String),
-  snapshot: Schema.optional(Schema.String),
+const text = z.string().optional().catch(undefined);
+export const AppLogLine = z.object({
+  level: z.union([z.number(), z.string()]),
+  msg: z.unknown(),
+  err: z.object({ message: text }).optional().catch(undefined),
+  error: z
+    .union([z.string(), z.object({ message: text })])
+    .optional()
+    .catch(undefined),
+  context: text,
+  logger: text,
 });
-export type StateAnswer = typeof StateAnswer.Type;
 
-// PUT /__box/file
-export const FileAnswer = Schema.Struct({ path: Schema.String, exitCode: Schema.Number });
+// --- The checkout's own JSON ---
 
-// GET /__box/boxes, PUT and DELETE /__box/boxes/<box>
-export const BoxList = Schema.Struct({ boxes: Schema.Array(Schema.String) });
-export const BoxCreated = Schema.Struct({ box: Schema.String, origin: Schema.String });
-export const BoxDeleted = Schema.Struct({ box: Schema.String, state: Schema.Literal('deleted') });
-
-// --- Slack: the router (src/cloud/slack/router.ts) and a box's side of it (src/cloud/slack/box.ts), over RPC ---
-
-// What Router.register gives a box: one signing secret, a fake bot token per agent, the real bot's workspace and user.
-export const SlackCredentials = Schema.Struct({
-  signingSecret: Schema.String,
-  tokens: Schema.Record(Schema.String, Schema.String),
-  team: Schema.Struct({ id: Schema.String, name: Schema.String }),
-  botUserId: Schema.String,
+export const PackageJson = z.object({
+  dependencies: z.record(z.string(), z.string()).optional(),
+  devDependencies: z.record(z.string(), z.string()).optional(),
+  optionalDependencies: z.record(z.string(), z.string()).optional(),
 });
-export type SlackCredentials = typeof SlackCredentials.Type;
-
-// An agent the box set up (Router.ready): its identifier, its id in the box's API, its Slack integration.
-export const SlackAgent = Schema.Struct({
-  identifier: Schema.String,
-  id: Schema.String,
-  integrationIdentifier: Schema.String,
+export const NxGraph = z.object({
+  graph: z.object({
+    nodes: z.record(
+      z.string(),
+      z.object({ data: z.object({ root: z.string(), targets: z.record(z.string(), z.unknown()).optional() }) })
+    ),
+    dependencies: z.record(z.string(), z.array(z.object({ target: z.string() }))),
+  }),
 });
-export type SlackAgent = typeof SlackAgent.Type;
+export const NxProjects = z.array(z.string());
+export const PnpmPackages = z.array(z.object({ name: z.string(), path: z.string() }));
+export const NestConfig = z.looseObject({ compilerOptions: z.looseObject({}) });
 
-// Box.slackEvent: an event for one of the box's agents, signed with the box's secret.
-export const SlackEvent = Schema.Struct({
-  id: Schema.optional(Schema.String),
-  agent: SlackAgent,
-  user: Schema.optional(Schema.String),
-  headers: Schema.Record(Schema.String, Schema.String),
-  body: Schema.String,
-  timeoutMs: Schema.optional(Schema.Number),
-});
-export type SlackEvent = typeof SlackEvent.Type;
+// --- The host's /__box/* routes ---
 
-// The agent's answer; Box.slackEvent gives null while the box is asleep, starting or saving.
-export const SlackAnswer = Schema.Struct({
-  ok: Schema.Boolean,
-  status: Schema.Number,
-  contentType: Schema.String,
-  text: Schema.String,
-});
-export type SlackAnswer = typeof SlackAnswer.Type;
+export const Phase = z.enum(['new', 'baking', 'running', 'saving', 'asleep', 'lost']);
+export type Phase = z.infer<typeof Phase>;
 
-// The last Slack events the router handed to the box's agents, in GET /__box/state.
-export const SlackEventNote = Schema.Struct({
-  id: Schema.optional(Schema.String),
-  agent: Schema.String,
-  user: Schema.optional(Schema.String),
-  status: Schema.Number,
-  at: Schema.String,
+const Note = z.object({ at: z.string(), message: z.string() });
+export const BoxStatus = z.object({
+  phase: Phase,
+  since: z.string().nullable(),
+  running: z.boolean(),
+  snapshot: z.object({ id: z.string(), name: z.string().optional(), gigabytes: z.number().nullable() }).nullable(),
+  saveTries: z.number(),
+  error: Note.nullable(),
+  lost: Note.extend({ id: z.string() }).nullable(),
+  lastActivity: z.string(),
+  origin: z.string().nullish(),
 });
-export type SlackEventNote = typeof SlackEventNote.Type;
+export type BoxStatus = z.infer<typeof BoxStatus>;
+
+export const ExecRequest = z.object({
+  cmd: z.array(z.string()).min(1),
+  cwd: z.string().optional(),
+  github: z.boolean().optional(),
+});
+
+export const StateAnswer = z.object({ state: z.string(), ref: z.string().optional(), snapshot: z.string().optional() });
+export type StateAnswer = z.infer<typeof StateAnswer>;
+
+export const BoxList = z.object({ boxes: z.array(z.string()) });
+
+// --- Cloudflare and GitHub ---
+
+export const CloudflareAnswer = z.object({ success: z.boolean(), errors: z.unknown(), result: z.unknown() });
+export const ScriptList = z.array(z.object({ id: z.string() }));
+
+export const CheckRuns = z.object({
+  check_runs: z.array(z.object({ status: z.string(), conclusion: z.string().nullable(), html_url: z.string() })),
+});
+const Label = z.object({ name: z.string() });
+export const PullRequestEvent = z.object({
+  action: z.string(),
+  number: z.number(),
+  sender: z.object({ login: z.string() }).optional(),
+  label: Label.optional(),
+  pull_request: z.object({ state: z.string(), labels: z.array(Label), head: z.object({ sha: z.string() }) }),
+});
+export type PullRequestEvent = z.infer<typeof PullRequestEvent>;
+export const Pull = z.object({ state: z.string(), labels: z.array(Label) });
+export const IssueComment = z.object({ id: z.number(), body: z.string().nullish() });
+export const IssueEvent = z.object({
+  event: z.string(),
+  label: Label.optional(),
+  actor: z.object({ login: z.string() }).nullish(),
+});
+export const Permission = z.object({ permission: z.string() });
+export const OidcToken = z.object({ value: z.string() });
+
+// --- What the bake and start read from Clerk, Stripe, the box's own API and the bridge app ---
+
+// A Clerk or Stripe object.
+export const WithId = z.object({ id: z.string() });
+export type WithId = z.infer<typeof WithId>;
+export const ClerkUsers = z.array(WithId);
+export const ClerkMemberships = z.object({
+  data: z.array(z.object({ organization: WithId.extend({ name: z.string() }) })),
+});
+export const ClerkToken = z.object({ jwt: z.string() });
+
+const data = <T extends z.ZodType>(schema: T) => z.object({ data: schema });
+const ApiId = z.object({ _id: z.string() });
+export const ApiOrganization = data(ApiId.extend({ name: z.string() }));
+export const ApiUser = data(ApiId.extend({ email: z.string(), firstName: z.string(), lastName: z.string() }));
+export const ApiEnvironments = data(
+  z.array(ApiId.extend({ name: z.string(), apiKeys: z.array(z.object({ key: z.string() })) }))
+);
+export const ApiEnvironment = data(ApiId);
+export const ApiCreated = data(ApiId);
+export const ApiIntegrations = data(z.array(ApiId.extend({ providerId: z.string(), _environmentId: z.string() })));
+export const ApiSubscription = data(z.object({ apiServiceLevel: z.string().nullish(), status: z.string().nullish() }));
+export const ApiSynced = data(z.array(z.unknown()));
+export const BridgeDiscovery = z.object({ agents: z.array(z.object({ agentId: z.string() })).default([]) });
+
+const Usage = z.object({ recurring: z.object({ usage_type: z.string() }) });
+export const StripeCustomers = data(
+  z.array(
+    WithId.extend({
+      metadata: z.record(z.string(), z.string()),
+      subscriptions: data(z.array(WithId.extend({ items: data(z.array(WithId.extend({ price: Usage }))) }))).optional(),
+    })
+  )
+);
+export const StripePrices = data(z.array(WithId.extend(Usage.shape)));
+
+// --- The sink: whatever a Novu HTTP provider sent, and Mailpit's answer to it ---
+
+export const ProviderRequest = z.record(z.string(), z.unknown());
+export const MailpitSent = z.object({ ID: z.string() });
+
+// --- Mailpit, through `box mail` ---
+
+const Address = z.object({ Name: z.string().optional(), Address: z.string() });
+const Addresses = z.array(Address).nullish();
+export type MailAddress = z.infer<typeof Address>;
+const Mail = z.object({ ID: z.string(), To: Addresses, Subject: z.string(), Tags: z.array(z.string()).nullish() });
+export const MailList = z.object({
+  messages: z.array(Mail.extend({ Created: z.string() })),
+  messages_count: z.number().optional(),
+  total: z.number().optional(),
+});
+export const MailMessage = Mail.extend({
+  Date: z.string(),
+  From: Address.nullish(),
+  Cc: Addresses,
+  HTML: z.string(),
+  Text: z.string(),
+  Attachments: z.array(z.object({ FileName: z.string(), ContentType: z.string(), Size: z.number() })).nullish(),
+});
+export const HtmlCheck = z.object({
+  Total: z.object({ Supported: z.number(), Partial: z.number(), Unsupported: z.number(), Tests: z.number() }),
+  Warnings: z
+    .array(
+      z.object({
+        Title: z.string(),
+        URL: z.string(),
+        Score: z.object({ Found: z.number() }),
+        Results: z.array(z.object({ Family: z.string(), Platform: z.string(), Support: z.string() })),
+      })
+    )
+    .nullish(),
+});
+export const LinkCheck = z.object({
+  Errors: z.number(),
+  Links: z.array(z.object({ URL: z.string(), StatusCode: z.number(), Status: z.string().optional() })),
+});
