@@ -43,6 +43,16 @@ export async function stopRunning(names: ReadonlyArray<string>): Promise<void> {
   );
 }
 
+// A process waiting for an app that was stopped before it got healthy (stripe waits for the API) is Skipped, and
+// stays so when that app restarts.
+export async function startSkipped(): Promise<void> {
+  const skipped = (await list()).filter((row) => row.status === 'Skipped').map((row) => row.name);
+  if (skipped.length)
+    await step(`start ${skipped.join(' ')}`, async () => {
+      for (const name of skipped) await pc(['process', 'start', name]);
+    });
+}
+
 // Every store answers its readiness probe and `migrate` has run: what the apps, and an apply, need first.
 export async function storesReady(): Promise<boolean> {
   const rows = await list();

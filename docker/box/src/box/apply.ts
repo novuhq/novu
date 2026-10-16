@@ -22,7 +22,7 @@ import { migrate } from './migrate.ts';
 import { API_HEALTH, APPLIED, APPLYING, BAKED, NX, REPO_URL } from './paths.ts';
 import { CODE_PROCESSES, DEPLOYED_APPS, PATH_PROCESSES, PROJECT_PROCESSES } from './processes.ts';
 import { output, readJson, run, step, vars, waitForHttp } from './runtime.ts';
-import { pc, stopRunning, storesReady } from './supervisor.ts';
+import { pc, startSkipped, stopRunning, storesReady } from './supervisor.ts';
 
 // Those of `processes` this box runs: thalamus only runs with the managed-agent key (see `box start`).
 export function runnable(processes: Iterable<string>): Array<string> {
@@ -161,6 +161,7 @@ async function applyPlan({ install, build: projects, enterprise, restart }: Appl
       for (const name of stop) await pc(['process', 'restart', name]);
     });
   await waitForHttp(API_HEALTH, 300);
+  await startSkipped();
   // A new framework can discover the same workflows differently (schemas, step options).
   if (restart.includes('bridge')) await step('sync bridge', syncBridge);
 }
