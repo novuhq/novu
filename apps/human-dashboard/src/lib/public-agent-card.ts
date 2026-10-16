@@ -26,6 +26,12 @@ export type PublicAgentCard = {
   address: string;
   /** Its Telegram bot's `@username`. `null` without Telegram: the card then leaves that line out. */
   telegramBot: string | null;
+  /**
+   * Whether the operator approves a stranger's first message before the agent gets it, which the page then
+   * tells visitors. Not yet: with Who can reach set to Anyone, a stranger's message reaches the agent
+   * straight away, so the placeholder card says no.
+   */
+  approvesNewPeople: boolean;
   /** The card's own link, `https://agentinbox.md/p/atlas` (`cardLinkOf`). */
   cardLink: string;
 };
@@ -48,6 +54,7 @@ const SAMPLE_CARD = {
   operatorName: 'Dima Grossman',
   issuedAt: '2026-10-03T12:00:00.000Z',
   telegramBot: '@atlas_bot',
+  approvesNewPeople: false,
 } as const satisfies Partial<PublicAgentCard>;
 
 /**

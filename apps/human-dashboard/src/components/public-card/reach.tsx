@@ -38,14 +38,15 @@ export function Reach({ card }: { card: PublicAgentCard }) {
       aria-labelledby={titleId}
       className="flex w-full max-w-95 animate-rise-in flex-col items-start [animation-delay:80ms] motion-reduce:animate-none min-[880px]:w-95 min-[880px]:shrink-0"
     >
-      <p className="font-mono text-[10px] leading-3.5 font-medium tracking-[0.8px] text-accent uppercase">
+      {/* A handle can be 32 letters with no hyphen to break at, so these lines may break inside a word. */}
+      <p className="font-mono text-[10px] leading-3.5 font-medium tracking-[0.8px] text-accent uppercase [overflow-wrap:anywhere]">
         Message {card.handle}
       </p>
-      <h1 id={titleId} className="mt-3.5 text-[26px] leading-8 font-medium text-foreground">
+      <h1 id={titleId} className="mt-3.5 text-[26px] leading-8 font-medium text-foreground [overflow-wrap:anywhere]">
         Reach {card.handle} anywhere.
       </h1>
       {/* Not in the design without an operator: the plainest sentence that leaves them out. */}
-      <p className="mt-2.5 text-sm leading-5.25 text-secondary">
+      <p className="mt-2.5 text-sm leading-5.25 text-secondary [overflow-wrap:anywhere]">
         {card.operatorName
           ? `${card.name} is ${card.operatorName}’s agent. It reads and replies on its own.`
           : `${card.name} is an agent. It reads and replies on its own.`}
@@ -57,11 +58,14 @@ export function Reach({ card }: { card: PublicAgentCard }) {
         ))}
       </ul>
 
-      <p className="mt-4 flex items-center gap-2 text-xs leading-4 text-muted">
-        <ShieldCheck aria-hidden="true" className="size-3.25 shrink-0" />
-        {/* Not in the design without an operator: "the owner" stands in for their name. */}
-        <span>Someone new? {operatorFirstName || 'The owner'} approves your first message.</span>
-      </p>
+      {/* Only while it's true: today a stranger's first message reaches the agent straight away. */}
+      {card.approvesNewPeople && (
+        <p className="mt-4 flex items-center gap-2 text-xs leading-4 text-muted">
+          <ShieldCheck aria-hidden="true" className="size-3.25 shrink-0" />
+          {/* Not in the design without an operator: "the owner" stands in for their name. */}
+          <span>Someone new? {operatorFirstName || 'The owner'} approves your first message.</span>
+        </p>
+      )}
 
       <div className="mt-8 flex items-center gap-4">
         <CopyButton
