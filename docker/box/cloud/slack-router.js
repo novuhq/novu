@@ -4,9 +4,9 @@
 // the real bot token and signing secret; boxes get fake ones, minted here per box and agent, so PR code never sees
 // the real ones. Slack's events, interactivity and the /novu-box command all come to POST /slack.
 //
-//   POST /slack          from Slack: check its signature, ack at once, then queue the event for the box that owns
-//                        it and hand it to Box(<box>), re-signed with that box's fake secret (a sleeping box wakes;
-//                        the queue retries until it answers)
+//   POST /slack          from Slack: check its signature, queue the event for the box that owns it, ack, then hand
+//                        it to Box(<box>), re-signed with that box's fake secret (a sleeping box wakes; the queue
+//                        retries until it answers)
 //   POST /api/<method>   from boxes (their SLACK_API_URL): a fake token gets the real one for the allowed methods,
 //                        only in #novu-box and in DMs people started; any other token goes to slack.com unchanged
 //   GET  /files/<path>   files.slack.com downloads (image and PDF input) with the real token
@@ -139,8 +139,8 @@ export class Router extends DurableObject {
     const raw = await request.text();
     if (!(await verified(request.headers, raw, this.env.SLACK_SIGNING_SECRET)))
       return new Response('bad signature\n', { status: 401 });
-    // Every first delivery is acked at once, so a retry is a duplicate.
-    if (request.headers.get('x-slack-retry-num')) return ack();
+    // An event is queued before its ack, so a retry after a slow ack is a duplicate; one after an error isn't.
+    if (request.headers.get('x-slack-retry-reason') === 'http_timeout') return ack();
     if (request.headers.get('content-type')?.includes('json')) {
       const body = JSON.parse(raw);
       if (body.type === 'url_verification') return Response.json({ challenge: body.challenge });
@@ -168,44 +168,44 @@ export class Router extends DurableObject {
     const facts = classify(event, (await this.identity()).botUserId, this.env.SLACK_CHANNEL);
     if (!facts) return;
     if (facts.dm && facts.kind !== 'reaction') await this.put(`dm:${facts.channel}`, facts.user);
-    const forward = {
+    const envelope = {
       id: body.event_id,
       contentType: 'application/json',
       user: facts.user,
       body: JSON.stringify(body).replaceAll(SLACK_FILES, `${this.env.SLACK_ROUTER_URL}/files/`),
-      notice: { channel: facts.channel, ts: facts.thread ?? (facts.dm ? undefined : facts.ts) },
+      notice: { channel: facts.channel, ts: replyTo(facts.channel, facts.ts, facts.thread) },
     };
-    if (facts.kind === 'reaction' || facts.kind === 'edit') return this.continued(facts, forward);
+    if (facts.kind === 'reaction' || facts.kind === 'edit') return this.continued(facts, envelope);
 
-    return this.message(facts, forward);
+    return this.message(facts, envelope);
   }
 
   // A reaction, edit or delete goes to the box that owns the message or its thread; a reaction on anything else
   // (the box's ready message) to the sender's selection.
-  async continued({ kind, user, channel, ts, thread }, forward) {
+  async continued({ kind, user, channel, ts, thread }, envelope) {
     const owner =
       (await this.ownerOf(channel, ts, thread)) ?? (kind === 'reaction' ? await this.get(`sel:${user}`) : null);
-    if (owner) this.later(this.forward(owner, forward));
+    if (owner) await this.forward(owner, envelope);
   }
 
-  async message({ kind, user, channel, ts, thread, dm }, forward) {
-    const inbound = { channel, ts, thread, dm, forward };
+  async message(facts, envelope) {
+    const { kind, user, channel, thread, dm } = facts;
     const owner = thread && (await this.get(`msg:${channel}:${thread}`));
     // A mention in a thread a box owns also comes as a `message`, which goes to that box.
     if (owner && kind === 'mention') return;
     if (owner) {
-      await this.claim(owner, inbound);
+      await this.claim(owner, facts);
       if (!dm) await this.noteOtherSelection(owner, user, channel, thread);
-      this.later(this.forward(owner, forward));
+      await this.forward(owner, envelope);
 
       return;
     }
     // In the channel only a mention starts something; a DM needs none.
     if (kind === 'message' && !dm) return;
     const selection = await this.get(`sel:${user}`);
-    if (!selection) return this.pick(user, inbound);
-    await this.claim(selection, inbound);
-    this.later(this.forward(selection, forward));
+    if (!selection) return this.pick(facts, envelope);
+    await this.claim(selection, facts);
+    await this.forward(selection, envelope);
   }
 
   async ownerOf(channel, ts, thread) {
@@ -234,14 +234,14 @@ export class Router extends DurableObject {
   }
 
   // Nobody picked a box yet: the message waits while the sender picks one.
-  async pick(user, inbound) {
-    const key = `pending:${inbound.channel}:${inbound.ts}`;
-    await this.put(key, inbound);
+  async pick({ user, channel, ts, thread }, envelope) {
+    const key = `pending:${channel}:${ts}`;
+    await this.put(key, { channel, ts, thread, envelope });
     const boxes = await this.boxes();
-    const thread_ts = inbound.thread ?? (inbound.dm ? undefined : inbound.ts);
+    const thread_ts = replyTo(channel, ts, thread);
     this.later(
       this.ephemeral(
-        inbound.channel,
+        channel,
         user,
         boxes.length
           ? { thread_ts, text: 'Which box should answer?', blocks: boxes.flatMap((box) => talkBlocks(box, key)) }
@@ -261,22 +261,22 @@ export class Router extends DurableObject {
       ? await this.get(`view:${payload.view.id}`)
       : await this.ownerOf(channel, ts, payload.message?.thread_ts);
     if (!owner) return ack();
-    const forward = {
+    const envelope = {
       id: payload.trigger_id ?? action?.action_ts,
       contentType: 'application/x-www-form-urlencoded',
       user: payload.user?.id,
       body: raw,
-      notice: channel && { channel, ts: payload.message?.thread_ts ?? (channel.startsWith('D') ? undefined : ts) },
+      notice: channel && { channel, ts: replyTo(channel, ts, payload.message?.thread_ts) },
     };
     // A modal submission and an options request answer with the box's response; there is no time to wake it.
     if (payload.type === 'view_submission' || payload.type === 'block_suggestion') {
-      const answer = await this.deliver({ ...forward, box: owner.box, agent: owner.agent }, 2500);
+      const answer = await this.deliver({ ...envelope, box: owner.box, agent: owner.agent }, 2500);
 
       return answer?.ok && answer.text
         ? new Response(answer.text, { headers: { 'content-type': answer.contentType } })
         : ack();
     }
-    this.later(this.forward(owner, forward));
+    await this.forward(owner, envelope);
 
     return ack();
   }
@@ -301,7 +301,7 @@ export class Router extends DurableObject {
     if (waiting) {
       await this.ctx.storage.delete(pending);
       await this.claim(selection, waiting);
-      this.later(this.forward(selection, waiting.forward));
+      await this.forward(selection, waiting.envelope);
     }
 
     return ack();
@@ -363,18 +363,23 @@ export class Router extends DurableObject {
     await this.slack('views.publish', { user_id: user, view: { type: 'home', blocks } });
   }
 
-  // Every event waits in its box's queue, so a box gets its events in order. Only a box that was asleep gets the
-  // "Waking" notice: a running box can miss once (its API restarting after an apply, a redeploy) and answers on
-  // the next try.
-  async forward(owner, forward) {
-    const item = { ...forward, box: owner.box, agent: owner.agent, at: Date.now() };
-    const { running } = await this.env.BOX.get(this.env.BOX.idFromName(owner.box))
+  // Every event waits in its box's queue, written before Slack gets its ack, so none is lost and a box gets its
+  // events in the order they came.
+  async forward(owner, envelope) {
+    const item = { ...envelope, box: owner.box, agent: owner.agent, at: Date.now() };
+    await this.put(`q:${owner.box}:${String(item.at).padStart(15, '0')}:${random(4)}`, item);
+    if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + RETRY_MS);
+    this.later(this.handOver(item));
+  }
+
+  // Only a box that was asleep gets the "Waking" notice: a running box can miss once (its API restarting after an
+  // apply, a redeploy) and answers on the next try.
+  async handOver(item) {
+    const { running } = await this.env.BOX.get(this.env.BOX.idFromName(item.box))
       .state()
       .catch(() => ({ running: true }));
     if (!running) await this.wakingNotice(item);
-    await this.put(`q:${owner.box}:${String(item.at).padStart(15, '0')}:${random(4)}`, item);
-    if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + RETRY_MS);
-    await this.drain(owner.box);
+    await this.drain(item.box);
   }
 
   // Hands a box its waiting events, oldest first, until it doesn't answer; the alarm tries again.
@@ -507,7 +512,7 @@ export class Router extends DurableObject {
   }
 
   async refusal(method, params, owner) {
-    if (!(method in METHODS)) return 'method_not_allowed_by_novu_box';
+    if (!Object.hasOwn(METHODS, method)) return 'method_not_allowed_by_novu_box';
     const channel = METHODS[method] && params[METHODS[method]];
     if (METHODS[method] && !(await this.allowedChannel(channel))) return 'channel_not_allowed_by_novu_box';
     if (OWN_MESSAGE.has(method) && (await this.get(`msg:${channel}:${params.ts}`))?.box !== owner.box)
@@ -519,7 +524,7 @@ export class Router extends DurableObject {
   async allowedChannel(channel) {
     if (channel === this.env.SLACK_CHANNEL) return true;
 
-    return Boolean(channel?.startsWith('D') && (await this.get(`dm:${channel}`)));
+    return isDm(channel) && Boolean(await this.get(`dm:${channel}`));
   }
 
   // Message and view owners, from what the box posted, so replies, reactions, edits and clicks find the box.
@@ -603,7 +608,7 @@ function classify(event, botUserId, home) {
   const message = event.subtype === 'message_changed' ? event.message : (event.previous_message ?? event);
   const user = reaction ? event.user : message?.user;
   const channel = reaction ? event.item?.channel : event.channel;
-  const dm = Boolean(channel?.startsWith('D'));
+  const dm = isDm(channel);
   if (!user || user === botUserId || message?.bot_id || (!dm && channel !== home)) return null;
   const facts = { user, channel, dm };
   if (reaction) return { ...facts, kind: 'reaction', ts: event.item.ts };
@@ -614,6 +619,15 @@ function classify(event, botUserId, home) {
     return { ...facts, kind: 'message', ts: event.ts, thread };
 
   return null;
+}
+
+function isDm(channel) {
+  return Boolean(channel?.startsWith('D'));
+}
+
+// Where the router answers about a message: in its thread, in a new thread on a channel message, or in the DM.
+function replyTo(channel, ts, thread) {
+  return thread ?? (isDm(channel) ? undefined : ts);
 }
 
 // "<box> ready · Talk to: custom-code | ai-sdk | langchain", with a link to its dashboard. `pending`: the picker,

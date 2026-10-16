@@ -233,8 +233,9 @@ stands between Slack and every box; no box ever sees them.
   "Waking <box> (about 40 s)…" in the thread, and delivers the message when the box is up (it retries for 8
   minutes). In a thread of a deleted box, the router tells you so and to start a new message.
 - The router passes only the Slack methods the agents use, only to `#novu-box` and DMs a person started, and
-  edits only a box's own messages; anything else gets `ok: false` with a `…_by_novu_box` error. A token it
-  didn't make (a Slack app you connect in the box's dashboard) goes to Slack unchanged. It doesn't keep boxes
+  edits only a box's own messages (checked by hand, not by `slack-check.mjs`); anything else gets `ok: false`
+  with a `…_by_novu_box` error. A token it didn't make (a Slack app you connect in the box's dashboard) goes to
+  Slack unchanged. It doesn't keep boxes
   apart within those: a box's code can read every thread in `#novu-box` and any DM with the bot, which is fine
   for a channel only Novu's developers and TesterArmy use.
 

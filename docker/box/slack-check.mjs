@@ -14,28 +14,17 @@
 import { spawnSync } from 'node:child_process';
 import { createHmac, randomBytes, randomInt } from 'node:crypto';
 import fs from 'node:fs';
-import os from 'node:os';
-import { join } from 'node:path';
+import { SLACK_CHANNEL as CHANNEL, DOMAIN, ROUTER as ROUTER_WORKER, readEnvFile, SLACK_ENV } from './cloud/target.mjs';
 
 const [A, B, OUT = `.scratch/box-run/slack-check-${Date.now()}`] = process.argv.slice(2);
 if (!A || !B) {
   console.error('usage: node docker/box/slack-check.mjs <box> <other box> [artifact-dir]');
   process.exit(2);
 }
-const DOMAIN = process.env.BOX_CLOUD_DOMAIN ?? 'cli-shortener.workers.dev';
-const ROUTER = `https://novu-box-slack.${DOMAIN}/slack`;
-const CHANNEL = process.env.BOX_SLACK_CHANNEL ?? 'C0C9PHBUDR6';
+const ROUTER = `https://${ROUTER_WORKER}.${DOMAIN}/slack`;
 // The TesterArmy guest in Novu's workspace.
 const USER = process.env.BOX_SLACK_CHECK_USER ?? 'U0C8TDG9086';
-const SLACK_ENV = process.env.BOX_SLACK_ENV ?? join(os.homedir(), '.config/novu-box/slack.env');
-const secrets = Object.fromEntries(
-  fs
-    .readFileSync(SLACK_ENV, 'utf8')
-    .split('\n')
-    .map((line) => line.match(/^(?:export )?([A-Z0-9_]+)=["']?(.*?)["']?$/))
-    .filter(Boolean)
-    .map((match) => [match[1], match[2]])
-);
+const secrets = readEnvFile(SLACK_ENV);
 const GITHUB = process.env.GITHUB_TOKEN ?? spawnSync('gh', ['auth', 'token'], { encoding: 'utf8' }).stdout.trim();
 const RUN = randomBytes(3).toString('hex');
 
@@ -209,16 +198,9 @@ try {
   });
 
   await check(`${B}, asleep, gets a reply in its thread once it wakes`, async () => {
-    const down = await fetch(`https://novu-box-${B}.${DOMAIN}/__box/down`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${GITHUB}` },
-    });
-    if (!down.ok) throw new Error(`down: ${down.status}`);
-    const deadline = Date.now() + 15 * 60_000;
-    while ((await state(B)).running) {
-      if (Date.now() > deadline) throw new Error(`${B} is still saving after 15 minutes`);
-      await new Promise((resolve) => setTimeout(resolve, 10_000));
-    }
+    const cli = new URL('cli.mjs', import.meta.url).pathname;
+    const down = spawnSync('node', [cli, 'down', '--cloud', '--box', B], { stdio: 'inherit' });
+    if (down.status !== 0) throw new Error(`down --box ${B} exited ${down.status}`);
     const sent = Date.now();
     const id = await event({ type: 'message', ts: replyTs(), thread_ts: threads[B], text: 'are you awake?' });
     const got = await delivered(B, id, agents[B][0], { within: 8 * 60_000 });

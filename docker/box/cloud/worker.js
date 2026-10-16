@@ -157,12 +157,7 @@ export class Box extends DurableObject {
   // bakes `ref`. The GitHub token of the caller is in the bake's environment only; `box start` runs without it.
   async up(url, request) {
     await this.ctx.storage.put('origin', url.origin);
-    if (this.ctx.container.running) {
-      // A first restore can outlast the caller (4 to 6 min), and a start cut short never set its alarm.
-      if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
-
-      return { state: 'running' };
-    }
+    if (this.ctx.container.running) return { state: 'running' };
     const from = url.searchParams.get('from');
     if (from && !(await this.ctx.storage.get('snapshot')))
       await this.ctx.storage.put('snapshot', { id: from, name: `from ${from}` });
@@ -188,6 +183,9 @@ export class Box extends DurableObject {
     await this.ctx.storage.delete('slackConnected');
     this.slackLinked = new Set();
     this.apiKey = null;
+    // Before the start: a first restore can outlast the caller (4 to 6 minutes), and the alarm is what puts the box
+    // to sleep.
+    await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
     this.ctx.container.start({
       instance: INSTANCE,
       enableInternet: true,
@@ -195,7 +193,6 @@ export class Box extends DurableObject {
       ...options,
     });
     await this.ctx.container.setInactivityTimeout(backstopMs(this.env));
-    await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
     this.touch();
   }
 

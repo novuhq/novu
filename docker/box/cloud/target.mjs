@@ -11,10 +11,10 @@ const HERE = new URL('.', import.meta.url).pathname;
 const BOX_DIR = join(HERE, '..');
 const WRANGLER = ['npx', '--yes', 'wrangler@4.150.0'];
 const HOST = 'novu-box-host';
-const ROUTER = 'novu-box-slack';
+export const ROUTER = 'novu-box-slack';
 const COMPATIBILITY_DATE = '2026-09-29';
 // The Novu account's workers.dev subdomain.
-const DOMAIN = process.env.BOX_CLOUD_DOMAIN ?? 'cli-shortener.workers.dev';
+export const DOMAIN = process.env.BOX_CLOUD_DOMAIN ?? 'cli-shortener.workers.dev';
 const SECRETS = [
   'CLERK_SECRET_KEY',
   'BOX_SEED_PASSWORD',
@@ -25,9 +25,9 @@ const SECRETS = [
 ];
 const EXIT_MARK = '__BOX_EXIT__';
 // Novu Bot's credentials, for the router only (never a box): SLACK_BOT_TOKEN and SLACK_SIGNING_SECRET.
-const SLACK_ENV = process.env.BOX_SLACK_ENV ?? join(os.homedir(), '.config/novu-box/slack.env');
+export const SLACK_ENV = process.env.BOX_SLACK_ENV ?? join(os.homedir(), '.config/novu-box/slack.env');
 // #novu-box, the one channel the router posts in besides DMs.
-const SLACK_CHANNEL = process.env.BOX_SLACK_CHANNEL ?? 'C0C9PHBUDR6';
+export const SLACK_CHANNEL = process.env.BOX_SLACK_CHANNEL ?? 'C0C9PHBUDR6';
 // A first bake takes 11 to 14 minutes on Cloudflare; a wake about 35 s.
 const READY_WITHIN_SECONDS = { baking: 25 * 60, waking: 5 * 60, running: 5 * 60 };
 
@@ -222,7 +222,7 @@ export function cloudTarget({ box, log, githubToken }) {
       const snapshot = await startingSnapshot({ from, fromBase, ref });
       if (snapshot) query.set('from', snapshot);
       // --deploy: a change to docker/box (image or Worker code) goes to the host, so to every box.
-      if (redeploy || !(await hostExists())) await deployHost();
+      if (redeploy || !(await hostExists())) deployHost();
       if (redeploy || !(await state())) deployBoxWorker();
       const { state: started } = await (await call(`/up?${query}`, { method: 'POST' })).json();
       log(`${worker}: ${started}${started === 'baking' ? ` ${ref} (11 to 14 minutes)` : ''}`);
@@ -326,7 +326,7 @@ function output(cmd, args) {
   return `${result.stdout}\n${result.stderr}`.trim();
 }
 
-function readEnvFile(file) {
+export function readEnvFile(file) {
   const entries = fs
     .readFileSync(file, 'utf8')
     .split('\n')
