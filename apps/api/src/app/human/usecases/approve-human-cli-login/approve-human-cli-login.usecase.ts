@@ -1,5 +1,6 @@
 import { ConflictException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '@novu/application-generic';
+import { SignupSourceEnum } from '@novu/shared';
 import {
   type CliDeviceSessionApprovalHold,
   CliDeviceSessionBeingApprovedError,
@@ -133,7 +134,12 @@ export class ApproveHumanCliLogin {
     try {
       await this.humanAccountAgent.claimOverUntouchedAgent(account, name, () =>
         this.claimKeylessConnect.execute(
-          ClaimKeylessConnectCommand.create({ token, organizationId: account.organizationId, userId: account.userId })
+          ClaimKeylessConnectCommand.create({
+            token,
+            organizationId: account.organizationId,
+            userId: account.userId,
+            source: SignupSourceEnum.HUMAN,
+          })
         )
       );
     } catch (error) {

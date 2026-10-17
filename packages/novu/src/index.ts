@@ -20,6 +20,15 @@ import {
 } from './commands/connect/types';
 import { CloudRegionEnum } from './commands/dev/enums';
 import { IInitCommandOptions, init } from './commands/init';
+import {
+  DEFAULT_KEYLESS_API_URL,
+  type KeylessClaimOptions,
+  type KeylessCreateOptions,
+  type KeylessStatusOptions,
+  keylessClaim,
+  keylessCreate,
+  keylessStatus,
+} from './commands/keyless';
 import { stepPublish } from './commands/step';
 import { sync } from './commands/sync';
 import { pullTranslations, pushTranslations } from './commands/translations';
@@ -263,6 +272,7 @@ program
   )
   .addHelpText('after', CONNECT_HELP_TEXT)
   .showHelpAfterError('(run `novu connect --help` for the non-interactive contract and examples)')
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing connect command orchestration is outside this change.
   .action(async (positionalPrompt: string | undefined, options: ConnectCommandInput) => {
     analytics.track({
       identity: {
@@ -368,6 +378,40 @@ program
   .option('-t, --template <name>', 'The template to use (notifications or chat-sdk)')
   .action(async (options: IInitCommandOptions) => {
     return await init(options, anonymousId);
+  });
+
+const keylessCommand = program
+  .command('keyless')
+  .description('Create and claim a Novu environment without an account (for AI agents)');
+
+keylessCommand
+  .command('create')
+  .description('Create a keyless environment and print its secret key, application identifier and claim URL')
+  .option('--source <source>', 'Who is creating the environment, e.g. cursor, claude-code, codex, mcp')
+  .option('--env-file <path>', 'Write NOVU_SECRET_KEY, NOVU_APPLICATION_IDENTIFIER and NOVU_API_URL to this file')
+  .option('--json', 'Print the raw response as JSON')
+  .option('-a, --api-url <url>', 'The Novu Cloud API URL', NOVU_API_URL || DEFAULT_KEYLESS_API_URL)
+  .action(async (options: KeylessCreateOptions) => {
+    process.exitCode = await keylessCreate(options);
+  });
+
+keylessCommand
+  .command('status')
+  .description('Show whether the keyless environment is active, claimed (exit 3) or expired (exit 4)')
+  .option('-s, --secret-key <secret-key>', 'The keyless environment secret key', NOVU_SECRET_KEY)
+  .option('--json', 'Print the raw response as JSON')
+  .option('-a, --api-url <url>', 'The Novu Cloud API URL', NOVU_API_URL)
+  .action(async (options: KeylessStatusOptions) => {
+    process.exitCode = await keylessStatus(options);
+  });
+
+keylessCommand
+  .command('claim')
+  .description('Print the claim URL and open it in your browser (refreshed via NOVU_SECRET_KEY when set)')
+  .option('--no-open', 'Print the claim URL without opening a browser')
+  .option('-a, --api-url <url>', 'The Novu Cloud API URL', NOVU_API_URL)
+  .action(async (options: KeylessClaimOptions) => {
+    process.exitCode = await keylessClaim({ ...options, secretKey: NOVU_SECRET_KEY });
   });
 
 const translationsCommand = program.command('translations').description('Manage Novu translations');

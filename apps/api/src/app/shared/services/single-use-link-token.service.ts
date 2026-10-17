@@ -113,16 +113,19 @@ export interface SingleUseTokenCacheOptions {
 export class SingleUseTokenCache<TPayload> {
   constructor(private readonly options: SingleUseTokenCacheOptions) {}
 
-  async issue(payload: TPayload): Promise<IssuedSingleUseToken> {
+  async issue(payload: TPayload, options?: { ttlSeconds?: number }): Promise<IssuedSingleUseToken> {
     this.assertCacheAvailable('issue');
 
+    const ttlSeconds = options?.ttlSeconds ?? this.options.ttlSeconds;
     const token = mintAutolinkSafeOpaqueToken();
     const mintedAt = Math.floor(Date.now() / 1000);
-    const expiresAtEpoch = mintedAt + this.options.ttlSeconds;
+    const expiresAtEpoch = mintedAt + ttlSeconds;
     const entry: StoredTokenEntry<TPayload> = { payload, expiresAt: expiresAtEpoch };
 
+    // No jitter: the stored entry must live exactly until the advertised `expiresAt`.
     await this.options.cacheService.set(this.storageKey(token), JSON.stringify(entry), {
-      ttl: this.options.ttlSeconds,
+      ttl: ttlSeconds,
+      jitter: false,
     });
 
     return { token, expiresAt: new Date(expiresAtEpoch * 1000).toISOString() };

@@ -38,6 +38,7 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import { createHash } from 'crypto';
+import { signupSourceForOrigin, trackSignupStarted } from '../../shared/helpers/signup-analytics';
 import { CreateUserCommand } from '../../user/usecases/create-user/create-user.command';
 import { CreateUser } from '../../user/usecases/create-user/create-user.usecase';
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
@@ -105,6 +106,10 @@ export class CommunityAuthService implements IAuthService {
         loginType: authProvider,
         origin,
         wasInvited: Boolean(invitationToken),
+      });
+      trackSignupStarted(this.analyticsService, user._id, {
+        source: signupSourceForOrigin(origin),
+        loginType: authProvider,
       });
     } else {
       if (authProvider === AuthProviderEnum.GITHUB) {

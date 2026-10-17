@@ -133,7 +133,7 @@ describe('WhatsAppSignupLinkTokenService', () => {
     expect(setArgs[0]).to.equal(`whatsapp_signup_link:{${token}}`);
     const parsed = JSON.parse(setArgs[1] as string);
     expect(parsed.payload).to.deep.equal({ env: 'env-1', org: 'org-1', aid: 'agent-1', iid: 'whatsapp-main' });
-    expect(setArgs[2]).to.deep.equal({ ttl: WHATSAPP_SIGNUP_LINK_TTL_SECONDS });
+    expect(setArgs[2]).to.deep.equal({ ttl: WHATSAPP_SIGNUP_LINK_TTL_SECONDS, jitter: false });
   });
 
   it('peek returns the payload without consuming the token', async () => {

@@ -25,10 +25,7 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import { getClientIp } from 'request-ip';
-import {
-  isKeylessApplicationIdentifierHeader,
-  isResolvedKeylessAuthScheme,
-} from '../../shared/utils/auth.utils';
+import { isKeylessApplicationIdentifierHeader, isResolvedKeylessAuthScheme } from '../../shared/utils/auth.utils';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { ThrottlerCategory, ThrottlerCost } from './throttler.decorator';
 
@@ -130,6 +127,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
    * @see https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/
    * @throws {ThrottlerException}
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing throttling orchestration is outside this change.
   protected async handleRequest({ context, throttler }: ThrottlerRequest): Promise<boolean> {
     const { req, res } = this.getRequestResponse(context);
     const clientIp = getClientIp(req) || undefined;
@@ -325,7 +323,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
   private isKeylessRoute(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
 
-    return req.path === '/v1/inbox/session' && req.method === 'POST';
+    return req.method === 'POST' && (req.path === '/v1/inbox/session' || req.path === '/v1/keyless/environments');
   }
 
   private getReqUser(context: ExecutionContext): UserSessionData | undefined {

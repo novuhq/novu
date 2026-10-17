@@ -10,7 +10,8 @@ const ENV_TOKEN_KEY_PREFIX = 'connect_claim_link_env:';
 const CTA_POSTED_KEY_PREFIX = 'connect_claim_cta_posted:';
 const CLAIM_LOCK_KEY_PREFIX = 'connect_claim_link_lock:';
 
-const CLAIM_LOCK_TTL_SECONDS = 60;
+/** Covers copying an agent environment's workflows inside the lock; the lock is released as soon as a claim ends. */
+const CLAIM_LOCK_TTL_SECONDS = 5 * 60;
 
 export interface ConnectClaimTokenPayload {
   env: string;
@@ -64,7 +65,14 @@ export class ConnectClaimTokenService {
     return this.tokens.issue(payload);
   }
 
-  async issueOrGetForEnvironment(payload: ConnectClaimTokenPayload): Promise<IssuedConnectClaimToken> {
+  /**
+   * `ttlSeconds` only applies when a new token is minted; a still-active token
+   * for the environment is reused with its original expiry.
+   */
+  async issueOrGetForEnvironment(
+    payload: ConnectClaimTokenPayload,
+    options?: { ttlSeconds?: number }
+  ): Promise<IssuedConnectClaimToken> {
     this.assertCacheAvailable('issueOrGetForEnvironment');
 
     const envKey = `${ENV_TOKEN_KEY_PREFIX}{${payload.env}}`;
@@ -78,8 +86,9 @@ export class ConnectClaimTokenService {
       }
     }
 
-    const issued = await this.issue(payload);
-    await this.cacheService.set(envKey, issued.token, { ttl: CONNECT_CLAIM_TOKEN_TTL_SECONDS });
+    const ttlSeconds = options?.ttlSeconds ?? CONNECT_CLAIM_TOKEN_TTL_SECONDS;
+    const issued = await this.tokens.issue(payload, { ttlSeconds });
+    await this.cacheService.set(envKey, issued.token, { ttl: ttlSeconds, jitter: false });
 
     return issued;
   }

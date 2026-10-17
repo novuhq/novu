@@ -36,6 +36,8 @@ import { InboxModule } from './app/inbox/inbox.module';
 import { IntegrationModule } from './app/integrations/integrations.module';
 import { InternalModule } from './app/internal/internal.module';
 import { InvitesModule } from './app/invites/invites.module';
+import { KeylessClaimModule } from './app/keyless/claim/keyless-claim.module';
+import { KeylessEnvironmentsModule } from './app/keyless/environments/keyless-environments.module';
 import { LayoutsV1Module } from './app/layouts-v1/layouts-v1.module';
 import { LayoutsV2Module } from './app/layouts-v2/layouts.module';
 import { MessagesModule } from './app/messages/messages.module';
@@ -139,6 +141,8 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   AgentsModule,
   HumanModule,
   ConnectModule,
+  KeylessEnvironmentsModule,
+  KeylessClaimModule,
   NovuContextModule,
   DomainsModule.forRoot(),
   UserModule,

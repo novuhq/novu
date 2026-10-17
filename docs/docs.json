@@ -448,6 +448,7 @@
             "group": "Build with AI",
             "pages": [
               "platform/build-with-ai/mcp",
+              "platform/build-with-ai/keyless",
               "platform/build-with-ai/skills",
               "platform/build-with-ai/agent-toolkit"
             ],

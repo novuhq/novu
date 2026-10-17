@@ -1,0 +1,271 @@
+---
+title: "Start with Novu without an account (for AI agents)"
+sidebarTitle: "Keyless environments"
+description: "Let an AI coding agent create a temporary Novu Cloud environment without signing up, build and trigger workflows with it, and hand you a claim link to keep the work in your own account."
+tag: "Early access"
+---
+
+A keyless environment is a temporary Novu Cloud environment that an AI agent creates with one API call, without a Novu account. The agent gets a secret key, builds and triggers workflows, and gives you a claim link. When you open the link and sign in, the workflows, subscribers, and integrations move into your **Development** environment.
+
+<Warning>
+  Keyless environments are in **early access** and available on **Novu Cloud only**. They aren't available on self-hosted deployments or the Community edition, where the endpoint returns `404`. The API, limits, and error codes on this page may change.
+</Warning>
+
+## Before you start
+
+If `NOVU_SECRET_KEY` is already set in the project (for example in `.env` or `.env.local`), use it and stop here. Keyless environments are for projects that don't have a Novu account yet. Don't create one to replace an existing key.
+
+Create one keyless environment per project and reuse it until it's claimed or expires. Creation is rate limited, and work spread across several environments can't be merged into one account.
+
+## Kick off with a prompt
+
+If you're a developer, paste this prompt into your AI coding agent to start a Novu integration without signing up first.
+
+<Prompt description="Set up Novu notifications without an account" icon="bot" actions={["copy", "cursor"]}>
+Add Novu notifications to this project.
+
+If NOVU_SECRET_KEY is already set, use it. Otherwise, create a Novu keyless environment by following https://docs.novu.co/platform/build-with-ai/keyless (run `npx novu@latest keyless create --source cursor --env-file .env --json`).
+
+Build the workflows with the Novu API using that key, trigger one to confirm it works, and then give me the claim URL so I can keep the setup in my Novu account. Don't print the secret key in chat, and don't commit it.
+</Prompt>
+
+## Create a keyless environment
+
+Call the public endpoint. It needs no authentication. Pass an optional `source` so Novu knows which tool created the environment (for example `cursor`, `claude-code`, `codex`, `mcp`).
+
+<Tabs>
+<Tab title="CLI">
+```bash
+npx novu@latest keyless create --source cursor --env-file .env --json
+```
+
+`--env-file` writes `NOVU_SECRET_KEY`, `NOVU_APPLICATION_IDENTIFIER`, and `NOVU_API_URL` into the file. The CLI also writes `.novu/keyless.json` (environment ID, claim URL, expiry, never the secret key) and adds `.novu/` to an existing `.gitignore`. `--json` prints machine-readable output for agents.
+</Tab>
+<Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/keyless/environments' \
+  -H 'Content-Type: application/json' \
+  -d '{ "source": "cursor" }'
+```
+</Tab>
+</Tabs>
+
+The API responds with `201`:
+
+```json
+{
+  "data": {
+    "environmentId": "6710f1c2a1b2c3d4e5f60718",
+    "secretKey": "<NOVU_SECRET_KEY>",
+    "applicationIdentifier": "<NOVU_APPLICATION_IDENTIFIER>",
+    "apiUrl": "https://api.novu.co",
+    "claimUrl": "https://dashboard.novu.co/connect/claim?token=<CLAIM_TOKEN>",
+    "expiresAt": "2026-10-17T20:16:00.000Z"
+  }
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `environmentId` | `string` | ID of the keyless environment. |
+| `secretKey` | `string` | Secret key for the Novu API. Returned **only once**. Store it as `NOVU_SECRET_KEY` in an env file that isn't committed. |
+| `applicationIdentifier` | `string` | Public identifier for the [Inbox](/platform/inbox/setup-inbox) and other client SDKs. |
+| `apiUrl` | `string` | Base URL to use for every later API call with this key. |
+| `claimUrl` | `string` | Link the human opens to keep the environment. Valid until `expiresAt`. |
+| `expiresAt` | `string` | ISO 8601 time when the environment and the claim link expire (72 hours after creation). |
+
+<Warning>
+  Treat `secretKey` and `claimUrl` as credentials. Anyone with the claim link can take the environment into their own account. Give the link only to the person you're working for. Don't post it in public issues, pull requests, chat channels, or logs.
+</Warning>
+
+With cURL, save the values yourself. The examples on this page read them from these environment variables:
+
+```bash
+NOVU_SECRET_KEY=<secretKey>
+NOVU_APPLICATION_IDENTIFIER=<applicationIdentifier>
+NOVU_API_URL=<apiUrl>
+```
+
+## Build and trigger workflows
+
+Send the key in the `Authorization: ApiKey <NOVU_SECRET_KEY>` header to the returned `apiUrl`. Every new environment includes:
+
+- A `hello-world` workflow with one in-app step that renders `payload.subject` and `payload.body`
+- The Novu In-App provider and Novu's built-in email provider
+
+### Trigger `hello-world`
+
+```bash
+curl -X POST "$NOVU_API_URL/v1/events/trigger" \
+  -H "Authorization: ApiKey $NOVU_SECRET_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "hello-world",
+    "to": { "subscriberId": "user-1" },
+    "payload": { "subject": "Hello", "body": "Your first Novu notification" }
+  }'
+```
+
+### Create a workflow
+
+Create workflows with the [workflows API](/api-reference/workflows/create-a-workflow) (`/v2/workflows`). Only these workflows move to your account on claim.
+
+```bash
+curl -X POST "$NOVU_API_URL/v2/workflows" \
+  -H "Authorization: ApiKey $NOVU_SECRET_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "Order shipped",
+    "workflowId": "order-shipped",
+    "steps": [
+      { "name": "In-App", "type": "in_app", "controlValues": { "body": "Your order {{payload.orderId}} shipped" } }
+    ]
+  }'
+```
+
+With the Node.js SDK, point the client at `apiUrl`:
+
+```typescript
+import { Novu } from "@novu/api";
+
+const novu = new Novu({
+  secretKey: process.env.NOVU_SECRET_KEY,
+  serverURL: process.env.NOVU_API_URL,
+});
+
+await novu.trigger({
+  workflowId: "order-shipped",
+  to: "user-1",
+  payload: { orderId: "1234" },
+});
+```
+
+### Add the Inbox
+
+Use `applicationIdentifier` with your app's real subscriber IDs. In Next.js, expose it to the browser as `NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER`:
+
+```tsx
+import { Inbox } from "@novu/react";
+
+export function NotificationInbox({ userId }: { userId: string }) {
+  return (
+    <Inbox
+      applicationIdentifier={process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER!}
+      subscriberId={userId}
+    />
+  );
+}
+```
+
+## Hand off the claim link
+
+When the setup works, give the human the claim link and the expiry. For example:
+
+```text
+Your Novu setup is ready, but it lives in a temporary environment that expires on <expiresAt>.
+Open this link and sign in (or sign up) to keep it: <claimUrl>
+After claiming, copy your Development secret key and application identifier from
+Novu dashboard → API Keys and replace NOVU_SECRET_KEY and NOVU_APPLICATION_IDENTIFIER in .env.
+```
+
+To print the link again, run `npx novu@latest keyless claim` (it opens the browser unless you pass `--no-open` or run without a terminal), or call `GET /v1/keyless/environments/me`.
+
+## Check the status
+
+```bash
+curl "$NOVU_API_URL/v1/keyless/environments/me" \
+  -H "Authorization: ApiKey $NOVU_SECRET_KEY"
+```
+
+```json
+{
+  "data": {
+    "environmentId": "6710f1c2a1b2c3d4e5f60718",
+    "applicationIdentifier": "<NOVU_APPLICATION_IDENTIFIER>",
+    "status": "active",
+    "expiresAt": "2026-10-17T20:16:00.000Z",
+    "claimUrl": "https://dashboard.novu.co/connect/claim?token=<CLAIM_TOKEN>"
+  }
+}
+```
+
+Once the environment is claimed or expired, this endpoint returns `401` with `keyless_environment_claimed` or `keyless_environment_expired`. `npx novu@latest keyless status` reports the same state with exit codes: `0` active, `3` claimed, `4` expired, `1` any other error.
+
+## Limits
+
+| Limit | Value |
+| --- | --- |
+| Lifetime | 72 hours after creation. The claim link expires at the same time. After that, the key stops working and the setup can't be claimed. |
+| Creation | 10 environments per IP address per day |
+| Triggers | 200 recipients per environment per day. Each event counts once per recipient in `to`, a topic in `to` counts once per subscriber of the topic, and a broadcast counts once per subscriber in the environment. Provider overrides that add recipients (`to`, `cc`, `bcc`) are rejected. |
+| Email | Novu's built-in email provider, with its usual monthly cap |
+
+### APIs a keyless key can call
+
+| Area | Paths |
+| --- | --- |
+| Triggers | `/v1/events/*` (trigger, bulk, broadcast, cancel) |
+| Workflows | `/v2/workflows/*`, except sync to another environment |
+| Subscribers | `/v1/subscribers/*`, `/v2/subscribers/*` |
+| Integrations | `/v1/integrations/*`, except creating Novu-managed demo providers (`novu-email`, `novu-sms`, `novu-slack`) |
+| Activity | `/v1/notifications/*`, `/v1/messages/*`, `/v1/activity/*`, `/v1/execution-details/*` |
+| Environment | `GET /v1/environments/me`, `GET /v1/keyless/environments/me` |
+
+Every other API returns `403` with `keyless_requires_account` and the `claimUrl`. This includes topics, contexts, layouts, v1 workflows, [Framework](/framework/introduction) sync (`npx novu sync`, `/v1/bridge/*`), API keys, other environments, and organization settings. Ask the human to claim the environment to unlock them.
+
+## Claim the environment
+
+The human opens the claim link in a browser:
+
+1. Sign in, or sign up for Novu Cloud. After sign-up, Novu brings you back to the claim page.
+2. Novu moves the setup into the **Development** environment of the organization you're signed in to. You need permission to edit environments in that organization.
+3. When the claim succeeds, the dashboard links to your workflows and to **API Keys**.
+
+| Moves to your Development environment | Stays behind |
+| --- | --- |
+| Workflows created with `/v2/workflows` (and `hello-world`), including steps, content, and preferences | Notification history and activity |
+| Subscribers | Topics, contexts, layouts, and translations |
+| Integrations, except the Novu In-App provider. Novu's built-in email provider is skipped if you already have one. | Framework (code-first) workflows |
+
+If your Development environment already has:
+
+- A `hello-world` workflow, the keyless one is skipped and yours stays unchanged.
+- Any other workflow with the same identifier, the claim stops with `claim_workflow_exists` and lists the identifiers. Nothing is moved. Rename or delete those workflows, then open the link again.
+- A subscriber with the same `subscriberId`, the claim stops with `claim_conflict`.
+
+## After the claim
+
+The keyless secret key stops working right away. Any call with it returns `401` with `keyless_environment_claimed`. To keep going:
+
+1. Open **API Keys** in the [Novu dashboard](https://dashboard.novu.co/settings/api-keys) for the Development environment.
+2. Replace `NOVU_SECRET_KEY` and `NOVU_APPLICATION_IDENTIFIER` in your env file with the Development values. The Inbox needs the new application identifier too.
+3. Delete `.novu/keyless.json` if the CLI created it.
+
+Emails sent from moved workflows use the email integration in your Development environment. Email steps use your default layout.
+
+## Error codes
+
+Errors use the standard shape `{ "statusCode", "message", "code" }`, plus extra fields where noted.
+
+| Status | `code` | When | What to do |
+| --- | --- | --- | --- |
+| `404` | `keyless_disabled` | Create | Keyless isn't available on this deployment. Sign up at [dashboard.novu.co](https://dashboard.novu.co). |
+| `429` | `keyless_rate_limited` | Create | Daily per-IP limit reached. Try again tomorrow or sign up. |
+| `429` | (no code) | Create | Too many requests in a short time. Wait a moment and retry. |
+| `503` | `keyless_capacity_reached` | Create | Global daily capacity reached. Try later or sign up. |
+| `503` | `keyless_unavailable` | Create | Temporary outage. Retry later. |
+| `404` | `keyless_environment_not_found` | `GET …/me` | The key doesn't belong to a keyless environment. |
+| `401` | `keyless_environment_claimed` | Any call | The environment was claimed. Use the Development key from **API Keys**. |
+| `401` | `keyless_environment_expired` | Any call | The environment expired. Create a new one or sign up. |
+| `403` | `keyless_requires_account` | Any call | The API isn't available to keyless keys. Body includes `claimUrl`. |
+| `429` | `keyless_trigger_limit_reached` | Triggers | Daily recipient limit reached. Body includes `claimUrl`. |
+| `400` | `claim_link_used` | Claim | The link was already used. The setup is in the account that claimed it. |
+| `400` | `claim_link_expired`, `keyless_environment_expired` | Claim | The environment expired. Ask the agent to create a new one. |
+| `400` | `claim_link_invalid` | Claim | The link is malformed or unknown. |
+| `409` | `claim_workflow_exists` | Claim | Workflow identifiers clash. Body includes `workflowIdentifiers`. |
+| `409` | `claim_conflict` | Claim | Part of the setup, such as a subscriber, already exists in your Development environment. |
+
+## Related
+
+- [Novu MCP server](/platform/build-with-ai/mcp) for managing a claimed account from your AI tool
+- [Agent Skills](/platform/build-with-ai/skills) for implementation guidance in your coding agent

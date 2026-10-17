@@ -81,6 +81,7 @@ import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbo
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
+import { TrackHumanSignupStarted } from './usecases/track-human-signup-started/track-human-signup-started.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 import { VerifyAddress } from './usecases/verify-address/verify-address.usecase';
 
@@ -158,6 +159,7 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     HumanDashboardSecretGuard,
     HumanAgentPausedGuard,
     EnsureBackingOrganization,
+    TrackHumanSignupStarted,
     ClaimForHumanAccount,
     GetBackingSecretKey,
     GenerateUniqueApiKey,

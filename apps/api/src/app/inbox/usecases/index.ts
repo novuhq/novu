@@ -14,6 +14,7 @@ import { ParseEventRequest } from '../../events/usecases/parse-event-request';
 import { GetSubscriberGlobalPreference } from '../../subscribers/usecases/get-subscriber-global-preference';
 import { GetSubscription } from '../../subscriptions/usecases/get-subscription/get-subscription.usecase';
 import { BulkUpdatePreferences } from './bulk-update-preferences/bulk-update-preferences.usecase';
+import { CreateKeylessEnvironment } from './create-keyless-environment/create-keyless-environment.usecase';
 import { DeleteAllNotifications } from './delete-all-notifications/delete-all-notifications.usecase';
 import { DeleteManyNotifications } from './delete-many-notifications/delete-many-notifications.usecase';
 import { DeleteNotification } from './delete-notification/delete-notification.usecase';
@@ -35,6 +36,7 @@ import { UpdatePreferences } from './update-preferences/update-preferences.useca
 
 export const USE_CASES = [
   Session,
+  CreateKeylessEnvironment,
   NotificationsCount,
   GetNotifications,
   MarkManyNotificationsAs,

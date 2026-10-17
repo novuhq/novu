@@ -185,6 +185,27 @@ describe('CreateNovuIntegrations - managed Claude demo integration', () => {
 
     expect(managedClaudeCall).to.equal(undefined);
   });
+
+  it('should NOT provision novu-anthropic on Development when includeManagedClaude is false', async () => {
+    featureFlagsService.getFlag.resolves(true);
+
+    await useCase.execute(
+      CreateNovuIntegrationsCommand.create({
+        environmentId: 'env-id',
+        organizationId: 'org-id',
+        userId: 'user-id',
+        name: EnvironmentEnum.DEVELOPMENT,
+        environmentType: EnvironmentTypeEnum.DEV,
+        includeManagedClaude: false,
+      })
+    );
+
+    const managedClaudeCall = createIntegration.execute
+      .getCalls()
+      .find((call) => call.args[0].providerId === AgentRuntimeProviderIdEnum.NovuAnthropic);
+
+    expect(managedClaudeCall).to.equal(undefined);
+  });
 });
 
 describe('CreateNovuIntegrations - Novu Slack demo integration', () => {

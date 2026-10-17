@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { SignupSourceEnum } from '@novu/shared';
 import { ClaimKeylessConnectCommand } from '../../../connect/usecases/claim-keyless-connect/claim-keyless-connect.command';
 import { ClaimKeylessConnect } from '../../../connect/usecases/claim-keyless-connect/claim-keyless-connect.usecase';
 import type { HumanAccountClaimResponseDto } from '../../dtos/human-account.dto';
@@ -38,6 +39,7 @@ export class ClaimForHumanAccount {
             token: command.token,
             organizationId: backingOrganization.organizationId,
             userId: backingOrganization.userId,
+            source: SignupSourceEnum.HUMAN,
           })
         )
     );

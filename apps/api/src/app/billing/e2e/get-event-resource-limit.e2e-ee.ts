@@ -2,11 +2,13 @@ import { randomUUID } from 'node:crypto';
 import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
 import { GetEventResourceUsage, GetEventResourceUsageCommand, GetSubscription } from '@novu/ee-billing';
-import { ApiServiceLevelEnum, GetSubscriptionDto } from '@novu/shared';
-import { UserSession } from '@novu/testing';
+import { ApiServiceLevelEnum, GetSubscriptionDto, PassportStrategyEnum } from '@novu/shared';
+import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import passport from 'passport';
 import sinon from 'sinon';
 import { AppModule } from '../../../app.module';
+import { ApiKeyStrategy } from '../../auth/services/passport/apikey.strategy';
 
 describe('GetEventResourceUsage #novu-v2', async () => {
   let useCase: GetEventResourceUsage;
@@ -33,6 +35,12 @@ describe('GetEventResourceUsage #novu-v2', async () => {
 
   afterEach(() => {
     getSubscriptionStub.restore();
+  });
+
+  after(() => {
+    // Compiling AppModule again registers its passport strategies globally, so the API key strategy built
+    // around MockCacheService would otherwise authenticate every later request of the shared test server.
+    passport.use(PassportStrategyEnum.HEADER_API_KEY, testServer.getService(ApiKeyStrategy));
   });
 
   describe('within the maximum evaluation duration', () => {

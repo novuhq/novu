@@ -6,6 +6,7 @@ import { RegionPicker } from '@/components/auth/region-picker';
 import { PageMeta } from '@/components/page-meta';
 import { IS_CLOUD } from '@/config';
 import { useSegment } from '@/context/segment';
+import { useTrackSignupStarted } from '@/hooks/use-track-signup-started';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
 import { appendRedirectUrlParam, readCliAuthReturnUrl } from '@/utils/cli-auth-pending';
 import { storePendingConnectClaimFromRedirectUrl } from '@/utils/connect-claim-pending';
@@ -36,6 +37,8 @@ export const SignUpPage = () => {
       referrer,
     });
   }, []);
+
+  useTrackSignupStarted({ ...getUtmParams(), referrer: getReferrer() });
 
   // The agents `product_type` choice rides on sessionStorage (captured above), not the Clerk link:
   // Clerk's <SignUp> renders its sign-in link with hash routing and mangles any query we inject here.

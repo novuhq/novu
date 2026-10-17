@@ -150,7 +150,7 @@ describe('TelegramMobileLinkTokenService', () => {
     expect(parsed.payload.kind).to.equal('agent');
     expect(parsed.payload.env).to.equal('env-1');
     expect(parsed.payload.sid).to.equal('sub-1');
-    expect(setArgs[2]).to.deep.equal({ ttl: TELEGRAM_MOBILE_LINK_TTL_SECONDS });
+    expect(setArgs[2]).to.deep.equal({ ttl: TELEGRAM_MOBILE_LINK_TTL_SECONDS, jitter: false });
   });
 
   it('peek verifies without consuming', async () => {

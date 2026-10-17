@@ -1,10 +1,10 @@
 import { useAuth as useClerkAuth } from '@clerk/react';
 import type { IEnvironment } from '@novu/shared';
 import { EnvironmentTypeEnum } from '@novu/shared';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { RiCheckLine, RiLoader4Line } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { type ClaimKeylessConnectResponse, claimKeylessConnect } from '@/api/connect';
+import { type ClaimKeylessEnvironmentResponse, claimKeylessEnvironment } from '@/api/connect';
 import { AuthLayout } from '@/components/auth-layout';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
@@ -15,6 +15,7 @@ import { useFetchEnvironments } from '@/context/environment/hooks';
 import { BOOTSTRAP_ORG_CACHE_KEY } from '@/context/environment/use-bootstrap-organization';
 import { appendRedirectUrlParam } from '@/utils/cli-auth-pending';
 import { clearConnectProvisioning } from '@/utils/connect';
+import { type ConnectClaimError, getConnectClaimError } from '@/utils/connect-claim-errors';
 import {
   clearPendingConnectClaim,
   parseConnectClaimToken,
@@ -23,7 +24,6 @@ import {
 } from '@/utils/connect-claim-pending';
 import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 
-const CLAIM_FAILED_MESSAGE = 'Unable to claim this agent. Please try again or reopen the link from your chat.';
 const ENV_READY_TIMEOUT_MS = 60_000;
 
 export const ConnectClaimPage = () => {
@@ -56,7 +56,7 @@ export const ConnectClaimPage = () => {
   return (
     <AuthLayout>
       <EnvironmentProvider>
-        <PageMeta title="Keep your Novu agent" />
+        <PageMeta title="Keep what your agent built" />
         <ConnectClaimContent token={token} />
       </EnvironmentProvider>
     </AuthLayout>
@@ -109,9 +109,8 @@ function ConnectClaimContent({ token }: { token: string | null }) {
     };
   }, [isEnvironmentReady, environmentSetupError]);
   const [isClaiming, setIsClaiming] = useState(false);
-  const [didClaim, setDidClaim] = useState(false);
-  const [claimResult, setClaimResult] = useState<ClaimKeylessConnectResponse | null>(null);
-  const [claimError, setClaimError] = useState<string | null>(null);
+  const [claimResult, setClaimResult] = useState<ClaimKeylessEnvironmentResponse | null>(null);
+  const [claimError, setClaimError] = useState<ConnectClaimError | null>(null);
   const hasAttemptedRef = useRef(false);
 
   const tokenOk = Boolean(token);
@@ -125,14 +124,14 @@ function ConnectClaimContent({ token }: { token: string | null }) {
     setIsClaiming(true);
     setClaimError(null);
     try {
-      const result = await claimKeylessConnect(token);
+      const result = await claimKeylessEnvironment(token);
       clearPendingConnectClaim();
       setClaimResult(result);
-      setDidClaim(true);
     } catch (error) {
       console.error('Connect claim failed', error);
-      showErrorToast(CLAIM_FAILED_MESSAGE, 'Claim failed');
-      setClaimError(CLAIM_FAILED_MESSAGE);
+      const claimFailure = getConnectClaimError(error);
+      showErrorToast(claimFailure.message, 'Claim failed');
+      setClaimError(claimFailure);
     } finally {
       setIsClaiming(false);
     }
@@ -144,19 +143,33 @@ function ConnectClaimContent({ token }: { token: string | null }) {
     void handleClaim();
   };
 
-  const handleVisitDashboard = useCallback(() => {
+  const getEnvironmentSlug = useCallback(() => {
     const devEnvironment =
       environments?.find((env) => env._id === claimResult?.environmentId) ??
       getClaimableDevelopmentEnvironment(environments);
-    const environmentSlug = devEnvironment?.slug;
 
-    if (!environmentSlug) {
-      navigate(ROUTES.ROOT);
+    return devEnvironment?.slug;
+  }, [claimResult, environments]);
 
-      return;
-    }
+  const navigateInEnvironment = useCallback(
+    (route: string) => {
+      const environmentSlug = getEnvironmentSlug();
 
-    if (claimResult?.agentIdentifier) {
+      if (!environmentSlug) {
+        navigate(ROUTES.ROOT);
+
+        return;
+      }
+
+      navigate(buildRoute(route, { environmentSlug }));
+    },
+    [getEnvironmentSlug, navigate]
+  );
+
+  const handleVisitDashboard = useCallback(() => {
+    const environmentSlug = getEnvironmentSlug();
+
+    if (environmentSlug && claimResult?.agentIdentifier) {
       navigate(
         buildRoute(ROUTES.AGENT_DETAILS_TAB, {
           environmentSlug,
@@ -168,12 +181,12 @@ function ConnectClaimContent({ token }: { token: string | null }) {
       return;
     }
 
-    navigate(buildRoute(ROUTES.AGENTS, { environmentSlug }));
-  }, [claimResult, environments, navigate]);
+    navigateInEnvironment(ROUTES.AGENTS);
+  }, [claimResult, getEnvironmentSlug, navigate, navigateInEnvironment]);
 
   const reason = tokenOk ? null : 'This page must be opened from the link in your chat.';
   const setupError = environmentSetupError;
-  const canClaim = !reason && !setupError && isEnvironmentReady && !isClaiming && !didClaim && !claimError;
+  const canClaim = !reason && !setupError && isEnvironmentReady && !isClaiming && !claimResult && !claimError;
 
   useEffect(() => {
     if (canClaim && !hasAttemptedRef.current) {
@@ -189,74 +202,164 @@ function ConnectClaimContent({ token }: { token: string | null }) {
 
           <div className="flex w-full flex-col items-center gap-3">
             <h1 className="text-label-sm text-text-strong text-center font-medium tracking-[-0.084px]">
-              Keep the agent you just built
+              Keep what your agent built
             </h1>
-            <p className="text-label-xs text-text-sub text-center">
-              We'll move your agent, its connected channel, and your conversation into your new Development environment.
-              The agent picks the conversation back up right where it left off.
-            </p>
+            <p className="text-label-xs text-text-sub text-center">We'll move it into your Development environment.</p>
           </div>
 
-          {reason ? (
-            <div className="text-text-sub flex w-full items-start gap-2 rounded-lg border border-dashed border-stroke-soft p-3 text-label-xs">
-              <span>{reason}</span>
-            </div>
-          ) : setupError ? (
-            <div className="flex w-full flex-col gap-3">
-              <div className="text-text-sub flex w-full items-start gap-2 rounded-lg border border-dashed border-stroke-soft p-3 text-label-xs">
-                <span>{setupError}</span>
-              </div>
-              <button
-                type="button"
-                className="text-label-xs text-text-strong w-full rounded-lg border border-stroke-soft px-3 py-2 font-medium"
-                onClick={() => {
-                  setEnvironmentSetupError(null);
-                  setIsEnvironmentReady(false);
-                }}
-              >
-                Try again
-              </button>
-            </div>
-          ) : didClaim ? (
-            <div className="flex w-full flex-col gap-3">
-              <div className="flex w-full items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-label-xs text-green-700">
-                <RiCheckLine className="mt-0.5 size-4 shrink-0" />
-                <span>
-                  Your agent is connected to your account. Head back to your chat: the agent is ready to continue.
-                </span>
-              </div>
-              <Button
-                type="button"
-                variant="secondary"
-                mode="ghost"
-                size="xs"
-                className="w-full"
-                onClick={handleVisitDashboard}
-              >
-                Visit Dashboard
-              </Button>
-            </div>
-          ) : claimError ? (
-            <div className="flex w-full flex-col gap-3">
-              <div className="text-text-sub flex w-full items-start gap-2 rounded-lg border border-dashed border-stroke-soft p-3 text-label-xs">
-                <span>{claimError}</span>
-              </div>
-              <button
-                type="button"
-                className="text-label-xs text-text-strong w-full rounded-lg border border-stroke-soft px-3 py-2 font-medium"
-                onClick={handleRetry}
-              >
-                Try again
-              </button>
-            </div>
-          ) : (
-            <div className="text-text-sub flex w-full items-center justify-center gap-2 p-3 text-label-xs">
-              <RiLoader4Line className="size-4 shrink-0 animate-spin" />
-              <span>Setting up your agent…</span>
-            </div>
-          )}
+          <ClaimState
+            reason={reason}
+            setupError={setupError}
+            claimResult={claimResult}
+            claimError={claimError}
+            onRetrySetup={() => {
+              setEnvironmentSetupError(null);
+              setIsEnvironmentReady(false);
+            }}
+            onRetryClaim={handleRetry}
+            onVisitDashboard={handleVisitDashboard}
+            onNavigate={navigateInEnvironment}
+          />
         </div>
       </div>
+    </div>
+  );
+}
+
+type ClaimStateProps = {
+  reason: string | null;
+  setupError: string | null;
+  claimResult: ClaimKeylessEnvironmentResponse | null;
+  claimError: ConnectClaimError | null;
+  onRetrySetup: () => void;
+  onRetryClaim: () => void;
+  onVisitDashboard: () => void;
+  onNavigate: (route: string) => void;
+};
+
+function ClaimState({
+  reason,
+  setupError,
+  claimResult,
+  claimError,
+  onRetrySetup,
+  onRetryClaim,
+  onVisitDashboard,
+  onNavigate,
+}: ClaimStateProps) {
+  if (reason) {
+    return <ClaimNotice message={reason} />;
+  }
+
+  if (setupError) {
+    return <ClaimNotice message={setupError} onRetry={onRetrySetup} />;
+  }
+
+  if (claimResult) {
+    return <ClaimSuccess result={claimResult} onVisitDashboard={onVisitDashboard} onNavigate={onNavigate} />;
+  }
+
+  if (claimError) {
+    return <ClaimNotice message={claimError.message} onRetry={claimError.isTerminal ? undefined : onRetryClaim} />;
+  }
+
+  return (
+    <div className="text-text-sub flex w-full items-center justify-center gap-2 p-3 text-label-xs">
+      <RiLoader4Line className="size-4 shrink-0 animate-spin" />
+      <span>Moving everything into your account…</span>
+    </div>
+  );
+}
+
+function ClaimNotice({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <div className="text-text-sub flex w-full items-start gap-2 rounded-lg border border-dashed border-stroke-soft p-3 text-label-xs">
+        <span>{message}</span>
+      </div>
+      {onRetry && (
+        <button
+          type="button"
+          className="text-label-xs text-text-strong w-full rounded-lg border border-stroke-soft px-3 py-2 font-medium"
+          onClick={onRetry}
+        >
+          Try again
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ClaimSuccess({
+  result,
+  onVisitDashboard,
+  onNavigate,
+}: {
+  result: ClaimKeylessEnvironmentResponse;
+  onVisitDashboard: () => void;
+  onNavigate: (route: string) => void;
+}) {
+  switch (result.kind) {
+    case 'agent-environment':
+      return (
+        <div className="flex w-full flex-col gap-3">
+          <ClaimSuccessMessage>
+            Your workflows and subscribers are in your Development environment. The secret key your agent used no longer
+            works — switch your app to your Development secret key and application identifier from API Keys.
+          </ClaimSuccessMessage>
+          <Button
+            type="button"
+            variant="primary"
+            mode="gradient"
+            size="xs"
+            className="w-full"
+            onClick={() => onNavigate(ROUTES.WORKFLOWS)}
+          >
+            Go to workflows
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            mode="ghost"
+            size="xs"
+            className="w-full"
+            onClick={() => onNavigate(ROUTES.API_KEYS)}
+          >
+            Open API Keys
+          </Button>
+        </div>
+      );
+    case 'connect':
+      return (
+        <div className="flex w-full flex-col gap-3">
+          <ClaimSuccessMessage>
+            Your agent is connected to your account. Head back to your chat: the agent is ready to continue.
+          </ClaimSuccessMessage>
+          <Button
+            type="button"
+            variant="secondary"
+            mode="ghost"
+            size="xs"
+            className="w-full"
+            onClick={onVisitDashboard}
+          >
+            Visit Dashboard
+          </Button>
+        </div>
+      );
+    default: {
+      const exhaustiveCheck: never = result.kind;
+
+      return exhaustiveCheck;
+    }
+  }
+}
+
+function ClaimSuccessMessage({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex w-full items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-label-xs text-green-700">
+      <RiCheckLine className="mt-0.5 size-4 shrink-0" />
+      <span>{children}</span>
     </div>
   );
 }

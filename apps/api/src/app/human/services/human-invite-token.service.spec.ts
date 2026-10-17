@@ -54,7 +54,7 @@ describe('HumanInviteTokenService', () => {
     expect(token).to.match(/^[A-Za-z0-9]{32}$/);
     expect(Math.abs(Date.parse(expiresAt) - (Date.now() + HUMAN_INVITE_LINK_TTL_SECONDS * 1000))).to.be.below(1500);
     expect(cacheService.set.firstCall.args[0]).to.equal(`human_invite_link:{${token}}`);
-    expect(cacheService.set.firstCall.args[2]).to.deep.equal({ ttl: HUMAN_INVITE_LINK_TTL_SECONDS });
+    expect(cacheService.set.firstCall.args[2]).to.deep.equal({ ttl: HUMAN_INVITE_LINK_TTL_SECONDS, jitter: false });
   });
 
   it('can be read any number of times while active', async () => {

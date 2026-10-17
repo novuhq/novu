@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { RegionPicker } from '@/components/auth/region-picker';
 import { PageMeta } from '@/components/page-meta';
+import { useTrackSignupStarted } from '@/hooks/use-track-signup-started';
 import { clerkLandingSignupAppearance } from '@/utils/clerk-appearance';
 import { ROUTES } from '@/utils/routes';
 import { IS_CLOUD } from '../config';
@@ -59,6 +60,8 @@ export function Landing1SignUpPage() {
       landing: 'landing-1',
     });
   }, []);
+
+  useTrackSignupStarted({ ...getUtmParams(), referrer: getReferrer(), landing: 'landing-1' });
 
   return (
     <>
