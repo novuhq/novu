@@ -1,12 +1,4 @@
 # syntax=docker/dockerfile:1.7
-#
-# Novu Box base image: tools only, no Novu code. The Novu checkout, node_modules,
-# builds and database files live under /data (a Cloudflare snapshot, or a named
-# volume locally), so this image changes rarely and every snapshot can share it.
-#
-#   docker build -t novu-box -f docker/box/image/Dockerfile docker/box
-#   docker run --rm -v novu-box-data:/data -e GITHUB_TOKEN [-e BULL_MQ_PRO_NPM_TOKEN] novu-box bake
-#   docker run --rm -v novu-box-data:/data -p 14200:4200 -p 13000:3000 -p 18887:8887 -p 4566:4566 -p 18025:8025 novu-box
 
 FROM mongo:8.0.17@sha256:9814652e33f0cf8b9fddea8b46dfc9d8e19b130dcfdd7b510ca58bb0d40c8b71 AS mongo
 FROM clickhouse/clickhouse-server:24.3@sha256:85b97f63dcfff47790d26bb5d5801637aaddb2b93e5e9aee27a686c2fb2b9916 AS clickhouse
@@ -47,7 +39,6 @@ COPY --link --from=sqs /opt/elasticmq/bin/elasticmq-native-server /usr/local/bin
 COPY --link --from=node /usr/local/bin/node /usr/local/bin/node
 COPY --link --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
 
-# pm2 runs the API and Worker the way the production images do (pm2-runtime, cluster mode).
 RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
  && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
  && ln -s ../lib/node_modules/corepack/dist/corepack.js /usr/local/bin/corepack \
@@ -63,7 +54,6 @@ RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
  && redis-server --version >/dev/null && mailpit version >/dev/null && pm2-runtime --version >/dev/null \
  && stripe version >/dev/null
 
-# Everything that has to survive a snapshot lives under /data.
 ENV COREPACK_HOME=/data/corepack \
     COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     NX_DAEMON=false \

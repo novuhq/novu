@@ -1,17 +1,11 @@
 name: Novu Box
 
-# A Novu Box (docker/box on Cloudflare) per pull request, on demand: a member with write access adds the `box` label
-# and the PR gets https://novu-box-pr-<number>.cli-shortener.workers.dev, started from the `base` box; every push
-# applies the new head; closing the PR or removing the label deletes it. One PR comment, edited in place, says how
-# it went. No secrets: the box host trusts this workflow's OIDC token (docker/box/src/shared/auth.ts), and PRs from
-# forks get no box. See docker/box/README.md, "Per pull request".
-
 on:
   pull_request:
     types: [labeled, unlabeled, synchronize, reopened, closed]
   schedule:
-    - cron: "17 3 * * *" # nightly: delete boxes whose PR is closed or no longer labeled
-    - cron: "17 4 * * 0" # Sundays: bake base again from next
+    - cron: "17 3 * * *"
+    - cron: "17 4 * * 0"
   workflow_dispatch:
     inputs:
       task:
@@ -24,20 +18,16 @@ permissions: {}
 jobs:
   pr:
     name: Box for this PR
-    # The events that concern the box: the `box` label added or removed, or any other event on a PR that has it.
-    # A job this skips never joins the concurrency group below, so it can't cancel a box run.
     if: >-
       github.event_name == 'pull_request'
       && github.event.pull_request.head.repo.full_name == github.repository
       && (github.event.label.name == 'box'
           || (github.event.action != 'labeled' && github.event.action != 'unlabeled'
               && contains(github.event.pull_request.labels.*.name, 'box')))
-    # One run per PR at a time; a newer event cancels the older run, and the newer run stops the older apply in the box.
     concurrency:
       group: novu-box-pr-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     runs-on: ubuntu-latest
-    # docker/box/src/ci/ci.ts ends every wait 5 minutes before this, so it can still say why in the comment.
     timeout-minutes: 60
     permissions:
       contents: read

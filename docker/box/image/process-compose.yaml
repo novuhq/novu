@@ -1,7 +1,3 @@
-# What runs in a Novu Box, in what order. `box start` runs this with config/box.env
-# loaded into the environment. Databases start first, then the `migrate` gate,
-# then the apps. With ordered_shutdown, stop runs in reverse dependency order.
-# Off on purpose, like the README says: legacy ws, webhook, inbound-mail, step-resolver.
 version: "0.5"
 log_location: /data/logs/process-compose.log
 log_level: info
@@ -74,7 +70,6 @@ processes:
       restart: on_failure
 
   s3:
-    # Same keys as the API and Worker; `box start` generates them on every start.
     command: ROOT_ACCESS_KEY=$AWS_ACCESS_KEY_ID ROOT_SECRET_KEY=$AWS_SECRET_ACCESS_KEY exec versitygw --port :4566 posix /data/s3
     readiness_probe:
       exec:
@@ -110,7 +105,6 @@ processes:
     availability:
       restart: on_failure
 
-  # SMS, push and chat catcher (src/box/sink.ts): forwards what Novu's HTTP providers send to Mailpit.
   sink:
     command: node /opt/box/src/box/sink.ts
     depends_on:
@@ -126,8 +120,6 @@ processes:
     availability:
       restart: on_failure
 
-  # Data store setup: replica set, Redis Cluster, Mongo indexes, ClickHouse migrations, S3 bucket.
-  # Waits for SQS too, so the API and Worker never start before their queues exist.
   migrate:
     command: node /opt/box/src/box/main.ts migrate
     depends_on:
@@ -239,9 +231,6 @@ processes:
     availability:
       restart: on_failure
 
-  # Self-hosted Novu app: the playground's code-first workflows and agents on the checkout's @novu/framework,
-  # synced to the Development environment by the box, which builds it. The signature check stays on.
-  # With the Anthropic key, its agents run on Claude.
   bridge:
     command: >-
       while [ ! -s /data/bridge/secret-key ]; do sleep 1; done;
@@ -262,7 +251,6 @@ processes:
       restart: on_failure
       backoff_seconds: 2
 
-  # Managed agents only: `box start` starts it when NOVU_MANAGED_CLAUDE_API_KEY is set.
   thalamus:
     disabled: true
     command: >-

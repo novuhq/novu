@@ -1,5 +1,3 @@
-// What the Box (box.ts) needs around its container: running commands in it, their environment, streamed output,
-// timeouts.
 
 import * as z from 'zod';
 import { isOidc } from '../shared/auth.ts';
@@ -8,22 +6,17 @@ import { BOX_CLI, bearer, EXIT_MARK, SECRETS } from '../shared/names.ts';
 import type { HostEnv } from './env.ts';
 import { json, text } from './life.ts';
 
-// What a call into the box (a command, its API) gets from the alarm: a hung bridge or API mustn't stall the idle check.
 export const CALL_MS = 30 * 1000;
 
-// What runs a command in the box.
 export interface Shell {
   readonly container: Container;
-  // The environment every command gets (boxEnv), read when it runs.
   readonly env: () => Promise<Record<string, string>>;
-  // The box ran a command, so its snapshot was restored.
   readonly answered: () => void;
 }
 
 interface RunOptions {
   readonly cwd?: string | undefined;
   readonly github?: string | undefined;
-  // 'pipe': the caller writes stdin, and the command's output is dropped.
   readonly stdin?: 'pipe';
   readonly signal?: AbortSignal;
 }
@@ -42,7 +35,6 @@ export const IMAGE_ENV = {
 };
 export const START = ['tini', '--', ...BOX_CLI, 'start'];
 
-// `promise`, or a failure after `ms`; `onTimeout` stops what the promise waits for.
 export function withTimeout<T>(promise: Promise<T>, ms: number, what: string, onTimeout?: () => void): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | null = null;
   const timeout = new Promise<never>((_, reject) => {
@@ -72,7 +64,6 @@ export async function run(
   return process;
 }
 
-// A read-only command's output, within CALL_MS; the timeout also stops the command.
 export function output(shell: Shell, cmd: ReadonlyArray<string>, what: string): Promise<string> {
   const controller = new AbortController();
   const read = async () => {
@@ -91,13 +82,10 @@ export function exitCode(shell: Shell, cmd: ReadonlyArray<string>, timeoutMs: nu
   return withTimeout(exited(), timeoutMs, what, () => controller.abort());
 }
 
-// What `box state` says: the baked and applied commits, and the bake or apply holding the lock.
 export async function boxState(shell: Shell, what: string): Promise<BoxState> {
   return decode(BoxState, await output(shell, [...BOX_CLI, 'state'], what), what);
 }
 
-// The GitHub token a box's git fetches and CI lookup get: the host's read-only GITHUB_READ_TOKEN when it has one, so
-// no caller's push-capable token reaches a box; else the caller's own. A workflow's OIDC token is no GitHub token.
 export function readToken(request: Request, env: HostEnv): string | undefined {
   if (env.GITHUB_READ_TOKEN) return env.GITHUB_READ_TOKEN;
   const token = bearer(request);
@@ -106,14 +94,12 @@ export function readToken(request: Request, env: HostEnv): string | undefined {
   return token;
 }
 
-// POST /__box/exec's body, or the 400 for one that isn't.
 export async function execBody(request: Request): Promise<ExecRequest | Response> {
   const body = ExecRequest.safeParse(await request.json().catch(() => null));
 
   return body.success ? body.data : text(`not an exec request: ${z.prettifyError(body.error)}\n`, 400);
 }
 
-// POST /__box/exec
 export async function execAnswer(shell: Shell, request: Request, body: ExecRequest, env: HostEnv): Promise<Response> {
   const { cmd, cwd, github } = body;
   const token = github ? readToken(request, env) : undefined;
@@ -121,7 +107,6 @@ export async function execAnswer(shell: Shell, request: Request, body: ExecReque
   return streamed(await run(shell, cmd, { cwd, github: token }));
 }
 
-// PUT /__box/file
 // An exec whose stdin is the request's body often never answers, though the file is written whole (October 2026: 12
 // of 16 tries); writing the bytes to a piped stdin answers every time.
 export async function fileAnswer(shell: Shell, url: URL, bytes: Uint8Array): Promise<Response> {
@@ -135,8 +120,6 @@ export async function fileAnswer(shell: Shell, url: URL, bytes: Uint8Array): Pro
   return json({ path, exitCode: code }, code === 0 ? 200 : 500);
 }
 
-// The secrets and the box's public URLs, for the box and for every command run in it (an apply that rebuilds the
-// dashboard writes these URLs into it). `slack`: the Slack part's own variables.
 export function boxEnv(
   env: HostEnv,
   origin: string | undefined,
@@ -161,7 +144,6 @@ export function boxEnv(
   };
 }
 
-// The command's output as it comes, then a last line with its exit code, which the CLI reads.
 export function streamed(process: ExecProcess): Response {
   const { readable, writable } = new TransformStream();
   const finish = async () => {
@@ -170,7 +152,6 @@ export function streamed(process: ExecProcess): Response {
     await writer.write(new TextEncoder().encode(`\n${EXIT_MARK} ${await process.exitCode}\n`));
     await writer.close();
   };
-  // A client that disconnects only stops the stream; the command keeps running.
   finish().catch(() => {});
 
   return new Response(readable, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });

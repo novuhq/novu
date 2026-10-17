@@ -1,4 +1,3 @@
-// A box's phase, stored once (storage `life`) with what goes with it, and the answers that depend on it.
 
 import type { BoxStatus } from '../shared/contracts.ts';
 
@@ -13,32 +12,24 @@ export interface Snapshot {
   readonly name?: string;
 }
 
-// A `down` that waits to save (a bake or apply runs), or tries again after a failed save.
 export interface Down {
   readonly tries: number;
 }
 
 export type Life =
-  // No container and no snapshot: `up` bakes. `error`: why the bake, or the run before it, ended.
   | { readonly phase: 'new'; readonly since: number; readonly error: Note | null }
-  // The container bakes its first /data; `running` once /data/.baked.json is there.
   | { readonly phase: 'baking'; readonly since: number; readonly down: Down | null }
   | {
       readonly phase: 'running';
       readonly since: number;
-      // null until its first save.
       readonly snapshot: Snapshot | null;
       readonly down: Down | null;
       readonly saveFailed: Note | null;
     }
   | Saving
-  // Stopped with its snapshot: the next request wakes it.
   | { readonly phase: 'asleep'; readonly since: number; readonly snapshot: Snapshot; readonly error: Note | null }
-  // Its snapshot couldn't be restored: `up` bakes again.
   | { readonly phase: 'lost'; readonly since: number; readonly lost: Note & { readonly id: string } };
 
-// save() stops the processes and snapshots the disk; until it's done, requests get 503. `before`: the phase it
-// goes back to if the save fails.
 export interface Saving {
   readonly phase: 'saving';
   readonly since: number;
@@ -48,36 +39,7 @@ export interface Saving {
 }
 
 export async function lifeOf(storage: DurableObjectStorage): Promise<Life> {
-  const life = await storage.get<Life | LegacyLife>('life');
-  if (!life) return { phase: 'new', since: Date.now(), error: null };
-
-  return 'saveTries' in life ? upgraded(life) : life;
-}
-
-// What boxes stored before `down` and `saveFailed` (October 2026): `saveTries`, and running's `error` for a failed
-// save; the other phases are as they were. Delete this once every box that ran then has been saved again.
-type LegacyLife =
-  | { readonly phase: 'baking'; readonly since: number; readonly saveTries: number }
-  | {
-      readonly phase: 'running';
-      readonly since: number;
-      readonly snapshot: Snapshot | null;
-      readonly saveTries: number;
-      readonly error: Note | null;
-    }
-  | (Omit<Saving, 'down'> & { readonly saveTries: number });
-
-function upgraded(life: LegacyLife): Life {
-  const { since } = life;
-  const down = life.saveTries ? { tries: life.saveTries } : null;
-  switch (life.phase) {
-    case 'baking':
-      return { phase: 'baking', since, down };
-    case 'running':
-      return { phase: 'running', since, snapshot: life.snapshot, down, saveFailed: life.error };
-    case 'saving':
-      return { phase: 'saving', since, before: life.before, snapshot: life.snapshot, down };
-  }
+  return (await storage.get<Life>('life')) ?? { phase: 'new', since: Date.now(), error: null };
 }
 
 export async function setLife(storage: DurableObjectStorage, life: Life): Promise<Life> {
@@ -133,7 +95,6 @@ export function withDown(life: Life, down: Down | null): Life {
   }
 }
 
-// What a box that stopped without this object stopping it becomes: asleep on its snapshot, or new without one.
 export function stopped(life: Life, why: string): Life {
   const snapshot = snapshotOf(life);
   const error = note(why);
@@ -143,7 +104,6 @@ export function stopped(life: Life, why: string): Life {
     : { phase: 'new', since: Date.now(), error };
 }
 
-// The phase before a failed save, with why it failed.
 export function unsaved(life: Saving, error: Note): Life {
   const { down, snapshot } = life;
 
@@ -152,7 +112,6 @@ export function unsaved(life: Saving, error: Note): Life {
     : { phase: 'running', since: Date.now(), snapshot, down, saveFailed: error };
 }
 
-// GET /__box/state, without what the Slack part adds.
 export function status(life: Life, running: boolean, lastActivity: number, origin: string | null): BoxStatus {
   const snapshot = snapshotOf(life);
   const gigabytes = snapshot?.size ? +(snapshot.size / 1e9).toFixed(2) : null;
@@ -177,7 +136,6 @@ export function status(life: Life, running: boolean, lastActivity: number, origi
   }
 }
 
-// While the box saves (3 to 6 minutes), for browsers and for the CLI and CI, which wait and ask again.
 export function saving(request: Request): Response {
   const headers = { 'Retry-After': '30', 'X-Box-Phase': 'saving' };
   if (request.headers.get('Accept')?.includes('text/html'))

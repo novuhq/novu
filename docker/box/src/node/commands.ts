@@ -7,7 +7,6 @@ export interface Parsed {
 }
 
 export interface Command {
-  // After the command's name: its arguments and flags.
   readonly usage: string;
   readonly help: string;
   readonly options?: ParseArgsOptionsConfig;
@@ -24,7 +23,6 @@ export function help(program: string, commands: Readonly<Record<string, Command>
   return `usage:\n${lines.join('\n')}${notes && `\n\n${notes}`}`;
 }
 
-// Runs the command `argv` names; help (exit 0 if asked for, 1 if the command is unknown) otherwise.
 export function runCommand(
   program: string,
   commands: Readonly<Record<string, Command>>,

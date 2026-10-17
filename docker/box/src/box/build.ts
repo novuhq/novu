@@ -1,5 +1,3 @@
-// Installing, building and deploying the checkout's apps, which bake and apply share, and the dashboard's runtime
-// copy, which start prepares too.
 
 import fs from 'node:fs';
 import { relative } from 'node:path';
@@ -29,12 +27,6 @@ function packageJson(dir: string) {
   return readJson(`${dir}/package.json`, PackageJson) ?? {};
 }
 
-// The API, the worker and the dashboard build in their own runs to get their own arguments (`--sourcemap false` takes
-// vite's peak from ~4 GB to ~2.5 GB). Their dependencies build once, in the first run. nx can't hash the enterprise
-// packages (their src links into the nxignored submodule), so it rebuilds them every time (~25 s); without
-// `enterprise` they are left out and their last dist is reused.
-// Libraries first, 4 at a time (the box has 4 vCPUs; peak memory measured 4.2 of 12 GiB). Then the worker, and the
-// API's metadata and build, at the same time.
 export async function build(projects: ReadonlyArray<string>, { enterprise = true } = {}): Promise<void> {
   const nx = (args: ReadonlyArray<string>) => run(NX, args, { env: { ...vars, NODE_OPTIONS: '' } });
   const graph = await projectGraph();
@@ -76,8 +68,6 @@ export async function build(projects: ReadonlyArray<string>, { enterprise = true
     await nx(['run', '@novu/dashboard:build', '--excludeTaskDependencies', '--', '--sourcemap', 'false']);
 }
 
-// An app's nest-cli.json without `typeCheck`: the same swc output without a full type-check (API ~6 s instead of
-// ~57 s, worker ~4 s instead of ~14 s). CI's build type-checks every PR.
 function withoutTypeCheck(app: string): string {
   const config = readJson(`${REPO}/apps/${app}/nest-cli.json`, NestConfig);
   if (!config) throw new Error(`apps/${app} has no nest-cli.json`);
@@ -88,8 +78,6 @@ function withoutTypeCheck(app: string): string {
   return relative(`${REPO}/apps/${app}`, `${RUN}/${app}-nest-cli.json`);
 }
 
-// `compile` mode skips the type check and the static prerender, which the playground doesn't pass; every page
-// renders on request, as under `next dev`. Turbopack takes ~45 s and ~2.4 GB, webpack ~110 s.
 export async function buildBridge(): Promise<void> {
   await run('node_modules/.bin/next', ['build', '--turbopack', '--experimental-build-mode', 'compile'], {
     cwd: `${REPO}/playground/nextjs`,
@@ -121,8 +109,6 @@ export async function dashboardBundleChanged(files: ReadonlyArray<string>): Prom
   return files.some((file) => [...dirs].some((dir) => `${REPO}/${file}`.startsWith(`${dir}/`)));
 }
 
-// Same layout as the production images: `pnpm deploy --prod` output, dist with its .env files,
-// metadata.js paths rewritten for the flat layout, and BullMQ Pro dropped in when it was installed.
 export async function deployApp(name: string, { dependenciesChanged = true } = {}): Promise<void> {
   const target = `${DEPLOY}/${name}`;
   const dist = `${target}/dist`;
@@ -171,8 +157,6 @@ export async function deployApp(name: string, { dependenciesChanged = true } = {
   }
 }
 
-// With the same dependencies, a new `pnpm deploy` (~60 s: it re-resolves the whole workspace) differs from the
-// previous one only in the workspace packages it copied in, so re-copy just those (`file+<path>` entries).
 async function refreshWorkspacePackages(target: string): Promise<void> {
   const workspace = await workspacePackages();
   const store = `${target}/node_modules/.pnpm`;
@@ -187,7 +171,6 @@ async function refreshWorkspacePackages(target: string): Promise<void> {
   }
 }
 
-// Same job as apps/dashboard/docker-entrypoint.sh: expose VITE_* runtime env as window._env_.
 export function prepareDashboard(): void {
   const target = `${RUN}/dashboard`;
   fs.rmSync(target, { recursive: true, force: true });
@@ -201,7 +184,6 @@ export function prepareDashboard(): void {
   writeBoxJson();
 }
 
-// The baked and applied commits, for the dashboard (served at /__box.json).
 export function writeBoxJson(): void {
   const baked = readJson(BAKED, Baked);
   const applied = readJson(APPLIED, Applied);

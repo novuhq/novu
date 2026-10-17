@@ -1,13 +1,3 @@
-// `box mail`: what the box sent, read from its Mailpit over the box's address. Every email lands there, and the sink
-// (src/box/sink.ts) puts SMS, push and chat messages there too, tagged `sms`, `push` or `chat`.
-//
-//   mail [search]           the newest messages, one line each; search is Mailpit's: to:a@b.c subject:Welcome tag:sms
-//   mail <id>               one message: headers, attachments, links, the HTML check, the view URL, the text
-//   mail <id> --html        the HTML source instead of the text
-//   mail <id> --check-links also request every link (HEAD) and report the broken ones
-//
-// The HTML check is Mailpit's: each HTML/CSS feature the email uses against caniemail.com's data for the email
-// clients (Gmail, Outlook, Apple Mail, ...). The view URL renders the HTML alone, for a browser screenshot.
 
 import type * as z from 'zod';
 import { fetchJson } from '../node/http.ts';
@@ -97,7 +87,6 @@ async function htmlCheck(api: Api, id: string): Promise<void> {
       `${percent(total.Unsupported)} unsupported (${total.Tests} tests across email clients)`
   );
   for (const warning of warnings ?? []) {
-    // One entry per client and platform, without versions: "outlook (windows)".
     const clients = (support: string) => [
       ...new Set(warning.Results.filter((r) => r.Support === support).map((r) => `${r.Family} (${r.Platform})`)),
     ];
@@ -109,7 +98,6 @@ async function htmlCheck(api: Api, id: string): Promise<void> {
   }
 }
 
-// Chat and push subjects are the message itself, line breaks included.
 function oneLine(text: string, max: number): string {
   const flat = text.replace(/\s+/g, ' ').trim();
 

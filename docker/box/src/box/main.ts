@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-// Novu Box, the commands that run inside the box. From your machine, use the CLI (`npm run box -- <command>`, see
-// src/cli), which calls these.
 
 import { type Command, runCommand } from '../node/commands.ts';
 import { main } from '../node/main.ts';
@@ -11,9 +9,6 @@ import { logs } from './logs.ts';
 import { migrate } from './migrate.ts';
 import { pc } from './supervisor.ts';
 
-// The caller's GitHub token (push-capable from a laptop, the host's read-only one on Cloudflare), while the box runs
-// PR code: it leaves the environment before any command runs, and only bake and apply get it, for their git fetches
-// and the CI lookup.
 const token = process.env.GITHUB_TOKEN || undefined;
 delete process.env.GITHUB_TOKEN;
 

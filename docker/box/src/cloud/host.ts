@@ -1,6 +1,3 @@
-// Novu Box on Cloudflare, the host Worker `novu-box-hub` (wrangler.jsonc): the Box Durable Object class (box.ts),
-// one per box, each with its container; the Slack router's (slack/router.ts); and its own routes for creating and
-// deleting boxes (boxes.ts). Boxes are reached through their own Workers (thin.ts), never through this one.
 
 import { HOST } from '../shared/names.ts';
 import { boxes } from './boxes.ts';

@@ -1,5 +1,3 @@
-// The Slack router's address, https://novu-box-slack.cli-shortener.workers.dev (Novu Bot's request URL ends in
-// /slack): the thin Worker, bound to Router("router") in the host. `box deploy` deploys it after the host.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "novu-box-slack",

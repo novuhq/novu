@@ -1,5 +1,3 @@
-// The local box: a Docker container with its data in a named volume. Local boxes publish the same host ports, so one
-// runs at a time.
 
 import fs from 'node:fs';
 import { join } from 'node:path';
@@ -11,7 +9,6 @@ import { BOX_CLI } from '../shared/names.ts';
 import { githubToken, type Target } from './target.ts';
 
 export const HERE = new URL('../..', import.meta.url).pathname;
-// Not novu-box:dev, the tag checkouts on the old box.mjs image build: the entrypoint changed.
 const IMAGE = 'novu-box:local';
 const ENV_FILE = join(HERE, '.env');
 const PORTS = { api: 13000, dashboard: 14200, socket: 18887, s3: 4566, mailpit: 18025 };
@@ -34,7 +31,6 @@ export function dockerTarget(box: string): Target {
     if (status !== 'running') throw new Error(`box ${box} is ${status ?? 'not created'}; run \`box up\` first`);
   };
 
-  // Its exit code is the box's; the GitHub token reaches only this command.
   const inBox = async (args: ReadonlyArray<string>, github = false) => {
     const token = github ? await githubToken() : undefined;
     const options: RunOptions = token ? { env: { ...process.env, GITHUB_TOKEN: token } } : {};
@@ -42,7 +38,6 @@ export function dockerTarget(box: string): Target {
     return { args: ['exec', ...(token ? ['-e', 'GITHUB_TOKEN'] : []), box, ...BOX_CLI, ...args], options };
   };
 
-  // The doctor prints its report whether or not it passes; null while the box can't give one (starting).
   const doctorReport = async () => {
     const { stdout } = await capture('docker', ['exec', box, ...BOX_CLI, 'doctor']).catch(() => ({ stdout: '' }));
 

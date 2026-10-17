@@ -1,5 +1,3 @@
-// `box migrate`: replica set, Redis Cluster, Mongo indexes, ClickHouse migrations, S3 bucket (process-compose runs
-// it before the apps). Mongo goes through the checkout's own mongoose (libs/dal), so it matches what the apps use.
 
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
@@ -9,7 +7,6 @@ import { messageOf } from '../shared/errors.ts';
 import { DATA, MIGRATED, REDIS_PORTS, REDIS_TLS, REPO, RUN } from './paths.ts';
 import { output, run, vars } from './runtime.ts';
 
-// What the box uses of the checkout's mongoose and its mongodb driver.
 interface MongoClient {
   db(name?: string): MongoDb;
   close(): Promise<void>;
@@ -95,8 +92,6 @@ async function createRedisCluster(): Promise<void> {
   });
 }
 
-// Production runs with MONGO_AUTO_CREATE_INDEXES=false, so the box applies the indexes declared in
-// the checked-out schemas explicitly and logs every difference, which is what a PR's index change does.
 async function syncIndexes(mongoose: Mongoose, requireDal: NodeJS.Require): Promise<void> {
   Object.assign(process.env, vars);
   requireDal('./dist/index.js');
@@ -107,7 +102,6 @@ async function syncIndexes(mongoose: Mongoose, requireDal: NodeJS.Require): Prom
       const { toCreate, toDrop } = await model.diffIndexes({ indexOptionsToCreate: true });
       if (!toCreate.length && !toDrop.length) continue;
       await model.cleanIndexes({ toDrop });
-      // One at a time: a schema that declares conflicting indexes must not skip the rest of its collection.
       let created = 0;
       for (const spec of toCreate) {
         try {

@@ -4,14 +4,11 @@ import { stopping } from './process.ts';
 export interface PollOptions<T> {
   readonly timeoutMs: number;
   readonly everyMs?: number;
-  // What still isn't so when the time is up: "<what> after <n>s".
   readonly what?: string | (() => string);
   readonly signal?: AbortSignal | undefined;
-  // The answer when the time is up, instead of failing.
   readonly orElse?: () => T;
 }
 
-// Runs `check` until it gives something truthy, and returns that. A check that throws ends the wait.
 export async function poll<T>(check: () => Promise<T | null | undefined | false>, options: PollOptions<T>): Promise<T> {
   const { timeoutMs, everyMs = 1000, what = 'not yet', signal, orElse } = options;
   const until = Date.now() + timeoutMs;

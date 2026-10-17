@@ -1,7 +1,3 @@
-// The host's /__box/boxes routes, for whoever may call /__box/* (shared/auth.ts): the one way boxes' Workers are
-// created and deleted, through the Cloudflare API, so CI needs no Cloudflare credentials. The host holds
-// CLOUDFLARE_API_TOKEN as a secret no box gets. Deleting a box stops it first; when it can't be stopped, its Worker
-// stays, so the box isn't left running unreachable.
 
 import * as z from 'zod';
 import { authorize } from '../shared/auth.ts';
@@ -58,8 +54,6 @@ async function list(env: HostEnv): Promise<Array<string>> {
     .sort();
 }
 
-// A Worker on workers.dev that forwards everything to Box(<box>) in the host (thin.ts, bundled by `box deploy`):
-// its module, the binding to the host's class, BOX_NAME, then the workers.dev address.
 async function upload(env: HostEnv, box: string): Promise<void> {
   const form = new FormData();
   form.append(
@@ -84,7 +78,6 @@ async function upload(env: HostEnv, box: string): Promise<void> {
   );
 }
 
-// The Workers Scripts API's `result`; deleting a Worker that isn't there counts as done.
 async function scripts(env: HostEnv, method: 'GET' | 'PUT' | 'POST' | 'DELETE', path: string, body?: BodyInit) {
   const what = `Cloudflare ${method} workers/scripts${path.split('?')[0]}`;
   const headers: Record<string, string> = { Authorization: `Bearer ${env.CLOUDFLARE_API_TOKEN}` };

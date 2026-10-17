@@ -1,4 +1,3 @@
-// process-compose, the box's supervisor: asking it for its processes, starting and stopping them.
 
 import { poll } from '../node/poll.ts';
 import { decode, type PcProcess, PcProcesses } from '../shared/contracts.ts';
@@ -50,7 +49,6 @@ export async function startSkipped(): Promise<void> {
     });
 }
 
-// Every store answers its readiness probe and `migrate` has run: what the apps, and an apply, need first.
 export async function storesReady(): Promise<boolean> {
   const rows = await list();
   const ready = STORES.every((name) => rows.find((row) => row.name === name)?.is_ready === 'Ready');

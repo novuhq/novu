@@ -1,17 +1,13 @@
 import { spawn } from 'node:child_process';
 import { constants } from 'node:os';
 
-// Aborted by the first SIGTERM or SIGINT (main.ts): every child still running is stopped with it.
 export const stopping = new AbortController();
 
 export interface RunOptions {
   readonly cwd?: string;
-  // Replaces the environment.
   readonly env?: NodeJS.ProcessEnv;
-  // Written to stdin.
   readonly input?: string;
   readonly stdio?: 'inherit' | 'ignore';
-  // Gets stdout as it comes, instead of our stdout (a command that runs until it's stopped).
   readonly onStdout?: (chunk: string) => void;
   // Our terminal's stdin, and our process group, so the terminal's signals reach it (`docker exec -it`).
   readonly interactive?: boolean;
@@ -27,8 +23,6 @@ export interface Captured {
   readonly stderr: string;
 }
 
-// Each child leads its own process group, so stopping it (timeout, abort, our own SIGTERM) reaches everything it
-// started: SIGTERM to the group, then SIGKILL after the grace period, even when the leader exited first.
 function start(cmd: string, args: ReadonlyArray<string>, options: RunOptions, piped: boolean): Promise<Captured> {
   const { cwd, env, input, stdio = 'inherit', interactive = false, timeoutMs, signal, graceMs = 10_000 } = options;
   const { onStdout } = options;
@@ -80,23 +74,19 @@ function start(cmd: string, args: ReadonlyArray<string>, options: RunOptions, pi
   });
 }
 
-// Output on ours; fails unless it exits 0.
 export async function run(cmd: string, args: ReadonlyArray<string>, options: RunOptions = {}): Promise<void> {
   const { exitCode } = await start(cmd, args, options, false);
   if (exitCode !== 0) throw new Error(`${[cmd, ...args].join(' ').slice(0, 300)} exited with ${exitCode}`);
 }
 
-// Output on ours; the exit code, for commands whose code is the answer.
 export async function exitCode(cmd: string, args: ReadonlyArray<string>, options: RunOptions = {}): Promise<number> {
   return (await start(cmd, args, options, false)).exitCode;
 }
 
-// Its exit code and output, whatever the code.
 export function capture(cmd: string, args: ReadonlyArray<string>, options: RunOptions = {}): Promise<Captured> {
   return start(cmd, args, options, true);
 }
 
-// stdout, trimmed; fails with the end of its stderr unless it exits 0.
 export async function output(cmd: string, args: ReadonlyArray<string>, options: RunOptions = {}): Promise<string> {
   const { exitCode, stdout, stderr } = await capture(cmd, args, options);
   if (exitCode !== 0)

@@ -1,4 +1,3 @@
-// The first bake, which runs detached in the container (`box bake --start`), as the host sees it.
 
 import { messageOf } from '../shared/errors.ts';
 import { BOX_CLI, detached } from '../shared/names.ts';
@@ -7,14 +6,11 @@ import { type Life, note, setLife } from './life.ts';
 
 const LOG = '/data/logs/up.log';
 
-// In a container just started from the image; the GitHub token is in the bake's environment only.
 export async function startBake(shell: Shell, storage: DurableObjectStorage, ref: string, github?: string) {
   await setLife(storage, { phase: 'baking', since: Date.now(), down: null });
   await (await run(shell, detached([...BOX_CLI, 'bake', ref, '--start'], LOG), { github })).exitCode;
 }
 
-// A bake that ended without /data/.baked.json failed: its container goes, with the end of its log kept as the
-// error, so the next `up` bakes again. The bake takes its lock a moment after it starts, hence the minute's grace.
 export async function checkBake(shell: Shell, storage: DurableObjectStorage, life: Life): Promise<Life> {
   if (life.phase !== 'baking' || !shell.container.running || Date.now() - life.since < 60_000) return life;
   const state = await boxState(shell, 'the bake check').catch((error: unknown) => {

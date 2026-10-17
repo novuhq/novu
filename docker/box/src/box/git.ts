@@ -1,4 +1,3 @@
-// git in the checkout: fetching a ref, the token-scoped calls, merging a PR onto the baked commit, a sync bundle.
 
 import { gitIdentity, mergedTree } from '../node/git.ts';
 import { REPO } from './paths.ts';
@@ -25,7 +24,6 @@ export async function gitWithToken(token: string | undefined, args: ReadonlyArra
   );
 }
 
-// `ref`: a PR number, branch, tag or SHA.
 export async function fetchRef(ref: string): Promise<string> {
   const refspec = /^\d+$/.test(ref) ? `pull/${ref}/head` : ref;
   await run('git', ['fetch', '--filter=blob:none', 'origin', refspec]);
@@ -44,8 +42,6 @@ export async function mergeOntoBaked(ref: string, prHead: string, baked: string)
   });
 }
 
-// A bundle from `box sync` holds one commit: a snapshot of a checkout, committed or not, on top of its HEAD.
-// Its prerequisites are in the baked commit's history, which the box always has.
 export async function unbundle(file: string): Promise<{ sha: string; subject: string }> {
   const [head = '', ...others] = (await output('git', ['bundle', 'unbundle', file])).split('\n');
   if (others.length) throw new Error(`${file} has ${others.length + 1} heads; expected the one from box sync`);

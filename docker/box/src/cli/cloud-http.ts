@@ -1,4 +1,3 @@
-// Requests to a box's Worker and the host's routes, through what Cloudflare and the box answer while they can't yet.
 
 import { setTimeout as sleep } from 'node:timers/promises';
 import * as z from 'zod';
@@ -25,7 +24,6 @@ async function send(url: string, { method = 'GET', body }: FetchInit, token: Tok
   );
 }
 
-// The Worker's own answer, Cloudflare's HTML page (`missing` for its 404), or a box that saves.
 function answerOf(response: Response): 'own' | 'page' | 'missing' | 'saving' {
   if (response.headers.get('content-type')?.includes('text/html')) return response.status === 404 ? 'missing' : 'page';
 
@@ -62,13 +60,11 @@ export async function boxFetch(url: string, init: FetchInit, token: Token): Prom
   return response;
 }
 
-// Fails with the start of the answer unless it is 2xx, or `allowed`.
 export async function failUnlessOk(response: Response, what: string, allowed?: number): Promise<void> {
   if (response.ok || response.status === allowed) return;
   throw new Error(`${what} -> ${response.status}: ${(await response.text()).slice(0, 300)}`);
 }
 
-// The host's routes (src/cloud/boxes.ts): list, create and delete boxes' Workers.
 export async function hostBoxes<T>(
   path: string,
   schema: z.ZodType<T>,
@@ -81,7 +77,6 @@ export async function hostBoxes<T>(
   return decode(schema, await response.text(), what);
 }
 
-// The host answers its own plain-text 404; Cloudflare's 404 page (HTML) means it isn't deployed.
 export async function hostExists(): Promise<boolean> {
   const response = await fetch(`https://${HOST}.${DOMAIN}/`, { signal: stopping.signal }).catch(() => null);
   await response?.body?.cancel();
@@ -89,7 +84,6 @@ export async function hostExists(): Promise<boolean> {
   return response?.status === 404 && Boolean(response.headers.get('content-type')?.includes('text/plain'));
 }
 
-// A command's output from /__box/exec, printed as it comes unless `capture`, and its exit code from the last line.
 export async function readExec(response: Response, capture: boolean) {
   const decoder = new TextDecoder();
   let text = '';
@@ -97,7 +91,6 @@ export async function readExec(response: Response, capture: boolean) {
   for await (const chunk of response.body ?? []) {
     text += decoder.decode(chunk, { stream: true });
     if (capture) continue;
-    // Holds back the last line, which may be the exit mark.
     const upTo = text.lastIndexOf('\n') + 1;
     if (upTo > printed) {
       process.stdout.write(text.slice(printed, upTo).replace(new RegExp(`\\n?${EXIT_MARK} \\d+\\n$`), ''));

@@ -1,5 +1,3 @@
-// What the router's parts (router.ts, inbound.ts, outbound.ts) share: its storage, Slack's Web API with the real
-// token, the bot's identity, and the Talk to buttons.
 
 import { fromJson } from '../../shared/contracts.ts';
 import type { HostEnv } from '../env.ts';
@@ -20,18 +18,15 @@ export const ROUTER_NAME = 'Novu Box';
 export const NO_BOX = 'No Novu Box is running: start one with `box up --cloud`.';
 export const NOT_SLACK = 'not what Slack sends';
 
-// The Router (router.ts) as its parts see it.
 export interface RouterCore {
   readonly storage: DurableObjectStorage;
   readonly env: HostEnv;
-  // Queues an event for the owner's box and hands it over.
   readonly forward: (owner: Owner, envelope: Envelope) => Promise<void>;
   readonly deliver: (item: Item, timeoutMs?: number) => Promise<SlackAnswer | null>;
   // Work that outlives the request (Slack wants its ack within 3 s); the Durable Object keeps running it.
   readonly later: (what: string, work: Promise<unknown>) => void;
 }
 
-// Slack's Web API with the real bot token.
 export async function slack(core: RouterCore, method: string, params: Params): Promise<SlackResult> {
   const response = await fetch(`${SLACK_API}${method}`, {
     method: 'POST',
@@ -58,7 +53,6 @@ export function ephemeral(core: RouterCore, channel: string, user: string, messa
   return slack(core, 'chat.postEphemeral', { channel, user, username: ROUTER_NAME, ...message });
 }
 
-// The real bot's workspace and user, which boxes need for mention detection (`<@U…>`).
 export async function identity(core: RouterCore): Promise<Identity> {
   const known = await core.storage.get<Identity>('identity');
   if (known) return known;
@@ -79,8 +73,6 @@ export async function registered(core: RouterCore): Promise<Array<RegisteredBox>
   return [...(await core.storage.list<RegisteredBox>({ prefix: 'box:' })).values()].filter((box) => box.agents.length);
 }
 
-// "<box> ready · Talk to: custom-code | ai-sdk | langchain", with a link to its dashboard. `pending`: the picker,
-// which then forwards the waiting message. Action IDs are unique per message and view, so they name the box.
 export function talkBlocks(box: RegisteredBox, pending?: string): Array<object> {
   return [
     { type: 'section', text: { type: 'mrkdwn', text: `*${box.name}* ready · Talk to:` } },
@@ -108,7 +100,6 @@ export function isDm(channel: string | undefined): boolean {
   return Boolean(channel?.startsWith('D'));
 }
 
-// Where the router answers about a message: in its thread, in a new thread on a channel message, or in the DM.
 export function replyTo(channel: string, ts: string | undefined, thread: string | undefined): string | undefined {
   return thread ?? (isDm(channel) ? undefined : ts);
 }

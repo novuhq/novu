@@ -1,8 +1,6 @@
-// What crosses a boundary, decoded where it comes in. Objects keep only the fields the box reads.
 
 import * as z from 'zod';
 
-// `schema`, from JSON text.
 export function fromJson<T extends z.ZodType>(schema: T) {
   return z
     .string()
@@ -18,7 +16,6 @@ export function fromJson<T extends z.ZodType>(schema: T) {
     .pipe(schema);
 }
 
-// JSON `text` as `schema` says, or a failure that starts with `what`.
 export function decode<T extends z.ZodType>(schema: T, text: string, what: string): z.output<T> {
   const decoded = fromJson(schema).safeParse(text);
   if (!decoded.success) throw new Error(`${what}: ${z.prettifyError(decoded.error)}`);
@@ -26,12 +23,10 @@ export function decode<T extends z.ZodType>(schema: T, text: string, what: strin
   return decoded.data;
 }
 
-// --- The box's files under /data, and what `box state` and `box doctor` print ---
 
 export const Baked = z.object({ ref: z.string(), sha: z.string(), at: z.string() });
 export type Baked = z.infer<typeof Baked>;
 
-// The last apply that finished; `files`: how many changed.
 export const Applied = z.object({
   ref: z.string(),
   source: z.enum(['github', 'sync']),
@@ -44,7 +39,6 @@ export const Applied = z.object({
 });
 export type Applied = z.infer<typeof Applied>;
 
-// Written before an apply checks out its commit, removed when it succeeds; the next apply plans for these files too.
 export const Applying = z.object({ sha: z.string(), files: z.array(z.string()), full: z.boolean(), at: z.string() });
 export type Applying = z.infer<typeof Applying>;
 
@@ -72,7 +66,6 @@ export const DoctorReport = z.object({
 });
 export type DoctorReport = z.infer<typeof DoctorReport>;
 
-// One row of `process-compose process list -o json`.
 export const PcProcesses = z.array(
   z.object({
     name: z.string(),
@@ -85,8 +78,6 @@ export const PcProcesses = z.array(
 );
 export type PcProcess = z.infer<typeof PcProcesses>[number];
 
-// A line of process-compose's log, and an app's JSON log line inside its `message`: fields that aren't what `box
-// logs` expects are left out rather than failing the line.
 export const PcLogLine = z.object({
   process: z.string().optional().catch(undefined),
   message: z.unknown(),
@@ -105,7 +96,6 @@ export const AppLogLine = z.object({
   logger: text,
 });
 
-// --- The checkout's own JSON ---
 
 export const PackageJson = z.object({
   dependencies: z.record(z.string(), z.string()).optional(),
@@ -125,10 +115,8 @@ export const NxProjects = z.array(z.string());
 export const PnpmPackages = z.array(z.object({ name: z.string(), path: z.string() }));
 export const NestConfig = z.looseObject({ compilerOptions: z.looseObject({}) });
 
-// --- The host's /__box/* routes ---
 
 const Note = z.object({ at: z.string(), message: z.string() });
-// A `down` that waits to save, or tries again.
 const Down = z.object({ tries: z.number() }).nullable();
 const Status = {
   since: z.string().nullable(),
@@ -146,7 +134,6 @@ export const BoxStatus = z.discriminatedUnion('phase', [
 export type BoxStatus = z.infer<typeof BoxStatus>;
 export type Phase = BoxStatus['phase'];
 
-// A box with nothing to wake: never baked, its bake failed, or its snapshot is lost.
 export function needsBake(status: BoxStatus): boolean {
   return status.phase === 'new' || status.phase === 'lost';
 }
@@ -163,7 +150,6 @@ export type StateAnswer = z.infer<typeof StateAnswer>;
 
 export const BoxList = z.object({ boxes: z.array(z.string()) });
 
-// --- Cloudflare and GitHub ---
 
 export const CloudflareAnswer = z.object({ success: z.boolean(), errors: z.unknown(), result: z.unknown() });
 export const ScriptList = z.array(z.object({ id: z.string() }));
@@ -190,9 +176,7 @@ export const IssueEvent = z.object({
 export const Permission = z.object({ permission: z.string() });
 export const OidcToken = z.object({ value: z.string() });
 
-// --- What the bake and start read from Clerk, Stripe, the box's own API and the bridge app ---
 
-// A Clerk or Stripe object.
 export const WithId = z.object({ id: z.string() });
 export type WithId = z.infer<typeof WithId>;
 export const ClerkUsers = z.array(WithId);
@@ -226,12 +210,10 @@ export const StripeCustomers = data(
 );
 export const StripePrices = data(z.array(WithId.extend(Usage.shape)));
 
-// --- The sink: whatever a Novu HTTP provider sent, and Mailpit's answer to it ---
 
 export const ProviderRequest = z.record(z.string(), z.unknown());
 export const MailpitSent = z.object({ ID: z.string() });
 
-// --- Mailpit, through `box mail` ---
 
 const Address = z.object({ Name: z.string().optional(), Address: z.string() });
 const Addresses = z.array(Address).nullish();

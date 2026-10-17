@@ -2,7 +2,6 @@ import type * as z from 'zod';
 import { decode } from '../shared/contracts.ts';
 import { stopping } from './process.ts';
 
-// A non-2xx answer, for callers that tell statuses apart.
 export class HttpError extends Error {
   readonly status: number;
 
@@ -15,9 +14,7 @@ export class HttpError extends Error {
 export interface JsonInit {
   readonly method?: string;
   readonly headers?: Record<string, string>;
-  // Sent as JSON.
   readonly json?: object;
-  // Sent as application/x-www-form-urlencoded.
   readonly form?: Record<string, string>;
   readonly timeoutMs?: number;
 }
@@ -28,7 +25,6 @@ function bodyOf({ json, form }: JsonInit): string | URLSearchParams | null {
   return form ? new URLSearchParams(form) : null;
 }
 
-// The answer's JSON, decoded with `schema` (an empty body as null); fails unless the status is 2xx.
 export async function fetchJson<T>(url: string, schema: z.ZodType<T>, init: JsonInit = {}): Promise<T> {
   const { method = 'GET', json, form, timeoutMs = 60_000 } = init;
   const what = `${method} ${url.split('?')[0]}`;

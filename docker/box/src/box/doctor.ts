@@ -1,5 +1,3 @@
-// What the box reports (`state`, `doctor`), and what stops and restarts it around a snapshot (`quiesce`, `resume`)
-// or stops an apply (`stop-apply`).
 
 import { log } from '../node/main.ts';
 import { poll } from '../node/poll.ts';
@@ -12,8 +10,6 @@ import { APPS, PROCESSES, STORES } from './processes.ts';
 import { httpStatus, readJson, waitForHttp } from './runtime.ts';
 import { list, pc, running, stopRunning, storesReady } from './supervisor.ts';
 
-// The baked and applied commits, an apply that didn't finish, and the bake or apply that runs now. It reads files
-// only, so it answers before the supervisor is up and after `quiesce`.
 export function state(): BoxState {
   return {
     baked: readJson(BAKED, Baked),
@@ -23,8 +19,6 @@ export function state(): BoxState {
   };
 }
 
-// Whether the box is fit to test on: no bake or apply running or an apply left half done, every process up (and
-// ready, if it has a probe), and the API, dashboard and bridge app answering. `problems` says what isn't.
 export async function doctor(): Promise<DoctorReport> {
   const problems: Array<string> = [];
   const { baked, applied, applying, lock } = state();
@@ -55,7 +49,6 @@ export async function doctor(): Promise<DoctorReport> {
   return { ok: !problems.length, problems, baked, applied, lock, http, processes };
 }
 
-// Only migrate runs once; any other process that completed was stopped or exited, whatever its exit code.
 function processProblem({ name, status, ready, exitCode }: DoctorReport['processes'][number]): string | undefined {
   if (status === 'Completed' && name !== 'migrate') return `${name} stopped (exit ${exitCode})`;
   if (status === 'Completed' ? exitCode !== 0 : status !== 'Running' || ready === 'Not Ready')
@@ -73,10 +66,6 @@ function processTableProblems(names: ReadonlyArray<string>): Array<string> {
   ];
 }
 
-// Stops the apply that runs and everything it started, within a minute; CI calls it when a newer push supersedes
-// the one being applied. The apply was started detached (src/shared/names.ts), so its pid is its process group; its
-// SIGTERM handler stops each child's own group (src/node/process.ts). The next apply takes over its lock and redoes
-// its files (.applying.json).
 export async function stopApply(): Promise<void> {
   const holder = lockHolder();
   if (holder?.command !== 'apply') return;
@@ -87,14 +76,10 @@ export async function stopApply(): Promise<void> {
       return false;
     }
   };
-  // An apply started without `setsid` (by hand) has no process group of its own: then only its pid. Never both: a
-  // second SIGTERM would kill the apply before it stopped its children.
   const signal = (name: NodeJS.Signals) => kill(-holder.pid, name) || kill(holder.pid, name);
   const gone = async () => !isAlive(-holder.pid) && !isAlive(holder.pid);
   signal('SIGTERM');
   if (!(await poll<boolean>(gone, { timeoutMs: 60_000, orElse: () => false }))) {
-    // It ignored its SIGTERM. Its children lead their own groups, so each is found (before its death hands them to
-    // PID 1) and killed.
     for (const pid of await descendants(holder.pid)) kill(pid, 'SIGKILL');
     signal('SIGKILL');
   }
@@ -114,14 +99,11 @@ async function descendants(root: number): Promise<Array<number>> {
   return found.filter((pid) => pid !== root);
 }
 
-// Stops every process, the stores last, leaving the supervisor up for a snapshot.
 export async function quiesce(): Promise<void> {
   await stopRunning(APPS);
   await stopRunning(STORES);
 }
 
-// Starts again what `quiesce` stopped, when the box keeps running after all (saving it failed): the stores, then,
-// once they are ready, the rest. `migrate` already ran on this data.
 export async function resume(): Promise<void> {
   const notRunning = async (names: ReadonlyArray<string>) => {
     const now = await running();

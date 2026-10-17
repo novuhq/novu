@@ -1,4 +1,3 @@
-// A box's life inside its container: `bake` makes the golden /data and `start` boots it.
 
 import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
@@ -35,7 +34,6 @@ import { seedChannels, seedTeamTier } from './seed.ts';
 import { seedClerk } from './seed-org.ts';
 import { SOCKET } from './supervisor.ts';
 
-// Bakes `ref` into an empty /data. `thenStart`: boot the box once baked, as the Cloudflare host's bake does.
 export async function bake(ref: string, token: string | undefined, thenStart: boolean): Promise<number | undefined> {
   if (fs.existsSync(BAKED)) throw new Error(`${BAKED} exists; bake into an empty /data`);
   await withLock('bake', () => bakeLocked(ref, token));
@@ -82,8 +80,6 @@ async function bakeLocked(ref: string, token: string | undefined): Promise<void>
   log(`baked ${ref} at ${sha}`);
 }
 
-// `process-compose up` with the box's environment as it is now. Stopping it stops the processes in order, the
-// stores last, each within its own timeout (image/process-compose.yaml).
 function startSupervisor(): { exited: Promise<number>; stop: () => Promise<void> } {
   const stopper = new AbortController();
   const args = ['up', '--tui=false', '--keep-project', '--config', `${BOX}/process-compose.yaml`, ...SOCKET];
@@ -117,7 +113,6 @@ async function installBullMqPro(): Promise<void> {
   vars.NOVU_MANAGED_SERVICE = 'true';
 }
 
-// One self-signed cert for every Redis node, which is also the CA the nodes and the apps (NODE_EXTRA_CA_CERTS) trust.
 async function ensureRedisTls(): Promise<void> {
   if (fs.existsSync(`${REDIS_TLS}/box.crt`)) return;
   fs.mkdirSync(REDIS_TLS, { recursive: true });
@@ -145,9 +140,6 @@ async function prepareRuntime(): Promise<void> {
   ];
   for (const dir of [...dirs, 'pnpm-store']) fs.mkdirSync(`${DATA}/${dir}`, { recursive: true });
 
-  // A filesystem snapshot keeps the lock and socket files of processes that are no longer running, and git's
-  // index.lock when it cut a checkout off. PIDs start over, so a lock from before it could name a live process; only
-  // the bake that calls this holds one now.
   const pm2Homes = fs
     .readdirSync(RUN)
     .filter((name) => name.startsWith('pm2-'))
@@ -169,8 +161,6 @@ async function prepareRuntime(): Promise<void> {
   );
   vars.NODE_EXTRA_CA_CERTS = bundle;
 
-  // S3 keys are new on every start and exist only in the env of this process tree, so nobody outside the box
-  // can sign S3 requests. Browsers only ever get presigned URLs, and stored objects don't depend on the keys.
   vars.AWS_ACCESS_KEY_ID = randomBytes(10).toString('hex');
   vars.AWS_SECRET_ACCESS_KEY = randomBytes(20).toString('hex');
 
@@ -206,14 +196,11 @@ async function addHosts(): Promise<void> {
   }
 }
 
-// The image's default command: boots every process and runs until process-compose exits. A SIGTERM stops
-// process-compose, which stops the processes in order.
 export async function start(): Promise<number> {
   if (!fs.existsSync(BAKED)) throw new Error('No golden data in /data. Run `box bake` first.');
   const started = Date.now();
   await prepareRuntime();
   const supervisor = startSupervisor();
-  // The box lives as long as process-compose, ready or not.
   const exited = new AbortController();
   supervisor.exited.finally(() => exited.abort()).catch(() => {});
   try {
@@ -221,8 +208,6 @@ export async function start(): Promise<number> {
     await waitForHttp(WORKER_HEALTH, 600, exited.signal);
   } catch (error) {
     if (exited.signal.aborted) return supervisor.exited;
-    // It stays up, as after a failed apply: `doctor` and `logs` say why, and an apply (CI's, which may be what holds
-    // the apps down right now) can still fix it.
     log(`WARN: ${messageOf(error)}; the box keeps running`);
 
     return supervisor.exited;
@@ -230,7 +215,6 @@ export async function start(): Promise<number> {
   const seconds = (Date.now() - started) / 1000;
   appendTiming('api+worker healthy', seconds, 'start');
   log(`box ready in ${seconds.toFixed(1)}s`);
-  // The API keeps the workflows and agents of the last sync; sync again so they match the bridge running now.
   if (fs.existsSync(BRIDGE_SECRET))
     await syncBridge().catch((error) => log(`WARN: bridge sync failed: ${error.message}`));
   if (vars.NOVU_MANAGED_CLAUDE_API_KEY)

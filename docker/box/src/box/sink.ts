@@ -1,10 +1,3 @@
-// Catches what Novu sends over SMS, push and chat, and shows it in Mailpit next to the emails (process-compose's
-// `sink`: `node /opt/box/src/box/sink.ts`).
-//
-// The box seeds Novu's HTTP providers (generic-sms, push-webhook, chat-webhook) with this server as their
-// URL, so a message here is exactly what the worker handed to the provider: rendered content, recipient,
-// payload and signature. Provider-specific adapters (Twilio, FCM, Slack, ...) are not exercised. A Mailpit failure
-// becomes a 502 so the Novu step fails too.
 
 import http from 'node:http';
 import { text } from 'node:stream/consumers';

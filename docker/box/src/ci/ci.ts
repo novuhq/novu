@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-// Novu Box per pull request, run by .github/workflows/novu-box.yml (README, "Per pull request"). It drives boxes as
-// `box --cloud` does (src/cli/cloud.ts), signed in with the workflow's GitHub Actions OIDC token, and has the host
-// create and delete their Workers (src/cloud/boxes.ts), so the workflow holds no secret. Run by hand, it signs in
-// with GITHUB_TOKEN or `gh auth token` instead.
 
 import fs from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -29,20 +25,14 @@ import { BOX_CLI, boxWorker, DOMAIN, detached, OIDC_AUDIENCE } from '../shared/n
 import { canWrite, comment, github, LABEL, labeler, REPO, unlessMissing } from './github.ts';
 
 const MAX_BOXES = 30;
-// The longest an apply may take: a full one (install, every build) takes about 6 minutes.
 const APPLY_MINUTES = 20;
-// How long the box may take to pass its doctor after an apply restarted its apps.
 const SETTLE_SECONDS = 3 * 60;
-// The laptop CLI, as a PR comment tells people to run it from the repository (after `npm ci` in docker/box).
 const CLI = 'node docker/box/src/cli/main.ts';
 const RUN_URL =
   process.env.GITHUB_RUN_ID && `${process.env.GITHUB_SERVER_URL}/${REPO}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 const started = Date.now();
-// Every wait ends by then, so the run can still say why in the comment: 5 minutes before the job's timeout-minutes
-// (60, .github/workflows/novu-box.yml) ends it. The worst case (a save to wait out, a bake, a full apply) takes longer.
 const DEADLINE = started + 55 * 60_000;
 
-// An apply that failed, with the box file that has its log, for the PR comment.
 class ApplyFailed extends Error {
   readonly log: string;
 
@@ -52,10 +42,7 @@ class ApplyFailed extends Error {
   }
 }
 
-// --- tokens ---
 
-// What the host and the boxes accept from this run (shared/auth.ts): the workflow's OIDC token, fetched again a
-// minute before it expires; run by hand, the GitHub token.
 let oidc: { readonly value: string; readonly exp: number } | undefined;
 
 async function boxToken(): Promise<string> {
@@ -76,12 +63,10 @@ async function boxToken(): Promise<string> {
   return value;
 }
 
-// The box's cloud target, signed in with boxToken; no wait runs past DEADLINE.
 const target = (box: string) => cloudTarget({ box, token: boxToken, deadline: DEADLINE });
 
 const hostList = async () => (await hostBoxes('boxes', BoxList, { token: boxToken })).boxes;
 
-// --- pr ---
 
 async function pr(): Promise<number> {
   const event = decode(
@@ -167,12 +152,8 @@ async function applyHead(number: number, sha: string): Promise<number> {
   }
 }
 
-// A new box starts from base, unless MAX_BOXES exist (false). A box that exists is woken or waited for: a save to
-// wait out, or a bake an earlier push started (a box that runs answers its doctor, whatever the doctor finds); then
-// the apply an earlier, cancelled run left going is stopped.
 async function startOrReach(cloud: CloudTarget, box: string, number: number): Promise<boolean> {
   const current = await cloud.state();
-  // Never started, created by a run cancelled before the box first came up, its bake failed, or its snapshot is lost.
   if (!current || needsBake(current)) {
     const others = (await hostList()).filter((name) => /^pr-\d+$/.test(name) && name !== box);
     if (others.length >= MAX_BOXES) {
@@ -188,16 +169,12 @@ async function startOrReach(cloud: CloudTarget, box: string, number: number): Pr
     return true;
   }
   await cloud.readyFor({ reachable: true });
-  // A newer push cancels the run of the older one, but not that run's apply, which goes on in the box.
   const stopped = await cloud.boxOutput(['stop-apply']);
   if (stopped) log(stopped);
 
   return true;
 }
 
-// `box apply <sha>` detached in the box: it outlives this run when a newer push cancels it, and a stream that long
-// would break (over 5 minutes, README). This waits while it holds the box's lock, then reads its log and the box's
-// state. Returns its plan line.
 async function apply(cloud: CloudTarget, sha: string): Promise<string> {
   const file = `/data/logs/apply-${sha.slice(0, 12)}.log`;
   const boxState = (text: string) => decode(BoxState, text, '`box state`');
@@ -245,7 +222,6 @@ async function apply(cloud: CloudTarget, sha: string): Promise<string> {
   return output.match(/plan: .*$/gm)?.at(-1) ?? 'plan: nothing';
 }
 
-// --- schedules ---
 
 function whyStale(pull: { readonly state: string }): string {
   return pull.state === 'open' ? `not labeled \`${LABEL}\`` : pull.state;

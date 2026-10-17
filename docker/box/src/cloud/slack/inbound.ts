@@ -1,4 +1,3 @@
-// Slack -> box: POST /slack, Slack's events (events.ts), interactivity and the /novu-box command.
 
 import { decode } from '../../shared/contracts.ts';
 import {
@@ -80,7 +79,6 @@ async function interaction(core: RouterCore, payload: Interaction, raw: string):
   return ack();
 }
 
-// A modal's box, or the box that owns the message or thread the click was on.
 function interactionOwner(core: RouterCore, payload: Interaction, channel: string | undefined, ts: string | undefined) {
   const view = payload.view?.id;
   const inView = view && (payload.type !== 'block_actions' || payload.container?.type === 'view');
@@ -88,7 +86,6 @@ function interactionOwner(core: RouterCore, payload: Interaction, channel: strin
   return inView ? core.storage.get<Owner>(`view:${view}`) : ownerOf(core, channel, ts, payload.message?.thread_ts);
 }
 
-// The router's own buttons: Talk to (ready message, App Home, /novu-box) and the picker.
 async function routerAction(core: RouterCore, payload: Interaction, action: Action): Promise<Response> {
   if (!action.action_id?.startsWith('novubox_talk') || !payload.user) return ack();
   const user = payload.user.id;
@@ -134,7 +131,6 @@ async function talkingTo(core: RouterCore, selection: Owner): Promise<string> {
   return `You're talking to *${label(selection)}*. Mention <@${me.botUserId}> in <#${core.env.SLACK_CHANNEL}>, or write to me in a DM.`;
 }
 
-// /novu-box [box [agent]]: lists the boxes, or talks to one (its first agent unless named).
 async function command(core: RouterCore, form: URLSearchParams): Promise<object> {
   const [name, agent] = (form.get('text') ?? '').trim().split(/\s+/).filter(Boolean);
   const boxes = await registered(core);

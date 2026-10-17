@@ -23,7 +23,6 @@
     <default_profile>default</default_profile>
     <default_database>default</default_database>
 
-    <!-- Low-memory settings for a box with a few GB of RAM. -->
     <max_server_memory_usage>1500000000</max_server_memory_usage>
     <mark_cache_size>268435456</mark_cache_size>
     <uncompressed_cache_size>0</uncompressed_cache_size>

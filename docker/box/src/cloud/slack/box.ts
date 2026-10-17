@@ -1,7 +1,3 @@
-// A box's side of the Slack router (router.ts): what Box (box.ts) does for Novu Bot. Box calls it at its Slack
-// hooks: `resetSlack` when the container starts, `connectSlack` on each alarm, `unregisterSlack` when the box is
-// deleted, `slackEnv` for the box's environment, `slackState` for /__box/state, and `slackEvent` when the router hands
-// the box an event. Without the router's settings (SLACK_ROUTER_URL) every hook does nothing, and boxes get no Slack.
 
 import * as z from 'zod';
 import { decode, fromJson, type Phase } from '../../shared/contracts.ts';
@@ -11,8 +7,6 @@ import { CALL_MS, withTimeout } from '../container.ts';
 import type { HostEnv } from '../env.ts';
 import type { SlackAgent, SlackAnswer, SlackEvent, SlackEventNote } from './types.ts';
 
-// Prints the API key and the agents the bridge app serves now, signed as `box` signs discover. An agent the bridge
-// no longer serves keeps its bridge URL in the API, so the API's list can't tell.
 const DISCOVER = `
 const key = require('fs').readFileSync('/data/bridge/secret-key', 'utf8').trim();
 const t = Date.now();
@@ -28,7 +22,6 @@ const Discovered = fromJson(z.object({ key: z.string(), served: z.array(z.string
 const WithIds = z.object({ data: z.array(z.object({ identifier: z.string(), _id: z.string() })) });
 const Connections = z.object({ data: z.array(z.object({ identifier: z.string() })) });
 
-// What the Slack part needs from its Box, and what it remembers while the container runs.
 export interface SlackBox {
   readonly storage: DurableObjectStorage;
   readonly env: HostEnv;
@@ -50,12 +43,10 @@ interface ApiInit {
 const enabled = (box: SlackBox) => Boolean(box.env.SLACK_ROUTER_URL);
 const router = (box: SlackBox) => box.env.ROUTER.get(box.env.ROUTER.idFromName('router'));
 
-// SLACK_API_URL sends the box's Slack calls to the router, which swaps its fake tokens for the real one.
 export function slackEnv(box: SlackBox): Record<string, string> {
   return enabled(box) ? { SLACK_API_URL: `${box.env.SLACK_ROUTER_URL}/api/` } : {};
 }
 
-// The last Slack events the router handed to the box's agents, newest last.
 export async function slackState(box: SlackBox): Promise<{ slackEvents: ReadonlyArray<SlackEventNote> }> {
   return { slackEvents: (await box.storage.get<Array<SlackEventNote>>('slackEvents')) ?? [] };
 }
@@ -74,12 +65,6 @@ export async function unregisterSlack(box: SlackBox): Promise<void> {
     .catch((error: unknown) => console.log(`slack: ${messageOf(error)}`));
 }
 
-// When the box is up, and again when the agents its bridge serves change (an apply): every one of them gets a
-// Slack integration, linked to it, with the signing secret and a bot token the router minted for this box, and a
-// workspace connection for Novu Bot's workspace. Then the router posts (or refreshes) the box's ready message in
-// #novu-box. It goes through the box's API from here, not from the box's own commands, because a box keeps the
-// commands of the snapshot it started from. A box started from another box's snapshot has that box's credentials
-// until this replaces them.
 export async function connectSlack(box: SlackBox): Promise<void> {
   if (!enabled(box)) return;
   const origin = await box.storage.get<string>('origin');
@@ -90,7 +75,6 @@ export async function connectSlack(box: SlackBox): Promise<void> {
   const name = boxOfOrigin(origin);
   // In storage: the Durable Object doesn't stay in memory between alarms.
   if (!served.length || [...served].sort().join(',') === (await box.storage.get<string>('slackConnected'))) return;
-  // An agent the bridge serves may not be in the API yet (a sync creates it); the next alarm connects it.
   const agents = (await list(box, origin, '/v1/agents?limit=50', WithIds)).filter((agent) =>
     served.includes(agent.identifier)
   );
@@ -165,10 +149,6 @@ export async function connectSlack(box: SlackBox): Promise<void> {
   console.log(`slack: ${name} connected ${connected}`);
 }
 
-// The Slack router hands the box an event for one of its agents, signed with the box's secret, and gets the
-// agent's answer; null while the box is asleep (this wakes it), starting or saving, and the router tries again.
-// The bridge agents answer only people linked to a subscriber (subscriberAccess `restricted`), so a person's first
-// event links them to subscriber slack-<user> in the box, as a customer's app does with <ConnectChat>.
 export async function slackEvent(box: SlackBox, event: SlackEvent): Promise<SlackAnswer | null> {
   box.touch();
   const origin = (await box.storage.get<string>('origin')) ?? '';
@@ -213,7 +193,6 @@ async function deliver(box: SlackBox, origin: string, event: SlackEvent): Promis
     body,
     ...(timeoutMs && { signal: AbortSignal.timeout(timeoutMs) }),
   });
-  // From the box's proxy while the API restarts.
   if (response.status === 502 || response.status === 504) return null;
   const answer: SlackAnswer = {
     ok: response.ok,
@@ -228,7 +207,6 @@ async function deliver(box: SlackBox, origin: string, event: SlackEvent): Promis
   return answer;
 }
 
-// The box's own API over its port, with the environment's secret key. 409 counts as done: the thing exists.
 async function api(box: SlackBox, origin: string, path: string, init: ApiInit = {}): Promise<string> {
   const method = init.method ?? 'GET';
   box.apiKey ||= await box.output(['cat', '/data/bridge/secret-key'], 'reading the API key');

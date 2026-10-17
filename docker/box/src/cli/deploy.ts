@@ -1,12 +1,3 @@
-// `box deploy` (and `box up --cloud --deploy`): the host Worker with its image (wrangler.jsonc), then the Slack
-// router's address (wrangler.slack.jsonc), signed in with your wrangler login. Deploys run one at a time, from a
-// laptop. Boxes themselves aren't deployed here: the host uploads their Workers at runtime (src/cloud/boxes.ts).
-//
-// Secrets: SECRETS from docker/box/.env, for every box; and, for the host only: Novu Bot's credentials
-// (~/.config/novu-box/slack.env: SLACK_BOT_TOKEN, SLACK_SIGNING_SECRET), a read-only GitHub token (github.env:
-// GITHUB_READ_TOKEN, fine-grained, Contents and Checks on novuhq/novu and novuhq/packages-enterprise) for the boxes'
-// fetches and CI lookups instead of the caller's token, and CLOUDFLARE_API_TOKEN (cloudflare.env, Workers Scripts:
-// Edit on the Novu account) for /__box/boxes. They go to wrangler in a file only this user can read, removed after.
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -25,7 +16,6 @@ const SLACK_ENV = process.env.BOX_SLACK_ENV ?? join(CONFIG, 'slack.env');
 const IMAGE_CONFIG = join(HERE, '.wrangler.box-image.json');
 const HostConfig = z.looseObject({ containers: z.array(z.looseObject({})) });
 
-// The named keys from an env file, or null when the file isn't there.
 function readKeys(file: string, keys: ReadonlyArray<string>): Record<string, string> | null {
   if (!fs.existsSync(file)) return null;
   const env = parseEnvFile(fs.readFileSync(file, 'utf8'));
@@ -57,7 +47,6 @@ export async function deployHost(): Promise<void> {
   const secretsFile = join(dir, 'secrets.json');
   fs.writeFileSync(secretsFile, JSON.stringify(all), { mode: 0o600 });
   try {
-    // The host uploads this bundle as every box's Worker; the router's address is the same Worker.
     await run(WRANGLER, ['deploy', '--dry-run', '--outdir', join(dir, 'thin'), '-c', 'wrangler.slack.jsonc'], {
       cwd: HERE,
       stdio: 'ignore',
@@ -70,7 +59,6 @@ export async function deployHost(): Promise<void> {
     log(`deploying ${HOST} with wrangler; this applies to every box`);
     const define = ['--define', `THIN_WORKER:${JSON.stringify(thin)}`];
     await run(WRANGLER, ['deploy', '--secrets-file', secretsFile, ...define, ...vars, ...onImage()], { cwd: HERE });
-    // Novu Bot's request URL is https://novu-box-slack.<DOMAIN>/slack.
     if (slack) await run(WRANGLER, ['deploy', '-c', 'wrangler.slack.jsonc'], { cwd: HERE });
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

@@ -1,4 +1,3 @@
-// What a bake seeds through the box's own API besides the org: the channels' providers and the Team tier.
 
 import * as z from 'zod';
 import { log } from '../node/main.ts';
@@ -66,10 +65,6 @@ const INTEGRATIONS = [
   },
 ];
 
-// Email goes to Mailpit (UI on :8025); SMS, push and chat go to sink.ts, which shows them in Mailpit. Every
-// environment of the seeded org gets the four providers, and the seeded user's subscriber (the default target of the
-// dashboard's Test Workflow) gets a phone number, a push device token and a chat webhook, so a test run reaches all
-// channels.
 export async function seedChannels(token: string): Promise<void> {
   const me = (await api('/v1/users/me', ApiUser, { headers: bearer(token) })).data;
   const environments = (await api('/v1/environments', ApiEnvironments, { headers: bearer(token) })).data;
@@ -97,12 +92,9 @@ export async function seedChannels(token: string): Promise<void> {
   }
 }
 
-// The seeded org buys the Team tier the way a customer would: a test card on file and its subscription moved to
-// the business prices. Novu's webhook handler, fed by the `stripe` process, then sets the tier in Mongo.
 export async function seedTeamTier(token: string): Promise<void> {
   const auth = { headers: bearer(token) };
   const org = (await api('/v1/organizations/me', ApiOrganization, auth)).data;
-  // Creates the Stripe customer and its Pro trial if creating the org didn't.
   await api('/v1/billing/subscription', ApiSubscription, auth);
   const { data: customers } = await stripe(
     `/customers?email=${encodeURIComponent(SEED.email)}&limit=100&expand[]=data.subscriptions`,

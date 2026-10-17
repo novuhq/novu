@@ -1,5 +1,3 @@
-// What CI asks of GitHub's API, with the job's GITHUB_TOKEN (or `gh auth token` by hand): the sticky PR comment, who
-// labeled a PR, and whether they may start a box.
 
 import * as z from 'zod';
 import { githubToken } from '../cli/target.ts';
@@ -23,7 +21,6 @@ export async function github<T>(path: string, schema: z.ZodType<T>, init: JsonIn
   });
 }
 
-// null for a 404.
 export function unlessMissing(error: Error): null {
   if (error instanceof HttpError && error.status === 404) return null;
   throw error;
@@ -38,7 +35,6 @@ async function everyPage<T>(path: string, item: z.ZodType<T>): Promise<Array<T>>
   }
 }
 
-// The one comment the box keeps on its PR, edited in place. `onlyUpdate`: say nothing on a PR that has none.
 const commentIds = new Map<number, number | undefined>();
 
 export async function comment(number: number, body: string, { onlyUpdate = false } = {}): Promise<void> {
@@ -56,7 +52,6 @@ export async function comment(number: number, body: string, { onlyUpdate = false
   }
 }
 
-// Who added the `box` label: the sender of a `labeled` event, else whoever labeled the PR last.
 export async function labeler(event: PullRequestEvent): Promise<string | undefined> {
   if (event.action === 'labeled') return event.sender?.login;
   const events = await everyPage(`/repos/${REPO}/issues/${event.number}/events`, IssueEvent);

@@ -1,13 +1,9 @@
-// Box -> Slack: POST /api/<method> from boxes (their SLACK_API_URL), GET /files/* downloads and POST /upload. A token
-// the router minted gets the real one, for the methods the agents use, only in #novu-box and in DMs people started.
 
 import { decode } from '../../shared/contracts.ts';
 import { bearer } from '../../shared/names.ts';
 import { identity, isDm, label, NOT_SLACK, type RouterCore, SLACK_API, SLACK_FILES, slackAnswer } from './core.ts';
 import { BoxParams, type Identity, type Owner, type Params, type SlackResult } from './model.ts';
 
-// The Slack methods the playground agents use through @chat-adapter/slack and Novu's native delivery, with the
-// parameter that names the channel (null: none). Everything else is refused.
 const METHODS: Record<string, string | null> = {
   'chat.postMessage': 'channel',
   'chat.postEphemeral': 'channel',
@@ -33,7 +29,6 @@ const METHODS: Record<string, string | null> = {
 // Parameters that also name channels, which the router doesn't check, so a call with them is refused. @slack/web-api
 // sends files.uploadV2's `channels` as `channel_id`, so the agents never use this one.
 const UNCHECKED_CHANNELS: Record<string, string> = { 'files.completeUploadExternal': 'channels' };
-// Only on the box's own messages, so one box can't change another's.
 const OWN_MESSAGE = new Set(['chat.update', 'chat.delete', 'chat.appendStream', 'chat.stopStream']);
 
 export async function outbound(core: RouterCore, request: Request, method: string): Promise<Response> {
@@ -43,7 +38,6 @@ export async function outbound(core: RouterCore, request: Request, method: strin
     ? decode(BoxParams, raw || '{}', NOT_SLACK)
     : Object.fromEntries(new URLSearchParams(raw));
   const owner = await core.storage.get<Owner>(`token:${bearer(request) ?? params.token}`);
-  // Not a token the router minted (a person's own Slack app, connected in the box's dashboard): Slack decides.
   if (!owner) return passThrough(request, method, raw);
   delete params.token;
   if (method === 'auth.test') return Response.json(authTest(await identity(core)));
@@ -94,7 +88,6 @@ async function allowedChannel(core: RouterCore, channel: Params[string]): Promis
   return Boolean(await core.storage.get(`dm:${channel}`));
 }
 
-// Message and view owners, from what the box posted, so replies, reactions, edits and clicks find the box.
 async function record(core: RouterCore, method: string, params: Params, body: SlackResult, owner: Owner) {
   if (method === 'chat.postMessage' || method === 'chat.startStream')
     await core.storage.put(`msg:${body.channel}:${body.ts}`, owner);

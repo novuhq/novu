@@ -1,6 +1,3 @@
-// `box sync`: puts this checkout on the box as the box would put a PR on it. The checkout becomes one commit (HEAD
-// plus every change, committed or not, new files included; see `snapshot`), which the box merges onto its baked
-// commit. It travels as a git bundle, so it arrives exactly as it is here: binaries, file modes, deletions.
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -13,7 +10,6 @@ import type { Target } from './target.ts';
 
 const BUNDLE_IN_BOX = '/data/run/sync.bundle';
 const SYNC_REF = 'refs/worktree/box-sync';
-// Code changes bundle to kilobytes; a bundle this big holds build output or media nobody meant to send.
 const MAX_BUNDLE_MB = 25;
 
 type Git = (args: ReadonlyArray<string>, options?: RunOptions) => Promise<string>;
@@ -31,7 +27,6 @@ export async function sync(target: Target, { full }: { readonly full: boolean })
 
   const { commit, changed, summary } = await snapshot(root, git);
   log(summary);
-  // The box merges the commit onto its baked one (src/box/git.ts): a conflict fails here, before the upload.
   await mergedTree(baked.sha, commit, 'this checkout', { cwd: root });
   const bundle = join(os.tmpdir(), `box-sync-${process.pid}.bundle`);
   try {
@@ -65,10 +60,6 @@ function biggest(root: string, changed: ReadonlyArray<string>): string {
     .join(', ');
 }
 
-// The checkout as a commit on HEAD, built in a copy of the index so your own index and staging stay as they are.
-// New code starts untracked, so untracked files are sent too, but only inside the top-level folders the repo
-// already has (apps, libs, packages, ...). Untracked files elsewhere (scratch folders, tool state, a stray
-// screenshot or .env at the root) stay on your machine, and the summary names them. Ignored files are never sent.
 async function snapshot(root: string, git: Git) {
   const head = await git(['rev-parse', 'HEAD']);
   const repoFolders = new Set((await git(['ls-tree', '-d', '--name-only', 'HEAD'])).split('\n'));
@@ -80,7 +71,6 @@ async function snapshot(root: string, git: Git) {
   const ownIndex = resolve(root, await git(['rev-parse', '--git-path', 'index']));
   const scratch = { env: { ...process.env, GIT_INDEX_FILE: index } };
   try {
-    // Starting from the real index (when there is one) keeps its file stats, so `add` doesn't re-read every file.
     if (fs.existsSync(ownIndex)) fs.copyFileSync(ownIndex, index);
     else await git(['read-tree', head], scratch);
     await git(['add', '--update'], scratch);

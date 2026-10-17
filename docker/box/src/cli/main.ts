@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-// Novu Box from your machine: start a box, put your checkout on it, check it, read its logs. It runs the box's own
-// commands (src/box/main.ts) inside the box: a local Docker container (docker.ts), or with `--cloud` a Cloudflare
-// container (cloud.ts). From docker/box, after `npm ci` once: `npm run box -- <command>`.
 
 import type { ParseArgsOptionsConfig } from 'node:util';
 import { type Command, type Parsed, runCommand } from '../node/commands.ts';
@@ -16,7 +13,6 @@ import { branchBox, githubToken, type Target } from './target.ts';
 
 const SHARED: ParseArgsOptionsConfig = { box: { type: 'string' }, cloud: { type: 'boolean' } };
 
-// The box --box and --cloud name.
 async function targetOf(parsed: Parsed): Promise<Target> {
   const cloud = parsed.flag('cloud');
   const box = parsed.option('box') ?? (cloud ? await branchBox() : 'novu-box');
@@ -24,7 +20,6 @@ async function targetOf(parsed: Parsed): Promise<Target> {
   return cloud ? cloudTarget({ box, token: githubToken }) : dockerTarget(box);
 }
 
-// Flags that mean something only for a Cloudflare box.
 function cloudOnly(parsed: Parsed, names: ReadonlyArray<string>): void {
   const set = names.filter((name) => (name === 'from' ? parsed.option(name) : parsed.flag(name)));
   if (!set.length || parsed.flag('cloud')) return;
@@ -32,7 +27,6 @@ function cloudOnly(parsed: Parsed, names: ReadonlyArray<string>): void {
   process.exit(2);
 }
 
-// A command on a running box; its exit code is the command's.
 function onBox(
   usage: string,
   help: string,
@@ -53,9 +47,7 @@ const commands: Record<string, Command> = {
     'start the box (baking next the first time); --cloud without --box also syncs',
     async (target, parsed) => {
       cloudOnly(parsed, ['deploy', 'from', 'no-sync']);
-      // The branch's own box (no --box) is for this checkout: start it from base and put the checkout on it.
       const ownBox = parsed.flag('cloud') && !parsed.option('box');
-      // --deploy: a change to docker/box (image or Worker code) goes to the host, so to every box.
       if (parsed.flag('cloud') && (parsed.flag('deploy') || !(await hostExists()))) await deployHost();
       const code = await target.up({ from: parsed.option('from'), fromBase: ownBox });
 

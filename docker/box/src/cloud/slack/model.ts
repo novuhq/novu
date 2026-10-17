@@ -1,11 +1,8 @@
-// What the router stores, and the parts of what Slack sends and answers that it reads.
 
 import * as z from 'zod';
 import type { SlackAgent } from './types.ts';
 
-// --- what the router stores ---
 
-// A box and agent: the owner of a token, a thread, a message or a view, and a person's selection.
 export interface Owner {
   readonly box: string;
   readonly agent: string;
@@ -27,13 +24,11 @@ export interface Identity {
   readonly url?: string;
 }
 
-// Where the router answers about an event: the sender's channel, and the thread there.
 export interface Notice {
   readonly channel: string;
   readonly ts?: string | undefined;
 }
 
-// An event on its way to a box, as Slack sent it.
 export interface Envelope {
   readonly id?: string | undefined;
   readonly contentType: string;
@@ -68,7 +63,6 @@ export interface Facts {
 
 export type Params = Record<string, unknown>;
 
-// --- what Slack sends and answers ---
 
 const SlackMessage = z.looseObject({
   user: z.string().optional(),
@@ -119,7 +113,6 @@ export const Interaction = z.looseObject({
 });
 export type Interaction = z.infer<typeof Interaction>;
 
-// A Talk to button's value (core.ts talkBlocks).
 export const TalkValue = z.object({ box: z.string(), agent: z.string(), pending: z.string().optional() });
 
 export const SlackResult = z.looseObject({

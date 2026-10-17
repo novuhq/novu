@@ -1,4 +1,3 @@
-// The bake's Clerk user and org, and the move of the org to the ID every box shares.
 
 import { log } from '../node/main.ts';
 import { ApiOrganization, StripeCustomers, WithId } from '../shared/contracts.ts';
@@ -11,10 +10,6 @@ import { pc, stopRunning } from './supervisor.ts';
 
 const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });
 
-// The API creates the Novu user and org from the Clerk ones on their first request, as in production.
-// The user keeps the Novu ID Clerk holds for it. The org gets a random one, and the Clerk org every box shares
-// would then link to this box only, so the seed moves it to SEED.novuOrgId, which is the same in every box.
-// The password is set on every bake, so BOX_SEED_PASSWORD is the one place it changes.
 export async function seedClerk(): Promise<string> {
   const found = await findSeedUser();
   const password = seedPassword();
@@ -48,8 +43,6 @@ export async function seedClerk(): Promise<string> {
 
     return { token, org: data };
   };
-  // The API trusts a link in the token without looking the org up, so it only creates the org without one.
-  // Meanwhile other boxes find theirs by the Clerk org ID.
   await linkOrg(null);
   const created = await me();
   await step('move the seed org to its fixed ID', () => moveSeedOrg(created.org._id));
@@ -61,10 +54,6 @@ export async function seedClerk(): Promise<string> {
   return seeded.token;
 }
 
-// The bake's Mongo holds only what creating the org wrote, and every reference to the org in it is its ObjectId
-// or that ID as a string: both are the quoted ID in canonical Extended JSON. The org's Stripe customer is found by
-// its metadata, so it moves too, or the box reuses the one an earlier bake moved. Redis may cache the old ID, and
-// the API and worker have nothing else in it yet.
 async function moveSeedOrg(oldId: string): Promise<void> {
   await stopRunning(['api', 'worker']);
   const { mongo } = checkoutMongoose().mongoose;

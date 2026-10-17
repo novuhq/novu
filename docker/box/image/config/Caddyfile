@@ -18,8 +18,6 @@
 
 	handle {
 		root * /data/run/dashboard
-		# Same caching as apps/dashboard/netlify.toml. A PR box keeps its URL across pushes,
-		# so index.html must never be cached or reviewers keep loading the previous build.
 		header /assets/* Cache-Control "public, max-age=31536000, immutable"
 		header /auth/* Cache-Control "private, no-cache, no-store, must-revalidate"
 		@app not path /assets/* /auth/*
@@ -29,8 +27,6 @@
 	}
 }
 
-# API_ROOT_URL is the browser-facing URL (host port 13000), but the thalamus observer and self-hosted agents
-# inside the box call it too, so the same port must reach the API here.
 :13000 {
 	reverse_proxy 127.0.0.1:3000
 }
@@ -48,7 +44,6 @@
 		reverse_proxy 127.0.0.1:3000
 	}
 
-	# The socket worker serves its WebSocket at /.
 	@socket path /ws /ws/*
 	handle @socket {
 		uri strip_prefix /ws

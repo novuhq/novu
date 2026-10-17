@@ -7,8 +7,6 @@ export const gitIdentity = (name: string) => ({
   GIT_COMMITTER_EMAIL: 'box@box.internal',
 });
 
-// `head` merged onto the box's baked commit, as the box merges a PR or a sync: the merged tree, or null when `head`
-// already has `baked`. A conflict fails, naming the files; `what` is what conflicts.
 export async function mergedTree(
   baked: string,
   head: string,

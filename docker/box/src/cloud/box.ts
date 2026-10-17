@@ -1,5 +1,3 @@
-// One box: its container, its phase (life.ts), its first bake (bake.ts) and its saves (sleep.ts). Requests reach it
-// through its own Worker (thin.ts).
 
 import { DurableObject } from 'cloudflare:workers';
 import type { BoxStatus, StateAnswer } from '../shared/contracts.ts';
@@ -54,9 +52,7 @@ const INSTANCE = 'standard-4';
 type StartFrom = { readonly image: string } | { readonly containerSnapshot: Snapshot };
 
 export class Box extends DurableObject<HostEnv> {
-  // Goes up with each `destroy`, so a save that runs meanwhile writes nothing back.
   #generation = 0;
-  // Set before a save's first await, so every request that comes in after it sees the save (the stored phase follows).
   #saving = false;
   #restoring: string | null = null;
   #lastActivity = 0;
@@ -98,8 +94,8 @@ export class Box extends DurableObject<HostEnv> {
   override async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const route = `${request.method} ${url.pathname}`;
-    // Asking for the state isn't using the box; a poller would otherwise keep it awake forever.
-    if (route !== 'GET /__box/state') this.#touch();
+    const isStatePoll = route === 'GET /__box/state';
+    if (!isStatePoll) this.#touch();
     try {
       return await this.#route(route, request, url);
     } catch (error) {
@@ -135,15 +131,10 @@ export class Box extends DurableObject<HostEnv> {
     return this.#unlessSaving(request, (life) => this.#serve(request, url, life));
   }
 
-  // Every 60 s while the box runs: after an hour without requests, and with no bake or apply running, it sleeps; after
-  // a `down`, it sleeps once no bake or apply runs. The alarm and the inactivity timeout are renewed first, so nothing
-  // below can leave the box to the timeout, which stops it without a snapshot.
   override async alarm(): Promise<void> {
     const storage = this.ctx.storage;
     let life = await this.#reconcile();
     if (life.phase === 'saving') {
-      // Alarms shouldn't overlap, so a save running here is unexpected; it keeps its own alarm, and this only makes
-      // sure one stays set.
       if (this.#saving) return alarmIn(storage, ALARM_MS);
       life = await recoverSave(this.#shell, storage, life);
     }
@@ -154,7 +145,6 @@ export class Box extends DurableObject<HostEnv> {
     if (!this.#container.running) return;
     const down = downOf(life);
     if (down) return this.#retrySave(down.tries);
-    // Slack: connect the agents the bridge serves now.
     await withTimeout(connectSlack(this.#slack), 4 * CALL_MS, 'connecting Slack').catch((error: unknown) =>
       console.log(`slack not connected yet: ${messageOf(error)}`)
     );
@@ -163,7 +153,6 @@ export class Box extends DurableObject<HostEnv> {
     await this.#sleep('idle').catch((error: unknown) => console.log(`saving failed: ${messageOf(error)}`));
   }
 
-  // RPC for the router, and GET /__box/state.
   async state(): Promise<BoxStatus & { slackEvents: ReadonlyArray<SlackEventNote> }> {
     const life = await this.#reconcile();
     const lastActivity = this.#lastActivity || ((await this.ctx.storage.get<number>('lastActivity')) ?? 0);
@@ -172,7 +161,6 @@ export class Box extends DurableObject<HostEnv> {
     return { ...status(life, this.#container.running, lastActivity, origin), ...(await slackState(this.#slack)) };
   }
 
-  // Slack: the router's RPC for an event to one of the box's agents.
   slackEvent(event: SlackEvent): Promise<SlackAnswer | null> {
     if (this.#saving) return Promise.resolve(null);
 
@@ -202,8 +190,6 @@ export class Box extends DurableObject<HostEnv> {
     );
   }
 
-  // The stored phase, brought up to date (written, and a stray container destroyed) when the container went away
-  // without this object stopping it (the inactivity backstop, a crash, a restart in the middle of a save).
   async #reconcile(): Promise<Life> {
     const storage = this.ctx.storage;
     const life = await lifeOf(storage);
@@ -212,7 +198,6 @@ export class Box extends DurableObject<HostEnv> {
       return setLife(storage, stopped(life, `the container stopped while ${life.phase}, without a save`));
     if (!running && life.phase === 'saving' && !this.#saving)
       return setLife(storage, stopped(life, 'a restart cut the save off after the container stopped'));
-    // A save that a restart cut off after it stored the snapshot: what runs is the quiesced box it saved.
     if (running && life.phase === 'asleep' && !this.#saving) await this.#container.destroy('saved');
 
     return life;
@@ -235,21 +220,16 @@ export class Box extends DurableObject<HostEnv> {
     inside.protocol = 'http:';
     try {
       const response = await this.#port().fetch(new Request(inside, request));
-      // The box answered, so its snapshot was restored.
       this.#restoring = null;
 
       return response;
     } catch (error) {
-      // The container is up but the box isn't serving yet (it starts in about 35 s).
       console.log(`box not serving yet: ${messageOf(error)}`);
 
       return waking(request);
     }
   }
 
-  // Wakes the box from its snapshot. The first time, it starts from another box's snapshot (`from`, its id) or
-  // bakes `ref`; so does a box whose bake failed. The GitHub token (readToken) is in the bake's environment only;
-  // `box start` runs without it.
   async #up(request: Request, url: URL): Promise<StateAnswer> {
     await this.ctx.storage.put('origin', url.origin);
     const life = await checkBake(this.#shell, this.ctx.storage, await this.#reconcile());
@@ -306,7 +286,6 @@ export class Box extends DurableObject<HostEnv> {
   }
 
   async #start(from: StartFrom, entrypoint: Array<string>, origin?: string): Promise<void> {
-    // Slack: what the box's agents had in the last container.
     await resetSlack(this.#slack);
     // Before the start: a first restore can outlast the caller (4 to 6 minutes), and the alarm is what puts the box
     // to sleep.
@@ -327,7 +306,6 @@ export class Box extends DurableObject<HostEnv> {
     const storage = this.ctx.storage;
     const life = await this.#reconcile();
     if (!this.#container.running) return { state: life.phase };
-    // During a save, too: it keeps the down if it comes back without saving (busy, failed).
     await setLife(storage, withDown(life, downOf(life) ?? { tries: 1 }));
     if (life.phase !== 'saving') await alarmIn(storage, 1000);
 
@@ -346,7 +324,6 @@ export class Box extends DurableObject<HostEnv> {
     }
   }
 
-  // A `destroy` while the save runs wins: from then on the save writes nothing.
   async #sleep(reason: string): Promise<StateAnswer> {
     if (!this.#container.running) return { state: 'stopped' };
     this.#saving = true;
@@ -359,10 +336,8 @@ export class Box extends DurableObject<HostEnv> {
     }
   }
 
-  // For a deleted box: the Durable Object's storage goes too, so the name starts from nothing if it's used again.
   async #destroy(): Promise<StateAnswer> {
     this.#generation++;
-    // Slack: the router forgets the box and its agents.
     await unregisterSlack(this.#slack);
     if (this.#container.running) await this.#container.destroy('deleted');
     await this.ctx.storage.deleteAlarm();
@@ -371,7 +346,6 @@ export class Box extends DurableObject<HostEnv> {
     return { state: 'deleted' };
   }
 
-  // The box's one address (Caddy), from inside the Worker.
   #port(): Fetcher {
     return this.#container.getTcpPort(PUBLIC_PORT);
   }

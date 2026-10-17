@@ -1,4 +1,3 @@
-// `box logs`: the last lines of one process, or of all of them, from process-compose's log.
 
 import fs from 'node:fs';
 import { exitCode, stopping } from '../node/process.ts';
@@ -14,9 +13,7 @@ const PINO_LEVELS: Record<number, string> = {
   50: 'ERROR',
   60: 'FATAL',
 };
-// For lines that aren't pino: what Mongo, Redis, ClickHouse, Caddy and the rest print for a problem.
 const PROBLEM = /\b(error|errors|fatal|panic|exception|uncaught|unhandled|warn|warning)\b|<(Error|Warning|Fatal)>/i;
-// Terminal colours, which wrangler prints even into a file.
 const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
 
 interface Line {
@@ -38,8 +35,6 @@ function logLine(raw: string): Line {
   return { name, ...(appLine(message) ?? { text: message, problem: PROBLEM.test(message) }) };
 }
 
-// An app's JSON log line as `LEVEL context: msg (error)`, or null when the message isn't one. pino levels are
-// numbers (40 is warn); Caddy's are words.
 function appLine(message: string): Omit<Line, 'name'> | null {
   if (!message.startsWith('{')) return null;
   const decoded = AppEntry.safeParse(message);
@@ -70,11 +65,9 @@ export async function logs({ name, tail, follow, errors }: LogsOptions): Promise
   const wanted = (line: Line) =>
     Boolean(line.text.trim()) && (!name || line.name === name) && (!errors || line.problem);
   const print = (line: Line) => process.stdout.write(`${line.name.padEnd(width)} | ${line.text}\n`);
-  // The last element is '' or a line process-compose is still writing.
   const lines = fs.existsSync(PC_LOG) ? fs.readFileSync(PC_LOG, 'utf8').split('\n').slice(0, -1) : [];
   for (const line of lines.map(logLine).filter(wanted).slice(-tail)) print(line);
   if (!follow) return;
-  // Lines appended from now on, until the caller stops.
   let partial = '';
   const tailed = (chunk: string) => {
     const raws = (partial + chunk).split('\n');

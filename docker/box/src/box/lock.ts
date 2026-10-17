@@ -1,6 +1,3 @@
-// One bake or apply at a time, and the one answer to "is one running" (`box state` and `doctor`, the host's busy
-// check, CI stopping an older push's apply, `stop-apply`). A lock whose process is gone (a killed apply) is taken
-// over; `box start` clears one a snapshot kept, since PIDs start over.
 
 import fs from 'node:fs';
 import { log } from '../node/main.ts';
@@ -17,17 +14,15 @@ export function isAlive(pid: number): boolean {
   }
 }
 
-// The bake or apply that holds the lock, while its process lives.
 export function lockHolder(): LockHolder | null {
   const holder = fs.existsSync(LOCK) ? fromJson(LockHolder).safeParse(fs.readFileSync(LOCK, 'utf8')).data : undefined;
 
   return holder?.pid && isAlive(holder.pid) ? holder : null;
 }
 
-// One taker of a dead holder's lock at a time: two that found the same dead holder could otherwise each remove the
-// lock, the second removing the first's new one. Held for microseconds, so one this old was left by a dead taker.
 const TAKEOVER = `${LOCK}.takeover`;
 const TAKEOVER_STALE_MS = 30_000;
+const DEAD_HOLDERS_GIT_LOCK = `${REPO}/.git/index.lock`;
 
 function taken(holder: LockHolder | null): Error {
   return new Error(
@@ -37,7 +32,6 @@ function taken(holder: LockHolder | null): Error {
   );
 }
 
-// Written whole to a file of its own, then linked into place, so `file` is never there half written.
 function take(file: string, command: string): boolean {
   const own = `${file}.${process.pid}`;
   fs.writeFileSync(own, JSON.stringify({ pid: process.pid, command, at: new Date().toISOString() }));
@@ -68,14 +62,11 @@ function acquire(command: string): void {
   if (lockHolder()) throw taken(lockHolder());
   if (!takeTakeover(command)) throw taken(null);
   try {
-    // Looked at again, now that no other taker can remove it.
     const holder = lockHolder();
     if (holder) throw taken(holder);
     log('taking over the lock of a bake or apply that is gone');
     fs.rmSync(LOCK, { force: true });
-    // Only a bake or apply runs git in the checkout, so an index.lock is one that the dead one left.
-    fs.rmSync(`${REPO}/.git/index.lock`, { force: true });
-    // A plain `take` may have won it in between.
+    fs.rmSync(DEAD_HOLDERS_GIT_LOCK, { force: true });
     if (!take(LOCK, command)) throw taken(lockHolder());
   } finally {
     fs.rmSync(TAKEOVER, { force: true });

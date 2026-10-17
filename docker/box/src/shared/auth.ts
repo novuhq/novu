@@ -1,7 +1,3 @@
-// Who may call /__box/* (thin.ts, and the host's /__box/boxes in boxes.ts): a GitHub user with push access to
-// novuhq/novu, by their token, or the Novu Box workflow (.github/workflows/novu-box.yml) in novuhq/novu, by its
-// GitHub Actions OIDC token, so CI needs no stored secret. The thin Worker bundles it, and the host uploads that for
-// every box, so it checks GitHub's answers by hand rather than with zod.
 
 import { bearer, OIDC_AUDIENCE } from './names.ts';
 
@@ -20,7 +16,6 @@ export function isOidc(token: string | undefined): boolean {
   return /^eyJ[\w-]*\.[\w-]+\.[\w-]+$/.test(token ?? '');
 }
 
-// Tokens checked in the last 5 minutes, by SHA-256; the token itself is never stored.
 const pushers = new Map<string, number>();
 
 async function canPush(token: string): Promise<boolean> {
@@ -78,7 +73,6 @@ interface Jwk {
   readonly e: string;
 }
 
-// GitHub's keys, kept for an hour; an unknown key id fetches them again, at most once a minute.
 let keys: { list: ReadonlyArray<Jwk>; at: number } = { list: [], at: 0 };
 
 async function githubKey(kid: string): Promise<Jwk | undefined> {
@@ -101,7 +95,6 @@ function jwkOf(value: unknown): Jwk | null {
     : null;
 }
 
-// The fields of untrusted JSON, each to be checked before use; none when it isn't an object.
 function fieldsOf(value: unknown): Readonly<Record<string, unknown>> {
   return typeof value === 'object' && value !== null ? Object.fromEntries(Object.entries(value)) : {};
 }

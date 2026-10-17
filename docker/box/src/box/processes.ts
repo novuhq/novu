@@ -1,7 +1,3 @@
-// Every process in process-compose.yaml (`doctor` checks the two match). A store keeps data under /data: it stops
-// after everything else, so its files are whole in a snapshot. `projects`: the nx projects whose build it runs;
-// `paths`: files no nx project covers that change it (the workers have no nx build, and playground/ is in
-// .nxignore); `deploy`: the package `pnpm deploy` puts under /data/deploy for it.
 
 import { REDIS_PORTS } from './paths.ts';
 
@@ -36,7 +32,6 @@ const processesWhere = (test: (entry: ProcessEntry) => boolean) =>
 
 export const STORES = processesWhere((entry) => entry.kind === 'store');
 export const APPS = processesWhere((entry) => entry.kind === 'app');
-// The processes that run the checkout's code, which a new install restarts.
 export const CODE_PROCESSES = processesWhere((entry) => Boolean(entry.projects || entry.paths));
 export const PROJECT_PROCESSES: Readonly<Record<string, string>> = Object.fromEntries(
   entries.flatMap(([name, entry]) => (entry.projects ?? []).map((project) => [project, name]))

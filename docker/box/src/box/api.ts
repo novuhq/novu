@@ -1,4 +1,3 @@
-// The box's own API, as the dashboard calls it, and Stripe.
 
 import * as z from 'zod';
 import { fetchJson, HttpError, type JsonInit } from '../node/http.ts';
@@ -12,7 +11,6 @@ export function api<T>(path: string, schema: z.ZodType<T>, init: JsonInit = {}):
   });
 }
 
-// Whether the box's API answers `path` with 2xx.
 export async function apiHas(path: string, headers: Record<string, string>): Promise<boolean> {
   try {
     await api(path, z.unknown(), { headers });

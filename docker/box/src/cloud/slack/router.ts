@@ -1,9 +1,3 @@
-// Novu Box on Cloudflare, the Slack router: one Slack app (Novu Bot) for every box. It runs in the host Worker
-// (host.ts exports it), as one Durable Object, Router("router"), that keeps the boxes, each person's selection, and
-// who owns each thread and message. Its address is the Worker `novu-box-slack` (thin.ts, bound to it by
-// wrangler.slack.jsonc). It holds the real bot token and signing secret; boxes get fake ones, minted here per box and
-// agent, so PR code never sees the real ones. An event for a box is queued, acked, then handed to it re-signed with
-// its fake secret; a sleeping box wakes, and the queue retries until it answers.
 
 import { DurableObject } from 'cloudflare:workers';
 import { messageOf } from '../../shared/errors.ts';
@@ -59,10 +53,7 @@ export class Router extends DurableObject<HostEnv> {
     return Promise.resolve(new Response('not found\n', { status: 404 }));
   }
 
-  // --- registry ---
 
-  // A box's credentials: one signing secret, and a bot token per agent, so the router knows which box and agent
-  // every outbound call comes from. A box that registers again (every start) gets the same ones.
   async register(name: string, origin: string, identifiers: ReadonlyArray<string>): Promise<SlackCredentials> {
     const box: RegisteredBox = (await this.#core.storage.get<RegisteredBox>(`box:${name}`)) ?? {
       name,
@@ -84,7 +75,6 @@ export class Router extends DurableObject<HostEnv> {
     return { signingSecret: box.signingSecret, tokens, team: me.team, botUserId: me.botUserId };
   }
 
-  // The agents the box set up, with their webhook IDs, replace its list; #novu-box gets (or keeps) its ready message.
   async ready(name: string, agents: ReadonlyArray<SlackAgent>): Promise<void> {
     const box = await this.#core.storage.get<RegisteredBox>(`box:${name}`);
     if (!box) throw new Error(`${name} isn't registered`);
@@ -113,10 +103,7 @@ export class Router extends DurableObject<HostEnv> {
     await this.#core.storage.delete(`box:${name}`);
   }
 
-  // --- the queue ---
 
-  // Every event waits in its box's queue, written before Slack gets its ack, so none is lost and a box gets its
-  // events in the order they came.
   async #forward(owner: Owner, envelope: Envelope): Promise<void> {
     const item: Item = { ...envelope, box: owner.box, agent: owner.agent, at: Date.now() };
     await this.#core.storage.put(`q:${owner.box}:${String(item.at).padStart(15, '0')}:${random(4)}`, item);
@@ -124,8 +111,6 @@ export class Router extends DurableObject<HostEnv> {
     this.#core.later('hand over', this.#handOver(item));
   }
 
-  // Only a box that was asleep gets the "Waking" notice: a running box can miss once (its API restarting after an
-  // apply, a redeploy) and answers on the next try.
   async #handOver(item: Item): Promise<void> {
     const box = this.env.BOX.get(this.env.BOX.idFromName(item.box));
     const { running } = await box.state().catch(() => ({ running: true }));
@@ -133,7 +118,6 @@ export class Router extends DurableObject<HostEnv> {
     await this.#drain(item.box);
   }
 
-  // Hands a box its waiting events, oldest first, until it doesn't answer; the alarm tries again.
   async #drain(box: string): Promise<void> {
     if (this.#draining.has(box)) return;
     this.#draining.add(box);
@@ -161,8 +145,6 @@ export class Router extends DurableObject<HostEnv> {
       await this.ctx.storage.setAlarm(Date.now() + RETRY_MS);
   }
 
-  // The box's answer once it took the event (an error answer counts: retrying won't help); null while it's asleep
-  // or starting. An event for a box or agent that's gone is dropped, and its sender told.
   async #deliver(item: Item, timeoutMs?: number): Promise<SlackAnswer | null> {
     const box = await this.#core.storage.get<RegisteredBox>(`box:${item.box}`);
     const agent = box?.agents.find((candidate) => candidate.identifier === item.agent);

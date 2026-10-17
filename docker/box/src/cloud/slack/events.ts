@@ -1,6 +1,3 @@
-// Slack's events: new things (a mention in the channel, a main-DM message) go to the sender's selection; continued
-// ones (a thread reply, a reaction, an edit or delete of a known message) go to the box that owns the thread or
-// message. Nobody picked a box yet: the message waits while the sender picks one.
 
 import {
   ephemeral,
@@ -32,8 +29,6 @@ export async function event(core: RouterCore, body: SlackEventBody): Promise<voi
   return message(core, facts, envelope);
 }
 
-// A reaction, edit or delete goes to the box that owns the message or its thread; a reaction on anything else
-// (the box's ready message) to the sender's selection.
 async function continued(core: RouterCore, { kind, user, channel, ts, thread }: Facts, envelope: Envelope) {
   const owner =
     (await ownerOf(core, channel, ts, thread)) ??
@@ -75,8 +70,6 @@ export async function ownerOf(
   );
 }
 
-// The first forwarded message of a thread decides its owner for good. The main DM has none: it follows the
-// person's selection, so switching boxes starts a new conversation on the new one.
 export async function claim(
   core: RouterCore,
   owner: Owner,
@@ -121,8 +114,6 @@ async function pick(core: RouterCore, { user, channel, ts, thread }: Facts, enve
   );
 }
 
-// What an event is, or null for what the router ignores: the bot's own messages, other channels, and other
-// subtypes. `kind`: a reaction, an edit (or delete), a mention (`app_mention`, only in the channel), or a message.
 function classify(event: SlackEventPayload, botUserId: string, home: string | undefined): Facts | null {
   const reaction = event.type === 'reaction_added' || event.type === 'reaction_removed';
   const edit = event.subtype === 'message_changed' || event.subtype === 'message_deleted';

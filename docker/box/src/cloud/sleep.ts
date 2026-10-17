@@ -1,4 +1,3 @@
-// When a box sleeps, and its save: the processes stop, the disk goes to a snapshot, the container stops.
 
 import type { StateAnswer } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
@@ -31,7 +30,6 @@ const RESUME_MS = 10 * 60 * 1000;
 
 // The backstop, Cloudflare's inactivity timeout, is shorter than IDLE_MINUTES, as in its autosave recipe: each alarm
 // renews it, so it only stops the container (without a snapshot) when the alarms stop.
-// Anything but a positive number (`box deploy` refuses one) is the default: NaN would put the box to sleep every minute.
 export const idleMs = (env: HostEnv) => {
   const minutes = Number(env.IDLE_MINUTES);
 
@@ -43,19 +41,13 @@ export interface Sleeper {
   readonly shell: Shell;
   readonly storage: DurableObjectStorage;
   readonly env: HostEnv;
-  // A `destroy` came in after the save began: from then on it writes nothing.
   readonly destroyed: () => boolean;
 }
 
-// Stops every process, the data stores last, so their files are whole, saves the disk to a snapshot, then stops the
-// container. A bake or apply that runs puts it off (`busy`). A box whose first bake never finished has nothing
-// worth saving. Anything else that goes wrong (or takes too long) starts the stopped processes again and keeps the
-// box running (with its alarm, to try again): stopping without a snapshot loses everything since the last one.
 export async function save(box: Sleeper, reason: string): Promise<StateAnswer> {
   const { shell, storage, destroyed } = box;
   const { container } = shell;
   const write = async (life: Life) => !destroyed() && Boolean(await setLife(storage, life));
-  // What goes back when the save doesn't happen, with a `down` that came in meanwhile (stored on the saving record).
   const writeBack = async (life: Life) => write(withDown(life, downOf(await lifeOf(storage))));
   const started = Date.now();
   const step = (what: string) =>
@@ -127,7 +119,6 @@ async function snapshotOfBox(shell: Shell, step: (what: string) => void): Promis
   const quiesce = await exitCode(shell, [...BOX_CLI, 'quiesce'], QUIESCE_MS, 'quiesce');
   step(`quiesce exited ${quiesce}`);
   if (quiesce !== 0) throw new Error(`quiesce exited ${quiesce}`);
-  // A bake or apply whose exec came in just before the save began holds its lock by now.
   if ((await boxState(shell, 'the state check')).lock) throw new Error('a bake or apply started as the save began');
   const snapshot = await withTimeout(shell.container.snapshotContainer({ name: 'box' }), SNAPSHOT_MS, 'the snapshot');
   if (!snapshot?.id) throw new Error('the snapshot came back without an id');
@@ -136,8 +127,6 @@ async function snapshotOfBox(shell: Shell, step: (what: string) => void): Promis
   return snapshot;
 }
 
-// A save that ended without resuming the box (a restart of this object cut it off, or it ran out of time): whatever
-// it had stopped starts again, and the box runs on until its next save.
 export async function recoverSave(shell: Shell, storage: DurableObjectStorage, life: Saving): Promise<Life> {
   console.log('the save ended without resuming the box; resuming it');
   const resumed = await resume(shell, RESUME_MS);
@@ -145,7 +134,6 @@ export async function recoverSave(shell: Shell, storage: DurableObjectStorage, l
   return setLife(storage, unsaved(life, note(`the save ended without resuming the box; resume exited ${resumed}`)));
 }
 
-// `box resume`'s exit code, or why it has none.
 function resume(shell: Shell, timeoutMs: number): Promise<number | string> {
   return exitCode(shell, [...BOX_CLI, 'resume'], timeoutMs, 'resume').catch(messageOf);
 }

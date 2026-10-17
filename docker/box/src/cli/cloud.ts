@@ -1,6 +1,3 @@
-// `--cloud`: the box runs on Cloudflare in the host Worker (src/cloud/host.ts, shared by all boxes) and is reached
-// through its own small Worker `novu-box-<box>` on workers.dev (src/cloud/thin.ts). The same commands as for a local
-// box, over HTTPS, signed in with your GitHub token (`gh auth token`), or CI's OIDC token (src/ci).
 
 import fs from 'node:fs';
 import * as z from 'zod';
@@ -30,7 +27,6 @@ interface Exec {
   readonly github?: boolean;
 }
 
-// Why the box won't get ready, when its phase says so: its snapshot is lost, or it stopped (its bake failed).
 function stuck(worker: string, current: BoxStatus | null): string | null {
   if (current?.phase === 'lost')
     return `${worker} couldn't restore snapshot ${current.lost.id} (${current.lost.message}); snapshots expire 30 days after they were made or last restored. Run \`up\` again to bake it`;
@@ -48,19 +44,13 @@ function readyWait(current: BoxStatus): keyof typeof READY_WITHIN_SECONDS {
 export interface CloudOptions {
   readonly box: string;
   readonly token: Token;
-  // No wait runs past it (CI's job time), in ms since the epoch.
   readonly deadline?: number;
 }
 
 export interface CloudTarget extends Target {
-  // null only when the box's Worker doesn't exist; a failed request fails.
   readonly state: () => Promise<BoxStatus | null>;
-  // `reachable`: any doctor answer will do, even a running box's, for an apply, which fixes or replaces what the
-  // doctor finds.
   readonly readyFor: (options: { readonly reachable: boolean }) => Promise<void>;
-  // The doctor's report once the box is fit, or its last one after `seconds`: what an apply left behind.
   readonly settled: (seconds: number) => Promise<DoctorReport | null>;
-  // Any command in the box, its output collected; fails unless it exits 0.
   readonly runOutput: (cmd: ReadonlyArray<string>, options?: BoxCall) => Promise<string>;
 }
 
@@ -69,7 +59,6 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
   const worker = boxWorker(box);
   const origin = `https://${worker}.${DOMAIN}`;
 
-  // The box's answer, or its failure; 409 (the box isn't running) is the caller's to read.
   const call = async (path: string, init: FetchInit = {}) => {
     const response = await boxFetch(`${origin}/__box${path}`, init, token);
     await failUnlessOk(response, `${worker} ${path}`, 409);
@@ -77,7 +66,6 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     return response;
   };
 
-  // null only when the box's Worker doesn't exist (Cloudflare's 404 page).
   const state = async () => {
     const response = await fetchThrough(`${origin}/__box/state`, {}, token, true);
     if (!response) return null;
@@ -93,7 +81,6 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     return decode(BoxStatus, await response.text(), `${boxWorker(name)} /state`).snapshot?.id ?? null;
   };
 
-  // Streams a command's output to stdout (or collects it) and returns its exit code (or its output).
   const stream = async (body: Exec, capture: boolean) => {
     const response = await call('/exec', { method: 'POST', body: JSON.stringify(body) });
     if (response.status === 409) throw new Error(`${worker} isn't running: \`box up --cloud --box ${box}\``);
@@ -110,7 +97,6 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     return output.trim();
   };
 
-  // The snapshot a new box starts from: `from`'s, or base's for a branch box that is new; none means bake.
   const startingSnapshot = async (from: string | undefined, fromBase: boolean, ref: string) => {
     if (from) {
       const id = await snapshotOf(from);
@@ -128,15 +114,12 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     return id;
   };
 
-  // The box's doctor report, or null while it can't give one (baking, starting).
   const doctor = async () => {
     const text = await collected({ cmd: ['sh', '-c', `${BOX_CLI.join(' ')} doctor || true`] }).catch(() => '');
 
     return fromJson(DoctorReport).safeParse(text).data ?? null;
   };
 
-  // Asks the doctor every 10 s until `accept` takes its report, and returns that; fails when the box won't get there
-  // (`stuck`), and after `seconds` or at the deadline. `orLast`: return the last report then instead (null if none).
   const waitFor = (seconds: number, accept: (report: DoctorReport) => boolean, orLast = false) => {
     const until = Math.min(Date.now() + seconds * 1000, deadline);
     const when = until === deadline ? "the job's time is up" : `after ${seconds}s`;
@@ -161,11 +144,9 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     );
   };
 
-  // 0 once the box stopped with a snapshot other than `previous`, 1 when it stopped without one.
   const waitUntilAsleep = (previous: string | undefined) =>
     poll(
       async () => {
-        // A request that fails doesn't mean the box stopped; ask again.
         const current = await state().catch(() => null);
         if (current?.phase === 'running' && !current.down && current.saveFailed)
           throw new Error(`${worker} couldn't save, so it keeps running: ${current.saveFailed.message}`);
@@ -185,8 +166,6 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
       }
     ).then(({ code }) => code);
 
-  // Wakes the box if it sleeps, and waits for its doctor to pass; a running box passes at once. `reachable` still
-  // waits for a bake to finish (an earlier push's), since an apply can't run beside it.
   const readyFor = async ({ reachable }: { readonly reachable: boolean }) => {
     const current = await state();
     if (!current || needsBake(current))
@@ -207,7 +186,6 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     const snapshot = await startingSnapshot(from, fromBase, ref);
     if (snapshot) query.set('from', snapshot);
     if (!(await hostExists())) throw new Error(`${HOST} isn't deployed; deploy it with \`box up --cloud --deploy\``);
-    // Uploading the box's Worker is idempotent and takes about 2 s.
     log(`deploying ${worker}`);
     await hostBoxes(`boxes/${box}`, z.unknown(), { method: 'PUT', token });
     const answer = await call(`/up?${query}`, { method: 'POST' });
@@ -222,7 +200,6 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     return 0;
   };
 
-  // Done when the box stopped with a snapshot newer than the one it had.
   const down = async () => {
     const before = await state();
     if (!before) throw new Error(`${worker} doesn't exist`);
@@ -244,8 +221,6 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     mailUrl: `${origin}/mail`,
     up,
     down,
-    // The host stops the box and forgets it (snapshot and settings), then deletes its Worker; when the box can't be
-    // stopped, its Worker stays, so the box isn't left running unreachable. Other boxes are untouched.
     async delete() {
       log(`${worker}: stopping and forgetting the box, then deleting its Worker`);
       await hostBoxes(`boxes/${box}`, z.unknown(), { method: 'DELETE', token });

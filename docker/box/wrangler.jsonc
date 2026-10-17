@@ -1,6 +1,3 @@
-// Novu Box on Cloudflare, the host Worker (src/cloud/host.ts): the Box Durable Object with its container, and the
-// Slack router's. Deploy with `box deploy` (src/cli/deploy.ts), which adds the secrets, the Slack settings and the
-// bundled thin Worker (THIN_WORKER); wrangler 4.150 or later (README.md says why).
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "novu-box-hub",

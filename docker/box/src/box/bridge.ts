@@ -1,4 +1,3 @@
-// The bridge app (playground/nextjs): its key, its sync with the box's API, and the managed agent.
 
 import { createHmac } from 'node:crypto';
 import fs from 'node:fs';
@@ -19,8 +18,6 @@ import { BRIDGE_SECRET, BRIDGE_URL, MANAGED_AGENT } from './paths.ts';
 import { waitForHttp } from './runtime.ts';
 import { pc } from './supervisor.ts';
 
-// The bridge app serves the Development environment, so it signs with that environment's secret key. The key
-// belongs to this box's own Mongo data, like every other seeded record.
 export async function seedBridge(token: string): Promise<void> {
   const { data } = await api('/v1/environments', ApiEnvironments, { headers: { Authorization: `Bearer ${token}` } });
   const key = data.find((environment) => environment.name === 'Development')?.apiKeys[0]?.key;
@@ -34,9 +31,6 @@ function bridgeKey(): string {
   return fs.readFileSync(BRIDGE_SECRET, 'utf8').trim();
 }
 
-// Same requests as `npx novu sync`: the API discovers the workflows from the bridge and stores them, then
-// every agent the bridge serves gets the bridge URL. An agent the bridge serves for the first time (a PR can
-// add one) is created and published to web chat, as a customer does in the dashboard before syncing.
 export async function syncBridge(): Promise<void> {
   const headers = { Authorization: `ApiKey ${bridgeKey()}` };
   const { agents } = await discoverBridge();
@@ -60,7 +54,6 @@ export async function syncBridge(): Promise<void> {
   log(`bridge synced: ${synced.data.length} workflows and ${agents.length} agents from ${BRIDGE_URL}`);
 }
 
-// The CLI calls discover unsigned, which a bridge with strictAuthentication rejects; the box signs it like the API.
 async function discoverBridge() {
   await waitForHttp(`${BRIDGE_URL}?action=health-check`, 120);
   const timestamp = Date.now();
@@ -71,9 +64,6 @@ async function discoverBridge() {
   });
 }
 
-// Managed agents run on Anthropic with the key from the start env, so this runs at start, not at bake, and only
-// with a key. The Novu-managed Claude integration is the one Novu adds to new Development environments when the
-// key is set; it stores no key. The agent gets Haiku and only the bash tool, which asks for approval before it runs.
 export async function seedManagedAgent(): Promise<void> {
   await pc(['process', 'start', 'thalamus']);
   await waitForHttp('http://127.0.0.1:8788/health', 120);
