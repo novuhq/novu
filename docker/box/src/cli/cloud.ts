@@ -6,19 +6,18 @@ import fs from 'node:fs';
 import * as z from 'zod';
 import { log } from '../node/main.ts';
 import { poll } from '../node/poll.ts';
-import { BoxStatus, DoctorReport, fromJson, StateAnswer } from '../shared/contracts.ts';
+import { BoxStatus, DoctorReport, decode, fromJson, needsBake, StateAnswer } from '../shared/contracts.ts';
 import { BOX_CLI, boxWorker, DOMAIN, HOST } from '../shared/names.ts';
 import {
   boxFetch,
-  decoded,
   type FetchInit,
+  failUnlessOk,
   fetchThrough,
   hostBoxes,
   hostExists,
   readExec,
   type Token,
 } from './cloud-http.ts';
-import { deployHost } from './deploy.ts';
 import type { BoxCall, Target, UpOptions } from './target.ts';
 
 // A first bake takes 11 to 14 minutes on Cloudflare; a wake about 35 s, but the first restore of a snapshot 4 to 6
@@ -34,7 +33,7 @@ interface Exec {
 // Why the box won't get ready, when its phase says so: its snapshot is lost, or it stopped (its bake failed).
 function stuck(worker: string, current: BoxStatus | null): string | null {
   if (current?.phase === 'lost')
-    return `${worker} couldn't restore snapshot ${current.lost?.id} (${current.lost?.message}); snapshots expire 30 days after they were made or last restored. Run \`up\` again to bake it`;
+    return `${worker} couldn't restore snapshot ${current.lost.id} (${current.lost.message}); snapshots expire 30 days after they were made or last restored. Run \`up\` again to bake it`;
   if (current?.phase === 'new') return `${worker} stopped: ${current.error?.message ?? 'never started'}`;
 
   return null;
@@ -49,8 +48,6 @@ function readyWait(current: BoxStatus): keyof typeof READY_WITHIN_SECONDS {
 export interface CloudOptions {
   readonly box: string;
   readonly token: Token;
-  // Whether `up` deploys the host when it's missing (wrangler, Docker and Cloudflare's login); CI can't.
-  readonly mayDeployHost?: boolean;
   // No wait runs past it (CI's job time), in ms since the epoch.
   readonly deadline?: number;
 }
@@ -68,32 +65,32 @@ export interface CloudTarget extends Target {
 }
 
 export function cloudTarget(options: CloudOptions): CloudTarget {
-  const { box, token, mayDeployHost = true, deadline = Number.POSITIVE_INFINITY } = options;
+  const { box, token, deadline = Number.POSITIVE_INFINITY } = options;
   const worker = boxWorker(box);
   const origin = `https://${worker}.${DOMAIN}`;
 
   // The box's answer, or its failure; 409 (the box isn't running) is the caller's to read.
   const call = async (path: string, init: FetchInit = {}) => {
     const response = await boxFetch(`${origin}/__box${path}`, init, token);
-    if (response.ok || response.status === 409) return response;
-    throw new Error(`${worker} ${path} -> ${response.status}: ${(await response.text()).slice(0, 300)}`);
+    await failUnlessOk(response, `${worker} ${path}`, 409);
+
+    return response;
   };
 
   // null only when the box's Worker doesn't exist (Cloudflare's 404 page).
   const state = async () => {
     const response = await fetchThrough(`${origin}/__box/state`, {}, token, true);
     if (!response) return null;
-    if (!response.ok)
-      throw new Error(`${worker} /state -> ${response.status}: ${(await response.text()).slice(0, 300)}`);
+    await failUnlessOk(response, `${worker} /state`);
 
-    return decoded(response, BoxStatus, `${worker} /state`);
+    return decode(BoxStatus, await response.text(), `${worker} /state`);
   };
 
   const snapshotOf = async (name: string) => {
     const response = await fetchThrough(`https://${boxWorker(name)}.${DOMAIN}/__box/state`, {}, token, true);
     if (!response?.headers.get('content-type')?.includes('json')) return null;
 
-    return (await decoded(response, BoxStatus, `${boxWorker(name)} /state`)).snapshot?.id ?? null;
+    return decode(BoxStatus, await response.text(), `${boxWorker(name)} /state`).snapshot?.id ?? null;
   };
 
   // Streams a command's output to stdout (or collects it) and returns its exit code (or its output).
@@ -121,8 +118,8 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
 
       return id;
     }
-    const phase = (await state())?.phase ?? 'new';
-    if (!fromBase || box === 'base' || !['new', 'lost'].includes(phase)) return null;
+    const current = await state();
+    if (!fromBase || box === 'base' || (current && !needsBake(current))) return null;
     const id = await snapshotOf('base');
     log(
       id ? `${worker} is new: starting it from ${boxWorker('base')}` : `no ${boxWorker('base')} snapshot: baking ${ref}`
@@ -170,8 +167,8 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
       async () => {
         // A request that fails doesn't mean the box stopped; ask again.
         const current = await state().catch(() => null);
-        if (current?.phase === 'running' && !current.saveTries && current.error)
-          throw new Error(`${worker} couldn't save, so it keeps running: ${current.error.message}`);
+        if (current?.phase === 'running' && !current.down && current.saveFailed)
+          throw new Error(`${worker} couldn't save, so it keeps running: ${current.saveFailed.message}`);
         if (!current || current.running || current.phase === 'saving') return null;
         console.log(JSON.stringify({ state: current.phase, snapshot: current.snapshot?.id }));
         if (current.snapshot?.id && current.snapshot.id !== previous) return { code: 0 };
@@ -192,7 +189,7 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
   // waits for a bake to finish (an earlier push's), since an apply can't run beside it.
   const readyFor = async ({ reachable }: { readonly reachable: boolean }) => {
     const current = await state();
-    if (!current || current.phase === 'new' || current.phase === 'lost')
+    if (!current || needsBake(current))
       throw new Error(
         `${worker} ${current ? `isn't set up (${current.phase})` : "doesn't exist"}: \`box up --cloud --box ${box}\``
       );
@@ -205,23 +202,16 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     await waitFor(READY_WITHIN_SECONDS[readyWait(current)], reachable ? baked : (report) => report.ok);
   };
 
-  const up = async ({ deploy: redeploy = false, ref = 'next', from, fromBase = false }: UpOptions) => {
+  const up = async ({ ref = 'next', from, fromBase = false }: UpOptions) => {
     const query = new URLSearchParams({ ref });
     const snapshot = await startingSnapshot(from, fromBase, ref);
     if (snapshot) query.set('from', snapshot);
-    // --deploy: a change to docker/box (image or Worker code) goes to the host, so to every box.
-    if (redeploy || !(await hostExists())) {
-      if (!mayDeployHost) throw new Error(`${HOST} isn't deployed; deploy it with \`box up --cloud --deploy\``);
-      await deployHost();
-    }
+    if (!(await hostExists())) throw new Error(`${HOST} isn't deployed; deploy it with \`box up --cloud --deploy\``);
     // Uploading the box's Worker is idempotent and takes about 2 s.
     log(`deploying ${worker}`);
     await hostBoxes(`boxes/${box}`, z.unknown(), { method: 'PUT', token });
-    const { state: started } = await decoded(
-      await call(`/up?${query}`, { method: 'POST' }),
-      StateAnswer,
-      `${worker} /up`
-    );
+    const answer = await call(`/up?${query}`, { method: 'POST' });
+    const { state: started } = decode(StateAnswer, await answer.text(), `${worker} /up`);
     log(`${worker}: ${started}${started === 'baking' ? ` ${ref} (11 to 14 minutes)` : ''}`);
     const waits: Record<string, number> = READY_WITHIN_SECONDS;
     await waitFor(waits[started] ?? READY_WITHIN_SECONDS.running, (report) => report.ok);

@@ -1,3 +1,4 @@
+import { messageOf } from '../shared/errors.ts';
 import { stopping } from './process.ts';
 
 let tag = 'box';
@@ -16,7 +17,7 @@ export async function main(name: 'box' | 'cli' | 'ci', command: () => Promise<nu
   try {
     process.exitCode = (await command()) ?? 0;
   } catch (error) {
-    log(`ERROR: ${error instanceof Error ? error.message : String(error)}`);
+    log(`ERROR: ${messageOf(error)}`);
     process.exitCode = 1;
   }
 }

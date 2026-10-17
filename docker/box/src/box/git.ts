@@ -1,6 +1,8 @@
 // git in the checkout: fetching a ref, the token-scoped calls, merging a PR onto the baked commit, a sync bundle.
 
-import { capture, exitCode, output, run, vars } from './runtime.ts';
+import { gitIdentity, mergedTree } from '../node/git.ts';
+import { REPO } from './paths.ts';
+import { output, run, vars } from './runtime.ts';
 
 // The token is only in this git's environment, never on disk, and git's credential helper gives it to github.com
 // only. No hooks, so no checked-out code runs with it.
@@ -34,20 +36,11 @@ export async function fetchRef(ref: string): Promise<string> {
 // A PR runs on top of the baked commit, like CI's merge ref, so a branch cut from an older `next`
 // doesn't roll the box back. GitHub's own merge ref can lag behind `next`, so the merge is local.
 export async function mergeOntoBaked(ref: string, prHead: string, baked: string): Promise<string> {
-  if ((await exitCode('git', ['merge-base', '--is-ancestor', baked, prHead], { stdio: 'ignore' })) === 0) return prHead;
-  const merge = await capture('git', ['merge-tree', '--write-tree', baked, prHead]);
-  if (merge.exitCode !== 0)
-    throw new Error(`${ref} conflicts with the baked ${baked.slice(0, 10)}; rebase it:\n${merge.stdout}`);
-  const identity = {
-    GIT_AUTHOR_NAME: 'box',
-    GIT_AUTHOR_EMAIL: 'box@box.internal',
-    GIT_COMMITTER_NAME: 'box',
-    GIT_COMMITTER_EMAIL: 'box@box.internal',
-  };
-  const [tree = ''] = merge.stdout.split('\n');
+  const tree = await mergedTree(baked, prHead, ref, { cwd: REPO, env: vars });
+  if (!tree) return prHead;
 
   return output('git', ['commit-tree', tree, '-p', baked, '-p', prHead, '-m', `box: ${ref} on ${baked.slice(0, 10)}`], {
-    env: { ...vars, ...identity },
+    env: { ...vars, ...gitIdentity('box') },
   });
 }
 

@@ -6,7 +6,7 @@ import * as z from 'zod';
 import { log } from '../node/main.ts';
 import { poll } from '../node/poll.ts';
 import * as proc from '../node/process.ts';
-import { fromJson } from '../shared/contracts.ts';
+import { decode } from '../shared/contracts.ts';
 import { parseEnvFile } from '../shared/env-file.ts';
 import { BOX, BULLMQ_PRO, DATA, REPO } from './paths.ts';
 
@@ -81,8 +81,5 @@ export async function waitForHttp(url: string, seconds: number, signal?: AbortSi
 // A JSON file under /data or in the checkout, with the fields the box reads; null when it isn't there.
 export function readJson<T>(file: string, schema: z.ZodType<T>): T | null {
   if (!fs.existsSync(file)) return null;
-  const decoded = fromJson(schema).safeParse(fs.readFileSync(file, 'utf8'));
-  if (!decoded.success) throw new Error(`${file} isn't what the box expects: ${z.prettifyError(decoded.error)}`);
-
-  return decoded.data;
+  return decode(schema, fs.readFileSync(file, 'utf8'), `${file} isn't what the box expects`);
 }

@@ -1,25 +1,42 @@
 // When a box sleeps, and its save: the processes stop, the disk goes to a snapshot, the container stops.
 
 import type { StateAnswer } from '../shared/contracts.ts';
+import { messageOf } from '../shared/errors.ts';
 import { BOX_CLI } from '../shared/names.ts';
-import { boxState, exitCode, messageOf, type Shell, withTimeout } from './container.ts';
+import { boxState, exitCode, type Shell, withTimeout } from './container.ts';
 import type { HostEnv } from './env.ts';
-import { alarmIn, type Life, lifeOf, note, type Saving, type Snapshot, setLife, snapshotOf, unsaved } from './life.ts';
+import {
+  alarmIn,
+  downOf,
+  type Life,
+  lifeOf,
+  note,
+  type Saving,
+  type Snapshot,
+  setLife,
+  snapshotOf,
+  unsaved,
+  withDown,
+} from './life.ts';
 
 export const ALARM_MS = 60 * 1000;
 // Past the longest save seen (over 6 minutes for a big disk): while the box saves, its alarm and inactivity timeout are
 // set this far ahead, so neither stops it half saved.
 export const SAVE_MS = 20 * 60 * 1000;
-// A save runs in an alarm, which gets 15 minutes: a hung quiesce or snapshot must still leave time to resume the box.
+// A save runs in an alarm, which gets 15 minutes; a resume that no longer fits in them waits for the next alarm.
 const SAVE_BUDGET_MS = 14 * 60 * 1000;
 const QUIESCE_MS = 5 * 60 * 1000;
 const SNAPSHOT_MS = 7 * 60 * 1000;
 const RESUME_MS = 10 * 60 * 1000;
 
-// How long the box waits without requests before it saves itself and stops (the IDLE_MINUTES var, default 60).
-// The backstop, Cloudflare's inactivity timeout, is shorter, as in its autosave recipe: each alarm renews it, so it
-// only stops the container (without a snapshot) when the alarms stop.
-export const idleMs = (env: HostEnv) => Number(env.IDLE_MINUTES ?? 60) * 60 * 1000;
+// The backstop, Cloudflare's inactivity timeout, is shorter than IDLE_MINUTES, as in its autosave recipe: each alarm
+// renews it, so it only stops the container (without a snapshot) when the alarms stop.
+// Anything but a positive number (`box deploy` refuses one) is the default: NaN would put the box to sleep every minute.
+export const idleMs = (env: HostEnv) => {
+  const minutes = Number(env.IDLE_MINUTES);
+
+  return (minutes > 0 ? minutes : 60) * 60 * 1000;
+};
 export const backstopMs = (env: HostEnv) => Math.min(10 * 60 * 1000, idleMs(env) / 2);
 
 export interface Sleeper {
@@ -38,6 +55,8 @@ export async function save(box: Sleeper, reason: string): Promise<StateAnswer> {
   const { shell, storage, destroyed } = box;
   const { container } = shell;
   const write = async (life: Life) => !destroyed() && Boolean(await setLife(storage, life));
+  // What goes back when the save doesn't happen, with a `down` that came in meanwhile (stored on the saving record).
+  const writeBack = async (life: Life) => write(withDown(life, downOf(await lifeOf(storage))));
   const started = Date.now();
   const step = (what: string) =>
     console.log(`sleep(${reason}) ${what} at ${Math.round((Date.now() - started) / 1000)}s`);
@@ -57,14 +76,14 @@ export async function save(box: Sleeper, reason: string): Promise<StateAnswer> {
       since: Date.now(),
       before: before.phase,
       snapshot: snapshotOf(before),
-      saveTries: before.saveTries,
+      down: before.down,
     };
     await setLife(storage, current);
     await alarmIn(storage, SAVE_MS);
     await container.setInactivityTimeout(SAVE_MS);
     const state = await boxState(shell, 'the state check');
     if (state.lock) {
-      await write(before);
+      await writeBack(before);
       await keepRunning();
 
       return { state: 'busy' };
@@ -90,9 +109,15 @@ export async function save(box: Sleeper, reason: string): Promise<StateAnswer> {
   } catch (error) {
     if (destroyed()) return { state: 'deleted' };
     step(`failed, the box keeps running: ${messageOf(error)}`);
-    const left = Math.max(60_000, started + SAVE_BUDGET_MS - Date.now());
+    const left = started + SAVE_BUDGET_MS - Date.now();
+    // Too little of the alarm's 15 minutes is left for a whole resume: the box stays `saving` (503) and the next
+    // alarm resumes it (recoverSave).
+    if (container.running && quiesced && left < RESUME_MS) {
+      await alarmIn(storage, 1000);
+      throw error;
+    }
     if (container.running && quiesced) step(`resume exited ${await resume(shell, left)}`);
-    if (current) await write(unsaved(current, note(messageOf(error))));
+    if (current) await writeBack(unsaved(current, note(messageOf(error))));
     if (container.running) await keepRunning();
     throw error;
   }
@@ -111,13 +136,13 @@ async function snapshotOfBox(shell: Shell, step: (what: string) => void): Promis
   return snapshot;
 }
 
-// A restart of this object (a deploy) cut a save off while the container ran: whatever the save had stopped
-// starts again, and the box runs on until its next save.
+// A save that ended without resuming the box (a restart of this object cut it off, or it ran out of time): whatever
+// it had stopped starts again, and the box runs on until its next save.
 export async function recoverSave(shell: Shell, storage: DurableObjectStorage, life: Saving): Promise<Life> {
-  console.log('a restart cut the save off; resuming the box');
+  console.log('the save ended without resuming the box; resuming it');
   const resumed = await resume(shell, RESUME_MS);
 
-  return setLife(storage, unsaved(life, note(`a restart cut the save off; resume exited ${resumed}`)));
+  return setLife(storage, unsaved(life, note(`the save ended without resuming the box; resume exited ${resumed}`)));
 }
 
 // `box resume`'s exit code, or why it has none.

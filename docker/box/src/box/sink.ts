@@ -3,18 +3,14 @@
 //
 // The box seeds Novu's HTTP providers (generic-sms, push-webhook, chat-webhook) with this server as their
 // URL, so a message here is exactly what the worker handed to the provider: rendered content, recipient,
-// payload and signature. Provider-specific adapters (Twilio, FCM, Slack, ...) are not exercised.
-//
-//   POST /sms   generic-sms body: { to, content, sender, ... }
-//   POST /push  push-webhook body: { target, title, content, payload, ... } + X-Novu-Signature
-//   POST /chat  chat-webhook body: { content, webhookUrl, ... } + X-Novu-Signature
-//
-// Replies { id, date } like a provider; a Mailpit failure becomes a 502 so the Novu step fails too.
+// payload and signature. Provider-specific adapters (Twilio, FCM, Slack, ...) are not exercised. A Mailpit failure
+// becomes a 502 so the Novu step fails too.
 
 import http from 'node:http';
 import { text } from 'node:stream/consumers';
 import { fetchJson } from '../node/http.ts';
 import { fromJson, MailpitSent, ProviderRequest } from '../shared/contracts.ts';
+import { messageOf } from '../shared/errors.ts';
 
 const PORT = Number(process.env.SINK_PORT ?? 8026);
 const MAILPIT = process.env.SINK_MAILPIT_URL ?? 'http://127.0.0.1:8025/mail';
@@ -73,7 +69,7 @@ async function catchMessage(
 
     return [200, { id: ID, date: new Date().toISOString() }];
   } catch (error) {
-    console.error(`${channel}: Mailpit send failed: ${error instanceof Error ? error.message : error}`);
+    console.error(`${channel}: Mailpit send failed: ${messageOf(error)}`);
 
     return [502, { error: 'mailpit send failed' }];
   }

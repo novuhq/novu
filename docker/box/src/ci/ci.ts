@@ -3,12 +3,6 @@
 // `box --cloud` does (src/cli/cloud.ts), signed in with the workflow's GitHub Actions OIDC token, and has the host
 // create and delete their Workers (src/cloud/boxes.ts), so the workflow holds no secret. Run by hand, it signs in
 // with GITHUB_TOKEN or `gh auth token` instead.
-//
-//   node docker/box/src/ci/ci.ts pr       the pull_request event in GITHUB_EVENT_PATH: start the PR's box pr-<number>
-//                                         from base and apply the PR's head, or delete the box; one sticky PR
-//                                         comment says how it went
-//   node docker/box/src/ci/ci.ts cleanup  delete pr-* boxes whose PR is closed or no longer labeled `box`
-//   node docker/box/src/ci/ci.ts rebake   bake base again from next and save it to its snapshot
 
 import fs from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -20,7 +14,17 @@ import { runCommand } from '../node/commands.ts';
 import { fetchJson, HttpError } from '../node/http.ts';
 import { log, main } from '../node/main.ts';
 import { poll } from '../node/poll.ts';
-import { BoxList, BoxState, fromJson, OidcToken, Pull, PullRequestEvent } from '../shared/contracts.ts';
+import {
+  BoxList,
+  BoxState,
+  decode,
+  fromJson,
+  needsBake,
+  OidcToken,
+  Pull,
+  PullRequestEvent,
+} from '../shared/contracts.ts';
+import { messageOf } from '../shared/errors.ts';
 import { BOX_CLI, boxWorker, DOMAIN, detached, OIDC_AUDIENCE } from '../shared/names.ts';
 import { canWrite, comment, github, LABEL, labeler, REPO, unlessMissing } from './github.ts';
 
@@ -72,17 +76,19 @@ async function boxToken(): Promise<string> {
   return value;
 }
 
-// The box's cloud target, signed in with boxToken; it never deploys the host, and no wait runs past DEADLINE.
-const target = (box: string) => cloudTarget({ box, token: boxToken, mayDeployHost: false, deadline: DEADLINE });
+// The box's cloud target, signed in with boxToken; no wait runs past DEADLINE.
+const target = (box: string) => cloudTarget({ box, token: boxToken, deadline: DEADLINE });
 
 const hostList = async () => (await hostBoxes('boxes', BoxList, { token: boxToken })).boxes;
 
 // --- pr ---
 
 async function pr(): Promise<number> {
-  const decoded = fromJson(PullRequestEvent).safeParse(fs.readFileSync(process.env.GITHUB_EVENT_PATH ?? '', 'utf8'));
-  if (!decoded.success) throw new Error(`the pull_request event: ${z.prettifyError(decoded.error)}`);
-  const event = decoded.data;
+  const event = decode(
+    PullRequestEvent,
+    fs.readFileSync(process.env.GITHUB_EVENT_PATH ?? '', 'utf8'),
+    'the pull_request event'
+  );
   const { action, number, pull_request: pull } = event;
   const labeled = pull.labels.some((label) => label.name === LABEL);
   if (['labeled', 'unlabeled'].includes(action) ? event.label?.name !== LABEL : !labeled && action !== 'closed') {
@@ -147,7 +153,7 @@ async function applyHead(number: number, sha: string): Promise<number> {
 
     return 0;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = messageOf(error);
     log(`ERROR: ${message}`);
     const where =
       error instanceof ApplyFailed ? `; the apply's log: \`${CLI} exec --cloud --box ${box} -- cat ${error.log}\`` : '';
@@ -165,9 +171,9 @@ async function applyHead(number: number, sha: string): Promise<number> {
 // wait out, or a bake an earlier push started (a box that runs answers its doctor, whatever the doctor finds); then
 // the apply an earlier, cancelled run left going is stopped.
 async function startOrReach(cloud: CloudTarget, box: string, number: number): Promise<boolean> {
-  const phase = (await cloud.state())?.phase ?? 'new';
+  const current = await cloud.state();
   // Never started, created by a run cancelled before the box first came up, its bake failed, or its snapshot is lost.
-  if (phase === 'new' || phase === 'lost') {
+  if (!current || needsBake(current)) {
     const others = (await hostList()).filter((name) => /^pr-\d+$/.test(name) && name !== box);
     if (others.length >= MAX_BOXES) {
       await comment(
@@ -194,12 +200,7 @@ async function startOrReach(cloud: CloudTarget, box: string, number: number): Pr
 // state. Returns its plan line.
 async function apply(cloud: CloudTarget, sha: string): Promise<string> {
   const file = `/data/logs/apply-${sha.slice(0, 12)}.log`;
-  const boxState = (text: string) => {
-    const state = fromJson(BoxState).safeParse(text);
-    if (!state.success) throw new Error(`\`box state\`: ${z.prettifyError(state.error)}`);
-
-    return state.data;
-  };
+  const boxState = (text: string) => decode(BoxState, text, '`box state`');
   log(`applying ${sha}; the box logs it to ${file}`);
   await cloud.runOutput(detached([...BOX_CLI, 'apply', sha], file), { github: true });
   const deadline = Math.min(Date.now() + APPLY_MINUTES * 60_000, DEADLINE);
@@ -216,25 +217,22 @@ async function apply(cloud: CloudTarget, sha: string): Promise<string> {
       return still;
     } catch (error) {
       if (Date.now() - lastSeen <= 3 * 60_000) return true;
-      throw new ApplyFailed(`the box stopped answering: ${error instanceof Error ? error.message : error}`, file);
+      throw new ApplyFailed(`the box stopped answering: ${messageOf(error)}`, file);
     }
   };
   await sleep(10_000);
-  await poll(
-    async () => {
-      if (!(await applying())) return true;
-      if (Date.now() > deadline)
-        throw new ApplyFailed(
-          deadline === DEADLINE
-            ? "the job's time ran out during the apply"
-            : `the apply runs for over ${APPLY_MINUTES} minutes`,
-          file
-        );
-
-      return false;
+  await poll(async () => !(await applying()), {
+    timeoutMs: deadline - Date.now(),
+    everyMs: 10_000,
+    orElse: () => {
+      throw new ApplyFailed(
+        deadline === DEADLINE
+          ? "the job's time ran out during the apply"
+          : `the apply runs for over ${APPLY_MINUTES} minutes`,
+        file
+      );
     },
-    { timeoutMs: Number.POSITIVE_INFINITY, everyMs: 10_000 }
-  );
+  });
   const output = await cloud.runOutput(['cat', file]);
   console.log(output);
   const { applied, applying: unfinished } = boxState(await cloud.boxOutput(['state']));
@@ -249,6 +247,10 @@ async function apply(cloud: CloudTarget, sha: string): Promise<string> {
 
 // --- schedules ---
 
+function whyStale(pull: { readonly state: string }): string {
+  return pull.state === 'open' ? `not labeled \`${LABEL}\`` : pull.state;
+}
+
 async function cleanup(): Promise<number> {
   let failed = 0;
   for (const box of (await hostList()).filter((name) => /^pr-\d+$/.test(name))) {
@@ -256,8 +258,7 @@ async function cleanup(): Promise<number> {
     try {
       const pull = await github(`/repos/${REPO}/pulls/${number}`, Pull).catch(unlessMissing);
       if (pull?.state === 'open' && pull.labels.some((label) => label.name === LABEL)) continue;
-      const why = !pull ? 'missing' : pull.state !== 'open' ? pull.state : `not labeled \`${LABEL}\``;
-      log(`${box}: the PR is ${why}`);
+      log(`${box}: the PR is ${pull ? whyStale(pull) : 'missing'}`);
       await target(box).delete();
       if (pull)
         await comment(
@@ -266,7 +267,7 @@ async function cleanup(): Promise<number> {
           { onlyUpdate: true }
         );
     } catch (error) {
-      log(`ERROR: ${box}: ${error instanceof Error ? error.message : error}`);
+      log(`ERROR: ${box}: ${messageOf(error)}`);
       failed++;
     }
   }
@@ -286,8 +287,12 @@ async function rebake(): Promise<number> {
 
 await main('ci', () =>
   runCommand('ci', {
-    pr: { usage: '', help: "the pull_request event's box", run: pr },
-    cleanup: { usage: '', help: 'delete stale pr-* boxes', run: cleanup },
-    rebake: { usage: '', help: 'bake base again from next', run: rebake },
+    pr: {
+      usage: '',
+      help: "the pull_request event in GITHUB_EVENT_PATH: start or update the PR's box pr-<number>,\nor delete it; one sticky PR comment says how it went",
+      run: pr,
+    },
+    cleanup: { usage: '', help: 'delete pr-* boxes whose PR is closed or no longer labeled `box`', run: cleanup },
+    rebake: { usage: '', help: 'bake base again from next and save it to its snapshot', run: rebake },
   })
 );

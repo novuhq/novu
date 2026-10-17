@@ -1,9 +1,7 @@
 // `box logs`: the last lines of one process, or of all of them, from process-compose's log.
 
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
-import { createInterface } from 'node:readline';
-import { stopping } from '../node/process.ts';
+import { exitCode, stopping } from '../node/process.ts';
 import { AppLogLine, fromJson, PcLogLine } from '../shared/contracts.ts';
 import { PC_LOG } from './paths.ts';
 import { list } from './supervisor.ts';
@@ -77,10 +75,13 @@ export async function logs({ name, tail, follow, errors }: LogsOptions): Promise
   for (const line of lines.map(logLine).filter(wanted).slice(-tail)) print(line);
   if (!follow) return;
   // Lines appended from now on, until the caller stops.
-  const tailing = spawn('tail', ['-n', '0', '-F', PC_LOG], { stdio: ['ignore', 'pipe', 'ignore'] });
-  stopping.signal.addEventListener('abort', () => tailing.kill());
-  for await (const raw of createInterface({ input: tailing.stdout })) {
-    const line = logLine(raw);
-    if (raw && wanted(line)) print(line);
-  }
+  let partial = '';
+  const tailed = (chunk: string) => {
+    const raws = (partial + chunk).split('\n');
+    partial = raws.pop() ?? '';
+    for (const line of raws.filter(Boolean).map(logLine)) if (wanted(line)) print(line);
+  };
+  await exitCode('tail', ['-n', '0', '-F', PC_LOG], { stdio: 'ignore', onStdout: tailed }).catch((error: unknown) => {
+    if (!stopping.signal.aborted) throw error;
+  });
 }

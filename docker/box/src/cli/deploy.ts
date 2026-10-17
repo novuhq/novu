@@ -37,7 +37,11 @@ function secrets() {
   const slack = readKeys(SLACK_ENV, ['SLACK_BOT_TOKEN', 'SLACK_SIGNING_SECRET']);
   if (!slack) log(`no ${SLACK_ENV}, so boxes get no Slack`);
   const github = readKeys(join(CONFIG, 'github.env'), ['GITHUB_READ_TOKEN']);
-  if (!github) log(`no ${CONFIG}/github.env, so boxes fetch with their caller's token, and CI can't apply`);
+  // wrangler's --secrets-file only adds: a GITHUB_READ_TOKEN the host already has stays.
+  if (!github)
+    log(
+      `no ${CONFIG}/github.env: boxes fetch with the host's GITHUB_READ_TOKEN if it has one, else their caller's token`
+    );
   const cloudflare = readKeys(join(CONFIG, 'cloudflare.env'), ['CLOUDFLARE_API_TOKEN']);
   if (!cloudflare?.CLOUDFLARE_API_TOKEN)
     throw new Error(`${CONFIG}/cloudflare.env is missing; the host creates and deletes boxes' Workers with it`);
@@ -46,6 +50,8 @@ function secrets() {
 }
 
 export async function deployHost(): Promise<void> {
+  const idle = process.env.BOX_IDLE_MINUTES;
+  if (idle && !(Number(idle) > 0)) throw new Error(`BOX_IDLE_MINUTES=${idle}: a number of minutes, over 0`);
   const { slack, all } = secrets();
   const dir = fs.mkdtempSync(join(os.tmpdir(), 'box-deploy-'));
   const secretsFile = join(dir, 'secrets.json');
@@ -58,8 +64,7 @@ export async function deployHost(): Promise<void> {
     });
     const thin = fs.readFileSync(join(dir, 'thin/thin.js'), 'utf8');
     const vars = [
-      // Minutes without requests before a box saves itself and stops; default 60 (src/cloud/box.ts).
-      ...(process.env.BOX_IDLE_MINUTES ? [`IDLE_MINUTES:${process.env.BOX_IDLE_MINUTES}`] : []),
+      ...(idle ? [`IDLE_MINUTES:${idle}`] : []),
       ...(slack ? [`SLACK_ROUTER_URL:https://${ROUTER}.${DOMAIN}`, `SLACK_CHANNEL:${SLACK_CHANNEL}`] : []),
     ].flatMap((pair) => ['--var', pair]);
     log(`deploying ${HOST} with wrangler; this applies to every box`);

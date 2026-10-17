@@ -1,19 +1,9 @@
 // Box -> Slack: POST /api/<method> from boxes (their SLACK_API_URL), GET /files/* downloads and POST /upload. A token
 // the router minted gets the real one, for the methods the agents use, only in #novu-box and in DMs people started.
 
+import { decode } from '../../shared/contracts.ts';
 import { bearer } from '../../shared/names.ts';
-import {
-  identity,
-  isDm,
-  label,
-  parsed,
-  type RouterCore,
-  SLACK_API,
-  SLACK_FILES,
-  slackAnswer,
-  store,
-  stored,
-} from './core.ts';
+import { identity, isDm, label, NOT_SLACK, type RouterCore, SLACK_API, SLACK_FILES, slackAnswer } from './core.ts';
 import { BoxParams, type Identity, type Owner, type Params, type SlackResult } from './model.ts';
 
 // The Slack methods the playground agents use through @chat-adapter/slack and Novu's native delivery, with the
@@ -49,8 +39,10 @@ const OWN_MESSAGE = new Set(['chat.update', 'chat.delete', 'chat.appendStream', 
 export async function outbound(core: RouterCore, request: Request, method: string): Promise<Response> {
   const raw = await request.text();
   const json = Boolean(request.headers.get('content-type')?.includes('json'));
-  const params: Params = json ? parsed(BoxParams, raw || '{}') : Object.fromEntries(new URLSearchParams(raw));
-  const owner = await stored<Owner>(core, `token:${bearer(request) ?? params.token}`);
+  const params: Params = json
+    ? decode(BoxParams, raw || '{}', NOT_SLACK)
+    : Object.fromEntries(new URLSearchParams(raw));
+  const owner = await core.storage.get<Owner>(`token:${bearer(request) ?? params.token}`);
   // Not a token the router minted (a person's own Slack app, connected in the box's dashboard): Slack decides.
   if (!owner) return passThrough(request, method, raw);
   delete params.token;
@@ -89,7 +81,7 @@ async function refusal(core: RouterCore, method: string, params: Params, owner: 
   const parameter = METHODS[method];
   const channel = parameter ? params[parameter] : undefined;
   if (parameter && !(await allowedChannel(core, channel))) return 'channel_not_allowed_by_novu_box';
-  if (OWN_MESSAGE.has(method) && (await stored<Owner>(core, `msg:${channel}:${params.ts}`))?.box !== owner.box)
+  if (OWN_MESSAGE.has(method) && (await core.storage.get<Owner>(`msg:${channel}:${params.ts}`))?.box !== owner.box)
     return 'message_not_owned_by_this_box';
 
   return null;
@@ -99,22 +91,22 @@ async function allowedChannel(core: RouterCore, channel: Params[string]): Promis
   if (channel === core.env.SLACK_CHANNEL) return true;
   if (typeof channel !== 'string' || !isDm(channel)) return false;
 
-  return Boolean(await stored(core, `dm:${channel}`));
+  return Boolean(await core.storage.get(`dm:${channel}`));
 }
 
 // Message and view owners, from what the box posted, so replies, reactions, edits and clicks find the box.
 async function record(core: RouterCore, method: string, params: Params, body: SlackResult, owner: Owner) {
   if (method === 'chat.postMessage' || method === 'chat.startStream')
-    await store(core, `msg:${body.channel}:${body.ts}`, owner);
+    await core.storage.put(`msg:${body.channel}:${body.ts}`, owner);
   if (method === 'chat.postEphemeral' && body.message_ts)
-    await store(core, `msg:${params.channel}:${body.message_ts}`, owner);
-  if (method.startsWith('views.') && body.view?.id) await store(core, `view:${body.view.id}`, owner);
+    await core.storage.put(`msg:${params.channel}:${body.message_ts}`, owner);
+  if (method.startsWith('views.') && body.view?.id) await core.storage.put(`view:${body.view.id}`, owner);
   if (method === 'files.getUploadURLExternal' && body.upload_url)
     body.upload_url = `${core.env.SLACK_ROUTER_URL}/upload?url=${encodeURIComponent(body.upload_url)}`;
 }
 
 export async function download(core: RouterCore, request: Request, url: URL): Promise<Response> {
-  if (!(await stored(core, `token:${bearer(request)}`))) return new Response('unknown token\n', { status: 403 });
+  if (!(await core.storage.get(`token:${bearer(request)}`))) return new Response('unknown token\n', { status: 403 });
   const response = await fetch(`${SLACK_FILES}${url.pathname.slice('/files/'.length)}${url.search}`, {
     headers: { Authorization: `Bearer ${core.env.SLACK_BOT_TOKEN ?? ''}` },
   });
@@ -125,7 +117,7 @@ export async function download(core: RouterCore, request: Request, url: URL): Pr
 export async function upload(core: RouterCore, request: Request, url: URL): Promise<Response> {
   const target = URL.parse(url.searchParams.get('url') ?? '');
   if (target?.origin !== new URL(SLACK_FILES).origin) return new Response('not a Slack upload URL\n', { status: 400 });
-  if (!(await stored(core, `token:${bearer(request)}`))) return new Response('unknown token\n', { status: 403 });
+  if (!(await core.storage.get(`token:${bearer(request)}`))) return new Response('unknown token\n', { status: 403 });
   const response = await fetch(target.href, {
     method: 'POST',
     headers: {

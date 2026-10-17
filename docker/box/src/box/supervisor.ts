@@ -1,7 +1,7 @@
 // process-compose, the box's supervisor: asking it for its processes, starting and stopping them.
 
 import { poll } from '../node/poll.ts';
-import { fromJson, type PcProcess, PcProcesses } from '../shared/contracts.ts';
+import { decode, type PcProcess, PcProcesses } from '../shared/contracts.ts';
 import { PC_SOCKET, RUN } from './paths.ts';
 import { STORES } from './processes.ts';
 import { output, run, step } from './runtime.ts';
@@ -14,10 +14,7 @@ export function pc(args: ReadonlyArray<string>): Promise<void> {
 
 export async function list(): Promise<ReadonlyArray<PcProcess>> {
   const text = await output('process-compose', ['process', 'list', '-o', 'json', ...SOCKET], { cwd: RUN });
-  const decoded = fromJson(PcProcesses).safeParse(text);
-  if (!decoded.success) throw new Error(`process-compose's list: ${decoded.error.message}`);
-
-  return decoded.data;
+  return decode(PcProcesses, text, "process-compose's list");
 }
 
 export async function running(): Promise<Set<string>> {

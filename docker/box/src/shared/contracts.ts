@@ -18,6 +18,14 @@ export function fromJson<T extends z.ZodType>(schema: T) {
     .pipe(schema);
 }
 
+// JSON `text` as `schema` says, or a failure that starts with `what`.
+export function decode<T extends z.ZodType>(schema: T, text: string, what: string): z.output<T> {
+  const decoded = fromJson(schema).safeParse(text);
+  if (!decoded.success) throw new Error(`${what}: ${z.prettifyError(decoded.error)}`);
+
+  return decoded.data;
+}
+
 // --- The box's files under /data, and what `box state` and `box doctor` print ---
 
 export const Baked = z.object({ ref: z.string(), sha: z.string(), at: z.string() });
@@ -119,28 +127,36 @@ export const NestConfig = z.looseObject({ compilerOptions: z.looseObject({}) });
 
 // --- The host's /__box/* routes ---
 
-export const Phase = z.enum(['new', 'baking', 'running', 'saving', 'asleep', 'lost']);
-export type Phase = z.infer<typeof Phase>;
-
 const Note = z.object({ at: z.string(), message: z.string() });
-export const BoxStatus = z.object({
-  phase: Phase,
+// A `down` that waits to save, or tries again.
+const Down = z.object({ tries: z.number() }).nullable();
+const Status = {
   since: z.string().nullable(),
   running: z.boolean(),
   snapshot: z.object({ id: z.string(), name: z.string().optional(), gigabytes: z.number().nullable() }).nullable(),
-  saveTries: z.number(),
-  error: Note.nullable(),
-  lost: Note.extend({ id: z.string() }).nullable(),
   lastActivity: z.string(),
   origin: z.string().nullish(),
-});
+};
+export const BoxStatus = z.discriminatedUnion('phase', [
+  z.object({ ...Status, phase: z.literal(['new', 'asleep']), error: Note.nullable() }),
+  z.object({ ...Status, phase: z.literal(['baking', 'saving']), down: Down }),
+  z.object({ ...Status, phase: z.literal('running'), down: Down, saveFailed: Note.nullable() }),
+  z.object({ ...Status, phase: z.literal('lost'), lost: Note.extend({ id: z.string() }) }),
+]);
 export type BoxStatus = z.infer<typeof BoxStatus>;
+export type Phase = BoxStatus['phase'];
+
+// A box with nothing to wake: never baked, its bake failed, or its snapshot is lost.
+export function needsBake(status: BoxStatus): boolean {
+  return status.phase === 'new' || status.phase === 'lost';
+}
 
 export const ExecRequest = z.object({
   cmd: z.array(z.string()).min(1),
   cwd: z.string().optional(),
   github: z.boolean().optional(),
 });
+export type ExecRequest = z.infer<typeof ExecRequest>;
 
 export const StateAnswer = z.object({ state: z.string(), ref: z.string().optional(), snapshot: z.string().optional() });
 export type StateAnswer = z.infer<typeof StateAnswer>;

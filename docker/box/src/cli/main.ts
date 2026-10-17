@@ -7,6 +7,7 @@ import type { ParseArgsOptionsConfig } from 'node:util';
 import { type Command, type Parsed, runCommand } from '../node/commands.ts';
 import { main } from '../node/main.ts';
 import { cloudTarget } from './cloud.ts';
+import { hostExists } from './cloud-http.ts';
 import { deployHost } from './deploy.ts';
 import { dockerTarget } from './docker.ts';
 import { mail } from './mail.ts';
@@ -54,7 +55,9 @@ const commands: Record<string, Command> = {
       cloudOnly(parsed, ['deploy', 'from', 'no-sync']);
       // The branch's own box (no --box) is for this checkout: start it from base and put the checkout on it.
       const ownBox = parsed.flag('cloud') && !parsed.option('box');
-      const code = await target.up({ deploy: parsed.flag('deploy'), from: parsed.option('from'), fromBase: ownBox });
+      // --deploy: a change to docker/box (image or Worker code) goes to the host, so to every box.
+      if (parsed.flag('cloud') && (parsed.flag('deploy') || !(await hostExists()))) await deployHost();
+      const code = await target.up({ from: parsed.option('from'), fromBase: ownBox });
 
       return code === 0 && ownBox && !parsed.flag('no-sync') ? sync(target, { full: false }) : code;
     },

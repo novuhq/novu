@@ -2,36 +2,21 @@
 // (host.ts exports it), as one Durable Object, Router("router"), that keeps the boxes, each person's selection, and
 // who owns each thread and message. Its address is the Worker `novu-box-slack` (thin.ts, bound to it by
 // wrangler.slack.jsonc). It holds the real bot token and signing secret; boxes get fake ones, minted here per box and
-// agent, so PR code never sees the real ones. Slack's events, interactivity and the /novu-box command all come to
-// POST /slack.
-//
-//   POST /slack          from Slack (inbound.ts): check its signature, queue the event for the box that owns it, ack,
-//                        then hand it to Box(<box>), re-signed with that box's fake secret (a sleeping box wakes; the
-//                        queue retries until it answers)
-//   POST /api/<method>   from boxes (outbound.ts, their SLACK_API_URL): a fake token gets the real one for the allowed
-//                        methods, only in #novu-box and in DMs people started; any other token goes to slack.com
-//   GET  /files/<path>   files.slack.com downloads (image and PDF input) with the real token
-//   POST /upload?url=    file uploads to the upload_url Slack returned, with the real token
-//
-// Box(<box>) calls `register` for its credentials, `ready` once its agents are set up, and `unregister` when the
-// box is deleted (slack/box.ts).
+// agent, so PR code never sees the real ones. An event for a box is queued, acked, then handed to it re-signed with
+// its fake secret; a sleeping box wakes, and the queue retries until it answers.
 
 import { DurableObject } from 'cloudflare:workers';
-import { messageOf } from '../container.ts';
+import { messageOf } from '../../shared/errors.ts';
 import type { HostEnv } from '../env.ts';
 import {
   ephemeral,
-  forget,
   hmacHex,
   identity,
   label,
-  listed,
   ROUTER_NAME,
   type RouterCore,
   random,
   slack,
-  store,
-  stored,
   talkBlocks,
 } from './core.ts';
 import { inbound } from './inbound.ts';
@@ -79,7 +64,7 @@ export class Router extends DurableObject<HostEnv> {
   // A box's credentials: one signing secret, and a bot token per agent, so the router knows which box and agent
   // every outbound call comes from. A box that registers again (every start) gets the same ones.
   async register(name: string, origin: string, identifiers: ReadonlyArray<string>): Promise<SlackCredentials> {
-    const box: RegisteredBox = (await stored<RegisteredBox>(this.#core, `box:${name}`)) ?? {
+    const box: RegisteredBox = (await this.#core.storage.get<RegisteredBox>(`box:${name}`)) ?? {
       name,
       signingSecret: random(16),
       tokens: {},
@@ -89,11 +74,11 @@ export class Router extends DurableObject<HostEnv> {
     const tokens: Record<string, string> = {};
     for (const identifier of identifiers) tokens[identifier] = box.tokens[identifier] ?? `xoxb-novu-box-${random(18)}`;
     for (const [identifier, token] of Object.entries(box.tokens))
-      if (!tokens[identifier]) await forget(this.#core, `token:${token}`);
+      if (!tokens[identifier]) await this.#core.storage.delete(`token:${token}`);
     for (const [agent, token] of Object.entries(tokens))
-      await store(this.#core, `token:${token}`, { box: name, agent });
+      await this.#core.storage.put(`token:${token}`, { box: name, agent });
     box.tokens = tokens;
-    await store(this.#core, `box:${name}`, box);
+    await this.#core.storage.put(`box:${name}`, box);
     const me = await identity(this.#core);
 
     return { signingSecret: box.signingSecret, tokens, team: me.team, botUserId: me.botUserId };
@@ -101,7 +86,7 @@ export class Router extends DurableObject<HostEnv> {
 
   // The agents the box set up, with their webhook IDs, replace its list; #novu-box gets (or keeps) its ready message.
   async ready(name: string, agents: ReadonlyArray<SlackAgent>): Promise<void> {
-    const box = await stored<RegisteredBox>(this.#core, `box:${name}`);
+    const box = await this.#core.storage.get<RegisteredBox>(`box:${name}`);
     if (!box) throw new Error(`${name} isn't registered`);
     box.agents = agents;
     const message = {
@@ -115,17 +100,17 @@ export class Router extends DurableObject<HostEnv> {
       const posted = await slack(this.#core, 'chat.postMessage', message);
       if (posted.ok && posted.channel && posted.ts) box.message = { channel: posted.channel, ts: posted.ts };
     }
-    await store(this.#core, `box:${name}`, box);
+    await this.#core.storage.put(`box:${name}`, box);
   }
 
   async unregister(name: string): Promise<void> {
-    const box = await stored<RegisteredBox>(this.#core, `box:${name}`);
+    const box = await this.#core.storage.get<RegisteredBox>(`box:${name}`);
     if (!box) return;
     if (box.message) await slack(this.#core, 'chat.delete', box.message);
     await this.ctx.storage.delete(Object.values(box.tokens).map((token) => `token:${token}`));
-    for (const [key, selection] of await listed<Owner>(this.#core, 'sel:'))
-      if (selection.box === name) await forget(this.#core, key);
-    await forget(this.#core, `box:${name}`);
+    for (const [key, selection] of await this.#core.storage.list<Owner>({ prefix: 'sel:' }))
+      if (selection.box === name) await this.#core.storage.delete(key);
+    await this.#core.storage.delete(`box:${name}`);
   }
 
   // --- the queue ---
@@ -134,7 +119,7 @@ export class Router extends DurableObject<HostEnv> {
   // events in the order they came.
   async #forward(owner: Owner, envelope: Envelope): Promise<void> {
     const item: Item = { ...envelope, box: owner.box, agent: owner.agent, at: Date.now() };
-    await store(this.#core, `q:${owner.box}:${String(item.at).padStart(15, '0')}:${random(4)}`, item);
+    await this.#core.storage.put(`q:${owner.box}:${String(item.at).padStart(15, '0')}:${random(4)}`, item);
     if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + RETRY_MS);
     this.#core.later('hand over', this.#handOver(item));
   }
@@ -154,13 +139,13 @@ export class Router extends DurableObject<HostEnv> {
     this.#draining.add(box);
     try {
       for (;;) {
-        const [entry] = await listed<Item>(this.#core, `q:${box}:`, 1);
+        const [entry] = await this.#core.storage.list<Item>({ prefix: `q:${box}:`, limit: 1 });
         if (!entry) return await this.#endNotices(box);
         const [key, item] = entry;
         if (Date.now() - item.at > GIVE_UP_MS)
           await this.#endNotices(box, `${box} didn't wake within ${GIVE_UP_MS / 60000} minutes; try again later.`);
         else if (!(await this.#deliver(item))) return;
-        await forget(this.#core, key);
+        await this.#core.storage.delete(key);
       }
     } finally {
       this.#draining.delete(box);
@@ -168,15 +153,18 @@ export class Router extends DurableObject<HostEnv> {
   }
 
   override async alarm(): Promise<void> {
-    const boxes = new Set([...(await listed<Item>(this.#core, 'q:')).values()].map((item) => item.box));
+    const boxes = new Set(
+      [...(await this.#core.storage.list<Item>({ prefix: 'q:' })).values()].map((item) => item.box)
+    );
     await Promise.all([...boxes].map((box) => this.#drain(box)));
-    if ((await listed(this.#core, 'q:', 1)).size) await this.ctx.storage.setAlarm(Date.now() + RETRY_MS);
+    if ((await this.#core.storage.list({ prefix: 'q:', limit: 1 })).size)
+      await this.ctx.storage.setAlarm(Date.now() + RETRY_MS);
   }
 
   // The box's answer once it took the event (an error answer counts: retrying won't help); null while it's asleep
   // or starting. An event for a box or agent that's gone is dropped, and its sender told.
   async #deliver(item: Item, timeoutMs?: number): Promise<SlackAnswer | null> {
-    const box = await stored<RegisteredBox>(this.#core, `box:${item.box}`);
+    const box = await this.#core.storage.get<RegisteredBox>(`box:${item.box}`);
     const agent = box?.agents.find((candidate) => candidate.identifier === item.agent);
     if (!box || !agent) {
       await this.#gone(item);
@@ -224,8 +212,8 @@ export class Router extends DurableObject<HostEnv> {
   async #wakingNotice(item: Item): Promise<void> {
     if (!item.notice?.channel) return;
     const key = `notice:${item.box}:${item.notice.channel}:${item.notice.ts ?? ''}`;
-    if (await stored(this.#core, key)) return;
-    await store(this.#core, key, { at: Date.now() } satisfies PostedNotice);
+    if (await this.#core.storage.get(key)) return;
+    await this.#core.storage.put(key, { at: Date.now() } satisfies PostedNotice);
     const posted = await slack(this.#core, 'chat.postMessage', {
       channel: item.notice.channel,
       thread_ts: item.notice.ts,
@@ -233,12 +221,16 @@ export class Router extends DurableObject<HostEnv> {
       username: `${item.box} · ${ROUTER_NAME}`,
     });
     if (posted.ok && posted.channel && posted.ts)
-      await store(this.#core, key, { at: Date.now(), channel: posted.channel, ts: posted.ts } satisfies PostedNotice);
+      await this.#core.storage.put(key, {
+        at: Date.now(),
+        channel: posted.channel,
+        ts: posted.ts,
+      } satisfies PostedNotice);
   }
 
   async #endNotices(box: string, failure?: string): Promise<void> {
-    for (const [key, notice] of await listed<PostedNotice>(this.#core, `notice:${box}:`)) {
-      await forget(this.#core, key);
+    for (const [key, notice] of await this.#core.storage.list<PostedNotice>({ prefix: `notice:${box}:` })) {
+      await this.#core.storage.delete(key);
       if (!notice.ts) continue;
       const text = failure ?? `Woke ${box} in ${Math.round((Date.now() - notice.at) / 1000)} s.`;
       await slack(this.#core, 'chat.update', { channel: notice.channel, ts: notice.ts, text });

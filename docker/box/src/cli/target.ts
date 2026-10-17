@@ -3,8 +3,6 @@
 import { output } from '../node/process.ts';
 
 export interface UpOptions {
-  // Cloud: redeploy the host (a change to docker/box) before starting the box.
-  readonly deploy?: boolean;
   // Cloud: the first start begins from that box's latest snapshot instead of a bake.
   readonly from?: string | undefined;
   // Cloud: a box that is new starts from `base`'s snapshot when there is one, else bakes.

@@ -1,19 +1,19 @@
-// One box: its container, its phase (life.ts) and its saves (sleep.ts). Requests reach it through its own Worker
-// (thin.ts).
+// One box: its container, its phase (life.ts), its first bake (bake.ts) and its saves (sleep.ts). Requests reach it
+// through its own Worker (thin.ts).
 
 import { DurableObject } from 'cloudflare:workers';
 import type { BoxStatus, StateAnswer } from '../shared/contracts.ts';
-import { BOX_CLI, detached, HOST } from '../shared/names.ts';
+import { messageOf } from '../shared/errors.ts';
+import { HOST } from '../shared/names.ts';
+import { checkBake, startBake } from './bake.ts';
 import {
   boxEnv,
-  boxState,
   CALL_MS,
   execAnswer,
+  execBody,
   fileAnswer,
-  messageOf,
   output,
   readToken,
-  run,
   type Shell,
   START,
   withTimeout,
@@ -21,6 +21,7 @@ import {
 import type { HostEnv } from './env.ts';
 import {
   alarmIn,
+  downOf,
   json,
   type Life,
   lifeOf,
@@ -33,7 +34,7 @@ import {
   stopped,
   text,
   waking,
-  withSaveTries,
+  withDown,
 } from './life.ts';
 import {
   connectSlack,
@@ -83,7 +84,7 @@ export class Box extends DurableObject<HostEnv> {
       storage: ctx.storage,
       env,
       running: () => this.#container.running,
-      phase: async () => (await this.#current()).phase,
+      phase: async () => (await this.#reconcile()).phase,
       wake: (origin) => this.#wakeAsleep(origin),
       output: (cmd, what) => output(this.#shell, cmd, what),
       port: () => this.#port(),
@@ -116,10 +117,18 @@ export class Box extends DurableObject<HostEnv> {
         return json(await this.#destroy());
       case 'POST /__box/up':
         return this.#unlessSaving(request, async () => json(await this.#up(request, url)));
-      case 'POST /__box/exec':
-        return this.#whenRunning(request, () => execAnswer(this.#shell, request, this.env));
-      case 'PUT /__box/file':
-        return this.#whenRunning(request, () => fileAnswer(this.#shell, request, url));
+      // The body is read before the save check: reading it lets the alarm in, which may begin a save.
+      case 'POST /__box/exec': {
+        const body = await execBody(request);
+        if (body instanceof Response) return body;
+
+        return this.#whenRunning(request, () => execAnswer(this.#shell, request, body, this.env));
+      }
+      case 'PUT /__box/file': {
+        const bytes = await request.bytes();
+
+        return this.#whenRunning(request, () => fileAnswer(this.#shell, url, bytes));
+      }
     }
     if (url.pathname.startsWith('/__box/')) return text('not found\n', 404);
 
@@ -131,23 +140,20 @@ export class Box extends DurableObject<HostEnv> {
   // below can leave the box to the timeout, which stops it without a snapshot.
   override async alarm(): Promise<void> {
     const storage = this.ctx.storage;
-    let life = await this.#current();
+    let life = await this.#reconcile();
     if (life.phase === 'saving') {
-      // The save that runs keeps its own alarm; this one only makes sure an alarm stays set.
+      // Alarms shouldn't overlap, so a save running here is unexpected; it keeps its own alarm, and this only makes
+      // sure one stays set.
       if (this.#saving) return alarmIn(storage, ALARM_MS);
       life = await recoverSave(this.#shell, storage, life);
     }
-    if (!this.#container.running) {
-      if ('saveTries' in life && life.saveTries) await setLife(storage, withSaveTries(life, 0));
-
-      return;
-    }
+    if (!this.#container.running) return;
     await this.#container.setInactivityTimeout(backstopMs(this.env));
     await alarmIn(storage, ALARM_MS);
-    life = await this.#checkBake(life);
+    life = await checkBake(this.#shell, this.ctx.storage, life);
     if (!this.#container.running) return;
-    const tries = 'saveTries' in life ? life.saveTries : 0;
-    if (tries) return this.#retrySave(tries);
+    const down = downOf(life);
+    if (down) return this.#retrySave(down.tries);
     // Slack: connect the agents the bridge serves now.
     await withTimeout(connectSlack(this.#slack), 4 * CALL_MS, 'connecting Slack').catch((error: unknown) =>
       console.log(`slack not connected yet: ${messageOf(error)}`)
@@ -159,7 +165,7 @@ export class Box extends DurableObject<HostEnv> {
 
   // RPC for the router, and GET /__box/state.
   async state(): Promise<BoxStatus & { slackEvents: ReadonlyArray<SlackEventNote> }> {
-    const life = await this.#current();
+    const life = await this.#reconcile();
     const lastActivity = this.#lastActivity || ((await this.ctx.storage.get<number>('lastActivity')) ?? 0);
     const origin = (await this.ctx.storage.get<string>('origin')) ?? null;
 
@@ -185,7 +191,7 @@ export class Box extends DurableObject<HostEnv> {
 
   async #unlessSaving(request: Request, f: (life: Life) => Promise<Response>): Promise<Response> {
     if (this.#saving) return saving(request);
-    const life = await this.#current();
+    const life = await this.#reconcile();
 
     return this.#saving || life.phase === 'saving' ? saving(request) : f(life);
   }
@@ -196,9 +202,9 @@ export class Box extends DurableObject<HostEnv> {
     );
   }
 
-  // The stored phase, set right when the container went away without this object stopping it (the inactivity
-  // backstop, a crash, a restart in the middle of a save).
-  async #current(): Promise<Life> {
+  // The stored phase, brought up to date (written, and a stray container destroyed) when the container went away
+  // without this object stopping it (the inactivity backstop, a crash, a restart in the middle of a save).
+  async #reconcile(): Promise<Life> {
     const storage = this.ctx.storage;
     const life = await lifeOf(storage);
     const running = this.#container.running;
@@ -246,7 +252,7 @@ export class Box extends DurableObject<HostEnv> {
   // `box start` runs without it.
   async #up(request: Request, url: URL): Promise<StateAnswer> {
     await this.ctx.storage.put('origin', url.origin);
-    const life = await this.#checkBake(await this.#current());
+    const life = await checkBake(this.#shell, this.ctx.storage, await this.#reconcile());
     if (this.#container.running) return { state: life.phase };
     const from = url.searchParams.get('from');
     const snapshot = snapshotOf(life) ?? (from ? { id: from, name: `from ${from}` } : null);
@@ -260,36 +266,9 @@ export class Box extends DurableObject<HostEnv> {
     const image = this.#container.images.box;
     if (!image) throw new Error(`${HOST} was deployed without the box image`);
     await this.#start({ image }, ['tini', '--', 'sleep', 'infinity']);
-    await setLife(this.ctx.storage, { phase: 'baking', since: Date.now(), saveTries: 0 });
-    const bake = detached([...BOX_CLI, 'bake', ref, '--start'], '/data/logs/up.log');
-    await (await run(this.#shell, bake, { github })).exitCode;
+    await startBake(this.#shell, this.ctx.storage, ref, github);
 
     return { state: 'baking', ref };
-  }
-
-  // A bake that ended without /data/.baked.json failed: its container goes, with the end of its log kept as the
-  // error, so the next `up` bakes again. The bake takes its lock a moment after it starts, hence the minute's grace.
-  async #checkBake(life: Life): Promise<Life> {
-    if (life.phase !== 'baking' || !this.#container.running || Date.now() - life.since < 60_000) return life;
-    const state = await boxState(this.#shell, 'the bake check').catch((error: unknown) => {
-      console.log(`${messageOf(error)}; the bake counts as running`);
-
-      return null;
-    });
-    const storage = this.ctx.storage;
-    if (state?.baked)
-      return setLife(storage, {
-        phase: 'running',
-        since: Date.now(),
-        snapshot: null,
-        saveTries: life.saveTries,
-        error: null,
-      });
-    if (!state || state.lock) return life;
-    const tail = await output(this.#shell, ['tail', '-n', '5', '/data/logs/up.log'], 'the bake log').catch(() => '');
-    await this.#container.destroy('the bake failed');
-
-    return setLife(storage, { phase: 'new', since: Date.now(), error: note(`the bake failed: ${tail.slice(-600)}`) });
   }
 
   async #wakeAsleep(origin: string): Promise<void> {
@@ -299,7 +278,13 @@ export class Box extends DurableObject<HostEnv> {
 
   async #wake(origin: string, snapshot: Snapshot): Promise<void> {
     if (this.#container.running) return;
-    await setLife(this.ctx.storage, { phase: 'running', since: Date.now(), snapshot, saveTries: 0, error: null });
+    await setLife(this.ctx.storage, {
+      phase: 'running',
+      since: Date.now(),
+      snapshot,
+      down: null,
+      saveFailed: null,
+    });
     await this.#start({ containerSnapshot: snapshot }, START, origin);
     this.#watchRestore(snapshot);
   }
@@ -340,12 +325,11 @@ export class Box extends DurableObject<HostEnv> {
   // would stop the box without its snapshot; an alarm runs for up to 15 minutes on its own.
   async #sleepSoon(): Promise<StateAnswer> {
     const storage = this.ctx.storage;
-    const life = await this.#current();
-    if (!this.#container.running || life.phase === 'saving') return { state: life.phase };
-    if (life.phase === 'running')
-      await setLife(storage, { ...life, saveTries: Math.max(1, life.saveTries), error: null });
-    if (life.phase === 'baking') await setLife(storage, { ...life, saveTries: Math.max(1, life.saveTries) });
-    await alarmIn(storage, 1000);
+    const life = await this.#reconcile();
+    if (!this.#container.running) return { state: life.phase };
+    // During a save, too: it keeps the down if it comes back without saving (busy, failed).
+    await setLife(storage, withDown(life, downOf(life) ?? { tries: 1 }));
+    if (life.phase !== 'saving') await alarmIn(storage, 1000);
 
     return { state: 'saving' };
   }
@@ -357,7 +341,7 @@ export class Box extends DurableObject<HostEnv> {
     } catch (error) {
       const again = tries < 5;
       if (again) console.log(`saving failed (try ${tries}): ${messageOf(error)}`);
-      await setLife(this.ctx.storage, withSaveTries(await lifeOf(this.ctx.storage), again ? tries + 1 : 0));
+      await setLife(this.ctx.storage, withDown(await lifeOf(this.ctx.storage), again ? { tries: tries + 1 } : null));
       if (again) await alarmIn(this.ctx.storage, 10_000);
     }
   }

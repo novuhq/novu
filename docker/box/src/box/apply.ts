@@ -6,6 +6,7 @@ import { fetchJson } from '../node/http.ts';
 import { log } from '../node/main.ts';
 import { poll } from '../node/poll.ts';
 import { Applied, Applying, Baked, CheckRuns, fromJson, NxProjects } from '../shared/contracts.ts';
+import { messageOf } from '../shared/errors.ts';
 import { syncBridge } from './bridge.ts';
 import {
   build,
@@ -179,6 +180,6 @@ async function logCiResult(sha: string, token: string | undefined): Promise<void
     else if (check.conclusion === 'success') log(`CI: passed on ${sha.slice(0, 10)}`);
     else log(`WARN: CI ${check.conclusion} on ${sha.slice(0, 10)}; the box may run code CI rejects: ${check.html_url}`);
   } catch (error) {
-    log(`WARN: couldn't read the CI result: ${error instanceof Error ? error.message : error}`);
+    log(`WARN: couldn't read the CI result: ${messageOf(error)}`);
   }
 }

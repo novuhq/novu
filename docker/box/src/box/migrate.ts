@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import { log } from '../node/main.ts';
 import { poll } from '../node/poll.ts';
+import { messageOf } from '../shared/errors.ts';
 import { DATA, MIGRATED, REDIS_PORTS, REDIS_TLS, REPO, RUN } from './paths.ts';
 import { output, run, vars } from './runtime.ts';
 
@@ -113,7 +114,7 @@ async function syncIndexes(mongoose: Mongoose, requireDal: NodeJS.Require): Prom
           await model.createIndexes({ toCreate: [spec] });
           created++;
         } catch (error) {
-          const why = error instanceof Error ? error.message : String(error);
+          const why = messageOf(error);
           log(`WARN: index conflict on ${model.collection.collectionName} ${JSON.stringify(spec)}: ${why}`);
         }
       }

@@ -3,7 +3,7 @@
 
 import * as z from 'zod';
 import { isOidc } from '../shared/auth.ts';
-import { type BoxState, ExecRequest, fromJson, BoxState as State } from '../shared/contracts.ts';
+import { BoxState, decode, ExecRequest } from '../shared/contracts.ts';
 import { BOX_CLI, bearer, EXIT_MARK, SECRETS } from '../shared/names.ts';
 import type { HostEnv } from './env.ts';
 import { json, text } from './life.ts';
@@ -41,8 +41,6 @@ export const IMAGE_ENV = {
   BOX_HOME: '/opt/box',
 };
 export const START = ['tini', '--', ...BOX_CLI, 'start'];
-
-export const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 // `promise`, or a failure after `ms`; `onTimeout` stops what the promise waits for.
 export function withTimeout<T>(promise: Promise<T>, ms: number, what: string, onTimeout?: () => void): Promise<T> {
@@ -95,10 +93,7 @@ export function exitCode(shell: Shell, cmd: ReadonlyArray<string>, timeoutMs: nu
 
 // What `box state` says: the baked and applied commits, and the bake or apply holding the lock.
 export async function boxState(shell: Shell, what: string): Promise<BoxState> {
-  const answer = fromJson(State).safeParse(await output(shell, [...BOX_CLI, 'state'], what));
-  if (!answer.success) throw new Error(`${what}: ${z.prettifyError(answer.error)}`);
-
-  return answer.data;
+  return decode(BoxState, await output(shell, [...BOX_CLI, 'state'], what), what);
 }
 
 // The GitHub token a box's git fetches and CI lookup get: the host's read-only GITHUB_READ_TOKEN when it has one, so
@@ -111,22 +106,26 @@ export function readToken(request: Request, env: HostEnv): string | undefined {
   return token;
 }
 
-// POST /__box/exec
-export async function execAnswer(shell: Shell, request: Request, env: HostEnv): Promise<Response> {
+// POST /__box/exec's body, or the 400 for one that isn't.
+export async function execBody(request: Request): Promise<ExecRequest | Response> {
   const body = ExecRequest.safeParse(await request.json().catch(() => null));
-  if (!body.success) return text(`not an exec request: ${z.prettifyError(body.error)}\n`, 400);
-  const { cmd, cwd, github } = body.data;
+
+  return body.success ? body.data : text(`not an exec request: ${z.prettifyError(body.error)}\n`, 400);
+}
+
+// POST /__box/exec
+export async function execAnswer(shell: Shell, request: Request, body: ExecRequest, env: HostEnv): Promise<Response> {
+  const { cmd, cwd, github } = body;
   const token = github ? readToken(request, env) : undefined;
 
   return streamed(await run(shell, cmd, { cwd, github: token }));
 }
 
 // PUT /__box/file
-export async function fileAnswer(shell: Shell, request: Request, url: URL): Promise<Response> {
+// An exec whose stdin is the request's body often never answers, though the file is written whole (October 2026: 12
+// of 16 tries); writing the bytes to a piped stdin answers every time.
+export async function fileAnswer(shell: Shell, url: URL, bytes: Uint8Array): Promise<Response> {
   const path = url.searchParams.get('path') ?? '';
-  // An exec whose stdin is the request's body often never answers, though the file is written whole (October
-  // 2026: 12 of 16 tries); writing the bytes to a piped stdin answers every time.
-  const bytes = await request.bytes();
   const process = await run(shell, ['sh', '-c', 'cat > "$0"', path], { stdin: 'pipe' });
   const writer = process.stdin?.getWriter();
   await writer?.write(bytes);

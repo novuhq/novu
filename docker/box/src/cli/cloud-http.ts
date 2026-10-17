@@ -4,7 +4,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import * as z from 'zod';
 import { log } from '../node/main.ts';
 import { stopping } from '../node/process.ts';
-import { fromJson } from '../shared/contracts.ts';
+import { decode } from '../shared/contracts.ts';
 import { DOMAIN, EXIT_MARK, HOST } from '../shared/names.ts';
 
 export type Token = () => Promise<string>;
@@ -62,11 +62,10 @@ export async function boxFetch(url: string, init: FetchInit, token: Token): Prom
   return response;
 }
 
-export async function decoded<T>(response: Response, schema: z.ZodType<T>, what: string): Promise<T> {
-  const answer = fromJson(schema).safeParse(await response.text());
-  if (!answer.success) throw new Error(`${what}: ${z.prettifyError(answer.error)}`);
-
-  return answer.data;
+// Fails with the start of the answer unless it is 2xx, or `allowed`.
+export async function failUnlessOk(response: Response, what: string, allowed?: number): Promise<void> {
+  if (response.ok || response.status === allowed) return;
+  throw new Error(`${what} -> ${response.status}: ${(await response.text()).slice(0, 300)}`);
 }
 
 // The host's routes (src/cloud/boxes.ts): list, create and delete boxes' Workers.
@@ -77,9 +76,9 @@ export async function hostBoxes<T>(
 ): Promise<T> {
   const what = `${method} ${HOST}/__box/${path}`;
   const response = await boxFetch(`https://${HOST}.${DOMAIN}/__box/${path}`, { method }, token);
-  if (!response.ok) throw new Error(`${what} -> ${response.status}: ${(await response.text()).slice(0, 300)}`);
+  await failUnlessOk(response, what);
 
-  return decoded(response, schema, what);
+  return decode(schema, await response.text(), what);
 }
 
 // The host answers its own plain-text 404; Cloudflare's 404 page (HTML) means it isn't deployed.

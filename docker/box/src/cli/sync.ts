@@ -5,10 +5,10 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import { join, resolve } from 'node:path';
-import * as z from 'zod';
+import { gitIdentity, mergedTree } from '../node/git.ts';
 import { log } from '../node/main.ts';
-import { capture, exitCode, output, type RunOptions } from '../node/process.ts';
-import { BoxState, fromJson } from '../shared/contracts.ts';
+import { exitCode, output, type RunOptions } from '../node/process.ts';
+import { BoxState, decode } from '../shared/contracts.ts';
 import type { Target } from './target.ts';
 
 const BUNDLE_IN_BOX = '/data/run/sync.bundle';
@@ -22,9 +22,7 @@ export async function sync(target: Target, { full }: { readonly full: boolean })
   await target.ready();
   const root = await output('git', ['rev-parse', '--show-toplevel']);
   const git: Git = (args, options = {}) => output('git', args, { cwd: root, ...options });
-  const state = fromJson(BoxState).safeParse(await target.boxOutput(['state']));
-  if (!state.success) throw new Error(`the box's state: ${z.prettifyError(state.error)}`);
-  const { baked } = state.data;
+  const { baked } = decode(BoxState, await target.boxOutput(['state']), "the box's state");
   if (!baked) throw new Error(`${target.name} isn't baked`);
   if ((await exitCode('git', ['cat-file', '-e', `${baked.sha}^{commit}`], { cwd: root, stdio: 'ignore' })) !== 0) {
     log(`fetching the box's baked commit ${baked.sha.slice(0, 10)}`);
@@ -33,7 +31,8 @@ export async function sync(target: Target, { full }: { readonly full: boolean })
 
   const { commit, changed, summary } = await snapshot(root, git);
   log(summary);
-  await mergesOnto(root, baked.sha, commit);
+  // The box merges the commit onto its baked one (src/box/git.ts): a conflict fails here, before the upload.
+  await mergedTree(baked.sha, commit, 'this checkout', { cwd: root });
   const bundle = join(os.tmpdir(), `box-sync-${process.pid}.bundle`);
   try {
     await git(['update-ref', SYNC_REF, commit]);
@@ -51,17 +50,6 @@ export async function sync(target: Target, { full }: { readonly full: boolean })
   }
 
   return target.box(['apply', '--bundle', BUNDLE_IN_BOX, ...(full ? ['--full'] : [])], { github: true });
-}
-
-// The box merges the commit onto its baked one (src/box/git.ts mergeOntoBaked); a conflict fails here, before the
-// upload, with the same check.
-async function mergesOnto(root: string, baked: string, commit: string): Promise<void> {
-  const options = { cwd: root, stdio: 'ignore' } as const;
-  if ((await exitCode('git', ['merge-base', '--is-ancestor', baked, commit], options)) === 0) return;
-  const merge = await capture('git', ['merge-tree', '--write-tree', '--name-only', baked, commit], { cwd: root });
-  if (merge.exitCode === 1)
-    throw new Error(`this checkout conflicts with the box's baked ${baked.slice(0, 10)}; rebase it:\n${merge.stdout}`);
-  if (merge.exitCode !== 0) throw new Error(`git merge-tree failed: ${merge.stderr.trim().slice(-600)}`);
 }
 
 function biggest(root: string, changed: ReadonlyArray<string>): string {
@@ -106,13 +94,7 @@ async function snapshot(root: string, git: Git) {
     const branch = (await git(['branch', '--show-current'])) || 'a detached HEAD';
     const label = `sync ${branch} at ${head.slice(0, 10)}${changed.length ? ' with uncommitted changes' : ''}`;
     const commit = await git(['commit-tree', tree, '-p', head, '-m', label], {
-      env: {
-        ...process.env,
-        GIT_AUTHOR_NAME: 'box sync',
-        GIT_AUTHOR_EMAIL: 'box@box.internal',
-        GIT_COMMITTER_NAME: 'box sync',
-        GIT_COMMITTER_EMAIL: 'box@box.internal',
-      },
+      env: { ...process.env, ...gitIdentity('box sync') },
     });
     const sentNote = sent.size ? `, ${sent.size} of them untracked: ${[...sent].slice(0, 5).join(' ')}` : '';
     const skippedNote = skipped.length ? `; not sent, outside the repo's folders: ${countByFolder(skipped)}` : '';

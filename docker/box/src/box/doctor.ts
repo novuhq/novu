@@ -3,6 +3,7 @@
 
 import { log } from '../node/main.ts';
 import { poll } from '../node/poll.ts';
+import { output } from '../node/process.ts';
 import { Applied, Applying, Baked, type BoxState, type DoctorReport } from '../shared/contracts.ts';
 import { runnable } from './apply.ts';
 import { isAlive, lockHolder } from './lock.ts';
@@ -73,27 +74,44 @@ function processTableProblems(names: ReadonlyArray<string>): Array<string> {
 }
 
 // Stops the apply that runs and everything it started, within a minute; CI calls it when a newer push supersedes
-// the one being applied. The apply was started detached (src/shared/names.ts), so its pid is its process group. The
-// next apply takes over its lock and redoes its files (.applying.json).
+// the one being applied. The apply was started detached (src/shared/names.ts), so its pid is its process group; its
+// SIGTERM handler stops each child's own group (src/node/process.ts). The next apply takes over its lock and redoes
+// its files (.applying.json).
 export async function stopApply(): Promise<void> {
   const holder = lockHolder();
   if (holder?.command !== 'apply') return;
-  // An apply started without `setsid` (by hand) has no process group of its own: then only its pid. Never both: a
-  // second SIGTERM would kill the apply before it stopped its children.
-  const signal = (name: NodeJS.Signals) => {
+  const kill = (pid: number, name: NodeJS.Signals) => {
     try {
-      process.kill(-holder.pid, name);
+      return process.kill(pid, name);
     } catch {
-      try {
-        process.kill(holder.pid, name);
-      } catch {}
+      return false;
     }
   };
+  // An apply started without `setsid` (by hand) has no process group of its own: then only its pid. Never both: a
+  // second SIGTERM would kill the apply before it stopped its children.
+  const signal = (name: NodeJS.Signals) => kill(-holder.pid, name) || kill(holder.pid, name);
   const gone = async () => !isAlive(-holder.pid) && !isAlive(holder.pid);
   signal('SIGTERM');
-  if (!(await poll<boolean>(gone, { timeoutMs: 60_000, orElse: () => false }))) signal('SIGKILL');
+  if (!(await poll<boolean>(gone, { timeoutMs: 60_000, orElse: () => false }))) {
+    // It ignored its SIGTERM. Its children lead their own groups, so each is found (before its death hands them to
+    // PID 1) and killed.
+    for (const pid of await descendants(holder.pid)) kill(pid, 'SIGKILL');
+    signal('SIGKILL');
+  }
   await poll(gone, { timeoutMs: 10_000, what: `the apply ${holder.pid} outlived SIGKILL` });
   log(`stopped the apply of an older push (pid ${holder.pid})`);
+}
+
+async function descendants(root: number): Promise<Array<number>> {
+  const children = new Map<number, Array<number>>();
+  for (const line of (await output('ps', ['-eo', 'pid=,ppid='])).split('\n')) {
+    const [pid = 0, parent = 0] = line.trim().split(/\s+/).map(Number);
+    if (pid) children.set(parent, [...(children.get(parent) ?? []), pid]);
+  }
+  const found: Array<number> = [];
+  for (let next = [root]; next.length; next = next.flatMap((pid) => children.get(pid) ?? [])) found.push(...next);
+
+  return found.filter((pid) => pid !== root);
 }
 
 // Stops every process, the stores last, leaving the supervisor up for a snapshot.

@@ -29,8 +29,8 @@ async function canPush(token: string): Promise<boolean> {
   const response = await fetch(`https://api.github.com/repos/${REPOSITORY}`, {
     headers: { Authorization: `Bearer ${token}`, 'User-Agent': 'novu-box' },
   });
-  const repo = response.ok ? JSON.parse(await response.text()) : null;
-  if (repo?.permissions?.push !== true) return false;
+  const repo = response.ok ? json(await response.text()) : {};
+  if (fieldsOf(repo.permissions).push !== true) return false;
   pushers.set(key, Date.now());
 
   return true;
@@ -41,7 +41,7 @@ async function canPush(token: string): Promise<boolean> {
 async function verifyOidc(token: string): Promise<boolean> {
   try {
     const [header = '', payload = '', signature = ''] = token.split('.');
-    const { alg, kid } = JSON.parse(text(header));
+    const { alg, kid } = json(text(header));
     const jwk = alg === 'RS256' && typeof kid === 'string' ? await githubKey(kid) : undefined;
     if (!jwk) return false;
     const key = await crypto.subtle.importKey(
@@ -53,7 +53,7 @@ async function verifyOidc(token: string): Promise<boolean> {
     );
     const signed = new TextEncoder().encode(`${header}.${payload}`);
     if (!(await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, bytes(signature), signed))) return false;
-    const claims = JSON.parse(text(payload));
+    const claims = json(text(payload));
     const now = Date.now() / 1000;
 
     return (
@@ -85,15 +85,29 @@ async function githubKey(kid: string): Promise<Jwk | undefined> {
   const age = Date.now() - keys.at;
   if (age > 60 * 60 * 1000 || (age > 60 * 1000 && !keys.list.some((key) => key.kid === kid))) {
     const response = await fetch(`${ISSUER}/.well-known/jwks`, { headers: { 'User-Agent': 'novu-box' } });
-    const body = response.ok ? JSON.parse(await response.text()) : null;
-    if (Array.isArray(body?.keys)) keys = { list: body.keys.filter(isJwk), at: Date.now() };
+    const body = response.ok ? json(await response.text()) : {};
+    if (Array.isArray(body.keys))
+      keys = { list: body.keys.flatMap((key: unknown) => jwkOf(key) ?? []), at: Date.now() };
   }
 
   return keys.list.find((key) => key.kid === kid);
 }
 
-function isJwk(key: Partial<Record<keyof Jwk, string>> | null): key is Jwk {
-  return [key?.kid, key?.kty, key?.n, key?.e].every((field) => typeof field === 'string');
+function jwkOf(value: unknown): Jwk | null {
+  const { kid, kty, n, e } = fieldsOf(value);
+
+  return typeof kid === 'string' && typeof kty === 'string' && typeof n === 'string' && typeof e === 'string'
+    ? { kid, kty, n, e }
+    : null;
+}
+
+// The fields of untrusted JSON, each to be checked before use; none when it isn't an object.
+function fieldsOf(value: unknown): Readonly<Record<string, unknown>> {
+  return typeof value === 'object' && value !== null ? Object.fromEntries(Object.entries(value)) : {};
+}
+
+function json(text: string): Readonly<Record<string, unknown>> {
+  return fieldsOf(JSON.parse(text));
 }
 
 function bytes(base64url: string): Uint8Array<ArrayBuffer> {

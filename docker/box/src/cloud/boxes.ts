@@ -1,18 +1,12 @@
-// The host's own routes, at https://novu-box-hub.<workers.dev subdomain>, for whoever may call /__box/*
-// (shared/auth.ts): the one way boxes' Workers are created and deleted (`box --cloud` and CI, src/cli/cloud.ts),
-// through the Cloudflare API, so CI (.github/workflows/novu-box.yml) needs no Cloudflare credentials. The host holds
-// CLOUDFLARE_API_TOKEN (Workers Scripts: Edit) as a secret no box gets.
-//
-//   GET    /__box/boxes        {boxes: [name, ...]}, every novu-box-<name> Worker but the host's and the router's
-//   PUT    /__box/boxes/<box>  upload the box's Worker (thin.ts) and put it on workers.dev; then `up` it through it
-//   DELETE /__box/boxes/<box>  stop the box and forget it (Box.destroy), then delete its Worker; 502 and the Worker
-//                              stays when the box couldn't be stopped
-//
-// The Slack router's address isn't here: wrangler.slack.jsonc deploys it.
+// The host's /__box/boxes routes, for whoever may call /__box/* (shared/auth.ts): the one way boxes' Workers are
+// created and deleted, through the Cloudflare API, so CI needs no Cloudflare credentials. The host holds
+// CLOUDFLARE_API_TOKEN as a secret no box gets. Deleting a box stops it first; when it can't be stopped, its Worker
+// stays, so the box isn't left running unreachable.
 
 import * as z from 'zod';
 import { authorize } from '../shared/auth.ts';
 import { CloudflareAnswer, fromJson, ScriptList } from '../shared/contracts.ts';
+import { messageOf } from '../shared/errors.ts';
 import { boxWorker, COMPATIBILITY_DATE, HOST, ROUTER } from '../shared/names.ts';
 import type { HostEnv } from './env.ts';
 import { json, text } from './life.ts';
@@ -24,7 +18,7 @@ export async function boxes(request: Request, env: HostEnv, url: URL): Promise<R
   try {
     return await route(request, env, url);
   } catch (error) {
-    return text(`${error instanceof Error ? error.message : String(error)}\n`, 500);
+    return text(`${messageOf(error)}\n`, 500);
   }
 }
 

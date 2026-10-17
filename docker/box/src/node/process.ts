@@ -11,6 +11,8 @@ export interface RunOptions {
   // Written to stdin.
   readonly input?: string;
   readonly stdio?: 'inherit' | 'ignore';
+  // Gets stdout as it comes, instead of our stdout (a command that runs until it's stopped).
+  readonly onStdout?: (chunk: string) => void;
   // Our terminal's stdin, and our process group, so the terminal's signals reach it (`docker exec -it`).
   readonly interactive?: boolean;
   readonly timeoutMs?: number;
@@ -29,6 +31,7 @@ export interface Captured {
 // started: SIGTERM to the group, then SIGKILL after the grace period, even when the leader exited first.
 function start(cmd: string, args: ReadonlyArray<string>, options: RunOptions, piped: boolean): Promise<Captured> {
   const { cwd, env, input, stdio = 'inherit', interactive = false, timeoutMs, signal, graceMs = 10_000 } = options;
+  const { onStdout } = options;
   const what = [cmd, ...args].join(' ').slice(0, 300);
   const abort = AbortSignal.any([
     stopping.signal,
@@ -41,12 +44,14 @@ function start(cmd: string, args: ReadonlyArray<string>, options: RunOptions, pi
   return new Promise((resolve, reject) => {
     if (abort.aborted) return reject(failure());
     const out = piped ? 'pipe' : stdio;
-    const stdin = input !== undefined ? 'pipe' : interactive ? 'inherit' : 'ignore';
-    const child = spawn(cmd, args, { cwd, env, detached: !interactive, stdio: [stdin, out, out] });
+    const terminal = interactive ? 'inherit' : 'ignore';
+    const stdin = input === undefined ? terminal : 'pipe';
+    const child = spawn(cmd, args, { cwd, env, detached: !interactive, stdio: [stdin, onStdout ? 'pipe' : out, out] });
     let stdout = '';
     let stderr = '';
     child.stdout?.setEncoding('utf8').on('data', (chunk: string) => {
-      stdout += chunk;
+      if (onStdout) onStdout(chunk);
+      else stdout += chunk;
     });
     child.stderr?.setEncoding('utf8').on('data', (chunk: string) => {
       stderr += chunk;

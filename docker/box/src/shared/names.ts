@@ -41,7 +41,7 @@ export const BOX_CLI = ['node', '/opt/box/src/box/main.ts'];
 
 // A command that runs on in the box after the request that started it, with its output in `log`: the host's bake
 // and CI's apply. In its own session (setsid execs it, so it keeps sh's child pid), its pid is also its process
-// group, which the bake-or-apply lock records, so `box stop-apply` stops all of it.
+// group, which the bake-or-apply lock records, for `box stop-apply`.
 export function detached(cmd: ReadonlyArray<string>, log: string): Array<string> {
   return ['sh', '-c', 'mkdir -p /data/logs && setsid nohup "$@" > "$0" 2>&1 < /dev/null &', log, ...cmd];
 }

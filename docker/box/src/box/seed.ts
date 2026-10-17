@@ -1,8 +1,8 @@
 // What a bake seeds through the box's own API besides the org: the channels' providers and the Team tier.
 
-import { setTimeout as sleep } from 'node:timers/promises';
 import * as z from 'zod';
 import { log } from '../node/main.ts';
+import { poll } from '../node/poll.ts';
 import {
   ApiCreated,
   ApiEnvironments,
@@ -127,19 +127,25 @@ export async function seedTeamTier(token: string): Promise<void> {
   });
   await stripe(`/subscriptions/${subscription.id}`, WithId, { ...items, trial_end: 'now', proration_behavior: 'none' });
 
-  for (let second = 1; second <= 60; second++) {
-    await sleep(1000);
-    const { data } = await api('/v1/billing/subscription', ApiSubscription, auth);
-    if (data.apiServiceLevel === 'business' && data.status === 'active') {
-      log(`${SEED.orgName} is on Team (customer ${customer.id})`);
+  let checks = 0;
+  await poll(
+    async () => {
+      const { data } = await api('/v1/billing/subscription', ApiSubscription, auth);
+      if (data.apiServiceLevel === 'business' && data.status === 'active') return true;
+      // The first event can go out before `stripe listen` is connected; any update sends a new one.
+      if (++checks % 15 === 0)
+        await stripe(`/subscriptions/${subscription.id}`, WithId, {
+          'metadata[box_seeded_at]': new Date().toISOString(),
+        });
 
-      return;
+      return false;
+    },
+    {
+      timeoutMs: 60_000,
+      orElse: () => {
+        throw new Error('the org is not on Team after 60s; check the stripe process in /data/logs/process-compose.log');
+      },
     }
-    // The first event can go out before `stripe listen` is connected; any update sends a new one.
-    if (second % 15 === 0)
-      await stripe(`/subscriptions/${subscription.id}`, WithId, {
-        'metadata[box_seeded_at]': new Date().toISOString(),
-      });
-  }
-  throw new Error('the org is not on Team after 60s; check the stripe process in /data/logs/process-compose.log');
+  );
+  log(`${SEED.orgName} is on Team (customer ${customer.id})`);
 }

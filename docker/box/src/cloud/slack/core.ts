@@ -1,7 +1,6 @@
 // What the router's parts (router.ts, inbound.ts, outbound.ts) share: its storage, Slack's Web API with the real
 // token, the bot's identity, and the Talk to buttons.
 
-import type * as z from 'zod';
 import { fromJson } from '../../shared/contracts.ts';
 import type { HostEnv } from '../env.ts';
 import {
@@ -19,6 +18,7 @@ export const SLACK_API = 'https://slack.com/api/';
 export const SLACK_FILES = 'https://files.slack.com/';
 export const ROUTER_NAME = 'Novu Box';
 export const NO_BOX = 'No Novu Box is running: start one with `box up --cloud`.';
+export const NOT_SLACK = 'not what Slack sends';
 
 // The Router (router.ts) as its parts see it.
 export interface RouterCore {
@@ -29,22 +29,6 @@ export interface RouterCore {
   readonly deliver: (item: Item, timeoutMs?: number) => Promise<SlackAnswer | null>;
   // Work that outlives the request (Slack wants its ack within 3 s); the Durable Object keeps running it.
   readonly later: (what: string, work: Promise<unknown>) => void;
-}
-
-export function stored<T>(core: RouterCore, key: string): Promise<T | undefined> {
-  return core.storage.get<T>(key);
-}
-
-export function store(core: RouterCore, key: string, value: object | string | boolean): Promise<void> {
-  return core.storage.put(key, value);
-}
-
-export async function forget(core: RouterCore, key: string): Promise<void> {
-  await core.storage.delete(key);
-}
-
-export function listed<T>(core: RouterCore, prefix: string, limit?: number): Promise<Map<string, T>> {
-  return core.storage.list<T>({ prefix, ...(limit && { limit }) });
 }
 
 // Slack's Web API with the real bot token.
@@ -76,7 +60,7 @@ export function ephemeral(core: RouterCore, channel: string, user: string, messa
 
 // The real bot's workspace and user, which boxes need for mention detection (`<@U…>`).
 export async function identity(core: RouterCore): Promise<Identity> {
-  const known = await stored<Identity>(core, 'identity');
+  const known = await core.storage.get<Identity>('identity');
   if (known) return known;
   const auth = await slack(core, 'auth.test', {});
   if (!auth.ok) throw new Error(`auth.test: ${auth.error}`);
@@ -86,20 +70,13 @@ export async function identity(core: RouterCore): Promise<Identity> {
     ...(auth.bot_id && { botId: auth.bot_id }),
     ...(auth.url && { url: auth.url }),
   };
-  await store(core, 'identity', me);
+  await core.storage.put('identity', me);
 
   return me;
 }
 
 export async function registered(core: RouterCore): Promise<Array<RegisteredBox>> {
-  return [...(await listed<RegisteredBox>(core, 'box:')).values()].filter((box) => box.agents.length);
-}
-
-export function parsed<T extends z.ZodType>(schema: T, text: string): z.infer<T> {
-  const answer = fromJson(schema).safeParse(text);
-  if (!answer.success) throw new Error(`not what Slack sends: ${answer.error.issues[0]?.message ?? ''}`);
-
-  return answer.data;
+  return [...(await core.storage.list<RegisteredBox>({ prefix: 'box:' })).values()].filter((box) => box.agents.length);
 }
 
 // "<box> ready · Talk to: custom-code | ai-sdk | langchain", with a link to its dashboard. `pending`: the picker,

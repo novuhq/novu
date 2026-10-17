@@ -1,5 +1,5 @@
-import * as z from 'zod';
-import { fromJson } from '../shared/contracts.ts';
+import type * as z from 'zod';
+import { decode } from '../shared/contracts.ts';
 import { stopping } from './process.ts';
 
 // A non-2xx answer, for callers that tell statuses apart.
@@ -22,6 +22,12 @@ export interface JsonInit {
   readonly timeoutMs?: number;
 }
 
+function bodyOf({ json, form }: JsonInit): string | URLSearchParams | null {
+  if (json) return JSON.stringify(json);
+
+  return form ? new URLSearchParams(form) : null;
+}
+
 // The answer's JSON, decoded with `schema` (an empty body as null); fails unless the status is 2xx.
 export async function fetchJson<T>(url: string, schema: z.ZodType<T>, init: JsonInit = {}): Promise<T> {
   const { method = 'GET', json, form, timeoutMs = 60_000 } = init;
@@ -33,15 +39,13 @@ export async function fetchJson<T>(url: string, schema: z.ZodType<T>, init: Json
       ...(form && { 'Content-Type': 'application/x-www-form-urlencoded' }),
       ...init.headers,
     },
-    body: json ? JSON.stringify(json) : form ? new URLSearchParams(form) : null,
+    body: bodyOf(init),
     signal: AbortSignal.any([stopping.signal, AbortSignal.timeout(timeoutMs)]),
   }).catch((error: Error) => {
     throw new Error(`${what}: ${error.message}`);
   });
   const text = await response.text();
   if (!response.ok) throw new HttpError(`${what} -> ${response.status}: ${text.slice(0, 300)}`, response.status);
-  const decoded = fromJson(schema).safeParse(text || 'null');
-  if (!decoded.success) throw new Error(`${what} answered what the box can't read: ${z.prettifyError(decoded.error)}`);
 
-  return decoded.data;
+  return decode(schema, text || 'null', `${what} answered what the box can't read`);
 }

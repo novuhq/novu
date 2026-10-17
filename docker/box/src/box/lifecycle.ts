@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import { log } from '../node/main.ts';
 import * as proc from '../node/process.ts';
 import { type Baked, PackageJson } from '../shared/contracts.ts';
+import { messageOf } from '../shared/errors.ts';
 import { seedBridge, seedManagedAgent, syncBridge } from './bridge.ts';
 import { build, buildBridge, deployApp, pnpmInstall, prepareDashboard } from './build.ts';
 import { fetchRef, gitWithToken } from './git.ts';
@@ -220,8 +221,11 @@ export async function start(): Promise<number> {
     await waitForHttp(WORKER_HEALTH, 600, exited.signal);
   } catch (error) {
     if (exited.signal.aborted) return supervisor.exited;
-    await supervisor.stop();
-    throw error;
+    // It stays up, as after a failed apply: `doctor` and `logs` say why, and an apply (CI's, which may be what holds
+    // the apps down right now) can still fix it.
+    log(`WARN: ${messageOf(error)}; the box keeps running`);
+
+    return supervisor.exited;
   }
   const seconds = (Date.now() - started) / 1000;
   appendTiming('api+worker healthy', seconds, 'start');

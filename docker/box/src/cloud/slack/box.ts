@@ -4,9 +4,10 @@
 // the box an event. Without the router's settings (SLACK_ROUTER_URL) every hook does nothing, and boxes get no Slack.
 
 import * as z from 'zod';
-import { fromJson, type Phase } from '../../shared/contracts.ts';
+import { decode, fromJson, type Phase } from '../../shared/contracts.ts';
+import { messageOf } from '../../shared/errors.ts';
 import { boxOfOrigin } from '../../shared/names.ts';
-import { CALL_MS, messageOf, withTimeout } from '../container.ts';
+import { CALL_MS, withTimeout } from '../container.ts';
 import type { HostEnv } from '../env.ts';
 import type { SlackAgent, SlackAnswer, SlackEvent, SlackEventNote } from './types.ts';
 
@@ -253,10 +254,7 @@ async function list<T extends { identifier: string }>(
   path: string,
   schema: z.ZodType<{ data: Array<T> }>
 ): Promise<Array<T>> {
-  const answer = fromJson(schema).safeParse(await api(box, origin, path));
-  if (!answer.success) throw new Error(`GET ${path}: ${z.prettifyError(answer.error)}`);
-
-  return answer.data.data;
+  return decode(schema, await api(box, origin, path), `GET ${path}`).data;
 }
 
 // The port speaks plain HTTP; the host stays the public one, which the API's URLs and Clerk check.
