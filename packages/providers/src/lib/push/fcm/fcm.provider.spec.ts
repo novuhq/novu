@@ -119,7 +119,7 @@ describe('FcmPushProvider', () => {
       },
       tokens: ['tester'],
       registrationIds: ['test'],
-      data: {},
+      data: { sound: 'test_sound' },
     });
   });
 
@@ -194,7 +194,7 @@ describe('FcmPushProvider', () => {
         body: 'Test push',
       },
       tokens: ['tester'],
-      data: { foo: 'bar' },
+      data: { sound: 'test_sound', foo: 'bar' },
       fcmOptions: {
         analyticsLabel: 'my-label',
       },
@@ -233,7 +233,7 @@ describe('FcmPushProvider', () => {
         body: 'Test push',
       },
       tokens: ['tester'],
-      data: { foo: 'bar' },
+      data: { sound: 'test_sound', foo: 'bar' },
       android: {
         notification: {
           title: 'Test',
@@ -281,7 +281,7 @@ describe('FcmPushProvider', () => {
         body: 'Test push',
       },
       tokens: ['tester'],
-      data: {},
+      data: { sound: 'test_sound' },
       apns: {
         payload: {
           aps: {
@@ -519,7 +519,7 @@ describe('FcmPushProvider', () => {
       tokens: ['tester'],
       registrationIds: ['test'],
       android: { priority: 'high' },
-      data: {},
+      data: { sound: 'test_sound' },
     });
   });
 
