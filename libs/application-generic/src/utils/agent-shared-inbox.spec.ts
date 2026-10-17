@@ -1,16 +1,22 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   buildAgentSharedInbox,
+  defaultInboxDomainForProvider,
   generateAgentInboxRoutingKey,
+  getAgentInboxSharedDomainOrNull,
+  getConfiguredSharedInboxDomains,
   getSharedAgentDomain,
   isAgentEmailEnabled,
   isAgentSharedInboxEnabled,
   isValidAgentEmailSlugPrefix,
   isValidAgentInboxRoutingKey,
   parseAgentSharedInboxLocalPart,
+  resolveAgentInboxDomain,
   resolvePublishedAgentEmailSlug,
 } from './agent-shared-inbox';
 
 const ENV_KEY = 'NOVU_AGENT_SHARED_INBOUND_DOMAIN';
+const INBOX_DOMAIN_ENV_KEY = 'NOVU_AGENT_INBOX_INBOUND_DOMAIN';
 const NOVU_ENTERPRISE_KEY = 'NOVU_ENTERPRISE';
 const IS_SELF_HOSTED_KEY = 'IS_SELF_HOSTED';
 
@@ -229,6 +235,57 @@ describe('agent-shared-inbox helpers', () => {
         expect(() => buildAgentSharedInbox('-leading-dash', 'a1b2c3d4')).toThrow();
         expect(() => buildAgentSharedInbox('UPPER', 'a1b2c3d4')).toThrow();
         expect(() => buildAgentSharedInbox('', 'a1b2c3d4')).toThrow();
+      });
+    });
+
+    it('uses an explicit domain instead of the Connect domain', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh' }, () => {
+        expect(buildAgentSharedInbox('wine-bot', 'a1b2c3d4', 'agentinbox.md')).toBe('wine-bot-a1b2c3d4@agentinbox.md');
+      });
+    });
+  });
+
+  describe('agent inbox domain', () => {
+    it('ignores an unset or invalid Agent Inbox domain', () => {
+      withEnv({ [INBOX_DOMAIN_ENV_KEY]: undefined }, () => {
+        expect(getAgentInboxSharedDomainOrNull()).toBeNull();
+      });
+      withEnv({ [INBOX_DOMAIN_ENV_KEY]: 'not a domain' }, () => {
+        expect(getAgentInboxSharedDomainOrNull()).toBeNull();
+      });
+    });
+
+    it('pins Agent Email Inbox to the Agent Inbox domain and everyone else to the Connect domain', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'agentinbox.md' }, () => {
+        expect(defaultInboxDomainForProvider(EmailProviderIdEnum.AgentEmailInbox)).toBe('agentinbox.md');
+        expect(defaultInboxDomainForProvider(EmailProviderIdEnum.NovuAgent)).toBe('agentconnect.sh');
+      });
+    });
+
+    it('falls Agent Email Inbox back to the Connect domain when the Agent Inbox domain is unset', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: undefined }, () => {
+        expect(defaultInboxDomainForProvider(EmailProviderIdEnum.AgentEmailInbox)).toBe('agentconnect.sh');
+      });
+    });
+
+    it('keeps a valid stored pin and falls back to the Connect domain otherwise', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'agentinbox.md' }, () => {
+        expect(resolveAgentInboxDomain({ inboxDomain: 'AgentInbox.MD' })).toBe('agentinbox.md');
+        expect(resolveAgentInboxDomain({})).toBe('agentconnect.sh');
+        expect(resolveAgentInboxDomain({ inboxDomain: 'not a domain' })).toBe('agentconnect.sh');
+        expect(resolveAgentInboxDomain(undefined)).toBe('agentconnect.sh');
+      });
+    });
+
+    it('lists both configured domains once', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'agentinbox.md' }, () => {
+        expect(getConfiguredSharedInboxDomains()).toEqual(['agentconnect.sh', 'agentinbox.md']);
+      });
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'agentconnect.sh' }, () => {
+        expect(getConfiguredSharedInboxDomains()).toEqual(['agentconnect.sh']);
+      });
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: undefined }, () => {
+        expect(getConfiguredSharedInboxDomains()).toEqual(['agentconnect.sh']);
       });
     });
   });

@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
-  getSharedAgentDomain,
+  getConfiguredSharedInboxDomains,
   InboundDomainRouteDelivery,
   isAgentSharedInboxEnabled,
   isValidAgentEmailSlugPrefix,
   PinoLogger,
   parseAgentSharedInboxLocalPart,
+  resolveAgentInboxDomain,
   resolvePublishedAgentEmailSlug,
 } from '@novu/application-generic';
 import {
@@ -68,8 +69,8 @@ export class DomainRouteStrategy {
       this.throwError(`No domain found for address ${toAddress}`);
     }
 
-    if (isAgentSharedInboxEnabled() && domainName === getSharedAgentDomain()) {
-      return this.deliverSharedAgentInbox(command, toAddress, strippedLocalPart, originToken);
+    if (isAgentSharedInboxEnabled() && getConfiguredSharedInboxDomains().includes(domainName)) {
+      return this.deliverSharedAgentInbox(command, toAddress, strippedLocalPart, originToken, domainName);
     }
 
     const domain = await this.domainRepository.findByName(domainName);
@@ -199,24 +200,30 @@ export class DomainRouteStrategy {
   }
 
   /**
-   * Inbound email arrived at the shared agent domain (e.g. `agentconnect.sh`).
-   * The local-part shape is `{slug}-{inboxRoutingKey}` (see
-   * `parseAgentSharedInboxLocalPart`). We resolve the owning NovuAgent
+   * Inbound email arrived at a shared agent domain (`agentconnect.sh`, or the
+   * Agent Inbox domain). The local-part shape is `{slug}-{inboxRoutingKey}`
+   * (see `parseAgentSharedInboxLocalPart`). We resolve the owning inbox
    * integration via its `credentials.inboxRoutingKey` (backed by a partial
    * unique index, cross-tenant), then join through `AgentIntegration` to find
    * the agent, then reuse the existing `InboundDomainRouteDelivery.deliverToAgent`
    * pipeline — which enforces `Integration.active=true` and signs/forwards the
    * payload to the API webhook just like the standard per-tenant flow.
    *
+   * The matched domain has to be the one pinned on that integration. A Connect
+   * agent is not reachable on the Agent Inbox domain, and an Agent Inbox agent
+   * pinned to the new domain is not reachable on `agentconnect.sh`. Rows with
+   * no pin still accept the Connect domain.
+   *
    * Unknown routing keys, malformed local-parts, missing links, and agents
-   * whose NovuAgent integration is disabled all result in silently dropping
+   * whose inbox integration is disabled all result in silently dropping
    * the message (after logging).
    */
   private async deliverSharedAgentInbox(
     command: InboundEmailParseCommand,
     toAddress: string,
     localPart: string | undefined,
-    originToken: string | null
+    originToken: string | null,
+    domainName: string
   ): Promise<InboundParseOutcome | undefined> {
     if (!localPart) {
       this.logger.info({ toAddress }, 'Shared agent domain: missing local part - dropping');
@@ -239,6 +246,17 @@ export class DomainRouteStrategy {
         'Shared agent domain: no integration found for routing key - dropping'
       );
       throw new InboundParseDroppedError('Shared agent domain: no integration found for routing key');
+    }
+
+    if (domainName !== resolveAgentInboxDomain(integration.credentials)) {
+      this.logger.info(
+        { toAddress, integrationId: integration._id, domainName },
+        'Shared agent domain: address domain does not match the integration - dropping'
+      );
+      throw new InboundParseDroppedError('Shared agent domain: address domain does not match the integration', {
+        organizationId: integration._organizationId,
+        environmentId: integration._environmentId,
+      });
     }
 
     // The slug has to be the agent's own, checked in two phases: a stored prefix
@@ -342,7 +360,7 @@ export class DomainRouteStrategy {
 
     const syntheticDomain = {
       _id: agent._id,
-      name: getSharedAgentDomain(),
+      name: domainName,
       status: DomainStatusEnum.VERIFIED,
       mxRecordConfigured: true,
       _environmentId: agent._environmentId,
