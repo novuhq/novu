@@ -4,6 +4,7 @@ import {
   ChatProviderIdEnum,
   ENDPOINT_TYPES,
   ExecutionDetailsStatusEnum,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
   TriggerOverrides,
 } from '@novu/shared';
 import { expect } from 'chai';
@@ -33,7 +34,9 @@ describe('SendMessageChat - phone-based channel de-duplication', () => {
     };
     const selectIntegration = {
       execute: sinon.stub().callsFake(async (command: { providerId: ChatProviderIdEnum }) => {
-        return activePhoneProviders.includes(command.providerId) ? { providerId: command.providerId } : null;
+        return activePhoneProviders.includes(command.providerId)
+          ? { integration: { providerId: command.providerId } }
+          : null;
       }),
     };
 
@@ -183,9 +186,14 @@ describe('SendMessageChat - Slack provider content overrides', () => {
 
   function stubSlackTransport() {
     const handler = new ChatFactory().getHandler(slackIntegration as never);
-    const provider = (handler as unknown as { getProvider: () => { axiosInstance?: unknown } }).getProvider();
+    if (!handler) {
+      throw new Error('Slack handler is unavailable');
+    }
+    const provider = handler.getProvider();
     // Fail here rather than silently letting the suite make a real request to slack.com.
-    expect(provider, 'SlackProvider no longer exposes axiosInstance').to.have.property('axiosInstance');
+    if (!('axiosInstance' in provider)) {
+      throw new Error('SlackProvider no longer exposes axiosInstance');
+    }
 
     const post = sinon.stub().resolves({ data: { ok: true }, headers: { 'x-slack-req-id': 'req_1' } });
     provider.axiosInstance = { post };
@@ -194,12 +202,18 @@ describe('SendMessageChat - Slack provider content overrides', () => {
     return post;
   }
 
-  function buildUsecase() {
+  const slackEndpointGroup = {
+    integrationIdentifier: 'slack-main',
+    providerId: ChatProviderIdEnum.Slack,
+    channelData: [slackChannelData],
+  };
+
+  function buildUsecase(endpointGroups = [slackEndpointGroup]) {
     const usecase = new SendMessageChat(
       {} as never, // subscriberRepository
       { create: sinon.stub().resolves({ _id: 'message_1' }) } as never,
       {} as never, // compileTemplate
-      { execute: sinon.stub().resolves(slackIntegration) } as never,
+      { execute: sinon.stub().resolves({ integration: slackIntegration }) } as never,
       {} as never, // getNovuProviderCredentials
       { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
       { execute: sinon.stub().resolves(undefined) } as never,
@@ -209,15 +223,7 @@ describe('SendMessageChat - Slack provider content overrides', () => {
         }),
       } as never,
       { execute: sinon.stub().resolves(undefined) } as never,
-      {
-        execute: sinon.stub().resolves([
-          {
-            integrationIdentifier: 'slack-main',
-            providerId: ChatProviderIdEnum.Slack,
-            channelData: [slackChannelData],
-          },
-        ]),
-      } as never,
+      { execute: sinon.stub().resolves(endpointGroups) } as never,
       {} as never, // agentRepository
       {} as never, // agentIntegrationRepository
       { getFlag: sinon.stub().resolves(false) } as never // featureFlagsService
@@ -226,14 +232,19 @@ describe('SendMessageChat - Slack provider content overrides', () => {
     return usecase;
   }
 
+  interface TestTriggerOverrides extends TriggerOverrides {
+    steps?: Record<string, { providers?: Record<string, Record<string, unknown>> }>;
+  }
+
   function buildCommand(
     options: {
       providerOverrides?: Record<string, unknown>;
-      overrides?: TriggerOverrides;
+      overrides?: TestTriggerOverrides;
       card?: Record<string, unknown>;
+      subscriberChannels?: Array<Record<string, unknown>>;
     } = {}
   ) {
-    const { providerOverrides, overrides = {}, card } = options;
+    const { providerOverrides, overrides = {}, card, subscriberChannels = [] } = options;
 
     return SendMessageChannelCommand.create({
       environmentId: 'env_1',
@@ -251,7 +262,7 @@ describe('SendMessageChat - Slack provider content overrides', () => {
       tags: [],
       contextKeys: [],
       compileContext: {
-        subscriber: { subscriberId: 'sub_1', locale: 'en', channels: [] },
+        subscriber: { subscriberId: 'sub_1', locale: 'en', channels: subscriberChannels },
       } as never,
       bridgeData: {
         outputs: {
@@ -307,12 +318,66 @@ describe('SendMessageChat - Slack provider content overrides', () => {
         providerOverrides: { blocks: persistedBlocks },
         overrides: {
           steps: { step_1: { providers: { [ChatProviderIdEnum.Slack]: { blocks: triggerBlocks } } } },
-        } as unknown as TriggerOverrides,
+        },
       })
     );
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     expect(post.firstCall.args[1].blocks).to.deep.equal(triggerBlocks);
+  });
+
+  it('layers the selected integration override over the Slack provider override without forwarding the others', async () => {
+    const post = stubSlackTransport();
+
+    const result = await buildUsecase().execute(
+      buildCommand({
+        providerOverrides: {
+          text: 'provider text',
+          blocks: persistedBlocks,
+          [INTEGRATION_OVERRIDES_OUTPUT_KEY]: {
+            'slack-main': { text: 'slack-main text' },
+            'slack-other': { text: 'slack-other text' },
+          },
+        },
+      })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    const body = post.firstCall.args[1];
+    expect(body.text).to.equal('slack-main text');
+    expect(body.blocks).to.deep.equal(persistedBlocks);
+    expect(JSON.stringify(body)).to.not.include('slack-other');
+  });
+
+  it('applies the integration override to legacy subscriber channels, including the webhook URL', async () => {
+    const send = sinon.stub().resolves({});
+    sinon.stub(ChatFactory.prototype, 'getHandler').returns({ send } as never);
+    const integrationWebhookUrl = 'https://hooks.slack.com/services/T0/B0/slack-main';
+
+    const result = await buildUsecase([]).execute(
+      buildCommand({
+        providerOverrides: {
+          text: 'provider text',
+          [INTEGRATION_OVERRIDES_OUTPUT_KEY]: {
+            'slack-main': { webhookUrl: integrationWebhookUrl },
+            'slack-other': { webhookUrl: 'https://hooks.slack.com/services/T0/B0/slack-other' },
+          },
+        },
+        subscriberChannels: [
+          {
+            providerId: ChatProviderIdEnum.Slack,
+            _integrationId: '64a1b2c3d4e5f60718293a4b',
+            credentials: { webhookUrl: 'https://hooks.slack.com/services/T0/B0/subscriber' },
+          },
+        ],
+      })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(send);
+    const sendArgs = send.firstCall.args[0];
+    expect(sendArgs.channelData.endpoint.url).to.equal(integrationWebhookUrl);
+    expect(sendArgs.bridgeProviderData).to.deep.equal({ text: 'provider text', webhookUrl: integrationWebhookUrl });
   });
 
   it('falls back to the compiled step body as the Slack notification text when the override omits it', async () => {
@@ -326,8 +391,13 @@ describe('SendMessageChat - Slack provider content overrides', () => {
 
   function stubSlackHandlerWithCardResolve(nativePayload: Record<string, unknown>) {
     const handler = new ChatFactory().getHandler(slackIntegration as never);
-    const provider = (handler as unknown as { getProvider: () => { axiosInstance?: unknown } }).getProvider();
-    expect(provider, 'SlackProvider no longer exposes axiosInstance').to.have.property('axiosInstance');
+    if (!handler) {
+      throw new Error('Slack handler is unavailable');
+    }
+    const provider = handler.getProvider();
+    if (!('axiosInstance' in provider)) {
+      throw new Error('SlackProvider no longer exposes axiosInstance');
+    }
 
     const post = sinon.stub().resolves({ data: { ok: true }, headers: { 'x-slack-req-id': 'req_1' } });
     provider.axiosInstance = { post };
@@ -489,7 +559,7 @@ describe('SendMessageChat - agent assigned path', () => {
       update: updateMessage,
     };
     const selectIntegration = {
-      execute: sinon.stub().resolves(integration),
+      execute: sinon.stub().resolves({ integration }),
     };
     const featureFlagsService = {
       getFlag: sinon.stub().resolves(false),
@@ -813,7 +883,7 @@ describe('SendMessageChat - agent assigned path', () => {
     const selectIntegration = {
       execute: sinon.stub().callsFake(async (command: { providerId?: string }) => {
         if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
-          return whatsappIntegration;
+          return { integration: whatsappIntegration };
         }
 
         return null;
@@ -888,10 +958,12 @@ describe('SendMessageChat - agent assigned path', () => {
     const selectIntegration = {
       execute: sinon.stub().callsFake(async (command: { providerId?: string }) => {
         if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
-          return whatsappIntegration;
+          return { integration: whatsappIntegration };
         }
         if (command.providerId === ChatProviderIdEnum.Sendblue) {
-          return { ...whatsappIntegration, _id: 'integration_sb', providerId: ChatProviderIdEnum.Sendblue };
+          return {
+            integration: { ...whatsappIntegration, _id: 'integration_sb', providerId: ChatProviderIdEnum.Sendblue },
+          };
         }
 
         return null;
@@ -977,10 +1049,10 @@ describe('SendMessageChat - agent assigned path', () => {
     const selectIntegration = {
       execute: sinon.stub().callsFake(async (command: { providerId?: string; identifier?: string }) => {
         if (command.identifier === 'whatsapp-linked') {
-          return linkedIntegration;
+          return { integration: linkedIntegration };
         }
         if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
-          return otherActiveIntegration;
+          return { integration: otherActiveIntegration };
         }
 
         return null;

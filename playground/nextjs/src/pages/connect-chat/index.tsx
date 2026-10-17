@@ -16,7 +16,7 @@ type HmacSession = {
   contextHash?: string;
 };
 
-const SLACK_INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_CONNECT_CHAT_INTEGRATION_IDENTIFIER ?? 'slack';
+const SLACK_INTEGRATION_IDENTIFIER = 'human-hitl-s5mQXl4qk';
 const SLACK_CONNECTION_IDENTIFIER = 'slack-workspace-connection';
 const SLACK_TEST_WORKFLOW_ID = process.env.NEXT_PUBLIC_CONNECT_CHAT_TEST_WORKFLOW_ID ?? '';
 const MSTEAMS_INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_CONNECT_MSTEAMS_INTEGRATION_IDENTIFIER ?? 'msteams';

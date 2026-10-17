@@ -1,6 +1,5 @@
 import { SlackConnectButtonProps } from '@novu/js/ui';
-import { useCallback } from 'react';
-import { useNovuUI } from '../../context/NovuUIContext';
+import { useMemo } from 'react';
 import { Mounter } from '../Mounter';
 
 export type DefaultSlackConnectButtonProps = Pick<
@@ -38,33 +37,25 @@ export const DefaultSlackConnectButton = (props: DefaultSlackConnectButtonProps)
     connectLabel,
     connectedLabel,
   } = props;
-  const { novuUI } = useNovuUI();
 
-  const mount = useCallback(
-    (element: HTMLElement) => {
-      return novuUI.mountComponent({
-        name: 'SlackConnectButton',
-        props: {
-          integrationIdentifier,
-          connectionIdentifier,
-          subscriberId,
-          context,
-          contextHash,
-          scope,
-          connectionMode,
-          autoLinkUser,
-          onConnectSuccess,
-          onConnectError,
-          onDisconnectSuccess,
-          onDisconnectError,
-          connectLabel,
-          connectedLabel,
-        },
-        element,
-      });
-    },
+  const mountProps = useMemo(
+    () => ({
+      integrationIdentifier,
+      connectionIdentifier,
+      subscriberId,
+      context,
+      contextHash,
+      scope,
+      connectionMode,
+      autoLinkUser,
+      onConnectSuccess,
+      onConnectError,
+      onDisconnectSuccess,
+      onDisconnectError,
+      connectLabel,
+      connectedLabel,
+    }),
     [
-      novuUI,
       integrationIdentifier,
       connectionIdentifier,
       subscriberId,
@@ -82,5 +73,5 @@ export const DefaultSlackConnectButton = (props: DefaultSlackConnectButtonProps)
     ]
   );
 
-  return <Mounter mount={mount} />;
+  return <Mounter name="SlackConnectButton" props={mountProps} />;
 };

@@ -129,6 +129,10 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       workflow: {
         _id: 'tpl_1',
         origin: 'novu-cloud',
+        name: 'Workflow Actual Name',
+        description: 'A test workflow',
+        tags: ['test'],
+        triggers: [{ identifier: 'wf-identifier' }],
       } as never,
       compileContext: {
         subscriber: { subscriberId: 'subscriber_1' },
@@ -286,5 +290,81 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
     // System env values are not secrets, and masking them would gut the excerpt.
     expect(raw.bodyExcerpt).to.contain('"tier":"prod"');
     expect(raw.bodyExcerpt).to.contain('"order":{"sku" }');
+  });
+
+  it('runs the HTTP step when a workflow.name skip condition matches', async () => {
+    const { usecase, httpClientService, createStepConditionEvaluationDetail } = buildUsecase(
+      {
+        url: 'https://example.com/webhook',
+        method: 'POST',
+        body: '{"ok":true}',
+        skip: { '==': [{ var: 'workflow.name' }, 'Workflow Actual Name'] },
+      },
+      true
+    );
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    expect(httpClientService.request.calledOnce).to.equal(true);
+    expect(createStepConditionEvaluationDetail.execute.firstCall.args[0].passed).to.equal(true);
+    expect(createStepConditionEvaluationDetail.execute.firstCall.args[0].evaluatedValues).to.deep.equal({
+      'workflow.name': 'Workflow Actual Name',
+    });
+  });
+
+  it('skips the HTTP step when a workflow.name skip condition does not match', async () => {
+    const { usecase, httpClientService, createStepConditionEvaluationDetail } = buildUsecase(
+      {
+        url: 'https://example.com/webhook',
+        method: 'POST',
+        skip: { '==': [{ var: 'workflow.name' }, 'Pawan'] },
+      },
+      true
+    );
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SKIPPED);
+    expect(httpClientService.request.called).to.equal(false);
+    expect(createStepConditionEvaluationDetail.execute.firstCall.args[0].passed).to.equal(false);
+    expect(createStepConditionEvaluationDetail.execute.firstCall.args[0].evaluatedValues).to.deep.equal({
+      'workflow.name': 'Workflow Actual Name',
+    });
+  });
+
+  it('resolves workflow.workflowId from the trigger identifier in skip conditions', async () => {
+    const { usecase, httpClientService, createStepConditionEvaluationDetail } = buildUsecase(
+      {
+        url: 'https://example.com/webhook',
+        method: 'POST',
+        body: '{"ok":true}',
+        skip: { '==': [{ var: 'workflow.workflowId' }, 'wf-identifier'] },
+      },
+      true
+    );
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    expect(httpClientService.request.calledOnce).to.equal(true);
+    expect(createStepConditionEvaluationDetail.execute.firstCall.args[0].evaluatedValues).to.deep.equal({
+      'workflow.workflowId': 'wf-identifier',
+    });
+  });
+
+  it('compiles workflow.name into the HTTP request body', async () => {
+    const { usecase, httpClientService } = buildUsecase({
+      url: 'https://example.com/webhook',
+      method: 'POST',
+      body: '{"workflowName":"{{ workflow.name }}"}',
+    });
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+
+    const requestArgs = httpClientService.request.firstCall.args[0];
+    expect(requestArgs.body).to.deep.equal({ workflowName: 'Workflow Actual Name' });
   });
 });

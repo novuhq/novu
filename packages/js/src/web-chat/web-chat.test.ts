@@ -1,30 +1,31 @@
 import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { WebChatPlanLimitError, WebChatService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { NovuError } from '../utils/errors';
-import { WebChat } from './web-chat';
 import { derivePendingActions } from './agent-message.types';
 import { pendingActionKey } from './derive-pending-actions';
 import { createActionIdempotencyKeyForScope } from './idempotency';
 import type { WebChatChange } from './types';
+import { WebChat } from './web-chat';
 
 describe('WebChat', () => {
   const inboxServiceInstance = { isSessionInitialized: true } as any;
   let emitter: NovuEventEmitter;
-  let sendMessage: jest.Mock;
-  let respondToAction: jest.Mock;
-  let sendAction: jest.Mock;
-  let getEvents: jest.Mock;
-  let connect: jest.Mock;
+  let sendMessage: Mock;
+  let respondToAction: Mock;
+  let sendAction: Mock;
+  let getEvents: Mock;
+  let connect: Mock;
   let webChat: WebChat;
 
   beforeEach(() => {
     emitter = new NovuEventEmitter();
-    sendMessage = jest.fn();
-    respondToAction = jest.fn();
-    sendAction = jest.fn();
-    getEvents = jest.fn();
-    connect = jest.fn().mockResolvedValue({ data: undefined });
+    sendMessage = vi.fn();
+    respondToAction = vi.fn();
+    sendAction = vi.fn();
+    getEvents = vi.fn();
+    connect = vi.fn().mockResolvedValue({ data: undefined });
     const webChatService = { sendMessage, respondToAction, sendAction, getEvents } as unknown as WebChatService;
     webChat = new WebChat({
       inboxServiceInstance,
@@ -434,14 +435,24 @@ describe('WebChat', () => {
     expect(snapshot?.messages).toEqual(result.data?.messages);
   });
 
-  it('loadConversation merges history with local-only messages by messageId', async () => {
-    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_local000001' });
+  it('loadConversation drops cached sent messages the newest page does not reach and keeps failed sends', async () => {
+    sendMessage.mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_local000001' });
     await webChat.sendMessage({
       agentId: 'agent_1',
       text: 'ack locally',
       key: 'conv_abcdefghijkl',
       conversationId: 'conv_abcdefghijkl',
     });
+    sendMessage.mockRejectedValueOnce(new Error('network'));
+    await webChat.sendMessage({
+      agentId: 'agent_1',
+      text: 'never delivered',
+      key: 'conv_abcdefghijkl',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    const failedId = webChat
+      .getConversation({ agentId: 'agent_1', key: 'conv_abcdefghijkl' })
+      ?.messages.find((message) => message.status === 'failed')?.id;
 
     getEvents.mockResolvedValue({
       events: [
@@ -452,7 +463,7 @@ describe('WebChat', () => {
           agentId: 'agent_1',
           runId: 'history',
           turnId: 't1',
-          sequence: 1,
+          sequence: 60,
           timestamp: '2026-08-06T12:00:00.000Z',
           event: {
             type: 'message',
@@ -470,7 +481,79 @@ describe('WebChat', () => {
       conversationId: 'conv_abcdefghijkl',
     });
 
-    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_server00001', 'msg_local000001']);
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_server00001', failedId]);
+    expect(result.data?.hasMore).toBe(true);
+  });
+
+  it('loadConversation shows a reopened long conversation in order and keeps a live event that arrives mid-load', async () => {
+    getEvents.mockResolvedValueOnce(messagePage(7, 56, 'cursor_before_7'));
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    emitter.emit('web_chat.agent_event', liveAssistantEnvelope({ sequence: 57, messageId: 'msg_57', markdown: '57' }));
+
+    let resolveReload!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveReload = resolve;
+        })
+    );
+    const reopen = webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    await waitForGetEventsCalls(2);
+    emitter.emit('web_chat.agent_event', liveAssistantEnvelope({ sequence: 58, messageId: 'msg_58', markdown: '58' }));
+    resolveReload(messagePage(8, 57, 'cursor_before_8'));
+    const result = await reopen;
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(messageIds(8, 58));
+
+    getEvents.mockResolvedValueOnce(messagePage(1, 7, null));
+    const older = await webChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    expect(getEvents).toHaveBeenLastCalledWith(expect.objectContaining({ before: 'cursor_before_8' }));
+    expect(older.data?.messages.map((message) => message.id)).toEqual(messageIds(1, 58));
+  });
+
+  it('loadConversation clears a stale catch-up error once history is rebuilt', async () => {
+    getEvents.mockResolvedValueOnce(messagePage(1, 2, null));
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    webChat.subscribe();
+    getEvents.mockRejectedValueOnce(new Error('network'));
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.catchUpError
+    ).toBeDefined();
+
+    getEvents.mockResolvedValueOnce(messagePage(1, 3, null));
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    expect(
+      webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.catchUpError
+    ).toBeUndefined();
+  });
+
+  it('keeps live events buffered until a reload and the catch-up queued behind it both finish', async () => {
+    getEvents.mockResolvedValueOnce(messagePage(1, 2, null));
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    webChat.subscribe();
+
+    let resolveReload!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveReload = resolve;
+          })
+      )
+      .mockResolvedValueOnce(messagePage(1, 5, null));
+    const reload = webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    await waitForGetEventsCalls(2);
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    emitter.emit('web_chat.agent_event', liveAssistantEnvelope({ sequence: 6, messageId: 'msg_6', markdown: '6' }));
+    resolveReload(messagePage(1, 2, null));
+    await reload;
+
+    await waitForMessageIds(messageIds(1, 6), 'conv_abcdefghijkl');
   });
 
   it('loadConversation dedupes when history already contains the ack’d messageId', async () => {
@@ -860,6 +943,22 @@ describe('WebChat', () => {
     );
   }
 
+  function messageIds(from: number, to: number): string[] {
+    return Array.from({ length: to - from + 1 }, (_, index) => `msg_${from + index}`);
+  }
+
+  function messagePage(from: number, to: number, olderCursor: string | null) {
+    return historyPage(
+      messageIds(from, to).map((messageId, index) => ({
+        sequence: from + index,
+        messageId,
+        role: 'user' as const,
+        markdown: messageId,
+      })),
+      olderCursor
+    );
+  }
+
   function historyEventPage(
     events: Array<{ sequence: number; event: Record<string, unknown> }>,
     olderCursor: string | null = null,
@@ -1234,7 +1333,7 @@ describe('WebChat', () => {
 
   it('drops malformed web_chat.agent_event envelopes without folding them', async () => {
     await openClaimedConversation();
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
     emitter.emit('web_chat.agent_event', { result: { invalid: true } as any });
 

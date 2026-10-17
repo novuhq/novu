@@ -1,7 +1,7 @@
 {
   "name": "root",
   "private": true,
-  "packageManager": "pnpm@11.0.9",
+  "packageManager": "pnpm@11.28.2",
   "scripts": {
     "bootstrap": "npm run setup:dev",
     "build:api": "nx build @novu/api-service",
@@ -56,7 +56,7 @@
     "preview:pkg:publish": "node scripts/publish-preview-packages.mjs",
     "release": "node scripts/release.mjs",
     "release:version:apps": "nx release version --projects=tag:type:app",
-    "setup:project": "npx --yes pnpm@11.0.9 i && node scripts/setup-env-files.js && pnpm build",
+    "setup:project": "npx --yes pnpm@11.28.2 i && node scripts/setup-env-files.js && pnpm build",
     "seed:agent": "node scripts/seed-agent-data.mjs",
     "setup:agent": "bash scripts/setup-agent.sh",
     "start:api:dev": "cross-env nx run @novu/api-service:start:dev",
@@ -64,6 +64,7 @@
     "start:api": "cross-env nx run @novu/api-service:start",
     "start:dal": "cross-env nx run @novu/dal:start",
     "start:dashboard": "cross-env nx run @novu/dashboard:start",
+    "start:human-dashboard": "cross-env nx run @novu/human-dashboard:start",
     "start:integration:api": "cd apps/api && pnpm run test",
     "start:shared": "cross-env nx run @novu/shared:start",
     "start:webhook:test": "cross-env nx run-many --target=start:test --projects=@novu/webhook",
@@ -85,10 +86,10 @@
     "@auto-it/released": "^10.36.5",
     "@biomejs/biome": "^2.2.0",
     "@gitopslovers/nx-biome": "^1.5.0",
-    "@nx/jest": "21.3.11",
-    "@nx/js": "21.3.11",
-    "@nx/plugin": "21.3.11",
-    "@nx/workspace": "21.3.11",
+    "@nx/jest": "22.7.12",
+    "@nx/js": "22.7.12",
+    "@nx/plugin": "22.7.12",
+    "@nx/workspace": "22.7.12",
     "@octokit/core": "^4.0.0",
     "@pnpm/filter-workspace-packages": "^7.0.6",
     "@pnpm/logger": "^5.0.0",
@@ -123,11 +124,11 @@
     "meow": "^10.1.3",
     "mississippi": "^4.0.0",
     "mprocs": "^0.9.2",
-    "nx": "21.3.11",
+    "nx": "22.7.12",
     "nx-cloud": "19.1.0",
     "ora": "~5.4.1",
     "pkg-pr-new": "^0.0.24",
-    "pnpm": "11.0.9",
+    "pnpm": "11.28.2",
     "portless": "^0.14.0",
     "process": "^0.11.10",
     "rimraf": "^3.0.2",
@@ -153,7 +154,7 @@
   },
   "engines": {
     "node": ">=22 <23",
-    "pnpm": "^11.0.0"
+    "pnpm": "^11.28.0"
   },
   "dependencies": {
     "tslib": "^2.4.0"

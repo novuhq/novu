@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
+  AgentEmailInboxQuotaService,
   areNovuEmailCredentialsSet,
   buildAgentSharedInbox,
   CalculateLimitNovuIntegration,
@@ -10,7 +11,8 @@ import {
   PinoLogger,
 } from '@novu/application-generic';
 import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions, isAgentInboxProvider } from '@novu/shared';
+import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { captureAgentWarning } from '../shared/errors/capture-agent-sentry';
 import { toDeliveryError } from '../shared/util/delivery-error.util';
@@ -21,6 +23,21 @@ const EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS = new Set<string>([
   EmailProviderIdEnum.SendGrid,
   EmailProviderIdEnum.SES,
 ]);
+
+type AgentOutboundEmailParams = {
+  from: string;
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  alternatives?: Array<{
+    contentType: string;
+    content: string | Buffer;
+  }>;
+  inReplyTo?: string;
+  references?: string;
+  messageId?: string;
+};
 
 /** Ensure a Message-ID value is wrapped in RFC 5322 angle brackets. */
 function wrapMsgId(id: string): string {
@@ -39,7 +56,8 @@ export class AgentEmailSender {
     private readonly logger: PinoLogger,
     private readonly integrationRepository: IntegrationRepository,
     private readonly calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
-    private readonly messageRepository: MessageRepository
+    private readonly messageRepository: MessageRepository,
+    private readonly inboxQuota: AgentEmailInboxQuotaService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -47,117 +65,137 @@ export class AgentEmailSender {
   buildSendEmailCallback(
     config: ResolvedAgentConfig,
     outboundIntegrationId: string | undefined
-  ): (params: {
-    from: string;
-    to: string;
-    subject: string;
-    html: string;
-    text?: string;
-    alternatives?: Array<{
-      contentType: string;
-      content: string | Buffer;
-    }>;
-    inReplyTo?: string;
-    references?: string;
-    messageId?: string;
-  }) => Promise<{ messageId?: string }> {
+  ): (params: AgentOutboundEmailParams) => Promise<{ messageId?: string }> {
     return async (params) => {
-      if (!outboundIntegrationId) {
-        throw new BadRequestException(
-          'Email agent integration is missing outboundIntegrationId. Reconfigure the agent email setup.'
-        );
-      }
-
-      const integration = await this.integrationRepository.findOne({
-        _id: outboundIntegrationId,
-        _environmentId: config.environmentId,
-        _organizationId: config.organizationId,
-        channel: ChannelTypeEnum.EMAIL,
-      });
-
-      if (!integration) {
-        throw new BadRequestException(
-          `Outbound email integration ${outboundIntegrationId} not found or does not belong to this environment`
-        );
-      }
-
-      if (integration.providerId === EmailProviderIdEnum.NovuAgent) {
-        throw new BadRequestException(
-          `Integration ${outboundIntegrationId} is the inbound NovuAgent provider and cannot be used as an outbound sender`
-        );
-      }
-
-      if (!integration.active) {
-        throw new BadRequestException(
-          `Outbound email integration ${outboundIntegrationId} (${integration.providerId}) is inactive`
-        );
-      }
+      const integration = await this.loadActiveOutboundIntegration(config, outboundIntegrationId);
 
       if (integration.providerId === EmailProviderIdEnum.Novu) {
         return this.sendViaNovuDemoProvider(config, params, integration);
       }
 
-      const hasUnsupportedAlternatives =
-        params.alternatives?.length && !EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS.has(integration.providerId);
-      if (hasUnsupportedAlternatives) {
-        if (!params.messageId) {
-          this.logger.warn(
-            {
-              providerId: integration.providerId,
-              outboundIntegrationId,
-            },
-            'Skipping email with custom MIME alternatives because the outbound provider is unsupported and no messageId was supplied'
-          );
+      return this.sendViaCustomProvider(config, params, integration, outboundIntegrationId);
+    };
+  }
 
-          return { messageId: undefined };
-        }
+  private async loadActiveOutboundIntegration(
+    config: ResolvedAgentConfig,
+    outboundIntegrationId: string | undefined
+  ): Promise<IntegrationEntity> {
+    if (!outboundIntegrationId) {
+      throw new BadRequestException(
+        'Email agent integration is missing outboundIntegrationId. Reconfigure the agent email setup.'
+      );
+    }
 
-        this.logger.warn(
-          {
-            providerId: integration.providerId,
-            outboundIntegrationId,
-          },
-          'Skipping email reaction because the outbound provider does not support custom MIME alternatives'
-        );
+    const integration = await this.integrationRepository.findOne({
+      _id: outboundIntegrationId,
+      _environmentId: config.environmentId,
+      _organizationId: config.organizationId,
+      channel: ChannelTypeEnum.EMAIL,
+    });
 
-        return { messageId: params.messageId };
-      }
+    if (!integration) {
+      throw new BadRequestException(
+        `Outbound email integration ${outboundIntegrationId} not found or does not belong to this environment`
+      );
+    }
 
-      const decrypted = decryptCredentials(integration.credentials);
+    if (isAgentInboxProvider(integration.providerId)) {
+      throw new BadRequestException(
+        `Integration ${outboundIntegrationId} is an inbound agent inbox and cannot be used as an outbound sender`
+      );
+    }
 
-      const agentInboundAddress = this.resolveAgentInboundAddress(config, params.from);
-      const overrideFrom = config.credentials.useFromAddressOverride
-        ? config.credentials.fromAddressOverride?.trim() || undefined
-        : undefined;
-      const outboundFrom = (decrypted.from as string | undefined)?.trim() || undefined;
-      const effectiveFrom = overrideFrom || agentInboundAddress || outboundFrom;
-      const replyToHeader = effectiveFrom !== agentInboundAddress ? agentInboundAddress : undefined;
-      const senderName = resolveAgentEmailSenderName(config);
+    if (!integration.active) {
+      throw new BadRequestException(
+        `Outbound email integration ${outboundIntegrationId} (${integration.providerId}) is inactive`
+      );
+    }
 
-      const mailFactory = new MailFactory();
-      const handler = mailFactory.getHandler({ ...integration, credentials: decrypted }, effectiveFrom);
+    return integration;
+  }
 
-      const mailOptions: IEmailOptions = {
-        to: [params.to],
-        subject: params.subject,
-        html: params.html,
-        text: params.text,
-        alternatives: params.alternatives,
-        from: effectiveFrom,
-        ...(replyToHeader ? { replyTo: replyToHeader } : {}),
-        senderName,
-        headers: {
-          ...(params.messageId ? { 'Message-ID': wrapMsgId(params.messageId) } : {}),
-          ...(params.inReplyTo ? { 'In-Reply-To': wrapMsgId(params.inReplyTo) } : {}),
-          ...(params.references
-            ? { References: params.references.split(/\s+/).filter(Boolean).map(wrapMsgId).join(' ') }
-            : {}),
-        },
-      };
+  private async sendViaCustomProvider(
+    config: ResolvedAgentConfig,
+    params: AgentOutboundEmailParams,
+    integration: IntegrationEntity,
+    outboundIntegrationId: string | undefined
+  ): Promise<{ messageId?: string }> {
+    const skipped = this.skipUnsupportedAlternatives(params, integration.providerId, outboundIntegrationId);
+    if (skipped) {
+      return skipped;
+    }
 
-      const result = await handler.send(mailOptions).catch(toDeliveryError);
+    const decrypted = decryptCredentials(integration.credentials);
+    const agentInboundAddress = this.resolveAgentInboundAddress(config, params.from);
+    const overrideFrom = config.credentials.useFromAddressOverride
+      ? config.credentials.fromAddressOverride?.trim() || undefined
+      : undefined;
+    const outboundFrom = (decrypted.from as string | undefined)?.trim() || undefined;
+    const effectiveFrom = overrideFrom || agentInboundAddress || outboundFrom;
+    const replyToHeader = effectiveFrom !== agentInboundAddress ? agentInboundAddress : undefined;
 
-      return { messageId: result?.id || params.messageId || '' };
+    const mailFactory = new MailFactory();
+    const handler = mailFactory.getHandler({ ...integration, credentials: decrypted }, effectiveFrom);
+    const result = await this.accountInboxSend(config, () =>
+      handler
+        .send(this.buildMailOptions(params, effectiveFrom, replyToHeader, resolveAgentEmailSenderName(config)))
+        .catch(toDeliveryError)
+    );
+
+    return { messageId: result?.id || params.messageId || '' };
+  }
+
+  /** Reactions need a custom MIME part most providers cannot send; skip those instead of failing the send. */
+  private skipUnsupportedAlternatives(
+    params: AgentOutboundEmailParams,
+    providerId: string,
+    outboundIntegrationId: string | undefined
+  ): { messageId?: string } | undefined {
+    const unsupported = Boolean(params.alternatives?.length) && !EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS.has(providerId);
+    if (!unsupported) {
+      return undefined;
+    }
+
+    if (!params.messageId) {
+      this.logger.warn(
+        { providerId, outboundIntegrationId },
+        'Skipping email with custom MIME alternatives because the outbound provider is unsupported and no messageId was supplied'
+      );
+
+      return { messageId: undefined };
+    }
+
+    this.logger.warn(
+      { providerId, outboundIntegrationId },
+      'Skipping email reaction because the outbound provider does not support custom MIME alternatives'
+    );
+
+    return { messageId: params.messageId };
+  }
+
+  private buildMailOptions(
+    params: AgentOutboundEmailParams,
+    from: string | undefined,
+    replyTo: string | undefined,
+    senderName: string
+  ): IEmailOptions {
+    return {
+      to: [params.to],
+      subject: params.subject,
+      html: params.html,
+      text: params.text,
+      alternatives: params.alternatives,
+      from,
+      ...(replyTo ? { replyTo } : {}),
+      senderName,
+      headers: {
+        ...(params.messageId ? { 'Message-ID': wrapMsgId(params.messageId) } : {}),
+        ...(params.inReplyTo ? { 'In-Reply-To': wrapMsgId(params.inReplyTo) } : {}),
+        ...(params.references
+          ? { References: params.references.split(/\s+/).filter(Boolean).map(wrapMsgId).join(' ') }
+          : {}),
+      },
     };
   }
 
@@ -168,23 +206,34 @@ export class AgentEmailSender {
    *   2. The fallback supplied by the chat-adapter-email SDK
    */
   resolveAgentInboundAddress(config: ResolvedAgentConfig, fallback: string): string {
+    return this.resolveSharedInboxAddress(config) ?? fallback;
+  }
+
+  /**
+   * The synthetic shared inbox `{slug}-{inboxRoutingKey}@<shared-domain>`, or
+   * `undefined` when this deployment/agent has none (self-hosted, shared inbox
+   * disabled, or the address could not be built).
+   */
+  resolveSharedInboxAddress(config: ResolvedAgentConfig): string | undefined {
     const slug = config.credentials.emailSlugPrefix;
     const inboxRoutingKey = config.credentials.inboxRoutingKey;
     const sharedDisabled = Boolean(config.credentials.sharedInboxDisabled);
-    if (isAgentSharedInboxEnabled() && slug && inboxRoutingKey && !sharedDisabled) {
-      try {
-        return buildAgentSharedInbox(slug, inboxRoutingKey);
-      } catch (err) {
-        this.logger.warn({ err, agentId: config.agentId }, 'Falling back to params.from - shared inbox build failed');
-        captureAgentWarning(err, {
-          component: 'chat-sdk',
-          operation: 'resolve-agent-inbound-address',
-          agentId: config.agentId,
-        });
-      }
+    if (!isAgentSharedInboxEnabled() || !slug || !inboxRoutingKey || sharedDisabled) {
+      return undefined;
     }
 
-    return fallback;
+    try {
+      return buildAgentSharedInbox(slug, inboxRoutingKey);
+    } catch (err) {
+      this.logger.warn({ err, agentId: config.agentId }, 'Falling back to params.from - shared inbox build failed');
+      captureAgentWarning(err, {
+        component: 'chat-sdk',
+        operation: 'resolve-agent-inbound-address',
+        agentId: config.agentId,
+      });
+
+      return undefined;
+    }
   }
 
   /**
@@ -271,7 +320,7 @@ export class AgentEmailSender {
       },
     };
 
-    const result = await handler.send(mailOptions).catch(toDeliveryError);
+    const result = await this.accountInboxSend(config, () => handler.send(mailOptions).catch(toDeliveryError));
 
     const messageIdForReturn = result?.id || params.messageId || '';
 
@@ -305,5 +354,30 @@ export class AgentEmailSender {
     }
 
     return { messageId: messageIdForReturn };
+  }
+
+  /**
+   * Agent Email Inbox credits are counted only when the outbound provider
+   * accepts the message. Dashboard Novu Email sends do not enter this path.
+   * Keyless orgs share one organization id, so the org-wide counters would
+   * pool every demo together — the claim reply is metered on its own.
+   */
+  private async accountInboxSend<T>(config: ResolvedAgentConfig, send: () => Promise<T>): Promise<T> {
+    if (config.providerId !== EmailProviderIdEnum.AgentEmailInbox || isKeylessOrganization(config.organizationId)) {
+      return send();
+    }
+
+    const attempt = await this.inboxQuota.beginSend(config.organizationId);
+
+    try {
+      const result = await send();
+      attempt.accept();
+
+      return result;
+    } catch (err) {
+      await attempt.release();
+
+      throw err;
+    }
   }
 }

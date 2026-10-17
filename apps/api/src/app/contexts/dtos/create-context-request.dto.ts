@@ -40,7 +40,7 @@ export class CreateContextRequestDto {
   @ApiProperty({
     description: 'Optional custom data to associate with this context.',
     example: { tenantName: 'Acme Corp', region: 'us-east-1', settings: { theme: 'dark' } },
-    required: false,
+    selfRequired: false,
     type: 'object',
     additionalProperties: true,
   })

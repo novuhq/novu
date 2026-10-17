@@ -5,7 +5,7 @@ import { ControlsMetadataDto } from '../../controls-metadata.dto';
 import { SmsControlDto } from '../controls/sms-control.dto';
 import { StepResponseDto } from '../step.response.dto';
 
-class SmsControlsMetadataResponseDto extends ControlsMetadataDto {
+class SmsControlsMetadataResponseDto extends ControlsMetadataDto<SmsControlDto> {
   @ApiProperty({
     description: 'Control values specific to SMS',
     type: () => SmsControlDto,

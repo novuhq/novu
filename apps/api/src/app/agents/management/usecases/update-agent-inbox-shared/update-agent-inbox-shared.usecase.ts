@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase, isAgentSharedInboxEnabled } from '@novu/application-generic';
+import { InstrumentUsecase, isAgentSharedInboxEnabled, pickAgentInboxIntegration } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, DomainRouteRepository, IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, DomainRouteTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { AGENT_INBOX_PROVIDER_IDS, ChannelTypeEnum, DomainRouteTypeEnum } from '@novu/shared';
 
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
@@ -101,13 +101,17 @@ export class UpdateAgentInboxShared {
     }
 
     const integrationIds = links.map((l) => l._integrationId);
-    const integration = await this.integrationRepository.findOne({
-      _id: { $in: integrationIds } as unknown as string,
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      providerId: EmailProviderIdEnum.NovuAgent,
-      channel: ChannelTypeEnum.EMAIL,
-    });
+    const integrations = await this.integrationRepository.find(
+      {
+        _id: { $in: integrationIds },
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
+        channel: ChannelTypeEnum.EMAIL,
+      },
+      '_id identifier credentials providerId'
+    );
+    const integration = pickAgentInboxIntegration(integrations);
     if (!integration) {
       throw new NotFoundException('No Novu Email integration found for this agent.');
     }

@@ -1,6 +1,6 @@
 import './instrument';
 import { NestFactory } from '@nestjs/core';
-import { BullMqService, getErrorInterceptor, Logger } from '@novu/application-generic';
+import { getErrorInterceptor, Logger } from '@novu/application-generic';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { CONTEXT_PATH, validateEnv } from './config';
@@ -11,8 +11,8 @@ import { prepareAppInfra, startAppInfra } from './socket/services';
 validateEnv();
 
 export async function bootstrap() {
-  BullMqService.haveProInstalled();
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  // abortOnError: false so init errors reach runWithHydratedSecrets instead of process.abort(), which drops New Relic data.
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, abortOnError: false });
 
   const inMemoryAdapter = new InMemoryIoAdapter(app);
   await inMemoryAdapter.connectToInMemoryCluster();
@@ -41,11 +41,7 @@ export async function bootstrap() {
 
   await app.init();
 
-  try {
-    await startAppInfra(app);
-  } catch (e) {
-    process.exit(1);
-  }
+  await startAppInfra(app);
 
   await app.listen(process.env.PORT as string);
 }

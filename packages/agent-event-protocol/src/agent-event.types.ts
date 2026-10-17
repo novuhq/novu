@@ -109,6 +109,8 @@ export type AgentEvent =
       content: AgentMessageContent;
       files?: AgentFileRef[];
       quoteReply?: AgentQuoteReplyContext;
+      /** Its text was streamed to a live reader, which delivers it; deliver here only if that reader did not. */
+      streamed?: boolean;
     }
   | { type: 'message-start'; messageId: string }
   | { type: 'message-delta'; messageId: string; delta: string }

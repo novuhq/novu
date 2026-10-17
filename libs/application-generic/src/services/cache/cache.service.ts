@@ -26,6 +26,7 @@ export interface ICacheService {
 
 export type CachingConfig = {
   ttl?: number;
+  jitter?: boolean;
 };
 
 export class CacheService implements ICacheService {
@@ -103,6 +104,24 @@ export class CacheService implements ICacheService {
 
   public async get(key: string): Promise<string> {
     return this.client?.get(key);
+  }
+
+  /** Values in key order, `null` for a missing key. */
+  public async mget(keys: string[]): Promise<(string | null)[]> {
+    if (!this.client) {
+      return keys.map(() => null);
+    }
+
+    if (keys.length === 0) {
+      return [];
+    }
+
+    // Every key is its own `{...}` hash tag, so a multi-key MGET would fail with CROSSSLOT on a cluster.
+    if (this.cacheInMemoryProviderService.providerInUseIsInClusterMode()) {
+      return Promise.all(keys.map((key) => this.client.get(key)));
+    }
+
+    return this.client.mget(keys);
   }
 
   public async del(key: string | string[]): Promise<number> {
@@ -191,9 +210,9 @@ export class CacheService implements ICacheService {
 
   private getTtlInSeconds(options?: CachingConfig): number {
     const seconds = options?.ttl || this.cacheTtl;
-    const number = addJitter(seconds, this.TTL_VARIANT_PERCENTAGE);
+    const ttl = options?.jitter === false ? seconds : addJitter(seconds, this.TTL_VARIANT_PERCENTAGE);
 
-    return number;
+    return Math.ceil(ttl);
   }
 
   public async sadd(key: string, ...members: (string | number | Buffer)[]): Promise<number> {

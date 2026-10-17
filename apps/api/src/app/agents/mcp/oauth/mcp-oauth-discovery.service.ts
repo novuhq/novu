@@ -348,30 +348,6 @@ export class McpOAuthDiscoveryService {
     }
   }
 
-  /** Test-only escape hatch: drop cached entries for a (mcpUrl|issuer) pair. */
-  clearCache(opts?: { mcpUrl?: string; issuer?: string }): void {
-    if (!opts) {
-      this.prmCache.clear();
-      this.asMetadataCache.clear();
-
-      return;
-    }
-    if (opts.mcpUrl) {
-      this.prmCache.delete(opts.mcpUrl);
-    }
-    if (opts.issuer) {
-      // `discoverAuthorizationServer` dual-keys the metadata under both the
-      // discovery URL and the document's canonical `issuer` (Auth0-tenant
-      // pattern). Evicting only the requested key would leave the canonical
-      // entry stale, so drop both when they diverge.
-      const entry = this.asMetadataCache.get(opts.issuer);
-      this.asMetadataCache.delete(opts.issuer);
-      if (entry && entry.document.issuer !== opts.issuer) {
-        this.asMetadataCache.delete(entry.document.issuer);
-      }
-    }
-  }
-
   private async probeMcpServer(mcpUrl: string): Promise<{ resourceMetadataUrl?: string; challengeScopes?: string[] }> {
     let response: Awaited<ReturnType<typeof safeOutboundRequest>>;
     try {

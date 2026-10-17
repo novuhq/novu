@@ -1,3 +1,16 @@
+const numberFormatter = new Intl.NumberFormat('en-US');
+const compactNumberFormatter = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
+
+/** `12345` → `12,345` */
+export function formatNumber(value: number): string {
+  return numberFormatter.format(value);
+}
+
+/** `12345` → `12.3k` */
+export function formatCompactNumber(value: number): string {
+  return compactNumberFormatter.format(value).toLowerCase();
+}
+
 export function getCompactFormat(num: number) {
   if (num >= 1000000000) {
     return {

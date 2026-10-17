@@ -257,6 +257,8 @@ By default, Novu uses your primary SMS provider. To route automatically from sub
 
 This is useful if you have multiple active integrations for different purposes. For example, you might have one integration for transactional SMS and one for security SMS. You can find the `integrationIdentifier` in the **Integration Store** of the Novu dashboard.
 
+When you pass `integrationIdentifier` in `overrides.sms`, Novu sends through that integration and doesn't check [integration conditions](/platform/integrations/integration-conditions) for the step. If the integration doesn't exist or isn't active, the step fails instead of falling back to the primary integration.
+
 <Tabs>
   <Tab title="Node.js">
 ```javascript

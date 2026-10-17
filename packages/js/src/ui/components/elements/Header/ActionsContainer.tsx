@@ -13,7 +13,7 @@ export const ActionsContainer = (props: ActionsContainerProps) => {
   const style = useStyle();
   const cogsIconClass = style({
     key: 'icon',
-    className: 'nt-size-5',
+    className: 'nt-size-5 nt-transition-transform nt-duration-slow motion-full:in-hover:nt-rotate-45',
     iconKey: 'cogs',
   });
 

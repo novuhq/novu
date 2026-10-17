@@ -3,10 +3,10 @@ import {
   decryptChannelConnectionAuth,
   decryptChannelEndpoint,
   decryptCredentials,
-  evaluateRules,
-  getIntegrationRulesIssues,
+  evaluateIntegrationRules,
   hasIntegrationRules,
   InstrumentUsecase,
+  type MatchedIntegrationConditions,
   MsTeamsTokenService,
   RotatingConnectionTokenService,
 } from '@novu/application-generic';
@@ -20,7 +20,6 @@ import {
 } from '@novu/dal';
 import { ProvidersIdEnum } from '@novu/shared';
 import { ChannelData, ENDPOINT_TYPES, ENDPOINT_TYPES_REQUIRING_TOKEN } from '@novu/stateless';
-import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import { ResolveChannelEndpointsCommand } from './resolve-channel-endpoints.command';
 
 const LOG_CONTEXT = 'ResolveChannelEndpoints';
@@ -48,7 +47,18 @@ export type IntegrationEndpoints = {
   integrationIdentifier: string;
   providerId: ProvidersIdEnum;
   channelData: ChannelData[];
+  matchedConditions?: MatchedIntegrationConditions;
 };
+
+interface DeliverableEndpoints {
+  endpoints: ChannelEndpointEntity[];
+  matchedConditionsByIdentifier: Map<string, MatchedIntegrationConditions>;
+}
+
+interface IntegrationRuleEvaluation {
+  deliverable: boolean;
+  matchedConditions?: MatchedIntegrationConditions;
+}
 
 /**
  * Resolves channel endpoints for a subscriber and groups them by integration.
@@ -89,21 +99,21 @@ export class ResolveChannelEndpoints {
       return [];
     }
 
-    const deliverableEndpoints = await this.keepEndpointsForDeliverableIntegrations(command, endpoints);
+    const deliverable = await this.keepEndpointsForDeliverableIntegrations(command, endpoints);
 
-    if (deliverableEndpoints.length === 0) {
+    if (deliverable.endpoints.length === 0) {
       return [];
     }
 
-    const connectionMap = await this.fetchConnectionMap(command, deliverableEndpoints);
+    const connectionMap = await this.fetchConnectionMap(command, deliverable.endpoints);
 
-    return this.buildIntegrationGroups(deliverableEndpoints, connectionMap);
+    return this.buildIntegrationGroups(deliverable.endpoints, connectionMap, deliverable.matchedConditionsByIdentifier);
   }
 
   private async keepEndpointsForDeliverableIntegrations(
     command: ResolveChannelEndpointsCommand,
     endpoints: ChannelEndpointEntity[]
-  ): Promise<ChannelEndpointEntity[]> {
+  ): Promise<DeliverableEndpoints> {
     const identifiers = [...new Set(endpoints.map((endpoint) => endpoint.integrationIdentifier))];
 
     const activeIntegrations = await this.integrationRepository.find(
@@ -116,13 +126,25 @@ export class ResolveChannelEndpoints {
       },
       'identifier rules'
     );
-    const deliverableIdentifiers = new Set(
-      activeIntegrations
-        .filter((integration) => this.integrationRulesMatch(command, integration))
-        .map((integration) => integration.identifier)
-    );
+    const deliverableIdentifiers = new Set<string>();
+    const matchedConditionsByIdentifier = new Map<string, MatchedIntegrationConditions>();
 
-    return endpoints.filter((endpoint) => deliverableIdentifiers.has(endpoint.integrationIdentifier));
+    for (const integration of activeIntegrations) {
+      const evaluation = this.evaluateEndpointDeliveryRules(command, integration);
+      if (!evaluation.deliverable) {
+        continue;
+      }
+
+      deliverableIdentifiers.add(integration.identifier);
+      if (evaluation.matchedConditions) {
+        matchedConditionsByIdentifier.set(integration.identifier, evaluation.matchedConditions);
+      }
+    }
+
+    return {
+      endpoints: endpoints.filter((endpoint) => deliverableIdentifiers.has(endpoint.integrationIdentifier)),
+      matchedConditionsByIdentifier,
+    };
   }
 
   /**
@@ -134,15 +156,21 @@ export class ResolveChannelEndpoints {
    * Only `rules` (JSONLogic) are evaluated — legacy `conditions` predate the endpoint model and are
    * left to `SelectIntegration`, matching the precedence rules take there.
    */
-  private integrationRulesMatch(
+  private evaluateEndpointDeliveryRules(
     command: ResolveChannelEndpointsCommand,
     integration: Pick<IntegrationEntity, 'identifier' | 'rules'>
-  ): boolean {
+  ): IntegrationRuleEvaluation {
     if (!hasIntegrationRules(integration.rules)) {
-      return true;
+      return { deliverable: true };
     }
 
-    const issues = getIntegrationRulesIssues(integration.rules);
+    const evaluation = evaluateIntegrationRules(integration.rules, {
+      payload: command.filterData?.payload,
+      subscriber: command.filterData?.subscriber,
+      context: command.filterData?.context,
+      workflow: command.filterData?.workflow,
+    });
+    const { issues } = evaluation;
     if (issues.length > 0) {
       Logger.warn(
         {
@@ -154,19 +182,13 @@ export class ResolveChannelEndpoints {
         `${LOG_CONTEXT} — skipping endpoints for integration with invalid rules`
       );
 
-      return false;
+      return { deliverable: false };
     }
 
-    const { result } = evaluateRules(
-      integration.rules as RulesLogic<AdditionalOperation>,
-      {
-        subscriber: command.filterData?.subscriber,
-        context: command.filterData?.context,
-      },
-      true
-    );
-
-    return result;
+    return {
+      deliverable: evaluation.result,
+      ...(evaluation.result && { matchedConditions: { type: 'rules', value: integration.rules } }),
+    };
   }
 
   private async fetchChannelEndpoints(command: ResolveChannelEndpointsCommand): Promise<ChannelEndpointEntity[]> {
@@ -213,13 +235,19 @@ export class ResolveChannelEndpoints {
 
   private async buildIntegrationGroups(
     endpoints: ChannelEndpointEntity[],
-    connectionMap: Map<string, ChannelConnectionEntity>
+    connectionMap: Map<string, ChannelConnectionEntity>,
+    matchedConditionsByIdentifier: Map<string, MatchedIntegrationConditions>
   ): Promise<IntegrationEndpoints[]> {
     const groupedByIntegration = this.groupEndpointsByIntegration(endpoints);
 
     return await Promise.all(
       Array.from(groupedByIntegration.entries()).map(([integrationIdentifier, groupEndpoints]) =>
-        this.buildIntegrationGroup(integrationIdentifier, groupEndpoints, connectionMap)
+        this.buildIntegrationGroup(
+          integrationIdentifier,
+          groupEndpoints,
+          connectionMap,
+          matchedConditionsByIdentifier.get(integrationIdentifier)
+        )
       )
     );
   }
@@ -239,12 +267,14 @@ export class ResolveChannelEndpoints {
   private async buildIntegrationGroup(
     integrationIdentifier: string,
     endpoints: ChannelEndpointEntity[],
-    connectionMap: Map<string, ChannelConnectionEntity>
+    connectionMap: Map<string, ChannelConnectionEntity>,
+    matchedConditions?: MatchedIntegrationConditions
   ): Promise<IntegrationEndpoints> {
     return {
       integrationIdentifier,
       providerId: endpoints[0].providerId,
       channelData: await Promise.all(endpoints.map((endpoint) => this.buildChannelData(endpoint, connectionMap))),
+      ...(matchedConditions && { matchedConditions }),
     };
   }
 

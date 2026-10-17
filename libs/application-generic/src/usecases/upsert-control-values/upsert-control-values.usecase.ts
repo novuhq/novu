@@ -18,6 +18,7 @@ export class UpsertControlValuesUseCase {
         _layoutId: command.layoutId,
         level: command.level,
         ...(command.providerId ? { providerId: command.providerId } : {}),
+        ...(command.integrationIdentifier ? { integrationIdentifier: command.integrationIdentifier } : {}),
       },
       undefined,
       sessionOptions
@@ -36,6 +37,7 @@ export class UpsertControlValuesUseCase {
         _layoutId: command.layoutId,
         level: command.level,
         ...(command.providerId ? { providerId: command.providerId } : {}),
+        ...(command.integrationIdentifier ? { integrationIdentifier: command.integrationIdentifier } : {}),
         priority: 0,
         controls: command.newControlValues,
       },
@@ -59,6 +61,7 @@ export class UpsertControlValuesUseCase {
         priority: 0,
         controls: controlValues,
         ...(command.providerId ? { providerId: command.providerId } : {}),
+        ...(command.integrationIdentifier ? { integrationIdentifier: command.integrationIdentifier } : {}),
       },
       sessionOptions
     );

@@ -1,4 +1,5 @@
 import { isIP } from 'node:net';
+import type { Readable } from 'node:stream';
 import { Injectable } from '@nestjs/common';
 import {
   assertSafeOutboundUrl,
@@ -7,8 +8,9 @@ import {
   GetDecryptedSecretKeyCommand,
   PinoLogger,
   resolvePublicAddresses,
+  type SafeOutboundStreamResponse,
   SsrfBlockedError,
-  safeOutboundJsonRequest,
+  safeOutboundStreamRequest,
 } from '@novu/application-generic';
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
@@ -25,10 +27,11 @@ import type {
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
-import type { Message } from 'chat';
+import type { Message, Root } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
+import { esmImport } from '../../shared/util/esm-import';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import {
@@ -38,6 +41,8 @@ import {
 } from '../ingress/workflow-origin.helpers';
 
 const MAX_RETRIES = 2;
+/** Bridges send an SSE comment every 15s while a turn runs, so a longer silence means the bridge is gone. */
+const LIVE_REPLY_IDLE_TIMEOUT_MS = 60_000;
 
 /**
  * True for `https://` URLs whose host is loopback (`localhost`, `*.localhost`,
@@ -144,6 +149,7 @@ export interface AgentExecutionParams {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   message: Message | null;
+  previousMessage?: Message | null;
   platformContext: AgentPlatformContext;
   /** Trusted connect-time context resolved from the inbound channel connection; forwarded as `ctx.context`. */
   context?: AgentContextPayload | null;
@@ -158,9 +164,13 @@ export interface AgentExecutionParams {
   reaction?: BridgeReaction;
   humanResponse?: AgentHumanResponse | null;
   storedAttachments?: StoredAttachment[];
+  /** Distinguishes edit/delete deliveries that reuse the same platform message id. */
+  deliveryRevision?: string;
   platformThreadId?: string;
   /** Called after all retries are exhausted and the bridge remains unreachable. */
   onBridgeFailure?: (error: Error) => Promise<void>;
+  /** When set, the bridge is asked for SSE; an SSE response body is handed here instead of being discarded. */
+  onEventStream?: (body: Readable) => void;
 }
 
 export class NoBridgeUrlError extends Error {
@@ -200,23 +210,33 @@ export class BridgeExecutorService {
       );
 
       const payload = await this.buildPayload(params);
+      const { onEventStream } = params;
 
-      this.fireWithRetries(bridgeUrl, payload, secretKey, agentIdentifier).catch((err) => {
-        this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
-        captureAgentException(err, {
-          component: 'bridge-executor',
-          operation: 'bridge-delivery',
-          agentIdentifier,
-        });
-        params.onBridgeFailure?.(err instanceof Error ? err : new Error(String(err))).catch((callbackErr) => {
-          this.logger.warn(callbackErr, `[agent:${agentIdentifier}] onBridgeFailure callback threw`);
-          captureAgentWarning(callbackErr, {
+      this.fireWithRetries(bridgeUrl, payload, secretKey, agentIdentifier, !!onEventStream)
+        .then((response) => {
+          const isEventStream = String(response.headers['content-type'] ?? '').startsWith('text/event-stream');
+          if (onEventStream && isEventStream) {
+            onEventStream(response.body);
+          } else {
+            response.body.resume();
+          }
+        })
+        .catch((err) => {
+          this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
+          captureAgentException(err, {
             component: 'bridge-executor',
-            operation: 'on-bridge-failure-callback',
+            operation: 'bridge-delivery',
             agentIdentifier,
           });
+          params.onBridgeFailure?.(err instanceof Error ? err : new Error(String(err))).catch((callbackErr) => {
+            this.logger.warn(callbackErr, `[agent:${agentIdentifier}] onBridgeFailure callback threw`);
+            captureAgentWarning(callbackErr, {
+              component: 'bridge-executor',
+              operation: 'on-bridge-failure-callback',
+              agentIdentifier,
+            });
+          });
         });
-      });
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {
         throw err;
@@ -235,13 +255,15 @@ export class BridgeExecutorService {
     url: string,
     payload: AgentBridgeRequest,
     secretKey: string,
-    agentIdentifier: string
-  ): Promise<void> {
+    agentIdentifier: string,
+    streamReply: boolean
+  ): Promise<SafeOutboundStreamResponse> {
     let lastError: Error | undefined;
+    const accept = streamReply ? 'text/event-stream, application/json' : 'application/json';
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       // Pre-flight URL syntax/scheme/host check on every attempt. The follow-up
-      // safeOutboundJsonRequest call performs the connect-time DNS guard and
+      // safeOutboundStreamRequest call performs the connect-time DNS guard and
       // re-validates every redirect target.
       try {
         assertSafeOutboundUrl(url);
@@ -258,11 +280,12 @@ export class BridgeExecutorService {
       const signatureHeader = buildNovuSignatureHeader(secretKey, payload);
 
       try {
-        const response = await safeOutboundJsonRequest({
+        const response = await safeOutboundStreamRequest({
           url,
           method: 'POST',
           headers: {
             'content-type': 'application/json',
+            accept,
             // Must match HttpHeaderKeysEnum.NOVU_SIGNATURE — the framework SDK reads
             // this exact header to verify the HMAC. Sending any other name (e.g.
             // `x-novu-signature`) silently disables signature verification on the
@@ -270,22 +293,21 @@ export class BridgeExecutorService {
             // via an attacker-controlled `replyUrl`.
             [HttpHeaderKeysEnum.NOVU_SIGNATURE]: signatureHeader,
           },
-          body: payload,
+          body: JSON.stringify(payload),
+          idleTimeoutMs: LIVE_REPLY_IDLE_TIMEOUT_MS,
         });
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
-          return;
+          return response;
         }
 
+        response.body.resume();
         lastError = new Error(`Bridge returned ${response.statusCode}: ${response.statusMessage}`);
         this.logger.warn(
           `[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} failed: ${response.statusCode}`
         );
       } catch (err) {
-        if (err instanceof SsrfBlockedError) {
-          throw new Error(`Bridge URL blocked by SSRF protection: ${err.message}`);
-        }
-        lastError = err instanceof Error ? err : new Error(String(err));
+        lastError = this.retryableError(err, streamReply);
         this.logger.warn(
           `[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} network error: ${lastError.message}`
         );
@@ -297,6 +319,20 @@ export class BridgeExecutorService {
     }
 
     throw lastError ?? new Error('Bridge call failed');
+  }
+
+  private retryableError(err: unknown, streamReply: boolean): Error {
+    if (err instanceof SsrfBlockedError) {
+      throw new Error(`Bridge URL blocked by SSRF protection: ${err.message}`);
+    }
+
+    const error = err instanceof Error ? err : new Error(String(err));
+    // A host that buffers the SSE response holds its headers while the turn runs; a retry would run it twice.
+    if (streamReply && (err as NodeJS.ErrnoException).code === 'ETIMEDOUT') {
+      throw error;
+    }
+
+    return error;
   }
 
   private delay(ms: number): Promise<void> {
@@ -367,8 +403,10 @@ export class BridgeExecutorService {
     const timestamp = new Date().toISOString();
 
     let deliveryId: string;
-    if (message?.id) {
+    if (message?.id && event === AgentEventEnum.ON_MESSAGE) {
       deliveryId = `${conversation._id}:${message.id}`;
+    } else if (message?.id) {
+      deliveryId = `${conversation._id}:${event}:${message.id}:${params.deliveryRevision ?? timestamp}`;
     } else if (action) {
       deliveryId = `${conversation._id}:${event}:${action.id}:${timestamp}`;
     } else if (reaction) {
@@ -391,6 +429,15 @@ export class BridgeExecutorService {
       integrationIdentifier: config.integrationIdentifier,
       message: message
         ? await this.mapMessage(message, params.storedAttachments, {
+            organizationId: config.organizationId,
+            environmentId: config.environmentId,
+            conversationId: conversation._id,
+            platform: config.platform,
+            platformThreadId: params.platformThreadId,
+          })
+        : null,
+      previousMessage: params.previousMessage
+        ? await this.mapMessage(params.previousMessage, undefined, {
             organizationId: config.organizationId,
             environmentId: config.environmentId,
             conversationId: conversation._id,
@@ -442,19 +489,46 @@ export class BridgeExecutorService {
     }
   }
 
+  /**
+   * GFM rendering of the adapter-parsed `formatted` AST, so platform structure that `text`
+   * flattens (Slack table blocks, bold, links, code) reaches every bridge runtime. Omitted for
+   * plain prose: stringifying it only adds Markdown escapes (`snake\_case`) the brain would read.
+   * Fail-soft: an unserializable node must not drop the delivery — the brain still gets `text`.
+   */
+  private async toBridgeMarkdown(message: Message): Promise<string | undefined> {
+    if (!message.formatted || isPlainProse(message.formatted)) {
+      return undefined;
+    }
+
+    try {
+      const { stringifyMarkdown }: typeof import('chat') = await esmImport('chat');
+      const markdown = stringifyMarkdown(message.formatted).trimEnd();
+
+      return markdown.length > 0 ? markdown : undefined;
+    } catch (err) {
+      this.logger.warn(err, `Failed to render inbound message ${message.id} as markdown; sending plain text only`);
+
+      return undefined;
+    }
+  }
+
   private async mapMessage(
     message: Message,
     storedAttachments?: StoredAttachment[],
     signingContext?: AttachmentSigningContext
   ): Promise<AgentMessage> {
+    const markdown = await this.toBridgeMarkdown(message);
     const mapped: AgentMessage = {
       text: message.text,
+      ...(markdown !== undefined ? { markdown } : {}),
       platformMessageId: message.id,
       author: {
         userId: message.author.userId,
         fullName: message.author.fullName,
         userName: message.author.userName,
         isBot: message.author.isBot,
+        ...(message.author.email ? { email: message.author.email } : {}),
+        ...(message.author.isSystem ? { isSystem: true } : {}),
       },
       timestamp: message.metadata?.dateSent?.toISOString() ?? new Date().toISOString(),
     };
@@ -715,4 +789,11 @@ function mapWorkflowOriginToNotification(origin: WorkflowOriginData): AgentNotif
     body: origin.body,
     payload: origin.payload,
   };
+}
+
+/** True when the AST is only paragraphs of plain text, i.e. `text` already says everything. */
+function isPlainProse(formatted: Root): boolean {
+  return formatted.children.every(
+    (node) => node.type === 'paragraph' && node.children.every((child) => child.type === 'text')
+  );
 }

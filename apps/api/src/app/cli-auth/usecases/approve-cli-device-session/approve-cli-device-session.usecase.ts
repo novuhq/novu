@@ -50,6 +50,7 @@ export class ApproveCliDeviceSession {
           firstName: command.userFirstName ?? null,
           lastName: command.userLastName ?? null,
         },
+        approvalHoldId: command.approvalHoldId,
       });
     } catch (error) {
       if (error instanceof CliDeviceSessionNotFoundError) {

@@ -11,7 +11,9 @@ import { IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import Axios from 'axios';
 
+import { humanRelayProfile } from '../../agents/human-relay/human-relay-identity';
 import { TelegramAgentLinkResolver } from '../telegram-agent-link.resolver';
+import { TelegramBotProfile } from '../telegram-bot-profile.service';
 import {
   buildAgentTelegramWebhookUrl,
   buildIntegrationTelegramWebhookUrl,
@@ -71,7 +73,8 @@ interface TelegramGetMeResponse {
 export class ConfigureTelegramWebhook {
   constructor(
     private readonly integrationRepository: IntegrationRepository,
-    private readonly agentLinkResolver: TelegramAgentLinkResolver
+    private readonly agentLinkResolver: TelegramAgentLinkResolver,
+    private readonly botProfile: TelegramBotProfile
   ) {}
 
   async execute(command: ConfigureTelegramWebhookCommand): Promise<TelegramSetWebhookResult> {
@@ -119,6 +122,14 @@ export class ConfigureTelegramWebhook {
       : [...TELEGRAM_INTEGRATION_WEBHOOK_ALLOWED_UPDATES];
 
     await this.callSetWebhook(botToken, webhookUrl, secretToken, allowedUpdates);
+
+    // A Human agent speaks as itself, so the bot takes the name and description its operator gave it.
+    if (agent?.agentRuntime === 'human_relay') {
+      await this.botProfile.apply(botToken, {
+        ...humanRelayProfile({ name: agent.agentName, description: agent.agentDescription }),
+        ...(agent.agentPicture ? { picture: agent.agentPicture } : {}),
+      });
+    }
 
     const [, botUsername] = await Promise.all([
       this.integrationRepository.update(

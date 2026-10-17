@@ -142,7 +142,7 @@ export const SubscriptionPreferenceGroupRow = (props: {
             class={style({
               key: 'subscriptionPreferenceGroupActionsContainerRight__icon',
               className:
-                'nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180',
+                'nt-text-foreground-alpha-600 nt-transition-transform nt-duration-base data-[open=true]:nt-rotate-180',
               context: { group: props.group } satisfies Parameters<
                 SubscriptionAppearanceCallback['subscriptionPreferenceGroupActionsContainerRight__icon']
               >[0],

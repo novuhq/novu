@@ -7,7 +7,16 @@ import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { NovuWebChatAdapter } from '@novu/chat-adapter-web-chat';
 import { stripAgentReplyToken } from '@novu/shared';
 import { retryPolicies } from '@slack/web-api';
-import type { Adapter, Chat, Message, MessageContext, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
+import type {
+  Adapter,
+  Chat,
+  Message,
+  MessageContext,
+  MessageDeletedEvent,
+  ReactionEvent,
+  SlashCommandEvent,
+  Thread,
+} from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
@@ -24,6 +33,7 @@ import {
 import { WebChatResumeAuthorizationService } from '../../web-chat/web-chat-resume-authorization.service';
 import { WebChatSessionVerifier } from '../../web-chat/web-chat-session.verifier';
 import { AgentActionTokenService } from '../action-token/agent-action-token.service';
+import { parseEmailThreadAddress } from './email-thread-id';
 import type { InboundReactionEvent } from './inbound-turn.handler';
 import { PlanLimitGateService } from './plan-limit-gate.service';
 import { rehydrateInboundAttachments } from './rehydrate-inbound-attachments';
@@ -96,6 +106,14 @@ export interface InboundCallbacks {
     rawEvent: unknown
   ) => Promise<void>;
   onReaction: (agentId: string, config: ResolvedAgentConfig, event: InboundReactionEvent) => Promise<void>;
+  onMessageUpdated: (
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message,
+    previousMessage?: Message
+  ) => Promise<void>;
+  onMessageDeleted: (agentId: string, config: ResolvedAgentConfig, event: MessageDeletedEvent) => Promise<void>;
 }
 
 /**
@@ -123,12 +141,12 @@ export interface CachedChat {
  * for subscriber resolution on the click handler side.
  */
 function extractRecipientFromThreadId(threadId: string): string {
-  const parts = threadId.split(':');
-  if (parts.length !== 3 || parts[0] !== 'email' || !parts[1]) {
+  const address = parseEmailThreadAddress(threadId);
+  if (!address) {
     throw new Error(`Cannot extract recipient from invalid email thread id: ${threadId}`);
   }
 
-  return decodeURIComponent(parts[1]);
+  return address;
 }
 
 const MAX_CACHED_INSTANCES = 200;
@@ -498,6 +516,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           email: createNovuEmailAdapter({
             senderName: resolveAgentEmailSenderName(config),
             signingSecret: credentials.secretKey,
+            defaultAgentAddress: this.agentEmailSender.resolveSharedInboxAddress(config),
             sendEmail: this.agentEmailSender.buildSendEmailCallback(config, outboundIntegrationId),
             stripAgentReplyToken,
             actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style }) => {
@@ -554,6 +573,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
               ),
             deliverMessage: this.webChatPlatformDelivery.createDeliverMessage(deliveryContext),
             editMessage: this.webChatPlatformDelivery.createEditMessage(deliveryContext),
+            streamMessage: this.webChatPlatformDelivery.createStreamMessage(deliveryContext),
             deleteMessage: this.webChatPlatformDelivery.createDeleteMessage(deliveryContext),
             startTyping: this.webChatPlatformDelivery.createStartTyping(deliveryContext),
           }),
@@ -632,7 +652,11 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
     chat.onNewMention(async (thread: Thread, message: Message, context?: MessageContext) => {
       try {
-        await thread.subscribe();
+        // Shared rooms stay unsubscribed until the mention gate in the inbound
+        // handler decides this agent should follow the thread.
+        if (thread.isDM) {
+          await thread.subscribe();
+        }
         this.rehydrateBurstAttachments(cached, message, context);
         await callbacks.onMessage(agentId, cached.config, thread, message, context);
       } catch (err) {
@@ -653,6 +677,43 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           agentId,
           operation: 'on-subscribed-message',
           logMessage: `[agent:${agentId}] Error handling subscribed message`,
+        });
+      }
+    });
+
+    chat.onMessageUpdated(async (thread: Thread, message: Message, previousMessage?: Message) => {
+      try {
+        const adapter = cached.chat?.getAdapter(platformAdapterKey(cached.config.platform));
+        if (adapter) {
+          rehydrateInboundAttachments(adapter, message);
+          if (previousMessage) {
+            rehydrateInboundAttachments(adapter, previousMessage);
+          }
+        }
+        await callbacks.onMessageUpdated(agentId, cached.config, thread, message, previousMessage);
+      } catch (err) {
+        this.rethrowWebChatInboundError(cached, err, {
+          agentId,
+          operation: 'on-message-updated',
+          logMessage: `[agent:${agentId}] Error handling message update`,
+        });
+      }
+    });
+
+    chat.onMessageDeleted(async (event: MessageDeletedEvent) => {
+      try {
+        if (event.previousMessage) {
+          const adapter = cached.chat?.getAdapter(platformAdapterKey(cached.config.platform));
+          if (adapter) {
+            rehydrateInboundAttachments(adapter, event.previousMessage);
+          }
+        }
+        await callbacks.onMessageDeleted(agentId, cached.config, event);
+      } catch (err) {
+        this.rethrowWebChatInboundError(cached, err, {
+          agentId,
+          operation: 'on-message-deleted',
+          logMessage: `[agent:${agentId}] Error handling message delete`,
         });
       }
     });

@@ -1,3 +1,5 @@
+import type { NovuSocketOptions } from '@novu/js';
+
 export const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 
 export const MODE = import.meta.env.MODE;
@@ -48,6 +50,12 @@ export const BETTER_AUTH_BASE_URL =
 export const IS_EU = API_HOSTNAME === 'https://eu.api.novu.co';
 
 export const WEBSOCKET_HOSTNAME = window._env_?.VITE_WEBSOCKET_HOSTNAME || import.meta.env.VITE_WEBSOCKET_HOSTNAME;
+
+// Overrides the SDK's URL-based socket type detection, which only recognizes known Novu hosts.
+const WEBSOCKET_TYPE = getEnvVar('VITE_WEBSOCKET_TYPE');
+
+export const SOCKET_OPTIONS: NovuSocketOptions | undefined =
+  WEBSOCKET_TYPE === 'cloud' || WEBSOCKET_TYPE === 'self-hosted' ? { socketType: WEBSOCKET_TYPE } : undefined;
 
 export const SEGMENT_KEY = import.meta.env.VITE_SEGMENT_KEY;
 

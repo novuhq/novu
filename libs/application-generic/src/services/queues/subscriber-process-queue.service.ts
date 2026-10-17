@@ -1,10 +1,8 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { CommunityOrganizationRepository } from '@novu/dal';
 import { JobTopicNameEnum } from '@novu/shared';
 import { IProcessSubscriberBulkJobDto, IProcessSubscriberJobDto } from '../../dtos/process-subscriber-job.dto';
 import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
-import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { SqsService } from '../sqs';
 import { QueueBaseService } from './queue-base.service';
@@ -16,18 +14,9 @@ export class SubscriberProcessQueueService extends QueueBaseService {
     @Inject(forwardRef(() => WorkflowInMemoryProviderService))
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
     sqsService: SqsService,
-    featureFlagsService: FeatureFlagsService,
-    organizationRepository: CommunityOrganizationRepository,
     logger: PinoLogger
   ) {
-    super(
-      JobTopicNameEnum.PROCESS_SUBSCRIBER,
-      new BullMqService(workflowInMemoryProviderService),
-      sqsService,
-      featureFlagsService,
-      organizationRepository,
-      logger
-    );
+    super(JobTopicNameEnum.PROCESS_SUBSCRIBER, new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
     Logger.log({ topic: this.topic }, 'Creating queue', this.LOG_CONTEXT);
 

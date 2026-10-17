@@ -19,6 +19,7 @@ import {
 import { InlineToast } from '../../primitives/inline-toast';
 import { IntegrationFormData } from '../types';
 import { DescriptionWithLinks } from './description-with-links';
+import { credentialValueToInputString } from './utils/helpers';
 
 const SECURE_CREDENTIALS = [
   CredentialsKeyEnum.ApiKey,
@@ -150,16 +151,14 @@ function TextareaInput({
   field: ControllerRenderProps<IntegrationFormData>;
   isReadOnly?: boolean;
 }) {
-  const stringValue = typeof field.value === 'string' ? field.value : '';
-
   return (
     <>
       <FormLabel credential={credential} />
       <FormControl>
         <Textarea
           id={credential.key}
-          placeholder={`Enter ${credential.displayName.toLowerCase()}`}
-          value={stringValue}
+          placeholder={credential.placeholder ?? `Enter ${credential.displayName.toLowerCase()}`}
+          value={credentialValueToInputString(field.value)}
           onChange={field.onChange}
           rows={7}
           disabled={isReadOnly}

@@ -1,8 +1,18 @@
-import { createEffect, createMemo, For, JSX, onCleanup, Show } from 'solid-js';
+import { type Accessor, createEffect, createMemo, For, JSX, onCleanup, onMount, Show } from 'solid-js';
+import type { Notification as NotificationType } from '../../../notifications';
 import type { NotificationFilter } from '../../../types';
 import { useNotificationsInfiniteScroll } from '../../api';
 import { DEFAULT_LIMIT, useInboxContext, useNewMessagesCount } from '../../context';
-import { useStyle } from '../../helpers';
+import { useMotion, useStyle } from '../../helpers';
+import { createListPresence } from '../../helpers/createListPresence';
+import {
+  animateItemEnter,
+  animateItemExit,
+  fadeInList,
+  fadeOutList,
+  isItemOnScreen,
+  moveFocusOutOf,
+} from '../../helpers/listMotion';
 import { useNotificationVisibility } from '../../helpers/useNotificationVisibility';
 import type {
   AvatarRenderer,
@@ -36,14 +46,60 @@ type NotificationListProps = {
 export const NotificationList = (props: NotificationListProps) => {
   const options = createMemo(() => ({ ...props.filter, limit: props.limit }));
   const style = useStyle();
+  const motion = useMotion();
   const { data, setEl, end, refetch, initialLoading } = useNotificationsInfiniteScroll({ options });
   const { count, reset: resetNewMessagesCount } = useNewMessagesCount({
     filter: { tags: props.filter?.tags ?? [], data: props.filter?.data ?? {}, severity: props.filter?.severity },
   });
   const { setLimit } = useInboxContext();
   const ids = createMemo(() => data().map((n) => n.id));
+  const byId = createMemo(() => new Map(data().map((notification) => [notification.id, notification] as const)));
   const { observeNotification, unobserveNotification } = useNotificationVisibility();
-  let notificationListElement: HTMLDivElement;
+  let notificationListElement: HTMLDivElement | undefined;
+
+  // Items that are there before the list was first painted (from the cache) appear with whatever brought the list in,
+  // such as the Inbox opening or a tab panel fading in. Fading the list as well would play a second fade over it.
+  let hasPainted = typeof requestAnimationFrame !== 'function';
+  onMount(() => {
+    if (hasPainted) {
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      hasPainted = true;
+    });
+    onCleanup(() => cancelAnimationFrame(frame));
+  });
+
+  // Removed items stay rendered (inert) while they animate out, so the list doesn't jump and a host-rendered item
+  // keeps its content until it is gone; items inserted at the top expand in.
+  const presence = createListPresence<string>({
+    keys: ids,
+    ready: () => !initialLoading(),
+    motion,
+    isOnScreen: (item) => isItemOnScreen(item, notificationListElement),
+    exit: animateItemExit,
+    enter: animateItemEnter,
+    onLeave: (_, item) => {
+      moveFocusOutOf(item);
+      unobserveNotification(item);
+    },
+    onRestore: (id, item) => observeNotification(item, id),
+    // A filter change or a refetch: the items fade out, then the new content fades in from its top.
+    exitList: (mode) => {
+      const animation = fadeOutList(notificationListElement, mode);
+      animation?.finished.then(
+        () => notificationListElement?.scrollTo({ top: 0 }),
+        () => {}
+      );
+
+      return animation;
+    },
+    enterList: (kind) => {
+      if (kind !== 'load' || hasPainted) {
+        fadeInList(notificationListElement, motion());
+      }
+    },
+  });
 
   createEffect(() => {
     setLimit(props.limit || DEFAULT_LIMIT);
@@ -53,7 +109,7 @@ export const NotificationList = (props: NotificationListProps) => {
     e.stopPropagation();
     resetNewMessagesCount();
     refetch({ filter: props.filter });
-    notificationListElement.scrollTo({ top: 0 });
+    notificationListElement?.scrollTo({ top: 0 });
   };
 
   return (
@@ -77,16 +133,24 @@ export const NotificationList = (props: NotificationListProps) => {
           context: { notifications: data() } satisfies Parameters<InboxAppearanceCallback['notificationList']>[0],
         })}
       >
-        <Show when={data().length > 0} fallback={<NotificationListSkeleton loading={initialLoading()} />}>
-          <For each={ids()}>
-            {(_, index) => {
-              const notification = () => data()[index()];
+        <Show when={presence.rendered().length > 0} fallback={<NotificationListSkeleton loading={initialLoading()} />}>
+          <For each={presence.rendered()}>
+            {(id) => {
+              // A leaving item is no longer in `data()`; it keeps rendering its last snapshot until it is gone. An item is
+              // only created for a key that is in `data()`, so the first value is always there.
+              const notification = createMemo<NotificationType | undefined>(
+                (last) => byId().get(id) ?? last
+              ) as Accessor<NotificationType>;
 
               return (
                 <div
+                  // An item that collapses (`overflow: hidden`) would otherwise shrink to nothing at once in a list that
+                  // overflows, instead of animating its height.
+                  class="nt-shrink-0"
                   ref={(el) => {
+                    presence.register(id, el);
                     // Start observing this notification for visibility tracking
-                    observeNotification(el, notification().id);
+                    observeNotification(el, id);
 
                     // Set up cleanup when element is removed
                     const observer = new MutationObserver((mutations) => {

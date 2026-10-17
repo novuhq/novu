@@ -1,12 +1,6 @@
-import type {
-  CustomDataType,
-  IPreferenceChannels,
-  PreferenceLevelEnum,
-  Schedule,
-  SeverityLevelEnum,
-  TagsFilter,
-} from '@novu/shared';
-import type { RulesLogic } from 'json-logic-js';
+import type { SeverityLevelEnum, TagsFilter } from '@novu/shared';
+
+export type { InboxPreference } from '@novu/application-generic';
 
 export type NotificationFilter = {
   tags?: TagsFilter;
@@ -18,22 +12,4 @@ export type NotificationFilter = {
   severity?: SeverityLevelEnum | SeverityLevelEnum[];
   createdGte?: number;
   createdLte?: number;
-};
-
-export type InboxPreference = {
-  level: PreferenceLevelEnum;
-  subscriptionId?: string;
-  enabled: boolean;
-  condition?: RulesLogic;
-  channels: IPreferenceChannels;
-  workflow?: {
-    id: string;
-    identifier: string;
-    name: string;
-    critical: boolean;
-    tags?: string[];
-    data?: CustomDataType;
-    severity: SeverityLevelEnum;
-  };
-  schedule?: Schedule;
 };

@@ -5,7 +5,7 @@ import { ControlsMetadataDto } from '../../controls-metadata.dto';
 import { ThrottleControlDto } from '../controls/throttle-control.dto';
 import { StepResponseDto } from '../step.response.dto';
 
-class ThrottleControlsMetadataResponseDto extends ControlsMetadataDto {
+class ThrottleControlsMetadataResponseDto extends ControlsMetadataDto<ThrottleControlDto> {
   @ApiProperty({
     description: 'Control values specific to Throttle',
     type: () => ThrottleControlDto,

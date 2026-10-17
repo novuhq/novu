@@ -3,9 +3,10 @@ import { Bell, Inbox, InboxContent, useNovu } from '@novu/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getNovuInboxContext } from '@/api/novu-context';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
-import { APP_ID, IS_SELF_HOSTED } from '@/config';
+import { APP_ID, IS_SELF_HOSTED, SOCKET_OPTIONS } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -103,6 +104,7 @@ export const InboxButton = ({
   side?: 'top' | 'bottom' | 'left' | 'right';
 }) => {
   const { user } = useUser();
+  const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const { isWorkflowEditorPage: isTestPage } = useWorkflowEditorPage();
   const { currentOrganization } = useAuth();
@@ -173,10 +175,12 @@ export const InboxButton = ({
       applicationIdentifier={appId}
       backendUrl={shouldUseProductionApi ? 'https://api.novu.co' : apiHostnameManager.getHostname()}
       socketUrl={shouldUseProductionApi ? 'https://ws.novu.co' : apiHostnameManager.getWebSocketHostname()}
+      socketOptions={shouldUseProductionApi ? undefined : SOCKET_OPTIONS}
       subscriberHash={isTestPage ? undefined : connectContext?.subscriberHash}
       context={isTestPage ? undefined : connectContext?.context}
       contextHash={isTestPage ? undefined : connectContext?.contextHash}
       localization={localization}
+      routerPush={(path: string) => navigate(path)}
     >
       <InboxInner align={align} side={side} />
     </Inbox>

@@ -1,0 +1,27 @@
+import { SiteFrame } from '@/components/site/site-frame';
+import { buttonClassName } from '@/components/ui/button';
+
+/** Placeholder until the agentinbox.md landing page moves into this app. */
+export default function HomePage() {
+  return (
+    <SiteFrame className="justify-center px-4 py-20 md:px-8">
+      <section className="max-w-120">
+        <p className="font-mono text-sm tracking-tight text-foreground/50">the inbox API for agents</p>
+        <h1 className="mt-3 text-3xl leading-[1.125] tracking-[-0.04em] md:text-[40px]">
+          Give your agent an inbox on <em className="font-display tracking-tight text-accent">every channel</em>
+        </h1>
+        <p className="mt-3.5 text-[15px] leading-[1.375] tracking-tight text-foreground/70">
+          Agent Inbox is a tiny CLI that gives your AI agent one address on email, Telegram and Slack.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center gap-2">
+          <a href="https://www.npmjs.com/package/@agentinbox/cli" className={buttonClassName('primary')}>
+            Get @agentinbox/cli
+          </a>
+          <a href="/sign-in" className={buttonClassName('text')}>
+            Sign in
+          </a>
+        </div>
+      </section>
+    </SiteFrame>
+  );
+}

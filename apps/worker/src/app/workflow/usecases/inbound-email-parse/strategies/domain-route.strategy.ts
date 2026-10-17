@@ -3,8 +3,10 @@ import {
   getSharedAgentDomain,
   InboundDomainRouteDelivery,
   isAgentSharedInboxEnabled,
+  isValidAgentEmailSlugPrefix,
   PinoLogger,
   parseAgentSharedInboxLocalPart,
+  resolvePublishedAgentEmailSlug,
 } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
@@ -239,6 +241,22 @@ export class DomainRouteStrategy {
       throw new InboundParseDroppedError('Shared agent domain: no integration found for routing key');
     }
 
+    // The slug has to be the agent's own, checked in two phases: a stored prefix
+    // settles it here, before any further lookups, while the published fallback
+    // is derived from the agent and so has to wait until the agent is loaded.
+    const storedSlug = integration.credentials?.emailSlugPrefix;
+    const hasAuthoritativeSlug = typeof storedSlug === 'string' && isValidAgentEmailSlugPrefix(storedSlug);
+    if (hasAuthoritativeSlug && storedSlug !== parsed.slug) {
+      this.logger.info(
+        { toAddress, integrationId: integration._id, slug: parsed.slug },
+        'Shared agent domain: slug does not match the integration - dropping'
+      );
+      throw new InboundParseDroppedError('Shared agent domain: slug does not match the integration', {
+        organizationId: integration._organizationId,
+        environmentId: integration._environmentId,
+      });
+    }
+
     if (integration.active === false) {
       this.logger.info(
         { toAddress, integrationId: integration._id },
@@ -300,6 +318,21 @@ export class DomainRouteStrategy {
       });
     }
 
+    // Phase two of the slug check: no stored prefix, so the agent decides.
+    if (!hasAuthoritativeSlug) {
+      const publishedSlug = resolvePublishedAgentEmailSlug(storedSlug, agent);
+      if (publishedSlug !== parsed.slug) {
+        this.logger.info(
+          { toAddress, integrationId: integration._id, slug: parsed.slug, publishedSlug },
+          'Shared agent domain: slug does not match the published inbox address - dropping'
+        );
+        throw new InboundParseDroppedError('Shared agent domain: slug does not match the published inbox address', {
+          organizationId: agent._organizationId,
+          environmentId: agent._environmentId,
+        });
+      }
+    }
+
     const resolved: ResolvedDomainRouteContext = {
       organizationId: agent._organizationId,
       environmentId: agent._environmentId,
@@ -337,6 +370,7 @@ export class DomainRouteStrategy {
         mail: this.commandToMail(command, toAddress),
         toAddress,
         originToken: originToken ?? undefined,
+        integrationId: integration._id,
       });
       this.logger.info(
         { toAddress, agentId: agent._id, messageId: command.messageId, dkim: command.dkim, spf: command.spf },

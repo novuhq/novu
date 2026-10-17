@@ -52,6 +52,8 @@ export interface NovuAdapterConfig {
 
 export enum AgentEvent {
   ON_MESSAGE = 'onMessage',
+  ON_MESSAGE_UPDATED = 'onMessageUpdated',
+  ON_MESSAGE_DELETED = 'onMessageDeleted',
   ON_ACTION = 'onAction',
   ON_RESOLVE = 'onResolve',
   ON_REACTION = 'onReaction',
@@ -62,6 +64,8 @@ export interface AgentMessageAuthor {
   fullName: string;
   userName: string;
   isBot: boolean | 'unknown';
+  email?: string;
+  isSystem?: boolean;
 }
 
 export interface AgentAttachment {
@@ -78,6 +82,8 @@ export interface AgentReplyToContext {
 
 export interface AgentMessage {
   text: string;
+  /** GFM rendering of the platform-formatted message (tables, bold, links); absent for plain prose. */
+  markdown?: string;
   platformMessageId: string;
   author: AgentMessageAuthor;
   timestamp: string;
@@ -178,6 +184,7 @@ export interface AgentBridgeRequest {
   integrationIdentifier: string;
   action: AgentAction | null;
   message: AgentMessage | null;
+  previousMessage?: AgentMessage | null;
   reaction: AgentReaction | null;
   conversation: AgentConversation;
   subscriber: AgentSubscriber | null;
@@ -272,6 +279,7 @@ export interface NovuHistoryFields {
 export interface NovuRawMessage {
   id: string;
   text: string;
+  markdown?: string;
   author: AgentMessageAuthor;
   timestamp: string;
   attachments?: AgentAttachment[];

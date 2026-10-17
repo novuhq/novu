@@ -46,9 +46,10 @@ export class AgentEventOutbox {
     this.maxRetries = options.maxRetries ?? 3;
   }
 
-  enqueue(event: AgentEvent): void {
+  envelope(event: AgentEvent): AgentEventEnvelope {
     this.sequence += 1;
-    this.buffer.push({
+
+    return {
       version: AGENT_EVENT_PROTOCOL_VERSION,
       conversationId: this.conversationId,
       agentId: this.agentId,
@@ -57,7 +58,11 @@ export class AgentEventOutbox {
       sequence: this.sequence,
       timestamp: new Date().toISOString(),
       event,
-    });
+    };
+  }
+
+  enqueue(event: AgentEvent): void {
+    this.buffer.push(this.envelope(event));
   }
 
   flush(): Promise<void> {
@@ -67,7 +72,7 @@ export class AgentEventOutbox {
 
     const batch = this.buffer;
     this.buffer = [];
-    this.chain = this.chain.then(() => this.postBatchWithRetry(batch));
+    this.chain = this.chain.catch(() => undefined).then(() => this.postBatchWithRetry(batch));
 
     return this.chain;
   }

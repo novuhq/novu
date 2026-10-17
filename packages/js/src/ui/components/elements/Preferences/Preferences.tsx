@@ -1,4 +1,4 @@
-import { createEffect, createMemo, Show } from 'solid-js';
+import { createEffect, createMemo, createSignal, on, Show } from 'solid-js';
 import { Preference } from '../../../../preferences/preference';
 import { ChannelPreference, PreferenceLevel } from '../../../../types';
 import { usePreferences } from '../../../api';
@@ -23,6 +23,17 @@ export const Preferences = () => {
     severity: preferencesFilter()?.severity,
     criticality: preferencesFilter()?.criticality,
   });
+
+  // Rows fade in when they replace the loading skeleton; rows that were already cached appear with the page.
+  const [revealRows, setRevealRows] = createSignal(false);
+  createEffect(
+    on(loading, (isLoading, wasLoading) => {
+      // An empty result keeps the skeleton, which morphs into the empty notice on its own.
+      if (wasLoading && !isLoading && preferences()?.length) {
+        setRevealRows(true);
+      }
+    })
+  );
 
   const allPreferences = createMemo(() => {
     const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL);
@@ -120,18 +131,21 @@ export const Preferences = () => {
       class={style({
         key: 'preferencesContainer',
         className:
-          'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-2 nt-overflow-y-auto nt-h-full nt-pr-0 [scrollbar-gutter:stable]',
+          'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-2 nt-overflow-y-auto nt-h-full nt-pr-0 [scrollbar-gutter:stable] nt-motion-fade-children',
         context: { preferences: preferences(), groups: groupedPreferences() } satisfies Parameters<
           InboxAppearanceCallback['preferencesContainer']
         >[0],
       })}
+      data-animate={revealRows() ? '' : undefined}
     >
       <Show when={allPreferences().globalPreference}>
-        <PreferencesRow
-          iconKey="cogs"
-          preference={allPreferences().globalPreference!}
-          onChange={() => updatePreference(allPreferences().globalPreference)}
-        />
+        {(globalPreference) => (
+          <PreferencesRow
+            iconKey="cogs"
+            preference={globalPreference()}
+            onChange={() => updatePreference(globalPreference())}
+          />
+        )}
       </Show>
       <Show when={allPreferences().globalPreference}>
         <ScheduleRow globalPreference={allPreferences().globalPreference} />

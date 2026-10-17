@@ -1,6 +1,12 @@
 import { IntegrationEntity } from '@novu/dal';
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { CardElement, IChatOptions, IChatRenderValidation, ISendMessageSuccessResponse } from '@novu/stateless';
+import {
+  CardElement,
+  IChatOptions,
+  IChatProvider,
+  IChatRenderValidation,
+  ISendMessageSuccessResponse,
+} from '@novu/stateless';
 import { IHandler } from '../../shared/interfaces';
 
 /**
@@ -17,6 +23,7 @@ export type ResolvedChatCard = {
 export interface IChatHandler extends IHandler {
   canHandle(providerId: string, channelType: ChannelTypeEnum);
   buildProvider(credentials: ICredentials);
+  getProvider(): IChatProvider;
   send(chatData: IChatOptions): Promise<ISendMessageSuccessResponse>;
   /**
    * Rich Chat: resolve a `CardElement` into transport-ready `content` + native `nativePayload`

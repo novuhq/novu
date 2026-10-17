@@ -3,7 +3,12 @@ import {
   BullMqService,
   getInboundParseMailWorkerOptions,
   IInboundParseDataDto,
+  INBOUND_PARSE_RETRY_POLICY,
   InboundMailRequestLogger,
+  ISqsFailureOutcome,
+  Job,
+  PinoLogger,
+  SqsService,
   WorkerBaseService,
   WorkerOptions,
   WorkflowInMemoryProviderService,
@@ -16,21 +21,32 @@ import { severityFromInboundStatus } from '../usecases/inbound-email-parse/log-i
 
 const LOG_CONTEXT = 'InboundParseQueueService';
 
+/**
+ * The SQS queue's own redrive policy decides when a message stops being
+ * redelivered, so the worker cannot infer the last attempt - it has to be told
+ * the same number the infrastructure was configured with. Defaults to the
+ * shared policy, which is what the redrive policy should be set to.
+ */
+function getMaxReceiveCount(): number {
+  const configured = Number(process.env.SQS_INBOUND_PARSE_MAX_RECEIVE_COUNT);
+
+  return Number.isFinite(configured) && configured > 0 ? configured : INBOUND_PARSE_RETRY_POLICY.attempts;
+}
+
 @Injectable()
 export class InboundParseWorker extends WorkerBaseService {
-  /* *
-   * BullMQ-only worker - no SQS support.
-   * Processes inbound email parsing, not part of the SQS migration.
-   */
   constructor(
     private inboundEmailParseUsecase: InboundEmailParse,
     private inboundMailRequestLogger: InboundMailRequestLogger,
-    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
+    sqsService: SqsService,
+    logger: PinoLogger
   ) {
-    super(JobTopicNameEnum.INBOUND_PARSE_MAIL, new BullMqService(workflowInMemoryProviderService));
+    super(JobTopicNameEnum.INBOUND_PARSE_MAIL, new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
     this.registerFailedSafetyNet();
+    this.registerSqsFailedSafetyNet();
   }
 
   private getWorkerOptions(): WorkerOptions {
@@ -75,34 +91,74 @@ export class InboundParseWorker extends WorkerBaseService {
         return;
       }
 
-      const data = job.data as IInboundParseDataDto | undefined;
-      if (!data?.requestLogId) {
-        return;
-      }
-
-      const processingError = error instanceof InboundParseProcessingError ? error : undefined;
-      const outcome = processingError?.outcome;
-      const message =
-        outcome?.message ??
-        (error instanceof Error ? error.message : 'Inbound mail processing failed after exhausted retries');
-
-      this.inboundMailRequestLogger
-        .logCompleted({
-          requestLogId: data.requestLogId,
-          organizationId: outcome?.organizationId ?? '',
-          environmentId: outcome?.environmentId ?? '',
-          transactionId: outcome?.transactionId ?? data.messageId ?? '',
-          delivered: false,
-          severity: outcome ? severityFromInboundStatus(outcome.status) : 'error',
-          message,
-        })
-        .catch((traceError) => {
-          Logger.warn(
-            { err: traceError, jobId: job.id, requestLogId: data.requestLogId },
-            'Failed to write inbound-email exhausted-retries trace',
-            LOG_CONTEXT
-          );
-        });
+      this.traceExhaustedRetries(job, error);
     });
+  }
+
+  /**
+   * The SQS equivalent of the BullMQ `failed` listener above.
+   *
+   * `receiveCount` is the only attempt counter SQS offers, and the redrive
+   * policy - not this code - decides when redelivery stops, so the terminal
+   * trace is keyed on reaching the configured ceiling. Until then the message
+   * is re-thrown with the same exponential delay the BullMQ queue applies.
+   */
+  private registerSqsFailedSafetyNet(): void {
+    this.setSqsFailedHandler(
+      async (job: Job<IInboundParseDataDto, void, string>, error: Error): Promise<ISqsFailureOutcome> => {
+        const receiveCount = job.attemptsMade ?? 1;
+        const maxReceiveCount = getMaxReceiveCount();
+
+        if (receiveCount >= maxReceiveCount) {
+          this.traceExhaustedRetries(job, error);
+
+          /*
+           * Acking here would delete the message instead of letting the
+           * redrive policy move it to the DLQ, which is where an inbound mail
+           * that never parsed needs to end up.
+           */
+          return { retry: true };
+        }
+
+        return { retry: true, retryDelayMs: INBOUND_PARSE_RETRY_POLICY.backoffBaseMs * 2 ** (receiveCount - 1) };
+      }
+    );
+  }
+
+  /**
+   * Writes the terminal `request_failed` trace for a job that will not be
+   * retried again. Shared by both backends so the request detail view shows
+   * the same lifecycle regardless of which one delivered the job.
+   */
+  private traceExhaustedRetries(job: Job<IInboundParseDataDto, unknown, string>, error: Error): void {
+    const data = job.data as IInboundParseDataDto | undefined;
+
+    if (!data?.requestLogId) {
+      return;
+    }
+
+    const processingError = error instanceof InboundParseProcessingError ? error : undefined;
+    const outcome = processingError?.outcome;
+    const message =
+      outcome?.message ??
+      (error instanceof Error ? error.message : 'Inbound mail processing failed after exhausted retries');
+
+    this.inboundMailRequestLogger
+      .logCompleted({
+        requestLogId: data.requestLogId,
+        organizationId: outcome?.organizationId ?? '',
+        environmentId: outcome?.environmentId ?? '',
+        transactionId: outcome?.transactionId ?? data.messageId ?? '',
+        delivered: false,
+        severity: outcome ? severityFromInboundStatus(outcome.status) : 'error',
+        message,
+      })
+      .catch((traceError) => {
+        Logger.warn(
+          { err: traceError, jobId: job.id, requestLogId: data.requestLogId },
+          'Failed to write inbound-email exhausted-retries trace',
+          LOG_CONTEXT
+        );
+      });
   }
 }

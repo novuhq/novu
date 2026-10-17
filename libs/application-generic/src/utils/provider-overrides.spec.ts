@@ -3,12 +3,16 @@ import {
   CONTENT_OVERRIDE_PROVIDER_IDS,
   ContentIssueEnum,
   getProviderOverrideConfig,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
+  PushProviderIdEnum,
   ToolProviderIdEnum,
 } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
 import {
   LIQUID_TOLERANT_SCHEMAS_BY_SUBPATH,
+  processIntegrationOverridesIssues,
   processProviderOverridesIssues,
+  stitchIntegrationOverridesFromDocs,
   stitchProviderOverridesFromDocs,
   withStitchedProviderOverrides,
 } from './provider-overrides';
@@ -74,8 +78,45 @@ describe('stitchProviderOverridesFromDocs', () => {
     expect(stitchProviderOverridesFromDocs([{ providerId: 'novu-email', controls: { subject: 'x' } }])).toBeUndefined();
   });
 
+  it('ignores integration override docs so they never stand in for the provider override', () => {
+    expect(
+      stitchProviderOverridesFromDocs([
+        { providerId: ToolProviderIdEnum.Webhook, integrationIdentifier: 'prod-alerts', controls: { env: 'prod' } },
+      ])
+    ).toBeUndefined();
+  });
+
   it('returns undefined when there are no supported provider docs', () => {
     expect(stitchProviderOverridesFromDocs([])).toBeUndefined();
+  });
+});
+
+describe('stitchIntegrationOverridesFromDocs', () => {
+  it('groups STEP_INTEGRATION_CONTROLS docs by provider, then by integration identifier', () => {
+    expect(
+      stitchIntegrationOverridesFromDocs([
+        { providerId: ToolProviderIdEnum.Webhook, integrationIdentifier: 'prod-alerts', controls: { env: 'prod' } },
+        { providerId: ToolProviderIdEnum.Webhook, integrationIdentifier: 'staging-alerts', controls: { env: 'stg' } },
+        { providerId: ChatProviderIdEnum.Slack, integrationIdentifier: 'acme-slack', controls: { text: 'hi' } },
+      ])
+    ).toEqual({
+      [ToolProviderIdEnum.Webhook]: {
+        'prod-alerts': { env: 'prod' },
+        'staging-alerts': { env: 'stg' },
+      },
+      [ChatProviderIdEnum.Slack]: {
+        'acme-slack': { text: 'hi' },
+      },
+    });
+  });
+
+  it('drops docs without an integration identifier or for providers that support no overrides', () => {
+    expect(
+      stitchIntegrationOverridesFromDocs([
+        { providerId: ToolProviderIdEnum.Webhook, controls: { env: 'prod' } },
+        { providerId: 'novu-email', integrationIdentifier: 'mail', controls: { subject: 'x' } },
+      ])
+    ).toBeUndefined();
   });
 });
 
@@ -89,6 +130,107 @@ describe('withStitchedProviderOverrides', () => {
         [ToolProviderIdEnum.PagerDuty]: { severity: 'info' },
       },
     });
+  });
+
+  it('merges integrationOverrides alongside providerOverrides', () => {
+    expect(
+      withStitchedProviderOverrides(
+        { body: 'default' },
+        { [ToolProviderIdEnum.Webhook]: { env: 'all' } },
+        { [ToolProviderIdEnum.Webhook]: { 'prod-alerts': { env: 'prod' } } }
+      )
+    ).toEqual({
+      body: 'default',
+      providerOverrides: { [ToolProviderIdEnum.Webhook]: { env: 'all' } },
+      integrationOverrides: { [ToolProviderIdEnum.Webhook]: { 'prod-alerts': { env: 'prod' } } },
+    });
+  });
+
+  it('stitches integrationOverrides even when the step has no provider-level overrides', () => {
+    expect(
+      withStitchedProviderOverrides({ body: 'default' }, undefined, {
+        [ToolProviderIdEnum.Webhook]: { 'prod-alerts': { env: 'prod' } },
+      })
+    ).toEqual({
+      body: 'default',
+      integrationOverrides: { [ToolProviderIdEnum.Webhook]: { 'prod-alerts': { env: 'prod' } } },
+    });
+  });
+
+  it('returns the controls untouched when there is nothing to stitch', () => {
+    const controls = { body: 'default' };
+
+    expect(withStitchedProviderOverrides(controls, undefined, undefined)).toBe(controls);
+  });
+});
+
+describe('processIntegrationOverridesIssues', () => {
+  it('validates each integration override against its provider schema, namespaced by identifier', () => {
+    const issues = processIntegrationOverridesIssues({
+      [ToolProviderIdEnum.Opsgenie]: {
+        'ops-eu': { message: 'db is down', foo: 'bar' },
+        'ops-us': { priority: '{{payload.priority}}' },
+      },
+    });
+
+    const path = `integrationOverrides.${ToolProviderIdEnum.Opsgenie}.ops-eu.foo`;
+    expect(issues.controls).toEqual({
+      [path]: [
+        {
+          message: '"foo" is not a supported property',
+          issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+          variableName: path,
+        },
+      ],
+    });
+  });
+
+  it('rejects the reserved bridge key inside an integration override', () => {
+    const path = `integrationOverrides.${ToolProviderIdEnum.Webhook}.prod-alerts.${INTEGRATION_OVERRIDES_OUTPUT_KEY}`;
+    const issues = processIntegrationOverridesIssues({
+      [ToolProviderIdEnum.Webhook]: { 'prod-alerts': { [INTEGRATION_OVERRIDES_OUTPUT_KEY]: {} } },
+    });
+
+    expect(issues.controls?.[path]).toEqual([
+      {
+        message: `"${INTEGRATION_OVERRIDES_OUTPUT_KEY}" is not a supported property`,
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: path,
+      },
+    ]);
+  });
+
+  it('accepts free-form integration overrides for escape-hatch providers', () => {
+    const issues = processIntegrationOverridesIssues({
+      [ToolProviderIdEnum.Webhook]: {
+        'prod-alerts': { event: '{{payload.event}}', nested: { any: 'value' } },
+      },
+    });
+
+    expect(issues.controls).toBeUndefined();
+  });
+
+  it('rejects a provider that supports no overrides at all', () => {
+    const issues = processIntegrationOverridesIssues({ 'not-a-provider': { foo: { bar: 1 } } } as never);
+
+    expect(issues.controls?.['integrationOverrides.not-a-provider']).toEqual([
+      {
+        message: '"not-a-provider" is not a supported property',
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: 'integrationOverrides.not-a-provider',
+      },
+    ]);
+  });
+
+  it.each([null, [], 'not-an-object'])('rejects a malformed identifier map %j', (identifiers) => {
+    const issues = processIntegrationOverridesIssues({ [ToolProviderIdEnum.Webhook]: identifiers } as never);
+
+    expect(issues.controls?.[`integrationOverrides.${ToolProviderIdEnum.Webhook}`]).toBeDefined();
+  });
+
+  it('returns no issues when there are no integration overrides', () => {
+    expect(processIntegrationOverridesIssues(undefined)).toEqual({});
+    expect(processIntegrationOverridesIssues(null)).toEqual({});
   });
 });
 
@@ -135,6 +277,23 @@ describe('processProviderOverridesIssues', () => {
     });
 
     expect(issues.controls).toBeUndefined();
+  });
+
+  it('rejects the reserved bridge key in an escape-hatch provider override instead of dropping it silently', () => {
+    const path = `providerOverrides.${ToolProviderIdEnum.Webhook}.${INTEGRATION_OVERRIDES_OUTPUT_KEY}`;
+    const issues = processProviderOverridesIssues({
+      [ToolProviderIdEnum.Webhook]: { event: 'x', [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { spoof: {} } },
+    });
+
+    expect(issues.controls).toEqual({
+      [path]: [
+        {
+          message: `"${INTEGRATION_OVERRIDES_OUTPUT_KEY}" is not a supported property`,
+          issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+          variableName: path,
+        },
+      ],
+    });
   });
 
   it.each([null, [], 'not-an-object'])('rejects malformed tool-webhook override value %j', (override) => {
@@ -260,6 +419,107 @@ describe('processProviderOverridesIssues', () => {
     expect(issues.controls).toBeUndefined();
   });
 
+  it('accepts free-form objects for escape-hatch push providers', () => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.APNS]: {
+        aps: { alert: { body: '{{payload.body}}' } },
+        whatever: true,
+      },
+    });
+
+    expect(issues.controls).toBeUndefined();
+  });
+
+  it('validates FCM overrides against the generated BaseMessage schema', () => {
+    const valid = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        data: { orderId: '{{payload.orderId}}' },
+        android: { priority: 'high' },
+        fcmOptions: { analyticsLabel: 'orders' },
+      },
+    });
+
+    expect(valid.controls).toBeUndefined();
+
+    const invalidKey = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        android: { priority: 'high' },
+        topíc: 'orders',
+      },
+    });
+
+    expect(invalidKey.controls?.['providerOverrides.fcm.topíc']).toEqual([
+      {
+        message: '"topíc" is not a supported property',
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: 'providerOverrides.fcm.topíc',
+      },
+    ]);
+
+    const invalidData = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        data: { orderId: 123 },
+      },
+    });
+
+    expect(invalidData.controls?.['providerOverrides.fcm.data.orderId']).toBeDefined();
+  });
+
+  it.each([null, [], 'not-an-object'])('rejects malformed fcm override value %j', (override) => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: override,
+    } as never);
+
+    expect(issues.controls?.[`providerOverrides.${PushProviderIdEnum.FCM}`]).toBeDefined();
+  });
+
+  it.each([
+    { topic: 't', token: 'x' },
+    { topic: 'orders', condition: "'stock' in topics" },
+    { token: 'a', tokens: ['b'], topic: 'c' },
+  ])('reports a friendly mutual-exclusion message when FCM override sets multiple routing keys %j', (override) => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: override,
+    });
+
+    expect(issues.controls?.['providerOverrides.fcm']).toEqual([
+      {
+        message: 'Only one of token, topic, condition, tokens is allowed',
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: 'providerOverrides.fcm',
+      },
+    ]);
+  });
+
+  it('accepts a single FCM routing key with Liquid', () => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        topic: 'org-{{subscriber.data.orgId}}',
+      },
+    });
+
+    expect(issues.controls).toBeUndefined();
+  });
+
+  it('keeps unrelated FCM schema issues when routing keys conflict', () => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        topic: 'orders',
+        token: 'device-token',
+        data: { orderId: 123 },
+      },
+    });
+
+    expect(issues.controls?.['providerOverrides.fcm']).toEqual([
+      {
+        message: 'Only one of token, topic, condition, tokens is allowed',
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: 'providerOverrides.fcm',
+      },
+    ]);
+    expect(issues.controls?.['providerOverrides.fcm.data.orderId']).toBeDefined();
+  });
+
   it('validates Telegram overrides against the generated sendMessage schema', () => {
     const valid = processProviderOverridesIssues({
       [ChatProviderIdEnum.Telegram]: {
@@ -280,6 +540,33 @@ describe('processProviderOverridesIssues', () => {
         message: '"whatever" is not a supported property',
         issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
         variableName: 'providerOverrides.telegram.whatever',
+      },
+    ]);
+  });
+
+  it('validates Expo overrides against the schema', () => {
+    const valid = processProviderOverridesIssues({
+      [PushProviderIdEnum.EXPO]: {
+        priority: 'high',
+        channelId: 'orders',
+        interruptionLevel: 'time-sensitive',
+      },
+    });
+
+    expect(valid.controls).toBeUndefined();
+
+    const invalid = processProviderOverridesIssues({
+      [PushProviderIdEnum.EXPO]: {
+        priority: 'high',
+        chanelId: 'orders',
+      },
+    });
+
+    expect(invalid.controls?.['providerOverrides.expo.chanelId']).toEqual([
+      {
+        message: '"chanelId" is not a supported property',
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: 'providerOverrides.expo.chanelId',
       },
     ]);
   });

@@ -515,28 +515,24 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
   });
 
   describe('email channel', () => {
-    it('setup stamps the subscriber email and updates it on re-run', async () => {
+    it('setup ignores email — verification owns Subscriber.email', async () => {
       const withEmail = await session.testAgent
         .post('/v1/human/setup')
         .send({ subscriberId, email: 'Human@Example.com' });
       expect(withEmail.status).to.equal(200);
 
-      let subscriber = await subscriberRepository.findOne({
+      const subscriber = await subscriberRepository.findOne({
         _environmentId: session.environment._id,
         subscriberId,
       });
-      expect(subscriber?.email).to.equal('human@example.com');
-
-      await session.testAgent.post('/v1/human/setup').send({ subscriberId, email: 'other@example.com' });
-      subscriber = await subscriberRepository.findOne({ _environmentId: session.environment._id, subscriberId });
-      expect(subscriber?.email).to.equal('other@example.com');
+      expect(subscriber?.email).to.equal(undefined);
     });
 
-    it('rejects email-channel interactions when the human has no email on file', async () => {
+    it('rejects email-channel interactions when the human has no verified email', async () => {
       const emailIntegration = await integrationRepository.create({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
-        providerId: 'novu-email' as never,
+        providerId: 'agent-email-inbox' as never,
         channel: ChannelTypeEnum.EMAIL,
         credentials: {},
         active: true,
@@ -561,7 +557,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       });
 
       expect(res.status).to.equal(404);
-      expect(res.body.message).to.match(/no email address on file/i);
+      expect(res.body.message).to.match(/no verified email address/i);
     });
   });
 
@@ -635,14 +631,15 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       expect(third.status).to.equal(429, JSON.stringify(third.body));
       expect(third.body.code).to.equal('KEYLESS_HUMAN_CAP_REACHED');
       expect(third.body.cap).to.equal(2);
-      expect(third.body.claimUrl).to.match(/\/connect\/claim\?token=/);
+      expect(third.body.claimUrl).to.match(/\/claim\?token=/);
+      expect(third.body.browserLogin).to.equal(true);
       expect(third.body.message).to.include(third.body.claimUrl);
 
       // The human got the CTA card on the channel the prompt would have used — not the prompt itself.
       const sends = telegramSends();
       expect(sends.length).to.equal(sendsBefore + 1);
       const cta = JSON.stringify(sends[sends.length - 1].payload);
-      expect(cta).to.include('connect/claim');
+      expect(cta).to.include('/claim?token=');
       expect(cta).to.include('Sign up');
       expect(cta).to.not.include('Three?');
 
@@ -687,8 +684,33 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       // The keyless env is now empty; the CLI must be told to re-auth, not to run setup again.
       const after = await createInteraction({ kind: 'tell', prompt: 'Still here?' });
       expect(after.status).to.equal(403, JSON.stringify(after.body));
-      expect(after.body.message).to.match(/claimed into your Novu account/);
-      expect(after.body.message).to.include('human setup --secret-key');
+      expect(after.body.message).to.include('npx @agentinbox/cli login');
+    });
+
+    it('hands `human login` the claim token of a keyless setup until it is claimed', async () => {
+      const first = await session.testAgent.post('/v1/human/claim-token').send({});
+      expect(first.status).to.equal(200, JSON.stringify(first.body));
+      const { token } = first.body.data;
+
+      const again = await session.testAgent.post('/v1/human/claim-token').send({});
+      expect(again.body.data.token).to.equal(token);
+
+      const claimer = new UserSession();
+      await claimer.initialize();
+      const claimRes = await claimer.testAgent.post('/v1/connect/claim').send({ token });
+      expect(claimRes.status).to.equal(200, JSON.stringify(claimRes.body));
+
+      const afterClaim = await session.testAgent.post('/v1/human/claim-token').send({});
+      expect(afterClaim.status).to.equal(409, JSON.stringify(afterClaim.body));
+      expect(afterClaim.body.code).to.equal('keyless_setup_claimed');
+    });
+
+    it('has no claim token for setups that belong to an account', async () => {
+      process.env.KEYLESS_ORGANIZATION_ID = 'some-other-org';
+
+      const res = await session.testAgent.post('/v1/human/claim-token').send({});
+
+      expect(res.status).to.equal(400, JSON.stringify(res.body));
     });
   });
 });

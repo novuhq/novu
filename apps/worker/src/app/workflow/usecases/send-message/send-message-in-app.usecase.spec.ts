@@ -42,7 +42,9 @@ describe('SendMessageInApp - webhook environment reuse', () => {
     );
 
     // Short-circuit inherited collaborators that would otherwise hit external services / DB.
-    sinon.stub(usecase as never, 'getIntegration').resolves({ providerId: 'novu', _id: 'int_1' });
+    sinon.stub(usecase as never, 'getIntegration').resolves({
+      integration: { providerId: 'novu', _id: 'int_1' },
+    });
     sinon.stub(usecase as never, 'processVariants').resolves(undefined);
     sinon.stub(usecase as never, 'storeContent').returns(false);
 

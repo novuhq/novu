@@ -39,6 +39,12 @@ export class HumanInteractionEntity {
   /** All Novu subscriberIds allowed to settle. First valid answer wins. */
   subscriberIds: string[];
 
+  /**
+   * Sent into a thread without naming anyone, so whoever is in that thread may settle, including
+   * people who are not subscribers. `subscriberIds` is then only who was in the thread at send time.
+   */
+  anyoneMayAnswer?: boolean;
+
   /** Agent that owns delivery and the inbound webhook. */
   _agentId: string;
 

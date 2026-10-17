@@ -1,4 +1,9 @@
+import { ConversationActivitySenderTypeEnum } from '@novu/dal';
 import {
+  AGENT_PLATFORM_PROVISION_SOURCE,
+  AGENT_PROVISION_DATA_KEYS,
+  AGENT_REPLY_METADATA_KEYS,
+  AgentReplyPolicyEnum,
   AgentSubscriberAccessEnum,
   buildDashboardWebChatSubscriberId,
   HumanInteractionKindEnum,
@@ -120,15 +125,27 @@ describe('AgentInboundHandler', () => {
     const conversationService = {
       createOrGetConversation: sinon.stub().resolves(conversation),
       getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
+      importInboundMessages: sinon.stub().callsFake(({ messages }) => Promise.resolve(messages)),
       persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
+      updateInboundMessage: sinon.stub().resolves({ _id: 'activity1', content: 'updated' }),
+      deleteInboundMessage: sinon.stub().resolves({ _id: 'activity1', content: 'gone' }),
+      persistInboundReaction: sinon.stub().resolves({ _id: 'reaction-activity1' }),
       persistAgentMessage: sinon.stub().resolves({ activity: { _id: 'agent-activity1' }, created: true }),
       persistWorkflowOriginHydration: sinon.stub().resolves(undefined),
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
+      countOtherAgentsOnPlatformThread: sinon.stub().resolves(0),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
+      updateMetadata: sinon.stub().resolves(undefined),
       persistToolApprovalDecision: sinon.stub().resolves({ _id: 'decision-1' }),
       persistInboundActionAccept: sinon.stub().resolves(undefined),
       findSourceActivity: sinon
+        .stub()
+        .callsFake(
+          async (_environmentId: string, _conversationId: string, platformMessageId: string) =>
+            (overrides.history ?? []).find((activity: any) => activity?.platformMessageId === platformMessageId) ?? null
+        ),
+      resolveCurrentMessage: sinon
         .stub()
         .callsFake(
           async (_environmentId: string, _conversationId: string, platformMessageId: string) =>
@@ -166,6 +183,7 @@ describe('AgentInboundHandler', () => {
 
         return { messageId: result.id, platformThreadId: result.threadId };
       }),
+      replyOnThreadWithCard: sinon.stub().resolves({ messageId: 'card-1', platformThreadId: 'email:thread1:' }),
     };
     const inboundAck = {
       showWorkingSignal: sinon.stub().resolves(undefined),
@@ -180,6 +198,7 @@ describe('AgentInboundHandler', () => {
       conversationService as any,
       environmentRepository as any,
       expireSupersededApprovals as any,
+      { readerFor: () => undefined } as any,
       logger as any
     );
     const managedRuntime = new ManagedRuntime(
@@ -232,6 +251,7 @@ describe('AgentInboundHandler', () => {
       issueOrGetForEnvironment: sinon.stub().resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
       isSignupCtaPosted: sinon.stub().resolves(false),
       tryMarkSignupCtaPosted: sinon.stub().resolves(true),
+      releaseSignupCtaPosted: sinon.stub().resolves(),
     };
     const keylessAbuseGuard = {
       isKeylessAgentAiEnabled: sinon.stub().resolves(true),
@@ -252,13 +272,22 @@ describe('AgentInboundHandler', () => {
     const workflowOriginService = {
       resolve: sinon.stub().resolves(null),
       resolveForTurn: sinon.stub().resolves(null),
-      hydrate: sinon.stub().resolves(null),
+    };
+    const agentConfigResolver = {
+      resolveSlackInstallation: sinon.stub().resolves({ token: 'xoxb-test', botUserId: 'UBOT' }),
     };
     const humanInteractionInbound = {
       tryHandleAction: sinon.stub().resolves({ outcome: 'ignored' }),
       tryHandleMessage: sinon.stub().resolves({ outcome: 'ignored' }),
+      hasPendingConversationAsk: sinon.stub().resolves(false),
     };
     const humanConversationInbound = new HumanConversationInboundInterceptor(humanInteractionInbound as any);
+    const keylessEmailGate = {
+      isBlocked: sinon.stub().returns(false),
+      assertAllowed: sinon.stub().resolves(),
+      resolveOperatorClaimCard: sinon.stub().resolves(undefined),
+    };
+    const contactHandles = { refresh: sinon.stub().resolves() };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -281,7 +310,10 @@ describe('AgentInboundHandler', () => {
       connectionContextResolver as any,
       replyApprovalInterceptor as any,
       workflowOriginService as any,
-      humanConversationInbound
+      humanConversationInbound,
+      agentConfigResolver as any,
+      keylessEmailGate as any,
+      contactHandles as any
     );
 
     return {
@@ -294,6 +326,7 @@ describe('AgentInboundHandler', () => {
       bridgeExecutor,
       conversationService,
       workflowOriginService,
+      agentConfigResolver,
       linkTelegramChatToSubscriber,
       subscriberResolver,
       startCodeService,
@@ -304,6 +337,10 @@ describe('AgentInboundHandler', () => {
       subscriberRepository,
       outboundGateway,
       inboundAck,
+      planLimitGate,
+      connectClaimTokenService,
+      keylessEmailGate,
+      contactHandles,
     };
   }
 
@@ -323,6 +360,7 @@ describe('AgentInboundHandler', () => {
       }),
       startTyping: sinon.stub().resolves(undefined),
       post: sinon.stub().resolves({ id: '1777837479.427739', threadId: 'slack:D123:1777837477.371619' }),
+      unsubscribe: sinon.stub().resolves(undefined),
     };
   }
 
@@ -459,6 +497,772 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.firstCall.args[0].platformContext.threadId).to.equal(expectedThreadId);
     });
 
+    it('should fold a same-author burst into one message whose formatted content matches the folded text', async () => {
+      const { handler, bridgeExecutor } = makeHandler();
+      const paragraph = (value: string) => ({ type: 'paragraph', children: [{ type: 'text', value }] });
+      const table = {
+        type: 'table',
+        children: [
+          { type: 'tableRow', children: [{ type: 'tableCell', children: [{ type: 'text', value: 'EMEA' }] }] },
+        ],
+      };
+      const pastedTable = {
+        ...makeSlackDmMessage(),
+        id: '1777837470.000001',
+        text: 'EMEA',
+        formatted: { type: 'root', children: [table] },
+      };
+      const otherAuthor = {
+        ...makeSlackDmMessage(),
+        id: '1777837472.000001',
+        text: 'not mine',
+        author: { userId: 'user2', fullName: 'User Two', userName: 'usertwo', isBot: false },
+        formatted: { type: 'root', children: [paragraph('not mine')] },
+      };
+      const fileOnly = {
+        ...makeSlackDmMessage(),
+        id: '1777837474.000001',
+        text: ' ',
+        formatted: { type: 'root', children: [paragraph(' ')] },
+        attachments: [{ type: 'file', name: 'q3.csv' }],
+      };
+      const latest = { ...makeSlackDmMessage(), formatted: { type: 'root', children: [paragraph('hello')] } };
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        latest as any,
+        AgentEventEnum.ON_MESSAGE,
+        { skipped: [pastedTable, otherAuthor, fileOnly], totalSinceLastHandler: 4 } as any
+      );
+
+      const sent = bridgeExecutor.execute.firstCall.args[0].message;
+      expect(sent.text).to.equal('EMEA\n\nhello');
+      expect(sent.formatted).to.deep.equal({ type: 'root', children: [table, paragraph('hello')] });
+      expect(sent.attachments.map((a: { name: string }) => a.name)).to.deep.equal(['q3.csv']);
+    });
+
+    it('should keep only the approval verdict, text and formatting, when a burst contains one', async () => {
+      const { handler, bridgeExecutor } = makeHandler();
+      const paragraph = (value: string) => ({ type: 'paragraph', children: [{ type: 'text', value }] });
+      const verdict = {
+        ...makeSlackDmMessage(),
+        id: '1777837470.000001',
+        text: 'yes',
+        formatted: { type: 'root', children: [paragraph('yes')] },
+      };
+      const latest = {
+        ...makeSlackDmMessage(),
+        text: 'also restart *prod*',
+        formatted: { type: 'root', children: [paragraph('also restart prod')] },
+      };
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        latest as any,
+        AgentEventEnum.ON_MESSAGE,
+        { skipped: [verdict], totalSinceLastHandler: 2 } as any
+      );
+
+      const sent = bridgeExecutor.execute.firstCall.args[0].message;
+      expect(sent.text).to.equal('yes');
+      expect(sent.formatted).to.deep.equal({ type: 'root', children: [paragraph('yes')] });
+    });
+
+    it('should seed Slack thread history before recording a mention even when the conversation already exists', async () => {
+      const { handler, conversationService } = makeHandler();
+      const mention = {
+        id: 'mention-ts',
+        text: '<@UBOT> help',
+        author: { userId: 'U1', fullName: 'Ada', userName: 'ada', isBot: false },
+        isMention: true,
+        raw: { type: 'app_mention', thread_ts: 'root-ts' },
+        attachments: [],
+      };
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        messages: {
+          [Symbol.asyncIterator]: async function* () {
+            yield mention;
+            yield {
+              id: 'prior-ts',
+              text: 'the deploy failed',
+              author: { userId: 'U2', fullName: 'Bob', isBot: false },
+            };
+          },
+        },
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe: sinon.stub().resolves(undefined),
+        unsubscribe: sinon.stub().resolves(undefined),
+      };
+
+      await handler.handle('agent1', config as any, thread as any, mention as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(conversationService.importInboundMessages.calledOnce).to.equal(true);
+      expect(
+        conversationService.importInboundMessages.calledBefore(conversationService.persistInboundMessage)
+      ).to.equal(true);
+      expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundMessage.firstCall.args[0]).to.include({
+        platformMessageId: 'mention-ts',
+        content: '<@UBOT> help',
+      });
+    });
+
+    it('should hand a managed agent the thread messages it missed between mentions', async () => {
+      const { handler, managedAgentService } = makeHandler({
+        ...makeResolvedSubscriberOverrides(),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const mention = {
+        id: 'mention-ts',
+        text: '<@UBOT> ?',
+        author: { userId: 'U1', fullName: 'Ada', userName: 'ada', isBot: false },
+        isMention: true,
+        raw: { type: 'app_mention', thread_ts: 'root-ts' },
+        attachments: [],
+      };
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        messages: {
+          [Symbol.asyncIterator]: async function* () {
+            yield mention;
+            yield {
+              id: 'later-ts',
+              text: 'any thoughts on la chapelle ?',
+              author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            };
+            yield {
+              id: 'prior-ts',
+              text: 'what about hermitage ?',
+              author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            };
+          },
+        },
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe: sinon.stub().resolves(undefined),
+        unsubscribe: sinon.stub().resolves(undefined),
+      };
+
+      await handler.handle('agent1', config as any, thread as any, mention as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(managedAgentService.dispatch.firstCall.args[0].unseenThreadMessages).to.deep.equal([
+        { senderName: 'Ada', content: 'what about hermitage ?' },
+        { senderName: 'Ada', content: 'any thoughts on la chapelle ?' },
+      ]);
+    });
+
+    it('drops an unmentioned nested-thread message when mention-only is on', async () => {
+      const { handler, conversationService, bridgeExecutor, humanInteractionInbound } = makeHandler();
+      const unsubscribe = sinon.stub().resolves(undefined);
+      const subscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe,
+        unsubscribe,
+      };
+      const message = {
+        id: 'follow-up',
+        text: 'the deploy is still failing',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: false,
+        attachments: [],
+      };
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handle(
+        'agent1',
+        mentionOnlyConfig as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(unsubscribe.calledOnce).to.equal(true);
+      expect(subscribe.called).to.equal(false);
+      expect(humanInteractionInbound.hasPendingConversationAsk.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundMessage.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('dispatches an unmentioned nested-thread follow-up after the agent has joined', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      const unsubscribe = sinon.stub().resolves(undefined);
+      const subscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe,
+        unsubscribe,
+      };
+      const message = {
+        id: 'follow-up',
+        text: 'the deploy is still failing',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: false,
+        attachments: [],
+      };
+
+      await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(unsubscribe.called).to.equal(false);
+      expect(subscribe.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+    });
+
+    describe('smart reply policy', () => {
+      const smartConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.SMART, agentName: 'Support Bot' };
+
+      function makeNestedThread() {
+        return {
+          id: 'slack:C1:root-ts',
+          channelId: 'slack:C1',
+          isDM: false,
+          toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+          startTyping: sinon.stub().resolves(undefined),
+          post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+          postEphemeral: sinon.stub().resolves({ id: 'notice', threadId: 'slack:C1:root-ts' }),
+          subscribe: sinon.stub().resolves(undefined),
+          unsubscribe: sinon.stub().resolves(undefined),
+        };
+      }
+
+      function makeFollowUp(overrides: Record<string, unknown> = {}) {
+        return {
+          id: 'follow-up',
+          text: 'the deploy is still failing',
+          author: { userId: 'U2', fullName: 'Grace', isBot: false },
+          isMention: false,
+          attachments: [],
+          ...overrides,
+        };
+      }
+
+      const sharedConversation = {
+        ...conversation,
+        participants: [
+          { type: 'subscriber', id: 'sub1' },
+          { type: 'subscriber', id: 'sub2' },
+        ],
+      };
+
+      it('keeps following an unmentioned thread while the same person is talking', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({ author: { userId: 'U1', fullName: 'Ada', isBot: false } }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.called).to.equal(false);
+        expect(thread.unsubscribe.called).to.equal(false);
+        expect(thread.subscribe.calledOnce).to.equal(true);
+        expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('names the newcomer and stops answering when a second person speaks', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub2'));
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp() as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.firstCall.args[0]).to.equal('U2');
+        expect(thread.postEphemeral.firstCall.args[2]).to.deep.equal({ fallbackToDM: false });
+        expect(thread.post.called).to.equal(false);
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Grace');
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Support Bot');
+        expect(thread.unsubscribe.calledOnce).to.equal(true);
+        expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.called).to.equal(false);
+      });
+
+      it('still answers a newcomer who mentioned the agent, alongside the notice', async () => {
+        const { handler, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub2'));
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({ isMention: true }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Grace');
+        expect(thread.unsubscribe.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('explains itself once in a thread that was already shared, then goes quiet', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub2'));
+        conversationService.findByPlatformThread.resolves(sharedConversation);
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp() as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.firstCall.args[0]).to.equal('U2');
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Support Bot');
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.not.contain('Grace');
+        expect(thread.unsubscribe.calledOnce).to.equal(true);
+        expect(conversationService.updateMetadata.calledOnce).to.equal(true);
+        expect(conversationService.persistInboundMessage.called).to.equal(false);
+        expect(bridgeExecutor.execute.called).to.equal(false);
+      });
+
+      it('retries the mention notice in a shared thread when Slack rejects the first post', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub2'));
+        conversationService.findByPlatformThread.resolves(sharedConversation);
+        const thread = makeNestedThread();
+        thread.postEphemeral.onFirstCall().rejects(new Error('slack_rate_limited'));
+        thread.postEphemeral.onSecondCall().resolves({ id: 'notice', threadId: 'slack:C1:root-ts' });
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp() as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(conversationService.updateMetadata.called).to.equal(false);
+        expect(thread.unsubscribe.calledOnce).to.equal(true);
+        expect(conversationService.persistInboundMessage.called).to.equal(false);
+        expect(bridgeExecutor.execute.called).to.equal(false);
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp() as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.calledTwice).to.equal(true);
+        expect(conversationService.updateMetadata.calledOnce).to.equal(true);
+        expect(thread.unsubscribe.calledTwice).to.equal(true);
+      });
+
+      it('stops answering unmentioned follow-ups when another agent is already in the thread', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        conversationService.countOtherAgentsOnPlatformThread.resolves(1);
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({ author: { userId: 'U1', fullName: 'Ada', isBot: false } }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.firstCall.args[0]).to.equal('U1');
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Support Bot');
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.not.contain('Ada');
+        expect(thread.unsubscribe.calledOnce).to.equal(true);
+        expect(conversationService.persistInboundMessage.called).to.equal(false);
+        expect(bridgeExecutor.execute.called).to.equal(false);
+      });
+
+      it('answers a mention when another agent is in the thread, alongside the notice', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        conversationService.countOtherAgentsOnPlatformThread.resolves(1);
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            isMention: true,
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Support Bot');
+        expect(thread.unsubscribe.calledOnce).to.equal(true);
+        expect(conversationService.updateMetadata.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('answers a mention the adapter failed to flag in a multi-agent thread', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        conversationService.countOtherAgentsOnPlatformThread.resolves(1);
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: '<@UBOT> what is the status?',
+            isMention: false,
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('answers later mentions in a multi-agent thread without repeating the notice', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        const announcedConversation = {
+          ...conversation,
+          metadata: { [AGENT_REPLY_METADATA_KEYS.smartMentionRequired]: true },
+        };
+        conversationService.countOtherAgentsOnPlatformThread.resolves(1);
+        conversationService.findByPlatformThread.resolves(announcedConversation);
+        conversationService.createOrGetConversation.resolves(announcedConversation);
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            isMention: true,
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.called).to.equal(false);
+        expect(conversationService.updateMetadata.called).to.equal(false);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('answers a mention in a shared thread without re-subscribing or re-explaining', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub2'));
+        conversationService.findByPlatformThread.resolves(sharedConversation);
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({ isMention: true }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.subscribe.called).to.equal(false);
+        expect(thread.postEphemeral.called).to.equal(false);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('names nobody and stops answering when the incumbent mentions a teammate', async () => {
+        const { handler, conversationService, bridgeExecutor, agentConfigResolver } = makeHandler(
+          makeResolvedSubscriberOverrides('sub1')
+        );
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: 'hey <@U99> take a look',
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.firstCall.args[0]).to.equal('U1');
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Support Bot');
+        expect(thread.postEphemeral.firstCall.args[1].markdown).to.not.contain('Ada');
+        expect(thread.unsubscribe.calledOnce).to.equal(true);
+        expect(conversationService.updateMetadata.calledOnce).to.equal(true);
+        expect(conversationService.updateMetadata.firstCall.args[0].ops).to.deep.equal([
+          { action: 'set', key: AGENT_REPLY_METADATA_KEYS.smartMentionRequired, value: true },
+        ]);
+        expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+        expect(
+          agentConfigResolver.resolveSlackInstallation.calledOnceWith('env1', 'org1', 'slack-main', undefined)
+        ).to.equal(true);
+        expect(bridgeExecutor.execute.called).to.equal(false);
+      });
+
+      it('keeps following when the smart mention-required flag cannot be persisted', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        conversationService.updateMetadata.rejects(new Error('metadata write failed'));
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: 'hey <@U99> take a look',
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(conversationService.updateMetadata.calledOnce).to.equal(true);
+        expect(thread.unsubscribe.called).to.equal(false);
+        expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('keeps following when the mention notice cannot be posted', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        const thread = makeNestedThread();
+        thread.postEphemeral.rejects(new Error('slack_rate_limited'));
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: 'hey <@U99> take a look',
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(conversationService.updateMetadata.called).to.equal(false);
+        expect(thread.unsubscribe.called).to.equal(false);
+        expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('keeps following when native ephemeral delivery is unavailable', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        const thread = makeNestedThread();
+        thread.postEphemeral.resolves(null);
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: 'hey <@U99> take a look',
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.postEphemeral.firstCall.args[2]).to.deep.equal({ fallbackToDM: false });
+        expect(conversationService.updateMetadata.called).to.equal(false);
+        expect(thread.unsubscribe.called).to.equal(false);
+        expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('does not mistake a bot-only mention for a teammate when the SDK mention flag is false', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: '<@UBOT> help',
+            isMention: false,
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.called).to.equal(false);
+        expect(thread.unsubscribe.called).to.equal(false);
+        expect(conversationService.updateMetadata.called).to.equal(false);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('still answers when the incumbent mentions a teammate and the agent', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: '<@UBOT> cc <@U99>',
+            isMention: true,
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.calledOnce).to.equal(true);
+        expect(thread.unsubscribe.calledOnce).to.equal(true);
+        expect(conversationService.updateMetadata.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      });
+
+      it('stays quiet on a later unmentioned follow-up after a teammate was mentioned', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        conversationService.findByPlatformThread.resolves({
+          ...conversation,
+          metadata: { [AGENT_REPLY_METADATA_KEYS.smartMentionRequired]: true },
+        });
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({ author: { userId: 'U1', fullName: 'Ada', isBot: false } }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.called).to.equal(false);
+        expect(thread.unsubscribe.calledOnce).to.equal(true);
+        expect(conversationService.persistInboundMessage.called).to.equal(false);
+        expect(bridgeExecutor.execute.called).to.equal(false);
+      });
+    });
+
+    it('drops an unmentioned nested-thread message when the agent has not joined yet', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      conversationService.findByPlatformThread.resolves(null);
+      const unsubscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe: sinon.stub().resolves(undefined),
+        unsubscribe,
+      };
+      const message = {
+        id: 'follow-up',
+        text: 'the deploy is still failing',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: false,
+        attachments: [],
+      };
+
+      await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(unsubscribe.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundMessage.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('persists a channel-root Slack mention under the spawned thread id', async () => {
+      const { handler, conversationService } = makeHandler();
+      conversationService.findByPlatformThread.resolves(null);
+      const subscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:mention-ts' }),
+        subscribe,
+        unsubscribe: sinon.stub().resolves(undefined),
+      };
+      const mention = {
+        id: 'mention-ts',
+        text: '<@UBOT> help',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: true,
+        attachments: [],
+      };
+
+      await handler.handle('agent1', config as any, thread as any, mention as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(conversationService.findByPlatformThread.firstCall.args[4]).to.equal('slack:C1:mention-ts');
+      expect(conversationService.createOrGetConversation.firstCall.args[0].platformThreadId).to.equal(
+        'slack:C1:mention-ts'
+      );
+      expect(subscribe.calledOnce).to.equal(true);
+    });
+
+    it('lets an unmentioned shared-room message settle a pending ask without dispatching a turn', async () => {
+      const { handler, conversationService, bridgeExecutor, humanInteractionInbound } = makeHandler();
+      humanInteractionInbound.hasPendingConversationAsk.resolves(true);
+      const unsubscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe: sinon.stub().resolves(undefined),
+        unsubscribe,
+      };
+      const message = {
+        id: 'follow-up',
+        text: 'staging',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: false,
+        attachments: [],
+      };
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handle(
+        'agent1',
+        mentionOnlyConfig as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(unsubscribe.called).to.equal(false);
+      expect(humanInteractionInbound.tryHandleMessage.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
     it('should dispatch ON_MESSAGE with humanResponse when a conversation HITL ask settles', async () => {
       const settled = {
         identifier: 'hi_1',
@@ -552,6 +1356,77 @@ describe('AgentInboundHandler', () => {
       expect(humanRelayRuntime.dispatch.calledOnce).to.equal(true);
     });
 
+    describe('an Agent Inbox agent open to contacts only', () => {
+      const contactsOnly = { ...config, isHumanRelay: true, inboxReach: 'contacts' };
+      const relayAgent = () => sinon.stub().resolves({ _id: 'agent1', runtime: 'human_relay' });
+
+      async function receive(handler: AgentInboundHandler, agentConfig: Record<string, unknown> = contactsOnly) {
+        const thread = makeSlackDmThread();
+
+        await handler.handle(
+          'agent1',
+          agentConfig as any,
+          thread as any,
+          makeSlackDmMessage() as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        return thread;
+      }
+
+      it('drops a message from someone who is not a contact before anything about it is saved', async () => {
+        const { handler, conversationService, humanRelayRuntime, agentIntegrationRepository } = makeHandler({
+          agentFindOne: relayAgent(),
+        });
+
+        const thread = await receive(handler);
+
+        expect(conversationService.createOrGetConversation.called).to.equal(false);
+        expect(conversationService.persistInboundMessage.called).to.equal(false);
+        expect(agentIntegrationRepository.updateOne.called).to.equal(false);
+        expect(humanRelayRuntime.dispatch.called).to.equal(false);
+        expect(thread.post.called).to.equal(false);
+      });
+
+      it('drops a message from a subscriber an agent made up for an unknown sender', async () => {
+        const { handler, conversationService, humanRelayRuntime } = makeHandler({
+          agentFindOne: relayAgent(),
+          subscriberResolve: sinon.stub().resolves('stranger1'),
+          subscriberFindById: sinon.stub().resolves({
+            _id: 'subscriber-mongo-2',
+            subscriberId: 'stranger1',
+            data: { [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE },
+          }),
+        });
+
+        await receive(handler);
+
+        expect(conversationService.createOrGetConversation.called).to.equal(false);
+        expect(humanRelayRuntime.dispatch.called).to.equal(false);
+      });
+
+      it('takes a message from a contact', async () => {
+        const { handler, conversationService, humanRelayRuntime } = makeHandler({
+          agentFindOne: relayAgent(),
+          ...makeResolvedSubscriberOverrides('ada'),
+        });
+
+        await receive(handler);
+
+        expect(conversationService.createOrGetConversation.calledOnce).to.equal(true);
+        expect(humanRelayRuntime.dispatch.calledOnce).to.equal(true);
+      });
+
+      it('takes a message from anyone while anyone can reach the agent', async () => {
+        const { handler, conversationService, humanRelayRuntime } = makeHandler({ agentFindOne: relayAgent() });
+
+        await receive(handler, { ...contactsOnly, inboxReach: 'anyone' });
+
+        expect(conversationService.createOrGetConversation.calledOnce).to.equal(true);
+        expect(humanRelayRuntime.dispatch.calledOnce).to.equal(true);
+      });
+    });
+
     it('should post no-bridge Slack DM auto-replies with the message-rooted platform thread id', async () => {
       const { handler } = makeHandler({ bridgeError: new NoBridgeUrlError('support-agent') });
       const thread = makeSlackDmThread();
@@ -601,54 +1476,6 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
       expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
       expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution.origin).to.equal(origin);
-    });
-
-    it('should forward the hydrated origin to a managed dispatch on an existing Telegram conversation', async () => {
-      // A live managed session only receives the new turn, so a mid-conversation
-      // hydration write is invisible unless it rides along on the dispatch.
-      const telegramConfig = {
-        ...config,
-        platform: AgentPlatformEnum.TELEGRAM,
-        integrationIdentifier: 'telegram-main',
-        isManaged: true,
-        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
-      };
-      const { handler, conversationService, workflowOriginService, managedAgentService } = makeHandler({
-        ...makeResolvedSubscriberOverrides('sub-tg', 'sub-mongo'),
-        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
-      });
-      const snapshot = makeOriginSnapshot({ platformMessageId: '42' });
-
-      conversationService.findByPlatformThread.resolves({
-        _id: 'conv1',
-        externalSessionId: 'ses_live',
-        channels: [{ platform: AgentPlatformEnum.TELEGRAM, _integrationId: 'int1', platformThreadId: 'telegram:42' }],
-        participants: [],
-      });
-      workflowOriginService.resolve.resolves({ origin: { _id: 'msg1', _notificationId: 'notif1', identifier: '42' } });
-      workflowOriginService.resolveForTurn.resolves(snapshot);
-
-      const thread = {
-        id: 'telegram:42',
-        channelId: '42',
-        isDM: true,
-        toJSON: () => ({ id: 'telegram:42', channelId: '42', isDM: true }),
-        startTyping: sinon.stub().resolves(undefined),
-        post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:42' }),
-      };
-      const message = {
-        id: 'msg-2',
-        threadId: 'telegram:42',
-        text: 'where is it?',
-        author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
-        raw: {},
-        attachments: [],
-      };
-
-      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
-      expect(managedAgentService.dispatch.firstCall.args[0].workflowOrigin).to.deep.equal(snapshot);
     });
 
     it('should read the latest persisted origin on later turns when nothing new hydrates', async () => {
@@ -834,7 +1661,7 @@ describe('AgentInboundHandler', () => {
         isManaged: true,
         subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
       };
-      const { handler, managedAgentService, outboundGateway } = makeHandler({
+      const { handler, managedAgentService, outboundGateway, subscriberResolver } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberFindById: sinon.stub().resolves(null),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
@@ -844,6 +1671,7 @@ describe('AgentInboundHandler', () => {
 
       await handler.handle('agent1', restrictedConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
+      expect(subscriberResolver.resolveOrProvision.called).to.equal(false);
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
@@ -911,7 +1739,7 @@ describe('AgentInboundHandler', () => {
         subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
       };
       const senderEmail = 'unknown@example.com';
-      const { handler, managedAgentService, outboundGateway } = makeHandler({
+      const { handler, managedAgentService, outboundGateway, subscriberResolver } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberFindById: sinon.stub().resolves(null),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
@@ -921,6 +1749,7 @@ describe('AgentInboundHandler', () => {
 
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
+      expect(subscriberResolver.resolveOrProvision.called).to.equal(false);
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
@@ -987,7 +1816,7 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.equal(UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY);
     });
 
-    it('should dispatch keyless managed agent even when subscriber is unresolved (email)', async () => {
+    it('never dispatches a keyless email turn, even when the subscriber is unresolved', async () => {
       const emailConfig = {
         ...config,
         platform: AgentPlatformEnum.EMAIL,
@@ -996,7 +1825,7 @@ describe('AgentInboundHandler', () => {
         isManaged: true,
       };
       const senderEmail = 'tester@example.com';
-      const { handler, managedAgentService, outboundGateway } = makeHandler({
+      const { handler, managedAgentService, outboundGateway, conversationService } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberFindById: sinon.stub().resolves(null),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
@@ -1007,7 +1836,9 @@ describe('AgentInboundHandler', () => {
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(outboundGateway.replyOnThread.called).to.equal(false);
-      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThreadWithCard.called).to.equal(false);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
     });
 
     it('should still gate keyless managed agents on non-email platforms when subscriber is unresolved', async () => {
@@ -1070,33 +1901,6 @@ describe('AgentInboundHandler', () => {
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
     });
 
-    it('should not auto-provision for a restricted email agent and keep the no-access gate', async () => {
-      const emailConfig = {
-        ...config,
-        platform: AgentPlatformEnum.EMAIL,
-        integrationIdentifier: 'email-main',
-        isManaged: true,
-        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
-      };
-      const senderEmail = 'stranger@example.com';
-      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
-      const { handler, managedAgentService, outboundGateway } = makeHandler({
-        subscriberResolve: sinon.stub().resolves(null),
-        subscriberResolveOrProvision: resolveOrProvision,
-        subscriberFindById: sinon.stub().resolves(null),
-        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
-      });
-      const thread = makeEmailDmThread();
-      const message = makeEmailDmMessage(senderEmail);
-
-      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      expect(resolveOrProvision.called).to.equal(false);
-      expect(managedAgentService.dispatch.called).to.equal(false);
-      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
-      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
-    });
-
     it('should not auto-provision for a keyless open-access email agent (demo path owns provisioning)', async () => {
       const emailConfig = {
         ...config,
@@ -1119,8 +1923,97 @@ describe('AgentInboundHandler', () => {
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(resolveOrProvision.called).to.equal(false);
-      // Keyless demo agents bypass the subscriber gate and still dispatch.
-      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+    });
+
+    it('replies with the claim card the gate hands back, and keeps the once-flag', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isKeyless: true,
+      };
+      const address = 'owner@example.com';
+      const {
+        handler,
+        managedAgentService,
+        outboundGateway,
+        keylessEmailGate,
+        connectClaimTokenService,
+        conversationService,
+      } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      keylessEmailGate.resolveOperatorClaimCard.resolves({ title: 'Sign up free', url: 'https://claim.test' });
+      const thread = { ...makeEmailDmThread(), id: `email:${encodeURIComponent(address)}:abc` };
+      const message = makeEmailDmMessage(address);
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThreadWithCard.calledOnce).to.equal(true);
+      // The gate takes the flag before it returns a card. A sent card keeps it.
+      expect(connectClaimTokenService.tryMarkSignupCtaPosted.called).to.equal(false);
+      expect(connectClaimTokenService.releaseSignupCtaPosted.called).to.equal(false);
+      expect(keylessEmailGate.resolveOperatorClaimCard.firstCall.args[0]).to.deep.equal({
+        environmentId: 'env1',
+        organizationId: 'org1',
+        agentId: 'agent1',
+        sender: address,
+      });
+    });
+
+    it('releases the once-flag when the claim email fails to send', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isKeyless: true,
+      };
+      const address = 'owner@example.com';
+      const { handler, outboundGateway, keylessEmailGate, connectClaimTokenService } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      keylessEmailGate.resolveOperatorClaimCard.resolves({ title: 'Sign up free', url: 'https://claim.test' });
+      outboundGateway.replyOnThreadWithCard.rejects(new Error('smtp down'));
+      const thread = { ...makeEmailDmThread(), id: `email:${encodeURIComponent(address)}:abc` };
+
+      await handler.handle(
+        'agent1',
+        emailConfig as any,
+        thread as any,
+        makeEmailDmMessage(address) as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(connectClaimTokenService.releaseSignupCtaPosted.calledOnceWith('human-email:env1')).to.equal(true);
+    });
+
+    it('stays silent, and marks nothing, when the gate withholds a card', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isKeyless: true,
+      };
+      const address = 'owner@example.com';
+      const thread = { ...makeEmailDmThread(), id: `email:${encodeURIComponent(address)}:abc` };
+      const withheld = makeHandler({ subscriberResolve: sinon.stub().resolves(null) });
+
+      await withheld.handler.handle(
+        'agent1',
+        emailConfig as any,
+        thread as any,
+        makeEmailDmMessage(address) as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(withheld.outboundGateway.replyOnThreadWithCard.called).to.equal(false);
+      expect(withheld.connectClaimTokenService.tryMarkSignupCtaPosted.called).to.equal(false);
+      expect(withheld.managedAgentService.dispatch.called).to.equal(false);
     });
 
     it('should not resolve or provision an identity for a spoofed (unverified) open-access email sender', async () => {
@@ -1270,30 +2163,6 @@ describe('AgentInboundHandler', () => {
       });
     });
 
-    it('should not call resolveOrProvision for a restricted Slack agent', async () => {
-      const slackConfig = {
-        ...config,
-        platform: AgentPlatformEnum.SLACK,
-        isManaged: true,
-        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
-      };
-      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
-      const { handler, managedAgentService, outboundGateway } = makeHandler({
-        subscriberResolve: sinon.stub().resolves(null),
-        subscriberResolveOrProvision: resolveOrProvision,
-        subscriberFindById: sinon.stub().resolves(null),
-        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
-      });
-      const thread = makeSlackDmThread();
-      const message = makeSlackDmMessage();
-
-      await handler.handle('agent1', slackConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      expect(resolveOrProvision.called).to.equal(false);
-      expect(managedAgentService.dispatch.called).to.equal(false);
-      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
-    });
-
     it('should call resolveOrProvision for an open Telegram DM (chatId equals author userId)', async () => {
       const telegramConfig = {
         ...config,
@@ -1359,6 +2228,7 @@ describe('AgentInboundHandler', () => {
         toJSON: () => ({ id: 'telegram:-100123', channelId: '-100123', isDM: false }),
         startTyping: sinon.stub().resolves(undefined),
         post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:-100123' }),
+        unsubscribe: sinon.stub().resolves(undefined),
       };
       const message = {
         id: 'msg-1',
@@ -1397,12 +2267,14 @@ describe('AgentInboundHandler', () => {
         toJSON: () => ({ id: 'telegram:-100123', channelId: '-100123', isDM: false }),
         startTyping: sinon.stub().resolves(undefined),
         post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:-100123' }),
+        unsubscribe: sinon.stub().resolves(undefined),
       };
       const message = {
         id: 'msg-1',
         threadId: 'telegram:-100123',
         text: 'hello group',
         author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
+        isMention: true,
         raw: {},
         attachments: [],
       };
@@ -1566,6 +2438,35 @@ describe('AgentInboundHandler', () => {
       expect(thread.post.calledOnce).to.equal(true);
       expect(thread.post.firstCall.args[0]).to.match(/already connected/i);
       expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('keeps the handle of the person who linked, for the chat they linked', async () => {
+      const linkTelegramExecute = sinon.stub().resolves({
+        created: true,
+        subscriberId: 'ext-sub-1',
+        linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
+      });
+      const { handler, contactHandles } = makeHandler({
+        linkTelegramExecute,
+        startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: matchingStartPayload }),
+      });
+      const message = makeStartMessage('/start validcode');
+
+      await handler.handle(
+        'agent1',
+        telegramConfig as any,
+        makeTelegramThread() as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(contactHandles.refresh.calledOnce).to.equal(true);
+      expect(contactHandles.refresh.firstCall.args[0]).to.deep.equal({
+        config: telegramConfig,
+        subscriberId: 'ext-sub-1',
+        platformUserId: '42',
+        message,
+      });
     });
 
     it('does not mark the integration connected on /start alone for the dashboard test identity', async () => {
@@ -1904,6 +2805,23 @@ describe('AgentInboundHandler', () => {
       expect(humanRelayRuntime.dispatch.calledOnce).to.equal(true);
     });
 
+    it('should drop a click from someone who is not a contact when an Agent Inbox agent takes contacts only', async () => {
+      const { handler, conversationService, humanRelayRuntime } = makeHandler({
+        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'human_relay' }),
+      });
+
+      await handler.handleAction(
+        'agent1',
+        { ...config, isHumanRelay: true, inboxReach: 'contacts' } as any,
+        makeActionThread() as any,
+        { id: 'human:hi_1:approve', value: undefined } as any,
+        'user1'
+      );
+
+      expect(conversationService.createOrGetConversation.called).to.equal(false);
+      expect(humanRelayRuntime.dispatch.called).to.equal(false);
+    });
+
     it('should hydrate workflow origin when an action is the first interaction on the thread', async () => {
       const { handler, conversationService, workflowOriginService, bridgeExecutor } = makeHandler(
         makeResolvedSubscriberOverrides()
@@ -1965,21 +2883,6 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.firstCall.args[0].platformContext.threadId).to.equal(platformThreadId);
     });
 
-    it('should not hydrate workflow origin for link-button actions when resolve returns null', async () => {
-      const { handler, workflowOriginService } = makeHandler();
-
-      await handler.handleAction(
-        'agent1',
-        config as any,
-        makeActionThread() as any,
-        { id: 'link-https://novu.co/pricing', value: undefined } as any,
-        'user1'
-      );
-
-      expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
-      expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution).to.equal(null);
-    });
-
     it('should still hydrate workflow origin when a link-button click is the first-ever interaction on a seeded thread', async () => {
       const { handler, conversationService, workflowOriginService } = makeHandler(makeResolvedSubscriberOverrides());
 
@@ -2007,27 +2910,6 @@ describe('AgentInboundHandler', () => {
       expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution).to.include({
         notificationId: 'notif1',
       });
-    });
-
-    it('should still dispatch the action when workflow origin resolve returns null', async () => {
-      const { handler, conversationService, workflowOriginService, bridgeExecutor } = makeHandler(
-        makeResolvedSubscriberOverrides()
-      );
-
-      conversationService.findByPlatformThread.resolves(null);
-      workflowOriginService.resolve.resolves(null);
-
-      await handler.handleAction(
-        'agent1',
-        config as any,
-        makeActionThread() as any,
-        { id: 'ack', value: undefined } as any,
-        'user1'
-      );
-
-      expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
-      expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution).to.equal(null);
-      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
     });
   });
 
@@ -2103,6 +2985,344 @@ describe('AgentInboundHandler', () => {
       const params = bridgeExecutor.execute.firstCall.args[0];
       expect(params.event).to.equal(AgentEventEnum.ON_REACTION);
       expect(params.workflowOrigin).to.deep.equal(snapshot);
+    });
+
+    it('dispatches reactions in a mention-only room without applying the reply-policy gate', async () => {
+      const { handler, bridgeExecutor } = makeHandler();
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handleReaction('agent1', mentionOnlyConfig as any, makeReactionEvent() as any);
+
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_REACTION);
+    });
+  });
+
+  describe('handleMessageUpdated', () => {
+    it('appends an edit and dispatches ON_MESSAGE_UPDATED with previousMessage', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      const previousMessage = {
+        id: 'msg-1',
+        text: 'where is order 1234?',
+        author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+      };
+      const message = {
+        ...previousMessage,
+        text: 'where is order 4321?',
+        raw: {},
+      };
+
+      await handler.handleMessageUpdated(
+        'agent1',
+        config as any,
+        { id: 'thread1', isDM: true } as any,
+        message as any,
+        previousMessage as any
+      );
+
+      expect(conversationService.updateInboundMessage.calledOnce).to.equal(true);
+      expect(conversationService.updateInboundMessage.firstCall.args[0]).to.include({
+        conversationId: conversation._id,
+        platformMessageId: 'msg-1',
+        content: 'where is order 4321?',
+      });
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      const params = bridgeExecutor.execute.firstCall.args[0];
+      expect(params.event).to.equal(AgentEventEnum.ON_MESSAGE_UPDATED);
+      expect(params.message.text).to.equal('where is order 4321?');
+      expect(params.previousMessage.text).to.equal('where is order 1234?');
+    });
+
+    it('persists an edit but skips dispatch when the plan gate blocks', async () => {
+      const { handler, conversationService, bridgeExecutor, planLimitGate } = makeHandler();
+      planLimitGate.maybeBlock.resolves(true);
+
+      await handler.handleMessageUpdated(
+        'agent1',
+        config as any,
+        { id: 'thread1', isDM: true } as any,
+        {
+          id: 'msg-1',
+          text: 'where is order 4321?',
+          author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          raw: {},
+        } as any
+      );
+
+      expect(conversationService.updateInboundMessage.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('persists an unmentioned edit in a mention-only room but skips dispatch', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handleMessageUpdated(
+        'agent1',
+        mentionOnlyConfig as any,
+        { id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false } as any,
+        {
+          id: 'msg-1',
+          text: 'deploy is at 5pm',
+          author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          isMention: false,
+          raw: {},
+        } as any
+      );
+
+      expect(conversationService.updateInboundMessage.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('dispatches an edit that mentions the agent in a mention-only room', async () => {
+      const { handler, bridgeExecutor } = makeHandler();
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handleMessageUpdated(
+        'agent1',
+        mentionOnlyConfig as any,
+        { id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false } as any,
+        {
+          id: 'msg-1',
+          text: '@bot deploy is at 5pm',
+          author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          isMention: true,
+          raw: {},
+        } as any
+      );
+
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_MESSAGE_UPDATED);
+    });
+
+    it('skips persisting and dispatching an edit of a bot-authored message without throwing', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+
+      await handler.handleMessageUpdated(
+        'agent1',
+        config as any,
+        { id: 'thread1', isDM: true } as any,
+        {
+          id: 'msg-1',
+          text: 'streamed reply',
+          author: { userId: 'bot1', fullName: 'Bot', userName: 'bot', isBot: true },
+          raw: {},
+        } as any
+      );
+
+      expect(conversationService.updateInboundMessage.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+  });
+
+  describe('handleMessageDeleted', () => {
+    it('appends a delete tombstone and dispatches ON_MESSAGE_DELETED', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler({
+        history: [
+          { platformMessageId: 'msg-1', content: 'where is order 1234?', senderId: 'user1', senderName: 'Ada' },
+        ],
+      });
+
+      await handler.handleMessageDeleted(
+        'agent1',
+        config as any,
+        {
+          messageId: 'msg-1',
+          threadId: 'thread1',
+          channelId: 'C1',
+          previousMessage: {
+            id: 'msg-1',
+            text: 'where is order 1234?',
+            author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          },
+          raw: {},
+        } as any
+      );
+
+      expect(conversationService.deleteInboundMessage.calledOnce).to.equal(true);
+      expect(conversationService.deleteInboundMessage.firstCall.args[0]).to.include({
+        conversationId: conversation._id,
+        platformMessageId: 'msg-1',
+        content: 'where is order 1234?',
+      });
+      const params = bridgeExecutor.execute.firstCall.args[0];
+      expect(params.event).to.equal(AgentEventEnum.ON_MESSAGE_DELETED);
+      expect(params.message.id).to.equal('msg-1');
+      expect(params.message.text).to.equal('where is order 1234?');
+    });
+
+    it('persists a delete in a mention-only shared room but skips dispatch', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      conversationService.findByPlatformThread.resolves({ ...conversation, isDirectMessage: false });
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handleMessageDeleted(
+        'agent1',
+        mentionOnlyConfig as any,
+        {
+          messageId: 'msg-1',
+          threadId: 'slack:C1:root-ts',
+          channelId: 'slack:C1',
+          previousMessage: {
+            id: 'msg-1',
+            text: 'deploy is at 3pm',
+            author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          },
+          raw: {},
+        } as any
+      );
+
+      expect(conversationService.deleteInboundMessage.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('skips a delete without a previous message in a mention-only room even when the stored row exists', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler({
+        history: [{ platformMessageId: 'msg-1', content: '@bot deploy is at 3pm', senderId: 'user1' }],
+      });
+      conversationService.findByPlatformThread.resolves({ ...conversation, isDirectMessage: false });
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handleMessageDeleted(
+        'agent1',
+        mentionOnlyConfig as any,
+        { messageId: 'msg-1', threadId: 'slack:C1:root-ts', channelId: 'slack:C1', raw: {} } as any
+      );
+
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('dispatches a delete in a mention-only direct message', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      conversationService.findByPlatformThread.resolves({ ...conversation, isDirectMessage: true });
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handleMessageDeleted(
+        'agent1',
+        mentionOnlyConfig as any,
+        {
+          messageId: 'msg-1',
+          threadId: 'slack:D1:',
+          channelId: 'slack:D1',
+          previousMessage: {
+            id: 'msg-1',
+            text: 'deploy is at 3pm',
+            author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          },
+          raw: {},
+        } as any
+      );
+
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_MESSAGE_DELETED);
+    });
+  });
+
+  describe('edits, deletes and reactions on an Agent Inbox agent open to contacts only', () => {
+    const contactsOnly = { ...config, isHumanRelay: true, inboxReach: 'contacts' };
+    const author = { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false };
+
+    async function editDeleteAndReact(handler: AgentInboundHandler) {
+      await handler.handleMessageUpdated(
+        'agent1',
+        contactsOnly as any,
+        { id: 'thread1', isDM: true } as any,
+        { id: 'msg-1', text: 'replaced text', author, raw: {} } as any
+      );
+      await handler.handleMessageDeleted(
+        'agent1',
+        contactsOnly as any,
+        {
+          messageId: 'msg-1',
+          threadId: 'thread1',
+          channelId: 'C1',
+          previousMessage: { id: 'msg-1', text: 'hello', author },
+          raw: {},
+        } as any
+      );
+      await handler.handleReaction('agent1', contactsOnly as any, { ...makeReactionEvent(), user: author } as any);
+    }
+
+    it('keeps someone who is not a contact from changing what the inbox holds', async () => {
+      const { handler, conversationService, bridgeExecutor, humanRelayRuntime } = makeHandler();
+
+      await editDeleteAndReact(handler);
+
+      expect(conversationService.updateInboundMessage.called).to.equal(false);
+      expect(conversationService.deleteInboundMessage.called).to.equal(false);
+      expect(conversationService.persistInboundReaction.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+      expect(humanRelayRuntime.dispatch.called).to.equal(false);
+    });
+
+    it('keeps out a subscriber an agent made up for an unknown sender', async () => {
+      const { handler, conversationService } = makeHandler({
+        subscriberResolve: sinon.stub().resolves('stranger1'),
+        subscriberFindById: sinon.stub().resolves({
+          _id: 'subscriber-mongo-2',
+          subscriberId: 'stranger1',
+          data: { [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE },
+        }),
+      });
+
+      await editDeleteAndReact(handler);
+
+      expect(conversationService.updateInboundMessage.called).to.equal(false);
+      expect(conversationService.deleteInboundMessage.called).to.equal(false);
+      expect(conversationService.persistInboundReaction.called).to.equal(false);
+    });
+
+    it('still takes them from a contact', async () => {
+      const { handler, conversationService } = makeHandler(makeResolvedSubscriberOverrides('ada'));
+
+      await editDeleteAndReact(handler);
+
+      expect(conversationService.updateInboundMessage.calledOnce).to.equal(true);
+      expect(conversationService.deleteInboundMessage.calledOnce).to.equal(true);
+      expect(conversationService.findSourceActivity.called).to.equal(true);
+    });
+
+    function deleteWithoutAuthor(handler: AgentInboundHandler) {
+      return handler.handleMessageDeleted(
+        'agent1',
+        contactsOnly as any,
+        { messageId: 'msg-1', threadId: 'thread1', channelId: 'C1', raw: {} } as any
+      );
+    }
+
+    it('takes a delete with no author on the event from a contact, as the stored message names them', async () => {
+      const { handler, conversationService } = makeHandler({
+        history: [
+          {
+            platformMessageId: 'msg-1',
+            content: 'hello',
+            senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+            senderId: 'ada',
+          },
+        ],
+        subscriberFindById: sinon.stub().resolves({ _id: 'subscriber-mongo-1', subscriberId: 'ada' }),
+      });
+
+      await deleteWithoutAuthor(handler);
+
+      expect(conversationService.deleteInboundMessage.calledOnce).to.equal(true);
+    });
+
+    it('drops a delete with no author on the event when the stored message came from a stranger', async () => {
+      const { handler, conversationService } = makeHandler({
+        history: [
+          {
+            platformMessageId: 'msg-1',
+            content: 'hello',
+            senderType: ConversationActivitySenderTypeEnum.PLATFORM_USER,
+            senderId: 'slack:user1',
+          },
+        ],
+      });
+
+      await deleteWithoutAuthor(handler);
+
+      expect(conversationService.deleteInboundMessage.called).to.equal(false);
     });
   });
 });

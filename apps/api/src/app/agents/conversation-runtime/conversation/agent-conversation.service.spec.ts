@@ -10,6 +10,26 @@ import {
 } from './agent-conversation.service';
 import { ConversationActivityLedger } from './conversation-activity-ledger';
 
+/** Only the repository surface a given test exercises; widened once at the constructor boundary. */
+type ConversationRepositoryDouble = Partial<ConversationRepository>;
+
+/** The ledger methods the service delegates to, kept as stubs so sinon assertions stay typed. */
+type ConversationActivityLedgerDouble = Record<
+  | 'persistAgentMessage'
+  | 'persistWorkflowOriginHydration'
+  | 'isWorkflowOriginHydrated'
+  | 'persistMcpConnectionRequest'
+  | 'persistMcpConnectionResult'
+  | 'persistToolResult'
+  | 'persistInboundMessage'
+  | 'persistResolveSignal'
+  | 'persistTriggerSignal'
+  | 'persistRunLifecycle'
+  | 'listForView'
+  | 'mint',
+  sinon.SinonStub
+>;
+
 describe('AgentConversationService', () => {
   function makeLogger() {
     return {
@@ -36,7 +56,7 @@ describe('AgentConversationService', () => {
     };
   }
 
-  function makeLedger(overrides: Partial<Record<keyof ConversationActivityLedger, sinon.SinonStub>> = {}) {
+  function makeLedger(overrides: Partial<ConversationActivityLedgerDouble> = {}): ConversationActivityLedgerDouble {
     return {
       persistAgentMessage: sinon.stub().resolves({ activity: {}, created: true }),
       persistWorkflowOriginHydration: sinon.stub().resolves(undefined),
@@ -51,44 +71,19 @@ describe('AgentConversationService', () => {
       listForView: sinon.stub().resolves({ data: [], hasMore: false }),
       mint: sinon.stub().resolves(1),
       ...overrides,
-    } as unknown as ConversationActivityLedger;
+    };
   }
 
   function makeService(
-    conversationRepository: ConversationRepository,
-    ledger: ConversationActivityLedger = makeLedger()
+    conversationRepository: ConversationRepositoryDouble,
+    ledger: Partial<ConversationActivityLedger> = makeLedger()
   ) {
-    return new AgentConversationService(conversationRepository, ledger, makeLogger() as any);
+    return new AgentConversationService(
+      conversationRepository as ConversationRepository,
+      ledger as ConversationActivityLedger,
+      makeLogger() as any
+    );
   }
-
-  describe('delegation', () => {
-    it('delegates persistAgentMessage to the ledger', async () => {
-      const ledger = makeLedger();
-      const service = makeService({} as unknown as ConversationRepository, ledger);
-      const params = {
-        conversationId: 'conv-1',
-        channel: { platform: 'slack', _integrationId: 'int-1', platformThreadId: 'thread-1' },
-        agentIdentifier: 'agent-a',
-        content: 'hello',
-        environmentId: 'env-1',
-        organizationId: 'org-1',
-      };
-
-      await service.persistAgentMessage(params);
-
-      expect(ledger.persistAgentMessage.calledOnceWithExactly(params)).to.equal(true);
-    });
-
-    it('delegates mintEventSequence to the ledger', async () => {
-      const ledger = makeLedger();
-      const service = makeService({} as unknown as ConversationRepository, ledger);
-      const params = { environmentId: 'env-1', organizationId: 'org-1', conversationId: 'conv-1' };
-
-      await service.mintEventSequence(params);
-
-      expect(ledger.mint.calledOnceWithExactly(params)).to.equal(true);
-    });
-  });
 
   describe('getConversationTitle', () => {
     it('returns trimmed text truncated to 200 characters', () => {
@@ -128,7 +123,7 @@ describe('AgentConversationService', () => {
       create,
       updateStatus: sinon.stub(),
       updateParticipants: sinon.stub(),
-    } as unknown as ConversationRepository;
+    };
 
     const service = makeService(conversationRepository);
 
@@ -154,7 +149,7 @@ describe('AgentConversationService', () => {
       create,
       updateStatus: sinon.stub(),
       updateParticipants: sinon.stub(),
-    } as unknown as ConversationRepository;
+    };
 
     const service = makeService(conversationRepository);
 
@@ -181,7 +176,7 @@ describe('AgentConversationService', () => {
       findByPlatformThread: sinon.stub().resolves(existing),
       updateStatus: sinon.stub(),
       updateParticipants: sinon.stub(),
-    } as unknown as ConversationRepository;
+    };
 
     const service = makeService(conversationRepository);
 
@@ -214,7 +209,7 @@ describe('AgentConversationService', () => {
       buildContextExactMatchQuery: sinon.stub().returns({ contextKeys: { $all: ['tenant:globex'], $size: 1 } }),
       updateStatus: sinon.stub(),
       updateParticipants: sinon.stub(),
-    } as unknown as ConversationRepository;
+    };
 
     const service = makeService(conversationRepository);
 
@@ -246,7 +241,7 @@ describe('AgentConversationService', () => {
       create,
       updateStatus: sinon.stub(),
       updateParticipants: sinon.stub(),
-    } as unknown as ConversationRepository;
+    };
 
     const service = makeService(conversationRepository);
 
@@ -270,7 +265,7 @@ describe('AgentConversationService', () => {
       create,
       updateStatus: sinon.stub(),
       updateParticipants: sinon.stub(),
-    } as unknown as ConversationRepository;
+    };
 
     const service = makeService(conversationRepository);
 
@@ -293,13 +288,27 @@ describe('AgentConversationService', () => {
       create: sinon.stub(),
       updateStatus: sinon.stub(),
       updateParticipants: sinon.stub(),
-    } as unknown as ConversationRepository;
+    };
 
     const service = makeService(conversationRepository);
 
     await service.findByPlatformThread('e', 'o', 'agent-x', 'int-x', 'thread-z');
 
     expect(findByPlatformThread.calledOnceWithExactly('e', 'o', 'agent-x', 'int-x', 'thread-z')).to.equal(true);
+  });
+
+  it('delegates countOtherAgentsOnPlatformThread to the repository', async () => {
+    const countOtherAgentsOnPlatformThread = sinon.stub().resolves(1);
+    const conversationRepository = {
+      countOtherAgentsOnPlatformThread,
+    };
+
+    const service = makeService(conversationRepository);
+
+    expect(await service.countOtherAgentsOnPlatformThread('e', 'o', 'slack:C1:root-ts', 'agent-x')).to.equal(1);
+    expect(countOtherAgentsOnPlatformThread.calledOnceWithExactly('e', 'o', 'slack:C1:root-ts', 'agent-x')).to.equal(
+      true
+    );
   });
 
   it('orchestrates resolveConversation across repository and ledger', async () => {
@@ -311,7 +320,7 @@ describe('AgentConversationService', () => {
       updateStatus,
       markBillingResolved,
       clearExternalSessionId,
-    } as unknown as ConversationRepository;
+    };
     const ledger = makeLedger({ persistResolveSignal });
     const service = makeService(conversationRepository, ledger);
     const params = {

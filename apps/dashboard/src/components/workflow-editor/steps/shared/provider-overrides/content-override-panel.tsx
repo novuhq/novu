@@ -1,28 +1,33 @@
-import { type ContentOverrideProviderId } from '@novu/shared';
 import { Undo2 } from 'lucide-react';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { RiErrorWarningFill } from 'react-icons/ri';
-import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import {
-  DEFAULT_CONTENT_SOURCE,
-  getContentSourceLabel,
-  getUnsupportedOverrideKeys,
-  isContentOverrideProviderId,
-  type OverrideChannel,
-  PROVIDER_OVERRIDES_FIELD,
-  type ProviderOverrideOption,
-  type ProviderOverrides,
-  shouldKeepServerOverrideIssue,
-} from './content-source';
 import { useContentSource } from './content-source-context';
 import { ContentSourceSelector } from './content-source-selector';
+import { MergesOverBar } from './merges-over-bar';
+import { buildOverrideInheritance } from './override-inheritance';
+import { buildOverrideIssueIndex, countOverrideIssues, type OverrideServerIssue } from './override-issues';
+import { getOverrideProviderDisplayName, type ProviderOverrideOption } from './override-options';
+import {
+  DEFAULT_CONTENT_SOURCE,
+  getOverrideFormField,
+  getOverridePath,
+  getSourceOverride,
+  isSameContentSource,
+  listSourceOverrides,
+  type OverrideChannel,
+  type OverrideContentSource,
+  type OverrideValues,
+  updateSourceOverride,
+} from './override-source';
 import { ProviderOverrideEditor, type ProviderOverrideEditorProps } from './provider-override-editor';
+import { RemoveOverrideModal } from './remove-override-modal';
+import { readOverrideValues } from './use-provider-override-options';
 
 /** Per-provider customizations a channel can layer onto the generic override editor. */
 export type ProviderOverrideEditorExtras = Pick<
@@ -30,10 +35,12 @@ export type ProviderOverrideEditorExtras = Pick<
   'notice' | 'headerTooltip' | 'placeholder' | 'rootSchemaOverride' | 'describeField' | 'annotateField'
 >;
 
+const NO_SERVER_ISSUES: OverrideServerIssue[] = [];
+
 type ContentOverridePanelProps = {
   channel: OverrideChannel;
   providerOptions: ProviderOverrideOption[];
-  providerOverrides: ProviderOverrides | undefined;
+  overrides: OverrideValues;
   defaultContent: ReactNode;
   /**
    * Rendered at the top-right inside the TabsSection when showing default content
@@ -41,13 +48,13 @@ type ContentOverridePanelProps = {
    */
   defaultContentActions?: ReactNode;
   showEscapeHatchBadge?: boolean;
-  getEditorExtras?: (providerId: ContentOverrideProviderId) => ProviderOverrideEditorExtras;
+  getEditorExtras?: (source: OverrideContentSource) => ProviderOverrideEditorExtras;
 };
 
 export function ContentOverridePanel({
   channel,
   providerOptions,
-  providerOverrides,
+  overrides,
   defaultContent,
   defaultContentActions,
   showEscapeHatchBadge,
@@ -58,122 +65,81 @@ export function ContentOverridePanel({
   const { step } = useWorkflow();
   const { selectedSource, setSelectedSource } = useContentSource();
   const { isReadOnly } = useStepEditor();
-  // Only one override editor is mounted at a time, so at most one provider can have an uncommitted parse error.
-  const [draftParseErrorProviderId, setDraftParseErrorProviderId] = useState<string | null>(null);
-  const [pendingResetProviderId, setPendingResetProviderId] = useState<ContentOverrideProviderId | null>(null);
+  // Only one override editor is mounted at a time, so at most one override can have an uncommitted parse error.
+  const [draftParseErrorPath, setDraftParseErrorPath] = useState<string | null>(null);
+  const [pendingResetSource, setPendingResetSource] = useState<OverrideContentSource | null>(null);
+
+  const overrideSource =
+    selectedSource !== DEFAULT_CONTENT_SOURCE && getSourceOverride(selectedSource, overrides) !== undefined
+      ? selectedSource
+      : undefined;
 
   useEffect(() => {
-    if (selectedSource !== DEFAULT_CONTENT_SOURCE && !(selectedSource in (providerOverrides ?? {}))) {
+    if (selectedSource !== DEFAULT_CONTENT_SOURCE && !overrideSource) {
       setSelectedSource(DEFAULT_CONTENT_SOURCE);
     }
-  }, [selectedSource, providerOverrides, setSelectedSource]);
+  }, [selectedSource, overrideSource, setSelectedSource]);
 
-  const unsupportedKeyCountByProvider = useMemo(() => {
-    const counts = new Map<string, number>();
+  const sourceOverrides = useMemo(() => listSourceOverrides(channel, overrides), [channel, overrides]);
 
-    for (const [providerId, override] of Object.entries(providerOverrides ?? {})) {
-      if (!isContentOverrideProviderId(channel, providerId)) {
-        continue;
-      }
+  const overrideInheritance = useMemo(
+    () => (overrideSource ? buildOverrideInheritance(overrideSource, providerOptions, overrides) : undefined),
+    [overrideSource, providerOptions, overrides]
+  );
 
-      const unsupportedCount = getUnsupportedOverrideKeys(providerId, override).length;
-      if (unsupportedCount > 0) {
-        counts.set(providerId, unsupportedCount);
-      }
+  const issueIndex = useMemo(
+    () => buildOverrideIssueIndex(step?.issues?.controls, sourceOverrides),
+    [sourceOverrides, step?.issues?.controls]
+  );
+
+  const sourcePathsWithErrors = useMemo(() => {
+    const paths = new Set(issueIndex.keys());
+
+    if (draftParseErrorPath) {
+      paths.add(draftParseErrorPath);
     }
 
-    return counts;
-  }, [channel, providerOverrides]);
-
-  const otherServerIssueCountByProvider = useMemo(() => {
-    const counts = new Map<string, number>();
-    const controlIssues = step?.issues?.controls ?? {};
-    const prefix = `${PROVIDER_OVERRIDES_FIELD}.`;
-
-    for (const [key, issueList] of Object.entries(controlIssues)) {
-      if (!key.startsWith(prefix)) {
-        continue;
-      }
-
-      const providerId = key.slice(prefix.length).split('.')[0];
-      const providerPathPrefix = `${PROVIDER_OVERRIDES_FIELD}.${providerId}`;
-      // Mirror the editor: top-level UNSUPPORTED_PROPERTY is counted via
-      // getUnsupportedOverrideKeys; nested ones only exist on the server issues.
-      const otherCount = issueList.filter((issue) =>
-        shouldKeepServerOverrideIssue(issue, key, providerPathPrefix)
-      ).length;
-      if (otherCount > 0) {
-        counts.set(providerId, (counts.get(providerId) ?? 0) + otherCount);
-      }
-    }
-
-    return counts;
-  }, [step?.issues?.controls]);
-
-  const providersWithErrors = useMemo(() => {
-    const merged = new Set([...unsupportedKeyCountByProvider.keys(), ...otherServerIssueCountByProvider.keys()]);
-
-    if (draftParseErrorProviderId) {
-      merged.add(draftParseErrorProviderId);
-    }
-
-    return merged;
-  }, [draftParseErrorProviderId, unsupportedKeyCountByProvider, otherServerIssueCountByProvider]);
+    return paths;
+  }, [draftParseErrorPath, issueIndex]);
 
   const totalErrorCount = useMemo(() => {
-    let total = draftParseErrorProviderId ? 1 : 0;
+    let total = draftParseErrorPath ? 1 : 0;
 
-    for (const unsupportedCount of unsupportedKeyCountByProvider.values()) {
-      total += unsupportedCount;
-    }
-
-    for (const otherCount of otherServerIssueCountByProvider.values()) {
-      total += otherCount;
+    for (const issues of issueIndex.values()) {
+      total += countOverrideIssues(issues);
     }
 
     return total;
-  }, [otherServerIssueCountByProvider, unsupportedKeyCountByProvider, draftParseErrorProviderId]);
+  }, [draftParseErrorPath, issueIndex]);
 
-  const handleDraftParseValidityChange = useCallback((providerId: string, isParseValid: boolean) => {
-    setDraftParseErrorProviderId(isParseValid ? null : providerId);
+  const handleDraftParseValidityChange = useCallback((overridePath: string, isParseValid: boolean) => {
+    setDraftParseErrorPath(isParseValid ? null : overridePath);
   }, []);
 
   const handleAddOverride = useCallback(
-    (providerId: ContentOverrideProviderId) => {
-      const current = (getValues(PROVIDER_OVERRIDES_FIELD) as ProviderOverrides | undefined) ?? {};
-      if (providerId in current) {
-        setSelectedSource(providerId);
-
-        return;
+    (source: OverrideContentSource) => {
+      const current = readOverrideValues(getValues);
+      if (getSourceOverride(source, current) === undefined) {
+        setValue(getOverrideFormField(source), updateSourceOverride(source, current, {}), { shouldDirty: true });
+        saveForm();
       }
 
-      const next = {
-        ...current,
-        [providerId]: {},
-      };
-      setValue(PROVIDER_OVERRIDES_FIELD, next, { shouldDirty: true });
-      setSelectedSource(providerId);
-      saveForm();
+      setSelectedSource(source);
     },
     [getValues, saveForm, setValue, setSelectedSource]
   );
 
   const handleRemoveOverride = useCallback(
-    (providerId: ContentOverrideProviderId) => {
-      const current = (getValues(PROVIDER_OVERRIDES_FIELD) as ProviderOverrides | undefined) ?? {};
-      if (!(providerId in current)) {
+    (source: OverrideContentSource) => {
+      const current = readOverrideValues(getValues);
+      if (getSourceOverride(source, current) === undefined) {
         return;
       }
 
-      const next = { ...current };
-      delete next[providerId];
+      setValue(getOverrideFormField(source), updateSourceOverride(source, current, undefined), { shouldDirty: true });
+      setDraftParseErrorPath(null);
 
-      // null = delete-all contract; undefined would be omitted and leave STEP_PROVIDER_CONTROLS docs intact.
-      const cleaned = Object.keys(next).length > 0 ? next : null;
-      setValue(PROVIDER_OVERRIDES_FIELD, cleaned, { shouldDirty: true });
-      setDraftParseErrorProviderId(null);
-
-      if (selectedSource === providerId) {
+      if (isSameContentSource(selectedSource, source)) {
         setSelectedSource(DEFAULT_CONTENT_SOURCE);
       }
 
@@ -183,38 +149,32 @@ export function ContentOverridePanel({
   );
 
   const handleJumpToFirstError = useCallback(() => {
-    const firstProviderWithError = providerOptions.find(
-      (option) => option.hasOverride && providersWithErrors.has(option.providerId)
-    );
+    const firstOptionWithError = providerOptions
+      .flatMap((option) => [option, ...option.integrations])
+      .find((option) => option.hasOverride && sourcePathsWithErrors.has(getOverridePath(option.source)));
 
-    if (firstProviderWithError) {
-      setSelectedSource(firstProviderWithError.providerId);
+    if (firstOptionWithError) {
+      setSelectedSource(firstOptionWithError.source);
     }
-  }, [providerOptions, providersWithErrors, setSelectedSource]);
+  }, [providerOptions, sourcePathsWithErrors, setSelectedSource]);
 
   const handleConfirmReset = useCallback(() => {
-    if (pendingResetProviderId) {
-      handleRemoveOverride(pendingResetProviderId);
+    if (pendingResetSource) {
+      handleRemoveOverride(pendingResetSource);
     }
 
-    setPendingResetProviderId(null);
-  }, [handleRemoveOverride, pendingResetProviderId]);
-
-  const overrideProviderId =
-    selectedSource !== DEFAULT_CONTENT_SOURCE && selectedSource in (providerOverrides ?? {})
-      ? selectedSource
-      : undefined;
-  const showingOverride = overrideProviderId !== undefined;
-  const selectedOption = providerOptions.find((option) => option.providerId === overrideProviderId);
+    setPendingResetSource(null);
+  }, [handleRemoveOverride, pendingResetSource]);
 
   return (
     <div className="-mx-3 -mt-3 flex h-full min-h-0 flex-col">
       <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
         <ContentSourceSelector
-          selectedSource={showingOverride ? selectedSource : DEFAULT_CONTENT_SOURCE}
+          selectedSource={overrideSource ?? DEFAULT_CONTENT_SOURCE}
           providers={providerOptions}
-          invalidProviderIds={providersWithErrors}
+          invalidSourcePaths={sourcePathsWithErrors}
           showEscapeHatchBadge={showEscapeHatchBadge}
+          overrideCount={sourceOverrides.length}
           onSelectSource={setSelectedSource}
           onAddOverride={handleAddOverride}
         />
@@ -236,27 +196,33 @@ export function ContentOverridePanel({
             </TooltipContent>
           </Tooltip>
         )}
-        {overrideProviderId && (
+        {overrideSource && (
           <button
             type="button"
             className="border-stroke-soft bg-bg-white text-label-xs text-text-strong hover:bg-bg-weak flex h-7 items-center gap-1 border-r pl-1.5 pr-2 transition-colors disabled:opacity-50"
-            onClick={() => setPendingResetProviderId(overrideProviderId)}
+            onClick={() => setPendingResetSource(overrideSource)}
             disabled={isReadOnly}
           >
             <Undo2 className="size-3.5" />
-            <span>Reset to default</span>
+            <span>Remove override</span>
           </button>
         )}
         <div className="h-full flex-1" />
       </div>
 
-      <TabsSection className="flex min-h-0 flex-1 flex-col p-3">
-        {overrideProviderId ? (
+      <TabsSection className="flex min-h-0 flex-1 flex-col gap-0 p-3">
+        <MergesOverBar inheritance={overrideInheritance} onSelectSource={setSelectedSource} />
+        {overrideSource ? (
+          // Keyed per source: the editor's Controller binds `providerOverrides` or `integrationOverrides`,
+          // and react-hook-form unregisters (drops the value of) a Controller's previous field on rename.
           <ProviderOverrideEditor
-            providerId={overrideProviderId}
-            displayName={selectedOption?.displayName ?? getContentSourceLabel(overrideProviderId)}
+            key={getOverridePath(overrideSource)}
+            source={overrideSource}
+            displayName={getOverrideProviderDisplayName(overrideSource.providerId)}
+            inheritance={overrideInheritance}
+            serverIssues={issueIndex.get(getOverridePath(overrideSource))?.serverIssues ?? NO_SERVER_ISSUES}
             onDraftParseValidityChange={handleDraftParseValidityChange}
-            {...getEditorExtras?.(overrideProviderId)}
+            {...getEditorExtras?.(overrideSource)}
           />
         ) : (
           defaultContent && (
@@ -272,23 +238,12 @@ export function ContentOverridePanel({
         )}
       </TabsSection>
 
-      <ConfirmationModal
-        open={pendingResetProviderId !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setPendingResetProviderId(null);
-          }
-        }}
+      <RemoveOverrideModal
+        source={pendingResetSource}
+        providerOptions={providerOptions}
+        overrides={overrides}
         onConfirm={handleConfirmReset}
-        title="Reset to default content?"
-        description={
-          <>
-            This will remove the {pendingResetProviderId ? getContentSourceLabel(pendingResetProviderId) : 'provider'}{' '}
-            override and restore the default content for this step. This action cannot be undone.
-          </>
-        }
-        confirmButtonText="Reset to default"
-        confirmButtonVariant="error"
+        onCancel={() => setPendingResetSource(null)}
       />
     </div>
   );

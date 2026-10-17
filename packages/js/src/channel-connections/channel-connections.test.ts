@@ -1,3 +1,4 @@
+import { afterEach, describe, expect, it, test, vi } from 'vitest';
 import { InboxService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { ChannelConnections } from './channel-connections';
@@ -12,9 +13,9 @@ function createChannelConnections(overrides: Partial<MockInboxService> = {}) {
   const emitter = new NovuEventEmitter();
   const inboxService: MockInboxService = {
     isSessionInitialized: true,
-    listChannelConnections: jest.fn(),
-    getChannelConnection: jest.fn(),
-    deleteChannelConnection: jest.fn(),
+    listChannelConnections: vi.fn(),
+    getChannelConnection: vi.fn(),
+    deleteChannelConnection: vi.fn(),
     ...overrides,
   };
 
@@ -40,7 +41,7 @@ const SHARED_CONNECTION: ChannelConnectionResponse = {
 
 describe('ChannelConnections.list()', () => {
   it('returns the subscriber-owned and shared connections together', async () => {
-    const listChannelConnections = jest.fn().mockResolvedValue({ data: [SUBSCRIBER_CONNECTION, SHARED_CONNECTION] });
+    const listChannelConnections = vi.fn().mockResolvedValue({ data: [SUBSCRIBER_CONNECTION, SHARED_CONNECTION] });
     const { channelConnections } = createChannelConnections({ listChannelConnections });
 
     const result = await channelConnections.list();
@@ -51,7 +52,7 @@ describe('ChannelConnections.list()', () => {
   });
 
   it('forwards connectionMode so callers can narrow to shared connections', async () => {
-    const listChannelConnections = jest.fn().mockResolvedValue({ data: [SHARED_CONNECTION] });
+    const listChannelConnections = vi.fn().mockResolvedValue({ data: [SHARED_CONNECTION] });
     const { channelConnections } = createChannelConnections({ listChannelConnections });
 
     const result = await channelConnections.list({ connectionMode: 'shared' });
@@ -63,12 +64,12 @@ describe('ChannelConnections.list()', () => {
 
 describe('ChannelConnections.get()', () => {
   it('resolves a shared connection by identifier', async () => {
-    const getChannelConnection = jest.fn().mockResolvedValue(SHARED_CONNECTION);
+    const getChannelConnection = vi.fn().mockResolvedValue(SHARED_CONNECTION);
     const { channelConnections } = createChannelConnections({ getChannelConnection });
 
     const result = await channelConnections.get({ identifier: SHARED_CONNECTION.identifier });
 
-    expect(getChannelConnection).toHaveBeenCalledWith(SHARED_CONNECTION.identifier);
+    expect(getChannelConnection).toHaveBeenCalledWith({ identifier: SHARED_CONNECTION.identifier });
     expect(result.data).toEqual(SHARED_CONNECTION);
     expect(result.error).toBeUndefined();
   });
@@ -76,7 +77,7 @@ describe('ChannelConnections.get()', () => {
 
 describe('ChannelConnections.delete()', () => {
   it('deletes a shared connection by identifier', async () => {
-    const deleteChannelConnection = jest.fn().mockResolvedValue(undefined);
+    const deleteChannelConnection = vi.fn().mockResolvedValue(undefined);
     const { channelConnections } = createChannelConnections({ deleteChannelConnection });
 
     const result = await channelConnections.delete({ identifier: SHARED_CONNECTION.identifier });
@@ -94,7 +95,7 @@ describe('InboxService.listChannelConnections network contract', () => {
   });
 
   it('appends connectionMode to the query string', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
+    const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({ data: [SHARED_CONNECTION] }),

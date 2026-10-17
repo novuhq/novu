@@ -25,7 +25,8 @@ const Checkbox = <T extends ValidComponent = 'div'>(props: PolymorphicProps<T, C
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                class="size-4"
+                class="size-4 nt-motion-pop"
+                data-state="open"
               >
                 <path d="M5 12l5 5l10 -10" />
               </svg>
@@ -39,7 +40,8 @@ const Checkbox = <T extends ValidComponent = 'div'>(props: PolymorphicProps<T, C
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                class="size-4"
+                class="size-4 nt-motion-pop"
+                data-state="open"
               >
                 <path d="M5 12l14 0" />
               </svg>

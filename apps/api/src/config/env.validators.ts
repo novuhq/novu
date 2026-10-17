@@ -1,8 +1,35 @@
-import { DEFAULT_NOTIFICATION_RETENTION_DAYS, FeatureFlagsKeysEnum, StringifyEnv } from '@novu/shared';
+import {
+  assertQueueBackendConfig,
+  createThrowingEnvReporter,
+  requiresStandaloneRedis,
+} from '@novu/application-generic';
+import {
+  DEFAULT_NOTIFICATION_RETENTION_DAYS,
+  FeatureFlagsKeysEnum,
+  JobTopicNameEnum,
+  QueueBackend,
+  StringifyEnv,
+} from '@novu/shared';
 import { bool, CleanedEnv, cleanEnv, json, num, port, str, url, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
-  return cleanEnv(process.env, envValidators);
+  const env = cleanEnv(process.env, envValidators, { reporter: createThrowingEnvReporter('api') });
+
+  /*
+   * The API only produces, and only to these three - inbound parse is enqueued
+   * by the SMTP service and process-subscriber by the worker, so demanding
+   * their queue urls here would block boot on config the API never reads.
+   *
+   * It needs the scheduler once BullMQ is gone because snooze puts a delayed
+   * job on the standard queue, and a snooze beyond 900s can then only be
+   * delivered by EventBridge.
+   */
+  assertQueueBackendConfig({
+    topics: [JobTopicNameEnum.STANDARD, JobTopicNameEnum.WORKFLOW, JobTopicNameEnum.WEB_SOCKETS],
+    requiresScheduler: true,
+  });
+
+  return env;
 }
 
 export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
@@ -20,23 +47,28 @@ function getFeatureFlagValidator(key: FeatureFlagsKeysEnum): ValidatorSpec<strin
   return str({ default: undefined });
 }
 
-// Managed-agent (Thalamus) config is a Novu Cloud concern. On self-hosted (or whenever the URL is
-// blank) we must not run envalid's `url()` validator, which rejects an empty string even with a
-// default — a blank `THALAMUS_CF_URL=` is common in self-hosted .env files and would block boot.
+// Managed-agent (Thalamus) config is optional at boot unless the worker URL is set.
+// A blank URL must not run envalid's `url()` validator, which rejects an empty string even
+// with a default. Once the URL is present, the webhook secret is required. The API key stays
+// optional: the worker only checks Authorization when its own API_KEY is set.
+// Do not redeclare these inside the enterprise block: a later spread overrides this one.
 function getThalamusValidators(): {
   THALAMUS_CF_URL: ValidatorSpec<string>;
   THALAMUS_WEBHOOK_SECRET: ValidatorSpec<string>;
+  THALAMUS_CF_API_KEY: ValidatorSpec<string>;
 } {
-  if (processEnv.IS_SELF_HOSTED === 'true' || !processEnv.THALAMUS_CF_URL) {
+  if (!processEnv.THALAMUS_CF_URL) {
     return {
       THALAMUS_CF_URL: str({ default: undefined }),
       THALAMUS_WEBHOOK_SECRET: str({ default: undefined }),
+      THALAMUS_CF_API_KEY: str({ default: undefined }),
     };
   }
 
   return {
     THALAMUS_CF_URL: url(),
     THALAMUS_WEBHOOK_SECRET: str(),
+    THALAMUS_CF_API_KEY: str({ default: undefined }),
   };
 }
 
@@ -47,9 +79,22 @@ export const envValidators = {
   PORT: port(),
   FRONT_BASE_URL: str(),
   DASHBOARD_URL: str({ default: '' }),
+  HUMAN_DASHBOARD_URL: str({ default: '' }),
+  HUMAN_DASHBOARD_API_SECRET: str({ default: '' }),
   DISABLE_USER_REGISTRATION: bool({ default: false }),
-  REDIS_HOST: str(),
-  REDIS_PORT: port(),
+  /*
+   * Standalone Redis. Cluster mode uses ElastiCache for cache, and SQS-only
+   * does not open the BullMQ Redis (MemoryDB), so REDIS_HOST is not required.
+   */
+  ...(requiresStandaloneRedis()
+    ? {
+        REDIS_HOST: str(),
+        REDIS_PORT: port(),
+      }
+    : {
+        REDIS_HOST: str({ default: undefined }),
+        REDIS_PORT: str({ default: undefined }),
+      }),
   REDIS_TLS: json({ default: undefined }),
   REDIS_MASTER_HOST: str({ default: '' }),
   REDIS_MASTER_PORT: str({ default: '' }),
@@ -78,7 +123,12 @@ export const envValidators = {
   STORAGE_SERVICE: str({ default: undefined }),
   WORKER_DEFAULT_CONCURRENCY: num({ default: undefined }),
   WORKER_DEFAULT_LOCK_DURATION: num({ default: undefined }),
-  // SQS queue backend (optional - when unset, jobs are produced to BullMQ only)
+  /*
+   * Which backend the API produces to. `sqs_bullmq` still falls back to BullMQ
+   * when a send fails; `sqs` lets the failure surface instead. See
+   * assertQueueBackendConfig in @novu/application-generic for required env.
+   */
+  QUEUE_BACKEND: str({ choices: Object.values(QueueBackend), default: QueueBackend.BULLMQ }),
   SQS_QUEUE_URL_STANDARD: str({ default: undefined }),
   SQS_QUEUE_URL_WORKFLOW: str({ default: undefined }),
   SQS_QUEUE_URL_PROCESS_SUBSCRIBER: str({ default: undefined }),
@@ -86,8 +136,8 @@ export const envValidators = {
   SQS_ENDPOINT: str({ default: undefined }),
   SQS_PAYLOAD_OFFLOAD_BUCKET: str({ default: undefined }),
   SQS_PAYLOAD_SIZE_THRESHOLD: num({ default: undefined }),
-  // EventBridge Scheduler for delays beyond the SQS 900s cap (optional - when
-  // unset, long delays keep going to BullMQ)
+  // EventBridge Scheduler for delays beyond the SQS 900s cap. Required once
+  // QUEUE_BACKEND=sqs, since long delays then have no BullMQ fallback.
   EVENTBRIDGE_SCHEDULER_GROUP_PREFIX: str({ default: undefined }),
   EVENTBRIDGE_SCHEDULER_ROLE_ARN: str({ default: undefined }),
   EVENTBRIDGE_SCHEDULER_DLQ_ARN: str({ default: undefined }),
@@ -109,7 +159,6 @@ export const envValidators = {
   STEP_RESOLVER_CF_PLACEMENT_REGION: str({ default: undefined }),
   STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
   STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
-  THALAMUS_CF_API_KEY: str({ default: undefined }),
   ...getThalamusValidators(),
   /**
    * Shared inbound domain for the agent default inbox feature, e.g. `agentconnect.sh`.
@@ -158,17 +207,6 @@ export const envValidators = {
       AI_LLM_PROMPT_CACHE_RETENTION: str({ choices: ['in-memory', '24h'], default: '24h' }),
       // Brand enrichment
       CONTEXT_DEV_API_KEY: str({ default: '' }),
-      ...(['production', 'dev'].includes(processEnv.NODE_ENV)
-        ? {
-            THALAMUS_CF_API_KEY: str(),
-            THALAMUS_CF_URL: url(),
-            THALAMUS_WEBHOOK_SECRET: str(),
-          }
-        : {
-            THALAMUS_CF_API_KEY: str({ default: undefined }),
-            THALAMUS_CF_URL: url({ default: undefined }),
-            THALAMUS_WEBHOOK_SECRET: str({ default: undefined }),
-          }),
     }),
 
   // Feature Flags

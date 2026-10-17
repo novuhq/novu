@@ -197,7 +197,7 @@ Handler coverage: `onNewMention`, `onSubscribedMessage`, `onAction` (button clic
 | Button actions (`onAction`)                              | ✅                             |
 | Inbound reactions (`onReaction`)                         | ✅                             |
 | Post message (markdown)                                  | ✅                             |
-| Quote reply (`thread.reply`)                             | ✅ WhatsApp first              |
+| Quote reply (`thread.reply`)                             | ✅ WhatsApp, Telegram          |
 | Rich cards                                               | ✅                             |
 | File attachments (outbound)                              | ✅                             |
 | Edit message (in place)                                  | ✅                             |
@@ -214,3 +214,11 @@ Handler coverage: `onNewMention`, `onSubscribedMessage`, `onAction` (button clic
 | Delete message                                           | ❌ Not in v1                   |
 | Outbound-initiated DM (`openDM`)                         | ❌ Not in v1                   |
 | Modals                                                   | ❌ Not in v1                   |
+
+### Quote reply
+
+```typescript
+await thread.reply(inboundMessage, 'Your answer');
+```
+
+When the user quote-replied, `message.raw.replyTo?.messageId` is set (WhatsApp, Telegram, Teams).

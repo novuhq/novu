@@ -901,7 +901,7 @@ This renders as plain text in Slack. It does not produce Block Kit formatting su
 
 ### Configure Slack overrides in the dashboard
 
-Save a Slack override on the Chat step and every trigger of that workflow sends it, with no change to your trigger call. The override is stored on the step, so it is versioned and promoted between environments along with the rest of the workflow.
+Save a Slack override on the Chat step with no change to your trigger call. A provider-wide override applies whenever any Slack integration sends the step. An override saved on one integration applies only when that integration sends it. The JSON is stored on the step, so it is versioned and promoted with the workflow. See [Overrides for one integration](/platform/integrations/chat#overrides-for-one-integration).
 
 <Steps>
   <Step title="Open the Chat step">
@@ -909,7 +909,7 @@ Save a Slack override on the Chat step and every trigger of that workflow sends 
   </Step>
 
   <Step title="Open the Slack overrides editor">
-    In the step editor, open the content source dropdown — it reads **Default content** until you switch it — and pick **Slack** under **Overrides**. If Slack has no override yet, use the **+** beside it to add one.
+    In the step editor, open the content source dropdown. It reads **Default content** until you switch it. Under **Overrides**, pick **Slack** when Slack has one active integration and no integration-specific override is saved. Otherwise, Slack is grouped: pick **All integrations** for the payload every Slack integration shares, or pick one integration for a payload only that integration sends. If that row has no override yet, choose **Override** beside it.
   </Step>
 
   <Step title="Write the override JSON">
@@ -1656,11 +1656,12 @@ curl -X POST 'https://api.novu.co/v1/events/trigger' \
 
 When a Slack override exists in more than one place, Novu merges them in this order, lowest priority first:
 
-1. **Slack overrides saved on the step** — the JSON you configured in the workflow editor
-2. **Workflow-level trigger overrides** — `overrides.providers.slack` from the trigger call
-3. **Step-scoped trigger overrides** — `overrides.steps.<step-id>.providers.slack` from the trigger call
+1. **Provider-wide Slack override saved on the step.** This is **All integrations** when Slack is grouped, or **Slack** when you have a single Slack integration. It applies to every Slack integration.
+2. **Integration override saved on the step.** This is the JSON for the integration that sends the message. Novu merges it on top of the provider-wide override. Other Slack integrations do not receive it.
+3. **Workflow-level trigger overrides.** `overrides.providers.slack` from the trigger call. This applies to every Slack integration that sends.
+4. **Step-scoped trigger overrides.** `overrides.steps.<step-id>.providers.slack` from the trigger call. This also applies to every Slack integration that sends.
 
-Runtime always wins: an override sent at trigger time replaces the value saved on the step for the same field. Fields you do not send at trigger time keep their configured values, so you can save a full Block Kit layout on the step and override only `unfurl_links` per trigger.
+An override sent at trigger time replaces the saved value for the same field. Fields you do not send at trigger time keep their configured values, so you can save a full Block Kit layout on the step and override only `unfurl_links` per trigger.
 
 `_passthrough.body` sits outside this ordering. Wherever it appears, it is merged last and takes priority over every field above. See [Send extra Slack fields with `_passthrough`](#send-extra-slack-fields-with-_passthrough).
 

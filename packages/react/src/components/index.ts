@@ -5,6 +5,7 @@ export * from './InboxContent';
 export * from './msteams-connect-button/MsTeamsConnectButton';
 export * from './msteams-link-user/MsTeamsLinkUser';
 export * from './Notifications';
+export * from './notification-item/NotificationItem';
 export * from './Preferences';
 export * from './slack-connect-button/SlackConnectButton';
 export * from './slack-link-user/SlackLinkUser';

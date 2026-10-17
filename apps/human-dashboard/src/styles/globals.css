@@ -1,0 +1,402 @@
+@import "tailwindcss";
+
+/* Design tokens from the Human design system (Figma: Design system › Foundations, dark). */
+@theme inline {
+  --font-sans: var(--font-geist), sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+  --font-display: var(--font-instrument-serif), serif;
+
+  /* Surfaces, from the page canvas up to raised cards. */
+  --color-background: #0a0908;
+  --color-subtle: #100f0d;
+  --color-raised: #12110f;
+  --color-surface: #2e2b27;
+
+  /* Text and icons. */
+  --color-foreground: #ebe2d6;
+  --color-default: #c4bcb0;
+  --color-secondary: #8f887d;
+  --color-muted: #5c574f;
+  --color-placeholder: #757575;
+  --color-on-accent: #ffffff;
+
+  --color-accent: #ff5c30;
+  --color-border: #1f1d1a;
+  --color-border-strong: #2e2b27;
+
+  /* Status. */
+  --color-success: #1fc16b;
+  --color-pending: #ff8547;
+  --color-pending-subtle: #311d12;
+  --color-info: #3b82ff;
+  --color-warning: #f2a838;
+  --color-danger: #fb3748;
+  --color-danger-strong: #d0312d;
+  --color-danger-border: #6a1c22;
+
+  /* Channel brand colors. */
+  --color-telegram: #26a5e4;
+  --color-slack: #e01e5a;
+  --color-imessage: #34c759;
+
+  --tracking-tight: -0.02em;
+  --animate-terminal-cursor: terminal-cursor 1.1s steps(1) infinite;
+  --animate-overlay-in: overlay-in 150ms ease-out;
+  --animate-dialog-in: dialog-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-dialog-out: dialog-out 150ms ease-in forwards;
+  --animate-drawer-in: drawer-in 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  --animate-drawer-out: drawer-out 220ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  --animate-overlay-out: overlay-out 220ms ease-in forwards;
+  --animate-rise-in: rise-in 300ms ease-out both;
+  --animate-breathe: breathe 4s ease-in-out infinite alternate;
+  --animate-draw-around: draw-around 900ms ease-in-out both;
+  --animate-grow-down: grow-down 400ms ease-out both;
+  --animate-fold-open: fold-open 300ms ease-out both;
+  --animate-fold-close: fold-close 300ms ease-in both;
+
+  @keyframes terminal-cursor {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes overlay-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* Only `transform`: the dialog is centered with `translate`, which these must leave alone. */
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.97);
+    }
+  }
+
+  @keyframes dialog-out {
+    to {
+      opacity: 0;
+      transform: translateY(4px) scale(0.98);
+    }
+  }
+
+  @keyframes drawer-in {
+    from {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes drawer-out {
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes overlay-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  /* A slow swell in brightness. Opacity only: scaling the dither would smear its pixel grid. */
+  @keyframes breathe {
+    from {
+      opacity: 0.5;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /*
+   * A line that draws itself along its whole path, for a shape with `pathLength="1"`. Where on the path
+   * it starts is the shape's `stroke-dashoffset`, as a share of the way round and negative.
+   */
+  @keyframes draw-around {
+    from {
+      stroke-dasharray: 0 1;
+    }
+    to {
+      stroke-dasharray: 1 0;
+    }
+  }
+
+  /* A line that grows downwards from its top end. Give it `transform-origin: top`. */
+  @keyframes grow-down {
+    from {
+      transform: scaleY(0);
+    }
+  }
+
+  /*
+   * Something new unfolding into its place, such as a row that joins a list: give it to a one-row grid
+   * (`grid grid-rows-[1fr]`) whose child has `min-h-0` and hides its overflow while it opens.
+   */
+  @keyframes fold-open {
+    from {
+      grid-template-rows: 0fr;
+      opacity: 0;
+    }
+  }
+
+  /* The other way: something folding away out of its place, such as a row that leaves a list. Same grid. */
+  @keyframes fold-close {
+    to {
+      grid-template-rows: 0fr;
+      opacity: 0;
+    }
+  }
+}
+
+/* Vertical rails framing each section of the 896px content column. */
+@utility section-rails {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 -0.5px;
+    border-inline: 1px solid var(--color-border);
+    pointer-events: none;
+    z-index: 30;
+  }
+}
+
+/*
+ * The dithered orange glow behind highlighted cards and banners. Fades out from the top right corner.
+ * Set `--glow-color` for another color, such as green on a success card.
+ */
+@utility dot-glow {
+  position: relative;
+  isolation: isolate;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background-image: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--glow-color, var(--color-accent)) 60%, transparent) 1px,
+      transparent 1.5px
+    );
+    background-size: 5px 5px;
+    mask-image: radial-gradient(ellipse 70% 120% at 100% 0%, black, transparent 70%);
+    pointer-events: none;
+  }
+}
+
+/*
+ * The ordered dither behind a callout: 2px pixels that get denser towards the right edge, 640px wide.
+ * The mask is a 640x8 strip of that pattern (a 4x4 Bayer matrix), repeated down the element.
+ * Set `--dither-width` and `--dither-opacity` for a narrower or fainter one.
+ */
+@utility dither-side {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    right: 0;
+    width: min(var(--dither-width, 640px), 100%);
+    z-index: -1;
+    opacity: var(--dither-opacity, 0.55);
+    pointer-events: none;
+  }
+  /* A soft glow under the pixels, strongest at the right edge. */
+  &::before {
+    background-image: radial-gradient(
+      ellipse 60% 100% at 100% 50%,
+      color-mix(in srgb, var(--glow-color, var(--color-accent)) 16%, transparent),
+      transparent
+    );
+  }
+  /* The pixels themselves fade too: 70% at the right edge, 30% halfway, clear at the left. */
+  &::after {
+    background-image: linear-gradient(
+      to left,
+      color-mix(in srgb, var(--glow-color, var(--color-accent)) 70%, transparent),
+      color-mix(in srgb, var(--glow-color, var(--color-accent)) 30%, transparent) 50%,
+      transparent
+    );
+    mask-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoAAAAAICAQAAADDuIY0AAAAT0lEQVR42u3XwQ0AIAjFUPZfWr24gRL9eeXQsEAJVchirEnY+V3v6d5vDARQAFkAAfx1VPiMAQigAAJprzZ7nb3AEEAWQAEEHA32AgMCyBPfwZOleFaLtQAAAABJRU5ErkJggg==");
+    /* The strip scales with the width, as the design's `Dither` does when it is resized. */
+    mask-size: var(--dither-width, 640px) calc(var(--dither-width, 640px) / 80);
+    mask-position: right top;
+    mask-repeat: repeat-y;
+    image-rendering: pixelated;
+    pointer-events: none;
+  }
+}
+
+/*
+ * The same slow swell as `animate-breathe`, for the dither of `dither-side` and the glow of `dot-glow`:
+ * both are drawn by pseudo-elements, which an animation on the element itself wouldn't reach.
+ */
+@utility dither-breathe {
+  &::before,
+  &::after {
+    animation: dither-breathe 4s ease-in-out infinite alternate;
+  }
+}
+
+@utility glow-breathe {
+  &::after {
+    animation: breathe 4s ease-in-out infinite alternate;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dither-breathe::before,
+  .dither-breathe::after,
+  .glow-breathe::after {
+    animation: none;
+  }
+}
+
+/*
+ * The lit edge of the public agent card (`TiltCard`): the stretch of its border nearest the pointer glows
+ * orange, palest where the pointer is and fading along the edge either way. `--edge-angle` says where (0deg
+ * at the top, clockwise from the card's centre) and `--edge` how strongly, from 0 to 1. `edge-line` keeps it
+ * to the 1px border; blurred, the same light is the halo outside it.
+ */
+@utility edge-glow {
+  background: conic-gradient(
+    from calc(var(--edge-angle, 0deg) - 70deg),
+    transparent 0deg,
+    color-mix(in srgb, var(--color-accent) 60%, transparent) 40deg,
+    #ffc2ad 70deg,
+    color-mix(in srgb, var(--color-accent) 60%, transparent) 100deg,
+    transparent 140deg
+  );
+  opacity: var(--edge, 0);
+}
+
+@utility edge-line {
+  padding: 1px;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+
+/*
+ * The Inbox's thread rows when a refresh changes the list (`thread-list.tsx`): a new thread rises in,
+ * one that left fades out, and the others slide to their new places, their content crossfading.
+ */
+::view-transition-group(.inbox-row),
+::view-transition-group(.inbox-row-enter),
+::view-transition-group(.inbox-row-exit) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+::view-transition-new(.inbox-row-enter):only-child {
+  animation: inbox-row-in 320ms ease-out both;
+}
+
+::view-transition-old(.inbox-row-exit):only-child {
+  animation: inbox-row-out 200ms ease-in both;
+}
+
+/* Clicks during a transition reach the page instead of its snapshot. */
+::view-transition {
+  pointer-events: none;
+}
+
+@keyframes inbox-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes inbox-row-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* No motion at all: the rows' own animations are named again, as they'd win over the catch-all. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-new(.inbox-row-enter):only-child,
+  ::view-transition-old(.inbox-row-exit):only-child {
+    animation: none;
+  }
+}
+
+/* Swells up to the dither's own opacity, whatever `--dither-opacity` sets it to, from half of it. */
+@keyframes dither-breathe {
+  from {
+    opacity: calc(var(--dither-opacity, 0.55) * 0.5);
+  }
+}
+
+@layer base {
+  /*
+   * The scrollbar's room is kept at all times, so a page that grows taller than the window (a section
+   * folding open, a longer list) doesn't shift sideways when the scrollbar shows up.
+   */
+  html {
+    scrollbar-gutter: stable;
+  }
+
+  /*
+   * A drawer locks the page's scroll and makes up for the scrollbar it hides with a margin. The room is
+   * kept already, so that margin would shift the page instead. Overrides the lock's own `!important`.
+   */
+  html body[data-scroll-locked] {
+    /* biome-ignore lint/complexity/noImportantStyles: only an important rule wins over the scroll lock's */
+    margin-right: 0 !important;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+  button,
+  a {
+    @apply focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent;
+  }
+
+  /* Thin scrollbars in the colour of the borders, on a clear track, wherever something scrolls. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+  }
+
+  /* The same for browsers without `scrollbar-color` (Safari), which style the scrollbar's parts instead. */
+  @supports not (scrollbar-color: auto) {
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track,
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      border: 2px solid transparent;
+      border-radius: 9999px;
+      background-color: var(--color-border-strong);
+      background-clip: padding-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: var(--color-muted);
+    }
+  }
+}

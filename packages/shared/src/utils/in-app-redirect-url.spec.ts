@@ -3,6 +3,7 @@ import {
   isValidInAppRedirectTarget,
   isValidInAppRedirectUrl,
   sanitizeInAppRedirect,
+  sanitizeMessageCta,
 } from './in-app-redirect-url';
 
 describe('in-app-redirect-url', () => {
@@ -64,6 +65,79 @@ describe('in-app-redirect-url', () => {
       expect(sanitizeInAppRedirect('https://example.com', 'invalid-target')).toEqual({
         url: 'https://example.com',
       });
+    });
+  });
+
+  describe('sanitizeMessageCta', () => {
+    it('should keep allowlisted redirect URLs on the notification and its buttons', () => {
+      expect(
+        sanitizeMessageCta({
+          type: 'redirect',
+          data: { url: 'https://example.com/inbox', target: '_blank' },
+          action: {
+            buttons: [
+              { type: 'primary', content: 'Open', url: '/dashboard', target: '_self' },
+              { type: 'secondary', content: 'Docs', url: 'https://example.com/{{id}}', target: '_blank' },
+            ],
+          },
+        })
+      ).toEqual({
+        type: 'redirect',
+        data: { url: 'https://example.com/inbox', target: '_blank' },
+        action: {
+          buttons: [
+            { type: 'primary', content: 'Open', url: '/dashboard', target: '_self' },
+            { type: 'secondary', content: 'Docs', url: 'https://example.com/{{id}}', target: '_blank' },
+          ],
+        },
+      });
+    });
+
+    it('should strip unsafe schemes from stored CTA urls without dropping button labels', () => {
+      const cta = {
+        type: 'redirect',
+        data: { url: 'javascript:alert(1)', target: '_self' },
+        action: {
+          status: 'pending',
+          buttons: [
+            { type: 'primary', content: 'Primary', url: 'javascript:alert(1)', target: '_blank' },
+            { type: 'secondary', content: 'Secondary', url: 'data:text/html,hi', target: '_self' },
+          ],
+        },
+      };
+
+      expect(sanitizeMessageCta(cta)).toEqual({
+        type: 'redirect',
+        data: {},
+        action: {
+          status: 'pending',
+          buttons: [
+            { type: 'primary', content: 'Primary' },
+            { type: 'secondary', content: 'Secondary' },
+          ],
+        },
+      });
+      expect(cta.data.url).toBe('javascript:alert(1)');
+    });
+
+    it('should drop invalid targets and protocol-relative urls', () => {
+      expect(
+        sanitizeMessageCta({
+          data: { url: 'https://example.com', target: 'javascript:' },
+          action: {
+            buttons: [{ type: 'primary', content: 'Go', url: '//evil.example', target: '_blank' }],
+          },
+        })
+      ).toEqual({
+        data: { url: 'https://example.com' },
+        action: {
+          buttons: [{ type: 'primary', content: 'Go' }],
+        },
+      });
+    });
+
+    it('should return undefined when the CTA is missing', () => {
+      expect(sanitizeMessageCta(undefined)).toBeUndefined();
     });
   });
 });

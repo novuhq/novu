@@ -43,7 +43,7 @@ export interface NormalizedMail {
   to: LegacyAddress[];
   cc: LegacyAddress[];
   bcc: LegacyAddress[];
-  date?: Date;
+  date: Date;
   attachments: LegacyAttachment[];
   [key: string]: unknown;
 }
@@ -178,6 +178,11 @@ export function normalizeParsedMail(parsed: ParsedMail): NormalizedMail {
    * simpleParser only copies a fixed set of headers onto the mail object and
    * `priority` is not one of them — it exists solely in the headers map (as a
    * plain 'normal' | 'low' | 'high' string produced by parsePriority).
+   *
+   * `date` falls back to receipt time because RFC 5322 mandates the header but
+   * relays and probes still omit it, and JSON.stringify would drop the
+   * undefined key entirely — leaving the worker's @IsDefined() to reject an
+   * otherwise deliverable message.
    */
   const priorityHeader = parsed.headers?.get('priority');
   const [inReplyTo] = normalizeMessageIdList(parsed.inReplyTo);
@@ -196,7 +201,7 @@ export function normalizeParsedMail(parsed: ParsedMail): NormalizedMail {
     to: flattenAddresses(parsed.to),
     cc: flattenAddresses(parsed.cc),
     bcc: flattenAddresses(parsed.bcc),
-    date: parsed.date,
+    date: parsed.date ?? new Date(),
     attachments: normalizeAttachments(parsed.attachments),
   };
 }
