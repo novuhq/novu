@@ -1,5 +1,7 @@
 # thalamus-observer
 
+test 123
+
 Cloudflare Worker + Durable Object that observes managed-agent provider streams and delivers signed webhooks to the Novu API.
 
 Companion to `@novu/thalamus`. The API points at this Worker via `THALAMUS_CF_URL` / `THALAMUS_CF_API_KEY` / `THALAMUS_WEBHOOK_SECRET`.
