@@ -3,6 +3,7 @@ import { type HumanApi, HumanApiError } from './human-api';
 export type InteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
 
 type Option = { id: string; label: string };
+export type OptionInput = string | Option;
 
 /** A message to a person and, once they answer, what they said. The Human API's own shape. */
 export type Interaction = {
@@ -18,10 +19,13 @@ export type Interaction = {
 
 export type Card = {
   title: string;
+  icon?: string;
+  subtitle?: string;
   body?: string;
   approveLabel?: string;
   denyLabel?: string;
-  options?: string[];
+  extraActions?: OptionInput[];
+  options?: OptionInput[];
 };
 
 /** AI tools give up on a call after about a minute, so a tool never waits longer than this in one go. */
@@ -58,18 +62,20 @@ export async function sendInteraction(
   input: {
     kind: InteractionKind;
     card: Card;
-    to?: string;
+    to?: string | string[];
     from?: string;
     /** Reply in an existing inbox thread (`conv_...`). When set, `to` is optional. */
     thread?: string;
     /** Let anyone in the thread answer — needed for stranger threads with no contact. */
     anyoneMayAnswer?: boolean;
+    via?: string;
+    ttlSeconds?: number;
   }
 ): Promise<Interaction> {
   const thread = input.thread?.trim();
   // A thread send must not invent a `to`: the API routes by the conversation, and a defaulted
   // operator would trip contact checks on stranger threads.
-  const to = thread ? input.to?.trim() || undefined : await resolveRecipient(api, input.to);
+  const to = thread ? normalizeRecipients(input.to) : await resolveRecipients(api, input.to);
   const created = await api
     .post<Interaction>(
       '/v1/human/interactions',
@@ -80,6 +86,8 @@ export async function sendInteraction(
         ...(thread ? { thread } : {}),
         ...(input.anyoneMayAnswer ? { anyoneMayAnswer: true } : {}),
         ...(input.from ? { from: input.from } : {}),
+        ...(input.via ? { via: input.via } : {}),
+        ...(input.ttlSeconds !== undefined ? { ttlSeconds: input.ttlSeconds } : {}),
       },
       SEND_TIMEOUT_MS
     )
@@ -95,7 +103,7 @@ export async function sendInteraction(
       throw error;
     });
 
-  if (created.failedTo?.length) {
+  if (created.failedTo?.length && everyRecipientFailed(to, created.failedTo)) {
     throw new HumanApiError(
       409,
       `The message could not be delivered to ${created.failedTo.join(', ')}. They may not have connected a channel yet; the invite tool gives you a link for them.`
@@ -103,6 +111,35 @@ export async function sendInteraction(
   }
 
   return created;
+}
+
+function normalizeRecipients(to: string | string[] | undefined): string | string[] | undefined {
+  if (Array.isArray(to)) {
+    const recipients = to.map((recipient) => recipient.trim()).filter(Boolean);
+
+    return recipients.length ? recipients : undefined;
+  }
+
+  return to?.trim() || undefined;
+}
+
+async function resolveRecipients(api: HumanApi, to: string | string[] | undefined): Promise<string | string[]> {
+  const normalized = normalizeRecipients(to);
+  if (normalized !== undefined) {
+    return normalized;
+  }
+
+  return resolveRecipient(api, undefined);
+}
+
+function everyRecipientFailed(to: string | string[] | undefined, failedTo: string[]): boolean {
+  if (to === undefined) {
+    return true;
+  }
+
+  const recipients = Array.isArray(to) ? to : [to];
+
+  return recipients.every((recipient) => failedTo.includes(recipient));
 }
 
 /** A check never gets less time than this, however little of the wait is left. */
@@ -139,9 +176,9 @@ export async function waitForAnswer(
     await sleep(POLL_EVERY_MS);
 
     try {
-      // GET does not include `threads`. Those exist only on the send response, and sending
-      // has already marked the thread read, so a later check must not drop them.
-      interaction = keepSentThreads(await check(), sent);
+      // GET omits `threads` and `failedTo`. Both exist only on the create response, so a
+      // later check must not drop the unread warning or which contacts missed the message.
+      interaction = keepCreateDetails(await check(), sent);
     } catch {
       // One missed check is not an answer: keep what is known and try again while there is time.
     }
@@ -150,12 +187,22 @@ export async function waitForAnswer(
   return interaction;
 }
 
-function keepSentThreads(latest: Interaction, sent: Interaction | string): Interaction {
-  if (typeof sent === 'string' || latest.threads?.length || !sent.threads?.length) {
+function keepCreateDetails(latest: Interaction, sent: Interaction | string): Interaction {
+  if (typeof sent === 'string') {
     return latest;
   }
 
-  return { ...latest, threads: sent.threads };
+  const threads = latest.threads?.length ? undefined : sent.threads;
+  const failedTo = latest.failedTo?.length ? undefined : sent.failedTo;
+  if (!threads?.length && !failedTo?.length) {
+    return latest;
+  }
+
+  return {
+    ...latest,
+    ...(threads?.length ? { threads } : {}),
+    ...(failedTo?.length ? { failedTo } : {}),
+  };
 }
 
 /** What to tell the AI tool about an interaction, in words it can act on. */
@@ -163,18 +210,21 @@ export function describeOutcome(interaction: Interaction): string {
   const { id, status, response } = interaction;
   const by = response?.respondedBy ? ` by ${response.respondedBy}` : '';
   const threadNote = describeThreads(interaction.threads);
+  const failureNote = interaction.failedTo?.length
+    ? ` Warning: delivery failed for ${interaction.failedTo.join(', ')}.`
+    : '';
 
   switch (status) {
     case 'pending':
-      return `No answer yet. The request is still open: call the wait tool with id "${id}" to keep waiting. Do not go ahead without the answer.${threadNote}`;
+      return `No answer yet. The request is still open: call the wait tool with id "${id}" to keep waiting. Do not go ahead without the answer.${threadNote}${failureNote}`;
     case 'approved':
-      return `Approved${by}.${answerOf(interaction)}${threadNote}`;
+      return `Approved${by}.${answerOf(interaction)}${threadNote}${failureNote}`;
     case 'denied':
-      return `Denied${by}. Do not go ahead.${answerOf(interaction)}${threadNote}`;
+      return `Denied${by}. Do not go ahead.${answerOf(interaction)}${threadNote}${failureNote}`;
     case 'answered':
-      return `Answered${by}.${answerOf(interaction)}${threadNote}`;
+      return `Answered${by}.${answerOf(interaction)}${threadNote}${failureNote}`;
     case 'delivered':
-      return `Delivered.${threadNote}`;
+      return `Delivered.${threadNote}${failureNote}`;
     case 'expired':
       return 'Nobody answered in time, so the request expired. Treat it as not approved.';
     case 'canceled':

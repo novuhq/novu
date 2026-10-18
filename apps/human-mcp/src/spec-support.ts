@@ -63,12 +63,23 @@ export function setup(overrides: Partial<Env> = {}) {
 
 export type StubBackendsOptions = {
   interaction?: Partial<Interaction>;
+  /** Fields returned by POST /v1/human/interactions. */
+  createdInteraction?: Partial<Interaction>;
+  /** Contact pages keyed by their `after` cursor (the first page uses an empty key). */
+  contactPages?: Record<string, { data: StubContact[]; next: string | null }>;
+  contactsById?: Record<string, StubContact>;
   /** Inbox list page returned by GET /v1/human/inbox. */
   inboxPage?: { data: InboxThread[]; next: string | null };
   /** Thread view returned by GET /v1/human/inbox/:id. */
   inboxThread?: InboxThreadView;
   /** Thread returned after read/resolve. */
   inboxActionThread?: InboxThread;
+};
+
+export type StubContact = {
+  id: string;
+  email?: string;
+  channels?: Array<{ via: string; status?: 'unverified' | 'pending' | 'verified'; address?: string }>;
 };
 
 export const DEFAULT_STRANGER_THREAD: InboxThread = {
@@ -100,7 +111,13 @@ type Call = { url: string; method: string; body?: unknown; headers: Headers };
 
 function isStubBackendsOptions(options: StubBackendsOptions | Partial<Interaction>): options is StubBackendsOptions {
   return (
-    'interaction' in options || 'inboxPage' in options || 'inboxThread' in options || 'inboxActionThread' in options
+    'interaction' in options ||
+    'createdInteraction' in options ||
+    'contactPages' in options ||
+    'contactsById' in options ||
+    'inboxPage' in options ||
+    'inboxThread' in options ||
+    'inboxActionThread' in options
   );
 }
 
@@ -164,22 +181,26 @@ function answerInteractions(
   url: string,
   method: string,
   body: unknown,
-  interaction: Partial<Interaction>
+  interaction: Partial<Interaction>,
+  createdInteraction: Partial<Interaction>
 ): Response | null {
   if (url === `${API_EU}/v1/human/interactions` && method === 'POST') {
-    const posted = body as { thread?: string } | undefined;
+    const posted = body as { kind?: string; thread?: string } | undefined;
     if (posted?.thread) {
       return reply({
         data: {
           id: 'hi_thread_1',
-          kind: 'ask',
+          kind: posted.kind ?? 'ask',
           status: 'pending',
           threads: [{ id: posted.thread, unreadBefore: 2 }],
+          ...createdInteraction,
         },
       });
     }
 
-    return reply({ data: { id: 'hi_1', kind: 'approve', status: 'pending' } });
+    return reply({
+      data: { id: 'hi_1', kind: posted?.kind ?? 'approve', status: 'pending', ...createdInteraction },
+    });
   }
 
   if (url === `${API_EU}/v1/human/interactions/hi_1`) {
@@ -201,10 +222,35 @@ function answerInteractions(
   return null;
 }
 
+function answerContacts(
+  url: string,
+  method: string,
+  contactPages: Record<string, { data: StubContact[]; next: string | null }>,
+  contactsById: Record<string, StubContact>
+): Response | null {
+  const contactsUrl = `${API_EU}/v1/human/contacts`;
+  if (!url.startsWith(contactsUrl) || method !== 'GET') {
+    return null;
+  }
+
+  const parsed = new URL(url);
+  const id = parsed.pathname.slice('/v1/human/contacts/'.length);
+  if (parsed.pathname.startsWith('/v1/human/contacts/') && id) {
+    const contact = contactsById[decodeURIComponent(id)];
+
+    return contact ? reply({ data: contact }) : reply({ message: 'Contact not found' }, 404);
+  }
+
+  return reply(contactPages[parsed.searchParams.get('after') ?? ''] ?? { data: [], next: null });
+}
+
 /** Answers the calls the Worker makes: Clerk for who the token is, the API for everything else. */
 export function stubBackends(options: StubBackendsOptions | Partial<Interaction> = {}) {
   const opts = normalizeOptions(options);
   const interaction = opts.interaction ?? { status: 'approved' };
+  const createdInteraction = opts.createdInteraction ?? {};
+  const contactPages = opts.contactPages ?? { '': { data: [], next: null } };
+  const contactsById = opts.contactsById ?? {};
   const inboxPage = opts.inboxPage ?? { data: [DEFAULT_STRANGER_THREAD], next: null };
   const inboxThread =
     opts.inboxThread ??
@@ -233,7 +279,11 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
       return (
         answerAuth(url, headers) ??
         answerInbox(url, method, inboxPage, inboxThread, inboxActionThread) ??
-        answerInteractions(url, method, body, interaction) ??
+        answerContacts(url, method, contactPages, contactsById) ??
+        (url === `${API_EU}/v1/human/verifications` && method === 'POST'
+          ? reply({ data: { address: 'masked', requestedAt: 'now' } })
+          : null) ??
+        answerInteractions(url, method, body, interaction, createdInteraction) ??
         reply({ message: 'not stubbed' }, 500)
       );
     })
