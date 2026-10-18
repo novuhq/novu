@@ -174,10 +174,19 @@ export type InboxThreadView = {
   thread: InboxThread;
   /** Oldest first. */
   messages: InboxMessage[];
-  /** Older messages than these exist. */
+  /** More messages lie past these: older ones, or newer ones for a page read with `after`. */
   hasMore: boolean;
   details: InboxThreadDetails;
 };
+
+/**
+ * Which messages of a thread to read: the newest by default, the page before `before`, or the messages that
+ * came after `after` (never both). `limit` is how many, up to 100.
+ */
+export type InboxThreadPage = { before?: string; after?: string; limit?: number };
+
+/** The most messages the API reads at once. */
+export const INBOX_THREAD_PAGE_MAX = 100;
 
 export function isInboxTab(value: unknown): value is InboxTab {
   return typeof value === 'string' && (INBOX_TABS as readonly string[]).includes(value);

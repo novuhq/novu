@@ -83,7 +83,7 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
               )
             }
             address={agent?.address ?? addressOf(draft.handle || PLACEHOLDER_HANDLE)}
-            cardLink={agent?.cardLink ?? cardLinkOf(draft.handle || PLACEHOLDER_HANDLE)}
+            cardLink={agent?.cardLink ?? cardLinkOf(view.origin, draft.handle || PLACEHOLDER_HANDLE)}
             telegramConnected={view.channels.telegram}
             gotMail={testPassed}
             hostVia={host?.via}
@@ -134,6 +134,7 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
                   host={host}
                   readFrom={operator.email}
                   channels={view.channels}
+                  reach={view.reach}
                 />
               )}
             </div>

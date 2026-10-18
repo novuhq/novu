@@ -1,5 +1,12 @@
 import { createHash } from 'node:crypto';
-import { CanActivate, ExecutionContext, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { areHexDigestsEqual } from '../../shared/helpers/timing-safe-equal';
 import { HumanBackingAccounts } from '../services/human-backing-accounts.service';
 
@@ -20,12 +27,43 @@ export class HumanDashboardSecretGuard implements CanActivate {
       throw new NotFoundException();
     }
 
-    const providedSecret = context.switchToHttp().getRequest().headers?.[HUMAN_DASHBOARD_SECRET_HEADER];
-    if (typeof providedSecret !== 'string' || !areHexDigestsEqual(sha256(expectedSecret), sha256(providedSecret))) {
+    if (!carriesHumanDashboardSecret(context.switchToHttp().getRequest().headers)) {
       throw new UnauthorizedException();
     }
 
     return true;
+  }
+}
+
+/**
+ * Whether a request carries the secret only the Human dashboard's server knows. The dashboard sends it next
+ * to the account's key on its regular calls too, so the API can tell the operator's dashboard from a host
+ * holding the same key.
+ */
+export function carriesHumanDashboardSecret(headers: Record<string, unknown> | undefined): boolean {
+  const expectedSecret = process.env.HUMAN_DASHBOARD_API_SECRET;
+  const providedSecret = headers?.[HUMAN_DASHBOARD_SECRET_HEADER];
+
+  return (
+    Boolean(expectedSecret) &&
+    typeof providedSecret === 'string' &&
+    areHexDigestsEqual(sha256(expectedSecret as string), sha256(providedSecret))
+  );
+}
+
+/** Machine-readable code on the error a host gets for a change only the operator makes on the dashboard. */
+export const DASHBOARD_ONLY = 'dashboard_only';
+
+/**
+ * Refuses a change only the operator makes, on the Human dashboard: who can reach the agent, pausing or
+ * resuming it, and deleting it. Hosts hold the same key, so the key alone doesn't count.
+ */
+export function assertFromHumanDashboard(headers: Record<string, unknown> | undefined): void {
+  if (!carriesHumanDashboardSecret(headers)) {
+    throw new ForbiddenException({
+      code: DASHBOARD_ONLY,
+      message: 'Only the operator can change who can reach the agent, pause it or delete it, on agentinbox.md.',
+    });
   }
 }
 

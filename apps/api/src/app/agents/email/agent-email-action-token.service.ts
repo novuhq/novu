@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
+import { HUMAN_INTERACTION_MAX_TTL_SECONDS } from '@novu/shared';
 import { resolveHumanDashboardBaseUrl } from '../../shared/helpers/resolve-human-dashboard-base-url';
 import {
   buildOpaqueStorageKey,
@@ -9,7 +10,8 @@ import {
 
 const KEY_PREFIX = 'agent:email:action:';
 const MESSAGE_KEY_PREFIX = 'agent:email:action:msg:';
-const DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 3; // 3 days
+/** An email button has to outlive the longest question the Human API will keep open. */
+const DEFAULT_TTL_SECONDS = HUMAN_INTERACTION_MAX_TTL_SECONDS;
 /** 256 bits of entropy. Encoded as base64url → 43 URL-safe characters. */
 const TOKEN_BYTES = 32;
 /** Hosts where plaintext HTTP is acceptable because the link never leaves the developer's

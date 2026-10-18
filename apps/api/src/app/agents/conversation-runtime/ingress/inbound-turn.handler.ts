@@ -31,6 +31,7 @@ import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-tel
 import { agentTelegramLinkScope } from '../../../telegram-linking/telegram-link-scope';
 import { TelegramStartCodeService } from '../../../telegram-linking/telegram-start-code.service';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { ContactHandleService } from '../../human-relay/contact-handle.service';
 import { HumanConversationInboundInterceptor } from '../../human-relay/human-conversation-inbound.interceptor';
 import {
   trackAgentInboundAction,
@@ -57,6 +58,7 @@ import { AgentConversationService, getInboundActivityPreview } from '../conversa
 import {
   AgentSubscriberResolver,
   ConnectOrgSubscriberCapExceededError,
+  isAgentProvisionedSubscriber,
 } from '../conversation/agent-subscriber-resolver.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import { maybeReplyUnresolvedSubscriberAccess } from '../reply/maybe-reply-unresolved-subscriber-access';
@@ -325,7 +327,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly workflowOriginService: WorkflowOriginService,
     private readonly humanConversationInbound: HumanConversationInboundInterceptor,
     private readonly agentConfigResolver: AgentConfigResolver,
-    private readonly keylessEmailGate: KeylessEmailGateService
+    private readonly keylessEmailGate: KeylessEmailGateService,
+    private readonly contactHandles: ContactHandleService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -410,6 +413,11 @@ export class AgentInboundHandler implements OnModuleInit {
 
     const { resolution, isVerifiedEmailSender } = inboundSubscriber;
     const subscriberId = getResolvedSubscriberId(resolution);
+
+    if (await this.isKeptOutOfAgentInbox(agentId, config, subscriberId)) {
+      return;
+    }
+
     const isDashboardTester = isDashboardWebChatSubscriberId(subscriberId);
 
     // A genuine, non-bot user has messaged the agent (bot-authored echoes were
@@ -630,6 +638,37 @@ export class AgentInboundHandler implements OnModuleInit {
         agentId,
       });
     }
+  }
+
+  /**
+   * An Agent Inbox agent its operator opened to contacts only takes nothing from anyone else: no
+   * conversation, no message, no answer to a question, and no reply to the sender. A contact is a
+   * subscriber the operator added; one an agent made up for an unknown sender is a stranger, as the inbox
+   * labels it. Runs before anything about the message is saved.
+   */
+  private async isKeptOutOfAgentInbox(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    subscriberId: string | null
+  ): Promise<boolean> {
+    if (!config.isHumanRelay || config.inboxReach !== 'contacts') {
+      return false;
+    }
+
+    const subscriber = subscriberId
+      ? await this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
+      : null;
+
+    if (subscriber && !isAgentProvisionedSubscriber(subscriber)) {
+      return false;
+    }
+
+    this.logger.info(
+      { agentId, environmentId: config.environmentId, platform: config.platform },
+      'Agent Inbox agent takes messages from contacts only — dropped one from a stranger'
+    );
+
+    return true;
   }
 
   private async resolveInboundSubscriber(
@@ -1304,6 +1343,14 @@ export class AgentInboundHandler implements OnModuleInit {
         // the next genuine inbound message (handled in `handle()`), matching Slack's
         // "install ≠ connected" split and the dashboard "Send a test message" step.
 
+        // An Agent Inbox contact's card shows their Telegram handle from the moment they connect.
+        await this.contactHandles.refresh({
+          config,
+          subscriberId: linkResult.subscriberId,
+          platformUserId: chatId,
+          message,
+        });
+
         const reply = linkResult.created ? SUBSCRIBER_LINK_SUCCESS_REPLY : SUBSCRIBER_LINK_DUPLICATE_REPLY;
         await this.safePostInboundReply(thread, reply, agentId, message);
       } catch (err) {
@@ -1690,6 +1737,11 @@ export class AgentInboundHandler implements OnModuleInit {
 
     const resolution = await this.resolveEventSubscriber(agentId, config, platformUserId, 'message-updated');
 
+    // Contacts only: a stranger can't change the inbox by editing a message either.
+    if (await this.isKeptOutOfAgentInbox(agentId, config, getResolvedSubscriberId(resolution))) {
+      return;
+    }
+
     const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
     const richContent = Array.isArray(message.attachments)
       ? {
@@ -1791,6 +1843,17 @@ export class AgentInboundHandler implements OnModuleInit {
     const platformUserId = previousAuthor?.userId ?? current?.senderId;
     const resolution = await this.resolveEventSubscriber(agentId, config, platformUserId, 'message-deleted');
 
+    // Contacts only: a stranger can't change the inbox by deleting a message either. With no author on the
+    // event, the stored message says who sent it: its `senderId` is a subscriber id, not a platform user id.
+    const senderSubscriberId = previousAuthor?.userId
+      ? getResolvedSubscriberId(resolution)
+      : current?.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER
+        ? current.senderId
+        : null;
+    if (await this.isKeptOutOfAgentInbox(agentId, config, senderSubscriberId)) {
+      return;
+    }
+
     if (event.messageId) {
       await this.conversationService.deleteInboundMessage({
         conversationId: conversation._id,
@@ -1871,6 +1934,12 @@ export class AgentInboundHandler implements OnModuleInit {
     const thread = event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread);
 
     const resolution = await this.resolveEventSubscriber(agentId, config, platformUserId, 'reaction');
+
+    // Contacts only: a stranger can't change the inbox by reacting either.
+    if (await this.isKeptOutOfAgentInbox(agentId, config, getResolvedSubscriberId(resolution))) {
+      return;
+    }
+
     const reaction = await this.recordInboundReaction(config, conversation, event, resolution);
 
     if (
@@ -2128,6 +2197,10 @@ export class AgentInboundHandler implements OnModuleInit {
     });
     const subscriberId = getResolvedSubscriberId(actionResolution);
 
+    if (await this.isKeptOutOfAgentInbox(agentId, config, subscriberId)) {
+      return;
+    }
+
     const participantId = subscriberId ?? `${config.platform}:${userId}`;
     const participantType = subscriberId
       ? ConversationParticipantTypeEnum.SUBSCRIBER
@@ -2240,6 +2313,7 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId,
       platformUserId: userId,
       action,
+      actionRaw: rawEvent,
       workflowOrigin: workflowOrigin ?? undefined,
     };
 

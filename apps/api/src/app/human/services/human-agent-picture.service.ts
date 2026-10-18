@@ -72,6 +72,9 @@ export class HumanAgentPictureService {
       ...(pictureUrl ? { pictureUrl } : {}),
       active: agent.active !== false,
       createdAt: agent.createdAt,
+      reach: agent.reach ?? 'anyone',
+      paused: Boolean(agent.pausedAt),
+      ...(agent.pausedAt ? { pausedAt: agent.pausedAt } : {}),
     };
   }
 
@@ -127,6 +130,13 @@ export class HumanAgentPictureService {
     await this.humanAgentIdentity.updateTelegramBots(agent, { picture: null });
 
     return { ...agent, picture: undefined };
+  }
+
+  /** Drops the stored picture of an agent that is being deleted. Never fails the delete. */
+  async forget(agent: Pick<AgentEntity, 'picture'>): Promise<void> {
+    if (agent.picture?.storageKey) {
+      await this.deleteFile(agent.picture.storageKey);
+    }
   }
 
   /** The file behind a public picture address, or `null` when the address is not (or no longer) a picture. */

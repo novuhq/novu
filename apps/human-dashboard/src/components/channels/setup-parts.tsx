@@ -36,14 +36,27 @@ type ConnectionPoll<Connection> = {
   /** Asks the API whether that happened. `null` means not yet; a failed call counts as not yet too. */
   check: () => Promise<Connection | null>;
   onConnected: (connection: Connection) => void;
+  /**
+   * How long it asks before it gives up: ten minutes by default. `null` asks for as long as `waiting` stays
+   * on, for a drawer that keeps what it waits on working, such as a code it renews.
+   */
+  giveUpAfterMs?: number | null;
+  /** How often it asks: every 2.5 seconds by default. */
+  everyMs?: number;
 };
 
 /**
  * Asks every few seconds whether a channel got connected, while a drawer waits for it. It gives up after
- * ten minutes and says so with `waitedTooLong`; `keepWaiting` starts it over. Leaving the waiting step
- * starts it over as well.
+ * ten minutes (`giveUpAfterMs`) and says so with `waitedTooLong`; `keepWaiting` starts it over. Leaving the
+ * waiting step starts it over as well.
  */
-export function useConnectionPoll<Connection>({ waiting, check, onConnected }: ConnectionPoll<Connection>) {
+export function useConnectionPoll<Connection>({
+  waiting,
+  check,
+  onConnected,
+  giveUpAfterMs = POLL_TIMEOUT_MS,
+  everyMs = POLL_INTERVAL_MS,
+}: ConnectionPoll<Connection>) {
   const [waitedTooLong, setWaitedTooLong] = useState(false);
   // The callbacks are new on every render; the timer below always calls the latest ones without restarting.
   const latest = useRef({ check, onConnected });
@@ -67,7 +80,7 @@ export function useConnectionPoll<Connection>({ waiting, check, onConnected }: C
     const startedAt = Date.now();
 
     const timer = setInterval(async () => {
-      if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+      if (giveUpAfterMs !== null && Date.now() - startedAt > giveUpAfterMs) {
         setWaitedTooLong(true);
 
         return;
@@ -79,13 +92,13 @@ export function useConnectionPoll<Connection>({ waiting, check, onConnected }: C
         stale = true;
         latest.current.onConnected(connection);
       }
-    }, POLL_INTERVAL_MS);
+    }, everyMs);
 
     return () => {
       stale = true;
       clearInterval(timer);
     };
-  }, [waiting, waitedTooLong]);
+  }, [waiting, waitedTooLong, giveUpAfterMs, everyMs]);
 
   return { waitedTooLong, keepWaiting: () => setWaitedTooLong(false) };
 }

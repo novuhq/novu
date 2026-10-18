@@ -166,6 +166,12 @@ export const envValidators = {
    * per-tenant Domain/DomainRoute lookup.
    */
   NOVU_AGENT_SHARED_INBOUND_DOMAIN: str({ default: undefined }),
+  /**
+   * Shared inbound domain for Agent Inbox (Human) agents, e.g. `agentinbox.md`.
+   * Connect agents stay on `NOVU_AGENT_SHARED_INBOUND_DOMAIN`. When unset, new
+   * Agent Inbox agents are pinned to that Connect domain instead. US only.
+   */
+  NOVU_AGENT_INBOX_INBOUND_DOMAIN: str({ default: undefined }),
   NOVU_WHATSAPP_APP_ID: str({ default: undefined }),
   NOVU_WHATSAPP_APP_SECRET: str({ default: undefined }),
   NOVU_WHATSAPP_CONFIG_ID: str({ default: undefined }),

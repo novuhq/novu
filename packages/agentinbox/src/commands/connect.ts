@@ -2,8 +2,10 @@ import pc from 'picocolors';
 import { ApiError, createApiClient } from '../api/client';
 import { type ConnectedAgent, connectWithCode } from '../api/connect';
 import { findOperator } from '../api/login';
-import { info, promptLine } from '../cli-io';
+import { info, promptLine, success } from '../cli-io';
 import { CLI_COMMAND, type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
+import { openedScreen, openScreen } from '../screen/screen';
+import { failOnScreen } from './failure';
 import { handleError } from './interact';
 
 interface ConnectOptions {
@@ -34,26 +36,42 @@ const HANDLE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const HANDLE_MAX_LENGTH = 32;
 
 export async function connectCommand(agent: string, options: ConnectOptions): Promise<never> {
+  const screen = await openScreen({ command: 'connect', handle: handleOf(agent) });
+
   try {
     const result = await runConnect(agent, options);
     const { handle, name } = result.agent;
     const named = name && name.toLowerCase() !== handle ? ` (${name})` : '';
 
-    process.stdout.write(`\n${pc.green('✔')} Connected to ${pc.bold(handle)}${named}.\n`);
-    info(`Saved to ${configPath()}.`);
+    if (screen) {
+      screen.add({ mark: 'done', value: `Connected to ${pc.bold(handle)}${named}.` });
+      screen.feel('happy');
+    } else {
+      process.stdout.write(`\n${pc.green('✔')} Connected to ${pc.bold(handle)}${named}.\n`);
+    }
+    success(`Saved to ${configPath()}.`);
 
     if (!result.config.subscriberId) {
       info(`Messages need --to until the account has you as a contact: run ${pc.bold(`${CLI_COMMAND} setup`)}.`);
     }
 
-    process.stdout.write(`Check it works: ${pc.bold(`${CLI_COMMAND} inbox list`)}\n`);
+    const check = `Check it works: ${pc.bold(`${CLI_COMMAND} inbox list`)}`;
+    if (screen) {
+      screen.add({ mark: 'next', value: check });
+    } else {
+      process.stdout.write(`${check}\n`);
+    }
 
     if (process.env.INBOX_SECRET_KEY?.trim()) {
       info('INBOX_SECRET_KEY is set in this shell, and it takes priority over this connection.');
     }
 
+    await screen?.done('happy');
     process.exit(0);
   } catch (err) {
+    if (screen) {
+      await failOnScreen(screen, err);
+    }
     handleError(err);
   }
 }
@@ -78,9 +96,13 @@ export async function runConnect(
     await confirmReplacing(existing, agent, io);
   }
 
-  const connected = await connectWithCode(apiUrl, { agent, code }).catch((err: unknown) => {
-    throw isMissingRoute(err) ? new Error(CONNECT_UNAVAILABLE_MESSAGE) : err;
-  });
+  // Only a screen shows the code being checked; without one, the result is all that is printed.
+  const stopWaiting = openedScreen()?.wait({ status: { text: `Connecting to ${agent}…` } });
+  const connected = await connectWithCode(apiUrl, { agent, code })
+    .catch((err: unknown) => {
+      throw isMissingRoute(err) ? new Error(CONNECT_UNAVAILABLE_MESSAGE) : err;
+    })
+    .finally(stopWaiting);
 
   // Who agents here reach by default only carries over from the same account, which has the same key.
   const current = existing?.apiUrl === apiUrl ? existing : null;
@@ -118,6 +140,15 @@ export function readAgent(input: string): string {
   }
 
   return handle;
+}
+
+/** The agent's handle for the screen's caption, where `input` names one. */
+function handleOf(input: string): string | undefined {
+  try {
+    return readAgent(input);
+  } catch {
+    return undefined;
+  }
 }
 
 /** The code as agentinbox.md shows it, e.g. `BCDF-GHJK`. Case, spaces and the dash don't matter. */

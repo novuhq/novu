@@ -134,7 +134,7 @@ export class CreateInteractionRequestDto {
   from?: string;
 
   @ApiPropertyOptional({
-    description: `Seconds until the interaction expires. Default 86400 (24h), max ${HUMAN_INTERACTION_MAX_TTL_SECONDS} (72h — delivered buttons cannot outlive their action tokens).`,
+    description: `Seconds until the interaction expires. Default 86400 (24h), max ${HUMAN_INTERACTION_MAX_TTL_SECONDS}.`,
   })
   @IsOptional()
   @IsInt()

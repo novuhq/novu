@@ -22,6 +22,7 @@ import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbou
 import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card.builder';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
 import { KeylessEmailGateService } from '../../keyless/keyless-email-gate.service';
+import { type ContactHandle, describeContactHandle, readContactHandle } from './contact-handle';
 import { maskEmail } from './mask-email';
 
 export interface ResolvedHumanTarget {
@@ -53,6 +54,8 @@ export interface ReachableHumanTarget extends ResolvedHumanTarget {
   via: HumanChannelViaEnum;
   /** When the human connected / verified it. */
   connectedAt?: string;
+  /** How they show on that chat app, as far as it is known. Absent for email. */
+  handle?: ContactHandle;
 }
 
 /** Apps a human can connect themselves from the invite page. */
@@ -77,6 +80,10 @@ export type InviteChannelDescription = {
   verifiedAt?: string;
   verifiedRequestedAt?: string;
   requestedAt?: string;
+  /** How the human shows on a connected chat app: `@username` on Telegram, their name on Slack. */
+  handle?: string;
+  /** The Slack workspace they are in, such as `acme.slack.com`. */
+  workspace?: string;
 };
 
 /**
@@ -265,7 +272,8 @@ export class HumanDeliveryService {
         return described;
       }
 
-      const connected = targets.some((target) => target.integrationIdentifier === channel.integrationIdentifier);
+      const target = targets.find((candidate) => candidate.integrationIdentifier === channel.integrationIdentifier);
+      const connected = Boolean(target);
 
       return {
         ...channel,
@@ -273,6 +281,7 @@ export class HumanDeliveryService {
         available: true,
         isDefault: connected && defaultVia === channel.via,
         status: connected ? HumanAddressVerificationStateEnum.VERIFIED : HumanAddressVerificationStateEnum.UNVERIFIED,
+        ...describeContactHandle(channel.via, target?.handle),
       };
     });
   }
@@ -588,12 +597,15 @@ export class HumanDeliveryService {
       return null;
     }
 
+    const handle = readContactHandle(endpoint.endpoint);
+
     return {
       via,
       platform: via,
       platformUserId,
       integrationIdentifier,
       connectedAt: endpoint.createdAt,
+      ...(Object.keys(handle).length > 0 ? { handle } : {}),
     };
   }
 }
@@ -653,6 +665,8 @@ function toContactChannelStatus(channel: InviteChannelDescription): HumanContact
     ...(channel.verifiedAt ? { verifiedAt: channel.verifiedAt } : {}),
     ...(channel.verifiedRequestedAt ? { verifiedRequestedAt: channel.verifiedRequestedAt } : {}),
     ...(channel.requestedAt ? { requestedAt: channel.requestedAt } : {}),
+    ...(channel.handle ? { handle: channel.handle } : {}),
+    ...(channel.workspace ? { workspace: channel.workspace } : {}),
   };
 }
 

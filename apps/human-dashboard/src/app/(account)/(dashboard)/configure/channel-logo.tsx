@@ -29,14 +29,16 @@ export function ChannelLogo({ via, size }: ChannelLogoProps) {
   return <ChannelIcon via={via} className={MARK[via][size]} />;
 }
 
-/** WhatsApp and iMessage: a green circle with the app's white mark. */
-function ComingSoonLogo({ via, size }: { via: ComingSoonVia; size: ChannelLogoProps['size'] }) {
+const COMING_SOON_SIZE = { 14: 'size-3.5', 16: 'size-4', 24: 'size-6' } as const;
+
+/** WhatsApp and iMessage: a green circle with the app's white mark. 14 in the "Coming soon" chips. */
+export function ComingSoonLogo({ via, size }: { via: ComingSoonVia; size: keyof typeof COMING_SOON_SIZE }) {
   return (
     <span
       aria-hidden="true"
       className={cn(
         'flex shrink-0 items-center justify-center rounded-full text-white',
-        size === 16 ? 'size-4' : 'size-6',
+        COMING_SOON_SIZE[size],
         via === 'whatsapp' ? 'bg-[#25d366]' : 'bg-linear-to-b from-[#5df777] to-[#0abe2b]'
       )}
     >

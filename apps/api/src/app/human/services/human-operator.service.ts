@@ -1,11 +1,14 @@
 import { randomBytes } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AgentRepository, HumanContactRepository, SubscriberRepository } from '@novu/dal';
 
 /** The subscriberId `human setup` made up for the operator before the API kept track: `human_` and 12 hex characters. */
 const CLI_OPERATOR_ID_PATTERN = /^human_[0-9a-f]{12}$/;
 
 type OperatorScope = { environmentId: string; organizationId: string; agentId: string };
+
+/** A relay agent named by its identifier instead of its internal id. */
+type RelayScope = Omit<OperatorScope, 'agentId'> & { agentIdentifier: string };
 
 /**
  * Which contact is the account owner. The CLI and the Human dashboard both ask here, so an operator who
@@ -24,7 +27,37 @@ export class HumanOperatorService {
    * The operator's subscriberId, or `null` when there is none yet. Setups from before the operator was
    * recorded have none stored; there the oldest contact made by `human setup` is the operator.
    */
-  async find(scope: Omit<OperatorScope, 'agentId'> & { agentIdentifier: string }): Promise<string | null> {
+  async find(scope: RelayScope): Promise<string | null> {
+    const agentId = await this.findRelayAgentId(scope);
+
+    return agentId ? this.findForAgent({ ...scope, agentId }) : null;
+  }
+
+  /**
+   * The relay agent and its operator, for a call that changes the operator's own contact. A 404 before
+   * `human setup` has made the agent, or while nobody is set up as its operator.
+   */
+  async require(scope: RelayScope): Promise<{ agentId: string; subscriberId: string }> {
+    const agentId = await this.findRelayAgentId(scope);
+    if (!agentId) {
+      throw new NotFoundException({
+        code: 'agent_not_found',
+        message: 'There is no agent yet. Run `npx @agentinbox/cli setup` first.',
+      });
+    }
+
+    const subscriberId = await this.findForAgent({ ...scope, agentId });
+    if (!subscriberId) {
+      throw new NotFoundException({
+        code: 'operator_not_found',
+        message: 'You aren’t one of your agent’s contacts yet. Run `npx @agentinbox/cli setup` first.',
+      });
+    }
+
+    return { agentId, subscriberId };
+  }
+
+  private async findRelayAgentId(scope: RelayScope): Promise<string | null> {
     const agent = await this.agentRepository.findOne(
       {
         identifier: scope.agentIdentifier,
@@ -34,11 +67,7 @@ export class HumanOperatorService {
       ['_id', 'runtime']
     );
 
-    if (!agent || agent.runtime !== 'human_relay') {
-      return null;
-    }
-
-    return this.findForAgent({ ...scope, agentId: agent._id });
+    return agent?.runtime === 'human_relay' ? agent._id : null;
   }
 
   /**

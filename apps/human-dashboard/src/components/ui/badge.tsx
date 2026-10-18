@@ -18,7 +18,8 @@ const VARIANTS: Record<BadgeVariant, string> = {
 
 const DOTS: Partial<Record<BadgeVariant, string>> = {
   success: 'bg-success',
-  pending: 'bg-pending',
+  // The design's "Waiting" dot glows with a halo of its own.
+  pending: 'bg-pending shadow-[0_0_0_3px_rgb(242_173_64/0.5)]',
   danger: 'bg-danger',
 };
 

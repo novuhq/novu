@@ -6,6 +6,8 @@ import { useEffect, useOptimistic, useState, useTransition } from 'react';
 
 import { buttonClassName } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
+import type { AgentPause } from '@/lib/agent-settings';
+import type { HostStatus } from '@/lib/host-status';
 import {
   INBOX_UNREAD_COMMAND,
   INBOX_WATCH_COMMAND,
@@ -19,22 +21,28 @@ import { cn } from '@/lib/utils';
 
 import { loadMoreThreadsAction, loadThreadAction } from './actions';
 import { HeaderCommand } from './command-chip';
+import { HostCheck } from './host-check';
 import { InboxEmpty } from './inbox-empty';
 import { InboxClock } from './inbox-time';
 import { InboxToolbar } from './inbox-toolbar';
+import { type PausedAgent, PausedBanner, PausedStatus, usePausedAgent } from './paused-banner';
 import { ThreadDrawer, type ThreadLoad } from './thread-drawer';
 import { ThreadList } from './thread-list';
+import { useThreadLoads } from './use-thread-loads';
 
 type InboxViewProps = {
   view: InboxViewState;
   /** The first page of threads in the view. */
   page: InboxThreadsPage;
   counts: InboxCounts;
-  agent: { handle: string; address: string };
+  /** `paused` is set while the agent is paused: the banner above the header, and the header's status. */
+  agent: { handle: string; address: string; paused?: AgentPause | null };
   /** Set while the agent has no threads at all: how many channels it listens on, when that could be read. */
   empty: { listening: number | null } | null;
   /** The thread the page's address opens, read along with the page. */
   initialThread: { id: string; load: ThreadLoad } | null;
+  /** Whether a host reads the agent's mail, or `null` when that couldn't be read: the header then leaves it out. */
+  hostStatus: HostStatus | null;
   /** When the server rendered this: "now" until the browser takes over, and new on every render. */
   renderedAt: string;
 };
@@ -48,13 +56,29 @@ type MoreThreads = {
   error: string | null;
 };
 
+/** Threads as the drawer last read them, by id. They belong to one render of the page, as `MoreThreads` do. */
+type ReadThreads = {
+  renderedAt: string;
+  threads: Record<string, InboxThread>;
+};
+
 /**
  * The Inbox page: the header, the tabs and filters, the threads, and the drawer of the one that is open.
  * The view lives in the page's address, so the server lists its threads; the drawer only changes the
  * address in place and reads its thread itself.
  */
-export function InboxView({ view: serverView, page, counts, agent, empty, initialThread, renderedAt }: InboxViewProps) {
+export function InboxView({
+  view: serverView,
+  page,
+  counts,
+  agent,
+  empty,
+  initialThread,
+  hostStatus,
+  renderedAt,
+}: InboxViewProps) {
   const router = useRouter();
+  const pausedAgent = usePausedAgent(agent.paused ?? null);
   const [view, setOptimisticView] = useOptimistic(serverView);
   const [navigating, startNavigation] = useTransition();
   const [refreshing, startRefresh] = useTransition();
@@ -71,15 +95,25 @@ export function InboxView({ view: serverView, page, counts, agent, empty, initia
   const [more, setMore] = useState<MoreThreads | null>(null);
   const extra = more?.renderedAt === renderedAt ? more : null;
   const shownIds = new Set(page.threads.map((thread) => thread.id));
-  const threads = [...page.threads, ...(extra?.threads.filter((thread) => !shownIds.has(thread.id)) ?? [])];
+  const listed = [...page.threads, ...(extra?.threads.filter((thread) => !shownIds.has(thread.id)) ?? [])];
   const next = extra ? extra.next : page.next;
+
+  const { threads, remember } = useFresherRows(listed, renderedAt);
 
   // The thread in the drawer stays set while the drawer slides out, so it keeps its content.
   const [openId, setOpenId] = useState<string | null>(initialThread?.id ?? null);
   const [drawerOpen, setDrawerOpen] = useState(Boolean(initialThread));
-  const [loads, setLoads] = useState<Record<string, ThreadLoad>>(
-    initialThread ? { [initialThread.id]: initialThread.load } : {}
-  );
+  const {
+    loads,
+    open: readThread,
+    loadOlder,
+    receive,
+  } = useThreadLoads({
+    initial: initialThread,
+    readPage: loadThreadAction,
+    liveId: drawerOpen ? openId : null,
+    onThreadRead: remember,
+  });
   const openLoad = openId ? loads[openId] : undefined;
   const openSummary =
     threads.find((thread) => thread.id === openId) ?? (openLoad?.status === 'ready' ? openLoad.view.thread : null);
@@ -92,10 +126,7 @@ export function InboxView({ view: serverView, page, counts, agent, empty, initia
     if (initialThread) {
       setOpenId(initialThread.id);
       setDrawerOpen(true);
-      setLoads((previous) => ({
-        ...previous,
-        [initialThread.id]: withEarlier(previous[initialThread.id], initialThread.load),
-      }));
+      receive(initialThread.id, initialThread.load);
     } else {
       setDrawerOpen(false);
     }
@@ -109,63 +140,12 @@ export function InboxView({ view: serverView, page, counts, agent, empty, initia
     });
   }
 
-  async function fetchThread(threadId: string) {
-    // A thread read before shows at once, and is replaced once it's read again.
-    setLoads((previous) => ({
-      ...previous,
-      [threadId]: previous[threadId]?.status === 'ready' ? previous[threadId] : { status: 'loading' },
-    }));
-
-    const result = await loadThreadAction(threadId);
-    const fresh: ThreadLoad = result.ok
-      ? { status: 'ready', view: result.view }
-      : { status: 'error', error: result.error };
-
-    setLoads((previous) => ({ ...previous, [threadId]: withEarlier(previous[threadId], fresh) }));
-  }
-
-  async function fetchEarlier(threadId: string) {
-    const current = loads[threadId];
-    const oldest = current?.status === 'ready' ? current.view.messages[0]?.id : undefined;
-    if (!oldest || current?.status !== 'ready' || current.earlier === 'loading') {
-      return;
-    }
-
-    setLoads((previous) => ({ ...previous, [threadId]: { ...current, earlier: 'loading' } }));
-    const result = await loadThreadAction(threadId, oldest);
-
-    setLoads((previous) => {
-      const latest = previous[threadId];
-      if (latest?.status !== 'ready') {
-        return previous;
-      }
-
-      // The thread was read again meanwhile and starts at another message now: this page no longer joins
-      // up with it, so it's dropped, and "Show earlier messages" reads from the new first message.
-      if (latest.view.messages[0]?.id !== oldest) {
-        return { ...previous, [threadId]: { ...latest, earlier: undefined } };
-      }
-
-      if (!result.ok) {
-        return { ...previous, [threadId]: { ...latest, earlier: 'error' } };
-      }
-
-      const view = {
-        ...latest.view,
-        messages: [...result.view.messages, ...latest.view.messages],
-        hasMore: result.view.hasMore,
-      };
-
-      return { ...previous, [threadId]: { status: 'ready', view } };
-    });
-  }
-
   function openThread(thread: InboxThread) {
     setOpenId(thread.id);
     setDrawerOpen(true);
     // In place: no new entry in the history, and nothing for the server to render again.
     window.history.replaceState(null, '', inboxHref(view, thread.id));
-    void fetchThread(thread.id);
+    void readThread(thread.id);
   }
 
   function changeDrawer(open: boolean) {
@@ -195,12 +175,14 @@ export function InboxView({ view: serverView, page, counts, agent, empty, initia
   return (
     <InboxClock renderedAt={renderedAt}>
       <div data-full-width className="flex flex-col gap-4">
+        <PausedBanner agent={pausedAgent} />
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-xl leading-7 font-medium tracking-[-0.3px] text-foreground">Inbox</h1>
           <span className="rounded border border-border bg-subtle px-2 py-0.75 font-mono text-xs leading-4 text-default">
             {agent.address}
           </span>
           <span aria-hidden="true" className="flex-1" />
+          <AgentStatus hostStatus={hostStatus} pausedAgent={pausedAgent} renderedAt={renderedAt} />
           <Tooltip label="Refresh">
             <button
               type="button"
@@ -241,45 +223,64 @@ export function InboxView({ view: serverView, page, counts, agent, empty, initia
         summary={openSummary}
         load={openLoad}
         agentName={agent.handle}
-        onRetry={() => openId && fetchThread(openId)}
-        onLoadEarlier={() => openId && fetchEarlier(openId)}
+        onRetry={() => openId && readThread(openId)}
+        onLoadOlder={() => openId && loadOlder(openId)}
       />
     </InboxClock>
   );
 }
 
 /**
- * A thread read again over what the drawer already has. The fresh page wins, and the older messages loaded
- * before it ("Show earlier messages") stay above it where the two meet. A failed read keeps what was there.
+ * The list's rows, with the threads the drawer read since the page was rendered: the drawer reads its thread
+ * after the page did, and keeps reading it while it is open, so its row shows what the drawer found until the
+ * page is rendered again. `remember` takes a thread as a read found it.
  */
-function withEarlier(current: ThreadLoad | undefined, fresh: ThreadLoad): ThreadLoad {
-  if (current?.status !== 'ready') {
-    return fresh;
+function useFresherRows(listed: InboxThread[], renderedAt: string) {
+  const [read, setRead] = useState<ReadThreads>({ renderedAt, threads: {} });
+  const fresher = read.renderedAt === renderedAt ? read.threads : {};
+
+  function remember(thread: InboxThread) {
+    setRead((previous) => {
+      const known = previous.renderedAt === renderedAt ? previous.threads : {};
+      const same = JSON.stringify(known[thread.id]) === JSON.stringify(thread);
+
+      return same ? previous : { renderedAt, threads: { ...known, [thread.id]: thread } };
+    });
   }
 
-  if (fresh.status !== 'ready') {
-    return current;
-  }
+  return { threads: listed.map((thread) => fresher[thread.id] ?? thread), remember };
+}
 
-  const first = fresh.view.messages[0];
-  const meet = first ? current.view.messages.findIndex((message) => message.id === first.id) : -1;
-  if (meet <= 0) {
-    return fresh;
-  }
+/**
+ * The header's one spot for the agent's state, left of Refresh: "paused by you 12m ago" while it's paused,
+ * otherwise whether a host checks the inbox. The two are stacked in place, so one fades in as the other
+ * fades out.
+ */
+function AgentStatus({
+  hostStatus,
+  pausedAgent,
+  renderedAt,
+}: {
+  hostStatus: HostStatus | null;
+  pausedAgent: PausedAgent;
+  renderedAt: string;
+}) {
+  const paused = Boolean(pausedAgent.paused);
 
-  // A card's answer changes the card where it is, and the fresh page doesn't reach that far back. Older
-  // messages with a card still waiting are dropped, so "Show earlier messages" reads them as they are now.
-  const older = current.view.messages.slice(0, meet);
-  if (older.some((message) => message.card?.state.status === 'pending')) {
-    return fresh;
-  }
-
-  const messages = [...older, ...fresh.view.messages];
-
-  // The first message is the same, so a page of older ones on its way still joins up.
-  return {
-    status: 'ready',
-    view: { ...fresh.view, messages, hasMore: current.view.hasMore },
-    earlier: current.earlier,
-  };
+  return (
+    <span className="grid shrink-0 items-center justify-items-end *:col-start-1 *:row-start-1">
+      {hostStatus && (
+        <span
+          aria-hidden={paused || undefined}
+          className={cn(
+            'transition-opacity duration-300 ease-out motion-reduce:transition-none',
+            paused && 'opacity-0'
+          )}
+        >
+          <HostCheck lastCheckedAt={hostStatus.lastCheckedAt} renderedAt={renderedAt} />
+        </span>
+      )}
+      <PausedStatus agent={pausedAgent} renderedAt={renderedAt} />
+    </span>
+  );
 }
