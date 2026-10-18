@@ -193,30 +193,33 @@ integrationSchema.index(
 );
 
 /**
- * One vanity Agent Inbox address per domain (`{emailSlugPrefix}@inboxDomain`).
- * Rows that still carry a routing key stay out of this index, so existing
- * `{slug}-{key}` mailboxes are not part of the claim.
+ * One Agent Inbox address per `(slug, domain, routing key)`. A vanity row has
+ * no routing key, so Mongo stores that part as null and a second `{slug}@domain`
+ * collides. A keyed row keeps its own key, so `atlas` and `atlas-a1b2c3d4` on
+ * the same domain both fit. `$exists: false` is not a legal partial filter.
  *
  * A new index: `agent-inbox-vanity-slug-index` creates it on databases that
  * do not auto-build indexes.
  */
 export const AGENT_INBOX_VANITY_SLUG_INDEX = 'agent_inbox_vanity_slug';
 
+export const AGENT_INBOX_VANITY_SLUG_INDEX_KEYS = {
+  'credentials.emailSlugPrefix': 1,
+  'credentials.inboxDomain': 1,
+  'credentials.inboxRoutingKey': 1,
+} as const;
+
 export const AGENT_INBOX_VANITY_SLUG_PARTIAL_FILTER = {
   providerId: EmailProviderIdEnum.AgentEmailInbox,
-  'credentials.inboxRoutingKey': { $exists: false },
   'credentials.emailSlugPrefix': { $type: 'string' },
   'credentials.inboxDomain': { $type: 'string' },
 } as const;
 
-integrationSchema.index(
-  { 'credentials.emailSlugPrefix': 1, 'credentials.inboxDomain': 1 },
-  {
-    unique: true,
-    name: AGENT_INBOX_VANITY_SLUG_INDEX,
-    partialFilterExpression: AGENT_INBOX_VANITY_SLUG_PARTIAL_FILTER,
-  }
-);
+integrationSchema.index(AGENT_INBOX_VANITY_SLUG_INDEX_KEYS, {
+  unique: true,
+  name: AGENT_INBOX_VANITY_SLUG_INDEX,
+  partialFilterExpression: AGENT_INBOX_VANITY_SLUG_PARTIAL_FILTER,
+});
 
 integrationSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 

@@ -115,8 +115,7 @@ export class AgentInboxAddressService {
       return true;
     }
 
-    const vanity = await this.integrationRepository.findAgentInboundByVanitySlug(handle, domain);
-    if (vanity) {
+    if (await this.integrationRepository.hasAgentInboundByVanitySlug(handle, domain)) {
       return true;
     }
 

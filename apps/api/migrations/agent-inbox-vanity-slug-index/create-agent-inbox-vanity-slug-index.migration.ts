@@ -2,14 +2,16 @@ import '../../src/config';
 
 import {
   AGENT_INBOX_VANITY_SLUG_INDEX,
+  AGENT_INBOX_VANITY_SLUG_INDEX_KEYS,
   AGENT_INBOX_VANITY_SLUG_PARTIAL_FILTER,
   DalService,
   IntegrationRepository,
 } from '@novu/dal';
 
 /**
- * Unique claim for vanity Agent Inbox addresses (`{handle}@domain`).
- * Existing keyed rows are outside the partial filter, so the index builds empty.
+ * Unique claim for Agent Inbox addresses. A vanity row has no routing key, so
+ * it occupies `(slug, domain, null)`. A keyed row occupies its own key and
+ * does not block the bare handle.
  */
 export async function run(): Promise<void> {
   console.log('Start migration - create agent inbox vanity slug index');
@@ -23,14 +25,11 @@ export async function run(): Promise<void> {
 
   try {
     const collection = new IntegrationRepository()._model.collection;
-    await collection.createIndex(
-      { 'credentials.emailSlugPrefix': 1, 'credentials.inboxDomain': 1 },
-      {
-        unique: true,
-        name: AGENT_INBOX_VANITY_SLUG_INDEX,
-        partialFilterExpression: AGENT_INBOX_VANITY_SLUG_PARTIAL_FILTER,
-      }
-    );
+    await collection.createIndex(AGENT_INBOX_VANITY_SLUG_INDEX_KEYS, {
+      unique: true,
+      name: AGENT_INBOX_VANITY_SLUG_INDEX,
+      partialFilterExpression: AGENT_INBOX_VANITY_SLUG_PARTIAL_FILTER,
+    });
 
     console.log('End migration.');
   } finally {

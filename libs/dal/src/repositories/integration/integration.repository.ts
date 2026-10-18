@@ -64,21 +64,14 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
 
   /**
    * Unscoped lookup of the vanity Agent Inbox (`{handle}@domain`) that claimed
-   * a handle. Used by inbound mail, which knows neither the env nor the org,
-   * and by the availability check. Backed by `agent_inbox_vanity_slug`.
+   * a handle. Used by inbound mail, which knows neither the env nor the org.
+   * Backed by `agent_inbox_vanity_slug`.
    *
    * More than one match means the uniqueness gate is down. Return null so the
    * worker drops the message instead of picking an arbitrary tenant.
    */
   async findAgentInboundByVanitySlug(emailSlugPrefix: string, inboxDomain: string): Promise<IntegrationEntity | null> {
-    const docs = await this.MongooseModel.find({
-      providerId: EmailProviderIdEnum.AgentEmailInbox,
-      'credentials.emailSlugPrefix': emailSlugPrefix,
-      'credentials.inboxDomain': inboxDomain,
-      'credentials.inboxRoutingKey': { $exists: false },
-    })
-      .limit(2)
-      .lean();
+    const docs = await this.MongooseModel.find(this.vanitySlugQuery(emailSlugPrefix, inboxDomain)).limit(2).lean();
 
     const doc = docs[0];
     if (docs.length !== 1 || !doc) {
@@ -86,6 +79,26 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
     }
 
     return this.mapEntity(doc);
+  }
+
+  /**
+   * Whether any vanity inbox already holds this handle, including when more
+   * than one does. Availability must treat that as taken. Inbound uses
+   * {@link findAgentInboundByVanitySlug} and drops instead.
+   */
+  async hasAgentInboundByVanitySlug(emailSlugPrefix: string, inboxDomain: string): Promise<boolean> {
+    const existing = await this.MongooseModel.exists(this.vanitySlugQuery(emailSlugPrefix, inboxDomain));
+
+    return existing != null;
+  }
+
+  private vanitySlugQuery(emailSlugPrefix: string, inboxDomain: string) {
+    return {
+      providerId: EmailProviderIdEnum.AgentEmailInbox,
+      'credentials.emailSlugPrefix': emailSlugPrefix,
+      'credentials.inboxDomain': inboxDomain,
+      'credentials.inboxRoutingKey': { $exists: false },
+    };
   }
 
   async findHighestPriorityIntegration({

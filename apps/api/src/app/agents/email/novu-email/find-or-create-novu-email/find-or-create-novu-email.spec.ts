@@ -37,6 +37,7 @@ describe('NovuEmailProvisioningService', () => {
     findOne: sinon.SinonStub;
     create: sinon.SinonStub;
     findAgentInboundByVanitySlug: sinon.SinonStub;
+    hasAgentInboundByVanitySlug: sinon.SinonStub;
     findAgentInboundByInboxRoutingKey: sinon.SinonStub;
   };
   let agentIntegrationRepo: {
@@ -84,6 +85,7 @@ describe('NovuEmailProvisioningService', () => {
       findOne: stub(),
       create: stub(),
       findAgentInboundByVanitySlug: stub().resolves(null),
+      hasAgentInboundByVanitySlug: stub().resolves(false),
       findAgentInboundByInboxRoutingKey: stub().resolves(null),
     };
     agentIntegrationRepo = {
@@ -245,9 +247,7 @@ describe('NovuEmailProvisioningService', () => {
     });
 
     it('refuses a handle that is already claimed and offers a neighbour', async () => {
-      integrationRepo.findAgentInboundByVanitySlug.callsFake(async (handle: string) =>
-        handle === 'atlas' ? { _id: 'taken' } : null
-      );
+      integrationRepo.hasAgentInboundByVanitySlug.callsFake(async (handle: string) => handle === 'atlas');
 
       try {
         await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID, EmailProviderIdEnum.AgentEmailInbox, {

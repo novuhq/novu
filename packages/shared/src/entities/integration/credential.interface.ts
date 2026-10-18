@@ -76,9 +76,10 @@ export interface ICredentials {
   /**
    * Agent default shared inbox: the slug prefix used in
    * `{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`. A new Agent Inbox
-   * with no routing key publishes `{emailSlugPrefix}@<shared-domain>` instead.
-   * Snapshotted from the linked agent's identifier, or the handle the operator
-   * chose. Validated against `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$` server-side.
+   * with no routing key publishes `{emailSlugPrefix}@<shared-domain>` instead,
+   * and that slug stays the one chosen at creation. A keyed inbox may still
+   * edit its prefix. Validated against
+   * `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$` server-side.
    */
   emailSlugPrefix?: string;
   /**
