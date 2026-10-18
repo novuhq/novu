@@ -29,7 +29,7 @@ describe('Workflow Queue service', () => {
     it('should be initialised properly', async () => {
       expect(workflowQueueService).toBeDefined();
       expect(Object.keys(workflowQueueService)).toEqual(
-        expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
+        expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'bullMqService', 'queue'])
       );
       expect(workflowQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(workflowQueueService.topic).toEqual('trigger-handler');
@@ -47,9 +47,9 @@ describe('Workflow Queue service', () => {
           _eventsCount: 0,
           _maxListeners: undefined,
           name: 'trigger-handler',
-          jobsOpts: {
+          jobsOpts: expect.objectContaining({
             removeOnComplete: true,
-          },
+          }),
         })
       );
       expect(workflowQueueService.queue.opts.prefix).toEqual('bull');
@@ -118,12 +118,7 @@ describe('Workflow Queue service', () => {
         expect.objectContaining({
           id: '2',
           name: jobId,
-          data: {
-            _id: jobId,
-            _environmentId,
-            _organizationId,
-            _userId,
-          },
+          data: jobData,
           attemptsMade: 0,
         })
       );

@@ -32,10 +32,10 @@ type TestJob = {
 describe('StepTemplateHydrationService', () => {
   function buildService() {
     const messageTemplateRepository = {
-      findOne: jest.fn().mockResolvedValue(null),
-      findDeleted: jest.fn().mockResolvedValue(null),
+      findOne: vi.fn().mockResolvedValue(null),
+      findDeleted: vi.fn().mockResolvedValue(null),
     };
-    const logger = { warn: jest.fn(), setContext: jest.fn() };
+    const logger = { warn: vi.fn(), setContext: vi.fn() };
     const service = new StepTemplateHydrationService(messageTemplateRepository as never, logger as never);
 
     return { service, messageTemplateRepository, logger };

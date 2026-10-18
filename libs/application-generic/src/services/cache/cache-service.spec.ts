@@ -185,9 +185,8 @@ describe('cache-service', () => {
     cacheService = MockCacheService.createClient();
   });
 
-  afterEach((done) => {
-    cacheService.delByPattern('*');
-    done();
+  afterEach(async () => {
+    await cacheService.delByPattern('*');
   });
 
   it('should store data in cache', async () => {

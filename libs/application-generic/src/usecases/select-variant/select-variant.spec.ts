@@ -1,18 +1,32 @@
-import { MessageTemplateEntity, MessageTemplateRepository, SubscriberRepository, TenantRepository } from '@novu/dal';
+import {
+  EnvironmentRepository,
+  ExecutionDetailsRepository,
+  JobRepository,
+  MessageRepository,
+  MessageTemplateEntity,
+  MessageTemplateRepository,
+  SubscriberRepository,
+  TenantRepository,
+} from '@novu/dal';
 import { EmailBlockTypeEnum, FieldLogicalOperatorEnum, FieldOperatorEnum, StepTypeEnum } from '@novu/shared';
 
+import { FeatureFlagsService, TraceLogRepository } from '../../services';
+import { CompileTemplate } from '../compile-template';
 import { ConditionsFilter } from '../conditions-filter';
+import { CreateExecutionDetails } from '../create-execution-details';
 import { NormalizeVariables } from '../normalize-variables';
 import { SelectVariantCommand } from './select-variant.command';
 import { SelectVariant } from './select-variant.usecase';
 
-const findOneMessageTemplateMock = jest.fn(() => testVariant);
+const findOneMessageTemplateMock = vi.fn(() => testVariant);
 
-jest.mock('@novu/dal', () => ({
-  ...jest.requireActual('@novu/dal'),
-  MessageTemplateRepository: jest.fn(() => ({
-    findOne: findOneMessageTemplateMock,
-  })),
+vi.mock('@novu/dal', async () => ({
+  ...(await vi.importActual('@novu/dal')),
+  MessageTemplateRepository: vi.fn(function () {
+    return {
+      findOne: findOneMessageTemplateMock,
+    };
+  }),
 }));
 
 describe('select variant', () => {
@@ -20,12 +34,24 @@ describe('select variant', () => {
 
   beforeEach(async () => {
     selectVariantUsecase = new SelectVariant(
-      // @ts-expect-error test stub — logger/featureFlags are optional at construction
-      new ConditionsFilter(),
+      new ConditionsFilter(
+        new SubscriberRepository(),
+        new MessageRepository(),
+        new JobRepository(),
+        new EnvironmentRepository(),
+        new CreateExecutionDetails(
+          new ExecutionDetailsRepository(),
+          TraceLogRepository as any,
+          new FeatureFlagsService()
+        ),
+        new CompileTemplate(),
+        new FeatureFlagsService(),
+        { setContext: vi.fn(), info: vi.fn() } as any
+      ),
       new MessageTemplateRepository(),
       new NormalizeVariables(new SubscriberRepository(), new TenantRepository())
     );
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should select the variant', async () => {

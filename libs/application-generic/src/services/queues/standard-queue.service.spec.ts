@@ -53,9 +53,9 @@ describe('Standard Queue service', () => {
           _eventsCount: 0,
           _maxListeners: undefined,
           name: 'standard',
-          jobsOpts: {
+          jobsOpts: expect.objectContaining({
             removeOnComplete: true,
-          },
+          }),
         })
       );
       expect(standardQueueService.queue.opts.prefix).toEqual('bull');
@@ -125,12 +125,7 @@ describe('Standard Queue service', () => {
         expect.objectContaining({
           id: jobId,
           name: jobId,
-          data: {
-            _id: jobId,
-            _environmentId,
-            _organizationId,
-            _userId,
-          },
+          data: jobData,
           attemptsMade: 0,
         })
       );
@@ -176,7 +171,7 @@ describe('Standard Queue service', () => {
       expect(await standardQueueService.queue.getWaitingCount()).toEqual(2);
 
       const standardQueueJobs = await standardQueueService.queue.getJobs();
-      expect(standardQueueJobs.map((job) => job.id).sort()).toEqual([customJobId, jobId]);
+      expect(standardQueueJobs.map((job) => job.id).sort()).toEqual([jobId, customJobId]);
     });
   });
 

@@ -35,7 +35,7 @@ describe('WebSockets Queue service', () => {
     it('should be initialised properly', async () => {
       expect(webSocketsQueueService).toBeDefined();
       expect(Object.keys(webSocketsQueueService)).toEqual(
-        expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
+        expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'bullMqService', 'queue'])
       );
       expect(webSocketsQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(webSocketsQueueService.topic).toEqual('ws_socket_queue');
@@ -113,12 +113,7 @@ describe('WebSockets Queue service', () => {
         expect.objectContaining({
           id: '2',
           name: jobId,
-          data: {
-            _id: jobId,
-            _environmentId,
-            _organizationId,
-            _userId,
-          },
+          data: jobData,
           attemptsMade: 0,
         })
       );

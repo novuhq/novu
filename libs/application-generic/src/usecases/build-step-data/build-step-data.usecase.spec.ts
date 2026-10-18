@@ -1,4 +1,4 @@
-jest.mock('../../utils/provider-overrides', () => ({
+vi.mock('../../utils/provider-overrides', () => ({
   stitchProviderOverridesFromDocs: (docs: Array<{ providerId?: string; controls?: Record<string, unknown> }>) => {
     const stitched: Record<string, Record<string, unknown>> = {};
 

@@ -85,7 +85,7 @@ describe('BullMQ Service', () => {
 
     it('should hash-tag the prefix when the workflow Redis provider is clustered', () => {
       const mockInMemoryProvider = {
-        providerInUseIsInClusterMode: jest.fn(() => true),
+        providerInUseIsInClusterMode: vi.fn(() => true),
       };
 
       bullMqService = new BullMqService(mockInMemoryProvider as unknown as WorkflowInMemoryProviderService);
@@ -97,7 +97,7 @@ describe('BullMQ Service', () => {
 
     it('should omit the prefix for a standalone Redis provider', () => {
       const mockInMemoryProvider = {
-        providerInUseIsInClusterMode: jest.fn(() => false),
+        providerInUseIsInClusterMode: vi.fn(() => false),
       };
 
       bullMqService = new BullMqService(mockInMemoryProvider as unknown as WorkflowInMemoryProviderService);
@@ -109,7 +109,7 @@ describe('BullMQ Service', () => {
   describe('Add job', () => {
     beforeEach(() => {
       const mockInMemoryProvider = {
-        providerInUseIsInClusterMode: jest.fn(() => false),
+        providerInUseIsInClusterMode: vi.fn(() => false),
       };
 
       bullMqService = new BullMqService(mockInMemoryProvider as unknown as WorkflowInMemoryProviderService);
@@ -117,7 +117,7 @@ describe('BullMQ Service', () => {
 
     it('should return a Promise<Job> that resolves with the enqueued job', async () => {
       const queue = {
-        add: jest.fn().mockResolvedValue({ id: 'job-1' }),
+        add: vi.fn().mockResolvedValue({ id: 'job-1' }),
       };
       (bullMqService as any)._queue = queue;
 
@@ -131,7 +131,7 @@ describe('BullMQ Service', () => {
     it('should not resolve before the underlying enqueue settles', async () => {
       let settled = false;
       const queue = {
-        add: jest.fn().mockImplementation(
+        add: vi.fn().mockImplementation(
           () =>
             new Promise((resolve) => {
               setTimeout(() => {
@@ -162,7 +162,7 @@ describe('BullMQ Service', () => {
 
       try {
         const queue = {
-          add: jest.fn().mockRejectedValue(enqueueError),
+          add: vi.fn().mockRejectedValue(enqueueError),
         };
         (bullMqService as any)._queue = queue;
 

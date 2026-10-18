@@ -69,13 +69,11 @@ describe('Readiness Service', () => {
 
   describe('Set up', () => {
     it('should be able to instantiate it correctly', async () => {
-      expect(Object.keys(readinessService)).toEqual(
-        expect.arrayContaining([
-          'standardQueueServiceHealthIndicator',
-          'workflowQueueServiceHealthIndicator',
-          'subscriberProcessQueueHealthIndicator',
-        ])
-      );
+      expect(readinessService['healthIndicators'].map((indicator) => indicator.constructor)).toEqual([
+        StandardQueueServiceHealthIndicator,
+        WorkflowQueueServiceHealthIndicator,
+        SubscriberProcessQueueHealthIndicator,
+      ]);
 
       const areQueuesEnabled = await readinessService.areQueuesEnabled();
       expect(areQueuesEnabled).toEqual(true);

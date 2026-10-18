@@ -9,10 +9,10 @@ import {
 } from './create-step-condition-evaluation-detail.usecase';
 import { DetailEnum } from './types';
 
-jest.mock('../../services/feature-flags/feature-flags.service', () => ({
+vi.mock('../../services/feature-flags/feature-flags.service', () => ({
   FeatureFlagsService: class FeatureFlagsService {},
 }));
-jest.mock('./create-execution-details.usecase', () => ({
+vi.mock('./create-execution-details.usecase', () => ({
   CreateExecutionDetails: class CreateExecutionDetails {},
 }));
 

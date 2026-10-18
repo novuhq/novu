@@ -1,4 +1,5 @@
 import { JobTopicNameEnum, QueueBackend } from '@novu/shared';
+import type { Mock } from 'vitest';
 
 import { restoreQueueBackendEnv } from '../../config/queue-backend.test-helpers';
 import { BullMqService } from '../bull-mq';
@@ -14,9 +15,9 @@ const SHORT_DELAY_MS = 60_000;
 
 type Harness = {
   service: QueueBaseService;
-  bullMq: { add: jest.Mock; addBulk: jest.Mock; createQueue: jest.Mock };
-  sqs: { isConfigured: jest.Mock; send: jest.Mock; sendBulk: jest.Mock };
-  scheduler: { isConfigured: jest.Mock; createDelayedFire: jest.Mock; deleteSchedule: jest.Mock };
+  bullMq: { add: Mock; addBulk: Mock; createQueue: Mock };
+  sqs: { isConfigured: Mock; send: Mock; sendBulk: Mock };
+  scheduler: { isConfigured: Mock; createDelayedFire: Mock; deleteSchedule: Mock };
 };
 
 /**
@@ -30,12 +31,12 @@ function buildHarnessOnBackend(
 
   process.env.QUEUE_BACKEND = backend;
 
-  const bullMq = { add: jest.fn(), addBulk: jest.fn(), createQueue: jest.fn() };
-  const sqs = { isConfigured: jest.fn(() => sqsConfigured), send: jest.fn(), sendBulk: jest.fn() };
+  const bullMq = { add: vi.fn(), addBulk: vi.fn(), createQueue: vi.fn() };
+  const sqs = { isConfigured: vi.fn(() => sqsConfigured), send: vi.fn(), sendBulk: vi.fn() };
   const scheduler = {
-    isConfigured: jest.fn(() => schedulerConfigured),
-    createDelayedFire: jest.fn(),
-    deleteSchedule: jest.fn(),
+    isConfigured: vi.fn(() => schedulerConfigured),
+    createDelayedFire: vi.fn(),
+    deleteSchedule: vi.fn(),
   };
 
   /*
@@ -70,7 +71,7 @@ function longDelayJob(overrides: Record<string, unknown> = {}) {
 
 describe('QueueBaseService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(restoreQueueBackendEnv());
@@ -351,9 +352,9 @@ describe('QueueBaseService', () => {
       });
     }
 
-    /** Message ids are assigned by `addJobsToSQS` as `${groupId}-${index}`. */
+    /** Message ids are assigned by `addJobsToSQS` as `${topic}-${index}`. */
     function unsentMessage(index: number) {
-      return { id: `${ORGANIZATION_ID}-${index}`, body: '{}', groupId: ORGANIZATION_ID };
+      return { id: `${JobTopicNameEnum.STANDARD}-${index}`, body: '{}', groupId: ORGANIZATION_ID };
     }
 
     it('should re-queue only the undelivered jobs', async () => {

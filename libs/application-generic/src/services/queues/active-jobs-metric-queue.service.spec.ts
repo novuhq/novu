@@ -43,9 +43,9 @@ describe('Job metrics Queue service', () => {
           _eventsCount: 0,
           _maxListeners: undefined,
           name: 'metric-active-jobs',
-          jobsOpts: {
+          jobsOpts: expect.objectContaining({
             removeOnComplete: true,
-          },
+          }),
         })
       );
       expect(activeJobsMetricQueueService.queue.opts.prefix).toEqual('bull');

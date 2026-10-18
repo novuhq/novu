@@ -2,45 +2,51 @@ import { resolveStorageServiceClass } from './index';
 import { NonExistingFileError } from './non-existing-file.error';
 import { AzureBlobStorageService, GCSStorageService, S3StorageService } from './storage.service';
 
-const azureUpload = jest.fn(() => Promise.resolve({ _response: { status: 201 } }));
-const azureDownloadToBuffer = jest.fn();
-const azureDeleteIfExists = jest.fn(() => Promise.resolve({ succeeded: true }));
-const azureExists = jest.fn(() => Promise.resolve(true));
+const azureUpload = vi.fn(() => Promise.resolve({ _response: { status: 201 } }));
+const azureDownloadToBuffer = vi.fn();
+const azureDeleteIfExists = vi.fn(() => Promise.resolve({ succeeded: true }));
+const azureExists = vi.fn(() => Promise.resolve(true));
 
-const gcsSave = jest.fn(() => Promise.resolve());
-const gcsDownload = jest.fn();
-const gcsDelete = jest.fn(() => Promise.resolve());
-const gcsExists = jest.fn(() => Promise.resolve([true]));
-const gcsGetSignedUrl = jest.fn();
+const gcsSave = vi.fn(() => Promise.resolve());
+const gcsDownload = vi.fn();
+const gcsDelete = vi.fn(() => Promise.resolve());
+const gcsExists = vi.fn(() => Promise.resolve([true]));
+const gcsGetSignedUrl = vi.fn();
 
-jest.mock('@azure/storage-blob', () => ({
-  ...jest.requireActual('@azure/storage-blob'),
-  StorageSharedKeyCredential: jest.fn(() => ({})),
-  BlobServiceClient: jest.fn(() => ({
-    getContainerClient: jest.fn(() => ({
-      getBlockBlobClient: jest.fn(() => ({
-        upload: azureUpload,
-        downloadToBuffer: azureDownloadToBuffer,
-        deleteIfExists: azureDeleteIfExists,
-        exists: azureExists,
+vi.mock('@azure/storage-blob', async () => ({
+  ...(await vi.importActual('@azure/storage-blob')),
+  StorageSharedKeyCredential: vi.fn(function () {
+    return {};
+  }),
+  BlobServiceClient: vi.fn(function () {
+    return {
+      getContainerClient: vi.fn(() => ({
+        getBlockBlobClient: vi.fn(() => ({
+          upload: azureUpload,
+          downloadToBuffer: azureDownloadToBuffer,
+          deleteIfExists: azureDeleteIfExists,
+          exists: azureExists,
+        })),
       })),
-    })),
-  })),
+    };
+  }),
 }));
 
-jest.mock('@google-cloud/storage', () => ({
-  ...jest.requireActual('@google-cloud/storage'),
-  Storage: jest.fn(() => ({
-    bucket: jest.fn(() => ({
-      file: jest.fn(() => ({
-        save: gcsSave,
-        download: gcsDownload,
-        delete: gcsDelete,
-        exists: gcsExists,
-        getSignedUrl: gcsGetSignedUrl,
+vi.mock('@google-cloud/storage', async () => ({
+  ...(await vi.importActual('@google-cloud/storage')),
+  Storage: vi.fn(function () {
+    return {
+      bucket: vi.fn(() => ({
+        file: vi.fn(() => ({
+          save: gcsSave,
+          download: gcsDownload,
+          delete: gcsDelete,
+          exists: gcsExists,
+          getSignedUrl: gcsGetSignedUrl,
+        })),
       })),
-    })),
-  })),
+    };
+  }),
 }));
 
 describe('resolveStorageServiceClass', () => {
@@ -76,7 +82,7 @@ describe('AzureBlobStorageService email attachment handoff', () => {
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     azureDownloadToBuffer.mockResolvedValue(file);
     service = new AzureBlobStorageService();
   });
@@ -128,7 +134,7 @@ describe('GCSStorageService email attachment handoff', () => {
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     gcsDownload.mockResolvedValue([file]);
     service = new GCSStorageService();
   });

@@ -1,16 +1,17 @@
 import { Test } from '@nestjs/testing';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import type { Mocked } from 'vitest';
 import { FeatureFlagsService } from '../feature-flags';
 import { InMemoryLRUCacheService } from './in-memory-lru-cache.service';
 import { InMemoryLRUCacheStore } from './in-memory-lru-cache.store';
 
 describe('InMemoryLRUCacheService', () => {
   let service: InMemoryLRUCacheService;
-  let featureFlagsService: jest.Mocked<FeatureFlagsService>;
+  let featureFlagsService: Mocked<FeatureFlagsService>;
 
   beforeEach(async () => {
     const mockFeatureFlagsService = {
-      getFlag: jest.fn(),
+      getFlag: vi.fn(),
     };
 
     const module = await Test.createTestingModule({
@@ -28,7 +29,7 @@ describe('InMemoryLRUCacheService', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     service.invalidateAll(InMemoryLRUCacheStore.WORKFLOW);
     service.invalidateAll(InMemoryLRUCacheStore.ORGANIZATION);
     service.invalidateAll(InMemoryLRUCacheStore.VALIDATOR);
@@ -37,7 +38,7 @@ describe('InMemoryLRUCacheService', () => {
   describe('get', () => {
     it('should fetch and cache value when cache is enabled', async () => {
       featureFlagsService.getFlag.mockResolvedValue(true);
-      const fetchFn = jest.fn().mockResolvedValue({ id: '123', name: 'test' });
+      const fetchFn = vi.fn().mockResolvedValue({ id: '123', name: 'test' });
 
       const result = await service.get(InMemoryLRUCacheStore.WORKFLOW, 'key1', fetchFn, {
         environmentId: 'env1',
@@ -58,7 +59,7 @@ describe('InMemoryLRUCacheService', () => {
 
     it('should not cache null or undefined values', async () => {
       featureFlagsService.getFlag.mockResolvedValue(true);
-      const fetchFn = jest.fn().mockResolvedValue(null);
+      const fetchFn = vi.fn().mockResolvedValue(null);
 
       const result = await service.get(InMemoryLRUCacheStore.WORKFLOW, 'key2', fetchFn, {
         environmentId: 'env1',
@@ -76,7 +77,7 @@ describe('InMemoryLRUCacheService', () => {
 
     it('should bypass cache when skipCache is true', async () => {
       featureFlagsService.getFlag.mockResolvedValue(true);
-      const fetchFn = jest.fn().mockResolvedValue({ id: '456' });
+      const fetchFn = vi.fn().mockResolvedValue({ id: '456' });
 
       await service.get(InMemoryLRUCacheStore.WORKFLOW, 'key3', fetchFn, {
         environmentId: 'env1',
@@ -95,7 +96,7 @@ describe('InMemoryLRUCacheService', () => {
     it('should deduplicate concurrent requests', async () => {
       featureFlagsService.getFlag.mockResolvedValue(true);
       let resolveCount = 0;
-      const fetchFn = jest.fn().mockImplementation(
+      const fetchFn = vi.fn().mockImplementation(
         () =>
           new Promise((resolve) => {
             setTimeout(() => {
@@ -119,7 +120,7 @@ describe('InMemoryLRUCacheService', () => {
 
     it('should bypass cache when feature flag is disabled', async () => {
       featureFlagsService.getFlag.mockResolvedValue(false);
-      const fetchFn = jest.fn().mockResolvedValue({ id: '789' });
+      const fetchFn = vi.fn().mockResolvedValue({ id: '789' });
 
       const result = await service.get(InMemoryLRUCacheStore.WORKFLOW, 'key5', fetchFn, {
         environmentId: 'env1',
@@ -136,7 +137,7 @@ describe('InMemoryLRUCacheService', () => {
     });
 
     it('should skip feature flag check for VALIDATOR store', async () => {
-      const fetchFn = jest.fn().mockResolvedValue({ validator: 'fn' });
+      const fetchFn = vi.fn().mockResolvedValue({ validator: 'fn' });
 
       await service.get(InMemoryLRUCacheStore.VALIDATOR, 'key6', fetchFn);
 
@@ -146,8 +147,8 @@ describe('InMemoryLRUCacheService', () => {
 
     it('should handle different stores independently', async () => {
       featureFlagsService.getFlag.mockResolvedValue(true);
-      const workflowFn = jest.fn().mockResolvedValue({ type: 'workflow' });
-      const orgFn = jest.fn().mockResolvedValue({ type: 'org' });
+      const workflowFn = vi.fn().mockResolvedValue({ type: 'workflow' });
+      const orgFn = vi.fn().mockResolvedValue({ type: 'org' });
 
       await service.get(InMemoryLRUCacheStore.WORKFLOW, 'key7', workflowFn, { environmentId: 'env1' });
       await service.get(InMemoryLRUCacheStore.ORGANIZATION, 'key7', orgFn, { environmentId: 'env1' });
@@ -158,8 +159,8 @@ describe('InMemoryLRUCacheService', () => {
 
     it('should isolate cache entries by cacheVariant', async () => {
       featureFlagsService.getFlag.mockResolvedValue(true);
-      const fetchFn1 = jest.fn().mockResolvedValue({ id: '1', projection: 'variant1' });
-      const fetchFn2 = jest.fn().mockResolvedValue({ id: '2', projection: 'variant2' });
+      const fetchFn1 = vi.fn().mockResolvedValue({ id: '1', projection: 'variant1' });
+      const fetchFn2 = vi.fn().mockResolvedValue({ id: '2', projection: 'variant2' });
 
       const result1 = await service.get(InMemoryLRUCacheStore.WORKFLOW, 'key-variant', fetchFn1, {
         environmentId: 'env1',
@@ -194,7 +195,7 @@ describe('InMemoryLRUCacheService', () => {
       featureFlagsService.getFlag.mockResolvedValue(true);
       let resolveCount1 = 0;
       let resolveCount2 = 0;
-      const fetchFn1 = jest.fn().mockImplementation(
+      const fetchFn1 = vi.fn().mockImplementation(
         () =>
           new Promise((resolve) => {
             setTimeout(() => {
@@ -203,7 +204,7 @@ describe('InMemoryLRUCacheService', () => {
             }, 10);
           })
       );
-      const fetchFn2 = jest.fn().mockImplementation(
+      const fetchFn2 = vi.fn().mockImplementation(
         () =>
           new Promise((resolve) => {
             setTimeout(() => {
@@ -255,7 +256,7 @@ describe('InMemoryLRUCacheService', () => {
     });
 
     const buildFetchMissing = () =>
-      jest.fn(async (missingKeys: string[]) => {
+      vi.fn(async (missingKeys: string[]) => {
         const fetched = new Map<string, any>();
         for (const key of missingKeys) {
           fetched.set(key, [{ id: `resource-${key}` }, { id: `user-${key}` }]);
@@ -332,7 +333,7 @@ describe('InMemoryLRUCacheService', () => {
     it('coalesces concurrent callers for the same key into a single fetch', async () => {
       featureFlagsService.getFlag.mockResolvedValue(true);
       let fetchCount = 0;
-      const fetchMissing = jest.fn(
+      const fetchMissing = vi.fn(
         (missingKeys: string[]) =>
           new Promise<Map<string, any>>((resolve) => {
             setTimeout(() => {
@@ -396,7 +397,7 @@ describe('InMemoryLRUCacheService', () => {
 
     it('should return cached value without calling fetch', async () => {
       featureFlagsService.getFlag.mockResolvedValue(true);
-      const fetchFn = jest.fn().mockResolvedValue({ id: 'abc' });
+      const fetchFn = vi.fn().mockResolvedValue({ id: 'abc' });
 
       await service.get(InMemoryLRUCacheStore.WORKFLOW, 'key8', fetchFn, { environmentId: 'env1' });
 
@@ -409,7 +410,7 @@ describe('InMemoryLRUCacheService', () => {
   describe('invalidate', () => {
     it('should remove specific key from cache', async () => {
       featureFlagsService.getFlag.mockResolvedValue(true);
-      const fetchFn = jest.fn().mockResolvedValue({ id: 'xyz' });
+      const fetchFn = vi.fn().mockResolvedValue({ id: 'xyz' });
 
       await service.get(InMemoryLRUCacheStore.WORKFLOW, 'key9', fetchFn, { environmentId: 'env1' });
 
@@ -424,9 +425,9 @@ describe('InMemoryLRUCacheService', () => {
 
     it('should invalidate all variants for a base key', async () => {
       featureFlagsService.getFlag.mockResolvedValue(true);
-      const fetchFn1 = jest.fn().mockResolvedValue({ id: '1', variant: 'v1' });
-      const fetchFn2 = jest.fn().mockResolvedValue({ id: '2', variant: 'v2' });
-      const fetchFnBase = jest.fn().mockResolvedValue({ id: 'base' });
+      const fetchFn1 = vi.fn().mockResolvedValue({ id: '1', variant: 'v1' });
+      const fetchFn2 = vi.fn().mockResolvedValue({ id: '2', variant: 'v2' });
+      const fetchFnBase = vi.fn().mockResolvedValue({ id: 'base' });
 
       await service.get(InMemoryLRUCacheStore.WORKFLOW, 'key-invalidate', fetchFnBase, { environmentId: 'env1' });
       await service.get(InMemoryLRUCacheStore.WORKFLOW, 'key-invalidate', fetchFn1, {
@@ -463,8 +464,8 @@ describe('InMemoryLRUCacheService', () => {
   describe('invalidateAll', () => {
     it('should clear entire store', async () => {
       featureFlagsService.getFlag.mockResolvedValue(true);
-      const fetchFn1 = jest.fn().mockResolvedValue({ id: '1' });
-      const fetchFn2 = jest.fn().mockResolvedValue({ id: '2' });
+      const fetchFn1 = vi.fn().mockResolvedValue({ id: '1' });
+      const fetchFn2 = vi.fn().mockResolvedValue({ id: '2' });
 
       await service.get(InMemoryLRUCacheStore.WORKFLOW, 'key10', fetchFn1, { environmentId: 'env1' });
       await service.get(InMemoryLRUCacheStore.WORKFLOW, 'key11', fetchFn2, { environmentId: 'env1' });

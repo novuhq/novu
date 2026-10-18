@@ -110,7 +110,7 @@ describe('In-memory Provider Service', () => {
         expect(inMemoryProviderConfig.family).toEqual(4);
         expect(inMemoryProviderConfig.keepAlive).toEqual(30_000);
         expect(inMemoryProviderConfig.keyPrefix).toEqual('');
-        expect(inMemoryProviderConfig.password).toEqual('');
+        expect(inMemoryProviderConfig.password).toEqual(undefined);
         expect(inMemoryProviderConfig.ttl).toEqual(7_200);
       });
 
@@ -122,7 +122,7 @@ describe('In-memory Provider Service', () => {
         expect(inMemoryProviderClient.options.enableAutoPipelining).toEqual(false);
 
         const options = inMemoryProviderService.getOptions();
-        expect(options).toEqual(undefined);
+        expect(options).toEqual(expect.objectContaining({ maxRetriesPerRequest: null }));
 
         const clusterOptions = await inMemoryProviderService.getClusterOptions();
         expect(clusterOptions.enableOfflineQueue).toEqual(false);

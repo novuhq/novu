@@ -1,5 +1,6 @@
 import { PreferencesEntity } from '@novu/dal';
 import { PreferencesTypeEnum } from '@novu/shared';
+import type { Mock } from 'vitest';
 import { FeatureFlagsService } from '../../services/feature-flags';
 import { InMemoryLRUCacheService, InMemoryLRUCacheStore } from '../../services/in-memory-lru-cache';
 import { GetPreferences } from './get-preferences.usecase';
@@ -21,12 +22,12 @@ function buildPreference(templateId: string, type: PreferencesTypeEnum): Prefere
 describe('GetPreferences.getWorkflowPreferencesByIds', () => {
   let getPreferences: GetPreferences;
   let cacheService: InMemoryLRUCacheService;
-  let findForComputation: jest.Mock;
+  let findForComputation: Mock;
 
   beforeEach(() => {
-    const featureFlagsService = { getFlag: jest.fn().mockResolvedValue(true) } as unknown as FeatureFlagsService;
+    const featureFlagsService = { getFlag: vi.fn().mockResolvedValue(true) } as unknown as FeatureFlagsService;
     cacheService = new InMemoryLRUCacheService(featureFlagsService);
-    findForComputation = jest.fn();
+    findForComputation = vi.fn();
     const preferencesRepository = { findForComputation } as any;
     getPreferences = new GetPreferences(preferencesRepository, featureFlagsService, cacheService);
   });

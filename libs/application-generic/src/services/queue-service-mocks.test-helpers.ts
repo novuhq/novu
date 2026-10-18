@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { PinoLogger } from '../logging';
 import { EventBridgeSchedulerService } from './scheduler';
 import { SocketWorkerService } from './socket-worker';
@@ -13,13 +14,13 @@ import { SqsService } from './sqs';
 
 export function createSqsServiceMock(): SqsService {
   const stub: Partial<SqsService> = {
-    getQueueUrl: jest.fn(),
-    getProducer: jest.fn(),
-    getClient: jest.fn(),
-    getPayloadOffloadService: jest.fn(),
-    isConfigured: jest.fn(() => false),
-    send: jest.fn(),
-    sendBulk: jest.fn(),
+    getQueueUrl: vi.fn(),
+    getProducer: vi.fn(),
+    getClient: vi.fn(),
+    getPayloadOffloadService: vi.fn(),
+    isConfigured: vi.fn(() => false),
+    send: vi.fn(),
+    sendBulk: vi.fn(),
   };
 
   return stub as SqsService;
@@ -27,11 +28,11 @@ export function createSqsServiceMock(): SqsService {
 
 export function createPinoLoggerMock(): PinoLogger {
   const stub: Partial<PinoLogger> = {
-    setContext: jest.fn(),
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    setContext: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   };
 
   return stub as PinoLogger;
@@ -39,9 +40,9 @@ export function createPinoLoggerMock(): PinoLogger {
 
 export function createSchedulerServiceMock(): EventBridgeSchedulerService {
   const stub: Partial<EventBridgeSchedulerService> = {
-    isConfigured: jest.fn(() => false),
-    createDelayedFire: jest.fn(),
-    deleteSchedule: jest.fn(),
+    isConfigured: vi.fn(() => false),
+    createDelayedFire: vi.fn(),
+    deleteSchedule: vi.fn(),
   };
 
   return stub as EventBridgeSchedulerService;
@@ -49,9 +50,9 @@ export function createSchedulerServiceMock(): EventBridgeSchedulerService {
 
 export function createSocketWorkerServiceMock(): SocketWorkerService {
   const stub: Partial<SocketWorkerService> = {
-    isEnabled: jest.fn().mockResolvedValue(false),
-    isLegacyWsDisabled: jest.fn().mockResolvedValue(false),
-    sendMessage: jest.fn().mockResolvedValue(undefined),
+    isEnabled: vi.fn().mockResolvedValue(false),
+    isLegacyWsDisabled: vi.fn().mockResolvedValue(false),
+    sendMessage: vi.fn().mockResolvedValue(undefined),
   };
 
   return stub as SocketWorkerService;

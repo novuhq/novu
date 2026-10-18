@@ -1,26 +1,28 @@
 import { CacheInMemoryProviderService, WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { RedisThrottleService } from './redis-throttle.service';
 
-const mockInitialize = jest.fn(async () => undefined);
-const mockShutdown = jest.fn(async () => undefined);
-const mockScript = jest.fn(async () => 'script-sha');
-const mockEvalsha = jest.fn(async () => [1, 1, 90]);
-const mockEval = jest.fn(async () => [1, 1, 90]);
+const mockInitialize = vi.fn(async () => undefined);
+const mockShutdown = vi.fn(async () => undefined);
+const mockScript = vi.fn(async () => 'script-sha');
+const mockEvalsha = vi.fn(async () => [1, 1, 90]);
+const mockEval = vi.fn(async () => [1, 1, 90]);
 
-jest.mock('../in-memory-provider', () => {
-  const actual = jest.requireActual('../in-memory-provider');
+vi.mock('../in-memory-provider', async () => {
+  const actual = await vi.importActual('../in-memory-provider');
 
   return {
     ...actual,
-    CacheInMemoryProviderService: jest.fn().mockImplementation(() => ({
-      initialize: mockInitialize,
-      shutdown: mockShutdown,
-      getClient: () => ({
-        script: mockScript,
-        evalsha: mockEvalsha,
-        eval: mockEval,
-      }),
-    })),
+    CacheInMemoryProviderService: vi.fn().mockImplementation(function () {
+      return {
+        initialize: mockInitialize,
+        shutdown: mockShutdown,
+        getClient: () => ({
+          script: mockScript,
+          evalsha: mockEvalsha,
+          eval: mockEval,
+        }),
+      };
+    }),
   };
 });
 
@@ -65,7 +67,7 @@ describe('RedisThrottleService SQS cache client', () => {
       }
     }
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockEvalsha.mockImplementation(async () => [1, 1, 90]);
   });
 

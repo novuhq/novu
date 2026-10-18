@@ -4,17 +4,21 @@ import { FieldLogicalOperatorEnum, FieldOperatorEnum } from '@novu/shared';
 import { ConditionsFilterCommand } from '../conditions-filter';
 import { NormalizeVariables } from './normalize-variables.usecase';
 
-const findOneSubscriberMock = jest.fn(() => testSubscriber);
-const findOneTenantMock = jest.fn(() => null);
+const findOneSubscriberMock = vi.fn(() => testSubscriber);
+const findOneTenantMock = vi.fn(() => null);
 
-jest.mock('@novu/dal', () => ({
-  ...jest.requireActual('@novu/dal'),
-  SubscriberRepository: jest.fn(() => ({
-    findOne: findOneSubscriberMock,
-  })),
-  TenantRepository: jest.fn(() => ({
-    findOne: findOneTenantMock,
-  })),
+vi.mock('@novu/dal', async () => ({
+  ...(await vi.importActual('@novu/dal')),
+  SubscriberRepository: vi.fn(function () {
+    return {
+      findOne: findOneSubscriberMock,
+    };
+  }),
+  TenantRepository: vi.fn(function () {
+    return {
+      findOne: findOneTenantMock,
+    };
+  }),
 }));
 
 describe('NormalizeVariables', () => {
@@ -22,7 +26,7 @@ describe('NormalizeVariables', () => {
 
   beforeEach(() => {
     normalizeVariables = new NormalizeVariables(new SubscriberRepository(), new TenantRepository());
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   /*
