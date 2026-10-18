@@ -8,10 +8,11 @@ import {
   listAgentIntegrations,
   listIntegrations,
 } from '../../api/setup';
-import { info, promptLine, promptSecret } from '../../cli-io';
+import { info, promptLine, promptSecret, success } from '../../cli-io';
 import { openInBrowser } from '../../open-browser';
 import { SetupStillPendingError } from '../../output';
 import { renderQR } from '../../qr';
+import { openedScreen, type ScreenRow } from '../../screen/screen';
 import { SETUP_PAGE_POLL_TIMEOUT_MS, type SetupPageOutcome } from '../link-channel';
 
 /** Terminal/browser side effects, injectable so the connect flows are unit-testable. */
@@ -42,7 +43,15 @@ export interface SetupPageHandoff {
 
 export const defaultSetupIo: SetupIo = {
   isTTY: Boolean(process.stdin.isTTY),
-  write: (text) => process.stdout.write(text),
+  // Under the command's screen, where it has one, until the screen next changes: menus and how-tos.
+  write: (text) => {
+    const screen = openedScreen();
+    if (screen) {
+      screen.print(text);
+    } else {
+      process.stdout.write(text);
+    }
+  },
   openInBrowser,
   prompt: promptLine,
   promptSecret,
@@ -55,23 +64,33 @@ export const defaultSetupIo: SetupIo = {
  */
 export async function handOffToSetupPage(handoff: SetupPageHandoff): Promise<void> {
   const { io, pageUrl } = handoff;
+  const screen = openedScreen();
 
-  io.write(
-    `\n${handoff.intro} Finish that on this page` +
-      (io.isTTY ? ` (scan with your phone, or use the link):\n\n${renderQR(pageUrl)}\n\n` : ':\n\n') +
-      `  ${pc.underline(pageUrl)}\n\n` +
-      `${pc.dim(handoff.waiting)}\n`
-  );
+  if (!screen) {
+    io.write(
+      `\n${handoff.intro} Finish that on this page` +
+        (io.isTTY ? ` (scan with your phone, or use the link):\n\n${renderQR(pageUrl)}\n\n` : ':\n\n') +
+        `  ${pc.underline(pageUrl)}\n\n` +
+        `${pc.dim(handoff.waiting)}\n`
+    );
+  }
 
   if (io.isTTY) {
     io.openInBrowser(pageUrl);
   }
 
-  const outcome = await handoff.poll();
+  const stopWaiting = screen?.wait({
+    subtitle: `${handoff.intro} Finish that on this page (scan with your phone, or use the link).`,
+    figure: renderQR(pageUrl).split('\n'),
+    rows: [{ mark: 'next', value: pc.underline(pageUrl), whole: true }],
+    status: { text: handoff.waiting },
+    said: `${handoff.intro} Finish that on this page.`,
+  });
+  const outcome = await handoff.poll().finally(stopWaiting);
 
   switch (outcome) {
     case 'saved':
-      info(handoff.savedMessage);
+      success(handoff.savedMessage);
 
       return;
     case 'expired':
@@ -133,14 +152,26 @@ export async function promptChoice<T>(
   const list = choices.map((choice, index) => `  ${pc.bold(String(index + 1))}. ${choice.label}\n`).join('');
   io.write(`\n${copy.heading}\n${list}\n`);
 
+  const pick = (answer: string) =>
+    choices.find((choice, index) => answer === String(index + 1) || choice.aliases.includes(answer));
+  // On a screen the answer is kept as the choice it made, under the heading's question.
+  const screen = openedScreen();
+  const remember = (answer: string): ScreenRow | undefined => {
+    const picked = pick(answer.trim().toLowerCase());
+
+    return picked && { mark: 'done', value: `${copy.heading.replace(/\?.*$/, '?')} ${pc.bold(picked.label)}` };
+  };
+
   for (let attempt = 0; attempt < MAX_PROMPT_ATTEMPTS; attempt++) {
-    const answer = (await io.prompt(copy.question)).trim().toLowerCase();
+    const answer = (await (screen ? screen.ask(copy.question, { remember }) : io.prompt(copy.question)))
+      .trim()
+      .toLowerCase();
 
     if (!answer && options.skippable) {
       return undefined;
     }
 
-    const picked = choices.find((choice, index) => answer === String(index + 1) || choice.aliases.includes(answer));
+    const picked = pick(answer);
     if (picked) {
       return picked.value;
     }

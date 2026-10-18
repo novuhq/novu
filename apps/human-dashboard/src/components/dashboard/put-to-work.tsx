@@ -7,13 +7,14 @@ import { FoldAwayButton, FoldsAway } from '@/components/dashboard/folds-away';
 import { configureChannelPath } from '@/components/dashboard/nav';
 import { buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
+import { writtenLink } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
 type PutToWorkProps = {
   /** What the agent is called in a sentence: its address without the domain. */
   handle: string;
   address: string;
-  /** The public card's address, written out without `https://`. */
+  /** The public card's link, `https://agentinbox.md/p/atlas` (`cardLinkOf`). Shown as `writtenLink` writes it. */
   cardLink: string;
   /** The items the operator has ticked off by doing them (`address`, `card`). */
   done: string[];
@@ -68,10 +69,10 @@ export function PutToWork({ handle, address, cardLink, done, secondChannelConnec
           <Item
             done={cardDone}
             title={`Share ${handle}’s card`}
-            description={`One link with every way to reach ${handle}: ${cardLink}`}
+            description={`One link with every way to reach ${handle}: ${writtenLink(cardLink)}`}
             action={
               <CopyButton
-                value={`https://${cardLink}`}
+                value={cardLink}
                 label="Copy the link to the card"
                 variant="secondary"
                 className={SMALL_BUTTON}

@@ -4,7 +4,7 @@ import { Transform } from 'class-transformer';
 export class UnseenCountQueryDto {
   @ApiProperty({
     description: 'Identifier for the feed. Can be a single string or an array of strings.',
-    oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
+    type: [String],
     required: false,
   })
   feedId?: string | string[];

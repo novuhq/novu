@@ -11,7 +11,7 @@ import type { HumanAccount } from './human-account';
  * links to the docs instead of opening steps that can't work.
  */
 export function readMcpUrl(): string | null {
-  return process.env.HUMAN_MCP_URL?.trim().replace(/\/$/, '') || null;
+  return process.env.AGENT_INBOX_MCP_URL?.trim().replace(/\/$/, '') || null;
 }
 
 /** A slow MCP server must not hold up the Agent page: the tiles then read as not connected yet. */
@@ -29,7 +29,7 @@ const CONNECTIONS_TIMEOUT_MS = 4_000;
  */
 export const listConnectedTools = cache(async (account: HumanAccount): Promise<ToolId[]> => {
   const mcpUrl = readMcpUrl();
-  const secret = process.env.HUMAN_DASHBOARD_API_SECRET;
+  const secret = process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
   if (!mcpUrl || !secret) {
     return [];
   }

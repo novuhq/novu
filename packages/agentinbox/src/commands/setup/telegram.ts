@@ -7,8 +7,9 @@ import {
   issueTelegramMobileLink,
   issueTelegramSubscriberLink,
 } from '../../api/setup';
-import { info } from '../../cli-io';
+import { success } from '../../cli-io';
 import { renderQR } from '../../qr';
+import { openedScreen } from '../../screen/screen';
 import {
   buildSetupPageUrl,
   CREDENTIAL_PROPAGATION_TIMEOUT_MS,
@@ -51,21 +52,34 @@ export async function connectTelegram(
   );
 
   if (await hasChannelEndpoint(client, integrationIdentifier, subscriberId)) {
-    info('Telegram already connected.');
+    success('Telegram already connected.');
 
     return integrationIdentifier;
   }
 
   const subscriberLink = await resolveTelegramSubscriberLink(client, integrationIdentifier, subscriberId, options, io);
 
-  io.write(
-    `\nOpen @${pc.bold(subscriberLink.botUsername)} in Telegram and tap ${pc.bold('Start')}` +
-      (io.isTTY ? ` (scan the QR or use the link):\n\n${renderQR(subscriberLink.deepLinkUrl)}\n\n` : ':\n\n') +
-      `  ${pc.underline(subscriberLink.deepLinkUrl)}\n\n`
-  );
+  const { botUsername, deepLinkUrl } = subscriberLink;
+  const waitingFor = `your /start on @${botUsername}`;
+  const screen = openedScreen();
 
-  await waitForEndpoint(client, integrationIdentifier, subscriberId, `your /start on @${subscriberLink.botUsername}`);
-  info('Telegram connected.');
+  if (!screen) {
+    io.write(
+      `\nOpen @${pc.bold(botUsername)} in Telegram and tap ${pc.bold('Start')}` +
+        (io.isTTY ? ` (scan the QR or use the link):\n\n${renderQR(deepLinkUrl)}\n\n` : ':\n\n') +
+        `  ${pc.underline(deepLinkUrl)}\n\n`
+    );
+  }
+
+  const stopWaiting = screen?.wait({
+    subtitle: `Open @${pc.bold(botUsername)} in Telegram and tap ${pc.bold('Start')} (scan the QR or use the link).`,
+    figure: renderQR(deepLinkUrl).split('\n'),
+    rows: [{ mark: 'next', value: pc.underline(deepLinkUrl), whole: true }],
+    status: { text: `Waiting for ${waitingFor}` },
+    said: `Open @${pc.bold(botUsername)} in Telegram and tap ${pc.bold('Start')}.`,
+  });
+  await waitForEndpoint(client, integrationIdentifier, subscriberId, waitingFor).finally(stopWaiting);
+  success('Telegram connected.');
 
   return integrationIdentifier;
 }

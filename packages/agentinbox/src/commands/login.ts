@@ -12,7 +12,7 @@ import {
   type LoginRequestStatus,
   startLoginRequest,
 } from '../api/login';
-import { info, promptLine } from '../cli-io';
+import { info, promptLine, success } from '../cli-io';
 import {
   type CliConfig,
   configPath,
@@ -23,7 +23,9 @@ import {
 } from '../config';
 import { openInBrowser } from '../open-browser';
 import { sleep } from '../poll';
+import { openedScreen, openScreen } from '../screen/screen';
 import { startWaitIndicator } from '../spinner';
+import { failOnScreen } from './failure';
 import { handleError } from './interact';
 import { splitName } from './invite';
 
@@ -54,12 +56,19 @@ const MACHINE_NAME_MAX_LENGTH = 64;
 const MAX_WAIT_MS = 60 * 60 * 1000;
 
 export async function loginCommand(options: LoginOptions): Promise<never> {
+  const screen = await openScreen({ command: 'login' });
+
   try {
     const result = await runLogin(options);
     const who = result.email ? ` as ${pc.bold(result.email)}` : '';
 
-    process.stdout.write(`\n${pc.green('✔')} Logged in${who}.\n`);
-    info(`Saved to ${configPath()}.`);
+    if (screen) {
+      screen.add({ mark: 'done', value: `Logged in${who}.` });
+      screen.feel('happy');
+    } else {
+      process.stdout.write(`\n${pc.green('✔')} Logged in${who}.\n`);
+    }
+    success(`Saved to ${configPath()}.`);
 
     let { config } = result;
     let isNewContact = false;
@@ -69,14 +78,23 @@ export async function loginCommand(options: LoginOptions): Promise<never> {
       ({ config, isNewContact } = await introduceYourself(result));
     }
 
-    process.stdout.write(`${describeNextStep({ config, keptSetup: result.keptSetup, isNewContact })}\n`);
+    const nextStep = describeNextStep({ config, keptSetup: result.keptSetup, isNewContact });
+    if (screen) {
+      screen.add({ mark: 'next', value: nextStep });
+    } else {
+      process.stdout.write(`${nextStep}\n`);
+    }
 
     if (process.env.INBOX_SECRET_KEY?.trim()) {
       info('INBOX_SECRET_KEY is set in this shell, and it takes priority over this login.');
     }
 
+    await screen?.done('happy');
     process.exit(0);
   } catch (err) {
+    if (screen) {
+      await failOnScreen(screen, err);
+    }
     handleError(err);
   }
 }
@@ -105,14 +123,7 @@ export async function runLogin(options: LoginOptions): Promise<LoginResult> {
   // Newer APIs put the code in the link, so the page shows it; with older ones it's typed there.
   const pageShowsCode = new URL(loginUrl).searchParams.get('code') === request.userCode;
 
-  process.stdout.write(
-    `\nLog in with your Agent Inbox account in your browser (opening it now):\n\n  ${pc.underline(loginUrl)}\n\n` +
-      (pageShowsCode
-        ? `Approve there only if the page shows this code:  ${pc.bold(request.userCode)}\n`
-        : `Enter this code there:  ${pc.bold(request.userCode)}\n`) +
-      (claimToken ? 'The setup you made without an account moves into your Agent Inbox account.\n' : '') +
-      '\n'
-  );
+  showLoginLink(loginUrl, request.userCode, pageShowsCode, Boolean(claimToken));
   openInBrowser(loginUrl);
 
   const approved = await waitForApproval(apiUrl, request, request.userCode, pageShowsCode);
@@ -142,6 +153,33 @@ export async function runLogin(options: LoginOptions): Promise<LoginResult> {
     ...(firstName ? { name: { firstName, ...(lastName ? { lastName } : {}) } } : {}),
     keptSetup,
   };
+}
+
+/** Where to log in and the code to check there: on the command's screen, or printed as always. */
+function showLoginLink(loginUrl: string, userCode: string, pageShowsCode: boolean, movesSetup: boolean): void {
+  const checkCode = pageShowsCode
+    ? `Approve there only if the page shows this code:  ${pc.bold(userCode)}`
+    : `Enter this code there:  ${pc.bold(userCode)}`;
+  const setupMoves = 'The setup you made without an account moves into your Agent Inbox account.';
+  const screen = openedScreen();
+
+  if (screen) {
+    screen.subtitle('Log in with your Agent Inbox account in your browser (opening it now).');
+    screen.rows([
+      { step: '01', value: pc.underline(loginUrl), whole: true },
+      { step: '02', value: checkCode },
+      ...(movesSetup ? [{ mark: 'info' as const, value: setupMoves }] : []),
+    ]);
+
+    return;
+  }
+
+  process.stdout.write(
+    `\nLog in with your Agent Inbox account in your browser (opening it now):\n\n  ${pc.underline(loginUrl)}\n\n` +
+      `${checkCode}\n` +
+      (movesSetup ? `${setupMoves}\n` : '') +
+      '\n'
+  );
 }
 
 /**

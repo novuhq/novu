@@ -47,13 +47,14 @@ Gated tools post Approve once / Deny / Always allow. The handler resumes after t
 
 ## Connect component
 
-Use `TelegramConnectButton` from `@novu/react` so end users can link their Telegram chat to your agent. The button issues a `t.me/<bot>?start=<code>` deep link, opens it, and polls until the user presses **Start** in Telegram.
+Use `TelegramConnectButton` from `@novu/react` so end users can link their Telegram chat to your agent. The button issues a `t.me/<bot>?start=<code>` deep link, opens it, and polls until the user presses **Start** in Telegram. Render it on an authenticated page and pass the signed-in user's id as `subscriberId`. See [Connect components in production](/agents/custom-code-agent/connect-components#use-connect-components-in-production).
 
 ```tsx
 import { NovuProvider, TelegramConnectButton } from '@novu/react';
 
-export function TelegramConnect() {
-  const subscriberId = 'subscriber-id';
+// userId: the signed-in user's id from your app's auth session
+export function TelegramConnect({ userId }: { userId: string }) {
+  const subscriberId = userId;
   const integrationIdentifier = 'telegram-integration-identifier';
 
   return (

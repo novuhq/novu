@@ -6,7 +6,7 @@ import { HumanApiError, toHumanApiError } from './human-api-error';
 import { resolveNovuApiUrl } from './novu-api';
 
 export type HumanApiRequest = {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   query?: Record<string, string | number | undefined>;
   body?: Record<string, unknown>;
 };
@@ -20,17 +20,25 @@ export function requestWithDashboardSecret(
   path: string,
   init?: HumanApiRequest
 ): Promise<JsonBody> {
-  return send(region, path, { 'x-human-dashboard-secret': process.env.HUMAN_DASHBOARD_API_SECRET ?? '' }, init);
+  return send(region, path, dashboardSecretHeader(), init);
 }
 
-/** The regular Novu API, as the backing organization's Development environment. Same calls the CLI makes. */
+/**
+ * The regular Novu API, as the backing organization's Development environment. Same calls the CLI makes,
+ * plus the dashboard's secret: the key alone can't tell the operator from a host, and a paused agent's
+ * hosts can't read its inbox while the operator still can.
+ */
 export function requestWithSecretKey(
   region: HumanRegion,
   secretKey: string,
   path: string,
   init?: HumanApiRequest
 ): Promise<JsonBody> {
-  return send(region, path, { Authorization: `ApiKey ${secretKey}` }, init);
+  return send(region, path, { Authorization: `ApiKey ${secretKey}`, ...dashboardSecretHeader() }, init);
+}
+
+function dashboardSecretHeader(): Record<string, string> {
+  return { 'x-human-dashboard-secret': process.env.AGENT_INBOX_DASHBOARD_API_SECRET ?? '' };
 }
 
 /** For what the API can't do yet, so the pages can be built against the final function names. */

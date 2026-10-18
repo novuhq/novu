@@ -81,6 +81,12 @@ export const envValidators = {
    * per-tenant Domain/DomainRoute lookup.
    */
   NOVU_AGENT_SHARED_INBOUND_DOMAIN: str({ default: undefined }),
+  /**
+   * Shared inbound domain for Agent Inbox (Human) agents, e.g. `agentinbox.md`.
+   * The worker accepts mail for both domains. When unset, only the Connect domain
+   * is recognized. US only.
+   */
+  NOVU_AGENT_INBOX_INBOUND_DOMAIN: str({ default: undefined }),
   STORAGE_SERVICE: str({ default: undefined }),
   /*
    * Standalone Redis. Cluster mode uses ElastiCache for cache, and SQS-only

@@ -1,7 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { AgentHostVia } from '@novu/dal';
 import { IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
-import { AGENT_HANDLE_MAX_LENGTH, AGENT_HANDLE_PATTERN } from '../services/human-connect-code.service';
+import {
+  AGENT_HANDLE_MAX_LENGTH,
+  AGENT_HANDLE_PATTERN,
+  type ConnectCodeStatus,
+} from '../services/human-connect-code.service';
 import { HumanAgentQueryDto } from './human-agent.dto';
 
 export class CreateConnectCodeRequestDto extends HumanAgentQueryDto {
@@ -25,6 +29,45 @@ export class ConnectCodeResponseDto {
 
   @ApiProperty({ description: 'When the code stops working: 10 minutes after it was made.' })
   expiresAt: string;
+}
+
+/**
+ * A code goes in the body, not the address: it works as a key until it is used or runs out, and addresses
+ * end up in logs.
+ */
+export class ConnectCodeStatusRequestDto extends HumanAgentQueryDto {
+  @ApiProperty({
+    description: 'The agent the code was made for, as it was asked for: the part of its address before the `@`.',
+    maxLength: AGENT_HANDLE_MAX_LENGTH,
+  })
+  @IsString()
+  @Matches(AGENT_HANDLE_PATTERN)
+  @MaxLength(AGENT_HANDLE_MAX_LENGTH)
+  handle: string;
+
+  @ApiProperty({ description: 'The one-time code, e.g. `BCDF-GHJK`, in any case or spacing.' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(32)
+  code: string;
+}
+
+export class ConnectCodeStatusResponseDto {
+  @ApiProperty({ description: 'The one-time code, e.g. `BCDF-GHJK`.' })
+  code: string;
+
+  @ApiProperty({
+    enum: ['unused', 'used', 'expired'],
+    description:
+      '`unused` while it can still connect a host, `used` once a host connected with it, `expired` once it ran out or the account’s key changed after it was made.',
+  })
+  status: ConnectCodeStatus;
+
+  @ApiProperty({ description: 'When the code stops (or stopped) working: 10 minutes after it was made.' })
+  expiresAt: string;
+
+  @ApiPropertyOptional({ description: 'When a host used it. Only on a `used` code.' })
+  usedAt?: string;
 }
 
 export class ConnectHostRequestDto {

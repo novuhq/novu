@@ -130,7 +130,6 @@ export class SubscriptionPreferenceDto {
   @ApiPropertyOptional({
     description:
       'Optional JSON Logic condition evaluated against the trigger payload at fan-out time (for example, `{ "var": "payload.tier" }`)',
-    required: false,
     type: 'object',
     additionalProperties: true,
     example: { and: [{ '===': [{ var: 'payload.tier' }, 'premium'] }] },

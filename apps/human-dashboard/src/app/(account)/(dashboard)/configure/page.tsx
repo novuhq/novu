@@ -2,19 +2,13 @@ import type { Metadata } from 'next';
 
 import { CONFIGURE_DRAWER_PARAM, CONFIGURE_PATH, configureChannelPath, DOCS_URL } from '@/components/dashboard/nav';
 import { ResumeSetupCard, SetupDoneBanner } from '@/components/dashboard/setup-banners';
-import {
-  buildChannelPrompt,
-  buildSetupCommand,
-  buildSetupPrompt,
-  maskSetupCommand,
-  type SetupContext,
-} from '@/lib/agent-setup-prompt';
-import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
+import { buildChannelPrompt, type PromptContext } from '@/lib/agent-setup-prompt';
+import { requireHumanAccount } from '@/lib/human-account';
 import { agentDisplayName } from '@/lib/human-agent-api';
 import { describeAgentStatus } from '@/lib/human-agent-status';
-import { readApiKey } from '@/lib/human-api-key';
 import type { ChannelVia } from '@/lib/human-channels-api';
 import { loadChannelsOverview } from '@/lib/human-channels-overview';
+import { loadHostStatus } from '@/lib/human-hosts-api';
 import { isSetupUnfinished, loadSetupSummary, requireSetUpAgent } from '@/lib/human-onboarding';
 import { listConnectedTools, readMcpUrl } from '@/lib/human-tools-api';
 import { resolveNovuApiUrl } from '@/lib/novu-api';
@@ -34,10 +28,9 @@ const CHANNELS_POLL_MS = 5000;
  * onboarding, which is where an operator without one is sent; what the onboarding leaves behind shows
  * across the top here.
  *
- * Whether a host reads the agent's mail comes from the onboarding's record of it, the same one its banners
- * and the sidebar's dot go by: an approved CLI login, a connector that signed in, an agent that came from a
- * terminal, and until NV-9037 the onboarding's stand-in after its prompt is copied. The API has no word
- * for it yet.
+ * Whether a host reads the agent's mail comes from the API's record of its hosts: when one last checked the
+ * inbox. The card and the Agent setup row go by it; the onboarding's banners and the sidebar's dot still go
+ * by the onboarding's own record (NV-9050).
  *
  * `?setup=telegram` (`configureChannelPath`) opens with that channel's drawer, for links such as the
  * Inbox checklist's "Add Telegram".
@@ -50,15 +43,14 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
   const progress = await requireSetUpAgent(account);
   const { agent, user } = progress;
   const mcpUrl = readMcpUrl();
-  const [setup, secretKey, connectedTools, { rows, telegramSetup, slackSetup }] = await Promise.all([
+  const [setup, connectedTools, { rows, telegramSetup, slackSetup }, hostStatus] = await Promise.all([
     loadSetupSummary(account, progress),
-    loadApiKey(account),
     mcpUrl ? listConnectedTools(account) : [],
     loadChannelsOverview(account),
+    loadHostStatus(account),
   ]);
 
-  const context: SetupContext = { secretKey, apiUrl: resolveNovuApiUrl(account.region) };
-  const command = buildSetupCommand(context);
+  const context: PromptContext = { apiUrl: resolveNovuApiUrl(account.region) };
   const operatorName = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
   const { handle } = setup.agent;
   // With Telegram or Slack connected the setup is done, and there is nothing left to wait for.
@@ -75,7 +67,7 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
       )}
       <ConfigureView
         initialDrawer={openDrawer}
-        agent={{ ...setup.agent, active: agent.active, hostConnected: !isSetupUnfinished(setup.step) }}
+        agent={{ ...setup.agent, active: agent.active }}
         operatorName={operatorName}
         channels={rows}
         telegramSetup={telegramSetup}
@@ -85,17 +77,13 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
           telegram: buildChannelPrompt(context, 'telegram', handle),
           slack: buildChannelPrompt(context, 'slack', handle),
         }}
-        setup={{
-          prompt: buildSetupPrompt(context, {
-            name: operatorName || undefined,
-            email: user?.primaryEmailAddress?.emailAddress,
-          }),
-          command,
-          commandDisplay: maskSetupCommand(command, secretKey),
-        }}
+        hostStatus={hostStatus}
+        renderedAt={new Date().toISOString()}
+        apiUrl={context.apiUrl}
         docsUrl={DOCS_URL}
         mcpUrl={mcpUrl}
         connectedTools={connectedTools}
+        settings={agent.settings}
       />
     </>
   );
@@ -104,15 +92,4 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
 /** The channel whose drawer a link asked for, when it names one this page has a drawer for. */
 function readDrawerParam(value: string | string[] | undefined): ChannelVia | null {
   return value === 'email' || value === 'telegram' || value === 'slack' ? value : null;
-}
-
-/** Without the key the page still explains the setup; the command then logs in from the terminal instead. */
-async function loadApiKey(account: HumanAccount): Promise<string | null> {
-  try {
-    return await readApiKey(account);
-  } catch (error) {
-    console.error('Failed to load the API key for the Configure page', error);
-
-    return null;
-  }
 }

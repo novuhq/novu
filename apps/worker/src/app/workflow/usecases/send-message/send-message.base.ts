@@ -198,6 +198,32 @@ function resolveOverrideLayers(
   );
 }
 
+/**
+ * Merges every trigger override shape addressed to one provider, lowest priority first:
+ *   1. Deprecated channel bucket:    `overrides.<channel>`
+ *   2. Deprecated flat provider key: `overrides.<providerId>`
+ *   3. Workflow-wide provider:       `overrides.providers.<providerId>`
+ *   4. Step-scoped provider:         `overrides.steps.<stepId>.providers.<providerId>`
+ *
+ * Use it for fields the worker reads itself (e.g. SMS `to`/`from`, email `cc`) — provider request
+ * bodies get the nested shapes through `combineProviderOverrides` instead.
+ */
+export function mergeTriggerProviderOverrides(
+  overrides: TriggerOverrides | undefined,
+  channel: string | undefined,
+  providerId: string | undefined,
+  stepId: string | undefined
+): Record<string, unknown> {
+  const legacyOverrides = overrides as Record<string, Record<string, unknown> | undefined> | undefined;
+
+  return {
+    ...(channel ? legacyOverrides?.[channel] || {} : {}),
+    ...(providerId ? legacyOverrides?.[providerId] || {} : {}),
+    ...(providerId ? overrides?.providers?.[providerId] || {} : {}),
+    ...(providerId && stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {}),
+  };
+}
+
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
   protected constructor(

@@ -92,6 +92,15 @@ export interface ICredentials {
    */
   inboxRoutingKey?: string;
   /**
+   * Domain half of the shared inbox address, pinned when the integration is
+   * provisioned. Agent Email Inbox gets `NOVU_AGENT_INBOX_INBOUND_DOMAIN`
+   * (falling back to the Connect domain when that is unset). Novu Email gets
+   * `NOVU_AGENT_SHARED_INBOUND_DOMAIN`. A missing pin means the Connect domain,
+   * so rows created before this field keep their existing address.
+   * Server-managed: the integration update path restores the stored value.
+   */
+  inboxDomain?: string;
+  /**
    * Kill switch for the Novu shared inbox
    * (`{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`). When `true`, the
    * inbound worker drops mail addressed to this agent on the shared domain;

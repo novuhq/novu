@@ -12,6 +12,7 @@ import { DomainRouteTypeEnum, EmailProviderIdEnum, type WorkflowAgentConfig } fr
 import {
   buildAgentSharedInbox,
   isAgentSharedInboxEnabled,
+  resolveAgentInboxDomain,
   resolvePublishedAgentEmailSlug,
 } from '../../utils/agent-shared-inbox';
 
@@ -379,7 +380,7 @@ export class ResolveAgentInboundAddresses {
     }
 
     try {
-      return buildAgentSharedInbox(slug, inboxRoutingKey);
+      return buildAgentSharedInbox(slug, inboxRoutingKey, resolveAgentInboxDomain(novuAgent.credentials));
     } catch {
       return undefined;
     }
