@@ -87,6 +87,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       fromAddressOverride: Schema.Types.String,
       emailSlugPrefix: Schema.Types.String,
       inboxRoutingKey: Schema.Types.String,
+      inboxDomain: Schema.Types.String,
       sharedInboxDisabled: Schema.Types.Boolean,
       AppIOBaseUrl: Schema.Types.String,
       AppIOSubscriptionId: Schema.Types.String,

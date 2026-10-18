@@ -2,6 +2,7 @@ import {
   buildAgentSharedInbox,
   getSharedAgentDomain,
   isAgentSharedInboxEnabled,
+  resolveAgentInboxDomain,
   resolvePublishedAgentEmailSlug,
 } from '@novu/application-generic';
 import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
@@ -141,7 +142,7 @@ function resolveSharedInboxAddress(
   }
 
   try {
-    return buildAgentSharedInbox(slug, inboxRoutingKey);
+    return buildAgentSharedInbox(slug, inboxRoutingKey, resolveAgentInboxDomain(integration.credentials));
   } catch {
     return undefined;
   }

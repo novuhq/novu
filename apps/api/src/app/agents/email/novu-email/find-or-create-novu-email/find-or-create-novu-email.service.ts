@@ -8,6 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  defaultInboxDomainForProvider,
   encryptSecret,
   generateAgentInboxRoutingKey,
   isAgentEmailEnabled,
@@ -194,9 +195,14 @@ export class NovuEmailProvisioningService {
     for (let attempt = 0; attempt < ROUTING_KEY_MAX_ATTEMPTS; attempt += 1) {
       const inboxRoutingKey = generateAgentInboxRoutingKey();
       try {
-        return await this.integrationRepository.create(buildPayload({ ...baseCredentials, inboxRoutingKey }), {
-          session,
-        });
+        return await this.integrationRepository.create(
+          buildPayload({
+            ...baseCredentials,
+            inboxRoutingKey,
+            inboxDomain: defaultInboxDomainForProvider(providerId),
+          }),
+          { session }
+        );
       } catch (err) {
         if (!isInboxRoutingKeyCollision(err)) {
           throw err;
