@@ -60,8 +60,8 @@ export class HumanKeylessCapService {
     await this.postSignupCta(params, claimUrl);
 
     const message = claimUrl
-      ? `You've used the ${cap} free messages of this keyless demo. Sign up for a free Novu account to keep your channels and continue: ${claimUrl}`
-      : `You've used the ${cap} free messages of this keyless demo. Sign up for a free Novu account to keep your channels and continue.`;
+      ? `You've used the ${cap} free messages of this keyless demo. Sign up for a free Agent Inbox account to keep your channels and continue: ${claimUrl}`
+      : `You've used the ${cap} free messages of this keyless demo. Sign up for a free Agent Inbox account to keep your channels and continue.`;
 
     throw new HttpException(
       {
