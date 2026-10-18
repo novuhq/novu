@@ -2,8 +2,11 @@ import { ChannelTypeEnum, PushProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 import {
   apnsGroupConfigurations,
+  appIOGroupConfigurations,
   expoGroupConfigurations,
   fcmGroupConfigurations,
+  oneSignalGroupConfigurations,
+  pusherBeamsGroupConfigurations,
   pushpadGroupConfigurations,
   pushWebhookGroupConfigurations,
 } from '../configurations/provider-configuration';
@@ -25,6 +28,7 @@ export const pushProviders: IProviderConfig[] = [
     displayName: 'OneSignal',
     channel: ChannelTypeEnum.PUSH,
     credentials: oneSignalConfig,
+    configurations: oneSignalGroupConfigurations,
     docReference: `https://docs.novu.co/platform/integrations/push/onesignal${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'one-signal.svg', dark: 'one-signal.svg' },
   },
@@ -80,6 +84,7 @@ export const pushProviders: IProviderConfig[] = [
     displayName: 'Pusher Beams',
     channel: ChannelTypeEnum.PUSH,
     credentials: pusherBeamsConfig,
+    configurations: pusherBeamsGroupConfigurations,
     docReference: `https://docs.novu.co/platform/integrations/push/pusher-beams${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'pusher-beams.svg', dark: 'pusher-beams.svg' },
   },
@@ -88,6 +93,7 @@ export const pushProviders: IProviderConfig[] = [
     displayName: 'AppIO',
     channel: ChannelTypeEnum.PUSH,
     credentials: appIOConfig,
+    configurations: appIOGroupConfigurations,
     docReference: `https://localhost/channels-and-providers/push/pusher-beams${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'appio.svg', dark: 'appio.svg' },
   },

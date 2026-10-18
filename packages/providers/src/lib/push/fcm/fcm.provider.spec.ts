@@ -1,4 +1,4 @@
-import { IPushOptions } from '@novu/stateless';
+import { IPushOptions, PushEventStatusEnum } from '@novu/stateless';
 import { cert, initializeApp } from 'firebase-admin/app';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -88,6 +88,20 @@ describe('FcmPushProvider', () => {
       .mockImplementation(async () => {
         return {} as any;
       });
+  });
+
+  test('parses generic push activity payloads', () => {
+    const eventId = 'message-identifier';
+    const body = { eventId, eventType: PushEventStatusEnum.CLICKED, platform: 'android' };
+
+    expect(provider.getMessageId(body)).toEqual([eventId]);
+    expect(provider.getMessageId({})).toEqual([]);
+
+    const parsed = provider.parseEventBody(body, eventId);
+
+    expect(parsed?.status).toBe(PushEventStatusEnum.CLICKED);
+    expect(parsed?.row).toBe(JSON.stringify(body));
+    expect(parsed?.date).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 
   test('should trigger fcm correctly', async () => {

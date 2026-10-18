@@ -1,13 +1,13 @@
 import { PushProviderIdEnum } from '@novu/shared';
-import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
+import { IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
 import Pushpad from 'pushpad';
-import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+import { PushBaseProvider } from '../push.base-provider';
 
-export class PushpadPushProvider extends BaseProvider implements IPushProvider {
+export class PushpadPushProvider extends PushBaseProvider implements IPushProvider {
   id = PushProviderIdEnum.Pushpad;
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
-  channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
   private pushpad: Pushpad.Pushpad;
 

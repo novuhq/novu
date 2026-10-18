@@ -1,3 +1,4 @@
+import { generateKeyPairSync } from 'node:crypto';
 import { Novu } from '@novu/api';
 import { DetailEnum, QueryBuilder, Trace, TraceLogRepository } from '@novu/application-generic';
 import {
@@ -13,6 +14,7 @@ import { ChannelTypeEnum, ExecutionDetailsSourceEnum, PushProviderIdEnum, StepTy
 import { PushEventStatusEnum } from '@novu/stateless';
 import { NotificationTemplateService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { Types } from 'mongoose';
 import { initNovuClassSdk } from '../../../src/app/shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Process Inbound Webhook E2E #novu-v2', () => {
@@ -256,6 +258,137 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
       }
     });
   });
+});
+
+function buildFakeFcmServiceAccount(): string {
+  const { privateKey } = generateKeyPairSync('rsa', {
+    modulusLength: 2048,
+    privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+    publicKeyEncoding: { type: 'spki', format: 'pem' },
+  });
+
+  return JSON.stringify({
+    project_id: 'test-project',
+    client_email: 'firebase-adminsdk@test-project.iam.gserviceaccount.com',
+    private_key: privateKey,
+  });
+}
+
+describe('Process Inbound Webhook push providers E2E #novu-v2', () => {
+  const fakeFcmServiceAccount = buildFakeFcmServiceAccount();
+
+  const providerCases: Array<{
+    providerId: PushProviderIdEnum;
+    credentials: Record<string, string>;
+  }> = [
+    {
+      providerId: PushProviderIdEnum.FCM,
+      credentials: {
+        serviceAccount: fakeFcmServiceAccount,
+      },
+    },
+    {
+      providerId: PushProviderIdEnum.PushWebhook,
+      credentials: {
+        webhookUrl: 'https://example.com/push-webhook',
+        secretKey: 'test-hmac-secret',
+      },
+    },
+  ];
+
+  for (const providerCase of providerCases) {
+    it(`should process a clicked push activity event for ${providerCase.providerId}`, async () => {
+      const session = new UserSession();
+      await session.initialize();
+
+      const integrationRepository = session.testServer?.getService(IntegrationRepository);
+      const messageRepository = session.testServer?.getService(MessageRepository);
+      const subscriberRepository = session.testServer?.getService(SubscriberRepository);
+      const executionDetailsRepository = session.testServer?.getService(ExecutionDetailsRepository);
+      const novuClient = initNovuClassSdk(session);
+
+      await integrationRepository.update(
+        {
+          _environmentId: session.environment._id,
+          providerId: PushProviderIdEnum.FCM,
+        },
+        { active: false }
+      );
+
+      const integration = await integrationRepository.create({
+        name: `Test ${providerCase.providerId} Integration`,
+        identifier: `${providerCase.providerId}-inbound-test`,
+        providerId: providerCase.providerId,
+        channel: ChannelTypeEnum.PUSH,
+        credentials: providerCase.credentials,
+        configurations: {
+          inboundWebhookEnabled: true,
+        },
+        active: true,
+        primary: true,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      });
+
+      const subscriber = await subscriberRepository.findOne({
+        _organizationId: session.organization._id,
+        subscriberId: session.subscriberId,
+      });
+
+      if (!subscriber) {
+        throw new Error('Subscriber not found');
+      }
+
+      const messageIdentifier = `push-activity-${providerCase.providerId}-${Date.now()}`;
+      const message = await messageRepository.create({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _subscriberId: subscriber._id,
+        _jobId: new Types.ObjectId().toString(),
+        channel: ChannelTypeEnum.PUSH,
+        providerId: providerCase.providerId,
+        identifier: messageIdentifier,
+        transactionId: `transaction-${providerCase.providerId}`,
+        content: 'Seeded push notification',
+        seen: false,
+      });
+
+      const eventPayload = {
+        eventId: messageIdentifier,
+        eventType: 'clicked',
+        platform: 'ios',
+      };
+
+      const response = await novuClient.activity.track({
+        environmentId: session.environment._id,
+        integrationId: integration._id,
+        requestBody: eventPayload,
+      });
+
+      expect(response).to.have.length(1);
+      expect(response[0]).to.have.property('id', messageIdentifier);
+      expect(response[0].event).to.have.property('status', PushEventStatusEnum.CLICKED);
+
+      const updatedMessage = await messageRepository.findOne({
+        _id: message._id,
+        _environmentId: session.environment._id,
+      });
+
+      expect(updatedMessage?.seen).to.be.true;
+      expect(updatedMessage?.lastSeenDate).to.be.a('string');
+
+      const executionDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _jobId: message._jobId,
+        source: ExecutionDetailsSourceEnum.WEBHOOK,
+      });
+
+      const clickedDetail = executionDetails.find((detail) => detail.detail === DetailEnum.MESSAGE_CLICKED);
+      expect(clickedDetail, 'webhook execution detail should be persisted in MongoDB').to.exist;
+      expect(clickedDetail?.webhookStatus).to.equal(PushEventStatusEnum.CLICKED);
+      expect(JSON.parse(clickedDetail?.raw as string)).to.deep.equal(eventPayload);
+    });
+  }
 });
 
 describe('Process Inbound Webhook auth E2E #novu-v2', () => {
