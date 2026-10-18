@@ -187,6 +187,8 @@ export interface InboxThreadDto {
   preview: string;
   unreadCount: number;
   lastMessage: { text: string; at: string; from: InboxSender } | null;
+  /** The address on the other side of an email thread. Missing for chat. */
+  fromAddress?: string;
   isDirectMessage: boolean;
   openedAt: string;
   /** When the agent last read the thread, or null if it never did. */

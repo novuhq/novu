@@ -22,6 +22,14 @@ export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
   @IsString()
   agentName?: string;
 
+  /**
+   * Mailbox local-part the operator chose. Missing means derive one from the agent name
+   * and walk to a free neighbour when that is taken.
+   */
+  @IsOptional()
+  @IsString()
+  inboxHandle?: string;
+
   @IsOptional()
   @IsString()
   agentDescription?: string;

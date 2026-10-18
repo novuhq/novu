@@ -1,6 +1,7 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import {
   buildAgentSharedInbox,
+  buildAgentVanityInbox,
   defaultInboxDomainForProvider,
   generateAgentInboxRoutingKey,
   getAgentInboxSharedDomainOrNull,
@@ -13,6 +14,7 @@ import {
   parseAgentSharedInboxLocalPart,
   resolveAgentInboxDomain,
   resolvePublishedAgentEmailSlug,
+  resolvePublishedAgentInboxAddress,
 } from './agent-shared-inbox';
 
 const ENV_KEY = 'NOVU_AGENT_SHARED_INBOUND_DOMAIN';
@@ -245,6 +247,43 @@ describe('agent-shared-inbox helpers', () => {
     });
   });
 
+  describe('vanity agent inbox address', () => {
+    it('publishes the handle alone', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [NOVU_ENTERPRISE_KEY]: 'true', [IS_SELF_HOSTED_KEY]: 'false' }, () => {
+        expect(buildAgentVanityInbox('atlas', 'agentinbox.md')).toBe('atlas@agentinbox.md');
+        expect(
+          resolvePublishedAgentInboxAddress({
+            emailSlugPrefix: 'atlas',
+            inboxDomain: 'agentinbox.md',
+          })
+        ).toBe('atlas@agentinbox.md');
+      });
+    });
+
+    it('keeps a routing key in the address', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [NOVU_ENTERPRISE_KEY]: 'true', [IS_SELF_HOSTED_KEY]: 'false' }, () => {
+        expect(
+          resolvePublishedAgentInboxAddress({
+            emailSlugPrefix: 'atlas',
+            inboxRoutingKey: 'a1b2c3d4',
+            inboxDomain: 'agentinbox.md',
+          })
+        ).toBe('atlas-a1b2c3d4@agentinbox.md');
+      });
+    });
+
+    it('does not treat a broken routing key as a vanity address', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [NOVU_ENTERPRISE_KEY]: 'true', [IS_SELF_HOSTED_KEY]: 'false' }, () => {
+        expect(
+          resolvePublishedAgentInboxAddress({
+            emailSlugPrefix: 'atlas',
+            inboxRoutingKey: 'NOT-A-KEY',
+          })
+        ).toBeUndefined();
+      });
+    });
+  });
+
   describe('agent inbox domain', () => {
     it('ignores an unset or invalid Agent Inbox domain', () => {
       withEnv({ [INBOX_DOMAIN_ENV_KEY]: undefined }, () => {
@@ -351,12 +390,12 @@ describe('agent-shared-inbox helpers', () => {
       );
     });
 
-    it('falls back to the agent identifier when the stored prefix is missing', () => {
-      expect(resolvePublishedAgentEmailSlug(undefined, { identifier: 'wine-bot', name: 'Wine Bot' })).toBe('wine-bot');
+    it('uses the agent name when the stored prefix is missing', () => {
+      expect(resolvePublishedAgentEmailSlug(undefined, { identifier: 'human-relay', name: 'Vasya' })).toBe('vasya');
     });
 
-    it('falls back to the agent name when the identifier is empty', () => {
-      expect(resolvePublishedAgentEmailSlug(undefined, { identifier: '', name: 'Wine Bot' })).toBe('wine-bot');
+    it('falls back to the identifier when the name is empty', () => {
+      expect(resolvePublishedAgentEmailSlug(undefined, { identifier: 'wine-bot', name: '' })).toBe('wine-bot');
     });
 
     it('falls back when the stored prefix is not a valid slug', () => {

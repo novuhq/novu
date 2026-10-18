@@ -6,15 +6,23 @@ import { redirect } from 'next/navigation';
 import { CONFIGURE_PATH, DASHBOARD_HOME } from '@/components/dashboard/nav';
 import { findCurrentUser } from '@/lib/auth-page';
 import { requireHumanAccount } from '@/lib/human-account';
+import { sendAgentTestEmail } from '@/lib/human-agent-api';
 import { HumanApiError } from '@/lib/human-api-error';
+import { requestForAccount } from '@/lib/human-api-key';
 import { describeProgress, loadSetupProgress, updateOnboardingState } from '@/lib/human-onboarding';
 import { ensureRelay } from '@/lib/human-operator';
 import { AGENT_NAME_MAX_LENGTH, ONBOARDING_PATH, toHandle } from '@/lib/onboarding';
-import { type AddressCheck, checkAddress } from '@/lib/onboarding-mocks';
 
 const DESTINATIONS = { inbox: DASHBOARD_HOME, configure: CONFIGURE_PATH, contacts: '/contacts' };
 
 type Destination = keyof typeof DESTINATIONS;
+
+export type AddressCheck = {
+  handle: string;
+  available: boolean;
+  /** A free address close to the one that is taken. */
+  suggestion?: string;
+};
 
 export type CreateInboxResult =
   | { ok: true }
@@ -27,20 +35,30 @@ export async function checkAddressAction(handle: string): Promise<AddressCheck |
     return null;
   }
 
+  const account = await requireHumanAccount({ returnTo: ONBOARDING_PATH });
   const user = await findCurrentUser();
 
-  return checkAddress(handle, user?.primaryEmailAddress?.emailAddress ?? null);
+  try {
+    return await requestForAccount<AddressCheck>(account, '/v1/human/inbox-address', {
+      query: {
+        handle,
+        ...(user?.primaryEmailAddress?.emailAddress ? { email: user.primaryEmailAddress.emailAddress } : {}),
+      },
+    });
+  } catch {
+    return null;
+  }
 }
 
 /**
- * Step 1: makes the agent under the name the operator gave it. The same call as `setup`, so running
- * it for an agent a terminal made in the meantime only names that one.
+ * Step 1: makes the agent under the name the operator gave it, at the address they chose. The same
+ * call as `setup`, so running it for an agent a terminal made in the meantime only names that one
+ * and leaves the mailbox it already has.
  */
 export async function createInboxAction(input: { name: string; handle: string }): Promise<CreateInboxResult> {
   const account = await requireHumanAccount({ returnTo: ONBOARDING_PATH });
   const user = await findCurrentUser();
   const name = String(input.name ?? '').trim();
-  const handle = String(input.handle ?? '');
 
   if (!user) {
     return { ok: false, message: 'Your session has ended. Reload this page and sign in again.' };
@@ -50,15 +68,12 @@ export async function createInboxAction(input: { name: string; handle: string })
     return { ok: false, message: `Give your agent a name of up to ${AGENT_NAME_MAX_LENGTH} characters.` };
   }
 
+  const handle = String(input.handle ?? '');
   if (!isHandle(handle)) {
     return { ok: false, message: 'An address takes letters, digits and hyphens.' };
   }
 
   const email = user.primaryEmailAddress?.emailAddress;
-  const check = checkAddress(handle, email ?? null);
-  if (!check.available) {
-    return { ok: false, message: `${handle} is taken`, check };
-  }
 
   // Taken before the agent is made, so the agent is never older than the start of its own onboarding.
   const now = new Date().toISOString();
@@ -68,10 +83,18 @@ export async function createInboxAction(input: { name: string; handle: string })
     ({ agentId } = await ensureRelay(
       account,
       { firstName: user.firstName, lastName: user.lastName },
-      { agentName: name, operatorEmail: email }
+      { agentName: name, operatorEmail: email, inboxHandle: handle }
     ));
   } catch (error) {
     console.error('Failed to create the agent from the onboarding', error);
+
+    if (error instanceof HumanApiError && error.code === 'inbox_address_taken') {
+      return {
+        ok: false,
+        message: error.message,
+        check: { handle, available: false, ...(error.suggestion ? { suggestion: error.suggestion } : {}) },
+      };
+    }
 
     return {
       ok: false,
@@ -82,20 +105,52 @@ export async function createInboxAction(input: { name: string; handle: string })
   // Step 1 again for the same agent (a retry, or a form left open in another tab) keeps how far it got. A
   // new agent starts its steps from here: progress left over from one that was deleted (when forgetting it
   // then failed) must not take this one past its test and its host.
-  await updateOnboardingState((state) =>
-    !state.agentId || state.agentId === agentId
-      ? { ...state, startedAt: state.startedAt ?? now, handle, agentId }
-      : { startedAt: state.startedAt ?? now, handle, agentId }
-  );
+  await updateOnboardingState((state) => {
+    const { handle: _chosenHandle, ...kept } = state;
+
+    return !state.agentId || state.agentId === agentId
+      ? { ...kept, startedAt: state.startedAt ?? now, agentId }
+      : { startedAt: state.startedAt ?? now, agentId };
+  });
   refresh();
 
   return { ok: true };
 }
 
-/** Step 2: "sends" the test email. Sending it again leaves a reply that already landed where it is. */
-export async function sendTestEmailAction(): Promise<void> {
-  await updateOnboardingState((state) => ({ ...state, testSentAt: new Date().toISOString() }));
+export type SendTestEmailResult = { ok: true } | { ok: false; message: string };
+
+/**
+ * Step 2: sends a real email from the Agent Email Inbox to the operator’s sign-up address.
+ * `testSentAt` moves forward only after that send, so a reply is measured from the latest one.
+ */
+export async function sendTestEmailAction(): Promise<SendTestEmailResult> {
+  const account = await requireHumanAccount({ returnTo: ONBOARDING_PATH });
+  const user = await findCurrentUser();
+  const email = user?.primaryEmailAddress?.emailAddress;
+
+  if (!email) {
+    return { ok: false, message: 'Your account has no email address to send the test to.' };
+  }
+
+  try {
+    await sendAgentTestEmail(account, email);
+  } catch (error) {
+    console.error('Failed to send the test email', error);
+
+    return {
+      ok: false,
+      message: error instanceof HumanApiError ? error.message : 'Something went wrong. Please try again.',
+    };
+  }
+
+  await updateOnboardingState((state) => {
+    const { testReplyAt: _previousReply, ...rest } = state;
+
+    return { ...rest, testSentAt: new Date().toISOString() };
+  });
   refresh();
+
+  return { ok: true };
 }
 
 /**

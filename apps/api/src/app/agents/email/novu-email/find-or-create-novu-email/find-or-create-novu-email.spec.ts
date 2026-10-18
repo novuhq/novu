@@ -10,6 +10,7 @@ import {
 import { expect } from 'chai';
 import { restore, stub } from 'sinon';
 
+import { AgentInboxAddressService } from '../agent-inbox-address.service';
 import { NovuEmailProvisioningService } from './find-or-create-novu-email.service';
 
 const ENV_ID = 'env-id';
@@ -35,6 +36,8 @@ describe('NovuEmailProvisioningService', () => {
     find: sinon.SinonStub;
     findOne: sinon.SinonStub;
     create: sinon.SinonStub;
+    findAgentInboundByVanitySlug: sinon.SinonStub;
+    findAgentInboundByInboxRoutingKey: sinon.SinonStub;
   };
   let agentIntegrationRepo: {
     find: sinon.SinonStub;
@@ -60,7 +63,8 @@ describe('NovuEmailProvisioningService', () => {
       integrationRepo as any,
       agentIntegrationRepo as any,
       organizationRepo as any,
-      agentRepo as any
+      agentRepo as any,
+      new AgentInboxAddressService(integrationRepo as any)
     );
   }
 
@@ -79,6 +83,8 @@ describe('NovuEmailProvisioningService', () => {
       find: stub().resolves([]),
       findOne: stub(),
       create: stub(),
+      findAgentInboundByVanitySlug: stub().resolves(null),
+      findAgentInboundByInboxRoutingKey: stub().resolves(null),
     };
     agentIntegrationRepo = {
       find: stub().resolves([]),
@@ -183,6 +189,79 @@ describe('NovuEmailProvisioningService', () => {
       const createArg = integrationRepo.create.firstCall.args[0];
       expect(createArg.providerId).to.equal(EmailProviderIdEnum.AgentEmailInbox);
       expect(createArg.credentials.inboxDomain).to.equal('agentinbox.md');
+      expect(createArg.credentials.emailSlugPrefix).to.equal('my-agent');
+      expect(createArg.credentials.inboxRoutingKey).to.equal(undefined);
+    });
+
+    it('puts the agent name in the mailbox instead of the identifier', async () => {
+      agentRepo.findOne.resolves(makeAgent({ name: 'Vasya', identifier: 'human-relay' }));
+      integrationRepo.findOne.onFirstCall().resolves({
+        _id: 'sendgrid-id',
+        providerId: 'sendgrid',
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+        primary: true,
+      } as IntegrationEntity);
+      integrationRepo.create.resolves({
+        _id: 'agent-inbox-int-id',
+        providerId: EmailProviderIdEnum.AgentEmailInbox,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'agent-email-inbox-xxx',
+        name: 'Agent Email Inbox',
+        active: true,
+        credentials: {},
+      });
+
+      await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID, EmailProviderIdEnum.AgentEmailInbox);
+
+      expect(integrationRepo.create.firstCall.args[0].credentials.emailSlugPrefix).to.equal('vasya');
+      expect(integrationRepo.create.firstCall.args[0].credentials.inboxRoutingKey).to.equal(undefined);
+    });
+
+    it('stores the handle the operator asked for', async () => {
+      integrationRepo.findOne.onFirstCall().resolves({
+        _id: 'sendgrid-id',
+        providerId: 'sendgrid',
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+        primary: true,
+      } as IntegrationEntity);
+      integrationRepo.create.resolves({
+        _id: 'agent-inbox-int-id',
+        providerId: EmailProviderIdEnum.AgentEmailInbox,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'agent-email-inbox-xxx',
+        name: 'Agent Email Inbox',
+        active: true,
+        credentials: { emailSlugPrefix: 'atlas-acme', inboxDomain: 'agentinbox.md' },
+      });
+
+      const result = await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID, EmailProviderIdEnum.AgentEmailInbox, {
+        inboxHandle: 'atlas-acme',
+      });
+
+      expect(integrationRepo.create.firstCall.args[0].credentials.emailSlugPrefix).to.equal('atlas-acme');
+      expect(result.inboxHandleAdjusted).to.equal(false);
+    });
+
+    it('refuses a handle that is already claimed and offers a neighbour', async () => {
+      integrationRepo.findAgentInboundByVanitySlug.callsFake(async (handle: string) =>
+        handle === 'atlas' ? { _id: 'taken' } : null
+      );
+
+      try {
+        await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID, EmailProviderIdEnum.AgentEmailInbox, {
+          inboxHandle: 'atlas',
+          operatorEmail: 'ada@acme.co',
+        });
+        expect.fail('expected the handle to be taken');
+      } catch (error) {
+        expect(error).to.be.instanceOf(ConflictException);
+        const body = (error as ConflictException).getResponse() as { suggestion?: string };
+        expect(body.suggestion).to.equal('atlas-acme');
+      }
+
+      expect(integrationRepo.create.called).to.equal(false);
     });
 
     it("falls back to the env's Novu demo email integration when no primary custom integration exists", async () => {

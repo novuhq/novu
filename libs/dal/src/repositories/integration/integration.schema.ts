@@ -1,4 +1,4 @@
-import { AGENT_INBOX_PROVIDER_IDS } from '@novu/shared';
+import { AGENT_INBOX_PROVIDER_IDS, EmailProviderIdEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -189,6 +189,32 @@ integrationSchema.index(
   {
     unique: true,
     partialFilterExpression: AGENT_INBOX_ROUTING_KEY_PARTIAL_FILTER,
+  }
+);
+
+/**
+ * One vanity Agent Inbox address per domain (`{emailSlugPrefix}@inboxDomain`).
+ * Rows that still carry a routing key stay out of this index, so existing
+ * `{slug}-{key}` mailboxes are not part of the claim.
+ *
+ * A new index: `agent-inbox-vanity-slug-index` creates it on databases that
+ * do not auto-build indexes.
+ */
+export const AGENT_INBOX_VANITY_SLUG_INDEX = 'agent_inbox_vanity_slug';
+
+export const AGENT_INBOX_VANITY_SLUG_PARTIAL_FILTER = {
+  providerId: EmailProviderIdEnum.AgentEmailInbox,
+  'credentials.inboxRoutingKey': { $exists: false },
+  'credentials.emailSlugPrefix': { $type: 'string' },
+  'credentials.inboxDomain': { $type: 'string' },
+} as const;
+
+integrationSchema.index(
+  { 'credentials.emailSlugPrefix': 1, 'credentials.inboxDomain': 1 },
+  {
+    unique: true,
+    name: AGENT_INBOX_VANITY_SLUG_INDEX,
+    partialFilterExpression: AGENT_INBOX_VANITY_SLUG_PARTIAL_FILTER,
   }
 );
 

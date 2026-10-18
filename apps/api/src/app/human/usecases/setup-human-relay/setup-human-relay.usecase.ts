@@ -15,6 +15,7 @@ import {
   HumanChannelViaEnum,
 } from '@novu/shared';
 import { isAgentProvisionedSubscriber } from '../../../agents/conversation-runtime/conversation/agent-subscriber-resolver.service';
+import { InboxAddressTakenException } from '../../../agents/email/novu-email/agent-inbox-address.service';
 import { NovuEmailProvisioningService } from '../../../agents/email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { HUMAN_RELAY_DEFAULT_NAME } from '../../../agents/human-relay/human-relay-identity';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../../agents/shared/util/email-normalization';
@@ -58,7 +59,7 @@ export class SetupHumanRelay {
     const agent = await this.ensureRelayAgent(command, identifier);
     const subscriberId = await this.resolveSubscriberId(command, agent);
     await this.ensureSubscriber(command, subscriberId);
-    await this.ensureAgentEmailInbox(command, agent);
+    const inbox = await this.ensureAgentEmailInbox(command, agent);
     await this.rememberDeclaredEmail(command, agent._id, subscriberId);
 
     if (command.defaultVia) {
@@ -77,6 +78,7 @@ export class SetupHumanRelay {
       agentIdentifier: agent.identifier,
       agentName: agent.name,
       subscriberId,
+      ...inbox,
     };
   }
 
@@ -205,20 +207,40 @@ export class SetupHumanRelay {
    * Every setup gets an agent email inbox. Self-hosted has no shared address to
    * hand out, so it is skipped. A failure here must not fail `human setup`.
    */
-  private async ensureAgentEmailInbox(command: SetupHumanRelayCommand, agent: AgentEntity): Promise<void> {
+  private async ensureAgentEmailInbox(
+    command: SetupHumanRelayCommand,
+    agent: AgentEntity
+  ): Promise<{ emailAddress?: string; emailHandleAdjusted?: boolean }> {
     if (!isAgentSharedInboxEnabled()) {
-      return;
+      return {};
     }
 
     try {
-      await this.findOrCreateNovuEmail.execute(
+      const result = await this.findOrCreateNovuEmail.execute(
         agent._id,
         command.environmentId,
         command.organizationId,
-        EmailProviderIdEnum.AgentEmailInbox
+        EmailProviderIdEnum.AgentEmailInbox,
+        { inboxHandle: command.inboxHandle, operatorEmail: command.email }
       );
+      if (!result.provisionedNewLink) {
+        return {};
+      }
+
+      const emailAddress = result.response?.integration?.sharedInboundAddress;
+
+      return {
+        ...(emailAddress ? { emailAddress } : {}),
+        ...(result.inboxHandleAdjusted ? { emailHandleAdjusted: true } : {}),
+      };
     } catch (err) {
+      if (err instanceof InboxAddressTakenException) {
+        throw err;
+      }
+
       this.logger.warn({ err, agentId: agent._id }, 'Failed to provision the agent email inbox');
+
+      return {};
     }
   }
 
