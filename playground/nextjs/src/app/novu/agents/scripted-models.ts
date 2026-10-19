@@ -1,6 +1,7 @@
+import type { CallbackManagerForLLMRun } from '@langchain/core/callbacks/manager';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { AIMessage, type BaseMessage } from '@langchain/core/messages';
-import type { ChatResult } from '@langchain/core/outputs';
+import { AIMessage, AIMessageChunk, type BaseMessage } from '@langchain/core/messages';
+import { ChatGenerationChunk, type ChatResult } from '@langchain/core/outputs';
 import { MockLanguageModelV4 } from 'ai/test';
 
 /**
@@ -105,5 +106,31 @@ export class ScriptedChatModel extends BaseChatModel {
     }
 
     return { generations: [{ text: message.text, message }] };
+  }
+
+  /** Without this, `BaseChatModel` yields the whole answer as one chunk and nothing streams. */
+  async *_streamResponseChunks(
+    messages: BaseMessage[],
+    _options: this['ParsedCallOptions'],
+    runManager?: CallbackManagerForLLMRun
+  ): AsyncGenerator<ChatGenerationChunk> {
+    const { message } = (await this._generate(messages)).generations[0] as { message: AIMessage };
+    if (message.tool_calls?.length) {
+      const toolCallChunks = message.tool_calls.map((call, index) => ({
+        ...call,
+        args: JSON.stringify(call.args),
+        index,
+        type: 'tool_call_chunk' as const,
+      }));
+
+      yield new ChatGenerationChunk({ text: '', message: new AIMessageChunk({ content: '', tool_call_chunks: toolCallChunks }) });
+
+      return;
+    }
+
+    for (const word of message.text.split(/(?<=\s)/)) {
+      await runManager?.handleLLMNewToken(word);
+      yield new ChatGenerationChunk({ text: word, message: new AIMessageChunk(word) });
+    }
   }
 }
