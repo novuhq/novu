@@ -218,6 +218,9 @@ export async function provisionOperator(
     ...name,
     ...(operatorEmail ? { email: operatorEmail } : {}),
   });
+  if (relay.emailHandleAdjusted && relay.emailAddress) {
+    info(`Your inbox is ${pc.bold(relay.emailAddress)}.`);
+  }
   await uploadPicture(client, picture, relay.agentIdentifier);
   const subscriberId = relay.subscriberId || localSubscriberId;
   const switchedContact = Boolean(existing?.subscriberId) && subscriberId !== existing?.subscriberId;

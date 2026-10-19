@@ -61,6 +61,15 @@ export class SetupHumanRelayRequestDto {
   agentName?: string;
 
   @ApiPropertyOptional({
+    description:
+      'Mailbox local-part the operator chose, such as `atlas-acme`. Missing means derive one from the agent name.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/)
+  inboxHandle?: string;
+
+  @ApiPropertyOptional({
     description: 'A line about what the relay agent does, shown with its name. An empty one clears it.',
     maxLength: AGENT_DESCRIPTION_MAX_LENGTH,
   })
@@ -114,6 +123,15 @@ export class SetupHumanRelayResponseDto {
 
   @ApiProperty()
   subscriberId: string;
+
+  @ApiPropertyOptional({ description: 'The Agent Inbox address, when one was just created.' })
+  emailAddress?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'The new mailbox is not the slug of the agent name, because that handle was taken or could not be one.',
+  })
+  emailHandleAdjusted?: boolean;
 }
 
 export class HumanOperatorResponseDto {

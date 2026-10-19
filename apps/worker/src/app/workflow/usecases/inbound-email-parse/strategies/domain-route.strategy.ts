@@ -14,6 +14,7 @@ import {
   AgentRepository,
   DomainRepository,
   DomainRouteRepository,
+  type IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
 import { DomainRouteTypeEnum, DomainStatusEnum, splitAgentReplyLocalPart } from '@novu/shared';
@@ -201,13 +202,11 @@ export class DomainRouteStrategy {
 
   /**
    * Inbound email arrived at a shared agent domain (`agentconnect.sh`, or the
-   * Agent Inbox domain). The local-part shape is `{slug}-{inboxRoutingKey}`
-   * (see `parseAgentSharedInboxLocalPart`). We resolve the owning inbox
-   * integration via its `credentials.inboxRoutingKey` (backed by a partial
-   * unique index, cross-tenant), then join through `AgentIntegration` to find
-   * the agent, then reuse the existing `InboundDomainRouteDelivery.deliverToAgent`
-   * pipeline — which enforces `Integration.active=true` and signs/forwards the
-   * payload to the API webhook just like the standard per-tenant flow.
+   * Agent Inbox domain). A local-part of `{slug}-{inboxRoutingKey}` resolves
+   * via `credentials.inboxRoutingKey`. Anything else, and a key that belongs
+   * to another domain, is looked up as a vanity Agent Inbox handle: the whole
+   * local-part on this domain. Then we join through `AgentIntegration` and
+   * reuse `InboundDomainRouteDelivery.deliverToAgent`.
    *
    * The matched domain has to be the one pinned on that integration. A Connect
    * agent is not reachable on the Agent Inbox domain, and an Agent Inbox agent
@@ -230,50 +229,13 @@ export class DomainRouteStrategy {
       throw new InboundParseDroppedError('Shared agent domain: missing local part');
     }
 
-    const parsed = parseAgentSharedInboxLocalPart(localPart);
-    if (!parsed) {
-      this.logger.info(
-        { toAddress, localPart },
-        'Shared agent domain: local part did not match {slug}-{inboxRoutingKey} - dropping'
-      );
-      throw new InboundParseDroppedError('Shared agent domain: local part did not match expected pattern');
-    }
-
-    const integration = await this.integrationRepository.findAgentInboundByInboxRoutingKey(parsed.inboxRoutingKey);
-    if (!integration) {
-      this.logger.info(
-        { toAddress, inboxRoutingKey: parsed.inboxRoutingKey },
-        'Shared agent domain: no integration found for routing key - dropping'
-      );
-      throw new InboundParseDroppedError('Shared agent domain: no integration found for routing key');
-    }
-
-    if (domainName !== resolveAgentInboxDomain(integration.credentials)) {
-      this.logger.info(
-        { toAddress, integrationId: integration._id, domainName },
-        'Shared agent domain: address domain does not match the integration - dropping'
-      );
-      throw new InboundParseDroppedError('Shared agent domain: address domain does not match the integration', {
-        organizationId: integration._organizationId,
-        environmentId: integration._environmentId,
-      });
-    }
-
+    const { integration, vanity, parsed } = await this.findSharedAgentInbox(toAddress, localPart, domainName);
     // The slug has to be the agent's own, checked in two phases: a stored prefix
-    // settles it here, before any further lookups, while the published fallback
-    // is derived from the agent and so has to wait until the agent is loaded.
-    const storedSlug = integration.credentials?.emailSlugPrefix;
+    // settles it before any further lookups, while the published fallback is
+    // derived from the agent and so has to wait until the agent is loaded.
+    // A vanity address was looked up by the whole local-part, so the slug already matches.
+    const storedSlug = vanity ? localPart : integration.credentials?.emailSlugPrefix;
     const hasAuthoritativeSlug = typeof storedSlug === 'string' && isValidAgentEmailSlugPrefix(storedSlug);
-    if (hasAuthoritativeSlug && storedSlug !== parsed.slug) {
-      this.logger.info(
-        { toAddress, integrationId: integration._id, slug: parsed.slug },
-        'Shared agent domain: slug does not match the integration - dropping'
-      );
-      throw new InboundParseDroppedError('Shared agent domain: slug does not match the integration', {
-        organizationId: integration._organizationId,
-        environmentId: integration._environmentId,
-      });
-    }
 
     if (integration.active === false) {
       this.logger.info(
@@ -337,7 +299,7 @@ export class DomainRouteStrategy {
     }
 
     // Phase two of the slug check: no stored prefix, so the agent decides.
-    if (!hasAuthoritativeSlug) {
+    if (!vanity && parsed && !hasAuthoritativeSlug) {
       const publishedSlug = resolvePublishedAgentEmailSlug(storedSlug, agent);
       if (publishedSlug !== parsed.slug) {
         this.logger.info(
@@ -413,6 +375,61 @@ export class DomainRouteStrategy {
 
       this.failDelivery(resolved, err);
     }
+  }
+
+  /**
+   * A `{slug}-{key}` whose key belongs to this domain is authoritative: a slug
+   * mismatch drops the mail. Anything else is a vanity handle, the whole local-part.
+   */
+  private async findSharedAgentInbox(
+    toAddress: string,
+    localPart: string,
+    domainName: string
+  ): Promise<{
+    integration: IntegrationEntity;
+    vanity: boolean;
+    parsed: ReturnType<typeof parseAgentSharedInboxLocalPart>;
+  }> {
+    const parsed = parseAgentSharedInboxLocalPart(localPart);
+    const keyed = parsed
+      ? await this.integrationRepository.findAgentInboundByInboxRoutingKey(parsed.inboxRoutingKey)
+      : null;
+    const keyedHere = keyed && domainName === resolveAgentInboxDomain(keyed.credentials) ? keyed : null;
+
+    if (keyedHere && parsed) {
+      this.dropWhenKeyedSlugDiffers(keyedHere, parsed, toAddress);
+
+      return { integration: keyedHere, vanity: false, parsed };
+    }
+
+    const integration = await this.integrationRepository.findAgentInboundByVanitySlug(localPart, domainName);
+    if (!integration) {
+      this.logger.info({ toAddress, localPart }, 'Shared agent domain: no inbox for this address - dropping');
+      throw new InboundParseDroppedError('Shared agent domain: no inbox for this address');
+    }
+
+    return { integration, vanity: true, parsed };
+  }
+
+  private dropWhenKeyedSlugDiffers(
+    integration: IntegrationEntity,
+    parsed: { slug: string; inboxRoutingKey: string },
+    toAddress: string
+  ): void {
+    const storedSlug = integration.credentials?.emailSlugPrefix;
+    const authoritative = typeof storedSlug === 'string' && isValidAgentEmailSlugPrefix(storedSlug);
+    if (!authoritative || storedSlug === parsed.slug) {
+      return;
+    }
+
+    this.logger.info(
+      { toAddress, integrationId: integration._id, slug: parsed.slug },
+      'Shared agent domain: slug does not match the integration - dropping'
+    );
+    throw new InboundParseDroppedError('Shared agent domain: slug does not match the integration', {
+      organizationId: integration._organizationId,
+      environmentId: integration._environmentId,
+    });
   }
 
   private commandToMail(command: InboundEmailParseCommand, recipientAddress: string) {
