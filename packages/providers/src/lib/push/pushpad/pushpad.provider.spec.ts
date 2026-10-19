@@ -55,7 +55,8 @@ test('should pass the Novu message id as Pushpad custom data', async () => {
     title: 'Test',
     content: 'Test push',
     target: ['tester'],
-    payload: { __nvMessageId: 'message-id-123' },
+    payload: {},
+    messageId: 'message-id-123',
     subscriber: {},
     step: {
       digest: false,

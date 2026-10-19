@@ -447,6 +447,34 @@ describe('Process Inbound Webhook push providers E2E #novu-v2', () => {
       expect(JSON.parse(clickedDetail?.raw as string)).to.deep.equal(eventPayload);
     });
   }
+
+  it('should reject push activity events for AppIO even when the toggle is set through the API', async () => {
+    const session = new UserSession();
+    await session.initialize();
+
+    const integration = await session.testServer?.getService(IntegrationRepository).create({
+      name: 'Test AppIO Integration',
+      identifier: 'appio-inbound-test',
+      providerId: PushProviderIdEnum.AppIO,
+      channel: ChannelTypeEnum.PUSH,
+      credentials: { AppIOBaseUrl: 'https://api.io.italia.it/api/v1' },
+      configurations: {
+        inboundWebhookEnabled: true,
+      },
+      active: true,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    });
+
+    const response = await session.testAgent
+      .post(`/v2/inbound-webhooks/delivery-providers/${session.environment._id}/${integration._id}`)
+      .set('Authorization', `ApiKey ${session.apiKey}`)
+      .set('content-type', 'application/json')
+      .send({ eventId: 'appio-message-identifier', eventType: 'clicked' })
+      .expect(404);
+
+    expect(response.body.message).to.equal(`Provider ${PushProviderIdEnum.AppIO} does not support inbound webhooks`);
+  });
 });
 
 describe('Process Inbound Webhook auth E2E #novu-v2', () => {

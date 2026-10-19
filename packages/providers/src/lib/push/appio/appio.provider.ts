@@ -1,13 +1,13 @@
 import { isOutboundSsrfProtectionEnabled, PushProviderIdEnum } from '@novu/shared';
 import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
-import { IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
-import { CasingEnum } from '../../../base.provider';
+import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { createProviderHttpClient } from '../../../utils/http';
 import { resolveSafeProviderUrl } from '../../../utils/safe-provider-url';
-import { PushBaseProvider } from '../push.base-provider';
 
-export class AppioPushProvider extends PushBaseProvider implements IPushProvider {
+export class AppioPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.AppIO;
+  channelType = ChannelTypeEnum.PUSH as const;
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   private axiosInstance = createProviderHttpClient();
 
