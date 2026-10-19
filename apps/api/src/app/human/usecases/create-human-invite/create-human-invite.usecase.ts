@@ -9,7 +9,7 @@ import { SetupHumanRelay } from '../setup-human-relay/setup-human-relay.usecase'
 import { CreateHumanInviteCommand } from './create-human-invite.command';
 
 /**
- * Behind `human invite <id>` without `--via`: mints a link to the invite page
+ * Behind `human contact invite <id>` without `--via`: mints a link to the invite page
  * on the Human dashboard, where the human connects any of the relay's chat apps
  * and picks their default. The page only ever offers apps the inviter set up.
  */
@@ -44,7 +44,7 @@ export class CreateHumanInvite {
 
     if (channels.length === 0) {
       throw new NotFoundException(
-        'No Telegram or Slack channel is linked to the relay agent. Run `human setup telegram` or `human setup slack` first.'
+        'No Telegram, Slack, or Email channel is linked to the relay agent. Run `npx @agentinbox/cli setup` first.'
       );
     }
 

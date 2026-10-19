@@ -53,7 +53,10 @@ import {
 } from '../../shared/dtos/configure-photon-webhook.dto';
 import { ConfigureSendblueWebhookResponseDto } from '../../shared/dtos/configure-sendblue-webhook-response.dto';
 import { ConfigureWhatsAppWebhookResponseDto } from '../../shared/dtos/configure-whatsapp-webhook-response.dto';
-import { IssueSlackSetupLinkResponseDto } from '../../shared/dtos/issue-slack-setup-link-response.dto';
+import {
+  IssueSlackSetupLinkRequestDto,
+  IssueSlackSetupLinkResponseDto,
+} from '../../shared/dtos/issue-slack-setup-link-response.dto';
 import {
   PollPhotonDeviceAuthRequestDto,
   PollPhotonDeviceAuthResponseDto,
@@ -724,7 +727,8 @@ export class AgentIntegrationsController {
   createSlackSetupLink(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
-    @Param('integrationId') integrationId: string
+    @Param('integrationId') integrationId: string,
+    @Body() body: IssueSlackSetupLinkRequestDto
   ): Promise<IssueSlackSetupLinkResponseDto> {
     return this.issueSlackSetupLinkUsecase.execute(
       IssueSlackSetupLinkCommand.create({
@@ -733,6 +737,7 @@ export class AgentIntegrationsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         integrationId,
+        subscriberId: body?.subscriberId,
       })
     );
   }

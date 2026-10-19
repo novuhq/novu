@@ -4,6 +4,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 
 import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
+import { AGENT_NOT_SET_UP_MESSAGE, getRelayAgent } from '@/lib/human-agent-api';
 import { HumanApiError } from '@/lib/human-api-error';
 import {
   type ChannelVia,
@@ -25,7 +26,7 @@ import { readSlackSetup, type SlackSetupState } from '@/lib/human-slack-setup';
 import { readTelegramSetup, type TelegramSetupState } from '@/lib/human-telegram-setup';
 import { validateSlackAppName, validateSlackConfigToken } from '@/lib/slack-app';
 
-const CHANNELS_PATH = '/channels';
+const CHANNELS_PATH = '/configure';
 
 /** What BotFather hands out: the bot's numeric id, a colon, then the secret. */
 const BOT_TOKEN_PATTERN = /^\d+:[\w-]+$/;
@@ -93,6 +94,10 @@ export async function saveTelegramTokenAction(botToken: string): Promise<SaveTel
   const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
 
   try {
+    if (!(await getRelayAgent(account))) {
+      return { ok: false, error: AGENT_NOT_SET_UP_MESSAGE };
+    }
+
     const contactId = await findOrCreateOperatorContact(account);
     const channelIdentifier = await ensureTelegramChannel(account);
     const { botUsername } = await saveTelegramBotToken(account, channelIdentifier, token);
@@ -117,11 +122,15 @@ export async function saveTelegramTokenAction(botToken: string): Promise<SaveTel
   }
 }
 
-/** Whether someone has pressed Start in the bot. The drawer asks while it waits. */
+/**
+ * Whether the operator has pressed Start in the bot. The drawer asks while it waits. Another contact
+ * pressing it first doesn't count: the drawer is about the operator's own Telegram, as Slack's is.
+ */
 export async function checkTelegramConnectedAction(): Promise<boolean> {
   const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
-  const channels = await listChannels(account);
-  const connected = channels.some((channel) => channel.via === 'telegram' && channel.active && channel.connected);
+  const [channels, contactId] = await Promise.all([listChannels(account), findOperatorContactId(account)]);
+  const telegram = channels.find((channel) => channel.via === 'telegram' && channel.active && channel.connected);
+  const connected = Boolean(telegram && contactId && (await hasLinkedChannel(account, telegram.identifier, contactId)));
 
   if (connected) {
     revalidatePath(CHANNELS_PATH);
@@ -148,7 +157,7 @@ export async function loadSlackSetupAction(): Promise<SlackSetupState> {
 
 /**
  * Creates the agent's Slack app under `appName`, in the workspace the App Configuration Token is for.
- * The token goes to the API for this one call and is kept nowhere. Same steps as `human setup slack`.
+ * The token goes to the API for this one call and is kept nowhere. Same steps as `channel add slack`.
  */
 export async function createSlackAppAction(appName: string, configToken: string): Promise<CreateSlackAppResult> {
   const name = appName.trim();
@@ -167,6 +176,10 @@ export async function createSlackAppAction(appName: string, configToken: string)
   const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
 
   try {
+    if (!(await getRelayAgent(account))) {
+      return { ok: false, field: 'token', error: AGENT_NOT_SET_UP_MESSAGE };
+    }
+
     const { agentId } = await ensureRelayWithOperator(account);
     const channel = await ensureSlackChannel(account, name);
 
@@ -233,7 +246,7 @@ export async function checkSlackConnectedAction(): Promise<SlackWorkspace | null
 }
 
 /**
- * Has the agent send the operator a DM, right after the install, as `human setup slack` does. `false`
+ * Has the agent send the operator a DM, right after the install, as `channel add slack` does. `false`
  * when it couldn't be sent; Slack is connected either way.
  */
 export async function sendSlackTestMessageAction(): Promise<boolean> {
@@ -271,9 +284,9 @@ async function findChannel(account: HumanAccount, via: ChannelVia): Promise<stri
 }
 
 /**
- * The operator's own contact. It's made with the account, so this is a lookup; only an account from
- * before that (remembered by an older dashboard, or made by a CLI login that never ran `human setup`)
- * has none and gets its agent and contact here.
+ * The operator's own contact. `setup` makes it with the agent, so this is a lookup; only an agent
+ * that has no operator on record yet gets one here. Callers check that the agent exists first: this must
+ * never be what creates it.
  */
 async function findOrCreateOperatorContact(account: HumanAccount): Promise<string> {
   const existing = await findOperatorContactId(account);
@@ -286,7 +299,7 @@ async function findOrCreateOperatorContact(account: HumanAccount): Promise<strin
   return ensureOperatorContact(account, { firstName: user?.firstName, lastName: user?.lastName });
 }
 
-/** The relay agent and the operator's contact, for a step that needs the agent's own id too. */
+/** The relay agent and the operator's contact, for a step that needs the agent's own id too. Same rule: the agent exists already. */
 async function ensureRelayWithOperator(account: HumanAccount): Promise<{ agentId: string; contactId: string }> {
   if (await findOperatorContactId(account)) {
     return ensureRelay(account);

@@ -1,0 +1,71 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "agent-inbox-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  // Secrets, set per environment with `wrangler secret put <NAME> --env <env>` (local: `.dev.vars`):
+  //   AGENT_INBOX_DASHBOARD_API_SECRET  the secret the Agent Inbox dashboard shares with the Novu API
+  "env": {
+    // Local development against a local API. Sign-in needs the Agent Inbox Clerk app's address in
+    // CLERK_OAUTH_ISSUER; put it in `.dev.vars` next to the secret.
+    "local": {
+      "name": "agent-inbox-mcp-local",
+      "workers_dev": true,
+      "vars": {
+        "CLERK_OAUTH_ISSUER": "https://exact-haddock-1045.clerk.accounts.dev",
+        "NOVU_API_URL": "http://localhost:3000",
+        "NOVU_API_URL_EU": "",
+        "DOCS_URL": "https://www.npmjs.com/package/@agentinbox/cli"
+      }
+    },
+    "staging": {
+      "name": "agent-inbox-mcp-staging",
+      "workers_dev": true,
+      "routes": [
+        {
+          "pattern": "mcp-staging.agentinbox.md",
+          "custom_domain": true
+        }
+      ],
+      "vars": {
+        "CLERK_OAUTH_ISSUER": "https://select-foal-365.clerk.accounts.dev",
+        "NOVU_API_URL": "https://api.novu-staging.co",
+        "NOVU_API_URL_EU": "",
+        "DOCS_URL": "https://www.npmjs.com/package/@agentinbox/cli"
+      },
+      "kv_namespaces": [
+        {
+          "binding": "CONNECTIONS",
+          "id": "5f02fe813d1842daacc789eccfa438b2"
+        }
+      ]
+    },
+    "production": {
+      "name": "agent-inbox-mcp",
+      "workers_dev": false,
+      "routes": [
+        {
+          "pattern": "mcp.agentinbox.md",
+          "custom_domain": true
+        }
+      ],
+      "vars": {
+        "CLERK_OAUTH_ISSUER": "https://clerk.agentinbox.md",
+        "NOVU_API_URL": "https://api.novu.co",
+        "NOVU_API_URL_EU": "https://eu.api.novu.co",
+        "DOCS_URL": "https://www.npmjs.com/package/@agentinbox/cli"
+      },
+      "kv_namespaces": [
+        {
+          "binding": "CONNECTIONS",
+          "id": "f69a59a57ba34394875cb7971af518b4"
+        }
+      ]
+    }
+  }
+}

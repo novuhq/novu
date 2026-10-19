@@ -5,22 +5,6 @@
 
 type IconProps = { className?: string };
 
-/** The two overlapping squares of the human.md logo. */
-export function Logomark({ className }: IconProps) {
-  return (
-    <svg viewBox="48 36 22 22" fill="none" aria-hidden="true" className={className}>
-      <path
-        d="M69.0831 36C69.5893 36 70 36.4107 70 36.9169V50.2081C70 50.7143 69.5893 51.125 69.0831 51.125H59.2021C59.0845 51.125 59 51.013 59 50.8956V47.9169C59 47.4107 58.5893 47 58.0831 47H55.1044C54.9869 47 54.875 46.9155 54.875 46.7979V36.9169C54.875 36.4107 55.2857 36 55.7919 36H69.0831Z"
-        fill="#FF5C30"
-      />
-      <path
-        d="M54.1875 50.8956C54.1875 51.4018 54.5982 51.8125 55.1044 51.8125H56.7083C57.2146 51.8125 57.625 52.2229 57.625 52.7292V57.0831C57.625 57.5893 57.2143 58 56.7081 58H48.9169C48.4107 58 48 57.5893 48 57.0831V49.2919C48 48.7857 48.4107 48.375 48.9169 48.375H53.2708C53.7771 48.375 54.1875 48.7854 54.1875 49.2917V50.8956Z"
-        fill="#5C5650"
-      />
-    </svg>
-  );
-}
-
 /** Takes the text color. */
 export function GitHubIcon({ className }: IconProps) {
   return (

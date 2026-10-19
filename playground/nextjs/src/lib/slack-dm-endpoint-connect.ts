@@ -21,7 +21,7 @@
  */
 
 import { Novu } from '@novu/api';
-import type { ContextPayload } from '@novu/shared';
+import type { ContextPayload, ContextValue } from '@novu/shared';
 import {
   findConnectionForProvider,
   findMatchingUserEndpoint,
@@ -179,7 +179,7 @@ export async function ensureSlackUserDmEndpoint(args: {
       connectionIdentifier,
       type: SLACK_USER_TYPE,
       endpoint: { userId: slackUserId },
-      ...(args.context && { context: args.context }),
+      ...(args.context && { context: args.context as Record<string, ContextValue> }),
     });
 
     return { ok: true, slackUserId };

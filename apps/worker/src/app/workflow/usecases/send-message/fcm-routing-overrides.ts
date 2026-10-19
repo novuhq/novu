@@ -8,21 +8,30 @@
 
 import {
   FCM_ROUTING_KEYS,
-  getProviderOverrideConfig,
   PushProviderIdEnum,
   resolveExclusiveRoutingKeys,
-  type TriggerOverrides,
+  unpackProviderOverrideOutput,
 } from '@novu/shared';
-import { combineProviderOverrides } from './send-message.base';
-
-export type PushProviderOverride = {
-  providerId: PushProviderIdEnum;
-  overrides: Record<string, unknown>;
-};
+import { combineProviderOverrides, integrationOverrideClaimsExclusiveKeys } from './send-message.base';
+import { SendMessageChannelCommand } from './send-message-channel.command';
 
 export type PushRoutingCredentials = {
   deviceTokens?: string[];
   topic?: string;
+};
+
+type PushOverrideSource = Pick<SendMessageChannelCommand, 'bridgeData' | 'overrides' | 'step'>;
+
+/**
+ * `credentials` is set when a routing key (FCM: `token` / `tokens` / `topic` / `condition`) is claimed.
+ * A claimed key *is* the destination — `FcmPushProvider.resolveSendPlan` ignores the subscriber
+ * targets — so such a send needs no stored device token and must not fan out over them.
+ * `isIntegrationScoped` is true when the integration's own override claimed it, not a provider-wide layer.
+ */
+export type ResolvedPushRoute = {
+  bridgeProviderData: Record<string, unknown>;
+  credentials: PushRoutingCredentials | null;
+  isIntegrationScoped: boolean;
 };
 
 /** FCM topic/condition sends are broadcast — they must not fan out per subscriber device token. */
@@ -30,21 +39,6 @@ export function isFcmBroadcastRoutingOverride(overrides: Record<string, unknown>
   const routing = resolveExclusiveRoutingKeys(overrides, [FCM_ROUTING_KEYS]);
 
   return 'topic' in routing || 'condition' in routing;
-}
-
-/**
- * True when the merged overrides claim one of the provider's exclusive routing keys
- * (FCM: `token` / `tokens` / `topic` / `condition`). A claimed key *is* the destination —
- * `FcmPushProvider.resolveSendPlan` ignores the subscriber targets — so such a send needs no stored
- * device token and must not fan out over them.
- */
-export function hasDestinationRoutingOverride(
-  providerId: PushProviderIdEnum,
-  overrides: Record<string, unknown> | null | undefined
-): boolean {
-  const groups = getProviderOverrideConfig(providerId)?.exclusiveKeyGroups ?? [];
-
-  return Object.keys(resolveExclusiveRoutingKeys(overrides, groups)).length > 0;
 }
 
 /**
@@ -91,45 +85,40 @@ export function extractPushRoutingCredentials(
 }
 
 /**
- * Upserts fully-merged overrides for push providers with exclusive routing key groups
- * so content-override routing keys participate in synthetic channel construction.
+ * Resolves the overrides delivered to the provider for one integration, so channel selection and
+ * device-token fan-out see the same `__nvIntegrationOverrides__` entry that delivery does.
+ * Without `integrationIdentifier` only the provider-wide layers apply.
  */
-export function upsertMergedRoutingOverrides(
-  result: PushProviderOverride[],
-  command: {
-    bridgeData?: Record<string, unknown> | null;
-    overrides?: TriggerOverrides;
-    step?: { stepId?: string };
-  },
-  pushProviderIds: readonly PushProviderIdEnum[]
-): void {
-  for (const providerId of pushProviderIds) {
-    const exclusiveKeyGroups = getProviderOverrideConfig(providerId)?.exclusiveKeyGroups;
+export function resolvePushRoute(
+  source: PushOverrideSource,
+  providerId: PushProviderIdEnum,
+  integrationIdentifier?: string
+): ResolvedPushRoute {
+  const { bridgeData, overrides, step } = source;
+  const bridgeProviderData = combineProviderOverrides(
+    bridgeData,
+    overrides,
+    step?.stepId,
+    providerId,
+    integrationIdentifier
+  );
+  const credentials = extractPushRoutingCredentials(providerId, bridgeProviderData);
 
-    if (!exclusiveKeyGroups?.length) {
-      continue;
-    }
+  return {
+    bridgeProviderData,
+    credentials,
+    isIntegrationScoped:
+      credentials !== null &&
+      integrationIdentifier !== undefined &&
+      integrationOverrideClaimsExclusiveKeys(bridgeData, overrides, step?.stepId, providerId, integrationIdentifier),
+  };
+}
 
-    const mergedOverrides = combineProviderOverrides(
-      command.bridgeData,
-      command.overrides,
-      command.step?.stepId,
-      providerId
-    );
+export function getIntegrationOverrideIdentifiers(
+  source: PushOverrideSource,
+  providerId: PushProviderIdEnum
+): string[] {
+  const providers = source.bridgeData?.providers as Record<string, unknown> | undefined;
 
-    if (!hasDestinationRoutingOverride(providerId, mergedOverrides)) {
-      continue;
-    }
-
-    const existingIndex = result.findIndex((item) => item.providerId === providerId);
-
-    if (existingIndex >= 0) {
-      result[existingIndex].overrides = mergedOverrides;
-    } else {
-      result.push({
-        providerId,
-        overrides: mergedOverrides,
-      });
-    }
-  }
+  return Object.keys(unpackProviderOverrideOutput(providers?.[providerId]).integrationOverrides);
 }

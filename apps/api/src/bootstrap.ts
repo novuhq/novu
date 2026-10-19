@@ -4,7 +4,6 @@ import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import {
-  BullMqService,
   getErrorInterceptor,
   // biome-ignore lint/style/noRestrictedImports: <explanation> x
   Logger,
@@ -47,8 +46,6 @@ class BootstrapOptions {
 export async function bootstrap(
   bootstrapOptions?: BootstrapOptions
 ): Promise<{ app: INestApplication; document: Awaited<ReturnType<typeof setupSwagger>> }> {
-  BullMqService.haveProInstalled();
-
   const agentRawBodyBuffer = (_req, _res, buffer, _encoding): void => {
     if (buffer?.length) {
       // eslint-disable-next-line no-param-reassign

@@ -7,7 +7,7 @@ sidebarTitle: LangChain
 
 Already connecting an agent? Start with [Connect LangChain to Slack](/agents/get-started/langchain). This page is the adapter API.
 
-`@novu/framework/langchain` lets you write agent handlers with [LangChain](https://docs.langchain.com/). Return a `LangChainAgentConfig` from `onMessage` and Novu runs `createAgent().invoke()` for you - including tool approval gating and resume from `ctx.history`.
+`@novu/framework/langchain` lets you write agent handlers with [LangChain](https://docs.langchain.com/). Return a `LangChainAgentConfig` from `onMessage` and Novu runs the agent with `createAgent()` for you - including streaming, tool approval gating, and resume from `ctx.history`.
 
 ## Before you start
 
@@ -72,7 +72,7 @@ On the LangChain path, `onMessage` (and `onToolApproval`) can return a LangChain
 
 | Return | Behavior |
 | --- | --- |
-| `LangChainAgentConfig` | Novu runs `createAgent()` and delivers the final assistant text |
+| `LangChainAgentConfig` | Novu runs `createAgent()` and streams the assistant text into the thread - see [Stream a reply](/agents/custom-code-agent/building-blocks/reply#stream-a-reply) |
 | `{ messages: BaseMessage[] }` | Novu delivers the final assistant text from your pre-invoked agent or graph. Wrap history with `hydrateUnreachableAttachmentUrls` before invoke - see [Invoke your own agent](#invoke-your-own-agent) |
 | `BaseMessage` | Delivered as a normal reply (assistant text extracted from the message) |
 | `string` / JSX `Card` | Delivered as a normal reply - see [Reply](/agents/custom-code-agent/building-blocks/reply) |
@@ -152,7 +152,7 @@ export const supportAgent = agent('support-bot', {
 });
 ```
 
-To stream live updates in the thread, post a reply and update it with [`ReplyHandle.edit()`](/agents/custom-code-agent/building-blocks/edit-sent-messages) as your graph produces chunks - the adapter does not stream token-by-token when you return a result.
+This path delivers the text once your invoke finishes. To stream from your own agent or graph, pass its text chunks to `ctx.reply()` - see [Stream a reply](/agents/custom-code-agent/building-blocks/reply#stream-a-reply).
 
 ## Automatic tool approval
 
@@ -186,7 +186,7 @@ Add `onToolApproval` when you need a hook after the click. See [Tool approval](/
 
 ## Turn failures and `onError`
 
-When Novu runs `createAgent().invoke()` for a returned `LangChainAgentConfig` and the invoke rejects - for example the provider errors or the model call fails - the failure propagates to the same dispatch boundary as a thrown handler error. The same applies when you `await` your own agent or graph in `onMessage` and the invoke throws before you return. Register `onError` on the agent to log, suppress user notification, send custom copy, or fall back to Novu's generic message.
+When Novu runs the agent for a returned `LangChainAgentConfig` and the run fails - for example the provider errors or the model call fails - the failure propagates to the same dispatch boundary as a thrown handler error. The same applies when you `await` your own agent or graph in `onMessage` and the invoke throws before you return. Register `onError` on the agent to log, suppress user notification, send custom copy, or fall back to Novu's generic message.
 
 ```typescript
 export const supportAgent = agent('support-bot', {
@@ -208,7 +208,7 @@ export const supportAgent = agent('support-bot', {
 A gated tool waiting for user approval pauses the turn with an approval card - that is not a turn failure and does not trigger `onError`. See [Handlers and context - onError](/agents/custom-code-agent/building-blocks/handle-events#onerror) for the full pipeline.
 
 <Note>
-  The adapter awaits `invoke()` to completion when you return a config - it does not stream token-by-token. If you stream inside `onMessage` yourself, stream failures throw from your handler the same way as any other handler error.
+  If you stream inside `onMessage` yourself, stream failures throw from your handler the same way as any other handler error.
 </Note>
 
 ## Related

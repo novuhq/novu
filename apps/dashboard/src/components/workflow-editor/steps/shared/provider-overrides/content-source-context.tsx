@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
-import { type ContentSource, DEFAULT_CONTENT_SOURCE } from './content-source';
+import { type ContentSource, DEFAULT_CONTENT_SOURCE } from './override-source';
 
 type ContentSourceContextValue = {
   selectedSource: ContentSource;

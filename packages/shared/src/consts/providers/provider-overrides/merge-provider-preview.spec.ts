@@ -63,6 +63,19 @@ describe('mergeProviderPreview', () => {
     });
   });
 
+  it('sends the step body as webhook content when the override is empty', () => {
+    expect(
+      mergeProviderPreview({
+        body: 'Default webhook body',
+        providerId: ToolProviderIdEnum.Webhook,
+        override: {},
+      })
+    ).toEqual({
+      merged: { content: 'Default webhook body' },
+      defaultContentKey: 'content',
+    });
+  });
+
   it('injects a LINE text message from the step body when override omits messages', () => {
     const result = mergeProviderPreview({
       body: 'Hello from Novu',

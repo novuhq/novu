@@ -33,4 +33,9 @@ export class ApproveCliDeviceSessionCommand extends BaseCommand {
   @IsOptional()
   @IsString()
   readonly userLastName?: string | null;
+
+  /** The hold of the approval doing this, when it holds the session: it is then only approved under that hold. */
+  @IsOptional()
+  @IsString()
+  readonly approvalHoldId?: string;
 }

@@ -1,3 +1,4 @@
+export * from './agent-email-inbox-quota';
 export * from './analytic-logs';
 export { AnalyticsService } from './analytics.service';
 export * from './auth';

@@ -5,10 +5,10 @@ import {
   type AgentMessage,
   createInitialAgentConversationState,
 } from './agent-message.types';
-import { derivePendingActions, pendingActionKey } from './derive-pending-actions';
 import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
+import { derivePendingActions, pendingActionKey } from './derive-pending-actions';
 import { mintClientId } from './idempotency';
-import type { WebChatChange, WebChatChangeSource, WebChatPaginationStatus, FetchMoreResult } from './types';
+import type { FetchMoreResult, WebChatChange, WebChatChangeSource, WebChatPaginationStatus } from './types';
 
 type McpConnectionResult = {
   status: 'connected' | 'failed';
@@ -174,10 +174,8 @@ export class WebChatStore {
       return messages;
     }
 
-    return applyEnvelopes(
-      { ...createInitialAgentConversationState(), messages },
-      [...entry.messageMutations.values()]
-    ).messages;
+    return applyEnvelopes({ ...createInitialAgentConversationState(), messages }, [...entry.messageMutations.values()])
+      .messages;
   }
 
   #overlayMessages(entry: ConversationEntry, messages: AgentMessage[]): AgentMessage[] {
@@ -336,8 +334,8 @@ export class WebChatStore {
   }
 
   /**
-   * Merge a history page into this session.
-   * Server message ids win. Local-only messages stay on the session.
+   * Rebuild this session's timeline from the newest history page.
+   * Server message ids win. Unconfirmed local messages stay at the end.
    */
   absorbHistoryPage(
     entry: ConversationEntry,
@@ -349,12 +347,14 @@ export class WebChatStore {
     this.#recordMessageMutations(entry, envelopes);
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const serverIds = new Set(folded.messages.map((message) => message.id));
-    const localOnly = previous.filter((message) => !serverIds.has(message.id));
+    // Confirmed messages missing from the page are older history that fetchMore reloads in order.
+    const localOnly = previous.filter((message) => !serverIds.has(message.id) && message.status !== 'sent');
 
     applyState(entry, {
       ...folded,
       messages: this.#overlayMessages(entry, [...folded.messages, ...localOnly]),
     });
+    entry.catchUpError = undefined;
     entry.olderCursor = olderCursor;
     entry.paginationEpoch += 1;
     entry.paginationStatus = 'idle';

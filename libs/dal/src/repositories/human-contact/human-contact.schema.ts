@@ -3,6 +3,67 @@ import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { HumanContactDBModel } from './human-contact.entity';
 
+const humanContactPendingAddressSchema = new Schema(
+  {
+    address: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    requestedAt: {
+      type: Schema.Types.String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+const humanContactVerifiedAddressSchema = new Schema(
+  {
+    address: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    requestedAt: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    verifiedAt: {
+      type: Schema.Types.String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+const humanContactDeclaredAddressSchema = new Schema(
+  {
+    address: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    declaredAt: {
+      type: Schema.Types.String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+const humanContactChannelAddressesSchema = new Schema(
+  {
+    pending: {
+      type: humanContactPendingAddressSchema,
+    },
+    verified: {
+      type: humanContactVerifiedAddressSchema,
+    },
+    declared: {
+      type: humanContactDeclaredAddressSchema,
+    },
+  },
+  { _id: false }
+);
+
 const humanContactSchema = new Schema<HumanContactDBModel>(
   {
     _environmentId: {
@@ -30,6 +91,16 @@ const humanContactSchema = new Schema<HumanContactDBModel>(
     defaultSetBy: {
       type: Schema.Types.String,
       enum: ['inviter', 'contact'],
+    },
+    addresses: {
+      type: new Schema(
+        {
+          email: {
+            type: humanContactChannelAddressesSchema,
+          },
+        },
+        { _id: false }
+      ),
     },
     isOperator: {
       type: Schema.Types.Boolean,

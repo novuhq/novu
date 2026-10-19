@@ -226,7 +226,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         with:
-          version: 11.0.9
+          version: 11.28.2
           run_install: false
 
       - name: Setup Node Version
@@ -272,9 +272,6 @@ jobs:
       - uses: ./.github/actions/free-space
         if: github.event.inputs.dual_arch == 'true'
         name: Extend space in Action Container
-
-      - name: Prepare Variables
-        run: echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4

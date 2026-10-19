@@ -11,13 +11,20 @@ import {
   ChatProviderIdEnum,
   EmailProviderIdEnum,
   ENDPOINT_TYPES,
+  HumanChannelViaEnum,
   HumanInteractionStatusEnum,
 } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
+import sinon from 'sinon';
+import { AgentConfigResolver } from '../../agents/channels/agent-config-resolver.service';
 import { ChatInstanceRegistry } from '../../agents/conversation-runtime/ingress/chat-instance.registry';
+import { AgentInboundHandler } from '../../agents/conversation-runtime/ingress/inbound-turn.handler';
 import { startTelegramApiStub, type TelegramApiStub } from '../../agents/e2e/helpers/telegram-api-stub';
+import { AgentEventEnum } from '../../agents/shared/enums/agent-event.enum';
+import { agentTelegramLinkScope } from '../../telegram-linking/telegram-link-scope';
+import { TelegramStartCodeService } from '../../telegram-linking/telegram-start-code.service';
 
 const subscriberRepository = new SubscriberRepository();
 const integrationRepository = new IntegrationRepository();
@@ -111,6 +118,55 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
     });
   }
 
+  function linkSlack(agentId: string) {
+    return linkIntegration(agentId, {
+      providerId: ChatProviderIdEnum.Slack,
+      channel: ChannelTypeEnum.CHAT,
+      credentials: { clientId: 'e2e-contacts-slack-client', secretKey: 'e2e-contacts-slack-secret' },
+    });
+  }
+
+  /** Stands in for the person finishing Slack's OAuth install. */
+  async function connectSlack(subscriberId: string, integrationIdentifier: string) {
+    await channelEndpointRepository.create({
+      identifier: `ce-contacts-e2e-slack-${subscriberId}-${Date.now()}`,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      integrationIdentifier,
+      providerId: ChatProviderIdEnum.Slack,
+      channel: ChannelTypeEnum.CHAT,
+      subscriberId,
+      contextKeys: [],
+      type: ENDPOINT_TYPES.SLACK_USER,
+      endpoint: { userId: `U${Date.now()}` },
+    });
+  }
+
+  /** Stands in for an email link the person asked for, and, with `verify`, used. */
+  async function storeEmail(agentId: string, subscriberId: string, address: string, { verify = false } = {}) {
+    const pending = await humanContactRepository.upsertPendingAddress({
+      environmentId: session.environment._id,
+      organizationId: session.organization._id,
+      agentId,
+      subscriberId,
+      via: HumanChannelViaEnum.EMAIL,
+      address,
+    });
+
+    if (verify) {
+      await humanContactRepository.promotePendingAddress({
+        environmentId: session.environment._id,
+        agentId,
+        subscriberId,
+        via: HumanChannelViaEnum.EMAIL,
+        address,
+        requestedAt: pending.requestedAt,
+      });
+    }
+
+    return pending;
+  }
+
   function findTelegramEndpoint(subscriberId: string, integrationIdentifier: string) {
     return channelEndpointRepository.findOne({
       _environmentId: session.environment._id,
@@ -142,6 +198,22 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       const subscriber = await findSubscriber(subscriberId);
       expect(subscriber?.firstName).to.equal('Alice');
       expect(subscriber?.lastName).to.equal('Chen');
+    });
+
+    it('turns a subscriber an agent made up for an unknown sender into a contact', async () => {
+      const subscriberId = `phantom-${Date.now()}`;
+      await subscriberRepository.create({
+        subscriberId,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        data: { __novu_source: 'agent-platform-provision', __novu_platform: 'telegram' },
+      });
+
+      await setup({ subscriberId, firstName: 'Alice' });
+
+      const subscriber = await findSubscriber(subscriberId);
+      expect(subscriber?.firstName).to.equal('Alice');
+      expect(subscriber?.data).to.deep.equal({ __novu_platform: 'telegram' });
     });
 
     it('replaces the name on re-setup and keeps it when omitted', async () => {
@@ -265,7 +337,13 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
     it('lists every subscriber in the environment with only contact fields', async () => {
       const stamp = Date.now();
       await setup({ subscriberId: `alice-${stamp}`, firstName: 'Alice', lastName: 'Chen' });
-      await setup({ subscriberId: `bob-${stamp}`, email: 'bob@example.com' });
+      // Setup no longer writes Subscriber.email (it lands after double opt-in), so seed it directly.
+      await subscriberRepository.create({
+        subscriberId: `bob-${stamp}`,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        email: 'bob@example.com',
+      });
       await subscriberRepository.create({
         subscriberId: `carol-${stamp}`,
         _environmentId: session.environment._id,
@@ -287,6 +365,13 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect(alice?.firstName).to.equal('Alice');
       expect(alice?.lastName).to.equal('Chen');
       expect(byId.get(`bob-${stamp}`)?.email).to.equal('bob@example.com');
+      // On the profile is not confirmed: agents can't email it.
+      expect(byId.get(`bob-${stamp}`)?.emailVerification).to.deep.equal({
+        address: 'bob@example.com',
+        status: 'unverified',
+      });
+      expect(alice).to.not.have.property('emailVerification');
+      expect(alice?.isOperator).to.equal(false);
 
       const carol = byId.get(`carol-${stamp}`);
       expect(carol?.phone).to.equal('+15550000000');
@@ -305,11 +390,13 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
         'firstName',
         'lastName',
         'email',
+        'emailVerification',
         'phone',
         'data',
         'channels',
         'defaultVia',
         'status',
+        'isOperator',
         'invite',
         'createdAt',
         'updatedAt',
@@ -355,7 +442,10 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       await setup({ subscriberId: emailId, email: 'erin@example.com' });
 
       const telegram = await linkTelegram(agentId);
-      await linkIntegration(agentId, { providerId: EmailProviderIdEnum.NovuAgent, channel: ChannelTypeEnum.EMAIL });
+      await linkIntegration(agentId, {
+        providerId: EmailProviderIdEnum.AgentEmailInbox,
+        channel: ChannelTypeEnum.EMAIL,
+      });
       await connectTelegram(joinedId, telegram.identifier);
       const invite = await createInvite(invitedId);
 
@@ -375,10 +465,59 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect(invited).to.not.have.property('defaultVia');
       expect(invited?.invite).to.deep.equal({ url: invite.url, expiresAt: invite.expiresAt });
 
-      const email = contacts.get(emailId);
-      expect(email?.status).to.equal('joined');
-      expect(email?.defaultVia).to.equal('email');
-      expect(email?.channels).to.deep.equal([{ via: 'email', isDefault: true }]);
+      const emailContact = contacts.get(emailId);
+      expect(emailContact?.status).to.equal('invite_sent');
+      expect(emailContact?.channels).to.deep.equal([]);
+      expect(emailContact).to.not.have.property('defaultVia');
+      expect(emailContact).to.not.have.property('email');
+      // Typed during setup, never confirmed.
+      expect(emailContact?.emailVerification).to.deep.equal({ address: 'erin@example.com', status: 'unverified' });
+    });
+
+    it("marks the operator and reports their email's double opt-in", async () => {
+      const { subscriberId: operatorId, agentId } = await setup({
+        subscriberId: 'dima',
+        operator: true,
+        email: 'Dima@Example.com',
+      });
+      await setup({ subscriberId: 'maya' });
+
+      let contacts = await listContacts();
+      expect(contacts.get(operatorId)?.isOperator).to.equal(true);
+      expect(contacts.get('maya')?.isOperator).to.equal(false);
+      // The address the operator signed up with is known, but they never confirmed it here.
+      expect(contacts.get(operatorId)?.emailVerification).to.deep.equal({
+        address: 'dima@example.com',
+        status: 'unverified',
+      });
+
+      const pending = await storeEmail(agentId, operatorId, 'dima@example.com');
+      expect((await listContacts()).get(operatorId)?.emailVerification).to.deep.equal({
+        address: 'dima@example.com',
+        status: 'pending',
+        pending: { address: 'dima@example.com', requestedAt: pending.requestedAt },
+      });
+
+      await storeEmail(agentId, operatorId, 'dima@example.com', { verify: true });
+      const change = await storeEmail(agentId, operatorId, 'dima@new.example.com');
+
+      contacts = await listContacts();
+      const email = contacts.get(operatorId)?.emailVerification;
+      expect(email?.address).to.equal('dima@example.com');
+      expect(email?.status).to.equal('verified');
+      expect(email?.verifiedAt).to.be.a('string');
+      expect(email?.pending).to.deep.equal({ address: 'dima@new.example.com', requestedAt: change.requestedAt });
+    });
+
+    it('returns only the contact asked for by subscriberId', async () => {
+      await setup({ subscriberId: 'only-alice' });
+      await setup({ subscriberId: 'only-alice-2' });
+
+      const res = await session.testAgent.get('/v1/human/contacts?subscriberId=only-alice');
+
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect(res.body.data.map((contact: { id: string }) => contact.id)).to.deep.equal(['only-alice']);
+      expect(res.body.next).to.equal(null);
     });
 
     it('shows the newest invite link that still works', async () => {
@@ -397,6 +536,303 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       expect(decline.status).to.equal(200, JSON.stringify(decline.body));
 
       expect((await listContacts()).get(subscriberId)?.invite?.url).to.equal(older.url);
+    });
+  });
+
+  describe("contacts' Telegram and Slack handles", () => {
+    const TELEGRAM_CHAT_ID = '777301';
+    const SLACK_USER_ID = 'U0HANDLE01';
+
+    function chatThread(id: string, channelId: string) {
+      return {
+        id,
+        channelId,
+        isDM: true,
+        toJSON: () => ({ id, channelId, isDM: true }),
+        startTyping: async () => {},
+        post: sinon.stub().resolves({ id: 'reply-1', threadId: id }),
+      };
+    }
+
+    /** A Telegram message as the chat SDK hands it over: the person's own `from` is in `raw`. */
+    function telegramMessage(chatId: string, text: string, from: Record<string, unknown>) {
+      return {
+        id: `${chatId}:${Math.floor(Math.random() * 1_000_000)}`,
+        threadId: `telegram:${chatId}`,
+        text,
+        author: { userId: chatId, fullName: 'Someone', userName: 'someone', isBot: false },
+        raw: {
+          message_id: 1,
+          chat: { id: Number(chatId), type: 'private' },
+          from: { id: Number(chatId), is_bot: false, ...from },
+          text,
+        },
+        attachments: [],
+      };
+    }
+
+    async function channelOf(subscriberId: string, via: string): Promise<Record<string, any> | undefined> {
+      const channels = (await listContacts()).get(subscriberId)?.channels as Array<Record<string, any>> | undefined;
+
+      return channels?.find((channel) => channel.via === via);
+    }
+
+    function resolveConfig(agentId: string, integrationIdentifier: string, source?: 'webhook_message') {
+      return testServer
+        .getService(AgentConfigResolver)
+        .resolve(agentId, integrationIdentifier, source ? { source } : {});
+    }
+
+    it('shows the @username the person linked Telegram with, and the new one once they write', async () => {
+      const subscriberId = `handle-tg-${Date.now()}`;
+      const { agentId } = await setup({ subscriberId });
+      const telegram = await linkTelegram(agentId);
+      const config = await resolveConfig(agentId, telegram.identifier, 'webhook_message');
+      const { code } = await testServer.getService(TelegramStartCodeService).issue({
+        environmentId: session.environment._id,
+        organizationId: session.organization._id,
+        linkScope: agentTelegramLinkScope(config.agentIdentifier),
+        integrationId: String(telegram._id),
+        subscriberId,
+      });
+      const inbound = testServer.getService(AgentInboundHandler);
+      const thread = chatThread(`telegram:${TELEGRAM_CHAT_ID}`, TELEGRAM_CHAT_ID);
+
+      await inbound.handle(
+        agentId,
+        config,
+        thread as any,
+        telegramMessage(TELEGRAM_CHAT_ID, `/start ${code}`, {
+          username: 'dima',
+          first_name: 'Dima',
+          last_name: 'Grossman',
+        }) as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(await channelOf(subscriberId, 'telegram')).to.deep.include({ via: 'telegram', handle: '@dima' });
+      const single = await session.testAgent.get(`/v1/human/contacts/${subscriberId}`);
+      expect(single.status).to.equal(200, JSON.stringify(single.body));
+      expect(
+        (single.body.data.channels as Array<Record<string, any>>).find((channel) => channel.via === 'telegram')
+      ).to.deep.include({ status: 'verified', handle: '@dima' });
+
+      await inbound.handle(
+        agentId,
+        config,
+        thread as any,
+        telegramMessage(TELEGRAM_CHAT_ID, 'New username, same me', {
+          username: 'dima_g',
+          first_name: 'Dima',
+          last_name: 'Grossman',
+        }) as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect((await channelOf(subscriberId, 'telegram'))?.handle).to.equal('@dima_g');
+    });
+
+    it('learns the name of someone linked before, from a button press, when they have no username', async () => {
+      const subscriberId = `handle-tg-old-${Date.now()}`;
+      const { agentId } = await setup({ subscriberId });
+      const telegram = await linkTelegram(agentId);
+      // Linked before handles were kept: the endpoint has only the chat id.
+      await connectTelegram(subscriberId, telegram.identifier);
+
+      expect(await channelOf(subscriberId, 'telegram')).to.not.have.property('handle');
+
+      const config = await resolveConfig(agentId, telegram.identifier, 'webhook_message');
+      await testServer
+        .getService(AgentInboundHandler)
+        .handleAction(
+          agentId,
+          config,
+          chatThread('telegram:777003', '777003') as any,
+          { id: 'contacts-e2e-press' },
+          '777003',
+          { id: 'callback-1', from: { id: 777003, is_bot: false, first_name: 'Maya', last_name: 'Levi' } }
+        );
+
+      expect((await channelOf(subscriberId, 'telegram'))?.handle).to.equal('Maya Levi');
+    });
+
+    it("shows a Slack contact's workspace from a button press and their name once they write", async () => {
+      const subscriberId = `handle-slack-${Date.now()}`;
+      const { agentId } = await setup({ subscriberId });
+      const slack = await linkSlack(agentId);
+      await channelEndpointRepository.create({
+        identifier: `ce-contacts-e2e-slack-handle-${Date.now()}`,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        integrationIdentifier: slack.identifier,
+        providerId: ChatProviderIdEnum.Slack,
+        channel: ChannelTypeEnum.CHAT,
+        subscriberId,
+        contextKeys: [],
+        type: ENDPOINT_TYPES.SLACK_USER,
+        endpoint: { userId: SLACK_USER_ID },
+      });
+      const config = await resolveConfig(agentId, slack.identifier);
+      const inbound = testServer.getService(AgentInboundHandler);
+      const thread = chatThread('slack:D0HANDLE:', 'slack:D0HANDLE');
+
+      await inbound.handleAction(agentId, config, thread as any, { id: 'contacts-e2e-press' }, SLACK_USER_ID, {
+        type: 'block_actions',
+        team: { id: 'T0HANDLE', domain: 'acme' },
+        user: { id: SLACK_USER_ID, username: 'dima', name: 'dima', team_id: 'T0HANDLE' },
+      });
+
+      const pressed = await channelOf(subscriberId, 'slack');
+      expect(pressed).to.deep.include({ via: 'slack', workspace: 'acme.slack.com' });
+      expect(pressed).to.not.have.property('handle');
+
+      await inbound.handle(
+        agentId,
+        config,
+        thread as any,
+        {
+          id: `slack-${Date.now()}`,
+          threadId: 'slack:D0HANDLE:',
+          text: 'Here now',
+          author: { userId: SLACK_USER_ID, fullName: 'Dima Grossman', userName: 'dima', isBot: false },
+          raw: { type: 'message', channel: 'D0HANDLE', user: SLACK_USER_ID, team: 'T0HANDLE', ts: '1.000' },
+          attachments: [],
+        } as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(await channelOf(subscriberId, 'slack')).to.deep.include({
+        handle: 'dima',
+        workspace: 'acme.slack.com',
+      });
+    });
+  });
+
+  describe('PUT /v1/human/operator/default-channel', () => {
+    function setDefault(via: string) {
+      return session.testAgent.put('/v1/human/operator/default-channel').send({ via });
+    }
+
+    it("makes a connected channel the operator's default, and an inviter's --via does not replace it", async () => {
+      const { agentId } = await setup({ subscriberId: 'dima', operator: true });
+      const telegram = await linkTelegram(agentId);
+      const slack = await linkSlack(agentId);
+      await connectTelegram('dima', telegram.identifier);
+      await connectSlack('dima', slack.identifier);
+      expect((await listContacts()).get('dima')?.defaultVia).to.equal('telegram');
+
+      const res = await setDefault('slack');
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect(res.body.data).to.deep.equal({ defaultVia: 'slack' });
+
+      await setup({ subscriberId: 'dima', defaultVia: 'telegram' });
+
+      const dima = (await listContacts()).get('dima');
+      expect(dima?.defaultVia).to.equal('slack');
+      expect(
+        dima?.channels.map(({ via, isDefault }: { via: string; isDefault: boolean }) => ({ via, isDefault }))
+      ).to.have.deep.members([
+        { via: 'telegram', isDefault: false },
+        { via: 'slack', isDefault: true },
+      ]);
+    });
+
+    it('refuses a channel the operator is not connected on', async () => {
+      const { agentId } = await setup({ subscriberId: 'dima', operator: true });
+      const telegram = await linkTelegram(agentId);
+      // Someone else's Telegram doesn't make it the operator's.
+      await setup({ subscriberId: 'maya' });
+      await connectTelegram('maya', telegram.identifier);
+
+      const res = await setDefault('telegram');
+
+      expect(res.status).to.equal(400, JSON.stringify(res.body));
+      expect(res.body.code).to.equal('channel_not_connected');
+      expect((await listContacts()).get('dima')).to.not.have.property('defaultVia');
+    });
+
+    it('refuses a channel that does not exist', async () => {
+      await setup({ subscriberId: 'dima', operator: true });
+
+      const res = await setDefault('whatsapp');
+
+      expect(res.status).to.equal(422, JSON.stringify(res.body));
+    });
+
+    it('needs an agent and an operator', async () => {
+      const beforeSetup = await setDefault('telegram');
+      expect(beforeSetup.status).to.equal(404, JSON.stringify(beforeSetup.body));
+      expect(beforeSetup.body.code).to.equal('agent_not_found');
+
+      await setup({ subscriberId: 'maya' });
+
+      const withoutOperator = await setDefault('telegram');
+      expect(withoutOperator.status).to.equal(404, JSON.stringify(withoutOperator.body));
+      expect(withoutOperator.body.code).to.equal('operator_not_found');
+    });
+
+    it('needs a login', async () => {
+      await setup({ subscriberId: 'dima', operator: true });
+
+      const anonymous = axios.create({ baseURL: session.serverUrl, validateStatus: () => true });
+      const res = await anonymous.put('/v1/human/operator/default-channel', { via: 'telegram' });
+
+      expect(res.status).to.equal(401);
+    });
+  });
+
+  describe('POST /v1/human/operator/email', () => {
+    function changeEmail(address: string) {
+      return session.testAgent.post('/v1/human/operator/email').send({ address });
+    }
+
+    it('refuses the address that is already verified', async () => {
+      const { agentId } = await setup({ subscriberId: 'dima', operator: true });
+      await storeEmail(agentId, 'dima', 'dima@example.com', { verify: true });
+
+      const res = await changeEmail('Dima@Example.com');
+
+      expect(res.status).to.equal(409, JSON.stringify(res.body));
+      expect(res.body.code).to.equal('address_already_verified');
+    });
+
+    it('sends nothing and keeps the email as it was while the agent has no email channel', async () => {
+      const { agentId } = await setup({ subscriberId: 'dima', operator: true });
+      await storeEmail(agentId, 'dima', 'dima@example.com', { verify: true });
+
+      const res = await changeEmail('dima@new.example.com');
+
+      expect(res.status).to.equal(404, JSON.stringify(res.body));
+      expect((await listContacts()).get('dima')?.emailVerification).to.not.have.property('pending');
+    });
+
+    it('refuses something that is not an email address', async () => {
+      await setup({ subscriberId: 'dima', operator: true });
+
+      const res = await changeEmail('not-an-address');
+
+      expect(res.status).to.equal(422, JSON.stringify(res.body));
+    });
+
+    it('needs an agent and an operator', async () => {
+      const beforeSetup = await changeEmail('dima@example.com');
+      expect(beforeSetup.status).to.equal(404, JSON.stringify(beforeSetup.body));
+      expect(beforeSetup.body.code).to.equal('agent_not_found');
+
+      await setup({ subscriberId: 'maya' });
+
+      const withoutOperator = await changeEmail('dima@example.com');
+      expect(withoutOperator.status).to.equal(404, JSON.stringify(withoutOperator.body));
+      expect(withoutOperator.body.code).to.equal('operator_not_found');
+    });
+
+    it('needs a login', async () => {
+      await setup({ subscriberId: 'dima', operator: true });
+
+      const anonymous = axios.create({ baseURL: session.serverUrl, validateStatus: () => true });
+      const res = await anonymous.post('/v1/human/operator/email', { address: 'dima@example.com' });
+
+      expect(res.status).to.equal(401);
     });
   });
 

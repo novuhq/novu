@@ -1,0 +1,337 @@
+import { ApiClient, unwrap } from './client';
+
+export type InteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
+
+export type InteractionStatus = 'pending' | 'answered' | 'approved' | 'denied' | 'expired' | 'canceled' | 'delivered';
+
+export type InteractionOption = { id: string; label: string };
+
+/** String is shorthand for `{ id: minted opt_N, label }`; structured `{ id, label }` keeps a stable id. */
+export type OptionInput = string | InteractionOption;
+
+export interface InteractionCard {
+  title?: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraActions?: InteractionOption[];
+  options?: InteractionOption[];
+}
+
+export type CreateInteractionCard = Omit<InteractionCard, 'extraActions' | 'options'> & {
+  title: string;
+  extraActions?: OptionInput[];
+  options?: OptionInput[];
+};
+
+/** Posted chat card element. Structural subset of `CardElement` in `@novu/shared`. */
+export type InteractionCardElement = {
+  type: 'card';
+  title?: string;
+  subtitle?: string;
+  imageUrl?: string;
+  children?: unknown[];
+};
+
+/**
+ * Persisted HITL content returned by the API — either normalized chrome
+ * (`cardChrome`) or a posted chat card element (`card`). Mirrors
+ * `HumanInteractionContent` in `@novu/shared`; kept as a local structural copy
+ * because the CLI cannot depend on `@novu/shared`.
+ */
+export type InteractionContent = { cardChrome: InteractionCard } | { card: InteractionCardElement };
+
+export interface Interaction {
+  id: string;
+  kind: InteractionKind;
+  status: InteractionStatus;
+  content: InteractionContent;
+  from?: string;
+  to: string[];
+  integrationIdentifier: string;
+  platform: string;
+  response?: {
+    type: 'text' | 'option';
+    text?: string;
+    optionId?: string;
+    respondedBy?: string;
+    respondedBySubscriberId?: string;
+    respondedAt: string;
+  };
+  failedTo?: string[];
+  /**
+   * On create: the conversation each message landed in, and how many messages in it were unread.
+   * The API calls them threads; the CLI prints them as `conversations`.
+   */
+  threads?: InteractionConversation[];
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface InteractionConversation {
+  id: string;
+  unreadBefore: number;
+}
+
+export function isInteractionChrome(content: InteractionContent): content is { cardChrome: InteractionCard } {
+  return 'cardChrome' in content;
+}
+
+export function isInteractionCardElement(content: InteractionContent): content is { card: InteractionCardElement } {
+  return 'card' in content && (content as { card?: { type?: string } }).card?.type === 'card';
+}
+
+function collectCardButtons(node: unknown, into: InteractionOption[] = []): InteractionOption[] {
+  if (Array.isArray(node)) {
+    for (const child of node) collectCardButtons(child, into);
+
+    return into;
+  }
+
+  if (typeof node !== 'object' || node === null) {
+    return into;
+  }
+
+  const record = node as { id?: unknown; label?: unknown; children?: unknown };
+  if (typeof record.id === 'string' && typeof record.label === 'string') {
+    into.push({ id: record.id, label: record.label });
+  }
+
+  if (record.children !== undefined) {
+    collectCardButtons(record.children, into);
+  }
+
+  return into;
+}
+
+/** Title shown in lists — from chrome or the posted card element. */
+export function interactionTitle(interaction: Interaction): string {
+  const { content } = interaction;
+
+  if (isInteractionChrome(content)) {
+    return content.cardChrome.title ?? '';
+  }
+
+  return content.card.title ?? '';
+}
+
+/** Selectable options for `choose` — chrome options, or buttons on a posted card. */
+export function interactionOptions(interaction: Interaction): InteractionOption[] {
+  const { content } = interaction;
+
+  if (isInteractionChrome(content)) {
+    return content.cardChrome.options ?? [];
+  }
+
+  return collectCardButtons(content.card.children);
+}
+
+export interface CreateInteractionInput {
+  kind: InteractionKind;
+  card: CreateInteractionCard;
+  /** Starts a new conversation with each contact; with `thread`, limits who may answer. */
+  to?: string | string[];
+  /** The conversation to send into (the API's name for it is a thread). */
+  thread?: string;
+  /** With `thread` and no `to`: anyone in the conversation may answer. */
+  anyoneMayAnswer?: boolean;
+  via?: string;
+  agentIdentifier?: string;
+  from?: string;
+  ttlSeconds?: number;
+}
+
+export async function createInteraction(client: ApiClient, input: CreateInteractionInput): Promise<Interaction> {
+  const res = await client.axios.post<{ data?: Interaction } | Interaction>('/v1/human/interactions', input);
+
+  return unwrap(res.data);
+}
+
+export async function getInteraction(client: ApiClient, id: string): Promise<Interaction> {
+  const res = await client.axios.get<{ data?: Interaction } | Interaction>(
+    `/v1/human/interactions/${encodeURIComponent(id)}`
+  );
+
+  return unwrap(res.data);
+}
+
+export interface SetupRelayResult {
+  agentId: string;
+  agentIdentifier: string;
+  /** What the relay agent is called. Missing from APIs older than agent names. */
+  agentName?: string;
+  subscriberId: string;
+  /** The mailbox, when this call created one. */
+  emailAddress?: string;
+  /** The mailbox is not the slug of the name, because that handle was taken or could not be one. */
+  emailHandleAdjusted?: boolean;
+}
+
+export async function setupRelay(
+  client: ApiClient,
+  input: {
+    subscriberId: string;
+    /**
+     * Set up the account owner. The API answers with the operator it has on record, which can differ
+     * from `subscriberId` when the account was first set up elsewhere.
+     */
+    operator?: boolean;
+    agentIdentifier?: string;
+    /** What the relay agent is called from now on. Missing leaves the name it has. */
+    agentName?: string;
+    /** A line about what the relay agent does. An empty one clears it. */
+    agentDescription?: string;
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    /** The inviter's `--via` pick; becomes the contact's default channel unless they chose one themselves. */
+    defaultVia?: 'telegram' | 'slack' | 'email';
+  }
+): Promise<SetupRelayResult> {
+  const res = await client.axios.post<{ data?: SetupRelayResult } | SetupRelayResult>('/v1/human/setup', input);
+
+  return unwrap(res.data);
+}
+
+export interface RelayAgent {
+  agentId: string;
+  agentIdentifier: string;
+  name: string;
+  description?: string;
+  /** Where anyone can load the agent's picture. Missing when it has none. */
+  pictureUrl?: string;
+}
+
+/** Names the relay agent a call is about. Left out, the API takes the default one. */
+function agentParams(agentIdentifier: string | undefined): { params?: { agentIdentifier: string } } {
+  return agentIdentifier ? { params: { agentIdentifier } } : {};
+}
+
+/** Uploads the relay agent's picture: a JPEG or PNG of up to 2 MB. Needs an account (`login`). */
+export async function setRelayAgentPicture(
+  client: ApiClient,
+  picture: { file: Buffer; contentType: string },
+  agentIdentifier?: string
+): Promise<RelayAgent> {
+  const form = new FormData();
+  form.append('picture', new Blob([new Uint8Array(picture.file)], { type: picture.contentType }), 'picture');
+  const res = await client.axios.put<{ data?: RelayAgent } | RelayAgent>(
+    '/v1/human/agent/picture',
+    form,
+    agentParams(agentIdentifier)
+  );
+
+  return unwrap(res.data);
+}
+
+export interface InviteChannel {
+  via: 'telegram' | 'slack' | 'email';
+  integrationIdentifier: string;
+  connected: boolean;
+}
+
+/** A shareable invite page where the contact connects any of the relay's chat channels. */
+export interface Invite {
+  url: string;
+  /** ISO timestamp after which the invite link stops working. */
+  expiresAt: string;
+  channels: InviteChannel[];
+}
+
+export async function createInvite(
+  client: ApiClient,
+  input: { subscriberId: string; agentIdentifier?: string; firstName?: string; lastName?: string }
+): Promise<Invite> {
+  const res = await client.axios.post<{ data?: Invite } | Invite>('/v1/human/invites', input);
+
+  return unwrap(res.data);
+}
+
+export type ContactChannelStatus = 'unverified' | 'pending' | 'verified';
+
+export type ContactChannel = {
+  via: 'telegram' | 'slack' | 'email';
+  status: ContactChannelStatus;
+  address?: string;
+  verifiedAt?: string;
+  /** `requestedAt` of the request whose link verified the current address. */
+  verifiedRequestedAt?: string;
+  /** Set while a newer request is still pending. */
+  requestedAt?: string;
+  /** On a contact from the list: when they connected the channel. Absent for email. */
+  connectedAt?: string;
+  /** On a contact from the list: whether a message that names no channel goes here. */
+  isDefault?: boolean;
+};
+
+/** A contact is a subscriber in the environment — `id` is the subscriberId `--to` addresses. */
+export interface Contact {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  data?: Record<string, unknown>;
+  /** Channels the agent can reach the contact on. */
+  channels?: ContactChannel[];
+  /** Channel used when a message to the contact names none. */
+  defaultVia?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContactsPage {
+  data: Contact[];
+  next: string | null;
+}
+
+export async function listContacts(
+  client: ApiClient,
+  params: { limit?: number; after?: string; subscriberId?: string; agentIdentifier?: string } = {}
+): Promise<ContactsPage> {
+  const res = await client.axios.get<{ data?: Contact[]; next?: string | null }>('/v1/human/contacts', { params });
+  const body = res.data;
+
+  return { data: Array.isArray(body?.data) ? body.data : [], next: body?.next ?? null };
+}
+
+export async function getContact(client: ApiClient, subscriberId: string, agentIdentifier?: string): Promise<Contact> {
+  const res = await client.axios.get<{ data?: Contact } | Contact>(
+    `/v1/human/contacts/${encodeURIComponent(subscriberId)}`,
+    { params: agentIdentifier ? { agentIdentifier } : undefined }
+  );
+
+  // Explicit type arg: `Contact.data` would otherwise make `unwrap` infer the wrong envelope.
+  return unwrap<Contact>(res.data);
+}
+
+export type AddressVerificationResult = {
+  address: string;
+  /** Identifies this request; the contact's email channel reports it as `verifiedRequestedAt` once used. */
+  requestedAt: string;
+  expiresAt: string;
+  retryAfterSeconds: number;
+  /** A different address is already verified and stays deliverable until this one is confirmed. */
+  replacesVerifiedAddress: boolean;
+};
+
+export async function requestAddressVerification(
+  client: ApiClient,
+  input: {
+    subscriberId: string;
+    via: 'email';
+    address: string;
+    agentIdentifier?: string;
+    firstName?: string;
+    lastName?: string;
+  }
+): Promise<AddressVerificationResult> {
+  const res = await client.axios.post<{ data?: AddressVerificationResult } | AddressVerificationResult>(
+    '/v1/human/verifications',
+    input
+  );
+
+  return unwrap(res.data);
+}

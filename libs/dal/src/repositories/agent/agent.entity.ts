@@ -37,6 +37,52 @@ export interface ManagedRuntimeConfig {
   managedDefinitionVersion?: number;
 }
 
+/** The agent's own picture, uploaded by its operator and kept in file storage. */
+export interface AgentPicture {
+  storageKey: string;
+  contentType: string;
+  /** Changes with the file, so a new picture gets a new address and an old one can be cached for good. */
+  version: string;
+}
+
+/** How a host reaches an Agent Inbox agent: the `agentinbox` CLI, or the hosted MCP server. */
+export type AgentHostVia = 'cli' | 'mcp';
+
+/** The hosts that came in one way. Every time is an ISO timestamp. */
+export interface AgentHostEntry {
+  /** The first time a host came in this way: it used a one-time code, or checked the inbox. */
+  connectedAt?: string;
+  /** The last time a host checked the inbox this way. */
+  lastCheckedAt?: string;
+}
+
+/** The newest unread conversation a host found the first time any host checked the inbox. */
+export interface AgentHostWaitingMessage {
+  conversationId: string;
+  /** Who wrote in it, as the inbox lists them. */
+  from: string;
+  subject: string;
+  /** When its newest message arrived. */
+  at: string;
+  /** When a host first saw it: in that first check. */
+  seenAt: string;
+}
+
+/** Who can write to an Agent Inbox agent: anyone, or only its contacts. */
+export const AGENT_INBOX_REACHES = ['anyone', 'contacts'] as const;
+
+export type AgentInboxReach = (typeof AGENT_INBOX_REACHES)[number];
+
+/** Which hosts act as an Agent Inbox agent, and when they last checked its inbox. */
+export interface AgentHosts {
+  cli?: AgentHostEntry;
+  mcp?: AgentHostEntry;
+  /** The first time any host checked the inbox. */
+  firstCheckedAt?: string;
+  /** Missing when nothing unread was waiting at the first check. */
+  waitingMessage?: AgentHostWaitingMessage;
+}
+
 export class AgentEntity {
   _id: string;
 
@@ -45,6 +91,21 @@ export class AgentEntity {
   identifier: string;
 
   description?: string;
+
+  /** Set for Human relay agents only (`human agent update --picture`). */
+  picture?: AgentPicture;
+
+  /** Set for Human relay agents only, once a host has connected or checked the inbox. */
+  hosts?: AgentHosts;
+
+  /** Set for Human relay agents only, once the operator chose on the dashboard. Missing reads as `anyone`. */
+  reach?: AgentInboxReach;
+
+  /**
+   * Set for Human relay agents only, while the operator has paused them on the dashboard (ISO timestamp).
+   * Messages keep arriving, but hosts can't read the inbox or send until the operator resumes the agent.
+   */
+  pausedAt?: string;
 
   active: boolean;
 

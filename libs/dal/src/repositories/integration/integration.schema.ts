@@ -1,4 +1,4 @@
-import { EmailProviderIdEnum } from '@novu/shared';
+import { AGENT_INBOX_PROVIDER_IDS, EmailProviderIdEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -87,6 +87,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       fromAddressOverride: Schema.Types.String,
       emailSlugPrefix: Schema.Types.String,
       inboxRoutingKey: Schema.Types.String,
+      inboxDomain: Schema.Types.String,
       sharedInboxDisabled: Schema.Types.Boolean,
       AppIOBaseUrl: Schema.Types.String,
       AppIOSubscriptionId: Schema.Types.String,
@@ -169,22 +170,56 @@ integrationSchema.index({
 });
 
 /**
- * Globally-unique routing key for the agent default shared inbox feature
+ * Globally-unique routing key for agent shared inboxes
  * (`{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`). The partial filter
- * scopes the index to NovuAgent rows so every other provider stays unconstrained
- * — and lets a string-typed `inboxRoutingKey` exist on legacy NovuAgent docs
- * provisioned before this field was added without forcing a backfill.
+ * covers Novu Email and Agent Email Inbox so the two cannot claim the same
+ * key on the shared domain. Other providers stay unconstrained.
+ *
+ * Changing this filter on an existing database requires the drop-and-recreate
+ * migration `agent-email-inbox-routing-key-index` — MongoDB rejects an
+ * in-place partial-filter change with IndexOptionsConflict.
  */
+export const AGENT_INBOX_ROUTING_KEY_PARTIAL_FILTER = {
+  providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
+  'credentials.inboxRoutingKey': { $type: 'string' },
+} as const;
+
 integrationSchema.index(
   { 'credentials.inboxRoutingKey': 1 },
   {
     unique: true,
-    partialFilterExpression: {
-      providerId: EmailProviderIdEnum.NovuAgent,
-      'credentials.inboxRoutingKey': { $type: 'string' },
-    },
+    partialFilterExpression: AGENT_INBOX_ROUTING_KEY_PARTIAL_FILTER,
   }
 );
+
+/**
+ * One Agent Inbox address per `(slug, domain, routing key)`. A vanity row has
+ * no routing key, so Mongo stores that part as null and a second `{slug}@domain`
+ * collides. A keyed row keeps its own key, so `atlas` and `atlas-a1b2c3d4` on
+ * the same domain both fit. `$exists: false` is not a legal partial filter.
+ *
+ * A new index: `agent-inbox-vanity-slug-index` creates it on databases that
+ * do not auto-build indexes.
+ */
+export const AGENT_INBOX_VANITY_SLUG_INDEX = 'agent_inbox_vanity_slug';
+
+export const AGENT_INBOX_VANITY_SLUG_INDEX_KEYS = {
+  'credentials.emailSlugPrefix': 1,
+  'credentials.inboxDomain': 1,
+  'credentials.inboxRoutingKey': 1,
+} as const;
+
+export const AGENT_INBOX_VANITY_SLUG_PARTIAL_FILTER = {
+  providerId: EmailProviderIdEnum.AgentEmailInbox,
+  'credentials.emailSlugPrefix': { $type: 'string' },
+  'credentials.inboxDomain': { $type: 'string' },
+} as const;
+
+integrationSchema.index(AGENT_INBOX_VANITY_SLUG_INDEX_KEYS, {
+  unique: true,
+  name: AGENT_INBOX_VANITY_SLUG_INDEX,
+  partialFilterExpression: AGENT_INBOX_VANITY_SLUG_PARTIAL_FILTER,
+});
 
 integrationSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 

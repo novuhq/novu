@@ -1,5 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase, isAgentSharedInboxEnabled, PinoLogger } from '@novu/application-generic';
 import {
   AgentEntity,
   AgentRepository,
@@ -8,20 +8,35 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { AgentSubscriberAccessEnum } from '@novu/shared';
+import {
+  AGENT_PROVISION_DATA_KEYS,
+  AgentSubscriberAccessEnum,
+  EmailProviderIdEnum,
+  HumanChannelViaEnum,
+} from '@novu/shared';
+import { isAgentProvisionedSubscriber } from '../../../agents/conversation-runtime/conversation/agent-subscriber-resolver.service';
+import { InboxAddressTakenException } from '../../../agents/email/novu-email/agent-inbox-address.service';
+import { NovuEmailProvisioningService } from '../../../agents/email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
+import { HUMAN_RELAY_DEFAULT_NAME } from '../../../agents/human-relay/human-relay-identity';
+import { isValidEmailForLookup, normalizeEmailForLookup } from '../../../agents/shared/util/email-normalization';
 import type { SetupHumanRelayResponseDto } from '../../dtos/setup-human-relay.dto';
+import { HumanAgentIdentityService } from '../../services/human-agent-identity.service';
 import { HumanOperatorService } from '../../services/human-operator.service';
 import { SetupHumanRelayCommand } from './setup-human-relay.command';
 
 export const DEFAULT_HUMAN_RELAY_IDENTIFIER = 'human-relay';
 
-type ContactDetails = Partial<Pick<SubscriberEntity, 'email' | 'firstName' | 'lastName'>>;
+type ContactDetails = Partial<Pick<SubscriberEntity, 'firstName' | 'lastName'>>;
 
 /**
  * Idempotent bootstrap behind `human setup`: ensures the environment has its
  * hidden `human_relay` system agent (the delivery/webhook anchor for all human
  * interactions) and that the human's subscriber row exists. Channel linking
  * itself reuses the standard agent-integration + channel-endpoint flows.
+ *
+ * When the caller is the relay's owner (`operator: true`), the relay records
+ * their subscriberId. Their name stays on that subscriber and is shown next to
+ * the agent's own name, which is never overwritten.
  */
 @Injectable()
 export class SetupHumanRelay {
@@ -29,8 +44,13 @@ export class SetupHumanRelay {
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly humanContactRepository: HumanContactRepository,
-    private readonly humanOperator: HumanOperatorService
-  ) {}
+    private readonly humanOperator: HumanOperatorService,
+    private readonly humanAgentIdentity: HumanAgentIdentityService,
+    private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: SetupHumanRelayCommand): Promise<SetupHumanRelayResponseDto> {
@@ -39,6 +59,8 @@ export class SetupHumanRelay {
     const agent = await this.ensureRelayAgent(command, identifier);
     const subscriberId = await this.resolveSubscriberId(command, agent);
     await this.ensureSubscriber(command, subscriberId);
+    const inbox = await this.ensureAgentEmailInbox(command, agent);
+    await this.rememberDeclaredEmail(command, agent._id, subscriberId);
 
     if (command.defaultVia) {
       await this.humanContactRepository.setDefaultVia({
@@ -54,7 +76,9 @@ export class SetupHumanRelay {
     return {
       agentId: agent._id,
       agentIdentifier: agent.identifier,
+      agentName: agent.name,
       subscriberId,
+      ...inbox,
     };
   }
 
@@ -87,11 +111,18 @@ export class SetupHumanRelay {
         );
       }
 
-      return existing;
+      // Running setup again with another name or description is how they are changed.
+      return this.humanAgentIdentity.apply(existing, {
+        name: command.agentName,
+        description: command.agentDescription,
+      });
     }
 
+    const description = command.agentDescription?.trim();
+
     return this.agentRepository.create({
-      name: 'Human',
+      name: command.agentName?.trim() || HUMAN_RELAY_DEFAULT_NAME,
+      ...(description ? { description } : {}),
       identifier,
       active: true,
       runtime: 'human_relay',
@@ -106,8 +137,8 @@ export class SetupHumanRelay {
   }
 
   private async ensureSubscriber(command: SetupHumanRelayCommand, subscriberId: string): Promise<void> {
+    // Subscriber.email is written when verification is promoted (`VerifyAddress`).
     const details: ContactDetails = {
-      email: command.email?.trim().toLowerCase() || undefined,
       firstName: command.firstName?.trim() || undefined,
       lastName: command.lastName?.trim() || undefined,
     };
@@ -121,7 +152,6 @@ export class SetupHumanRelay {
         subscriberId,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
-        ...(details.email ? { email: details.email } : {}),
         ...(details.firstName ? { firstName: details.firstName } : {}),
         ...(details.lastName ? { lastName: details.lastName } : {}),
       });
@@ -130,8 +160,7 @@ export class SetupHumanRelay {
         throw err;
       }
 
-      // A setup running at the same moment created the subscriber first. This request's email and
-      // name still have to land on it.
+      // A setup running at the same moment created the subscriber first. This request's name still has to land on it.
       await this.updateExistingSubscriber(command, subscriberId, details);
     }
   }
@@ -140,7 +169,7 @@ export class SetupHumanRelay {
   private async updateExistingSubscriber(
     command: SetupHumanRelayCommand,
     subscriberId: string,
-    { email, firstName, lastName }: ContactDetails
+    { firstName, lastName }: ContactDetails
   ): Promise<boolean> {
     const existing = await this.subscriberRepository.findOne({
       subscriberId,
@@ -151,22 +180,93 @@ export class SetupHumanRelay {
       return false;
     }
 
-    // Email identity powers the email channel (delivery target + inbound
-    // reply resolution live on Subscriber.email — no ChannelEndpoint).
     // Names are only ever set or replaced, never cleared: an invite that
     // omits `--name` must not wipe a name captured earlier.
     const updates: ContactDetails = {};
-    if (email && existing.email !== email) updates.email = email;
     if (firstName && existing.firstName !== firstName) updates.firstName = firstName;
     if (lastName && existing.lastName !== lastName) updates.lastName = lastName;
 
-    if (Object.keys(updates).length > 0) {
+    // A row an agent made up for an unknown sender counts as a stranger. Setup means the operator
+    // added this person, so the row stops being one.
+    const becomesContact = isAgentProvisionedSubscriber(existing);
+
+    if (Object.keys(updates).length > 0 || becomesContact) {
       await this.subscriberRepository.update(
         { subscriberId, _environmentId: command.environmentId },
-        { $set: updates }
+        {
+          ...(Object.keys(updates).length > 0 ? { $set: updates } : {}),
+          ...(becomesContact ? { $unset: { [`data.${AGENT_PROVISION_DATA_KEYS.source}`]: '' } } : {}),
+        }
       );
     }
 
     return true;
+  }
+
+  /**
+   * Every setup gets an agent email inbox. Self-hosted has no shared address to
+   * hand out, so it is skipped. A failure here must not fail `human setup`.
+   */
+  private async ensureAgentEmailInbox(
+    command: SetupHumanRelayCommand,
+    agent: AgentEntity
+  ): Promise<{ emailAddress?: string; emailHandleAdjusted?: boolean }> {
+    if (!isAgentSharedInboxEnabled()) {
+      return {};
+    }
+
+    try {
+      const result = await this.findOrCreateNovuEmail.execute(
+        agent._id,
+        command.environmentId,
+        command.organizationId,
+        EmailProviderIdEnum.AgentEmailInbox,
+        { inboxHandle: command.inboxHandle, operatorEmail: command.email }
+      );
+      if (!result.provisionedNewLink) {
+        return {};
+      }
+
+      const emailAddress = result.response?.integration?.sharedInboundAddress;
+
+      return {
+        ...(emailAddress ? { emailAddress } : {}),
+        ...(result.inboxHandleAdjusted ? { emailHandleAdjusted: true } : {}),
+      };
+    } catch (err) {
+      if (err instanceof InboxAddressTakenException) {
+        throw err;
+      }
+
+      this.logger.warn({ err, agentId: agent._id }, 'Failed to provision the agent email inbox');
+
+      return {};
+    }
+  }
+
+  /** Stored unverified. Delivery still requires the verified slot. */
+  private async rememberDeclaredEmail(
+    command: SetupHumanRelayCommand,
+    agentId: string,
+    subscriberId: string
+  ): Promise<void> {
+    const raw = command.email?.trim();
+    if (!raw) {
+      return;
+    }
+
+    const address = normalizeEmailForLookup(raw);
+    if (!isValidEmailForLookup(address)) {
+      return;
+    }
+
+    await this.humanContactRepository.setDeclaredAddress({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      agentId,
+      subscriberId,
+      via: HumanChannelViaEnum.EMAIL,
+      address,
+    });
   }
 }

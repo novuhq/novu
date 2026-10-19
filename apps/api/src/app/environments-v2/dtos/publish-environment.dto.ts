@@ -22,7 +22,8 @@ export class ResourceToPublishDto {
 
 export class PublishEnvironmentRequestDto {
   @ApiPropertyOptional({
-    description: 'Source environment ID to sync from. Defaults to the Development environment if not provided.',
+    description:
+      'Source environment ID. Only the Development environment is currently supported; defaults to Development if omitted.',
     example: '507f1f77bcf86cd799439011',
   })
   @IsOptional()

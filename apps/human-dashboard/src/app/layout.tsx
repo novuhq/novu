@@ -8,10 +8,10 @@ import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: {
-    default: 'gethuman.md',
-    template: '%s · gethuman.md',
+    default: 'agentinbox.md',
+    template: '%s · agentinbox.md',
   },
-  description: 'Human lets your AI agents reach you for a decision, over the apps you already use.',
+  description: 'Agent Inbox gives your AI agent one inbox on every channel: email, Telegram and Slack.',
 };
 
 export const viewport: Viewport = {

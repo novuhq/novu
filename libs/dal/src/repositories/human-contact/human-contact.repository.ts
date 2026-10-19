@@ -2,7 +2,14 @@ import { Injectable } from '@nestjs/common';
 import type { HumanChannelViaEnum } from '@novu/shared';
 import { EnforceEnvOrOrgIds, isDuplicateKeyError } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
-import { HumanContactDBModel, HumanContactDefaultSetBy, HumanContactEntity } from './human-contact.entity';
+import {
+  HumanContactDBModel,
+  HumanContactDeclaredAddress,
+  HumanContactDefaultSetBy,
+  HumanContactEntity,
+  HumanContactPendingAddress,
+  HumanContactVerifiedAddress,
+} from './human-contact.entity';
 import { HumanContact } from './human-contact.schema';
 
 @Injectable()
@@ -79,7 +86,7 @@ export class HumanContactRepository extends BaseRepositoryV2<
   }
 
   /**
-   * Saves the human's default channel. An inviter's pick (`human invite --via`)
+   * Saves the human's default channel. An inviter's pick (`human contact invite --via`)
    * never replaces a default the person chose themselves on the invite page.
    */
   async setDefaultVia(params: {
@@ -136,5 +143,191 @@ export class HumanContactRepository extends BaseRepositoryV2<
         throw err;
       }
     }
+  }
+
+  /**
+   * Replaces the pending slot for `via` in one write. The verified slot stays
+   * until {@link promotePendingAddress}.
+   */
+  async upsertPendingAddress(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    subscriberId: string;
+    via: HumanChannelViaEnum;
+    address: string;
+  }): Promise<HumanContactPendingAddress> {
+    const filter = {
+      _environmentId: params.environmentId,
+      _agentId: params.agentId,
+      subscriberId: params.subscriberId,
+    };
+    const pending: HumanContactPendingAddress = {
+      address: params.address,
+      requestedAt: new Date().toISOString(),
+    };
+    const pendingPath = `addresses.${params.via}.pending`;
+
+    try {
+      await this.findOneAndUpdate(
+        filter,
+        {
+          $set: { [pendingPath]: pending },
+          $setOnInsert: { _organizationId: params.organizationId },
+        },
+        { upsert: true }
+      );
+    } catch (err) {
+      if (!isDuplicateKeyError(err)) {
+        throw err;
+      }
+
+      await this.findOneAndUpdate(filter, { $set: { [pendingPath]: pending } });
+    }
+
+    return pending;
+  }
+
+  /**
+   * Puts the pending slot back after a failed send, but only while it still
+   * holds `replaced` (the value the failed request wrote). A newer request
+   * that already replaced it keeps its own link. `pending: null` clears the
+   * slot, which is the state before the first request for this channel.
+   */
+  async restorePendingAddress(params: {
+    environmentId: string;
+    agentId: string;
+    subscriberId: string;
+    via: HumanChannelViaEnum;
+    replaced: HumanContactPendingAddress;
+    pending: HumanContactPendingAddress | null;
+  }): Promise<void> {
+    const pendingPath = `addresses.${params.via}.pending`;
+    const filter = {
+      _environmentId: params.environmentId,
+      _agentId: params.agentId,
+      subscriberId: params.subscriberId,
+      [`${pendingPath}.address`]: params.replaced.address,
+      [`${pendingPath}.requestedAt`]: params.replaced.requestedAt,
+    };
+
+    if (params.pending) {
+      await this.update(filter, { $set: { [pendingPath]: params.pending } });
+
+      return;
+    }
+
+    await this.update(filter, { $unset: { [pendingPath]: '' } });
+  }
+
+  /**
+   * Promotes the pending slot this link was issued for and clears pending, in
+   * one write. Returns null when that request is gone (a superseded link).
+   */
+  async promotePendingAddress(params: {
+    environmentId: string;
+    agentId: string;
+    subscriberId: string;
+    via: HumanChannelViaEnum;
+    address: string;
+    requestedAt: string;
+  }): Promise<HumanContactVerifiedAddress | null> {
+    const pending = await this.findPendingAddress(
+      params.environmentId,
+      params.agentId,
+      params.subscriberId,
+      params.via
+    );
+    if (pending?.address !== params.address || pending.requestedAt !== params.requestedAt) {
+      return null;
+    }
+
+    const pendingPath = `addresses.${params.via}.pending`;
+    const verified: HumanContactVerifiedAddress = {
+      address: pending.address,
+      requestedAt: pending.requestedAt,
+      verifiedAt: new Date().toISOString(),
+    };
+    // Matching requestedAt too means a newer request between the read and this write leaves the link superseded.
+    const updated = await this.findOneAndUpdate(
+      {
+        _environmentId: params.environmentId,
+        _agentId: params.agentId,
+        subscriberId: params.subscriberId,
+        [`${pendingPath}.address`]: pending.address,
+        [`${pendingPath}.requestedAt`]: pending.requestedAt,
+      },
+      {
+        $set: { [`addresses.${params.via}.verified`]: verified },
+        $unset: { [pendingPath]: '' },
+      }
+    );
+
+    return updated ? verified : null;
+  }
+
+  async findVerifiedAddress(
+    environmentId: string,
+    agentId: string,
+    subscriberId: string,
+    via: HumanChannelViaEnum
+  ): Promise<HumanContactVerifiedAddress | null> {
+    const contact = await this.findContact(environmentId, agentId, subscriberId);
+
+    return contact?.addresses?.[via]?.verified ?? null;
+  }
+
+  async findPendingAddress(
+    environmentId: string,
+    agentId: string,
+    subscriberId: string,
+    via: HumanChannelViaEnum
+  ): Promise<HumanContactPendingAddress | null> {
+    const contact = await this.findContact(environmentId, agentId, subscriberId);
+
+    return contact?.addresses?.[via]?.pending ?? null;
+  }
+
+  /**
+   * Records an unverified address the person typed. Does not touch pending or
+   * verified, so it cannot make the address deliverable.
+   */
+  async setDeclaredAddress(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    subscriberId: string;
+    via: HumanChannelViaEnum;
+    address: string;
+  }): Promise<HumanContactDeclaredAddress> {
+    const filter = {
+      _environmentId: params.environmentId,
+      _agentId: params.agentId,
+      subscriberId: params.subscriberId,
+    };
+    const declared: HumanContactDeclaredAddress = {
+      address: params.address,
+      declaredAt: new Date().toISOString(),
+    };
+    const declaredPath = `addresses.${params.via}.declared`;
+
+    try {
+      await this.findOneAndUpdate(
+        filter,
+        {
+          $set: { [declaredPath]: declared },
+          $setOnInsert: { _organizationId: params.organizationId },
+        },
+        { upsert: true }
+      );
+    } catch (err) {
+      if (!isDuplicateKeyError(err)) {
+        throw err;
+      }
+
+      await this.findOneAndUpdate(filter, { $set: { [declaredPath]: declared } });
+    }
+
+    return declared;
   }
 }

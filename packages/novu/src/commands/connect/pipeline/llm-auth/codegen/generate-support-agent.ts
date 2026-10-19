@@ -75,11 +75,11 @@ function buildLangChainSearchNovuDocsTool(): string {
 );`;
 }
 
-function buildAiSdkGenerateTextReturn(modelLine: string, withTools: boolean): string {
+function buildAiSdkStreamTextReturn(modelLine: string, withTools: boolean): string {
   const instructions = withTools ? AGENT_SYSTEM_PROMPT_WITH_TOOLS : AGENT_SYSTEM_PROMPT;
   const toolsLine = withTools ? '\n      tools: { searchNovuDocs },' : '';
 
-  return `    return generateText({
+  return `    return streamText({
       model: ${modelLine},
       instructions: '${instructions}',
       messages: await hydrateUnreachableAttachmentUrls(toModelMessages(ctx)),${toolsLine}
@@ -100,7 +100,7 @@ function buildAiSdkHandler(input: GenerateSupportAgentInput, modelLine: string):
 
   return `${buildSharedHandlerBody()}
 
-${buildAiSdkGenerateTextReturn(modelLine, withTools)}`;
+${buildAiSdkStreamTextReturn(modelLine, withTools)}`;
 }
 
 function buildLangChainHandler(modelLine: string): string {
@@ -133,10 +133,10 @@ function buildOnMessageBody(input: GenerateSupportAgentInput): string {
 function buildAiSdkImports(kind: GenerateSupportAgentInput['llmAuth']['kind']): string {
   const withTools = aiSdkCodegenSupportsTools(kind);
   const toolImports = withTools
-    ? `import { generateText, tool } from 'ai';
+    ? `import { streamText, tool } from 'ai';
 import { hydrateUnreachableAttachmentUrls, toModelMessages } from '@novu/framework/ai-sdk';
 import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs';`
-    : `import { generateText } from 'ai';
+    : `import { streamText } from 'ai';
 import { hydrateUnreachableAttachmentUrls, toModelMessages } from '@novu/framework/ai-sdk';`;
 
   const base = `/** @jsxImportSource @novu/framework */

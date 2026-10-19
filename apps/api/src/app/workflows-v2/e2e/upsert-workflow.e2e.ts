@@ -34,6 +34,15 @@ interface ITestStepConfig {
   controlValues: Record<string, string>;
 }
 
+interface IRawStepResponse {
+  _id: string;
+  stepId: string;
+  name: string;
+  type: StepTypeEnum;
+  controls: { values: Record<string, unknown> };
+  issues?: { controls?: Record<string, unknown> };
+}
+
 describe('Upsert Workflow #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
@@ -744,6 +753,407 @@ describe('Upsert Workflow #novu-v2', () => {
       expect(updateResponse.body.data.steps[0].providerOverrides?.[ToolProviderIdEnum.PagerDuty]).to.deep.equal({
         severity: 'info',
       });
+    });
+  });
+
+  describe('step integrationOverrides', () => {
+    const PROD_ALERTS = 'prod-alerts';
+    const STAGING_ALERTS = 'staging-alerts';
+    const OPS_PRIMARY = 'ops-primary';
+    const toolProviderOverrides = {
+      [ToolProviderIdEnum.Webhook]: { alert_type: 'default' },
+    };
+    const toolIntegrationOverrides = {
+      [ToolProviderIdEnum.Webhook]: {
+        [PROD_ALERTS]: { alert_type: 'incident' },
+        [STAGING_ALERTS]: { alert_type: 'test' },
+      },
+      [ToolProviderIdEnum.Opsgenie]: {
+        [OPS_PRIMARY]: { priority: 'P1' },
+      },
+    };
+
+    async function createToolWorkflowWithIntegrationOverrides(name: string) {
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name,
+        workflowId: `tool-integration-overrides-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Tool Step',
+            type: StepTypeEnum.TOOL,
+            controlValues: {
+              body: 'default alert',
+            },
+            providerOverrides: toolProviderOverrides,
+            integrationOverrides: toolIntegrationOverrides,
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+
+      return createResponse.body.data;
+    }
+
+    function toStepUpdate(step: IRawStepResponse, fields: Record<string, unknown> = {}) {
+      return {
+        _id: step._id,
+        stepId: step.stepId,
+        name: step.name,
+        type: step.type,
+        controlValues: step.controls.values,
+        ...fields,
+      };
+    }
+
+    async function findStepDocs(options: {
+      workflowId: string;
+      stepId: string;
+      level: ControlValuesLevelEnum;
+      environmentId?: string;
+    }) {
+      return controlValuesRepository.find({
+        _environmentId: options.environmentId ?? session.environment._id,
+        _organizationId: session.organization._id,
+        _workflowId: options.workflowId,
+        _stepId: options.stepId,
+        level: options.level,
+      });
+    }
+
+    async function findIntegrationOverrideDocs(workflowId: string, stepId: string, environmentId?: string) {
+      const docs = await findStepDocs({
+        workflowId,
+        stepId,
+        environmentId,
+        level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+      });
+
+      return docs.map(({ providerId, integrationIdentifier, controls }) => ({
+        providerId,
+        integrationIdentifier,
+        controls,
+      }));
+    }
+
+    function getIntegrationOverrideIssuePaths(step: IRawStepResponse): string[] {
+      return Object.keys(step.issues?.controls ?? {}).filter((path) => path.startsWith('integrationOverrides'));
+    }
+
+    it('should persist integrationOverrides as a step sibling and keep them out of controlValues', async () => {
+      const workflow = await createToolWorkflowWithIntegrationOverrides('Tool Integration Overrides Workflow');
+      const step = workflow.steps[0];
+
+      expect(step.controls.values.integrationOverrides).to.equal(undefined);
+      expect(step.controls.values.providerOverrides).to.equal(undefined);
+      expect(step.controls.values.body).to.equal('default alert');
+      expect(step.integrationOverrides).to.deep.equal(toolIntegrationOverrides);
+      expect(step.providerOverrides).to.deep.equal(toolProviderOverrides);
+      expect(getIntegrationOverrideIssuePaths(step)).to.deep.equal([]);
+
+      const getWorkflowResponse = await session.testAgent.get(`/v2/workflows/${workflow._id}`);
+      expect(getWorkflowResponse.status).to.equal(200);
+      expect(getWorkflowResponse.body.data.steps[0].integrationOverrides).to.deep.equal(toolIntegrationOverrides);
+      expect(getWorkflowResponse.body.data.steps[0].controls.values.integrationOverrides).to.equal(undefined);
+
+      const getStepResponse = await session.testAgent.get(`/v2/workflows/${workflow._id}/steps/${step._id}`);
+      expect(getStepResponse.status).to.equal(200);
+      expect(getStepResponse.body.data.integrationOverrides).to.deep.equal(toolIntegrationOverrides);
+      expect(getStepResponse.body.data.controls.values.integrationOverrides).to.equal(undefined);
+
+      expect(await findIntegrationOverrideDocs(workflow._id, step._id)).to.have.deep.members([
+        {
+          providerId: ToolProviderIdEnum.Webhook,
+          integrationIdentifier: PROD_ALERTS,
+          controls: { alert_type: 'incident' },
+        },
+        {
+          providerId: ToolProviderIdEnum.Webhook,
+          integrationIdentifier: STAGING_ALERTS,
+          controls: { alert_type: 'test' },
+        },
+        {
+          providerId: ToolProviderIdEnum.Opsgenie,
+          integrationIdentifier: OPS_PRIMARY,
+          controls: { priority: 'P1' },
+        },
+      ]);
+
+      const providerDocs = await findStepDocs({
+        workflowId: workflow._id,
+        stepId: step._id,
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      });
+      expect(providerDocs).to.have.length(1);
+      expect(providerDocs[0].providerId).to.equal(ToolProviderIdEnum.Webhook);
+      expect(providerDocs[0].integrationIdentifier).to.equal(undefined);
+      expect(providerDocs[0].controls).to.deep.equal({ alert_type: 'default' });
+
+      const stepControlDocs = await findStepDocs({
+        workflowId: workflow._id,
+        stepId: step._id,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+      });
+      expect(stepControlDocs).to.have.length(1);
+      expect(stepControlDocs[0].controls).to.not.have.property('integrationOverrides');
+      expect(stepControlDocs[0].controls).to.not.have.property('providerOverrides');
+    });
+
+    it('should keep integrationOverrides when omitted from a later PUT', async () => {
+      const workflow = await createToolWorkflowWithIntegrationOverrides('Keep Integration Overrides Workflow');
+      const step = workflow.steps[0];
+
+      const updateResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+        steps: [toStepUpdate(step)],
+      });
+
+      expect(updateResponse.status).to.equal(200);
+      expect(updateResponse.body.data.steps[0].integrationOverrides).to.deep.equal(toolIntegrationOverrides);
+      expect(updateResponse.body.data.steps[0].providerOverrides).to.deep.equal(toolProviderOverrides);
+      expect(await findIntegrationOverrideDocs(workflow._id, step._id)).to.have.length(3);
+    });
+
+    it('should replace the full integrationOverrides set when an object is sent', async () => {
+      const workflow = await createToolWorkflowWithIntegrationOverrides('Replace Integration Overrides Workflow');
+      const step = workflow.steps[0];
+      const replacement = {
+        [ToolProviderIdEnum.Webhook]: {
+          [PROD_ALERTS]: { alert_type: 'major' },
+        },
+      };
+
+      const updateResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+        steps: [toStepUpdate(step, { integrationOverrides: replacement })],
+      });
+
+      expect(updateResponse.status).to.equal(200);
+      expect(updateResponse.body.data.steps[0].integrationOverrides).to.deep.equal(replacement);
+      expect(updateResponse.body.data.steps[0].providerOverrides).to.deep.equal(toolProviderOverrides);
+      expect(await findIntegrationOverrideDocs(workflow._id, step._id)).to.deep.equal([
+        {
+          providerId: ToolProviderIdEnum.Webhook,
+          integrationIdentifier: PROD_ALERTS,
+          controls: { alert_type: 'major' },
+        },
+      ]);
+
+      const getResponse = await session.testAgent.get(`/v2/workflows/${workflow._id}`);
+      expect(getResponse.status).to.equal(200);
+      expect(getResponse.body.data.steps[0].integrationOverrides).to.deep.equal(replacement);
+    });
+
+    it('should delete all integration override docs when integrationOverrides is null and keep providerOverrides', async () => {
+      const workflow = await createToolWorkflowWithIntegrationOverrides('Delete Integration Overrides Workflow');
+      const step = workflow.steps[0];
+
+      const updateResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+        steps: [toStepUpdate(step, { integrationOverrides: null })],
+      });
+
+      expect(updateResponse.status).to.equal(200);
+      expect(updateResponse.body.data.steps[0].integrationOverrides).to.not.exist;
+      expect(updateResponse.body.data.steps[0].providerOverrides).to.deep.equal(toolProviderOverrides);
+      expect(await findIntegrationOverrideDocs(workflow._id, step._id)).to.have.length(0);
+
+      const providerDocs = await findStepDocs({
+        workflowId: workflow._id,
+        stepId: step._id,
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      });
+      expect(providerDocs).to.have.length(1);
+      expect(providerDocs[0].providerId).to.equal(ToolProviderIdEnum.Webhook);
+    });
+
+    it('should surface integration override schema violations as namespaced step issues', async () => {
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Tool Integration Override Issues Workflow',
+        workflowId: `tool-integration-override-issues-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Tool Step',
+            type: StepTypeEnum.TOOL,
+            controlValues: {
+              body: 'default alert',
+            },
+            integrationOverrides: {
+              [ToolProviderIdEnum.Opsgenie]: {
+                [OPS_PRIMARY]: { message: 'ok', foo: true },
+              },
+              [ToolProviderIdEnum.Webhook]: {
+                [PROD_ALERTS]: { anyKey: { nested: true } },
+              },
+              'not-a-provider': {
+                [PROD_ALERTS]: { message: 'ok' },
+              },
+            },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+
+      const issues = createResponse.body.data.steps[0].issues?.controls ?? {};
+      const opsgenieIssues = issues[`integrationOverrides.${ToolProviderIdEnum.Opsgenie}.${OPS_PRIMARY}.foo`];
+      expect(opsgenieIssues).to.exist;
+      expect(opsgenieIssues[0].issueType).to.equal(ContentIssueEnum.UNSUPPORTED_PROPERTY);
+
+      const unsupportedProviderIssues = issues['integrationOverrides.not-a-provider'];
+      expect(unsupportedProviderIssues).to.exist;
+      expect(unsupportedProviderIssues[0].issueType).to.equal(ContentIssueEnum.UNSUPPORTED_PROPERTY);
+
+      expect(
+        Object.keys(issues).filter((path) => path.startsWith(`integrationOverrides.${ToolProviderIdEnum.Webhook}`))
+      ).to.deep.equal([]);
+    });
+
+    it('should keep validating persisted integrationOverrides when omitted and clear their issues on null', async () => {
+      const issuePath = `integrationOverrides.${ToolProviderIdEnum.Opsgenie}.${OPS_PRIMARY}.foo`;
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Tool Persisted Integration Override Issues Workflow',
+        workflowId: `tool-persisted-integration-override-issues-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Tool Step',
+            type: StepTypeEnum.TOOL,
+            controlValues: {
+              body: 'default alert',
+            },
+            integrationOverrides: {
+              [ToolProviderIdEnum.Opsgenie]: {
+                [OPS_PRIMARY]: { message: 'ok', foo: true },
+              },
+            },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+      const workflow = createResponse.body.data;
+      const step = workflow.steps[0];
+      expect(step.issues?.controls?.[issuePath]).to.exist;
+
+      const omittedResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+        steps: [toStepUpdate(step)],
+      });
+
+      expect(omittedResponse.status).to.equal(200);
+      const omittedIssues = omittedResponse.body.data.steps[0].issues?.controls?.[issuePath];
+      expect(omittedIssues).to.exist;
+      expect(omittedIssues[0].issueType).to.equal(ContentIssueEnum.UNSUPPORTED_PROPERTY);
+
+      const clearedResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+        steps: [toStepUpdate(step, { integrationOverrides: null })],
+      });
+
+      expect(clearedResponse.status).to.equal(200);
+      expect(getIntegrationOverrideIssuePaths(clearedResponse.body.data.steps[0])).to.deep.equal([]);
+    });
+
+    it('should round-trip chat step integrationOverrides on PUT', async () => {
+      const chatIntegrationOverrides = {
+        [ChatProviderIdEnum.Slack]: {
+          'slack-workspace-a': { text: 'workspace a {{payload.name}}' },
+        },
+      };
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Chat Integration Overrides Workflow',
+        workflowId: `chat-integration-overrides-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Chat Step',
+            type: StepTypeEnum.CHAT,
+            controlValues: { body: 'hello' },
+            integrationOverrides: chatIntegrationOverrides,
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+      const workflow = createResponse.body.data;
+      const step = workflow.steps[0];
+      expect(step.integrationOverrides).to.deep.equal(chatIntegrationOverrides);
+      expect(step.controls.values.integrationOverrides).to.equal(undefined);
+      expect(getIntegrationOverrideIssuePaths(step)).to.deep.equal([]);
+
+      const updateResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+      });
+
+      expect(updateResponse.status).to.equal(200);
+      expect(updateResponse.body.data.steps[0].type).to.equal(StepTypeEnum.CHAT);
+      expect(updateResponse.body.data.steps[0].integrationOverrides).to.deep.equal(chatIntegrationOverrides);
+      expect(await findIntegrationOverrideDocs(workflow._id, step._id)).to.deep.equal([
+        {
+          providerId: ChatProviderIdEnum.Slack,
+          integrationIdentifier: 'slack-workspace-a',
+          controls: { text: 'workspace a {{payload.name}}' },
+        },
+      ]);
+    });
+
+    it('should copy integrationOverrides when duplicating a workflow', async () => {
+      const workflow = await createToolWorkflowWithIntegrationOverrides('Integration Overrides Duplicate Source');
+
+      const duplicateResponse = await session.testAgent.post(`/v2/workflows/${workflow._id}/duplicate`).send({
+        name: 'Integration Overrides Duplicate Copy',
+      });
+
+      expect(duplicateResponse.status).to.equal(201);
+      const duplicate = duplicateResponse.body.data;
+      expect(duplicate._id).to.not.equal(workflow._id);
+      expect(duplicate.steps[0].integrationOverrides).to.deep.equal(toolIntegrationOverrides);
+      expect(duplicate.steps[0].providerOverrides).to.deep.equal(toolProviderOverrides);
+      expect(await findIntegrationOverrideDocs(duplicate._id, duplicate.steps[0]._id)).to.have.length(3);
+      expect(await findIntegrationOverrideDocs(workflow._id, workflow.steps[0]._id)).to.have.length(3);
+    });
+
+    it('should carry integrationOverrides when syncing a workflow to another environment', async () => {
+      const workflow = await createToolWorkflowWithIntegrationOverrides('Integration Overrides Sync Source');
+
+      await session.switchToProdEnvironment();
+      const prodEnvironmentId = session.environment._id;
+      await session.switchToDevEnvironment();
+
+      const syncResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}/sync`).send({
+        targetEnvironmentId: prodEnvironmentId,
+      });
+
+      expect(syncResponse.status).to.equal(200);
+      const prodWorkflow = syncResponse.body.data;
+      const prodStep = prodWorkflow.steps[0];
+      expect(prodWorkflow._id).to.not.equal(workflow._id);
+      expect(prodStep.integrationOverrides).to.deep.equal(toolIntegrationOverrides);
+      expect(prodStep.controls.values.integrationOverrides).to.equal(undefined);
+      expect(await findIntegrationOverrideDocs(prodWorkflow._id, prodStep._id, prodEnvironmentId)).to.have.length(3);
+
+      const clearResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+        steps: [toStepUpdate(workflow.steps[0], { integrationOverrides: null })],
+      });
+      expect(clearResponse.status).to.equal(200);
+
+      const resyncResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}/sync`).send({
+        targetEnvironmentId: prodEnvironmentId,
+      });
+
+      expect(resyncResponse.status).to.equal(200);
+      expect(resyncResponse.body.data._id).to.equal(prodWorkflow._id);
+      expect(resyncResponse.body.data.steps[0].integrationOverrides).to.not.exist;
+      expect(resyncResponse.body.data.steps[0].providerOverrides).to.deep.equal(toolProviderOverrides);
+      expect(await findIntegrationOverrideDocs(prodWorkflow._id, prodStep._id, prodEnvironmentId)).to.have.length(0);
     });
   });
 

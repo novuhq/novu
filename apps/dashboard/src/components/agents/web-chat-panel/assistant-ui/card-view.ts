@@ -24,6 +24,36 @@ function linkView(label: string, url: string): CardChildView | null {
   return safeUrl && trimmedLabel ? { type: 'link', url: safeUrl, label: trimmedLabel } : null;
 }
 
+function viewsFromActions(children: Extract<AgentCardChild, { type: 'actions' }>['children']): CardChildView[] {
+  const views: CardChildView[] = [];
+  const buttons: CardButtonView[] = [];
+
+  for (const actionChild of children) {
+    if (actionChild.type === 'button') {
+      buttons.push({
+        id: actionChild.id,
+        label: actionChild.label,
+        value: actionChild.value,
+        style: actionChild.style,
+      });
+      continue;
+    }
+
+    if (actionChild.type === 'link-button') {
+      const view = linkView(actionChild.label, actionChild.url);
+      if (view) {
+        views.push(view);
+      }
+    }
+  }
+
+  if (buttons.length > 0) {
+    views.push({ type: 'actions', buttons });
+  }
+
+  return views;
+}
+
 function viewsFromAgentChild(child: AgentCardChild): CardChildView[] {
   switch (child.type) {
     case 'text': {
@@ -50,35 +80,8 @@ function viewsFromAgentChild(child: AgentCardChild): CardChildView[] {
           buttons: [{ id: child.id, label: child.label, value: child.value, style: child.style }],
         },
       ];
-    case 'actions': {
-      const views: CardChildView[] = [];
-      const buttons: CardButtonView[] = [];
-
-      for (const actionChild of child.children) {
-        if (actionChild.type === 'button') {
-          buttons.push({
-            id: actionChild.id,
-            label: actionChild.label,
-            value: actionChild.value,
-            style: actionChild.style,
-          });
-          continue;
-        }
-
-        if (actionChild.type === 'link-button') {
-          const view = linkView(actionChild.label, actionChild.url);
-          if (view) {
-            views.push(view);
-          }
-        }
-      }
-
-      if (buttons.length > 0) {
-        views.push({ type: 'actions', buttons });
-      }
-
-      return views;
-    }
+    case 'actions':
+      return viewsFromActions(child.children);
     case 'section':
       return child.children.flatMap((nested) => viewsFromAgentChild(nested));
     case 'fields':
@@ -87,6 +90,7 @@ function viewsFromAgentChild(child: AgentCardChild): CardChildView[] {
         .filter(Boolean)
         .map((content) => ({ type: 'text' as const, content }));
     case 'table':
+    case 'chart':
       return [];
   }
 }

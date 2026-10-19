@@ -10,13 +10,13 @@ type PushEditorProps = { uiSchema: UiSchema };
 
 /** Split out so the flag-off editor never subscribes to the `providerOverrides` form field. */
 function PushOverrideEditor({ defaultContent }: { defaultContent: ReactNode }) {
-  const { providerOptions, providerOverrides } = useProviderOverrideOptions(ChannelTypeEnum.PUSH);
+  const { providerOptions, overrides } = useProviderOverrideOptions(ChannelTypeEnum.PUSH);
 
   return (
     <ContentOverridePanel
       channel={ChannelTypeEnum.PUSH}
       providerOptions={providerOptions}
-      providerOverrides={providerOverrides}
+      overrides={overrides}
       defaultContent={defaultContent}
       showEscapeHatchBadge={false}
     />
