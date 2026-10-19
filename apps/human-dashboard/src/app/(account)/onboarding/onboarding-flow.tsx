@@ -27,7 +27,7 @@ const IDENTITY_STATE: Record<OnboardingStep, IdentityState> = {
   reach: 'connected',
 };
 
-/** How often each step asks whether something happened outside the page. Step 4 waits for nothing. */
+/** How often each step asks whether something happened outside the page. */
 const POLL_MS: Partial<Record<OnboardingStep, number>> = { address: 3000, test: 4000, connect: 3000 };
 
 /** Quicker while the reply to the test email is on its way. */
@@ -43,7 +43,13 @@ const SWAP_MS = 200;
  */
 export function OnboardingFlow({ view }: { view: OnboardingView }) {
   const waitingForReply = view.step === 'test' && Boolean(view.test.sentAt) && !view.test.replyAt;
-  const pollMs = waitingForReply ? REPLY_POLL_MS : POLL_MS[view.step];
+  const waitingForHostRead = view.step === 'reach' && view.waiting > 0 && !view.waitingMessage;
+  let pollMs = POLL_MS[view.step];
+  if (waitingForReply) {
+    pollMs = REPLY_POLL_MS;
+  } else if (waitingForHostRead) {
+    pollMs = POLL_MS.connect;
+  }
 
   return (
     <>
@@ -123,7 +129,7 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
                 <ConnectStep
                   handle={agent.handle}
                   address={agent.address}
-                  code={view.connectCode}
+                  apiUrl={view.apiUrl}
                   waiting={view.waiting}
                 />
               )}
@@ -132,7 +138,7 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
                   handle={agent.handle}
                   cardLink={agent.cardLink}
                   host={host}
-                  readFrom={operator.email}
+                  waitingMessage={view.waitingMessage}
                   channels={view.channels}
                   reach={view.reach}
                 />

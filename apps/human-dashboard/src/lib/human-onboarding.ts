@@ -5,15 +5,16 @@ import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import type { AgentReach } from './agent-settings';
 import { findCurrentUser } from './auth-page';
+import type { HostStatus } from './host-status';
 import type { HumanAccount } from './human-account';
 import { DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from './human-agent-api';
 import { requestForAccount } from './human-api-key';
 import { listChannels } from './human-channels-api';
+import { loadHostStatus } from './human-hosts-api';
 import { getInboxThread, listInboxThreads } from './human-inbox-api';
-import { listConnectedTools } from './human-tools-api';
 import type { InboxMessage, InboxThread } from './inbox';
-import { cardLinkOf, type HostVia, ONBOARDING_PATH, type OnboardingStep, toHandle } from './onboarding';
-import { advanceMocks, connectCode } from './onboarding-mocks';
+import { resolveNovuApiUrl } from './novu-api';
+import { cardLinkOf, ONBOARDING_PATH, type OnboardingStep, toHandle } from './onboarding';
 import { type OnboardingState, readOnboardingState, writeOnboardingState } from './onboarding-state';
 import { readSiteOrigin } from './site-origin';
 
@@ -24,6 +25,7 @@ export type SetupProgress = {
   step: SetupStep;
   state: OnboardingState;
   agent: RelayAgent | null;
+  hostStatus: HostStatus | null;
   /** Missing only when the session outlived its user; the pages have sent that visitor to sign in by then. */
   user: User | null;
 };
@@ -46,20 +48,24 @@ export function wasMadeInTheSteps(agent: Pick<RelayAgent, 'createdAt'>, state: O
 }
 
 /**
- * The step the operator is on. Nothing but the agent and the stored state decide it, so a refresh, another
- * browser and "Continue setup" all open the same one.
+ * The step the operator is on. The agent, its real host status and the stored operator choices decide it,
+ * so a refresh, another browser and "Continue setup" all open the same one.
  *
  * An agent the steps never saw being made came from a terminal: claimed, or set up there after logging in.
  * It has its address and its host already, so there is nothing to walk its operator through.
  */
-export function resolveStep(agent: Pick<RelayAgent, 'createdAt'> | null, state: OnboardingState): SetupStep {
+export function resolveStep(
+  agent: Pick<RelayAgent, 'createdAt'> | null,
+  state: OnboardingState,
+  hostStatus: HostStatus | null
+): SetupStep {
   if (!agent) return 'address';
   if (!wasMadeInTheSteps(agent, state)) return 'done';
+  if (state.finishedAt) return 'done';
   if (!state.testLeftAt) return 'test';
-  if (!state.host) return 'connect';
-  if (!state.finishedAt) return 'reach';
+  if (!hostStatus?.connected) return 'connect';
 
-  return 'done';
+  return 'reach';
 }
 
 /** The agent exists but no host reads its mail yet: what the "setup not finished" banners are about. */
@@ -73,19 +79,19 @@ export function isSetupUnfinished(step: SetupStep): step is 'test' | 'connect' {
  */
 export const loadSetupProgress = cache(async (account: HumanAccount): Promise<SetupProgress> => {
   const [user, agent] = await Promise.all([findCurrentUser(), getRelayAgent(account)]);
+  const hostStatus = agent ? await loadHostStatus(account) : null;
   if (!user) {
-    return { step: resolveStep(agent, {}), state: {}, agent, user };
+    return { step: resolveStep(agent, {}, hostStatus), state: {}, agent, hostStatus, user };
   }
 
   const state = await catchUp(user, account, agent, readOnboardingState(user));
 
-  return { step: resolveStep(agent, state), state, agent, user };
+  return { step: resolveStep(agent, state, hostStatus), state, agent, hostStatus, user };
 });
 
 /**
- * Brings the stored state up to date: the stand-ins that are due (`advanceMocks`), and a connector that
- * signed in to the account, which is a host that really connected. A state that can't be saved is tried
- * again on the next read, so a failure here never takes a page down.
+ * Brings the stored state up to date with a reply that landed after the test email. A state that can't be
+ * saved is tried again on the next read, so a failure here never takes a page down.
  */
 async function catchUp(
   user: User,
@@ -93,18 +99,7 @@ async function catchUp(
   agent: RelayAgent | null,
   state: OnboardingState
 ): Promise<OnboardingState> {
-  let next = await noteTestReply(account, user, agent, state);
-  const advanced = advanceMocks(next);
-  if (advanced) {
-    next = advanced;
-  }
-
-  if (agent && isSetupUnfinished(resolveStep(agent, next)) && !next.host) {
-    const [tool] = await listConnectedTools(account);
-    if (tool) {
-      next = { ...next, host: { via: 'mcp', connectedAt: new Date().toISOString() } };
-    }
-  }
+  const next = await noteTestReply(account, user, agent, state);
 
   if (next === state) {
     return state;
@@ -152,7 +147,7 @@ export async function noteOnboardingStarted(): Promise<void> {
 /**
  * Records that the operator's agent came from a terminal by way of a claim. Such an agent has its address
  * and its host, so the steps are over for it, even for an operator who had opened them before.
- * Like `noteHostConnected`, it never fails what it follows.
+ * Losing this note must not fail the claim it follows.
  */
 export async function noteAgentClaimed(user: User): Promise<void> {
   const state = readOnboardingState(user);
@@ -161,30 +156,11 @@ export async function noteAgentClaimed(user: User): Promise<void> {
   try {
     await writeOnboardingState(user.id, state, {
       ...state,
-      host: state.host ?? { via: 'cli', connectedAt: now },
       testLeftAt: state.testLeftAt ?? now,
       finishedAt: state.finishedAt ?? now,
     });
   } catch (error) {
     console.error('Failed to note the claimed agent', error);
-  }
-}
-
-/**
- * Records that a host connected to the operator's agent, the first time one does. Approving a CLI login
- * calls it: a terminal that was let into the account is a host. Losing this note must not fail the login
- * it comes from, so it never throws.
- */
-export async function noteHostConnected(user: User, via: HostVia): Promise<void> {
-  const state = readOnboardingState(user);
-  if (state.host) {
-    return;
-  }
-
-  try {
-    await writeOnboardingState(user.id, state, { ...state, host: { via, connectedAt: new Date().toISOString() } });
-  } catch (error) {
-    console.error('Failed to note the connected host', error);
   }
 }
 
@@ -204,14 +180,15 @@ export async function requireSetUpAgent(account: HumanAccount): Promise<SetupPro
 }
 
 /** What the onboarding page keeps asking for, to notice a change it has to show. Cheap to work out. */
-export function describeProgress({ step, state, agent }: SetupProgress): string {
+export function describeProgress({ step, state, agent, hostStatus }: SetupProgress): string {
   return [
     step,
     agent?.id,
     state.testSentAt,
     state.testReplyAt,
-    state.host?.connectedAt,
-    state.host?.readAt,
+    hostStatus?.connected ? 'connected' : '',
+    ...(hostStatus?.hosts ?? []).map((host) => `${host.via}:${host.connectedAt}`),
+    hostStatus?.waitingMessage?.seenAt,
     state.skippedAt,
   ]
     .map((part) => part ?? '')
@@ -316,10 +293,11 @@ export type OnboardingView = {
   /** Missing on step 1, where the agent is still being named. */
   agent: AgentIdentity | null;
   test: { sentAt?: string; replyAt?: string };
-  host: OnboardingState['host'] | null;
+  host: { via: 'cli' | 'mcp'; connectedAt: string } | null;
+  waitingMessage: HostStatus['waitingMessage'];
   waiting: number;
-  /** The one-time code in the prompt of step 3. */
-  connectCode: string;
+  /** The API the account lives on, named by the connect command in step 3. */
+  apiUrl: string;
   channels: { telegram: boolean; slack: boolean };
   /** Who can reach the agent, for the Share dialog of step 4. `null` while there is no agent, or it couldn't be read. */
   reach: AgentReach | null;
@@ -330,7 +308,7 @@ export type OnboardingView = {
 /** What the onboarding page renders. `null` once there is nothing left to walk the operator through. */
 export async function loadOnboardingView(account: HumanAccount): Promise<OnboardingView | null> {
   const progress = await loadSetupProgress(account);
-  const { step, state, agent, user } = progress;
+  const { step, state, agent, hostStatus, user } = progress;
   if (step === 'done' || !user) {
     return null;
   }
@@ -339,6 +317,10 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
     ? await Promise.all([loadChannelFacts(account), countWaitingMessages(account)])
     : [{ telegram: false, slack: false, emailAddress: undefined }, 0];
   const origin = await readSiteOrigin();
+  const host = hostStatus?.hosts.reduce<(typeof hostStatus.hosts)[number] | null>(
+    (earliest, entry) => (!earliest || entry.connectedAt < earliest.connectedAt ? entry : earliest),
+    null
+  );
 
   return {
     step,
@@ -346,9 +328,10 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
     operator: { email: user.primaryEmailAddress?.emailAddress ?? null, firstName: user.firstName },
     agent: agent && describeAgentIdentity(agent, state, origin, channels.emailAddress),
     test: { sentAt: state.testSentAt, replyAt: state.testReplyAt },
-    host: state.host ?? null,
+    host: host ? { via: host.via, connectedAt: host.connectedAt } : null,
+    waitingMessage: hostStatus?.waitingMessage ?? null,
     waiting,
-    connectCode: connectCode(user.id),
+    apiUrl: resolveNovuApiUrl(account.region),
     channels: { telegram: channels.telegram, slack: channels.slack },
     reach: agent?.settings?.reach ?? null,
     origin,

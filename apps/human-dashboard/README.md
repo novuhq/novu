@@ -35,17 +35,6 @@ How far an operator got is kept in the private metadata of their Clerk user (`li
 An agent that is older than its operator's first visit to step 1 never goes through the steps: it was in
 use before, however the operator came to see that step.
 
-Some of what the steps show has no API yet and is faked in `lib/onboarding-mocks.ts`. Each part goes
-away with its ticket:
-
-| Faked today | Ticket |
-| ----------- | ------ |
-| Choosing the address, "available" / "taken", and the address offered instead. The API assigns its own. | NV-9032 |
-| The test email, and its reply landing a few seconds later. | NV-9032 |
-| The one-time code, and a host connecting a few seconds after the prompt is copied. An approved CLI login and a connector that signed in count for real. | NV-9037 |
-| `agentinbox connect … --code …` on step 3. The other commands are the CLI's; today a host connects with `login`. | NV-9037 |
-| "Share card" copies the link. | NV-9035 |
-
 ## Develop
 
 ```sh
