@@ -108,6 +108,11 @@ export async function deleteAgent(account: HumanAccount): Promise<void> {
   }
 }
 
+/** Sends the onboarding test from the Agent Email Inbox to the operator’s sign-up address. */
+export function sendAgentTestEmail(account: HumanAccount, email: string): Promise<{ success: boolean }> {
+  return requestForAccount(account, '/v1/human/agent/test-email', { method: 'POST', body: { email } });
+}
+
 function toSettings(agent: HumanApiAgent): AgentSettings {
   return {
     reach: AGENT_REACHES.find((value) => value === agent.reach) ?? DEFAULT_AGENT_SETTINGS.reach,

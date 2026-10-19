@@ -1,10 +1,4 @@
-import {
-  buildAgentSharedInbox,
-  getSharedAgentDomain,
-  isAgentSharedInboxEnabled,
-  resolveAgentInboxDomain,
-  resolvePublishedAgentEmailSlug,
-} from '@novu/application-generic';
+import { isAgentSharedInboxEnabled, resolvePublishedAgentInboxAddress } from '@novu/application-generic';
 import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
 import {
   AgentRuntimeProviderIdEnum,
@@ -124,28 +118,7 @@ function resolveSharedInboxAddress(
     return undefined;
   }
 
-  try {
-    getSharedAgentDomain();
-  } catch {
-    return undefined;
-  }
-
-  const slug = resolvePublishedAgentEmailSlug(integration.credentials?.emailSlugPrefix, agent);
-
-  if (!slug) {
-    return undefined;
-  }
-
-  const inboxRoutingKey = integration.credentials?.inboxRoutingKey;
-  if (!inboxRoutingKey) {
-    return undefined;
-  }
-
-  try {
-    return buildAgentSharedInbox(slug, inboxRoutingKey, resolveAgentInboxDomain(integration.credentials));
-  } catch {
-    return undefined;
-  }
+  return resolvePublishedAgentInboxAddress(integration.credentials, agent);
 }
 
 export function toAgentIntegrationSummary(

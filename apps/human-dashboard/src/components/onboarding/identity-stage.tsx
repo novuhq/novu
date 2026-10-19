@@ -322,7 +322,7 @@ function Portrait({ state, name, address, gotMail }: PortraitProps) {
         </>
       )}
       {/* Light on the dark portrait, as in the design: `Icon · 44×44`, 16px from the right, 4px from the bottom. */}
-      {!draft && (
+      {!draft && address && (
         <QRCode
           value={`mailto:${address}`}
           size={44}
@@ -369,14 +369,15 @@ type IdentityRowsProps = Pick<IdentityStageProps, 'state' | 'address'> & { teleg
 function IdentityRows({ state, address, telegramConnected }: IdentityRowsProps) {
   const draft = state === 'draft';
   const connected = state === 'connected';
+  const inboxReady = !draft && Boolean(address);
 
   return (
     <ul className="flex flex-col px-3 pb-2">
       <IdentityRow
         icon={<ChannelIcon via="email" className="size-4 [&>svg]:size-2.25" />}
-        label={address}
-        live={!draft}
-        status={draft ? <Pending /> : <Live>active</Live>}
+        label={address || (draft ? 'Assigned when you create it' : 'Inbox isn’t ready')}
+        live={inboxReady}
+        status={inboxReady ? <Live>active</Live> : <Pending />}
       />
       <IdentityRow
         icon={

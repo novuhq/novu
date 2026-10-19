@@ -23,6 +23,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiAuthSchemeEnum, ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import { AgentInboxAddressService } from '../agents/email/novu-email/agent-inbox-address.service';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -30,7 +31,15 @@ import { KeylessAccessible } from '../shared/framework/swagger/keyless.security'
 import { UserSession } from '../shared/framework/user.decorator';
 import { isResolvedKeylessAuthScheme } from '../shared/utils/auth.utils';
 import { CreateInteractionRequestDto } from './dtos/create-interaction-request.dto';
-import { HumanAgentQueryDto, HumanAgentResponseDto, UpdateHumanAgentRequestDto } from './dtos/human-agent.dto';
+import {
+  CheckInboxAddressQueryDto,
+  type CheckInboxAddressResponseDto,
+  HumanAgentQueryDto,
+  HumanAgentResponseDto,
+  SendHumanTestEmailRequestDto,
+  type SendHumanTestEmailResponseDto,
+  UpdateHumanAgentRequestDto,
+} from './dtos/human-agent.dto';
 import {
   CreateHumanInviteRequestDto,
   CreateHumanInviteResponseDto,
@@ -83,6 +92,8 @@ import { RemoveContactCommand } from './usecases/remove-contact/remove-contact.c
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
 import { RequestAddressVerificationCommand } from './usecases/request-address-verification/request-address-verification.command';
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
+import { SendHumanTestEmailCommand } from './usecases/send-human-test-email/send-human-test-email.command';
+import { SendHumanTestEmail } from './usecases/send-human-test-email/send-human-test-email.usecase';
 import { SetOperatorDefaultChannelCommand } from './usecases/set-operator-default-channel/set-operator-default-channel.command';
 import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelayCommand } from './usecases/setup-human-relay/setup-human-relay.command';
@@ -116,7 +127,9 @@ export class HumanInteractionsController {
     private readonly deleteHumanAgentUsecase: DeleteHumanAgent,
     private readonly humanAgentPicture: HumanAgentPictureService,
     private readonly setOperatorDefaultChannelUsecase: SetOperatorDefaultChannel,
-    private readonly changeOperatorEmailUsecase: ChangeOperatorEmail
+    private readonly changeOperatorEmailUsecase: ChangeOperatorEmail,
+    private readonly sendHumanTestEmailUsecase: SendHumanTestEmail,
+    private readonly inboxAddresses: AgentInboxAddressService
   ) {}
 
   @Post('/interactions')
@@ -303,6 +316,18 @@ export class HumanInteractionsController {
     );
   }
 
+  /**
+   * Whether an Agent Inbox handle is free. Asked while the operator types one. A taken handle comes
+   * back with a nearby free one.
+   */
+  @Get('/inbox-address')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  checkInboxAddress(@Query() query: CheckInboxAddressQueryDto): Promise<CheckInboxAddressResponseDto> {
+    return this.inboxAddresses.check(query.handle, query.email);
+  }
+
   @Post('/setup')
   @HttpCode(HttpStatus.OK)
   @KeylessAccessible()
@@ -322,6 +347,7 @@ export class HumanInteractionsController {
         agentIdentifier: body.agentIdentifier,
         agentName: body.agentName,
         agentDescription: body.agentDescription,
+        inboxHandle: body.inboxHandle,
         email: body.email,
         firstName: body.firstName,
         lastName: body.lastName,
@@ -385,6 +411,32 @@ export class HumanInteractionsController {
         organizationId: user.organizationId,
         userId: user._id,
         agentIdentifier: query.agentIdentifier,
+      })
+    );
+  }
+
+  /**
+   * The onboarding test. Mail leaves from the Agent Email Inbox, addressed to the operator, so their reply
+   * comes back to that inbox. Only the operator's dashboard may send it.
+   */
+  @Post('/agent/test-email')
+  @HttpCode(HttpStatus.OK)
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  sendTestEmail(
+    @UserSession() user: UserSessionData,
+    @Body() body: SendHumanTestEmailRequestDto,
+    @Headers() headers: Record<string, unknown>
+  ): Promise<SendHumanTestEmailResponseDto> {
+    assertFromHumanDashboard(headers);
+
+    return this.sendHumanTestEmailUsecase.execute(
+      SendHumanTestEmailCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        agentIdentifier: body.agentIdentifier,
+        email: body.email,
       })
     );
   }

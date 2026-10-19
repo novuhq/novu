@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "types": ["@cloudflare/workers-types"]
+  },
+  "include": [".", "../shared"]
+}

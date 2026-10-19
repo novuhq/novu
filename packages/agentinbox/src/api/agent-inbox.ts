@@ -163,6 +163,10 @@ export interface SetupRelayResult {
   /** What the relay agent is called. Missing from APIs older than agent names. */
   agentName?: string;
   subscriberId: string;
+  /** The mailbox, when this call created one. */
+  emailAddress?: string;
+  /** The mailbox is not the slug of the name, because that handle was taken or could not be one. */
+  emailHandleAdjusted?: boolean;
 }
 
 export async function setupRelay(

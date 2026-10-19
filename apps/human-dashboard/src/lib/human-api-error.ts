@@ -22,7 +22,8 @@ export class HumanApiError extends Error {
     public readonly status: number,
     public readonly code: string,
     message: string,
-    public readonly request?: string
+    public readonly request?: string,
+    public readonly suggestion?: string
   ) {
     super(message);
     this.name = 'HumanApiError';
@@ -43,7 +44,8 @@ export function toHumanApiError(
   status: number,
   apiCode: string | undefined,
   apiMessage: string | undefined,
-  request: string
+  request: string,
+  suggestion?: string
 ): HumanApiError {
   const isClientError = status >= 400 && status < 500;
 
@@ -51,7 +53,8 @@ export function toHumanApiError(
     status,
     apiCode ?? fallbackCode(status),
     (isClientError && apiMessage) || GENERIC_MESSAGE,
-    request
+    request,
+    suggestion
   );
 }
 

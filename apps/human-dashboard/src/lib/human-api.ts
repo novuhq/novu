@@ -74,7 +74,15 @@ async function send(
   const responseBody = await safeJson(response);
 
   if (!response.ok) {
-    throw toHumanApiError(response.status, readErrorCode(responseBody), readErrorMessage(responseBody), request);
+    const suggestion = typeof responseBody?.suggestion === 'string' ? responseBody.suggestion : undefined;
+
+    throw toHumanApiError(
+      response.status,
+      readErrorCode(responseBody),
+      readErrorMessage(responseBody),
+      request,
+      suggestion
+    );
   }
 
   return responseBody;
