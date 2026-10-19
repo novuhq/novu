@@ -37,8 +37,17 @@ export async function testUsers(env: HostEnv): Promise<Array<TestUser>> {
   return users.flatMap((user) => testUserOf(user) ?? []).sort((a, b) => a.createdAt - b.createdAt);
 }
 
+// The alphabet must have at most 64 characters: each byte is masked to 6 bits and rejected past its end.
 function random(alphabet: string, length: number): string {
-  return [...crypto.getRandomValues(new Uint8Array(length))].map((byte) => alphabet[byte % alphabet.length]).join('');
+  let out = '';
+  while (out.length < length) {
+    for (const byte of crypto.getRandomValues(new Uint8Array(length))) {
+      const index = byte & 63;
+      if (index < alphabet.length && out.length < length) out += alphabet[index];
+    }
+  }
+
+  return out;
 }
 
 export async function createTestUser(env: HostEnv, box: string): Promise<{ email: string; password: string }> {
