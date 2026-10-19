@@ -1,0 +1,37 @@
+{
+  "name": "@novu/api-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "tags": ["type:app"],
+  "sourceRoot": "apps/api/src",
+  "projectType": "application",
+  "targets": {
+    "build-metadata": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["default", "^default"],
+      "outputs": ["{projectRoot}/src/metadata.ts"],
+      "options": {
+        "cwd": "apps/api",
+        "command": "pnpm run build:metadata"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "dependsOn": ["build-metadata", "^build"],
+      "inputs": ["default", "^default"],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "cwd": "apps/api",
+        "command": "pnpm exec rimraf dist && pnpm exec nest build"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint apps/api"
+      }
+    }
+  }
+}

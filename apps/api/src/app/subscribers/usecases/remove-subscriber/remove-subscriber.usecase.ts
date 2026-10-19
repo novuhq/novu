@@ -1,53 +1,105 @@
-import { Injectable } from '@nestjs/common';
-import { SubscriberRepository, DalException, TopicSubscribersRepository } from '@novu/dal';
-import { buildSubscriberKey, InvalidateCacheService } from '@novu/application-generic';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  buildFeedKey,
+  buildMessageCountKey,
+  buildSubscriberKey,
+  InvalidateCacheService,
+} from '@novu/application-generic';
+import {
+  ChannelConnectionRepository,
+  ChannelEndpointRepository,
+  PreferencesRepository,
+  SubscriberRepository,
+  TopicSubscribersRepository,
+} from '@novu/dal';
 
 import { RemoveSubscriberCommand } from './remove-subscriber.command';
-import { GetSubscriber } from '../get-subscriber';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class RemoveSubscriber {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository,
-    private getSubscriber: GetSubscriber,
-    private topicSubscribersRepository: TopicSubscribersRepository
+    private topicSubscribersRepository: TopicSubscribersRepository,
+    private preferenceRepository: PreferencesRepository,
+    private channelEndpointRepository: ChannelEndpointRepository,
+    private channelConnectionRepository: ChannelConnectionRepository
   ) {}
 
-  async execute(command: RemoveSubscriberCommand) {
-    try {
-      const { environmentId: _environmentId, organizationId, subscriberId } = command;
-      const subscriber = await this.getSubscriber.execute({
-        environmentId: _environmentId,
-        organizationId,
-        subscriberId,
-      });
-
-      await this.invalidateCache.invalidateByKey({
+  async execute({ environmentId: _environmentId, subscriberId }: RemoveSubscriberCommand) {
+    await Promise.all([
+      this.invalidateCache.invalidateByKey({
         key: buildSubscriberKey({
-          subscriberId: command.subscriberId,
-          _environmentId: command.environmentId,
+          subscriberId,
+          _environmentId,
         }),
-      });
+      }),
+      this.invalidateCache.invalidateQuery({
+        key: buildMessageCountKey().invalidate({
+          subscriberId,
+          _environmentId,
+        }),
+      }),
+    ]);
 
-      await this.subscriberRepository.delete({
-        _environmentId: subscriber._environmentId,
-        _organizationId: subscriber._organizationId,
-        subscriberId: subscriber.subscriberId,
-      });
+    const subscriberInternalIds = await this.subscriberRepository._model.distinct('_id', {
+      subscriberId,
+      _environmentId,
+    });
 
-      await this.topicSubscribersRepository.delete({
-        _environmentId: subscriber._environmentId,
-        _organizationId: subscriber._organizationId,
-        externalSubscriberId: subscriber.subscriberId,
-      });
-    } catch (e) {
-      if (e instanceof DalException) {
-        throw new ApiException(e.message);
-      }
-      throw e;
+    if (subscriberInternalIds.length === 0) {
+      throw new NotFoundException({ message: 'Subscriber was not found', externalSubscriberId: subscriberId });
     }
+
+    await this.subscriberRepository.withTransaction(async (session) => {
+      /*
+       * Note about parallelism in transactions
+       *
+       * Running operations in parallel is not supported during a transaction.
+       * The use of Promise.all, Promise.allSettled, Promise.race, etc. to parallelize operations
+       * inside a transaction is undefined behaviour and should be avoided.
+       *
+       * Refer to https://mongoosejs.com/docs/transactions.html#note-about-parallelism-in-transactions
+       */
+      await this.subscriberRepository.delete(
+        {
+          subscriberId,
+          _environmentId,
+        },
+        { session }
+      );
+
+      await this.topicSubscribersRepository.delete(
+        {
+          _environmentId,
+          externalSubscriberId: subscriberId,
+        },
+        { session }
+      );
+      await this.preferenceRepository.delete(
+        {
+          _environmentId,
+          _subscriberId: { $in: subscriberInternalIds },
+        },
+        { session }
+      );
+
+      await this.channelEndpointRepository.delete(
+        {
+          subscriberId,
+          _environmentId,
+        },
+        { session }
+      );
+
+      await this.channelConnectionRepository.delete(
+        {
+          subscriberId,
+          _environmentId,
+        },
+        { session }
+      );
+    });
 
     return {
       acknowledged: true,

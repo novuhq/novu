@@ -1,0 +1,13 @@
+{
+  "name": "@novu/framework",
+  "sourceRoot": "packages/framework/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint packages/framework"
+      }
+    }
+  }
+}

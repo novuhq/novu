@@ -1,0 +1,55 @@
+import { SmsProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
+import qs from 'qs';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
+import { WithPassthrough } from '../../../utils/types';
+
+interface IUnifonicConfig {
+  appSid: string;
+  senderId: string;
+}
+
+export class UnifonicSmsProvider extends BaseProvider implements ISmsProvider {
+  id = SmsProviderIdEnum.Unifonic;
+  channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.CAMEL_CASE;
+  private readonly httpClient = createProviderHttpClient();
+
+  constructor(private config: IUnifonicConfig) {
+    super();
+  }
+
+  async sendMessage(
+    options: ISmsOptions,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+  ): Promise<ISendMessageSuccessResponse> {
+    const payload = this.transform(bridgeProviderData, {
+      AppSid: this.config.appSid,
+      SenderID: this.config.senderId,
+      Recipient: options.to,
+      Body: options.content,
+      responseType: 'JSON',
+      baseEncode: true,
+    });
+
+    const response = await this.httpClient.post(
+      'https://el.cloud.unifonic.com/rest/SMS/messages',
+      qs.stringify(payload.body),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+    );
+
+    if (response.data?.data?.MessageID) {
+      return {
+        id: response.data.data.MessageID,
+        date: new Date().toISOString(),
+      };
+    }
+
+    throw new Error(`Unifonic SMS failed: ${JSON.stringify(response.data || {})}`);
+  }
+}

@@ -1,0 +1,169 @@
+import { isAgentSharedInboxEnabled, resolvePublishedAgentInboxAddress } from '@novu/application-generic';
+import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
+import {
+  AgentRuntimeProviderIdEnum,
+  buildClaudePlatformAgentConsoleUrl,
+  isAgentInboxProvider,
+  isClaudePlatformConsoleProvider,
+} from '@novu/shared';
+
+import type { AgentIntegrationResponseDto, AgentIntegrationSummaryDto, AgentResponseDto } from '../dtos';
+import type { AgentMcpServerDto, AgentRuntimeConfigResponseDto, AgentToolDto } from '../dtos/agent-runtime-config.dto';
+import { formatAgentLinkConnectedAt } from '../util/agent-inbound-connection';
+
+/**
+ * Minimal integration shape needed by the agent integration mapper to compute
+ * the shared inbox address. Only NovuAgent links need `credentials`; for every
+ * other provider the slug-related fields are ignored.
+ */
+type AgentIntegrationEmbeddedSource = Pick<
+  IntegrationEntity,
+  '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'
+> &
+  Partial<Pick<IntegrationEntity, 'credentials'>>;
+
+/**
+ * Minimal agent shape needed to compute the shared inbox local-part. Only the
+ * agent's id (the routing key) and slug fallback are required.
+ */
+type SharedInboxAgentContext = Pick<AgentEntity, '_id'> & Partial<Pick<AgentEntity, 'identifier' | 'name'>>;
+
+export type ManagedRuntimeHydration = {
+  /** Provider-side environment id (decrypted from the linked integration credentials). */
+  externalEnvironmentId?: string;
+  /**
+   * Provider-side workspace id used in console deep links.
+   * For Anthropic this is `"default"` for the auto-created Default Workspace,
+   * or a `wrkspc_…` id for custom workspaces.
+   */
+  externalWorkspaceId?: string;
+};
+
+/** Builds a deep link to the agent in the provider console, or `undefined` for unknown providers. */
+function buildAgentConsoleUrl(
+  providerId: string,
+  externalAgentId: string,
+  externalWorkspaceId: string | undefined
+): string | undefined {
+  if (!isClaudePlatformConsoleProvider(providerId) || providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
+    return undefined;
+  }
+
+  return buildClaudePlatformAgentConsoleUrl(externalAgentId, externalWorkspaceId);
+}
+
+export function toAgentResponse(
+  agent: AgentEntity,
+  hydration?: ManagedRuntimeHydration,
+  runtimeConfig?: AgentRuntimeConfigResponseDto
+): AgentResponseDto {
+  const managedRuntime = agent.managedRuntime
+    ? {
+        providerId: agent.managedRuntime.providerId,
+        integrationId: agent.managedRuntime._integrationId,
+        externalAgentId: agent.managedRuntime.externalAgentId,
+        externalEnvironmentId: hydration?.externalEnvironmentId,
+        externalWorkspaceId: hydration?.externalWorkspaceId,
+        consoleUrl: buildAgentConsoleUrl(
+          agent.managedRuntime.providerId,
+          agent.managedRuntime.externalAgentId,
+          hydration?.externalWorkspaceId
+        ),
+        tools: runtimeConfig?.tools,
+        mcpServers: runtimeConfig?.mcpServers,
+        systemPrompt: runtimeConfig?.systemPrompt,
+      }
+    : undefined;
+
+  return {
+    _id: agent._id,
+    name: agent.name,
+    identifier: agent.identifier,
+    description: agent.description,
+    active: agent.active,
+    behavior: agent.behavior,
+    bridgeUrl: agent.bridgeUrl,
+    devBridgeUrl: agent.devBridgeUrl,
+    devBridgeActive: agent.devBridgeActive,
+    runtime: agent.runtime,
+    visibility: agent.visibility ?? 'public',
+    managedRuntime,
+    _environmentId: agent._environmentId,
+    _organizationId: agent._organizationId,
+    createdBy: agent.createdBy,
+    createdAt: agent.createdAt,
+    updatedAt: agent.updatedAt,
+  };
+}
+
+/**
+ * Compute the synthetic Novu shared inbox address
+ * (`{slug}-{inboxRoutingKey}@<shared-domain>`) for a NovuAgent email
+ * integration link. Returns `undefined` when the cloud shared-inbox feature is
+ * disabled, the provider is not NovuAgent, the shared domain isn't configured,
+ * the slug can't be resolved, or the routing key is missing/invalid. The
+ * result is deterministic given those inputs; the integration's `active` flag
+ * controls routing, not addressability, so the address is exposed regardless
+ * of toggle state so the dashboard can still display it while paused.
+ */
+function resolveSharedInboxAddress(
+  agent: SharedInboxAgentContext,
+  integration: AgentIntegrationEmbeddedSource
+): string | undefined {
+  if (!isAgentInboxProvider(integration.providerId)) {
+    return undefined;
+  }
+
+  if (!isAgentSharedInboxEnabled()) {
+    return undefined;
+  }
+
+  return resolvePublishedAgentInboxAddress(integration.credentials, agent);
+}
+
+export function toAgentIntegrationSummary(
+  integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'>
+): AgentIntegrationSummaryDto {
+  return {
+    integrationId: integration._id,
+    providerId: integration.providerId,
+    name: integration.name,
+    identifier: integration.identifier,
+    channel: integration.channel,
+    active: integration.active,
+  };
+}
+
+export function toAgentIntegrationResponse(
+  link: AgentIntegrationEntity,
+  integration: AgentIntegrationEmbeddedSource,
+  agent: SharedInboxAgentContext
+): AgentIntegrationResponseDto {
+  const sharedInboundAddress = resolveSharedInboxAddress(agent, integration);
+  const defaultSenderName = isAgentInboxProvider(integration.providerId)
+    ? integration.credentials?.senderName || agent.name
+    : undefined;
+
+  return {
+    _id: link._id,
+    _agentId: link._agentId,
+    integration: {
+      _id: integration._id,
+      identifier: integration.identifier,
+      name: integration.name,
+      providerId: integration.providerId,
+      channel: integration.channel,
+      active: integration.active,
+      sharedInboundAddress,
+      defaultSenderName,
+      sharedInboxDisabled: isAgentInboxProvider(integration.providerId)
+        ? Boolean(integration.credentials?.sharedInboxDisabled)
+        : undefined,
+    },
+    _environmentId: link._environmentId,
+    _organizationId: link._organizationId,
+    connectedAt: formatAgentLinkConnectedAt(link.connectedAt),
+    createdAt: link.createdAt,
+    updatedAt: link.updatedAt,
+  };
+}

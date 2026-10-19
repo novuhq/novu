@@ -1,0 +1,349 @@
+import 'event-target-polyfill';
+import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import { WebSocket } from 'partysocket';
+import { InboxService } from '../api';
+import { BaseModule } from '../base-module';
+import {
+  WebChatAgentEvent,
+  NotificationReceivedEvent,
+  NotificationUnreadEvent,
+  NotificationUnseenEvent,
+  NovuEventEmitter,
+  SocketEventNames,
+} from '../event-emitter';
+import { Notification } from '../notifications';
+import {
+  ActionTypeEnum,
+  InboxNotification,
+  NotificationActionStatus,
+  Result,
+  Session,
+  Subscriber,
+  TODO,
+  WebSocketEvent,
+} from '../types';
+import { NovuError } from '../utils/errors';
+import { sanitizeInAppRedirect } from '../utils/in-app-redirect-url';
+import type { BaseSocketInterface } from './base-socket';
+
+export const PRODUCTION_SOCKET_URL = 'wss://socket.novu.co';
+
+const HIBERNATION_HEARTBEAT_MS = 25_000;
+const HIBERNATION_PING_PAYLOAD = 'ping';
+
+const NOTIFICATION_RECEIVED: NotificationReceivedEvent = 'notifications.notification_received';
+const UNSEEN_COUNT_CHANGED: NotificationUnseenEvent = 'notifications.unseen_count_changed';
+const UNREAD_COUNT_CHANGED: NotificationUnreadEvent = 'notifications.unread_count_changed';
+const WEB_CHAT_AGENT_EVENT: WebChatAgentEvent = 'web_chat.agent_event';
+
+const mapToNotification = ({
+  _id,
+  transactionId,
+  content,
+  read,
+  seen,
+  archived,
+  snoozedUntil,
+  deliveredAt,
+  createdAt,
+  lastReadDate,
+  firstSeenDate,
+  archivedAt,
+  channel,
+  subscriber,
+  subject,
+  avatar,
+  cta,
+  tags,
+  data,
+  workflow,
+  severity,
+}: TODO): InboxNotification => {
+  const to: Subscriber = {
+    id: subscriber?._id,
+    subscriberId: subscriber?.subscriberId,
+    firstName: subscriber?.firstName,
+    lastName: subscriber?.lastName,
+    avatar: subscriber?.avatar,
+    locale: subscriber?.locale,
+    data: subscriber?.data,
+    timezone: subscriber?.timezone,
+    email: subscriber?.email,
+    phone: subscriber?.phone,
+  };
+  const primaryCta = cta.action?.buttons?.find((button: any) => button.type === ActionTypeEnum.PRIMARY);
+  const secondaryCta = cta.action?.buttons?.find((button: any) => button.type === ActionTypeEnum.SECONDARY);
+  const actionType = cta.action?.result?.type;
+  const actionStatus = cta.action?.status;
+
+  return {
+    id: _id,
+    transactionId,
+    subject,
+    body: content as string,
+    to,
+    isRead: read,
+    isSeen: seen,
+    isArchived: archived,
+    isSnoozed: !!snoozedUntil,
+    ...(deliveredAt && {
+      deliveredAt,
+    }),
+    ...(snoozedUntil && {
+      snoozedUntil,
+    }),
+    createdAt,
+    readAt: lastReadDate,
+    firstSeenAt: firstSeenDate,
+    archivedAt,
+    avatar,
+    primaryAction: primaryCta && {
+      label: primaryCta.content,
+      isCompleted: actionType === ActionTypeEnum.PRIMARY && actionStatus === NotificationActionStatus.DONE,
+      redirect: sanitizeInAppRedirect(primaryCta.url, primaryCta.target),
+    },
+    secondaryAction: secondaryCta && {
+      label: secondaryCta.content,
+      isCompleted: actionType === ActionTypeEnum.SECONDARY && actionStatus === NotificationActionStatus.DONE,
+      redirect: sanitizeInAppRedirect(secondaryCta.url, secondaryCta.target),
+    },
+    channelType: channel,
+    tags,
+    redirect: sanitizeInAppRedirect(cta.data?.url, cta.data?.target),
+    data,
+    workflow,
+    severity,
+  };
+};
+
+export class PartySocketClient extends BaseModule implements BaseSocketInterface {
+  #token: string;
+  #emitter: NovuEventEmitter;
+  #partySocket: WebSocket | undefined;
+  #socketUrl: string;
+  #socketOptions?: Record<string, unknown>;
+  #hibernationHeartbeatIntervalId: ReturnType<typeof setInterval> | undefined;
+
+  constructor({
+    socketUrl,
+    socketOptions,
+    inboxServiceInstance,
+    eventEmitterInstance,
+  }: {
+    socketUrl?: string;
+    socketOptions?: Record<string, unknown>;
+    inboxServiceInstance: InboxService;
+    eventEmitterInstance: NovuEventEmitter;
+  }) {
+    super({
+      eventEmitterInstance,
+      inboxServiceInstance,
+    });
+    this.#emitter = eventEmitterInstance;
+    this.#socketUrl = socketUrl ?? PRODUCTION_SOCKET_URL;
+    this.#socketOptions = socketOptions;
+  }
+
+  protected onSessionSuccess({ token }: Session): void {
+    this.#token = token;
+  }
+
+  #notificationReceived = (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.event === WebSocketEvent.RECEIVED) {
+        this.#emitter.emit(NOTIFICATION_RECEIVED, {
+          result: new Notification(mapToNotification(data.data.message), this.#emitter, this._inboxService),
+        });
+      }
+    } catch (error) {
+      console.log('error', error);
+      // Failed to parse notification received event
+    }
+  };
+
+  #unseenCountChanged = (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.event === WebSocketEvent.UNSEEN) {
+        this.#emitter.emit(UNSEEN_COUNT_CHANGED, {
+          result: data.data.unseenCount,
+        });
+      }
+    } catch (error) {
+      // Failed to parse unseen count changed event
+    }
+  };
+
+  #unreadCountChanged = (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.event === WebSocketEvent.UNREAD) {
+        this.#emitter.emit(UNREAD_COUNT_CHANGED, {
+          result: data.data.counts,
+        });
+      }
+    } catch (error) {
+      // Failed to parse unread count changed event
+    }
+  };
+
+  #agentEvent = (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.event === WebSocketEvent.AGENT_EVENT) {
+        this.#emitter.emit(WEB_CHAT_AGENT_EVENT, {
+          result: data.data as AgentEventEnvelope,
+        });
+      }
+    } catch (error) {
+      // Failed to parse agent event
+    }
+  };
+
+  #handleMessage = (event: MessageEvent) => {
+    if (event.data === HIBERNATION_PING_PAYLOAD || event.data === 'pong') {
+      return;
+    }
+
+    try {
+      const data = JSON.parse(event.data);
+
+      switch (data.event) {
+        case WebSocketEvent.RECEIVED:
+          this.#notificationReceived(event);
+          break;
+        case WebSocketEvent.UNSEEN:
+          this.#unseenCountChanged(event);
+          break;
+        case WebSocketEvent.UNREAD:
+          this.#unreadCountChanged(event);
+          break;
+        case WebSocketEvent.AGENT_EVENT:
+          this.#agentEvent(event);
+          break;
+        default:
+        // Unknown WebSocket event type
+      }
+    } catch (error) {
+      // Failed to parse WebSocket message
+    }
+  };
+
+  #clearHibernationHeartbeat(): void {
+    if (this.#hibernationHeartbeatIntervalId !== undefined) {
+      clearInterval(this.#hibernationHeartbeatIntervalId);
+      this.#hibernationHeartbeatIntervalId = undefined;
+    }
+  }
+
+  #clearCurrentSocket(): void {
+    this.#clearHibernationHeartbeat();
+    this.#partySocket = undefined;
+  }
+
+  #startHibernationHeartbeat(): void {
+    this.#clearHibernationHeartbeat();
+
+    this.#hibernationHeartbeatIntervalId = setInterval(() => {
+      const socket = this.#partySocket;
+
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      try {
+        socket.send(HIBERNATION_PING_PAYLOAD);
+      } catch {
+        // Socket may have closed between readyState check and send
+      }
+    }, HIBERNATION_HEARTBEAT_MS);
+  }
+
+  async #initializeSocket(): Promise<void> {
+    if (this.#partySocket) {
+      return;
+    }
+
+    const args = { socketUrl: this.#socketUrl };
+    this.#emitter.emit('socket.connect.pending', { args });
+
+    const url = new URL(this.#socketUrl);
+    url.searchParams.set('token', this.#token);
+
+    this.#partySocket = new WebSocket(url.toString(), undefined, this.#socketOptions);
+
+    const socket = this.#partySocket;
+
+    socket.addEventListener('open', () => {
+      this.#startHibernationHeartbeat();
+      this.#emitter.emit('socket.connect.resolved', { args });
+    });
+
+    socket.addEventListener('error', (error) => {
+      this.#emitter.emit('socket.connect.resolved', { args, error });
+    });
+
+    socket.addEventListener('close', () => {
+      if (socket !== this.#partySocket) {
+        return;
+      }
+
+      this.#clearCurrentSocket();
+      this.#emitter.emit('socket.disconnect.resolved', { args });
+    });
+
+    socket.addEventListener('message', this.#handleMessage);
+  }
+
+  async #handleConnectSocket(): Result<void> {
+    try {
+      await this.#initializeSocket();
+
+      return {};
+    } catch (error) {
+      return { error: new NovuError('Failed to initialize the PartySocket', error) };
+    }
+  }
+
+  async #handleDisconnectSocket(): Result<void> {
+    try {
+      const socket = this.#partySocket;
+      this.#clearCurrentSocket();
+      socket?.close();
+
+      if (socket) {
+        this.#emitter.emit('socket.disconnect.resolved', { args: { socketUrl: this.#socketUrl } });
+      }
+
+      return {};
+    } catch (error) {
+      return { error: new NovuError('Failed to disconnect from the PartySocket', error) };
+    }
+  }
+
+  isSocketEvent(eventName: string): eventName is SocketEventNames {
+    return (
+      eventName === NOTIFICATION_RECEIVED ||
+      eventName === UNSEEN_COUNT_CHANGED ||
+      eventName === UNREAD_COUNT_CHANGED ||
+      eventName === WEB_CHAT_AGENT_EVENT
+    );
+  }
+
+  async connect(): Result<void> {
+    if (this.#token) {
+      return this.#handleConnectSocket();
+    }
+
+    return this.callWithSession(this.#handleConnectSocket.bind(this));
+  }
+
+  async disconnect(): Result<void> {
+    if (this.#partySocket) {
+      return this.#handleDisconnectSocket();
+    }
+
+    return this.callWithSession(this.#handleDisconnectSocket.bind(this));
+  }
+}

@@ -2,7 +2,7 @@ import { IBulkInviteRequestDto } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { ArrayNotEmpty, IsArray, IsDefined, IsEmail, IsNotEmpty, ValidateNested } from 'class-validator';
 
-class EmailInvitee {
+export class EmailInvitee {
   @IsDefined()
   @IsNotEmpty()
   @IsEmail()

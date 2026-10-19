@@ -1,26 +1,118 @@
-import { BadRequestException, Injectable, NotFoundException, Inject, Logger, ConflictException } from '@nestjs/common';
-import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
+  decryptCredentials,
   encryptCredentials,
-  buildIntegrationKey,
-  InvalidateCacheService,
+  hasIntegrationRules,
+  hasLegacyIntegrationConditions,
+  PinoLogger,
 } from '@novu/application-generic';
-import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
-
-import { UpdateIntegrationCommand } from './update-integration.command';
-import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { ControlValuesRepository, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { CHANNELS_WITH_PRIMARY, ControlValuesLevelEnum } from '@novu/shared';
+import type { ClientSession } from 'mongoose';
+import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
+import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
+import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
+import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { applyManagedCredentialsOnUpdate } from '../managed-credentials';
+import { maybeStampWhatsNextCompletedAt } from '../whatsapp/whatsapp-whats-next-stamp.utils';
+import { UpdateIntegrationCommand } from './update-integration.command';
 
 @Injectable()
 export class UpdateIntegration {
   @Inject()
   private checkIntegration: CheckIntegration;
   constructor(
-    private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
-    private analyticsService: AnalyticsService
-  ) {}
+    private analyticsService: AnalyticsService,
+    private environmentRepository: EnvironmentRepository,
+    private logger: PinoLogger,
+    private controlValuesRepository: ControlValuesRepository
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
+
+  /**
+   * Step integration overrides are keyed by integration identifier, so a rename carries them along.
+   * Overrides already stored under the new identifier (left by a deleted integration, or synced from
+   * another environment whose integration uses that identifier) apply to whichever integration holds
+   * it, so they are kept; only on steps where both exist does the renamed integration's own win.
+   *
+   * Overrides are re-keyed in the integration's current environment, and in the destination when the
+   * same request moves it, so copies synced there under the old identifier follow it. Identifiers
+   * are unique per environment, so the destination may already have its own integration under that
+   * identifier; its overrides apply to it and are left in place.
+   */
+  private async renameStepIntegrationOverrides(
+    integration: IntegrationEntity,
+    newIdentifier: string,
+    environmentIds: string[],
+    session: ClientSession | null
+  ): Promise<void> {
+    for (const environmentId of environmentIds) {
+      if (await this.destinationOwnsIdentifier(integration, environmentId, session)) {
+        continue;
+      }
+
+      const scope = {
+        _environmentId: environmentId,
+        _organizationId: integration._organizationId,
+        level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+        providerId: integration.providerId,
+      };
+      const overrides = await this.controlValuesRepository.find(
+        { ...scope, integrationIdentifier: integration.identifier },
+        { _stepId: 1 },
+        { session }
+      );
+
+      if (overrides.length === 0) {
+        continue;
+      }
+
+      await this.controlValuesRepository.delete(
+        {
+          ...scope,
+          integrationIdentifier: newIdentifier,
+          _stepId: { $in: overrides.map((override) => override._stepId) },
+        },
+        { session }
+      );
+      await this.controlValuesRepository.update(
+        { ...scope, integrationIdentifier: integration.identifier },
+        { $set: { integrationIdentifier: newIdentifier } },
+        { session }
+      );
+    }
+  }
+
+  /**
+   * True when `environmentId` is a move destination whose own integration already holds this
+   * identifier for the same provider. Overrides there apply to that integration, not to the one
+   * being renamed.
+   */
+  private async destinationOwnsIdentifier(
+    integration: IntegrationEntity,
+    environmentId: string,
+    session: ClientSession | null
+  ): Promise<boolean> {
+    if (environmentId === integration._environmentId) {
+      return false;
+    }
+
+    const owner = await this.integrationRepository.findOne(
+      {
+        _organizationId: integration._organizationId,
+        _environmentId: environmentId,
+        identifier: integration.identifier,
+      },
+      'providerId',
+      { session }
+    );
+
+    return owner?.providerId === integration.providerId;
+  }
 
   private async calculatePriorityAndPrimaryForActive({
     existingIntegration,
@@ -93,9 +185,10 @@ export class UpdateIntegration {
     return result;
   }
 
-  async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
-    Logger.verbose('Executing Update Integration Command');
-
+  private async loadIntegrationForUpdate(command: UpdateIntegrationCommand): Promise<{
+    existingIntegration: IntegrationEntity;
+    identifierHasChanged: boolean;
+  }> {
     const existingIntegration = await this.integrationRepository.findOne({
       _id: command.integrationId,
       _organizationId: command.organizationId,
@@ -104,7 +197,24 @@ export class UpdateIntegration {
       throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
     }
 
-    const identifierHasChanged = command.identifier && command.identifier !== existingIntegration.identifier;
+    assertIntegrationEnvironmentScope({
+      restrictToUserEnvironment: command.restrictToUserEnvironment,
+      userEnvironmentId: command.userEnvironmentId,
+      integrationEnvironmentId: existingIntegration._environmentId,
+      action: 'update',
+    });
+
+    if (command.environmentId && command.environmentId !== existingIntegration._environmentId) {
+      const targetEnvironment = await this.environmentRepository.findByIdAndOrganization(
+        command.environmentId,
+        command.organizationId
+      );
+      if (!targetEnvironment) {
+        throw new NotFoundException(`Environment with id ${command.environmentId} not found`);
+      }
+    }
+
+    const identifierHasChanged = Boolean(command.identifier && command.identifier !== existingIntegration.identifier);
     if (identifierHasChanged) {
       const existingIntegrationWithIdentifier = await this.integrationRepository.findOne({
         _organizationId: command.organizationId,
@@ -116,36 +226,18 @@ export class UpdateIntegration {
       }
     }
 
-    this.analyticsService.track('Update Integration - [Integrations]', command.userId, {
-      providerId: existingIntegration.providerId,
-      channel: existingIntegration.channel,
-      _organization: command.organizationId,
-      active: command.active,
-    });
+    return { existingIntegration, identifierHasChanged };
+  }
 
-    await this.invalidateCache.invalidateQuery({
-      key: buildIntegrationKey().invalidate({
-        _organizationId: command.organizationId,
-      }),
-    });
-
-    const environmentId = command.environmentId ?? existingIntegration._environmentId;
-
-    if (command.check) {
-      await this.checkIntegration.execute(
-        CheckIntegrationCommand.create({
-          environmentId,
-          organizationId: command.organizationId,
-          credentials: command.credentials ?? existingIntegration.credentials ?? {},
-          providerId: existingIntegration.providerId,
-          channel: existingIntegration.channel,
-        })
-      );
-    }
-
+  private buildUpdatePayload(params: {
+    command: UpdateIntegrationCommand;
+    existingIntegration: IntegrationEntity;
+    identifierHasChanged: boolean;
+    environmentId: string;
+  }): Partial<IntegrationEntity> {
+    const { command, existingIntegration, identifierHasChanged, environmentId } = params;
     const updatePayload: Partial<IntegrationEntity> = {};
     const isActiveDefined = typeof command.active !== 'undefined';
-    const isActiveChanged = isActiveDefined && existingIntegration.active !== command.active;
 
     if (command.name) {
       updatePayload.name = command.name;
@@ -164,20 +256,93 @@ export class UpdateIntegration {
     }
 
     if (command.credentials) {
-      updatePayload.credentials = encryptCredentials(command.credentials);
+      const existingCredentials = existingIntegration.credentials
+        ? decryptCredentials(existingIntegration.credentials)
+        : undefined;
+      const managedCredentials = applyManagedCredentialsOnUpdate({
+        providerId: existingIntegration.providerId,
+        credentials: command.credentials,
+        existingCredentials,
+        allowNovuManagedWhatsApp: command.allowNovuManagedWhatsAppCredentials === true,
+      });
+      const stampedCredentials = maybeStampWhatsNextCompletedAt({
+        providerId: existingIntegration.providerId,
+        existingCredentials,
+        nextCredentials: managedCredentials,
+      });
+      updatePayload.credentials = encryptCredentials(stampedCredentials);
+    }
+
+    if (command.configurations) {
+      updatePayload.configurations = command.configurations;
     }
 
     if (command.conditions) {
       updatePayload.conditions = command.conditions;
     }
 
+    if (command.rules !== undefined) {
+      assertValidIntegrationRules(command.rules);
+
+      if (hasIntegrationRules(command.rules)) {
+        updatePayload.rules = command.rules;
+        updatePayload.conditions = [];
+      } else {
+        updatePayload.rules = null;
+      }
+    }
+
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
     }
 
-    const haveConditions = updatePayload.conditions && updatePayload.conditions?.length > 0;
+    return updatePayload;
+  }
 
-    const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
+  async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
+    this.logger.trace('Executing Update Integration Command');
+
+    const { existingIntegration, identifierHasChanged } = await this.loadIntegrationForUpdate(command);
+
+    this.analyticsService.track('Update Integration - [Integrations]', command.userId, {
+      providerId: existingIntegration.providerId,
+      channel: existingIntegration.channel,
+      _organization: command.organizationId,
+      active: command.active,
+    });
+
+    const environmentId = command.environmentId ?? existingIntegration._environmentId;
+    const credentialsForValidation = command.credentials ?? existingIntegration.credentials ?? {};
+
+    if (command.check || command.credentials) {
+      await validateOutboundIntegrationCredentials(existingIntegration.providerId, credentialsForValidation);
+    }
+
+    if (command.check) {
+      await this.checkIntegration.execute(
+        CheckIntegrationCommand.create({
+          environmentId,
+          organizationId: command.organizationId,
+          credentials: credentialsForValidation,
+          providerId: existingIntegration.providerId,
+          channel: existingIntegration.channel,
+        })
+      );
+    }
+
+    const isActiveChanged = typeof command.active !== 'undefined' && existingIntegration.active !== command.active;
+    const updatePayload = this.buildUpdatePayload({
+      command,
+      existingIntegration,
+      identifierHasChanged,
+      environmentId,
+    });
+
+    const haveConditions =
+      hasIntegrationRules(updatePayload.rules) || hasLegacyIntegrationConditions(updatePayload.conditions);
+
+    const isChannelSupportsPrimary =
+      !!existingIntegration.channel && CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
     if (isActiveChanged && isChannelSupportsPrimary) {
       const { primary, priority } = await this.calculatePriorityAndPrimary({
         existingIntegration,
@@ -193,27 +358,39 @@ export class UpdateIntegration {
       updatePayload.primary = false;
     }
 
-    await this.integrationRepository.update(
-      {
-        _id: existingIntegration._id,
-        _environmentId: existingIntegration._environmentId,
-      },
-      {
-        $set: updatePayload,
+    const newIdentifier = updatePayload.identifier;
+    const environmentIdsToRekey = [...new Set([existingIntegration._environmentId, environmentId])];
+
+    await this.integrationRepository.withTransaction(async (session) => {
+      await this.integrationRepository.update(
+        {
+          _id: existingIntegration._id,
+          _organizationId: existingIntegration._organizationId,
+          _environmentId: existingIntegration._environmentId,
+        },
+        {
+          $set: updatePayload,
+        },
+        { session }
+      );
+
+      if (newIdentifier) {
+        await this.renameStepIntegrationOverrides(existingIntegration, newIdentifier, environmentIdsToRekey, session);
       }
-    );
+    });
 
     if (shouldRemovePrimary) {
       await this.integrationRepository.recalculatePriorityForAllActive({
         _id: existingIntegration._id,
         _organizationId: existingIntegration._organizationId,
-        _environmentId: existingIntegration._organizationId,
+        _environmentId: existingIntegration._environmentId,
         channel: existingIntegration.channel,
       });
     }
 
     const updatedIntegration = await this.integrationRepository.findOne({
       _id: command.integrationId,
+      _organizationId: existingIntegration._organizationId,
       _environmentId: environmentId,
     });
     if (!updatedIntegration) {

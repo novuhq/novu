@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig",
+  "compilerOptions": {
+    "sourceMap": true,
+    "target": "esnext",
+    "outDir": "build/module",
+    "module": "esnext",
+    "esModuleInterop": true,
+    "types": ["jest", "node"],
+    "jsx": "preserve",
+    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules/**"]
+}

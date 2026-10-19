@@ -1,10 +1,9 @@
-import { Injectable, Scope } from '@nestjs/common';
-import * as dns from 'dns';
+import { type MxRecord, promises } from 'node:dns';
+import { BadRequestException, Injectable, Scope } from '@nestjs/common';
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
-
-import { GetMxRecordCommand } from './get-mx-record.command';
+import { getMailServerDomain } from '../../../domains/utils/dns-records';
 import { GetMxRecordResponseDto } from '../../dtos/get-mx-record.dto';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { GetMxRecordCommand } from './get-mx-record.command';
 
 @Injectable({
   scope: Scope.REQUEST,
@@ -14,7 +13,7 @@ export class GetMxRecord {
 
   async execute(command: GetMxRecordCommand): Promise<GetMxRecordResponseDto> {
     const env = await this.environmentRepository.findOne({ _id: command.environmentId });
-    if (!env) throw new ApiException('Environment is not found');
+    if (!env) throw new BadRequestException('Environment is not found');
 
     const inboundParseDomain = env.dns?.inboundParseDomain;
 
@@ -47,17 +46,17 @@ export class GetMxRecord {
 
   private async checkMxRecordExistence(inboundParseDomain: string) {
     const relativeDnsRecords = await this.getMxRecords(inboundParseDomain);
-    const INBOUND_DOMAIN = process.env.MAIL_SERVER_DOMAIN?.replace('https://', '').replace('/', '');
+    const INBOUND_DOMAIN = getMailServerDomain();
     if (!INBOUND_DOMAIN) {
-      throw new ApiException('MAIL_SERVER_DOMAIN is not defined as an environment variable');
+      throw new BadRequestException('MAIL_SERVER_DOMAIN is not defined as an environment variable');
     }
 
-    return relativeDnsRecords.some((record: dns.MxRecord) => record.exchange === INBOUND_DOMAIN);
+    return relativeDnsRecords.some((record: MxRecord) => record.exchange === INBOUND_DOMAIN);
   }
 
-  async getMxRecords(domain: string): Promise<dns.MxRecord[]> {
+  async getMxRecords(domain: string): Promise<MxRecord[]> {
     try {
-      return await dns.promises.resolveMx(domain);
+      return await promises.resolveMx(domain);
     } catch (e) {
       return [];
     }

@@ -1,0 +1,49 @@
+---
+title: 'Chat'
+description: "Configure Novu chat providers to send workflow notifications to Slack, Discord, Microsoft Teams, and WhatsApp using the Framework SDK."
+---
+
+Novu brings chat notifications into your development workflow, giving you a unified way to manage messaging across platforms and apps. Whether you're working with tools like Slack or Microsoft Teams or apps like WhatsApp, Telegram, and Discord, Novu lets you integrate, manage, and scale chat notifications without unnecessary complexity.
+
+Learn more about the [Chat Channel](/platform/integrations/chat).
+
+## Plain text
+
+```tsx
+await step.chat('chat', async () => {
+  return {
+    body: 'A new post has been created',
+  };
+});
+```
+
+## Rich card
+
+Return a `card` for structured messages (text, images, link buttons, and more). Existing `body`-only steps stay valid.
+
+```tsx
+import { Actions, Card, CardText, Divider } from '@novu/framework';
+
+await step.chat('chat', async () => {
+  return {
+    card: Card({
+      title: 'Deploy finished',
+      children: [
+        CardText('All checks passed.'),
+        Divider(),
+        Actions([
+          {
+            type: 'link-button',
+            id: 'view',
+            label: 'View deploy',
+            url: 'https://example.com/deploys/123',
+            style: 'primary',
+          },
+        ]),
+      ],
+    }),
+  };
+});
+```
+
+See the [Chat step reference](/framework/typescript/steps/chat) for the full output schema, and [Writing chat templates](/platform/integrations/chat/writing-chat-template) for the Dashboard editors.

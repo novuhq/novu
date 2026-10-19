@@ -1,0 +1,21 @@
+name: Workflow security lint
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+
+jobs:
+  workflow-security-lint:
+    name: Lint workflows for AWS static keys, shell-injection, and unpinned actions
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Run security lint
+        run: python3 .github/workflows/scripts/check-workflow-security.py

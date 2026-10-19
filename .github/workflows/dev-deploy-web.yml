@@ -1,22 +1,23 @@
-# This is a basic workflow to help you get started with Actions
-
 name: Deploy DEV WEB
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - next
-      - main
-    paths:
-      - 'apps/web/**'
-      - 'libs/shared/**'
+    inputs:
+      skip_tests:
+        description: "Skip E2E tests"
+        required: false
+        type: boolean
+        default: false
+
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   test_web:
+    if: ${{ !inputs.skip_tests }}
     uses: ./.github/workflows/reusable-web-e2e.yml
     with:
       ee: true
@@ -24,11 +25,11 @@ jobs:
 
   deploy_web:
     needs: test_web
-    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    if: ${{ !contains(github.event.head_commit.message, 'ci skip') && (success() || inputs.skip_tests) }}
     uses: ./.github/workflows/reusable-web-deploy.yml
     with:
       environment: Development
-      react_app_api_url: https://dev.api.novu.co
+      react_app_api_url: https://api.novu-staging.co
       react_app_ws_url: https://dev.ws.novu.co
       react_app_webhook_url: https://dev.webhook.novu.co
       react_app_widget_embed_path: https://dev.embed.novu.co/embed.umd.min.js
@@ -40,16 +41,8 @@ jobs:
       netlify_alias: dev
       netlify_gh_env: development
       netlify_site_id: 45396446-dc86-4ad6-81e4-86d3eb78d06f
-    secrets: inherit
-
-  publish_docker_image_web:
-    needs: test_web
-    if: "!contains(github.event.head_commit.message, 'ci skip')"
-    uses: ./.github/workflows/reusable-docker.yml
-    with:
-      environment: Development
-      package_name: novu/web
-      project_path: apps/web
-      local_tag: novu-web
-      env_tag: dev
+      clerk_publishable_key: pk_live_Y2xlcmsubm92dS1zdGFnaW5nLmNvJA
+      clerk_is_ee_auth_enabled: true
+      new_dashboard_url: https://dashboard.novu-staging.co
+      extra_env_variables: ${{ vars.STAGING_EXTRA_VARIABLES || '' }}
     secrets: inherit

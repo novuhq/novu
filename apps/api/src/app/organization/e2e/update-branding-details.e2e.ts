@@ -1,10 +1,8 @@
-import { OrganizationRepository } from '@novu/dal';
 import { processTestAgentExpectedStatusCode, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Update Branding Details - /organizations/branding (PUT)', function () {
+describe('Update Branding Details - /organizations/branding (PUT) #novu-v0-os', () => {
   let session: UserSession;
-  const organizationRepository = new OrganizationRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -17,13 +15,14 @@ describe('Update Branding Details - /organizations/branding (PUT)', function () 
     };
 
     await session.testAgent.patch('/v1/organizations').send(payload).expect(processTestAgentExpectedStatusCode(200));
+    const { body } = await session.testAgent.get('/v1/organizations/me').expect(200);
+    const organization = body.data;
 
-    const organization = await organizationRepository.findById(session.organization._id);
     expect(organization?.name).to.equal(payload.name);
     expect(organization?.logo).to.equal(session.organization.logo);
   });
 
-  it('should update the branding details', async function () {
+  it('should update the branding details', async () => {
     const payload = {
       color: '#fefefe',
       fontColor: '#f4f4f4',
@@ -37,7 +36,8 @@ describe('Update Branding Details - /organizations/branding (PUT)', function () 
       .send(payload)
       .expect(processTestAgentExpectedStatusCode(200));
 
-    const organization = await organizationRepository.findById(session.organization._id);
+    const { body } = await session.testAgent.get('/v1/organizations/me').expect(200);
+    const organization = body.data;
 
     expect(organization?.branding.color).to.equal(payload.color);
     expect(organization?.branding.logo).to.equal(payload.logo);
@@ -55,7 +55,7 @@ describe('Update Branding Details - /organizations/branding (PUT)', function () 
   });
 
   ['png', 'jpg', 'jpeg', 'gif', 'svg'].forEach((extension) => {
-    it(`should update if logo is a valid image URL with ${extension} extension`, async function () {
+    it(`should update if logo is a valid image URL with ${extension} extension`, async () => {
       const payload = {
         logo: `https://s3.us-east-1.amazonaws.com/novu-app-bucket/2/1/3.${extension}`,
       };
@@ -68,7 +68,7 @@ describe('Update Branding Details - /organizations/branding (PUT)', function () 
   });
 
   ['exe', 'zip'].forEach((extension) => {
-    it(`should fail to update if logo is a valid image URL with ${extension} extension`, async function () {
+    it(`should fail to update if logo is a valid image URL with ${extension} extension`, async () => {
       const payload = {
         logo: `https://s3.us-east-1.amazonaws.com/novu-app-bucket/2/1/3.${extension}`,
       };

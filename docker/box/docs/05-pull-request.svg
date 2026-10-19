@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg style="min-width: 1280px" viewBox="0 0 1280 680" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="pr-flow-title pr-flow-desc" id="d-05-pull-request-root">
+        <title id="pr-flow-title">Novu Box: one pull request, from label to delete</title>
+        <desc id="pr-flow-desc">Swimlane across Developer, GitHub, Cloudflare and the box container: the box label makes ci.ts check the labeler's write access, have the hub create the PR's Worker, start the box from base's snapshot, apply the PR head, run doctor and edit one sticky PR comment; each push cancels the older run and re-applies; removing the label or closing the PR deletes the box.</desc>
+        <defs>
+      <style>#d-05-pull-request-root { --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace; }
+      #d-05-pull-request-root { font-family: var(--font-sans); color: var(--color-ink); }
+      #d-05-pull-request-root .diagram-container { width: 100%; overflow-x: auto; }
+      #d-05-pull-request-root .subtitle { font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--color-muted);
+      max-width: 78ch;
+      margin-bottom: 1.5rem; }
+      #d-05-pull-request-root .diagram-container { overflow-x: visible; }
+      #d-05-pull-request-root .diagram-container { overflow-x: visible; }
+      #d-05-pull-request-root nav { margin: 0 0 3rem; display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; }
+      #d-05-pull-request-root nav a { color: var(--color-muted); text-decoration: none; border-bottom: 1px solid rgba(45,49,66,0.2); }
+      #d-05-pull-request-root nav a:hover { color: var(--color-accent); border-color: var(--color-accent); }
+      #d-05-pull-request-root section { padding: 3rem 0 4rem; border-top: 1px solid rgba(45,49,66,0.12); }
+      #d-05-pull-request-root section:first-of-type { border-top: 0; padding-top: 0; }</style>
+          <marker id="d-05-pull-request-pr-flow-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="d-05-pull-request-pr-flow-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
+          <marker id="d-05-pull-request-pr-flow-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- Lane bands (alternate faint fill) -->
+        <rect x="40" y="192" width="1200" height="128" fill="#2d3142" fill-opacity="0.03"/>
+        <rect x="40" y="448" width="1200" height="128" fill="#2d3142" fill-opacity="0.03"/>
+
+        <!-- Lane dividers -->
+        <line x1="40" y1="64" x2="1240" y2="64" stroke="#2d3142" stroke-width="1" stroke-opacity="0.22"/>
+        <line x1="40" y1="192" x2="1240" y2="192" stroke="#2d3142" stroke-width="1" stroke-opacity="0.10"/>
+        <line x1="40" y1="320" x2="1240" y2="320" stroke="#2d3142" stroke-width="1" stroke-opacity="0.10"/>
+        <line x1="40" y1="448" x2="1240" y2="448" stroke="#2d3142" stroke-width="1" stroke-opacity="0.10"/>
+        <line x1="40" y1="576" x2="1240" y2="576" stroke="#2d3142" stroke-width="1" stroke-opacity="0.22"/>
+        <line x1="144" y1="64" x2="144" y2="576" stroke="#2d3142" stroke-width="1" stroke-opacity="0.22"/>
+
+        <!-- Lane labels -->
+        <text x="52" y="132" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.18em">DEVELOPER</text>
+
+        <text x="52" y="260" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.18em">GITHUB</text>
+
+        <text x="52" y="388" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.18em">CLOUDFLARE</text>
+
+        <text x="52" y="516" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.18em">THE BOX</text>
+
+        <!-- Phase headers -->
+        <text x="160" y="52" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">1 · ADD LABEL</text>
+        <text x="920" y="52" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">2 · EACH PUSH</text>
+        <text x="1072" y="52" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">3 · UNLABEL / CLOSE</text>
+
+        <!-- Arrows (drawn before nodes) -->
+        <!-- 1 Add label -> ci.ts pr -->
+        <line x1="224" y1="156" x2="224" y2="228" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+        <!-- 1 ci.ts pr -> Writer check -->
+        <line x1="288" y1="256" x2="312" y2="256" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+        <!-- 1 Writer check -> Create Worker (hub) -->
+        <line x1="376" y1="284" x2="376" y2="356" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+        <!-- 1 Create Worker -> Verify OIDC (thin Worker) -->
+        <line x1="440" y1="384" x2="464" y2="384" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+        <!-- 1 Verify OIDC -> Start from base (Box DO) -->
+        <line x1="592" y1="384" x2="616" y2="384" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+        <!-- 1 Start from base -> box apply -->
+        <line x1="680" y1="412" x2="680" y2="484" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+        <!-- 1 box apply -> doctor -->
+        <line x1="744" y1="512" x2="768" y2="512" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+        <!-- doctor -> Sticky PR comment (focal handoff) -->
+        <line x1="832" y1="484" x2="832" y2="292" stroke="#bf4520" stroke-width="1.4" marker-end="url(#d-05-pull-request-pr-flow-arrow-accent)"/>
+        <!-- 2 Push -> Cancel old run -->
+        <line x1="984" y1="156" x2="984" y2="228" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+        <!-- 2 Cancel old run -> Stop, re-apply (through the thin Worker and Box DO) -->
+        <line x1="984" y1="284" x2="984" y2="484" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+        <!-- 2 Stop, re-apply -> doctor -->
+        <line x1="920" y1="512" x2="896" y2="512" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+        <!-- 3 Unlabel / close -> ci.ts pr -->
+        <line x1="1136" y1="156" x2="1136" y2="228" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+        <!-- 3 ci.ts pr -> Delete box (hub) -->
+        <line x1="1136" y1="284" x2="1136" y2="356" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+        <!-- sync (no PR) -> Verify token (thin Worker) -->
+        <line x1="528" y1="156" x2="528" y2="356" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+
+        <!-- Arrow labels -->
+        <rect x="384" y="296" width="64" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="416" y="305" fill="#5a6580" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PUT /BOXES</text>
+
+        <rect x="536" y="250" width="60" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="566" y="259" fill="#5a6580" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PUT /FILE</text>
+
+        <rect x="688" y="426" width="32" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="704" y="435" fill="#5a6580" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EXEC</text>
+
+        <rect x="992" y="378" width="32" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="1008" y="387" fill="#5a6580" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EXEC</text>
+
+        <rect x="1144" y="298" width="80" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="1184" y="307" fill="#5a6580" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DELETE /BOXES</text>
+
+        <!-- ===== Nodes ===== -->
+
+        <!-- Developer: Add label box -->
+        <rect x="160" y="100" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="160" y="100" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="168" y="106" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="182" y="115" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PR</text>
+        <text x="224" y="130" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Add label “box”</text>
+        <text x="224" y="146" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">needs write access</text>
+
+        <!-- Developer: sync (not part of the PR flow) -->
+        <rect x="464" y="100" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="464" y="100" width="128" height="56" rx="6" fill="#2d3142" stroke="#2d3142" stroke-width="1" stroke-dasharray="4,3" fill-opacity="0.02" stroke-opacity="0.20"/>
+        <rect x="472" y="106" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="486" y="115" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CLI</text>
+        <text x="528" y="130" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">sync</text>
+        <text x="528" y="146" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">git bundle</text>
+
+        <!-- Developer: Push -->
+        <rect x="920" y="100" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="920" y="100" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="928" y="106" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="942" y="115" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PR</text>
+        <text x="984" y="130" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Push</text>
+        <text x="984" y="146" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">synchronize</text>
+
+        <!-- Developer: Unlabel / close -->
+        <rect x="1072" y="100" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="1072" y="100" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="1080" y="106" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="1094" y="115" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PR</text>
+        <text x="1136" y="130" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Unlabel / close</text>
+        <text x="1136" y="146" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">unlabeled · closed</text>
+
+        <!-- GitHub: ci.ts pr -->
+        <rect x="160" y="228" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="160" y="228" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="168" y="234" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="182" y="243" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CI</text>
+        <text x="224" y="258" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">ci.ts pr</text>
+        <text x="224" y="274" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">OIDC aud novu-box</text>
+
+        <!-- GitHub: Writer check -->
+        <rect x="312" y="228" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="312" y="228" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="320" y="234" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="334" y="243" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CI</text>
+        <text x="376" y="258" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Writer check</text>
+        <text x="376" y="274" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">labeler can write</text>
+
+        <!-- GitHub: Sticky PR comment (focal) -->
+        <rect x="616" y="220" width="280" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="616" y="220" width="280" height="72" rx="6" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+        <rect x="624" y="226" width="28" height="12" rx="2" fill="none" stroke="#bf4520" stroke-width="0.8" stroke-opacity="0.50"/>
+        <text x="638" y="235" fill="#bf4520" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PR</text>
+        <text x="756" y="254" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Sticky PR comment</text>
+        <text x="756" y="270" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">URL, or what failed</text>
+
+        <!-- GitHub: Cancel old run -->
+        <rect x="920" y="228" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="920" y="228" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="928" y="234" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="942" y="243" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CI</text>
+        <text x="984" y="258" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Cancel old run</text>
+        <text x="984" y="274" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cancel-in-progress</text>
+
+        <!-- GitHub: ci.ts pr (delete) -->
+        <rect x="1072" y="228" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="1072" y="228" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="1080" y="234" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="1094" y="243" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CI</text>
+        <text x="1136" y="258" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">ci.ts pr</text>
+        <text x="1136" y="274" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">delete pr-&lt;n&gt;</text>
+
+        <!-- Cloudflare: Create Worker (hub) -->
+        <rect x="312" y="356" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="312" y="356" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="320" y="362" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="334" y="371" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HUB</text>
+        <text x="376" y="386" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Create Worker</text>
+        <text x="376" y="402" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">novu-box-pr-&lt;n&gt;</text>
+
+        <!-- Cloudflare: Verify token (thin Worker) -->
+        <rect x="464" y="356" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="464" y="356" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="472" y="362" width="32" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="488" y="371" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">THIN</text>
+        <text x="528" y="386" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Verify OIDC</text>
+        <text x="528" y="402" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">or gh push token</text>
+
+        <!-- Cloudflare: Start from base (Box DO) -->
+        <rect x="616" y="356" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="616" y="356" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="624" y="362" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="638" y="371" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DO</text>
+        <text x="680" y="386" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Start from base</text>
+        <text x="680" y="402" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">restores snapshot</text>
+
+        <!-- Cloudflare: Delete box (hub) -->
+        <rect x="1072" y="356" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="1072" y="356" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="1080" y="362" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="1094" y="371" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HUB</text>
+        <text x="1136" y="386" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Delete box</text>
+        <text x="1136" y="402" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+ Worker, test users</text>
+
+        <!-- The box: box apply -->
+        <rect x="616" y="484" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="616" y="484" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="624" y="490" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="638" y="499" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">BOX</text>
+        <text x="680" y="514" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">box apply</text>
+        <text x="680" y="530" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">PR head sha</text>
+
+        <!-- The box: doctor -->
+        <rect x="768" y="484" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="768" y="484" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="776" y="490" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="790" y="499" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">BOX</text>
+        <text x="832" y="514" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">doctor</text>
+        <text x="832" y="530" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">health report</text>
+
+        <!-- The box: Stop, re-apply -->
+        <rect x="920" y="484" width="128" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="920" y="484" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="928" y="490" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="942" y="499" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">BOX</text>
+        <text x="984" y="514" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Stop, re-apply</text>
+        <text x="984" y="530" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">stop-apply → apply</text>
+
+        <!-- Legend -->
+        <line x1="40" y1="608" x2="1240" y2="608" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.10"/>
+        <text x="40" y="628" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+        <rect x="40" y="640" width="16" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="64" y="648" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Step</text>
+
+        <rect x="120" y="640" width="16" height="10" rx="2" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+        <text x="144" y="648" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">What the PR author sees</text>
+
+        <rect x="292" y="640" width="16" height="10" rx="2" fill="#2d3142" stroke="#2d3142" stroke-width="1" stroke-dasharray="4,3" fill-opacity="0.02" stroke-opacity="0.40"/>
+        <text x="316" y="648" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Your own checkout, not CI</text>
+
+        <line x1="460" y1="645" x2="488" y2="645" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+        <text x="496" y="648" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Next step</text>
+
+        <line x1="576" y1="645" x2="604" y2="645" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
+        <text x="612" y="648" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">sync joins</text>
+
+        <line x1="700" y1="645" x2="728" y2="645" stroke="#bf4520" stroke-width="1.4" marker-end="url(#d-05-pull-request-pr-flow-arrow-accent)"/>
+        <text x="736" y="648" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Result on the PR</text>
+      </svg>

@@ -1,0 +1,102 @@
+---
+title: "Connect Claude managed agent"
+description: "Create a Claude managed agent with Anthropic credentials via the Novu CLI, connect Slack, and send your first message. No bridge server."
+sidebarTitle: Claude Managed
+---
+
+Create a managed agent on Anthropic Claude and connect it to Slack with the Novu CLI. No bridge server is required.
+
+For Claude Platform on AWS, see [Connect AWS Claude managed agent](/agents/get-started/aws-claude). To try without your own API key, select **Try a demo agent** in the CLI (`npx novu connect`).
+
+<video autoPlay loop muted playsInline src="/images/agents/quickstart/novu-connect-demo.mp4" />
+
+## Prerequisites
+
+- Node.js on your machine
+- A [Novu account](https://dashboard.novu.co/agents) (you can create one during setup)
+- An [Anthropic API key](https://console.anthropic.com/settings/keys)
+- A Slack workspace where you can install apps
+
+## Connect Claude
+
+<Steps>
+
+<Step>
+## Run the CLI
+
+```bash
+npx novu connect
+```
+</Step>
+
+<Step>
+## Choose Claude Managed Agent
+
+When the CLI asks **Where your agent runs?**, select **Claude Managed Agent**.
+
+The CLI prompts for your **Anthropic API key** (`sk-ant-…`). Paste the key from the [Anthropic console](https://console.anthropic.com/settings/keys). Novu verifies it and creates a Claude runtime integration in your environment.
+</Step>
+
+<Step>
+## Create the agent
+
+1. Describe the agent in plain text, for example:
+
+    ```text
+    Create an engineering assistant agent that checks Linear and GitHub for open issues, pending PR reviews, and review requests. It summarizes what needs attention, flags blockers and stale tickets, and posts a short daily standup digest. It keeps responses concise and links back to the relevant Linear issue or GitHub pull request.
+    ```
+
+2. Novu generates a name, identifier, system prompt, tools, MCP servers, and skills from that description.
+3. Review the fields. Select **Create this agent**, or **Regenerate from description** to revise.
+</Step>
+
+<Step>
+## Connect Slack
+
+When prompted to pick a channel, select **Slack**.
+
+1. Open [https://api.slack.com/apps](https://api.slack.com/apps).
+2. Under **App Configuration Tokens**, click **Generate Token**.
+3. Copy the access token (starts with `xoxe.xoxp-`).
+4. Paste it into the CLI. Novu uses it once to create the Slack app and does not store it.
+5. Follow the install link to add the bot to your workspace.
+</Step>
+
+<Step>
+## Send a message
+
+Open Slack and DM the agent (or @mention it in a channel). If the generated config includes Linear or GitHub MCP servers, the agent may prompt you to authorize them in-thread.
+
+Manage channels and conversations in the [Novu dashboard](https://dashboard.novu.co/agents).
+</Step>
+
+</Steps>
+
+<Note>
+  Non-interactive / CI: `npx novu connect --runtime claude --anthropic-api-key <key>`. See [Create an agent](/api-reference/agents/create-an-agent) for the REST API.
+</Note>
+
+<Prompt description="Copy an example agent description" icon="plug" actions={["copy", "cursor"]}>
+Create an engineering assistant agent that checks Linear and GitHub for open issues, pending PR reviews, and review requests. It summarizes what needs attention, flags blockers and stale tickets, and posts a short daily standup digest. It keeps responses concise and links back to the relevant Linear issue or GitHub pull request.
+
+Use the Novu CLI (`npx novu connect`) with Claude Managed Agent and an Anthropic API key. Connect Slack as the first channel.
+
+Reference: https://docs.novu.co/agents/get-started/claude-managed
+</Prompt>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card icon="cloud" href="/agents/get-started/aws-claude" title="AWS Claude">
+    Same flow with Claude Platform on AWS credentials.
+  </Card>
+  <Card icon="brain" href="/agents/managed-agent/concepts" title="Concepts">
+    Connectors, MCP servers, skills, and conversation lifecycle.
+  </Card>
+  <Card icon="link" href="/agents/managed-agent/configure-mcp-servers" title="Configure MCP servers">
+    Enable Linear, GitHub, Notion, and other MCP tools.
+  </Card>
+  <Card icon="messages-square" href="/agents/conversations" title="Conversation observability">
+    Inspect live conversations in the dashboard.
+  </Card>
+</Columns>

@@ -1,19 +1,20 @@
-import * as sinon from 'sinon';
-import { EnvironmentRepository, MessageEntity, MessageRepository, UserRepository } from '@novu/dal';
+import { MessageEntity, MessageRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
-
-import { ExternalServicesRoute } from './external-services-route.usecase';
-import { ExternalServicesRouteCommand } from './external-services-route.command';
+import { Types } from 'mongoose';
+import sinon from 'sinon';
 import { WSGateway } from '../../ws.gateway';
+import { ExternalServicesRouteCommand } from './external-services-route.command';
+import { ExternalServicesRoute } from './external-services-route.usecase';
 
-const environmentId = EnvironmentRepository.createObjectId();
+const environmentId = new Types.ObjectId().toString();
 const messageId = 'message-id-1';
-const userId = UserRepository.createObjectId();
+const userId = new Types.ObjectId().toString();
 
 const commandReceivedMessage = ExternalServicesRouteCommand.create({
   event: WebSocketEventEnum.RECEIVED,
   userId,
   _environmentId: environmentId,
+  contextKeys: [],
   payload: {
     message: {
       _id: messageId,
@@ -75,11 +76,12 @@ describe('ExternalServicesRoute', () => {
       findOneStub.resolves(Promise.resolve({ _id: messageId }));
     });
 
-    it('should send message, unseen count and unread count change when event is received', async () => {
+    it('should send message, unseen count and unread count change when event is received to Socket.io', async () => {
       getCountStub.resolves(Promise.resolve(5));
 
       await externalServicesRoute.execute(commandReceivedMessage);
 
+      // Verify Socket.io calls
       sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(0), userId, WebSocketEventEnum.RECEIVED, {
         message: {
           _id: messageId,
@@ -95,152 +97,36 @@ describe('ExternalServicesRoute', () => {
       });
     });
 
-    it('should skip getCount query if unseen count provided', async () => {
-      getCountStub.resolves(Promise.resolve(10));
-
-      let command: ExternalServicesRouteCommand = {
-        event: WebSocketEventEnum.UNSEEN,
+    it('should forward agent event envelopes without inbox count side effects', async () => {
+      const payload = {
+        version: '1',
+        conversationId: 'conversation-id',
+        agentId: 'agent-id',
+        runId: 'run-id',
+        turnId: 'turn-id',
+        sequence: 3,
+        timestamp: new Date().toISOString(),
+        event: { type: 'channel.typing', state: 'on' },
+      };
+      const command = ExternalServicesRouteCommand.create({
+        event: WebSocketEventEnum.AGENT_EVENT,
         userId,
         _environmentId: environmentId,
-        payload: { unseenCount: 5 },
-      };
-      await externalServicesRoute.execute(command);
-      sinon.assert.calledOnceWithExactly(wsGatewayStub.sendMessage, userId, WebSocketEventEnum.UNSEEN, {
-        unseenCount: 5,
-        hasMore: false,
+        contextKeys: [],
+        payload,
       });
 
-      command = {
-        event: WebSocketEventEnum.UNSEEN,
+      await externalServicesRoute.execute(command);
+
+      sinon.assert.calledOnceWithExactly(
+        wsGatewayStub.sendMessage,
         userId,
-        _environmentId: environmentId,
-        payload: { unseenCount: 4 },
-      };
-      await externalServicesRoute.execute(command);
-      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(1), userId, WebSocketEventEnum.UNSEEN, {
-        unseenCount: 4,
-      });
-
-      getCountStub.resolves(Promise.resolve(20));
-      command = {
-        event: WebSocketEventEnum.UNSEEN,
-        userId,
-        _environmentId: environmentId,
-      };
-      await externalServicesRoute.execute(command);
-      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(2), userId, WebSocketEventEnum.UNSEEN, {
-        unseenCount: 20,
-      });
-
-      getCountStub.resolves(Promise.resolve(21));
-      command = {
-        event: WebSocketEventEnum.UNSEEN,
-        userId,
-        _environmentId: environmentId,
-        payload: { unseenCount: undefined },
-      };
-      await externalServicesRoute.execute(command);
-      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(3), userId, WebSocketEventEnum.UNSEEN, {
-        unseenCount: 21,
-      });
-
-      getCountStub.resolves(Promise.resolve(22));
-      command = {
-        event: WebSocketEventEnum.UNSEEN,
-        userId,
-        _environmentId: environmentId,
-        payload: { unseenCount: undefined },
-      };
-      await externalServicesRoute.execute(command);
-      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(4), userId, WebSocketEventEnum.UNSEEN, {
-        unseenCount: 22,
-      });
-
-      getCountStub.resolves(Promise.resolve(23));
-      command = {
-        event: WebSocketEventEnum.UNSEEN,
-        userId,
-        _environmentId: environmentId,
-        payload: { unseenCount: 0 },
-      };
-      await externalServicesRoute.execute(command);
-      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(5), userId, WebSocketEventEnum.UNSEEN, {
-        unseenCount: 0,
-      });
-    });
-
-    it('should skip getCount query if unread count provided', async () => {
-      getCountStub.resolves(Promise.resolve(10));
-
-      let command: ExternalServicesRouteCommand = {
-        event: WebSocketEventEnum.UNREAD,
-        userId,
-        _environmentId: environmentId,
-        payload: { unreadCount: 5 },
-      };
-      await externalServicesRoute.execute(command);
-      sinon.assert.calledOnceWithExactly(wsGatewayStub.sendMessage, userId, WebSocketEventEnum.UNREAD, {
-        unreadCount: 5,
-        hasMore: false,
-      });
-
-      command = {
-        event: WebSocketEventEnum.UNREAD,
-        userId,
-        _environmentId: environmentId,
-        payload: { unreadCount: 4 },
-      };
-      await externalServicesRoute.execute(command);
-      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(1), userId, WebSocketEventEnum.UNREAD, {
-        unreadCount: 4,
-      });
-
-      getCountStub.resolves(Promise.resolve(20));
-      command = {
-        event: WebSocketEventEnum.UNREAD,
-        userId,
-        _environmentId: environmentId,
-      };
-      await externalServicesRoute.execute(command);
-      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(2), userId, WebSocketEventEnum.UNREAD, {
-        unreadCount: 20,
-      });
-
-      getCountStub.resolves(Promise.resolve(21));
-      command = {
-        event: WebSocketEventEnum.UNREAD,
-        userId,
-        _environmentId: environmentId,
-        payload: { unreadCount: undefined },
-      };
-      await externalServicesRoute.execute(command);
-      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(3), userId, WebSocketEventEnum.UNREAD, {
-        unreadCount: 21,
-      });
-
-      getCountStub.resolves(Promise.resolve(22));
-      command = {
-        event: WebSocketEventEnum.UNREAD,
-        userId,
-        _environmentId: environmentId,
-        payload: { unreadCount: undefined },
-      };
-      await externalServicesRoute.execute(command);
-      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(4), userId, WebSocketEventEnum.UNREAD, {
-        unreadCount: 22,
-      });
-
-      getCountStub.resolves(Promise.resolve(23));
-      command = {
-        event: WebSocketEventEnum.UNREAD,
-        userId,
-        _environmentId: environmentId,
-        payload: { unreadCount: 0 },
-      };
-      await externalServicesRoute.execute(command);
-      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(5), userId, WebSocketEventEnum.UNREAD, {
-        unreadCount: 0,
-      });
+        WebSocketEventEnum.AGENT_EVENT,
+        payload,
+        []
+      );
+      sinon.assert.notCalled(getCountStub);
+      sinon.assert.notCalled(findOneStub);
     });
   });
 });

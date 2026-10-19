@@ -1,18 +1,19 @@
-import { expect } from 'chai';
 import { Test } from '@nestjs/testing';
-import { UserSession } from '@novu/testing';
+import {
+  CompileEmailTemplate,
+  CompileEmailTemplateCommand,
+  CompileTemplate,
+  GetLayoutUseCase,
+  GetNovuLayout,
+} from '@novu/application-generic';
+import { DalService, LayoutRepository, OrganizationRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailBlockTypeEnum } from '@novu/shared';
-import { LayoutRepository, OrganizationRepository, DalService } from '@novu/dal';
-
-import { CompileEmailTemplate } from '@novu/application-generic';
-import { CompileEmailTemplateCommand } from '@novu/application-generic';
-import { CompileTemplate } from '@novu/application-generic';
-import { GetLayoutUseCase } from '@novu/application-generic';
-import { GetNovuLayout } from '@novu/application-generic';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 const dalService = new DalService();
 
-describe('Compile E-mail Template', function () {
+describe('Compile E-mail Template', () => {
   let useCase: CompileEmailTemplate;
   let session: UserSession;
   const layoutRepository = new LayoutRepository();
@@ -44,7 +45,7 @@ describe('Compile E-mail Template', function () {
     useCase = moduleRef.get<CompileEmailTemplate>(CompileEmailTemplate);
   });
 
-  it('should compile a template with custom layout defined', async function () {
+  it('should compile a template with custom layout defined', async () => {
     const layout = await layoutRepository.create({
       name: 'Test Layout',
       _environmentId: session.environment._id,
@@ -74,7 +75,7 @@ describe('Compile E-mail Template', function () {
     expect(subject).to.equal('A title for Header Test');
   });
 
-  it('should compile a template with custom layout defined for visual editor', async function () {
+  it('should compile a template with custom layout defined for visual editor', async () => {
     const layout = await layoutRepository.create({
       name: 'Test Layout',
       _environmentId: session.environment._id,
@@ -112,7 +113,7 @@ describe('Compile E-mail Template', function () {
     expect(subject).to.equal('A title for Header Test');
   });
 
-  it('should apply subject variable if provided', async function () {
+  it('should apply subject variable if provided', async () => {
     const subjectText = 'Novu Test';
     const { html, subject } = await useCase.execute(
       CompileEmailTemplateCommand.create({
@@ -140,7 +141,7 @@ describe('Compile E-mail Template', function () {
     expect(subject).to.equal(subjectText);
   });
 
-  it('should apply sender name variable if provided', async function () {
+  it('should apply sender name variable if provided', async () => {
     const senderNameTest = 'Novu Test';
     const { html, senderName } = await useCase.execute(
       CompileEmailTemplateCommand.create({
@@ -169,8 +170,8 @@ describe('Compile E-mail Template', function () {
     expect(senderName).to.equal(senderNameTest);
   });
 
-  describe('Backwards compatibility', function () {
-    it('should compile e-mail template for custom html without layouts attached for backwards compatibility', async function () {
+  describe('Backwards compatibility', () => {
+    it('should compile e-mail template for custom html without layouts attached for backwards compatibility', async () => {
       const { html, subject } = await useCase.execute(
         CompileEmailTemplateCommand.create({
           organizationId: session.organization._id,
@@ -189,7 +190,7 @@ describe('Compile E-mail Template', function () {
       expect(subject).to.equal('A title for Header Test');
     });
 
-    it('should add default novu layout for visual editor templates', async function () {
+    it('should add default novu layout for visual editor templates', async () => {
       const { html, subject } = await useCase.execute(
         CompileEmailTemplateCommand.create({
           organizationId: session.organization._id,
@@ -217,8 +218,8 @@ describe('Compile E-mail Template', function () {
     });
   });
 
-  describe('Escaping', function () {
-    it('should escape editor text in double curly braces', async function () {
+  describe('Escaping', () => {
+    it('should escape editor text in double curly braces', async () => {
       const { html } = await useCase.execute(
         CompileEmailTemplateCommand.create({
           organizationId: session.organization._id,
@@ -243,7 +244,7 @@ describe('Compile E-mail Template', function () {
       expect(html).to.contain('<div>https://example.com?email&#x3D;text+testing@example.com</div>');
     });
 
-    it('should not escape editor text in triple curly braces', async function () {
+    it('should not escape editor text in triple curly braces', async () => {
       const { html } = await useCase.execute(
         CompileEmailTemplateCommand.create({
           organizationId: session.organization._id,
@@ -268,7 +269,7 @@ describe('Compile E-mail Template', function () {
       expect(html).to.contain('<div>https://example.com?email=text+testing@example.com</div>');
     });
 
-    it('should escape button text in double curly braces', async function () {
+    it('should escape button text in double curly braces', async () => {
       const { html } = await useCase.execute(
         CompileEmailTemplateCommand.create({
           organizationId: session.organization._id,
@@ -294,7 +295,7 @@ describe('Compile E-mail Template', function () {
       expect(html).to.contain('https://example.com?email&#x3D;button+testing@example.com');
     });
 
-    it('should not escape button text in triple curly braces', async function () {
+    it('should not escape button text in triple curly braces', async () => {
       const { html } = await useCase.execute(
         CompileEmailTemplateCommand.create({
           organizationId: session.organization._id,
@@ -320,7 +321,7 @@ describe('Compile E-mail Template', function () {
       expect(html).to.contain('https://example.com?email=button+testing@example.com');
     });
 
-    it('should escape button url in double curly braces', async function () {
+    it('should escape button url in double curly braces', async () => {
       const { html } = await useCase.execute(
         CompileEmailTemplateCommand.create({
           organizationId: session.organization._id,
@@ -346,7 +347,7 @@ describe('Compile E-mail Template', function () {
       expect(html).to.contain('https://example.com?email&#x3D;button+testing@example.com');
     });
 
-    it('should not escape button url in triple curly braces', async function () {
+    it('should not escape button url in triple curly braces', async () => {
       const { html } = await useCase.execute(
         CompileEmailTemplateCommand.create({
           organizationId: session.organization._id,

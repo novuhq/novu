@@ -1,0 +1,139 @@
+import { AgentRuntimeProviderIdEnum } from '@novu/shared';
+import type { ReactNode } from 'react';
+import { RiFileCodeLine } from 'react-icons/ri';
+import { AiSdkIcon } from '@/components/icons/ai-sdk';
+import { AwsIcon } from '@/components/icons/aws';
+import { LangChainIcon } from '@/components/icons/langchain';
+import { ClaudeIcon } from '../../icons/claude';
+
+export type ConnectorId = 'claude' | 'claude-aws' | 'bedrock' | 'ai-sdk' | 'langchain' | 'custom-code';
+
+export type ConnectorGroup = 'external' | 'custom';
+
+export type ConnectorOption = {
+  id: ConnectorId;
+  label: string;
+  group: ConnectorGroup;
+  icon: ReactNode;
+  comingSoon: boolean;
+  /**
+   * Maps the UI option onto an internal `RuntimeType` recognized by the agent creation pipeline.
+   * Coming-soon options omit this to make them unselectable.
+   */
+  runtime?: 'scratch' | 'claude' | 'vertex';
+  /**
+   * Managed-runtime provider id for connectors that ship an Integration-backed runtime.
+   * Drives integration filtering and the verify-credentials endpoint.
+   */
+  providerId?: AgentRuntimeProviderIdEnum;
+  /** Short provider name shown inside inline prompts (e.g. "Setup Anthropic credentials"). */
+  providerLabel?: string;
+};
+
+const CLAUDE_AVATAR = (
+  <div className="bg-primary-base/10 text-primary-base flex size-4 items-center justify-center rounded-full">
+    <ClaudeIcon className="size-3" />
+  </div>
+);
+
+const CUSTOM_CODE_AVATAR = (
+  <div className="bg-bg-weak text-text-sub flex size-4 items-center justify-center rounded-full">
+    <RiFileCodeLine className="size-3" />
+  </div>
+);
+
+const AI_SDK_AVATAR = (
+  <div className="bg-bg-weak text-text-strong flex size-4 items-center justify-center rounded-full">
+    <AiSdkIcon className="size-2.5" />
+  </div>
+);
+
+const LANGCHAIN_AVATAR = (
+  <div className="bg-bg-weak flex size-4 items-center justify-center rounded-full">
+    <LangChainIcon className="size-3" />
+  </div>
+);
+
+const AWS_AVATAR = (
+  <div className="bg-bg-weak text-text-sub flex size-4 items-center justify-center rounded-full text-[10px] font-semibold">
+    <AwsIcon className="size-3" />
+  </div>
+);
+
+export const CONNECTOR_OPTIONS: ConnectorOption[] = [
+  {
+    id: 'ai-sdk',
+    label: 'AI SDK',
+    group: 'custom',
+    icon: AI_SDK_AVATAR,
+    comingSoon: false,
+    runtime: 'scratch',
+  },
+  {
+    id: 'langchain',
+    label: 'LangChain',
+    group: 'custom',
+    icon: LANGCHAIN_AVATAR,
+    comingSoon: false,
+    runtime: 'scratch',
+  },
+  {
+    id: 'custom-code',
+    label: 'Custom code',
+    group: 'custom',
+    icon: CUSTOM_CODE_AVATAR,
+    comingSoon: false,
+    runtime: 'scratch',
+  },
+  {
+    id: 'claude',
+    label: 'Claude Managed Agent',
+    group: 'external',
+    icon: CLAUDE_AVATAR,
+    comingSoon: false,
+    runtime: 'claude',
+    providerId: AgentRuntimeProviderIdEnum.Anthropic,
+    providerLabel: 'Anthropic',
+  },
+  {
+    id: 'claude-aws',
+    label: 'AWS Claude Managed Agent',
+    group: 'external',
+    icon: AWS_AVATAR,
+    comingSoon: false,
+    runtime: 'claude',
+    providerId: AgentRuntimeProviderIdEnum.AnthropicAws,
+    providerLabel: 'AWS Claude Platform',
+  },
+  {
+    id: 'bedrock',
+    label: 'AWS Bedrock AgentCore',
+    group: 'external',
+    icon: AWS_AVATAR,
+    comingSoon: true,
+  },
+];
+
+export const DEFAULT_MANAGED_CONNECTOR_ID: ConnectorId = 'claude';
+
+export function pickInitialConnector(isManagedEnabled: boolean): ConnectorId {
+  if (isManagedEnabled) return DEFAULT_MANAGED_CONNECTOR_ID;
+
+  const fallback = CONNECTOR_OPTIONS.find((o) => !o.comingSoon && o.runtime === 'scratch');
+
+  return fallback?.id ?? 'ai-sdk';
+}
+
+export function getConnectorById(id: ConnectorId | undefined): ConnectorOption | undefined {
+  if (!id) return undefined;
+
+  return CONNECTOR_OPTIONS.find((o) => o.id === id);
+}
+
+export function getConnectorIdForProviderId(providerId: string): ConnectorId | undefined {
+  if (providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
+    return 'claude';
+  }
+
+  return CONNECTOR_OPTIONS.find((option) => option.providerId === providerId)?.id;
+}

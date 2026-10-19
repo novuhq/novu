@@ -1,16 +1,66 @@
 import { forwardRef, Module } from '@nestjs/common';
-
-import { SharedModule } from '../shared/shared.module';
-import { USE_CASES } from './usecases';
-import { IntegrationsController } from './integrations.controller';
+import {
+  analyticsService,
+  CalculateLimitNovuIntegration,
+  ChannelFactory,
+  CompileTemplate,
+  CreateOrUpdateSubscriberUseCase,
+  GetNovuProviderCredentials,
+  MsTeamsTokenService,
+  UpdateSubscriber,
+  UpdateSubscriberChannel,
+} from '@novu/application-generic';
+import { CommunityOrganizationRepository, CommunityUserRepository, IntegrationRepository } from '@novu/dal';
+import { AgentsModule } from '../agents/agents.module';
 import { AuthModule } from '../auth/auth.module';
-import { CompileTemplate, CreateExecutionDetails, QueuesModule } from '@novu/application-generic';
-import { JobTopicNameEnum } from '@novu/shared';
+import { ChannelConnectionsModule } from '../channel-connections/channel-connections.module';
+import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
+import { SharedModule } from '../shared/shared.module';
+import { IntegrationTelegramWebhookController } from '../telegram-linking/integration-telegram-webhook.controller';
+import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
+import { IntegrationsController } from './integrations.controller';
+import { IntegrationsMobileConfigurePublicController } from './integrations-mobile-configure-public.controller';
+import { IntegrationsPublicController } from './integrations-public.controller';
+import { IntegrationsWhatsAppSignupPublicController } from './integrations-whatsapp-signup-public.controller';
+import { USE_CASES } from './usecases';
+import { WhatsAppSignupLinkTokenService } from './whatsapp-signup-link-token.service';
+
+const PROVIDERS = [
+  ChannelFactory,
+  CompileTemplate,
+  GetNovuProviderCredentials,
+  CalculateLimitNovuIntegration,
+  MsTeamsTokenService,
+];
 
 @Module({
-  imports: [SharedModule, forwardRef(() => AuthModule)],
-  controllers: [IntegrationsController],
-  providers: [...USE_CASES, CompileTemplate, CreateExecutionDetails],
+  imports: [
+    SharedModule,
+    forwardRef(() => AuthModule),
+    ChannelConnectionsModule,
+    ChannelEndpointsModule,
+    TelegramLinkingModule,
+    forwardRef(() => AgentsModule),
+  ],
+  controllers: [
+    IntegrationsController,
+    IntegrationsPublicController,
+    IntegrationsMobileConfigurePublicController,
+    IntegrationsWhatsAppSignupPublicController,
+    IntegrationTelegramWebhookController,
+  ],
+  providers: [
+    ...USE_CASES,
+    WhatsAppSignupLinkTokenService,
+    CommunityOrganizationRepository,
+    CommunityUserRepository,
+    IntegrationRepository,
+    ...PROVIDERS,
+    analyticsService,
+    CreateOrUpdateSubscriberUseCase,
+    UpdateSubscriber,
+    UpdateSubscriberChannel,
+  ],
   exports: [...USE_CASES],
 })
 export class IntegrationModule {}

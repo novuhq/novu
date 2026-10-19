@@ -1,5 +1,5 @@
+import { BaseCommand } from '@novu/application-generic';
 import { IsDefined, IsEmail, IsNotEmpty } from 'class-validator';
-import { BaseCommand } from '../../../shared/commands/base.command';
 
 export class LoginCommand extends BaseCommand {
   @IsDefined()

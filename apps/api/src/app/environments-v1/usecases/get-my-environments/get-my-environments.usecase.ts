@@ -1,0 +1,52 @@
+import { Injectable, NotFoundException, Scope } from '@nestjs/common';
+import { buildSlug, decryptApiKey, PinoLogger, shortenEnvironmentName } from '@novu/application-generic';
+import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
+import { ShortIsPrefixEnum } from '@novu/shared';
+import { EnvironmentResponseDto } from '../../dtos/environment-response.dto';
+import { GetMyEnvironmentsCommand } from './get-my-environments.command';
+
+@Injectable({
+  scope: Scope.REQUEST,
+})
+export class GetMyEnvironments {
+  constructor(
+    private environmentRepository: EnvironmentRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
+
+  async execute(command: GetMyEnvironmentsCommand): Promise<EnvironmentResponseDto[]> {
+    this.logger.trace('Getting Environments');
+
+    const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
+
+    if (!environments?.length) {
+      throw new NotFoundException(`No environments were found for organization ${command.organizationId}`);
+    }
+
+    return environments.map((environment) => {
+      const processedEnvironment = { ...environment };
+
+      const isApiKeysEnvironmentMatch =
+        !command.apiKeysEnvironmentId || environment._id === command.apiKeysEnvironmentId;
+
+      processedEnvironment.apiKeys =
+        command.returnApiKeys && isApiKeysEnvironmentMatch ? this.decryptApiKeys(environment.apiKeys) : [];
+
+      const shortEnvName = shortenEnvironmentName(processedEnvironment.name);
+
+      return {
+        ...processedEnvironment,
+        slug: buildSlug(shortEnvName, ShortIsPrefixEnum.ENVIRONMENT, processedEnvironment._id),
+      };
+    });
+  }
+
+  private decryptApiKeys(apiKeys: EnvironmentEntity['apiKeys']) {
+    return apiKeys.map((apiKey) => ({
+      ...apiKey,
+      key: decryptApiKey(apiKey.key),
+    }));
+  }
+}

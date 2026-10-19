@@ -1,5 +1,5 @@
+import { BaseCommand } from '@novu/application-generic';
 import { IsNotEmpty } from 'class-validator';
-import { BaseCommand } from './base.command';
 
 export abstract class AuthenticatedCommand extends BaseCommand {
   @IsNotEmpty()

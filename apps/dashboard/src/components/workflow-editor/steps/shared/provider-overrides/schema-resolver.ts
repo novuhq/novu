@@ -1,0 +1,318 @@
+import { defaultValueForFieldSchema, getTypeLabel, type OverrideFieldSchema } from './override-field-schema';
+
+/**
+ * Property that discriminates `anyOf` branches. Slack's Block Kit unions all key off `type`
+ * (`{ "type": "section" }`), which is what lets completion narrow to one block's fields.
+ */
+export const DISCRIMINATOR_KEY = 'type';
+
+const MAX_REF_HOPS = 20;
+
+const MAX_BRANCH_DEPTH = 4;
+
+const DISCRIMINATOR_HINT = 'Set the type first to unlock the rest of this object.';
+
+/** Resolves `#/definitions/...` pointers. Segments are URI-encoded by the schema generator. */
+function readPointer(root: OverrideFieldSchema, ref: string): OverrideFieldSchema | undefined {
+  if (!ref.startsWith('#/')) {
+    return undefined;
+  }
+
+  let node: unknown = root;
+
+  for (const rawSegment of ref.slice(2).split('/')) {
+    if (typeof node !== 'object' || node === null) {
+      return undefined;
+    }
+
+    let segment: string;
+    try {
+      segment = decodeURIComponent(rawSegment);
+    } catch {
+      return undefined;
+    }
+
+    node = (node as Record<string, unknown>)[segment.replace(/~1/g, '/').replace(/~0/g, '~')];
+  }
+
+  if (typeof node !== 'object' || node === null || Array.isArray(node)) {
+    return undefined;
+  }
+
+  return node as OverrideFieldSchema;
+}
+
+function unique(values: string[]): string[] {
+  return [...new Set(values)];
+}
+
+/** One concrete `anyOf`/`oneOf` branch, identified by its discriminator (`type`) literal. */
+export type UnionBranchSummary = {
+  typeValue: string;
+  description?: string;
+};
+
+/** Keep reference-section copy scannable; Slack Block Kit descriptions often run hundreds of chars. */
+const MAX_SUMMARY_DESCRIPTION_LENGTH = 120;
+
+/**
+ * Slack (and similar) schemas ship JSDoc `{@link …}` markup in descriptions. Strip it so the
+ * supported-fields popover can show a short plain-text summary.
+ */
+function plainDescription(description: string | undefined): string | undefined {
+  if (!description) {
+    return undefined;
+  }
+
+  const cleaned = description
+    .replace(/\{@link\s+https?:\/\/\S+\s+([^}]+)\}/g, '$1')
+    .replace(/\{@link\s+([^}]+)\}/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!cleaned) {
+    return undefined;
+  }
+
+  if (cleaned.length <= MAX_SUMMARY_DESCRIPTION_LENGTH) {
+    return cleaned;
+  }
+
+  return `${cleaned.slice(0, MAX_SUMMARY_DESCRIPTION_LENGTH - 1).trimEnd()}…`;
+}
+
+export type SchemaResolver = {
+  rootSchema: OverrideFieldSchema;
+  /** Follows `$ref` chains. Returns undefined when a pointer cannot be resolved. */
+  deref: (fieldSchema: OverrideFieldSchema | undefined) => OverrideFieldSchema | undefined;
+  /**
+   * Types and constraints live on the target of a `$ref`, while the description and any
+   * caller-supplied annotations live on the referencing node, so the two are layered.
+   */
+  describedNode: (fieldSchema: OverrideFieldSchema) => OverrideFieldSchema;
+  typeLabel: (fieldSchema: OverrideFieldSchema) => string;
+  /** Seed value inserted when a field is added from the supported-fields popover. */
+  defaultValue: (fieldSchema: OverrideFieldSchema | undefined) => unknown;
+  /**
+   * Narrows a node to the concrete object schema whose properties should be offered, picking the
+   * `anyOf` branch that matches `discriminator` when one is known.
+   */
+  objectNode: (fieldSchema: OverrideFieldSchema | undefined, discriminator?: string) => OverrideFieldSchema | undefined;
+  propertyNode: (objectNode: OverrideFieldSchema | undefined, key: string) => OverrideFieldSchema | undefined;
+  itemsNode: (fieldSchema: OverrideFieldSchema | undefined) => OverrideFieldSchema | undefined;
+  /** String literals accepted at a value position, gathered across `enum`, `const` and branches. */
+  valueOptions: (fieldSchema: OverrideFieldSchema | undefined) => string[];
+  /**
+   * Summaries of discriminated `anyOf`/`oneOf` object branches (e.g. Slack `KnownBlock`). Used by
+   * the supported-fields popover for informational reference sections — not for insertion.
+   */
+  unionBranchSummaries: (fieldSchema: OverrideFieldSchema | undefined) => UnionBranchSummary[];
+};
+
+export function createSchemaResolver(rootSchema: OverrideFieldSchema): SchemaResolver {
+  // Slack's schema is deeply cross-referenced and completion re-walks it on every keystroke.
+  const derefCache = new Map<string, OverrideFieldSchema | undefined>();
+
+  function deref(fieldSchema: OverrideFieldSchema | undefined): OverrideFieldSchema | undefined {
+    if (!fieldSchema?.$ref) {
+      return fieldSchema;
+    }
+
+    const cacheKey = fieldSchema.$ref;
+    if (derefCache.has(cacheKey)) {
+      return derefCache.get(cacheKey);
+    }
+
+    let current: OverrideFieldSchema | undefined = fieldSchema;
+
+    for (let hop = 0; current?.$ref && hop < MAX_REF_HOPS; hop += 1) {
+      current = readPointer(rootSchema, current.$ref);
+    }
+
+    const resolved = current?.$ref ? undefined : current;
+    derefCache.set(cacheKey, resolved);
+
+    return resolved;
+  }
+
+  function describedNode(fieldSchema: OverrideFieldSchema): OverrideFieldSchema {
+    const resolved = deref(fieldSchema);
+    if (!resolved || resolved === fieldSchema) {
+      return fieldSchema;
+    }
+
+    return { ...resolved, ...fieldSchema };
+  }
+
+  function typeLabel(fieldSchema: OverrideFieldSchema): string {
+    return getTypeLabel(describedNode(fieldSchema), (items) => deref(items)?.type);
+  }
+
+  function defaultValue(fieldSchema: OverrideFieldSchema | undefined): unknown {
+    return defaultValueForFieldSchema(fieldSchema && describedNode(fieldSchema));
+  }
+
+  /** String literals a node accepts, walking `const`, `enum` and nested branches. */
+  function collectValues(fieldSchema: OverrideFieldSchema | undefined, depth: number): string[] {
+    const resolved = deref(fieldSchema);
+    if (!resolved || depth > MAX_BRANCH_DEPTH) {
+      return [];
+    }
+
+    const values: string[] = [];
+
+    if (typeof resolved.const === 'string') {
+      values.push(resolved.const);
+    }
+
+    values.push(...(resolved.enum ?? []));
+
+    for (const branch of resolved.anyOf ?? resolved.oneOf ?? []) {
+      values.push(...collectValues(branch, depth + 1));
+    }
+
+    return values;
+  }
+
+  function mergeBranchProperties(branches: OverrideFieldSchema[]): OverrideFieldSchema {
+    const properties: Record<string, OverrideFieldSchema> = {};
+
+    for (const branch of branches) {
+      for (const [key, propertySchema] of Object.entries(branch.properties ?? {})) {
+        properties[key] ??= propertySchema;
+      }
+    }
+
+    return { type: 'object', properties };
+  }
+
+  function objectNode(
+    fieldSchema: OverrideFieldSchema | undefined,
+    discriminator?: string
+  ): OverrideFieldSchema | undefined {
+    const resolved = deref(fieldSchema);
+    if (!resolved) {
+      return undefined;
+    }
+
+    const rawBranches = resolved.anyOf ?? resolved.oneOf;
+    if (!rawBranches) {
+      return resolved;
+    }
+
+    const objectBranches = rawBranches
+      .map((branch) => deref(branch))
+      .filter((branch): branch is OverrideFieldSchema => !!branch?.properties);
+
+    if (objectBranches.length === 0) {
+      return resolved;
+    }
+
+    if (discriminator) {
+      const match = objectBranches.find((branch) =>
+        collectValues(branch.properties?.[DISCRIMINATOR_KEY], 0).includes(discriminator)
+      );
+
+      if (match) {
+        return match;
+      }
+    }
+
+    if (objectBranches.length === 1) {
+      return objectBranches[0];
+    }
+
+    const discriminatorValues = unique(
+      objectBranches.flatMap((branch) => collectValues(branch.properties?.[DISCRIMINATOR_KEY], 0))
+    );
+
+    // With several candidate branches and no chosen type yet, offering every branch's fields would
+    // be noise. Offer only the discriminator so the next keystroke narrows the union.
+    if (discriminatorValues.length > 1) {
+      return {
+        type: 'object',
+        properties: {
+          [DISCRIMINATOR_KEY]: {
+            type: 'string',
+            enum: discriminatorValues,
+            description: DISCRIMINATOR_HINT,
+          },
+        },
+      };
+    }
+
+    return mergeBranchProperties(objectBranches);
+  }
+
+  function propertyNode(node: OverrideFieldSchema | undefined, key: string): OverrideFieldSchema | undefined {
+    const direct = node?.properties?.[key];
+    if (direct) {
+      return direct;
+    }
+
+    const additional = node?.additionalProperties;
+
+    return typeof additional === 'object' ? additional : undefined;
+  }
+
+  function itemsNode(fieldSchema: OverrideFieldSchema | undefined): OverrideFieldSchema | undefined {
+    return deref(fieldSchema)?.items;
+  }
+
+  function valueOptions(fieldSchema: OverrideFieldSchema | undefined): string[] {
+    return unique(collectValues(fieldSchema, 0));
+  }
+
+  function unionBranchSummaries(fieldSchema: OverrideFieldSchema | undefined): UnionBranchSummary[] {
+    const byType = new Map<string, UnionBranchSummary>();
+
+    // Nested unions (Slack ImageBlock = anyOf of image_url vs slack_file shapes) only expose
+    // `properties.type` on the leaves; recurse the same branch graph collectValues walks.
+    function visit(node: OverrideFieldSchema | undefined, depth: number, fallbackDescription?: string): void {
+      const resolved = deref(node);
+      if (!resolved || depth > MAX_BRANCH_DEPTH) {
+        return;
+      }
+
+      const rawBranches = resolved.anyOf ?? resolved.oneOf;
+      if (rawBranches) {
+        const unionDescription = plainDescription(resolved.description) ?? fallbackDescription;
+
+        for (const branch of rawBranches) {
+          visit(branch, depth + 1, unionDescription);
+        }
+
+        return;
+      }
+
+      if (!resolved.properties?.[DISCRIMINATOR_KEY]) {
+        return;
+      }
+
+      const description = plainDescription(resolved.description) ?? fallbackDescription;
+
+      for (const typeValue of collectValues(resolved.properties[DISCRIMINATOR_KEY], 0)) {
+        if (!byType.has(typeValue)) {
+          byType.set(typeValue, { typeValue, description });
+        }
+      }
+    }
+
+    visit(fieldSchema, 0);
+
+    return [...byType.values()];
+  }
+
+  return {
+    rootSchema,
+    deref,
+    describedNode,
+    typeLabel,
+    defaultValue,
+    objectNode,
+    propertyNode,
+    itemsNode,
+    valueOptions,
+    unionBranchSummaries,
+  };
+}

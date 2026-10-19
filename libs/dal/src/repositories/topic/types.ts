@@ -1,6 +1,6 @@
 export { EnvironmentId } from '../environment';
-export { ExternalSubscriberId, SubscriberId } from '../subscriber';
 export { OrganizationId } from '../organization';
+export { ExternalSubscriberId, SubscriberId } from '../subscriber';
 
 export type TopicId = string;
 export type TopicKey = string;

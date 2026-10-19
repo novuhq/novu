@@ -1,0 +1,437 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { RiArrowLeftSLine, RiRobot2Line } from 'react-icons/ri';
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
+import {
+  AGENTS_LIST_QUERY_KEY,
+  type AgentResponse,
+  deleteAgent,
+  getAgent,
+  getAgentDetailQueryKey,
+  getAgentIntegrationsQueryKey,
+  listAgentIntegrations,
+} from '@/api/agents';
+import { NovuApiError } from '@/api/api.client';
+import { WebChatDrawer } from '@/components/agents/web-chat-panel';
+import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
+import { AgentIntegrationsTab } from '@/components/agents/agent-integrations-tab';
+import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
+import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
+import { AgentExceedsPlanBanner } from '@/components/agents/agents-plan-limit-banner';
+import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
+import {
+  getWebChatIntegrationLink,
+  hasAgentInboundConnection,
+} from '@/components/agents/is-agent-integration-connected';
+import { ConnectSubscriberProvider } from '@/components/connect/connect-subscriber-provider';
+import { DashboardLayout } from '@/components/dashboard-layout';
+import { PageMeta } from '@/components/page-meta';
+import { Badge } from '@/components/primitives/badge';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/primitives/breadcrumb';
+import { CompactButton } from '@/components/primitives/button-compact';
+import { Skeleton } from '@/components/primitives/skeleton';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import TruncatedText from '@/components/truncated-text';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useWebChatPreview } from '@/hooks/use-web-chat-preview';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { QueryKeys } from '@/utils/query-keys';
+import {
+  WEB_CHAT_PREVIEW_PARAM,
+  AGENT_DETAILS_CHAT_TAB,
+  AGENT_DETAILS_DEFAULT_TAB,
+  AGENT_DETAILS_TABS,
+  type AgentDetailsTab,
+  buildRoute,
+  parseAgentDetailsTab,
+} from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
+
+function isValidAgentDetailsTab(tab: string): tab is AgentDetailsTab {
+  return (AGENT_DETAILS_TABS as readonly string[]).includes(tab);
+}
+
+function getBreadcrumbCurrentLabel(isNotFound: boolean, error: unknown, agent: AgentResponse | undefined): string {
+  if (isNotFound) {
+    return 'Not found';
+  }
+
+  if (error) {
+    return 'Agent';
+  }
+
+  return agent?.name ?? 'Agent';
+}
+
+function AgentDetailsTabsSkeleton() {
+  return (
+    <div className="flex w-full flex-col">
+      <div className="border-stroke-soft -mx-2 border-b px-4 py-3 md:px-6">
+        <Skeleton className="h-5 w-56" />
+      </div>
+      <div className="mx-auto max-w-3xl px-3 py-4 md:px-6">
+        <Skeleton className="h-24 w-full max-w-xl" />
+      </div>
+    </div>
+  );
+}
+
+export function AgentDetailsPage() {
+  const {
+    agentIdentifier = '',
+    agentTab: agentTabParam,
+    integrationIdentifier: integrationIdentifierParam,
+  } = useParams<{
+    agentIdentifier?: string;
+    agentTab?: string;
+    integrationIdentifier?: string;
+  }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
+  const { currentEnvironment, readOnly } = useEnvironment();
+  const areAgentsAvailable = useAreConversationalAgentsAvailable();
+  const agentRoutes = useAgentRoutes();
+  const [agentToDelete, setAgentToDelete] = useState<AgentResponse | null>(null);
+  const [setupModalDismissed, setSetupModalDismissed] = useState(false);
+  const track = useTelemetry();
+  const lastAgentDetailsTelemetryKey = useRef<string | null>(null);
+  const { isOpen: isChatPreviewOpen, setPreviewOpen } = useWebChatPreview();
+
+  const agentsListPath = buildRoute(agentRoutes.list, {
+    environmentSlug: currentEnvironment?.slug ?? '',
+  });
+
+  const agentQuery = useQuery({
+    queryKey: getAgentDetailQueryKey(currentEnvironment?._id, agentIdentifier),
+    queryFn: () => getAgent(requireEnvironment(currentEnvironment, 'No environment selected'), agentIdentifier),
+    enabled: Boolean(currentEnvironment && agentIdentifier && areAgentsAvailable),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: ({
+      identifier,
+      deleteFromProvider,
+    }: {
+      identifier: string;
+      name: string;
+      deleteFromProvider?: boolean;
+    }) =>
+      deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, {
+        deleteFromProvider,
+      }),
+    onSuccess: async (_, { identifier, name }) => {
+      setAgentToDelete(null);
+      showSuccessToast(`Deleted agent: ${name.length > 40 ? `${name.slice(0, 40)}…` : name}`);
+      track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
+      await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflows] });
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] });
+      navigate(agentsListPath);
+    },
+    onError: (err: Error) => {
+      const message = err instanceof NovuApiError ? err.message : 'Could not delete agent.';
+
+      showErrorToast(message, 'Delete failed');
+    },
+  });
+
+  const agentIntegrationsQuery = useQuery({
+    queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agentIdentifier),
+    queryFn: () =>
+      listAgentIntegrations({
+        environment: requireEnvironment(currentEnvironment, 'No environment selected'),
+        agentIdentifier,
+        limit: 100,
+      }),
+    enabled: Boolean(currentEnvironment && agentIdentifier && areAgentsAvailable),
+  });
+
+  const hasConnectedIntegration = useMemo(() => {
+    const links = agentIntegrationsQuery.data?.data;
+    if (!links?.length) return false;
+
+    return links.some((link) => Boolean(link.connectedAt));
+  }, [agentIntegrationsQuery.data?.data]);
+
+  const webChatLink = useMemo(
+    () => getWebChatIntegrationLink(agentIntegrationsQuery.data?.data),
+    [agentIntegrationsQuery.data?.data]
+  );
+  const webChatIntegrationIdentifier = webChatLink?.integration.identifier;
+  const hasWebChat = Boolean(webChatIntegrationIdentifier);
+  const showAddToAppCallouts = webChatLink != null && !hasAgentInboundConnection(webChatLink.connectedAt);
+
+  const isProductionEnv = readOnly;
+  const agent = agentQuery.data;
+  const showSetupModal =
+    isProductionEnv &&
+    agent != null &&
+    agentIntegrationsQuery.isSuccess &&
+    !agent.active &&
+    !hasConnectedIntegration &&
+    !setupModalDismissed;
+
+  const integrationIdentifier = integrationIdentifierParam ? decodeURIComponent(integrationIdentifierParam) : undefined;
+  const currentTab = integrationIdentifier ? 'integrations' : parseAgentDetailsTab(agentTabParam);
+
+  useEffect(() => {
+    if (!areAgentsAvailable || !agentIdentifier || !agentQuery.data) {
+      return;
+    }
+
+    const dedupeKey = `${agentQuery.data.identifier}:${currentTab}:${integrationIdentifier ?? ''}`;
+    if (lastAgentDetailsTelemetryKey.current === dedupeKey) {
+      return;
+    }
+
+    lastAgentDetailsTelemetryKey.current = dedupeKey;
+
+    track(TelemetryEvent.AGENT_DETAILS_PAGE_VISITED, {
+      agentIdentifier: agentQuery.data.identifier,
+      tab: currentTab,
+      integrationIdentifier: integrationIdentifier ?? undefined,
+    });
+
+    if (integrationIdentifier) {
+      track(TelemetryEvent.AGENT_INTEGRATION_GUIDE_VIEWED, {
+        agentIdentifier: agentQuery.data.identifier,
+        integrationIdentifier,
+      });
+    }
+  }, [agentIdentifier, agentQuery.data, currentTab, integrationIdentifier, areAgentsAvailable, track]);
+
+  if (!areAgentsAvailable) {
+    return <Navigate to={agentsListPath} replace />;
+  }
+
+  if (!agentIdentifier) {
+    return <Navigate to={agentsListPath} replace />;
+  }
+
+  if (agentTabParam === AGENT_DETAILS_CHAT_TAB && currentEnvironment?.slug) {
+    const params = new URLSearchParams(location.search);
+    params.set(WEB_CHAT_PREVIEW_PARAM, '1');
+    const query = params.toString();
+
+    return (
+      <Navigate
+        replace
+        to={`${buildRoute(agentRoutes.detailsTab, {
+          environmentSlug: currentEnvironment.slug,
+          agentIdentifier: encodeURIComponent(agentIdentifier),
+          agentTab: AGENT_DETAILS_DEFAULT_TAB,
+        })}${query ? `?${query}` : ''}`}
+      />
+    );
+  }
+
+  if (agentTabParam && currentEnvironment?.slug && !isValidAgentDetailsTab(agentTabParam)) {
+    return (
+      <Navigate
+        replace
+        to={`${buildRoute(agentRoutes.detailsTab, {
+          environmentSlug: currentEnvironment.slug,
+          agentIdentifier: encodeURIComponent(agentIdentifier),
+          agentTab: AGENT_DETAILS_DEFAULT_TAB,
+        })}${location.search}`}
+      />
+    );
+  }
+
+  const isLoading = agentQuery.isLoading;
+  const error = agentQuery.error;
+  const isNotFound = error instanceof NovuApiError && error.status === 404;
+
+  let pageTitle = 'Agent';
+
+  if (isNotFound) {
+    pageTitle = 'Agent not found';
+  } else if (error && !isNotFound) {
+    pageTitle = 'Agent';
+  } else if (agent) {
+    pageTitle = agent.name;
+  }
+
+  const handleTabChange = (value: string) => {
+    if (!agent || !currentEnvironment?.slug) {
+      return;
+    }
+
+    navigate(
+      `${buildRoute(agentRoutes.detailsTab, {
+        environmentSlug: currentEnvironment.slug,
+        agentIdentifier: encodeURIComponent(agent.identifier),
+        agentTab: value,
+      })}${location.search}`
+    );
+  };
+
+  const handleBack = () => navigate(agentsListPath);
+
+  const breadcrumbCurrentLabel = getBreadcrumbCurrentLabel(isNotFound, error, agent);
+
+  const headerStartItems = (
+    <div className="flex min-w-0 items-center gap-1 overflow-hidden">
+      <CompactButton
+        size="lg"
+        className="mr-1 shrink-0"
+        variant="ghost"
+        icon={RiArrowLeftSLine}
+        type="button"
+        aria-label="Back to agents"
+        onClick={handleBack}
+      />
+      <Breadcrumb className="min-w-0">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink to={agentsListPath}>Agents</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem className="min-w-0">
+            {isLoading ? (
+              <div className="flex min-w-0 items-center gap-1.5">
+                <Skeleton className="inline-block h-5 w-[min(100%,16ch)]" />
+                <Badge color="gray" size="sm" variant="lighter" className="shrink-0">
+                  BETA
+                </Badge>
+              </div>
+            ) : (
+              <BreadcrumbPage className="flex min-w-0 items-center gap-1.5">
+                <RiRobot2Line className="text-text-sub size-4 shrink-0" aria-hidden />
+                <TruncatedText className="min-w-0 max-w-[40ch]">{breadcrumbCurrentLabel}</TruncatedText>
+                <Badge color="gray" size="sm" variant="lighter" className="shrink-0">
+                  BETA
+                </Badge>
+              </BreadcrumbPage>
+            )}
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    </div>
+  );
+
+  return (
+    <>
+      <PageMeta title={pageTitle} />
+      <DashboardLayout headerStartItems={headerStartItems}>
+        {isNotFound ? (
+          <div className="text-text-soft text-label-sm max-w-3xl px-4 py-6 md:px-6">
+            <p>This agent does not exist or was removed.</p>
+            <Link to={agentsListPath} className="text-primary-base mt-3 inline-block text-label-sm font-medium">
+              Back to agents
+            </Link>
+          </div>
+        ) : null}
+
+        {error && !isNotFound ? (
+          <div className="text-error-base text-label-sm max-w-3xl px-4 py-6 md:px-6">
+            Could not load this agent. Try again later.
+          </div>
+        ) : null}
+
+        {!error && isLoading ? (
+          <>
+            <AgentDetailsHeader agent={undefined} isLoading />
+            <AgentDetailsTabsSkeleton />
+          </>
+        ) : null}
+
+        {!error && !isLoading && agent ? (
+          <>
+            <AgentDetailsHeader agent={agent} isLoading={false} onRequestDelete={setAgentToDelete} />
+
+            {agent.exceedsPlanLimit ? (
+              <div className="px-4 pb-2 md:px-6">
+                <AgentExceedsPlanBanner />
+              </div>
+            ) : null}
+
+            <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2 w-full">
+              <TabsList align="start" variant="regular" className="border-t-transparent px-4 py-0! md:px-6">
+                <TabsTrigger variant="regular" value="overview" size="xl">
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger variant="regular" value="integrations" size="xl">
+                  Channels
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="outline-none">
+                <ConnectSubscriberProvider>
+                  <AgentOverviewTab agent={agent} />
+                </ConnectSubscriberProvider>
+              </TabsContent>
+              <TabsContent value="integrations" className="outline-none">
+                {currentTab === 'integrations' ? (
+                  <ConnectSubscriberProvider>
+                    <AgentIntegrationsTab agent={agent} integrationIdentifier={integrationIdentifier} />
+                  </ConnectSubscriberProvider>
+                ) : null}
+              </TabsContent>
+            </Tabs>
+
+            {hasWebChat ? (
+              <WebChatDrawer
+                open={isChatPreviewOpen}
+                onOpenChange={setPreviewOpen}
+                agent={agent}
+                showAddToAppCallouts={showAddToAppCallouts}
+                addToAppHref={
+                  currentEnvironment?.slug && webChatIntegrationIdentifier
+                    ? buildRoute(agentRoutes.integrationDetail, {
+                        environmentSlug: currentEnvironment.slug,
+                        agentIdentifier: encodeURIComponent(agent.identifier),
+                        integrationIdentifier: encodeURIComponent(webChatIntegrationIdentifier),
+                      })
+                    : undefined
+                }
+              />
+            ) : null}
+
+            <DeleteAgentDialog
+              open={Boolean(agentToDelete)}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setAgentToDelete(null);
+                }
+              }}
+              onConfirm={({ deleteFromProvider }) => {
+                if (agentToDelete) {
+                  deleteMutation.mutate({
+                    identifier: agentToDelete.identifier,
+                    name: agentToDelete.name,
+                    deleteFromProvider,
+                  });
+                }
+              }}
+              agentName={agentToDelete?.name ?? ''}
+              agentIdentifier={agentToDelete?.identifier ?? ''}
+              isDeleting={deleteMutation.isPending}
+              isManagedRuntime={agentToDelete?.runtime === 'managed'}
+            />
+
+            <AgentSetupModal
+              isOpen={showSetupModal}
+              onClose={() => setSetupModalDismissed(true)}
+              onSetupClick={() => {
+                setSetupModalDismissed(true);
+                handleTabChange('integrations');
+              }}
+            />
+          </>
+        ) : null}
+      </DashboardLayout>
+    </>
+  );
+}

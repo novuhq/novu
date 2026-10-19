@@ -1,11 +1,10 @@
 import { createParamDecorator, UnauthorizedException } from '@nestjs/common';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const UserSession = createParamDecorator((data, ctx) => {
   let req;
 
-  if (ctx.getType() === 'graphql') {
+  if ((ctx.getType() as string) === 'graphql') {
     req = ctx.getArgs()[2].req;
   } else {
     req = ctx.switchToHttp().getRequest();
@@ -29,11 +28,10 @@ export const UserSession = createParamDecorator((data, ctx) => {
   return null;
 });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const SubscriberSession = createParamDecorator((data, ctx) => {
   let req;
 
-  if (ctx.getType() === 'graphql') {
+  if ((ctx.getType() as string) === 'graphql') {
     req = ctx.getArgs()[2].req;
   } else {
     req = ctx.switchToHttp().getRequest();

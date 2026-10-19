@@ -9,7 +9,6 @@ import { AppModule } from '../../src/app.module';
  * topic subscriber normalize - will remove deleted subscribers from topic subscribers
  */
 export async function topicSubscriberNormalize() {
-  // eslint-disable-next-line no-console
   console.log('start migration - topic subscriber normalize - will remove deleted subscribers from topic subscribers');
 
   const app = await NestFactory.create(AppModule, {
@@ -30,7 +29,6 @@ export async function topicSubscriberNormalize() {
     );
 
     if (!subscriber) {
-      // eslint-disable-next-line no-console
       console.log(
         `remove relation topic subscriber ${topicSubscriber.externalSubscriberId} from topic ${topicSubscriber._topicId}`
       );
@@ -43,7 +41,6 @@ export async function topicSubscriberNormalize() {
     }
   }
 
-  // eslint-disable-next-line no-console
   console.log('end migration- topic subscriber normalize');
 
   app.close();

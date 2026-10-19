@@ -1,9 +1,8 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
-import { WorkflowOverrideService } from '@novu/testing';
 import { NotificationGroupRepository, NotificationTemplateRepository, WorkflowOverrideRepository } from '@novu/dal';
+import { UserSession, WorkflowOverrideService } from '@novu/testing';
+import { expect } from 'chai';
 
-describe('Get workflows overrides - /workflow-overrides (GET)', async () => {
+describe('Get workflows overrides - /workflow-overrides (GET) #novu-v0', async () => {
   let session: UserSession;
   const notificationTemplateRepository = new NotificationTemplateRepository();
   const notificationGroupRepository = new NotificationGroupRepository();
@@ -62,7 +61,7 @@ describe('Get workflows overrides - /workflow-overrides (GET)', async () => {
     });
     await workflowOverrideService.createWorkflowOverride({ workflowId: workflow._id });
 
-    const data = (await session.testAgent.get(`/v1/workflow-overrides`)).body.data;
+    const { data } = (await session.testAgent.get(`/v1/workflow-overrides`)).body;
 
     expect(data.length).to.equal(3);
 

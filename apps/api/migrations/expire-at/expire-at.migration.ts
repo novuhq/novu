@@ -1,15 +1,15 @@
 import '../../src/config';
+import { NestFactory } from '@nestjs/core';
 import {
-  MessageRepository,
-  NotificationRepository,
+  EnvironmentRepository,
   ExecutionDetailsRepository,
   JobRepository,
-  OrganizationRepository,
-  EnvironmentRepository,
   JobStatusEnum,
+  MessageRepository,
+  NotificationRepository,
+  OrganizationRepository,
 } from '@novu/dal';
-import { addMinutes, addDays } from 'date-fns';
-import { NestFactory } from '@nestjs/core';
+import { addDays, addMinutes } from 'date-fns';
 import { AppModule } from '../../src/app.module';
 
 const messageRepository = new MessageRepository();
@@ -27,10 +27,8 @@ export async function createExpireAt() {
     logger: false,
   });
 
-  // eslint-disable-next-line no-console
   console.log('start migration - add expireAt field');
 
-  // eslint-disable-next-line no-console
   console.log('get organizations and its environments');
 
   const organizations = await organizationRepository.find({});
@@ -59,7 +57,6 @@ export async function createExpireAt() {
     console.log('Prococessed organization' + organization._id);
   }
 
-  // eslint-disable-next-line no-console
   console.log('end migration');
 }
 

@@ -5,11 +5,11 @@ import {
   NotificationTemplateRepository,
   TenantEntity,
   TenantRepository,
-  WorkflowOverrideRepository,
   WorkflowOverrideEntity,
+  WorkflowOverrideRepository,
 } from '@novu/dal';
+import { UpdateWorkflowOverrideResponseDto } from '../../dtos/update-workflow-override-response.dto';
 import { UpdateWorkflowOverrideCommand } from './update-workflow-override.command';
-import { UpdateWorkflowOverrideResponseDto } from '../../dto/update-workflow-override-response.dto';
 
 @Injectable()
 export class UpdateWorkflowOverride {

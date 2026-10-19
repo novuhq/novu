@@ -1,0 +1,102 @@
+---
+title: 'Webhook connectors'
+description: 'Send Novu webhook events to data warehouses, object storage, messaging services, analytics tools, and observability collectors.'
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+
+Webhook connectors deliver Novu events directly to services that would otherwise require a custom HTTP receiver. Novu uses [Svix](https://docs.svix.com/introduction) to manage connector delivery, transformations, retries, and endpoint logs.
+
+<WebhookConnectorsPlanNote />
+
+Each connector has a step-by-step setup guide covering prerequisites, configuration fields, the transformation contract, verification, and troubleshooting. Select a destination below to open its guide.
+
+## Data warehouses
+
+Store notification events as queryable rows. Create the destination table before you enable the endpoint, because connectors do not create or alter tables.
+
+Before you pick a warehouse, read [Plan your export](/guides/webhook-connectors/data-warehouse-sync) for the event types to subscribe to and the schema decisions that apply to every warehouse.
+
+<Columns cols={2}>
+  <Card title="ClickHouse" href="/guides/webhook-connectors/clickhouse">
+    Insert Novu events into a ClickHouse table with `JSONEachRow` or a batch transformation.
+  </Card>
+  <Card title="Google BigQuery" href="/guides/webhook-connectors/google-bigquery">
+    Insert notification events into BigQuery for delivery and engagement analysis.
+  </Card>
+  <Card title="Snowflake" href="/guides/webhook-connectors/snowflake">
+    Write webhook batches to Snowflake with key-pair authentication.
+  </Card>
+  <Card title="Amazon Redshift" href="/guides/webhook-connectors/amazon-redshift">
+    Write webhook batches through the Redshift Data API.
+  </Card>
+  <Card title="Postgres" href="/guides/webhook-connectors/postgres">
+    Insert Novu events as rows in a Postgres table.
+  </Card>
+</Columns>
+
+## Object storage
+
+Write each webhook batch as a timestamped object. Choose JSON Lines, JSON, or raw output in the connector transformation.
+
+<Columns cols={2}>
+  <Card title="Amazon S3" href="/guides/webhook-connectors/amazon-s3">
+    Store webhook batches as objects in an Amazon S3 bucket.
+  </Card>
+  <Card title="Azure Blob Storage" href="/guides/webhook-connectors/azure-blob-storage">
+    Store webhook batches as blobs in an Azure Storage container.
+  </Card>
+  <Card title="Google Cloud Storage" href="/guides/webhook-connectors/google-cloud-storage">
+    Store webhook batches as objects in a Google Cloud Storage bucket.
+  </Card>
+</Columns>
+
+## Messaging
+
+Publish Novu events to a queue, topic, exchange, or event bus for asynchronous processing.
+
+<Columns cols={2}>
+  <Card title="Amazon SQS" href="/guides/webhook-connectors/amazon-sqs">
+    Send Novu events to an Amazon SQS queue.
+  </Card>
+  <Card title="Amazon SNS" href="/guides/webhook-connectors/amazon-sns">
+    Publish Novu events to an Amazon SNS topic.
+  </Card>
+  <Card title="Amazon EventBridge" href="/guides/webhook-connectors/amazon-eventbridge">
+    Publish Novu events to an Amazon EventBridge event bus.
+  </Card>
+  <Card title="RabbitMQ" href="/guides/webhook-connectors/rabbitmq">
+    Publish Novu events to RabbitMQ with a routing key.
+  </Card>
+  <Card title="Google Cloud Pub/Sub" href="/guides/webhook-connectors/google-cloud-pubsub">
+    Publish Novu events to a Google Cloud Pub/Sub topic.
+  </Card>
+</Columns>
+
+## Analytics and observability
+
+Send Novu events to analytics and tracing systems without operating a receiver service.
+
+<Columns cols={2}>
+  <Card title="Segment" href="/guides/webhook-connectors/segment">
+    Map Novu events to Segment Track calls.
+  </Card>
+  <Card title="OpenTelemetry Collector" href="/guides/webhook-connectors/opentelemetry-collector">
+    Convert Novu events into spans and send them to an OTLP traces endpoint.
+  </Card>
+</Columns>
+
+## HTTP delivery
+
+Use polling when a consumer cannot accept inbound HTTP requests. Use FIFO delivery when the consumer must process webhook batches in strict order.
+
+<Columns cols={2}>
+  <Card title="Polling Endpoint" href="/guides/webhook-connectors/polling-endpoint">
+    Pull events with an endpoint-scoped token and commit offsets after processing.
+  </Card>
+  <Card title="FIFO Endpoint" href="/guides/webhook-connectors/fifo-endpoint">
+    Deliver webhook batches over HTTP in strict first-in, first-out order.
+  </Card>
+</Columns>
+
+For a standard push endpoint, see [Webhooks](/platform/developer/webhooks/webhooks). For payload availability, see [Event types](/platform/developer/webhooks/event-types).

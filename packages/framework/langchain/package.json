@@ -1,0 +1,4 @@
+{
+  "main": "../dist/cjs/langchain/index.cjs",
+  "types": "../dist/cjs/langchain/index.d.cts"
+}

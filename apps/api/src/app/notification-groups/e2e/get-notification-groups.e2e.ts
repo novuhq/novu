@@ -1,7 +1,7 @@
-import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
-describe('Get Notification Groups - /notification-groups (GET)', async () => {
+describe('Get Notification Groups - /notification-groups (GET) #novu-v0', async () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -9,7 +9,7 @@ describe('Get Notification Groups - /notification-groups (GET)', async () => {
     await session.initialize();
   });
 
-  it('should get all notification groups', async function () {
+  it('should get all notification groups', async () => {
     await session.testAgent.post(`/v1/notification-groups`).send({
       name: 'Test name',
     });

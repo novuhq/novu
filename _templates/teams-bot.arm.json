@@ -1,0 +1,86 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_description": "Deploys an Azure Bot (F0) with the Microsoft Teams channel enabled. Paste App ID, tenant, app type, and messaging endpoint from the Novu Teams setup guide."
+  },
+  "parameters": {
+    "botName": {
+      "type": "string",
+      "defaultValue": "novu-agent-bot",
+      "metadata": {
+        "description": "Name of the Azure Bot resource (globally unique)."
+      }
+    },
+    "msaAppId": {
+      "type": "string",
+      "metadata": {
+        "description": "Application (client) ID from your Microsoft Entra app registration."
+      }
+    },
+    "msaAppType": {
+      "type": "string",
+      "defaultValue": "SingleTenant",
+      "allowedValues": ["SingleTenant", "MultiTenant", "UserAssignedMSI"],
+      "metadata": {
+        "description": "Microsoft app type for the bot (matches your app registration)."
+      }
+    },
+    "msaAppTenantId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Directory (tenant) ID. Use empty string for multi-tenant bots when applicable."
+      }
+    },
+    "messagingEndpoint": {
+      "type": "string",
+      "metadata": {
+        "description": "HTTPS messaging endpoint URL (from Novu — copy from the setup guide)."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.BotService/botServices",
+      "apiVersion": "2022-09-15",
+      "name": "[parameters('botName')]",
+      "location": "global",
+      "kind": "azurebot",
+      "sku": {
+        "name": "F0"
+      },
+      "properties": {
+        "displayName": "[parameters('botName')]",
+        "endpoint": "[parameters('messagingEndpoint')]",
+        "msaAppId": "[parameters('msaAppId')]",
+        "msaAppType": "[parameters('msaAppType')]",
+        "msaAppTenantId": "[parameters('msaAppTenantId')]",
+        "tenantId": "[parameters('msaAppTenantId')]",
+        "luisAppIds": [],
+        "schemaTransformationVersion": "1.3",
+        "isCmekEnabled": false
+      }
+    },
+    {
+      "type": "Microsoft.BotService/botServices/channels",
+      "apiVersion": "2022-09-15",
+      "name": "[concat(parameters('botName'), '/MsTeamsChannel')]",
+      "location": "global",
+      "dependsOn": ["[resourceId('Microsoft.BotService/botServices', parameters('botName'))]"],
+      "properties": {
+        "channelName": "MsTeamsChannel",
+        "properties": {
+          "isEnabled": true,
+          "acceptedTerms": true
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "botResourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.BotService/botServices', parameters('botName'))]"
+    }
+  }
+}

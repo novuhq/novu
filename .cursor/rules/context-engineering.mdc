@@ -1,0 +1,25 @@
+---
+description: Context quality checklist for system prompts and agent instructions
+globs:
+  - "**/tools/**/*.ts"
+  - "**/prompts/**/*.ts"
+  - "**/*.prompt.ts"
+  - "AGENTS.md"
+  - ".cursor/rules/**"
+  - ".cursor/skills/**"
+  - ".agents/skills/**"
+alwaysApply: false
+---
+
+### Context Engineering Checklist
+
+When writing or reviewing agent instructions, tool descriptions, or prompts:
+
+- Is this explained elsewhere? → Consolidate to one location
+- Would a senior dev infer this? → Remove if obvious
+- Can this be an example instead? → One example beats three paragraphs of rules
+- Is this defensive repetition ("MUST", "NEVER", "CRITICAL")? → State once, remove emphasis
+- Does this duplicate a tool's own description? → Keep in tool description only
+- Are there prescriptive step lists? → Compress to a sentence
+- Is the altitude right? → Specific heuristics, not hardcoded logic or vague guidance
+- Is this stable across requests? → Move to cached/static portion

@@ -1,18 +1,18 @@
-import { expect } from 'chai';
 import {
-  MessageRepository,
-  NotificationTemplateEntity,
-  SubscriberRepository,
   ExecutionDetailsRepository,
   JobRepository,
+  MessageRepository,
   NotificationRepository,
+  NotificationTemplateEntity,
+  SubscriberRepository,
 } from '@novu/dal';
-import { UserSession } from '@novu/testing';
-import { sendTrigger } from '../../src/app/events/e2e/trigger-event.e2e';
 import { DelayTypeEnum, DigestUnitEnum, StepTypeEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { sendTrigger } from '../../src/app/events/e2e/trigger-event.e2e';
 import { notificationExpireAt } from './expire-at.migration';
 
-describe('Create expireAt - TTL support - with pending jobs', function () {
+describe('Create expireAt - TTL support - with pending jobs', () => {
   const messageRepository = new MessageRepository();
   const notificationRepository = new NotificationRepository();
   const jobRepository = new JobRepository();
@@ -34,7 +34,7 @@ describe('Create expireAt - TTL support - with pending jobs', function () {
       expireAt: { $exists: false },
     };
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 5; i += 1) {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       await sendTrigger(session, digestTemplate, newSubscriberIdInAppNotification);
       await sendTrigger(session, delayTemplate, newSubscriberIdInAppNotification);
@@ -49,7 +49,7 @@ describe('Create expireAt - TTL support - with pending jobs', function () {
     await executionDetailsRepository.update({ _environmentId: session.environment._id }, { $unset: { expireAt: 1 } });
   });
 
-  it('should not add expireAt for a pending execution', async function () {
+  it('should not add expireAt for a pending execution', async () => {
     await notificationExpireAt(query);
 
     const notifications = await notificationRepository.find({
@@ -73,8 +73,8 @@ describe('Create expireAt - TTL support - with pending jobs', function () {
     });
   });
 
-  it('should add expireAt to pending events that were digested', async function () {
-    await session.awaitRunningJobs(digestTemplate?._id, false, 5);
+  it('should add expireAt to pending events that were digested', async () => {
+    await session.waitForJobCompletion();
 
     await notificationExpireAt(query);
 

@@ -1,0 +1,147 @@
+---
+title: 'Send webhook events to an OpenTelemetry Collector'
+description: 'Configure the OpenTelemetry Collector webhook connector to convert selected Novu events into OTLP trace spans.'
+sidebarTitle: 'OpenTelemetry Collector'
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import WebhookBatchInput from "/snippets/webhook-batch-input.mdx";
+
+The OpenTelemetry Collector connector transforms selected Novu webhook events into spans and sends them to an OTLP HTTP traces endpoint.
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- An OpenTelemetry-compatible traces endpoint
+- Any authentication headers required by the collector or observability provider
+- Permission to manage webhook endpoints in the Novu environment
+
+The URL is typically the provider's `OTEL_EXPORTER_OTLP_ENDPOINT` with `/v1/traces` appended.
+
+## Configuration
+
+| Dashboard field | Required | Description |
+| --- | --- | --- |
+| **URL** | Yes | OTLP HTTP traces endpoint, including `/v1/traces` when required by the provider. |
+| **Headers** | No | String key-value headers required by the collector. |
+| **Transformation** | Yes | JavaScript that maps an event batch to OpenTelemetry spans. |
+
+Provider-specific examples documented by Svix include `dd-api-key` for Datadog, `CX-Application-Name` and `CX-Subsystem-Name` for Coralogix, and `api-key` for New Relic. Confirm current requirements with your provider.
+
+## Transformation contract
+
+<WebhookBatchInput />
+
+It returns:
+
+```ts
+{
+  config: {
+    serviceName: string;
+    scope: {
+      name: string;
+      version: string;
+    };
+  };
+  spans: Array<{
+    startTime: string;
+    endTime: string;
+    name: string;
+    kind?: "SERVER" | "CLIENT" | "PRODUCER" | "CONSUMER" | "INTERNAL";
+    attributes?: Record<string, unknown>;
+    traceIdKey?: string;
+    spanIdKey?: string;
+    parentSpanIdKey?: string;
+  }>;
+}
+```
+
+`startTime` and `endTime` must be ISO 8601 strings. `traceIdKey` groups spans into one trace. `spanIdKey` identifies a parent span, and `parentSpanIdKey` attaches a child to that parent.
+
+```js
+function handler(input) {
+  const spans = input.events.map((event) => {
+    const timestamp = new Date().toISOString();
+
+    return {
+      startTime: timestamp,
+      endTime: timestamp,
+      name: event.eventType,
+      attributes: event.payload,
+    };
+  });
+
+  return {
+    config: {
+      serviceName: "novu.webhooks",
+      scope: {
+        name: "novu.webhooks",
+        version: "1.0.0",
+      },
+    },
+    spans,
+  };
+}
+```
+
+This default shape creates one span per event. To correlate events, inspect the real Novu test payloads you select, derive stable keys from them, and set `traceIdKey`, `spanIdKey`, and `parentSpanIdKey`. The child field is `parentSpanIdKey`.
+
+## Configure in the Dashboard
+
+<Steps>
+  <Step>
+## Prepare the collector
+
+Copy the OTLP traces URL and required headers from your collector or observability provider.
+  </Step>
+
+<WebhookConnectorAddEndpoint connectorName="OpenTelemetry Collector" />
+
+  <Step>
+## Enter connection details
+
+Enter the **URL** and optional **Headers**.
+  </Step>
+
+  <Step>
+## Configure the transformation
+
+Map span times, identifiers, and attributes from your selected Novu payloads. Keep `config.serviceName` stable so traces remain searchable.
+  </Step>
+
+  <Step>
+## Select event types
+
+Choose the [event types](/platform/developer/webhooks/event-types) that should produce spans. Select related lifecycle events if you intend to correlate parent and child spans.
+  </Step>
+
+  <Step>
+## Test the endpoint
+
+Create the endpoint. Use **Testing** to send examples for the selected events. Confirm success in **Logs**, then search the observability platform for `service.name` set by `config.serviceName`.
+  </Step>
+</Steps>
+
+## Verify delivery
+
+Search the tracing backend for the configured service name and confirm one span appears for the test event. Compare its name, timestamps, and attributes with the transformed output in the endpoint's **Logs** tab.
+
+## Troubleshooting
+
+- **The collector returns an HTTP error**: Confirm the URL is an OTLP HTTP traces endpoint and includes `/v1/traces` where required.
+- **Authentication fails**: Verify header names and values against the observability provider's current OTLP documentation.
+- **No spans appear after success**: Search for the configured service name and confirm the provider is reading from the same account, site, or region.
+- **Spans have invalid timestamps**: Return ISO 8601 strings for `startTime` and `endTime`.
+- **Spans do not correlate**: Use the same `traceIdKey` for related spans and match a child's `parentSpanIdKey` to its parent's `spanIdKey`.
+
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix OpenTelemetry tracing endpoint](https://docs.svix.com/advanced-endpoints/otel-tracing)
+- [Svix advanced endpoint types](https://docs.svix.com/advanced-endpoints)
+- [OpenTelemetry OTLP endpoint configuration](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/#otel_exporter_otlp_endpoint)

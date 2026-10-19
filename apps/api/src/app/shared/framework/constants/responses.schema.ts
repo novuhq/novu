@@ -1,11 +1,10 @@
 import { ApiResponseOptions } from '@nestjs/swagger';
+import { ApiResponseDecoratorName, HttpResponseHeaderKeysEnum } from '@novu/application-generic';
 import { THROTTLED_EXCEPTION_MESSAGE } from '../../../rate-limiting/guards';
 import { createReusableHeaders } from '../swagger';
-import { ApiResponseDecoratorName, HttpResponseHeaderKeysEnum } from '../types';
 
 export const COMMON_RESPONSES: Partial<Record<ApiResponseDecoratorName, ApiResponseOptions>> = {
   ApiConflictResponse: {
-    description: 'The request could not be completed due to a conflict with the current state of the target resource.',
     schema: {
       type: 'string',
       example:

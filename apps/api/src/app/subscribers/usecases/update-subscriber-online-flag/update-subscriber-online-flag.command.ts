@@ -1,4 +1,4 @@
-import { IsDefined, IsBoolean } from 'class-validator';
+import { IsBoolean, IsDefined } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 

@@ -1,0 +1,209 @@
+---
+title: 'Supabase Auth Notifications with Novu'
+sidebarTitle: 'Supabase auth'
+description: "Send signup, password reset, and authentication alert notifications from Supabase Auth events using Novu workflows, subscribers, and multi-channel delivery."
+---
+
+
+Send auth notifications from Supabase by listening to Supabase Auth events in your backend or Edge Function and triggering Novu workflows for signup confirmations, password resets, and security alerts.
+
+## How does the Supabase and Novu integration work?
+
+1. Supabase Auth emits an event (for example, `SIGNED_UP` or password recovery initiated).
+2. Your application or Edge Function handles the event.
+3. Your handler calls Novu's [Trigger event](/api-reference/events/trigger-event) API with the user's `subscriberId` and event payload.
+4. Novu delivers the notification through your configured workflow.
+
+## How do I send a signup notification?
+
+<Steps>
+  <Step title="Create a welcome workflow in Novu">
+    Add email and optional in-app steps to a `welcome` workflow in the Novu Dashboard.
+  </Step>
+
+  <Step title="Listen for Supabase auth events">
+    Use a Supabase Edge Function or your application backend to handle auth events:
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: Deno.env.get('NOVU_SECRET_KEY')! });
+
+Deno.serve(async (req) => {
+  const { type, record } = await req.json();
+
+  if (type === 'INSERT' && record.email) {
+    await novu.trigger({
+      workflowId: 'welcome',
+      to: { subscriberId: record.id, email: record.email },
+      payload: { email: record.email },
+    });
+  }
+
+  return new Response('ok');
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+def handle_supabase_auth_event(event_type, record):
+    if event_type == "INSERT" and record.get("email"):
+        with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+            novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+                workflow_id="welcome",
+                to={"subscriber_id": record["id"], "email": record["email"]},
+                payload={"email": record["email"]},
+            ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+func handleSupabaseAuthEvent(eventType string, record map[string]any) error {
+    email, _ := record["email"].(string)
+    id, _ := record["id"].(string)
+    if eventType != "INSERT" || email == "" {
+        return nil
+    }
+
+    s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+    _, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+        WorkflowID: "welcome",
+        To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+            SubscriberID: id,
+            Email:        email,
+        }),
+        Payload: map[string]any{"email": email},
+    }, nil)
+    return err
+}
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+function handleSupabaseAuthEvent(string $type, array $record): void
+{
+    if ($type !== 'INSERT' || empty($record['email'])) {
+        return;
+    }
+
+    $sdk = novu\Novu::builder()
+        ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+        ->build();
+
+    $sdk->trigger(
+        triggerEventRequestDto: new Components\TriggerEventRequestDto(
+            workflowId: 'welcome',
+            to: new Components\SubscriberPayloadDto(
+                subscriberId: $record['id'],
+                email: $record['email'],
+            ),
+            payload: ['email' => $record['email']],
+        ),
+    );
+}
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+async Task HandleSupabaseAuthEvent(string type, Dictionary<string, object> record)
+{
+    if (type != "INSERT" || !record.ContainsKey("email")) return;
+
+    var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+    await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+        WorkflowId = "welcome",
+        To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+            SubscriberId = record["id"].ToString(),
+            Email = record["email"].ToString(),
+        }),
+        Payload = new Dictionary<string, object>() {
+            { "email", record["email"] },
+        },
+    });
+}
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+void handleSupabaseAuthEvent(String type, Map<String, Object> record) {
+    if (!"INSERT".equals(type) || record.get("email") == null) return;
+
+    Novu novu = Novu.builder()
+        .secretKey("<YOUR_SECRET_KEY_HERE>")
+        .build();
+
+    novu.trigger()
+        .body(TriggerEventRequestDto.builder()
+            .workflowId("welcome")
+            .to(To2.of(SubscriberPayloadDto.builder()
+                .subscriberId(record.get("id").toString())
+                .email(record.get("email").toString())
+                .build()))
+            .payload(Map.of("email", record.get("email")))
+            .build())
+        .call();
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "welcome",
+  "to": { "subscriberId": "supabase-user-uuid", "email": "user@example.com" },
+  "payload": { "email": "user@example.com" }
+}'
+```
+  </Tab>
+</Tabs>
+  </Step>
+
+  <Step title="Handle password reset emails">
+    When using Supabase's built-in password reset, customize the email template in Supabase or disable it and trigger a Novu `password-reset` workflow instead. See [password reset notifications](/guides/use-cases/password-reset-notifications).
+  </Step>
+</Steps>
+
+## Related guides
+
+- [Password reset notifications](/guides/use-cases/password-reset-notifications)
+- [Auth0 webhook integration](/guides/webhooks/auth0)
+- [Transactional notifications](/guides/use-cases/transactional-notifications)
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Can I replace Supabase auth emails entirely with Novu?">
+    Yes. Disable Supabase email templates for the events you want Novu to handle, then trigger Novu workflows from your auth hooks or Edge Functions.
+  </Accordion>
+  <Accordion title="What should I use as the subscriberId?">
+    Use the Supabase user UUID as the `subscriberId` to keep identifiers consistent across your application and Novu.
+  </Accordion>
+</AccordionGroup>

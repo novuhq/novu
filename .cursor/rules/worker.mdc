@@ -1,0 +1,33 @@
+---
+description: Rules for working in the Worker service (background job processing)
+globs: apps/worker/**/*
+alwaysApply: false
+---
+
+## Worker Service
+
+**Stack:** NestJS · Bull + Redis · ClickHouse (execution traces) · cron-parser
+
+**Run:** `pnpm start:worker` — only needed when testing notification triggering; skip for dashboard/API-only tasks.
+
+**Tests/lint:** see testing.mdc
+
+**Key directories:**
+```
+apps/worker/src/app/workflow/usecases/   # Workflow step execution usecases
+apps/worker/src/app/workflow/services/   # Queue consumers and job handlers
+```
+
+---
+
+### Worker Service Conventions
+
+**Use-case structure**
+- Each notification channel has a dedicated `send-message` use-case under `apps/worker/src/app/workflow/usecases/`.
+- Follow the CQRS pattern: `execute(command: CommandClass)` returning a typed result.
+- Keep channel-specific logic isolated — do not share send-message logic across channels.
+
+**Queue / Bull**
+- Job consumers are registered in NestJS modules using Bull's `@Process` decorator.
+- Retry logic and failure handling are configured at the queue level in `libs/application-generic` — do not duplicate this in worker use-cases.
+- Always handle job failures gracefully and log execution details via `CreateExecutionDetails`.

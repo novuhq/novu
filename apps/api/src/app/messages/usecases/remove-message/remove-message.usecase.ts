@@ -1,13 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { MessageRepository } from '@novu/dal';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { buildFeedKey, buildMessageCountKey, InvalidateCacheService } from '@novu/application-generic';
+import { MessageRepository } from '@novu/dal';
 
 import { RemoveMessageCommand } from './remove-message.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class RemoveMessage {
-  constructor(private invalidateCache: InvalidateCacheService, private messageRepository: MessageRepository) {}
+  constructor(
+    private invalidateCache: InvalidateCacheService,
+    private messageRepository: MessageRepository
+  ) {}
 
   async execute(command: RemoveMessageCommand) {
     const message = await this.messageRepository.findMessageById({
@@ -18,14 +20,8 @@ export class RemoveMessage {
       throw new NotFoundException(`Message with id ${command.messageId} not found`);
     }
 
-    if (!message.subscriber) throw new ApiException(`A subscriber was not found for message ${command.messageId}`);
-
-    await this.invalidateCache.invalidateQuery({
-      key: buildFeedKey().invalidate({
-        subscriberId: message.subscriber.subscriberId,
-        _environmentId: command.environmentId,
-      }),
-    });
+    if (!message.subscriber)
+      throw new BadRequestException(`A subscriber was not found for message ${command.messageId}`);
 
     await this.invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({

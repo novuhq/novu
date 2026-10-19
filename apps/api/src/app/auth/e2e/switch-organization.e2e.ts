@@ -1,10 +1,10 @@
-import * as jwt from 'jsonwebtoken';
-import { expect } from 'chai';
 import { OrganizationEntity } from '@novu/dal';
+import { MemberRoleEnum, UserSessionData } from '@novu/shared';
 import { UserSession } from '@novu/testing';
-import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { expect } from 'chai';
+import jwt from 'jsonwebtoken';
 
-describe('Switch Organization - /auth/organizations/:id/switch (POST)', async () => {
+describe('Switch Organization - /auth/organizations/:id/switch (POST) #novu-v0-os', async () => {
   let session: UserSession;
 
   describe('no organization for user', () => {
@@ -31,19 +31,19 @@ describe('Switch Organization - /auth/organizations/:id/switch (POST)', async ()
     });
 
     it('should switch the user current organization', async () => {
-      const content = jwt.decode(session.token.split(' ')[1]) as IJwtPayload;
+      const content = jwt.decode(session.token.split(' ')[1]) as UserSessionData;
 
       expect(content._id).to.equal(session.user._id);
       const organization = await session.addOrganization();
 
       const { body } = await session.testAgent.post(`/v1/auth/organizations/${organization._id}/switch`).expect(200);
 
-      const newJwt = jwt.decode(body.data) as IJwtPayload;
+      const newJwt = jwt.decode(body.data) as UserSessionData;
 
       expect(newJwt._id).to.equal(session.user._id);
       expect(newJwt.organizationId).to.equal(organization._id);
       expect(newJwt.roles.length).to.equal(1);
-      expect(newJwt.roles[0]).to.equal(MemberRoleEnum.ADMIN);
+      expect(newJwt.roles[0]).to.equal(MemberRoleEnum.OSS_ADMIN);
     });
   });
 
@@ -59,7 +59,7 @@ describe('Switch Organization - /auth/organizations/:id/switch (POST)', async ()
     });
 
     it('should switch to second organization', async () => {
-      const content = jwt.decode(session.token.split(' ')[1]) as IJwtPayload;
+      const content = jwt.decode(session.token.split(' ')[1]) as UserSessionData;
 
       expect(content.organizationId).to.equal(firstOrganization._id);
 
@@ -67,7 +67,7 @@ describe('Switch Organization - /auth/organizations/:id/switch (POST)', async ()
         .post(`/v1/auth/organizations/${secondOrganization._id}/switch`)
         .expect(200);
 
-      const newJwt = jwt.decode(body.data) as IJwtPayload;
+      const newJwt = jwt.decode(body.data) as UserSessionData;
 
       expect(newJwt._id).to.equal(session.user._id);
       expect(newJwt.organizationId).to.equal(secondOrganization._id);

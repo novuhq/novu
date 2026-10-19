@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build:
@@ -25,7 +23,7 @@ services:
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
   db:
-    image: mongo:latest
+    image: mongo:8.0.17
     restart: unless-stopped
     volumes:
       - mongodb-content:/data/db

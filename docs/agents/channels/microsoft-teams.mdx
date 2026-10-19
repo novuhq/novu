@@ -1,0 +1,116 @@
+---
+title: "Microsoft Teams"
+description: "Connect your agent to Microsoft Teams: threading, typing indicators, Adaptive Cards, and tool approval."
+sidebarTitle: Microsoft Teams
+---
+
+Use Microsoft Teams as a messaging channel for your agent. Novu keeps conversation context, shows typing during the turn, can update a plan card in place, can attach files on replies, and posts Adaptive Card approvals for gated tools.
+
+## Capabilities
+
+| Capability | Support |
+| --- | --- |
+| Full context history | Yes |
+| Threaded replies | Yes |
+| Live typing indicator (custom status text) | Yes |
+| React with eyes on inbound messages | Yes |
+| Plan card (markdown edit-in-place / Adaptive Card) | Yes |
+| Rich text / markdown | Yes |
+| Tap-to-respond buttons | Yes |
+| Emoji reactions | Yes |
+| Message edits in place | Yes |
+| Action / MCP tool approval | Yes |
+| MCP connect card | Yes |
+| Resolve conversation | Yes |
+| File sharing | Yes |
+| Streaming word-by-word | Not yet |
+| Quote reply | Plain post |
+
+Full matrix: [Channels overview](/agents/channels/overview).
+
+## Examples
+
+### Inbound chat
+
+A user messages the agent in Teams. Novu adds an eyes reaction, shows typing, updates a plan card while tools run, then replies with action buttons.
+
+### Tool approval
+
+Gated tools surface as an Adaptive Card (**Deny**, **Approve once**, **Always allow this tool**). The turn resumes after the user selects an option.
+
+## Setup
+
+| Framework / Platform | Guide |
+| --- | --- |
+| Custom code agent | Follow a [connect guide](/agents/get-started/ai-sdk), then add Teams as another provider on the same agent |
+| Managed agent | [Claude](/agents/get-started/claude-managed) or [AWS Claude](/agents/get-started/aws-claude), then link Teams in the dashboard |
+
+Teams provider credentials and app packaging are configured in the Novu dashboard when you add the Microsoft Teams provider.
+
+## Distribute to other tenants
+
+Teams has no equivalent of Slack's Public Distribution. Novu installs the app in your own Microsoft 365 tenant during setup. Every other tenant, including each customer's, must make the same app package available before its users can connect.
+
+1. **Download the app package.** In the Novu dashboard, open the Teams integration on your agent and download the multi-tenant app package. The same package works in every tenant.
+2. **Upload it in each tenant.** A Teams admin opens **Teams admin center → Teams apps → Manage apps**, chooses **Actions → Upload new app**, and confirms its status is **Allowed**.
+3. **Allow it in the permission policy.** In **Teams apps → Permission policies**, the admin allows custom apps, or allowlists this app, in the policy assigned to users. If this step is skipped, users see "This app is not available".
+4. **Grant admin consent.** A Global Admin of each tenant opens the admin consent link shown in the dashboard once.
+5. **Users connect from your app.** Users in that tenant connect with `MsTeamsConnectButton`, and the bot installs for them.
+
+Changes can take up to 24 hours to propagate. To distribute to many customers without sharing the package with each tenant, [publish the app to the Microsoft Teams Store](https://learn.microsoft.com/en-us/microsoftteams/platform/concepts/deploy-and-publish/apps-publish-overview).
+
+## Connect component
+
+Use `MsTeamsConnectButton` from `@novu/react` so end users can admin-consent and link Teams to your agent from your product UI. In subscriber mode, `autoLinkUser` defaults to `true` so the per-user Teams identity is linked after consent. Render it on an authenticated page and pass the signed-in user's id as `subscriberId`. See [Connect components in production](/agents/custom-code-agent/connect-components#use-connect-components-in-production).
+
+```tsx
+import { NovuProvider, MsTeamsConnectButton } from '@novu/react';
+
+// userId: the signed-in user's id from your app's auth session
+export function TeamsConnect({ userId }: { userId: string }) {
+  const subscriberId = userId;
+  const integrationIdentifier = 'msteams-integration-identifier';
+
+  return (
+    <NovuProvider
+      applicationIdentifier={process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER!}
+      subscriberId={subscriberId}
+    >
+      <MsTeamsConnectButton
+        integrationIdentifier={integrationIdentifier}
+        connectionMode="subscriber"
+        connectLabel="Install agent ↗"
+        connectedLabel="Connected to MS Teams"
+        onConnectSuccess={() => {
+          // Workspace linked
+        }}
+        onConnectError={(error: unknown) => {
+          console.error(error);
+        }}
+      />
+    </NovuProvider>
+  );
+}
+```
+
+If auto-link fails after consent, use `MsTeamsLinkUser` as a follow-up step. Full prop reference: [Connect components](/agents/custom-code-agent/connect-components#microsoft-teams-connect-button).
+
+## Related
+
+<Columns cols={2}>
+  <Card href="/agents/custom-code-agent/building-blocks/reply" title="Reply" icon="message-square">
+    Plain text, markdown, and interactive cards.
+  </Card>
+  <Card href="/agents/custom-code-agent/building-blocks/typing-indicator" title="Typing indicator" icon="ellipsis">
+    Custom status text while the handler runs.
+  </Card>
+  <Card href="/agents/custom-code-agent/building-blocks/tool-approval" title="Tool approval" icon="shield-check">
+    Approve / Deny before tools execute.
+  </Card>
+  <Card href="/agents/custom-code-agent/building-blocks/edit-sent-messages" title="Edit sent messages" icon="pencil">
+    Update a sent message in place.
+  </Card>
+  <Card href="/agents/custom-code-agent/connect-components" title="Connect components" icon="plug">
+    MsTeamsConnectButton and MsTeamsLinkUser.
+  </Card>
+</Columns>

@@ -1,45 +1,35 @@
 {
+  "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
+    "typeCheck": true,
+    "deleteOutDir": true,
+    "builder": {
+      "type": "swc",
+      "options": {
+        "extensions": [".js", ".ts", ".jsx", ".tsx"],
+        "stripLeadingPaths": true
+      }
+    },
     "assets": [
       {
         "include": ".env",
-        "outDir": "dist/src"
+        "outDir": "dist"
       },
       {
         "include": ".env.development",
-        "outDir": "dist/src"
+        "outDir": "dist"
       },
       {
         "include": ".env.test",
-        "outDir": "dist/src"
+        "outDir": "dist"
       },
       {
         "include": ".env.production",
-        "outDir": "dist/src"
+        "outDir": "dist"
       }
     ],
-    "plugins": [
-      {
-        "name": "@nestjs/swagger",
-        "options": {
-          "classValidatorShim": true,
-          "introspectComments": true
-        }
-      }
-    ],
-    "webpack": true
-  },
-  "projects": {
-    "dal": {
-      "type": "library",
-      "root": "../../../libs/dal",
-      "entryFile": "index",
-      "sourceRoot": "../../../libs/dal/src",
-      "compilerOptions": {
-        "tsConfigPath": "../../../libs/dal/tsconfig.build.json"
-      }
-    }
+    "plugins": []
   }
 }

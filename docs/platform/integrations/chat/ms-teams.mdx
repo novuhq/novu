@@ -1,0 +1,53 @@
+---
+title: "MS Teams Chat Integration with Novu"
+sidebarTitle: "MS Teams"
+description: "Connect Microsoft Teams to Novu to send chat notifications through a multi-tenant bot, a Workflows webhook, or an agent conversation."
+---
+
+The Novu Microsoft Teams integration enables you to send notifications to Teams channels and direct messages (DMs) across different customer workspaces using a single multi-tenant bot.
+
+You create and host a Microsoft Teams bot in your Azure environment, and your customers then approve the app (via Admin Consent) and install it in their Teams tenants.
+
+Once a customer connects their workspace, Novu establishes a secure channel connection using your bot's credentials. You then map specific destinations, whether the destinations involve public channels or individual users to channel endpoints, allowing Novu to route notifications dynamically to the correct tenant and conversation context.
+
+<Note>
+  Compose rich Chat step content with the [block editor](/platform/integrations/chat/writing-chat-template), or keep a plain-text / Liquid body. Novu renders shared cards as Microsoft Teams Adaptive Cards. Use provider overrides when you need Teams-native payloads beyond the shared card model.
+</Note>
+
+## Choose a path
+
+| Path | Use when |
+| --- | --- |
+| **Bot integration** | You need multi-tenant channel messages, DMs, or an agent in Teams. Requires Azure and admin consent. |
+| **Workflows webhook** | You only need one-way posts into a single channel. No Azure bot or admin consent. |
+| **Agent conversation** | Users message your bot and get replies in the same Teams chat. |
+
+<Columns cols={2}>
+  <Card title="Set up the Azure bot" icon="cloud" href="/platform/integrations/chat/ms-teams-azure-setup">
+    Create the Entra ID app, Azure Bot, and Teams package, then save credentials in Novu.
+  </Card>
+  <Card title="Connect tenants and destinations" icon="link" href="/platform/integrations/chat/ms-teams-connect">
+    Run admin consent, install the app, and register channel or user endpoints.
+  </Card>
+  <Card title="Workflows webhook" icon="webhook" href="/platform/integrations/chat/ms-teams-workflows">
+    Paste a Teams Workflows URL as a Novu channel endpoint.
+  </Card>
+  <Card title="Agents on Teams" icon="bot" href="/agents">
+    Connect the same bot to a managed or custom-code agent.
+  </Card>
+</Columns>
+
+## Agent conversations vs. workflow notifications
+
+| Use case | What happens |
+| --- | --- |
+| **Agent conversation** | The user messages your bot and your agent replies in the same Teams chat. |
+| **Workflow notification** | You trigger a workflow with a Chat step and Novu sends a one-way message via your Teams integration or workflow webhook. |
+
+See [agent conversations](/agents/conversations#supported-platforms) for capabilities across all providers.
+
+## Related
+
+<Card icon="bot" href="/agents/get-started/agents-and-providers" title="Agents and providers">
+  Connect Teams and other providers to an agent.
+</Card>

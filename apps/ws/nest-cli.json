@@ -1,10 +1,33 @@
 {
+  "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
+    "typeCheck": true,
+    "deleteOutDir": true,
+    "builder": {
+      "type": "swc",
+      "options": {
+        "stripLeadingPaths": true
+      }
+    },
     "assets": [
-      ".env.test",
-      ".env.development"
+      {
+        "include": ".env",
+        "outDir": "dist"
+      },
+      {
+        "include": ".env.development",
+        "outDir": "dist"
+      },
+      {
+        "include": ".env.test",
+        "outDir": "dist"
+      },
+      {
+        "include": ".env.production",
+        "outDir": "dist"
+      }
     ]
   }
 }

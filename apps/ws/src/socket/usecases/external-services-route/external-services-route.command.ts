@@ -1,7 +1,6 @@
-import { IsDefined, IsOptional, IsString } from 'class-validator';
-
 import { BaseCommand } from '@novu/application-generic';
 import { MessageEntity } from '@novu/dal';
+import { IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class ExternalServicesRouteCommand extends BaseCommand {
   @IsDefined()
@@ -22,8 +21,15 @@ export class ExternalServicesRouteCommand extends BaseCommand {
     messageId?: string;
     unreadCount?: number;
     unseenCount?: number;
+    /** Agent envelopes and other passthrough payloads beyond inbox fields. */
+    [key: string]: unknown;
   };
 
   @IsString()
   _environmentId: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys: string[] = [];
 }

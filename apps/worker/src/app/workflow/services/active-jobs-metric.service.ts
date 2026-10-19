@@ -1,5 +1,4 @@
-const nr = require('newrelic');
-
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   ActiveJobsMetricQueueService,
   ActiveJobsMetricWorkerService,
@@ -7,9 +6,9 @@ import {
   QueueBaseService,
   WorkerOptions,
 } from '@novu/application-generic';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { CronExpressionEnum } from '@novu/shared';
 
-import { checkingForCronJob } from '../../shared/utils';
+const nr = require('newrelic');
 
 const LOG_CONTEXT = 'ActiveJobMetricService';
 const METRIC_JOB_ID = 'metrics-job';
@@ -22,66 +21,64 @@ export class ActiveJobsMetricService {
     public readonly activeJobsMetricWorkerService: ActiveJobsMetricWorkerService,
     private metricsService: MetricsService
   ) {
-    if (process.env.NOVU_MANAGED_SERVICE === 'true' && process.env.NEW_RELIC_LICENSE_KEY) {
+    const hasMetricsBackend =
+      (process.env.NOVU_MANAGED_SERVICE === 'true' && !!process.env.NEW_RELIC_LICENSE_KEY) ||
+      process.env.ENABLE_OTEL === 'true';
+
+    if (hasMetricsBackend) {
       this.activeJobsMetricWorkerService.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
-      this.activeJobsMetricWorkerService.worker.on('completed', async (job) => {
-        await checkingForCronJob(process.env.ACTIVE_CRON_ID);
-        Logger.log({ jobId: job.id }, 'Metric Completed Job', LOG_CONTEXT);
-      });
-
-      this.activeJobsMetricWorkerService.worker.on('failed', async (job, error) => {
+      this.activeJobsMetricWorkerService.bullMqWorker?.on('failed', async (job, error) => {
         Logger.error(error, 'Metric Completed Job failed', LOG_CONTEXT);
       });
-
-      this.addToQueueIfMetricJobExists();
     }
+
+    void this.reconcileRepeatableMetricJob(hasMetricsBackend);
   }
 
-  private addToQueueIfMetricJobExists(): void {
-    Promise.resolve(
-      this.activeJobsMetricQueueService.queue.getRepeatableJobs().then((job): boolean => {
-        let exists = false;
-        for (const jobElement of job) {
-          if (jobElement.id === METRIC_JOB_ID) {
-            exists = true;
-          }
+  /**
+   * Keeps the repeatable entry in step with whether this deployment can consume
+   * it. Without a metrics backend no worker is created, so an entry left over
+   * from a previous configuration would repeat forever with nobody reading it.
+   */
+  private async reconcileRepeatableMetricJob(hasMetricsBackend: boolean): Promise<void> {
+    try {
+      const repeatables = await this.activeJobsMetricQueueService.queue.getRepeatableJobs();
+      const existing = repeatables.find((repeatable) => repeatable.id === METRIC_JOB_ID);
+
+      if (!hasMetricsBackend) {
+        if (existing) {
+          await this.activeJobsMetricQueueService.queue.removeRepeatableByKey(existing.key);
         }
 
-        return exists;
-      })
-    )
-      .then(async (exists: boolean): Promise<void> => {
-        Logger.log(`metric job exists: ${exists}`, LOG_CONTEXT);
+        return;
+      }
 
-        if (!exists) {
-          Logger.log(`metricJob doesn't exist, creating it`, LOG_CONTEXT);
+      if (existing) {
+        return;
+      }
 
-          return await this.activeJobsMetricQueueService.add({
-            name: METRIC_JOB_ID,
-            data: undefined,
-            groupId: '',
-            options: {
-              jobId: METRIC_JOB_ID,
-              repeatJobKey: METRIC_JOB_ID,
-              repeat: {
-                immediately: true,
-                pattern: '* * * * * *',
-              },
-              removeOnFail: true,
-              removeOnComplete: true,
-              attempts: 1,
-            },
-          });
-        }
-
-        return undefined;
-      })
-      .catch((error) => {
-        nr.noticeError(error);
-
-        Logger.error('Metric Job Exists function errored', LOG_CONTEXT, error);
+      await this.activeJobsMetricQueueService.add({
+        name: METRIC_JOB_ID,
+        data: undefined,
+        groupId: '',
+        options: {
+          jobId: METRIC_JOB_ID,
+          repeatJobKey: METRIC_JOB_ID,
+          repeat: {
+            immediately: true,
+            pattern: CronExpressionEnum.EVERY_30_SECONDS,
+          },
+          removeOnFail: true,
+          removeOnComplete: true,
+          attempts: 1,
+        },
       });
+    } catch (error) {
+      nr.noticeError(error);
+
+      Logger.error(error, 'Failed to reconcile the repeatable metric job', LOG_CONTEXT);
+    }
   }
 
   private getWorkerOptions(): WorkerOptions {
@@ -94,32 +91,28 @@ export class ActiveJobsMetricService {
 
   private getWorkerProcessor() {
     return async () => {
-      return await new Promise<void>(async (resolve, reject): Promise<void> => {
-        Logger.log('metric job started', LOG_CONTEXT);
-        const deploymentName = process.env.FLEET_NAME ?? 'default';
+      Logger.debug('metric job started', LOG_CONTEXT);
+      const deploymentName = process.env.FLEET_NAME ?? 'default';
+      let fatalError: unknown;
 
+      for (const queueService of this.tokenList) {
         try {
-          for (const queueService of this.tokenList) {
-            const waitCount = queueService.getGroupsJobsCount
-              ? await queueService.getGroupsJobsCount()
-              : await queueService.getWaitingCount();
-            const delayedCount = await queueService.getDelayedCount();
-            const activeCount = await queueService.getActiveCount();
+          const waitCount = await queueService.getWaitingCount();
+          const delayedCount = await queueService.getDelayedCount();
+          const activeCount = await queueService.getActiveCount();
 
-            Logger.verbose('Recording active, waiting, and delayed metrics');
-
-            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
-            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
-            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
-          }
-
-          return resolve();
+          this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
+          this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
+          this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
         } catch (error) {
-          Logger.error({ error }, 'Error occurred while processing metrics', LOG_CONTEXT);
-
-          return reject(error);
+          Logger.error(error, `Failed to collect metrics for queue: ${queueService.topic}`, LOG_CONTEXT);
+          fatalError = error;
         }
-      });
+      }
+
+      if (fatalError) {
+        throw fatalError;
+      }
     };
   }
 

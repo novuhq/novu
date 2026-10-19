@@ -1,0 +1,124 @@
+import { ChannelTypeEnum, ConfigurationKey, CredentialsKeyEnum, ProvidersIdEnum } from '../../types';
+
+export type ConfigConfiguration = {
+  key: ConfigurationKey;
+  value?: unknown;
+  placeholder?: string;
+  dropdown?: Array<{
+    name: string;
+    value: string | null;
+  }>;
+  displayName: string;
+  description?: string;
+  type: CredentialsType;
+  required: boolean;
+  links?: Array<{
+    text: string;
+    url: string;
+  }>;
+  tooltip?: string;
+};
+
+export interface ILogoFileName {
+  light: string;
+  dark: string;
+}
+
+export type ConfigConfigurationGroup = {
+  groupType: CredentialsType;
+  configurations: ConfigConfiguration[];
+  enabler?: ConfigurationKey;
+  setupWebhookUrlGuide?: string;
+};
+
+export interface IProviderDeprecation {
+  /** Self-contained sentence rendered as-is in the dashboard deprecation notice. */
+  reason: string;
+  /**
+   * Provider that supersedes this one. The dashboard links to its connect page,
+   * but only once its channel is visible to the organization — a replacement on a
+   * feature-flagged channel is announced without a click-through until then.
+   */
+  replacedBy?: ProvidersIdEnum;
+}
+
+export interface IProviderConfig {
+  id: ProvidersIdEnum;
+  displayName: string;
+  channel: ChannelTypeEnum;
+  credentials: IConfigCredential[];
+  configurations?: ConfigConfigurationGroup[];
+  logoFileName: ILogoFileName;
+  docReference: string;
+  comingSoon?: boolean;
+  betaVersion?: boolean;
+  deprecated?: IProviderDeprecation;
+}
+
+export type ProviderColorToken =
+  | 'neutral'
+  | 'stable'
+  | 'information'
+  | 'feature'
+  | 'destructive'
+  | 'verified'
+  | 'alert'
+  | 'highlighted'
+  | 'warning';
+
+type CredentialsType =
+  | 'string'
+  | 'dropdown'
+  | 'switch'
+  | 'textarea'
+  | 'text'
+  | 'number'
+  | 'inboundWebhook'
+  | 'boolean'
+  | 'pushResources'
+  | 'crossChannelConfigs'
+  | 'inboxCount';
+
+type CredentialTypeToTS = {
+  string: string;
+  number: number;
+  boolean: boolean;
+  switch: boolean;
+};
+
+export type CredentialsFromConfig<T extends readonly IConfigCredential[]> = {
+  // biome-ignore lint/suspicious/noExplicitAny: unmapped credential types intentionally fall back to any
+  [K in T[number] as K['key']]: K['type'] extends keyof CredentialTypeToTS ? CredentialTypeToTS[K['type']] : any;
+};
+
+export interface IConfigCredential {
+  key: CredentialsKeyEnum;
+  value?: unknown;
+  displayName: string;
+  description?: string;
+  placeholder?: string;
+  type: CredentialsType;
+  required: boolean;
+  /**
+   * When true, the credential is managed automatically (e.g. server-generated)
+   * and should not be rendered in the integration settings form.
+   */
+  hidden?: boolean;
+  tooltip?: {
+    text: string;
+    when?: boolean;
+  };
+  dropdown?: Array<{
+    name: string;
+    value: string | null;
+  }>;
+  validation?: {
+    pattern?: RegExp;
+    message?: string;
+    validate?: (value: string) => boolean | string;
+  };
+  links?: Array<{
+    text: string;
+    url: string;
+  }>;
+}

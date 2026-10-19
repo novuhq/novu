@@ -1,0 +1,8 @@
+.cspell.json
+.devcontainer
+.github
+.source
+novu.code-workspace
+pnpm-lock.yaml
+scripts
+playground/

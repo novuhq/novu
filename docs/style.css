@@ -1,0 +1,42 @@
+@media (min-width: 1024px) {
+  #sidebar-content {
+    width: 16rem;
+    min-width: 16rem;
+    max-width: 16rem;
+  }
+}
+
+/* Homepage (/) only - scoped via the #home-content wrapper in index.mdx */
+
+/* Don't highlight any navbar tab as selected on the homepage */
+body:has(#home-content) nav[aria-label='Main'] a[aria-current='location'] {
+  background: transparent !important;
+  color: rgb(75 85 99);
+}
+html.dark body:has(#home-content) nav[aria-label='Main'] a[aria-current='location'] {
+  color: rgb(156 163 175);
+}
+body:has(#home-content) nav[aria-label='Main'] a[aria-current='location']:hover {
+  background: rgb(3 7 18 / 0.03) !important;
+  color: rgb(17 24 39);
+}
+html.dark body:has(#home-content) nav[aria-label='Main'] a[aria-current='location']:hover {
+  background: rgb(255 255 255 / 0.03) !important;
+  color: rgb(229 231 235);
+}
+
+/* Space between the intro paragraph and the hero cards */
+#home-content .hero-cards {
+  margin-top: 1.5rem;
+}
+
+/* Card images have rounded corners baked into the PNGs (~3.25% of width),
+   which don't align with the card's own border radius and leave visible
+   slivers. Bleed the image past the card edges so the card's overflow-hidden
+   radius clips the baked-in corners away. */
+#home-content .card [data-component-part='card-image'] {
+  width: 107.5%;
+  max-width: none;
+  margin: -3.75% -3.75% 0;
+}
+

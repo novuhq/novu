@@ -1,5 +1,8 @@
 name: E2E worker Tests
 
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
   workflow_call:
@@ -15,7 +18,7 @@ jobs:
   # This workflow contains a single job called "build"
   e2e_worker_service:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 80
 
     permissions:
@@ -26,35 +29,39 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    - id: setup
-      run: |
-        if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-           echo "has_token=true" >> $GITHUB_OUTPUT
-        else
-           echo "has_token=false" >> $GITHUB_OUTPUT
-        fi
-    # checkout with submodules if token is provided
-    - uses: actions/checkout@v3
-      if: steps.setup.outputs.has_token == 'true'
-      with:
-        submodules: ${{ inputs.ee }}
-        token: ${{ secrets.SUBMODULES_TOKEN }}
-      # else checkout without submodules if the token is not provided
-    - uses: actions/checkout@v3
-      if: steps.setup.outputs.has_token != 'true'
+      - id: setup
+        env:
+          SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}
+        run: |
+          if [ -n "${SUBMODULES_TOKEN:-}" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+          fi
+      # checkout with submodules if token is provided
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        if: steps.setup.outputs.has_token == 'true'
+        with:
+          submodules: ${{ inputs.ee }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+        # else checkout without submodules if the token is not provided
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        if: steps.setup.outputs.has_token != 'true'
 
-    - uses: ./.github/actions/setup-project
+      - uses: ./.github/actions/setup-project
 
-    - uses: ./.github/actions/setup-redis-cluster
+      - uses: ./.github/actions/setup-redis-cluster
 
-    - uses: ./.github/actions/start-localstack
+      - uses: ./.github/actions/start-localstack
 
-      # Runs a single command using the runners shell
-    - name: Build worker
-      run: CI='' pnpm build:worker
+        # Runs a single command using the runners shell
+      - name: Build worker
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+        run: CI='' pnpm build:worker
 
-    # Runs a set of commands using the runners shell
-    - name: Run a test
-      run: |
-        cd apps/worker && pnpm test:e2e
-        pnpm test
+      # Runs a set of commands using the runners shell
+      - name: Run a test
+        run: |
+          cd apps/worker && pnpm test:e2e
+          pnpm test

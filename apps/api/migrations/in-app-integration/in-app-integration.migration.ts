@@ -1,8 +1,8 @@
 import '../../src/config';
-import { OrganizationRepository, EnvironmentRepository, IntegrationRepository, ChannelTypeEnum } from '@novu/dal';
-import { InAppProviderIdEnum } from '@novu/shared';
-import { encryptCredentials } from '@novu/application-generic';
 import { NestFactory } from '@nestjs/core';
+import { encryptCredentials } from '@novu/application-generic';
+import { ChannelTypeEnum, EnvironmentRepository, IntegrationRepository, OrganizationRepository } from '@novu/dal';
+import { InAppProviderIdEnum } from '@novu/shared';
 import { AppModule } from '../../src/app.module';
 
 const organizationRepository = new OrganizationRepository();
@@ -15,10 +15,8 @@ export async function createInAppIntegration() {
     logger: false,
   });
 
-  // eslint-disable-next-line no-console
   console.log('start migration - in app integration');
 
-  // eslint-disable-next-line no-console
   console.log('get organizations and its environments');
 
   const organizations = await organizationRepository.find({});
@@ -49,16 +47,15 @@ export async function createInAppIntegration() {
           active: true,
         });
 
-        console.log('Created Integration' + response._id);
+        console.log(`Created Integration ${response._id}`);
       }
 
-      console.log('Prococessed environment' + environment._id);
+      console.log(`Prococessed environment ${environment._id}`);
     }
 
-    console.log('Prococessed organization' + organization._id);
+    console.log(`Prococessed organization ${organization._id}`);
   }
 
-  // eslint-disable-next-line no-console
   console.log('end migration');
 }
 

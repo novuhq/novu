@@ -1,28 +1,12 @@
-import { Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
-import {
-  IntegrationEntity,
-  IntegrationQuery,
-  IntegrationRepository,
-  MemberRepository,
-  MessageRepository,
-} from '@novu/dal';
+import { BadRequestException, Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
+import { AnalyticsService, IMailHandler, ISmsHandler, MailFactory, SmsFactory } from '@novu/application-generic';
+import { IntegrationEntity, IntegrationQuery, IntegrationRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, providers } from '@novu/shared';
 import { IEmailProvider, ISmsProvider } from '@novu/stateless';
-import {
-  AnalyticsService,
-  ApiException,
-  IMailHandler,
-  ISmsHandler,
-  MailFactory,
-  SmsFactory,
-} from '@novu/application-generic';
-
-import { WebhookCommand } from './webhook.command';
-
-import { CreateExecutionDetails } from '../execution-details/create-execution-details.usecase';
-
 import { IWebhookResult } from '../../dtos/webhooks-response.dto';
 import { WebhookTypes } from '../../interfaces/webhook.interface';
+import { CreateExecutionDetails } from '../execution-details/create-execution-details.usecase';
+import { WebhookCommand } from './webhook.command';
 
 @Injectable({ scope: Scope.REQUEST })
 export class Webhook {
@@ -33,13 +17,12 @@ export class Webhook {
   constructor(
     private createExecutionDetails: CreateExecutionDetails,
     private integrationRepository: IntegrationRepository,
-    private memberRepository: MemberRepository,
     private messageRepository: MessageRepository,
     private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: WebhookCommand): Promise<IWebhookResult[]> {
-    const providerOrIntegrationId = command.providerOrIntegrationId;
+    const { providerOrIntegrationId } = command;
     const isProviderId = !!providers.find((el) => el.id === providerOrIntegrationId);
     const channel: ChannelTypeEnum = command.type === 'email' ? ChannelTypeEnum.EMAIL : ChannelTypeEnum.SMS;
 
@@ -58,18 +41,15 @@ export class Webhook {
 
     const hasNoCredentials = !integration.credentials || Object.keys(integration.credentials).length === 0;
     if (hasNoCredentials) {
-      throw new ApiException(`Integration ${integration._id} doesn't have credentials set up`);
+      throw new BadRequestException(`Integration ${integration._id} doesn't have credentials set up`);
     }
 
-    const member = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-    if (member) {
-      this.analyticsService.track('[Webhook] - Provider Webhook called', member._userId, {
-        _organization: command.organizationId,
-        _environmentId: command.environmentId,
-        providerId: integration.providerId,
-        channel,
-      });
-    }
+    this.analyticsService.track('[Webhook] - Provider Webhook called', '', {
+      _organization: command.organizationId,
+      _environmentId: command.environmentId,
+      providerId: integration.providerId,
+      channel,
+    });
 
     this.createProvider(integration, command.type);
 
@@ -79,15 +59,13 @@ export class Webhook {
 
     const events = await this.parseEvents(command, integration.providerId, channel);
 
-    if (member) {
-      this.analyticsService.track('[Webhook] - Provider Webhook events parsed', member._userId, {
-        _organization: command.organizationId,
-        _environmentId: command.environmentId,
-        providerId: integration.providerId,
-        channel,
-        events,
-      });
-    }
+    this.analyticsService.track('[Webhook] - Provider Webhook events parsed', '', {
+      _organization: command.organizationId,
+      _environmentId: command.environmentId,
+      providerId: integration.providerId,
+      channel,
+      events,
+    });
 
     return events;
   }
@@ -97,13 +75,14 @@ export class Webhook {
     providerId: string,
     channel: ChannelTypeEnum
   ): Promise<IWebhookResult[]> {
-    const body = command.body;
+    const { body } = command;
     const messageIdentifiers: string[] = this.provider.getMessageId(body);
 
     const events: IWebhookResult[] = [];
 
-    for (const messageIdentifier of messageIdentifiers) {
-      const event = await this.parseEvent(messageIdentifier, command, providerId, channel);
+    for (let eventIndex = 0; eventIndex < messageIdentifiers.length; eventIndex++) {
+      const messageIdentifier = messageIdentifiers[eventIndex];
+      const event = await this.parseEvent(messageIdentifier, command, providerId, channel, eventIndex);
 
       if (event === undefined) {
         continue;
@@ -119,7 +98,8 @@ export class Webhook {
     messageIdentifier: string,
     command: WebhookCommand,
     providerId: string,
-    channel: ChannelTypeEnum
+    channel: ChannelTypeEnum,
+    eventIndex: number
   ): Promise<IWebhookResult | undefined> {
     const message = await this.messageRepository.findOne({
       identifier: messageIdentifier,
@@ -133,7 +113,11 @@ export class Webhook {
       return;
     }
 
-    const event = this.provider.parseEventBody(command.body, messageIdentifier);
+    const event = this.provider.parseEventBody(
+      command.body,
+      messageIdentifier,
+      Array.isArray(command.body) ? eventIndex : undefined
+    );
 
     if (event === undefined) {
       return undefined;
@@ -153,7 +137,7 @@ export class Webhook {
       message,
       webhook: {
         ...command,
-        providerId: providerId,
+        providerId,
       },
       webhookEvent: parsedEvent,
       channel,

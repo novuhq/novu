@@ -1,27 +1,29 @@
-import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
-import { RemoveMessage, RemoveMessageCommand } from './usecases/remove-message';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Query } from '@nestjs/common';
+import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions } from '@novu/application-generic';
+import { PermissionsEnum, UserSessionData } from '@novu/shared';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { UserSession } from '../shared/framework/user.decorator';
-import { IJwtPayload } from '@novu/shared';
-import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
-import { DeleteMessageResponseDto } from './dtos/delete-message-response.dto';
-import { ActivitiesResponseDto } from '../notifications/dtos/activities-response.dto';
-import { GetMessages, GetMessagesCommand } from './usecases/get-messages';
-import { MessagesResponseDto } from '../widgets/dtos/message-response.dto';
-import { DeleteMessageParams } from './params/delete-message.param';
 import {
   ApiCommonResponses,
-  ApiResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiResponse,
 } from '../shared/framework/response.decorator';
+import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { UserSession } from '../shared/framework/user.decorator';
+import { MessagesResponseDto } from '../widgets/dtos/message-response.dto';
+import { DeleteMessageResponseDto } from './dtos/delete-message-response.dto';
 import { GetMessagesRequestDto } from './dtos/get-messages-requests.dto';
-import { RemoveMessagesByTransactionId } from './usecases/remove-messages-by-transactionId/remove-messages-by-transactionId.usecase';
-import { RemoveMessagesByTransactionIdCommand } from './usecases/remove-messages-by-transactionId/remove-messages-by-transactionId.command';
 import { DeleteMessageByTransactionIdRequestDto } from './dtos/remove-messages-by-transactionId-request.dto';
+import { DeleteMessageParams } from './params/delete-message.param';
+import { GetMessages, GetMessagesCommand } from './usecases/get-messages';
+import { RemoveMessage, RemoveMessageCommand } from './usecases/remove-message';
+import { RemoveMessagesByTransactionIdCommand } from './usecases/remove-messages-by-transactionId/remove-messages-by-transactionId.command';
+import { RemoveMessagesByTransactionId } from './usecases/remove-messages-by-transactionId/remove-messages-by-transactionId.usecase';
 
 @ApiCommonResponses()
+@RequireAuthentication()
 @Controller('/messages')
 @ApiTags('Messages')
 export class MessagesController {
@@ -33,19 +35,21 @@ export class MessagesController {
 
   @Get('')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
   @ApiOkResponse({
-    type: ActivitiesResponseDto,
+    type: MessagesResponseDto,
   })
   @ApiOperation({
-    summary: 'Get messages',
-    description: 'Returns a list of messages, could paginate using the `page` query parameter',
+    summary: 'List all messages',
+    description: `List all messages for the current environment. 
+    This API supports filtering by **channel**, **subscriberId**, and **transactionId**. 
+    This API returns a paginated list of messages.`,
   })
+  @RequirePermissions(PermissionsEnum.MESSAGE_READ)
   async getMessages(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Query() query: GetMessagesRequestDto
   ): Promise<MessagesResponseDto> {
-    let transactionIdQuery: string[] | undefined = undefined;
+    let transactionIdQuery: string[] | undefined;
     if (query.transactionId) {
       transactionIdQuery = Array.isArray(query.transactionId) ? query.transactionId : [query.transactionId];
     }
@@ -56,6 +60,7 @@ export class MessagesController {
         environmentId: user.environmentId,
         channel: query.channel,
         subscriberId: query.subscriberId,
+        contextKeys: query.contextKeys,
         page: query.page ? Number(query.page) : 0,
         limit: query.limit ? Number(query.limit) : 10,
         transactionIds: transactionIdQuery,
@@ -65,15 +70,16 @@ export class MessagesController {
 
   @Delete('/:messageId')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
   @ApiResponse(DeleteMessageResponseDto)
   @ApiOperation({
-    summary: 'Delete message',
-    description: 'Deletes a message entity from the Novu platform',
+    summary: 'Delete a message',
+    description: `Delete a message entity from the Novu platform by **messageId**. 
+    This action is irreversible. **messageId** is required and of mongodbId type.`,
   })
-  @ApiParam({ name: 'messageId', type: String, required: true })
+  @ApiParam({ name: 'messageId', type: String, required: true, example: '507f1f77bcf86cd799439011' })
+  @RequirePermissions(PermissionsEnum.MESSAGE_WRITE)
   async deleteMessage(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param() { messageId }: DeleteMessageParams
   ): Promise<DeleteMessageResponseDto> {
     return await this.removeMessage.execute(
@@ -88,15 +94,17 @@ export class MessagesController {
   @Delete('/transaction/:transactionId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
   @ApiNoContentResponse()
   @ApiOperation({
     summary: 'Delete messages by transactionId',
-    description: 'Deletes messages entity from the Novu platform using TransactionId of message',
+    description: `Delete multiple messages from the Novu platform using **transactionId** of triggered event. 
+    This API supports filtering by **channel** and delete all messages associated with the **transactionId**.`,
   })
-  @ApiParam({ name: 'transactionId', type: String, required: true })
+  @ApiParam({ name: 'transactionId', type: String, required: true, example: '507f1f77bcf86cd799439011' })
+  @SdkMethodName('deleteByTransactionId')
+  @RequirePermissions(PermissionsEnum.MESSAGE_WRITE)
   async deleteMessagesByTransactionId(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param() { transactionId }: { transactionId: string },
     @Query() query: DeleteMessageByTransactionIdRequestDto
   ) {
@@ -104,7 +112,7 @@ export class MessagesController {
       RemoveMessagesByTransactionIdCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        transactionId: transactionId,
+        transactionId,
         channel: query.channel,
       })
     );

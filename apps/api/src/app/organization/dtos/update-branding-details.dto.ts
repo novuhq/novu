@@ -2,14 +2,13 @@ import { IsHexColor, IsOptional, IsString, IsUrl } from 'class-validator';
 import { IsImageUrl } from '../../shared/validators/image.validator';
 
 const environments = ['production', 'test'];
-const protocols = environments.includes(process.env.NODE_ENV) ? ['https'] : ['http', 'https'];
-const hostWhitelist = environments.includes(process.env.NODE_ENV) ? undefined : ['localhost', 'web.novu.co'];
+const protocols = environments.includes(process.env.NODE_ENV || '') ? ['https'] : ['http', 'https'];
 
 export class UpdateBrandingDetailsDto {
   @IsUrl({
     require_protocol: true,
     protocols,
-    host_whitelist: hostWhitelist,
+    require_tld: false,
   })
   @IsImageUrl({
     message: 'Logo must be a valid image URL with one of the following extensions: jpg, jpeg, png, gif, svg',

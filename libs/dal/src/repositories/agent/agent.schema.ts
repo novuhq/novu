@@ -1,0 +1,113 @@
+import { AGENT_ANALYTICS_SOURCES, AgentReplyPolicyEnum, AgentSubscriberAccessEnum } from '@novu/shared';
+import mongoose, { Schema } from 'mongoose';
+
+import { schemaOptions } from '../schema-default.options';
+import { AGENT_INBOX_REACHES, AgentDBModel } from './agent.entity';
+
+const agentSchema = new Schema<AgentDBModel>(
+  {
+    name: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    identifier: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    description: Schema.Types.String,
+    picture: {
+      storageKey: Schema.Types.String,
+      contentType: Schema.Types.String,
+      version: Schema.Types.String,
+    },
+    hosts: {
+      cli: {
+        connectedAt: Schema.Types.String,
+        lastCheckedAt: Schema.Types.String,
+      },
+      mcp: {
+        connectedAt: Schema.Types.String,
+        lastCheckedAt: Schema.Types.String,
+      },
+      firstCheckedAt: Schema.Types.String,
+      waitingMessage: {
+        conversationId: Schema.Types.String,
+        from: Schema.Types.String,
+        subject: Schema.Types.String,
+        at: Schema.Types.String,
+        seenAt: Schema.Types.String,
+      },
+    },
+    reach: {
+      type: Schema.Types.String,
+      enum: [...AGENT_INBOX_REACHES],
+    },
+    pausedAt: Schema.Types.String,
+    active: {
+      type: Schema.Types.Boolean,
+      default: true,
+    },
+    behavior: {
+      acknowledgeOnReceived: Schema.Types.Boolean,
+      reactionOnResolved: Schema.Types.String,
+      subscriberAccess: {
+        type: Schema.Types.String,
+        enum: Object.values(AgentSubscriberAccessEnum),
+        required: true,
+      },
+      replyPolicy: {
+        type: Schema.Types.String,
+        enum: Object.values(AgentReplyPolicyEnum),
+      },
+    },
+    bridgeUrl: Schema.Types.String,
+    devBridgeUrl: Schema.Types.String,
+    devBridgeActive: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
+    runtime: {
+      type: Schema.Types.String,
+      enum: ['self-hosted', 'managed', 'human_relay'],
+      default: 'self-hosted',
+    },
+    visibility: {
+      type: Schema.Types.String,
+      enum: ['public', 'private'],
+      default: 'public',
+    },
+    managedRuntime: {
+      providerId: Schema.Types.String,
+      _integrationId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Integration',
+      },
+      externalAgentId: Schema.Types.String,
+      managedDefinitionVersion: Schema.Types.Number,
+    },
+    creationSource: {
+      type: Schema.Types.String,
+      enum: AGENT_ANALYTICS_SOURCES,
+    },
+    _organizationId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Organization',
+    },
+    _environmentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Environment',
+    },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  },
+  schemaOptions
+);
+
+agentSchema.index({ _environmentId: 1 });
+agentSchema.index({ identifier: 1, _environmentId: 1 }, { unique: true });
+agentSchema.index({ 'managedRuntime._integrationId': 1 }, { sparse: true });
+
+export const Agent =
+  (mongoose.models.Agent as mongoose.Model<AgentDBModel>) || mongoose.model<AgentDBModel>('Agent', agentSchema);

@@ -1,0 +1,93 @@
+---
+title: "Messages"
+description: "Render the Web Chat timeline: hook state, errors, text, and thinking."
+sidebarTitle: Messages
+---
+
+Start from [Send a first message](/agents/channels/web-chat#send-a-first-message). This page covers the timeline after that first bubble.
+
+`messages` is the ordered timeline. Each message has `role` (`user` or `assistant`) and `parts`. A part is one block in the message, such as text or thinking.
+
+See [`useWebChat`](/platform/sdks/react/hooks/use-web-chat) for the full type list.
+
+## State
+
+Use these fields to drive the composer, spinner, and error banner:
+
+| Field | What you do |
+| --- | --- |
+| `isLoading` | First history fetch. False when there is no `conversationId`. Show a spinner. |
+| `isRunning` | Agent turn in progress. Disable the composer. `typing` is optional status text. |
+| `conversationStatus` | Conversation is `active` or `resolved`. Do not use it to disable the composer. |
+| `error` | Last load, send, retry, action, or run error. Show the message. |
+| `message.status` | `sending`, `sent`, or `failed`. If `failed`, call `retryMessage`. See [Retry](/agents/channels/web-chat/conversations#retry). |
+
+## Errors
+
+`error` is the last failure from load, send, retry, or action. Show `error.message`.
+
+`sendMessage`, `respondToAction`, `sendAction`, and `retryMessage` do not throw. A `try/catch` around them does not run.
+
+Wait for the result and read `error` on that call:
+
+```tsx
+const result = await sendMessage(text);
+
+if (result.error) {
+  return result.error.message;
+}
+```
+
+When the organization is over a plan limit, `error` is a [`WebChatPlanLimitError`](/platform/sdks/react/hooks/use-web-chat#plan-limit-error). The HTTP status is `402`. Read `reason` (`agents`, `channels`, or `conversations`) and show `message`.
+
+## Text
+
+Start with `type === 'text'`. That is the visible body of the row.
+
+```tsx
+const { messages } = useWebChat({ agentId: 'YOUR_AGENT_IDENTIFIER' });
+
+{messages.map((message) => (
+  <li key={message.id}>
+    {message.parts.map((part, index) =>
+      part.type === 'text' ? <span key={index}>{part.text}</span> : null
+    )}
+  </li>
+))}
+```
+
+## Thinking
+
+`isRunning` is true for the whole agent turn. `typing` is present only while the agent types. Assistant messages can also include `thinking` parts before text arrives.
+
+`run` is an alias for the same snapshot: `isRunning` is `run.isRunning`, and `typing` is `run.typing`.
+
+Show a status line while the turn runs:
+
+```tsx
+const { messages, isRunning, typing } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+{isRunning ? <p>{typing?.status ?? 'Working…'}</p> : null}
+```
+
+Then render `thinking` parts next to text:
+
+```tsx
+{messages.map((message) =>
+  message.parts.map((part, index) => {
+    if (part.type === 'thinking') {
+      return <em key={index}>{part.text}</em>;
+    }
+
+    if (part.type === 'text') {
+      return <span key={index}>{part.text}</span>;
+    }
+
+    return null;
+  })
+)}
+```
+
+The first event of a turn can create an empty assistant message before any text arrives. Keep that row in the list. Then fill it as parts arrive.

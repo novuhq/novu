@@ -1,7 +1,6 @@
 import { MessageTemplateRepository } from '@novu/dal';
 
 export async function normalizeMessageTemplateCtaAction() {
-  // eslint-disable-next-line no-console
   console.log('start migration - normalize message template cta action');
 
   const messageTemplateRepository = new MessageTemplateRepository();
@@ -10,7 +9,6 @@ export async function normalizeMessageTemplateCtaAction() {
     .read('secondaryPreferred');
 
   for (const message of messageTemplates) {
-    // eslint-disable-next-line no-console
     console.log(`message ${message._id}`);
 
     await messageTemplateRepository.update(
@@ -19,10 +17,8 @@ export async function normalizeMessageTemplateCtaAction() {
         $set: { 'cta.action': {} },
       }
     );
-    // eslint-disable-next-line no-console
     console.log(`message ${message._id} - cta action updated`);
   }
 
-  // eslint-disable-next-line no-console
   console.log('end migration');
 }

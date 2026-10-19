@@ -1,118 +1,104 @@
-import { IPartnerConfiguration, OrganizationDBModel, OrganizationEntity } from './organization.entity';
-import { BaseRepository } from '../base-repository';
-import { Organization } from './organization.schema';
-import { MemberRepository } from '../member';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { Inject } from '@nestjs/common';
+import { IPartnerConfiguration, OrganizationEntity } from './organization.entity';
+import { IOrganizationRepository } from './organization-repository.interface';
 
-export class OrganizationRepository extends BaseRepository<OrganizationDBModel, OrganizationEntity, object> {
-  private memberRepository = new MemberRepository();
+export class OrganizationRepository implements IOrganizationRepository {
+  constructor(@Inject('ORGANIZATION_REPOSITORY') private organizationRepository: IOrganizationRepository) {}
 
-  constructor() {
-    super(Organization, OrganizationEntity);
+  findById(id: string, select?: string): Promise<OrganizationEntity | null> {
+    return this.organizationRepository.findById(id, select);
   }
 
-  async findById(id: string, select?: string): Promise<OrganizationEntity | null> {
-    const data = await this.MongooseModel.findById(id, select).read('secondaryPreferred');
-    if (!data) return null;
-
-    return this.mapEntity(data.toObject());
+  findUserActiveOrganizations(userId: string): Promise<OrganizationEntity[]> {
+    return this.organizationRepository.findUserActiveOrganizations(userId);
   }
 
-  async findUserActiveOrganizations(userId: string): Promise<OrganizationEntity[]> {
-    const organizationIds = await this.getUsersMembersOrganizationIds(userId);
-
-    return await this.find({
-      _id: { $in: organizationIds },
-    });
+  updateBrandingDetails(organizationId: string, branding: { color: string; logo: string }) {
+    return this.organizationRepository.updateBrandingDetails(organizationId, branding);
   }
 
-  private async getUsersMembersOrganizationIds(userId: string): Promise<string[]> {
-    const members = await this.memberRepository.findUserActiveMembers(userId);
-
-    return members.map((member) => member._organizationId);
+  renameOrganization(organizationId: string, payload: { name: string }) {
+    return this.organizationRepository.renameOrganization(organizationId, payload);
   }
 
-  async updateBrandingDetails(organizationId: string, branding: { color: string; logo: string }) {
-    return this.update(
-      {
-        _id: organizationId,
-      },
-      {
-        $set: {
-          branding,
-        },
-      }
-    );
+  updateDefaultLocale(organizationId: string, defaultLocale: string): Promise<{ matched: number; modified: number }> {
+    return this.organizationRepository.updateDefaultLocale(organizationId, defaultLocale);
   }
 
-  async renameOrganization(organizationId: string, payload: { name: string }) {
-    return this.update(
-      {
-        _id: organizationId,
-      },
-      {
-        $set: {
-          name: payload.name,
-        },
-      }
-    );
+  findByPartnerConfigurationId(args: { userId: string; configurationId: string }) {
+    return this.organizationRepository.findByPartnerConfigurationId(args);
   }
 
-  async updateServiceLevel(organizationId: string, apiServiceLevel: ApiServiceLevelEnum) {
-    return this.update(
-      {
-        _id: organizationId,
-      },
-      {
-        $set: {
-          apiServiceLevel,
-        },
-      }
-    );
+  upsertPartnerConfiguration(args: { organizationId: string; configuration: IPartnerConfiguration }) {
+    return this.organizationRepository.upsertPartnerConfiguration(args);
   }
 
-  async findPartnerConfigurationDetails(organizationId: string, userId: string, configurationId: string) {
-    const organizationIds = await this.getUsersMembersOrganizationIds(userId);
-
-    return await this.find(
-      {
-        _id: { $in: organizationIds },
-        'partnerConfigurations.configurationId': configurationId,
-      },
-      { 'partnerConfigurations.$': 1 }
-    );
+  bulkUpdatePartnerConfiguration(args: {
+    userId: string;
+    data: Record<string, string[]>;
+    configuration: IPartnerConfiguration;
+  }) {
+    return this.organizationRepository.bulkUpdatePartnerConfiguration(args);
   }
 
-  async updatePartnerConfiguration(organizationId: string, userId: string, configuration: IPartnerConfiguration) {
-    const organizationIds = await this.getUsersMembersOrganizationIds(userId);
-
-    return this.update(
-      {
-        _id: { $in: organizationIds },
-      },
-      {
-        $push: {
-          partnerConfigurations: configuration,
-        },
-      }
-    );
+  create(data: any, options?: any): Promise<OrganizationEntity> {
+    return this.organizationRepository.create(data, options);
   }
 
-  async bulkUpdatePartnerConfiguration(userId: string, data: Record<string, string[]>, configurationId: string) {
-    const organizationIds = await this.getUsersMembersOrganizationIds(userId);
-    const usedOrgIds = Object.keys(data);
-    const unusedOrgIds = organizationIds.filter((org) => !usedOrgIds.includes(org));
-    const bulkWriteOps = organizationIds.map((orgId) => {
-      return {
-        updateOne: {
-          filter: { _id: orgId, 'partnerConfigurations.configurationId': configurationId },
-          update: {
-            'partnerConfigurations.$.projectIds': unusedOrgIds.includes(orgId) ? [] : data[orgId],
-          },
-        },
-      };
-    });
+  update(query: any, body: any): Promise<{ matched: number; modified: number }> {
+    return this.organizationRepository.update(query, body);
+  }
 
-    return await this.bulkWrite(bulkWriteOps);
+  delete(query: any): Promise<{ acknowledged: boolean; deletedCount: number }> {
+    return this.organizationRepository.delete(query);
+  }
+
+  count(query: any, limit?: number): Promise<number> {
+    return this.organizationRepository.count(query, limit);
+  }
+
+  aggregate(query: any[], options?: { readPreference?: 'secondaryPreferred' | 'primary' }): Promise<any> {
+    return this.organizationRepository.aggregate(query, options);
+  }
+
+  findOne(query: any, select?: any, options?: any): Promise<OrganizationEntity | null> {
+    return this.organizationRepository.findOne(query, select, options);
+  }
+
+  find(query: any, select?: any, options?: any): Promise<OrganizationEntity[]> {
+    return this.organizationRepository.find(query, select, options);
+  }
+
+  findBatch(
+    query: any,
+    select?: string | undefined,
+    options?: any,
+    batchSize?: number | undefined
+  ): AsyncGenerator<any, any, unknown> {
+    return this.organizationRepository.findBatch(query, select, options, batchSize);
+  }
+
+  insertMany(data: any, ordered: boolean): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: any }> {
+    return this.organizationRepository.insertMany(data, ordered);
+  }
+
+  updateOne(query: any, body: any): Promise<{ matched: number; modified: number }> {
+    return this.organizationRepository.updateOne(query, body);
+  }
+
+  upsertMany(data: any): Promise<any> {
+    return this.organizationRepository.upsertMany(data);
+  }
+
+  upsert(query: any, data: any): Promise<any> {
+    return this.organizationRepository.upsert(query, data);
+  }
+
+  bulkWrite(bulkOperations: any, ordered: boolean): Promise<any> {
+    return this.organizationRepository.bulkWrite(bulkOperations, ordered);
+  }
+
+  estimatedDocumentCount(): Promise<number> {
+    return this.organizationRepository.estimatedDocumentCount();
   }
 }

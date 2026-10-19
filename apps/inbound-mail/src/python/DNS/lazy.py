@@ -1,4 +1,4 @@
-# $Id: lazy.py,v 1.5.2.7 2011/11/23 17:14:11 customdesigned Exp $
+# $Id$
 #
 # This file is part of the pydns project.
 # Homepage: http://pydns.sourceforge.net
@@ -7,71 +7,62 @@
 #
 
 # routines for lazy people.
-import Base
+from . import Base
+from . Base import ServerError
 
-from Base import ServerError
+class NoDataError(IndexError): pass
+class StatusError(IndexError): pass
 
-def revlookup(name):
+def revlookup(name,timeout=30):
     "convenience routine for doing a reverse lookup of an address"
-    names = revlookupall(name)
+    if Base.defaults['server'] == []: Base.DiscoverNameServers()
+    names = revlookupall(name, timeout)
     if not names: return None
     return names[0]     # return shortest name
 
-def revlookupall(name):
+def revlookupall(name,timeout=30):
     "convenience routine for doing a reverse lookup of an address"
     # FIXME: check for IPv6
     a = name.split('.')
     a.reverse()
     b = '.'.join(a)+'.in-addr.arpa'
-    names = dnslookup(b, qtype = 'ptr')
+    qtype='ptr'
+    names = dnslookup(b, qtype, timeout)
     # this will return all records.
     names.sort(key=str.__len__)
     return names
 
-def dnslookup(name,qtype):
+def dnslookup(name,qtype,timeout=30):
     "convenience routine to return just answer data for any query type"
     if Base.defaults['server'] == []: Base.DiscoverNameServers()
-    result = Base.DnsRequest(name=name, qtype=qtype).req()
+    result = Base.DnsRequest(name=name, qtype=qtype).req(timeout=timeout)
     if result.header['status'] != 'NOERROR':
         raise ServerError("DNS query status: %s" % result.header['status'],
             result.header['rcode'])
     elif len(result.answers) == 0 and Base.defaults['server_rotate']:
         # check with next DNS server
-        result = Base.DnsRequest(name=name, qtype=qtype).req()
+        result = Base.DnsRequest(name=name, qtype=qtype).req(timeout=timeout)
     if result.header['status'] != 'NOERROR':
         raise ServerError("DNS query status: %s" % result.header['status'],
             result.header['rcode'])
     return [x['data'] for x in result.answers]
 
-def mxlookup(name):
+def mxlookup(name,timeout=30):
     """
     convenience routine for doing an MX lookup of a name. returns a
     sorted list of (preference, mail exchanger) records
     """
-    l = dnslookup(name, qtype = 'mx')
-    l.sort()
+    qtype = 'mx'
+    l = dnslookup(name, qtype, timeout)
     return l
 
 #
-# $Log: lazy.py,v $
-# Revision 1.5.2.7  2011/11/23 17:14:11  customdesigned
-# Apply patch 3388075 from sourceforge: raise subclasses of DNSError.
+# $Log$
+# Revision 1.5.2.1.2.2  2011/03/23 01:42:07  customdesigned
+# Changes from 2.3 branch
 #
-# Revision 1.5.2.6  2011/03/21 21:06:47  customdesigned
-# Replace map() with list comprehensions.
-#
-# Revision 1.5.2.5  2011/03/21 21:03:22  customdesigned
-# Get rid of obsolete string module
-#
-# Revision 1.5.2.4  2011/03/19 22:15:01  customdesigned
-# Added rotation of name servers - SF Patch ID: 2795929
-#
-# Revision 1.5.2.3  2011/03/16 20:06:24  customdesigned
-# Expand convenience methods.
-#
-# Revision 1.5.2.2  2011/03/08 21:06:42  customdesigned
-# Address sourceforge patch requests 2981978, 2795932 to add revlookupall
-# and raise DNSError instead of IndexError on server fail.
+# Revision 1.5.2.1.2.1  2011/02/18 19:35:22  customdesigned
+# Python3 updates from Scott Kitterman
 #
 # Revision 1.5.2.1  2007/05/22 20:23:38  customdesigned
 # Lazy call to DiscoverNameServers

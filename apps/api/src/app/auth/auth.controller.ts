@@ -4,7 +4,9 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Header,
   HttpCode,
+  HttpStatus,
   NotFoundException,
   Param,
   Post,
@@ -13,40 +15,32 @@ import {
   Res,
   UseGuards,
   UseInterceptors,
-  Logger,
-  Header,
-  HttpStatus,
 } from '@nestjs/common';
-import { MemberRepository, OrganizationRepository, UserRepository, MemberEntity } from '@novu/dal';
 import { AuthGuard } from '@nestjs/passport';
-import { IJwtPayload, PasswordResetFlowEnum } from '@novu/shared';
-import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
-import { UserRegister } from './usecases/register/user-register.usecase';
-import { UserRegisterCommand } from './usecases/register/user-register.command';
-import { Login } from './usecases/login/login.usecase';
-import { LoginBodyDto } from './dtos/login.dto';
-import { LoginCommand } from './usecases/login/login.command';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { buildOauthRedirectUrl, PinoLogger } from '@novu/application-generic';
+import { MemberEntity, MemberRepository, UserRepository } from '@novu/dal';
+import { PasswordResetFlowEnum, UserSessionData } from '@novu/shared';
+import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { UserAuthGuard } from './framework/user.auth.guard';
-import { PasswordResetRequestCommand } from './usecases/password-reset-request/password-reset-request.command';
-import { PasswordResetRequest } from './usecases/password-reset-request/password-reset-request.usecase';
+import { LoginBodyDto } from './dtos/login.dto';
+import { PasswordResetBodyDto, PasswordResetRequestBodyDto } from './dtos/password-reset.dto';
+import { UpdatePasswordBodyDto } from './dtos/update-password.dto';
+import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
+import { RequireAuthentication } from './framework/auth.decorator';
+import { AuthService } from './services/auth.service';
+import { LoginCommand } from './usecases/login/login.command';
+import { Login } from './usecases/login/login.usecase';
 import { PasswordResetCommand } from './usecases/password-reset/password-reset.command';
 import { PasswordReset } from './usecases/password-reset/password-reset.usecase';
-import { ApiException } from '../shared/exceptions/api.exception';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
-import { PasswordResetBodyDto } from './dtos/password-reset.dto';
-import {
-  AuthService,
-  buildOauthRedirectUrl,
-  SwitchEnvironment,
-  SwitchEnvironmentCommand,
-  SwitchOrganization,
-  SwitchOrganizationCommand,
-} from '@novu/application-generic';
-import { ApiCommonResponses } from '../shared/framework/response.decorator';
-import { UpdatePasswordBodyDto } from './dtos/update-password.dto';
-import { UpdatePassword } from './usecases/update-password/update-password.usecase';
+import { PasswordResetRequestCommand } from './usecases/password-reset-request/password-reset-request.command';
+import { PasswordResetRequest } from './usecases/password-reset-request/password-reset-request.usecase';
+import { UserRegisterCommand } from './usecases/register/user-register.command';
+import { UserRegister } from './usecases/register/user-register.usecase';
+import { SwitchOrganizationCommand } from './usecases/switch-organization/switch-organization.command';
+import { SwitchOrganization } from './usecases/switch-organization/switch-organization.usecase';
 import { UpdatePasswordCommand } from './usecases/update-password/update-password.command';
+import { UpdatePassword } from './usecases/update-password/update-password.usecase';
 
 @ApiCommonResponses()
 @Controller('/auth')
@@ -59,26 +53,27 @@ export class AuthController {
     private authService: AuthService,
     private userRegisterUsecase: UserRegister,
     private loginUsecase: Login,
-    private organizationRepository: OrganizationRepository,
-    private switchEnvironmentUsecase: SwitchEnvironment,
     private switchOrganizationUsecase: SwitchOrganization,
     private memberRepository: MemberRepository,
     private passwordResetRequestUsecase: PasswordResetRequest,
     private passwordResetUsecase: PasswordReset,
-    private updatePasswordUsecase: UpdatePassword
-  ) {}
+    private updatePasswordUsecase: UpdatePassword,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @Get('/github')
   githubAuth() {
-    Logger.verbose('Checking Github Auth');
+    this.logger.trace('Checking Github Auth');
 
     if (!process.env.GITHUB_OAUTH_CLIENT_ID || !process.env.GITHUB_OAUTH_CLIENT_SECRET) {
-      throw new ApiException(
+      throw new BadRequestException(
         'GitHub auth is not configured, please provide GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET as env variables'
       );
     }
 
-    Logger.verbose('Github Auth has all variables.');
+    this.logger.trace('Github Auth has all variables.');
 
     return {
       success: true,
@@ -94,9 +89,9 @@ export class AuthController {
   }
 
   @Get('/refresh')
-  @UseGuards(UserAuthGuard)
+  @RequireAuthentication()
   @Header('Cache-Control', 'no-store')
-  refreshToken(@UserSession() user: IJwtPayload) {
+  refreshToken(@UserSession() user: UserSessionData) {
     if (!user || !user._id) throw new BadRequestException();
 
     return this.authService.refreshToken(user._id);
@@ -116,16 +111,17 @@ export class AuthController {
         jobTitle: body.jobTitle,
         domain: body.domain,
         productUseCases: body.productUseCases,
+        wasInvited: !!body.invitationToken,
       })
     );
   }
 
   @Post('/reset/request')
-  async forgotPasswordRequest(@Body() body: { email: string }, @Query('src') src?: PasswordResetFlowEnum) {
+  async forgotPasswordRequest(@Body() body: PasswordResetRequestBodyDto, @Query('src') src?: string) {
     return await this.passwordResetRequestUsecase.execute(
       PasswordResetRequestCommand.create({
         email: body.email,
-        src,
+        src: src as PasswordResetFlowEnum,
       })
     );
   }
@@ -152,45 +148,23 @@ export class AuthController {
   }
 
   @Post('/organizations/:organizationId/switch')
-  @UseGuards(UserAuthGuard)
+  @RequireAuthentication()
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
-  async organizationSwitch(
-    @UserSession() user: IJwtPayload,
-    @Param('organizationId') organizationId: string
-  ): Promise<string> {
+  async organizationSwitch(@UserSession() user: UserSessionData, @Param('organizationId') organizationId: string) {
     const command = SwitchOrganizationCommand.create({
       userId: user._id,
       newOrganizationId: organizationId,
     });
 
-    return await this.switchOrganizationUsecase.execute(command);
-  }
-
-  @Post('/environments/:environmentId/switch')
-  @Header('Cache-Control', 'no-store')
-  @UseGuards(UserAuthGuard)
-  @HttpCode(200)
-  async projectSwitch(
-    @UserSession() user: IJwtPayload,
-    @Param('environmentId') environmentId: string
-  ): Promise<{ token: string }> {
-    const command = SwitchEnvironmentCommand.create({
-      userId: user._id,
-      newEnvironmentId: environmentId,
-      organizationId: user.organizationId,
-    });
-
-    return {
-      token: await this.switchEnvironmentUsecase.execute(command),
-    };
+    return this.switchOrganizationUsecase.execute(command);
   }
 
   @Post('/update-password')
   @Header('Cache-Control', 'no-store')
-  @UseGuards(UserAuthGuard)
+  @RequireAuthentication()
   @HttpCode(HttpStatus.NO_CONTENT)
-  async updatePassword(@UserSession() user: IJwtPayload, @Body() body: UpdatePasswordBodyDto) {
+  async updatePassword(@UserSession() user: UserSessionData, @Body() body: UpdatePasswordBodyDto) {
     return await this.updatePasswordUsecase.execute(
       UpdatePasswordCommand.create({
         userId: user._id,
@@ -204,11 +178,7 @@ export class AuthController {
   }
 
   @Get('/test/token/:userId')
-  async authenticateTest(
-    @Param('userId') userId: string,
-    @Query('organizationId') organizationId: string,
-    @Query('environmentId') environmentId: string
-  ) {
+  async authenticateTest(@Param('userId') userId: string, @Query('organizationId') organizationId: string) {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
 
     const user = await this.userRepository.findById(userId);
@@ -216,6 +186,6 @@ export class AuthController {
 
     const member = organizationId ? await this.memberRepository.findMemberByUserId(organizationId, user._id) : null;
 
-    return await this.authService.getSignedToken(user, organizationId, member as MemberEntity, environmentId);
+    return await this.authService.getSignedToken(user, organizationId, member as MemberEntity);
   }
 }

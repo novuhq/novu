@@ -1,8 +1,8 @@
-import { TenantCustomData } from '@novu/shared';
-import { TenantId } from './types';
-import { EnvironmentId } from '../environment';
+import { CustomDataType } from '@novu/shared';
 import { ChangePropsValueType } from '../../types/helpers';
+import { EnvironmentId } from '../environment';
 import { OrganizationId } from '../organization';
+import { TenantId } from './types';
 
 export class TenantEntity {
   _id: TenantId;
@@ -17,7 +17,7 @@ export class TenantEntity {
 
   updatedAt: string;
 
-  data?: TenantCustomData;
+  data?: CustomDataType;
 
   _environmentId: EnvironmentId;
 

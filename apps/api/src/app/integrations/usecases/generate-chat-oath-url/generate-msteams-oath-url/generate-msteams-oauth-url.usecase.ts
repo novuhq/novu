@@ -1,0 +1,226 @@
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { createHash } from '@novu/application-generic';
+import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, SubscriberRepository } from '@novu/dal';
+import { ChatProviderIdEnum, ContextPayload } from '@novu/shared';
+import { buildAgentApiRootUrl } from '../../../../agents/shared/util/agent-api-root-url';
+import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
+import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
+import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
+import { GenerateMsTeamsOauthUrlCommand } from './generate-msteams-oauth-url.command';
+
+export type OAuthMode = 'connect' | 'link_user';
+
+export const MS_TEAMS_LINK_USER_OAUTH_SCOPES = ['openid', 'profile', 'User.Read'] as const;
+
+export type StateData = {
+  identifier?: string;
+  subscriberId?: string;
+  context?: ContextPayload;
+  /** Trusted, session-validated context keys. When present the callback persists these directly. */
+  contextKeys?: string[];
+  environmentId: string;
+  organizationId: string;
+  integrationIdentifier: string;
+  providerId: ChatProviderIdEnum;
+  timestamp: number;
+  mode?: OAuthMode;
+  autoLinkUser?: boolean;
+};
+
+@Injectable()
+export class GenerateMsTeamsOauthUrl {
+  /*
+   * MS Teams Admin Consent flow (app-only):
+   * - Uses /adminconsent endpoint instead of /authorize
+   * - No code exchange, no refresh token
+   * - Admin grants application permissions once per tenant
+   * - Messages sent as bot/app identity, not as user
+   * - Requires application permissions configured in Azure app registration:
+   *   Team.ReadBasic.All, Channel.ReadBasic.All, AppCatalog.Read.All,
+   *   TeamsAppInstallation.ReadWriteSelfForTeam.All
+   */
+  private readonly MS_TEAMS_ADMIN_CONSENT_URL = 'https://login.microsoftonline.com/organizations/v2.0/adminconsent?';
+
+  constructor(
+    private environmentRepository: EnvironmentRepository,
+    private subscriberRepository: SubscriberRepository
+  ) {}
+
+  async execute(command: GenerateMsTeamsOauthUrlCommand): Promise<string> {
+    this.validateSubscriberIdOrContext(command);
+    await this.assertResourceExists(command);
+
+    const credentials = await this.getIntegrationCredentials(command.integration);
+    const { clientId } = credentials;
+
+    if (!clientId) {
+      throw new NotFoundException('MS Teams integration missing clientId');
+    }
+
+    const secureState = await this.createSecureState(
+      command.integration,
+      command.subscriberId,
+      command.context,
+      command.connectionIdentifier,
+      command.mode,
+      command.autoLinkUser,
+      command.contextKeys
+    );
+
+    if (command.mode === 'link_user') {
+      // the callback requires subscriberId to be present
+      if (!command.subscriberId) {
+        throw new BadRequestException('subscriberId is required for link_user mode');
+      }
+
+      return this.getLinkUserOAuthUrl(clientId, secureState);
+    }
+
+    return this.getAdminConsentUrl(clientId, secureState);
+  }
+
+  private validateSubscriberIdOrContext(command: GenerateMsTeamsOauthUrlCommand): void {
+    const { subscriberId, context, contextKeys } = command;
+
+    if (!subscriberId && !context && !contextKeys?.length) {
+      throw new BadRequestException('Either subscriberId or context must be provided');
+    }
+  }
+
+  private async assertResourceExists(command: GenerateMsTeamsOauthUrlCommand) {
+    const { subscriberId, organizationId, environmentId } = command;
+
+    if (!subscriberId) {
+      return;
+    }
+
+    const found = await this.subscriberRepository.findOne({
+      subscriberId,
+      _organizationId: organizationId,
+      _environmentId: environmentId,
+    });
+
+    if (!found) throw new NotFoundException(`Subscriber not found: ${subscriberId}`);
+
+    return;
+  }
+
+  private getAdminConsentUrl(clientId: string, secureState: string): string {
+    const oauthParams = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: GenerateMsTeamsOauthUrl.buildRedirectUri(),
+      scope: 'https://graph.microsoft.com/.default',
+      state: secureState,
+    });
+
+    return `${this.MS_TEAMS_ADMIN_CONSENT_URL}${oauthParams.toString()}`;
+  }
+
+  /*
+   * Multi-tenant link_user: authorize against the `/organizations` authority rather than the bot's
+   * home tenant, so a user signs in within their OWN tenant (the bot's home tenant or any external
+   * customer tenant that has consented to the app). The user's actual tenant is read from the
+   * returned id_token (`tid` claim) in the callback.
+   */
+  private getLinkUserOAuthUrl(clientId: string, secureState: string): string {
+    const oauthParams = new URLSearchParams({
+      client_id: clientId,
+      response_type: 'code',
+      redirect_uri: GenerateMsTeamsOauthUrl.buildRedirectUri(),
+      scope: MS_TEAMS_LINK_USER_OAUTH_SCOPES.join(' '),
+      state: secureState,
+      response_mode: 'query',
+    });
+
+    return `https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?${oauthParams.toString()}`;
+  }
+
+  private async createSecureState(
+    integration: IntegrationEntity,
+    subscriberId?: string,
+    context?: ContextPayload,
+    connectionIdentifier?: string,
+    mode?: OAuthMode,
+    autoLinkUser?: boolean,
+    contextKeys?: string[]
+  ): Promise<string> {
+    const { _environmentId, _organizationId, identifier, providerId } = integration;
+
+    // A session-validated context is carried as trusted keys; drop the raw payload
+    // so a mismatched body.context can never ride along in the signed state.
+    const hasContextKeys = Boolean(contextKeys?.length);
+
+    const stateData: StateData = {
+      identifier: connectionIdentifier,
+      subscriberId,
+      context: hasContextKeys ? undefined : context,
+      contextKeys: hasContextKeys ? contextKeys : undefined,
+      environmentId: _environmentId,
+      organizationId: _organizationId,
+      integrationIdentifier: identifier,
+      providerId: providerId as ChatProviderIdEnum,
+      timestamp: Date.now(),
+      mode,
+      autoLinkUser,
+    };
+
+    const payload = JSON.stringify(stateData);
+    const secret = await this.getEnvironmentApiKey(_environmentId);
+    const signature = createHash(secret, payload);
+
+    if (!signature) {
+      throw new BadRequestException('Failed to create OAuth state signature');
+    }
+
+    return encodeOAuthState(payload, signature);
+  }
+
+  static async validateAndDecodeState(state: string, environmentApiKey: string): Promise<StateData> {
+    try {
+      const { payload, signature } = splitOAuthState(state);
+
+      const expectedSignature = createHash(environmentApiKey, payload);
+      if (!areHexDigestsEqual(expectedSignature, signature)) {
+        throw new Error('Invalid state signature');
+      }
+
+      const data = JSON.parse(payload);
+
+      // Validate timestamp (5 minutes expiry)
+      const FIVE_MINUTES = 5 * 60 * 1000;
+      if (Date.now() - data.timestamp > FIVE_MINUTES) {
+        throw new Error('OAuth state expired');
+      }
+
+      return data;
+    } catch {
+      throw new BadRequestException('Invalid OAuth state parameter');
+    }
+  }
+
+  static buildRedirectUri(): string {
+    return `${buildAgentApiRootUrl()}${CHAT_OAUTH_CALLBACK_PATH}`;
+  }
+
+  private async getIntegrationCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {
+    if (!integration.credentials) {
+      throw new NotFoundException(`MS Teams integration missing credentials `);
+    }
+
+    if (!integration.credentials.clientId) {
+      throw new NotFoundException(`MS Teams integration missing required OAuth credentials (clientId) `);
+    }
+
+    return integration.credentials;
+  }
+
+  private async getEnvironmentApiKey(environmentId: string): Promise<string> {
+    const apiKeys = await this.environmentRepository.getApiKeys(environmentId);
+
+    if (!apiKeys.length) {
+      throw new NotFoundException(`Environment ID: ${environmentId} not found`);
+    }
+
+    return apiKeys[0].key;
+  }
+}

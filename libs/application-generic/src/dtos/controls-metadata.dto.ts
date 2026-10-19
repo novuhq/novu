@@ -1,0 +1,30 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, ValidateNested } from 'class-validator';
+import { JSONSchemaDto } from './json-schema.dto';
+import { UiSchema } from './ui-schema.dto';
+
+export class ControlsMetadataDto<TValues = Record<string, unknown>> {
+  @ApiPropertyOptional({
+    description: 'JSON Schema for data',
+    additionalProperties: true,
+    type: () => Object,
+  })
+  @IsOptional()
+  @ValidateNested()
+  dataSchema?: JSONSchemaDto;
+
+  @ApiPropertyOptional({
+    description: 'UI Schema for rendering',
+    type: UiSchema,
+  })
+  @IsOptional()
+  @ValidateNested()
+  uiSchema?: UiSchema;
+
+  @ApiPropertyOptional({
+    description: 'Resolved control values for the step',
+    type: 'object',
+    additionalProperties: true,
+  })
+  values?: TValues;
+}

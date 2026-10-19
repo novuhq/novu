@@ -1,0 +1,170 @@
+---
+title: 'Stream webhook events into Google BigQuery'
+description: "Stream Novu webhook events into a BigQuery table with the BigQuery connector, including service account permissions, the default id and payload schema, and a batch transformation."
+sidebarTitle: Google BigQuery
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import WebhookBatchInput from "/snippets/webhook-batch-input.mdx";
+
+The Google BigQuery connector inserts Novu webhook events as rows in a BigQuery table. Use it when you want notification data in BigQuery for reporting or downstream pipelines without building an ingestion service.
+
+Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction). This connector maps to the Svix [BigQuery advanced endpoint](https://docs.svix.com/advanced-endpoints/bigquery).
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- A GCP project with a BigQuery dataset.
+- The destination table created before you enable the endpoint. The connector does not create or alter tables.
+- A Google Cloud service account with a JSON key, granted write access on the destination dataset.
+
+## Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Project ID | Yes | The GCP project that owns the dataset. |
+| Dataset ID | Yes | The BigQuery dataset that contains the table. |
+| Table ID | Yes | The table that receives the rows. |
+| Credentials | Yes | Google Cloud service account credentials JSON, provided as a string. |
+| Transformation | No | JavaScript that maps each webhook batch to rows. Required when your table does not use the default two column schema. |
+
+Paste the full contents of the service account JSON key file into the credentials field. Treat it as a secret and do not commit it to a repository.
+
+## Service account permissions
+
+Svix does not publish a required role list for this connector, so scope the service account using Google's own reference. Google documents that writing rows to a table requires the `bigquery.tables.updateData` permission, which is included in the predefined `roles/bigquery.dataEditor` role. See [BigQuery access control](https://cloud.google.com/bigquery/docs/access-control).
+
+Grant the role on the destination dataset rather than the whole project:
+
+```bash
+bq add-iam-policy-binding \
+  --member="serviceAccount:novu-writer@my-gcp-project.iam.gserviceaccount.com" \
+  --role="roles/bigquery.dataEditor" \
+  my-gcp-project:my_dataset
+```
+
+If inserts fail with a permission error, compare the failure in the endpoint **Logs** tab against the permissions listed on the Google page above before widening access.
+
+## Default destination behavior
+
+Without a transformation, Svix writes two columns. It generates a unique `id` for each row and writes the raw webhook payload to `payload`:
+
+```sql
+CREATE TABLE `my-gcp-project.my_dataset.events` (
+  id STRING,
+  payload STRING
+);
+```
+
+The table must exist before you enable the endpoint. With a transformation you control every column, so the table can use any schema that matches the rows you return.
+
+
+## Create an analytics table
+
+```sql
+CREATE TABLE `my-gcp-project.my_dataset.novu_events` (
+  id STRING NOT NULL,
+  event_type STRING NOT NULL,
+  subscriber_id STRING,
+  channel STRING,
+  payload STRING NOT NULL,
+  received_at TIMESTAMP NOT NULL
+)
+PARTITION BY DATE(received_at)
+CLUSTER BY event_type;
+```
+
+## Transformation contract
+
+The transformation receives one batch and returns the rows to insert:
+
+<WebhookBatchInput />
+- Output: an object with a `rows` array. Each row is inserted as a separate BigQuery row, and its keys must match your column names.
+
+Novu-oriented example that matches the analytics table above and reads message fields from `event.payload.data.object`:
+
+```javascript
+function handler(input) {
+  const rows = input.events.map((event) => {
+    const message = event.payload.data?.object ?? {};
+
+    return {
+      id: crypto.randomUUID(),
+      event_type: event.eventType,
+      subscriber_id: message.subscriberId ?? null,
+      channel: message.channel ?? null,
+      payload: JSON.stringify(event.payload),
+      received_at: new Date().toISOString(),
+    };
+  });
+
+  return { rows };
+}
+```
+
+The default template Svix ships returns only `id` and `payload`, which matches the two column schema. Replace it when you use a wider table.
+
+## Configure in the Dashboard
+
+<Steps>
+
+<WebhookConnectorAddEndpoint connectorName="Google BigQuery" />
+
+<Step>
+## Enter connection details
+
+Enter the project ID, dataset ID, table ID, and paste the service account credentials JSON.
+</Step>
+
+<Step>
+## Configure the transformation
+
+Keep the default template if your table uses the `id` and `payload` schema. Otherwise paste a transformation whose row keys match your columns.
+</Step>
+
+<Step>
+## Select event types
+
+Subscribe to the [event types](/platform/developer/webhooks/event-types) you want to store. All subscribed types land in the same table, so confirm the transformation produces valid rows for each one.
+</Step>
+
+<Step>
+## Test the endpoint
+
+Click **Create**, open the endpoint, go to the **Testing** tab, and use **Send Example** for each subscribed event type. Confirm success in the **Logs** tab.
+</Step>
+
+</Steps>
+
+## Verify delivery
+
+```bash
+bq query --use_legacy_sql=false \
+  'SELECT event_type, subscriber_id, channel, received_at
+   FROM `my-gcp-project.my_dataset.novu_events`
+   ORDER BY received_at DESC
+   LIMIT 10'
+```
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| Delivery succeeds in **Logs** but the query returns nothing | Confirm the project, dataset, and table in the query match the endpoint. Then compare the transformed payload in **Logs** with the table schema. |
+| Permission denied on insert | The service account is missing `bigquery.tables.updateData` on the table, or the binding was made on the wrong dataset. |
+| Invalid credentials errors | The credentials field must contain the full JSON key as a string. A truncated or re-quoted key fails. |
+| Table not found | The table must exist before the endpoint is enabled, and the project, dataset, and table fields must match it exactly. |
+| Invalid value for a column | A `TIMESTAMP` column received a value that is not a valid timestamp, or a required column received `null`. The example returns ISO 8601 strings for `received_at`. |
+| No event type to filter on | You are using the default two column schema. Switch to the analytics table and transformation above. |
+| Rows appear for some event types but not others | The transformation assumes fields that only exist on certain event types. Guard with defaults, as in the example above. |
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix BigQuery endpoint](https://docs.svix.com/advanced-endpoints/bigquery)
+- [BigQuery access control](https://cloud.google.com/bigquery/docs/access-control)
+- [BigQuery JSON functions](https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions)

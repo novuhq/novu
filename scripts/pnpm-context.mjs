@@ -5,14 +5,14 @@
  * I believe this is a bug, see https://github.com/pnpm/pnpm/issues/3726 for details.
  */
 
+import { parsePackageSelector, readProjects } from '@pnpm/filter-workspace-packages';
+import { promises as fs } from 'fs';
+import { globby } from 'globby';
 import meow from 'meow';
+import { pipe as rawPipe } from 'mississippi';
 import os from 'os';
 import { basename, dirname, join, relative, resolve } from 'path';
 import { create as createTar } from 'tar';
-import { globby } from 'globby';
-import { parsePackageSelector, readProjects } from '@pnpm/filter-workspace-packages';
-import { pipe as rawPipe } from 'mississippi';
-import { promises as fs } from 'fs';
 import { promisify } from 'util';
 
 const pipe = promisify(rawPipe);
@@ -144,11 +144,8 @@ async function getMetafilesFromPnpmSelector(selector, cwd, options = {}) {
         'pnpm-workspace.yaml',
         'nx.json',
         'tsconfig.json',
-        'tsconfig.base.json',
         'tsconfig.build.json',
         '.npmrc',
-        'lerna.json',
-        '.npmrc-cloud',
       ],
       { cwd, dot: true, gitignore: true }
     ),

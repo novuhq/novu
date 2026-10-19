@@ -1,0 +1,27 @@
+---
+description: Rules for working with ClickHouse analytics and trace logging
+globs:
+  - "**/analytic-logs/**"
+  - "**/clickhouse-migrations/**"
+alwaysApply: false
+---
+
+### ClickHouse Conventions
+
+**Service layer**
+- Use `ClickHouseService` for single queries/inserts and `ClickHouseBatchService` for high-throughput writes.
+- Both are registered as custom providers (`clickHouseService`, `clickHouseBatchService`) in each app's `shared.module.ts`.
+- Never instantiate ClickHouse clients directly — always inject the providers.
+
+**Repositories**
+- All ClickHouse repositories extend `LogRepository` in `libs/application-generic/src/services/analytic-logs/`.
+- Each repository has a corresponding schema file defining the table columns and types.
+- Always include `_environmentId` and `_organizationId` in queries for tenant isolation (same pattern as MongoDB DAL).
+
+**Migrations**
+- ClickHouse migrations are numbered `.sql` files in `apps/api/migrations/clickhouse-migrations/`.
+- Run locally with `cd apps/api && pnpm run clickhouse:migrate:local`.
+- New migrations must be additive — never alter or drop columns that existing queries depend on. Use temp tables and exchange patterns for schema refactors (see migration 4/5 for the established pattern).
+
+**Feature flags**
+- Gate new ClickHouse-dependent behavior behind a feature flag (see `packages/shared/src/types/feature-flags.ts` for existing flags like `IS_CLICKHOUSE_BATCHING_ENABLED`).

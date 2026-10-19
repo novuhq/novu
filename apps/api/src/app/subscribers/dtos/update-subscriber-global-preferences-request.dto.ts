@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsBoolean, IsOptional, ValidateNested } from 'class-validator';
 import { ChannelPreference } from '../../shared/dtos/channel-preference';
 
 export class UpdateSubscriberGlobalPreferencesRequestDto {

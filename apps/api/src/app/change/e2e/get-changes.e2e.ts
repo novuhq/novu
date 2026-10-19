@@ -1,17 +1,16 @@
-import { expect } from 'chai';
 import { ChangeRepository } from '@novu/dal';
 import {
   EmailBlockTypeEnum,
-  StepTypeEnum,
-  FilterPartTypeEnum,
   FieldLogicalOperatorEnum,
   FieldOperatorEnum,
+  FilterPartTypeEnum,
+  StepTypeEnum,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows-v1/dtos';
 
-import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows/dto';
-
-describe('Get changes', () => {
+describe('Get changes #novu-v0', () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
 
@@ -58,9 +57,9 @@ describe('Get changes', () => {
     await session.applyChanges();
 
     const updateData: UpdateWorkflowRequestDto = {
-      name: testTemplate.name,
-      tags: testTemplate.tags,
-      description: testTemplate.description,
+      name: testTemplate.name || '',
+      tags: testTemplate.tags || [],
+      description: testTemplate.description || '',
       steps: [],
       notificationGroupId: session.notificationGroups[0]._id,
     };

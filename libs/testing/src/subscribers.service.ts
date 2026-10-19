@@ -6,7 +6,10 @@ export class SubscribersService {
   private subscriberRepository = new SubscriberRepository();
   private integrationRepository = new IntegrationRepository();
 
-  constructor(private _organizationId: string, private _environmentId: string) {}
+  constructor(
+    private _organizationId: string,
+    private _environmentId: string
+  ) {}
 
   async createSubscriber(fields: Partial<SubscriberEntity> = {}) {
     const integrations = await this.integrationRepository.find({
@@ -34,10 +37,10 @@ export class SubscribersService {
     }
 
     return await this.subscriberRepository.create({
-      lastName: faker.name.lastName(),
-      firstName: faker.name.firstName(),
+      lastName: faker.person.lastName(),
+      firstName: faker.person.firstName(),
       email: faker.internet.email(),
-      phone: faker.phone.phoneNumber(),
+      phone: faker.phone.number(),
       _environmentId: this._environmentId,
       _organizationId: this._organizationId,
       subscriberId: SubscriberRepository.createObjectId(),

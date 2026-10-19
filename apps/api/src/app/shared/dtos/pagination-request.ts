@@ -1,19 +1,21 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IPaginationParams } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsInt, Max, Min } from 'class-validator';
-import { IPaginationParams } from '@novu/shared';
 
 import { Constructor } from '../types';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function PaginationRequestDto(defaultLimit = 10, maxLimit = 100): Constructor<IPaginationParams> {
   class PaginationRequest {
     @ApiPropertyOptional({
       type: Number,
       required: false,
+      example: 0,
+      minimum: 0,
     })
     @Type(() => Number)
     @IsInt()
+    @Min(0)
     page = 0;
 
     @ApiPropertyOptional({
@@ -21,6 +23,7 @@ export function PaginationRequestDto(defaultLimit = 10, maxLimit = 100): Constru
       required: false,
       default: defaultLimit,
       maximum: maxLimit,
+      example: 10,
     })
     @Type(() => Number)
     @IsInt()

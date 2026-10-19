@@ -1,0 +1,92 @@
+import { Novu } from '@novu/api';
+import { SubscriberResponseDto } from '@novu/api/models/components';
+import { SubscriberRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { randomBytes } from 'crypto';
+import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+
+let session: UserSession;
+
+describe('Get Subscriber - /subscribers/:subscriberId (GET) #novu-v2', () => {
+  let subscriber: SubscriberResponseDto;
+  let novuClient: Novu;
+
+  beforeEach(async () => {
+    const uuid = randomBytes(4).toString('hex');
+    session = new UserSession();
+    await session.initialize();
+    subscriber = await createSubscriberAndValidate(uuid);
+    novuClient = initNovuClassSdk(session);
+  });
+
+  it('should fetch subscriber by subscriberId', async () => {
+    const res = await novuClient.subscribers.retrieve(subscriber.subscriberId);
+
+    validateSubscriber(res.result, subscriber);
+  });
+
+  it('should return 404 if subscriberId does not exist', async () => {
+    const invalidSubscriberId = `non-existent-${randomBytes(2).toString('hex')}`;
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.subscribers.retrieve(invalidSubscriberId));
+
+    expect(error?.statusCode).to.equal(404);
+  });
+
+  it('should return null values if subscriber has null or undefined values', async () => {
+    const subscriberId = `test-subscriber-${`${randomBytes(4).toString('hex')}`}`;
+    const payload = {
+      subscriberId,
+    };
+
+    await novuClient.subscribers.create(payload);
+
+    const res = await novuClient.subscribers.retrieve(subscriberId);
+
+    expect(res.result.firstName).to.be.undefined;
+    expect(res.result.lastName).to.be.undefined;
+  });
+
+  it('should retrieve subscriber when channels is null in the database', async () => {
+    const subscriberId = `test-subscriber-null-channels-${randomBytes(4).toString('hex')}`;
+    await novuClient.subscribers.create({ subscriberId });
+
+    const subscriberRepository = new SubscriberRepository();
+    await subscriberRepository.update(
+      { _environmentId: session.environment._id, subscriberId },
+      { $set: { channels: null } }
+    );
+
+    const res = await novuClient.subscribers.retrieve(subscriberId);
+
+    expect(res.result.subscriberId).to.equal(subscriberId);
+    expect(res.result.channels).to.deep.equal([]);
+  });
+});
+
+async function createSubscriberAndValidate(id: string = '') {
+  const payload = {
+    subscriberId: `test-subscriber-${id}`,
+    firstName: `Test ${id}`,
+    lastName: 'Subscriber',
+    email: `test-${id}@subscriber.com`,
+    phone: '+1234567890',
+  };
+
+  const res = await session.testAgent.post(`/v1/subscribers`).send(payload);
+  expect(res.status).to.equal(201);
+
+  const subscriber = res.body.data;
+
+  validateSubscriber(subscriber, payload);
+
+  return subscriber;
+}
+
+function validateSubscriber(subscriber: SubscriberResponseDto, expected: Partial<SubscriberResponseDto>) {
+  expect(subscriber.subscriberId).to.equal(expected.subscriberId);
+  expect(subscriber.firstName).to.equal(expected.firstName);
+  expect(subscriber.lastName).to.equal(expected.lastName);
+  expect(subscriber.email).to.equal(expected.email);
+  expect(subscriber.phone).to.equal(expected.phone);
+}

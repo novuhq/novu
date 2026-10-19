@@ -1,0 +1,144 @@
+---
+title: "Conversations"
+description: "List, resume, page, reconnect, and retry Web Chat conversations."
+sidebarTitle: Conversations
+---
+
+Start from [Send a first message](/agents/channels/web-chat#send-a-first-message). This page covers listing conversations, resuming them, paging history, reconnect, and retry.
+
+`useWebChat` has no list helper. Use `novu.webChat.listConversations` to build a conversation sidebar or history screen.
+
+## List
+
+Call `novu.loadWebChat()`, then `novu.webChat.listConversations` on the client from [`useNovu`](/platform/sdks/react/hooks/use-novu). `useWebChat` loads Web Chat for the chat UI only.
+
+Each row is a `WebChatConversation` with these fields: `identifier`, `title`, `status`, `agentIdentifier`, `lastActivityAt`, and `createdAt`.
+
+```tsx
+const novu = useNovu();
+
+await novu.loadWebChat();
+const { data, error } = await novu.webChat.listConversations({
+  limit: 10,
+  orderBy: 'lastActivityAt',
+  orderDirection: 'DESC',
+});
+```
+
+`data.conversations` is the page. Use `data.next` and `data.previous` with `after` and `before` to page older lists.
+
+When a row is selected, pass `item.identifier` as `conversationId` and `item.agentIdentifier` as `agentId` on `useWebChat`. Match the agent to the conversation.
+
+## Start or resume
+
+Pass `conversationId` so the hook loads history on mount.
+
+```tsx
+function Chat({ conversationId }: { conversationId?: string }) {
+  const { sendMessage } = useWebChat({
+    agentId: 'YOUR_AGENT_IDENTIFIER',
+    conversationId,
+  });
+
+  async function onSend(text: string) {
+    const { data } = await sendMessage(text);
+    if (data?.conversationId) {
+      storeConversationId(data.conversationId);
+    }
+  }
+}
+```
+
+Store the `conversationId` that `sendMessage` returns, or the `conversationId` field on the hook result. On the next visit, pass that id back in, or pick a row from [List](#list).
+
+To start another chat without a `conversationId` prop, call `startNewConversation()` from the hook. It clears the current timeline and opens an empty chat in place, so the component does not remount. The next `sendMessage` creates the new server conversation.
+
+```tsx
+const { startNewConversation } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+<button type="button" onClick={() => startNewConversation()}>
+  New chat
+</button>
+```
+
+`startNewConversation()` is a no-op when you pass `conversationId` or a shared `conversation` runtime. In those cases, switch chats by changing the `conversationId` you pass in, or remount the component.
+
+`agentId` selects the agent. If the identifier changes, remount with the new `agentId`.
+
+Omit `conversationId` unless that conversation belongs to the new agent. A conversation id from a different agent does not resume.
+
+## Older messages
+
+If `pagination.hasMore` is true, call `pagination.fetchMore()` to load an older page.
+
+```tsx
+const { pagination } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+  conversationId,
+});
+
+{pagination.hasMore ? (
+  <button
+    type="button"
+    disabled={pagination.status === 'loading'}
+    onClick={() => void pagination.fetchMore()}
+  >
+    {pagination.status === 'loading' ? 'Loading…' : 'Load older messages'}
+  </button>
+) : null}
+```
+
+Overlapping `fetchMore` calls do not run.
+
+## Reconnect
+
+The hook reconnects and applies missed events on its own. Show a banner from these fields.
+
+```tsx
+const { isRecovering, catchUpError } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+  conversationId,
+});
+
+{isRecovering ? <p>Reconnecting…</p> : null}
+{catchUpError ? <p>{catchUpError.message}</p> : null}
+```
+
+`catchUpError` is separate from send and fetch `error`. `conversationStatus` does not become an error state when recovery fails.
+
+## Retry
+
+If `message.status` is `failed`, call `retryMessage` with that message id. Retry reuses the original idempotency key. It does not create a second message with the same text.
+
+```tsx
+const { messages, retryMessage } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+{messages.map((message) => (
+  <li key={message.id}>
+    {message.parts.map((part, index) =>
+      part.type === 'text' ? <span key={index}>{part.text}</span> : null
+    )}
+    {message.status === 'failed' ? (
+      <button type="button" onClick={() => void retryMessage(message.id)}>
+        Retry
+      </button>
+    ) : null}
+  </li>
+))}
+```
+
+## Resolved
+
+`conversationStatus` on `useWebChat` is `active` or `resolved`. Do not use it to disable the composer.
+
+The agent marks a conversation resolved with [`ctx.resolve()`](/agents/custom-code-agent/building-blocks/signals#resolve-a-conversation). `conversationStatus` becomes `resolved`.
+
+When the subscriber sends the next message, the conversation reopens and `conversationStatus` becomes `active` again.
+
+Use `conversationStatus` for badges or labels in your UI. Keep the composer enabled unless `isRunning` or `isLoading` is true.
+
+Inspect resolved conversations in the [Novu dashboard](/agents/conversations).

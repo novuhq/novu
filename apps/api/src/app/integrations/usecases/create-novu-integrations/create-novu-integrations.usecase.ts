@@ -1,24 +1,40 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationRepository } from '@novu/dal';
-import { areNovuEmailCredentialsSet, areNovuSmsCredentialsSet } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  areNovuEmailCredentialsSet,
+  areNovuManagedClaudeCredentialsSet,
+  FeatureFlagsService,
+} from '@novu/application-generic';
+import { EnvironmentEntity, IntegrationRepository, OrganizationEntity, UserEntity } from '@novu/dal';
 
-import { CreateNovuIntegrationsCommand } from './create-novu-integrations.command';
-import { CreateIntegration } from '../create-integration/create-integration.usecase';
+import {
+  AgentRuntimeProviderIdEnum,
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  EnvironmentEnum,
+  EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
+  InAppProviderIdEnum,
+  IntegrationKindEnum,
+} from '@novu/shared';
 import { CreateIntegrationCommand } from '../create-integration/create-integration.command';
-import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
-import { SetIntegrationAsPrimary } from '../set-integration-as-primary/set-integration-as-primary.usecase';
+import { CreateIntegration } from '../create-integration/create-integration.usecase';
 import { SetIntegrationAsPrimaryCommand } from '../set-integration-as-primary/set-integration-as-primary.command';
+import { SetIntegrationAsPrimary } from '../set-integration-as-primary/set-integration-as-primary.usecase';
+import { CreateNovuIntegrationsCommand } from './create-novu-integrations.command';
 
 @Injectable()
 export class CreateNovuIntegrations {
   constructor(
     private createIntegration: CreateIntegration,
     private integrationRepository: IntegrationRepository,
-    private setIntegrationAsPrimary: SetIntegrationAsPrimary
+    private setIntegrationAsPrimary: SetIntegrationAsPrimary,
+    private featureFlagService: FeatureFlagsService,
+    private analyticsService: AnalyticsService
   ) {}
 
   private async createEmailIntegration(command: CreateNovuIntegrationsCommand) {
-    if (!areNovuEmailCredentialsSet()) {
+    if (!areNovuEmailCredentialsSet() || command.name !== EnvironmentEnum.DEVELOPMENT) {
       return;
     }
 
@@ -53,44 +69,111 @@ export class CreateNovuIntegrations {
     }
   }
 
-  private async createSmsIntegration(command: CreateNovuIntegrationsCommand) {
-    if (!areNovuSmsCredentialsSet()) {
-      return;
-    }
-
-    const smsIntegrationCount = await this.integrationRepository.count({
-      providerId: SmsProviderIdEnum.Novu,
-      channel: ChannelTypeEnum.SMS,
+  private async createInAppIntegration(command: CreateNovuIntegrationsCommand) {
+    const inAppIntegrationCount = await this.integrationRepository.count({
+      providerId: InAppProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.IN_APP,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
     });
 
-    if (smsIntegrationCount === 0) {
-      const novuSmsIntegration = await this.createIntegration.execute(
+    if (inAppIntegrationCount === 0) {
+      const isV2Enabled = await this.featureFlagService.getFlag({
+        user: { _id: command.userId } as UserEntity,
+        environment: { _id: command.environmentId } as EnvironmentEntity,
+        organization: { _id: command.organizationId } as OrganizationEntity,
+        key: FeatureFlagsKeysEnum.IS_V2_ENABLED,
+        defaultValue: false,
+      });
+
+      const name = isV2Enabled ? 'Novu Inbox' : 'Novu In-App';
+
+      /*
+       * Default the Inbox (in-app) integration to HMAC-enabled for any
+       * non-dev environment. This is a secure-by-default posture so that
+       * production Inbox deployments cannot be initialized for an arbitrary
+       * subscriberId without a valid `subscriberHash` (see NV-7593). Dev
+       * environments – and ad-hoc/keyless flows that do not pass an
+       * environment type – keep the previous HMAC-off default so local
+       * development remains friction-free.
+       */
+      const shouldEnableHmacByDefault = command.environmentType === EnvironmentTypeEnum.PROD;
+
+      await this.createIntegration.execute(
         CreateIntegrationCommand.create({
-          providerId: SmsProviderIdEnum.Novu,
-          channel: ChannelTypeEnum.SMS,
-          name: 'Novu SMS',
+          name,
+          providerId: InAppProviderIdEnum.Novu,
+          channel: ChannelTypeEnum.IN_APP,
           active: true,
+          check: false,
+          userId: command.userId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          credentials: shouldEnableHmacByDefault ? { hmac: true } : undefined,
+        })
+      );
+    }
+  }
+
+  private async createManagedClaudeIntegration(command: CreateNovuIntegrationsCommand) {
+    const isDevelopmentEnvironment = command.name === EnvironmentEnum.DEVELOPMENT;
+    if (!areNovuManagedClaudeCredentialsSet() || (!isDevelopmentEnvironment && !command.includeManagedClaude)) {
+      return;
+    }
+
+    const isEnabled = await this.featureFlagService.getFlag({
+      user: { _id: command.userId } as UserEntity,
+      environment: { _id: command.environmentId } as EnvironmentEntity,
+      organization: { _id: command.organizationId } as OrganizationEntity,
+      key: FeatureFlagsKeysEnum.IS_DEMO_MANAGED_CLAUDE_ENABLED,
+      defaultValue: false,
+    });
+
+    if (!isEnabled) {
+      return;
+    }
+
+    const managedClaudeIntegrationCount = await this.integrationRepository.count({
+      providerId: AgentRuntimeProviderIdEnum.NovuAnthropic,
+      kind: IntegrationKindEnum.AGENT,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
+
+    if (managedClaudeIntegrationCount === 0) {
+      await this.createIntegration.execute(
+        CreateIntegrationCommand.create({
+          providerId: AgentRuntimeProviderIdEnum.NovuAnthropic,
+          kind: IntegrationKindEnum.AGENT,
+          active: true,
+          name: 'Novu Managed Claude',
           check: false,
           userId: command.userId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
         })
       );
-      await this.setIntegrationAsPrimary.execute(
-        SetIntegrationAsPrimaryCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          integrationId: novuSmsIntegration._id,
-          userId: command.userId,
-        })
-      );
+
+      this.analyticsService.track('[Novu Managed Claude] - Integration provisioned', command.userId, {
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      });
     }
   }
 
   async execute(command: CreateNovuIntegrationsCommand): Promise<void> {
-    await this.createEmailIntegration(command);
-    await this.createSmsIntegration(command);
+    const integrationPromises: Array<Promise<void>> = [];
+
+    if (!command.channels || command.channels.includes(ChannelTypeEnum.EMAIL)) {
+      integrationPromises.push(this.createEmailIntegration(command));
+    }
+
+    if (!command.channels || command.channels.includes(ChannelTypeEnum.IN_APP)) {
+      integrationPromises.push(this.createInAppIntegration(command));
+    }
+
+    integrationPromises.push(this.createManagedClaudeIntegration(command));
+
+    await Promise.all(integrationPromises);
   }
 }

@@ -1,0 +1,1 @@
+export { slugify } from './slugify';

@@ -1,23 +1,22 @@
-import merge from 'lodash.merge';
 import { EventEmitter } from 'events';
+import merge from 'lodash.merge';
+import { HandlebarsContentEngine, IContentEngine } from './content/content.engine';
 import { INovuConfig } from './novu.interface';
 import {
-  IEmailProvider,
-  ISmsProvider,
   IChatProvider,
+  IEmailProvider,
   IPushProvider,
+  ISmsProvider,
+  IToolProvider,
 } from './provider/provider.interface';
 import { ProviderStore } from './provider/provider.store';
 import { ITemplate, ITriggerPayload } from './template/template.interface';
 import { TemplateStore } from './template/template.store';
-import { TriggerEngine } from './trigger/trigger.engine';
-import { ThemeStore } from './theme/theme.store';
 import { ITheme } from './theme/theme.interface';
-import {
-  HandlebarsContentEngine,
-  IContentEngine,
-} from './content/content.engine';
+import { ThemeStore } from './theme/theme.store';
+import { TriggerEngine } from './trigger/trigger.engine';
 
+type RegisterableProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider | IToolProvider;
 export class NovuStateless extends EventEmitter {
   private readonly templateStore: TemplateStore;
   private readonly providerStore: ProviderStore;
@@ -39,8 +38,7 @@ export class NovuStateless extends EventEmitter {
     this.themeStore = this.config?.themeStore || new ThemeStore();
     this.templateStore = this.config?.templateStore || new TemplateStore();
     this.providerStore = this.config?.providerStore || new ProviderStore();
-    this.contentEngine =
-      this.config?.contentEngine || new HandlebarsContentEngine();
+    this.contentEngine = this.config?.contentEngine || new HandlebarsContentEngine();
   }
 
   async registerTheme(id: string, theme: ITheme) {
@@ -57,30 +55,22 @@ export class NovuStateless extends EventEmitter {
     return await this.templateStore.getTemplateById(template.id);
   }
 
-  async registerProvider(
-    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
-  );
+  async registerProvider(provider: RegisterableProvider): Promise<void>;
+
+  async registerProvider(providerId: string, provider: RegisterableProvider): Promise<void>;
 
   async registerProvider(
-    providerId: string,
-    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
-  );
+    providerOrProviderId: string | RegisterableProvider,
+    provider?: RegisterableProvider
+  ): Promise<void> {
+    const providerId = typeof providerOrProviderId === 'string' ? providerOrProviderId : provider?.id || '';
+    const finalProvider = typeof providerOrProviderId === 'string' ? provider : providerOrProviderId;
 
-  async registerProvider(
-    providerOrProviderId:
-      | string
-      | IEmailProvider
-      | ISmsProvider
-      | IChatProvider
-      | IPushProvider,
-    provider?: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
-  ) {
-    await this.providerStore.addProvider(
-      typeof providerOrProviderId === 'string'
-        ? providerOrProviderId
-        : provider?.id,
-      typeof providerOrProviderId === 'string' ? provider : providerOrProviderId
-    );
+    if (!finalProvider) {
+      throw new Error('Provider is required');
+    }
+
+    await this.providerStore.addProvider(providerId, finalProvider);
   }
 
   async getProviderByInternalId(providerId: string) {

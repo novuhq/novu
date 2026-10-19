@@ -1,0 +1,401 @@
+overlay: 1.0.0
+info:
+  title: Speakeasy Modifications
+  version: 0.0.6
+  x-speakeasy-metadata:
+    after: ""
+    before: ""
+    type: speakeasy-modifications
+actions:
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/preferences"]["patch"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.Preferences.updateGlobal()
+      after: sdk.subscribersPreferences.updateGlobal()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/notification-groups/{id}"]["delete"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Workflow groups.NotificationGroupsController_deleteNotificationGroup()
+      after: sdk.workflowGroups.delete()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/events/trigger/{transactionId}"]["delete"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Events.cancel()
+      after: sdk.events.cancelByTransactionId()
+      reviewed_at: 1732563929240
+      created_at: 1732563888541
+      disabled: true
+  - target: $["paths"]["/v1/integrations/webhook/provider/{providerOrIntegrationId}/status"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Integrations.Webhooks.IntegrationsController_getWebhookSupportStatus()
+      after: sdk.integrationsWebhooks.getStatus()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/credentials/{providerId}/oauth"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.Authentication.chatAccessOauth()
+      after: sdk.subscribers.authentication.handleOauth()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/topics/{topicKey}/subscribers/{externalSubscriberId}"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Topics.Subscribers.TopicsController_getTopicSubscriber()
+      after: sdk.topics.subscribers.check()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/topics/{topicKey}"]["delete"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Topics.TopicsController_deleteTopic()
+      after: sdk.topics.delete()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/notifications/stats"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Notifications.Stats.NotificationsController_getActivityStats()
+      after: sdk.notifications.stats.get()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/messages"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Messages.MessagesController_getMessages()
+      after: sdk.messages.get()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/integrations"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Integrations.IntegrationsController_listIntegrations()
+      after: sdk.integrations.list()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/preferences/{parameter}"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.Preferences.retrieveByLevel()
+      after: sdk.subscribers.preferences.getByLevel()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/environments/me"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Environments.EnvironmentsControllerV1_getCurrentEnvironment()
+      after: sdk.environments.getCurrent()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/notifications/feed"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.Notifications.SubscribersController_getNotificationsFeed()
+      after: sdk.subscribers.notifications.getFeed()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/preferences/{parameter}"]["patch"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.Preferences.SubscribersController_updateSubscriberPreference()
+      after: sdk.subscribers.preferences.update()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/notification-groups/{id}"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Workflow groups.NotificationGroupsController_getNotificationGroup()
+      after: sdk.workflowGroups.get()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/credentials"]["patch"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.Credentials.append()
+      after: sdk.subscribers.credentials.append()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/preferences"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.Preferences.SubscribersController_listSubscriberPreferences()
+      after: sdk.subscribers.preferences.get()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/integrations/{integrationId}"]["put"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Integrations.IntegrationsController_updateIntegrationById()
+      after: sdk.integrations.update()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/notification-groups/{id}"]["patch"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Workflow groups.NotificationGroupsController_updateNotificationGroup()
+      after: sdk.workflowGroups.update()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/environments"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Environments.EnvironmentsControllerV1_listMyEnvironments()
+      after: sdk.environments.getAll()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/notification-groups"]["post"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Workflow groups.NotificationGroupsController_createNotificationGroup()
+      after: sdk.workflowGroups.create()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/notifications/unseen"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.Notifications.unseenCount()
+      after: sdk.subscribersNotifications.getUnseenCount()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/credentials"]["put"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.Credentials.SubscribersController_updateSubscriberChannel()
+      after: sdk.subscribers.credentials.update()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/messages/mark-as"]["post"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.Messages.markAllAs()
+      after: sdk.subscribers.messages.mark()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/integrations/{integrationId}/set-primary"]["post"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Integrations.setAsPrimary()
+      after: sdk.integrations.setPrimary()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/notifications"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Notifications.NotificationsController_listNotifications()
+      after: sdk.notifications.list()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/notifications/graph/stats"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Notifications.Stats.graph()
+      after: sdk.notificationsStats.get()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/notifications/{notificationId}"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Notifications.NotificationsController_getNotification()
+      after: sdk.notifications.get()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/topics/{topicKey}/subscribers/removal"]["post"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Topics.Subscribers.TopicsController_removeSubscribers()
+      after: sdk.topics.subscribers.remove()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.SubscribersController_getSubscriber()
+      after: sdk.subscribers.get()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/topics/{topicKey}"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Topics.TopicsController_getTopic()
+      after: sdk.topics.get()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/credentials/{providerId}"]["delete"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.Credentials.SubscribersController_deleteSubscriberCredentials()
+      after: sdk.subscribers.credentials.delete()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/credentials/{providerId}/oauth/callback"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.Authentication.chatAccessOauthCallBack()
+      after: sdk.subscribers.authentication.handleOauthCallback()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/subscribers"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.SubscribersController_listSubscribers()
+      after: sdk.subscribers.getAll()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/topics"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Topics.TopicsController_listTopics()
+      after: sdk.topics.getAll()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}"]["put"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.SubscribersController_updateSubscriber()
+      after: sdk.subscribers.update()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/environments/api-keys"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Environments.ApiKeys.EnvironmentsControllerV1_listOrganizationApiKeys()
+      after: sdk.environments.apiKeys.list()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/notification-groups"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Workflow groups.NotificationGroupsController_listNotificationGroups()
+      after: sdk.workflowGroups.list()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/topics/{topicKey}/subscribers"]["post"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Topics.Subscribers.assign()
+      after: sdk.topics.subscribers.add()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/messages/{messageId}"]["delete"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Messages.MessagesController_deleteMessage()
+      after: sdk.messages.delete()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/messages/mark-all"]["post"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.Messages.markAll()
+      after: sdk.subscribersMessages.markAll()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/topics"]["post"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Topics.TopicsController_createTopic()
+      after: sdk.topics.create()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/execution-details"]["get"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Execution Details.ExecutionDetailsController_getExecutionDetailsForNotification()
+      after: sdk.executionDetails.get()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/online-status"]["patch"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.properties.updateOnlineFlag()
+      after: sdk.subscribers.properties.updateOnlineStatus()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}"]["delete"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.SubscribersController_removeSubscriber()
+      after: sdk.subscribers.delete()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/integrations"]["post"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Integrations.IntegrationsController_createIntegration()
+      after: sdk.integrations.create()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/subscribers/{subscriberId}/messages/{messageId}/actions/{type}"]["post"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.Messages.updateAsSeen()
+      after: sdk.subscribersMessages.updateAsSeen()
+      reviewed_at: 1732386050400
+      created_at: 1732385969424
+      disabled: true
+  - target: $["paths"]["/v1/integrations/{integrationId}"]["delete"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Integrations.IntegrationsController_removeIntegration()
+      after: sdk.integrations.delete()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true
+  - target: $["paths"]["/v1/subscribers"]["post"]
+    x-speakeasy-metadata:
+      type: method-name
+      before: sdk.Subscribers.SubscribersController_createSubscriber()
+      after: sdk.subscribers.create()
+      reviewed_at: 1732386050400
+      created_at: 1732385969423
+      disabled: true

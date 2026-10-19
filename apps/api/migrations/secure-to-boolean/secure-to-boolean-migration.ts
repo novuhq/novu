@@ -1,26 +1,29 @@
 import '../../src/config';
-import { IntegrationRepository } from '@novu/dal';
 import { NestFactory } from '@nestjs/core';
-import { Logger } from '@nestjs/common';
+import { PinoLogger } from '@novu/application-generic';
+import { IntegrationRepository } from '@novu/dal';
 import { AppModule } from '../../src/app.module';
 
 const integrationRepository = new IntegrationRepository();
-const MIGRATION_CONTEXT = 'Migration';
 
 export async function run() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: false,
+  });
+  const logger = await app.resolve(PinoLogger);
+  logger.setContext('SecureToBooleanMigration');
 
-  Logger.log('Start migration - update credentials.secure from string to boolean', MIGRATION_CONTEXT);
+  logger.info('Start migration - update credentials.secure from string to boolean');
 
-  Logger.log('Updating from "true" to true...', MIGRATION_CONTEXT);
+  logger.info('Updating from "true" to true...');
   const resultTrue = await updateTrueValues();
-  Logger.log(`Matched: ${resultTrue.matchedCount}  Modified: ${resultTrue.modifiedCount} \n`, MIGRATION_CONTEXT);
+  logger.info(`Matched: ${resultTrue.matchedCount}  Modified: ${resultTrue.modifiedCount} \n`);
 
-  Logger.log('Updating from "false" to false...', MIGRATION_CONTEXT);
+  logger.info('Updating from "false" to false...');
   const resultFalse = await updateFalseValues();
-  Logger.log(`Matched: ${resultFalse.matchedCount}  Modified: ${resultFalse.modifiedCount} \n`, MIGRATION_CONTEXT);
+  logger.info(`Matched: ${resultFalse.matchedCount}  Modified: ${resultFalse.modifiedCount} \n`);
 
-  Logger.log('End migration.\n', MIGRATION_CONTEXT);
+  logger.info('End migration.\n');
   await app.close();
 }
 

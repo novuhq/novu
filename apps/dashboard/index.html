@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Novu Cloud Dashboard</title>
+    <meta name="description" content="Novu is an open-source notification platform that empowers developers to create robust, multi-channel notifications for web and mobile apps. With powerful workflows, seamless integrations, and a flexible API-first approach, Novu enables product teams to manage notifications without breaking production." />
+    <meta name="theme-color" content="#fff" />
+    <meta property="og:title" content="Novu - Cloud Dashboard" />
+    <meta property="og:description" content="Novu is an open-source notification platform that empowers developers to create robust, multi-channel notifications for web and mobile apps. With powerful workflows, seamless integrations, and a flexible API-first approach, Novu enables product teams to manage notifications without breaking production." />
+    <meta property="og:image" content="https://novu.co/images/social-preview.jpg" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="/favicon-gradient.svg" />
+    <link rel="apple-touch-icon" href="/favicon-gradient.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://use.typekit.net" crossorigin />
+    <link rel="preconnect" href="https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;1,400;1,500&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Lato approximates Slack-Lato used in Block Kit Builder chat previews -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Roboto+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link href="https://use.typekit.net/xkp1qsv.css" rel="stylesheet" />
+    <% if (env.VITE_GTM) { %>
+    <script>
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != 'dataLayer' ? '&l=' + l : '';
+        j.async = true;
+        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, 'script', 'dataLayer', '<%= env.VITE_GTM %>');
+    </script>
+    <% } %>
+  </head>
+  <body>
+    <% if (env.VITE_GTM) { %>
+    <noscript>
+      <iframe
+        src="https://www.googletagmanager.com/ns.html?id=<%= env.VITE_GTM %>"
+        height="0"
+        width="0"
+        style="display: none; visibility: hidden"
+      ></iframe>
+    </noscript>
+    <% } %> <% if (env.VITE_SELF_HOSTED === 'false' ) { %>
+    <script
+      src="https://uptime.betterstack.com/widgets/announcement.js"
+      data-id="144175"
+      async="async"
+      type="text/javascript"
+    ></script>
+    <% } %> <% if (env.VITE_PLAIN_SUPPORT_CHAT_APP_ID) { %>
+    <script>
+      (function (d, script) {
+        script = d.createElement('script');
+        script.async = false;
+        script.src = 'https://chat.cdn-plain.com/index.js';
+        d.getElementsByTagName('head')[0].appendChild(script);
+      })(document);
+    </script>
+    <% } %>
+    <div id="root" class="h-full"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

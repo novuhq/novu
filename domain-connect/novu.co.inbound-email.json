@@ -1,0 +1,21 @@
+{
+  "providerId": "novu.co",
+  "providerName": "Novu",
+  "serviceId": "inbound-email",
+  "serviceName": "Inbound Email",
+  "version": 2,
+  "syncPubKeyDomain": "domainconnect.novu.co",
+  "syncRedirectDomain": "dashboard.novu.co, eu.dashboard.novu.co",
+  "syncBlock": false,
+  "logoUrl": "https://dashboard.novu.co/images/novu-logo-dark.svg",
+  "description": "Configure MX records so Novu can receive inbound email for this domain.",
+  "records": [
+    {
+      "type": "MX",
+      "host": "@",
+      "pointsTo": "%mailServerDomain%",
+      "priority": 10,
+      "ttl": 300
+    }
+  ]
+}

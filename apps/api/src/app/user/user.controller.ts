@@ -1,42 +1,32 @@
-import {
-  Body,
-  ClassSerializerInterceptor,
-  Controller,
-  Get,
-  Put,
-  UseGuards,
-  UseInterceptors,
-  Logger,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
-import { IJwtPayload } from '@novu/shared';
+import { Body, ClassSerializerInterceptor, Controller, Get, Put, UseInterceptors } from '@nestjs/common';
+import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { OAuthAccessible, PinoLogger } from '@novu/application-generic';
+import { UserSessionData } from '@novu/shared';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { GetMyProfileUsecase } from './usecases/get-my-profile/get-my-profile.usecase';
-import { GetMyProfileCommand } from './usecases/get-my-profile/get-my-profile.dto';
+import { ChangeProfileEmailDto } from './dtos/change-profile-email.dto';
+import { UpdateProfileRequestDto } from './dtos/update-profile-request.dto';
+import { UserOnboardingRequestDto } from './dtos/user-onboarding-request.dto';
+import { UserOnboardingTourRequestDto } from './dtos/user-onboarding-tour-request.dto';
 import { UserResponseDto } from './dtos/user-response.dto';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
+import { GetMyProfileCommand } from './usecases/get-my-profile/get-my-profile.dto';
+import { GetMyProfileUsecase } from './usecases/get-my-profile/get-my-profile.usecase';
+import { UpdateNameAndProfilePictureCommand } from './usecases/update-name-and-profile-picture/update-name-and-profile-picture.command';
+import { UpdateNameAndProfilePicture } from './usecases/update-name-and-profile-picture/update-name-and-profile-picture.usecase';
 import { UpdateOnBoardingCommand } from './usecases/update-on-boarding/update-on-boarding.command';
 import { UpdateOnBoardingUsecase } from './usecases/update-on-boarding/update-on-boarding.usecase';
-import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { UserOnboardingRequestDto } from './dtos/user-onboarding-request.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { ChangeProfileEmailDto } from './dtos/change-profile-email.dto';
-import { UpdateProfileEmail } from './usecases/update-profile-email/update-profile-email.usecase';
-import { UpdateProfileEmailCommand } from './usecases/update-profile-email/update-profile-email.command';
-import { ApiCommonResponses, ApiResponse, ApiNoContentResponse } from '../shared/framework/response.decorator';
-import { UserOnboardingTourRequestDto } from './dtos/user-onboarding-tour-request.dto';
-import { UpdateOnBoardingTourUsecase } from './usecases/update-on-boarding-tour/update-on-boarding-tour.usecase';
 import { UpdateOnBoardingTourCommand } from './usecases/update-on-boarding-tour/update-on-boarding-tour.command';
-import { UpdateNameAndProfilePicture } from './usecases/update-name-and-profile-picture/update-name-and-profile-picture.usecase';
-import { UpdateNameAndProfilePictureCommand } from './usecases/update-name-and-profile-picture/update-name-and-profile-picture.command';
-import { UpdateProfileRequestDto } from './dtos/update-profile-request.dto';
+import { UpdateOnBoardingTourUsecase } from './usecases/update-on-boarding-tour/update-on-boarding-tour.usecase';
+import { UpdateProfileEmailCommand } from './usecases/update-profile-email/update-profile-email.command';
+import { UpdateProfileEmail } from './usecases/update-profile-email/update-profile-email.usecase';
 
 @ApiCommonResponses()
 @Controller('/users')
 @ApiTags('Users')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(UserAuthGuard)
+@RequireAuthentication()
 @ApiExcludeController()
 export class UsersController {
   constructor(
@@ -44,19 +34,23 @@ export class UsersController {
     private updateOnBoardingUsecase: UpdateOnBoardingUsecase,
     private updateOnBoardingTourUsecase: UpdateOnBoardingTourUsecase,
     private updateProfileEmailUsecase: UpdateProfileEmail,
-    private updateNameAndProfilePictureUsecase: UpdateNameAndProfilePicture
-  ) {}
+    private updateNameAndProfilePictureUsecase: UpdateNameAndProfilePicture,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @Get('/me')
   @ApiResponse(UserResponseDto)
   @ApiOperation({
     summary: 'Get User',
   })
+  @OAuthAccessible()
   @ExternalApiAccessible()
-  async getMyProfile(@UserSession() user: IJwtPayload): Promise<UserResponseDto> {
-    Logger.verbose('Getting User');
-    Logger.debug('User id: ' + user._id);
-    Logger.verbose('Creating GetMyProfileCommand');
+  async getMyProfile(@UserSession() user: UserSessionData): Promise<UserResponseDto> {
+    this.logger.trace('Getting User');
+    this.logger.debug(`User id: ${user._id}`);
+    this.logger.trace('Creating GetMyProfileCommand');
 
     const command = GetMyProfileCommand.create({
       userId: user._id,
@@ -67,7 +61,7 @@ export class UsersController {
 
   @Put('/profile/email')
   async updateProfileEmail(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: ChangeProfileEmailDto
   ): Promise<UserResponseDto> {
     return await this.updateProfileEmailUsecase.execute(
@@ -86,7 +80,7 @@ export class UsersController {
   })
   @ExternalApiAccessible()
   async updateOnBoarding(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: UserOnboardingRequestDto
   ): Promise<UserResponseDto> {
     return await this.updateOnBoardingUsecase.execute(
@@ -99,7 +93,7 @@ export class UsersController {
 
   @Put('/onboarding-tour')
   async updateOnBoardingTour(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: UserOnboardingTourRequestDto
   ): Promise<UserResponseDto> {
     return await this.updateOnBoardingTourUsecase.execute(
@@ -116,7 +110,7 @@ export class UsersController {
   })
   @ExternalApiAccessible()
   async updateProfile(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: UpdateProfileRequestDto
   ): Promise<UserResponseDto> {
     return await this.updateNameAndProfilePictureUsecase.execute(

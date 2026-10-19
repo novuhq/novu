@@ -4,7 +4,7 @@ import { OrganizationCommand } from '../../../../shared/commands/organization.co
 
 export class ChangeMemberRoleCommand extends OrganizationCommand {
   @IsDefined()
-  role: MemberRoleEnum.ADMIN;
+  role: MemberRoleEnum.OSS_ADMIN;
 
   @IsDefined()
   @IsMongoId()

@@ -1,0 +1,8 @@
+# Copy to .dev.vars (gitignored), then fill from your local API env:
+#   cp .dev.vars.example .dev.vars
+#
+# JWT_SECRET       = apps/api/src/.env → JWT_SECRET
+# INTERNAL_API_KEY = apps/api/src/.env → INTERNAL_SERVICES_API_KEY
+
+JWT_SECRET=
+INTERNAL_API_KEY=

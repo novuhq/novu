@@ -1,0 +1,44 @@
+---
+description: Mintlify Steps anchors — use markdown headings inside Step so in-page links work
+globs: docs/**/*.mdx
+alwaysApply: false
+---
+
+# Mintlify Steps and in-page anchors
+
+Mintlify `<Step title="...">` does **not** create a heading ID. Links like `#run-the-agent-locally` will do nothing if they target a Step `title` prop.
+
+## Do this
+
+Put a real markdown heading inside `<Step>` when anything needs to link to that step (or when you want TOC/anchor support):
+
+```mdx
+<Steps>
+  <Step>
+## Run the agent locally
+
+Content here.
+  </Step>
+</Steps>
+```
+
+Then link with:
+
+```mdx
+skip to [Run the agent locally](#run-the-agent-locally)
+```
+
+## Do not do this
+
+```mdx
+{/* ❌ title prop is not an anchor target */}
+<Step title="Run the agent locally">
+...
+</Step>
+
+skip to [Run the agent locally](#run-the-agent-locally)
+```
+
+## Pattern reference
+
+See `docs/agents/custom-code-agent/quickstart.mdx` and `docs/agents/get-started/ai-sdk.mdx` for working examples.

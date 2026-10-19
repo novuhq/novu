@@ -1,0 +1,192 @@
+---
+title: "Connect Mastra to Slack"
+description: "Add @novu/framework to an existing Mastra app, connect Slack, and return generate() output from onMessage."
+sidebarTitle: Connect Mastra
+boost: 3
+---
+
+Connect a [Mastra](https://mastra.ai/) agent to Novu Connect via `@novu/framework`. Call `generate()` in `onMessage` and return the text. Novu delivers the reply on Slack. The same handler works on other providers after you link them.
+
+There is no `@novu/framework/mastra` adapter yet. Use the base Framework package and return text from `onMessage` (or call `ctx.reply()`).
+
+<Note>
+  Starting from scratch? See [Scaffold with the CLI](#scaffold-with-the-cli).
+</Note>
+
+## Prerequisites
+
+- A [Novu account](https://dashboard.novu.co)
+- Node.js 22+
+- An existing app with a Mastra agent
+- A Slack workspace where you can install apps
+- An `OPENAI_API_KEY` (or another model key [Mastra supports](https://mastra.ai/models))
+
+## Connect an existing app
+
+<Steps>
+
+<Step>
+## Create the agent and connect Slack
+
+In the [Novu dashboard](https://dashboard.novu.co):
+
+1. Go to **Agents** → **Create agent**.
+2. Under **Custom code**, pick **Custom code** (Mastra uses the base Framework path).
+3. Set **Agent name** and **Identifier**.
+4. Select **Slack**, generate a [Slack App Configuration Token](https://api.slack.com/apps), paste it, and finish the install / Allow flow.
+
+Alternatively run `npx novu connect`, choose **Custom code** and **Slack**, and skip creating a starter project when prompted.
+</Step>
+
+<Step>
+## Install packages
+
+```bash
+npm install @novu/framework @mastra/core
+```
+
+Add to `.env.local`:
+
+```bash
+NOVU_SECRET_KEY=your-novu-secret-key
+OPENAI_API_KEY=sk-...
+```
+</Step>
+
+<Step>
+## Add the Mastra agent and Novu handler
+
+```typescript
+import { Agent } from '@mastra/core/agent';
+
+export const mastraSupport = new Agent({
+  id: 'mastra-support',
+  name: 'Support Agent',
+  instructions: 'You are a helpful support agent. Keep answers short.',
+  model: 'openai/gpt-4o',
+});
+```
+
+```typescript
+import { agent } from '@novu/framework';
+import { mastraSupport } from './mastra-support';
+
+function toMastraMessages(history: { role: string; type: string; content: string }[]) {
+  return history
+    .filter((entry) => entry.type === 'message' && entry.content.trim())
+    .map((entry) => ({
+      role: entry.role === 'agent' || entry.role === 'assistant' ? 'assistant' : 'user',
+      content: entry.content,
+    }));
+}
+
+export const supportBot = agent('support-bot', {
+  onMessage: async (_message, ctx) => {
+    const result = await mastraSupport.generate(toMastraMessages(ctx.history));
+
+    return result.text;
+  },
+});
+```
+
+Match `agent('...')` to the dashboard **Identifier**. Export the Novu agent from your agents index.
+</Step>
+
+<Step>
+## Add the bridge route
+
+```typescript
+import { serve } from '@novu/framework/next';
+import { supportBot } from '../../novu/agents';
+
+export const { GET, POST, OPTIONS } = serve({
+  agents: [supportBot],
+});
+```
+
+For Express, Hono, and other servers, see [Connecting your app](/agents/custom-code-agent/connecting-your-app).
+</Step>
+
+<Step>
+## Run locally and message Slack
+
+```bash
+npx novu dev --port 4000
+```
+
+DM or @mention the bot in Slack. The reply should come from Mastra in the same thread.
+</Step>
+
+</Steps>
+
+## Tool approval
+
+For sensitive tools, use `ctx.toolApproval.request()` from [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) so the turn pauses for Approve / Deny before execution.
+
+## Scaffold with the CLI
+
+```bash
+npx novu connect
+```
+
+Choose **Custom code**, connect **Slack**, accept the starter project, install `@mastra/core`, and replace the demo handler with the code above.
+
+For an existing codebase, use [Connect an existing app](#connect-an-existing-app) instead.
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Which channels work with a Mastra agent?">
+    Slack, Microsoft Teams, WhatsApp, Telegram, and email. See [Channels overview](/agents/channels/overview).
+  </Accordion>
+  <Accordion title="Does Novu have a Mastra adapter?">
+    Not yet. Use `@novu/framework` and return text from `onMessage`. AI SDK and LangChain have dedicated adapters if you prefer those stacks.
+  </Accordion>
+  <Accordion title="Where is the generic Framework API documented?">
+    [Other frameworks](/agents/custom-code-agent/frameworks/other) for patterns without a dedicated adapter.
+  </Accordion>
+</AccordionGroup>
+
+## Set this up with an AI assistant
+
+<Prompt description="Connect my Mastra agent to Slack with Novu" icon="plug" actions={["copy", "cursor"]}>
+# Connect a Mastra agent to Slack with Novu Connect
+
+Follow https://docs.novu.co/agents/get-started/mastra
+
+## Goal
+
+Add Novu bridge + Mastra handler to this repo and connect Slack. Prefer the existing project over scaffolding a new one.
+
+## Rules
+
+ALWAYS:
+
+- Match Novu `agent('id')` to the dashboard agent Identifier
+- Map only `type === 'message'` history entries into Mastra messages
+- Use Mastra model strings like `openai/gpt-4o`
+- Keep handlers channel-agnostic
+
+NEVER:
+
+- Hardcode API keys
+- Import `@novu/framework/ai-sdk` or `@novu/framework/langchain` for this path
+
+</Prompt>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card icon="code" href="/agents/custom-code-agent/frameworks/other" title="Other frameworks">
+    Framework patterns without a dedicated adapter.
+  </Card>
+  <Card icon="hash" href="/agents/channels/slack" title="Slack">
+    Slack capabilities and setup links.
+  </Card>
+  <Card icon="rocket" href="/agents/custom-code-agent/going-to-production" title="Going to production">
+    Deploy the bridge and disable local tunneling.
+  </Card>
+  <Card icon="sparkles" href="/agents/get-started/ai-sdk" title="Connect AI SDK">
+    Same flow with @novu/framework/ai-sdk.
+  </Card>
+</Columns>

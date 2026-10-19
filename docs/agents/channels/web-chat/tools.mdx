@@ -1,0 +1,117 @@
+---
+title: "Tools"
+description: "Render tool calls, resolve tool approvals, and complete MCP connect in Web Chat."
+sidebarTitle: Tools
+---
+
+When the agent calls a tool, the assistant message includes a part with `type: 'tool'`. Tool approval and Model Context Protocol (MCP) connect are separate. They block the turn until the subscriber acts.
+
+See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) for the agent-side API.
+
+## Tool calls
+
+A tool part shows the call and its result. This is not approval. Do not call `respondToAction` for tool parts.
+
+Fields on `part.type === 'tool'`:
+
+| Field | Meaning |
+| --- | --- |
+| `toolUseId` | ID for this tool use. |
+| `toolName` | Tool that ran. |
+| `input` | Arguments the agent sent. |
+| `output` | Result blocks when the call finishes. |
+| `state` | `input-streaming`, `input-available`, `output-available`, or `output-error`. |
+
+Render the tool name, then input or output from `state`:
+
+```tsx
+const { messages } = useWebChat({ agentId: 'YOUR_AGENT_IDENTIFIER' });
+
+{messages.map((message) =>
+  message.parts.map((part, index) => {
+    if (part.type !== 'tool') {
+      return null;
+    }
+
+    return (
+      <div key={index}>
+        <strong>{part.toolName}</strong>
+        {part.state === 'output-error' ? (
+          <p>Tool failed</p>
+        ) : part.output ? (
+          <pre>{JSON.stringify(part.output, null, 2)}</pre>
+        ) : (
+          <pre>{JSON.stringify(part.input, null, 2)}</pre>
+        )}
+      </div>
+    );
+  })
+)}
+```
+
+## Tool approval
+
+`pendingActions` lists waits that block the turn. Do not mix the two action types.
+
+| `action.type` | What to do |
+| --- | --- |
+| `approval` | Call `respondToAction` with `action.approvalId` and `approved` or `denied`. |
+| `mcp-connection` | Open `action.authorizeUrl` in the browser. Do not call `respondToAction`. |
+
+Show an Approve button for each pending approval:
+
+```tsx
+const { pendingActions, respondToAction } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+{pendingActions.map((action) => {
+  if (action.type !== 'approval') {
+    return null;
+  }
+
+  return (
+    <button
+      key={action.approvalId}
+      type="button"
+      onClick={() =>
+        void respondToAction({
+          approvalId: action.approvalId,
+          decision: 'approved',
+        })
+      }
+    >
+      Approve {action.toolName}
+    </button>
+  );
+})}
+```
+
+Pass `action.approvalId` from `pendingActions`. Do not invent approve or deny ids.
+
+## MCP connect
+
+An `mcp-connection` action asks the subscriber to authorize an MCP server. Open `authorizeUrl`. Do not call `respondToAction`.
+
+```tsx
+const { pendingActions } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+{pendingActions.map((action) => {
+  if (action.type !== 'mcp-connection') {
+    return null;
+  }
+
+  return (
+    <a
+      key={action.actionId}
+      href={action.authorizeUrl}
+      target="_blank"
+      rel="noreferrer"
+    >
+      Connect {action.displayName}
+    </a>
+  );
+})}
+```

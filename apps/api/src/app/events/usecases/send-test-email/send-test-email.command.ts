@@ -1,13 +1,13 @@
-import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
-import { IEmailBlock } from '@novu/shared';
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
+import { IEmailBlock } from '@novu/shared';
+import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class SendTestEmailCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   contentType: 'customHtml' | 'editor';
 
   @IsDefined()
-  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payload: Record<string, unknown>;
 
   @IsDefined()
   @IsString()
@@ -33,14 +33,14 @@ export class SendTestEmailCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @IsBoolean()
-  chimera?: boolean;
+  bridge?: boolean;
 
   @IsOptional()
   @IsString()
   stepId?: string | null;
 
   @IsOptional()
-  inputs: any;
+  controls: Record<string, unknown>;
 
   @IsOptional()
   @IsString()

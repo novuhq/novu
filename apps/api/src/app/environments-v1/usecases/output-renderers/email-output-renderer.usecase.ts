@@ -1,0 +1,644 @@
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  EmailControlType,
+  GetLayoutCommand,
+  GetLayoutUseCase,
+  InstrumentUsecase,
+  LayoutControlType,
+  PinoLogger,
+  removeBrandingFromHtml,
+  replaceMailyNodesByCondition,
+  sanitizeHTML,
+  transformMailyContent,
+  wrapMailyInLiquid,
+} from '@novu/application-generic';
+import {
+  ControlValuesEntity,
+  ControlValuesRepository,
+  JobEntity,
+  JobRepository,
+  LocalizationResourceEnum,
+  NotificationTemplateEntity,
+  OrganizationEntity,
+} from '@novu/dal';
+import { createLiquidEngine } from '@novu/framework/internal';
+import { JSONContent as MailyJSONContent, render as mailyRender } from '@novu/maily-render';
+import {
+  ControlValuesLevelEnum,
+  EmailRenderOutput,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  LAYOUT_CONTENT_VARIABLE,
+  LAYOUT_PREVIEW_EMAIL_STEP,
+} from '@novu/shared';
+import { decodeHTML } from 'entities';
+import { Liquid } from 'liquidjs';
+import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
+import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
+import { ControlsTranslationService } from './controls-translation.service';
+import { NOVU_BRANDING_HTML } from './novu-branding-html';
+import { FullPayloadForRender, RenderCommand } from './render-command';
+
+type TranslationContext = {
+  i18nInstance: unknown;
+  liquidEngine: unknown;
+  locale: string;
+  resourceId: string;
+};
+
+interface TranslatableEmailControls {
+  [key: string]: unknown;
+  subject: string;
+  from?: Pick<NonNullable<EmailControlType['from']>, 'name'>;
+  preheader?: string;
+}
+
+export class EmailOutputRendererCommand extends RenderCommand {
+  dbWorkflow: NotificationTemplateEntity;
+  locale?: string;
+  skipLayoutRendering?: boolean;
+  jobId?: string;
+  stepId: string;
+  layoutId?: string;
+}
+
+function isJsonString(str: string): boolean {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+
+  return true;
+}
+
+@Injectable()
+export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
+  private readonly liquidEngine: Liquid;
+
+  constructor(
+    private getOrganizationSettings: GetOrganizationSettings,
+    logger: PinoLogger,
+    controlsTranslationService: ControlsTranslationService,
+    private controlValuesRepository: ControlValuesRepository,
+    private getLayoutUseCase: GetLayoutUseCase,
+    private jobRepository: JobRepository,
+    private createExecutionDetails: CreateExecutionDetails
+  ) {
+    super(logger, controlsTranslationService);
+    /**
+     * Custom outputEscape function for email rendering that handles object serialization
+     * without escaping HTML content.
+     *
+     * The default outputEscape (from createLiquidEngine) escapes special characters in strings
+     * (quotes, newlines, etc.) which is needed for JSON context but breaks HTML attributes
+     * when rendering email content. For example, `style="color: red"` would become
+     * `style=\"color: red\"` causing malformed HTML.
+     *
+     * This custom implementation:
+     * 1. Serializes objects/arrays to JSON strings (required for Maily loops like {{ payload.items }})
+     * 2. Does NOT escape quotes/newlines in regular strings (preserves HTML attribute integrity)
+     *
+     * This allows HTML content like `{{ layout_content }}` to render properly with correct
+     * attributes while still supporting object iteration in email templates.
+     */
+    this.liquidEngine = createLiquidEngine({
+      outputEscape: (output: unknown): string => {
+        if (Array.isArray(output) || (typeof output === 'object' && output !== null)) {
+          const valueStringified = JSON.stringify(output);
+          const valueSingleQuotes = valueStringified.replace(/"/g, "'");
+          const valueEscapedNewLines = valueSingleQuotes.replace(/\n/g, '\\n');
+
+          return valueEscapedNewLines;
+        }
+
+        return output === undefined || output === null ? '' : String(output as unknown);
+      },
+    });
+  }
+
+  @InstrumentUsecase()
+  async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
+    const {
+      body,
+      subject: controlSubject,
+      disableOutputSanitization,
+      layoutId: stepLayoutId,
+      from,
+      replyTo,
+      preheader,
+      useProviderDefaults,
+    } = renderCommand.controlValues as EmailControlType;
+
+    const controlMeta = {
+      ...(from && { from }),
+      ...(replyTo && { replyTo }),
+      ...(preheader !== undefined && { preheader }),
+      ...(useProviderDefaults !== undefined && { useProviderDefaults }),
+    };
+
+    if (!body || typeof body !== 'string') {
+      return {
+        subject: controlSubject as string,
+        body: body as string,
+        ...controlMeta,
+      };
+    }
+
+    const {
+      fullPayloadForRender,
+      dbWorkflow,
+      locale,
+      skipLayoutRendering,
+      jobId,
+      stepId,
+      layoutId: layoutIdForPreview,
+      organization,
+    } = renderCommand;
+
+    const { _environmentId: environmentId, _organizationId: organizationId, _id: workflowId } = dbWorkflow;
+
+    const [translatedControls, workflowTranslationContext] = await Promise.all([
+      this.processTranslations({
+        controls: {
+          subject: controlSubject as string,
+          ...(from?.name !== undefined && { from: { name: from.name } }),
+          ...(preheader !== undefined && { preheader }),
+        },
+        variables: fullPayloadForRender,
+        environmentId,
+        organizationId,
+        resourceId: workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        locale,
+        organization,
+        resourceEntity: dbWorkflow,
+      }) as Promise<TranslatableEmailControls>,
+      this.createTranslationContext({
+        environmentId,
+        organizationId,
+        resourceId: workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        locale,
+        organization,
+        resourceEntity: dbWorkflow,
+      }),
+    ]);
+
+    const translatedSubject = decodeHTML(this.unescapeJsonString(translatedControls.subject));
+    const translatedFromName =
+      translatedControls.from?.name === undefined
+        ? undefined
+        : decodeHTML(this.unescapeJsonString(translatedControls.from.name));
+    const translatedPreheader =
+      translatedControls.preheader === undefined
+        ? undefined
+        : decodeHTML(this.unescapeJsonString(translatedControls.preheader));
+    const translatedFrom = from ? { ...from, ...(from.name !== undefined && { name: translatedFromName }) } : undefined;
+
+    const translatedControlMeta = {
+      ...(translatedFrom && { from: translatedFrom }),
+      ...(replyTo && { replyTo }),
+      ...(preheader !== undefined && { preheader: translatedPreheader }),
+      ...(useProviderDefaults !== undefined && { useProviderDefaults }),
+    };
+
+    // Process body content with translations applied before rendering
+    const renderedHtml = await this.renderWithLayout({
+      body,
+      stepLayoutId,
+      payload: fullPayloadForRender,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+      skipLayoutRendering,
+      jobId,
+      stepId,
+      organization,
+      layoutIdForPreview,
+      workflowTranslationContext,
+    });
+
+    // Add Novu branding
+    const htmlWithBranding = await this.appendNovuBranding(renderedHtml, organizationId, organization);
+    const cleanedHtml = this.cleanupRenderedHtml(htmlWithBranding);
+    const htmlWithPreheader = injectRenderedPreheader(cleanedHtml, translatedPreheader);
+
+    // Sanitize output if needed
+    if (disableOutputSanitization) {
+      return {
+        subject: translatedSubject,
+        body: htmlWithPreheader,
+        ...translatedControlMeta,
+      };
+    }
+
+    const sanitizedBody = sanitizeHTML(htmlWithPreheader);
+
+    return {
+      subject: translatedSubject,
+      body: sanitizedBody,
+      ...translatedControlMeta,
+    };
+  }
+
+  private async getOverrideLayoutId({
+    job,
+    stepId,
+  }: {
+    job: JobEntity;
+    stepId: string;
+  }): Promise<string | null | undefined> {
+    const { overrides, step } = job;
+    let layoutIdentifier: string | null | undefined;
+
+    // Step 1: Check step-level override (highest priority)
+    const id = overrides?.steps?.[step._id ?? ''] ? step._id : stepId;
+    const stepOverrides = overrides?.steps?.[id ?? ''];
+    if (stepOverrides?.layoutId !== undefined) {
+      layoutIdentifier = stepOverrides.layoutId;
+    }
+    // Step 2: Check channel-level override for email
+    else if (overrides?.channels?.email?.layoutId !== undefined) {
+      layoutIdentifier = overrides.channels.email.layoutId;
+    }
+    // Step 3: Check deprecated layoutIdentifier (backward compatibility)
+    else if (overrides?.layoutIdentifier) {
+      layoutIdentifier = overrides.layoutIdentifier;
+    }
+
+    // If no override is specified, return undefined (use step configuration)
+    if (layoutIdentifier === undefined) {
+      return undefined;
+    }
+
+    // If explicitly set to null, return null (no layout)
+    if (layoutIdentifier === null) {
+      return null;
+    }
+
+    return layoutIdentifier;
+  }
+
+  private async renderWithLayout({
+    body,
+    stepLayoutId,
+    payload,
+    environmentId,
+    organizationId,
+    workflowId,
+    locale,
+    skipLayoutRendering,
+    jobId,
+    stepId,
+    organization,
+    layoutIdForPreview,
+    workflowTranslationContext,
+  }: {
+    body: string;
+    stepLayoutId?: string | null;
+    payload: FullPayloadForRender;
+    environmentId: string;
+    organizationId: string;
+    workflowId?: string;
+    locale?: string;
+    skipLayoutRendering?: boolean;
+    jobId?: string;
+    stepId: string;
+    organization?: OrganizationEntity;
+    layoutIdForPreview?: string;
+    workflowTranslationContext?: TranslationContext | null;
+  }): Promise<string> {
+    let job: JobEntity | null = null;
+    let overrideLayoutId: string | null | undefined;
+    if (jobId) {
+      job = await this.jobRepository.findOne({
+        _id: jobId,
+        _environmentId: environmentId,
+      });
+      if (job) {
+        overrideLayoutId = await this.getOverrideLayoutId({ job, stepId });
+      }
+    }
+
+    const overriddenStepLayoutId = overrideLayoutId || (overrideLayoutId === null ? null : stepLayoutId);
+
+    let layoutControlsEntity: ControlValuesEntity | null = null;
+    // if the step control values have a layoutId then find layout controls entity
+    if (overriddenStepLayoutId) {
+      try {
+        const layout = await this.getLayoutUseCase.execute(
+          GetLayoutCommand.create({
+            layoutIdOrInternalId: overriddenStepLayoutId,
+            environmentId,
+            organizationId,
+            skipAdditionalFields: true,
+          })
+        );
+        layoutControlsEntity = await this.controlValuesRepository.findOne({
+          _organizationId: organizationId,
+          _environmentId: environmentId,
+          _layoutId: layout._id,
+          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+        });
+        if (job) {
+          this.createExecutionDetails
+            .execute(
+              CreateExecutionDetailsCommand.create({
+                ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+                detail: DetailEnum.LAYOUT_SELECTED,
+                source: ExecutionDetailsSourceEnum.INTERNAL,
+                status: ExecutionDetailsStatusEnum.PENDING,
+                isTest: false,
+                isRetry: false,
+                raw: JSON.stringify({ name: layout.name, layoutId: layout.layoutId }),
+              })
+            )
+            .catch((promiseError) => {
+              this.logger.error({ error: promiseError }, 'Failed to create execution details');
+            });
+        }
+      } catch (error) {
+        if (job) {
+          this.createExecutionDetails
+            .execute(
+              CreateExecutionDetailsCommand.create({
+                ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+                detail: DetailEnum.LAYOUT_NOT_FOUND,
+                source: ExecutionDetailsSourceEnum.INTERNAL,
+                status: ExecutionDetailsStatusEnum.FAILED,
+                isTest: false,
+                isRetry: false,
+                raw: JSON.stringify({
+                  layoutId: overriddenStepLayoutId,
+                  error: error.message,
+                }),
+              })
+            )
+            .catch((promiseError) => {
+              this.logger.error({ error: promiseError }, 'Failed to create execution details');
+            });
+        }
+        throw error;
+      }
+    }
+
+    const isLayoutRendering = stepId === LAYOUT_PREVIEW_EMAIL_STEP && !!layoutIdForPreview;
+    const stepBodyHtml = await this.processBodyContent({
+      body,
+      payload,
+      environmentId,
+      organizationId,
+      resourceId: isLayoutRendering ? layoutIdForPreview : workflowId,
+      resourceType: isLayoutRendering ? LocalizationResourceEnum.LAYOUT : LocalizationResourceEnum.WORKFLOW,
+      locale,
+      noHtmlWrappingTags: !!layoutControlsEntity,
+      organization,
+      translationContext: isLayoutRendering ? undefined : workflowTranslationContext,
+    });
+
+    const cleanedStepBodyHtml = stepBodyHtml
+      .replace(/<!DOCTYPE.*?>/g, '')
+      .replace(/<!--\$-->/g, '')
+      .replace(/<!--\/\$-->/g, '')
+      .replace(/<!--[\s\S]*?-->/g, '');
+
+    if (!layoutControlsEntity || skipLayoutRendering || isLayoutRendering) {
+      return cleanedStepBodyHtml;
+    }
+
+    const layoutControlValues = layoutControlsEntity.controls as LayoutControlType;
+
+    /**
+     * Preprocess layout body: transform 't.key' filter arguments to '{{t.key}}'
+     * so they can be resolved by the translation service.
+     *
+     * This preprocessing normally happens in the framework's client.ts (preprocessFilterTranslationArgs),
+     * but since layouts are fetched directly from the database and don't go through the framework,
+     * we need to apply the same transformation here.
+     *
+     * @see packages/framework/src/client.ts - preprocessFilterTranslationArgs
+     */
+    const layoutBody = (layoutControlValues.email?.body ?? '').replace(/'t\.([\p{L}\p{N}_.-]+)'/gu, "'{{t.$1}}'");
+
+    return this.processBodyContent({
+      body: layoutBody,
+      payload: {
+        ...payload,
+        [LAYOUT_CONTENT_VARIABLE]: removeBrandingFromHtml(cleanedStepBodyHtml.replace(/\n/g, '')),
+      },
+      environmentId,
+      organizationId,
+      resourceId: overriddenStepLayoutId ?? undefined,
+      resourceType: LocalizationResourceEnum.LAYOUT,
+      locale,
+    });
+  }
+
+  private enhanceContentVariable(body: string) {
+    return JSON.stringify(
+      replaceMailyNodesByCondition(
+        body,
+        (node) => node.type === 'variable' && node.attrs?.id === LAYOUT_CONTENT_VARIABLE,
+        (node) =>
+          ({
+            ...node,
+            attrs: {
+              ...node.attrs,
+              shouldDangerouslySetInnerHTML: true,
+            },
+          }) satisfies MailyJSONContent
+      )
+    );
+  }
+
+  private async processBodyContent({
+    body,
+    payload,
+    environmentId,
+    organizationId,
+    resourceId,
+    resourceType,
+    locale,
+    noHtmlWrappingTags,
+    organization,
+    translationContext,
+  }: {
+    body: string;
+    payload: FullPayloadForRender;
+    environmentId: string;
+    organizationId: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
+    locale?: string;
+    noHtmlWrappingTags?: boolean;
+    organization?: OrganizationEntity;
+    translationContext?: TranslationContext | null;
+  }): Promise<string> {
+    if (typeof body === 'object' || (typeof body === 'string' && isJsonString(body))) {
+      const unescapedPayload = this.deepUnescapeTranslationStrings(payload) as FullPayloadForRender;
+      const escapedPayloadForJson = this.deepEscapePayloadStrings(unescapedPayload);
+      const liquifiedMaily = wrapMailyInLiquid(this.enhanceContentVariable(body));
+      const transformedMaily = await transformMailyContent(liquifiedMaily, escapedPayloadForJson, this.liquidEngine);
+      const translatedMaily = await this.processMailyTranslations({
+        mailyContent: transformedMaily,
+        variables: escapedPayloadForJson,
+        environmentId,
+        organizationId,
+        resourceId,
+        resourceType,
+        locale,
+        organization,
+        translationContext,
+      });
+      const parsedMaily = await this.parseMailyContentByLiquid(translatedMaily, escapedPayloadForJson);
+      const renderedMaily = await mailyRender(parsedMaily, { noHtmlWrappingTags });
+      return decodeHTML(renderedMaily);
+    } else {
+      const processedHtml = await this.processTextTranslations({
+        text: body,
+        variables: payload,
+        environmentId,
+        organizationId,
+        resourceId,
+        resourceType,
+        locale,
+        organization,
+        translationContext,
+      });
+
+      return processedHtml;
+    }
+  }
+
+  private async processTextTranslations({
+    text,
+    variables,
+    environmentId,
+    organizationId,
+    resourceId,
+    resourceType,
+    locale,
+    organization,
+    translationContext,
+  }: {
+    text: string;
+    variables: FullPayloadForRender;
+    environmentId: string;
+    organizationId: string;
+    resourceId?: string;
+    resourceType?: LocalizationResourceEnum;
+    locale?: string;
+    organization?: OrganizationEntity;
+    translationContext?: TranslationContext | null;
+  }): Promise<string> {
+    const unescapedVariables = this.deepUnescapeTranslationStrings(variables) as FullPayloadForRender;
+    const translatedText = translationContext
+      ? await this.processStringWithContext({
+          context: translationContext,
+          content: text,
+          variables: unescapedVariables,
+        })
+      : await this.processStringTranslations({
+          content: text,
+          variables: unescapedVariables,
+          environmentId,
+          organizationId,
+          resourceId,
+          resourceType,
+          locale,
+          organization,
+        });
+
+    const unescapedTranslatedText = this.unescapeJsonString(translatedText);
+
+    return await this.liquidEngine.parseAndRender(unescapedTranslatedText, unescapedVariables);
+  }
+
+  private async parseMailyContentByLiquid(
+    mailyContent: MailyJSONContent,
+    variables: FullPayloadForRender
+  ): Promise<MailyJSONContent> {
+    const parsedString = await this.liquidEngine.parseAndRender(JSON.stringify(mailyContent), variables);
+
+    try {
+      return JSON.parse(parsedString);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Liquid-rendered Maily content is not valid JSON: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  private async appendNovuBranding(
+    html: string,
+    organizationId: string,
+    organization?: OrganizationEntity
+  ): Promise<string> {
+    try {
+      const { removeNovuBranding } = await this.getOrganizationSettings.execute(
+        GetOrganizationSettingsCommand.create({
+          organizationId,
+          organization,
+        })
+      );
+
+      if (removeNovuBranding) {
+        return html;
+      }
+
+      return this.insertBrandingHtml(html);
+    } catch (error) {
+      // If there's any error fetching organization, return original HTML to avoid breaking emails
+      return html;
+    }
+  }
+
+  private insertBrandingHtml(html: string): string {
+    const matches = [...html.matchAll(/<\/body>/gi)];
+
+    if (matches.length === 0) {
+      if (html?.trim()) {
+        return html + NOVU_BRANDING_HTML;
+      } else {
+        return html;
+      }
+    }
+
+    const lastIndex = matches[matches.length - 1].index!;
+
+    return html.slice(0, lastIndex) + NOVU_BRANDING_HTML + html.slice(lastIndex);
+  }
+
+  private cleanupRenderedHtml(html: string): string {
+    /*
+     * Convert paragraphs that contain only whitespace characters to empty paragraphs to prevent Gmail clipping.
+     * Gmail's clipping algorithm detects trailing whitespace content and marks emails as "message clipped".
+     * This preserves the intended spacing while removing the problematic whitespace content.
+     */
+    return html.replace(/<p([^>]*)>\s+<\/p>/g, '<p$1></p>');
+  }
+}
+
+function injectRenderedPreheader(html: string, preheader: string | undefined): string {
+  const trimmed = preheader?.trim();
+  if (!trimmed || !html) {
+    return html;
+  }
+
+  const escaped = trimmed.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const spacer = '&nbsp;&zwnj;'.repeat(50);
+  const block = `<div style="display: none; max-height: 0px; overflow: hidden;">${escaped}${spacer}</div>`;
+
+  if (!/<body\b[^<>]*?>/i.test(html)) {
+    return `${block}${html}`;
+  }
+
+  // Replacer function, not a string: the block carries user content and `$&`/`$'` would otherwise be expanded.
+  return html.replace(/<body\b[^<>]*?>/i, (bodyTag) => `${bodyTag}${block}`);
+}

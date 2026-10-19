@@ -1,32 +1,43 @@
 import { Injectable } from '@nestjs/common';
-import * as Sentry from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
-
 import {
-  MessageRepository,
-  NotificationStepEntity,
-  SubscriberRepository,
-  MessageEntity,
-  IntegrationEntity,
-} from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import {
-  InstrumentUsecase,
-  DetailEnum,
-  SelectIntegration,
   CompileTemplate,
   CompileTemplateCommand,
-  SmsFactory,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
   GetNovuProviderCredentials,
+  InstrumentUsecase,
+  messageWebhookMapper,
+  SelectIntegration,
   SelectVariant,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
+  SendWebhookMessage,
+  SmsFactory,
 } from '@novu/application-generic';
 
-import { CreateLog } from '../../../shared/logs';
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageBase } from './send-message.base';
+import { IntegrationEntity, MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { SmsOutput } from '@novu/framework/internal';
+import {
+  ChannelTypeEnum,
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatusEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
+} from '@novu/shared';
+import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
+import { combineProviderOverrides, mergeTriggerProviderOverrides, SendMessageBase } from './send-message.base';
+import { SendMessageChannelCommand } from './send-message-channel.command';
+import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
+
+type SmsMessageOverrides = {
+  to?: string;
+  from?: string;
+  content?: string;
+  customData?: Record<string, unknown>;
+};
 
 @Injectable()
 export class SendMessageSms extends SendMessageBase {
@@ -35,18 +46,17 @@ export class SendMessageSms extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
-    protected createLogUsecase: CreateLog,
-    protected executionLogRoute: ExecutionLogRoute,
+    protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
-    protected moduleRef: ModuleRef
+    protected moduleRef: ModuleRef,
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     super(
       messageRepository,
-      createLogUsecase,
-      executionLogRoute,
+      createExecutionDetails,
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
@@ -56,45 +66,49 @@ export class SendMessageSms extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand) {
+  public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     const overrideSelectedIntegration = command.overrides?.sms?.integrationIdentifier;
 
-    const integration = await this.getIntegration({
+    const selection = await this.getIntegration({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       channelType: ChannelTypeEnum.SMS,
       userId: command.userId,
       identifier: overrideSelectedIntegration as string,
-      filterData: {
-        tenant: command.job.tenant,
-      },
+      filterData: this.getIntegrationFilterData(command),
     });
 
-    Sentry.addBreadcrumb({
+    addBreadcrumb({
       message: 'Sending SMS',
     });
 
-    const step: NotificationStepEntity = command.step;
+    const { step } = command;
 
     if (!step.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
 
     const { subscriber } = command.compileContext;
     const template = await this.processVariants(command);
-    await this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale);
+    const i18nInstance = await this.initiateTranslations(
+      command.environmentId,
+      command.organizationId,
+      subscriber.locale
+    );
 
     if (template) {
       step.template = template;
     }
 
-    let content: string | null = '';
+    const bridgeOutput = command.bridgeData?.outputs as SmsOutput | undefined;
+    let content: string = bridgeOutput?.body || '';
 
     try {
-      if (!command.chimeraData) {
+      if (!command.bridgeData) {
         content = await this.compileTemplate.execute(
           CompileTemplateCommand.create({
             template: step.template.content as string,
             data: this.getCompilePayload(command.compileContext),
-          })
+          }),
+          i18nInstance
         );
 
         if (!content) {
@@ -104,15 +118,18 @@ export class SendMessageSms extends SendMessageBase {
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
-      return;
+      return {
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+      };
     }
 
     const phone = command.payload.phone || subscriber.phone;
 
-    if (!integration) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+    if (!selection) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -128,17 +145,24 @@ export class SendMessageSms extends SendMessageBase {
         })
       );
 
-      return;
+      return {
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+      };
     }
 
-    await this.sendSelectedIntegrationExecution(command.job, integration);
+    const { integration } = selection;
 
-    const overrides = {
-      ...(command.overrides[integration?.channel] || {}),
-      ...(command.overrides[integration?.providerId] || {}),
-    };
+    await this.sendSelectedIntegrationExecution(command.job, selection);
 
-    const messagePayload = Object.assign({}, command.payload);
+    const overrides = mergeTriggerProviderOverrides(
+      command.overrides,
+      integration?.channel,
+      integration?.providerId,
+      command.step.stepId
+    ) as SmsMessageOverrides;
+
+    const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
 
     const message: MessageEntity = await this.messageRepository.create({
@@ -153,15 +177,19 @@ export class SendMessageSms extends SendMessageBase {
       phone,
       content: this.storeContent() ? content : null,
       providerId: integration?.providerId,
-      payload: messagePayload,
+      payload: this.payloadToPersist(command, messagePayload),
       overrides,
       templateIdentifier: command.identifier,
+      stepId: command.step.stepId,
       _jobId: command.jobId,
+      tags: command.tags,
+      severity: command.severity,
+      contextKeys: command.contextKeys,
     });
 
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -172,16 +200,19 @@ export class SendMessageSms extends SendMessageBase {
       })
     );
 
-    if (phone && integration) {
-      await this.sendMessage(phone, integration, content, message, command, overrides);
-
-      return;
+    if (!phone || !integration) {
+      return await this.sendErrors(phone, integration, message, command);
     }
 
-    await this.sendErrors(phone, integration, message, command);
+    return await this.sendMessage(phone, integration, content, message, command, overrides);
   }
 
-  private async sendErrors(phone, integration, message: MessageEntity, command: SendMessageCommand) {
+  private async sendErrors(
+    phone,
+    integration,
+    message: MessageEntity,
+    command: SendMessageChannelCommand
+  ): Promise<SendMessageResult> {
     if (!phone) {
       await this.messageRepository.updateMessageStatus(
         command.environmentId,
@@ -192,11 +223,11 @@ export class SendMessageSms extends SendMessageBase {
         'Subscriber does not have active phone'
       );
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
+          detail: DetailEnum.SUBSCRIBER_MISSING_PHONE_NUMBER,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
@@ -204,7 +235,13 @@ export class SendMessageSms extends SendMessageBase {
         })
       );
 
-      return;
+      return {
+        status: SendMessageStatus.SKIPPED,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatusEnum.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_PHONE,
+        },
+      };
     }
     if (!integration) {
       await this.sendErrorStatus(
@@ -212,13 +249,12 @@ export class SendMessageSms extends SendMessageBase {
         'warning',
         'sms_missing_integration_error',
         'Subscriber does not have an active sms integration',
-        command,
-        LogCodeEnum.MISSING_SMS_INTEGRATION
+        command
       );
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -228,7 +264,10 @@ export class SendMessageSms extends SendMessageBase {
         })
       );
 
-      return;
+      return {
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+      };
     }
     if (!integration?.credentials?.from) {
       await this.sendErrorStatus(
@@ -236,13 +275,12 @@ export class SendMessageSms extends SendMessageBase {
         'warning',
         'no_integration_from_phone',
         'Integration does not have from phone configured',
-        command,
-        LogCodeEnum.MISSING_SMS_PROVIDER
+        command
       );
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -252,8 +290,16 @@ export class SendMessageSms extends SendMessageBase {
         })
       );
 
-      return;
+      return {
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+      };
     }
+
+    return {
+      status: SendMessageStatus.FAILED,
+      errorMessage: DetailEnum.PROVIDER_ERROR,
+    };
   }
 
   private async sendMessage(
@@ -261,11 +307,11 @@ export class SendMessageSms extends SendMessageBase {
     integration: IntegrationEntity,
     content: string,
     message: MessageEntity,
-    command: SendMessageCommand,
-    overrides: Record<string, any> = {}
-  ) {
+    command: SendMessageChannelCommand,
+    overrides: SmsMessageOverrides = {}
+  ): Promise<SendMessageResult> {
     try {
-      const chimeraBody = command.chimeraData?.outputs.body;
+      const bridgeBody = (command.bridgeData?.outputs as SmsOutput | undefined)?.body;
 
       const smsFactory = new SmsFactory();
       const smsHandler = smsFactory.getHandler(this.buildFactoryIntegration(integration));
@@ -276,14 +322,20 @@ export class SendMessageSms extends SendMessageBase {
       const result = await smsHandler.send({
         to: overrides.to || phone,
         from: overrides.from || integration.credentials.from,
-        content: chimeraBody || overrides.content || content,
+        content: bridgeBody || overrides.content || content,
         id: message._id,
         customData: overrides.customData || {},
+        bridgeProviderData: combineProviderOverrides(
+          command.bridgeData,
+          command.overrides,
+          command.step.stepId,
+          integration.providerId
+        ),
       });
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.MESSAGE_SENT,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -295,7 +347,10 @@ export class SendMessageSms extends SendMessageBase {
       );
 
       if (!result?.id) {
-        return;
+        return {
+          status: SendMessageStatus.FAILED,
+          errorMessage: DetailEnum.PROVIDER_ERROR,
+        };
       }
 
       await this.messageRepository.update(
@@ -306,6 +361,22 @@ export class SendMessageSms extends SendMessageBase {
           },
         }
       );
+
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId, {
+            providerResponseId: result.id,
+          }),
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
+
+      return {
+        status: SendMessageStatus.SUCCESS,
+      };
     } catch (e) {
       await this.sendErrorStatus(
         message,
@@ -313,12 +384,25 @@ export class SendMessageSms extends SendMessageBase {
         'unexpected_sms_error',
         e.message || e.name || 'Un-expect SMS provider error',
         command,
-        LogCodeEnum.SMS_ERROR
+        e
       );
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_FAILED,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId),
+          error: {
+            message: e.message || e.name || 'Error while sending sms with provider',
+          },
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.PROVIDER_ERROR,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -328,10 +412,15 @@ export class SendMessageSms extends SendMessageBase {
           raw: JSON.stringify({ message: e?.response?.data || e.message, name: e.name }),
         })
       );
+
+      return {
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.PROVIDER_ERROR,
+      };
     }
   }
 
-  public buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
+  public buildFactoryIntegration(integration: IntegrationEntity, _senderName?: string) {
     return {
       ...integration,
       providerId: integration.providerId,

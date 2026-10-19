@@ -1,0 +1,4 @@
+{
+  "main": "../dist/cjs/cards.cjs",
+  "types": "../dist/cjs/cards.d.cts"
+}

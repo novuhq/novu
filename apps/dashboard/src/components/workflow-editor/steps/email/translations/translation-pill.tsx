@@ -1,0 +1,140 @@
+import React, { useMemo, useRef, useState } from 'react';
+import { VariableIcon } from '@/components/variable/components/variable-icon';
+import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
+import { useTranslationValidation } from '@/hooks/use-translation-validation';
+import { LocalizationResourceEnum } from '@/types/translations';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { cn } from '@/utils/ui';
+import {
+  EditTranslationPopover,
+  TranslationValueInputComponent,
+} from './edit-translation-popover/edit-translation-popover';
+import { TranslationTooltip } from './translation-tooltip';
+
+type TranslationPillProps = {
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
+  variables: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
+  decoratorKey: string; // "common.submit"
+  onUpdate?: (key: string) => void;
+  onDelete?: () => void;
+  translationValueInput: TranslationValueInputComponent;
+};
+
+export const TranslationPill: React.FC<TranslationPillProps> = ({
+  resourceId,
+  resourceType,
+  variables,
+  isAllowedVariable,
+  decoratorKey,
+  onUpdate,
+  onDelete,
+  translationValueInput,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [popoverPosition, setPopoverPosition] = useState<{ top: number; left: number } | undefined>();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Fetch translation keys to validate if the current key exists
+  const { translationKeys, isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
+    resourceId,
+    resourceType,
+    enabled: !!resourceId,
+  });
+
+  const displayTranslationKey = useMemo(() => {
+    if (!decoratorKey) return '';
+    const keyParts = decoratorKey.split('.');
+
+    return keyParts.length >= 2 ? '..' + keyParts.slice(-2).join('.') : decoratorKey;
+  }, [decoratorKey]);
+
+  const validation = useTranslationValidation({
+    translationKey: decoratorKey,
+    availableKeys: translationKeys,
+    isLoading: isTranslationKeysLoading,
+    allowEmpty: false, // Pills should always have a key
+  });
+
+  const hasError = validation.hasError;
+  const errorMessage = validation.errorMessage;
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Calculate position for popover
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPopoverPosition({
+        top: rect.bottom + 4, // Small offset below the button
+        left: rect.left,
+      });
+    }
+
+    setIsOpen(true);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Calculate position for popover
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPopoverPosition({
+        top: rect.bottom + 4, // Small offset below the button
+        left: rect.left,
+      });
+    }
+
+    setIsOpen(true);
+  };
+
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete();
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <>
+      <TranslationTooltip hasError={hasError} errorMessage={errorMessage}>
+        <button
+          type="button"
+          contentEditable={false}
+          className={cn(
+            'bg-bg-white border-stroke-soft font-code',
+            'relative m-0 box-border inline-flex cursor-pointer items-center gap-1 rounded-lg border px-1.5! py-px! align-middle font-medium leading-[inherit] text-inherit',
+            'text-text-sub h-[max(18px,calc(1em+2px))] text-[max(12px,calc(1em-3px))]',
+            { 'hover:bg-error-base/2.5': hasError }
+          )}
+          onClick={handleClick}
+          onPointerDown={handlePointerDown}
+          ref={buttonRef}
+        >
+          <VariableIcon variableName={decoratorKey} hasError={hasError} context="translations" />
+          <span className="text-label-xs text-text-sub max-w-[24ch] truncate" title={displayTranslationKey}>
+            {displayTranslationKey}
+          </span>
+        </button>
+      </TranslationTooltip>
+
+      <EditTranslationPopover
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        translationKey={decoratorKey}
+        onDelete={handleDelete}
+        onReplaceKey={onUpdate}
+        position={popoverPosition}
+        variables={variables}
+        isAllowedVariable={isAllowedVariable}
+        resourceId={resourceId}
+        resourceType={resourceType}
+        translationValueInput={translationValueInput}
+      />
+    </>
+  );
+};

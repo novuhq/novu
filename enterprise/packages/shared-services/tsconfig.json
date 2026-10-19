@@ -9,8 +9,7 @@
     "esModuleInterop": true,
     "rootDir": "src",
     "strict": true,
-    "types": ["node", "jest"],
-    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
+    "types": ["node", "jest"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules/**"]

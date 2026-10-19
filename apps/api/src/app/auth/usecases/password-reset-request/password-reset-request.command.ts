@@ -1,6 +1,6 @@
-import { IsDefined, IsEmail, IsEnum, IsOptional } from 'class-validator';
+import { BaseCommand } from '@novu/application-generic';
 import { PasswordResetFlowEnum } from '@novu/shared';
-import { BaseCommand } from '../../../shared/commands/base.command';
+import { IsDefined, IsEmail, IsEnum, IsOptional } from 'class-validator';
 
 export class PasswordResetRequestCommand extends BaseCommand {
   @IsEmail()

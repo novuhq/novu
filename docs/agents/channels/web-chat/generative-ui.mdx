@@ -1,0 +1,112 @@
+---
+title: "Generative UI"
+description: "Render Web Chat cards, handle card buttons, and show custom data parts."
+sidebarTitle: Generative UI
+---
+
+Handle structured assistant output in Web Chat: cards and custom data parts. See [Messages](/agents/channels/web-chat/messages) for the timeline. See [Tools](/agents/channels/web-chat/tools) for approvals.
+
+## Cards
+
+A Card is a structured reply. It can include a title, text, images, links, and buttons.
+
+When the agent sends a Card, the message includes a part with `type: 'card'`. The payload is on `part.card`.
+
+Agents create Cards with JSX or `Card({…})`. That authoring API is shared with Slack and the other [Agent Communication Infrastructure (ACI)](/agents/get-started/what-is-aci) channels: [Interactive cards](/agents/custom-code-agent/building-blocks/reply#interactive-cards). You can also post the JSON with [Send an agent reply](/api-reference/agents/send-an-agent-reply).
+
+`part.card` is `Record<string, unknown>`. Read the fields that you support. Skip child types that you do not use.
+
+Render `title` and the `text` children that you support:
+
+```tsx
+const { messages } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+{messages.map((message) =>
+  message.parts.map((part, i) => {
+    if (part.type !== 'card') {
+      return null;
+    }
+
+    const title =
+      typeof part.card.title === 'string' ? part.card.title : null;
+    const children = Array.isArray(part.card.children)
+      ? part.card.children
+      : [];
+
+    return (
+      <article key={i}>
+        {title ? <h3>{title}</h3> : null}
+        {children.map((child, j) =>
+          child?.type === 'text' ? (
+            <p key={j}>{child.content}</p>
+          ) : null
+        )}
+      </article>
+    );
+  })
+)}
+```
+
+## Card buttons
+
+If the subscriber clicks a button, call `sendAction`. The agent receives the click in `onAction`.
+
+Do not send the button label with `sendMessage`. That call creates a new chat message. Do not call `respondToAction`. That function is for tool approval only.
+
+In the same `children` loop, handle `type === 'actions'`:
+
+```tsx
+const { sendAction } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+{child?.type === 'actions'
+  ? child.children?.map((button) => (
+      <button
+        key={button.id}
+        type="button"
+        onClick={() =>
+          void sendAction({
+            actionId: button.id,
+            value: button.value,
+            sourceMessageId: message.id,
+          })
+        }
+      >
+        {button.label}
+      </button>
+    ))
+  : null}
+```
+
+## Custom data
+
+The agent sends a named payload with [`ctx.emit`](/agents/custom-code-agent/building-blocks/emit). Web Chat adds it to the in-flight assistant message as `part.type === 'data'`. The fields are `name` and `data`.
+
+See [Emit custom events](/agents/custom-code-agent/building-blocks/emit) for the handler API, size limit, and other channels.
+
+Render parts whose `name` your UI handles:
+
+```tsx
+const { messages } = useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+{messages.map((message) =>
+  message.parts.map((part, index) => {
+    if (part.type !== 'data') {
+      return null;
+    }
+
+    return (
+      <pre key={index}>
+        {part.name}: {JSON.stringify(part.data)}
+      </pre>
+    );
+  })
+)}
+```
+
+Skip `data` parts with names that your UI does not handle. The part stays on the message.

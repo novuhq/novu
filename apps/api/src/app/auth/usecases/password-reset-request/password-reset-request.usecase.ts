@@ -1,13 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
-import { differenceInHours, differenceInSeconds, parseISO } from 'date-fns';
-import { Novu } from '@novu/node';
-import { UserRepository, UserEntity, IUserResetTokenCount } from '@novu/dal';
 import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
-
-import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
+import { IUserResetTokenCount, UserEntity, UserRepository } from '@novu/dal';
+import { normalizeEmail, PasswordResetFlowEnum } from '@novu/shared';
+import { differenceInHours, differenceInSeconds, parseISO } from 'date-fns';
+import { v4 as uuidv4 } from 'uuid';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
-import { PasswordResetFlowEnum } from '@novu/shared';
 
 @Injectable()
 export class PasswordResetRequest {
@@ -15,7 +12,10 @@ export class PasswordResetRequest {
   private MAX_ATTEMPTS_IN_A_DAY = 15;
   private RATE_LIMIT_IN_SECONDS = 60;
   private RATE_LIMIT_IN_HOURS = 24;
-  constructor(private invalidateCache: InvalidateCacheService, private userRepository: UserRepository) {}
+  constructor(
+    private invalidateCache: InvalidateCacheService,
+    private userRepository: UserRepository
+  ) {}
 
   async execute(command: PasswordResetRequestCommand): Promise<{ success: boolean }> {
     const email = normalizeEmail(command.email);
@@ -37,18 +37,7 @@ export class PasswordResetRequest {
       await this.userRepository.updatePasswordResetToken(foundUser._id, token, resetTokenCount);
 
       if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
-        const novu = new Novu(process.env.NOVU_API_KEY);
         const resetPasswordLink = PasswordResetRequest.getResetRedirectLink(token, foundUser, command.src);
-
-        novu.trigger(process.env.NOVU_TEMPLATEID_PASSWORD_RESET || 'password-reset-llS-wzWMq', {
-          to: {
-            subscriberId: foundUser._id,
-            email: foundUser.email,
-          },
-          payload: {
-            resetPasswordLink,
-          },
-        });
       }
     }
 
@@ -60,7 +49,7 @@ export class PasswordResetRequest {
   private static getResetRedirectLink(token: string, user: UserEntity, src?: PasswordResetFlowEnum): string {
     // ensure that only users without passwords are allowed to reset
     if (src === PasswordResetFlowEnum.USER_PROFILE && !user.password) {
-      return `${process.env.FRONT_BASE_URL}/settings/profile?token=${token}&view=password`;
+      return `${process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL}/settings/profile?token=${token}&view=password`;
     }
 
     /**
@@ -69,7 +58,7 @@ export class PasswordResetRequest {
      * 2. When src is explicitly FORGOT_PASSWORD
      * 3. User already has a password
      */
-    return `${process.env.FRONT_BASE_URL}/auth/reset/${token}`;
+    return `${process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL}/auth/reset/${token}`;
   }
 
   private isRequestBlocked(user: UserEntity) {

@@ -1,14 +1,501 @@
 packages:
   # all packages in subdirs of packages/ and components/
-  - 'automation'
   - 'packages/*'
-  # Angular projects - these are nested under the Angular workspace root, and need version bumps during release.
-  - 'packages/notification-center-angular/projects/*'
   - 'apps/*'
   - 'libs/*'
   # exclude packages that are inside test directories
   - '!**/test/**'
   # all packages in enterprise modules
   - 'enterprise/packages/*'
-  - 'enterprise/packages/libs/*'
-  - 'enterprise/packages/echo/*'
+  - 'enterprise/workers/step-resolver'
+  - 'enterprise/workers/thalamus-observer'
+  - 'enterprise/workers/socket'
+  # playground apps
+  - 'playground/*'
+
+# Pnpm configuration
+# Wait 3 days (4320 minutes) before allowing packages to be installed
+minimumReleaseAge: 4320
+# Workaround for pnpm v11.0.4+: the new `minimumReleaseAgeStrict: true` default
+# raises spurious ERR_PNPM_MISSING_TIME errors during resolution
+# (see https://github.com/pnpm/pnpm/issues/11238). Falling back to non-strict
+# matches the pre-v11.0.4 behavior.
+minimumReleaseAgeStrict: false
+# First-party packages are published by us and consumed right away, so they skip the age gate.
+minimumReleaseAgeExclude:
+  - '@novu/*'
+
+# Settings migrated from .npmrc (pnpm v11 reads only auth/registry settings from .npmrc).
+autoInstallPeers: true
+strictPeerDependencies: false
+fetchRetryMaxtimeout: 10000
+enablePrePostScripts: true
+
+# pnpm >= 11.28 resolves debug's optional supports-color peer per project, and that suffix
+# spreads up to @nestjs/common/core, so apps and libs load different Nest copies and DI
+# breaks. Giving debug its own supports-color removes the peer variant. 8.x is the last CJS major.
+packageExtensions:
+  debug:
+    dependencies:
+      supports-color: ^8.1.1
+
+# Settings migrated from package.json#pnpm (pnpm v11 no longer reads the `pnpm` field).
+overrides:
+  body-parser@<1.20.6: ^1.20.6
+  deepmerge-ts@<8.0.0: ^8.0.0
+  body-parser@>=2.0.0 <2.3.0: ^2.3.0
+  # GHSA-8r5x-fm3f-whwj (critical): Handlebars JavaScript injection via AST
+  # type confusion in compile (bypass of CVE-2026-33937).
+  # GHSA-p8wg-vrv2-v86f (critical): Handlebars JavaScript injection via own
+  # property check bypass. GHSA-xw65-4hp5-5hc7 (moderate): JavaScript
+  # injection via unsafe inline embedding of precompiled templates.
+  # All three are patched in 4.7.10 (patch bump within the 4.7.x line).
+  handlebars@<4.7.10: ^4.7.10
+  braces@<3.0.3: ^3.0.3
+  # GHSA-vc2v-76pw-4v95 (high): compression DoS via memory leak when the HTTP
+  # response is closed before compression finishes flushing. Patched in 1.8.2
+  # (patch bump within the 1.8.x line). Direct dep via apps/api and transitive
+  # via @nx/js > verdaccio across build tooling.
+  compression@<1.8.2: ^1.8.2
+  file-type@>=13.0.0 <16.5.4: ^16.5.4
+  file-type@>=17.0.0 <21.3.4: ^21.3.4
+  get-func-name@<2.0.1: ^2.0.1
+  glob-parent@<5.1.2: ^5.1.2
+  minimatch@>=3.0.0 <3.1.4: ^3.1.4
+  minimatch@>=5.0.0 <5.1.8: ^5.1.8
+  minimatch@>=7.0.0 <7.4.8: ^7.4.8
+  minimatch@>=8.0.0 <8.0.6: ^8.0.6
+  minimatch@>=9.0.0 <9.0.7: ^9.0.7
+  nanoid@>=3.0.0 <3.3.17: ^3.3.17
+  nth-check: ^2.1.1
+  postcss@<8.5.23: ^8.5.23
+  # GHSA-68fv-2mgg-jv7q (high): source-map-js event-loop DoS via indexed
+  # source-map section offsets. Patched in 1.2.2 (patch bump within the 1.x line).
+  # Transitive via postcss and css-tree across apps/api and apps/dashboard.
+  source-map-js@>=1.0.0 <1.2.2: ^1.2.2
+  proxy-agent@<6.3.1: ^6.3.1
+  # GHSA-jqcg-44mw-7w3h (critical): proxy-addr trusts IPv4-mapped IPv6 addresses
+  # (`::ffff:a.b.c.d`) against IPv4 trust subnets, enabling X-Forwarded-For
+  # spoofing when express `trust proxy` is configured with an IPv4 CIDR.
+  # Patched in 2.0.8 (patch bump within the 2.x line). Pulled transitively via
+  # express (verdaccio, @nx/js dev tooling).
+  proxy-addr@<2.0.8: ^2.0.8
+  semver@>=7.0.0 <7.5.2: ^7.5.2
+  systeminformation@<5.31.7: ^5.31.7
+  tar: 7.5.21
+  tar-fs: '>=3.1.1'
+  tough-cookie@<4.1.3: ^4.1.3
+  trim-newlines@<3.0.1: ^3.0.1
+  xml2js@<0.5.0: ^0.5.0
+  '@types/mocha': ^10.0.8
+  rollup@>=4.0.0 <4.59.0: ^4.59.0
+  '@nestjs/common@>=10.0.0 <12.0.0': 11.1.27
+  # GHSA-m9gg-hp2v-232j (high) / GHSA-f596-whhp-79r4 (low): @grpc/grpc-js
+  # getAuthContext may return unauthorized certificates as authorized, and
+  # server leaks handler error messages to clients. Patched in 1.14.5.
+  # Transitive via @nestjs/terminus and newrelic.
+  '@grpc/grpc-js@>=1.14.0 <1.14.5': ^1.14.5
+  # GHSA-7mx3-vvmw-hjmv (high): @graphql-tools/utils prototype pollution in
+  # `mergeDeep`. Patched in 12.0.1 (patch bump within the 12.0.x line).
+  # Transitive via `@nestjs/graphql` in apps/api and apps/webhook.
+  '@graphql-tools/utils@<12.0.1': ^12.0.1
+  # GHSA-c8x8-7fp4-3x9w (high): prosemirror-view XSS in paste handling.
+  # Patched in 1.42.3 (minor bump within the 1.x line). Transitive via
+  # `@tiptap/react > @tiptap/core > @tiptap/pm` in apps/dashboard.
+  prosemirror-view@<1.42.3: ^1.42.3
+  # GHSA-6w3j-5fw6-r9vr / GHSA-gg4h-3hg2-grpc: joi 18.x prototype pollution
+  # via `__proto__` in custom message language and `object().rename()` with a
+  # template target. Patched in 18.2.5 (patch bump within the 18.2.x line).
+  # GHSA-wr44-6hxh-3jwq (moderate): joi 18.x prototype replacement through
+  # `__proto__` error codes during messages compilation. Patched in 18.2.9
+  # (patch bump within the 18.2.x line). Widen the previous `<18.2.5` floor
+  # so transitive consumers (packages/providers > africastalking, etc.) pick
+  # up the fix.
+  joi@<18.2.9: ^18.2.9
+  prosemirror-model: 1.22.3
+  path-to-regexp@<0.1.13: ^0.1.13
+  '@swc/core@>=1.0.0 <2.0.0': 1.7.26
+  '@swc/cli@>=0.0.0 <1.0.0': 0.3.12
+  '@babel/core@>7.0.0 <8.0.0': 7.29.7
+  prismjs@<=1.29.0: 1.30.0
+  mongodb@>=4.0.0 <5.0.0: 5.9.2
+  form-data@<2.5.6: ^2.5.6
+  form-data@>=3.0.0 <3.0.5: ^3.0.5
+  form-data@>=4.0.0 <4.0.6: ^4.0.6
+  # GHSA-px8p-9vwx-vf98: fflate DoS in memLevel handling. Split into
+  # per-line overrides because the 0.4.x consumers (rrweb > mixpanel-browser)
+  # and the 0.8.x consumers (@arethetypeswrong/cli, dev-only) cannot be
+  # collapsed onto a single major version without breaking rrweb.
+  fflate@>=0.4.5 <0.4.9: ^0.4.9
+  fflate@>=0.8.0 <0.8.3: ^0.8.3
+  vite@<4.5.10: ^4.5.10
+  vite@>=5.0.0 <6.4.3: ^6.4.3
+  node-forge@<1.4.0: ^1.4.0
+  ws@>=8.0.0 <8.21.0: ^8.21.0
+  ws@>=7.0.0 <7.5.11: ^7.5.11
+  websocket-driver@<0.7.5: ^0.7.5
+  # Pin playground `nextjs` package's `next` to the patched 15.5.x release
+  # (GHSA-4jqv-mc3x-m676, GHSA-mcj8-r9mp-w47p and friends in >=15.0.0 <15.5.27
+  # are patched in 15.5.27).
+  nextjs>next: ^15.5.27
+  # GHSA-vcvr-r3jv-pc5j (critical): Next.js remote code execution in
+  # next/og ImageResponse. Patched in 16.3.6; widen the override so transitive
+  # 16.3.4 resolutions (via better-auth, @better-auth/sso) also pick up the fix.
+  # GHSA-cjq9-62q9-8jv4 (high): Next.js SSRF in middleware/image optimization,
+  # plus related moderate advisories GHSA-3w37-wq28-93x7, GHSA-4jqv-mc3x-m676,
+  # GHSA-f87g-xv8r-7p7x, GHSA-mcj8-r9mp-w47p, and low GHSA-39w2-rjm5-chcv.
+  # Patched in 16.3.8; widen the override from <16.3.6 so transitive consumers
+  # (better-auth, @better-auth/sso, @clerk/nextjs, apps/human-dashboard) land
+  # on 16.3.8.
+  next@<16.3.8: ^16.3.8
+  fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
+  fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
+  fast-xml-parser@>=5.9.3 <5.10.1: 5.10.1
+  # GHSA-c475-qrg2-pj4r: basic-ftp SSRF via `./` prefixed paths in list()
+  # bypassing the loopback / private-IP guard. Patched in 6.2.1. Widen the
+  # override from the previous 5.3.1 floor so the transitive `get-uri` >
+  # `pac-proxy-agent` > `proxy-agent` chain in `packages/providers` picks up
+  # the 6.x line. basic-ftp 6.0 removed the deprecated `Client.list()` string
+  # overload and tightened TypeScript signatures, but `get-uri` only calls
+  # `Client.access()` + `Client.downloadTo()`, which are unchanged.
+  basic-ftp@<6.2.1: ^6.2.1
+  # GHSA-ch52-4w7c-c8xp: http-cache-semantics max-stale handling can disclose
+  # cross-user cached responses. Patched in 4.2.1. Transitive via got >
+  # cacheable-request across build tooling.
+  http-cache-semantics@<4.2.1: ^4.2.1
+  # GHSA-c29m-xwm3-cm6r / GHSA-mghh-pgcx-3jjj / GHSA-x97p-jq2g-jp4f /
+  # GHSA-3pq3-5fj3-cg6v / GHSA-542g-h47m-68v8 / GHSA-m8m8-qj5v-23w3 /
+  # GHSA-r4gj-5m52-g5wh (high) and GHSA-vh66-26gq-q6x8 / GHSA-9fr6-4gfg-395g
+  # / GHSA-j8rh-479h-cp32 / GHSA-4hqw-qxg8-jxx2 / GHSA-44g4-m2mj-wpvx
+  # (moderate): axios ReDoS, prototype pollution, SSRF, header injection, and
+  # proxy bypass issues. All patched in 1.20.0.
+  axios@>=1.0.0 <1.20.0: ^1.20.0
+  '@slack/web-api': 7.17.0
+  # GHSA-p6vx-979v-rg4c (critical): seroval `fromJSON()` Promise thenable
+  # assimilation invokes plugin-produced callables (bypass of
+  # GHSA-mv8w-475r-vwqw). Patched in 1.6.1. GHSA-jp82-f5mq-hwhp (high) adds
+  # memory exhaustion via unchecked TypedArray length in JSON deserialization,
+  # patched in 1.6.3. Widen the override to lift transitive consumers
+  # (apps/dashboard > @better-auth/sso/better-auth > solid-js > seroval and
+  # seroval-plugins) onto the 1.6.x patch line. solid-js@1.9.6 depends on
+  # `seroval: ^1.1.0` and seroval-plugins@1.2.1 has a `^1.0` peer, both of
+  # which stay satisfied on 1.6.x.
+  seroval@<1.6.3: ^1.6.3
+  h3@<1.15.9: ^1.15.9
+  immutable@>=4.0.0 <4.3.8: ^4.3.8
+  jws@>=4.0.0 <4.0.1: ^4.0.1
+  validator@<13.15.22: ^13.15.22
+  msgpackr: ^1.10.1
+  multer@<2.4.0: ^2.4.0
+  jws@<3.2.3: ^3.2.3
+  svgo@>=3.0.0 <3.3.5: ^3.3.5
+  flatted@<3.4.2: ^3.4.2
+  serialize-javascript@<7.0.5: ^7.0.5
+  ejs@<3.1.10: ^3.1.10
+  rollup@>=3.0.0 <3.30.0: ^3.30.0
+  rollup@<2.80.0: ^2.80.0
+  glob@>=10.2.0 <10.5.0: ^10.5.0
+  # GHSA-* (undici): several DoS / cache-key / request-smuggling / cookie
+  # forwarding issues in undici 6.x, 7.x, and 8.x. Patched in 6.28.1, 7.29.1,
+  # and 8.10.2. Route each major version to its matching patched branch.
+  undici@>=7.0.0 <7.29.1: ^7.29.1
+  undici@>=6.0.0 <6.28.1: ^6.28.1
+  undici@>=8.0.0 <8.10.2: ^8.10.2
+  jose@>=3.0.0 <4.15.5: ^4.15.5
+  qs@<6.16.0: ^6.16.0
+  js-yaml@<3.15.2: ^3.15.2
+  js-yaml@>=4.0.0 <4.3.2: ^4.3.2
+  # GHSA-r3ph-w7gj-g6xm (moderate): js-yaml maxTotalMergeKeys does not limit CPU
+  # use for empty merge sources. Patched in 5.4.1 (patch bump within the 5.x
+  # line). @nestjs/swagger 11.4.7 pins js-yaml to exactly 5.3.0.
+  js-yaml@>=5.0.0 <5.4.1: ^5.4.1
+  # GHSA-r4xh-jqrq-34v2 (moderate): smol-toml parseKey quadratic-time
+  # parse() rescanning that enables CPU exhaustion on large TOML inputs.
+  # Patched in 1.8.1, but the npm release stream published 1.9.0 directly
+  # after 1.8.0 (no 1.8.1 artifact). Widen the previous `<1.7.1` floor so
+  # transitive consumers (`nx > smol-toml` in dev tooling) land on 1.9.x.
+  smol-toml@<1.9.0: ^1.9.0
+  '@langchain/langgraph-checkpoint-mongodb@<1.3.1': ^1.3.1
+  # GHSA-6qxp-vccf-f47h (high): MCP TypeScript SDK OAuth client could send
+  # credentials to an authorization server chosen by the MCP server, enabling
+  # token exfiltration via a malicious server. Patched in 1.31.0. Pulled
+  # transitively via apps/human-mcp, enterprise/workers/thalamus-observer,
+  # packages/novu > @anthropic-ai/claude-agent-sdk, and playground/web-chat.
+  '@modelcontextprotocol/sdk@>=1.12.0 <1.31.0': ^1.31.0
+  # GHSA-6qxp-vccf-f47h (high): the v2 OAuth client can send stored
+  # credentials to an authorization server chosen by the MCP server. Patched
+  # in 2.2.0. agents@0.21.0 peers @modelcontextprotocol/client at exactly
+  # 2.0.0 for enterprise/workers/thalamus-observer. Pin 2.2.0 rather than
+  # floating ^2.2.0: 2.3.0 changes cross-origin redirect handling, and 2.2.0
+  # (published 2026-09-28) already satisfies minimumReleaseAge.
+  '@modelcontextprotocol/client@>=2.0.0 <2.2.0': 2.2.0
+  '@babel/runtime@<7.26.10': ^7.26.10
+  altcha-lib@<1.4.1: ^1.4.1
+  lodash-es@<=4.17.23: ^4.18.0
+  lodash@<=4.17.23: ^4.18.0
+  ajv@>=8.0.0 <8.18.0: ^8.18.0
+  express@<4.20.0: ^4.20.0
+  serve-static@<1.16.0: ^1.16.0
+  send@<0.19.0: ^0.19.0
+  # GHSA-p98j-92pf-mc4p (low): dompurify 3.4.13-3.4.15 SVG `use` element XSS
+  # bypass of DOMPurify's foreign-content isolation. Patched in 3.4.16.
+  # Widen the previous `<3.4.13` floor so transitive mermaid consumers in
+  # apps/dashboard and playground/nextjs also land on the fix.
+  dompurify@>=3.1.3 <3.4.16: ^3.4.16
+  '@octokit/endpoint@>=9.0.5 <9.0.6': ^9.0.6
+  '@octokit/request-error@<5.1.1': ^5.1.1
+  '@octokit/plugin-paginate-rest@<9.2.2': ^9.2.2
+  '@octokit/request@<8.4.1': ^8.4.1
+  kysely@>=0.26.0 <0.28.17: 0.28.17
+  undici@>=5.0.0 <5.30.0: ^6.28.1
+  markdown-it@>=13.0.0 <14.3.1: ^14.3.1
+  mdast-util-to-hast@>=13.0.0 <13.2.1: ^13.2.1
+  webpack@>=5.49.0 <5.104.1: ^5.104.1
+  micromatch@>=4.0.0 <4.0.8: ^4.0.8
+  # GHSA-238p-pmpm-9mq7 (low): KaTeX pre-existing prototype pollution can bypass
+  # trust restrictions. Patched in 0.18.2. Transitive via @streamdown/math
+  # (rehype-katex, micromark-extension-math) and @streamdown/mermaid > mermaid
+  # across apps/dashboard and playground/nextjs. Consumers declare `katex: ^0.16.0`
+  # but only use the public katex.render/renderToString APIs, which are stable
+  # across the 0.17/0.18 line, so forcing the override is safe. Pin to 0.18.10
+  # exactly: 0.18.11 was deprecated for accidental breaking changes, and 0.19.0
+  # ships the same strict-callback break with a proper major-ish bump that we
+  # don't need yet.
+  katex@>=0.11.0 <0.18.2: 0.18.10
+  # GHSA-mh99-v99m-4gvg / CVE-2026-14257, GHSA-rgw5-rvv9-x895, GHSA-qhr7-859c-m2p7,
+  # GHSA-6j4f-fj2g-mc7p (high) and GHSA-q2hr-2g5m-vwhr (moderate): brace-expansion
+  # DoS via unbounded intermediate arrays, uncontrolled recursion in
+  # parseCommaParts, and nested brace-group recursion. Fixes land in 2.1.6
+  # (2.x line) and 5.0.11 (5.x line). We can't force every consumer to the
+  # 5.x line because v4 switched from `module.exports = fn` to named
+  # `exports.expand` and breaks minimatch@9 (`(0 , brace_expansion_1.default)
+  # is not a function`). Route each range to the matching patched branch.
+  # There is no 1.x patch, so 1.x consumers move up to 2.1.6 which is
+  # API-compatible (same default-export shape).
+  brace-expansion@<2.1.6: ^2.1.6
+  brace-expansion@>=3.0.0 <3.0.3: ^3.0.3
+  brace-expansion@>=4.0.0 <5.0.11: ^5.0.11
+  on-headers@<1.1.0: ^1.1.0
+  diff@>=4.0.0 <4.0.4: ^4.0.4
+  diff@>=5.0.0 <5.2.2: ^5.2.2
+  formidable@>=2.1.0 <2.1.3: ^2.1.3
+  formidable@>=3.1.1 <3.5.3: ^3.5.3
+  ip@<1.1.9: ^1.1.9
+  socks@>=2.0.0 <2.7.2: ^2.8.7
+  cookie@<0.7.0: ^0.7.0
+  tmp@<0.2.7: ^0.2.7
+  socket.io-parser@>=4.0.0 <4.2.7: ^4.2.7
+  # GHSA-2gc4-cqfq-p2gv (high): engine.io protocol revision mismatch DoS.
+  # Patched in 6.6.10. Transitive via @nestjs/platform-socket.io > socket.io.
+  engine.io@>=6.0.0 <6.6.10: ^6.6.10
+  cross-spawn@<6.0.6: ^6.0.6
+  path-to-regexp@>=0.2.0 <1.9.0: ^1.9.0
+  path-to-regexp@>=3.0.0 <3.3.0: ^3.3.0
+  path-to-regexp@>=6.0.0 <6.3.0: ^6.3.0
+  path-to-regexp@>=8.0.0 <8.4.0: ^8.4.0
+  svelte: 5.55.7
+  # GHSA-29g2-3rmr-qm68: ReDoS (O(n^2)) in @sveltejs/kit content negotiation
+  # via the Accept header. Patched in 2.70.2 (patch bump within the 2.x line).
+  '@sveltejs/kit@<2.70.2': ^2.70.2
+  langsmith@<0.6.0: ^0.6.3
+  devalue@<5.9.3: ^5.9.3
+  picomatch@<2.3.2: ^2.3.2
+  picomatch@>=4.0.0 <4.0.4: ^4.0.4
+  yaml@>=1.0.0 <1.10.3: ^1.10.3
+  yaml@>=2.0.0 <2.8.3: ^2.8.3
+  '@xmldom/xmldom@<0.8.15': ^0.8.15
+  micromatch@<4.0.0: ^4.0.8
+  defu@<=6.1.4: ^6.1.5
+  '@smithy/config-resolver@<4.4.0': ^4.4.0
+  # GHSA-j965-2qgj-vjmq: aws-sdk v2 is deprecated by AWS in favor of v3.
+  # The npm `aws-lambda` package (a debugging CLI, last published 2020) still
+  # pulls in aws-sdk v2 as a runtime dependency for its CLI. We only consume
+  # type-only imports from `aws-lambda` in `packages/framework/src/servers/lambda.ts`
+  # (types provided by `@types/aws-lambda`), so the runtime aws-sdk is never
+  # required at build/test time. Strip the transitive aws-sdk to remove the
+  # advisory from our dependency graph.
+  aws-lambda>aws-sdk: '-'
+  esbuild@<0.28.1: ^0.28.1
+  follow-redirects@<=1.15.11: ^1.16.0
+  # GHSA-gqvv-2mrq-wpjv / GHSA-g6gw-c38x-mqfc / GHSA-crvj-82cr-hjcx: hono
+  # 4.x has an incomplete `toSSG()` path-traversal fix (writes outside output
+  # dir), unbounded dot-notation nesting in `parseBody()` (memory exhaustion),
+  # and query-parser fragment handling that leaks params past `#`
+  # (cache-key / proxy interpretation differentials). All three are patched
+  # in 4.13.5; stay on the 4.x line (patch bump within 4.x).
+  hono@<4.13.5: ^4.13.5
+  '@hono/node-server@<2.0.5': ^2.0.5
+  '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
+  '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5': ^3.47.5
+  '@clerk/shared@>=4.0.0 <4.12.2': ^4.12.2
+  '@tootallnate/once@<3.0.1': ^3.0.1
+  protobufjs@<7.6.5: ^7.6.5
+  protobufjs@>=8.0.0 <8.6.6: ^8.6.6
+  ip-address@<10.7.1: ^10.7.1
+  mongoose@>=8.0.0 <8.24.1: ^8.24.1
+  newrelic: 13.19.2
+  # GHSA-5jgf-p345-68v8 / GHSA-f65p-4m7j-42xc / GHSA-fph4-wmhf-6fwf /
+  # GHSA-jqff-g426-hqxp: fast-uri vulnerable to host confusion and SSRF via
+  # scheme/hostname normalization. Patched in 3.1.6.
+  # GHSA-qw65-cvwx-89v3: additional host-confusion regression affecting
+  # 3.1.6 (and 3.1.6 is separately called out by GHSA-58mr-gqgx-xq4g).
+  # Patched in 3.1.7. Widen the override so the transitive verdaccio > ajv
+  # consumer picks up the fix.
+  fast-uri@<3.1.7: ^3.1.7
+  # GHSA-c83g-rgw3-j3cx / GHSA-73wf-gq98-2v4g: browserslist unbounded memory
+  # growth (OOM) via distinct query results and uncaught crash / prototype
+  # write via untrusted browserslist-stats.json. Patched in 4.28.7.
+  browserslist@<4.28.7: ^4.28.7
+  # GHSA-p498-v437-472g: @humanfs/node recursive copy follows symlinked files
+  # and copies data from outside the source tree. Patched in 0.16.8. Only
+  # pulled transitively via eslint (dev-only tooling).
+  '@humanfs/node@<0.16.8': ^0.16.8
+  # GHSA-xjh9-v7x6-24jw / GHSA-x8mw-p69m-v3mx: @fastify/busboy header-DoS /
+  # memory-exhaustion issues (ReDoS on headers, uncapped field growth).
+  # Patched in 3.2.1 (patch bump within the 3.x line). Transitive via
+  # firebase-admin in `packages/providers`.
+  '@fastify/busboy@<3.2.1': ^3.2.1
+  sharp@<0.35.5: ^0.35.5
+  '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
+  uuid: ^11.1.1
+  uuid@>=13.0.0 <13.0.1: ^13.0.1
+  '@opentelemetry/exporter-prometheus@<0.217.0': ^0.217.0
+  '@opentelemetry/sdk-node@<0.217.0': ^0.217.0
+  '@opentelemetry/auto-instrumentations-node@<0.75.0': ^0.75.0
+  '@opentelemetry/core@<2.8.0': ^2.8.0
+  '@opentelemetry/sdk-trace-base@<2.8.0': ^2.8.0
+  '@opentelemetry/resources@<2.8.0': ^2.8.0
+  '@opentelemetry/context-async-hooks@<2.8.0': ^2.8.0
+  '@opentelemetry/propagator-jaeger@<2.9.0': ^2.9.0
+  mermaid@>=11.0.0-alpha.1 <11.16.1: ^11.16.1
+  # GHSA-jggr-w7fw-pc2j (moderate): fast-copy 3.0.x stack-exhaustion DoS
+  # when copying deeply-nested values. Patched in 3.1.0 (minor bump within
+  # the 3.x line). Only pulled transitively via `pino-pretty > fast-copy` in
+  # libs/application-generic (and other logger consumers).
+  fast-copy@>=3.0.0 <3.1.0: ^3.1.0
+  tsup@<8.3.5: ^8.3.5
+  # GHSA-g8qq-57p8-ggw5 / GHSA-jxwj-j7wr-gfrw: stored/mutation XSS via SVG SMIL
+  # URI-list scheme-policy bypass and literal `</textarea/>` solidus close.
+  # Patched in 2.17.7 (patch bump within the 2.17.x line).
+  sanitize-html@<2.17.7: ^2.17.7
+  samlify@<2.13.0: ^2.13.0
+  better-auth@<1.6.13: ^1.6.23
+  '@better-auth/sso@<1.6.13': ^1.6.23
+  # GHSA-2x7j-588g-ccc2 (high) and the related moderate advisories
+  # GHSA-8m3c-c648-2xjj, GHSA-wmmp-3585-3rmp, GHSA-cc9r-2j5m-2m83 are all
+  # patched in nodemailer 9.1.0. GHSA-prgh-xp8r-p3m5 (high, 9.1.0-10.0.4)
+  # and GHSA-v53p-9fqp-m79j (high, <=10.0.5) require the 10.x line and
+  # GHSA-g57g-f23g-4646 (moderate, 9.1.0-10.0.9) pushes the floor to 10.0.9.
+  # Widen the override so transitive 9.x resolutions via mailparser, mailtrap,
+  # smtp-server, and nextjs pick up the 10.0.x patch line. Nodemailer 10
+  # preserves backward-compatible subpath exports (`./lib/*` → `./dist/cjs/*`)
+  # so consumers that `require('nodemailer/lib/addressparser')` and
+  # `require('nodemailer/lib/shared')` keep resolving. Repo-wide `engines`
+  # already requires Node >=22, satisfying nodemailer 10's `>=20` floor.
+  nodemailer@<10.0.9: ^10.0.9
+  # GHSA-pqg4-j6r4-53mv (critical): shell-quote `quote()` command injection via a
+  # line terminator in a token following a `{ comment }` token. Patched in 1.11.0
+  # (minor bump within the 1.x line). Widen the previous <1.8.5 override so
+  # transitive 1.10.0 resolutions (via npm-run-all and cpx) pick up the fix.
+  shell-quote@<1.11.0: ^1.11.0
+  # GHSA-67c8-pqhq-4rmx (critical): piscina prototype-pollution gadget in
+  # ThreadPool.options allowing RCE via execArgv / loadBalancer / env.
+  # Patched in 4.9.4 (patch bump within the 4.9.x line). Transitive dev-only
+  # dep via @swc/cli (pinned to 0.3.12 above), which declares `piscina ^4.3.0`,
+  # so an override to the 4.9.x patch line is compatible.
+  piscina@<4.9.4: ^4.9.4
+  # GHSA-9crc-q9x8-hgqq: @vitest/mocker path-traversal / arbitrary file read
+  # via Redirect Mock; vitest re-exports the vulnerable code. Patched in
+  # 4.1.11 (patch bump within the 4.1.x line). Widen the pre-existing
+  # `vitest@<4.1.0` override so all transitive consumers land on the fix,
+  # and add a matching `@vitest/mocker` override in case a consumer pulls
+  # the mocker without the vitest CLI.
+  vitest@<4.1.11: ^4.1.11
+  '@vitest/mocker@<4.1.11': ^4.1.11
+  react-router@>=6.0.0 <7.18.0: ^7.18.0
+  js-cookie@<3.0.7: ^3.0.7
+  # GHSA-77c7-pq4r-6mcq: degit command injection via unsanitised git repo name.
+  # Transitive dev-only dep via hygen. Stay on the 2.x patch (^2.8.6) since
+  # hygen pins the 2.x line; a 3.x jump would be unnecessary.
+  degit@<2.8.6: ^2.8.6
+  liquidjs@<10.27.2: ^10.27.2
+  linkify-it@<5.0.2: ^5.0.2
+  # GHSA-vcc3-ghjq-m6fr: decode-uri-component <=0.4.2 DoS via exponential
+  # decoding of malformed percent-encoded input. Pulled transitively via
+  # pkg-pr-new > query-registry > query-string. Patched in >=0.4.3, but the
+  # only published patched release is 0.5.0.
+  decode-uri-component@<0.5.0: ^0.5.0
+  # Force single instances of @codemirror/state and @codemirror/autocomplete.
+  # Without this, transitive lang-* packages pin to state@6.4.1 while direct
+  # dashboard imports resolve against state@6.6.0, producing two virtual peer
+  # instances of @codemirror/autocomplete@6.18.3 with incompatible types.
+  '@codemirror/state': 6.6.0
+  '@codemirror/autocomplete': 6.18.3
+  # GHSA-w9m9-85wc-3x92: postcss-selector-parser 6.1.0-6.1.2 allows DoS via
+  # uncontrolled AST recursion in nested pseudo-selectors. Patched in 6.1.3.
+  # GHSA-rj75-hqrm-r3gf (moderate): quadratic complexity in flat selector
+  # parsing (CPU exhaustion). The fix only ships in the 7.x line (>=7.1.6);
+  # the 6.x line has no patched release, so route both 6.x and <7.1.6 to the
+  # 7.1.x patch branch. v7 only drops Node <4 and legacy iteration helpers,
+  # which tailwindcss/postcss/cssnano consumers don't use. Pulled transitively
+  # via tailwindcss, postcss-preset-env, cssnano, and @tailwindcss/typography.
+  postcss-selector-parser@<7.1.6: ^7.1.6
+  # GHSA-2wm5-q62r-hmrv: colord slow rejection of oversized malformed color
+  # strings (DoS via CPU). Patched in 2.9.4. Only pulled transitively via
+  # cssnano (postcss-colormin / postcss-minify-gradients) in packages/js.
+  colord@<2.9.4: ^2.9.4
+  # GHSA-866g-f22w-33x8: @ai-sdk/provider-utils 4.0.0-beta.10 through 4.0.32
+  # is vulnerable to insecure JSON parsing that can cause a DoS. Patched in
+  # 4.0.33. Pulled transitively via ai / @ai-sdk/gateway / @ai-sdk/react /
+  # @ai-sdk/openai / @ai-sdk/anthropic in apps/dashboard, agent-evals, and
+  # enterprise packages. Bump within the 4.0.x line (patch bump).
+  '@ai-sdk/provider-utils@>=4.0.0 <4.0.33': ^4.0.33
+  # GHSA-4p3w-j4w9-5jqw (moderate): moment ReDoS (quadratic complexity) in
+  # the parseTwoDigitYear helper when parsing untrusted input with the `YY`
+  # or `YYYY` tokens. Patched in 2.31.0 (minor bump within the 2.x line).
+  # Only pulled transitively via `@pulsecron/pulse` > `moment-timezone` >
+  # `moment` in libs/application-generic. moment-timezone@0.5.48 declares a
+  # `moment@^2.29.4` peer, which 2.31.0 satisfies.
+  moment@>=2.29.2 <2.31.0: ^2.31.0
+
+# allowBuilds replaces onlyBuiltDependencies (and other build-dependency settings) in pnpm v11.
+# Values map package names to `true` (always allow scripts) or `false` (always deny).
+allowBuilds:
+  '@clerk/shared': true
+  '@clerk/types': true
+  '@contrast/fn-inspect': true
+  '@datadog/pprof': true
+  '@firebase/util': true
+  '@fortawesome/fontawesome-common-types': true
+  '@fortawesome/fontawesome-svg-core': true
+  '@fortawesome/free-regular-svg-icons': true
+  '@fortawesome/free-solid-svg-icons': true
+  '@nestjs/core': true
+  '@newrelic/fn-inspect': true
+  '@newrelic/native-metrics': true
+  '@novu/thalamus': true
+  '@scarf/scarf': false
+  '@sentry/cli': true
+  '@sentry/node-cpu-profiler': true
+  '@sentry/profiling-node': true
+  '@sveltejs/kit': true
+  '@swc/core': true
+  '@tailwindcss/oxide': true
+  aws-sdk: true
+  bcrypt: true
+  core-js: true
+  core-js-pure: true
+  cypress: true
+  es5-ext: true
+  esbuild: true
+  fsevents: true
+  iframe-resizer: true
+  msgpackr-extract: true
+  nestjs-pino: true
+  nice-napi: true
+  nx: true
+  protobufjs: true
+  react-icons: true
+  sharp: true
+  unrs-resolver: true
+  workerd: true

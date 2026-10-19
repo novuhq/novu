@@ -1,17 +1,27 @@
-import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { UserSession } from '@novu/testing';
-import { expect } from 'chai';
+import { randomUUID } from 'node:crypto';
+import {
+  CommunityOrganizationRepository,
+  ControlValuesRepository,
+  EnvironmentRepository,
+  IntegrationRepository,
+} from '@novu/dal';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
+  ControlValuesLevelEnum,
   EmailProviderIdEnum,
   FieldOperatorEnum,
   InAppProviderIdEnum,
   ITenantFilterPart,
   PushProviderIdEnum,
+  StepTypeEnum,
+  ToolProviderIdEnum,
+  WorkflowCreationSourceEnum,
 } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
-describe('Update Integration - /integrations/:integrationId (PUT)', function () {
+describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () => {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
   const envRepository = new EnvironmentRepository();
@@ -21,7 +31,22 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     await session.initialize();
   });
 
-  it('should throw not found exception when integration is not found', async function () {
+  it('should reject integration id that is not a MongoDB ObjectId', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: { apiKey: 'new_key', secretKey: 'new_secret' },
+      active: true,
+      check: false,
+    };
+
+    const { body } = await session.testAgent.put('/v1/integrations/telegram').send(payload);
+
+    expect(body.statusCode).to.equal(422);
+    expect(body.errors.integrationId.messages[0]).to.equal('integrationId must be a mongodb id');
+  });
+
+  it('should throw not found exception when integration is not found', async () => {
     const integrationId = IntegrationRepository.createObjectId();
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,
@@ -37,7 +62,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(body.message).to.equal(`Entity with id ${integrationId} not found`);
   });
 
-  it('should update newly created integration', async function () {
+  it('should update newly created integration', async () => {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,
       channel: ChannelTypeEnum.EMAIL,
@@ -63,7 +88,37 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(integration.credentials.secretKey).to.equal(payload.credentials.secretKey);
   });
 
-  it('should update conditions on integration', async function () {
+  it('should update webhook payload schema configuration', async () => {
+    const integration = await integrationRepository.create({
+      name: 'Webhook',
+      identifier: 'webhook-payload-schema',
+      providerId: ToolProviderIdEnum.Webhook,
+      channel: ChannelTypeEnum.TOOL,
+      active: false,
+      configurations: { payloadSchema: '{"type":"object"}' },
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+    const payloadSchema = JSON.stringify({
+      type: 'object',
+      properties: { event: { type: 'string' } },
+    });
+    const {
+      body: { data },
+    } = await session.testAgent.put(`/v1/integrations/${integration._id}`).send({
+      configurations: { payloadSchema },
+      check: false,
+    });
+    const persisted = await integrationRepository.findOne({
+      _id: integration._id,
+      _environmentId: session.environment._id,
+    });
+
+    expect(data.configurations.payloadSchema).to.equal(payloadSchema);
+    expect(persisted?.configurations?.payloadSchema).to.equal(payloadSchema);
+  });
+
+  it('should update conditions on integration', async () => {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,
       channel: ChannelTypeEnum.EMAIL,
@@ -77,7 +132,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       ],
     };
 
-    const data = (await session.testAgent.get(`/v1/integrations`)).body.data;
+    const { data } = (await session.testAgent.get(`/v1/integrations`)).body;
 
     const integration = data.find((i) => i.primary && i.channel === 'email');
 
@@ -99,7 +154,35 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect((result?.conditions?.at(0)?.children.at(0) as ITenantFilterPart)?.operator).to.equal('EQUAL');
   });
 
-  it('should return error with malformed conditions', async function () {
+  it('should update JsonLogic conditions on integration', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: { apiKey: 'SG.123', secretKey: 'abc' },
+      active: true,
+      check: false,
+      rules: {
+        '==': [{ var: 'subscriber.locale' }, 'fr'],
+      },
+    };
+
+    const { data } = (await session.testAgent.get(`/v1/integrations`)).body;
+
+    const integration = data.find((i) => i.primary && i.channel === 'email');
+
+    await session.testAgent.put(`/v1/integrations/${integration._id}`).send(payload);
+
+    const result = await integrationRepository.findOne({
+      _id: integration._id,
+      _organizationId: session.organization._id,
+    });
+
+    expect(result?.rules).to.deep.equal(payload.rules);
+    expect(result?.conditions).to.deep.equal([]);
+    expect(result?.primary).to.equal(false);
+  });
+
+  it('should return error with malformed conditions', async () => {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,
       channel: ChannelTypeEnum.EMAIL,
@@ -113,7 +196,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       ],
     };
 
-    const data = (await session.testAgent.get(`/v1/integrations`)).body.data;
+    const { data } = (await session.testAgent.get(`/v1/integrations`)).body;
 
     const integration = data.find((i) => i.primary && i.channel === 'email');
 
@@ -125,7 +208,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(body.error).to.equal('Bad Request');
   });
 
-  it('should not allow to update the integration with same identifier', async function () {
+  it('should not allow to update the integration with same identifier', async () => {
     const identifier2 = 'identifier2';
     const integrationOne = await integrationRepository.create({
       name: 'Test1',
@@ -156,7 +239,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(body.message).to.equal('Integration with identifier already exists');
   });
 
-  it('should allow updating the integration with just identifier', async function () {
+  it('should allow updating the integration with just identifier', async () => {
     const integrationOne = await integrationRepository.create({
       name: 'Test',
       identifier: 'identifier',
@@ -179,7 +262,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(data.identifier).to.eq(payload.identifier);
   });
 
-  it('should allow updating the integration with just name', async function () {
+  it('should allow updating the integration with just name', async () => {
     const integrationOne = await integrationRepository.create({
       name: 'Test',
       identifier: 'identifier',
@@ -202,7 +285,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(data.name).to.eq(payload.name);
   });
 
-  it('should allow updating the integration with just environment', async function () {
+  it('should allow updating the integration with just environment', async () => {
     const integrationOne = await integrationRepository.create({
       name: 'Test',
       identifier: 'identifier',
@@ -225,7 +308,65 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(data._environmentId).to.equal(prodEnv?._id);
   });
 
-  it('should update custom SMTP integration with TLS options successfully', async function () {
+  it('should allow updating an integration that lives in a different environment of the same organization', async () => {
+    const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+    const otherEnvironmentIntegration = await integrationRepository.create({
+      name: 'OtherEnv',
+      identifier: 'other-env-update',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: prodEnv!._id,
+    });
+
+    const payload = {
+      name: 'Renamed cross env',
+      check: false,
+    };
+
+    const {
+      body: { data },
+    } = await session.testAgent.put(`/v1/integrations/${otherEnvironmentIntegration._id}`).send(payload);
+
+    expect(data.name).to.equal('Renamed cross env');
+    expect(data._environmentId).to.equal(prodEnv!._id);
+  });
+
+  it('should not allow moving an integration into an environment owned by another organization', async () => {
+    const integrationOne = await integrationRepository.create({
+      name: 'TestCrossOrg',
+      identifier: 'identifier-cross-org',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const otherSession = new UserSession();
+    await otherSession.initialize();
+
+    const payload = {
+      _environmentId: otherSession.environment._id,
+      name: 'Hijacked',
+      check: false,
+    };
+
+    const { body } = await session.testAgent.put(`/v1/integrations/${integrationOne._id}`).send(payload);
+
+    expect(body.statusCode).to.equal(404);
+    expect(body.message).to.equal(`Environment with id ${otherSession.environment._id} not found`);
+
+    const untouched = await integrationRepository.findOne({
+      _id: integrationOne._id,
+      _environmentId: session.environment._id,
+    });
+    expect(untouched?._environmentId).to.equal(session.environment._id);
+    expect(untouched?.name).to.equal('TestCrossOrg');
+  });
+
+  it('should update custom SMTP integration with TLS options successfully', async () => {
     const nodeMailerProviderPayload = {
       providerId: 'nodemailer',
       channel: 'email',
@@ -277,7 +418,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(nodeMailerIntegration?.active).to.equal(true);
   });
 
-  it('should not calculate primary and priority if active is not defined', async function () {
+  it('should not calculate primary and priority if active is not defined', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -310,7 +451,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(data.active).to.equal(false);
   });
 
-  it('should not calculate primary and priority if active not changed', async function () {
+  it('should not calculate primary and priority if active not changed', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -342,7 +483,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(data.active).to.equal(false);
   });
 
-  it('should not calculate primary and priority fields for in-app channel', async function () {
+  it('should not calculate primary and priority fields for in-app channel', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -372,7 +513,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(data.active).to.equal(true);
   });
 
-  it('should not calculate primary and priority fields for push channel', async function () {
+  it('should not calculate primary and priority fields for push channel', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -402,7 +543,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(data.active).to.equal(true);
   });
 
-  it('should not calculate primary and priority fields for chat channel', async function () {
+  it('should not calculate primary and priority fields for chat channel', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -432,7 +573,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(data.active).to.equal(true);
   });
 
-  it('should not set the primary if there are no other active integrations', async function () {
+  it('should not set the primary if there are no other active integrations', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -464,7 +605,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(data.active).to.equal(true);
   });
 
-  it('should not set the primary if there is only Novu active integration', async function () {
+  it('should not set the primary if there is only Novu active integration', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -528,7 +669,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(second.priority).to.equal(1);
   });
 
-  it('should calculate the highest priority but not set primary if there is another active integration', async function () {
+  it('should calculate the highest priority but not set primary if there is another active integration', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -592,7 +733,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(second.priority).to.equal(1);
   });
 
-  it('should calculate the priority but not higher than the primary integration', async function () {
+  it('should calculate the priority but not higher than the primary integration', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -707,7 +848,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(fifth.priority).to.equal(0);
   });
 
-  it('should recalculate the priority when integration is deactivated', async function () {
+  it('should recalculate the priority when integration is deactivated', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -805,7 +946,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(fourth.priority).to.equal(0);
   });
 
-  it('should recalculate the priority when the primary integration is deactivated', async function () {
+  it('should recalculate the priority when the primary integration is deactivated', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -903,7 +1044,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(fourth.priority).to.equal(0);
   });
 
-  it('should not disable the novu integration and clear the primary flag if the integration is updated', async function () {
+  it('should not disable the novu integration and clear the primary flag if the integration is updated', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -961,5 +1102,324 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(second.primary).to.equal(false);
     expect(second.active).to.equal(true);
     expect(second.priority).to.equal(1);
+  });
+
+  describe('step integration overrides on identifier rename', () => {
+    const controlValuesRepository = new ControlValuesRepository();
+    const OLD_IDENTIFIER = 'prod-alerts';
+    const NEW_IDENTIFIER = 'prod-alerts-v2';
+
+    async function createWebhookIntegration() {
+      return integrationRepository.create({
+        name: 'Prod alerts',
+        identifier: OLD_IDENTIFIER,
+        providerId: ToolProviderIdEnum.Webhook,
+        channel: ChannelTypeEnum.TOOL,
+        active: true,
+        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
+      });
+    }
+
+    async function createToolWorkflow(integrationOverrides: Record<string, Record<string, Record<string, unknown>>>) {
+      const response = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.EDITOR,
+        name: 'Integration Rename Workflow',
+        workflowId: `integration-rename-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Tool Step',
+            type: StepTypeEnum.TOOL,
+            controlValues: { body: 'default alert' },
+            integrationOverrides,
+          },
+        ],
+      });
+
+      expect(response.status).to.equal(201);
+
+      return response.body.data;
+    }
+
+    async function renameIntegration(integrationId: string) {
+      const response = await session.testAgent
+        .put(`/v1/integrations/${integrationId}`)
+        .send({ identifier: NEW_IDENTIFIER, check: false });
+
+      expect(response.status).to.equal(200);
+      expect(response.body.data.identifier).to.equal(NEW_IDENTIFIER);
+    }
+
+    async function findWebhookOverrideDocs(environmentId: string, integrationIdentifier: string) {
+      return controlValuesRepository.find({
+        _environmentId: environmentId,
+        _organizationId: session.organization._id,
+        level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+        providerId: ToolProviderIdEnum.Webhook,
+        integrationIdentifier,
+      });
+    }
+
+    it('should re-key the step integration overrides to the new identifier', async () => {
+      const integration = await createWebhookIntegration();
+      const workflow = await createToolWorkflow({
+        [ToolProviderIdEnum.Webhook]: { [OLD_IDENTIFIER]: { alert_type: 'incident' } },
+        [ToolProviderIdEnum.Opsgenie]: { [OLD_IDENTIFIER]: { priority: 'P1' } },
+      });
+      const stepId = workflow.steps[0]._id;
+
+      await renameIntegration(integration._id);
+
+      const expectedOverrides = {
+        [ToolProviderIdEnum.Webhook]: { [NEW_IDENTIFIER]: { alert_type: 'incident' } },
+        [ToolProviderIdEnum.Opsgenie]: { [OLD_IDENTIFIER]: { priority: 'P1' } },
+      };
+
+      const workflowResponse = await session.testAgent.get(`/v2/workflows/${workflow._id}`);
+      expect(workflowResponse.status).to.equal(200);
+      expect(workflowResponse.body.data.steps[0].integrationOverrides).to.deep.equal(expectedOverrides);
+
+      const stepResponse = await session.testAgent.get(`/v2/workflows/${workflow._id}/steps/${stepId}`);
+      expect(stepResponse.status).to.equal(200);
+      expect(stepResponse.body.data.integrationOverrides).to.deep.equal(expectedOverrides);
+
+      expect(await findWebhookOverrideDocs(session.environment._id, OLD_IDENTIFIER)).to.have.length(0);
+      expect(await findWebhookOverrideDocs(session.environment._id, NEW_IDENTIFIER)).to.have.length(1);
+    });
+
+    it('should replace step overrides already stored under the new identifier', async () => {
+      const integration = await createWebhookIntegration();
+      const workflow = await createToolWorkflow({
+        [ToolProviderIdEnum.Webhook]: {
+          [OLD_IDENTIFIER]: { alert_type: 'incident' },
+          [NEW_IDENTIFIER]: { alert_type: 'stale' },
+        },
+      });
+
+      await renameIntegration(integration._id);
+
+      const workflowResponse = await session.testAgent.get(`/v2/workflows/${workflow._id}`);
+      expect(workflowResponse.status).to.equal(200);
+      expect(workflowResponse.body.data.steps[0].integrationOverrides).to.deep.equal({
+        [ToolProviderIdEnum.Webhook]: { [NEW_IDENTIFIER]: { alert_type: 'incident' } },
+      });
+
+      const renamedDocs = await findWebhookOverrideDocs(session.environment._id, NEW_IDENTIFIER);
+      expect(renamedDocs).to.have.length(1);
+      expect(renamedDocs[0].controls).to.deep.equal({ alert_type: 'incident' });
+      expect(await findWebhookOverrideDocs(session.environment._id, OLD_IDENTIFIER)).to.have.length(0);
+    });
+
+    it('should only re-key step integration overrides in the integration environment', async () => {
+      const integration = await createWebhookIntegration();
+      const workflow = await createToolWorkflow({
+        [ToolProviderIdEnum.Webhook]: { [OLD_IDENTIFIER]: { alert_type: 'incident' } },
+      });
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+
+      const syncResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}/sync`).send({
+        targetEnvironmentId: prodEnv!._id,
+      });
+      expect(syncResponse.status).to.equal(200);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(1);
+
+      await renameIntegration(integration._id);
+
+      expect(await findWebhookOverrideDocs(session.environment._id, OLD_IDENTIFIER)).to.have.length(0);
+      expect(await findWebhookOverrideDocs(session.environment._id, NEW_IDENTIFIER)).to.have.length(1);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(1);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, NEW_IDENTIFIER)).to.have.length(0);
+    });
+
+    it('should re-key step integration overrides in the destination environment when the integration is also moved', async () => {
+      const integration = await createWebhookIntegration();
+      const workflow = await createToolWorkflow({
+        [ToolProviderIdEnum.Webhook]: { [OLD_IDENTIFIER]: { alert_type: 'incident' } },
+      });
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+
+      const syncResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}/sync`).send({
+        targetEnvironmentId: prodEnv!._id,
+      });
+      expect(syncResponse.status).to.equal(200);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(1);
+
+      const response = await session.testAgent
+        .put(`/v1/integrations/${integration._id}`)
+        .send({ identifier: NEW_IDENTIFIER, _environmentId: prodEnv!._id, check: false });
+      expect(response.status).to.equal(200);
+      expect(response.body.data.identifier).to.equal(NEW_IDENTIFIER);
+      expect(response.body.data._environmentId).to.equal(prodEnv!._id);
+
+      expect(await findWebhookOverrideDocs(session.environment._id, OLD_IDENTIFIER)).to.have.length(0);
+      expect(await findWebhookOverrideDocs(session.environment._id, NEW_IDENTIFIER)).to.have.length(1);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(0);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, NEW_IDENTIFIER)).to.have.length(1);
+    });
+
+    it('should keep destination overrides that already belong to an integration there', async () => {
+      const integration = await createWebhookIntegration();
+      const workflow = await createToolWorkflow({
+        [ToolProviderIdEnum.Webhook]: { [OLD_IDENTIFIER]: { alert_type: 'incident' } },
+      });
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+
+      const destinationIntegration = await integrationRepository.create({
+        name: 'Prod alerts',
+        identifier: OLD_IDENTIFIER,
+        providerId: ToolProviderIdEnum.Webhook,
+        channel: ChannelTypeEnum.TOOL,
+        active: true,
+        _organizationId: session.organization._id,
+        _environmentId: prodEnv!._id,
+      });
+
+      const syncResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}/sync`).send({
+        targetEnvironmentId: prodEnv!._id,
+      });
+      expect(syncResponse.status).to.equal(200);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(1);
+
+      const response = await session.testAgent
+        .put(`/v1/integrations/${integration._id}`)
+        .send({ identifier: NEW_IDENTIFIER, _environmentId: prodEnv!._id, check: false });
+      expect(response.status).to.equal(200);
+
+      const untouched = await integrationRepository.findOne({
+        _id: destinationIntegration._id,
+        _environmentId: prodEnv!._id,
+      });
+      expect(untouched?.identifier).to.equal(OLD_IDENTIFIER);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(1);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, NEW_IDENTIFIER)).to.have.length(0);
+      expect(await findWebhookOverrideDocs(session.environment._id, NEW_IDENTIFIER)).to.have.length(1);
+    });
+  });
+
+  describe('API key authentication is scoped to the key environment', () => {
+    it('should forbid updating with a different `_environmentId` when authenticated via API key', async () => {
+      const integrationOne = await integrationRepository.create({
+        name: 'Test',
+        identifier: 'identifier-api-key-other-env',
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        active: false,
+        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
+      });
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+
+      const payload = {
+        _environmentId: prodEnv!._id,
+        check: false,
+      };
+
+      const { body } = await session.testAgent
+        .put(`/v1/integrations/${integrationOne._id}`)
+        .set('authorization', `ApiKey ${session.apiKey}`)
+        .send(payload);
+
+      expect(body.statusCode).to.equal(403);
+      expect(body.message).to.contain('is scoped to a single environment');
+
+      const untouched = await integrationRepository.findOne({
+        _id: integrationOne._id,
+        _environmentId: session.environment._id,
+      });
+      expect(untouched?._environmentId).to.equal(session.environment._id);
+    });
+
+    it('should allow updating with the same `_environmentId` as the API key environment', async () => {
+      const integrationOne = await integrationRepository.create({
+        name: 'Test',
+        identifier: 'identifier-api-key-same-env',
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        active: false,
+        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
+      });
+
+      const payload = {
+        _environmentId: session.environment._id,
+        name: 'Renamed via API key',
+        check: false,
+      };
+
+      const {
+        body: { data },
+      } = await session.testAgent
+        .put(`/v1/integrations/${integrationOne._id}`)
+        .set('authorization', `ApiKey ${session.apiKey}`)
+        .send(payload);
+
+      expect(data.name).to.equal('Renamed via API key');
+      expect(data._environmentId).to.equal(session.environment._id);
+    });
+
+    it('should forbid updating an integration that lives in a different environment when authenticated via API key', async () => {
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+      const otherEnvironmentIntegration = await integrationRepository.create({
+        name: 'OtherEnv',
+        identifier: 'other-env-update-api-key',
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        active: false,
+        _organizationId: session.organization._id,
+        _environmentId: prodEnv!._id,
+      });
+
+      const payload = {
+        name: 'Should not change',
+        check: false,
+      };
+
+      const { body } = await session.testAgent
+        .put(`/v1/integrations/${otherEnvironmentIntegration._id}`)
+        .set('authorization', `ApiKey ${session.apiKey}`)
+        .send(payload);
+
+      expect(body.statusCode).to.equal(403);
+      expect(body.message).to.contain('is scoped to a single environment');
+
+      const untouched = await integrationRepository.findOne({
+        _id: otherEnvironmentIntegration._id,
+        _environmentId: prodEnv!._id,
+      });
+      expect(untouched?.name).to.equal('OtherEnv');
+    });
+
+    it('should still allow JWT-authenticated requests to update integrations in another environment', async () => {
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+      const otherEnvironmentIntegration = await integrationRepository.create({
+        name: 'OtherEnv',
+        identifier: 'other-env-update-jwt',
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        active: false,
+        _organizationId: session.organization._id,
+        _environmentId: prodEnv!._id,
+      });
+
+      const payload = {
+        _environmentId: prodEnv!._id,
+        name: 'Renamed via JWT',
+        check: false,
+      };
+
+      const {
+        body: { data },
+      } = await session.testAgent.put(`/v1/integrations/${otherEnvironmentIntegration._id}`).send(payload);
+
+      expect(data.name).to.equal('Renamed via JWT');
+      expect(data._environmentId).to.equal(prodEnv!._id);
+    });
   });
 });

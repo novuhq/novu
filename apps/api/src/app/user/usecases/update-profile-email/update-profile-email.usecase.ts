@@ -1,6 +1,4 @@
 import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
-
-import { UserRepository } from '@novu/dal';
 import {
   AnalyticsService,
   buildAuthServiceKey,
@@ -8,12 +6,12 @@ import {
   decryptApiKey,
   InvalidateCacheService,
 } from '@novu/application-generic';
-import { EnvironmentRepository } from '@novu/dal';
+import { EnvironmentRepository, UserRepository } from '@novu/dal';
 
-import { UpdateProfileEmailCommand } from './update-profile-email.command';
-import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
+import { normalizeEmail } from '@novu/shared';
 import type { UserResponseDto } from '../../dtos/user-response.dto';
 import { BaseUserProfileUsecase } from '../base-user-profile.usecase';
+import { UpdateProfileEmailCommand } from './update-profile-email.command';
 
 @Injectable()
 export class UpdateProfileEmail extends BaseUserProfileUsecase {

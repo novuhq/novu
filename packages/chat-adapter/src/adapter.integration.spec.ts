@@ -1,0 +1,872 @@
+import { createHmac } from 'node:crypto';
+import { createMemoryState } from '@chat-adapter/state-memory';
+import { Actions, Button, Card, CardText, Chat } from 'chat';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { NovuAdapterImpl } from './adapter.js';
+import type { AgentEventEnvelope } from './event-protocol.js';
+import { createNovuAdapter, getNovuContext } from './index.js';
+import { encodeThreadId } from './thread-id.js';
+import type { AgentBridgeRequest, AgentSubscriber, NovuRawMessage } from './types.js';
+
+const BRIDGE_SECRET = 'bridge-secret';
+const API_KEY = 'api-key';
+
+function sign(body: string, secret = BRIDGE_SECRET): string {
+  const ts = Date.now();
+  const hmac = createHmac('sha256', secret).update(`${ts}.${body}`).digest('hex');
+
+  return `t=${ts},v1=${hmac}`;
+}
+
+function bridgeRequest(overrides: Partial<AgentBridgeRequest> = {}): AgentBridgeRequest {
+  return {
+    version: 1,
+    timestamp: new Date().toISOString(),
+    deliveryId: `d-${Math.random()}`,
+    event: 'onMessage',
+    agentId: 'support-agent',
+    replyUrl: 'https://attacker.example.com/steal',
+    conversationId: 'conv-1',
+    integrationIdentifier: 'slack-prod',
+    action: null,
+    message: {
+      text: 'hello',
+      platformMessageId: 'pm-1',
+      author: {
+        userId: 'u1',
+        userName: 'alice',
+        fullName: 'Alice',
+        isBot: false,
+      },
+      timestamp: new Date().toISOString(),
+    },
+    reaction: null,
+    conversation: {
+      identifier: 'conv-1',
+      status: 'open',
+      metadata: {},
+      messageCount: 2,
+      createdAt: new Date().toISOString(),
+      lastActivityAt: new Date().toISOString(),
+    },
+    subscriber: { subscriberId: 'sub-1', firstName: 'Alice' },
+    history: [
+      {
+        role: 'user',
+        type: 'text',
+        content: 'earlier',
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    platform: 'slack',
+    platformContext: { threadId: 'pm-1', channelId: 'C1', isDM: false },
+    ...overrides,
+  };
+}
+
+function asFetch(fn: unknown): typeof fetch {
+  return fn as typeof fetch;
+}
+
+async function deliver(adapter: ReturnType<typeof createNovuAdapter>, req: AgentBridgeRequest): Promise<Response> {
+  const body = JSON.stringify(req);
+  const request = new Request('https://bridge.example.com/api/novu', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'novu-signature': sign(body),
+    },
+    body,
+  });
+
+  return adapter.handleWebhook(request);
+}
+
+describe('Novu adapter end-to-end', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
+  });
+
+  function ingestBody(index: number): { events: AgentEventEnvelope[] } {
+    const calls = fetchMock.mock.calls;
+    const resolvedIndex = index < 0 ? calls.length + index : index;
+    const call = calls[resolvedIndex];
+    if (call === undefined) {
+      throw new Error(`expected fetch call at index ${index}`);
+    }
+    const init = call[1] as RequestInit | undefined;
+    if (init === undefined) {
+      throw new Error('expected fetch RequestInit');
+    }
+
+    return JSON.parse(String(init.body)) as { events: AgentEventEnvelope[] };
+  }
+
+  function lastEnvelope(): AgentEventEnvelope {
+    const body = ingestBody(-1);
+    const envelope = body.events[0];
+    if (envelope === undefined) {
+      throw new Error('expected an ingest envelope');
+    }
+
+    return envelope;
+  }
+
+  function buildChat() {
+    const adapter = createNovuAdapter({
+      apiKey: API_KEY,
+      agentIdentifier: 'support-agent',
+      bridgeSecret: BRIDGE_SECRET,
+      fetch: asFetch(fetchMock),
+    });
+    const chat = new Chat({
+      userName: 'support',
+      adapters: { novu: adapter },
+      state: createMemoryState(),
+    });
+
+    return { adapter, chat };
+  }
+
+  it('routes an ongoing conversation to onSubscribedMessage and replies via the derived URL', async () => {
+    const { adapter, chat } = buildChat();
+    const seen: string[] = [];
+    chat.onSubscribedMessage(async (thread, message) => {
+      seen.push(message.text);
+      await thread.post(`echo: ${message.text}`);
+    });
+    await chat.initialize();
+
+    const res = await deliver(adapter, bridgeRequest());
+    expect(res.status).toBe(200);
+    expect(seen).toEqual(['hello']);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const firstCall = fetchMock.mock.calls[0];
+    if (firstCall === undefined) {
+      throw new Error('expected a fetch call');
+    }
+    const [url, init] = firstCall;
+    // Ingest went to the derived URL, NOT the attacker-controlled replyUrl in the request.
+    expect(url).toBe('https://api.novu.co/v1/agents/events/ingest');
+    expect((init.headers as { authorization?: string }).authorization).toBe(`ApiKey ${API_KEY}`);
+    const envelope = lastEnvelope();
+    expect(envelope).toMatchObject({
+      conversationId: 'conv-1',
+      agentId: 'support-agent',
+      turnId: expect.any(String),
+      event: {
+        type: 'message',
+        role: 'assistant',
+        content: { markdown: 'echo: hello' },
+      },
+    });
+    expect((envelope.event as { messageId: string }).messageId).toMatch(/^msg_/);
+  });
+
+  it('routes a brand-new channel conversation to onNewMention', async () => {
+    const { adapter, chat } = buildChat();
+    const mentions: string[] = [];
+    chat.onNewMention(async (_thread, message) => {
+      mentions.push(message.text);
+    });
+    chat.onSubscribedMessage(async () => {
+      throw new Error('should not be subscribed on first message');
+    });
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        conversation: { ...bridgeRequest().conversation, messageCount: 1 },
+        history: [],
+      })
+    );
+
+    expect(mentions).toEqual(['hello']);
+  });
+
+  it('routes first channel mention to onNewMention when history includes the current message', async () => {
+    const { adapter, chat } = buildChat();
+    const mentions: string[] = [];
+    chat.onNewMention(async (_thread, message) => {
+      mentions.push(message.text);
+    });
+    chat.onSubscribedMessage(async () => {
+      throw new Error('first mention should not route to onSubscribedMessage');
+    });
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        conversation: { ...bridgeRequest().conversation, messageCount: 1 },
+        history: [
+          {
+            role: 'user',
+            type: 'text',
+            content: 'hello',
+            createdAt: new Date().toISOString(),
+          },
+        ],
+      })
+    );
+
+    expect(mentions).toEqual(['hello']);
+  });
+
+  it('routes an ongoing DM conversation to onSubscribedMessage (not onDirectMessage)', async () => {
+    const { adapter, chat } = buildChat();
+    const subscribed: string[] = [];
+    chat.onNewMention(async () => {
+      throw new Error('ongoing DM should not route to onNewMention');
+    });
+    chat.onSubscribedMessage(async (_thread, message) => {
+      subscribed.push(message.text);
+    });
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        platformContext: {
+          threadId: 'dm-thread',
+          channelId: 'dm-channel',
+          isDM: true,
+        },
+        conversation: { ...bridgeRequest().conversation, messageCount: 3 },
+      })
+    );
+
+    expect(subscribed).toEqual(['hello']);
+  });
+
+  it('rejects an invalid signature with 401 and does not dispatch', async () => {
+    const { adapter, chat } = buildChat();
+    const handler = vi.fn();
+    chat.onSubscribedMessage(handler);
+    await chat.initialize();
+
+    const body = JSON.stringify(bridgeRequest());
+    const request = new Request('https://bridge.example.com/api/novu', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'novu-signature': sign(body, 'wrong-secret'),
+      },
+      body,
+    });
+    const res = await adapter.handleWebhook(request);
+
+    expect(res.status).toBe(401);
+    expect(handler).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('normalizes a chat-sdk Card posted by a handler into event.content.card', async () => {
+    const { adapter, chat } = buildChat();
+    chat.onSubscribedMessage(async (thread) => {
+      await thread.post(
+        Card({
+          title: 'Card title',
+          subtitle: 'Card subtitle',
+          children: [
+            CardText('Hello from a card'),
+            Actions([
+              Button({
+                id: 'approve',
+                label: 'Approve',
+                style: 'primary',
+                value: 'yes',
+              }),
+            ]),
+          ],
+        })
+      );
+    });
+    await chat.initialize();
+
+    await deliver(adapter, bridgeRequest());
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const event = lastEnvelope().event as {
+      content: { markdown?: string; card: { type?: string; title?: string; subtitle?: string; children?: unknown[] } };
+    };
+    expect(event.content.markdown).toBeUndefined();
+    expect(event.content.card).toMatchObject({
+      type: 'card',
+      title: 'Card title',
+      subtitle: 'Card subtitle',
+    });
+    expect(event.content.card.children).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'text', content: 'Hello from a card' })])
+    );
+  });
+
+  it('exposes the full subscriber via getNovuContext(thread).getSubscriber()', async () => {
+    const { adapter, chat } = buildChat();
+    const richSubscriber: AgentSubscriber = {
+      subscriberId: 'sub-1',
+      firstName: 'Alice',
+      lastName: 'Smith',
+      email: 'alice@example.com',
+      phone: '+15550001111',
+      avatar: 'https://cdn.example.com/alice.png',
+      locale: 'en-US',
+      data: { plan: 'enterprise' },
+    };
+    let captured: AgentSubscriber | null = null;
+    chat.onSubscribedMessage(async (thread) => {
+      captured = await getNovuContext(thread).getSubscriber();
+    });
+    await chat.initialize();
+
+    await deliver(adapter, bridgeRequest({ subscriber: richSubscriber }));
+
+    expect(captured).toEqual(richSubscriber);
+  });
+
+  it('presents the subscriber as the message author so getUser(author.userId) resolves', async () => {
+    const { adapter, chat } = buildChat();
+    let authorUserId = '';
+    let resolvedFullName: string | undefined;
+    chat.onSubscribedMessage(async (_thread, message) => {
+      authorUserId = message.author.userId;
+      // The platform-native author is still available on the raw escape hatch.
+      expect((message.raw as NovuRawMessage).author.userId).toBe('u1');
+      const user = await adapter.getUser?.(message.author.userId);
+      resolvedFullName = user?.fullName;
+    });
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        message: {
+          text: 'hello',
+          platformMessageId: 'pm-1',
+          author: {
+            userId: 'u1',
+            userName: 'alice',
+            fullName: 'Alice',
+            isBot: false,
+          },
+          timestamp: new Date().toISOString(),
+        },
+        subscriber: {
+          subscriberId: 'sub-1',
+          firstName: 'Alice',
+          lastName: 'Smith',
+        },
+      })
+    );
+
+    expect(authorUserId).toBe('sub-1');
+    expect(resolvedFullName).toBe('Alice Smith');
+  });
+
+  it('parses bridged markdown so a pasted Slack table reaches handlers as table rows and cells', async () => {
+    const { adapter, chat } = buildChat();
+    let received: { text: string; formatted: unknown } | undefined;
+    chat.onSubscribedMessage(async (_thread, message) => {
+      received = { text: message.text, formatted: message.formatted };
+    });
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        message: {
+          ...bridgeRequest().message!,
+          text: 'Q3 numbers below\n\nRegion Revenue EMEA 1,200 APAC | JP 950',
+          markdown: [
+            'Q3 numbers **below**',
+            '',
+            '| Region     | Revenue |',
+            '| ---------- | ------- |',
+            '| EMEA       | 1,200   |',
+            '| APAC \\| JP | 950     |',
+          ].join('\n'),
+        },
+      })
+    );
+
+    type Node = { type: string; value?: string; children?: Node[] };
+    const textOf = (node: Node): string => node.value ?? (node.children ?? []).map(textOf).join('');
+    const root = received?.formatted as Node;
+    const table = root.children?.find((node) => node.type === 'table');
+
+    expect(received?.text).toBe('Q3 numbers below\n\nRegion Revenue EMEA 1,200 APAC | JP 950');
+    expect(root.children?.[0]?.children?.some((node) => node.type === 'strong')).toBe(true);
+    expect(table?.children?.map((row) => row.children?.map(textOf))).toEqual([
+      ['Region', 'Revenue'],
+      ['EMEA', '1,200'],
+      ['APAC | JP', '950'],
+    ]);
+  });
+
+  it('exposes platform email and the system flag on the author for unlinked and linked senders', async () => {
+    const { adapter, chat } = buildChat();
+    const authors: Array<{ userId: string; email?: string; isSystem?: boolean }> = [];
+    chat.onSubscribedMessage(async (_thread, message) => {
+      authors.push({ userId: message.author.userId, email: message.author.email, isSystem: message.author.isSystem });
+    });
+    await chat.initialize();
+
+    const platformMessage = bridgeRequest().message!;
+    // Unlinked Slackbot notice: no subscriber, platform author passes through.
+    await deliver(
+      adapter,
+      bridgeRequest({
+        subscriber: null,
+        message: {
+          ...platformMessage,
+          platformMessageId: 'pm-system',
+          author: { userId: 'USLACK', userName: 'slackbot', fullName: 'Slackbot', isBot: false, isSystem: true },
+        },
+      })
+    );
+    // Linked subscriber without an email on file: fall back to the platform email.
+    await deliver(
+      adapter,
+      bridgeRequest({
+        subscriber: { subscriberId: 'sub-1', firstName: 'Alice' },
+        message: {
+          ...platformMessage,
+          platformMessageId: 'pm-linked',
+          author: { ...platformMessage.author, email: 'alice@acme.test' },
+        },
+      })
+    );
+    // Linked subscriber with an email on file: Novu's subscriber record wins.
+    await deliver(
+      adapter,
+      bridgeRequest({
+        subscriber: { subscriberId: 'sub-2', firstName: 'Bob', email: 'bob@novu.test' },
+        message: {
+          ...platformMessage,
+          platformMessageId: 'pm-linked-2',
+          author: { ...platformMessage.author, email: 'bob@personal.test' },
+        },
+      })
+    );
+
+    expect(authors).toEqual([
+      { userId: 'USLACK', email: undefined, isSystem: true },
+      { userId: 'sub-1', email: 'alice@acme.test', isSystem: undefined },
+      { userId: 'sub-2', email: 'bob@novu.test', isSystem: undefined },
+    ]);
+  });
+
+  it('resolves the subscriber as portable UserInfo via getUser(subscriberId)', async () => {
+    const { adapter, chat } = buildChat();
+    chat.onSubscribedMessage(async () => {});
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        subscriber: {
+          subscriberId: 'sub-1',
+          firstName: 'Alice',
+          lastName: 'Smith',
+          email: 'alice@example.com',
+          avatar: 'https://cdn.example.com/alice.png',
+        },
+      })
+    );
+
+    expect(await adapter.getUser?.('sub-1')).toEqual({
+      userId: 'sub-1',
+      userName: 'sub-1',
+      fullName: 'Alice Smith',
+      email: 'alice@example.com',
+      avatarUrl: 'https://cdn.example.com/alice.png',
+      isBot: false,
+    });
+    expect(await adapter.getUser?.('unknown')).toBeNull();
+  });
+
+  it('exposes conversation, history, metadata, and email context via getNovuContext', async () => {
+    const { adapter, chat } = buildChat();
+    let ctx: ReturnType<typeof getNovuContext> | null = null;
+    chat.onSubscribedMessage(async (thread) => {
+      ctx = getNovuContext(thread);
+    });
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        platform: 'email',
+        conversation: {
+          identifier: 'conv-1',
+          status: 'open',
+          metadata: { ticketId: 'T-42' },
+          messageCount: 2,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          lastActivityAt: '2026-01-02T00:00:00.000Z',
+        },
+        history: [
+          {
+            role: 'user',
+            type: 'text',
+            content: 'earlier with attachment',
+            richContent: {
+              attachments: [
+                {
+                  type: 'image',
+                  url: 'https://cdn.example.com/a.png',
+                  name: 'a.png',
+                },
+              ],
+            },
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+        platformContext: {
+          threadId: 'email-thread',
+          channelId: 'email-channel',
+          isDM: false,
+          email: {
+            domain: { id: 'dom-1', name: 'support.example.com' },
+            route: { address: 'help@support.example.com' },
+            rootMessageId: '<root@example.com>',
+          },
+        },
+      })
+    );
+
+    expect(ctx).not.toBeNull();
+    if (ctx === null) {
+      throw new Error('expected novu context');
+    }
+    const novu = ctx;
+
+    expect(await novu.getConversation()).toMatchObject({
+      identifier: 'conv-1',
+      status: 'open',
+      messageCount: 2,
+      metadata: { ticketId: 'T-42' },
+    });
+    expect(await novu.getMetadata('ticketId')).toBe('T-42');
+    expect(await novu.getHistory()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          role: 'user',
+          content: 'earlier with attachment',
+          richContent: expect.objectContaining({
+            attachments: expect.arrayContaining([expect.objectContaining({ url: 'https://cdn.example.com/a.png' })]),
+          }),
+        }),
+      ])
+    );
+    expect(await novu.getEmailContext()).toMatchObject({
+      domain: { id: 'dom-1', name: 'support.example.com' },
+      route: { address: 'help@support.example.com' },
+      rootMessageId: '<root@example.com>',
+    });
+
+    await novu.clearMetadata();
+    expect(lastEnvelope().event).toMatchObject({
+      type: 'signal',
+      signal: { type: 'metadata', action: 'clear' },
+    });
+    expect(await novu.getMetadata('ticketId')).toBeUndefined();
+    expect((await novu.getConversation())?.metadata).toEqual({});
+  });
+
+  it('updates metadata snapshot optimistically after setMetadata in the same handler turn', async () => {
+    const { adapter, chat } = buildChat();
+    let ctx: ReturnType<typeof getNovuContext> | null = null;
+    chat.onSubscribedMessage(async (thread) => {
+      ctx = getNovuContext(thread);
+      await ctx.setMetadata('ticketId', 'T-99');
+      expect(await ctx.getMetadata('ticketId')).toBe('T-99');
+      expect((await ctx.getConversation())?.metadata.ticketId).toBe('T-99');
+    });
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        conversation: {
+          identifier: 'conv-1',
+          status: 'open',
+          metadata: { ticketId: 'T-42' },
+          messageCount: 2,
+          createdAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString(),
+        },
+      })
+    );
+
+    expect(ctx).not.toBeNull();
+  });
+
+  it('marks conversation resolved in snapshot after resolve()', async () => {
+    const { adapter, chat } = buildChat();
+    let ctx: ReturnType<typeof getNovuContext> | null = null;
+    chat.onSubscribedMessage(async (thread) => {
+      ctx = getNovuContext(thread);
+      await ctx.resolve('done');
+      expect((await ctx.getConversation())?.status).toBe('resolved');
+    });
+    await chat.initialize();
+
+    await deliver(adapter, bridgeRequest());
+    expect(ctx).not.toBeNull();
+    expect(lastEnvelope().event).toMatchObject({ type: 'resolve', summary: 'done' });
+  });
+
+  it('preserves Novu history fields on fetchMessages', async () => {
+    const { adapter, chat } = buildChat();
+    chat.onSubscribedMessage(async () => {});
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        history: [
+          {
+            role: 'assistant',
+            type: 'card',
+            content: 'Card fallback text',
+            richContent: {
+              card: { type: 'card', title: 'Saved card', children: [] },
+            },
+            senderName: 'Agent',
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    const threadId = encodeThreadId({
+      platform: 'slack',
+      integrationIdentifier: 'slack-prod',
+      conversationId: 'conv-1',
+      isDM: false,
+    });
+    const { messages } = await adapter.fetchMessages(threadId);
+    const historyMsg = messages[0];
+    if (historyMsg === undefined) {
+      throw new Error('expected a history message');
+    }
+
+    expect(historyMsg.text).toBe('Card fallback text');
+    expect((historyMsg.raw as NovuRawMessage).history).toMatchObject({
+      role: 'assistant',
+      type: 'card',
+      richContent: expect.objectContaining({
+        card: expect.objectContaining({ title: 'Saved card' }),
+      }),
+    });
+  });
+
+  it('normalizes outbound files on markdown replies into event.files', async () => {
+    const { adapter, chat } = buildChat();
+    chat.onSubscribedMessage(async (thread) => {
+      await thread.post({
+        markdown: 'See attached',
+        files: [
+          {
+            filename: 'note.txt',
+            data: Buffer.from('hello'),
+            mimeType: 'text/plain',
+          },
+        ],
+      });
+    });
+    await chat.initialize();
+
+    await deliver(adapter, bridgeRequest());
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(lastEnvelope().event).toMatchObject({
+      type: 'message',
+      content: { markdown: 'See attached' },
+      files: [
+        expect.objectContaining({
+          fileId: 'note.txt',
+          mediaType: 'text/plain',
+          data: Buffer.from('hello').toString('base64'),
+        }),
+      ],
+    });
+  });
+
+  it('editMessage after post uses the minted id on channel.edit', async () => {
+    const { adapter, chat } = buildChat();
+    let postedId = '';
+    chat.onSubscribedMessage(async (thread) => {
+      const posted = await thread.post('draft');
+      postedId = posted.id;
+      await adapter.editMessage(thread.id, posted.id, 'edited');
+    });
+    await chat.initialize();
+
+    await deliver(adapter, bridgeRequest({ deliveryId: 'del-edit' }));
+
+    expect(postedId).toMatch(/^msg_/);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const first = ingestBody(0);
+    const second = ingestBody(1);
+    expect(first.events[0].event).toMatchObject({
+      type: 'message',
+      messageId: postedId,
+      content: { markdown: 'draft' },
+    });
+    expect(second.events[0].event).toMatchObject({
+      type: 'channel.edit',
+      messageId: postedId,
+      content: { markdown: 'edited' },
+    });
+    expect(first.events[0].turnId).toBe('del-edit');
+    expect(second.events[0].turnId).toBe('del-edit');
+    expect(second.events[0].sequence).toBe(2);
+  });
+
+  it('addReaction emits channel.reaction op add', async () => {
+    const { adapter, chat } = buildChat();
+    chat.onSubscribedMessage(async (thread) => {
+      const posted = await thread.post('react to me');
+      await adapter.addReaction(thread.id, posted.id, 'thumbsup');
+    });
+    await chat.initialize();
+
+    await deliver(adapter, bridgeRequest());
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(lastEnvelope().event).toMatchObject({
+      type: 'channel.reaction',
+      emoji: 'thumbsup',
+      op: 'add',
+    });
+  });
+
+  it('dedupes a replayed deliveryId (same delivery processed once)', async () => {
+    const { adapter, chat } = buildChat();
+    const handler = vi.fn();
+    chat.onSubscribedMessage(handler);
+    await chat.initialize();
+
+    const req = bridgeRequest({ deliveryId: 'fixed-delivery' });
+    await deliver(adapter, req);
+    await deliver(adapter, req);
+
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows retry after transient dispatch failure (does not permanently dedupe)', async () => {
+    const { adapter, chat } = buildChat();
+    const handler = vi.fn();
+    chat.onSubscribedMessage(handler);
+    await chat.initialize();
+
+    const req = bridgeRequest({ deliveryId: 'retry-delivery' });
+    const cacheSnapshot = vi.spyOn(NovuAdapterImpl.prototype, 'cacheSnapshot');
+    cacheSnapshot.mockRejectedValueOnce(new Error('transient cache failure'));
+
+    await expect(deliver(adapter, req)).rejects.toThrow('transient cache failure');
+    await deliver(adapter, req);
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    cacheSnapshot.mockRestore();
+  });
+
+  it('applies fetchMessages limit and pagination cursor', async () => {
+    const { adapter, chat } = buildChat();
+    chat.onSubscribedMessage(async () => {});
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        history: Array.from({ length: 5 }, (_, index) => ({
+          role: 'user' as const,
+          type: 'text' as const,
+          content: `msg-${index}`,
+          createdAt: `2026-01-01T00:00:0${index}.000Z`,
+        })),
+      })
+    );
+
+    const threadId = encodeThreadId({
+      platform: 'slack',
+      integrationIdentifier: 'slack-prod',
+      conversationId: 'conv-1',
+      isDM: false,
+    });
+
+    const firstPage = await adapter.fetchMessages(threadId, { limit: 2 });
+    expect(firstPage.messages.map((message) => message.text)).toEqual(['msg-3', 'msg-4']);
+    expect(firstPage.nextCursor).toBe('3');
+
+    const secondPage = await adapter.fetchMessages(threadId, {
+      limit: 2,
+      cursor: firstPage.nextCursor,
+    });
+    expect(secondPage.messages.map((message) => message.text)).toEqual(['msg-1', 'msg-2']);
+    expect(secondPage.nextCursor).toBe('1');
+  });
+
+  it('dispatches onMessageUpdated to chat.onMessageUpdated', async () => {
+    const { adapter, chat } = buildChat();
+    const seen: string[] = [];
+    chat.onMessageUpdated(async (thread, message, previousMessage) => {
+      seen.push(`${previousMessage?.text ?? ''}->${message.text}`);
+      await thread.post(`got ${message.text}`);
+    });
+    await chat.initialize();
+
+    const res = await deliver(
+      adapter,
+      bridgeRequest({
+        event: 'onMessageUpdated',
+        previousMessage: {
+          text: 'where is order 1234?',
+          platformMessageId: 'pm-1',
+          author: { userId: 'u1', userName: 'alice', fullName: 'Alice', isBot: false },
+          timestamp: new Date().toISOString(),
+        },
+        message: {
+          text: 'where is order 4321?',
+          platformMessageId: 'pm-1',
+          author: { userId: 'u1', userName: 'alice', fullName: 'Alice', isBot: false },
+          timestamp: new Date().toISOString(),
+        },
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(seen).toEqual(['where is order 1234?->where is order 4321?']);
+  });
+
+  it('dispatches onMessageDeleted to chat.onMessageDeleted', async () => {
+    const { adapter, chat } = buildChat();
+    const seen: string[] = [];
+    chat.onMessageDeleted(async (event) => {
+      seen.push(event.messageId);
+    });
+    await chat.initialize();
+
+    const res = await deliver(
+      adapter,
+      bridgeRequest({
+        event: 'onMessageDeleted',
+        message: {
+          text: 'where is order 1234?',
+          platformMessageId: 'pm-1',
+          author: { userId: 'u1', userName: 'alice', fullName: 'Alice', isBot: false },
+          timestamp: new Date().toISOString(),
+        },
+      })
+    );
+
+    expect(res.status).toBe(200);
+    expect(seen).toEqual(['pm-1']);
+  });
+});

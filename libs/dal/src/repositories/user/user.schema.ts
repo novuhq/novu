@@ -1,5 +1,4 @@
-import * as mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { UserDBModel } from './user.entity';
@@ -17,10 +16,7 @@ const userSchema = new Schema<UserDBModel>(
       reqInDay: Schema.Types.Number,
     },
     showOnBoarding: Schema.Types.Boolean,
-    showOnBoardingTour: {
-      type: Schema.Types.Number,
-      default: 0,
-    },
+    showOnBoardingTour: Schema.Types.Number,
     tokens: [
       {
         providerId: Schema.Types.String,
@@ -38,7 +34,7 @@ const userSchema = new Schema<UserDBModel>(
       lastFailedAttempt: Schema.Types.Date,
     },
     servicesHashes: {
-      intercom: Schema.Types.String,
+      plain: Schema.Types.String,
     },
     jobTitle: Schema.Types.String,
     externalId: Schema.Types.String,
@@ -46,6 +42,15 @@ const userSchema = new Schema<UserDBModel>(
   schemaOptions
 );
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
+// Create a unique index for email field only when self-hosted
+if (process.env.IS_SELF_HOSTED === 'true') {
+  userSchema.index(
+    { email: 1 },
+    {
+      unique: true,
+    }
+  );
+}
+
 export const User =
   (mongoose.models.User as mongoose.Model<UserDBModel>) || mongoose.model<UserDBModel>('User', userSchema);

@@ -1,4 +1,5 @@
 import { BaseCommand } from '@novu/application-generic';
+import { ChatProviderIdEnum } from '@novu/shared';
 import {
   IsEnum,
   IsMongoId,
@@ -8,21 +9,19 @@ import {
   ValidationArguments,
   ValidationOptions,
 } from 'class-validator';
-import { ChatProviderIdEnum } from '@novu/shared';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function IsNotEmpty(validationOptions?: ValidationOptions) {
-  return function (object: object, propertyName: string) {
+  return (object: object, propertyName: string) => {
     registerDecorator({
       name: 'isNotEmpty',
       target: object.constructor,
-      propertyName: propertyName,
+      propertyName,
       options: validationOptions,
       validator: {
         validate(value: any, args: ValidationArguments) {
           return ![null, undefined, 'null', 'undefined', ''].some((invalidValue) => invalidValue === value);
         },
-        defaultMessage: function (data) {
+        defaultMessage(data) {
           const value = data?.value === '' ? 'empty string' : data?.value;
 
           return `${data?.property} should not be ${value}`;
@@ -54,4 +53,9 @@ export class ChatOauthCallbackCommand extends BaseCommand {
   @IsOptional()
   @IsString()
   readonly integrationIdentifier?: string;
+
+  /** Signed state minted by {@link ChatOauth} and echoed back by the provider. */
+  @IsOptional()
+  @IsString()
+  readonly state?: string;
 }

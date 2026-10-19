@@ -1,10 +1,10 @@
-import { expect } from 'chai';
-import axios, { AxiosResponse } from 'axios';
-
-import { UserSession } from '@novu/testing';
 import { TenantRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import axios from 'axios';
+import type { AxiosResponse } from 'axios';
+import { expect } from 'chai';
 
-describe('Delete Tenant - /tenants/:identifier (DELETE)', function () {
+describe('Delete Tenant - /tenants/:identifier (DELETE) #novu-v0', () => {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
 
@@ -13,7 +13,7 @@ describe('Delete Tenant - /tenants/:identifier (DELETE)', function () {
     await session.initialize();
   });
 
-  it('should delete newly created tenant', async function () {
+  it('should delete newly created tenant', async () => {
     await tenantRepository.create({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -42,13 +42,13 @@ describe('Delete Tenant - /tenants/:identifier (DELETE)', function () {
     expect(deletedTenant).to.equal(null);
   });
 
-  it('should throw exception while trying to delete not existing tenant', async function () {
+  it('should throw exception while trying to delete not existing tenant', async () => {
     const identifier = '4f3c4146-e471-4fe8-b23d-e3411689db00';
 
     try {
       await deleteTenant({
         session,
-        identifier: identifier,
+        identifier,
       });
 
       throw new Error('');

@@ -1,11 +1,10 @@
-import { Injectable, NotFoundException, Scope } from '@nestjs/common';
-import { IntegrationEntity, IntegrationQuery, IntegrationRepository } from '@novu/dal';
-import { IEmailProvider, ISmsProvider } from '@novu/stateless';
+import { BadRequestException, Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { IMailHandler, ISmsHandler, MailFactory, SmsFactory } from '@novu/application-generic';
+import { IntegrationEntity, IntegrationQuery, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, providers } from '@novu/shared';
+import { IEmailProvider, ISmsProvider } from '@novu/stateless';
 
 import { GetWebhookSupportStatusCommand } from './get-webhook-support-status.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable({ scope: Scope.REQUEST })
 export class GetWebhookSupportStatus {
@@ -23,12 +22,12 @@ export class GetWebhookSupportStatus {
 
     const hasNoCredentials = !integration.credentials || Object.keys(integration.credentials).length === 0;
     if (hasNoCredentials) {
-      throw new ApiException(`Integration ${integration._id} doesn't have credentials set up`);
+      throw new BadRequestException(`Integration ${integration._id} doesn't have credentials set up`);
     }
 
     const { channel, providerId } = integration;
-    if (![ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(channel)) {
-      throw new ApiException(`Webhook for ${providerId}-${channel} is not supported yet`);
+    if (!channel || ![ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(channel)) {
+      throw new BadRequestException(`Webhook for ${providerId}-${channel ?? 'unknown'} is not supported yet`);
     }
 
     this.createProvider(integration);
@@ -41,7 +40,7 @@ export class GetWebhookSupportStatus {
   }
 
   private async getIntegration(command: GetWebhookSupportStatusCommand) {
-    const providerOrIntegrationId = command.providerOrIntegrationId;
+    const { providerOrIntegrationId } = command;
     const isProviderId = !!providers.find((el) => el.id === providerOrIntegrationId);
 
     const query: IntegrationQuery = {

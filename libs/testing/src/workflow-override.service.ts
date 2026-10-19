@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import {
   NotificationGroupRepository,
   NotificationTemplateRepository,
@@ -6,7 +7,6 @@ import {
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import { ICreateWorkflowOverrideRequestDto } from '@novu/shared';
-import { faker } from '@faker-js/faker';
 
 export class WorkflowOverrideService {
   constructor(private config: { organizationId: string; environmentId: string }) {}
@@ -21,7 +21,7 @@ export class WorkflowOverrideService {
     const tenant = await this.tenantRepository.create({
       _organizationId: organizationId,
       _environmentId: environmentId,
-      identifier: faker.datatype.uuid(),
+      identifier: faker.string.uuid(),
       name: 'name_123',
       data: { test1: 'test value1', test2: 'test value2' },
     });
@@ -47,7 +47,7 @@ export class WorkflowOverrideService {
       payload.preferenceSettings = override.preferenceSettings;
     }
 
-    const workflowOverride = await this.workflowOverrideRepository.create(payload as any);
+    const workflowOverride = await this.workflowOverrideRepository.create(payload as WorkflowOverrideEntity);
 
     return { tenant, workflowOverride };
   }

@@ -1,9 +1,3 @@
 {
-  "recommendations": [
-    "dbaeumer.vscode-eslint",
-    "esbenp.prettier-vscode",
-    "folke.vscode-monorepo-workspace",
-    "seatonjiang.gitmoji-vscode",
-    "jondot.vscode-hygen"
-  ]
+  "recommendations": ["biomejs.biome"]
 }

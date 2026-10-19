@@ -1,0 +1,440 @@
+import { ConflictException } from '@nestjs/common';
+import type { AgentEntity, IntegrationEntity } from '@novu/dal';
+import {
+  AgentSubscriberAccessEnum,
+  ApiServiceLevelEnum,
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  NOVU_PROVIDERS,
+} from '@novu/shared';
+import { expect } from 'chai';
+import { restore, stub } from 'sinon';
+
+import { AgentInboxAddressService } from '../agent-inbox-address.service';
+import { NovuEmailProvisioningService } from './find-or-create-novu-email.service';
+
+const ENV_ID = 'env-id';
+const ORG_ID = 'org-id';
+const AGENT_ID = 'agent-id';
+
+function makeAgent(overrides: Partial<AgentEntity> = {}): AgentEntity {
+  return {
+    _id: AGENT_ID,
+    name: 'My Agent',
+    identifier: 'my-agent',
+    description: '',
+    behavior: { subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED },
+    active: true,
+    _environmentId: ENV_ID,
+    _organizationId: ORG_ID,
+    ...overrides,
+  } as AgentEntity;
+}
+
+describe('NovuEmailProvisioningService', () => {
+  let integrationRepo: {
+    find: sinon.SinonStub;
+    findOne: sinon.SinonStub;
+    create: sinon.SinonStub;
+    findAgentInboundByVanitySlug: sinon.SinonStub;
+    hasAgentInboundByVanitySlug: sinon.SinonStub;
+    findAgentInboundByInboxRoutingKey: sinon.SinonStub;
+  };
+  let agentIntegrationRepo: {
+    find: sinon.SinonStub;
+    findOne: sinon.SinonStub;
+    createOrReviveLink: sinon.SinonStub;
+    withTransaction: sinon.SinonStub;
+  };
+  let organizationRepo: {
+    findById: sinon.SinonStub;
+  };
+  let agentRepo: {
+    findOne: sinon.SinonStub;
+    update: sinon.SinonStub;
+  };
+
+  let savedNovuEnterprise: string | undefined;
+  let savedSelfHosted: string | undefined;
+  let savedSharedDomain: string | undefined;
+  let savedInboxDomain: string | undefined;
+
+  function buildUsecase() {
+    return new NovuEmailProvisioningService(
+      integrationRepo as any,
+      agentIntegrationRepo as any,
+      organizationRepo as any,
+      agentRepo as any,
+      new AgentInboxAddressService(integrationRepo as any)
+    );
+  }
+
+  beforeEach(() => {
+    savedNovuEnterprise = process.env.NOVU_ENTERPRISE;
+    savedSelfHosted = process.env.IS_SELF_HOSTED;
+    savedSharedDomain = process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN;
+    savedInboxDomain = process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN;
+
+    process.env.NOVU_ENTERPRISE = 'true';
+    delete process.env.IS_SELF_HOSTED;
+    process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = 'agentconnect.sh';
+    process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = 'agentinbox.md';
+
+    integrationRepo = {
+      find: stub().resolves([]),
+      findOne: stub(),
+      create: stub(),
+      findAgentInboundByVanitySlug: stub().resolves(null),
+      hasAgentInboundByVanitySlug: stub().resolves(false),
+      findAgentInboundByInboxRoutingKey: stub().resolves(null),
+    };
+    agentIntegrationRepo = {
+      find: stub().resolves([]),
+      findOne: stub().resolves(null),
+      createOrReviveLink: stub().resolves({
+        _id: 'link-id',
+        _agentId: AGENT_ID,
+        _integrationId: 'novu-agent-int-id',
+        _environmentId: ENV_ID,
+        _organizationId: ORG_ID,
+        connectedAt: null,
+      }),
+      withTransaction: stub().callsFake(async (fn: (session: null) => Promise<unknown>) => fn(null)),
+    };
+    organizationRepo = {
+      findById: stub().resolves({ apiServiceLevel: ApiServiceLevelEnum.BUSINESS }),
+    };
+    agentRepo = {
+      findOne: stub().resolves(makeAgent()),
+      update: stub().resolves({ matched: 1, modified: 1 }),
+    };
+  });
+
+  afterEach(() => {
+    if (savedNovuEnterprise === undefined) delete process.env.NOVU_ENTERPRISE;
+    else process.env.NOVU_ENTERPRISE = savedNovuEnterprise;
+
+    if (savedSelfHosted === undefined) delete process.env.IS_SELF_HOSTED;
+    else process.env.IS_SELF_HOSTED = savedSelfHosted;
+
+    if (savedSharedDomain === undefined) delete process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN;
+    else process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = savedSharedDomain;
+
+    if (savedInboxDomain === undefined) delete process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN;
+    else process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = savedInboxDomain;
+
+    restore();
+  });
+
+  describe('outbound integration default', () => {
+    it("uses the env's active primary custom email integration as the default outboundIntegrationId on first provision", async () => {
+      const primaryCustomIntegration = {
+        _id: 'sendgrid-id',
+        providerId: 'sendgrid',
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+        primary: true,
+      } as IntegrationEntity;
+
+      // First findOne: lookup of the primary custom email integration.
+      integrationRepo.findOne.onFirstCall().resolves(primaryCustomIntegration);
+      integrationRepo.create.resolves({
+        _id: 'novu-agent-int-id',
+        providerId: EmailProviderIdEnum.NovuAgent,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'novu-email-xxx',
+        name: 'Novu Email',
+        active: true,
+        credentials: {},
+      });
+
+      await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID);
+
+      const primaryQuery = integrationRepo.findOne.firstCall.args[0];
+      expect(primaryQuery._environmentId).to.equal(ENV_ID);
+      expect(primaryQuery._organizationId).to.equal(ORG_ID);
+      expect(primaryQuery.channel).to.equal(ChannelTypeEnum.EMAIL);
+      expect(primaryQuery.active).to.equal(true);
+      expect(primaryQuery.primary).to.equal(true);
+      expect(primaryQuery.providerId).to.deep.equal({ $nin: NOVU_PROVIDERS });
+
+      expect(integrationRepo.create.calledOnce).to.equal(true);
+      const createArg = integrationRepo.create.firstCall.args[0];
+      expect(createArg.providerId).to.equal(EmailProviderIdEnum.NovuAgent);
+      expect(createArg.credentials.outboundIntegrationId).to.equal('sendgrid-id');
+      expect(createArg.credentials.emailSlugPrefix).to.be.a('string');
+      expect(createArg.credentials.inboxRoutingKey).to.be.a('string');
+      expect(createArg.credentials.inboxDomain).to.equal('agentconnect.sh');
+      expect(createArg.credentials.senderName).to.equal('My Agent');
+    });
+
+    it('pins an Agent Email Inbox to the Agent Inbox domain', async () => {
+      integrationRepo.findOne.onFirstCall().resolves({
+        _id: 'sendgrid-id',
+        providerId: 'sendgrid',
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+        primary: true,
+      } as IntegrationEntity);
+      integrationRepo.create.resolves({
+        _id: 'agent-inbox-int-id',
+        providerId: EmailProviderIdEnum.AgentEmailInbox,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'agent-email-inbox-xxx',
+        name: 'Agent Email Inbox',
+        active: true,
+        credentials: {},
+      });
+
+      await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID, EmailProviderIdEnum.AgentEmailInbox);
+
+      const createArg = integrationRepo.create.firstCall.args[0];
+      expect(createArg.providerId).to.equal(EmailProviderIdEnum.AgentEmailInbox);
+      expect(createArg.credentials.inboxDomain).to.equal('agentinbox.md');
+      expect(createArg.credentials.emailSlugPrefix).to.equal('my-agent');
+      expect(createArg.credentials.inboxRoutingKey).to.equal(undefined);
+    });
+
+    it('puts the agent name in the mailbox instead of the identifier', async () => {
+      agentRepo.findOne.resolves(makeAgent({ name: 'Vasya', identifier: 'human-relay' }));
+      integrationRepo.findOne.onFirstCall().resolves({
+        _id: 'sendgrid-id',
+        providerId: 'sendgrid',
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+        primary: true,
+      } as IntegrationEntity);
+      integrationRepo.create.resolves({
+        _id: 'agent-inbox-int-id',
+        providerId: EmailProviderIdEnum.AgentEmailInbox,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'agent-email-inbox-xxx',
+        name: 'Agent Email Inbox',
+        active: true,
+        credentials: {},
+      });
+
+      await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID, EmailProviderIdEnum.AgentEmailInbox);
+
+      expect(integrationRepo.create.firstCall.args[0].credentials.emailSlugPrefix).to.equal('vasya');
+      expect(integrationRepo.create.firstCall.args[0].credentials.inboxRoutingKey).to.equal(undefined);
+    });
+
+    it('stores the handle the operator asked for', async () => {
+      integrationRepo.findOne.onFirstCall().resolves({
+        _id: 'sendgrid-id',
+        providerId: 'sendgrid',
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+        primary: true,
+      } as IntegrationEntity);
+      integrationRepo.create.resolves({
+        _id: 'agent-inbox-int-id',
+        providerId: EmailProviderIdEnum.AgentEmailInbox,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'agent-email-inbox-xxx',
+        name: 'Agent Email Inbox',
+        active: true,
+        credentials: { emailSlugPrefix: 'atlas-acme', inboxDomain: 'agentinbox.md' },
+      });
+
+      const result = await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID, EmailProviderIdEnum.AgentEmailInbox, {
+        inboxHandle: 'atlas-acme',
+      });
+
+      expect(integrationRepo.create.firstCall.args[0].credentials.emailSlugPrefix).to.equal('atlas-acme');
+      expect(result.inboxHandleAdjusted).to.equal(false);
+    });
+
+    it('refuses a handle that is already claimed and offers a neighbour', async () => {
+      integrationRepo.hasAgentInboundByVanitySlug.callsFake(async (handle: string) => handle === 'atlas');
+
+      try {
+        await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID, EmailProviderIdEnum.AgentEmailInbox, {
+          inboxHandle: 'atlas',
+          operatorEmail: 'ada@acme.co',
+        });
+        expect.fail('expected the handle to be taken');
+      } catch (error) {
+        expect(error).to.be.instanceOf(ConflictException);
+        const body = (error as ConflictException).getResponse() as { suggestion?: string };
+        expect(body.suggestion).to.equal('atlas-acme');
+      }
+
+      expect(integrationRepo.create.called).to.equal(false);
+    });
+
+    it("falls back to the env's Novu demo email integration when no primary custom integration exists", async () => {
+      const novuDemoIntegration = {
+        _id: 'novu-demo-id',
+        providerId: EmailProviderIdEnum.Novu,
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+        primary: true,
+      } as IntegrationEntity;
+
+      // First findOne: no primary custom email integration.
+      integrationRepo.findOne.onFirstCall().resolves(null);
+      // Second findOne: Novu demo integration exists.
+      integrationRepo.findOne.onSecondCall().resolves(novuDemoIntegration);
+      integrationRepo.create.resolves({
+        _id: 'novu-agent-int-id',
+        providerId: EmailProviderIdEnum.NovuAgent,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'novu-email-xxx',
+        name: 'Novu Email',
+        active: true,
+        credentials: {},
+      });
+
+      await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID);
+
+      const demoQuery = integrationRepo.findOne.secondCall.args[0];
+      expect(demoQuery.providerId).to.equal(EmailProviderIdEnum.Novu);
+      expect(demoQuery.active).to.equal(true);
+
+      const createArg = integrationRepo.create.firstCall.args[0];
+      expect(createArg.credentials.outboundIntegrationId).to.equal('novu-demo-id');
+    });
+
+    it('throws when neither a primary custom integration nor a Novu demo integration is available', async () => {
+      integrationRepo.findOne.onFirstCall().resolves(null);
+      integrationRepo.findOne.onSecondCall().resolves(null);
+
+      try {
+        await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID);
+        throw new Error('Expected ConflictException');
+      } catch (err) {
+        expect(err).to.be.instanceOf(ConflictException);
+      }
+
+      expect(integrationRepo.create.called).to.equal(false);
+    });
+
+    it('does not mutate behavior.subscriberAccess when provisioning a new NovuAgent link', async () => {
+      integrationRepo.findOne.onFirstCall().resolves({
+        _id: 'sendgrid-id',
+        providerId: 'sendgrid',
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+        primary: true,
+      } as IntegrationEntity);
+      integrationRepo.create.resolves({
+        _id: 'novu-agent-int-id',
+        providerId: EmailProviderIdEnum.NovuAgent,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'novu-email-xxx',
+        name: 'Novu Email',
+        active: true,
+        credentials: {},
+      });
+
+      const result = await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID);
+
+      expect(result.provisionedNewLink).to.equal(true);
+      expect(agentRepo.update.called).to.equal(false);
+    });
+
+    it('does not lookup or change outboundIntegrationId when an existing NovuAgent link is returned', async () => {
+      const existingLink = {
+        _id: 'link-id',
+        _agentId: AGENT_ID,
+        _integrationId: 'existing-novu-agent-int-id',
+        _environmentId: ENV_ID,
+        _organizationId: ORG_ID,
+        connectedAt: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const existingNovuAgentIntegration = {
+        _id: 'existing-novu-agent-int-id',
+        providerId: EmailProviderIdEnum.NovuAgent,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'novu-email-existing',
+        name: 'Novu Email',
+        active: true,
+        credentials: {
+          emailSlugPrefix: 'my-agent',
+          inboxRoutingKey: 'abcd1234',
+        },
+      };
+      agentIntegrationRepo.find.resolves([existingLink]);
+      // Lookup of the NovuAgent integration linked to the agent (in findExistingLink).
+      integrationRepo.findOne.onFirstCall().resolves(existingNovuAgentIntegration);
+
+      const result = await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID);
+
+      expect(result.provisionedNewLink).to.equal(false);
+      expect(integrationRepo.create.called).to.equal(false);
+      // Only the existing-link lookup happens; we never query for the default outbound integration.
+      expect(integrationRepo.findOne.calledOnce).to.equal(true);
+      expect(agentRepo.update.called).to.equal(false);
+    });
+  });
+
+  describe('self-hosted', () => {
+    beforeEach(() => {
+      // Self-hosted enterprise: isAgentEmailEnabled() is true (no shared domain
+      // needed) while isAgentSharedInboxEnabled() is false (IS_SELF_HOSTED).
+      process.env.IS_SELF_HOSTED = 'true';
+      delete process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN;
+      delete process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN;
+    });
+
+    it('provisions without a routing key and persists sharedInboxDisabled, using a custom provider for outbound', async () => {
+      const primaryCustomIntegration = {
+        _id: 'ses-id',
+        providerId: 'ses',
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+        primary: true,
+      } as IntegrationEntity;
+
+      integrationRepo.findOne.onFirstCall().resolves(primaryCustomIntegration);
+      integrationRepo.create.resolves({
+        _id: 'novu-agent-int-id',
+        providerId: EmailProviderIdEnum.NovuAgent,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'novu-email-xxx',
+        name: 'Novu Email',
+        active: true,
+        credentials: {},
+      });
+
+      await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID);
+
+      expect(integrationRepo.create.calledOnce).to.equal(true);
+      const createArg = integrationRepo.create.firstCall.args[0];
+      expect(createArg.providerId).to.equal(EmailProviderIdEnum.NovuAgent);
+      expect(createArg.credentials.sharedInboxDisabled).to.equal(true);
+      expect(createArg.credentials.inboxRoutingKey).to.equal(undefined);
+      expect(createArg.credentials.inboxDomain).to.equal(undefined);
+      expect(createArg.credentials.outboundIntegrationId).to.equal('ses-id');
+      expect(createArg.credentials.emailSlugPrefix).to.be.a('string');
+    });
+
+    it('provisions with no outboundIntegrationId (no ConflictException) when no provider exists', async () => {
+      // Self-hosted has no bundled Novu demo provider; both lookups miss.
+      integrationRepo.findOne.onFirstCall().resolves(null);
+      integrationRepo.findOne.onSecondCall().resolves(null);
+      integrationRepo.create.resolves({
+        _id: 'novu-agent-int-id',
+        providerId: EmailProviderIdEnum.NovuAgent,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'novu-email-xxx',
+        name: 'Novu Email',
+        active: true,
+        credentials: {},
+      });
+
+      const result = await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID);
+
+      expect(result.provisionedNewLink).to.equal(true);
+      expect(integrationRepo.create.calledOnce).to.equal(true);
+      const createArg = integrationRepo.create.firstCall.args[0];
+      expect(createArg.credentials.sharedInboxDisabled).to.equal(true);
+      expect(createArg.credentials.inboxRoutingKey).to.equal(undefined);
+      expect('outboundIntegrationId' in createArg.credentials).to.equal(false);
+    });
+  });
+});

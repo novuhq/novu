@@ -1,0 +1,168 @@
+import { Injectable } from '@nestjs/common';
+import type { AgentEvent } from '@novu/agent-event-protocol';
+import { PinoLogger } from '@novu/application-generic';
+import { AgentMcpServerRepository, McpConnectionRepository, SubscriberRepository } from '@novu/dal';
+import { McpConnectionStatusEnum } from '@novu/shared';
+import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
+import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
+import { listOAuthMcps } from '../managed-runtime/tool-connect/list-oauth-mcps.helper';
+import { findOAuthMcpByServerName } from '../managed-runtime/tool-connect/oauth-mcp.types';
+import type { AgentEventContext } from './agent-event-sink.service';
+import { captureAgentException } from './errors/capture-agent-sentry';
+
+/**
+ * Runtime-ops: MCP (or other) connection failed during the run. Auth failures
+ * flip the OAuth MCP connection out of `connected` so reconnect UX can offer.
+ * Non-auth failures are logged only. Errors are swallowed — must not fail the
+ * webhook the way message ingest does.
+ */
+@Injectable()
+export class McpConnectionErrorHandler {
+  constructor(
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly agentMcpServerRepository: AgentMcpServerRepository,
+    private readonly mcpConnectionRepository: McpConnectionRepository,
+    private readonly handleAgentReply: HandleAgentReply,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
+
+  async handle(event: Extract<AgentEvent, { type: 'connection.error' }>, context: AgentEventContext): Promise<void> {
+    try {
+      if (event.reason !== 'authentication') {
+        this.logger.warn(
+          {
+            sessionId: context.sessionId,
+            serverName: event.serverName,
+            reason: event.reason,
+            message: event.message,
+            source: event.source,
+          },
+          'MCP server failure (non-auth) — session continues without updating connection status'
+        );
+
+        return;
+      }
+
+      const { environmentId, organizationId, agentId, subscriberId, sessionId } = context;
+
+      if (!agentId || !subscriberId) {
+        this.logger.warn(
+          { sessionId, serverName: event.serverName },
+          'connection.error missing agent/subscriber context — skipping connection update'
+        );
+
+        return;
+      }
+
+      const mcps = await listOAuthMcps(
+        {
+          subscriberRepository: this.subscriberRepository,
+          agentMcpServerRepository: this.agentMcpServerRepository,
+          mcpConnectionRepository: this.mcpConnectionRepository,
+        },
+        {
+          environmentId,
+          organizationId,
+          agentId,
+          subscriberId,
+        }
+      );
+
+      const mcp = findOAuthMcpByServerName(mcps, event.serverName);
+
+      if (!mcp) {
+        this.logger.warn(
+          { sessionId, serverName: event.serverName, agentId },
+          'connection.error for unknown OAuth MCP — skipping connection update'
+        );
+
+        return;
+      }
+
+      if (mcp.status !== McpConnectionStatusEnum.Connected) {
+        return;
+      }
+
+      const subscriber = await this.subscriberRepository.findBySubscriberId(environmentId, subscriberId);
+
+      if (!subscriber) {
+        return;
+      }
+
+      const flipped = await this.mcpConnectionRepository.update(
+        {
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+          _agentMcpServerId: mcp.agentMcpServerId,
+          _subscriberId: subscriber._id,
+          status: McpConnectionStatusEnum.Connected,
+        },
+        {
+          $set: {
+            status: McpConnectionStatusEnum.Error,
+            lastError: {
+              code: 'authentication_failed',
+              message: event.message,
+              at: new Date(),
+            },
+          },
+        }
+      );
+
+      this.logger.info(
+        {
+          sessionId,
+          serverName: event.serverName,
+          mcpId: mcp.mcpId,
+          agentId,
+          subscriberId,
+        },
+        'Marked MCP connection as error after authentication failure'
+      );
+
+      // Only notify on the Connected → Error transition (the atomic filter
+      // matched the `connected` row) so repeated failures don't spam the user.
+      // This closes the loop on the optimistic provider-managed connect: if the
+      // vault OAuth was never finished, the user is told instead of silently
+      // seeing the integration fail.
+      if (flipped.matched > 0) {
+        await this.notifyConnectionFailed(context, mcp.name);
+      }
+    } catch (err) {
+      this.logger.error(err, `connection.error failed: session=${context.sessionId}`);
+      captureAgentException(err, {
+        component: 'agent-event-sink',
+        operation: 'connection-error',
+        sessionId: context.sessionId,
+      });
+    }
+  }
+
+  /**
+   * Tell the user their integration isn't actually connected and how to retry.
+   * Best-effort: delivery failures are logged but never rethrown, so a failed
+   * notification cannot break event ingest.
+   */
+  private async notifyConnectionFailed(context: AgentEventContext, mcpName: string): Promise<void> {
+    try {
+      await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          userId: context.organizationId,
+          environmentId: context.environmentId,
+          organizationId: context.organizationId,
+          conversationId: context.conversationId,
+          agentIdentifier: context.agentIdentifier,
+          integrationIdentifier: context.integrationIdentifier,
+          reply: {
+            markdown: `⚠️ ${mcpName} isn't connected yet — no stored credential was found. Ask me to connect ${mcpName} again to retry.`,
+          },
+          isSystemGenerated: true,
+        })
+      );
+    } catch (err) {
+      this.logger.warn(err, 'Failed to notify user about MCP connection failure');
+    }
+  }
+}

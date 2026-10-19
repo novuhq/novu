@@ -1,0 +1,79 @@
+import { NovuError, Preference, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
+import { useEffect, useState } from 'react';
+import { useNovu } from './NovuProvider';
+
+export type UsePreferencesProps = {
+  filter?: {
+    tags?: string[];
+    severity?: SeverityLevelEnum | SeverityLevelEnum[];
+    criticality?: WorkflowCriticalityEnum;
+  };
+  onSuccess?: (data: Preference[]) => void;
+  onError?: (error: NovuError) => void;
+};
+
+export type UsePreferencesResult = {
+  preferences?: Preference[];
+  error?: NovuError;
+  isLoading: boolean; // initial loading
+  isFetching: boolean; // the request is in flight
+  refetch: () => Promise<void>;
+};
+
+export const usePreferences = (props?: UsePreferencesProps): UsePreferencesResult => {
+  const { onSuccess, onError } = props || {};
+  const [data, setData] = useState<Preference[]>();
+  const { preferences, on } = useNovu();
+  const [error, setError] = useState<NovuError>();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
+
+  const sync = (event: { data?: Preference[] }) => {
+    if (!event.data) {
+      return;
+    }
+    setData(event.data);
+  };
+
+  useEffect(() => {
+    fetchPreferences();
+
+    const listUpdatedCleanup = on('preferences.list.updated', sync);
+    const listPendingCleanup = on('preferences.list.pending', sync);
+    const listResolvedCleanup = on('preferences.list.resolved', sync);
+
+    return () => {
+      listUpdatedCleanup();
+      listPendingCleanup();
+      listResolvedCleanup();
+    };
+  }, []);
+
+  const fetchPreferences = async () => {
+    setIsFetching(true);
+    const response = await preferences.list(props?.filter);
+    if (response.error) {
+      setError(response.error);
+      onError?.(response.error);
+    } else if (response.data) {
+      setData(response.data);
+      onSuccess?.(response.data);
+    }
+    setIsLoading(false);
+    setIsFetching(false);
+  };
+
+  const refetch = () => {
+    preferences.cache.clearAll();
+
+    return fetchPreferences();
+  };
+
+  return {
+    preferences: data,
+    error,
+    isLoading,
+    isFetching,
+    refetch,
+  };
+};

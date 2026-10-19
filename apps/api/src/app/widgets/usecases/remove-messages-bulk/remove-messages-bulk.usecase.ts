@@ -1,15 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DalException, MessageRepository, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  WebSocketsQueueService,
   AnalyticsService,
-  InvalidateCacheService,
   buildFeedKey,
   buildMessageCountKey,
+  InvalidateCacheService,
+  WebSocketsQueueService,
 } from '@novu/application-generic';
+import { DalException, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
 import { RemoveMessagesBulkCommand } from './remove-messages-bulk.command';
 
@@ -28,7 +27,7 @@ export class RemoveMessagesBulk {
     if (!subscriber) throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
 
     try {
-      await this.messageRepository.deleteMany({
+      const deletedMessages = await this.messageRepository.delete({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _subscriberId: subscriber._id,
@@ -36,39 +35,36 @@ export class RemoveMessagesBulk {
         _id: { $in: command.messageIds },
       });
 
-      await this.updateServices(subscriber, MarkEnum.SEEN);
-      await this.updateServices(subscriber, MarkEnum.READ);
-
-      await this.invalidateCache.invalidateQuery({
-        key: buildFeedKey().invalidate({
-          subscriberId: command.subscriberId,
-          _environmentId: command.environmentId,
-        }),
-      });
-
-      await this.invalidateCache.invalidateQuery({
-        key: buildMessageCountKey().invalidate({
-          subscriberId: command.subscriberId,
-          _environmentId: command.environmentId,
-        }),
-      });
+      if (deletedMessages.deletedCount > 0) {
+        await Promise.all([
+          this.updateServices(subscriber, MarkEnum.SEEN),
+          this.updateServices(subscriber, MarkEnum.READ),
+          this.invalidateCache.invalidateQuery({
+            key: buildMessageCountKey().invalidate({
+              subscriberId: command.subscriberId,
+              _environmentId: command.environmentId,
+            }),
+          }),
+        ]);
+      }
     } catch (e) {
       if (e instanceof DalException) {
-        throw new ApiException(e.message);
+        throw new BadRequestException(e.message);
       }
       throw e;
     }
   }
 
-  private async updateServices(subscriber, marked: string) {
+  private async updateServices(subscriber: SubscriberEntity, marked: MarkEnum): Promise<void> {
     const eventMessage = marked === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
-    this.webSocketsQueueService.add({
+    await this.webSocketsQueueService.add({
       name: 'sendMessage',
       data: {
         event: eventMessage,
         userId: subscriber._id,
         _environmentId: subscriber._environmentId,
+        contextKeys: [],
       },
       groupId: subscriber._organizationId,
     });

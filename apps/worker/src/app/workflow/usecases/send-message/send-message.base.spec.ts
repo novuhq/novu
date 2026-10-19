@@ -1,0 +1,493 @@
+import { INTEGRATION_OVERRIDES_OUTPUT_KEY, PushProviderIdEnum, TriggerOverrides } from '@novu/shared';
+import { expect } from 'chai';
+import { combineProviderOverrides } from './send-message.base';
+
+const PROVIDER_ID = 'slack';
+const FCM_PROVIDER_ID = PushProviderIdEnum.FCM;
+
+type ProviderData = Record<string, unknown>;
+
+function bridgeFor(providerId: string, providerData: ProviderData) {
+  return { providers: { [providerId]: providerData } };
+}
+
+function bridge(providerData: ProviderData) {
+  return bridgeFor(PROVIDER_ID, providerData);
+}
+
+/** `TriggerOverrides.providers` is a total record over every provider id, so one-provider literals need the cast. */
+function triggerOverrides(shape: {
+  providers?: Record<string, ProviderData>;
+  steps?: Record<string, { providers: Record<string, ProviderData> }>;
+}): TriggerOverrides {
+  return shape as unknown as TriggerOverrides;
+}
+
+function stepOverrides(providerData: ProviderData): TriggerOverrides {
+  return triggerOverrides({ steps: { step_1: { providers: { [PROVIDER_ID]: providerData } } } });
+}
+
+describe('combineProviderOverrides', () => {
+  it('replaces a persisted array with the step-scoped array instead of merging them by index', () => {
+    const combined = combineProviderOverrides(
+      bridge({ blocks: [{ type: 'section', text: 'a' }, { type: 'divider' }, { type: 'actions' }] }),
+      stepOverrides({ blocks: [{ type: 'header', text: 'x' }] }),
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined.blocks).to.deep.equal([{ type: 'header', text: 'x' }]);
+  });
+
+  it('lets an empty override array clear a persisted array', () => {
+    const combined = combineProviderOverrides(
+      bridge({ blocks: [{ type: 'section' }, { type: 'divider' }] }),
+      stepOverrides({ blocks: [] }),
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined.blocks).to.deep.equal([]);
+  });
+
+  it('replaces arrays nested inside objects', () => {
+    const combined = combineProviderOverrides(
+      bridge({ attachment: { elements: ['a', 'b', 'c'], color: 'good' } }),
+      stepOverrides({ attachment: { elements: ['x'] } }),
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined.attachment).to.deep.equal({ elements: ['x'], color: 'good' });
+  });
+
+  it('applies bridge < workflow-global < step-scoped precedence to arrays', () => {
+    const combined = combineProviderOverrides(
+      bridge({ blocks: ['bridge'], text: 'bridge text' }),
+      triggerOverrides({
+        providers: { [PROVIDER_ID]: { blocks: ['global'], text: 'global text' } },
+        steps: { step_1: { providers: { [PROVIDER_ID]: { blocks: ['step'] } } } },
+      }),
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined).to.deep.equal({ blocks: ['step'], text: 'global text' });
+  });
+
+  it('ignores step-scoped overrides belonging to another step', () => {
+    const combined = combineProviderOverrides(
+      bridge({ blocks: ['bridge'] }),
+      triggerOverrides({ steps: { step_2: { providers: { [PROVIDER_ID]: { blocks: ['other'] } } } } }),
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined.blocks).to.deep.equal(['bridge']);
+  });
+
+  it('keeps deep-merging non-array values', () => {
+    const combined = combineProviderOverrides(
+      bridge({ metadata: { channel: 'general', icon: ':bell:' } }),
+      stepOverrides({ metadata: { icon: ':fire:' } }),
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined.metadata).to.deep.equal({ channel: 'general', icon: ':fire:' });
+  });
+
+  it('replaces an object with an override array and an array with an override scalar', () => {
+    const combined = combineProviderOverrides(
+      bridge({ blocks: { type: 'section' }, attachments: ['a', 'b'] }),
+      stepOverrides({ blocks: ['x'], attachments: 'none' }),
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined.blocks).to.deep.equal(['x']);
+    expect(combined.attachments).to.equal('none');
+  });
+
+  it('treats an undefined override value as absent and a null one as an explicit clear', () => {
+    const combined = combineProviderOverrides(
+      bridge({ blocks: ['bridge'], attachments: ['a'] }),
+      stepOverrides({ blocks: undefined, attachments: null }),
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined.blocks).to.deep.equal(['bridge']);
+    expect(combined.attachments).to.equal(null);
+  });
+
+  it('detaches the merged arrays from the command they came from', () => {
+    const blocks = [{ type: 'section' }];
+
+    const combined = combineProviderOverrides(bridge({ blocks }), undefined, 'step_1', PROVIDER_ID);
+
+    expect(combined.blocks).to.deep.equal(blocks);
+    expect(combined.blocks).to.not.equal(blocks);
+    expect((combined.blocks as unknown[])[0]).to.not.equal(blocks[0]);
+  });
+
+  it('returns an empty object when the provider has no overrides at any layer', () => {
+    expect(combineProviderOverrides(undefined, undefined, undefined, PROVIDER_ID)).to.deep.equal({});
+    expect(combineProviderOverrides(bridge({ blocks: ['bridge'] }), undefined, undefined, 'discord')).to.deep.equal({});
+  });
+
+  it('passes Slack routing and credential keys from the persisted layer through', () => {
+    const combined = combineProviderOverrides(
+      bridge({ channel: 'C_ATTACKER', token: 'xoxb-stolen', as_user: true, text: 'hi' }),
+      undefined,
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined).to.deep.equal({ channel: 'C_ATTACKER', token: 'xoxb-stolen', as_user: true, text: 'hi' });
+  });
+
+  it('lets step-scoped Slack routing keys win over workflow-global ones', () => {
+    const combined = combineProviderOverrides(
+      bridge({ text: 'hi' }),
+      triggerOverrides({
+        providers: { [PROVIDER_ID]: { channel: 'C_GLOBAL' } },
+        steps: { step_1: { providers: { [PROVIDER_ID]: { channel: 'C_STEP' } } } },
+      }),
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined).to.deep.equal({ text: 'hi', channel: 'C_STEP' });
+  });
+
+  it('passes routing keys persisted on the step through, for schema-less providers too', () => {
+    const combined = combineProviderOverrides(
+      { providers: { discord: { content: 'hi', webhookUrl: 'https://elsewhere.example/hook' } } },
+      undefined,
+      'step_1',
+      'discord'
+    );
+
+    expect(combined).to.deep.equal({ content: 'hi', webhookUrl: 'https://elsewhere.example/hook' });
+  });
+
+  it('passes a persisted endpoint swap through while keeping ordinary object overrides', () => {
+    const combined = combineProviderOverrides(
+      bridge({
+        text: 'hi',
+        'slack-endpoint-1': { endpoint: { channelId: 'C_ATTACKER' } },
+        metadata: { event_type: 'x' },
+      }),
+      undefined,
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined).to.deep.equal({
+      text: 'hi',
+      'slack-endpoint-1': { endpoint: { channelId: 'C_ATTACKER' } },
+      metadata: { event_type: 'x' },
+    });
+  });
+
+  it('still lets a trigger-time caller choose the destination', () => {
+    const combined = combineProviderOverrides(
+      bridge({ text: 'hi' }),
+      stepOverrides({ webhookUrl: 'https://chosen.example/hook' }),
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined.webhookUrl).to.equal('https://chosen.example/hook');
+  });
+
+  it('passes reserved keys in _passthrough.body and at the top level through', () => {
+    const combined = combineProviderOverrides(
+      bridge({ channel: 'C_ATTACKER', _passthrough: { body: { channel: 'C_SMUGGLED', unfurl_links: false } } }),
+      undefined,
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined).to.deep.equal({
+      channel: 'C_ATTACKER',
+      _passthrough: { body: { channel: 'C_SMUGGLED', unfurl_links: false } },
+    });
+  });
+
+  describe('integration overrides', () => {
+    const INTEGRATION_ID = 'slack-eu';
+
+    function bridgeWithIntegrations(providerData: ProviderData, integrationOverrides: Record<string, ProviderData>) {
+      return bridge({ ...providerData, [INTEGRATION_OVERRIDES_OUTPUT_KEY]: integrationOverrides });
+    }
+
+    it('merges the integration blob over the provider blob for sends through that integration', () => {
+      const combined = combineProviderOverrides(
+        bridgeWithIntegrations(
+          { text: 'provider text', metadata: { channel: 'general', icon: ':bell:' } },
+          {
+            [INTEGRATION_ID]: { text: 'eu text', metadata: { icon: ':eu:' } },
+            'slack-us': { text: 'us text' },
+          }
+        ),
+        undefined,
+        'step_1',
+        PROVIDER_ID,
+        INTEGRATION_ID
+      );
+
+      expect(combined).to.deep.equal({ text: 'eu text', metadata: { channel: 'general', icon: ':eu:' } });
+    });
+
+    it('replaces a provider-blob array with the integration-blob array', () => {
+      const combined = combineProviderOverrides(
+        bridgeWithIntegrations({ blocks: ['a', 'b', 'c'] }, { [INTEGRATION_ID]: { blocks: ['eu'] } }),
+        undefined,
+        'step_1',
+        PROVIDER_ID,
+        INTEGRATION_ID
+      );
+
+      expect(combined).to.deep.equal({ blocks: ['eu'] });
+    });
+
+    it('lets workflow-global and step-scoped trigger overrides win over the integration blob', () => {
+      const combined = combineProviderOverrides(
+        bridgeWithIntegrations(
+          { text: 'provider text' },
+          { [INTEGRATION_ID]: { text: 'eu text', color: 'eu', icon: 'eu', blocks: ['eu'] } }
+        ),
+        triggerOverrides({
+          providers: { [PROVIDER_ID]: { color: 'global' } },
+          steps: { step_1: { providers: { [PROVIDER_ID]: { icon: 'step', blocks: ['step'] } } } },
+        }),
+        'step_1',
+        PROVIDER_ID,
+        INTEGRATION_ID
+      );
+
+      expect(combined).to.deep.equal({ text: 'eu text', color: 'global', icon: 'step', blocks: ['step'] });
+    });
+
+    it('applies only the provider blob when the identifier matches no integration override', () => {
+      const combined = combineProviderOverrides(
+        bridgeWithIntegrations({ text: 'provider text' }, { 'slack-us': { text: 'us text' } }),
+        undefined,
+        'step_1',
+        PROVIDER_ID,
+        INTEGRATION_ID
+      );
+
+      expect(combined).to.deep.equal({ text: 'provider text' });
+    });
+
+    it('strips the reserved key when no integration identifier is passed', () => {
+      const combined = combineProviderOverrides(
+        bridgeWithIntegrations({ text: 'provider text' }, { [INTEGRATION_ID]: { text: 'eu text' } }),
+        undefined,
+        'step_1',
+        PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ text: 'provider text' });
+    });
+
+    it('ignores an integration override that is not an object', () => {
+      const combined = combineProviderOverrides(
+        bridge({ text: 'provider text', [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { [INTEGRATION_ID]: 'eu text' } }),
+        undefined,
+        'step_1',
+        PROVIDER_ID,
+        INTEGRATION_ID
+      );
+
+      expect(combined).to.deep.equal({ text: 'provider text' });
+    });
+
+    it('neither applies nor forwards the reserved key when a trigger override carries it', () => {
+      const combined = combineProviderOverrides(
+        bridge({ text: 'provider text' }),
+        triggerOverrides({
+          providers: {
+            [PROVIDER_ID]: { [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { [INTEGRATION_ID]: { text: 'global smuggled' } } },
+          },
+          steps: {
+            step_1: {
+              providers: {
+                [PROVIDER_ID]: { [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { [INTEGRATION_ID]: { text: 'step smuggled' } } },
+              },
+            },
+          },
+        }),
+        'step_1',
+        PROVIDER_ID,
+        INTEGRATION_ID
+      );
+
+      expect(combined).to.deep.equal({ text: 'provider text' });
+    });
+  });
+
+  describe('exclusive FCM routing-key groups', () => {
+    it('evicts bridge topic when trigger providers set tokens', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: 'a', notification: { body: 'x' } }),
+        triggerOverrides({ providers: { [FCM_PROVIDER_ID]: { tokens: ['t1'] } } }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ tokens: ['t1'], notification: { body: 'x' } });
+    });
+
+    it('evicts workflow-global tokens and bridge topic when step-scoped sets topic', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: 'bridge-topic', notification: { title: 'hi' } }),
+        triggerOverrides({
+          providers: { [FCM_PROVIDER_ID]: { tokens: ['t1'], data: { from: 'global' } } },
+          steps: { step_1: { providers: { [FCM_PROVIDER_ID]: { topic: 'step-topic' } } } },
+        }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({
+        topic: 'step-topic',
+        notification: { title: 'hi' },
+        data: { from: 'global' },
+      });
+    });
+
+    it('keeps bridge topic when the trigger sets an empty topic', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: 'orders' }),
+        triggerOverrides({ providers: { [FCM_PROVIDER_ID]: { topic: '' } } }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ topic: 'orders' });
+    });
+
+    it('keeps bridge topic when the trigger sets an empty tokens array', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: 'orders' }),
+        triggerOverrides({ providers: { [FCM_PROVIDER_ID]: { tokens: [] } } }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ topic: 'orders' });
+    });
+
+    it('still evicts bridge topic when the trigger tokens are usable', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: 'orders' }),
+        triggerOverrides({ providers: { [FCM_PROVIDER_ID]: { tokens: ['t1'] } } }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ tokens: ['t1'] });
+    });
+
+    it('falls through an unusable step-scoped value to the workflow-global claim', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: 'bridge-topic' }),
+        triggerOverrides({
+          providers: { [FCM_PROVIDER_ID]: { tokens: ['t1'] } },
+          steps: { step_1: { providers: { [FCM_PROVIDER_ID]: { topic: '' } } } },
+        }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ tokens: ['t1'] });
+    });
+
+    it('drops the group entirely when no layer has a usable routing value', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: '', notification: { body: 'x' } }),
+        triggerOverrides({ providers: { [FCM_PROVIDER_ID]: { tokens: [] } } }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ notification: { body: 'x' } });
+    });
+
+    it('keeps bridge topic when the trigger has no routing keys', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: 'a' }),
+        triggerOverrides({ providers: { [FCM_PROVIDER_ID]: { data: { k: 'v' } } } }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ topic: 'a', data: { k: 'v' } });
+    });
+
+    it('still deep-merges non-routing keys across layers', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, {
+          topic: 'a',
+          notification: { title: 'bridge', body: 'bridge-body' },
+          data: { keep: true },
+        }),
+        triggerOverrides({
+          providers: {
+            [FCM_PROVIDER_ID]: {
+              tokens: ['t1'],
+              notification: { body: 'trigger-body' },
+              data: { added: 'yes' },
+            },
+          },
+        }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({
+        tokens: ['t1'],
+        notification: { title: 'bridge', body: 'trigger-body' },
+        data: { keep: true, added: 'yes' },
+      });
+    });
+
+    it('leaves providers without exclusive groups unchanged', () => {
+      const combined = combineProviderOverrides(
+        bridge({ channel: 'C_BRIDGE', text: 'hi', metadata: { a: 1 } }),
+        triggerOverrides({
+          providers: { [PROVIDER_ID]: { token: 'xoxb-global' } },
+          steps: { step_1: { providers: { [PROVIDER_ID]: { channel: 'C_STEP', metadata: { b: 2 } } } } },
+        }),
+        'step_1',
+        PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({
+        channel: 'C_STEP',
+        text: 'hi',
+        token: 'xoxb-global',
+        metadata: { a: 1, b: 2 },
+      });
+    });
+
+    it('lets an integration override claim the routing group over the provider blob', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, {
+          topic: 'provider-topic',
+          [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'fcm-prod': { tokens: ['t1'] } },
+        }),
+        undefined,
+        'step_1',
+        FCM_PROVIDER_ID,
+        'fcm-prod'
+      );
+
+      expect(combined).to.deep.equal({ tokens: ['t1'] });
+    });
+  });
+});

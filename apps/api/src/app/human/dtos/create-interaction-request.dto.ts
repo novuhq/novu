@@ -1,0 +1,144 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  HUMAN_INTERACTION_MAX_TTL_SECONDS,
+  HumanChannelViaEnum,
+  HumanInteractionKindEnum,
+  type HumanOptionInput,
+} from '@novu/shared';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+  Validate,
+  ValidateNested,
+} from 'class-validator';
+import { IsValidHumanTo } from '../validators/is-valid-human-to';
+
+export class HumanInteractionCardDto {
+  @ApiProperty({ description: 'Card title. Required. Shown on every channel.' })
+  @IsString()
+  @MaxLength(4000)
+  title: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Slack only. MCP catalog id (`stripe`, `github`) or display name, or an https URL (32×32). Ignored on other channels.',
+  })
+  @IsOptional()
+  @IsString()
+  icon?: string;
+
+  @ApiPropertyOptional({ description: 'Secondary line under the title. Shown on every channel.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  subtitle?: string;
+
+  @ApiPropertyOptional({ description: 'Optional details under the subtitle. Shown on every channel.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  body?: string;
+
+  @ApiPropertyOptional({ description: 'Approve button label. Defaults to Approve.' })
+  @IsOptional()
+  @IsString()
+  approveLabel?: string;
+
+  @ApiPropertyOptional({ description: 'Deny button label. Defaults to Deny.' })
+  @IsOptional()
+  @IsString()
+  denyLabel?: string;
+
+  @ApiPropertyOptional({
+    description: 'Extra approve buttons after Approve / Deny (max 4). Do not invent trust-tool or trust-server.',
+  })
+  @IsOptional()
+  @IsArray()
+  extraActions?: HumanOptionInput[];
+
+  @ApiPropertyOptional({ description: 'Choose options (2–10). String label or `{ id, label }`.' })
+  @IsOptional()
+  @IsArray()
+  options?: HumanOptionInput[];
+}
+
+export class CreateInteractionRequestDto {
+  @ApiProperty({ enum: HumanInteractionKindEnum, description: 'Interaction verb.' })
+  @IsEnum(HumanInteractionKindEnum)
+  kind: HumanInteractionKindEnum;
+
+  @ApiProperty({ description: 'Kind-specific card. `title` is required. Choose must set `card.options` (2–10).' })
+  @IsObject()
+  @ValidateNested()
+  @Type(() => HumanInteractionCardDto)
+  card: HumanInteractionCardDto;
+
+  @ApiPropertyOptional({
+    description:
+      'subscriberId of the contact to reach, or an array of subscriberIds. Any listed subscriber may settle (first valid answer wins). Without `thread` it starts a new thread with each of them; with `thread` it limits who may answer. Required unless `thread` is set.',
+    oneOf: [
+      { type: 'string', example: 'alice' },
+      { type: 'array', items: { type: 'string' }, example: ['alice', 'bob'] },
+    ],
+  })
+  @IsOptional()
+  @Validate(IsValidHumanTo)
+  to?: string | string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Identifier of the inbox thread to send into. The contact the thread belongs to may answer, unless `to` or `anyoneMayAnswer` says otherwise. Cannot be combined with `via`.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  thread?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Let anyone in the thread answer, including people who are not contacts. Needs `thread` and cannot be combined with `to`.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  anyoneMayAnswer?: boolean;
+
+  @ApiPropertyOptional({
+    enum: HumanChannelViaEnum,
+    description:
+      'Delivery channel preference. Required when the human is reachable on more than one linked channel; otherwise the sole linked channel is used.',
+  })
+  @IsOptional()
+  @IsEnum(HumanChannelViaEnum)
+  via?: HumanChannelViaEnum;
+
+  @ApiPropertyOptional({
+    description: 'Identifier of the agent that sends the DM. Defaults to `human-relay`.',
+  })
+  @IsOptional()
+  @IsString()
+  agentIdentifier?: string;
+
+  @ApiPropertyOptional({ description: 'Attribution label of the calling agent, rendered in the message.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  from?: string;
+
+  @ApiPropertyOptional({
+    description: `Seconds until the interaction expires. Default 86400 (24h), max ${HUMAN_INTERACTION_MAX_TTL_SECONDS}.`,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(60)
+  @Max(HUMAN_INTERACTION_MAX_TTL_SECONDS)
+  ttlSeconds?: number;
+}

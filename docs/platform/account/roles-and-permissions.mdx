@@ -1,0 +1,63 @@
+---
+title: 'Roles and permissions'
+description: "Learn how roles and permissions work in Novu organizations. Assign admin, developer, or viewer roles to control who can edit workflows and integrations."
+---
+export const AccessWrite = () => <Badge icon="check" color="green" size="sm">Write</Badge>;
+export const AccessRead = () => <Badge icon="eye" color="blue" size="sm" stroke>Read</Badge>;
+export const AccessNone = () => <Badge icon="ban" color="gray" size="sm" stroke disabled>-</Badge>;
+
+Novu uses a role-based access control (RBAC) model at the [organization level](/platform/account/organizations). Each member in the organization is assigned a role that determines the actions they can perform within the Novu dashboard. Every user can belong to more than one organization, each with separate configurations and permissions.
+
+When you invite a team member to your organization, you can assign them a role that determines the actions they can perform within that organization. You can later update their role from the [Team section](https://dashboard.novu.co/settings/team) in your organization settings.
+These permissions are valid only on the actions performed on the Novu dashboard. Secret Keys are scoped to the whole environment and not to a specific role. If a viewer role member has access to the secret key that member can perform all possible actions on the environment.
+
+<Note>
+  This feature is available to users on the Team and Enterprise pricing plans, and it is supported on both the new dashboard and the legacy dashboard.
+</Note>
+
+## Roles
+
+<Columns cols={4}>
+  <Card title="Owner" icon="crown" description="Full access, including billing." />
+  <Card title="Admin" icon="shield" description="Operations and org settings. No billing." />
+  <Card title="Author" icon="pen-line" description="Build workflows and trigger events." />
+  <Card title="Viewer" icon="eye" description="Read-only dashboard access." />
+</Columns>
+
+## Permissions matrix
+
+Compare access across roles at a glance.
+
+| Permission | Viewer | Author | Admin | Owner |
+| --- | --- | --- | --- | --- |
+| **Workflows and delivery** | | | | |
+| Create and manage workflows | <AccessRead /> | <AccessWrite /> | <AccessWrite /> | <AccessWrite /> |
+| Create and manage messages | <AccessRead /> | <AccessRead /> | <AccessWrite /> | <AccessWrite /> |
+| Create and manage topics | <AccessRead /> | <AccessWrite /> | <AccessWrite /> | <AccessWrite /> |
+| Trigger events | <AccessNone /> | <AccessWrite /> | <AccessWrite /> | <AccessWrite /> |
+| View activity feed logs | <AccessRead /> | <AccessRead /> | <AccessRead /> | <AccessRead /> |
+| Environment variables | <AccessRead /> | <AccessWrite /> | <AccessWrite /> | <AccessWrite /> |
+| **Agents** | | | | |
+| View agents | <AccessRead /> | <AccessRead /> | <AccessRead /> | <AccessRead /> |
+| Create and manage agents | <AccessNone /> | <AccessWrite /> | <AccessWrite /> | <AccessWrite /> |
+| **Integrations and webhooks** | | | | |
+| Manage integrations | <AccessRead /> | <AccessWrite /> | <AccessWrite /> | <AccessWrite /> |
+| Create and manage webhooks | <AccessNone /> | <AccessNone /> | <AccessWrite /> | <AccessWrite /> |
+| Manage bridges | <AccessNone /> | <AccessWrite /> | <AccessWrite /> | <AccessWrite /> |
+| Manage partner integrations | <AccessNone /> | <AccessNone /> | <AccessWrite /> | <AccessWrite /> |
+| **Subscribers and agents** | | | | |
+| Manage subscribers | <AccessRead /> | <AccessWrite /> | <AccessWrite /> | <AccessWrite /> |
+| **Organization and billing** | | | | |
+| Create and manage environments | <AccessNone /> | <AccessNone /> | <AccessWrite /> | <AccessWrite /> |
+| Manage API keys | <AccessNone /> | <AccessNone /> | <AccessWrite /> | <AccessWrite /> |
+| Manage custom domains | <AccessNone /> | <AccessNone /> | <AccessWrite /> | <AccessWrite /> |
+| Manage organization metadata | <AccessNone /> | <AccessNone /> | <AccessWrite /> | <AccessWrite /> |
+| Manage organization profile | <AccessNone /> | <AccessNone /> | <AccessWrite /> | <AccessWrite /> |
+| View and manage team members | <AccessRead /> | <AccessRead /> | <AccessWrite /> | <AccessWrite /> |
+| Manage billing | <AccessNone /> | <AccessNone /> | <AccessNone /> | <AccessWrite /> |
+
+## Billing access
+
+On Novu Cloud, every member can open **Settings → Billing**, but only **Owners** can view plans, change subscriptions, and manage payment methods. Other roles see a restricted-state message with links to team settings and this permissions matrix.
+
+If you need someone on your team to manage invoices or payment methods, assign them the **Owner** role from [Team settings](https://dashboard.novu.co/settings/team). See [Billing](/platform/account/billing) for plan management and invoice FAQs.

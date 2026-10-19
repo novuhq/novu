@@ -2,7 +2,7 @@
   "extends": "apps/api/tsconfig.json",
   "compilerOptions": {
     "strictNullChecks": false,
-    "types": ["mocha", "node"],
+    "types": ["node", "mocha"],
     "esModuleInterop": false
   }
 }

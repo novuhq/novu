@@ -1,13 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { ApiRateLimitAlgorithmEnum } from '@novu/shared';
-import { EvaluateApiRateLimitCommand } from './evaluate-api-rate-limit.command';
-import { GetApiRateLimitMaximum, GetApiRateLimitMaximumCommand } from '../get-api-rate-limit-maximum';
-import { InstrumentUsecase, buildEvaluateApiRateLimitKey } from '@novu/application-generic';
-import { GetApiRateLimitAlgorithmConfig } from '../get-api-rate-limit-algorithm-config';
-import { EvaluateApiRateLimitResponseDto } from './evaluate-api-rate-limit.types';
-import { EvaluateTokenBucketRateLimit } from '../evaluate-token-bucket-rate-limit/evaluate-token-bucket-rate-limit.usecase';
-import { GetApiRateLimitCostConfig } from '../get-api-rate-limit-cost-config';
+import { buildEvaluateApiRateLimitKey, InstrumentUsecase } from '@novu/application-generic';
+import {
+  ApiRateLimitAlgorithmEnum,
+  ApiServiceLevelEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsNumber,
+} from '@novu/shared';
 import { EvaluateTokenBucketRateLimitCommand } from '../evaluate-token-bucket-rate-limit/evaluate-token-bucket-rate-limit.command';
+import { EvaluateTokenBucketRateLimit } from '../evaluate-token-bucket-rate-limit/evaluate-token-bucket-rate-limit.usecase';
+import { GetApiRateLimitAlgorithmConfig } from '../get-api-rate-limit-algorithm-config';
+import { GetApiRateLimitCostConfig } from '../get-api-rate-limit-cost-config';
+import { GetApiRateLimitMaximum, GetApiRateLimitMaximumCommand } from '../get-api-rate-limit-maximum';
+import type { ApiServiceLevel } from '../get-api-rate-limit-maximum/get-api-rate-limit-maximum.dto';
+import { EvaluateApiRateLimitCommand } from './evaluate-api-rate-limit.command';
+import { EvaluateApiRateLimitResponseDto } from './evaluate-api-rate-limit.types';
 
 @Injectable()
 export class EvaluateApiRateLimit {
@@ -20,13 +26,21 @@ export class EvaluateApiRateLimit {
 
   @InstrumentUsecase()
   async execute(command: EvaluateApiRateLimitCommand): Promise<EvaluateApiRateLimitResponseDto> {
-    const [maxLimitPerSecond, apiServiceLevel] = await this.getApiRateLimitMaximum.execute(
-      GetApiRateLimitMaximumCommand.create({
-        apiRateLimitCategory: command.apiRateLimitCategory,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-      })
-    );
+    let maxLimitPerSecond: number;
+    let apiServiceLevel: ApiServiceLevel;
+
+    if (!command.organizationId || !command.environmentId || command.isKeyless) {
+      maxLimitPerSecond = 3000;
+      apiServiceLevel = ApiServiceLevelEnum.ENTERPRISE;
+    } else {
+      [maxLimitPerSecond, apiServiceLevel] = await this.getApiRateLimitMaximum.execute(
+        GetApiRateLimitMaximumCommand.create({
+          apiRateLimitCategory: command.apiRateLimitCategory,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        })
+      );
+    }
 
     const windowDuration = this.getApiRateLimitAlgorithmConfig.default[ApiRateLimitAlgorithmEnum.WINDOW_DURATION];
     const burstAllowance = this.getApiRateLimitAlgorithmConfig.default[ApiRateLimitAlgorithmEnum.BURST_ALLOWANCE];
@@ -35,9 +49,12 @@ export class EvaluateApiRateLimit {
     const refillRate = this.getRefillRate(maxLimitPerSecond, windowDuration);
     const burstLimit = this.getBurstLimit(maxTokensPerWindow, burstAllowance);
 
+    // For keyless authentication, we'll use both environment and IP-based rate limiting
     const identifier = buildEvaluateApiRateLimitKey({
-      _environmentId: command.environmentId,
-      apiRateLimitCategory: command.apiRateLimitCategory,
+      _environmentId: command.environmentId || 'keyless_env',
+      apiRateLimitCategory: command.ip
+        ? `${command.apiRateLimitCategory}:ip=${command.ip}`
+        : command.apiRateLimitCategory,
     });
 
     const { success, remaining, reset } = await this.evaluateTokenBucketRateLimit.execute(

@@ -1,0 +1,97 @@
+---
+title: "Migrate from the Legacy Dashboard to the New Dashboard"
+sidebarTitle: "Migration overview"
+description: "Plan and execute a controlled migration from legacy Novu workflows to the new Dashboard without changing the notifications delivered to subscribers."
+---
+
+This guide covers the migration of workflows created in the legacy Dashboard to workflows that use the current Dashboard and workflow engine.
+
+The migration creates new workflows instead of converting the existing workflows in place. You validate the new workflows in Development, publish them to Production, copy subscriber preferences, and then update your application to trigger the new workflow IDs.
+
+Because the legacy and new workflows use different workflow IDs in the same environment, they run side by side. The legacy workflows stay active and keep serving traffic until your application deploy switches the workflow IDs, so the migration requires no notification downtime and no maintenance window. Legacy workflows are deactivated or deleted later, as a separate change.
+
+<Note>
+  This guide covers cloud organizations that move from the legacy Dashboard to the new Dashboard. If you operate a self-hosted v0 installation, follow the [self-hosted v0 to v2 migration guide](/community/self-hosting-novu/v0-to-v2-migration).
+</Note>
+
+## Migration goals
+
+A successful migration preserves subscriber-facing behavior while moving workflow configuration to the current data model.
+
+- Every production legacy workflow has a corresponding new workflow.
+- Each channel delivers equivalent content and uses the intended provider.
+- Step order, conditions, delays, digests, and subscriber preferences continue to produce the intended behavior.
+- Your application triggers only the new workflow IDs after cutover.
+- Applications that display in-app notifications use the current Inbox SDK.
+
+## Terminology
+
+This guide uses the following terms:
+
+| Term | Meaning |
+| --- | --- |
+| Legacy workflow | A workflow created in the legacy Dashboard and executed by the legacy workflow engine. |
+| New workflow | A workflow created for the current Dashboard and workflow engine. |
+| Legacy workflow ID | The trigger identifier used by your application before migration. |
+| New workflow ID | The trigger identifier of the replacement workflow. A common convention is the legacy identifier with a `-v2` suffix. |
+| Development | The environment where you inspect, edit, and test the new workflows. |
+| Production | The environment that serves production traffic. Workflow, layout, and translation changes are published to this environment. |
+
+## Before you start
+
+Assign an owner from application engineering and an owner who can approve notification content. Include a team member with permission to publish workflows to Production.
+
+Collect the following information before validation:
+
+- Every legacy production workflow ID and the source locations that trigger it
+- The channel and action steps in each workflow, in execution order
+- Step conditions and variant conditions
+- Payload examples from real application calls
+- Handlebars expressions and Novu-specific helpers used by each template
+- Layout assignments, layout variables, and trigger-time layout overrides
+- Translation groups, locale files, and subscriber locale formats
+- Tenant-based content, workflow preference overrides, and provider routing
+- Subscriber preferences that must be copied
+- In-app feeds and the client applications that consume them
+- Environment-specific integrations, API keys, webhooks, subscribers, and topics
+- Expected provider, rendered content, and delivery behavior for at least one test case per path
+
+Do not change production trigger identifiers during the validation phase.
+
+## Migration stages
+
+### Pre-migration preparation
+
+Each legacy Production workflow needs an inactive replacement workflow in Development. The replacement normally keeps the workflow name, uses the legacy workflow ID with a `-v2` suffix, and reproduces the step order, content, conditions, and an initial payload schema.
+
+A replacement workflow that mirrors the legacy definition is a starting point. It does not prove behavioral equivalence.
+
+### Phase 1: Convert and validate
+
+Use the [feature comparison](/guides/migration-to-new-dashboard/feature-comparison) to find migration-blocking differences. Then follow [Convert legacy workflows](/guides/migration-to-new-dashboard/workflow-conversion) to rebuild payload contracts, templates, variants, layouts, translations, conditions, and tenant behavior.
+
+Keep replacement workflows inactive in Development except during controlled tests. Record the payload, subscriber, condition path, rendered output, provider result, and reviewer for each test. Legacy workflows are unaffected by this work because Development and Production are separate environments.
+
+Migrate every in-app client before cutover. Use the [Inbox migration guide](/platform/inbox/migration-guide#choose-the-inbox-package) for React, Angular, Vue, and Vanilla JS, then complete the [application and cutover](/guides/migration-to-new-dashboard/application-and-cutover#migrate-from-notification-center-to-inbox) checks.
+
+### Phase 2: Publish and cut over
+
+Follow the single [production cutover runbook](/guides/migration-to-new-dashboard/application-and-cutover#create-a-cutover-runbook) to publish resources, activate the replacement workflows, copy preferences, deploy the new workflow IDs, and verify Production while the legacy workflows remain active.
+
+Retire the legacy workflows only after the stabilization period described in [Retire the legacy workflows](/guides/migration-to-new-dashboard/application-and-cutover#retire-the-legacy-workflows).
+
+The authoritative [rollback procedure](/guides/migration-to-new-dashboard/application-and-cutover#roll-back-safely) is maintained with that runbook.
+
+## Continue the migration
+
+<Columns cols={2}>
+  <Card title="Compare legacy and new features" href="/guides/migration-to-new-dashboard/feature-comparison">
+    Identify every behavior that is preserved, replaced, added, plan-dependent, or no longer available.
+  </Card>
+  <Card title="Convert workflow configuration" href="/guides/migration-to-new-dashboard/workflow-conversion">
+    Convert schemas, variables, Handlebars, variants, layouts, translations, conditions, and action steps.
+  </Card>
+  <Card title="Migrate the app and cut over" href="/guides/migration-to-new-dashboard/application-and-cutover">
+    Update Inbox code, publish resources, copy preferences, switch workflow IDs, and verify Production.
+  </Card>
+</Columns>

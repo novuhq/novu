@@ -1,0 +1,348 @@
+---
+title: "Convert Legacy Workflows for the New Dashboard"
+sidebarTitle: "Convert workflows"
+description: "Convert legacy Novu payload variables, Handlebars templates, variants, layouts, translations, conditions, tenants, and action steps to the new workflow model."
+---
+
+Convert one workflow at a time. Start from a captured legacy definition and finish with test evidence for every execution path.
+
+## Build the payload contract first
+
+Legacy workflows accepted payload variables without a declared workflow schema. The new Dashboard uses the payload schema to make fields available to templates, conditions, grouping keys, and dynamic action-step settings.
+
+<Warning>
+  A payload schema and schema enforcement are separate controls. You must declare a payload field before using it as a Dashboard variable. You can leave enforcement disabled while callers are being updated, but an undeclared field is not a substitute for a migration plan.
+</Warning>
+
+For each legacy workflow:
+
+1. Capture successful production payloads from every trigger producer.
+2. List each field referenced by content, conditions, variants, delay or digest configuration, and provider overrides.
+3. Resolve inconsistent types. For example, do not define `orderId` as an integer if one producer sends it as a string.
+4. Add nested objects and array item types.
+5. Mark a field required only if every valid trigger must provide it.
+6. Add defaults only when a missing value has an unambiguous meaning.
+7. Import a representative JSON object or create the properties in **Manage workflow schema**.
+8. Preview the workflow with minimum and maximum valid values.
+9. Enable schema enforcement after all trigger producers conform.
+
+For example, a legacy trigger payload:
+
+```json
+{
+  "orderId": "order-123",
+  "customerTier": "gold",
+  "items": [
+    {
+      "name": "Keyboard",
+      "quantity": 1
+    }
+  ]
+}
+```
+
+should define `orderId` as a string, `customerTier` as an enum or string, and `items` as an array of objects with typed `name` and `quantity` properties.
+
+See [Configure workflow](/platform/workflow/configure-workflow#payload-schema) for supported schema types and constraints.
+
+## Convert Handlebars to LiquidJS
+
+Do not perform a global brace replacement. Handlebars helpers and Liquid tags have different parsing, scoping, truthiness, and formatting behavior.
+
+### Variable paths
+
+| Legacy expression | Current expression | Notes |
+| --- | --- | --- |
+| `{{orderId}}` | `{{ payload.orderId }}` | Declare `orderId` in the payload schema. |
+| `{{subscriber.firstName}}` | `{{ subscriber.firstName }}` | The namespace remains, but verify null behavior. |
+| `{{subscriber.data.plan}}` | `{{ subscriber.data.plan }}` | Custom subscriber data remains under `data`. |
+| `{{tenant.data.logo}}` | `{{ context.tenant.data.logo }}` | The exact path depends on the context key and data shape you create. |
+| `{{step.events}}` | `{{ steps.digest-step.events }}` | Replace `digest-step` with the actual Digest step ID. |
+| `{{step.total_count}}` | `{{ steps.digest-step.eventCount }}` | The current name uses `eventCount`. |
+| `{{branding.logo}}` | `{{ context.brand.data.logo }}` or `{{ env.BRAND_LOGO_URL }}` | Choose context for reusable tenant data or an environment variable for environment-wide configuration. |
+
+### Conditions and loops
+
+<CodeGroup>
+```handlebars title="Legacy Handlebars"
+{{#if showDiscount}}
+  Save {{discountPercent}}%
+{{else}}
+  View your order
+{{/if}}
+```
+
+```liquid title="Current LiquidJS"
+{% if payload.showDiscount %}
+  Save {{ payload.discountPercent }}%
+{% else %}
+  View your order
+{% endif %}
+```
+</CodeGroup>
+
+<CodeGroup>
+```handlebars title="Legacy Handlebars"
+{{#each items}}
+  {{@index}}: {{this.name}}
+{{/each}}
+```
+
+```liquid title="Current LiquidJS"
+{% for item in payload.items %}
+  {{ forloop.index0 }}: {{ item.name }}
+{% endfor %}
+```
+</CodeGroup>
+
+When comparing string values, use single quotes in Liquid conditions:
+
+```liquid
+{% if payload.customerTier == 'gold' %}
+  Priority support is included.
+{% endif %}
+```
+
+Do not assume every Novu-specific Handlebars helper has a direct Liquid equivalent. Use the documented Liquid filters for case conversion, dates, numbers, and pluralization. Precompute a display-ready value in application code when exact output parity is not available. In particular, redesign templates that depend on legacy `groupBy`, implicit `with` context, or different date-format tokens.
+
+Use the variable picker where possible. It inserts the current namespace and reduces errors caused by renamed fields. See [Personalize content](/platform/workflow/add-notification-content/personalize-content) for the supported namespaces, conditions, loops, and filters.
+
+### Choose the email editing model
+
+The code editor accepts Liquid variables, tags, and filters directly in HTML. The block editor stores structured nodes and inserts variables through its variable controls. Some block attributes use selected variable paths rather than handwritten `{{ ... }}` expressions.
+
+For an exact legacy HTML migration:
+
+1. Start with the code editor.
+2. Convert Handlebars to LiquidJS in the source.
+3. Compare the rendered HTML and text output with the legacy message.
+
+Use the block editor when you intend to rebuild the email as structured content. Configure Repeat, Digest, and conditional blocks through their controls. Do not paste code-editor Liquid into every block attribute and assume it has the same representation.
+
+Switching editor modes can reset content. Back up the migrated source before changing modes.
+
+## Replace variants with conditional flow
+
+Legacy variants selected alternate content or configuration inside one step. The new editor models each alternative as an independent step with its own condition.
+
+Assume a legacy Email step has:
+
+- A Gold variant when `customerTier` equals `gold`
+- A Silver variant when `customerTier` equals `silver`
+- A root variant for every other value
+
+Create three Email steps:
+
+The expressions below describe rules in the Dashboard condition builder. They are not Liquid template syntax.
+
+| Step ID | Condition | Content |
+| --- | --- | --- |
+| `email-gold` | `payload.customerTier = "gold"` | Content from the Gold variant |
+| `email-silver` | `payload.customerTier = "silver"` | Content from the Silver variant |
+| `email-default` | `payload.customerTier not in ["gold", "silver"]` | Content from the root variant |
+
+All three steps are evaluated in sequence. Their conditions must be mutually exclusive. Otherwise, one trigger can execute more than one replacement step.
+
+<Warning>
+  Include missing or null values in the fallback design. A `not in` rule might not match a missing property. If the field is required, enforce it in the payload schema. If it is optional, test a trigger that omits it and add an explicit fallback condition supported by the field type.
+</Warning>
+
+Apply the same pattern to variants of action steps:
+
+- A legacy Delay variant becomes a separate conditional Delay step.
+- A legacy Digest variant becomes a separate conditional Digest path.
+- All downstream steps must have conditions that prevent execution after the wrong action path.
+
+For complex variant trees, separate workflows are often easier to verify than a long linear sequence of duplicated conditional steps. Choose separate workflows when the paths have different step order, different action semantics, or independent ownership.
+
+## Convert step conditions
+
+Recreate conditions from their intent, not only their labels.
+
+### Payload and subscriber conditions
+
+Map legacy fields to current namespaced fields:
+
+- Payload: `payload.<declared-property>`
+- Standard subscriber fields: `subscriber.firstName`, `subscriber.email`, `subscriber.locale`, or another supported field
+- Custom subscriber fields: `subscriber.data.<property>`
+
+The current condition builder supports nested `AND` and `OR` groups. Match the legacy grouping exactly and test boundary values for numeric, range, empty, null, `in`, and string operators.
+
+### Webhook response conditions
+
+Replace a legacy webhook condition with:
+
+1. An HTTP step before the dependent steps
+2. A response schema that declares every consumed field
+3. A condition that reads `steps.<http-step-id>.<response-field>`
+4. An explicit failure policy
+
+If the old webhook returned `{ "eligible": true }`, a later Email step can use a condition on `steps.check-eligibility.eligible`.
+
+Test timeout, non-2xx, malformed response, and false-result paths. A successful preview request does not create Activity feed evidence, so also run the complete workflow.
+
+### Previous message state
+
+For fallback delivery:
+
+1. Send the in-app step.
+2. Add enough Delay time for the subscriber to interact.
+3. Add a condition to the later step using the exact ID of the in-app step.
+4. Test read, unread, seen, and unseen outcomes independently.
+
+Do not rename referenced step IDs without updating every template and condition that consumes their results.
+
+## Migrate email layouts
+
+Legacy layouts and current layouts have different content contracts.
+
+| Concern | Legacy layout | Current layout |
+| --- | --- | --- |
+| Email content insertion | `{{{body}}}` | `{{content}}` |
+| Available variables | Layout variables could include payload-style values configured on the layout | Only `subscriber`, `context`, `env`, and `content` are available. `payload`, `steps`, and `workflow` are not supported. |
+| Selection | Organization default, step assignment, and legacy trigger-time layout override | Select a layout or no layout on each Email step |
+| Editing | HTML-focused legacy editor | Block editor or code editor |
+| Translations | Referenced external translation groups | Enabled and managed on the layout |
+
+Use this conversion order:
+
+1. Copy the legacy HTML to a backup file.
+2. Replace `{{{body}}}` with `{{content}}`.
+3. Find every payload or tenant-dependent expression.
+4. Move workflow payload-dependent markup into the Email step.
+5. Replace stable global values with static layout content.
+6. Replace environment-specific values with `env.*`.
+7. Replace reusable tenant or brand values with `context.*`.
+8. Convert remaining Handlebars expressions to LiquidJS.
+9. Enable and migrate layout translations if the layout contains localized text.
+10. Select the layout explicitly on every migrated Email step.
+11. Preview long content, empty optional fields, mobile width, links, images, and dark-mode-sensitive styles.
+
+If legacy triggers choose `layoutIdentifier` dynamically, decide whether to use separate conditional Email steps or separate workflows. Do not leave the legacy override in application code without proving that the current delivery path supports the intended result.
+
+See [Email layouts](/platform/workflow/add-notification-content/channels-template-editors#email-layouts).
+
+## Migrate translations
+
+Legacy translation groups were independent resources referenced with the `i18n` Handlebars helper. Current translations belong to a workflow or layout and use the `t` namespace.
+
+Example:
+
+<CodeGroup>
+```handlebars title="Legacy Handlebars"
+{{i18n "marketing.welcome_message"}}
+```
+
+```liquid title="Current LiquidJS"
+{{t.welcome_message}}
+```
+</CodeGroup>
+
+For each group:
+
+1. Identify which workflows and layouts use the group.
+2. Copy the required keys into each owning workflow or layout.
+3. Remove the legacy group prefix from expressions when it is no longer part of the current JSON key path.
+4. Rewrite helper parameters and nested variables using LiquidJS.
+5. Rename files to `language_REGION.json`.
+6. Set the default and target locales.
+7. Import the default locale, then each target locale.
+8. Preview with subscribers that have each locale.
+9. Test fallback behavior for missing keys and unsupported locales.
+10. Publish translation resources with their workflows and layouts.
+
+An edit to the default locale can mark target locales outdated. Resolve outdated translations before Production publication.
+
+See [Translations](/platform/workflow/advanced-features/translations).
+
+## Replace tenants with contexts
+
+Map each legacy tenant use separately:
+
+| Legacy tenant use | Current replacement |
+| --- | --- |
+| `tenant.data.*` in content | A named context and `context.<key>.data.*` |
+| Tenant condition on a variant or step | A condition on the context identifier or data |
+| Tenant-specific content | Conditional steps, Liquid content logic, or separate workflows |
+| Tenant-specific workflow preferences | Recreate with the supported current preference model and verify per subscriber |
+| Tenant-specific provider selection | [Integration conditions](/platform/integrations/integration-conditions) on the corresponding context |
+| Tenant branding | Context data for tenant values, plus layouts or Inbox appearance for presentation |
+
+Keep context data reusable and stable. Keep event-specific data in the payload. The current platform limits the number of contexts per trigger, so check [Limits](/platform/developer/limits) before mapping one legacy tenant into several context objects.
+
+Provider routing and workflow step conditions are separate controls. Recreate tenant-based routing in **Integrations**. See [Integration conditions](/platform/integrations/integration-conditions). Recreate content or orchestration conditions on the workflow steps. Test a matching tenant, a non-matching tenant, and a trigger with no tenant context.
+
+See [Contexts](/platform/workflow/advanced-features/contexts).
+
+## Review action steps
+
+### Delay
+
+Both dashboards support a fixed delay and a payload-driven delay. Map the legacy type before changing anything else.
+
+| Legacy delay | New delay | Conversion notes |
+| --- | --- | --- |
+| Regular, with amount and unit | Fixed delay | Keep the same amount and unit. |
+| Scheduled, with a `delayPath` payload key | Dynamic delay | The legacy value came from a top-level payload key holding an ISO date. Select the equivalent payload variable, declare it in the payload schema, and keep sending a future timestamp. |
+
+The Dynamic delay also accepts a `{ "amount": 30, "unit": "minutes" }` duration object. Treat that as a follow-up change, because the legacy step only accepted an ISO date.
+
+The new Scheduled delay is calendar-based and uses a recurring minute, hour, day, week, or month. It is not the replacement for the legacy Scheduled delay. Use it only when you intend to change behavior.
+
+Enabling extension to the subscriber's schedule changes delivery time. Leave it disabled if exact legacy timing is required during migration.
+
+A dynamic delay fails the workflow when the variable is missing, is not a valid ISO date or duration object, or resolves to a past time. Test each of those cases before cutover.
+
+### Digest
+
+Both dashboards support a regular window, a repeat-event start, and a scheduled window.
+
+| Legacy digest | New digest | Conversion notes |
+| --- | --- | --- |
+| Regular, with amount and unit | Regular window with **Start digest** set to immediately | Keep the same amount and unit, and confirm the plan limit for the window length. |
+| Backoff, with `backoffAmount` and `backoffUnit` | Regular window with **Start digest** set to when events repeat | The first event is delivered immediately and later events in the window are digested. Test both paths. |
+| Timed, with a time, weekday, or month-day configuration | Scheduled window | Recreate the calendar rule and confirm delivery in the subscriber's time zone. |
+
+Also confirm subscriber grouping, the optional payload aggregation key, extension to the subscriber schedule, and every downstream reference to digest events and counts.
+
+The aggregation key must exist in the payload schema. Test multiple events for one subscriber, the same subscriber with different aggregation keys, and different subscribers with the same key.
+
+### Throttle
+
+Throttle is new relative to the primary legacy action-step model. Do not add it merely because it is available. If you adopt it, define:
+
+- Fixed or dynamic window
+- Execution threshold
+- Subscriber and optional payload grouping
+- Behavior for critical workflows
+
+### HTTP
+
+Use HTTP to replace legacy webhook-condition enrichment or to fetch application state. Define response schemas, signatures, timeout behavior, and whether workflow execution continues after failure.
+
+See [Add and configure steps](/platform/workflow/add-and-configure-steps) for current step behavior and plan-dependent duration limits.
+
+## Validate channel parity
+
+Use the current [channel template editor reference](/platform/workflow/add-notification-content/channels-template-editors) to validate each copied channel. Keep this page focused on conversion rules rather than duplicating channel configuration.
+
+For every channel in a legacy workflow, record the rendered content, provider, credentials, overrides, condition result, and delivery result. For In-app steps, also confirm Data, actions, tags, avatar, and sanitization. Complete the client-side field and feed migration in the [Inbox migration guide](/platform/inbox/migration-guide#choose-the-inbox-package).
+
+## Workflow validation record
+
+Create one record per workflow with:
+
+| Field | Required evidence |
+| --- | --- |
+| Workflow mapping | Legacy ID, new ID, owner, and reviewer |
+| Schema | Sample minimum payload, sample complete payload, and enforcement state |
+| Content | Preview or provider output for each channel and locale |
+| Conditions | Matching and non-matching test for every path |
+| Variants | Exactly one replacement step executed for each legacy variant case |
+| Actions | Measured Delay, Digest, Throttle, or HTTP behavior |
+| Layout | Selected layout, rendered output, and no unsupported payload references |
+| Multi-tenancy | Context content, preference, and routing result |
+| Activity | Workflow run ID or transaction ID and final step statuses |
+
+After all workflow records pass, continue with [application migration and production cutover](/guides/migration-to-new-dashboard/application-and-cutover).

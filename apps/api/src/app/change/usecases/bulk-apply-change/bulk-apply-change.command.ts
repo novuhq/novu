@@ -1,4 +1,4 @@
-import { IsDefined, IsArray } from 'class-validator';
+import { IsArray, IsDefined } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class BulkApplyChangeCommand extends EnvironmentWithUserCommand {

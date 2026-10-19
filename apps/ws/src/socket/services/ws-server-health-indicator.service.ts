@@ -1,5 +1,5 @@
-import { HealthCheckError, HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
 import { Injectable } from '@nestjs/common';
+import { HealthCheckError, HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
 
 import { IHealthIndicator } from '@novu/application-generic';
 

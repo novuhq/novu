@@ -119,8 +119,10 @@ def select_headers(headers, include_headers):
     return sign_headers
 
 # FWS  =  ([*WSP CRLF] 1*WSP) /  obs-FWS ; Folding white space  [RFC5322]
-FWS = r'(?:(?:\s*\r?\n)?\s+)?'
-RE_BTAG = re.compile(r'([;\s]b'+FWS+r'=)(?:'+FWS+r'[a-zA-Z0-9+/=])*(?:\r?\n\Z)?')
+# Must be a bytes pattern: it is applied to raw header bytes, and Python 3
+# rejects mixing str patterns with bytes subjects.
+FWS = br'(?:(?:\s*\r?\n)?\s+)?'
+RE_BTAG = re.compile(br'([;\s]b'+FWS+br'=)(?:'+FWS+br'[a-zA-Z0-9+/=])*(?:\r?\n\Z)?')
 
 def hash_headers(hasher, canonicalize_headers, headers, include_headers,
                  sigheader, sig):

@@ -1,8 +1,26 @@
 {
   "mochaExplorer.configFile": ".mocharc.json",
   "mochaExplorer.files": ["e2e/setup.ts", "e2e/**/*.e2e.ts", "src/**/*.e2e.ts", "src/**/**/*.spec.ts"],
-  "mochaExplorer.require": ["ts-node/register"],
+  "mochaExplorer.require": ["./swc-register.js"],
   "mochaExplorer.env": {
     "NODE_ENV": "test"
+  },
+  "jest.runMode": "on-demand",
+  "jest.enable": false,
+  // Biome configuration
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "biomejs.biome"
   }
 }

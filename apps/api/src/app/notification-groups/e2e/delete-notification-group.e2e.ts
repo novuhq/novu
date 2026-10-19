@@ -1,7 +1,7 @@
-import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
-describe('Delete Notification Group - /notification-groups/:id (DELETE)', async () => {
+describe('Delete Notification Group - /notification-groups/:id (DELETE) #novu-v0', async () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -9,12 +9,12 @@ describe('Delete Notification Group - /notification-groups/:id (DELETE)', async 
     await session.initialize();
   });
 
-  it('should delete notification group by id', async function () {
+  it('should delete notification group by id', async () => {
     const postNotificationGroup1 = await session.testAgent.post(`/v1/notification-groups`).send({
       name: 'Test delete group',
     });
 
-    const id = postNotificationGroup1.body.data.id;
+    const { id } = postNotificationGroup1.body.data;
 
     const getResult = await session.testAgent.get(`/v1/notification-groups/${id}`);
 
@@ -34,12 +34,12 @@ describe('Delete Notification Group - /notification-groups/:id (DELETE)', async 
     expect(getResultAfterDelete.statusCode).to.eq(404);
   });
 
-  it('should return 404 error when attempting to delete non-existent notification group', async function () {
+  it('should return 404 error when attempting to delete non-existent notification group', async () => {
     const postNotificationGroup1 = await session.testAgent.post(`/v1/notification-groups`).send({
       name: 'Test name',
     });
 
-    const id = postNotificationGroup1.body.data.id;
+    const { id } = postNotificationGroup1.body.data;
 
     await session.testAgent.delete(`/v1/notification-groups/${id}`);
 

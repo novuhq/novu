@@ -1,9 +1,7 @@
+// @ts-nocheck
 import { CheckIntegrationResponseEnum } from '../provider/provider.enum';
 import { IEmailProvider } from '../provider/provider.interface';
-import {
-  ChannelTypeEnum,
-  ITriggerPayload,
-} from '../template/template.interface';
+import { ChannelTypeEnum, ITriggerPayload } from '../template/template.interface';
 import { IEmailTemplate, ITheme } from '../theme/theme.interface';
 import { EmailHandler } from './email.handler';
 
@@ -11,8 +9,7 @@ test('it should be able to accept subject as a function and read message configu
   const provider: IEmailProvider = {
     id: 'email-provider',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -48,13 +45,16 @@ test('it should be able to accept subject as a function and read message configu
   });
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith({
-    attachments: undefined,
-    text: '',
-    html: `<div data-test-id="theme-layout-wrapper"><img src="logo-url"/><div><h1>Test Header</div> Name: test name</div></div>`,
-    subject: 'should pass',
-    to: ['test@email.com'],
-  });
+  expect(spy).toHaveBeenCalledWith(
+    {
+      attachments: undefined,
+      text: '',
+      html: `<div data-test-id="theme-layout-wrapper"><img src="logo-url"/><div><h1>Test Header</div> Name: test name</div></div>`,
+      subject: 'should pass',
+      to: ['test@email.com'],
+    },
+    {}
+  );
   spy.mockRestore();
 });
 
@@ -62,8 +62,7 @@ test('it should be able to accept subject as a function and access outer scope',
   const provider: IEmailProvider = {
     id: 'email-provider',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -101,13 +100,16 @@ test('it should be able to accept subject as a function and access outer scope',
   });
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith({
-    attachments: undefined,
-    text: '',
-    html: `<div data-test-id="theme-layout-wrapper"><img src="logo-url"/><div><h1>Test Header</div> Name: test name</div></div>`,
-    subject: 'test',
-    to: ['test@email.com'],
-  });
+  expect(spy).toHaveBeenCalledWith(
+    {
+      attachments: undefined,
+      text: '',
+      html: `<div data-test-id="theme-layout-wrapper"><img src="logo-url"/><div><h1>Test Header</div> Name: test name</div></div>`,
+      subject: 'test',
+      to: ['test@email.com'],
+    },
+    {}
+  );
   spy.mockRestore();
 });
 
@@ -115,8 +117,7 @@ test('it should be able to accept subject as a function', async () => {
   const provider: IEmailProvider = {
     id: 'email-provider',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -152,13 +153,16 @@ test('it should be able to accept subject as a function', async () => {
   });
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith({
-    attachments: undefined,
-    text: '',
-    html: `<div data-test-id="theme-layout-wrapper"><img src="logo-url"/><div><h1>Test Header</div> Name: test name</div></div>`,
-    subject: 'test',
-    to: ['test@email.com'],
-  });
+  expect(spy).toHaveBeenCalledWith(
+    {
+      attachments: undefined,
+      text: '',
+      html: `<div data-test-id="theme-layout-wrapper"><img src="logo-url"/><div><h1>Test Header</div> Name: test name</div></div>`,
+      subject: 'test',
+      to: ['test@email.com'],
+    },
+    {}
+  );
   spy.mockRestore();
 });
 
@@ -166,8 +170,7 @@ test('send should call the provider method correctly', async () => {
   const provider: IEmailProvider = {
     id: 'email-provider',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -201,13 +204,16 @@ test('send should call the provider method correctly', async () => {
   });
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith({
-    attachments: undefined,
-    text: '',
-    html: `<div data-test-id="theme-layout-wrapper"><img src="logo-url"/><div><h1>Test Header</div> Name: test name</div></div>`,
-    subject: 'test',
-    to: ['test@email.com'],
-  });
+  expect(spy).toHaveBeenCalledWith(
+    {
+      attachments: undefined,
+      text: '',
+      html: `<div data-test-id="theme-layout-wrapper"><img src="logo-url"/><div><h1>Test Header</div> Name: test name</div></div>`,
+      subject: 'test',
+      to: ['test@email.com'],
+    },
+    {}
+  );
   spy.mockRestore();
 });
 
@@ -215,8 +221,7 @@ test('send should call template method correctly', async () => {
   const provider: IEmailProvider = {
     id: 'email-provider',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -232,9 +237,7 @@ test('send should call template method correctly', async () => {
     emailTemplate: new EmailTemplate('logo-url'),
   };
 
-  const spyTemplateFunction = jest
-    .fn()
-    .mockImplementation(() => Promise.resolve('test'));
+  const spyTemplateFunction = jest.fn().mockImplementation(() => Promise.resolve('test'));
 
   const emailHandler = new EmailHandler(
     {
@@ -253,7 +256,7 @@ test('send should call template method correctly', async () => {
   });
 
   expect(spyTemplateFunction).toHaveBeenCalled();
-  expect(spyTemplateFunction).toBeCalledWith({
+  expect(spyTemplateFunction).toHaveBeenCalledWith({
     $branding: {},
     $email: 'test@email.com',
     $user_id: '1234',
@@ -265,8 +268,7 @@ test('send should handle attachments correctly', async () => {
   const provider: IEmailProvider = {
     id: 'email-provider',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',

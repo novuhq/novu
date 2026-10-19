@@ -1,13 +1,12 @@
-import { FilterQuery } from 'mongoose';
+import { AGENT_INBOX_PROVIDER_IDS, EmailProviderIdEnum, NOVU_PROVIDERS } from '@novu/shared';
+import { ClientSession, FilterQuery, type QueryOptions } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
-import { NOVU_PROVIDERS } from '@novu/shared';
-
-import { IntegrationEntity, IntegrationDBModel } from './integration.entity';
-import { Integration } from './integration.schema';
-
-import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds, IDeleteResult } from '../../types';
+
+import { BaseRepository } from '../base-repository';
+import { IntegrationDBModel, IntegrationEntity, ProviderCount } from './integration.entity';
+import { Integration } from './integration.schema';
 
 export type IntegrationQuery = FilterQuery<IntegrationDBModel> & EnforceEnvOrOrgIds;
 
@@ -21,8 +20,7 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
   async find(
     query: IntegrationQuery,
     select = '',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    options: { limit?: number; sort?: any; skip?: number } = {}
+    options: { limit?: number; sort?: QueryOptions['sort']; skip?: number; session?: ClientSession | null } = {}
   ): Promise<IntegrationEntity[]> {
     return super.find(query, select, options);
   }
@@ -31,6 +29,76 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
     return await this.find({
       _environmentId: environmentId,
     });
+  }
+
+  /**
+   * Unscoped lookup of the agent inbox integration (Novu Email or Agent Email
+   * Inbox) that owns a given inbox routing key. Used exclusively by the
+   * inbound-email worker, which knows neither the env nor the org until it has
+   * resolved the integration. Backed by the partial unique index
+   * `{ 'credentials.inboxRoutingKey': 1 }` scoped to both inbox providers.
+   *
+   * More than one match means the uniqueness gate is down (the index rebuild
+   * window, or a planted duplicate). Return null so the worker drops the
+   * message instead of picking an arbitrary tenant.
+   *
+   * Mirrors `AgentRepository.findByIdForWebhook` — both bypass the standard
+   * EnforceEnvOrOrgIds constraint because the inbound bootstrap legitimately
+   * has nothing else to query by.
+   */
+  async findAgentInboundByInboxRoutingKey(inboxRoutingKey: string): Promise<IntegrationEntity | null> {
+    const docs = await this.MongooseModel.find({
+      providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
+      'credentials.inboxRoutingKey': inboxRoutingKey,
+    })
+      .limit(2)
+      .lean();
+
+    const doc = docs[0];
+    if (docs.length !== 1 || !doc) {
+      return null;
+    }
+
+    return this.mapEntity(doc);
+  }
+
+  /**
+   * Unscoped lookup of the vanity Agent Inbox (`{handle}@domain`) that claimed
+   * a handle. Used by inbound mail, which knows neither the env nor the org.
+   * Backed by `agent_inbox_vanity_slug`.
+   *
+   * More than one match means the uniqueness gate is down. Return null so the
+   * worker drops the message instead of picking an arbitrary tenant.
+   */
+  async findAgentInboundByVanitySlug(emailSlugPrefix: string, inboxDomain: string): Promise<IntegrationEntity | null> {
+    const docs = await this.MongooseModel.find(this.vanitySlugQuery(emailSlugPrefix, inboxDomain)).limit(2).lean();
+
+    const doc = docs[0];
+    if (docs.length !== 1 || !doc) {
+      return null;
+    }
+
+    return this.mapEntity(doc);
+  }
+
+  /**
+   * Whether any vanity inbox already holds this handle, including when more
+   * than one does. Availability must treat that as taken. Inbound uses
+   * {@link findAgentInboundByVanitySlug} and drops instead.
+   */
+  async hasAgentInboundByVanitySlug(emailSlugPrefix: string, inboxDomain: string): Promise<boolean> {
+    const existing = await this.MongooseModel.exists(this.vanitySlugQuery(emailSlugPrefix, inboxDomain));
+
+    return existing != null;
+  }
+
+  private vanitySlugQuery(emailSlugPrefix: string, inboxDomain: string) {
+    return {
+      providerId: EmailProviderIdEnum.AgentEmailInbox,
+      'credentials.emailSlugPrefix': emailSlugPrefix,
+      'credentials.inboxDomain': inboxDomain,
+      'credentials.inboxRoutingKey': { $exists: false },
+    };
   }
 
   async findHighestPriorityIntegration({
@@ -66,15 +134,15 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
     });
   }
 
-  async create(data: IntegrationQuery): Promise<IntegrationEntity> {
-    return await super.create(data);
+  async create(data: IntegrationQuery, options: { session?: ClientSession | null } = {}): Promise<IntegrationEntity> {
+    return await super.create(data, options);
   }
 
-  async delete(query: IntegrationQuery) {
-    const integration = await this.findOne({ _id: query._id, _organizationId: query._organizationId });
-    if (!integration) throw new DalException(`Could not find integration with id ${query._id}`);
+  async delete(query: IntegrationQuery, options: { session?: ClientSession | null } = {}) {
+    const q = this.integration.delete({ _id: query._id, _organizationId: query._organizationId });
+    if (options.session) q.session(options.session);
 
-    return await this.integration.delete({ _id: integration._id, _organizationId: integration._organizationId });
+    return await q;
   }
 
   async deleteMany(query: IntegrationQuery): Promise<IDeleteResult> {
@@ -150,5 +218,25 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
       )
     );
     await Promise.all(promises);
+  }
+
+  async sumByProviderId(): Promise<ProviderCount[]> {
+    const res = await this.integration.aggregate<ProviderCount[]>([
+      {
+        $group: {
+          _id: '$providerId',
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          providerId: '$_id',
+          count: 1,
+        },
+      },
+    ]);
+
+    return res;
   }
 }

@@ -1,0 +1,118 @@
+---
+title: 'Novu Integration Guides and Recipes'
+description: "Step-by-step Novu integration guides for Clerk, Stripe, Segment, Hightouch, Databricks, Auth0, Supabase, and other services to add notifications to your product stack."
+sidebarTitle: Overview
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+
+## Integration Guides
+
+Novu provides various ways to integrate with external services to trigger notification workflows. Here are the main integration approaches:
+
+## Use case guides
+
+<Columns cols={2}>
+  <Card title="Transactional notifications" icon="send" href="/guides/use-cases/transactional-notifications">
+    Send order confirmations, payment alerts, and account notifications through Novu workflows.
+  </Card>
+  <Card title="Password reset alerts" icon="key" href="/guides/use-cases/password-reset-notifications">
+    Build password reset and authentication alert workflows with email and in-app channels.
+  </Card>
+  <Card title="Digest notifications" icon="layers" href="/guides/use-cases/digest-notifications">
+    Batch notifications into summaries such as "10 new comments on your post."
+  </Card>
+  <Card title="Multi-channel fallback" icon="git-branch" href="/guides/use-cases/multi-channel-fallback">
+    Send in-app first, then email or SMS if the message remains unread.
+  </Card>
+</Columns>
+
+### Dashboard migration
+
+<Columns cols={2}>
+  <Card title="Migrate to the new Dashboard" icon="refresh-cw" href="/guides/migration-to-new-dashboard/overview">
+    Convert legacy workflows, templates, variants, layouts, translations, tenant behavior, and Notification Center clients to the current Dashboard.
+  </Card>
+</Columns>
+
+### Incoming webhook guides
+
+Webhooks enable real-time event-driven communication between applications, making integrations more efficient and responsive.
+
+In Novu, webhooks trigger notification workflows whenever specific events occur in external applications. This ensures notifications are delivered exactly when they're needed, keeping users informed without delay.
+
+For example, when a user signs up via Clerk or completes a payment through Stripe, a webhook delivers the event payload to Novu, which then processes it and triggers the appropriate workflow.
+
+This allows for real-time notifications - whether it's a welcome email, payment confirmation SMS, or in-app alert - without the need for constant polling, ensuring efficiency and a seamless user experience.
+
+<Columns cols={2}>
+  <Card title="Clerk" icon="/images/icons/clerk.svg" href="/guides/webhooks/clerk">
+  <p>
+    Use Clerk webhook events to trigger authentication-related notification workflows.
+  </p>
+  </Card>
+  <Card title="Auth0" icon="key" href="/guides/webhooks/auth0">
+  <p>
+    Trigger Novu workflows from Auth0 signup, password reset, and security events.
+  </p>
+  </Card>
+  <Card title="Stripe" icon="/images/icons/stripe.svg" href="/guides/webhooks/stripe">
+  <p>
+    Use Stripe webhook events to trigger payment-related notification workflows.
+  </p>
+  </Card>
+</Columns>
+
+### Webhook connector guides
+
+Webhook connectors send Novu delivery and engagement events to data warehouses, object storage, queues, analytics tools, and HTTP consumers.
+
+<WebhookConnectorsPlanNote />
+
+<Columns cols={2}>
+  <Card title="Browse webhook connectors" icon="plug" href="/platform/developer/webhooks/connectors">
+    Compare every supported destination and open its step-by-step setup guide.
+  </Card>
+  <Card title="Export events to a data warehouse" icon="database-zap" href="/guides/webhook-connectors/data-warehouse-sync">
+    Plan a notification analytics export, then configure BigQuery, ClickHouse, Snowflake, Redshift, or Postgres.
+  </Card>
+</Columns>
+
+### Data sources
+
+Sync warehouse and CDP data into Novu to create subscribers and trigger workflows.
+
+<Columns cols={2}>
+  <Card title="Segment" icon="activity" href="/guides/analytics/segment">
+  <p>
+    Use Segment Destination Functions to forward user events and traits into Novu workflows.
+  </p>
+  </Card>
+  <Card title="Hightouch" icon="database" href="/guides/analytics/hightouch">
+  <p>
+    Sync warehouse models to Novu with Hightouch's HTTP Request destination to create subscribers and trigger workflows.
+  </p>
+  </Card>
+  <Card title="Databricks" icon="warehouse" href="/guides/analytics/databricks">
+  <p>
+    Sync subscriber profiles and cohort membership from Databricks with the Novu REST API, including retries and rate-limit handling.
+  </p>
+  </Card>
+</Columns>
+
+### Workflow Automation Platform Integrations
+
+Workflow automation platforms help orchestrate complex business processes and event-driven workflows. Integrating Novu with these platforms allows you to trigger notifications as part of your automated workflows.
+
+<Columns cols={2}>
+  <Card title="Inngest" href="/guides/inngest">
+  <p>
+    Use Inngest's event-driven workflows to trigger notifications at specific steps in your automation pipeline.
+  </p>
+  </Card>
+  <Card title="Trigger.dev" href="/guides/triggerdotdev">
+  <p>
+    Leverage Trigger.dev's developer-friendly workflow engine to send notifications based on scheduled or event-driven triggers.
+  </p>
+  </Card>
+</Columns>

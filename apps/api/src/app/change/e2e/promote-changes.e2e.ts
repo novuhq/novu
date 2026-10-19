@@ -1,13 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { expect } from 'chai';
 import {
   ChangeRepository,
+  EnvironmentEntity,
   EnvironmentRepository,
+  FeedRepository,
   MessageTemplateRepository,
   NotificationGroupRepository,
   NotificationTemplateRepository,
-  EnvironmentEntity,
-  FeedRepository,
 } from '@novu/dal';
 import {
   ChangeEntityTypeEnum,
@@ -15,15 +13,15 @@ import {
   EmailBlockTypeEnum,
   FieldLogicalOperatorEnum,
   FieldOperatorEnum,
-  StepTypeEnum,
   FilterPartTypeEnum,
+  StepTypeEnum,
   TemplateVariableTypeEnum,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows-v1/dtos';
 
-import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows/dto';
-
-describe('Promote changes', () => {
+describe('Promote changes #novu-v0', () => {
   let session: UserSession;
   let prodEnv: EnvironmentEntity;
   const changeRepository: ChangeRepository = new ChangeRepository();
@@ -224,9 +222,9 @@ describe('Promote changes', () => {
       let { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
       const updateData: UpdateWorkflowRequestDto = {
-        name: testTemplate.name,
-        tags: testTemplate.tags,
-        description: testTemplate.description,
+        name: testTemplate.name || '',
+        tags: testTemplate.tags || [],
+        description: testTemplate.description || '',
         steps: [],
         notificationGroupId: session.notificationGroups[0]._id,
       };
@@ -723,6 +721,36 @@ describe('Promote changes', () => {
         name: feed.name,
       });
       expect(prodFeeds.length).to.equal(0);
+    });
+
+    it('should update workflow preferences on promote', async () => {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
+        name: 'test email template',
+        description: 'This is a test description',
+        tags: ['test-tag'],
+        notificationGroupId: session.notificationGroups[0]._id,
+        steps: [],
+        preferenceSettings: {
+          email: true,
+          in_app: false,
+          sms: true,
+          chat: false,
+          push: false,
+        },
+      };
+
+      const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
+      const notificationTemplateId = body.data._id;
+
+      await session.testAgent.put(`/v1/workflows/${notificationTemplateId}/status`).send({ active: true });
+
+      await session.applyChanges({
+        enabled: false,
+      });
+
+      const { body: prodVersion } = await session.testAgent.get(`/v1/workflows/${notificationTemplateId}`);
+
+      expect(prodVersion?.data?.preferenceSettings).to.deep.equal(testTemplate.preferenceSettings);
     });
   });
 

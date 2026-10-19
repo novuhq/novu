@@ -1,0 +1,674 @@
+.novu {
+  /* Motion tokens. `tailwind.config.js` maps the duration and easing utilities onto them; hosts may override them. */
+  --nv-motion-duration-fast: 120ms;
+  --nv-motion-duration-base: 160ms;
+  --nv-motion-duration-slow: 220ms;
+  --nv-motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --nv-motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --nv-motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --nv-motion-distance-sm: 4px;
+  --nv-motion-distance-md: 8px;
+  --nv-motion-distance-lg: 12px;
+  --nv-motion-reveal-delay: 60ms;
+
+  :where(*),
+  :where(*) ::before,
+  :where(*) ::after,
+  :where(*)::before,
+  :where(*)::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: #e5e7eb;
+  }
+
+  :where(html, :host) {
+    line-height: 1.5; /* 1 */
+    -webkit-text-size-adjust: 100%; /* 2 */
+    -moz-tab-size: 4; /* 3 */
+    -o-tab-size: 4;
+    tab-size: 4; /* 3 */
+    font-family:
+      ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+    font-feature-settings: normal; /* 5 */
+    font-variation-settings: normal; /* 6 */
+    -webkit-tap-highlight-color: transparent; /* 7 */
+  }
+
+  :where(body) {
+    margin: 0; /* 1 */
+    line-height: inherit; /* 2 */
+  }
+
+  :where(hr) {
+    height: 0; /* 1 */
+    color: inherit; /* 2 */
+    border-top-width: 1px; /* 3 */
+  }
+
+  :where(abbr:where([title])) {
+    -webkit-text-decoration: underline dotted;
+    text-decoration: underline dotted;
+  }
+
+  :where(h1, h2, h3, h4, h5, h6) {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  :where(a) {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  :where(b, strong) {
+    font-weight: bolder;
+  }
+
+  :where(code, kbd, samp, pre) {
+    font-family:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+    font-feature-settings: normal; /* 2 */
+    font-variation-settings: normal; /* 3 */
+    font-size: 1em; /* 4 */
+  }
+
+  :where(small) {
+    font-size: 80%;
+  }
+
+  :where(sub, sup) {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+
+  :where(sub) {
+    bottom: -0.25em;
+  }
+
+  :where(sup) {
+    top: -0.5em;
+  }
+
+  :where(table) {
+    text-indent: 0; /* 1 */
+    border-color: inherit; /* 2 */
+    border-collapse: collapse; /* 3 */
+  }
+
+  :where(button, input, optgroup, select, textarea) {
+    font-family: inherit; /* 1 */
+    font-feature-settings: inherit; /* 1 */
+    font-variation-settings: inherit; /* 1 */
+    font-size: 100%; /* 1 */
+    font-weight: inherit; /* 1 */
+    line-height: inherit; /* 1 */
+    letter-spacing: inherit; /* 1 */
+    color: inherit; /* 1 */
+    margin: 0; /* 2 */
+    padding: 0; /* 3 */
+  }
+
+  :where(button, select) {
+    text-transform: none;
+  }
+
+  :where(button, input:where([type="button"]), input:where([type="reset"]), input:where([type="submit"])) {
+    -webkit-appearance: button; /* 1 */
+    background-color: transparent; /* 2 */
+    background-image: none; /* 2 */
+  }
+
+  :where(:-moz-focusring) {
+    outline: auto;
+  }
+
+  :where(:-moz-ui-invalid) {
+    box-shadow: none;
+  }
+
+  :where(progress) {
+    vertical-align: baseline;
+  }
+
+  :where(*)::-webkit-inner-spin-button,
+  :where(*)::-webkit-outer-spin-button {
+    height: auto;
+  }
+
+  :where([type="search"]) {
+    -webkit-appearance: textfield; /* 1 */
+    outline-offset: -2px; /* 2 */
+  }
+
+  :where(*)::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+
+  :where(*)::-webkit-file-upload-button {
+    -webkit-appearance: button; /* 1 */
+    font: inherit; /* 2 */
+  }
+
+  :where(summary) {
+    display: list-item;
+  }
+
+  :where(blockquote, dl, dd, h1, h2, h3, h4, h5, h6, hr, figure, p, pre) {
+    margin: 0;
+  }
+
+  :where(fieldset) {
+    margin: 0;
+    padding: 0;
+  }
+
+  :where(legend) {
+    padding: 0;
+  }
+
+  :where(ol, ul, menu) {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  :where(dialog) {
+    padding: 0;
+  }
+
+  :where(textarea) {
+    resize: vertical;
+  }
+
+  :where(input)::-moz-placeholder,
+  :where(textarea)::-moz-placeholder {
+    opacity: 1; /* 1 */
+    color: #9ca3af; /* 2 */
+  }
+
+  :where(input)::placeholder,
+  :where(textarea)::placeholder {
+    opacity: 1; /* 1 */
+    color: #9ca3af; /* 2 */
+  }
+
+  :where(button, [role="button"]) {
+    cursor: pointer;
+  }
+
+  :where(:disabled) {
+    cursor: default;
+  }
+
+  :where(img, svg, video, canvas, audio, iframe, embed, object) {
+    display: block; /* 1 */
+    vertical-align: middle; /* 2 */
+  }
+
+  :where(img, video) {
+    max-width: 100%;
+    height: auto;
+  }
+
+  :where([hidden]) {
+    display: none;
+  }
+
+  :where(*),
+  :where(*) ::before,
+  :where(*) ::after,
+  :where(*)::before,
+  :where(*)::after {
+    --tw-border-spacing-x: 0;
+    --tw-border-spacing-y: 0;
+    --tw-translate-x: 0;
+    --tw-translate-y: 0;
+    --tw-rotate: 0;
+    --tw-skew-x: 0;
+    --tw-skew-y: 0;
+    --tw-scale-x: 1;
+    --tw-scale-y: 1;
+    --tw-pan-x: ;
+    --tw-pan-y: ;
+    --tw-pinch-zoom: ;
+    --tw-scroll-snap-strictness: proximity;
+    --tw-gradient-from-position: ;
+    --tw-gradient-via-position: ;
+    --tw-gradient-to-position: ;
+    --tw-ordinal: ;
+    --tw-slashed-zero: ;
+    --tw-numeric-figure: ;
+    --tw-numeric-spacing: ;
+    --tw-numeric-fraction: ;
+    --tw-ring-inset: ;
+    --tw-ring-offset-width: 0px;
+    --tw-ring-offset-color: #fff;
+    --tw-ring-color: rgb(59 130 246 / 0.5);
+    --tw-ring-offset-shadow: 0 0 #0000;
+    --tw-ring-shadow: 0 0 #0000;
+    --tw-shadow: 0 0 #0000;
+    --tw-shadow-colored: 0 0 #0000;
+    --tw-blur: ;
+    --tw-brightness: ;
+    --tw-contrast: ;
+    --tw-grayscale: ;
+    --tw-hue-rotate: ;
+    --tw-invert: ;
+    --tw-saturate: ;
+    --tw-sepia: ;
+    --tw-drop-shadow: ;
+    --tw-backdrop-blur: ;
+    --tw-backdrop-brightness: ;
+    --tw-backdrop-contrast: ;
+    --tw-backdrop-grayscale: ;
+    --tw-backdrop-hue-rotate: ;
+    --tw-backdrop-invert: ;
+    --tw-backdrop-opacity: ;
+    --tw-backdrop-saturate: ;
+    --tw-backdrop-sepia: ;
+    --tw-contain-size: ;
+    --tw-contain-layout: ;
+    --tw-contain-paint: ;
+    --tw-contain-style: ;
+  }
+
+  :where(*) ::backdrop {
+    --tw-border-spacing-x: 0;
+    --tw-border-spacing-y: 0;
+    --tw-translate-x: 0;
+    --tw-translate-y: 0;
+    --tw-rotate: 0;
+    --tw-skew-x: 0;
+    --tw-skew-y: 0;
+    --tw-scale-x: 1;
+    --tw-scale-y: 1;
+    --tw-pan-x: ;
+    --tw-pan-y: ;
+    --tw-pinch-zoom: ;
+    --tw-scroll-snap-strictness: proximity;
+    --tw-gradient-from-position: ;
+    --tw-gradient-via-position: ;
+    --tw-gradient-to-position: ;
+    --tw-ordinal: ;
+    --tw-slashed-zero: ;
+    --tw-numeric-figure: ;
+    --tw-numeric-spacing: ;
+    --tw-numeric-fraction: ;
+    --tw-ring-inset: ;
+    --tw-ring-offset-width: 0px;
+    --tw-ring-offset-color: #fff;
+    --tw-ring-color: rgb(59 130 246 / 0.5);
+    --tw-ring-offset-shadow: 0 0 #0000;
+    --tw-ring-shadow: 0 0 #0000;
+    --tw-shadow: 0 0 #0000;
+    --tw-shadow-colored: 0 0 #0000;
+    --tw-blur: ;
+    --tw-brightness: ;
+    --tw-contrast: ;
+    --tw-grayscale: ;
+    --tw-hue-rotate: ;
+    --tw-invert: ;
+    --tw-saturate: ;
+    --tw-sepia: ;
+    --tw-drop-shadow: ;
+    --tw-backdrop-blur: ;
+    --tw-backdrop-brightness: ;
+    --tw-backdrop-contrast: ;
+    --tw-backdrop-grayscale: ;
+    --tw-backdrop-hue-rotate: ;
+    --tw-backdrop-invert: ;
+    --tw-backdrop-opacity: ;
+    --tw-backdrop-saturate: ;
+    --tw-backdrop-sepia: ;
+    --tw-contain-size: ;
+    --tw-contain-layout: ;
+    --tw-contain-paint: ;
+    --tw-contain-style: ;
+  }
+
+  /* Scrollbar */
+  scrollbar-color: var(--nv-color-secondary-foreground-alpha-300) transparent;
+
+  /* Webkit Safari */
+  ::-webkit-scrollbar {
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--nv-color-secondary-foreground-alpha-300);
+    border-radius: 0.25rem;
+    background-clip: "padding-box";
+  }
+
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background-color: transparent;
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Hide spin buttons in Firefox */
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+/*
+ * Motion modes. Every `.novu` root renders `data-nv-motion` from `appearance.animations` and the OS preference.
+ * `reduced` keeps fades only: enter/exit keyframes lose their offsets and scale, and transforms or sizes change
+ * without a transition. `off` zeroes the tokens, so nothing that runs on them animates.
+ */
+.novu[data-nv-motion="reduced"] {
+  --nv-motion-duration-base: var(--nv-motion-duration-fast);
+  --nv-motion-duration-slow: var(--nv-motion-duration-fast);
+}
+
+.novu[data-nv-motion="reduced"] *,
+.novu[data-nv-motion="reduced"] *::before,
+.novu[data-nv-motion="reduced"] *::after {
+  --tw-enter-translate-x: 0 !important;
+  --tw-enter-translate-y: 0 !important;
+  --tw-enter-scale: 1 !important;
+  --tw-enter-rotate: 0 !important;
+  --tw-exit-translate-x: 0 !important;
+  --tw-exit-translate-y: 0 !important;
+  --tw-exit-scale: 1 !important;
+  --tw-exit-rotate: 0 !important;
+  transition-property:
+    color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, opacity, box-shadow !important;
+}
+
+.novu[data-nv-motion="off"] {
+  --nv-motion-duration-fast: 0ms;
+  --nv-motion-duration-base: 0ms;
+  --nv-motion-duration-slow: 0ms;
+  --nv-motion-reveal-delay: 0ms;
+}
+
+/*
+ * The recipes' own keyframes, driven by the same variables as tailwindcss-animate (so the `reduced` rule above
+ * neutralises both), but named so a host's `@keyframes enter` can't replace them.
+ */
+@keyframes nv-enter {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform: translate3d(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0), 0)
+      scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), var(--tw-enter-scale, 1))
+      rotate(var(--tw-enter-rotate, 0));
+  }
+}
+
+@keyframes nv-exit {
+  to {
+    opacity: var(--tw-exit-opacity, 1);
+    transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0)
+      scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1))
+      rotate(var(--tw-exit-rotate, 0));
+  }
+}
+
+/*
+ * `RollingText` slides its values with `top`, not a transform, and fades them with `color`, not opacity. Animating a
+ * transform or opacity draws the text on its own compositing layer, rasterised differently from the rest of the
+ * badge, and the number visibly settles when that layer is dropped at the end of the roll.
+ */
+@keyframes nv-roll-in {
+  from {
+    top: var(--nv-roll-from);
+  }
+}
+
+@keyframes nv-roll-out {
+  to {
+    top: var(--nv-roll-to);
+  }
+}
+
+@keyframes nv-roll-fade-in {
+  from {
+    color: transparent;
+  }
+}
+
+@keyframes nv-roll-fade-out {
+  to {
+    color: transparent;
+  }
+}
+
+/* biome-ignore lint/suspicious/noUnknownAtRules: tailwind */
+@tailwind components;
+/* biome-ignore lint/suspicious/noUnknownAtRules: tailwind */
+@tailwind utilities;
+
+/*
+ * Motion recipes. A presence-driven element renders `data-state="open"` or `"closed"` (see `createPresence`):
+ * `open` plays `nv-enter`, `closed` plays `nv-exit` and keeps its last frame until the element is removed, and no
+ * state means no animation. Each recipe sets every `--tw-enter/exit-*` variable it uses, so nested recipes don't
+ * inherit them; don't combine a recipe with the `nt-animate-in/out` utilities, which reset those variables.
+ *
+ * No selector weighs more than a single class: states, sides and ancestors sit inside `:where()`. A host's class or
+ * `appearance.elements` style on the same element therefore overrides the motion (`animation: none`), because the
+ * host's styles load after these. Among the rules below, a later one wins over an earlier one, so order matters.
+ * The one exception is the hover reveal, which keeps the weight of the `group-hover` utilities it replaced.
+ * `recipes.test.ts` holds this line.
+ */
+/* biome-ignore lint/suspicious/noUnknownAtRules: tailwind */
+@layer components {
+  .nt-motion-panel,
+  .nt-motion-menu,
+  .nt-motion-tooltip,
+  .nt-motion-pop,
+  .nt-motion-pill,
+  .nt-motion-fade,
+  .nt-motion-page {
+    --tw-enter-opacity: 0;
+    --tw-enter-scale: 1;
+    --tw-enter-rotate: 0;
+    --tw-enter-translate-x: 0;
+    --tw-enter-translate-y: 0;
+    --tw-exit-opacity: 0;
+    --tw-exit-scale: 1;
+    --tw-exit-rotate: 0;
+    --tw-exit-translate-x: 0;
+    --tw-exit-translate-y: 0;
+  }
+
+  /* Floating layers grow out of their trigger and shrink back into it. */
+  .nt-motion-panel,
+  .nt-motion-menu,
+  .nt-motion-tooltip {
+    --nv-motion-offset: var(--nv-motion-distance-sm);
+    --tw-enter-scale: 0.96;
+    --tw-exit-scale: 0.96;
+    transform-origin: var(--nv-floating-origin, center);
+  }
+
+  .nt-motion-panel {
+    --nv-motion-offset: var(--nv-motion-distance-md);
+    --tw-enter-scale: 0.97;
+    --tw-exit-scale: 0.98;
+  }
+
+  .nt-motion-tooltip {
+    --nv-motion-offset: 2px;
+  }
+
+  :where(.nt-motion-panel, .nt-motion-menu, .nt-motion-tooltip)[data-side="bottom"] {
+    --tw-enter-translate-y: calc(-1 * var(--nv-motion-offset));
+    --tw-exit-translate-y: calc(-1 * var(--nv-motion-offset));
+  }
+
+  :where(.nt-motion-panel, .nt-motion-menu, .nt-motion-tooltip)[data-side="top"] {
+    --tw-enter-translate-y: var(--nv-motion-offset);
+    --tw-exit-translate-y: var(--nv-motion-offset);
+  }
+
+  :where(.nt-motion-panel, .nt-motion-menu, .nt-motion-tooltip)[data-side="left"] {
+    --tw-enter-translate-x: var(--nv-motion-offset);
+    --tw-exit-translate-x: var(--nv-motion-offset);
+  }
+
+  :where(.nt-motion-panel, .nt-motion-menu, .nt-motion-tooltip)[data-side="right"] {
+    --tw-enter-translate-x: calc(-1 * var(--nv-motion-offset));
+    --tw-exit-translate-x: calc(-1 * var(--nv-motion-offset));
+  }
+
+  /* Dots, badges and swapped icons scale in from nothing (or from `--nv-motion-pop-scale`). */
+  .nt-motion-pop {
+    --tw-enter-scale: var(--nv-motion-pop-scale, 0);
+    --tw-exit-scale: var(--nv-motion-pop-scale, 0);
+  }
+
+  .nt-motion-pill {
+    --tw-enter-translate-y: calc(-1 * var(--nv-motion-distance-sm));
+    --tw-exit-translate-y: calc(-1 * var(--nv-motion-distance-sm));
+  }
+
+  /*
+   * Notifications <-> Preferences, and tab panels, fade through: the old one fades out as it shifts away, then the new
+   * one fades in from the side it came from. They share one grid cell but are never visible together, so two lists
+   * never blend into each other. A tab panel says `active`/`inactive` where a page says `open`/`closed`.
+   */
+  .nt-motion-page {
+    --tw-enter-translate-x: var(--nv-motion-distance-md);
+    --tw-exit-translate-x: calc(-1 * var(--nv-motion-distance-sm));
+  }
+
+  :where(.nt-motion-page)[data-direction="backward"] {
+    --tw-enter-translate-x: calc(-1 * var(--nv-motion-distance-md));
+    --tw-exit-translate-x: var(--nv-motion-distance-sm);
+  }
+
+  /*
+   * Text that rolls to a new value, like an odometer: the new value comes in from below (`up`) or from above (`down`)
+   * while the old one leaves the other way, on top of it and out of the flow. `RollingText` positions and clips them;
+   * see `nv-roll-in` for why they move with `top`. The distance is one line (`1lh`), the height of the wrapper: the
+   * new value is relatively positioned in that auto-height wrapper, where `top: 100%` would count as `auto`.
+   */
+  .nt-motion-roll {
+    --nv-roll-from: 1lh;
+    --nv-roll-to: -1lh;
+  }
+
+  :where(.nt-motion-roll)[data-direction="down"] {
+    --nv-roll-from: -1lh;
+    --nv-roll-to: 1lh;
+  }
+
+  /* Presence states. */
+  :where(
+      .nt-motion-panel,
+      .nt-motion-menu,
+      .nt-motion-tooltip,
+      .nt-motion-pop,
+      .nt-motion-pill,
+      .nt-motion-fade
+    )[data-state="open"] {
+    animation: nv-enter var(--nv-motion-duration-base) var(--nv-motion-ease-enter);
+  }
+
+  :where(.nt-motion-panel)[data-state="open"] {
+    animation-duration: var(--nv-motion-duration-slow);
+  }
+
+  :where(.nt-motion-tooltip)[data-state="open"] {
+    animation-duration: var(--nv-motion-duration-fast);
+  }
+
+  /*
+   * The new page or panel waits, invisible, until the old one has faded out (the exit below takes `fast`). The first
+   * one has no direction yet and appears with the Inbox instead.
+   */
+  :where(.nt-motion-page[data-direction])[data-state="open"],
+  :where(.nt-motion-page[data-direction])[data-state="active"] {
+    z-index: 1;
+    animation: nv-enter var(--nv-motion-duration-base) var(--nv-motion-ease-enter) var(--nv-motion-duration-fast)
+      backwards;
+  }
+
+  :where(
+      .nt-motion-panel,
+      .nt-motion-menu,
+      .nt-motion-tooltip,
+      .nt-motion-pop,
+      .nt-motion-pill,
+      .nt-motion-fade,
+      .nt-motion-page
+    )[data-state="closed"],
+  :where(.nt-motion-page)[data-state="inactive"] {
+    animation: nv-exit var(--nv-motion-duration-fast) var(--nv-motion-ease-exit) forwards;
+    pointer-events: none;
+  }
+
+  /* Both values of a roll move together, as one strip. */
+  :where(.nt-motion-roll)[data-state="open"] {
+    animation: nv-roll-in var(--nv-motion-duration-slow) var(--nv-motion-ease-standard);
+  }
+
+  :where(.nt-motion-roll)[data-state="closed"] {
+    animation: nv-roll-out var(--nv-motion-duration-slow) var(--nv-motion-ease-standard) forwards;
+  }
+
+  /* With reduced motion the values don't move: they crossfade in place. */
+  :where([data-nv-motion="reduced"] .nt-motion-roll)[data-state="open"] {
+    animation-name: nv-roll-fade-in;
+  }
+
+  :where([data-nv-motion="reduced"] .nt-motion-roll)[data-state="closed"] {
+    animation-name: nv-roll-fade-out;
+  }
+
+  /* Content that fades in when it replaces other content (a calendar month) marks itself with `data-animate`. */
+  :where(.nt-motion-fade)[data-animate] {
+    animation: nv-enter var(--nv-motion-duration-base) var(--nv-motion-ease-enter);
+  }
+
+  /* A list whose items fade in together when they replace a placeholder. */
+  :where(.nt-motion-fade-children)[data-animate] > * {
+    --tw-enter-opacity: 0;
+    --tw-enter-scale: 1;
+    --tw-enter-rotate: 0;
+    --tw-enter-translate-x: 0;
+    --tw-enter-translate-y: 0;
+    animation: nv-enter var(--nv-motion-duration-base) var(--nv-motion-ease-enter);
+  }
+
+  /*
+   * The default actions of an item: revealed on hover, on keyboard focus, and while one of their menus is open. Not on
+   * `:focus-within`: a clicked button keeps the focus, which would pin the actions to that item after the pointer left.
+   * `:has()` sits inside the forgiving `:is()`, so a browser without it still keeps the other selectors.
+   */
+  .nt-motion-reveal {
+    opacity: 0;
+    transform: translateX(var(--nv-motion-distance-sm));
+    transition-property: opacity, transform;
+    transition-duration: var(--nv-motion-duration-fast);
+    transition-timing-function: var(--nv-motion-ease-standard);
+    transition-delay: var(--nv-motion-reveal-delay);
+  }
+
+  @media (hover: hover) {
+    .nt-motion-reveal {
+      pointer-events: none;
+    }
+  }
+
+  .nt-group:hover .nt-motion-reveal,
+  .nt-group:is(:focus-visible, :has(:focus-visible)) .nt-motion-reveal,
+  .nt-motion-reveal:is(:has([data-open="true"])) {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    transition-duration: var(--nv-motion-duration-base);
+    transition-delay: 0s;
+  }
+}

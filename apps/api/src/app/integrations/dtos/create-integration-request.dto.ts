@@ -1,50 +1,61 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { CredentialsDto, StepFilterDto } from '@novu/application-generic';
+import { ChannelTypeEnum, ICreateIntegrationBodyDto, IntegrationKindEnum } from '@novu/shared';
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
   IsDefined,
   IsEnum,
   IsMongoId,
+  IsObject,
   IsOptional,
   IsString,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { ChannelTypeEnum, ICreateIntegrationBodyDto } from '@novu/shared';
-
-import { CredentialsDto } from './credentials.dto';
-import { StepFilter } from '../../shared/dtos/step-filter';
 
 export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
-  @ApiPropertyOptional({ type: String })
+  @ApiPropertyOptional({ type: String, description: 'The name of the integration' })
   @IsOptional()
   @IsString()
   name?: string;
 
-  @ApiPropertyOptional({ type: String })
+  @ApiPropertyOptional({ type: String, description: 'The unique identifier for the integration' })
   @IsOptional()
   @IsString()
   identifier?: string;
 
-  @ApiPropertyOptional({ type: String })
+  @ApiPropertyOptional({ type: String, description: 'The ID of the associated environment', format: 'uuid' })
   @IsOptional()
   @IsMongoId()
   _environmentId?: string;
 
-  @ApiProperty({ type: String })
+  @ApiPropertyOptional({ type: String, description: 'The provider ID for the integration' })
   @IsDefined()
   @IsString()
   providerId: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     enum: ChannelTypeEnum,
+    description: 'The channel type for the integration. Not required for agent-kind integrations.',
   })
-  @IsDefined()
+  @IsOptional()
   @IsEnum(ChannelTypeEnum)
-  channel: ChannelTypeEnum;
+  channel?: ChannelTypeEnum;
+
+  @ApiPropertyOptional({
+    enum: IntegrationKindEnum,
+    description:
+      'Distinguishes delivery integrations from agent-runtime integrations. Defaults to "delivery". Agent integrations do not require a channel.',
+  })
+  @IsOptional()
+  @IsEnum(IntegrationKindEnum)
+  kind?: IntegrationKindEnum;
 
   @ApiPropertyOptional({
     type: CredentialsDto,
+    description: 'The credentials for the integration',
   })
   @IsOptional()
   @Type(() => CredentialsDto)
@@ -53,22 +64,47 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
 
   @ApiPropertyOptional({
     type: Boolean,
-    description: 'If the integration is active the validation on the credentials field will run',
+    description: 'If the integration is active, the validation on the credentials field will run',
   })
   @IsOptional()
   @IsBoolean()
   active?: boolean;
 
-  @ApiPropertyOptional({ type: Boolean })
+  @ApiPropertyOptional({ type: Boolean, description: 'Flag to check the integration status' })
   @IsOptional()
   @IsBoolean()
   check?: boolean;
 
   @ApiPropertyOptional({
-    type: [StepFilter],
+    type: [StepFilterDto],
+    deprecated: true,
+    description: 'Legacy StepFilter conditions. Ignored when `rules` is also set.',
   })
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })
-  conditions?: StepFilter[];
+  conditions?: StepFilterDto[];
+
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+    description:
+      'JSONLogic used at send time to select this integration. Takes precedence over `conditions`.',
+    example: {
+      '==': [{ var: 'context.tenant.id' }, 'acme'],
+    },
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsObject()
+  rules?: Record<string, unknown> | null;
+
+  @ApiPropertyOptional({
+    type: Object,
+    description: 'Configurations for the integration',
+  })
+  @IsOptional()
+  @IsObject()
+  configurations?: Record<string, string>;
 }

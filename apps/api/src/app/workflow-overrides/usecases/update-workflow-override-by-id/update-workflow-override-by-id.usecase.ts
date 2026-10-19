@@ -3,12 +3,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   NotificationTemplateRepository,
   TenantRepository,
-  WorkflowOverrideRepository,
   WorkflowOverrideEntity,
+  WorkflowOverrideRepository,
 } from '@novu/dal';
-
+import { UpdateWorkflowOverrideResponseDto } from '../../dtos';
 import { UpdateWorkflowOverrideByIdCommand } from './update-workflow-override-by-id.command';
-import { UpdateWorkflowOverrideResponseDto } from '../../dto';
 
 @Injectable()
 export class UpdateWorkflowOverrideById {

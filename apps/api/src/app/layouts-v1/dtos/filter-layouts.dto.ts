@@ -1,0 +1,63 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { LayoutDtoV0 } from '@novu/application-generic';
+import { OrderByEnum } from '@novu/shared';
+import { Transform } from 'class-transformer';
+import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+
+export class FilterLayoutsRequestDto {
+  @Transform(({ value }) => Number(value))
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @ApiPropertyOptional({ type: Number, description: 'Number of page for pagination', required: false })
+  public page?: number;
+
+  @Transform(({ value }) => Number(value))
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @ApiPropertyOptional({ type: Number, description: 'Size of page for pagination', required: false })
+  public pageSize?: number;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Sort field. Currently only supported `createdAt`',
+    required: false,
+  })
+  public sortBy?: string;
+
+  @Transform(({ value }) => Number(value))
+  @IsOptional()
+  @ApiPropertyOptional({
+    type: String,
+    enum: OrderByEnum,
+    description: 'Direction of the sorting query param',
+    required: false,
+  })
+  public orderBy?: number | OrderByEnum;
+}
+
+export class FilterLayoutsResponseDto {
+  @ApiProperty({
+    type: LayoutDtoV0,
+    isArray: true,
+  })
+  data: LayoutDtoV0[];
+
+  @ApiProperty({
+    type: Number,
+  })
+  page: number;
+
+  @ApiProperty({
+    type: Number,
+  })
+  pageSize: number;
+
+  @ApiProperty({
+    type: Number,
+  })
+  totalCount: number;
+}

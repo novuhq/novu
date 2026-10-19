@@ -1,37 +1,39 @@
-const nr = require('newrelic');
-import { Server, Socket } from 'socket.io';
+import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { Logger } from '@nestjs/common';
-import { instrument } from '@socket.io/admin-ui';
-
-import { ISubscriberJwt, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { IDestroy } from '@novu/application-generic';
+import { ISubscriberJwt, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { instrument } from '@socket.io/admin-ui';
+import { Server, Socket } from 'socket.io';
 
 import { SubscriberOnlineService } from '../shared/subscriber-online';
+
+const nr = require('newrelic');
 
 const LOG_CONTEXT = 'WSGateway';
 
 @WebSocketGateway()
-export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDestroy {
+export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDestroy, OnModuleDestroy {
   private isShutdown = false;
 
-  constructor(private jwtService: JwtService, private subscriberOnlineService: SubscriberOnlineService) {}
+  constructor(
+    private jwtService: JwtService,
+    private subscriberOnlineService: SubscriberOnlineService
+  ) {}
 
   @WebSocketServer()
   server: Server;
 
   async handleDisconnect(connection: Socket) {
-    Logger.log(`New disconnect received from ${connection.id}`, LOG_CONTEXT);
+    Logger.debug(`New disconnect received from ${connection.id}`, LOG_CONTEXT);
 
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const _this = this;
 
     return new Promise((resolve, reject) => {
       nr.startBackgroundTransaction(
         ObservabilityBackgroundTransactionEnum.WS_SOCKET_HANDLE_DISCONNECT,
         'WS Service',
-        function () {
+        function processTask() {
           const transaction = nr.getTransaction();
 
           _this
@@ -47,16 +49,15 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   }
 
   async handleConnection(connection: Socket) {
-    Logger.log(`New connection received from ${connection.id}`, LOG_CONTEXT);
+    Logger.debug(`New connection received from ${connection.id}`, LOG_CONTEXT);
 
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const _this = this;
 
     return new Promise((resolve, reject) => {
       nr.startBackgroundTransaction(
         ObservabilityBackgroundTransactionEnum.WS_SOCKET_SOCKET_CONNECTION,
         'WS Service',
-        function () {
+        function processTask() {
           const transaction = nr.getTransaction();
 
           _this
@@ -86,7 +87,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
 
       return subscriber;
     } catch (e) {
-      return;
+      /* empty */
     }
   }
 
@@ -117,7 +118,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
 
     const activeConnections = await this.getActiveConnections(connection, subscriber._id);
 
-    Logger.log(
+    Logger.debug(
       `Disconnect request received from ${subscriber._id}. Active connections: ${activeConnections}`,
       LOG_CONTEXT
     );
@@ -146,29 +147,189 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
       return this.disconnect(connection);
     }
 
-    Logger.log(
-      `Connection request received from ${subscriber._id} external id: ${subscriber.subscriberId}`,
+    Logger.debug(
+      `Connection request received from ${subscriber._id} external id: ${subscriber.subscriberId} organization id: ${subscriber.organizationId}`,
       LOG_CONTEXT
     );
 
+    const contextKeys = subscriber.contextKeys ?? [];
+
+    connection.data.contextKeys = contextKeys;
+
     await connection.join(subscriber._id);
 
-    Logger.log(`Connection request accepted for ${subscriber._id}`, LOG_CONTEXT);
+    const contextDisplay = contextKeys.length === 0 ? 'no context' : contextKeys.join(', ');
+    Logger.debug(
+      `Connection ${connection.id} accepted for ${subscriber._id} with contexts: ${contextDisplay}`,
+      LOG_CONTEXT
+    );
 
     await this.subscriberOnlineService.handleConnection(subscriber);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async sendMessage(userId: string, event: string, data: any) {
+  async sendMessage(userId: string, event: string, data: any, contextKeys: string[]) {
     if (!this.server) {
       Logger.error('No sw server available to send message', LOG_CONTEXT);
 
       return;
     }
 
-    Logger.log(`Sending event ${event} message to ${userId}`, LOG_CONTEXT);
+    const safeContextKeys = contextKeys ?? [];
+    const sockets = await this.server.in(userId).fetchSockets();
 
-    this.server.to(userId).emit(event, data);
+    Logger.log(
+      `Sending event ${event} to ${userId} with message contexts: ${safeContextKeys.length === 0 ? 'none' : safeContextKeys.join(', ')} (${sockets.length} socket(s))`,
+      LOG_CONTEXT
+    );
+
+    for (const socket of sockets) {
+      const inboxContextKeys = socket.data.contextKeys ?? [];
+
+      if (this.isExactMatch(safeContextKeys, inboxContextKeys)) {
+        socket.emit(event, data);
+        Logger.debug(
+          `Delivered to socket ${socket.id} with inbox contexts: ${inboxContextKeys.length === 0 ? 'none' : inboxContextKeys.join(', ')}`,
+          LOG_CONTEXT
+        );
+      } else {
+        Logger.log(
+          `Skipped socket ${socket.id} - contexts mismatch. Message: [${safeContextKeys.join(', ') || 'none'}], Inbox: [${inboxContextKeys.join(', ') || 'none'}]`,
+          LOG_CONTEXT
+        );
+      }
+    }
+  }
+
+  private isExactMatch(messageContextKeys: string[], inboxContextKeys: string[]): boolean {
+    if (messageContextKeys.length === 0) {
+      return inboxContextKeys.length === 0;
+    }
+
+    if (messageContextKeys.length !== inboxContextKeys.length) {
+      return false;
+    }
+
+    // Order-independent match: all message keys must exist in inbox keys
+    return messageContextKeys.every((key) => inboxContextKeys.includes(key));
+  }
+
+  async sendUnreadCountToAllConnections(userId: string, environmentId: string, messageRepository: any) {
+    if (!this.server) {
+      Logger.error('No server available to send unread count', LOG_CONTEXT);
+
+      return;
+    }
+
+    const sockets = await this.server.in(userId).fetchSockets();
+
+    Logger.log(`Sending individualized unread counts to ${sockets.length} socket(s) for user ${userId}`, LOG_CONTEXT);
+
+    for (const socket of sockets) {
+      const contextKeys = socket.data.contextKeys ?? [];
+
+      try {
+        const [unreadCount, severityCounts] = await Promise.all([
+          messageRepository.getCount(
+            environmentId,
+            userId,
+            'in_app',
+            { read: false },
+            { limit: 101 },
+            contextKeys,
+            undefined,
+            'primary'
+          ),
+          messageRepository.getCountBySeverity(
+            environmentId,
+            userId,
+            'in_app',
+            { read: false, snoozed: false },
+            { limit: 99 },
+            contextKeys
+          ),
+        ]);
+
+        const paginationIndication =
+          unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount, hasMore: false };
+
+        const counts = {
+          total: unreadCount,
+          severity: {
+            high: 0,
+            medium: 0,
+            low: 0,
+            none: 0,
+          },
+        };
+
+        for (const { severity, count } of severityCounts) {
+          if (severity in counts.severity) {
+            counts.severity[severity] = count;
+          }
+        }
+
+        socket.emit('unread_count_changed', {
+          unreadCount: paginationIndication.unreadCount,
+          counts,
+          hasMore: paginationIndication.hasMore,
+        });
+
+        const contextDisplay = contextKeys.length === 0 ? 'none' : contextKeys.join(', ');
+
+        Logger.log(
+          `Sent unread count to socket ${socket.id} with contexts [${contextDisplay}]: ${counts.total}`,
+          LOG_CONTEXT
+        );
+      } catch (error) {
+        Logger.error(`Failed to send unread count to socket ${socket.id}: ${error.message}`, LOG_CONTEXT);
+      }
+    }
+  }
+
+  async sendUnseenCountToAllConnections(userId: string, environmentId: string, messageRepository: any) {
+    if (!this.server) {
+      Logger.error('No server available to send unseen count', LOG_CONTEXT);
+
+      return;
+    }
+
+    const sockets = await this.server.in(userId).fetchSockets();
+
+    Logger.log(`Sending individualized unseen counts to ${sockets.length} socket(s) for user ${userId}`, LOG_CONTEXT);
+
+    for (const socket of sockets) {
+      const contextKeys = socket.data.contextKeys ?? [];
+
+      try {
+        const unseenCount = await messageRepository.getCount(
+          environmentId,
+          userId,
+          'in_app',
+          { seen: false },
+          { limit: 101 },
+          contextKeys,
+          undefined,
+          'primary'
+        );
+
+        const paginationIndication =
+          unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount, hasMore: false };
+
+        socket.emit('unseen_count_changed', {
+          unseenCount: paginationIndication.unseenCount,
+          hasMore: paginationIndication.hasMore,
+        });
+
+        const contextDisplay = contextKeys.length === 0 ? 'none' : contextKeys.join(', ');
+
+        Logger.log(
+          `Sent unseen count to socket ${socket.id} with contexts [${contextDisplay}]: ${unseenCount}`,
+          LOG_CONTEXT
+        );
+      } catch (error) {
+        Logger.error(`Failed to send unseen count to socket ${socket.id}: ${error.message}`, LOG_CONTEXT);
+      }
+    }
   }
 
   private disconnect(socket: Socket) {

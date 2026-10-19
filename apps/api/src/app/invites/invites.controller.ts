@@ -3,38 +3,36 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Headers,
   Param,
   Post,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import {
   ApiRateLimitCostEnum,
   IBulkInviteResponse,
   IGetInviteResponseDto,
-  IJwtPayload,
   MemberRoleEnum,
+  UserSessionData,
 } from '@novu/shared';
-import { UserSession } from '../shared/framework/user.decorator';
-import { GetInviteCommand } from './usecases/get-invite/get-invite.command';
-import { AcceptInviteCommand } from './usecases/accept-invite/accept-invite.command';
-import { Roles } from '../auth/framework/roles.decorator';
-import { InviteMemberDto } from './dtos/invite-member.dto';
-import { InviteMemberCommand } from './usecases/invite-member/invite-member.command';
-import { BulkInviteMembersDto } from './dtos/bulk-invite-members.dto';
-import { BulkInviteCommand } from './usecases/bulk-invite/bulk-invite.command';
-import { InviteMember } from './usecases/invite-member/invite-member.usecase';
-import { BulkInvite } from './usecases/bulk-invite/bulk-invite.usecase';
-import { AcceptInvite } from './usecases/accept-invite/accept-invite.usecase';
-import { GetInvite } from './usecases/get-invite/get-invite.usecase';
-import { ResendInviteDto } from './dtos/resend-invite.dto';
-import { ResendInviteCommand } from './usecases/resend-invite/resend-invite.command';
-import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCost } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
+import { UserSession } from '../shared/framework/user.decorator';
+import { BulkInviteMembersDto } from './dtos/bulk-invite-members.dto';
+import { InviteMemberDto, InviteWebhookDto } from './dtos/invite-member.dto';
+import { ResendInviteDto } from './dtos/resend-invite.dto';
+import { AcceptInviteCommand } from './usecases/accept-invite/accept-invite.command';
+import { AcceptInvite } from './usecases/accept-invite/accept-invite.usecase';
+import { BulkInviteCommand } from './usecases/bulk-invite/bulk-invite.command';
+import { BulkInvite } from './usecases/bulk-invite/bulk-invite.usecase';
+import { GetInviteCommand } from './usecases/get-invite/get-invite.command';
+import { GetInvite } from './usecases/get-invite/get-invite.usecase';
+import { InviteMemberCommand } from './usecases/invite-member/invite-member.command';
+import { InviteMember } from './usecases/invite-member/invite-member.usecase';
+import { ResendInviteCommand } from './usecases/resend-invite/resend-invite.command';
+import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiCommonResponses()
@@ -60,9 +58,9 @@ export class InvitesController {
   }
 
   @Post('/:inviteToken/accept')
-  @UseGuards(UserAuthGuard)
+  @RequireAuthentication()
   async acceptInviteToken(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('inviteToken') inviteToken: string
   ): Promise<string> {
     const command = AcceptInviteCommand.create({
@@ -74,14 +72,16 @@ export class InvitesController {
   }
 
   @Post('/')
-  @Roles(MemberRoleEnum.ADMIN)
-  @UseGuards(UserAuthGuard)
-  async inviteMember(@UserSession() user: IJwtPayload, @Body() body: InviteMemberDto): Promise<{ success: boolean }> {
+  @RequireAuthentication()
+  async inviteMember(
+    @UserSession() user: UserSessionData,
+    @Body() body: InviteMemberDto
+  ): Promise<{ success: boolean }> {
     const command = InviteMemberCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
       email: body.email,
-      role: MemberRoleEnum.ADMIN,
+      role: MemberRoleEnum.OSS_ADMIN,
     });
 
     await this.inviteMemberUsecase.execute(command);
@@ -92,10 +92,9 @@ export class InvitesController {
   }
 
   @Post('/resend')
-  @Roles(MemberRoleEnum.ADMIN)
-  @UseGuards(UserAuthGuard)
+  @RequireAuthentication()
   async resendInviteMember(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: ResendInviteDto
   ): Promise<{ success: boolean }> {
     const command = ResendInviteCommand.create({
@@ -113,10 +112,9 @@ export class InvitesController {
 
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
-  @UseGuards(UserAuthGuard)
-  @Roles(MemberRoleEnum.ADMIN)
+  @RequireAuthentication()
   async bulkInviteMembers(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: BulkInviteMembersDto
   ): Promise<IBulkInviteResponse[]> {
     const command = BulkInviteCommand.create({

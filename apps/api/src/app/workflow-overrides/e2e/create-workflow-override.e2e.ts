@@ -1,10 +1,9 @@
+import { NotificationTemplateRepository, TenantRepository } from '@novu/dal';
+import { ICreateWorkflowOverrideRequestDto } from '@novu/shared';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-import { UserSession } from '@novu/testing';
-import { ICreateWorkflowOverrideRequestDto } from '@novu/shared';
-import { NotificationTemplateRepository, TenantRepository } from '@novu/dal';
-
-describe('Create Integration - /workflow-overrides (POST)', function () {
+describe('Create Integration - /workflow-overrides (POST) #novu-v0', () => {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
   const notificationTemplateRepository = new NotificationTemplateRepository();
@@ -14,7 +13,7 @@ describe('Create Integration - /workflow-overrides (POST)', function () {
     await session.initialize();
   });
 
-  it('should successfully create new workflow override', async function () {
+  it('should successfully create new workflow override', async () => {
     const tenant = await tenantRepository.create({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -60,7 +59,7 @@ describe('Create Integration - /workflow-overrides (POST)', function () {
     expect(res.body.data._organizationId).to.equal(session.organization._id);
   });
 
-  it('should fail on creation of new workflow override with missing workflow id', async function () {
+  it('should fail on creation of new workflow override with missing workflow id', async () => {
     const tenant = await tenantRepository.create({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -83,7 +82,7 @@ describe('Create Integration - /workflow-overrides (POST)', function () {
     expect(res.body.message[1]).to.equal('workflowId must be a string');
   });
 
-  it('should fail on creation of new workflow override with missing tenant id', async function () {
+  it('should fail on creation of new workflow override with missing tenant id', async () => {
     const workflow = await notificationTemplateRepository.create({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -103,8 +102,7 @@ describe('Create Integration - /workflow-overrides (POST)', function () {
     };
 
     const res = await session.testAgent.post('/v1/workflow-overrides').send(payload);
-
-    expect(res.body.statusCode).to.equal(400);
-    expect(res.body.message[0]).to.equal('_tenantId must be a mongodb id');
+    expect(res.body.statusCode).to.equal(422);
+    expect(res.body.errors._tenantId.messages[0]).to.equal(`_tenantId must be a mongodb id`);
   });
 });

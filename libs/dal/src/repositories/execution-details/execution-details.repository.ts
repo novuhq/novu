@@ -1,9 +1,8 @@
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
-
-import { ExecutionDetailsEntity, ExecutionDetailsDBModel } from './execution-details.entity';
-import { ExecutionDetails } from './execution-details.schema';
-import { BaseRepository } from '../base-repository';
 import { EnforceEnvId } from '../../types/enforce';
+import { BaseRepository } from '../base-repository';
+import { ExecutionDetailsDBModel, ExecutionDetailsEntity } from './execution-details.entity';
+import { ExecutionDetails } from './execution-details.schema';
 
 /**
  * Execution details is meant to be read only almost exclusively as a log history of the Jobs executions.

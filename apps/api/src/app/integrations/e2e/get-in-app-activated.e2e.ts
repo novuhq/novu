@@ -2,7 +2,7 @@ import { SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Get in-app activated - /integrations/in-app/activated (GET)', async () => {
+describe('Get in-app activated - /integrations/in-app/activated (GET) #novu-v2', async () => {
   let session: UserSession;
   let otherSession: UserSession;
 

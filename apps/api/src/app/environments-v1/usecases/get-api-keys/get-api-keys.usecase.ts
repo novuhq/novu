@@ -1,0 +1,25 @@
+import { Injectable } from '@nestjs/common';
+import { decryptApiKey } from '@novu/application-generic';
+import { EnvironmentRepository, IApiKey } from '@novu/dal';
+import { createHash } from 'crypto';
+import { ApiKey } from '../../../shared/dtos/api-key';
+import { GetApiKeysCommand } from './get-api-keys.command';
+
+@Injectable()
+export class GetApiKeys {
+  constructor(private environmentRepository: EnvironmentRepository) {}
+
+  async execute(command: GetApiKeysCommand): Promise<ApiKey[]> {
+    const keys = await this.environmentRepository.getApiKeys(command.environmentId);
+
+    return keys.map((apiKey: IApiKey) => {
+      const decryptedKey = decryptApiKey(apiKey.key);
+
+      return {
+        key: decryptedKey,
+        _userId: apiKey._userId,
+        hash: apiKey.hash ?? createHash('sha256').update(decryptedKey).digest('hex'),
+      };
+    });
+  }
+}

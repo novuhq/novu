@@ -1,0 +1,35 @@
+---
+title: "Bandwidth SMS Integration with Novu"
+sidebarTitle: "Bandwidth"
+description: "Connect Bandwidth to Novu to send SMS notifications through workflows. Store your Bandwidth username, password, account ID, and sender in the Novu dashboard."
+---
+
+You can use the [Bandwidth Messaging API](https://dev.bandwidth.com/docs/messaging/) to send SMS messages through Novu.
+
+## Getting started
+
+You need a Bandwidth account with messaging enabled, API credentials, and a phone number or sender ID that Bandwidth allows for your account.
+
+1. Log in to the [Bandwidth Dashboard](https://dashboard.bandwidth.com/).
+2. Create or copy an API user **Username** and **Password**.
+3. Copy your **Account ID**.
+4. Confirm you have a number or sender assigned for outbound SMS.
+
+## Creating a Bandwidth integration with Novu
+
+1. Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-sms-bandwidth) page on Novu.
+2. Click **Add a provider**.
+3. Locate **Bandwidth** under the SMS section and click **Connect**.
+4. Enter your:
+   - **Username**
+   - **Password**
+   - **Account ID**
+   - **From** (Bandwidth phone number in E.164 format, or an allowed sender ID)
+5. Confirm **Active Integration** is on. New integrations start active by default.
+6. Click **Create Integration**.
+
+You can now send SMS notifications with Bandwidth through Novu.
+
+<Note>
+  Bandwidth is marked beta in Novu. Verify delivery in both Novu activity and the Bandwidth dashboard when you first connect.
+</Note>

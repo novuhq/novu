@@ -1,19 +1,35 @@
-import { StepTypeEnum, IWorkflowStepMetadata, JobStatusEnum, ITenantDefine } from '@novu/shared';
+import {
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatusEnum,
+  ITenantDefine,
+  IWorkflowStepMetadata,
+  JobStatusEnum,
+  StepTypeEnum,
+  TriggerOverrides,
+  WorkflowPreferences,
+} from '@novu/shared';
 import { Types } from 'mongoose';
-
-import { NotificationStepEntity } from '../notification-template';
-import type { EnvironmentId } from '../environment';
-import type { OrganizationId } from '../organization';
 import type { ChangePropsValueType } from '../../types';
+import type { EnvironmentId } from '../environment';
+import { NotificationStepEntity } from '../notification-template';
+import type { OrganizationId } from '../organization';
 
 export { JobStatusEnum };
+
+export type DeliveryLifecycleState = {
+  status?: DeliveryLifecycleStatusEnum;
+  detail?: DeliveryLifecycleDetail;
+};
 
 export class JobEntity {
   _id: string;
   identifier: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
-  overrides: Record<string, Record<string, unknown>>;
+  overrides: TriggerOverrides;
+  /**
+   * Trigger-selected agent ObjectId. Omitted inherits the workflow agent; null opts out.
+   */
+  _agentId?: string | null;
   step: NotificationStepEntity;
   tenant?: ITenantDefine;
   transactionId: string;
@@ -28,11 +44,16 @@ export class JobEntity {
   delay?: number;
   _parentId?: string;
   status: JobStatusEnum;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  /**
+   * True from claimNextChildAsQueued until AddJob confirms the queue message exists.
+   * Lets stranded-chain recovery distinguish a child whose worker died before the
+   * enqueue (releasable) from one whose message is live but backlogged (leave alone).
+   */
+  awaitingEnqueue?: boolean;
+  deliveryLifecycleState?: DeliveryLifecycleState;
   error?: any;
   createdAt: string;
   updatedAt: string;
-  expireAt?: string;
   _templateId: string;
   digest?: IWorkflowStepMetadata & {
     events?: any[];
@@ -41,13 +62,21 @@ export class JobEntity {
   _actorId?: string;
   actorId?: string;
   stepOutput?: Record<string, unknown>;
+  preferences?: WorkflowPreferences;
+  contextKeys?: string[];
+  /**
+   * used to track the number of times a step has been extended to the next available time in the subscriber schedule
+   */
+  scheduleExtensionsCount?: number;
 }
 
 export type JobDBModel = ChangePropsValueType<
-  Omit<JobEntity, '_parentId' | '_actorId'>,
+  Omit<JobEntity, '_parentId' | '_actorId' | '_agentId'>,
   '_notificationId' | '_subscriberId' | '_environmentId' | '_organizationId' | '_userId'
 > & {
   _parentId?: Types.ObjectId;
 
   _actorId?: Types.ObjectId;
+
+  _agentId?: Types.ObjectId | null;
 };

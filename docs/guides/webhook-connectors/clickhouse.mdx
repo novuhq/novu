@@ -1,0 +1,165 @@
+---
+title: 'Insert webhook events into ClickHouse'
+description: "Insert Novu webhook events into a ClickHouse table with the ClickHouse connector, including table setup, JSONEachRow column matching, and a batch transformation."
+sidebarTitle: ClickHouse
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import WebhookBatchInput from "/snippets/webhook-batch-input.mdx";
+
+The ClickHouse connector inserts Novu webhook events into a ClickHouse table over the ClickHouse HTTP interface. Use it when you want notification events in ClickHouse for analytics without running your own ingestion service.
+
+Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction). This connector maps to the Svix [ClickHouse advanced endpoint](https://docs.svix.com/advanced-endpoints/clickhouse).
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- A ClickHouse server reachable over its HTTP or HTTPS interface, for example port `8443` for HTTPS or `8123` for HTTP. The native protocol port (`9000`) is not used.
+- A ClickHouse user with a password and `INSERT` permission on the destination table.
+- The destination table created before you enable the endpoint. The connector does not create or alter tables.
+
+## Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| URL | Yes | HTTP URL of the ClickHouse server, for example `https://clickhouse.example.com:8443`. |
+| Username | Yes | ClickHouse user used to authenticate. |
+| Password | Yes | Password for that user. |
+| Table name | Yes | Table that receives the rows. |
+| Database | No | Database that contains the table. Defaults to `default`. |
+| Transformation | No | JavaScript that maps each webhook batch to rows. Required when your table columns do not match the top-level keys of the webhook body. |
+
+## Grant insert permission
+
+Give the connector user insert access on the destination table only. ClickHouse [`GRANT`](https://clickhouse.com/docs/sql-reference/statements/grant) syntax:
+
+```sql
+GRANT INSERT ON analytics.novu_events TO novu_writer;
+```
+
+## Default destination behavior
+
+Without a transformation, Svix inserts each webhook payload directly using the ClickHouse [`JSONEachRow`](https://clickhouse.com/docs/interfaces/formats/JSONEachRow) format. Top-level payload fields are matched to columns by name.
+
+ClickHouse is different from the other warehouse connectors in one important way: it does not add any columns of its own. There is no generated `id` column and no `payload` column unless you define them. You own the full schema.
+
+Novu webhook bodies are nested, and message fields such as `subscriberId` and `channel` sit under `data.object` rather than at the top level. Because of that, plan on writing a transformation for this connector unless your table columns exactly match the top-level keys of the webhook body.
+
+
+## Create the destination table
+
+This table stores a few flattened fields plus the full webhook body:
+
+```sql
+CREATE TABLE novu_events (
+  event_type String,
+  subscriber_id String,
+  channel String,
+  payload String,
+  received_at DateTime DEFAULT now()
+)
+ENGINE = MergeTree()
+ORDER BY (event_type, subscriber_id);
+```
+
+`received_at` is not returned by the transformation below. Columns omitted from a `JSONEachRow` row take their declared default, so ClickHouse fills the insert time.
+
+## Transformation contract
+
+The transformation receives one batch and returns the rows to insert:
+
+<WebhookBatchInput />
+- Output: an object with a `rows` array. Each row is an object whose keys match your ClickHouse column names. Each row is inserted separately using `JSONEachRow`.
+
+Novu-oriented example that reads message fields from `event.payload.data.object`:
+
+```javascript
+function handler(input) {
+  const rows = input.events.map((event) => {
+    const message = event.payload.data?.object ?? {};
+
+    return {
+      event_type: event.eventType,
+      subscriber_id: String(message.subscriberId ?? ""),
+      channel: String(message.channel ?? ""),
+      payload: JSON.stringify(event.payload),
+    };
+  });
+
+  return { rows };
+}
+```
+
+Stringify nested values. A row value that is itself an object or array will not insert into a `String` column.
+
+## Configure in the Dashboard
+
+<Steps>
+
+<WebhookConnectorAddEndpoint connectorName="ClickHouse" />
+
+<Step>
+## Enter connection details
+
+Enter the URL, username, password, table name, and database.
+</Step>
+
+<Step>
+## Configure the transformation
+
+Paste the transformation above and adjust the keys so they match your column names exactly.
+</Step>
+
+<Step>
+## Select event types
+
+Subscribe to the [event types](/platform/developer/webhooks/event-types) you want to store. If you subscribe to more than one, confirm the transformation produces valid rows for every one of them, since a single table receives all of them.
+</Step>
+
+<Step>
+## Test the endpoint
+
+Click **Create**, open the endpoint, go to the **Testing** tab, and use **Send Example** for each subscribed event type. Confirm success in the **Logs** tab.
+</Step>
+
+</Steps>
+
+## Verify delivery
+
+Query the table with `clickhouse-client`:
+
+```bash
+clickhouse-client --host clickhouse.example.com --secure \
+  --user novu_writer --password "$CLICKHOUSE_PASSWORD" \
+  --query "SELECT event_type, subscriber_id, channel, received_at FROM analytics.novu_events ORDER BY received_at DESC LIMIT 10"
+```
+
+Or over the same HTTP interface the connector uses:
+
+```bash
+curl -u "novu_writer:$CLICKHOUSE_PASSWORD" \
+  --data-urlencode "query=SELECT count() FROM analytics.novu_events" \
+  "https://clickhouse.example.com:8443/"
+```
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| Insert fails on an unknown field | The transformation returned a key that has no matching column. Remove the key or add the column. |
+| Type errors on insert | A row value is an object or array being written to a scalar column. Wrap it in `JSON.stringify`. |
+| Connection or timeout errors | The URL points at the native protocol port instead of the HTTP interface, or the server is not reachable from Novu. Use the HTTP or HTTPS port. |
+| Authentication failures | Username or password is wrong, or the user lacks `INSERT` on the table. |
+| Rows appear for some event types but not others | The transformation assumes fields that only exist on certain event types. Guard with defaults, as in the example above. |
+| Table does not exist errors | The table must exist before the endpoint is enabled, and `database` defaults to `default` when left blank. |
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix ClickHouse endpoint](https://docs.svix.com/advanced-endpoints/clickhouse)
+- [ClickHouse JSONEachRow format](https://clickhouse.com/docs/interfaces/formats/JSONEachRow)
+- [ClickHouse access rights](https://clickhouse.com/docs/operations/access-rights)

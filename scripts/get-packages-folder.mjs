@@ -1,5 +1,5 @@
 import { readProjects } from '@pnpm/filter-workspace-packages';
-import * as fs from 'fs';
+import fs from 'node:fs';
 
 export async function getPackageFolders(folders) {
   const cachePath = folders.join('_') + '-changes-cache.json';
@@ -13,16 +13,18 @@ export async function getPackageFolders(folders) {
 
   const path = process.cwd();
   const content = await readProjects(path, {
-    engineStrict: false
+    engineStrict: false,
   });
 
   let result = {};
   for (const folder of folders) {
-    const filteredItems = content.allProjects.filter((project) => {
-      const contains =  project.dir.includes(folder + '/');
+    const filteredItems = content.allProjects
+      .filter((project) => {
+        const contains = project.dir.includes(folder + '/');
 
-      return contains;
-    } ).map((project) => project.manifest.name);
+        return contains;
+      })
+      .map((project) => project.manifest.name);
 
     result[folder] = filteredItems;
   }

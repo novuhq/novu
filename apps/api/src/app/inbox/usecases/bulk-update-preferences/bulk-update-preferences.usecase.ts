@@ -1,0 +1,189 @@
+import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { AnalyticsService, FeatureFlagsService, InstrumentUsecase } from '@novu/application-generic';
+import {
+  BaseRepository,
+  ContextRepository,
+  EnvironmentRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+  SubscriberRepository,
+} from '@novu/dal';
+import { ContextPayload, FeatureFlagsKeysEnum, PreferenceLevelEnum } from '@novu/shared';
+import { BulkUpdatePreferenceItemDto } from '../../dtos/bulk-update-preferences-request.dto';
+import { AnalyticsEventsEnum } from '../../utils';
+import { InboxPreference } from '../../utils/types';
+import { UpdatePreferencesCommand } from '../update-preferences/update-preferences.command';
+import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
+import { BulkUpdatePreferencesCommand } from './bulk-update-preferences.command';
+
+const MAX_BULK_LIMIT = 100;
+const UPDATE_BATCH_SIZE = 5;
+
+@Injectable()
+export class BulkUpdatePreferences {
+  constructor(
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private subscriberRepository: SubscriberRepository,
+    private analyticsService: AnalyticsService,
+    private updatePreferencesUsecase: UpdatePreferences,
+    private environmentRepository: EnvironmentRepository,
+    private contextRepository: ContextRepository,
+    private featureFlagsService: FeatureFlagsService
+  ) {}
+
+  @InstrumentUsecase()
+  async execute(command: BulkUpdatePreferencesCommand): Promise<InboxPreference[]> {
+    const contextKeys = await this.resolveContexts(
+      command.environmentId,
+      command.organizationId,
+      command.context,
+      command.contextKeys
+    );
+
+    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    if (!subscriber) throw new NotFoundException(`Subscriber with id: ${command.subscriberId} is not found`);
+
+    if (command.preferences.length === 0) {
+      throw new BadRequestException('No preferences provided for bulk update');
+    }
+
+    if (command.preferences.length > MAX_BULK_LIMIT) {
+      throw new UnprocessableEntityException(`preferences must contain no more than ${MAX_BULK_LIMIT} elements`);
+    }
+
+    const allWorkflowIds = command.preferences.map((preference) => preference.workflowId);
+    const workflowInternalIds = allWorkflowIds.filter((id) => BaseRepository.isInternalId(id));
+    const workflowIdentifiers = allWorkflowIds.filter((id) => !BaseRepository.isInternalId(id));
+
+    const dbWorkflows = await this.notificationTemplateRepository.findForBulkPreferences(
+      command.environmentId,
+      workflowInternalIds,
+      workflowIdentifiers
+    );
+
+    const allValidWorkflowsMap = new Map<string, NotificationTemplateEntity>();
+    if (dbWorkflows && dbWorkflows.length > 0) {
+      for (const workflow of dbWorkflows) {
+        allValidWorkflowsMap.set(workflow._id, workflow);
+
+        if (workflow.triggers?.[0]?.identifier) {
+          allValidWorkflowsMap.set(workflow.triggers[0].identifier, workflow);
+        }
+      }
+    }
+
+    const invalidWorkflowIds = allWorkflowIds.filter((id) => !allValidWorkflowsMap.has(id));
+    if (invalidWorkflowIds.length > 0) {
+      throw new NotFoundException(`Workflows with ids: ${invalidWorkflowIds.join(', ')} not found`);
+    }
+
+    const criticalWorkflows = dbWorkflows.filter((workflow) => workflow.critical);
+    if (criticalWorkflows.length > 0) {
+      const criticalWorkflowIds = criticalWorkflows.map((workflow) => workflow._id);
+      throw new BadRequestException(`Critical workflows with ids: ${criticalWorkflowIds.join(', ')} cannot be updated`);
+    }
+
+    // deduplicate preferences by workflow document ID, it ensures we only process one update per actual workflow document
+    const workflowPreferencesMap = new Map<
+      string,
+      { preference: BulkUpdatePreferenceItemDto; workflow: NotificationTemplateEntity }
+    >();
+    for (const preference of command.preferences) {
+      const workflow = allValidWorkflowsMap.get(preference.workflowId);
+      if (workflow) {
+        workflowPreferencesMap.set(workflow._id, {
+          preference,
+          workflow,
+        });
+      }
+    }
+
+    const environment = await this.environmentRepository.findOne({
+      _id: command.environmentId,
+    });
+
+    const workflowPreferenceEntries = Array.from(workflowPreferencesMap.entries());
+    const updatedPreferences: InboxPreference[] = [];
+
+    for (let batchStart = 0; batchStart < workflowPreferenceEntries.length; batchStart += UPDATE_BATCH_SIZE) {
+      const batch = workflowPreferenceEntries.slice(batchStart, batchStart + UPDATE_BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(async ([workflowId, { preference, workflow }]) => {
+          const isUpdatingSubscriptionPreference =
+            preference.subscriptionIdentifier &&
+            (typeof preference.enabled !== 'undefined' || typeof preference.condition !== 'undefined');
+
+          return this.updatePreferencesUsecase.execute(
+            UpdatePreferencesCommand.create(
+              {
+                organizationId: command.organizationId,
+                subscriberId: command.subscriberId,
+                environmentId: command.environmentId,
+                contextKeys,
+                level: PreferenceLevelEnum.TEMPLATE,
+                subscriptionIdentifier: preference.subscriptionIdentifier,
+                ...(isUpdatingSubscriptionPreference && {
+                  all: {
+                    ...(typeof preference.enabled !== 'undefined' && { enabled: preference.enabled }),
+                    ...(typeof preference.condition !== 'undefined' && { condition: preference.condition }),
+                  },
+                }),
+                chat: preference.chat,
+                email: preference.email,
+                in_app: preference.in_app,
+                push: preference.push,
+                sms: preference.sms,
+                tool: preference.tool,
+                workflowIdOrIdentifier: workflowId,
+                includeInactiveChannels: false,
+              },
+              {
+                workflow,
+                subscriber,
+                // biome-ignore lint/style/noNonNullAssertion: environment is always found
+                environment: environment!,
+              }
+            )
+          );
+        })
+      );
+
+      updatedPreferences.push(...batchResults);
+    }
+
+    return updatedPreferences;
+  }
+
+  private async resolveContexts(
+    environmentId: string,
+    organizationId: string,
+    context?: ContextPayload,
+    sessionContextKeys?: string[]
+  ): Promise<string[] | undefined> {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+    });
+
+    if (!isEnabled) {
+      return undefined;
+    }
+
+    if (!context) {
+      if (sessionContextKeys?.length) {
+        return sessionContextKeys;
+      }
+
+      return [];
+    }
+
+    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+      environmentId,
+      organizationId,
+      context
+    );
+
+    return contexts.map((ctx) => ctx.key);
+  }
+}

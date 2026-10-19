@@ -1,5 +1,4 @@
-import * as mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { TenantDBModel } from './tenant.entity';
@@ -44,24 +43,5 @@ tenantSchema.index({
   createdAt: -1,
 });
 
-/*
- * This index was initially created to optimize:
- *
- * Path: apps/api/src/app/tenant/usecases/create-tenant/create-tenant.usecase.ts
- * Context: execute()
- * Query: findOne({
- *    _environmentId: command.environmentId,
- *    identifier: command.identifier,
- *  });
- */
-tenantSchema.index(
-  {
-    _environmentId: 1,
-    identifier: 1,
-  },
-  { unique: true }
-);
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Tenant =
   (mongoose.models.Tenant as mongoose.Model<TenantDBModel>) || mongoose.model<TenantDBModel>('Tenant', tenantSchema);

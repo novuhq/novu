@@ -1,7 +1,7 @@
 import { IntegrationRepository } from '@novu/dal';
+import { expect } from 'chai';
 import { beforeEach } from 'mocha';
 import { updateFalseValues, updateTrueValues } from './secure-to-boolean-migration';
-import { expect } from 'chai';
 
 const integrationRepository = new IntegrationRepository();
 
@@ -44,7 +44,7 @@ async function clearIntegrationCollection() {
 }
 
 async function seedIntegrationCollection(secureValue: any, amount: number) {
-  for (let i = 0; i < amount; i++) {
+  for (let i = 0; i < amount; i += 1) {
     await integrationRepository._model.collection.insertOne({
       providerId: 'apns',
       channel: 'push',

@@ -1,9 +1,34 @@
-import * as mongoose from 'mongoose';
-import { Schema } from 'mongoose';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, UsageAlertRecipientsEnum } from '@novu/shared';
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { OrganizationDBModel, PartnerTypeEnum } from './organization.entity';
+
+const usageLimitsSchema = new Schema(
+  {
+    workflowRuns: {
+      type: new Schema(
+        {
+          onDemandLimit: Schema.Types.Number,
+        },
+        { _id: false }
+      ),
+      required: false,
+    },
+    pauseAtLimit: Schema.Types.Boolean,
+    alerts: {
+      type: new Schema(
+        {
+          enabled: Schema.Types.Boolean,
+          sendTo: { type: Schema.Types.String, enum: UsageAlertRecipientsEnum },
+        },
+        { _id: false }
+      ),
+      required: false,
+    },
+  },
+  { _id: false }
+);
 
 const organizationSchema = new Schema<OrganizationDBModel>(
   {
@@ -12,6 +37,11 @@ const organizationSchema = new Schema<OrganizationDBModel>(
     apiServiceLevel: {
       type: Schema.Types.String,
       enum: ApiServiceLevelEnum,
+      default: ApiServiceLevelEnum.FREE,
+    },
+    isTrial: {
+      type: Schema.Types.Boolean,
+      default: false,
     },
     branding: {
       fontColor: Schema.Types.String,
@@ -37,7 +67,10 @@ const organizationSchema = new Schema<OrganizationDBModel>(
       select: false,
     },
     defaultLocale: Schema.Types.String,
+    targetLocales: [Schema.Types.String],
     domain: Schema.Types.String,
+    language: [Schema.Types.String],
+    removeNovuBranding: Schema.Types.Boolean,
     productUseCases: {
       delay: {
         type: Schema.Types.Boolean,
@@ -59,13 +92,68 @@ const organizationSchema = new Schema<OrganizationDBModel>(
         type: Schema.Types.Boolean,
         default: false,
       },
+      agents: {
+        type: Schema.Types.Boolean,
+        default: false,
+      },
     },
     externalId: Schema.Types.String,
+    stripeCustomerId: Schema.Types.String,
+    brandEnrichment: {
+      type: {
+        industry: [
+          {
+            industry: Schema.Types.String,
+            subindustry: Schema.Types.String,
+          },
+        ],
+        companyTitle: Schema.Types.String,
+        companyDescription: Schema.Types.String,
+        logos: [
+          {
+            url: Schema.Types.String,
+            type: { type: Schema.Types.String, enum: ['icon', 'logo'] },
+            mode: { type: Schema.Types.String, enum: ['light', 'dark', 'has_opaque_background'] },
+          },
+        ],
+        colors: [
+          {
+            hex: Schema.Types.String,
+            name: Schema.Types.String,
+          },
+        ],
+        enrichedAt: Schema.Types.String,
+        status: {
+          type: Schema.Types.String,
+          enum: ['pending', 'completed', 'failed', 'not_available'],
+          required: true,
+        },
+      },
+      required: false,
+    },
+    onboardingWorkflowsStatus: {
+      type: Schema.Types.String,
+      enum: ['pending', 'generating', 'completed', 'failed', 'skipped'],
+      required: false,
+    },
+    usageLimits: {
+      type: usageLimitsSchema,
+      required: false,
+    },
   },
   schemaOptions
 );
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
+if (process.env.NOVU_ENTERPRISE !== 'true') {
+  organizationSchema.index(
+    { name: 1 },
+    {
+      unique: true,
+      partialFilterExpression: { name: 'Community Edition' },
+    }
+  );
+}
+
 export const Organization =
   (mongoose.models.Organization as mongoose.Model<OrganizationDBModel>) ||
   mongoose.model<OrganizationDBModel>('Organization', organizationSchema);

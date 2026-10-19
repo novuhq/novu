@@ -1,11 +1,9 @@
 import { MiddlewareConsumer, Module, NestModule, OnApplicationShutdown } from '@nestjs/common';
 import { CompileTemplate, WorkflowInMemoryProviderService } from '@novu/application-generic';
-
-import { USE_CASES } from './usecases';
-import { InboundParseController } from './inbound-parse.controller';
-
-import { SharedModule } from '../shared/shared.module';
 import { AuthModule } from '../auth/auth.module';
+import { SharedModule } from '../shared/shared.module';
+import { InboundParseController } from './inbound-parse.controller';
+import { USE_CASES } from './usecases';
 
 const PROVIDERS = [CompileTemplate];
 

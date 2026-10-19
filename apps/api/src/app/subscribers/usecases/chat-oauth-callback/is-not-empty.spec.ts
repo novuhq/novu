@@ -1,51 +1,67 @@
-import { BaseCommand } from '@novu/application-generic';
-import { IsNotEmpty } from './chat-oauth-callback.command';
-import { expect } from 'chai';
+// noinspection ExceptionCaughtLocallyJS
 
-describe('@IsNotEmpty() validator', function () {
-  it('should create command with string name', async function () {
+import { BaseCommand, CommandValidationException } from '@novu/application-generic';
+import { expect } from 'chai';
+import { IsNotEmpty } from './chat-oauth-callback.command';
+
+function assertCommandValidationError(e: CommandValidationException, fieldName: string, fieldMsg: string) {
+  if (!(e instanceof CommandValidationException)) {
+    throw new Error(e);
+  }
+  if (!e.constraintsViolated) {
+    throw e;
+  }
+  expect(e.constraintsViolated[fieldName].messages[0]).to.equal(fieldMsg);
+}
+
+describe('@IsNotEmpty() validator', () => {
+  it('should create command with string name', async () => {
     const validateNameCommand = IsNotEmptyNameCommand.create({ name: 'mike' });
 
     expect(validateNameCommand.name).to.equal('mike');
   });
 
-  it('should throw exception on string null', async function () {
+  it('should throw exception on string null', async () => {
     const noValidation = NameCommand.create({ name: 'null' } as any);
 
     try {
-      const validateNameCommand = IsNotEmptyNameCommand.create({ name: 'null' } as any);
+      IsNotEmptyNameCommand.create({ name: 'null' } as any);
+      throw new Error('should not have passed validation');
     } catch (e) {
-      expect(e.response.message[0]).to.equal('name should not be null');
+      assertCommandValidationError(e, 'name', 'name should not be null');
     }
   });
 
-  it('should throw exception on undefined', async function () {
+  it('should throw exception on undefined', async () => {
     const noValidation = NameCommand.create({ name: undefined } as any);
 
     try {
       const validateNameCommand = IsNotEmptyNameCommand.create({ name: undefined } as any);
+      throw new Error('should not have passed validation');
     } catch (e) {
-      expect(e.response.message[0]).to.equal('name should not be undefined');
+      assertCommandValidationError(e, 'name', 'name should not be undefined');
     }
   });
 
-  it('should throw exception on undefined null', async function () {
+  it('should throw exception on undefined null', async () => {
     const noValidation = NameCommand.create({ name: 'undefined' } as any);
 
     try {
-      const validateNameCommand = IsNotEmptyNameCommand.create({ name: 'undefined' } as any);
+      IsNotEmptyNameCommand.create({ name: 'undefined' } as any);
+      throw new Error('should not have passed validation');
     } catch (e) {
-      expect(e.response.message[0]).to.equal('name should not be undefined');
+      assertCommandValidationError(e, 'name', 'name should not be undefined');
     }
   });
 
-  it('should throw exception on empty string', async function () {
+  it('should throw exception on empty string', async () => {
     const noValidation = NameCommand.create({ name: '' });
 
     try {
-      const validateNameCommand = IsNotEmptyNameCommand.create({ name: '' });
+      IsNotEmptyNameCommand.create({ name: '' });
+      throw new Error('should not have passed validation');
     } catch (e) {
-      expect(e.response.message[0]).to.equal('name should not be empty string');
+      assertCommandValidationError(e, 'name', 'name should not be empty string');
     }
   });
 });

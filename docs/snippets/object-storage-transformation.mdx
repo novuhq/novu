@@ -1,0 +1,75 @@
+import WebhookBatchInput from "/snippets/webhook-batch-input.mdx";
+
+## Transformation contract
+
+Object storage connectors run the handler once per delivery batch.
+
+<WebhookBatchInput />
+
+The handler must return:
+
+```ts
+{
+  config: {
+    format: "jsonl" | "json" | "raw";
+    key: string;
+  };
+  data: unknown[] | string;
+}
+```
+
+| Return field | Behavior |
+| --- | --- |
+| `config.format` | `"jsonl"`, `"json"`, or `"raw"`. Defaults to `"jsonl"`. |
+| `config.key` | Object name for this batch. A timestamp is appended after the transformation runs, so each batch produces a unique object. |
+| `data` | The batch contents. Use an array for `"jsonl"` and `"json"`. Use a string for `"raw"`. |
+
+The default template returns the batch unchanged:
+
+```js
+function handler(input) {
+  return {
+    config: {
+      format: "jsonl",
+      key: "object-generated-by-svix",
+    },
+    data: input.events,
+  };
+}
+```
+
+With `"jsonl"`, each line is one event:
+
+```jsonl
+{"payload":{"email":"joe@enterprise.io"},"eventType":"user.created"}
+{"payload":{"id":12,"timestamp":"2025-07-21T14:23:17.861Z"},"eventType":"user.login"}
+```
+
+### Novu example
+
+This example groups objects by date and keeps each payload intact:
+
+```js
+function handler(input) {
+  const partition = new Date().toISOString().slice(0, 10);
+
+  const data = input.events.map((event) => ({
+    eventType: event.eventType,
+    payload: event.payload,
+  }));
+
+  return {
+    config: {
+      format: "jsonl",
+      key: `novu-events/dt=${partition}/events`,
+    },
+    data,
+  };
+}
+```
+
+The connector appends a timestamp to `config.key`, so use the key for the prefix structure rather than adding a uniqueness suffix.
+
+### Batching behavior
+
+One delivered batch produces one object. Treat its contents as a variable-length batch and read it line by line when using `"jsonl"`.

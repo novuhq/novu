@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "sourceMap": true,
+    "strictNullChecks": false,
+    "allowSyntheticDefaultImports": true,
+    "outDir": "build/main",
+    "module": "commonjs",
+    "target": "es6",
+    "esModuleInterop": true,
+    "rootDir": "src",
+    "strict": true,
+    "types": ["node", "jest"],
+    "jsx": "react",
+    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules/**"]
+}

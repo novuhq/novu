@@ -1,71 +1,309 @@
-import * as i18next from 'i18next';
-import { ModuleRef } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
-import { format } from 'date-fns';
-import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { ModuleRef } from '@nestjs/core';
+import {
+  buildWorkflowVariablesForJob,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  createProviderSelectedMessage,
+  DetailEnum,
+  GetNovuProviderCredentials,
+  Instrument,
+  type IntegrationFilterData,
+  type IntegrationSelectionResult,
+  SelectIntegration,
+  SelectIntegrationCommand,
+  SelectVariant,
+  SelectVariantCommand,
+} from '@novu/application-generic';
+import { JobEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ChatProviderIdEnum,
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  IMessageTemplate,
+  getProviderOverrideConfig,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
+  layerClaimsExclusiveGroup,
+  ProvidersIdEnum,
+  providers,
+  resolveExclusiveRoutingKeys,
   SmsProviderIdEnum,
+  TriggerOverrides,
+  unpackProviderOverrideOutput,
 } from '@novu/shared';
+import { format } from 'date-fns';
+import i18next from 'i18next';
+import { cloneDeep, isPlainObject, mergeWith } from 'lodash';
+import { PlatformException, TRANSLATIONS_SERVICE } from '../../../shared/utils';
+import { SendMessageChannelCommand } from './send-message-channel.command';
+import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
 
-import {
-  DetailEnum,
-  SelectIntegration,
-  SelectIntegrationCommand,
-  GetNovuProviderCredentials,
-  SelectVariantCommand,
-  SelectVariant,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
-} from '@novu/application-generic';
-import { SendMessageType } from './send-message-type.usecase';
-import { CreateLog } from '../../../shared/logs';
-import { PlatformException } from '../../../shared/utils';
-import { SendMessageCommand } from './send-message.command';
+/**
+ * Never replace this with a plain `merge`: lodash merges arrays element-by-element, so a
+ * higher-priority `blocks: [x]` layered over a persisted `blocks: [a, b, c]` would yield
+ * `[merge(a, x), b, c]` — a corrupted first element plus two stale ones. An override array is a
+ * complete replacement of the list it overrides, so the higher-priority array wins whole.
+ *
+ * The clone keeps the result detached from the command the way `merge` used to: the merged blob
+ * leaves the worker as `bridgeProviderData`, and it is reused across every endpoint of a fan-out.
+ */
+function replaceArrays(_targetValue: unknown, sourceValue: unknown): unknown[] | undefined {
+  if (Array.isArray(sourceValue)) {
+    return cloneDeep(sourceValue);
+  }
+
+  return undefined;
+}
+
+type BridgeProviderOverrides = {
+  providers?: Record<string, Record<string, unknown>>;
+};
+
+/**
+ * For each exclusive key group, the highest-precedence layer that claims it — sets one of its keys
+ * to a value `resolveExclusiveRoutingKeys` can still use — keeps its group keys, and every other
+ * layer loses them. That stops a deep-merge from leaving a mixed destination (e.g. FCM `topic` from
+ * bridge + `tokens` from trigger).
+ *
+ * Group keys on non-claiming layers are dropped rather than merged, so an unusable value cannot
+ * silently take the destination away: lodash merges `topic: ''` over a dashboard `topic: 'orders'`,
+ * and the resolver would then discard the empty string and find no destination at all.
+ *
+ * `layers` is ordered low → high precedence. Returns shallow-cloned layers; originals are untouched.
+ */
+function applyExclusiveKeyGroups(
+  layers: readonly Record<string, unknown>[],
+  exclusiveKeyGroups: readonly (readonly string[])[]
+): Record<string, unknown>[] {
+  if (exclusiveKeyGroups.length === 0) {
+    return [...layers];
+  }
+
+  const result = layers.map((layer) => ({ ...layer }));
+
+  for (const group of exclusiveKeyGroups) {
+    let claimed = false;
+
+    for (let i = result.length - 1; i >= 0; i -= 1) {
+      const layer = result[i];
+
+      if (!claimed && layerClaimsExclusiveGroup(layer, group)) {
+        claimed = true;
+        continue;
+      }
+
+      for (const key of group) {
+        delete layer[key];
+      }
+    }
+  }
+
+  return result;
+}
+
+function resolveExclusiveKeyGroups(providerId: string): readonly (readonly string[])[] {
+  return getProviderOverrideConfig(providerId)?.exclusiveKeyGroups ?? [];
+}
+
+/**
+ * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
+ * dashboard persisted for the provider, then for the sending integration, then the workflow-global
+ * trigger override, then the step-scoped one.
+ *
+ * The integration overrides map rides inside the bridge provider entry and is never provider data,
+ * so it is stripped from the result whichever layer carried it.
+ *
+ * When the provider declares exclusive key groups (e.g. FCM routing destinations), the highest layer
+ * that sets a usable key in a group evicts all group keys contributed by the other layers before merge.
+ */
+export function combineProviderOverrides(
+  bridgeData: BridgeProviderOverrides | null | undefined,
+  overrides: TriggerOverrides | undefined,
+  stepId: string | undefined,
+  providerId: string,
+  integrationIdentifier?: string
+): Record<string, unknown> {
+  const [providerLayer, integrationLayer, workflowLayer, stepLayer] = resolveOverrideLayers(
+    bridgeData,
+    overrides,
+    stepId,
+    providerId,
+    integrationIdentifier
+  );
+
+  const combined: Record<string, unknown> = mergeWith(
+    {},
+    providerLayer,
+    integrationLayer,
+    workflowLayer,
+    stepLayer,
+    replaceArrays
+  );
+  delete combined[INTEGRATION_OVERRIDES_OUTPUT_KEY];
+
+  return combined;
+}
+
+const INTEGRATION_LAYER_INDEX = 1;
+
+/**
+ * True when the sending integration's own override supplies the winning exclusive key group, i.e. it
+ * chose the destination rather than a provider-wide or trigger layer. Mirrors
+ * `resolveExclusiveRoutingKeys`: a `_passthrough.body` claim on any layer outranks top-level keys.
+ */
+export function integrationOverrideClaimsExclusiveKeys(
+  bridgeData: BridgeProviderOverrides | null | undefined,
+  overrides: TriggerOverrides | undefined,
+  stepId: string | undefined,
+  providerId: string,
+  integrationIdentifier: string
+): boolean {
+  const layers = resolveOverrideLayers(bridgeData, overrides, stepId, providerId, integrationIdentifier);
+  const mergedPassthroughBody = mergeWith({}, ...layers.map(readPassthroughBody), replaceArrays);
+
+  return resolveExclusiveKeyGroups(providerId).some((group) => {
+    const [passthroughKey] = Object.keys(
+      resolveExclusiveRoutingKeys({ _passthrough: { body: mergedPassthroughBody } }, [group])
+    );
+    const claims = passthroughKey
+      ? layers.map((layer) => layerClaimsExclusiveGroup(readPassthroughBody(layer), [passthroughKey]))
+      : layers.map((layer) => layerClaimsExclusiveGroup(layer, group));
+
+    return claims.lastIndexOf(true) === INTEGRATION_LAYER_INDEX;
+  });
+}
+
+function readPassthroughBody(layer: Record<string, unknown>): Record<string, unknown> {
+  const body = (layer._passthrough as { body?: unknown } | undefined)?.body;
+
+  return isPlainObject(body) ? (body as Record<string, unknown>) : {};
+}
+
+function resolveOverrideLayers(
+  bridgeData: BridgeProviderOverrides | null | undefined,
+  overrides: TriggerOverrides | undefined,
+  stepId: string | undefined,
+  providerId: string,
+  integrationIdentifier?: string
+): Record<string, unknown>[] {
+  const { providerOverride, integrationOverrides } = unpackProviderOverrideOutput(bridgeData?.providers?.[providerId]);
+  const integrationOverride = integrationIdentifier ? (integrationOverrides[integrationIdentifier] ?? {}) : {};
+  const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
+  const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
+
+  return applyExclusiveKeyGroups(
+    [providerOverride, integrationOverride, workflowGlobalProviderOverrides, stepScopedOverrides],
+    resolveExclusiveKeyGroups(providerId)
+  );
+}
+
+/**
+ * Merges every trigger override shape addressed to one provider, lowest priority first:
+ *   1. Deprecated channel bucket:    `overrides.<channel>`
+ *   2. Deprecated flat provider key: `overrides.<providerId>`
+ *   3. Workflow-wide provider:       `overrides.providers.<providerId>`
+ *   4. Step-scoped provider:         `overrides.steps.<stepId>.providers.<providerId>`
+ *
+ * Use it for fields the worker reads itself (e.g. SMS `to`/`from`, email `cc`) — provider request
+ * bodies get the nested shapes through `combineProviderOverrides` instead.
+ */
+export function mergeTriggerProviderOverrides(
+  overrides: TriggerOverrides | undefined,
+  channel: string | undefined,
+  providerId: string | undefined,
+  stepId: string | undefined
+): Record<string, unknown> {
+  const legacyOverrides = overrides as Record<string, Record<string, unknown> | undefined> | undefined;
+
+  return {
+    ...(channel ? legacyOverrides?.[channel] || {} : {}),
+    ...(providerId ? legacyOverrides?.[providerId] || {} : {}),
+    ...(providerId ? overrides?.providers?.[providerId] || {} : {}),
+    ...(providerId && stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {}),
+  };
+}
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
   protected constructor(
     protected messageRepository: MessageRepository,
-    protected createLogUsecase: CreateLog,
-    protected executionLogRoute: ExecutionLogRoute,
+    protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef
   ) {
-    super(messageRepository, createLogUsecase, executionLogRoute);
+    super(messageRepository, createExecutionDetails);
   }
 
-  protected async getIntegration(
-    selectIntegrationCommand: SelectIntegrationCommand
-  ): Promise<IntegrationEntity | undefined> {
-    const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
+  @Instrument()
+  protected async getIntegration(params: {
+    id?: string;
+    providerId?: ProvidersIdEnum;
+    identifier?: string;
+    organizationId: string;
+    environmentId: string;
+    channelType: ChannelTypeEnum;
+    userId: string;
+    recipientEmail?: string;
+    filterData: IntegrationFilterData;
+  }): Promise<IntegrationSelectionResult | undefined> {
+    const selection = await this.selectIntegration.execute(SelectIntegrationCommand.create(params));
 
-    if (!integration) {
+    if (!selection) {
       return;
     }
 
-    if (integration.providerId === EmailProviderIdEnum.Novu || integration.providerId === SmsProviderIdEnum.Novu) {
+    const { integration } = selection;
+
+    if (
+      integration.providerId === EmailProviderIdEnum.Novu ||
+      integration.providerId === SmsProviderIdEnum.Novu ||
+      integration.providerId === ChatProviderIdEnum.Novu
+    ) {
       integration.credentials = await this.getNovuProviderCredentials.execute({
-        channelType: integration.channel,
+        channelType: this.channelType,
         providerId: integration.providerId,
         environmentId: integration._environmentId,
         organizationId: integration._organizationId,
-        userId: selectIntegrationCommand.userId,
+        userId: params.userId,
+        recipientEmail: params.recipientEmail,
       });
     }
 
-    return integration;
+    return selection;
+  }
+
+  protected getIntegrationFilterData(command: SendMessageChannelCommand) {
+    return {
+      tenant: command.job.tenant,
+      payload: command.compileContext?.payload,
+      subscriber: command.compileContext?.subscriber,
+      context: command.compileContext?.context,
+      workflow: buildWorkflowVariablesForJob({
+        workflow: command.workflow,
+        workflowMetadata: command.job.step.workflowMetadata,
+        identifier: command.identifier,
+        tags: command.tags,
+        severity: command.severity,
+      }),
+    };
   }
 
   protected storeContent(): boolean {
     return this.channelType === ChannelTypeEnum.IN_APP || process.env.STORE_NOTIFICATION_CONTENT === 'true';
+  }
+
+  /**
+   * Payload-dedup write policy for a stored message: when enabled, the payload
+   * is not persisted on the message and is resolved from the parent
+   * notification at read time. When off, the channel's payload is persisted as
+   * before. In-app messages keep their own payload and don't use this.
+   */
+  protected payloadToPersist<T>(command: SendMessageChannelCommand, payload: T): T | undefined {
+    return command.isPayloadDedupEnabled ? undefined : payload;
   }
 
   protected getCompilePayload(compileContext) {
@@ -74,10 +312,10 @@ export abstract class SendMessageBase extends SendMessageType {
     return { ...payload, ...rest };
   }
 
-  protected async sendErrorHandlebars(job: JobEntity, error: string) {
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+  protected async sendErrorHandlebars(job: JobEntity, error: string): Promise<SendMessageResult> {
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.FAILED,
@@ -86,29 +324,65 @@ export abstract class SendMessageBase extends SendMessageType {
         raw: JSON.stringify({ error }),
       })
     );
+
+    return {
+      status: SendMessageStatus.FAILED,
+      errorMessage: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+    };
   }
 
-  protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
-        detail: DetailEnum.INTEGRATION_INSTANCE_SELECTED,
+  @Instrument()
+  protected async sendSelectedIntegrationExecution(job: JobEntity, selection: IntegrationSelectionResult) {
+    const { integration, matchedConditions } = selection;
+    const providerDisplayName = providers.find((el) => el.id === integration.providerId)?.displayName || 'Unknown';
+    const details = [
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: createProviderSelectedMessage(providerDisplayName) as DetailEnum,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
         raw: JSON.stringify({
-          providerId: integration?.providerId,
-          identifier: integration?.identifier,
-          name: integration?.name,
-          _environmentId: integration?._environmentId,
-          _id: integration?._id,
+          providerId: integration.providerId,
+          identifier: integration.identifier,
+          name: integration.name,
+          _environmentId: integration._environmentId,
+          _id: integration._id,
         }),
-      })
-    );
+      }),
+    ];
+
+    if (matchedConditions) {
+      details.unshift(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.INTEGRATION_CONDITIONS_MATCHED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            integrationIdentifier: integration.identifier,
+            matchedConditions,
+          }),
+        })
+      );
+    }
+
+    await Promise.all(details.map((detail) => this.createExecutionDetailBestEffort(detail)));
   }
 
-  protected async processVariants(command: SendMessageCommand): Promise<IMessageTemplate> {
+  private async createExecutionDetailBestEffort(command: CreateExecutionDetailsCommand): Promise<void> {
+    try {
+      await this.createExecutionDetails.execute(command);
+    } catch (error) {
+      Logger.error(error, `Failed to create "${command.detail}" execution detail`, SendMessageBase.name);
+    }
+  }
+
+  @Instrument()
+  protected async processVariants(command: SendMessageChannelCommand): Promise<MessageTemplateEntity> {
     const { messageTemplate, conditions } = await this.selectVariant.execute(
       SelectVariantCommand.create({
         organizationId: command.organizationId,
@@ -121,9 +395,9 @@ export abstract class SendMessageBase extends SendMessageType {
     );
 
     if (conditions) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.VARIANT_CHOSEN,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
@@ -137,19 +411,20 @@ export abstract class SendMessageBase extends SendMessageType {
     return messageTemplate;
   }
 
+  @Instrument()
   protected async initiateTranslations(environmentId: string, organizationId: string, locale: string | undefined) {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!require('@novu/ee-shared-services')?.TranslationsService) {
+        if (!this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false })) {
           throw new PlatformException('Translation module is not loaded');
         }
-        const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
+        const service = this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false });
         const { namespaces, resources, defaultLocale } = await service.getTranslationsList(
           environmentId,
           organizationId
         );
 
-        await i18next.init({
+        const instance = i18next.createInstance({
           resources,
           ns: namespaces,
           defaultNS: false,
@@ -159,15 +434,19 @@ export abstract class SendMessageBase extends SendMessageType {
           fallbackLng: defaultLocale || 'en',
           interpolation: {
             formatSeparator: ',',
-            format: function (value, formatting, lng) {
-              if (value && formatting && !isNaN(Date.parse(value))) {
+            format(value, formatting, _lng) {
+              if (value && formatting && !Number.isNaN(Date.parse(value))) {
                 return format(new Date(value), formatting);
               }
 
-              return value.toString();
+              return String(value ?? '');
             },
           },
         });
+
+        await instance.init();
+
+        return instance;
       }
     } catch (e) {
       Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');

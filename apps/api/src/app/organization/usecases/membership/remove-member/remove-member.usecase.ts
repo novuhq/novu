@@ -1,14 +1,12 @@
-import { Injectable, NotFoundException, Scope } from '@nestjs/common';
-import { OrganizationRepository, MemberRepository, EnvironmentRepository } from '@novu/dal';
+import { BadRequestException, Injectable, NotFoundException, Scope } from '@nestjs/common';
+import { EnvironmentRepository, MemberRepository } from '@novu/dal';
 import { RemoveMemberCommand } from './remove-member.command';
-import { ApiException } from '../../../../shared/exceptions/api.exception';
 
 @Injectable({
   scope: Scope.REQUEST,
 })
 export class RemoveMember {
   constructor(
-    private organizationRepository: OrganizationRepository,
     private memberRepository: MemberRepository,
     private environmentRepository: EnvironmentRepository
   ) {}
@@ -19,7 +17,7 @@ export class RemoveMember {
 
     if (!memberToRemove) throw new NotFoundException('Member not found');
     if (memberToRemove._userId && memberToRemove._userId && memberToRemove._userId === command.userId) {
-      throw new ApiException('Cannot remove self from members');
+      throw new BadRequestException('Cannot remove self from members');
     }
 
     await this.memberRepository.removeMemberById(command.organizationId, memberToRemove._id);
@@ -29,13 +27,13 @@ export class RemoveMember {
     );
 
     if (isMemberAssociatedWithEnvironment) {
-      const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-      if (!admin) throw new NotFoundException('No admin account found for organization');
+      const owner = await this.memberRepository.getOrganizationOwnerAccount(command.organizationId);
+      if (!owner) throw new NotFoundException('No owner account found for organization');
 
       await this.environmentRepository.updateApiKeyUserId(
         command.organizationId,
         memberToRemove._userId,
-        admin._userId
+        owner._userId
       );
     }
 

@@ -1,0 +1,954 @@
+import type {
+  AgentEvent,
+  AgentFileRef,
+  AgentMessageContent,
+  AgentQuoteReplyContext,
+  AgentRunOutcome,
+} from '@novu/agent-event-protocol';
+import type { CardElement, ChatElement, Emoji } from 'chat';
+import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from './agent.runtime';
+import type {
+  AddReactionPayload,
+  AgentAction,
+  AgentBridgeRequest,
+  AgentContextPayload,
+  AgentConversation,
+  AgentHistoryEntry,
+  AgentHumanResponse,
+  AgentMessage,
+  AgentMessageContext,
+  AgentNotification,
+  AgentPlatformContext,
+  AgentReaction,
+  AgentReplyOptions,
+  AgentSubscriber,
+  AgentToolCall,
+  DeleteMessagePayload,
+  FileRef,
+  HumanApproveRenderArgs,
+  HumanApproveRenderFn,
+  HumanAskApproveOptions,
+  HumanAskApproveRenderOptions,
+  HumanAskOptions,
+  HumanAskRenderArgs,
+  HumanAskRenderFn,
+  HumanAskRenderOptions,
+  HumanChooseOptions,
+  HumanChooseRenderArgs,
+  HumanChooseRenderFn,
+  HumanChooseRenderOptions,
+  HumanChrome,
+  HumanInteractionKind,
+  HumanOptionInput,
+  HumanSignalCard,
+  HumanTellOptions,
+  HumanTellRenderArgs,
+  HumanTellRenderFn,
+  HumanTellRenderOptions,
+  MessageContent,
+  PendingApproval as PendingApprovalType,
+  QuoteReplyTarget,
+  ReplyContent,
+  ReplyHandle,
+  ReplyStream,
+  SentMessageInfo,
+  Signal,
+  ToolApprovalCard,
+  ToolApprovalConfig,
+  ToolApprovalControl,
+  ToolApprovalRequestOptions,
+  ToolResult,
+  TriggerRecipientsPayload,
+  TypingControl,
+  TypingOp,
+} from './agent.types';
+import { AgentEventEnum, isReplyStream, PendingApproval } from './agent.types';
+import { serializeContent } from './agent-content-serialization';
+import { AgentEventOutbox } from './agent-event-outbox';
+import type { AgentLiveStream } from './agent-live-stream';
+import { isCardElement, isHumanChrome } from './guards';
+import { buildHumanApproveActionId, buildHumanDenyActionId, buildHumanOptionActionId } from './human/action-id';
+import {
+  assertChooseOptions,
+  assertExtraActions,
+  assertHumanCardElement,
+  assertHumanChrome,
+  assertHumanTitle,
+} from './human/assert';
+import { normalizeHumanTo } from './human-to';
+import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
+import { postToolApprovalCard } from './tool-approval/post-card';
+
+type HumanQueuedOpts = {
+  from?: string;
+  ttlSeconds?: number;
+  to?: string | string[];
+};
+
+type HumanRenderFn = HumanAskRenderFn | HumanApproveRenderFn | HumanChooseRenderFn | HumanTellRenderFn;
+
+type HumanRenderArg = HumanAskRenderArgs | HumanApproveRenderArgs | HumanChooseRenderArgs | HumanTellRenderArgs;
+
+function humanChromeFactory<T extends HumanChrome['type']>(type: T) {
+  return (overrides?: Omit<Extract<HumanChrome, { type: T }>, 'type'>) =>
+    ({ type, ...overrides }) as Extract<HumanChrome, { type: T }>;
+}
+
+/** Per-kind render context (`*Card()` factory + minted `actionIds`) passed to a `{ render }` fn. */
+function buildHumanRenderArg(kind: 'ask', requestId: string): HumanAskRenderArgs;
+function buildHumanRenderArg(kind: 'approve', requestId: string): HumanApproveRenderArgs;
+function buildHumanRenderArg(kind: 'choose', requestId: string): HumanChooseRenderArgs;
+function buildHumanRenderArg(kind: 'tell', requestId: string): HumanTellRenderArgs;
+function buildHumanRenderArg(kind: HumanInteractionKind, requestId: string): HumanRenderArg {
+  switch (kind) {
+    case 'ask':
+      return { requestId, askCard: humanChromeFactory('human-ask-card') };
+    case 'approve':
+      return {
+        requestId,
+        actionIds: { approve: buildHumanApproveActionId(requestId), deny: buildHumanDenyActionId(requestId) },
+        approveCard: humanChromeFactory('human-approve-card'),
+      };
+    case 'choose':
+      return {
+        requestId,
+        actionIds: { option: (optionId: string) => buildHumanOptionActionId(requestId, optionId) },
+        chooseCard: humanChromeFactory('human-choose-card'),
+      };
+    case 'tell':
+      return { requestId, tellCard: humanChromeFactory('human-tell-card') };
+    default: {
+      const exhaustive: never = kind;
+
+      return exhaustive;
+    }
+  }
+}
+
+function mint(prefix: string): string {
+  return `${prefix}_${crypto.randomUUID()}`;
+}
+
+function chromeToSignalCard(chrome: HumanChrome): HumanSignalCard {
+  const { type: _type, ...card } = chrome;
+
+  return card;
+}
+
+function readHumanSignalCard(
+  opts: HumanAskOptions | HumanAskApproveOptions | HumanChooseOptions | HumanTellOptions | undefined
+): HumanSignalCard | undefined {
+  if (!opts || !('card' in opts)) {
+    return undefined;
+  }
+
+  return opts.card;
+}
+
+function readHumanRender<T>(opts: object | undefined): T | undefined {
+  if (!opts || !('render' in opts)) {
+    return undefined;
+  }
+
+  return (opts as { render?: T }).render;
+}
+
+function asHumanContentCard(rendered: ChatElement): CardElement {
+  if (typeof rendered === 'object' && rendered !== null && isCardElement(rendered)) {
+    return rendered;
+  }
+
+  return { type: 'card', children: [rendered] } as CardElement;
+}
+
+function readHumanTtlSeconds(opts: HumanQueuedOpts | undefined): number | undefined {
+  if (!opts || !('ttlSeconds' in opts) || typeof opts.ttlSeconds !== 'number') {
+    return undefined;
+  }
+
+  return opts.ttlSeconds;
+}
+
+/**
+ * `ReplyContent['card']` is Chat SDK `CardElement`. `AgentMessageContent['card']` is the
+ * Novu-owned protocol `CardElement`. This is the one place that crosses that authoring
+ * → wire boundary for outbound card content.
+ */
+function toAgentMessageContent(reply: ReplyContent): AgentMessageContent {
+  if (reply.markdown !== undefined) {
+    return { markdown: reply.markdown };
+  }
+
+  if (reply.card !== undefined) {
+    return { card: reply.card };
+  }
+
+  throw new Error('Invalid reply content — expected markdown or card');
+}
+
+function resolveQuoteReply(target: QuoteReplyTarget): AgentQuoteReplyContext {
+  const messageId = 'platformMessageId' in target ? target.platformMessageId.trim() : target.messageId.trim();
+
+  if (!messageId) {
+    throw new Error('quoteReply requires a non-empty platform message id');
+  }
+
+  return { messageId };
+}
+
+function toAgentFileRefs(files?: FileRef[]): AgentFileRef[] | undefined {
+  if (!files?.length) {
+    return undefined;
+  }
+
+  return files.map((file, index) => ({
+    fileId: file.filename || `file_${index}`,
+    name: file.filename,
+    mediaType: file.mimeType,
+    ...(file.data !== undefined ? { data: typeof file.data === 'string' ? file.data : undefined } : {}),
+    ...(file.url !== undefined ? { url: file.url } : {}),
+  }));
+}
+
+/** Pending side effects queued between replies, drained atomically before each turn action. */
+interface SideEffectsSnapshot {
+  toolApprovalRequest: ToolApprovalRequestPayload | null;
+  signals: Signal[];
+  toolResults: ToolResult[];
+  addReactions: AddReactionPayload[];
+  deleteMessages: DeleteMessagePayload[];
+  resolve: { summary?: string } | null;
+}
+
+function toSideEffectEvents(
+  sideEffects: SideEffectsSnapshot,
+  options?: { deliverApprovalCard?: boolean }
+): AgentEvent[] {
+  const events: AgentEvent[] = [];
+
+  if (sideEffects.toolApprovalRequest) {
+    const request = sideEffects.toolApprovalRequest;
+    events.push({
+      type: 'tool-approval-request',
+      approvalId: request.approvalId,
+      toolUseId: request.toolCallId,
+      toolName: request.name,
+      input: request.input,
+      ...(request.ttlSeconds !== undefined ? { ttlSeconds: request.ttlSeconds } : {}),
+      ...(request.to !== undefined ? { to: request.to } : {}),
+      ...(request.from !== undefined ? { from: request.from } : {}),
+      ...(options?.deliverApprovalCard ? { deliverCard: true } : {}),
+    });
+  }
+
+  for (const result of sideEffects.toolResults) {
+    events.push({
+      type: 'tool-use-result',
+      toolUseId: result.toolCallId,
+      content: [
+        { type: 'text', text: String(result.preview ?? '') },
+        { type: 'json', value: result.output },
+      ],
+    });
+  }
+
+  for (const signal of sideEffects.signals) {
+    events.push({ type: 'signal', signal });
+  }
+
+  for (const reaction of sideEffects.addReactions) {
+    events.push({ type: 'channel.reaction', messageId: reaction.messageId, emoji: reaction.emojiName, op: 'add' });
+  }
+
+  for (const deletion of sideEffects.deleteMessages) {
+    events.push({ type: 'channel.delete', messageId: deletion.messageId });
+  }
+
+  if (sideEffects.resolve) {
+    events.push({ type: 'resolve', summary: sideEffects.resolve.summary });
+  }
+
+  return events;
+}
+
+/** Maps handler delivery calls onto `AgentEvent`s and flushes them through the run outbox. */
+class EventOutboxTransport {
+  constructor(
+    private readonly outbox: AgentEventOutbox,
+    private readonly live?: AgentLiveStream
+  ) {}
+
+  get streamsLive(): boolean {
+    return this.live !== undefined;
+  }
+
+  /** Writes to the bridge response, which only Novu's live reader sees; durable events go through the outbox. */
+  writeLive(event: AgentEvent): void {
+    this.live?.write(this.outbox.envelope(event));
+  }
+
+  /** `streamedMessageId` marks a reply whose text was written live under that id. */
+  async sendReply(
+    reply: ReplyContent,
+    sideEffects: SideEffectsSnapshot,
+    quoteReply?: AgentQuoteReplyContext,
+    streamedMessageId?: string
+  ): Promise<SentMessageInfo | null> {
+    const messageId = streamedMessageId ?? mint('msg');
+    const events = toSideEffectEvents(sideEffects);
+    events.push({
+      type: 'message',
+      role: 'assistant',
+      messageId,
+      content: toAgentMessageContent(reply),
+      files: toAgentFileRefs(reply.files),
+      ...(quoteReply ? { quoteReply } : {}),
+      ...(streamedMessageId ? { streamed: true } : {}),
+    });
+    await this._emitAndFlush(events);
+
+    return { messageId, platformThreadId: '' };
+  }
+
+  // Approval-card rendering is sink-owned in event mode; only the queued side effects
+  // (notably the tool-approval-request itself) are drained here. There is no client-addressable
+  // message id for the rendered card, so the caller gets a no-op handle rather than a fake one.
+  async sendApprovalCard(_card: ToolApprovalCard, sideEffects: SideEffectsSnapshot): Promise<'unaddressable'> {
+    await this._emitAndFlush(toSideEffectEvents(sideEffects, { deliverApprovalCard: true }));
+
+    return 'unaddressable';
+  }
+
+  async editMessage(messageId: string, reply: ReplyContent): Promise<SentMessageInfo | null> {
+    await this.outbox.emit({
+      type: 'channel.edit',
+      messageId,
+      content: toAgentMessageContent(reply),
+      files: toAgentFileRefs(reply.files),
+    });
+
+    return { messageId, platformThreadId: '' };
+  }
+
+  async deleteMessage(messageId: string): Promise<void> {
+    await this.outbox.emit({ type: 'channel.delete', messageId });
+  }
+
+  async setTyping(op: TypingOp): Promise<void> {
+    if (op === 'stop') {
+      await this.outbox.emit({ type: 'channel.typing', state: 'off' });
+
+      return;
+    }
+
+    const status = typeof op === 'object' && 'status' in op ? op.status : undefined;
+    await this.outbox.emit({ type: 'channel.typing', state: 'on', status });
+  }
+
+  async flushSideEffects(sideEffects: SideEffectsSnapshot): Promise<void> {
+    await this._emitAndFlush(toSideEffectEvents(sideEffects));
+  }
+
+  async emitCustom(name: string, data: unknown): Promise<void> {
+    await this.outbox.emit({ type: 'custom', name, data });
+  }
+
+  queueRunStart(): void {
+    this.outbox.enqueue({ type: 'run-start' });
+  }
+
+  async emitRunFinish(outcome: AgentRunOutcome): Promise<void> {
+    await this.outbox.emit({ type: 'run-finish', outcome });
+  }
+
+  async reportTurnError(message?: string): Promise<void> {
+    await this.outbox.emit({ type: 'run-error', message: message ?? 'agent handler failed' });
+  }
+
+  private async _emitAndFlush(events: AgentEvent[]): Promise<void> {
+    if (events.length === 0) {
+      return;
+    }
+
+    for (const event of events) {
+      this.outbox.enqueue(event);
+    }
+
+    await this.outbox.flush();
+  }
+}
+
+class ReplyHandleImpl implements ReplyHandle {
+  public messageId: string;
+  public platformThreadId: string;
+  /** @internal set when the handler calls `edit()`; dispatch skips default approval card cleanup. */
+  public editedByHandler = false;
+
+  constructor(
+    messageId: string,
+    platformThreadId: string,
+    private readonly transport: EventOutboxTransport
+  ) {
+    this.messageId = messageId;
+    this.platformThreadId = platformThreadId;
+  }
+
+  async edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
+    this.editedByHandler = true;
+    const reply = await serializeContent(content, options?.files);
+    const info = await this.transport.editMessage(this.messageId, reply);
+
+    if (!info) {
+      throw new Error('Agent edit did not return a message handle');
+    }
+
+    // Mutate-in-place: the handle represents the same platform message, so we refresh
+    // ids from the edit response (Slack/Teams preserve them; other platforms may not)
+    // and return `this` to honour the "same handle for chaining" contract.
+    this.messageId = info.messageId;
+    this.platformThreadId = info.platformThreadId;
+
+    return this;
+  }
+
+  async delete(): Promise<void> {
+    await this.transport.deleteMessage(this.messageId);
+  }
+}
+
+/**
+ * Returned by `replyApprovalCard()` when the transport reports the card as not addressable
+ * (event mode: the sink renders the card from the `tool-approval-request` event itself, so
+ * there is no client id to edit/delete against). `edit`/`delete` are no-ops rather than
+ * emitting a `channel.edit`/`channel.delete` the sink could never resolve.
+ */
+class NoopReplyHandle implements ReplyHandle {
+  readonly messageId = '';
+  readonly platformThreadId = '';
+
+  async edit(): Promise<ReplyHandle> {
+    return this;
+  }
+
+  async delete(): Promise<void> {}
+}
+
+export class AgentContextImpl implements AgentRuntimeContext {
+  readonly [RUNTIME_CONTEXT_BRAND] = true;
+  readonly event: AgentEventEnum;
+  readonly action: AgentAction | null;
+  readonly message: AgentMessage | null;
+  readonly previousMessage: AgentMessage | null;
+  readonly reaction: AgentReaction | null;
+  readonly conversation: AgentConversation;
+  readonly subscriber: AgentSubscriber | null;
+  readonly context: AgentContextPayload | null;
+  readonly notification: AgentNotification | null;
+  readonly history: AgentHistoryEntry[];
+  readonly platform: string;
+  readonly platformContext: AgentPlatformContext;
+  readonly humanResponse: AgentHumanResponse | null;
+  readonly typing: TypingControl;
+  readonly toolApproval: ToolApprovalControl;
+
+  readonly metadata: {
+    get(key: string): unknown;
+    set(key: string, value: unknown): void;
+    delete(key: string): void;
+    clear(): void;
+    readonly current: Readonly<Record<string, unknown>>;
+  };
+
+  private _signals: Signal[] = [];
+  private _toolResults: ToolResult[] = [];
+  private _pendingToolApprovalRequest: ToolApprovalRequestPayload | null = null;
+  private _pendingReactions: AddReactionPayload[] = [];
+  private _pendingDeletes: DeleteMessagePayload[] = [];
+  private _resolveSignal: { summary?: string } | null = null;
+  private _metadataState: Record<string, unknown>;
+  private readonly _toolApprovalConfig?: ToolApprovalConfig;
+  private readonly _transport: EventOutboxTransport;
+  private _pendingHumanRenders: Array<() => Promise<void>> = [];
+
+  constructor(
+    request: AgentBridgeRequest,
+    secretKey: string,
+    toolApprovalConfig?: ToolApprovalConfig,
+    live?: AgentLiveStream
+  ) {
+    this.event = request.event as AgentEventEnum;
+    this.action = request.action ?? null;
+    this.message = request.message;
+    this.previousMessage = request.previousMessage ?? null;
+    this.reaction = request.reaction;
+    this.conversation = request.conversation;
+    this.subscriber = request.subscriber;
+    this.context = request.context ?? null;
+    this.notification = request.notification ?? null;
+    this.history = request.history;
+    this.platform = request.platform;
+    this.platformContext = request.platformContext;
+    this.humanResponse = request.humanResponse ?? null;
+
+    this._toolApprovalConfig = toolApprovalConfig;
+    const eventsUrl = request.eventsUrl;
+    if (!eventsUrl) {
+      throw new Error('AgentBridgeRequest.eventsUrl is required');
+    }
+
+    this._transport = new EventOutboxTransport(
+      new AgentEventOutbox({
+        eventsUrl,
+        secretKey,
+        conversationId: request.conversationId,
+        agentId: request.agentId,
+        turnId: request.deliveryId,
+      }),
+      live
+    );
+
+    this._metadataState = { ...(request.conversation.metadata ?? {}) };
+
+    const self = this;
+    this.metadata = {
+      get(key: string) {
+        return self._metadataState[key];
+      },
+      set(key: string, value: unknown) {
+        self._metadataState[key] = value;
+        self._signals.push({ type: 'metadata', action: 'set', key, value });
+      },
+      delete(key: string) {
+        delete self._metadataState[key];
+        self._signals.push({ type: 'metadata', action: 'delete', key });
+      },
+      clear() {
+        self._metadataState = {};
+        self._signals.push({ type: 'metadata', action: 'clear' });
+      },
+      get current() {
+        return { ...self._metadataState } as Readonly<Record<string, unknown>>;
+      },
+    };
+
+    const postTyping = (op: TypingOp): Promise<void> => this._transport.setTyping(op);
+
+    const typing = ((status?: string) => postTyping(status === undefined ? {} : { status })) as TypingControl;
+    typing.stop = () => postTyping('stop');
+    this.typing = typing;
+
+    this.toolApproval = {
+      request: async (toolCall: AgentToolCall, opts?: ToolApprovalRequestOptions): Promise<PendingApprovalType> => {
+        await postToolApprovalCard(this, toolCall, this._toolApprovalConfig, undefined, opts);
+
+        return new PendingApproval();
+      },
+    };
+  }
+
+  asMessageContext(): AgentMessageContext {
+    return this as AgentMessageContext;
+  }
+
+  async reply(content: MessageContent | ReplyStream, options?: AgentReplyOptions): Promise<ReplyHandle> {
+    if (isReplyStream(content)) {
+      return this.replyStream(content, options);
+    }
+
+    return this.sendReply(content, options);
+  }
+
+  /**
+   * Writes the text live when Novu asked for it, then sends the reply. Live text has no files or
+   * quote, so such replies are sent whole. An empty stream sends nothing.
+   */
+  private async replyStream(stream: ReplyStream, options?: AgentReplyOptions): Promise<ReplyHandle> {
+    const messageId = mint('msg');
+    const streamLive = this._transport.streamsLive && !options?.files?.length && !options?.quoteReply;
+    let text = '';
+    let completed = false;
+
+    try {
+      for await (const delta of stream) {
+        if (!delta) continue;
+        if (streamLive && !text) this._transport.writeLive({ type: 'message-start', messageId });
+        text += delta;
+        if (streamLive) this._transport.writeLive({ type: 'message-delta', messageId, delta });
+      }
+      completed = true;
+      // Novu saves the reply on `message-end`, so the tool results it used must be saved first.
+      if (streamLive && text.trim()) await this.flush();
+    } finally {
+      if (streamLive && text) {
+        // Without final text, Novu removes the preview instead of keeping a partial reply.
+        const content = completed && text.trim() ? { markdown: text } : undefined;
+        this._transport.writeLive({ type: 'message-end', messageId, content });
+      }
+    }
+
+    if (!text.trim()) {
+      return new NoopReplyHandle();
+    }
+
+    return this.sendReply(text, options, streamLive ? messageId : undefined);
+  }
+
+  private async sendReply(
+    content: MessageContent,
+    options?: AgentReplyOptions,
+    streamedMessageId?: string
+  ): Promise<ReplyHandle> {
+    await this.materializePendingHumanRenders();
+    const reply = await serializeContent(content, options?.files);
+    const sideEffects = this._drainSideEffectsSnapshot();
+    const quoteReply = options?.quoteReply ? resolveQuoteReply(options.quoteReply) : undefined;
+    const info = await this._transport.sendReply(reply, sideEffects, quoteReply, streamedMessageId);
+
+    if (!info) {
+      throw new Error('Agent reply did not return a message handle');
+    }
+
+    return new ReplyHandleImpl(info.messageId, info.platformThreadId, this._transport);
+  }
+
+  async replyApprovalCard(card: ToolApprovalCard): Promise<ReplyHandle> {
+    await this.materializePendingHumanRenders();
+    const sideEffects = this._drainSideEffectsSnapshot();
+    await this._transport.sendApprovalCard(card, sideEffects);
+
+    return new NoopReplyHandle();
+  }
+
+  /** @internal Build a handle to an already-posted message (used to resume an approval). */
+  createReplyHandle(messageId: string): ReplyHandleImpl {
+    return new ReplyHandleImpl(messageId, '', this._transport);
+  }
+
+  async emit(event: { name: string; data: unknown }): Promise<void> {
+    await this._transport.emitCustom(event.name, event.data);
+  }
+
+  resolve(summary?: string): void {
+    this._resolveSignal = { summary };
+  }
+
+  trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void {
+    this._signals.push({ ...opts, type: 'trigger', workflowId });
+  }
+
+  ask(question: string, opts?: HumanAskOptions): string;
+  ask(opts: HumanAskOptions & { card: { title: string } }): string;
+  ask(opts: HumanAskRenderOptions): string;
+  ask(questionOrOpts: string | HumanAskOptions | HumanAskRenderOptions, opts?: HumanAskOptions): string {
+    const objectForm = typeof questionOrOpts !== 'string';
+    const resolvedOpts = objectForm ? questionOrOpts : opts;
+    const render = readHumanRender<HumanAskRenderFn>(resolvedOpts);
+    if (render) {
+      return this.queueRendered('ask', resolvedOpts, render);
+    }
+
+    return this.queueHumanSignal('ask', questionOrOpts, opts);
+  }
+
+  approve(action: string, opts?: HumanAskApproveOptions): string;
+  approve(opts: HumanAskApproveOptions & { card: { title: string } }): string;
+  approve(opts: HumanAskApproveRenderOptions): string;
+  approve(
+    actionOrOpts: string | HumanAskApproveOptions | HumanAskApproveRenderOptions,
+    opts?: HumanAskApproveOptions
+  ): string {
+    const objectForm = typeof actionOrOpts !== 'string';
+    const resolvedOpts = objectForm ? actionOrOpts : opts;
+    const render = readHumanRender<HumanApproveRenderFn>(resolvedOpts);
+    if (render) {
+      return this.queueRendered('approve', resolvedOpts, render);
+    }
+
+    return this.queueHumanSignal('approve', actionOrOpts, opts);
+  }
+
+  choose(question: string, options: HumanOptionInput[], opts?: HumanChooseOptions): string;
+  choose(opts: HumanChooseOptions & { card: { title: string } }): string;
+  choose(opts: HumanChooseRenderOptions): string;
+  choose(
+    questionOrOpts: string | HumanChooseOptions | HumanChooseRenderOptions,
+    optionsOrOpts?: HumanOptionInput[] | HumanChooseOptions,
+    opts?: HumanChooseOptions
+  ): string {
+    const objectForm = typeof questionOrOpts !== 'string';
+    let resolvedOpts: HumanChooseOptions | HumanChooseRenderOptions | undefined;
+    let chooseOptions: HumanOptionInput[] | undefined;
+    if (objectForm) {
+      resolvedOpts = questionOrOpts;
+    } else if (Array.isArray(optionsOrOpts)) {
+      resolvedOpts = opts;
+      chooseOptions = optionsOrOpts;
+    } else {
+      resolvedOpts = optionsOrOpts;
+    }
+    const render = readHumanRender<HumanChooseRenderFn>(resolvedOpts);
+    if (render) {
+      return this.queueRendered('choose', resolvedOpts, render);
+    }
+
+    if (objectForm) {
+      return this.queueHumanSignal(
+        'choose',
+        questionOrOpts,
+        undefined,
+        'card' in questionOrOpts ? questionOrOpts.card?.options : undefined
+      );
+    }
+
+    return this.queueHumanSignal('choose', questionOrOpts, resolvedOpts, chooseOptions);
+  }
+
+  tell(message: string, opts?: HumanTellOptions): string;
+  tell(opts: HumanTellRenderOptions): string;
+  tell(messageOrOpts: string | HumanTellOptions | HumanTellRenderOptions, opts?: HumanTellOptions): string {
+    const objectForm = typeof messageOrOpts !== 'string';
+    const resolvedOpts = objectForm ? messageOrOpts : opts;
+    const render = readHumanRender<HumanTellRenderFn>(resolvedOpts);
+    if (render) {
+      return this.queueRendered('tell', resolvedOpts, render);
+    }
+
+    if (objectForm) {
+      throw new Error('ctx.tell requires a title (string argument) when render is omitted');
+    }
+
+    return this.queueHumanSignal('tell', messageOrOpts, opts);
+  }
+
+  private queueHumanSignal(
+    kind: 'ask' | 'approve' | 'choose' | 'tell',
+    promptOrOpts: string | HumanAskOptions | HumanAskApproveOptions | HumanChooseOptions | HumanTellOptions,
+    opts?: HumanAskOptions | HumanAskApproveOptions | HumanChooseOptions | HumanTellOptions,
+    chooseOptions?: HumanOptionInput[]
+  ): string {
+    const objectForm = typeof promptOrOpts !== 'string';
+    const stringArg = objectForm ? undefined : promptOrOpts;
+    const resolvedOpts = objectForm ? promptOrOpts : opts;
+    const card = readHumanSignalCard(resolvedOpts);
+    const title = assertHumanTitle(kind, stringArg?.trim() || card?.title);
+
+    if (kind === 'choose') {
+      const options = chooseOptions ?? card?.options;
+      assertChooseOptions(options);
+    }
+
+    if (kind === 'approve' && card?.extraActions) {
+      assertExtraActions(card.extraActions);
+    }
+
+    const requestId = mint('hr');
+    const to = resolvedOpts?.to !== undefined ? normalizeHumanTo(resolvedOpts.to) : undefined;
+    const resolvedCard: HumanSignalCard = {
+      ...card,
+      title,
+      ...(kind === 'choose' && chooseOptions ? { options: chooseOptions } : {}),
+    };
+    const ttlSeconds = readHumanTtlSeconds(resolvedOpts);
+
+    this._signals.push({
+      type: 'human',
+      kind,
+      requestId,
+      card: resolvedCard,
+      ...(resolvedOpts?.from ? { from: resolvedOpts.from } : {}),
+      ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
+      ...(to !== undefined ? { to } : {}),
+    });
+
+    return requestId;
+  }
+
+  private queueRendered(kind: HumanInteractionKind, opts: HumanQueuedOpts | undefined, render: HumanRenderFn): string {
+    const requestId = mint('hr');
+    this._pendingHumanRenders.push(async () => {
+      const rendered = await this.invokeHumanRender(kind, requestId, render);
+      if (isHumanChrome(rendered)) {
+        this.pushRenderedChrome(kind, requestId, rendered, opts);
+
+        return;
+      }
+
+      await this.pushRenderedContent(kind, requestId, rendered, opts);
+    });
+
+    return requestId;
+  }
+
+  private invokeHumanRender(
+    kind: HumanInteractionKind,
+    requestId: string,
+    render: HumanRenderFn
+  ): Promise<HumanChrome | ChatElement> {
+    switch (kind) {
+      case 'ask':
+        return Promise.resolve((render as HumanAskRenderFn)(buildHumanRenderArg('ask', requestId)));
+      case 'approve':
+        return Promise.resolve((render as HumanApproveRenderFn)(buildHumanRenderArg('approve', requestId)));
+      case 'choose':
+        return Promise.resolve((render as HumanChooseRenderFn)(buildHumanRenderArg('choose', requestId)));
+      case 'tell':
+        return Promise.resolve((render as HumanTellRenderFn)(buildHumanRenderArg('tell', requestId)));
+      default: {
+        const exhaustive: never = kind;
+
+        return Promise.resolve(exhaustive);
+      }
+    }
+  }
+
+  private pushRenderedChrome(
+    kind: HumanInteractionKind,
+    requestId: string,
+    chrome: HumanChrome,
+    opts: HumanQueuedOpts | undefined
+  ): void {
+    assertHumanChrome(kind, chrome);
+    const card = chromeToSignalCard(chrome);
+    const ttlSeconds = readHumanTtlSeconds(opts);
+    const to = opts?.to !== undefined ? normalizeHumanTo(opts.to) : undefined;
+    const usesRequestIdActions = kind === 'approve' || kind === 'choose';
+
+    this._signals.push({
+      type: 'human',
+      kind,
+      requestId,
+      ...(usesRequestIdActions ? { actionIdentifier: requestId } : {}),
+      card,
+      ...(opts?.from ? { from: opts.from } : {}),
+      ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
+      ...(to !== undefined ? { to } : {}),
+    });
+  }
+
+  private async pushRenderedContent(
+    kind: HumanInteractionKind,
+    requestId: string,
+    rendered: ChatElement,
+    opts: HumanQueuedOpts | undefined
+  ): Promise<void> {
+    assertHumanCardElement(kind, rendered, requestId);
+    const serialized = await serializeContent(asHumanContentCard(rendered));
+    if (!serialized.card) {
+      throw new Error('human render must return chrome (*Card()), a Card, or a chat element — not a markdown string');
+    }
+
+    const ttlSeconds = readHumanTtlSeconds(opts);
+    const to = opts?.to !== undefined ? normalizeHumanTo(opts.to) : undefined;
+    const usesRequestIdActions = kind === 'approve' || kind === 'choose';
+
+    this._signals.push({
+      type: 'human',
+      kind,
+      requestId,
+      ...(usesRequestIdActions ? { actionIdentifier: requestId } : {}),
+      card: serialized.card,
+      ...(opts?.from ? { from: opts.from } : {}),
+      ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
+      ...(to !== undefined ? { to } : {}),
+    });
+  }
+
+  /** @internal Queue a gated tool call for the ledger; flushed with the next reply. */
+  emitToolApprovalRequest(request: ToolApprovalRequestPayload): void {
+    if (this._pendingToolApprovalRequest) {
+      throw new Error('Only one tool approval request can be queued before the next reply');
+    }
+
+    this._pendingToolApprovalRequest = request;
+  }
+
+  /** @internal Queue a tool-call outcome to be recorded in history; flushed with the next reply. */
+  emitToolResult(result: ToolResult): void {
+    this._toolResults.push(result);
+  }
+
+  addReaction(messageId: string, emojiName: Emoji): void {
+    this._pendingReactions.push({ messageId, emojiName });
+  }
+
+  deleteMessage(messageId: string): void {
+    this._pendingDeletes.push({ messageId });
+  }
+
+  /** @internal Enqueue run-start before handler execution; flushed with the first emit. */
+  queueRunStart(): void {
+    this._transport.queueRunStart();
+  }
+
+  /** @internal Enqueue and flush run-finish as the terminal success event. */
+  async emitRunFinish(options: { outcome: AgentRunOutcome }): Promise<void> {
+    try {
+      await this._transport.emitRunFinish(options.outcome);
+    } catch (err) {
+      console.error(`[agent] Failed to emit run finish:`, err);
+    }
+  }
+
+  /** Best-effort failure report to Novu. Never throws. */
+  async reportTurnError(message?: string): Promise<void> {
+    try {
+      await this._transport.reportTurnError(message);
+    } catch (err) {
+      // Local only — cannot recurse into onError
+      console.error(`[agent] Failed to report turn error:`, err);
+    }
+  }
+
+  /**
+   * Flush any remaining signals that weren't sent with reply().
+   * Called internally after onResolve returns.
+   */
+  async flush(): Promise<void> {
+    await this.materializePendingHumanRenders();
+    if (!this._hasPendingSideEffects()) {
+      return;
+    }
+
+    const sideEffects = this._drainSideEffectsSnapshot();
+    await this._transport.flushSideEffects(sideEffects);
+  }
+
+  private async materializePendingHumanRenders(): Promise<void> {
+    const pending = this._pendingHumanRenders.splice(0);
+    for (const run of pending) {
+      await run();
+    }
+  }
+
+  private _hasPendingSideEffects(): boolean {
+    return !!(
+      this._pendingToolApprovalRequest ||
+      this._signals.length ||
+      this._toolResults.length ||
+      this._resolveSignal ||
+      this._pendingReactions.length ||
+      this._pendingDeletes.length
+    );
+  }
+
+  /** Atomically drains all queued side effects into a snapshot for the transport to deliver. */
+  private _drainSideEffectsSnapshot(): SideEffectsSnapshot {
+    const snapshot: SideEffectsSnapshot = {
+      toolApprovalRequest: this._pendingToolApprovalRequest,
+      signals: this._signals,
+      toolResults: this._toolResults,
+      addReactions: this._pendingReactions,
+      deleteMessages: this._pendingDeletes,
+      resolve: this._resolveSignal,
+    };
+
+    this._pendingToolApprovalRequest = null;
+    this._signals = [];
+    this._toolResults = [];
+    this._pendingReactions = [];
+    this._pendingDeletes = [];
+    this._resolveSignal = null;
+
+    return snapshot;
+  }
+}

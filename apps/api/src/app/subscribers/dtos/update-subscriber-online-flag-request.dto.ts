@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDefined, IsBoolean } from 'class-validator';
+import { IsBoolean, IsDefined } from 'class-validator';
 
 export class UpdateSubscriberOnlineFlagRequestDto {
   @ApiProperty()

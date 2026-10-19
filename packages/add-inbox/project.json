@@ -1,0 +1,13 @@
+{
+  "name": "add-inbox",
+  "sourceRoot": "packages/add-inbox/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint packages/add-inbox"
+      }
+    }
+  }
+}

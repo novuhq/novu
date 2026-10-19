@@ -1,10 +1,10 @@
-import { expect } from 'chai';
-import { UserSession, NotificationTemplateService } from '@novu/testing';
-import { StepTypeEnum } from '@novu/shared';
 import { FeedRepository, MessageTemplateRepository, NotificationTemplateRepository } from '@novu/dal';
-import { CreateWorkflowRequestDto } from '../../workflows/dto';
+import { StepTypeEnum } from '@novu/shared';
+import { NotificationTemplateService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { CreateWorkflowRequestDto } from '../../workflows-v1/dtos';
 
-describe('Delete A Feed - /feeds (POST)', async () => {
+describe('Delete A Feed - /feeds (POST) #novu-v0', async () => {
   let session: UserSession;
   let feedRepository = new FeedRepository();
   let notificationTemplateRepository = new NotificationTemplateRepository();
@@ -18,7 +18,7 @@ describe('Delete A Feed - /feeds (POST)', async () => {
     messageTemplateRepository = new MessageTemplateRepository();
   });
 
-  it('should not be able to delete feed that has a message', async function () {
+  it('should not be able to delete feed that has a message', async () => {
     const feeds = await feedRepository.find({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
@@ -36,7 +36,7 @@ describe('Delete A Feed - /feeds (POST)', async () => {
     expect(body.message).to.contains('Can not delete feed that has existing');
   });
 
-  it('should delete feed', async function () {
+  it('should delete feed', async () => {
     const newFeed = {
       name: 'Test name',
     };
@@ -49,7 +49,8 @@ describe('Delete A Feed - /feeds (POST)', async () => {
       _id: newFeedId,
     });
 
-    expect(feed.name).to.equal(`Test name`);
+    expect(feed).to.be.ok;
+    expect(feed?.name).to.equal(`Test name`);
     const { body: deletedBody } = await session.testAgent.delete(`/v1/feeds/${newFeedId}`).send();
 
     expect(deletedBody.data).to.be.ok;
@@ -87,7 +88,7 @@ describe('Delete A Feed - /feeds (POST)', async () => {
     expect(feeds.length).to.equal(0);
   });
 
-  it('should be able to delete feed after template is deleted', async function () {
+  it('should be able to delete feed after template is deleted', async () => {
     const testFeed = {
       name: 'add feed to message',
     };
