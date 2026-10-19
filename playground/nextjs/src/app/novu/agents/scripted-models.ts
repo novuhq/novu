@@ -16,38 +16,69 @@ const usage = {
   outputTokens: { total: 1, text: 1, reasoning: 0 },
 };
 
-export const scriptedAiSdkModel = new MockLanguageModelV4({
-  doGenerate: async ({ prompt }) => {
-    const last = prompt[prompt.length - 1];
-    const result = last.role === 'tool' ? last.content.find((part) => part.type === 'tool-result') : undefined;
-    if (result) {
-      const output = 'value' in result.output ? String(result.output.value) : '';
+const doGenerate: MockLanguageModelV4['doGenerate'] = async ({ prompt }) => {
+  const last = prompt[prompt.length - 1];
+  const result = last.role === 'tool' ? last.content.find((part) => part.type === 'tool-result') : undefined;
+  if (result) {
+    const output = 'value' in result.output ? String(result.output.value) : '';
 
-      return { content: [{ type: 'text', text: output }], finishReason: { unified: 'stop', raw: 'stop' }, usage, warnings: [] };
-    }
+    return { content: [{ type: 'text', text: output }], finishReason: { unified: 'stop', raw: 'stop' }, usage, warnings: [] };
+  }
 
-    const text = Array.isArray(last.content)
-      ? last.content.map((part) => (part.type === 'text' ? part.text : '')).join(' ')
-      : last.content;
-    if (/weather/i.test(text)) {
-      const call = {
-        type: 'tool-call' as const,
-        toolCallId: `call-${Date.now()}`,
-        toolName: 'get_weather',
-        input: JSON.stringify({ city: cityOf(text) }),
-      };
-
-      return { content: [call], finishReason: { unified: 'tool-calls', raw: 'tool_use' }, usage, warnings: [] };
-    }
-
-    return {
-      content: [{ type: 'text', text: NO_KEY }],
-      finishReason: { unified: 'stop', raw: 'stop' },
-      usage,
-      warnings: [],
+  const text = Array.isArray(last.content)
+    ? last.content.map((part) => (part.type === 'text' ? part.text : '')).join(' ')
+    : last.content;
+  if (/weather/i.test(text)) {
+    const call = {
+      type: 'tool-call' as const,
+      toolCallId: `call-${Date.now()}`,
+      toolName: 'get_weather',
+      input: JSON.stringify({ city: cityOf(text) }),
     };
-  },
-});
+
+    return { content: [call], finishReason: { unified: 'tool-calls', raw: 'tool_use' }, usage, warnings: [] };
+  }
+
+  return {
+    content: [{ type: 'text', text: NO_KEY }],
+    finishReason: { unified: 'stop', raw: 'stop' },
+    usage,
+    warnings: [],
+  };
+};
+
+/** The same scripted answer, split into deltas, so `streamText` works without a key. */
+const doStream: MockLanguageModelV4['doStream'] = async (options) => {
+  const { content, finishReason } = await doGenerate(options);
+
+  return {
+    stream: new ReadableStream({
+      start(controller) {
+        controller.enqueue({ type: 'stream-start', warnings: [] });
+        content.forEach((part, index) => {
+          if (part.type === 'tool-call') {
+            controller.enqueue(part);
+
+            return;
+          }
+
+          if (part.type !== 'text') return;
+
+          const id = `text-${index}`;
+          controller.enqueue({ type: 'text-start', id });
+          for (const word of part.text.split(/(?<=\s)/)) {
+            controller.enqueue({ type: 'text-delta', id, delta: word });
+          }
+          controller.enqueue({ type: 'text-end', id });
+        });
+        controller.enqueue({ type: 'finish', finishReason, usage });
+        controller.close();
+      },
+    }),
+  };
+};
+
+export const scriptedAiSdkModel = new MockLanguageModelV4({ doGenerate, doStream });
 
 export class ScriptedChatModel extends BaseChatModel {
   _llmType() {

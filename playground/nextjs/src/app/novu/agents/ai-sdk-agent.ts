@@ -1,16 +1,16 @@
 import { anthropic } from '@ai-sdk/anthropic';
 import { agent, hydrateUnreachableAttachmentUrls, toModelMessages } from '@novu/framework/ai-sdk';
-import { generateText, stepCountIs, tool } from 'ai';
+import { stepCountIs, streamText, tool } from 'ai';
 import { agentTools, channelHandlers, MODEL, SYSTEM } from './features';
 import { scriptedAiSdkModel } from './scripted-models';
 
 const model = () => (process.env.ANTHROPIC_API_KEY ? anthropic(MODEL) : scriptedAiSdkModel);
 
-/** Claude Haiku (scripted without `ANTHROPIC_API_KEY`) with every feature but HITL as a tool, plus attached images and PDFs. */
+/** Claude Haiku (scripted without `ANTHROPIC_API_KEY`) with every feature but HITL as a tool, plus attached images and PDFs. Returning `streamText` streams the reply as the model writes it. */
 export const aiSdkAgent = agent('ai-sdk-agent', {
   ...channelHandlers,
   onMessage: async (message, ctx) =>
-    generateText({
+    streamText({
       model: model(),
       system: SYSTEM,
       messages: await hydrateUnreachableAttachmentUrls(toModelMessages(ctx)),
