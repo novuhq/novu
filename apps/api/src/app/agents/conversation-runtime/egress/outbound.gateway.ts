@@ -3,7 +3,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
-import type { Adapter, AdapterPostableMessage, CardElement, EmojiValue, PlanModel, Thread } from 'chat';
+import type { Adapter, AdapterPostableMessage, CardElement, EmojiValue, PlanModel, RawMessage, Thread } from 'chat';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -50,6 +50,11 @@ export interface ConversationTarget {
    * an extra conversation lookup. Falls back to a lookup, then to the first installed workspace.
    */
   workspaceId?: string;
+  /**
+   * Platform identity of the user this delivery answers (a Slack `userId`). Slack streams
+   * natively in a channel only when it is told who the stream is for.
+   */
+  recipientPlatformUserId?: string;
 }
 
 export interface OutboundPersistContext {
@@ -421,17 +426,53 @@ export class OutboundGateway {
     const instanceKey = `${target.agentId}:${target.integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, target.agentId, config.platform, config);
     const thread = chat.thread(target.platformThreadId);
+    const workspaceId = await this.resolveSlackWorkspaceId(
+      config,
+      target.agentId,
+      target.platformThreadId,
+      target.workspaceId
+    );
 
     const sent = await this.runWithPlatformToken(
       chat,
       config,
       target.agentId,
       target.platformThreadId,
-      target.workspaceId,
-      () => thread.post(chunks)
+      workspaceId,
+      async () => (await this.streamSlackPreview(chat, config, target, workspaceId, chunks)) ?? thread.post(chunks)
     ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
+  }
+
+  /**
+   * Slack streams natively only when it knows who the stream is for: in a channel that means the
+   * recipient's user id plus the workspace id (in a DM it infers both). The chat SDK takes those
+   * from the inbound message of the thread it is handling, which a preview — posted by a reader
+   * running outside the inbound turn — has none of, so pass them explicitly.
+   *
+   * Returns null when the preview cannot stream natively; the caller then posts the stream through
+   * the SDK, which renders it as throttled post-and-edit.
+   */
+  private async streamSlackPreview(
+    chat: ChatWithAdapters,
+    config: ResolvedAgentConfig,
+    target: ConversationTarget,
+    workspaceId: string | undefined,
+    chunks: AsyncIterable<string>
+  ): Promise<RawMessage | null> {
+    if (config.platform !== AgentPlatformEnum.SLACK || !target.recipientPlatformUserId || !workspaceId) {
+      return null;
+    }
+
+    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK);
+
+    const streamed = await adapter?.stream(target.platformThreadId, chunks, {
+      recipientUserId: target.recipientPlatformUserId,
+      recipientTeamId: workspaceId,
+    });
+
+    return streamed ?? null;
   }
 
   async setThreadSubscribed(

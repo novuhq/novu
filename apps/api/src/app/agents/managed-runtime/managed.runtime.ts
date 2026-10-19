@@ -69,6 +69,7 @@ export class ManagedRuntime implements AgentRuntime {
           unseenThreadMessages: turn.unseenThreadMessages,
           platformThreadId: turn.platformThreadId,
           platformMessageId: turn.message?.id,
+          platformUserId: turn.platformUserId,
         },
         turn.agent
       );

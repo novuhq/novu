@@ -48,6 +48,7 @@ export interface ManagedAgentContext {
   unseenThreadMessages?: UnseenThreadMessage[];
   platformThreadId?: string;
   platformMessageId?: string;
+  platformUserId?: string;
 }
 
 interface WebhookSessionMetadata {
@@ -63,6 +64,8 @@ interface WebhookSessionMetadata {
   platform: AgentPlatformEnum;
   platformThreadId: string;
   platformMessageId?: string;
+  /** The acting user's platform identity — lets a streamed reply name its Slack recipient. */
+  platformUserId?: string;
   firstPlatformMessageId?: string;
   acknowledgeOnReceived?: boolean;
   suppressReply?: boolean;
@@ -174,6 +177,7 @@ export class ManagedAgentService implements OnModuleInit {
         platform: context.config.platform,
         platformThreadId: context.platformThreadId ?? context.conversation.channels?.[0]?.platformThreadId ?? '',
         platformMessageId: context.platformMessageId,
+        platformUserId: context.platformUserId,
         firstPlatformMessageId: context.conversation.channels?.[0]?.firstPlatformMessageId,
         acknowledgeOnReceived: context.config.acknowledgeOnReceived,
       }),
@@ -489,6 +493,10 @@ export class ManagedAgentService implements OnModuleInit {
 
     if (input.platformMessageId) {
       metadata.platformMessageId = input.platformMessageId;
+    }
+
+    if (input.platformUserId) {
+      metadata.platformUserId = input.platformUserId;
     }
 
     if (input.firstPlatformMessageId) {

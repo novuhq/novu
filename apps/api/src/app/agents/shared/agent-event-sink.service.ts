@@ -55,6 +55,8 @@ export interface AgentEventContext {
   subscriberId?: string;
   platform?: AgentPlatformEnum;
   platformThreadId?: string;
+  /** The acting user's platform identity (Slack userId, Telegram chatId) for the turn being answered. */
+  platformUserId?: string;
   /** Conversation channel for durable activity persist (web-chat lifecycle, tool ledger, etc.). */
   channel?: ConversationChannel;
   sessionId?: string;

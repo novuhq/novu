@@ -36,7 +36,8 @@ export class BridgeLiveReplies implements OnApplicationShutdown {
   readerFor(
     config: ResolvedAgentConfig,
     conversation: ConversationEntity,
-    platformThreadId?: string
+    platformThreadId?: string,
+    platformUserId?: string
   ): ((body: Readable) => void) | undefined {
     if (!streamsLiveReplies(config.platform)) {
       return undefined;
@@ -45,7 +46,7 @@ export class BridgeLiveReplies implements OnApplicationShutdown {
     return (body) => {
       this.bodies.add(body);
       body.once('close', () => this.bodies.delete(body));
-      this.read(body, config, conversation, platformThreadId).catch((err) => {
+      this.read(body, config, conversation, platformThreadId, platformUserId).catch((err) => {
         body.destroy();
         this.logger.warn(err, `[agent:${config.agentIdentifier}] Bridge live reply stream ended early`);
       });
@@ -56,7 +57,8 @@ export class BridgeLiveReplies implements OnApplicationShutdown {
     body: Readable,
     config: ResolvedAgentConfig,
     conversation: ConversationEntity,
-    platformThreadId?: string
+    platformThreadId?: string,
+    platformUserId?: string
   ): Promise<void> {
     const channel = resolveLifecycleChannel(conversation, platformThreadId);
     const context: AgentEventContext = {
@@ -69,6 +71,7 @@ export class BridgeLiveReplies implements OnApplicationShutdown {
       agentId: config.agentId,
       platform: config.platform,
       platformThreadId: channel.platformThreadId,
+      platformUserId,
       channel,
       source: 'bridge',
     };
