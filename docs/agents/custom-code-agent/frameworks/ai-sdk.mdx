@@ -66,34 +66,9 @@ On the AI SDK path, `onMessage` (and `onToolApproval`) can return an AI SDK resu
 | Return | Behavior |
 | --- | --- |
 | `generateText(...)` | Novu delivers the generated text |
-| `streamText(...)` | Novu waits for the full response, then delivers the final text (same outcome as `generateText`) |
+| `streamText(...)` | Novu streams the text into the thread as the model writes it - see [Stream a reply](/agents/custom-code-agent/building-blocks/reply#stream-a-reply) |
 | `string` / JSX `Card` | Delivered as a normal reply - see [Reply](/agents/custom-code-agent/building-blocks/reply) |
 | nothing | After you call `ctx.reply()` yourself |
-
-<Note>
-  Returning `streamText(...)` behaves the same as returning `generateText(...)` - Novu waits for the full response, then posts the completed text.
-</Note>
-
-To stream live updates in the thread, call `streamText()` inside the handler **without returning it**. Post a reply, then update it as chunks arrive with [`ReplyHandle.edit()`](/agents/custom-code-agent/building-blocks/edit-sent-messages):
-
-```typescript
-onMessage: async (message, ctx) => {
-  const result = streamText({
-    model: openai('gpt-4o'),
-    messages: toModelMessages(ctx),
-  });
-
-  const msg = await ctx.reply('');
-  let text = '';
-
-  for await (const chunk of result.textStream) {
-    text += chunk;
-    await msg.edit(text);
-  }
-},
-```
-
-This pattern requires the provider to support message edits. See [Agents and providers](/agents/get-started/agents-and-providers#provider-connections) for capability details.
 
 Shorthand when you only need `onMessage`: pass the handler directly.
 
