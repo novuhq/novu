@@ -115,8 +115,7 @@ export function AddressStep({ onDraftChange }: AddressStepProps) {
       <StepTitle>
         Give your agent an <em>inbox</em>
       </StepTitle>
-      {/* Fixed wording, as the design has it: it doesn't follow what is typed into the field below. */}
-      <StepLead>Name it once. We use it for the address and everywhere atlas shows up.</StepLead>
+      <StepLead>Name it once. We use it for the address and everywhere it shows up.</StepLead>
 
       <form onSubmit={create} className="flex flex-col gap-5.5">
         <div className="flex flex-col gap-2">
@@ -257,7 +256,7 @@ export function AddressStep({ onDraftChange }: AddressStepProps) {
           or from your terminal
           <span aria-hidden="true" className="h-px flex-1 bg-border" />
         </p>
-        <TerminalCommand command={setupCommand(handle || PLACEHOLDER_HANDLE)} note="creates the same inbox" />
+        <TerminalCommand command={setupCommand(name.trim() || PLACEHOLDER_NAME)} note="creates the same inbox" />
       </div>
     </>
   );

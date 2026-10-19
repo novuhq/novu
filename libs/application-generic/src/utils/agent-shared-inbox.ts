@@ -16,6 +16,9 @@ import { customAlphabet } from 'nanoid';
  * agents use `NOVU_AGENT_INBOX_INBOUND_DOMAIN` when it is set, and the chosen
  * domain is pinned on the integration as `credentials.inboxDomain`. A row
  * without that pin keeps the Connect domain, so existing addresses do not move.
+ * A new Agent Inbox row with no routing key publishes `{emailSlugPrefix}@<domain>`
+ * instead; inbound mail resolves that local-part as a whole. Existing keyed
+ * addresses are unchanged.
  * The inbound worker resolves the agent by looking up the inbox integration
  * whose `credentials.inboxRoutingKey` matches the trailing segment, then joining
  * through `AgentIntegration` — see
@@ -207,6 +210,57 @@ export function buildAgentSharedInbox(emailSlugPrefix: string, inboxRoutingKey: 
 }
 
 /**
+ * Agent Inbox address chosen by the operator: the handle alone, on the pinned
+ * domain. Rows that still carry an `inboxRoutingKey` use `buildAgentSharedInbox`.
+ */
+export function buildAgentVanityInbox(emailSlugPrefix: string, domain?: string): string {
+  const slug = sanitizeSlugForAddress(emailSlugPrefix);
+
+  return `${slug}@${domain ?? getSharedAgentDomain()}`;
+}
+
+/**
+ * The address a shared inbox publishes. A routing key keeps the
+ * `{slug}-{key}@domain` shape. A stored slug and no routing key is a vanity
+ * Agent Inbox address. A missing or invalid key is not treated as vanity, so a
+ * broken keyed row cannot start receiving mail at the bare slug.
+ */
+export function resolvePublishedAgentInboxAddress(
+  credentials:
+    | {
+        emailSlugPrefix?: string | null;
+        inboxRoutingKey?: string | null;
+        inboxDomain?: unknown;
+        sharedInboxDisabled?: boolean | null;
+      }
+    | null
+    | undefined,
+  agent: { identifier?: string | null; name?: string | null } = {}
+): string | undefined {
+  if (!isAgentSharedInboxEnabled() || credentials?.sharedInboxDisabled) {
+    return undefined;
+  }
+
+  const domain = resolveAgentInboxDomain(credentials);
+  const key = credentials?.inboxRoutingKey;
+  if (typeof key === 'string' && key.length > 0) {
+    const slug = resolvePublishedAgentEmailSlug(credentials?.emailSlugPrefix, agent);
+    if (!slug || !isValidAgentInboxRoutingKey(key)) {
+      return undefined;
+    }
+
+    return buildAgentSharedInbox(slug, key, domain);
+  }
+
+  const stored = credentials?.emailSlugPrefix;
+  if (!stored || !isValidAgentEmailSlugPrefix(stored)) {
+    return undefined;
+  }
+
+  return buildAgentVanityInbox(stored, domain);
+}
+
+/**
  * Parse the local-part of an inbound email address into `{ slug, inboxRoutingKey }`.
  * The trailing fixed-length lowercase-alnum segment is taken as the routing key
  * (unambiguous even when the slug contains dashes).
@@ -251,7 +305,7 @@ export function isValidAgentEmailSlugPrefix(slug: string): boolean {
 
 /**
  * Slug the shared inbox actually publishes. A valid stored prefix wins; otherwise
- * the address is `{slugify(identifier or name)}-{inboxRoutingKey}@<shared-domain>`.
+ * the address is `{slugify(name or identifier)}-{inboxRoutingKey}@<shared-domain>`.
  * Inbound routing must accept this same slug, including when a credential save
  * omitted `emailSlugPrefix`.
  */
@@ -263,7 +317,7 @@ export function resolvePublishedAgentEmailSlug(
     return storedPrefix;
   }
 
-  const candidate = slugify(agent.identifier || agent.name || '')
+  const candidate = slugify(agent.name || agent.identifier || '')
     .slice(0, 32)
     .replace(/^-+/, '')
     .replace(/-+$/, '');

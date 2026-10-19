@@ -485,6 +485,26 @@ describe('DomainRouteStrategy', () => {
       sinon.assert.notCalled(agentIntegrationRepository.findOne as any);
     });
 
+    it('delivers a vanity handle on the Agent Inbox domain', async () => {
+      integrationRepository.findAgentInboundByVanitySlug.resolves({
+        ...makeIntegration(),
+        providerId: EmailProviderIdEnum.AgentEmailInbox,
+        credentials: { emailSlugPrefix: 'atlas', inboxDomain: AGENT_INBOX_DOMAIN },
+      } as any);
+      agentIntegrationRepository.findOne.resolves(makeLink() as any);
+      agentRepository.findByIdForWebhook.resolves(makeAgent() as any);
+
+      await strategy.execute(makeSharedCommand('atlas', AGENT_INBOX_DOMAIN));
+
+      sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
+      sinon.assert.calledOnceWithExactly(
+        integrationRepository.findAgentInboundByVanitySlug as any,
+        'atlas',
+        AGENT_INBOX_DOMAIN
+      );
+      sinon.assert.notCalled(integrationRepository.findAgentInboundByInboxRoutingKey as any);
+    });
+
     it('strips a +nv reply token before shared-inbox routing and forwards originToken', async () => {
       const originId = '65f1a2b3c4d5e6f7a8b9c0d1';
       const tokenized = buildAgentReplyToAddress(`wine-bot-${ROUTING_KEY}@${SHARED_DOMAIN}`, originId);

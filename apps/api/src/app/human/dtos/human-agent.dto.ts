@@ -2,8 +2,34 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AGENT_INBOX_REACHES, type AgentInboxReach } from '@novu/dal';
 import { AGENT_NAME_MAX_LENGTH } from '@novu/shared';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 import { AGENT_DESCRIPTION_MAX_LENGTH, trimmed } from './setup-human-relay.dto';
+
+/** Whether a mailbox local-part is free on the Agent Inbox domain. */
+export class CheckInboxAddressQueryDto {
+  @ApiProperty({ description: 'The handle to check, such as `atlas`.' })
+  @IsString()
+  @Matches(/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/)
+  handle: string;
+
+  @ApiPropertyOptional({
+    description: 'The operator’s email, used only to suggest a nearby free handle when this one is taken.',
+  })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+}
+
+export class CheckInboxAddressResponseDto {
+  @ApiProperty()
+  handle: string;
+
+  @ApiProperty()
+  available: boolean;
+
+  @ApiPropertyOptional()
+  suggestion?: string;
+}
 
 /** Which relay agent a call is about, for a setup made with its own `--agent-identifier`. */
 export class HumanAgentQueryDto {
@@ -85,4 +111,17 @@ export class HumanAgentResponseDto {
 
   @ApiPropertyOptional({ description: 'When the agent was paused. Missing while it isn’t.' })
   pausedAt?: string;
+}
+
+/** The onboarding test: mail from the Agent Email Inbox to the operator’s sign-up address. */
+export class SendHumanTestEmailRequestDto extends HumanAgentQueryDto {
+  @ApiProperty({ description: 'Where the test email goes: the address the operator signed up with.' })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+}
+
+export class SendHumanTestEmailResponseDto {
+  @ApiProperty()
+  success: boolean;
 }

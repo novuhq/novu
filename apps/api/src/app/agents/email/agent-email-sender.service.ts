@@ -3,13 +3,12 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   AgentEmailInboxQuotaService,
   areNovuEmailCredentialsSet,
-  buildAgentSharedInbox,
   CalculateLimitNovuIntegration,
   decryptCredentials,
   isAgentSharedInboxEnabled,
   MailFactory,
   PinoLogger,
-  resolveAgentInboxDomain,
+  resolvePublishedAgentInboxAddress,
 } from '@novu/application-generic';
 import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions, isAgentInboxProvider } from '@novu/shared';
@@ -216,15 +215,8 @@ export class AgentEmailSender {
    * disabled, or the address could not be built).
    */
   resolveSharedInboxAddress(config: ResolvedAgentConfig): string | undefined {
-    const slug = config.credentials.emailSlugPrefix;
-    const inboxRoutingKey = config.credentials.inboxRoutingKey;
-    const sharedDisabled = Boolean(config.credentials.sharedInboxDisabled);
-    if (!isAgentSharedInboxEnabled() || !slug || !inboxRoutingKey || sharedDisabled) {
-      return undefined;
-    }
-
     try {
-      return buildAgentSharedInbox(slug, inboxRoutingKey, resolveAgentInboxDomain(config.credentials));
+      return resolvePublishedAgentInboxAddress(config.credentials, { name: config.agentName });
     } catch (err) {
       this.logger.warn({ err, agentId: config.agentId }, 'Falling back to params.from - shared inbox build failed');
       captureAgentWarning(err, {
@@ -257,7 +249,8 @@ export class AgentEmailSender {
     },
     integration: IntegrationEntity
   ): Promise<{ messageId?: string }> {
-    if (!isAgentSharedInboxEnabled() || !config.credentials.emailSlugPrefix || !config.credentials.inboxRoutingKey) {
+    const fromAddress = this.resolveSharedInboxAddress(config);
+    if (!isAgentSharedInboxEnabled() || !fromAddress) {
       throw new BadRequestException(
         'Email agent integration requires either a shared agent inbox or a custom outbound email provider. ' +
           'Configure one in the agent email setup.'
@@ -288,11 +281,7 @@ export class AgentEmailSender {
       );
     }
 
-    const from = buildAgentSharedInbox(
-      config.credentials.emailSlugPrefix,
-      config.credentials.inboxRoutingKey,
-      resolveAgentInboxDomain(config.credentials)
-    );
+    const from = fromAddress;
     const senderName = resolveAgentEmailSenderName(config);
 
     const demoIntegration: IntegrationEntity = {

@@ -194,6 +194,40 @@ describe('SetupHumanRelay', () => {
 
     expect(humanAgentIdentity.apply.firstCall.args[1]).to.deep.equal({ name: 'Deploy bot', description: undefined });
   });
+
+  it('reports the mailbox when a new one was not the slug of the name', async () => {
+    const savedEnterprise = process.env.NOVU_ENTERPRISE;
+    const savedSelfHosted = process.env.IS_SELF_HOSTED;
+    const savedDomain = process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN;
+    process.env.NOVU_ENTERPRISE = 'true';
+    delete process.env.IS_SELF_HOSTED;
+    process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = 'agentconnect.sh';
+
+    try {
+      const { usecase, findOrCreateNovuEmail } = setup();
+      findOrCreateNovuEmail.execute.resolves({
+        provisionedNewLink: true,
+        inboxHandleAdjusted: true,
+        response: { integration: { sharedInboundAddress: 'atlas-acme@agentinbox.md' } },
+      });
+
+      const result = await usecase.execute(
+        SetupHumanRelayCommand.create({ ...base, agentName: 'Atlas', inboxHandle: 'atlas-acme', email: 'ada@acme.co' })
+      );
+
+      expect(findOrCreateNovuEmail.execute.firstCall.args[3]).to.equal('agent-email-inbox');
+      expect(findOrCreateNovuEmail.execute.firstCall.args[4]).to.deep.equal({
+        inboxHandle: 'atlas-acme',
+        operatorEmail: 'ada@acme.co',
+      });
+      expect(result.emailAddress).to.equal('atlas-acme@agentinbox.md');
+      expect(result.emailHandleAdjusted).to.equal(true);
+    } finally {
+      restoreEnv('NOVU_ENTERPRISE', savedEnterprise);
+      restoreEnv('IS_SELF_HOSTED', savedSelfHosted);
+      restoreEnv('NOVU_AGENT_SHARED_INBOUND_DOMAIN', savedDomain);
+    }
+  });
 });
 
 function restoreEnv(name: string, value: string | undefined): void {

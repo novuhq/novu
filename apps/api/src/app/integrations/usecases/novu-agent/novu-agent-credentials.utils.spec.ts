@@ -85,6 +85,28 @@ describe('mergeAgentInboxCredentialsForUpdate', () => {
     expect(result.emailSlugPrefix).to.equal('renamed-bot');
   });
 
+  it('keeps the handle of a vanity Agent Inbox', () => {
+    const result = mergeAgentInboxCredentialsForUpdate(
+      EmailProviderIdEnum.AgentEmailInbox,
+      { emailSlugPrefix: 'postmaster', senderName: 'Ops' },
+      { emailSlugPrefix: 'atlas', inboxDomain: 'agentinbox.md' }
+    );
+
+    expect(result.emailSlugPrefix).to.equal('atlas');
+    expect(result.inboxDomain).to.equal('agentinbox.md');
+    expect(result.senderName).to.equal('Ops');
+  });
+
+  it('still replaces the slug of a keyed Agent Inbox', () => {
+    const result = mergeAgentInboxCredentialsForUpdate(
+      EmailProviderIdEnum.AgentEmailInbox,
+      { emailSlugPrefix: 'renamed-bot' },
+      { emailSlugPrefix: 'atlas', inboxDomain: 'agentinbox.md', inboxRoutingKey: 'abcd1234' }
+    );
+
+    expect(result.emailSlugPrefix).to.equal('renamed-bot');
+  });
+
   it('keeps the stored inbox domain and ignores a client change', () => {
     const result = mergeAgentInboxCredentialsForUpdate(
       EmailProviderIdEnum.AgentEmailInbox,
