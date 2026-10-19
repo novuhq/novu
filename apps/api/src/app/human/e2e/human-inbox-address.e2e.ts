@@ -4,7 +4,7 @@ import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { DASHBOARD_ONLY, HUMAN_DASHBOARD_SECRET_HEADER } from '../guards/human-dashboard-secret.guard';
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER, DASHBOARD_ONLY } from '../guards/human-dashboard-secret.guard';
 
 const integrationRepository = new IntegrationRepository();
 
@@ -23,7 +23,7 @@ describe('Agent Inbox address (create, taken, test email, CLI) #novu-v2', () => 
     IS_SELF_HOSTED: process.env.IS_SELF_HOSTED,
     NOVU_AGENT_SHARED_INBOUND_DOMAIN: process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN,
     NOVU_AGENT_INBOX_INBOUND_DOMAIN: process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN,
-    HUMAN_DASHBOARD_API_SECRET: process.env.HUMAN_DASHBOARD_API_SECRET,
+    AGENT_INBOX_DASHBOARD_API_SECRET: process.env.AGENT_INBOX_DASHBOARD_API_SECRET,
   };
 
   before(() => {
@@ -32,7 +32,7 @@ describe('Agent Inbox address (create, taken, test email, CLI) #novu-v2', () => 
     delete process.env.IS_SELF_HOSTED;
     process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = 'agentconnect.sh';
     process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = INBOX_DOMAIN;
-    process.env.HUMAN_DASHBOARD_API_SECRET = DASHBOARD_SECRET;
+    process.env.AGENT_INBOX_DASHBOARD_API_SECRET = DASHBOARD_SECRET;
   });
 
   after(() => {
@@ -41,7 +41,7 @@ describe('Agent Inbox address (create, taken, test email, CLI) #novu-v2', () => 
     restoreEnv('IS_SELF_HOSTED', originalEnv.IS_SELF_HOSTED);
     restoreEnv('NOVU_AGENT_SHARED_INBOUND_DOMAIN', originalEnv.NOVU_AGENT_SHARED_INBOUND_DOMAIN);
     restoreEnv('NOVU_AGENT_INBOX_INBOUND_DOMAIN', originalEnv.NOVU_AGENT_INBOX_INBOUND_DOMAIN);
-    restoreEnv('HUMAN_DASHBOARD_API_SECRET', originalEnv.HUMAN_DASHBOARD_API_SECRET);
+    restoreEnv('AGENT_INBOX_DASHBOARD_API_SECRET', originalEnv.AGENT_INBOX_DASHBOARD_API_SECRET);
   });
 
   it('creates the agent at the handle the operator chose, once that handle is free', async () => {
@@ -201,7 +201,7 @@ function cliSetup(input: { agentName: string }) {
 function asDashboard(session: UserSession, method: 'get' | 'post', path: string) {
   return session.testAgent[method](path)
     .set('Authorization', `ApiKey ${session.apiKey}`)
-    .set(HUMAN_DASHBOARD_SECRET_HEADER, DASHBOARD_SECRET);
+    .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, DASHBOARD_SECRET);
 }
 
 function asCli(session: UserSession, method: 'get' | 'post', path: string) {

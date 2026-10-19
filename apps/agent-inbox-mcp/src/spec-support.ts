@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
 import type { Env } from './env';
 import type { InboxMessage, InboxThread, InboxThreadView } from './inbox';
 import type { Interaction } from './interactions';
@@ -47,7 +48,7 @@ export function setup(overrides: Partial<Env> = {}) {
   const kv = fakeKv();
   const env: Env = {
     CLERK_OAUTH_ISSUER: ISSUER,
-    HUMAN_DASHBOARD_API_SECRET: 'shared-secret',
+    AGENT_INBOX_DASHBOARD_API_SECRET: 'shared-secret',
     NOVU_API_URL: API,
     NOVU_API_URL_EU: API_EU,
     CONNECTIONS: asConnections(kv),
@@ -139,7 +140,7 @@ function answerAuth(url: string, headers: Headers): Response | null {
   }
 
   if (url === `${API_EU}/v1/human/accounts/user_1/secret-key`) {
-    return headers.get('x-human-dashboard-secret') === 'shared-secret'
+    return headers.get(AGENT_INBOX_DASHBOARD_SECRET_HEADER) === 'shared-secret'
       ? reply({ data: { secretKey: 'account-key' } })
       : reply({}, 401);
   }

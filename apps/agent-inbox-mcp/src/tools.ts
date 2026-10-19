@@ -1,6 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { type HumanApi, HumanApiError } from './human-api';
+import { type AgentInboxApi, AgentInboxApiError } from './agent-inbox-api';
 import {
   getInboxThread,
   INBOX_MAX_WAIT_SECONDS,
@@ -136,10 +136,10 @@ function normalizeTo(value: string | string[] | undefined): string[] | undefined
   const raw = Array.isArray(value) ? value : value.split(',');
   const recipients = [...new Set(raw.map((item) => item.trim()).filter(Boolean))];
   if (recipients.length === 0) {
-    throw new HumanApiError(400, 'to must name at least one contact or email address.');
+    throw new AgentInboxApiError(400, 'to must name at least one contact or email address.');
   }
   if (recipients.length > 50) {
-    throw new HumanApiError(400, 'to supports at most 50 contacts.');
+    throw new AgentInboxApiError(400, 'to supports at most 50 contacts.');
   }
 
   return recipients;
@@ -147,28 +147,28 @@ function normalizeTo(value: string | string[] | undefined): string[] | undefined
 
 function assertKindOptions(input: SendToolInput): void {
   if (input.kind === 'choose' && !input.options?.length) {
-    throw new HumanApiError(400, 'kind "choose" requires 2-10 options.');
+    throw new AgentInboxApiError(400, 'kind "choose" requires 2-10 options.');
   }
   if (input.kind !== 'choose' && input.options?.length) {
-    throw new HumanApiError(400, 'options only work with kind "choose".');
+    throw new AgentInboxApiError(400, 'options only work with kind "choose".');
   }
   if (
     input.kind !== 'approve' &&
     (input.approve_label !== undefined || input.deny_label !== undefined || input.extra_actions?.length)
   ) {
-    throw new HumanApiError(400, 'approve_label, deny_label, and extra_actions only work with kind "approve".');
+    throw new AgentInboxApiError(400, 'approve_label, deny_label, and extra_actions only work with kind "approve".');
   }
   if (input.kind === 'tell' && input.wait_seconds !== undefined) {
-    throw new HumanApiError(400, 'wait_seconds only applies to ask, approve, and choose.');
+    throw new AgentInboxApiError(400, 'wait_seconds only applies to ask, approve, and choose.');
   }
 }
 
-async function sendOrReply(api: HumanApi, input: SendToolInput | ReplyToolInput): Promise<string> {
+async function sendOrReply(api: AgentInboxApi, input: SendToolInput | ReplyToolInput): Promise<string> {
   assertKindOptions(input);
   const since = Date.now();
   const isReply = 'thread' in input;
   if (isReply && input.anyone_may_answer && input.to !== undefined) {
-    throw new HumanApiError(400, 'anyone_may_answer cannot be combined with to.');
+    throw new AgentInboxApiError(400, 'anyone_may_answer cannot be combined with to.');
   }
 
   const requestedRecipients = normalizeTo(input.to);
@@ -206,7 +206,7 @@ async function sendOrReply(api: HumanApi, input: SendToolInput | ReplyToolInput)
 }
 
 /** The tools an AI tool gets: ways to reach a person, read the inbox, and wait for what they say. */
-export function registerTools(server: McpServer, api: HumanApi): void {
+export function registerTools(server: McpServer, api: AgentInboxApi): void {
   server.registerTool(
     'inbox_send',
     {
@@ -322,7 +322,7 @@ export function registerTools(server: McpServer, api: HumanApi): void {
           { limit: 100 }
         );
         if (!contacts?.length) {
-          return 'There is nobody to reach yet. Set up Human on agentinbox.md, or use the invite tool.';
+          return 'There is nobody to reach yet. Set up Agent Inbox on agentinbox.md, or use the invite tool.';
         }
 
         return contacts
@@ -448,7 +448,9 @@ async function run(work: () => Promise<string>): Promise<ToolResult> {
     return { content: [{ type: 'text', text: await work() }] };
   } catch (error) {
     const text =
-      error instanceof HumanApiError ? error.message : 'Something went wrong while reaching Human. Try again.';
+      error instanceof AgentInboxApiError
+        ? error.message
+        : 'Something went wrong while reaching Agent Inbox. Try again.';
 
     return { content: [{ type: 'text', text }], isError: true };
   }

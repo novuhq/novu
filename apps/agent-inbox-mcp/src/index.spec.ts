@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AgentInboxApiError } from './agent-inbox-api';
 import { toolOf } from './connections';
-import { HumanApiError } from './human-api';
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
 import worker from './index';
 import { describeOutcome, type Interaction, sendInteraction, waitForAnswer } from './interactions';
 import { API, INITIALIZE, ISSUER, ORIGIN, rpc, setup, stubBackends } from './spec-support';
 
-describe('the Human MCP server', () => {
+describe('the Agent Inbox MCP server', () => {
   beforeEach(() => {
     stubBackends();
   });
@@ -25,7 +26,7 @@ describe('the Human MCP server', () => {
     );
   });
 
-  it('names the Human Clerk app as the place to sign in', async () => {
+  it('names the Agent Inbox Clerk app as the place to sign in', async () => {
     const { env, ctx } = setup();
 
     const response = await worker.fetch(new Request(`${ORIGIN}/.well-known/oauth-protected-resource`), env, ctx);
@@ -49,7 +50,7 @@ describe('the Human MCP server', () => {
 
     expect(response.status).toBe(200);
     expect(((await response.json()) as { result: { serverInfo: { name: string } } }).result.serverInfo.name).toBe(
-      'human'
+      'agent-inbox'
     );
     expect(kv.values.has('tool:user_1:claude')).toBe(true);
   });
@@ -138,7 +139,7 @@ describe('the Human MCP server', () => {
     expect(result.isError).toBe(true);
   });
 
-  it('passes the full send card and delivery options to the Human API', async () => {
+  it('passes the full send card and delivery options to the Agent Inbox API', async () => {
     const calls = stubBackends();
     const { env, ctx } = setup();
 
@@ -373,7 +374,9 @@ describe('the Human MCP server', () => {
     await settle();
 
     const response = await worker.fetch(
-      new Request(`${ORIGIN}/connections/user_1`, { headers: { 'x-human-dashboard-secret': 'shared-secret' } }),
+      new Request(`${ORIGIN}/connections/user_1`, {
+        headers: { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: 'shared-secret' },
+      }),
       env,
       ctx
     );
@@ -387,7 +390,9 @@ describe('the Human MCP server', () => {
     kv.values.set('tool:user_1:cursor', '2026-10-09T00:00:00.000Z');
     const ask = (secret?: string) =>
       worker.fetch(
-        new Request(`${ORIGIN}/connections/user_1`, { headers: secret ? { 'x-human-dashboard-secret': secret } : {} }),
+        new Request(`${ORIGIN}/connections/user_1`, {
+          headers: secret ? { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: secret } : {},
+        }),
         env,
         ctx
       );
@@ -441,7 +446,7 @@ describe('waiting for an answer', () => {
   });
 
   it('gives sending longer than other calls, and says a send without an answer may still arrive', async () => {
-    const post = vi.fn().mockRejectedValue(new HumanApiError(0, 'Could not reach the Human API.'));
+    const post = vi.fn().mockRejectedValue(new AgentInboxApiError(0, 'Could not reach the Agent Inbox API.'));
     const api = { get: vi.fn(), post };
 
     await expect(

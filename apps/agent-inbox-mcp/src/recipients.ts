@@ -1,4 +1,4 @@
-import { type HumanApi, HumanApiError } from './human-api';
+import { type AgentInboxApi, AgentInboxApiError } from './agent-inbox-api';
 
 const MAX_CONTACT_PAGES = 5;
 const CONTACTS_PAGE_SIZE = 100;
@@ -62,7 +62,7 @@ function hasVerifiedAddress(contact: Contact, email: string): boolean {
   );
 }
 
-async function listContacts(api: HumanApi, after?: string): Promise<ContactsPage> {
+async function listContacts(api: AgentInboxApi, after?: string): Promise<ContactsPage> {
   const page = await api.getRaw<{ data?: Contact[]; next?: string | null }>('/v1/human/contacts', {
     limit: CONTACTS_PAGE_SIZE,
     after,
@@ -72,7 +72,7 @@ async function listContacts(api: HumanApi, after?: string): Promise<ContactsPage
 }
 
 /** Finds a verified address while bounding MCP call latency to five contact pages. */
-export async function findContactByEmail(api: HumanApi, email: string): Promise<Contact | null> {
+export async function findContactByEmail(api: AgentInboxApi, email: string): Promise<Contact | null> {
   const matches: Contact[] = [];
   let after: string | undefined;
 
@@ -82,7 +82,7 @@ export async function findContactByEmail(api: HumanApi, email: string): Promise<
 
     if (!page.next) {
       if (matches.length > 1) {
-        throw new HumanApiError(
+        throw new AgentInboxApiError(
           409,
           `${email} is verified for more than one contact (${matches.map((contact) => contact.id).join(', ')}). Pass a contact id instead.`
         );
@@ -94,17 +94,17 @@ export async function findContactByEmail(api: HumanApi, email: string): Promise<
     after = page.next;
   }
 
-  throw new HumanApiError(
+  throw new AgentInboxApiError(
     409,
     `Could not safely search every contact for ${email}. Call the contacts tool and pass the contact id instead.`
   );
 }
 
-async function getContact(api: HumanApi, id: string): Promise<Contact | null> {
+async function getContact(api: AgentInboxApi, id: string): Promise<Contact | null> {
   try {
     return await api.get<Contact>(`/v1/human/contacts/${encodeURIComponent(id)}`);
   } catch (error) {
-    if (error instanceof HumanApiError && error.status === 404) {
+    if (error instanceof AgentInboxApiError && error.status === 404) {
       return null;
     }
 
@@ -112,7 +112,7 @@ async function getContact(api: HumanApi, id: string): Promise<Contact | null> {
   }
 }
 
-async function idFitsNewcomer(api: HumanApi, id: string, email: string): Promise<boolean> {
+async function idFitsNewcomer(api: AgentInboxApi, id: string, email: string): Promise<boolean> {
   const contact = await getContact(api, id);
   if (!contact) {
     return true;
@@ -124,7 +124,7 @@ async function idFitsNewcomer(api: HumanApi, id: string, email: string): Promise
 }
 
 async function resolveEmailContact(
-  api: HumanApi,
+  api: AgentInboxApi,
   email: string,
   reserved: ReadonlySet<string>
 ): Promise<{ id: string; exists: boolean }> {
@@ -145,7 +145,7 @@ async function resolveEmailContact(
     }
   }
 
-  throw new HumanApiError(
+  throw new AgentInboxApiError(
     409,
     `Could not pick a contact id for ${email}. Use the invite tool with a contact id, then send to that id.`
   );
@@ -155,7 +155,11 @@ async function resolveEmailContact(
  * Resolves email addresses to verified contact ids. New addresses receive a verification email,
  * but the message itself is not sent until verification succeeds and the caller retries.
  */
-export async function resolveEmailRecipients(api: HumanApi, recipients: string[], isReply: boolean): Promise<string[]> {
+export async function resolveEmailRecipients(
+  api: AgentInboxApi,
+  recipients: string[],
+  isReply: boolean
+): Promise<string[]> {
   if (!recipients.some(isEmailAddress)) {
     return recipients;
   }
@@ -174,7 +178,10 @@ export async function resolveEmailRecipients(api: HumanApi, recipients: string[]
     if (contact.exists) {
       resolved.push(contact.id);
     } else if (isReply) {
-      throw new HumanApiError(409, `${recipient} is not one of your contacts, so it cannot be in this conversation.`);
+      throw new AgentInboxApiError(
+        409,
+        `${recipient} is not one of your contacts, so it cannot be in this conversation.`
+      );
     } else {
       newcomers.push({ id: contact.id, email: recipient });
     }
@@ -190,7 +197,7 @@ export async function resolveEmailRecipients(api: HumanApi, recipients: string[]
     }
 
     const who = newcomers.map((newcomer) => newcomer.email).join(', ');
-    throw new HumanApiError(
+    throw new AgentInboxApiError(
       409,
       `Your message was not sent: ${who} ${newcomers.length === 1 ? 'is' : 'are'} not verified yet. A verification email is on its way; send again once ${newcomers.length === 1 ? 'they have' : 'the recipients have'} clicked it.`
     );

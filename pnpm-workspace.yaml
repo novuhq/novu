@@ -219,7 +219,7 @@ overrides:
   # GHSA-6qxp-vccf-f47h (high): MCP TypeScript SDK OAuth client could send
   # credentials to an authorization server chosen by the MCP server, enabling
   # token exfiltration via a malicious server. Patched in 1.31.0. Pulled
-  # transitively via apps/human-mcp, enterprise/workers/thalamus-observer,
+  # transitively via apps/agent-inbox-mcp, enterprise/workers/thalamus-observer,
   # packages/novu > @anthropic-ai/claude-agent-sdk, and playground/web-chat.
   '@modelcontextprotocol/sdk@>=1.12.0 <1.31.0': ^1.31.0
   # GHSA-6qxp-vccf-f47h (high): the v2 OAuth client can send stored

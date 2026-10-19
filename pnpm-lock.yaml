@@ -388,6 +388,28 @@ importers:
         specifier: ^17.7.2
         version: 17.7.2
 
+  apps/agent-inbox-mcp:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.31.0
+        version: 1.32.1(@cfworker/json-schema@4.1.1)(zod@3.25.76)
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20250424.0
+        version: 4.20260702.1
+      typescript:
+        specifier: ^5.5.2
+        version: 5.8.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.3(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+      wrangler:
+        specifier: ^4.49.0
+        version: 4.68.1(@cloudflare/workers-types@4.20260702.1)(@types/node@22.15.13)
+
   apps/api:
     dependencies:
       '@aws-sdk/client-secrets-manager':
@@ -1363,28 +1385,6 @@ importers:
       typescript:
         specifier: 5.6.2
         version: 5.6.2
-
-  apps/human-mcp:
-    dependencies:
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.31.0
-        version: 1.32.1(@cfworker/json-schema@4.1.1)(zod@3.25.76)
-      zod:
-        specifier: ^3.25.76
-        version: 3.25.76
-    devDependencies:
-      '@cloudflare/workers-types':
-        specifier: ^4.20250424.0
-        version: 4.20260702.1
-      typescript:
-        specifier: ^5.5.2
-        version: 5.8.3
-      vitest:
-        specifier: ^4.1.11
-        version: 4.1.11(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.3(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
-      wrangler:
-        specifier: ^4.49.0
-        version: 4.68.1(@cloudflare/workers-types@4.20260702.1)(@types/node@22.15.13)
 
   apps/inbound-mail:
     dependencies:

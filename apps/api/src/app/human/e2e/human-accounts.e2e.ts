@@ -4,7 +4,7 @@ import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ConnectClaimTokenService } from '../../connect/services/connect-claim-token.service';
-import { HUMAN_DASHBOARD_SECRET_HEADER } from '../guards/human-dashboard-secret.guard';
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from '../guards/human-dashboard-secret.guard';
 import { HumanBackingAccounts } from '../services/human-backing-accounts.service';
 import { EnsureBackingOrganization } from '../usecases/ensure-backing-organization/ensure-backing-organization.usecase';
 
@@ -14,7 +14,7 @@ import { EnsureBackingOrganization } from '../usecases/ensure-backing-organizati
  * backing organization is needed, the test session's own organization stands in for it.
  */
 describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', () => {
-  const originalSecret = process.env.HUMAN_DASHBOARD_API_SECRET;
+  const originalSecret = process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
   let session: UserSession;
 
   beforeEach(async () => {
@@ -24,9 +24,9 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
 
   afterEach(() => {
     if (originalSecret === undefined) {
-      delete process.env.HUMAN_DASHBOARD_API_SECRET;
+      delete process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
     } else {
-      process.env.HUMAN_DASHBOARD_API_SECRET = originalSecret;
+      process.env.AGENT_INBOX_DASHBOARD_API_SECRET = originalSecret;
     }
   });
 
@@ -35,17 +35,20 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
   }
 
   it('does not exist while no shared secret is configured', async () => {
-    delete process.env.HUMAN_DASHBOARD_API_SECRET;
+    delete process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
 
-    const res = await ensureAccount({ [HUMAN_DASHBOARD_SECRET_HEADER]: '' }, { humanUserId: 'user_e2e' });
+    const res = await ensureAccount({ [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: '' }, { humanUserId: 'user_e2e' });
 
     expect(res.status).to.equal(404, JSON.stringify(res.body));
   });
 
   it('rejects callers without the shared secret, including dashboard sessions', async () => {
-    process.env.HUMAN_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
+    process.env.AGENT_INBOX_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
 
-    const anonymous = await ensureAccount({ [HUMAN_DASHBOARD_SECRET_HEADER]: 'wrong' }, { humanUserId: 'user_e2e' });
+    const anonymous = await ensureAccount(
+      { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: 'wrong' },
+      { humanUserId: 'user_e2e' }
+    );
     expect(anonymous.status).to.equal(401, JSON.stringify(anonymous.body));
 
     const dashboardSession = await session.testAgent.post('/v1/human/accounts').send({ humanUserId: 'user_e2e' });
@@ -53,10 +56,10 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
   });
 
   it('validates the Human user ID before touching Clerk', async () => {
-    process.env.HUMAN_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
+    process.env.AGENT_INBOX_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
 
     const res = await ensureAccount(
-      { [HUMAN_DASHBOARD_SECRET_HEADER]: 'e2e-human-dashboard-secret' },
+      { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: 'e2e-human-dashboard-secret' },
       { humanUserId: 'not an id@example.com' }
     );
 
@@ -68,12 +71,12 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
       session.testAgent
         .post('/v1/human/accounts/user_e2e/secret-key/regenerate')
         .set('Authorization', '')
-        .set(HUMAN_DASHBOARD_SECRET_HEADER, secret);
+        .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, secret);
 
-    delete process.env.HUMAN_DASHBOARD_API_SECRET;
+    delete process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
     expect((await regenerate('')).status).to.equal(404);
 
-    process.env.HUMAN_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
+    process.env.AGENT_INBOX_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
     expect((await regenerate('wrong')).status).to.equal(401);
 
     const dashboardSession = await session.testAgent.post('/v1/human/accounts/user_e2e/secret-key/regenerate');
@@ -88,7 +91,7 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
     let ended = false;
 
     beforeEach(() => {
-      process.env.HUMAN_DASHBOARD_API_SECRET = SECRET;
+      process.env.AGENT_INBOX_DASHBOARD_API_SECRET = SECRET;
       inFlight = [];
       ended = false;
     });
@@ -128,7 +131,7 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
       const answered = new Set<string>();
       const ensure = (caller: string) => {
         const request = ensureAccount(
-          { [HUMAN_DASHBOARD_SECRET_HEADER]: SECRET },
+          { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: SECRET },
           { humanUserId, firstName: 'Ada' }
         ).then((res) => {
           answered.add(caller);
@@ -174,7 +177,7 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
     let ensureBackingOrganization: sinon.SinonStub;
 
     beforeEach(() => {
-      process.env.HUMAN_DASHBOARD_API_SECRET = SECRET;
+      process.env.AGENT_INBOX_DASHBOARD_API_SECRET = SECRET;
       ensureBackingOrganization = sinon
         .stub(testServer.getService(EnsureBackingOrganization), 'execute')
         .resolves(backingAccount());
@@ -214,7 +217,7 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
       return session.testAgent
         .post('/v1/human/accounts/cli-login')
         .set('Authorization', '')
-        .set(HUMAN_DASHBOARD_SECRET_HEADER, SECRET)
+        .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, SECRET)
         .send({ humanUserId: 'user_e2e', firstName: 'Ada', email: 'ada@example.com', ...body });
     }
 
@@ -222,7 +225,7 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
       return session.testAgent
         .post('/v1/human/accounts/cli-login/lookup')
         .set('Authorization', '')
-        .set(HUMAN_DASHBOARD_SECRET_HEADER, SECRET)
+        .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, SECRET)
         .send({ userCode });
     }
 
@@ -230,7 +233,7 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
       return session.testAgent
         .post('/v1/human/accounts/cli-login/deny')
         .set('Authorization', '')
-        .set(HUMAN_DASHBOARD_SECRET_HEADER, SECRET)
+        .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, SECRET)
         .send({ userCode });
     }
 
