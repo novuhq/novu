@@ -1,9 +1,10 @@
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
 import { apiUrls, type Env, issuerOf, type Region } from './env';
 
-/** The Human account a request acts for, and the key to its part of the Novu API. */
+/** The Agent Inbox account a request acts for, and the key to its part of the Novu API. */
 export type Account = {
-  /** The person's id in the Human Clerk app. */
-  humanUserId: string;
+  /** The person's id in the Agent Inbox Clerk app. */
+  agentInboxUserId: string;
   region: Region;
   apiUrl: string;
   secretKey: string;
@@ -28,19 +29,19 @@ const API_TIMEOUT_MS = 8_000;
  */
 const IDENTITY_TTL_SECONDS = 300;
 
-type Identity = { humanUserId: string; region?: Region };
+type Identity = { agentInboxUserId: string; region?: Region };
 
 /**
- * Finds the Human account behind a request's bearer token.
+ * Finds the Agent Inbox account behind a request's bearer token.
  *
- * The token comes from the Human Clerk app. Clerk is asked whose it is; this server never trusts what a
+ * The token comes from the Agent Inbox Clerk app. Clerk is asked whose it is; this server never trusts what a
  * token says about itself. The account's key is then read from the Novu API with the secret the
  * dashboard uses, so the AI tool never holds the key.
  */
 export async function authenticate(request: Request, env: Env): Promise<Account> {
   const token = bearerTokenOf(request);
   if (!token) {
-    throw new AuthError(401, 'Sign in to Human to use this server.');
+    throw new AuthError(401, 'Sign in to Agent Inbox to use this server.');
   }
 
   const cacheKey = `token:${await sha256(token)}`;
@@ -52,9 +53,11 @@ export async function authenticate(request: Request, env: Env): Promise<Account>
   const account = await loadAccount(await identify(token, env), env);
 
   // Only an answer from Clerk is remembered. Renewing this on every call would keep a token alive forever.
-  await env.CONNECTIONS?.put(cacheKey, JSON.stringify({ humanUserId: account.humanUserId, region: account.region }), {
-    expirationTtl: IDENTITY_TTL_SECONDS,
-  });
+  await env.CONNECTIONS?.put(
+    cacheKey,
+    JSON.stringify({ agentInboxUserId: account.agentInboxUserId, region: account.region }),
+    { expirationTtl: IDENTITY_TTL_SECONDS }
+  );
 
   return account;
 }
@@ -82,7 +85,7 @@ async function identify(token: string, env: Env): Promise<Identity> {
   }
 
   if (response.status === 401 || response.status === 403) {
-    throw new AuthError(401, 'Your Human sign-in has expired. Sign in again.');
+    throw new AuthError(401, 'Your Agent Inbox sign-in has expired. Sign in again.');
   }
 
   if (!response.ok) {
@@ -90,18 +93,20 @@ async function identify(token: string, env: Env): Promise<Identity> {
   }
 
   const body = (await response.json().catch(() => null)) as { sub?: unknown; user_id?: unknown } | null;
-  const humanUserId = [body?.user_id, body?.sub].find((id): id is string => typeof id === 'string' && id.length > 0);
-  if (!humanUserId) {
-    throw new AuthError(401, 'Your Human sign-in could not be read. Sign in again.');
+  const agentInboxUserId = [body?.user_id, body?.sub].find(
+    (id): id is string => typeof id === 'string' && id.length > 0
+  );
+  if (!agentInboxUserId) {
+    throw new AuthError(401, 'Your Agent Inbox sign-in could not be read. Sign in again.');
   }
 
-  return { humanUserId };
+  return { agentInboxUserId };
 }
 
 /** An account lives in one region. Which one isn't in the token, so the remembered one is asked first. */
 async function loadAccount(identity: Identity, env: Env): Promise<Account> {
-  if (!env.HUMAN_DASHBOARD_API_SECRET) {
-    throw new AuthError(503, 'This server is not connected to the Human API.');
+  if (!env.AGENT_INBOX_DASHBOARD_API_SECRET) {
+    throw new AuthError(503, 'This server is not connected to the Agent Inbox API.');
   }
 
   const regions = apiUrls(env).sort(
@@ -109,25 +114,28 @@ async function loadAccount(identity: Identity, env: Env): Promise<Account> {
   );
 
   for (const { region, url } of regions) {
-    const secretKey = await readSecretKey(url, identity.humanUserId, env.HUMAN_DASHBOARD_API_SECRET);
+    const secretKey = await readSecretKey(url, identity.agentInboxUserId, env.AGENT_INBOX_DASHBOARD_API_SECRET);
     if (secretKey) {
-      return { humanUserId: identity.humanUserId, region, apiUrl: url, secretKey };
+      return { agentInboxUserId: identity.agentInboxUserId, region, apiUrl: url, secretKey };
     }
   }
 
-  throw new AuthError(403, 'There is no Human account for this sign-in yet. Open agentinbox.md and sign up first.');
+  throw new AuthError(
+    403,
+    'There is no Agent Inbox account for this sign-in yet. Open agentinbox.md and sign up first.'
+  );
 }
 
 /** The account's key in one region, or `null` when the account doesn't live there. */
-async function readSecretKey(apiUrl: string, humanUserId: string, secret: string): Promise<string | null> {
+async function readSecretKey(apiUrl: string, agentInboxUserId: string, secret: string): Promise<string | null> {
   let response: Response;
   try {
-    response = await fetch(`${apiUrl}/v1/human/accounts/${encodeURIComponent(humanUserId)}/secret-key`, {
-      headers: { 'x-human-dashboard-secret': secret },
+    response = await fetch(`${apiUrl}/v1/human/accounts/${encodeURIComponent(agentInboxUserId)}/secret-key`, {
+      headers: { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: secret },
       signal: AbortSignal.timeout(API_TIMEOUT_MS),
     });
   } catch {
-    throw new AuthError(503, 'Could not reach the Human API. Try again in a moment.');
+    throw new AuthError(503, 'Could not reach the Agent Inbox API. Try again in a moment.');
   }
 
   if (response.status === 404) {
@@ -135,7 +143,7 @@ async function readSecretKey(apiUrl: string, humanUserId: string, secret: string
   }
 
   if (!response.ok) {
-    throw new AuthError(503, 'The Human API did not answer. Try again in a moment.');
+    throw new AuthError(503, 'The Agent Inbox API did not answer. Try again in a moment.');
   }
 
   const body = (await response.json().catch(() => null)) as { data?: { secretKey?: unknown } } | null;

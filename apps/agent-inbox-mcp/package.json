@@ -1,8 +1,8 @@
 {
-  "name": "@novu/human-mcp",
+  "name": "@novu/agent-inbox-mcp",
   "version": "0.0.1",
   "private": true,
-  "description": "The hosted Human MCP server: lets ChatGPT, Claude and Cursor ask a human before they act.",
+  "description": "The hosted Agent Inbox MCP server: lets ChatGPT, Claude and Cursor ask a human before they act.",
   "scripts": {
     "dev": "wrangler dev --env local --port 8790",
     "start": "wrangler dev --env local --port 8790",
@@ -28,7 +28,7 @@
     ],
     "targets": {
       "lint": {
-        "command": "npx biome lint apps/human-mcp"
+        "command": "npx biome lint apps/agent-inbox-mcp"
       }
     }
   }

@@ -1,4 +1,4 @@
-import type { HumanApi } from './human-api';
+import type { AgentInboxApi } from './agent-inbox-api';
 
 /** Longest a `?wait=` long-poll holds the request on the server. */
 export const INBOX_MAX_WAIT_SECONDS = 25;
@@ -76,7 +76,7 @@ function threadPath(id: string, suffix = ''): string {
  * Lists threads. Uses `getRaw` because the API already returns `{ data, next }`; unwrapping would
  * throw `next` away.
  */
-export async function listInbox(api: HumanApi, query: ListInboxQuery = {}): Promise<InboxPage> {
+export async function listInbox(api: AgentInboxApi, query: ListInboxQuery = {}): Promise<InboxPage> {
   const wait = query.wait;
   const timeoutMs = wait ? (wait + 10) * 1000 : undefined;
   const body = await api.getRaw<{ data?: InboxThread[]; next?: string | null } | InboxThread[]>(
@@ -100,7 +100,7 @@ export async function listInbox(api: HumanApi, query: ListInboxQuery = {}): Prom
 }
 
 export async function getInboxThread(
-  api: HumanApi,
+  api: AgentInboxApi,
   id: string,
   query: { limit?: number; before?: string } = {}
 ): Promise<InboxThreadView> {
@@ -110,10 +110,10 @@ export async function getInboxThread(
   });
 }
 
-export async function markInboxRead(api: HumanApi, id: string): Promise<InboxThread> {
+export async function markInboxRead(api: AgentInboxApi, id: string): Promise<InboxThread> {
   return api.post<InboxThread>(threadPath(id, '/read'), {});
 }
 
-export async function resolveInboxThread(api: HumanApi, id: string): Promise<InboxThread> {
+export async function resolveInboxThread(api: AgentInboxApi, id: string): Promise<InboxThread> {
   return api.post<InboxThread>(threadPath(id, '/resolve'), {});
 }
