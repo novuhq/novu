@@ -39,6 +39,9 @@ export type { SlackNativeDelivery } from './slack-native-delivery';
 /** The subset of the resolved config that drives outbound watermarking. */
 type OutboundBrandingContext = Pick<ResolvedAgentConfig, 'removeNovuBranding' | 'agentIdentifier' | 'platform'>;
 
+/** What the chat SDK's own thread passes to `adapter.stream`; the adapter alone defaults to 1000ms. */
+const SLACK_STREAM_UPDATE_INTERVAL_MS = 500;
+
 export interface ConversationTarget {
   agentId: string;
   integrationIdentifier: string;
@@ -426,20 +429,15 @@ export class OutboundGateway {
     const instanceKey = `${target.agentId}:${target.integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, target.agentId, config.platform, config);
     const thread = chat.thread(target.platformThreadId);
-    const workspaceId = await this.resolveSlackWorkspaceId(
-      config,
-      target.agentId,
-      target.platformThreadId,
-      target.workspaceId
-    );
 
     const sent = await this.runWithPlatformToken(
       chat,
       config,
       target.agentId,
       target.platformThreadId,
-      workspaceId,
-      async () => (await this.streamSlackPreview(chat, config, target, workspaceId, chunks)) ?? thread.post(chunks)
+      target.workspaceId,
+      async (workspaceId) =>
+        (await this.streamSlackPreview(chat, config, target, workspaceId, chunks)) ?? thread.post(chunks)
     ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
@@ -467,12 +465,12 @@ export class OutboundGateway {
 
     const adapter = chat.getAdapter(AgentPlatformEnum.SLACK);
 
-    const streamed = await adapter?.stream(target.platformThreadId, chunks, {
+    return adapter.stream(target.platformThreadId, chunks, {
       recipientUserId: target.recipientPlatformUserId,
       recipientTeamId: workspaceId,
+      // The SDK's own thread sets this; keep its cadence for the adapter's internal fallback.
+      updateIntervalMs: SLACK_STREAM_UPDATE_INTERVAL_MS,
     });
-
-    return streamed ?? null;
   }
 
   async setThreadSubscribed(
@@ -983,6 +981,9 @@ export class OutboundGateway {
    * integration's first installed workspace) and run the operation inside `adapter.withBotToken`,
    * which the SDK reads via request-scoped context. Every other platform — and any Slack call
    * without a resolvable token — runs the operation unchanged.
+   *
+   * The operation receives the workspace id resolved here, so callers that need it themselves do
+   * not have to resolve it a second time.
    */
   private async runWithPlatformToken<T>(
     chat: ChatWithAdapters,
@@ -990,7 +991,7 @@ export class OutboundGateway {
     agentId: string,
     platformThreadId: string,
     workspaceId: string | undefined,
-    fn: () => Promise<T>
+    fn: (resolvedWorkspaceId?: string) => Promise<T>
   ): Promise<T> {
     if (config.platform !== AgentPlatformEnum.SLACK) {
       return fn();
@@ -1007,10 +1008,10 @@ export class OutboundGateway {
     const adapter = chat.getAdapter(AgentPlatformEnum.SLACK);
 
     if (!token || typeof adapter?.withBotToken !== 'function') {
-      return fn();
+      return fn(resolvedWorkspaceId);
     }
 
-    return adapter.withBotToken(token, fn);
+    return adapter.withBotToken(token, () => fn(resolvedWorkspaceId));
   }
 
   /**

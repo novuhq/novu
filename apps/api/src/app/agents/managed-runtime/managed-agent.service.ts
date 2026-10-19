@@ -211,6 +211,8 @@ export class ManagedAgentService implements OnModuleInit {
     followUpMessage?: string;
     platform: AgentPlatformEnum;
     platformThreadId: string;
+    /** Who the resumed turn answers, when a person triggered it. Lets its reply stream natively. */
+    platformUserId?: string;
     suppressReply?: boolean;
   }): Promise<void> {
     const conversation = await this.conversationRepository.findOne(
@@ -276,6 +278,7 @@ export class ManagedAgentService implements OnModuleInit {
       subscriberId: params.subscriberId ?? '',
       platform: params.platform,
       platformThreadId: params.platformThreadId,
+      platformUserId: params.platformUserId,
       firstPlatformMessageId: channel?.firstPlatformMessageId,
       suppressReply: params.suppressReply,
     });

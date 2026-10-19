@@ -145,6 +145,7 @@ export class ManagedRuntime implements AgentRuntime {
         parsed,
         sourceMessageId: turn.action?.sourceMessageId,
         platformThreadId: turn.platformThreadId,
+        platformUserId: turn.platformUserId,
         actionValue: turn.action?.value,
       })
     );
