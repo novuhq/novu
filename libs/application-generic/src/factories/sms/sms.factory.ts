@@ -29,6 +29,7 @@ import {
   RingCentralHandler,
   RuachSmsHandler,
   SendchampSmsHandler,
+  SfrSmsHandler,
   SimpletextingSmsHandler,
   SinchHandler,
   Sms77Handler,
@@ -83,6 +84,7 @@ export class SmsFactory implements ISmsFactory {
     new ISendProSmsHandler(),
     new CmTelecomHandler(),
     new RuachSmsHandler(),
+    new SfrSmsHandler(),
   ];
 
   getHandler(integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>) {
