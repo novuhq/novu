@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/dashboard/page-header';
 import { buildChannelPrompt } from '@/lib/agent-setup-prompt';
 import { requireHumanAccount } from '@/lib/human-account';
 import { agentDisplayName } from '@/lib/human-agent-api';
+import { listChannels } from '@/lib/human-channels-api';
 import { type Contact, listContactsPage } from '@/lib/human-contacts-api';
 import { handleOf, requireSetUpAgent } from '@/lib/human-onboarding';
 import { resolveNovuApiUrl } from '@/lib/novu-api';
@@ -38,7 +39,9 @@ export default async function ContactsPage(props: PageProps<'/contacts'>) {
   );
 
   const { agent, state, user } = await requireSetUpAgent(account);
-  const handle = handleOf(agent, state);
+  const channels = await listChannels(account).catch(() => []);
+  const emailAddress = channels.find((channel) => channel.via === 'email' && channel.active)?.address;
+  const handle = handleOf(agent, state, emailAddress);
   const page = await listContactsPage(account, { after: cursors.at(-1), limit: PAGE_SIZE });
 
   // The API answers a cursor it no longer knows (that contact was removed since) with an empty page.
