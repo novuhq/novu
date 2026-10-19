@@ -12,6 +12,7 @@ import { resolveAgentOutboundEmail } from '../../../agents/email/resolve-agent-o
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../../agents/shared/util/email-normalization';
 import { KeylessEmailGateService } from '../../../keyless/keyless-email-gate.service';
 import { HumanVerificationEmailSender } from '../../email/human-verification-email.sender';
+import { HumanVerificationCodeService } from '../../services/human-verification-code.service';
 import { HumanVerificationRateLimitService } from '../../services/human-verification-rate-limit.service';
 import {
   HumanVerificationTokenService,
@@ -47,6 +48,7 @@ export class RequestAddressVerification {
     private readonly humanContactRepository: HumanContactRepository,
     private readonly rateLimit: HumanVerificationRateLimitService,
     private readonly verificationTokens: HumanVerificationTokenService,
+    private readonly verificationCodes: HumanVerificationCodeService,
     private readonly emailSender: HumanVerificationEmailSender,
     private readonly inboxQuota: AgentEmailInboxQuotaService,
     private readonly keylessEmailGate: KeylessEmailGateService
@@ -181,6 +183,21 @@ export class RequestAddressVerification {
           throw toVerificationHttpError(err);
         }
 
+        let coded: { code: string };
+        try {
+          coded = await this.verificationCodes.issue({
+            env: params.environmentId,
+            org: params.organizationId,
+            agentId: params.agentId,
+            subscriberId: params.subscriberId,
+            via: params.via,
+            address: params.address,
+            requestedAt: written.requestedAt,
+          });
+        } catch (err) {
+          throw toVerificationHttpError(err);
+        }
+
         await this.emailSender.send({
           environmentId: params.environmentId,
           organizationId: params.organizationId,
@@ -188,6 +205,7 @@ export class RequestAddressVerification {
           subscriberId: params.subscriberId,
           address: params.address,
           token: issued.token,
+          code: coded.code,
           expiresAt: issued.expiresAt,
           outbound,
           claimUrl,

@@ -14,6 +14,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -23,6 +24,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiAuthSchemeEnum, ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import type { Request } from 'express';
+import { getClientIp } from 'request-ip';
 import { AgentInboxAddressService } from '../agents/email/novu-email/agent-inbox-address.service';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -45,9 +48,11 @@ import {
   CreateHumanInviteResponseDto,
   RequestAddressVerificationDto,
   RequestAddressVerificationResponseDto,
+  type VerifyAddressResponseDto,
 } from './dtos/human-invite.dto';
 import {
   ChangeOperatorEmailRequestDto,
+  ConfirmOperatorEmailRequestDto,
   SetOperatorDefaultChannelRequestDto,
   SetOperatorDefaultChannelResponseDto,
 } from './dtos/human-operator-contact.dto';
@@ -72,6 +77,8 @@ import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-i
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { ChangeOperatorEmailCommand } from './usecases/change-operator-email/change-operator-email.command';
 import { ChangeOperatorEmail } from './usecases/change-operator-email/change-operator-email.usecase';
+import { ConfirmOperatorEmailCommand } from './usecases/confirm-operator-email/confirm-operator-email.command';
+import { ConfirmOperatorEmail } from './usecases/confirm-operator-email/confirm-operator-email.usecase';
 import { CreateHumanInviteCommand } from './usecases/create-human-invite/create-human-invite.command';
 import { CreateHumanInvite } from './usecases/create-human-invite/create-human-invite.usecase';
 import { CreateInteractionCommand } from './usecases/create-interaction/create-interaction.command';
@@ -128,6 +135,7 @@ export class HumanInteractionsController {
     private readonly humanAgentPicture: HumanAgentPictureService,
     private readonly setOperatorDefaultChannelUsecase: SetOperatorDefaultChannel,
     private readonly changeOperatorEmailUsecase: ChangeOperatorEmail,
+    private readonly confirmOperatorEmailUsecase: ConfirmOperatorEmail,
     private readonly sendHumanTestEmailUsecase: SendHumanTestEmail,
     private readonly inboxAddresses: AgentInboxAddressService
   ) {}
@@ -550,6 +558,29 @@ export class HumanInteractionsController {
         userId: user._id,
         address: body.address,
         agentIdentifier: body.agentIdentifier,
+      })
+    );
+  }
+
+  /** Confirms the operator's pending address with the 6-digit code from the verification email. */
+  @Post('/operator/email/confirm')
+  @HttpCode(HttpStatus.OK)
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  confirmOperatorEmail(
+    @UserSession() user: UserSessionData,
+    @Body() body: ConfirmOperatorEmailRequestDto,
+    @Req() request: Request
+  ): Promise<VerifyAddressResponseDto> {
+    return this.confirmOperatorEmailUsecase.execute(
+      ConfirmOperatorEmailCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        code: body.code,
+        agentIdentifier: body.agentIdentifier,
+        clientIp: getClientIp(request) ?? undefined,
       })
     );
   }

@@ -45,12 +45,14 @@ import { HumanInviteTokenService } from './services/human-invite-token.service';
 import { HumanKeylessCapService } from './services/human-keyless-cap.service';
 import { HumanMessageQuotaService } from './services/human-message-quota.service';
 import { HumanOperatorService } from './services/human-operator.service';
+import { HumanVerificationCodeService } from './services/human-verification-code.service';
 import { HumanVerificationRateLimitService } from './services/human-verification-rate-limit.service';
 import { HumanVerificationTokenService } from './services/human-verification-token.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { ChangeOperatorEmail } from './usecases/change-operator-email/change-operator-email.usecase';
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
+import { ConfirmOperatorEmail } from './usecases/confirm-operator-email/confirm-operator-email.usecase';
 import { ConnectHost } from './usecases/connect-host/connect-host.usecase';
 import { ConnectHumanInviteChannel } from './usecases/connect-human-invite-channel/connect-human-invite-channel.usecase';
 import { CountInboxThreads } from './usecases/count-inbox-threads/count-inbox-threads.usecase';
@@ -83,7 +85,9 @@ import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-h
 import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
+import { ConfirmHumanAddress } from './usecases/verify-address/confirm-human-address.service';
 import { VerifyAddress } from './usecases/verify-address/verify-address.usecase';
+import { VerifyAddressByCode } from './usecases/verify-address-by-code/verify-address-by-code.usecase';
 
 /**
  * The human-in-the-loop interaction API. State lives here.
@@ -142,10 +146,14 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     ChangeOperatorEmail,
     HumanInviteTokenService,
     HumanVerificationTokenService,
+    HumanVerificationCodeService,
     HumanVerificationRateLimitService,
     HumanVerificationEmailSender,
     RequestAddressVerification,
+    ConfirmHumanAddress,
     VerifyAddress,
+    VerifyAddressByCode,
+    ConfirmOperatorEmail,
     HumanOperatorService,
     HumanAgentIdentityService,
     HumanAgentPictureService,

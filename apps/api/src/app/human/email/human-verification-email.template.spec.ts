@@ -13,7 +13,11 @@ describe('maskEmail', () => {
 });
 
 describe('buildHumanVerificationEmail', () => {
-  const base = { verifyUrl: 'https://gethuman.md/verify/tok123', expiresAt: '2026-10-02T12:00:00.000Z' };
+  const base = {
+    verifyUrl: 'https://gethuman.md/verify/tok123',
+    code: '481926',
+    expiresAt: '2026-10-02T12:00:00.000Z',
+  };
 
   it('names the agent and, separately, the operator who owns it', () => {
     const content = buildHumanVerificationEmail({
@@ -24,8 +28,9 @@ describe('buildHumanVerificationEmail', () => {
 
     expect(content.subject).to.equal('Nikita <Grossman> wants to reach you via agent Acme Ops');
     expect(content.html).to.include('Nikita &lt;Grossman&gt;</strong> wants to reach you via agent');
-    expect(content.html).to.include('Acme Ops</strong>. Confirm this address belongs to you:');
-    expect(content.html).to.include('Verify this email');
+    expect(content.html).to.include('Acme Ops</strong>. Enter this code to confirm this address belongs to you:');
+    expect(content.html).to.include('481926');
+    expect(content.html).to.include('Or verify in one click');
     expect(content.html).to.include('https://gethuman.md/verify/tok123');
     expect(content.html).to.include('Alice &lt;script&gt;');
     expect(content.text.startsWith('Hi Alice <script>')).to.equal(true);
@@ -33,7 +38,9 @@ describe('buildHumanVerificationEmail', () => {
     expect(content.html).to.include('#ff5c30');
     expect(content.html.toLowerCase()).to.not.include('powered by novu');
     expect(content.text).to.include('Nikita <Grossman> wants to reach you via agent Acme Ops.');
+    expect(content.text).to.include('Your code is 481926');
     expect(content.text).to.include('https://gethuman.md/verify/tok123');
+    expect(content.text.trimEnd().endsWith('@agentinbox.md #481926')).to.equal(true);
   });
 
   it('uses the placeholder agent name when the relay was never renamed', () => {
@@ -41,7 +48,7 @@ describe('buildHumanVerificationEmail', () => {
 
     expect(content.subject).to.equal('Nikita Grossman wants to reach you via agent Human');
     expect(content.html).to.include('Nikita Grossman</strong> wants to reach you via agent');
-    expect(content.html).to.include('Human</strong>. Confirm this address belongs to you:');
+    expect(content.html).to.include('Human</strong>. Enter this code to confirm this address belongs to you:');
   });
 
   it('says Someone when the operator never set a name', () => {

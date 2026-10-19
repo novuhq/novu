@@ -34,6 +34,7 @@ export class HumanVerificationEmailSender {
     subscriberId: string;
     address: string;
     token: string;
+    code: string;
     expiresAt: string;
     outbound: ResolvedAgentOutboundEmail;
     /** Keyless setups only: the operator can claim the setup from the same email. */
@@ -79,6 +80,7 @@ export class HumanVerificationEmailSender {
       sender,
       inviteeName,
       verifyUrl,
+      code: params.code,
       expiresAt: params.expiresAt,
       claimUrl: params.claimUrl,
     });

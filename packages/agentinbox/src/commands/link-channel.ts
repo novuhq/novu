@@ -1,4 +1,5 @@
-import { getContact } from '../api/agent-inbox';
+import readline from 'node:readline';
+import { confirmAddressByCode, getContact } from '../api/agent-inbox';
 import { type ApiClient, ApiError } from '../api/client';
 import {
   type AgentIntegrationLink,
@@ -265,6 +266,250 @@ export async function waitForVerifiedEmail(
       `We didn't see ${waitingFor} within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)}s. ${timeoutHint}`
     );
   }
+}
+
+const CODE_PROMPT = 'Enter the code from the email, or open the link: ';
+
+export type VerifiedEmailCodeWait = {
+  subscriberId: string;
+  agentIdentifier: string | undefined;
+  requestedAt: string;
+  address: string;
+  waitingFor: string;
+  timeoutHint: string;
+  readCode: (signal: AbortSignal) => Promise<string | null>;
+  confirmCode: (address: string, code: string) => Promise<void>;
+  onCodeRejected: (message: string) => void;
+};
+
+/**
+ * Polls for the link and, at the same time, accepts the 6-digit code.
+ * Whichever finishes first wins. A wrong code asks again; the poll keeps going.
+ */
+export async function waitForVerifiedEmailOrCode(client: ApiClient, input: VerifiedEmailCodeWait): Promise<void> {
+  const abort = new AbortController();
+  let finished = false;
+  let failure: Error | undefined;
+  const race = {
+    signal: abort.signal,
+    isFinished: () => finished,
+    stop: (err?: Error) => {
+      if (finished) {
+        return;
+      }
+
+      finished = true;
+      failure = err;
+      abort.abort();
+    },
+  };
+
+  await Promise.all([pollVerifiedEmail(client, input, race), promptForVerificationCode(input, race)]);
+  if (failure) {
+    throw failure;
+  }
+}
+
+async function pollVerifiedEmail(
+  client: ApiClient,
+  input: VerifiedEmailCodeWait,
+  race: VerificationRace
+): Promise<void> {
+  const deadline = Date.now() + CHANNEL_POLL_TIMEOUT_MS;
+
+  while (!race.isFinished() && Date.now() < deadline) {
+    try {
+      const contact = await getContact(client, input.subscriberId, input.agentIdentifier);
+      const channel = contact.channels?.find((item) => item.via === 'email');
+      if (channel?.status === 'verified' && channel.verifiedRequestedAt === input.requestedAt) {
+        race.stop();
+
+        return;
+      }
+    } catch {
+      // The contact row may not exist until the verification lands.
+    }
+
+    if (race.isFinished()) {
+      return;
+    }
+
+    await pause(CHANNEL_POLL_INTERVAL_MS, race.signal);
+  }
+
+  if (!race.isFinished()) {
+    race.stop(
+      new Error(
+        `We didn't see ${input.waitingFor} within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)}s. ${input.timeoutHint}`
+      )
+    );
+  }
+}
+
+async function promptForVerificationCode(input: VerifiedEmailCodeWait, race: VerificationRace): Promise<void> {
+  try {
+    while (!race.isFinished()) {
+      const line = await input.readCode(race.signal);
+      if (race.isFinished() || line == null) {
+        return;
+      }
+
+      const outcome = await submitVerificationCode(input, line);
+      if (outcome.kind === 'done') {
+        race.stop();
+
+        return;
+      }
+      if (outcome.kind === 'fatal') {
+        race.stop(new Error(outcome.message));
+
+        return;
+      }
+      if (outcome.kind === 'rejected') {
+        input.onCodeRejected(outcome.message);
+      }
+    }
+  } catch (err) {
+    race.stop(err instanceof Error ? err : new Error('That code did not work. Try again, or open the link.'));
+  }
+}
+
+type VerificationRace = {
+  signal: AbortSignal;
+  isFinished: () => boolean;
+  stop: (err?: Error) => void;
+};
+
+/**
+ * On a terminal, asks for the code while polling for the link. Without a terminal, only polls,
+ * so a script that passed `--email` keeps waiting on the link.
+ */
+export async function waitForEmailCodeOrLink(
+  client: ApiClient,
+  input: Omit<VerifiedEmailCodeWait, 'readCode' | 'confirmCode' | 'onCodeRejected'> & {
+    onCodeRejected: (message: string) => void;
+  }
+): Promise<void> {
+  if (!process.stdin.isTTY) {
+    await waitForVerifiedEmail(
+      client,
+      input.subscriberId,
+      input.agentIdentifier,
+      input.requestedAt,
+      input.waitingFor,
+      input.timeoutHint
+    );
+
+    return;
+  }
+
+  await waitForVerifiedEmailOrCode(client, {
+    ...input,
+    readCode: readVerificationCode,
+    confirmCode: (address, code) => confirmAddressByCode(client, address, code),
+  });
+}
+
+type CodeSubmitResult = { kind: 'done' } | { kind: 'rejected'; message: string } | { kind: 'fatal'; message: string };
+
+async function submitVerificationCode(input: VerifiedEmailCodeWait, line: string): Promise<CodeSubmitResult> {
+  const code = line.replace(/\D/g, '');
+  if (code.length !== 6) {
+    return { kind: 'rejected', message: 'Enter the 6-digit code from the email, or open the link.' };
+  }
+
+  try {
+    await input.confirmCode(input.address, code);
+
+    return { kind: 'done' };
+  } catch (err) {
+    const detail = describeVerificationCodeError(err);
+    if (detail.fatal) {
+      return { kind: 'fatal', message: detail.message };
+    }
+
+    return { kind: 'rejected', message: detail.message };
+  }
+}
+export function readVerificationCode(signal: AbortSignal): Promise<string | null> {
+  if (signal.aborted) {
+    return Promise.resolve(null);
+  }
+
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (value: string | null) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      signal.removeEventListener('abort', onAbort);
+      rl.close();
+      resolve(value);
+    };
+    const onAbort = () => finish(null);
+    signal.addEventListener('abort', onAbort, { once: true });
+    rl.question(CODE_PROMPT, (answer) => finish(answer));
+  });
+}
+
+function pause(ms: number, signal: AbortSignal): Promise<void> {
+  if (signal.aborted) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      resolve();
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+function describeVerificationCodeError(err: unknown): { message: string; fatal: boolean } {
+  if (!(err instanceof ApiError)) {
+    return {
+      message: err instanceof Error ? err.message : 'That code did not work. Try again, or open the link.',
+      fatal: true,
+    };
+  }
+
+  const parsed = readVerificationError(err.body);
+  const code = parsed.code;
+  const message = parsed.message ?? err.message;
+  const fatal = code !== 'verification_code_invalid';
+
+  return { message, fatal };
+}
+
+function readVerificationError(body: unknown): { code?: string; message?: string } {
+  if (!body || typeof body !== 'object') {
+    return {};
+  }
+
+  const record = body as { code?: unknown; message?: unknown };
+  const inner = record.message;
+  if (inner && typeof inner === 'object') {
+    const nested = inner as { code?: unknown; message?: unknown };
+
+    return {
+      code: typeof nested.code === 'string' ? nested.code : undefined,
+      message: typeof nested.message === 'string' ? nested.message : undefined,
+    };
+  }
+
+  return {
+    code: typeof record.code === 'string' ? record.code : undefined,
+    message: typeof inner === 'string' ? inner : undefined,
+  };
 }
 
 /**

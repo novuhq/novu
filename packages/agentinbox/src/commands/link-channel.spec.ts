@@ -3,10 +3,11 @@ import { type ApiClient, ApiError } from '../api/client';
 import type { AgentIntegrationLink } from '../api/setup';
 import { DEFAULT_API_URL, SETUP_PAGE_ORIGIN } from '../config';
 
-const { getSlackSetupLinkStatus, getTelegramMobileLinkStatus, hasChannelEndpoint } = vi.hoisted(() => ({
+const { getSlackSetupLinkStatus, getTelegramMobileLinkStatus, hasChannelEndpoint, getContact } = vi.hoisted(() => ({
   getSlackSetupLinkStatus: vi.fn(),
   getTelegramMobileLinkStatus: vi.fn(),
   hasChannelEndpoint: vi.fn(),
+  getContact: vi.fn(),
 }));
 
 vi.mock('../api/setup', () => ({
@@ -15,6 +16,11 @@ vi.mock('../api/setup', () => ({
   hasChannelEndpoint,
   generateConnectOauthUrl: vi.fn(),
   issueTelegramSubscriberLink: vi.fn(),
+}));
+
+vi.mock('../api/agent-inbox', () => ({
+  getContact,
+  confirmAddressByCode: vi.fn(),
 }));
 
 import {
@@ -28,6 +34,7 @@ import {
   waitForAnyEndpoint,
   waitForSlackSetupPage,
   waitForTelegramSetupPage,
+  waitForVerifiedEmailOrCode,
 } from './link-channel';
 
 const mockedStatus = getTelegramMobileLinkStatus;
@@ -195,5 +202,78 @@ describe('waitForAnyEndpoint', () => {
     await vi.advanceTimersByTimeAsync(CHANNEL_POLL_TIMEOUT_MS + CHANNEL_POLL_INTERVAL_MS);
 
     await assertion;
+  });
+});
+
+describe('waitForVerifiedEmailOrCode', () => {
+  const client = {} as ApiClient;
+  const wait = {
+    subscriberId: 'alice',
+    agentIdentifier: 'relay',
+    requestedAt: 't1',
+    address: 'alice@example.com',
+    waitingFor: 'you verify your email',
+    timeoutHint: 'Re-run setup.',
+  };
+
+  afterEach(() => {
+    getContact.mockReset();
+  });
+
+  it('resolves from the prompted code while the contact is still pending', async () => {
+    getContact.mockResolvedValue({ channels: [{ via: 'email', status: 'pending' }] });
+    const confirmCode = vi.fn().mockResolvedValue(undefined);
+    const readCode = vi.fn().mockResolvedValue('123456');
+
+    await expect(
+      waitForVerifiedEmailOrCode(client, {
+        ...wait,
+        readCode,
+        confirmCode,
+        onCodeRejected: vi.fn(),
+      })
+    ).resolves.toBeUndefined();
+
+    expect(confirmCode).toHaveBeenCalledWith('alice@example.com', '123456');
+    expect(getContact.mock.calls.some((call) => call[1] === 'alice')).toBe(true);
+  });
+
+  it('asks again after a wrong code, then accepts the next one', async () => {
+    getContact.mockResolvedValue({ channels: [{ via: 'email', status: 'pending' }] });
+    const onCodeRejected = vi.fn();
+    const confirmCode = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new ApiError('Request failed', 401, 'POST /v1/human/verify-code', {
+          message: { code: 'verification_code_invalid', message: 'That code is wrong or has expired.' },
+        })
+      )
+      .mockResolvedValue(undefined);
+    const readCode = vi.fn().mockResolvedValueOnce('000000').mockResolvedValueOnce('481926');
+
+    await expect(
+      waitForVerifiedEmailOrCode(client, { ...wait, readCode, confirmCode, onCodeRejected })
+    ).resolves.toBeUndefined();
+
+    expect(onCodeRejected).toHaveBeenCalledWith('That code is wrong or has expired.');
+    expect(confirmCode).toHaveBeenLastCalledWith('alice@example.com', '481926');
+  });
+
+  it('stops when the code is locked, without waiting out the poll', async () => {
+    getContact.mockResolvedValue({ channels: [{ via: 'email', status: 'pending' }] });
+    const confirmCode = vi.fn().mockRejectedValue(
+      new ApiError('Request failed', 429, 'POST /v1/human/verify-code', {
+        message: { code: 'verification_code_too_many_tries', message: 'Too many wrong codes. Send a new one.' },
+      })
+    );
+
+    await expect(
+      waitForVerifiedEmailOrCode(client, {
+        ...wait,
+        readCode: vi.fn().mockResolvedValue('123456'),
+        confirmCode,
+        onCodeRejected: vi.fn(),
+      })
+    ).rejects.toThrow('Too many wrong codes. Send a new one.');
   });
 });

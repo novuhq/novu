@@ -317,6 +317,10 @@ export type AddressVerificationResult = {
   replacesVerifiedAddress: boolean;
 };
 
+export async function confirmAddressByCode(client: ApiClient, address: string, code: string): Promise<void> {
+  await client.axios.post('/v1/human/verify-code', { address, code });
+}
+
 export async function requestAddressVerification(
   client: ApiClient,
   input: {

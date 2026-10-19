@@ -1,6 +1,8 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { ApiRateLimitCategoryEnum, HumanChannelViaEnum } from '@novu/shared';
+import type { Request } from 'express';
+import { getClientIp } from 'request-ip';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import {
@@ -9,6 +11,7 @@ import {
   type HumanInviteStatusResult,
   HumanInviteTokenRequestDto,
   type RequestAddressVerificationResponseDto,
+  VerifyAddressByCodeRequestDto,
   VerifyAddressRequestDto,
   type VerifyAddressResponseDto,
 } from './dtos/human-invite.dto';
@@ -23,6 +26,8 @@ import { SetHumanInviteDefaultCommand } from './usecases/set-human-invite-defaul
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { VerifyAddressCommand } from './usecases/verify-address/verify-address.command';
 import { VerifyAddress } from './usecases/verify-address/verify-address.usecase';
+import { VerifyAddressByCodeCommand } from './usecases/verify-address-by-code/verify-address-by-code.command';
+import { VerifyAddressByCode } from './usecases/verify-address-by-code/verify-address-by-code.usecase';
 
 /**
  * Public, unauthenticated endpoints behind the invite page on the Human
@@ -88,12 +93,29 @@ export class HumanInvitesPublicController {
 @Controller('/human')
 @ApiExcludeController()
 export class HumanVerifyPublicController {
-  constructor(private readonly verifyAddressUsecase: VerifyAddress) {}
+  constructor(
+    private readonly verifyAddressUsecase: VerifyAddress,
+    private readonly verifyAddressByCodeUsecase: VerifyAddressByCode
+  ) {}
 
   @Post('/verify')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Claim a Human email verification link' })
   verify(@Body() body: VerifyAddressRequestDto): Promise<VerifyAddressResponseDto> {
     return this.verifyAddressUsecase.execute(VerifyAddressCommand.create({ token: body.token }));
+  }
+
+  @Post('/verify-code')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Confirm a Human email address with the 6-digit code from the email' })
+  verifyCode(@Body() body: VerifyAddressByCodeRequestDto, @Req() request: Request): Promise<VerifyAddressResponseDto> {
+    return this.verifyAddressByCodeUsecase.execute(
+      VerifyAddressByCodeCommand.create({
+        code: body.code,
+        address: body.address,
+        inviteToken: body.inviteToken,
+        clientIp: getClientIp(request) ?? undefined,
+      })
+    );
   }
 }

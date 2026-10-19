@@ -129,13 +129,21 @@ export async function setOperatorDefaultChannel(account: HumanAccount, via: Cont
 }
 
 /**
- * Sends a confirmation link to a new address for the operator, or to the one they signed up with. Agents
+ * Sends a confirmation code to a new address for the operator, or to the one they signed up with. Agents
  * keep using a verified address until the new one is confirmed, and the default channel stays as it is.
  */
 export function changeOperatorEmail(account: HumanAccount, address: string): Promise<EmailLinkSent> {
   return requestForAccount<EmailLinkSent>(account, '/v1/human/operator/email', {
     method: 'POST',
     body: { address },
+  });
+}
+
+/** Confirms the operator's pending address with the 6-digit code from the email. */
+export function confirmOperatorEmailCode(account: HumanAccount, code: string): Promise<{ verified: true }> {
+  return requestForAccount<{ verified: true }>(account, '/v1/human/operator/email/confirm', {
+    method: 'POST',
+    body: { code },
   });
 }
 

@@ -7,6 +7,7 @@ import QRCode from 'react-qr-code';
 import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
+import { CodeInput } from '@/components/ui/code-input';
 import { Field, Input } from '@/components/ui/input';
 import { MascotFace } from '@/components/ui/mascot-face';
 import { useInviteStatus } from '@/hooks/use-invite-status';
@@ -20,6 +21,7 @@ import {
   type InviteChannelVia,
   InviteRequestError,
   setInviteDefaultChannel,
+  verifyInviteCode,
 } from '@/lib/invite-api';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +32,24 @@ const APP_LABELS: Record<InviteChannelVia, string> = {
   telegram: 'Telegram',
   slack: 'Slack',
 };
+
+const REMEMBERED_EMAIL_PREFIX = 'human-verify-email:';
+
+function readRememberedEmail(token: string): string {
+  try {
+    return sessionStorage.getItem(`${REMEMBERED_EMAIL_PREFIX}${token}`) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function rememberEmail(token: string, address: string) {
+  try {
+    sessionStorage.setItem(`${REMEMBERED_EMAIL_PREFIX}${token}`, address);
+  } catch {
+    // A private window can refuse storage. The code can still be entered.
+  }
+}
 
 type InactiveReason = 'expired' | 'declined' | 'invalid';
 
@@ -134,6 +154,14 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
   // Whether they pressed "Continue with Slack": before that there is nothing to wait for.
   const [slackStarted, setSlackStarted] = useState(false);
   const [emailCooldownUntil, setEmailCooldownUntil] = useState<number | null>(null);
+  const [emailSentTo, setEmailSentTo] = useState(() => readRememberedEmail(token));
+  const [awaitingEmailCode, setAwaitingEmailCode] = useState(false);
+  const [dismissedEmailCode, setDismissedEmailCode] = useState(false);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [emailCode, setEmailCode] = useState('');
+  const [emailCodeInvalid, setEmailCodeInvalid] = useState(false);
+  const [emailCodeLocked, setEmailCodeLocked] = useState(false);
+  const [confirmingCode, setConfirmingCode] = useState(false);
   // Counts the times they chose to go back, so a request from before that can tell it's stale.
   const navigations = useRef(0);
 
@@ -167,8 +195,12 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
           return;
         case 'verification_cooldown':
         case 'verification_cap':
+        case 'verification_code_too_many_tries':
           if (error.retryAfterSeconds) {
             setEmailCooldownUntil(Date.now() + error.retryAfterSeconds * 1000);
+          }
+          if (error.code === 'verification_code_too_many_tries') {
+            setEmailCodeLocked(true);
           }
           setErrorMessage(error.message);
 
@@ -205,6 +237,17 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
         tab,
         onEmailSent: (retryAfterSeconds) => {
           setEmailCooldownUntil(Date.now() + retryAfterSeconds * 1000);
+          if (address) {
+            setEmailSentTo(address);
+            rememberEmail(token, address);
+          }
+          setAwaitingEmailCode(true);
+          setEditingEmail(false);
+          setDismissedEmailCode(false);
+          setEmailCode('');
+          setEmailCodeInvalid(false);
+          setEmailCodeLocked(false);
+          setView('email');
           onChanged();
         },
         onTelegram: (url) => {
@@ -252,11 +295,47 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
     setView('channels');
   };
 
-  const busy = connectingVia !== null || defaultingVia !== null || declining;
+  const leaveEmailCode = () => {
+    setDismissedEmailCode(true);
+    setAwaitingEmailCode(false);
+    setEditingEmail(false);
+    setEmailCode('');
+    setEmailCodeInvalid(false);
+    showChannels();
+  };
+
+  const submitEmailCode = async (code: string) => {
+    setErrorMessage(null);
+    setEmailCodeInvalid(false);
+    setConfirmingCode(true);
+    try {
+      await verifyInviteCode(apiUrl, token, code);
+      onChanged();
+    } catch (error) {
+      setEmailCode('');
+      if (error instanceof InviteRequestError && error.code === 'verification_code_invalid') {
+        setEmailCodeInvalid(true);
+      }
+      handleError(error);
+    } finally {
+      setConfirmingCode(false);
+    }
+  };
+
+  const busy = connectingVia !== null || defaultingVia !== null || declining || confirmingCode;
   const connectedChannels = status.channels.filter((channel) => channel.connected);
   const anyConnected = connectedChannels.length > 0;
   const telegramBot = telegramLink ? telegramBotUsername(telegramLink) : undefined;
   const error = errorMessage && <ErrorNote>{errorMessage}</ErrorNote>;
+  const emailChannel = status.channels.find((channel) => channel.via === 'email');
+  const showEmailCode =
+    !editingEmail &&
+    !dismissedEmailCode &&
+    !emailChannel?.connected &&
+    view !== 'telegram' &&
+    view !== 'slack' &&
+    view !== 'done' &&
+    (emailChannel?.status === 'pending' || awaitingEmailCode);
 
   if (view === 'done' && anyConnected) {
     // No default among the apps here means asks go somewhere else by default, such as their email.
@@ -278,6 +357,37 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
 
   // The status refreshes in the background: once the app shows up as connected, its steps are
   // over and the list (now with "Connected") takes their place.
+  if (showEmailCode && emailChannel) {
+    return (
+      <EmailCodeCard
+        status={status}
+        address={emailSentTo || emailChannel.address || 'your email'}
+        code={emailCode}
+        invalid={emailCodeInvalid}
+        locked={emailCodeLocked}
+        busy={busy}
+        cooldownUntil={emailCooldownUntil}
+        error={error}
+        onCodeChange={(value) => {
+          setEmailCode(value);
+          setEmailCodeInvalid(false);
+        }}
+        onComplete={(value) => void submitEmailCode(value)}
+        onSendAgain={() => {
+          if (emailSentTo) {
+            void handleConnect('email', emailSentTo);
+
+            return;
+          }
+
+          setEditingEmail(true);
+          setView('email');
+        }}
+        onBack={leaveEmailCode}
+      />
+    );
+  }
+
   const stepsFor = status.channels.find((channel) => channel.via === view && !channel.connected)?.via;
   const connecting = connectingStep({
     status,
@@ -286,7 +396,6 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
     telegramBot,
     busy,
     slackStarted,
-    emailCooldownUntil,
     connectingVia,
     error,
     onConnect: (via, address) => void handleConnect(via, address),
@@ -319,20 +428,17 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
               connecting={connectingVia === channel.via}
               settingDefault={defaultingVia === channel.via}
               disabled={busy || !channel.available}
-              onConnect={() => {
-                if (!channel.available) {
-                  return;
-                }
-
-                // Telegram needs its link before there is anything to show; Slack mints its
-                // link on the next card, inside the click that opens the tab.
-                if (channel.via === 'telegram') {
-                  void handleConnect('telegram');
-                } else {
-                  setErrorMessage(null);
-                  setView(channel.via);
-                }
-              }}
+              onConnect={() =>
+                openInviteChannel(channel, emailSentTo || readRememberedEmail(token), {
+                  connectTelegram: () => void handleConnect('telegram'),
+                  clearError: () => setErrorMessage(null),
+                  editEmail: (editing) => {
+                    setDismissedEmailCode(false);
+                    setEditingEmail(editing);
+                  },
+                  show: setView,
+                })
+              }
               onMakeDefault={() => void handleMakeDefault(channel.via)}
             />
           ))}
@@ -381,7 +487,6 @@ function connectingStep({
   telegramBot,
   busy,
   slackStarted,
-  emailCooldownUntil,
   connectingVia,
   error,
   onConnect,
@@ -393,7 +498,6 @@ function connectingStep({
   telegramBot: string | undefined;
   busy: boolean;
   slackStarted: boolean;
-  emailCooldownUntil: number | null;
   connectingVia: InviteChannelVia | null;
   error: ReactNode;
   onConnect: (via: InviteChannelVia, address?: string) => void;
@@ -475,15 +579,10 @@ function connectingStep({
       <InviteCard step="email">
         <InviterLine name={status.inviterName} agentPictureUrl={status.agentPictureUrl} />
         <AppIcon via="email" size="large" />
-        <StepTitle>Confirm your email</StepTitle>
-        <CardText>
-          {status.agentName} emails you a link. It can message that address only after you open the link.
-        </CardText>
+        <StepTitle>Where should it email you?</StepTitle>
         <EmailAddressForm
-          channel={emailChannel}
           connecting={connectingVia === 'email'}
           disabled={busy}
-          cooldownUntil={emailCooldownUntil}
           onSend={(address) => onConnect('email', address)}
         />
         {error}
@@ -506,6 +605,34 @@ type ChannelRowProps = {
   onConnect: () => void;
   onMakeDefault: () => void;
 };
+
+function openInviteChannel(
+  channel: InviteChannel,
+  rememberedEmail: string,
+  actions: {
+    connectTelegram: () => void;
+    clearError: () => void;
+    editEmail: (editing: boolean) => void;
+    show: (via: InviteChannelVia) => void;
+  }
+) {
+  if (!channel.available) {
+    return;
+  }
+
+  // Telegram needs its link before there is anything to show. Slack mints its link on the next card.
+  if (channel.via === 'telegram') {
+    actions.connectTelegram();
+
+    return;
+  }
+
+  actions.clearError();
+  if (channel.via === 'email') {
+    actions.editEmail(channel.status === 'pending' && !rememberedEmail);
+  }
+  actions.show(channel.via);
+}
 
 function ChannelRow({
   channel,
@@ -758,21 +885,15 @@ function ErrorNote({ children }: { children: ReactNode }) {
 }
 
 function EmailAddressForm({
-  channel,
   connecting,
   disabled,
-  cooldownUntil,
   onSend,
 }: {
-  channel: InviteChannel;
   connecting: boolean;
   disabled: boolean;
-  cooldownUntil: number | null;
   onSend: (address: string) => void;
 }) {
   const [address, setAddress] = useState('');
-  const cooldownSeconds = useCooldownSeconds(cooldownUntil);
-  const pending = channel.status === 'pending';
   const value = address.trim();
 
   return (
@@ -780,21 +901,14 @@ function EmailAddressForm({
       className="flex flex-col gap-3"
       onSubmit={(event) => {
         event.preventDefault();
-        if (!value || cooldownSeconds > 0) {
+        if (!value) {
           return;
         }
 
         onSend(value);
       }}
     >
-      <Field
-        label="Email address"
-        hint={
-          pending
-            ? `Check your inbox${channel.address ? ` at ${channel.address}` : ''}.`
-            : 'We’ll email you a link to confirm this address.'
-        }
-      >
+      <Field label="Your email" hint="We’ll send a 6-digit code to confirm it’s you.">
         {(props) => (
           <Input
             {...props}
@@ -808,28 +922,70 @@ function EmailAddressForm({
           />
         )}
       </Field>
-      <Button
-        type="submit"
-        className="self-start"
-        pending={connecting}
-        disabled={disabled || cooldownSeconds > 0 || !value}
-      >
-        {verificationButtonLabel(pending, cooldownSeconds)}
+      <Button type="submit" className="w-full" pending={connecting} disabled={disabled || !value}>
+        Send code
       </Button>
     </form>
   );
 }
 
-function verificationButtonLabel(pending: boolean, cooldownSeconds: number): string {
-  if (!pending) {
-    return 'Send verification';
-  }
+function EmailCodeCard({
+  status,
+  address,
+  code,
+  invalid,
+  locked,
+  busy,
+  cooldownUntil,
+  error,
+  onCodeChange,
+  onComplete,
+  onSendAgain,
+  onBack,
+}: {
+  status: ActiveInviteStatus;
+  address: string;
+  code: string;
+  invalid: boolean;
+  locked: boolean;
+  busy: boolean;
+  cooldownUntil: number | null;
+  error: ReactNode;
+  onCodeChange: (value: string) => void;
+  onComplete: (value: string) => void;
+  onSendAgain: () => void;
+  onBack: () => void;
+}) {
+  const cooldownSeconds = useCooldownSeconds(cooldownUntil);
 
-  if (cooldownSeconds > 0) {
-    return `Resend in ${cooldownSeconds}s`;
-  }
-
-  return 'Resend';
+  return (
+    <InviteCard step="email-code">
+      <InviterLine name={status.inviterName} agentPictureUrl={status.agentPictureUrl} />
+      <AppIcon via="email" size="large" />
+      <StepTitle>Check your inbox</StepTitle>
+      <CardText>Enter the code we sent to {address}</CardText>
+      <CodeInput
+        value={code}
+        onChange={onCodeChange}
+        onComplete={onComplete}
+        label="Code from the email"
+        size="lg"
+        invalid={invalid}
+        disabled={busy || locked}
+        autoFocus
+      />
+      {error}
+      <div className="flex items-center gap-1">
+        <p className="text-xs leading-4 text-muted">Didn’t get it?</p>
+        <Button variant="quiet" className={SMALL_BUTTON} disabled={busy || cooldownSeconds > 0} onClick={onSendAgain}>
+          {cooldownSeconds > 0 ? `Send again in ${cooldownSeconds}s` : 'Send again'}
+        </Button>
+      </div>
+      <Button variant="secondary" className={cn(SMALL_BUTTON, 'self-start')} onClick={onBack}>
+        Choose another way
+      </Button>
+    </InviteCard>
+  );
 }
 
 function useCooldownSeconds(until: number | null): number {
@@ -876,7 +1032,7 @@ function channelDescription(channel: InviteChannel, telegramBot?: string): strin
       return 'Message it in Slack';
     case 'email':
       if (channel.status === 'pending') {
-        return channel.address ? `Check your inbox at ${channel.address}` : 'Check your inbox for a verification link';
+        return channel.address ? `Check your inbox at ${channel.address}` : 'Check your inbox for a code';
       }
 
       if (channel.connected && channel.address) {

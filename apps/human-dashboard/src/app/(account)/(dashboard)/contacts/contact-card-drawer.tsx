@@ -8,6 +8,7 @@ import { DRAWER_HEADER, FOCUSED_INPUT } from '@/components/channels/setup-parts'
 import { SlackSetup } from '@/components/channels/slack-setup';
 import { TelegramSetup } from '@/components/channels/telegram-setup';
 import { Button, SMALL_BUTTON } from '@/components/ui/button';
+import { CodeInput } from '@/components/ui/code-input';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
 import {
@@ -25,7 +26,7 @@ import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 import { cn } from '@/lib/utils';
 import { ChannelLogo } from '../configure/channel-logo';
 import { CrossFade } from '../inbox/cross-fade';
-import { sendEmailLinkAction, setDefaultChannelAction } from './actions';
+import { confirmOperatorEmailCodeAction, sendEmailLinkAction, setDefaultChannelAction } from './actions';
 import { ContactAvatar } from './contact-avatar';
 import { ShortDate } from './short-date';
 
@@ -513,7 +514,7 @@ function useNewLines(lines: ContactChannelVia[]): ReadonlySet<ContactChannelVia>
   return appearing;
 }
 
-/** Asks for the new address and sends it a link. The verified one keeps working until that's used. */
+/** Asks for the new address and sends it a code. The verified one keeps working until that's used. */
 function EmailForm({ onDone }: { onDone: () => void }) {
   const [address, setAddress] = useState('');
   const [error, setError] = useState<string>();
@@ -536,7 +537,7 @@ function EmailForm({ onDone }: { onDone: () => void }) {
     <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-3 pt-3 pb-1">
       <Field
         label="New email"
-        hint="We send it a link. Your current email keeps working until it’s opened."
+        hint="We’ll send a 6-digit code. Your current email keeps working until it’s confirmed."
         error={error}
       >
         {(field) => (
@@ -554,7 +555,7 @@ function EmailForm({ onDone }: { onDone: () => void }) {
       </Field>
       <div className="flex items-center gap-2">
         <Button type="submit" variant="secondary" className={SMALL_BUTTON} pending={sending}>
-          Send link
+          Send code
         </Button>
         <Button variant="quiet" className={SMALL_BUTTON} disabled={sending} onClick={onDone}>
           Cancel
@@ -567,51 +568,90 @@ function EmailForm({ onDone }: { onDone: () => void }) {
 type EmailNoteProps = { contact: Contact; agentHandle: string; signInEmail: string | null };
 
 /**
- * The notes under the actions: where a confirmation link went, or that the email isn't confirmed yet, each
- * with a way to send the link again; and that it's the address the operator signs in with, when it is.
+ * The notes under the actions: where a confirmation code went, with a place to enter it, or that the email
+ * isn't confirmed yet; and that it's the address the operator signs in with, when it is.
  */
 function EmailNote({ contact, agentHandle, signInEmail }: EmailNoteProps) {
   const email = contact.emailVerification;
   const [error, setError] = useState<string>();
+  const [code, setCode] = useState('');
+  const [invalid, setInvalid] = useState(false);
+  const [locked, setLocked] = useState(false);
   const [sending, startSending] = useTransition();
+  const [confirming, startConfirming] = useTransition();
   const linkTo = email?.pending?.address ?? (email?.status === 'unverified' ? email.address : undefined);
   const signsInWith = Boolean(email && signInEmail && email.address.toLowerCase() === signInEmail.toLowerCase());
 
-  function sendLink() {
+  function sendCode() {
     if (!linkTo) {
       return;
     }
 
     setError(undefined);
+    setLocked(false);
     startSending(async () => {
       const result = await sendEmailLinkAction(linkTo);
       if (result.ok) {
-        toast(`Link sent to ${linkTo}.`);
+        toast(`Code sent to ${linkTo}.`);
       } else {
         setError(result.error);
       }
     });
   }
 
+  function confirm(value: string) {
+    setError(undefined);
+    setInvalid(false);
+    startConfirming(async () => {
+      const result = await confirmOperatorEmailCodeAction(value);
+      if (result.ok) {
+        setCode('');
+        toast('Email confirmed.');
+
+        return;
+      }
+
+      setCode('');
+      setInvalid(result.invalid);
+      setLocked(result.locked);
+      setError(result.error);
+    });
+  }
+
   return (
     <div className="flex flex-col">
       <Fold open={Boolean(linkTo)} innerClassName="-mx-1.5 px-1.5">
-        {/* A new key when the state changes, so the new words fade in. */}
-        <p
+        <div
           key={`${email?.status}-${linkTo}`}
-          className="animate-overlay-in pb-1.5 text-xs leading-4 text-muted motion-reduce:animate-none"
+          className="flex animate-overlay-in flex-col gap-3 pb-1.5 motion-reduce:animate-none"
         >
-          {email?.pending ? (
-            <>Confirmation sent to {email.pending.address}. </>
-          ) : (
-            <>
-              {linkTo} isn’t confirmed yet, so {agentHandle} can’t email you there.{' '}
-            </>
+          <p className="text-xs leading-4 text-muted">
+            {email?.pending ? (
+              <>Enter the code we sent to {email.pending.address}. </>
+            ) : (
+              <>
+                {linkTo} isn’t confirmed yet, so {agentHandle} can’t email you there.{' '}
+              </>
+            )}
+            <TextButton onClick={sendCode} pending={sending}>
+              {email?.pending ? 'Send again' : 'Send code'}
+            </TextButton>
+          </p>
+          {email?.pending && (
+            <CodeInput
+              value={code}
+              onChange={(value) => {
+                setCode(value);
+                setInvalid(false);
+              }}
+              onComplete={confirm}
+              label="Code from the email"
+              invalid={invalid}
+              disabled={confirming || locked || sending}
+              autoFocus
+            />
           )}
-          <TextButton onClick={sendLink} pending={sending}>
-            {email?.pending ? 'Send again' : 'Send link'}
-          </TextButton>
-        </p>
+        </div>
       </Fold>
       <Fold open={Boolean(error)}>
         <p role="alert" className="pb-1.5 text-xs leading-4 text-danger">

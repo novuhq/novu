@@ -16,6 +16,8 @@ type CodeInputProps = {
   invalid?: boolean;
   disabled?: boolean;
   autoFocus?: boolean;
+  /** `lg` is the 56px boxes on the invite card. The default fits the sign-in form. */
+  size?: 'md' | 'lg';
   className?: string;
 };
 
@@ -29,6 +31,7 @@ export function CodeInput({
   invalid = false,
   disabled = false,
   autoFocus = false,
+  size = 'md',
   className,
 }: CodeInputProps) {
   const boxes = useRef<Array<HTMLInputElement | null>>([]);
@@ -110,8 +113,10 @@ export function CodeInput({
           autoFocus={autoFocus && index === 0}
           disabled={disabled}
           className={cn(
-            'size-11 rounded bg-background text-center font-mono text-lg text-foreground ring-1 ring-border-strong',
-            'focus-visible:outline-none focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-60',
+            'bg-background text-center font-mono text-foreground ring-1 focus-visible:outline-none focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-60',
+            size === 'lg'
+              ? 'size-14 rounded-lg bg-raised text-base font-medium ring-border'
+              : 'size-11 rounded text-lg ring-border-strong',
             invalid && 'ring-danger focus-visible:ring-danger'
           )}
         />
