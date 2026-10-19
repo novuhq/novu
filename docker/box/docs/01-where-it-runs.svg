@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg style="min-width: 1280px" viewBox="0 0 1280 680" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="where-it-runs-b-title where-it-runs-b-desc" id="d-01-where-it-runs-root">
+        <title id="where-it-runs-b-title">Novu Box · Where it runs (simpler)</title>
+        <desc id="where-it-runs-b-desc">You and GitHub Actions reach box pr-123 through its address Worker, which forwards by name to the Box pr-123 Durable Object in novu-box-hub; its container runs the Novu stack and calls outside services, its disk is saved to a snapshot while asleep, and Slack reaches the Router Durable Object through novu-box-slack.</desc>
+        <defs>
+      <style>#d-01-where-it-runs-root { --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace; }
+      #d-01-where-it-runs-root { font-family: var(--font-sans); color: var(--color-ink); }
+      #d-01-where-it-runs-root .diagram-container { width: 100%; overflow-x: auto; }
+      #d-01-where-it-runs-root .subtitle { font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--color-muted);
+      max-width: 78ch;
+      margin-bottom: 1.5rem; }
+      #d-01-where-it-runs-root .diagram-container { overflow-x: visible; }
+      #d-01-where-it-runs-root .diagram-container { overflow-x: visible; }
+      #d-01-where-it-runs-root nav { margin: 0 0 3rem; display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; }
+      #d-01-where-it-runs-root nav a { color: var(--color-muted); text-decoration: none; border-bottom: 1px solid rgba(45,49,66,0.2); }
+      #d-01-where-it-runs-root nav a:hover { color: var(--color-accent); border-color: var(--color-accent); }
+      #d-01-where-it-runs-root section { padding: 3rem 0 4rem; border-top: 1px solid rgba(45,49,66,0.12); }
+      #d-01-where-it-runs-root section:first-of-type { border-top: 0; padding-top: 0; }</style>
+          <marker id="d-01-where-it-runs-where-it-runs-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="d-01-where-it-runs-where-it-runs-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+        </defs>
+                <rect width="100%" height="100%" fill="#f5f5f5"/>
+        <rect x="240" y="104" width="808" height="504" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.015" stroke-opacity="0.30"/>
+        <rect x="456" y="128" width="568" height="336" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.025" stroke-opacity="0.40"/>
+        <rect x="480" y="152" width="320" height="192" rx="8" fill="#bf4520" stroke="#bf4520" stroke-width="1.2" fill-opacity="0.06"/>
+        <rect x="252" y="96" width="148" height="16" fill="#f5f5f5"/><text x="260" y="108" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">CLOUDFLARE ACCOUNT</text>
+        <rect x="468" y="120" width="196" height="16" fill="#f5f5f5"/><text x="476" y="132" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">NOVU-BOX-HUB · ONE DEPLOY</text>
+        <path d="M 120,152 V 80 Q 120,72 128,72 H 732 Q 740,72 740,80 V 128" fill="none" stroke="#2e5aa8" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#d-01-where-it-runs-where-it-runs-arrow-link)"/>
+        <line x1="200" y1="192" x2="264" y2="192" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-01-where-it-runs-where-it-runs-arrow-link)"/>
+        <path d="M 200,328 H 336 Q 344,328 344,320 V 224" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-01-where-it-runs-where-it-runs-arrow-link)"/>
+        <line x1="424" y1="192" x2="480" y2="192" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-01-where-it-runs-where-it-runs-arrow-link)"/>
+        <line x1="784" y1="276" x2="832" y2="276" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#d-01-where-it-runs-where-it-runs-arrow)"/>
+        <line x1="784" y1="320" x2="1080" y2="320" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-01-where-it-runs-where-it-runs-arrow-link)"/>
+        <path d="M 832,408 H 688 Q 680,408 680,400 V 344" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-01-where-it-runs-where-it-runs-arrow-link)"/>
+        <line x1="912" y1="520" x2="912" y2="440" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-01-where-it-runs-where-it-runs-arrow-link)"/>
+        <line x1="1080" y1="552" x2="992" y2="552" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-01-where-it-runs-where-it-runs-arrow-link)"/>
+        <path d="M 992,408 H 1152 Q 1160,408 1160,416 V 520" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-01-where-it-runs-where-it-runs-arrow-link)"/>
+        <rect x="398.0" y="53" width="64" height="12" rx="2" fill="#f5f5f5"/><text x="430" y="62" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">BOX DEPLOY</text>
+        <rect x="212.0" y="171" width="40" height="12" rx="2" fill="#f5f5f5"/><text x="232" y="180" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">HTTPS</text>
+        <rect x="250.0" y="307" width="36" height="12" rx="2" fill="#f5f5f5"/><text x="268" y="316" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">OIDC</text>
+        <rect x="430.0" y="171" width="44" height="12" rx="2" fill="#f5f5f5"/><text x="452" y="180" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">BY NAME</text>
+        <rect x="988.0" y="328" width="56" height="12" rx="2" fill="#f5f5f5"/><text x="1016" y="337" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">API CALLS</text>
+        <rect x="738.0" y="387" width="44" height="12" rx="2" fill="#f5f5f5"/><text x="760" y="396" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">EVENTS</text>
+        <rect x="926.0" y="474" width="44" height="12" rx="2" fill="#f5f5f5"/><text x="948" y="483" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">BY NAME</text>
+        <rect x="1016.0" y="531" width="40" height="12" rx="2" fill="#f5f5f5"/><text x="1036" y="540" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">EVENTS</text>
+        <rect x="1074.0" y="387" width="44" height="12" rx="2" fill="#f5f5f5"/><text x="1096" y="396" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">WEB API</text>
+        <rect x="40" y="152" width="160" height="104" rx="6" fill="#f5f5f5"/><rect x="40" y="152" width="160" height="104" rx="6" fill="#4f5d75" stroke="#5a6580" stroke-width="1" fill-opacity="0.10"/>
+        <text x="120" y="174" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">You</text>
+        <rect x="48" y="184" width="144" height="24" rx="4" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.05"/><text x="56" y="200" fill="#2d3142" font-size="12" font-family="'Geist', system-ui, sans-serif">box CLI</text><text x="184" y="200" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">src/cli</text>
+        <rect x="48" y="216" width="144" height="24" rx="4" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.05"/><text x="56" y="232" fill="#2d3142" font-size="12" font-family="'Geist', system-ui, sans-serif">browser</text><text x="184" y="232" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end">the box's URL</text>
+        <rect x="40" y="296" width="160" height="64" rx="6" fill="#f5f5f5"/><rect x="40" y="296" width="160" height="64" rx="6" fill="#4f5d75" stroke="#5a6580" stroke-width="1" fill-opacity="0.10"/>
+        <text x="120" y="324" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">GitHub Actions</text>
+        <text x="120" y="342" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">OIDC · no secrets</text>
+        <rect x="264" y="160" width="160" height="64" rx="6" fill="#f5f5f5"/><rect x="264" y="160" width="160" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="272" y="166" width="40" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/><text x="292.0" y="175" fill="#2d3142" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">WORKER</text>
+        <rect x="388" y="166" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/><text x="402.0" y="175" fill="#2d3142" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">×N</text>
+        <text x="344" y="198" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">novu-box-pr-123</text>
+        <text x="344" y="214" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">the box's URL</text>
+        <rect x="832" y="520" width="160" height="64" rx="6" fill="#f5f5f5"/><rect x="832" y="520" width="160" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="840" y="526" width="40" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/><text x="860.0" y="535" fill="#2d3142" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">WORKER</text>
+        <text x="912" y="556" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">novu-box-slack</text>
+        <text x="912" y="572" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Slack's URL</text>
+        <rect x="488" y="160" width="84" height="12" rx="2" fill="none" stroke="#bf4520" stroke-width="0.8" stroke-opacity="0.55"/><text x="530.0" y="169" fill="#bf4520" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">DURABLE OBJECT</text>
+        <text x="640" y="184" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Box pr-123</text>
+        <text x="640" y="200" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">phase · idle timer</text>
+        <rect x="496" y="216" width="288" height="120" rx="6" fill="#f5f5f5"/><rect x="496" y="216" width="288" height="120" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="504" y="222" width="60" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/><text x="534.0" y="231" fill="#2d3142" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">CONTAINER</text>
+        <text x="640" y="252" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">container</text>
+        <text x="640" y="268" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">the Novu stack</text>
+        <rect x="576" y="288" width="128" height="20" rx="4" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-dasharray="3,3" stroke-opacity="0.45"/>
+        <text x="640" y="301" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">box secrets</text>
+        <rect x="840" y="152" width="160" height="56" rx="6" fill="#f5f5f5" stroke="#4f5d75" stroke-width="0.8"/>
+        <rect x="836" y="156" width="160" height="56" rx="6" fill="#f5f5f5" stroke="#4f5d75" stroke-width="0.8"/>
+        <rect x="832" y="160" width="160" height="56" rx="6" fill="#f5f5f5"/><rect x="832" y="160" width="160" height="56" rx="6" fill="#2d3142" stroke="#4f5d75" stroke-width="1" fill-opacity="0.05"/>
+        <text x="912" y="184" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">other boxes</text>
+        <text x="912" y="200" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">base · pr-456 · …</text>
+        <rect x="832" y="248" width="160" height="56" rx="6" fill="#f5f5f5"/><rect x="832" y="248" width="160" height="56" rx="6" fill="#2d3142" stroke="#4f5d75" stroke-width="1" fill-opacity="0.05"/>
+        <text x="912" y="272" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">snapshot</text>
+        <text x="912" y="288" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">/data while asleep</text>
+        <rect x="832" y="376" width="160" height="64" rx="6" fill="#f5f5f5"/><rect x="832" y="376" width="160" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="840" y="382" width="84" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/><text x="882.0" y="391" fill="#2d3142" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">DURABLE OBJECT</text>
+        <text x="912" y="414" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Router</text>
+        <text x="912" y="430" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">real Slack token</text>
+        <rect x="480" y="384" width="168" height="48" rx="4" fill="#f5f5f5"/><rect x="480" y="384" width="168" height="48" rx="4" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-dasharray="3,3" stroke-opacity="0.45"/>
+        <text x="564" y="404" fill="#2d3142" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">host-only secrets</text>
+        <text x="564" y="420" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">GitHub · Cloudflare · Slack</text>
+        <rect x="1080" y="232" width="160" height="144" rx="6" fill="#f5f5f5"/><rect x="1080" y="232" width="160" height="144" rx="6" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <rect x="1088" y="238" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.22"/><text x="1102.0" y="247" fill="#5a6580" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+        <text x="1160" y="268" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Outside services</text>
+        <rect x="1088" y="280" width="144" height="24" rx="4" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.05"/><text x="1096" y="296" fill="#2d3142" font-size="11" font-family="'Geist', system-ui, sans-serif">GitHub</text>
+        <rect x="1088" y="312" width="144" height="24" rx="4" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.05"/><text x="1096" y="328" fill="#2d3142" font-size="11" font-family="'Geist', system-ui, sans-serif">Clerk · Stripe</text>
+        <rect x="1088" y="344" width="144" height="24" rx="4" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.05"/><text x="1096" y="360" fill="#2d3142" font-size="11" font-family="'Geist', system-ui, sans-serif">LaunchDarkly · Anthropic</text>
+        <rect x="1080" y="520" width="160" height="64" rx="6" fill="#f5f5f5"/><rect x="1080" y="520" width="160" height="64" rx="6" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <rect x="1088" y="526" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.22"/><text x="1102.0" y="535" fill="#5a6580" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+        <text x="1160" y="556" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Slack</text>
+        <text x="1160" y="572" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Novu Box</text>
+        <line x1="40" y1="632" x2="1240" y2="632" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.10"/>
+<text x="40" y="658" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="112" y="650" width="14" height="10" rx="2" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.06"/>
+<text x="132" y="658" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">One box (focal)</text>
+<rect x="234.0" y="650" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<text x="254.0" y="658" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Worker or Durable Object</text>
+<rect x="402.8" y="650" width="14" height="10" rx="2" fill="#2d3142" stroke="#4f5d75" stroke-width="1" fill-opacity="0.05"/>
+<text x="422.8" y="658" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Snapshot</text>
+<rect x="488.40000000000003" y="650" width="14" height="10" rx="2" fill="#4f5d75" stroke="#5a6580" stroke-width="1" fill-opacity="0.10"/>
+<text x="508.40000000000003" y="658" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Caller</text>
+<rect x="563.6" y="650" width="14" height="10" rx="2" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+<text x="583.6" y="658" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Outside service</text>
+<rect x="685.6" y="650" width="14" height="10" rx="2" fill="none" stroke="#2d3142" stroke-width="1" stroke-dasharray="3,3" stroke-opacity="0.45"/>
+<text x="705.6" y="658" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Secrets kept here</text>
+<line x1="818.0" y1="655" x2="846.0" y2="655" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-01-where-it-runs-where-it-runs-arrow-link)"/>
+<text x="854.0" y="658" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Request</text>
+<line x1="914.4" y1="655" x2="942.4" y2="655" stroke="#2e5aa8" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#d-01-where-it-runs-where-it-runs-arrow-link)"/>
+<text x="950.4" y="658" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Now and then</text>
+<line x1="1036.8" y1="655" x2="1064.8" y2="655" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#d-01-where-it-runs-where-it-runs-arrow)"/>
+<text x="1072.8" y="658" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Saved while asleep</text>
+      </svg>
