@@ -50,11 +50,15 @@ export class PushpadPushProvider extends PushBaseProvider implements IPushProvid
     options: IPushOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>>
   ): Pushpad.Notification {
+    const messageId = (options.payload as { __nvMessageId?: string } | undefined)?.__nvMessageId;
+
     return new Pushpad.Notification(
       this.transform(bridgeProviderData, {
         project: this.pushpad,
         body: options.content,
         title: options.title,
+        // Pushpad only hands custom_data to action button callbacks, so clicks on the notification body can't report back.
+        ...(messageId && { customData: String(messageId) }),
       }).body
     );
   }

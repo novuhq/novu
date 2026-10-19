@@ -274,8 +274,19 @@ function buildFakeFcmServiceAccount(): string {
   });
 }
 
+function buildFakeApnsKey(): string {
+  const { privateKey } = generateKeyPairSync('ec', {
+    namedCurve: 'prime256v1',
+    privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+    publicKeyEncoding: { type: 'spki', format: 'pem' },
+  });
+
+  return privateKey;
+}
+
 describe('Process Inbound Webhook push providers E2E #novu-v2', () => {
   const fakeFcmServiceAccount = buildFakeFcmServiceAccount();
+  const fakeApnsKey = buildFakeApnsKey();
 
   const providerCases: Array<{
     providerId: PushProviderIdEnum;
@@ -292,6 +303,42 @@ describe('Process Inbound Webhook push providers E2E #novu-v2', () => {
       credentials: {
         webhookUrl: 'https://example.com/push-webhook',
         secretKey: 'test-hmac-secret',
+      },
+    },
+    {
+      providerId: PushProviderIdEnum.APNS,
+      credentials: {
+        secretKey: fakeApnsKey,
+        apiKey: 'TESTKEYID1',
+        projectName: 'TESTTEAMID',
+        applicationId: 'co.novu.test',
+      },
+    },
+    {
+      providerId: PushProviderIdEnum.EXPO,
+      credentials: {
+        apiKey: 'test-expo-access-token',
+      },
+    },
+    {
+      providerId: PushProviderIdEnum.OneSignal,
+      credentials: {
+        apiKey: 'test-onesignal-api-key',
+        applicationId: 'test-onesignal-app-id',
+      },
+    },
+    {
+      providerId: PushProviderIdEnum.PusherBeams,
+      credentials: {
+        instanceId: 'test-pusher-beams-instance',
+        secretKey: 'test-pusher-beams-secret',
+      },
+    },
+    {
+      providerId: PushProviderIdEnum.Pushpad,
+      credentials: {
+        apiKey: 'test-pushpad-auth-token',
+        applicationId: '841',
       },
     },
   ];

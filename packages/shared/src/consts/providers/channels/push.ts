@@ -2,7 +2,6 @@ import { ChannelTypeEnum, PushProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 import {
   apnsGroupConfigurations,
-  appIOGroupConfigurations,
   expoGroupConfigurations,
   fcmGroupConfigurations,
   oneSignalGroupConfigurations,
@@ -93,7 +92,6 @@ export const pushProviders: IProviderConfig[] = [
     displayName: 'AppIO',
     channel: ChannelTypeEnum.PUSH,
     credentials: appIOConfig,
-    configurations: appIOGroupConfigurations,
     docReference: `https://localhost/channels-and-providers/push/pusher-beams${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'appio.svg', dark: 'appio.svg' },
   },

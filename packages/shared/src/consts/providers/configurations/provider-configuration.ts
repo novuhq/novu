@@ -283,12 +283,3 @@ export const pusherBeamsGroupConfigurations: ConfigConfigurationGroup[] = [
     setupWebhookUrlGuide: 'https://docs.novu.co/platform/integrations/push/pusher-beams',
   },
 ];
-
-export const appIOGroupConfigurations: ConfigConfigurationGroup[] = [
-  {
-    groupType: 'inboundWebhook',
-    configurations: pushConfigurations,
-    enabler: 'inboundWebhookEnabled',
-    setupWebhookUrlGuide: 'https://docs.novu.co/platform/integrations/push/push-activity-tracking',
-  },
-];
