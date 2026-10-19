@@ -67,24 +67,28 @@ describe('Human email verification code #novu-v2', () => {
     expect(byCode.data.data.verified).to.equal(true);
   });
 
-  it('rejects a wrong code and locks the slot after ten tries', async () => {
+  it('rejects a wrong code and stops that network after ten tries', async () => {
     const address = `cio-${Date.now()}@example.com`;
     const mail = await requestVerification(session, `cio-${Date.now()}`, address, sent);
     const anonymous = publicClient(session);
+    const wrongCode = mail.code === '000000' ? '000001' : '000000';
 
     for (let attempt = 0; attempt < 9; attempt++) {
-      const wrong = await anonymous.post('/v1/human/verify-code', { address, code: '000000' });
+      const wrong = await anonymous.post('/v1/human/verify-code', { address, code: wrongCode });
       expect(wrong.status).to.equal(401, JSON.stringify(wrong.data));
       expect(errorCode(wrong.data)).to.equal('verification_code_invalid');
     }
 
-    const tenth = await anonymous.post('/v1/human/verify-code', { address, code: '000000' });
+    const tenth = await anonymous.post('/v1/human/verify-code', { address, code: wrongCode });
     expect(tenth.status).to.equal(429, JSON.stringify(tenth.data));
     expect(errorCode(tenth.data)).to.equal('verification_code_too_many_tries');
+    expect(tenth.data.retryAfterSeconds).to.equal(10 * 60);
 
-    const locked = await anonymous.post('/v1/human/verify-code', { address, code: mail.code });
-    expect(locked.status).to.equal(429, JSON.stringify(locked.data));
-    expect(errorCode(locked.data)).to.equal('verification_code_too_many_tries');
+    const stopped = await anonymous.post('/v1/human/verify-code', { address, code: mail.code });
+    expect(stopped.status).to.equal(tenth.status);
+    expect(errorCode(stopped.data)).to.equal(errorCode(tenth.data));
+    expect(stopped.data.message).to.equal(tenth.data.message);
+    expect(stopped.data.retryAfterSeconds).to.equal(tenth.data.retryAfterSeconds);
   });
 
   it('rejects a code from before a resend', async () => {

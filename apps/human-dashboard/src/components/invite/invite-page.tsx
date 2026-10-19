@@ -971,7 +971,7 @@ function EmailCodeCard({
         label="Code from the email"
         size="lg"
         invalid={invalid}
-        disabled={busy || locked}
+        disabled={busy || (locked && cooldownSeconds > 0)}
         autoFocus
       />
       {error}

@@ -576,7 +576,6 @@ function EmailNote({ contact, agentHandle, signInEmail }: EmailNoteProps) {
   const [error, setError] = useState<string>();
   const [code, setCode] = useState('');
   const [invalid, setInvalid] = useState(false);
-  const [locked, setLocked] = useState(false);
   const [sending, startSending] = useTransition();
   const [confirming, startConfirming] = useTransition();
   const linkTo = email?.pending?.address ?? (email?.status === 'unverified' ? email.address : undefined);
@@ -588,7 +587,6 @@ function EmailNote({ contact, agentHandle, signInEmail }: EmailNoteProps) {
     }
 
     setError(undefined);
-    setLocked(false);
     startSending(async () => {
       const result = await sendEmailLinkAction(linkTo);
       if (result.ok) {
@@ -613,7 +611,6 @@ function EmailNote({ contact, agentHandle, signInEmail }: EmailNoteProps) {
 
       setCode('');
       setInvalid(result.invalid);
-      setLocked(result.locked);
       setError(result.error);
     });
   }
@@ -647,7 +644,7 @@ function EmailNote({ contact, agentHandle, signInEmail }: EmailNoteProps) {
               onComplete={confirm}
               label="Code from the email"
               invalid={invalid}
-              disabled={confirming || locked || sending}
+              disabled={confirming || sending}
               autoFocus
             />
           )}

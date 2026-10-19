@@ -263,7 +263,10 @@ describe('waitForVerifiedEmailOrCode', () => {
     getContact.mockResolvedValue({ channels: [{ via: 'email', status: 'pending' }] });
     const confirmCode = vi.fn().mockRejectedValue(
       new ApiError('Request failed', 429, 'POST /v1/human/verify-code', {
-        message: { code: 'verification_code_too_many_tries', message: 'Too many wrong codes. Send a new one.' },
+        message: {
+          code: 'verification_code_too_many_tries',
+          message: 'Too many wrong codes from this network. Wait a few minutes, then try the code from the email.',
+        },
       })
     );
 
@@ -274,6 +277,6 @@ describe('waitForVerifiedEmailOrCode', () => {
         confirmCode,
         onCodeRejected: vi.fn(),
       })
-    ).rejects.toThrow('Too many wrong codes. Send a new one.');
+    ).rejects.toThrow('Too many wrong codes from this network. Wait a few minutes, then try the code from the email.');
   });
 });

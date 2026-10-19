@@ -14,12 +14,11 @@ import {
   type HumanVerificationTokenPayload,
 } from './human-verification-token.service';
 
-/** Wrong codes one pending slot accepts before that code stops working. A resend starts a new slot. */
-export const HUMAN_VERIFICATION_CODE_MAX_SLOT_FAILURES = 10;
-
 /**
  * Wrong codes one network can send for one address, and for any addresses together, in
- * {@link HUMAN_VERIFICATION_CODE_FAILURE_WINDOW_SECONDS}. Copied from the connect-code caps.
+ * {@link HUMAN_VERIFICATION_CODE_FAILURE_WINDOW_SECONDS}. Past the address cap, that network
+ * gets no further try at the address, right codes included. A different network is unaffected,
+ * so a stranger who knows the inbox cannot lock its code. Copied from the connect-code caps.
  */
 export const HUMAN_VERIFICATION_CODE_MAX_ADDRESS_FAILURES = 10;
 export const HUMAN_VERIFICATION_CODE_MAX_NETWORK_FAILURES = 30;
@@ -37,56 +36,23 @@ export type RedeemedVerificationCode = {
 };
 
 /**
- * Reserves `ARGV[1]` under `KEYS[1]` for `ARGV[2]` seconds, and remembers its slot on `KEYS[2]`
- * so wrong guesses can be counted against every code still live for this address.
- * Returns 1 when the code was stored, 0 when that code was already taken.
- */
-const ISSUE_SCRIPT = `
-local ok = redis.call('SET', KEYS[1], ARGV[1], 'EX', tonumber(ARGV[2]), 'NX')
-if not ok then return 0 end
-redis.call('SADD', KEYS[2], ARGV[3])
-redis.call('EXPIRE', KEYS[2], tonumber(ARGV[2]))
-return 1
-`;
-
-/**
- * Takes the code once, or counts a wrong one.
- * A code that is still live is redeemed even after this network has used up its guesses,
- * so a resend (a new slot) works straight away. Wrong, expired and unknown codes share one outcome.
- * KEYS: the code, the address's live slots, this network's wrong tries for the address.
- * ARGV: now (epoch seconds), max wrong tries per slot, max wrong tries per address for this network,
- * their window, and how long a new slot counter is kept.
- * Returns OK/USED plus the payload JSON, INVALID, BLOCKED (the address cap was already hit),
- * TOO_MANY_SLOT, or TOO_MANY_ADDR.
+ * Takes the code once, or counts a wrong one for this network only.
+ * The cap is checked before a live code is accepted, so this network cannot keep guessing
+ * until one lands. Nothing here is shared with another network or another code, and a wrong,
+ * expired, or unknown code is the same outcome.
+ * KEYS: the code, this network's wrong tries for the address.
+ * ARGV: now (epoch seconds), max wrong tries, their window.
+ * Returns OK/USED plus the payload JSON, INVALID, BLOCKED (the cap was already hit), or TOO_MANY.
  */
 const REDEEM_SCRIPT = `
-local function countWrong()
-  local addrFails = tonumber(redis.call('GET', KEYS[3]) or '0')
-  if addrFails >= tonumber(ARGV[3]) then return 'BLOCKED' end
-  local n = redis.call('INCR', KEYS[3])
-  if n == 1 then redis.call('EXPIRE', KEYS[3], ARGV[4]) end
-  local locked = false
-  local slots = redis.call('SMEMBERS', KEYS[2])
-  for _, slotKey in ipairs(slots) do
-    local c = redis.call('INCR', slotKey)
-    if c == 1 then
-      local ttl = redis.call('TTL', KEYS[2])
-      if ttl < 1 then ttl = tonumber(ARGV[5]) end
-      redis.call('EXPIRE', slotKey, ttl)
-    end
-    if c >= tonumber(ARGV[2]) then locked = true end
-  end
-  if locked then return 'TOO_MANY_SLOT' end
-  if n >= tonumber(ARGV[3]) then return 'TOO_MANY_ADDR' end
-  return 'INVALID'
-end
+local maxFails = tonumber(ARGV[2])
+local fails = tonumber(redis.call('GET', KEYS[2]) or '0')
+if fails >= maxFails then return 'BLOCKED' end
 
 local raw = redis.call('GET', KEYS[1])
 local ok, record = false, nil
 if raw then ok, record = pcall(cjson.decode, raw) end
-if ok and record and record.payload and record.slotKey and tonumber(record.expiresAt) > tonumber(ARGV[1]) then
-  local fails = tonumber(redis.call('GET', record.slotKey) or '0')
-  if fails >= tonumber(ARGV[2]) then return 'TOO_MANY_SLOT' end
+if ok and record and record.payload and tonumber(record.expiresAt) > tonumber(ARGV[1]) then
   local payload = cjson.encode(record.payload)
   if record.usedAt then return 'USED' .. payload end
   record.usedAt = tonumber(ARGV[1])
@@ -96,7 +62,10 @@ if ok and record and record.payload and record.slotKey and tonumber(record.expir
   return 'OK' .. payload
 end
 
-return countWrong()
+local n = redis.call('INCR', KEYS[2])
+if n == 1 then redis.call('EXPIRE', KEYS[2], ARGV[3]) end
+if n >= maxFails then return 'TOO_MANY' end
+return 'INVALID'
 `;
 
 /** Puts a redeemed code back so the same entry can retry after a failed write. */
@@ -122,7 +91,6 @@ return n
 type StoredCode = {
   payload: HumanVerificationTokenPayload;
   expiresAt: number;
-  slotKey: string;
   usedAt?: number;
 };
 
@@ -148,18 +116,16 @@ export class HumanVerificationCodeService {
 
     const address = normalizeEmailForLookup(payload.address);
     const expiresAt = Math.floor(Date.now() / 1000) + HUMAN_VERIFICATION_LINK_TTL_SECONDS;
-    const slotKey = slotCounterKey(address, payload);
-    const record: StoredCode = { payload: { ...payload, address }, expiresAt, slotKey };
+    const record: StoredCode = { payload: { ...payload, address }, expiresAt };
 
     for (let attempt = 0; attempt < CODE_ISSUE_ATTEMPTS; attempt++) {
       const code = generateCode();
-      const reserved = await this.cacheService.eval<number>(
-        ISSUE_SCRIPT,
-        [codeKey(address, code), slotsKey(address)],
-        [JSON.stringify(record), HUMAN_VERIFICATION_LINK_TTL_SECONDS, slotKey]
-      );
+      const reserved = await this.cacheService.setIfNotExist(codeKey(address, code), JSON.stringify(record), {
+        ttl: HUMAN_VERIFICATION_LINK_TTL_SECONDS,
+        jitter: false,
+      });
 
-      if (reserved === 1) {
+      if (reserved === 'OK') {
         return { code, expiresAt: new Date(expiresAt * 1000).toISOString() };
       }
     }
@@ -169,7 +135,7 @@ export class HumanVerificationCodeService {
 
   /**
    * Uses the code once. A wrong, expired, or unknown code is the same invalid error.
-   * Ten wrong tries on the pending slot lock that code; the link keeps working.
+   * Ten wrong tries from one network stop that network; every other network, and the link, keep working.
    */
   async redeem(addressInput: string, codeInput: string, clientIp?: string): Promise<RedeemedVerificationCode> {
     const address = normalizeEmailForLookup(addressInput);
@@ -185,20 +151,18 @@ export class HumanVerificationCodeService {
     const network = clientIp?.trim() || 'unknown';
     const networkKey = networkFailuresKey(network);
     if (Number(await this.cacheService.get(networkKey)) >= HUMAN_VERIFICATION_CODE_MAX_NETWORK_FAILURES) {
-      throw tooManyTries(HUMAN_VERIFICATION_CODE_FAILURE_WINDOW_SECONDS);
+      throw tooManyTries();
     }
 
     let result: string | null;
     try {
       result = await this.cacheService.eval<string | null>(
         REDEEM_SCRIPT,
-        [codeKey(address, code), slotsKey(address), addressFailuresKey(address, network)],
+        [codeKey(address, code), addressFailuresKey(address, network)],
         [
           Math.floor(Date.now() / 1000),
-          HUMAN_VERIFICATION_CODE_MAX_SLOT_FAILURES,
           HUMAN_VERIFICATION_CODE_MAX_ADDRESS_FAILURES,
           HUMAN_VERIFICATION_CODE_FAILURE_WINDOW_SECONDS,
-          HUMAN_VERIFICATION_LINK_TTL_SECONDS,
         ]
       );
     } catch (err) {
@@ -212,18 +176,12 @@ export class HumanVerificationCodeService {
       throw invalidCode();
     }
 
-    if (result === 'BLOCKED' || result === 'TOO_MANY_ADDR') {
-      if (result === 'TOO_MANY_ADDR') {
+    if (result === 'BLOCKED' || result === 'TOO_MANY') {
+      if (result === 'TOO_MANY') {
         await this.countNetwork(networkKey);
       }
 
-      throw tooManyTries(HUMAN_VERIFICATION_CODE_FAILURE_WINDOW_SECONDS);
-    }
-
-    if (result === 'TOO_MANY_SLOT') {
-      await this.countNetwork(networkKey);
-
-      throw tooManyTries(0);
+      throw tooManyTries();
     }
 
     const alreadyUsed = result.startsWith('USED');
@@ -268,19 +226,9 @@ function generateCode(): string {
   return String(randomInt(0, 1_000_000)).padStart(6, '0');
 }
 
-/** The address is the hash tag, so the code, its slots and this network's tries share one Redis Cluster slot. */
+/** The address is the hash tag, so the code and this network's tries share one Redis Cluster slot. */
 export function codeKey(address: string, code: string): string {
   return `human_verify_code:{${address}}:${code}`;
-}
-
-function slotsKey(address: string): string {
-  return `human_verify_code_slots:{${address}}`;
-}
-
-export function slotCounterKey(address: string, payload: HumanVerificationTokenPayload): string {
-  const slotId = `${payload.env}:${payload.agentId}:${payload.subscriberId}:${payload.via}:${payload.requestedAt}`;
-
-  return `human_verify_code_slot:{${address}}:${slotId}`;
 }
 
 function addressFailuresKey(address: string, network: string): string {
@@ -323,15 +271,12 @@ function invalidCode(): UnauthorizedException {
   });
 }
 
-function tooManyTries(retryAfterSeconds: number): HttpException {
+function tooManyTries(): HttpException {
   return new HttpException(
     {
       code: VERIFICATION_CODE_TOO_MANY_TRIES,
-      message:
-        retryAfterSeconds > 0
-          ? 'Too many wrong codes from this network. Wait a few minutes, then try the code from the email.'
-          : 'Too many wrong codes. Send a new one.',
-      retryAfterSeconds,
+      message: 'Too many wrong codes from this network. Wait a few minutes, then try the code from the email.',
+      retryAfterSeconds: HUMAN_VERIFICATION_CODE_FAILURE_WINDOW_SECONDS,
     },
     HttpStatus.TOO_MANY_REQUESTS
   );

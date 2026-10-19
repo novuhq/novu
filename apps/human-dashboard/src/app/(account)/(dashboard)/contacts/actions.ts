@@ -149,18 +149,18 @@ export async function sendEmailLinkAction(address: string): Promise<ContactCardR
   }
 }
 
-export type ConfirmEmailCodeResult = { ok: true } | { ok: false; error: string; invalid: boolean; locked: boolean };
+export type ConfirmEmailCodeResult = { ok: true } | { ok: false; error: string; invalid: boolean };
 
 /** Confirms the operator's pending address with the 6-digit code from the email. */
 export async function confirmOperatorEmailCodeAction(code: string): Promise<ConfirmEmailCodeResult> {
   const account = await readSignedInAccount();
   if (!account) {
-    return { ok: false, error: SESSION_ENDED, invalid: false, locked: false };
+    return { ok: false, error: SESSION_ENDED, invalid: false };
   }
 
   const digits = String(code ?? '').replace(/\D/g, '');
   if (digits.length !== 6) {
-    return { ok: false, error: 'Enter the 6-digit code from the email.', invalid: true, locked: false };
+    return { ok: false, error: 'Enter the 6-digit code from the email.', invalid: true };
   }
 
   try {
@@ -174,7 +174,6 @@ export async function confirmOperatorEmailCodeAction(code: string): Promise<Conf
       ok: false,
       error: describeEmailError(error),
       invalid: error instanceof HumanApiError && error.code === 'verification_code_invalid',
-      locked: error instanceof HumanApiError && error.code === 'verification_code_too_many_tries',
     };
   } finally {
     revalidatePath(CONTACTS_PATH);

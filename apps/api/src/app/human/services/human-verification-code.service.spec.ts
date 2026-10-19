@@ -8,9 +8,7 @@ import {
   HUMAN_VERIFICATION_CODE_FAILURE_WINDOW_SECONDS,
   HUMAN_VERIFICATION_CODE_MAX_ADDRESS_FAILURES,
   HUMAN_VERIFICATION_CODE_MAX_NETWORK_FAILURES,
-  HUMAN_VERIFICATION_CODE_MAX_SLOT_FAILURES,
   HumanVerificationCodeService,
-  slotCounterKey,
   VERIFICATION_CODE_INVALID,
   VERIFICATION_CODE_TOO_MANY_TRIES,
 } from './human-verification-code.service';
@@ -29,7 +27,6 @@ describe('HumanVerificationCodeService', () => {
 
   function setup({ cacheEnabled = true } = {}) {
     const strings = new Map<string, { value: string; expireAt: number | null }>();
-    const sets = new Map<string, { members: Set<string>; expireAt: number | null }>();
 
     const now = () => Math.floor(Date.now() / 1000);
 
@@ -47,94 +44,16 @@ describe('HumanVerificationCodeService', () => {
       return entry;
     }
 
-    function liveSet(key: string) {
-      const entry = sets.get(key);
-      if (!entry) {
-        return null;
-      }
-      if (entry.expireAt !== null && entry.expireAt <= now()) {
-        sets.delete(key);
-
-        return null;
-      }
-
-      return entry;
-    }
-
-    function ttlOf(key: string): number {
-      const text = liveString(key);
-      if (text) {
-        return text.expireAt === null ? -1 : text.expireAt - now();
-      }
-      const group = liveSet(key);
-      if (!group) {
-        return -2;
-      }
-
-      return group.expireAt === null ? -1 : group.expireAt - now();
-    }
-
-    function issue(keys: string[], args: Array<string | number>): number {
-      const [code, slots] = keys;
-      const [record, ttl, slotKey] = args;
-      if (liveString(code)) {
-        return 0;
-      }
-
-      const seconds = Number(ttl);
-      strings.set(code, { value: String(record), expireAt: now() + seconds });
-      const group = liveSet(slots) ?? { members: new Set<string>(), expireAt: null };
-      group.members.add(String(slotKey));
-      group.expireAt = now() + seconds;
-      sets.set(slots, group);
-
-      return 1;
-    }
-
-    function countWrong(keys: string[], args: Array<string | number>): string {
-      const [, slots, addressFails] = keys;
-      const [, maxSlot, maxAddress, window, slotTtl] = args.map(Number);
+    function redeem(keys: string[], args: Array<string | number>): string {
+      const [codeKeyName, addressFails] = keys;
+      const [nowArg, maxAddress, window] = args.map(Number);
       const already = Number(liveString(addressFails)?.value ?? '0');
       if (already >= maxAddress) {
         return 'BLOCKED';
       }
 
-      const current = liveString(addressFails);
-      const next = Number(current?.value ?? '0') + 1;
-      strings.set(addressFails, {
-        value: String(next),
-        expireAt: current ? current.expireAt : now() + window,
-      });
-
-      let locked = false;
-      for (const slotKey of liveSet(slots)?.members ?? []) {
-        const slot = liveString(slotKey);
-        const count = Number(slot?.value ?? '0') + 1;
-        const slotsTtl = ttlOf(slots);
-        strings.set(slotKey, {
-          value: String(count),
-          expireAt: slot ? slot.expireAt : now() + (slotsTtl < 1 ? slotTtl : slotsTtl),
-        });
-        if (count >= maxSlot) {
-          locked = true;
-        }
-      }
-
-      if (locked) {
-        return 'TOO_MANY_SLOT';
-      }
-      if (next >= maxAddress) {
-        return 'TOO_MANY_ADDR';
-      }
-
-      return 'INVALID';
-    }
-
-    function redeem(keys: string[], args: Array<string | number>): string {
-      const [codeKeyName] = keys;
-      const [nowArg, maxSlot] = args.map(Number);
       const raw = liveString(codeKeyName)?.value;
-      let record: { payload?: unknown; slotKey?: string; expiresAt?: number; usedAt?: number } | null = null;
+      let record: { payload?: unknown; expiresAt?: number; usedAt?: number } | null = null;
       if (raw) {
         try {
           record = JSON.parse(raw);
@@ -143,12 +62,7 @@ describe('HumanVerificationCodeService', () => {
         }
       }
 
-      if (record?.payload && record.slotKey && Number(record.expiresAt) > nowArg) {
-        const slotFails = Number(liveString(record.slotKey)?.value ?? '0');
-        if (slotFails >= maxSlot) {
-          return 'TOO_MANY_SLOT';
-        }
-
+      if (record?.payload && Number(record.expiresAt) > nowArg) {
         const encoded = JSON.stringify(record.payload);
         if (record.usedAt) {
           return `USED${encoded}`;
@@ -162,7 +76,17 @@ describe('HumanVerificationCodeService', () => {
         return `OK${encoded}`;
       }
 
-      return countWrong(keys, args);
+      const current = liveString(addressFails);
+      const next = Number(current?.value ?? '0') + 1;
+      strings.set(addressFails, {
+        value: String(next),
+        expireAt: current ? current.expireAt : now() + window,
+      });
+      if (next >= maxAddress) {
+        return 'TOO_MANY';
+      }
+
+      return 'INVALID';
     }
 
     function release(keys: string[]): number {
@@ -192,11 +116,17 @@ describe('HumanVerificationCodeService', () => {
     const cacheService = {
       cacheEnabled: sinon.stub().returns(cacheEnabled),
       get: sinon.stub().callsFake(async (key: string) => liveString(key)?.value ?? null),
+      setIfNotExist: sinon.stub().callsFake(async (key: string, value: string, options?: { ttl?: number }) => {
+        if (liveString(key)) {
+          return null;
+        }
+
+        strings.set(key, { value, expireAt: now() + Number(options?.ttl ?? 0) });
+
+        return 'OK';
+      }),
       eval: sinon.stub().callsFake(async (_script: string, keys: string[], args: Array<string | number> = []) => {
         if (keys.length === 2) {
-          return issue(keys, args);
-        }
-        if (keys.length === 3) {
           return redeem(keys, args);
         }
         if (args.length === 0) {
@@ -222,18 +152,34 @@ describe('HumanVerificationCodeService', () => {
     }
   }
 
-  async function expectTooMany(run: () => Promise<unknown>, retryAfterSeconds: number) {
+  const TOO_MANY_BODY = {
+    code: VERIFICATION_CODE_TOO_MANY_TRIES,
+    message: 'Too many wrong codes from this network. Wait a few minutes, then try the code from the email.',
+    retryAfterSeconds: HUMAN_VERIFICATION_CODE_FAILURE_WINDOW_SECONDS,
+  };
+
+  async function expectTooMany(run: () => Promise<unknown>) {
     try {
       await run();
       expect.fail('should have thrown');
     } catch (err) {
       expect(err).to.be.instanceOf(HttpException);
       expect((err as HttpException).getStatus()).to.equal(HttpStatus.TOO_MANY_REQUESTS);
-      expect((err as HttpException).getResponse()).to.deep.include({
-        code: VERIFICATION_CODE_TOO_MANY_TRIES,
-        retryAfterSeconds,
-      });
+      expect((err as HttpException).getResponse()).to.deep.equal(TOO_MANY_BODY);
     }
+  }
+
+  async function refusal(run: () => Promise<unknown>): Promise<{ status: number; body: unknown }> {
+    try {
+      await run();
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(HttpException);
+
+      return { status: (err as HttpException).getStatus(), body: (err as HttpException).getResponse() };
+    }
+
+    throw new Error('unreachable');
   }
 
   it('issues a 6-digit code that redeems to the pending slot', async () => {
@@ -259,22 +205,49 @@ describe('HumanVerificationCodeService', () => {
     expect(cacheService.eval.callCount).to.be.greaterThan(1);
   });
 
-  it('locks the pending slot after 10 wrong tries and leaves a resent code usable', async () => {
+  it('stops one network after 10 wrong tries and leaves the code usable from another', async () => {
     const { service } = setup();
     const first = await service.issue(payload('2026-10-01T12:00:00.000Z'));
+    const other = await service.issue({
+      ...payload('2026-10-01T13:00:00.000Z'),
+      env: 'env-2',
+      agentId: 'agent-2',
+    });
+    const wrong = first.code === '000000' || other.code === '000000' ? '000001' : '000000';
 
-    for (let attempt = 0; attempt < HUMAN_VERIFICATION_CODE_MAX_SLOT_FAILURES - 1; attempt++) {
-      await expectInvalid(() => service.redeem('alice@example.com', '000000', '203.0.113.4'));
+    for (let attempt = 0; attempt < HUMAN_VERIFICATION_CODE_MAX_ADDRESS_FAILURES - 1; attempt++) {
+      await expectInvalid(() => service.redeem('alice@example.com', wrong, '203.0.113.4'));
     }
 
-    await expectTooMany(() => service.redeem('alice@example.com', '000000', '203.0.113.4'), 0);
-    await expectTooMany(() => service.redeem('alice@example.com', first.code, '203.0.113.4'), 0);
+    await expectTooMany(() => service.redeem('alice@example.com', wrong, '203.0.113.4'));
+    await expectTooMany(() => service.redeem('alice@example.com', first.code, '203.0.113.4'));
 
-    const resent = await service.issue(payload('2026-10-01T13:00:00.000Z'));
-    const redeemed = await service.redeem('alice@example.com', resent.code, '203.0.113.4');
+    const redeemed = await service.redeem('alice@example.com', first.code, '203.0.113.10');
+    const redeemedOther = await service.redeem('alice@example.com', other.code, '203.0.113.10');
 
-    expect(redeemed.payload.requestedAt).to.equal('2026-10-01T13:00:00.000Z');
-    expect(resent.code).to.not.equal(first.code);
+    expect(redeemed.payload).to.include({ env: 'env-1', requestedAt: '2026-10-01T12:00:00.000Z' });
+    expect(redeemedOther.payload).to.include({ env: 'env-2', agentId: 'agent-2' });
+  });
+
+  it('refuses a wrong code the same way whether or not one is pending', async () => {
+    const pending = setup();
+    const absent = setup();
+    const issued = await pending.service.issue(payload());
+    const wrong = issued.code === '000000' ? '000001' : '000000';
+
+    const withCode: Array<{ status: number; body: unknown }> = [];
+    const withoutCode: Array<{ status: number; body: unknown }> = [];
+    for (let attempt = 0; attempt < HUMAN_VERIFICATION_CODE_MAX_ADDRESS_FAILURES + 1; attempt++) {
+      withCode.push(await refusal(() => pending.service.redeem('alice@example.com', wrong, '203.0.113.4')));
+      withoutCode.push(await refusal(() => absent.service.redeem('alice@example.com', wrong, '203.0.113.4')));
+    }
+
+    expect(withCode).to.deep.equal(withoutCode);
+    expect(withCode[HUMAN_VERIFICATION_CODE_MAX_ADDRESS_FAILURES - 1]).to.deep.equal({
+      status: HttpStatus.TOO_MANY_REQUESTS,
+      body: TOO_MANY_BODY,
+    });
+    expect(withCode.at(-1)).to.deep.equal(withCode.at(-2));
   });
 
   it('stops an address that one network has already guessed too often', async () => {
@@ -286,17 +259,11 @@ describe('HumanVerificationCodeService', () => {
       expireAt: Math.floor(Date.now() / 1000) + 60,
     });
 
-    await expectTooMany(
-      () => service.redeem('alice@example.com', '000000', '203.0.113.4'),
-      HUMAN_VERIFICATION_CODE_FAILURE_WINDOW_SECONDS
-    );
-    await expectTooMany(
-      () => service.redeem('alice@example.com', '000000', '203.0.113.4'),
-      HUMAN_VERIFICATION_CODE_FAILURE_WINDOW_SECONDS
-    );
+    await expectTooMany(() => service.redeem('alice@example.com', '000000', '203.0.113.4'));
+    await expectTooMany(() => service.redeem('alice@example.com', '000000', '203.0.113.4'));
   });
 
-  it('stops a network that has already guessed too often, before it spends the slot', async () => {
+  it('stops a network that has already guessed too often, before it spends a code', async () => {
     const { service, strings } = setup();
     const issued = await service.issue(payload());
     strings.set(`human_verify_code_net:{203.0.113.9}`, {
@@ -304,10 +271,7 @@ describe('HumanVerificationCodeService', () => {
       expireAt: Math.floor(Date.now() / 1000) + 60,
     });
 
-    await expectTooMany(
-      () => service.redeem('alice@example.com', issued.code, '203.0.113.9'),
-      HUMAN_VERIFICATION_CODE_FAILURE_WINDOW_SECONDS
-    );
+    await expectTooMany(() => service.redeem('alice@example.com', issued.code, '203.0.113.9'));
 
     const redeemed = await service.redeem('alice@example.com', issued.code, '203.0.113.10');
     expect(redeemed.alreadyUsed).to.equal(false);
@@ -329,8 +293,9 @@ describe('HumanVerificationCodeService', () => {
     const issued = await service.issue(payload());
 
     expect(strings.has(codeKey('alice@example.com', issued.code))).to.equal(true);
-    expect(slotCounterKey('alice@example.com', { ...payload(), address: 'alice@example.com' })).to.include(
-      'env-1:agent-1:alice:email:2026-10-01T12:00:00.000Z'
-    );
+    expect(JSON.parse(strings.get(codeKey('alice@example.com', issued.code))?.value ?? '{}').payload).to.include({
+      env: 'env-1',
+      address: 'alice@example.com',
+    });
   });
 });
