@@ -11,6 +11,7 @@ import {
   anypostConfig,
   brazeEmailConfig,
   emailWebhookConfig,
+  groundmailConfig,
   infobipEmailConfig,
   mailerSendConfig,
   mailgunConfig,
@@ -179,6 +180,14 @@ export const emailProviders: IProviderConfig[] = [
     credentials: plunkConfig,
     docReference: `https://docs.novu.co/platform/integrations/email/plunk${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'plunk.png', dark: 'plunk.png' },
+  },
+  {
+    id: EmailProviderIdEnum.Groundmail,
+    displayName: 'Groundmail',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: groundmailConfig,
+    docReference: 'https://docs.groundmail.dev',
+    logoFileName: { light: 'groundmail.svg', dark: 'groundmail.svg' },
   },
   {
     id: EmailProviderIdEnum.SparkPost,

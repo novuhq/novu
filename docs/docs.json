@@ -237,6 +237,7 @@
                   "platform/integrations/email/mailtrap",
                   "platform/integrations/email/netcore",
                   "platform/integrations/email/plunk",
+                  "platform/integrations/email/groundmail",
                   "platform/integrations/email/anypost",
                   "platform/integrations/email/webhook",
                   "platform/integrations/email/custom-smtp",
