@@ -29,6 +29,11 @@ export class HandlePendingToolApprovalsCommand extends EnvironmentWithUserComman
   @IsNotEmpty()
   platformThreadId: string;
 
+  /** Who the paused turn answers, when a person triggered it. Lets a resumed reply stream natively. */
+  @IsString()
+  @IsOptional()
+  platformUserId?: string;
+
   @IsString()
   @IsNotEmpty()
   sessionId: string;

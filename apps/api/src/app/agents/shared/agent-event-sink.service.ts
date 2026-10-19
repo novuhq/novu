@@ -763,7 +763,7 @@ export class AgentEventSink {
     runId: string
   ): Promise<void> {
     const baseFields = this.buildBaseFields(context);
-    const { platform, platformThreadId, sessionId, subscriberId } = context;
+    const { platform, platformThreadId, platformUserId, sessionId, subscriberId } = context;
     const approvals = event.approvals ?? [];
 
     if (!platform || !platformThreadId || !sessionId) {
@@ -801,6 +801,7 @@ export class AgentEventSink {
           subscriberId,
           platform,
           platformThreadId,
+          platformUserId,
           sessionId,
           response,
         })

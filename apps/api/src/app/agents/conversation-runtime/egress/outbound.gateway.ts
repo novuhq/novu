@@ -468,7 +468,6 @@ export class OutboundGateway {
     return adapter.stream(target.platformThreadId, chunks, {
       recipientUserId: target.recipientPlatformUserId,
       recipientTeamId: workspaceId,
-      // The SDK's own thread sets this; keep its cadence for the adapter's internal fallback.
       updateIntervalMs: SLACK_STREAM_UPDATE_INTERVAL_MS,
     });
   }
@@ -981,9 +980,6 @@ export class OutboundGateway {
    * integration's first installed workspace) and run the operation inside `adapter.withBotToken`,
    * which the SDK reads via request-scoped context. Every other platform — and any Slack call
    * without a resolvable token — runs the operation unchanged.
-   *
-   * The operation receives the workspace id resolved here, so callers that need it themselves do
-   * not have to resolve it a second time.
    */
   private async runWithPlatformToken<T>(
     chat: ChatWithAdapters,

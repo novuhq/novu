@@ -11,6 +11,8 @@ import { MockLanguageModelV4 } from 'ai/test';
  */
 const NO_KEY = 'No ANTHROPIC_API_KEY, so I can only check the weather. custom-code-agent has every feature without a model.';
 const cityOf = (text: string) => text.match(/weather(?: in)? ([\p{L}\s-]+)/iu)?.[1].trim() ?? 'Berlin';
+/** Word-sized deltas, so a scripted answer arrives the way a real one does. */
+const toDeltas = (text: string) => text.split(/(?<=\s)/);
 
 const usage = {
   inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 },
@@ -67,7 +69,7 @@ const doStream: MockLanguageModelV4['doStream'] = async (options) => {
 
           const id = `text-${index}`;
           controller.enqueue({ type: 'text-start', id });
-          for (const word of part.text.split(/(?<=\s)/)) {
+          for (const word of toDeltas(part.text)) {
             controller.enqueue({ type: 'text-delta', id, delta: word });
           }
           controller.enqueue({ type: 'text-end', id });
@@ -91,21 +93,26 @@ export class ScriptedChatModel extends BaseChatModel {
   }
 
   async _generate(messages: BaseMessage[]): Promise<ChatResult> {
+    const message = this.scriptedReply(messages);
+
+    return { generations: [{ text: message.text, message }] };
+  }
+
+  private scriptedReply(messages: BaseMessage[]): AIMessage {
     const last = messages[messages.length - 1];
     const text = typeof last.content === 'string' ? last.content : last.text;
-    let message: AIMessage;
     if (last.getType() === 'tool') {
-      message = new AIMessage(text);
-    } else if (/weather/i.test(text)) {
-      message = new AIMessage({
+      return new AIMessage(text);
+    }
+
+    if (/weather/i.test(text)) {
+      return new AIMessage({
         content: '',
         tool_calls: [{ id: `call-${Date.now()}`, name: 'get_weather', args: { city: cityOf(text) }, type: 'tool_call' }],
       });
-    } else {
-      message = new AIMessage(NO_KEY);
     }
 
-    return { generations: [{ text: message.text, message }] };
+    return new AIMessage(NO_KEY);
   }
 
   /** Without this, `BaseChatModel` yields the whole answer as one chunk and nothing streams. */
@@ -114,7 +121,7 @@ export class ScriptedChatModel extends BaseChatModel {
     _options: this['ParsedCallOptions'],
     runManager?: CallbackManagerForLLMRun
   ): AsyncGenerator<ChatGenerationChunk> {
-    const { message } = (await this._generate(messages)).generations[0] as { message: AIMessage };
+    const message = this.scriptedReply(messages);
     if (message.tool_calls?.length) {
       const toolCallChunks = message.tool_calls.map((call, index) => ({
         ...call,
@@ -128,7 +135,7 @@ export class ScriptedChatModel extends BaseChatModel {
       return;
     }
 
-    for (const word of message.text.split(/(?<=\s)/)) {
+    for (const word of toDeltas(message.text)) {
       await runManager?.handleLLMNewToken(word);
       yield new ChatGenerationChunk({ text: word, message: new AIMessageChunk(word) });
     }
