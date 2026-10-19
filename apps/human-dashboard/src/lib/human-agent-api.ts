@@ -2,6 +2,7 @@ import 'server-only';
 
 import { cache } from 'react';
 
+import { AGENT_REACHES, type AgentSettings, type AgentSettingsChange, DEFAULT_AGENT_SETTINGS } from './agent-settings';
 import type { HumanAccount } from './human-account';
 import { isHumanApiNotFound } from './human-api-error';
 import { requestForAccount } from './human-api-key';
@@ -24,9 +25,21 @@ export type RelayAgent = {
   pictureUrl?: string;
   /** ISO timestamp of the `setup` that made it. */
   createdAt?: string;
+  /** Who can reach it and whether it is paused. `null` when they couldn't be read just now. */
+  settings: AgentSettings | null;
 };
 
-type ApiAgent = Omit<RelayAgent, 'id' | 'pictureUrl'> & { _id: string };
+type ApiAgent = Omit<RelayAgent, 'id' | 'pictureUrl' | 'settings'> & { _id: string };
+
+/** `GET`, `PATCH /v1/human/agent`: the agent as the Agent Inbox endpoints describe it. */
+type HumanApiAgent = {
+  pictureUrl?: string;
+  reach?: string;
+  paused?: boolean;
+  pausedAt?: string;
+};
+
+const HUMAN_AGENT_PATH = '/v1/human/agent';
 
 /**
  * The agent that carries messages between the operator's agents and their contacts, or `null` until
@@ -36,9 +49,9 @@ type ApiAgent = Omit<RelayAgent, 'id' | 'pictureUrl'> & { _id: string };
  */
 export const getRelayAgent = cache(async (account: HumanAccount): Promise<RelayAgent | null> => {
   try {
-    const [agent, pictureUrl] = await Promise.all([
+    const [agent, details] = await Promise.all([
       requestForAccount<ApiAgent>(account, `/v1/agents/${RELAY_AGENT_IDENTIFIER}`),
-      loadPictureUrl(account),
+      loadHumanDetails(account),
     ]);
 
     return {
@@ -47,8 +60,9 @@ export const getRelayAgent = cache(async (account: HumanAccount): Promise<RelayA
       name: agent.name,
       active: agent.active !== false,
       description: agent.description,
-      pictureUrl,
+      pictureUrl: details?.pictureUrl,
       createdAt: agent.createdAt,
+      settings: details ? toSettings(details) : null,
     };
   } catch (error) {
     if (isHumanApiNotFound(error)) {
@@ -59,15 +73,51 @@ export const getRelayAgent = cache(async (account: HumanAccount): Promise<RelayA
   }
 });
 
-/** The picture is a nicety: when it can't be read, the agent is shown with the mascot. */
-async function loadPictureUrl(account: HumanAccount): Promise<string | undefined> {
+/**
+ * The picture and the settings. Neither may take a page down: without them the agent is shown with the
+ * mascot, and its settings as unknown rather than as defaults that may not be what is saved.
+ */
+async function loadHumanDetails(account: HumanAccount): Promise<HumanApiAgent | null> {
   try {
-    const agent = await requestForAccount<{ pictureUrl?: string }>(account, '/v1/human/agent');
+    return await requestForAccount<HumanApiAgent>(account, HUMAN_AGENT_PATH);
+  } catch (error) {
+    console.error('Failed to read the agent’s picture and settings', error);
 
-    return agent.pictureUrl;
-  } catch {
-    return undefined;
+    return null;
   }
+}
+
+/** Changes who can reach the agent, or pauses or resumes it, and returns the settings it has now. */
+export async function updateAgentSettings(account: HumanAccount, change: AgentSettingsChange): Promise<AgentSettings> {
+  const agent = await requestForAccount<HumanApiAgent>(account, HUMAN_AGENT_PATH, { method: 'PATCH', body: change });
+
+  return toSettings(agent);
+}
+
+/**
+ * Deletes the agent for good: its address, channels, threads and the connections of its hosts. The account
+ * and the contacts stay. An agent that is gone already counts as deleted.
+ */
+export async function deleteAgent(account: HumanAccount): Promise<void> {
+  try {
+    await requestForAccount(account, HUMAN_AGENT_PATH, { method: 'DELETE' });
+  } catch (error) {
+    if (!isHumanApiNotFound(error)) {
+      throw error;
+    }
+  }
+}
+
+/** Sends the onboarding test from the Agent Email Inbox to the operator’s sign-up address. */
+export function sendAgentTestEmail(account: HumanAccount, email: string): Promise<{ success: boolean }> {
+  return requestForAccount(account, '/v1/human/agent/test-email', { method: 'POST', body: { email } });
+}
+
+function toSettings(agent: HumanApiAgent): AgentSettings {
+  return {
+    reach: AGENT_REACHES.find((value) => value === agent.reach) ?? DEFAULT_AGENT_SETTINGS.reach,
+    paused: agent.paused && agent.pausedAt ? { at: agent.pausedAt } : null,
+  };
 }
 
 /**

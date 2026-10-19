@@ -31,6 +31,8 @@ type RelayDetails = {
   agentName?: string;
   /** The operator's own address, so mail they send to the agent is recognized as theirs. */
   operatorEmail?: string;
+  /** The mailbox local-part they chose. Left out, the API derives one from the name. */
+  inboxHandle?: string;
 };
 
 /**
@@ -40,7 +42,7 @@ type RelayDetails = {
 export async function ensureRelay(
   account: HumanAccount,
   name: OperatorName = {},
-  { agentName, operatorEmail }: RelayDetails = {}
+  { agentName, operatorEmail, inboxHandle }: RelayDetails = {}
 ): Promise<{ agentId: string; contactId: string }> {
   const setup = await requestForAccount<{ agentId: string; subscriberId: string }>(account, '/v1/human/setup', {
     method: 'POST',
@@ -50,6 +52,7 @@ export async function ensureRelay(
       ...(name.lastName ? { lastName: name.lastName } : {}),
       ...(agentName ? { agentName } : {}),
       ...(operatorEmail ? { email: operatorEmail } : {}),
+      ...(inboxHandle ? { inboxHandle } : {}),
     },
   });
 

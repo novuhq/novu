@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowDown, ArrowRight, Check, Send } from 'lucide-react';
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 
 import { leaveTestAction, sendTestEmailAction } from '@/app/(account)/onboarding/actions';
 import { ChannelIcon } from '@/components/channels/channel-icon';
@@ -12,8 +12,9 @@ import { CopyButton } from '@/components/ui/copy-button';
 import { cn } from '@/lib/utils';
 
 type TestStepProps = {
-  /** What the agent is called in a sentence: its address without the domain. */
-  handle: string;
+  /** What the operator called the agent. */
+  name: string;
+  /** The Agent Email Inbox address. Empty when that inbox could not be read. */
   address: string;
   /** Where the test email goes: the address the operator signed up with. */
   operatorEmail: string | null;
@@ -28,10 +29,12 @@ type TestStepProps = {
  * The step goes through three states: nothing sent, the email sent, the reply in. Whatever a state
  * changes rises in (`Refresh`); the rest of the step stays where it is.
  */
-export function TestStep({ handle, address, operatorEmail, sentAt, replyAt }: TestStepProps) {
+export function TestStep({ name, address, operatorEmail, sentAt, replyAt }: TestStepProps) {
   const [sending, startSending] = useTransition();
   const [leaving, startLeaving] = useTransition();
-  const subject = `Hi, I’m ${handle}`;
+  const [error, setError] = useState<string>();
+  const subject = `Hi, I’m ${name}`;
+  const ready = Boolean(address);
 
   return (
     <>
@@ -42,7 +45,7 @@ export function TestStep({ handle, address, operatorEmail, sentAt, replyAt }: Te
             <StepTitle>
               It works <em>both ways</em>
             </StepTitle>
-            <StepLead>Your reply is in {handle}’s inbox. Connect your agent so it can read it.</StepLead>
+            <StepLead>Your reply is in {name}’s inbox. Connect your agent so it can read it.</StepLead>
           </>
         ) : (
           <>
@@ -56,16 +59,20 @@ export function TestStep({ handle, address, operatorEmail, sentAt, replyAt }: Te
 
       <div className="flex min-h-13.5 items-center gap-3 rounded-[10px] border border-border-strong bg-subtle py-3 pr-3 pl-4">
         <ChannelIcon via="email" className="size-5 [&>svg]:size-2.75" />
-        <p className="min-w-0 flex-1 truncate font-mono text-base leading-5.5 font-medium text-foreground">{address}</p>
-        <CopyButton value={address} label="Copy the address" variant="secondary" className={SMALL_BUTTON}>
-          Copy
-        </CopyButton>
+        <p className="min-w-0 flex-1 truncate font-mono text-base leading-5.5 font-medium text-foreground">
+          {address || 'Inbox isn’t ready'}
+        </p>
+        {ready && (
+          <CopyButton value={address} label="Copy the address" variant="secondary" className={SMALL_BUTTON}>
+            Copy
+          </CopyButton>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-[10px] border border-border-strong bg-subtle">
         <p className="flex items-center gap-2 border-b border-border px-3.5 py-2.5 font-mono text-xs leading-4 text-default">
           <span className="text-[11px] leading-3.5 text-muted">From</span>
-          <span className="min-w-0 truncate">{address}</span>
+          <span className="min-w-0 truncate">{address || 'Inbox isn’t ready'}</span>
           {/* Drawn: the mono font's subset has no arrow, and the fallback's is two letters wide. */}
           <ArrowRight aria-label="to" className="h-3.5 w-[1ch] shrink-0 text-muted" strokeWidth={1.5} />
           <span className="min-w-0 truncate">{operatorEmail ?? 'your email'}</span>
@@ -73,7 +80,7 @@ export function TestStep({ handle, address, operatorEmail, sentAt, replyAt }: Te
         <div className="flex flex-col gap-1 px-3.5 py-3">
           <p className="text-sm leading-5 font-medium text-foreground">{subject}</p>
           <p className="text-[13px] leading-4.75 text-secondary">
-            Reply to this email. Your reply lands in {handle}’s inbox below.
+            Reply to this email. Your reply lands in {name}’s inbox below.
           </p>
         </div>
         {/* The line above the row stays; what the row says comes in anew once the email is sent. */}
@@ -89,7 +96,8 @@ export function TestStep({ handle, address, operatorEmail, sentAt, replyAt }: Te
                   variant="quiet"
                   className={SMALL_BUTTON}
                   pending={sending}
-                  onClick={() => startSending(sendTestEmailAction)}
+                  disabled={!ready}
+                  onClick={() => startSending(() => send(setError))}
                 >
                   Send again
                 </Button>
@@ -97,7 +105,12 @@ export function TestStep({ handle, address, operatorEmail, sentAt, replyAt }: Te
             ) : (
               <>
                 <p className="min-w-0 flex-1 text-xs leading-4 text-muted">Goes to your sign-up email</p>
-                <Button className={SMALL_BUTTON} pending={sending} onClick={() => startSending(sendTestEmailAction)}>
+                <Button
+                  className={SMALL_BUTTON}
+                  pending={sending}
+                  disabled={!ready}
+                  onClick={() => startSending(() => send(setError))}
+                >
                   <Send aria-hidden="true" className="size-3.5" />
                   Send test email
                 </Button>
@@ -106,11 +119,16 @@ export function TestStep({ handle, address, operatorEmail, sentAt, replyAt }: Te
           </Refresh>
         </div>
       </div>
+      {error && (
+        <p role="alert" className="animate-rise-in text-xs leading-4 text-danger motion-reduce:animate-none">
+          {error}
+        </p>
+      )}
 
       <div className="overflow-hidden rounded-[10px] border border-border">
         <p className="flex items-center gap-2 border-b border-border bg-background px-3.5 py-2.5">
           <span className="flex-1 font-mono text-[10px] leading-3.5 font-medium tracking-[0.8px] text-muted uppercase">
-            {handle}’s inbox
+            {name}’s inbox
           </span>
           <span className="font-mono text-[11px] leading-3.5 text-success">active</span>
         </p>
@@ -162,4 +180,12 @@ export function TestStep({ handle, address, operatorEmail, sentAt, replyAt }: Te
       </div>
     </>
   );
+}
+
+async function send(setError: (message: string | undefined) => void): Promise<void> {
+  setError(undefined);
+  const result = await sendTestEmailAction();
+  if (!result.ok) {
+    setError(result.message);
+  }
 }

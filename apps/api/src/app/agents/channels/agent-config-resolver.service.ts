@@ -6,6 +6,7 @@ import {
   RotatingConnectionTokenService,
 } from '@novu/application-generic';
 import {
+  type AgentInboxReach,
   AgentIntegrationEntity,
   AgentIntegrationRepository,
   AgentRepository,
@@ -66,6 +67,8 @@ export interface ResolvedAgentConfig {
    * limits so a signed-up Human user never sees an upgrade card.
    */
   isHumanRelay: boolean;
+  /** Who can write to a Human relay: anyone, or only its contacts. Set for Human relays only. */
+  inboxReach?: AgentInboxReach;
   isManaged: boolean;
   agentId: string;
   agentIdentifier: string;
@@ -348,6 +351,7 @@ export class AgentConfigResolver {
       organizationId,
       isKeyless: isKeylessOrganization(organizationId),
       isHumanRelay,
+      ...(isHumanRelay ? { inboxReach: agent.reach ?? 'anyone' } : {}),
       isManaged: agent.runtime === 'managed' && !!agent.managedRuntime,
       agentId: agent._id,
       agentIdentifier: agent.identifier,

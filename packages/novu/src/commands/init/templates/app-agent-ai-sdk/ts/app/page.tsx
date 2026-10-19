@@ -22,7 +22,7 @@ export default function Home() {
               </a>
             </li>
             <li>
-              Uncomment the <code className={styles.code}>generateText</code> example in{' '}
+              Uncomment the <code className={styles.code}>streamText</code> example in{' '}
               <code className={styles.code}>app/novu/agents/support-agent.tsx</code>, install{' '}
               <code className={styles.code}>ai</code> + your provider, and set your API key
             </li>

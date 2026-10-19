@@ -122,11 +122,15 @@ export async function saveTelegramTokenAction(botToken: string): Promise<SaveTel
   }
 }
 
-/** Whether someone has pressed Start in the bot. The drawer asks while it waits. */
+/**
+ * Whether the operator has pressed Start in the bot. The drawer asks while it waits. Another contact
+ * pressing it first doesn't count: the drawer is about the operator's own Telegram, as Slack's is.
+ */
 export async function checkTelegramConnectedAction(): Promise<boolean> {
   const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
-  const channels = await listChannels(account);
-  const connected = channels.some((channel) => channel.via === 'telegram' && channel.active && channel.connected);
+  const [channels, contactId] = await Promise.all([listChannels(account), findOperatorContactId(account)]);
+  const telegram = channels.find((channel) => channel.via === 'telegram' && channel.active && channel.connected);
+  const connected = Boolean(telegram && contactId && (await hasLinkedChannel(account, telegram.identifier, contactId)));
 
   if (connected) {
     revalidatePath(CHANNELS_PATH);

@@ -11,8 +11,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
+import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   CreateWorkflowCommandV0,
   CreateWorkflowV0,

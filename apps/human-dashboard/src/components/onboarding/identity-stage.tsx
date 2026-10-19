@@ -10,7 +10,7 @@ import { SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { MascotFace, useBeaming } from '@/components/ui/mascot-face';
 import { AI_TOOLS } from '@/lib/ai-tools';
-import { HOST_LABELS, type HostVia, PLACEHOLDER_NAME } from '@/lib/onboarding';
+import { HOST_LABELS, type HostVia, PLACEHOLDER_NAME, writtenLink } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
 /**
@@ -29,7 +29,7 @@ type IdentityStageProps = {
   /** The line under the name: whose agent it is and since when. */
   subtitle: ReactNode;
   address: string;
-  /** The public card's address, written out without `https://`. */
+  /** The public card's link, `https://agentinbox.md/p/atlas` (`cardLinkOf`). Shown as `writtenLink` writes it. */
   cardLink: string;
   telegramConnected?: boolean;
   /** Mail has landed in the agent's inbox, which wakes the mascot up before any host is there. */
@@ -201,11 +201,11 @@ export function IdentityStage({
                 draft ? 'text-muted' : 'text-default'
               )}
             >
-              {cardLink}
+              {writtenLink(cardLink)}
             </p>
             {!draft && (
               <CopyButton
-                value={`https://${cardLink}`}
+                value={cardLink}
                 label="Copy the link to the agent's card"
                 variant="quiet"
                 className={cn(SMALL_BUTTON, 'ml-auto animate-overlay-in text-foreground motion-reduce:animate-none')}
@@ -322,7 +322,7 @@ function Portrait({ state, name, address, gotMail }: PortraitProps) {
         </>
       )}
       {/* Light on the dark portrait, as in the design: `Icon · 44×44`, 16px from the right, 4px from the bottom. */}
-      {!draft && (
+      {!draft && address && (
         <QRCode
           value={`mailto:${address}`}
           size={44}
@@ -369,14 +369,15 @@ type IdentityRowsProps = Pick<IdentityStageProps, 'state' | 'address'> & { teleg
 function IdentityRows({ state, address, telegramConnected }: IdentityRowsProps) {
   const draft = state === 'draft';
   const connected = state === 'connected';
+  const inboxReady = !draft && Boolean(address);
 
   return (
     <ul className="flex flex-col px-3 pb-2">
       <IdentityRow
         icon={<ChannelIcon via="email" className="size-4 [&>svg]:size-2.25" />}
-        label={address}
-        live={!draft}
-        status={draft ? <Pending /> : <Live>active</Live>}
+        label={address || (draft ? 'Assigned when you create it' : 'Inbox isn’t ready')}
+        live={inboxReady}
+        status={inboxReady ? <Live>active</Live> : <Pending />}
       />
       <IdentityRow
         icon={

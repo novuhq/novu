@@ -1,0 +1,96 @@
+---
+title: 'OpenID Connect SSO'
+sidebarTitle: 'OpenID Connect'
+description: 'Register Novu as an OpenID Connect client, using the authorization code flow, and provide the discovery URL or endpoints plus a client ID and secret.'
+---
+
+<Note>
+  This is an Enterprise feature on [Novu Cloud](https://dashboard.novu.co). Configure it as the organization **Owner** from **Settings** > **Organization** > **Security** after we enable self-serve, or email [support@novu.co](mailto:support@novu.co) and we will do the Novu side with you. Domain verification and activation are covered in [SAML SSO & SCIM](/platform/account/sso).
+</Note>
+
+Use this when the identity provider supports OpenID Connect and you want the authorization code flow rather than SAML. Okta Workforce, Microsoft Entra ID, and Google Workspace each have a SAML guide. Use those when you want the named SAML setup. Use this page when the provider is something else, or when you specifically need OIDC.
+
+The Security tab splits the work into three parts: redirect URI, endpoints, and client credentials. If we are configuring the connection, send us the same values the tab asks for.
+
+## Before you start
+
+- An Enterprise organization on Novu Cloud.
+- One or more email domains verified on the Security tab. After activation, an email on a verified domain has to sign in through this provider.
+- Permission in the IdP to create a confidential client that uses the authorization code grant, and to set a redirect URI.
+- The authorized redirect URI shown on the Security tab when **OIDC Provider** is selected, or the redirect URI we send you.
+
+Switching an existing connection from SAML to OIDC, or the other way, removes the current connection and starts again. The Security tab warns you before it does that.
+
+## Register the application
+
+<Steps>
+  <Step title="Create a confidential client">
+    In the IdP, create an application that uses the authorization code grant. Public clients and implicit flow are not this setup. The application has to be allowed to release the scopes `openid`, `email`, and `profile`, so the ID token can carry the claims below.
+
+    Copy the **authorized redirect URI** from the Security tab and add it to the IdP's allowed redirect URLs. It has to match exactly, including the scheme and any trailing path. A redirect URI the IdP does not list is rejected before Novu ever sees an ID token.
+  </Step>
+  <Step title="Provide the endpoints">
+    Paste the IdP's **discovery endpoint**. On most providers this is the issuer URL ending in `/.well-known/openid-configuration`. Novu reads the authorization, token, and user info URLs from that document.
+
+    If the IdP does not publish a discovery document, choose manual configuration and provide:
+
+    | Field | Required | What it is |
+    | --- | --- | --- |
+    | Authorization URL | Yes | Where the browser goes so the person can sign in and approve the request. |
+    | Token URL | Yes | Where Novu exchanges the authorization code for tokens. |
+    | User info URL | No | An extra profile endpoint. Use it when the ID token does not include the email and name claims and the IdP serves them from user info instead. |
+  </Step>
+  <Step title="Provide the client credentials">
+    Paste the **client ID** and **client secret** from the IdP application. The secret is a credential. Send it to us in the same channel you already use with Novu support, or paste it on the Security tab. Do not put it in a ticket that other people can read later if you can avoid it.
+
+    If the IdP only shows the secret once, store it before you close that screen. A new secret means updating the connection. On a live connection, that update applies immediately.
+  </Step>
+</Steps>
+
+## Claims the ID token should include
+
+| ID token claim | Required | Used as |
+| --- | --- | --- |
+| `sub` | Yes | Stable user ID at the IdP. This should not change when the person's email changes. |
+| `email` | Yes | Primary email. Novu matches the verified domain against this claim. |
+| `given_name` | No | First name |
+| `family_name` | No | Last name |
+
+The setup screen lists `sub` and `email` as the identity claims it reads. Enterprise OIDC also expects an `email_verified` claim. Some providers, including Microsoft Entra, omit `email_verified` or send it in a non-standard way. If the test fails for that reason, contact us. We can mark email as verified for that IdP.
+
+Do that only when you trust the IdP. Treating an unverified email as verified, from an IdP you do not control, is an account-takeover risk.
+
+## Test it, then turn it on
+
+Run a test sign-in with a user whose email is on a verified domain and who is allowed to use the OIDC application. For a new connection, the test does not change sign-in for anyone else. Activate after it succeeds.
+
+<Warning>
+  After activation, anyone signing in with an email on a verified domain must use this IdP. Editing a live connection, including a new client secret or a changed token URL, applies immediately.
+</Warning>
+
+## What your users experience
+
+- They enter their work email on the Novu sign-in page. Novu redirects them to the authorization URL. After they sign in, the IdP redirects back to the authorized redirect URI with an authorization code. Novu exchanges that code at the token URL.
+- IdP-initiated login from an app tile is a SAML feature. It is not available for this OIDC connection.
+- If the person has multi-factor authentication on their Novu account, they still complete it after the IdP returns.
+- Removing the connection does not delete Novu accounts. Those people need another sign-in method that is still available on the account.
+- There is no OIDC-specific directory protocol. If the IdP can also push SCIM 2.0, use [custom SCIM directory sync](/platform/account/directory-sync/custom-scim) on this same connection. Until then, the person is created in Novu when they first sign in.
+
+## If the test fails
+
+<AccordionGroup>
+  <Accordion title="The IdP says the redirect URI does not match">
+    Compare the URI registered in the IdP with the authorized redirect URI on the Security tab, character for character.
+  </Accordion>
+  <Accordion title="Discovery cannot be loaded">
+    Open the discovery URL in a browser. It should return JSON that includes `authorization_endpoint` and `token_endpoint`. If the IdP has no such document, switch to manual configuration and paste those two URLs.
+  </Accordion>
+  <Accordion title="The ID token has no email">
+    The client is not allowed to request `email`, or the IdP only puts email on the user info endpoint. Allow the `email` scope. If the claim is only on user info, set the user info URL in manual configuration.
+  </Accordion>
+  <Accordion title="email_verified is missing">
+    Contact us before you remap other claims. Some providers do not send this claim. We can trust the IdP for email verification when you are confident the IdP only issues tokens for accounts it has verified.
+  </Accordion>
+</AccordionGroup>
+
+Email [support@novu.co](mailto:support@novu.co) or your Slack Connect channel if you want us to enter the client secret and endpoints for you. Tell us the organization name and the email domain.

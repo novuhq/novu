@@ -82,12 +82,12 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
                 'Your agent’s inbox · not created yet'
               )
             }
-            address={agent?.address ?? addressOf(draft.handle || PLACEHOLDER_HANDLE)}
-            cardLink={agent?.cardLink ?? cardLinkOf(draft.handle || PLACEHOLDER_HANDLE)}
+            address={agent?.address || (draft.handle ? addressOf(draft.handle) : '')}
+            cardLink={agent?.cardLink ?? cardLinkOf(view.origin, draft.handle || PLACEHOLDER_HANDLE)}
             telegramConnected={view.channels.telegram}
             gotMail={testPassed}
             hostVia={host?.via}
-            caption={describeFigure(step, draft)}
+            caption={describeFigure(step)}
           />
         }
       >
@@ -112,7 +112,7 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
               {shown === 'address' && <AddressStep onDraftChange={setDraft} />}
               {shown === 'test' && agent && (
                 <TestStep
-                  handle={agent.handle}
+                  name={agent.name}
                   address={agent.address}
                   operatorEmail={operator.email}
                   sentAt={test.sentAt}
@@ -134,6 +134,7 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
                   host={host}
                   readFrom={operator.email}
                   channels={view.channels}
+                  reach={view.reach}
                 />
               )}
             </div>
@@ -145,9 +146,9 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
 }
 
 /** The caption in the corner of the stage, numbered like the figures of a manual. */
-function describeFigure(step: OnboardingStep, draft: AgentDraft): string {
+function describeFigure(step: OnboardingStep): string {
   if (step === 'address') {
-    return draft.takenHandle ? 'fig. 01  name kept, address changed' : 'fig. 01  naming';
+    return 'fig. 01  naming';
   }
 
   return step === 'reach' ? 'fig. 04  issued and connected' : 'fig. 02  issued';

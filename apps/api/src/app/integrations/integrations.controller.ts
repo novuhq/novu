@@ -808,36 +808,55 @@ export class IntegrationsController {
     @Query('error') error?: string,
     @Query('error_description') errorDescription?: string
   ): Promise<void> {
-    if (error) {
-      throw new BadRequestException(`OAuth error: ${error}${errorDescription ? ` - ${errorDescription}` : ''}`);
-    }
+    try {
+      if (error) {
+        throw new BadRequestException(`OAuth error: ${error}${errorDescription ? ` - ${errorDescription}` : ''}`);
+      }
 
+      if (!state) {
+        throw new BadRequestException('Missing required OAuth parameter: state');
+      }
+
+      if (!providerCode && !tenant) {
+        throw new BadRequestException('Missing required OAuth parameters: code or tenant');
+      }
+
+      const result = await this.chatOauthCallbackUsecase.execute(
+        ChatOauthCallbackCommand.create({
+          providerCode,
+          tenant,
+          adminConsent,
+          state,
+        })
+      );
+
+      if (result.type === ResponseTypeEnum.HTML) {
+        res.setHeader('Content-Type', 'text/html');
+        res.setHeader('Content-Security-Policy', CONNECTION_RESULT_CSP);
+        res.send(result.result);
+
+        return;
+      }
+
+      res.redirect(result.result);
+    } catch (err) {
+      const redirectUrl = await this.resolveAgentInboxSlackErrorRedirect(state);
+      if (!redirectUrl) {
+        throw err;
+      }
+
+      this.logger.error({ err }, 'Agent Inbox Slack OAuth callback failed');
+      res.redirect(redirectUrl);
+    }
+  }
+
+  /** A readable Agent Inbox Slack install goes to its result page. Anything else keeps the thrown error. */
+  private async resolveAgentInboxSlackErrorRedirect(state: string | undefined): Promise<string | null> {
     if (!state) {
-      throw new BadRequestException('Missing required OAuth parameter: state');
+      return null;
     }
 
-    if (!providerCode && !tenant) {
-      throw new BadRequestException('Missing required OAuth parameters: code or tenant');
-    }
-
-    const result = await this.chatOauthCallbackUsecase.execute(
-      ChatOauthCallbackCommand.create({
-        providerCode,
-        tenant,
-        adminConsent,
-        state,
-      })
-    );
-
-    if (result.type === ResponseTypeEnum.HTML) {
-      res.setHeader('Content-Type', 'text/html');
-      res.setHeader('Content-Security-Policy', CONNECTION_RESULT_CSP);
-      res.send(result.result);
-
-      return;
-    }
-
-    res.redirect(result.result);
+    return this.chatOauthCallbackUsecase.resolveHumanRelayErrorRedirect(state);
   }
 
   @Post('/whatsapp/validate-token')

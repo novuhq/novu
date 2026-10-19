@@ -1,5 +1,5 @@
 import { isValidAgentEmailSlugPrefix } from '@novu/application-generic';
-import { type ICredentials, isAgentInboxProvider } from '@novu/shared';
+import { EmailProviderIdEnum, type ICredentials, isAgentInboxProvider } from '@novu/shared';
 
 /**
  * The NovuAgent integration owns a handful of routing-control fields that a
@@ -10,6 +10,8 @@ import { type ICredentials, isAgentInboxProvider } from '@novu/shared';
  *                           rotating it is the moral equivalent of changing
  *                           the integration's email address and should only
  *                           happen through an explicit server-side flow.
+ * - `inboxDomain`         — domain the address was pinned to at provision
+ *                           time. A client save must not repoint or erase it.
  * - `secretKey`           — HMAC secret used to sign inbound webhook
  *                           payloads. Same property as on other agent
  *                           providers: minted at provision time and never
@@ -28,8 +30,9 @@ import { type ICredentials, isAgentInboxProvider } from '@novu/shared';
  * client sent is dropped. On update, a partial credential save (e.g. the
  * dashboard sends only the subset the user edited) gets the server-stored
  * value re-applied, and an attempt to *change* one is ignored rather than
- * allowed to nuke the integration. `emailSlugPrefix` is the exception: an
- * explicit, valid prefix replaces the stored one.
+ * allowed to nuke the integration. `emailSlugPrefix` is the exception on a
+ * keyed inbox: an explicit, valid prefix replaces the stored one. A vanity
+ * Agent Inbox keeps the handle it was created with.
  */
 export function sanitizeAgentInboxCredentialsForCreate(providerId: string, next: ICredentials): ICredentials {
   if (!isAgentInboxProvider(providerId)) {
@@ -39,6 +42,7 @@ export function sanitizeAgentInboxCredentialsForCreate(providerId: string, next:
   // Nothing is provisioned yet, so every managed field is the server's to mint.
   const created: ICredentials = { ...next };
   delete created.inboxRoutingKey;
+  delete created.inboxDomain;
   delete created.secretKey;
   delete created.sharedInboxDisabled;
 
@@ -66,6 +70,12 @@ export function mergeAgentInboxCredentialsForUpdate(
     delete merged.inboxRoutingKey;
   }
 
+  if (existing?.inboxDomain) {
+    merged.inboxDomain = existing.inboxDomain;
+  } else {
+    delete merged.inboxDomain;
+  }
+
   if (existing?.secretKey) {
     merged.secretKey = existing.secretKey;
   }
@@ -77,8 +87,9 @@ export function mergeAgentInboxCredentialsForUpdate(
     delete merged.sharedInboxDisabled;
   }
 
-  // An explicit, valid prefix is the one managed field the client may change.
-  if (!hasValidSlugPrefix(merged)) {
+  // A vanity address is the handle alone, fixed when the inbox was created.
+  // A keyed inbox may still replace an explicit, valid prefix.
+  if (isVanityAgentInbox(providerId, existing) || !hasValidSlugPrefix(merged)) {
     if (existing?.emailSlugPrefix) {
       merged.emailSlugPrefix = existing.emailSlugPrefix;
     } else {
@@ -93,4 +104,15 @@ function hasValidSlugPrefix(credentials: ICredentials): boolean {
   const slug = credentials.emailSlugPrefix;
 
   return typeof slug === 'string' && isValidAgentEmailSlugPrefix(slug);
+}
+
+/** `{slug}@domain`: an Agent Email Inbox with a pinned domain and no routing key. */
+function isVanityAgentInbox(providerId: string, existing: ICredentials | undefined): boolean {
+  const vanity =
+    providerId === EmailProviderIdEnum.AgentEmailInbox &&
+    typeof existing?.inboxDomain === 'string' &&
+    existing.inboxDomain.length > 0 &&
+    !existing.inboxRoutingKey;
+
+  return vanity;
 }

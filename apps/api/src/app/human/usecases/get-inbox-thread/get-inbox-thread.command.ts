@@ -15,6 +15,11 @@ export class GetInboxThreadCommand extends InboxThreadCommand {
   @IsString()
   before?: string;
 
+  /** The newest message already read: the page is what came after it. Not together with `before`. */
+  @IsOptional()
+  @IsString()
+  after?: string;
+
   @IsOptional()
   @IsIn(INBOX_THREAD_INCLUDES)
   include?: InboxThreadInclude;

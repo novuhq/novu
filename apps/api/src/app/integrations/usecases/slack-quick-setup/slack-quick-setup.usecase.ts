@@ -64,11 +64,14 @@ export class SlackQuickSetup {
       throw new BadRequestException('Slack quick setup is only supported for Slack integrations');
     }
 
+    const agent = await this.findAgent(command);
+    const nameFallback = agent?.runtime === 'human_relay' ? 'Agent' : 'Novu Bot';
     const manifest = this.buildManifest(
-      integration.name ?? 'Novu Bot',
+      integration.name ?? nameFallback,
       integration.identifier,
       command.agentId,
-      await this.resolveDescription(command)
+      this.resolveDescription(agent),
+      nameFallback
     );
 
     this.logger.info(`Slack quick setup: creating app for integrationId=${command.integrationId}`);
@@ -143,24 +146,43 @@ export class SlackQuickSetup {
    * Slack rejects display_name values that are or contain the reserved word "slack"
    * (case-insensitive). Strip it and fall back to a safe default when nothing is left.
    */
-  private sanitizeBotDisplayName(name: string): string {
+  private sanitizeBotDisplayName(name: string, fallback: string): string {
     const sanitized = name.replace(/slack/gi, '').trim();
 
-    return sanitized.length > 0 ? sanitized : 'Novu Bot';
+    return sanitized.length > 0 ? sanitized : fallback;
   }
 
-  /** A Human agent speaks as itself: its Slack app carries the description its operator gave it. */
-  private async resolveDescription(command: SlackQuickSetupCommand): Promise<string> {
-    const agent = await this.agentRepository.findOne(
+  private async findAgent(command: SlackQuickSetupCommand): Promise<{ runtime?: string; description?: string } | null> {
+    return this.agentRepository.findOne(
       { _id: command.agentId, _environmentId: command.environmentId, _organizationId: command.organizationId },
       ['runtime', 'description']
     );
-    const description = agent?.runtime === 'human_relay' ? humanRelayProfile(agent).description : undefined;
-
-    return description ? description.slice(0, SLACK_DESCRIPTION_MAX_LENGTH) : SLACK_AGENT_DEFAULT_DESCRIPTION;
   }
 
-  private buildManifest(botName: string, integrationIdentifier: string, agentId: string, description: string): object {
+  /**
+   * A Human agent speaks as itself when its operator wrote a description. With none, the Slack
+   * app says "AI agent" rather than the Novu default used by every other agent.
+   */
+  private resolveDescription(agent: { runtime?: string; description?: string } | null): string {
+    const description = agent?.runtime === 'human_relay' ? humanRelayProfile(agent).description : undefined;
+    if (description) {
+      return description.slice(0, SLACK_DESCRIPTION_MAX_LENGTH);
+    }
+
+    if (agent?.runtime === 'human_relay') {
+      return 'AI agent';
+    }
+
+    return SLACK_AGENT_DEFAULT_DESCRIPTION;
+  }
+
+  private buildManifest(
+    botName: string,
+    integrationIdentifier: string,
+    agentId: string,
+    description: string,
+    nameFallback: string
+  ): object {
     // Slack must reach both the OAuth callback and the agent webhook over the
     // public internet — so `api.novu.localhost` and any LAN-only hostname are
     // unreachable. `AGENT_API_HOSTNAME` (e.g. an ngrok URL) takes precedence
@@ -172,7 +194,7 @@ export class SlackQuickSetup {
       ''
     );
     const oauthCallbackUrl = `${apiBaseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
-    const displayName = this.sanitizeBotDisplayName(botName);
+    const displayName = this.sanitizeBotDisplayName(botName, nameFallback);
 
     const webhookUrl = `${apiBaseUrl}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 

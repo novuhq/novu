@@ -9,11 +9,7 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import { DomainRouteTypeEnum, EmailProviderIdEnum, type WorkflowAgentConfig } from '@novu/shared';
-import {
-  buildAgentSharedInbox,
-  isAgentSharedInboxEnabled,
-  resolvePublishedAgentEmailSlug,
-} from '../../utils/agent-shared-inbox';
+import { isAgentSharedInboxEnabled, resolvePublishedAgentInboxAddress } from '../../utils/agent-shared-inbox';
 
 export type ResolveAgentInboundAddressesParams = {
   agentIdentifier: string;
@@ -364,25 +360,10 @@ export class ResolveAgentInboundAddresses {
       return undefined;
     }
 
-    const slug = resolvePublishedAgentEmailSlug(novuAgent.credentials?.emailSlugPrefix, {
+    return resolvePublishedAgentInboxAddress(novuAgent.credentials, {
       identifier: params.agentIdentifier,
       name: params.agentName,
     });
-
-    if (!slug) {
-      return undefined;
-    }
-
-    const inboxRoutingKey = novuAgent.credentials?.inboxRoutingKey;
-    if (!inboxRoutingKey) {
-      return undefined;
-    }
-
-    try {
-      return buildAgentSharedInbox(slug, inboxRoutingKey);
-    } catch {
-      return undefined;
-    }
   }
 
   private async resolveCustomDomainAddresses(params: {

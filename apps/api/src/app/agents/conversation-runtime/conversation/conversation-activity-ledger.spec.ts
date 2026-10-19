@@ -1,4 +1,4 @@
-import { ConversationActivityTypeEnum, ConversationRepository } from '@novu/dal';
+import { ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum, ConversationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ConversationActivityLedger } from './conversation-activity-ledger';
@@ -582,6 +582,99 @@ describe('ConversationActivityLedger', () => {
         content: 'where is order 4321?',
         platformMessageId: 'msg-1',
         senderId: 'ada',
+      });
+    });
+  });
+
+  describe('human interaction activities', () => {
+    function humanInteractionParams() {
+      return {
+        conversationId: 'conv-1',
+        channel: {
+          platform: 'telegram',
+          _integrationId: 'integration-a',
+          platformThreadId: 'telegram:1',
+        },
+        agentIdentifier: 'human',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        interactionIdentifier: 'hi_1',
+        kind: 'ask',
+        title: 'Which region?',
+        platformMessageId: 'msg-1',
+        actorType: ConversationActivitySenderTypeEnum.AGENT as const,
+        actorId: 'human',
+      };
+    }
+
+    it('keeps the identifiers of a thread as they always were', async () => {
+      const activityRepository = makeActivityRepository();
+      const ledger = makeLedger(activityRepository);
+
+      await ledger.persistHumanInteractionRequest(humanInteractionParams());
+      await ledger.persistHumanInteractionResponse({
+        ...humanInteractionParams(),
+        status: 'answered',
+        text: 'eu-west',
+        actorType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+        actorId: 'ada',
+      });
+
+      expect(activityRepository.createToolActivity.firstCall.args[0]).to.include({
+        identifier: 'human:hi_1:request',
+        conversationId: 'conv-1',
+        type: ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST,
+      });
+      expect(activityRepository.createToolActivity.secondCall.args[0]).to.include({
+        identifier: 'human:hi_1:response',
+        conversationId: 'conv-1',
+        type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+      });
+    });
+
+    it('names the thread in the identifiers of a thread after the first', async () => {
+      const activityRepository = makeActivityRepository();
+      const ledger = makeLedger(activityRepository);
+      const otherThread = { ...humanInteractionParams(), conversationId: 'conv-2', inOtherThread: true };
+
+      await ledger.persistHumanInteractionRequest(otherThread);
+      await ledger.persistHumanInteractionResponse({
+        ...otherThread,
+        status: 'answered',
+        actorType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+        actorId: 'bob',
+      });
+
+      expect(activityRepository.createToolActivity.firstCall.args[0]).to.deep.include({
+        identifier: 'human:hi_1:conv-2:request',
+        conversationId: 'conv-2',
+        richContent: { humanInteraction: { interactionIdentifier: 'hi_1', kind: 'ask', title: 'Which region?' } },
+      });
+      expect(activityRepository.createToolActivity.secondCall.args[0]).to.include({
+        identifier: 'human:hi_1:conv-2:response',
+        conversationId: 'conv-2',
+      });
+    });
+
+    it('returns the row already in that thread when the same row is written twice', async () => {
+      const existing = { _id: 'existing', identifier: 'human:hi_1:conv-2:request' };
+      const findOne = sinon.stub().resolves(existing);
+      const activityRepository = makeActivityRepository({
+        createToolActivity: sinon.stub().rejects(Object.assign(new Error('dup'), { code: 11000 })),
+        findOne,
+      });
+
+      const activity = await makeLedger(activityRepository).persistHumanInteractionRequest({
+        ...humanInteractionParams(),
+        conversationId: 'conv-2',
+        inOtherThread: true,
+      });
+
+      expect(activity).to.equal(existing);
+      expect(findOne.firstCall.args[0]).to.deep.equal({
+        _environmentId: 'env-1',
+        _conversationId: 'conv-2',
+        identifier: 'human:hi_1:conv-2:request',
       });
     });
   });

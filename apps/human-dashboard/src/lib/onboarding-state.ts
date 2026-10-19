@@ -19,9 +19,14 @@ export type OnboardingState = {
    * terminal, claimed or not, or it was in use long before the steps existed.
    */
   startedAt?: string;
-  /** Mock (NV-9032): the address picked on step 1. The API assigns its own until it takes this one. */
+  /** The agent step 1 made. The progress below is its own: step 1 giving back another agent starts it over. */
+  agentId?: string;
+  /**
+   * Left over from when step 1 stored a chosen address. New progress does not write it. Sentences use the
+   * agent's name, and the mailbox is the address the API assigned.
+   */
   handle?: string;
-  /** Mock (NV-9032): when the test email was "sent", and when its reply "landed". */
+  /** When the test email was sent from the Agent Email Inbox, and when the operator's reply landed. */
   testSentAt?: string;
   testReplyAt?: string;
   /** The operator moved on from step 2, with or without the test. */

@@ -106,7 +106,9 @@ export async function channelListCommand(options: { json?: boolean; apiUrl?: str
 export function channelAddCommand(channelArg: string, options: ChannelAddOptions): Promise<never> {
   requireSetup();
 
-  return setupCommand(parseChannel(channelArg), { ...options, skill: false });
+  const channel = parseChannel(channelArg);
+
+  return setupCommand(channel, { ...options, skill: false }, `channel add ${channel}`);
 }
 
 export async function channelDefaultCommand(channelArg: string, options: { json?: boolean }): Promise<never> {
