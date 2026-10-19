@@ -339,11 +339,22 @@ describe('Process Inbound Webhook push providers E2E #novu-v2', () => {
         throw new Error('Subscriber not found');
       }
 
+      const template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.PUSH,
+            content: 'Seeded push notification',
+            title: 'Seeded push title',
+          },
+        ],
+      });
+
       const messageIdentifier = `push-activity-${providerCase.providerId}-${Date.now()}`;
       const message = await messageRepository.create({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
         _subscriberId: subscriber._id,
+        _notificationId: template._id,
         _jobId: new Types.ObjectId().toString(),
         channel: ChannelTypeEnum.PUSH,
         providerId: providerCase.providerId,
