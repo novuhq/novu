@@ -19,6 +19,9 @@ fetch('http://127.0.0.1:4000/api/novu?action=discover', {
 `;
 const Discovered = fromJson(z.object({ key: z.string(), served: z.array(z.string()) }));
 const WithIds = z.object({ data: z.array(z.object({ identifier: z.string(), _id: z.string() })) });
+const Agents = z.object({
+  data: z.array(z.object({ identifier: z.string(), _id: z.string(), runtime: z.string().optional() })),
+});
 const Connections = z.object({ data: z.array(z.object({ identifier: z.string() })) });
 
 export interface SlackBox {
@@ -72,11 +75,17 @@ export async function connectSlack(box: SlackBox): Promise<void> {
   const { key, served } = Discovered.parse(output);
   box.apiKey = key;
   const name = boxOfOrigin(origin);
-  // In storage: the Durable Object doesn't stay in memory between alarms.
-  if (!served.length || [...served].sort().join(',') === (await box.storage.get<string>('slackConnected'))) return;
-  const agents = (await list(box, origin, '/v1/agents?limit=50', WithIds)).filter((agent) =>
-    served.includes(agent.identifier)
+  if (!served.length) return;
+  // Managed agents answer from Novu's managed runtime, not the bridge, and the box seeds its own after the bridge.
+  const agents = (await list(box, origin, '/v1/agents?limit=50', Agents)).filter(
+    (agent) => served.includes(agent.identifier) || agent.runtime === 'managed'
   );
+  const wanted = agents
+    .map((agent) => agent.identifier)
+    .sort()
+    .join(',');
+  // In storage: the Durable Object doesn't stay in memory between alarms.
+  if (wanted === (await box.storage.get<string>('slackConnected'))) return;
   const slack = await router(box)
     .register(
       name,
