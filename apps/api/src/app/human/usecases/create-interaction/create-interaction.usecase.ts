@@ -467,14 +467,17 @@ export class CreateInteraction {
 
     for (const value of to) {
       const address = explicitEmailAddress(value);
-      if (!address) {
-        recipients.push({ subscriberId: value });
+      const subscriberId = address ? await this.contactForExplicitEmail(command, agent, address, reserved) : value;
+      const prior = recipients.find((recipient) => recipient.subscriberId === subscriberId);
+      if (prior) {
+        if (address && !prior.explicitEmail) {
+          prior.explicitEmail = address;
+        }
         continue;
       }
 
-      const subscriberId = await this.contactForExplicitEmail(command, agent, address, reserved);
       reserved.add(subscriberId);
-      recipients.push({ subscriberId, explicitEmail: address });
+      recipients.push(address ? { subscriberId, explicitEmail: address } : { subscriberId });
     }
 
     return recipients;
@@ -529,7 +532,51 @@ export class CreateInteraction {
       address,
     });
 
+    const winner = await this.winningContactForEmail(command, agent, address);
+    if (winner && winner !== subscriberId) {
+      await this.humanContactRepository.clearDeclaredAddress({
+        environmentId: command.environmentId,
+        agentId: agent._id,
+        subscriberId,
+        via: HumanChannelViaEnum.EMAIL,
+        address,
+      });
+
+      return winner;
+    }
+
     return subscriberId;
+  }
+
+  /**
+   * The contact that keeps `address` when two first sends stored it at once.
+   * The earlier declaration wins; a tie takes the smaller id so both requests agree.
+   */
+  private async winningContactForEmail(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    address: string
+  ): Promise<string | null> {
+    const matches = await this.humanContactRepository.findContactsByEmailAddress(
+      command.environmentId,
+      agent._id,
+      address
+    );
+    const ranked = [...matches].sort((left, right) => {
+      const leftAt = left.addresses?.[HumanChannelViaEnum.EMAIL]?.declared?.declaredAt ?? '';
+      const rightAt = right.addresses?.[HumanChannelViaEnum.EMAIL]?.declared?.declaredAt ?? '';
+      if (leftAt !== rightAt) {
+        return leftAt < rightAt ? -1 : 1;
+      }
+
+      if (left.subscriberId === right.subscriberId) {
+        return 0;
+      }
+
+      return left.subscriberId < right.subscriberId ? -1 : 1;
+    });
+
+    return ranked[0]?.subscriberId ?? null;
   }
 
   private async existingContactForEmail(

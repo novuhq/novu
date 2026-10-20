@@ -688,7 +688,7 @@ function describeStoredEmail(slot: HumanContactChannelAddresses | undefined): {
     status = HumanAddressVerificationStateEnum.PENDING;
   }
 
-  const rawAddress = verified?.address ?? pending?.address;
+  const rawAddress = verified?.address ?? pending?.address ?? slot?.declared?.address;
 
   return {
     connected: Boolean(verified),

@@ -104,6 +104,7 @@ describe('CreateInteraction', () => {
     const humanContactRepository = {
       findContactsByEmailAddress: sinon.stub().resolves([]),
       setDeclaredAddress: sinon.stub().resolves({ address: 'ada@acme.com', declaredAt: 't' }),
+      clearDeclaredAddress: sinon.stub().resolves(),
     };
     const subscriberRepository = {
       findOne: sinon.stub().resolves(null),
@@ -999,6 +1000,64 @@ describe('CreateInteraction', () => {
 
       expect(subscriberRepository.create.called).to.equal(false);
       expect(humanContactRepository.setDeclaredAddress.called).to.equal(false);
+    });
+
+    it('delivers once when the same address is named twice', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanContactRepository, subscriberRepository } =
+        setup();
+      agentRepository.findOne.resolves(agent);
+      humanContactRepository.findContactsByEmailAddress
+        .onCall(0)
+        .resolves([])
+        .onCall(1)
+        .resolves([])
+        .onCall(2)
+        .resolves([{ subscriberId: 'ada' }]);
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'email-inbox',
+        platform: 'email',
+        platformUserId: 'ada@acme.com',
+      });
+
+      await usecase.execute({ ...command, to: ['Ada@Acme.com', 'ada@acme.com'], via: undefined } as any);
+
+      expect(subscriberRepository.create.calledOnce).to.equal(true);
+      expect(deliveryService.resolveChannel.calledOnce).to.equal(true);
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({
+        subscriberId: 'ada',
+        explicitEmail: 'ada@acme.com',
+      });
+    });
+
+    it('drops the later contact when two first sends store the same address', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanContactRepository } = setup();
+      agentRepository.findOne.resolves(agent);
+      humanContactRepository.findContactsByEmailAddress
+        .onCall(0)
+        .resolves([])
+        .onCall(1)
+        .resolves([
+          {
+            subscriberId: 'ada',
+            addresses: { email: { declared: { address: 'ada@acme.com', declaredAt: '2026-01-02T00:00:00.000Z' } } },
+          },
+          {
+            subscriberId: 'ada-earlier',
+            addresses: { email: { declared: { address: 'ada@acme.com', declaredAt: '2026-01-01T00:00:00.000Z' } } },
+          },
+        ]);
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'email-inbox',
+        platform: 'email',
+        platformUserId: 'ada@acme.com',
+      });
+
+      await usecase.execute({ ...command, to: 'ada@acme.com', via: undefined } as any);
+
+      expect(deliveryService.resolveChannel.calledOnce).to.equal(true);
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({ subscriberId: 'ada-earlier' });
+      expect(humanContactRepository.clearDeclaredAddress.calledOnce).to.equal(true);
+      expect(humanContactRepository.clearDeclaredAddress.firstCall.args[0]).to.include({ subscriberId: 'ada' });
     });
 
     it('rejects an email address combined with a chat channel', async () => {

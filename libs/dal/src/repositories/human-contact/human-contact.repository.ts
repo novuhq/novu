@@ -352,4 +352,25 @@ export class HumanContactRepository extends BaseRepositoryV2<
 
     return declared;
   }
+
+  /** Drops a declared address this request just stored, when another contact already owns it. */
+  async clearDeclaredAddress(params: {
+    environmentId: string;
+    agentId: string;
+    subscriberId: string;
+    via: HumanChannelViaEnum;
+    address: string;
+  }): Promise<void> {
+    const declaredPath = `addresses.${params.via}.declared`;
+
+    await this.update(
+      {
+        _environmentId: params.environmentId,
+        _agentId: params.agentId,
+        subscriberId: params.subscriberId,
+        [`${declaredPath}.address`]: params.address,
+      },
+      { $unset: { [declaredPath]: '' } }
+    );
+  }
 }
