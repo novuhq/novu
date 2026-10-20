@@ -4,19 +4,22 @@ import type { User } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import type { AgentReach } from './agent-settings';
+import { buildChannelPrompt } from './agent-setup-prompt';
 import { findCurrentUser } from './auth-page';
 import type { HostStatus } from './host-status';
 import type { HumanAccount } from './human-account';
-import { DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from './human-agent-api';
+import { agentDisplayName, DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from './human-agent-api';
 import { requestForAccount } from './human-api-key';
 import { listChannels } from './human-channels-api';
+import { loadChannelsOverview } from './human-channels-overview';
 import { loadHostStatus } from './human-hosts-api';
 import { getInboxThread, listInboxThreads } from './human-inbox-api';
+import type { SlackSetupState } from './human-slack-setup';
+import type { TelegramSetupState } from './human-telegram-setup';
 import type { InboxMessage, InboxThread } from './inbox';
-import { resolveNovuApiUrl } from './novu-api';
 import { cardLinkOf, ONBOARDING_PATH, type OnboardingStep, toHandle } from './onboarding';
 import { type OnboardingState, readOnboardingState, writeOnboardingState } from './onboarding-state';
-import { readSiteOrigin } from './site-origin';
+import { readApiUrl, readSiteOrigin } from './site-origin';
 
 /** Where an operator stands: on one of the four steps, or `done` with them. */
 export type SetupStep = OnboardingStep | 'done';
@@ -300,13 +303,26 @@ export type OnboardingView = {
   waitingMessage: HostStatus['waitingMessage'];
   /** `null` when the unread count could not be checked. */
   waiting: number | null;
-  /** The API the account lives on, named by the connect command in step 3. */
+  /** The Agent Inbox API (`readApiUrl`), named by the connect command of step 3 and the channel prompts of step 4. */
   apiUrl: string;
   channels: { telegram: boolean; slack: boolean };
+  /** What the Telegram and Slack drawers of step 4 open with. `null` on the other steps. */
+  channelSetup: OnboardingChannelSetup | null;
   /** Who can reach the agent, for the Share dialog of step 4. `null` while there is no agent, or it couldn't be read. */
   reach: AgentReach | null;
   /** Where the dashboard is served (`readSiteOrigin`): the card link the steps show before there is an agent. */
   origin: string;
+};
+
+/** What the Configure page hands its Telegram and Slack drawers, for the same drawers in step 4. */
+export type OnboardingChannelSetup = {
+  /** How far each setup got, so its drawer opens where it was left. `unknown` when it couldn't be read. */
+  telegram: TelegramSetupState;
+  slack: SlackSetupState;
+  /** What the Slack app is called until the operator names it. */
+  slackAppName: string;
+  /** What the operator hands their own agent in each drawer. */
+  prompts: Record<'telegram' | 'slack', string>;
 };
 
 /** What the onboarding page renders. `null` once there is nothing left to walk the operator through. */
@@ -317,30 +333,63 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
     return null;
   }
 
-  const [channels, waiting] = agent
-    ? await Promise.all([loadChannelFacts(account), countWaitingMessages(account)])
-    : [{ telegram: false, slack: false, emailAddress: undefined }, 0];
+  const [channels, waiting, setups] = agent
+    ? await Promise.all([
+        loadChannelFacts(account),
+        countWaitingMessages(account),
+        step === 'reach' ? loadChannelSetups(account) : null,
+      ])
+    : [{ telegram: false, slack: false, emailAddress: undefined }, 0, null];
   const origin = await readSiteOrigin();
   const host = hostStatus?.hosts.reduce<(typeof hostStatus.hosts)[number] | null>(
     (earliest, entry) => (!earliest || entry.connectedAt < earliest.connectedAt ? entry : earliest),
     null
   );
+  const identity = agent && describeAgentIdentity(agent, state, origin, channels.emailAddress);
+  const apiUrl = await readApiUrl();
 
   return {
     step,
     status: describeProgress(progress),
     operator: { email: user.primaryEmailAddress?.emailAddress ?? null, firstName: user.firstName },
-    agent: agent && describeAgentIdentity(agent, state, origin, channels.emailAddress),
+    agent: identity,
     test: { sentAt: state.testSentAt, replyAt: state.testReplyAt },
     host: host ? { via: host.via, connectedAt: host.connectedAt } : null,
     hostStatusUnavailable: Boolean(agent && state.testLeftAt && !hostStatus),
     waitingMessage: hostStatus?.waitingMessage ?? null,
     waiting,
-    apiUrl: resolveNovuApiUrl(account.region),
+    apiUrl,
     channels: { telegram: channels.telegram, slack: channels.slack },
+    channelSetup:
+      agent && identity && setups
+        ? {
+            ...setups,
+            slackAppName: agentDisplayName(agent),
+            prompts: {
+              telegram: buildChannelPrompt({ apiUrl }, 'telegram', identity.handle),
+              slack: buildChannelPrompt({ apiUrl }, 'slack', identity.handle),
+            },
+          }
+        : null,
     reach: agent?.settings?.reach ?? null,
     origin,
   };
+}
+
+/**
+ * The Telegram and Slack setups, read as the Configure page reads them. They are a detail of step 4: when
+ * they can't be read, the drawers find out for themselves once they open.
+ */
+async function loadChannelSetups(account: HumanAccount): Promise<Pick<OnboardingChannelSetup, 'telegram' | 'slack'>> {
+  try {
+    const { telegramSetup, slackSetup } = await loadChannelsOverview(account);
+
+    return { telegram: telegramSetup, slack: slackSetup };
+  } catch (error) {
+    console.error('Failed to read the channel setups for the onboarding', error);
+
+    return { telegram: { step: 'unknown' }, slack: { step: 'unknown' } };
+  }
 }
 
 async function loadChannelFacts(account: HumanAccount) {
