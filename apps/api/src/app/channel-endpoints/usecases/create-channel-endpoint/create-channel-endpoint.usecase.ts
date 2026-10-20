@@ -30,6 +30,7 @@ import {
 import { ConfirmLinkedAuthCardsCommand } from '../../../agents/conversation-runtime/link/confirm-linked-auth-cards.command';
 import { ConfirmLinkedAuthCards } from '../../../agents/conversation-runtime/link/confirm-linked-auth-cards.usecase';
 import { AgentPlatformEnum } from '../../../agents/shared/enums/agent-platform.enum';
+import { AgentInboxChannelAnalytics } from '../../../human/services/agent-inbox-channel-analytics.service';
 import { CreateChannelEndpointCommand } from './create-channel-endpoint.command';
 
 const MONGO_DUPLICATE_KEY_CODE = 11000;
@@ -167,7 +168,33 @@ export class CreateChannelEndpoint {
       void this.confirmLinkedAuthCards(command, integration);
     }
 
+    // Best-effort, non-blocking: the first chat linked on an Agent Inbox's Telegram or Slack is when it works.
+    void this.countAgentInboxChannel(command, integration);
+
     return channelEndpoint;
+  }
+
+  /**
+   * Counts an Agent Inbox's Telegram or Slack channel as connected for analytics. Lazily resolved like
+   * {@link confirmLinkedAuthCards}, as it lives in `HumanModule`, and swallowed so linking is never affected.
+   */
+  private async countAgentInboxChannel(
+    command: CreateChannelEndpointCommand,
+    integration: IntegrationEntity
+  ): Promise<void> {
+    try {
+      const channelAnalytics = this.moduleRef.get(AgentInboxChannelAnalytics, { strict: false });
+
+      await channelAnalytics.countLinkedChat(
+        { environmentId: command.environmentId, organizationId: command.organizationId },
+        integration
+      );
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), integrationId: integration._id },
+        'Failed to count an Agent Inbox channel as connected'
+      );
+    }
   }
 
   /**

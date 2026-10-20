@@ -18,7 +18,9 @@ describe('HumanAccountAgentService', () => {
   } = {}) {
     const agentRepository = {
       find: sinon.stub().resolves(relays),
-      findOne: sinon.stub().resolves({ _id: 'claimed1', runtime: 'human_relay' }),
+      findOne: sinon
+        .stub()
+        .resolves({ _id: 'claimed1', identifier: 'human-relay', name: 'Human', runtime: 'human_relay' }),
       delete: sinon.stub().resolves(),
     };
     const agentIntegrationRepository = { count: sinon.stub().resolves(channels) };
@@ -34,12 +36,7 @@ describe('HumanAccountAgentService', () => {
     };
     const humanOperator = { findForAgent: sinon.stub().resolves('human_aaaaaaaaaaaa') };
     const setupHumanRelay = { execute: sinon.stub().resolves() };
-    const deliveryService = {
-      listInviteChannels: sinon.stub().resolves([
-        { via: 'telegram', integrationIdentifier: 'tg' },
-        { via: 'email', integrationIdentifier: 'inbox' },
-      ]),
-    };
+    const deliveryService = { listWorkingChannels: sinon.stub().resolves(['telegram', 'email']) };
     const analyticsService = { track: sinon.stub() };
     const service = new HumanAccountAgentService(
       agentRepository as never,
@@ -145,10 +142,10 @@ describe('HumanAccountAgentService', () => {
       _organizationId: 'org1',
       identifier: 'human-relay',
     });
-    expect(deliveryService.listInviteChannels.firstCall.args[0]).to.deep.equal({
+    expect(deliveryService.listWorkingChannels.firstCall.args[0]).to.deep.equal({
       environmentId: 'env1',
       organizationId: 'org1',
-      agentId: 'claimed1',
+      agent: { _id: 'claimed1', identifier: 'human-relay', name: 'Human', runtime: 'human_relay' },
     });
     expect(analyticsService.track.args).to.deep.equal([
       [AGENT_INBOX_EVENTS.INBOX_CREATED, 'user1', { _organization: 'org1', agentId: 'claimed1', source: 'cli' }],
@@ -158,6 +155,26 @@ describe('HumanAccountAgentService', () => {
         { _organization: 'org1', agentId: 'claimed1', channel: 'telegram' },
       ],
       [AGENT_INBOX_EVENTS.CHANNEL_CONNECTED, 'user1', { _organization: 'org1', agentId: 'claimed1', channel: 'email' }],
+    ]);
+  });
+
+  it('counts no inbox for a claimed setup whose agent never got its address', async () => {
+    const { service, deliveryService, analyticsService } = setup({ relays: [] });
+    deliveryService.listWorkingChannels.resolves(['telegram']);
+
+    await service.claimOverUntouchedAgent(
+      account,
+      name,
+      sinon.stub().resolves({ environmentId: 'env1', agentIdentifier: 'human-relay' })
+    );
+    await settle();
+
+    expect(analyticsService.track.args).to.deep.equal([
+      [
+        AGENT_INBOX_EVENTS.CHANNEL_CONNECTED,
+        'user1',
+        { _organization: 'org1', agentId: 'claimed1', channel: 'telegram' },
+      ],
     ]);
   });
 

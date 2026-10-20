@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { resolvePublishedAgentInboxAddress } from '@novu/application-generic';
 import {
+  type AgentEntity,
   AgentIntegrationRepository,
   ChannelEndpointEntity,
   ChannelEndpointRepository,
@@ -216,6 +218,43 @@ export class HumanDeliveryService {
     }
 
     return channels;
+  }
+
+  /**
+   * The agent's channels that work, as the dashboard shows them connected: email once the agent has its
+   * address, Telegram and Slack once someone linked their chat.
+   */
+  async listWorkingChannels(params: {
+    environmentId: string;
+    organizationId: string;
+    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>;
+  }): Promise<HumanChannelViaEnum[]> {
+    const integrations = await this.findLinkedIntegrations({ ...params, agentId: params.agent._id });
+    const channels = await Promise.all(
+      integrations.map(async (integration) => {
+        const via = viaForProviderId(integration.providerId);
+        if (!via) {
+          return null;
+        }
+
+        if (via === HumanChannelViaEnum.EMAIL) {
+          return resolvePublishedAgentInboxAddress(integration.credentials, params.agent) ? via : null;
+        }
+
+        const chat = await this.channelEndpointRepository.findOne(
+          {
+            _environmentId: params.environmentId,
+            _organizationId: params.organizationId,
+            integrationIdentifier: integration.identifier,
+          },
+          '_id'
+        );
+
+        return chat ? via : null;
+      })
+    );
+
+    return [...new Set(channels.filter((via): via is HumanChannelViaEnum => via !== null))];
   }
 
   /** The invite page's apps, with connection / verification state and default. */

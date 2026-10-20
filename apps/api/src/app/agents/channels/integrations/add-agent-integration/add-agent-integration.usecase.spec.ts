@@ -99,6 +99,14 @@ describe('AddAgentIntegration Agent Inbox analytics', () => {
     const environmentRepository = {
       findOne: sinon.stub().resolves({ type: EnvironmentTypeEnum.DEV, name: 'Development' }),
     };
+    const findOrCreateNovuEmail = {
+      execute: sinon.stub().resolves({
+        response: {
+          integration: { _id: 'int-2', identifier: 'inbox', providerId: 'agent-email-inbox', channel: 'email' },
+        },
+        provisionedNewLink: true,
+      }),
+    };
     const analyticsService = { track: sinon.stub() };
     const usecase = new AddAgentIntegration(
       agentRepository as never,
@@ -106,7 +114,7 @@ describe('AddAgentIntegration Agent Inbox analytics', () => {
       agentIntegrationRepository as never,
       {} as never,
       environmentRepository as never,
-      {} as never,
+      findOrCreateNovuEmail as never,
       {} as never,
       analyticsService as never,
       {} as never
@@ -123,15 +131,32 @@ describe('AddAgentIntegration Agent Inbox analytics', () => {
     userId: 'user-1',
   };
 
-  it('counts a channel linked to the Agent Inbox agent as one of its own', async () => {
+  it("leaves the Agent Inbox's Telegram uncounted until someone links their chat", async () => {
     const { usecase, analyticsService } = setup('human_relay');
 
     await usecase.execute(command as never);
 
-    expect(analyticsService.track.secondCall.args).to.deep.equal([
-      AGENT_INBOX_EVENTS.CHANNEL_CONNECTED,
-      'user-1',
-      { _organization: 'org-1', agentId: 'agent-1', channel: 'telegram' },
+    expect(analyticsService.track.calledOnce).to.equal(true);
+    expect(analyticsService.track.firstCall.args[0]).to.equal('Agent Integration Connected - [Agents]');
+  });
+
+  it("counts a new address as the Agent Inbox's inbox and its email channel", async () => {
+    const { usecase, analyticsService } = setup('human_relay');
+
+    await usecase.execute({
+      ...command,
+      integrationIdentifier: undefined,
+      providerId: EmailProviderIdEnum.AgentEmailInbox,
+      analyticsSource: 'cli',
+    } as never);
+
+    expect(analyticsService.track.args.slice(1)).to.deep.equal([
+      [AGENT_INBOX_EVENTS.INBOX_CREATED, 'user-1', { _organization: 'org-1', agentId: 'agent-1', source: 'cli' }],
+      [
+        AGENT_INBOX_EVENTS.CHANNEL_CONNECTED,
+        'user-1',
+        { _organization: 'org-1', agentId: 'agent-1', channel: 'email' },
+      ],
     ]);
   });
 

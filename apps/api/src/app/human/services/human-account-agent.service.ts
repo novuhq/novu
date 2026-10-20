@@ -7,6 +7,7 @@ import {
   HumanInteractionRepository,
   SubscriberRepository,
 } from '@novu/dal';
+import { HumanChannelViaEnum } from '@novu/shared';
 import { SetupHumanRelayCommand } from '../usecases/setup-human-relay/setup-human-relay.command';
 import {
   DEFAULT_HUMAN_RELAY_IDENTIFIER,
@@ -131,9 +132,9 @@ export class HumanAccountAgentService {
   }
 
   /**
-   * A setup made without an account was never counted: it belonged to nobody. Its inbox and channels count
-   * now, for the account that claimed it, as made in the CLI. In the background, so counting never slows or
-   * fails a claim.
+   * A setup made without an account was never counted: it belonged to nobody. What works of it counts now, for
+   * the account that claimed it, as made in the CLI: its inbox once it has its address, and each channel that
+   * is connected. In the background, so counting never slows or fails a claim.
    */
   private countClaimedSetup(account: AccountScope, agentIdentifier: string | undefined): void {
     if (!agentIdentifier) {
@@ -146,22 +147,25 @@ export class HumanAccountAgentService {
   private async trackClaimedSetup(account: AccountScope, agentIdentifier: string): Promise<void> {
     const agent = await this.agentRepository.findOne(
       { _environmentId: account.environmentId, _organizationId: account.organizationId, identifier: agentIdentifier },
-      ['_id', 'runtime']
+      ['_id', 'identifier', 'name', 'runtime']
     );
     if (agent?.runtime !== 'human_relay') {
       return;
     }
 
     const owner = { userId: account.userId, organizationId: account.organizationId };
-    trackAgentInboxCreated(this.analyticsService, owner, { agentId: agent._id, source: 'cli' });
-
-    const channels = await this.deliveryService.listInviteChannels({
+    const channels = await this.deliveryService.listWorkingChannels({
       environmentId: account.environmentId,
       organizationId: account.organizationId,
-      agentId: agent._id,
+      agent,
     });
-    for (const { via } of channels) {
-      trackAgentInboxChannelConnected(this.analyticsService, owner, { agentId: agent._id, channel: via });
+
+    if (channels.includes(HumanChannelViaEnum.EMAIL)) {
+      trackAgentInboxCreated(this.analyticsService, owner, { agentId: agent._id, source: 'cli' });
+    }
+
+    for (const channel of channels) {
+      trackAgentInboxChannelConnected(this.analyticsService, owner, { agentId: agent._id, channel });
     }
   }
 

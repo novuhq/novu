@@ -9,6 +9,7 @@ import { ChatProviderIdEnum, ENDPOINT_TYPES, ToolProviderIdEnum } from '@novu/sh
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ConfirmLinkedAuthCards } from '../../../agents/conversation-runtime/link/confirm-linked-auth-cards.usecase';
+import { AgentInboxChannelAnalytics } from '../../../human/services/agent-inbox-channel-analytics.service';
 import { CreateChannelEndpointCommand } from './create-channel-endpoint.command';
 import { CreateChannelEndpoint } from './create-channel-endpoint.usecase';
 
@@ -50,7 +51,12 @@ function createHarness() {
   const contextRepository = sinon.createStubInstance(ContextRepository);
   const createOrUpdateSubscriber = { execute: sinon.stub().resolves() };
   const confirmLinkedAuthCards = sinon.createStubInstance(ConfirmLinkedAuthCards);
-  const moduleRef = { get: sinon.stub().returns(confirmLinkedAuthCards) };
+  const channelAnalytics = { countLinkedChat: sinon.stub().resolves() };
+  const moduleRef = {
+    get: sinon
+      .stub()
+      .callsFake((token) => (token === AgentInboxChannelAnalytics ? channelAnalytics : confirmLinkedAuthCards)),
+  };
   const logger = { setContext: sinon.stub(), warn: sinon.stub(), info: sinon.stub(), debug: sinon.stub() };
 
   integrationRepository.findOne.resolves(buildMockIntegration());
@@ -73,6 +79,7 @@ function createHarness() {
   return {
     usecase,
     confirmLinkedAuthCards,
+    channelAnalytics,
     moduleRef,
     channelEndpointRepository,
     channelConnectionRepository,
@@ -109,8 +116,22 @@ describe('CreateChannelEndpoint — auth card confirmation gating', () => {
     await usecase.execute(buildSlackUserCommand());
     await flushMicrotasks();
 
-    expect(moduleRef.get.called).to.be.false;
+    expect(moduleRef.get.calledWith(ConfirmLinkedAuthCards)).to.be.false;
     expect(confirmLinkedAuthCards.execute.called).to.be.false;
+  });
+
+  it('hands every linked chat to the Agent Inbox channel count', async () => {
+    const { usecase, channelAnalytics } = createHarness();
+
+    await usecase.execute(buildSlackUserCommand());
+    await flushMicrotasks();
+
+    expect(channelAnalytics.countLinkedChat.calledOnce).to.be.true;
+    expect(channelAnalytics.countLinkedChat.firstCall.args[0]).to.deep.equal({
+      environmentId: MOCK_ENVIRONMENT_ID,
+      organizationId: MOCK_ORGANIZATION_ID,
+    });
+    expect(channelAnalytics.countLinkedChat.firstCall.args[1].identifier).to.equal(MOCK_INTEGRATION_IDENTIFIER);
   });
 
   it('should NOT confirm auth cards when platformIdentityVerified is explicitly false', async () => {

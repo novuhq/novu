@@ -1,4 +1,5 @@
 import type { AnalyticsService } from '@novu/application-generic';
+import type { EnvironmentRepository } from '@novu/dal';
 import { AGENT_INBOX_EVENTS, type AgentAnalyticsSource, isAgentAnalyticsSource } from '@novu/shared';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 
@@ -8,6 +9,28 @@ import { isKeylessOrganization } from '../../keyless/keyless-organization.helper
  * made the request. The dashboard identifies the operator with the same id, so both land on one profile.
  */
 export type AgentInboxOwner = { userId: string; organizationId: string };
+
+/**
+ * The owner of an Agent Inbox environment, for events that come without a session, such as a chat linked from
+ * Telegram or Slack: the user the environment has its key from, the same user every request with that key
+ * carries. Null for a setup made without an account.
+ */
+export async function findAgentInboxOwner(
+  environmentRepository: EnvironmentRepository,
+  scope: { environmentId: string; organizationId: string }
+): Promise<AgentInboxOwner | null> {
+  if (isKeylessOrganization(scope.organizationId)) {
+    return null;
+  }
+
+  const environment = await environmentRepository.findOne(
+    { _id: scope.environmentId, _organizationId: scope.organizationId },
+    ['apiKeys']
+  );
+  const userId = environment?.apiKeys?.[0]?._userId;
+
+  return userId ? { userId: String(userId), organizationId: scope.organizationId } : null;
+}
 
 /** The app a request came from, by its `Novu-Analytics-Source` header: `cli`, `mcp` or `dashboard`. */
 export function readAnalyticsSource(header: unknown): AgentAnalyticsSource | undefined {
