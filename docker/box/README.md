@@ -154,6 +154,8 @@ Object and one container per box, the Slack router, and a registry of the boxes 
 request reaches by hostname: `box.novu-staging.co` is the hub's own API, `slack.box.novu-staging.co` the Slack
 router, and `<box>` or `<box>-api` that box. So a box name can't be `slack` or end in `-api`.
 
+![The parts on Cloudflare: hostnames under box.novu-staging.co reach the one hub Worker, which picks the Registry, a Box or the Router Durable Object; each awake box has a container, an asleep box a snapshot](./docs/07-cloudflare.svg)
+
 **The domain:** staging's zone `novu-staging.co`, in the same Cloudflare account. Universal SSL covers only one
 level of subdomain, so the hub's Custom Domain `box.novu-staging.co` is what brings a free certificate for
 `*.box.novu-staging.co` too; keep it attached. A proxied DNS record `*.box` (AAAA `100::`, set by hand) and the

@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg style="min-width: 1280px" viewBox="0 0 1500 760" xmlns="http://www.w3.org/2000/svg" font-family="Geist, system-ui, -apple-system, sans-serif" role="img" aria-labelledby="cloudflare-title cloudflare-desc">
+  <title id="cloudflare-title">Novu Box · Its parts on Cloudflare</title>
+  <desc id="cloudflare-desc">The CLI and CI, a browser or agent, and Slack call hostnames under box.novu-staging.co; every hostname reaches the one hub Worker in the novu-box-hub deploy, which picks a Durable Object by host: Registry for the hub's API, Box per box, Router for Slack. An awake box's Durable Object runs its container from the image; an asleep box has no container and its disk is a snapshot in the image registry. The Router passes Slack events to a box by name, and the box replies through Slack's host.</desc>
+  <defs>
+    <marker id="r" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
+    <marker id="g" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+    <marker id="gs" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto"><polygon points="8 0, 0 3, 8 6" fill="#4f5d75"/></marker>
+    <marker id="b" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+    <marker id="bs" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto"><polygon points="8 0, 0 3, 8 6" fill="#2e5aa8"/></marker>
+    <style>
+      .t{font-size:14px;font-weight:600;fill:#2d3142}
+      .tm{font-size:14px;font-weight:600;fill:#4f5d75}
+      .hm{font-size:12px;font-weight:600;fill:#2d3142;font-family:'Geist Mono',ui-monospace,monospace}
+      .hg{font-size:12px;font-weight:600;fill:#4f5d75;font-family:'Geist Mono',ui-monospace,monospace}
+      .s{font-size:11px;fill:#4f5d75;font-family:'Geist Mono',ui-monospace,monospace}
+      .h{font-size:10.5px;letter-spacing:.1em;fill:#2d3142;font-family:'Geist Mono',ui-monospace,monospace}
+      .n{font-size:10.5px;fill:#4f5d75;font-family:'Geist Mono',ui-monospace,monospace}
+      .x{font-size:10px;fill:#4f5d75;font-family:'Geist Mono',ui-monospace,monospace}
+      .l{font-size:10px;letter-spacing:.06em;fill:#4f5d75;font-family:'Geist Mono',ui-monospace,monospace}
+      .lb{font-size:10px;letter-spacing:.06em;fill:#2e5aa8;font-family:'Geist Mono',ui-monospace,monospace}
+      .lane{font-size:10px;letter-spacing:.12em;fill:#4f5d75;font-family:'Geist Mono',ui-monospace,monospace}
+      .card{fill:#fff;stroke:#2d3142;stroke-width:1.2}
+      .back{fill:#fff;stroke:#9aa1b0;stroke-width:1}
+      .focal{fill:#f6e9e4;stroke:#bf4520;stroke-width:1.6}
+      .fback{fill:#fbf3f0;stroke:#d79a85;stroke-width:1}
+      .snap{fill:#e4e6ea;stroke:#5a6580;stroke-width:1.2}
+      .sback{fill:#eceef1;stroke:#9aa1b0;stroke-width:1}
+      .slot{fill:none;stroke:#9aa1b0;stroke-width:1.2;stroke-dasharray:5 4}
+      .ext{fill:#e2e3e6;stroke:#9aa1b0;stroke-width:1.2}
+    </style>
+  </defs>
+  <rect width="1500" height="760" fill="#f5f5f5"/>
+
+  <!-- the hub's deploy -->
+  <rect x="494" y="64" width="680" height="556" rx="14" fill="#ececec" stroke="#2d3142" stroke-width="1.6"/>
+  <text x="516" y="92" font-size="16" font-weight="600" fill="#2d3142">novu-box-hub</text>
+  <text x="634" y="92" class="n">one deploy (wrangler.jsonc): everything inside this frame</text>
+
+  <!-- column headers -->
+  <text x="44" y="128" class="h">CALLERS</text>
+  <text x="254" y="128" class="h">HOSTNAMES</text>
+  <text x="254" y="144" class="n">*.box.novu-staging.co</text>
+  <text x="514" y="128" class="h">WORKER</text>
+  <text x="514" y="144" class="n">picks by host</text>
+  <text x="704" y="128" class="h">DURABLE OBJECTS</text>
+  <text x="704" y="144" class="n">novu-box-hub_&lt;name&gt;</text>
+  <text x="954" y="128" class="h">CONTAINERS</text>
+  <text x="954" y="144" class="n">novu-box-hub-box</text>
+  <text x="1254" y="128" class="h">IMAGE REGISTRY · CLI ONLY</text>
+  <text x="1254" y="144" class="n">novu-box-hub-box-box</text>
+  <rect x="1234" y="108" width="236" height="350" rx="12" fill="none" stroke="#9aa1b0" stroke-dasharray="4 3"/>
+
+  <!-- lane labels -->
+  <text transform="translate(24 188) rotate(-90)" text-anchor="middle" class="lane">HUB</text>
+  <text transform="translate(24 292) rotate(-90)" text-anchor="middle" class="lane">ASLEEP</text>
+  <text transform="translate(24 412) rotate(-90)" text-anchor="middle" class="lane" style="fill:#bf4520">AWAKE</text>
+  <text transform="translate(24 532) rotate(-90)" text-anchor="middle" class="lane">SLACK</text>
+
+  <!-- the one Worker every lane passes through -->
+  <rect x="514" y="160" width="150" height="410" rx="7" class="card"/>
+  <text x="528" y="248" class="t">hub Worker</text>
+  <text x="528" y="266" class="s">code · secrets</text>
+
+  <!-- HUB lane -->
+  <rect x="44" y="160" width="170" height="56" rx="7" class="ext"/>
+  <text x="58" y="184" class="t">CLI · CI</text>
+  <text x="58" y="202" class="s">create, list, delete</text>
+  <rect x="254" y="160" width="210" height="56" rx="28" class="card"/>
+  <text x="272" y="184" class="hm">box.novu-staging.co</text>
+  <text x="272" y="202" class="s">the hub's API</text>
+  <rect x="704" y="160" width="190" height="56" rx="7" class="card"/>
+  <text x="718" y="184" class="t">Registry</text>
+  <text x="718" y="202" class="s">the boxes' names</text>
+  <line x1="214" y1="188" x2="252" y2="188" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#g)"/>
+  <line x1="464" y1="188" x2="512" y2="188" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#g)"/>
+  <line x1="664" y1="188" x2="702" y2="188" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#g)"/>
+
+  <!-- ASLEEP lane: pr-456 -->
+  <rect x="254" y="260" width="210" height="64" rx="32" class="card"/>
+  <text x="272" y="287" class="hg">pr-456.box…</text>
+  <text x="272" y="306" class="s">+ pr-456-api.box…</text>
+  <rect x="704" y="260" width="190" height="64" rx="7" class="card"/>
+  <text x="718" y="287" class="tm">Box · pr-456</text>
+  <text x="718" y="306" class="s">its manager</text>
+  <rect x="954" y="260" width="190" height="64" rx="7" class="slot"/>
+  <text x="968" y="287" class="tm">no machine</text>
+  <text x="968" y="306" class="s">wakes on a request</text>
+  <rect x="1270" y="244" width="190" height="64" rx="7" class="sback"/>
+  <rect x="1262" y="252" width="190" height="64" rx="7" class="sback"/>
+  <rect x="1254" y="260" width="190" height="64" rx="7" class="snap"/>
+  <text x="1268" y="287" class="t">snapshot</text>
+  <text x="1268" y="306" class="s">pr-456's saved disk</text>
+  <text x="1428" y="256" class="x" text-anchor="end">×N</text>
+  <line x1="464" y1="292" x2="512" y2="292" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#g)"/>
+  <line x1="664" y1="292" x2="702" y2="292" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#g)"/>
+  <line x1="894" y1="292" x2="952" y2="292" stroke="#9aa1b0" stroke-width="1.2" marker-end="url(#g)"/>
+  <line x1="1146" y1="292" x2="1252" y2="292" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5 4" marker-start="url(#gs)" marker-end="url(#g)"/>
+  <text x="1199" y="284" class="l" text-anchor="middle">SAVE · LOAD</text>
+
+  <!-- AWAKE lane: pr-123 -->
+  <rect x="44" y="380" width="170" height="64" rx="7" class="ext"/>
+  <text x="58" y="407" class="t">Browser · agent</text>
+  <text x="58" y="426" class="s">a person, a test</text>
+  <rect x="270" y="364" width="210" height="64" rx="32" class="fback"/>
+  <rect x="262" y="372" width="210" height="64" rx="32" class="fback"/>
+  <rect x="254" y="380" width="210" height="64" rx="32" class="focal"/>
+  <text x="272" y="407" class="hm">pr-123.box…</text>
+  <text x="272" y="426" class="s">+ pr-123-api.box…</text>
+  <text x="440" y="376" class="x" text-anchor="end">×N</text>
+  <rect x="720" y="364" width="190" height="64" rx="7" class="fback"/>
+  <rect x="712" y="372" width="190" height="64" rx="7" class="fback"/>
+  <rect x="704" y="380" width="190" height="64" rx="7" class="focal"/>
+  <text x="718" y="407" class="t">Box · pr-123</text>
+  <text x="718" y="426" class="s">its manager</text>
+  <text x="878" y="376" class="x" text-anchor="end">×N</text>
+  <rect x="970" y="364" width="190" height="64" rx="7" class="fback"/>
+  <rect x="962" y="372" width="190" height="64" rx="7" class="fback"/>
+  <rect x="954" y="380" width="190" height="64" rx="7" class="focal"/>
+  <text x="968" y="407" class="t">pr-123's machine</text>
+  <text x="968" y="426" class="s">Novu runs here</text>
+  <text x="1128" y="376" class="x" text-anchor="end">×N</text>
+  <rect x="1254" y="380" width="190" height="64" rx="7" class="card"/>
+  <text x="1268" y="407" class="t">image</text>
+  <text x="1268" y="426" class="s">the empty machine</text>
+  <line x1="214" y1="412" x2="252" y2="412" stroke="#bf4520" stroke-width="1.6" marker-end="url(#r)"/>
+  <line x1="464" y1="412" x2="512" y2="412" stroke="#bf4520" stroke-width="1.6" marker-end="url(#r)"/>
+  <line x1="664" y1="412" x2="702" y2="412" stroke="#bf4520" stroke-width="1.6" marker-end="url(#r)"/>
+  <line x1="894" y1="412" x2="952" y2="412" stroke="#bf4520" stroke-width="1.6" marker-end="url(#r)"/>
+  <line x1="1254" y1="412" x2="1164" y2="412" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#g)"/>
+  <text x="1209" y="404" class="l" text-anchor="middle">BOOTS</text>
+
+  <!-- SLACK lane -->
+  <rect x="44" y="500" width="170" height="64" rx="7" class="ext"/>
+  <text x="58" y="527" class="t">Slack</text>
+  <text x="58" y="546" class="s">the Novu Box app</text>
+  <rect x="254" y="500" width="210" height="64" rx="32" class="card"/>
+  <text x="272" y="527" class="hg">slack.box…</text>
+  <text x="272" y="546" class="s">Slack's URL</text>
+  <rect x="704" y="500" width="190" height="64" rx="7" class="card"/>
+  <text x="718" y="527" class="tm">Router</text>
+  <text x="718" y="546" class="s">picks the box</text>
+  <line x1="214" y1="532" x2="252" y2="532" stroke="#2e5aa8" stroke-width="1.3" marker-start="url(#bs)" marker-end="url(#b)"/>
+  <line x1="464" y1="532" x2="512" y2="532" stroke="#2e5aa8" stroke-width="1.3" marker-start="url(#bs)" marker-end="url(#b)"/>
+  <line x1="664" y1="532" x2="702" y2="532" stroke="#2e5aa8" stroke-width="1.3" marker-start="url(#bs)" marker-end="url(#b)"/>
+  <line x1="799" y1="500" x2="799" y2="446" stroke="#2e5aa8" stroke-width="1.3" marker-end="url(#b)"/>
+  <text x="809" y="478" class="lb">BY NAME</text>
+  <path d="M1049 444 L1049 596 L359 596 L359 566" fill="none" stroke="#2e5aa8" stroke-width="1.3" stroke-dasharray="6 3" marker-end="url(#b)"/>
+  <text x="704" y="588" class="lb">REPLY, TO SLACK'S HOST</text>
+
+  <!-- legend -->
+  <g transform="translate(44 700)">
+    <rect x="0" y="-11" width="22" height="14" rx="3" class="focal"/>
+    <text x="30" y="0" class="l">ONE BOX, FOLLOWED</text>
+    <rect x="178" y="-15" width="20" height="13" rx="3" class="back"/><rect x="174" y="-11" width="20" height="13" rx="3" class="card"/>
+    <text x="206" y="0" class="l">ONE PER BOX</text>
+    <rect x="310" y="-11" width="26" height="14" rx="7" class="card"/>
+    <text x="344" y="0" class="l">HOSTNAME, NOT CODE</text>
+    <rect x="490" y="-11" width="22" height="14" rx="3" class="ext"/>
+    <text x="520" y="0" class="l">OUTSIDE CLOUDFLARE</text>
+    <line x1="660" y1="-4" x2="694" y2="-4" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#g)"/>
+    <text x="702" y="0" class="l">REQUEST</text>
+    <line x1="770" y1="-4" x2="804" y2="-4" stroke="#2e5aa8" stroke-width="1.3" marker-end="url(#b)"/>
+    <text x="812" y="0" class="l">SLACK</text>
+    <line x1="870" y1="-4" x2="904" y2="-4" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#g)"/>
+    <text x="912" y="0" class="l">SAVED DISK</text>
+    <rect x="1006" y="-11" width="22" height="14" rx="3" class="slot"/>
+    <text x="1036" y="0" class="l">NO MACHINE</text>
+  </g>
+</svg>
