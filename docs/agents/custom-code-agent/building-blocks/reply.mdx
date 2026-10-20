@@ -63,6 +63,16 @@ Pass `quoteReply` to pin the reply to a specific inbound message. WhatsApp and T
 await ctx.reply('Your order shipped today.', { quoteReply: message });
 ```
 
+## Stream a reply
+
+Pass an async iterable of text, such as an AI SDK `textStream`, to send the reply as it is generated. `ctx.reply()` resolves once the stream ends. You can also return the stream from a handler.
+
+```typescript
+await ctx.reply(result.textStream);
+```
+
+Slack, Telegram, and Web Chat show the reply as it is written. Other channels receive it once the stream ends. The [AI SDK](/agents/custom-code-agent/frameworks/ai-sdk) and [LangChain](/agents/custom-code-agent/frameworks/langchain) adapters stream returned results for you.
+
 ## Sending attachments
 
 Include files with string or markdown replies via the optional second argument.

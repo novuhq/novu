@@ -9,8 +9,10 @@ import type { HumanAccount } from './human-account';
 import { DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from './human-agent-api';
 import { requestForAccount } from './human-api-key';
 import { listChannels } from './human-channels-api';
+import { getInboxThread, listInboxThreads } from './human-inbox-api';
 import { listConnectedTools } from './human-tools-api';
-import { addressOf, cardLinkOf, type HostVia, ONBOARDING_PATH, type OnboardingStep, toHandle } from './onboarding';
+import type { InboxMessage, InboxThread } from './inbox';
+import { cardLinkOf, type HostVia, ONBOARDING_PATH, type OnboardingStep, toHandle } from './onboarding';
 import { advanceMocks, connectCode } from './onboarding-mocks';
 import { type OnboardingState, readOnboardingState, writeOnboardingState } from './onboarding-state';
 import { readSiteOrigin } from './site-origin';
@@ -91,7 +93,11 @@ async function catchUp(
   agent: RelayAgent | null,
   state: OnboardingState
 ): Promise<OnboardingState> {
-  let next = advanceMocks(state) ?? state;
+  let next = await noteTestReply(account, user, agent, state);
+  const advanced = advanceMocks(next);
+  if (advanced) {
+    next = advanced;
+  }
 
   if (agent && isSetupUnfinished(resolveStep(agent, next)) && !next.host) {
     const [tool] = await listConnectedTools(account);
@@ -223,15 +229,29 @@ export type AgentIdentity = {
   createdAt?: string;
 };
 
-/** The part of the agent's address before the `@`: the one picked on step 1, or one made from its name. */
-export function handleOf(agent: RelayAgent, state: OnboardingState): string {
-  return state.handle || toHandle(agent.name) || 'agent';
+/**
+ * A short name for sentences and the connect prompt. The mailbox local-part wins, so an edited
+ * address stays the one the card, the link and `connect` use. Otherwise the name, then a handle
+ * left over from an older step 1.
+ */
+export function handleOf(agent: RelayAgent, state: OnboardingState, emailAddress?: string): string {
+  return inboxHandleOf(emailAddress) || toHandle(agent.name) || state.handle || 'agent';
+}
+
+/** The part of an inbox address before `@`, when it is itself a handle. */
+export function inboxHandleOf(emailAddress: string | undefined): string | undefined {
+  const local = emailAddress?.split('@')[0]?.trim().toLowerCase();
+  if (!local || toHandle(local) !== local) {
+    return undefined;
+  }
+
+  return local;
 }
 
 /**
- * How the agent is addressed. The address is the one the API gave it; while the API can't take the one
- * picked on step 1 (NV-9032), an agent without an inbox of its own shows the picked one instead. Its card
- * is on the site `origin` names (`readSiteOrigin`).
+ * How the agent is addressed. `emailAddress` is the Agent Email Inbox the API assigned. Empty when that
+ * inbox could not be read: the pages say it isn't ready rather than inventing `{name}@agentinbox.md`.
+ * Its card is on the site `origin` names (`readSiteOrigin`).
  */
 export function describeAgentIdentity(
   agent: RelayAgent,
@@ -240,12 +260,12 @@ export function describeAgentIdentity(
   emailAddress?: string
 ): AgentIdentity {
   const name = agent.name && agent.name !== DEFAULT_AGENT_NAME ? agent.name : 'Your agent';
-  const handle = handleOf(agent, state);
+  const handle = handleOf(agent, state, emailAddress);
 
   return {
     name,
     handle,
-    address: emailAddress ?? addressOf(handle),
+    address: emailAddress ?? '',
     cardLink: cardLinkOf(origin, handle),
     pictureUrl: agent.pictureUrl,
     createdAt: agent.createdAt,
@@ -273,7 +293,7 @@ export async function loadSetupSummary(
   const { state, agent, step } = progress;
   const [channels, waiting, origin] = await Promise.all([
     loadChannelFacts(account),
-    countWaitingMessages(account, state),
+    countWaitingMessages(account),
     readSiteOrigin(),
   ]);
 
@@ -316,7 +336,7 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
   }
 
   const [channels, waiting] = agent
-    ? await Promise.all([loadChannelFacts(account), countWaitingMessages(account, state)])
+    ? await Promise.all([loadChannelFacts(account), countWaitingMessages(account)])
     : [{ telegram: false, slack: false, emailAddress: undefined }, 0];
   const origin = await readSiteOrigin();
 
@@ -354,22 +374,114 @@ async function loadChannelFacts(account: HumanAccount) {
   }
 }
 
-/**
- * How many messages wait for a host: the unread threads of the inbox, plus the stand-in reply to the test
- * email (NV-9032) until a host has read it.
- */
-async function countWaitingMessages(account: HumanAccount, state: OnboardingState): Promise<number> {
-  const mockReply = state.testReplyAt && !state.host?.readAt ? 1 : 0;
-
+/** How many messages wait for a host: the unread threads of the inbox. */
+async function countWaitingMessages(account: HumanAccount): Promise<number> {
   try {
     const counts = await requestForAccount<{ tabs?: { unread?: number } }>(account, '/v1/human/inbox/counts', {
       query: { senders: 'all' },
     });
 
-    return (counts?.tabs?.unread ?? 0) + mockReply;
+    return counts?.tabs?.unread ?? 0;
   } catch (error) {
     console.error('Failed to count the waiting messages', error);
 
-    return mockReply;
+    return 0;
   }
+}
+
+/**
+ * Records the operator's reply to the test email, or forgets a reply the old timer had painted in when
+ * the inbox has none. A lookup that fails leaves the stored reply where it is.
+ */
+async function noteTestReply(
+  account: HumanAccount,
+  user: User,
+  agent: RelayAgent | null,
+  state: OnboardingState
+): Promise<OnboardingState> {
+  if (!agent || !state.testSentAt) {
+    return state;
+  }
+
+  const email = user.primaryEmailAddress?.emailAddress;
+  if (!email) {
+    return state;
+  }
+
+  let replyAt: string | null;
+  try {
+    replyAt = await findOperatorReplyAt(account, email, state.testSentAt);
+  } catch (error) {
+    console.error('Failed to look for the reply to the test email', error);
+
+    return state;
+  }
+
+  if (replyAt) {
+    return state.testReplyAt === replyAt ? state : { ...state, testReplyAt: replyAt };
+  }
+
+  if (!state.testReplyAt) {
+    return state;
+  }
+
+  const { testReplyAt: _painted, ...rest } = state;
+
+  return rest;
+}
+
+/** When the operator wrote to the agent by email, after `sentAt`. Null when they have not. */
+async function findOperatorReplyAt(
+  account: HumanAccount,
+  operatorEmail: string,
+  sentAt: string
+): Promise<string | null> {
+  const page = await listInboxThreads(account, { tab: 'all', channel: 'email' });
+  const sentMs = Date.parse(sentAt);
+
+  for (const thread of page.threads) {
+    if (!sameEmail(thread.fromAddress, operatorEmail)) {
+      continue;
+    }
+
+    const latest = humanMessageAfter(thread.lastMessage, sentMs);
+    if (latest) {
+      return latest;
+    }
+
+    if (Date.parse(thread.lastActivityAt) <= sentMs) {
+      continue;
+    }
+
+    const reply = await humanReplyInThread(account, thread, sentMs);
+    if (reply) {
+      return reply;
+    }
+  }
+
+  return null;
+}
+
+/** A later human message in the thread, for when the agent wrote something after the reply. */
+async function humanReplyInThread(account: HumanAccount, thread: InboxThread, sentMs: number): Promise<string | null> {
+  const view = await getInboxThread(account, thread.id);
+
+  return view.messages.reduce<string | null>((found, message) => found ?? humanMessageAfter(message, sentMs), null);
+}
+
+function humanMessageAfter(
+  message: { from: InboxMessage['from']; at: string } | null | undefined,
+  sentMs: number
+): string | null {
+  if (!message || message.from !== 'human') {
+    return null;
+  }
+
+  const at = Date.parse(message.at);
+
+  return Number.isFinite(at) && at > sentMs ? message.at : null;
+}
+
+function sameEmail(left: string | undefined, right: string): boolean {
+  return (left ?? '').trim().toLowerCase() === right.trim().toLowerCase();
 }

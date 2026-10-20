@@ -83,9 +83,12 @@ const NPX_CLI = `npx ${CLI_PACKAGE}`;
 /**
  * The terminal's way to do step 1. It logs in first, which the operator approves in this browser: on its
  * own, `setup` makes an inbox without an account, apart from the one this page waits for.
+ * `name` is what the agent is called, the same word the page sends as `agentName`.
  */
-export function setupCommand(handle: string): string {
-  return `${NPX_CLI} login && ${NPX_CLI} setup --agent-name ${handle}`;
+export function setupCommand(name: string): string {
+  const quoted = /[\s"']/.test(name) ? `"${name.replaceAll('"', '\\"')}"` : name;
+
+  return `${NPX_CLI} login && ${NPX_CLI} setup --agent-name ${quoted}`;
 }
 
 export const INSTALL_SKILLS_COMMAND = `${NPX_CLI} skill install`;

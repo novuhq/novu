@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg style="min-width: 1280px" viewBox="0 0 1280 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="code-and-commands-title code-and-commands-desc" id="d-06-code-root">
+        <title id="code-and-commands-title">Novu Box · Which code runs where</title>
+        <desc id="code-and-commands-desc">The cli and ci folders run on a laptop or CI runner, cloud and cloud/slack run on Cloudflare Workers, and box runs in the container; a command goes from cli (which ci reuses) over HTTPS to cloud, which execs box/main.ts in the container, while node is shared by the two Node runtimes and shared by all three.</desc>
+        <defs>
+      <style>#d-06-code-root { --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace; }
+      #d-06-code-root { font-family: var(--font-sans); color: var(--color-ink); }
+      #d-06-code-root .diagram-container { width: 100%; overflow-x: auto; }
+      #d-06-code-root .subtitle { font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--color-muted);
+      max-width: 78ch;
+      margin-bottom: 1.5rem; }
+      #d-06-code-root .diagram-container { overflow-x: visible; }
+      #d-06-code-root .diagram-container { overflow-x: visible; }
+      #d-06-code-root nav { margin: 0 0 3rem; display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; }
+      #d-06-code-root nav a { color: var(--color-muted); text-decoration: none; border-bottom: 1px solid rgba(45,49,66,0.2); }
+      #d-06-code-root nav a:hover { color: var(--color-accent); border-color: var(--color-accent); }
+      #d-06-code-root section { padding: 3rem 0 4rem; border-top: 1px solid rgba(45,49,66,0.12); }
+      #d-06-code-root section:first-of-type { border-top: 0; padding-top: 0; }</style>
+          <marker id="d-06-code-code-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="d-06-code-code-arrow-both" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="d-06-code-code-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- ============ Zones ============ -->
+        <rect x="40" y="80" width="384" height="264" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.02" stroke-opacity="0.30"/>
+        <rect x="52" y="72" width="180" height="16" fill="#f5f5f5"/>
+        <text x="60" y="84" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">YOUR LAPTOP · CI · NODE</text>
+
+        <rect x="448" y="80" width="384" height="264" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.02" stroke-opacity="0.30"/>
+        <rect x="460" y="72" width="144" height="16" fill="#f5f5f5"/>
+        <text x="468" y="84" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">CLOUDFLARE WORKERS</text>
+
+        <rect x="856" y="80" width="384" height="264" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.02" stroke-opacity="0.30"/>
+        <rect x="868" y="72" width="156" height="16" fill="#f5f5f5"/>
+        <text x="876" y="84" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">BOX CONTAINER · NODE</text>
+
+        <!-- ============ Arrows (before nodes) ============ -->
+        <!-- ci -> cli: ci drives boxes through the CLI's cloud target -->
+        <line x1="232" y1="176" x2="232" y2="240" stroke="#4f5d75" stroke-width="1" marker-end="url(#d-06-code-code-arrow)"/>
+        <!-- cloud/slack <-> cloud -->
+        <line x1="640" y1="176" x2="640" y2="240" stroke="#4f5d75" stroke-width="1" marker-start="url(#d-06-code-code-arrow-both)" marker-end="url(#d-06-code-code-arrow-both)"/>
+        <!-- image/Dockerfile -> box -->
+        <line x1="1048" y1="176" x2="1048" y2="240" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#d-06-code-code-arrow)"/>
+        <!-- cli -> cloud: HTTPS (focal) -->
+        <line x1="352" y1="264" x2="520" y2="264" stroke="#bf4520" stroke-width="1.4" marker-end="url(#d-06-code-code-arrow-accent)"/>
+        <!-- cli -> cloud: box deploy -->
+        <line x1="352" y1="288" x2="520" y2="288" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#d-06-code-code-arrow)"/>
+        <!-- cloud -> box: container exec (focal) -->
+        <line x1="760" y1="264" x2="928" y2="264" stroke="#bf4520" stroke-width="1.4" marker-end="url(#d-06-code-code-arrow-accent)"/>
+
+        <!-- ============ Arrow labels ============ -->
+        <rect x="240" y="202" width="44" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="262" y="211" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">REUSES</text>
+
+        <rect x="1056" y="202" width="32" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="1072" y="211" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">COPY</text>
+
+        <rect x="416" y="244" width="40" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="436" y="253" fill="#bf4520" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">HTTPS</text>
+
+        <rect x="404" y="296" width="64" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="436" y="305" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">BOX DEPLOY</text>
+
+        <rect x="828" y="244" width="32" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="844" y="253" fill="#bf4520" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">EXEC</text>
+
+        <!-- ============ Nodes ============ -->
+        <!-- ci -->
+        <rect x="112" y="112" width="240" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="112" y="112" width="240" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="232" y="140" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">ci</text>
+        <text x="232" y="158" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">ci/ci.ts · pr cleanup refresh rebake</text>
+
+        <!-- cli -->
+        <rect x="112" y="240" width="240" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="112" y="240" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="232" y="272" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">cli</text>
+        <text x="232" y="290" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">cli/box.ts · up sync logs user</text>
+
+        <!-- cloud/slack -->
+        <rect x="520" y="112" width="240" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="520" y="112" width="240" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="640" y="140" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">cloud/slack</text>
+        <text x="640" y="158" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Router DO</text>
+
+        <!-- cloud -->
+        <rect x="520" y="240" width="240" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="520" y="240" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="640" y="272" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">cloud</text>
+        <text x="640" y="290" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">hub + Box DO</text>
+
+        <!-- image/Dockerfile -->
+        <rect x="928" y="112" width="240" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="928" y="112" width="240" height="64" rx="6" fill="#2d3142" stroke="#2d3142" stroke-width="1" stroke-dasharray="4,3" fill-opacity="0.02" stroke-opacity="0.45"/>
+        <text x="1048" y="140" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">image/Dockerfile</text>
+        <text x="1048" y="158" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">box · node · shared</text>
+
+        <!-- box -->
+        <rect x="928" y="240" width="240" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="928" y="240" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="1048" y="272" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">box</text>
+        <text x="1048" y="290" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">box/main.ts · bake apply doctor</text>
+
+        <!-- node: under the two Node runtimes only -->
+        <rect x="40" y="376" width="384" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="40" y="376" width="384" height="56" rx="6" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.05"/>
+        <text x="232" y="400" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">node</text>
+        <text x="232" y="418" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">commands · process · http</text>
+
+        <rect x="856" y="376" width="384" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="856" y="376" width="384" height="56" rx="6" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.05"/>
+        <text x="1048" y="400" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">node</text>
+        <text x="1048" y="418" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">commands · process · http</text>
+
+        <!-- shared: under all three runtimes -->
+        <rect x="40" y="456" width="1200" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="40" y="456" width="1200" height="56" rx="6" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.05"/>
+        <text x="640" y="480" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">shared</text>
+        <text x="640" y="498" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">names · contracts · auth</text>
+
+        <!-- ============ Legend ============ -->
+        <line x1="40" y1="544" x2="1240" y2="544" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.10"/>
+        <text x="40" y="570" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+
+        <rect x="112" y="562" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="132" y="570" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Folder in src/</text>
+
+        <rect x="224" y="562" width="14" height="10" rx="2" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.05"/>
+        <text x="244" y="570" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Shared code</text>
+
+        <rect x="324" y="562" width="14" height="10" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-dasharray="3,3" stroke-opacity="0.45"/>
+        <text x="344" y="570" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Build file</text>
+
+        <line x1="420" y1="567" x2="448" y2="567" stroke="#bf4520" stroke-width="1.4" marker-end="url(#d-06-code-code-arrow-accent)"/>
+        <text x="456" y="570" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">A command's path</text>
+
+        <line x1="560" y1="567" x2="588" y2="567" stroke="#4f5d75" stroke-width="1" marker-end="url(#d-06-code-code-arrow)"/>
+        <text x="596" y="570" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Uses</text>
+
+        <line x1="648" y1="567" x2="676" y2="567" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#d-06-code-code-arrow)"/>
+        <text x="684" y="570" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">How code gets there</text>
+      </svg>

@@ -78,6 +78,7 @@ import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
 import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbox-thread.usecase';
+import { SendHumanTestEmail } from './usecases/send-human-test-email/send-human-test-email.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
@@ -179,6 +180,7 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     CreateConnectCode,
     GetConnectCodeStatus,
     ConnectHost,
+    SendHumanTestEmail,
   ],
 })
 export class HumanModule {}

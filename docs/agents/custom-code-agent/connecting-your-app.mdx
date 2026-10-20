@@ -52,6 +52,8 @@ Import `serve` from the adapter that matches your stack:
 | H3 | `@novu/framework/h3` |
 | AWS Lambda | `@novu/framework/lambda` |
 
+All adapters except AWS Lambda [stream replies](/agents/custom-code-agent/building-blocks/reply#stream-a-reply) to channels that support it. On Lambda, the reply is delivered once the handler finishes.
+
 The first argument to `agent('support-bot', …)` must match the agent **Identifier** in the dashboard. To run multiple agents from one endpoint, add each export to the `agents` array.
 
 ## Environment variables

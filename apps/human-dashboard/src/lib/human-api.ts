@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { type JsonBody, readErrorCode, readErrorMessage, safeJson } from './api-response';
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
 import type { HumanRegion } from './human-accounts-api';
 import { HumanApiError, toHumanApiError } from './human-api-error';
 import { resolveNovuApiUrl } from './novu-api';
@@ -38,7 +39,7 @@ export function requestWithSecretKey(
 }
 
 function dashboardSecretHeader(): Record<string, string> {
-  return { 'x-human-dashboard-secret': process.env.AGENT_INBOX_DASHBOARD_API_SECRET ?? '' };
+  return { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: process.env.AGENT_INBOX_DASHBOARD_API_SECRET ?? '' };
 }
 
 /** For what the API can't do yet, so the pages can be built against the final function names. */
@@ -73,7 +74,15 @@ async function send(
   const responseBody = await safeJson(response);
 
   if (!response.ok) {
-    throw toHumanApiError(response.status, readErrorCode(responseBody), readErrorMessage(responseBody), request);
+    const suggestion = typeof responseBody?.suggestion === 'string' ? responseBody.suggestion : undefined;
+
+    throw toHumanApiError(
+      response.status,
+      readErrorCode(responseBody),
+      readErrorMessage(responseBody),
+      request,
+      suggestion
+    );
   }
 
   return responseBody;

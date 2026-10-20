@@ -111,11 +111,23 @@ describe('AgentEmailSender', () => {
       expect(address).to.equal(undefined);
     });
 
-    it('returns undefined when the agent has no slug or routing key', () => {
+    it('publishes from the agent name when the stored slug is missing, and the bare slug when there is no routing key', () => {
       const sender = buildSender();
 
-      expect(sender.resolveSharedInboxAddress(makeConfig({ emailSlugPrefix: undefined }))).to.equal(undefined);
-      expect(sender.resolveSharedInboxAddress(makeConfig({ inboxRoutingKey: undefined }))).to.equal(undefined);
+      expect(sender.resolveSharedInboxAddress(makeConfig({ emailSlugPrefix: undefined }))).to.equal(
+        `human-relay-abc12345@${SHARED_DOMAIN}`
+      );
+      expect(sender.resolveSharedInboxAddress(makeConfig({ inboxRoutingKey: undefined }))).to.equal(
+        `human-relay@${SHARED_DOMAIN}`
+      );
+    });
+
+    it('builds a vanity address on the pinned domain', () => {
+      const address = buildSender().resolveSharedInboxAddress(
+        makeConfig({ inboxRoutingKey: undefined, inboxDomain: AGENT_INBOX_DOMAIN, emailSlugPrefix: 'atlas' })
+      );
+
+      expect(address).to.equal(`atlas@${AGENT_INBOX_DOMAIN}`);
     });
 
     it('returns undefined on self-hosted deployments where the shared inbox is unavailable', () => {

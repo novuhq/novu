@@ -80,7 +80,7 @@ describe('CORS Configuration', () => {
       expect(callbackSpy.firstCall.lastArg.origin[0]).to.equal(previewOrigin);
     });
 
-    it('should allow the human.md landing page origins on the public setup routes only', () => {
+    it('should allow the agentinbox.md landing page origins on the public setup routes only', () => {
       const setupRoutes = [
         '/v1/integrations/mobile-configure/status',
         '/v1/integrations/mobile-configure',

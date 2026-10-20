@@ -462,7 +462,7 @@ function InstallStep({
           <ChannelIcon via="slack" className="size-5.5" />
         </span>
         <span className={cn(BADGE, 'relative -ml-3')}>
-          {/* The human.md mark, from the paths the design exports. */}
+          {/* The agentinbox.md mark, from the paths the design exports. */}
           <svg viewBox="0 0 22 22" className="size-6.5" fill="none">
             <path
               className="fill-accent"

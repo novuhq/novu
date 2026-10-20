@@ -66,6 +66,8 @@ export type InboxThread = {
   preview: string;
   unreadCount: number;
   lastMessage: { text: string; at: string; from: InboxSender } | null;
+  /** The address on the other side of an email thread. Missing for chat, and for an email thread with none. */
+  fromAddress?: string;
   isDirectMessage: boolean;
   openedAt: string;
   /** Up to which message the agent read the thread; `null` until it did. */
