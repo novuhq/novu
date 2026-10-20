@@ -27,7 +27,7 @@ The send and reply tools mirror the Agent Inbox CLI: they support attribution, e
 ## How sign-in works
 
 1. A tool calls the server without a token and gets a `401` that points at `/.well-known/oauth-protected-resource`.
-2. That document names the Agent Inbox Clerk app as the place to sign in. The tool registers itself there and the person signs in on Clerk's page.
+2. That document names the Agent Inbox Clerk app as the place to sign in. The tool registers itself there, and Clerk sends the person to its sign-in page: the dashboard's `/sign-in` when the Clerk app's paths point there. The dashboard makes sure their account exists, then sends them back to Clerk to approve the tool. Someone without an agent yet is sent to the onboarding on their next dashboard visit.
 3. The tool calls again with the token. The server asks Clerk whose token it is (`/oauth/userinfo`); it never trusts what a token says about itself.
 4. The server reads the account's API key from the Novu API with the secret the Agent Inbox dashboard uses, tries the US API and then the EU one, and calls the Agent Inbox endpoints as the account. The AI tool never sees the key.
 
