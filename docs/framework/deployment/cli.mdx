@@ -61,3 +61,15 @@ For more detail, see [View your bridge URL](/framework/endpoint#view-your-bridge
 In free tier, vercel preview urls for non production deployments are not publicly accessible. You will need to enable [Protection Bypass for Automation](https://vercel.com/docs/security/deployment-protection/methods-to-bypass-deployment-protection/protection-bypass-automation#protection-bypass-for-automation) from settings to make the preview url publicly accessible. Use vercel generated secret key in query params with bridge url to make the bridge url accessible to novu.
 
 Example: `https://my-app-preview-url.vercel.app/api/novu?x-vercel-protection-bypass=BYPASS_SECRET_KEY`
+
+## Sync failed while calling the bridge
+
+`novu sync` returns the same `code` and `message` as any other call Novu makes to your bridge. Read `code` on the `400`, `401`, `404`, `408`, `413`, `502`, or `500` response.
+
+A URL Novu rejects before connecting uses this message for every rejection:
+
+```
+The provided bridge URL is blocked by the outbound SSRF policy.
+```
+
+`DNS_LOOKUP_FAILED` means the hostname did not resolve, which includes a preview deployment that is down or not in DNS yet. Every code is documented with the returned message and the debug and fix steps in [Bridge request errors](/framework/errors).

@@ -1,0 +1,649 @@
+---
+title: 'Bridge request errors'
+sidebarTitle: 'Errors'
+description: 'The code and message Novu returns for each bridge failure, and what to check on your side.'
+---
+
+When sync, preview, or a step cannot call your bridge, the response has a `code` and a `message`. `novu sync` returns the same body. Find the `code` below. The message is quoted because several codes share one sentence, and the sentence is often the wrong place to start.
+
+```json
+{
+  "statusCode": 400,
+  "message": "The provided bridge URL is blocked by the outbound SSRF policy.",
+  "code": "DNS_LOOKUP_FAILED",
+  "path": "/v1/bridge/sync"
+}
+```
+
+If the bridge itself rejected the call, the response also has `data`. That field is the detail from your app: the validation errors, or the stack.
+
+## The provided bridge URL is blocked by the outbound SSRF policy
+
+Every code in this section returns `400` and this message:
+
+```
+The provided bridge URL is blocked by the outbound SSRF policy.
+```
+
+The wording does not change. A public preview URL that has gone away returns this same sentence, with code `DNS_LOOKUP_FAILED`. Read `code`, then take the hostname from the URL you synced.
+
+```bash
+dig +short YOUR_HOST
+dig +short YOUR_HOST @8.8.8.8
+curl -I https://YOUR_HOST
+```
+
+Use `@8.8.8.8` so you are not looking at office or VPN DNS. Novu resolves the name from the public internet.
+
+### INVALID_URL
+
+**Message:** `The provided bridge URL is blocked by the outbound SSRF policy.`
+
+Paste the bridge URL into a new browser tab. If the tab cannot open it, the string is the problem: a missing `https://`, a space, or a line break copied from a CI variable. If the tab opens and then hops through several addresses, the bridge is redirecting. Novu follows 3 redirects and then stops. Sync the URL you land on after the redirects, not the one that bounces.
+
+### UNSUPPORTED_SCHEME
+
+**Message:** `The provided bridge URL is blocked by the outbound SSRF policy.`
+
+Look at the characters before `://`. Anything other than `http` or `https` is this code. Sync `https://your-app.example.com/api/novu`.
+
+### CREDENTIALS_IN_URL
+
+**Message:** `The provided bridge URL is blocked by the outbound SSRF policy.`
+
+Search the URL for `@`. `https://user:secret@example.com/api/novu` is this code. Delete `user:secret@`. If the bridge needs a credential, put it in the app environment, not in the URL.
+
+### BLOCKED_HOSTNAME
+
+**Message:** `The provided bridge URL is blocked by the outbound SSRF policy.`
+
+The host is `localhost` or `metadata.google.internal`. An allow list does not change that. For local development, run `npx novu@latest dev` and sync the `https://<id>.novu.sh/...` URL it prints.
+
+### DNS_LOOKUP_FAILED
+
+**Message:** `The provided bridge URL is blocked by the outbound SSRF policy.`
+
+Novu could not resolve the hostname. The deployment is often already gone: a preview that was deleted, a branch deploy that expired, or a name that was never published.
+
+Run the `dig` and `curl` commands above.
+
+- `dig` prints nothing, and curl says `Could not resolve host`. Open the deployment in your host (Vercel, Netlify, your own platform) and see if that exact hostname still exists. Sync the URL of a deployment that is still there.
+- `dig @8.8.8.8` prints nothing, but `dig` without `@8.8.8.8` prints an address. The name exists only on your network. Novu cannot see it. Publish a public record, or sync a public hostname.
+- `dig` prints an address and curl returns HTTP headers. DNS is fine from where you are sitting. Run the sync again once. If the code is still `DNS_LOOKUP_FAILED`, the record is not visible to public resolvers yet. Wait, then retry. Novu does not retry this code on its own.
+- `dig` prints `10.`, `192.168.`, `172.16.` through `172.31.`, or `127.`. That is [`PRIVATE_IP`](#private_ip), and you are resolving through a private DNS zone. Trust the `@8.8.8.8` answer.
+
+### PRIVATE_IP
+
+**Message:** `The provided bridge URL is blocked by the outbound SSRF policy.`
+
+Either the URL itself is a private address (`http://10.x`, `http://127.0.0.1`, `http://192.168.x`, `http://169.254.x`) or the hostname resolves to one.
+
+```bash
+dig +short YOUR_HOST @8.8.8.8
+```
+
+A public address (anything outside the ranges above, and outside `fe80:`) means this code is unexpected. A private address means Novu refused to connect, which is what you want if that host is an internal service you did not mean to expose.
+
+On Novu Cloud, sync a URL that resolves to a public address. `localhost` cannot be allow-listed.
+
+On a self-hosted Novu, you can allow a specific internal host. Set this on the API and the Worker, then restart both:
+
+```bash
+NOVU_SAFE_OUTBOUND_ALLOW=host.docker.internal,10.0.0.0/8,.svc.cluster.local
+```
+
+Put the hostname in the bridge URL. A literal `10.x` address in the URL is still rejected. Link-local addresses and `metadata.google.internal` stay blocked. See [Deploy with Docker](/community/self-hosting-novu/deploy-with-docker#faqs).
+
+### CROSS_ORIGIN_METHOD_PRESERVING_REDIRECT
+
+**Message:** `The provided bridge URL is blocked by the outbound SSRF policy.`
+
+```bash
+curl -sI YOUR_BRIDGE_URL
+```
+
+You will see `307` or `308`, and a `Location` on a different host. Novu will not replay the signed POST onto that other host. Sync the URL in `Location` if that is where the bridge actually lives, or stop the redirect.
+
+### SSRF_BLOCKED
+
+**Message:** `The provided bridge URL is blocked by the outbound SSRF policy.`
+
+No specific reason was attached. Run the same `dig` and `curl -sI` commands. The result usually matches one of the codes above: the name does not resolve, the address is private, the scheme is wrong, or curl shows a cross-host `307`/`308`.
+
+## Reachability errors
+
+The URL was accepted. The call still failed. The URL in the message is the one to test. Run it yourself before changing code:
+
+```bash
+curl -i --max-time 10 "THE_URL_FROM_THE_MESSAGE"
+```
+
+### InvalidBridgeUrl
+
+**Status:** `400`
+
+**Message:** `Invalid bridge URL: <url>`
+
+The environment has no bridge URL. In the Dashboard, select that environment and click the status orb in the top-right. If **Bridge Endpoint URL** is empty, that is the whole problem. Sync one:
+
+```bash
+npx novu@latest sync \
+  --bridge-url https://your-app.example.com/api/novu \
+  --secret-key <secret key of this environment>
+```
+
+### BridgeEndpointUnavailable
+
+**Status:** `404`
+
+**Message:** `Unable to reach Bridge Endpoint at <url>. Run npx novu@latest dev in Local mode, or ensure your Bridge app deployment is available.`
+
+`curl -i` returned `404`. The host is up. The path is wrong, or the deploy does not contain the route. Compare the path in the error with the path where `serve()` is mounted. A bridge mounted at `/api/novu` and a sync URL of `https://app.example.com/api/notifications` fails here. Sync the path that returns JSON, not the path that returns your site's 404 page.
+
+Connection failures use this same message with a different `code`. Those are the `E*` codes further down.
+
+### BridgeEndpointNotFound
+
+**Status:** `404`
+
+**Message:** `Could not connect to Bridge Endpoint at <url>. Make sure you are running your local app server.`
+
+`curl -i` returned `502`. Something is proxying, and the app behind it is down. For `npx novu dev`, the tunnel is running and your app is not. Start the app on the port the tunnel expects, and leave it running.
+
+### TunnelNotFound
+
+**Status:** `404`
+
+**Message:** `Unable to establish tunnel connection to <url>. Run npx novu@latest dev in Local mode, or ensure your Tunnel app deployment is available.`
+
+The URL is a `*.novu.sh` tunnel and nothing is connected to it. In the app directory, run `npx novu@latest dev`. When it prints a tunnel URL, sync that URL. Closing the terminal closes the tunnel, and the next sync fails with this code until you start it again.
+
+### BridgeRequestTimeout
+
+**Status:** `408`
+
+**Message:** `Bridge request timeout for <url>`
+
+Novu connected and your handler did not finish within 5 seconds. Novu already retried 3 times, waiting 1s, then 2s, then 4s.
+
+Hit the same URL with `curl --max-time 10` and watch how long it sits. Then look at the bridge log for that request. A cold start, a step that calls a slow third party, or a query with no timeout shows up as a request that starts and never logs a response. Return from the handler within 5 seconds. Do the slow work after you respond, or in another job. On a serverless host, the log line you want is the platform's "cold start" or "duration" field for that invocation.
+
+### EAI_AGAIN
+
+**Status:** `400`
+
+**Message:** same as `BridgeEndpointUnavailable`
+
+Novu's DNS lookup was interrupted, and the retries were too. `dig +short YOUR_HOST @8.8.8.8` tells you if the name is real. If dig prints an address, run the sync or trigger one more time. If dig prints nothing, the name does not exist publicly. See [`DNS_LOOKUP_FAILED`](#dns_lookup_failed).
+
+### ENOTFOUND
+
+**Status:** `400`
+
+**Message:** same as `BridgeEndpointUnavailable`
+
+The lookup failed during the connection. Novu already retried. `dig +short YOUR_HOST @8.8.8.8` with no output means there is no public record. Publish one, or sync a host that has one. [`DNS_LOOKUP_FAILED`](#dns_lookup_failed) is the same situation caught earlier, before Novu tried to connect, and that one is not retried.
+
+### ECONNREFUSED
+
+**Status:** `400`
+
+**Message:** same as `BridgeEndpointUnavailable`
+
+`dig` prints an address. `curl` says `Connection refused`. The name is real and nothing is listening on that port. Check the process on the server, and check that the port in the URL is the port the process uses. A URL with no port uses 443 for `https` and 80 for `http`.
+
+### ECONNRESET
+
+**Status:** `400`
+
+**Message:** same as `BridgeEndpointUnavailable`
+
+The connection opened and the other side closed it. In the bridge log, find the request at the same time as the error. A stack trace there means the process crashed mid-request. No log line at all means a proxy in front of the app closed it. Restart the process if it exited, and read the proxy's error log for a reset on that path.
+
+### EADDRINUSE
+
+**Status:** `400`
+
+**Message:** same as `BridgeEndpointUnavailable`
+
+Novu could not open a local socket, and the retries failed too. Run the request again. If you run Novu yourself and this keeps happening, the worker is out of local ports. Check `ss -s` or your platform's port metrics on the worker.
+
+### EPIPE
+
+**Status:** `400`
+
+**Message:** same as `BridgeEndpointUnavailable`
+
+The connection closed while Novu was still sending the body. The usual cause is a proxy idle timeout shorter than the upload. Your access log shows the request starting and then a closed connection, with no status from the app. Raise that proxy timeout, or shrink the trigger payload, and run it again.
+
+### ETIMEDOUT
+
+**Status:** `400`
+
+**Message:** same as `BridgeEndpointUnavailable`
+
+`curl --max-time 10` hangs and then times out, and `dig` did return an address. Packets are not getting through. A firewall, a security group, or a host that is only reachable on a private network does this. Novu Cloud has no fixed source IP to allow. If curl from your laptop works and Novu still times out, the host is allowing your network and not the public internet. A handler that starts and then runs too long is [`BridgeRequestTimeout`](#bridgerequesttimeout), not this code.
+
+### EHOSTUNREACH
+
+**Status:** `400`
+
+**Message:** same as `BridgeEndpointUnavailable`
+
+`dig` returns an address Novu has no route to. On Novu Cloud that address is almost always private or otherwise unroutable. On a self-hosted worker, check that the worker can route to the address `dig` printed.
+
+### ENETUNREACH
+
+**Status:** `400`
+
+**Message:** same as `BridgeEndpointUnavailable`
+
+The worker's own network is down. On Novu Cloud, run the request again. On a self-hosted worker, check outbound connectivity from the API and Worker containers.
+
+## Response errors
+
+`curl -i` the URL from the message. The status and the body you get are what Novu got.
+
+### BridgeAuthenticationFailed
+
+**Status:** `401`
+
+**Message:** `Bridge authentication failed for <url>. Please check your NOVU_SECRET_KEY environment variable.`
+
+`curl -i` returns `401`, and the body is your app's error, not a `Signature*` code. Another middleware answered before `@novu/framework`. Clerk, Auth.js, a JWT plugin, or a platform password wall all do this.
+
+Hit the URL in a browser. A login page means the same thing. Exclude the bridge path from that middleware. In Next.js, skip it from the matcher:
+
+```ts
+export const config = {
+  matcher: ['/((?!api/novu|_next/static|_next/image|favicon.ico).*)'],
+};
+```
+
+Change `api/novu` to your bridge path. A `401` whose `code` is `SignatureMismatchError` or another signature code is not this error. Use [Signature errors](#signature-errors).
+
+### BridgeMethodNotConfigured
+
+**Status:** `400`
+
+**Message:** ``Bridge Endpoint at `<url>` is not correctly configured. Ensure your `@novu/framework` integration exposes the `POST`, `GET`, and `OPTIONS` methods.``
+
+The bridge returned `405`. See which methods exist:
+
+```bash
+curl -i YOUR_BRIDGE_URL
+curl -i -X POST YOUR_BRIDGE_URL
+curl -i -X OPTIONS YOUR_BRIDGE_URL
+```
+
+The one that returns `405` is the method to add. The framework `serve()` helper exports `GET`, `POST`, and `OPTIONS`. If the platform only forwards `POST`, turn the other methods on for that route.
+
+### PayloadTooLarge
+
+**Status:** `413`
+
+**Message:** `Payload too large for <url>`
+
+`curl -i` with a small body works, and the real trigger does not. The trigger payload plus subscriber data exceeded the limit on your app or on a proxy in front of it. The proxy log names the limit. Shrink the payload, or raise the limit on that route.
+
+### SelfSignedCertificate
+
+**Status:** `400`
+
+**Message:** `Bridge Endpoint can't use a self signed certificate in production environments.`
+
+This only happens for an environment named Production. Development skips certificate verification.
+
+```bash
+curl -v https://YOUR_HOST
+```
+
+The TLS section says the certificate is self-signed, or that the name does not match. Put a publicly trusted certificate on that host. A certificate that is only trusted by your laptop's keychain still fails for Novu.
+
+### UnsupportedProtocol
+
+**Status:** `400`
+
+**Message:** `Unsupported protocol for <url>`
+
+The synced URL does not start with `http://` or `https://`. Sync an `https://` URL.
+
+### MaximumRedirectsExceeded
+
+**Status:** `400`
+
+**Message:** `Maximum redirects exceeded for <url>`
+
+```bash
+curl -sI YOUR_BRIDGE_URL
+```
+
+Follow each `Location` by hand. After a few hops you are either in a loop or still not on the bridge. Sync the final URL. A redirect Novu refuses for safety is `INVALID_URL` or `CROSS_ORIGIN_METHOD_PRESERVING_REDIRECT` instead.
+
+### ResponseReadError
+
+**Status:** `400`
+
+**Message:** `Response body could not be read for <url>`
+
+The app closed the response early. In the bridge log at that time, look for a crash after the handler started writing. `curl` of the same URL either hangs and drops, or returns a short body. Fix the crash. If curl returns a full JSON body and Novu still reports this, the proxy between them is cutting the response. Check that proxy's error log for a truncated response on this path.
+
+### RequestUploadError
+
+**Status:** `400`
+
+**Message:** `Error uploading request body for <url>`
+
+Novu could not finish sending the body. Your access log shows the request, then a closed connection, and no response from the handler. Run it again. If it happens on large payloads only, the proxy is cutting uploads. Raise its body timeout, and confirm the route accepts `POST`.
+
+### RequestCacheError
+
+**Status:** `400`
+
+**Message:** `Error caching request for <url>`
+
+This failed inside Novu, before your handler ran. There will be no matching line in your access log. Run the request again. If it keeps happening, contact support with the `path` and `timestamp` from the response.
+
+### ResponseParseError
+
+**Status:** `502`
+
+**Message:** `Bridge URL response code is 2xx, but parsing body failed for <url>`
+
+```bash
+curl -i YOUR_BRIDGE_URL
+```
+
+The status is `200` (or another `2xx`) and the body is not JSON. An HTML login page, a Vercel password-protection page, or an empty body all look like this. The first bytes are usually `<!DOCTYPE html>`. Exclude the bridge path from whatever is writing that page. A health check from the framework is JSON.
+
+### UnknownBridgeRequestError
+
+**Status:** `500`
+
+**Message:** `Unknown bridge request error calling <url>`
+
+Look up the request in your access log at the same time. The status there is the one Novu did not recognize. Statuses Novu does recognize are `401`, `404`, `405`, `413`, and `502`. A `500` from your handler lands here. The handler log next to that request has the exception.
+
+### UnknownBridgeNonRequestError
+
+**Status:** `500`
+
+**Message:** `Unknown bridge non-request error calling <url>`
+
+There is no line in your access log, because Novu failed before the request was classified. Run it again. If it keeps happening, contact support with the `path` and `timestamp` from the response.
+
+## Signature errors
+
+Novu puts a `novu-signature` header on every bridge request except the health check:
+
+```
+novu-signature: t=1710000000000,v1=ab12cd34...
+```
+
+`t` is a Unix timestamp in milliseconds. `v1` is HMAC-SHA256 of the text `<t>.<json body>`, using the environment secret key as the key. A GET with no body is signed over `{}`.
+
+Your bridge computes the same HMAC with its own copy of that secret and compares it to `v1`. The check runs when strict authentication is on. That is the default when `NODE_ENV` is not `development`, `dev`, or unset. `strictAuthentication: true` on the framework client, or `NOVU_STRICT_AUTHENTICATION_ENABLED=true`, turns it on anyway. Leave it on in production.
+
+The secret the bridge uses is `secretKey` on the client, otherwise `NOVU_SECRET_KEY` or `NOVU_API_KEY` environment variables. It has to be the secret key of the environment that sent the request. The Development key and the Production key are different. A webhook signing secret from another product will not work here.
+
+Novu checks in this order, and stops at the first failure:
+
+1. No header → `SignatureNotFoundError`
+2. Empty secret on the bridge → `SigningKeyNotFoundError`
+3. Header is missing `t` or `v1` → `SignatureInvalidError`
+4. `t` is more than 5 minutes from the bridge clock → `SignatureExpiredError`
+5. HMAC differs → `SignatureMismatchError`
+
+Before chasing a signature code, confirm the request reached the framework:
+
+```bash
+curl -i YOUR_BRIDGE_URL
+```
+
+You want JSON from the framework. An HTML page or a `401` from Clerk means the signature check never ran. Fix that first. See [`BridgeAuthenticationFailed`](#bridgeauthenticationfailed).
+
+### SignatureMismatchError
+
+**Status:** `401`
+
+**Message:** ``Signature does not match the expected signature. Please ensure the signature provided in the `novu-signature` header is correct and try again.``
+
+The header was well formed and fresh. The HMAC did not match. The two things that go into it are the secret key and the exact JSON body.
+
+**Compare the keys.** In the Dashboard, select the environment you actually called. That is the environment of the secret key you passed to `novu sync`, or the environment you triggered. Open **API Keys** and copy the secret key.
+
+Then on the process that is serving the bridge (the preview or production container, not the `.env` on your laptop, unless Novu is calling your laptop):
+
+```bash
+node -e "const k=process.env.NOVU_SECRET_KEY||''; console.log(k ? k.slice(0,4)+' len='+k.length : 'NOVU_SECRET_KEY is empty')"
+```
+
+Compare the first 4 characters and the length with the Dashboard key. Do not print the whole key. If the process says the variable is empty, the deploy did not get it. On Vercel, open Project → Settings → Environment Variables and see which environments the variable is enabled for. A key set only for Production is empty on a Preview deployment, and this error is what you get.
+
+If you construct the client yourself, the value that matters is `secretKey` in that constructor. An env var you set but never pass in is unused.
+
+**If the keys match, the body changed.** Novu signed `JSON.stringify` of the body it sent. The bridge hashed a different string. In Next.js this is usually `middleware.ts` running on the bridge path and reading the body, or an auth wrapper doing the same. Exclude the path:
+
+```ts
+export const config = {
+  matcher: ['/((?!api/novu|_next/static|_next/image|favicon.ico).*)'],
+};
+```
+
+A custom `serve` handler has to return the parsed object from `body()`. Returning a string, or an object you copied and then added fields to, changes the HMAC. If `body()` throws, the framework hashes `{}` instead, and you get this error. The bridge log shows that exception immediately before the signature error.
+
+### SignatureNotFoundError
+
+**Status:** `401`
+
+**Message:** ``Signature not found. Please provide a signature in the `novu-signature` header``
+
+Strict authentication is on, and the header was empty when the framework read it. `curl` with no header gets this too, so a manual call is not evidence that Novu omitted it.
+
+In the bridge access log, open the request Novu made (it is a POST from Novu's servers, not your curl). If `novu-signature` is missing there, a proxy dropped it. Forward that header. Nginx does this when `underscores_in_headers` is off only for names with underscores. This header uses a hyphen, so look for an allowlist of forwarded headers instead. API Gateway and some WAFs forward a fixed list and drop the rest.
+
+If the log shows the header and you still get this error, the framework is reading headers in a custom `serve` handler that does not pass `novu-signature` through. The header callback has to return that value.
+
+### SignatureInvalidError
+
+**Status:** `401`
+
+**Message:** ``Signature is invalid. Please provide a valid signature in the `novu-signature` header``
+
+The header arrived, and it is not `t=<milliseconds>,v1=<hex>`. Log the header value for one request. A missing half, a non-numeric `t`, or a proxy that rewrote the value shows up immediately. Novu sends both parts. Something between Novu and the framework changed them.
+
+### SignatureExpiredError
+
+**Status:** `401`
+
+**Message:** ``Signature expired. Please provide a signature with a timestamp no older than 5 minutes in the `novu-signature` header``
+
+Take `t` from the `novu-signature` header in the bridge log and compare it with the bridge clock:
+
+```bash
+date +%s%3N
+```
+
+That prints Unix milliseconds. If it is more than 5 minutes away from `t`, the host clock is wrong. Enable NTP and try a new request from Novu. Replaying a saved request after 5 minutes fails here even when the key is right. That part is working.
+
+### SigningKeyNotFoundError
+
+**Status:** `401`
+
+**Message:** ``Signature key not found. Please provide a valid key in the Client constructor `config.secretKey` ``
+
+The header was present, and the bridge has no secret to check it with. Run the `node -e` one-liner from [`SignatureMismatchError`](#signaturemismatcherror) on the running process. It will print `NOVU_SECRET_KEY is empty`. Also check `NOVU_API_KEY`. The client uses that only when the secret key is unset.
+
+Set `NOVU_SECRET_KEY` to the secret key of this environment and redeploy. A variable added in the host's UI does nothing until the next deploy. If you pass `secretKey: ''` into the client, that empty string wins over the environment variable. Remove it.
+
+## Errors raised by your bridge
+
+These `code` values come from your app. Novu forwards `message` and `data` and uses the HTTP status your bridge returned. The same error is in the bridge log.
+
+### WorkflowNotFoundError
+
+**Status:** `404`
+
+**Message:** ``Workflow with id: `<id>` does not exist. Please provide a valid id.``
+
+The id in the message is the one Novu asked for. Search the repo for it. If the only copy is in the trigger call, and the workflow file uses a different id, those two strings have to match. If the id exists in code, the running deploy may be older than the Dashboard. Open the deployment that the bridge URL points at and confirm that commit contains the workflow. Sync again from that deploy, then trigger the id it exports.
+
+### WorkflowAlreadyExistsError
+
+**Status:** `409`
+
+**Message:** ``Workflow with id: `<id>` already exists. Please use a different id.``
+
+Search the repo for the id in the message. Two `workflow()` calls use it. Rename one and sync.
+
+### WorkflowPayloadInvalidError
+
+**Status:** `400`
+
+**Message:** ``Workflow with id: `<id>` has invalid `payload`. Please provide the correct payload.``
+
+Open `data` on the response. It is the validator output and names the field. The workflow id in the message is the schema to open. A missing field, or a string where the schema wants a number, is written out there. Send that field in the shape `data` describes.
+
+### StepNotFoundError
+
+**Status:** `404`
+
+**Message:** ``Step with id: `<id>` does not exist. Please provide a valid id.``
+
+Search the workflow for the step id in the message. If you renamed or removed that step, the Dashboard copy is stale, or an older notification is still running and asking for the old step. Sync the current workflow. New triggers use the new steps. A notification already in progress still has the old step id. Cancel it, or keep the old step until those notifications finish.
+
+### StepAlreadyExistsError
+
+**Status:** `409`
+
+**Message:** ``Step with id: `<id>` already exists. Please use a different id.``
+
+Search that workflow for the step id. Two steps use it. Rename one and sync.
+
+### StepExecutionFailedError
+
+**Status:** `502`
+
+**Message:** ``Failed to <action> Step with id: `<id>``
+
+`<action>` is `execute` or `preview`. If your handler threw an `Error`, the message continues with `: ` and the exception text. `data.stack` is the stack. Search the step id, open that handler, and use the exception text. The bridge log has the same stack.
+
+### StepControlCompilationFailedError
+
+**Status:** `400`
+
+**Message:** ``Workflow with id: `<workflowId>` has invalid controls syntax in step with id: `<stepId>`. Please correct step control syntax.``
+
+Open that step in the Dashboard. `data` names the control. The value is a template the bridge could not compile. The template error is in `data`. Edit that control and trigger again.
+
+### ProviderNotFoundError
+
+**Status:** `404`
+
+**Message:** ``Provider with id: `<id>` does not exist. Please provide a valid id.``
+
+Search the bridge for the provider id in the message. The request is asking for one the running process does not register. Register it, or send an id that this deploy exports.
+
+### ProviderExecutionFailedError
+
+**Status:** `502`
+
+**Message:** ``Failed to <action> Provider with id: `<id>``
+
+Same shape as [`StepExecutionFailedError`](#stepexecutionfailederror). The text after `: ` and `data.stack` are the exception from the provider handler.
+
+### InvalidActionError
+
+**Status:** `400`
+
+**Message:** ``Invalid query string: `action`=`<action>`. Please use one of `<allowed actions>` ``
+
+Read `action` in the message. Novu sends `trigger`, `execute`, `preview`, `discover`, `health-check`, or `agent-event`. Any other value was added by a proxy rewriting the query string, or by a client that is not Novu. Call the bridge from Novu, and stop the proxy from changing `action`.
+
+### MethodNotAllowedError
+
+**Status:** `405`
+
+**Message:** ``Method not allowed. Please use one of `POST`, `GET`, `OPTIONS` ``
+
+The request method was something else, usually `HEAD` or `PUT`. A platform health check using `HEAD` against the bridge URL does this. Point that check at another path, or at `GET` on this one.
+
+### MissingSecretKeyError
+
+**Status:** `400`
+
+**Message:** ``Missing secret key. Set the `NOVU_SECRET_KEY` environment variable or pass `secretKey` to the client options.``
+
+The bridge was calling the Novu API and had no key. This is not the inbound signature check. That one is [`SigningKeyNotFoundError`](#signingkeynotfounderror). Set `NOVU_SECRET_KEY` on the process, or pass `secretKey` into the client, and redeploy.
+
+### MissingDependencyError
+
+**Status:** `500`
+
+**Message:** ``Tried to use a <feature> in @novu/framework without <packages> installed. Please install them by running `npm install <packages>`.``
+
+The message names the packages. They are imported by the handler and missing from the deployed `node_modules`. Install them in the bridge project and redeploy. A lockfile that omits optional dependencies drops them on the host even when they exist on your laptop.
+
+### ExecutionEventPayloadInvalidError
+
+**Status:** `400`
+
+**Message:** ``Workflow with id: `<workflowId>` has invalid `payload`. Please provide the correct event payload.``
+
+Same check as [`WorkflowPayloadInvalidError`](#workflowpayloadinvaliderror), during step execution rather than at trigger time. `data` names the field. Compare it with the payload the workflow stored for this event.
+
+### ExecutionEventControlInvalidError
+
+**Status:** `400`
+
+**Message:** ``Workflow with id: `<workflowId>` has invalid `controls`. Please provide the correct event controls.``
+
+`data` names the control that failed. Open that step's control schema and compare it with the controls on this event.
+
+### ExecutionStateControlInvalidError
+
+**Status:** `400`
+
+**Message:** ``Workflow with id: `<workflowId>` has an invalid state. Step with id: `<stepId>` has invalid `controls`. Please provide the correct step controls.``
+
+This notification started before the control schema changed, and the stored controls no longer match. `data` shows which field. Trigger a new event to pick up the new schema. Let the old notification finish, or cancel it.
+
+### ExecutionStateOutputInvalidError
+
+**Status:** `400`
+
+**Message:** ``Workflow with id: `<workflowId>` has an invalid state. Step with id: `<stepId>` has invalid output. Please provide the correct step output.``
+
+The output saved for that step does not match the schema. `data` names the field. The step handler returned a different shape than the step declares. Align the two.
+
+### ExecutionStateResultInvalidError
+
+**Status:** `400`
+
+**Message:** ``Workflow with id: `<workflowId>` has an invalid state. Step with id: `<stepId>` has invalid result. Please provide the correct step result.``
+
+Same as the output error, for the step result. `data` names the field.
+
+### ExecutionProviderOutputInvalidError
+
+**Status:** `400`
+
+**Message:** ``Workflow with id: `<workflowId>` has an invalid state. Step with id: `<stepId>` and provider with id: `<providerId>` has invalid output. Please provide the correct provider output.``
+
+`data` names the field. The provider id in the message is the handler to open. Its return value does not match the output it declares.
+
+### ExecutionStateCorruptError
+
+**Status:** `400`
+
+**Message:** ``Workflow with id: `<workflowId>` has a corrupt state. Step with id: `<stepId>` does not exist. Please provide the missing state.``
+
+`data` is `{ workflowId, stepId }`. The notification's saved state points at a step you removed. Sync a workflow that still has that step, or cancel the notification and trigger a new one.
+
+### BridgeError
+
+**Status:** `500`
+
+**Message:** `Unknown BridgeError`
+
+The handler threw something the framework has no specific code for. If the thrown value was an `Error`, the message continues with `: ` and that error's message. `data.stack` is the stack. Search the stack for a file in your app. That frame is the one to open. The bridge log has the same error.
