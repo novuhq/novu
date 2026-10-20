@@ -289,8 +289,30 @@ export class HumanContactRepository extends BaseRepositoryV2<
   }
 
   /**
+   * Contacts on this relay that already store `address` as verified, pending, or declared.
+   */
+  async findContactsByEmailAddress(
+    environmentId: string,
+    agentId: string,
+    address: string
+  ): Promise<HumanContactEntity[]> {
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _agentId: agentId,
+        $or: [
+          { 'addresses.email.verified.address': address },
+          { 'addresses.email.pending.address': address },
+          { 'addresses.email.declared.address': address },
+        ],
+      },
+      '*'
+    );
+  }
+
+  /**
    * Records an unverified address the person typed. Does not touch pending or
-   * verified, so it cannot make the address deliverable.
+   * verified, so a contact-id send still cannot use it.
    */
   async setDeclaredAddress(params: {
     environmentId: string;

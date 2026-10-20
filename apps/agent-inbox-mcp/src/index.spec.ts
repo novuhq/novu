@@ -296,10 +296,10 @@ describe('the Agent Inbox MCP server', () => {
 
     expect(result.isError).toBeFalsy();
     const created = calls.find((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST');
-    expect(created?.body).toMatchObject({ to: ['alice'] });
+    expect(created?.body).toMatchObject({ to: ['alice@example.com'] });
   });
 
-  it('starts verification for a new email address without sending the message', async () => {
+  it('sends a new email address without waiting for verification', async () => {
     const calls = stubBackends();
     const { env, ctx } = setup();
 
@@ -315,10 +315,10 @@ describe('the Agent Inbox MCP server', () => {
       result: { content: Array<{ text: string }>; isError?: boolean };
     };
 
-    expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('not verified yet');
-    expect(calls.some((call) => call.url.endsWith('/v1/human/verifications') && call.method === 'POST')).toBe(true);
-    expect(calls.some((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST')).toBe(false);
+    expect(result.isError).toBeFalsy();
+    const created = calls.find((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST');
+    expect(created?.body).toMatchObject({ to: ['new@example.com'] });
+    expect(calls.some((call) => call.url.endsWith('/v1/human/verifications'))).toBe(false);
   });
 
   it('does not invite a new email address while replying', async () => {

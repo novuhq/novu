@@ -101,6 +101,14 @@ describe('CreateInteraction', () => {
       execute: sinon.stub().resolves({ ...created, _conversationId: 'conv1', subscriberIds: ['sub-1', 'sub-2'] }),
     };
     const keylessEmailGate = { assertAllowed: sinon.stub().resolves() };
+    const humanContactRepository = {
+      findContactsByEmailAddress: sinon.stub().resolves([]),
+      setDeclaredAddress: sinon.stub().resolves({ address: 'ada@acme.com', declaredAt: 't' }),
+    };
+    const subscriberRepository = {
+      findOne: sinon.stub().resolves(null),
+      create: sinon.stub().resolves({ subscriberId: 'ada' }),
+    };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
@@ -119,7 +127,9 @@ describe('CreateInteraction', () => {
       inbox as any,
       conversationService as any,
       createConversationInteraction as any,
-      keylessEmailGate as any
+      keylessEmailGate as any,
+      humanContactRepository as any,
+      subscriberRepository as any
     );
     const command = {
       userId: 'user1',
@@ -145,6 +155,8 @@ describe('CreateInteraction', () => {
       conversationService,
       createConversationInteraction,
       keylessEmailGate,
+      humanContactRepository,
+      subscriberRepository,
     };
   }
 
@@ -250,19 +262,15 @@ describe('CreateInteraction', () => {
       expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(true);
     });
 
-    it('refuses a question in a thread without a contact unless anyone may answer', async () => {
+    it('sends a question into a thread with no contact to everyone there', async () => {
       const { usecase, command, agentRepository, inbox, createConversationInteraction } = setup();
       agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
       inbox.firstContactId.returns(undefined);
 
-      try {
-        await usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any);
-        expect.fail('expected BadRequestException');
-      } catch (err) {
-        expect(err).to.be.instanceOf(BadRequestException);
-        expect((err as Error).message).to.contain('--anyone');
-      }
-      expect(createConversationInteraction.execute.called).to.equal(false);
+      await usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any);
+
+      expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['sub-1', 'sub-2']);
+      expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(true);
     });
 
     it('tells everyone in the thread, contact or not', async () => {
@@ -892,5 +900,136 @@ describe('CreateInteraction', () => {
     expect(messageQuota.reserveCredits.calledOnceWith('org1', 1)).to.equal(true);
     expect(messageQuota.messageCredits.accept.called).to.equal(false);
     expect(messageQuota.messageCredits.release.calledOnce).to.equal(true);
+  });
+
+  describe('explicit email address', () => {
+    const agent = { _id: 'agent-relay', identifier: 'human-relay' };
+
+    it('stores a typed address as unverified and delivers that address', async () => {
+      const {
+        usecase,
+        command,
+        agentRepository,
+        deliveryService,
+        humanContactRepository,
+        subscriberRepository,
+        keylessEmailGate,
+      } = setup();
+      agentRepository.findOne.resolves(agent);
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'email-main',
+        platform: 'email',
+        platformUserId: 'ada@acme.com',
+      });
+
+      await usecase.execute({ ...command, to: 'Ada@Acme.com', via: undefined } as any);
+
+      expect(keylessEmailGate.assertAllowed.calledOnce).to.equal(true);
+      expect(subscriberRepository.create.firstCall.args[0]).to.deep.equal({
+        subscriberId: 'ada',
+        _environmentId: 'env1',
+        _organizationId: 'org1',
+      });
+      expect(subscriberRepository.create.firstCall.args[0]).to.not.have.property('email');
+      expect(humanContactRepository.setDeclaredAddress.firstCall.args[0]).to.include({
+        subscriberId: 'ada',
+        address: 'ada@acme.com',
+        via: HumanChannelViaEnum.EMAIL,
+      });
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({
+        subscriberId: 'ada',
+        via: HumanChannelViaEnum.EMAIL,
+        explicitEmail: 'ada@acme.com',
+      });
+    });
+
+    it('reuses the contact that already stores the address', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanContactRepository, subscriberRepository } =
+        setup();
+      agentRepository.findOne.resolves(agent);
+      humanContactRepository.findContactsByEmailAddress.resolves([{ subscriberId: 'ada' }]);
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'email-main',
+        platform: 'email',
+        platformUserId: 'ada@acme.com',
+      });
+
+      await usecase.execute({ ...command, to: 'ada@acme.com' } as any);
+
+      expect(subscriberRepository.create.called).to.equal(false);
+      expect(humanContactRepository.setDeclaredAddress.called).to.equal(false);
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({
+        subscriberId: 'ada',
+        explicitEmail: 'ada@acme.com',
+      });
+    });
+
+    it('sends the typed address when that contact has a different verified address', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanContactRepository } = setup();
+      agentRepository.findOne.resolves(agent);
+      humanContactRepository.findContactsByEmailAddress.resolves([{ subscriberId: 'ada' }]);
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'email-main',
+        platform: 'email',
+        platformUserId: 'new@example.com',
+      });
+
+      await usecase.execute({ ...command, to: 'new@example.com' } as any);
+
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({
+        subscriberId: 'ada',
+        explicitEmail: 'new@example.com',
+      });
+    });
+
+    it('does not create a contact when the org is keyless', async () => {
+      const { usecase, command, agentRepository, keylessEmailGate, subscriberRepository, humanContactRepository } =
+        setup();
+      agentRepository.findOne.resolves(agent);
+      keylessEmailGate.assertAllowed.rejects(
+        new ForbiddenException({ code: 'KEYLESS_EMAIL_REQUIRES_ACCOUNT', message: 'needs an account' })
+      );
+
+      try {
+        await usecase.execute({ ...command, to: 'ada@acme.com' } as any);
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(ForbiddenException);
+      }
+
+      expect(subscriberRepository.create.called).to.equal(false);
+      expect(humanContactRepository.setDeclaredAddress.called).to.equal(false);
+    });
+
+    it('rejects an email address combined with a chat channel', async () => {
+      const { usecase, command, agentRepository, subscriberRepository } = setup();
+      agentRepository.findOne.resolves(agent);
+
+      try {
+        await usecase.execute({ ...command, to: 'ada@acme.com', via: HumanChannelViaEnum.TELEGRAM } as any);
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.include('must be email');
+      }
+
+      expect(subscriberRepository.create.called).to.equal(false);
+    });
+
+    it('does not create a contact when an email is named inside a thread', async () => {
+      const { usecase, command, agentRepository, humanContactRepository, createConversationInteraction } = setup();
+      agentRepository.findOne.resolves(agent);
+
+      try {
+        await usecase.execute({ ...command, to: 'ada@acme.com', thread: 'conv_abc', via: undefined } as any);
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.include('not in this thread');
+      }
+
+      expect(humanContactRepository.setDeclaredAddress.called).to.equal(false);
+      expect(createConversationInteraction.execute.called).to.equal(false);
+    });
   });
 });

@@ -14,7 +14,6 @@ import { answerHint, EXIT_TIMEOUT, emitResult, fail, interactionJson, SetupStill
 import { sleep } from '../poll';
 import { startWaitIndicator } from '../spinner';
 import { isEmailAddress, resolveEmailContact } from './email-contact';
-import { runInvite } from './invite';
 
 export interface SendOptions {
   to?: string;
@@ -271,9 +270,9 @@ export function resolveAddress(
 }
 
 /**
- * Swaps each email address for the contact that has it. A new conversation with an address nobody has
- * yet makes that person a contact and sends them the verification email, but nothing else: an address
- * has to be verified before the agent may write to it, so the send stops there.
+ * Swaps nothing on a new conversation: a typed address is delivered by the API, which
+ * creates the contact when needed. A reply still requires a contact this relay already
+ * verified, and never starts verification from here.
  */
 export async function resolveEmailRecipients(
   client: ApiClient,
@@ -282,12 +281,11 @@ export async function resolveEmailRecipients(
   isReply: boolean
 ): Promise<string | string[]> {
   const ids = Array.isArray(to) ? to : [to];
-  if (!ids.some(isEmailAddress)) {
+  if (!ids.some(isEmailAddress) || !isReply) {
     return to;
   }
 
   const resolved: string[] = [];
-  const newcomers: Array<{ id: string; email: string }> = [];
 
   for (const value of ids) {
     if (!isEmailAddress(value)) {
@@ -295,28 +293,12 @@ export async function resolveEmailRecipients(
       continue;
     }
 
-    // Two new addresses in one command must not end up as the same contact.
-    const reserved = new Set(newcomers.map((newcomer) => newcomer.id));
-    const contact = await resolveEmailContact(client, agentIdentifier, value, reserved);
-    if (contact.exists) {
-      resolved.push(contact.id);
-    } else if (isReply) {
+    const contact = await resolveEmailContact(client, agentIdentifier, value);
+    if (!contact.exists) {
       fail(`${value} is not one of your contacts, so it cannot be in this conversation.`);
-    } else {
-      newcomers.push({ id: contact.id, email: value });
-    }
-  }
-
-  if (newcomers.length > 0) {
-    for (const newcomer of newcomers) {
-      await runInvite(newcomer.id, { via: 'email', email: newcomer.email, async: true, apiUrl: client.apiUrl });
     }
 
-    const who = newcomers.map((newcomer) => newcomer.email).join(', ');
-    fail(
-      `Your message was not sent: ${who} ${newcomers.length === 1 ? 'is' : 'are'} not verified yet. ` +
-        'A verification email is on its way; send again once they have clicked it.'
-    );
+    resolved.push(contact.id);
   }
 
   return Array.isArray(to) ? resolved : resolved[0];

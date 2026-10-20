@@ -45,7 +45,7 @@ const anyoneMayAnswer = z
   .boolean()
   .optional()
   .describe(
-    'When true with thread, anyone in the thread may answer. Pass this when replying to a stranger thread that has no contact.'
+    'When true with thread, anyone in the thread may answer, including when the thread already has a contact. A thread with no contact already lets everyone in it answer.'
   );
 
 const CHECK_INBOX_HINT =

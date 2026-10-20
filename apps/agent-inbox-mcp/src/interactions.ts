@@ -66,7 +66,7 @@ export async function sendInteraction(
     from?: string;
     /** Reply in an existing inbox thread (`conv_...`). When set, `to` is optional. */
     thread?: string;
-    /** Let anyone in the thread answer — needed for stranger threads with no contact. */
+    /** Let anyone in the thread answer. A thread with no contact already does this. */
     anyoneMayAnswer?: boolean;
     via?: string;
     ttlSeconds?: number;
