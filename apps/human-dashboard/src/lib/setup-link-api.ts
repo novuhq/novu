@@ -46,10 +46,8 @@ export async function getSetupLinkStatus(
   token: string,
   signal?: AbortSignal
 ): Promise<SetupLinkStatus> {
-  const path =
-    channel === 'slack' ? '/v1/agents/public/slack/setup/status' : '/v1/integrations/mobile-configure/status';
   const data = await request(
-    `${apiUrl}${path}?token=${encodeURIComponent(token)}`,
+    `${apiUrl}/v1/channels/${channel}/setup?token=${encodeURIComponent(token)}`,
     { method: 'GET', signal },
     'Could not verify the setup link.'
   );
@@ -63,7 +61,7 @@ export async function submitTelegramSetup(
   botToken: string
 ): Promise<TelegramSetupResult> {
   const data = await request(
-    `${apiUrl}/v1/integrations/mobile-configure`,
+    `${apiUrl}/v1/channels/telegram/setup`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -80,7 +78,7 @@ export async function submitTelegramSetup(
 
 export async function submitSlackSetup(apiUrl: string, token: string, configToken: string): Promise<SlackSetupResult> {
   const data = await request(
-    `${apiUrl}/v1/agents/public/slack/setup`,
+    `${apiUrl}/v1/channels/slack/setup`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

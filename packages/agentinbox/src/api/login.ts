@@ -37,10 +37,10 @@ export type LoginRequestStatus =
  * APIs that don't know it yet ignore it.
  */
 export async function startLoginRequest(apiUrl: string, machineName?: string): Promise<LoginRequest> {
-  const res = await createPublicApiClient(apiUrl).post<{ data?: LoginRequest } | LoginRequest>(
-    '/v1/cli/device-sessions',
-    { name: CLI_SESSION_NAME, ...(machineName ? { machineName } : {}) }
-  );
+  const res = await createPublicApiClient(apiUrl).post<{ data?: LoginRequest } | LoginRequest>('/v1/login', {
+    name: CLI_SESSION_NAME,
+    ...(machineName ? { machineName } : {}),
+  });
   const request = unwrap(res.data);
 
   if (!request?.deviceCode) {
@@ -53,7 +53,7 @@ export async function startLoginRequest(apiUrl: string, machineName?: string): P
 /** Reading an approved request hands over its key once; the request is gone after that. */
 export async function checkLoginRequest(apiUrl: string, deviceCode: string): Promise<LoginRequestStatus> {
   const res = await createPublicApiClient(apiUrl).post<{ data?: LoginRequestStatus } | LoginRequestStatus>(
-    `/v1/cli/device-sessions/${encodeURIComponent(deviceCode)}/poll`
+    `/v1/login/${encodeURIComponent(deviceCode)}/poll`
   );
 
   return unwrap(res.data);
@@ -65,7 +65,7 @@ export async function checkLoginRequest(apiUrl: string, deviceCode: string): Pro
  */
 export async function getKeylessClaimToken(client: ApiClient): Promise<string | null> {
   try {
-    const res = await client.axios.post<{ data?: { token: string } } | { token: string }>('/v1/human/claim-token');
+    const res = await client.axios.post<{ data?: { token: string } } | { token: string }>('/v1/login/claim');
 
     return unwrap(res.data).token;
   } catch (err) {
@@ -77,10 +77,10 @@ export async function getKeylessClaimToken(client: ApiClient): Promise<string | 
   }
 }
 
-/** Whether the environment behind `client` has this subscriber. Only a definite 404 counts as missing. */
+/** Whether the account behind `client` has this contact. Only a definite 404 counts as missing. */
 export async function hasSubscriber(client: ApiClient, subscriberId: string): Promise<boolean> {
   try {
-    await client.axios.get(`/v2/subscribers/${encodeURIComponent(subscriberId)}`);
+    await client.axios.get(`/v1/contacts/${encodeURIComponent(subscriberId)}`);
 
     return true;
   } catch (err) {
@@ -99,7 +99,7 @@ export async function hasSubscriber(client: ApiClient, subscriberId: string): Pr
 export async function findOperator(client: ApiClient): Promise<string | undefined> {
   try {
     const res = await client.axios.get<{ data?: { subscriberId?: string } } | { subscriberId?: string }>(
-      '/v1/human/operator'
+      '/v1/operator'
     );
 
     return unwrap(res.data)?.subscriberId || undefined;

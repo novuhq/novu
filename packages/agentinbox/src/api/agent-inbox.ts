@@ -144,14 +144,14 @@ export interface CreateInteractionInput {
 }
 
 export async function createInteraction(client: ApiClient, input: CreateInteractionInput): Promise<Interaction> {
-  const res = await client.axios.post<{ data?: Interaction } | Interaction>('/v1/human/interactions', input);
+  const res = await client.axios.post<{ data?: Interaction } | Interaction>('/v1/inbox/messages', input);
 
   return unwrap(res.data);
 }
 
 export async function getInteraction(client: ApiClient, id: string): Promise<Interaction> {
   const res = await client.axios.get<{ data?: Interaction } | Interaction>(
-    `/v1/human/interactions/${encodeURIComponent(id)}`
+    `/v1/inbox/messages/${encodeURIComponent(id)}`
   );
 
   return unwrap(res.data);
@@ -190,7 +190,7 @@ export async function setupRelay(
     defaultVia?: 'telegram' | 'slack' | 'email';
   }
 ): Promise<SetupRelayResult> {
-  const res = await client.axios.post<{ data?: SetupRelayResult } | SetupRelayResult>('/v1/human/setup', input);
+  const res = await client.axios.post<{ data?: SetupRelayResult } | SetupRelayResult>('/v1/setup', input);
 
   return unwrap(res.data);
 }
@@ -218,7 +218,7 @@ export async function setRelayAgentPicture(
   const form = new FormData();
   form.append('picture', new Blob([new Uint8Array(picture.file)], { type: picture.contentType }), 'picture');
   const res = await client.axios.put<{ data?: RelayAgent } | RelayAgent>(
-    '/v1/human/agent/picture',
+    '/v1/agent/picture',
     form,
     agentParams(agentIdentifier)
   );
@@ -244,7 +244,7 @@ export async function createInvite(
   client: ApiClient,
   input: { subscriberId: string; agentIdentifier?: string; firstName?: string; lastName?: string }
 ): Promise<Invite> {
-  const res = await client.axios.post<{ data?: Invite } | Invite>('/v1/human/invites', input);
+  const res = await client.axios.post<{ data?: Invite } | Invite>('/v1/contacts/invites', input);
 
   return unwrap(res.data);
 }
@@ -291,7 +291,7 @@ export async function listContacts(
   client: ApiClient,
   params: { limit?: number; after?: string; subscriberId?: string; agentIdentifier?: string } = {}
 ): Promise<ContactsPage> {
-  const res = await client.axios.get<{ data?: Contact[]; next?: string | null }>('/v1/human/contacts', { params });
+  const res = await client.axios.get<{ data?: Contact[]; next?: string | null }>('/v1/contacts', { params });
   const body = res.data;
 
   return { data: Array.isArray(body?.data) ? body.data : [], next: body?.next ?? null };
@@ -303,10 +303,10 @@ export async function getContact(
   agentIdentifier?: string,
   signal?: AbortSignal
 ): Promise<Contact> {
-  const res = await client.axios.get<{ data?: Contact } | Contact>(
-    `/v1/human/contacts/${encodeURIComponent(subscriberId)}`,
-    { params: agentIdentifier ? { agentIdentifier } : undefined, signal }
-  );
+  const res = await client.axios.get<{ data?: Contact } | Contact>(`/v1/contacts/${encodeURIComponent(subscriberId)}`, {
+    params: agentIdentifier ? { agentIdentifier } : undefined,
+    signal,
+  });
 
   // Explicit type arg: `Contact.data` would otherwise make `unwrap` infer the wrong envelope.
   return unwrap<Contact>(res.data);
@@ -329,7 +329,7 @@ export async function confirmAddressByCode(
   requestedAt: string,
   signal?: AbortSignal
 ): Promise<void> {
-  await client.axios.post('/v1/human/verify-code', { address, code, requestedAt }, { signal });
+  await client.axios.post('/v1/verify-code', { address, code, requestedAt }, { signal });
 }
 
 export async function requestAddressVerification(
@@ -344,7 +344,7 @@ export async function requestAddressVerification(
   }
 ): Promise<AddressVerificationResult> {
   const res = await client.axios.post<{ data?: AddressVerificationResult } | AddressVerificationResult>(
-    '/v1/human/verifications',
+    '/v1/contacts/verifications',
     input
   );
 

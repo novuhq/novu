@@ -244,7 +244,7 @@ describe('waitForVerifiedEmailOrCode', () => {
     const confirmCode = vi
       .fn()
       .mockRejectedValueOnce(
-        new ApiError('Request failed', 401, 'POST /v1/human/verify-code', {
+        new ApiError('Request failed', 401, 'POST /v1/verify-code', {
           message: { code: 'verification_code_invalid', message: 'That code is wrong or has expired.' },
         })
       )
@@ -268,7 +268,7 @@ describe('waitForVerifiedEmailOrCode', () => {
         })
     );
     const onCodeRejected = vi.fn();
-    const confirmCode = vi.fn().mockRejectedValue(new ApiError('timeout', 0, 'POST /v1/human/verify-code'));
+    const confirmCode = vi.fn().mockRejectedValue(new ApiError('timeout', 0, 'POST /v1/verify-code'));
     const readCode = vi
       .fn()
       .mockResolvedValueOnce('123456')
@@ -328,7 +328,7 @@ describe('waitForVerifiedEmailOrCode', () => {
   it('stops when the code is locked, without waiting out the poll', async () => {
     getContact.mockResolvedValue({ channels: [{ via: 'email', status: 'pending' }] });
     const confirmCode = vi.fn().mockRejectedValue(
-      new ApiError('Request failed', 429, 'POST /v1/human/verify-code', {
+      new ApiError('Request failed', 429, 'POST /v1/verify-code', {
         message: {
           code: 'verification_code_too_many_tries',
           message: 'Too many wrong codes from this network. Wait a few minutes, then try the code from the email.',

@@ -134,6 +134,18 @@ function noteVerificationEmailSent(sent: {
   sent.setView('email');
 }
 
+/**
+ * An invite link this site can't open: one the EU API issued, as Agent Inbox's API only reaches the US region.
+ * It shows as not valid, and its token is sent nowhere.
+ */
+export function UnsupportedInvite() {
+  return (
+    <InviteCard step="inactive">
+      <InactiveInvite reason="invalid" />
+    </InviteCard>
+  );
+}
+
 function followConnectResult(
   result: ConnectInviteResult,
   via: InviteChannelVia,

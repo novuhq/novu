@@ -112,12 +112,12 @@ export class InviteRequestError extends Error {
 }
 
 /**
- * Public invite endpoints of the Novu API. The token from the invite link is the only
+ * Public invite endpoints of Agent Inbox's API (this site's `/api`). The token from the invite link is the only
  * credential, so nothing here sends cookies or API keys.
  */
 export async function getInviteStatus(apiUrl: string, token: string, signal?: AbortSignal): Promise<InviteStatus> {
   const status = await request<InviteStatus>(
-    `${apiUrl}/v1/human/invites/status?token=${encodeURIComponent(token)}`,
+    `${apiUrl}/v1/invites/status?token=${encodeURIComponent(token)}`,
     { method: 'GET', signal },
     'Failed to load the invitation'
   );
@@ -158,7 +158,7 @@ export async function declineInvite(apiUrl: string, token: string): Promise<{ de
 /** Claims a verification token from the email link. */
 export async function verifyAddress(apiUrl: string, token: string, signal?: AbortSignal): Promise<VerifyAddressResult> {
   return request<VerifyAddressResult>(
-    `${apiUrl}/v1/human/verify`,
+    `${apiUrl}/v1/verify`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -172,7 +172,7 @@ export async function verifyAddress(apiUrl: string, token: string, signal?: Abor
 /** Confirms the invite's pending address with the 6-digit code from the email. */
 export async function verifyInviteCode(apiUrl: string, token: string, code: string): Promise<VerifyAddressResult> {
   return request<VerifyAddressResult>(
-    `${apiUrl}/v1/human/verify-code`,
+    `${apiUrl}/v1/verify-code`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -189,7 +189,7 @@ async function postAction<T>(
   fallbackMessage: string
 ): Promise<T> {
   return request<T>(
-    `${apiUrl}/v1/human/invites/${action}`,
+    `${apiUrl}/v1/invites/${action}`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
     fallbackMessage
   );
