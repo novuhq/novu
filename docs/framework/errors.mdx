@@ -35,14 +35,8 @@ The provided bridge URL is blocked by the outbound SSRF policy.
 The wording does not change. A public preview URL that has gone away returns this same sentence. On a step or preview the `code` is `DNS_LOOKUP_FAILED`. On sync you only have the sentence, so take the hostname from the URL you passed and run the checks below.
 
 ```bash
-dig +short YOUR_HOST
-dig +short YOUR_HOST @8.8.8.8
 curl -I https://YOUR_HOST
 ```
-
-Novu Cloud resolves names from the public internet. `dig +short YOUR_HOST @8.8.8.8` is what Cloud sees, instead of office or VPN DNS.
-
-Self-hosted Novu uses the resolver on the API and Worker containers. A name `dig @8.8.8.8` cannot find, such as `my-bridge.default.svc.cluster.local`, can still resolve there. Run `dig +short YOUR_HOST` or `getent hosts YOUR_HOST` inside the API container. If that prints an address, publishing the name on public DNS is not the fix.
 
 ### INVALID_URL
 
@@ -72,14 +66,33 @@ The host is `localhost` or `metadata.google.internal`. An allow list does not ch
 
 **Message:** `The provided bridge URL is blocked by the outbound SSRF policy.`
 
-Novu could not resolve the hostname. The deployment is often already gone: a preview that was deleted, a branch deploy that expired, or a name that was never published.
+Novu could not resolve the hostname from the process that made the request. A missing public preview is one cause. A private name that your laptop cannot resolve is another, and that one is normal on a self-hosted deployment.
 
-Run the `dig` and `curl` commands above.
+**Novu Cloud.** Resolution uses public DNS. From your laptop:
 
-- `dig` prints nothing, and curl says `Could not resolve host`. Open the deployment in your host (Vercel, Netlify, your own platform) and see if that exact hostname still exists. Sync the URL of a deployment that is still there.
-- `dig @8.8.8.8` prints nothing, but `dig` without `@8.8.8.8` prints an address. On Novu Cloud the name is only on your network. Publish a public record, or sync a public hostname. On a self-hosted deployment, check the API container instead, as described above. If the container can resolve it, this is not the failure.
-- `dig` prints an address and curl returns HTTP headers. DNS is fine from where you are sitting. On Novu Cloud, run the sync again once. If it still fails, the record is not visible to public resolvers yet. Wait, then retry. Novu does not retry this code on its own. On a self-hosted deployment, repeat the lookup inside the API container before you change DNS.
-- `dig` prints an address in a blocked range. That is [`PRIVATE_IP`](#private_ip). On Novu Cloud, trust the `@8.8.8.8` answer. On a self-hosted deployment, trust the answer from inside the API container.
+```bash
+dig +short YOUR_HOST @8.8.8.8
+curl -I https://YOUR_HOST
+```
+
+- `dig` prints nothing, and curl says `Could not resolve host`. The name is not on the public internet. Open the deployment (Vercel, Netlify, or your host) and sync a hostname that still exists. A deleted or expired preview does this.
+- `dig` without `@8.8.8.8` prints an address, and `@8.8.8.8` prints nothing. The name exists only on your office or VPN DNS. Publish a public record, or sync a public hostname.
+- `dig` prints an address and curl returns headers. Public DNS is fine from your laptop. Run the sync again once. If it still fails, the record is not visible to public resolvers yet. Wait, then retry. Novu does not retry this code on its own.
+- `dig` prints an address in a [blocked range](#private_ip). That failure is `PRIVATE_IP`, not a missing name.
+
+**Self-hosted.** The API container resolves names for sync. The Worker container resolves names for a step. Both use the DNS configured on that container, not Google DNS and not your laptop. `my-bridge.default.svc.cluster.local` will not appear in `dig @8.8.8.8`. That does not mean it is broken, and you do not publish it.
+
+Run the same lookup Novu runs, in both containers. The community Compose services are named `api` and `worker`:
+
+```bash
+docker compose exec api node -e "require('dns').promises.lookup('YOUR_HOST',{all:true}).then(console.log).catch(e=>{console.error(e.code);process.exit(1)})"
+docker compose exec worker node -e "require('dns').promises.lookup('YOUR_HOST',{all:true}).then(console.log).catch(e=>{console.error(e.code);process.exit(1)})"
+```
+
+On Kubernetes, run that `node -e` command in the API pod and in the Worker pod.
+
+- The command prints `ENOTFOUND`. That container cannot resolve the name. Fix DNS for that container (cluster DNS, `resolv.conf`, or an extra hostname in the Compose file). Do not publish the name on the public internet because `8.8.8.8` has no record for it.
+- The command prints one or more addresses. The container can already resolve the host. A public DNS record will not change this error. If an address is private, continue at [`PRIVATE_IP`](#private_ip) and the allow list. If the API prints an address and the Worker prints `ENOTFOUND`, only the Worker is missing the name. Sync uses the API. A step uses the Worker.
 
 ### PRIVATE_IP
 
@@ -87,11 +100,7 @@ Run the `dig` and `curl` commands above.
 
 Either the URL itself is a private or reserved address, or the hostname resolves to one. Blocked ranges include `10.0.0.0/8`, `127.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, `100.64.0.0/10`, `0.0.0.0`, `::`, `::1`, `fc00::/7`, and `fe80::/10`, plus IPv4-mapped forms of those addresses. An address in one of these ranges is this code. An address outside them usually is not.
 
-```bash
-dig +short YOUR_HOST @8.8.8.8
-```
-
-On Novu Cloud, that answer is the one that matters. On a self-hosted deployment, run the lookup inside the API container instead.
+On Novu Cloud, `dig +short YOUR_HOST @8.8.8.8` is the answer that matters. On a self-hosted deployment, use the API and Worker `node` lookup in [`DNS_LOOKUP_FAILED`](#dns_lookup_failed). An address from your laptop, or from `8.8.8.8`, is not the address those containers use.
 
 On Novu Cloud, sync a URL that resolves to a public address. `localhost` cannot be allow-listed.
 
@@ -185,7 +194,7 @@ Hit the same URL with `curl --max-time 10` and watch how long it sits. Then look
 
 **Message:** same as `BridgeEndpointUnavailable`
 
-Novu's DNS lookup was interrupted, and the retries did not help. On Novu Cloud, `dig +short YOUR_HOST @8.8.8.8` tells you if the name is real. On a self-hosted deployment, run that lookup inside the API container. If it prints an address, run the sync or trigger one more time. If it prints nothing, see [`DNS_LOOKUP_FAILED`](#dns_lookup_failed).
+Novu's DNS lookup was interrupted, and the retries did not help. Use the lookup in [`DNS_LOOKUP_FAILED`](#dns_lookup_failed): `dig @8.8.8.8` on Novu Cloud, and the `node` lookup inside the API and Worker containers when you run Novu yourself. An address means the name is real. Run the sync or trigger one more time. No address is the same missing-name case as `DNS_LOOKUP_FAILED`.
 
 ### ENOTFOUND
 
@@ -193,7 +202,7 @@ Novu's DNS lookup was interrupted, and the retries did not help. On Novu Cloud, 
 
 **Message:** same as `BridgeEndpointUnavailable`
 
-The lookup failed during the connection, after the retries for this call. On Novu Cloud, `dig +short YOUR_HOST @8.8.8.8` with no output means there is no public record. Publish one, or sync a host that has one. On a self-hosted deployment, check the API container before you publish anything. [`DNS_LOOKUP_FAILED`](#dns_lookup_failed) is the same situation caught earlier, before Novu tried to connect, and that one is not retried.
+The lookup failed during the connection, after the retries for this call. Use the lookup in [`DNS_LOOKUP_FAILED`](#dns_lookup_failed). On Novu Cloud, no output from `dig @8.8.8.8` means there is no public record. Publish one, or sync a host that has one. On a self-hosted deployment, `ENOTFOUND` from the API or Worker container means that container's DNS is missing the name. Do not publish a private name such as `*.svc.cluster.local` because Google DNS does not have it. `DNS_LOOKUP_FAILED` is this same miss, caught before Novu opens a connection, and that code is not retried.
 
 ### ECONNREFUSED
 
