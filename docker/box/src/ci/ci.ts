@@ -18,6 +18,8 @@ import {
   OidcToken,
   Pull,
   PullRequestEvent,
+  type TesterArmyStart,
+  TesterArmyStarted,
 } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
 import { BOX_CLI, boxOrigin, detached, OIDC_AUDIENCE } from '../shared/names.ts';
@@ -104,11 +106,12 @@ async function pr(): Promise<number> {
     return 0;
   }
 
-  return applyHead(number, pull.head.sha);
+  return applyHead(number, pull);
 }
 
-async function applyHead(number: number, sha: string): Promise<number> {
+async function applyHead(number: number, pull: PullRequestEvent['pull_request']): Promise<number> {
   const box = `pr-${number}`;
+  const { sha } = pull.head;
   const short = sha.slice(0, 10);
   const origin = boxOrigin(box);
   const cloud = target(box);
@@ -119,6 +122,27 @@ async function applyHead(number: number, sha: string): Promise<number> {
     const report = await cloud.settled(Math.min(SETTLE_SECONDS, (DEADLINE - Date.now()) / 1000));
     const seconds = Math.round((Date.now() - started) / 1000);
     const problems = report?.ok ? [] : (report?.problems ?? ['the box gave no doctor report']);
+    // A box that's ready stays ready when TesterArmy doesn't start.
+    const tests = problems.length
+      ? []
+      : [
+          await startTesterArmy(box, {
+            number,
+            title: pull.title,
+            ...(pull.body && { description: pull.body.slice(0, 65_536) }),
+            baseBranch: pull.base.ref,
+            headBranch: pull.head.ref,
+            commitSha: sha,
+          }).then(
+            (suites) => `- TesterArmy started: ${suites}. Its results come as checks on this PR.`,
+            (error: unknown) => {
+              log(`WARN: starting TesterArmy: ${messageOf(error)}`);
+              const [first = ''] = messageOf(error).split('\n');
+
+              return `- TesterArmy didn't start: ${first.slice(0, 300)}`;
+            }
+          ),
+        ];
     await comment(
       number,
       [
@@ -129,6 +153,7 @@ async function applyHead(number: number, sha: string): Promise<number> {
           ? ['', `Problems (\`${CLI} doctor --box ${box}\`):`, ...problems.map((problem) => `- ${problem}`)]
           : []),
         '',
+        ...tests,
         `- Mailpit: ${origin}/mail`,
         `- Sign in as \`agent@novu.co\` with the Novu Box seed password from the password manager, or sign up with your own \`@novu.co\` address.`,
         `- Every push applies the new head here. The box sleeps after an hour without requests and wakes on the next one (about 40 s). Removing \`${LABEL}\` or closing the PR deletes it.`,
@@ -171,6 +196,24 @@ async function startOrReach(cloud: CloudTarget, box: string, number: number): Pr
   if (stopped) log(stopped);
 
   return true;
+}
+
+// Returns what started, for the PR comment; TesterArmy reports results on the PR itself, as checks and a comment.
+async function startTesterArmy(box: string, pullRequest: TesterArmyStart['pullRequest']): Promise<string> {
+  const start: TesterArmyStart = { pullRequest };
+  const { exploration, groups, signUpUsersDeleted } = await hostBoxes(`testerarmy/${box}`, TesterArmyStarted, {
+    method: 'POST',
+    body: JSON.stringify(start),
+    token: boxToken,
+  });
+  if (signUpUsersDeleted.length) log(`deleted leftover sign-up users: ${signUpUsersDeleted.join(', ')}`);
+  const suites = [
+    exploration.status === 'skipped' ? 'exploration (skipped)' : 'exploration',
+    ...groups.map((group) => `${group.name} (${group.runs} runs)`),
+  ];
+  log(`TesterArmy started on ${box}: ${suites.join(', ')}`);
+
+  return suites.join(', ');
 }
 
 async function apply(cloud: CloudTarget, sha: string, { baseline = false } = {}): Promise<string> {

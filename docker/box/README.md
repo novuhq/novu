@@ -53,6 +53,10 @@ baked from, like CI's merge ref, and stops on a conflict: rebase onto `next`, th
   older run).
 - One comment on the PR, edited in place, shows the box's address, the applied commit and what was rebuilt, or what
   failed; ⚠️ when the apply ran but `doctor` then found problems.
+- Once the box is healthy, TesterArmy (project Novu Box) tests it: its exploration agent, which reads the PR and
+  tests what it changes, and `Box smoke`, a few minutes of the main flows (sign-in, every channel, the API key,
+  the editor, digest, an agent in web chat). They report on the PR as checks. The tests live in TesterArmy, not in
+  this repo; its other groups (`Box workflows`, `Box accounts`, `Box agents`, `Box Slack`) are run by hand for now.
 - Closing the PR or removing the label deletes the box. At most 30 PR boxes exist at once. PRs from forks get no
   box.
 - The workflow holds no secrets: it signs in to the boxes with its GitHub OIDC token.
@@ -190,6 +194,7 @@ about missing ones.
 | `NX_CLOUD_ACCESS_TOKEN` | yes, optional | Reads CI's Nx Cloud cache. **Read-only only**: PR code can read it |
 | `GITHUB_READ_TOKEN` | no | Read-only access to `novu` and `packages-enterprise` for the boxes' git fetches |
 | `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET` | no | The Slack router |
+| `TESTERARMY_API_KEY` | no, optional | Starts TesterArmy's runs on PR boxes |
 
 A box runs PR code, which can read its environment: never put production keys in boxes, never name a secret
 `VITE_*` (it would end up in the dashboard's public `index.html`), and never run boxes for PRs from forks.
@@ -197,7 +202,9 @@ A box runs PR code, which can read its environment: never put production keys in
 **Who can get in:** every box command needs a GitHub token with push access to `novuhq/novu`, or the workflow's
 OIDC token. Box addresses are public, like staging's; the dashboard is protected by Clerk. Keep these two Clerk
 settings, or anyone could sign up: email-code sign-in **off** (sign-in needs the password), and test mode **off**
-(it accepts `424242` as any address's code). Sign-up is limited to `@novu.co` addresses.
+(it accepts `424242` as any address's code). Sign-up is limited to `@novu.co` addresses, and
+`@qa.box.novu-staging.co` for TesterArmy's sign-up tests: Cloudflare Email Routing forwards those addresses to
+TesterArmy's inbox, and each time the hub starts TesterArmy it deletes those users over an hour old.
 
 ## Troubleshooting
 
