@@ -94,10 +94,13 @@ export function createPublicApiClient(apiUrl: string): AxiosInstance {
  */
 export const AGENT_INBOX_VIA_HEADER = 'Agent-Inbox-Via';
 
+/** Matches Novu's `NOVU_ANALYTICS_SOURCE_HEADER`. Tells Novu's analytics the request comes from this CLI. */
+export const ANALYTICS_SOURCE_HEADER = 'Novu-Analytics-Source';
+
 function createAxios(baseURL: string, headers: Record<string, string> = {}): AxiosInstance {
   const instance = axios.create({
     baseURL,
-    headers: { [AGENT_INBOX_VIA_HEADER]: 'cli', ...headers },
+    headers: { [AGENT_INBOX_VIA_HEADER]: 'cli', [ANALYTICS_SOURCE_HEADER]: 'cli', ...headers },
     timeout: 60_000,
     httpsAgent: loopbackHttpsAgent(baseURL),
   });

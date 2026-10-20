@@ -3,6 +3,7 @@ import { redirect, unstable_rethrow } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { readOnboardingStatusAction } from '@/app/(account)/onboarding/actions';
+import { Analytics } from '@/components/analytics/analytics';
 import { DASHBOARD_HOME } from '@/components/dashboard/nav';
 import { Sidebar, type SidebarAgent } from '@/components/dashboard/sidebar';
 import { TopBar } from '@/components/dashboard/top-bar';
@@ -39,6 +40,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   }
 
   const { agent, setupStatus } = await loadSidebarAgent();
+  const analyticsUserId = await loadAnalyticsUserId();
   const email = user.primaryEmailAddress?.emailAddress ?? null;
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || email || 'Your account';
 
@@ -56,6 +58,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       </div>
       <Toaster />
       {setupStatus && <StatusPoll status={setupStatus} read={readOnboardingStatusAction} everyMs={SETUP_POLL_MS} />}
+      <Analytics userId={analyticsUserId} />
     </TooltipProvider>
   );
 }
@@ -100,5 +103,20 @@ async function loadSidebarAgent(): Promise<{ agent: SidebarAgent; setupStatus: s
     console.error('Failed to load the agent for the sidebar', error);
 
     return { agent: AGENT_NOT_SET_UP, setupStatus: null };
+  }
+}
+
+/**
+ * Who the operator is to analytics: the hidden Novu user behind their account, the id the API's Agent Inbox
+ * events carry. The sidebar has loaded the account already, so this asks for nothing new. `null` when the
+ * account can't be read, and the dashboard opens all the same.
+ */
+async function loadAnalyticsUserId(): Promise<string | null> {
+  try {
+    return (await requireHumanAccount({ returnTo: DASHBOARD_HOME })).userId;
+  } catch (error) {
+    unstable_rethrow(error);
+
+    return null;
   }
 }

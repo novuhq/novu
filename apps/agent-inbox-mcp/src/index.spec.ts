@@ -98,6 +98,7 @@ describe('the Agent Inbox MCP server', () => {
     expect(created?.headers.get('Authorization')).toBe('ApiKey account-key');
     // The CLI holds the same key: this is how the API tells an inbox check here from one in a terminal.
     expect(created?.headers.get('Agent-Inbox-Via')).toBe('mcp');
+    expect(created?.headers.get('Novu-Analytics-Source')).toBe('mcp');
     expect(created?.body).toMatchObject({
       kind: 'approve',
       to: 'operator_1',

@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { type JsonBody, readErrorCode, readErrorMessage, safeJson } from './api-response';
-import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER, NOVU_ANALYTICS_SOURCE_HEADER } from './constants';
 import type { HumanRegion } from './human-accounts-api';
 import { HumanApiError, toHumanApiError } from './human-api-error';
 import { resolveNovuApiUrl } from './novu-api';
@@ -60,7 +60,7 @@ async function send(
   try {
     response = await fetch(`${resolveNovuApiUrl(region)}${path}${toQueryString(query)}`, {
       method,
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      headers: { 'Content-Type': 'application/json', [NOVU_ANALYTICS_SOURCE_HEADER]: 'dashboard', ...authHeaders },
       body: body ? JSON.stringify(body) : undefined,
       cache: 'no-store',
     });

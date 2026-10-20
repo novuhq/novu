@@ -1,5 +1,5 @@
-import { HumanChannelViaEnum } from '@novu/shared';
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
+import { AGENT_ANALYTICS_SOURCES, type AgentAnalyticsSource, HumanChannelViaEnum } from '@novu/shared';
+import { IsBoolean, IsEnum, IsIn, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
@@ -49,4 +49,9 @@ export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsEnum(HumanChannelViaEnum)
   defaultVia?: HumanChannelViaEnum;
+
+  /** The app that asked, for analytics. */
+  @IsOptional()
+  @IsIn(AGENT_ANALYTICS_SOURCES)
+  analyticsSource?: AgentAnalyticsSource;
 }

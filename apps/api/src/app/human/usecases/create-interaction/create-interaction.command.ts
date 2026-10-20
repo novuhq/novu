@@ -1,5 +1,10 @@
-import { HumanChannelViaEnum, HumanInteractionKindEnum } from '@novu/shared';
-import { IsBoolean, IsEnum, IsInt, IsObject, IsOptional, IsString, Validate } from 'class-validator';
+import {
+  AGENT_ANALYTICS_SOURCES,
+  type AgentAnalyticsSource,
+  HumanChannelViaEnum,
+  HumanInteractionKindEnum,
+} from '@novu/shared';
+import { IsBoolean, IsEnum, IsIn, IsInt, IsObject, IsOptional, IsString, Validate } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { IsValidHumanTo } from '../../validators/is-valid-human-to';
 import type { HumanInteractionCardInput } from '../create-conversation-interaction/create-conversation-interaction.command';
@@ -40,4 +45,9 @@ export class CreateInteractionCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsInt()
   ttlSeconds?: number;
+
+  /** The app that asked, for analytics. */
+  @IsOptional()
+  @IsIn(AGENT_ANALYTICS_SOURCES)
+  analyticsSource?: AgentAnalyticsSource;
 }

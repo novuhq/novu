@@ -1,4 +1,5 @@
 import type { AgentHostVia } from '@novu/dal';
+import { AGENT_ANALYTICS_SOURCES, type AgentAnalyticsSource } from '@novu/shared';
 import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { INBOX_THREAD_INCLUDES, type InboxThreadInclude } from '../../dtos/human-inbox.dto';
 import { AGENT_HOST_VIAS } from '../../services/human-host-status.service';
@@ -28,4 +29,9 @@ export class GetInboxThreadCommand extends InboxThreadCommand {
   @IsOptional()
   @IsIn(AGENT_HOST_VIAS)
   hostVia?: AgentHostVia;
+
+  /** The app that asked, for analytics. */
+  @IsOptional()
+  @IsIn(AGENT_ANALYTICS_SOURCES)
+  analyticsSource?: AgentAnalyticsSource;
 }

@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { CacheService } from '@novu/application-generic';
+import { AnalyticsService, CacheService } from '@novu/application-generic';
 import { CommunityOrganizationRepository, EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
 import { EnvironmentTypeEnum } from '@novu/shared';
 import { SyncExternalOrganizationCommand } from '../../../organization/usecases/create-organization/sync-external-organization/sync-external-organization.command';
 import { resolveHumanRegion } from '../../../shared/helpers/resolve-human-dashboard-base-url';
 import type { HumanAccountResponseDto } from '../../dtos/human-account.dto';
+import { trackAgentInboxSignedUp } from '../../services/agent-inbox-analytics';
 import {
   buildHumanBackingEmail,
   HumanBackingAccount,
@@ -67,7 +68,8 @@ export class EnsureBackingOrganization {
     private readonly communityOrganizationRepository: CommunityOrganizationRepository,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly cacheService: CacheService,
-    private readonly moduleRef: ModuleRef
+    private readonly moduleRef: ModuleRef,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   async execute(command: EnsureBackingOrganizationCommand): Promise<HumanAccountResponseDto> {
@@ -202,6 +204,9 @@ export class EnsureBackingOrganization {
     const development = findBackingDevelopmentEnvironment(
       await this.environmentRepository.findOrganizationEnvironments(organization._id)
     );
+
+    // Only a setup that made the organization gets this far, so each account signs up once.
+    trackAgentInboxSignedUp(this.analyticsService, { userId: account.novuUserId, organizationId: organization._id });
 
     return { organizationId: organization._id, environmentId: development._id };
   }

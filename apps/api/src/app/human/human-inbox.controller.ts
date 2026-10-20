@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import { ApiRateLimitCategoryEnum, NOVU_ANALYTICS_SOURCE_HEADER, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -30,6 +30,7 @@ import {
   type ListInboxResponseDto,
 } from './dtos/human-inbox.dto';
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
+import { readAnalyticsSource } from './services/agent-inbox-analytics';
 import { AGENT_INBOX_VIA_HEADER, readHostVia } from './services/human-host-status.service';
 import { CountInboxThreads } from './usecases/count-inbox-threads/count-inbox-threads.usecase';
 import { GetInboxThreadCommand } from './usecases/get-inbox-thread/get-inbox-thread.command';
@@ -67,7 +68,8 @@ export class HumanInboxController {
   listInboxThreads(
     @UserSession() user: UserSessionData,
     @Query() query: ListInboxQueryDto,
-    @Headers(AGENT_INBOX_VIA_HEADER) via?: string
+    @Headers(AGENT_INBOX_VIA_HEADER) via?: string,
+    @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string
   ): Promise<ListInboxResponseDto> {
     return this.listInboxThreadsUsecase.execute(
       ListInboxThreadsCommand.create({
@@ -85,6 +87,7 @@ export class HumanInboxController {
         waitSeconds: query.wait,
         agentIdentifier: query.agentIdentifier,
         hostVia: readHostVia(via),
+        analyticsSource: readAnalyticsSource(analyticsSource),
       })
     );
   }
@@ -122,7 +125,8 @@ export class HumanInboxController {
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
     @Query() query: GetInboxThreadQueryDto,
-    @Headers(AGENT_INBOX_VIA_HEADER) via?: string
+    @Headers(AGENT_INBOX_VIA_HEADER) via?: string,
+    @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string
   ): Promise<GetInboxThreadResponseDto> {
     return this.getInboxThreadUsecase.execute(
       GetInboxThreadCommand.create({
@@ -136,6 +140,7 @@ export class HumanInboxController {
         include: query.include,
         agentIdentifier: query.agentIdentifier,
         hostVia: readHostVia(via),
+        analyticsSource: readAnalyticsSource(analyticsSource),
       })
     );
   }

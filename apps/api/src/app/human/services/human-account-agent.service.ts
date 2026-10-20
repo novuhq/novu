@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { AnalyticsService } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -6,16 +7,21 @@ import {
   HumanInteractionRepository,
   SubscriberRepository,
 } from '@novu/dal';
+import { HumanChannelViaEnum } from '@novu/shared';
 import { SetupHumanRelayCommand } from '../usecases/setup-human-relay/setup-human-relay.command';
 import {
   DEFAULT_HUMAN_RELAY_IDENTIFIER,
   SetupHumanRelay,
 } from '../usecases/setup-human-relay/setup-human-relay.usecase';
+import { trackAgentInboxChannelConnected, trackAgentInboxCreated } from './agent-inbox-analytics';
+import { HumanDeliveryService } from './human-delivery.service';
 import { HumanOperatorService } from './human-operator.service';
 
 type AccountScope = { environmentId: string; organizationId: string; userId: string };
 type OperatorName = { firstName?: string; lastName?: string };
 type UntouchedAgent = { agentId: string; operator: string | null };
+/** What a claim reports back: the agent it brought, when it brought one. */
+type ClaimedSetup = { agentIdentifier?: string };
 
 /**
  * The relay agent of a Human account, and what happens to it when the operator brings a setup made
@@ -34,7 +40,9 @@ export class HumanAccountAgentService {
     private readonly humanContactRepository: HumanContactRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly humanOperator: HumanOperatorService,
-    private readonly setupHumanRelay: SetupHumanRelay
+    private readonly setupHumanRelay: SetupHumanRelay,
+    private readonly deliveryService: HumanDeliveryService,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   /**
@@ -58,9 +66,13 @@ export class HumanAccountAgentService {
   /**
    * Runs a claim with the account's untouched agent out of the way. When the claim fails, or the agent
    * could only be removed halfway, the account gets its agent back with the same operator contact, so it
-   * is never left without one.
+   * is never left without one. A claim that goes through counts the setup it brought for the account.
    */
-  async claimOverUntouchedAgent<T>(account: AccountScope, name: OperatorName, claim: () => Promise<T>): Promise<T> {
+  async claimOverUntouchedAgent<T extends ClaimedSetup>(
+    account: AccountScope,
+    name: OperatorName,
+    claim: () => Promise<T>
+  ): Promise<T> {
     const untouched = await this.findUntouchedAgent(account);
     let removing = false;
 
@@ -70,7 +82,10 @@ export class HumanAccountAgentService {
         await this.remove(account, untouched);
       }
 
-      return await claim();
+      const claimed = await claim();
+      this.countClaimedSetup(account, claimed?.agentIdentifier);
+
+      return claimed;
     } catch (error) {
       if (removing) {
         await this.setUp(account, name, untouched?.operator ?? undefined);
@@ -114,6 +129,44 @@ export class HumanAccountAgentService {
     }
 
     return { agentId: agent._id, operator };
+  }
+
+  /**
+   * A setup made without an account was never counted: it belonged to nobody. What works of it counts now, for
+   * the account that claimed it, as made in the CLI: its inbox once it has its address, and each channel that
+   * is connected. In the background, so counting never slows or fails a claim.
+   */
+  private countClaimedSetup(account: AccountScope, agentIdentifier: string | undefined): void {
+    if (!agentIdentifier) {
+      return;
+    }
+
+    this.trackClaimedSetup(account, agentIdentifier).catch(() => undefined);
+  }
+
+  private async trackClaimedSetup(account: AccountScope, agentIdentifier: string): Promise<void> {
+    const agent = await this.agentRepository.findOne(
+      { _environmentId: account.environmentId, _organizationId: account.organizationId, identifier: agentIdentifier },
+      ['_id', 'identifier', 'name', 'runtime']
+    );
+    if (agent?.runtime !== 'human_relay') {
+      return;
+    }
+
+    const owner = { userId: account.userId, organizationId: account.organizationId };
+    const channels = await this.deliveryService.listWorkingChannels({
+      environmentId: account.environmentId,
+      organizationId: account.organizationId,
+      agent,
+    });
+
+    if (channels.includes(HumanChannelViaEnum.EMAIL)) {
+      trackAgentInboxCreated(this.analyticsService, owner, { agentId: agent._id, source: 'cli' });
+    }
+
+    for (const channel of channels) {
+      trackAgentInboxChannelConnected(this.analyticsService, owner, { agentId: agent._id, channel });
+    }
   }
 
   private async remove(account: AccountScope, { agentId, operator }: UntouchedAgent): Promise<void> {
