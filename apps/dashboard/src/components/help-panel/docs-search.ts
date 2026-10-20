@@ -37,10 +37,6 @@ const STOP_WORDS = new Set([
   'with',
 ]);
 
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 export function tokenizeQuery(query: string): string[] {
   const tokens = query
     .toLowerCase()
@@ -50,18 +46,45 @@ export function tokenizeQuery(query: string): string[] {
   return Array.from(new Set(tokens));
 }
 
-function wordStartPattern(token: string, flags: 'iu' | 'giu' = 'iu'): RegExp {
-  return new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(token)}`, flags);
+/** Letters and numbers. `\p{}` is supported since Safari 11; lookbehind is not, until 16.4. */
+function isWordCharacter(character: string | undefined): boolean {
+  return character !== undefined && /[\p{L}\p{N}]/u.test(character);
+}
+
+/**
+ * Indexes where `token` begins a word. Case-insensitive, and literal, so characters like `+`
+ * stay searchable. Avoids lookbehind, which throws in Safari 14–16.3 while the results render.
+ */
+function findWordStartRanges(text: string, token: string): Array<[number, number]> {
+  const haystack = text.toLowerCase();
+  const needle = token.toLowerCase();
+
+  if (needle.length === 0 || needle.length > haystack.length) {
+    return [];
+  }
+
+  const ranges: Array<[number, number]> = [];
+  let from = 0;
+
+  while (from <= haystack.length - needle.length) {
+    const index = haystack.indexOf(needle, from);
+
+    if (index === -1) {
+      break;
+    }
+
+    if (!isWordCharacter(haystack[index - 1])) {
+      ranges.push([index, index + needle.length]);
+    }
+
+    from = index + 1;
+  }
+
+  return ranges;
 }
 
 function findMatchRanges(text: string, tokens: string[]): Array<[number, number]> {
-  const ranges: Array<[number, number]> = [];
-
-  for (const token of tokens) {
-    for (const match of text.matchAll(wordStartPattern(token, 'giu'))) {
-      ranges.push([match.index, match.index + token.length]);
-    }
-  }
+  const ranges = tokens.flatMap((token) => findWordStartRanges(text, token));
 
   ranges.sort((a, b) => a[0] - b[0]);
 
@@ -105,11 +128,9 @@ function scorePage(page: DocsPage, tokens: string[]): number {
   let score = 0;
 
   for (const token of tokens) {
-    const pattern = wordStartPattern(token);
-
-    if (pattern.test(page.title)) {
+    if (findWordStartRanges(page.title, token).length > 0) {
       score += TITLE_MATCH_SCORE;
-    } else if (page.keywords.some((keyword) => pattern.test(keyword))) {
+    } else if (page.keywords.some((keyword) => findWordStartRanges(keyword, token).length > 0)) {
       score += KEYWORD_MATCH_SCORE;
     }
   }

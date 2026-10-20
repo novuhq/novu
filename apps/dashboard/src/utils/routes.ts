@@ -118,12 +118,11 @@ export function parseAgentDetailsTab(tab: string | undefined): AgentDetailsTab {
   return AGENT_DETAILS_DEFAULT_TAB;
 }
 
+/** Reserved path segments, not slug prefixes. `create-account_wf_…` is still an editor slug. */
+const RESERVED_WORKFLOW_SEGMENTS = /\/workflows\/(?:create|templates)(?:\/|$)/;
+
 export function isWorkflowEditorPath(pathname: string): boolean {
-  return (
-    pathname.includes('/workflows/') &&
-    !pathname.includes('/workflows/create') &&
-    !pathname.includes('/workflows/templates')
-  );
+  return pathname.includes('/workflows/') && !RESERVED_WORKFLOW_SEGMENTS.test(pathname);
 }
 
 export const buildRoute = (route: string, params: Record<string, string>) => {

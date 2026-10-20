@@ -56,7 +56,7 @@ export const DOCS_PAGES: DocsPage[] = [
   },
   {
     title: 'Schedule a delay from payload values',
-    path: '/platform/workflow/add-and-configure-steps/configure-action-steps/delay',
+    path: '/platform/workflow/add-and-configure-steps/configure-action-steps/delay#dynamic-delay',
     keywords: ['dynamic', 'wait', 'timestamp', 'payload'],
   },
   {
