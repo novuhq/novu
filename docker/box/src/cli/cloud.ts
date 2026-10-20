@@ -210,8 +210,8 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
       const started = await call(`/up?${query}`, { method: 'POST' }).then(
         async (answer) => decode(StateAnswer, await answer.text(), `${box} /up`).state,
         (error: Error) => {
-          // A snapshot's first restore can outlast the request (Node gives up after 5 minutes); the box goes on.
-          if (!snapshot || !error.message.endsWith('fetch failed')) throw error;
+          // A snapshot restore can outlast the request (Node gives up after 5 minutes); the box goes on.
+          if (!error.message.endsWith('fetch failed')) throw error;
           log(`${box} /up didn't answer: ${error.message}; waiting for the restore`);
 
           return 'waking';
