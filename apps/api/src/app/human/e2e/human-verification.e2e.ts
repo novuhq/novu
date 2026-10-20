@@ -158,7 +158,7 @@ async function requestVerification(session: UserSession, subscriberId: string, a
 
 function readMailedCode(mail: IEmailOptions | undefined) {
   const text = `${mail?.text ?? ''}\n${mail?.html ?? ''}`;
-  const code = text.match(/@agentinbox\.md #(\d{6})/)?.[1];
+  const code = text.match(/@[^\s]+ #(\d{6})/)?.[1];
   const token = text.match(/\/verify\/([A-Za-z0-9]{32})/)?.[1];
   expect(code, text).to.be.a('string');
   expect(token, text).to.be.a('string');
