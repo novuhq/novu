@@ -79,6 +79,25 @@ export async function deleteBoxUsers(env: HostEnv, box: string): Promise<Array<s
   return users.map((user) => user.email);
 }
 
+// TesterArmy's sign-up tests make a new user on this domain every run and delete it at the end; one that's an hour
+// old is a failed run's leftover.
+const SIGN_UP_DOMAIN = '@qa.box.novu-staging.co';
+
+export async function deleteSignUpUsers(env: HostEnv): Promise<Array<string>> {
+  const users = await clerk(
+    env,
+    `/users?email_address_query=${encodeURIComponent(SIGN_UP_DOMAIN)}&limit=500`,
+    ClerkUserList
+  );
+  const leftovers = users.filter(
+    ({ email_addresses: [address, ...more], created_at: createdAt }) =>
+      address?.email_address.endsWith(SIGN_UP_DOMAIN) && !more.length && Date.now() - createdAt > 60 * 60_000
+  );
+  for (const user of leftovers) await clerk(env, `/users/${user.id}`, z.unknown(), { method: 'DELETE' });
+
+  return leftovers.flatMap((user) => user.email_addresses.map((address) => address.email_address));
+}
+
 // The users to delete before a create, when there are `limit` or more: every user of a box that's gone, then the
 // oldest, until under `limit`.
 export function toPrune(users: ReadonlyArray<TestUser>, live: ReadonlyArray<string>, limit: number): Array<TestUser> {
