@@ -2,15 +2,10 @@ import 'server-only';
 
 import { clerkClient, type User } from '@clerk/nextjs/server';
 
-import type { HostVia } from './onboarding';
-
 /**
  * How far an operator got in the onboarding, and what they dismissed after it. Kept in the private
  * metadata of their Clerk user, next to where their backing account lives, so it follows them to another
  * browser and needs nothing from the API. Every time is an ISO timestamp.
- *
- * The fields marked "mock" stand in for what the API can't tell yet. They go away with the ticket named
- * next to them, and nothing else reads them.
  */
 export type OnboardingState = {
   /**
@@ -31,14 +26,6 @@ export type OnboardingState = {
   testReplyAt?: string;
   /** The operator moved on from step 2, with or without the test. */
   testLeftAt?: string;
-  /** Mock (NV-9037): the operator copied the prompt, which is when the stand-in host starts connecting. */
-  promptCopiedAt?: string;
-  /**
-   * A host connected to the agent. Real when a CLI login was approved in the browser or a connector
-   * signed in; a stand-in (NV-9037) when it follows the copied prompt. `readAt` is when it read the
-   * message that was waiting for it.
-   */
-  host?: { via: HostVia; connectedAt: string; readAt?: string };
   /** "Skip for now" or "Later": the dashboard is open, with its banners, while the setup isn't finished. */
   skippedAt?: string;
   /** The operator left step 4. */

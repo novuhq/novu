@@ -11,6 +11,7 @@ import { ClockTime } from '@/components/onboarding/parts';
 import { Badge } from '@/components/ui/badge';
 import { Button, SMALL_BUTTON } from '@/components/ui/button';
 import type { AgentReach } from '@/lib/agent-settings';
+import type { HostStatus } from '@/lib/host-status';
 import { HOST_LABELS, type HostVia } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
@@ -18,9 +19,9 @@ type ReachStepProps = {
   handle: string;
   /** The public card's link, `https://agentinbox.md/p/atlas` (`cardLinkOf`). Shown as `writtenLink` writes it. */
   cardLink: string;
-  host: { via: HostVia; connectedAt: string; readAt?: string };
-  /** Who wrote the message the host read on its way in, when one was waiting: the operator's test reply. */
-  readFrom: string | null;
+  host: { via: HostVia; connectedAt: string };
+  /** The unread message the first host check found, when there was one. */
+  waitingMessage: HostStatus['waitingMessage'];
   channels: { telegram: boolean; slack: boolean };
   /** Who can reach the agent, for the Share dialog. */
   reach: AgentReach | null;
@@ -35,7 +36,7 @@ const TRACE_BEAT_MS = 140;
  * Step 4: a host is connected, and the setup is complete. What is left is optional: more ways for people
  * to reach the agent. Every way out of this step ends the onboarding.
  */
-export function ReachStep({ handle, cardLink, host, readFrom, channels, reach }: ReachStepProps) {
+export function ReachStep({ handle, cardLink, host, waitingMessage, channels, reach }: ReachStepProps) {
   const [leaving, startLeaving] = useTransition();
   const [sharing, setSharing] = useState(false);
   const leaveFor = (destination: Destination) => () => startLeaving(() => finishOnboardingAction(destination));
@@ -60,10 +61,10 @@ export function ReachStep({ handle, cardLink, host, readFrom, channels, reach }:
             </span>
           </span>
         </TraceLine>
-        {host.readAt && (
-          <TraceLine at={host.readAt} delay={TRACE_BEAT_MS * 2}>
+        {waitingMessage && (
+          <TraceLine at={waitingMessage.seenAt} delay={TRACE_BEAT_MS * 2}>
             <span className="min-w-0 truncate">
-              Read the waiting message{readFrom ? ` from ${readFrom}` : ''} · “Re: Hi, I’m {handle}”
+              Read the waiting message from {waitingMessage.from} · “{waitingMessage.subject}”
             </span>
           </TraceLine>
         )}

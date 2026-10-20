@@ -1,44 +1,36 @@
 'use client';
 
 import { ArrowRight, Download } from 'lucide-react';
-import { useState, useTransition } from 'react';
+import { useCallback, useTransition } from 'react';
 
-import { notePromptCopiedAction, skipForNowAction } from '@/app/(account)/onboarding/actions';
+import { createOnboardingConnectCodeAction, skipForNowAction } from '@/app/(account)/onboarding/actions';
+import { ConnectPromptBox } from '@/components/connect/connect-prompt-box';
 import { DOCS_URL } from '@/components/dashboard/nav';
 import { ToolChips } from '@/components/onboarding/identity-stage';
 import { Eyebrow, StepLead, StepTitle } from '@/components/onboarding/onboarding-shell';
 import { buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
-import { CopyButton } from '@/components/ui/copy-button';
 import { toast } from '@/components/ui/toast';
-import { connectCommands, connectPrompt, INSTALL_SKILLS_COMMAND, promptText } from '@/lib/onboarding';
+import { useConnectCode } from '@/hooks/use-connect-code';
+import { INSTALL_SKILLS_COMMAND } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
 type ConnectStepProps = {
   handle: string;
   address: string;
-  /** The one-time code a host connects with. */
-  code: string;
+  /** The API the account lives on, named by the connect command. */
+  apiUrl: string;
   /** Messages already in the inbox, waiting for a host to read them. */
   waiting: number;
 };
-
-type Tab = 'prompt' | 'cli';
-
-const TABS: Array<{ id: Tab; label: string }> = [
-  { id: 'prompt', label: 'Prompt' },
-  { id: 'cli', label: 'CLI' },
-];
 
 /**
  * Step 3: the operator hands the agent to whatever runs it. One prompt to paste into the agent, or the
  * same commands to run by hand. The page moves on by itself once a host has connected.
  */
-export function ConnectStep({ handle, address, code, waiting }: ConnectStepProps) {
-  const [tab, setTab] = useState<Tab>('prompt');
+export function ConnectStep({ handle, address, apiUrl, waiting }: ConnectStepProps) {
   const [leaving, startLeaving] = useTransition();
-  const prompt = connectPrompt({ handle, address, code });
-  const commands = connectCommands({ handle, code });
-  const copyValue = tab === 'prompt' ? promptText(prompt) : commands.map(({ command }) => command).join('\n');
+  const createCode = useCallback(() => createOnboardingConnectCodeAction(handle), [handle]);
+  const { state: code, retry } = useConnectCode(createCode, true);
 
   return (
     <>
@@ -50,86 +42,10 @@ export function ConnectStep({ handle, address, code, waiting }: ConnectStepProps
       <StepTitle>
         Hand {handle} to <em>your agent</em>
       </StepTitle>
-      <StepLead>
-        {/* The sentence that belongs to the tab fades in with it. */}
-        <span key={tab} className="animate-overlay-in motion-reduce:animate-none">
-          {tab === 'prompt' ? 'Paste this into your agent.' : 'Run these where your agent runs.'}
-        </span>{' '}
-        It connects as {handle}.
-      </StepLead>
+      <StepLead>Paste this into your agent, or run the commands where it runs. It connects as {handle}.</StepLead>
 
       <div className="flex flex-col gap-2">
-        <div className="overflow-hidden rounded-[10px] border border-border-strong bg-subtle">
-          <div className="flex items-center gap-2.5 bg-raised p-2">
-            <div
-              role="tablist"
-              aria-label="How to connect"
-              className="flex gap-0.5 rounded-[7px] border border-border-strong/50 bg-background p-0.5"
-            >
-              {TABS.map(({ id, label }) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={tab === id}
-                  onClick={() => setTab(id)}
-                  className={cn(
-                    'rounded-[5px] border px-2.5 py-0.75 text-xs leading-4 transition-colors motion-reduce:transition-none',
-                    tab === id
-                      ? 'border-border-strong bg-raised font-medium text-foreground'
-                      : 'border-transparent text-secondary hover:text-foreground'
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <CopyButton
-              value={copyValue}
-              label={tab === 'prompt' ? 'Copy the prompt' : 'Copy the commands'}
-              variant="primary"
-              className={cn(SMALL_BUTTON, 'ml-auto')}
-              // Nothing waits for this: it only starts the clock of the stand-in host (NV-9037).
-              onCopy={() => void notePromptCopiedAction().catch(() => {})}
-            >
-              {tab === 'prompt' ? 'Copy prompt' : 'Copy commands'}
-            </CopyButton>
-          </div>
-          {/*
-            A new key per tab, so its lines fade in. The panel keeps the height of the prompt's ten lines
-            for the commands as well: the card, and the tabs under the pointer, stay where they are.
-            A line that is too long for the panel goes on in the next one; nothing scrolls sideways.
-          */}
-          <div key={tab} role="tabpanel" className="animate-overlay-in p-4 motion-reduce:animate-none">
-            <pre className="min-h-50 font-mono text-[12.5px] leading-5 wrap-anywhere whitespace-pre-wrap text-default">
-              {tab === 'prompt'
-                ? prompt.map((line, index) => (
-                    // The lines of a prompt never reorder, so where a line stands is its key.
-                    <span key={index} className="block min-h-5">
-                      {line.map((span) => (
-                        <span
-                          key={span.text}
-                          className={cn(
-                            span.tone === 'strong' && 'font-medium text-foreground',
-                            span.tone === 'accent' && 'text-accent'
-                          )}
-                        >
-                          {span.text}
-                        </span>
-                      ))}
-                    </span>
-                  ))
-                : commands.map(({ command }) => (
-                    <span key={command} className="block">
-                      <span aria-hidden="true" className="font-medium text-accent select-none">
-                        ${' '}
-                      </span>
-                      <span className="font-medium text-foreground">{command}</span>
-                    </span>
-                  ))}
-            </pre>
-          </div>
-        </div>
+        <ConnectPromptBox handle={handle} address={address} apiUrl={apiUrl} code={code} onRetry={retry} />
 
         <div className="flex flex-wrap items-center gap-2 text-xs leading-4 text-muted">
           <span>Works with</span>
