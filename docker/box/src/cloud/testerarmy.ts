@@ -13,8 +13,10 @@ const API = 'https://tester.army/api/v1';
 const PROJECT = '7face08e-82db-4350-bfa3-c4a736709f9c';
 const CORE = { name: 'Box core', id: 'c59e6208-575b-40f1-acd7-394ea57afc66' };
 const WORKFLOWS = { name: 'Box workflows', id: 'fef21e20-5d8a-4b3c-9f57-9105d6755035' };
+// Its sign-ups share one inbox, so they don't run on every PR at once.
+const ACCOUNTS = { name: 'Box accounts', id: '46526209-9574-46d7-8c88-490cdac79509' };
 const PR_GROUPS = [CORE];
-const NIGHTLY_GROUPS = [CORE, WORKFLOWS];
+const NIGHTLY_GROUPS = [CORE, WORKFLOWS, ACCOUNTS];
 
 const PrRun = z.object({ status: z.string(), runId: z.string() });
 const GroupRun = z.object({ batchId: z.string(), queuedRunIds: z.array(z.string()) });
