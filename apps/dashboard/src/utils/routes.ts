@@ -118,6 +118,14 @@ export function parseAgentDetailsTab(tab: string | undefined): AgentDetailsTab {
   return AGENT_DETAILS_DEFAULT_TAB;
 }
 
+export function isWorkflowEditorPath(pathname: string): boolean {
+  return (
+    pathname.includes('/workflows/') &&
+    !pathname.includes('/workflows/create') &&
+    !pathname.includes('/workflows/templates')
+  );
+}
+
 export const buildRoute = (route: string, params: Record<string, string>) => {
   return Object.entries(params).reduce((acc, [key, value]) => {
     return acc.replace(`:${key}`, value);
