@@ -4,14 +4,21 @@ sidebarTitle: 'Errors'
 description: 'The code and message Novu returns for each bridge failure, and what to check on your side.'
 ---
 
-When sync, preview, or a step cannot call your bridge, the response has a `code` and a `message`. `novu sync` returns the same body. Find the `code` below. The message is quoted because several codes share one sentence, and the sentence is often the wrong place to start.
+When a preview or a step cannot call your bridge, the response has a `code` and a `message`. Find the `code` below. The message is quoted because several codes share one sentence, and the sentence is often the wrong place to start.
+
+`novu sync` does not return that body. It always responds with `400`, and the body is only a `message`.
+
+- Before sync connects, a bad URL is `bridgeUrl: ` plus the reason. That text is `Invalid URL format.`, `URL scheme "<scheme>" is not allowed. Only http and https are permitted.`, `URLs with embedded credentials are not allowed.`, `Requests to "<host>" are not allowed.`, or `Requests to private or reserved IP addresses are not allowed (resolved: <ip>).`
+- If the call itself fails, sync keeps the bridge `message` and drops `code`, `data`, and the original status. A URL rejected while connecting still says `The provided bridge URL is blocked by the outbound SSRF policy.` The sync response will not contain `DNS_LOOKUP_FAILED` or `PRIVATE_IP`. Use the checks in that section to tell those apart.
+
+A step or preview looks like this. Sync does not include `code`.
 
 ```json
 {
   "statusCode": 400,
   "message": "The provided bridge URL is blocked by the outbound SSRF policy.",
   "code": "DNS_LOOKUP_FAILED",
-  "path": "/v1/bridge/sync"
+  "path": "/v1/events/trigger"
 }
 ```
 
@@ -25,7 +32,7 @@ Every code in this section returns `400` and this message:
 The provided bridge URL is blocked by the outbound SSRF policy.
 ```
 
-The wording does not change. A public preview URL that has gone away returns this same sentence, with code `DNS_LOOKUP_FAILED`. Read `code`, then take the hostname from the URL you synced.
+The wording does not change. A public preview URL that has gone away returns this same sentence. On a step or preview the `code` is `DNS_LOOKUP_FAILED`. On sync you only have the sentence, so take the hostname from the URL you passed and run the checks below.
 
 ```bash
 dig +short YOUR_HOST
@@ -33,7 +40,9 @@ dig +short YOUR_HOST @8.8.8.8
 curl -I https://YOUR_HOST
 ```
 
-Use `@8.8.8.8` so you are not looking at office or VPN DNS. Novu resolves the name from the public internet.
+Novu Cloud resolves names from the public internet. `dig +short YOUR_HOST @8.8.8.8` is what Cloud sees, instead of office or VPN DNS.
+
+Self-hosted Novu uses the resolver on the API and Worker containers. A name `dig @8.8.8.8` cannot find, such as `my-bridge.default.svc.cluster.local`, can still resolve there. Run `dig +short YOUR_HOST` or `getent hosts YOUR_HOST` inside the API container. If that prints an address, publishing the name on public DNS is not the fix.
 
 ### INVALID_URL
 
@@ -68,21 +77,21 @@ Novu could not resolve the hostname. The deployment is often already gone: a pre
 Run the `dig` and `curl` commands above.
 
 - `dig` prints nothing, and curl says `Could not resolve host`. Open the deployment in your host (Vercel, Netlify, your own platform) and see if that exact hostname still exists. Sync the URL of a deployment that is still there.
-- `dig @8.8.8.8` prints nothing, but `dig` without `@8.8.8.8` prints an address. The name exists only on your network. Novu cannot see it. Publish a public record, or sync a public hostname.
-- `dig` prints an address and curl returns HTTP headers. DNS is fine from where you are sitting. Run the sync again once. If the code is still `DNS_LOOKUP_FAILED`, the record is not visible to public resolvers yet. Wait, then retry. Novu does not retry this code on its own.
-- `dig` prints `10.`, `192.168.`, `172.16.` through `172.31.`, or `127.`. That is [`PRIVATE_IP`](#private_ip), and you are resolving through a private DNS zone. Trust the `@8.8.8.8` answer.
+- `dig @8.8.8.8` prints nothing, but `dig` without `@8.8.8.8` prints an address. On Novu Cloud the name is only on your network. Publish a public record, or sync a public hostname. On a self-hosted deployment, check the API container instead, as described above. If the container can resolve it, this is not the failure.
+- `dig` prints an address and curl returns HTTP headers. DNS is fine from where you are sitting. On Novu Cloud, run the sync again once. If it still fails, the record is not visible to public resolvers yet. Wait, then retry. Novu does not retry this code on its own. On a self-hosted deployment, repeat the lookup inside the API container before you change DNS.
+- `dig` prints an address in a blocked range. That is [`PRIVATE_IP`](#private_ip). On Novu Cloud, trust the `@8.8.8.8` answer. On a self-hosted deployment, trust the answer from inside the API container.
 
 ### PRIVATE_IP
 
 **Message:** `The provided bridge URL is blocked by the outbound SSRF policy.`
 
-Either the URL itself is a private address (`http://10.x`, `http://127.0.0.1`, `http://192.168.x`, `http://169.254.x`) or the hostname resolves to one.
+Either the URL itself is a private or reserved address, or the hostname resolves to one. Blocked ranges include `10.0.0.0/8`, `127.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, `100.64.0.0/10`, `0.0.0.0`, `::`, `::1`, `fc00::/7`, and `fe80::/10`, plus IPv4-mapped forms of those addresses. An address in one of these ranges is this code. An address outside them usually is not.
 
 ```bash
 dig +short YOUR_HOST @8.8.8.8
 ```
 
-A public address (anything outside the ranges above, and outside `fe80:`) means this code is unexpected. A private address means Novu refused to connect, which is what you want if that host is an internal service you did not mean to expose.
+On Novu Cloud, that answer is the one that matters. On a self-hosted deployment, run the lookup inside the API container instead.
 
 On Novu Cloud, sync a URL that resolves to a public address. `localhost` cannot be allow-listed.
 
@@ -92,7 +101,7 @@ On a self-hosted Novu, you can allow a specific internal host. Set this on the A
 NOVU_SAFE_OUTBOUND_ALLOW=host.docker.internal,10.0.0.0/8,.svc.cluster.local
 ```
 
-Put the hostname in the bridge URL. A literal `10.x` address in the URL is still rejected. Link-local addresses and `metadata.google.internal` stay blocked. See [Deploy with Docker](/community/self-hosting-novu/deploy-with-docker#faqs).
+The bridge URL can be that hostname, or a private IP covered by the list. `NOVU_SAFE_OUTBOUND_ALLOW=10.0.0.0/8` allows `http://10.0.0.1/api/novu`. Link-local addresses (`169.254.0.0/16`, `fe80::/10`) and the hostnames `localhost` and `metadata.google.internal` stay blocked. See [Deploy with Docker](/community/self-hosting-novu/deploy-with-docker#faqs).
 
 ### CROSS_ORIGIN_METHOD_PRESERVING_REDIRECT
 
@@ -112,7 +121,9 @@ No specific reason was attached. Run the same `dig` and `curl -sI` commands. The
 
 ## Reachability errors
 
-The URL was accepted. The call still failed. The URL in the message is the one to test. Run it yourself before changing code:
+The URL was accepted. The call still failed. The URL in the message is the one to test. Run it yourself before changing code.
+
+A step retries 3 times, after 1s, then 2s, then 4s. `novu sync` retries once, after 1s. SSRF rejections are not retried.
 
 ```bash
 curl -i --max-time 10 "THE_URL_FROM_THE_MESSAGE"
@@ -164,7 +175,7 @@ The URL is a `*.novu.sh` tunnel and nothing is connected to it. In the app direc
 
 **Message:** `Bridge request timeout for <url>`
 
-Novu connected and your handler did not finish within 5 seconds. Novu already retried 3 times, waiting 1s, then 2s, then 4s.
+Novu connected and your handler did not finish within 5 seconds. A step retries 3 times, waiting 1s, then 2s, then 4s. `novu sync` retries once, after 1s.
 
 Hit the same URL with `curl --max-time 10` and watch how long it sits. Then look at the bridge log for that request. A cold start, a step that calls a slow third party, or a query with no timeout shows up as a request that starts and never logs a response. Return from the handler within 5 seconds. Do the slow work after you respond, or in another job. On a serverless host, the log line you want is the platform's "cold start" or "duration" field for that invocation.
 
@@ -174,7 +185,7 @@ Hit the same URL with `curl --max-time 10` and watch how long it sits. Then look
 
 **Message:** same as `BridgeEndpointUnavailable`
 
-Novu's DNS lookup was interrupted, and the retries were too. `dig +short YOUR_HOST @8.8.8.8` tells you if the name is real. If dig prints an address, run the sync or trigger one more time. If dig prints nothing, the name does not exist publicly. See [`DNS_LOOKUP_FAILED`](#dns_lookup_failed).
+Novu's DNS lookup was interrupted, and the retries did not help. On Novu Cloud, `dig +short YOUR_HOST @8.8.8.8` tells you if the name is real. On a self-hosted deployment, run that lookup inside the API container. If it prints an address, run the sync or trigger one more time. If it prints nothing, see [`DNS_LOOKUP_FAILED`](#dns_lookup_failed).
 
 ### ENOTFOUND
 
@@ -182,7 +193,7 @@ Novu's DNS lookup was interrupted, and the retries were too. `dig +short YOUR_HO
 
 **Message:** same as `BridgeEndpointUnavailable`
 
-The lookup failed during the connection. Novu already retried. `dig +short YOUR_HOST @8.8.8.8` with no output means there is no public record. Publish one, or sync a host that has one. [`DNS_LOOKUP_FAILED`](#dns_lookup_failed) is the same situation caught earlier, before Novu tried to connect, and that one is not retried.
+The lookup failed during the connection, after the retries for this call. On Novu Cloud, `dig +short YOUR_HOST @8.8.8.8` with no output means there is no public record. Publish one, or sync a host that has one. On a self-hosted deployment, check the API container before you publish anything. [`DNS_LOOKUP_FAILED`](#dns_lookup_failed) is the same situation caught earlier, before Novu tried to connect, and that one is not retried.
 
 ### ECONNREFUSED
 
@@ -420,7 +431,7 @@ node -e "const k=process.env.NOVU_SECRET_KEY||''; console.log(k ? k.slice(0,4)+'
 
 Compare the first 4 characters and the length with the Dashboard key. Do not print the whole key. If the process says the variable is empty, the deploy did not get it. On Vercel, open Project → Settings → Environment Variables and see which environments the variable is enabled for. A key set only for Production is empty on a Preview deployment, and this error is what you get.
 
-If you construct the client yourself, the value that matters is `secretKey` in that constructor. An env var you set but never pass in is unused.
+A non-empty `secretKey` on the client is the key that is used. If you omit it, or pass `''`, the client uses `NOVU_SECRET_KEY`, then `NOVU_API_KEY`. An empty string does not replace those variables.
 
 **If the keys match, the body changed.** Novu signed `JSON.stringify` of the body it sent. The bridge hashed a different string. In Next.js this is usually `middleware.ts` running on the bridge path and reading the body, or an auth wrapper doing the same. Exclude the path:
 
@@ -430,7 +441,7 @@ export const config = {
 };
 ```
 
-A custom `serve` handler has to return the parsed object from `body()`. Returning a string, or an object you copied and then added fields to, changes the HMAC. If `body()` throws, the framework hashes `{}` instead, and you get this error. The bridge log shows that exception immediately before the signature error.
+A custom `serve` handler has to return the parsed object from `body()`. Returning a string, or an object you copied and then added fields to, changes the HMAC. If `body()` throws, the framework hashes `{}` instead, and you get this error. It does not log that exception. Log it inside your `body()` callback.
 
 ### SignatureNotFoundError
 
@@ -461,10 +472,10 @@ The header arrived, and it is not `t=<milliseconds>,v1=<hex>`. Log the header va
 Take `t` from the `novu-signature` header in the bridge log and compare it with the bridge clock:
 
 ```bash
-date +%s%3N
+node -e "console.log(Date.now())"
 ```
 
-That prints Unix milliseconds. If it is more than 5 minutes away from `t`, the host clock is wrong. Enable NTP and try a new request from Novu. Replaying a saved request after 5 minutes fails here even when the key is right. That part is working.
+That prints the bridge clock in Unix milliseconds. If it is more than 5 minutes away from `t`, the host clock is wrong. Enable NTP and try a new request from Novu. Replaying a saved request after 5 minutes fails here even when the key is right. That part is working.
 
 ### SigningKeyNotFoundError
 
@@ -474,7 +485,7 @@ That prints Unix milliseconds. If it is more than 5 minutes away from `t`, the h
 
 The header was present, and the bridge has no secret to check it with. Run the `node -e` one-liner from [`SignatureMismatchError`](#signaturemismatcherror) on the running process. It will print `NOVU_SECRET_KEY is empty`. Also check `NOVU_API_KEY`. The client uses that only when the secret key is unset.
 
-Set `NOVU_SECRET_KEY` to the secret key of this environment and redeploy. A variable added in the host's UI does nothing until the next deploy. If you pass `secretKey: ''` into the client, that empty string wins over the environment variable. Remove it.
+Set `NOVU_SECRET_KEY` to the secret key of this environment and redeploy. A variable added in the host's UI does nothing until the next deploy. This error means the constructor `secretKey`, `NOVU_SECRET_KEY`, and `NOVU_API_KEY` are all empty. Passing `secretKey: ''` does not override the environment variables. The client skips an empty string and reads them next.
 
 ## Errors raised by your bridge
 

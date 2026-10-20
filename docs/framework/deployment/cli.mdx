@@ -64,12 +64,12 @@ Example: `https://my-app-preview-url.vercel.app/api/novu?x-vercel-protection-byp
 
 ## Sync failed while calling the bridge
 
-`novu sync` returns the same `code` and `message` as any other call Novu makes to your bridge. Read `code` on the `400`, `401`, `404`, `408`, `413`, `502`, or `500` response.
+`novu sync` always returns `400`. The body is only a `message`. It does not include the `code` a step failure includes.
 
-A URL Novu rejects before connecting uses this message for every rejection:
+A URL rejected before sync connects looks like `bridgeUrl: Invalid URL format.` or `bridgeUrl: Requests to private or reserved IP addresses are not allowed (resolved: <ip>).` A URL rejected while sync is calling the bridge keeps this message, with no reason code:
 
 ```
 The provided bridge URL is blocked by the outbound SSRF policy.
 ```
 
-`DNS_LOOKUP_FAILED` means the hostname did not resolve, which includes a preview deployment that is down or not in DNS yet. Every code is documented with the returned message and the debug and fix steps in [Bridge request errors](/framework/errors).
+A preview deployment that is down or not in DNS yet is one cause of that sentence. Sync retries that call once, after 1 second. [Bridge request errors](/framework/errors) has the message for each failure and what to run to tell them apart.

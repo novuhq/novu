@@ -68,7 +68,7 @@ Other responses - for example most `4xx` errors outside `408` and `429` - are no
 
 ## Bridge request errors
 
-Sync, preview, and step execution return `code` and `message` when a call to your bridge fails. `novu sync` returns the same body. [Bridge request errors](/framework/errors) quotes the message for every code and explains how to debug and fix it, including the `novu-signature` check behind `SignatureMismatchError`.
+A preview or a step returns `code` and `message` when a call to your bridge fails. `novu sync` returns `400` and the message only. [Bridge request errors](/framework/errors) quotes each message and says what to run, including the `novu-signature` check behind `SignatureMismatchError`.
 
 
 ## Writing a custom `serve` function

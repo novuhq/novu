@@ -63,4 +63,4 @@ Upgrade to a production provider or reset the limit for testing. Avoid using dem
 
 ## Bridge execution failed
 
-Sync, preview, and a workflow step return `code` and `message` when the bridge call fails. Several codes share one message, so start from `code`. [Bridge request errors](/framework/errors) quotes the message and says what to run, and what the result means, for each code.
+A preview or a workflow step returns `code` and `message` when the bridge call fails. Several codes share one message, so start from `code`. `novu sync` returns `400` and the message only, with no `code`. [Bridge request errors](/framework/errors) quotes the message and says what to run, and what the result means, for each code.
