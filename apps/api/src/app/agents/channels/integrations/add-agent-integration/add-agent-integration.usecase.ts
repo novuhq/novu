@@ -27,6 +27,8 @@ import {
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
 } from '@novu/shared';
+import { trackAgentInboxChannelConnected } from '../../../../human/services/agent-inbox-analytics';
+import { viaForProviderId } from '../../../../human/services/human-channel-via';
 import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { trackAgentIntegrationConnected } from '../../../shared/analytics/agent-analytics';
 import { assertWebChatEnabledForConnect } from '../../../shared/assert-web-chat-enabled';
@@ -96,6 +98,7 @@ export class AddAgentIntegration {
           channel: response.integration.channel,
           connectionSource: 'agent_email_inbox_provisioned',
         });
+        this.trackAgentInboxChannel(agent, command, response.integration.providerId);
       }
 
       return response;
@@ -252,8 +255,30 @@ export class AddAgentIntegration {
       channel: integration.channel,
       connectionSource: 'existing_integration',
     });
+    this.trackAgentInboxChannel(agent, command, integration.providerId);
 
     return response;
+  }
+
+  /**
+   * The Agent Inbox sets its channels up through these same endpoints, so a channel linked to its agent also
+   * counts as one of its own, besides the event every agent gets.
+   */
+  private trackAgentInboxChannel(
+    agent: Pick<AgentEntity, '_id' | 'runtime'>,
+    command: AddAgentIntegrationCommand,
+    providerId: string
+  ): void {
+    const channel = viaForProviderId(providerId);
+    if (agent.runtime !== 'human_relay' || !channel) {
+      return;
+    }
+
+    trackAgentInboxChannelConnected(
+      this.analyticsService,
+      { userId: command.userId, organizationId: command.organizationId },
+      { agentId: agent._id, channel }
+    );
   }
 
   private async enforceEmailTier(organizationId: string): Promise<void> {

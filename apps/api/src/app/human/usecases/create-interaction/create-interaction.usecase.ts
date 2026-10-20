@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, HttpException, Injectable, Not
 import {
   type AgentEmailInboxCredits,
   AgentEmailInboxQuotaService,
+  AnalyticsService,
   InstrumentUsecase,
   isAgentEmailInboxQuotaExceeded,
   PinoLogger,
@@ -32,6 +33,7 @@ import {
   type InteractionThreadDto,
   toInteractionResponse,
 } from '../../dtos/interaction-response.dto';
+import { trackAgentInboxMessageSent } from '../../services/agent-inbox-analytics';
 import { HumanDeliveryService, type ResolvedHumanTarget } from '../../services/human-delivery.service';
 import { HumanInboxService, type InboxScope } from '../../services/human-inbox.service';
 import {
@@ -76,7 +78,8 @@ export class CreateInteraction {
     private readonly inbox: HumanInboxService,
     private readonly conversationService: AgentConversationService,
     private readonly createConversationInteraction: CreateConversationInteraction,
-    private readonly keylessEmailGate: KeylessEmailGateService
+    private readonly keylessEmailGate: KeylessEmailGateService,
+    private readonly analyticsService: AnalyticsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -223,6 +226,11 @@ export class CreateInteraction {
         });
       const delivered = credits ? await credits.run(deliver) : await deliver();
 
+      // Each contact gets the message in a thread of their own, so each delivery is one message sent.
+      for (const { platform } of delivered.interaction.deliveries ?? []) {
+        this.trackMessageSent(command, agent, platform);
+      }
+
       await this.activityRecorder.recordRequest(delivered.interaction);
 
       if (delivered.interaction.status === HumanInteractionStatusEnum.DELIVERED) {
@@ -348,6 +356,7 @@ export class CreateInteraction {
       await messageCredits?.release();
     }
 
+    this.trackMessageSent(command, agent, channel.platform);
     const unreadBefore = await this.inbox.markSentInto(scope, conversation);
 
     return toInteractionResponse(interaction, undefined, [{ id: conversation.identifier, unreadBefore }]);
@@ -403,6 +412,14 @@ export class CreateInteraction {
         `"${stranger}" is not one of your contacts, so \`to\` cannot name them. Pass \`anyoneMayAnswer\` (\`--anyone\`) to let anyone in the thread answer.`
       );
     }
+  }
+
+  private trackMessageSent(command: CreateInteractionCommand, agent: AgentEntity, channel: string): void {
+    trackAgentInboxMessageSent(
+      this.analyticsService,
+      { userId: command.userId, organizationId: command.organizationId },
+      { agentId: agent._id, type: command.kind, channel, source: command.analyticsSource }
+    );
   }
 
   private async resolveTargets(command: CreateInteractionCommand, agent: AgentEntity, subscriberIds: string[]) {

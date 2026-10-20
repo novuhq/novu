@@ -103,8 +103,17 @@ and the MCP server only speak these paths, so a self-hosted or local setup point
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | —                        | Human Clerk app. Only the account pages use it.            |
 | `CLERK_SECRET_KEY`                  | —                        | Human Clerk app, server only.                              |
 | `AGENT_INBOX_DASHBOARD_API_SECRET`  | —                        | The API's `AGENT_INBOX_DASHBOARD_API_SECRET`, for `/v1/human/accounts`. Server only. |
+| `NEXT_PUBLIC_MIXPANEL_TOKEN`        | —                        | Novu's Mixpanel project. Counts dashboard page views on the operator's profile; empty sends nothing. |
 
 `NEXT_PUBLIC_` values are inlined at build time. The API URL never comes from a link itself.
+
+## Analytics
+
+Agent Inbox events go to Novu's Mixpanel project, named `… - [Agent Inbox]` (`AGENT_INBOX_EVENTS` in
+`@novu/shared`). The API sends what agents and operators do; this app only adds `Page Viewed - [Agent Inbox]`
+for each dashboard page (`components/analytics`). Both use the id of the hidden Novu user behind the account, so
+one operator is one profile. The page sends a page's path only, never its query, which can hold a one-time
+token, and nothing about the operator besides that id. Its calls to the API say `Novu-Analytics-Source: dashboard`.
 
 ## Checks
 

@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AGENT_INBOX_VIA_HEADER, ApiError, createApiClient, createPublicApiClient } from '../api/client';
+import {
+  AGENT_INBOX_VIA_HEADER,
+  ANALYTICS_SOURCE_HEADER,
+  ApiError,
+  createApiClient,
+  createPublicApiClient,
+} from '../api/client';
 import type { CliConfig } from '../config';
 
 const connectWithCode = vi.fn();
@@ -230,5 +236,13 @@ describe('API requests', () => {
 
     expect(authed.axios.defaults.headers[AGENT_INBOX_VIA_HEADER]).toBe('cli');
     expect(anonymous.defaults.headers[AGENT_INBOX_VIA_HEADER]).toBe('cli');
+  });
+
+  it("say they come from the CLI for Novu's analytics", () => {
+    const authed = createApiClient({ apiUrl: 'https://api.novu.co', secretKey: 'sk_account' });
+    const anonymous = createPublicApiClient('https://api.novu.co');
+
+    expect(authed.axios.defaults.headers[ANALYTICS_SOURCE_HEADER]).toBe('cli');
+    expect(anonymous.defaults.headers[ANALYTICS_SOURCE_HEADER]).toBe('cli');
   });
 });

@@ -1,5 +1,5 @@
 import { BadGatewayException, BadRequestException, ConflictException } from '@nestjs/common';
-import { HumanChannelViaEnum } from '@novu/shared';
+import { AGENT_INBOX_EVENTS, HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ConnectHumanInviteChannelCommand } from './connect-human-invite-channel.command';
@@ -14,7 +14,9 @@ describe('ConnectHumanInviteChannel', () => {
       }),
     };
     const deliveryService = {
-      describeInviteChannels: sinon.stub().resolves(channels.map((channel) => ({ ...channel, isDefault: false }))),
+      describeInviteChannels: sinon
+        .stub()
+        .resolves(channels.map((channel) => ({ ...channel, isDefault: false, available: true }))),
     };
     const issueTelegramSubscriberLink = {
       execute: sinon.stub().resolves({ deepLinkUrl: 'https://t.me/bot?start=code', botUsername: 'bot', expiresAt: '' }),
@@ -29,16 +31,30 @@ describe('ConnectHumanInviteChannel', () => {
         replacesVerifiedAddress: false,
       }),
     };
+    const environmentRepository = { findOne: sinon.stub().resolves({ apiKeys: [{ _userId: 'owner1' }] }) };
+    const analyticsService = { track: sinon.stub() };
     const usecase = new ConnectHumanInviteChannel(
       inviteTokens as never,
       deliveryService as never,
       issueTelegramSubscriberLink as never,
       generateConnectOauthUrl as never,
-      requestAddressVerification as never
+      requestAddressVerification as never,
+      environmentRepository as never,
+      analyticsService as never
     );
 
-    return { usecase, issueTelegramSubscriberLink, generateConnectOauthUrl, requestAddressVerification };
+    return {
+      usecase,
+      issueTelegramSubscriberLink,
+      generateConnectOauthUrl,
+      requestAddressVerification,
+      environmentRepository,
+      analyticsService,
+    };
   }
+
+  /** Lets the count that runs in the background finish. */
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
 
   const both = [
     { via: HumanChannelViaEnum.TELEGRAM, integrationIdentifier: 'tg', connected: false },
@@ -77,15 +93,44 @@ describe('ConnectHumanInviteChannel', () => {
     });
   });
 
+  it('counts the accepted invite for the owner: the user the environment has its key from', async () => {
+    const { usecase, environmentRepository, analyticsService } = setup(both);
+
+    await usecase.execute(
+      ConnectHumanInviteChannelCommand.create({ token: 'T'.repeat(32), via: HumanChannelViaEnum.TELEGRAM })
+    );
+    await settle();
+
+    expect(environmentRepository.findOne.firstCall.args[0]).to.deep.equal({ _id: 'env1', _organizationId: 'org1' });
+    expect(analyticsService.track.args).to.deep.equal([
+      [AGENT_INBOX_EVENTS.INVITE_ACCEPTED, 'owner1', { _organization: 'org1', agentId: 'relay1', channel: 'telegram' }],
+    ]);
+  });
+
+  it('still answers when the owner cannot be looked up', async () => {
+    const { usecase, environmentRepository, analyticsService } = setup(both);
+    environmentRepository.findOne.rejects(new Error('mongo down'));
+
+    const result = await usecase.execute(
+      ConnectHumanInviteChannelCommand.create({ token: 'T'.repeat(32), via: HumanChannelViaEnum.SLACK })
+    );
+    await settle();
+
+    expect(result).to.deep.equal({ url: 'https://slack.com/oauth/v2/authorize?x=1' });
+    expect(analyticsService.track.called).to.equal(false);
+  });
+
   it('refuses apps the inviter has not set up', async () => {
-    const { usecase } = setup([both[0]]);
+    const { usecase, analyticsService } = setup([both[0]]);
 
     const err = await usecase
       .execute(ConnectHumanInviteChannelCommand.create({ token: 'T'.repeat(32), via: HumanChannelViaEnum.SLACK }))
       .catch((error) => error);
+    await settle();
 
     expect(err).to.be.instanceOf(BadRequestException);
     expect((err as BadRequestException).getResponse()).to.include({ code: 'channel_unavailable' });
+    expect(analyticsService.track.called).to.equal(false);
   });
 
   it('refuses an app the invitee is already connected on', async () => {

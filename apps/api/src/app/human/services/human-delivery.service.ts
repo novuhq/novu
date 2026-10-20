@@ -11,8 +11,6 @@ import {
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  ChatProviderIdEnum,
-  EmailProviderIdEnum,
   ENDPOINT_TYPES,
   HumanAddressVerificationStateEnum,
   HumanChannelViaEnum,
@@ -23,30 +21,13 @@ import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
 import { KeylessEmailGateService } from '../../keyless/keyless-email-gate.service';
 import { type ContactHandle, describeContactHandle, readContactHandle } from './contact-handle';
+import { VIA_PROVIDER_IDS, viaForProviderId } from './human-channel-via';
 import { maskEmail } from './mask-email';
 
 export interface ResolvedHumanTarget {
   platform: string;
   platformUserId: string;
   integrationIdentifier: string;
-}
-
-const VIA_PROVIDER_IDS: Record<HumanChannelViaEnum, readonly string[]> = {
-  [HumanChannelViaEnum.TELEGRAM]: [ChatProviderIdEnum.Telegram],
-  [HumanChannelViaEnum.SLACK]: [ChatProviderIdEnum.Slack, ChatProviderIdEnum.Novu],
-  [HumanChannelViaEnum.EMAIL]: [EmailProviderIdEnum.AgentEmailInbox],
-};
-
-function viaForProviderId(providerId: string): HumanChannelViaEnum | null {
-  for (const [via, providerIds] of Object.entries(VIA_PROVIDER_IDS) as Array<
-    [HumanChannelViaEnum, readonly string[]]
-  >) {
-    if (providerIds.includes(providerId)) {
-      return via;
-    }
-  }
-
-  return null;
 }
 
 /** A channel the human can receive on right now. */

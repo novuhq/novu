@@ -1,5 +1,5 @@
 import { ConflictException } from '@nestjs/common';
-import { EnvironmentTypeEnum } from '@novu/shared';
+import { AGENT_INBOX_EVENTS, EnvironmentTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { EnsureBackingOrganizationCommand } from './ensure-backing-organization.command';
@@ -66,13 +66,15 @@ describe('EnsureBackingOrganization', () => {
     };
     const syncExternalOrganization = { execute: sinon.stub().resolves({ _id: 'novu_org' }) };
     const moduleRef = { resolve: sinon.stub().resolves(syncExternalOrganization) };
+    const analyticsService = { track: sinon.stub() };
 
     const usecase = new EnsureBackingOrganization(
       humanBackingAccounts as never,
       communityOrganizationRepository as never,
       environmentRepository as never,
       cacheService as never,
-      moduleRef as never
+      moduleRef as never,
+      analyticsService as never
     );
 
     return {
@@ -82,6 +84,7 @@ describe('EnsureBackingOrganization', () => {
       cacheService,
       heldLocks,
       communityOrganizationRepository,
+      analyticsService,
     };
   }
 
@@ -124,12 +127,25 @@ describe('EnsureBackingOrganization', () => {
     });
   });
 
+  it('counts the sign-up for the hidden Novu user the first time', async () => {
+    const { usecase, analyticsService } = setup();
+
+    await usecase.execute(command);
+
+    expect(analyticsService.track.args).to.deep.equal([
+      [AGENT_INBOX_EVENTS.SIGNED_UP, 'novu_user', { _organization: 'novu_org' }],
+    ]);
+  });
+
   it('reuses the organization on later visits', async () => {
     process.env.NOVU_REGION = 'eu-central-1';
-    const { usecase, syncExternalOrganization, cacheService, heldLocks } = setup({ existingOrganization: 'complete' });
+    const { usecase, syncExternalOrganization, cacheService, heldLocks, analyticsService } = setup({
+      existingOrganization: 'complete',
+    });
 
     const result = await usecase.execute(command);
 
+    expect(analyticsService.track.called).to.equal(false);
     expect(syncExternalOrganization.execute.called).to.equal(false);
     expect(result).to.include({ organizationId: 'novu_org', environmentId: 'dev_env', region: 'eu' });
     expect(cacheService.eval.firstCall.args[1]).to.deep.equal(['human_backing_account_lock:{user_2AbC}']);
@@ -150,7 +166,7 @@ describe('EnsureBackingOrganization', () => {
 
   it('sets the account up once when the sign-up webhook and the first visit arrive together', async () => {
     const context = setup();
-    const { usecase, humanBackingAccounts, syncExternalOrganization, heldLocks } = context;
+    const { usecase, humanBackingAccounts, syncExternalOrganization, heldLocks, analyticsService } = context;
     findOrganizationOnceMade(context);
 
     const [webhook, firstVisit] = await Promise.all([usecase.execute(command), usecase.execute(command)]);
@@ -159,6 +175,7 @@ describe('EnsureBackingOrganization', () => {
     expect(firstVisit).to.deep.equal(webhook);
     expect(webhook).to.include({ organizationId: 'novu_org', environmentId: 'dev_env' });
     expect(syncExternalOrganization.execute.calledOnce).to.equal(true);
+    expect(analyticsService.track.calledOnce).to.equal(true);
     expect(
       humanBackingAccounts.findOrCreate.secondCall.calledAfter(syncExternalOrganization.execute.firstCall)
     ).to.equal(true);

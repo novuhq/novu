@@ -1,4 +1,4 @@
-import { HumanChannelViaEnum } from '@novu/shared';
+import { AGENT_INBOX_EVENTS, HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { SetupHumanRelayCommand } from './setup-human-relay.command';
@@ -32,6 +32,7 @@ describe('SetupHumanRelay', () => {
     const humanAgentIdentity = { apply: sinon.stub().callsFake(async (agent: unknown) => agent) };
     const findOrCreateNovuEmail = { execute: sinon.stub().resolves({ provisionedNewLink: true }) };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
+    const analyticsService = { track: sinon.stub() };
     const usecase = new SetupHumanRelay(
       agentRepository as never,
       subscriberRepository as never,
@@ -39,7 +40,8 @@ describe('SetupHumanRelay', () => {
       humanOperator as never,
       humanAgentIdentity as never,
       findOrCreateNovuEmail as never,
-      logger as never
+      logger as never,
+      analyticsService as never
     );
 
     return {
@@ -51,6 +53,7 @@ describe('SetupHumanRelay', () => {
       subscriberRepository,
       findOrCreateNovuEmail,
       logger,
+      analyticsService,
     };
   }
 
@@ -227,6 +230,84 @@ describe('SetupHumanRelay', () => {
       restoreEnv('IS_SELF_HOSTED', savedSelfHosted);
       restoreEnv('NOVU_AGENT_SHARED_INBOUND_DOMAIN', savedDomain);
     }
+  });
+});
+
+describe('SetupHumanRelay analytics', () => {
+  const base = { environmentId: 'env1', organizationId: 'org1', userId: 'user1', subscriberId: 'alice' };
+  const names = ['NOVU_ENTERPRISE', 'IS_SELF_HOSTED', 'NOVU_AGENT_SHARED_INBOUND_DOMAIN', 'KEYLESS_ORGANIZATION_ID'];
+  let saved: Record<string, string | undefined>;
+
+  beforeEach(() => {
+    saved = Object.fromEntries(names.map((name) => [name, process.env[name]]));
+    process.env.NOVU_ENTERPRISE = 'true';
+    delete process.env.IS_SELF_HOSTED;
+    process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = 'agentinbox.md';
+    process.env.KEYLESS_ORGANIZATION_ID = 'keyless-org';
+  });
+
+  afterEach(() => {
+    for (const name of names) {
+      restoreEnv(name, saved[name]);
+    }
+  });
+
+  function setup(provisioned: { provisionedNewLink: boolean; response?: unknown }) {
+    const analyticsService = { track: sinon.stub() };
+    const usecase = new SetupHumanRelay(
+      {
+        findOne: sinon.stub().resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' }),
+      } as never,
+      { findOne: sinon.stub().resolves({ subscriberId: 'alice' }), update: sinon.stub() } as never,
+      { setDefaultVia: sinon.stub(), setDeclaredAddress: sinon.stub() } as never,
+      { resolve: sinon.stub() } as never,
+      { apply: sinon.stub().callsFake(async (agent: unknown) => agent) } as never,
+      { execute: sinon.stub().resolves(provisioned) } as never,
+      { setContext: sinon.stub(), warn: sinon.stub() } as never,
+      analyticsService as never
+    );
+
+    return { usecase, analyticsService };
+  }
+
+  const newInbox = {
+    provisionedNewLink: true,
+    response: { integration: { sharedInboundAddress: 'atlas@agentinbox.md' } },
+  };
+
+  it('counts a new inbox, and its email channel, for the owner and the app that asked', async () => {
+    const { usecase, analyticsService } = setup(newInbox);
+
+    await usecase.execute(SetupHumanRelayCommand.create({ ...base, analyticsSource: 'cli' }));
+
+    expect(analyticsService.track.args).to.deep.equal([
+      [AGENT_INBOX_EVENTS.INBOX_CREATED, 'user1', { _organization: 'org1', agentId: 'relay1', source: 'cli' }],
+      [AGENT_INBOX_EVENTS.CHANNEL_CONNECTED, 'user1', { _organization: 'org1', agentId: 'relay1', channel: 'email' }],
+    ]);
+  });
+
+  it('says a request without a source came from the API', async () => {
+    const { usecase, analyticsService } = setup(newInbox);
+
+    await usecase.execute(SetupHumanRelayCommand.create(base));
+
+    expect(analyticsService.track.firstCall.args[2]).to.include({ source: 'api' });
+  });
+
+  it('counts nothing when the agent had its inbox already', async () => {
+    const { usecase, analyticsService } = setup({ provisionedNewLink: false });
+
+    await usecase.execute(SetupHumanRelayCommand.create(base));
+
+    expect(analyticsService.track.called).to.equal(false);
+  });
+
+  it('counts nothing for a setup made without an account', async () => {
+    const { usecase, analyticsService } = setup(newInbox);
+
+    await usecase.execute(SetupHumanRelayCommand.create({ ...base, organizationId: 'keyless-org' }));
+
+    expect(analyticsService.track.called).to.equal(false);
   });
 });
 

@@ -1,12 +1,16 @@
 import { BadGatewayException, BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { AnalyticsService } from '@novu/application-generic';
+import { EnvironmentRepository } from '@novu/dal';
 import { HumanChannelViaEnum } from '@novu/shared';
 import { GenerateConnectOauthUrlCommand } from '../../../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.command';
 import { GenerateConnectOauthUrl } from '../../../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.usecase';
+import { isKeylessOrganization } from '../../../keyless/keyless-organization.helpers';
 import { IssueTelegramSubscriberLinkCommand } from '../../../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.command';
 import { IssueTelegramSubscriberLink } from '../../../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import { HUMAN_INVITE_APP_NAMES } from '../../dtos/human-invite.dto';
+import { trackAgentInboxInviteAccepted } from '../../services/agent-inbox-analytics';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
-import { HumanInviteTokenService } from '../../services/human-invite-token.service';
+import { type HumanInviteTokenPayload, HumanInviteTokenService } from '../../services/human-invite-token.service';
 import { RequestAddressVerificationCommand } from '../request-address-verification/request-address-verification.command';
 import {
   RequestAddressVerification,
@@ -31,11 +35,23 @@ export class ConnectHumanInviteChannel {
     private readonly deliveryService: HumanDeliveryService,
     private readonly issueTelegramSubscriberLink: IssueTelegramSubscriberLink,
     private readonly generateConnectOauthUrl: GenerateConnectOauthUrl,
-    private readonly requestAddressVerification: RequestAddressVerification
+    private readonly requestAddressVerification: RequestAddressVerification,
+    private readonly environmentRepository: EnvironmentRepository,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   async execute(command: ConnectHumanInviteChannelCommand): Promise<ConnectHumanInviteChannelResult> {
     const { payload } = await this.inviteTokens.requireActive(command.token);
+    const result = await this.connect(command, payload);
+    this.trackAccepted(payload, command.via);
+
+    return result;
+  }
+
+  private async connect(
+    command: ConnectHumanInviteChannelCommand,
+    payload: HumanInviteTokenPayload
+  ): Promise<ConnectHumanInviteChannelResult> {
     const appName = HUMAN_INVITE_APP_NAMES[command.via];
 
     const channels = await this.deliveryService.describeInviteChannels({
@@ -118,5 +134,30 @@ export class ConnectHumanInviteChannel {
     );
 
     return { url };
+  }
+
+  /**
+   * Counts the accepted invite for the agent's owner. The invite page has no session, so the owner is the
+   * user the invite's environment has its key from: the hidden Novu user of their account, the same user
+   * every request with that key carries. In the background, so it never slows or fails the invite page.
+   */
+  private trackAccepted(payload: HumanInviteTokenPayload, channel: HumanChannelViaEnum): void {
+    if (isKeylessOrganization(payload.org)) {
+      return;
+    }
+
+    this.environmentRepository
+      .findOne({ _id: payload.env, _organizationId: payload.org }, ['apiKeys'])
+      .then((environment) => {
+        const userId = environment?.apiKeys?.[0]?._userId;
+        if (userId) {
+          trackAgentInboxInviteAccepted(
+            this.analyticsService,
+            { userId: String(userId), organizationId: payload.org },
+            { agentId: payload.agentId, channel }
+          );
+        }
+      })
+      .catch(() => undefined);
   }
 }

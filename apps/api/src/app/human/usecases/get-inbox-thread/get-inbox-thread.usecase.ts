@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
 import { ConversationActivityRepository } from '@novu/dal';
 import type { GetInboxThreadResponseDto } from '../../dtos/human-inbox.dto';
+import { trackAgentInboxItemRead } from '../../services/agent-inbox-analytics';
 import { HumanHostStatusService } from '../../services/human-host-status.service';
 import { HumanInboxService } from '../../services/human-inbox.service';
 import { GetInboxThreadCommand } from './get-inbox-thread.command';
@@ -18,7 +19,8 @@ export class GetInboxThread {
   constructor(
     private readonly inbox: HumanInboxService,
     private readonly activityRepository: ConversationActivityRepository,
-    private readonly hostStatus: HumanHostStatusService
+    private readonly hostStatus: HumanHostStatusService,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   @InstrumentUsecase()
@@ -46,6 +48,12 @@ export class GetInboxThread {
     if (command.hostVia) {
       await this.hostStatus.recordCheck(scope, agent, command.hostVia, [thread]);
     }
+
+    trackAgentInboxItemRead(
+      this.analyticsService,
+      { userId: command.userId, organizationId: command.organizationId },
+      { agentId: agent._id, source: command.analyticsSource }
+    );
 
     return {
       thread,

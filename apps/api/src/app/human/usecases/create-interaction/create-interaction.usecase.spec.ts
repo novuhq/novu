@@ -7,7 +7,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AgentEmailInboxQuotaExceededException } from '@novu/application-generic';
-import { HumanChannelViaEnum, HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
+import {
+  AGENT_INBOX_EVENTS,
+  HumanChannelViaEnum,
+  HumanInteractionKindEnum,
+  HumanInteractionStatusEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { HumanKeylessCapService } from '../../services/human-keyless-cap.service';
@@ -101,6 +106,7 @@ describe('CreateInteraction', () => {
       execute: sinon.stub().resolves({ ...created, _conversationId: 'conv1', subscriberIds: ['sub-1', 'sub-2'] }),
     };
     const keylessEmailGate = { assertAllowed: sinon.stub().resolves() };
+    const analyticsService = { track: sinon.stub() };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
@@ -119,7 +125,8 @@ describe('CreateInteraction', () => {
       inbox as any,
       conversationService as any,
       createConversationInteraction as any,
-      keylessEmailGate as any
+      keylessEmailGate as any,
+      analyticsService as any
     );
     const command = {
       userId: 'user1',
@@ -145,8 +152,66 @@ describe('CreateInteraction', () => {
       conversationService,
       createConversationInteraction,
       keylessEmailGate,
+      analyticsService,
     };
   }
+
+  describe('analytics', () => {
+    it('counts one message for each contact it reached, with its type, channel and the app that asked', async () => {
+      const {
+        usecase,
+        command,
+        created,
+        agentRepository,
+        deliveryService,
+        humanInteractionRepository,
+        analyticsService,
+      } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel
+        .onSecondCall()
+        .resolves({ integrationIdentifier: 'slack-main', platform: 'slack', platformUserId: 'U1' });
+      humanInteractionRepository.create.resolves({ ...created, subscriberIds: ['sub-1', 'sub-2'] });
+
+      await usecase.execute({ ...command, to: ['sub-1', 'sub-2'], analyticsSource: 'mcp' } as any);
+
+      const properties = { _organization: 'org1', agentId: 'agent-relay', type: 'approve', source: 'mcp' };
+      expect(analyticsService.track.args).to.deep.equal([
+        [AGENT_INBOX_EVENTS.MESSAGE_SENT, 'user1', { ...properties, channel: 'telegram' }],
+        [AGENT_INBOX_EVENTS.MESSAGE_SENT, 'user1', { ...properties, channel: 'slack' }],
+      ]);
+    });
+
+    it('counts a reply into a thread once, on the channel of the thread', async () => {
+      const { usecase, command, agentRepository, analyticsService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+
+      await usecase.execute({
+        ...command,
+        kind: HumanInteractionKindEnum.TELL,
+        to: undefined,
+        thread: 'conv_abc',
+      } as any);
+
+      expect(analyticsService.track.args).to.deep.equal([
+        [
+          AGENT_INBOX_EVENTS.MESSAGE_SENT,
+          'user1',
+          { _organization: 'org1', agentId: 'agent-relay', type: 'tell', channel: 'telegram', source: 'api' },
+        ],
+      ]);
+    });
+
+    it('counts nothing when the message reached nobody', async () => {
+      const { usecase, command, agentRepository, deliveryService, analyticsService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.deliver.rejects(new Error('telegram down'));
+
+      await usecase.execute(command as any).catch(() => undefined);
+
+      expect(analyticsService.track.called).to.equal(false);
+    });
+  });
 
   describe('threads', () => {
     it('files a send to a contact under their thread, marks it read and reports what was unread', async () => {
