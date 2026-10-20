@@ -4,10 +4,12 @@ import { type ReactNode, useEffect, useState } from 'react';
 
 import { describeSender, InviteRequestError, type VerifyAddressResult, verifyAddress } from '@/lib/invite-api';
 
+type FailedReason = 'expired' | 'used' | 'superseded' | 'invalid';
+
 type VerifyState =
   | { phase: 'loading' }
   | { phase: 'success'; result: VerifyAddressResult }
-  | { phase: 'failed'; reason: 'expired' | 'used' | 'superseded' | 'invalid' };
+  | { phase: 'failed'; reason: FailedReason };
 
 /**
  * Landing page for the "Verify this email" button. Claims the token once on
@@ -87,7 +89,19 @@ export function VerifyPage({ apiUrl, token }: { apiUrl: string; token: string })
     );
   }
 
-  const failed = failedCopy(state.reason);
+  return <FailedVerification reason={state.reason} />;
+}
+
+/**
+ * A verification link this site can't open: one the EU API issued, as Agent Inbox's API only reaches the US
+ * region. It shows as not valid, and its token is sent nowhere.
+ */
+export function UnsupportedVerification() {
+  return <FailedVerification reason="invalid" />;
+}
+
+function FailedVerification({ reason }: { reason: FailedReason }) {
+  const failed = failedCopy(reason);
 
   return (
     <VerifyCard>
@@ -98,7 +112,7 @@ export function VerifyPage({ apiUrl, token }: { apiUrl: string; token: string })
   );
 }
 
-function failedCopy(reason: 'expired' | 'used' | 'superseded' | 'invalid'): { title: string; text: string } {
+function failedCopy(reason: FailedReason): { title: string; text: string } {
   switch (reason) {
     case 'expired':
       return {

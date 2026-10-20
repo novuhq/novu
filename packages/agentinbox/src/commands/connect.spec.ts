@@ -36,7 +36,7 @@ const CONNECTED = {
 };
 
 const keylessConfig: CliConfig = {
-  apiUrl: 'https://api.novu.co',
+  apiUrl: 'https://www.agentinbox.md/api',
   auth: { mode: 'keyless', keylessIdentifier: 'pk_keyless_1' },
   relayAgentIdentifier: 'human-relay',
   subscriberId: 'ada',
@@ -44,7 +44,7 @@ const keylessConfig: CliConfig = {
 };
 
 const loggedInConfig: CliConfig = {
-  apiUrl: 'https://api.novu.co',
+  apiUrl: 'https://www.agentinbox.md/api',
   auth: { mode: 'apiKey', secretKey: 'sk_account' },
   relayAgentIdentifier: 'human-relay',
   subscriberId: 'ada',
@@ -110,10 +110,13 @@ describe('runConnect', () => {
 
     const result = await runConnect('Atlas', { code: 'bcdf ghjk' }, io);
 
-    expect(connectWithCode).toHaveBeenCalledWith('https://api.novu.co', { agent: 'atlas', code: 'BCDF-GHJK' });
+    expect(connectWithCode).toHaveBeenCalledWith('https://www.agentinbox.md/api', {
+      agent: 'atlas',
+      code: 'BCDF-GHJK',
+    });
     expect(prompt).not.toHaveBeenCalled();
     expect(saveConfig).toHaveBeenCalledWith({
-      apiUrl: 'https://api.novu.co',
+      apiUrl: 'https://www.agentinbox.md/api',
       auth: { mode: 'apiKey', secretKey: 'sk_account' },
       relayAgentIdentifier: 'human-relay',
       subscriberId: 'ada',
@@ -192,7 +195,7 @@ describe('runConnect', () => {
 
   it('passes the API’s words on for a used, expired or wrong code, and saves nothing', async () => {
     connectWithCode.mockRejectedValue(
-      new ApiError('This code was used already.', 409, 'POST /v1/human/connect', { code: 'connect_code_used' })
+      new ApiError('This code was used already.', 409, 'POST /v1/connect', { code: 'connect_code_used' })
     );
 
     await expect(runConnect('atlas', { code: 'BCDF-GHJK' }, ioAnswering(null).io)).rejects.toThrow(
@@ -203,7 +206,7 @@ describe('runConnect', () => {
 
   it('tells an API without one-time codes apart from a wrong code', async () => {
     connectWithCode.mockRejectedValue(
-      new ApiError('Cannot POST /v1/human/connect', 404, 'POST /v1/human/connect', { statusCode: 404 })
+      new ApiError('Cannot POST /v1/connect', 404, 'POST /v1/connect', { statusCode: 404 })
     );
 
     await expect(runConnect('atlas', { code: 'BCDF-GHJK' }, ioAnswering(null).io)).rejects.toThrow(
@@ -211,7 +214,7 @@ describe('runConnect', () => {
     );
 
     connectWithCode.mockRejectedValue(
-      new ApiError('No agent has this code.', 404, 'POST /v1/human/connect', { code: 'connect_code_invalid' })
+      new ApiError('No agent has this code.', 404, 'POST /v1/connect', { code: 'connect_code_invalid' })
     );
 
     await expect(runConnect('atlas', { code: 'BCDF-GHJK' }, ioAnswering(null).io)).rejects.toThrow(
@@ -222,8 +225,8 @@ describe('runConnect', () => {
 
 describe('API requests', () => {
   it('say they come from the CLI, so reading the inbox counts as this host checking it', () => {
-    const authed = createApiClient({ apiUrl: 'https://api.novu.co', secretKey: 'sk_account' });
-    const anonymous = createPublicApiClient('https://api.novu.co');
+    const authed = createApiClient({ apiUrl: 'https://www.agentinbox.md/api', secretKey: 'sk_account' });
+    const anonymous = createPublicApiClient('https://www.agentinbox.md/api');
 
     expect(authed.axios.defaults.headers[AGENT_INBOX_VIA_HEADER]).toBe('cli');
     expect(anonymous.defaults.headers[AGENT_INBOX_VIA_HEADER]).toBe('cli');

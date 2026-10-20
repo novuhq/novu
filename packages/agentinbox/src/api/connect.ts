@@ -13,7 +13,7 @@ export interface ConnectedAgent {
  */
 export async function connectWithCode(apiUrl: string, input: { agent: string; code: string }): Promise<ConnectedAgent> {
   const res = await createPublicApiClient(apiUrl).post<{ data?: ConnectedAgent } | ConnectedAgent>(
-    '/v1/human/connect',
+    '/v1/connect',
     input
   );
   const connected = unwrap(res.data);

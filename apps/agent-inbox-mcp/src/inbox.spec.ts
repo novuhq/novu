@@ -3,7 +3,7 @@ import type { InboxThread, InboxThreadView } from './inbox';
 import { listInbox } from './inbox';
 import { formatInboxPage, formatThreadDigest, formatThreadLine, stripControls } from './inbox-digest';
 import worker from './index';
-import { DEFAULT_MESSAGES, DEFAULT_STRANGER_THREAD, rpc, setup, stubBackends } from './spec-support';
+import { AGENT_INBOX_API, DEFAULT_MESSAGES, DEFAULT_STRANGER_THREAD, rpc, setup, stubBackends } from './spec-support';
 
 describe('inbox tools — a host sees a thread, reads it, replies and resolves it', () => {
   beforeEach(() => {
@@ -36,7 +36,7 @@ describe('inbox tools — a host sees a thread, reads it, replies and resolves i
     expect(listResult.result.content[0].text).toContain('(stranger)');
     expect(listResult.result.content[0].text).toContain('Caution:');
 
-    const listCall = calls.find((call) => call.url.includes('/v1/human/inbox') && !call.url.includes('/inbox/'));
+    const listCall = calls.find((call) => call.url.startsWith(`${AGENT_INBOX_API}/v1/inbox?`));
     expect(listCall?.url).toContain('filter=unread');
     expect(listCall?.url).toContain('senders=all');
 
@@ -74,7 +74,7 @@ describe('inbox tools — a host sees a thread, reads it, replies and resolves i
     expect(askResult.result.isError).toBeFalsy();
     expect(askResult.result.content[0].text).toMatch(/Answered|No answer yet|unread|inbox_show/);
 
-    const created = calls.find((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST');
+    const created = calls.find((call) => call.url.endsWith('/v1/inbox/messages') && call.method === 'POST');
     expect(created?.body).toMatchObject({
       kind: 'ask',
       thread: 'conv_stranger_1',
@@ -93,7 +93,9 @@ describe('inbox tools — a host sees a thread, reads it, replies and resolves i
     };
     expect(resolveResult.result.isError).toBeFalsy();
     expect(resolveResult.result.content[0].text).toContain('resolved');
-    expect(calls.some((call) => call.url.endsWith('/resolve') && call.method === 'POST')).toBe(true);
+    expect(
+      calls.some((call) => call.url === `${AGENT_INBOX_API}/v1/inbox/conv_stranger_1/resolve` && call.method === 'POST')
+    ).toBe(true);
   });
 
   it('keeps next through the list envelope and gives wait a timeout above the hold', async () => {
@@ -109,11 +111,7 @@ describe('inbox tools — a host sees a thread, reads it, replies and resolves i
     const result = await listInbox(api as never, { filter: 'unread', wait: 10 });
 
     expect(result).toEqual(page);
-    expect(getRaw).toHaveBeenCalledWith(
-      '/v1/human/inbox',
-      expect.objectContaining({ filter: 'unread', wait: 10 }),
-      20_000
-    );
+    expect(getRaw).toHaveBeenCalledWith('/v1/inbox', expect.objectContaining({ filter: 'unread', wait: 10 }), 20_000);
   });
 
   it('marks a thread read when asked', async () => {
@@ -129,7 +127,9 @@ describe('inbox tools — a host sees a thread, reads it, replies and resolves i
 
     expect(result.isError).toBeFalsy();
     expect(result.content[0].text).toContain('marked read');
-    expect(calls.some((call) => call.url.endsWith('/read') && call.method === 'POST')).toBe(true);
+    expect(
+      calls.some((call) => call.url === `${AGENT_INBOX_API}/v1/inbox/conv_stranger_1/read` && call.method === 'POST')
+    ).toBe(true);
   });
 });
 

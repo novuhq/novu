@@ -5,8 +5,10 @@ import type { InboxMessage, InboxThread, InboxThreadView } from './inbox';
 import type { Interaction } from './interactions';
 
 export const ISSUER = 'https://clerk.example.test';
-export const API = 'https://api.example.test';
-export const API_EU = 'https://eu.api.example.test';
+/** The Dashboard API, which every tool calls. */
+export const AGENT_INBOX_API = 'https://agentinbox.example.test/api';
+/** The Novu API, asked only for the account's key. */
+export const NOVU_API = 'https://api.example.test';
 export const ORIGIN = 'https://mcp.example.test';
 
 type FakeKv = {
@@ -49,8 +51,8 @@ export function setup(overrides: Partial<Env> = {}) {
   const env: Env = {
     CLERK_OAUTH_ISSUER: ISSUER,
     AGENT_INBOX_DASHBOARD_API_SECRET: 'shared-secret',
-    NOVU_API_URL: API,
-    NOVU_API_URL_EU: API_EU,
+    AGENT_INBOX_API_URL: AGENT_INBOX_API,
+    NOVU_API_URL: NOVU_API,
     CONNECTIONS: asConnections(kv),
     ...overrides,
   };
@@ -64,14 +66,14 @@ export function setup(overrides: Partial<Env> = {}) {
 
 export type StubBackendsOptions = {
   interaction?: Partial<Interaction>;
-  /** Fields returned by POST /v1/human/interactions. */
+  /** Fields returned by POST /v1/inbox/messages. */
   createdInteraction?: Partial<Interaction>;
   /** Contact pages keyed by their `after` cursor (the first page uses an empty key). */
   contactPages?: Record<string, { data: StubContact[]; next: string | null }>;
   contactsById?: Record<string, StubContact>;
-  /** Inbox list page returned by GET /v1/human/inbox. */
+  /** Inbox list page returned by GET /v1/inbox. */
   inboxPage?: { data: InboxThread[]; next: string | null };
-  /** Thread view returned by GET /v1/human/inbox/:id. */
+  /** Thread view returned by GET /v1/inbox/:conversationId. */
   inboxThread?: InboxThreadView;
   /** Thread returned after read/resolve. */
   inboxActionThread?: InboxThread;
@@ -130,22 +132,32 @@ function normalizeOptions(options: StubBackendsOptions | Partial<Interaction>): 
   return { interaction: options };
 }
 
+/** Who each test token belongs to. `user_2` signed in but has no Agent Inbox account. */
+const USERS_BY_TOKEN: Record<string, string> = { 'good-token': 'user_1', 'newcomer-token': 'user_2' };
+
+/** A call's path on the Dashboard API without its query, such as `/v1/inbox`, or `null` for a call elsewhere. */
+function dashboardPathOf(url: string): string | null {
+  return url.startsWith(`${AGENT_INBOX_API}/`) ? url.slice(AGENT_INBOX_API.length).split('?')[0] : null;
+}
+
 function answerAuth(url: string, headers: Headers): Response | null {
   if (url === `${ISSUER}/oauth/userinfo`) {
-    return headers.get('Authorization') === 'Bearer good-token' ? reply({ user_id: 'user_1' }) : reply({}, 401);
+    const user = USERS_BY_TOKEN[headers.get('Authorization')?.replace(/^Bearer /, '') ?? ''];
+
+    return user ? reply({ user_id: user }) : reply({}, 401);
   }
 
-  if (url === `${API}/v1/human/accounts/user_1/secret-key`) {
-    return reply({}, 404);
-  }
-
-  if (url === `${API_EU}/v1/human/accounts/user_1/secret-key`) {
+  if (url === `${NOVU_API}/v1/human/accounts/user_1/secret-key`) {
     return headers.get(AGENT_INBOX_DASHBOARD_SECRET_HEADER) === 'shared-secret'
       ? reply({ data: { secretKey: 'account-key' } })
       : reply({}, 401);
   }
 
-  if (url === `${API_EU}/v1/human/operator`) {
+  if (url === `${NOVU_API}/v1/human/accounts/user_2/secret-key`) {
+    return reply({ message: 'Not found' }, 404);
+  }
+
+  if (url === `${AGENT_INBOX_API}/v1/operator`) {
     return reply({ data: { subscriberId: 'operator_1' } });
   }
 
@@ -159,19 +171,21 @@ function answerInbox(
   inboxThread: InboxThreadView,
   inboxActionThread: InboxThread
 ): Response | null {
-  if (!url.startsWith(`${API_EU}/v1/human/inbox`)) {
+  const path = dashboardPathOf(url);
+  // Messages share the `/v1/inbox` prefix but are answered in `answerInteractions`.
+  if (!path?.startsWith('/v1/inbox') || /^\/v1\/inbox\/messages(?:\/|$)/.test(path)) {
     return null;
   }
 
-  if (url.startsWith(`${API_EU}/v1/human/inbox/`) && method === 'POST') {
+  if (/^\/v1\/inbox\/[^/]+\/(?:read|resolve)$/.test(path) && method === 'POST') {
     return reply({ data: inboxActionThread });
   }
 
-  if (url.startsWith(`${API_EU}/v1/human/inbox/`) && method === 'GET') {
+  if (/^\/v1\/inbox\/[^/]+$/.test(path) && method === 'GET') {
     return reply({ data: inboxThread });
   }
 
-  if (method === 'GET') {
+  if (path === '/v1/inbox' && method === 'GET') {
     return reply(inboxPage);
   }
 
@@ -185,7 +199,7 @@ function answerInteractions(
   interaction: Partial<Interaction>,
   createdInteraction: Partial<Interaction>
 ): Response | null {
-  if (url === `${API_EU}/v1/human/interactions` && method === 'POST') {
+  if (url === `${AGENT_INBOX_API}/v1/inbox/messages` && method === 'POST') {
     const posted = body as { kind?: string; thread?: string } | undefined;
     if (posted?.thread) {
       return reply({
@@ -204,11 +218,11 @@ function answerInteractions(
     });
   }
 
-  if (url === `${API_EU}/v1/human/interactions/hi_1`) {
+  if (url === `${AGENT_INBOX_API}/v1/inbox/messages/hi_1`) {
     return reply({ data: { id: 'hi_1', kind: 'approve', ...interaction } });
   }
 
-  if (url === `${API_EU}/v1/human/interactions/hi_thread_1`) {
+  if (url === `${AGENT_INBOX_API}/v1/inbox/messages/hi_thread_1`) {
     return reply({
       data: {
         id: 'hi_thread_1',
@@ -229,23 +243,37 @@ function answerContacts(
   contactPages: Record<string, { data: StubContact[]; next: string | null }>,
   contactsById: Record<string, StubContact>
 ): Response | null {
-  const contactsUrl = `${API_EU}/v1/human/contacts`;
-  if (!url.startsWith(contactsUrl) || method !== 'GET') {
+  const path = dashboardPathOf(url);
+  if (!path?.startsWith('/v1/contacts')) {
     return null;
   }
 
-  const parsed = new URL(url);
-  const id = parsed.pathname.slice('/v1/human/contacts/'.length);
-  if (parsed.pathname.startsWith('/v1/human/contacts/') && id) {
+  if (path === '/v1/contacts/verifications' && method === 'POST') {
+    return reply({ data: { address: 'masked', requestedAt: 'now' } });
+  }
+
+  if (path === '/v1/contacts/invites' && method === 'POST') {
+    return reply({ data: { url: 'https://agentinbox.example.test/invite/inv_1', expiresAt: '2026-10-27T00:00:00Z' } });
+  }
+
+  if (method !== 'GET') {
+    return null;
+  }
+
+  const id = path.slice('/v1/contacts/'.length);
+  if (path.startsWith('/v1/contacts/') && id) {
     const contact = contactsById[decodeURIComponent(id)];
 
     return contact ? reply({ data: contact }) : reply({ message: 'Contact not found' }, 404);
   }
 
-  return reply(contactPages[parsed.searchParams.get('after') ?? ''] ?? { data: [], next: null });
+  return reply(contactPages[new URL(url).searchParams.get('after') ?? ''] ?? { data: [], next: null });
 }
 
-/** Answers the calls the Worker makes: Clerk for who the token is, the API for everything else. */
+/**
+ * Answers the calls the Worker makes: Clerk for who the token is, the Novu API for the account's key, and the
+ * Dashboard API for everything else. A call anywhere else gets a 500, so a tool that strays fails its test.
+ */
 export function stubBackends(options: StubBackendsOptions | Partial<Interaction> = {}) {
   const opts = normalizeOptions(options);
   const interaction = opts.interaction ?? { status: 'approved' };
@@ -281,9 +309,6 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
         answerAuth(url, headers) ??
         answerInbox(url, method, inboxPage, inboxThread, inboxActionThread) ??
         answerContacts(url, method, contactPages, contactsById) ??
-        (url === `${API_EU}/v1/human/verifications` && method === 'POST'
-          ? reply({ data: { address: 'masked', requestedAt: 'now' } })
-          : null) ??
         answerInteractions(url, method, body, interaction, createdInteraction) ??
         reply({ message: 'not stubbed' }, 500)
       );

@@ -3,6 +3,8 @@ import 'server-only';
 import { headers } from 'next/headers';
 import { cache } from 'react';
 
+import { API_PROXY_PATH } from './novu-api';
+
 /**
  * Where this dashboard is served, such as `http://localhost:4300` or `https://agentinbox.md`: the links it
  * hands out, an agent's public card above all, point there. `AGENT_INBOX_DASHBOARD_URL` sets it, with the
@@ -22,6 +24,14 @@ export const readSiteOrigin = cache(async (): Promise<string> => {
 
   return `${protocol}://${host}`;
 });
+
+/**
+ * The API the setup prompts tell an agent's CLI to use: this site's Agent Inbox API, such as
+ * `https://www.agentinbox.md/api`, which forwards to the US Novu API. Agent Inbox has no EU region.
+ */
+export async function readApiUrl(): Promise<string> {
+  return `${await readSiteOrigin()}${API_PROXY_PATH}`;
+}
 
 /** `https://agentinbox.md` of `https://agentinbox.md/`, or `null` for a setting that is empty or no URL. */
 function originOf(setting: string | undefined): string | null {

@@ -63,7 +63,7 @@ function hasVerifiedAddress(contact: Contact, email: string): boolean {
 }
 
 async function listContacts(api: AgentInboxApi, after?: string): Promise<ContactsPage> {
-  const page = await api.getRaw<{ data?: Contact[]; next?: string | null }>('/v1/human/contacts', {
+  const page = await api.getRaw<{ data?: Contact[]; next?: string | null }>('/v1/contacts', {
     limit: CONTACTS_PAGE_SIZE,
     after,
   });
@@ -102,7 +102,7 @@ export async function findContactByEmail(api: AgentInboxApi, email: string): Pro
 
 async function getContact(api: AgentInboxApi, id: string): Promise<Contact | null> {
   try {
-    return await api.get<Contact>(`/v1/human/contacts/${encodeURIComponent(id)}`);
+    return await api.get<Contact>(`/v1/contacts/${encodeURIComponent(id)}`);
   } catch (error) {
     if (error instanceof AgentInboxApiError && error.status === 404) {
       return null;
@@ -189,7 +189,7 @@ export async function resolveEmailRecipients(
 
   if (newcomers.length > 0) {
     for (const newcomer of newcomers) {
-      await api.post('/v1/human/verifications', {
+      await api.post('/v1/contacts/verifications', {
         subscriberId: newcomer.id,
         via: 'email',
         address: newcomer.email,
