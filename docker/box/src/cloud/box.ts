@@ -1,7 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { BoxStatus, StateAnswer } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
-import { HOST } from '../shared/names.ts';
+import { boxOfHost, boxOrigin, HOST } from '../shared/names.ts';
 import { checkBake, startBake } from './bake.ts';
 import {
   boxEnv,
@@ -92,19 +92,24 @@ export class Box extends DurableObject<HostEnv> {
 
   override async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
+    const box = boxOfHost(url.hostname);
+    if (!box) return text(`not a box address: ${url.hostname}\n`, 404);
     const route = `${request.method} ${url.pathname}`;
     const isStatePoll = route === 'GET /__box/state';
     if (!isStatePoll) this.#touch();
     try {
-      return await this.#route(route, request, url);
+      return await this.#route(route, request, url, boxOrigin(box));
     } catch (error) {
       return text(`${messageOf(error)}\n`, 500);
     }
   }
 
-  async #route(route: string, request: Request, url: URL): Promise<Response> {
+  // `origin` is the box's dashboard address, whichever of its hosts the request came to.
+  async #route(route: string, request: Request, url: URL, origin: string): Promise<Response> {
     switch (route) {
       case 'GET /__box/state':
+        if (!(await this.ctx.storage.get('origin'))) return text('no such box: `box up` creates it\n', 404);
+
         return json(await this.state());
       case 'POST /__box/down':
         return json(await this.#sleepSoon());
@@ -113,9 +118,9 @@ export class Box extends DurableObject<HostEnv> {
       case 'POST /__box/discard':
         return json(await this.#discard());
       case 'POST /__box/adopt':
-        return json(await this.#adopt(url));
+        return json(await this.#adopt(url, origin));
       case 'POST /__box/up':
-        return this.#unlessSaving(request, async () => json(await this.#up(request, url)));
+        return this.#unlessSaving(request, async () => json(await this.#up(request, url, origin)));
       // The body is read before the save check: reading it lets the alarm in, which may begin a save.
       case 'POST /__box/exec': {
         const body = await execBody(request);
@@ -131,7 +136,7 @@ export class Box extends DurableObject<HostEnv> {
     }
     if (url.pathname.startsWith('/__box/')) return text('not found\n', 404);
 
-    return this.#unlessSaving(request, (life) => this.#serve(request, url, life));
+    return this.#unlessSaving(request, (life) => this.#serve(request, origin, life));
   }
 
   override async alarm(): Promise<void> {
@@ -206,7 +211,7 @@ export class Box extends DurableObject<HostEnv> {
     return life;
   }
 
-  async #serve(request: Request, url: URL, life: Life): Promise<Response> {
+  async #serve(request: Request, origin: string, life: Life): Promise<Response> {
     if (!this.#container.running) {
       if (life.phase === 'lost')
         return text(
@@ -214,7 +219,7 @@ export class Box extends DurableObject<HostEnv> {
           503
         );
       if (life.phase !== 'asleep') return text('This box is not set up yet: run `box up`.\n', 503);
-      await this.#wake(url.origin, life.snapshot);
+      await this.#wake(origin, life.snapshot);
 
       return waking(request);
     }
@@ -233,14 +238,14 @@ export class Box extends DurableObject<HostEnv> {
     }
   }
 
-  async #up(request: Request, url: URL): Promise<StateAnswer> {
-    await this.ctx.storage.put('origin', url.origin);
+  async #up(request: Request, url: URL, origin: string): Promise<StateAnswer> {
+    await this.ctx.storage.put('origin', origin);
     const life = await checkBake(this.#shell, this.ctx.storage, await this.#reconcile());
     if (this.#container.running) return { state: life.phase };
     const from = url.searchParams.get('from');
     const snapshot = snapshotOf(life) ?? (from ? { id: from, name: `from ${from}` } : null);
     if (snapshot) {
-      await this.#wake(url.origin, snapshot);
+      await this.#wake(origin, snapshot);
 
       return { state: 'waking' };
     }
@@ -361,13 +366,13 @@ export class Box extends DurableObject<HostEnv> {
 
   // Takes over another box's saved snapshot, dropping whatever this box runs: a rebake bakes in another box, so
   // base is replaced only once the new snapshot exists.
-  async #adopt(url: URL): Promise<StateAnswer> {
+  async #adopt(url: URL, origin: string): Promise<StateAnswer> {
     const id = url.searchParams.get('snapshot');
     if (!id) throw new Error('adopt needs ?snapshot=<id>');
     this.#stopUnsaved();
     if (this.#container.running) await this.#container.destroy('replaced');
     const storage = this.ctx.storage;
-    await storage.put('origin', url.origin);
+    await storage.put('origin', origin);
     await setLife(storage, {
       phase: 'asleep',
       since: Date.now(),

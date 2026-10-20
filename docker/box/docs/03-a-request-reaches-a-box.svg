@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg style="min-width: 1280px" viewBox="0 0 1280 840" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="box-lifecycle-title box-lifecycle-desc" id="d-03-a-request-reaches-a-box-root">
         <title id="box-lifecycle-title">What happens when something reaches a box</title>
-        <desc id="box-lifecycle-desc">Two flowcharts for a Novu Box on Cloudflare: a request gets 503 while the box saves, is served when the container runs, wakes an asleep box by restoring its snapshot, and otherwise waits for box up to bake or restore from base; after 60 idle minutes or box down, the box stops its processes, snapshots its disk and goes to sleep, or starts its processes again if the save fails; box delete stops it, forgets its snapshot and deletes its Worker and test users.</desc>
+        <desc id="box-lifecycle-desc">Two flowcharts for a Novu Box on Cloudflare: a request gets 503 while the box saves, is served when the container runs, wakes an asleep box by restoring its snapshot, and otherwise waits for box up to bake or restore from base; after 60 idle minutes or box down, the box stops its processes, snapshots its disk and goes to sleep, or starts its processes again if the save fails; box delete stops it, forgets its snapshot and deletes its test users.</desc>
         <defs>
       <style>#d-03-a-request-reaches-a-box-root { --color-paper:   #f5f5f5;
       --color-ink:     #2d3142;
@@ -105,7 +105,7 @@
         <rect x="88" y="72" width="192" height="48" rx="20" fill="#f5f5f5"/>
         <rect x="88" y="72" width="192" height="48" rx="20" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
         <text x="184" y="93" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">A request arrives</text>
-        <text x="184" y="108" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">via its address Worker</text>
+        <text x="184" y="108" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">at its hostname</text>
 
         <polygon points="184,148 268,188 184,228 100,188" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
         <text x="184" y="192" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Box saving?</text>
@@ -188,7 +188,7 @@
         <rect x="1048" y="676" width="176" height="56" rx="20" fill="#f5f5f5"/>
         <rect x="1048" y="676" width="176" height="56" rx="20" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
         <text x="1136" y="700" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Stopped and gone</text>
-        <text x="1136" y="716" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Worker, users deleted</text>
+        <text x="1136" y="716" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">its test users deleted</text>
 
         <!-- Legend strip -->
         <line x1="40" y1="776" x2="1240" y2="776" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.10"/>

@@ -3,17 +3,8 @@ import * as z from 'zod';
 import { log } from '../node/main.ts';
 import { poll } from '../node/poll.ts';
 import { BoxStatus, DeletedBox, DoctorReport, decode, fromJson, needsBake, StateAnswer } from '../shared/contracts.ts';
-import { BOX_CLI, boxWorker, DOMAIN, HOST } from '../shared/names.ts';
-import {
-  boxFetch,
-  type FetchInit,
-  failUnlessOk,
-  fetchThrough,
-  hostBoxes,
-  hostExists,
-  readExec,
-  type Token,
-} from './cloud-http.ts';
+import { apiOrigin, BOX_CLI, boxOrigin, HOST } from '../shared/names.ts';
+import { boxFetch, type FetchInit, failUnlessOk, hostBoxes, hostExists, readExec, type Token } from './cloud-http.ts';
 
 // A first bake takes 13 to 16 minutes on Cloudflare; a wake about 35 s, but the first restore of a snapshot 4 to 6
 // minutes (the Slack router waits as long).
@@ -25,10 +16,10 @@ interface Exec {
   readonly github?: boolean;
 }
 
-function stuck(worker: string, current: BoxStatus | null): string | null {
+function stuck(box: string, current: BoxStatus | null): string | null {
   if (current?.phase === 'lost')
-    return `${worker} couldn't restore snapshot ${current.lost.id} (${current.lost.message}); snapshots expire 30 days after they were made or last restored. Run \`up\` again to bake it`;
-  if (current?.phase === 'new') return `${worker} stopped: ${current.error?.message ?? 'never started'}`;
+    return `${box} couldn't restore snapshot ${current.lost.id} (${current.lost.message}); snapshots expire 30 days after they were made or last restored. Run \`up\` again to bake it`;
+  if (current?.phase === 'new') return `${box} stopped: ${current.error?.message ?? 'never started'}`;
 
   return null;
 }
@@ -78,37 +69,40 @@ export interface CloudTarget {
 
 export function cloudTarget(options: CloudOptions): CloudTarget {
   const { box, token, deadline = Number.POSITIVE_INFINITY } = options;
-  const worker = boxWorker(box);
-  const origin = `https://${worker}.${DOMAIN}`;
+  const origin = boxOrigin(box);
 
   const call = async (path: string, init: FetchInit = {}) => {
     const response = await boxFetch(`${origin}/__box${path}`, init, token);
-    await failUnlessOk(response, `${worker} ${path}`, 409);
+    await failUnlessOk(response, `${box} ${path}`, 409);
 
     return response;
   };
 
   const state = async () => {
-    const response = await fetchThrough(`${origin}/__box/state`, {}, token, true);
-    if (!response) return null;
-    await failUnlessOk(response, `${worker} /state`);
+    const response = await boxFetch(`${origin}/__box/state`, {}, token);
+    if (response.status === 404) {
+      await response.body?.cancel();
 
-    return decode(BoxStatus, await response.text(), `${worker} /state`);
+      return null;
+    }
+    await failUnlessOk(response, `${box} /state`);
+
+    return decode(BoxStatus, await response.text(), `${box} /state`);
   };
 
   const snapshotOf = async (name: string) => {
-    const response = await fetchThrough(`https://${boxWorker(name)}.${DOMAIN}/__box/state`, {}, token, true);
-    if (!response?.headers.get('content-type')?.includes('json')) return null;
+    const response = await boxFetch(`${boxOrigin(name)}/__box/state`, {}, token);
+    if (!response.headers.get('content-type')?.includes('json')) return null;
 
-    return decode(BoxStatus, await response.text(), `${boxWorker(name)} /state`).snapshot?.id ?? null;
+    return decode(BoxStatus, await response.text(), `${name} /state`).snapshot?.id ?? null;
   };
 
   const stream = async (body: Exec, capture: boolean) => {
     const response = await call('/exec', { method: 'POST', body: JSON.stringify(body) });
-    if (response.status === 409) throw new Error(`${worker} isn't running: \`box up --box ${box}\``);
+    if (response.status === 409) throw new Error(`${box} isn't running: \`box up --box ${box}\``);
 
     return readExec(response, capture).catch((error: Error) => {
-      throw new Error(`${worker} /exec: ${error.message}`);
+      throw new Error(`${box} /exec: ${error.message}`);
     });
   };
   const streamed = async (body: Exec) => (await stream(body, false)).exitCode;
@@ -122,16 +116,14 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
   const startingSnapshot = async (from: string | undefined, fromBase: boolean, ref: string) => {
     if (from) {
       const id = await snapshotOf(from);
-      if (!id) throw new Error(`${boxWorker(from)} has no snapshot to start from`);
+      if (!id) throw new Error(`${from} has no snapshot to start from`);
 
       return id;
     }
     const current = await state();
     if (!fromBase || box === 'base' || (current && !needsBake(current))) return null;
     const id = await snapshotOf('base');
-    log(
-      id ? `${worker} is new: starting it from ${boxWorker('base')}` : `no ${boxWorker('base')} snapshot: baking ${ref}`
-    );
+    log(id ? `${box} is new: starting it from base` : `no base snapshot: baking ${ref}`);
 
     return id;
   };
@@ -151,7 +143,7 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
 
     return poll<DoctorReport | null>(
       async () => {
-        const why = stuck(worker, await state().catch(() => null));
+        const why = stuck(box, await state().catch(() => null));
         if (why) throw new Error(why);
         report = (await doctor()) ?? report;
 
@@ -163,7 +155,7 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
         everyMs: seconds >= READY_WITHIN_SECONDS.baking ? 10_000 : 2000,
         orElse: () => {
           if (orLast) return report;
-          throw new Error(`${worker} isn't ready (${when}): ${report?.problems.join('; ') ?? 'no doctor report'}`);
+          throw new Error(`${box} isn't ready (${when}): ${report?.problems.join('; ') ?? 'no doctor report'}`);
         },
       }
     );
@@ -174,11 +166,11 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
       async () => {
         const current = await state().catch(() => null);
         if (current?.phase === 'running' && !current.down && current.saveFailed)
-          throw new Error(`${worker} couldn't save, so it keeps running: ${current.saveFailed.message}`);
+          throw new Error(`${box} couldn't save, so it keeps running: ${current.saveFailed.message}`);
         if (!current || current.running || current.phase === 'saving') return null;
         console.log(JSON.stringify({ state: current.phase, snapshot: current.snapshot?.id }));
         if (current.snapshot?.id && current.snapshot.id !== previous) return { code: 0 };
-        log(`${worker} stopped WITHOUT a new snapshot: its next start bakes, or wakes from an older snapshot`);
+        log(`${box} stopped WITHOUT a new snapshot: its next start bakes, or wakes from an older snapshot`);
 
         return { code: 1 };
       },
@@ -186,7 +178,7 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
         timeoutMs: 15 * 60_000,
         everyMs: 10_000,
         orElse: () => {
-          throw new Error(`${worker} is still saving after 15 minutes`);
+          throw new Error(`${box} is still saving after 15 minutes`);
         },
       }
     ).then(({ code }) => code);
@@ -195,11 +187,11 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     const current = await state();
     if (!current || needsBake(current))
       throw new Error(
-        `${worker} ${current ? `isn't set up (${current.phase})` : "doesn't exist"}: \`box up --box ${box}\``
+        `${box} ${current ? `isn't set up (${current.phase})` : "doesn't exist"}: \`box up --box ${box}\``
       );
     if (current.phase === 'running' && current.running && !reachable) return;
     if (!current.running || current.phase === 'saving') {
-      log(`${worker} is ${current.phase}; waking it`);
+      log(`${box} is ${current.phase}; waking it`);
       await call('/up', { method: 'POST' });
     }
     await waitFor(READY_WITHIN_SECONDS[readyWait(current)], reachable ? answers : (report) => report.ok);
@@ -211,23 +203,23 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     const snapshot = await startingSnapshot(from, fromBase, ref);
     if (snapshot) query.set('from', snapshot);
     if (!(await hostExists())) throw new Error(`${HOST} isn't deployed; deploy it with \`box deploy\``);
-    log(`deploying ${worker}`);
     await hostBoxes(`boxes/${box}`, z.unknown(), { method: 'PUT', token });
     const waits: Record<string, number> = READY_WITHIN_SECONDS;
     try {
       const answer = await call(`/up?${query}`, { method: 'POST' });
-      const { state: started } = decode(StateAnswer, await answer.text(), `${worker} /up`);
-      log(`${worker}: ${started}${started === 'baking' ? ` ${ref} (13 to 16 minutes)` : ''}`);
+      const { state: started } = decode(StateAnswer, await answer.text(), `${box} /up`);
+      log(`${box}: ${started}${started === 'baking' ? ` ${ref} (13 to 16 minutes)` : ''}`);
       await waitFor(waits[started] ?? READY_WITHIN_SECONDS.running, reachable ? answers : (report) => report.ok);
     } catch (error) {
       // Its own snapshot is gone: now `lost`, it starts from base's.
       if (!fromBase || snapshot || (await state())?.phase !== 'lost') throw error;
-      log(`${worker} couldn't restore its snapshot; starting it from ${boxWorker('base')} instead`);
+      log(`${box} couldn't restore its snapshot; starting it from base instead`);
 
       return up(options);
     }
-    log(`${worker} is ${reachable ? 'up' : 'ready'}`);
+    log(`${box} is ${reachable ? 'up' : 'ready'}`);
     console.log(`box: ${origin}`);
+    console.log(`api: ${apiOrigin(box)}`);
     console.log(`mailpit: ${origin}/mail`);
 
     return 0;
@@ -235,14 +227,14 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
 
   const down = async () => {
     const before = await state();
-    if (!before) throw new Error(`${worker} doesn't exist`);
+    if (!before) throw new Error(`${box} doesn't exist`);
     if (!before.running) {
-      log(`${worker} is already ${before.phase} (snapshot ${before.snapshot?.id ?? 'none'})`);
+      log(`${box} is already ${before.phase} (snapshot ${before.snapshot?.id ?? 'none'})`);
 
       return before.snapshot?.id ? 0 : 1;
     }
     log(
-      `${worker}: saving to its snapshot and stopping (3 to 6 minutes, after a bake or apply that runs); the next request wakes it`
+      `${box}: saving to its snapshot and stopping (3 to 6 minutes, after a bake or apply that runs); the next request wakes it`
     );
     await call('/down', { method: 'POST' });
 
@@ -250,21 +242,21 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
   };
 
   return {
-    name: worker,
+    name: box,
     mailUrl: `${origin}/mail`,
     up,
     down,
     async discard() {
-      log(`${worker}: stopping it without a save`);
+      log(`${box}: stopping it without a save`);
       await call('/discard', { method: 'POST' });
     },
     async adopt(snapshot) {
       if (!(await state())) await hostBoxes(`boxes/${box}`, z.unknown(), { method: 'PUT', token });
-      log(`${worker}: taking over snapshot ${snapshot}`);
+      log(`${box}: taking over snapshot ${snapshot}`);
       await call(`/adopt?snapshot=${encodeURIComponent(snapshot)}`, { method: 'POST' });
     },
     async delete() {
-      log(`${worker}: stopping and forgetting the box, then deleting its Worker and test users`);
+      log(`${box}: stopping and forgetting the box, then deleting its test users`);
       const { users, usersError } = await hostBoxes(`boxes/${box}`, DeletedBox, { method: 'DELETE', token });
       if (users.length) log(`deleted ${box}'s test users: ${users.join(', ')}`);
       if (usersError) log(`WARN: ${box}'s test users weren't deleted: ${usersError}`);

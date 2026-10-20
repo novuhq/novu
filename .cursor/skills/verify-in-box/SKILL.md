@@ -40,8 +40,9 @@ rebuilt and restarted, which is part of the evidence.
 - `up` is your branch's box: a new one starts from `base` and is ready in 1 to 5 minutes (the first restore of a
   freshly baked `base` takes about 4) and already gets your checkout (the `sync` after it then has nothing to do);
   an existing one wakes in under a minute. Without a `base` snapshot it bakes `next` first (13 to 16 minutes).
-- It prints the box's one address, `https://novu-box-<branch>.cli-shortener.workers.dev`: the dashboard, the API
-  under `/v1`, Mailpit under `/mail`. `<box>` below means that address.
+- It prints the box's addresses: the dashboard at `https://<branch>.box.novu-staging.co`, Mailpit under `/mail`,
+  and the API at `https://<branch>-api.box.novu-staging.co`, which the dashboard calls cross-origin as in
+  production. `<box>` below means the dashboard's address.
 - `sync` sends new files only inside the repo's existing top-level folders. A new file at the root or in a new
   top-level folder isn't sent; commit it or move it if the box needs it.
 - `sync` stops over 25 MB and names the biggest changed files. Ask the user before deleting or ignoring any of them.

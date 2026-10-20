@@ -4,8 +4,8 @@
 	persist_config off
 }
 
-# Everything the browser reaches, on the box's one address (Cloudflare's workers.dev gives a box one name), routed
-# by path.
+# Everything the browser reaches, on the box's two addresses (<box> and <box>-api under box.novu-staging.co), routed
+# by path: either host reaches any of it.
 :18080 {
 	@api path /v1/* /v2/* /.well-known/*
 	handle @api {

@@ -2,6 +2,7 @@ import type { ParseArgsOptionsConfig } from 'node:util';
 import { type Command, type Parsed, runCommand } from '../node/commands.ts';
 import { main } from '../node/main.ts';
 import { output } from '../node/process.ts';
+import { isBoxName } from '../shared/names.ts';
 import { type CloudTarget, cloudTarget } from './cloud.ts';
 import { githubToken, hostExists } from './cloud-http.ts';
 import { deployHost } from './deploy.ts';
@@ -19,6 +20,8 @@ async function branchBox(): Promise<string> {
     .slice(0, 50)
     .replace(/-$/, '');
   if (!name) throw new Error('not on a branch; pass --box <name>');
+  if (!isBoxName(name))
+    throw new Error(`this branch's box would be ${name}, which can't be a box name; pass --box <name>`);
 
   return name;
 }
@@ -114,7 +117,7 @@ const commands: Record<string, Command> = {
     },
   },
   down: onBox('', 'save the box to its snapshot and stop it; the next request wakes it', (target) => target.down()),
-  delete: onBox('', 'stop the box, forget its snapshot, delete its Worker and test users', (target) => target.delete()),
+  delete: onBox('', 'stop the box, forget its snapshot, delete its test users', (target) => target.delete()),
   deploy: {
     usage: '',
     help: "deploy the Cloudflare host, its image and the Slack router's address (wrangler.jsonc)",
@@ -127,9 +130,10 @@ const commands: Record<string, Command> = {
   },
 };
 
-const NOTES = `boxes run on Cloudflare: all of them in one host Worker, each with its own small Worker for its address.
+const NOTES = `boxes run on Cloudflare, all of them in one host Worker.
 every command but deploy takes:
-  --box <name>  default the current branch; the box is https://novu-box-<name>.<workers.dev>.
+  --box <name>  default the current branch; the box is https://<name>.box.novu-staging.co,
+                its API https://<name>-api.box.novu-staging.co.
                 \`up --deploy\` redeploys the host (after a change to docker/box), which applies to every box.
                 \`up --from <box>\` starts a new box from that box's latest snapshot instead of baking.
                 Without --box, \`up\` is this branch's box: a new one starts from \`base\` (when it has a

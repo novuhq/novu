@@ -4,8 +4,14 @@
   "main": "src/cloud/host.ts",
   "account_id": "33ec6e8088201ace372678be50170681",
   "compatibility_date": "2026-09-29",
-  "workers_dev": true,
+  "workers_dev": false,
   "preview_urls": false,
+  // The Custom Domain brings a free certificate that also covers *.box.novu-staging.co (Universal SSL covers one
+  // level only); the route sends every box's host here. The *.box DNS record (AAAA 100::, proxied) is set by hand.
+  "routes": [
+    { "pattern": "box.novu-staging.co", "custom_domain": true },
+    { "pattern": "*.box.novu-staging.co/*", "zone_name": "novu-staging.co" }
+  ],
   "minify": true,
   "observability": { "enabled": true },
   "containers": [
@@ -18,15 +24,19 @@
     }
   ],
   "durable_objects": {
-    "bindings": [{ "name": "BOX", "class_name": "Box" }, { "name": "ROUTER", "class_name": "Router" }]
+    "bindings": [
+      { "name": "BOX", "class_name": "Box" },
+      { "name": "REGISTRY", "class_name": "Registry" },
+      { "name": "ROUTER", "class_name": "Router" }
+    ]
   },
   "exports": {
     "Box": { "type": "durable-object", "storage": "sqlite" },
+    "Registry": { "type": "durable-object", "storage": "sqlite" },
     "Router": { "type": "durable-object", "storage": "sqlite" }
   },
   "vars": {
-    "CLOUDFLARE_ACCOUNT_ID": "33ec6e8088201ace372678be50170681",
-    "SLACK_ROUTER_URL": "https://novu-box-slack.cli-shortener.workers.dev",
+    "SLACK_ROUTER_URL": "https://slack.box.novu-staging.co",
     "SLACK_CHANNEL": "C0C9PHBUDR6"
   }
 }
