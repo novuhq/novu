@@ -1084,11 +1084,51 @@ describe('CreateInteraction', () => {
         expect.fail('should have thrown');
       } catch (err) {
         expect(err).to.be.instanceOf(BadRequestException);
-        expect((err as BadRequestException).message).to.include('not in this thread');
+        expect((err as BadRequestException).message).to.include('not a confirmed address');
       }
 
       expect(humanContactRepository.setDeclaredAddress.called).to.equal(false);
       expect(createConversationInteraction.execute.called).to.equal(false);
+    });
+
+    it('does not let an unconfirmed address choose who answers a thread', async () => {
+      const { usecase, command, agentRepository, humanContactRepository, createConversationInteraction } = setup();
+      agentRepository.findOne.resolves(agent);
+      humanContactRepository.findContactsByEmailAddress.resolves([
+        {
+          subscriberId: 'ada',
+          addresses: { email: { declared: { address: 'ada@acme.com', declaredAt: 't' } } },
+        },
+      ]);
+
+      try {
+        await usecase.execute({ ...command, to: 'ada@acme.com', thread: 'conv_abc', via: undefined } as any);
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.include('not a confirmed address');
+      }
+
+      expect(createConversationInteraction.execute.called).to.equal(false);
+    });
+
+    it('delivers each distinct address when one contact has both', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanContactRepository, subscriberRepository } =
+        setup();
+      agentRepository.findOne.resolves(agent);
+      humanContactRepository.findContactsByEmailAddress.resolves([{ subscriberId: 'ada' }]);
+      deliveryService.resolveChannel.callsFake(async (params: { explicitEmail?: string }) => ({
+        integrationIdentifier: 'email-inbox',
+        platform: 'email',
+        platformUserId: params.explicitEmail,
+      }));
+
+      await usecase.execute({ ...command, to: ['old@example.com', 'new@example.com'], via: undefined } as any);
+
+      expect(subscriberRepository.create.called).to.equal(false);
+      expect(deliveryService.resolveChannel.callCount).to.equal(2);
+      expect(deliveryService.resolveChannel.getCall(0).args[0]).to.include({ explicitEmail: 'old@example.com' });
+      expect(deliveryService.resolveChannel.getCall(1).args[0]).to.include({ explicitEmail: 'new@example.com' });
     });
   });
 });

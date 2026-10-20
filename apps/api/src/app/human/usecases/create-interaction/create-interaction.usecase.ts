@@ -161,7 +161,7 @@ export class CreateInteraction {
     recipients: ExplicitRecipient[],
     title: string
   ): Promise<InteractionResponseDto> {
-    const subscriberIds = recipients.map((recipient) => recipient.subscriberId);
+    const subscriberIds = [...new Set(recipients.map((recipient) => recipient.subscriberId))];
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
 
     await this.keylessCap.assertWithinCap({ ...scope, agentId: agent._id, subscriberIds, via: command.via });
@@ -468,7 +468,11 @@ export class CreateInteraction {
     for (const value of to) {
       const address = explicitEmailAddress(value);
       const subscriberId = address ? await this.contactForExplicitEmail(command, agent, address, reserved) : value;
-      const prior = recipients.find((recipient) => recipient.subscriberId === subscriberId);
+      const prior = recipients.find(
+        (recipient) =>
+          recipient.subscriberId === subscriberId &&
+          (!address || !recipient.explicitEmail || recipient.explicitEmail === address)
+      );
       if (prior) {
         if (address && !prior.explicitEmail) {
           prior.explicitEmail = address;
@@ -483,7 +487,10 @@ export class CreateInteraction {
     return recipients;
   }
 
-  /** `thread` never creates a contact. The address has to already belong to someone. */
+  /**
+   * `thread` never creates a contact, and an unconfirmed address cannot choose who
+   * may answer. Settlement is by subscriber id, including from another conversation.
+   */
   private async resolveThreadEmails(
     command: CreateInteractionCommand,
     agent: AgentEntity,
@@ -498,10 +505,10 @@ export class CreateInteraction {
         continue;
       }
 
-      const subscriberId = await this.existingContactForEmail(command, agent, address);
+      const subscriberId = await this.verifiedContactForEmail(command, agent, address);
       if (!subscriberId) {
         throw new BadRequestException(
-          `"${address}" is not in this thread, so they would never see the message. Leave \`to\` out, or start a thread with them by passing \`to\` without \`thread\`.`
+          `"${address}" is not a confirmed address, so it cannot choose who answers in this thread. Leave \`to\` out, or pass the contact id.`
         );
       }
 
@@ -577,6 +584,31 @@ export class CreateInteraction {
     });
 
     return ranked[0]?.subscriberId ?? null;
+  }
+
+  /** Who may answer a thread when `to` names an email: only a verified address. */
+  private async verifiedContactForEmail(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    address: string
+  ): Promise<string | null> {
+    const matches = await this.humanContactRepository.findContactsByEmailAddress(
+      command.environmentId,
+      agent._id,
+      address
+    );
+    const verified = matches.filter(
+      (match) => match.addresses?.[HumanChannelViaEnum.EMAIL]?.verified?.address === address
+    );
+    const subscriberIds = [...new Set(verified.map((match) => match.subscriberId))];
+
+    if (subscriberIds.length > 1) {
+      throw new ConflictException(
+        `${address} is verified for more than one contact (${subscriberIds.join(', ')}). Pass the contact id instead.`
+      );
+    }
+
+    return subscriberIds[0] ?? null;
   }
 
   private async existingContactForEmail(

@@ -84,7 +84,7 @@ export class CreateInteractionRequestDto {
 
   @ApiPropertyOptional({
     description:
-      'subscriberId of the contact to reach, an email address, or an array of either. An email address is delivered as typed for a claimed organization and does not require confirmation. A contact id on email still requires a verified address. Any listed subscriber may settle (first valid answer wins). Without `thread` it starts a new thread with each of them; with `thread` it limits who may answer and does not create a contact. Required unless `thread` is set.',
+      'subscriberId of the contact to reach, an email address, or an array of either. An email address is delivered as typed for a claimed organization and does not require confirmation. A contact id on email still requires a verified address. Any listed subscriber may settle (first valid answer wins). Without `thread` it starts a new thread with each of them; with `thread` only a verified email can choose who may answer, and no contact is created. Required unless `thread` is set.',
     oneOf: [
       { type: 'string', example: 'alice' },
       { type: 'array', items: { type: 'string' }, example: ['alice', 'bob'] },
