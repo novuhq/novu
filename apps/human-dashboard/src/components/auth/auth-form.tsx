@@ -239,6 +239,18 @@ export function useEnterApp(redirectPath: string) {
   };
 }
 
+/** The "Loading" line with the blinking cursor, while the browser is on its way somewhere. */
+export function AuthLoading() {
+  return (
+    <output className="font-mono text-[13px] leading-4.5 text-secondary">
+      Loading
+      <span aria-hidden="true" className="ml-0.5 animate-terminal-cursor text-accent">
+        ▍
+      </span>
+    </output>
+  );
+}
+
 type ClerkMessage = { message: string; longMessage?: string } | null | undefined;
 
 /** The text of an error from Clerk, preferring the full sentence. */
