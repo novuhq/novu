@@ -436,8 +436,8 @@ export class OutboundGateway {
       target.agentId,
       target.platformThreadId,
       target.workspaceId,
-      async (workspaceId) =>
-        (await this.streamSlackPreview(chat, config, target, workspaceId, chunks)) ?? thread.post(chunks)
+      async (resolvedWorkspaceId) =>
+        (await this.streamSlackPreview(chat, config, target, resolvedWorkspaceId, chunks)) ?? thread.post(chunks)
     ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
@@ -459,7 +459,22 @@ export class OutboundGateway {
     workspaceId: string | undefined,
     chunks: AsyncIterable<string>
   ): Promise<RawMessage | null> {
-    if (config.platform !== AgentPlatformEnum.SLACK || !target.recipientPlatformUserId || !workspaceId) {
+    if (config.platform !== AgentPlatformEnum.SLACK) {
+      return null;
+    }
+
+    if (!target.recipientPlatformUserId || !workspaceId) {
+      // Both renderings look alike downstream, so say which input was missing.
+      this.logger.warn(
+        {
+          agentId: target.agentId,
+          platformThreadId: target.platformThreadId,
+          hasRecipientPlatformUserId: Boolean(target.recipientPlatformUserId),
+          hasWorkspaceId: Boolean(workspaceId),
+        },
+        'Slack preview cannot stream natively; falling back to post-and-edit'
+      );
+
       return null;
     }
 

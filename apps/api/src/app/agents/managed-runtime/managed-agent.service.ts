@@ -64,7 +64,6 @@ interface WebhookSessionMetadata {
   platform: AgentPlatformEnum;
   platformThreadId: string;
   platformMessageId?: string;
-  /** The acting user's platform identity — lets a streamed reply name its Slack recipient. */
   platformUserId?: string;
   firstPlatformMessageId?: string;
   acknowledgeOnReceived?: boolean;
@@ -211,7 +210,6 @@ export class ManagedAgentService implements OnModuleInit {
     followUpMessage?: string;
     platform: AgentPlatformEnum;
     platformThreadId: string;
-    /** Who the resumed turn answers, when a person triggered it. Lets its reply stream natively. */
     platformUserId?: string;
     suppressReply?: boolean;
   }): Promise<void> {
