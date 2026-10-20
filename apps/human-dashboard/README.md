@@ -15,7 +15,7 @@ landing page moves in here later.
 | `/inbox`, `/configure`, `/contacts` | The dashboard: the agent's inbox, the agent with its channels, and the people it can ask. An operator without an agent is sent to `/onboarding`. |
 | `/settings`, `/settings/billing` | The operator, their API key (show, copy, regenerate), the plan and billing, log out and delete account. |
 | `/`               | Placeholder until the landing page moves in.                                               |
-| `/api/*`          | Agent Inbox's way to the Novu API, so people only ever see this site's address. See [API proxy](#api-proxy). |
+| `/api/*`          | The Agent Inbox API, which forwards to the Novu API, so people only ever see this site's address. See [Agent Inbox API](#agent-inbox-api). |
 
 Each Human account is backed by a hidden Novu organization that the Novu API creates through private
 `/v1/human/accounts` endpoints. See
@@ -90,7 +90,8 @@ and the MCP server only speak these paths, so a self-hosted or local setup point
   `Agent-Inbox-Via`. This site's cookies never reach the API, and the API's `Set-Cookie` never reaches the browser.
 - The caller's IP address goes on as `X-Forwarded-For`, taken from the `x-forwarded-for` Vercel sets, so the API's
   per-IP limits (keyless setups, one-time codes) count each caller, not this site.
-- It only reaches the US API: Agent Inbox has no EU region for now.
+- It only reaches the US API: Agent Inbox has no EU region for now. The invite and verify pages show a link the EU API
+  issued (`?region=eu`) as not valid, and send its token nowhere.
 - The longest call is the inbox's long-poll, which the API holds for up to 25 seconds; the route may run for 60.
 
 ## Configuration
