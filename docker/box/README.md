@@ -54,7 +54,10 @@ baked from, like CI's merge ref, and stops on a conflict: rebase onto `next`, th
 - One comment on the PR, edited in place, shows the box's address, the applied commit and what was rebuilt, or what
   failed; ⚠️ when the apply ran but `doctor` then found problems.
 - Once the box is healthy, TesterArmy (project Novu Box) tests it: its exploration agent, which reads the PR and
-  tests what it changes, and the `Box core` suite. Both report on the PR as checks.
+  tests what it changes, `Box core`, and the suites for what the PR changes: `Box workflows` (apps, libs,
+  packages), `Box accounts` (sign-up, organizations) and `Box agents` with `Box Slack` (agents, Slack, the
+  framework); a change to `docker/box` runs them all (`SUITE_PATHS` in `src/ci/ci.ts`). They report on the PR as
+  checks. The suites live in TesterArmy, not in this repo.
 - Closing the PR or removing the label deletes the box. At most 30 PR boxes exist at once. PRs from forks get no
   box.
 - The workflow holds no secrets: it signs in to the boxes with its GitHub OIDC token.
@@ -177,9 +180,6 @@ about 4 min) and rebakes it nightly. A rebake bakes in a separate box and `base`
 it's saved, so `base` is never missing; a refresh that fails keeps the last good snapshot. Snapshots expire 30 days
 after they were made or last restored, and nothing deletes old ones.
 
-**`nightly`:** after the rebake, the workflow starts a fresh box `nightly` from `base` and runs every TesterArmy
-suite on it. It stays until the next night, for a look at what failed.
-
 **Secrets** are Worker secrets of `novu-box-hub`, set only in Cloudflare (dashboard → Workers → `novu-box-hub` →
 Settings → Variables and Secrets, or `npx wrangler secret put <NAME>`). `deploy` never reads secret files; it warns
 about missing ones.
@@ -195,7 +195,7 @@ about missing ones.
 | `NX_CLOUD_ACCESS_TOKEN` | yes, optional | Reads CI's Nx Cloud cache. **Read-only only**: PR code can read it |
 | `GITHUB_READ_TOKEN` | no | Read-only access to `novu` and `packages-enterprise` for the boxes' git fetches |
 | `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET` | no | The Slack router |
-| `TESTERARMY_API_KEY` | no, optional | Starts TesterArmy's runs on PR boxes and `nightly` |
+| `TESTERARMY_API_KEY` | no, optional | Starts TesterArmy's runs on PR boxes |
 
 A box runs PR code, which can read its environment: never put production keys in boxes, never name a secret
 `VITE_*` (it would end up in the dashboard's public `index.html`), and never run boxes for PRs from forks.

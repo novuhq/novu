@@ -207,8 +207,16 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     await hostBoxes(`boxes/${box}`, z.unknown(), { method: 'PUT', token });
     const waits: Record<string, number> = READY_WITHIN_SECONDS;
     try {
-      const answer = await call(`/up?${query}`, { method: 'POST' });
-      const { state: started } = decode(StateAnswer, await answer.text(), `${box} /up`);
+      const started = await call(`/up?${query}`, { method: 'POST' }).then(
+        async (answer) => decode(StateAnswer, await answer.text(), `${box} /up`).state,
+        (error: Error) => {
+          // A snapshot's first restore can outlast the request (Node gives up after 5 minutes); the box goes on.
+          if (!snapshot || !error.message.endsWith('fetch failed')) throw error;
+          log(`${box} /up didn't answer: ${error.message}; waiting for the restore`);
+
+          return 'waking';
+        }
+      );
       log(`${box}: ${started}${started === 'baking' ? ` ${ref} (13 to 16 minutes)` : ''}`);
       await waitFor(waits[started] ?? READY_WITHIN_SECONDS.running, reachable ? answers : (report) => report.ok);
     } catch (error) {

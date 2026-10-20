@@ -20,6 +20,7 @@ import {
   PullRequestEvent,
   type TesterArmyStart,
   TesterArmyStarted,
+  TesterArmySuite,
 } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
 import { BOX_CLI, boxOrigin, detached, OIDC_AUDIENCE } from '../shared/names.ts';
@@ -27,7 +28,6 @@ import { canWrite, comment, github, LABEL, labeler, REPO, unlessMissing } from '
 
 const MAX_BOXES = 30;
 const REBAKE_BOX = 'base-next';
-const NIGHTLY_BOX = 'nightly';
 const APPLY_MINUTES = 20;
 const SETTLE_SECONDS = 3 * 60;
 // Past a day since base's bake, a nightly rebake was skipped (a refresh that waited replaced it).
@@ -37,6 +37,8 @@ const RUN_URL =
   process.env.GITHUB_RUN_ID && `${process.env.GITHUB_SERVER_URL}/${REPO}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 const started = Date.now();
 const DEADLINE = started + 55 * 60_000;
+
+const PullFiles = z.array(z.object({ filename: z.string() }));
 
 class ApplyFailed extends Error {
   readonly log: string;
@@ -128,14 +130,12 @@ async function applyHead(number: number, pull: PullRequestEvent['pull_request'])
       ? []
       : [
           await startTesterArmy(box, {
-            pullRequest: {
-              number,
-              title: pull.title,
-              ...(pull.body && { description: pull.body.slice(0, 65_536) }),
-              baseBranch: pull.base.ref,
-              headBranch: pull.head.ref,
-              commitSha: sha,
-            },
+            number,
+            title: pull.title,
+            ...(pull.body && { description: pull.body.slice(0, 65_536) }),
+            baseBranch: pull.base.ref,
+            headBranch: pull.head.ref,
+            commitSha: sha,
           }).then(
             (suites) => `- TesterArmy started: ${suites}. Its results come as checks on this PR.`,
             (error: unknown) => {
@@ -202,35 +202,42 @@ async function startOrReach(cloud: CloudTarget, box: string, number: number): Pr
 }
 
 // Returns what started, for the PR comment; TesterArmy reports results on the PR itself, as checks and a comment.
-async function startTesterArmy(box: string, start: TesterArmyStart): Promise<string> {
+async function startTesterArmy(box: string, pullRequest: TesterArmyStart['pullRequest']): Promise<string> {
+  const files = await changedFiles(pullRequest.number);
+  const start: TesterArmyStart = { pullRequest, suites: TesterArmySuite.options.filter((suite) => runs(suite, files)) };
   const { exploration, groups, signUpUsersDeleted } = await hostBoxes(`testerarmy/${box}`, TesterArmyStarted, {
     method: 'POST',
     body: JSON.stringify(start),
     token: boxToken,
   });
   if (signUpUsersDeleted.length) log(`deleted leftover sign-up users: ${signUpUsersDeleted.join(', ')}`);
-  const suites = groups.map((group) => `${group.name} (${group.runs} runs)`);
-  if (exploration) suites.unshift(exploration.status === 'skipped' ? 'exploration (skipped)' : 'exploration');
+  const suites = [
+    exploration.status === 'skipped' ? 'exploration (skipped)' : 'exploration',
+    ...groups.map((group) => `${group.name} (${group.runs} runs)`),
+  ];
   log(`TesterArmy started on ${box}: ${suites.join(', ')}`);
 
   return suites.join(', ');
 }
 
-// A fresh box from base each night, so every suite runs on next's head; it stays until the next night, for a look
-// at what failed.
-async function nightly(): Promise<number> {
-  const cloud = target(NIGHTLY_BOX);
-  await cloud.delete();
-  await cloud.up({ fromBase: true, reachable: true });
-  const report = await cloud.settled(Math.min(SETTLE_SECONDS, (DEADLINE - Date.now()) / 1000));
-  if (!report?.ok) {
-    log(`ERROR: ${NIGHTLY_BOX} isn't healthy: ${(report?.problems ?? ['no doctor report']).join('; ')}`);
+// Box core runs on every PR; the other suites when the PR changes what they test. A change to the box runs them all.
+const SUITE_PATHS: Record<TesterArmySuite, RegExp> = {
+  workflows: /^(apps|libs|packages|enterprise|playground)\//,
+  accounts: /auth|clerk|organization|onboarding|user|member|billing/i,
+  agents: /agent|slack|conversation|chat|thalamus|framework|playground/i,
+};
 
-    return 1;
+function runs(suite: TesterArmySuite, files: ReadonlyArray<string>): boolean {
+  return files.some((file) => file.startsWith('docker/box/') || SUITE_PATHS[suite].test(file));
+}
+
+async function changedFiles(number: number): Promise<Array<string>> {
+  const files: Array<string> = [];
+  for (let page = 1; ; page++) {
+    const batch = await github(`/repos/${REPO}/pulls/${number}/files?per_page=100&page=${page}`, PullFiles);
+    files.push(...batch.map((file) => file.filename));
+    if (batch.length < 100) return files;
   }
-  await startTesterArmy(NIGHTLY_BOX, {});
-
-  return 0;
 }
 
 async function apply(cloud: CloudTarget, sha: string, { baseline = false } = {}): Promise<string> {
@@ -384,10 +391,5 @@ await main('ci', () =>
     cleanup: { usage: '', help: 'delete pr-* boxes whose PR is closed or no longer labeled `box`', run: cleanup },
     rebake: { usage: '', help: 'bake base again from next and save it to its snapshot (a new chain)', run: rebake },
     refresh: { usage: '', help: "put next's head on base (merges onto it from then on) and save it", run: refresh },
-    nightly: {
-      usage: '',
-      help: `start a fresh box ${NIGHTLY_BOX} from base and run every TesterArmy suite on it`,
-      run: nightly,
-    },
   })
 );

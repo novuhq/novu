@@ -195,22 +195,23 @@ export const TestUsers = z.object({ users: z.array(TestUser), prune: z.array(z.s
 export const CreatedTestUser = z.object({ email: z.string(), password: z.string(), pruned: z.array(z.string()) });
 export const DeletedBox = z.object({ users: z.array(z.string()).default([]), usersError: z.string().optional() });
 
-// Without a pull request, the hub starts the nightly suites.
+export const TesterArmySuite = z.enum(['workflows', 'accounts', 'agents']);
+export type TesterArmySuite = z.infer<typeof TesterArmySuite>;
+// Box core runs on every PR; `suites` are the others, by what the PR changes.
 export const TesterArmyStart = z.object({
-  pullRequest: z
-    .object({
-      number: z.number(),
-      title: z.string(),
-      description: z.string().optional(),
-      baseBranch: z.string(),
-      headBranch: z.string(),
-      commitSha: z.string(),
-    })
-    .optional(),
+  pullRequest: z.object({
+    number: z.number(),
+    title: z.string(),
+    description: z.string().optional(),
+    baseBranch: z.string(),
+    headBranch: z.string(),
+    commitSha: z.string(),
+  }),
+  suites: z.array(TesterArmySuite).default([]),
 });
 export type TesterArmyStart = z.infer<typeof TesterArmyStart>;
 export const TesterArmyStarted = z.object({
-  exploration: z.object({ status: z.string(), runId: z.string() }).optional(),
+  exploration: z.object({ status: z.string(), runId: z.string() }),
   groups: z.array(z.object({ name: z.string(), batchId: z.string(), runs: z.number() })),
   signUpUsersDeleted: z.array(z.string()),
 });

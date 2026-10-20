@@ -79,9 +79,12 @@ export async function deleteBoxUsers(env: HostEnv, box: string): Promise<Array<s
   return users.map((user) => user.email);
 }
 
-// TesterArmy's sign-up tests make a new user on this domain every run and delete it at the end; one that's an hour
-// old is a failed run's leftover.
+// TesterArmy's sign-up tests make a new user on this domain every run, with an organization of its own, and delete
+// both at the end; a user that's an hour old is a failed run's leftover.
 const SIGN_UP_DOMAIN = '@qa.box.novu-staging.co';
+const Memberships = z.object({
+  data: z.array(z.object({ organization: z.object({ id: z.string(), members_count: z.number() }) })),
+});
 
 export async function deleteSignUpUsers(env: HostEnv): Promise<Array<string>> {
   const users = await clerk(
@@ -93,7 +96,13 @@ export async function deleteSignUpUsers(env: HostEnv): Promise<Array<string>> {
     ({ email_addresses: [address, ...more], created_at: createdAt }) =>
       address?.email_address.endsWith(SIGN_UP_DOMAIN) && !more.length && Date.now() - createdAt > 60 * 60_000
   );
-  for (const user of leftovers) await clerk(env, `/users/${user.id}`, z.unknown(), { method: 'DELETE' });
+  for (const user of leftovers) {
+    const { data: memberships } = await clerk(env, `/users/${user.id}/organization_memberships`, Memberships);
+    for (const { organization } of memberships)
+      if (organization.members_count === 1)
+        await clerk(env, `/organizations/${organization.id}`, z.unknown(), { method: 'DELETE' });
+    await clerk(env, `/users/${user.id}`, z.unknown(), { method: 'DELETE' });
+  }
 
   return leftovers.flatMap((user) => user.email_addresses.map((address) => address.email_address));
 }
