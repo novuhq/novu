@@ -174,6 +174,15 @@ export class VerifyAddressByCodeRequestDto {
   @IsString()
   @IsNotEmpty()
   inviteToken?: string;
+
+  @ApiPropertyOptional({
+    description: 'The verification send this code should confirm. A code from another send is refused.',
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(40)
+  requestedAt?: string;
 }
 
 export class VerifyAddressResponseDto {

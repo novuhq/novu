@@ -1,6 +1,6 @@
 'use client';
 
-import { type ClipboardEvent, type KeyboardEvent, useRef } from 'react';
+import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -35,6 +35,12 @@ export function CodeInput({
   className,
 }: CodeInputProps) {
   const boxes = useRef<Array<HTMLInputElement | null>>([]);
+
+  useEffect(() => {
+    if (invalid && !disabled) {
+      boxes.current[0]?.focus();
+    }
+  }, [invalid, disabled]);
 
   function update(next: string, focusIndex: number) {
     const digits = next.replace(/\D/g, '').slice(0, length);
@@ -93,7 +99,7 @@ export function CodeInput({
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: a fieldset can't lay its boxes out with flex in every browser
-    <div role="group" aria-label={label} className={cn('flex gap-2', className)}>
+    <div role="group" aria-label={label} className={cn('flex gap-2', size === 'lg' && 'w-full sm:w-auto', className)}>
       {Array.from({ length }, (_, index) => (
         <input
           key={index}
@@ -115,7 +121,7 @@ export function CodeInput({
           className={cn(
             'bg-background text-center font-mono text-foreground ring-1 focus-visible:outline-none focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-60',
             size === 'lg'
-              ? 'size-14 rounded-lg bg-raised text-base font-medium ring-border'
+              ? 'h-12 max-w-14 min-w-0 flex-1 basis-0 rounded-lg bg-raised text-base font-medium ring-border sm:size-14 sm:flex-none sm:basis-auto'
               : 'size-11 rounded text-lg ring-border-strong',
             invalid && 'ring-danger focus-visible:ring-danger'
           )}

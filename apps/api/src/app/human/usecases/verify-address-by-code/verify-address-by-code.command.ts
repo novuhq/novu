@@ -19,4 +19,28 @@ export class VerifyAddressByCodeCommand extends BaseCommand {
   @IsOptional()
   @IsString()
   clientIp?: string;
+
+  /**
+   * The contact this code must belong to. Set by the invite and the operator session.
+   * A code issued for someone else is refused and left unused.
+   */
+  @IsOptional()
+  @IsString()
+  expectedEnv?: string;
+
+  @IsOptional()
+  @IsString()
+  expectedAgentId?: string;
+
+  @IsOptional()
+  @IsString()
+  expectedSubscriberId?: string;
+
+  /**
+   * The send this code must belong to. The CLI passes the `requestedAt` it is waiting on,
+   * so a code mailed for a different send is refused and left unused.
+   */
+  @IsOptional()
+  @IsString()
+  expectedRequestedAt?: string;
 }

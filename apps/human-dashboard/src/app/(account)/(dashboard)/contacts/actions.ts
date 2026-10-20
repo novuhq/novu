@@ -202,6 +202,11 @@ function describeEmailError(error: unknown): string {
       return 'That’s already your email.';
     }
 
+    // A wrong code is a 401, which the generic helper hides so a dead session stays generic.
+    if (error.code === 'verification_code_invalid') {
+      return 'That code is wrong or has expired. Check the email, or send a new one.';
+    }
+
     // Without its own email channel the agent has nothing to send the link from.
     if (error.status === 404 && error.code === 'not_found') {
       return 'Your agent has no email address to send from yet. Set it up on the Configure page.';

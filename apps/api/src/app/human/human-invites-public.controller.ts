@@ -114,6 +114,7 @@ export class HumanVerifyPublicController {
         code: body.code,
         address: body.address,
         inviteToken: body.inviteToken,
+        expectedRequestedAt: body.requestedAt,
         clientIp: getClientIp(request) ?? undefined,
       })
     );

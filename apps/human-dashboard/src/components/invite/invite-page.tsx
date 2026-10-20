@@ -98,6 +98,42 @@ export function InvitePage({ apiUrl, token }: { apiUrl: string; token: string })
   return <ActiveInvite apiUrl={apiUrl} token={token} status={state.status} onChanged={() => void refresh()} />;
 }
 
+function noteVerificationEmailSent(sent: {
+  stillHere: boolean;
+  address?: string;
+  retryAfterSeconds: number;
+  token: string;
+  onChanged: () => void;
+  setEmailCooldownUntil: (until: number) => void;
+  setEmailSentTo: (address: string) => void;
+  setAwaitingEmailCode: (awaiting: boolean) => void;
+  setEditingEmail: (editing: boolean) => void;
+  setDismissedEmailCode: (dismissed: boolean) => void;
+  setEmailCode: (code: string) => void;
+  setEmailCodeInvalid: (invalid: boolean) => void;
+  setEmailCodeLocked: (locked: boolean) => void;
+  setView: (view: InviteView) => void;
+}) {
+  sent.setEmailCooldownUntil(Date.now() + sent.retryAfterSeconds * 1000);
+  if (sent.address) {
+    sent.setEmailSentTo(sent.address);
+    rememberEmail(sent.token, sent.address);
+  }
+  sent.onChanged();
+  // They may have left this step while the send was in flight. Keep the address, but don't pull them back.
+  if (!sent.stillHere) {
+    return;
+  }
+
+  sent.setAwaitingEmailCode(true);
+  sent.setEditingEmail(false);
+  sent.setDismissedEmailCode(false);
+  sent.setEmailCode('');
+  sent.setEmailCodeInvalid(false);
+  sent.setEmailCodeLocked(false);
+  sent.setView('email');
+}
+
 function followConnectResult(
   result: ConnectInviteResult,
   via: InviteChannelVia,
@@ -225,6 +261,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
     }
 
     const navigation = navigations.current;
+    const stillHere = () => navigation === navigations.current;
 
     setConnectingVia(via);
     if (via === 'slack') {
@@ -233,22 +270,25 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
     try {
       const result = await connectInviteChannel(apiUrl, token, via, address);
       followConnectResult(result, via, {
-        stillHere: () => navigation === navigations.current,
+        stillHere,
         tab,
         onEmailSent: (retryAfterSeconds) => {
-          setEmailCooldownUntil(Date.now() + retryAfterSeconds * 1000);
-          if (address) {
-            setEmailSentTo(address);
-            rememberEmail(token, address);
-          }
-          setAwaitingEmailCode(true);
-          setEditingEmail(false);
-          setDismissedEmailCode(false);
-          setEmailCode('');
-          setEmailCodeInvalid(false);
-          setEmailCodeLocked(false);
-          setView('email');
-          onChanged();
+          noteVerificationEmailSent({
+            stillHere: stillHere(),
+            address,
+            retryAfterSeconds,
+            token,
+            onChanged,
+            setEmailCooldownUntil,
+            setEmailSentTo,
+            setAwaitingEmailCode,
+            setEditingEmail,
+            setDismissedEmailCode,
+            setEmailCode,
+            setEmailCodeInvalid,
+            setEmailCodeLocked,
+            setView,
+          });
         },
         onTelegram: (url) => {
           setTelegramLink(url);
@@ -383,6 +423,15 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
           setEditingEmail(true);
           setView('email');
         }}
+        onChangeAddress={() => {
+          // A send still in flight must not reopen the code card over the address form.
+          navigations.current += 1;
+          setErrorMessage(null);
+          setEmailCode('');
+          setEmailCodeInvalid(false);
+          setEditingEmail(true);
+          setView('email');
+        }}
         onBack={leaveEmailCode}
       />
     );
@@ -400,6 +449,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
     error,
     onConnect: (via, address) => void handleConnect(via, address),
     onBack: showChannels,
+    emailAddress: emailSentTo,
   });
 
   if (connecting) {
@@ -491,6 +541,7 @@ function connectingStep({
   error,
   onConnect,
   onBack,
+  emailAddress = '',
 }: {
   status: ActiveInviteStatus;
   stepsFor: InviteChannelVia | undefined;
@@ -502,6 +553,7 @@ function connectingStep({
   error: ReactNode;
   onConnect: (via: InviteChannelVia, address?: string) => void;
   onBack: () => void;
+  emailAddress?: string;
 }): ReactNode {
   if (stepsFor === 'telegram' && telegramLink) {
     return (
@@ -581,6 +633,7 @@ function connectingStep({
         <AppIcon via="email" size="large" />
         <StepTitle>Where should it email you?</StepTitle>
         <EmailAddressForm
+          initialAddress={emailAddress}
           connecting={connectingVia === 'email'}
           disabled={busy}
           onSend={(address) => onConnect('email', address)}
@@ -885,15 +938,17 @@ function ErrorNote({ children }: { children: ReactNode }) {
 }
 
 function EmailAddressForm({
+  initialAddress = '',
   connecting,
   disabled,
   onSend,
 }: {
+  initialAddress?: string;
   connecting: boolean;
   disabled: boolean;
   onSend: (address: string) => void;
 }) {
-  const [address, setAddress] = useState('');
+  const [address, setAddress] = useState(initialAddress);
   const value = address.trim();
 
   return (
@@ -941,6 +996,7 @@ function EmailCodeCard({
   onCodeChange,
   onComplete,
   onSendAgain,
+  onChangeAddress,
   onBack,
 }: {
   status: ActiveInviteStatus;
@@ -954,6 +1010,7 @@ function EmailCodeCard({
   onCodeChange: (value: string) => void;
   onComplete: (value: string) => void;
   onSendAgain: () => void;
+  onChangeAddress: () => void;
   onBack: () => void;
 }) {
   const cooldownSeconds = useCooldownSeconds(cooldownUntil);
@@ -975,13 +1032,16 @@ function EmailCodeCard({
         autoFocus
       />
       {error}
-      <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center gap-1">
         <p className="text-xs leading-4 text-muted">Didn’t get it?</p>
         <Button variant="quiet" className={SMALL_BUTTON} disabled={busy || cooldownSeconds > 0} onClick={onSendAgain}>
           {cooldownSeconds > 0 ? `Send again in ${cooldownSeconds}s` : 'Send again'}
         </Button>
+        <Button variant="quiet" className={SMALL_BUTTON} disabled={busy} onClick={onChangeAddress}>
+          Use a different email
+        </Button>
       </div>
-      <Button variant="secondary" className={cn(SMALL_BUTTON, 'self-start')} onClick={onBack}>
+      <Button variant="secondary" className={cn(SMALL_BUTTON, 'self-start')} disabled={busy} onClick={onBack}>
         Choose another way
       </Button>
     </InviteCard>

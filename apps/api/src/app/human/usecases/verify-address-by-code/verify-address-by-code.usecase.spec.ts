@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -141,5 +141,46 @@ describe('VerifyAddressByCode', () => {
     await usecase.execute(VerifyAddressByCodeCommand.create({ inviteToken: 'a'.repeat(32), code: '481926' }));
 
     expect(verificationCodes.redeem.firstCall.args[0]).to.equal('alice@example.com');
+  });
+
+  it('refuses a code issued for another contact on the same inbox and leaves that code unused', async () => {
+    const { usecase, verificationCodes, humanContactRepository, inviteTokens } = setup();
+    inviteTokens.requireActive.resolves({
+      payload: { env: 'env-1', org: 'org-1', agentId: 'agent-2', subscriberId: 'bob' },
+    });
+    humanContactRepository.findPendingAddress.resolves({ address: 'alice@example.com' });
+    verificationCodes.redeem.resolves({ payload: payload(), alreadyUsed: false });
+
+    try {
+      await usecase.execute(VerifyAddressByCodeCommand.create({ inviteToken: 'a'.repeat(32), code: '481926' }));
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(UnauthorizedException);
+      expect((err as UnauthorizedException).getResponse()).to.deep.include({ code: 'verification_code_invalid' });
+    }
+
+    expect(verificationCodes.release.calledOnceWith('alice@example.com', '481926')).to.equal(true);
+    expect(humanContactRepository.promotePendingAddress.called).to.equal(false);
+  });
+
+  it('refuses a code from a different send when the caller names the one it is waiting on', async () => {
+    const { usecase, verificationCodes, humanContactRepository } = setup();
+    verificationCodes.redeem.resolves({ payload: payload('2026-10-01T11:00:00.000Z'), alreadyUsed: false });
+
+    try {
+      await usecase.execute(
+        VerifyAddressByCodeCommand.create({
+          address: 'alice@example.com',
+          code: '481926',
+          expectedRequestedAt: '2026-10-01T12:00:00.000Z',
+        })
+      );
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(UnauthorizedException);
+    }
+
+    expect(verificationCodes.release.calledOnce).to.equal(true);
+    expect(humanContactRepository.promotePendingAddress.called).to.equal(false);
   });
 });

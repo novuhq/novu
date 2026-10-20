@@ -9,6 +9,7 @@ import {
   HumanVerificationCodeService,
   VERIFICATION_CODE_INVALID,
 } from '../../services/human-verification-code.service';
+import type { HumanVerificationTokenPayload } from '../../services/human-verification-token.service';
 import {
   ConfirmHumanAddress,
   isVerificationSuperseded,
@@ -31,21 +32,29 @@ export class VerifyAddressByCode {
 
   @InstrumentUsecase()
   async execute(command: VerifyAddressByCodeCommand): Promise<VerifyAddressResult> {
-    const address = await this.resolveAddress(command);
-    const redeemed = await this.verificationCodes.redeem(address, command.code, command.clientIp);
+    const resolved = await this.resolveAddress(command);
+    const redeemed = await this.verificationCodes.redeem(resolved.address, command.code, command.clientIp);
+
+    if (!codeBelongsTo(redeemed.payload, resolved.expected, command.expectedRequestedAt)) {
+      if (!redeemed.alreadyUsed) {
+        await this.verificationCodes.release(resolved.address, command.code).catch(() => undefined);
+      }
+
+      throw invalidCode();
+    }
 
     try {
       return await this.confirmAddress.confirm(redeemed.payload);
     } catch (err) {
       if (!redeemed.alreadyUsed && !isVerificationSuperseded(err)) {
-        await this.verificationCodes.release(address, command.code).catch(() => undefined);
+        await this.verificationCodes.release(resolved.address, command.code).catch(() => undefined);
       }
 
       throw err;
     }
   }
 
-  private async resolveAddress(command: VerifyAddressByCodeCommand): Promise<string> {
+  private async resolveAddress(command: VerifyAddressByCodeCommand): Promise<ResolvedVerification> {
     const hasAddress = Boolean(command.address?.trim());
     const hasInvite = Boolean(command.inviteToken?.trim());
     if (hasAddress === hasInvite) {
@@ -61,32 +70,81 @@ export class VerifyAddressByCode {
         throw invalidCode();
       }
 
-      return address;
+      return { address, expected: expectedContact(command) };
     }
 
     const invite = await this.inviteTokens.requireActive(command.inviteToken ?? '');
+    const expected = {
+      env: invite.payload.env,
+      agentId: invite.payload.agentId,
+      subscriberId: invite.payload.subscriberId,
+    };
     const pending = await this.humanContactRepository.findPendingAddress(
-      invite.payload.env,
-      invite.payload.agentId,
-      invite.payload.subscriberId,
+      expected.env,
+      expected.agentId,
+      expected.subscriberId,
       HumanChannelViaEnum.EMAIL
     );
     if (pending?.address) {
-      return pending.address;
+      return { address: pending.address, expected };
     }
 
     const verified = await this.humanContactRepository.findVerifiedAddress(
-      invite.payload.env,
-      invite.payload.agentId,
-      invite.payload.subscriberId,
+      expected.env,
+      expected.agentId,
+      expected.subscriberId,
       HumanChannelViaEnum.EMAIL
     );
     if (verified?.address) {
-      return verified.address;
+      return { address: verified.address, expected };
     }
 
     throw invalidCode();
   }
+}
+
+interface ExpectedContact {
+  env: string;
+  agentId: string;
+  subscriberId: string;
+}
+
+interface ResolvedVerification {
+  address: string;
+  expected?: ExpectedContact;
+}
+
+function expectedContact(command: VerifyAddressByCodeCommand): ExpectedContact | undefined {
+  if (!command.expectedEnv || !command.expectedAgentId || !command.expectedSubscriberId) {
+    return undefined;
+  }
+
+  return {
+    env: command.expectedEnv,
+    agentId: command.expectedAgentId,
+    subscriberId: command.expectedSubscriberId,
+  };
+}
+
+/** A scoped caller only accepts the code issued for that contact and that send. */
+function codeBelongsTo(
+  payload: HumanVerificationTokenPayload,
+  expected: ExpectedContact | undefined,
+  expectedRequestedAt: string | undefined
+): boolean {
+  if (expectedRequestedAt && payload.requestedAt !== expectedRequestedAt) {
+    return false;
+  }
+
+  if (!expected) {
+    return true;
+  }
+
+  return (
+    payload.env === expected.env &&
+    payload.agentId === expected.agentId &&
+    payload.subscriberId === expected.subscriberId
+  );
 }
 
 function invalidCode(): UnauthorizedException {

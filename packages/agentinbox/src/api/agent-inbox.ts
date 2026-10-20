@@ -297,10 +297,15 @@ export async function listContacts(
   return { data: Array.isArray(body?.data) ? body.data : [], next: body?.next ?? null };
 }
 
-export async function getContact(client: ApiClient, subscriberId: string, agentIdentifier?: string): Promise<Contact> {
+export async function getContact(
+  client: ApiClient,
+  subscriberId: string,
+  agentIdentifier?: string,
+  signal?: AbortSignal
+): Promise<Contact> {
   const res = await client.axios.get<{ data?: Contact } | Contact>(
     `/v1/human/contacts/${encodeURIComponent(subscriberId)}`,
-    { params: agentIdentifier ? { agentIdentifier } : undefined }
+    { params: agentIdentifier ? { agentIdentifier } : undefined, signal }
   );
 
   // Explicit type arg: `Contact.data` would otherwise make `unwrap` infer the wrong envelope.
@@ -317,8 +322,14 @@ export type AddressVerificationResult = {
   replacesVerifiedAddress: boolean;
 };
 
-export async function confirmAddressByCode(client: ApiClient, address: string, code: string): Promise<void> {
-  await client.axios.post('/v1/human/verify-code', { address, code });
+export async function confirmAddressByCode(
+  client: ApiClient,
+  address: string,
+  code: string,
+  requestedAt: string,
+  signal?: AbortSignal
+): Promise<void> {
+  await client.axios.post('/v1/human/verify-code', { address, code, requestedAt }, { signal });
 }
 
 export async function requestAddressVerification(

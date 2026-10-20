@@ -234,7 +234,7 @@ describe('waitForVerifiedEmailOrCode', () => {
       })
     ).resolves.toBeUndefined();
 
-    expect(confirmCode).toHaveBeenCalledWith('alice@example.com', '123456');
+    expect(confirmCode).toHaveBeenCalledWith('alice@example.com', '123456', expect.any(AbortSignal));
     expect(getContact.mock.calls.some((call) => call[1] === 'alice')).toBe(true);
   });
 
@@ -256,7 +256,73 @@ describe('waitForVerifiedEmailOrCode', () => {
     ).resolves.toBeUndefined();
 
     expect(onCodeRejected).toHaveBeenCalledWith('That code is wrong or has expired.');
-    expect(confirmCode).toHaveBeenLastCalledWith('alice@example.com', '481926');
+    expect(confirmCode).toHaveBeenLastCalledWith('alice@example.com', '481926', expect.any(AbortSignal));
+  });
+
+  it('keeps waiting on the link when checking the code fails temporarily', async () => {
+    let releaseContact: (value: unknown) => void = () => {};
+    getContact.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          releaseContact = resolve;
+        })
+    );
+    const onCodeRejected = vi.fn();
+    const confirmCode = vi.fn().mockRejectedValue(new ApiError('timeout', 0, 'POST /v1/human/verify-code'));
+    const readCode = vi
+      .fn()
+      .mockResolvedValueOnce('123456')
+      .mockImplementationOnce(() => {
+        releaseContact({
+          channels: [{ via: 'email', status: 'verified', verifiedRequestedAt: 't1' }],
+        });
+
+        return null;
+      });
+
+    await expect(
+      waitForVerifiedEmailOrCode(client, { ...wait, readCode, confirmCode, onCodeRejected })
+    ).resolves.toBeUndefined();
+
+    expect(onCodeRejected).toHaveBeenCalledWith('Could not check that code. Try it again, or open the link.');
+  });
+
+  it('stops the wait when the code prompt is interrupted', async () => {
+    getContact.mockResolvedValue({ channels: [{ via: 'email', status: 'pending' }] });
+
+    await expect(
+      waitForVerifiedEmailOrCode(client, {
+        ...wait,
+        readCode: vi.fn().mockRejectedValue(new Error('Stopped waiting. The link in the email still works.')),
+        confirmCode: vi.fn(),
+        onCodeRejected: vi.fn(),
+      })
+    ).rejects.toThrow('Stopped waiting. The link in the email still works.');
+  });
+
+  it('does not wait out a slow contact request after the code succeeds', async () => {
+    getContact.mockImplementation((_client, _subscriberId, _agentIdentifier, signal?: AbortSignal) => {
+      return new Promise((_resolve, reject) => {
+        if (!signal) {
+          return;
+        }
+        if (signal.aborted) {
+          reject(new Error('aborted'));
+
+          return;
+        }
+        signal.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+      });
+    });
+
+    await expect(
+      waitForVerifiedEmailOrCode(client, {
+        ...wait,
+        readCode: vi.fn().mockResolvedValue('123456'),
+        confirmCode: vi.fn().mockResolvedValue(undefined),
+        onCodeRejected: vi.fn(),
+      })
+    ).resolves.toBeUndefined();
   });
 
   it('stops when the code is locked, without waiting out the poll', async () => {

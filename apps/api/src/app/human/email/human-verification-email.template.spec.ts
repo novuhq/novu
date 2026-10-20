@@ -40,7 +40,8 @@ describe('buildHumanVerificationEmail', () => {
     expect(content.text).to.include('Nikita <Grossman> wants to reach you via agent Acme Ops.');
     expect(content.text).to.include('Your code is 481926');
     expect(content.text).to.include('https://gethuman.md/verify/tok123');
-    expect(content.text.trimEnd().endsWith('@agentinbox.md #481926')).to.equal(true);
+    expect(content.text.trimEnd().endsWith('@gethuman.md #481926')).to.equal(true);
+    expect(content.html).to.include('@gethuman.md #481926');
   });
 
   it('uses the placeholder agent name when the relay was never renamed', () => {

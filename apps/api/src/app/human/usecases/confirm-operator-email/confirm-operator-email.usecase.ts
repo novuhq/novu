@@ -58,6 +58,9 @@ export class ConfirmOperatorEmail {
         address,
         code: command.code,
         clientIp: command.clientIp,
+        expectedEnv: command.environmentId,
+        expectedAgentId: agentId,
+        expectedSubscriberId: subscriberId,
       })
     );
   }

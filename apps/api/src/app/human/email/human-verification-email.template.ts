@@ -1,5 +1,14 @@
 import { DEFAULT_HUMAN_RELAY_NAME, type RelaySender } from '../services/relay-owner-name';
 
+/** The site the code is typed on. Safari only offers a code whose footer names that host. */
+function verificationAutofillDomain(verifyUrl: string): string {
+  try {
+    return new URL(verifyUrl).hostname || 'agentinbox.md';
+  } catch {
+    return 'agentinbox.md';
+  }
+}
+
 function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -46,7 +55,7 @@ export function buildHumanVerificationEmail(params: {
   const expiresLabel = formatExpiry(params.expiresAt);
   const verifyUrl = escapeHtml(params.verifyUrl);
   const code = escapeHtml(params.code);
-  const autofill = `@agentinbox.md #${params.code}`;
+  const autofill = `@${verificationAutofillDomain(params.verifyUrl)} #${params.code}`;
 
   const subject = who.text;
 

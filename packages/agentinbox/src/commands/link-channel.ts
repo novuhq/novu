@@ -278,7 +278,7 @@ export type VerifiedEmailCodeWait = {
   waitingFor: string;
   timeoutHint: string;
   readCode: (signal: AbortSignal) => Promise<string | null>;
-  confirmCode: (address: string, code: string) => Promise<void>;
+  confirmCode: (address: string, code: string, signal: AbortSignal) => Promise<void>;
   onCodeRejected: (message: string) => void;
 };
 
@@ -319,7 +319,7 @@ async function pollVerifiedEmail(
 
   while (!race.isFinished() && Date.now() < deadline) {
     try {
-      const contact = await getContact(client, input.subscriberId, input.agentIdentifier);
+      const contact = await getContact(client, input.subscriberId, input.agentIdentifier, race.signal);
       const channel = contact.channels?.find((item) => item.via === 'email');
       if (channel?.status === 'verified' && channel.verifiedRequestedAt === input.requestedAt) {
         race.stop();
@@ -327,7 +327,10 @@ async function pollVerifiedEmail(
         return;
       }
     } catch {
-      // The contact row may not exist until the verification lands.
+      // The contact row may not exist until the verification lands. A cancelled poll just ends.
+      if (race.isFinished()) {
+        return;
+      }
     }
 
     if (race.isFinished()) {
@@ -354,7 +357,10 @@ async function promptForVerificationCode(input: VerifiedEmailCodeWait, race: Ver
         return;
       }
 
-      const outcome = await submitVerificationCode(input, line);
+      const outcome = await submitVerificationCode(input, line, race.signal);
+      if (race.isFinished()) {
+        return;
+      }
       if (outcome.kind === 'done') {
         race.stop();
 
@@ -370,6 +376,10 @@ async function promptForVerificationCode(input: VerifiedEmailCodeWait, race: Ver
       }
     }
   } catch (err) {
+    if (race.isFinished()) {
+      return;
+    }
+
     race.stop(err instanceof Error ? err : new Error('That code did not work. Try again, or open the link.'));
   }
 }
@@ -406,20 +416,24 @@ export async function waitForEmailCodeOrLink(
   await waitForVerifiedEmailOrCode(client, {
     ...input,
     readCode: readVerificationCode,
-    confirmCode: (address, code) => confirmAddressByCode(client, address, code),
+    confirmCode: (address, code, signal) => confirmAddressByCode(client, address, code, input.requestedAt, signal),
   });
 }
 
 type CodeSubmitResult = { kind: 'done' } | { kind: 'rejected'; message: string } | { kind: 'fatal'; message: string };
 
-async function submitVerificationCode(input: VerifiedEmailCodeWait, line: string): Promise<CodeSubmitResult> {
+async function submitVerificationCode(
+  input: VerifiedEmailCodeWait,
+  line: string,
+  signal: AbortSignal
+): Promise<CodeSubmitResult> {
   const code = line.replace(/\D/g, '');
   if (code.length !== 6) {
     return { kind: 'rejected', message: 'Enter the 6-digit code from the email, or open the link.' };
   }
 
   try {
-    await input.confirmCode(input.address, code);
+    await input.confirmCode(input.address, code, signal);
 
     return { kind: 'done' };
   } catch (err) {
@@ -438,7 +452,7 @@ export function readVerificationCode(signal: AbortSignal): Promise<string | null
 
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     let settled = false;
     const finish = (value: string | null) => {
       if (settled) {
@@ -450,8 +464,22 @@ export function readVerificationCode(signal: AbortSignal): Promise<string | null
       rl.close();
       resolve(value);
     };
+    // Readline takes the terminal, so the first Ctrl-C is a key, not a process signal.
+    // Rejecting stops the contact poll; closing alone would leave that poll running.
+    const onInterrupt = () => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      signal.removeEventListener('abort', onAbort);
+      rl.close();
+      reject(new Error('Stopped waiting. The link in the email still works.'));
+    };
     const onAbort = () => finish(null);
     signal.addEventListener('abort', onAbort, { once: true });
+    rl.on('SIGINT', onInterrupt);
+    rl.on('close', () => finish(null));
     rl.question(CODE_PROMPT, (answer) => finish(answer));
   });
 }
@@ -484,6 +512,11 @@ function describeVerificationCodeError(err: unknown): { message: string; fatal: 
 
   const parsed = readVerificationError(err.body);
   const code = parsed.code;
+  // A timeout or a 5xx used to abort the link poll. Those are temporary; the link can still land.
+  if (err.status === 0 || err.status >= 500) {
+    return { message: 'Could not check that code. Try it again, or open the link.', fatal: false };
+  }
+
   const message = parsed.message ?? err.message;
   const fatal = code !== 'verification_code_invalid';
 

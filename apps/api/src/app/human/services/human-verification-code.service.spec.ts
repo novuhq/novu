@@ -196,8 +196,9 @@ describe('HumanVerificationCodeService', () => {
   it('treats a wrong code, an unknown code and a short code as the same invalid result', async () => {
     const { service, cacheService } = setup();
     const issued = await service.issue(payload());
+    const wrong = issued.code === '000000' ? '000001' : '000000';
 
-    await expectInvalid(() => service.redeem('alice@example.com', '000000', '203.0.113.4'));
+    await expectInvalid(() => service.redeem('alice@example.com', wrong, '203.0.113.4'));
     await expectInvalid(() => service.redeem('alice@example.com', '12', '203.0.113.4'));
     expect(
       await service.redeem('alice@example.com', ` ${issued.code.slice(0, 3)}-${issued.code.slice(3)} `)
