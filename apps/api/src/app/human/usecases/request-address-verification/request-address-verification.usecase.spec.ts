@@ -29,6 +29,9 @@ describe('RequestAddressVerification', () => {
     const verificationTokens = {
       issue: sinon.stub().resolves({ token: 'a'.repeat(32), expiresAt: '2026-10-02T12:00:00.000Z' }),
     };
+    const verificationCodes = {
+      issue: sinon.stub().resolves({ code: '481926', expiresAt: '2026-10-02T12:00:00.000Z' }),
+    };
     const emailSender = {
       send: sinon.stub().resolves(),
     };
@@ -67,6 +70,7 @@ describe('RequestAddressVerification', () => {
       humanContactRepository as never,
       rateLimit as never,
       verificationTokens as never,
+      verificationCodes as never,
       emailSender as never,
       inboxQuota as never,
       keylessEmailGate as never

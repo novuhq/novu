@@ -1,5 +1,14 @@
 import { DEFAULT_HUMAN_RELAY_NAME, type RelaySender } from '../services/relay-owner-name';
 
+/** The site the code is typed on. Safari only offers a code whose footer names that host. */
+function verificationAutofillDomain(verifyUrl: string): string {
+  try {
+    return new URL(verifyUrl).hostname || 'agentinbox.md';
+  } catch {
+    return 'agentinbox.md';
+  }
+}
+
 function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -35,6 +44,7 @@ export function buildHumanVerificationEmail(params: {
   sender: RelaySender;
   inviteeName?: string;
   verifyUrl: string;
+  code: string;
   expiresAt: string;
   claimUrl?: string;
 }): HumanVerificationEmailContent {
@@ -44,6 +54,8 @@ export function buildHumanVerificationEmail(params: {
   const greetingHtml = inviteeName ? `Hi ${escapeHtml(inviteeName)},` : 'Hi,';
   const expiresLabel = formatExpiry(params.expiresAt);
   const verifyUrl = escapeHtml(params.verifyUrl);
+  const code = escapeHtml(params.code);
+  const autofill = `@${verificationAutofillDomain(params.verifyUrl)} #${params.code}`;
 
   const subject = who.text;
 
@@ -62,15 +74,21 @@ export function buildHumanVerificationEmail(params: {
     'Verify your <span style="color:#ff5c30;font-style:italic;">email</span>',
     '</td></tr>',
     `<tr><td style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.4;color:rgba(238,229,216,0.7);padding-bottom:8px;">${greetingHtml}</td></tr>`,
-    '<tr><td style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;font-size:15px;line-height:1.4;color:rgba(238,229,216,0.7);padding-bottom:28px;">',
-    `${who.html}. Confirm this address belongs to you:`,
+    '<tr><td style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;font-size:15px;line-height:1.4;color:rgba(238,229,216,0.7);padding-bottom:20px;">',
+    `${who.html}. Enter this code to confirm this address belongs to you:`,
     '</td></tr>',
-    '<tr><td align="center" style="padding-bottom:28px;">',
-    `<a href="${verifyUrl}" style="display:inline-block;background:#ff5c30;color:#000000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:12px 24px;border-radius:6px;">Verify this email</a>`,
+    '<tr><td align="center" style="padding-bottom:16px;">',
+    `<p style="margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:32px;letter-spacing:0.28em;color:#eee5d8;">${code}</p>`,
+    '</td></tr>',
+    '<tr><td align="center" style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;font-size:14px;line-height:1.4;color:rgba(238,229,216,0.7);padding-bottom:28px;">',
+    `Or verify in one click: <a href="${verifyUrl}" style="color:#ff5c30;text-decoration:underline;">open this link</a>`,
     '</td></tr>',
     params.claimUrl ? claimSectionHtml(params.claimUrl) : '',
+    '<tr><td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5;color:rgba(238,229,216,0.45);padding-bottom:12px;">',
+    `This code and link expire ${escapeHtml(expiresLabel)}. If you didn't expect this, you can ignore it.`,
+    '</td></tr>',
     '<tr><td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5;color:rgba(238,229,216,0.45);">',
-    `This link expires ${escapeHtml(expiresLabel)}. If you didn't expect this, you can ignore it.`,
+    escapeHtml(autofill),
     '</td></tr>',
     '</table></td></tr></table>',
     '</body></html>',
@@ -81,10 +99,14 @@ export function buildHumanVerificationEmail(params: {
     '',
     `${who.text}.`,
     '',
-    `Verify this email: ${params.verifyUrl}`,
+    `Your code is ${params.code}`,
+    '',
+    `Or verify in one click: ${params.verifyUrl}`,
     '',
     ...(params.claimUrl ? claimSectionText(params.claimUrl) : []),
-    `This link expires ${expiresLabel}. If you didn't expect this, you can ignore it.`,
+    `This code and link expire ${expiresLabel}. If you didn't expect this, you can ignore it.`,
+    '',
+    autofill,
   ].join('\n');
 
   return { subject, html, text };

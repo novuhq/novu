@@ -155,6 +155,36 @@ export class VerifyAddressRequestDto {
   token: string;
 }
 
+/** Exactly one of `address` and `inviteToken`, plus the 6-digit code from the email. */
+export class VerifyAddressByCodeRequestDto {
+  @ApiProperty({ description: 'The 6-digit code from the verification email.' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(16)
+  code: string;
+
+  @ApiPropertyOptional({ description: 'The address the code was sent to. Omit when `inviteToken` is set.' })
+  @ValidateIf((body: VerifyAddressByCodeRequestDto) => !body.inviteToken)
+  @IsEmail()
+  @MaxLength(254)
+  address?: string;
+
+  @ApiPropertyOptional({ description: 'Invite link token. Omit when `address` is set.' })
+  @ValidateIf((body: VerifyAddressByCodeRequestDto) => !body.address)
+  @IsString()
+  @IsNotEmpty()
+  inviteToken?: string;
+
+  @ApiPropertyOptional({
+    description: 'The verification send this code should confirm. A code from another send is refused.',
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(40)
+  requestedAt?: string;
+}
+
 export class VerifyAddressResponseDto {
   @ApiProperty()
   verified: true;

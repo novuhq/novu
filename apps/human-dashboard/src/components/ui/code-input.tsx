@@ -1,6 +1,6 @@
 'use client';
 
-import { type ClipboardEvent, type KeyboardEvent, useRef } from 'react';
+import { type ClipboardEvent, type KeyboardEvent, useEffect, useRef } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -16,6 +16,8 @@ type CodeInputProps = {
   invalid?: boolean;
   disabled?: boolean;
   autoFocus?: boolean;
+  /** `lg` is the 56px boxes on the invite card. The default fits the sign-in form. */
+  size?: 'md' | 'lg';
   className?: string;
 };
 
@@ -29,9 +31,16 @@ export function CodeInput({
   invalid = false,
   disabled = false,
   autoFocus = false,
+  size = 'md',
   className,
 }: CodeInputProps) {
   const boxes = useRef<Array<HTMLInputElement | null>>([]);
+
+  useEffect(() => {
+    if (invalid && !disabled) {
+      boxes.current[0]?.focus();
+    }
+  }, [invalid, disabled]);
 
   function update(next: string, focusIndex: number) {
     const digits = next.replace(/\D/g, '').slice(0, length);
@@ -90,7 +99,7 @@ export function CodeInput({
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: a fieldset can't lay its boxes out with flex in every browser
-    <div role="group" aria-label={label} className={cn('flex gap-2', className)}>
+    <div role="group" aria-label={label} className={cn('flex gap-2', size === 'lg' && 'w-full sm:w-auto', className)}>
       {Array.from({ length }, (_, index) => (
         <input
           key={index}
@@ -110,8 +119,10 @@ export function CodeInput({
           autoFocus={autoFocus && index === 0}
           disabled={disabled}
           className={cn(
-            'size-11 rounded bg-background text-center font-mono text-lg text-foreground ring-1 ring-border-strong',
-            'focus-visible:outline-none focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-60',
+            'bg-background text-center font-mono text-foreground ring-1 focus-visible:outline-none focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-60',
+            size === 'lg'
+              ? 'h-12 max-w-14 min-w-0 flex-1 basis-0 rounded-lg bg-raised text-base font-medium ring-border sm:size-14 sm:flex-none sm:basis-auto'
+              : 'size-11 rounded text-lg ring-border-strong',
             invalid && 'ring-danger focus-visible:ring-danger'
           )}
         />

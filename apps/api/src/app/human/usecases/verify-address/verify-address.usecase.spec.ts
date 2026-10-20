@@ -3,6 +3,7 @@ import { HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InactiveHumanVerificationError } from '../../services/human-verification-token.service';
+import { ConfirmHumanAddress } from './confirm-human-address.service';
 import { VerifyAddressCommand } from './verify-address.command';
 import { VerifyAddress } from './verify-address.usecase';
 
@@ -26,10 +27,12 @@ describe('VerifyAddress', () => {
     const operatorService = { findForAgent: sinon.stub().resolves('nikita') };
     const usecase = new VerifyAddress(
       verificationTokens as never,
-      humanContactRepository as never,
-      agentRepository as never,
-      subscriberRepository as never,
-      operatorService as never
+      new ConfirmHumanAddress(
+        humanContactRepository as never,
+        agentRepository as never,
+        subscriberRepository as never,
+        operatorService as never
+      )
     );
 
     return { usecase, verificationTokens, humanContactRepository, subscriberRepository, agentRepository };

@@ -4,7 +4,7 @@ import type { ApiClient } from '../../api/client';
 import { addAgentEmailIntegration } from '../../api/setup';
 import { info, promptLine } from '../../cli-io';
 import { startWaitIndicator } from '../../spinner';
-import { parseEmailAddress, waitForVerifiedEmail } from '../link-channel';
+import { parseEmailAddress, waitForEmailCodeOrLink } from '../link-channel';
 import type { SetupOptions } from './operator';
 
 /**
@@ -79,21 +79,24 @@ export async function connectEmail(
     via: 'email',
     address: email,
   });
-  info(`Verification email sent to ${pc.bold(email)} (shown as ${sent.address}).`);
+  info(
+    `Verification email sent to ${pc.bold(email)} (shown as ${sent.address}). Enter the code here, or open the link.`
+  );
 
   const stopIndicator = startWaitIndicator(
     'Waiting for you to verify your email',
     'Ctrl-C detaches; resume with: npx @agentinbox/cli setup email'
   );
   try {
-    await waitForVerifiedEmail(
-      client,
+    await waitForEmailCodeOrLink(client, {
       subscriberId,
       agentIdentifier,
-      sent.requestedAt,
-      'you verify your email',
-      'Re-run `npx @agentinbox/cli setup email` to resend.'
-    );
+      requestedAt: sent.requestedAt,
+      address: email,
+      waitingFor: 'you verify your email',
+      timeoutHint: 'Re-run `npx @agentinbox/cli setup email` to resend.',
+      onCodeRejected: (message) => info(message),
+    });
   } finally {
     stopIndicator();
   }

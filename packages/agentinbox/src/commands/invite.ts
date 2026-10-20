@@ -16,9 +16,9 @@ import {
   isChannelName,
   issueTelegramSubscriberLinkWithRetry,
   parseEmailAddress,
+  waitForEmailCodeOrLink,
   waitForEndpoint,
   waitForVerifiedChannels,
-  waitForVerifiedEmail,
 } from './link-channel';
 
 export interface InviteOptions {
@@ -396,7 +396,7 @@ async function inviteEmail(
     return { contactId, linkedOn: [], alreadyLinked: false };
   }
 
-  await waitForEmailVerification(client, contactId, agentIdentifier, sent.requestedAt);
+  await waitForEmailVerification(client, contactId, agentIdentifier, email, sent.requestedAt);
 
   return { contactId, linkedOn: ['email'], alreadyLinked: false };
 }
@@ -415,6 +415,7 @@ async function waitForEmailVerification(
   client: ApiClient,
   contactId: string,
   agentIdentifier: string,
+  address: string,
   requestedAt: string
 ): Promise<void> {
   const stopIndicator = startWaitIndicator(
@@ -423,14 +424,15 @@ async function waitForEmailVerification(
   );
 
   try {
-    await waitForVerifiedEmail(
-      client,
-      contactId,
+    await waitForEmailCodeOrLink(client, {
+      subscriberId: contactId,
       agentIdentifier,
       requestedAt,
-      `${contactId} verify their email`,
-      `Re-run \`${CLI_COMMAND} contact invite ${contactId} --via email\` to resend.`
-    );
+      address,
+      waitingFor: `${contactId} verify their email`,
+      timeoutHint: `Re-run \`${CLI_COMMAND} contact invite ${contactId} --via email\` to resend.`,
+      onCodeRejected: (message) => info(message),
+    });
   } finally {
     stopIndicator();
   }

@@ -72,6 +72,7 @@ const ROUTES: readonly Route[] = [
   ['POST', '/v1/invites/default', '/v1/human/invites/default'],
   ['POST', '/v1/invites/decline', '/v1/human/invites/decline'],
   ['POST', '/v1/verify', '/v1/human/verify'],
+  ['POST', '/v1/verify-code', '/v1/human/verify-code'],
   [
     'GET',
     '/v1/agent-pictures/:environmentId/:agentId/:version',

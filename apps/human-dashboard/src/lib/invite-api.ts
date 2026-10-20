@@ -69,6 +69,8 @@ export type InviteErrorCode =
   | 'verification_cap'
   | 'verification_superseded'
   | 'verification_used'
+  | 'verification_code_invalid'
+  | 'verification_code_too_many_tries'
   | 'unknown';
 
 export type VerifyAddressResult = InviteSender & {
@@ -94,6 +96,8 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<InviteErrorCode>([
   'verification_cap',
   'verification_superseded',
   'verification_used',
+  'verification_code_invalid',
+  'verification_code_too_many_tries',
 ]);
 
 export class InviteRequestError extends Error {
@@ -160,6 +164,19 @@ export async function verifyAddress(apiUrl: string, token: string, signal?: Abor
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token }),
       signal,
+    },
+    'Failed to verify this email'
+  );
+}
+
+/** Confirms the invite's pending address with the 6-digit code from the email. */
+export async function verifyInviteCode(apiUrl: string, token: string, code: string): Promise<VerifyAddressResult> {
+  return request<VerifyAddressResult>(
+    `${apiUrl}/v1/verify-code`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inviteToken: token, code }),
     },
     'Failed to verify this email'
   );

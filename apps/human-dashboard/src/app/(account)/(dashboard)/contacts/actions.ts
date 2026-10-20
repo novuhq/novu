@@ -9,6 +9,7 @@ import { HumanApiError } from '@/lib/human-api-error';
 import {
   type ContactChannelVia,
   changeOperatorEmail,
+  confirmOperatorEmailCode,
   removeContact,
   setOperatorDefaultChannel,
 } from '@/lib/human-contacts-api';
@@ -121,8 +122,8 @@ export async function setDefaultChannelAction(via: ContactChannelVia): Promise<C
 }
 
 /**
- * Sends the operator's address a link to confirm it: a new one, the one they signed up with, or the one
- * still waiting for its link again. Agents keep the verified address until the new one is confirmed.
+ * Sends the operator's address a code to confirm it: a new one, the one they signed up with, or the one
+ * still waiting for its code again. Agents keep the verified address until the new one is confirmed.
  */
 export async function sendEmailLinkAction(address: string): Promise<ContactCardResult> {
   const account = await readSignedInAccount();
@@ -140,9 +141,40 @@ export async function sendEmailLinkAction(address: string): Promise<ContactCardR
 
     return { ok: true };
   } catch (error) {
-    console.error('Failed to send the email confirmation link', error);
+    console.error('Failed to send the email confirmation', error);
 
     return { ok: false, error: describeEmailError(error) };
+  } finally {
+    revalidatePath(CONTACTS_PATH);
+  }
+}
+
+export type ConfirmEmailCodeResult = { ok: true } | { ok: false; error: string; invalid: boolean };
+
+/** Confirms the operator's pending address with the 6-digit code from the email. */
+export async function confirmOperatorEmailCodeAction(code: string): Promise<ConfirmEmailCodeResult> {
+  const account = await readSignedInAccount();
+  if (!account) {
+    return { ok: false, error: SESSION_ENDED, invalid: false };
+  }
+
+  const digits = String(code ?? '').replace(/\D/g, '');
+  if (digits.length !== 6) {
+    return { ok: false, error: 'Enter the 6-digit code from the email.', invalid: true };
+  }
+
+  try {
+    await confirmOperatorEmailCode(account, digits);
+
+    return { ok: true };
+  } catch (error) {
+    console.error('Failed to confirm the email code', error);
+
+    return {
+      ok: false,
+      error: describeEmailError(error),
+      invalid: error instanceof HumanApiError && error.code === 'verification_code_invalid',
+    };
   } finally {
     revalidatePath(CONTACTS_PATH);
   }
@@ -170,11 +202,16 @@ function describeEmailError(error: unknown): string {
       return 'That’s already your email.';
     }
 
+    // A wrong code is a 401, which the generic helper hides so a dead session stays generic.
+    if (error.code === 'verification_code_invalid') {
+      return 'That code is wrong or has expired. Check the email, or send a new one.';
+    }
+
     // Without its own email channel the agent has nothing to send the link from.
     if (error.status === 404 && error.code === 'not_found') {
-      return 'Your agent has no email address to send the link from yet. Set it up on the Configure page.';
+      return 'Your agent has no email address to send from yet. Set it up on the Configure page.';
     }
   }
 
-  return describeError(error, 'Something went wrong while sending the link. Please try again.');
+  return describeError(error, 'Something went wrong while sending the code. Please try again.');
 }
