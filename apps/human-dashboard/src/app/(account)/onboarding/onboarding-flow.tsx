@@ -166,6 +166,7 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
                   host={host}
                   waitingMessage={view.waitingMessage}
                   channels={view.channels}
+                  channelSetup={view.channelSetup}
                   reach={view.reach}
                 />
               )}
