@@ -3,7 +3,7 @@ import * as z from 'zod';
 import { log } from '../node/main.ts';
 import { poll } from '../node/poll.ts';
 import { BoxStatus, DeletedBox, DoctorReport, decode, fromJson, needsBake, StateAnswer } from '../shared/contracts.ts';
-import { apiOrigin, BOX_CLI, boxOrigin, HOST } from '../shared/names.ts';
+import { apiOrigin, BOX_CLI, boxOrigin, HOST, isBoxName } from '../shared/names.ts';
 import { boxFetch, type FetchInit, failUnlessOk, hostBoxes, hostExists, readExec, type Token } from './cloud-http.ts';
 
 // A first bake takes 13 to 16 minutes on Cloudflare; a wake about 35 s, but the first restore of a snapshot 4 to 6
@@ -69,6 +69,7 @@ export interface CloudTarget {
 
 export function cloudTarget(options: CloudOptions): CloudTarget {
   const { box, token, deadline = Number.POSITIVE_INFINITY } = options;
+  if (!isBoxName(box)) throw new Error(`\`${box}\` is not a box name`);
   const origin = boxOrigin(box);
 
   const call = async (path: string, init: FetchInit = {}) => {

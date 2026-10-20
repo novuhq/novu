@@ -94,6 +94,9 @@ export class Box extends DurableObject<HostEnv> {
     const url = new URL(request.url);
     const box = boxOfHost(url.hostname);
     if (!box) return text(`not a box address: ${url.hostname}\n`, 404);
+    // Any host under the domain reaches a box, unauthenticated, so an unknown one must not be written to.
+    if (!url.pathname.startsWith('/__box/') && !(await this.ctx.storage.get('origin')))
+      return text(`no such box: ${box}\n`, 404);
     const route = `${request.method} ${url.pathname}`;
     const isStatePoll = route === 'GET /__box/state';
     if (!isStatePoll) this.#touch();
