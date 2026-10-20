@@ -682,6 +682,35 @@ export class ConversationActivityLedger {
     return this.activityRepository.countAgentMessages(environmentId, conversationId);
   }
 
+  /** True when this thread already has an agent message whose text contains `contentIncludes`. */
+  async hasAgentMessageContaining(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    platformThreadId: string;
+    contentIncludes: string;
+  }): Promise<boolean> {
+    const needle = params.contentIncludes.trim();
+    if (!needle) {
+      return false;
+    }
+
+    const existing = await this.activityRepository.findOne(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        _conversationId: params.conversationId,
+        platformThreadId: params.platformThreadId,
+        type: ConversationActivityTypeEnum.MESSAGE,
+        senderType: ConversationActivitySenderTypeEnum.AGENT,
+        content: { $regex: escapeRegExp(needle) },
+      },
+      ['_id']
+    );
+
+    return existing != null;
+  }
+
   async findAgentMessageByIdentifier(
     environmentId: string,
     conversationId: string,
@@ -1089,6 +1118,10 @@ export class ConversationActivityLedger {
  * `human:<interaction>:<conversation>:request`. The first thread, and every interaction that has
  * only one, keep the identifiers they always had.
  */
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function humanInteractionActivityIdentifier(
   params: PersistHumanInteractionActivityParams,
   suffix: 'request' | 'response'

@@ -13,11 +13,26 @@ export const UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY =
   "We couldn't process your message because of a temporary issue on our side. Please try again in a few minutes.";
 
 /**
+ * Stable prefix of the DKIM/SPF notice. Inbound copies of that notice (tracking
+ * pixels, quoted replies) still contain it, so the thread can recognize its own
+ * mail and send the notice only once.
+ */
+export const EMAIL_VERIFICATION_FAILED_NOTICE_MARKER = "We couldn't verify that this email really came from";
+
+/**
  * Shown when an inbound email failed DKIM/SPF verification. Must not use the
  * generic identity-miss copy — that would misattribute a spoofed From as
  * "unknown user" rather than an unverified sender.
  */
 export const UNRESOLVED_SUBSCRIBER_EMAIL_VERIFICATION_FAILED_REPLY = buildEmailVerificationFailedReply(undefined);
+
+export function isEmailVerificationFailedNotice(content: string | undefined | null): boolean {
+  if (!content) {
+    return false;
+  }
+
+  return content.includes(EMAIL_VERIFICATION_FAILED_NOTICE_MARKER);
+}
 
 export function buildMentionRequiredNoticeReply(params: { joinerName?: string; agentName?: string }): string {
   const handle = params.agentName?.trim();
@@ -65,7 +80,7 @@ function buildEmailVerificationFailedReply(senderEmail: string | undefined): str
   const from = senderEmail?.trim() || 'the address in the From header';
 
   return (
-    `We couldn't verify that this email really came from ${from} (DKIM/SPF checks failed), ` +
+    `${EMAIL_VERIFICATION_FAILED_NOTICE_MARKER} ${from} (DKIM/SPF checks failed), ` +
     "so this agent can't reply yet. Resend from a properly authenticated mailbox, or contact the team that owns this agent."
   );
 }
