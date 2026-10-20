@@ -9,8 +9,10 @@ const model = () => (process.env.ANTHROPIC_API_KEY ? anthropic(MODEL) : scripted
 /** Claude Haiku (scripted without `ANTHROPIC_API_KEY`) with every feature but HITL as a tool, plus attached images and PDFs. */
 export const aiSdkAgent = agent('ai-sdk-agent', {
   ...channelHandlers,
-  onMessage: async (message, ctx) =>
-    generateText({
+  onMessage: async (message, ctx) => {
+    if ((message.text ?? '').replace(/<@[^>]+>/g, '').trim().toLowerCase() === 'demo') return 'demo 123';
+
+    return generateText({
       model: model(),
       system: SYSTEM,
       messages: await hydrateUnreachableAttachmentUrls(toModelMessages(ctx)),
@@ -26,5 +28,6 @@ export const aiSdkAgent = agent('ai-sdk-agent', {
           }),
         ])
       ),
-    }),
+    });
+  },
 });
