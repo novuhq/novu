@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import {
+  AgentEmailInboxQuotaService,
   analyticsService,
   BulkCreateExecutionDetails,
   ComputeJobWaitDurationService,
@@ -23,6 +24,7 @@ import {
   InboundMailRequestLogger,
   InMemoryLRUCacheService,
   InvalidateCacheService,
+  isBullMqEnabled,
   LoggerModule,
   MetricsModule,
   NotificationPayloadService,
@@ -43,6 +45,7 @@ import {
 } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
+  CommunityOrganizationRepository,
   ControlValuesRepository,
   DalService,
   EnvironmentRepository,
@@ -70,6 +73,7 @@ import { ActiveJobsMetricService } from '../workflow/services';
 
 const DAL_MODELS = [
   AgentIntegrationRepository,
+  CommunityOrganizationRepository,
   EnvironmentRepository,
   EnvironmentVariableRepository,
   ExecutionDetailsRepository,
@@ -93,8 +97,13 @@ const dalService = {
   provide: DalService,
   useFactory: async () => {
     const service = new DalService();
+    const mongoUrl = process.env.MONGO_URL;
 
-    await service.connect(process.env.MONGO_URL!);
+    if (!mongoUrl) {
+      throw new Error('MONGO_URL is required to connect the worker to MongoDB');
+    }
+
+    await service.connect(mongoUrl);
 
     return service;
   },
@@ -118,6 +127,7 @@ const ANALYTICS_PROVIDERS = [
 ];
 
 const PROVIDERS = [
+  AgentEmailInboxQuotaService,
   analyticsService,
   BulkCreateExecutionDetails,
   cacheService,
@@ -142,7 +152,12 @@ const PROVIDERS = [
   CreateTenant,
   ProcessTenant,
   ...DAL_MODELS,
-  ActiveJobsMetricService,
+  /*
+   * Queue-depth metrics are read off BullMQ counters, so the collector only
+   * exists while BullMQ does. QueuesModule drops the ACTIVE_JOBS_METRIC
+   * providers it depends on under the same condition.
+   */
+  ...(isBullMqEnabled() ? [ActiveJobsMetricService] : []),
   ExecuteBridgeRequest,
   ExecuteFrameworkRequest,
   ExecuteStepResolverRequest,

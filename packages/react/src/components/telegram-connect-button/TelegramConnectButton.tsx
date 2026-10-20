@@ -1,13 +1,12 @@
 import React, { useMemo } from 'react';
 import { useNovu } from '../../hooks/NovuProvider';
 import { NovuUI, NovuUIOptions } from '../NovuUI';
-import { withRenderer } from '../Renderer';
 import { DefaultTelegramConnectButton, DefaultTelegramConnectButtonProps } from './DefaultTelegramConnectButton';
 
 export type TelegramConnectButtonProps = DefaultTelegramConnectButtonProps &
   Pick<NovuUIOptions, 'container' | 'appearance'>;
 
-const TelegramConnectButtonInternal = withRenderer<TelegramConnectButtonProps>((props) => {
+const TelegramConnectButtonInternal = (props: TelegramConnectButtonProps) => {
   const { container, appearance, ...defaultProps } = props;
   const novu = useNovu();
 
@@ -24,7 +23,7 @@ const TelegramConnectButtonInternal = withRenderer<TelegramConnectButtonProps>((
       <DefaultTelegramConnectButton {...defaultProps} />
     </NovuUI>
   );
-});
+};
 
 TelegramConnectButtonInternal.displayName = 'TelegramConnectButtonInternal';
 

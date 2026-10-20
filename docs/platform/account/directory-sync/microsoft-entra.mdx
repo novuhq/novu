@@ -1,0 +1,104 @@
+---
+title: 'Microsoft Entra ID directory sync'
+sidebarTitle: 'Microsoft Entra ID'
+description: 'Provision Novu users from Microsoft Entra ID with SCIM, using the tenant URL, secret token, and the same enterprise application as SAML.'
+---
+
+import DirectorySyncPauseAndRemove from "/snippets/directory-sync-pause-and-remove.mdx";
+
+<Note>
+  Directory sync is an Enterprise feature on [Novu Cloud](https://dashboard.novu.co). It sits under SSO on **Settings** > **Organization** > **Security**, which the organization **Owner** sees after we enable self-serve. Shared behavior is on [Directory sync](/platform/account/directory-sync). The enterprise application comes from [Microsoft Entra ID SSO](/platform/account/sso/microsoft-entra).
+</Note>
+
+Use the same non-gallery enterprise application you created for SAML. Entra pushes users to Novu over SCIM 2.0 on Microsoft's provisioning schedule. A new assignment often takes several minutes to appear.
+
+## Before you start
+
+- The [Entra SSO](/platform/account/sso/microsoft-entra) connection exists. It does not have to be activated. People can be provisioned before they are able to sign in.
+- The email domain is verified on that connection.
+- Someone who can open **Provisioning** on the enterprise application and assign users or groups.
+- The **SCIM endpoint URL** and **bearer token** from the Security tab after you select **Start configuration**.
+
+<Warning>
+  The bearer token is shown once. Paste it into **Secret Token** before you leave the page. **Generate new token** keeps the previous token working for 10 minutes. After that, **Test Connection** fails until Entra has the new secret.
+</Warning>
+
+Saving the URL and token does not by itself start the schedule. You also set **Provisioning Status** to **On**.
+
+## Configure provisioning in Entra
+
+<Steps>
+  <Step title="Set the mode to automatic">
+    In the enterprise application, select **Provisioning**. Set **Provisioning Mode** to **Automatic**.
+  </Step>
+  <Step title="Enter the admin credentials">
+    Under **Admin Credentials**:
+
+    | Entra field | Value from Novu |
+    | --- | --- |
+    | Tenant URL | SCIM endpoint URL |
+    | Secret Token | Bearer token |
+
+    Select **Test Connection**, then **Save**. Do not turn provisioning on until this test succeeds.
+  </Step>
+  <Step title="Check the attribute mappings">
+    Expand **Mappings** and open **Provision Microsoft Entra ID Users**. Confirm these targets:
+
+    | SCIM target | Entra source |
+    | --- | --- |
+    | `userName` | Usually `userPrincipalName` |
+    | `name.givenName` | `givenName` |
+    | `name.familyName` | `surname` |
+    | `emails[type eq "work"].value` | `mail` |
+    | `active` | Account enabled state |
+
+    There is no target named `email`. `emails[type eq "work"].value` is the row that fills the SCIM `emails` value Novu reads. Its source has to be `mail`, the person's primary mail address. Novu does not fall back to `userName` when that value looks like an email. If `mail` is empty, provisioning fails for that user. `active` is what marks the account enabled or deactivated.
+  </Step>
+  <Step title="Assign who is provisioned and turn it on">
+    Assign the users and groups that should be provisioned. This can be the same assignment you made for SAML. Under **Settings**, set **Scope** to **Sync only assigned users and groups**. Then set **Provisioning Status** to **On** and select **Save**.
+
+    With that scope, an account that exists in the tenant and is not assigned is not provisioned. **Sync all users and groups** ignores the assignment and can push the rest of the directory.
+  </Step>
+</Steps>
+
+## What Novu stores
+
+| SCIM attribute | Novu user field |
+| --- | --- |
+| `userName` | Username / primary identifier |
+| `emails[0].value` | Email address. Entra sends this as `emails[type eq "work"].value`. |
+| `name.givenName` | First name |
+| `name.familyName` | Last name |
+| `active` | Enabled or deactivated |
+
+Other Entra attributes are not applied from the Security tab. Group assignment does not set Novu roles. Ask us if you need an Entra group to map to Owner, Admin, Author, or Viewer. Only direct membership would count.
+
+## Test a user
+
+Assign a user whose email is on a verified domain, then watch the test step on the Security tab. It lists email, name, time, and **Active** or **Deprovisioned**.
+
+**Complete** only closes the wizard. Provisioning is already running once **Provisioning Status** is **On** and the connection test has been saved.
+
+## When someone leaves
+
+Remove them from the application assignment, or disable the account in Entra, and wait for the next provisioning cycle. Novu deactivates the account and revokes sessions. The account is not deleted. A SCIM delete is treated the same way.
+
+If they were also invited from **Settings** > **Team**, that membership remains until you remove it there.
+
+<DirectorySyncPauseAndRemove />
+
+## If Entra provisioning fails
+
+<AccordionGroup>
+  <Accordion title="Test Connection fails">
+    Compare **Tenant URL** and **Secret Token** with the Security tab. Generate a new token if you left the page or the 10-minute overlap has ended.
+  </Accordion>
+  <Accordion title="Provisioning is on and the user never appears">
+    Confirm they are assigned to this enterprise application, their `mail` address is on a verified domain, and `emails[type eq "work"].value` is mapped from `mail`. Then wait for Microsoft's cycle. The provisioning logs on the Entra application show the skip reason.
+  </Accordion>
+  <Accordion title="The user was removed and can still sign in to Novu">
+    The cycle may not have run. After it has, check **Settings** > **Team** for an invited membership that directory sync does not remove.
+  </Accordion>
+</AccordionGroup>
+
+Email [support@novu.co](mailto:support@novu.co) with the error from Entra's provisioning logs and the user's email if the connection test succeeds and the user still fails to provision.

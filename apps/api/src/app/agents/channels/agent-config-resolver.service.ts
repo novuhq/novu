@@ -6,6 +6,7 @@ import {
   RotatingConnectionTokenService,
 } from '@novu/application-generic';
 import {
+  type AgentInboxReach,
   AgentIntegrationEntity,
   AgentIntegrationRepository,
   AgentRepository,
@@ -16,7 +17,12 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { type AgentAnalyticsSource, AgentSubscriberAccessEnum, EmailProviderIdEnum } from '@novu/shared';
+import {
+  type AgentAnalyticsSource,
+  AgentReplyPolicyEnum,
+  AgentSubscriberAccessEnum,
+  isAgentInboxProvider,
+} from '@novu/shared';
 import axios from 'axios';
 import type { WellKnownEmoji } from 'chat';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
@@ -56,6 +62,13 @@ export interface ResolvedAgentConfig {
   environmentId: string;
   organizationId: string;
   isKeyless: boolean;
+  /**
+   * The Human relay is delivery infrastructure. Inbound turns skip Novu plan
+   * limits so a signed-up Human user never sees an upgrade card.
+   */
+  isHumanRelay: boolean;
+  /** Who can write to a Human relay: anyone, or only its contacts. Set for Human relays only. */
+  inboxReach?: AgentInboxReach;
   isManaged: boolean;
   agentId: string;
   agentIdentifier: string;
@@ -84,6 +97,7 @@ export interface ResolvedAgentConfig {
    * so inbound webhooks keep working until the backfill migration runs.
    */
   subscriberAccess: AgentSubscriberAccessEnum;
+  replyPolicy: AgentReplyPolicyEnum;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
@@ -244,7 +258,7 @@ export class AgentConfigResolver {
     // ("Enable email inbox" toggle in the dashboard). When false the email channel
     // for this agent is disabled - reject resolve here so both inbound webhook and
     // outbound chat paths fail fast with a clear error.
-    if (integration.providerId === EmailProviderIdEnum.NovuAgent && integration.active === false) {
+    if (isAgentInboxProvider(integration.providerId) && integration.active === false) {
       throw new UnprocessableEntityException(`Email channel is disabled for agent ${agentId}`);
     }
 
@@ -327,6 +341,8 @@ export class AgentConfigResolver {
     // now recorded only when a genuine, non-bot user message is dispatched, in
     // `AgentInboundHandler.handle` (after the bot-author filter).
 
+    const isHumanRelay = agent.runtime === 'human_relay';
+
     return {
       platform,
       credentials,
@@ -334,6 +350,8 @@ export class AgentConfigResolver {
       environmentId,
       organizationId,
       isKeyless: isKeylessOrganization(organizationId),
+      isHumanRelay,
+      ...(isHumanRelay ? { inboxReach: agent.reach ?? 'anyone' } : {}),
       isManaged: agent.runtime === 'managed' && !!agent.managedRuntime,
       agentId: agent._id,
       agentIdentifier: agent.identifier,
@@ -343,7 +361,7 @@ export class AgentConfigResolver {
       providerId: integration.providerId,
       // Human-relay messages are utility traffic between a person and their own
       // agents — never consumer-facing web chat — so they always ship unbranded.
-      removeNovuBranding: agent.runtime === 'human_relay' ? true : await this.resolveRemoveNovuBranding(organizationId),
+      removeNovuBranding: isHumanRelay ? true : await this.resolveRemoveNovuBranding(organizationId),
       acknowledgeOnReceived: agent.behavior?.acknowledgeOnReceived !== false,
       reactionOnResolved: await resolveReaction(
         agent.behavior?.reactionOnResolved,
@@ -351,6 +369,7 @@ export class AgentConfigResolver {
         this.logger
       ),
       subscriberAccess: agent.behavior?.subscriberAccess ?? AgentSubscriberAccessEnum.OPEN,
+      replyPolicy: agent.behavior?.replyPolicy ?? AgentReplyPolicyEnum.AUTO_REPLY,
       bridgeUrl: agent.bridgeUrl,
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,

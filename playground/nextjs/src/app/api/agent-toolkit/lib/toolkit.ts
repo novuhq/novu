@@ -1,6 +1,5 @@
-import type { DeferredToolCall, HumanDecision } from '@novu/agent-toolkit/ai-sdk';
+import type { AiSdkToolSet, DeferredToolCall, HumanDecision } from '@novu/agent-toolkit/ai-sdk';
 import { createNovuAgentToolkit } from '@novu/agent-toolkit/ai-sdk';
-import { type ToolSet, tool } from 'ai';
 import { z } from 'zod';
 
 export type PendingApproval = {
@@ -21,8 +20,10 @@ const refundSchema = z.object({
   reason: z.string().describe('The reason for the refund.'),
 });
 
-function buildIssueRefundTool() {
-  return tool({
+// Typed as the toolkit's tool type instead of built with `tool()` from this app's `ai`: comparing two `ai` major
+// versions' tool types is "excessively deep" (TS2589) when the toolkit resolves a different `ai` than the app.
+function buildIssueRefundTool(): AiSdkToolSet[string] {
+  return {
     description: 'Issue a refund to a customer for a specific order.',
     inputSchema: refundSchema,
     execute: async (args: z.infer<typeof refundSchema>) => {
@@ -35,7 +36,7 @@ function buildIssueRefundTool() {
         processedAt: new Date().toISOString(),
       };
     },
-  });
+  };
 }
 
 export async function getToolkit() {
@@ -53,13 +54,13 @@ export async function getToolkit() {
   return toolkitPromise;
 }
 
-export async function buildRefundTools(): Promise<ToolSet> {
+export async function buildRefundTools(): Promise<AiSdkToolSet> {
   const toolkit = await getToolkit();
 
   const issueRefund = buildIssueRefundTool();
 
-  const guarded = toolkit.requireHumanInput(
-    { issue_refund: issueRefund as ToolSet[string] },
+  return toolkit.requireHumanInput(
+    { issue_refund: issueRefund },
     {
       workflowId: process.env.NOVU_HITL_WORKFLOW_ID ?? 'refund-approval',
       subscribers: [process.env.NOVU_SUBSCRIBER_ID ?? 'demo-subscriber'],
@@ -73,8 +74,6 @@ export async function buildRefundTools(): Promise<ToolSet> {
       },
     }
   );
-
-  return guarded;
 }
 
 export async function resolveApproval(

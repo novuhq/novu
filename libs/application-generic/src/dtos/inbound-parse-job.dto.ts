@@ -53,7 +53,7 @@ export interface IInboundParseDataDto {
   spf: string;
   spamScore: number;
   language: string;
-  cc: any[];
+  cc: ITo[];
   attachments?: IInboundParseAttachment[];
   connection: IConnection;
   envelopeFrom: IEnvelopeFrom;
@@ -71,7 +71,7 @@ export interface IInboundParseDataDto {
   requestLogId?: string;
 }
 
-export interface IHeaders {
+export interface IHeaders extends Record<string, string | string[]> {
   'content-type': string;
   from: string;
   to: string;
@@ -121,8 +121,8 @@ export interface IConnection {
   clientHostname: string;
   openingCommand: string;
   hostNameAppearsAs: string;
-  xClient: any;
-  xForward: any;
+  xClient: unknown;
+  xForward: unknown;
   transmissionType: string;
   tlsOptions: ITlsOptions;
   envelope: IEnvelope;

@@ -133,7 +133,7 @@ export const PreferencesRow = (props: {
             class={style({
               key: 'workflowContainerRight__icon',
               className:
-                'nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180',
+                'nt-text-foreground-alpha-600 nt-transition-transform nt-duration-base data-[open=true]:nt-rotate-180',
               context: { preference: props.preference } satisfies Parameters<
                 InboxAppearanceCallback['workflowContainerRight__icon']
               >[0],

@@ -13,8 +13,7 @@ import {
   DialogPortal,
   DialogTitle,
 } from '@/components/primitives/dialog';
-import { SUPPORT_EMAIL } from '@/config';
-import { usePlainChat } from '@/hooks/use-plain-chat';
+import { useContactSupport } from '@/hooks/use-contact-support';
 
 export type PlanLimitUpgradeDialogProps = {
   open: boolean;
@@ -50,7 +49,7 @@ export function PlanLimitUpgradeDialog({
   utmCampaign,
 }: PlanLimitUpgradeDialogProps) {
   const planUpgradeClick = usePlanUpgradeClick(telemetrySource, utmCampaign);
-  const { isLiveChatVisible, showPlainLiveChat } = usePlainChat();
+  const contactSupport = useContactSupport();
 
   const handleUpgradeClick = () => {
     onOpenChange(false);
@@ -59,14 +58,7 @@ export function PlanLimitUpgradeDialog({
 
   const handleContactSupportClick = () => {
     onOpenChange(false);
-
-    if (isLiveChatVisible) {
-      showPlainLiveChat();
-
-      return;
-    }
-
-    window.location.href = `mailto:${SUPPORT_EMAIL}`;
+    contactSupport();
   };
 
   const handleContinueAnyway = () => {

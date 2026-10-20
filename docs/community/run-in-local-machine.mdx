@@ -126,6 +126,7 @@ If you used `npm run setup:project` or Jarvis, default `.env` files are created 
   <Accordion title="Dashboard">
     - `VITE_API_HOSTNAME` - API base URL (default: `http://localhost:3000`)
     - `VITE_WEBSOCKET_HOSTNAME` - WebSocket base URL (default: `http://localhost:3002`)
+    - `VITE_WEBSOCKET_TYPE` - Optional. Forces the Inbox realtime transport: `self-hosted` (socket.io) or `cloud` (PartySocket). Leave unset to auto-detect from the WebSocket URL; most self-hosted deployments do not need to set this.
     - `VITE_DASHBOARD_URL` - Dashboard URL (default local dev: `http://localhost:4201`)
     - `VITE_SELF_HOSTED` - Set when running a self-hosted deployment
     - `VITE_SENTRY_DSN`, `VITE_LAUNCH_DARKLY_CLIENT_SIDE_ID` - Optional telemetry and feature-flag settings

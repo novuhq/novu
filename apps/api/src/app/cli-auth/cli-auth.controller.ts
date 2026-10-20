@@ -35,7 +35,7 @@ export class CliAuthController {
   async createCliDeviceSession(
     @Body() body: CreateCliDeviceSessionRequestDto
   ): Promise<CreateCliDeviceSessionResponseDto> {
-    return this.cliDeviceSessionService.create({ name: body.name });
+    return this.cliDeviceSessionService.create({ name: body.name, machineName: body.machineName });
   }
 
   @Post('/:deviceCode/poll')

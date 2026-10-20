@@ -3,7 +3,6 @@ import React, { useMemo } from 'react';
 import { useNovu } from '../../hooks/NovuProvider';
 import { ReactSubscriptionAppearance } from '../../utils/types';
 import { NovuUI, NovuUIOptions } from '../NovuUI';
-import { withRenderer } from '../Renderer';
 import { DefaultSubscription, DefaultSubscriptionProps } from './DefaultSubscription';
 
 type BaseSubscriptionProps = {
@@ -23,7 +22,7 @@ type SubscriptionPropsWithoutChildren = {
 
 export type SubscriptionProps = SubscriptionPropsWithChildren | SubscriptionPropsWithoutChildren;
 
-const SubscriptionInternal = withRenderer<SubscriptionProps>((props) => {
+const SubscriptionInternal = (props: SubscriptionProps) => {
   const { container, localization, appearance, ...defaultSubscriptionProps } = props;
   const novu = useNovu();
 
@@ -62,7 +61,7 @@ const SubscriptionInternal = withRenderer<SubscriptionProps>((props) => {
       <DefaultSubscription {...defaultSubscriptionProps} />
     </NovuUI>
   );
-});
+};
 
 SubscriptionInternal.displayName = 'SubscriptionInternal';
 

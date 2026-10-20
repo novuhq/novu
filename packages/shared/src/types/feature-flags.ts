@@ -37,6 +37,23 @@ export enum FeatureFlagsKeysEnum {
   IS_EVENT_QUOTA_THROTTLER_ENABLED = 'IS_EVENT_QUOTA_THROTTLER_ENABLED',
   IS_NEW_MESSAGES_API_RESPONSE_ENABLED = 'IS_NEW_MESSAGES_API_RESPONSE_ENABLED',
   IS_USAGE_ALERTS_ENABLED = 'IS_USAGE_ALERTS_ENABLED',
+  /** Stops the usage-alerts cron before it reads usage. Default off, so the cron runs. */
+  IS_USAGE_ALERTS_CRON_DISABLED = 'IS_USAGE_ALERTS_CRON_DISABLED',
+  /** Global: the usage-alerts cron evaluates and logs every alert it would send, but sends none and writes no alert claims. */
+  IS_USAGE_ALERTS_DRY_RUN_ENABLED = 'IS_USAGE_ALERTS_DRY_RUN_ENABLED',
+  /**
+   * Organization-scoped: workflow-run usage limits (on-demand limit, pause at limit, alert settings) in the
+   * dashboard and `/billing/usage-limits`, paid-tier enforcement at the limit, and the usage-alerts cron honoring
+   * those settings.
+   */
+  IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED = 'IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED',
+  /**
+   * Organization-scoped, read only when subscriber-process jobs are enqueued (`TriggerBase`): moves the usage
+   * counter increment from enqueue to workflow-run creation (`CreateNotificationJobs`), matching what ClickHouse
+   * counts. Transitional (NV-8853): remove with the enqueue-time increment and the job stamp once on for all
+   * organizations and the subscriber-process queue has drained.
+   */
+  IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED = 'IS_USAGE_COUNTER_WORKER_INCREMENT_ENABLED',
   IS_USE_MERGED_DIGEST_ID_ENABLED = 'IS_USE_MERGED_DIGEST_ID_ENABLED',
   IS_V2_ENABLED = 'IS_V2_ENABLED',
 
@@ -86,7 +103,10 @@ export enum FeatureFlagsKeysEnum {
   /** When true, integration lookup may match across environments in the same organization (opt-in for regressed customers). Default is false (environment-scoped). */
   IS_CROSS_ENVIRONMENT_INTEGRATION_ENABLED = 'IS_CROSS_ENVIRONMENT_INTEGRATION_ENABLED',
   IS_PREFERENCE_FETCH_OPTIMIZATION_ENABLED = 'IS_PREFERENCE_FETCH_OPTIMIZATION_ENABLED',
+  /** Platform-wide billing usage (Stripe usage records) source. Keep off until shadow mode proves parity. */
   IS_BILLING_USAGE_CLICKHOUSE_ENABLED = 'IS_BILLING_USAGE_CLICKHOUSE_ENABLED',
+  /** Organization-scoped usage source for the event quota check and dashboard subscription usage. */
+  IS_BILLING_QUOTA_CLICKHOUSE_ENABLED = 'IS_BILLING_QUOTA_CLICKHOUSE_ENABLED',
   IS_BILLING_USAGE_CLICKHOUSE_SHADOW_ENABLED = 'IS_BILLING_USAGE_CLICKHOUSE_SHADOW_ENABLED',
   IS_BILLING_USAGE_DETAILED_DIAGNOSTICS_ENABLED = 'IS_BILLING_USAGE_DETAILED_DIAGNOSTICS_ENABLED',
   IS_AI_WORKFLOW_GENERATION_ENABLED = 'IS_AI_WORKFLOW_GENERATION_ENABLED',
@@ -208,6 +228,14 @@ export enum FeatureFlagsKeysEnum {
   IS_WORKFLOW_AGENT_ASSIGNMENT_ENABLED = 'IS_WORKFLOW_AGENT_ASSIGNMENT_ENABLED',
   /** Enable per-provider content overrides on chat steps (Slack schema, free-form elsewhere). */
   IS_CHAT_PROVIDER_OVERRIDES_ENABLED = 'IS_CHAT_PROVIDER_OVERRIDES_ENABLED',
+  /**
+   * Show per-integration content overrides on chat and tool steps in the dashboard. Stored
+   * integration overrides are always applied at send time. Create the boolean in LaunchDarkly
+   * for cloud, or set `VITE_IS_INTEGRATION_CONTENT_OVERRIDES_ENABLED` when self-hosted.
+   */
+  IS_INTEGRATION_CONTENT_OVERRIDES_ENABLED = 'IS_INTEGRATION_CONTENT_OVERRIDES_ENABLED',
+  /** Enable per-provider content overrides on push steps (FCM/Expo schemas, free-form elsewhere). */
+  IS_PUSH_PROVIDER_OVERRIDES_ENABLED = 'IS_PUSH_PROVIDER_OVERRIDES_ENABLED',
 
   /**
    * When true (default), the deprecated per-subscriber chat OAuth routes require
@@ -218,16 +246,7 @@ export enum FeatureFlagsKeysEnum {
    */
   IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED = 'IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED',
 
-  /**
-   * Route job delays longer than the SQS 900s per-message cap through
-   * EventBridge Scheduler instead of BullMQ. Only consulted once
-   * `QUEUE_BACKEND_MODE` has SQS as the primary backend; when false (default)
-   * long delays keep going to BullMQ.
-   */
-  IS_EVENTBRIDGE_SCHEDULER_ENABLED = 'IS_EVENTBRIDGE_SCHEDULER_ENABLED',
-
   // String flags
-  QUEUE_BACKEND_MODE = 'QUEUE_BACKEND_MODE', // Values: "bullmq" | "shadow" | "live" | "complete"
   USAGE_REPORT_TRIGGER_SECRET = 'USAGE_REPORT_TRIGGER_SECRET',
   USAGE_REPORT_OVERRIDE_EMAIL = 'USAGE_REPORT_OVERRIDE_EMAIL',
 
@@ -253,15 +272,14 @@ export enum FeatureFlagsKeysEnum {
   MAX_DOMAINS_LIMIT_NUMBER = 'MAX_DOMAINS_LIMIT_NUMBER',
   MAX_AGENTS_LIMIT_NUMBER = 'MAX_AGENTS_LIMIT_NUMBER',
   MAX_CUSTOM_EMAIL_DOMAINS_NUMBER = 'MAX_CUSTOM_EMAIL_DOMAINS_NUMBER',
+  /**
+   * When greater than 0, stands in for the included events under an on-demand limit above them,
+   * replaces the tier-derived usage-alert cap otherwise, and lowers the candidate query to 75% of
+   * this value. 0 keeps the real cap. Set it in the staging environment only.
+   */
+  USAGE_ALERTS_ALLOWANCE_OVERRIDE_NUMBER = 'USAGE_ALERTS_ALLOWANCE_OVERRIDE_NUMBER',
   IS_ANALYTICS_PAGE_ENABLED = 'IS_ANALYTICS_PAGE_ENABLED',
   IS_LEGACY_SELECTOR_BUTTON_VISIBLE = 'IS_LEGACY_SELECTOR_BUTTON_VISIBLE',
-}
-
-export enum QueueBackendMode {
-  BULLMQ = 'bullmq',
-  SHADOW = 'shadow',
-  LIVE = 'live',
-  COMPLETE = 'complete',
 }
 
 export type FeatureFlags = {

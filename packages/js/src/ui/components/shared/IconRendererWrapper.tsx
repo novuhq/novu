@@ -15,7 +15,7 @@ export const IconRendererWrapper = (props: IconRendererWrapperProps) => {
 
   return (
     <Show when={customRenderer()} fallback={props.fallback}>
-      <ExternalElementRenderer render={(el) => customRenderer()!(el, { class: props.class })} />
+      {(renderer) => <ExternalElementRenderer render={renderer()} args={[{ class: props.class }]} />}
     </Show>
   );
 };

@@ -247,6 +247,62 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(replyHeaders.Authorization).toBe('ApiKey test-secret-key');
   });
 
+  it('streams a returned reply stream over SSE, then sends the reply marked as streamed', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async function* () {
+        yield 'Hello ';
+        yield 'world';
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: (key: string) => (key === 'accept' ? 'text/event-stream, application/json' : null),
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+          transformStreamResponse: (res: any) => res,
+        };
+      },
+    });
+
+    const result = await handler.createHandler()();
+
+    expect(result.headers['content-type']).toBe('text/event-stream');
+    expect(result.headers['access-control-allow-origin']).toBeUndefined();
+    const live = (await new Response(result.body).text())
+      .split('\n\n')
+      .filter((frame) => frame.startsWith('data: '))
+      .map((frame) => JSON.parse(frame.replace(/^data: /, '')));
+    expect(live.map((envelope) => envelope.event.type)).toEqual([
+      'message-start',
+      'message-delta',
+      'message-delta',
+      'message-end',
+    ]);
+    expect(live.every((envelope) => envelope.conversationId === 'conv-456')).toBe(true);
+
+    const sentMessages = () =>
+      ingestBatchesFromFetch(fetchMock)
+        .flatMap((batch) => batch.events ?? [])
+        .map((envelope) => envelope.event)
+        .filter((event) => event.type === 'message');
+    await vi.waitFor(() => expect(sentMessages()).toHaveLength(1));
+    expect(sentMessages()[0]).toMatchObject({
+      messageId: live[0].event.messageId,
+      streamed: true,
+      content: { markdown: 'Hello world' },
+    });
+  });
+
   it('should return 404 for unknown agent', async () => {
     const handler = new NovuRequestHandler({
       frameworkName: 'test',
@@ -1920,6 +1976,106 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(JSON.parse(result.body).status).toBe('ack');
   });
 
+  it('should dispatch onMessageUpdated with previousMessage on ctx', async () => {
+    let capturedText = '';
+    let capturedPrevious = '';
+    let capturedEvent = '';
+
+    const testBot = agent('test-bot', {
+      onMessage: async () => {},
+      onMessageUpdated: async (message, ctx) => {
+        capturedText = message.text;
+        capturedPrevious = ctx.previousMessage?.text ?? '';
+        capturedEvent = ctx.event;
+        await ctx.reply(`updated to ${message.text}`);
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          event: 'onMessageUpdated',
+          previousMessage: {
+            text: 'where is order 1234?',
+            platformMessageId: 'msg-789',
+            author: { userId: 'u1', fullName: 'Alice', userName: 'alice', isBot: false },
+            timestamp: new Date().toISOString(),
+          },
+          message: {
+            text: 'where is order 4321?',
+            platformMessageId: 'msg-789',
+            author: { userId: 'u1', fullName: 'Alice', userName: 'alice', isBot: false },
+            timestamp: new Date().toISOString(),
+          },
+        });
+        const url = new URL(
+          `http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessageUpdated`
+        );
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    const result = await handler.createHandler()();
+    expect(result.status).toBe(200);
+    expect(capturedEvent).toBe('onMessageUpdated');
+    expect(capturedText).toBe('where is order 4321?');
+    expect(capturedPrevious).toBe('where is order 1234?');
+  });
+
+  it('should dispatch onMessageDeleted with the removed message', async () => {
+    let capturedId = '';
+
+    const testBot = agent('test-bot', {
+      onMessage: async () => {},
+      onMessageDeleted: async (message, ctx) => {
+        capturedId = message.platformMessageId;
+        await ctx.reply('cancelled');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          event: 'onMessageDeleted',
+          message: {
+            text: 'where is order 1234?',
+            platformMessageId: 'msg-789',
+            author: { userId: 'u1', fullName: 'Alice', userName: 'alice', isBot: false },
+            timestamp: new Date().toISOString(),
+          },
+        });
+        const url = new URL(
+          `http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessageDeleted`
+        );
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    const result = await handler.createHandler()();
+    expect(result.status).toBe(200);
+    expect(capturedId).toBe('msg-789');
+  });
+
   it('should silently skip onReaction when no handler registered', async () => {
     const testBot = agent('test-bot', {
       onMessage: async () => {},
@@ -2541,11 +2697,12 @@ describe('agent dispatch via NovuRequestHandler', () => {
     });
 
     await handler.createHandler()();
-    await vi.waitFor(() => expect(errorSpy).toHaveBeenCalled());
 
-    const logged = errorSpy.mock.calls[0].join(' ');
-    expect(logged).toContain('[agent:test-bot] Turn failed (onMessage): Delivery failed: Bad Gateway');
-    expect(logged).not.toContain('<p>error</p>');
+    const logged = () => errorSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+    await vi.waitFor(() =>
+      expect(logged()).toContain('[agent:test-bot] Turn failed (onMessage): Delivery failed: Bad Gateway')
+    );
+    expect(logged()).not.toContain('<p>error</p>');
 
     errorSpy.mockRestore();
   });
@@ -2975,6 +3132,66 @@ describe('tool approval', () => {
       replyBodies.find((p) => p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev'))
     ).toBeUndefined();
   });
+
+  it.each([
+    [
+      true,
+      [
+        {
+          type: 'tool-use-result',
+          toolUseId: 'tc',
+          content: [
+            { type: 'text', text: 'Tool "get_weather" approved' },
+            { type: 'json', value: null },
+          ],
+        },
+      ],
+    ],
+    [false, []],
+  ])(
+    'records a tool result for agent() only when the gated tool was approved (approved=%s)',
+    async (approved, expectedResults) => {
+      const posts: any[] = [];
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (_url, init: any) => {
+          posts.push(JSON.parse(init.body));
+
+          return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+        })
+      );
+
+      await dispatchAgentEvent({
+        agent: agent('a', {
+          onMessage: () => undefined,
+          onToolApproval: (decision) => (decision.approved ? 'Sunny in Berlin' : 'Skipped'),
+        }),
+        event: 'onAction',
+        bridge: approvalBridge({
+          event: 'onAction',
+          message: null,
+          history: [
+            {
+              role: 'agent',
+              type: 'tool_approval_request',
+              content: '',
+              toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'get_weather', input: { city: 'Berlin' } },
+              createdAt: '1',
+            },
+          ],
+          action: { id: buildApprovalActionId(approved ? 'approve' : 'deny', 'tc'), sourceMessageId: 'm_prev' },
+        }),
+        secretKey: 's',
+      });
+
+      const results = posts
+        .flatMap((post) => post.events ?? [])
+        .filter((envelope) => envelope.event.type === 'tool-use-result')
+        .map((envelope) => envelope.event);
+      // The reply text ('Sunny in Berlin') must not leak into the recorded tool output.
+      expect(results).toEqual(expectedResults);
+    }
+  );
 
   it('routes a HITL tool-gate settlement to onToolApproval from humanResponse', async () => {
     const seen: { decision?: { approved: boolean; toolCall: unknown } } = {};

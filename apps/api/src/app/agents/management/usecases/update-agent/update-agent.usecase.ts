@@ -1,8 +1,8 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { assertSafeOutboundUrl, PinoLogger, resolvePublicAddresses, SsrfBlockedError } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { EmailProviderIdEnum, EnvironmentTypeEnum } from '@novu/shared';
-import type { ClientSession } from 'mongoose';
+import { AgentRepository, EnvironmentRepository } from '@novu/dal';
+import { EnvironmentTypeEnum } from '@novu/shared';
+import { SyncAgentEmailSenderName } from '../../../email/sync-agent-email-sender-name.service';
 import type { AgentResponseDto, AgentRuntimeConfigResponseDto } from '../../../shared/dtos';
 import { toAgentResponse } from '../../../shared/mappers/agent-response.mapper';
 import { GetAgentRuntimeConfigCommand } from '../get-agent-runtime-config/get-agent-runtime-config.command';
@@ -14,8 +14,7 @@ export class UpdateAgent {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly environmentRepository: EnvironmentRepository,
-    private readonly agentIntegrationRepository: AgentIntegrationRepository,
-    private readonly integrationRepository: IntegrationRepository,
+    private readonly syncAgentEmailSenderName: SyncAgentEmailSenderName,
     private readonly getAgentRuntimeConfigUsecase: GetAgentRuntimeConfig,
     private readonly logger: PinoLogger
   ) {
@@ -26,7 +25,8 @@ export class UpdateAgent {
     const hasBehaviorFields =
       command.behavior?.acknowledgeOnReceived !== undefined ||
       command.behavior?.reactionOnResolved !== undefined ||
-      command.behavior?.subscriberAccess !== undefined;
+      command.behavior?.subscriberAccess !== undefined ||
+      command.behavior?.replyPolicy !== undefined;
 
     const hasGeneralFields =
       command.name !== undefined ||
@@ -82,62 +82,24 @@ export class UpdateAgent {
       throw new ForbiddenException('System human-relay agents cannot be modified.');
     }
 
-    const $set: Record<string, string | boolean | null> = {};
+    const $set = this.buildUpdateSet(command);
 
-    if (command.name !== undefined) {
-      $set.name = command.name;
-    }
-
-    if (command.description !== undefined) {
-      $set.description = command.description;
-    }
-
-    if (command.active !== undefined) {
-      $set.active = command.active;
-    }
-
-    if (hasBehaviorFields) {
-      if (command.behavior!.acknowledgeOnReceived !== undefined) {
-        $set['behavior.acknowledgeOnReceived'] = command.behavior!.acknowledgeOnReceived;
-      }
-      if (command.behavior!.reactionOnResolved !== undefined) {
-        $set['behavior.reactionOnResolved'] = command.behavior!.reactionOnResolved;
-      }
-      if (command.behavior!.subscriberAccess !== undefined) {
-        $set['behavior.subscriberAccess'] = command.behavior!.subscriberAccess;
-      }
-    }
-
-    if (command.bridgeUrl !== undefined) {
-      $set.bridgeUrl = command.bridgeUrl;
-    }
-
-    if (command.devBridgeUrl !== undefined) {
-      $set.devBridgeUrl = command.devBridgeUrl;
-    }
-
-    if (command.devBridgeActive !== undefined) {
-      $set.devBridgeActive = command.devBridgeActive;
-    }
-
-    const nameChanged = command.name !== undefined && command.name !== existing.name;
+    const newName = command.name;
     const agentQuery = {
       _id: existing._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     };
 
-    if (nameChanged) {
+    if (newName !== undefined && newName !== existing.name) {
       await this.agentRepository.withTransaction(async (session) => {
         if (Object.keys($set).length > 0) {
           await this.agentRepository.update(agentQuery, { $set }, session ? { session } : {});
         }
 
-        await this.syncNovuAgentSenderName(
-          existing._id,
-          command.environmentId,
-          command.organizationId,
-          command.name!,
+        await this.syncAgentEmailSenderName.execute(
+          { agentId: existing._id, environmentId: command.environmentId, organizationId: command.organizationId },
+          newName,
           session
         );
       });
@@ -161,6 +123,53 @@ export class UpdateAgent {
     const runtimeConfig = await this.loadRuntimeConfig(updated, command);
 
     return toAgentResponse(updated, undefined, runtimeConfig);
+  }
+
+  private buildUpdateSet(command: UpdateAgentCommand): Record<string, string | boolean | null> {
+    const $set: Record<string, string | boolean | null> = {};
+
+    if (command.name !== undefined) {
+      $set.name = command.name;
+    }
+
+    if (command.description !== undefined) {
+      $set.description = command.description;
+    }
+
+    if (command.active !== undefined) {
+      $set.active = command.active;
+    }
+
+    const behavior = command.behavior;
+
+    if (behavior) {
+      if (behavior.acknowledgeOnReceived !== undefined) {
+        $set['behavior.acknowledgeOnReceived'] = behavior.acknowledgeOnReceived;
+      }
+      if (behavior.reactionOnResolved !== undefined) {
+        $set['behavior.reactionOnResolved'] = behavior.reactionOnResolved;
+      }
+      if (behavior.subscriberAccess !== undefined) {
+        $set['behavior.subscriberAccess'] = behavior.subscriberAccess;
+      }
+      if (behavior.replyPolicy !== undefined) {
+        $set['behavior.replyPolicy'] = behavior.replyPolicy;
+      }
+    }
+
+    if (command.bridgeUrl !== undefined) {
+      $set.bridgeUrl = command.bridgeUrl;
+    }
+
+    if (command.devBridgeUrl !== undefined) {
+      $set.devBridgeUrl = command.devBridgeUrl;
+    }
+
+    if (command.devBridgeActive !== undefined) {
+      $set.devBridgeActive = command.devBridgeActive;
+    }
+
+    return $set;
   }
 
   private async loadRuntimeConfig(
@@ -201,40 +210,6 @@ export class UpdateAgent {
     if (environment?.type === EnvironmentTypeEnum.PROD) {
       throw new ForbiddenException(message);
     }
-  }
-
-  private async syncNovuAgentSenderName(
-    agentId: string,
-    environmentId: string,
-    organizationId: string,
-    senderName: string,
-    session: ClientSession | null = null
-  ): Promise<void> {
-    const links = await this.agentIntegrationRepository.find(
-      {
-        _agentId: agentId,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      },
-      ['_integrationId'],
-      { session }
-    );
-
-    const integrationIds = links.map((link) => link._integrationId).filter(Boolean);
-    if (integrationIds.length === 0) {
-      return;
-    }
-
-    await this.integrationRepository.update(
-      {
-        _id: { $in: integrationIds } as unknown as string,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
-      },
-      { $set: { 'credentials.senderName': senderName } },
-      session ? { session } : {}
-    );
   }
 
   private async assertSafeBridgeUrl(url: string | undefined | null, field: string): Promise<void> {

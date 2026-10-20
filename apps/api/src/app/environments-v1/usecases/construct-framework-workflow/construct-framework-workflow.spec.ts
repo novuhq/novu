@@ -1,9 +1,13 @@
-import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
+import { JsonSchemaTypeEnum, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { Client, providerSchemas } from '@novu/framework';
 import { Event, PostActionEnum, Workflow } from '@novu/framework/internal';
 import {
   CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   ChatProviderIdEnum,
+  DeepPartial,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
+  PUSH_CONTENT_OVERRIDE_PROVIDER_IDS,
+  PushProviderIdEnum,
   ResourceOriginEnum,
   StepTypeEnum,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
@@ -43,14 +47,30 @@ type ConstructFrameworkWorkflowTestDouble = {
 
 const usecase = Object.create(ConstructFrameworkWorkflow.prototype) as ConstructFrameworkWorkflowTestDouble;
 
+/** Fixtures only carry the fields the step constructors read, so they are typed as deep partials. */
+function asStepEntity(step: DeepPartial<NotificationStepEntity>): NotificationStepEntity {
+  return step as NotificationStepEntity;
+}
+
+function asWorkflowEntity(workflow: DeepPartial<NotificationTemplateEntity>): NotificationTemplateEntity {
+  return workflow as NotificationTemplateEntity;
+}
+
+function asEvent(event: DeepPartial<Event>): Event {
+  return event as Event;
+}
+
 // Isolation: assert resolve/provider projection, not enterprise translation.
 usecase.controlsTranslationService = {
   processTranslations: async ({ controls }) => controls,
 };
 
-const staticStep = {
-  template: { type: StepTypeEnum.CHAT, controls: { schema: { type: 'object', properties: { body: {} } } } },
-} as unknown as NotificationStepEntity;
+const staticStep = asStepEntity({
+  template: {
+    type: StepTypeEnum.CHAT,
+    controls: { schema: { type: JsonSchemaTypeEnum.OBJECT, properties: { body: {} } } },
+  },
+});
 
 const dbWorkflow = {
   origin: ResourceOriginEnum.NOVU_CLOUD,
@@ -83,6 +103,14 @@ describe('ConstructFrameworkWorkflow content-override channel steps', () => {
 
     expect(Object.keys(options.providers).sort()).to.deep.equal([...TOOL_CONTENT_OVERRIDE_PROVIDER_IDS].sort());
     expect(options.providers[ChatProviderIdEnum.Slack]).to.equal(undefined);
+  });
+
+  it('gives a push step exactly the push providers, and no chat or tool providers', () => {
+    const options = buildOptions(StepTypeEnum.PUSH);
+
+    expect(Object.keys(options.providers).sort()).to.deep.equal([...PUSH_CONTENT_OVERRIDE_PROVIDER_IDS].sort());
+    expect(options.providers[ChatProviderIdEnum.Slack]).to.equal(undefined);
+    expect(options.providers[ToolProviderIdEnum.PagerDuty]).to.equal(undefined);
   });
 
   it('shares one translation across step resolve and provider resolvers', async () => {
@@ -121,9 +149,11 @@ describe('ConstructFrameworkWorkflow content-override channel steps', () => {
   it('only registers provider ids the framework has schemas for', () => {
     const chatSchemaIds = Object.keys(providerSchemas.chat);
     const toolSchemaIds = Object.keys(providerSchemas.tool);
+    const pushSchemaIds = Object.keys(providerSchemas.push);
 
     expect(chatSchemaIds).to.include.members([...CHAT_CONTENT_OVERRIDE_PROVIDER_IDS]);
     expect(toolSchemaIds).to.include.members([...TOOL_CONTENT_OVERRIDE_PROVIDER_IDS]);
+    expect(pushSchemaIds).to.include.members([...PUSH_CONTENT_OVERRIDE_PROVIDER_IDS]);
   });
 
   it('accepts the stitched providerOverrides field the framework would otherwise strip', () => {
@@ -134,6 +164,158 @@ describe('ConstructFrameworkWorkflow content-override channel steps', () => {
 
     expect(options.controlSchema.properties?.body, 'the step\u2019s own controls must survive').to.exist;
     expect(providerOverrides?.additionalProperties?.additionalProperties).to.equal(true);
+  });
+
+  it('accepts stitched providerOverrides on a push step control schema', () => {
+    const options = buildOptions(StepTypeEnum.PUSH);
+    const providerOverrides = options.controlSchema.properties?.providerOverrides as {
+      additionalProperties?: { additionalProperties?: boolean };
+    };
+
+    expect(providerOverrides?.additionalProperties?.additionalProperties).to.equal(true);
+    expect(options.providers[PushProviderIdEnum.FCM]).to.be.a('function');
+  });
+
+  describe('integration overrides', () => {
+    const webhookIntegrationOverrides = {
+      'prod-alerts': { alert_type: 'incident' },
+      'staging-alerts': { alert_type: 'test' },
+    };
+
+    it('carries the provider\u2019s integration overrides under the reserved key, next to its provider override', async () => {
+      const options = buildOptions(StepTypeEnum.TOOL);
+      const controls = {
+        body: 'hi',
+        providerOverrides: { [ToolProviderIdEnum.Webhook]: { alert_type: 'all' } },
+        integrationOverrides: { [ToolProviderIdEnum.Webhook]: webhookIntegrationOverrides },
+      };
+
+      expect(await options.providers[ToolProviderIdEnum.Webhook]({ controls })).to.deep.equal({
+        alert_type: 'all',
+        [INTEGRATION_OVERRIDES_OUTPUT_KEY]: webhookIntegrationOverrides,
+      });
+    });
+
+    it('carries integration overrides alone when the provider has no provider override', async () => {
+      const options = buildOptions(StepTypeEnum.TOOL);
+      const controls = {
+        body: 'hi',
+        integrationOverrides: { [ToolProviderIdEnum.Webhook]: webhookIntegrationOverrides },
+      };
+
+      expect(await options.providers[ToolProviderIdEnum.Webhook]({ controls })).to.deep.equal({
+        [INTEGRATION_OVERRIDES_OUTPUT_KEY]: webhookIntegrationOverrides,
+      });
+    });
+
+    it('leaves a provider\u2019s output untouched when its integration overrides are absent or empty', async () => {
+      const options = buildOptions(StepTypeEnum.CHAT);
+      const controls = {
+        body: 'hi',
+        providerOverrides: { [ChatProviderIdEnum.Slack]: { text: 'compiled' } },
+        integrationOverrides: {
+          [ChatProviderIdEnum.Slack]: {},
+          [ChatProviderIdEnum.Discord]: { 'discord-main': { content: 'other provider' } },
+        },
+      };
+
+      expect(await options.providers[ChatProviderIdEnum.Slack]({ controls })).to.deep.equal({ text: 'compiled' });
+      expect(await options.providers[ChatProviderIdEnum.MsTeams]({ controls })).to.deep.equal({});
+    });
+
+    it('never forwards a reserved key authored inside a provider override', async () => {
+      const options = buildOptions(StepTypeEnum.TOOL);
+      const controls = {
+        body: 'hi',
+        providerOverrides: {
+          [ToolProviderIdEnum.Webhook]: {
+            alert_type: 'all',
+            [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'prod-alerts': { alert_type: 'spoofed' } },
+          },
+        },
+      };
+
+      expect(await options.providers[ToolProviderIdEnum.Webhook]({ controls })).to.deep.equal({ alert_type: 'all' });
+    });
+
+    it('accepts the stitched integrationOverrides field the framework would otherwise strip', () => {
+      const options = buildOptions(StepTypeEnum.TOOL);
+
+      expect(options.controlSchema.properties?.integrationOverrides).to.exist;
+    });
+  });
+});
+
+/**
+ * Integration overrides reach the worker only inside a provider's bridge output, so both the
+ * control schema (AJV strips unknown controls) and the provider output validation must keep them.
+ */
+describe('ConstructFrameworkWorkflow integration override bridge transport', () => {
+  const TOOL_STEP_ID = 'tool-step';
+  const WORKFLOW_ID = 'tool-integration-overrides-workflow';
+
+  function buildToolWorkflow(): Workflow {
+    const transportUsecase = Object.create(ConstructFrameworkWorkflow.prototype) as {
+      logger: { setContext: () => void; warn: () => void; error: () => void };
+      controlsTranslationService: ConstructFrameworkWorkflowTestDouble['controlsTranslationService'];
+      toolOutputRendererUseCase: { execute: (controls: Record<string, unknown>) => { body: string } };
+      constructFrameworkWorkflow: (args: { dbWorkflow: NotificationTemplateEntity }) => Workflow;
+    };
+
+    transportUsecase.logger = { setContext: () => {}, warn: () => {}, error: () => {} };
+    transportUsecase.controlsTranslationService = { processTranslations: async ({ controls }) => controls };
+    transportUsecase.toolOutputRendererUseCase = { execute: (controls) => ({ body: String(controls.body ?? '') }) };
+
+    return transportUsecase.constructFrameworkWorkflow({
+      dbWorkflow: asWorkflowEntity({
+        _id: 'workflow-id',
+        _environmentId: 'env-id',
+        _organizationId: 'org-id',
+        name: 'Tool integration overrides',
+        origin: ResourceOriginEnum.NOVU_CLOUD,
+        triggers: [{ identifier: WORKFLOW_ID }],
+        steps: [
+          {
+            stepId: TOOL_STEP_ID,
+            template: {
+              type: StepTypeEnum.TOOL,
+              controls: { schema: { type: JsonSchemaTypeEnum.OBJECT, properties: { body: {} } } },
+            },
+          },
+        ],
+      }),
+    });
+  }
+
+  it('returns the rendered integration overrides inside the provider output of the executed step', async () => {
+    const client = new Client({ secretKey: 'construct-framework-workflow-secret' });
+    await client.addWorkflows([buildToolWorkflow()]);
+
+    const result = await client.executeWorkflow(
+      asEvent({
+        action: PostActionEnum.EXECUTE,
+        workflowId: WORKFLOW_ID,
+        stepId: TOOL_STEP_ID,
+        subscriber: {},
+        payload: { severity: 'sev1' },
+        controls: {
+          body: 'Disk full',
+          providerOverrides: { [ToolProviderIdEnum.Webhook]: { alert_type: 'all' } },
+          integrationOverrides: {
+            [ToolProviderIdEnum.Webhook]: { 'prod-alerts': { alert_type: '{{payload.severity}}' } },
+          },
+        },
+        state: [],
+        context: {},
+        env: { name: 'Test', type: 'dev' },
+      })
+    );
+
+    expect(result.outputs.body).to.equal('Disk full');
+    expect(result.providers?.[ToolProviderIdEnum.Webhook]).to.deep.include({
+      alert_type: 'all',
+      [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'prod-alerts': { alert_type: 'sev1' } },
+    });
   });
 });
 
@@ -148,7 +330,7 @@ describe('ConstructFrameworkWorkflow worker-executed step hydration', () => {
   const IN_APP_STEP_ID = 'in-app-step';
   const WORKFLOW_ID = 'http-conditions-workflow';
 
-  const hydrationDbWorkflow = {
+  const hydrationDbWorkflow = asWorkflowEntity({
     _id: 'workflow-id',
     _environmentId: 'env-id',
     _organizationId: 'org-id',
@@ -162,8 +344,11 @@ describe('ConstructFrameworkWorkflow worker-executed step hydration', () => {
           type: StepTypeEnum.HTTP_REQUEST,
           controls: {
             schema: {
-              type: 'object',
-              properties: { url: { type: 'string' }, method: { type: 'string' } },
+              type: JsonSchemaTypeEnum.OBJECT,
+              properties: {
+                url: { type: JsonSchemaTypeEnum.STRING },
+                method: { type: JsonSchemaTypeEnum.STRING },
+              },
               additionalProperties: false,
             },
           },
@@ -175,15 +360,18 @@ describe('ConstructFrameworkWorkflow worker-executed step hydration', () => {
           type: StepTypeEnum.IN_APP,
           controls: {
             schema: {
-              type: 'object',
-              properties: { body: { type: 'string' }, skip: { type: 'object', additionalProperties: true } },
+              type: JsonSchemaTypeEnum.OBJECT,
+              properties: {
+                body: { type: JsonSchemaTypeEnum.STRING },
+                skip: { type: JsonSchemaTypeEnum.OBJECT, additionalProperties: true },
+              },
               additionalProperties: false,
             },
           },
         },
       },
     ],
-  } as unknown as NotificationTemplateEntity;
+  });
 
   function buildHydrationWorkflow(): Workflow {
     const hydrationUsecase = Object.create(ConstructFrameworkWorkflow.prototype) as {
@@ -199,7 +387,7 @@ describe('ConstructFrameworkWorkflow worker-executed step hydration', () => {
   }
 
   function buildEvent(enrolmentCount: number): Event {
-    return {
+    return asEvent({
       action: PostActionEnum.EXECUTE,
       workflowId: WORKFLOW_ID,
       stepId: IN_APP_STEP_ID,
@@ -213,12 +401,12 @@ describe('ConstructFrameworkWorkflow worker-executed step hydration', () => {
         {
           stepId: HTTP_STEP_ID,
           outputs: { id: '123', message: { text: 'pawan' }, enrolmentCount },
-          state: { status: 'completed', error: false },
+          state: { status: 'completed' },
         },
       ],
       context: {},
       env: { name: 'Test', type: 'dev' },
-    } as unknown as Event;
+    });
   }
 
   async function executeInAppStep(enrolmentCount: number) {
@@ -237,6 +425,36 @@ describe('ConstructFrameworkWorkflow worker-executed step hydration', () => {
 
   it('skips the next step when the hydrated HTTP response does not satisfy the condition', async () => {
     const result = await executeInAppStep(2);
+
+    expect(result.options?.skip).to.equal(true);
+  });
+
+  it('runs the next step when a workflow.workflowId skip condition matches the trigger identifier', async () => {
+    const client = new Client({ secretKey: 'construct-framework-workflow-secret' });
+    await client.addWorkflows([buildHydrationWorkflow()]);
+
+    const result = await client.executeWorkflow({
+      ...buildEvent(1),
+      controls: {
+        body: 'Enrolled',
+        skip: { '==': [{ var: 'workflow.workflowId' }, WORKFLOW_ID] },
+      },
+    });
+
+    expect(result.options?.skip).to.equal(false);
+  });
+
+  it('skips the next step when a workflow.workflowId skip condition does not match', async () => {
+    const client = new Client({ secretKey: 'construct-framework-workflow-secret' });
+    await client.addWorkflows([buildHydrationWorkflow()]);
+
+    const result = await client.executeWorkflow({
+      ...buildEvent(1),
+      controls: {
+        body: 'Enrolled',
+        skip: { '==': [{ var: 'workflow.workflowId' }, 'other-workflow'] },
+      },
+    });
 
     expect(result.options?.skip).to.equal(true);
   });

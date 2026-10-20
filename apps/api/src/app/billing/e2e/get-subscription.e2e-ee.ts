@@ -1,12 +1,25 @@
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { CommunityOrganizationRepository } from '@novu/dal';
+import {
+  GetOrCreateCustomer,
+  GetOrganizationPeriodUsage,
+  GetOrganizationPeriodUsageCommand,
+  GetSubscription,
+  GetSubscriptionCommand,
+} from '@novu/ee-billing';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { Stripe } from 'stripe';
+import { PAUSING_USAGE_LIMITS, useEnvironment } from './billing-e2e.helpers';
+
+process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
 
 type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
 
-const mockedStripeSubscriptionItems: DeepPartial<Stripe.ApiList<Stripe.SubscriptionItem>> = {
+const buildStripeSubscriptionItems = (
+  includedEvents: string
+): DeepPartial<Stripe.ApiList<Stripe.SubscriptionItem>> => ({
   data: [
     {
       price: {
@@ -15,7 +28,7 @@ const mockedStripeSubscriptionItems: DeepPartial<Stripe.ApiList<Stripe.Subscript
           interval: 'month',
         },
         metadata: {
-          includedEvents: '1000000',
+          includedEvents,
         },
       },
     },
@@ -26,14 +39,14 @@ const mockedStripeSubscriptionItems: DeepPartial<Stripe.ApiList<Stripe.Subscript
           interval: 'month',
         },
         metadata: {
-          includedEvents: '1000000',
+          includedEvents,
         },
       },
     },
   ],
-};
+});
 
-const mockedStripeCustomer: DeepPartial<Stripe.Customer> = {
+const buildStripeCustomer = (includedEvents = '1000000'): DeepPartial<Stripe.Customer> => ({
   id: 'customer_id',
   invoice_settings: {
     default_payment_method: 'payment_method_id',
@@ -47,70 +60,41 @@ const mockedStripeCustomer: DeepPartial<Stripe.Customer> = {
         current_period_start: new Date('2024-04-05T00:00:00.000Z').getTime() / 1000,
         trial_start: null,
         trial_end: null,
-        items: mockedStripeSubscriptionItems,
+        items: buildStripeSubscriptionItems(includedEvents),
       },
     ],
   },
-};
+});
 
-describe('GetSubscription #novu-v2', async () => {
+describe('GetSubscription #novu-v2', () => {
+  const organizationRepository = new CommunityOrganizationRepository();
   let session: UserSession;
+  let getOrCreateCustomerStub: sinon.SinonStub;
+  let getOrganizationPeriodUsageStub: sinon.SinonStub;
 
-  const eeBilling = require('@novu/ee-billing');
-  if (!eeBilling) {
-    throw new Error('ee-billing does not exist');
-  }
-
-  const { GetPlatformNotificationUsageCommand, GetSubscription, GetSubscriptionCommand } = eeBilling;
-
-  const communityOrganizationRepo = {
-    findById: () =>
-      Promise.resolve({
-        _id: session.organization._id,
-        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-      }),
-  };
-  const getPlatformNotificationUsage = {
-    execute: () =>
-      Promise.resolve([
-        {
-          _id: session.organization._id,
-          notificationsCount: 1000000,
-          apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-        },
-      ]),
-  };
-  let getOrCreateCustomer = {
-    execute: () => Promise.resolve(mockedStripeCustomer),
-  };
-  let getPlatformNotificationUsageSpy: sinon.SinonSpy;
-
-  const createUseCase = () => {
-    const useCase = new GetSubscription(
-      getOrCreateCustomer as any,
-      getPlatformNotificationUsage as any,
-      communityOrganizationRepo
-    );
-
-    return useCase;
-  };
-
-  beforeEach(async () => {
-    session = new UserSession();
-    await session.initialize();
-    getPlatformNotificationUsageSpy = sinon.spy(getPlatformNotificationUsage, 'execute');
-  });
-
-  afterEach(() => {
-    getPlatformNotificationUsageSpy.resetHistory();
-  });
-
-  it('should return the correct subscription details for a given organization', async () => {
-    const result = await createUseCase().execute(
+  const executeUseCase = () =>
+    (session.testServer?.getService(GetSubscription) as GetSubscription).execute(
       GetSubscriptionCommand.create({
         organizationId: session.organization._id,
       })
     );
+
+  beforeEach(async () => {
+    session = new UserSession();
+    await session.initialize();
+    await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+
+    // BillingModule is imported by more than one module, so every instance must see the stubs.
+    getOrCreateCustomerStub = sinon
+      .stub(GetOrCreateCustomer.prototype, 'execute')
+      .resolves(buildStripeCustomer() as Stripe.Customer);
+    getOrganizationPeriodUsageStub = sinon
+      .stub(GetOrganizationPeriodUsage.prototype, 'execute')
+      .resolves({ notificationsCount: 1000000 });
+  });
+
+  it('should return the correct subscription details for a given organization', async () => {
+    const result = await executeUseCase();
 
     expect(result).to.deep.equal({
       apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
@@ -123,7 +107,10 @@ describe('GetSubscription #novu-v2', async () => {
       events: {
         current: 1000000,
         included: 1000000,
+        limit: null,
+        isPaused: false,
       },
+      usageLimits: null,
       trial: {
         start: null,
         end: null,
@@ -135,14 +122,10 @@ describe('GetSubscription #novu-v2', async () => {
   });
 
   it('should fetch usage with the subscription period dates and organizationId', async () => {
-    await createUseCase().execute(
-      GetSubscriptionCommand.create({
-        organizationId: session.organization._id,
-      })
-    );
+    await executeUseCase();
 
-    expect(getPlatformNotificationUsageSpy.lastCall.args.at(0)).to.deep.equal(
-      GetPlatformNotificationUsageCommand.create({
+    expect(getOrganizationPeriodUsageStub.lastCall.args.at(0)).to.deep.equal(
+      GetOrganizationPeriodUsageCommand.create({
         organizationId: session.organization._id,
         startDate: new Date('2024-04-05T00:00:00.000Z'),
         endDate: new Date('2024-05-05T00:00:00.000Z'),
@@ -151,41 +134,35 @@ describe('GetSubscription #novu-v2', async () => {
   });
 
   it('should throw error if no licensed subscription is found', async () => {
-    getOrCreateCustomer = {
-      execute: () =>
-        Promise.resolve({
-          ...mockedStripeCustomer,
-          subscriptions: {
-            data: [
-              {
-                ...mockedStripeCustomer.subscriptions?.data?.[0],
-                items: {
-                  data: [
-                    {
-                      price: {
-                        recurring: {
-                          usage_type: 'metered',
-                          interval: 'month',
-                        },
-                        metadata: {
-                          includedEvents: '1000000',
-                        },
-                      },
+    const stripeCustomer = buildStripeCustomer();
+    getOrCreateCustomerStub.resolves({
+      ...stripeCustomer,
+      subscriptions: {
+        data: [
+          {
+            ...stripeCustomer.subscriptions?.data?.[0],
+            items: {
+              data: [
+                {
+                  price: {
+                    recurring: {
+                      usage_type: 'metered',
+                      interval: 'month',
                     },
-                  ],
+                    metadata: {
+                      includedEvents: '1000000',
+                    },
+                  },
                 },
-              },
-            ],
+              ],
+            },
           },
-        } as unknown as Stripe.Customer),
-    };
+        ],
+      },
+    });
 
     try {
-      await createUseCase().execute(
-        GetSubscriptionCommand.create({
-          organizationId: session.organization._id,
-        })
-      );
+      await executeUseCase();
       // shouldn't get here
       throw new Error();
     } catch (e) {
@@ -194,45 +171,55 @@ describe('GetSubscription #novu-v2', async () => {
   });
 
   it('should throw error if no metered subscription is found', async () => {
-    getOrCreateCustomer = {
-      execute: () =>
-        Promise.resolve({
-          ...mockedStripeCustomer,
-          subscriptions: {
-            data: [
-              {
-                ...mockedStripeCustomer.subscriptions?.data?.[0],
-                items: {
-                  data: [
-                    {
-                      price: {
-                        recurring: {
-                          usage_type: 'licensed',
-                          interval: 'month',
-                        },
-                        metadata: {
-                          includedEvents: '1000000',
-                        },
-                      },
+    const stripeCustomer = buildStripeCustomer();
+    getOrCreateCustomerStub.resolves({
+      ...stripeCustomer,
+      subscriptions: {
+        data: [
+          {
+            ...stripeCustomer.subscriptions?.data?.[0],
+            items: {
+              data: [
+                {
+                  price: {
+                    recurring: {
+                      usage_type: 'licensed',
+                      interval: 'month',
                     },
-                  ],
+                    metadata: {
+                      includedEvents: '1000000',
+                    },
+                  },
                 },
-              },
-            ],
+              ],
+            },
           },
-        } as unknown as Stripe.Customer),
-    };
+        ],
+      },
+    });
 
     try {
-      await createUseCase().execute(
-        GetSubscriptionCommand.create({
-          organizationId: session.organization._id,
-        })
-      );
+      await executeUseCase();
       // shouldn't get here
       throw new Error();
     } catch (e) {
       expect(e.message).to.include("No metered subscription found for customerId: 'customer_id'");
     }
+  });
+
+  describe('with workflow run usage limits enabled', () => {
+    useEnvironment({ [FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_USAGE_LIMITS_ENABLED]: 'true' });
+
+    it('should derive the limit and the usage limits settings from the stored settings of the organization', async () => {
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
+      await organizationRepository.updateUsageLimits(session.organization._id, PAUSING_USAGE_LIMITS);
+      getOrCreateCustomerStub.resolves(buildStripeCustomer('30000'));
+      getOrganizationPeriodUsageStub.resolves({ notificationsCount: 40_000 });
+
+      const { events, usageLimits } = await executeUseCase();
+
+      expect(events).to.deep.equal({ current: 40_000, included: 30_000, limit: 40_000, isPaused: true });
+      expect(usageLimits).to.deep.include({ isConfigurable: true, settings: PAUSING_USAGE_LIMITS });
+    });
   });
 });

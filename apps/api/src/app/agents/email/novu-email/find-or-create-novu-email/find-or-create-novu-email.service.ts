@@ -8,6 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  defaultInboxDomainForProvider,
   encryptSecret,
   generateAgentInboxRoutingKey,
   isAgentEmailEnabled,
@@ -20,9 +21,11 @@ import {
   AgentRepository,
   CommunityOrganizationRepository,
   IntegrationEntity,
+  type IntegrationQuery,
   IntegrationRepository,
 } from '@novu/dal';
 import {
+  type AgentInboxProviderId,
   ApiServiceLevelEnum,
   ChannelTypeEnum,
   EmailProviderIdEnum,
@@ -37,6 +40,7 @@ import shortid from 'shortid';
 
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
+import { AgentInboxAddressService } from '../agent-inbox-address.service';
 
 /**
  * Max collision-retry attempts when minting the per-agent inbox routing key.
@@ -49,9 +53,18 @@ const ROUTING_KEY_MAX_ATTEMPTS = 5;
 /** Mongo duplicate-key error code. */
 const MONGO_DUPLICATE_KEY = 11000;
 
+export type ProvisionAgentInboxOptions = {
+  /** Exact handle from the onboarding. Omitted, the name is slugified and a taken one walks to a free neighbour. */
+  inboxHandle?: string;
+  /** Used only to build that neighbour (the company, otherwise the mailbox name). */
+  operatorEmail?: string;
+};
+
 export type FindOrCreateNovuEmailResult = {
   response: AgentIntegrationResponseDto;
   provisionedNewLink: boolean;
+  /** A new vanity mailbox is not the slug of the agent name. Keyed inboxes, and a second setup, are not. */
+  inboxHandleAdjusted: boolean;
 };
 
 function sanitizeSlug(input: string): string {
@@ -64,14 +77,21 @@ export class NovuEmailProvisioningService {
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly organizationRepository: CommunityOrganizationRepository,
-    private readonly agentRepository: AgentRepository
+    private readonly agentRepository: AgentRepository,
+    private readonly inboxAddresses: AgentInboxAddressService
   ) {}
 
   /**
    * Find the agent's existing NovuAgent integration link, or create a new
    * Integration + link atomically. Idempotent — safe to call concurrently.
    */
-  async execute(agentId: string, environmentId: string, organizationId: string): Promise<FindOrCreateNovuEmailResult> {
+  async execute(
+    agentId: string,
+    environmentId: string,
+    organizationId: string,
+    providerId: AgentInboxProviderId = EmailProviderIdEnum.NovuAgent,
+    options: ProvisionAgentInboxOptions = {}
+  ): Promise<FindOrCreateNovuEmailResult> {
     await this.enforceEmailTier(organizationId);
 
     const agent = await this.agentRepository.findOne(
@@ -83,20 +103,28 @@ export class NovuEmailProvisioningService {
       throw new NotFoundException(`Agent "${agentId}" was not found.`);
     }
 
-    const existing = await this.findExistingLink(agent, environmentId, organizationId);
-    if (existing) return { response: existing, provisionedNewLink: false };
+    const existing = await this.findExistingLink(agent, environmentId, organizationId, providerId);
+    if (existing) return { response: existing, provisionedNewLink: false, inboxHandleAdjusted: false };
+
+    if (providerId === EmailProviderIdEnum.AgentEmailInbox && isAgentSharedInboxEnabled()) {
+      return this.provisionVanityInbox(agent, environmentId, organizationId, providerId, options);
+    }
 
     const emailSlugPrefix = this.deriveEmailSlugPrefix(agent);
     const defaultOutboundIntegrationId = await this.resolveDefaultOutboundIntegrationId(environmentId, organizationId);
 
     return this.agentIntegrationRepository.withTransaction(async (session) => {
-      const recheck = await this.findExistingLink(agent, environmentId, organizationId);
-      if (recheck) return { response: recheck, provisionedNewLink: false };
+      const recheck = await this.findExistingLink(agent, environmentId, organizationId, providerId);
+      if (recheck) return { response: recheck, provisionedNewLink: false, inboxHandleAdjusted: false };
 
-      const displayName = providers.find((p) => p.id === EmailProviderIdEnum.NovuAgent)?.displayName ?? 'Novu Email';
+      let displayName = providers.find((provider) => provider.id === providerId)?.displayName;
+      if (!displayName) {
+        displayName = providerId === EmailProviderIdEnum.AgentEmailInbox ? 'Agent Email Inbox' : 'Novu Email';
+      }
       const identifier = `${slugify(displayName)}-${shortid.generate()}`;
 
       const integration = await this.createNovuAgentIntegration({
+        providerId,
         displayName,
         identifier,
         emailSlugPrefix,
@@ -109,8 +137,79 @@ export class NovuEmailProvisioningService {
 
       const response = await this.createLink(agent, integration, environmentId, organizationId, session);
 
-      return { response, provisionedNewLink: true };
+      return { response, provisionedNewLink: true, inboxHandleAdjusted: false };
     });
+  }
+
+  /**
+   * A new Agent Inbox is `{handle}@domain`, with no routing key. The handle is the one the
+   * caller asked for, or the slug of the name when they didn't. A duplicate-key from a race
+   * is claimed again; an exact handle that lost the race is reported taken.
+   */
+  private async provisionVanityInbox(
+    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>,
+    environmentId: string,
+    organizationId: string,
+    providerId: AgentInboxProviderId,
+    options: ProvisionAgentInboxOptions
+  ): Promise<FindOrCreateNovuEmailResult> {
+    let displayName = providers.find((provider) => provider.id === providerId)?.displayName;
+    if (!displayName) {
+      displayName = 'Agent Email Inbox';
+    }
+    const identifier = `${slugify(displayName)}-${shortid.generate()}`;
+
+    let lastError: unknown;
+    for (let attempt = 0; attempt < ROUTING_KEY_MAX_ATTEMPTS; attempt += 1) {
+      const claim = await this.inboxAddresses.claim({
+        requestedHandle: options.inboxHandle,
+        name: agent.name,
+        operatorEmail: options.operatorEmail,
+      });
+      const defaultOutboundIntegrationId = await this.resolveDefaultOutboundIntegrationId(
+        environmentId,
+        organizationId
+      );
+
+      try {
+        return await this.agentIntegrationRepository.withTransaction(async (session) => {
+          const recheck = await this.findExistingLink(agent, environmentId, organizationId, providerId);
+          if (recheck) return { response: recheck, provisionedNewLink: false, inboxHandleAdjusted: false };
+
+          const integration = await this.createNovuAgentIntegration({
+            providerId,
+            displayName,
+            identifier,
+            emailSlugPrefix: claim.handle,
+            senderName: agent.name,
+            outboundIntegrationId: defaultOutboundIntegrationId,
+            environmentId,
+            organizationId,
+            session,
+            vanity: true,
+          });
+          const response = await this.createLink(agent, integration, environmentId, organizationId, session);
+
+          return { response, provisionedNewLink: true, inboxHandleAdjusted: claim.adjusted };
+        });
+      } catch (err) {
+        if (!isVanitySlugCollision(err)) {
+          throw err;
+        }
+
+        if (options.inboxHandle) {
+          throw await this.inboxAddresses.taken(
+            options.inboxHandle,
+            options.operatorEmail,
+            defaultInboxDomainForProvider(providerId)
+          );
+        }
+
+        lastError = err;
+      }
+    }
+
+    throw lastError ?? new ConflictException('That address was just taken. Try another.');
   }
 
   /**
@@ -129,6 +228,7 @@ export class NovuEmailProvisioningService {
    * here and assigned later via the agent email setup guide.
    */
   private async createNovuAgentIntegration({
+    providerId,
     displayName,
     identifier,
     emailSlugPrefix,
@@ -137,7 +237,9 @@ export class NovuEmailProvisioningService {
     environmentId,
     organizationId,
     session,
+    vanity = false,
   }: {
+    providerId: AgentInboxProviderId;
     displayName: string;
     identifier: string;
     emailSlugPrefix: string;
@@ -146,6 +248,8 @@ export class NovuEmailProvisioningService {
     environmentId: string;
     organizationId: string;
     session: ClientSession | null;
+    /** Agent Inbox address is the handle alone. No routing key is stored. */
+    vanity?: boolean;
   }): Promise<IntegrationEntity> {
     const baseCredentials = {
       secretKey: encryptSecret(randomBytes(32).toString('hex')),
@@ -155,22 +259,18 @@ export class NovuEmailProvisioningService {
     };
 
     // The create envelope is identical across both branches; only `credentials`
-    // varies (shared-inbox routing key vs. self-hosted disabled flag). Build it
-    // once so the lone `as any` (a pre-existing DAL signature wart) lives in a
-    // single place. The cast is needed because the repository's `create` accepts
-    // a query type rather than a plain document.
-    const buildPayload = (credentials: Record<string, unknown>) =>
-      ({
-        providerId: EmailProviderIdEnum.NovuAgent,
-        channel: ChannelTypeEnum.EMAIL,
-        credentials,
-        configurations: {},
-        name: displayName,
-        identifier,
-        active: true,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      }) as any;
+    // varies (shared-inbox routing key vs. self-hosted disabled flag).
+    const buildPayload = (credentials: Record<string, unknown>): IntegrationQuery => ({
+      providerId,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials,
+      configurations: {},
+      name: displayName,
+      identifier,
+      active: true,
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+    });
 
     // Self-hosted: no shared domain to route against, so skip routing-key minting
     // (and its collision loop) and persist the disabled flag. Inbound is wired
@@ -181,13 +281,28 @@ export class NovuEmailProvisioningService {
       });
     }
 
+    if (vanity) {
+      return this.integrationRepository.create(
+        buildPayload({
+          ...baseCredentials,
+          inboxDomain: defaultInboxDomainForProvider(providerId),
+        }),
+        { session }
+      );
+    }
+
     let lastError: unknown;
     for (let attempt = 0; attempt < ROUTING_KEY_MAX_ATTEMPTS; attempt += 1) {
       const inboxRoutingKey = generateAgentInboxRoutingKey();
       try {
-        return await this.integrationRepository.create(buildPayload({ ...baseCredentials, inboxRoutingKey }), {
-          session,
-        });
+        return await this.integrationRepository.create(
+          buildPayload({
+            ...baseCredentials,
+            inboxRoutingKey,
+            inboxDomain: defaultInboxDomainForProvider(providerId),
+          }),
+          { session }
+        );
       } catch (err) {
         if (!isInboxRoutingKeyCollision(err)) {
           throw err;
@@ -234,7 +349,7 @@ export class NovuEmailProvisioningService {
       channel: ChannelTypeEnum.EMAIL,
       active: true,
       primary: true,
-      providerId: { $nin: NOVU_PROVIDERS } as unknown as string,
+      providerId: { $nin: NOVU_PROVIDERS },
     });
     if (primaryCustom) return primaryCustom._id;
 
@@ -257,12 +372,13 @@ export class NovuEmailProvisioningService {
   }
 
   /**
-   * Build the per-agent slug prefix from the agent's identifier. Falls back
-   * to a random short id if the identifier slugifies to something the slug
-   * regex would reject (empty, longer than 32 chars after sanitization, etc.).
+   * Build the per-agent slug prefix from the agent's name, so the mailbox reads
+   * as that name. The identifier is the fallback when the name slugifies to
+   * nothing the slug regex accepts (empty, longer than 32 chars after
+   * sanitization, and so on). A random short id is the last resort.
    */
   private deriveEmailSlugPrefix(agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>): string {
-    const candidate = sanitizeSlug(agent.identifier ?? agent.name ?? '');
+    const candidate = sanitizeSlug(agent.name || agent.identifier || '');
     if (candidate && isValidAgentEmailSlugPrefix(candidate)) {
       return candidate;
     }
@@ -284,7 +400,8 @@ export class NovuEmailProvisioningService {
   private async findExistingLink(
     agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>,
     environmentId: string,
-    organizationId: string
+    organizationId: string,
+    providerId: AgentInboxProviderId
   ): Promise<AgentIntegrationResponseDto | null> {
     const agentId = agent._id;
     const links = await this.agentIntegrationRepository.find(
@@ -299,10 +416,10 @@ export class NovuEmailProvisioningService {
     // from `emailSlugPrefix`. The field is plaintext (no decryption needed).
     const emailIntegration = await this.integrationRepository.findOne(
       {
-        _id: { $in: linkedIntegrationIds } as unknown as string,
+        _id: { $in: linkedIntegrationIds },
         _environmentId: environmentId,
         _organizationId: organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
+        providerId,
       },
       '_id identifier name providerId channel active credentials'
     );
@@ -380,4 +497,14 @@ function isInboxRoutingKeyCollision(err: unknown): boolean {
   const message = typeof candidate.message === 'string' ? candidate.message : '';
 
   return message.includes('credentials.inboxRoutingKey');
+}
+
+/** Duplicate on the vanity slug index (`credentials.emailSlugPrefix` + domain). */
+function isVanitySlugCollision(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const candidate = err as { code?: number; message?: string };
+  if (candidate.code !== MONGO_DUPLICATE_KEY) return false;
+  const message = typeof candidate.message === 'string' ? candidate.message : '';
+
+  return message.includes('emailSlugPrefix') || message.includes('agent_inbox_vanity_slug');
 }

@@ -139,3 +139,6 @@ demos/web-chat-demo/next-env.d.ts
 # Local agent design/plan artifacts (not part of published docs)
 superpowers/
 /tmp/
+
+# PR Lens writes its previews here. They are rebuilt on demand.
+.pr-lens/

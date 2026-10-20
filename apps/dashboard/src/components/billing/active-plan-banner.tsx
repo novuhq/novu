@@ -16,10 +16,17 @@ import { Card } from '@/components/primitives/card';
 import { Progress } from '@/components/primitives/progress';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { formatShortDate } from '@/utils/format-date';
+import { formatNumber } from '@/utils/number-formatting';
 import { useFetchConversationUsage } from '../../hooks/use-fetch-conversation-usage';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { getPlanFeatures, type PlanFeature } from './features-config';
 import { PlanActionButton } from './plan-action-button';
+import { UsageLimitsDrawer } from './usage-limits/usage-limits-drawer';
+import { UsageLimitsStatusPills } from './usage-limits/usage-limits-status-pills';
+import { getIncludedWorkflowRuns, type UsageLimitsView } from './usage-limits/usage-limits-view';
+import { useUsageLimitsView } from './usage-limits/use-usage-limits-view';
+import { WorkflowRunsUsageRow } from './usage-limits/workflow-runs-usage-row';
 
 interface ActivePlanBannerProps {
   selectedBillingInterval: 'month' | 'year';
@@ -32,21 +39,13 @@ interface UsageMetric {
 }
 
 const USAGE_METRICS: UsageMetric[] = [
-  { type: 'events', icon: RiCalendarEventLine, label: 'Workflow Runs' },
+  { type: 'events', icon: RiCalendarEventLine, label: 'Workflow runs' },
   { type: 'conversations', icon: RiChat3Line, label: 'Conversations' },
   { type: 'teammates', icon: RiTeamLine, label: 'Teammates' },
 ];
 
-function formatDate(date: string | number): string {
-  return new Date(date).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
 function formatLimit(limit: number): string {
-  return limit === UNLIMITED_VALUE ? '∞' : limit.toLocaleString();
+  return limit === UNLIMITED_VALUE ? '∞' : formatNumber(limit);
 }
 
 function getEventsTooltipContent(
@@ -97,12 +96,12 @@ function formatDateRange(
   daysLeft: number
 ) {
   if (subscription.trial.isActive) {
-    const endDate = subscription.trial.end ? formatDate(subscription.trial.end) : 'soon';
+    const endDate = subscription.trial.end ? formatShortDate(subscription.trial.end) : 'soon';
     return `Trial ends ${endDate} (${daysLeft} days left)`;
   }
 
-  const start = formatDate(subscription.currentPeriodStart ?? Date.now());
-  const end = formatDate(subscription.currentPeriodEnd ?? Date.now());
+  const start = formatShortDate(subscription.currentPeriodStart ?? Date.now());
+  const end = formatShortDate(subscription.currentPeriodEnd ?? Date.now());
   return `${start} - ${end}`;
 }
 
@@ -129,9 +128,7 @@ function getUsageData(
     case 'events':
       return {
         current: subscription?.events.current ?? 0,
-        included:
-          subscription?.events.included ??
-          getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED, currentPlan, false),
+        included: getIncludedWorkflowRuns(subscription),
         label: 'included',
       };
     case 'conversations':
@@ -214,7 +211,7 @@ function UsageMetricRow({ metric, subscription, conversationUsage, organization 
           <span>{metric.label}</span>
         </div>
         <span className="text-label-xs">
-          <span className="text-text-sub">{usageData.current.toLocaleString()}</span> /{' '}
+          <span className="text-text-sub">{formatNumber(usageData.current)}</span> /{' '}
           <span className="text-text-soft">
             {formatLimit(usageData.included)}{' '}
             {tooltipContent ? (
@@ -298,11 +295,13 @@ function UsageCard({
   daysLeft,
   conversationUsage,
   organization,
+  usageLimits,
 }: {
   subscription: ReturnType<typeof useFetchSubscription>['subscription'];
   daysLeft: number;
   conversationUsage: ReturnType<typeof useFetchConversationUsage>['conversationUsage'];
   organization: ReturnType<typeof useOrganization>['organization'];
+  usageLimits: UsageLimitsView | null;
 }) {
   return (
     <Card className="flex h-full flex-col border shadow-none">
@@ -319,17 +318,26 @@ function UsageCard({
 
       <div className="p-6">
         <div className="space-y-8">
-          {USAGE_METRICS.map((metric) => (
-            <UsageMetricRow
-              key={metric.type}
-              metric={metric}
-              subscription={subscription}
-              conversationUsage={conversationUsage}
-              organization={organization}
-            />
-          ))}
+          {USAGE_METRICS.map((metric) =>
+            metric.type === 'events' && usageLimits ? (
+              <WorkflowRunsUsageRow key={metric.type} view={usageLimits} />
+            ) : (
+              <UsageMetricRow
+                key={metric.type}
+                metric={metric}
+                subscription={subscription}
+                conversationUsage={conversationUsage}
+                organization={organization}
+              />
+            )
+          )}
         </div>
       </div>
+      {usageLimits?.isConfigurable && (
+        <div className="border-t border-neutral-200 px-3 py-2">
+          <UsageLimitsStatusPills view={usageLimits} />
+        </div>
+      )}
     </Card>
   );
 }
@@ -372,6 +380,7 @@ export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerPr
   const { subscription, daysLeft } = useFetchSubscription();
   const { organization } = useOrganization();
   const { conversationUsage } = useFetchConversationUsage();
+  const usageLimits = useUsageLimitsView();
 
   useEffect(() => {
     (async () => {
@@ -388,9 +397,12 @@ export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerPr
           daysLeft={daysLeft}
           conversationUsage={conversationUsage}
           organization={organization}
+          usageLimits={usageLimits}
         />
         <PlanCard selectedBillingInterval={selectedBillingInterval} subscription={subscription} />
       </div>
+
+      {usageLimits && <UsageLimitsDrawer view={usageLimits} />}
 
       <div className="flex justify-end">
         <span className="text-paragraph-sm text-text-sub">

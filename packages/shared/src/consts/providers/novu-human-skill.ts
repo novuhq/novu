@@ -1,7 +1,5 @@
 /**
- * Novu-owned HITL skill attached to managed agents (Anthropic `uploadSkill`)
- * and installable for coding agents via `@novu/human`. Keep in sync with
- * `packages/human/src/skills/content/novu-human/SKILL.md`.
+ * Novu-owned HITL skill attached to managed agents (Anthropic `uploadSkill`).
  */
 export const NOVU_HUMAN_SKILL_NAME = 'novu-human';
 
@@ -46,5 +44,5 @@ Call \`ctx.ask\`, \`ctx.approve\`, \`ctx.choose\`, or \`ctx.tell\`. The verdict 
 
 ### Unattended (CLI / cron / no live thread)
 
-Use the \`human-cli\` skill and the \`human\` CLI (\`human ask|approve|choose|tell\`).
+Use the \`agent-inbox\` skill and the Agent Inbox CLI: \`npx @agentinbox/cli inbox send ask|approve|choose\` to ask, a plain \`inbox send\` to tell, and \`inbox reply <conversation>\` to answer in a conversation.
 `;

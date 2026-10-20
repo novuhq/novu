@@ -20,8 +20,8 @@ const logInfo = (...args: unknown[]) => {
   }
 };
 
-const emitWarning = process.emitWarning.bind(process) as (warning: string | Error, ...args: any[]) => void;
-process.emitWarning = ((warning: string | Error, ...args: any[]) => {
+const emitWarning = process.emitWarning.bind(process) as (warning: string | Error, ...args: unknown[]) => void;
+process.emitWarning = ((warning: string | Error, ...args: unknown[]) => {
   const message = typeof warning === 'string' ? warning : (warning?.message ?? '');
 
   if (isCI && message.includes('Duplicate schema index on')) {
@@ -39,9 +39,26 @@ async function getDatabaseConnection(): Promise<Connection> {
   return databaseConnection;
 }
 
+/**
+ * The root hooks drop the whole Mongo database and truncate every ClickHouse table. Without NODE_ENV=test the API
+ * loads apps/api/src/.env, which points at the developer's own databases, so only a test database may be wiped.
+ */
+function assertTestDatabase(kind: string, databaseName: string): void {
+  if (process.env.NODE_ENV === 'test' && databaseName.toLowerCase().includes('test')) {
+    return;
+  }
+
+  throw new Error(
+    `Refusing to wipe the ${kind} database "${databaseName}" with NODE_ENV=${process.env.NODE_ENV ?? '(unset)'}. ` +
+      'The API test setup only wipes test databases; run the tests with NODE_ENV=test (e.g. pnpm test).'
+  );
+}
+
 async function dropDatabase(): Promise<void> {
+  const conn = await getDatabaseConnection();
+  assertTestDatabase('MongoDB', conn.name);
+
   try {
-    const conn = await getDatabaseConnection();
     await conn.dropDatabase();
   } catch (error) {
     console.error('Error dropping the database:', error);
@@ -137,8 +154,10 @@ async function truncateClickHouseTable(databaseName: string, tableName: string):
 }
 
 async function cleanupClickHouseDatabase(): Promise<void> {
+  const databaseName = process.env.CLICK_HOUSE_DATABASE || 'test_logs';
+  assertTestDatabase('ClickHouse', databaseName);
+
   try {
-    const databaseName = process.env.CLICK_HOUSE_DATABASE || 'test_logs';
     logInfo(`Cleaning up ClickHouse database: ${databaseName}`);
 
     await ensureClickHouseDatabase(databaseName);
@@ -382,8 +401,10 @@ after(async () => {
   await closeClickHouseConnection();
 });
 
+// biome-ignore lint/plugin: a failed hook can throw any value; logE2EFailure narrows it
 function getFailedHookError(test: Mocha.Test | undefined): unknown {
   if (!test) return undefined;
+  // biome-ignore lint/suspicious/noExplicitAny: mocha keeps hook errors on the private Suite._beforeEach field
   const suite = test.parent as any;
   if (!suite) return undefined;
   const hooks: Array<{ err?: unknown }> = suite._beforeEach ?? [];

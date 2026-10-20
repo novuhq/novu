@@ -6,6 +6,18 @@ description: 'Use prebuilt React components so your users can install and connec
 
 Novu provides pre-built UI components for chat platforms like Slack, Microsoft Teams, Telegram and other communication platforms. Add these components so users can install the communication platform app in their workspace and connect it to your agent.
 
+## Use connect components in production
+
+Each connection belongs to one subscriber. To connect each person to their own Novu subscriber, follow this pattern:
+
+- Render the component on an authenticated page in your app, such as a settings or integrations page.
+- Pass the signed-in user's id from your auth session as `subscriberId`, for example `session.user.id`. Use the same id you use for that user everywhere else in Novu. Do not hardcode it.
+- Enable distribution so users outside your own workspace can install the app: [Slack Public Distribution](/agents/channels/slack#distribute-to-other-workspaces) or [Microsoft Teams per-tenant setup](/agents/channels/microsoft-teams#distribute-to-other-tenants). Telegram needs no extra step, because one bot serves every user.
+
+<Note>
+  The connect button in the Novu dashboard connects your own account, so you can test the agent. In production, your users connect through the component embedded in your app, with their own `subscriberId`.
+</Note>
+
 ## Slack connect button
 
 `SlackConnectButton` is a pre-built UI component in the `@novu/react` SDK that connects an agent to a Slack workspace. Check out the example below.
@@ -13,8 +25,9 @@ Novu provides pre-built UI components for chat platforms like Slack, Microsoft T
 ```tsx
 import { SlackConnectButton } from '@novu/react';
 
-const SlackConnectButtonComponent = () => {
-  const subscriberId = 'subscriber-id';
+// userId: the signed-in user's id from your app's auth session
+const SlackConnectButtonComponent = ({ userId }: { userId: string }) => {
+  const subscriberId = userId;
   const integrationIdentifier = 'integration-identifier';
   const agent = {
     identifier: 'agent-identifier',
@@ -86,8 +99,9 @@ Optional reference: https://docs.novu.co/agents/custom-code-agent/connect-compon
 ```tsx
 import { NovuProvider, MsTeamsConnectButton } from '@novu/react';
 
-const MsTeamsConnectButtonComponent = () => {
-  const subscriberId = 'subscriber-id';
+// userId: the signed-in user's id from your app's auth session
+const MsTeamsConnectButtonComponent = ({ userId }: { userId: string }) => {
+  const subscriberId = userId;
   const integrationIdentifier = 'msteams-integration-identifier';
 
   return (
@@ -158,8 +172,9 @@ When clicked, the button issues a `t.me/<bot>?start=<code>` deep link, opens it 
 ```tsx
 import { NovuProvider, TelegramConnectButton } from '@novu/react';
 
-const TelegramConnectButtonComponent = () => {
-  const subscriberId = 'subscriber-id';
+// userId: the signed-in user's id from your app's auth session
+const TelegramConnectButtonComponent = ({ userId }: { userId: string }) => {
+  const subscriberId = userId;
   const integrationIdentifier = 'telegram-integration-identifier';
 
   return (

@@ -84,7 +84,7 @@ describe('resolveApprovalRequesterId', () => {
     expect(resolveApprovalRequesterId(history, request)).to.equal(null);
   });
 
-  it('does not cross into a different approval request when scanning backwards', () => {
+  it('locates each request by approvalId when several are outstanding', () => {
     // Two approvals outstanding; each should only see its own preceding human message.
     const otherRequest = activity({
       type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,

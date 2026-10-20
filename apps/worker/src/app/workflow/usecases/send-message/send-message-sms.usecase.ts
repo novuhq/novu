@@ -28,9 +28,16 @@ import {
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
-import { combineProviderOverrides, SendMessageBase } from './send-message.base';
+import { combineProviderOverrides, mergeTriggerProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
+
+type SmsMessageOverrides = {
+  to?: string;
+  from?: string;
+  content?: string;
+  customData?: Record<string, unknown>;
+};
 
 @Injectable()
 export class SendMessageSms extends SendMessageBase {
@@ -62,7 +69,7 @@ export class SendMessageSms extends SendMessageBase {
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     const overrideSelectedIntegration = command.overrides?.sms?.integrationIdentifier;
 
-    const integration = await this.getIntegration({
+    const selection = await this.getIntegration({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       channelType: ChannelTypeEnum.SMS,
@@ -119,7 +126,7 @@ export class SendMessageSms extends SendMessageBase {
 
     const phone = command.payload.phone || subscriber.phone;
 
-    if (!integration) {
+    if (!selection) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -144,12 +151,16 @@ export class SendMessageSms extends SendMessageBase {
       };
     }
 
-    await this.sendSelectedIntegrationExecution(command.job, integration);
+    const { integration } = selection;
 
-    const overrides = {
-      ...(integration?.channel ? command.overrides[integration.channel] || {} : {}),
-      ...(command.overrides[integration?.providerId] || {}),
-    };
+    await this.sendSelectedIntegrationExecution(command.job, selection);
+
+    const overrides = mergeTriggerProviderOverrides(
+      command.overrides,
+      integration?.channel,
+      integration?.providerId,
+      command.step.stepId
+    ) as SmsMessageOverrides;
 
     const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
@@ -297,10 +308,10 @@ export class SendMessageSms extends SendMessageBase {
     content: string,
     message: MessageEntity,
     command: SendMessageChannelCommand,
-    overrides: Record<string, any> = {}
+    overrides: SmsMessageOverrides = {}
   ): Promise<SendMessageResult> {
     try {
-      const bridgeBody = command.bridgeData?.outputs.body;
+      const bridgeBody = (command.bridgeData?.outputs as SmsOutput | undefined)?.body;
 
       const smsFactory = new SmsFactory();
       const smsHandler = smsFactory.getHandler(this.buildFactoryIntegration(integration));
@@ -409,7 +420,7 @@ export class SendMessageSms extends SendMessageBase {
     }
   }
 
-  public buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
+  public buildFactoryIntegration(integration: IntegrationEntity, _senderName?: string) {
     return {
       ...integration,
       providerId: integration.providerId,

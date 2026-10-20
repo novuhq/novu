@@ -1,3 +1,4 @@
+import { HUMAN_INTERACTION_MAX_TTL_SECONDS } from '@novu/shared';
 import { expect } from 'chai';
 import type { ActionsElement, ButtonElement, CardElement, LinkButtonElement, SectionElement } from 'chat';
 import sinon from 'sinon';
@@ -50,6 +51,7 @@ describe('AgentActionTokenService', () => {
     expect(token.length).to.be.lessThan(30);
     expect(encodedTelegramCallbackDataByteLength(token)).to.be.at.most(64);
     expect(cacheService.set.calledOnce).to.equal(true);
+    expect(cacheService.set.firstCall.args[2]).to.deep.equal({ ttl: HUMAN_INTERACTION_MAX_TTL_SECONDS });
   });
 
   it('resolves a minted token to the original id and value', async () => {
@@ -75,11 +77,12 @@ describe('AgentActionTokenService', () => {
   });
 
   it('returns null when token is missing from cache', async () => {
-    const { service } = makeService();
+    const { service, cacheService } = makeService();
 
-    const resolved = await service.resolveActionToken(`${AGENT_ACTION_TOKEN_PREFIX}missing`, binding);
+    const resolved = await service.resolveActionToken(`${AGENT_ACTION_TOKEN_PREFIX}${'A'.repeat(22)}`, binding);
 
     expect(resolved).to.equal(null);
+    expect(cacheService.get.calledOnce).to.equal(true);
   });
 
   it('returns null on full binding mismatch including environment and organization', async () => {
@@ -282,9 +285,11 @@ describe('AgentActionTokenService', () => {
       id: 'repeatable:refresh',
     });
 
-    await service.resolveActionToken(token, binding);
-    await service.resolveActionToken(token, binding);
+    const first = await service.resolveActionToken(token, binding);
+    const second = await service.resolveActionToken(token, binding);
 
+    expect(first).to.deep.equal({ id: 'repeatable:refresh', value: undefined });
+    expect(second).to.deep.equal({ id: 'repeatable:refresh', value: undefined });
     expect(cacheService.set.callCount).to.equal(1);
     expect(cacheService.get.callCount).to.equal(2);
   });

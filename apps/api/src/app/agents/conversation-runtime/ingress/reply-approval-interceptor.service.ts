@@ -544,6 +544,7 @@ export class ReplyApprovalInterceptor {
         toolName,
         actorType,
         actorId,
+        actorName: turn.subscriber?.firstName?.trim() || turn.subscriber?.subscriberId || actorId,
         environmentId: config.environmentId,
         organizationId: config.organizationId,
       });

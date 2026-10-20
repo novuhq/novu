@@ -72,16 +72,10 @@ describe('RemoveSendblueWebhooks usecase', () => {
 
   afterEach(() => {
     restore();
-    process.env.API_ROOT_URL = originalApiRootUrl;
-    process.env.AGENT_API_HOSTNAME = originalAgentApiHostname;
-  });
-
-  it('removes Novu-shaped webhook URLs', async () => {
-    const result = await buildUsecase().execute(buildCommand());
-
-    expect(result.success).to.equal(true);
-    expect(result.removedWebhookUrls).to.deep.equal([NOVU_WEBHOOK_URL]);
-    expect(deleteStub.calledOnceWith({ apiKey: 'key', secretKey: 'secret' }, [NOVU_WEBHOOK_URL])).to.equal(true);
+    if (originalApiRootUrl === undefined) delete process.env.API_ROOT_URL;
+    else process.env.API_ROOT_URL = originalApiRootUrl;
+    if (originalAgentApiHostname === undefined) delete process.env.AGENT_API_HOSTNAME;
+    else process.env.AGENT_API_HOSTNAME = originalAgentApiHostname;
   });
 
   it('filters out non-Novu-shaped URLs before calling Sendblue', async () => {

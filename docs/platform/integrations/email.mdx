@@ -574,6 +574,8 @@ By default, Novu uses your primary email provider. To route automatically from s
 
 This is useful if you have multiple active integrations for different purposes. For example, you might have one integration for transactional emails and one for marketing emails. You can find the `integrationIdentifier` for each provider in provider page in the **Integration Store**.
 
+When you pass `integrationIdentifier` in `overrides.email`, Novu sends through that integration and doesn't check [integration conditions](/platform/integrations/integration-conditions) for the step. If the integration doesn't exist or isn't active, the step fails instead of falling back to the primary integration.
+
 <Tabs>
   <Tab title="Node.js">
 ```javascript

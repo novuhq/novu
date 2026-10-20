@@ -3,6 +3,7 @@ import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import PQueue from 'p-queue';
 import { QueueBaseService } from '../queues';
+import { SqsConsumerService } from '../sqs';
 import { ClickHouseService, InsertOptions } from './clickhouse.service';
 
 const noopTransaction = { end: () => {} };
@@ -340,10 +341,18 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, Be
     await Promise.all(buffers.map((buffer) => buffer.flushQueue.onIdle()));
   }
 
+  /**
+   * SQS in-flight messages have no queue-side counterpart, so a worker on SQS
+   * reports a BullMQ active count of zero no matter how much it is processing.
+   * Counting only the queues would declare the process idle and close the
+   * buffer mid-flight.
+   */
   private async getTotalActiveJobsCount(): Promise<number> {
     const counts = await Promise.all(this.queueServices.map((queue) => queue.getActiveCount()));
+    const bullMqActive = counts.reduce((sum, count) => sum + count, 0);
+    const sqsInFlight = SqsConsumerService.getTotalInFlightCount();
 
-    return counts.reduce((sum, count) => sum + count, 0);
+    return bullMqActive + sqsInFlight;
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -369,8 +378,8 @@ export class ClickHouseBatchService implements OnModuleDestroy, OnModuleInit, Be
   }
 
   private async waitForActiveJobsToComplete(): Promise<void> {
-    if (this.queueServices.length === 0) {
-      this.logger.debug('No queue services configured, skipping active jobs wait');
+    if (this.queueServices.length === 0 && !SqsConsumerService.hasLiveConsumers()) {
+      this.logger.debug('No queue services or SQS consumers configured, skipping active jobs wait');
 
       return;
     }

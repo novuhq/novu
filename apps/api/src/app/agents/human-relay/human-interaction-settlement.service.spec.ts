@@ -40,7 +40,8 @@ describe('HumanInteractionSettlementService', () => {
       outboundGateway as any,
       { execute: sinon.stub().resolves(undefined) } as any,
       { execute: sinon.stub().resolves(undefined) } as any,
-      logger as any
+      logger as any,
+      { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any
     );
 
     await service.settle(
@@ -73,7 +74,8 @@ describe('HumanInteractionSettlementService', () => {
       outboundGateway as any,
       { execute: sinon.stub().resolves(undefined) } as any,
       { execute: sinon.stub().resolves(undefined) } as any,
-      logger as any
+      logger as any,
+      { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any
     );
 
     await service.settle(
@@ -105,7 +107,8 @@ describe('HumanInteractionSettlementService', () => {
       outboundGateway as any,
       resumeManagedHuman as any,
       resumeToolApprovalFromHitl as any,
-      logger as any
+      logger as any,
+      { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any
     );
 
     await service.settle({ _id: 'hi1', _environmentId: 'env1' } as any, HumanInteractionStatusEnum.APPROVED);
@@ -136,7 +139,8 @@ describe('HumanInteractionSettlementService', () => {
       outboundGateway as any,
       resumeManagedHuman as any,
       resumeToolApprovalFromHitl as any,
-      logger as any
+      logger as any,
+      { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any
     );
 
     await service.expireIfOverdue(pending as any);

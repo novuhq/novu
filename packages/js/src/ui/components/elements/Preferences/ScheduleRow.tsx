@@ -156,7 +156,7 @@ const ScheduleRowActions = (props: {
         class={style({
           key: 'scheduleActionsContainerRight',
           className:
-            'nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180',
+            'nt-text-foreground-alpha-600 nt-transition-transform nt-duration-base data-[open=true]:nt-rotate-180',
           context: { schedule: props.schedule() } satisfies Parameters<
             InboxAppearanceCallback['scheduleActionsContainerRight']
           >[0],

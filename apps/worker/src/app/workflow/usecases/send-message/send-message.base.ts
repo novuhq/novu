@@ -1,39 +1,40 @@
 import { Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
+  buildWorkflowVariablesForJob,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   createProviderSelectedMessage,
   DetailEnum,
   GetNovuProviderCredentials,
   Instrument,
+  type IntegrationFilterData,
+  type IntegrationSelectionResult,
   SelectIntegration,
   SelectIntegrationCommand,
   SelectVariant,
   SelectVariantCommand,
 } from '@novu/application-generic';
-import {
-  IntegrationEntity,
-  JobEntity,
-  MessageRepository,
-  MessageTemplateEntity,
-  SubscriberRepository,
-} from '@novu/dal';
+import { JobEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  ITenantDefine,
+  getProviderOverrideConfig,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
+  layerClaimsExclusiveGroup,
   ProvidersIdEnum,
   providers,
+  resolveExclusiveRoutingKeys,
   SmsProviderIdEnum,
   TriggerOverrides,
+  unpackProviderOverrideOutput,
 } from '@novu/shared';
 import { format } from 'date-fns';
 import i18next from 'i18next';
-import { cloneDeep, mergeWith } from 'lodash';
+import { cloneDeep, isPlainObject, mergeWith } from 'lodash';
 import { PlatformException, TRANSLATIONS_SERVICE } from '../../../shared/utils';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
@@ -55,21 +56,172 @@ function replaceArrays(_targetValue: unknown, sourceValue: unknown): unknown[] |
   return undefined;
 }
 
+type BridgeProviderOverrides = {
+  providers?: Record<string, Record<string, unknown>>;
+};
+
+/**
+ * For each exclusive key group, the highest-precedence layer that claims it — sets one of its keys
+ * to a value `resolveExclusiveRoutingKeys` can still use — keeps its group keys, and every other
+ * layer loses them. That stops a deep-merge from leaving a mixed destination (e.g. FCM `topic` from
+ * bridge + `tokens` from trigger).
+ *
+ * Group keys on non-claiming layers are dropped rather than merged, so an unusable value cannot
+ * silently take the destination away: lodash merges `topic: ''` over a dashboard `topic: 'orders'`,
+ * and the resolver would then discard the empty string and find no destination at all.
+ *
+ * `layers` is ordered low → high precedence. Returns shallow-cloned layers; originals are untouched.
+ */
+function applyExclusiveKeyGroups(
+  layers: readonly Record<string, unknown>[],
+  exclusiveKeyGroups: readonly (readonly string[])[]
+): Record<string, unknown>[] {
+  if (exclusiveKeyGroups.length === 0) {
+    return [...layers];
+  }
+
+  const result = layers.map((layer) => ({ ...layer }));
+
+  for (const group of exclusiveKeyGroups) {
+    let claimed = false;
+
+    for (let i = result.length - 1; i >= 0; i -= 1) {
+      const layer = result[i];
+
+      if (!claimed && layerClaimsExclusiveGroup(layer, group)) {
+        claimed = true;
+        continue;
+      }
+
+      for (const key of group) {
+        delete layer[key];
+      }
+    }
+  }
+
+  return result;
+}
+
+function resolveExclusiveKeyGroups(providerId: string): readonly (readonly string[])[] {
+  return getProviderOverrideConfig(providerId)?.exclusiveKeyGroups ?? [];
+}
+
 /**
  * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
- * dashboard persisted, then the workflow-global trigger override, then the step-scoped one.
+ * dashboard persisted for the provider, then for the sending integration, then the workflow-global
+ * trigger override, then the step-scoped one.
+ *
+ * The integration overrides map rides inside the bridge provider entry and is never provider data,
+ * so it is stripped from the result whichever layer carried it.
+ *
+ * When the provider declares exclusive key groups (e.g. FCM routing destinations), the highest layer
+ * that sets a usable key in a group evicts all group keys contributed by the other layers before merge.
  */
 export function combineProviderOverrides(
-  bridgeData: Record<string, any> | null | undefined,
+  bridgeData: BridgeProviderOverrides | null | undefined,
   overrides: TriggerOverrides | undefined,
   stepId: string | undefined,
-  integrationId: string
+  providerId: string,
+  integrationIdentifier?: string
 ): Record<string, unknown> {
-  const bridgeProviderData = bridgeData?.providers?.[integrationId] || {};
-  const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
-  const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[integrationId] || {} : {};
+  const [providerLayer, integrationLayer, workflowLayer, stepLayer] = resolveOverrideLayers(
+    bridgeData,
+    overrides,
+    stepId,
+    providerId,
+    integrationIdentifier
+  );
 
-  return mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides, replaceArrays);
+  const combined: Record<string, unknown> = mergeWith(
+    {},
+    providerLayer,
+    integrationLayer,
+    workflowLayer,
+    stepLayer,
+    replaceArrays
+  );
+  delete combined[INTEGRATION_OVERRIDES_OUTPUT_KEY];
+
+  return combined;
+}
+
+const INTEGRATION_LAYER_INDEX = 1;
+
+/**
+ * True when the sending integration's own override supplies the winning exclusive key group, i.e. it
+ * chose the destination rather than a provider-wide or trigger layer. Mirrors
+ * `resolveExclusiveRoutingKeys`: a `_passthrough.body` claim on any layer outranks top-level keys.
+ */
+export function integrationOverrideClaimsExclusiveKeys(
+  bridgeData: BridgeProviderOverrides | null | undefined,
+  overrides: TriggerOverrides | undefined,
+  stepId: string | undefined,
+  providerId: string,
+  integrationIdentifier: string
+): boolean {
+  const layers = resolveOverrideLayers(bridgeData, overrides, stepId, providerId, integrationIdentifier);
+  const mergedPassthroughBody = mergeWith({}, ...layers.map(readPassthroughBody), replaceArrays);
+
+  return resolveExclusiveKeyGroups(providerId).some((group) => {
+    const [passthroughKey] = Object.keys(
+      resolveExclusiveRoutingKeys({ _passthrough: { body: mergedPassthroughBody } }, [group])
+    );
+    const claims = passthroughKey
+      ? layers.map((layer) => layerClaimsExclusiveGroup(readPassthroughBody(layer), [passthroughKey]))
+      : layers.map((layer) => layerClaimsExclusiveGroup(layer, group));
+
+    return claims.lastIndexOf(true) === INTEGRATION_LAYER_INDEX;
+  });
+}
+
+function readPassthroughBody(layer: Record<string, unknown>): Record<string, unknown> {
+  const body = (layer._passthrough as { body?: unknown } | undefined)?.body;
+
+  return isPlainObject(body) ? (body as Record<string, unknown>) : {};
+}
+
+function resolveOverrideLayers(
+  bridgeData: BridgeProviderOverrides | null | undefined,
+  overrides: TriggerOverrides | undefined,
+  stepId: string | undefined,
+  providerId: string,
+  integrationIdentifier?: string
+): Record<string, unknown>[] {
+  const { providerOverride, integrationOverrides } = unpackProviderOverrideOutput(bridgeData?.providers?.[providerId]);
+  const integrationOverride = integrationIdentifier ? (integrationOverrides[integrationIdentifier] ?? {}) : {};
+  const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
+  const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
+
+  return applyExclusiveKeyGroups(
+    [providerOverride, integrationOverride, workflowGlobalProviderOverrides, stepScopedOverrides],
+    resolveExclusiveKeyGroups(providerId)
+  );
+}
+
+/**
+ * Merges every trigger override shape addressed to one provider, lowest priority first:
+ *   1. Deprecated channel bucket:    `overrides.<channel>`
+ *   2. Deprecated flat provider key: `overrides.<providerId>`
+ *   3. Workflow-wide provider:       `overrides.providers.<providerId>`
+ *   4. Step-scoped provider:         `overrides.steps.<stepId>.providers.<providerId>`
+ *
+ * Use it for fields the worker reads itself (e.g. SMS `to`/`from`, email `cc`) — provider request
+ * bodies get the nested shapes through `combineProviderOverrides` instead.
+ */
+export function mergeTriggerProviderOverrides(
+  overrides: TriggerOverrides | undefined,
+  channel: string | undefined,
+  providerId: string | undefined,
+  stepId: string | undefined
+): Record<string, unknown> {
+  const legacyOverrides = overrides as Record<string, Record<string, unknown> | undefined> | undefined;
+
+  return {
+    ...(channel ? legacyOverrides?.[channel] || {} : {}),
+    ...(providerId ? legacyOverrides?.[providerId] || {} : {}),
+    ...(providerId ? overrides?.providers?.[providerId] || {} : {}),
+    ...(providerId && stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {}),
+  };
 }
 
 export abstract class SendMessageBase extends SendMessageType {
@@ -96,17 +248,15 @@ export abstract class SendMessageBase extends SendMessageType {
     channelType: ChannelTypeEnum;
     userId: string;
     recipientEmail?: string;
-    filterData: {
-      tenant?: ITenantDefine;
-      subscriber?: SendMessageChannelCommand['compileContext']['subscriber'];
-      context?: SendMessageChannelCommand['compileContext']['context'];
-    };
-  }): Promise<IntegrationEntity | undefined> {
-    const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(params));
+    filterData: IntegrationFilterData;
+  }): Promise<IntegrationSelectionResult | undefined> {
+    const selection = await this.selectIntegration.execute(SelectIntegrationCommand.create(params));
 
-    if (!integration) {
+    if (!selection) {
       return;
     }
+
+    const { integration } = selection;
 
     if (
       integration.providerId === EmailProviderIdEnum.Novu ||
@@ -123,14 +273,22 @@ export abstract class SendMessageBase extends SendMessageType {
       });
     }
 
-    return integration;
+    return selection;
   }
 
   protected getIntegrationFilterData(command: SendMessageChannelCommand) {
     return {
       tenant: command.job.tenant,
+      payload: command.compileContext?.payload,
       subscriber: command.compileContext?.subscriber,
       context: command.compileContext?.context,
+      workflow: buildWorkflowVariablesForJob({
+        workflow: command.workflow,
+        workflowMetadata: command.job.step.workflowMetadata,
+        identifier: command.identifier,
+        tags: command.tags,
+        severity: command.severity,
+      }),
     };
   }
 
@@ -174,10 +332,10 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   @Instrument()
-  protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
-    const providerDisplayName = providers.find((el) => el.id === integration?.providerId)?.displayName || 'Unknown';
-
-    await this.createExecutionDetails.execute(
+  protected async sendSelectedIntegrationExecution(job: JobEntity, selection: IntegrationSelectionResult) {
+    const { integration, matchedConditions } = selection;
+    const providerDisplayName = providers.find((el) => el.id === integration.providerId)?.displayName || 'Unknown';
+    const details = [
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: createProviderSelectedMessage(providerDisplayName) as DetailEnum,
@@ -186,14 +344,41 @@ export abstract class SendMessageBase extends SendMessageType {
         isTest: false,
         isRetry: false,
         raw: JSON.stringify({
-          providerId: integration?.providerId,
-          identifier: integration?.identifier,
-          name: integration?.name,
-          _environmentId: integration?._environmentId,
-          _id: integration?._id,
+          providerId: integration.providerId,
+          identifier: integration.identifier,
+          name: integration.name,
+          _environmentId: integration._environmentId,
+          _id: integration._id,
         }),
-      })
-    );
+      }),
+    ];
+
+    if (matchedConditions) {
+      details.unshift(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.INTEGRATION_CONDITIONS_MATCHED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            integrationIdentifier: integration.identifier,
+            matchedConditions,
+          }),
+        })
+      );
+    }
+
+    await Promise.all(details.map((detail) => this.createExecutionDetailBestEffort(detail)));
+  }
+
+  private async createExecutionDetailBestEffort(command: CreateExecutionDetailsCommand): Promise<void> {
+    try {
+      await this.createExecutionDetails.execute(command);
+    } catch (error) {
+      Logger.error(error, `Failed to create "${command.detail}" execution detail`, SendMessageBase.name);
+    }
   }
 
   @Instrument()
@@ -249,7 +434,7 @@ export abstract class SendMessageBase extends SendMessageType {
           fallbackLng: defaultLocale || 'en',
           interpolation: {
             formatSeparator: ',',
-            format(value, formatting, lng) {
+            format(value, formatting, _lng) {
               if (value && formatting && !Number.isNaN(Date.parse(value))) {
                 return format(new Date(value), formatting);
               }

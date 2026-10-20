@@ -313,6 +313,70 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
     expect(messageCreated).to.be.ok;
   });
 
+  it('should send push notification using an FCM topic set in _passthrough without device tokens', async () => {
+    const { result: subscriber } = await novuClient.subscribers.create({
+      subscriberId: 'test-subscriber-passthrough-topic',
+      email: 'test-passthrough-topic@example.com',
+      firstName: 'Test',
+      lastName: 'PassthroughTopic',
+    });
+
+    await novuClient.integrations.create({
+      providerId: PushProviderIdEnum.FCM,
+      channel: ChannelTypeEnum.PUSH,
+      credentials: {
+        serviceAccount:
+          '{"type":"service_account","project_id":"react-native-expo-fcm","private_key_id":"asdfas","private_key":"-----BEGIN PRIVATE KEY-----\\nasdf\\n-----END PRIVATE KEY-----\\n","client_email":"firebase-adminsdk-fsa@react-native-expo-fcm.iam.gserviceaccount.com","client_id":"asdf","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fsa@react-native-expo-fcm.iam.gserviceaccount.com","universe_domain":"googleapis.com"}',
+      },
+      environmentId: session.environment._id,
+      active: true,
+      check: false,
+    });
+
+    await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: [{ subscriberId: subscriber.subscriberId }],
+      payload: {},
+      overrides: {
+        providers: {
+          fcm: {
+            _passthrough: {
+              body: {
+                topic: 'topic-passthrough-123',
+              },
+            },
+          },
+        },
+      },
+    });
+
+    await session.waitForJobCompletion(template._id);
+
+    const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: subscriber.id,
+    });
+
+    expect(messages.length).to.equal(1);
+    expect(messages[0].channel).to.equal(ChannelTypeEnum.PUSH);
+
+    const executionDetails = await executionDetailsRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber.id,
+    });
+
+    const pushMissingTokensError = executionDetails.find(
+      (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS && ex.providerId === PushProviderIdEnum.FCM
+    );
+    expect(pushMissingTokensError).to.not.be.ok;
+
+    const messageCreated = executionDetails.find(
+      (ex) => ex.detail === DetailEnum.MESSAGE_CREATED && ex.providerId === PushProviderIdEnum.FCM
+    );
+    expect(messageCreated).to.be.ok;
+  });
+
   async function triggerEvent(template2) {
     await novuClient.trigger({
       workflowId: template2.triggers[0].identifier,

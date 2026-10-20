@@ -65,13 +65,6 @@ export class WebSocketWorker extends WebSocketsWorkerService {
 
         const { data: jobData } = job;
 
-        // Skip processing if marked (for shadow/live modes)
-        if (jobData.skipProcessing) {
-          Logger.log(`Skipping job ${job.id} - skipProcessing flag is set`, LOG_CONTEXT);
-          resolve();
-          return;
-        }
-
         Logger.log(`Job ${job.id} / ${jobData.event} is being processed WebSocketWorker`, LOG_CONTEXT);
 
         nr.startBackgroundTransaction(ObservabilityBackgroundTransactionEnum.WS_SOCKET_QUEUE, 'WS Service', () => {

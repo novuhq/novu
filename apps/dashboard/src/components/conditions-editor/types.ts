@@ -1,6 +1,16 @@
 import type { ComponentType } from 'react';
 import type { BaseOption, Path, RuleGroupTypeAny, RuleType } from 'react-querybuilder';
-import type { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import type {
+  EnhancedLiquidVariable,
+  FieldDataType,
+  IsAllowedVariable,
+  LiquidVariable,
+} from '@/utils/parseStepVariables';
+
+export type ConditionFieldDataType = FieldDataType | 'mixed' | 'unknown';
+export type EnhancedConditionVariable = Omit<EnhancedLiquidVariable, 'dataType'> & {
+  dataType: ConditionFieldDataType;
+};
 
 /**
  * Editor used for a rule's value. Defaults to a plain input. The workflow editor

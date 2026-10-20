@@ -1,4 +1,5 @@
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { SqsService } from '../sqs';
 import { InboundParseQueueService } from './inbound-parse-queue.service';
 
 let inboundParseQueueService: InboundParseQueueService;
@@ -6,7 +7,7 @@ let inboundParseQueueService: InboundParseQueueService;
 describe('Inbound Parse Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
-      inboundParseQueueService = new InboundParseQueueService(new WorkflowInMemoryProviderService());
+      inboundParseQueueService = new InboundParseQueueService(new WorkflowInMemoryProviderService(), new SqsService());
       await inboundParseQueueService.queue.obliterate();
     });
 
@@ -123,7 +124,7 @@ describe('Inbound Parse Queue service', () => {
     beforeAll(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      inboundParseQueueService = new InboundParseQueueService(new WorkflowInMemoryProviderService());
+      inboundParseQueueService = new InboundParseQueueService(new WorkflowInMemoryProviderService(), new SqsService());
       await inboundParseQueueService.queue.obliterate();
     });
 

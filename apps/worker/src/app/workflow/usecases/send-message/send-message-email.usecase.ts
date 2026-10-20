@@ -13,6 +13,7 @@ import {
   GetNovuProviderCredentials,
   Instrument,
   InstrumentUsecase,
+  type IntegrationSelectionResult,
   MailFactory,
   messageWebhookMapper,
   ResolveAgentInboundAddresses,
@@ -24,6 +25,7 @@ import {
   AgentRepository,
   EnvironmentEntity,
   EnvironmentRepository,
+  IEmailBlock,
   IntegrationEntity,
   LayoutRepository,
   MessageEntity,
@@ -51,7 +53,7 @@ import {
 import inlineCss from 'inline-css';
 
 import { PlatformException } from '../../../shared/utils';
-import { combineProviderOverrides, SendMessageBase } from './send-message.base';
+import { combineProviderOverrides, mergeTriggerProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -90,14 +92,15 @@ export class SendMessageEmail extends SendMessageBase {
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing channel orchestration is outside this change.
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
-    let integration: IntegrationEntity | undefined;
+    let selection: IntegrationSelectionResult | undefined;
     const { subscriber } = command.compileContext;
     const email: string | undefined = command.overrides?.email?.toRecipient || subscriber?.email;
 
     const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
     try {
-      integration = await this.getIntegration({
+      selection = await this.getIntegration({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         channelType: ChannelTypeEnum.EMAIL,
@@ -136,7 +139,7 @@ export class SendMessageEmail extends SendMessageBase {
     if (!step) throw new PlatformException('Email channel step not found');
     if (!step.template) throw new PlatformException('Email channel template not found');
 
-    if (!integration) {
+    if (!selection) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -161,12 +164,13 @@ export class SendMessageEmail extends SendMessageBase {
       };
     }
 
+    const { integration } = selection;
     const bridgeOutputs = command.bridgeData?.outputs;
 
     const [template, overrideLayoutId] = await Promise.all([
       this.processVariants(command),
       this.getOverrideLayoutId(command, !!bridgeOutputs),
-      this.sendSelectedIntegrationExecution(command.job, integration),
+      this.sendSelectedIntegrationExecution(command.job, selection),
     ]);
 
     if (template) {
@@ -175,10 +179,10 @@ export class SendMessageEmail extends SendMessageBase {
 
     const overrides = this.buildEmailProviderOverrides(command, integration?.providerId, command.step?.stepId);
 
-    let html;
+    let html = '';
     let subject = (bridgeOutputs as EmailOutput)?.subject || step?.template?.subject || '';
-    let content;
-    let senderName;
+    let content: string | IEmailBlock[] = '';
+    let senderName: string | undefined;
     const bridgeEmailOutput = bridgeOutputs as EmailOutput | undefined;
     const bridgeFrom = bridgeEmailOutput?.from;
     const useProviderDefaults = bridgeEmailOutput?.useProviderDefaults === true;
@@ -690,9 +694,7 @@ export class SendMessageEmail extends SendMessageBase {
        * Axios Error, to provide better readability, otherwise stringify ignores response object
        * TODO: Handle this at the handler level globally
        */
-      if (error?.isAxiosError && error.response) {
-        error = error.response;
-      }
+      const providerError = error?.isAxiosError && error.response ? error.response : error;
 
       await this.sendWebhookMessage.execute({
         eventType: WebhookEventEnum.MESSAGE_FAILED,
@@ -700,7 +702,7 @@ export class SendMessageEmail extends SendMessageBase {
         payload: {
           object: messageWebhookMapper(message, command.subscriberId),
           error: {
-            message: error.message || error.name || 'Error while sending email with provider',
+            message: providerError.message || providerError.name || 'Error while sending email with provider',
           },
         },
         organizationId: command.organizationId,
@@ -717,7 +719,9 @@ export class SendMessageEmail extends SendMessageBase {
           isTest: false,
           isRetry: false,
           raw:
-            safeJsonStringify(error) === '{}' ? JSON.stringify({ message: error.message }) : safeJsonStringify(error),
+            safeJsonStringify(providerError) === '{}'
+              ? JSON.stringify({ message: providerError.message })
+              : safeJsonStringify(providerError),
         })
       );
 
@@ -797,36 +801,20 @@ export class SendMessageEmail extends SendMessageBase {
   }
 
   /**
-   * Builds the merged provider overrides object for email sending.
-   *
-   * Provider-specific fields (cc/bcc/from/replyTo/etc.) can arrive in three shapes:
-   *   1. Deprecated channel bucket:     `overrides.email`
-   *   2. Deprecated flat provider key:  `overrides.<providerId>`
-   *   3. Modern nested providers shape: `overrides.providers.<providerId>`
-   *                                     `overrides.steps.<stepId>.providers.<providerId>`
-   *
-   * All three are merged (step-level wins) so values like `cc` reach `createMailData`
-   * and downstream providers (e.g. SendGrid `personalizations[0].cc`).
+   * Merged so values like `cc` reach `createMailData` and downstream providers
+   * (e.g. SendGrid `personalizations[0].cc`).
    */
   private buildEmailProviderOverrides(
     command: SendMessageChannelCommand,
     providerId: string | undefined,
     stepId: string | undefined
-  ): Record<string, unknown> {
-    const deprecatedFlatEmailOverride = command.overrides?.email || {};
-    const deprecatedFlatProviderOverride = providerId
-      ? (command.overrides as Record<string, Record<string, unknown>>)?.[providerId] || {}
-      : {};
-    const providerOverride = providerId ? command.overrides?.providers?.[providerId] || {} : {};
-    const stepProviderOverride =
-      providerId && stepId ? command.overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
-
-    return {
-      ...deprecatedFlatEmailOverride,
-      ...deprecatedFlatProviderOverride,
-      ...providerOverride,
-      ...stepProviderOverride,
-    };
+  ): EmailMessageOverrides {
+    return mergeTriggerProviderOverrides(
+      command.overrides,
+      ChannelTypeEnum.EMAIL,
+      providerId,
+      stepId
+    ) as EmailMessageOverrides;
   }
 
   public buildFactoryIntegration(integration: IntegrationEntity) {
@@ -860,7 +848,22 @@ function hasExplicitEmptyToOverride(overrides: Record<string, unknown>): boolean
   return 'to' in overrides && Array.isArray(overrides.to) && overrides.to.length === 0;
 }
 
-const createMailData = (options: IEmailOptions, overrides: Record<string, any>): IEmailOptions => {
+type EmailMessageOverrides = {
+  replaceToRecipient?: boolean;
+  to?: string[];
+  from?: string;
+  text?: string;
+  html?: string;
+  cc?: string[];
+  bcc?: string[];
+  ipPoolName?: string;
+  senderName?: string;
+  subject?: string;
+  customData?: Record<string, unknown>;
+  headers?: Record<string, string>;
+};
+
+const createMailData = (options: IEmailOptions, overrides: EmailMessageOverrides): IEmailOptions => {
   const filterDuplicate = (prev: string[], current: string) => (prev.includes(current) ? prev : [...prev, current]);
   const replaceToRecipient = overrides?.replaceToRecipient === true;
   const explicitEmptyTo = replaceToRecipient && hasExplicitEmptyToOverride(overrides);

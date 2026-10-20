@@ -92,6 +92,10 @@ You can:
 
 This enables full control over client-side navigation behavior.
 
+<Note>
+  For security, Novu only keeps redirect URLs that are an absolute `http`/`https` URL, a root-relative path that starts with `/` (for example, `/tasks/123`), or a URL built from [Liquid variables](/platform/workflow/add-notification-content/personalize-content) (for example, `{{payload.url}}`). Other values - such as `javascript:`, `mailto:`, protocol-relative `//host` URLs, or custom app deep-link schemes (`myapp://...`) - are removed, and the notification renders without a redirect. This applies to both the main redirect URL and action button URLs.
+</Note>
+
 ### Data object
 
 The data object is a customizable key-value store available in the in-app step. You can use it to extend each Inbox component notification by embedding custom data.

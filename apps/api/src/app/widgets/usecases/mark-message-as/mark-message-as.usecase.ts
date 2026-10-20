@@ -17,7 +17,13 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { DeliveryLifecycleStatusEnum, WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
+import {
+  DeliveryLifecycleStatusEnum,
+  sanitizeMessageCta,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
+  WebSocketEventEnum,
+} from '@novu/shared';
 
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
 
@@ -113,6 +119,10 @@ export class MarkMessageAs {
       }
     }
 
+    for (const message of updatedMessages) {
+      message.cta = sanitizeMessageCta(message.cta);
+    }
+
     return updatedMessages;
   }
 
@@ -161,7 +171,7 @@ export class MarkMessageAs {
   private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
     const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
-    this.webSocketsQueueService.add({
+    void this.webSocketsQueueService.add({
       name: 'sendMessage',
       data: {
         event: eventMessage,

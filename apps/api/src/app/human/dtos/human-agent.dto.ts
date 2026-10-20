@@ -1,0 +1,127 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AGENT_INBOX_REACHES, type AgentInboxReach } from '@novu/dal';
+import { AGENT_NAME_MAX_LENGTH } from '@novu/shared';
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { AGENT_DESCRIPTION_MAX_LENGTH, trimmed } from './setup-human-relay.dto';
+
+/** Whether a mailbox local-part is free on the Agent Inbox domain. */
+export class CheckInboxAddressQueryDto {
+  @ApiProperty({ description: 'The handle to check, such as `atlas`.' })
+  @IsString()
+  @Matches(/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/)
+  handle: string;
+
+  @ApiPropertyOptional({
+    description: 'The operator’s email, used only to suggest a nearby free handle when this one is taken.',
+  })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+}
+
+export class CheckInboxAddressResponseDto {
+  @ApiProperty()
+  handle: string;
+
+  @ApiProperty()
+  available: boolean;
+
+  @ApiPropertyOptional()
+  suggestion?: string;
+}
+
+/** Which relay agent a call is about, for a setup made with its own `--agent-identifier`. */
+export class HumanAgentQueryDto {
+  @ApiPropertyOptional({ description: 'Relay agent identifier. Defaults to `human-relay`.' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z0-9-_]+$/i)
+  @MaxLength(64)
+  agentIdentifier?: string;
+}
+
+export class UpdateHumanAgentRequestDto extends HumanAgentQueryDto {
+  @ApiPropertyOptional({
+    description: 'What the relay agent is called from now on. Missing leaves the name it has.',
+    maxLength: AGENT_NAME_MAX_LENGTH,
+  })
+  @IsOptional()
+  @IsString()
+  @Transform(trimmed)
+  @IsNotEmpty()
+  @MaxLength(AGENT_NAME_MAX_LENGTH)
+  name?: string;
+
+  @ApiPropertyOptional({
+    description: 'A line about what the relay agent does. An empty one clears it; missing leaves it alone.',
+    maxLength: AGENT_DESCRIPTION_MAX_LENGTH,
+  })
+  @IsOptional()
+  @IsString()
+  @Transform(trimmed)
+  @MaxLength(AGENT_DESCRIPTION_MAX_LENGTH)
+  description?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Who can write to the agent: `anyone`, or only its `contacts`. Missing leaves it as it is. The operator’s dashboard only.',
+    enum: [...AGENT_INBOX_REACHES],
+  })
+  @IsOptional()
+  @IsIn(AGENT_INBOX_REACHES)
+  reach?: AgentInboxReach;
+
+  @ApiPropertyOptional({
+    description:
+      'Pauses (`true`) or resumes (`false`) the agent. Paused, messages keep arriving but its hosts can’t read the inbox or send. The operator’s dashboard only.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  paused?: boolean;
+}
+
+export class HumanAgentResponseDto {
+  @ApiProperty()
+  agentId: string;
+
+  @ApiProperty()
+  agentIdentifier: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiPropertyOptional()
+  description?: string;
+
+  @ApiPropertyOptional({ description: 'Where anyone can load the agent’s picture. Missing when it has none.' })
+  pictureUrl?: string;
+
+  @ApiProperty()
+  active: boolean;
+
+  @ApiPropertyOptional({ description: 'When `human setup` made the agent.' })
+  createdAt?: string;
+
+  @ApiProperty({ description: 'Who can write to the agent.', enum: [...AGENT_INBOX_REACHES] })
+  reach: AgentInboxReach;
+
+  @ApiProperty({ description: 'Whether the operator paused the agent.' })
+  paused: boolean;
+
+  @ApiPropertyOptional({ description: 'When the agent was paused. Missing while it isn’t.' })
+  pausedAt?: string;
+}
+
+/** The onboarding test: mail from the Agent Email Inbox to the operator’s sign-up address. */
+export class SendHumanTestEmailRequestDto extends HumanAgentQueryDto {
+  @ApiProperty({ description: 'Where the test email goes: the address the operator signed up with.' })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+}
+
+export class SendHumanTestEmailResponseDto {
+  @ApiProperty()
+  success: boolean;
+}

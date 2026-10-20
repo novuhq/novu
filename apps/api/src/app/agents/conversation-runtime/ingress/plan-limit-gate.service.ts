@@ -76,6 +76,8 @@ function buildUpgradeRequiredCard(
  * enforces identical semantics:
  *   - Keyless/demo orgs are governed by their own caps (KeylessAbuseGuard) and
  *     are never gated here.
+ *   - The Human relay skips this gate. Its traffic is not a Novu plan agent,
+ *     channel, or conversation.
  *   - Limit evaluation fails open (`checkRuntimeLimits` is contractually
  *     non-throwing) so a transient error never disables a paying customer's agent.
  *   - The upgrade card's own CTA is a link-button; clicking it emits another
@@ -105,7 +107,7 @@ export class PlanLimitGateService {
     config: ResolvedAgentConfig,
     params: { isNewThread: boolean; conversationId?: string }
   ): Promise<{ reason: PlanLimitBlockReason; message: string } | null> {
-    if (config.isKeyless) {
+    if (config.isKeyless || config.isHumanRelay) {
       return null;
     }
 
@@ -136,16 +138,16 @@ export class PlanLimitGateService {
 
   /**
    * Returns `true` when inbound processing must stop because the agent or its
-   * channel is over the plan limit. Posts the upgrade card unless the trigger
-   * is a link-button action (see class docs).
+   * channel is over the plan limit. Posts the upgrade card unless `postCard`
+   * is false or the trigger is a link-button action (see class docs).
    */
   async maybeBlock(
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    action?: AgentAction
+    { action, postCard = true }: { action?: AgentAction; postCard?: boolean } = {}
   ): Promise<boolean> {
-    if (config.isKeyless) {
+    if (config.isKeyless || config.isHumanRelay) {
       return false;
     }
 
@@ -155,7 +157,7 @@ export class PlanLimitGateService {
       return false;
     }
 
-    if (this.shouldPostUpgradeCard(config) && !isLinkButtonActionId(action?.id)) {
+    if (postCard && this.shouldPostUpgradeCard(config) && !isLinkButtonActionId(action?.id)) {
       await this.postUpgradeRequiredReply(agentId, config, thread, reason);
     }
 
@@ -180,7 +182,7 @@ export class PlanLimitGateService {
     thread: Thread,
     conversation?: ConversationEntity
   ): Promise<boolean> {
-    if (config.isKeyless) {
+    if (config.isKeyless || config.isHumanRelay) {
       return false;
     }
 

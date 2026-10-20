@@ -23,7 +23,8 @@ Use Slack as a messaging channel for your agent. Users can DM or @mention the bo
 | MCP connect card | Yes |
 | Resolve conversation | Yes |
 | File sharing | Yes |
-| Streaming word-by-word | Not yet |
+| Streaming word-by-word | Yes |
+| Quote reply | Plain post |
 
 Full matrix: [Channels overview](/agents/channels/overview).
 
@@ -54,6 +55,16 @@ When the dashboard or CLI asks for a Slack App Configuration Token:
 
 The configuration token is used once to create the Slack app. Novu does not store it.
 
+## Distribute to other workspaces
+
+A Slack app only works in the workspace where it was created. Users in any other workspace are blocked when they click your connect button until you enable Public Distribution.
+
+1. Open your app in [Slack API apps](https://api.slack.com/apps).
+2. Go to **Manage Distribution**.
+3. Complete the checklist and click **Activate Public Distribution**.
+
+Novu does not turn this on for you. Public Distribution is a manual setting in Slack, and the app manifest that Novu generates leaves it off.
+
 ## Setup
 
 | Framework / Platform | Guide |
@@ -66,13 +77,14 @@ The configuration token is used once to create the Slack app. Novu does not stor
 
 ## Connect component
 
-Use `SlackConnectButton` from `@novu/react` so end users can install the Slack app and link it to your agent from your product UI.
+Use `SlackConnectButton` from `@novu/react` so end users can install the Slack app and link it to your agent from your product UI. Render it on an authenticated page and pass the signed-in user's id as `subscriberId`. See [Connect components in production](/agents/custom-code-agent/connect-components#use-connect-components-in-production).
 
 ```tsx
 import { NovuProvider, SlackConnectButton } from '@novu/react';
 
-export function SlackConnect() {
-  const subscriberId = 'subscriber-id';
+// userId: the signed-in user's id from your app's auth session
+export function SlackConnect({ userId }: { userId: string }) {
+  const subscriberId = userId;
   const integrationIdentifier = 'slack-integration-identifier';
   const agentIdentifier = 'agent-identifier';
 

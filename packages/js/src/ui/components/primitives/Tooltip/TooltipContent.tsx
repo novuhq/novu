@@ -1,10 +1,10 @@
-import { JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
+import { type Accessor, JSX, onCleanup, Show, splitProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { useAppearance, useFocusManager } from '../../../context';
-import { useStyle } from '../../../helpers';
+import { useAppearance } from '../../../context';
+import { createPresence, type PresenceState, useStyle } from '../../../helpers';
 import type { AllAppearanceKey } from '../../../types';
 import { Root } from '../../elements';
-import { Motion } from '../Motion';
+import { useParentLayerPresent } from '../floating';
 import { useTooltip } from './TooltipRoot';
 
 export const tooltipContentVariants = () =>
@@ -14,52 +14,45 @@ type TooltipContentProps = JSX.IntrinsicElements['div'] & {
   appearanceKey?: AllAppearanceKey;
 };
 
-const TooltipContentBody = (props: TooltipContentProps) => {
-  const { open, setFloating, floating, floatingStyles, effectiveAnimationDuration } = useTooltip();
-  const { setActive, removeActive } = useFocusManager();
-  const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'style']);
+const TooltipContentBody = (props: TooltipContentProps & { state: Accessor<PresenceState | undefined> }) => {
+  const { setFloating, floatingStyles, side, origin } = useTooltip();
+  const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'style', 'state']);
   const style = useStyle();
 
-  onMount(() => {
-    const floatingEl = floating();
-    if (floatingEl) setActive(floatingEl);
+  onCleanup(() => setFloating(null));
 
-    onCleanup(() => {
-      if (floatingEl) removeActive(floatingEl);
-    });
-  });
-
+  // A tooltip never takes focus or clicks, so it stays out of the focus stack: joining it made the open popover
+  // ignore Escape and outside clicks, and focused the popover's first control again when the tooltip left.
   return (
-    <Motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={open() ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
-      transition={{ duration: effectiveAnimationDuration(), easing: 'ease-in-out' }}
+    <div
       ref={setFloating}
-      class={
+      class={`${
         local.class
           ? local.class
           : style({ key: local.appearanceKey || 'tooltipContent', className: tooltipContentVariants() })
-      }
-      style={{ ...floatingStyles(), 'z-index': 99999 }}
+      } nt-motion-tooltip nt-pointer-events-none`}
+      style={{ ...floatingStyles(), 'z-index': 99999, '--nv-floating-origin': origin() }}
+      data-state={local.state()}
+      data-side={side()}
       {...rest}
-    >
-      {props.children}
-    </Motion.div>
+    />
   );
 };
 
 export const TooltipContent = (props: TooltipContentProps) => {
-  const { shouldRender } = useTooltip();
+  const { open, floating } = useTooltip();
   const { container } = useAppearance();
+  const parentPresent = useParentLayerPresent();
+  const presence = createPresence({ present: () => open() && parentPresent(), element: floating });
   const portalContainer = () => container() ?? document.body;
 
   return (
-    <Show when={shouldRender()}>
-      {/* we can safely use portal to document.body here as this element 
+    <Show when={presence.isMounted()}>
+      {/* we can safely use portal to document.body here as this element
       won't be focused and close other portals (outside solid world) as a result */}
       <Portal mount={portalContainer()}>
         <Root>
-          <TooltipContentBody {...props} />
+          <TooltipContentBody {...props} state={presence.state} />
         </Root>
       </Portal>
     </Show>

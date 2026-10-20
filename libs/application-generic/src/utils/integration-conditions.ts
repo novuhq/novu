@@ -1,24 +1,36 @@
+import {
+  INTEGRATION_CONDITION_NAMESPACES,
+  INTEGRATION_CONDITION_RUNTIME_NAMESPACES,
+  INTEGRATION_CONDITION_VARIABLES,
+} from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import {
   COMPARISON_OPERATORS,
+  evaluateRules,
   isValidRule,
   LOGICAL_OPERATORS,
   QueryValidatorService,
   UNARY_STRING_OPERATORS,
 } from '../services/query-parser';
+import type { WorkflowVariables } from './build-workflow-variables';
 
-export const INTEGRATION_CONDITION_NAMESPACES = ['context.', 'subscriber.'];
+export interface IntegrationRuleEvaluationData {
+  payload?: unknown;
+  subscriber?: unknown;
+  context?: unknown;
+  workflow?: WorkflowVariables;
+}
 
-export const INTEGRATION_CONDITION_VARIABLES = [
-  'context.tenant.id',
-  'subscriber.subscriberId',
-  'subscriber.email',
-  'subscriber.phone',
-  'subscriber.firstName',
-  'subscriber.lastName',
-  'subscriber.locale',
-  'subscriber.data',
-];
+export interface IntegrationRuleEvaluationResult {
+  result: boolean;
+  issues: string[];
+}
+
+export { INTEGRATION_CONDITION_NAMESPACES, INTEGRATION_CONDITION_RUNTIME_NAMESPACES, INTEGRATION_CONDITION_VARIABLES };
+
+type IntegrationConditionNamespace =
+  | (typeof INTEGRATION_CONDITION_NAMESPACES)[number]
+  | (typeof INTEGRATION_CONDITION_RUNTIME_NAMESPACES)[number];
 
 /**
  * Operators the conditions editor and QueryValidatorService actually inspect.
@@ -49,14 +61,18 @@ export function hasLegacyIntegrationConditions(conditions?: unknown[] | null): b
   return Array.isArray(conditions) && conditions.length > 0;
 }
 
-function collectDisallowedOperatorIssues(node: unknown, issues: string[]): void {
+function collectDisallowedOperatorIssues(
+  node: unknown,
+  issues: string[],
+  namespaces: readonly IntegrationConditionNamespace[]
+): void {
   if (node === null || typeof node !== 'object') {
     return;
   }
 
   if (Array.isArray(node)) {
     for (const item of node) {
-      collectDisallowedOperatorIssues(item, issues);
+      collectDisallowedOperatorIssues(item, issues, namespaces);
     }
 
     return;
@@ -86,17 +102,17 @@ function collectDisallowedOperatorIssues(node: unknown, issues: string[]): void 
   if (operator === 'var') {
     const fieldValue = typeof value === 'string' ? value : '';
 
-    if (!isAllowedIntegrationVar(fieldValue)) {
+    if (!isAllowedIntegrationVar(fieldValue, namespaces)) {
       issues.push('Value is not valid');
     }
 
     return;
   }
 
-  collectDisallowedOperatorIssues(value, issues);
+  collectDisallowedOperatorIssues(value, issues, namespaces);
 }
 
-function isAllowedIntegrationVar(fieldValue: string): boolean {
+function isAllowedIntegrationVar(fieldValue: string, namespaces: readonly IntegrationConditionNamespace[]): boolean {
   if (!fieldValue) {
     return false;
   }
@@ -105,29 +121,43 @@ function isAllowedIntegrationVar(fieldValue: string): boolean {
     return true;
   }
 
-  const isWithinAllowedPrefixes = INTEGRATION_CONDITION_NAMESPACES.some(
+  const isWithinAllowedPrefixes = namespaces.some(
     (prefix) => fieldValue.startsWith(prefix) && fieldValue.length > prefix.length
   );
 
-  return isWithinAllowedPrefixes || INTEGRATION_CONDITION_VARIABLES.includes(fieldValue);
+  return isWithinAllowedPrefixes || (INTEGRATION_CONDITION_VARIABLES as readonly string[]).includes(fieldValue);
 }
 
-export function getIntegrationRulesIssues(logic: Record<string, unknown>): string[] {
+export function getIntegrationRulesIssues(
+  logic: Record<string, unknown>,
+  namespaces: readonly IntegrationConditionNamespace[] = INTEGRATION_CONDITION_NAMESPACES
+): string[] {
   if (!isValidRule(logic as RulesLogic<AdditionalOperation>)) {
     return ['Invalid integration conditions'];
   }
 
   const disallowedOperatorIssues: string[] = [];
-  collectDisallowedOperatorIssues(logic, disallowedOperatorIssues);
+  collectDisallowedOperatorIssues(logic, disallowedOperatorIssues, namespaces);
 
-  const queryValidatorService = new QueryValidatorService(
-    INTEGRATION_CONDITION_VARIABLES,
-    INTEGRATION_CONDITION_NAMESPACES
-  );
+  const queryValidatorService = new QueryValidatorService([...INTEGRATION_CONDITION_VARIABLES], [...namespaces]);
 
   const fieldAndStructureIssues = queryValidatorService
     .validateQueryRules(logic as RulesLogic<AdditionalOperation>)
     .map((issue) => issue.message);
 
   return [...disallowedOperatorIssues, ...fieldAndStructureIssues];
+}
+
+export function evaluateIntegrationRules(
+  rules: Record<string, unknown>,
+  data: IntegrationRuleEvaluationData
+): IntegrationRuleEvaluationResult {
+  const issues = getIntegrationRulesIssues(rules, INTEGRATION_CONDITION_RUNTIME_NAMESPACES);
+  if (issues.length > 0) {
+    return { result: false, issues };
+  }
+
+  const { result } = evaluateRules(rules as RulesLogic<AdditionalOperation>, data, true);
+
+  return { result, issues: [] };
 }

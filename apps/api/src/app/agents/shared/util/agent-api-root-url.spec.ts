@@ -7,8 +7,10 @@ describe('buildAgentApiRootUrl', () => {
   const originalAgentApiHostname = process.env.AGENT_API_HOSTNAME;
 
   afterEach(() => {
-    process.env.API_ROOT_URL = originalApiRootUrl;
-    process.env.AGENT_API_HOSTNAME = originalAgentApiHostname;
+    if (originalApiRootUrl === undefined) delete process.env.API_ROOT_URL;
+    else process.env.API_ROOT_URL = originalApiRootUrl;
+    if (originalAgentApiHostname === undefined) delete process.env.AGENT_API_HOSTNAME;
+    else process.env.AGENT_API_HOSTNAME = originalAgentApiHostname;
   });
 
   it('uses API_ROOT_URL when AGENT_API_HOSTNAME is not set', () => {

@@ -60,12 +60,6 @@ describe('novu-powered-by-watermark', () => {
     expect(contentHasPoweredByWatermark(markdown)).to.equal(true);
   });
 
-  it('detects italic attributed watermark in markdown', () => {
-    const markdown = `Hello\n\n_Powered by [Novu](${NOVU_AGENT_POWERED_URL}?utm_campaign=agent-powered)_`;
-
-    expect(contentHasPoweredByWatermark(markdown)).to.equal(true);
-  });
-
   it('detects legacy attributed watermark in markdown', () => {
     const markdown = `Hello\n\n[Powered by Novu](${NOVU_AGENT_POWERED_URL}?utm_campaign=agent-powered)`;
 

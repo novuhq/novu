@@ -16,12 +16,13 @@ import {
   ConversationRepository,
   EnvironmentEntity,
   EnvironmentRepository,
+  HumanContactRepository,
   HumanInteractionRepository,
   IntegrationRepository,
   McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum, EnvironmentTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, EnvironmentTypeEnum, HumanChannelViaEnum } from '@novu/shared';
 import { KEYLESS_SUBSCRIBER_ID } from '../../../inbox/utils/keyless.constants';
 import {
   ConnectClaimTokenCacheUnavailableError,
@@ -51,6 +52,7 @@ export class ClaimKeylessConnect {
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly humanInteractionRepository: HumanInteractionRepository,
+    private readonly humanContactRepository: HumanContactRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -93,8 +95,10 @@ export class ClaimKeylessConnect {
       const target = { _environmentId: targetEnvironment._id, _organizationId: command.organizationId };
 
       const sourceAgents = await this.agentRepository.find(sourceScope, ['_id', 'identifier']);
+      await this.assertNoAgentIdentifierClash(sourceAgents, target);
+      await this.assertOperatorEmailVerified(keylessEnvironment._id);
 
-      await this.agentRepository.withTransaction(async (session) => {
+      await this.moveIntoTarget(async (session) => {
         await this.agentRepository.update(sourceScope, { $set: target }, { session });
         await this.agentIntegrationRepository.update(sourceScope, { $set: target }, { session });
         await this.integrationRepository.update(
@@ -109,6 +113,7 @@ export class ClaimKeylessConnect {
         await this.agentMcpServerRepository.update(sourceScope, { $set: target }, { session });
         await this.mcpConnectionRepository.update(sourceScope, { $set: target }, { session });
         await this.humanInteractionRepository.update(sourceScope, { $set: target }, { session });
+        await this.humanContactRepository.update(sourceScope, { $set: target }, { session });
         await this.subscriberRepository.update(
           { ...sourceScope, subscriberId: { $ne: KEYLESS_SUBSCRIBER_ID } },
           { $set: target },
@@ -143,6 +148,65 @@ export class ClaimKeylessConnect {
       };
     } finally {
       await this.connectClaimTokenService.releaseClaimLock(command.token);
+    }
+  }
+
+  /**
+   * A verification link names the keyless environment. Claiming first moves the
+   * pending contact, and that link can no longer find it. Verify, then claim.
+   */
+  private async assertOperatorEmailVerified(environmentId: string): Promise<void> {
+    const operator = await this.humanContactRepository.findOperatorInEnvironment(environmentId);
+    const email = operator?.addresses?.[HumanChannelViaEnum.EMAIL];
+
+    if (!email?.pending || email.verified) {
+      return;
+    }
+
+    throw new ConflictException({
+      message:
+        'Verify your email before claiming this setup. Open the verification message and confirm the address, then use this link again.',
+      code: 'verify_email_before_claim',
+    });
+  }
+
+  /**
+   * Agent identifiers are unique per environment, so a target that already has one of the claimed agents
+   * (e.g. a second keyless `human-relay` claimed into the same account) can't take this setup.
+   */
+  private async assertNoAgentIdentifierClash(
+    sourceAgents: Array<{ identifier: string }>,
+    target: { _environmentId: string; _organizationId: string }
+  ): Promise<void> {
+    if (sourceAgents.length === 0) {
+      return;
+    }
+
+    const clash = await this.agentRepository.findOne(
+      { ...target, identifier: { $in: sourceAgents.map((agent) => agent.identifier) } },
+      ['identifier']
+    );
+
+    if (clash) {
+      throw new ConflictException({
+        message: `Your Development environment already has an agent called "${clash.identifier}", so this setup can't be added to it.`,
+        code: 'claim_agent_exists',
+      });
+    }
+  }
+
+  private async moveIntoTarget(move: Parameters<AgentRepository['withTransaction']>[0]): Promise<void> {
+    try {
+      await this.agentRepository.withTransaction(move);
+    } catch (error) {
+      if ((error as { code?: number })?.code === 11000) {
+        throw new ConflictException({
+          message: 'Part of this setup already exists in your Development environment.',
+          code: 'claim_conflict',
+        });
+      }
+
+      throw error;
     }
   }
 

@@ -571,7 +571,6 @@ describe('WorkflowOriginService', () => {
     it('catch-up hydrates an existing conversation when the origin is not hydrated yet', async () => {
       const existingConversation = {
         ...conversation,
-        lastActivityAt: new Date(Date.now() - 3_600_000).toISOString(),
         participants: [{ type: 'subscriber', id: 'sub1' }],
       };
       const { service, messageRepository, conversationService } = makeService({
@@ -599,7 +598,6 @@ describe('WorkflowOriginService', () => {
     it('skips an origin already hydrated into the conversation', async () => {
       const existingConversation = {
         ...conversation,
-        lastActivityAt: new Date(Date.now() - 3_600_000).toISOString(),
         participants: [{ type: 'subscriber', id: 'sub1' }],
       };
       const { service } = makeService({
@@ -619,34 +617,9 @@ describe('WorkflowOriginService', () => {
       expect(result).to.equal(null);
     });
 
-    it('re-resolves an unhydrated origin older than lastActivityAt so a failed hydration is retried', async () => {
-      const existingConversation = {
-        ...conversation,
-        // The failed turn still persisted its inbound message, so activity is newer than the origin.
-        lastActivityAt: new Date().toISOString(),
-        participants: [{ type: 'subscriber', id: 'sub1' }],
-      };
-      const { service } = makeService({
-        find: sinon.stub().resolves([whatsappOrigin]),
-      });
-
-      const result = await service.resolve({
-        agentId: 'agent1',
-        config: whatsappConfig as any,
-        platformThreadId: 'whatsapp:15551234567',
-        subscriberId: 'sub1',
-        message: { id: 'inbound', text: 'again', author: { userId: '15551234567' }, raw: {} } as any,
-        existingConversation: existingConversation as any,
-      });
-
-      expect(result?.origin).to.equal(whatsappOrigin);
-    });
-
     it('prefers a quoted wamid over latest-by-subscriber and bypasses the catch-up window', async () => {
-      const lastActivityAt = new Date().toISOString();
       const existingConversation = {
         ...conversation,
-        lastActivityAt,
         participants: [{ type: 'subscriber', id: 'sub1' }],
       };
       const { service, messageRepository } = makeService({
@@ -809,7 +782,6 @@ describe('WorkflowOriginService', () => {
     it('prefers a flat quoted reply_to_message.message_id over latest-by-subscriber', async () => {
       const existingConversation = {
         ...conversation,
-        lastActivityAt: new Date().toISOString(),
         participants: [{ type: 'subscriber', id: 'sub1' }],
       };
       const { service, messageRepository } = makeService({
@@ -882,7 +854,6 @@ describe('WorkflowOriginService', () => {
     it('catch-up hydrates an existing conversation when the origin is not hydrated yet', async () => {
       const existingConversation = {
         ...conversation,
-        lastActivityAt: new Date(Date.now() - 3_600_000).toISOString(),
         participants: [{ type: 'subscriber', id: 'sub1' }],
       };
       const { service, messageRepository, conversationService } = makeService({
@@ -910,7 +881,6 @@ describe('WorkflowOriginService', () => {
     it('skips an origin already hydrated into the conversation', async () => {
       const existingConversation = {
         ...conversation,
-        lastActivityAt: new Date(Date.now() - 3_600_000).toISOString(),
         participants: [{ type: 'subscriber', id: 'sub1' }],
       };
       const { service } = makeService({
@@ -928,28 +898,6 @@ describe('WorkflowOriginService', () => {
       });
 
       expect(result).to.equal(null);
-    });
-
-    it('re-resolves an unhydrated origin so a failed hydration is retried', async () => {
-      const existingConversation = {
-        ...conversation,
-        lastActivityAt: new Date().toISOString(),
-        participants: [{ type: 'subscriber', id: 'sub1' }],
-      };
-      const { service } = makeService({
-        find: sinon.stub().resolves([telegramOrigin]),
-      });
-
-      const result = await service.resolve({
-        agentId: 'agent1',
-        config: telegramConfig as any,
-        platformThreadId: 'telegram:777042',
-        subscriberId: 'sub1',
-        message: { id: 'inbound', text: 'again', author: { userId: '777042' }, raw: {} } as any,
-        existingConversation: existingConversation as any,
-      });
-
-      expect(result?.origin).to.equal(telegramOrigin);
     });
 
     it('resolves on action turns without a message using latest-by-subscriber', async () => {
@@ -1126,7 +1074,6 @@ describe('WorkflowOriginService', () => {
     it('catch-up hydrates an existing conversation when the origin is not hydrated yet', async () => {
       const existingConversation = {
         ...conversation,
-        lastActivityAt: new Date(Date.now() - 3_600_000).toISOString(),
         participants: [{ type: 'subscriber', id: 'sub1' }],
       };
       const { service, messageRepository, conversationService } = makeService({
@@ -1154,7 +1101,6 @@ describe('WorkflowOriginService', () => {
     it('skips an origin already hydrated into the conversation', async () => {
       const existingConversation = {
         ...conversation,
-        lastActivityAt: new Date(Date.now() - 3_600_000).toISOString(),
         participants: [{ type: 'subscriber', id: 'sub1' }],
       };
       const { service } = makeService({
@@ -1301,10 +1247,8 @@ describe('WorkflowOriginService', () => {
     });
 
     it('prefers a quotedReply entity messageId over latest-by-subscriber and bypasses the catch-up window', async () => {
-      const lastActivityAt = new Date().toISOString();
       const existingConversation = {
         ...conversation,
-        lastActivityAt,
         participants: [{ type: 'subscriber', id: 'sub1' }],
       };
       const { service, messageRepository } = makeService({
@@ -1379,7 +1323,6 @@ describe('WorkflowOriginService', () => {
     it('catch-up hydrates an existing DM conversation when the origin is not hydrated yet', async () => {
       const existingConversation = {
         ...conversation,
-        lastActivityAt: new Date(Date.now() - 3_600_000).toISOString(),
         participants: [{ type: 'subscriber', id: 'sub1' }],
       };
       const { service, messageRepository, conversationService } = makeService({
@@ -1408,7 +1351,6 @@ describe('WorkflowOriginService', () => {
     it('skips an origin already hydrated into the conversation', async () => {
       const existingConversation = {
         ...conversation,
-        lastActivityAt: new Date(Date.now() - 3_600_000).toISOString(),
         participants: [{ type: 'subscriber', id: 'sub1' }],
       };
       const { service } = makeService({

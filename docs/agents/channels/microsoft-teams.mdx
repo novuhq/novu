@@ -24,6 +24,7 @@ Use Microsoft Teams as a messaging channel for your agent. Novu keeps conversati
 | Resolve conversation | Yes |
 | File sharing | Yes |
 | Streaming word-by-word | Not yet |
+| Quote reply | Plain post |
 
 Full matrix: [Channels overview](/agents/channels/overview).
 
@@ -46,15 +47,28 @@ Gated tools surface as an Adaptive Card (**Deny**, **Approve once**, **Always al
 
 Teams provider credentials and app packaging are configured in the Novu dashboard when you add the Microsoft Teams provider.
 
+## Distribute to other tenants
+
+Teams has no equivalent of Slack's Public Distribution. Novu installs the app in your own Microsoft 365 tenant during setup. Every other tenant, including each customer's, must make the same app package available before its users can connect.
+
+1. **Download the app package.** In the Novu dashboard, open the Teams integration on your agent and download the multi-tenant app package. The same package works in every tenant.
+2. **Upload it in each tenant.** A Teams admin opens **Teams admin center → Teams apps → Manage apps**, chooses **Actions → Upload new app**, and confirms its status is **Allowed**.
+3. **Allow it in the permission policy.** In **Teams apps → Permission policies**, the admin allows custom apps, or allowlists this app, in the policy assigned to users. If this step is skipped, users see "This app is not available".
+4. **Grant admin consent.** A Global Admin of each tenant opens the admin consent link shown in the dashboard once.
+5. **Users connect from your app.** Users in that tenant connect with `MsTeamsConnectButton`, and the bot installs for them.
+
+Changes can take up to 24 hours to propagate. To distribute to many customers without sharing the package with each tenant, [publish the app to the Microsoft Teams Store](https://learn.microsoft.com/en-us/microsoftteams/platform/concepts/deploy-and-publish/apps-publish-overview).
+
 ## Connect component
 
-Use `MsTeamsConnectButton` from `@novu/react` so end users can admin-consent and link Teams to your agent from your product UI. In subscriber mode, `autoLinkUser` defaults to `true` so the per-user Teams identity is linked after consent.
+Use `MsTeamsConnectButton` from `@novu/react` so end users can admin-consent and link Teams to your agent from your product UI. In subscriber mode, `autoLinkUser` defaults to `true` so the per-user Teams identity is linked after consent. Render it on an authenticated page and pass the signed-in user's id as `subscriberId`. See [Connect components in production](/agents/custom-code-agent/connect-components#use-connect-components-in-production).
 
 ```tsx
 import { NovuProvider, MsTeamsConnectButton } from '@novu/react';
 
-export function TeamsConnect() {
-  const subscriberId = 'subscriber-id';
+// userId: the signed-in user's id from your app's auth session
+export function TeamsConnect({ userId }: { userId: string }) {
+  const subscriberId = userId;
   const integrationIdentifier = 'msteams-integration-identifier';
 
   return (

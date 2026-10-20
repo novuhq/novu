@@ -5,5 +5,6 @@ export * from './DatePicker';
 export * from './Dropdown';
 export * from './Motion';
 export * from './Popover';
+export * from './RollingText';
 export * from './Tabs';
 export * from './TimeSelect';

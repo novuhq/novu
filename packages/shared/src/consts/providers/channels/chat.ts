@@ -44,6 +44,14 @@ export const chatProviders: IProviderConfig[] = [
     logoFileName: { light: 'discord.svg', dark: 'discord.svg' },
   },
   {
+    id: ChatProviderIdEnum.GoogleChat,
+    displayName: 'Google Chat',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredential[],
+    docReference: `https://docs.novu.co/platform/integrations/chat/google-chat${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'google-chat.svg', dark: 'google-chat.svg' },
+  },
+  {
     id: ChatProviderIdEnum.GrafanaOnCall,
     displayName: 'Grafana On Call Webhook',
     channel: ChannelTypeEnum.CHAT,

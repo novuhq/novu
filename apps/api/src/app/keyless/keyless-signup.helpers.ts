@@ -1,4 +1,5 @@
 import type { CardElement } from 'chat';
+import { buildHumanDashboardUrl } from '../shared/helpers/resolve-human-dashboard-base-url';
 
 export function resolveConnectClaimBaseUrl(): string {
   for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
@@ -17,6 +18,23 @@ export function resolveConnectClaimBaseUrl(): string {
 
 export function buildConnectClaimUrl(token: string): string {
   return `${resolveConnectClaimBaseUrl()}/connect/claim?token=${encodeURIComponent(token)}`;
+}
+
+/** `human login` is approved on the Human dashboard, so it only works where one is configured. */
+export function isHumanBrowserLoginAvailable(): boolean {
+  return Boolean(process.env.HUMAN_DASHBOARD_URL?.trim());
+}
+
+/**
+ * Human keyless setups are claimed on the Human dashboard when one is configured,
+ * and on the dashboard otherwise (self-hosted, or before the website is live).
+ */
+export function buildHumanClaimUrl(token: string): string {
+  if (!process.env.HUMAN_DASHBOARD_URL?.trim()) {
+    return buildConnectClaimUrl(token);
+  }
+
+  return buildHumanDashboardUrl('/claim', { token });
 }
 
 export function buildKeylessWelcomeCard(welcomeText: string, claimUrl: string): CardElement {
@@ -73,6 +91,40 @@ export function buildKeylessSignupCard(claimUrl: string): CardElement {
  * Sent on the human's linked channel *instead of* the agent's message once a
  * keyless `@novu/human` environment hits its interaction cap.
  */
+/**
+ * The only outbound email a keyless inbox sends: a reply to the owner telling
+ * them to claim the setup. Inbound replies from the agent never follow it.
+ */
+export function buildKeylessEmailClaimCard(claimUrl: string): CardElement {
+  return {
+    type: 'card',
+    children: [
+      {
+        type: 'text',
+        content:
+          'This inbox can receive email, but it cannot send any until you claim this setup. Claiming it is free.',
+      },
+      {
+        type: 'text',
+        content:
+          'Your agent can then email the people you invite — 50 a day and 300 a month. The five-message demo cap is lifted. Your agents, channels, and contacts move into an account you own and can reach from any machine.',
+      },
+      { type: 'divider' },
+      {
+        type: 'actions',
+        children: [
+          {
+            type: 'link-button',
+            label: 'Sign up free',
+            url: claimUrl,
+            style: 'primary',
+          },
+        ],
+      },
+    ],
+  };
+}
+
 export function buildKeylessHumanSignupCard(claimUrl: string): CardElement {
   return {
     type: 'card',
@@ -80,7 +132,7 @@ export function buildKeylessHumanSignupCard(claimUrl: string): CardElement {
       {
         type: 'text',
         content:
-          "You've reached the limit of this free `human` demo. Sign up for a free Novu account to keep this " +
+          "You've reached the limit of this free Agent Inbox demo. Sign up for a free Agent Inbox account to keep this " +
           'channel and your setup — your agents pick up right where they left off.',
       },
       { type: 'divider' },

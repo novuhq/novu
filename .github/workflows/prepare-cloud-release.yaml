@@ -184,31 +184,136 @@ jobs:
         run: |
           git push origin -d ${{ steps.output-variables.outputs.branch_name }} || true
 
-      - name: Generate commit log
-        id: commit-log
+      # Builds a single Slack message. A Slack section block is capped at 3000
+      # characters, so the commit log is split across several section blocks
+      # (max 50 blocks per message) instead of one oversized block that Slack
+      # would otherwise break apart.
+      - name: Build Slack payload
+        id: slack-payload
         if: ${{ success() }}
+        env:
+          RELEASE_TYPE: ${{ steps.output-variables.outputs.release_type }}
+          DATE_HUMANIZED: ${{ steps.output-variables.outputs.date_humanized }}
+          BRANCH_NAME: ${{ steps.output-variables.outputs.branch_name }}
+          PR_NUMBERS: ${{ steps.output-variables.outputs.pr_numbers }}
+          PR_URL: ${{ steps.create-pr.outputs.pr_url }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          echo 'commit_log<<EOF' >> $GITHUB_OUTPUT
-          echo $(git log --format="format:%h %s (@%aL)\n" origin/prod..origin/${{steps.output-variables.outputs.branch_name}} | sed "s/\"/'/g") >> $GITHUB_OUTPUT
-          echo 'EOF' >> $GITHUB_OUTPUT
+          LOG_FILE=$(mktemp)
+          # Kept raw. jq escapes & < > while it splits, so a cut never lands inside &amp; &lt; or &gt;.
+          git log --format='%h %s (@%aL)' "origin/prod..origin/$BRANCH_NAME" > "$LOG_FILE"
+
+          COMMIT_COUNT=$(grep -c . "$LOG_FILE" || true)
+          echo "commit_count=$COMMIT_COUNT" >> "$GITHUB_OUTPUT"
+
+          if [ "$RELEASE_TYPE" = "hotfix" ]; then
+            TITLE="🔥 Novu Cloud Hotfix Release: $DATE_HUMANIZED"
+            KIND="*Hotfix release* — cherry-picked onto \`prod\`"
+          else
+            TITLE="🚀 Novu Cloud Release: $DATE_HUMANIZED"
+            KIND="*Scheduled release* — full \`next\` → \`prod\`"
+          fi
+
+          PAYLOAD_FILE="$RUNNER_TEMP/slack-payload.json"
+          jq -Rn \
+            --arg title "$TITLE" \
+            --arg kind "$KIND" \
+            --arg pr_url "$PR_URL" \
+            --arg pr_numbers "$PR_NUMBERS" \
+            --arg repo_url "$REPO_URL" \
+            --arg run_url "$RUN_URL" \
+            --argjson commit_count "$COMMIT_COUNT" \
+            --argjson max_chunk_chars 2800 \
+            --argjson max_log_blocks 40 \
+            --argjson slack_section_limit 3000 \
+            '
+            # Section text is wrapped in code fences on their own lines, so each
+            # chunk must stay under the Slack limit once those 8 characters are
+            # added. Each raw
+            # character is escaped before it is packed, and & < > become a whole
+            # entity or move to the next piece — a fixed slice of the escaped
+            # line would otherwise cut through &amp; &lt; or &gt;. Triple
+            # backticks are rewritten so a subject cannot close the fence early.
+            def escape_pieces($limit):
+              gsub("```"; "\u0027\u0027\u0027")
+              | reduce explode[] as $cp ({parts: [], buf: "", n: 0};
+                  ([$cp] | implode) as $ch
+                  | (if $ch == "&" then "&amp;"
+                     elif $ch == "<" then "&lt;"
+                     elif $ch == ">" then "&gt;"
+                     else $ch end) as $esc
+                  | ($esc | length) as $elen
+                  | if .n > 0 and (.n + $elen) > $limit then
+                      .parts += [.buf] | .buf = $esc | .n = $elen
+                    else
+                      .buf += $esc | .n += $elen
+                    end)
+              | if .buf != "" then .parts + [.buf] else .parts end;
+            ($slack_section_limit - 8) as $max_body
+            | ([$max_chunk_chars, $max_body] | min) as $limit
+            | [inputs | select(length > 0) | escape_pieces($limit)[]] as $lines
+            | ($lines | reduce .[] as $line ([];
+                if length > 0 and ((.[-1] | length) + ($line | length) + 1) <= $limit
+                then .[:-1] + [.[-1] + "\n" + $line]
+                else . + [$line]
+                end)) as $chunks
+            | ($chunks[:$max_log_blocks] | map({
+                type: "section",
+                text: { type: "mrkdwn", text: ("```\n" + . + "\n```") }
+              })) as $log_blocks
+            | (if ($chunks | length) > $max_log_blocks then [{
+                type: "context",
+                elements: [{ type: "mrkdwn", text: ("_Commit list truncated — see the <" + $pr_url + "/commits|full list on GitHub>._") }]
+              }] else [] end) as $truncated
+            | ($pr_numbers | split(",") | map(select(length > 0))) as $pr_ids
+            | ($pr_ids | map("<" + $repo_url + "/pull/" + . + "|#" + . + ">")) as $pr_links
+            | (if $commit_count == 1 then "1 commit" else ($commit_count | tostring) + " commits" end) as $count_label
+            | ($kind + "\n<" + $pr_url + "|Release PR> • " + $count_label) as $head
+            | ("\nHotfix PRs: ") as $pr_label
+            | (if ($pr_links | length) == 0 then $head
+               elif (($head + $pr_label + ($pr_links | join(", "))) | length) <= $slack_section_limit then
+                 $head + $pr_label + ($pr_links | join(", "))
+               else
+                 # Keep adding links only while the section, including an
+                 # "and N more" pointer back at the release PR, stays in budget.
+                 (reduce range(0; $pr_links | length) as $i ({text: "", n: 0, stop: false};
+                    if .stop then .
+                    else
+                      ((if .n > 0 then ", " else "" end) + $pr_links[$i]) as $piece
+                      | (($pr_links | length) - (.n + 1)) as $left
+                      | (", and " + ($left | tostring) + " more — see the <" + $pr_url + "|release PR>") as $suffix
+                      | if (($head + $pr_label + .text + $piece + $suffix) | length) <= $slack_section_limit
+                        then .text = .text + $piece | .n = .n + 1
+                        else .stop = true
+                        end
+                    end)) as $fit
+                 | if $fit.n == 0 then $head
+                   else
+                     $head + $pr_label + $fit.text
+                     + ", and " + ((($pr_links | length) - $fit.n) | tostring)
+                     + " more — see the <" + $pr_url + "|release PR>"
+                   end
+               end) as $summary
+            | {
+                text: ($title + " — " + $count_label),
+                blocks: ([
+                  { type: "header", text: { type: "plain_text", text: $title, emoji: true } },
+                  { type: "section", text: { type: "mrkdwn", text: $summary } },
+                  { type: "divider" }
+                ] + $log_blocks + $truncated + [
+                  { type: "context", elements: [{ type: "mrkdwn", text: ("Triggered by <" + $run_url + "|GitHub Actions>") }] }
+                ])
+              }
+            ' "$LOG_FILE" > "$PAYLOAD_FILE"
+
+          echo "payload_file=$PAYLOAD_FILE" >> "$GITHUB_OUTPUT"
 
       - name: Send commit log to Slack
         id: slack
-        uses: slackapi/slack-github-action@70cd7be8e40a46e8b0eced40b0de447bdb42f68e # v1.26.0
-        if: ${{ success() && steps.commit-log.outputs.commit_log != '' }}
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
+        if: ${{ success() && steps.slack-payload.outputs.commit_count != '0' }}
         with:
-          payload: |
-            {
-              "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*\n```${{steps.commit-log.outputs.commit_log}}```",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*\n```${{steps.commit-log.outputs.commit_log}}```"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS}}
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
+          webhook-type: incoming-webhook
+          payload-file-path: ${{ steps.slack-payload.outputs.payload_file }}

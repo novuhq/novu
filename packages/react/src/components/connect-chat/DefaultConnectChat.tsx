@@ -1,6 +1,5 @@
 import { ConnectChatProps } from '@novu/js/ui';
-import { useCallback } from 'react';
-import { useNovuUI } from '../../context/NovuUIContext';
+import { useMemo } from 'react';
 import { Mounter } from '../Mounter';
 
 export type DefaultConnectChatProps = Pick<
@@ -30,29 +29,21 @@ export const DefaultConnectChat = (props: DefaultConnectChatProps) => {
     onDisconnectSuccess,
     onDisconnectError,
   } = props;
-  const { novuUI } = useNovuUI();
 
-  const mount = useCallback(
-    (element: HTMLElement) => {
-      return novuUI.mountComponent({
-        name: 'ConnectChat',
-        props: {
-          integrationIdentifier,
-          connectionIdentifier,
-          subscriberId,
-          context,
-          scope,
-          connectionMode,
-          onConnectSuccess,
-          onConnectError,
-          onDisconnectSuccess,
-          onDisconnectError,
-        },
-        element,
-      });
-    },
+  const mountProps = useMemo(
+    () => ({
+      integrationIdentifier,
+      connectionIdentifier,
+      subscriberId,
+      context,
+      scope,
+      connectionMode,
+      onConnectSuccess,
+      onConnectError,
+      onDisconnectSuccess,
+      onDisconnectError,
+    }),
     [
-      novuUI,
       integrationIdentifier,
       connectionIdentifier,
       subscriberId,
@@ -66,5 +57,5 @@ export const DefaultConnectChat = (props: DefaultConnectChatProps) => {
     ]
   );
 
-  return <Mounter mount={mount} />;
+  return <Mounter name="ConnectChat" props={mountProps} />;
 };

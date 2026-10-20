@@ -13,31 +13,22 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
 
   const { GetPlatformNotificationUsage, GetPlatformNotificationUsageCommand } = eeBilling;
 
-  const environmentRepo = new EnvironmentRepository();
   const notificationRepo = new NotificationRepository();
   const communityOrganizationRepo = new CommunityOrganizationRepository();
 
   const mockWorkflowRunCountRepository = {
-    getPlatformUsageByDateRange: sinon.stub().resolves([]),
+    getPlatformUsageByWholeUtcDays: sinon.stub().resolves([]),
   };
 
   const mockFeatureFlagsService = {
     getFlag: sinon.stub().resolves(false),
   };
 
-  const mockCacheService = {
-    cacheEnabled: sinon.stub().returns(false),
-    get: sinon.stub().resolves(undefined),
-  };
-
   const createUseCase = () => {
     return new GetPlatformNotificationUsage(
       mockWorkflowRunCountRepository,
-      environmentRepo,
-      notificationRepo,
       communityOrganizationRepo,
       mockFeatureFlagsService,
-      mockCacheService,
       new PinoLogger({})
     );
   };
@@ -46,8 +37,8 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    mockWorkflowRunCountRepository.getPlatformUsageByDateRange.reset();
-    mockWorkflowRunCountRepository.getPlatformUsageByDateRange.resolves([]);
+    mockWorkflowRunCountRepository.getPlatformUsageByWholeUtcDays.reset();
+    mockWorkflowRunCountRepository.getPlatformUsageByWholeUtcDays.resolves([]);
     mockFeatureFlagsService.getFlag.reset();
     mockFeatureFlagsService.getFlag.resolves(false);
   });
@@ -82,7 +73,7 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
     const notificationCountPerIndex = 10;
     const orgCount = 10;
 
-    const organizations: any[] = [];
+    const organizations: Array<{ id: string; notificationsCount: number }> = [];
 
     for (let index = 0; index < orgCount; index += 1) {
       const orgSession = new UserSession();
@@ -121,10 +112,50 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
 
     expect(result).to.include.deep.members(expectedResult.splice(0, 1));
   });
+});
+
+describe('GetOrganizationPeriodUsage #novu-v2', () => {
+  const eeBilling = require('@novu/ee-billing');
+  if (!eeBilling) {
+    throw new Error('ee-billing does not exist');
+  }
+
+  const { GetOrganizationPeriodUsage, GetOrganizationPeriodUsageCommand } = eeBilling;
+
+  const environmentRepo = new EnvironmentRepository();
+  const notificationRepo = new NotificationRepository();
+
+  const mockTraceLogRepository = {
+    getOrganizationWorkflowRunsCount: sinon.stub().resolves(0),
+  };
+
+  const mockFeatureFlagsService = {
+    getFlag: sinon.stub().resolves(false),
+  };
+
+  const mockUsageCounterCache = {
+    get: sinon.stub().resolves(null),
+    seedIfMissing: sinon.stub().resolves(),
+  };
+
+  const createUseCase = () => {
+    return new GetOrganizationPeriodUsage(
+      mockTraceLogRepository,
+      environmentRepo,
+      notificationRepo,
+      mockFeatureFlagsService,
+      mockUsageCounterCache,
+      new PinoLogger({})
+    );
+  };
+  let session: UserSession;
+
+  beforeEach(async () => {
+    session = new UserSession();
+    await session.initialize();
+  });
 
   it(`should return the usage for the given single organization`, async () => {
-    await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
-
     const useCase = createUseCase();
     const notificationsCount = 110;
     const mockNotificationDate = new Date('2021-01-05');
@@ -138,19 +169,13 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
     );
 
     const result = await useCase.execute(
-      GetPlatformNotificationUsageCommand.create({
+      GetOrganizationPeriodUsageCommand.create({
         startDate: new Date('2021-01-01'),
         endDate: new Date('2021-01-31'),
         organizationId: session.organization._id,
       })
     );
 
-    expect(result).to.deep.equal([
-      {
-        _id: session.organization._id.toString(),
-        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-        notificationsCount,
-      },
-    ]);
+    expect(result).to.deep.equal({ notificationsCount });
   });
 });

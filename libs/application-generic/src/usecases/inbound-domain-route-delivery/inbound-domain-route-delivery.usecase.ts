@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AgentIntegrationRepository, DomainEntity, DomainRouteEntity, IntegrationRepository } from '@novu/dal';
 import {
+  AGENT_INBOX_PROVIDER_IDS,
   ChannelTypeEnum,
   EmailProviderIdEnum,
   EmailWebhookPayload,
@@ -14,8 +15,10 @@ import { decryptSecret } from '../../encryption/encrypt-provider';
 import { PinoLogger } from '../../logging';
 import { FeatureFlagsService } from '../../services/feature-flags';
 import { HttpClientService } from '../../services/http-client/http-client.service';
+import { pickAgentInboxIntegration } from '../../utils/agent-shared-inbox';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { normalizeReferences } from '../../utils/inbound-email-references';
+import type { InboundEmailWebhookObject } from '../../webhooks/dtos/inbound-email-webhook.dto';
 import { SendWebhookMessage } from '../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
 import { AttachmentRehydrator } from './attachment-rehydrator';
 
@@ -29,6 +32,18 @@ import { AttachmentRehydrator } from './attachment-rehydrator';
  */
 const MAX_INLINE_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 const MAX_HEADERS_BYTES = 16 * 1024;
+
+function toIsoDate(value: Date | string): string {
+  const date = value instanceof Date ? value : new Date(value);
+
+  return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+}
+
+function toWebhookDate(value: Date | string): string | null {
+  const date = value instanceof Date ? value : new Date(value);
+
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
 
 function normalizeMailHeaders(
   headers: InboundDomainRouteMailInput['headers'] | undefined
@@ -76,8 +91,8 @@ export interface InboundDomainRouteMailInput {
   messageId: string;
   inReplyTo?: string;
   references?: string | string[];
-  date: Date;
-  cc?: unknown[];
+  date: Date | string;
+  cc?: ITo[];
   bcc?: ITo[];
   /**
    * Sender-authentication verdicts (`'pass'` / `'failed'`) computed by the
@@ -88,34 +103,6 @@ export interface InboundDomainRouteMailInput {
    */
   dkim?: string;
   spf?: string;
-}
-
-export interface DomainRouteWebhookPayload {
-  domain: {
-    id: string;
-    name: string;
-    data: Record<string, string>;
-  };
-  route: {
-    address: string;
-    data: Record<string, string>;
-  };
-  mail: {
-    from: InboundDomainRouteMailInput['from'];
-    to: InboundDomainRouteMailInput['to'];
-    subject: string;
-    html: string;
-    text: string;
-    headers: InboundDomainRouteMailInput['headers'];
-    /** Rehydrated attachments — include both new `url`/`size` and the deprecated legacy `content` field. */
-    attachments?: InboundEmailAttachment[];
-    messageId: string;
-    inReplyTo?: string;
-    references?: string | string[];
-    date: Date;
-    cc?: unknown[];
-    bcc?: ITo[];
-  };
 }
 
 @Injectable()
@@ -137,7 +124,7 @@ export class InboundDomainRouteDelivery {
     route: DomainRouteEntity,
     mail: InboundDomainRouteMailInput,
     rehydratedAttachments: InboundEmailAttachment[]
-  ): DomainRouteWebhookPayload {
+  ): InboundEmailWebhookObject {
     return {
       domain: {
         id: domain._id,
@@ -159,7 +146,7 @@ export class InboundDomainRouteDelivery {
         messageId: mail.messageId,
         inReplyTo: mail.inReplyTo,
         references: mail.references,
-        date: mail.date,
+        date: toWebhookDate(mail.date),
         cc: mail.cc,
         bcc: mail.bcc,
       },
@@ -188,7 +175,7 @@ export class InboundDomainRouteDelivery {
       organizationId: params.organizationId,
       eventType: WebhookEventEnum.EMAIL_RECEIVED,
       objectType: WebhookObjectTypeEnum.EMAIL_INBOUND,
-      payload: { object: payload as unknown as Record<string, unknown> },
+      payload: { object: payload },
     });
 
     return {
@@ -204,6 +191,12 @@ export class InboundDomainRouteDelivery {
     toAddress: string;
     /** Decoded Novu Message._id from a trailing `+nv{base36}` Reply-To token. */
     originToken?: string;
+    /**
+     * Shared-inbox path: the integration already matched by routing key.
+     * Without this, an agent linked to both inboxes would sign the webhook
+     * with whichever row Mongo returned first.
+     */
+    integrationId?: string;
   }): Promise<{ httpStatus: number; body: unknown; latencyMs: number }> {
     this.logger.info({ toAddress: params.toAddress }, 'Delivering inbound email to agent');
 
@@ -217,7 +210,8 @@ export class InboundDomainRouteDelivery {
     const { identifier: integrationIdentifier, secretKey } = await this.resolveIntegration(
       agentId,
       params.domain._environmentId,
-      params.domain._organizationId
+      params.domain._organizationId,
+      params.integrationId
     );
 
     const payload = this.buildAgentEmailWebhookPayload(params.mail, {
@@ -335,18 +329,15 @@ export class InboundDomainRouteDelivery {
           url: att.url,
         };
       }),
-      date: (() => {
-        const d = new Date(mail.date as unknown as string);
-
-        return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
-      })(),
+      date: toIsoDate(mail.date),
     };
   }
 
   private async resolveIntegration(
     agentId: string,
     environmentId: string,
-    organizationId: string
+    organizationId: string,
+    integrationId?: string
   ): Promise<{ identifier: string; secretKey: string }> {
     const links = await this.agentIntegrationRepository.findLinksForAgents({
       organizationId,
@@ -360,17 +351,21 @@ export class InboundDomainRouteDelivery {
       this.throwError(`No integration linked to agent ${agentId}`);
     }
 
-    const integration = await this.integrationRepository.findOne(
+    const integrations = await this.integrationRepository.find(
       {
-        _id: { $in: integrationIds } as unknown as string,
+        _id: { $in: integrationIds },
         _environmentId: environmentId,
         _organizationId: organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
+        providerId: { $in: [...AGENT_INBOX_PROVIDER_IDS] },
         channel: ChannelTypeEnum.EMAIL,
         active: true,
       },
-      'identifier credentials active'
+      'identifier credentials active providerId'
     );
+
+    const integration = integrationId
+      ? integrations.find((item) => String(item._id) === String(integrationId))
+      : pickAgentInboxIntegration(integrations);
 
     if (!integration) {
       this.throwError(`No active NovuAgent email integration found for agent ${agentId}`);

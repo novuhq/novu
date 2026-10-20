@@ -6,6 +6,7 @@ import {
   CacheServiceHealthIndicator,
   DalServiceHealthIndicator,
   ExternalApiAccessible,
+  isBullMqEnabled,
   SkipPermissionsCheck,
   WorkflowQueueServiceHealthIndicator,
 } from '@novu/application-generic';
@@ -34,7 +35,6 @@ export class HealthController {
   healthCheck(): Promise<HealthCheckResult> {
     const checks: HealthIndicatorFunction[] = [
       async () => this.dalHealthIndicator.isHealthy(),
-      async () => this.workflowQueueHealthIndicator.isHealthy(),
       async () => ({
         apiVersion: {
           version,
@@ -42,6 +42,15 @@ export class HealthController {
         },
       }),
     ];
+
+    /*
+     * This indicator only reports whether the BullMQ Redis (MemoryDB) client is
+     * up. `QUEUE_BACKEND=sqs` never opens that client, so the check would fail
+     * every load balancer probe.
+     */
+    if (isBullMqEnabled()) {
+      checks.push(async () => this.workflowQueueHealthIndicator.isHealthy());
+    }
 
     if (process.env.ELASTICACHE_CLUSTER_SERVICE_HOST) {
       checks.push(async () => this.cacheHealthIndicator.isHealthy());

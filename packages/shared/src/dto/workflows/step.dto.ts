@@ -1,8 +1,22 @@
-import { ChatProviderIdEnum, ResourceOriginEnum, Slug, StepTypeEnum, ToolProviderIdEnum } from '../../types';
+import {
+  ChatProviderIdEnum,
+  PushProviderIdEnum,
+  ResourceOriginEnum,
+  Slug,
+  StepTypeEnum,
+  ToolProviderIdEnum,
+} from '../../types';
 import { RuntimeIssue } from '../../utils/issues';
 import type { JSONSchemaDto } from './json-schema-dto';
 
-export type StepProviderOverrides = Partial<Record<ToolProviderIdEnum | ChatProviderIdEnum, Record<string, unknown>>>;
+export type StepProviderOverrides = Partial<
+  Record<ToolProviderIdEnum | ChatProviderIdEnum | PushProviderIdEnum, Record<string, unknown>>
+>;
+
+/** Per-integration content overrides keyed by providerId, then by integration identifier. */
+export type StepIntegrationOverrides = Partial<
+  Record<ToolProviderIdEnum | ChatProviderIdEnum, Record<string, Record<string, unknown>>>
+>;
 
 export type StepResponseDto = {
   controls: Controls;
@@ -12,6 +26,11 @@ export type StepResponseDto = {
    * Stored as separate control-value docs — not inside controls.values.
    */
   providerOverrides?: StepProviderOverrides | null;
+  /**
+   * Overrides for a single integration, merged over that provider's `providerOverrides` entry.
+   * Stored as separate control-value docs — not inside controls.values.
+   */
+  integrationOverrides?: StepIntegrationOverrides | null;
   variables: JSONSchemaDto;
   stepId: string;
   _id: string;
@@ -34,6 +53,7 @@ export type StepCreateDto = StepDto & {
   // TODO: Rename to controls to align naming with the response DTO
   controlValues?: Record<string, unknown> | null;
   providerOverrides?: StepProviderOverrides | null;
+  integrationOverrides?: StepIntegrationOverrides | null;
 };
 
 export type StepDto = {
