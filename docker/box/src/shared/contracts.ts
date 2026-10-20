@@ -195,9 +195,6 @@ export const TestUsers = z.object({ users: z.array(TestUser), prune: z.array(z.s
 export const CreatedTestUser = z.object({ email: z.string(), password: z.string(), pruned: z.array(z.string()) });
 export const DeletedBox = z.object({ users: z.array(z.string()).default([]), usersError: z.string().optional() });
 
-export const TesterArmySuite = z.enum(['workflows', 'accounts', 'agents']);
-export type TesterArmySuite = z.infer<typeof TesterArmySuite>;
-// Box core runs on every PR; `suites` are the others, by what the PR changes.
 export const TesterArmyStart = z.object({
   pullRequest: z.object({
     number: z.number(),
@@ -207,7 +204,6 @@ export const TesterArmyStart = z.object({
     headBranch: z.string(),
     commitSha: z.string(),
   }),
-  suites: z.array(TesterArmySuite).default([]),
 });
 export type TesterArmyStart = z.infer<typeof TesterArmyStart>;
 export const TesterArmyStarted = z.object({

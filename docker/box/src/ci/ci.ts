@@ -20,7 +20,6 @@ import {
   PullRequestEvent,
   type TesterArmyStart,
   TesterArmyStarted,
-  TesterArmySuite,
 } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
 import { BOX_CLI, boxOrigin, detached, OIDC_AUDIENCE } from '../shared/names.ts';
@@ -37,8 +36,6 @@ const RUN_URL =
   process.env.GITHUB_RUN_ID && `${process.env.GITHUB_SERVER_URL}/${REPO}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 const started = Date.now();
 const DEADLINE = started + 55 * 60_000;
-
-const PullFiles = z.array(z.object({ filename: z.string() }));
 
 class ApplyFailed extends Error {
   readonly log: string;
@@ -203,8 +200,7 @@ async function startOrReach(cloud: CloudTarget, box: string, number: number): Pr
 
 // Returns what started, for the PR comment; TesterArmy reports results on the PR itself, as checks and a comment.
 async function startTesterArmy(box: string, pullRequest: TesterArmyStart['pullRequest']): Promise<string> {
-  const files = await changedFiles(pullRequest.number);
-  const start: TesterArmyStart = { pullRequest, suites: TesterArmySuite.options.filter((suite) => runs(suite, files)) };
+  const start: TesterArmyStart = { pullRequest };
   const { exploration, groups, signUpUsersDeleted } = await hostBoxes(`testerarmy/${box}`, TesterArmyStarted, {
     method: 'POST',
     body: JSON.stringify(start),
@@ -218,26 +214,6 @@ async function startTesterArmy(box: string, pullRequest: TesterArmyStart['pullRe
   log(`TesterArmy started on ${box}: ${suites.join(', ')}`);
 
   return suites.join(', ');
-}
-
-// Box core runs on every PR; the other suites when the PR changes what they test. A change to the box runs them all.
-const SUITE_PATHS: Record<TesterArmySuite, RegExp> = {
-  workflows: /^(apps|libs|packages|enterprise|playground)\//,
-  accounts: /auth|clerk|organization|onboarding|user|member|billing/i,
-  agents: /agent|slack|conversation|chat|thalamus|framework|playground/i,
-};
-
-function runs(suite: TesterArmySuite, files: ReadonlyArray<string>): boolean {
-  return files.some((file) => file.startsWith('docker/box/') || SUITE_PATHS[suite].test(file));
-}
-
-async function changedFiles(number: number): Promise<Array<string>> {
-  const files: Array<string> = [];
-  for (let page = 1; ; page++) {
-    const batch = await github(`/repos/${REPO}/pulls/${number}/files?per_page=100&page=${page}`, PullFiles);
-    files.push(...batch.map((file) => file.filename));
-    if (batch.length < 100) return files;
-  }
 }
 
 async function apply(cloud: CloudTarget, sha: string, { baseline = false } = {}): Promise<string> {
