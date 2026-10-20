@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import {
+  type AgentEntity,
   AgentIntegrationRepository,
   AgentRepository,
   ChannelEndpointRepository,
@@ -30,10 +31,14 @@ export class AgentInboxChannelAnalytics {
     private readonly analyticsService: AnalyticsService
   ) {}
 
-  /** Runs for a chat linked on any integration, and stops at once for anything but an Agent Inbox's channel. */
+  /**
+   * Runs for each chat linked on any integration, and stops at once for anything but an Agent Inbox's channel.
+   * `chatId` is the channel endpoint just made for the chat.
+   */
   async countLinkedChat(
     scope: Scope,
-    integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'providerId'>
+    integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'providerId'>,
+    chatId: string
   ): Promise<void> {
     const channel = viaForProviderId(integration.providerId);
     if (!channel || channel === HumanChannelViaEnum.EMAIL || isKeylessOrganization(scope.organizationId)) {
@@ -41,21 +46,19 @@ export class AgentInboxChannelAnalytics {
     }
 
     const query = { _environmentId: scope.environmentId, _organizationId: scope.organizationId };
-    const link = await this.agentIntegrationRepository.findOne({ ...query, _integrationId: integration._id }, [
-      '_agentId',
-    ]);
-    const agent = link && (await this.agentRepository.findOne({ ...query, _id: link._agentId }, ['_id', 'runtime']));
-    if (agent?.runtime !== 'human_relay') {
+    const agent = await this.findRelayAgent(query, integration._id);
+    if (!agent) {
       return;
     }
 
-    // The chat just linked is one of them, so a second means the channel was connected already.
-    const chats = await this.channelEndpointRepository.find(
+    // Only the channel's first chat connects it. Chats linked at the same moment all see each other, but only
+    // one of them is the oldest, so exactly one counts.
+    const [firstChat] = await this.channelEndpointRepository.find(
       { ...query, integrationIdentifier: integration.identifier },
       '_id',
-      { limit: 2 }
+      { sort: { _id: 1 }, limit: 1 }
     );
-    if (chats.length !== 1) {
+    if (!firstChat || String(firstChat._id) !== String(chatId)) {
       return;
     }
 
@@ -63,5 +66,19 @@ export class AgentInboxChannelAnalytics {
     if (owner) {
       trackAgentInboxChannelConnected(this.analyticsService, owner, { agentId: agent._id, channel });
     }
+  }
+
+  /** The Agent Inbox agent the integration is linked to. A Slack app can be linked to other agents as well. */
+  private async findRelayAgent(
+    query: { _environmentId: string; _organizationId: string },
+    integrationId: string
+  ): Promise<Pick<AgentEntity, '_id'> | null> {
+    const links = await this.agentIntegrationRepository.find({ ...query, _integrationId: integrationId }, ['_agentId']);
+    const agentIds = links.flatMap((link) => (link._agentId ? [link._agentId] : []));
+    if (agentIds.length === 0) {
+      return null;
+    }
+
+    return this.agentRepository.findOne({ ...query, _id: { $in: agentIds }, runtime: 'human_relay' }, ['_id']);
   }
 }

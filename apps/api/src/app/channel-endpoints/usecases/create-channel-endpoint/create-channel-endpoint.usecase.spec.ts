@@ -61,7 +61,7 @@ function createHarness() {
 
   integrationRepository.findOne.resolves(buildMockIntegration());
   channelEndpointRepository.findOne.resolves(null as any);
-  channelEndpointRepository.create.resolves({ identifier: 'chendp_test' } as any);
+  channelEndpointRepository.create.resolves({ _id: 'endpoint-id', identifier: 'chendp_test' } as any);
   channelConnectionRepository.create.resolves({ identifier: 'chconn_test' } as any);
   subscriberRepository.findOne.resolves({ subscriberId: MOCK_SUBSCRIBER_ID } as any);
 
@@ -132,6 +132,7 @@ describe('CreateChannelEndpoint — auth card confirmation gating', () => {
       organizationId: MOCK_ORGANIZATION_ID,
     });
     expect(channelAnalytics.countLinkedChat.firstCall.args[1].identifier).to.equal(MOCK_INTEGRATION_IDENTIFIER);
+    expect(channelAnalytics.countLinkedChat.firstCall.args[2]).to.equal('endpoint-id');
   });
 
   it('should NOT confirm auth cards when platformIdentityVerified is explicitly false', async () => {

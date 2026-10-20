@@ -169,7 +169,7 @@ export class CreateChannelEndpoint {
     }
 
     // Best-effort, non-blocking: the first chat linked on an Agent Inbox's Telegram or Slack is when it works.
-    void this.countAgentInboxChannel(command, integration);
+    void this.countAgentInboxChannel(command, integration, channelEndpoint._id);
 
     return channelEndpoint;
   }
@@ -180,14 +180,16 @@ export class CreateChannelEndpoint {
    */
   private async countAgentInboxChannel(
     command: CreateChannelEndpointCommand,
-    integration: IntegrationEntity
+    integration: IntegrationEntity,
+    channelEndpointId: string
   ): Promise<void> {
     try {
       const channelAnalytics = this.moduleRef.get(AgentInboxChannelAnalytics, { strict: false });
 
       await channelAnalytics.countLinkedChat(
         { environmentId: command.environmentId, organizationId: command.organizationId },
-        integration
+        integration,
+        channelEndpointId
       );
     } catch (err) {
       this.logger.warn(
