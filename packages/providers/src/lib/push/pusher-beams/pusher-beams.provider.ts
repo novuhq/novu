@@ -48,6 +48,7 @@ export class PusherBeamsPushProvider extends PushBaseProvider implements IPushPr
           category: overrides.categoryId,
           sound,
         },
+        data: options.payload,
       },
       fcm: {
         notification: {
