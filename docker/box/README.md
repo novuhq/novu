@@ -142,7 +142,8 @@ The boxes' agents can be used from the company Slack through one app, Novu Box:
 
 A Slack router (`src/cloud/slack/`) runs on the host and stands between Slack and every box: it holds the real bot
 token, gives each box made-up credentials, and passes only the Slack methods agents use, only in `#novu-box` and
-DMs. No box ever sees the real token.
+DMs. No box ever sees the real token. The Slack app's event, interactivity and `/novu-box` request URLs are all
+`https://slack.box.novu-staging.co/slack`.
 
 ![One Slack message to a box's agent and its reply, through the router, which swaps in the real bot token](./docs/04-slack.svg)
 
