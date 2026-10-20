@@ -15,6 +15,7 @@ landing page moves in here later.
 | `/inbox`, `/configure`, `/contacts` | The dashboard: the agent's inbox, the agent with its channels, and the people it can ask. An operator without an agent is sent to `/onboarding`. |
 | `/settings`, `/settings/billing` | The operator, their API key (show, copy, regenerate), the plan and billing, log out and delete account. |
 | `/`               | Placeholder until the landing page moves in.                                               |
+| `/api/*`          | Agent Inbox's way to the Novu API, so people only ever see this site's address. See [API proxy](#api-proxy). |
 
 Each Human account is backed by a hidden Novu organization that the Novu API creates through private
 `/v1/human/accounts` endpoints. See
@@ -53,9 +54,9 @@ cp apps/human-dashboard/.env.example apps/human-dashboard/.env.local
 pnpm start:human-dashboard         # http://localhost:4300
 ```
 
-The invite page calls the Novu API's public `/v1/human/invites/*` endpoints. Run the API locally
-(`pnpm start:api:dev`) with `HUMAN_DASHBOARD_URL=http://localhost:4300` so `human invite` links point here,
-then run `human invite <id>` against the local API and open the printed link.
+The invite page calls the public `/v1/invites/*` endpoints of this site's Agent Inbox API (`/api`). Run the
+API locally (`pnpm start:api:dev`) with `HUMAN_DASHBOARD_URL=http://localhost:4300` so `human invite` links point
+here, then run `human invite <id>` against the local API and open the printed link.
 
 Human accounts also need:
 
@@ -68,15 +69,36 @@ Human accounts also need:
 To try a claim, set `KEYLESS_HUMAN_INTERACTION_CAP=1` on the API, run `human setup` without a key against
 the local API, send two messages, and open the printed `/claim` link.
 
-To try `human login`, run it against the local API (`NOVU_API_URL=http://localhost:3000 human login`) and enter
+To try `login`, point the CLI at this site's `/api` (`INBOX_API_URL=http://localhost:4300/api`), run `login` and enter
 the code it prints on `/cli/login` here. The API only offers the browser login when `HUMAN_DASHBOARD_URL` is set.
+
+## Agent Inbox API
+
+`/api` is Agent Inbox's API: each of its paths forwards to one on the US Novu API (`NEXT_PUBLIC_NOVU_API_URL`), such
+as `/api/v1/inbox` to `/v1/human/inbox`, and the API's status, headers and body come back as they are
+(`src/app/api/[...path]/route.ts`; the paths are `ROUTES` in `src/lib/api-proxy.ts`, grouped like the CLI's
+commands). The CLI goes to `https://www.agentinbox.md/api` by default, the MCP server calls it for every tool, the
+invite, verify and connect pages call `/api` from the browser, and the setup prompts name this site's `/api`. The CLI
+and the MCP server only speak these paths, so a self-hosted or local setup points them at its own dashboard's `/api`.
+
+- Only those paths are forwarded; anything else answers 404. The private `/v1/human/accounts` endpoints are not among
+  them: only this site's server and the MCP server's key lookup call them, with the dashboard secret.
+- The channel paths name the agent with the `agentIdentifier` query parameter, as the rest of the API does; left out,
+  it's the relay agent `setup` creates.
+- Only the headers the API reads go on: `Authorization`, `Content-Type`, `Accept`, `User-Agent`,
+  `Idempotency-Key`, `If-None-Match`, `If-Modified-Since`, `Novu-Application-Identifier`, `Novu-Analytics-Source` and
+  `Agent-Inbox-Via`. This site's cookies never reach the API, and the API's `Set-Cookie` never reaches the browser.
+- The caller's IP address goes on as `X-Forwarded-For`, taken from the `x-forwarded-for` Vercel sets, so the API's
+  per-IP limits (keyless setups, one-time codes) count each caller, not this site.
+- It only reaches the US API: Agent Inbox has no EU region for now.
+- The longest call is the inbox's long-poll, which the API holds for up to 25 seconds; the route may run for 60.
 
 ## Configuration
 
 | Variable                            | Default                  | Purpose                                                    |
 | ----------------------------------- | ------------------------ | ---------------------------------------------------------- |
-| `NEXT_PUBLIC_NOVU_API_URL`          | `https://api.novu.co`    | API for links without a region, and for US Human accounts. |
-| `NEXT_PUBLIC_NOVU_API_URL_EU`       | `https://eu.api.novu.co` | API for links issued with `?region=eu`, and EU accounts.   |
+| `NEXT_PUBLIC_NOVU_API_URL`          | `https://api.novu.co`    | US API: where `/api` forwards to, and the server's calls for US Human accounts. |
+| `NEXT_PUBLIC_NOVU_API_URL_EU`       | `https://eu.api.novu.co` | The server's calls for EU accounts. The pages and `/api` don't use it. |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | —                        | Human Clerk app. Only the account pages use it.            |
 | `CLERK_SECRET_KEY`                  | —                        | Human Clerk app, server only.                              |
 | `AGENT_INBOX_DASHBOARD_API_SECRET`  | —                        | The API's `AGENT_INBOX_DASHBOARD_API_SECRET`, for `/v1/human/accounts`. Server only. |

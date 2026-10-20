@@ -151,7 +151,7 @@ const run = {
   },
   expiredCode: async () => {
     connectWithCode.mockRejectedValue(
-      new ApiError('This code expired.', 410, 'POST /v1/human/connect', { code: 'connect_code_expired' })
+      new ApiError('This code expired.', 410, 'POST /v1/connect', { code: 'connect_code_expired' })
     );
     await connectCommand('atlas', { code: 'BCDF-GHJK' });
   },

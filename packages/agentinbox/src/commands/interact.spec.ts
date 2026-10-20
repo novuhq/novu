@@ -198,7 +198,7 @@ describe('exit code contract', () => {
 
 describe('keyless cap errors', () => {
   const capError = (body: unknown, status = 429, message = 'limit') =>
-    new ApiError(message, status, 'POST https://api.novu.co/v1/human/interactions', body);
+    new ApiError(message, status, 'POST https://www.agentinbox.md/api/v1/inbox/messages', body);
 
   it('detects the structured 429 body and extracts the claim link', () => {
     const err = capError({

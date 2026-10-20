@@ -4,7 +4,7 @@ import { toolOf } from './connections';
 import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
 import worker from './index';
 import { describeOutcome, type Interaction, sendInteraction, waitForAnswer } from './interactions';
-import { API, INITIALIZE, ISSUER, ORIGIN, rpc, setup, stubBackends } from './spec-support';
+import { AGENT_INBOX_API, INITIALIZE, ISSUER, NOVU_API, ORIGIN, rpc, setup, stubBackends } from './spec-support';
 
 describe('the Agent Inbox MCP server', () => {
   beforeEach(() => {
@@ -76,7 +76,7 @@ describe('the Agent Inbox MCP server', () => {
     );
   });
 
-  it('asks the owner of the account for approval, in the region the account lives in', async () => {
+  it('asks the owner of the account for approval through the Dashboard API', async () => {
     const calls = stubBackends({ status: 'approved', response: { type: 'option', respondedBy: 'Dima' } as never });
     const { env, ctx } = setup();
 
@@ -93,7 +93,8 @@ describe('the Agent Inbox MCP server', () => {
     expect(result.isError).toBeFalsy();
     expect(result.content[0].text).toContain('Approved by Dima');
 
-    const created = calls.find((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST');
+    const created = calls.find((call) => call.url.endsWith('/v1/inbox/messages') && call.method === 'POST');
+    expect(created?.url).toBe(`${AGENT_INBOX_API}/v1/inbox/messages`);
     expect(created?.headers.get('Authorization')).toBe('ApiKey account-key');
     // The CLI holds the same key: this is how the API tells an inbox check here from one in a terminal.
     expect(created?.headers.get('Agent-Inbox-Via')).toBe('mcp');
@@ -119,7 +120,7 @@ describe('the Agent Inbox MCP server', () => {
     const { result } = (await response.json()) as { result: { isError?: boolean } };
 
     expect(result.isError).toBeFalsy();
-    const created = calls.find((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST');
+    const created = calls.find((call) => call.url.endsWith('/v1/inbox/messages') && call.method === 'POST');
     expect(created?.body).toMatchObject({ ttlSeconds: 345_600 });
   });
 
@@ -168,7 +169,7 @@ describe('the Agent Inbox MCP server', () => {
     const { result } = (await response.json()) as { result: { isError?: boolean } };
 
     expect(result.isError).toBeFalsy();
-    const created = calls.find((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST');
+    const created = calls.find((call) => call.url.endsWith('/v1/inbox/messages') && call.method === 'POST');
     expect(created?.body).toEqual({
       kind: 'approve',
       to: ['alice', 'bob'],
@@ -208,7 +209,7 @@ describe('the Agent Inbox MCP server', () => {
       ctx
     );
 
-    const created = calls.find((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST');
+    const created = calls.find((call) => call.url.endsWith('/v1/inbox/messages') && call.method === 'POST');
     expect(created?.body).toMatchObject({
       card: {
         options: [
@@ -295,7 +296,7 @@ describe('the Agent Inbox MCP server', () => {
     const { result } = (await response.json()) as { result: { isError?: boolean } };
 
     expect(result.isError).toBeFalsy();
-    const created = calls.find((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST');
+    const created = calls.find((call) => call.url.endsWith('/v1/inbox/messages') && call.method === 'POST');
     expect(created?.body).toMatchObject({ to: ['alice'] });
   });
 
@@ -317,8 +318,8 @@ describe('the Agent Inbox MCP server', () => {
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('not verified yet');
-    expect(calls.some((call) => call.url.endsWith('/v1/human/verifications') && call.method === 'POST')).toBe(true);
-    expect(calls.some((call) => call.url.endsWith('/v1/human/interactions') && call.method === 'POST')).toBe(false);
+    expect(calls.some((call) => call.url.endsWith('/v1/contacts/verifications') && call.method === 'POST')).toBe(true);
+    expect(calls.some((call) => call.url.endsWith('/v1/inbox/messages') && call.method === 'POST')).toBe(false);
   });
 
   it('does not invite a new email address while replying', async () => {
@@ -339,7 +340,7 @@ describe('the Agent Inbox MCP server', () => {
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('not one of your contacts');
-    expect(calls.some((call) => call.url.endsWith('/v1/human/verifications'))).toBe(false);
+    expect(calls.some((call) => call.url.endsWith('/v1/contacts/verifications'))).toBe(false);
   });
 
   it('remembers whose token it is, so the next call does not ask Clerk again', async () => {
@@ -350,8 +351,88 @@ describe('the Agent Inbox MCP server', () => {
     await worker.fetch(rpc('tools/list', {}), env, ctx);
 
     expect(calls.filter((call) => call.url.endsWith('/oauth/userinfo'))).toHaveLength(1);
-    // The remembered region is asked first: no second trip to the US API.
-    expect(calls.filter((call) => call.url.startsWith(`${API}/`))).toHaveLength(1);
+  });
+
+  it('still knows whose token it is from what was remembered before Agent Inbox was US only', async () => {
+    const calls = stubBackends();
+    const { env, ctx, kv } = setup();
+    await worker.fetch(rpc('tools/list', {}), env, ctx);
+    const cacheKey = [...kv.values.keys()].find((key) => key.startsWith('token:')) ?? '';
+    kv.values.set(cacheKey, JSON.stringify({ agentInboxUserId: 'user_1', region: 'eu' }));
+    const before = calls.length;
+
+    const response = await worker.fetch(rpc('tools/list', {}), env, ctx);
+
+    expect(response.status).toBe(200);
+    expect(calls.slice(before).map((call) => call.url)).toEqual([`${NOVU_API}/v1/human/accounts/user_1/secret-key`]);
+  });
+
+  it('calls the Dashboard API for every tool, and the Novu API only for the account key', async () => {
+    const calls = stubBackends();
+    const { env, ctx } = setup();
+    const callTool = (name: string, arguments_: Record<string, unknown>) =>
+      worker.fetch(rpc('tools/call', { name, arguments: arguments_ }), env, ctx);
+
+    await callTool('inbox_send', { kind: 'ask', message: 'Ship it?', wait_seconds: 0 });
+    await callTool('wait', { id: 'hi_1', wait_seconds: 0 });
+    // A new email address: the contacts are searched, then verification starts.
+    await callTool('inbox_send', { kind: 'tell', message: 'Hello', to: 'new@example.com' });
+    await callTool('invite', { id: 'alice', name: 'Alice Chen' });
+    await callTool('contacts', {});
+    await callTool('inbox_list', {});
+    await callTool('inbox_show', { thread: 'conv_1' });
+    await callTool('inbox_read', { thread: 'conv_1' });
+    await callTool('inbox_resolve', { thread: 'conv_1' });
+
+    const reached = new Set(
+      calls.filter((call) => !call.url.startsWith(`${ISSUER}/`)).map((call) => `${call.method} ${call.url}`)
+    );
+    expect([...reached].sort()).toEqual(
+      [
+        `GET ${NOVU_API}/v1/human/accounts/user_1/secret-key`,
+        `GET ${AGENT_INBOX_API}/v1/operator`,
+        `POST ${AGENT_INBOX_API}/v1/inbox/messages`,
+        `GET ${AGENT_INBOX_API}/v1/inbox/messages/hi_1`,
+        `GET ${AGENT_INBOX_API}/v1/contacts?limit=100`,
+        `GET ${AGENT_INBOX_API}/v1/contacts/new`,
+        `POST ${AGENT_INBOX_API}/v1/contacts/verifications`,
+        `POST ${AGENT_INBOX_API}/v1/contacts/invites`,
+        `GET ${AGENT_INBOX_API}/v1/inbox`,
+        `GET ${AGENT_INBOX_API}/v1/inbox/conv_1`,
+        `POST ${AGENT_INBOX_API}/v1/inbox/conv_1/read`,
+        `POST ${AGENT_INBOX_API}/v1/inbox/conv_1/resolve`,
+      ].sort()
+    );
+
+    // The tools act as the account; only the key lookup carries the dashboard's secret.
+    for (const call of calls.filter((candidate) => candidate.url.startsWith(`${AGENT_INBOX_API}/`))) {
+      expect(call.headers.get('Authorization')).toBe('ApiKey account-key');
+      expect(call.headers.get('Agent-Inbox-Via')).toBe('mcp');
+      expect(call.headers.has(AGENT_INBOX_DASHBOARD_SECRET_HEADER)).toBe(false);
+    }
+  });
+
+  it('says it is not connected when the Dashboard API is not configured', async () => {
+    const calls = stubBackends();
+    const { env, ctx } = setup({ AGENT_INBOX_API_URL: '' });
+
+    const response = await worker.fetch(rpc('tools/list', {}), env, ctx);
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({
+      error: 'unavailable',
+      message: 'This server is not connected to the Agent Inbox API.',
+    });
+    expect(calls.some((call) => call.url.includes('/secret-key'))).toBe(false);
+  });
+
+  it('sends someone signed in without an Agent Inbox account to sign up', async () => {
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(rpc('tools/list', {}, 'newcomer-token'), env, ctx);
+
+    expect(response.status).toBe(403);
+    expect(((await response.json()) as { message: string }).message).toContain('sign up first');
   });
 
   it('does not renew a remembered token, so one Clerk no longer accepts stops working', async () => {
@@ -589,7 +670,7 @@ describe('waiting for an answer', () => {
     });
 
     expect(post).toHaveBeenCalledWith(
-      '/v1/human/interactions',
+      '/v1/inbox/messages',
       { kind: 'ask', card: { title: 'Hi?' }, thread: 'conv_1', anyoneMayAnswer: true },
       expect.any(Number)
     );

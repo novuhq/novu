@@ -32,7 +32,10 @@ export type AgentInboxApi = {
   post<T>(path: string, body: unknown, timeoutMs?: number): Promise<T>;
 };
 
-/** The Agent Inbox endpoints of the Novu API, called as the account. The same calls the `agentinbox` CLI makes. */
+/**
+ * The Agent Inbox Dashboard API (`AGENT_INBOX_API_URL`), called as the account with its key: the same calls the
+ * `agentinbox` CLI makes. The dashboard forwards them to the Novu API.
+ */
 export function createAgentInboxApi(account: Account): AgentInboxApi {
   async function send<T>(
     method: 'GET' | 'POST',
