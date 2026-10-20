@@ -239,7 +239,7 @@ function WorkflowListPage() {
 
   return (
     <ListPage
-      title="Workflows"
+      title="Workfllows New"
       paginationInfo={{
         totalItemCount,
         pageSize: pageSizeQueryParam,
