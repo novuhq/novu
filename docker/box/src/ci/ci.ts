@@ -20,7 +20,7 @@ import {
   PullRequestEvent,
 } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
-import { BOX_CLI, boxWorker, DOMAIN, detached, OIDC_AUDIENCE } from '../shared/names.ts';
+import { BOX_CLI, boxOrigin, detached, OIDC_AUDIENCE } from '../shared/names.ts';
 import { canWrite, comment, github, LABEL, labeler, REPO, unlessMissing } from './github.ts';
 
 const MAX_BOXES = 30;
@@ -110,7 +110,7 @@ async function pr(): Promise<number> {
 async function applyHead(number: number, sha: string): Promise<number> {
   const box = `pr-${number}`;
   const short = sha.slice(0, 10);
-  const origin = `https://${boxWorker(box)}.${DOMAIN}`;
+  const origin = boxOrigin(box);
   const cloud = target(box);
   await comment(number, `⏳ Applying \`${short}\` to Novu Box \`${box}\`…${RUN_URL ? ` ([log](${RUN_URL}))` : ''}`);
   try {

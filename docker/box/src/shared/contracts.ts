@@ -147,9 +147,6 @@ export type StateAnswer = z.infer<typeof StateAnswer>;
 
 export const BoxList = z.object({ boxes: z.array(z.string()) });
 
-export const CloudflareAnswer = z.object({ success: z.boolean(), errors: z.unknown(), result: z.unknown() });
-export const ScriptList = z.array(z.object({ id: z.string() }));
-
 export const CheckRuns = z.object({
   check_runs: z.array(z.object({ status: z.string(), conclusion: z.string().nullable(), html_url: z.string() })),
 });
