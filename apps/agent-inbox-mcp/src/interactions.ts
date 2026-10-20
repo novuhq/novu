@@ -1,11 +1,11 @@
-import { type HumanApi, HumanApiError } from './human-api';
+import { type AgentInboxApi, AgentInboxApiError } from './agent-inbox-api';
 
 export type InteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
 
 type Option = { id: string; label: string };
 export type OptionInput = string | Option;
 
-/** A message to a person and, once they answer, what they said. The Human API's own shape. */
+/** A message to a person and, once they answer, what they said. The Agent Inbox API's own shape. */
 export type Interaction = {
   id: string;
   kind: InteractionKind;
@@ -41,16 +41,16 @@ const POLL_EVERY_MS = 2_000;
 const SEND_TIMEOUT_MS = 30_000;
 
 /** Who gets the message when the tool names nobody: the account's owner. */
-export async function resolveRecipient(api: HumanApi, to: string | undefined): Promise<string> {
+export async function resolveRecipient(api: AgentInboxApi, to: string | undefined): Promise<string> {
   if (to?.trim()) {
     return to.trim();
   }
 
-  const operator = await api.get<{ subscriberId?: string }>('/v1/human/operator');
+  const operator = await api.get<{ subscriberId?: string }>('/v1/operator');
   if (!operator?.subscriberId) {
-    throw new HumanApiError(
+    throw new AgentInboxApiError(
       409,
-      'Human is not set up yet. Open agentinbox.md, go to Configure and follow the setup steps.'
+      'Agent Inbox is not set up yet. Open agentinbox.md, go to Configure and follow the setup steps.'
     );
   }
 
@@ -58,7 +58,7 @@ export async function resolveRecipient(api: HumanApi, to: string | undefined): P
 }
 
 export async function sendInteraction(
-  api: HumanApi,
+  api: AgentInboxApi,
   input: {
     kind: InteractionKind;
     card: Card;
@@ -78,7 +78,7 @@ export async function sendInteraction(
   const to = thread ? normalizeRecipients(input.to) : await resolveRecipients(api, input.to);
   const created = await api
     .post<Interaction>(
-      '/v1/human/interactions',
+      '/v1/inbox/messages',
       {
         kind: input.kind,
         card: input.card,
@@ -93,10 +93,10 @@ export async function sendInteraction(
     )
     .catch((error) => {
       // No answer is not a "no": the API may have taken the message and still deliver it.
-      if (error instanceof HumanApiError && error.status === 0) {
-        throw new HumanApiError(
+      if (error instanceof AgentInboxApiError && error.status === 0) {
+        throw new AgentInboxApiError(
           0,
-          'The Human API did not confirm the message in time. It may still reach the person, so do not send it again right away: tell the user it is unconfirmed, and send it again only if they ask.'
+          'The Agent Inbox API did not confirm the message in time. It may still reach the person, so do not send it again right away: tell the user it is unconfirmed, and send it again only if they ask.'
         );
       }
 
@@ -104,7 +104,7 @@ export async function sendInteraction(
     });
 
   if (created.failedTo?.length && everyRecipientFailed(to, created.failedTo)) {
-    throw new HumanApiError(
+    throw new AgentInboxApiError(
       409,
       `The message could not be delivered to ${created.failedTo.join(', ')}. They may not have connected a channel yet; the invite tool gives you a link for them.`
     );
@@ -123,7 +123,7 @@ function normalizeRecipients(to: string | string[] | undefined): string | string
   return to?.trim() || undefined;
 }
 
-async function resolveRecipients(api: HumanApi, to: string | string[] | undefined): Promise<string | string[]> {
+async function resolveRecipients(api: AgentInboxApi, to: string | string[] | undefined): Promise<string | string[]> {
   const normalized = normalizeRecipients(to);
   if (normalized !== undefined) {
     return normalized;
@@ -154,7 +154,7 @@ const SHORTEST_CHECK_MS = 1_000;
  * `since` is when the tool's call began. Counting from there keeps a slow send from adding to the wait.
  */
 export async function waitForAnswer(
-  api: HumanApi,
+  api: AgentInboxApi,
   sent: Interaction | string,
   seconds: number,
   sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
@@ -165,7 +165,7 @@ export async function waitForAnswer(
   // No check takes longer than what is left of the wait.
   const check = () =>
     api.get<Interaction>(
-      `/v1/human/interactions/${encodeURIComponent(id)}`,
+      `/v1/inbox/messages/${encodeURIComponent(id)}`,
       undefined,
       Math.max(SHORTEST_CHECK_MS, deadline - Date.now())
     );

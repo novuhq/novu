@@ -1,7 +1,7 @@
 import * as z from 'zod';
 import { isOidc } from '../shared/auth.ts';
 import { BoxState, decode, ExecRequest } from '../shared/contracts.ts';
-import { BOX_CLI, bearer, EXIT_MARK, SECRETS } from '../shared/names.ts';
+import { apiOrigin, BOX_CLI, bearer, boxOfOrigin, EXIT_MARK, SECRETS } from '../shared/names.ts';
 import type { HostEnv } from './env.ts';
 import { json, text } from './life.ts';
 
@@ -131,13 +131,15 @@ export function boxEnv(
     ...slack,
   };
   if (!origin) return secrets;
+  // Separate hosts, as in Novu Cloud, so the dashboard's calls to the API are cross-origin (CORS) there too.
+  const api = apiOrigin(boxOfOrigin(origin));
 
   return {
     ...secrets,
-    API_ROOT_URL: origin,
+    API_ROOT_URL: api,
     FRONT_BASE_URL: origin,
     DASHBOARD_URL: origin,
-    VITE_API_HOSTNAME: origin,
+    VITE_API_HOSTNAME: api,
     VITE_DASHBOARD_URL: origin,
     VITE_WEBSOCKET_HOSTNAME: `${origin.replace(/^http/, 'ws')}/ws`,
     S3_LOCAL_STACK: origin,

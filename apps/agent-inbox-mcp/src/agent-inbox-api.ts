@@ -1,7 +1,7 @@
 import type { Account } from './auth';
 
-/** An answer from the Human API that isn't a success, with the API's own words for the tool to pass on. */
-export class HumanApiError extends Error {
+/** An answer from the Agent Inbox API that isn't a success, with the API's own words for the tool to pass on. */
+export class AgentInboxApiError extends Error {
   constructor(
     readonly status: number,
     message: string
@@ -21,7 +21,7 @@ export const AGENT_INBOX_VIA_HEADER = 'Agent-Inbox-Via';
 
 type Query = Record<string, string | number | undefined>;
 
-export type HumanApi = {
+export type AgentInboxApi = {
   /** `timeoutMs` replaces the usual limit on how long the call may take. */
   get<T>(path: string, query?: Query, timeoutMs?: number): Promise<T>;
   /**
@@ -32,8 +32,11 @@ export type HumanApi = {
   post<T>(path: string, body: unknown, timeoutMs?: number): Promise<T>;
 };
 
-/** The Human endpoints of the Novu API, called as the account. The same calls the `human` CLI makes. */
-export function createHumanApi(account: Account): HumanApi {
+/**
+ * The Agent Inbox Dashboard API (`AGENT_INBOX_API_URL`), called as the account with its key: the same calls the
+ * `agentinbox` CLI makes. The dashboard forwards them to the Novu API.
+ */
+export function createAgentInboxApi(account: Account): AgentInboxApi {
   async function send<T>(
     method: 'GET' | 'POST',
     path: string,
@@ -54,15 +57,15 @@ export function createHumanApi(account: Account): HumanApi {
         signal: AbortSignal.timeout(Math.max(1, timeoutMs ?? REQUEST_TIMEOUT_MS)),
       });
     } catch {
-      throw new HumanApiError(0, 'Could not reach the Human API. Try again in a moment.');
+      throw new AgentInboxApiError(0, 'Could not reach the Agent Inbox API. Try again in a moment.');
     }
 
     const json = (await response.json().catch(() => null)) as { data?: T; message?: unknown } | null;
 
     if (!response.ok) {
-      throw new HumanApiError(
+      throw new AgentInboxApiError(
         response.status,
-        readMessage(json?.message) ?? `The Human API answered ${response.status}.`
+        readMessage(json?.message) ?? `The Agent Inbox API answered ${response.status}.`
       );
     }
 

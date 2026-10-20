@@ -1,13 +1,14 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
+import { createAgentInboxApi } from './agent-inbox-api';
 import { AuthError, authenticate, bearerTokenOf } from './auth';
 import { clientNameOf, listConnections, recordConnection, toolOf } from './connections';
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
 import { type Env, issuerOf } from './env';
-import { createHumanApi } from './human-api';
 import { registerTools } from './tools';
 
-const SERVER = { name: 'human', version: '0.0.1' };
-const DEFAULT_DOCS_URL = 'https://www.npmjs.com/package/@novu/human';
+const SERVER = { name: 'agent-inbox', version: '0.0.1' };
+const DEFAULT_DOCS_URL = 'https://www.npmjs.com/package/@agentinbox/cli';
 const RESOURCE_METADATA_PATH = '/.well-known/oauth-protected-resource';
 const CONNECTIONS_PATH = /^\/connections\/([^/]+)$/;
 
@@ -80,15 +81,15 @@ async function serveMcp(request: Request, env: Env, ctx: ExecutionContext): Prom
       )
     );
     if (tool) {
-      ctx.waitUntil(recordConnection(env, account.humanUserId, tool));
+      ctx.waitUntil(recordConnection(env, account.agentInboxUserId, tool));
     }
   }
 
   const server = new McpServer(SERVER, {
     instructions:
-      'Human lets you reach a real person and wait for their answer. Use inbox_send to start a conversation and inbox_reply to continue an existing thread. Both require a kind: approve before anything hard to undo, ask for information only a person has, choose for a pick between options, and tell for news that needs no answer. A person may write to the agent first: call inbox_list with filter "unread" before you send, then use inbox_show and reply in that thread rather than starting a new one. inbox_show does not mark a thread read; use inbox_read when no reply is needed and inbox_resolve when you are done. When a result says the request is still open, call wait with its id; never go ahead without the answer.',
+      'Agent Inbox lets you reach a real person and wait for their answer. Use inbox_send to start a conversation and inbox_reply to continue an existing thread. Both require a kind: approve before anything hard to undo, ask for information only a person has, choose for a pick between options, and tell for news that needs no answer. A person may write to the agent first: call inbox_list with filter "unread" before you send, then use inbox_show and reply in that thread rather than starting a new one. inbox_show does not mark a thread read; use inbox_read when no reply is needed and inbox_resolve when you are done. When a result says the request is still open, call wait with its id; never go ahead without the answer.',
   });
-  registerTools(server, createHumanApi(account));
+  registerTools(server, createAgentInboxApi(account));
 
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
@@ -99,7 +100,7 @@ async function serveMcp(request: Request, env: Env, ctx: ExecutionContext): Prom
   return transport.handleRequest(request);
 }
 
-/** Tells a tool where to sign in: the Human Clerk app itself, so what it reads there is Clerk's own word. */
+/** Tells a tool where to sign in: the Agent Inbox Clerk app itself, so what it reads there is Clerk's own word. */
 function resourceMetadata(url: URL, env: Env): Response {
   const issuer = issuerOf(env);
   if (!issuer) {
@@ -108,7 +109,7 @@ function resourceMetadata(url: URL, env: Env): Response {
 
   return json({
     resource: url.origin,
-    resource_name: 'Human',
+    resource_name: 'Agent Inbox',
     authorization_servers: [issuer],
     bearer_methods_supported: ['header'],
     scopes_supported: ['profile', 'email'],
@@ -140,18 +141,18 @@ function authFailure(error: AuthError, url: URL): Response {
   );
 }
 
-/** For the Human dashboard's server only: which AI tools have signed in to an account. */
-async function connectionsOf(request: Request, env: Env, humanUserId: string): Promise<Response> {
-  const secret = env.HUMAN_DASHBOARD_API_SECRET;
+/** For the Agent Inbox dashboard's server only: which AI tools have signed in to an account. */
+async function connectionsOf(request: Request, env: Env, agentInboxUserId: string): Promise<Response> {
+  const secret = env.AGENT_INBOX_DASHBOARD_API_SECRET;
   if (request.method !== 'GET' || !secret) {
     return json({ error: 'not_found' }, 404);
   }
 
-  if (!(await sameSecret(request.headers.get('x-human-dashboard-secret') ?? '', secret))) {
+  if (!(await sameSecret(request.headers.get(AGENT_INBOX_DASHBOARD_SECRET_HEADER) ?? '', secret))) {
     return json({ error: 'unauthorized' }, 401);
   }
 
-  return json({ data: await listConnections(env, humanUserId) });
+  return json({ data: await listConnections(env, agentInboxUserId) });
 }
 
 /** Compares digests, so how long the comparison takes says nothing about the secret. */

@@ -30,6 +30,7 @@ export const config = {
     '/configure/:path*',
     '/contacts/:path*',
     '/inbox/:path*',
+    '/mcp/:path*',
     '/onboarding/:path*',
     '/settings/:path*',
     '/sign-in/:path*',

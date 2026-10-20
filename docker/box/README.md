@@ -4,7 +4,7 @@ A full Novu Cloud stack (enterprise API, worker, socket worker, dashboard, every
 channel, and a code-first bridge app with agents) in one container per box on Cloudflare. A PR, or your checkout,
 runs on it with production builds, so people and coding agents can try a change end to end before it merges.
 
-![Where a box runs: you or GitHub Actions reach a box through its own Worker on Cloudflare; the box is a Durable Object with its own container in the novu-box-hub Worker](./docs/01-where-it-runs.svg)
+![Where a box runs: you or GitHub Actions reach a box at its own hostname under box.novu-staging.co; the box is a Durable Object with its own container in the novu-box-hub Worker](./docs/01-where-it-runs.svg)
 
 ## Quick start
 
@@ -16,8 +16,9 @@ node docker/box/src/cli/main.ts up         # your branch's box, with your checko
 node docker/box/src/cli/main.ts doctor     # "ok": true when it's fit to test on
 ```
 
-`up` prints the box's address, `https://novu-box-<branch>.cli-shortener.workers.dev`: the dashboard, the API under
-`/v1`, and the box's Mailpit under `/mail`. After more changes, `sync` puts them on the box. Coding agents follow
+`up` prints the box's addresses: the dashboard at `https://<branch>.box.novu-staging.co` (the box's Mailpit under
+`/mail`), and the API at `https://<branch>-api.box.novu-staging.co`. After more changes, `sync` puts them on the
+box. Coding agents follow
 the `verify-in-box` skill (`.cursor/skills/verify-in-box/SKILL.md`).
 
 ## Commands
@@ -35,7 +36,7 @@ the `verify-in-box` skill (`.cursor/skills/verify-in-box/SKILL.md`).
 | `exec -- <command>` | Runs a command in the box's checkout (`/data/novu`) |
 | `user create \| list \| channels \| team \| delete` | Dashboard test users (below) |
 | `down` | Saves the box to its snapshot and stops it; the next request or `up` wakes it with its data |
-| `delete` | Stops the box, forgets its snapshot, and deletes its address and test users |
+| `delete` | Stops the box, forgets its snapshot, and deletes its test users |
 | `deploy` | Deploys the Cloudflare host (maintainers, below) |
 
 `sync` sends HEAD plus every change, untracked files included (only inside the repo's existing top-level folders)
@@ -60,7 +61,7 @@ baked from, like CI's merge ref, and stops on a conflict: rebase onto `next`, th
 
 ## What's in a box
 
-![Inside one box: Caddy routes the box's one address by path to the dashboard, the API, the socket worker, Mailpit and S3; jobs go from the API through SQS to the worker](./docs/02-inside-a-box.svg)
+![Inside one box: Caddy routes the box's addresses by path to the dashboard, the API, the socket worker, Mailpit and S3; jobs go from the API through SQS to the worker](./docs/02-inside-a-box.svg)
 
 process-compose (`image/process-compose.yaml`) supervises:
 
@@ -76,9 +77,10 @@ process-compose (`image/process-compose.yaml`) supervises:
 | `s3`, `sqs` | versitygw (S3 API) and ElasticMQ (SQS API, `sqs_bullmq` mode, the Novu queues) |
 | `mail`, `sink` | Mailpit catches every email; the sink (`src/box/sink.ts`) shows SMS, push and chat messages there too |
 
-A box has one address. Caddy (`image/config/Caddyfile`) routes it by path: `/v1`, `/v2` and `/.well-known` to the
-API, `/ws` to the socket worker, `/mail` to Mailpit, `/novu-box` and `/cdn` to S3, the rest to the dashboard. The
-dashboard calls the API on the same origin, so unlike production, CORS isn't exercised.
+A box has two hosts, `<box>` and `<box>-api` under `box.novu-staging.co`, and Caddy (`image/config/Caddyfile`)
+routes both by path: `/v1`, `/v2` and `/.well-known` to the API, `/ws` to the socket worker, `/mail` to Mailpit,
+`/novu-box` and `/cdn` to S3, the rest to the dashboard. The dashboard calls the API on its own host, so CORS is
+exercised as in production.
 
 The bake seeds:
 
@@ -140,15 +142,25 @@ The boxes' agents can be used from the company Slack through one app, Novu Box:
 
 A Slack router (`src/cloud/slack/`) runs on the host and stands between Slack and every box: it holds the real bot
 token, gives each box made-up credentials, and passes only the Slack methods agents use, only in `#novu-box` and
-DMs. No box ever sees the real token.
+DMs. No box ever sees the real token. The Slack app's event, interactivity and `/novu-box` request URLs are all
+`https://slack.box.novu-staging.co/slack`.
 
 ![One Slack message to a box's agent and its reply, through the router, which swaps in the real bot token](./docs/04-slack.svg)
 
 ## Running the host (maintainers)
 
-Every box runs in one Cloudflare Worker, `novu-box-hub` (`src/cloud/`): one Durable Object and one container per
-box, plus a small Worker per box for its address (`novu-box-<box>`, created by the host) and `novu-box-slack` for
-the Slack router. `wrangler.jsonc` and `wrangler.slack.jsonc` define them.
+Every box runs in one Cloudflare Worker, `novu-box-hub` (`src/cloud/`, defined by `wrangler.jsonc`): one Durable
+Object and one container per box, the Slack router, and a registry of the boxes `up` created. It picks what a
+request reaches by hostname: `box.novu-staging.co` is the hub's own API, `slack.box.novu-staging.co` the Slack
+router, and `<box>` or `<box>-api` that box. So a box name can't be `slack` or end in `-api`.
+
+![The parts on Cloudflare: hostnames under box.novu-staging.co reach the one hub Worker, which picks the Registry, a Box or the Router Durable Object; each awake box has a container, an asleep box a snapshot](./docs/07-cloudflare.svg)
+
+**The domain:** staging's zone `novu-staging.co`, in the same Cloudflare account. Universal SSL covers only one
+level of subdomain, so the hub's Custom Domain `box.novu-staging.co` is what brings a free certificate for
+`*.box.novu-staging.co` too; keep it attached. A proxied DNS record `*.box` (AAAA `100::`, set by hand) and the
+route `*.box.novu-staging.co/*` (in `wrangler.jsonc`) send every box's host to the hub. A new box needs no DNS,
+certificate or Worker of its own.
 
 ![Which code runs where: the CLI and CI on Node, the hub on Cloudflare Workers, the in-box CLI in the container](./docs/06-code.svg)
 
@@ -177,7 +189,6 @@ about missing ones.
 | `BULL_MQ_PRO_NPM_TOKEN` | yes, optional | BullMQ Pro; without it, open-source BullMQ |
 | `NX_CLOUD_ACCESS_TOKEN` | yes, optional | Reads CI's Nx Cloud cache. **Read-only only**: PR code can read it |
 | `GITHUB_READ_TOKEN` | no | Read-only access to `novu` and `packages-enterprise` for the boxes' git fetches |
-| `CLOUDFLARE_API_TOKEN` | no | Workers Scripts and Containers edit: creating boxes' Workers |
 | `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET` | no | The Slack router |
 
 A box runs PR code, which can read its environment: never put production keys in boxes, never name a secret
@@ -187,11 +198,6 @@ A box runs PR code, which can read its environment: never put production keys in
 OIDC token. Box addresses are public, like staging's; the dashboard is protected by Clerk. Keep these two Clerk
 settings, or anyone could sign up: email-code sign-in **off** (sign-in needs the password), and test mode **off**
 (it accepts `424242` as any address's code). Sign-up is limited to `@novu.co` addresses.
-
-**With a domain (planned):** one wildcard route would send every box's hostname to the hub, replacing the per-box
-Workers, and give the dashboard and API separate hosts as in production.
-
-![The planned setup with a domain](./docs/07-with-a-domain.svg)
 
 ## Troubleshooting
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg style="min-width: 1280px" viewBox="0 0 1280 680" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="pr-flow-title pr-flow-desc" id="d-05-pull-request-root">
         <title id="pr-flow-title">Novu Box: one pull request, from label to delete</title>
-        <desc id="pr-flow-desc">Swimlane across Developer, GitHub, Cloudflare and the box container: the box label makes ci.ts check the labeler's write access, have the hub create the PR's Worker, start the box from base's snapshot, apply the PR head, run doctor and edit one sticky PR comment; each push cancels the older run and re-applies; removing the label or closing the PR deletes the box.</desc>
+        <desc id="pr-flow-desc">Swimlane across Developer, GitHub, Cloudflare and the box container: the box label makes ci.ts check the labeler's write access, have the hub register the box, start the box from base's snapshot, apply the PR head, run doctor and edit one sticky PR comment; each push cancels the older run and re-applies; removing the label or closing the PR deletes the box.</desc>
         <defs>
       <style>#d-05-pull-request-root { --color-paper:   #f5f5f5;
       --color-ink:     #2d3142;
@@ -62,9 +62,9 @@
         <line x1="224" y1="156" x2="224" y2="228" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
         <!-- 1 ci.ts pr -> Writer check -->
         <line x1="288" y1="256" x2="312" y2="256" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
-        <!-- 1 Writer check -> Create Worker (hub) -->
+        <!-- 1 Writer check -> Register box (hub) -->
         <line x1="376" y1="284" x2="376" y2="356" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
-        <!-- 1 Create Worker -> Verify OIDC (thin Worker) -->
+        <!-- 1 Register box -> Verify OIDC (hub) -->
         <line x1="440" y1="384" x2="464" y2="384" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
         <!-- 1 Verify OIDC -> Start from base (Box DO) -->
         <line x1="592" y1="384" x2="616" y2="384" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
@@ -76,7 +76,7 @@
         <line x1="832" y1="484" x2="832" y2="292" stroke="#bf4520" stroke-width="1.4" marker-end="url(#d-05-pull-request-pr-flow-arrow-accent)"/>
         <!-- 2 Push -> Cancel old run -->
         <line x1="984" y1="156" x2="984" y2="228" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
-        <!-- 2 Cancel old run -> Stop, re-apply (through the thin Worker and Box DO) -->
+        <!-- 2 Cancel old run -> Stop, re-apply (through the hub and Box DO) -->
         <line x1="984" y1="284" x2="984" y2="484" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
         <!-- 2 Stop, re-apply -> doctor -->
         <line x1="920" y1="512" x2="896" y2="512" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
@@ -84,7 +84,7 @@
         <line x1="1136" y1="156" x2="1136" y2="228" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
         <!-- 3 ci.ts pr -> Delete box (hub) -->
         <line x1="1136" y1="284" x2="1136" y2="356" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
-        <!-- sync (no PR) -> Verify token (thin Worker) -->
+        <!-- sync (no PR) -> Verify token (hub) -->
         <line x1="528" y1="156" x2="528" y2="356" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#d-05-pull-request-pr-flow-arrow)"/>
 
         <!-- Arrow labels -->
@@ -177,19 +177,19 @@
         <text x="1136" y="258" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">ci.ts pr</text>
         <text x="1136" y="274" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">delete pr-&lt;n&gt;</text>
 
-        <!-- Cloudflare: Create Worker (hub) -->
+        <!-- Cloudflare: Register box (hub) -->
         <rect x="312" y="356" width="128" height="56" rx="6" fill="#f5f5f5"/>
         <rect x="312" y="356" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
         <rect x="320" y="362" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
         <text x="334" y="371" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HUB</text>
-        <text x="376" y="386" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Create Worker</text>
-        <text x="376" y="402" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">novu-box-pr-&lt;n&gt;</text>
+        <text x="376" y="386" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Register box</text>
+        <text x="376" y="402" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">pr-&lt;n&gt;</text>
 
-        <!-- Cloudflare: Verify token (thin Worker) -->
+        <!-- Cloudflare: Verify token (hub) -->
         <rect x="464" y="356" width="128" height="56" rx="6" fill="#f5f5f5"/>
         <rect x="464" y="356" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
         <rect x="472" y="362" width="32" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
-        <text x="488" y="371" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">THIN</text>
+        <text x="488" y="371" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HUB</text>
         <text x="528" y="386" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Verify OIDC</text>
         <text x="528" y="402" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">or gh push token</text>
 
@@ -207,7 +207,7 @@
         <rect x="1080" y="362" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
         <text x="1094" y="371" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HUB</text>
         <text x="1136" y="386" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Delete box</text>
-        <text x="1136" y="402" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+ Worker, test users</text>
+        <text x="1136" y="402" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+ its test users</text>
 
         <!-- The box: box apply -->
         <rect x="616" y="484" width="128" height="56" rx="6" fill="#f5f5f5"/>
