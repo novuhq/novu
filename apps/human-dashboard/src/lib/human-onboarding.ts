@@ -186,6 +186,7 @@ export function describeProgress({ step, state, agent, hostStatus }: SetupProgre
     agent?.id,
     state.testSentAt,
     state.testReplyAt,
+    agent && state.testLeftAt && !hostStatus ? 'host-status-unavailable' : '',
     hostStatus?.connected ? 'connected' : '',
     ...(hostStatus?.hosts ?? []).map((host) => `${host.via}:${host.connectedAt}`),
     hostStatus?.waitingMessage?.seenAt,
@@ -277,7 +278,7 @@ export async function loadSetupSummary(
   return {
     step,
     agent: describeAgentIdentity(agent, state, origin, channels.emailAddress),
-    waiting,
+    waiting: waiting ?? 0,
     secondChannelConnected: channels.telegram || channels.slack,
     wentThroughSteps: wasMadeInTheSteps(agent, state),
     doneBannerDismissed: state.doneBannerDismissed === true,
@@ -294,8 +295,11 @@ export type OnboardingView = {
   agent: AgentIdentity | null;
   test: { sentAt?: string; replyAt?: string };
   host: { via: 'cli' | 'mcp'; connectedAt: string } | null;
+  /** True when an agent may already be connected but its host status could not be checked. */
+  hostStatusUnavailable: boolean;
   waitingMessage: HostStatus['waitingMessage'];
-  waiting: number;
+  /** `null` when the unread count could not be checked. */
+  waiting: number | null;
   /** The API the account lives on, named by the connect command in step 3. */
   apiUrl: string;
   channels: { telegram: boolean; slack: boolean };
@@ -329,6 +333,7 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
     agent: agent && describeAgentIdentity(agent, state, origin, channels.emailAddress),
     test: { sentAt: state.testSentAt, replyAt: state.testReplyAt },
     host: host ? { via: host.via, connectedAt: host.connectedAt } : null,
+    hostStatusUnavailable: Boolean(agent && state.testLeftAt && !hostStatus),
     waitingMessage: hostStatus?.waitingMessage ?? null,
     waiting,
     apiUrl: resolveNovuApiUrl(account.region),
@@ -358,7 +363,7 @@ async function loadChannelFacts(account: HumanAccount) {
 }
 
 /** How many messages wait for a host: the unread threads of the inbox. */
-async function countWaitingMessages(account: HumanAccount): Promise<number> {
+async function countWaitingMessages(account: HumanAccount): Promise<number | null> {
   try {
     const counts = await requestForAccount<{ tabs?: { unread?: number } }>(account, '/v1/human/inbox/counts', {
       query: { senders: 'all' },
@@ -368,7 +373,7 @@ async function countWaitingMessages(account: HumanAccount): Promise<number> {
   } catch (error) {
     console.error('Failed to count the waiting messages', error);
 
-    return 0;
+    return null;
   }
 }
 

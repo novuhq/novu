@@ -1,6 +1,7 @@
 'use client';
 
 import { useClerk } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { AddressStep, type AgentDraft } from '@/components/onboarding/address-step';
@@ -10,6 +11,7 @@ import { OnboardingShell, SetupCard, StepRail } from '@/components/onboarding/on
 import { TimeAgo } from '@/components/onboarding/parts';
 import { ReachStep } from '@/components/onboarding/reach-step';
 import { TestStep } from '@/components/onboarding/test-step';
+import { Button } from '@/components/ui/button';
 import { StatusPoll } from '@/components/ui/status-poll';
 import { toast } from '@/components/ui/toast';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
@@ -27,8 +29,11 @@ const IDENTITY_STATE: Record<OnboardingStep, IdentityState> = {
   reach: 'connected',
 };
 
+/** How often the host status is checked while connecting or waiting for its first inbox read. */
+const HOST_POLL_MS = 3000;
+
 /** How often each step asks whether something happened outside the page. */
-const POLL_MS: Partial<Record<OnboardingStep, number>> = { address: 3000, test: 4000, connect: 3000 };
+const POLL_MS: Partial<Record<OnboardingStep, number>> = { address: 3000, test: 4000, connect: HOST_POLL_MS };
 
 /** Quicker while the reply to the test email is on its way. */
 const REPLY_POLL_MS = 2000;
@@ -42,13 +47,34 @@ const SWAP_MS = 200;
  * reply, a host connecting) is noticed here, by asking the server again.
  */
 export function OnboardingFlow({ view }: { view: OnboardingView }) {
+  const router = useRouter();
   const waitingForReply = view.step === 'test' && Boolean(view.test.sentAt) && !view.test.replyAt;
-  const waitingForHostRead = view.step === 'reach' && view.waiting > 0 && !view.waitingMessage;
+  const waitingForHostRead =
+    view.step === 'reach' && (view.waiting === null || view.waiting > 0) && !view.waitingMessage;
   let pollMs = POLL_MS[view.step];
   if (waitingForReply) {
     pollMs = REPLY_POLL_MS;
   } else if (waitingForHostRead) {
-    pollMs = POLL_MS.connect;
+    pollMs = HOST_POLL_MS;
+  }
+
+  if (view.hostStatusUnavailable) {
+    return (
+      <>
+        <StatusPoll status={view.status} read={readOnboardingStatusAction} everyMs={HOST_POLL_MS} />
+        <OnboardingShell aside={<Aside email={view.operator.email} />}>
+          <section className="flex w-full max-w-lg flex-col items-start gap-4 rounded-xl border border-border bg-background p-8">
+            <h1 className="text-xl font-medium text-foreground">We couldn’t check your agent’s connection</h1>
+            <p className="text-sm leading-5 text-secondary">
+              Your agent may already be connected. Try again instead of connecting it a second time.
+            </p>
+            <Button variant="secondary" onClick={() => router.refresh()}>
+              Try again
+            </Button>
+          </section>
+        </OnboardingShell>
+      </>
+    );
   }
 
   return (
@@ -130,7 +156,7 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
                   handle={agent.handle}
                   address={agent.address}
                   apiUrl={view.apiUrl}
-                  waiting={view.waiting}
+                  waiting={view.waiting ?? 0}
                 />
               )}
               {shown === 'reach' && agent && host && (
