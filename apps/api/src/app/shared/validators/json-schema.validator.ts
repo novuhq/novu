@@ -1,5 +1,4 @@
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
+import { createSchemaValidationAjv } from '@novu/application-generic';
 import { registerDecorator, ValidationArguments, ValidationOptions } from 'class-validator';
 
 export function IsValidJsonSchema(validationOptions?: ValidationOptions & { nullable?: boolean }) {
@@ -10,7 +9,7 @@ export function IsValidJsonSchema(validationOptions?: ValidationOptions & { null
       propertyName,
       options: validationOptions,
       validator: {
-        validate(value: any, args: ValidationArguments) {
+        validate(value: unknown, args: ValidationArguments) {
           if (!value || typeof value !== 'object') {
             if (validationOptions?.nullable && !value) {
               return true;
@@ -20,10 +19,7 @@ export function IsValidJsonSchema(validationOptions?: ValidationOptions & { null
           }
 
           try {
-            const ajv = new Ajv({ strict: false });
-            addFormats(ajv);
-
-            ajv.compile(value);
+            createSchemaValidationAjv({ schema: value }).compile(value);
 
             return true;
           } catch (error) {
