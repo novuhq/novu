@@ -1,5 +1,4 @@
 import { authorize } from '../shared/auth.ts';
-import type { CreatedBy } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
 import { boxOrigin, isBoxName } from '../shared/names.ts';
 import { deleteBoxUsers } from './clerk.ts';
@@ -24,10 +23,10 @@ async function route(request: Request, env: HostEnv, url: URL): Promise<Response
     return text(`not a box name: ${box} (lowercase letters, digits and dashes; not slack, nor ending in -api)\n`, 400);
   const origin = boxOrigin(box);
   if (request.method === 'PUT') {
-    const createdBy = (await registry(env).has(box)) ? null : await introduce(env, box);
+    const failed = (await registry(env).has(box)) ? null : await introduce(env, box);
     await registry(env).add(box);
 
-    return json({ box, origin, ...(createdBy && { createdBy }) });
+    return json({ box, origin, ...(failed && { placed: false, warning: failed }) });
   }
   if (request.method !== 'DELETE') return text('not found\n', 404);
   // An unregistered box isn't created only to be destroyed: base creates it on `up`.
@@ -46,15 +45,17 @@ async function route(request: Request, env: HostEnv, url: URL): Promise<Response
 }
 
 // Before the box is registered, so no request reaches it first (see `Box.introduce`). Without base, or if base fails
-// to, the box's first caller creates it.
-async function introduce(env: HostEnv, box: string): Promise<CreatedBy | null> {
+// to, the box's first caller creates it. Returns why base failed.
+async function introduce(env: HostEnv, box: string): Promise<string | null> {
   if (box === 'base' || !(await registry(env).has('base'))) return null;
   try {
-    return await env.BOX.get(env.BOX.idFromName('base')).introduce(box);
+    await env.BOX.get(env.BOX.idFromName('base')).introduce(box);
+
+    return null;
   } catch (error) {
     console.log(`base couldn't create ${box}: ${messageOf(error)}`);
 
-    return null;
+    return messageOf(error);
   }
 }
 
@@ -78,8 +79,8 @@ export function liveBoxes(env: HostEnv): Promise<Array<string>> {
 // origin.
 const registered = new Set<string>();
 
-export async function isRegistered(env: HostEnv, box: string): Promise<boolean> {
-  if (registered.has(box)) return true;
+export async function isRegistered(env: HostEnv, box: string, { cached = true } = {}): Promise<boolean> {
+  if (cached && registered.has(box)) return true;
   if (!(await registry(env).has(box))) return false;
   registered.add(box);
 

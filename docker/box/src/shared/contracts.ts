@@ -115,19 +115,23 @@ export const NestConfig = z.looseObject({ compilerOptions: z.looseObject({}) });
 
 const Note = z.object({ at: z.string(), message: z.string() });
 const Down = z.object({ tries: z.number() }).nullable();
-// `colo` is the Box object's Cloudflare location, `container` its container's.
+// The last snapshot restore: `colo` is the Box object's Cloudflare location, `container` its container's, each
+// absent if it couldn't be looked up.
 export const LastStart = z.object({
   at: z.string(),
-  from: z.literal(['snapshot', 'image']),
-  snapshot: z.string().optional(),
+  snapshot: z.string(),
   ms: z.number(),
-  colo: z.string(),
-  container: z.string(),
+  colo: z.string().optional(),
+  container: z.string().optional(),
 });
 export type LastStart = z.infer<typeof LastStart>;
-export const CreatedBy = z.object({ base: z.string(), box: z.string() });
-export type CreatedBy = z.infer<typeof CreatedBy>;
-export const RegisteredBox = z.object({ box: z.string(), origin: z.string(), createdBy: CreatedBy.optional() });
+// `placed: false` when base exists but couldn't make the box's first call (see `Box.introduce`).
+export const RegisteredBox = z.object({
+  box: z.string(),
+  origin: z.string(),
+  placed: z.boolean().optional(),
+  warning: z.string().optional(),
+});
 const Status = {
   since: z.string().nullable(),
   running: z.boolean(),

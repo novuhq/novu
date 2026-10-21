@@ -16,9 +16,8 @@ import {
 import { apiOrigin, BOX_CLI, boxOrigin, HOST, isBoxName } from '../shared/names.ts';
 import { boxFetch, type FetchInit, failUnlessOk, hostBoxes, hostExists, readExec, type Token } from './cloud-http.ts';
 
-// A first bake takes 13 to 16 minutes on Cloudflare, a wake about 35 s. A snapshot restores in seconds where it was
-// saved or restored before; elsewhere (a box created before base created new boxes) base's takes up to 6 minutes
-// (the Slack router waits as long).
+// A first bake takes 13 to 16 minutes on Cloudflare, a wake about 35 s. A snapshot restores in seconds in base's
+// location (see `Box.introduce`), up to 6 minutes elsewhere (the Slack router waits as long).
 const READY_WITHIN_SECONDS = { baking: 25 * 60, waking: 8 * 60, running: 5 * 60 };
 
 interface Exec {
@@ -35,10 +34,10 @@ function stuck(box: string, current: BoxStatus | null): string | null {
   return null;
 }
 
-function startLine(box: string, { from, ms, colo, container }: LastStart): string {
-  const how = from === 'snapshot' ? 'restored' : 'started from the image';
+function restoreLine(box: string, { ms, colo, container }: LastStart): string {
+  const where = `${colo ? ` in ${colo}` : ''}${container ? ` (container in ${container})` : ''}`;
 
-  return `${box}: ${how} in ${(ms / 1000).toFixed(1)} s in ${colo} (container in ${container})`;
+  return `${box}: restored in ${(ms / 1000).toFixed(1)} s${where}`;
 }
 
 function readyWait(current: BoxStatus): keyof typeof READY_WITHIN_SECONDS {
@@ -131,14 +130,18 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     return output.trim();
   };
 
-  const startingSnapshot = async (from: string | undefined, fromBase: boolean, ref: string) => {
+  const startingSnapshot = async (
+    current: BoxStatus | null,
+    from: string | undefined,
+    fromBase: boolean,
+    ref: string
+  ) => {
     if (from) {
       const id = await snapshotOf(from);
       if (!id) throw new Error(`${from} has no snapshot to start from`);
 
       return id;
     }
-    const current = await state();
     if (!fromBase || box === 'base' || (current && !needsBake(current))) return null;
     const id = await snapshotOf('base');
     log(id ? `${box} is new: starting it from base` : `no base snapshot: baking ${ref}`);
@@ -201,6 +204,20 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
       }
     ).then(({ code }) => code);
 
+  // The box records a restore a moment after it first answers; a start from the image records none.
+  const logRestore = async (before: BoxStatus | null) => {
+    if (before?.running) return;
+    const restored = await poll<LastStart | null>(
+      async () => {
+        const lastStart = (await state().catch(() => null))?.lastStart;
+
+        return lastStart?.at !== before?.lastStart?.at && lastStart;
+      },
+      { timeoutMs: 5000, everyMs: 1000, orElse: () => null }
+    );
+    if (restored) log(restoreLine(box, restored));
+  };
+
   const readyFor = async ({ reachable }: { readonly reachable: boolean }) => {
     const current = await state();
     if (!current || needsBake(current))
@@ -218,12 +235,12 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
   const up = async (options: UpOptions): Promise<number> => {
     const { ref = 'next', from, fromBase = false, reachable = false } = options;
     const query = new URLSearchParams({ ref });
-    const snapshot = await startingSnapshot(from, fromBase, ref);
+    const current = await state();
+    const snapshot = await startingSnapshot(current, from, fromBase, ref);
     if (snapshot) query.set('from', snapshot);
     if (!(await hostExists())) throw new Error(`${HOST} isn't deployed; deploy it with \`box deploy\``);
-    const begun = Date.now();
-    const { createdBy } = await hostBoxes(`boxes/${box}`, RegisteredBox, { method: 'PUT', token });
-    if (createdBy) log(`${box} was created by base: base in ${createdBy.base}, ${box} in ${createdBy.box}`);
+    const { warning } = await hostBoxes(`boxes/${box}`, RegisteredBox, { method: 'PUT', token });
+    if (warning) log(`WARN: ${box} wasn't created by base (${warning}); it may restore slowly`);
     const waits: Record<string, number> = READY_WITHIN_SECONDS;
     try {
       const started = await call(`/up?${query}`, { method: 'POST' }).then(
@@ -246,9 +263,7 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
       return up(options);
     }
     log(`${box} is ${reachable ? 'up' : 'ready'}`);
-    const lastStart = (await state().catch(() => null))?.lastStart;
-    // Allows for the clock of this machine running ahead of Cloudflare's.
-    if (lastStart && Date.parse(lastStart.at) > begun - 30_000) log(startLine(box, lastStart));
+    await logRestore(current);
     console.log(`box: ${origin}`);
     console.log(`api: ${apiOrigin(box)}`);
     console.log(`mailpit: ${origin}/mail`);
