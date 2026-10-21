@@ -35,7 +35,8 @@ enum ReqStatusEnum {
 }
 
 const DOCS_LINK = 'https://docs.novu.co/additional-resources/idempotency';
-const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY];
+// `Internal` callers retry with the same idempotency key, so their retries must be deduplicated too.
+const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY, ApiAuthSchemeEnum.INTERNAL];
 const ALLOWED_METHODS = ['post', 'patch'];
 
 @Injectable()
@@ -76,7 +77,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
   }
 
   @Instrument()
-  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
     const request = context.switchToHttp().getRequest();
     const isAllowedMethod = ALLOWED_METHODS.includes(request.method.toLowerCase());
     const idempotencyKey = this.getIdempotencyKey(context);
@@ -157,7 +158,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
   async setCache(
     key: string,
-    val: { status: ReqStatusEnum; bodyHash: string; data?: any; statusCode?: number },
+    val: { status: ReqStatusEnum; bodyHash: string; data?: unknown; statusCode?: number },
     ttl: number,
     ifNotExists?: boolean
   ): Promise<string | null> {
@@ -173,7 +174,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     return null;
   }
 
-  private setHeaders(response: any, headers: Record<string, string>) {
+  private setHeaders(response: { set(key: string, value: string): unknown }, headers: Record<string, string>) {
     Object.keys(headers).forEach((key) => {
       if (headers[key]) {
         response.set(key, headers[key]);
@@ -195,9 +196,9 @@ export class IdempotencyInterceptor implements NestInterceptor {
     return hash.digest('hex');
   }
 
-  private async handlerDuplicateRequest(context: ExecutionContext, bodyHash: string): Promise<Observable<any>> {
+  private async handlerDuplicateRequest(context: ExecutionContext, bodyHash: string): Promise<Observable<unknown>> {
     const cacheKey = this.getCacheKey(context);
-    const idempotencyKey = this.getIdempotencyKey(context)!;
+    const idempotencyKey = this.getIdempotencyKey(context) ?? '';
     const data = await this.cacheService.get(cacheKey);
     this.setHeaders(context.switchToHttp().getResponse(), {
       [HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]: idempotencyKey,
@@ -255,9 +256,9 @@ export class IdempotencyInterceptor implements NestInterceptor {
     context: ExecutionContext,
     next: CallHandler,
     bodyHash: string
-  ): Promise<Observable<any>> {
+  ): Promise<Observable<unknown>> {
     const cacheKey = this.getCacheKey(context);
-    const idempotencyKey = this.getIdempotencyKey(context)!;
+    const idempotencyKey = this.getIdempotencyKey(context) ?? '';
 
     return next.handle().pipe(
       map(async (response) => {

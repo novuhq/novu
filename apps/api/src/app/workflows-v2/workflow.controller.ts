@@ -217,8 +217,8 @@ export class WorkflowController {
         workflowIdOrInternalId,
         user,
         environmentId,
-        // Interactive dashboard reads (JWT / Bearer) must reflect the latest write.
-        skipPreferencesCache: user.scheme === ApiAuthSchemeEnum.BEARER,
+        // Interactive reads (dashboard Bearer, Copilot Internal) must reflect the latest write.
+        skipPreferencesCache: user.scheme === ApiAuthSchemeEnum.BEARER || user.scheme === ApiAuthSchemeEnum.INTERNAL,
       })
     );
   }

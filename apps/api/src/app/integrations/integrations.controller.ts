@@ -1184,7 +1184,7 @@ export class IntegrationsController {
 
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
     /*
-     * API-key, keyless, and OAuth auth must never receive decrypted provider credentials,
+     * API-key, keyless, OAuth, and internal (service) auth must never receive decrypted provider credentials,
      * regardless of RBAC state. API keys grant ALL_PERMISSIONS in `community.auth.service.ts`,
      * which would otherwise allow the RBAC path below to succeed and leak every stored
      * provider secret to any caller holding an environment API key or OAuth token.
@@ -1192,7 +1192,8 @@ export class IntegrationsController {
     if (
       user.scheme === ApiAuthSchemeEnum.API_KEY ||
       user.scheme === ApiAuthSchemeEnum.KEYLESS ||
-      user.scheme === ApiAuthSchemeEnum.OAUTH2
+      user.scheme === ApiAuthSchemeEnum.OAUTH2 ||
+      user.scheme === ApiAuthSchemeEnum.INTERNAL
     ) {
       return false;
     }
