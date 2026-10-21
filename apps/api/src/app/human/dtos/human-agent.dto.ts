@@ -117,6 +117,12 @@ export class HumanAgentResponseDto {
 
   @ApiPropertyOptional({ description: 'When the agent was paused. Missing while it isn’t.' })
   pausedAt?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Who runs the agent, as its public card names them: their first name and the initial of their last name ("Ada L."). Missing without a first name. Only `GET /v1/human/agent` includes it.',
+  })
+  operatorName?: string;
 }
 
 /** The onboarding test: mail from the Agent Email Inbox to the operator’s sign-up address. */

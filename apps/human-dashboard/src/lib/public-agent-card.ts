@@ -61,6 +61,12 @@ const NOT_AVAILABLE: PublicAgentCardResult = { available: false };
 const HANDLE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**
+ * The longest handle a card can be at. An address made before handles could be chosen is `{slug}-{key}`: a slug
+ * as long as a handle, a hyphen and an 8-character key.
+ */
+const CARD_HANDLE_MAX_LENGTH = HANDLE_MAX_LENGTH + 1 + 8;
+
+/**
  * The public card of the agent with this handle, for the page at `/p/{handle}` and its share image. The API
  * has none for a handle no agent has, for an agent that was deleted, and for one only its contacts can reach
  * (Who can reach, on the Configure page): the card is public only while that is Anyone.
@@ -68,7 +74,7 @@ const HANDLE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
  * The page and its image of one request share a single lookup.
  */
 export const getPublicAgentCard = cache(async (handle: string): Promise<PublicAgentCardResult> => {
-  if (handle.length > HANDLE_MAX_LENGTH || !HANDLE_PATTERN.test(handle)) {
+  if (handle.length > CARD_HANDLE_MAX_LENGTH || !HANDLE_PATTERN.test(handle)) {
     return NOT_AVAILABLE;
   }
 

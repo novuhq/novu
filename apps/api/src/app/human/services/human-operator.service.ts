@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AgentRepository, HumanContactRepository, SubscriberRepository } from '@novu/dal';
+import { buildRelayOwnerCardName } from './relay-owner-name';
 
 /** The subscriberId `human setup` made up for the operator before the API kept track: `human_` and 12 hex characters. */
 const CLI_OPERATOR_ID_PATTERN = /^human_[0-9a-f]{12}$/;
@@ -106,5 +107,23 @@ export class HumanOperatorService {
     );
 
     return madeByCli?.subscriberId ?? null;
+  }
+
+  /**
+   * The operator as the agent's card names them, "Ada L.". The public card and the operator's own card on the
+   * Configure page both read it here, so they never disagree. Nothing without an operator or a first name.
+   */
+  async cardNameFor(scope: OperatorScope): Promise<string | undefined> {
+    const operatorId = await this.findForAgent(scope);
+    if (!operatorId) {
+      return undefined;
+    }
+
+    const operator = await this.subscriberRepository.findOne(
+      { _environmentId: scope.environmentId, subscriberId: operatorId },
+      'firstName lastName'
+    );
+
+    return buildRelayOwnerCardName(operator?.firstName, operator?.lastName);
   }
 }

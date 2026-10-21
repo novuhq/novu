@@ -13,14 +13,13 @@ import {
   AgentRepository,
   type IntegrationEntity,
   IntegrationRepository,
-  SubscriberRepository,
 } from '@novu/dal';
 import { EmailProviderIdEnum } from '@novu/shared';
 import type { HumanAgentCardResult } from '../../dtos/human-agent-card.dto';
 import { agentPictureUrl } from '../../services/human-agent-picture.service';
 import { HumanOperatorService } from '../../services/human-operator.service';
 import { HumanTelegramBotService } from '../../services/human-telegram-bot.service';
-import { buildRelayOwnerCardName, resolveRelayAgentName } from '../../services/relay-owner-name';
+import { resolveRelayAgentName } from '../../services/relay-owner-name';
 import { GetHumanAgentCardCommand } from './get-human-agent-card.command';
 
 /** Code on the 404 of every card that can't be shown, whatever the reason. */
@@ -58,7 +57,6 @@ export class GetHumanAgentCard {
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly agentRepository: AgentRepository,
-    private readonly subscriberRepository: SubscriberRepository,
     private readonly operatorService: HumanOperatorService,
     private readonly telegramBot: HumanTelegramBotService
   ) {}
@@ -72,7 +70,11 @@ export class GetHumanAgentCard {
     }
 
     const [operatorName, telegramBotUsername] = await Promise.all([
-      this.findOperatorName(agent),
+      this.operatorService.cardNameFor({
+        environmentId: agent._environmentId,
+        organizationId: agent._organizationId,
+        agentId: agent._id,
+      }),
       this.telegramBot.usernameFor(agent),
     ]);
     const pictureUrl = agentPictureUrl(agent);
@@ -140,24 +142,5 @@ export class GetHumanAgentCard {
     }
 
     return agent;
-  }
-
-  /** The operator as the card names them, "Ada L.": a stranger never gets more of their last name. */
-  private async findOperatorName(agent: CardAgent): Promise<string | undefined> {
-    const operatorId = await this.operatorService.findForAgent({
-      environmentId: agent._environmentId,
-      organizationId: agent._organizationId,
-      agentId: agent._id,
-    });
-    if (!operatorId) {
-      return undefined;
-    }
-
-    const operator = await this.subscriberRepository.findOne(
-      { _environmentId: agent._environmentId, subscriberId: operatorId },
-      'firstName lastName'
-    );
-
-    return buildRelayOwnerCardName(operator?.firstName, operator?.lastName);
   }
 }

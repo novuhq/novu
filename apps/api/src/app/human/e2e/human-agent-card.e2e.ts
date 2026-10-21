@@ -68,6 +68,17 @@ describe('Agent Inbox public agent card #novu-v2', () => {
     expect(Date.parse(card.createdAt)).to.be.closeTo(Date.now(), 60_000);
   });
 
+  it('names the operator on the Configure page as the public card does', async () => {
+    const { session, handle } = await createAgent({ agentName: 'Atlas' });
+
+    const own = await asDashboard(session, 'get', '/v1/human/agent');
+    const card = await readCard(handle);
+
+    expect(own.status).to.equal(200, JSON.stringify(own.body));
+    expect(own.body.data.operatorName).to.equal('Ada L.');
+    expect(card.data.data.operatorName).to.equal(own.body.data.operatorName);
+  });
+
   it('names an agent that still has the name setup gave it after its handle', async () => {
     const { handle } = await createAgent({});
 
@@ -135,7 +146,7 @@ describe('Agent Inbox public agent card #novu-v2', () => {
     expectNotAvailable(await readCard(handle));
   });
 
-  it('finds an address made before handles could be chosen by its key, under its own slug only', async () => {
+  it('finds an address made before handles could be chosen by its key, even with the longest slug', async () => {
     // Without the shared domain, setup makes the agent without a mailbox, and the old kind is added by hand.
     const sharedDomain = process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN;
     delete process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN;
@@ -143,13 +154,15 @@ describe('Agent Inbox public agent card #novu-v2', () => {
       process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = sharedDomain;
     });
 
+    // A slug as long as a handle can be: with the hyphen and the key, the card's handle is 41 characters.
+    const slug = 'atlas-the-agents-of-ada-lovelace';
     const inboxRoutingKey = generateAgentInboxRoutingKey();
     const inbox = await integrationRepository.create({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
       providerId: EmailProviderIdEnum.AgentEmailInbox,
       channel: ChannelTypeEnum.EMAIL,
-      credentials: { inboxRoutingKey, emailSlugPrefix: 'atlas', inboxDomain: INBOX_DOMAIN },
+      credentials: { inboxRoutingKey, emailSlugPrefix: slug, inboxDomain: INBOX_DOMAIN },
       active: true,
       identifier: `agent-inbox-card-e2e-${Date.now()}`,
       deleted: false,
@@ -161,14 +174,12 @@ describe('Agent Inbox public agent card #novu-v2', () => {
       _organizationId: session.organization._id,
     });
 
-    const res = await readCard(`atlas-${inboxRoutingKey}`);
+    const handle = `${slug}-${inboxRoutingKey}`;
+    expect(handle).to.have.length(41);
+    const res = await readCard(handle);
 
     expect(res.status).to.equal(200, JSON.stringify(res.data));
-    expect(res.data.data).to.include({
-      handle: `atlas-${inboxRoutingKey}`,
-      name: 'Atlas',
-      address: `atlas-${inboxRoutingKey}@${INBOX_DOMAIN}`,
-    });
+    expect(res.data.data).to.include({ handle, name: 'Atlas', address: `${handle}@${INBOX_DOMAIN}` });
     expectNotAvailable(await readCard(`other-${inboxRoutingKey}`));
   });
 });
@@ -214,7 +225,7 @@ async function updateAgent(session: UserSession, body: Record<string, unknown>) 
   expect(res.status).to.equal(200, JSON.stringify(res.body));
 }
 
-function asDashboard(session: UserSession, method: 'post' | 'patch' | 'delete', path: string) {
+function asDashboard(session: UserSession, method: 'get' | 'post' | 'patch' | 'delete', path: string) {
   return session.testAgent[method](path)
     .set('Authorization', `ApiKey ${session.apiKey}`)
     .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, DASHBOARD_SECRET);

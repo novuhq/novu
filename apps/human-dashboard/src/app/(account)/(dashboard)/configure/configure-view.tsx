@@ -37,7 +37,7 @@ type ConfigureViewProps = {
   /** The drawer the page opens with, when a link asked for one (`?setup=`). */
   initialDrawer: ChannelVia | null;
   agent: ConfigureAgent;
-  /** The operator as the card names them, "Ada L." (`cardOperatorName`), or empty without a first name. */
+  /** The operator as the API names them for the public card, "Ada L.", or empty without a first name. */
   operatorName: string;
   channels: ChannelRow[];
   telegramSetup: TelegramSetupState;

@@ -29,7 +29,7 @@ export type IdentityCardProps = {
   cardLink: string;
   pictureUrl?: string;
   createdAt?: string;
-  /** Who runs the agent, as the card names them: "Ada L.", when Clerk has their first name. */
+  /** Who runs the agent, as the public card names them: "Ada L.". Empty without the operator's first name. */
   operatorName: string;
   state: AgentState;
   /** A host reads the agent's mail: one checked the inbox within the last day. */

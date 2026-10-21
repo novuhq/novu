@@ -27,9 +27,14 @@ export type RelayAgent = {
   createdAt?: string;
   /** Who can reach it and whether it is paused. `null` when they couldn't be read just now. */
   settings: AgentSettings | null;
+  /**
+   * Who runs it, as its public card names them: "Ada L.". Empty without the operator's first name, or when it
+   * couldn't be read just now.
+   */
+  operatorName: string;
 };
 
-type ApiAgent = Omit<RelayAgent, 'id' | 'pictureUrl' | 'settings'> & { _id: string };
+type ApiAgent = Omit<RelayAgent, 'id' | 'pictureUrl' | 'settings' | 'operatorName'> & { _id: string };
 
 /** `GET`, `PATCH /v1/human/agent`: the agent as the Agent Inbox endpoints describe it. */
 type HumanApiAgent = {
@@ -37,6 +42,8 @@ type HumanApiAgent = {
   reach?: string;
   paused?: boolean;
   pausedAt?: string;
+  /** Only `GET` names the operator, as the public card does. */
+  operatorName?: string;
 };
 
 const HUMAN_AGENT_PATH = '/v1/human/agent';
@@ -63,6 +70,7 @@ export const getRelayAgent = cache(async (account: HumanAccount): Promise<RelayA
       pictureUrl: details?.pictureUrl,
       createdAt: agent.createdAt,
       settings: details ? toSettings(details) : null,
+      operatorName: details?.operatorName ?? '',
     };
   } catch (error) {
     if (isHumanApiNotFound(error)) {

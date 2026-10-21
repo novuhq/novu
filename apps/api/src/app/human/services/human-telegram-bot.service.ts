@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CacheService, decryptCredentials, PinoLogger } from '@novu/application-generic';
 import { type AgentEntity, AgentIntegrationRepository, IntegrationRepository } from '@novu/dal';
@@ -8,8 +7,17 @@ import { buildTelegramBotApiUrl } from '../../telegram-linking/telegram-webhook.
 /** A bot keeps its username, so one answer from Telegram serves a day of card views. */
 const USERNAME_TTL_SECONDS = 24 * 60 * 60;
 
+/** How long a bot Telegram didn't name stays off the card before Telegram is asked again. */
+const NO_USERNAME_TTL_SECONDS = 10 * 60;
+
+/** What the cache holds for a bot Telegram didn't name: never a username, which has only letters, digits and `_`. */
+const NO_USERNAME = '-';
+
 /** A card doesn't wait long for Telegram: without an answer, it leaves the Telegram line out. */
 const TELEGRAM_TIMEOUT_MS = 3_000;
+
+/** A bot's token is `{bot id}:{secret}`. The bot id is public: it is the bot's own Telegram user id. */
+const BOT_TOKEN_PATTERN = /^(\d+):/;
 
 type TelegramGetMeResponse = { ok?: boolean; result?: { username?: string }; description?: string };
 
@@ -17,8 +25,9 @@ type BotAgent = Pick<AgentEntity, '_id' | '_environmentId' | '_organizationId'>;
 
 /**
  * The username of the Telegram bot a relay agent talks through, for its public card. Telegram only tells it to
- * whoever holds the bot's token (`getMe`), so the answer is cached under a hash of the token: a new token is a
- * new key, and the token itself never goes into the cache.
+ * whoever holds the bot's token (`getMe`), so the answer is cached under the bot's id, the public part of the
+ * token: nothing of the secret goes into the cache. When Telegram names no bot, the card leaves it out for a few
+ * minutes before Telegram is asked again, so a revoked token or an outage doesn't slow every card down.
  */
 @Injectable()
 export class HumanTelegramBotService {
@@ -34,20 +43,19 @@ export class HumanTelegramBotService {
   /** The bot's username without the `@`, or nothing when the agent has no bot that Telegram answers for. */
   async usernameFor(agent: BotAgent): Promise<string | undefined> {
     const botToken = await this.findBotToken(agent);
-    if (!botToken) {
+    const botId = botToken ? BOT_TOKEN_PATTERN.exec(botToken)?.[1] : undefined;
+    if (!botToken || !botId) {
       return undefined;
     }
 
-    const key = `agent-inbox:telegram-bot-username:${createHash('sha256').update(botToken).digest('hex')}`;
+    const key = `agent-inbox:telegram-bot-username:${botId}`;
     const cached = await this.readCache(key);
     if (cached) {
-      return cached;
+      return cached === NO_USERNAME ? undefined : cached;
     }
 
     const username = await this.askTelegram(botToken);
-    if (username) {
-      await this.writeCache(key, username);
-    }
+    await this.writeCache(key, username ?? NO_USERNAME, username ? USERNAME_TTL_SECONDS : NO_USERNAME_TTL_SECONDS);
 
     return username;
   }
@@ -110,13 +118,13 @@ export class HumanTelegramBotService {
     }
   }
 
-  private async writeCache(key: string, username: string): Promise<void> {
+  private async writeCache(key: string, value: string, ttl: number): Promise<void> {
     if (!this.cacheService.cacheEnabled()) {
       return;
     }
 
     try {
-      await this.cacheService.set(key, username, { ttl: USERNAME_TTL_SECONDS });
+      await this.cacheService.set(key, value, { ttl });
     } catch {
       // Without the cache, the next card asks Telegram again.
     }

@@ -2,7 +2,6 @@ import 'server-only';
 
 import type { User } from '@clerk/nextjs/server';
 
-import { cardOperatorName } from './agent-card';
 import { hostLiveness } from './host-status';
 import type { HumanAccount } from './human-account';
 import { getRelayAgent } from './human-agent-api';
@@ -47,8 +46,9 @@ export async function loadOwnShareImage(account: HumanAccount, user: User): Prom
     cardLink: identity.cardLink,
     pictureUrl: identity.pictureUrl,
     createdAt: identity.createdAt,
-    operatorName: cardOperatorName(user.firstName, user.lastName),
-    operatorFirstName: user.firstName ?? '',
+    operatorName: agent.operatorName,
+    // As the public card's image does: "Run by Dima G." makes "Dima’s agent".
+    operatorFirstName: agent.operatorName.split(' ')[0] ?? '',
     state: !agent.active || agent.settings?.paused ? 'paused' : hostConnected ? 'active' : 'waiting',
     telegram: connected('telegram') ? { bot: telegramBot ? `@${telegramBot}` : null } : null,
     host: { connected: hostConnected },
