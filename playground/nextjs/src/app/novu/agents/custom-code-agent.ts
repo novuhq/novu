@@ -5,6 +5,8 @@ const HELP = [
   'Custom-code agent (plain `agent()`, no model). Message me with one of:',
   '- `card` — a card with a table, a chart, a button and a select',
   '- `remember <note>` / `recall` — conversation metadata',
+  '- `history` — the conversation so far, from `ctx.history`',
+  '- attach a file — I reply with its name',
   '- `notify <name>` — triggers `all-channels-workflow` for you',
   '- `done` — resolves the conversation (`onResolve` then triggers a follow-up notification)',
   '- `progress` — a typing indicator, then a reply that gets edited',
@@ -80,6 +82,9 @@ export const customCodeAgent = agent('custom-code-agent', {
   ...features.channelHandlers,
   onMessage: async (message, ctx) => {
     if (ctx.humanResponse) return formatHumanResponse(ctx.humanResponse);
+    if (message.attachments?.length) {
+      return `Got ${message.attachments.map((file) => file.name ?? file.type).join(', ')}`;
+    }
 
     const [command = '', ...rest] = message.text.trim().split(/\s+/);
     const arg = rest.join(' ');
@@ -92,6 +97,8 @@ export const customCodeAgent = agent('custom-code-agent', {
         return features.remember(ctx, arg);
       case 'recall':
         return features.recall(ctx);
+      case 'history':
+        return features.history(ctx);
       case 'notify':
         return features.notify(ctx, arg);
       case 'done':
