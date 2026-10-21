@@ -111,6 +111,7 @@ describe('CreateInteraction', () => {
     const humanContactRepository = {
       findContactsByEmailAddress: sinon.stub().resolves([]),
       findSubscriberSharingEmailAddress: sinon.stub().resolves(null),
+      findContact: sinon.stub().resolves(null),
       setDeclaredAddress: sinon.stub().resolves({ address: 'ada@acme.com', declaredAt: 't' }),
       clearDeclaredAddress: sinon.stub().resolves(),
     };
@@ -1079,6 +1080,37 @@ describe('CreateInteraction', () => {
 
       expect(subscriberRepository.create.called).to.equal(false);
       expect(humanContactRepository.setDeclaredAddress.called).to.equal(false);
+    });
+
+    it("keeps this agent's declared address when another agent stored the new one on that id", async () => {
+      const { usecase, command, agentRepository, deliveryService, humanContactRepository, subscriberRepository } =
+        setup();
+      const hashedId = contactIdFromEmail('ada@new.com', true);
+      agentRepository.findOne.resolves(agent);
+      subscriberRepository.findOne.callsFake(async (query: { subscriberId: string }) =>
+        query.subscriberId === 'ada' ? { subscriberId: 'ada' } : null
+      );
+      humanContactRepository.findSubscriberSharingEmailAddress.callsFake(async (_env: string, subscriberId: string) =>
+        subscriberId === 'ada' ? { subscriberId: 'ada' } : null
+      );
+      humanContactRepository.findContact.resolves({
+        subscriberId: 'ada',
+        addresses: { email: { declared: { address: 'ada@old.com', declaredAt: 't' } } },
+      });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'email-main',
+        platform: 'email',
+        platformUserId: 'ada@new.com',
+      });
+
+      await usecase.execute({ ...command, to: 'ada@new.com', via: undefined } as any);
+
+      expect(subscriberRepository.create.firstCall.args[0].subscriberId).to.equal(hashedId);
+      expect(humanContactRepository.setDeclaredAddress.firstCall.args[0]).to.include({
+        subscriberId: hashedId,
+        address: 'ada@new.com',
+      });
+      expect(humanContactRepository.setDeclaredAddress.calledOnce).to.equal(true);
     });
 
     it('sends the typed address when that contact has a different verified address', async () => {

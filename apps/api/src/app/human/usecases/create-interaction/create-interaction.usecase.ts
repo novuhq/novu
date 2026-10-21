@@ -538,7 +538,7 @@ export class CreateInteraction {
       return existing;
     }
 
-    const subscriberId = await this.allocateContactId(command, address, reserved);
+    const subscriberId = await this.allocateContactId(command, agent, address, reserved);
     await this.humanContactRepository.setDeclaredAddress({
       environmentId: command.environmentId,
       organizationId: command.organizationId,
@@ -652,6 +652,7 @@ export class CreateInteraction {
   /** Same id order as the CLI: the local part, then a short hash when that id is already someone else. */
   private async allocateContactId(
     command: CreateInteractionCommand,
+    agent: AgentEntity,
     address: string,
     reserved: ReadonlySet<string>
   ): Promise<string> {
@@ -665,17 +666,33 @@ export class CreateInteraction {
       }
 
       // The id is taken. Reuse it only when it already is this address, so two agents can write to the same mailbox.
+      // Skip it when this agent already stored a different address there: writing this one would replace that.
       const shared = await this.humanContactRepository.findSubscriberSharingEmailAddress(
         command.environmentId,
         subscriberId,
         address
       );
-      if (shared) {
-        return subscriberId;
+      if (!shared || (await this.agentStoredDifferentAddress(command, agent, subscriberId, address))) {
+        continue;
       }
+
+      return subscriberId;
     }
 
     throw new ConflictException(`Could not pick a contact id for ${address}. Pass a contact id instead.`);
+  }
+
+  /** This agent already keeps a different declared address on `subscriberId`. */
+  private async agentStoredDifferentAddress(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    subscriberId: string,
+    address: string
+  ): Promise<boolean> {
+    const contact = await this.humanContactRepository.findContact(command.environmentId, agent._id, subscriberId);
+    const declared = contact?.addresses?.[HumanChannelViaEnum.EMAIL]?.declared?.address;
+
+    return declared !== undefined && declared !== address;
   }
 
   /** Creates the subscriber with no email. Returns false when that id is already taken. */
