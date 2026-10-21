@@ -14,7 +14,7 @@ import {
 import { NovuApiUtils } from "../utils/api";
 import { buildConnectAgentOverlay } from "../utils/connect-cli";
 import type { ToolAccessors } from "../utils/tool-accessors";
-import { ToolFactory } from "../utils/tool-factory";
+import { type ToolContext, ToolFactory } from "../utils/tool-factory";
 
 const ANALYTICS_SOURCE_HEADER = { "Novu-Analytics-Source": "mcp" };
 
@@ -219,16 +219,8 @@ export function registerAgentTools(server: McpServer, accessors: ToolAccessors) 
 	});
 }
 
-async function fetchIntegrations(context: {
-	apiUrl: string;
-	environmentId?: string;
-	idempotencyKey?: string;
-	token: string;
-}): Promise<AgentRuntimeIntegration[] | null> {
-	const headers = NovuApiUtils.prepareHeaders(context.token, {
-		environmentId: context.environmentId,
-		idempotencyKey: context.idempotencyKey,
-	});
+async function fetchIntegrations(context: ToolContext): Promise<AgentRuntimeIntegration[] | null> {
+	const headers = await ToolFactory.buildHeaders(context, context.idempotencyKey);
 
 	try {
 		const response = await fetch(`${context.apiUrl}/v1/integrations`, {
@@ -279,13 +271,10 @@ function formatCreatedAgent(data: unknown, requestedIdentifier: string): string 
 }
 
 async function fetchAgentByIdentifier(
-	context: { apiUrl: string; environmentId?: string; idempotencyKey?: string; token: string },
+	context: ToolContext,
 	identifier: string,
 ): Promise<Record<string, unknown> | "not_found" | null> {
-	const headers = NovuApiUtils.prepareHeaders(context.token, {
-		environmentId: context.environmentId,
-		idempotencyKey: context.idempotencyKey,
-	});
+	const headers = await ToolFactory.buildHeaders(context, context.idempotencyKey);
 
 	try {
 		const response = await fetch(`${context.apiUrl}${agentResourcePath(identifier)}`, {

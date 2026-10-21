@@ -72,43 +72,4 @@ export class NovuApiUtils {
 
 		return queryParams;
 	}
-
-	/**
-	 * Handle API response and return formatted result
-	 */
-	static async handleApiResponse(response: Response, operation: string, identifier?: string) {
-		if (!response.ok) {
-			const errorText = await response.text();
-			console.error("Novu API Error:", response.status, errorText);
-
-			const errorMessage = identifier
-				? `Error: Failed to ${operation} ${identifier}. Status: ${response.status}, Message: ${errorText}`
-				: `Error: Failed to ${operation}. Status: ${response.status}, Message: ${errorText}`;
-
-			return {
-				content: [
-					{
-						text: errorMessage,
-						type: "text" as const,
-					},
-				],
-			};
-		}
-
-		const data = await response.json();
-		const successMessage = identifier
-			? `Successfully ${operation} ${identifier}`
-			: `Successfully ${operation}`;
-
-		console.log(successMessage);
-
-		return {
-			content: [
-				{
-					text: `${successMessage}:\n\n${JSON.stringify(data, null, 2)}`,
-					type: "text" as const,
-				},
-			],
-		};
-	}
 }

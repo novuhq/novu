@@ -10,6 +10,20 @@ export interface ToolContext {
 	apiUrl: string;
 	environmentId?: string;
 	idempotencyKey?: string;
+	getAuthorization?: () => string | Promise<string>;
+}
+
+/** Outcome of one Novu API call, before it is turned into a tool result. */
+export type ApiCallResult =
+	| { ok: true; status: number; data: unknown }
+	| { ok: false; status: number; errorText: string; retryAfter?: string };
+
+export interface ToolErrorDetails {
+	/** HTTP status of the failed Novu API call, or a 4xx for input the tool rejected. Absent for network errors. */
+	status?: number;
+	message: string;
+	/** `Retry-After` header, set when the API asks the caller to retry later. */
+	retryAfter?: string;
 }
 
 const idempotencyKeySchema = z
@@ -55,7 +69,7 @@ export class ToolFactory {
 	 */
 	static createTool<T extends z.ZodObject<z.ZodRawShape>>(
 		server: McpServer,
-		{ getToken, getApiUrl }: ToolAccessors,
+		{ getToken, getApiUrl, getAuthorization }: ToolAccessors,
 		config: ToolConfig<T>,
 	) {
 		const schemaWithEnvironment = config.schema.extend({
@@ -68,9 +82,11 @@ export class ToolFactory {
 			config.description,
 			schemaWithEnvironment.shape,
 			async (rawInput) => {
-				const authError = ValidationUtils.validateToken(getToken());
-				if (authError) {
-					return authError;
+				if (!getAuthorization) {
+					const authError = ValidationUtils.validateToken(getToken());
+					if (authError) {
+						return authError;
+					}
 				}
 
 				const parsed = schemaWithEnvironment.parse(rawInput) as z.infer<T> & {
@@ -83,22 +99,89 @@ export class ToolFactory {
 					return await config.handler(toolInput as z.infer<T>, {
 						apiUrl: getApiUrl(),
 						environmentId,
+						getAuthorization,
 						idempotencyKey,
-						token: getToken()!,
+						token: getToken() ?? "",
 					});
 				} catch (error) {
 					console.error(`Error in ${config.name}:`, error);
-					return {
-						content: [
-							{
-								text: `Error: Failed to execute ${config.name}. ${error instanceof Error ? error.message : "Unknown error"}`,
-								type: "text" as const,
-							},
-						],
-					};
+					return ToolFactory.errorResult({
+						message: `Error: Failed to execute ${config.name}. ${error instanceof Error ? error.message : "Unknown error"}`,
+					});
 				}
 			},
 		);
+	}
+
+	/**
+	 * Headers for one Novu API request. `getAuthorization` (when the caller
+	 * supplied it) is called on every request; otherwise the token picks the
+	 * `Bearer` / `ApiKey` scheme.
+	 */
+	static async buildHeaders(
+		context: ToolContext,
+		idempotencyKey?: string,
+	): Promise<Record<string, string>> {
+		if (!context.getAuthorization) {
+			return NovuApiUtils.prepareHeaders(context.token, {
+				environmentId: context.environmentId,
+				idempotencyKey,
+			});
+		}
+
+		const headers: Record<string, string> = {
+			Authorization: await context.getAuthorization(),
+			"Content-Type": "application/json",
+		};
+		if (idempotencyKey) headers["idempotency-key"] = idempotencyKey;
+
+		return headers;
+	}
+
+	/** Send one request to the Novu API and unwrap the `data` envelope. */
+	static async callApi(
+		context: ToolContext,
+		request: { method: ApiRequestConfig["method"]; endpoint: string; body?: unknown },
+		idempotencyKey?: string,
+	): Promise<ApiCallResult> {
+		const response = await fetch(`${context.apiUrl}${request.endpoint}`, {
+			headers: await ToolFactory.buildHeaders(context, idempotencyKey),
+			method: request.method,
+			...(request.body !== undefined && { body: JSON.stringify(request.body) }),
+		});
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			console.error("Novu API Error:", response.status, errorText);
+			const retryAfter = response.headers.get("Retry-After") ?? undefined;
+
+			return { errorText, ok: false, retryAfter, status: response.status };
+		}
+
+		const json = response.status === 204 ? undefined : await response.json();
+		const data =
+			json && typeof json === "object" && "data" in json
+				? (json as { data: unknown }).data
+				: json;
+
+		return { data, ok: true, status: response.status };
+	}
+
+	/**
+	 * A failed tool call. `structuredContent.error.status` carries the HTTP
+	 * status so programmatic callers can tell validation errors (4xx) from
+	 * retryable ones (5xx, or no status for network errors).
+	 */
+	static errorResult(error: ToolErrorDetails): ApiResponse {
+		const details: ToolErrorDetails = { message: error.message };
+		if (error.status !== undefined) details.status = error.status;
+		if (error.retryAfter !== undefined) details.retryAfter = error.retryAfter;
+
+		return {
+			content: [{ text: error.message, type: "text" as const }],
+			isError: true,
+			structuredContent: { error: details },
+		};
 	}
 
 	/**
@@ -116,10 +199,7 @@ export class ToolFactory {
 		);
 
 		const headers = {
-			...NovuApiUtils.prepareHeaders(context.token, {
-				environmentId: context.environmentId,
-				idempotencyKey,
-			}),
+			...(await ToolFactory.buildHeaders(context, idempotencyKey)),
 			...requestConfig.customHeaders,
 		};
 
@@ -149,29 +229,18 @@ export class ToolFactory {
 		}
 
 		if (!response.ok) {
-			if (requestConfig.formatError) {
-				const errorText = await response.text();
-				console.error("Novu API Error:", response.status, errorText);
+			const errorText = await response.text();
+			console.error("Novu API Error:", response.status, errorText);
+			const target = requestConfig.identifier ? ` ${requestConfig.identifier}` : "";
+			const message = requestConfig.formatError
+				? requestConfig.formatError(response.status, errorText, requestConfig.identifier)
+				: `Error: Failed to ${requestConfig.successMessage}${target}. Status: ${response.status}, Message: ${errorText}`;
 
-				return {
-					content: [
-						{
-							text: requestConfig.formatError(
-								response.status,
-								errorText,
-								requestConfig.identifier,
-							),
-							type: "text" as const,
-						},
-					],
-				};
-			}
-
-			return NovuApiUtils.handleApiResponse(
-				response,
-				requestConfig.successMessage,
-				requestConfig.identifier,
-			);
+			return ToolFactory.errorResult({
+				message,
+				retryAfter: response.headers.get("Retry-After") ?? undefined,
+				status: response.status,
+			});
 		}
 
 		const data = await response.json();
