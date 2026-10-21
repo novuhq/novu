@@ -35,6 +35,7 @@ async function route(request: Request, env: HostEnv, url: URL): Promise<Response
       502
     );
   await registry(env).remove(box);
+  registered.delete(box);
 
   return json({ box, state: 'deleted', ...(await deleteUsersOf(env, box)) });
 }
@@ -53,4 +54,16 @@ async function deleteUsersOf(env: HostEnv, box: string): Promise<{ users: Array<
 
 export function liveBoxes(env: HostEnv): Promise<Array<string>> {
   return registry(env).list();
+}
+
+// Per isolate, so most requests skip the Registry. A box deleted since is harmless: its Box answers 404 without an
+// origin.
+const registered = new Set<string>();
+
+export async function isRegistered(env: HostEnv, box: string): Promise<boolean> {
+  if (registered.has(box)) return true;
+  if (!(await registry(env).has(box))) return false;
+  registered.add(box);
+
+  return true;
 }

@@ -1,6 +1,6 @@
 import { authorize } from '../shared/auth.ts';
 import { boxOfHost, DOMAIN, HOST, SLACK_HOST } from '../shared/names.ts';
-import { boxes } from './boxes.ts';
+import { boxes, isRegistered } from './boxes.ts';
 import type { HostEnv } from './env.ts';
 import { text } from './life.ts';
 import { testerArmy } from './testerarmy.ts';
@@ -28,6 +28,9 @@ export default {
     if (url.hostname === SLACK_HOST) return env.ROUTER.get(env.ROUTER.idFromName('router')).fetch(request);
     const box = boxOfHost(url.hostname);
     if (!box) return text(`not a box address: ${url.hostname}\n`, 404);
+    // A Durable Object is created near its first caller and never moves; a box must be created by base (`up`), in
+    // base's location, where base's snapshot restores in seconds.
+    if (!(await isRegistered(env, box))) return text(`no such box: ${box}\n`, 404);
 
     return env.BOX.get(env.BOX.idFromName(box)).fetch(request);
   },
