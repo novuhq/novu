@@ -200,7 +200,7 @@ async function writeLlmAuthAgentSource(
 
   const toolsDir = path.join(root, 'app', 'novu', 'agents', 'tools');
   await fs.rm(path.join(toolsDir, 'search-novu-docs.ts'), { force: true });
-  await fs.rmdir(toolsDir).catch(() => undefined);
+  await fs.rmdir(toolsDir).catch((): undefined => undefined);
 }
 
 async function writeAgentNextConfig(root: string, agent: AgentInstallContext, llmAuth?: LlmAuthChoice): Promise<void> {

@@ -182,7 +182,7 @@
     "ts-morph": "^24.0.0",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
-    "typescript": "5.6.2"
+    "typescript": "6.0.3"
   },
   "optionalDependencies": {
     "@novu/ee-ai": "workspace:*",

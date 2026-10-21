@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "outDir": "./dist",
     "rootDir": ".",

@@ -18,16 +18,16 @@ import { buildConnectAgentDetailsUrl, buildConnectClaimUrl, channelDisplayName }
 import { ConnectChannelBackError } from '../errors';
 import { shouldUpgradeFromKeylessGenerateLimit } from '../keyless-limit-errors';
 import type {
-  WebChatConnectOutcome,
   AgentConnectMode,
   AgentSummary,
   AiSdkConnectOutcome,
   ChannelChoice,
   ChatSdkConnectOutcome,
-  ConnectWebChatHandoff,
   ConnectCommandOptions,
+  ConnectWebChatHandoff,
   CustomCodeConnectOutcome,
   LangChainConnectOutcome,
+  WebChatConnectOutcome,
 } from '../types';
 import {
   isAiSdkConnectMode,
@@ -36,19 +36,13 @@ import {
   isVanillaCustomCodeConnectMode,
 } from '../types';
 import type { ConnectUI } from '../ui/ui';
-import { offerPostConnectBridgeTunnel } from './web-chat/offer-post-connect-bridge-tunnel';
-import { runWebChatProjectSetup } from './web-chat/run-web-chat-setup';
-import {
-  resolveWebChatHandoffUiPolicy,
-  wrapUiForWebChatHandoff,
-} from './web-chat/wrap-ui-for-web-chat-handoff';
 import { maybeRunAiSdkTunnel, runAiSdkProjectSetup } from './ai-sdk';
 import { createBridgeAgentFlow } from './bridge/create-bridge-agent';
-import { connectWebChatForAgent } from './channels/web-chat';
 import { connectEmailForAgent } from './channels/email';
 import { connectSendblueForAgent } from './channels/sendblue';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
+import { connectWebChatForAgent } from './channels/web-chat';
 import { connectWhatsAppForAgent } from './channels/whatsapp';
 import { maybeRunChatSdkTunnel, runChatSdkProjectSetup } from './chat-sdk';
 import { runCustomCodeProjectSetup } from './custom-code';
@@ -59,6 +53,9 @@ import {
   resolveExistingAgentContext,
   shouldSkipAgentConnectModePicker,
 } from './resolve-existing-agent';
+import { offerPostConnectBridgeTunnel } from './web-chat/offer-post-connect-bridge-tunnel';
+import { runWebChatProjectSetup } from './web-chat/run-web-chat-setup';
+import { resolveWebChatHandoffUiPolicy, wrapUiForWebChatHandoff } from './web-chat/wrap-ui-for-web-chat-handoff';
 
 export interface ConnectPipelineInput {
   options: ConnectCommandOptions;
@@ -88,6 +85,7 @@ interface PipelineContext {
   createdSpec?: GeneratedAgentSpec;
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing connect pipeline orchestration is outside this change
 export async function runConnectPipeline(input: ConnectPipelineInput): Promise<ConnectPipelineResult> {
   const { options, ui, onTrack, onboardingSessionId } = input;
   const track = onTrack ?? (() => undefined);
@@ -259,7 +257,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       });
 
       await ui.awaitDashboardChannelOpen({ channel: handoffChannel, agentDetailsUrl });
-      void open(agentDetailsUrl).catch(() => undefined);
+      void open(agentDetailsUrl).catch((): undefined => undefined);
       dashboardRedirectChannel = handoffChannel;
     };
 
@@ -582,7 +580,11 @@ async function resolveAgentConnectMode(
   }
 
   if (shouldSkipAgentConnectModePicker(options)) {
-    const connectMode = preselectedAgent!.connectMode;
+    if (!preselectedAgent) {
+      throw new Error('Cannot skip the connect mode picker without a preselected agent');
+    }
+
+    const connectMode = preselectedAgent.connectMode;
     track(CONNECT_EVENTS.RUNTIME_SELECTED, {
       connectMode,
       skipped: true,
