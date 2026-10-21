@@ -206,6 +206,22 @@ describe("workflow step tools", () => {
 			]);
 		});
 
+		it("finds a step by the unslugified id get_workflow returned", async () => {
+			const workflow = workflowResponseFixture();
+			workflow.steps[1].stepId = "Email Step";
+			const api = fakeWorkflowsApi(workflow);
+
+			await callTool(await client(), "remove_workflow_step", {
+				stepId: "Email Step",
+				workflowId: "welcome",
+			});
+
+			expect(api.puts[0].body!.steps.map((s: { stepId: string }) => s.stepId)).toEqual([
+				"in-app-step",
+				"chat-step",
+			]);
+		});
+
 		it("rejects an unknown stepId with a 404", async () => {
 			fakeWorkflowsApi();
 
