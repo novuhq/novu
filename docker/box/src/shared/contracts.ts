@@ -195,26 +195,29 @@ export const TestUsers = z.object({ users: z.array(TestUser), prune: z.array(z.s
 export const CreatedTestUser = z.object({ email: z.string(), password: z.string(), pruned: z.array(z.string()) });
 export const DeletedBox = z.object({ users: z.array(z.string()).default([]), usersError: z.string().optional() });
 
-// A PR box gets the exploration agent and PR smoke; `full` starts the Full groups (the nightly box of next).
+const TesterArmyPullRequest = z.object({
+  number: z.number(),
+  title: z.string(),
+  description: z.string().optional(),
+  baseBranch: z.string(),
+  headBranch: z.string(),
+  commitSha: z.string(),
+});
+export type TesterArmyPullRequest = z.infer<typeof TesterArmyPullRequest>;
+// A PR box gets the exploration agent and PR smoke; `full` starts the Full groups (the nightly box of next). The PR
+// shape has no `suite`: PR branches send it with their own ci.ts.
 export const TesterArmyStart = z.union([
-  z.object({
-    pullRequest: z.object({
-      number: z.number(),
-      title: z.string(),
-      description: z.string().optional(),
-      baseBranch: z.string(),
-      headBranch: z.string(),
-      commitSha: z.string(),
-    }),
-  }),
+  z.object({ pullRequest: TesterArmyPullRequest }),
   z.object({ suite: z.literal('full') }),
 ]);
 export type TesterArmyStart = z.infer<typeof TesterArmyStart>;
+const StartedGroups = z.array(z.object({ name: z.string(), batchId: z.string(), runs: z.number() }));
 export const TesterArmyStarted = z.object({
-  exploration: z.object({ status: z.string(), runId: z.string() }).optional(),
-  groups: z.array(z.object({ name: z.string(), batchId: z.string(), runs: z.number() })),
+  exploration: z.object({ status: z.string(), runId: z.string() }),
+  groups: StartedGroups,
   signUpUsersDeleted: z.array(z.string()),
 });
+export const TesterArmyFullStarted = z.object({ groups: StartedGroups, signUpUsersDeleted: z.array(z.string()) });
 
 const data = <T extends z.ZodType>(schema: T) => z.object({ data: schema });
 const ApiId = z.object({ _id: z.string() });

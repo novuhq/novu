@@ -9,6 +9,12 @@ on:
         description: "refresh: put next's head on base; rebake: bake base again from next"
         type: choice
         options: [refresh, rebake]
+  # The nightly rebake (novu-box-nightly.yml), so every change to base goes through this job's lock.
+  workflow_call:
+    inputs:
+      task:
+        type: string
+        required: true
 
 permissions: {}
 
@@ -16,8 +22,8 @@ jobs:
   base:
     name: Refresh or rebake base
     if: github.repository == 'novuhq/novu'
-    # Shared with the nightly rebake: one runs at a time, and a newer one replaces one that waits but never stops the
-    # one that runs (stopping a save loses the snapshot).
+    # One refresh or rebake at a time, and a newer one replaces one that waits but never stops the one that runs
+    # (stopping a save loses the snapshot).
     concurrency:
       group: novu-box-base
       cancel-in-progress: false

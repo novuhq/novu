@@ -173,13 +173,15 @@ certificate or Worker of its own.
 **Deploy:** `node docker/box/src/cli/main.ts deploy`, with `npx wrangler login` on the Novu Cloudflare account and
 Docker (wrangler builds the image). A deploy applies to every box. A snapshot restores on the image it was taken
 on, so after a new image a box keeps running the old one until it starts again from `base` rebaked on the new image
-(`box delete`, then `box up --from base`; Run workflow → `rebake` in Novu Box base for `base` itself). To deploy only code on the current
-image, set `BOX_IMAGE` to the image's reference (from `npx wrangler containers images list`).
+(`box delete`, then `box up --from base`; for `base` itself, Run workflow → `rebake` in Novu Box base). To deploy
+only code on the current image, set `BOX_IMAGE` to the image's reference (from `npx wrangler containers images
+list`).
 
 **`base`:** the box new boxes start from. `novu-box-base.yml` refreshes it on every push to `next` (applies the new
-head, about 4 min). At 04:17 UTC `novu-box-nightly.yml` rebakes it and then runs the full suite on `nightly`, and
-deletes the boxes of closed or unlabeled PRs; its Run workflow button does the same by hand. A rebake bakes in a separate box and `base` takes over its snapshot only once
-it's saved, so `base` is never missing; a refresh that fails keeps the last good snapshot. Snapshots expire 30 days
+head, about 4 min). At 04:17 UTC `novu-box-nightly.yml` rebakes it through that workflow, then runs the full suite
+on `nightly`; next to that it deletes the boxes of closed or unlabeled PRs. Its Run workflow button does the same
+by hand. A rebake bakes in a separate box and `base` takes over its snapshot only once it's saved, so `base` is
+never missing; a refresh that fails keeps the last good snapshot. Snapshots expire 30 days
 after they were made or last restored, and nothing deletes old ones.
 
 **Secrets** are Worker secrets of `novu-box-hub`, set only in Cloudflare (dashboard → Workers → `novu-box-hub` →
@@ -203,9 +205,9 @@ A box runs PR code, which can read its environment: never put production keys in
 `VITE_*` (it would end up in the dashboard's public `index.html`), and never run boxes for PRs from forks.
 
 **Who can get in:** every box command needs a GitHub token with push access to `novuhq/novu`, or the OIDC token of
-one of the Novu Box workflows. Box addresses are public, like staging's; the dashboard is protected by Clerk. Keep these two Clerk
-settings, or anyone could sign up: email-code sign-in **off** (sign-in needs the password), and test mode **off**
-(it accepts `424242` as any address's code). Sign-up is limited to `@novu.co` addresses, and
+one of the Novu Box workflows. Box addresses are public, like staging's; the dashboard is protected by Clerk. Keep
+these two Clerk settings, or anyone could sign up: email-code sign-in **off** (sign-in needs the password), and test
+mode **off** (it accepts `424242` as any address's code). Sign-up is limited to `@novu.co` addresses, and
 `@qa.box.novu-staging.co` for TesterArmy's sign-up tests: Cloudflare Email Routing forwards those addresses to
 TesterArmy's inbox, and each time the hub starts TesterArmy it deletes those users over an hour old.
 

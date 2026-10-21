@@ -2,8 +2,8 @@ import { bearer, OIDC_AUDIENCE } from './names.ts';
 
 const ISSUER = 'https://token.actions.githubusercontent.com';
 const REPOSITORY = 'novuhq/novu';
-// novu-box.yml is the single workflow these replaced; a PR branch from before the split still runs it.
-const WORKFLOWS = ['novu-box-pr.yml', 'novu-box-base.yml', 'novu-box-nightly.yml', 'novu-box.yml'].map(
+// A PR runs the workflow files of its merge with next, and a reusable workflow's token names its caller.
+const WORKFLOWS = ['novu-box-pr.yml', 'novu-box-base.yml', 'novu-box-nightly.yml'].map(
   (file) => `${REPOSITORY}/.github/workflows/${file}@`
 );
 
@@ -33,7 +33,7 @@ async function canPush(token: string): Promise<boolean> {
   return true;
 }
 
-// Whether this is a GitHub Actions OIDC token from the Novu Box workflow in novuhq/novu: RS256 against GitHub's
+// Whether this is a GitHub Actions OIDC token from a Novu Box workflow in novuhq/novu: RS256 against GitHub's
 // published keys, then issuer, audience, time and workflow. A fork's pull_request run gets no such token.
 async function verifyOidc(token: string): Promise<boolean> {
   try {
