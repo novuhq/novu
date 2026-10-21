@@ -63,18 +63,20 @@ export function OrganizationList() {
     }
   };
 
+  const isCreateFormOpen = canCreateOrganization && showCreateForm;
+
   return (
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Organizations</h2>
         {canCreateOrganization && (
           <Button variant="primary" mode="filled" size="sm" onClick={() => setShowCreateForm(!showCreateForm)}>
-            {showCreateForm ? 'Cancel' : 'Create New'}
+            {isCreateFormOpen ? 'Cancel' : 'Create New'}
           </Button>
         )}
       </div>
 
-      {canCreateOrganization && showCreateForm && (
+      {isCreateFormOpen && (
         <form onSubmit={handleCreateOrganization} className="space-y-3 rounded border-neutral-200 p-4">
           <div>
             <label htmlFor="orgName" className="mb-1 block text-sm font-medium">
@@ -107,7 +109,7 @@ export function OrganizationList() {
             </Button>
           </div>
         ))}
-        {organizations.length === 0 && !showCreateForm && (
+        {organizations.length === 0 && !isCreateFormOpen && (
           <p className="text-center text-foreground-500">No organizations found</p>
         )}
       </div>

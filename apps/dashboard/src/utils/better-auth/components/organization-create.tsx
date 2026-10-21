@@ -211,9 +211,11 @@ function OrganizationListContent({
     return <OrganizationAccessRequired />;
   }
 
+  const isCreateFormOpen = canCreateOrganization && showCreateForm;
+
   return (
     <div className="space-y-6">
-      {organizations.length > 0 && !showCreateForm && (
+      {organizations.length > 0 && !isCreateFormOpen && (
         <>
           <div className="space-y-3">
             <AnimatePresence>
@@ -253,10 +255,10 @@ function OrganizationListContent({
         </>
       )}
 
-      {canCreateOrganization && (showCreateForm || organizations.length === 0) && (
+      {canCreateOrganization && (isCreateFormOpen || organizations.length === 0) && (
         <>
           <CreateOrganizationForm onSuccess={handleCreateSuccess} />
-          {organizations.length > 0 && showCreateForm && (
+          {organizations.length > 0 && isCreateFormOpen && (
             <Button
               type="button"
               onClick={() => setShowCreateForm(false)}
