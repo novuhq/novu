@@ -363,7 +363,9 @@ export class ToolFactory {
 			description,
 			handler: async (input, context) => {
 				const idValue = input[idParamName] as string;
-				const endpoint = endpointTemplate.replace("{id}", idValue);
+				const endpoint = endpointTemplate.replace("{id}", () =>
+					encodeURIComponent(idValue),
+				);
 				return ToolFactory.makeApiRequest(
 					context,
 					{
@@ -403,7 +405,9 @@ export class ToolFactory {
 			description,
 			handler: async (input, context) => {
 				const idValue = input[idParamName] as string;
-				const endpoint = endpointTemplate.replace("{id}", idValue);
+				const endpoint = endpointTemplate.replace("{id}", () =>
+					encodeURIComponent(idValue),
+				);
 				return ToolFactory.makeApiRequest(
 					context,
 					{
@@ -431,7 +435,6 @@ export class ToolFactory {
 			subscriberId: string;
 			payload: Record<string, unknown>;
 			overrides?: Record<string, { integrationIdentifier: string }>;
-			idempotencyKey?: string;
 		},
 		context: ToolContext,
 	): Promise<ApiResponse> {
@@ -457,7 +460,7 @@ export class ToolFactory {
 				method: "POST",
 				successMessage: `triggered workflow "${input.workflowName}" for subscriber "${input.subscriberId}"`,
 			},
-			input.idempotencyKey,
+			context.idempotencyKey,
 		);
 	}
 }

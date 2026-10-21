@@ -33,9 +33,10 @@ export async function gateInitializeWithOAuthProbe(
 	if (isInitializeRequest(bodyText)) {
 		try {
 			const response = await NovuApiUtils.fetchCurrentUser(token, apiUrl);
-			if (!response.ok) {
+			if (response.status === 401 || response.status === 403) {
 				return { reject: unauthorizedResponse(ctx, { oauth: isOAuthToken(token) }) };
 			}
+			if (!response.ok) return { reject: serviceUnavailableResponse() };
 		} catch {
 			return { reject: serviceUnavailableResponse() };
 		}
