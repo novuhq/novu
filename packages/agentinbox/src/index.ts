@@ -42,7 +42,7 @@ function collect(value: string, previous: string[]): string[] {
 function withSendOptions(command: Command): Command {
   return command
     .option('--from <name>', 'attribution label shown to the person (e.g. "deploy-bot")')
-    .option('--ttl <duration>', 'time until a question expires (e.g. 90s, 10m, 2h; max 72h; default 24h)')
+    .option('--ttl <duration>', 'time until a question expires (e.g. 90s, 10m, 2h, 1d; max 5d; default 24h)')
     .option('--timeout <duration>', 'max time to block waiting for an answer (default: until answered or expired)')
     .option('--async', 'return at once instead of waiting for an answer')
     .option('--option <label...>', 'choose: a choice (repeat for each option, 2-10). Also accepts id:label')

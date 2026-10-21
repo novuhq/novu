@@ -99,7 +99,7 @@ npx @agentinbox/cli inbox resolve conv_123              # finished; opens again 
 ## Useful flags
 
 - `--from deploy-bot` — attribution shown to the person ("Requested by deploy-bot").
-- `--ttl 2h` — how long a question stays answerable (default 24h, max 72h).
+- `--ttl 2h` — how long a question stays answerable (default 24h, max 5d).
 - `--timeout 10m` — max time this invocation blocks; on timeout it exits `11` and the answer later shows up in the conversation.
 - `--async` — don't block; return at once and check the conversation later.
 - `--json` — the full result for programmatic parsing.

@@ -72,7 +72,7 @@ export function writtenLink(url: string): string {
 const CLI_PACKAGE = '@agentinbox/cli';
 
 /** A command copied on its own runs through npx, which needs nothing installed first. */
-const NPX_CLI = `npx ${CLI_PACKAGE}`;
+export const NPX_CLI = `npx ${CLI_PACKAGE}`;
 
 /**
  * The terminal's way to do step 1. It logs in first, which the operator approves in this browser: on its

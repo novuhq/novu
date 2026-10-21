@@ -147,7 +147,7 @@ async function resolveEmailContact(
 
   throw new AgentInboxApiError(
     409,
-    `Could not pick a contact id for ${email}. Use the invite tool with a contact id, then send to that id.`
+    `Could not pick a contact id for ${email}. Use contact_invite with a contact id, then send to that id.`
   );
 }
 
