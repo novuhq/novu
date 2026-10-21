@@ -36,7 +36,11 @@ import { ApiKey } from '../shared/dtos/api-key';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
-import { assertEnvironmentScopedAccess, isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
+import {
+  assertEnvironmentScopedAccess,
+  assertNotInternalAuthScheme,
+  isEnvironmentScopedAuthScheme,
+} from '../shared/utils/auth.utils';
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
@@ -219,6 +223,8 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_READ)
   async listOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
+    assertNotInternalAuthScheme(user.scheme);
+
     const command = GetApiKeysCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -238,6 +244,8 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
   async createOrganizationApiKey(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
+    assertNotInternalAuthScheme(user.scheme);
+
     const command = GetApiKeysCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -257,6 +265,8 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
   async deleteOrganizationApiKey(@UserSession() user: UserSessionData, @Param('hash') hash: string): Promise<void> {
+    assertNotInternalAuthScheme(user.scheme);
+
     const command = DeleteApiKeyCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -272,6 +282,8 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
   async regenerateOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
+    assertNotInternalAuthScheme(user.scheme);
+
     const command = GetApiKeysCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
