@@ -1,0 +1,43 @@
+{
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.31.0",
+		"agents": "^0.21.0",
+		"zod": "^3.25.67"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.2.0",
+		"@types/node": "^24.0.14",
+		"cross-env": "^10.1.0",
+		"typescript": "^5.8.3",
+		"vitest": "^4.1.11",
+		"wrangler": "^4.107.0"
+	},
+	"exports": {
+		"./tools": "./dist/tools/tools/index.js"
+	},
+	"files": [
+		"dist/tools"
+	],
+	"name": "@novu/mcp-server",
+	"private": true,
+	"scripts": {
+		"build": "tsc -p tsconfig.tools.json",
+		"cf-typegen": "wrangler types",
+		"deploy:eu": "wrangler deploy --env eu",
+		"deploy:us": "wrangler deploy --env us",
+		"dev": "cross-env WRANGLER_REGISTRY_PATH=.wrangler/registry wrangler dev",
+		"format": "biome format --write",
+		"lint:fix": "biome lint --fix",
+		"start": "cross-env WRANGLER_REGISTRY_PATH=.wrangler/registry wrangler dev",
+		"test": "vitest run",
+		"type-check": "tsc --noEmit"
+	},
+	"typesVersions": {
+		"*": {
+			"tools": [
+				"dist/tools/tools/index.d.ts"
+			]
+		}
+	},
+	"version": "1.0.0"
+}
