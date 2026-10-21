@@ -152,20 +152,19 @@ async function resolveEmailContact(
 }
 
 /**
- * Resolves email addresses to verified contact ids. New addresses receive a verification email,
- * but the message itself is not sent until verification succeeds and the caller retries.
+ * Passes a typed address through on a new conversation so the API can deliver it.
+ * A reply still requires a contact this relay already verified.
  */
 export async function resolveEmailRecipients(
   api: AgentInboxApi,
   recipients: string[],
   isReply: boolean
 ): Promise<string[]> {
-  if (!recipients.some(isEmailAddress)) {
+  if (!recipients.some(isEmailAddress) || !isReply) {
     return recipients;
   }
 
   const resolved: string[] = [];
-  const newcomers: Array<{ id: string; email: string }> = [];
 
   for (const recipient of recipients) {
     if (!isEmailAddress(recipient)) {
@@ -173,34 +172,15 @@ export async function resolveEmailRecipients(
       continue;
     }
 
-    const reserved = new Set(newcomers.map((newcomer) => newcomer.id));
-    const contact = await resolveEmailContact(api, recipient, reserved);
-    if (contact.exists) {
-      resolved.push(contact.id);
-    } else if (isReply) {
+    const contact = await resolveEmailContact(api, recipient, new Set());
+    if (!contact.exists) {
       throw new AgentInboxApiError(
         409,
         `${recipient} is not one of your contacts, so it cannot be in this conversation.`
       );
-    } else {
-      newcomers.push({ id: contact.id, email: recipient });
-    }
-  }
-
-  if (newcomers.length > 0) {
-    for (const newcomer of newcomers) {
-      await api.post('/v1/contacts/verifications', {
-        subscriberId: newcomer.id,
-        via: 'email',
-        address: newcomer.email,
-      });
     }
 
-    const who = newcomers.map((newcomer) => newcomer.email).join(', ');
-    throw new AgentInboxApiError(
-      409,
-      `Your message was not sent: ${who} ${newcomers.length === 1 ? 'is' : 'are'} not verified yet. A verification email is on its way; send again once ${newcomers.length === 1 ? 'they have' : 'the recipients have'} clicked it.`
-    );
+    resolved.push(contact.id);
   }
 
   return resolved;
