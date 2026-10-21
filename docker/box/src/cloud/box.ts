@@ -1,5 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
-import type { BoxStatus, StateAnswer } from '../shared/contracts.ts';
+import type { BoxStatus, LastStart, StateAnswer } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
 import { boxOfHost, boxOrigin, HOST } from '../shared/names.ts';
 import { checkBake, startBake } from './bake.ts';
@@ -48,12 +48,22 @@ import { ALARM_MS, backstopMs, idleMs, recoverSave, save } from './sleep.ts';
 const PUBLIC_PORT = 18080;
 const INSTANCE = 'standard-4';
 
+const TRACE = 'https://www.cloudflare.com/cdn-cgi/trace';
+
 type StartFrom = { readonly image: string } | { readonly containerSnapshot: Snapshot };
+
+// A snapshot restore, until the box first answers.
+type Starting = Pick<LastStart, 'snapshot'> & { readonly since: number };
+
+function coloOf(trace: string): string | undefined {
+  return /^colo=(\w+)$/m.exec(trace)?.[1];
+}
 
 export class Box extends DurableObject<HostEnv> {
   #generation = 0;
   #saving = false;
-  #restoring: string | null = null;
+  #starting: Starting | null = null;
+  #colo: string | undefined;
   #lastActivity = 0;
   #persistedActivity = 0;
   readonly #container: Container;
@@ -71,9 +81,7 @@ export class Box extends DurableObject<HostEnv> {
     this.#shell = {
       container: ctx.container,
       env: () => this.#boxEnv(),
-      answered: () => {
-        this.#restoring = null;
-      },
+      answered: () => this.#answered(),
     };
     this.#slack = {
       storage: ctx.storage,
@@ -94,7 +102,8 @@ export class Box extends DurableObject<HostEnv> {
     const url = new URL(request.url);
     const box = boxOfHost(url.hostname);
     if (!box) return text(`not a box address: ${url.hostname}\n`, 404);
-    // Any host under the domain reaches a box, unauthenticated, so an unknown one must not be written to.
+    // Only a registered box's host reaches here, but an isolate's cache may still hold a deleted box, and `up`
+    // registers a box before its `/up` stores `origin`: until then only `/__box/*` (authenticated) gets through.
     if (!url.pathname.startsWith('/__box/') && !(await this.ctx.storage.get('origin')))
       return text(`no such box: ${box}\n`, 404);
     const route = `${request.method} ${url.pathname}`;
@@ -168,9 +177,24 @@ export class Box extends DurableObject<HostEnv> {
     const life = await this.#reconcile();
     const lastActivity = this.#lastActivity || ((await this.ctx.storage.get<number>('lastActivity')) ?? 0);
     const origin = (await this.ctx.storage.get<string>('origin')) ?? null;
+    const lastStart = await this.ctx.storage.get<LastStart>('lastStart');
 
-    return { ...status(life, this.#container.running, lastActivity, origin), ...(await slackState(this.#slack)) };
+    return {
+      ...status(life, this.#container.running, lastActivity, origin),
+      ...(lastStart && { lastStart }),
+      ...(await slackState(this.#slack)),
+    };
   }
+
+  // A Durable Object is created near its first caller and never moves, and its container runs where it is: a
+  // snapshot restores in seconds where it was saved or restored before, and takes minutes elsewhere. So base makes
+  // the first call to every new box. A `locationHint` doesn't do it: measured, it spreads new objects over several
+  // locations in a region (IAD, EWR, ATL, MIA, ORD), not base's. This leaves base's container and idle time alone.
+  async introduce(box: string): Promise<void> {
+    await this.env.BOX.get(this.env.BOX.idFromName(box)).ping();
+  }
+
+  ping(): void {}
 
   slackEvent(event: SlackEvent): Promise<SlackAnswer | null> {
     if (this.#saving) return Promise.resolve(null);
@@ -231,7 +255,7 @@ export class Box extends DurableObject<HostEnv> {
     inside.protocol = 'http:';
     try {
       const response = await this.#port().fetch(new Request(inside, request));
-      this.#restoring = null;
+      this.#answered();
 
       return response;
     } catch (error) {
@@ -276,7 +300,9 @@ export class Box extends DurableObject<HostEnv> {
       down: null,
       saveFailed: null,
     });
+    this.#starting = { since: Date.now(), snapshot: snapshot.id };
     await this.#start({ containerSnapshot: snapshot }, START, origin).catch(async (error: unknown) => {
+      this.#starting = null;
       // A snapshot that doesn't exist stops the container at once, before `#watchRestore` can see it.
       if (this.#container.running || messageOf(error).startsWith('start:')) throw error;
       await this.#forget(snapshot, messageOf(error));
@@ -291,10 +317,9 @@ export class Box extends DurableObject<HostEnv> {
   // forever. Once the box has answered (its address or a command), its snapshot was restored, and a later stop says
   // nothing about it.
   #watchRestore(snapshot: Snapshot): void {
-    this.#restoring = snapshot.id;
     this.#container.monitor().catch(async (error: unknown) => {
       const exited = error instanceof Error && 'exitCode' in error && typeof error.exitCode === 'number';
-      if (this.#restoring !== snapshot.id || !(error instanceof Error) || exited) return;
+      if (this.#starting?.snapshot !== snapshot.id || !(error instanceof Error) || exited) return;
       if (snapshotOf(await lifeOf(this.ctx.storage))?.id !== snapshot.id) return;
       await this.#forget(snapshot, error.message);
     });
@@ -318,6 +343,43 @@ export class Box extends DurableObject<HostEnv> {
     }
     await this.#container.setInactivityTimeout(backstopMs(this.env));
     this.#touch();
+  }
+
+  // The box answered its address or a command, so its snapshot was restored.
+  #answered(): void {
+    const starting = this.#starting;
+    if (!starting) return;
+    this.#starting = null;
+    this.ctx.waitUntil(
+      this.#recordRestore(starting, Date.now()).catch((error: unknown) =>
+        console.log(`recording the restore failed: ${messageOf(error)}`)
+      )
+    );
+  }
+
+  async #recordRestore({ since, snapshot }: Starting, answered: number): Promise<void> {
+    const colo = await this.#ownColo();
+    const lastStart: LastStart = {
+      at: new Date(since).toISOString(),
+      snapshot,
+      ms: answered - since,
+      ...(colo && { colo }),
+    };
+    await this.ctx.storage.put('lastStart', lastStart);
+    const container = await output(this.#shell, ['curl', '-fsS', '--max-time', '5', TRACE], 'the container colo').then(
+      coloOf,
+      () => undefined
+    );
+    console.log(`restored ${snapshot} in ${lastStart.ms} ms in ${colo} (container in ${container})`);
+    if (container) await this.ctx.storage.put('lastStart', { ...lastStart, container });
+  }
+
+  async #ownColo(): Promise<string | undefined> {
+    this.#colo ??= await fetch(TRACE, { signal: AbortSignal.timeout(5_000) })
+      .then((response) => response.text())
+      .then(coloOf, () => undefined);
+
+    return this.#colo;
   }
 
   // Saving can outlast the request that asked for it (a big disk takes over 5 minutes), and a cancelled request
@@ -389,7 +451,7 @@ export class Box extends DurableObject<HostEnv> {
   // A save that runs stores nothing, and a stop doesn't count as a failed restore.
   #stopUnsaved(): void {
     this.#generation++;
-    this.#restoring = null;
+    this.#starting = null;
   }
 
   async #destroy(): Promise<StateAnswer> {

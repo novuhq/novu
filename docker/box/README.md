@@ -56,9 +56,9 @@ baked from, like CI's merge ref, and stops on a conflict: rebase onto `next`, th
 - Once the box is healthy, TesterArmy (project Novu Box) tests it: its exploration agent, which reads the PR and
   tests what it changes, and `PR smoke`, a few minutes of the main flows (sign-in, every channel, the API key,
   the editor, digest, an agent in web chat). They report on the PR as checks. The tests live in TesterArmy, not in
-  this repo. Its other groups run every night after the rebake, on `nightly`, a fresh copy of `base` that replaces
-  the night before's: `Full` (everything in the dashboard), `Full: Slack` (the agents in Slack, one test at a time)
-  and `Full: account` (sign up, onboard, delete). Their results are in TesterArmy only.
+  this repo. Its other groups run every night after the rebake, on `nightly-<run id>`, a fresh copy of `base` that
+  the next night's cleanup deletes: `Full` (everything in the dashboard), `Full: Slack` (the agents in Slack, one
+  test at a time) and `Full: account` (sign up, onboard, delete). Their results are in TesterArmy only.
 - Closing the PR or removing the label deletes the box. At most 30 PR boxes exist at once. PRs from forks get no
   box.
 - The workflow holds no secrets: it signs in to the boxes with its GitHub OIDC token.
@@ -112,7 +112,7 @@ runs at a time; an interrupted one is completed by the next. Measured on Cloudfl
 
 | Step | Time |
 |---|---|
-| A new box from `base` | about 40 s, up to 5 min right after `base` was rebaked (a fresh snapshot's first restore) |
+| A new box from `base` | about 1 min, of which the restore is 3 s; up to 5 min right after `base` was rebaked (a fresh snapshot's first restore) |
 | Wake after sleeping | 30 to 40 s |
 | Apply: an API change / a worker change / the dashboard | 40 s / 16 s / 23 s |
 | Apply: a library / `@novu/framework` / the bridge app | 50 to 120 s / 114 s / 62 s |
@@ -166,7 +166,12 @@ router, and `<box>` or `<box>-api` that box. So a box name can't be `slack` or e
 level of subdomain, so the hub's Custom Domain `box.novu-staging.co` is what brings a free certificate for
 `*.box.novu-staging.co` too; keep it attached. A proxied DNS record `*.box` (AAAA `100::`, set by hand) and the
 route `*.box.novu-staging.co/*` (in `wrangler.jsonc`) send every box's host to the hub. A new box needs no DNS,
-certificate or Worker of its own.
+certificate or Worker of its own; a host of a box `up` didn't create gets 404.
+
+**Where boxes live:** a Durable Object stays in the Cloudflare location of its first request, and its container
+runs there. `base` makes the first request to every new box, so new boxes live in base's location (Frankfurt) and
+restore its snapshot in seconds; a box created before that keeps its location, and so does a name deleted and used
+again.
 
 ![Which code runs where: the CLI and CI on Node, the hub on Cloudflare Workers, the in-box CLI in the container](./docs/06-code.svg)
 
@@ -179,10 +184,11 @@ list`).
 
 **`base`:** the box new boxes start from. `novu-box-base.yml` refreshes it on every push to `next` (applies the new
 head, about 4 min). At 04:17 UTC `novu-box-nightly.yml` rebakes it through that workflow, then runs the full suite
-on `nightly`; next to that it deletes the boxes of closed or unlabeled PRs. Its Run workflow button does the same
-by hand. A rebake bakes in a separate box and `base` takes over its snapshot only once it's saved, so `base` is
-never missing; a refresh that fails keeps the last good snapshot. Snapshots expire 30 days
-after they were made or last restored, and nothing deletes old ones.
+on `nightly-<run id>`; next to that it deletes the boxes of closed or unlabeled PRs, and those of earlier runs
+(`base-next-*`, `nightly-*`) an hour idle. Its Run workflow button does the same by hand. A rebake bakes in a
+separate box (`base-next-<run id>`, a fresh name every run, see where boxes live above) and `base` takes over its
+snapshot only once it's saved, so `base` is never missing; a refresh that fails keeps the last good snapshot.
+Snapshots expire 30 days after they were made or last restored, and nothing deletes old ones.
 
 **Secrets** are Worker secrets of `novu-box-hub`, set only in Cloudflare (dashboard → Workers → `novu-box-hub` →
 Settings → Variables and Secrets, or `npx wrangler secret put <NAME>`). `deploy` never reads secret files; it warns

@@ -115,12 +115,30 @@ export const NestConfig = z.looseObject({ compilerOptions: z.looseObject({}) });
 
 const Note = z.object({ at: z.string(), message: z.string() });
 const Down = z.object({ tries: z.number() }).nullable();
+// The last snapshot restore: `colo` is the Box object's Cloudflare location, `container` its container's, each
+// absent if it couldn't be looked up.
+export const LastStart = z.object({
+  at: z.string(),
+  snapshot: z.string(),
+  ms: z.number(),
+  colo: z.string().optional(),
+  container: z.string().optional(),
+});
+export type LastStart = z.infer<typeof LastStart>;
+// `placed: false` when base exists but couldn't make the box's first call (see `Box.introduce`).
+export const RegisteredBox = z.object({
+  box: z.string(),
+  origin: z.string(),
+  placed: z.boolean().optional(),
+  warning: z.string().optional(),
+});
 const Status = {
   since: z.string().nullable(),
   running: z.boolean(),
   snapshot: z.object({ id: z.string(), name: z.string().optional(), gigabytes: z.number().nullable() }).nullable(),
   lastActivity: z.string(),
   origin: z.string().nullish(),
+  lastStart: LastStart.optional(),
 };
 export const BoxStatus = z.discriminatedUnion('phase', [
   z.object({ ...Status, phase: z.literal(['new', 'asleep']), error: Note.nullable() }),
