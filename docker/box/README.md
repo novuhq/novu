@@ -112,7 +112,7 @@ runs at a time; an interrupted one is completed by the next. Measured on Cloudfl
 
 | Step | Time |
 |---|---|
-| A new box from `base` | about 40 s, up to 5 min right after `base` was rebaked (a fresh snapshot's first restore) |
+| A new box from `base` | about 1 min, of which the restore is 3 s; up to 5 min right after `base` was rebaked (a fresh snapshot's first restore) |
 | Wake after sleeping | 30 to 40 s |
 | Apply: an API change / a worker change / the dashboard | 40 s / 16 s / 23 s |
 | Apply: a library / `@novu/framework` / the bridge app | 50 to 120 s / 114 s / 62 s |
@@ -166,7 +166,11 @@ router, and `<box>` or `<box>-api` that box. So a box name can't be `slack` or e
 level of subdomain, so the hub's Custom Domain `box.novu-staging.co` is what brings a free certificate for
 `*.box.novu-staging.co` too; keep it attached. A proxied DNS record `*.box` (AAAA `100::`, set by hand) and the
 route `*.box.novu-staging.co/*` (in `wrangler.jsonc`) send every box's host to the hub. A new box needs no DNS,
-certificate or Worker of its own.
+certificate or Worker of its own; a host of a box `up` didn't create gets 404.
+
+**Where boxes live:** a Durable Object stays in the Cloudflare location of its first request, and its container
+runs there. `base` makes the first request to every new box, so new boxes live in base's location (Frankfurt) and
+restore its snapshot in seconds; a box created before that keeps its location.
 
 ![Which code runs where: the CLI and CI on Node, the hub on Cloudflare Workers, the in-box CLI in the container](./docs/06-code.svg)
 
