@@ -186,6 +186,14 @@ For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 | `get_workflow` | Get a workflow's full definition, steps, and payload schema |
 | `create_workflow` | Create a workflow with steps, payload schema, preferences, and optional agent assignment |
 | `update_workflow` | Replace a workflow's definition (full update) |
+| `add_workflow_step` | Append a step to a workflow |
+| `insert_workflow_step` | Insert a step after another step |
+| `update_workflow_step_content` | Replace one step's content (control values), keyed on step type |
+| `update_workflow_step_conditions` | Set or clear one step's skip condition |
+| `remove_workflow_step` | Remove a step |
+| `move_workflow_step` | Move a step to a new position |
+| `update_workflow_payload_schema` | Add or remove payload schema properties (step tools never change the schema) |
+| `update_workflow_metadata` | Change a workflow's name, description, tags, severity or criticality |
 | `delete_workflow` | Delete a workflow (irreversible) |
 | `trigger_workflow` | Trigger a workflow for a subscriber with a custom payload |
 | `bulk_trigger_workflow` | Trigger several workflows in one call |
@@ -313,6 +321,17 @@ src/
 ```
 
 Add new tools by creating a `register*Tools` function under `src/tools/` and wiring it in `src/server/NovuMCP.ts`.
+
+### In-process use (`@novu/mcp-server/tools`)
+
+`pnpm build` compiles `src/tools/index.ts` to `dist/tools` (CommonJS). It exports
+`registerWorkflowTools(server, accessors)`, the `ToolAccessors` type and the
+`WORKFLOW_TOOL_NAMES` constants, so a Node service can register the workflow
+tools on its own `McpServer`. Pass `getAuthorization()` in the accessors to send
+a custom `Authorization` header; it is called before every request. Write tools
+return `structuredContent.workflow`; failures return `isError` with
+`structuredContent.error.status`. Code under `src/tools` and `src/utils` must not
+import Worker-only modules (Biome enforces this).
 
 ## 🔒 Security
 
