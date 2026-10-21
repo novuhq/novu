@@ -30,8 +30,11 @@ async function route(request: Request, env: HostEnv, url: URL): Promise<Response
     return json({ box, origin, ...(createdBy && { createdBy }) });
   }
   if (request.method !== 'DELETE') return text('not found\n', 404);
-  const destroyed = await env.BOX.get(env.BOX.idFromName(box)).fetch(`${origin}/__box/destroy`, { method: 'POST' });
-  if (!destroyed.ok)
+  // An unregistered box isn't created only to be destroyed: base creates it on `up`.
+  const destroyed = (await registry(env).has(box))
+    ? await env.BOX.get(env.BOX.idFromName(box)).fetch(`${origin}/__box/destroy`, { method: 'POST' })
+    : null;
+  if (destroyed && !destroyed.ok)
     return text(
       `stopping ${box} failed, so it stays: ${destroyed.status} ${(await destroyed.text()).slice(0, 300)}\n`,
       502
