@@ -32,9 +32,13 @@ export type RelayAgent = {
    * couldn't be read just now.
    */
   operatorName: string;
+  /** The operator's whole first name, for "Ada’s agent". Empty when `operatorName` is. */
+  operatorFirstName: string;
 };
 
-type ApiAgent = Omit<RelayAgent, 'id' | 'pictureUrl' | 'settings' | 'operatorName'> & { _id: string };
+type ApiAgent = Omit<RelayAgent, 'id' | 'pictureUrl' | 'settings' | 'operatorName' | 'operatorFirstName'> & {
+  _id: string;
+};
 
 /** `GET`, `PATCH /v1/human/agent`: the agent as the Agent Inbox endpoints describe it. */
 type HumanApiAgent = {
@@ -44,6 +48,7 @@ type HumanApiAgent = {
   pausedAt?: string;
   /** Only `GET` names the operator, as the public card does. */
   operatorName?: string;
+  operatorFirstName?: string;
 };
 
 const HUMAN_AGENT_PATH = '/v1/human/agent';
@@ -71,6 +76,7 @@ export const getRelayAgent = cache(async (account: HumanAccount): Promise<RelayA
       createdAt: agent.createdAt,
       settings: details ? toSettings(details) : null,
       operatorName: details?.operatorName ?? '',
+      operatorFirstName: details?.operatorFirstName ?? '',
     };
   } catch (error) {
     if (isHumanApiNotFound(error)) {

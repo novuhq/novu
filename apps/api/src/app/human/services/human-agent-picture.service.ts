@@ -97,9 +97,9 @@ export class HumanAgentPictureService {
    */
   async get(scope: AgentScope): Promise<HumanAgentResponseDto> {
     const agent = await this.findRelay(scope);
-    const operatorName = await this.humanOperator.cardNameFor({ ...scope, agentId: agent._id });
+    const operator = await this.humanOperator.cardNameFor({ ...scope, agentId: agent._id });
 
-    return { ...this.describe(agent), ...(operatorName ? { operatorName } : {}) };
+    return { ...this.describe(agent), ...operator };
   }
 
   async save(scope: AgentScope, file: Buffer): Promise<AgentEntity> {

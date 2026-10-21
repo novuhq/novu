@@ -123,6 +123,11 @@ export class HumanAgentResponseDto {
       'Who runs the agent, as its public card names them: their first name and the initial of their last name ("Ada L."). Missing without a first name. Only `GET /v1/human/agent` includes it.',
   })
   operatorName?: string;
+
+  @ApiPropertyOptional({
+    description: 'The operator’s whole first name, for "Ada’s agent". There with `operatorName` only.',
+  })
+  operatorFirstName?: string;
 }
 
 /** The onboarding test: mail from the Agent Email Inbox to the operator’s sign-up address. */

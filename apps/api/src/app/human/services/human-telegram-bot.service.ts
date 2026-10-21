@@ -25,9 +25,10 @@ type BotAgent = Pick<AgentEntity, '_id' | '_environmentId' | '_organizationId'>;
 
 /**
  * The username of the Telegram bot a relay agent talks through, for its public card. Telegram only tells it to
- * whoever holds the bot's token (`getMe`), so the answer is cached under the bot's id, the public part of the
- * token: nothing of the secret goes into the cache. When Telegram names no bot, the card leaves it out for a few
- * minutes before Telegram is asked again, so a revoked token or an outage doesn't slow every card down.
+ * whoever holds the bot's token (`getMe`), so each integration keeps its own answer: under its id and the bot's
+ * id, the public part of the token. Nothing of the secret goes into the cache, and a token made up with another
+ * bot's id only ever changes its own card. When Telegram names no bot, the card leaves it out for a few minutes
+ * before Telegram is asked again, so a revoked token or an outage doesn't slow every card down.
  */
 @Injectable()
 export class HumanTelegramBotService {
@@ -42,26 +43,26 @@ export class HumanTelegramBotService {
 
   /** The bot's username without the `@`, or nothing when the agent has no bot that Telegram answers for. */
   async usernameFor(agent: BotAgent): Promise<string | undefined> {
-    const botToken = await this.findBotToken(agent);
-    const botId = botToken ? BOT_TOKEN_PATTERN.exec(botToken)?.[1] : undefined;
-    if (!botToken || !botId) {
+    const bot = await this.findBot(agent);
+    const botId = bot ? BOT_TOKEN_PATTERN.exec(bot.token)?.[1] : undefined;
+    if (!bot || !botId) {
       return undefined;
     }
 
-    const key = `agent-inbox:telegram-bot-username:${botId}`;
+    const key = `agent-inbox:telegram-bot-username:${bot.integrationId}:${botId}`;
     const cached = await this.readCache(key);
     if (cached) {
       return cached === NO_USERNAME ? undefined : cached;
     }
 
-    const username = await this.askTelegram(botToken);
+    const username = await this.askTelegram(bot.token);
     await this.writeCache(key, username ?? NO_USERNAME, username ? USERNAME_TTL_SECONDS : NO_USERNAME_TTL_SECONDS);
 
     return username;
   }
 
-  /** The token of the agent's Telegram bot, when it has one that is switched on. */
-  private async findBotToken(agent: BotAgent): Promise<string | undefined> {
+  /** The agent's Telegram integration and its bot's token, when it has one that is switched on. */
+  private async findBot(agent: BotAgent): Promise<{ integrationId: string; token: string } | undefined> {
     const scope = { _environmentId: agent._environmentId, _organizationId: agent._organizationId };
     const links = await this.agentIntegrationRepository.find({ _agentId: agent._id, ...scope }, ['_integrationId']);
     if (links.length === 0) {
@@ -78,7 +79,9 @@ export class HumanTelegramBotService {
       'credentials'
     );
 
-    return bot ? decryptCredentials(bot.credentials ?? {}).apiToken || undefined : undefined;
+    const token = bot ? decryptCredentials(bot.credentials ?? {}).apiToken : undefined;
+
+    return bot && token ? { integrationId: bot._id, token } : undefined;
   }
 
   private async askTelegram(botToken: string): Promise<string | undefined> {

@@ -13,6 +13,8 @@ export type HumanAgentCardResult = {
   paused: boolean;
   /** The operator's first name and the initial of their last name: "Ada L.". Missing without a first name. */
   operatorName?: string;
+  /** The operator's whole first name, for "Ada’s agent". There with `operatorName` only. */
+  operatorFirstName?: string;
   /** When the agent was made, as an ISO timestamp. */
   createdAt: string;
   /** Its email address. */

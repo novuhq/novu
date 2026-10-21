@@ -90,10 +90,19 @@ describe('HumanOperatorService.cardNameFor', () => {
       { firstName: 'Ada', lastName: 'Lovelace' }
     );
 
-    expect(await service.cardNameFor(scope)).to.equal('Ada L.');
+    expect(await service.cardNameFor(scope)).to.deep.equal({ operatorName: 'Ada L.', operatorFirstName: 'Ada' });
     expect(subscriberRepository.findOne.firstCall.args[0]).to.deep.equal({
       _environmentId: 'env1',
       subscriberId: 'ada',
+    });
+  });
+
+  it('keeps a first name of several words whole', async () => {
+    const { service } = setup({ subscriberId: 'mj' }, { firstName: ' Mary Jane ', lastName: 'Watson' });
+
+    expect(await service.cardNameFor(scope)).to.deep.equal({
+      operatorName: 'Mary Jane W.',
+      operatorFirstName: 'Mary Jane',
     });
   });
 

@@ -69,7 +69,7 @@ export class GetHumanAgentCard {
       throw new NotFoundException({ code: CARD_NOT_AVAILABLE, message: 'This card isn’t available.' });
     }
 
-    const [operatorName, telegramBotUsername] = await Promise.all([
+    const [operator, telegramBotUsername] = await Promise.all([
       this.operatorService.cardNameFor({
         environmentId: agent._environmentId,
         organizationId: agent._organizationId,
@@ -85,7 +85,7 @@ export class GetHumanAgentCard {
       name: resolveRelayAgentName(agent) ?? nameFromHandle.charAt(0).toUpperCase() + nameFromHandle.slice(1),
       ...(pictureUrl ? { pictureUrl } : {}),
       paused: Boolean(agent.pausedAt),
-      ...(operatorName ? { operatorName } : {}),
+      ...operator,
       createdAt: agent.createdAt,
       address: `${handle}@${resolveAgentInboxDomain(inbox.integration.credentials)}`,
       ...(telegramBotUsername ? { telegramBotUsername } : {}),

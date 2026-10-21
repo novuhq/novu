@@ -32,7 +32,9 @@ describe('HumanAgentPictureService', () => {
       getFile: sinon.stub().resolves(PNG),
     };
     const humanAgentIdentity = { updateTelegramBots: sinon.stub().resolves() };
-    const humanOperator = { cardNameFor: sinon.stub().resolves('Ada L.') };
+    const humanOperator = {
+      cardNameFor: sinon.stub().resolves({ operatorName: 'Ada L.', operatorFirstName: 'Ada' }),
+    };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
     const service = new HumanAgentPictureService(
       agentRepository as never,
@@ -48,7 +50,7 @@ describe('HumanAgentPictureService', () => {
   it('names the operator as the agent’s card does when the agent is read', async () => {
     const { service, humanOperator } = setup();
 
-    expect((await service.get(scope)).operatorName).to.equal('Ada L.');
+    expect(await service.get(scope)).to.include({ operatorName: 'Ada L.', operatorFirstName: 'Ada' });
     expect(humanOperator.cardNameFor.firstCall.args[0]).to.include({
       environmentId: ENV,
       organizationId: 'org1',
@@ -56,7 +58,7 @@ describe('HumanAgentPictureService', () => {
     });
 
     humanOperator.cardNameFor.resolves(undefined);
-    expect(await service.get(scope)).to.not.have.property('operatorName');
+    expect(await service.get(scope)).to.not.have.any.keys('operatorName', 'operatorFirstName');
   });
 
   it('tells a JPEG and a PNG by their first bytes, and nothing else', () => {

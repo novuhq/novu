@@ -11,6 +11,9 @@ type OperatorScope = { environmentId: string; organizationId: string; agentId: s
 /** A relay agent named by its identifier instead of its internal id. */
 type RelayScope = Omit<OperatorScope, 'agentId'> & { agentIdentifier: string };
 
+/** The operator as an agent's card shows them: "Ada L.", and their first name for "Ada’s agent". */
+export type OperatorCardName = { operatorName: string; operatorFirstName: string };
+
 /**
  * Which contact is the account owner. The CLI and the Human dashboard both ask here, so an operator who
  * uses both is one contact, not two. An account has one owner: a second relay agent in the same
@@ -110,10 +113,11 @@ export class HumanOperatorService {
   }
 
   /**
-   * The operator as the agent's card names them, "Ada L.". The public card and the operator's own card on the
-   * Configure page both read it here, so they never disagree. Nothing without an operator or a first name.
+   * The operator as the agent's card names them, "Ada L.", with their whole first name for "Ada’s agent". The
+   * public card and the operator's own card on the Configure page both read it here, so they never disagree.
+   * Nothing without an operator or a first name.
    */
-  async cardNameFor(scope: OperatorScope): Promise<string | undefined> {
+  async cardNameFor(scope: OperatorScope): Promise<OperatorCardName | undefined> {
     const operatorId = await this.findForAgent(scope);
     if (!operatorId) {
       return undefined;
@@ -123,7 +127,8 @@ export class HumanOperatorService {
       { _environmentId: scope.environmentId, subscriberId: operatorId },
       'firstName lastName'
     );
+    const operatorName = buildRelayOwnerCardName(operator?.firstName, operator?.lastName);
 
-    return buildRelayOwnerCardName(operator?.firstName, operator?.lastName);
+    return operatorName ? { operatorName, operatorFirstName: operator?.firstName?.trim() ?? '' } : undefined;
   }
 }

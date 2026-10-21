@@ -23,6 +23,8 @@ export type PublicAgentCard = {
   status: PublicAgentStatus;
   /** Who runs the agent, as the API names them for the card: "Run by Dima G.". Empty without a first name. */
   operatorName: string;
+  /** The operator's whole first name, for "Dima’s agent". Empty without one. */
+  operatorFirstName: string;
   /** When the agent was made, as an ISO timestamp: "issued Oct 3". */
   issuedAt: string;
   /** Its email address, which the card's code to scan and the page's Email start an email to. */
@@ -49,6 +51,7 @@ type AgentCardResponse = {
   pictureUrl?: string;
   paused: boolean;
   operatorName?: string;
+  operatorFirstName?: string;
   createdAt: string;
   address: string;
   /** Without the `@`. */
@@ -99,6 +102,7 @@ export const getPublicAgentCard = cache(async (handle: string): Promise<PublicAg
       pictureUrl: found.pictureUrl ?? null,
       status: found.paused ? 'paused' : 'active',
       operatorName: found.operatorName ?? '',
+      operatorFirstName: found.operatorFirstName ?? '',
       issuedAt: found.createdAt,
       address: found.address,
       telegramBot: found.telegramBotUsername ? `@${found.telegramBotUsername}` : null,

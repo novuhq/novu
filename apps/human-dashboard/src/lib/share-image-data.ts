@@ -47,8 +47,7 @@ export async function loadOwnShareImage(account: HumanAccount, user: User): Prom
     pictureUrl: identity.pictureUrl,
     createdAt: identity.createdAt,
     operatorName: agent.operatorName,
-    // As the public card's image does: "Run by Dima G." makes "Dima’s agent".
-    operatorFirstName: agent.operatorName.split(' ')[0] ?? '',
+    operatorFirstName: agent.operatorFirstName,
     state: !agent.active || agent.settings?.paused ? 'paused' : hostConnected ? 'active' : 'waiting',
     telegram: connected('telegram') ? { bot: telegramBot ? `@${telegramBot}` : null } : null,
     host: { connected: hostConnected },
@@ -66,8 +65,7 @@ export function publicShareImage(card: PublicAgentCard): ShareImageCard {
     pictureUrl: card.pictureUrl ?? undefined,
     createdAt: card.issuedAt,
     operatorName: card.operatorName,
-    // "Run by Dima G." makes "Dima’s agent".
-    operatorFirstName: card.operatorName.split(' ')[0] ?? '',
+    operatorFirstName: card.operatorFirstName,
     state: card.status,
     telegram: card.telegramBot ? { bot: card.telegramBot } : null,
   };

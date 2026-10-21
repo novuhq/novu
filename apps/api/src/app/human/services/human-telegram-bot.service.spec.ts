@@ -16,6 +16,7 @@ function telegramAnswer(body: Record<string, unknown>): Response {
 describe('HumanTelegramBotService', () => {
   let store: Map<string, { value: string; ttl?: number }>;
   let links: Array<{ _integrationId: string }>;
+  let integrationId: string;
   let apiToken: string;
   let fetchStub: sinon.SinonStub;
   let warn: sinon.SinonStub;
@@ -24,12 +25,17 @@ describe('HumanTelegramBotService', () => {
   beforeEach(() => {
     store = new Map();
     links = [{ _integrationId: 'bot-1' }];
+    integrationId = 'bot-1';
     apiToken = BOT_TOKEN;
     fetchStub = sinon.stub(globalThis, 'fetch');
     warn = sinon.stub();
     service = new HumanTelegramBotService(
       { find: sinon.stub().callsFake(async () => links) } as never,
-      { findOne: sinon.stub().callsFake(async () => ({ credentials: encryptCredentials({ apiToken }) })) } as never,
+      {
+        findOne: sinon
+          .stub()
+          .callsFake(async () => ({ _id: integrationId, credentials: encryptCredentials({ apiToken }) })),
+      } as never,
       {
         cacheEnabled: () => true,
         get: async (key: string) => store.get(key)?.value ?? null,
@@ -47,7 +53,7 @@ describe('HumanTelegramBotService', () => {
     fetchStub.restore();
   });
 
-  it('asks Telegram once, then answers for a day from the cache, keyed by the bot id alone', async () => {
+  it('asks Telegram once, then answers for a day from the cache, which holds none of the secret', async () => {
     fetchStub.resolves(telegramAnswer({ ok: true, result: { username: 'atlas_bot' } }));
 
     expect(await service.usernameFor(AGENT)).to.equal('atlas_bot');
@@ -56,8 +62,23 @@ describe('HumanTelegramBotService', () => {
     expect(fetchStub.calledOnce).to.equal(true);
     expect(String(fetchStub.firstCall.args[0])).to.match(/\/getMe$/);
     expect([...store.entries()]).to.deep.equal([
-      [`agent-inbox:telegram-bot-username:${BOT_ID}`, { value: 'atlas_bot', ttl: 24 * 60 * 60 }],
+      [`agent-inbox:telegram-bot-username:bot-1:${BOT_ID}`, { value: 'atlas_bot', ttl: 24 * 60 * 60 }],
     ]);
+  });
+
+  it('keeps each integration’s answer to itself, even for a token made up with the same bot id', async () => {
+    fetchStub.onFirstCall().resolves(telegramAnswer({ ok: true, result: { username: 'atlas_bot' } }));
+    fetchStub.onSecondCall().resolves(telegramAnswer({ ok: false, description: 'Unauthorized' }));
+    expect(await service.usernameFor(AGENT)).to.equal('atlas_bot');
+
+    integrationId = 'bot-2';
+    apiToken = `${BOT_ID}:made-up`;
+    expect(await service.usernameFor(AGENT)).to.equal(undefined);
+
+    integrationId = 'bot-1';
+    apiToken = BOT_TOKEN;
+    expect(await service.usernameFor(AGENT)).to.equal('atlas_bot');
+    expect(fetchStub.calledTwice).to.equal(true);
   });
 
   it('leaves the bot out when Telegram refuses the token, and doesn’t ask again for ten minutes', async () => {

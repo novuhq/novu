@@ -55,12 +55,21 @@ describe('Agent Inbox public agent card #novu-v2', () => {
 
     expect(res.status).to.equal(200, JSON.stringify(res.data));
     const card = res.data.data;
-    expect(Object.keys(card)).to.have.members(['handle', 'name', 'paused', 'operatorName', 'createdAt', 'address']);
+    expect(Object.keys(card)).to.have.members([
+      'handle',
+      'name',
+      'paused',
+      'operatorName',
+      'operatorFirstName',
+      'createdAt',
+      'address',
+    ]);
     expect(card).to.include({
       handle,
       name: 'Atlas',
       paused: false,
       operatorName: 'Ada L.',
+      operatorFirstName: 'Ada',
       address: `${handle}@${INBOX_DOMAIN}`,
     });
     // Of the operator's last name, a stranger gets the initial only.
@@ -75,8 +84,11 @@ describe('Agent Inbox public agent card #novu-v2', () => {
     const card = await readCard(handle);
 
     expect(own.status).to.equal(200, JSON.stringify(own.body));
-    expect(own.body.data.operatorName).to.equal('Ada L.');
-    expect(card.data.data.operatorName).to.equal(own.body.data.operatorName);
+    expect(own.body.data).to.include({ operatorName: 'Ada L.', operatorFirstName: 'Ada' });
+    expect(card.data.data).to.include({
+      operatorName: own.body.data.operatorName,
+      operatorFirstName: own.body.data.operatorFirstName,
+    });
   });
 
   it('names an agent that still has the name setup gave it after its handle', async () => {
