@@ -5,6 +5,10 @@ description: "Manually forward push notification delivery, open, and dismissal e
 
 To enable activity tracking for Push channel notifications, Novu supports a manual integration approach for push notifications. Where your application captures and forwards push notification events to Novu. Once received, Novu processes and displays these events on the dashboard for a unified tracking experience.
 
+<Note>
+  Activity tracking is supported for APNs, Expo, FCM, OneSignal, Push Webhook, Pusher Beams, and Pushpad. **AppIO does not support activity tracking** - it has no **Push Activity Tracking** toggle, and the track endpoint rejects AppIO events because the IO app does not let you run code on the device or attach a custom data field to carry the Novu message id.
+</Note>
+
 ## How it works
 
 The process involves a four-step data flow from your subscriber's device to Novu's servers:
@@ -32,6 +36,10 @@ When push notifications are delivered or interacted with, your application must 
 The goal is to capture the event and send a JSON payload to your backend. You must send these fields:
 - `eventType`: A string describing the event (for example, `opened`, `clicked`).
 - `eventId`: The unique identifier for the notification, which Novu includes in the push payload as `__nvMessageId`.
+
+<Note>
+  With **Pushpad**, Novu sends the message id as `custom_data`, which Pushpad only forwards to action-button callbacks. Only taps on a notification's action buttons can report the `eventId` back - taps on the notification body cannot. The other providers deliver the id in their data payload, so any interaction can report back.
+</Note>
 
 <Tabs>
   <Tab title="expo">
