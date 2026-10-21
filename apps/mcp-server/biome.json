@@ -1,0 +1,52 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.1.1/schema.json",
+	"assist": {
+		"actions": {
+			"source": {
+				"useSortedKeys": "on"
+			}
+		},
+		"enabled": true
+	},
+	"files": {
+		"includes": ["**", "!worker-configuration.d.ts", "!wrangler.jsonc"]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentWidth": 4,
+		"lineWidth": 100
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"complexity": {
+				"noStaticOnlyClass": "off"
+			},
+			"recommended": true,
+			"style": {
+				"noInferrableTypes": "error",
+				"noNonNullAssertion": "off",
+				"noParameterAssign": "error",
+				"noUnusedTemplateLiteral": "error",
+				"noUselessElse": "error",
+				"useAsConstAssertion": "error",
+				"useDefaultParameterLast": "error",
+				"useEnumInitializers": "error",
+				"useNumberNamespace": "error",
+				"useSelfClosingElements": "error",
+				"useSingleVarDeclarator": "error"
+			},
+			"suspicious": {
+				"noConfusingVoidType": "off",
+				"noDebugger": "off",
+				"noExplicitAny": "off"
+			}
+		}
+	},
+	"root": true,
+	"vcs": {
+		"clientKind": "git",
+		"enabled": true,
+		"useIgnoreFile": true
+	}
+}
