@@ -72,8 +72,10 @@ export class ToolFactory {
 		{ getToken, getApiUrl, getAuthorization }: ToolAccessors,
 		config: ToolConfig<T>,
 	) {
+		// A caller-supplied Authorization is already bound to one environment, so
+		// advertising `environmentId` would let the model ask for one it can't get.
 		const schemaWithEnvironment = config.schema.extend({
-			environmentId: environmentIdSchema,
+			...(!getAuthorization && { environmentId: environmentIdSchema }),
 			idempotencyKey: idempotencyKeySchema,
 		});
 
@@ -158,7 +160,8 @@ export class ToolFactory {
 			return { errorText, ok: false, retryAfter, status: response.status };
 		}
 
-		const json = response.status === 204 ? undefined : await response.json();
+		const text = response.status === 204 ? "" : await response.text();
+		const json = text ? JSON.parse(text) : undefined;
 		const data =
 			json && typeof json === "object" && "data" in json
 				? (json as { data: unknown }).data
