@@ -11,6 +11,7 @@ import {
   type Changes,
   dashboardBundleChanged,
   deployApp,
+  dropNxCache,
   pnpmInstall,
   prepareDashboard,
   writeBoxJson,
@@ -95,6 +96,7 @@ async function applyLocked({ ref = '', bundle, full: fullAsked, baseline, token 
     const refreshed: Baked = { ref: target.ref, sha: target.sha, at: baked.at };
     fs.writeFileSync(BAKED, JSON.stringify(refreshed, null, 2));
     fs.rmSync(APPLIED, { force: true });
+    await step('drop the nx cache', dropNxCache);
   } else {
     const applied: Applied = { ...target, base, files: files.length, full, at: new Date().toISOString() };
     fs.writeFileSync(APPLIED, JSON.stringify(applied, null, 2));

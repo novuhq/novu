@@ -474,6 +474,13 @@ async function refreshWorkspacePackages(target: string): Promise<void> {
   }
 }
 
+// A box restores every byte of its snapshot chain, and deleting in a later snapshot doesn't shrink it. nx's cache
+// replays builds an apply rarely repeats, so base saves without it. pnpm's store and metadata cache stay: without
+// them a lockfile change took 2 to 3 minutes longer.
+export async function dropNxCache(): Promise<void> {
+  await fs.promises.rm(`${REPO}/.nx/cache`, { recursive: true, force: true });
+}
+
 export function prepareDashboard(): void {
   const target = `${RUN}/dashboard`;
   fs.rmSync(target, { recursive: true, force: true });
