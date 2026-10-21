@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { resolveSafeInfobipBaseUrl, resolveSafeProviderUrl } from '@novu/providers';
+import { buildKannelBaseUrl, resolveSafeInfobipBaseUrl, resolveSafeProviderUrl } from '@novu/providers';
 import {
   assertAllowedSinchSmsRegion,
   EmailProviderIdEnum,
@@ -68,7 +68,7 @@ export async function validateOutboundIntegrationCredentials(
     }
 
     if (providerId === SmsProviderIdEnum.Kannel) {
-      resolveSafeProviderUrl(`http://${credentials.host}:${credentials.port}/cgi-bin`, {
+      resolveSafeProviderUrl(buildKannelBaseUrl(credentials.host ?? '', credentials.port ?? ''), {
         blockedPrefix: 'Kannel host blocked',
       });
     }
