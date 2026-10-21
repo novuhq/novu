@@ -145,7 +145,7 @@
     "sinon": "^9.2.4",
     "ts-jest": "^27.0.5",
     "ts-node": "~10.9.1",
-    "typescript": "5.6.2",
+    "typescript": "6.0.3",
     "vitest": "^4.1.0"
   },
   "files": [
