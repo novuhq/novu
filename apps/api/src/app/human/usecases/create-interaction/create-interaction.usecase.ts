@@ -9,6 +9,7 @@ import {
 import {
   type AgentEmailInboxCredits,
   AgentEmailInboxQuotaService,
+  AnalyticsService,
   InstrumentUsecase,
   isAgentEmailInboxQuotaExceeded,
   PinoLogger,
@@ -42,6 +43,7 @@ import {
   type InteractionThreadDto,
   toInteractionResponse,
 } from '../../dtos/interaction-response.dto';
+import { trackAgentInboxMessageSent } from '../../services/agent-inbox-analytics';
 import { contactIdCandidates, explicitEmailAddress } from '../../services/explicit-email-recipient';
 import { HumanDeliveryService, type ResolvedHumanTarget } from '../../services/human-delivery.service';
 import { HumanInboxService, type InboxScope } from '../../services/human-inbox.service';
@@ -95,7 +97,8 @@ export class CreateInteraction {
     private readonly createConversationInteraction: CreateConversationInteraction,
     private readonly keylessEmailGate: KeylessEmailGateService,
     private readonly humanContactRepository: HumanContactRepository,
-    private readonly subscriberRepository: SubscriberRepository
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly analyticsService: AnalyticsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -247,6 +250,11 @@ export class CreateInteraction {
         });
       const delivered = credits ? await credits.run(deliver) : await deliver();
 
+      // Each contact gets the message in a thread of their own, so each delivery is one message sent.
+      for (const { platform } of delivered.interaction.deliveries ?? []) {
+        this.trackMessageSent(command, agent, platform);
+      }
+
       await this.activityRecorder.recordRequest(delivered.interaction);
 
       if (delivered.interaction.status === HumanInteractionStatusEnum.DELIVERED) {
@@ -376,6 +384,7 @@ export class CreateInteraction {
       await messageCredits?.release();
     }
 
+    this.trackMessageSent(command, agent, channel.platform);
     const unreadBefore = await this.inbox.markSentInto(scope, conversation);
 
     return toInteractionResponse(interaction, undefined, [{ id: conversation.identifier, unreadBefore }]);
@@ -553,6 +562,14 @@ export class CreateInteraction {
     }
 
     return subscriberId;
+  }
+
+  private trackMessageSent(command: CreateInteractionCommand, agent: AgentEntity, channel: string): void {
+    trackAgentInboxMessageSent(
+      this.analyticsService,
+      { userId: command.userId, organizationId: command.organizationId },
+      { agentId: agent._id, type: command.kind, channel, source: command.analyticsSource }
+    );
   }
 
   /**

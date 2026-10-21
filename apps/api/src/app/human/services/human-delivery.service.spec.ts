@@ -588,6 +588,44 @@ describe('HumanDeliveryService.listInviteChannels', () => {
   });
 });
 
+describe('HumanDeliveryService.listWorkingChannels', () => {
+  it('lists email once the agent has its address, and Telegram or Slack once someone linked a chat', async () => {
+    const agentIntegrationRepository = {
+      find: sinon.stub().resolves([1, 2, 3].map((n) => ({ _integrationId: `int${n}` }))),
+    };
+    const integrationRepository = {
+      find: sinon.stub().resolves([
+        { identifier: 'email-main', providerId: 'agent-email-inbox', channel: ChannelTypeEnum.EMAIL, credentials: {} },
+        { identifier: 'slack-main', providerId: ChatProviderIdEnum.Slack, channel: ChannelTypeEnum.CHAT },
+        { identifier: 'tg-main', providerId: ChatProviderIdEnum.Telegram, channel: ChannelTypeEnum.CHAT },
+      ]),
+    };
+    const channelEndpointRepository = {
+      findOne: sinon
+        .stub()
+        .callsFake(async ({ integrationIdentifier }) =>
+          integrationIdentifier === 'tg-main' ? { _id: 'chat1' } : null
+        ),
+    };
+    const service = new HumanDeliveryService(
+      agentIntegrationRepository as never,
+      channelEndpointRepository as never,
+      integrationRepository as never,
+      {} as never,
+      {} as never,
+      emailGate() as never
+    );
+
+    const channels = await service.listWorkingChannels({
+      environmentId: 'env1',
+      organizationId: 'org1',
+      agent: { _id: 'a1', identifier: 'human-relay', name: 'Human' },
+    });
+
+    expect(channels).to.deep.equal([HumanChannelViaEnum.TELEGRAM]);
+  });
+});
+
 describe('pickDefaultTarget', () => {
   const telegram: ReachableHumanTarget = {
     via: HumanChannelViaEnum.TELEGRAM,

@@ -28,7 +28,7 @@ const { contactIdFromEmail, isEmailAddress, maskEmail, resolveEmailContact } = a
 const { resolveEmailRecipients } = await import('./interact');
 
 const client = {} as never;
-const notFound = new ApiError('Contact not found', 404, 'GET /v1/human/contacts/x', {});
+const notFound = new ApiError('Contact not found', 404, 'GET /v1/contacts/x', {});
 
 function contact(id: string, email?: string, channelAddress?: string): Contact {
   return {

@@ -297,7 +297,7 @@ export function registerTools(server: McpServer, api: AgentInboxApi): void {
     ({ id, name }) =>
       run(async () => {
         const [firstName, ...rest] = (name ?? '').trim().split(/\s+/).filter(Boolean);
-        const invite = await api.post<{ url: string; expiresAt: string }>('/v1/human/invites', {
+        const invite = await api.post<{ url: string; expiresAt: string }>('/v1/contacts/invites', {
           subscriberId: id,
           ...(firstName ? { firstName } : {}),
           ...(rest.length ? { lastName: rest.join(' ') } : {}),
@@ -318,7 +318,7 @@ export function registerTools(server: McpServer, api: AgentInboxApi): void {
     () =>
       run(async () => {
         const contacts = await api.get<Array<{ id: string; firstName?: string; lastName?: string; email?: string }>>(
-          '/v1/human/contacts',
+          '/v1/contacts',
           { limit: 100 }
         );
         if (!contacts?.length) {

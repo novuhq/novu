@@ -33,6 +33,7 @@ import { HumanConnectPublicController, HumanHostsController } from './human-host
 import { HumanInboxController } from './human-inbox.controller';
 import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanInvitesPublicController, HumanVerifyPublicController } from './human-invites-public.controller';
+import { AgentInboxChannelAnalytics } from './services/agent-inbox-channel-analytics.service';
 import { HumanAccountAgentService } from './services/human-account-agent.service';
 import { HumanAgentIdentityService } from './services/human-agent-identity.service';
 import { HumanAgentPictureService } from './services/human-agent-picture.service';
@@ -124,6 +125,7 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     DomainRouteRepository,
     AgentMcpServerRepository,
     McpConnectionRepository,
+    AgentInboxChannelAnalytics,
     HumanDeliveryService,
     HumanKeylessCapService,
     HumanMessageQuotaService,

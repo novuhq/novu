@@ -58,7 +58,7 @@ const LOGIN_URL = 'https://agentinbox.md/cli/login?code=BCDF-GHJK';
 const LOGIN_URL_WITHOUT_CODE = 'https://agentinbox.md/cli/login';
 
 const keylessConfig: CliConfig = {
-  apiUrl: 'https://api.novu.co',
+  apiUrl: 'https://www.agentinbox.md/api',
   auth: { mode: 'keyless', keylessIdentifier: 'pk_keyless_1' },
   relayAgentIdentifier: 'human-relay',
   subscriberId: 'ada',
@@ -108,7 +108,7 @@ describe('runLogin', () => {
     const result = await runLogin({});
 
     // The page names this computer next to the code.
-    expect(startLoginRequest).toHaveBeenCalledWith('https://api.novu.co', 'adas-macbook-pro');
+    expect(startLoginRequest).toHaveBeenCalledWith('https://www.agentinbox.md/api', 'adas-macbook-pro');
     expect(openInBrowser).toHaveBeenCalledWith(LOGIN_URL);
     // The page shows the same code to compare; the device code the CLI polls with is never printed.
     const printed = stdout.mock.calls.map(([text]) => String(text)).join('');
@@ -118,7 +118,7 @@ describe('runLogin', () => {
     expect(checkLoginRequest).toHaveBeenCalledTimes(2);
     expect(getKeylessClaimToken).not.toHaveBeenCalled();
     expect(saveConfig).toHaveBeenCalledWith({
-      apiUrl: 'https://api.novu.co',
+      apiUrl: 'https://www.agentinbox.md/api',
       auth: { mode: 'apiKey', secretKey: 'sk_account' },
       relayAgentIdentifier: 'human-relay',
     });
@@ -133,7 +133,7 @@ describe('runLogin', () => {
     expect(openInBrowser).toHaveBeenCalledWith(`${LOGIN_URL}&claim=claim_token`);
     expect(hasSubscriber).toHaveBeenCalledWith(expect.anything(), 'ada');
     expect(saveConfig).toHaveBeenCalledWith({
-      apiUrl: 'https://api.novu.co',
+      apiUrl: 'https://www.agentinbox.md/api',
       auth: { mode: 'apiKey', secretKey: 'sk_account' },
       relayAgentIdentifier: 'human-relay',
       subscriberId: 'ada',
@@ -171,7 +171,7 @@ describe('runLogin', () => {
     // Made on the dashboard or another computer. No default channel: the API uses that person's own.
     expect(findOperator).toHaveBeenCalledTimes(1);
     expect(saveConfig).toHaveBeenCalledWith({
-      apiUrl: 'https://api.novu.co',
+      apiUrl: 'https://www.agentinbox.md/api',
       auth: { mode: 'apiKey', secretKey: 'sk_account' },
       relayAgentIdentifier: 'human-relay',
       subscriberId: 'ada_owner',
@@ -210,7 +210,7 @@ describe('runLogin', () => {
 
     // The key is handed over only once, so it is saved either way.
     expect(saveConfig).toHaveBeenCalledWith({
-      apiUrl: 'https://api.novu.co',
+      apiUrl: 'https://www.agentinbox.md/api',
       auth: { mode: 'apiKey', secretKey: 'sk_account' },
       relayAgentIdentifier: 'human-relay',
     });
@@ -293,17 +293,17 @@ describe('runLogin', () => {
   it('sends a long computer name cut short, and none when the system has none', async () => {
     hostname.mockReturnValue(`  ${'x'.repeat(300)}  `);
     await runLogin({});
-    expect(startLoginRequest).toHaveBeenLastCalledWith('https://api.novu.co', 'x'.repeat(64));
+    expect(startLoginRequest).toHaveBeenLastCalledWith('https://www.agentinbox.md/api', 'x'.repeat(64));
 
     hostname.mockReturnValue('');
     await runLogin({});
-    expect(startLoginRequest).toHaveBeenLastCalledWith('https://api.novu.co', undefined);
+    expect(startLoginRequest).toHaveBeenLastCalledWith('https://www.agentinbox.md/api', undefined);
 
     hostname.mockImplementation(() => {
       throw new Error('no hostname');
     });
     await runLogin({});
-    expect(startLoginRequest).toHaveBeenLastCalledWith('https://api.novu.co', undefined);
+    expect(startLoginRequest).toHaveBeenLastCalledWith('https://www.agentinbox.md/api', undefined);
   });
 
   it('stops without saving anything when the login is denied in the browser', async () => {
@@ -327,7 +327,7 @@ describe('runLogin', () => {
 
 describe('introduceYourself', () => {
   const config: CliConfig = {
-    apiUrl: 'https://api.novu.co',
+    apiUrl: 'https://www.agentinbox.md/api',
     auth: { mode: 'apiKey', secretKey: 'sk_account' },
     relayAgentIdentifier: 'human-relay',
   };
@@ -429,7 +429,7 @@ describe('introduceYourself', () => {
 
 describe('describeNextStep', () => {
   const config: CliConfig = {
-    apiUrl: 'https://api.novu.co',
+    apiUrl: 'https://www.agentinbox.md/api',
     auth: { mode: 'apiKey', secretKey: 'sk_account' },
     relayAgentIdentifier: 'human-relay',
   };

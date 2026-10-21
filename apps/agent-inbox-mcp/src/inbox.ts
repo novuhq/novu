@@ -69,7 +69,7 @@ export type ListInboxQuery = {
 };
 
 function threadPath(id: string, suffix = ''): string {
-  return `/v1/human/inbox/${encodeURIComponent(id)}${suffix}`;
+  return `/v1/inbox/${encodeURIComponent(id)}${suffix}`;
 }
 
 /**
@@ -80,7 +80,7 @@ export async function listInbox(api: AgentInboxApi, query: ListInboxQuery = {}):
   const wait = query.wait;
   const timeoutMs = wait ? (wait + 10) * 1000 : undefined;
   const body = await api.getRaw<{ data?: InboxThread[]; next?: string | null } | InboxThread[]>(
-    '/v1/human/inbox',
+    '/v1/inbox',
     {
       filter: query.filter,
       status: query.status,

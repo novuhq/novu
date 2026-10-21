@@ -15,6 +15,7 @@ landing page moves in here later.
 | `/inbox`, `/configure`, `/contacts` | The dashboard: the agent's inbox, the agent with its channels, and the people it can ask. An operator without an agent is sent to `/onboarding`. |
 | `/settings`, `/settings/billing` | The operator, their API key (show, copy, regenerate), the plan and billing, log out and delete account. |
 | `/`               | Placeholder until the landing page moves in.                                               |
+| `/api/*`          | The Agent Inbox API, which forwards to the Novu API, so people only ever see this site's address. See [Agent Inbox API](#agent-inbox-api). |
 
 Each Human account is backed by a hidden Novu organization that the Novu API creates through private
 `/v1/human/accounts` endpoints. See
@@ -35,17 +36,6 @@ How far an operator got is kept in the private metadata of their Clerk user (`li
 An agent that is older than its operator's first visit to step 1 never goes through the steps: it was in
 use before, however the operator came to see that step.
 
-Some of what the steps show has no API yet and is faked in `lib/onboarding-mocks.ts`. Each part goes
-away with its ticket:
-
-| Faked today | Ticket |
-| ----------- | ------ |
-| Choosing the address, "available" / "taken", and the address offered instead. The API assigns its own. | NV-9032 |
-| The test email, and its reply landing a few seconds later. | NV-9032 |
-| The one-time code, and a host connecting a few seconds after the prompt is copied. An approved CLI login and a connector that signed in count for real. | NV-9037 |
-| `agentinbox connect … --code …` on step 3. The other commands are the CLI's; today a host connects with `login`. | NV-9037 |
-| "Share card" copies the link. | NV-9035 |
-
 ## Develop
 
 ```sh
@@ -53,9 +43,9 @@ cp apps/human-dashboard/.env.example apps/human-dashboard/.env.local
 pnpm start:human-dashboard         # http://localhost:4300
 ```
 
-The invite page calls the Novu API's public `/v1/human/invites/*` endpoints. Run the API locally
-(`pnpm start:api:dev`) with `HUMAN_DASHBOARD_URL=http://localhost:4300` so `human invite` links point here,
-then run `human invite <id>` against the local API and open the printed link.
+The invite page calls the public `/v1/invites/*` endpoints of this site's Agent Inbox API (`/api`). Run the
+API locally (`pnpm start:api:dev`) with `HUMAN_DASHBOARD_URL=http://localhost:4300` so `human invite` links point
+here, then run `human invite <id>` against the local API and open the printed link.
 
 Human accounts also need:
 
@@ -68,20 +58,51 @@ Human accounts also need:
 To try a claim, set `KEYLESS_HUMAN_INTERACTION_CAP=1` on the API, run `human setup` without a key against
 the local API, send two messages, and open the printed `/claim` link.
 
-To try `human login`, run it against the local API (`NOVU_API_URL=http://localhost:3000 human login`) and enter
+To try `login`, point the CLI at this site's `/api` (`INBOX_API_URL=http://localhost:4300/api`), run `login` and enter
 the code it prints on `/cli/login` here. The API only offers the browser login when `HUMAN_DASHBOARD_URL` is set.
+
+## Agent Inbox API
+
+`/api` is Agent Inbox's API: each of its paths forwards to one on the US Novu API (`NEXT_PUBLIC_NOVU_API_URL`), such
+as `/api/v1/inbox` to `/v1/human/inbox`, and the API's status, headers and body come back as they are
+(`src/app/api/[...path]/route.ts`; the paths are `ROUTES` in `src/lib/api-proxy.ts`, grouped like the CLI's
+commands). The CLI goes to `https://www.agentinbox.md/api` by default, the MCP server calls it for every tool, the
+invite, verify and connect pages call `/api` from the browser, and the setup prompts name this site's `/api`. The CLI
+and the MCP server only speak these paths, so a self-hosted or local setup points them at its own dashboard's `/api`.
+
+- Only those paths are forwarded; anything else answers 404. The private `/v1/human/accounts` endpoints are not among
+  them: only this site's server and the MCP server's key lookup call them, with the dashboard secret.
+- The channel paths name the agent with the `agentIdentifier` query parameter, as the rest of the API does; left out,
+  it's the relay agent `setup` creates.
+- Only the headers the API reads go on: `Authorization`, `Content-Type`, `Accept`, `User-Agent`,
+  `Idempotency-Key`, `If-None-Match`, `If-Modified-Since`, `Novu-Application-Identifier`, `Novu-Analytics-Source` and
+  `Agent-Inbox-Via`. This site's cookies never reach the API, and the API's `Set-Cookie` never reaches the browser.
+- The caller's IP address goes on as `X-Forwarded-For`, taken from the `x-forwarded-for` Vercel sets, so the API's
+  per-IP limits (keyless setups, one-time codes) count each caller, not this site.
+- It only reaches the US API: Agent Inbox has no EU region for now. The invite and verify pages show a link the EU API
+  issued (`?region=eu`) as not valid, and send its token nowhere.
+- The longest call is the inbox's long-poll, which the API holds for up to 25 seconds; the route may run for 60.
 
 ## Configuration
 
 | Variable                            | Default                  | Purpose                                                    |
 | ----------------------------------- | ------------------------ | ---------------------------------------------------------- |
-| `NEXT_PUBLIC_NOVU_API_URL`          | `https://api.novu.co`    | API for links without a region, and for US Human accounts. |
-| `NEXT_PUBLIC_NOVU_API_URL_EU`       | `https://eu.api.novu.co` | API for links issued with `?region=eu`, and EU accounts.   |
+| `NEXT_PUBLIC_NOVU_API_URL`          | `https://api.novu.co`    | US API: where `/api` forwards to, and the server's calls for US Human accounts. |
+| `NEXT_PUBLIC_NOVU_API_URL_EU`       | `https://eu.api.novu.co` | The server's calls for EU accounts. The pages and `/api` don't use it. |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | —                        | Human Clerk app. Only the account pages use it.            |
 | `CLERK_SECRET_KEY`                  | —                        | Human Clerk app, server only.                              |
 | `AGENT_INBOX_DASHBOARD_API_SECRET`  | —                        | The API's `AGENT_INBOX_DASHBOARD_API_SECRET`, for `/v1/human/accounts`. Server only. |
+| `NEXT_PUBLIC_MIXPANEL_TOKEN`        | —                        | Novu's Mixpanel project. Counts dashboard page views on the operator's profile; empty sends nothing. |
 
 `NEXT_PUBLIC_` values are inlined at build time. The API URL never comes from a link itself.
+
+## Analytics
+
+Agent Inbox events go to Novu's Mixpanel project, named `… - [Agent Inbox]` (`AGENT_INBOX_EVENTS` in
+`@novu/shared`). The API sends what agents and operators do; this app only adds `Page Viewed - [Agent Inbox]`
+for each dashboard page (`components/analytics`). Both use the id of the hidden Novu user behind the account, so
+one operator is one profile. The page sends a page's path only, never its query, which can hold a one-time
+token, and nothing about the operator besides that id. Its calls to the API say `Novu-Analytics-Source: dashboard`.
 
 ## Checks
 

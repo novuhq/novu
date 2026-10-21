@@ -2,7 +2,7 @@
 
 The hosted Agent Inbox MCP server, meant for `https://mcp.agentinbox.md`. ChatGPT, Claude and Cursor add its address, the person signs in with their Agent Inbox account, and the AI tool can then ask them before it acts.
 
-It is a Cloudflare Worker and is for Novu Cloud only: it needs the Agent Inbox Clerk app and the private Agent Inbox endpoints of the Novu API, which self-hosted and Community editions do not have.
+It is a Cloudflare Worker and is for Novu Cloud only: it needs the Agent Inbox Clerk app, the Agent Inbox Dashboard API, and a private Agent Inbox endpoint of the Novu API, which self-hosted and Community editions do not have.
 
 ## Tools
 
@@ -29,9 +29,15 @@ The send and reply tools mirror the Agent Inbox CLI: they support attribution, e
 1. A tool calls the server without a token and gets a `401` that points at `/.well-known/oauth-protected-resource`.
 2. That document names the Agent Inbox Clerk app as the place to sign in. The tool registers itself there, and Clerk sends the person to its sign-in page: the dashboard's `/sign-in` when the Clerk app's paths point there. The dashboard makes sure their account exists, then sends them back to Clerk to approve the tool. Someone without an agent yet is sent to the onboarding on their next dashboard visit.
 3. The tool calls again with the token. The server asks Clerk whose token it is (`/oauth/userinfo`); it never trusts what a token says about itself.
-4. The server reads the account's API key from the Novu API with the secret the Agent Inbox dashboard uses, tries the US API and then the EU one, and calls the Agent Inbox endpoints as the account. The AI tool never sees the key.
+4. The server reads the account's API key from the Novu API with the secret the Agent Inbox dashboard uses, and calls the Agent Inbox Dashboard API as the account. The AI tool never sees the key.
 
 Every request stands alone: there are no sessions, so any instance can answer any call.
+
+## Where calls go
+
+- Every tool calls the Agent Inbox Dashboard API (`AGENT_INBOX_API_URL`, the dashboard's `/api`) with the account's key, as the CLI does: `/v1/inbox` and `/v1/inbox/messages` for threads and messages, `/v1/contacts` for contacts, invites and verifications, and `/v1/operator` for the account's owner. The dashboard forwards each call to the Novu API.
+- Reading the account's key is the one call that goes straight to the Novu API (`NOVU_API_URL`), with the dashboard's secret: `GET /v1/human/accounts/:id/secret-key`. The Dashboard API doesn't offer it.
+- Agent Inbox lives in the US region only, so there is no EU address to try.
 
 ## Which tools are connected
 
@@ -42,8 +48,8 @@ When a tool connects, the server notes which one it is (from the name the tool g
 | Name | Kind | What it is |
 | --- | --- | --- |
 | `CLERK_OAUTH_ISSUER` | variable | Address of the Agent Inbox Clerk app. Its OAuth feature with dynamic client registration must be on. |
-| `NOVU_API_URL` | variable | The Novu API of the US region. |
-| `NOVU_API_URL_EU` | variable | The Novu API of the EU region. Leave empty where there is none. |
+| `AGENT_INBOX_API_URL` | variable | The Agent Inbox Dashboard API, which every tool calls: `https://www.agentinbox.md/api` (staging `https://staging.agentinbox.md/api`, local `http://localhost:4300/api`). Without it the server answers `503`. |
+| `NOVU_API_URL` | variable | The Novu API of the US region, used only to read the account's key with the dashboard's secret. |
 | `DOCS_URL` | variable | Where a person who opens the address in a browser is sent. |
 | `AGENT_INBOX_DASHBOARD_API_SECRET` | secret | The secret the Agent Inbox dashboard shares with the Novu API. |
 | `CONNECTIONS` | KV namespace | Remembers connected tools and, for five minutes, whose token is whose. Optional: without it nothing reads as connected. |
@@ -51,7 +57,7 @@ When a tool connects, the server notes which one it is (from the name the tool g
 ## Run and deploy
 
 ```bash
-pnpm --filter @novu/agent-inbox-mcp dev        # http://localhost:8790, against a local API
+pnpm --filter @novu/agent-inbox-mcp dev        # http://localhost:8790, against a local dashboard and API
 pnpm --filter @novu/agent-inbox-mcp test
 pnpm --filter @novu/agent-inbox-mcp typecheck
 ```
@@ -59,10 +65,11 @@ pnpm --filter @novu/agent-inbox-mcp typecheck
 Before the first deploy of an environment:
 
 1. Turn on OAuth with dynamic client registration in that environment's Agent Inbox Clerk app, and put its address in `CLERK_OAUTH_ISSUER` in `wrangler.jsonc`.
-2. Create the KV namespace (`wrangler kv namespace create CONNECTIONS --env <env>`) and add the binding it prints to `wrangler.jsonc`.
-3. Set the secret: `wrangler secret put AGENT_INBOX_DASHBOARD_API_SECRET --env <env>`.
-4. `pnpm --filter @novu/agent-inbox-mcp deploy:<env>`.
-5. Set `AGENT_INBOX_MCP_URL` on the Agent Inbox dashboard to the server's address. The Connect drawers on the Agent page appear only once it is set.
+2. Check that `AGENT_INBOX_API_URL` in `wrangler.jsonc` points at that environment's dashboard (`/api`), and that the dashboard there already serves it.
+3. Create the KV namespace (`wrangler kv namespace create CONNECTIONS --env <env>`) and add the binding it prints to `wrangler.jsonc`.
+4. Set the secret: `wrangler secret put AGENT_INBOX_DASHBOARD_API_SECRET --env <env>`.
+5. `pnpm --filter @novu/agent-inbox-mcp deploy:<env>`.
+6. Set `AGENT_INBOX_MCP_URL` on the Agent Inbox dashboard to the server's address. The Connect drawers on the Agent page appear only once it is set.
 
 ## Known limits
 

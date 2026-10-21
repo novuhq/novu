@@ -156,7 +156,14 @@ export const PullRequestEvent = z.object({
   number: z.number(),
   sender: z.object({ login: z.string() }).optional(),
   label: Label.optional(),
-  pull_request: z.object({ state: z.string(), labels: z.array(Label), head: z.object({ sha: z.string() }) }),
+  pull_request: z.object({
+    state: z.string(),
+    title: z.string(),
+    body: z.string().nullish(),
+    labels: z.array(Label),
+    base: z.object({ ref: z.string() }),
+    head: z.object({ sha: z.string(), ref: z.string() }),
+  }),
 });
 export type PullRequestEvent = z.infer<typeof PullRequestEvent>;
 export const Pull = z.object({ state: z.string(), labels: z.array(Label) });
@@ -187,6 +194,23 @@ const TestUser = z.object({ email: z.string(), box: z.string(), createdAt: z.str
 export const TestUsers = z.object({ users: z.array(TestUser), prune: z.array(z.string()) });
 export const CreatedTestUser = z.object({ email: z.string(), password: z.string(), pruned: z.array(z.string()) });
 export const DeletedBox = z.object({ users: z.array(z.string()).default([]), usersError: z.string().optional() });
+
+export const TesterArmyStart = z.object({
+  pullRequest: z.object({
+    number: z.number(),
+    title: z.string(),
+    description: z.string().optional(),
+    baseBranch: z.string(),
+    headBranch: z.string(),
+    commitSha: z.string(),
+  }),
+});
+export type TesterArmyStart = z.infer<typeof TesterArmyStart>;
+export const TesterArmyStarted = z.object({
+  exploration: z.object({ status: z.string(), runId: z.string() }),
+  groups: z.array(z.object({ name: z.string(), batchId: z.string(), runs: z.number() })),
+  signUpUsersDeleted: z.array(z.string()),
+});
 
 const data = <T extends z.ZodType>(schema: T) => z.object({ data: schema });
 const ApiId = z.object({ _id: z.string() });

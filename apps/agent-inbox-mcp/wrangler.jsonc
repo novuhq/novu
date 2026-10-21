@@ -8,18 +8,22 @@
     "enabled": true,
     "head_sampling_rate": 1
   },
+  // Variables, per environment below:
+  //   AGENT_INBOX_API_URL  the Agent Inbox Dashboard API (the dashboard's `/api`); every tool calls it as the account
+  //   NOVU_API_URL         the Novu API (US; Agent Inbox has no EU region), only asked for the account's key with
+  //                        the dashboard secret: the one call the Dashboard API doesn't offer
   // Secrets, set per environment with `wrangler secret put <NAME> --env <env>` (local: `.dev.vars`):
   //   AGENT_INBOX_DASHBOARD_API_SECRET  the secret the Agent Inbox dashboard shares with the Novu API
   "env": {
-    // Local development against a local API. Sign-in needs the Agent Inbox Clerk app's address in
+    // Local development against a local dashboard and API. Sign-in needs the Agent Inbox Clerk app's address in
     // CLERK_OAUTH_ISSUER; put it in `.dev.vars` next to the secret.
     "local": {
       "name": "agent-inbox-mcp-local",
       "workers_dev": true,
       "vars": {
         "CLERK_OAUTH_ISSUER": "https://exact-haddock-1045.clerk.accounts.dev",
+        "AGENT_INBOX_API_URL": "http://localhost:4300/api",
         "NOVU_API_URL": "http://localhost:3000",
-        "NOVU_API_URL_EU": "",
         "DOCS_URL": "https://www.npmjs.com/package/@agentinbox/cli"
       }
     },
@@ -34,8 +38,8 @@
       ],
       "vars": {
         "CLERK_OAUTH_ISSUER": "https://select-foal-365.clerk.accounts.dev",
+        "AGENT_INBOX_API_URL": "https://staging.agentinbox.md/api",
         "NOVU_API_URL": "https://api.novu-staging.co",
-        "NOVU_API_URL_EU": "",
         "DOCS_URL": "https://www.npmjs.com/package/@agentinbox/cli"
       },
       "kv_namespaces": [
@@ -56,8 +60,8 @@
       ],
       "vars": {
         "CLERK_OAUTH_ISSUER": "https://clerk.agentinbox.md",
+        "AGENT_INBOX_API_URL": "https://www.agentinbox.md/api",
         "NOVU_API_URL": "https://api.novu.co",
-        "NOVU_API_URL_EU": "https://eu.api.novu.co",
         "DOCS_URL": "https://www.npmjs.com/package/@agentinbox/cli"
       },
       "kv_namespaces": [

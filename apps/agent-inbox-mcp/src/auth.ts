@@ -1,11 +1,11 @@
 import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
-import { apiUrls, type Env, issuerOf, type Region } from './env';
+import { type Env, issuerOf, urlOf } from './env';
 
-/** The Agent Inbox account a request acts for, and the key to its part of the Novu API. */
+/** The Agent Inbox account a request acts for, and where and with which key the tools call the API as it. */
 export type Account = {
   /** The person's id in the Agent Inbox Clerk app. */
   agentInboxUserId: string;
-  region: Region;
+  /** The Agent Inbox Dashboard API. */
   apiUrl: string;
   secretKey: string;
 };
@@ -29,14 +29,15 @@ const API_TIMEOUT_MS = 8_000;
  */
 const IDENTITY_TTL_SECONDS = 300;
 
-type Identity = { agentInboxUserId: string; region?: Region };
+/** What is remembered about a token. An entry from before Agent Inbox was US only also has a `region`, unused now. */
+type Identity = { agentInboxUserId: string };
 
 /**
  * Finds the Agent Inbox account behind a request's bearer token.
  *
  * The token comes from the Agent Inbox Clerk app. Clerk is asked whose it is; this server never trusts what a
  * token says about itself. The account's key is then read from the Novu API with the secret the
- * dashboard uses, so the AI tool never holds the key.
+ * dashboard uses, so the AI tool never holds the key. The tools call the Dashboard API with it.
  */
 export async function authenticate(request: Request, env: Env): Promise<Account> {
   const token = bearerTokenOf(request);
@@ -53,11 +54,8 @@ export async function authenticate(request: Request, env: Env): Promise<Account>
   const account = await loadAccount(await identify(token, env), env);
 
   // Only an answer from Clerk is remembered. Renewing this on every call would keep a token alive forever.
-  await env.CONNECTIONS?.put(
-    cacheKey,
-    JSON.stringify({ agentInboxUserId: account.agentInboxUserId, region: account.region }),
-    { expirationTtl: IDENTITY_TTL_SECONDS }
-  );
+  const identity: Identity = { agentInboxUserId: account.agentInboxUserId };
+  await env.CONNECTIONS?.put(cacheKey, JSON.stringify(identity), { expirationTtl: IDENTITY_TTL_SECONDS });
 
   return account;
 }
@@ -103,34 +101,34 @@ async function identify(token: string, env: Env): Promise<Identity> {
   return { agentInboxUserId };
 }
 
-/** An account lives in one region. Which one isn't in the token, so the remembered one is asked first. */
+/**
+ * Reads the account's key from the Novu API. It is the one call that goes there directly: the Dashboard API
+ * doesn't offer it, since it answers to the dashboard's secret rather than to an account.
+ */
 async function loadAccount(identity: Identity, env: Env): Promise<Account> {
-  if (!env.AGENT_INBOX_DASHBOARD_API_SECRET) {
+  const secret = env.AGENT_INBOX_DASHBOARD_API_SECRET;
+  const apiUrl = urlOf(env.AGENT_INBOX_API_URL);
+  const novuApiUrl = urlOf(env.NOVU_API_URL);
+  if (!secret || !apiUrl || !novuApiUrl) {
     throw new AuthError(503, 'This server is not connected to the Agent Inbox API.');
   }
 
-  const regions = apiUrls(env).sort(
-    (a, b) => Number(b.region === identity.region) - Number(a.region === identity.region)
-  );
-
-  for (const { region, url } of regions) {
-    const secretKey = await readSecretKey(url, identity.agentInboxUserId, env.AGENT_INBOX_DASHBOARD_API_SECRET);
-    if (secretKey) {
-      return { agentInboxUserId: identity.agentInboxUserId, region, apiUrl: url, secretKey };
-    }
+  const secretKey = await readSecretKey(novuApiUrl, identity.agentInboxUserId, secret);
+  if (!secretKey) {
+    throw new AuthError(
+      403,
+      'There is no Agent Inbox account for this sign-in yet. Open agentinbox.md and sign up first.'
+    );
   }
 
-  throw new AuthError(
-    403,
-    'There is no Agent Inbox account for this sign-in yet. Open agentinbox.md and sign up first.'
-  );
+  return { agentInboxUserId: identity.agentInboxUserId, apiUrl, secretKey };
 }
 
-/** The account's key in one region, or `null` when the account doesn't live there. */
-async function readSecretKey(apiUrl: string, agentInboxUserId: string, secret: string): Promise<string | null> {
+/** The account's key, or `null` when there is no account for this sign-in. */
+async function readSecretKey(novuApiUrl: string, agentInboxUserId: string, secret: string): Promise<string | null> {
   let response: Response;
   try {
-    response = await fetch(`${apiUrl}/v1/human/accounts/${encodeURIComponent(agentInboxUserId)}/secret-key`, {
+    response = await fetch(`${novuApiUrl}/v1/human/accounts/${encodeURIComponent(agentInboxUserId)}/secret-key`, {
       headers: { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: secret },
       signal: AbortSignal.timeout(API_TIMEOUT_MS),
     });

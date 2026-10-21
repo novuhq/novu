@@ -126,6 +126,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          CHANGED_FILES: ${{ github.event.pull_request.changed_files }}
         run: |
           # Use the GitHub API for the PR file list so detection doesn't depend
           # on the shallow local merge base (the depth-50 fetches above may not
@@ -137,11 +138,15 @@ jobs:
             echo "docs-only=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          changed=$(gh api --paginate "repos/${{ github.repository }}/pulls/$PR_NUMBER/files" --jq '.[].path')
-          echo "Changed files:"
-          echo "$changed"
-          non_docs=$(echo "$changed" | grep -v '^docs/' || true)
-          if [ -n "$changed" ] && [ -z "$non_docs" ]; then
+          # The API lists at most 3000 files without flagging truncation, so only
+          # trust a list whose length matches changed_files. Renamed files count
+          # by both old and new path, and a missing filename is never docs/.
+          read -r listed all_docs < <(
+            gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" |
+              jq -r 'add // [] | "\(length) \(all(.[]; [.filename, .previous_filename // "docs/"] | all(type == "string" and startswith("docs/"))))"'
+          )
+          echo "Listed $listed of $CHANGED_FILES changed files; all under docs/: $all_docs"
+          if [ "$all_docs" = true ] && [ "$listed" -gt 0 ] && [ "$listed" -lt 3000 ] && [ "$listed" -eq "$CHANGED_FILES" ]; then
             echo "docs-only=true" >> "$GITHUB_OUTPUT"
             echo "Only docs/ changed — E2E and code tests will be skipped."
           else

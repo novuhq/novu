@@ -112,7 +112,7 @@ npx @agentinbox/cli inbox resolve conv_123              # finished; opens again 
 
 ## Auth & headless use
 
-`login`, `connect` and `setup` store credentials in `~/.agentinbox/config.json`; `setup` reuses a saved login. On a self-hosted deployment, pass `setup --secret-key <key>` or set `INBOX_SECRET_KEY` (and optionally `INBOX_API_URL`) for an existing environment. `INBOX_SECRET_KEY` takes priority over the saved login.
+`login`, `connect` and `setup` store credentials in `~/.agentinbox/config.json`; `setup` reuses a saved login. On a self-hosted deployment, pass `setup --secret-key <key>` or set `INBOX_SECRET_KEY` (and `INBOX_API_URL`, its Agent Inbox dashboard's `/api`) for an existing environment. `INBOX_SECRET_KEY` takes priority over the saved login.
 
 Without a login, `setup` creates a keyless environment: a free demo with a small message allowance. Run `login` anytime to keep it; your channels and relay move into your Agent Inbox account. Once the allowance is used up, the next command exits `1` and asks you to run `login` instead of delivering the message (a sign-up link is also sent to you on your linked channel; if you use it, run `login` afterwards).
 
@@ -125,7 +125,7 @@ docker run -e INBOX_SECRET_KEY=... -e INBOX_TO=alice -e INBOX_VIA=slack agent \
 
 - `INBOX_TO` — default recipient contact id(s), comma-separated like `--to` (max 50).
 - `INBOX_VIA` — default channel (`telegram`, `slack`, or `email`), like `--via`.
-- `INBOX_API_URL` — API URL override.
+- `INBOX_API_URL` — API URL override, like `--api-url`. The default is `https://www.agentinbox.md/api`, the Agent Inbox API, which forwards to Novu Cloud's API. On a self-hosted or local deployment, point it at that deployment's Agent Inbox dashboard (`/api`, such as `http://localhost:4300/api`), not at the Novu API itself.
 - `INBOX_CONFIG` — config file path override.
 
 Precedence is always **CLI flags > environment variables > `~/.agentinbox/config.json`**, and env values are never written back to the config file.

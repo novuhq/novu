@@ -11,7 +11,7 @@ import { loadChannelsOverview } from '@/lib/human-channels-overview';
 import { loadHostStatus } from '@/lib/human-hosts-api';
 import { isSetupUnfinished, loadSetupSummary, requireSetUpAgent } from '@/lib/human-onboarding';
 import { listConnectedTools, readMcpUrl } from '@/lib/human-tools-api';
-import { resolveNovuApiUrl } from '@/lib/novu-api';
+import { readApiUrl } from '@/lib/site-origin';
 
 import { AgentStatusPoll } from './agent-status-poll';
 import { ConfigureView } from './configure-view';
@@ -50,7 +50,7 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
     loadHostStatus(account),
   ]);
 
-  const context: PromptContext = { apiUrl: resolveNovuApiUrl(account.region) };
+  const context: PromptContext = { apiUrl: await readApiUrl() };
   const operatorName = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
   const { handle } = setup.agent;
   // With Telegram or Slack connected the setup is done, and there is nothing left to wait for.

@@ -46,7 +46,7 @@ export async function resolveRecipient(api: AgentInboxApi, to: string | undefine
     return to.trim();
   }
 
-  const operator = await api.get<{ subscriberId?: string }>('/v1/human/operator');
+  const operator = await api.get<{ subscriberId?: string }>('/v1/operator');
   if (!operator?.subscriberId) {
     throw new AgentInboxApiError(
       409,
@@ -78,7 +78,7 @@ export async function sendInteraction(
   const to = thread ? normalizeRecipients(input.to) : await resolveRecipients(api, input.to);
   const created = await api
     .post<Interaction>(
-      '/v1/human/interactions',
+      '/v1/inbox/messages',
       {
         kind: input.kind,
         card: input.card,
@@ -165,7 +165,7 @@ export async function waitForAnswer(
   // No check takes longer than what is left of the wait.
   const check = () =>
     api.get<Interaction>(
-      `/v1/human/interactions/${encodeURIComponent(id)}`,
+      `/v1/inbox/messages/${encodeURIComponent(id)}`,
       undefined,
       Math.max(SHORTEST_CHECK_MS, deadline - Date.now())
     );

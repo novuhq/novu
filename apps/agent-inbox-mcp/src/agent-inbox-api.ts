@@ -19,6 +19,9 @@ const REQUEST_TIMEOUT_MS = 15_000;
  */
 export const AGENT_INBOX_VIA_HEADER = 'Agent-Inbox-Via';
 
+/** Matches Novu's `NOVU_ANALYTICS_SOURCE_HEADER`. Tells Novu's analytics the request comes from this server. */
+export const ANALYTICS_SOURCE_HEADER = 'Novu-Analytics-Source';
+
 type Query = Record<string, string | number | undefined>;
 
 export type AgentInboxApi = {
@@ -32,7 +35,10 @@ export type AgentInboxApi = {
   post<T>(path: string, body: unknown, timeoutMs?: number): Promise<T>;
 };
 
-/** The Agent Inbox endpoints of the Novu API, called as the account. The same calls the `agentinbox` CLI makes. */
+/**
+ * The Agent Inbox Dashboard API (`AGENT_INBOX_API_URL`), called as the account with its key: the same calls the
+ * `agentinbox` CLI makes. The dashboard forwards them to the Novu API.
+ */
 export function createAgentInboxApi(account: Account): AgentInboxApi {
   async function send<T>(
     method: 'GET' | 'POST',
@@ -49,6 +55,7 @@ export function createAgentInboxApi(account: Account): AgentInboxApi {
           Authorization: `ApiKey ${account.secretKey}`,
           'Content-Type': 'application/json',
           [AGENT_INBOX_VIA_HEADER]: 'mcp',
+          [ANALYTICS_SOURCE_HEADER]: 'mcp',
         },
         body: body === undefined ? undefined : JSON.stringify(body),
         signal: AbortSignal.timeout(Math.max(1, timeoutMs ?? REQUEST_TIMEOUT_MS)),

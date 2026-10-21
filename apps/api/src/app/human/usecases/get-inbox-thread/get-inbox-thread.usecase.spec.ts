@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { AGENT_INBOX_EVENTS } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { GetInboxThreadCommand } from './get-inbox-thread.command';
@@ -25,9 +26,15 @@ describe('GetInboxThread', () => {
     };
     const activityRepository = { findInboxMessages: sinon.stub().resolves(page) };
     const hostStatus = { recordCheck: sinon.stub().resolves() };
-    const usecase = new GetInboxThread(inbox as never, activityRepository as never, hostStatus as never);
+    const analyticsService = { track: sinon.stub() };
+    const usecase = new GetInboxThread(
+      inbox as never,
+      activityRepository as never,
+      hostStatus as never,
+      analyticsService as never
+    );
 
-    return { usecase, inbox, activityRepository, hostStatus };
+    return { usecase, inbox, activityRepository, hostStatus, analyticsService };
   }
 
   function command(fields: Partial<GetInboxThreadCommand> = {}) {
@@ -39,6 +46,24 @@ describe('GetInboxThread', () => {
       ...fields,
     });
   }
+
+  it('counts opening the thread for the owner, with the app that asked', async () => {
+    const { usecase, analyticsService } = setup();
+
+    await usecase.execute(command({ analyticsSource: 'cli' }));
+
+    expect(analyticsService.track.args).to.deep.equal([
+      [AGENT_INBOX_EVENTS.INBOX_ITEM_READ, 'user1', { _organization: 'org1', agentId: 'relay1', source: 'cli' }],
+    ]);
+  });
+
+  it('does not count the dashboard keeping an open thread up to date', async () => {
+    const { usecase, analyticsService } = setup();
+
+    await usecase.execute(command({ analyticsSource: 'dashboard', after: 'm1' }));
+
+    expect(analyticsService.track.called).to.equal(false);
+  });
 
   it('reads the messages that came after a message, with the thread as it stands now', async () => {
     const { usecase, activityRepository } = setup();
