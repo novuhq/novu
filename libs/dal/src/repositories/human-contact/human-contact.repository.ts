@@ -289,6 +289,29 @@ export class HumanContactRepository extends BaseRepositoryV2<
   }
 
   /**
+   * A contact on any relay in this environment that already stores `address` on `subscriberId`.
+   * Subscribers are shared by the environment, so a second agent can keep that id.
+   */
+  async findSubscriberSharingEmailAddress(
+    environmentId: string,
+    subscriberId: string,
+    address: string
+  ): Promise<Pick<HumanContactEntity, 'subscriberId'> | null> {
+    return this.findOne(
+      {
+        _environmentId: environmentId,
+        subscriberId,
+        $or: [
+          { 'addresses.email.verified.address': address },
+          { 'addresses.email.pending.address': address },
+          { 'addresses.email.declared.address': address },
+        ],
+      },
+      ['subscriberId']
+    );
+  }
+
+  /**
    * Contacts on this relay that already store `address` as verified, pending, or declared.
    */
   async findContactsByEmailAddress(

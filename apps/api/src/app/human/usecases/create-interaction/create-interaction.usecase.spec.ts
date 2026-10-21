@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   HttpException,
   HttpStatus,
@@ -15,6 +16,7 @@ import {
 } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { contactIdFromEmail } from '../../services/explicit-email-recipient';
 import { HumanKeylessCapService } from '../../services/human-keyless-cap.service';
 import { HumanMessageQuotaExceededException } from '../../services/human-message-quota.service';
 import { CreateInteraction } from './create-interaction.usecase';
@@ -108,6 +110,7 @@ describe('CreateInteraction', () => {
     const keylessEmailGate = { assertAllowed: sinon.stub().resolves() };
     const humanContactRepository = {
       findContactsByEmailAddress: sinon.stub().resolves([]),
+      findSubscriberSharingEmailAddress: sinon.stub().resolves(null),
       setDeclaredAddress: sinon.stub().resolves({ address: 'ada@acme.com', declaredAt: 't' }),
       clearDeclaredAddress: sinon.stub().resolves(),
     };
@@ -1028,6 +1031,54 @@ describe('CreateInteraction', () => {
         subscriberId: 'ada',
         explicitEmail: 'ada@acme.com',
       });
+    });
+
+    it('reuses the subscriber another agent already created for the same address', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanContactRepository, subscriberRepository } =
+        setup();
+      const subscriberId = contactIdFromEmail('ada+work@acme.com', true);
+      agentRepository.findOne.resolves(agent);
+      subscriberRepository.findOne.resolves({ subscriberId });
+      humanContactRepository.findSubscriberSharingEmailAddress.resolves({ subscriberId });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'email-main',
+        platform: 'email',
+        platformUserId: 'ada+work@acme.com',
+      });
+
+      await usecase.execute({ ...command, to: 'ada+work@acme.com', via: undefined } as any);
+
+      expect(subscriberRepository.create.called).to.equal(false);
+      expect(humanContactRepository.findSubscriberSharingEmailAddress.calledOnce).to.equal(true);
+      expect(humanContactRepository.findSubscriberSharingEmailAddress.firstCall.args).to.deep.equal([
+        'env1',
+        subscriberId,
+        'ada+work@acme.com',
+      ]);
+      expect(humanContactRepository.setDeclaredAddress.firstCall.args[0]).to.include({
+        subscriberId,
+        address: 'ada+work@acme.com',
+      });
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({
+        subscriberId,
+        explicitEmail: 'ada+work@acme.com',
+      });
+    });
+
+    it('does not reuse a taken subscriber that stores a different address', async () => {
+      const { usecase, command, agentRepository, subscriberRepository, humanContactRepository } = setup();
+      agentRepository.findOne.resolves(agent);
+      subscriberRepository.findOne.resolves({ subscriberId: 'taken' });
+
+      try {
+        await usecase.execute({ ...command, to: 'ada+work@acme.com', via: undefined } as any);
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(ConflictException);
+      }
+
+      expect(subscriberRepository.create.called).to.equal(false);
+      expect(humanContactRepository.setDeclaredAddress.called).to.equal(false);
     });
 
     it('sends the typed address when that contact has a different verified address', async () => {

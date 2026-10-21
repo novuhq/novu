@@ -663,6 +663,16 @@ export class CreateInteraction {
       if (await this.claimSubscriber(command, subscriberId)) {
         return subscriberId;
       }
+
+      // The id is taken. Reuse it only when it already is this address, so two agents can write to the same mailbox.
+      const shared = await this.humanContactRepository.findSubscriberSharingEmailAddress(
+        command.environmentId,
+        subscriberId,
+        address
+      );
+      if (shared) {
+        return subscriberId;
+      }
     }
 
     throw new ConflictException(`Could not pick a contact id for ${address}. Pass a contact id instead.`);
