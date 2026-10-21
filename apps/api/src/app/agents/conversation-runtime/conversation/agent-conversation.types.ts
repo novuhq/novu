@@ -173,6 +173,11 @@ export interface PersistHumanInteractionActivityParams extends ConversationActiv
     | ConversationActivitySenderTypeEnum.AGENT;
   actorId: string;
   actorName?: string;
+  /**
+   * Set on the rows of every thread but the first when one send landed in several threads, one for
+   * each contact. Row identifiers are unique per environment, so these rows also name their thread.
+   */
+  inOtherThread?: boolean;
 }
 
 export interface PersistToolResultParams extends ConversationActivityContext {

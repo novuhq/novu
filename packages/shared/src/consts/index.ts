@@ -1,3 +1,4 @@
+export * from './agent-inbox-analytics';
 export * from './agents-org-funnel';
 export * from './aws-claude-regions';
 export * from './connect-claim';

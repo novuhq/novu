@@ -14,8 +14,8 @@ export default function HomePage() {
           Agent Inbox is a tiny CLI that gives your AI agent one address on email, Telegram and Slack.
         </p>
         <div className="mt-8 flex flex-wrap items-center gap-2">
-          <a href="https://www.npmjs.com/package/@novu/human" className={buttonClassName('primary')}>
-            Get @novu/human
+          <a href="https://www.npmjs.com/package/@agentinbox/cli" className={buttonClassName('primary')}>
+            Get @agentinbox/cli
           </a>
           <a href="/sign-in" className={buttonClassName('text')}>
             Sign in

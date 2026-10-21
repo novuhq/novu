@@ -2,6 +2,10 @@ import { createHash } from 'node:crypto';
 import { BadRequestException, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import { PinoLogger, StorageService } from '@novu/application-generic';
 import { AgentEntity, type AgentPicture, AgentRepository } from '@novu/dal';
+import {
+  resolveHumanDashboardBaseUrl,
+  resolveHumanRegion,
+} from '../../shared/helpers/resolve-human-dashboard-base-url';
 import type { HumanAgentResponseDto } from '../dtos/human-agent.dto';
 import { HumanAgentIdentityService } from './human-agent-identity.service';
 
@@ -38,9 +42,16 @@ export function agentPictureUrl(agent: Pick<AgentEntity, '_id' | '_environmentId
     return undefined;
   }
 
-  const base = (process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '');
+  const path = `${agent._environmentId}/${agent._id}/${agent.picture.version}`;
 
-  return `${base}/v1/human/agent-pictures/${agent._environmentId}/${agent._id}/${agent.picture.version}`;
+  // Where the Agent Inbox dashboard runs, its API (`/api/v1/agent-pictures/…`) forwards to this one, so the
+  // people who see the picture never see this API's address. It only forwards to the US API; the EU API, and an
+  // API without a dashboard, hand out their own address.
+  if (process.env.HUMAN_DASHBOARD_URL?.trim() && resolveHumanRegion() === 'us') {
+    return `${resolveHumanDashboardBaseUrl()}/api/v1/agent-pictures/${path}`;
+  }
+
+  return `${(process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '')}/v1/human/agent-pictures/${path}`;
 }
 
 type AgentScope = { environmentId: string; organizationId: string; agentIdentifier: string };
@@ -72,6 +83,9 @@ export class HumanAgentPictureService {
       ...(pictureUrl ? { pictureUrl } : {}),
       active: agent.active !== false,
       createdAt: agent.createdAt,
+      reach: agent.reach ?? 'anyone',
+      paused: Boolean(agent.pausedAt),
+      ...(agent.pausedAt ? { pausedAt: agent.pausedAt } : {}),
     };
   }
 
@@ -129,6 +143,13 @@ export class HumanAgentPictureService {
     return { ...agent, picture: undefined };
   }
 
+  /** Drops the stored picture of an agent that is being deleted. Never fails the delete. */
+  async forget(agent: Pick<AgentEntity, 'picture'>): Promise<void> {
+    if (agent.picture?.storageKey) {
+      await this.deleteFile(agent.picture.storageKey);
+    }
+  }
+
   /** The file behind a public picture address, or `null` when the address is not (or no longer) a picture. */
   async read(address: {
     environmentId: string;
@@ -163,7 +184,7 @@ export class HumanAgentPictureService {
     );
 
     if (!agent || agent.runtime !== 'human_relay') {
-      throw new NotFoundException('There is no Human agent yet. Run `human setup` first.');
+      throw new NotFoundException('There is no agent yet. Run `npx @agentinbox/cli setup` first.');
     }
 
     return agent;

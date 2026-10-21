@@ -1,3 +1,5 @@
+import type { AgentHostVia } from '@novu/dal';
+import { AGENT_ANALYTICS_SOURCES, type AgentAnalyticsSource } from '@novu/shared';
 import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import {
@@ -12,6 +14,7 @@ import {
   type InboxStatusFilter,
   type InboxTab,
 } from '../../dtos/human-inbox.dto';
+import { AGENT_HOST_VIAS } from '../../services/human-host-status.service';
 
 /** The filters the thread list and its counts share. */
 export class InboxViewCommand extends EnvironmentWithUserCommand {
@@ -62,4 +65,14 @@ export class ListInboxThreadsCommand extends InboxViewCommand {
   @Min(0)
   @Max(HUMAN_INBOX_MAX_WAIT_SECONDS)
   waitSeconds?: number;
+
+  /** Set when a host asks, through the CLI or the MCP server: the list is then a check of the inbox. */
+  @IsOptional()
+  @IsIn(AGENT_HOST_VIAS)
+  hostVia?: AgentHostVia;
+
+  /** The app that asked, for analytics. */
+  @IsOptional()
+  @IsIn(AGENT_ANALYTICS_SOURCES)
+  analyticsSource?: AgentAnalyticsSource;
 }

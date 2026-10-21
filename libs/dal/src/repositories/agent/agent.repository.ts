@@ -7,6 +7,12 @@ import { BaseRepositoryV2 } from '../base-repository-v2';
 import { AgentDBModel, AgentEntity } from './agent.entity';
 import { Agent } from './agent.schema';
 
+/**
+ * The Human relay is delivery infrastructure, not a customer agent. Plan-usage
+ * counts skip it so a Human setup does not consume a Novu plan slot.
+ */
+const NOT_HUMAN_RELAY = { runtime: { $ne: 'human_relay' as const } };
+
 export class AgentRepository extends BaseRepositoryV2<AgentDBModel, AgentEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Agent, AgentEntity);
@@ -15,11 +21,16 @@ export class AgentRepository extends BaseRepositoryV2<AgentDBModel, AgentEntity,
   /**
    * Number of active agents in the environment. Plan-limit usage is counted per
    * environment so a dev agent promoted (synced) to production does not consume
-   * a second plan slot for the same logical agent. Inactive agents do not
-   * consume plan-limit slots.
+   * a second plan slot for the same logical agent. Inactive agents and the
+   * Human relay do not consume plan-limit slots.
    */
   async countActiveInEnvironment(organizationId: string, environmentId: string): Promise<number> {
-    return this.count({ _organizationId: organizationId, _environmentId: environmentId, active: true });
+    return this.count({
+      _organizationId: organizationId,
+      _environmentId: environmentId,
+      active: true,
+      ...NOT_HUMAN_RELAY,
+    });
   }
 
   /**
@@ -27,16 +38,21 @@ export class AgentRepository extends BaseRepositoryV2<AgentDBModel, AgentEntity,
    * for the hard creation cap — counting inactive agents too prevents bypassing
    * the cap via create/deactivate loops. Scoped per environment so promoted
    * production copies don't exhaust the cap for new creations in development.
+   * The Human relay is excluded.
    */
   async countTotalInEnvironment(organizationId: string, environmentId: string): Promise<number> {
-    return this.count({ _organizationId: organizationId, _environmentId: environmentId });
+    return this.count({
+      _organizationId: organizationId,
+      _environmentId: environmentId,
+      ...NOT_HUMAN_RELAY,
+    });
   }
 
   /**
    * Number of active agents in the environment created before the given agent,
    * using `_id` (monotonic with creation time) as the ordering key. This is the
    * agent's zero-based rank among active agents and is used for plan-limit
-   * enforcement; inactive agents do not consume slots.
+   * enforcement; inactive agents and the Human relay do not consume slots.
    */
   async countOlderAgentsInEnvironment(organizationId: string, environmentId: string, agentId: string): Promise<number> {
     return this.count({
@@ -44,6 +60,7 @@ export class AgentRepository extends BaseRepositoryV2<AgentDBModel, AgentEntity,
       _environmentId: environmentId,
       active: true,
       _id: { $lt: this.convertStringToObjectId(agentId) },
+      ...NOT_HUMAN_RELAY,
     });
   }
 
@@ -51,7 +68,7 @@ export class AgentRepository extends BaseRepositoryV2<AgentDBModel, AgentEntity,
    * Ids of the oldest `limit` active agents in the environment, using `_id`
    * (monotonic with creation time) as the ordering key. These are the agents
    * that fall within the plan limit; any other active agent in the environment
-   * is over-limit. Inactive agents do not consume slots.
+   * is over-limit. Inactive agents and the Human relay do not consume slots.
    */
   async findOldestAgentIds(organizationId: string, environmentId: string, limit: number): Promise<string[]> {
     if (limit <= 0) {
@@ -59,7 +76,7 @@ export class AgentRepository extends BaseRepositoryV2<AgentDBModel, AgentEntity,
     }
 
     const agents = await this.find(
-      { _organizationId: organizationId, _environmentId: environmentId, active: true },
+      { _organizationId: organizationId, _environmentId: environmentId, active: true, ...NOT_HUMAN_RELAY },
       ['_id'],
       {
         sort: { _id: 1 },

@@ -2697,11 +2697,12 @@ describe('agent dispatch via NovuRequestHandler', () => {
     });
 
     await handler.createHandler()();
-    await vi.waitFor(() => expect(errorSpy).toHaveBeenCalled());
 
-    const logged = errorSpy.mock.calls[0].join(' ');
-    expect(logged).toContain('[agent:test-bot] Turn failed (onMessage): Delivery failed: Bad Gateway');
-    expect(logged).not.toContain('<p>error</p>');
+    const logged = () => errorSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+    await vi.waitFor(() =>
+      expect(logged()).toContain('[agent:test-bot] Turn failed (onMessage): Delivery failed: Bad Gateway')
+    );
+    expect(logged()).not.toContain('<p>error</p>');
 
     errorSpy.mockRestore();
   });
@@ -3131,6 +3132,66 @@ describe('tool approval', () => {
       replyBodies.find((p) => p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev'))
     ).toBeUndefined();
   });
+
+  it.each([
+    [
+      true,
+      [
+        {
+          type: 'tool-use-result',
+          toolUseId: 'tc',
+          content: [
+            { type: 'text', text: 'Tool "get_weather" approved' },
+            { type: 'json', value: null },
+          ],
+        },
+      ],
+    ],
+    [false, []],
+  ])(
+    'records a tool result for agent() only when the gated tool was approved (approved=%s)',
+    async (approved, expectedResults) => {
+      const posts: any[] = [];
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (_url, init: any) => {
+          posts.push(JSON.parse(init.body));
+
+          return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+        })
+      );
+
+      await dispatchAgentEvent({
+        agent: agent('a', {
+          onMessage: () => undefined,
+          onToolApproval: (decision) => (decision.approved ? 'Sunny in Berlin' : 'Skipped'),
+        }),
+        event: 'onAction',
+        bridge: approvalBridge({
+          event: 'onAction',
+          message: null,
+          history: [
+            {
+              role: 'agent',
+              type: 'tool_approval_request',
+              content: '',
+              toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'get_weather', input: { city: 'Berlin' } },
+              createdAt: '1',
+            },
+          ],
+          action: { id: buildApprovalActionId(approved ? 'approve' : 'deny', 'tc'), sourceMessageId: 'm_prev' },
+        }),
+        secretKey: 's',
+      });
+
+      const results = posts
+        .flatMap((post) => post.events ?? [])
+        .filter((envelope) => envelope.event.type === 'tool-use-result')
+        .map((envelope) => envelope.event);
+      // The reply text ('Sunny in Berlin') must not leak into the recorded tool output.
+      expect(results).toEqual(expectedResults);
+    }
+  );
 
   it('routes a HITL tool-gate settlement to onToolApproval from humanResponse', async () => {
     const seen: { decision?: { approved: boolean; toolCall: unknown } } = {};

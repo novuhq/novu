@@ -7,10 +7,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AgentEmailInboxQuotaExceededException } from '@novu/application-generic';
-import { HumanChannelViaEnum, HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
+import {
+  AGENT_INBOX_EVENTS,
+  HumanChannelViaEnum,
+  HumanInteractionKindEnum,
+  HumanInteractionStatusEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { HumanKeylessCapService } from '../../services/human-keyless-cap.service';
+import { HumanMessageQuotaExceededException } from '../../services/human-message-quota.service';
 import { CreateInteraction } from './create-interaction.usecase';
 
 describe('CreateInteraction', () => {
@@ -62,6 +68,14 @@ describe('CreateInteraction', () => {
       reserveCredits: sinon.stub().resolves(credits),
       credits,
     };
+    const messageCredits = {
+      accept: sinon.stub(),
+      release: sinon.stub().resolves(),
+    };
+    const messageQuota = {
+      reserveCredits: sinon.stub().resolves(messageCredits),
+      messageCredits,
+    };
     const conversation = {
       _id: 'conv1',
       _agentId: 'agent-relay',
@@ -92,6 +106,7 @@ describe('CreateInteraction', () => {
       execute: sinon.stub().resolves({ ...created, _conversationId: 'conv1', subscriberIds: ['sub-1', 'sub-2'] }),
     };
     const keylessEmailGate = { assertAllowed: sinon.stub().resolves() };
+    const analyticsService = { track: sinon.stub() };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
@@ -100,6 +115,7 @@ describe('CreateInteraction', () => {
       logger as any,
       activityRecorder as any,
       inboxQuota as any,
+      messageQuota as any,
       new HumanKeylessCapService(
         humanInteractionRepository as any,
         deliveryService as any,
@@ -109,7 +125,8 @@ describe('CreateInteraction', () => {
       inbox as any,
       conversationService as any,
       createConversationInteraction as any,
-      keylessEmailGate as any
+      keylessEmailGate as any,
+      analyticsService as any
     );
     const command = {
       userId: 'user1',
@@ -130,12 +147,71 @@ describe('CreateInteraction', () => {
       humanInteractionRepository,
       connectClaimTokenService,
       inboxQuota,
+      messageQuota,
       inbox,
       conversationService,
       createConversationInteraction,
       keylessEmailGate,
+      analyticsService,
     };
   }
+
+  describe('analytics', () => {
+    it('counts one message for each contact it reached, with its type, channel and the app that asked', async () => {
+      const {
+        usecase,
+        command,
+        created,
+        agentRepository,
+        deliveryService,
+        humanInteractionRepository,
+        analyticsService,
+      } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel
+        .onSecondCall()
+        .resolves({ integrationIdentifier: 'slack-main', platform: 'slack', platformUserId: 'U1' });
+      humanInteractionRepository.create.resolves({ ...created, subscriberIds: ['sub-1', 'sub-2'] });
+
+      await usecase.execute({ ...command, to: ['sub-1', 'sub-2'], analyticsSource: 'mcp' } as any);
+
+      const properties = { _organization: 'org1', agentId: 'agent-relay', type: 'approve', source: 'mcp' };
+      expect(analyticsService.track.args).to.deep.equal([
+        [AGENT_INBOX_EVENTS.MESSAGE_SENT, 'user1', { ...properties, channel: 'telegram' }],
+        [AGENT_INBOX_EVENTS.MESSAGE_SENT, 'user1', { ...properties, channel: 'slack' }],
+      ]);
+    });
+
+    it('counts a reply into a thread once, on the channel of the thread', async () => {
+      const { usecase, command, agentRepository, analyticsService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+
+      await usecase.execute({
+        ...command,
+        kind: HumanInteractionKindEnum.TELL,
+        to: undefined,
+        thread: 'conv_abc',
+      } as any);
+
+      expect(analyticsService.track.args).to.deep.equal([
+        [
+          AGENT_INBOX_EVENTS.MESSAGE_SENT,
+          'user1',
+          { _organization: 'org1', agentId: 'agent-relay', type: 'tell', channel: 'telegram', source: 'api' },
+        ],
+      ]);
+    });
+
+    it('counts nothing when the message reached nobody', async () => {
+      const { usecase, command, agentRepository, deliveryService, analyticsService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.deliver.rejects(new Error('telegram down'));
+
+      await usecase.execute(command as any).catch(() => undefined);
+
+      expect(analyticsService.track.called).to.equal(false);
+    });
+  });
 
   describe('threads', () => {
     it('files a send to a contact under their thread, marks it read and reports what was unread', async () => {
@@ -386,7 +462,7 @@ describe('CreateInteraction', () => {
       expect.fail('should have thrown');
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
-      expect((err as NotFoundException).message).to.include('human setup');
+      expect((err as NotFoundException).message).to.include('npx @agentinbox/cli setup');
     }
   });
 
@@ -629,7 +705,7 @@ describe('CreateInteraction', () => {
     }
 
     it('creates normally while under the cap', async () => {
-      const { usecase, command, agentRepository, humanInteractionRepository, deliveryService } = setup();
+      const { usecase, command, agentRepository, humanInteractionRepository, deliveryService, messageQuota } = setup();
       agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
       humanInteractionRepository.count.resolves(1);
 
@@ -637,6 +713,7 @@ describe('CreateInteraction', () => {
 
       expect(humanInteractionRepository.create.calledOnce).to.equal(true);
       expect(deliveryService.deliverContent.called).to.equal(false);
+      expect(messageQuota.reserveCredits.called).to.equal(false);
     });
 
     it('sends the sign-up card instead of the prompt and returns 429 with the claim link once capped', async () => {
@@ -647,6 +724,7 @@ describe('CreateInteraction', () => {
         humanInteractionRepository,
         deliveryService,
         connectClaimTokenService,
+        messageQuota,
       } = setup();
       agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
       humanInteractionRepository.count.resolves(2);
@@ -674,6 +752,7 @@ describe('CreateInteraction', () => {
       expect(deliveryService.deliverContent.firstCall.args[0]).to.equal('agent-hitl');
       expect(JSON.stringify(deliveryService.deliverContent.firstCall.args[2])).to.include('Sign up');
       expect(connectClaimTokenService.tryMarkSignupCtaPosted.calledOnceWith('human:env1')).to.equal(true);
+      expect(messageQuota.reserveCredits.called).to.equal(false);
     });
 
     it('does not resend the card when the CTA was already posted for the environment', async () => {
@@ -750,7 +829,7 @@ describe('CreateInteraction', () => {
       }
 
       expect(thrown?.getStatus()).to.equal(403);
-      expect(thrown?.message).to.include('human login');
+      expect(thrown?.message).to.include('npx @agentinbox/cli login');
       expect(agentRepository.findOne.called).to.equal(false);
     });
 
@@ -762,7 +841,7 @@ describe('CreateInteraction', () => {
       const thrown = (await usecase.execute(command as any).catch((error) => error)) as HttpException;
 
       expect(thrown.getStatus()).to.equal(403);
-      expect(thrown.message).to.include('human setup --secret-key');
+      expect(thrown.message).to.include('npx @agentinbox/cli setup --secret-key');
     });
 
     it('ignores the cap for non-keyless organizations', async () => {
@@ -798,8 +877,16 @@ describe('CreateInteraction', () => {
   });
 
   it('still delivers Telegram when the email slice of a fan-out is over the cap', async () => {
-    const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository, inboxQuota } =
-      setup();
+    const {
+      usecase,
+      command,
+      created,
+      agentRepository,
+      deliveryService,
+      humanInteractionRepository,
+      inboxQuota,
+      messageQuota,
+    } = setup();
     agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
     deliveryService.resolveChannel.onFirstCall().resolves({
       integrationIdentifier: 'inbox',
@@ -820,7 +907,55 @@ describe('CreateInteraction', () => {
 
     expect(deliveryService.deliver.calledOnce).to.equal(true);
     expect(deliveryService.deliver.firstCall.args[1].platform).to.equal('telegram');
+    expect(messageQuota.reserveCredits.calledOnce).to.equal(true);
+    expect(messageQuota.reserveCredits.firstCall.args).to.deep.equal(['org1', 1]);
     expect(result.failedTo).to.deep.equal(['sub-1']);
     expect(result.to).to.deep.equal(['sub-2']);
+  });
+
+  it('rejects a signed-up send with the message cap and does not create the interaction', async () => {
+    const { usecase, command, agentRepository, humanInteractionRepository, deliveryService, messageQuota } = setup();
+    agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+    messageQuota.reserveCredits.rejects(
+      new HumanMessageQuotaExceededException('daily', 50, 3600, '2026-10-14T00:00:00.000Z')
+    );
+
+    const thrown = (await usecase.execute(command as any).catch((error) => error)) as HttpException;
+    const body = thrown.getResponse() as { code: string; message: string };
+
+    expect(thrown.getStatus()).to.equal(HttpStatus.TOO_MANY_REQUESTS);
+    expect(body.code).to.equal('human_message_daily_cap');
+    expect(body.message).to.equal('Human message daily limit reached (50). Resets at 2026-10-14T00:00:00.000Z.');
+    expect(body.message.toLowerCase()).to.not.include('upgrade');
+    expect(body.message.toLowerCase()).to.not.include('plan');
+    expect(humanInteractionRepository.create.called).to.equal(false);
+    expect(deliveryService.deliver.called).to.equal(false);
+  });
+
+  it('charges one message credit per recipient that was delivered', async () => {
+    const { usecase, command, agentRepository, messageQuota } = setup();
+    agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
+
+    await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any);
+
+    expect(messageQuota.reserveCredits.calledOnce).to.equal(true);
+    expect(messageQuota.reserveCredits.firstCall.args).to.deep.equal(['org1', 2]);
+    expect(messageQuota.messageCredits.accept.callCount).to.equal(2);
+    expect(messageQuota.messageCredits.release.calledOnce).to.equal(true);
+  });
+
+  it('releases a thread reservation when delivery does not happen', async () => {
+    const { usecase, command, agentRepository, createConversationInteraction, messageQuota } = setup();
+    agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+    createConversationInteraction.execute.rejects(new Error('thread send failed'));
+
+    const thrown = await usecase
+      .execute({ ...command, to: undefined, thread: 'conv_abc' } as any)
+      .catch((error) => error);
+
+    expect((thrown as Error).message).to.equal('thread send failed');
+    expect(messageQuota.reserveCredits.calledOnceWith('org1', 1)).to.equal(true);
+    expect(messageQuota.messageCredits.accept.called).to.equal(false);
+    expect(messageQuota.messageCredits.release.calledOnce).to.equal(true);
   });
 });

@@ -13,8 +13,13 @@ import {
 } from '@/app/(account)/(dashboard)/channels/actions';
 import { ChannelIcon } from '@/components/channels/channel-icon';
 import {
+  AgentPromptOption,
   ConnectedCard,
+  DRAWER_FOOTER,
+  DRAWER_HEADER,
   FieldError,
+  FOCUSED_INPUT,
+  RecheckButton,
   SetupCheck,
   SWAP_LAYER,
   useConnectionPoll,
@@ -25,6 +30,7 @@ import { CopyField } from '@/components/ui/copy-field';
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
 import { Field, Input } from '@/components/ui/input';
 import { Step, Stepper } from '@/components/ui/stepper';
+import { toast } from '@/components/ui/toast';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 import { cn } from '@/lib/utils';
 
@@ -36,12 +42,19 @@ type SetupStep = 'checking' | 'unavailable' | 'create' | 'token' | 'start' | 'co
 type TelegramSetupProps = {
   /** How far the setup got when the page loaded, so the drawer has something to show the moment it opens. */
   setup: TelegramSetupState;
+  /** How the agent is called in a sentence: its address without the domain. */
+  handle: string;
+  /** What the operator hands their own agent to do the setup with them instead. */
+  prompt: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-/** The drawer that walks through giving the agent a Telegram bot. The Channels table opens it. */
-export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps) {
+/**
+ * The drawer that walks through giving the agent a Telegram bot. The Configure page's channels open it, and
+ * so does the last step of the onboarding.
+ */
+export function TelegramSetup({ setup, handle, prompt, open, onOpenChange }: TelegramSetupProps) {
   const router = useRouter();
   const [step, setStep] = useState<SetupStep>(stepOf(setup));
   const [bot, setBot] = useState(botOf(setup));
@@ -76,8 +89,27 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
 
   const check = useCallback(async () => {
     setStep('checking');
-    show(await loadTelegramSetupAction().catch((): TelegramSetupState => ({ step: 'unknown' })));
-  }, [show]);
+    const next = await loadTelegramSetupAction().catch((): TelegramSetupState => ({ step: 'unknown' }));
+    show(next);
+    // The page couldn't tell in time: when the drawer finds it connected, the card and the row catch up.
+    if (next.step === 'connected') {
+      router.refresh();
+    }
+  }, [show, router]);
+
+  // The refresh button of a saved token: asks Telegram who the bot is again, without leaving the steps.
+  async function recheck() {
+    const next = await loadTelegramSetupAction().catch((): TelegramSetupState => ({ step: 'unknown' }));
+    if (next.step === 'unknown') {
+      toast('We couldn’t check your Telegram bot just now. Please try again.', 'error');
+    } else {
+      show(next);
+      // Found connected here first: the page's card and channel row catch up, as after the poll.
+      if (next.step === 'connected' && setup.step !== 'connected') {
+        router.refresh();
+      }
+    }
+  }
 
   // Reopening picks the setup up where the page says it is: a saved bot goes straight to "say hi".
   useEffect(() => {
@@ -133,12 +165,15 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
   const botName = bot.username ? `@${bot.username}` : 'your bot';
   const stepStatus = (current: SetupStep, done: SetupStep[]) =>
     step === current ? 'current' : done.includes(step) ? 'done' : 'upcoming';
+  const tokenStatus = error && step === 'token' ? 'error' : stepStatus('token', ['start', 'connected']);
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
         title="Set up Telegram"
-        description="Give your agent its own Telegram bot. Takes about a minute."
+        description={`Give ${handle} a Telegram bot. About a minute.`}
+        headerClassName={DRAWER_HEADER}
+        footerClassName={DRAWER_FOOTER}
         footer={
           step === 'connected' && (
             <DrawerClose asChild>
@@ -147,6 +182,7 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
           )
         }
       >
+        {(step === 'create' || step === 'token' || step === 'start') && <AgentPromptOption prompt={prompt} />}
         {(step === 'checking' || step === 'unavailable') && (
           <SetupCheck state={step} channel="Telegram" onRetry={() => void check()} />
         )}
@@ -163,7 +199,7 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
               </>
             }
           >
-            <div className="flex flex-col gap-4.5 sm:flex-row sm:items-start">
+            <div className="flex flex-col gap-4.5 sm:flex-row sm:items-center">
               <div className="flex min-w-0 flex-1 flex-col gap-2.5">
                 <p className="text-[13px] leading-4.5 text-secondary">
                   Open @BotFather in Telegram and send /newbot. Pick a name people will see, and a username ending in
@@ -192,7 +228,7 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
                   />
                   <ChannelIcon
                     via="telegram"
-                    className="absolute top-1/2 left-1/2 size-6 -translate-1/2 ring-2 ring-foreground"
+                    className="absolute top-1/2 left-1/2 size-6 -translate-1/2 [&>svg]:size-3.5"
                   />
                 </div>
                 <figcaption className="text-xs leading-4 text-muted">Scan to open on your phone</figcaption>
@@ -203,8 +239,9 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
           <Step
             index={2}
             title="Paste the bot token"
-            status={error && step === 'token' ? 'error' : stepStatus('token', ['start', 'connected'])}
+            status={tokenStatus}
             summary={`${botName} · token saved`}
+            action={tokenStatus === 'done' && <RecheckButton label="Check the bot again" onRecheck={recheck} />}
             footer={
               <>
                 <Button variant="secondary" disabled={saving} onClick={() => setStep('create')}>
@@ -239,7 +276,7 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
                     placeholder="Done! Congratulations on your new bot…"
                     autoComplete="off"
                     spellCheck={false}
-                    className="font-mono"
+                    className={cn('font-mono', FOCUSED_INPUT)}
                   />
                 )}
               </Field>
@@ -314,7 +351,7 @@ export function TelegramSetup({ setup, open, onOpenChange }: TelegramSetupProps)
 
           {step === 'connected' && (
             <ConnectedCard via="telegram" title="Telegram connected">
-              Your agent can now reach people as {botName}.
+              {handle} can now reach people as {botName}.
             </ConnectedCard>
           )}
         </Stepper>

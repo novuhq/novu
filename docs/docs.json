@@ -420,7 +420,27 @@
               "platform/account/roles-and-permissions",
               "platform/account/manage-members",
               "platform/account/billing",
-              "platform/account/sso"
+              "platform/account/sso",
+              {
+                "group": "SSO providers",
+                "pages": [
+                  "platform/account/sso/okta",
+                  "platform/account/sso/microsoft-entra",
+                  "platform/account/sso/google-workspace",
+                  "platform/account/sso/custom-saml",
+                  "platform/account/sso/oidc"
+                ]
+              },
+              {
+                "group": "Directory sync",
+                "pages": [
+                  "platform/account/directory-sync",
+                  "platform/account/directory-sync/okta",
+                  "platform/account/directory-sync/microsoft-entra",
+                  "platform/account/directory-sync/google-workspace",
+                  "platform/account/directory-sync/custom-scim"
+                ]
+              }
             ],
             "icon": "building-2"
           },
@@ -1066,6 +1086,7 @@
                 "pages": [
                   "framework/studio",
                   "framework/endpoint",
+                  "framework/errors",
                   "framework/tags",
                   "framework/payload",
                   "framework/controls"

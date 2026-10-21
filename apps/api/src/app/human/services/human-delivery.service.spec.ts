@@ -74,7 +74,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
       expect.fail('should have thrown');
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
-      expect((err as NotFoundException).message).to.include('human setup');
+      expect((err as NotFoundException).message).to.include('npx @agentinbox/cli setup');
       expect((err as NotFoundException).message).to.not.include('human contact invite');
     }
   });
@@ -534,6 +534,44 @@ describe('HumanDeliveryService.listInviteChannels', () => {
       { via: HumanChannelViaEnum.SLACK, integrationIdentifier: 'slack-main' },
       { via: HumanChannelViaEnum.TELEGRAM, integrationIdentifier: 'tg-main' },
     ]);
+  });
+});
+
+describe('HumanDeliveryService.listWorkingChannels', () => {
+  it('lists email once the agent has its address, and Telegram or Slack once someone linked a chat', async () => {
+    const agentIntegrationRepository = {
+      find: sinon.stub().resolves([1, 2, 3].map((n) => ({ _integrationId: `int${n}` }))),
+    };
+    const integrationRepository = {
+      find: sinon.stub().resolves([
+        { identifier: 'email-main', providerId: 'agent-email-inbox', channel: ChannelTypeEnum.EMAIL, credentials: {} },
+        { identifier: 'slack-main', providerId: ChatProviderIdEnum.Slack, channel: ChannelTypeEnum.CHAT },
+        { identifier: 'tg-main', providerId: ChatProviderIdEnum.Telegram, channel: ChannelTypeEnum.CHAT },
+      ]),
+    };
+    const channelEndpointRepository = {
+      findOne: sinon
+        .stub()
+        .callsFake(async ({ integrationIdentifier }) =>
+          integrationIdentifier === 'tg-main' ? { _id: 'chat1' } : null
+        ),
+    };
+    const service = new HumanDeliveryService(
+      agentIntegrationRepository as never,
+      channelEndpointRepository as never,
+      integrationRepository as never,
+      {} as never,
+      {} as never,
+      emailGate() as never
+    );
+
+    const channels = await service.listWorkingChannels({
+      environmentId: 'env1',
+      organizationId: 'org1',
+      agent: { _id: 'a1', identifier: 'human-relay', name: 'Human' },
+    });
+
+    expect(channels).to.deep.equal([HumanChannelViaEnum.TELEGRAM]);
   });
 });
 

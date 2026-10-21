@@ -11,7 +11,7 @@ import {
   listAgentIntegrations,
   listAgents,
 } from '@/api/agents';
-import { docsUrl } from '@/components/header-navigation/support-drawer-constants';
+import { docsUrl } from '@/components/help-panel';
 import { IS_SELF_HOSTED, ONBOARDING_DEMO_WORKFLOW_ID } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';

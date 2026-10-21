@@ -37,7 +37,7 @@ type InactiveReason = 'expired' | 'declined' | 'invalid';
 type InviteView = 'channels' | InviteChannelVia | 'done';
 
 /**
- * Public page opened by someone invited with `human contact invite`. The token in the link is the
+ * Public page opened by someone invited with `contact invite`. The token in the link is the
  * only credential. The person picks which of the inviter's channels (Email, Telegram, Slack) the agent
  * may reach them on and which one is their default. The status refreshes while the page is
  * open, so a card flips to "Connected" once they finish in Telegram or Slack.
@@ -76,6 +76,18 @@ export function InvitePage({ apiUrl, token }: { apiUrl: string; token: string })
   }
 
   return <ActiveInvite apiUrl={apiUrl} token={token} status={state.status} onChanged={() => void refresh()} />;
+}
+
+/**
+ * An invite link this site can't open: one the EU API issued, as Agent Inbox's API only reaches the US region.
+ * It shows as not valid, and its token is sent nowhere.
+ */
+export function UnsupportedInvite() {
+  return (
+    <InviteCard step="inactive">
+      <InactiveInvite reason="invalid" />
+    </InviteCard>
+  );
 }
 
 function followConnectResult(

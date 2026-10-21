@@ -1,10 +1,9 @@
 'use client';
 
-import { ArrowUpRight, Info } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useState } from 'react';
 
-import { checkToolConnectedAction } from '@/app/(account)/(dashboard)/configure/actions';
 import { useConnectionPoll, WaitingLine } from '@/components/channels/setup-parts';
 import { Button, buttonClassName } from '@/components/ui/button';
 import { CodeBlock } from '@/components/ui/code-block';
@@ -13,29 +12,48 @@ import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
 import { MascotFace } from '@/components/ui/mascot-face';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { useSwap } from '@/hooks/use-swap';
-import { type AiTool, cursorInstallLink, cursorMcpConfig, type ToolId } from '@/lib/ai-tools';
+import { type AiTool, cursorInstallLink, cursorMcpConfig } from '@/lib/ai-tools';
+import type { ConnectApi } from '@/lib/host-status';
 import { cn } from '@/lib/utils';
 
 /** How long the steps take to fade out before "connected" rises in. */
 const SWAP_MS = 200;
 
 type ConnectToolDrawerProps = {
-  /** The tool to connect. The drawer keeps showing it while it slides shut. */
+  /** The chat app to connect. The drawer keeps showing it while it slides shut. */
   tool: AiTool;
-  /** The hosted Human MCP server the tool is pointed at. */
+  /** The hosted MCP server the app is pointed at. */
   mcpUrl: string;
-  /** Whether the tool had signed in to the account when the page loaded. */
+  /** How the agent is called in a sentence: its address without the domain. */
+  handle: string;
+  /** Whether the app had signed in to the account when the page loaded. */
   connected: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** "Done" once the app is connected. Closes this drawer by default; one opened from another closes both. */
+  onDone?: () => void;
+  /** Opened from another drawer, which it covers: the page behind stays as dim as it was. */
+  nested?: boolean;
+  api: Pick<ConnectApi, 'isToolSignedIn'>;
 };
 
 /**
- * The drawer that walks through connecting one AI tool to Human: the tool adds the MCP server, and its
- * first use opens a Human sign-in window. A tile on the Agent page opens it. While it's open it asks
- * whether the tool has signed in, and the steps then give way to "connected".
+ * The drawer that walks through connecting a chat app to the agent's inbox (`4c.1 · ChatGPT`): the app adds
+ * the MCP server, and its first use opens a sign-in window. While it's open it asks whether this app has
+ * signed in, as the MCP server records for each app, and the steps then give way to
+ * "<app> is now <agent>" (`4c.2`). Only ChatGPT's is drawn; Claude's and Cursor's follow it with their own steps.
  */
-export function ConnectToolDrawer({ tool, mcpUrl, connected, open, onOpenChange }: ConnectToolDrawerProps) {
+export function ConnectToolDrawer({
+  tool,
+  mcpUrl,
+  handle,
+  connected,
+  open,
+  onOpenChange,
+  onDone,
+  nested = false,
+  api,
+}: ConnectToolDrawerProps) {
   const router = useRouter();
   // Known before the page has been reloaded with it.
   const [signedIn, setSignedIn] = useState(false);
@@ -43,7 +61,9 @@ export function ConnectToolDrawer({ tool, mcpUrl, connected, open, onOpenChange 
 
   useConnectionPoll({
     waiting: open && !isConnected,
-    check: async () => (await checkToolConnectedAction(tool.id)) || null,
+    // Only this app's own sign-in counts: the MCP server is shared by every chat app, so a check through it
+    // could be another app's.
+    check: async () => (await api.isToolSignedIn(tool.id).catch(() => false)) || null,
     onConnected: () => {
       setSignedIn(true);
       router.refresh();
@@ -59,13 +79,14 @@ export function ConnectToolDrawer({ tool, mcpUrl, connected, open, onOpenChange 
       <DrawerContent
         eyebrow="Connect"
         title={tool.name}
-        icon={<ToolIcon tool={tool} className="size-10 rounded-[9px]" />}
+        icon={<ToolIcon tool={tool} className="size-10 rounded-[8.75px]" />}
         className="max-w-140"
-        // The connect drawers keep 20px to the edges and a line under the header, with the close button level with its top.
-        headerClassName="items-center gap-3.75 border-b border-border px-5 py-4.5 [&>button]:m-0 [&>button]:self-start"
-        bodyClassName="gap-0 px-5 pt-4.5"
+        // 18px above and below the header and 20px to the edges, with the close button level with its top.
+        headerClassName="items-center gap-3 border-b border-border px-5 py-4.5 [&>button]:m-0 [&>button]:self-start"
+        bodyClassName="gap-0 p-5"
         footerClassName="px-5"
-        footer={<Footer tool={tool} connected={showsConnected} />}
+        overlayClassName={nested ? 'bg-transparent' : undefined}
+        footer={<Footer tool={tool} mcpUrl={mcpUrl} connected={showsConnected} onDone={onDone} />}
       >
         {/* The steps and "connected" differ in height; the block follows while one fades into the other. */}
         <div
@@ -77,13 +98,17 @@ export function ConnectToolDrawer({ tool, mcpUrl, connected, open, onOpenChange 
             <div
               key={shown}
               className={cn(
-                'flex flex-col',
+                'flex flex-col gap-5.5',
                 leaving
                   ? 'opacity-0 transition-opacity duration-200 ease-in motion-reduce:transition-none'
                   : 'animate-rise-in motion-reduce:animate-none'
               )}
             >
-              {showsConnected ? <Connected tool={tool} /> : <Steps tool={tool.id} mcpUrl={mcpUrl} />}
+              {showsConnected ? (
+                <Connected tool={tool} handle={handle} />
+              ) : (
+                <Steps tool={tool} mcpUrl={mcpUrl} handle={handle} />
+              )}
             </div>
           </div>
         </div>
@@ -92,7 +117,7 @@ export function ConnectToolDrawer({ tool, mcpUrl, connected, open, onOpenChange 
   );
 }
 
-/** A tool's logo on its rounded tile. */
+/** A chat app's logo on its rounded tile, with the faint inner line of the design's `Brand logo`. */
 export function ToolIcon({ tool, className }: { tool: AiTool; className?: string }) {
   return (
     <span className={cn('relative block shrink-0 overflow-hidden', className)}>
@@ -102,124 +127,111 @@ export function ToolIcon({ tool, className }: { tool: AiTool; className?: string
   );
 }
 
-function Footer({ tool, connected }: { tool: AiTool; connected: boolean }) {
-  if (connected || !tool.settingsUrl) {
-    return (
+type FooterProps = { tool: AiTool; mcpUrl: string; connected: boolean; onDone?: () => void };
+
+function Footer({ tool, mcpUrl, connected, onDone }: FooterProps) {
+  const [cursorLink] = useState(() => (tool.id === 'cursor' ? cursorInstallLink(mcpUrl) : null));
+
+  if (connected) {
+    return onDone ? (
+      <Button onClick={onDone}>Done</Button>
+    ) : (
       <DrawerClose asChild>
-        <Button variant={connected ? 'primary' : 'secondary'}>Done</Button>
+        <Button>Done</Button>
       </DrawerClose>
     );
   }
 
-  return (
+  if (cursorLink) {
+    return (
+      <a href={cursorLink} className={buttonClassName('primary')}>
+        <ArrowUpRight aria-hidden="true" className="size-3.5" />
+        Add to Cursor
+      </a>
+    );
+  }
+
+  return tool.settingsUrl ? (
     <a href={tool.settingsUrl} target="_blank" rel="noreferrer" className={buttonClassName('primary')}>
       <ArrowUpRight aria-hidden="true" className="size-3.5" />
       Open {tool.name} settings
       <span className="sr-only"> (opens in a new tab)</span>
     </a>
+  ) : null;
+}
+
+function Steps({ tool, mcpUrl, handle }: { tool: AiTool; mcpUrl: string; handle: string }) {
+  const url = (
+    <CopyField
+      value={mcpUrl}
+      // The design writes the address in the brighter text color.
+      display={<span className="text-foreground">{mcpUrl}</span>}
+      label="Copy the MCP server address"
+      action="Copy"
+    />
   );
-}
-
-function Steps({ tool, mcpUrl }: { tool: ToolId; mcpUrl: string }) {
-  if (tool === 'cursor') {
-    return <CursorSteps mcpUrl={mcpUrl} />;
-  }
-
-  return tool === 'claude' ? <ClaudeSteps mcpUrl={mcpUrl} /> : <ChatGptSteps mcpUrl={mcpUrl} />;
-}
-
-function ChatGptSteps({ mcpUrl }: { mcpUrl: string }) {
-  return (
-    <>
-      <Intro>Add Human as an MCP App so ChatGPT can ask you before it acts.</Intro>
-      <StepList>
-        <Step index={1} title="Add MCP Server">
-          In ChatGPT, open Settings › Plugins › Add › Add MCP Server.
-        </Step>
-        <Step
-          index={2}
-          title="Connect to a custom MCP"
-          extra={
-            <CopyField
-              value={mcpUrl}
-              label="Copy the Human MCP URL"
-              action="Copy"
-              className="py-2.25 pr-2.25 pl-3.25"
-            />
-          }
-        >
-          Name it Human, switch to Streamable HTTP and paste this URL.
-        </Step>
-        <Step index={3} title="Sign in to Human">
-          ChatGPT opens a sign-in window. Approve it and you are done.
-        </Step>
-      </StepList>
-      <WaitingLine className="mt-5.5">Waiting for ChatGPT to connect…</WaitingLine>
-    </>
-  );
-}
-
-function ClaudeSteps({ mcpUrl }: { mcpUrl: string }) {
-  return (
-    <>
-      <Intro>Works in Claude on the web, desktop and mobile.</Intro>
-      <StepList>
-        <Step index={1} title="Open your connectors">
-          In Claude, open Settings › Connectors and choose Add custom connector.
-        </Step>
-        <Step
-          index={2}
-          title="Add custom connector"
-          extra={<CopyField value={mcpUrl} label="Copy the Human MCP URL" className="pl-3.25" />}
-        >
-          Name it Human and paste this URL.
-        </Step>
-        <Step index={3} title="Connect and sign in">
-          Click Connect, then approve Human in the window that opens.
-        </Step>
-      </StepList>
-      <WaitingLine className="mt-5.5">Waiting for Claude to connect…</WaitingLine>
-    </>
-  );
-}
-
-function CursorSteps({ mcpUrl }: { mcpUrl: string }) {
-  const [installLink] = useState(() => cursorInstallLink(mcpUrl));
 
   return (
     <>
-      <Intro>One click adds the Human MCP server to Cursor.</Intro>
-      <a href={installLink} className={buttonClassName('primary', 'mt-4.5 self-start')}>
-        <ArrowUpRight aria-hidden="true" className="size-3.5" />
-        Add to Cursor
-      </a>
-      <p className="mt-6 text-xs leading-4 text-muted">Or add it to ~/.cursor/mcp.json</p>
-      <CodeBlock code={cursorMcpConfig(mcpUrl)} label="Copy the MCP config" className="mt-2.5 rounded-md" />
-      <p className="mt-5 flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5 text-xs leading-4 text-secondary">
-        <Info aria-hidden="true" className="size-3.5 shrink-0" />
-        The first time Cursor asks someone, it opens a sign-in link. Approve it once.
+      <p className="text-[13px] leading-4.5 text-secondary">
+        Connect {tool.name} to {handle}’s inbox.
       </p>
+      <ol className="flex flex-col gap-4.5">
+        {tool.id === 'chatgpt' && (
+          <>
+            <Step index={1} title="Turn on developer mode">
+              In ChatGPT, open Settings › Apps & Connectors › Advanced and switch on Developer mode.
+            </Step>
+            <Step index={2} title="Create a connector" extra={url}>
+              Name it Inbox and paste this URL.
+            </Step>
+            <Step index={3} title="Sign in to Inbox">
+              ChatGPT opens a sign-in window. Approve it and ChatGPT gets its address.
+            </Step>
+          </>
+        )}
+        {tool.id === 'claude' && (
+          <>
+            <Step index={1} title="Open your connectors">
+              In Claude, open Settings › Connectors and choose Add custom connector.
+            </Step>
+            <Step index={2} title="Add a custom connector" extra={url}>
+              Name it Inbox and paste this URL.
+            </Step>
+            <Step index={3} title="Sign in to Inbox">
+              Click Connect and Claude opens a sign-in window. Approve it and Claude gets its address.
+            </Step>
+          </>
+        )}
+        {tool.id === 'cursor' && (
+          <>
+            <Step
+              index={1}
+              title="Add the MCP server"
+              extra={<CodeBlock code={cursorMcpConfig(mcpUrl)} label="Copy the MCP config" className="rounded-md" />}
+            >
+              Add to Cursor does it in one click. Or add this to ~/.cursor/mcp.json.
+            </Step>
+            <Step index={2} title="Sign in to Inbox">
+              The first time Cursor uses Inbox, it opens a sign-in window. Approve it and Cursor gets its address.
+            </Step>
+          </>
+        )}
+      </ol>
+      <WaitingLine className="pl-0">Waiting for {tool.name} to connect…</WaitingLine>
     </>
   );
-}
-
-function Intro({ children }: { children: ReactNode }) {
-  return <p className="text-sm leading-5.25 text-secondary">{children}</p>;
-}
-
-function StepList({ children }: { children: ReactNode }) {
-  return <ol className="mt-5.25 flex flex-col gap-4.5">{children}</ol>;
 }
 
 type StepProps = {
   index: number;
   title: string;
-  /** A field or a button under the step's words. */
+  /** A field under the step's words. */
   extra?: ReactNode;
-  children?: ReactNode;
+  children: ReactNode;
 };
 
-/** One numbered step. All of a tool's steps show at once: they happen in the tool, not on this page. */
+/** One numbered step. All of an app's steps show at once: they happen in the app, not on this page. */
 function Step({ index, title, extra, children }: StepProps) {
   return (
     <li className="flex items-start gap-3">
@@ -229,26 +241,28 @@ function Step({ index, title, extra, children }: StepProps) {
       >
         {index}
       </span>
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
         <h3 className="text-[13px] leading-4.5 font-medium text-foreground">{title}</h3>
-        {children && <p className="mt-1.75 text-xs leading-4 text-secondary">{children}</p>}
-        {extra && <div className="mt-2.5">{extra}</div>}
+        <p className="text-xs leading-4 text-secondary">{children}</p>
+        {extra}
       </div>
     </li>
   );
 }
 
-/** What replaces the steps once the tool has signed in. */
-function Connected({ tool }: { tool: AiTool }) {
+/** What replaces the steps once the app has signed in (`4c.2`). */
+function Connected({ tool, handle }: { tool: AiTool; handle: string }) {
   return (
-    <div className="flex flex-col items-center pt-20 text-center">
-      <MascotFace art="waiting" mood="happy" className="size-35" />
-      <h3 className="mt-5 text-base leading-6 font-medium text-foreground">{tool.name} is connected</h3>
-      <p className="mt-2.5 text-[13px] leading-4.5 text-secondary">
+    <div className="flex flex-col items-center gap-3.5 py-10 text-center">
+      <MascotFace art="waiting" mood="happy" className="size-40" />
+      <h3 className="text-base leading-6 font-medium text-foreground">
+        {tool.name} is now {handle}
+      </h3>
+      <p className="text-[13px] leading-4.5 text-secondary">
         Try asking {tool.name}: “{tool.example}”
       </p>
       {tool.appUrl && (
-        <a href={tool.appUrl} target="_blank" rel="noreferrer" className={buttonClassName('primary', 'mt-4.5')}>
+        <a href={tool.appUrl} target="_blank" rel="noreferrer" className={buttonClassName('primary')}>
           <ArrowUpRight aria-hidden="true" className="size-3.5" />
           Open {tool.name}
           <span className="sr-only"> (opens in a new tab)</span>

@@ -54,6 +54,7 @@ On this path, `onMessage` accepts the standard reply types - not AI SDK results:
 | Return | Behavior |
 | --- | --- |
 | `string` / JSX `Card` | Delivered as a reply - see [Reply](/agents/custom-code-agent/building-blocks/reply) |
+| `AsyncIterable<string>` | Streamed as a reply - see [Stream a reply](/agents/custom-code-agent/building-blocks/reply#stream-a-reply) |
 | `ctx.toolApproval.request(...)` | Posts the Approve / Deny card and pauses the turn - see [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) |
 | nothing | After you call `ctx.reply()` yourself |
 

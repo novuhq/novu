@@ -1,5 +1,7 @@
+'use client';
+
 import { Check } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -51,7 +53,7 @@ export function Step({
       aria-current={open ? 'step' : undefined}
       className={cn('overflow-hidden rounded-[10px] border border-border bg-background', glow && open && 'dot-glow')}
     >
-      <div className="flex items-start gap-3 px-4.5 py-4">
+      <div className="flex items-center gap-3 px-4.5 py-4">
         <StepMarker index={index} status={status} />
         <div className="flex min-w-0 flex-1 flex-col">
           <h3
@@ -86,21 +88,47 @@ export function Step({
   );
 }
 
+type FoldProps = {
+  /** Unfolds when true, folds up when false. What it holds stays rendered, so it can fold away with it. */
+  open: boolean;
+  /** Unfolds when it first shows up too, for something new: a row that joins a table, a line on a card. */
+  appear?: boolean;
+  /** For the outer box, such as a negative margin that gives back the gap of a hidden section. */
+  className?: string;
+  /** Applied while it is folded up, on top of `className`. */
+  closedClassName?: string;
+  /** For the inner box, which clips while it folds. */
+  innerClassName?: string;
+  children: ReactNode;
+};
+
 /**
- * Grows its content open and folds it shut. While shut the content is still there but out of reach:
- * `inert` keeps the keyboard and screen readers away from a step that isn't the current one.
+ * Grows its content open and folds it shut, its height and opacity animating so nothing below it jumps.
+ * While shut the content is still there but out of reach: `inert` keeps the keyboard and screen readers
+ * away from a step that isn't the current one.
  */
-export function Fold({ open, children }: { open: boolean; children: ReactNode }) {
+export function Fold({ open, appear = false, className, closedClassName, innerClassName, children }: FoldProps) {
+  // Until the unfold on arrival has played; then only `open` moves it.
+  const [arriving, setArriving] = useState(appear);
+
   return (
     <div
       inert={!open}
+      onAnimationEnd={(event) => {
+        if (event.target === event.currentTarget) {
+          setArriving(false);
+        }
+      }}
       className={cn(
-        'grid transition-[grid-template-rows,opacity]',
+        'grid transition-[grid-template-rows,opacity,margin]',
         EASE,
-        open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+        arriving && 'animate-fold-open motion-reduce:animate-none',
+        className,
+        !open && closedClassName
       )}
     >
-      <div className="min-h-0 overflow-hidden">{children}</div>
+      <div className={cn('min-h-0 overflow-hidden', innerClassName)}>{children}</div>
     </div>
   );
 }

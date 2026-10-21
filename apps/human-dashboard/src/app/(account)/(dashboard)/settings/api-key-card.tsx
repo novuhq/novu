@@ -14,7 +14,7 @@ import { regenerateApiKeyAction } from './actions';
 import { CardHeading, SettingsCard } from './settings-card';
 
 /** The variable the `human` CLI reads the key from. */
-const KEY_VARIABLE = 'NOVU_SECRET_KEY';
+const KEY_VARIABLE = 'INBOX_SECRET_KEY';
 
 const MASK = '•'.repeat(24);
 const SHOWN_CHARACTERS = 4;
@@ -195,7 +195,7 @@ function RegenerateDialogContent({ onRegenerated }: { onRegenerated: (apiKey: st
       description={
         <>
           CI, VMs and automations using the current key stop working until you paste the new one. On your own machine,
-          run <span className="font-mono text-default">human login</span> again.
+          run <span className="font-mono text-default">npx @agentinbox/cli login</span> again.
         </>
       }
       footer={

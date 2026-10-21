@@ -1,16 +1,28 @@
+import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 import { cn } from '../../utils/ui';
 
-export function Kbd({ className, ...rest }: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn(
-        'flex h-5 items-center gap-0.5 whitespace-nowrap rounded bg-bg-white-0 px-1.5 text-subheading-xs text-text-soft ring-1 ring-inset ring-stroke-soft',
-        className
-      )}
-      {...rest}
-    />
-  );
+const KEY_CAP =
+  'h-[18px] min-w-[18px] shrink-0 justify-center rounded-6 border border-stroke-soft bg-bg-white px-[5px] text-label-2xs text-text-sub';
+
+const kbdVariants = cva('flex items-center whitespace-nowrap', {
+  variants: {
+    variant: {
+      default:
+        'h-5 gap-0.5 rounded bg-bg-white-0 px-1.5 text-subheading-xs text-text-soft ring-1 ring-inset ring-stroke-soft',
+      raised: `${KEY_CAP} border-b-[1.5px]`,
+      flat: KEY_CAP,
+    },
+  },
+  defaultVariants: {
+    variant: 'default',
+  },
+});
+
+export type KbdProps = React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof kbdVariants>;
+
+export function Kbd({ className, variant, ...rest }: KbdProps) {
+  return <div className={cn(kbdVariants({ variant }), className)} {...rest} />;
 }
 
 export function IconCmd(props: React.SVGProps<SVGSVGElement>) {

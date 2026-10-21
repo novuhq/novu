@@ -14,8 +14,13 @@ import {
 import { ShortDate } from '@/app/(account)/(dashboard)/contacts/short-date';
 import { ChannelIcon } from '@/components/channels/channel-icon';
 import {
+  AgentPromptOption,
   ConnectedCard,
+  DRAWER_FOOTER,
+  DRAWER_HEADER,
   FieldError,
+  FOCUSED_INPUT,
+  RecheckButton,
   SetupCheck,
   SWAP_LAYER,
   useConnectionPoll,
@@ -37,7 +42,7 @@ import {
 } from '@/lib/slack-app';
 import { cn } from '@/lib/utils';
 
-/** The name `human setup slack` gives the app, for an agent that has no name of its own to lend it. */
+/** The name `channel add slack` gives the app, for an agent that has no name of its own to lend it. */
 const DEFAULT_APP_NAME = 'Human';
 const PERMISSION_COUNT = `${SLACK_APP_PERMISSIONS.length} permissions`;
 /** One of the two round badges above "Install … in Slack". */
@@ -50,14 +55,21 @@ type StepStatus = ComponentProps<typeof Step>['status'];
 type SlackSetupProps = {
   /** How far the setup got when the page loaded, so the drawer has something to show the moment it opens. */
   setup: SlackSetupState;
-  /** What the agent is called: its own name, or "Human assistant". Without it the drawer says "your agent". */
+  /** What the agent is called, which the app is named after until the operator picks another name. */
   agentName?: string;
+  /** How the agent is called in a sentence: its address without the domain. */
+  handle: string;
+  /** What the operator hands their own agent to do the setup with them instead. */
+  prompt: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-/** The drawer that walks through giving the agent a Slack app. The Channels table opens it. */
-export function SlackSetup({ setup, agentName, open, onOpenChange }: SlackSetupProps) {
+/**
+ * The drawer that walks through giving the agent a Slack app. The Configure page's channels open it, and so
+ * does the last step of the onboarding.
+ */
+export function SlackSetup({ setup, agentName, handle, prompt, open, onOpenChange }: SlackSetupProps) {
   const router = useRouter();
   const [step, setStep] = useState<SetupStep>(stepOf(setup));
   const [appName, setAppName] = useState(appNameOf(setup) || agentName || DEFAULT_APP_NAME);
@@ -78,8 +90,27 @@ export function SlackSetup({ setup, agentName, open, onOpenChange }: SlackSetupP
 
   const check = useCallback(async () => {
     setStep('checking');
-    show(await loadSlackSetupAction().catch((): SlackSetupState => ({ step: 'unknown' })));
-  }, [show]);
+    const next = await loadSlackSetupAction().catch((): SlackSetupState => ({ step: 'unknown' }));
+    show(next);
+    // The page couldn't tell in time: when the drawer finds it connected, the card and the row catch up.
+    if (next.step === 'connected') {
+      router.refresh();
+    }
+  }, [show, router]);
+
+  // The refresh button of a finished install: reads the workspace again, without leaving the steps.
+  async function recheck() {
+    const next = await loadSlackSetupAction().catch((): SlackSetupState => ({ step: 'unknown' }));
+    if (next.step === 'unknown') {
+      toast('We couldn’t check your Slack app just now. Please try again.', 'error');
+    } else {
+      show(next);
+      // Found connected here first: the page's card and channel row catch up, as after the poll.
+      if (next.step === 'connected' && setup.step !== 'connected') {
+        router.refresh();
+      }
+    }
+  }
 
   // Reopening picks the setup up where the page says it is: a created app goes straight to the install.
   useEffect(() => {
@@ -145,7 +176,6 @@ export function SlackSetup({ setup, agentName, open, onOpenChange }: SlackSetupP
 
   const connected = step === 'connected';
   const unread = step === 'checking' || step === 'unavailable';
-  const agent = agentName ?? 'your agent';
   const name = appName.trim() || DEFAULT_APP_NAME;
   const statusOf = (current: SetupStep, done: SetupStep[], error?: string): StepStatus => {
     if (step === current) {
@@ -159,7 +189,13 @@ export function SlackSetup({ setup, agentName, open, onOpenChange }: SlackSetupP
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
         title={connected ? 'Slack connected' : 'Set up Slack'}
-        description={`Give ${agent} its own Slack app in your workspace.${connected ? '' : ' Takes about two minutes.'}`}
+        description={
+          connected
+            ? `Give ${handle} its own Slack app in your workspace.`
+            : `Give ${handle} a Slack app in your workspace. About two minutes.`
+        }
+        headerClassName={DRAWER_HEADER}
+        footerClassName={DRAWER_FOOTER}
         footer={
           connected && (
             <DrawerClose asChild>
@@ -168,12 +204,13 @@ export function SlackSetup({ setup, agentName, open, onOpenChange }: SlackSetupP
           )
         }
       >
+        {(step === 'name' || step === 'app' || step === 'install') && <AgentPromptOption prompt={prompt} />}
         {unread && <SetupCheck state={step} channel="Slack" onRetry={() => void check()} />}
         <div className={cn('flex flex-col gap-3', unread && 'hidden')}>
           <Stepper>
             <NameStep
               status={statusOf('name', ['app', 'install', 'connected'], nameError)}
-              agent={agent}
+              handle={handle}
               appName={appName}
               summary={`“${name}”`}
               error={nameError}
@@ -204,6 +241,7 @@ export function SlackSetup({ setup, agentName, open, onOpenChange }: SlackSetupP
               connected={connected}
               waitedTooLong={waitedTooLong}
               onKeepWaiting={keepWaiting}
+              onRecheck={recheck}
             />
             {connected && (
               <ConnectedCard
@@ -213,17 +251,17 @@ export function SlackSetup({ setup, agentName, open, onOpenChange }: SlackSetupP
                 {/* Both lines share one spot and cross-fade when the test DM goes out. */}
                 <span className="grid">
                   <span aria-hidden={testSent} className={cn(SWAP_LAYER, testSent && '-translate-y-1 opacity-0')}>
-                    {agentName ?? 'Your agent'} can now reach you in Slack.
+                    {handle} can now reach you in Slack.
                   </span>
                   <span aria-hidden={!testSent} className={cn(SWAP_LAYER, !testSent && 'translate-y-1 opacity-0')}>
-                    {agentName ?? 'Your agent'} sent you a test DM.
+                    {handle} sent you a test DM.
                   </span>
                 </span>
               </ConnectedCard>
             )}
           </Stepper>
           <p className="text-xs leading-4 text-muted">
-            The app lives in your Slack workspace. Removing Slack here disconnects it from {agent}.
+            The app lives in your Slack workspace. Removing Slack here disconnects it from {handle}.
           </p>
         </div>
       </DrawerContent>
@@ -233,8 +271,8 @@ export function SlackSetup({ setup, agentName, open, onOpenChange }: SlackSetupP
 
 type NameStepProps = {
   status: StepStatus;
-  /** The agent's name inside a sentence: its own name, "Human assistant", or "your agent". */
-  agent: string;
+  /** How the agent is called in a sentence: its address without the domain. */
+  handle: string;
   appName: string;
   summary: string;
   error?: string;
@@ -242,7 +280,7 @@ type NameStepProps = {
   onContinue: () => void;
 };
 
-function NameStep({ status, agent, appName, summary, error, onChange, onContinue }: NameStepProps) {
+function NameStep({ status, handle, appName, summary, error, onChange, onContinue }: NameStepProps) {
   return (
     <Step
       index={1}
@@ -256,9 +294,7 @@ function NameStep({ status, agent, appName, summary, error, onChange, onContinue
         </>
       }
     >
-      <p className="text-[13px] leading-4.5 text-secondary">
-        This is how {agent} shows up in Slack. We’ll put it into the app manifest for you.
-      </p>
+      <p className="text-[13px] leading-4.5 text-secondary">How {handle} shows up in Slack.</p>
       <Field
         label="App name"
         required
@@ -277,6 +313,7 @@ function NameStep({ status, agent, appName, summary, error, onChange, onContinue
             }}
             maxLength={SLACK_APP_NAME_MAX_LENGTH}
             autoComplete="off"
+            className={FOCUSED_INPUT}
           />
         )}
       </Field>
@@ -348,7 +385,7 @@ function AppStep({ status, name, token, summary, error, creating, onChange, onBa
             autoComplete="off"
             spellCheck={false}
             disabled={creating}
-            className="font-mono"
+            className={cn('font-mono', FOCUSED_INPUT)}
           />
         )}
       </Field>
@@ -365,13 +402,23 @@ type InstallStepProps = {
   connected: boolean;
   waitedTooLong: boolean;
   onKeepWaiting: () => void;
+  /** Reads the install again, from the refresh button the step has once it's done. */
+  onRecheck: () => Promise<void>;
 };
 
 /**
  * No way back from here: the app exists by now, and creating it again would make a second app in Slack and
  * swap the channel's credentials under an install that is already on its way.
  */
-function InstallStep({ status, name, workspace, connected, waitedTooLong, onKeepWaiting }: InstallStepProps) {
+function InstallStep({
+  status,
+  name,
+  workspace,
+  connected,
+  waitedTooLong,
+  onKeepWaiting,
+  onRecheck,
+}: InstallStepProps) {
   const [opening, setOpening] = useState(false);
 
   async function openSlack() {
@@ -410,6 +457,7 @@ function InstallStep({ status, name, workspace, connected, waitedTooLong, onKeep
           'App installed'
         )
       }
+      action={status === 'done' && <RecheckButton label="Check the install again" onRecheck={onRecheck} />}
       bodyClassName="items-center px-4.5 py-3 text-center"
     >
       <div aria-hidden="true" className="flex">
@@ -417,7 +465,7 @@ function InstallStep({ status, name, workspace, connected, waitedTooLong, onKeep
           <ChannelIcon via="slack" className="size-5.5" />
         </span>
         <span className={cn(BADGE, 'relative -ml-3')}>
-          {/* The human.md mark, from the paths the design exports. */}
+          {/* The agentinbox.md mark, from the paths the design exports. */}
           <svg viewBox="0 0 22 22" className="size-6.5" fill="none">
             <path
               className="fill-accent"

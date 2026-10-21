@@ -26,7 +26,12 @@ import {
   EnvironmentTypeEnum,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
+  HumanChannelViaEnum,
 } from '@novu/shared';
+import {
+  trackAgentInboxChannelConnected,
+  trackAgentInboxCreated,
+} from '../../../../human/services/agent-inbox-analytics';
 import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { trackAgentIntegrationConnected } from '../../../shared/analytics/agent-analytics';
 import { assertWebChatEnabledForConnect } from '../../../shared/assert-web-chat-enabled';
@@ -96,6 +101,7 @@ export class AddAgentIntegration {
           channel: response.integration.channel,
           connectionSource: 'agent_email_inbox_provisioned',
         });
+        this.trackAgentInboxEmail(agent, command, { newInbox: true });
       }
 
       return response;
@@ -252,8 +258,36 @@ export class AddAgentIntegration {
       channel: integration.channel,
       connectionSource: 'existing_integration',
     });
+    if (integration.providerId === EmailProviderIdEnum.AgentEmailInbox) {
+      this.trackAgentInboxEmail(agent, command, { newInbox: false });
+    }
 
     return response;
+  }
+
+  /**
+   * The Agent Inbox sets its email up through these same endpoints, besides the event every agent gets. A new
+   * address is a new inbox too: setup can't always make it, and the CLI then asks for it here. Telegram and
+   * Slack only work once someone links their chat, so they count then (`AgentInboxChannelAnalytics`).
+   */
+  private trackAgentInboxEmail(
+    agent: Pick<AgentEntity, '_id' | 'runtime'>,
+    command: AddAgentIntegrationCommand,
+    { newInbox }: { newInbox: boolean }
+  ): void {
+    if (agent.runtime !== 'human_relay') {
+      return;
+    }
+
+    const owner = { userId: command.userId, organizationId: command.organizationId };
+    if (newInbox) {
+      trackAgentInboxCreated(this.analyticsService, owner, { agentId: agent._id, source: command.analyticsSource });
+    }
+
+    trackAgentInboxChannelConnected(this.analyticsService, owner, {
+      agentId: agent._id,
+      channel: HumanChannelViaEnum.EMAIL,
+    });
   }
 
   private async enforceEmailTier(organizationId: string): Promise<void> {

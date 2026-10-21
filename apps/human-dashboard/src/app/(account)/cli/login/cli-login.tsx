@@ -15,10 +15,10 @@ import { approveCliLoginAction, denyCliLoginAction } from './actions';
 import { normalizeUserCode } from './user-code';
 
 /** The command that starts a login, shown wherever the person has to run it again. */
-const LOGIN_COMMAND = 'human login';
+const LOGIN_COMMAND = 'npx @agentinbox/cli login';
 
 /** Where "Read the quickstart" goes: the package page, whose readme is the quickstart. */
-const QUICKSTART_URL = 'https://www.npmjs.com/package/@novu/human';
+const QUICKSTART_URL = 'https://www.npmjs.com/package/@agentinbox/cli';
 
 type CliLoginProps = {
   /** The code from the link, already checked to be a code. Empty for links from older CLIs: it's typed then. */
@@ -42,7 +42,7 @@ type View =
   | { name: 'denied' };
 
 /**
- * The card `human login` opens: approve or deny the login, then what happened. The code and the computer's
+ * The card `login` opens: approve or deny the login, then what happened. The code and the computer's
  * name are there to compare with the terminal; nothing is approved until Approve is pressed.
  */
 export function CliLogin({ userCode, machineName, region, claim, cannotKeepSetup, email, expired }: CliLoginProps) {
@@ -127,7 +127,9 @@ function Authorize({ userCode, machineName, region, claim, cannotKeepSetup, onDo
     if (userCode) {
       onDone({ name: 'expired' });
     } else {
-      setError('That code doesn’t match a login waiting in a terminal. Check it, or run human login again.');
+      setError(
+        'That code doesn’t match a login waiting in a terminal. Check it, or run npx @agentinbox/cli login again.'
+      );
     }
   }
 
@@ -177,7 +179,7 @@ function Authorize({ userCode, machineName, region, claim, cannotKeepSetup, onDo
         <TerminalIcon />
         <span className={EYEBROW}>{LOGIN_COMMAND}</span>
       </p>
-      <h1 className={TITLE}>Let the human CLI act as you?</h1>
+      <h1 className={TITLE}>Let the Agent Inbox CLI act as you?</h1>
       <p className={DESCRIPTION}>
         {/* The name comes from the CLI's request, so anyone can pick it: plain text, wrapped wherever it has to. */}
         {machineName ? (
@@ -272,7 +274,7 @@ function SignedIn({ email, view }: { email?: string; view: Extract<View, { name:
           mark={<ArrowRight aria-hidden="true" className="h-5 w-[1ch]" strokeWidth={1.5} />}
           markClassName="text-muted"
         >
-          Try: human inbox approve &quot;Ship it?&quot;
+          Try: npx @agentinbox/cli inbox send approve &quot;Ship it?&quot;
         </TerminalLine>
       </div>
       <div className="flex flex-wrap gap-2">
