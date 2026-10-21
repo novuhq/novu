@@ -217,8 +217,11 @@ export class WorkflowController {
         workflowIdOrInternalId,
         user,
         environmentId,
-        // Interactive reads (dashboard Bearer, Copilot Internal) must reflect the latest write.
-        skipPreferencesCache: user.scheme === ApiAuthSchemeEnum.BEARER || isInternalAuthScheme(user.scheme),
+        // Interactive reads (dashboard Bearer, Copilot Internal, MCP OAuth) must reflect the latest write.
+        skipPreferencesCache:
+          user.scheme === ApiAuthSchemeEnum.BEARER ||
+          user.scheme === ApiAuthSchemeEnum.OAUTH2 ||
+          isInternalAuthScheme(user.scheme),
       })
     );
   }

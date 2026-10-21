@@ -36,13 +36,20 @@ export type OAuthContext = {
 	issuer: string | null;
 };
 
+function trimTrailingSlashes(value: string): string {
+	let end = value.length;
+	while (end > 0 && value[end - 1] === "/") end--;
+
+	return value.slice(0, end);
+}
+
 function resolveIssuer(env: Env): string | null {
 	const issuer = env.CLERK_OAUTH_ISSUER?.trim();
-	return issuer ? issuer.replace(/\/+$/, "") : null;
+	return issuer ? trimTrailingSlashes(issuer) : null;
 }
 
 export function resolveOrigin(request: Request): string {
-	return new URL(request.url).origin.replace(/\/+$/, "");
+	return new URL(request.url).origin;
 }
 
 export function resolveOAuthContext(env: Env, request: Request): OAuthContext {

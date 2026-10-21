@@ -75,8 +75,8 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 	ToolFactory.createTool(server, accessors, {
 		description: `Append a step to the end of an existing workflow. Returns the saved workflow. Pass stepId to make retries safe: if a step with that stepId already exists, the workflow is returned unchanged. ${PAYLOAD_SCHEMA_REMINDER}`,
 		handler: async (input, context) =>
-			mutateWorkflow(context, input, (request) => {
-				if (input.stepId && hasStep(request, input.stepId)) {
+			mutateWorkflow(context, input, (request, workflow) => {
+				if (input.stepId && hasStep(request, input.stepId, workflow)) {
 					return { unchanged: `Step "${input.stepId}" already exists` };
 				}
 
@@ -95,12 +95,12 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 	ToolFactory.createTool(server, accessors, {
 		description: `Insert a step into an existing workflow immediately after the step afterStepId. Returns the saved workflow. Pass stepId to make retries safe: if a step with that stepId already exists, the workflow is returned unchanged. ${PAYLOAD_SCHEMA_REMINDER}`,
 		handler: async (input, context) =>
-			mutateWorkflow(context, input, (request) => {
-				if (input.stepId && hasStep(request, input.stepId)) {
+			mutateWorkflow(context, input, (request, workflow) => {
+				if (input.stepId && hasStep(request, input.stepId, workflow)) {
 					return { unchanged: `Step "${input.stepId}" already exists` };
 				}
 
-				const afterIndex = findStepIndex(request, input.afterStepId);
+				const afterIndex = findStepIndex(request, input.afterStepId, workflow);
 				if (afterIndex === -1) return stepNotFound(input.afterStepId);
 
 				const step = newStep(input.step, input.stepId);
@@ -127,7 +127,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 		description: `Replace the content (control values) of one existing step. content.type must match the step's type. The step's name, id and skip conditions are kept; use update_workflow_step_conditions to change conditions. Returns the saved workflow. ${PAYLOAD_SCHEMA_REMINDER}`,
 		handler: async (input, context) =>
 			mutateWorkflow(context, input, (request, workflow) => {
-				const index = findStepIndex(request, input.stepId);
+				const index = findStepIndex(request, input.stepId, workflow);
 				if (index === -1) return stepNotFound(input.stepId);
 
 				const current = request.steps[index];
@@ -138,6 +138,11 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 						`Step "${input.stepId}" is a ${current.type} step; content.type is ${input.content.type}.`,
 					);
 				}
+
+				const invalid = WorkflowValidationUtils.validateWorkflowSteps([
+					{ ...input.content, name: current.name } as WorkflowStep,
+				]);
+				if (invalid) return badRequest(invalid.content[0].text);
 
 				const controlValues = normalizeControlValues(
 					current.type,
@@ -169,7 +174,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 			"Set or clear the skip condition of one step (e.g. only send when the subscriber is offline). Omit skip to remove the condition. The step's content is kept. Returns the saved workflow.",
 		handler: async (input, context) =>
 			mutateWorkflow(context, input, (request, workflow) => {
-				const index = findStepIndex(request, input.stepId);
+				const index = findStepIndex(request, input.stepId, workflow);
 				if (index === -1) return stepNotFound(input.stepId);
 				const locked = lockedStep(workflow, index);
 				if (locked) return locked;
@@ -196,8 +201,8 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 		description:
 			"Remove one step from a workflow. Returns the saved workflow. Payload variables only that step used stay in the payload schema; remove them with update_workflow_payload_schema if they are no longer needed.",
 		handler: async (input, context) =>
-			mutateWorkflow(context, input, (request) => {
-				const index = findStepIndex(request, input.stepId);
+			mutateWorkflow(context, input, (request, workflow) => {
+				const index = findStepIndex(request, input.stepId, workflow);
 				if (index === -1) return stepNotFound(input.stepId);
 
 				return {
@@ -217,8 +222,8 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 		description:
 			"Move one step to a new 0-based position in the workflow. Indexes past the end move it to the last position. Returns the saved workflow.",
 		handler: async (input, context) =>
-			mutateWorkflow(context, input, (request) => {
-				const from = findStepIndex(request, input.stepId);
+			mutateWorkflow(context, input, (request, workflow) => {
+				const from = findStepIndex(request, input.stepId, workflow);
 				if (from === -1) return stepNotFound(input.stepId);
 
 				const steps = [...request.steps];
@@ -278,7 +283,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 		description:
 			"Change a workflow's name, description, tags, severity or criticality. Omitted fields stay as they are; steps, preferences and the payload schema are kept. critical: true delivers regardless of subscriber preferences. Returns the saved workflow.",
 		handler: async (input, context) =>
-			mutateWorkflow(context, input, (request) => {
+			mutateWorkflow(context, input, (request, workflow) => {
 				const { critical, workflowId: _id, __source: _source, ...fields } = input;
 				const updated: UpdateWorkflowRequest = { ...request };
 				assignOptional(updated as unknown as Record<string, unknown>, fields);
@@ -401,18 +406,30 @@ function stepNotFound(stepId: string): Mutation {
 }
 
 /**
- * Index of `stepId` in the request. The request's step ids are slugified
- * (`toStepRequest`), so the caller's id is slugified the same way: an id read
- * back from get_workflow still finds its step.
+ * Index of `stepId` in the request. An exact match on the workflow's own step
+ * id wins (a legacy `Email Step` and a newer `email-step` both slugify to the
+ * same request id); otherwise the caller's id is slugified like `toStepRequest`
+ * does, so an id read back from get_workflow still finds its step.
  */
-function findStepIndex(request: UpdateWorkflowRequest, stepId: string): number {
+function findStepIndex(
+	request: UpdateWorkflowRequest,
+	stepId: string,
+	workflow: WorkflowResponse,
+): number {
+	const exact = workflow.steps.findIndex((step) => step.stepId === stepId);
+	if (exact !== -1) return exact;
+
 	const slug = toSlugIdentifier(stepId);
 
 	return request.steps.findIndex((step) => step.stepId === slug);
 }
 
-function hasStep(request: UpdateWorkflowRequest, stepId: string): boolean {
-	return findStepIndex(request, stepId) !== -1;
+function hasStep(
+	request: UpdateWorkflowRequest,
+	stepId: string,
+	workflow: WorkflowResponse,
+): boolean {
+	return findStepIndex(request, stepId, workflow) !== -1;
 }
 
 function newStep(

@@ -52,10 +52,11 @@ function addPath(root: SchemaNode, path: string[], leaf: SchemaNode, isRequired:
 	let node = root;
 	for (const segment of path.slice(0, -1)) {
 		node.properties ??= {};
-		if (node.properties[segment]?.type !== "object")
+		if (node.properties[segment]?.type !== "object") {
 			node.properties[segment] = createEmptyPayloadSchema();
-		node.required ??= [];
-		if (!node.required.includes(segment)) node.required.push(segment);
+			node.required ??= [];
+			if (!node.required.includes(segment)) node.required.push(segment);
+		}
 		node = node.properties[segment];
 	}
 
