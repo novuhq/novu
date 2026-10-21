@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { CONFIGURE_DRAWER_PARAM, CONFIGURE_PATH, configureChannelPath, DOCS_URL } from '@/components/dashboard/nav';
 import { ResumeSetupCard, SetupDoneBanner } from '@/components/dashboard/setup-banners';
+import { cardOperatorName } from '@/lib/agent-card';
 import { buildChannelPrompt, type PromptContext } from '@/lib/agent-setup-prompt';
 import { requireHumanAccount } from '@/lib/human-account';
 import { agentDisplayName } from '@/lib/human-agent-api';
@@ -51,7 +52,7 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
   ]);
 
   const context: PromptContext = { apiUrl: await readApiUrl() };
-  const operatorName = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
+  const operatorName = cardOperatorName(user?.firstName, user?.lastName);
   const { handle } = setup.agent;
   // With Telegram or Slack connected the setup is done, and there is nothing left to wait for.
   const settingUp = !rows.some((row) => row.via !== 'email' && row.connected);
