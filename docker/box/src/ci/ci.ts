@@ -18,6 +18,8 @@ import {
   OidcToken,
   Pull,
   PullRequestEvent,
+  TesterArmyFullStarted,
+  type TesterArmyPullRequest,
   type TesterArmyStart,
   TesterArmyStarted,
 } from '../shared/contracts.ts';
@@ -27,6 +29,7 @@ import { canWrite, comment, github, LABEL, labeler, REPO, unlessMissing } from '
 
 const MAX_BOXES = 30;
 const REBAKE_BOX = 'base-next';
+const NIGHTLY_BOX = 'nightly';
 const APPLY_MINUTES = 20;
 const SETTLE_SECONDS = 3 * 60;
 // Past a day since base's bake, a nightly rebake was skipped (a refresh that waited replaced it).
@@ -199,7 +202,7 @@ async function startOrReach(cloud: CloudTarget, box: string, number: number): Pr
 }
 
 // Returns what started, for the PR comment; TesterArmy reports results on the PR itself, as checks and a comment.
-async function startTesterArmy(box: string, pullRequest: TesterArmyStart['pullRequest']): Promise<string> {
+async function startTesterArmy(box: string, pullRequest: TesterArmyPullRequest): Promise<string> {
   const start: TesterArmyStart = { pullRequest };
   const { exploration, groups, signUpUsersDeleted } = await hostBoxes(`testerarmy/${box}`, TesterArmyStarted, {
     method: 'POST',
@@ -351,6 +354,26 @@ async function refresh(): Promise<number> {
   return rebakeBecause(tooOld);
 }
 
+// The full TesterArmy suite on a fresh copy of base: the tests' data never lands in base, and last night's box goes.
+// Results are in TesterArmy only, so the log names the commit and each group's batch.
+async function full(): Promise<number> {
+  const box = target(NIGHTLY_BOX);
+  await box.delete();
+  await box.up({ fromBase: true });
+  const { baked, applied } = decode(BoxState, await box.boxOutput(['state']), '`box state`');
+  log(`${NIGHTLY_BOX} runs next at ${applied?.head ?? baked?.sha ?? 'an unknown commit'}`);
+  const start: TesterArmyStart = { suite: 'full' };
+  const { groups, signUpUsersDeleted } = await hostBoxes(`testerarmy/${NIGHTLY_BOX}`, TesterArmyFullStarted, {
+    method: 'POST',
+    body: JSON.stringify(start),
+    token: boxToken,
+  });
+  if (signUpUsersDeleted.length) log(`deleted leftover sign-up users: ${signUpUsersDeleted.join(', ')}`);
+  for (const group of groups) log(`TesterArmy started ${group.name} (${group.runs} runs), batch ${group.batchId}`);
+
+  return 0;
+}
+
 function rebakeBecause(why: string): Promise<number> {
   log(`${why}: baking base again instead`);
 
@@ -367,5 +390,10 @@ await main('ci', () =>
     cleanup: { usage: '', help: 'delete pr-* boxes whose PR is closed or no longer labeled `box`', run: cleanup },
     rebake: { usage: '', help: 'bake base again from next and save it to its snapshot (a new chain)', run: rebake },
     refresh: { usage: '', help: "put next's head on base (merges onto it from then on) and save it", run: refresh },
+    full: {
+      usage: '',
+      help: `start box ${NIGHTLY_BOX} afresh from base and the Full TesterArmy groups on it`,
+      run: full,
+    },
   })
 );

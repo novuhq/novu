@@ -46,7 +46,7 @@ baked from, like CI's merge ref, and stops on a conflict: rebase onto `next`, th
 
 ## Per pull request: the `box` label
 
-`.github/workflows/novu-box.yml` gives a PR its own box, `pr-<number>`, when someone with write access to
+`.github/workflows/novu-box-pr.yml` gives a PR its own box, `pr-<number>`, when someone with write access to
 `novuhq/novu` adds the `box` label.
 
 - The box starts from `base` and applies the PR's head; every push applies the new head (a newer push cancels the
@@ -54,9 +54,11 @@ baked from, like CI's merge ref, and stops on a conflict: rebase onto `next`, th
 - One comment on the PR, edited in place, shows the box's address, the applied commit and what was rebuilt, or what
   failed; ⚠️ when the apply ran but `doctor` then found problems.
 - Once the box is healthy, TesterArmy (project Novu Box) tests it: its exploration agent, which reads the PR and
-  tests what it changes, and `Box smoke`, a few minutes of the main flows (sign-in, every channel, the API key,
+  tests what it changes, and `PR smoke`, a few minutes of the main flows (sign-in, every channel, the API key,
   the editor, digest, an agent in web chat). They report on the PR as checks. The tests live in TesterArmy, not in
-  this repo; its other groups (`Box workflows`, `Box accounts`, `Box agents`, `Box Slack`) are run by hand for now.
+  this repo. Its other groups run every night after the rebake, on `nightly`, a fresh copy of `base` that replaces
+  the night before's: `Full` (everything in the dashboard), `Full: Slack` (the agents in Slack, one test at a time)
+  and `Full: account` (sign up, onboard, delete). Their results are in TesterArmy only.
 - Closing the PR or removing the label deletes the box. At most 30 PR boxes exist at once. PRs from forks get no
   box.
 - The workflow holds no secrets: it signs in to the boxes with its GitHub OIDC token.
@@ -169,14 +171,17 @@ certificate or Worker of its own.
 ![Which code runs where: the CLI and CI on Node, the hub on Cloudflare Workers, the in-box CLI in the container](./docs/06-code.svg)
 
 **Deploy:** `node docker/box/src/cli/main.ts deploy`, with `npx wrangler login` on the Novu Cloudflare account and
-Docker (wrangler builds the image). A deploy applies to every box. A new image makes every snapshot unusable
-(snapshots restore only on the image they were taken on): boxes then start again from a rebaked `base`, without
-their data. To deploy only code on the current image, set `BOX_IMAGE` to the image's reference (from
-`npx wrangler containers images list`).
+Docker (wrangler builds the image). A deploy applies to every box. A snapshot restores on the image it was taken
+on, so after a new image a box keeps running the old one until it starts again from `base` rebaked on the new image
+(`box delete`, then `box up --from base`; for `base` itself, Run workflow → `rebake` in Novu Box base). To deploy
+only code on the current image, set `BOX_IMAGE` to the image's reference (from `npx wrangler containers images
+list`).
 
-**`base`:** the box new boxes start from. The workflow refreshes it on every push to `next` (applies the new head,
-about 4 min) and rebakes it nightly. A rebake bakes in a separate box and `base` takes over its snapshot only once
-it's saved, so `base` is never missing; a refresh that fails keeps the last good snapshot. Snapshots expire 30 days
+**`base`:** the box new boxes start from. `novu-box-base.yml` refreshes it on every push to `next` (applies the new
+head, about 4 min). At 04:17 UTC `novu-box-nightly.yml` rebakes it through that workflow, then runs the full suite
+on `nightly`; next to that it deletes the boxes of closed or unlabeled PRs. Its Run workflow button does the same
+by hand. A rebake bakes in a separate box and `base` takes over its snapshot only once it's saved, so `base` is
+never missing; a refresh that fails keeps the last good snapshot. Snapshots expire 30 days
 after they were made or last restored, and nothing deletes old ones.
 
 **Secrets** are Worker secrets of `novu-box-hub`, set only in Cloudflare (dashboard → Workers → `novu-box-hub` →
@@ -199,10 +204,10 @@ about missing ones.
 A box runs PR code, which can read its environment: never put production keys in boxes, never name a secret
 `VITE_*` (it would end up in the dashboard's public `index.html`), and never run boxes for PRs from forks.
 
-**Who can get in:** every box command needs a GitHub token with push access to `novuhq/novu`, or the workflow's
-OIDC token. Box addresses are public, like staging's; the dashboard is protected by Clerk. Keep these two Clerk
-settings, or anyone could sign up: email-code sign-in **off** (sign-in needs the password), and test mode **off**
-(it accepts `424242` as any address's code). Sign-up is limited to `@novu.co` addresses, and
+**Who can get in:** every box command needs a GitHub token with push access to `novuhq/novu`, or the OIDC token of
+one of the Novu Box workflows. Box addresses are public, like staging's; the dashboard is protected by Clerk. Keep
+these two Clerk settings, or anyone could sign up: email-code sign-in **off** (sign-in needs the password), and test
+mode **off** (it accepts `424242` as any address's code). Sign-up is limited to `@novu.co` addresses, and
 `@qa.box.novu-staging.co` for TesterArmy's sign-up tests: Cloudflare Email Routing forwards those addresses to
 TesterArmy's inbox, and each time the hub starts TesterArmy it deletes those users over an hour old.
 

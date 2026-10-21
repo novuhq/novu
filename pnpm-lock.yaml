@@ -54,6 +54,7 @@ overrides:
   fflate@>=0.8.0 <0.8.3: ^0.8.3
   vite@<4.5.10: ^4.5.10
   vite@>=5.0.0 <6.4.3: ^6.4.3
+  follow-redirects@>=1.16.0 <1.16.1: ^1.16.1
   node-forge@<1.4.0: ^1.4.0
   ws@>=8.0.0 <8.21.0: ^8.21.0
   ws@>=7.0.0 <7.5.11: ^7.5.11
@@ -21107,8 +21108,8 @@ packages:
   foldline@1.1.0:
     resolution: {integrity: sha512-9SheyADS50hjvFYjFJ3OB/GlDz2mD1T2CHd7auIk4Uto5YYWPBcw8iYo3F+gENJ+/SOeH9tT0loHZSqlUlumTA==}
 
-  follow-redirects@1.16.0:
-    resolution: {integrity: sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw==}
+  follow-redirects@1.16.1:
+    resolution: {integrity: sha512-FNvFGzoMLWmE6Yj9spb/zjd7yiNCHiAW9/Tg9CXrQ8wuu32HtlJOwWO11OJafl5FfY3DxTdQ0vj42zU1kvv5jg==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -50050,7 +50051,7 @@ snapshots:
 
   axios@1.20.0(debug@4.4.3):
     dependencies:
-      follow-redirects: 1.16.0(debug@4.4.3)
+      follow-redirects: 1.16.1(debug@4.4.3)
       form-data: 4.0.6
       https-proxy-agent: 5.0.1
       proxy-from-env: 2.1.0
@@ -53484,7 +53485,7 @@ snapshots:
 
   foldline@1.1.0: {}
 
-  follow-redirects@1.16.0(debug@4.4.3):
+  follow-redirects@1.16.1(debug@4.4.3):
     optionalDependencies:
       debug: 4.4.3
 
@@ -54548,7 +54549,7 @@ snapshots:
   http-proxy@1.18.1(debug@4.4.3):
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.16.0(debug@4.4.3)
+      follow-redirects: 1.16.1(debug@4.4.3)
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -58857,7 +58858,7 @@ snapshots:
       escape-string-regexp: 1.0.5
       figures: 3.2.0
       flat: 5.0.2
-      follow-redirects: 1.16.0(debug@4.4.3)
+      follow-redirects: 1.16.1(debug@4.4.3)
       form-data: 4.0.6
       fs-constants: 1.0.0
       function-bind: 1.1.2

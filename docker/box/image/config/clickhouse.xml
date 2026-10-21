@@ -24,6 +24,9 @@
     <default_database>default</default_database>
 
     <max_server_memory_usage>1500000000</max_server_memory_usage>
+    <!-- The cgroup observer counts the whole container (every Novu process) as ClickHouse's own memory: past 95% of
+         the limit above, as when a box wakes, ClickHouse refuses every allocation and resets new connections. -->
+    <cgroups_memory_usage_observer_wait_time>0</cgroups_memory_usage_observer_wait_time>
     <mark_cache_size>268435456</mark_cache_size>
     <uncompressed_cache_size>0</uncompressed_cache_size>
     <index_mark_cache_size>0</index_mark_cache_size>

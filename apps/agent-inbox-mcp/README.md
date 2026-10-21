@@ -8,21 +8,21 @@ It is a Cloudflare Worker and is for Novu Cloud only: it needs the Agent Inbox C
 
 | Tool | What it does |
 | --- | --- |
-| `inbox_send` | Starts a conversation. Required `kind` is `ask`, `approve`, `choose`, or `tell`. |
-| `inbox_reply` | Sends into an existing inbox thread with the same kinds and card options. |
-| `wait` | Keeps waiting for an answer that had not come yet. |
-| `invite` | Returns a link for another person to connect their chat app. |
-| `contacts` | Lists the people that can be reached. |
-| `inbox_list` | Lists inbox threads (unread/read, open/resolved, contacts/all). |
-| `inbox_show` | Shows a thread's messages. Does not mark the thread read. |
-| `inbox_read` | Marks a thread read without sending a reply. |
-| `inbox_resolve` | Marks a thread resolved; it reopens when anyone writes in it. |
+| `inbox_send` | Starts a conversation. Without a `kind` it is a plain message; `ask`, `approve` or `choose` waits for the answer. |
+| `inbox_reply` | Sends into an existing conversation, with the same kinds and card options. |
+| `inbox_wait` | Keeps waiting for an answer that had not come yet. |
+| `inbox_list` | Lists conversations (unread/read, open/resolved, contacts/all). |
+| `inbox_show` | Shows a conversation's messages. Does not mark it read. |
+| `inbox_read` | Marks a conversation read without sending a reply. |
+| `inbox_resolve` | Marks a conversation resolved; it opens again when anyone writes in it. |
+| `contact_list` | Lists the people that can be reached. |
+| `contact_invite` | Returns a link for another person to connect their chat app. |
 
-AI tools give up on a call after about a minute. So `inbox_send` and `inbox_reply` wait up to 50 seconds for `ask`, `approve`, and `choose`; with no answer by then they return the request's id, and `wait` picks it up. The `tell` kind returns as soon as delivery is confirmed.
+The tools are named after the CLI's commands (`inbox send` is `inbox_send`, `contact list` is `contact_list`) and say "conversation" as it does. `inbox_wait` is the one the CLI doesn't have: AI tools give up on a call after about a minute, while the CLI waits inside the send. So `inbox_send` and `inbox_reply` wait up to 50 seconds for `ask`, `approve` and `choose`; with no answer by then they return the request's id, and `inbox_wait` picks it up. A plain message returns as soon as delivery is confirmed.
 
-A person may message the agent first. Use the thread id from `inbox_list` with `inbox_reply` to answer in that conversation. Threads and messages are labelled contact or stranger the same way the CLI does: a contact is someone the operator added; a stranger wrote without being one. Showing a thread does not mark it read; any reply into it does.
+A person may message the agent first. Use the conversation id from `inbox_list` with `inbox_reply` to answer in it. Conversations and messages are labelled contact or stranger the same way the CLI does: a contact is someone the operator added; a stranger wrote without being one. Showing a conversation does not mark it read; any reply into it does.
 
-The send and reply tools mirror the Agent Inbox CLI: they support attribution, expiry, channel override on sends, full card chrome, custom approval actions, stable choice ids, up to 50 recipients, and contact email addresses. Sending to a new email address starts verification; the message must be retried after the recipient verifies it.
+The send and reply tools mirror the Agent Inbox CLI: they support attribution, expiry, channel override on sends, full card chrome, custom approval actions, stable choice ids, up to 50 recipients, and contact email addresses. A new email address on a send is delivered as typed. A reply still needs a contact that already verified that address.
 
 ## How sign-in works
 
@@ -35,7 +35,7 @@ Every request stands alone: there are no sessions, so any instance can answer an
 
 ## Where calls go
 
-- Every tool calls the Agent Inbox Dashboard API (`AGENT_INBOX_API_URL`, the dashboard's `/api`) with the account's key, as the CLI does: `/v1/inbox` and `/v1/inbox/messages` for threads and messages, `/v1/contacts` for contacts, invites and verifications, and `/v1/operator` for the account's owner. The dashboard forwards each call to the Novu API.
+- Every tool calls the Agent Inbox Dashboard API (`AGENT_INBOX_API_URL`, the dashboard's `/api`) with the account's key, as the CLI does: `/v1/inbox` and `/v1/inbox/messages` for conversations and messages, `/v1/contacts` for contacts, invites and verifications, and `/v1/operator` for the account's owner. The dashboard forwards each call to the Novu API.
 - Reading the account's key is the one call that goes straight to the Novu API (`NOVU_API_URL`), with the dashboard's secret: `GET /v1/human/accounts/:id/secret-key`. The Dashboard API doesn't offer it.
 - Agent Inbox lives in the US region only, so there is no EU address to try.
 

@@ -114,7 +114,7 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
                 'Your agent’s inbox · not created yet'
               )
             }
-            address={agent?.address || (draft.handle ? addressOf(draft.handle) : '')}
+            address={agent?.address || (draft.handle ? addressOf(draft.handle, view.mailDomain) : '')}
             cardLink={agent?.cardLink ?? cardLinkOf(view.origin, draft.handle || PLACEHOLDER_HANDLE)}
             telegramConnected={view.channels.telegram}
             gotMail={testPassed}
@@ -141,7 +141,7 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
                   : 'animate-rise-in motion-reduce:animate-none'
               )}
             >
-              {shown === 'address' && <AddressStep onDraftChange={setDraft} />}
+              {shown === 'address' && <AddressStep mailDomain={view.mailDomain} onDraftChange={setDraft} />}
               {shown === 'test' && agent && (
                 <TestStep
                   name={agent.name}

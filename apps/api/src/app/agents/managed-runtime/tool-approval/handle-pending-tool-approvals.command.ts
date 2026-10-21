@@ -30,6 +30,10 @@ export class HandlePendingToolApprovalsCommand extends EnvironmentWithUserComman
   platformThreadId: string;
 
   @IsString()
+  @IsOptional()
+  platformUserId?: string;
+
+  @IsString()
   @IsNotEmpty()
   sessionId: string;
 

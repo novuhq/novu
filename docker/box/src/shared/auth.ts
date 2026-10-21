@@ -2,7 +2,10 @@ import { bearer, OIDC_AUDIENCE } from './names.ts';
 
 const ISSUER = 'https://token.actions.githubusercontent.com';
 const REPOSITORY = 'novuhq/novu';
-const WORKFLOW = `${REPOSITORY}/.github/workflows/novu-box.yml@`;
+// A PR runs the workflow files of its merge with next, and a reusable workflow's token names its caller.
+const WORKFLOWS = ['novu-box-pr.yml', 'novu-box-base.yml', 'novu-box-nightly.yml'].map(
+  (file) => `${REPOSITORY}/.github/workflows/${file}@`
+);
 
 export async function authorize(request: Request): Promise<boolean> {
   const token = bearer(request);
@@ -30,7 +33,7 @@ async function canPush(token: string): Promise<boolean> {
   return true;
 }
 
-// Whether this is a GitHub Actions OIDC token from the Novu Box workflow in novuhq/novu: RS256 against GitHub's
+// Whether this is a GitHub Actions OIDC token from a Novu Box workflow in novuhq/novu: RS256 against GitHub's
 // published keys, then issuer, audience, time and workflow. A fork's pull_request run gets no such token.
 async function verifyOidc(token: string): Promise<boolean> {
   try {
@@ -49,6 +52,7 @@ async function verifyOidc(token: string): Promise<boolean> {
     if (!(await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, bytes(signature), signed))) return false;
     const claims = json(text(payload));
     const now = Date.now() / 1000;
+    const workflowRef = claims.workflow_ref;
 
     return (
       claims.iss === ISSUER &&
@@ -57,8 +61,8 @@ async function verifyOidc(token: string): Promise<boolean> {
       claims.exp > now &&
       (typeof claims.nbf === 'number' ? claims.nbf : 0) <= now + 60 &&
       claims.repository === REPOSITORY &&
-      typeof claims.workflow_ref === 'string' &&
-      claims.workflow_ref.startsWith(WORKFLOW)
+      typeof workflowRef === 'string' &&
+      WORKFLOWS.some((workflow) => workflowRef.startsWith(workflow))
     );
   } catch {
     return false;

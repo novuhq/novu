@@ -63,15 +63,15 @@ describe('the Agent Inbox MCP server', () => {
 
     expect(result.tools.map((tool) => tool.name).sort()).toEqual(
       [
-        'contacts',
+        'contact_invite',
+        'contact_list',
         'inbox_list',
         'inbox_read',
         'inbox_reply',
         'inbox_resolve',
         'inbox_send',
         'inbox_show',
-        'invite',
-        'wait',
+        'inbox_wait',
       ].sort()
     );
   });
@@ -221,17 +221,36 @@ describe('the Agent Inbox MCP server', () => {
     });
   });
 
-  it('requires an explicit kind', async () => {
+  it('sends a plain message when the kind is left out, as `inbox send <text>` does in the CLI', async () => {
+    const calls = stubBackends({ status: 'delivered' });
     const { env, ctx } = setup();
 
     const response = await worker.fetch(
-      rpc('tools/call', { name: 'inbox_send', arguments: { message: 'Deploy?' } }),
+      rpc('tools/call', { name: 'inbox_send', arguments: { message: 'Deploy finished.' } }),
       env,
       ctx
     );
-    const { result } = (await response.json()) as { result: { isError?: boolean } };
+    const { result } = (await response.json()) as { result: { content: Array<{ text: string }>; isError?: boolean } };
 
-    expect(result.isError).toBe(true);
+    expect(result.isError).toBeFalsy();
+    expect(result.content[0].text).toContain('Delivered.');
+    const created = calls.find((call) => call.url.endsWith('/v1/inbox/messages') && call.method === 'POST');
+    expect(created?.body).toMatchObject({ kind: 'tell', card: { title: 'Deploy finished.' } });
+  });
+
+  it('refuses tell as a kind: a plain message has none', async () => {
+    const calls = stubBackends();
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(
+      rpc('tools/call', { name: 'inbox_send', arguments: { kind: 'tell', message: 'Deploy finished.' } }),
+      env,
+      ctx
+    );
+    const body = (await response.json()) as { result?: { isError?: boolean }; error?: unknown };
+
+    expect(body.error ?? body.result?.isError).toBeTruthy();
+    expect(calls.some((call) => call.url.endsWith('/v1/inbox/messages'))).toBe(false);
   });
 
   it('rejects more than 50 recipients and incompatible kind options', async () => {
@@ -240,11 +259,11 @@ describe('the Agent Inbox MCP server', () => {
       worker.fetch(rpc('tools/call', { name: 'inbox_send', arguments: arguments_ }), env, ctx);
 
     const responses = await Promise.all([
-      call({ kind: 'tell', message: 'Hi', to: Array.from({ length: 51 }, (_, index) => `p${index}`) }),
+      call({ message: 'Hi', to: Array.from({ length: 51 }, (_, index) => `p${index}`) }),
       call({ kind: 'choose', message: 'Pick' }),
       call({ kind: 'ask', message: 'Pick', options: ['A', 'B'] }),
-      call({ kind: 'tell', message: 'Done', approve_label: 'Okay' }),
-      call({ kind: 'tell', message: 'Done', wait_seconds: 1 }),
+      call({ message: 'Done', approve_label: 'Okay' }),
+      call({ message: 'Done', wait_seconds: 1 }),
     ]);
 
     for (const response of responses) {
@@ -260,7 +279,7 @@ describe('the Agent Inbox MCP server', () => {
       rpc('tools/call', {
         name: 'inbox_reply',
         arguments: {
-          thread: 'conv_1',
+          conversation: 'conv_1',
           kind: 'ask',
           message: 'Who can answer?',
           to: 'alice',
@@ -275,7 +294,7 @@ describe('the Agent Inbox MCP server', () => {
     expect(result.isError).toBe(true);
   });
 
-  it('resolves a verified email address to its contact id', async () => {
+  it('sends a verified email address as typed', async () => {
     const calls = stubBackends({
       contactPages: {
         '': {
@@ -289,7 +308,7 @@ describe('the Agent Inbox MCP server', () => {
     const response = await worker.fetch(
       rpc('tools/call', {
         name: 'inbox_send',
-        arguments: { kind: 'tell', message: 'Hello', to: 'alice@example.com' },
+        arguments: { message: 'Hello', to: 'alice@example.com' },
       }),
       env,
       ctx
@@ -298,7 +317,8 @@ describe('the Agent Inbox MCP server', () => {
 
     expect(result.isError).toBeFalsy();
     const created = calls.find((call) => call.url.endsWith('/v1/inbox/messages') && call.method === 'POST');
-    expect(created?.body).toMatchObject({ to: ['alice@example.com'] });
+    // A message without a kind is what the API calls `tell`. The address is delivered as typed.
+    expect(created?.body).toMatchObject({ kind: 'tell', to: ['alice@example.com'] });
   });
 
   it('sends a new email address without waiting for verification', async () => {
@@ -308,7 +328,7 @@ describe('the Agent Inbox MCP server', () => {
     const response = await worker.fetch(
       rpc('tools/call', {
         name: 'inbox_send',
-        arguments: { kind: 'tell', message: 'Hello', to: 'new@example.com' },
+        arguments: { message: 'Hello', to: 'new@example.com' },
       }),
       env,
       ctx
@@ -330,7 +350,7 @@ describe('the Agent Inbox MCP server', () => {
     const response = await worker.fetch(
       rpc('tools/call', {
         name: 'inbox_reply',
-        arguments: { thread: 'conv_1', kind: 'tell', message: 'Hello', to: 'new@example.com' },
+        arguments: { conversation: 'conv_1', message: 'Hello', to: 'new@example.com' },
       }),
       env,
       ctx
@@ -375,15 +395,15 @@ describe('the Agent Inbox MCP server', () => {
       worker.fetch(rpc('tools/call', { name, arguments: arguments_ }), env, ctx);
 
     await callTool('inbox_send', { kind: 'ask', message: 'Ship it?', wait_seconds: 0 });
-    await callTool('wait', { id: 'hi_1', wait_seconds: 0 });
+    await callTool('inbox_wait', { id: 'hi_1', wait_seconds: 0 });
     // A new email address is delivered as typed. The API creates the contact; this server does not verify it first.
-    await callTool('inbox_send', { kind: 'tell', message: 'Hello', to: 'new@example.com' });
-    await callTool('invite', { id: 'alice', name: 'Alice Chen' });
-    await callTool('contacts', {});
+    await callTool('inbox_send', { message: 'Hello', to: 'new@example.com' });
+    await callTool('contact_invite', { id: 'alice', name: 'Alice Chen' });
+    await callTool('contact_list', {});
     await callTool('inbox_list', {});
-    await callTool('inbox_show', { thread: 'conv_1' });
-    await callTool('inbox_read', { thread: 'conv_1' });
-    await callTool('inbox_resolve', { thread: 'conv_1' });
+    await callTool('inbox_show', { conversation: 'conv_1' });
+    await callTool('inbox_read', { conversation: 'conv_1' });
+    await callTool('inbox_resolve', { conversation: 'conv_1' });
 
     const reached = new Set(
       calls.filter((call) => !call.url.startsWith(`${ISSUER}/`)).map((call) => `${call.method} ${call.url}`)
@@ -394,7 +414,8 @@ describe('the Agent Inbox MCP server', () => {
         `GET ${AGENT_INBOX_API}/v1/operator`,
         `POST ${AGENT_INBOX_API}/v1/inbox/messages`,
         `GET ${AGENT_INBOX_API}/v1/inbox/messages/hi_1`,
-        `GET ${AGENT_INBOX_API}/v1/contacts?limit=100`,
+        // contact_list reads a page as long as the CLI's. A typed email is sent as-is, so it does not search contacts.
+        `GET ${AGENT_INBOX_API}/v1/contacts?limit=50`,
         `POST ${AGENT_INBOX_API}/v1/contacts/invites`,
         `GET ${AGENT_INBOX_API}/v1/inbox`,
         `GET ${AGENT_INBOX_API}/v1/inbox/conv_1`,
@@ -483,6 +504,48 @@ describe('the Agent Inbox MCP server', () => {
   });
 });
 
+describe('contact_list', () => {
+  const listContacts = async (arguments_: Record<string, unknown>) => {
+    const { env, ctx } = setup();
+    const response = await worker.fetch(rpc('tools/call', { name: 'contact_list', arguments: arguments_ }), env, ctx);
+    const { result } = (await response.json()) as { result: { content: Array<{ text: string }>; isError?: boolean } };
+
+    return result;
+  };
+
+  it('pages like contact list in the CLI and marks the operator', async () => {
+    const calls = stubBackends({
+      contactPages: {
+        '': {
+          data: [
+            { id: 'operator_1', email: 'dima@novu.co' },
+            { id: 'alice', email: 'alice@acme.com' },
+          ],
+          next: 'alice',
+        },
+        alice: { data: [{ id: 'bob' }], next: null },
+      },
+    });
+
+    const first = await listContacts({});
+    expect(first.isError).toBeFalsy();
+    expect(first.content[0].text).toContain('operator_1 · dima@novu.co (you)');
+    expect(first.content[0].text).toContain('alice · alice@acme.com\n');
+    expect(first.content[0].text).toContain('call contact_list with after: "alice"');
+
+    const last = await listContacts({ after: 'alice', limit: 10 });
+    expect(last.content[0].text).toBe('bob');
+    expect(calls.some((call) => call.url.endsWith('/v1/contacts?limit=10&after=alice'))).toBe(true);
+  });
+
+  it('says there is nobody yet, and that a page past the end has no more', async () => {
+    stubBackends({ contactPages: { '': { data: [], next: null } } });
+
+    expect((await listContacts({})).content[0].text).toContain('There is nobody to reach yet');
+    expect((await listContacts({ after: 'zed' })).content[0].text).toBe('No more contacts.');
+  });
+});
+
 describe('toolOf', () => {
   it('knows the three tools by the name they connect with', () => {
     expect(toolOf('claude-ai')).toBe('claude');
@@ -499,7 +562,7 @@ describe('waiting for an answer', () => {
     const interaction = await waitForAnswer(api as never, 'hi_1', 0);
 
     expect(api.get).toHaveBeenCalledTimes(1);
-    expect(describeOutcome(interaction as Interaction)).toContain('call the wait tool with id "hi_1"');
+    expect(describeOutcome(interaction as Interaction)).toContain('call inbox_wait with id "hi_1"');
   });
 
   it('hands back the id of a request it just sent when the checks for an answer fail', async () => {
@@ -512,7 +575,7 @@ describe('waiting for an answer', () => {
     vi.useRealTimers();
 
     expect(api.get).toHaveBeenCalled();
-    expect(describeOutcome(interaction)).toContain('call the wait tool with id "hi_1"');
+    expect(describeOutcome(interaction)).toContain('call inbox_wait with id "hi_1"');
   });
 
   it('gives a check no longer than what is left of the wait', async () => {

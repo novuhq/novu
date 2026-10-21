@@ -41,7 +41,7 @@ describe('inbox tools — a host sees a thread, reads it, replies and resolves i
     expect(listCall?.url).toContain('senders=all');
 
     const showResponse = await worker.fetch(
-      rpc('tools/call', { name: 'inbox_show', arguments: { thread: 'conv_stranger_1' } }),
+      rpc('tools/call', { name: 'inbox_show', arguments: { conversation: 'conv_stranger_1' } }),
       env,
       ctx
     );
@@ -58,7 +58,7 @@ describe('inbox tools — a host sees a thread, reads it, replies and resolves i
       rpc('tools/call', {
         name: 'inbox_reply',
         arguments: {
-          thread: 'conv_stranger_1',
+          conversation: 'conv_stranger_1',
           kind: 'ask',
           message: 'How can I help?',
           anyone_may_answer: true,
@@ -84,7 +84,7 @@ describe('inbox tools — a host sees a thread, reads it, replies and resolves i
     expect(created?.body).not.toHaveProperty('to');
 
     const resolveResponse = await worker.fetch(
-      rpc('tools/call', { name: 'inbox_resolve', arguments: { thread: 'conv_stranger_1' } }),
+      rpc('tools/call', { name: 'inbox_resolve', arguments: { conversation: 'conv_stranger_1' } }),
       env,
       ctx
     );
@@ -119,7 +119,7 @@ describe('inbox tools — a host sees a thread, reads it, replies and resolves i
     const { env, ctx } = setup();
 
     const response = await worker.fetch(
-      rpc('tools/call', { name: 'inbox_read', arguments: { thread: 'conv_stranger_1' } }),
+      rpc('tools/call', { name: 'inbox_read', arguments: { conversation: 'conv_stranger_1' } }),
       env,
       ctx
     );

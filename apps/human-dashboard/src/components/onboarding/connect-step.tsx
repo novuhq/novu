@@ -1,17 +1,15 @@
 'use client';
 
-import { ArrowRight, Download } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useCallback, useTransition } from 'react';
 
 import { createOnboardingConnectCodeAction, skipForNowAction } from '@/app/(account)/onboarding/actions';
 import { ConnectPromptBox } from '@/components/connect/connect-prompt-box';
+import { InstallSkillsButton } from '@/components/connect/install-skills-button';
 import { DOCS_URL } from '@/components/dashboard/nav';
 import { ToolChips } from '@/components/onboarding/identity-stage';
 import { Eyebrow, StepLead, StepTitle } from '@/components/onboarding/onboarding-shell';
-import { buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
-import { toast } from '@/components/ui/toast';
 import { useConnectCode } from '@/hooks/use-connect-code';
-import { INSTALL_SKILLS_COMMAND } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
 type ConnectStepProps = {
@@ -51,14 +49,7 @@ export function ConnectStep({ handle, address, apiUrl, waiting }: ConnectStepPro
           <span>Works with</span>
           <ToolChips className="gap-0 [&>*]:-ml-0.75 [&>*:first-child]:ml-0 [&>*:first-child]:-rotate-3 [&>*:last-child]:rotate-3" />
           <span>and anything that runs a command or MCP</span>
-          <button
-            type="button"
-            onClick={installSkills}
-            className={buttonClassName('quiet', cn(SMALL_BUTTON, 'ml-auto'))}
-          >
-            <Download aria-hidden="true" className="size-3.5" />
-            Install skills
-          </button>
+          <InstallSkillsButton variant="quiet" className="ml-auto" />
         </div>
       </div>
 
@@ -89,14 +80,4 @@ export function ConnectStep({ handle, address, apiUrl, waiting }: ConnectStepPro
       </div>
     </>
   );
-}
-
-/** Until the skills can be downloaded from here, the button hands over the command that installs them. */
-async function installSkills() {
-  try {
-    await navigator.clipboard.writeText(INSTALL_SKILLS_COMMAND);
-    toast(`Copied: ${INSTALL_SKILLS_COMMAND}`);
-  } catch {
-    toast(`Couldn't copy. The command is: ${INSTALL_SKILLS_COMMAND}`, 'error');
-  }
 }

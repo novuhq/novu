@@ -327,7 +327,7 @@ export class HumanInteractionsController {
 
   /**
    * Whether an Agent Inbox handle is free. Asked while the operator types one. A taken handle comes
-   * back with a nearby free one.
+   * back with a nearby free one. With no handle, the answer is only the mailbox domain this deployment publishes.
    */
   @Get('/inbox-address')
   @KeylessAccessible()
