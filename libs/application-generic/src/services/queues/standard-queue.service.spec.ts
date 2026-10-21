@@ -1,200 +1,166 @@
-import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { Queue as QueueMock } from 'bullmq';
+import { restoreQueueBackendEnv } from '../../config/queue-backend.test-helpers';
 import {
+  createInMemoryProviderStub,
   createPinoLoggerMock,
   createSchedulerServiceMock,
   createSqsServiceMock,
+  getLastQueue,
 } from '../queue-service-mocks.test-helpers';
 import { StandardQueueService } from './standard-queue.service';
 
-let standardQueueService: StandardQueueService;
+vi.mock('bullmq', async (importOriginal) =>
+  (await import('../queue-service-mocks.test-helpers')).mockBullmqModule(await importOriginal())
+);
+
+const lastQueue = getLastQueue;
 
 const ORGANIZATION_ID = 'standard-organization-id';
 
-const mockSqsService = createSqsServiceMock();
-const mockLogger = createPinoLoggerMock();
-const mockSchedulerService = createSchedulerServiceMock();
+function build(isCluster = false) {
+  const { provider, client } = createInMemoryProviderStub(isCluster);
+  const service = new StandardQueueService(
+    provider,
+    createSqsServiceMock(),
+    createPinoLoggerMock(),
+    createSchedulerServiceMock()
+  );
+
+  return { service, provider, client };
+}
+
+function jobDataFor(jobId: string, extra: Record<string, unknown> = {}) {
+  return {
+    _id: jobId,
+    _environmentId: 'standard-environment-id',
+    _organizationId: ORGANIZATION_ID,
+    _userId: 'standard-user-id',
+    ...extra,
+  };
+}
 
 describe('Standard Queue service', () => {
+  const restoreEnv = restoreQueueBackendEnv();
+
+  beforeEach(() => {
+    delete process.env.QUEUE_BACKEND;
+    vi.mocked(QueueMock).mockClear();
+  });
+
+  afterEach(() => {
+    restoreEnv();
+  });
+
   describe('General', () => {
-    beforeAll(async () => {
-      standardQueueService = new StandardQueueService(
-        new WorkflowInMemoryProviderService(),
-        mockSqsService,
-        mockLogger,
-        mockSchedulerService
-      );
-      await standardQueueService.queue.obliterate();
-    });
-
-    beforeEach(async () => {
-      await standardQueueService.queue.drain();
-    });
-
-    afterAll(async () => {
-      await standardQueueService.gracefulShutdown();
-    });
-
     it('should be initialised properly', async () => {
-      expect(standardQueueService).toBeDefined();
-      expect(Object.keys(standardQueueService)).toEqual(expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'queue']));
-      expect(standardQueueService.DEFAULT_ATTEMPTS).toEqual(3);
-      expect(standardQueueService.topic).toEqual('standard');
-      expect(await standardQueueService.getStatus()).toEqual({
+      const { service, client } = build();
+
+      expect(service).toBeDefined();
+      expect(Object.keys(service)).toEqual(expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'queue']));
+      expect(service.DEFAULT_ATTEMPTS).toEqual(3);
+      expect(service.topic).toEqual('standard');
+
+      expect(QueueMock).toHaveBeenCalledTimes(1);
+      expect(QueueMock).toHaveBeenCalledWith('standard', {
+        connection: client,
+        defaultJobOptions: { removeOnComplete: true },
+      });
+      expect(vi.mocked(QueueMock).mock.calls[0][1]).not.toHaveProperty('prefix');
+      expect(service.queue).toBe(lastQueue());
+
+      expect(await service.getStatus()).toEqual({
         queueIsPaused: false,
         queueName: 'standard',
         workerName: undefined,
         workerIsPaused: undefined,
         workerIsRunning: undefined,
       });
-      expect(await standardQueueService.isPaused()).toEqual(false);
-      expect(standardQueueService.queue).toMatchObject(
-        expect.objectContaining({
-          _events: {},
-          _eventsCount: 0,
-          _maxListeners: undefined,
-          name: 'standard',
-          jobsOpts: expect.objectContaining({
-            removeOnComplete: true,
-          }),
-        })
-      );
-      expect(standardQueueService.queue.opts.prefix).toEqual('bull');
+      expect(await service.isPaused()).toEqual(false);
     });
 
     it('should add a job in the queue', async () => {
+      const { service } = build();
       const jobId = 'standard-job-id';
-      const _environmentId = 'standard-environment-id';
-      const _organizationId = 'standard-organization-id';
-      const _userId = 'standard-user-id';
-      const jobData = {
-        _id: jobId,
-        test: 'standard-job-data',
-        _environmentId,
-        _organizationId,
-        _userId,
-      };
+      const jobData = jobDataFor(jobId, { test: 'standard-job-data' });
 
-      await standardQueueService.add({
-        name: jobId,
-        data: jobData,
-        groupId: _organizationId,
+      await service.add({ name: jobId, data: jobData, groupId: ORGANIZATION_ID });
+
+      expect(lastQueue().add).toHaveBeenCalledTimes(1);
+      expect(lastQueue().add).toHaveBeenCalledWith(jobId, jobData, {
+        removeOnComplete: true,
+        removeOnFail: true,
+        jobId,
       });
-
-      expect(await standardQueueService.queue.getActiveCount()).toEqual(0);
-      expect(await standardQueueService.queue.getWaitingCount()).toEqual(1);
-
-      const standardQueueJobs = await standardQueueService.queue.getJobs();
-      expect(standardQueueJobs.length).toEqual(1);
-      const [standardQueueJob] = standardQueueJobs;
-      expect(standardQueueJob).toMatchObject(
-        expect.objectContaining({
-          id: jobId,
-          name: jobId,
-          data: jobData,
-          attemptsMade: 0,
-        })
-      );
     });
 
     it('should add a minimal job in the queue', async () => {
+      const { service } = build();
       const jobId = 'standard-job-id-2';
-      const _environmentId = 'standard-environment-id';
-      const _organizationId = 'standard-organization-id';
-      const _userId = 'standard-user-id';
-      const jobData = {
-        _id: jobId,
-        test: 'standard-job-data-2',
-        _environmentId,
-        _organizationId,
-        _userId,
-      };
+      const jobData = jobDataFor(jobId, { test: 'standard-job-data-2' });
 
-      await standardQueueService.add({
-        name: jobId,
-        data: jobData,
-        groupId: _organizationId,
+      await service.add({ name: jobId, data: jobData, groupId: ORGANIZATION_ID });
+
+      expect(lastQueue().add).toHaveBeenCalledWith(jobId, jobData, {
+        removeOnComplete: true,
+        removeOnFail: true,
+        jobId,
       });
-
-      expect(await standardQueueService.queue.getActiveCount()).toEqual(0);
-      expect(await standardQueueService.queue.getWaitingCount()).toEqual(1);
-
-      const standardQueueJobs = await standardQueueService.queue.getJobs();
-      expect(standardQueueJobs.length).toEqual(1);
-      const [standardQueueJob] = standardQueueJobs;
-      expect(standardQueueJob).toMatchObject(
-        expect.objectContaining({
-          id: jobId,
-          name: jobId,
-          data: jobData,
-          attemptsMade: 0,
-        })
-      );
     });
 
     it('should not add the same job twice', async () => {
+      const { service } = build();
       const jobId = 'standard-job-id-duplicated';
-      const jobData = {
-        _id: jobId,
-        _environmentId: 'standard-environment-id',
-        _organizationId: ORGANIZATION_ID,
-        _userId: 'standard-user-id',
-      };
+      const jobData = jobDataFor(jobId);
 
-      await standardQueueService.add({ name: jobId, data: jobData, groupId: ORGANIZATION_ID });
-      await standardQueueService.add({ name: jobId, data: jobData, groupId: ORGANIZATION_ID });
+      await service.add({ name: jobId, data: jobData, groupId: ORGANIZATION_ID });
+      await service.add({ name: jobId, data: jobData, groupId: ORGANIZATION_ID });
 
-      expect(await standardQueueService.queue.getWaitingCount()).toEqual(1);
-
-      const standardQueueJobs = await standardQueueService.queue.getJobs();
-      expect(standardQueueJobs.length).toEqual(1);
-      expect(standardQueueJobs[0].id).toEqual(jobId);
+      /*
+       * BullMQ is what drops the repeat, keyed on the job id. What this service owns is
+       * defaulting that id to the job name, so both inserts carry the same one.
+       */
+      const { calls } = lastQueue().add.mock;
+      expect(calls).toHaveLength(2);
+      expect(calls.map(([, , options]) => options.jobId)).toEqual([jobId, jobId]);
     });
 
     it('should honour a job id provided by the caller', async () => {
+      const { service } = build();
       const jobId = 'standard-job-id-with-custom-id';
       const customJobId = `${jobId}-ext1`;
-      const jobData = {
-        _id: jobId,
-        _environmentId: 'standard-environment-id',
-        _organizationId: ORGANIZATION_ID,
-        _userId: 'standard-user-id',
-      };
+      const jobData = jobDataFor(jobId);
 
-      await standardQueueService.add({ name: jobId, data: jobData, groupId: ORGANIZATION_ID });
-      await standardQueueService.add({
-        name: jobId,
-        data: jobData,
-        groupId: ORGANIZATION_ID,
-        options: { jobId: customJobId },
-      });
+      await service.add({ name: jobId, data: jobData, groupId: ORGANIZATION_ID });
+      await service.add({ name: jobId, data: jobData, groupId: ORGANIZATION_ID, options: { jobId: customJobId } });
 
-      expect(await standardQueueService.queue.getWaitingCount()).toEqual(2);
+      const { calls } = lastQueue().add.mock;
+      expect(calls.map(([, , options]) => options.jobId)).toEqual([jobId, customJobId]);
+    });
 
-      const standardQueueJobs = await standardQueueService.queue.getJobs();
-      expect(standardQueueJobs.map((job) => job.id).sort()).toEqual([jobId, customJobId]);
+    it('should add jobs in bulk', async () => {
+      const { service } = build();
+      const jobData = jobDataFor('standard-bulk');
+
+      await service.addBulk([{ name: 'standard-bulk', data: jobData, groupId: ORGANIZATION_ID }]);
+
+      expect(lastQueue().addBulk).toHaveBeenCalledWith([
+        { name: 'standard-bulk', data: jobData, opts: { removeOnComplete: true, removeOnFail: true } },
+      ]);
+    });
+
+    it('should delegate readiness to the in-memory provider', () => {
+      const { service, provider } = build();
+
+      expect(service.isReady()).toEqual(true);
+      expect(provider.isReady).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('Cluster mode', () => {
-    beforeAll(async () => {
-      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
+    it('should have prefix in cluster mode', () => {
+      build(true);
 
-      standardQueueService = new StandardQueueService(
-        new WorkflowInMemoryProviderService(),
-        mockSqsService,
-        mockLogger,
-        mockSchedulerService
-      );
-      await standardQueueService.queue.obliterate();
-    });
-
-    afterAll(async () => {
-      await standardQueueService.gracefulShutdown();
-      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-    });
-
-    it('should have prefix in cluster mode', async () => {
-      expect(standardQueueService.queue.opts.prefix).toEqual('{standard}');
+      expect(QueueMock).toHaveBeenCalledWith('standard', expect.objectContaining({ prefix: '{standard}' }));
     });
   });
 });

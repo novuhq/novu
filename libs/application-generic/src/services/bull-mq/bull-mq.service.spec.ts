@@ -1,16 +1,67 @@
 import { JobTopicNameEnum } from '@novu/shared';
-import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import type { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { BullMqService, QueueBaseOptions, WorkerOptions } from './bull-mq.service';
 
+/*
+ * BullMQ would open a real Redis connection for every Queue/Worker. We only own
+ * the wiring (name, connection, prefix, options), so bullmq is replaced with
+ * inert fakes that record what they were constructed with.
+ */
+vi.mock('bullmq', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('bullmq')>();
+
+  class FakeQueue {
+    public paused = false;
+
+    constructor(
+      public name: string,
+      public opts: Record<string, unknown> = {}
+    ) {
+      this.opts = { prefix: 'bull', ...opts };
+    }
+
+    isPaused = async () => this.paused;
+    close = vi.fn(async () => undefined);
+    add = vi.fn();
+  }
+
+  class FakeWorker {
+    public paused = false;
+    public running = true;
+
+    constructor(
+      public name: string,
+      public processor: unknown,
+      public opts: Record<string, unknown> = {}
+    ) {
+      this.opts = { prefix: 'bull', ...opts };
+    }
+
+    isPaused = async () => this.paused;
+    isRunning = () => this.running;
+    close = vi.fn(async () => undefined);
+  }
+
+  return { ...actual, Queue: FakeQueue, Worker: FakeWorker };
+});
+
 let bullMqService: BullMqService;
+
+const createProviderStub = (isCluster: boolean) => {
+  const client = { fake: 'redis-client' };
+  const provider = {
+    providerInUseIsInClusterMode: vi.fn(() => isCluster),
+    getClient: vi.fn(() => client),
+    isReady: vi.fn(() => true),
+  };
+
+  return { client, provider: provider as unknown as WorkflowInMemoryProviderService };
+};
 
 describe('BullMQ Service', () => {
   describe('Non cluster mode', () => {
     beforeEach(async () => {
-      process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-
-      bullMqService = new BullMqService(new WorkflowInMemoryProviderService());
+      bullMqService = new BullMqService(createProviderStub(false).provider);
     });
 
     afterEach(async () => {
@@ -31,11 +82,15 @@ describe('BullMQ Service', () => {
       });
 
       it('should create a queue properly with the default configuration', async () => {
+        const { client, provider } = createProviderStub(false);
+        bullMqService = new BullMqService(provider);
+
         const queueName = JobTopicNameEnum.ACTIVE_JOBS_METRIC;
         const queueOptions: QueueBaseOptions = {};
         await bullMqService.createQueue(queueName, queueOptions);
 
         expect(bullMqService.queue.name).toEqual(queueName);
+        expect(bullMqService.queue.opts.connection).toBe(client);
 
         expect(await bullMqService.getStatus()).toEqual({
           queueIsPaused: false,
@@ -47,40 +102,37 @@ describe('BullMQ Service', () => {
       });
 
       it('should create a worker properly with the default configuration', async () => {
+        const { client, provider } = createProviderStub(false);
+        bullMqService = new BullMqService(provider);
+
         const workerName = JobTopicNameEnum.ACTIVE_JOBS_METRIC;
-        await bullMqService.createWorker(workerName, undefined, {});
+        const workerOptions: WorkerOptions = { concurrency: 5, lockDuration: 1000 };
+        await bullMqService.createWorker(workerName, undefined, workerOptions);
 
         expect(bullMqService.worker.name).toEqual(workerName);
+        expect(bullMqService.worker.opts.connection).toBe(client);
+        expect(bullMqService.worker.opts).toEqual(expect.objectContaining({ concurrency: 5, lockDuration: 1000 }));
       });
     });
   });
 
   describe('Prefix functionality', () => {
     it('should use prefix if any Cluster provider enabled', async () => {
-      process.env.MEMORY_DB_CLUSTER_SERVICE_HOST = 'localhost';
-      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
-
-      bullMqService = new BullMqService(new WorkflowInMemoryProviderService());
+      bullMqService = new BullMqService(createProviderStub(true).provider);
       const queue = bullMqService.createQueue(JobTopicNameEnum.ACTIVE_JOBS_METRIC, {});
       expect(queue.opts.prefix).toEqual('{metric-active-jobs}');
     });
 
     it('should not use prefix if a Redis provider is used and not in Cluster mode', async () => {
-      process.env.MEMORY_DB_CLUSTER_SERVICE_HOST = '';
-      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-
-      bullMqService = new BullMqService(new WorkflowInMemoryProviderService());
+      bullMqService = new BullMqService(createProviderStub(false).provider);
       const queue = bullMqService.createQueue(JobTopicNameEnum.ACTIVE_JOBS_METRIC, {});
       expect(queue.opts.prefix).toEqual('bull');
     });
 
-    it('should use prefix if in Cluster mode in Redis', async () => {
-      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
-      process.env.MEMORY_DB_CLUSTER_SERVICE_HOST = '';
-
-      bullMqService = new BullMqService(new WorkflowInMemoryProviderService());
-      const queue = bullMqService.createQueue(JobTopicNameEnum.ACTIVE_JOBS_METRIC, {});
-      expect(queue.opts.prefix).toEqual('{metric-active-jobs}');
+    it('should use the same hash-tagged prefix for workers in Cluster mode', async () => {
+      bullMqService = new BullMqService(createProviderStub(true).provider);
+      const worker = bullMqService.createWorker(JobTopicNameEnum.ACTIVE_JOBS_METRIC, undefined, {} as WorkerOptions);
+      expect(worker.opts.prefix).toEqual('{metric-active-jobs}');
     });
 
     it('should hash-tag the prefix when the workflow Redis provider is clustered', () => {

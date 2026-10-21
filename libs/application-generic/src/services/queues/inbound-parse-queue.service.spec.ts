@@ -1,133 +1,119 @@
-import { WorkflowInMemoryProviderService } from '../in-memory-provider';
-import { SqsService } from '../sqs';
-import { InboundParseQueueService } from './inbound-parse-queue.service';
+import { Queue as QueueMock } from 'bullmq';
+import { restoreQueueBackendEnv } from '../../config/queue-backend.test-helpers';
+import { createInMemoryProviderStub, createSqsServiceMock, getLastQueue } from '../queue-service-mocks.test-helpers';
+import { INBOUND_PARSE_RETRY_POLICY, InboundParseQueueService } from './inbound-parse-queue.service';
 
-let inboundParseQueueService: InboundParseQueueService;
+vi.mock('bullmq', async (importOriginal) =>
+  (await import('../queue-service-mocks.test-helpers')).mockBullmqModule(await importOriginal())
+);
+
+const lastQueue = getLastQueue;
+
+function build(isCluster = false) {
+  const { provider, client } = createInMemoryProviderStub(isCluster);
+  const service = new InboundParseQueueService(provider, createSqsServiceMock());
+
+  return { service, provider, client };
+}
+
+const jobData = {
+  html: '<>Hello World</>',
+  text: 'text',
+  subject: 'subject',
+  messageId: '123',
+};
 
 describe('Inbound Parse Queue service', () => {
+  const restoreEnv = restoreQueueBackendEnv();
+
+  beforeEach(() => {
+    delete process.env.QUEUE_BACKEND;
+    vi.mocked(QueueMock).mockClear();
+  });
+
+  afterEach(() => {
+    restoreEnv();
+  });
+
   describe('General', () => {
-    beforeAll(async () => {
-      inboundParseQueueService = new InboundParseQueueService(new WorkflowInMemoryProviderService(), new SqsService());
-      await inboundParseQueueService.queue.obliterate();
-    });
-
-    beforeEach(async () => {
-      await inboundParseQueueService.queue.drain();
-    });
-
-    afterAll(async () => {
-      await inboundParseQueueService.gracefulShutdown();
-    });
-
     it('should be initialised properly', async () => {
-      expect(inboundParseQueueService).toBeDefined();
-      expect(Object.keys(inboundParseQueueService)).toEqual(
+      const { service, client } = build();
+
+      expect(service).toBeDefined();
+      expect(Object.keys(service)).toEqual(
         expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'bullMqService', 'queue'])
       );
-      expect(inboundParseQueueService.DEFAULT_ATTEMPTS).toEqual(3);
-      expect(inboundParseQueueService.topic).toEqual('inbound-parse-mail');
-      expect(await inboundParseQueueService.getStatus()).toEqual({
+      expect(service.DEFAULT_ATTEMPTS).toEqual(3);
+      expect(service.topic).toEqual('inbound-parse-mail');
+
+      expect(QueueMock).toHaveBeenCalledTimes(1);
+      expect(QueueMock).toHaveBeenCalledWith('inbound-parse-mail', {
+        connection: client,
+        defaultJobOptions: {
+          removeOnComplete: true,
+          removeOnFail: true,
+          attempts: INBOUND_PARSE_RETRY_POLICY.attempts,
+          backoff: { delay: INBOUND_PARSE_RETRY_POLICY.backoffBaseMs, type: 'exponential' },
+        },
+      });
+      expect(vi.mocked(QueueMock).mock.calls[0][1]).not.toHaveProperty('prefix');
+      expect(service.queue).toBe(lastQueue());
+
+      expect(await service.getStatus()).toEqual({
         queueIsPaused: false,
         queueName: 'inbound-parse-mail',
         workerName: undefined,
         workerIsPaused: undefined,
         workerIsRunning: undefined,
       });
-      expect(await inboundParseQueueService.isPaused()).toEqual(false);
-      expect(inboundParseQueueService.queue).toMatchObject(
-        expect.objectContaining({
-          _events: {},
-          _eventsCount: 0,
-          _maxListeners: undefined,
-          name: 'inbound-parse-mail',
-          jobsOpts: expect.objectContaining({
-            removeOnComplete: true,
-          }),
-        })
-      );
-      expect(inboundParseQueueService.queue.opts.prefix).toEqual('bull');
+      expect(await service.isPaused()).toEqual(false);
     });
 
     it('should add a job in the queue', async () => {
+      const { service } = build();
       const jobId = 'inbound-parse-mail-job-id';
-      const _organizationId = 'inbound-parse-mail-organization-id';
-      const jobData = {
-        html: '<>Hello World</>',
-        text: 'text',
-        subject: 'subject',
-        messageId: '123',
-      };
 
-      await inboundParseQueueService.add({
-        name: jobId,
-        data: jobData as any,
-        groupId: _organizationId,
-      });
+      await service.add({ name: jobId, data: jobData as any, groupId: 'inbound-parse-mail-organization-id' });
 
-      expect(await inboundParseQueueService.queue.getActiveCount()).toEqual(0);
-      expect(await inboundParseQueueService.queue.getWaitingCount()).toEqual(1);
-
-      const inboundParseQueueJobs = await inboundParseQueueService.queue.getJobs();
-      expect(inboundParseQueueJobs.length).toEqual(1);
-      const [inboundParseQueueJob] = inboundParseQueueJobs;
-      expect(inboundParseQueueJob).toMatchObject(
-        expect.objectContaining({
-          id: '1',
-          name: jobId,
-          data: jobData,
-          attemptsMade: 0,
-        })
-      );
+      expect(lastQueue().add).toHaveBeenCalledTimes(1);
+      expect(lastQueue().add).toHaveBeenCalledWith(jobId, jobData, { removeOnComplete: true, removeOnFail: true });
     });
 
     it('should add a minimal job in the queue', async () => {
+      const { service } = build();
       const jobId = 'inbound-parse-mail-job-id-2';
-      const _organizationId = 'inbound-parse-mail-organization-id';
-      const jobData = {
-        html: '<>Hello World</>',
-        text: 'text',
-        subject: 'subject',
-        messageId: '123',
-      };
 
-      await inboundParseQueueService.add({
-        name: jobId,
-        data: jobData as any,
-        groupId: _organizationId,
-      });
+      await service.add({ name: jobId, data: jobData as any, groupId: 'inbound-parse-mail-organization-id' });
 
-      expect(await inboundParseQueueService.queue.getActiveCount()).toEqual(0);
-      expect(await inboundParseQueueService.queue.getWaitingCount()).toEqual(1);
+      expect(lastQueue().add).toHaveBeenCalledWith(jobId, jobData, { removeOnComplete: true, removeOnFail: true });
+    });
 
-      const inboundParseQueueJobs = await inboundParseQueueService.queue.getJobs();
-      expect(inboundParseQueueJobs.length).toEqual(1);
-      const [inboundParseQueueJob] = inboundParseQueueJobs;
-      expect(inboundParseQueueJob).toMatchObject(
-        expect.objectContaining({
-          id: '2',
-          name: jobId,
-          data: jobData,
-          attemptsMade: 0,
-        })
-      );
+    it('should add jobs in bulk with the default removal options', async () => {
+      const { service } = build();
+
+      await service.addBulk([{ name: 'a', data: jobData as any, groupId: 'org' }]);
+
+      expect(lastQueue().addBulk).toHaveBeenCalledWith([
+        { name: 'a', data: jobData, opts: { removeOnComplete: true, removeOnFail: true } },
+      ]);
+    });
+
+    it('should delegate readiness to the in-memory provider', () => {
+      const { service, provider } = build();
+
+      expect(service.isReady()).toEqual(true);
+      expect(provider.isReady).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('Cluster mode', () => {
-    beforeAll(async () => {
-      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
+    it('should have prefix in cluster mode', () => {
+      build(true);
 
-      inboundParseQueueService = new InboundParseQueueService(new WorkflowInMemoryProviderService(), new SqsService());
-      await inboundParseQueueService.queue.obliterate();
-    });
-
-    afterAll(async () => {
-      await inboundParseQueueService.gracefulShutdown();
-      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-    });
-
-    it('should have prefix in cluster mode', async () => {
-      expect(inboundParseQueueService.queue.opts.prefix).toEqual('{inbound-parse-mail}');
+      expect(QueueMock).toHaveBeenCalledWith(
+        'inbound-parse-mail',
+        expect.objectContaining({ prefix: '{inbound-parse-mail}' })
+      );
     });
   });
 });

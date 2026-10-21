@@ -1,72 +1,88 @@
-import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { Queue as QueueMock } from 'bullmq';
+import { restoreQueueBackendEnv } from '../../config/queue-backend.test-helpers';
+import { createInMemoryProviderStub, getLastQueue } from '../queue-service-mocks.test-helpers';
 import { ActiveJobsMetricQueueService } from './active-jobs-metric-queue.service';
 
-let activeJobsMetricQueueService: ActiveJobsMetricQueueService;
+vi.mock('bullmq', async (importOriginal) =>
+  (await import('../queue-service-mocks.test-helpers')).mockBullmqModule(await importOriginal())
+);
+
+const lastQueue = getLastQueue;
 
 describe('Job metrics Queue service', () => {
+  const restoreEnv = restoreQueueBackendEnv();
+
+  beforeEach(() => {
+    delete process.env.QUEUE_BACKEND;
+    vi.mocked(QueueMock).mockClear();
+  });
+
+  afterEach(() => {
+    restoreEnv();
+  });
+
   describe('General', () => {
-    beforeAll(async () => {
-      activeJobsMetricQueueService = new ActiveJobsMetricQueueService(new WorkflowInMemoryProviderService());
-      await activeJobsMetricQueueService.queue.drain();
-    });
-
-    beforeEach(async () => {
-      await activeJobsMetricQueueService.queue.drain();
-    });
-
-    afterEach(async () => {
-      await activeJobsMetricQueueService.queue.drain();
-    });
-
-    afterAll(async () => {
-      await activeJobsMetricQueueService.gracefulShutdown();
-    });
-
     it('should be initialised properly', async () => {
-      expect(activeJobsMetricQueueService).toBeDefined();
-      expect(Object.keys(activeJobsMetricQueueService)).toEqual(
+      const { provider, client } = createInMemoryProviderStub();
+      const service = new ActiveJobsMetricQueueService(provider);
+
+      expect(service).toBeDefined();
+      expect(Object.keys(service)).toEqual(
         expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'bullMqService', 'queue'])
       );
-      expect(activeJobsMetricQueueService.DEFAULT_ATTEMPTS).toEqual(3);
-      expect(activeJobsMetricQueueService.topic).toEqual('metric-active-jobs');
-      expect(await activeJobsMetricQueueService.getStatus()).toEqual({
+      expect(service.DEFAULT_ATTEMPTS).toEqual(3);
+      expect(service.topic).toEqual('metric-active-jobs');
+
+      expect(QueueMock).toHaveBeenCalledTimes(1);
+      expect(QueueMock).toHaveBeenCalledWith('metric-active-jobs', {
+        connection: client,
+        defaultJobOptions: { removeOnComplete: true },
+      });
+      expect(service.queue).toBe(lastQueue());
+
+      expect(await service.getStatus()).toEqual({
         queueIsPaused: false,
         queueName: 'metric-active-jobs',
         workerName: undefined,
         workerIsPaused: undefined,
         workerIsRunning: undefined,
       });
-      expect(await activeJobsMetricQueueService.isPaused()).toEqual(false);
-      expect(activeJobsMetricQueueService.queue).toMatchObject(
-        expect.objectContaining({
-          _events: {},
-          _eventsCount: 0,
-          _maxListeners: undefined,
-          name: 'metric-active-jobs',
-          jobsOpts: expect.objectContaining({
-            removeOnComplete: true,
-          }),
-        })
-      );
-      expect(activeJobsMetricQueueService.queue.opts.prefix).toEqual('bull');
+      expect(await service.isPaused()).toEqual(false);
+    });
+
+    it('should not set a prefix outside cluster mode', () => {
+      new ActiveJobsMetricQueueService(createInMemoryProviderStub(false).provider);
+
+      expect(vi.mocked(QueueMock).mock.calls[0][1]).not.toHaveProperty('prefix');
+    });
+
+    it('should delegate readiness to the in-memory provider', () => {
+      const { provider } = createInMemoryProviderStub();
+      const service = new ActiveJobsMetricQueueService(provider);
+
+      expect(service.isReady()).toEqual(true);
+      expect(provider.isReady).toHaveBeenCalledTimes(1);
+    });
+
+    it('should close the queue on shutdown', async () => {
+      const service = new ActiveJobsMetricQueueService(createInMemoryProviderStub().provider);
+      const queue = lastQueue();
+
+      await service.gracefulShutdown();
+
+      expect(queue.close).toHaveBeenCalledTimes(1);
+      expect(service.queue).toBeUndefined();
     });
   });
 
   describe('Cluster mode', () => {
-    beforeAll(async () => {
-      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
+    it('should have prefix in cluster mode', () => {
+      new ActiveJobsMetricQueueService(createInMemoryProviderStub(true).provider);
 
-      activeJobsMetricQueueService = new ActiveJobsMetricQueueService(new WorkflowInMemoryProviderService());
-      await activeJobsMetricQueueService.queue.obliterate();
-    });
-
-    afterAll(async () => {
-      await activeJobsMetricQueueService.gracefulShutdown();
-      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-    });
-
-    it('should have prefix in cluster mode', async () => {
-      expect(activeJobsMetricQueueService.queue.opts.prefix).toEqual('{metric-active-jobs}');
+      expect(QueueMock).toHaveBeenCalledWith(
+        'metric-active-jobs',
+        expect.objectContaining({ prefix: '{metric-active-jobs}' })
+      );
     });
   });
 });

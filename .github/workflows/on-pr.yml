@@ -251,9 +251,6 @@ jobs:
 
       - uses: ./.github/actions/setup-project
 
-      # @novu/application-generic queue and cache specs assert cluster-mode behaviour against a live Redis Cluster.
-      - uses: ./.github/actions/setup-redis-cluster
-
       - name: Run Lint, Build, Test
         uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         env:

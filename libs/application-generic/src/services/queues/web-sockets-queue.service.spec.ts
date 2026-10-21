@@ -1,145 +1,129 @@
-import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { Queue as QueueMock } from 'bullmq';
+import { restoreQueueBackendEnv } from '../../config/queue-backend.test-helpers';
 import {
+  createInMemoryProviderStub,
   createPinoLoggerMock,
   createSocketWorkerServiceMock,
   createSqsServiceMock,
+  getLastQueue,
 } from '../queue-service-mocks.test-helpers';
 import { WebSocketsQueueService } from './web-sockets-queue.service';
 
-let webSocketsQueueService: WebSocketsQueueService;
+vi.mock('bullmq', async (importOriginal) =>
+  (await import('../queue-service-mocks.test-helpers')).mockBullmqModule(await importOriginal())
+);
 
-const mockSocketWorkerService = createSocketWorkerServiceMock();
-const mockSqsService = createSqsServiceMock();
-const mockLogger = createPinoLoggerMock();
+const lastQueue = getLastQueue;
+
+function build(isCluster = false) {
+  const { provider, client } = createInMemoryProviderStub(isCluster);
+  const service = new WebSocketsQueueService(
+    provider,
+    createSocketWorkerServiceMock(),
+    createSqsServiceMock(),
+    createPinoLoggerMock()
+  );
+
+  return { service, provider, client };
+}
+
+function jobDataFor(jobId: string, extra: Record<string, unknown> = {}) {
+  return {
+    _id: jobId,
+    _environmentId: 'web-sockets-queue-environment-id',
+    _organizationId: 'web-sockets-queue-organization-id',
+    _userId: 'web-sockets-queue-user-id',
+    ...extra,
+  };
+}
 
 describe('WebSockets Queue service', () => {
+  const restoreEnv = restoreQueueBackendEnv();
+
+  beforeEach(() => {
+    delete process.env.QUEUE_BACKEND;
+    vi.mocked(QueueMock).mockClear();
+  });
+
+  afterEach(() => {
+    restoreEnv();
+  });
+
   describe('General', () => {
-    beforeAll(async () => {
-      webSocketsQueueService = new WebSocketsQueueService(
-        new WorkflowInMemoryProviderService(),
-        mockSocketWorkerService,
-        mockSqsService,
-        mockLogger
-      );
-      await webSocketsQueueService.queue.obliterate();
-    });
-
-    beforeEach(async () => {
-      await webSocketsQueueService.queue.drain();
-    });
-
-    afterAll(async () => {
-      await webSocketsQueueService.gracefulShutdown();
-    });
-
     it('should be initialised properly', async () => {
-      expect(webSocketsQueueService).toBeDefined();
-      expect(Object.keys(webSocketsQueueService)).toEqual(
+      const { service, client } = build();
+
+      expect(service).toBeDefined();
+      expect(Object.keys(service)).toEqual(
         expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'bullMqService', 'queue'])
       );
-      expect(webSocketsQueueService.DEFAULT_ATTEMPTS).toEqual(3);
-      expect(webSocketsQueueService.topic).toEqual('ws_socket_queue');
-      expect(await webSocketsQueueService.getStatus()).toEqual({
+      expect(service.DEFAULT_ATTEMPTS).toEqual(3);
+      expect(service.topic).toEqual('ws_socket_queue');
+
+      expect(QueueMock).toHaveBeenCalledTimes(1);
+      expect(QueueMock).toHaveBeenCalledWith('ws_socket_queue', {
+        connection: client,
+        defaultJobOptions: { removeOnComplete: true },
+      });
+      expect(vi.mocked(QueueMock).mock.calls[0][1]).not.toHaveProperty('prefix');
+      expect(service.queue).toBe(lastQueue());
+
+      expect(await service.getStatus()).toEqual({
         queueIsPaused: false,
         queueName: 'ws_socket_queue',
         workerName: undefined,
         workerIsPaused: undefined,
         workerIsRunning: undefined,
       });
-      expect(await webSocketsQueueService.isPaused()).toEqual(false);
-      expect(webSocketsQueueService.queue.opts.prefix).toEqual('bull');
+      expect(await service.isPaused()).toEqual(false);
     });
 
     it('should add a job in the queue', async () => {
+      const { service } = build();
       const jobId = 'web-sockets-queue-job-id';
-      const _environmentId = 'web-sockets-queue-environment-id';
-      const _organizationId = 'web-sockets-queue-organization-id';
-      const _userId = 'web-sockets-queue-user-id';
-      const jobData = {
-        _id: jobId,
-        _environmentId,
-        _organizationId,
-        _userId,
-      } as any;
+      const jobData = jobDataFor(jobId);
 
-      await webSocketsQueueService.add({
-        name: jobId,
-        data: jobData,
-        groupId: _organizationId,
-      });
+      await service.add({ name: jobId, data: jobData as any, groupId: 'web-sockets-queue-organization-id' });
 
-      expect(await webSocketsQueueService.queue.getActiveCount()).toEqual(0);
-      expect(await webSocketsQueueService.queue.getWaitingCount()).toEqual(1);
-
-      const webSocketsQueueJobs = await webSocketsQueueService.queue.getJobs();
-      expect(webSocketsQueueJobs.length).toEqual(1);
-      const [webSocketsQueueJob] = webSocketsQueueJobs;
-      expect(webSocketsQueueJob).toMatchObject(
-        expect.objectContaining({
-          id: '1',
-          name: jobId,
-          data: jobData,
-          attemptsMade: 0,
-        })
-      );
+      expect(lastQueue().add).toHaveBeenCalledTimes(1);
+      expect(lastQueue().add).toHaveBeenCalledWith(jobId, jobData, { removeOnComplete: true, removeOnFail: true });
     });
 
     it('should add a minimal job in the queue', async () => {
+      const { service } = build();
       const jobId = 'web-sockets-queue-job-id-2';
-      const _environmentId = 'web-sockets-queue-environment-id';
-      const _organizationId = 'web-sockets-queue-organization-id';
-      const _userId = 'web-sockets-queue-user-id';
-      const jobData = {
-        _id: jobId,
-        test: 'web-sockets-queue-job-data-2',
-        _environmentId,
-        _organizationId,
-        _userId,
-      };
+      const jobData = jobDataFor(jobId, { test: 'web-sockets-queue-job-data-2' });
 
-      await webSocketsQueueService.add({
-        name: jobId,
-        data: jobData as any,
-        groupId: _organizationId,
-      });
+      await service.add({ name: jobId, data: jobData as any, groupId: 'web-sockets-queue-organization-id' });
 
-      expect(await webSocketsQueueService.queue.getActiveCount()).toEqual(0);
-      expect(await webSocketsQueueService.queue.getWaitingCount()).toEqual(1);
+      expect(lastQueue().add).toHaveBeenCalledWith(jobId, jobData, { removeOnComplete: true, removeOnFail: true });
+    });
 
-      const webSocketsQueueJobs = await webSocketsQueueService.queue.getJobs();
-      expect(webSocketsQueueJobs.length).toEqual(1);
-      const [webSocketQueueJob] = webSocketsQueueJobs;
-      expect(webSocketQueueJob).toMatchObject(
-        expect.objectContaining({
-          id: '2',
-          name: jobId,
-          data: jobData,
-          attemptsMade: 0,
-        })
-      );
+    it('should never reject when the queue write fails', async () => {
+      const { service } = build();
+      lastQueue().add.mockRejectedValueOnce(new Error('redis down'));
+
+      await expect(
+        service.add({ name: 'ws-failing', data: jobDataFor('ws-failing') as any, groupId: 'org' })
+      ).resolves.toBeUndefined();
+    });
+
+    it('should delegate readiness to the in-memory provider', () => {
+      const { service, provider } = build();
+
+      expect(service.isReady()).toEqual(true);
+      expect(provider.isReady).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('Cluster mode', () => {
-    beforeAll(async () => {
-      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
+    it('should have prefix in cluster mode', () => {
+      build(true);
 
-      webSocketsQueueService = new WebSocketsQueueService(
-        new WorkflowInMemoryProviderService(),
-        mockSocketWorkerService,
-        mockSqsService,
-        mockLogger
+      expect(QueueMock).toHaveBeenCalledWith(
+        'ws_socket_queue',
+        expect.objectContaining({ prefix: '{ws_socket_queue}' })
       );
-      await webSocketsQueueService.queue.obliterate();
-    });
-
-    afterAll(async () => {
-      await webSocketsQueueService.gracefulShutdown();
-      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-    });
-
-    it('should have prefix in cluster mode', async () => {
-      expect(webSocketsQueueService.queue.opts.prefix).toEqual('{ws_socket_queue}');
     });
   });
 });
