@@ -4,18 +4,8 @@ import { ApiAuthSchemeEnum } from '@novu/shared';
 import { KEYLESS_ENVIRONMENT_PREFIX } from '../../inbox/utils/keyless.constants';
 
 /** `Authorization: Internal <jwt>`: a short-lived token Novu's own backend mints to act as a member (EE only). */
-export function isInternalAuthScheme(scheme: ApiAuthSchemeEnum | string | undefined): boolean {
+export function isInternalAuthScheme(scheme: string | undefined): boolean {
   return scheme === ApiAuthSchemeEnum.INTERNAL;
-}
-
-/**
- * Internal tokens act as a member but are held by a service, so they must never read, create or
- * rotate API keys, even when the member's role would allow it.
- */
-export function assertNotInternalAuthScheme(scheme: ApiAuthSchemeEnum): void {
-  if (isInternalAuthScheme(scheme)) {
-    throw new ForbiddenException('API keys cannot be read or changed with an Internal token.');
-  }
 }
 
 export function isEnvironmentScopedAuthScheme(scheme: ApiAuthSchemeEnum): boolean {

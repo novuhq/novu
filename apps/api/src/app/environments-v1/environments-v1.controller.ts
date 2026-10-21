@@ -38,7 +38,6 @@ import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.dec
 import { UserSession } from '../shared/framework/user.decorator';
 import {
   assertEnvironmentScopedAccess,
-  assertNotInternalAuthScheme,
   isEnvironmentScopedAuthScheme,
   isInternalAuthScheme,
 } from '../shared/utils/auth.utils';
@@ -224,8 +223,6 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_READ)
   async listOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
-    assertNotInternalAuthScheme(user.scheme);
-
     const command = GetApiKeysCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -245,8 +242,6 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
   async createOrganizationApiKey(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
-    assertNotInternalAuthScheme(user.scheme);
-
     const command = GetApiKeysCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -266,8 +261,6 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
   async deleteOrganizationApiKey(@UserSession() user: UserSessionData, @Param('hash') hash: string): Promise<void> {
-    assertNotInternalAuthScheme(user.scheme);
-
     const command = DeleteApiKeyCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -283,8 +276,6 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
   async regenerateOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
-    assertNotInternalAuthScheme(user.scheme);
-
     const command = GetApiKeysCommand.create({
       userId: user._id,
       organizationId: user.organizationId,

@@ -156,11 +156,27 @@ describe('Internal auth scheme #novu-v2', () => {
 
   describe('API keys', () => {
     const apiKeyRoutes = [
-      { method: 'get', path: '/v1/environments/api-keys' },
-      { method: 'post', path: '/v1/environments/api-keys' },
-      { method: 'post', path: '/v1/environments/api-keys/regenerate' },
-      { method: 'delete', path: () => `/v1/environments/api-keys/${session.environment.apiKeys[0].hash}` },
+      { method: 'get', label: 'GET /v1/environments/api-keys', path: () => '/v1/environments/api-keys' },
+      { method: 'post', label: 'POST /v1/environments/api-keys', path: () => '/v1/environments/api-keys' },
+      {
+        method: 'post',
+        label: 'POST /v1/environments/api-keys/regenerate',
+        path: () => '/v1/environments/api-keys/regenerate',
+      },
+      {
+        method: 'delete',
+        label: 'DELETE /v1/environments/api-keys/:hash',
+        path: () => `/v1/environments/api-keys/${session.environment.apiKeys[0].hash}`,
+      },
+      // Hands out a code that is traded for the environment's decrypted key.
+      { method: 'post', label: 'POST /v1/human/agent/connect-codes', path: () => '/v1/human/agent/connect-codes' },
     ] as const;
+
+    function sendInternal(route: (typeof apiKeyRoutes)[number]) {
+      return session.testAgent[route.method](route.path())
+        .set(HttpRequestHeaderKeysEnum.AUTHORIZATION, `${ApiAuthSchemeEnum.INTERNAL} ${mintToken()}`)
+        .send({});
+    }
 
     beforeEach(() => {
       // An owner holds every API key permission, so only the scheme can refuse the call.
@@ -168,32 +184,18 @@ describe('Internal auth scheme #novu-v2', () => {
     });
 
     for (const route of apiKeyRoutes) {
-      const label = typeof route.path === 'string' ? route.path : '/v1/environments/api-keys/:hash';
-
-      it(`refuses ${route.method.toUpperCase()} ${label} even for an owner`, async () => {
-        const path = typeof route.path === 'string' ? route.path : route.path();
-
-        const response = await session.testAgent[route.method](path)
-          .set(HttpRequestHeaderKeysEnum.AUTHORIZATION, `${ApiAuthSchemeEnum.INTERNAL} ${mintToken()}`)
-          .send({});
+      it(`refuses ${route.label} even for an owner and leaves the key working`, async () => {
+        const response = await sendInternal(route);
 
         expect(response.statusCode).to.equal(403);
         expect(response.body.message).to.include('Internal token');
+
+        const keyCheck = await session.testAgent
+          .get('/v1/environments/me')
+          .set(HttpRequestHeaderKeysEnum.AUTHORIZATION, `${ApiAuthSchemeEnum.API_KEY} ${session.apiKey}`);
+        expect(keyCheck.statusCode).to.equal(200);
       });
     }
-
-    it('leaves the environment API key working after a refused regenerate', async () => {
-      await session.testAgent
-        .post('/v1/environments/api-keys/regenerate')
-        .set(HttpRequestHeaderKeysEnum.AUTHORIZATION, `${ApiAuthSchemeEnum.INTERNAL} ${mintToken()}`)
-        .send({});
-
-      const response = await session.testAgent
-        .get('/v1/environments/me')
-        .set(HttpRequestHeaderKeysEnum.AUTHORIZATION, `${ApiAuthSchemeEnum.API_KEY} ${session.apiKey}`);
-
-      expect(response.statusCode).to.equal(200);
-    });
   });
 
   it('rejects the scheme when NOVU_INTERNAL_AUTH_SECRET is empty', async () => {

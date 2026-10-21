@@ -119,8 +119,8 @@ describe('IdempotencyInterceptor', () => {
     }
 
     const [first, second] = cacheService.setIfNotExist.getCalls().map((call) => call.args[0]);
-    expect(first).to.equal(`${process.env.NODE_ENV}-org-id-user-a-ea398302-4865-4851-a9a9-25da599c923d`);
-    expect(second).to.equal(`${process.env.NODE_ENV}-org-id-user-b-ea398302-4865-4851-a9a9-25da599c923d`);
+    expect(first).to.equal(`${process.env.NODE_ENV}-org-id:internal:user-a-ea398302-4865-4851-a9a9-25da599c923d`);
+    expect(second).to.equal(`${process.env.NODE_ENV}-org-id:internal:user-b-ea398302-4865-4851-a9a9-25da599c923d`);
   });
 });
 

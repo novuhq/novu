@@ -156,7 +156,10 @@ export class IdempotencyInterceptor implements NestInterceptor {
      * An API key is the organization's own client, but Internal tokens act for different members of
      * the same organization, so one member's key must never replay another member's response.
      */
-    const scope = isInternalAuthScheme(user.scheme) ? `${user.organizationId}-${user._id}` : user.organizationId;
+    // The `:internal:` tag keeps an API key caller from forging a member's key by prefixing a user id.
+    const scope = isInternalAuthScheme(user.scheme)
+      ? `${user.organizationId}:internal:${user._id}`
+      : user.organizationId;
 
     return `${env}-${scope}-${this.getIdempotencyKey(context)}`;
   }
