@@ -27,6 +27,7 @@ import { canWrite, comment, github, LABEL, labeler, REPO, unlessMissing } from '
 
 const MAX_BOXES = 30;
 const REBAKE_BOX = 'base-next';
+const NIGHTLY_BOX = 'nightly';
 const APPLY_MINUTES = 20;
 const SETTLE_SECONDS = 3 * 60;
 // Past a day since base's bake, a nightly rebake was skipped (a refresh that waited replaced it).
@@ -127,12 +128,14 @@ async function applyHead(number: number, pull: PullRequestEvent['pull_request'])
       ? []
       : [
           await startTesterArmy(box, {
-            number,
-            title: pull.title,
-            ...(pull.body && { description: pull.body.slice(0, 65_536) }),
-            baseBranch: pull.base.ref,
-            headBranch: pull.head.ref,
-            commitSha: sha,
+            pullRequest: {
+              number,
+              title: pull.title,
+              ...(pull.body && { description: pull.body.slice(0, 65_536) }),
+              baseBranch: pull.base.ref,
+              headBranch: pull.head.ref,
+              commitSha: sha,
+            },
           }).then(
             (suites) => `- TesterArmy started: ${suites}. Its results come as checks on this PR.`,
             (error: unknown) => {
@@ -199,8 +202,7 @@ async function startOrReach(cloud: CloudTarget, box: string, number: number): Pr
 }
 
 // Returns what started, for the PR comment; TesterArmy reports results on the PR itself, as checks and a comment.
-async function startTesterArmy(box: string, pullRequest: TesterArmyStart['pullRequest']): Promise<string> {
-  const start: TesterArmyStart = { pullRequest };
+async function startTesterArmy(box: string, start: TesterArmyStart): Promise<string> {
   const { exploration, groups, signUpUsersDeleted } = await hostBoxes(`testerarmy/${box}`, TesterArmyStarted, {
     method: 'POST',
     body: JSON.stringify(start),
@@ -208,7 +210,7 @@ async function startTesterArmy(box: string, pullRequest: TesterArmyStart['pullRe
   });
   if (signUpUsersDeleted.length) log(`deleted leftover sign-up users: ${signUpUsersDeleted.join(', ')}`);
   const suites = [
-    exploration.status === 'skipped' ? 'exploration (skipped)' : 'exploration',
+    ...(exploration ? [exploration.status === 'skipped' ? 'exploration (skipped)' : 'exploration'] : []),
     ...groups.map((group) => `${group.name} (${group.runs} runs)`),
   ];
   log(`TesterArmy started on ${box}: ${suites.join(', ')}`);
@@ -351,6 +353,16 @@ async function refresh(): Promise<number> {
   return rebakeBecause(tooOld);
 }
 
+// The full TesterArmy suite on a fresh copy of base: the tests' data never lands in base, and last night's box goes.
+async function full(): Promise<number> {
+  const box = target(NIGHTLY_BOX);
+  await box.delete();
+  await box.up({ fromBase: true });
+  await startTesterArmy(NIGHTLY_BOX, { suite: 'full' });
+
+  return 0;
+}
+
 function rebakeBecause(why: string): Promise<number> {
   log(`${why}: baking base again instead`);
 
@@ -367,5 +379,10 @@ await main('ci', () =>
     cleanup: { usage: '', help: 'delete pr-* boxes whose PR is closed or no longer labeled `box`', run: cleanup },
     rebake: { usage: '', help: 'bake base again from next and save it to its snapshot (a new chain)', run: rebake },
     refresh: { usage: '', help: "put next's head on base (merges onto it from then on) and save it", run: refresh },
+    full: {
+      usage: '',
+      help: `start box ${NIGHTLY_BOX} afresh from base and the Full TesterArmy groups on it`,
+      run: full,
+    },
   })
 );

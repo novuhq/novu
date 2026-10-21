@@ -118,3 +118,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TASK: ${{ inputs.task || (github.event_name == 'push' && 'refresh') || (github.event.schedule == '17 4 * * *' && 'rebake') || 'cleanup' }}
+      - name: Run the full TesterArmy suite on a fresh box of next
+        if: github.event.schedule == '17 4 * * *'
+        run: node docker/box/src/ci/ci.ts full
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

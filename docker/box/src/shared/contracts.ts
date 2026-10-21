@@ -195,19 +195,23 @@ export const TestUsers = z.object({ users: z.array(TestUser), prune: z.array(z.s
 export const CreatedTestUser = z.object({ email: z.string(), password: z.string(), pruned: z.array(z.string()) });
 export const DeletedBox = z.object({ users: z.array(z.string()).default([]), usersError: z.string().optional() });
 
-export const TesterArmyStart = z.object({
-  pullRequest: z.object({
-    number: z.number(),
-    title: z.string(),
-    description: z.string().optional(),
-    baseBranch: z.string(),
-    headBranch: z.string(),
-    commitSha: z.string(),
+// A PR box gets the exploration agent and PR smoke; `full` starts the Full groups (the nightly box of next).
+export const TesterArmyStart = z.union([
+  z.object({
+    pullRequest: z.object({
+      number: z.number(),
+      title: z.string(),
+      description: z.string().optional(),
+      baseBranch: z.string(),
+      headBranch: z.string(),
+      commitSha: z.string(),
+    }),
   }),
-});
+  z.object({ suite: z.literal('full') }),
+]);
 export type TesterArmyStart = z.infer<typeof TesterArmyStart>;
 export const TesterArmyStarted = z.object({
-  exploration: z.object({ status: z.string(), runId: z.string() }),
+  exploration: z.object({ status: z.string(), runId: z.string() }).optional(),
   groups: z.array(z.object({ name: z.string(), batchId: z.string(), runs: z.number() })),
   signUpUsersDeleted: z.array(z.string()),
 });
