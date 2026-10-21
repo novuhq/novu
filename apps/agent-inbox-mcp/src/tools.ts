@@ -47,7 +47,7 @@ const anyoneMayAnswer = z
   .boolean()
   .optional()
   .describe(
-    'When true with conversation, anyone in it may answer. Pass this when replying to a stranger in a conversation that has no contact.'
+    'When true with conversation, anyone in it may answer, including when the conversation already has a contact. A conversation with no contact already lets everyone in it answer.'
   );
 
 const CHECK_INBOX_HINT =

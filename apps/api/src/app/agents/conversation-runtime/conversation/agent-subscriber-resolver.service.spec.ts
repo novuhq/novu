@@ -32,6 +32,8 @@ describe('AgentSubscriberResolver', () => {
       subscriberDelete?: sinon.SinonStub;
       trackAnalytics?: sinon.SinonStub;
       adoptPhantomsInto?: sinon.SinonStub;
+      findContactsByEmailAddress?: sinon.SinonStub;
+      findAgent?: sinon.SinonStub;
     } = {}
   ) {
     const channelEndpointRepository = {
@@ -62,6 +64,12 @@ describe('AgentSubscriberResolver', () => {
       debug: sinon.stub(),
       info: sinon.stub(),
     };
+    const humanContactRepository = {
+      findContactsByEmailAddress: overrides.findContactsByEmailAddress ?? sinon.stub().resolves([]),
+    };
+    const agentRepository = {
+      findOne: overrides.findAgent ?? sinon.stub().resolves(null),
+    };
 
     const resolver = new AgentSubscriberResolver(
       channelEndpointRepository as any,
@@ -70,7 +78,9 @@ describe('AgentSubscriberResolver', () => {
       createChannelEndpoint as any,
       analyticsService as any,
       adoptionService as any,
-      logger as any
+      logger as any,
+      humanContactRepository as any,
+      agentRepository as any
     );
 
     return {
@@ -82,6 +92,8 @@ describe('AgentSubscriberResolver', () => {
       analyticsService,
       adoptionService,
       logger,
+      humanContactRepository,
+      agentRepository,
     };
   }
 
@@ -686,6 +698,27 @@ describe('AgentSubscriberResolver', () => {
 
       expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-known' });
       expect(createOrUpdateSubscriber.execute.called).to.equal(false);
+    });
+
+    it('resolves a declared human contact without provisioning', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const findContactsByEmailAddress = sinon.stub().resolves([{ subscriberId: 'ada' }]);
+      const { resolver } = makeResolver({
+        findByEmail: sinon.stub().resolves([]),
+        findAgent: sinon.stub().resolves({ _id: 'agent-1' }),
+        findContactsByEmailAddress,
+        createOrUpdateSubscriberExecute,
+      });
+
+      const result = await resolver.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'Ada@Acme.com',
+      });
+
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'ada' });
+      expect(createOrUpdateSubscriberExecute.called).to.equal(false);
+      expect(findContactsByEmailAddress.calledOnceWith('env-1', 'agent-1', 'ada@acme.com')).to.equal(true);
     });
 
     it('provisions a phantom subscriber when the sender is unknown', async () => {

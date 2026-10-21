@@ -22,7 +22,7 @@ The tools are named after the CLI's commands (`inbox send` is `inbox_send`, `con
 
 A person may message the agent first. Use the conversation id from `inbox_list` with `inbox_reply` to answer in it. Conversations and messages are labelled contact or stranger the same way the CLI does: a contact is someone the operator added; a stranger wrote without being one. Showing a conversation does not mark it read; any reply into it does.
 
-The send and reply tools mirror the Agent Inbox CLI: they support attribution, expiry, channel override on sends, full card chrome, custom approval actions, stable choice ids, up to 50 recipients, and contact email addresses. Sending to a new email address starts verification; the message must be retried after the recipient verifies it.
+The send and reply tools mirror the Agent Inbox CLI: they support attribution, expiry, channel override on sends, full card chrome, custom approval actions, stable choice ids, up to 50 recipients, and contact email addresses. A new email address on a send is delivered as typed. A reply still needs a contact that already verified that address.
 
 ## How sign-in works
 
