@@ -54,9 +54,10 @@ baked from, like CI's merge ref, and stops on a conflict: rebase onto `next`, th
 - One comment on the PR, edited in place, shows the box's address, the applied commit and what was rebuilt, or what
   failed; ⚠️ when the apply ran but `doctor` then found problems.
 - Once the box is healthy, TesterArmy (project Novu Box) tests it: its exploration agent, which reads the PR and
-  tests what it changes, and `Box smoke`, a few minutes of the main flows (sign-in, every channel, the API key,
+  tests what it changes, and `PR smoke`, a few minutes of the main flows (sign-in, every channel, the API key,
   the editor, digest, an agent in web chat). They report on the PR as checks. The tests live in TesterArmy, not in
-  this repo; its other groups (`Box workflows`, `Box accounts`, `Box agents`, `Box Slack`) are run by hand for now.
+  this repo; its other groups are run by hand for now: `Full` (everything in the dashboard), `Full: Slack` (the
+  agents in Slack, one test at a time) and `Full: account` (sign up, onboard, delete).
 - Closing the PR or removing the label deletes the box. At most 30 PR boxes exist at once. PRs from forks get no
   box.
 - The workflow holds no secrets: it signs in to the boxes with its GitHub OIDC token.

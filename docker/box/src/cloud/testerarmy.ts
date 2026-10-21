@@ -11,7 +11,7 @@ import { json, text } from './life.ts';
 const API = 'https://tester.army/api/v1';
 // TesterArmy's "Novu Box" project, and the group that runs on every PR: one batch, so one comment on the PR.
 const PROJECT = '7face08e-82db-4350-bfa3-c4a736709f9c';
-const SMOKE = { name: 'Box smoke', id: '561cdead-b919-418f-a65e-1b4b8dc90242' };
+const SMOKE = { name: 'PR smoke', id: '561cdead-b919-418f-a65e-1b4b8dc90242' };
 
 const PrRun = z.object({ status: z.string(), runId: z.string() });
 const GroupRun = z.object({ batchId: z.string(), queuedRunIds: z.array(z.string()) });
