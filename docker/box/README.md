@@ -112,8 +112,8 @@ runs at a time; an interrupted one is completed by the next. Measured on Cloudfl
 
 | Step | Time |
 |---|---|
-| A new box from `base` | about 1 min, of which the restore is 3 s; up to 5 min right after `base` was rebaked (a fresh snapshot's first restore) |
-| Wake after sleeping | 30 to 40 s |
+| A new box from `base` | about 30 s, of which the restore is 1 to 2 s; about 3.5 min for the first one in a location after `base` was rebaked (a cold restore, about 38 s per GB) |
+| Wake after sleeping | about 30 s |
 | Apply: an API change / a worker change / the dashboard | 40 s / 16 s / 23 s |
 | Apply: a library / `@novu/framework` / the bridge app | 50 to 120 s / 114 s / 62 s |
 | Apply: a lockfile change | about 5 min |
@@ -188,6 +188,8 @@ on `nightly-<run id>`; next to that it deletes the boxes of closed or unlabeled 
 (`base-next-*`, `nightly-*`) an hour idle. Its Run workflow button does the same by hand. A rebake bakes in a
 separate box (`base-next-<run id>`, a fresh name every run, see where boxes live above) and `base` takes over its
 snapshot only once it's saved, so `base` is never missing; a refresh that fails keeps the last good snapshot.
+A new box restores every byte of base's snapshot chain, so the bake and each refresh drop nx's cache before they save
+(base's bake snapshot is about 3.8 GB; pnpm's store and cache stay, so a lockfile change doesn't download again).
 Snapshots expire 30 days after they were made or last restored, and nothing deletes old ones.
 
 **Secrets** are Worker secrets of `novu-box-hub`, set only in Cloudflare (dashboard → Workers → `novu-box-hub` →
@@ -229,4 +231,6 @@ the hub starts TesterArmy it deletes those users over an hour old.
 - **Mailpit has no SMS, push or chat:** check `sink` in `logs`, and that the step uses one of the `Box … (sink)`
   integrations (`user channels` for a test user's org).
 - **`sync` stops on a conflict:** the branch doesn't contain `base`'s commit; rebase onto `next`.
-- **A slow first start:** right after `base` was rebaked, the first box restores a fresh snapshot (up to 5 min).
+- **A slow first start:** right after `base` was rebaked, the first box in a location restores a fresh snapshot
+  (about 3 min). A restore that hasn't answered in 5 min is started again once from the same snapshot
+  (`lastStart.attempts` in `/__box/state`).
