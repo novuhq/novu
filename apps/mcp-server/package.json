@@ -12,9 +12,16 @@
 		"vitest": "^4.1.11",
 		"wrangler": "^4.107.0"
 	},
+	"exports": {
+		"./tools": "./dist/tools/tools/index.js"
+	},
+	"files": [
+		"dist/tools"
+	],
 	"name": "@novu/mcp-server",
 	"private": true,
 	"scripts": {
+		"build": "tsc -p tsconfig.tools.json",
 		"cf-typegen": "wrangler types",
 		"deploy:eu": "wrangler deploy --env eu",
 		"deploy:us": "wrangler deploy --env us",
@@ -24,6 +31,13 @@
 		"start": "cross-env WRANGLER_REGISTRY_PATH=.wrangler/registry wrangler dev",
 		"test": "vitest run",
 		"type-check": "tsc --noEmit"
+	},
+	"typesVersions": {
+		"*": {
+			"tools": [
+				"dist/tools/tools/index.d.ts"
+			]
+		}
 	},
 	"version": "1.0.0"
 }

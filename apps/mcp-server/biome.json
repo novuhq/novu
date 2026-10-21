@@ -44,5 +44,37 @@
 			}
 		}
 	},
+	"overrides": [
+		{
+			"includes": ["src/tools/**", "src/utils/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"paths": {
+									"agents": "src/tools and src/utils ship as @novu/mcp-server/tools and run inside the Novu API (Node). Keep Worker-only code in src/server, src/oauth or src/index.ts.",
+									"wrangler": "src/tools and src/utils ship as @novu/mcp-server/tools and run inside the Novu API (Node). Keep Worker-only code in src/server, src/oauth or src/index.ts."
+								},
+								"patterns": [
+									{
+										"group": [
+											"agents/**",
+											"cloudflare:*",
+											"../server/**",
+											"../oauth/**",
+											"../index"
+										],
+										"message": "src/tools and src/utils ship as @novu/mcp-server/tools and run inside the Novu API (Node). Keep Worker-only code in src/server, src/oauth or src/index.ts."
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		}
+	],
 	"root": false
 }

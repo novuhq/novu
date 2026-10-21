@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"declaration": true,
+		"module": "node16",
+		"moduleResolution": "node16",
+		"noEmit": false,
+		"outDir": "dist/tools",
+		"rootDir": "src",
+		"types": ["node"]
+	},
+	"extends": "./tsconfig.json",
+	"include": ["src/tools/index.ts"]
+}

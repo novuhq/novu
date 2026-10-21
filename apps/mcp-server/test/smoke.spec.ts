@@ -1,5 +1,7 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { API_URL, callTool, connectAllTools, textOf, tokenAccessors } from "./support";
+import { registerWorkflowTools, WORKFLOW_TOOL_NAMES } from "../src/tools/index";
+import { API_URL, callTool, connect, connectAllTools, textOf, tokenAccessors } from "./support";
 
 function stubFetch(body: unknown = { data: [] }, status = 200) {
 	const fetchMock = vi.fn(
@@ -66,6 +68,17 @@ describe("the Novu MCP server tools", () => {
 			  "whoami",
 			]
 		`);
+	});
+
+	it("exports a name constant for every tool the ./tools entry registers", async () => {
+		const server = new McpServer({ name: "tools", version: "1.0.0" });
+		registerWorkflowTools(server, tokenAccessors("api-key"));
+
+		const { tools } = await (await connect(server)).listTools();
+
+		expect(tools.map((tool) => tool.name).sort()).toEqual(
+			Object.values(WORKFLOW_TOOL_NAMES).sort(),
+		);
 	});
 
 	it("asks a caller without a credential to sign in", async () => {
