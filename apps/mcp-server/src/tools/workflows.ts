@@ -1,17 +1,22 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { toSlugIdentifier } from "../utils/slug";
 import type { ToolAccessors } from "../utils/tool-accessors";
-import { ToolFactory } from "../utils/tool-factory";
+import { type ApiCallResult, type ToolContext, ToolFactory } from "../utils/tool-factory";
+import { normalizeControlValues } from "../utils/workflow-request";
+import { apiError, workflowResult } from "../utils/workflow-results";
 import {
 	createWorkflowInputSchema,
 	payloadPropertiesToJsonSchema,
 	triggerWorkflowInputSchema,
 	updateWorkflowInputSchema,
+	type WorkflowStep,
 } from "../utils/workflow-schemas";
 import { WorkflowValidationUtils } from "../utils/workflow-validation";
+import { registerWorkflowStepTools } from "./workflow-steps";
 
 const AGENT_ASSIGNMENT_GUIDE = [
-	"To assign an agent: call get_agents, then pass agent: { identifier: \"<slug>\" } (not Mongo _id).",
+	'To assign an agent: call get_agents, then pass agent: { identifier: "<slug>" } (not Mongo _id).',
 	"Pass agent: null to unassign. Omit agent on update to leave the current assignment unchanged.",
 ].join(" ");
 
@@ -67,21 +72,23 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 	ToolFactory.createTool(server, accessors, {
 		description: `Create a new workflow in Novu with comprehensive configuration including steps, preferences, and validation.\n\n${AGENT_ASSIGNMENT_GUIDE}\n\n${STEP_TYPE_GUIDE}`,
 		handler: async (input, context) => {
-			console.log(`Creating workflow "${input.name}" with ID "${input.workflowId}"`);
-
 			const resolvedPayloadSchema = resolvePayloadSchema(input);
-			const stepValidationError = WorkflowValidationUtils.validateWorkflowSteps(input.steps, {
+			const steps = input.steps ?? [];
+			const stepValidationError = WorkflowValidationUtils.validateWorkflowSteps(steps, {
 				payloadSchema: resolvedPayloadSchema,
 			});
 			if (stepValidationError) return stepValidationError;
+
+			const workflowId = input.workflowId ?? toSlugIdentifier(input.name, "workflow");
+			console.log(`Creating workflow "${input.name}" with ID "${workflowId}"`);
 
 			const requestBody: Record<string, unknown> = {
 				__source: input.__source ?? "editor",
 				active: input.active ?? false,
 				isTranslationEnabled: input.isTranslationEnabled ?? false,
 				name: input.name,
-				steps: input.steps,
-				workflowId: input.workflowId,
+				steps: steps.map(toStepBody),
+				workflowId,
 			};
 
 			assignOptional(requestBody, {
@@ -95,17 +102,14 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 				validatePayload: input.validatePayload,
 			});
 
-			return ToolFactory.makeApiRequest(
-				context,
-				{
-					body: requestBody,
-					customHeaders: { "Content-Type": "application/json" },
-					endpoint: "/v2/workflows",
-					identifier: input.workflowId,
-					method: "POST",
-					successMessage: "created workflow",
-				},
-				context.idempotencyKey,
+			const created = await postWorkflow(context, requestBody, {
+				retryTakenSlug: input.workflowId === undefined,
+			});
+			if (!created.ok) return apiError("create workflow", workflowId, created);
+
+			return workflowResult(
+				`Successfully created workflow ${created.workflowId}`,
+				created.data,
 			);
 		},
 		name: "create_workflow",
@@ -130,10 +134,11 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 				name: input.name,
 				origin: input.origin,
 				preferences: input.preferences,
-				steps: input.steps,
+				steps: input.steps.map(toStepBody),
 			};
 
 			assignOptional(requestBody, {
+				__source: input.__source,
 				agent: input.agent,
 				critical: input.critical,
 				description: input.description,
@@ -143,18 +148,18 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 				validatePayload: input.validatePayload,
 			});
 
-			return ToolFactory.makeApiRequest(
+			const saved = await ToolFactory.callApi(
 				context,
 				{
 					body: requestBody,
-					customHeaders: { "Content-Type": "application/json" },
-					endpoint: `/v2/workflows/${input.workflowId}`,
-					identifier: input.workflowId,
+					endpoint: `/v2/workflows/${encodeURIComponent(input.workflowId)}`,
 					method: "PUT",
-					successMessage: "updated workflow",
 				},
 				context.idempotencyKey,
 			);
+			if (!saved.ok) return apiError("update workflow", input.workflowId, saved);
+
+			return workflowResult(`Successfully updated workflow ${input.workflowId}`, saved.data);
 		},
 		name: "update_workflow",
 		schema: updateWorkflowInputSchema,
@@ -240,6 +245,8 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 		"workflowId",
 		"The unique identifier of the workflow to delete",
 	);
+
+	registerWorkflowStepTools(server, accessors);
 }
 
 interface PayloadInputs {
@@ -260,4 +267,65 @@ function assignOptional(target: Record<string, unknown>, values: Record<string, 
 	for (const [key, value] of Object.entries(values)) {
 		if (value !== undefined) target[key] = value;
 	}
+}
+
+/** Request body for one step: email bodies are sent as strings. */
+function toStepBody(step: WorkflowStep): Record<string, unknown> {
+	return { ...step, controlValues: normalizeControlValues(step.type, step.controlValues) };
+}
+
+const SLUG_ATTEMPTS = 3;
+
+/**
+ * POST /v2/workflows. When the workflowId was derived from the name and the
+ * API answers 409, retry with a short suffix. A 409 with `Retry-After` is the
+ * idempotency interceptor saying the same key is still in progress, so it is
+ * returned as is. Each retry sends its own idempotency key, derived from the
+ * caller's, and the suffix is derived from that key too: a caller retrying
+ * the whole tool call with the same key replays the same requests.
+ */
+async function postWorkflow(
+	context: ToolContext,
+	body: Record<string, unknown>,
+	{ retryTakenSlug }: { retryTakenSlug: boolean },
+): Promise<ApiCallResult & { workflowId: string }> {
+	const baseId = body.workflowId as string;
+	let result: ApiCallResult | undefined;
+	let workflowId = baseId;
+
+	for (let attempt = 0; attempt < SLUG_ATTEMPTS; attempt++) {
+		const key =
+			attempt === 0 ? context.idempotencyKey : retryKey(context.idempotencyKey, attempt);
+		workflowId = attempt === 0 ? baseId : `${baseId}-${slugSuffix(key)}`;
+		result = await ToolFactory.callApi(
+			context,
+			{ body: { ...body, workflowId }, endpoint: "/v2/workflows", method: "POST" },
+			key,
+		);
+
+		const slugTaken = !result.ok && result.status === 409 && !result.retryAfter;
+		if (!slugTaken || !retryTakenSlug) break;
+	}
+
+	return { ...(result as ApiCallResult), workflowId };
+}
+
+function retryKey(key: string | undefined, attempt: number): string | undefined {
+	return key ? `${key.slice(0, 240)}:slug-${attempt}` : undefined;
+}
+
+/** 6 base-36 characters: a hash of the idempotency key, else random. */
+function slugSuffix(seed: string | undefined): string {
+	if (!seed) {
+		return Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) =>
+			(b % 36).toString(36),
+		).join("");
+	}
+
+	let hash = 0x811c9dc5;
+	for (let i = 0; i < seed.length; i++) {
+		hash = Math.imul(hash ^ seed.charCodeAt(i), 0x01000193) >>> 0;
+	}
+
+	return hash.toString(36).padStart(6, "0").slice(-6);
 }

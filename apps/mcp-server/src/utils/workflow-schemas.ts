@@ -42,6 +42,7 @@ export type {
 	ThrottleType,
 	TimeUnit,
 	WorkflowStep,
+	WorkflowStepContent,
 } from "./step-schemas";
 export {
 	delayTypeSchema,
@@ -52,6 +53,7 @@ export {
 	stepTypeSchema,
 	throttleTypeSchema,
 	timeUnitSchema,
+	workflowStepContentSchema,
 	workflowStepSchema,
 } from "./step-schemas";
 
@@ -78,7 +80,17 @@ export const workflowSourceSchema = z.enum([
 	"onboarding_get_started",
 	"bridge",
 	"dashboard",
+	"ai",
 ]);
+
+/** Optional `__source` on write tools, forwarded to the API for attribution. */
+export function createWorkflowSourceInputSchema() {
+	return workflowSourceSchema
+		.optional()
+		.describe(
+			"Where the change comes from, recorded for analytics. Omit unless told otherwise.",
+		);
+}
 
 export const workflowOriginSchema = z.enum(["novu-cloud", "novu-cloud-v1", "external"]);
 
@@ -254,11 +266,23 @@ export const baseWorkflowInputSchema = z.object({
 // Create workflow specific schema
 export const createWorkflowInputSchema = baseWorkflowInputSchema.extend({
 	__source: workflowSourceSchema.optional().describe("Source of workflow creation."),
-	workflowId: z.string().describe("Unique identifier for the workflow."),
+	steps: baseWorkflowInputSchema.shape.steps
+		.min(0)
+		.optional()
+		.describe(
+			"Steps of the workflow, each discriminated by `type`. Omit to create an empty workflow and add steps later with add_workflow_step. Always use {{payload.variableName}} for dynamic content.",
+		),
+	workflowId: z
+		.string()
+		.optional()
+		.describe(
+			"Optional unique identifier (slug) for the workflow. Derived from the name when omitted; if that slug is taken, a short suffix is added.",
+		),
 });
 
 // Update workflow specific schema
 export const updateWorkflowInputSchema = baseWorkflowInputSchema.extend({
+	__source: createWorkflowSourceInputSchema(),
 	origin: workflowOriginSchema.describe("Origin of the workflow."),
 	workflowId: z.string().describe("The unique identifier of the workflow to update."),
 });

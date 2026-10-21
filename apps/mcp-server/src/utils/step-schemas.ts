@@ -496,3 +496,24 @@ export const workflowStepSchema = z.discriminatedUnion("type", [
 ]);
 
 export type WorkflowStep = z.infer<typeof workflowStepSchema>;
+
+/**
+ * Step content for `update_workflow_step_content`: control values keyed on
+ * the step `type`. Covers the step types whose content an LLM edits.
+ */
+export const workflowStepContentSchema = z.discriminatedUnion("type", [
+	z.object({ controlValues: createInAppControlSchema(), type: z.literal("in_app") }),
+	z.object({ controlValues: createEmailControlSchema(), type: z.literal("email") }),
+	z.object({ controlValues: createSmsControlSchema(), type: z.literal("sms") }),
+	z.object({ controlValues: createPushControlSchema(), type: z.literal("push") }),
+	z.object({ controlValues: createChatControlSchema(), type: z.literal("chat") }),
+	z.object({ controlValues: createDelayControlSchema(), type: z.literal("delay") }),
+	z.object({ controlValues: createDigestControlSchema(), type: z.literal("digest") }),
+	z.object({ controlValues: createThrottleControlSchema(), type: z.literal("throttle") }),
+	z.object({
+		controlValues: createHttpRequestControlSchema(),
+		type: z.literal("http_request"),
+	}),
+]);
+
+export type WorkflowStepContent = z.infer<typeof workflowStepContentSchema>;

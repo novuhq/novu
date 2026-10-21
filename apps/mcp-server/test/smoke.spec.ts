@@ -26,6 +26,7 @@ describe("the Novu MCP server tools", () => {
 
 		expect(tools.map((tool) => tool.name).sort()).toMatchInlineSnapshot(`
 			[
+			  "add_workflow_step",
 			  "bulk_trigger_workflow",
 			  "cancel_triggered_event",
 			  "connect_agent",
@@ -49,12 +50,19 @@ describe("the Novu MCP server tools", () => {
 			  "get_subscriber_preferences",
 			  "get_workflow",
 			  "get_workflows",
+			  "insert_workflow_step",
+			  "move_workflow_step",
+			  "remove_workflow_step",
 			  "set_primary_integration",
 			  "trigger_workflow",
 			  "update_agent",
 			  "update_subscriber",
 			  "update_subscriber_preferences",
 			  "update_workflow",
+			  "update_workflow_metadata",
+			  "update_workflow_payload_schema",
+			  "update_workflow_step_conditions",
+			  "update_workflow_step_content",
 			  "whoami",
 			]
 		`);
