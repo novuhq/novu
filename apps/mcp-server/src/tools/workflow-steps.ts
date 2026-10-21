@@ -283,7 +283,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 		description:
 			"Change a workflow's name, description, tags, severity or criticality. Omitted fields stay as they are; steps, preferences and the payload schema are kept. critical: true delivers regardless of subscriber preferences. Returns the saved workflow.",
 		handler: async (input, context) =>
-			mutateWorkflow(context, input, (request, workflow) => {
+			mutateWorkflow(context, input, (request) => {
 				const { critical, workflowId: _id, __source: _source, ...fields } = input;
 				const updated: UpdateWorkflowRequest = { ...request };
 				assignOptional(updated as unknown as Record<string, unknown>, fields);
