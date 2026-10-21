@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { CredentialsKeyEnum } from '../../../types';
-import { emailWebhookConfig } from '../credentials';
+import { ChannelTypeEnum, CredentialsKeyEnum, EmailProviderIdEnum } from '../../../types';
+import { birdEmailConfig, emailWebhookConfig } from '../credentials';
+import { PROVIDER_ID_TO_CHANNEL_MAP, providers } from '../providers';
+import { emailProviders } from './email';
 
 describe('emailProviders credentials', () => {
   it('shapes emailWebhookConfig with an optional HMAC secret key encoding dropdown defaulting to text', () => {
@@ -23,5 +25,34 @@ describe('emailProviders credentials', () => {
       { name: 'Base-64', value: 'base64' },
       { name: 'HEX', value: 'hex' },
     ]);
+  });
+});
+
+describe('bird email provider registry', () => {
+  it('uses bird-email as the provider id', () => {
+    expect(EmailProviderIdEnum.Bird).toBe('bird-email');
+  });
+
+  it('shapes birdEmailConfig with an API key plus the shared mail base', () => {
+    expect(birdEmailConfig.map((credential) => credential.key)).toEqual([
+      CredentialsKeyEnum.ApiKey,
+      CredentialsKeyEnum.From,
+      CredentialsKeyEnum.SenderName,
+    ]);
+  });
+
+  it('registers Bird in the Integration Store email list', () => {
+    const entry = emailProviders.find((provider) => provider.id === EmailProviderIdEnum.Bird);
+
+    expect(entry).toEqual(
+      expect.objectContaining({
+        displayName: 'Bird',
+        channel: ChannelTypeEnum.EMAIL,
+        logoFileName: { light: 'bird-email.svg', dark: 'bird-email.svg' },
+      })
+    );
+    expect(entry?.docReference).toContain('/email/bird');
+    expect(providers.map((provider) => provider.id)).toContain(EmailProviderIdEnum.Bird);
+    expect(PROVIDER_ID_TO_CHANNEL_MAP[EmailProviderIdEnum.Bird]).toBe(ChannelTypeEnum.EMAIL);
   });
 });
