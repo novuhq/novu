@@ -131,6 +131,20 @@ describe("workflow step tools", () => {
 			});
 		});
 
+		it("refuses to edit a step managed by a step resolver, even under a slugified id", async () => {
+			const workflow = workflowResponseFixture();
+			Object.assign(workflow.steps[0], { stepId: "Send In-App", stepResolverHash: "abc" });
+			const api = fakeWorkflowsApi(workflow);
+
+			const result = await callTool(await client(), "update_workflow_step_conditions", {
+				stepId: "send-in-app",
+				workflowId: "welcome",
+			});
+
+			expect(api.puts).toHaveLength(0);
+			expect(result.structuredContent).toMatchObject({ error: { status: 400 } });
+		});
+
 		it("rejects content for a different step type with a 400", async () => {
 			const api = fakeWorkflowsApi();
 

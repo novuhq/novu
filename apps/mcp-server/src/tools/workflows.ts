@@ -3,8 +3,8 @@ import { z } from "zod";
 import { toSlugIdentifier } from "../utils/slug";
 import type { ToolAccessors } from "../utils/tool-accessors";
 import { type ApiCallResult, type ToolContext, ToolFactory } from "../utils/tool-factory";
-import { normalizeControlValues } from "../utils/workflow-request";
-import { apiError, workflowResult } from "../utils/workflow-results";
+import { normalizeControlValues, type WorkflowResponse } from "../utils/workflow-request";
+import { apiError, assignOptional, workflowResult } from "../utils/workflow-results";
 import {
 	createWorkflowInputSchema,
 	payloadPropertiesToJsonSchema,
@@ -108,7 +108,7 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 			if (!created.ok) return apiError("create workflow", workflowId, created);
 
 			return workflowResult(
-				`Successfully created workflow ${created.workflowId}`,
+				`Successfully created workflow ${(created.data as WorkflowResponse | undefined)?.workflowId ?? created.workflowId}`,
 				created.data,
 			);
 		},
@@ -261,12 +261,6 @@ function resolvePayloadSchema(input: PayloadInputs): Record<string, unknown> | u
 	}
 
 	return undefined;
-}
-
-function assignOptional(target: Record<string, unknown>, values: Record<string, unknown>): void {
-	for (const [key, value] of Object.entries(values)) {
-		if (value !== undefined) target[key] = value;
-	}
 }
 
 /** Request body for one step: email bodies are sent as strings. */

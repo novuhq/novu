@@ -21,3 +21,13 @@ export function apiError(
 		status: result.status,
 	});
 }
+
+/** Copies the defined entries of `values` onto `target`. */
+export function assignOptional(
+	target: Record<string, unknown>,
+	values: Record<string, unknown>,
+): void {
+	for (const [key, value] of Object.entries(values)) {
+		if (value !== undefined) target[key] = value;
+	}
+}

@@ -17,7 +17,7 @@ import {
 	type WorkflowResponse,
 	type WorkflowStepRequest,
 } from "../utils/workflow-request";
-import { apiError, workflowResult } from "../utils/workflow-results";
+import { apiError, assignOptional, workflowResult } from "../utils/workflow-results";
 import {
 	createSkipConditionSchema,
 	createWorkflowSourceInputSchema,
@@ -131,7 +131,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 				if (index === -1) return stepNotFound(input.stepId);
 
 				const current = request.steps[index];
-				const locked = lockedStep(workflow, input.stepId);
+				const locked = lockedStep(workflow, index);
 				if (locked) return locked;
 				if (current.type !== input.content.type) {
 					return badRequest(
@@ -171,7 +171,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 			mutateWorkflow(context, input, (request, workflow) => {
 				const index = request.steps.findIndex((s) => s.stepId === input.stepId);
 				if (index === -1) return stepNotFound(input.stepId);
-				const locked = lockedStep(workflow, input.stepId);
+				const locked = lockedStep(workflow, index);
 				if (locked) return locked;
 
 				const current = request.steps[index];
@@ -283,10 +283,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 			mutateWorkflow(context, input, (request) => {
 				const { critical, workflowId: _id, __source: _source, ...fields } = input;
 				const updated: UpdateWorkflowRequest = { ...request };
-				for (const [key, value] of Object.entries(fields)) {
-					if (value !== undefined)
-						(updated as unknown as Record<string, unknown>)[key] = value;
-				}
+				assignOptional(updated as unknown as Record<string, unknown>, fields);
 				if (critical !== undefined) {
 					updated.preferences = {
 						...request.preferences,
@@ -359,7 +356,7 @@ async function mutateWorkflow(
 	const workflow = fetched.data as WorkflowResponse;
 	const outcome = mutate(toUpdateWorkflowRequest(workflow), workflow);
 	if ("error" in outcome) return ToolFactory.errorResult(outcome.error);
-	if ("unchanged" in outcome) return workflowResult(`${outcome.unchanged}`, workflow);
+	if ("unchanged" in outcome) return workflowResult(outcome.unchanged, workflow);
 
 	const body = input.__source
 		? { ...outcome.request, __source: input.__source }
@@ -378,12 +375,15 @@ function badRequest(message: string): Mutation {
 	return { error: { message: `Error: ${message}`, status: 400 } };
 }
 
-/** Steps backed by a deployed step resolver are edited in code, not here. */
-function lockedStep(workflow: WorkflowResponse, stepId: string): Mutation | null {
-	const step = workflow.steps.find((s) => s.stepId === stepId);
+/**
+ * Steps backed by a deployed step resolver are edited in code, not here.
+ * `index` is into the mapped request, whose steps line up with the response's.
+ */
+function lockedStep(workflow: WorkflowResponse, index: number): Mutation | null {
+	const step = workflow.steps[index];
 
 	return step?.stepResolverHash
-		? badRequest(`Step "${stepId}" is managed by a step resolver and cannot be edited.`)
+		? badRequest(`Step "${step.stepId}" is managed by a step resolver and cannot be edited.`)
 		: null;
 }
 

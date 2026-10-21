@@ -17,12 +17,8 @@ type SchemaNode = {
 	[key: string]: unknown;
 };
 
-function emptyObjectNode(): SchemaNode {
-	return { additionalProperties: false, properties: {}, required: [], type: "object" };
-}
-
 export function createEmptyPayloadSchema(): SchemaNode {
-	return emptyObjectNode();
+	return { additionalProperties: false, properties: {}, required: [], type: "object" };
 }
 
 export function hasPayloadProperties(schema: SchemaNode): boolean {
@@ -34,7 +30,7 @@ function leafNode(property: PayloadProperty): SchemaNode {
 		case "enum":
 			return { enum: property.enumValues, type: "string" };
 		case "object":
-			return emptyObjectNode();
+			return createEmptyPayloadSchema();
 		case "array": {
 			if (property.arrayItemsType !== "object") {
 				return { items: { type: property.arrayItemsType }, type: "array" };
@@ -57,7 +53,7 @@ function addPath(root: SchemaNode, path: string[], leaf: SchemaNode, isRequired:
 	for (const segment of path.slice(0, -1)) {
 		node.properties ??= {};
 		if (node.properties[segment]?.type !== "object")
-			node.properties[segment] = emptyObjectNode();
+			node.properties[segment] = createEmptyPayloadSchema();
 		node.required ??= [];
 		if (!node.required.includes(segment)) node.required.push(segment);
 		node = node.properties[segment];
