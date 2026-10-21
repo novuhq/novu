@@ -1,19 +1,8 @@
-name: Novu Box
+name: Novu Box PR
 
 on:
   pull_request:
     types: [labeled, unlabeled, synchronize, reopened, closed]
-  push:
-    branches: [next]
-  schedule:
-    - cron: "17 3 * * *"
-    - cron: "17 4 * * *"
-  workflow_dispatch:
-    inputs:
-      task:
-        description: "cleanup: delete boxes whose PR is closed or unlabeled; rebake: bake base again from next; refresh: put next's head on base"
-        type: choice
-        options: [cleanup, rebake, refresh]
 
 permissions: {}
 
@@ -21,8 +10,7 @@ jobs:
   pr:
     name: Box for this PR
     if: >-
-      github.event_name == 'pull_request'
-      && github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository
       && (github.event.label.name == 'box'
           || (github.event.action != 'labeled' && github.event.action != 'unlabeled'
               && contains(github.event.pull_request.labels.*.name, 'box')))
@@ -55,7 +43,7 @@ jobs:
   typecheck:
     name: Typecheck docker/box
     # Only PRs that change docker/box; the workflow's events can't filter by path without also filtering the box job.
-    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -87,34 +75,3 @@ jobs:
         if: steps.changes.outputs.box == 'true'
         working-directory: docker/box
         run: npm ci --ignore-scripts --no-fund --no-audit && npm run typecheck
-
-  maintenance:
-    name: Clean up PR boxes, or refresh or rebake base
-    if: github.event_name != 'pull_request' && github.repository == 'novuhq/novu'
-    # refresh and rebake share base: one runs at a time, and a newer one replaces one that waits but never stops the
-    # one that runs (stopping a save loses the snapshot).
-    concurrency:
-      group: novu-box-${{ (inputs.task || (github.event_name == 'push' && 'refresh') || (github.event.schedule == '17 4 * * *' && 'rebake') || 'cleanup') == 'cleanup' && 'maintenance' || 'base' }}
-      cancel-in-progress: false
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    permissions:
-      contents: read
-      id-token: write
-      pull-requests: write
-    steps:
-      - name: Checkout docker/box
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        with:
-          sparse-checkout: docker/box
-          persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version-file: .nvmrc
-      - name: Install the box's dependencies
-        run: npm ci --prefix docker/box --omit=dev --omit=peer --ignore-scripts --no-fund --no-audit
-      - name: Run the task
-        run: node docker/box/src/ci/ci.ts "$TASK"
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          TASK: ${{ inputs.task || (github.event_name == 'push' && 'refresh') || (github.event.schedule == '17 4 * * *' && 'rebake') || 'cleanup' }}

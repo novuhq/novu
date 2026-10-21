@@ -22,7 +22,7 @@ export default {
     }
     if (url.pathname.startsWith('/__box/') && !(await authorize(request)))
       return text(
-        "needs `Authorization: Bearer <GitHub token>` with push access to novuhq/novu, or the Novu Box workflow's OIDC token\n",
+        "needs `Authorization: Bearer <GitHub token>` with push access to novuhq/novu, or a Novu Box workflow's OIDC token\n",
         401
       );
     if (url.hostname === SLACK_HOST) return env.ROUTER.get(env.ROUTER.idFromName('router')).fetch(request);
