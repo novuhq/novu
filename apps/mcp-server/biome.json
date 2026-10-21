@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.1.1/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
 	"assist": {
 		"actions": {
 			"source": {
@@ -9,7 +9,7 @@
 		"enabled": true
 	},
 	"files": {
-		"includes": ["**", "!worker-configuration.d.ts", "!wrangler.jsonc"]
+		"includes": ["**", "!worker-configuration.d.ts", "!wrangler.jsonc", "!dist"]
 	},
 	"formatter": {
 		"enabled": true,
@@ -39,14 +39,10 @@
 			"suspicious": {
 				"noConfusingVoidType": "off",
 				"noDebugger": "off",
-				"noExplicitAny": "off"
+				"noExplicitAny": "off",
+				"useIterableCallbackReturn": "off"
 			}
 		}
 	},
-	"root": true,
-	"vcs": {
-		"clientKind": "git",
-		"enabled": true,
-		"useIgnoreFile": true
-	}
+	"root": false
 }

@@ -1,17 +1,18 @@
 {
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "1.13.1",
-		"agents": "^0.0.100",
+		"@modelcontextprotocol/sdk": "^1.31.0",
+		"agents": "^0.21.0",
 		"zod": "^3.25.67"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.0.6",
+		"@biomejs/biome": "^2.2.0",
 		"@types/node": "^24.0.14",
 		"cross-env": "^10.1.0",
 		"typescript": "^5.8.3",
+		"vitest": "^4.1.11",
 		"wrangler": "^4.107.0"
 	},
-	"name": "novu-mcp-server",
+	"name": "@novu/mcp-server",
 	"private": true,
 	"scripts": {
 		"cf-typegen": "wrangler types",
@@ -21,6 +22,7 @@
 		"format": "biome format --write",
 		"lint:fix": "biome lint --fix",
 		"start": "cross-env WRANGLER_REGISTRY_PATH=.wrangler/registry wrangler dev",
+		"test": "vitest run",
 		"type-check": "tsc --noEmit"
 	},
 	"version": "1.0.0"

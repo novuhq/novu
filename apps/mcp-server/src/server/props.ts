@@ -26,7 +26,7 @@ export async function syncSessionProps(
 	try {
 		const id = env.MCP_OBJECT.idFromName(`streamable-http:${sessionId}`);
 		const stub = env.MCP_OBJECT.get(id);
-		const initialized = await stub.isInitialized();
+		const initialized = (await stub.getInitializeRequest()) !== undefined;
 		if (!initialized) {
 			return;
 		}
