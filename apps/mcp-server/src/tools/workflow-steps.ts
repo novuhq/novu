@@ -141,7 +141,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 				const invalid = WorkflowValidationUtils.validateWorkflowSteps([
 					{ ...input.content, name: current.name } as WorkflowStep,
 				]);
-				if (invalid) return badRequest(invalid.content[0].text);
+				if (invalid) return { error: { message: invalid.content[0].text, status: 400 } };
 
 				const controlValues = normalizeControlValues(
 					current.type,
