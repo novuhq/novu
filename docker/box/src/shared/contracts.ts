@@ -115,12 +115,26 @@ export const NestConfig = z.looseObject({ compilerOptions: z.looseObject({}) });
 
 const Note = z.object({ at: z.string(), message: z.string() });
 const Down = z.object({ tries: z.number() }).nullable();
+// `colo` is the Box object's Cloudflare location, `container` its container's.
+export const LastStart = z.object({
+  at: z.string(),
+  from: z.literal(['snapshot', 'image']),
+  snapshot: z.string().optional(),
+  ms: z.number(),
+  colo: z.string(),
+  container: z.string(),
+});
+export type LastStart = z.infer<typeof LastStart>;
+export const CreatedBy = z.object({ base: z.string(), box: z.string() });
+export type CreatedBy = z.infer<typeof CreatedBy>;
+export const RegisteredBox = z.object({ box: z.string(), origin: z.string(), createdBy: CreatedBy.optional() });
 const Status = {
   since: z.string().nullable(),
   running: z.boolean(),
   snapshot: z.object({ id: z.string(), name: z.string().optional(), gigabytes: z.number().nullable() }).nullable(),
   lastActivity: z.string(),
   origin: z.string().nullish(),
+  lastStart: LastStart.optional(),
 };
 export const BoxStatus = z.discriminatedUnion('phase', [
   z.object({ ...Status, phase: z.literal(['new', 'asleep']), error: Note.nullable() }),

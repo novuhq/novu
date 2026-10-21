@@ -1,5 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
-import type { BoxStatus, StateAnswer } from '../shared/contracts.ts';
+import type { BoxStatus, CreatedBy, LastStart, StateAnswer } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
 import { boxOfHost, boxOrigin, HOST } from '../shared/names.ts';
 import { checkBake, startBake } from './bake.ts';
@@ -48,12 +48,26 @@ import { ALARM_MS, backstopMs, idleMs, recoverSave, save } from './sleep.ts';
 const PUBLIC_PORT = 18080;
 const INSTANCE = 'standard-4';
 
+const TRACE = 'https://www.cloudflare.com/cdn-cgi/trace';
+
 type StartFrom = { readonly image: string } | { readonly containerSnapshot: Snapshot };
+
+interface Starting {
+  readonly at: number;
+  readonly from: LastStart['from'];
+  readonly snapshot?: string;
+}
+
+function coloOf(trace: string): string {
+  return /^colo=(\w+)$/m.exec(trace)?.[1] ?? 'unknown';
+}
 
 export class Box extends DurableObject<HostEnv> {
   #generation = 0;
   #saving = false;
   #restoring: string | null = null;
+  #starting: Starting | null = null;
+  #colo: string | null = null;
   #lastActivity = 0;
   #persistedActivity = 0;
   readonly #container: Container;
@@ -71,9 +85,7 @@ export class Box extends DurableObject<HostEnv> {
     this.#shell = {
       container: ctx.container,
       env: () => this.#boxEnv(),
-      answered: () => {
-        this.#restoring = null;
-      },
+      answered: () => this.#answered(),
     };
     this.#slack = {
       storage: ctx.storage,
@@ -168,8 +180,30 @@ export class Box extends DurableObject<HostEnv> {
     const life = await this.#reconcile();
     const lastActivity = this.#lastActivity || ((await this.ctx.storage.get<number>('lastActivity')) ?? 0);
     const origin = (await this.ctx.storage.get<string>('origin')) ?? null;
+    const lastStart = await this.ctx.storage.get<LastStart>('lastStart');
 
-    return { ...status(life, this.#container.running, lastActivity, origin), ...(await slackState(this.#slack)) };
+    return {
+      ...status(life, this.#container.running, lastActivity, origin),
+      ...(lastStart && { lastStart }),
+      ...(await slackState(this.#slack)),
+    };
+  }
+
+  // A Durable Object is created near its first caller and never moves, and its container runs where it is: a
+  // snapshot restores in seconds where it was saved or restored before, and takes minutes elsewhere. So base makes
+  // the first call to every new box. This leaves base's container and idle time alone.
+  async introduce(box: string): Promise<CreatedBy> {
+    const created = await this.env.BOX.get(this.env.BOX.idFromName(box)).colo();
+    const createdBy = { base: await this.colo(), box: created };
+    console.log(`base created ${box}: base in ${createdBy.base}, ${box} in ${createdBy.box}`);
+
+    return createdBy;
+  }
+
+  async colo(): Promise<string> {
+    this.#colo ??= coloOf(await (await fetch(TRACE)).text());
+
+    return this.#colo;
   }
 
   slackEvent(event: SlackEvent): Promise<SlackAnswer | null> {
@@ -231,7 +265,7 @@ export class Box extends DurableObject<HostEnv> {
     inside.protocol = 'http:';
     try {
       const response = await this.#port().fetch(new Request(inside, request));
-      this.#restoring = null;
+      this.#answered();
 
       return response;
     } catch (error) {
@@ -311,13 +345,44 @@ export class Box extends DurableObject<HostEnv> {
     // to sleep.
     await alarmIn(this.ctx.storage, ALARM_MS);
     const env = await this.#boxEnv(origin);
+    this.#starting =
+      'image' in from
+        ? { at: Date.now(), from: 'image' }
+        : { at: Date.now(), from: 'snapshot', snapshot: from.containerSnapshot.id };
     try {
       this.#container.start({ instance: INSTANCE, enableInternet: true, env, entrypoint, ...from });
     } catch (error) {
+      this.#starting = null;
       throw new Error(`start: ${messageOf(error)}`);
     }
     await this.#container.setInactivityTimeout(backstopMs(this.env));
     this.#touch();
+  }
+
+  // The box answered its address or a command, so its start (a snapshot's restore) is over.
+  #answered(): void {
+    this.#restoring = null;
+    const starting = this.#starting;
+    if (!starting) return;
+    this.#starting = null;
+    this.#recordStart(starting, Date.now() - starting.at).catch((error: unknown) =>
+      console.log(`recording the start failed: ${messageOf(error)}`)
+    );
+  }
+
+  async #recordStart(starting: Starting, ms: number): Promise<void> {
+    const container = await output(this.#shell, ['curl', '-fsS', '--max-time', '10', TRACE], 'the container colo')
+      .then(coloOf)
+      .catch(() => 'unknown');
+    const lastStart: LastStart = {
+      ...starting,
+      at: new Date(starting.at).toISOString(),
+      ms,
+      colo: await this.colo(),
+      container,
+    };
+    console.log(`started from ${starting.from} in ${ms} ms in ${lastStart.colo} (container in ${container})`);
+    await this.ctx.storage.put('lastStart', lastStart);
   }
 
   // Saving can outlast the request that asked for it (a big disk takes over 5 minutes), and a cancelled request

@@ -1,4 +1,5 @@
 import { authorize } from '../shared/auth.ts';
+import type { CreatedBy } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
 import { boxOrigin, isBoxName } from '../shared/names.ts';
 import { deleteBoxUsers } from './clerk.ts';
@@ -23,9 +24,10 @@ async function route(request: Request, env: HostEnv, url: URL): Promise<Response
     return text(`not a box name: ${box} (lowercase letters, digits and dashes; not slack, nor ending in -api)\n`, 400);
   const origin = boxOrigin(box);
   if (request.method === 'PUT') {
+    const createdBy = (await registry(env).has(box)) ? null : await introduce(env, box);
     await registry(env).add(box);
 
-    return json({ box, origin });
+    return json({ box, origin, ...(createdBy && { createdBy }) });
   }
   if (request.method !== 'DELETE') return text('not found\n', 404);
   const destroyed = await env.BOX.get(env.BOX.idFromName(box)).fetch(`${origin}/__box/destroy`, { method: 'POST' });
@@ -38,6 +40,19 @@ async function route(request: Request, env: HostEnv, url: URL): Promise<Response
   registered.delete(box);
 
   return json({ box, state: 'deleted', ...(await deleteUsersOf(env, box)) });
+}
+
+// Before the box is registered, so no request reaches it first (see `Box.introduce`). Without base, or if base fails
+// to, the box's first caller creates it.
+async function introduce(env: HostEnv, box: string): Promise<CreatedBy | null> {
+  if (box === 'base' || !(await registry(env).has('base'))) return null;
+  try {
+    return await env.BOX.get(env.BOX.idFromName('base')).introduce(box);
+  } catch (error) {
+    console.log(`base couldn't create ${box}: ${messageOf(error)}`);
+
+    return null;
+  }
 }
 
 // A user signed in to one box carries that box's Novu IDs in its Clerk metadata, so it must not outlive its box; a

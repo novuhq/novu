@@ -2,12 +2,23 @@ import fs from 'node:fs';
 import * as z from 'zod';
 import { log } from '../node/main.ts';
 import { poll } from '../node/poll.ts';
-import { BoxStatus, DeletedBox, DoctorReport, decode, fromJson, needsBake, StateAnswer } from '../shared/contracts.ts';
+import {
+  BoxStatus,
+  DeletedBox,
+  DoctorReport,
+  decode,
+  fromJson,
+  type LastStart,
+  needsBake,
+  RegisteredBox,
+  StateAnswer,
+} from '../shared/contracts.ts';
 import { apiOrigin, BOX_CLI, boxOrigin, HOST, isBoxName } from '../shared/names.ts';
 import { boxFetch, type FetchInit, failUnlessOk, hostBoxes, hostExists, readExec, type Token } from './cloud-http.ts';
 
-// A first bake takes 13 to 16 minutes on Cloudflare; a wake about 35 s, but the first restore of a snapshot 4 to 6
-// minutes (the Slack router waits as long).
+// A first bake takes 13 to 16 minutes on Cloudflare, a wake about 35 s. A snapshot restores in seconds where it was
+// saved or restored before; elsewhere (a box created before base created new boxes) base's takes up to 6 minutes
+// (the Slack router waits as long).
 const READY_WITHIN_SECONDS = { baking: 25 * 60, waking: 8 * 60, running: 5 * 60 };
 
 interface Exec {
@@ -22,6 +33,12 @@ function stuck(box: string, current: BoxStatus | null): string | null {
   if (current?.phase === 'new') return `${box} stopped: ${current.error?.message ?? 'never started'}`;
 
   return null;
+}
+
+function startLine(box: string, { from, ms, colo, container }: LastStart): string {
+  const how = from === 'snapshot' ? 'restored' : 'started from the image';
+
+  return `${box}: ${how} in ${(ms / 1000).toFixed(1)} s in ${colo} (container in ${container})`;
 }
 
 function readyWait(current: BoxStatus): keyof typeof READY_WITHIN_SECONDS {
@@ -204,7 +221,9 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     const snapshot = await startingSnapshot(from, fromBase, ref);
     if (snapshot) query.set('from', snapshot);
     if (!(await hostExists())) throw new Error(`${HOST} isn't deployed; deploy it with \`box deploy\``);
-    await hostBoxes(`boxes/${box}`, z.unknown(), { method: 'PUT', token });
+    const begun = Date.now();
+    const { createdBy } = await hostBoxes(`boxes/${box}`, RegisteredBox, { method: 'PUT', token });
+    if (createdBy) log(`${box} was created by base: base in ${createdBy.base}, ${box} in ${createdBy.box}`);
     const waits: Record<string, number> = READY_WITHIN_SECONDS;
     try {
       const started = await call(`/up?${query}`, { method: 'POST' }).then(
@@ -227,6 +246,9 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
       return up(options);
     }
     log(`${box} is ${reachable ? 'up' : 'ready'}`);
+    const lastStart = (await state().catch(() => null))?.lastStart;
+    // Allows for the clock of this machine running ahead of Cloudflare's.
+    if (lastStart && Date.parse(lastStart.at) > begun - 30_000) log(startLine(box, lastStart));
     console.log(`box: ${origin}`);
     console.log(`api: ${apiOrigin(box)}`);
     console.log(`mailpit: ${origin}/mail`);
