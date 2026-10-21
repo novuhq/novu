@@ -17,7 +17,7 @@ import { getInboxThread, listInboxThreads } from './human-inbox-api';
 import type { SlackSetupState } from './human-slack-setup';
 import type { TelegramSetupState } from './human-telegram-setup';
 import type { InboxMessage, InboxThread } from './inbox';
-import { cardLinkOf, ONBOARDING_PATH, type OnboardingStep, toHandle } from './onboarding';
+import { AGENT_DOMAIN, cardLinkOf, ONBOARDING_PATH, type OnboardingStep, toHandle } from './onboarding';
 import { type OnboardingState, readOnboardingState, writeOnboardingState } from './onboarding-state';
 import { readApiUrl, readSiteOrigin } from './site-origin';
 
@@ -312,6 +312,8 @@ export type OnboardingView = {
   reach: AgentReach | null;
   /** Where the dashboard is served (`readSiteOrigin`): the card link the steps show before there is an agent. */
   origin: string;
+  /** Mailbox domain the API publishes, such as `dev.agentinbox.md`. The address step shows this before an inbox exists. */
+  mailDomain: string;
 };
 
 /** What the Configure page hands its Telegram and Slack drawers, for the same drawers in step 4. */
@@ -340,7 +342,7 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
         step === 'reach' ? loadChannelSetups(account) : null,
       ])
     : [{ telegram: false, slack: false, emailAddress: undefined }, 0, null];
-  const origin = await readSiteOrigin();
+  const [origin, mailDomain] = await Promise.all([readSiteOrigin(), readInboxMailDomain(account)]);
   const host = hostStatus?.hosts.reduce<(typeof hostStatus.hosts)[number] | null>(
     (earliest, entry) => (!earliest || entry.connectedAt < earliest.connectedAt ? entry : earliest),
     null
@@ -373,7 +375,23 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
         : null,
     reach: agent?.settings?.reach ?? null,
     origin,
+    mailDomain,
   };
+}
+
+/** The domain new inboxes are created on. The production domain stands in when the API has not published one. */
+async function readInboxMailDomain(account: HumanAccount): Promise<string> {
+  try {
+    const result = await requestForAccount<{ domain?: string }>(account, '/v1/human/inbox-address');
+    const domain = result.domain?.trim().toLowerCase();
+    if (domain && !/[\s@]/.test(domain) && domain.includes('.')) {
+      return domain;
+    }
+  } catch {
+    // The address preview keeps the production domain when this call cannot be made.
+  }
+
+  return AGENT_DOMAIN;
 }
 
 /**

@@ -46,8 +46,8 @@ export function toHandle(name: string): string {
     .replace(/-+$/, '');
 }
 
-export function addressOf(handle: string): string {
-  return `${handle}@${AGENT_DOMAIN}`;
+export function addressOf(handle: string, domain: string = AGENT_DOMAIN): string {
+  return `${handle}@${domain}`;
 }
 
 /** Where an agent's public card lives on the site: `/p/atlas`. */
