@@ -38,7 +38,9 @@ describe('idempotency-http-error', () => {
   });
 
   it('restores non-HTTP errors as a sanitized InternalServerErrorException', () => {
-    const restored = restoreCachedHttpException(JSON.parse(JSON.stringify(serializeCachedHttpError(new Error('boom')))));
+    const restored = restoreCachedHttpException(
+      JSON.parse(JSON.stringify(serializeCachedHttpError(new Error('boom'))))
+    );
 
     expect(restored).to.be.instanceOf(InternalServerErrorException);
     expect(restored.getStatus()).to.equal(HttpStatus.INTERNAL_SERVER_ERROR);

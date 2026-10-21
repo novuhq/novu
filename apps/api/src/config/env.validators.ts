@@ -101,6 +101,8 @@ export const envValidators = {
   REDIS_SLAVE_HOST: str({ default: '' }),
   REDIS_SLAVE_PORT: str({ default: '' }),
   JWT_SECRET: str(),
+  // Signs `Authorization: Internal <jwt>` loopback tokens (EE only). Empty disables the scheme.
+  NOVU_INTERNAL_AUTH_SECRET: str({ default: '' }),
   SENDGRID_API_KEY: str({ default: '' }),
   MONGO_AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_MAX_IDLE_TIME_IN_MS: num({ default: 1000 * 30 }),
