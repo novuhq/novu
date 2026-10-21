@@ -45,7 +45,7 @@ only the way you call it changes:
 | `inbox send ask\|approve\|choose <text>` | `inbox_send` with `kind` `ask`, `approve` or `choose` |
 | `inbox reply <conversation> …` | `inbox_reply` with `conversation`, and `kind` the same way |
 | `inbox list`, `show`, `read`, `resolve` | `inbox_list`, `inbox_show`, `inbox_read`, `inbox_resolve` |
-| `contact list` | `contact_list` |
+| `contact list --after <next>` | `contact_list` with `after` |
 | `contact invite <id> --name "…"` | `contact_invite` with `id` and `name` |
 | `--to`, `--via`, `--from`, `--option`, `--anyone`, `--ttl 2h` | `to`, `via`, `from`, `options`, `anyone_may_answer`, `ttl_seconds: 7200` |
 | `inbox list --wait --timeout 25s` | `inbox_list` with `wait_seconds: 25` (25 at most) |
@@ -59,6 +59,10 @@ again for as long as it says the same. Never go ahead without the answer.
 There are no exit codes: the result says what happened in words. Approved,
 Answered (with what they said) and Delivered mean go on. Denied, expired and
 canceled mean don't.
+
+`contact_list` gives a line per contact (id, name, email) and marks your
+operator `(you)`, where the CLI has `self: true`. When it ends with a cursor,
+call it again with `after` before you decide someone isn't there.
 
 `setup`, `login`, `connect`, `channel` and `skill` have no tool: the operator
 does those on agentinbox.md. `contact_invite` only makes a link; to reach

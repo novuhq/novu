@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { type AgentInboxApi, AgentInboxApiError } from './agent-inbox-api';
+import { contactListText, DEFAULT_CONTACTS_LIMIT, MAX_CONTACTS_LIMIT } from './contacts';
 import {
   getInboxThread,
   INBOX_MAX_WAIT_SECONDS,
@@ -324,28 +325,21 @@ export function registerTools(server: McpServer, api: AgentInboxApi): void {
     'contact_list',
     {
       title: 'List contacts',
-      description: 'List the people you can reach, with the id to pass as `to`.',
-      inputSchema: {},
+      description:
+        'List the people you can reach, with the id to pass as `to`. Your operator is marked (you). When the result ends with a cursor, call it again with after to see the rest before you decide someone is not there.',
+      inputSchema: {
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(MAX_CONTACTS_LIMIT)
+          .optional()
+          .describe(`Page size (default ${DEFAULT_CONTACTS_LIMIT}).`),
+        after: z.string().optional().describe('Cursor from a previous page.'),
+      },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    () =>
-      run(async () => {
-        const contacts = await api.get<Array<{ id: string; firstName?: string; lastName?: string; email?: string }>>(
-          '/v1/contacts',
-          { limit: 100 }
-        );
-        if (!contacts?.length) {
-          return 'There is nobody to reach yet. Set up Agent Inbox on agentinbox.md, or use contact_invite.';
-        }
-
-        return contacts
-          .map((contact) => {
-            const name = [contact.firstName, contact.lastName].filter(Boolean).join(' ');
-
-            return [contact.id, name, contact.email].filter(Boolean).join(' · ');
-          })
-          .join('\n');
-      })
+    (input) => run(() => contactListText(api, input))
   );
 
   server.registerTool(

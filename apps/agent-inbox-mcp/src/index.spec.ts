@@ -414,7 +414,9 @@ describe('the Agent Inbox MCP server', () => {
         `GET ${AGENT_INBOX_API}/v1/operator`,
         `POST ${AGENT_INBOX_API}/v1/inbox/messages`,
         `GET ${AGENT_INBOX_API}/v1/inbox/messages/hi_1`,
+        // The email lookup reads 100 at a time; contact_list a page as long as the CLI's.
         `GET ${AGENT_INBOX_API}/v1/contacts?limit=100`,
+        `GET ${AGENT_INBOX_API}/v1/contacts?limit=50`,
         `GET ${AGENT_INBOX_API}/v1/contacts/new`,
         `POST ${AGENT_INBOX_API}/v1/contacts/verifications`,
         `POST ${AGENT_INBOX_API}/v1/contacts/invites`,
@@ -502,6 +504,48 @@ describe('the Agent Inbox MCP server', () => {
     expect((await ask()).status).toBe(401);
     expect((await ask('wrong')).status).toBe(401);
     expect(await (await ask('shared-secret')).json()).toEqual({ data: { cursor: '2026-10-09T00:00:00.000Z' } });
+  });
+});
+
+describe('contact_list', () => {
+  const listContacts = async (arguments_: Record<string, unknown>) => {
+    const { env, ctx } = setup();
+    const response = await worker.fetch(rpc('tools/call', { name: 'contact_list', arguments: arguments_ }), env, ctx);
+    const { result } = (await response.json()) as { result: { content: Array<{ text: string }>; isError?: boolean } };
+
+    return result;
+  };
+
+  it('pages like contact list in the CLI and marks the operator', async () => {
+    const calls = stubBackends({
+      contactPages: {
+        '': {
+          data: [
+            { id: 'operator_1', email: 'dima@novu.co' },
+            { id: 'alice', email: 'alice@acme.com' },
+          ],
+          next: 'alice',
+        },
+        alice: { data: [{ id: 'bob' }], next: null },
+      },
+    });
+
+    const first = await listContacts({});
+    expect(first.isError).toBeFalsy();
+    expect(first.content[0].text).toContain('operator_1 · dima@novu.co (you)');
+    expect(first.content[0].text).toContain('alice · alice@acme.com\n');
+    expect(first.content[0].text).toContain('call contact_list with after: "alice"');
+
+    const last = await listContacts({ after: 'alice', limit: 10 });
+    expect(last.content[0].text).toBe('bob');
+    expect(calls.some((call) => call.url.endsWith('/v1/contacts?limit=10&after=alice'))).toBe(true);
+  });
+
+  it('says there is nobody yet, and that a page past the end has no more', async () => {
+    stubBackends({ contactPages: { '': { data: [], next: null } } });
+
+    expect((await listContacts({})).content[0].text).toContain('There is nobody to reach yet');
+    expect((await listContacts({ after: 'zed' })).content[0].text).toBe('No more contacts.');
   });
 });
 
