@@ -1,0 +1,44 @@
+name: Novu Box base
+
+on:
+  push:
+    branches: [next]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "refresh: put next's head on base; rebake: bake base again from next"
+        type: choice
+        options: [refresh, rebake]
+
+permissions: {}
+
+jobs:
+  base:
+    name: Refresh or rebake base
+    if: github.repository == 'novuhq/novu'
+    # Shared with the nightly rebake: one runs at a time, and a newer one replaces one that waits but never stops the
+    # one that runs (stopping a save loses the snapshot).
+    concurrency:
+      group: novu-box-base
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout docker/box
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          sparse-checkout: docker/box
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+      - name: Install the box's dependencies
+        run: npm ci --prefix docker/box --omit=dev --omit=peer --ignore-scripts --no-fund --no-audit
+      - name: Refresh or rebake base
+        run: node docker/box/src/ci/ci.ts "$TASK"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TASK: ${{ inputs.task || 'refresh' }}

@@ -1,0 +1,90 @@
+name: Novu Box nightly
+
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  cleanup:
+    name: Delete boxes of closed or unlabeled PRs
+    if: github.repository == 'novuhq/novu'
+    concurrency:
+      group: novu-box-cleanup
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - name: Checkout docker/box
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          sparse-checkout: docker/box
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+      - name: Install the box's dependencies
+        run: npm ci --prefix docker/box --omit=dev --omit=peer --ignore-scripts --no-fund --no-audit
+      - name: Delete the boxes
+        run: node docker/box/src/ci/ci.ts cleanup
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  rebake:
+    name: Bake base again from next
+    if: github.repository == 'novuhq/novu'
+    # Shared with the refresh after a push to next (novu-box-base.yml): one runs at a time, and a newer one replaces one
+    # that waits but never stops the one that runs (stopping a save loses the snapshot).
+    concurrency:
+      group: novu-box-base
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout docker/box
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          sparse-checkout: docker/box
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+      - name: Install the box's dependencies
+        run: npm ci --prefix docker/box --omit=dev --omit=peer --ignore-scripts --no-fund --no-audit
+      - name: Bake base
+        run: node docker/box/src/ci/ci.ts rebake
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  full:
+    name: Full TesterArmy suite on a fresh box of next
+    needs: rebake
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout docker/box
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          sparse-checkout: docker/box
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+      - name: Install the box's dependencies
+        run: npm ci --prefix docker/box --omit=dev --omit=peer --ignore-scripts --no-fund --no-audit
+      - name: Start box nightly from base and the Full groups on it
+        run: node docker/box/src/ci/ci.ts full
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
