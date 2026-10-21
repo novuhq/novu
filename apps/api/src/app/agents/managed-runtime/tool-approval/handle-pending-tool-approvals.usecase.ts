@@ -152,6 +152,7 @@ export class HandlePendingToolApprovals {
           approved: true,
           platform: command.platform,
           platformThreadId: command.platformThreadId,
+          platformUserId: command.platformUserId,
         });
       } catch (err) {
         this.logger.warn(
@@ -418,6 +419,7 @@ export class HandlePendingToolApprovals {
         content,
         platform: command.platform,
         platformThreadId: command.platformThreadId,
+        platformUserId: command.platformUserId,
       });
     } catch (err) {
       this.logger.warn(
