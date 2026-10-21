@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { type AgentInboxApi, AgentInboxApiError } from './agent-inbox-api';
+import { contactListText, DEFAULT_CONTACTS_LIMIT, MAX_CONTACTS_LIMIT } from './contacts';
 import {
   getInboxThread,
   INBOX_MAX_WAIT_SECONDS,
@@ -13,6 +14,7 @@ import {
 } from './inbox';
 import { formatInboxPage, formatThreadDigest } from './inbox-digest';
 import {
+  type Card,
   DEFAULT_WAIT_SECONDS,
   describeOutcome,
   type InteractionKind,
@@ -45,15 +47,22 @@ const anyoneMayAnswer = z
   .boolean()
   .optional()
   .describe(
-    'When true with thread, anyone in the thread may answer. Pass this when replying to a stranger thread that has no contact.'
+    'When true with conversation, anyone in it may answer. Pass this when replying to a stranger in a conversation that has no contact.'
   );
 
 const CHECK_INBOX_HINT =
-  ' Before you send, call inbox_list with filter "unread" so you do not miss a thread a person started.';
+  ' Before you send, call inbox_list with filter "unread" so you do not miss a conversation a person started.';
 
-const interactionKind = z
-  .enum(['ask', 'approve', 'choose', 'tell'])
-  .describe('ask: free-text answer; approve: Approve/Deny buttons; choose: one of options; tell: no answer needed.');
+/** The kinds that ask something. Without one, a send is a plain message, as `inbox send <text>` is in the CLI. */
+type QuestionKind = Exclude<InteractionKind, 'tell'>;
+
+const questionKind = z
+  .enum(['ask', 'approve', 'choose'])
+  .optional()
+  .describe(
+    'Leave out for a plain message that needs no answer. ask: a free-text answer; approve: Approve/Deny buttons; choose: one of options.'
+  );
+const conversation = z.string().min(1).max(128).describe('Conversation id (conv_...) from inbox_list.');
 const optionInput = z.union([
   z.string().min(1).max(200),
   z.object({ id: z.string().min(1).max(128), label: z.string().min(1).max(200) }),
@@ -90,7 +99,7 @@ const extraActions = z
   .describe('Extra approve buttons after Approve and Deny (approve only, max 4).');
 
 type SendToolInput = {
-  kind: InteractionKind;
+  kind?: QuestionKind;
   message: string;
   to?: string | string[];
   via?: 'telegram' | 'slack' | 'email';
@@ -107,7 +116,7 @@ type SendToolInput = {
 };
 
 type ReplyToolInput = Omit<SendToolInput, 'via'> & {
-  thread: string;
+  conversation: string;
   anyone_may_answer?: boolean;
 };
 
@@ -158,24 +167,14 @@ function assertKindOptions(input: SendToolInput): void {
   ) {
     throw new AgentInboxApiError(400, 'approve_label, deny_label, and extra_actions only work with kind "approve".');
   }
-  if (input.kind === 'tell' && input.wait_seconds !== undefined) {
+  if (!input.kind && input.wait_seconds !== undefined) {
     throw new AgentInboxApiError(400, 'wait_seconds only applies to ask, approve, and choose.');
   }
 }
 
-async function sendOrReply(api: AgentInboxApi, input: SendToolInput | ReplyToolInput): Promise<string> {
-  assertKindOptions(input);
-  const since = Date.now();
-  const isReply = 'thread' in input;
-  if (isReply && input.anyone_may_answer && input.to !== undefined) {
-    throw new AgentInboxApiError(400, 'anyone_may_answer cannot be combined with to.');
-  }
-
-  const requestedRecipients = normalizeTo(input.to);
-  const resolvedRecipients = requestedRecipients
-    ? await resolveEmailRecipients(api, requestedRecipients, isReply)
-    : undefined;
-  const card = {
+/** The message as the API draws it: the text, and whatever the tool added around it. */
+function cardOf(input: SendToolInput): Card {
+  return {
     title: input.message,
     ...(input.icon ? { icon: input.icon } : {}),
     ...(input.subtitle ? { subtitle: input.subtitle } : {}),
@@ -185,18 +184,33 @@ async function sendOrReply(api: AgentInboxApi, input: SendToolInput | ReplyToolI
     ...(input.extra_actions?.length ? { extraActions: input.extra_actions.map(parseIdLabelOption) } : {}),
     ...(input.options?.length ? { options: input.options.map(parseIdLabelOption) } : {}),
   };
+}
+
+async function sendOrReply(api: AgentInboxApi, input: SendToolInput | ReplyToolInput): Promise<string> {
+  assertKindOptions(input);
+  const since = Date.now();
+  const isReply = 'conversation' in input;
+  if (isReply && input.anyone_may_answer && input.to !== undefined) {
+    throw new AgentInboxApiError(400, 'anyone_may_answer cannot be combined with to.');
+  }
+
+  const requestedRecipients = normalizeTo(input.to);
+  const resolvedRecipients = requestedRecipients
+    ? await resolveEmailRecipients(api, requestedRecipients, isReply)
+    : undefined;
   const created = await sendInteraction(api, {
-    kind: input.kind,
-    card,
+    // The API calls a plain message `tell`.
+    kind: input.kind ?? 'tell',
+    card: cardOf(input),
     ...(resolvedRecipients ? { to: resolvedRecipients } : {}),
-    ...(isReply ? { thread: input.thread } : {}),
+    ...(isReply ? { thread: input.conversation } : {}),
     ...(isReply && input.anyone_may_answer ? { anyoneMayAnswer: true } : {}),
     ...(!isReply && input.via ? { via: input.via } : {}),
     ...(input.from ? { from: input.from } : {}),
     ...(input.ttl_seconds !== undefined ? { ttlSeconds: input.ttl_seconds } : {}),
   });
 
-  if (input.kind === 'tell') {
+  if (!input.kind) {
     return describeOutcome({ ...created, status: 'delivered' });
   }
 
@@ -211,9 +225,9 @@ export function registerTools(server: McpServer, api: AgentInboxApi): void {
     'inbox_send',
     {
       title: 'Send an inbox message',
-      description: `Start a conversation with one or more contacts. Use kind ask, approve, or choose to wait for an answer; tell sends without waiting.${CHECK_INBOX_HINT}`,
+      description: `Start a conversation with one or more contacts. Leave kind out for a plain message, which returns once it is delivered; ask, approve or choose waits for the answer.${CHECK_INBOX_HINT}`,
       inputSchema: {
-        kind: interactionKind,
+        kind: questionKind,
         message,
         to,
         via: z.enum(['telegram', 'slack', 'email']).optional().describe("Override each contact's default channel."),
@@ -236,12 +250,12 @@ export function registerTools(server: McpServer, api: AgentInboxApi): void {
   server.registerTool(
     'inbox_reply',
     {
-      title: 'Reply in an inbox thread',
+      title: 'Reply in a conversation',
       description:
-        'Send into an existing inbox thread. Use kind ask, approve, or choose to wait for an answer; tell sends without waiting. A reply uses the thread channel, so it has no via option.',
+        "Send into an existing conversation. Leave kind out for a plain message; ask, approve or choose waits for the answer. A reply goes out on the conversation's channel, so it has no via option.",
       inputSchema: {
-        thread: z.string().min(1).max(128).describe('Thread id (conv_...) from inbox_list.'),
-        kind: interactionKind,
+        conversation,
+        kind: questionKind,
         message,
         to,
         anyone_may_answer: anyoneMayAnswer,
@@ -262,7 +276,7 @@ export function registerTools(server: McpServer, api: AgentInboxApi): void {
   );
 
   server.registerTool(
-    'wait',
+    'inbox_wait',
     {
       title: 'Wait for an answer',
       description:
@@ -278,7 +292,7 @@ export function registerTools(server: McpServer, api: AgentInboxApi): void {
   );
 
   server.registerTool(
-    'invite',
+    'contact_invite',
     {
       title: 'Invite a person',
       description:
@@ -308,51 +322,47 @@ export function registerTools(server: McpServer, api: AgentInboxApi): void {
   );
 
   server.registerTool(
-    'contacts',
+    'contact_list',
     {
-      title: 'List people',
-      description: 'List the people you can reach, with the id to pass as `to`.',
-      inputSchema: {},
+      title: 'List contacts',
+      description:
+        'List the people you can reach, with the id to pass as `to`. Your operator is marked (you). When the result ends with a cursor, call it again with after to see the rest before you decide someone is not there.',
+      inputSchema: {
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(MAX_CONTACTS_LIMIT)
+          .optional()
+          .describe(`Page size (default ${DEFAULT_CONTACTS_LIMIT}).`),
+        after: z.string().optional().describe('Cursor from a previous page.'),
+      },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    () =>
-      run(async () => {
-        const contacts = await api.get<Array<{ id: string; firstName?: string; lastName?: string; email?: string }>>(
-          '/v1/contacts',
-          { limit: 100 }
-        );
-        if (!contacts?.length) {
-          return 'There is nobody to reach yet. Set up Agent Inbox on agentinbox.md, or use the invite tool.';
-        }
-
-        return contacts
-          .map((contact) => {
-            const name = [contact.firstName, contact.lastName].filter(Boolean).join(' ');
-
-            return [contact.id, name, contact.email].filter(Boolean).join(' · ');
-          })
-          .join('\n');
-      })
+    (input) => run(() => contactListText(api, input))
   );
 
   server.registerTool(
     'inbox_list',
     {
-      title: 'List inbox threads',
+      title: 'List conversations',
       description:
-        'List threads in the agent inbox. People can message the agent first: call this with filter "unread" before you send, so you see new threads. Threads from strangers are hidden unless senders is "all". Showing a thread does not mark it read; any send into it does.',
+        'List the conversations in the agent\'s inbox. People can message the agent first: call this with filter "unread" before you send, so you see new conversations. Conversations with strangers are hidden unless senders is "all". Showing a conversation does not mark it read; any send into it does.',
       inputSchema: {
-        filter: z.enum(INBOX_READ_FILTERS).optional().describe('Unread threads, read threads, or both (default all).'),
+        filter: z
+          .enum(INBOX_READ_FILTERS)
+          .optional()
+          .describe('Unread conversations, read ones, or both (default all).'),
         status: z
           .enum(INBOX_STATUS_FILTERS)
           .optional()
-          .describe('Open threads, resolved threads, or both (default open).'),
+          .describe('Open conversations, resolved ones, or both (default open).'),
         senders: z
           .enum(INBOX_SENDERS_FILTERS)
           .optional()
-          .describe('Threads a contact has written in, or every thread including strangers (default contacts).'),
+          .describe('Conversations a contact has written in, or all of them, strangers included (default contacts).'),
         limit: z.number().int().min(1).max(100).optional().describe('Page size (default 20).'),
-        after: z.string().optional().describe('Cursor from a previous page (the last thread id).'),
+        after: z.string().optional().describe('Cursor from a previous page (the last conversation id).'),
         wait_seconds: z
           .number()
           .int()
@@ -360,7 +370,7 @@ export function registerTools(server: McpServer, api: AgentInboxApi): void {
           .max(INBOX_MAX_WAIT_SECONDS)
           .optional()
           .describe(
-            `Hold the request up to this many seconds until a thread matches (max ${INBOX_MAX_WAIT_SECONDS}, default 0).`
+            `Hold the request up to this many seconds until a conversation matches (max ${INBOX_MAX_WAIT_SECONDS}, default 0).`
           ),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
@@ -383,20 +393,20 @@ export function registerTools(server: McpServer, api: AgentInboxApi): void {
   server.registerTool(
     'inbox_show',
     {
-      title: 'Show an inbox thread',
+      title: 'Show a conversation',
       description:
-        'Show the messages in an inbox thread. Looking at a thread does not mark it read — use inbox_read or send a reply for that. People and messages are labelled contact or stranger.',
+        'Show the messages in a conversation. Looking at it does not mark it read — use inbox_read or send a reply for that. People and messages are labelled contact or stranger.',
       inputSchema: {
-        thread: z.string().min(1).max(128).describe('Thread id (conv_...) from inbox_list.'),
+        conversation,
         limit: z.number().int().min(1).max(100).optional().describe('How many recent messages to return (default 20).'),
         before: z.string().optional().describe('Message id cursor for older pages.'),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    ({ thread: threadId, limit, before }) =>
+    ({ conversation: id, limit, before }) =>
       run(async () =>
         formatThreadDigest(
-          await getInboxThread(api, threadId, {
+          await getInboxThread(api, id, {
             ...(limit !== undefined ? { limit } : {}),
             ...(before ? { before } : {}),
           })
@@ -407,37 +417,37 @@ export function registerTools(server: McpServer, api: AgentInboxApi): void {
   server.registerTool(
     'inbox_read',
     {
-      title: 'Mark an inbox thread read',
-      description: 'Mark an inbox thread as read without sending a reply. Showing a thread does not mark it read.',
+      title: 'Mark a conversation read',
+      description: 'Mark a conversation read without sending a reply. Showing a conversation does not mark it read.',
       inputSchema: {
-        thread: z.string().min(1).max(128).describe('Thread id (conv_...) from inbox_list.'),
+        conversation,
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
-    ({ thread: threadId }) =>
+    ({ conversation: id }) =>
       run(async () => {
-        const marked = await markInboxRead(api, threadId);
+        const marked = await markInboxRead(api, id);
 
-        return `Thread ${marked.id} marked read.`;
+        return `Conversation ${marked.id} marked read.`;
       })
   );
 
   server.registerTool(
     'inbox_resolve',
     {
-      title: 'Resolve an inbox thread',
+      title: 'Resolve a conversation',
       description:
-        'Mark an inbox thread resolved. It opens again when anyone writes in it. Use after you have finished with the thread.',
+        'Mark a conversation resolved. It opens again when anyone writes in it. Use after you have finished with it.',
       inputSchema: {
-        thread: z.string().min(1).max(128).describe('Thread id (conv_...) from inbox_list.'),
+        conversation,
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
-    ({ thread: threadId }) =>
+    ({ conversation: id }) =>
       run(async () => {
-        const resolved = await resolveInboxThread(api, threadId);
+        const resolved = await resolveInboxThread(api, id);
 
-        return `Thread ${resolved.id} resolved. It opens again when anyone writes in it.`;
+        return `Conversation ${resolved.id} resolved. It opens again when anyone writes in it.`;
       })
   );
 }

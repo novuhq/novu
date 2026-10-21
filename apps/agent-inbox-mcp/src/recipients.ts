@@ -96,7 +96,7 @@ export async function findContactByEmail(api: AgentInboxApi, email: string): Pro
 
   throw new AgentInboxApiError(
     409,
-    `Could not safely search every contact for ${email}. Call the contacts tool and pass the contact id instead.`
+    `Could not safely search every contact for ${email}. Call contact_list and pass the contact id instead.`
   );
 }
 
@@ -147,7 +147,7 @@ async function resolveEmailContact(
 
   throw new AgentInboxApiError(
     409,
-    `Could not pick a contact id for ${email}. Use the invite tool with a contact id, then send to that id.`
+    `Could not pick a contact id for ${email}. Use contact_invite with a contact id, then send to that id.`
   );
 }
 

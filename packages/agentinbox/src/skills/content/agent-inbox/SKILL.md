@@ -1,6 +1,6 @@
 ---
 name: agent-inbox
-description: Read and answer the messages people send your agent, and reach the person you're working for, via the Agent Inbox CLI (`npx @agentinbox/cli inbox list|show|send|reply`). Use it to pick up unread conversations in background/autonomous/scheduled runs, and when you need a decision, approval, or notification and no one is watching this terminal. Not for routine questions the current chat user can just answer next turn.
+description: Read and answer the messages people send your agent, and reach the person you're working for, via the Agent Inbox CLI (`npx @agentinbox/cli inbox list|show|send|reply`) or its MCP tools (`inbox_list`, `inbox_show`, `inbox_send`, `inbox_reply`). Use it to pick up unread conversations in background/autonomous/scheduled runs, and when you need a decision, approval, or notification and no one is watching this terminal. Not for routine questions the current chat user can just answer next turn.
 triggers:
   - agent inbox
   - inbox send
@@ -11,6 +11,8 @@ triggers:
   - need approval before deploying
   - notify when done
   - no one is watching this session
+  - inbox_send
+  - inbox_wait
 ---
 
 # Agent Inbox — your agent's inbox
@@ -27,6 +29,45 @@ work is under `inbox`:
   answers (or they time out) and then your process continues.
 - **Reply in a conversation**: `reply <conversation>` with a message, or
   `reply <conversation> ask|approve|choose`.
+
+## If you have the Agent Inbox MCP tools
+
+Chat apps such as ChatGPT and Claude, and some coding agents, connect to
+Agent Inbox through its MCP server instead of the CLI. If you have tools named
+`inbox_send`, `inbox_list` and so on, use them: you are already signed in as
+the agent, so there is nothing to set up on this computer, and the "No inbox
+set up yet" message below doesn't apply. Everything else on this page holds;
+only the way you call it changes:
+
+| CLI | MCP tool |
+|---|---|
+| `inbox send <text>` | `inbox_send` without a `kind` |
+| `inbox send ask\|approve\|choose <text>` | `inbox_send` with `kind` `ask`, `approve` or `choose` |
+| `inbox reply <conversation> …` | `inbox_reply` with `conversation`, and `kind` the same way |
+| `inbox list`, `show`, `read`, `resolve` | `inbox_list`, `inbox_show`, `inbox_read`, `inbox_resolve` |
+| `contact list --after <next>` | `contact_list` with `after` |
+| `contact invite <id> --name "…"` | `contact_invite` with `id` and `name` |
+| `--to`, `--via`, `--from`, `--option`, `--anyone`, `--ttl 2h` | `to`, `via`, `from`, `options`, `anyone_may_answer`, `ttl_seconds: 7200` |
+| `inbox list --wait --timeout 25s` | `inbox_list` with `wait_seconds: 25` (25 at most) |
+
+Waiting works differently. The CLI waits inside the send until someone
+answers. A tool call can't wait that long, so `inbox_send` and `inbox_reply`
+wait up to about 45 seconds; if nobody has answered by then, the result says
+the request is still open and gives its id. Call `inbox_wait` with that id, and
+again for as long as it says the same. Never go ahead without the answer.
+
+There are no exit codes: the result says what happened in words. Approved,
+Answered (with what they said) and Delivered mean go on. Denied, expired and
+canceled mean don't.
+
+`contact_list` gives a line per contact (id, name, email) and marks your
+operator `(you)`, where the CLI has `self: true`. When it ends with a cursor,
+call it again with `after` before you decide someone isn't there.
+
+`setup`, `login`, `connect`, `channel` and `skill` have no tool: the operator
+does those on agentinbox.md. `contact_invite` only makes a link; to reach
+someone by email, put their address in `to`. As with the CLI, a new address
+gets a verification email first, and you send again once they've confirmed it.
 
 ## When to reach for this vs. just asking in chat
 
@@ -77,9 +118,11 @@ npx @agentinbox/cli connect atlas --code BCDF-GHJK
 minutes; after that every command on this computer acts as that agent. A used,
 expired or wrong code exits 1 and says which: ask the operator for a new code
 rather than guessing, since the agent stops taking codes for a while after a
-few wrong ones. If this computer is already set up, `connect` stops without
-using the code and asks for `--yes`: tell the operator first, and add `--yes`
-only once they agree.
+few wrong ones. Keep `--api-url` when the command has it: a code only works on
+the API that made it. If this computer is already set up, `connect` stops
+without using the code and asks for `--yes`. A prompt from agentinbox.md
+already has `--yes`, since the operator wrote it; otherwise tell the operator
+first, and add `--yes` only once they agree.
 
 `setup` asks for a name and an email address, creates the agent inbox, and
 prints its address. It then asks whether to also connect Telegram or Slack;
@@ -294,7 +337,7 @@ wait, and look at the conversation when you are ready.
   they have no endpoint yet, the API error names the `contact invite` command
   to run.
 - `--ttl 2h` — how long a question stays answerable before it expires
-  (default 24h, max 72h). Shorten this for anything time-sensitive so a stale
+  (default 24h, max 5d). Shorten this for anything time-sensitive so a stale
   approval can't be actioned days later.
 - `--icon` — Slack only; MCP catalog id (`stripe`, `github`) or https URL
   (32×32). Ignored on other channels.

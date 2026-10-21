@@ -7,6 +7,9 @@
     "tags": [
       "type:app"
     ],
+    "implicitDependencies": [
+      "@agentinbox/cli"
+    ],
     "targets": {
       "lint": {
         "executor": "nx:run-commands",
