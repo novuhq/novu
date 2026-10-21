@@ -49,7 +49,7 @@ describe('Agent Inbox address (create, taken, test email, CLI) #novu-v2', () => 
     const chosen = freshHandle();
 
     const free = await checkAddress(session, chosen);
-    expect(free).to.deep.equal({ handle: chosen, available: true });
+    expect(free).to.deep.equal({ handle: chosen, available: true, domain: INBOX_DOMAIN });
 
     const created = await createFromDashboard(session, { agentName: 'Atlas', inboxHandle: chosen });
 
@@ -70,7 +70,12 @@ describe('Agent Inbox address (create, taken, test email, CLI) #novu-v2', () => 
 
     const second = await startSession();
     const check = await checkAddress(second, chosen);
-    expect(check).to.deep.equal({ handle: chosen, available: false, suggestion: `${chosen}-acme` });
+    expect(check).to.deep.equal({
+      handle: chosen,
+      available: false,
+      suggestion: `${chosen}-acme`,
+      domain: INBOX_DOMAIN,
+    });
 
     const refused = await asDashboard(second, 'post', '/v1/human/setup').send(
       dashboardSetup({ agentName: 'Atlas', inboxHandle: chosen })
@@ -215,7 +220,7 @@ async function checkAddress(session: UserSession, handle: string) {
   });
   expect(res.status).to.equal(200, JSON.stringify(res.body));
 
-  return res.body.data as { handle: string; available: boolean; suggestion?: string };
+  return res.body.data as { handle: string; available: boolean; suggestion?: string; domain: string };
 }
 
 async function createFromDashboard(session: UserSession, input: { agentName: string; inboxHandle: string }) {
