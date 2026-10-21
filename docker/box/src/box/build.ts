@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import { dirname, relative } from 'node:path';
@@ -484,7 +484,8 @@ export async function dropNxCache(): Promise<void> {
 export function prepareDashboard(): void {
   const target = `${RUN}/dashboard`;
   fs.rmSync(target, { recursive: true, force: true });
-  fs.cpSync(`${REPO}/apps/dashboard/dist`, target, { recursive: true });
+  // Every start makes this copy; a reflinked one shares the build's blocks instead of adding them to the next snapshot.
+  execFileSync('cp', ['-R', '--reflink=auto', `${REPO}/apps/dashboard/dist`, target]);
 
   const viteEnv = Object.fromEntries(Object.entries(vars).filter(([key]) => key.startsWith('VITE_')));
   const script = `<script>window._env_ = ${JSON.stringify(viteEnv).replace(/</g, '\\u003c')};</script>`;
