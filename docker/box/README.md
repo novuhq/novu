@@ -169,10 +169,10 @@ certificate or Worker of its own.
 ![Which code runs where: the CLI and CI on Node, the hub on Cloudflare Workers, the in-box CLI in the container](./docs/06-code.svg)
 
 **Deploy:** `node docker/box/src/cli/main.ts deploy`, with `npx wrangler login` on the Novu Cloudflare account and
-Docker (wrangler builds the image). A deploy applies to every box. A new image makes every snapshot unusable
-(snapshots restore only on the image they were taken on): boxes then start again from a rebaked `base`, without
-their data. To deploy only code on the current image, set `BOX_IMAGE` to the image's reference (from
-`npx wrangler containers images list`).
+Docker (wrangler builds the image). A deploy applies to every box. A snapshot restores on the image it was taken
+on, so after a new image a box keeps running the old one until it starts again from `base` rebaked on the new image
+(`box delete`, then `box up --from base`; the workflow's `rebake` for `base` itself). To deploy only code on the current
+image, set `BOX_IMAGE` to the image's reference (from `npx wrangler containers images list`).
 
 **`base`:** the box new boxes start from. The workflow refreshes it on every push to `next` (applies the new head,
 about 4 min) and rebakes it nightly. A rebake bakes in a separate box and `base` takes over its snapshot only once
