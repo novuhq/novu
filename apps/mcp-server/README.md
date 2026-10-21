@@ -176,25 +176,39 @@ For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 | `get_notifications` | Fetch events with filtering by channel, template, subscriber, date, and more |
 | `get_notification` | Get a specific notification with detailed execution logs |
 | `find_subscribers` | Search subscribers by email, name, phone, or ID |
+| `get_subscriber` | Get a single subscriber by ID |
+| `create_subscriber` | Create a subscriber |
+| `update_subscriber` | Update a subscriber's profile fields |
+| `delete_subscriber` | Delete a subscriber |
 | `get_subscriber_preferences` | Get a subscriber's preferences across all channels and workflows |
 | `update_subscriber_preferences` | Update a subscriber's channel preferences globally or per workflow |
 | `get_workflows` | List all workflows with their basic information |
 | `get_workflow` | Get a workflow's full definition, steps, and payload schema |
+| `create_workflow` | Create a workflow with steps, payload schema, preferences, and optional agent assignment |
+| `update_workflow` | Replace a workflow's definition (full update) |
+| `delete_workflow` | Delete a workflow (irreversible) |
 | `trigger_workflow` | Trigger a workflow for a subscriber with a custom payload |
+| `bulk_trigger_workflow` | Trigger several workflows in one call |
+| `cancel_triggered_event` | Cancel a pending (delayed or digested) event by `transactionId` |
 | `get_integrations` | List configured provider integrations across channels |
+| `get_active_integrations` | List only the active integrations |
+| `set_primary_integration` | Make an integration the primary one for its channel |
+| `delete_integration` | Delete an integration |
 
 ## 💻 Local Development
 
 **Prerequisites:** [Node.js](https://nodejs.org/) 20+ and [pnpm](https://pnpm.io/installation).
 
+The server lives in the Novu monorepo at `apps/mcp-server` (package `@novu/mcp-server`).
+
 ```bash
 # Clone and install
-git clone https://github.com/novuhq/novu-mcp-server.git
-cd novu-mcp-server
-pnpm install
+git clone https://github.com/novuhq/novu.git
+cd novu
+pnpm install --filter "@novu/mcp-server..."
 
 # Start the local worker
-pnpm dev
+pnpm --filter @novu/mcp-server dev
 ```
 
 The server runs at [http://localhost:8787](http://localhost:8787). Point your MCP client at it the same way you would the hosted version:
@@ -264,10 +278,10 @@ The server is a standard Cloudflare Worker. `wrangler.jsonc` is organized so the
 localhost and OAuth discovery advertises the localhost origin), while real
 deployments live under named environments:
 
-- `pnpm deploy` → `--env us` (binds `mcp.novu.co`, `NOVU_API_URL=https://api.novu.co`)
+- `pnpm deploy:us` → `--env us` (binds `mcp.novu.co`, `NOVU_API_URL=https://api.novu.co`)
 - `pnpm deploy:eu` → `--env eu` (binds `eu.mcp.novu.co`, `NOVU_API_URL=https://eu.api.novu.co`)
 
-To deploy your own instance, fork the repo and add an environment under `env`
+To deploy your own instance, fork the [Novu repo](https://github.com/novuhq/novu), and in `apps/mcp-server` add an environment under `env`
 (or edit an existing one) with your own `routes`, `NOVU_API_URL`, and
 `NOVU_REGION`, then deploy it with `wrangler deploy --env <name>`. A self-deployed
 instance works out of the box with API-key authentication against whatever
@@ -279,9 +293,10 @@ server that your Novu API trusts; leave it unset for API-key-only.
 ### Scripts
 
 - `pnpm dev` — Run the worker locally via Wrangler (top-level, route-free config)
-- `pnpm deploy` — Deploy the US worker (`mcp.novu.co`, `--env us`)
+- `pnpm deploy:us` — Deploy the US worker (`mcp.novu.co`, `--env us`)
 - `pnpm deploy:eu` — Deploy the EU worker (`eu.mcp.novu.co`, `--env eu`)
 - `pnpm type-check` — Run TypeScript type checking
+- `pnpm test` — Run the vitest suite
 - `pnpm lint:fix` — Fix linter issues with Biome
 - `pnpm format` — Format the codebase with Biome
 
@@ -290,7 +305,7 @@ server that your Novu API trusts; leave it unset for API-key-only.
 ```text
 src/
 ├── index.ts            # Worker entry — auth extraction and routing
-├── oauth.ts            # OAuth discovery, 401 bootstrap, initialize-time probe
+├── oauth/              # OAuth discovery, DCR, 401 bootstrap, initialize-time probe
 ├── server/NovuMCP.ts   # Durable Object hosting the MCP agent
 ├── tools/              # One file per tool group (workflows, subscribers, …)
 ├── utils/              # API client, validation, tool factory
@@ -324,6 +339,7 @@ Add new tools by creating a `register*Tools` function under `src/tools/` and wir
    git checkout -b feat/your-change
    pnpm dev           # Test locally
    pnpm type-check    # Verify types
+   pnpm test          # Run the test suite
    git commit -m "feat: your change"
    git push origin feat/your-change
    ```
@@ -337,7 +353,7 @@ Add new tools by creating a `register*Tools` function under `src/tools/` and wir
 - Keep tool descriptions concise — they are surfaced verbatim to LLMs
 - Validate inputs with Zod schemas in `src/utils/`
 - Prefer the `ToolFactory` helpers for standard CRUD endpoints
-- Something missing? Open a [GitHub issue](https://github.com/novuhq/novu-mcp-server/issues)
+- Something missing? Open a [GitHub issue](https://github.com/novuhq/novu/issues)
 
 **Need help?** Email us at [support@novu.co](mailto:support@novu.co) or join the [Discord](https://discord.novu.co).
 
