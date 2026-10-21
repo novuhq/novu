@@ -40,6 +40,7 @@ import {
   assertEnvironmentScopedAccess,
   assertNotInternalAuthScheme,
   isEnvironmentScopedAuthScheme,
+  isInternalAuthScheme,
 } from '../shared/utils/auth.utils';
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
@@ -120,7 +121,7 @@ export class EnvironmentsControllerV1 {
     @Body() body: CreateEnvironmentRequestDto
   ): Promise<EnvironmentResponseDto> {
     // Neither an API key nor an internal (service) token may mint readable API keys.
-    const isNonUserAuth = user.scheme === ApiAuthSchemeEnum.API_KEY || user.scheme === ApiAuthSchemeEnum.INTERNAL;
+    const isNonUserAuth = user.scheme === ApiAuthSchemeEnum.API_KEY || isInternalAuthScheme(user.scheme);
     const canAccessApiKeys = isNonUserAuth ? false : await this.canUserAccessApiKeys(user);
 
     return await this.createEnvironmentUsecase.execute(
@@ -150,7 +151,7 @@ export class EnvironmentsControllerV1 {
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
     const isApiKeyAuth = user.scheme === ApiAuthSchemeEnum.API_KEY;
     // OAuth and internal (service) tokens act for a user but must not read API keys.
-    const isDelegatedAuth = user.scheme === ApiAuthSchemeEnum.OAUTH2 || user.scheme === ApiAuthSchemeEnum.INTERNAL;
+    const isDelegatedAuth = user.scheme === ApiAuthSchemeEnum.OAUTH2 || isInternalAuthScheme(user.scheme);
     let canAccessApiKeys = false;
 
     if (isApiKeyAuth) {

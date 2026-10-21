@@ -36,8 +36,6 @@ enum ReqStatusEnum {
 }
 
 const DOCS_LINK = 'https://docs.novu.co/additional-resources/idempotency';
-// `Internal` callers retry with the same idempotency key, so their retries must be deduplicated too.
-const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY, ApiAuthSchemeEnum.INTERNAL];
 const ALLOWED_METHODS = ['post', 'patch'];
 
 @Injectable()
@@ -142,7 +140,8 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const req = context.switchToHttp().getRequest();
     const { authScheme } = req;
 
-    return ALLOWED_AUTH_SCHEMES.some((scheme) => authScheme === scheme);
+    // `Internal` callers retry with the same idempotency key, so their retries must be deduplicated too.
+    return authScheme === ApiAuthSchemeEnum.API_KEY || isInternalAuthScheme(authScheme);
   }
 
   private getCacheKey(context: ExecutionContext): string {

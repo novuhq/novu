@@ -55,7 +55,11 @@ import { KeylessAccessible } from '../shared/framework/swagger/keyless.security'
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CONNECTION_RESULT_CSP } from '../shared/html/connection-result-page';
-import { assertEnvironmentScopedAccess, isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
+import {
+  assertEnvironmentScopedAccess,
+  isEnvironmentScopedAuthScheme,
+  isInternalAuthScheme,
+} from '../shared/utils/auth.utils';
 import { ConfigureTelegramWebhookCommand } from '../telegram-linking/configure-telegram-webhook/configure-telegram-webhook.command';
 import { ConfigureTelegramWebhook } from '../telegram-linking/configure-telegram-webhook/configure-telegram-webhook.usecase';
 import { IssueTelegramMobileLinkCommand } from '../telegram-linking/issue-telegram-mobile-link/issue-telegram-mobile-link.command';
@@ -1193,7 +1197,7 @@ export class IntegrationsController {
       user.scheme === ApiAuthSchemeEnum.API_KEY ||
       user.scheme === ApiAuthSchemeEnum.KEYLESS ||
       user.scheme === ApiAuthSchemeEnum.OAUTH2 ||
-      user.scheme === ApiAuthSchemeEnum.INTERNAL
+      isInternalAuthScheme(user.scheme)
     ) {
       return false;
     }
