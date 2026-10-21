@@ -3,14 +3,15 @@ name: Novu Box nightly
 on:
   schedule:
     - cron: "17 4 * * *"
-  # By hand it does the same, and replaces box nightly even under tests an earlier run still has on it.
+  # By hand it does the same. Each run's boxes are base-next-<run id> and nightly-<run id>; the cleanup deletes
+  # those of earlier runs once they're an hour idle.
   workflow_dispatch:
 
 permissions: {}
 
 jobs:
   cleanup:
-    name: Delete boxes of closed or unlabeled PRs
+    name: Delete boxes of closed or unlabeled PRs and of earlier runs
     if: github.repository == 'novuhq/novu'
     concurrency:
       group: novu-box-cleanup
@@ -70,7 +71,7 @@ jobs:
           node-version-file: .nvmrc
       - name: Install the box's dependencies
         run: npm ci --prefix docker/box --omit=dev --omit=peer --ignore-scripts --no-fund --no-audit
-      - name: Start box nightly from base and the Full groups on it
+      - name: Start box nightly-<run id> from base and the Full groups on it
         run: node docker/box/src/ci/ci.ts full
         env:
           GITHUB_TOKEN: ${{ github.token }}
