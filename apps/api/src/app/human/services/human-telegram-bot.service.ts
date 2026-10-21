@@ -16,22 +16,31 @@ const NO_USERNAME = '-';
 /** A card doesn't wait long for Telegram: without an answer, it leaves the Telegram line out. */
 const TELEGRAM_TIMEOUT_MS = 3_000;
 
-/** A bot's token is `{bot id}:{secret}`. The bot id is public: it is the bot's own Telegram user id. */
-const BOT_TOKEN_PATTERN = /^(\d+):/;
+/**
+ * A bot's token as Telegram linking accepts it: `{bot id}:{secret}`. The bot id is public, it is the bot's own
+ * Telegram user id. A token of any other shape never goes into a request, so it can't end up in an error either.
+ */
+const BOT_TOKEN_PATTERN = /^(\d{8,}):[A-Za-z0-9_-]{35,}$/;
 
 type TelegramGetMeResponse = { ok?: boolean; result?: { username?: string }; description?: string };
 
 type BotAgent = Pick<AgentEntity, '_id' | '_environmentId' | '_organizationId'>;
 
 /**
- * The username of the Telegram bot a relay agent talks through, for its public card. Telegram only tells it to
- * whoever holds the bot's token (`getMe`), so each integration keeps its own answer: under its id and the bot's
- * id, the public part of the token. Nothing of the secret goes into the cache, and a token made up with another
- * bot's id only ever changes its own card. When Telegram names no bot, the card leaves it out for a few minutes
- * before Telegram is asked again, so a revoked token or an outage doesn't slow every card down.
+ * The username of the Telegram bot a relay agent talks through, for its public card, which anyone can open.
+ * Telegram only tells it to whoever holds the bot's token (`getMe`), so a stranger's views mustn't reach Telegram
+ * each time:
+ * - each integration keeps its own answer for a day, under its id and the bot's id, the public part of the
+ *   token. Nothing of the secret goes into the cache, and a token made up with another bot's id only ever
+ *   changes its own card;
+ * - a bot Telegram didn't name stays off the card for ten minutes before Telegram is asked again;
+ * - views arriving together share one call to Telegram, and without a working cache Telegram isn't asked at all.
  */
 @Injectable()
 export class HumanTelegramBotService {
+  /** Lookups on their way, by cache key. */
+  private readonly lookups = new Map<string, Promise<string | undefined>>();
+
   constructor(
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
@@ -50,15 +59,13 @@ export class HumanTelegramBotService {
     }
 
     const key = `agent-inbox:telegram-bot-username:${bot.integrationId}:${botId}`;
-    const cached = await this.readCache(key);
-    if (cached) {
-      return cached === NO_USERNAME ? undefined : cached;
+    let lookup = this.lookups.get(key);
+    if (!lookup) {
+      lookup = this.lookUp(key, bot.token).finally(() => this.lookups.delete(key));
+      this.lookups.set(key, lookup);
     }
 
-    const username = await this.askTelegram(bot.token);
-    await this.writeCache(key, username ?? NO_USERNAME, username ? USERNAME_TTL_SECONDS : NO_USERNAME_TTL_SECONDS);
-
-    return username;
+    return lookup;
   }
 
   /** The agent's Telegram integration and its bot's token, when it has one that is switched on. */
@@ -78,10 +85,38 @@ export class HumanTelegramBotService {
       },
       'credentials'
     );
-
     const token = bot ? decryptCredentials(bot.credentials ?? {}).apiToken : undefined;
 
     return bot && token ? { integrationId: bot._id, token } : undefined;
+  }
+
+  /** The cached answer, else Telegram's, kept for the next views. Nothing while the cache can't be used. */
+  private async lookUp(key: string, botToken: string): Promise<string | undefined> {
+    if (!this.cacheService.cacheEnabled()) {
+      return undefined;
+    }
+
+    let cached: string | null;
+    try {
+      cached = await this.cacheService.get(key);
+    } catch {
+      return undefined;
+    }
+
+    if (cached) {
+      return cached === NO_USERNAME ? undefined : cached;
+    }
+
+    const username = await this.askTelegram(botToken);
+    try {
+      await this.cacheService.set(key, username ?? NO_USERNAME, {
+        ttl: username ? USERNAME_TTL_SECONDS : NO_USERNAME_TTL_SECONDS,
+      });
+    } catch {
+      // Not kept: the next view asks Telegram again.
+    }
+
+    return username;
   }
 
   private async askTelegram(botToken: string): Promise<string | undefined> {
@@ -99,37 +134,13 @@ export class HumanTelegramBotService {
 
       return body.result.username;
     } catch (err) {
-      // The request URL carries the bot token, so only the message is logged, never the error itself.
+      // An error's message can hold the request's URL, and with it the token: only whether it timed out is logged.
       this.logger.warn(
-        { reason: err instanceof Error ? err.message : String(err) },
+        { timedOut: (err as { name?: string } | null)?.name === 'TimeoutError' },
         'Could not reach Telegram to read the username of an agent’s bot.'
       );
 
       return undefined;
-    }
-  }
-
-  private async readCache(key: string): Promise<string | undefined> {
-    if (!this.cacheService.cacheEnabled()) {
-      return undefined;
-    }
-
-    try {
-      return (await this.cacheService.get(key)) || undefined;
-    } catch {
-      return undefined;
-    }
-  }
-
-  private async writeCache(key: string, value: string, ttl: number): Promise<void> {
-    if (!this.cacheService.cacheEnabled()) {
-      return;
-    }
-
-    try {
-      await this.cacheService.set(key, value, { ttl });
-    } catch {
-      // Without the cache, the next card asks Telegram again.
     }
   }
 }

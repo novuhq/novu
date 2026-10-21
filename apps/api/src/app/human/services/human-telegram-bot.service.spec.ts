@@ -15,6 +15,8 @@ function telegramAnswer(body: Record<string, unknown>): Response {
 
 describe('HumanTelegramBotService', () => {
   let store: Map<string, { value: string; ttl?: number }>;
+  let cacheOn: boolean;
+  let cacheDown: boolean;
   let links: Array<{ _integrationId: string }>;
   let integrationId: string;
   let apiToken: string;
@@ -24,6 +26,8 @@ describe('HumanTelegramBotService', () => {
 
   beforeEach(() => {
     store = new Map();
+    cacheOn = true;
+    cacheDown = false;
     links = [{ _integrationId: 'bot-1' }];
     integrationId = 'bot-1';
     apiToken = BOT_TOKEN;
@@ -37,8 +41,14 @@ describe('HumanTelegramBotService', () => {
           .callsFake(async () => ({ _id: integrationId, credentials: encryptCredentials({ apiToken }) })),
       } as never,
       {
-        cacheEnabled: () => true,
-        get: async (key: string) => store.get(key)?.value ?? null,
+        cacheEnabled: () => cacheOn,
+        get: async (key: string) => {
+          if (cacheDown) {
+            throw new Error('Redis is down');
+          }
+
+          return store.get(key)?.value ?? null;
+        },
         set: async (key: string, value: string, options?: { ttl?: number }) => {
           store.set(key, { value, ttl: options?.ttl });
 
@@ -66,13 +76,27 @@ describe('HumanTelegramBotService', () => {
     ]);
   });
 
+  it('asks Telegram once for views that arrive together', async () => {
+    fetchStub.callsFake(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      return telegramAnswer({ ok: true, result: { username: 'atlas_bot' } });
+    });
+
+    expect(await Promise.all([service.usernameFor(AGENT), service.usernameFor(AGENT)])).to.deep.equal([
+      'atlas_bot',
+      'atlas_bot',
+    ]);
+    expect(fetchStub.calledOnce).to.equal(true);
+  });
+
   it('keeps each integration’s answer to itself, even for a token made up with the same bot id', async () => {
     fetchStub.onFirstCall().resolves(telegramAnswer({ ok: true, result: { username: 'atlas_bot' } }));
     fetchStub.onSecondCall().resolves(telegramAnswer({ ok: false, description: 'Unauthorized' }));
     expect(await service.usernameFor(AGENT)).to.equal('atlas_bot');
 
     integrationId = 'bot-2';
-    apiToken = `${BOT_ID}:made-up`;
+    apiToken = `${BOT_ID}:${'B'.repeat(35)}`;
     expect(await service.usernameFor(AGENT)).to.equal(undefined);
 
     integrationId = 'bot-1';
@@ -91,8 +115,8 @@ describe('HumanTelegramBotService', () => {
     expect([...store.values()]).to.deep.equal([{ value: '-', ttl: 10 * 60 }]);
   });
 
-  it('leaves the bot out when Telegram can’t be reached, and never logs the token', async () => {
-    fetchStub.rejects(new Error('connect ETIMEDOUT'));
+  it('leaves the bot out when Telegram can’t be reached, and logs nothing of the error, which can hold the token', async () => {
+    fetchStub.rejects(new TypeError(`Failed to parse URL from https://api.telegram.org/bot${BOT_TOKEN}/getMe`));
 
     expect(await service.usernameFor(AGENT)).to.equal(undefined);
     expect(await service.usernameFor(AGENT)).to.equal(undefined);
@@ -102,15 +126,32 @@ describe('HumanTelegramBotService', () => {
     expect(JSON.stringify(warn.firstCall.args)).to.not.include(BOT_SECRET);
   });
 
-  it('has no bot to show without a Telegram channel, or with a token that isn’t a bot’s', async () => {
-    links = [];
+  it('never asks Telegram for a token that isn’t a bot’s, one with a trailing newline included', async () => {
+    for (const token of ['not-a-bot-token', `${BOT_TOKEN}\n`, `${BOT_ID}: ${BOT_SECRET}`]) {
+      apiToken = token;
+      expect(await service.usernameFor(AGENT)).to.equal(undefined);
+    }
+
+    expect(fetchStub.called).to.equal(false);
+    expect(warn.called).to.equal(false);
+    expect(store.size).to.equal(0);
+  });
+
+  it('doesn’t ask Telegram without a working cache', async () => {
+    cacheOn = false;
     expect(await service.usernameFor(AGENT)).to.equal(undefined);
 
-    links = [{ _integrationId: 'bot-1' }];
-    apiToken = 'not-a-bot-token';
+    cacheOn = true;
+    cacheDown = true;
     expect(await service.usernameFor(AGENT)).to.equal(undefined);
 
     expect(fetchStub.called).to.equal(false);
-    expect(store.size).to.equal(0);
+  });
+
+  it('has no bot to show without a Telegram channel', async () => {
+    links = [];
+
+    expect(await service.usernameFor(AGENT)).to.equal(undefined);
+    expect(fetchStub.called).to.equal(false);
   });
 });
