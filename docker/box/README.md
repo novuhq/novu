@@ -217,10 +217,10 @@ push, so they get that secret instead: it opens boxes and nothing on GitHub. Don
 `gh` would use it instead of the app's token and stop opening PRs.
 
 Box addresses are public, like staging's; the dashboard is protected by Clerk. Keep these two Clerk settings, or
-anyone could sign up: email-code sign-in **off** (sign-in needs the password), and test
-mode **off** (it accepts `424242` as any address's code). Sign-up is limited to `@novu.co` addresses, and
-`@qa.box.novu-staging.co` for TesterArmy's sign-up tests: Cloudflare Email Routing forwards those addresses to
-TesterArmy's inbox, and each time the hub starts TesterArmy it deletes those users over an hour old.
+anyone could sign up: email-code sign-in **off** (sign-in needs the password), and test mode **off** (it accepts
+`424242` as any address's code). Sign-up is limited to `@novu.co` addresses, and `@qa.box.novu-staging.co` for
+TesterArmy's sign-up tests: Cloudflare Email Routing forwards those addresses to TesterArmy's inbox, and each time
+the hub starts TesterArmy it deletes those users over an hour old.
 
 ## Troubleshooting
 

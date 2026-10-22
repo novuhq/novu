@@ -16,13 +16,16 @@ export async function authorize(request: Request, env: { readonly CURSOR_BOX_TOK
 }
 
 // Cursor Cloud agents' `gh` is the Cursor GitHub App, which can't push, so they get a secret that opens boxes and
-// nothing on GitHub. Compared as hashes so the time taken says nothing about the secret.
+// nothing on GitHub. Compared as hashes so the time taken says nothing about the secret (this file is also typed for
+// Node, which has no `crypto.subtle.timingSafeEqual`).
 async function isCursorToken(token: string, secret: string | undefined): Promise<boolean> {
-  return secret !== undefined && secret !== '' && (await sha256(token)) === (await sha256(secret));
+  if (!secret) return false;
+
+  return (await sha256(token)) === (await sha256(secret));
 }
 
-export function isOidc(token: string | undefined): boolean {
-  return /^eyJ[\w-]*\.[\w-]+\.[\w-]+$/.test(token ?? '');
+function isOidc(token: string): boolean {
+  return /^eyJ[\w-]*\.[\w-]+\.[\w-]+$/.test(token);
 }
 
 const pushers = new Map<string, number>();

@@ -10,15 +10,23 @@ export type Token = () => Promise<string>;
 let ownToken: Promise<string> | undefined;
 
 export function githubToken(): Promise<string> {
-  // Cursor Cloud agents have CURSOR_BOX_TOKEN: their `gh` is the Cursor GitHub App, which the hub refuses.
-  const token = process.env.CURSOR_BOX_TOKEN || process.env.GITHUB_TOKEN;
-  ownToken ??= token
-    ? Promise.resolve(token)
+  ownToken ??= process.env.GITHUB_TOKEN
+    ? Promise.resolve(process.env.GITHUB_TOKEN)
     : output('gh', ['auth', 'token']).catch(() => {
-        throw new Error('needs CURSOR_BOX_TOKEN, GITHUB_TOKEN or a signed-in `gh` (gh auth login)');
+        throw new Error('needs GITHUB_TOKEN or a signed-in `gh` (gh auth login)');
       });
 
   return ownToken;
+}
+
+// Cursor Cloud agents have CURSOR_BOX_TOKEN: their `gh` is the Cursor GitHub App, which the hub refuses. It opens boxes
+// only, so it never goes to GitHub.
+export function hubToken(): Promise<string> {
+  if (process.env.CURSOR_BOX_TOKEN) return Promise.resolve(process.env.CURSOR_BOX_TOKEN);
+
+  return githubToken().catch(() => {
+    throw new Error('needs CURSOR_BOX_TOKEN, GITHUB_TOKEN or a signed-in `gh` (gh auth login)');
+  });
 }
 
 export interface FetchInit {
