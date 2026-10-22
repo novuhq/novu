@@ -7,6 +7,7 @@ export type HostEnv = {
   readonly BOX: DurableObjectNamespace<Box>;
   readonly REGISTRY: DurableObjectNamespace<Registry>;
   readonly ROUTER: DurableObjectNamespace<Router>;
+  readonly CURSOR_BOX_TOKEN?: string;
   readonly GITHUB_READ_TOKEN?: string;
   readonly IDLE_MINUTES?: string;
   readonly SLACK_BOT_TOKEN?: string;

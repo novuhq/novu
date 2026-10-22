@@ -1,4 +1,4 @@
-FROM node:22.23-alpine3.23 AS dev_base
+FROM node:22.23.4-alpine3.23 AS dev_base
 RUN apk add --no-cache g++ make py3-pip
 ENV NX_DAEMON=false
 
@@ -40,7 +40,7 @@ WORKDIR /usr/src/app
 RUN pnpm --filter @novu/api-service deploy --legacy --prod /usr/src/deploy
 
 # ------- PRODUCTION BUILD ----------
-FROM node:22.23-alpine3.23 AS prod
+FROM node:22.23.4-alpine3.23 AS prod
 
 ENV CI=true
 

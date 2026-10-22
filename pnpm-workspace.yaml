@@ -16,11 +16,7 @@ packages:
 # Pnpm configuration
 # Wait 3 days (4320 minutes) before allowing packages to be installed
 minimumReleaseAge: 4320
-# Workaround for pnpm v11.0.4+: the new `minimumReleaseAgeStrict: true` default
-# raises spurious ERR_PNPM_MISSING_TIME errors during resolution
-# (see https://github.com/pnpm/pnpm/issues/11238). Falling back to non-strict
-# matches the pre-v11.0.4 behavior.
-minimumReleaseAgeStrict: false
+minimumReleaseAgeStrict: true
 # First-party packages are published by us and consumed right away, so they skip the age gate.
 minimumReleaseAgeExclude:
   - '@novu/*'
@@ -133,9 +129,12 @@ overrides:
   # GHSA-698v-4r3x-3vcv, GHSA-r825-w8mm-5pxw, GHSA-rq7h-c2jc-7f22 plus
   # GHSA-9jrq-w75r-8gcw (low): vite dev-server middleware path traversal,
   # arbitrary file read, and HTML/HTTP smuggling via crafted request paths.
-  # All patched in 6.4.4 (patch bump within the 6.4.x line). Widen the
-  # previous `<6.4.3` floor so transitive 6.4.3 resolutions (via vitest,
-  # @vitest/mocker, @sveltejs/kit, maily-core/render) pick up the fix.
+  # CVE-2026-112942 / CVE-2026-112943 / CVE-2026-112944: the bundled
+  # launch-editor has a Windows existence-check bypass, missing `%` escaping,
+  # and editor CLI flag injection. All patched in 6.4.4 (patch bump within the
+  # 6.4.x line). Widen the previous `<6.4.3` floor so transitive 6.4.3
+  # resolutions (via vitest, @vitest/mocker, @sveltejs/kit, maily-core/render)
+  # pick up the fix; the dashboard's vite 8.x is unaffected.
   vite@>=5.0.0 <6.4.4: ^6.4.4
   # GHSA-q3jh-wrc6-jgq8 (high): follow-redirects array-form headers bypass
   # cross-origin credential stripping. GHSA-8r9p-f939-6h3c (high):
@@ -234,14 +233,19 @@ overrides:
   # token exfiltration via a malicious server. Patched in 1.31.0. Pulled
   # transitively via apps/agent-inbox-mcp, enterprise/workers/thalamus-observer,
   # packages/novu > @anthropic-ai/claude-agent-sdk, and playground/web-chat.
-  '@modelcontextprotocol/sdk@>=1.12.0 <1.31.0': ^1.31.0
+  # CVE-2026-111767 / CVE-2026-111768 / CVE-2026-111769 / CVE-2026-111771:
+  # task/session binding, validation memory exhaustion, cross-origin redirect
+  # header forwarding, and bearer token audience checks. Patched in 1.32.0.
+  '@modelcontextprotocol/sdk@>=1.12.0 <1.32.0': ^1.32.0
   # GHSA-6qxp-vccf-f47h (high): the v2 OAuth client can send stored
   # credentials to an authorization server chosen by the MCP server. Patched
-  # in 2.2.0. agents@0.21.0 peers @modelcontextprotocol/client at exactly
-  # 2.0.0 for enterprise/workers/thalamus-observer. Pin 2.2.0 rather than
-  # floating ^2.2.0: 2.3.0 changes cross-origin redirect handling, and 2.2.0
-  # (published 2026-09-28) already satisfies minimumReleaseAge.
-  '@modelcontextprotocol/client@>=2.0.0 <2.2.0': 2.2.0
+  # in 2.2.0. CVE-2026-111768 / CVE-2026-111769 / CVE-2026-111770 /
+  # CVE-2026-111771 (high/moderate) in the v2 client and server are patched in
+  # 2.3.0. agents@0.21.0 peers client and server at exactly 2.0.0 for
+  # enterprise/workers/thalamus-observer. Both depend on an exact
+  # @modelcontextprotocol/core version, so pin them to the same release.
+  '@modelcontextprotocol/client@>=2.0.0 <2.3.0': 2.3.1
+  '@modelcontextprotocol/server@>=2.0.0 <2.3.0': 2.3.1
   '@babel/runtime@<7.26.10': ^7.26.10
   altcha-lib@<1.4.1: ^1.4.1
   lodash-es@<=4.17.23: ^4.18.0
@@ -262,10 +266,12 @@ overrides:
   kysely@>=0.26.0 <0.28.17: 0.28.17
   undici@>=5.0.0 <5.30.0: ^6.28.1
   # GHSA-gfr2-rv44-r23c (high) and GHSA-vfgh-jcmw-g37q (low): markdown-it
-  # ReDoS / infinite loop in reference-link handling. Patched in 14.3.3
-  # (patch bump within the 14.3.x line). Widen the previous `<14.3.1`
-  # floor so transitive 14.3.1 / 14.3.2 resolutions (via tiptap >
-  # prosemirror-markdown and markdownlint-cli) pick up the fix.
+  # ReDoS / infinite loop in reference-link handling. CVE-2026-111758 (high) /
+  # CVE-2026-111766 (low): quadratic-time rendering of multi-line link
+  # reference definitions and inline HTML parsing. All patched in 14.3.3
+  # (patch bump within the 14.3.x line). Widen the previous `<14.3.1` floor so
+  # transitive 14.3.1 / 14.3.2 resolutions (via tiptap > prosemirror-markdown
+  # and markdownlint) pick up the fix.
   markdown-it@>=13.0.0 <14.3.3: ^14.3.3
   mdast-util-to-hast@>=13.0.0 <13.2.1: ^13.2.1
   webpack@>=5.49.0 <5.104.1: ^5.104.1
@@ -341,7 +347,9 @@ overrides:
   # and query-parser fragment handling that leaks params past `#`
   # (cache-key / proxy interpretation differentials). All three are patched
   # in 4.13.5; stay on the 4.x line (patch bump within 4.x).
-  hono@<4.13.5: ^4.13.5
+  # CVE-2026-111757: `serveStatic` decodes the request path twice, bypassing
+  # middleware on static paths. Patched in 4.13.11.
+  hono@<4.13.11: ^4.13.11
   '@hono/node-server@<2.0.5': ^2.0.5
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5': ^3.47.5
@@ -395,7 +403,10 @@ overrides:
   # GHSA-g8qq-57p8-ggw5 / GHSA-jxwj-j7wr-gfrw: stored/mutation XSS via SVG SMIL
   # URI-list scheme-policy bypass and literal `</textarea/>` solidus close.
   # Patched in 2.17.7 (patch bump within the 2.17.x line).
-  sanitize-html@<2.17.7: ^2.17.7
+  # CVE-2026-113654 / CVE-2026-113657 / CVE-2026-113661: `<noscript>` content
+  # rendering via implied close, SMIL namespace-prefix `javascript:` bypass, and
+  # `meta http-equiv=refresh` URLs. Patched in 2.18.0.
+  sanitize-html@<2.18.0: ^2.18.0
   samlify@<2.13.0: ^2.13.0
   better-auth@<1.6.13: ^1.6.23
   '@better-auth/sso@<1.6.13': ^1.6.23

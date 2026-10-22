@@ -43,7 +43,7 @@ export async function testerArmy(request: Request, env: HostEnv, url: URL): Prom
 }
 
 async function route(request: Request, env: HostEnv, url: URL): Promise<Response> {
-  if (!(await authorize(request))) return text("needs the same Authorization as a box's /__box/*\n", 401);
+  if (!(await authorize(request, env))) return text("needs the same Authorization as a box's /__box/*\n", 401);
   const box = decodeURIComponent(url.pathname.slice('/__box/testerarmy/'.length));
   if (request.method !== 'POST' || !box) return text('not found\n', 404);
   if (!(await liveBoxes(env)).includes(box)) return text(`no box ${box}\n`, 404);
