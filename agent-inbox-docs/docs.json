@@ -1,12 +1,17 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "luma",
+  "theme": "linden",
   "name": "Agent Inbox",
   "description": "An inbox for your agent on Telegram, Slack, and email. People write to it. The agent reads, asks, and waits for the answer.",
   "colors": {
     "primary": "#ff5c30",
     "light": "#ff5c30",
     "dark": "#ff5c30"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
   },
   "icons": {
     "library": "lucide"
