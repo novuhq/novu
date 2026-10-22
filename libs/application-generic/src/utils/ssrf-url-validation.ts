@@ -25,8 +25,8 @@ import { isIP } from 'node:net';
 import { Readable } from 'node:stream';
 import { LRUCache } from 'lru-cache';
 
-type PrivateIpClassificationModule = typeof import('@novu/shared/dist/cjs/utils/private-ip-classification');
-type OutboundSsrfAllowListModule = typeof import('@novu/shared/dist/cjs/utils/outbound-ssrf-allow-list');
+type PrivateIpClassificationModule = typeof import('@novu/shared/utils/private-ip-classification');
+type OutboundSsrfAllowListModule = typeof import('@novu/shared/utils/outbound-ssrf-allow-list');
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { isPrivateIp, isLinkLocalIp, normalizeHostnameForLookup } =

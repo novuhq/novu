@@ -86,7 +86,9 @@ function isStorageKeyInScope(storageKey: string, scope: AgentAttachmentStorageSc
 }
 
 function normalizeFetchData(data: Buffer | ArrayBuffer | Uint8Array): Buffer {
-  return Buffer.isBuffer(data) ? data : Buffer.from(data);
+  if (Buffer.isBuffer(data)) return data;
+
+  return data instanceof ArrayBuffer ? Buffer.from(data) : Buffer.from(data);
 }
 
 async function bufferFromAttachment(attachment: Attachment, allowUnknownSizeDownload = false): Promise<Buffer | null> {

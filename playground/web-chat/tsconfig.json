@@ -9,7 +9,6 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "Bundler",
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },

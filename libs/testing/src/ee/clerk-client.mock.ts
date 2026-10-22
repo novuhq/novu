@@ -2,6 +2,7 @@ import type { ClerkClient, Organization, OrganizationMembership, User } from '@c
 
 type UserAPI = ClerkClient['users'];
 type OrganizationAPI = ClerkClient['organizations'];
+
 import {
   CLERK_ORGANIZATION_1,
   CLERK_ORGANIZATION_1_MEMBERSHIP_1,
@@ -100,7 +101,15 @@ export class ClerkClientMock {
     };
   }
 
-  get organizations() {
+  get organizations(): Pick<
+    OrganizationAPI,
+    | 'getOrganization'
+    | 'getOrganizationMembershipList'
+    | 'createOrganizationMembership'
+    | 'updateOrganization'
+    | 'updateOrganizationMetadata'
+    | 'deleteOrganization'
+  > {
     const getOrganization: OrganizationAPI['getOrganization'] = async (params) => {
       if ('organizationId' in params) {
         const org = this.clerkOrganizations.get(params.organizationId);
@@ -131,6 +140,7 @@ export class ClerkClientMock {
     };
 
     const createOrganizationMembership: OrganizationAPI['createOrganizationMembership'] = async (params) => {
+      // biome-ignore lint/plugin: test fake of a Clerk SDK class that only fills the fields the code under test reads
       const newMembership = {
         ...params,
         createdAt: Date.now(),

@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "module": "commonjs",
+    "customConditions": ["require"],
     "declaration": true,
     "noImplicitAny": false,
     "removeComments": true,
@@ -10,10 +11,8 @@
     "experimentalDecorators": true,
     "strictNullChecks": true,
     "target": "es6",
-    "esModuleInterop": false,
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./src",
     "types": ["node", "mocha"]
   },
   "include": ["src/**/*", "src/**/*.d.ts"],

@@ -3,7 +3,6 @@
   "compilerOptions": {
     "module": "commonjs",
     "declaration": true,
-    "esModuleInterop": false,
     "noImplicitAny": false,
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
@@ -12,7 +11,6 @@
     "target": "es6",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./src",
     "types": ["node"]
   },
   "include": ["src/**/*", "src/**/*.d.ts"],
