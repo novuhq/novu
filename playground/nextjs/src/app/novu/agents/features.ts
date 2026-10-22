@@ -95,6 +95,23 @@ export function history(ctx: AgentMessageContext) {
   return ['So far:', ...lines].join('\n');
 }
 
+// Long agent replies (like the custom-code agent's help) would drown the recap.
+const RECAP_EXCERPT = 280;
+
+export function recap(ctx: AgentMessageContext) {
+  const messages = ctx.history
+    .filter((entry) => entry.type === 'message' && entry.content.trim().toLowerCase() !== 'recap')
+    .map((entry) => ({
+      role: entry.role,
+      content: entry.content.length > RECAP_EXCERPT ? `${entry.content.slice(0, RECAP_EXCERPT)}…` : entry.content,
+      sentAt: entry.createdAt,
+    }));
+  if (!messages.length) return 'Nothing to recap yet. Send me a few messages first.';
+  ctx.trigger('conversation-recap', { payload: { messages } });
+
+  return `Sent a recap of ${messages.length} messages to your email.`;
+}
+
 export function notify(ctx: AgentMessageContext, name: string) {
   ctx.trigger('all-channels-workflow', { payload: { name: name || 'Agent', skipPush: true } });
 

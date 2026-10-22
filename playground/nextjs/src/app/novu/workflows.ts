@@ -1,5 +1,6 @@
 import { Actions, Card, CardLink, CardText, Divider, Image, workflow } from '@novu/framework/next';
 import z from 'zod';
+import { recapEmail } from './recap-email';
 
 export const welcomeWorkflow = workflow(
   'welcome-workflow',
@@ -129,6 +130,39 @@ export const digestWorkflow = workflow(
     }));
   },
   { payloadSchema: z.object({ run: z.string(), n: z.number() }), tags: ['playground'] }
+);
+
+export const conversationRecapWorkflow = workflow(
+  'conversation-recap',
+  async ({ step, payload }) => {
+    await step.email(
+      'email',
+      async (controls) => ({
+        subject: controls.subject,
+        body: recapEmail({ ...controls, messages: payload.messages }),
+      }),
+      {
+        controlSchema: z.object({
+          subject: z.string().default('Your conversation recap'),
+          heading: z.string().default('Here is what we talked about'),
+          buttonLabel: z.string().default('Build your own agent'),
+          buttonUrl: z.string().default('https://docs.novu.co'),
+        }),
+      }
+    );
+    await step.inApp('in-app', async () => ({
+      subject: 'Conversation recap',
+      body: `A recap of ${payload.messages.length} messages is in your email.`,
+    }));
+  },
+  {
+    name: 'Conversation recap',
+    description: "An agent conversation as a designed email, from the custom-code agent's `recap` command",
+    tags: ['playground'],
+    payloadSchema: z.object({
+      messages: z.array(z.object({ role: z.string(), content: z.string(), sentAt: z.string() })).default([]),
+    }),
+  }
 );
 
 export const throttleWorkflow = workflow(
