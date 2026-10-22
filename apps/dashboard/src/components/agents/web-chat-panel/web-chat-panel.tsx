@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { SOCKET_OPTIONS } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useInboxSubscriberHash } from '@/hooks/use-inbox-subscriber-hash';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 
 type WebChatPanelProps = {
@@ -27,7 +28,13 @@ function WebChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }
   const { currentUser, isUserLoaded } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const testerSubscriberId = currentUser?._id ? buildDashboardWebChatSubscriberId(currentUser._id) : '';
-  const isReady = isUserLoaded && Boolean(testerSubscriberId) && Boolean(currentEnvironment?.identifier);
+  const { subscriberHash, isReady: isSubscriberHashReady } = useInboxSubscriberHash(testerSubscriberId || undefined);
+  const isReady =
+    isUserLoaded &&
+    Boolean(testerSubscriberId) &&
+    Boolean(currentEnvironment?.identifier) &&
+    isSubscriberHashReady &&
+    Boolean(subscriberHash);
   const subscriber = useMemo(
     () => ({
       subscriberId: testerSubscriberId,
@@ -57,6 +64,7 @@ function WebChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }
       apiUrl={apiHostnameManager.getHostname()}
       socketUrl={apiHostnameManager.getWebSocketHostname()}
       socketOptions={SOCKET_OPTIONS}
+      subscriberHash={subscriberHash}
     >
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <WebChatSurface

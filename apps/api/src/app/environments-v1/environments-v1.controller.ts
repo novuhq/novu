@@ -9,6 +9,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
@@ -39,7 +40,11 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { assertEnvironmentScopedAccess, isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
+import { InboxSubscriberHashQueryDto } from './dtos/inbox-subscriber-hash-query.dto';
+import { InboxSubscriberHashResponseDto } from './dtos/inbox-subscriber-hash-response.dto';
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
+import { BuildInboxSubscriberHashCommand } from './usecases/build-inbox-subscriber-hash/build-inbox-subscriber-hash.command';
+import { BuildInboxSubscriberHash } from './usecases/build-inbox-subscriber-hash/build-inbox-subscriber-hash.usecase';
 import { CreateApiKey } from './usecases/create-api-key/create-api-key.usecase';
 import { CreateEnvironmentCommand } from './usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from './usecases/create-environment/create-environment.usecase';
@@ -75,6 +80,7 @@ export class EnvironmentsControllerV1 {
     private getEnvironmentUsecase: GetEnvironment,
     private getMyEnvironmentsUsecase: GetMyEnvironments,
     private deleteEnvironmentUsecase: DeleteEnvironment,
+    private buildInboxSubscriberHashUsecase: BuildInboxSubscriberHash,
     private organizationRepository: CommunityOrganizationRepository,
     private featureFlagService: FeatureFlagsService
   ) {}
@@ -93,6 +99,31 @@ export class EnvironmentsControllerV1 {
         environmentId: user.environmentId,
         userId: user._id,
         organizationId: user.organizationId,
+      })
+    );
+  }
+
+  @Get('/me/inbox-subscriber-hash')
+  @ApiOperation({
+    summary: 'Mint an Inbox subscriber HMAC hash for dashboard-owned identities',
+    description:
+      'Returns a `subscriberHash` signed with the current environment API key. Used by dashboard Inbox sessions ' +
+      '(agent Slack/Teams connect and the web-chat tester) when In-App HMAC is enabled. Restricted to the ' +
+      'authenticated user id and the dashboard web-chat tester subscriber for that user.',
+  })
+  @ApiResponse(InboxSubscriberHashResponseDto)
+  @ApiExcludeEndpoint()
+  @SkipPermissionsCheck()
+  async getInboxSubscriberHash(
+    @UserSession() user: UserSessionData,
+    @Query() query: InboxSubscriberHashQueryDto
+  ): Promise<InboxSubscriberHashResponseDto> {
+    return await this.buildInboxSubscriberHashUsecase.execute(
+      BuildInboxSubscriberHashCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        subscriberId: query.subscriberId,
       })
     );
   }

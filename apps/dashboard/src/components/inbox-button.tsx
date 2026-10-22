@@ -10,6 +10,7 @@ import { APP_ID, IS_SELF_HOSTED, SOCKET_OPTIONS } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useInboxSubscriberHash } from '@/hooks/use-inbox-subscriber-hash';
 import { useWorkflowEditorPage } from '@/hooks/use-workflow-editor-page';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { HeaderButton } from './header-navigation/header-button';
@@ -129,8 +130,11 @@ export const InboxButton = ({
   // On the (non-test) dashboard Inbox we authenticate against Novu's own production account with the
   // shared APP_ID and the `<userId>` subscriber. If that production integration has HMAC enabled,
   // the session must carry a server-minted subscriberHash (+ tenant context/contextHash), so we mint
-  // it the same way the NovuCopilot connect flow does. The test page talks to the customer's own
-  // environment where none of this applies, hence it stays disabled there.
+  // it the same way the NovuCopilot connect flow does. The workflow-editor test Inbox talks to the
+  // customer's own environment and needs a hash signed with that environment's API key instead.
+  const { subscriberHash: testPageSubscriberHash } = useInboxSubscriberHash(
+    isTestPage ? subscriber.subscriberId : undefined
+  );
   const { data: connectContext } = useQuery({
     queryKey: ['novu-context', currentEnvironment?._id, subscriber.subscriberId],
     queryFn: ({ signal }) => {
@@ -176,7 +180,7 @@ export const InboxButton = ({
       backendUrl={shouldUseProductionApi ? 'https://api.novu.co' : apiHostnameManager.getHostname()}
       socketUrl={shouldUseProductionApi ? 'https://ws.novu.co' : apiHostnameManager.getWebSocketHostname()}
       socketOptions={shouldUseProductionApi ? undefined : SOCKET_OPTIONS}
-      subscriberHash={isTestPage ? undefined : connectContext?.subscriberHash}
+      subscriberHash={isTestPage ? testPageSubscriberHash : connectContext?.subscriberHash}
       context={isTestPage ? undefined : connectContext?.context}
       contextHash={isTestPage ? undefined : connectContext?.contextHash}
       localization={localization}

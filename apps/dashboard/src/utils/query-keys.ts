@@ -42,6 +42,7 @@ export const QueryKeys = Object.freeze({
   fetchEnvironmentVariables: 'fetchEnvironmentVariables',
   fetchEnvironmentVariable: 'fetchEnvironmentVariable',
   fetchEnvironmentVariableUsage: 'fetchEnvironmentVariableUsage',
+  inboxSubscriberHash: 'inboxSubscriberHash',
   stepResolversCount: 'stepResolversCount',
   fetchWorkflowSuggestions: 'fetchWorkflowSuggestions',
   fetchDomains: 'fetchDomains',

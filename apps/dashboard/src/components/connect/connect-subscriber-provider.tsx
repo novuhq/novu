@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom';
 import { SOCKET_OPTIONS } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useInboxSubscriberHash } from '@/hooks/use-inbox-subscriber-hash';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { createContextHook } from '@/utils/context';
 
@@ -28,9 +29,13 @@ type NovuProviderChildren = ComponentProps<typeof NovuProvider>['children'];
 export function ConnectSubscriberProvider({ children }: ConnectSubscriberProviderProps) {
   const { currentUser, isUserLoaded } = useAuth();
   const { currentEnvironment } = useEnvironment();
-
-  const isReady = isUserLoaded && !!currentUser?._id && !!currentEnvironment?.identifier;
   const subscriberId = currentUser?._id || '';
+  const { subscriberHash, isReady: isSubscriberHashReady } = useInboxSubscriberHash(
+    isUserLoaded && subscriberId ? subscriberId : undefined
+  );
+
+  const isReady =
+    isUserLoaded && !!currentUser?._id && !!currentEnvironment?.identifier && isSubscriberHashReady && !!subscriberHash;
   const routedContent = (children === undefined ? <Outlet /> : children) as NovuProviderChildren;
   const subscriber = useMemo(
     () => ({
@@ -43,7 +48,7 @@ export function ConnectSubscriberProvider({ children }: ConnectSubscriberProvide
     [subscriberId, currentUser?.firstName, currentUser?.lastName, currentUser?.email, currentUser?.profilePicture]
   );
 
-  if (!isReady) {
+  if (!isReady || !currentEnvironment || !subscriberHash) {
     return (
       <ConnectSubscriberContext.Provider value={{ subscriberId, isReady: false }}>
         {routedContent}
@@ -60,6 +65,7 @@ export function ConnectSubscriberProvider({ children }: ConnectSubscriberProvide
         apiUrl={apiHostnameManager.getHostname()}
         socketUrl={apiHostnameManager.getWebSocketHostname()}
         socketOptions={SOCKET_OPTIONS}
+        subscriberHash={subscriberHash}
       >
         {routedContent}
       </NovuProvider>
