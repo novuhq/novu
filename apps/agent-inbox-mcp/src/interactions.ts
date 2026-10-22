@@ -66,7 +66,7 @@ export async function sendInteraction(
     from?: string;
     /** Reply in an existing inbox thread (`conv_...`). When set, `to` is optional. */
     thread?: string;
-    /** Let anyone in the thread answer — needed for stranger threads with no contact. */
+    /** Let anyone in the thread answer. A thread with no contact already does this. */
     anyoneMayAnswer?: boolean;
     via?: string;
     ttlSeconds?: number;
@@ -106,7 +106,7 @@ export async function sendInteraction(
   if (created.failedTo?.length && everyRecipientFailed(to, created.failedTo)) {
     throw new AgentInboxApiError(
       409,
-      `The message could not be delivered to ${created.failedTo.join(', ')}. They may not have connected a channel yet; the invite tool gives you a link for them.`
+      `The message could not be delivered to ${created.failedTo.join(', ')}. They may not have connected a channel yet; contact_invite gives you a link for them.`
     );
   }
 
@@ -216,7 +216,7 @@ export function describeOutcome(interaction: Interaction): string {
 
   switch (status) {
     case 'pending':
-      return `No answer yet. The request is still open: call the wait tool with id "${id}" to keep waiting. Do not go ahead without the answer.${threadNote}${failureNote}`;
+      return `No answer yet. The request is still open: call inbox_wait with id "${id}" to keep waiting. Do not go ahead without the answer.${threadNote}${failureNote}`;
     case 'approved':
       return `Approved${by}.${answerOf(interaction)}${threadNote}${failureNote}`;
     case 'denied':
@@ -242,12 +242,12 @@ function describeThreads(threads: Interaction['threads']): string {
   return threads
     .map((thread) => {
       if (thread.unreadBefore > 0) {
-        return ` That thread (${thread.id}) had ${thread.unreadBefore} unread message${
+        return ` That conversation (${thread.id}) had ${thread.unreadBefore} unread message${
           thread.unreadBefore === 1 ? '' : 's'
         }, which are now marked read — read them with inbox_show.`;
       }
 
-      return ` Sent in thread ${thread.id}.`;
+      return ` Sent in conversation ${thread.id}.`;
     })
     .join('');
 }

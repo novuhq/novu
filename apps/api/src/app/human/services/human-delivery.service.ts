@@ -148,7 +148,17 @@ export class HumanDeliveryService {
     agentId: string;
     subscriberId: string;
     via?: HumanChannelViaEnum;
+    /**
+     * Mailbox named on this send. Skips the verified-address lookup and delivers
+     * here. Contact-id sends omit it. Not a reachability signal.
+     */
+    explicitEmail?: string;
   }): Promise<ResolvedHumanTarget> {
+    const explicitEmail = params.explicitEmail;
+    if (explicitEmail) {
+      return this.resolveExplicitEmail({ ...params, explicitEmail });
+    }
+
     const integrations = await this.findLinkedIntegrations(params);
 
     if (integrations.length === 0) {
@@ -199,6 +209,39 @@ export class HumanDeliveryService {
     );
 
     return toResolvedTarget(pickDefaultTarget(deliverable, contact?.defaultVia) ?? deliverable[0]);
+  }
+
+  /**
+   * One send to an address the caller typed. Does not consult `addresses.email.verified`
+   * and does not mark the address reachable for later contact-id sends.
+   */
+  private async resolveExplicitEmail(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    explicitEmail: string;
+  }): Promise<ResolvedHumanTarget> {
+    if (this.keylessEmailGate.isBlocked(params.organizationId)) {
+      await this.keylessEmailGate.assertAllowed(params);
+    }
+
+    const email = (await this.findLinkedIntegrations(params)).find(
+      (integration) =>
+        integration.channel === ChannelTypeEnum.EMAIL &&
+        viaForProviderId(integration.providerId) === HumanChannelViaEnum.EMAIL
+    );
+
+    if (!email) {
+      throw new NotFoundException(
+        `No ${HumanChannelViaEnum.EMAIL} channel is linked to this agent. Connect ${HumanChannelViaEnum.EMAIL} or run \`npx @agentinbox/cli channel add ${HumanChannelViaEnum.EMAIL}\`.`
+      );
+    }
+
+    return {
+      platform: HumanChannelViaEnum.EMAIL,
+      platformUserId: params.explicitEmail,
+      integrationIdentifier: email.identifier,
+    };
   }
 
   /** The agent's active invite-page integrations (Telegram, Slack, Email). */
@@ -665,7 +708,7 @@ function describeStoredEmail(slot: HumanContactChannelAddresses | undefined): {
     status = HumanAddressVerificationStateEnum.PENDING;
   }
 
-  const rawAddress = verified?.address ?? pending?.address;
+  const rawAddress = verified?.address ?? pending?.address ?? slot?.declared?.address;
 
   return {
     connected: Boolean(verified),

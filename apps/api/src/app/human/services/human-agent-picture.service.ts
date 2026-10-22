@@ -8,6 +8,7 @@ import {
 } from '../../shared/helpers/resolve-human-dashboard-base-url';
 import type { HumanAgentResponseDto } from '../dtos/human-agent.dto';
 import { HumanAgentIdentityService } from './human-agent-identity.service';
+import { HumanOperatorService } from './human-operator.service';
 
 /** Plenty for a picture shown in a small circle, and small enough for every channel to take. */
 export const AGENT_PICTURE_MAX_BYTES = 2 * 1024 * 1024;
@@ -66,6 +67,7 @@ export class HumanAgentPictureService {
     private readonly agentRepository: AgentRepository,
     private readonly storageService: StorageService,
     private readonly humanAgentIdentity: HumanAgentIdentityService,
+    private readonly humanOperator: HumanOperatorService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -89,9 +91,15 @@ export class HumanAgentPictureService {
     };
   }
 
-  /** The relay agent, or a 404 before `human setup` has made it. */
+  /**
+   * The relay agent, or a 404 before `human setup` has made it. This read also names the operator as the agent's
+   * card does, for the Configure page's card; the answers to changes leave that lookup out.
+   */
   async get(scope: AgentScope): Promise<HumanAgentResponseDto> {
-    return this.describe(await this.findRelay(scope));
+    const agent = await this.findRelay(scope);
+    const operator = await this.humanOperator.cardNameFor({ ...scope, agentId: agent._id });
+
+    return { ...this.describe(agent), ...operator };
   }
 
   async save(scope: AgentScope, file: Buffer): Promise<AgentEntity> {
