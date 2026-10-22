@@ -9,11 +9,11 @@ Add this address to a chat app that speaks MCP:
 https://mcp.agentinbox.md
 ```
 
-You sign in with your Agent Inbox account when the app asks. The app never sees the API key. Someone without an agent yet is sent through onboarding on the next visit to the dashboard.
+You sign in with your Agent Inbox account when the app asks. The app never sees the API key. Someone without an agent yet can create it from the app with `inbox_setup`, or in the onboarding on the dashboard.
 
 Opening that address in a browser redirects here.
 
-There are no tools for `setup`, `login`, `connect`, or `channel`. You do those on agentinbox.md or with the [CLI](/reference/cli).
+There are no tools for `login`, `connect`, or `channel`. You do those on agentinbox.md or with the [CLI](/reference/cli). `inbox_setup` covers only the agent and its email inbox.
 
 The tools are named after the CLI. `inbox send` is `inbox_send`. `contact list` is `contact_list`. `inbox_wait` is the one the CLI does not have.
 
@@ -28,8 +28,21 @@ There are no exit codes. The result says what happened.
 | `Nobody answered in time, so the request expired.` | Treat it as not approved |
 | `The request was canceled.` | Treat it as not approved |
 | `The request is still open` | Call `inbox_wait` with the id it gives you |
+| `Agent Inbox is not set up yet.` | Ask for a name and an address, then call `inbox_setup` |
 
 A plain message returns `Delivered` as soon as delivery is confirmed.
+
+## inbox_setup
+
+Creates the agent and its email inbox, sends the owner a confirmation link, or says how far setup got. With no arguments, it reports the status and may suggest the email you signed in with.
+
+| Argument | Meaning |
+| --- | --- |
+| `agent_name` | What the agent is called. Up to 60 characters. Pass it with `handle` to create the agent |
+| `handle` | The inbox address before the `@`, such as `atlas`. Letters, digits, and hyphens, up to 32. Alone, it finishes a mailbox that was not created |
+| `email` | The owner's email, after they confirm it. A confirmation link goes out |
+
+Ask for the name and the address before you create the agent. A name never renames an existing agent, and a handle never moves an existing mailbox. An email that is already confirmed is changed on agentinbox.md. Telegram and Slack are set up on agentinbox.md or with the CLI.
 
 ## inbox_send
 
