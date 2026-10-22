@@ -9,7 +9,13 @@ export const useFetchApiKeys = ({ enabled = true }: { enabled?: boolean } = {}) 
 
   const query = useQuery<{ data: IApiKey[] }>({
     queryKey: [QueryKeys.getApiKeys, currentEnvironment?._id],
-    queryFn: async () => await getApiKeys({ environment: currentEnvironment! }),
+    queryFn: async () => {
+      if (!currentEnvironment) {
+        throw new Error('No environment selected');
+      }
+
+      return getApiKeys({ environment: currentEnvironment });
+    },
     enabled: !!currentEnvironment?._id && enabled,
   });
 
@@ -21,11 +27,19 @@ export const useRegenerateApiKeys = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => regenerateApiKeys({ environment: currentEnvironment! }),
+    mutationFn: () => {
+      if (!currentEnvironment) {
+        throw new Error('No environment selected');
+      }
+
+      return regenerateApiKeys({ environment: currentEnvironment });
+    },
     onSuccess: () => {
-      // Invalidate the API keys query to refetch the new keys
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.getApiKeys, currentEnvironment?._id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.inboxSubscriberHash, currentEnvironment?._id],
       });
     },
   });
@@ -36,7 +50,13 @@ export const useCreateApiKey = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => createApiKey({ environment: currentEnvironment! }),
+    mutationFn: () => {
+      if (!currentEnvironment) {
+        throw new Error('No environment selected');
+      }
+
+      return createApiKey({ environment: currentEnvironment });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.getApiKeys, currentEnvironment?._id],
@@ -50,10 +70,19 @@ export const useDeleteApiKey = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ hash }: { hash: string }) => deleteApiKey({ environment: currentEnvironment!, hash }),
+    mutationFn: ({ hash }: { hash: string }) => {
+      if (!currentEnvironment) {
+        throw new Error('No environment selected');
+      }
+
+      return deleteApiKey({ environment: currentEnvironment, hash });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.getApiKeys, currentEnvironment?._id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.inboxSubscriberHash, currentEnvironment?._id],
       });
     },
   });
