@@ -206,13 +206,18 @@ about missing ones.
 | `GITHUB_READ_TOKEN` | no | Read-only access to `novu` and `packages-enterprise` for the boxes' git fetches |
 | `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET` | no | The Slack router |
 | `TESTERARMY_API_KEY` | no, optional | Starts TesterArmy's runs on PR boxes |
+| `CURSOR_BOX_TOKEN` | no, optional | Lets Cursor Cloud agents use boxes. Also a Cursor team Runtime Secret, same name and value |
 
 A box runs PR code, which can read its environment: never put production keys in boxes, never name a secret
 `VITE_*` (it would end up in the dashboard's public `index.html`), and never run boxes for PRs from forks.
 
-**Who can get in:** every box command needs a GitHub token with push access to `novuhq/novu`, or the OIDC token of
-one of the Novu Box workflows. Box addresses are public, like staging's; the dashboard is protected by Clerk. Keep
-these two Clerk settings, or anyone could sign up: email-code sign-in **off** (sign-in needs the password), and test
+**Who can get in:** every box command needs a GitHub token with push access to `novuhq/novu`, the OIDC token of
+one of the Novu Box workflows, or `CURSOR_BOX_TOKEN`. Cursor Cloud agents' `gh` is the Cursor GitHub App, which can't
+push, so they get that secret instead: it opens boxes and nothing on GitHub. Don't name it `GITHUB_TOKEN` in Cursor:
+`gh` would use it instead of the app's token and stop opening PRs.
+
+Box addresses are public, like staging's; the dashboard is protected by Clerk. Keep these two Clerk settings, or
+anyone could sign up: email-code sign-in **off** (sign-in needs the password), and test
 mode **off** (it accepts `424242` as any address's code). Sign-up is limited to `@novu.co` addresses, and
 `@qa.box.novu-staging.co` for TesterArmy's sign-up tests: Cloudflare Email Routing forwards those addresses to
 TesterArmy's inbox, and each time the hub starts TesterArmy it deletes those users over an hour old.
