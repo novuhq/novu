@@ -19,7 +19,7 @@ export type Account = {
 /** Why a request can't act for an account. `401` asks the tool to sign in (again). */
 export class AuthError extends Error {
   constructor(
-    readonly status: 401 | 403 | 503,
+    readonly status: 401 | 503,
     message: string
   ) {
     super(message);
@@ -28,6 +28,8 @@ export class AuthError extends Error {
 
 const USERINFO_TIMEOUT_MS = 8_000;
 const API_TIMEOUT_MS = 8_000;
+/** Opening an account creates its Novu organization. That takes longer than reading a key. */
+const ACCOUNT_SETUP_TIMEOUT_MS = 30_000;
 
 /**
  * How long a token's owner is remembered, so not every call asks Clerk again. It counts from when Clerk
@@ -36,14 +38,15 @@ const API_TIMEOUT_MS = 8_000;
 const IDENTITY_TTL_SECONDS = 300;
 
 /** What is remembered about a token. An entry from before Agent Inbox was US only also has a `region`, unused now. */
-type Identity = { agentInboxUserId: string; email?: string };
+type Identity = { agentInboxUserId: string; email?: string; firstName?: string; lastName?: string };
 
 /**
  * Finds the Agent Inbox account behind a request's bearer token.
  *
  * The token comes from the Agent Inbox Clerk app. Clerk is asked whose it is; this server never trusts what a
- * token says about itself. The account's key is then read from the Novu API with the secret the
- * dashboard uses, so the AI tool never holds the key. The tools call the Dashboard API with it.
+ * token says about itself. When that person has no Agent Inbox account yet, this server opens one. The
+ * account's key is then read from the Novu API with the secret the dashboard uses, so the AI tool never holds
+ * the key. The tools call the Dashboard API with it.
  */
 export async function authenticate(request: Request, env: Env): Promise<Account> {
   const token = bearerTokenOf(request);
@@ -103,6 +106,8 @@ async function identify(token: string, env: Env): Promise<Identity> {
     sub?: unknown;
     user_id?: unknown;
     email?: unknown;
+    given_name?: unknown;
+    family_name?: unknown;
   } | null;
   const agentInboxUserId = [body?.user_id, body?.sub].find(
     (id): id is string => typeof id === 'string' && id.length > 0
@@ -112,13 +117,31 @@ async function identify(token: string, env: Env): Promise<Identity> {
   }
 
   const email = typeof body?.email === 'string' && body.email.trim() ? body.email.trim() : undefined;
+  const firstName = personName(body?.given_name);
+  const lastName = personName(body?.family_name);
 
-  return { agentInboxUserId, ...(email ? { email } : {}) };
+  return {
+    agentInboxUserId,
+    ...(email ? { email } : {}),
+    ...(firstName ? { firstName } : {}),
+    ...(lastName ? { lastName } : {}),
+  };
+}
+
+function personName(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const name = value.trim().slice(0, 128);
+
+  return name.length > 0 ? name : undefined;
 }
 
 /**
- * Reads the account's key from the Novu API. It is the one call that goes there directly: the Dashboard API
- * doesn't offer it, since it answers to the dashboard's secret rather than to an account.
+ * Reads the account's key from the Novu API, opening the account first when this sign-in has none.
+ * Those are the calls that go there directly: the Dashboard API answers to an account's key, which
+ * does not exist until the account does.
  */
 async function loadAccount(identity: Identity, env: Env): Promise<Account> {
   const secret = env.AGENT_INBOX_DASHBOARD_API_SECRET;
@@ -128,12 +151,14 @@ async function loadAccount(identity: Identity, env: Env): Promise<Account> {
     throw new AuthError(503, 'This server is not connected to the Agent Inbox API.');
   }
 
-  const secretKey = await readSecretKey(novuApiUrl, identity.agentInboxUserId, secret);
+  let secretKey = await readSecretKey(novuApiUrl, identity.agentInboxUserId, secret);
   if (!secretKey) {
-    throw new AuthError(
-      403,
-      'There is no Agent Inbox account for this sign-in yet. Open agentinbox.md and sign up first.'
-    );
+    await ensureAccount(novuApiUrl, identity, secret);
+    secretKey = await readSecretKey(novuApiUrl, identity.agentInboxUserId, secret);
+  }
+
+  if (!secretKey) {
+    throw new AuthError(503, 'The Agent Inbox account could not be opened. Try again in a moment.');
   }
 
   return {
@@ -142,6 +167,39 @@ async function loadAccount(identity: Identity, env: Env): Promise<Account> {
     secretKey,
     ...(identity.email ? { email: identity.email } : {}),
   };
+}
+
+/**
+ * Creates the backing Novu organization for this Clerk user, or returns the one that already exists.
+ * The same call the dashboard makes on a first visit. It does not create an agent; `inbox_setup` does that.
+ */
+async function ensureAccount(novuApiUrl: string, identity: Identity, secret: string): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(`${novuApiUrl}/v1/human/accounts`, {
+      method: 'POST',
+      headers: {
+        [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: secret,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        humanUserId: identity.agentInboxUserId,
+        ...(identity.firstName ? { firstName: identity.firstName } : {}),
+        ...(identity.lastName ? { lastName: identity.lastName } : {}),
+      }),
+      signal: AbortSignal.timeout(ACCOUNT_SETUP_TIMEOUT_MS),
+    });
+  } catch {
+    throw new AuthError(503, 'Could not reach the Agent Inbox API. Try again in a moment.');
+  }
+
+  if (response.status === 409) {
+    throw new AuthError(503, 'This Agent Inbox account is being set up. Try again in a moment.');
+  }
+
+  if (!response.ok) {
+    throw new AuthError(503, 'The Agent Inbox API did not answer. Try again in a moment.');
+  }
 }
 
 /** The account's key, or `null` when there is no account for this sign-in. */

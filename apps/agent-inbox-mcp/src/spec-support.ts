@@ -7,7 +7,7 @@ import type { Interaction } from './interactions';
 export const ISSUER = 'https://clerk.example.test';
 /** The Dashboard API, which every tool calls. */
 export const AGENT_INBOX_API = 'https://agentinbox.example.test/api';
-/** The Novu API, asked only for the account's key. */
+/** The Novu API, asked to open an account and to read its key. */
 export const NOVU_API = 'https://api.example.test';
 export const ORIGIN = 'https://mcp.example.test';
 
@@ -93,6 +93,8 @@ export type StubBackendsOptions = {
   channelsError?: { status: number; message: string };
   /** POST /v1/contacts/verifications reports that a confirmed address is being replaced. */
   replacesVerifiedAddress?: boolean;
+  /** POST /v1/human/accounts fails with this status instead of opening the account. */
+  accountCreateStatus?: number;
 };
 
 export type StubContact = {
@@ -162,7 +164,8 @@ function isStubBackendsOptions(options: StubBackendsOptions | Partial<Interactio
     'userEmail' in options ||
     'setupError' in options ||
     'channelsError' in options ||
-    'replacesVerifiedAddress' in options
+    'replacesVerifiedAddress' in options ||
+    'accountCreateStatus' in options
   );
 }
 
@@ -182,26 +185,80 @@ function dashboardPathOf(url: string): string | null {
   return url.startsWith(`${AGENT_INBOX_API}/`) ? url.slice(AGENT_INBOX_API.length).split('?')[0] : null;
 }
 
-function answerAuth(url: string, headers: Headers, userEmail?: string): Response | null {
+function answerAuth(
+  url: string,
+  method: string,
+  headers: Headers,
+  body: unknown,
+  accounts: Set<string>,
+  userEmail?: string,
+  accountCreateStatus?: number
+): Response | null {
   if (url === `${ISSUER}/oauth/userinfo`) {
     const user = USERS_BY_TOKEN[headers.get('Authorization')?.replace(/^Bearer /, '') ?? ''];
 
     return user
-      ? reply({ user_id: user, ...(user === 'user_1' && userEmail ? { email: userEmail } : {}) })
+      ? reply({
+          user_id: user,
+          ...(user === 'user_1' && userEmail ? { email: userEmail } : {}),
+          ...(user === 'user_2' ? { given_name: 'Ada', family_name: 'Lovelace' } : {}),
+        })
       : reply({}, 401);
   }
 
-  if (url === `${NOVU_API}/v1/human/accounts/user_1/secret-key`) {
-    return headers.get(AGENT_INBOX_DASHBOARD_SECRET_HEADER) === 'shared-secret'
-      ? reply({ data: { secretKey: 'account-key' } })
-      : reply({}, 401);
+  if (url === `${NOVU_API}/v1/human/accounts` && method === 'POST') {
+    return answerEnsureAccount(headers, body, accounts, accountCreateStatus);
   }
 
-  if (url === `${NOVU_API}/v1/human/accounts/user_2/secret-key`) {
-    return reply({ message: 'Not found' }, 404);
+  const accountId = secretKeyAccountId(url);
+  if (!accountId) {
+    return null;
   }
 
-  return null;
+  if (headers.get(AGENT_INBOX_DASHBOARD_SECRET_HEADER) !== 'shared-secret') {
+    return reply({}, 401);
+  }
+
+  return accounts.has(accountId) ? reply({ data: { secretKey: 'account-key' } }) : reply({ message: 'Not found' }, 404);
+}
+
+function secretKeyAccountId(url: string): string | null {
+  const prefix = `${NOVU_API}/v1/human/accounts/`;
+  const suffix = '/secret-key';
+  if (!url.startsWith(prefix) || !url.endsWith(suffix)) {
+    return null;
+  }
+
+  const id = url.slice(prefix.length, -suffix.length);
+  if (!id || id.includes('/')) {
+    return null;
+  }
+
+  return decodeURIComponent(id);
+}
+
+function answerEnsureAccount(
+  headers: Headers,
+  body: unknown,
+  accounts: Set<string>,
+  accountCreateStatus?: number
+): Response {
+  if (headers.get(AGENT_INBOX_DASHBOARD_SECRET_HEADER) !== 'shared-secret') {
+    return reply({}, 401);
+  }
+
+  if (accountCreateStatus) {
+    return reply({ message: 'Account setup failed' }, accountCreateStatus);
+  }
+
+  const humanUserId = (body as { humanUserId?: unknown } | undefined)?.humanUserId;
+  if (typeof humanUserId !== 'string' || !humanUserId) {
+    return reply({ message: 'humanUserId is required' }, 400);
+  }
+
+  accounts.add(humanUserId);
+
+  return reply({ data: { organizationId: 'org_1', userId: 'novu_user_1', environmentId: 'env_1', region: 'us' } });
 }
 
 type SetupStubState = {
@@ -490,6 +547,7 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
   }
 
   const calls: Call[] = [];
+  const accounts = new Set<string>(['user_1']);
 
   vi.stubGlobal(
     'fetch',
@@ -501,7 +559,7 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
       calls.push({ url, method, body, headers });
 
       return (
-        answerAuth(url, headers, opts.userEmail) ??
+        answerAuth(url, method, headers, body, accounts, opts.userEmail, opts.accountCreateStatus) ??
         answerSetup(url, method, body, setupState) ??
         answerInbox(url, method, inboxPage, inboxThread, inboxActionThread) ??
         answerContacts(url, method, contactPages, contactsById, body, opts.replacesVerifiedAddress === true) ??
