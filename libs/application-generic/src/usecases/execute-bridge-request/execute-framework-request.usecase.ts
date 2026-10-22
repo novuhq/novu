@@ -19,6 +19,7 @@ import {
   HttpClientService,
   RETRYABLE_ERROR_CODES,
 } from '../../services/http-client';
+import { getNovuServiceCa, isNovuTlsEnabled } from '../../services/tls';
 import { BRIDGE_EXECUTION_ERROR, buildNovuSignatureHeader } from '../../utils';
 import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '../get-decrypted-secret-key';
 import { BridgeError, ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from './execute-bridge-request.command';
@@ -116,6 +117,7 @@ export class ExecuteFrameworkRequest {
       command.enforceSsrfProtection === true ||
       !!command.statelessBridgeUrl ||
       command.workflowOrigin === ResourceOriginEnum.EXTERNAL;
+    const isNovuHostedBridge = !command.statelessBridgeUrl && command.workflowOrigin === ResourceOriginEnum.NOVU_CLOUD;
 
     try {
       const response = await this.httpClient.request<ExecuteBridgeRequestDto<T>>({
@@ -127,7 +129,15 @@ export class ExecuteFrameworkRequest {
         retry: {
           limit: retriesLimit,
         },
-        rejectUnauthorized: environment.name.toLowerCase() === 'production',
+        /*
+         * A Novu-hosted bridge is this API calling itself, so once TLS is on the
+         * certificate must verify against the private CA no matter what the
+         * environment is called. Externally hosted bridges keep the existing
+         * per-environment behaviour and never see the private CA.
+         */
+        rejectUnauthorized:
+          environment.name.toLowerCase() === 'production' || (isNovuTlsEnabled() && isNovuHostedBridge),
+        ca: isNovuHostedBridge ? getNovuServiceCa() : undefined,
         // DNS-pinned SSRF guard for user- or environment-controlled bridge
         // targets (stateless bridgeUrl, EXTERNAL origin, or explicit opt-in).
         // The safe outbound layer pins the connection to a validated public IP
@@ -203,11 +213,18 @@ export class ExecuteFrameworkRequest {
     }
   }
 
+  /**
+   * Preview calls the API back on its own port, which serves under API_CONTEXT_PATH,
+   * while the configured origins already route to it. With TLS the listener is
+   * HTTPS-only, so preview prefers API_INTERNAL_ORIGIN when it is set and otherwise
+   * keeps the loopback on HTTPS. The API refuses to boot when the certificate would
+   * not verify for that loopback.
+   */
   private getApiUrl(action: PostActionEnum | GetActionEnum): string {
-    const baseUrl =
-      action === PostActionEnum.PREVIEW
-        ? `http://localhost:${process.env.PORT}`
-        : process.env.API_INTERNAL_ORIGIN || process.env.API_ROOT_URL;
+    const tlsEnabled = isNovuTlsEnabled();
+    const useLoopback = action === PostActionEnum.PREVIEW && !(tlsEnabled && process.env.API_INTERNAL_ORIGIN);
+    const loopbackOrigin = `${tlsEnabled ? 'https' : 'http'}://localhost:${process.env.PORT}`;
+    const baseUrl = useLoopback ? loopbackOrigin : process.env.API_INTERNAL_ORIGIN || process.env.API_ROOT_URL;
 
     if (!baseUrl) {
       throw new Error('API URL is not properly configured');
@@ -215,10 +232,7 @@ export class ExecuteFrameworkRequest {
 
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 
-    const contextPath = [
-      process.env.GLOBAL_CONTEXT_PATH,
-      action === PostActionEnum.PREVIEW ? process.env.API_CONTEXT_PATH : undefined,
-    ]
+    const contextPath = [process.env.GLOBAL_CONTEXT_PATH, useLoopback ? process.env.API_CONTEXT_PATH : undefined]
       .filter(Boolean)
       .join('/');
 
@@ -271,6 +285,7 @@ export class ExecuteFrameworkRequest {
   }
 
   @Instrument()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing; the switch over HttpClientErrorType scores 37 and is unchanged here.
   private async handleResponseError(
     error: unknown,
     url: string,
