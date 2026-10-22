@@ -10,6 +10,7 @@ import {
   fromJson,
   type LastStart,
   needsBake,
+  RESTORE_MS,
   RegisteredBox,
   StateAnswer,
 } from '../shared/contracts.ts';
@@ -17,9 +18,10 @@ import { apiOrigin, BOX_CLI, boxOrigin, HOST, isBoxName } from '../shared/names.
 import { boxFetch, type FetchInit, failUnlessOk, hostBoxes, hostExists, readExec, type Token } from './cloud-http.ts';
 
 // A first bake takes 13 to 16 minutes on Cloudflare, a wake about 35 s. A snapshot restores in seconds in base's
-// location (see `Box.introduce`), up to 6 minutes elsewhere, and one that hangs is started again after 5; `/up`
-// answers before the restore, so its wait counts here.
-const READY_WITHIN_SECONDS = { baking: 25 * 60, waking: 10 * 60, running: 5 * 60 };
+// location (see `Box.introduce`), up to 6 minutes elsewhere. `/up` answers before the restore, so a wake waits here
+// for the worst case: a restore that hangs (RESTORE_MS, 8 minutes), stopping it (up to 3.5 minutes measured, so 4), a
+// cold retry (6) and the boot (1).
+const READY_WITHIN_SECONDS = { baking: 25 * 60, waking: RESTORE_MS / 1000 + 11 * 60, running: 5 * 60 };
 
 interface Exec {
   readonly cmd: ReadonlyArray<string>;

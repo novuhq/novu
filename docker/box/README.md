@@ -232,5 +232,5 @@ the hub starts TesterArmy it deletes those users over an hour old.
   integrations (`user channels` for a test user's org).
 - **`sync` stops on a conflict:** the branch doesn't contain `base`'s commit; rebase onto `next`.
 - **A slow first start:** right after `base` was rebaked, the first box in a location restores a fresh snapshot
-  and is up in about 3.5 min (the restore takes about 3 of it). A restore that hasn't answered in 5 min is started
+  and is up in about 3.5 min (the restore takes about 3 of it). A restore that hasn't answered in 8 min is started
   again once from the same snapshot (`lastStart.attempts` in `/__box/state`).

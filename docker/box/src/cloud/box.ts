@@ -1,5 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
-import type { BoxStatus, LastStart, StateAnswer } from '../shared/contracts.ts';
+import { type BoxStatus, type LastStart, RESTORE_MS, type StateAnswer } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
 import { boxOfHost, boxOrigin, HOST } from '../shared/names.ts';
 import { checkBake, startBake } from './bake.ts';
@@ -56,13 +56,7 @@ type StartFrom = { readonly image: string } | { readonly containerSnapshot: Snap
 // A snapshot restore, until the box first answers. `since` is the first attempt's start.
 type Starting = { readonly since: number; readonly snapshot: Snapshot; readonly attempts: number };
 
-// A restore that hung stayed hung for over 14 minutes, and the same snapshot started again answered in under a second.
-// A healthy cold restore of base took 173 s, so a restore that hasn't answered in 5 minutes is taken for hung: a
-// tighter bound restarted healthy cold restores that were still progressing.
-const RESTORE_MS = 5 * 60 * 1000;
 const PROBE_EVERY_MS = 2000;
-// Under the 30 s a `blockConcurrencyWhile` may take before it resets this object.
-const DESTROY_MS = 20_000;
 
 function coloOf(trace: string): string | undefined {
   return /^colo=(\w+)$/m.exec(trace)?.[1];
@@ -96,6 +90,7 @@ export class Box extends DurableObject<HostEnv> {
       storage: ctx.storage,
       env,
       running: () => this.#container.running,
+      starting: () => this.#starting !== null,
       phase: async () => (await this.#reconcile()).phase,
       wake: (origin) => this.#wakeAsleep(origin),
       output: (cmd, what) => output(this.#shell, cmd, what),
@@ -168,7 +163,7 @@ export class Box extends DurableObject<HostEnv> {
       life = await recoverSave(this.#shell, storage, life);
     }
     if (!this.#container.running) return;
-    await this.#container.setInactivityTimeout(backstopMs(this.env));
+    void this.#keepRunning();
     await alarmIn(storage, ALARM_MS);
     life = await checkBake(this.#shell, this.ctx.storage, life);
     if (!this.#container.running) return;
@@ -265,10 +260,7 @@ export class Box extends DurableObject<HostEnv> {
     const inside = new URL(request.url);
     inside.protocol = 'http:';
     try {
-      const response = await this.#port().fetch(new Request(inside, request));
-      this.#answered();
-
-      return response;
+      return await this.#port().fetch(new Request(inside, request));
     } catch (error) {
       console.log(`box not serving yet: ${messageOf(error)}`);
 
@@ -279,7 +271,7 @@ export class Box extends DurableObject<HostEnv> {
   async #up(url: URL, origin: string): Promise<StateAnswer> {
     await this.ctx.storage.put('origin', origin);
     const life = await checkBake(this.#shell, this.ctx.storage, await this.#reconcile());
-    if (this.#container.running) return { state: life.phase };
+    if (this.#container.running) return { state: this.#starting ? 'waking' : life.phase };
     const from = url.searchParams.get('from');
     const snapshot = snapshotOf(life) ?? (from ? { id: from, name: `from ${from}` } : null);
     if (snapshot) {
@@ -322,8 +314,8 @@ export class Box extends DurableObject<HostEnv> {
   // Snapshots expire 30 days after they were made or last restored, and nothing extends them. A restore that fails
   // stops the container before the box ever answers, without an exit code; then the snapshot is forgotten (kept as
   // `lost`) so the next `up` starts it from base (a PR or branch box) or bakes it, instead of retrying a dead id
-  // forever. Once the box has answered (its address or a command), its snapshot was restored, and a later stop says
-  // nothing about it.
+  // forever. Once a command has run in the box (the watchdog's probe runs one), its snapshot was restored, and a later
+  // stop says nothing about it.
   async #restore(starting: Starting, origin: string): Promise<void> {
     const { snapshot } = starting;
     this.#starting = starting;
@@ -333,58 +325,94 @@ export class Box extends DurableObject<HostEnv> {
       this.#starting = null;
       throw error;
     }
+    // Claimed before the await, so the two detectors below mark it lost once.
     const lost = async (error: unknown) => {
-      if (this.#starting !== starting || snapshotOf(await lifeOf(this.ctx.storage))?.id !== snapshot.id) return;
-      await this.#forget(snapshot, messageOf(error));
+      if (this.#starting !== starting) return;
+      this.#starting = null;
+      if (snapshotOf(await lifeOf(this.ctx.storage))?.id === snapshot.id)
+        await this.#forget(snapshot, messageOf(error));
     };
+    const failed = (error: unknown) => console.log(`marking ${snapshot.id} lost failed: ${messageOf(error)}`);
     // A snapshot that doesn't exist stops the container at once, before `monitor` can see it.
-    this.#keepRunning().catch((error: unknown) => (this.#container.running ? undefined : lost(error)));
-    this.#container.monitor().catch((error: unknown) => {
-      const exited = error instanceof Error && 'exitCode' in error && typeof error.exitCode === 'number';
+    this.ctx.waitUntil(
+      this.#keepRunning()
+        .catch((error: unknown) => (this.#container.running ? undefined : lost(error)))
+        .catch(failed)
+    );
+    this.ctx.waitUntil(
+      this.#container
+        .monitor()
+        .catch((error: unknown) => {
+          const exited = error instanceof Error && 'exitCode' in error && typeof error.exitCode === 'number';
 
-      return exited ? undefined : lost(error);
-    });
+          return exited ? undefined : lost(error);
+        })
+        .catch(failed)
+    );
     this.ctx.waitUntil(this.#restartIfHung(starting, origin));
   }
 
-  // A hung restore never answers, and nothing else restarts it (the alarm's Slack connect may run a command in it, but
-  // gives up after a timeout). Only the first attempt is started again; a second one that hangs is probed until it
-  // answers, as every restore waited before: until then the page shows that the box is waking (see `#serve`). This
-  // lives in memory: a restart of this object (every deploy) drops it, and that restore waits too.
+  // A hung restore never answers (one stayed hung for over 14 minutes, and the same snapshot started again answered in
+  // under a second), and nothing else restarts it (the alarm's Slack connect may run a command in it, but gives up
+  // after a timeout). Only the first attempt is started again; a second one that hangs is probed until it answers, as
+  // every restore waited before: until then the page shows that the box is waking (see `#serve`). This lives in
+  // memory: a restart of this object (every deploy) drops it, and that restore waits too.
   async #restartIfHung(starting: Starting, origin: string): Promise<void> {
-    const retried = starting.attempts > 1;
-    const until = Date.now() + RESTORE_MS;
-    while (this.#restoring(starting) && (retried || Date.now() < until)) {
+    const { id } = starting.snapshot;
+    const until = starting.attempts > 1 ? Number.POSITIVE_INFINITY : starting.since + RESTORE_MS;
+    let quiet = true;
+    while (this.#restoring(starting) && Date.now() < until) {
       // A command in a container that is still restoring waits; `run` counts it as the box answering.
-      const timeout = retried ? CALL_MS : Math.min(CALL_MS, until - Date.now());
-      const ran = await exitCode(this.#shell, ['true'], timeout, 'the restore probe').then(
+      const ran = await exitCode(
+        this.#shell,
+        ['true'],
+        Math.min(CALL_MS, until - Date.now()),
+        'the restore probe'
+      ).then(
         () => true,
         () => false
       );
-      if (ran) continue;
-      console.log(
-        `restoring ${starting.snapshot.id}: no answer after ${Math.round((Date.now() - starting.since) / 1000)} s`
-      );
+      if (ran) return;
+      if (quiet && this.#restoring(starting))
+        console.log(`restoring ${id}: no answer after ${Math.round((Date.now() - starting.since) / 1000)} s`);
+      quiet = false;
       await new Promise((resolve) => setTimeout(resolve, PROBE_EVERY_MS));
     }
-    if (!this.#restoring(starting)) return;
-    const { id } = starting.snapshot;
+    // A delete, discard, adopt, save or lost snapshot may have come while the probe waited.
+    const life = await lifeOf(this.ctx.storage);
+    if (!this.#restoring(starting) || life.phase !== 'running' || life.snapshot?.id !== id) return;
     console.log(`restoring ${id} didn't answer in ${RESTORE_MS / 1000} s; starting it again`);
-    // A request that saw the container stopped in between would put the box to sleep. Only the destroy is bounded
-    // (DESTROY_MS): the start doesn't wait for the container to come up.
+    // Replaced before the destroy: requests meanwhile see the box waking, and the first attempt's detectors don't take
+    // the stop for a lost snapshot. Not under `blockConcurrencyWhile`: stopping a restoring container took 112 to 204 s.
+    const again = { ...starting, attempts: starting.attempts + 1 };
+    this.#starting = again;
+    const failed = (error: unknown) => {
+      console.log(`starting ${id} again failed: ${messageOf(error)}`);
+      if (this.#starting === again) this.#starting = null;
+    };
+    try {
+      await this.#container.destroy('the restore hung');
+    } catch (error) {
+      return failed(error);
+    }
+    // Brief (the start doesn't wait for the container): a request between the check and the start would see the
+    // container stopped and put the box to sleep. A throw in it would reset this object.
     await this.ctx.blockConcurrencyWhile(async () => {
-      // A delete, discard, adopt or lost snapshot may have come while the probe waited.
-      const life = await lifeOf(this.ctx.storage);
-      if (!this.#restoring(starting) || life.phase !== 'running' || life.snapshot?.id !== id) return;
-      // Replaced before the destroy, so the first attempt's watcher doesn't take it for a lost snapshot.
-      const again = { ...starting, attempts: starting.attempts + 1 };
-      this.#starting = again;
       try {
-        await withTimeout(this.#container.destroy('the restore hung'), DESTROY_MS, 'stopping the hung restore');
+        // A delete, discard, adopt or new start may have come during the destroy.
+        if (this.#starting !== again || this.#container.running) return;
+        // A request that saw the container stopped during the destroy put the box to sleep.
+        if ((await lifeOf(this.ctx.storage)).phase !== 'running')
+          await setLife(this.ctx.storage, {
+            phase: 'running',
+            since: Date.now(),
+            snapshot: starting.snapshot,
+            down: null,
+            saveFailed: null,
+          });
         await this.#restore(again, origin);
       } catch (error) {
-        console.log(`starting ${id} again failed: ${messageOf(error)}`);
-        this.#starting = null;
+        failed(error);
       }
     });
   }
@@ -424,7 +452,8 @@ export class Box extends DurableObject<HostEnv> {
     return set;
   }
 
-  // The box answered its address or a command, so its snapshot was restored.
+  // A command ran in the box (the watchdog's probe, or any other), so its snapshot was restored. Its address doesn't
+  // count: `#serve` answers that it's waking until then.
   #answered(): void {
     const starting = this.#starting;
     if (!starting) return;
