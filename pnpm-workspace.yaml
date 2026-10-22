@@ -20,7 +20,7 @@ minimumReleaseAge: 4320
 # raises spurious ERR_PNPM_MISSING_TIME errors during resolution
 # (see https://github.com/pnpm/pnpm/issues/11238). Falling back to non-strict
 # matches the pre-v11.0.4 behavior.
-minimumReleaseAgeStrict: false
+minimumReleaseAgeStrict: true
 # First-party packages are published by us and consumed right away, so they skip the age gate.
 minimumReleaseAgeExclude:
   - '@novu/*'
@@ -129,10 +129,16 @@ overrides:
   fflate@>=0.4.5 <0.4.9: ^0.4.9
   fflate@>=0.8.0 <0.8.3: ^0.8.3
   vite@<4.5.10: ^4.5.10
-  # CVE-2026-112942 / CVE-2026-112943 / CVE-2026-112944: vite <=6.4.3 bundles a
-  # launch-editor with Windows existence-check bypass, missing `%` escaping, and
-  # editor CLI flag injection. Patched in 6.4.4. Transitive via vitest,
-  # @sveltejs/kit, and the maily libs; the dashboard's vite 8.x is unaffected.
+  # GHSA-587h-7wmj-h5pm (high) and the related moderate advisories
+  # GHSA-698v-4r3x-3vcv, GHSA-r825-w8mm-5pxw, GHSA-rq7h-c2jc-7f22 plus
+  # GHSA-9jrq-w75r-8gcw (low): vite dev-server middleware path traversal,
+  # arbitrary file read, and HTML/HTTP smuggling via crafted request paths.
+  # CVE-2026-112942 / CVE-2026-112943 / CVE-2026-112944: the bundled
+  # launch-editor has a Windows existence-check bypass, missing `%` escaping,
+  # and editor CLI flag injection. All patched in 6.4.4 (patch bump within the
+  # 6.4.x line). Widen the previous `<6.4.3` floor so transitive 6.4.3
+  # resolutions (via vitest, @vitest/mocker, @sveltejs/kit, maily-core/render)
+  # pick up the fix; the dashboard's vite 8.x is unaffected.
   vite@>=5.0.0 <6.4.4: ^6.4.4
   # GHSA-q3jh-wrc6-jgq8 (high): follow-redirects array-form headers bypass
   # cross-origin credential stripping. GHSA-8r9p-f939-6h3c (high):
@@ -263,9 +269,13 @@ overrides:
   '@octokit/request@<8.4.1': ^8.4.1
   kysely@>=0.26.0 <0.28.17: 0.28.17
   undici@>=5.0.0 <5.30.0: ^6.28.1
-  # CVE-2026-111758 (high) / CVE-2026-111766 (low): markdown-it quadratic-time
-  # rendering of multi-line link reference definitions and inline HTML parsing.
-  # Patched in 14.3.3. Transitive via markdownlint and prosemirror-markdown.
+  # GHSA-gfr2-rv44-r23c (high) and GHSA-vfgh-jcmw-g37q (low): markdown-it
+  # ReDoS / infinite loop in reference-link handling. CVE-2026-111758 (high) /
+  # CVE-2026-111766 (low): quadratic-time rendering of multi-line link
+  # reference definitions and inline HTML parsing. All patched in 14.3.3
+  # (patch bump within the 14.3.x line). Widen the previous `<14.3.1` floor so
+  # transitive 14.3.1 / 14.3.2 resolutions (via tiptap > prosemirror-markdown
+  # and markdownlint) pick up the fix.
   markdown-it@>=13.0.0 <14.3.3: ^14.3.3
   mdast-util-to-hast@>=13.0.0 <13.2.1: ^13.2.1
   webpack@>=5.49.0 <5.104.1: ^5.104.1
@@ -433,8 +443,12 @@ overrides:
   # `vitest@<4.1.0` override so all transitive consumers land on the fix,
   # and add a matching `@vitest/mocker` override in case a consumer pulls
   # the mocker without the vitest CLI.
-  vitest@<4.1.11: ^4.1.11
-  '@vitest/mocker@<4.1.11': ^4.1.11
+  # GHSA-qxg6-89mg-rqv8 (moderate) and GHSA-xp26-3454-mjgp (moderate):
+  # follow-up @vitest/mocker regressions in the Redirect Mock path and the
+  # 4.1.11 release. Patched in 4.1.12 (patch bump within the 4.1.x line);
+  # widen both overrides so vitest and @vitest/mocker land on 4.1.12.
+  vitest@<4.1.12: ^4.1.12
+  '@vitest/mocker@<4.1.12': ^4.1.12
   react-router@>=6.0.0 <7.18.0: ^7.18.0
   js-cookie@<3.0.7: ^3.0.7
   # GHSA-77c7-pq4r-6mcq: degit command injection via unsanitised git repo name.

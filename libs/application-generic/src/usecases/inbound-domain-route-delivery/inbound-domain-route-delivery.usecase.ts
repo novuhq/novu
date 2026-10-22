@@ -3,7 +3,6 @@ import { AgentIntegrationRepository, DomainEntity, DomainRouteEntity, Integratio
 import {
   AGENT_INBOX_PROVIDER_IDS,
   ChannelTypeEnum,
-  EmailProviderIdEnum,
   EmailWebhookPayload,
   FeatureFlagsKeysEnum,
   InboundEmailAttachment,
@@ -15,6 +14,7 @@ import { decryptSecret } from '../../encryption/encrypt-provider';
 import { PinoLogger } from '../../logging';
 import { FeatureFlagsService } from '../../services/feature-flags';
 import { HttpClientService } from '../../services/http-client/http-client.service';
+import { getNovuServiceCa } from '../../services/tls';
 import { pickAgentInboxIntegration } from '../../utils/agent-shared-inbox';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { normalizeReferences } from '../../utils/inbound-email-references';
@@ -234,6 +234,7 @@ export class InboundDomainRouteDelivery {
       body: payload,
       headers: { 'novu-signature': signature, 'content-type': 'application/json' },
       timeout: 30_000,
+      ca: getNovuServiceCa(),
     });
 
     return {
