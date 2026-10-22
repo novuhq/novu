@@ -5,7 +5,6 @@ import { expect } from 'chai';
 
 describe('Inbox subscriber hash - /environments/me/inbox-subscriber-hash (GET) #novu-v2', () => {
   let session: UserSession;
-  const integrationRepository = new IntegrationRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -74,6 +73,8 @@ describe('Inbox subscriber hash - /environments/me/inbox-subscriber-hash (GET) #
 });
 
 async function setInAppHmac(session: UserSession, hmac: boolean) {
+  const integrationRepository = new IntegrationRepository();
+
   await integrationRepository.update(
     {
       _environmentId: session.environment._id,
