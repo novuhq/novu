@@ -60,7 +60,7 @@ export function BuildingBlocks() {
         ))}
       </Tabs>
 
-      <ul className="mt-8 grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mt-8 grid gap-px overflow-hidden rounded-xl border border-sapien-border bg-sapien-border sm:grid-cols-2 lg:grid-cols-3">
         {BUILDING_BLOCK_FEATURES.map((feature, index) => (
           <li
             key={feature.title}

@@ -27,7 +27,7 @@ export function MessageCard({
       <div className="flex items-center gap-1.5">
         <Artwork asset={icon} />
         <p
-          className={`font-mono text-xs leading-none tracking-tight ${kind === 'human' ? 'text-[#b8320f]' : 'text-accent'}`}
+          className={`font-sapien-mono text-xs leading-none tracking-tight ${kind === 'human' ? 'text-[#b8320f]' : 'text-accent'}`}
         >
           {kind === 'agent' ? 'Agent' : 'Human'}
         </p>

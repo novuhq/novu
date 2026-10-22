@@ -41,7 +41,7 @@ export function IntegrationsTabs({ items, className }: { items: readonly Integra
           </TabsTrigger>
         ))}
       </TabsList>
-      <div className="flex h-94 min-w-0 flex-col overflow-clip rounded-[14px] bg-border shadow-[0_4px_68px_0_rgb(0_0_0/25%)]">
+      <div className="flex h-94 min-w-0 flex-col overflow-clip rounded-[14px] bg-sapien-border shadow-[0_4px_68px_0_rgb(0_0_0/25%)]">
         <Artwork asset={integrationsAssets.imgControls} className="mt-4 ml-4 shrink-0" />
         {/* 25.4px top padding lines the transcript's rendered rows up with Figma's (which
             spaces 23.8px lines inside a 144px text box) instead of drifting 1-2px high. */}
@@ -72,8 +72,8 @@ export function IntegrationsTabs({ items, className }: { items: readonly Integra
 
 function TerminalSnippet({ snippet }: { snippet: IntegrationSnippet }) {
   return (
-    <pre className="w-max min-w-full font-mono text-sm leading-[1.7] tracking-[-0.03em] text-sapien-foreground">
-      <code className="font-mono">
+    <pre className="w-max min-w-full font-sapien-mono text-sm leading-[1.7] tracking-[-0.03em] text-sapien-foreground">
+      <code className="font-sapien-mono">
         {snippet.kind === 'commands' ? (
           snippet.lines.map((line, index) => (
             <Fragment key={index}>

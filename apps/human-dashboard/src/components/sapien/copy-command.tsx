@@ -24,10 +24,13 @@ export function CopyCommand({ command, label, variant = 'default', className = '
           icon ? 'pr-0.5' : 'pr-px'
         )}
       >
-        <span aria-hidden="true" className="-translate-y-px font-mono text-[15px] text-accent max-[359px]:text-sm">
+        <span
+          aria-hidden="true"
+          className="-translate-y-px font-sapien-mono text-[15px] text-accent max-[359px]:text-sm"
+        >
           $
         </span>
-        <code className="min-w-0 flex-1 -translate-y-px font-mono text-[15px] tracking-tight [overflow-wrap:anywhere] whitespace-normal select-text max-[359px]:text-sm">
+        <code className="min-w-0 flex-1 -translate-y-px font-sapien-mono text-[15px] tracking-tight [overflow-wrap:anywhere] whitespace-normal select-text max-[359px]:text-sm">
           {command}
         </code>
         {icon ? (

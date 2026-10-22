@@ -46,8 +46,8 @@ export function SiteMenu({ label, className }: { label: string; className?: stri
         aria-controls={panelId}
         onClick={() => setOpen((current) => !current)}
         className={cn(
-          'grid size-8.5 cursor-pointer place-items-center rounded border border-border text-white transition-colors duration-150 hover:bg-border motion-reduce:transition-none',
-          open && 'bg-border'
+          'grid size-8.5 cursor-pointer place-items-center rounded border border-sapien-border text-white transition-colors duration-150 hover:bg-sapien-border motion-reduce:transition-none',
+          open && 'bg-sapien-border'
         )}
       >
         <MenuIcon open={open} />
@@ -55,7 +55,7 @@ export function SiteMenu({ label, className }: { label: string; className?: stri
       <div
         id={panelId}
         hidden={!open}
-        className="absolute inset-x-px top-[calc(100%+1px)] z-[15] border-b border-border bg-black px-2.5 py-3 transition-[opacity,translate] duration-150 motion-reduce:transition-none starting:-translate-y-1 starting:opacity-0"
+        className="absolute inset-x-px top-[calc(100%+1px)] z-[15] border-b border-sapien-border bg-black px-2.5 py-3 transition-[opacity,translate] duration-150 motion-reduce:transition-none starting:-translate-y-1 starting:opacity-0"
       >
         <SiteNavigation
           items={HEADER_NAVIGATION}

@@ -22,6 +22,12 @@ const SHARE_IMAGE_FILES = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    // Turbopack's build cache, which Vercel restores from the last deployment, kept serving the old stylesheet
+    // after `globals.css` changed (Next 16.3.8): the people page shipped without its colours and faces. Builds
+    // start cold instead.
+    turbopackFileSystemCacheForBuild: false,
+  },
   // The website's old addresses, from when it was gethuman.md.
   async redirects() {
     return [

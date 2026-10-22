@@ -106,7 +106,7 @@ export function Hero() {
               successMessage={CLOSING_PROMPT_SUCCESS_MESSAGE}
               errorMessage={CLOSING_PROMPT_ERROR_MESSAGE}
               showTextOnError
-              className="h-10 w-full rounded-lg bg-border px-6 text-[15px] leading-none font-medium tracking-tight text-sapien-foreground hover:bg-sapien-surface sm:w-[139px]"
+              className="h-10 w-full rounded-lg bg-sapien-border px-6 text-[15px] leading-none font-medium tracking-tight text-sapien-foreground hover:bg-sapien-surface sm:w-[139px]"
             >
               {CLOSING_PROMPT_LABEL}
             </CopyButton>

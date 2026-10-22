@@ -58,7 +58,7 @@ export function PillTabsList({ className, children, ...props }: ComponentProps<t
   const mask = `linear-gradient(to right, ${edges.start ? 'transparent' : '#000'}, #000 ${FADE}, #000 calc(100% - ${FADE}), ${edges.end ? 'transparent' : '#000'})`;
   return (
     // The border sits outside the faded area, so the strip's lines run to the rails.
-    <div className={cn('border-y border-border sm:rounded-xl sm:border', className)}>
+    <div className={cn('border-y border-sapien-border sm:rounded-xl sm:border', className)}>
       <div
         ref={viewport}
         className="relative [scrollbar-width:none] overflow-x-auto [&::-webkit-scrollbar]:hidden"

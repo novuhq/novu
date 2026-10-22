@@ -24,7 +24,7 @@ export function InboxSection() {
 
         <div className="relative mx-auto mt-6 w-full max-w-224.25 md:mt-6 lg:left-[0.5px]">
           {/* Below lg the frame grows with its content, so larger text never runs under the badge. */}
-          <div className="relative flex min-h-160 flex-col overflow-clip rounded-[14px] bg-border sm:min-h-144 lg:block lg:h-140 lg:min-h-0">
+          <div className="relative flex min-h-160 flex-col overflow-clip rounded-[14px] bg-sapien-border sm:min-h-144 lg:block lg:h-140 lg:min-h-0">
             <div
               aria-hidden="true"
               className="absolute inset-x-0 bottom-0 h-69 bg-linear-to-b from-transparent from-14% to-black"

@@ -21,14 +21,14 @@ export function InboxDashboard({ agent }: { agent: InboxAgent }) {
   const unreadCount = agent.threads.filter((thread) => thread.unread).length;
 
   return (
-    <div className="flex h-full flex-col bg-border/62 lg:flex-row">
+    <div className="flex h-full flex-col bg-sapien-border/62 lg:flex-row">
       <div className="flex shrink-0 flex-col overflow-clip lg:w-55">
         <AgentIdentity agent={agent} />
         <div className="hidden lg:block">
           <ul className="flex flex-col gap-0.5 px-3 pt-1">
             <li className="flex h-7.5 items-center justify-between rounded-[7px] bg-sapien-foreground/8 px-2">
               <span className="text-[13px] leading-4 font-medium tracking-[-0.01em]">{INBOX_LABELS.inbox}</span>
-              <span className="font-mono text-[11px] leading-3.5 text-sapien-foreground/50">
+              <span className="font-sapien-mono text-[11px] leading-3.5 text-sapien-foreground/50">
                 {unreadCount}
                 <span className="sr-only"> {INBOX_LABELS.unreadCount}</span>
               </span>
@@ -60,7 +60,7 @@ export function InboxDashboard({ agent }: { agent: InboxAgent }) {
                     {channel.name}
                   </span>
                   {channel.soon ? (
-                    <span className="font-mono text-[10px] leading-3 text-sapien-foreground/36">
+                    <span className="font-sapien-mono text-[10px] leading-3 text-sapien-foreground/36">
                       {INBOX_LABELS.soon}
                     </span>
                   ) : null}
@@ -74,7 +74,7 @@ export function InboxDashboard({ agent }: { agent: InboxAgent }) {
 
       {/* Figma's inside stroke overlays the panel instead of insetting its columns. */}
       <div className="relative flex min-h-0 min-w-0 flex-1 overflow-clip rounded-t-xl bg-black shadow-[-2px_4px_10px_rgba(0,0,0,0.4)] after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:border after:border-sapien-foreground/7 lg:rounded-tr-none">
-        <div className="hidden w-62 shrink-0 flex-col border-r border-sapien-foreground/7 bg-border/30 md:flex lg:w-70">
+        <div className="hidden w-62 shrink-0 flex-col border-r border-sapien-foreground/7 bg-sapien-border/30 md:flex lg:w-70">
           <div className="flex h-14 shrink-0 items-center justify-between border-b border-sapien-foreground/7 px-5 whitespace-nowrap">
             <p className="text-sm leading-4.5 font-medium tracking-[-0.01em]">{INBOX_LABELS.inbox}</p>
             <p className="text-xs leading-4 tracking-[-0.01em] text-sapien-foreground/50">
@@ -122,7 +122,7 @@ function AgentIdentity({ agent }: { agent: InboxAgent }) {
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-px whitespace-nowrap">
         <p className="truncate text-[13px] leading-4 font-medium tracking-[-0.01em]">{agent.handle}</p>
-        <p className="truncate font-mono text-[10px] leading-3.5 tracking-tight text-sapien-foreground/50">
+        <p className="truncate font-sapien-mono text-[10px] leading-3.5 tracking-tight text-sapien-foreground/50">
           {agent.email}
         </p>
       </div>
@@ -140,7 +140,7 @@ function ThreadItem({ thread }: { thread: InboxThread }) {
             {thread.unread ? <span className="sr-only">{INBOX_LABELS.unreadThread}: </span> : null}
             <span className="truncate">{thread.sender}</span>
           </p>
-          <p className="shrink-0 font-mono text-[10px] leading-3 text-sapien-foreground/50">{thread.time}</p>
+          <p className="shrink-0 font-sapien-mono text-[10px] leading-3 text-sapien-foreground/50">{thread.time}</p>
         </div>
         <p
           className={cn(
@@ -164,7 +164,7 @@ function Tag({ tag }: { tag: InboxTag }) {
   return (
     <span
       className={cn(
-        'flex h-4.5 items-center rounded-sm px-1.5 font-mono text-[10px] leading-3',
+        'flex h-4.5 items-center rounded-sm px-1.5 font-sapien-mono text-[10px] leading-3',
         tag.outline
           ? 'border border-sapien-foreground/14 text-sapien-foreground/36'
           : 'bg-sapien-foreground/8 text-sapien-foreground/50'
@@ -241,7 +241,7 @@ function Message({ agent, message }: { agent: InboxAgent; message: InboxMessage 
         ) : null}
         {message.attachment ? (
           <div className="flex pt-2">
-            <p className="flex h-7 min-w-0 items-center gap-1.5 rounded-[7px] border border-sapien-foreground/9 bg-sapien-foreground/4 pr-2.5 pl-2 font-mono text-[11px] leading-3.5 text-sapien-foreground/70">
+            <p className="flex h-7 min-w-0 items-center gap-1.5 rounded-[7px] border border-sapien-foreground/9 bg-sapien-foreground/4 pr-2.5 pl-2 font-sapien-mono text-[11px] leading-3.5 text-sapien-foreground/70">
               <Artwork asset={inboxAssets.imgIconFile} className="size-3 shrink-0" />
               <span className="sr-only">{INBOX_LABELS.attachment} </span>
               <span className="truncate">{message.attachment}</span>

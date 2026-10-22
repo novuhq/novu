@@ -20,8 +20,8 @@ export function SiteNavigation({ label, items = NAVIGATION, onNavigate, classNam
           href={item.href}
           onClick={onNavigate}
           className={cn(
-            'inline-flex h-8 items-center justify-center rounded-sm bg-border px-4 pt-2 pb-2.5 font-mono text-sm leading-none tracking-tight text-sapien-foreground sm:px-6',
-            item.variant === 'outline' && 'bg-transparent ring-1 ring-border'
+            'inline-flex h-8 items-center justify-center rounded-sm bg-sapien-border px-4 pt-2 pb-2.5 font-sapien-mono text-sm leading-none tracking-tight text-sapien-foreground sm:px-6',
+            item.variant === 'outline' && 'bg-transparent ring-1 ring-sapien-border'
           )}
         >
           {item.label}

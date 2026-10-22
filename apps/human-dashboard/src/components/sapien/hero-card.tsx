@@ -92,7 +92,7 @@ export function CardMrz({
       <CardRule className={cn('absolute -top-px left-0', ruleWidth)} />
       <p
         className={cn(
-          'absolute top-2 left-0 font-mono text-[10px] leading-[1.2] whitespace-pre text-sapien-foreground',
+          'absolute top-2 left-0 font-sapien-mono text-[10px] leading-[1.2] whitespace-pre text-sapien-foreground',
           textClassName
         )}
       >

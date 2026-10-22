@@ -141,7 +141,7 @@ export function HeroTitleLine({
         {/* nowrap: while the slot animates narrower than its word, "E-mail" would
             otherwise break at its hyphen and lift the pill a line up. */}
         <span ref={pillSlot} className="relative inline-block whitespace-nowrap">
-          <span ref={pill} className={cn('absolute bg-border', pillBox)} />
+          <span ref={pill} className={cn('absolute bg-sapien-border', pillBox)} />
           {word}
         </span>
         {`  ${rest}`}

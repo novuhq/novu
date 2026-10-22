@@ -14,7 +14,7 @@ export function Scale() {
           />
         </div>
         <div className="relative z-10 flex flex-col items-center text-center">
-          <p className="mb-4.5 flex items-center gap-2 font-mono text-xs leading-none tracking-tight text-accent">
+          <p className="mb-4.5 flex items-center gap-2 font-sapien-mono text-xs leading-none tracking-tight text-accent">
             <span aria-hidden="true" className="size-1 rounded-[1px] bg-accent" />
             {SCALE_LABEL}
           </p>
@@ -34,11 +34,11 @@ export function Scale() {
           </h2>
         </div>
       </div>
-      <ul className="grid border-t border-border md:grid-cols-3">
+      <ul className="grid border-t border-sapien-border md:grid-cols-3">
         {SCALE_FEATURES.map((feature) => (
           <li
             key={feature.title}
-            className="flex flex-col gap-6 border-border px-5 pt-4.75 pb-5 not-first:border-t md:not-first:border-t-0 md:not-first:border-l md:not-first:pl-[19px]"
+            className="flex flex-col gap-6 border-sapien-border px-5 pt-4.75 pb-5 not-first:border-t md:not-first:border-t-0 md:not-first:border-l md:not-first:pl-[19px]"
           >
             <Artwork asset={feature.icon} className="size-6" />
             <div className="text-lg leading-[23px] tracking-tight text-sapien-foreground/70 md:max-w-[259px]">
