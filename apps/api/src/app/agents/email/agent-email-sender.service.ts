@@ -290,7 +290,7 @@ export class AgentEmailSender {
         apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
         from,
         senderName,
-        ipPoolName: 'Demo',
+        ipPoolName: 'Agentinbox',
       },
     };
 

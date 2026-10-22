@@ -119,7 +119,7 @@ async function findSenderIntegration(
         apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
         from: delivery.agentInboundFrom ?? 'no-reply@novu.co',
         senderName: delivery.senderName,
-        ipPoolName: 'Demo',
+        ipPoolName: 'Agentinbox',
       },
     };
   }
