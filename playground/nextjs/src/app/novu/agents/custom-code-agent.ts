@@ -6,6 +6,7 @@ const HELP = [
   '- `card` — a card with a table, a chart, a button and a select',
   '- `remember <note>` / `recall` — conversation metadata',
   '- `history` — the conversation so far, from `ctx.history`',
+  '- `demo` — emails you a recap of this conversation',
   '- attach a file — I reply with its name',
   '- `notify <name>` — triggers `all-channels-workflow` for you',
   '- `done` — resolves the conversation (`onResolve` then triggers a follow-up notification)',
@@ -99,6 +100,8 @@ export const customCodeAgent = agent('custom-code-agent', {
         return features.recall(ctx);
       case 'history':
         return features.history(ctx);
+      case 'demo':
+        return features.sendConversationRecap(ctx, message.text);
       case 'notify':
         return features.notify(ctx, arg);
       case 'done':

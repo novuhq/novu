@@ -4,6 +4,7 @@ import { customCodeAgent } from '@/app/novu/agents/custom-code-agent';
 import { langchainAgent } from '@/app/novu/agents/langchain-agent';
 import {
   allChannelsWorkflow,
+  conversationRecapWorkflow,
   delayCustomWorkflow,
   digestWorkflow,
   throttleWorkflow,
@@ -11,6 +12,13 @@ import {
 } from '@/app/novu/workflows';
 
 export const { GET, POST, OPTIONS } = serve({
-  workflows: [welcomeWorkflow, allChannelsWorkflow, delayCustomWorkflow, digestWorkflow, throttleWorkflow],
+  workflows: [
+    welcomeWorkflow,
+    allChannelsWorkflow,
+    conversationRecapWorkflow,
+    delayCustomWorkflow,
+    digestWorkflow,
+    throttleWorkflow,
+  ],
   agents: [customCodeAgent, aiSdkAgent, langchainAgent],
 });

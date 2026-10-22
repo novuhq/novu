@@ -95,6 +95,52 @@ export function history(ctx: AgentMessageContext) {
   return ['So far:', ...lines].join('\n');
 }
 
+const TRANSCRIPT_TYPES = new Set(['message', 'edit']);
+
+/** Chat transcript the agent can see, including this turn when history does not yet. */
+export function formatConversationRecap(ctx: AgentMessageContext, currentText: string): string {
+  const lines = ctx.history.flatMap((entry) => {
+    if (!TRANSCRIPT_TYPES.has(entry.type)) {
+      return [];
+    }
+
+    const content = entry.content.trim();
+    if (!content) {
+      return [];
+    }
+
+    return [`${entry.role}: ${content}`];
+  });
+
+  const trimmed = currentText.trim();
+  const lastFromSubscriber = [...ctx.history]
+    .reverse()
+    .find((entry) => TRANSCRIPT_TYPES.has(entry.type) && entry.role !== 'agent' && entry.role !== 'system');
+
+  if (trimmed && lastFromSubscriber?.content.trim() !== trimmed) {
+    lines.push(`subscriber: ${trimmed}`);
+  }
+
+  return lines.join('\n');
+}
+
+/** Emails the conversation subscriber a plain-text recap. No-op reply when they have no email. */
+export function sendConversationRecap(ctx: AgentMessageContext, currentText: string): string {
+  const email = ctx.subscriber?.email?.trim();
+  if (!email) {
+    return 'Cannot email a recap: this subscriber has no email address.';
+  }
+
+  const recap = formatConversationRecap(ctx, currentText);
+  if (!recap) {
+    return 'There is nothing in this conversation to recap.';
+  }
+
+  ctx.trigger('conversation-recap', { payload: { recap } });
+
+  return `Emailed the conversation recap to ${email}.`;
+}
+
 export function notify(ctx: AgentMessageContext, name: string) {
   ctx.trigger('all-channels-workflow', { payload: { name: name || 'Agent', skipPush: true } });
 

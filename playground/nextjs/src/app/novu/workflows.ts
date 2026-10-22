@@ -58,6 +58,36 @@ export const welcomeWorkflow = workflow(
   }
 );
 
+function escapeHtml(value: string): string {
+  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+}
+
+function recapEmailBody(recap: string): string {
+  const lines = recap.split('\n').map((line) => `<p>${escapeHtml(line)}</p>`);
+
+  return [`<p><strong>Conversation recap</strong></p>`, ...lines].join('');
+}
+
+export const conversationRecapWorkflow = workflow(
+  'conversation-recap',
+  async ({ step, payload, subscriber }) => {
+    await step.email(
+      'email',
+      async () => ({
+        subject: 'Your conversation recap',
+        body: recapEmailBody(payload.recap),
+      }),
+      { skip: () => !subscriber.email }
+    );
+  },
+  {
+    name: 'Conversation recap',
+    description: 'Emails the subscriber a recap of their agent conversation',
+    tags: ['playground'],
+    payloadSchema: z.object({ recap: z.string() }),
+  }
+);
+
 export const allChannelsWorkflow = workflow(
   'all-channels-workflow',
   async ({ step, payload, subscriber }) => {
