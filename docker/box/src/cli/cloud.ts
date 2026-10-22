@@ -34,10 +34,11 @@ function stuck(box: string, current: BoxStatus | null): string | null {
   return null;
 }
 
-function restoreLine(box: string, { ms, colo, container }: LastStart): string {
+function restoreLine(box: string, { ms, colo, container, attempts = 1 }: LastStart): string {
   const where = `${colo ? ` in ${colo}` : ''}${container ? ` (container in ${container})` : ''}`;
+  const again = attempts > 1 ? `, started again after the first attempt hung` : '';
 
-  return `${box}: restored in ${(ms / 1000).toFixed(1)} s${where}`;
+  return `${box}: restored in ${(ms / 1000).toFixed(1)} s${where}${again}`;
 }
 
 function readyWait(current: BoxStatus): keyof typeof READY_WITHIN_SECONDS {

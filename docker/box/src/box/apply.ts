@@ -11,6 +11,7 @@ import {
   type Changes,
   dashboardBundleChanged,
   deployApp,
+  dropNxCache,
   pnpmInstall,
   prepareDashboard,
   writeBoxJson,
@@ -90,6 +91,7 @@ async function applyLocked({ ref = '', bundle, full: fullAsked, baseline, token 
   await applyPlan(plan);
 
   if (baseline) {
+    await step('drop the nx cache', dropNxCache);
     // Later applies, and boxes started from this one's snapshot, merge onto this commit instead of the bake's; `at`
     // stays the bake's time.
     const refreshed: Baked = { ref: target.ref, sha: target.sha, at: baked.at };
