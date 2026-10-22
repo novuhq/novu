@@ -1,0 +1,52 @@
+---
+title: "Ask, approve, and choose"
+description: "Three questions an agent can ask: free text, Approve and Deny, or one of 2 to 10 options."
+---
+
+Start the message with `ask`, `approve`, or `choose`. On MCP, set `kind` to the same word. A plain message never uses these.
+
+| Kind | What the person does | What you get back |
+| --- | --- | --- |
+| `ask` | Types an answer | The text |
+| `approve` | Taps Approve or Deny | Approved or denied |
+| `choose` | Taps one of 2 to 10 options | The option |
+
+```bash
+npx @agentinbox/cli inbox send ask "Which environment should I deploy to?"
+npx @agentinbox/cli inbox send approve "Delete 342 stale records from prod?"
+npx @agentinbox/cli inbox send choose "Pick a release strategy" \
+  --option canary \
+  --option blue-green \
+  --option "all at once"
+```
+
+On MCP, pass `kind` and `message`. `choose` also needs `options`. Each option is a label, or an object with a stable `id` and a `label`. The CLI writes a stable id as `--option stg:Staging`.
+
+## How the buttons read
+
+`approve` shows Approve and Deny. Change the labels with `--approve-label` and `--deny-label`. Add more buttons with `--extra-action`, up to four on MCP (`extra_actions`). Repeat the CLI flag:
+
+```bash
+npx @agentinbox/cli inbox send approve "Should we deploy to staging?" \
+  --extra-action trust-tool:"Always allow this tool"
+```
+
+`choose` prints each option in full in the message. The buttons themselves are A, B, C, because chat apps truncate long labels. Write the full option text. Past 10 options, ask a plain question instead.
+
+## How long it stays answerable
+
+A question stays answerable for 24 hours. The maximum is 5 days. Shorten it when a stale yes would be dangerous.
+
+```bash
+npx @agentinbox/cli inbox send approve "Deploy to production?" --ttl 2h
+```
+
+On MCP, pass `ttl_seconds`. Two hours is `7200`. The minimum is 60 seconds. The default is `86400`.
+
+An approval is for a contact. Do not open it to everyone in the conversation. See [Read the inbox](/conversations).
+
+<Note>
+When exactly one question is pending, the next thing the person types is taken as the answer. If you asked "staging or prod?" and they reply "wait, the build is broken", treat that as a new message.
+</Note>
+
+The CLI exits `0` when they answer, approve, or choose, `10` when they deny, `11` when your wait runs out, and `12` when the question expires or is canceled. MCP has no exit codes. The result says `Approved`, `Answered`, `Delivered`, `Denied`, `expired`, or `canceled`. See [Waiting for an answer](/waiting).
