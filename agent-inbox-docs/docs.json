@@ -8,6 +8,27 @@
     "light": "#ff5c30",
     "dark": "#ff5c30"
   },
+  "fonts": {
+    "family": "Geist",
+    "heading": {
+      "family": "Geist",
+      "weight": 500
+    },
+    "body": {
+      "family": "Geist",
+      "weight": 400
+    }
+  },
+  "appearance": {
+    "default": "dark",
+    "strict": true
+  },
+  "background": {
+    "color": {
+      "light": "#0a0908",
+      "dark": "#0a0908"
+    }
+  },
   "favicon": "/favicon.svg",
   "logo": {
     "light": "/logo/light.svg",
