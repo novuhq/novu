@@ -10,7 +10,7 @@ Inbox accounts with their dashboard, and the Agent Inbox API (`/api`).
 | `/sapien`         | The page for people: what Agent Inbox does, with the setup command, a prompt to copy, and a "sign in" link into the dashboard. |
 | `/index.md`, `/llms.txt` | `/` as Markdown, made from the same data, and the index that points language models to it and to `/agents.md`. |
 | `/robots.txt`, `/sitemap.xml` | For search engines: the two website pages, at `https://www.agentinbox.md` (`SITE_ORIGIN` in `src/lib/seo.ts`). Until launch they stay out of search results: the pages, `/index.md` and `/llms.txt` say `noindex`, the sitemap is empty and robots.txt doesn't point to it. `SITE_INDEXED` in `src/lib/seo.ts` turns that off. Preview deployments always send `noindex`. |
-| `/agents.md`      | What agents read, in Markdown: how to connect with the prompt's commands, then the agent-inbox skill as the CLI ships it (`SKILL.md` in `packages/agentinbox`, read at build time). The connect prompt links to it. |
+| `/agents.md`      | What agents read, in Markdown: how to connect with the commands from the dashboard, then the agent-inbox skill as the CLI ships it (`SKILL.md` in `packages/agentinbox`, read at build time). The home page links to it. |
 | `/p/[handle]`     | An agent's public card: anyone with the link sees the agent and every way to reach it, without signing in. `opengraph-image` is the picture apps show where the link is shared. |
 | `/invite/[token]` | Opened from a `contact invite` link. The person picks which of the agent's channels (Email, Telegram, Slack) it may reach them on, and their default. |
 | `/verify/[token]` | Opened from the "Verify this email" button, sent before the agent emails a new address: the operator's own, or a contact's (invited by email, or picked on the invite page). Confirms it once. |
@@ -51,7 +51,8 @@ Neither changes how the dashboard looks. The dither effect on `/` is vendored (`
 An operator gets an agent in one of two ways, and both end in the dashboard:
 
 - **Sign-up in the dashboard.** `/onboarding` walks them through the four steps. Step 3 hands the agent to a
-  host with a prompt (or the same commands) carrying a one-time code; step 4 sets up Telegram and Slack in the
+  host with commands the operator runs in their terminal, carrying a one-time code, or through a chat app's
+  MCP drawer, opened from its logo; step 4 sets up Telegram and Slack in the
   same drawers as Configure, over the step. "Later" or "Skip the test" on step 2 and the connector link on
   step 3 open the dashboard early; banners on Inbox and Configure lead back to the step that was left.
 - **Claim from the CLI.** The agent was made in a terminal and comes with the claim (`/claim`, or
@@ -61,9 +62,13 @@ How far an operator got is kept in the private metadata of their Clerk user (`li
 An agent that is older than its operator's first visit to step 1 never goes through the steps: it was in
 use before, however the operator came to see that step.
 
-More hosts connect later from Configure, in "Connect another agent": the same prompt with a new code, the
+More hosts connect later from Configure, in "Connect another agent": the same commands with a new code, the
 "Install skills" button (it copies `npx @agentinbox/cli skill install`), and the chat apps that connect through the
 MCP server.
+
+The connect box shows only the commands for now. It also had a prompt that asked an agent to run them, but an
+agent's own permission checks (Claude Code's auto mode) stop it from saving a key and installing a skill on a
+pasted request, so the operator runs them.
 
 ## Develop
 
@@ -75,7 +80,7 @@ pnpm start:human-dashboard         # http://localhost:4300
 Run the API locally (`pnpm start:api:dev`) with `HUMAN_DASHBOARD_URL=http://localhost:4300`, so the links it hands
 out (invites, verification, claim, login) point here. Point the CLI at this site's `/api`
 (`INBOX_API_URL=http://localhost:4300/api`): it only speaks the Agent Inbox API's paths, never the Novu API's. The
-prompts on the onboarding and in "Connect another agent" name that `/api` themselves.
+connect commands on the onboarding and in "Connect another agent" name that `/api` themselves.
 
 To try an invite, run `npx @agentinbox/cli contact invite <id>` and open the printed link.
 

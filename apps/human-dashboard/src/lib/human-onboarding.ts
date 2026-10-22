@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import type { AgentReach } from './agent-settings';
 import { buildChannelPrompt } from './agent-setup-prompt';
+import type { ToolId } from './ai-tools';
 import { findCurrentUser } from './auth-page';
 import type { HostStatus } from './host-status';
 import type { HumanAccount } from './human-account';
@@ -16,6 +17,7 @@ import { loadHostStatus } from './human-hosts-api';
 import { getInboxThread, listInboxThreads } from './human-inbox-api';
 import type { SlackSetupState } from './human-slack-setup';
 import type { TelegramSetupState } from './human-telegram-setup';
+import { listConnectedTools, readMcpUrl } from './human-tools-api';
 import type { InboxMessage, InboxThread } from './inbox';
 import { AGENT_DOMAIN, cardLinkOf, ONBOARDING_PATH, type OnboardingStep, toHandle } from './onboarding';
 import { type OnboardingState, readOnboardingState, writeOnboardingState } from './onboarding-state';
@@ -305,6 +307,10 @@ export type OnboardingView = {
   waiting: number | null;
   /** The Agent Inbox API (`readApiUrl`), named by the connect command of step 3 and the channel prompts of step 4. */
   apiUrl: string;
+  /** The hosted MCP server the chat apps of step 3 connect to, or `null` while there is none. */
+  mcpUrl: string | null;
+  /** The chat apps that have signed in to the account. Only asked on step 3, whose drawers show it. */
+  connectedTools: ToolId[];
   channels: { telegram: boolean; slack: boolean };
   /** What the Telegram and Slack drawers of step 4 open with. `null` on the other steps. */
   channelSetup: OnboardingChannelSetup | null;
@@ -342,7 +348,12 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
         step === 'reach' ? loadChannelSetups(account) : null,
       ])
     : [{ telegram: false, slack: false, emailAddress: undefined }, 0, null];
-  const [origin, mailDomain] = await Promise.all([readSiteOrigin(), readInboxMailDomain(account)]);
+  const mcpUrl = readMcpUrl();
+  const [origin, mailDomain, connectedTools] = await Promise.all([
+    readSiteOrigin(),
+    readInboxMailDomain(account),
+    step === 'connect' && mcpUrl ? listConnectedTools(account) : [],
+  ]);
   const host = hostStatus?.hosts.reduce<(typeof hostStatus.hosts)[number] | null>(
     (earliest, entry) => (!earliest || entry.connectedAt < earliest.connectedAt ? entry : earliest),
     null
@@ -361,6 +372,8 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
     waitingMessage: hostStatus?.waitingMessage ?? null,
     waiting,
     apiUrl,
+    mcpUrl,
+    connectedTools,
     channels: { telegram: channels.telegram, slack: channels.slack },
     channelSetup:
       agent && identity && setups
