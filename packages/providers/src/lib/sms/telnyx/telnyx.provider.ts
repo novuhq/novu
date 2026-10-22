@@ -11,13 +11,13 @@ import {
 import Telnyx from 'telnyx';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
-import { ITelnyxCLient } from './telnyx.interface';
+import { ITelnyxClient } from './telnyx.interface';
 
 export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Telnyx;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.SNAKE_CASE;
-  private telnyxClient: ITelnyxCLient;
+  private telnyxClient: ITelnyxClient;
 
   constructor(
     private config: {
@@ -34,7 +34,7 @@ export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const telynxResponse = await this.telnyxClient.messages.create(
+    const telnyxResponse = await this.telnyxClient.messages.create(
       this.transform<any>(bridgeProviderData, {
         to: options.to,
         text: options.content,
@@ -44,8 +44,8 @@ export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
     );
 
     return {
-      id: telynxResponse.data.id,
-      date: telynxResponse.data.received_at.toString(),
+      id: telnyxResponse.data.id,
+      date: telnyxResponse.data.received_at.toString(),
     };
   }
 

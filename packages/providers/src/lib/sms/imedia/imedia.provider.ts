@@ -141,7 +141,7 @@ export class IMediaSmsProvider extends BaseProvider implements ISmsProvider {
       case 'undelivered':
         return SmsEventStatusEnum.UNDELIVERED;
       default:
-        return SmsEventStatusEnum.SENT;
+        return undefined;
     }
   }
 }

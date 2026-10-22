@@ -67,7 +67,7 @@ export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
 
     return {
       id: options.id,
-      date: new Date().toDateString(),
+      date: new Date().toISOString(),
     };
   }
 }

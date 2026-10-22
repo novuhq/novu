@@ -75,3 +75,22 @@ test('should trigger Kannel SMS axios request correctly with _passthrough', asyn
     },
   });
 });
+
+test('should return an ISO 8601 date', async () => {
+  axiosSpy({
+    data: '0: Accepted for delivery',
+  });
+
+  const provider = new KannelSmsProvider({
+    host: '0.0.0.0',
+    port: '13000',
+    from: '0000',
+  });
+
+  const result = await provider.sendMessage({
+    content: 'This is a test',
+    to: '+7777',
+  });
+
+  expect(result.date).toBe(new Date(result.date as string).toISOString());
+});
