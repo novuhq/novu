@@ -30,8 +30,6 @@ const CONNECT_API: ConnectApi = {
 type AgentSetupProps = {
   /** The agent, as `connect` names it: its address before the `@`. */
   handle: string;
-  /** The agent's address, or `null` while it has none. */
-  address: string | null;
   /** The API the account lives on. */
   apiUrl: string;
   /**

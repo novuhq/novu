@@ -86,10 +86,3 @@ export function setupCommand(name: string): string {
 }
 
 export const INSTALL_SKILLS_COMMAND = `${NPX_CLI} skill install`;
-
-/** A stretch of the prompt. `strong` is what the host acts on; `accent` is the one rule it must keep. */
-export type PromptSpan = { text: string; tone?: 'strong' | 'accent' };
-
-export function promptText(prompt: PromptSpan[][]): string {
-  return prompt.map((line) => line.map((span) => span.text).join('')).join('\n');
-}

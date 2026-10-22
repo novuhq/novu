@@ -143,7 +143,6 @@ export function ConfigureView({
           />
           <AgentSetup
             handle={agent.handle}
-            address={email}
             apiUrl={apiUrl}
             lastCheckedAt={lastCheckedAt}
             renderedAt={renderedAt}

@@ -4,6 +4,7 @@ import { refresh } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 import { CONFIGURE_PATH, DASHBOARD_HOME } from '@/components/dashboard/nav';
+import { isToolId } from '@/lib/ai-tools';
 import { findCurrentUser } from '@/lib/auth-page';
 import type { ConnectCodeResult } from '@/lib/host-status';
 import { requireHumanAccount } from '@/lib/human-account';
@@ -13,6 +14,7 @@ import { requestForAccount } from '@/lib/human-api-key';
 import { createConnectCode } from '@/lib/human-hosts-api';
 import { describeProgress, loadSetupProgress, updateOnboardingState } from '@/lib/human-onboarding';
 import { ensureRelay } from '@/lib/human-operator';
+import { listConnectedTools } from '@/lib/human-tools-api';
 import { AGENT_NAME_MAX_LENGTH, ONBOARDING_PATH, toHandle } from '@/lib/onboarding';
 
 const DESTINATIONS = { inbox: DASHBOARD_HOME, configure: CONFIGURE_PATH, contacts: '/contacts' };
@@ -231,6 +233,17 @@ export async function dismissDoneBannerAction(): Promise<void> {
 export async function hideChecklistAction(): Promise<void> {
   await updateOnboardingState((state) => ({ ...state, checklist: { ...state.checklist, hidden: true } }));
   refresh();
+}
+
+/** Whether a chat app has signed in to the account. Its drawer on step 3 asks while it's open. */
+export async function checkOnboardingToolConnectedAction(tool: string): Promise<boolean> {
+  if (!isToolId(tool)) {
+    return false;
+  }
+
+  const account = await requireHumanAccount({ returnTo: ONBOARDING_PATH });
+
+  return (await listConnectedTools(account)).includes(tool);
 }
 
 /** Inbox: ticks an item of the list off, once the operator did what it asks. */
