@@ -116,11 +116,13 @@ export const NestConfig = z.looseObject({ compilerOptions: z.looseObject({}) });
 const Note = z.object({ at: z.string(), message: z.string() });
 const Down = z.object({ tries: z.number() }).nullable();
 // The last snapshot restore: `colo` is the Box object's Cloudflare location, `container` its container's, each
-// absent if it couldn't be looked up.
+// absent if it couldn't be looked up. `ms` counts from the first attempt; `attempts` is 2 when a hung restore was
+// started again (absent in records from before).
 export const LastStart = z.object({
   at: z.string(),
   snapshot: z.string(),
   ms: z.number(),
+  attempts: z.number().optional(),
   colo: z.string().optional(),
   container: z.string().optional(),
 });
