@@ -1,8 +1,36 @@
 import type { IUserEntity } from '@novu/shared';
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import * as Sentry from '@sentry/react';
-import * as mixpanel from 'mixpanel-browser';
+// Default import. `import *` copies Mixpanel methods onto the module namespace, so
+// `this.persistence` is missing and `alias()` throws `load_prop` into React.
+import mixpanel from 'mixpanel-browser';
 import { MIXPANEL_KEY, SEGMENT_KEY } from '@/config';
+
+function reportAnalyticsFailure(error: unknown): void {
+  console.error(error);
+
+  try {
+    Sentry.captureException(error);
+  } catch {
+    // Reporting an analytics failure must not become the failure.
+  }
+}
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return typeof (value as PromiseLike<unknown> | null)?.then === 'function';
+}
+
+function guardAnalytics(action: () => unknown): void {
+  try {
+    const result = action();
+
+    if (isPromiseLike(result)) {
+      void Promise.resolve(result).catch(reportAnalyticsFailure);
+    }
+  } catch (error) {
+    reportAnalyticsFailure(error);
+  }
+}
 
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;
@@ -16,30 +44,39 @@ export class SegmentService {
     this._mixpanelEnabled = !!MIXPANEL_KEY;
 
     if (this._mixpanelEnabled) {
-      mixpanel.init(MIXPANEL_KEY as string, {
-        //@ts-expect-error missing from types
-        record_sessions_percent: 100,
-      });
+      guardAnalytics(() => {
+        mixpanel.init(MIXPANEL_KEY as string, {
+          //@ts-expect-error missing from types
+          record_sessions_percent: 100,
+        });
 
-      try {
         //@ts-expect-error missing from types
         mixpanel.start_session_recording();
-      } catch (e) {
-        Sentry.captureException(e);
-        console.error(e);
-      }
+      });
     }
 
-    if (this._segmentEnabled) {
+    if (!this._segmentEnabled) {
+      return;
+    }
+
+    try {
       this._segment = AnalyticsBrowser.load({
         writeKey: SEGMENT_KEY as string,
       });
+    } catch (error) {
+      reportAnalyticsFailure(error);
+      this._segment = null;
+      this._segmentEnabled = false;
 
-      if (!this._mixpanelEnabled) {
-        return;
-      }
+      return;
+    }
 
-      this._segment.addSourceMiddleware(({ payload, next }) => {
+    if (!this._mixpanelEnabled) {
+      return;
+    }
+
+    guardAnalytics(() => {
+      this._segment?.addSourceMiddleware(({ payload, next }) => {
         try {
           if (payload.type() === 'track' || payload.type() === 'page') {
             const segmentDeviceId = payload.obj.anonymousId;
@@ -64,7 +101,7 @@ export class SegmentService {
 
         next(payload);
       });
-    }
+    });
   }
 
   identify(user: IUserEntity, extraProperties?: Record<string, unknown>) {
@@ -72,14 +109,16 @@ export class SegmentService {
       return;
     }
 
-    this._segment?.identify(user?._id, {
-      email: user.email,
-      name: user.firstName + ' ' + user.lastName,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      avatar: user.profilePicture,
-      ...(extraProperties || {}),
-    });
+    guardAnalytics(() =>
+      this._segment?.identify(user?._id, {
+        email: user.email,
+        name: user.firstName + ' ' + user.lastName,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatar: user.profilePicture,
+        ...(extraProperties || {}),
+      })
+    );
   }
 
   group(organization: { id: string; name: string; createdAt: string }, extraProperties?: Record<string, unknown>) {
@@ -87,11 +126,13 @@ export class SegmentService {
       return;
     }
 
-    this._segment?.group(organization.id, {
-      name: organization.name,
-      createdAt: organization.createdAt,
-      ...(extraProperties || {}),
-    });
+    guardAnalytics(() =>
+      this._segment?.group(organization.id, {
+        name: organization.name,
+        createdAt: organization.createdAt,
+        ...(extraProperties || {}),
+      })
+    );
   }
 
   alias(anonymousId: string, userId: string) {
@@ -100,10 +141,12 @@ export class SegmentService {
     }
 
     if (this._mixpanelEnabled) {
-      mixpanel.alias(userId, anonymousId);
+      guardAnalytics(() => {
+        mixpanel.alias(userId, anonymousId);
+      });
     }
 
-    this._segment?.alias(userId, anonymousId);
+    guardAnalytics(() => this._segment?.alias(userId, anonymousId));
   }
 
   setAnonymousId(anonymousId: string) {
@@ -111,7 +154,7 @@ export class SegmentService {
       return;
     }
 
-    this._segment?.setAnonymousId(anonymousId);
+    guardAnalytics(() => this._segment?.setAnonymousId(anonymousId));
   }
 
   async track(event: string, data?: Record<string, unknown>) {
@@ -119,18 +162,28 @@ export class SegmentService {
       return;
     }
 
-    if (this._mixpanelEnabled) {
-      const sessionReplayProperties =
-        //@ts-expect-error missing from types
-        mixpanel.get_session_recording_properties();
+    let properties = data;
 
-      data = {
-        ...(data || {}),
-        ...sessionReplayProperties,
-      };
+    if (this._mixpanelEnabled) {
+      try {
+        const sessionReplayProperties =
+          //@ts-expect-error missing from types
+          mixpanel.get_session_recording_properties();
+
+        properties = {
+          ...(data || {}),
+          ...sessionReplayProperties,
+        };
+      } catch (error) {
+        reportAnalyticsFailure(error);
+      }
     }
 
-    this._segment?.track(event, data);
+    try {
+      await this._segment?.track(event, properties);
+    } catch (error) {
+      reportAnalyticsFailure(error);
+    }
   }
 
   pageView(url: string) {
@@ -138,7 +191,7 @@ export class SegmentService {
       return;
     }
 
-    this._segment?.pageView(url);
+    guardAnalytics(() => this._segment?.pageView(url));
   }
 
   reset() {
@@ -146,7 +199,7 @@ export class SegmentService {
       return;
     }
 
-    this._segment?.reset();
+    guardAnalytics(() => this._segment?.reset());
   }
 
   async getAnonymousId() {
@@ -154,9 +207,15 @@ export class SegmentService {
       return;
     }
 
-    const user = await this._segment?.user();
+    try {
+      const user = await this._segment?.user();
 
-    return user?.anonymousId();
+      return user?.anonymousId();
+    } catch (error) {
+      reportAnalyticsFailure(error);
+
+      return;
+    }
   }
 
   isSegmentEnabled(): boolean {
