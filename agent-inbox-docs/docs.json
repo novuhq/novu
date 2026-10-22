@@ -18,12 +18,6 @@
       "weight": 400
     }
   },
-  "background": {
-    "color": {
-      "light": "#0a0908",
-      "dark": "#0a0908"
-    }
-  },
   "favicon": "/favicon.svg",
   "logo": {
     "light": "/logo/light.svg",
