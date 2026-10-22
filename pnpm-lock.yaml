@@ -1341,6 +1341,9 @@ importers:
       '@radix-ui/react-dropdown-menu':
         specifier: ^2.1.24
         version: 2.1.24(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@radix-ui/react-tabs':
+        specifier: ^1.1.21
+        version: 1.1.21(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-tooltip':
         specifier: ^1.2.16
         version: 1.2.16(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1369,6 +1372,9 @@ importers:
         specifier: 3.4.0
         version: 3.4.0
     devDependencies:
+      '@playwright/test':
+        specifier: ^1.58.2
+        version: 1.58.2
       '@tailwindcss/postcss':
         specifier: 4.3.0
         version: 4.3.0
@@ -1387,6 +1393,9 @@ importers:
       postcss:
         specifier: ^8.5.23
         version: 8.5.25
+      sharp:
+        specifier: ^0.35.5
+        version: 0.35.5(@types/node@22.15.13)
       tailwindcss:
         specifier: 4.3.0
         version: 4.3.0
