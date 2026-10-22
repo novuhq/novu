@@ -8,10 +8,10 @@
     "light": "#ff5c30",
     "dark": "#ff5c30"
   },
-  "favicon": "/favicon.png",
+  "favicon": "/favicon.svg",
   "logo": {
-    "light": "/logo/light.png",
-    "dark": "/logo/dark.png"
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
   },
   "icons": {
     "library": "lucide"
