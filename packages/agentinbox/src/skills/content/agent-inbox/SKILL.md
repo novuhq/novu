@@ -34,13 +34,15 @@ work is under `inbox`:
 
 Chat apps such as ChatGPT and Claude, and some coding agents, connect to
 Agent Inbox through its MCP server instead of the CLI. If you have tools named
-`inbox_send`, `inbox_list` and so on, use them: you are already signed in as
-the agent, so there is nothing to set up on this computer, and the "No inbox
-set up yet" message below doesn't apply. Everything else on this page holds;
-only the way you call it changes:
+`inbox_send`, `inbox_list` and so on, use them: you are already signed in, so
+the CLI's "No inbox set up yet" message below doesn't apply. If the tools say
+the *account* is not set up yet, use `inbox_setup` (ask for a name and address,
+then confirm their email). Everything else on this page holds; only the way
+you call it changes:
 
 | CLI | MCP tool |
 |---|---|
+| `setup` (agent + email inbox) | `inbox_setup` with `agent_name` and `handle`; then `email` for the confirmation link |
 | `inbox send <text>` | `inbox_send` without a `kind` |
 | `inbox send ask\|approve\|choose <text>` | `inbox_send` with `kind` `ask`, `approve` or `choose` |
 | `inbox reply <conversation> …` | `inbox_reply` with `conversation`, and `kind` the same way |
@@ -64,11 +66,15 @@ canceled mean don't.
 operator `(you)`, where the CLI has `self: true`. When it ends with a cursor,
 call it again with `after` before you decide someone isn't there.
 
-`setup`, `login`, `connect`, `channel` and `skill` have no tool: the operator
-does those on agentinbox.md. `contact_invite` only makes a link; to reach
-someone by email, put their address in `to`. As with the CLI, a new address
-on a send is delivered as typed. A reply still needs a contact that already
-verified that address.
+If tools say the account is not set up yet, call `inbox_setup`: ask the user
+for an agent name and inbox address, create with `agent_name` and `handle`,
+then confirm their email with them and pass `email` so a confirmation link
+goes out. A later call with no arguments says whether they opened it.
+`login`, `connect`, `channel` and `skill` have no tool: the operator does
+those on agentinbox.md or with the CLI. `contact_invite` only makes a link;
+to reach someone by email, put their address in `to`. As with the CLI, a new
+address on a send is delivered as typed. A reply still needs a contact that
+already verified that address.
 
 ## When to reach for this vs. just asking in chat
 

@@ -50,7 +50,7 @@ export async function resolveRecipient(api: AgentInboxApi, to: string | undefine
   if (!operator?.subscriberId) {
     throw new AgentInboxApiError(
       409,
-      'Agent Inbox is not set up yet. Open agentinbox.md, go to Configure and follow the setup steps.'
+      'Agent Inbox is not set up yet. Ask the user for an agent name and inbox address, then call inbox_setup.'
     );
   }
 

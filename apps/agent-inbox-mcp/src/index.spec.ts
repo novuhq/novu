@@ -70,6 +70,7 @@ describe('the Agent Inbox MCP server', () => {
         'inbox_reply',
         'inbox_resolve',
         'inbox_send',
+        'inbox_setup',
         'inbox_show',
         'inbox_wait',
       ].sort()
