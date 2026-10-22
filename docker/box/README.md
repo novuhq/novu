@@ -112,7 +112,7 @@ runs at a time; an interrupted one is completed by the next. Measured on Cloudfl
 
 | Step | Time |
 |---|---|
-| A new box from `base` | about 30 s, of which the restore is 1 to 2 s; about 3.5 min for the first one in a location after `base` was rebaked (a cold restore, about 38 s per GB) |
+| A new box from `base` | about 30 s, of which the restore is 1 to 2 s; about 3.5 min for the first one in a location after `base` was rebaked (a cold restore, about 3 min of it) |
 | Wake after sleeping | about 30 s |
 | Apply: an API change / a worker change / the dashboard | 40 s / 16 s / 23 s |
 | Apply: a library / `@novu/framework` / the bridge app | 50 to 120 s / 114 s / 62 s |
@@ -232,5 +232,5 @@ the hub starts TesterArmy it deletes those users over an hour old.
   integrations (`user channels` for a test user's org).
 - **`sync` stops on a conflict:** the branch doesn't contain `base`'s commit; rebase onto `next`.
 - **A slow first start:** right after `base` was rebaked, the first box in a location restores a fresh snapshot
-  (about 3 min). A restore that hasn't answered in 5 min is started again once from the same snapshot
-  (`lastStart.attempts` in `/__box/state`).
+  and is up in about 3.5 min (the restore takes about 3 of it). A restore that hasn't answered in 5 min is started
+  again once from the same snapshot (`lastStart.attempts` in `/__box/state`).

@@ -91,7 +91,8 @@ async function buildViaNx(libs: ReadonlyArray<string>): Promise<void> {
   if (libs.includes(FRAMEWORK)) fs.rmSync(FRAMEWORK_TYPES_STALE, { force: true });
 }
 
-// The libraries the projects run on, which nx's cache replays when unchanged.
+// The libraries the projects run on. base saves without nx's cache, so a box's first apply builds them all; later
+// applies replay the unchanged ones from it.
 function libraryClosure(
   graph: Graph,
   projects: ReadonlyArray<string>,
