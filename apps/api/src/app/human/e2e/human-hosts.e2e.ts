@@ -368,6 +368,41 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
   });
 
   describe('host status', () => {
+    it('records the MCP host when setup itself comes through the MCP', async () => {
+      const mcpSession = new UserSession();
+      await mcpSession.initialize();
+
+      const setupRes = await mcpSession.testAgent
+        .post('/v1/human/setup')
+        .set('Authorization', `ApiKey ${mcpSession.apiKey}`)
+        .set(AGENT_INBOX_VIA_HEADER, 'mcp')
+        .send({ subscriberId: 'mcp-operator', operator: true, firstName: 'Ada', agentName: 'Atlas' });
+      expect(setupRes.status).to.equal(200, JSON.stringify(setupRes.body));
+
+      const status = await mcpSession.testAgent
+        .get('/v1/human/agent/hosts')
+        .set('Authorization', `ApiKey ${mcpSession.apiKey}`);
+      expect(status.status).to.equal(200, JSON.stringify(status.body));
+      expect(status.body.data.connected).to.equal(true);
+      expect(status.body.data.hosts).to.have.length(1);
+      expect(status.body.data.hosts[0]).to.include({ via: 'mcp', lastCheckedAt: null });
+      expect(status.body.data.hosts[0].connectedAt).to.be.a('string');
+
+      const withoutVia = new UserSession();
+      await withoutVia.initialize();
+      const plain = await withoutVia.testAgent
+        .post('/v1/human/setup')
+        .set('Authorization', `ApiKey ${withoutVia.apiKey}`)
+        .send({ subscriberId: 'plain-operator', operator: true, firstName: 'Ada' });
+      expect(plain.status).to.equal(200, JSON.stringify(plain.body));
+      const plainStatus = await withoutVia.testAgent
+        .get('/v1/human/agent/hosts')
+        .set('Authorization', `ApiKey ${withoutVia.apiKey}`);
+      expect(plainStatus.status).to.equal(200, JSON.stringify(plainStatus.body));
+      expect(plainStatus.body.data.connected).to.equal(false);
+      expect(plainStatus.body.data.hosts).to.deep.equal([]);
+    });
+
     it('reports no host before one connects, then the CLI host that used a code', async () => {
       expect(await hostStatus()).to.deep.equal({
         connected: false,

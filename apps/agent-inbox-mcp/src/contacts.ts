@@ -28,7 +28,7 @@ export async function contactListText(
   if (contacts.length === 0) {
     return after
       ? 'No more contacts.'
-      : 'There is nobody to reach yet. Set up Agent Inbox on agentinbox.md, or use contact_invite.';
+      : 'There is nobody to reach yet. Call inbox_setup if the agent is not set up, or use contact_invite.';
   }
 
   const lines = contacts.map((contact) => {

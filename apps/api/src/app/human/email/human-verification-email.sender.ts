@@ -81,6 +81,7 @@ export class HumanVerificationEmailSender {
       verifyUrl,
       expiresAt: params.expiresAt,
       claimUrl: params.claimUrl,
+      isOperatorVerification: operatorId === params.subscriberId,
     });
 
     const mailFactory = new MailFactory();

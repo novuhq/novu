@@ -24,8 +24,13 @@ import {
   waitForAnswer,
 } from './interactions';
 import { resolveEmailRecipients } from './recipients';
+import { AGENT_NAME_MAX_LENGTH, inboxSetup } from './setup';
 
 type ToolResult = { content: Array<{ type: 'text'; text: string }>; isError?: boolean };
+
+/** Points an AI at `inbox_setup` when the account has no relay agent yet. */
+const NOT_SET_UP_HINT =
+  'Agent Inbox is not set up yet. Ask the user for an agent name and inbox address, then call inbox_setup.';
 
 const recipient = z.string().min(1).max(320);
 const to = z
@@ -220,7 +225,44 @@ async function sendOrReply(api: AgentInboxApi, input: SendToolInput | ReplyToolI
 }
 
 /** The tools an AI tool gets: ways to reach a person, read the inbox, and wait for what they say. */
-export function registerTools(server: McpServer, api: AgentInboxApi): void {
+export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEmail?: string): void {
+  server.registerTool(
+    'inbox_setup',
+    {
+      title: 'Set up the agent inbox',
+      description:
+        'Create the agent and its email inbox, or report how far setup got. Call with no arguments to see status and a suggested owner email. Ask the user for an agent name and address before creating; pass agent_name and handle together. Pass email only after the user confirms the address — a confirmation link goes out, and a later call with no arguments says whether they opened it. A name never changes an existing agent, and a handle never moves an existing mailbox; pass handle alone to finish a mailbox that was not created. This tool does not replace an email that is already confirmed.',
+      inputSchema: {
+        agent_name: z
+          .string()
+          .min(1)
+          .max(AGENT_NAME_MAX_LENGTH)
+          .optional()
+          .describe(
+            `What the agent is called (up to ${AGENT_NAME_MAX_LENGTH} characters). Required with handle to create.`
+          ),
+        handle: z
+          .string()
+          .min(1)
+          .max(32)
+          .optional()
+          .describe(
+            'Mailbox local-part the user chose, such as "atlas". Letters, digits and hyphens. Required with agent_name to create.'
+          ),
+        email: z
+          .string()
+          .min(3)
+          .max(320)
+          .optional()
+          .describe(
+            "The owner's email to confirm. Confirm the suggested address from a no-argument call with the user before passing it."
+          ),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    },
+    (input) => run(() => inboxSetup(api, input, suggestedEmail))
+  );
+
   server.registerTool(
     'inbox_send',
     {
@@ -459,9 +501,21 @@ async function run(work: () => Promise<string>): Promise<ToolResult> {
   } catch (error) {
     const text =
       error instanceof AgentInboxApiError
-        ? error.message
+        ? mapSetupHint(error)
         : 'Something went wrong while reaching Agent Inbox. Try again.';
 
     return { content: [{ type: 'text', text }], isError: true };
   }
+}
+
+/**
+ * A missing relay agent looks like a 404 that names the relay. Other 404s (a stale conversation, a contact,
+ * an interaction) stay as the API wrote them, so the AI can correct the id instead of creating an agent.
+ */
+export function mapSetupHint(error: AgentInboxApiError): string {
+  if (error.status === 404 && /no agent yet|relay agent/i.test(error.message)) {
+    return NOT_SET_UP_HINT;
+  }
+
+  return error.message;
 }

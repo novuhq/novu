@@ -25,6 +25,7 @@
     "build": "next build",
     "start:prod": "next start --port 4300",
     "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
     "test:e2e": "playwright test",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
@@ -56,6 +57,7 @@
     "postcss": "^8.5.10",
     "sharp": "^0.35.5",
     "tailwindcss": "4.3.0",
-    "typescript": "5.6.2"
+    "typescript": "5.6.2",
+    "vitest": "^4.1.11"
   }
 }

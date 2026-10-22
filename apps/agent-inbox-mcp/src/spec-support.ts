@@ -7,7 +7,7 @@ import type { Interaction } from './interactions';
 export const ISSUER = 'https://clerk.example.test';
 /** The Dashboard API, which every tool calls. */
 export const AGENT_INBOX_API = 'https://agentinbox.example.test/api';
-/** The Novu API, asked only for the account's key. */
+/** The Novu API, asked to open an account and to read its key. */
 export const NOVU_API = 'https://api.example.test';
 export const ORIGIN = 'https://mcp.example.test';
 
@@ -77,12 +77,48 @@ export type StubBackendsOptions = {
   inboxThread?: InboxThreadView;
   /** Thread returned after read/resolve. */
   inboxActionThread?: InboxThread;
+  /** Override GET /v1/agent. `null` means 404 (no agent). */
+  agent?: StubAgent | null;
+  /** Override GET /v1/channels. */
+  channels?: StubChannelLink[];
+  /** Override GET /v1/operator. `null` means an empty body. */
+  operator?: { subscriberId?: string } | null;
+  /** Override GET /v1/inbox-address. */
+  inboxAddressCheck?: StubAddressCheck;
+  /** Clerk /oauth/userinfo email for the good-token user. */
+  userEmail?: string;
+  /** Error body for POST /v1/setup when set. */
+  setupError?: { status: number; code?: string; message: string; suggestion?: string };
+  /** GET /v1/channels fails with this instead of returning the channel list. */
+  channelsError?: { status: number; message: string };
+  /** POST /v1/contacts/verifications reports that a confirmed address is being replaced. */
+  replacesVerifiedAddress?: boolean;
+  /** POST /v1/human/accounts fails with this status instead of opening the account. */
+  accountCreateStatus?: number;
 };
 
 export type StubContact = {
   id: string;
   email?: string;
+  emailVerification?: { address: string; status: 'unverified' | 'pending' | 'verified' };
   channels?: Array<{ via: string; status?: 'unverified' | 'pending' | 'verified'; address?: string }>;
+};
+
+export type StubAgent = {
+  agentId: string;
+  agentIdentifier: string;
+  name: string;
+};
+
+export type StubChannelLink = {
+  integration: { providerId: string; sharedInboundAddress?: string };
+};
+
+export type StubAddressCheck = {
+  handle: string;
+  available: boolean;
+  suggestion?: string;
+  domain: string;
 };
 
 export const DEFAULT_STRANGER_THREAD: InboxThread = {
@@ -120,7 +156,16 @@ function isStubBackendsOptions(options: StubBackendsOptions | Partial<Interactio
     'contactsById' in options ||
     'inboxPage' in options ||
     'inboxThread' in options ||
-    'inboxActionThread' in options
+    'inboxActionThread' in options ||
+    'agent' in options ||
+    'channels' in options ||
+    'operator' in options ||
+    'inboxAddressCheck' in options ||
+    'userEmail' in options ||
+    'setupError' in options ||
+    'channelsError' in options ||
+    'replacesVerifiedAddress' in options ||
+    'accountCreateStatus' in options
   );
 }
 
@@ -140,28 +185,167 @@ function dashboardPathOf(url: string): string | null {
   return url.startsWith(`${AGENT_INBOX_API}/`) ? url.slice(AGENT_INBOX_API.length).split('?')[0] : null;
 }
 
-function answerAuth(url: string, headers: Headers): Response | null {
+function answerAuth(
+  url: string,
+  method: string,
+  headers: Headers,
+  body: unknown,
+  accounts: Set<string>,
+  userEmail?: string,
+  accountCreateStatus?: number
+): Response | null {
   if (url === `${ISSUER}/oauth/userinfo`) {
     const user = USERS_BY_TOKEN[headers.get('Authorization')?.replace(/^Bearer /, '') ?? ''];
 
-    return user ? reply({ user_id: user }) : reply({}, 401);
-  }
-
-  if (url === `${NOVU_API}/v1/human/accounts/user_1/secret-key`) {
-    return headers.get(AGENT_INBOX_DASHBOARD_SECRET_HEADER) === 'shared-secret'
-      ? reply({ data: { secretKey: 'account-key' } })
+    return user
+      ? reply({
+          user_id: user,
+          ...(user === 'user_1' && userEmail ? { email: userEmail } : {}),
+          ...(user === 'user_2' ? { given_name: 'Ada', family_name: 'Lovelace' } : {}),
+        })
       : reply({}, 401);
   }
 
-  if (url === `${NOVU_API}/v1/human/accounts/user_2/secret-key`) {
-    return reply({ message: 'Not found' }, 404);
+  if (url === `${NOVU_API}/v1/human/accounts` && method === 'POST') {
+    return answerEnsureAccount(headers, body, accounts, accountCreateStatus);
   }
 
-  if (url === `${AGENT_INBOX_API}/v1/operator`) {
-    return reply({ data: { subscriberId: 'operator_1' } });
+  const accountId = secretKeyAccountId(url);
+  if (!accountId) {
+    return null;
+  }
+
+  if (headers.get(AGENT_INBOX_DASHBOARD_SECRET_HEADER) !== 'shared-secret') {
+    return reply({}, 401);
+  }
+
+  return accounts.has(accountId) ? reply({ data: { secretKey: 'account-key' } }) : reply({ message: 'Not found' }, 404);
+}
+
+function secretKeyAccountId(url: string): string | null {
+  const prefix = `${NOVU_API}/v1/human/accounts/`;
+  const suffix = '/secret-key';
+  if (!url.startsWith(prefix) || !url.endsWith(suffix)) {
+    return null;
+  }
+
+  const id = url.slice(prefix.length, -suffix.length);
+  if (!id || id.includes('/')) {
+    return null;
+  }
+
+  return decodeURIComponent(id);
+}
+
+function answerEnsureAccount(
+  headers: Headers,
+  body: unknown,
+  accounts: Set<string>,
+  accountCreateStatus?: number
+): Response {
+  if (headers.get(AGENT_INBOX_DASHBOARD_SECRET_HEADER) !== 'shared-secret') {
+    return reply({}, 401);
+  }
+
+  if (accountCreateStatus) {
+    return reply({ message: 'Account setup failed' }, accountCreateStatus);
+  }
+
+  const humanUserId = (body as { humanUserId?: unknown } | undefined)?.humanUserId;
+  if (typeof humanUserId !== 'string' || !humanUserId) {
+    return reply({ message: 'humanUserId is required' }, 400);
+  }
+
+  accounts.add(humanUserId);
+
+  return reply({ data: { organizationId: 'org_1', userId: 'novu_user_1', environmentId: 'env_1', region: 'us' } });
+}
+
+type SetupStubState = {
+  agent: StubAgent | null;
+  channels: StubChannelLink[];
+  operator: { subscriberId?: string } | null;
+  inboxAddressCheck?: StubAddressCheck;
+  setupError?: { status: number; code?: string; message: string; suggestion?: string };
+  channelsError?: { status: number; message: string };
+  contactsById: Record<string, StubContact>;
+};
+
+function answerSetup(url: string, method: string, body: unknown, state: SetupStubState): Response | null {
+  const path = dashboardPathOf(url);
+  if (!path) {
+    return null;
+  }
+
+  if (path === '/v1/operator' && method === 'GET') {
+    return reply({ data: state.operator ?? {} });
+  }
+
+  if (path === '/v1/agent' && method === 'GET') {
+    return state.agent ? reply({ data: state.agent }) : reply({ message: 'Agent not found' }, 404);
+  }
+
+  if (path === '/v1/channels' && method === 'GET') {
+    if (state.channelsError) {
+      return reply({ message: state.channelsError.message }, state.channelsError.status);
+    }
+
+    return reply({ data: state.channels });
+  }
+
+  if (path === '/v1/inbox-address' && method === 'GET') {
+    return answerInboxAddress(url, state.inboxAddressCheck);
+  }
+
+  if (path === '/v1/setup' && method === 'POST') {
+    return answerCreateSetup(body, state);
   }
 
   return null;
+}
+
+function answerInboxAddress(url: string, check: StubAddressCheck | undefined): Response {
+  const handle = new URL(url).searchParams.get('handle') ?? '';
+  const resolved = check ?? { handle, available: true, domain: 'agentinbox.md' };
+
+  return reply({ data: { ...resolved, handle: resolved.handle || handle } });
+}
+
+function answerCreateSetup(body: unknown, state: SetupStubState): Response {
+  if (state.setupError) {
+    return reply(
+      {
+        message: state.setupError.message,
+        ...(state.setupError.code ? { code: state.setupError.code } : {}),
+        ...(state.setupError.suggestion ? { suggestion: state.setupError.suggestion } : {}),
+      },
+      state.setupError.status
+    );
+  }
+
+  const posted = body as { agentName?: string; inboxHandle?: string } | undefined;
+  const handle = posted?.inboxHandle ?? 'atlas';
+  const name = posted?.agentName?.trim() || state.agent?.name || 'Atlas';
+  const operatorId = state.operator?.subscriberId ?? 'operator_1';
+  state.agent = { agentId: state.agent?.agentId ?? 'agent_1', agentIdentifier: 'human-relay', name };
+  state.channels = [
+    { integration: { providerId: 'agent-email-inbox', sharedInboundAddress: `${handle}@agentinbox.md` } },
+  ];
+  state.operator = { subscriberId: operatorId };
+  state.contactsById[operatorId] = state.contactsById[operatorId] ?? {
+    id: operatorId,
+    emailVerification: { address: 'ada@acme.co', status: 'unverified' },
+  };
+
+  return reply({
+    data: {
+      agentId: 'agent_1',
+      agentIdentifier: 'human-relay',
+      agentName: name,
+      subscriberId: 'operator_1',
+      emailAddress: `${handle}@agentinbox.md`,
+    },
+  });
 }
 
 function answerInbox(
@@ -241,7 +425,9 @@ function answerContacts(
   url: string,
   method: string,
   contactPages: Record<string, { data: StubContact[]; next: string | null }>,
-  contactsById: Record<string, StubContact>
+  contactsById: Record<string, StubContact>,
+  body: unknown,
+  replacesVerifiedAddress: boolean
 ): Response | null {
   const path = dashboardPathOf(url);
   if (!path?.startsWith('/v1/contacts')) {
@@ -249,7 +435,21 @@ function answerContacts(
   }
 
   if (path === '/v1/contacts/verifications' && method === 'POST') {
-    return reply({ data: { address: 'masked', requestedAt: 'now' } });
+    const posted = body as { address?: string; subscriberId?: string } | undefined;
+    if (posted?.subscriberId && posted.address) {
+      contactsById[posted.subscriberId] = {
+        ...(contactsById[posted.subscriberId] ?? { id: posted.subscriberId }),
+        emailVerification: { address: posted.address, status: 'pending' },
+      };
+    }
+
+    return reply({
+      data: {
+        address: posted?.address ?? 'masked',
+        requestedAt: 'now',
+        ...(replacesVerifiedAddress ? { replacesVerifiedAddress: true } : {}),
+      },
+    });
   }
 
   if (path === '/v1/contacts/invites' && method === 'POST') {
@@ -260,14 +460,43 @@ function answerContacts(
     return null;
   }
 
+  return answerContactGet(url, path, contactPages, contactsById);
+}
+
+function answerContactGet(
+  url: string,
+  path: string,
+  contactPages: Record<string, { data: StubContact[]; next: string | null }>,
+  contactsById: Record<string, StubContact>
+): Response {
   const id = path.slice('/v1/contacts/'.length);
   if (path.startsWith('/v1/contacts/') && id) {
-    const contact = contactsById[decodeURIComponent(id)];
+    return answerOneContact(contactsById[decodeURIComponent(id)]);
+  }
 
-    return contact ? reply({ data: contact }) : reply({ message: 'Contact not found' }, 404);
+  const subscriberId = new URL(url).searchParams.get('subscriberId');
+  if (subscriberId) {
+    const contact = contactsById[subscriberId];
+
+    return reply({ data: contact ? [contact] : [], next: null });
   }
 
   return reply(contactPages[new URL(url).searchParams.get('after') ?? ''] ?? { data: [], next: null });
+}
+
+/** The single-contact endpoint returns channels, not `emailVerification`. The list does. */
+function answerOneContact(contact: StubContact | undefined): Response {
+  if (!contact) {
+    return reply({ message: 'Contact not found' }, 404);
+  }
+
+  return reply({
+    data: {
+      id: contact.id,
+      ...(contact.email ? { email: contact.email } : {}),
+      ...(contact.channels ? { channels: contact.channels } : {}),
+    },
+  });
 }
 
 /**
@@ -293,8 +522,32 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
     unreadCount: 0,
     status: 'resolved' as const,
   };
+  const setupState = {
+    agent:
+      opts.agent === undefined
+        ? ({ agentId: 'agent_1', agentIdentifier: 'human-relay', name: 'Atlas' } satisfies StubAgent)
+        : opts.agent,
+    channels:
+      opts.channels ??
+      ([
+        { integration: { providerId: 'agent-email-inbox', sharedInboundAddress: 'atlas@agentinbox.md' } },
+      ] satisfies StubChannelLink[]),
+    operator: opts.operator === undefined ? { subscriberId: 'operator_1' } : opts.operator,
+    inboxAddressCheck: opts.inboxAddressCheck,
+    setupError: opts.setupError,
+    channelsError: opts.channelsError,
+    contactsById,
+  };
+
+  if (opts.agent !== null && !contactsById.operator_1 && setupState.operator?.subscriberId) {
+    contactsById[setupState.operator.subscriberId] = contactsById[setupState.operator.subscriberId] ?? {
+      id: setupState.operator.subscriberId,
+      emailVerification: { address: 'ada@acme.co', status: 'verified' },
+    };
+  }
 
   const calls: Call[] = [];
+  const accounts = new Set<string>(['user_1']);
 
   vi.stubGlobal(
     'fetch',
@@ -306,9 +559,10 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
       calls.push({ url, method, body, headers });
 
       return (
-        answerAuth(url, headers) ??
+        answerAuth(url, method, headers, body, accounts, opts.userEmail, opts.accountCreateStatus) ??
+        answerSetup(url, method, body, setupState) ??
         answerInbox(url, method, inboxPage, inboxThread, inboxActionThread) ??
-        answerContacts(url, method, contactPages, contactsById) ??
+        answerContacts(url, method, contactPages, contactsById, body, opts.replacesVerifiedAddress === true) ??
         answerInteractions(url, method, body, interaction, createdInteraction) ??
         reply({ message: 'not stubbed' }, 500)
       );

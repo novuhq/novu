@@ -70,6 +70,7 @@ describe('the Agent Inbox MCP server', () => {
         'inbox_reply',
         'inbox_resolve',
         'inbox_send',
+        'inbox_setup',
         'inbox_show',
         'inbox_wait',
       ].sort()
@@ -446,13 +447,33 @@ describe('the Agent Inbox MCP server', () => {
     expect(calls.some((call) => call.url.includes('/secret-key'))).toBe(false);
   });
 
-  it('sends someone signed in without an Agent Inbox account to sign up', async () => {
+  it('opens an Agent Inbox account when the sign-in does not have one yet', async () => {
+    const calls = stubBackends();
     const { env, ctx } = setup();
 
     const response = await worker.fetch(rpc('tools/list', {}, 'newcomer-token'), env, ctx);
 
-    expect(response.status).toBe(403);
-    expect(((await response.json()) as { message: string }).message).toContain('sign up first');
+    expect(response.status).toBe(200);
+    expect(
+      calls.filter((call) => call.url.includes('/v1/human/accounts')).map((call) => `${call.method} ${call.url}`)
+    ).toEqual([
+      `GET ${NOVU_API}/v1/human/accounts/user_2/secret-key`,
+      `POST ${NOVU_API}/v1/human/accounts`,
+      `GET ${NOVU_API}/v1/human/accounts/user_2/secret-key`,
+    ]);
+    const create = calls.find((call) => call.method === 'POST' && call.url === `${NOVU_API}/v1/human/accounts`);
+    expect(create?.body).toEqual({ humanUserId: 'user_2', firstName: 'Ada', lastName: 'Lovelace' });
+    expect(create?.headers.get(AGENT_INBOX_DASHBOARD_SECRET_HEADER)).toBe('shared-secret');
+  });
+
+  it('says to try again when the account is already being set up', async () => {
+    stubBackends({ accountCreateStatus: 409 });
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(rpc('tools/list', {}, 'newcomer-token'), env, ctx);
+
+    expect(response.status).toBe(503);
+    expect(((await response.json()) as { message: string }).message).toContain('being set up');
   });
 
   it('does not renew a remembered token, so one Clerk no longer accepts stops working', async () => {
