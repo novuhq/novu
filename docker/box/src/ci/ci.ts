@@ -125,66 +125,95 @@ async function applyHead(number: number, pull: PullRequestEvent['pull_request'])
   const short = sha.slice(0, 10);
   const origin = boxOrigin(box);
   const cloud = target(box);
-  await comment(number, `⏳ Applying \`${short}\` to Novu Box \`${box}\`…${RUN_URL ? ` ([log](${RUN_URL}))` : ''}`);
+  const boxRow: Row = ['Box', `[${new URL(origin).host}](${origin}) · [Mailpit](${origin}/mail)`];
+  const commitRow: Row = ['Commit', `[\`${short}\`](https://github.com/${REPO}/commit/${sha})`];
+  const runLog = RUN_URL ? ` · [log](${RUN_URL})` : '';
+  const logRows: Array<Row> = RUN_URL ? [['Log', `[this run](${RUN_URL})`]] : [];
+  await comment(number, card('⏳ Novu Box applying', [boxRow, commitRow, ...logRows]));
   try {
     if (!(await startOrReach(cloud, box, number))) return 0;
     const plan = await apply(cloud, sha);
     const report = await cloud.settled(Math.min(SETTLE_SECONDS, (DEADLINE - Date.now()) / 1000));
-    const seconds = Math.round((Date.now() - started) / 1000);
+    const took = duration(Math.round((Date.now() - started) / 1000));
     const problems = report?.ok ? [] : (report?.problems ?? ['the box gave no doctor report']);
-    // A box that's ready stays ready when TesterArmy doesn't start.
-    const tests = problems.length
+    // A box that's ready stays ready when TesterArmy doesn't start. When it does, its own checks report on the PR.
+    const testerArmy = problems.length
       ? []
-      : [
-          await startTesterArmy(box, {
-            number,
-            title: pull.title,
-            ...(pull.body && { description: pull.body.slice(0, 65_536) }),
-            baseBranch: pull.base.ref,
-            headBranch: pull.head.ref,
-            commitSha: sha,
-          }).then(
-            (suites) => `- TesterArmy started: ${suites}. Its results come as checks on this PR.`,
-            (error: unknown) => {
-              log(`WARN: starting TesterArmy: ${messageOf(error)}`);
-              const [first = ''] = messageOf(error).split('\n');
+      : await startTesterArmy(box, {
+          number,
+          title: pull.title,
+          ...(pull.body && { description: pull.body.slice(0, 65_536) }),
+          baseBranch: pull.base.ref,
+          headBranch: pull.head.ref,
+          commitSha: sha,
+        }).then(
+          () => [],
+          (error: unknown) => {
+            log(`WARN: starting TesterArmy: ${messageOf(error)}`);
+            const [first = ''] = messageOf(error).split('\n');
 
-              return `- TesterArmy didn't start: ${first.slice(0, 300)}`;
-            }
-          ),
-        ];
+            return [['TesterArmy', `⚠️ didn't start: ${cell(first.slice(0, 300))}`] as Row];
+          }
+        );
     await comment(
       number,
-      [
-        problems.length
-          ? `⚠️ Novu Box applied \`${short}\` but isn't healthy: ${origin} (${plan}, took ${seconds} s)`
-          : `✅ Novu Box ready: ${origin} (applied \`${short}\`, ${plan}, took ${seconds} s)`,
-        ...(problems.length
-          ? ['', `Problems (\`${CLI} doctor --box ${box}\`):`, ...problems.map((problem) => `- ${problem}`)]
-          : []),
-        '',
-        ...tests,
-        `- Mailpit: ${origin}/mail`,
-        `- Sign in as \`agent@novu.co\` with the Novu Box seed password from the password manager, or sign up with your own \`@novu.co\` address.`,
-        `- Every push applies the new head here. The box sleeps after an hour without requests and wakes on the next one (about 40 s). Removing \`${LABEL}\` or closing the PR deletes it.`,
-        `- Logs: \`${CLI} logs --box ${box}\``,
-      ].join('\n')
+      card(
+        problems.length ? "⚠️ Novu Box isn't healthy" : '✅ Novu Box ready',
+        [boxRow, commitRow, ['Took', `${took}${runLog}`], ...testerArmy],
+        [
+          ...(problems.length
+            ? [`**Problems** (\`${CLI} doctor --box ${box}\`):`, ...problems.map((problem) => `- ${problem}`), '']
+            : []),
+          '<details><summary>Sign-in, what was rebuilt, how this box works</summary>',
+          '',
+          `- **Sign in** as \`agent@novu.co\` with the Novu Box seed password from the password manager, or sign up with your own \`@novu.co\` address.`,
+          `- **Rebuilt:** ${plan.replace(/^plan: /, '')}.`,
+          `- Every push applies the new head here. The box sleeps after an hour without requests and wakes on the next one (about 40 s). Removing \`${LABEL}\` or closing the PR deletes it.`,
+          `- **Logs:** \`${CLI} logs --box ${box}\``,
+          '',
+          '</details>',
+        ]
+      )
     );
 
     return 0;
   } catch (error) {
     const message = messageOf(error);
     log(`ERROR: ${message}`);
-    const where =
-      error instanceof ApplyFailed ? `; the apply's log: \`${CLI} exec --box ${box} -- cat ${error.log}\`` : '';
     const [first = ''] = message.split('\n');
     await comment(
       number,
-      `❌ Novu Box failed on \`${short}\`: ${first.slice(0, 400)}\n\nLog: ${RUN_URL ?? 'this run'}${where}`
+      card(
+        '❌ Novu Box failed',
+        [commitRow, ['Error', cell(first.slice(0, 400))], ...logRows],
+        error instanceof ApplyFailed ? [`The apply's log: \`${CLI} exec --box ${box} -- cat ${error.log}\``] : []
+      )
     );
 
     return 1;
   }
+}
+
+type Row = readonly [string, string];
+
+// Like Netlify's and Vercel's PR comments: a heading, a short table of links, everything else below it.
+function card(heading: string, rows: ReadonlyArray<Row>, below: ReadonlyArray<string> = []): string {
+  return [
+    `### ${heading}`,
+    '',
+    '| | |',
+    '|:--|:--|',
+    ...rows.map(([name, value]) => `| ${name} | ${value} |`),
+    ...(below.length ? ['', ...below] : []),
+  ].join('\n');
+}
+
+function cell(text: string): string {
+  return text.replaceAll('|', '\\|');
+}
+
+function duration(seconds: number): string {
+  return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${seconds % 60} s`;
 }
 
 // The apply restarts the API, so the box only has to answer before it.
@@ -208,8 +237,8 @@ async function startOrReach(cloud: CloudTarget, box: string, number: number): Pr
   return true;
 }
 
-// Returns what started, for the PR comment; TesterArmy reports results on the PR itself, as checks and a comment.
-async function startTesterArmy(box: string, pullRequest: TesterArmyPullRequest): Promise<string> {
+// TesterArmy reports results on the PR itself, as checks and a comment.
+async function startTesterArmy(box: string, pullRequest: TesterArmyPullRequest): Promise<void> {
   const start: TesterArmyStart = { pullRequest };
   const { exploration, groups, signUpUsersDeleted } = await hostBoxes(`testerarmy/${box}`, TesterArmyStarted, {
     method: 'POST',
@@ -222,8 +251,6 @@ async function startTesterArmy(box: string, pullRequest: TesterArmyPullRequest):
     ...groups.map((group) => `${group.name} (${group.runs} runs)`),
   ];
   log(`TesterArmy started on ${box}: ${suites.join(', ')}`);
-
-  return suites.join(', ');
 }
 
 async function apply(cloud: CloudTarget, sha: string, { baseline = false } = {}): Promise<string> {
