@@ -28,7 +28,7 @@ the `verify-in-box` skill (`.cursor/skills/verify-in-box/SKILL.md`).
 
 | Command | What it does |
 |---|---|
-| `up` | Starts the box: a new one starts from `base` (below) and gets your checkout, an asleep one wakes. Waits until `doctor` passes |
+| `up` | Starts the box: a new one starts from `base` (below) and gets your checkout, an asleep one wakes. Waits until `doctor` passes. A new box named with `--box` needs `--from base` (otherwise it bakes `next`) and a `sync` |
 | `sync [--full]` | Puts this checkout on the box, committed or not, and rebuilds what it changes. `--full` rebuilds everything |
 | `doctor` | Whether the box is fit to test on, as JSON; `problems` says what isn't, and it exits 1 if any |
 | `logs [process]` | The last lines of one process (`api`, `worker`, `bridge`, …) or of all of them. `--errors`, `--follow`, `--tail <n>` |
