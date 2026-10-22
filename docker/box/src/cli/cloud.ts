@@ -17,8 +17,9 @@ import { apiOrigin, BOX_CLI, boxOrigin, HOST, isBoxName } from '../shared/names.
 import { boxFetch, type FetchInit, failUnlessOk, hostBoxes, hostExists, readExec, type Token } from './cloud-http.ts';
 
 // A first bake takes 13 to 16 minutes on Cloudflare, a wake about 35 s. A snapshot restores in seconds in base's
-// location (see `Box.introduce`), up to 6 minutes elsewhere (the Slack router waits as long).
-const READY_WITHIN_SECONDS = { baking: 25 * 60, waking: 8 * 60, running: 5 * 60 };
+// location (see `Box.introduce`), up to 6 minutes elsewhere, and one that hangs is started again after 5; `/up`
+// answers before the restore, so its wait counts here.
+const READY_WITHIN_SECONDS = { baking: 25 * 60, waking: 10 * 60, running: 5 * 60 };
 
 interface Exec {
   readonly cmd: ReadonlyArray<string>;
@@ -244,16 +245,8 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     if (warning) log(`WARN: ${box} wasn't created by base (${warning}); it may restore slowly`);
     const waits: Record<string, number> = READY_WITHIN_SECONDS;
     try {
-      const started = await call(`/up?${query}`, { method: 'POST' }).then(
-        async (answer) => decode(StateAnswer, await answer.text(), `${box} /up`).state,
-        (error: Error) => {
-          // A snapshot restore can outlast the request (Node gives up after 5 minutes); the box goes on.
-          if (!error.message.endsWith('fetch failed')) throw error;
-          log(`${box} /up didn't answer: ${error.message}; waiting for the restore`);
-
-          return 'waking';
-        }
-      );
+      const answer = await call(`/up?${query}`, { method: 'POST' });
+      const started = decode(StateAnswer, await answer.text(), `${box} /up`).state;
       log(`${box}: ${started}${started === 'baking' ? ` ${ref} (13 to 16 minutes)` : ''}`);
       await waitFor(waits[started] ?? READY_WITHIN_SECONDS.running, reachable ? answers : (report) => report.ok);
     } catch (error) {
