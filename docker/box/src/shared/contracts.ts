@@ -127,6 +127,8 @@ export const LastStart = z.object({
   container: z.string().optional(),
 });
 export type LastStart = z.infer<typeof LastStart>;
+// Healthy cold restores took 231 to 352 s (up to 6 minutes elsewhere), so one that hasn't answered in 8 is hung.
+export const RESTORE_MS = 8 * 60 * 1000;
 // `placed: false` when base exists but couldn't make the box's first call (see `Box.introduce`).
 export const RegisteredBox = z.object({
   box: z.string(),
