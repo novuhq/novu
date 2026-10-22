@@ -20,9 +20,9 @@ export default {
 
       return text(`${HOST}: a box is https://<box>.${DOMAIN}, its API https://<box>-api.${DOMAIN}\n`, 404);
     }
-    if (url.pathname.startsWith('/__box/') && !(await authorize(request)))
+    if (url.pathname.startsWith('/__box/') && !(await authorize(request, env)))
       return text(
-        "needs `Authorization: Bearer <GitHub token>` with push access to novuhq/novu, or a Novu Box workflow's OIDC token\n",
+        "needs `Authorization: Bearer <GitHub token>` with push access to novuhq/novu, a Novu Box workflow's OIDC token, or CURSOR_BOX_TOKEN\n",
         401
       );
     if (url.hostname === SLACK_HOST) return env.ROUTER.get(env.ROUTER.idFromName('router')).fetch(request);

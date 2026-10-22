@@ -19,6 +19,16 @@ export function githubToken(): Promise<string> {
   return ownToken;
 }
 
+// Cursor Cloud agents have CURSOR_BOX_TOKEN: their `gh` is the Cursor GitHub App, which the hub refuses. It opens boxes
+// only, so it never goes to GitHub.
+export function hubToken(): Promise<string> {
+  if (process.env.CURSOR_BOX_TOKEN) return Promise.resolve(process.env.CURSOR_BOX_TOKEN);
+
+  return githubToken().catch(() => {
+    throw new Error('needs CURSOR_BOX_TOKEN, GITHUB_TOKEN or a signed-in `gh` (gh auth login)');
+  });
+}
+
 export interface FetchInit {
   readonly method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   readonly body?: string | Uint8Array;

@@ -4,7 +4,7 @@ import { main } from '../node/main.ts';
 import { output } from '../node/process.ts';
 import { isBoxName } from '../shared/names.ts';
 import { type CloudTarget, cloudTarget } from './cloud.ts';
-import { githubToken, hostExists } from './cloud-http.ts';
+import { hostExists, hubToken } from './cloud-http.ts';
 import { deployHost } from './deploy.ts';
 import { mail } from './mail.ts';
 import { sync } from './sync.ts';
@@ -37,7 +37,7 @@ function onBox(
     help,
     options: { ...SHARED, ...options },
     run: async (parsed) =>
-      run(cloudTarget({ box: parsed.option('box') ?? (await branchBox()), token: githubToken }), parsed),
+      run(cloudTarget({ box: parsed.option('box') ?? (await branchBox()), token: hubToken }), parsed),
   };
 }
 
