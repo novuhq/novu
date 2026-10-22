@@ -29,6 +29,44 @@ describe("create_workflow", () => {
 		expect(result.structuredContent).toEqual({ workflow: api.workflow });
 	});
 
+	it("sends channel preferences and HTTP response schemas in the API's shape", async () => {
+		const api = fakeWorkflowsApi();
+		const httpStep = {
+			controlValues: {
+				method: "GET",
+				responseBodySchema: { properties: { id: { type: "string" } }, type: "object" },
+				url: "https://example.com",
+			},
+			name: "Lookup",
+			type: "http_request",
+		};
+
+		const result = await callTool(await client(), "create_workflow", {
+			name: "Prefs",
+			preferences: {
+				workflow: { all: { enabled: true }, channels: { email: { enabled: false } } },
+			},
+			steps: [httpStep],
+		});
+
+		expect(result.isError).toBeFalsy();
+		expect(api.requests[0].body).toMatchObject({
+			preferences: { workflow: { channels: { email: { enabled: false } } } },
+			steps: [{ controlValues: httpStep.controlValues }],
+		});
+	});
+
+	it("rejects boolean channel preferences", async () => {
+		fakeWorkflowsApi();
+
+		const result = await callTool(await client(), "create_workflow", {
+			name: "Prefs",
+			preferences: { workflow: { channels: { email: false } } },
+		});
+
+		expect(result.isError).toBe(true);
+	});
+
 	it("retries a taken slug with a suffix and its own idempotency key", async () => {
 		const api = fakeWorkflowsApi();
 		api.failNext("POST", 409, { message: "Workflow with the same id already exists" });

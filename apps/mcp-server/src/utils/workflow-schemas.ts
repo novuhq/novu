@@ -96,17 +96,33 @@ export const workflowOriginSchema = z.enum(["novu-cloud", "novu-cloud-v1", "exte
 
 // --- Preferences ----------------------------------------------------------
 
+const channelPreferenceSchema = z.object({
+	enabled: z.boolean().describe("Whether delivery is enabled for this channel."),
+});
+
 export const channelPreferencesSchema = z.object({
-	chat: z.boolean().optional().describe("Chat channel preference."),
-	email: z.boolean().optional().describe("Email channel preference."),
-	in_app: z.boolean().optional().describe("In-app channel preference."),
-	push: z.boolean().optional().describe("Push channel preference."),
-	sms: z.boolean().optional().describe("SMS channel preference."),
+	chat: channelPreferenceSchema.optional().describe("Chat channel preference."),
+	email: channelPreferenceSchema.optional().describe("Email channel preference."),
+	in_app: channelPreferenceSchema.optional().describe("In-app channel preference."),
+	push: channelPreferenceSchema.optional().describe("Push channel preference."),
+	sms: channelPreferenceSchema.optional().describe("SMS channel preference."),
 });
 
 export const preferencesObjectSchema = z.object({
-	channels: channelPreferencesSchema.optional().describe("Channel preferences."),
-	enabled: z.boolean().optional().describe("Whether preferences are enabled."),
+	all: z
+		.object({
+			enabled: z
+				.boolean()
+				.optional()
+				.describe("Default for every channel without its own preference. Default: true."),
+			readOnly: z
+				.boolean()
+				.optional()
+				.describe("When true, subscribers cannot change this preference. Default: false."),
+		})
+		.optional()
+		.describe("Preference applied to all channels unless a channel overrides it."),
+	channels: channelPreferencesSchema.optional().describe("Per-channel preferences."),
 });
 
 export const workflowPreferencesSchema = z.object({

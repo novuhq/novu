@@ -351,7 +351,6 @@ function createHttpKeyValuePairSchema() {
 
 function createHttpResponsePropertySchema() {
 	return z.object({
-		name: z.string().describe("Response property name."),
 		type: z
 			.enum(["string", "number", "boolean", "integer", "array", "object"])
 			.describe("JSON Schema type for this property."),
@@ -390,9 +389,11 @@ function createHttpRequestControlSchema() {
 		responseBodySchema: z
 			.object({
 				properties: z
-					.array(createHttpResponsePropertySchema())
+					.record(createHttpResponsePropertySchema())
 					.optional()
-					.describe("Response properties as name+type pairs."),
+					.describe(
+						'JSON Schema properties keyed by response field name, e.g. { "id": { "type": "string" } }.',
+					),
 				required: z
 					.array(z.string())
 					.optional()
