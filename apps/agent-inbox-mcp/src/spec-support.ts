@@ -89,6 +89,10 @@ export type StubBackendsOptions = {
   userEmail?: string;
   /** Error body for POST /v1/setup when set. */
   setupError?: { status: number; code?: string; message: string; suggestion?: string };
+  /** GET /v1/channels fails with this instead of returning the channel list. */
+  channelsError?: { status: number; message: string };
+  /** POST /v1/contacts/verifications reports that a confirmed address is being replaced. */
+  replacesVerifiedAddress?: boolean;
 };
 
 export type StubContact = {
@@ -156,7 +160,9 @@ function isStubBackendsOptions(options: StubBackendsOptions | Partial<Interactio
     'operator' in options ||
     'inboxAddressCheck' in options ||
     'userEmail' in options ||
-    'setupError' in options
+    'setupError' in options ||
+    'channelsError' in options ||
+    'replacesVerifiedAddress' in options
   );
 }
 
@@ -204,6 +210,7 @@ type SetupStubState = {
   operator: { subscriberId?: string } | null;
   inboxAddressCheck?: StubAddressCheck;
   setupError?: { status: number; code?: string; message: string; suggestion?: string };
+  channelsError?: { status: number; message: string };
   contactsById: Record<string, StubContact>;
 };
 
@@ -222,6 +229,10 @@ function answerSetup(url: string, method: string, body: unknown, state: SetupStu
   }
 
   if (path === '/v1/channels' && method === 'GET') {
+    if (state.channelsError) {
+      return reply({ message: state.channelsError.message }, state.channelsError.status);
+    }
+
     return reply({ data: state.channels });
   }
 
@@ -257,14 +268,15 @@ function answerCreateSetup(body: unknown, state: SetupStubState): Response {
 
   const posted = body as { agentName?: string; inboxHandle?: string } | undefined;
   const handle = posted?.inboxHandle ?? 'atlas';
-  const name = posted?.agentName ?? 'Atlas';
-  state.agent = { agentId: 'agent_1', agentIdentifier: 'human-relay', name };
+  const name = posted?.agentName?.trim() || state.agent?.name || 'Atlas';
+  const operatorId = state.operator?.subscriberId ?? 'operator_1';
+  state.agent = { agentId: state.agent?.agentId ?? 'agent_1', agentIdentifier: 'human-relay', name };
   state.channels = [
     { integration: { providerId: 'agent-email-inbox', sharedInboundAddress: `${handle}@agentinbox.md` } },
   ];
-  state.operator = { subscriberId: 'operator_1' };
-  state.contactsById.operator_1 = {
-    id: 'operator_1',
+  state.operator = { subscriberId: operatorId };
+  state.contactsById[operatorId] = state.contactsById[operatorId] ?? {
+    id: operatorId,
     emailVerification: { address: 'ada@acme.co', status: 'unverified' },
   };
 
@@ -357,7 +369,8 @@ function answerContacts(
   method: string,
   contactPages: Record<string, { data: StubContact[]; next: string | null }>,
   contactsById: Record<string, StubContact>,
-  body?: unknown
+  body: unknown,
+  replacesVerifiedAddress: boolean
 ): Response | null {
   const path = dashboardPathOf(url);
   if (!path?.startsWith('/v1/contacts')) {
@@ -373,7 +386,13 @@ function answerContacts(
       };
     }
 
-    return reply({ data: { address: posted?.address ?? 'masked', requestedAt: 'now' } });
+    return reply({
+      data: {
+        address: posted?.address ?? 'masked',
+        requestedAt: 'now',
+        ...(replacesVerifiedAddress ? { replacesVerifiedAddress: true } : {}),
+      },
+    });
   }
 
   if (path === '/v1/contacts/invites' && method === 'POST') {
@@ -384,14 +403,43 @@ function answerContacts(
     return null;
   }
 
+  return answerContactGet(url, path, contactPages, contactsById);
+}
+
+function answerContactGet(
+  url: string,
+  path: string,
+  contactPages: Record<string, { data: StubContact[]; next: string | null }>,
+  contactsById: Record<string, StubContact>
+): Response {
   const id = path.slice('/v1/contacts/'.length);
   if (path.startsWith('/v1/contacts/') && id) {
-    const contact = contactsById[decodeURIComponent(id)];
+    return answerOneContact(contactsById[decodeURIComponent(id)]);
+  }
 
-    return contact ? reply({ data: contact }) : reply({ message: 'Contact not found' }, 404);
+  const subscriberId = new URL(url).searchParams.get('subscriberId');
+  if (subscriberId) {
+    const contact = contactsById[subscriberId];
+
+    return reply({ data: contact ? [contact] : [], next: null });
   }
 
   return reply(contactPages[new URL(url).searchParams.get('after') ?? ''] ?? { data: [], next: null });
+}
+
+/** The single-contact endpoint returns channels, not `emailVerification`. The list does. */
+function answerOneContact(contact: StubContact | undefined): Response {
+  if (!contact) {
+    return reply({ message: 'Contact not found' }, 404);
+  }
+
+  return reply({
+    data: {
+      id: contact.id,
+      ...(contact.email ? { email: contact.email } : {}),
+      ...(contact.channels ? { channels: contact.channels } : {}),
+    },
+  });
 }
 
 /**
@@ -430,6 +478,7 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
     operator: opts.operator === undefined ? { subscriberId: 'operator_1' } : opts.operator,
     inboxAddressCheck: opts.inboxAddressCheck,
     setupError: opts.setupError,
+    channelsError: opts.channelsError,
     contactsById,
   };
 
@@ -455,7 +504,7 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
         answerAuth(url, headers, opts.userEmail) ??
         answerSetup(url, method, body, setupState) ??
         answerInbox(url, method, inboxPage, inboxThread, inboxActionThread) ??
-        answerContacts(url, method, contactPages, contactsById, body) ??
+        answerContacts(url, method, contactPages, contactsById, body, opts.replacesVerifiedAddress === true) ??
         answerInteractions(url, method, body, interaction, createdInteraction) ??
         reply({ message: 'not stubbed' }, 500)
       );

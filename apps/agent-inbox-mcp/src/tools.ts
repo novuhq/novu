@@ -231,7 +231,7 @@ export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEm
     {
       title: 'Set up the agent inbox',
       description:
-        'Create the agent and its email inbox, or report how far setup got. Call with no arguments to see status and a suggested owner email. Ask the user for an agent name and address before creating; pass agent_name and handle together. Pass email only after the user confirms the address — a confirmation link goes out, and a later call with no arguments says whether they opened it. Once an agent exists, agent_name and handle are ignored so you cannot rename it or move its mailbox.',
+        'Create the agent and its email inbox, or report how far setup got. Call with no arguments to see status and a suggested owner email. Ask the user for an agent name and address before creating; pass agent_name and handle together. Pass email only after the user confirms the address — a confirmation link goes out, and a later call with no arguments says whether they opened it. A name never changes an existing agent, and a handle never moves an existing mailbox; pass handle alone to finish a mailbox that was not created. This tool does not replace an email that is already confirmed.',
       inputSchema: {
         agent_name: z
           .string()
@@ -258,7 +258,7 @@ export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEm
             "The owner's email to confirm. Confirm the suggested address from a no-argument call with the user before passing it."
           ),
       },
-      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     },
     (input) => run(() => inboxSetup(api, input, suggestedEmail))
   );
@@ -508,9 +508,12 @@ async function run(work: () => Promise<string>): Promise<ToolResult> {
   }
 }
 
-/** A missing relay agent looks like a 404 from the inbox APIs; point the AI at inbox_setup instead. */
-function mapSetupHint(error: AgentInboxApiError): string {
-  if (error.status === 404 && /agent|relay|not found|set up/i.test(error.message)) {
+/**
+ * A missing relay agent looks like a 404 that names the relay. Other 404s (a stale conversation, a contact,
+ * an interaction) stay as the API wrote them, so the AI can correct the id instead of creating an agent.
+ */
+export function mapSetupHint(error: AgentInboxApiError): string {
+  if (error.status === 404 && /no agent yet|relay agent/i.test(error.message)) {
     return NOT_SET_UP_HINT;
   }
 

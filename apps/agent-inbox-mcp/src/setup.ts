@@ -51,22 +51,22 @@ type SetupStatus = {
 
 /**
  * One idempotent call that reports how far setup got, creates the agent and its mailbox, and sends the
- * confirmation link for the owner's email. Name and handle are ignored once an agent exists, so a chatty
- * AI can never rename one or move its address.
+ * confirmation link for the owner's email. A name is never applied to an agent that already exists, and a
+ * handle never moves a mailbox that already exists. A missing mailbox can still be finished with a handle.
  */
 export async function inboxSetup(api: AgentInboxApi, input: InboxSetupInput, suggestedEmail?: string): Promise<string> {
-  const wantsCreate = input.agent_name !== undefined || input.handle !== undefined;
-  if (wantsCreate && (!input.agent_name?.trim() || !input.handle?.trim())) {
+  let status = await readSetupStatus(api);
+  const notes: string[] = [];
+  const wantsFields = input.agent_name !== undefined || input.handle !== undefined;
+
+  if (!status.agent && wantsFields && (!input.agent_name?.trim() || !input.handle?.trim())) {
     throw new AgentInboxApiError(
       400,
       'Creating an agent needs both agent_name and handle. Ask the user for a name and an address, then call again.'
     );
   }
 
-  let status = await readSetupStatus(api);
-  const notes: string[] = [];
-
-  if (wantsCreate) {
+  if (wantsFields) {
     const ensured = await ensureAgent(api, status, input, suggestedEmail);
     status = ensured.status;
     notes.push(...ensured.notes);
@@ -87,24 +87,62 @@ async function ensureAgent(
   input: InboxSetupInput,
   suggestedEmail?: string
 ): Promise<{ status: SetupStatus; notes: string[] }> {
-  if (status.agent) {
+  if (!status.agent) {
+    return {
+      status: await createAgent(
+        api,
+        input.agent_name?.trim() ?? '',
+        input.handle?.trim().toLowerCase() ?? '',
+        suggestedEmail
+      ),
+      notes: [],
+    };
+  }
+
+  if (status.inboxAddress) {
     return {
       status,
       notes: [
-        `This account already has an agent (${status.agent.name}${status.inboxAddress ? ` at ${status.inboxAddress}` : ''}). The name and handle you passed were ignored.`,
+        `This account already has an agent (${status.agent.name} at ${status.inboxAddress}). The name and handle you passed were ignored.`,
       ],
     };
   }
 
-  return {
-    status: await createAgent(
-      api,
-      input.agent_name?.trim() ?? '',
-      input.handle?.trim().toLowerCase() ?? '',
-      suggestedEmail
-    ),
-    notes: [],
-  };
+  return finishMailbox(api, status, input, suggestedEmail);
+}
+
+/** The agent was saved and the mailbox was not. A handle finishes it; a name is never written onto the agent. */
+async function finishMailbox(
+  api: AgentInboxApi,
+  status: SetupStatus,
+  input: InboxSetupInput,
+  suggestedEmail?: string
+): Promise<{ status: SetupStatus; notes: string[] }> {
+  const handle = input.handle?.trim().toLowerCase() ?? '';
+  if (!handle) {
+    return {
+      status,
+      notes: [
+        `This account already has an agent (${status.agent?.name ?? ''}), but its mailbox was not created. Pass handle to finish it. The name was ignored.`,
+      ],
+    };
+  }
+
+  if (!HANDLE_PATTERN.test(handle)) {
+    throw new AgentInboxApiError(
+      400,
+      'An address takes letters, digits and hyphens (up to 32 characters, starting and ending with a letter or digit).'
+    );
+  }
+
+  await assertHandleAvailable(api, handle, suggestedEmail);
+  await postSetup(api, {
+    operator: true,
+    inboxHandle: handle,
+    ...(suggestedEmail ? { email: suggestedEmail } : {}),
+  });
+
+  return { status: await readSetupStatus(api), notes: [] };
 }
 
 async function confirmOwnerEmail(
@@ -123,8 +161,15 @@ async function confirmOwnerEmail(
     );
   }
 
-  if (status.ownerEmail?.status === 'verified' && status.ownerEmail.address.toLowerCase() === email.toLowerCase()) {
-    return { status, notes: [`${email} is already confirmed. Agents can email the account owner there.`] };
+  if (status.ownerEmail?.status === 'verified') {
+    if (status.ownerEmail.address.toLowerCase() === email.toLowerCase()) {
+      return { status, notes: [`${email} is already confirmed. Agents can email the account owner there.`] };
+    }
+
+    throw new AgentInboxApiError(
+      409,
+      `${status.ownerEmail.address} is already confirmed. inbox_setup will not replace it. Change the owner's email on agentinbox.md.`
+    );
   }
 
   const note = await sendConfirmation(api, status.operatorId, email);
@@ -149,37 +194,51 @@ async function createAgent(
     );
   }
 
+  await assertHandleAvailable(api, handle, suggestedEmail);
+  await postSetup(api, {
+    operator: true,
+    agentName,
+    inboxHandle: handle,
+    ...(suggestedEmail ? { email: suggestedEmail } : {}),
+  });
+
+  return readSetupStatus(api);
+}
+
+async function assertHandleAvailable(api: AgentInboxApi, handle: string, suggestedEmail?: string): Promise<void> {
   const check = await api.get<AddressCheck>('/v1/inbox-address', {
     handle,
     ...(suggestedEmail ? { email: suggestedEmail } : {}),
   });
-  if (!check.available) {
-    const suggestion = check.suggestion
-      ? ` Try "${check.suggestion}" (it becomes ${check.suggestion}@${check.domain}).`
-      : '';
-
-    throw new AgentInboxApiError(
-      409,
-      `${handle} is taken.${suggestion} Ask the user for another address and call inbox_setup again.`,
-      'inbox_address_taken',
-      check.suggestion
-    );
+  if (check.available) {
+    return;
   }
 
+  const suggestion = check.suggestion
+    ? ` Try "${check.suggestion}" (it becomes ${check.suggestion}@${check.domain}).`
+    : '';
+
+  throw new AgentInboxApiError(
+    409,
+    `${handle} is taken.${suggestion} Ask the user for another address and call inbox_setup again.`,
+    'inbox_address_taken',
+    check.suggestion
+  );
+}
+
+async function postSetup(
+  api: AgentInboxApi,
+  body: { operator: true; agentName?: string; inboxHandle: string; email?: string }
+): Promise<void> {
   try {
-    await api.post('/v1/setup', {
-      operator: true,
-      agentName,
-      inboxHandle: handle,
-      ...(suggestedEmail ? { email: suggestedEmail } : {}),
-    });
+    await api.post('/v1/setup', body);
   } catch (error) {
     if (error instanceof AgentInboxApiError && error.code === 'inbox_address_taken') {
       const suggestion = error.suggestion ? ` Try "${error.suggestion}".` : '';
 
       throw new AgentInboxApiError(
         409,
-        `${handle} is taken.${suggestion} Ask the user for another address and call inbox_setup again.`,
+        `${body.inboxHandle} is taken.${suggestion} Ask the user for another address and call inbox_setup again.`,
         error.code,
         error.suggestion
       );
@@ -187,21 +246,22 @@ async function createAgent(
 
     throw error;
   }
-
-  return readSetupStatus(api);
 }
 
 async function sendConfirmation(api: AgentInboxApi, operatorId: string, email: string): Promise<string> {
-  const sent = await api.post<{ address: string; expiresAt?: string }>('/v1/contacts/verifications', {
+  const sent = await api.post<{ address?: string; replacesVerifiedAddress?: boolean }>('/v1/contacts/verifications', {
     subscriberId: operatorId,
     via: 'email',
     address: email,
   });
+  const delivery = sent.replacesVerifiedAddress
+    ? 'The address already confirmed still receives email until they open the new link.'
+    : 'Until then, inbox_send with no to cannot email them by contact id.';
 
   return [
     `A confirmation link was sent to ${sent.address ?? email}.`,
     'Tell the user to open it, then call inbox_setup with no arguments to check whether it is confirmed.',
-    'Until then, inbox_send with no to cannot email them by contact id.',
+    delivery,
   ].join(' ');
 }
 
@@ -219,25 +279,54 @@ async function readSetupStatus(api: AgentInboxApi): Promise<SetupStatus> {
   }
 
   const [channels, operator] = await Promise.all([
-    api.get<ChannelLink[]>('/v1/channels', { limit: 100 }).catch(() => [] as ChannelLink[]),
-    api.get<{ subscriberId?: string }>('/v1/operator').catch(() => null),
+    readIfMissing(api.get<unknown>('/v1/channels', { limit: 100 }), [] as unknown),
+    readIfMissing(api.get<{ subscriberId?: string }>('/v1/operator'), null),
   ]);
 
-  const links = Array.isArray(channels) ? channels : [];
+  const links = Array.isArray(channels) ? (channels as ChannelLink[]) : [];
   const inboxAddress =
     links.find((link) => link.integration?.providerId === 'agent-email-inbox')?.integration?.sharedInboundAddress ??
     null;
   const operatorId = operator?.subscriberId ?? null;
-  const contact = operatorId
-    ? await api.get<ContactInfo>(`/v1/contacts/${encodeURIComponent(operatorId)}`).catch(() => null)
-    : null;
-  const verification = contact?.emailVerification;
-  const ownerEmail =
-    verification?.address && verification.status
-      ? { address: verification.address, status: verification.status }
-      : null;
+  const ownerEmail = operatorId ? await readOwnerEmail(api, operatorId) : null;
 
   return { agent, inboxAddress, operatorId, ownerEmail };
+}
+
+/**
+ * A missing resource is empty data. Anything else (a timeout, a 500) is the caller's problem to see,
+ * so a status report does not pretend the inbox or the owner is simply absent.
+ */
+async function readIfMissing<T>(request: Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await request;
+  } catch (error) {
+    if (error instanceof AgentInboxApiError && error.status === 404) {
+      return fallback;
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * The single-contact endpoint returns channel rows, and those mask the address. The list endpoint is
+ * what returns `emailVerification` with the real address, which is what "already confirmed" has to compare.
+ */
+async function readOwnerEmail(
+  api: AgentInboxApi,
+  operatorId: string
+): Promise<{ address: string; status: 'unverified' | 'pending' | 'verified' } | null> {
+  const page = await readIfMissing(
+    api.getRaw<{ data?: ContactInfo[] }>('/v1/contacts', { subscriberId: operatorId, limit: 1 }),
+    null
+  );
+  const verification = page?.data?.find((contact) => contact.id === operatorId)?.emailVerification;
+  if (!verification?.address || !verification.status) {
+    return null;
+  }
+
+  return { address: verification.address, status: verification.status };
 }
 
 function formatStatus(status: SetupStatus, suggestedEmail?: string): string {
@@ -257,7 +346,7 @@ function formatStatus(status: SetupStatus, suggestedEmail?: string): string {
     `Agent: ${status.agent.name}`,
     status.inboxAddress
       ? `Inbox: ${status.inboxAddress}`
-      : 'Inbox: not provisioned yet. Call inbox_setup again, or open agentinbox.md.',
+      : 'Inbox: not provisioned yet. Call inbox_setup with handle to finish the mailbox.',
   ];
 
   if (!status.ownerEmail) {

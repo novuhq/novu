@@ -69,7 +69,10 @@ call it again with `after` before you decide someone isn't there.
 If tools say the account is not set up yet, call `inbox_setup`: ask the user
 for an agent name and inbox address, create with `agent_name` and `handle`,
 then confirm their email with them and pass `email` so a confirmation link
-goes out. A later call with no arguments says whether they opened it.
+goes out. A later call with no arguments says whether they opened it. A name
+never changes an existing agent, and a handle only finishes a mailbox that is
+missing. An email that is already confirmed is changed on agentinbox.md, not
+from this tool.
 `login`, `connect`, `channel` and `skill` have no tool: the operator does
 those on agentinbox.md or with the CLI. `contact_invite` only makes a link;
 to reach someone by email, put their address in `to`. As with the CLI, a new
