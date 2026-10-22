@@ -9,6 +9,8 @@ export type CopyButtonProps = {
   copiedLabel?: string;
   successMessage?: string;
   errorMessage?: string;
+  /** When copying fails, also show `text` to select by hand: for text the page doesn't show, such as a prompt. */
+  showTextOnError?: boolean;
   className?: string;
 };
 export function CopyButton({
@@ -17,6 +19,7 @@ export function CopyButton({
   copiedLabel = 'Copied',
   successMessage = 'Copied to clipboard',
   errorMessage = "Couldn't copy. Select the text and copy it manually.",
+  showTextOnError = false,
   className,
 }: CopyButtonProps) {
   const { state, copy } = useClipboard(text);
@@ -35,9 +38,16 @@ export function CopyButton({
       <p
         role="status"
         aria-live="polite"
-        className={state === 'error' ? 'mt-2 text-sm text-sapien-foreground/70' : 'sr-only'}
+        // Takes its row's whole width without widening it: under a row of buttons, it wraps onto a line of its own.
+        className={state === 'error' ? 'mt-2 w-0 min-w-full text-sm text-sapien-foreground/70' : 'sr-only'}
       >
         {state === 'error' ? errorMessage : state === 'success' ? successMessage : ''}
+        {/* Opaque and above its neighbours: in the hero it lies over the illustration. */}
+        {state === 'error' && showTextOnError ? (
+          <span className="relative z-20 mt-2 block rounded-md border border-border bg-sapien-background p-3 text-left font-mono text-sapien-foreground select-all">
+            {text}
+          </span>
+        ) : null}
       </p>
     </>
   );

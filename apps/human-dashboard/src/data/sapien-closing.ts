@@ -51,3 +51,5 @@ export const CLOSING_PROMPT =
   'Set up an agentinbox inbox for yourself: ask me for my name and email, run `npx @agentinbox/cli setup --name "<my name>" --email <my email>`, then tell me your new address.';
 // Draft copy — not in Figma
 export const CLOSING_PROMPT_SUCCESS_MESSAGE = 'Prompt copied to clipboard';
+// Draft copy — not in Figma. The prompt follows it, as the page shows it nowhere else.
+export const CLOSING_PROMPT_ERROR_MESSAGE = "Couldn't copy. Select the prompt and copy it:";

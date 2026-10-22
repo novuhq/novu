@@ -49,6 +49,7 @@ const MCP_SERVER_CONFIG = `{
   }
 }`;
 
+// Each snippet works when copied onto a fresh computer: a send without `--to` reaches the person who ran setup.
 export const INTEGRATIONS: readonly Integration[] = [
   {
     id: 'cli',
@@ -62,7 +63,7 @@ export const INTEGRATIONS: readonly Integration[] = [
         `${CLI} inbox list --filter unread`,
         // Single quotes: in double ones the shell would read `$2` as a variable.
         `${CLI} inbox send approve \\`,
-        `    'Refund $240?' --to maya`,
+        `    'Refund $240?'`,
       ],
     },
   },
@@ -96,7 +97,7 @@ export const INTEGRATIONS: readonly Integration[] = [
         '',
         `${CLI} channel add slack`,
         `${CLI} inbox send ask \\`,
-        '    "Post the launch thread?" --to maya',
+        '    "Post the launch thread?"',
       ],
     },
   },
@@ -112,7 +113,7 @@ export const INTEGRATIONS: readonly Integration[] = [
         `${CLI} channel add telegram`,
         `${CLI} inbox send choose \\`,
         '    "Friday or Monday?" --option Friday \\',
-        '    --option Monday --to maya',
+        '    --option Monday',
       ],
     },
   },
@@ -127,7 +128,7 @@ export const INTEGRATIONS: readonly Integration[] = [
         '',
         `${CLI} channel add slack`,
         `${CLI} inbox send \\`,
-        '    "Nightly backup finished" --to maya',
+        '    "Nightly backup finished"',
       ],
     },
   },
@@ -140,9 +141,11 @@ export const INTEGRATIONS: readonly Integration[] = [
       lines: [
         `${CLI} setup --agent-name Dots`,
         '',
+        // Outbound email starts once the setup is in an account.
+        `${CLI} login`,
         `${CLI} channel add email`,
         `${CLI} inbox send approve \\`,
-        '    "Send the Q3 invoice?" --to maya',
+        '    "Send the Q3 invoice?"',
       ],
     },
   },

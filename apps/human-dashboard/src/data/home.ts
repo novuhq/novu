@@ -64,8 +64,9 @@ export const HOME_CONTACTS_DESCRIPTION =
 export const HOME_AUTH = {
   commands: ['login', 'connect', 'setup'],
   file: '~/.agentinbox/config.json',
+  // A send needs someone to reach: without a saved setup, that is INBOX_TO or `--to`.
   alternative:
-    'In containers and CI, set INBOX_SECRET_KEY instead (and optionally INBOX_TO, INBOX_VIA, INBOX_API_URL).',
+    'In containers and CI, set INBOX_SECRET_KEY and INBOX_TO instead (or pass --to on every send), and optionally INBOX_VIA and INBOX_API_URL.',
 } as const;
 
 export const HOME_EXIT_CODES = [

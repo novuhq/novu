@@ -7,6 +7,7 @@ import {
   CLOSING_DESCRIPTION,
   CLOSING_HEADING,
   CLOSING_PROMPT,
+  CLOSING_PROMPT_ERROR_MESSAGE,
   CLOSING_PROMPT_LABEL,
   CLOSING_PROMPT_SUCCESS_MESSAGE,
 } from '@/data/sapien-closing';
@@ -27,7 +28,7 @@ export function Closing() {
   return (
     <SectionFrame
       anchor="get-started"
-      className="px-2.5 pt-22 pb-2.5 sm:px-4 sm:pt-20 sm:pb-[595px] md:px-8 lg:h-135 lg:pt-[137px] lg:pb-0"
+      className="px-2.5 pt-22 pb-2.5 sm:px-4 sm:pt-20 sm:pb-[595px] md:px-8 lg:min-h-135 lg:pt-[137px] lg:pb-0"
     >
       <div className="relative z-10 w-full sm:max-w-87.75">
         <h2 className="text-[36px] leading-[1.125] tracking-[-0.04em] sm:text-[40px]">
@@ -47,6 +48,8 @@ export function Closing() {
             <CopyButton
               text={CLOSING_PROMPT}
               successMessage={CLOSING_PROMPT_SUCCESS_MESSAGE}
+              errorMessage={CLOSING_PROMPT_ERROR_MESSAGE}
+              showTextOnError
               className="flex h-10 w-full items-center justify-center rounded-lg bg-sapien-surface p-2 text-[15px] leading-none font-medium tracking-tight text-white hover:bg-sapien-raised"
             >
               {CLOSING_PROMPT_LABEL}

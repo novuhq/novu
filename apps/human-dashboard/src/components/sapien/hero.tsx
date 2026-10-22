@@ -1,7 +1,12 @@
 import { CopyButton } from '@/components/sapien/copy-button';
 import { CopyCommand } from '@/components/sapien/copy-command';
 import { SETUP_COMMAND } from '@/data/sapien';
-import { CLOSING_PROMPT, CLOSING_PROMPT_LABEL, CLOSING_PROMPT_SUCCESS_MESSAGE } from '@/data/sapien-closing';
+import {
+  CLOSING_PROMPT,
+  CLOSING_PROMPT_ERROR_MESSAGE,
+  CLOSING_PROMPT_LABEL,
+  CLOSING_PROMPT_SUCCESS_MESSAGE,
+} from '@/data/sapien-closing';
 import {
   HERO_CARD_INTERVAL,
   HERO_COMMAND_LABEL,
@@ -88,22 +93,23 @@ export function Hero() {
               <br className="max-sm:hidden" /> {HERO_DESCRIPTION[1]}
             </p>
           </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          {/* Wraps so a failed prompt copy can show the prompt on a line of its own, under both. */}
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
             <CopyCommand
               command={SETUP_COMMAND}
               label={HERO_COMMAND_LABEL}
               variant="icon"
               className="w-full text-left sm:w-[283px]"
             />
-            <div className="flex flex-col">
-              <CopyButton
-                text={CLOSING_PROMPT}
-                successMessage={CLOSING_PROMPT_SUCCESS_MESSAGE}
-                className="h-10 w-full rounded-lg bg-border px-6 text-[15px] leading-none font-medium tracking-tight text-sapien-foreground hover:bg-sapien-surface sm:w-[139px]"
-              >
-                {CLOSING_PROMPT_LABEL}
-              </CopyButton>
-            </div>
+            <CopyButton
+              text={CLOSING_PROMPT}
+              successMessage={CLOSING_PROMPT_SUCCESS_MESSAGE}
+              errorMessage={CLOSING_PROMPT_ERROR_MESSAGE}
+              showTextOnError
+              className="h-10 w-full rounded-lg bg-border px-6 text-[15px] leading-none font-medium tracking-tight text-sapien-foreground hover:bg-sapien-surface sm:w-[139px]"
+            >
+              {CLOSING_PROMPT_LABEL}
+            </CopyButton>
           </div>
         </div>
         <HeroStage

@@ -114,7 +114,7 @@ test('copy commands copies the selected snippet without prompts', async ({ page 
       'npx @agentinbox/cli channel add telegram',
       'npx @agentinbox/cli inbox list --filter unread',
       'npx @agentinbox/cli inbox send approve \\',
-      "    'Refund $240?' --to maya",
+      "    'Refund $240?'",
     ].join('\n')
   );
   await expect(section.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
