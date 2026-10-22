@@ -1,12 +1,15 @@
 # @novu/human-dashboard
 
-Next.js app for [agentinbox.md](https://agentinbox.md): the landing page, the instructions agents read, the pages
-people open from [`@agentinbox/cli`](../../packages/agentinbox)'s links, Agent Inbox accounts with their dashboard,
-and the Agent Inbox API (`/api`).
+Next.js app for [agentinbox.md](https://agentinbox.md): the website (a page for agents and one for people), the
+instructions agents read, the pages people open from [`@agentinbox/cli`](../../packages/agentinbox)'s links, Agent
+Inbox accounts with their dashboard, and the Agent Inbox API (`/api`).
 
 | Route             | What it is                                                                                  |
 | ----------------- | ------------------------------------------------------------------------------------------- |
-| `/`               | The landing page: what Agent Inbox does, in a few terminal sessions, under the dithered Creation of Adam. |
+| `/`               | The page for agents ("for robots"): the CLI on one page of light paper, from install to exit codes and flags, beside a dithered robot arm. People go on to `/sapien`. See [the ADR](../../packages/agentinbox/docs/adr/0002-agentinbox-md-root-is-the-page-for-agents.md). |
+| `/sapien`         | The page for people: what Agent Inbox does, with the setup command, a prompt to copy, and a "sign in" link into the dashboard. |
+| `/index.md`, `/llms.txt` | `/` as Markdown, made from the same data, and the index that points language models to it and to `/agents.md`. |
+| `/robots.txt`, `/sitemap.xml` | For search engines: the two website pages, at `https://www.agentinbox.md` (`SITE_ORIGIN` in `src/lib/seo.ts`). Until launch they stay out of search results: the pages, `/index.md` and `/llms.txt` say `noindex`, the sitemap is empty and robots.txt doesn't point to it. `SITE_INDEXED` in `src/lib/seo.ts` turns that off. Preview deployments always send `noindex`. |
 | `/agents.md`      | What agents read, in Markdown: how to connect with the prompt's commands, then the agent-inbox skill as the CLI ships it (`SKILL.md` in `packages/agentinbox`, read at build time). The connect prompt links to it. |
 | `/p/[handle]`     | An agent's public card: anyone with the link sees the agent and every way to reach it, without signing in. `opengraph-image` is the picture apps show where the link is shared. |
 | `/invite/[token]` | Opened from a `contact invite` link. The person picks which of the agent's channels (Email, Telegram, Slack) it may reach them on, and their default. |
@@ -28,6 +31,20 @@ Each Agent Inbox account has a backing organization, which the API creates throu
 `/v1/human/accounts` endpoints. See
 [the ADR](../../packages/agentinbox/docs/adr/0001-separate-clerk-app-with-backing-organizations.md) and the
 [Agent Inbox glossary](../../packages/agentinbox/CONTEXT.md).
+
+## Website
+
+`/` and `/sapien` came over from the `novuhq/human-website` repo as they were designed (Figma file "Human.md", frames
+`256:3424` and `874:9900`). Each section keeps its words and pictures in a data file, `src/data/home.ts` for `/` and
+`src/data/sapien-*.ts` for `/sapien`; copy that Figma doesn't show is marked `// Draft copy — not in Figma`.
+
+Both pages show the CLI's commands as text written by hand. When a command, flag or exit code changes, change
+`src/data/home.ts` (also `/index.md`), the examples in `src/data/sapien-building-blocks.ts` and
+`src/data/sapien-integrations.ts`, and the prompt in `src/data/sapien-closing.ts`.
+
+`/sapien` has its own black, text and surface colours (`--color-sapien-*` in `src/styles/globals.css`) and its own
+faces, Inter and IvyPresto (`src/lib/sapien-fonts.ts`); `/` styles itself in `src/styles/home.css` with Geist Mono.
+Neither changes how the dashboard looks. The dither effect on `/` is vendored (`src/vendor/interactive-dither`, MIT).
 
 ## Onboarding
 
@@ -131,4 +148,12 @@ token, and nothing about the operator besides that id. Its calls to the API say 
 pnpm --filter @novu/human-dashboard typecheck
 pnpm --filter @novu/human-dashboard build
 pnpm exec biome check apps/human-dashboard
+```
+
+The website's browser tests (`tests/`, Playwright) build the app and serve it on port 3102, so they can run beside
+`pnpm start`. They aren't part of CI yet. Install their browser once:
+
+```sh
+pnpm --filter @novu/human-dashboard exec playwright install chromium
+pnpm --filter @novu/human-dashboard test:e2e
 ```
