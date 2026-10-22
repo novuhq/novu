@@ -9,7 +9,6 @@
     "dark": "#ff5c30"
   },
   "fonts": {
-    "family": "Geist",
     "heading": {
       "family": "Geist",
       "weight": 500
@@ -18,10 +17,6 @@
       "family": "Geist",
       "weight": 400
     }
-  },
-  "appearance": {
-    "default": "dark",
-    "strict": true
   },
   "background": {
     "color": {
