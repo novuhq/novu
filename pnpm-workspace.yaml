@@ -16,10 +16,6 @@ packages:
 # Pnpm configuration
 # Wait 3 days (4320 minutes) before allowing packages to be installed
 minimumReleaseAge: 4320
-# Workaround for pnpm v11.0.4+: the new `minimumReleaseAgeStrict: true` default
-# raises spurious ERR_PNPM_MISSING_TIME errors during resolution
-# (see https://github.com/pnpm/pnpm/issues/11238). Falling back to non-strict
-# matches the pre-v11.0.4 behavior.
 minimumReleaseAgeStrict: true
 # First-party packages are published by us and consumed right away, so they skip the age gate.
 minimumReleaseAgeExclude:
