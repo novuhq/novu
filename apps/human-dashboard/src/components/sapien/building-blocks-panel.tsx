@@ -23,7 +23,7 @@ const scroller =
 
 function TerminalText({ lines }: { lines: readonly TerminalLine[] }) {
   return (
-    <code className="font-mono">
+    <code className="font-sapien-mono">
       {lines.map((line, lineIndex) => (
         <span key={lineIndex} className="block pl-[4ch] -indent-[4ch]">
           {line.map((token, tokenIndex) => (
@@ -76,13 +76,20 @@ function NotificationResponse({ response }: { response: NotificationCard['respon
 export function BuildingBlocksPanel({ example }: { example: BuildingBlockExample }) {
   const { card } = example;
   return (
-    <div className="grid gap-2 overflow-hidden rounded-[14px] bg-border/50 p-2 lg:h-88 lg:grid-cols-[minmax(0,1fr)_440px]">
+    <div className="grid gap-2 overflow-hidden rounded-[14px] bg-sapien-border/50 p-2 lg:h-88 lg:grid-cols-[minmax(0,1fr)_440px]">
       <div className="flex min-h-63 min-w-0 flex-col justify-between gap-8 p-4 sm:p-6 lg:min-h-0">
-        <pre className={cn(scroller, 'text-sm leading-[22px] tracking-[-0.01em] text-sapien-foreground')}>
+        <pre
+          className={cn(scroller, 'font-sapien-mono text-sm leading-[22px] tracking-[-0.01em] text-sapien-foreground')}
+        >
           <TerminalText lines={example.command} />
         </pre>
         <div className="border-t border-sapien-foreground/9 pt-4">
-          <pre className={cn(scroller, 'text-[13px] leading-[18px] tracking-[-0.03em] text-sapien-foreground/50')}>
+          <pre
+            className={cn(
+              scroller,
+              'font-sapien-mono text-[13px] leading-[18px] tracking-[-0.03em] text-sapien-foreground/50'
+            )}
+          >
             <TerminalText lines={[example.result]} />
           </pre>
         </div>
@@ -90,7 +97,7 @@ export function BuildingBlocksPanel({ example }: { example: BuildingBlockExample
       {/* Illustrative preview of what the human sees: the terminal already carries the content. */}
       <div
         aria-hidden="true"
-        className="relative flex h-84 items-center justify-center overflow-hidden rounded-[10px] border border-border bg-sapien-surface/40 px-4"
+        className="relative flex h-84 items-center justify-center overflow-hidden rounded-[10px] border border-sapien-border bg-sapien-surface/40 px-4"
       >
         {/* Figma's own 2x render of the rotated, stretched dither layer: resampling the raw
             fill in the browser loses the grey tones Figma's downsampling produces. */}
@@ -98,7 +105,7 @@ export function BuildingBlocksPanel({ example }: { example: BuildingBlockExample
           asset={assets.texture}
           className="absolute top-[-17px] left-[calc(50%-339px)] h-[493px] w-[803px] mix-blend-difference"
         />
-        <div className="relative mt-0.5 w-86 max-w-full rounded-[10px] border border-border bg-black p-4">
+        <div className="relative mt-0.5 w-86 max-w-full rounded-[10px] border border-sapien-border bg-black p-4">
           <div className="flex flex-col gap-1.5">
             <p className="flex items-baseline gap-1.5">
               <span className="text-[13px] leading-4 font-medium tracking-[-0.01em] text-sapien-foreground">

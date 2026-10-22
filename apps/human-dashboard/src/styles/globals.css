@@ -40,13 +40,15 @@
   --color-imessage: #34c759;
 
   /*
-   * The people page (`/sapien`), from the website's own Figma file: black, its own text and surfaces, set in
-   * Inter with IvyPresto for the accent words. It shares the accent, the border and Geist Mono.
+   * The people page (`/sapien`), from the website's own Figma file: black, its own text, border and surfaces,
+   * set in Inter with IvyPresto for the accent words and its own cut of Geist Mono. It shares the accent.
    */
   --font-sapien-sans: var(--font-inter), sans-serif;
   --font-sapien-display: var(--font-ivy-presto), serif;
+  --font-sapien-mono: var(--font-sapien-geist-mono), monospace;
   --color-sapien-background: #000000;
   --color-sapien-foreground: #eee5d8;
+  --color-sapien-border: #1f1d1b;
   --color-sapien-surface: #2a2724;
   --color-sapien-raised: #383633;
 
@@ -389,6 +391,11 @@
   /* The people page is black to its edges, past the end of a scroll too. */
   body:has(.sapien-page) {
     background-color: var(--color-sapien-background);
+  }
+
+  /* The rails between its sections (`section-rails`) draw in its border too. */
+  .sapien-page {
+    --color-border: var(--color-sapien-border);
   }
   button,
   a {

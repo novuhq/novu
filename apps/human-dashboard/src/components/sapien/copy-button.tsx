@@ -44,7 +44,7 @@ export function CopyButton({
         {state === 'error' ? errorMessage : state === 'success' ? successMessage : ''}
         {/* Opaque and above its neighbours: in the hero it lies over the illustration. */}
         {state === 'error' && showTextOnError ? (
-          <span className="relative z-20 mt-2 block rounded-md border border-border bg-sapien-background p-3 text-left font-mono text-sapien-foreground select-all">
+          <span className="relative z-20 mt-2 block rounded-md border border-sapien-border bg-sapien-background p-3 text-left font-sapien-mono text-sapien-foreground select-all">
             {text}
           </span>
         ) : null}

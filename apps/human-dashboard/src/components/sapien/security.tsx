@@ -10,7 +10,7 @@ import {
 
 import { SectionFrame } from './section-frame';
 
-const FILLER_CLASSES = 'w-4 shrink-0 bg-border shadow-[0px_4px_68px_0px_rgba(0,0,0,0.25)] md:w-8';
+const FILLER_CLASSES = 'w-4 shrink-0 bg-sapien-border shadow-[0px_4px_68px_0px_rgba(0,0,0,0.25)] md:w-8';
 
 export function Security() {
   return (
@@ -55,7 +55,7 @@ export function Security() {
           {SECURITY_BADGES.map((badge) => (
             <li
               key={badge.id}
-              className="relative flex h-32 items-start justify-center pt-6 before:pointer-events-none before:absolute before:-inset-[0.5px] before:border before:border-border md:h-40 md:pt-10"
+              className="relative flex h-32 items-start justify-center pt-6 before:pointer-events-none before:absolute before:-inset-[0.5px] before:border before:border-sapien-border md:h-40 md:pt-10"
             >
               <Image
                 src={badge.image.src}

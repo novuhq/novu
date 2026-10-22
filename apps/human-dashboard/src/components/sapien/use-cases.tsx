@@ -61,11 +61,11 @@ export function UseCases() {
         {USE_CASES_SECTION.titleEnd}
       </h2>
 
-      <ul className="mt-8 overflow-hidden rounded-xl border border-border md:mt-8.5">
+      <ul className="mt-8 overflow-hidden rounded-xl border border-sapien-border md:mt-8.5">
         {USE_CASES.map((useCase) => (
           <li
             key={useCase.title}
-            className="relative grid gap-3 border-border px-4 pt-5 pb-6 not-first:border-t even:bg-border/50 md:min-h-28 md:grid-cols-[254px_minmax(0,513px)] md:gap-0 md:pr-8 md:pb-5 md:pl-[33px] md:first:min-h-[111px] md:last:min-h-[111px]"
+            className="relative grid gap-3 border-sapien-border px-4 pt-5 pb-6 not-first:border-t even:bg-sapien-border/50 md:min-h-28 md:grid-cols-[254px_minmax(0,513px)] md:gap-0 md:pr-8 md:pb-5 md:pl-[33px] md:first:min-h-[111px] md:last:min-h-[111px]"
           >
             <span aria-hidden="true" className="absolute top-[19px] left-0 h-6 w-[3px] rounded-r-[1px] bg-accent" />
             <h3 className="text-2xl leading-none tracking-[-0.04em]">{useCase.title}</h3>
@@ -78,7 +78,7 @@ export function UseCases() {
 
       {/* Opaque equivalent of border/50 on black: the blend layers need an
           opaque backdrop inside this isolated group. */}
-      <div className="relative isolate mt-4 flex flex-col overflow-hidden rounded-[14px] bg-[color-mix(in_srgb,var(--color-border)_50%,black)] px-4 pt-6 pb-37.5 md:mt-8 md:block md:h-82 md:p-0">
+      <div className="relative isolate mt-4 flex flex-col overflow-hidden rounded-[14px] bg-[color-mix(in_srgb,var(--color-sapien-border)_50%,black)] px-4 pt-6 pb-37.5 md:mt-8 md:block md:h-82 md:p-0">
         <CharacterLayer className="mix-blend-lighten">
           <Artwork asset={assets.imgImageGen1} className="absolute top-11.5 left-1.75 h-113 w-[771px] object-cover" />
         </CharacterLayer>

@@ -308,7 +308,7 @@ export function HeroStage({
         </div>
       </div>
       <p className="sr-only">{description}</p>
-      <figcaption className="relative z-10 mx-1 mb-1 flex min-h-10 flex-wrap items-center justify-between gap-x-1.5 gap-y-2 rounded-md bg-black py-2 pr-3 pl-2 font-mono text-xs leading-none tracking-tight sm:mx-[9px] sm:mb-2 sm:min-h-[50px] sm:gap-x-3 sm:px-[18px] sm:py-0 sm:text-[13px]">
+      <figcaption className="relative z-10 mx-1 mb-1 flex min-h-10 flex-wrap items-center justify-between gap-x-1.5 gap-y-2 rounded-md bg-black py-2 pr-3 pl-2 font-sapien-mono text-xs leading-none tracking-tight sm:mx-[9px] sm:mb-2 sm:min-h-[50px] sm:gap-x-3 sm:px-[18px] sm:py-0 sm:text-[13px]">
         <button
           ref={toggleButton}
           type="button"
