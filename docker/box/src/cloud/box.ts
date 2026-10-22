@@ -496,7 +496,11 @@ export class Box extends DurableObject<HostEnv> {
   async #sleepSoon(): Promise<StateAnswer> {
     const storage = this.ctx.storage;
     const life = await this.#reconcile();
-    if (!this.#container.running) return { state: life.phase };
+    if (!this.#container.running) {
+      this.#cancelStart();
+
+      return { state: life.phase };
+    }
     await setLife(storage, withDown(life, downOf(life) ?? { tries: 1 }));
     if (life.phase !== 'saving') await alarmIn(storage, 1000);
 
@@ -531,7 +535,11 @@ export class Box extends DurableObject<HostEnv> {
   // it was.
   async #discard(): Promise<StateAnswer> {
     const life = await this.#reconcile();
-    if (!this.#container.running) return { state: life.phase };
+    if (!this.#container.running) {
+      this.#cancelStart();
+
+      return { state: life.phase };
+    }
     this.#stopUnsaved();
     await this.#container.destroy('discarded');
 
@@ -555,6 +563,12 @@ export class Box extends DurableObject<HostEnv> {
     });
 
     return { state: 'asleep', snapshot: id };
+  }
+
+  // Asked to stop while the watchdog stops a hung restore: it must not start the box again. Only the start: a save
+  // that is finishing (its container already stopped) must still record its snapshot.
+  #cancelStart(): void {
+    this.#starting = null;
   }
 
   // A save that runs stores nothing, and a stop doesn't count as a failed restore.
