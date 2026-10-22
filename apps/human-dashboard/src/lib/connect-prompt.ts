@@ -1,3 +1,5 @@
+import { INSTALL_SKILLS_COMMAND } from './onboarding';
+
 /** How people run the CLI (`CLI_COMMAND` in `packages/agentinbox`): through npx, with nothing installed first. */
 const CLI = 'npx @agentinbox/cli';
 
@@ -21,7 +23,7 @@ export type ConnectDetails = {
 export function connectCommands({ handle, code, apiUrl }: ConnectDetails) {
   return [
     { label: 'Connect:', command: `${CLI} connect ${handle} --code ${code} --yes --api-url=${apiUrl}` },
-    { label: 'Add the skill:', command: `${CLI} skill install` },
+    { label: 'Add the skills:', command: INSTALL_SKILLS_COMMAND },
     { label: 'Check it works:', command: `${CLI} inbox list` },
   ];
 }

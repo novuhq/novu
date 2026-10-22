@@ -85,4 +85,8 @@ export function setupCommand(name: string): string {
   return `${NPX_CLI} login && ${NPX_CLI} setup --agent-name ${quoted}`;
 }
 
-export const INSTALL_SKILLS_COMMAND = `${NPX_CLI} skill install`;
+/** The Agent Inbox skills live in their own repository on GitHub, not in the CLI. */
+export const SKILLS_REPO = 'agentinboxhq/skills';
+
+/** Installs the skills with the skills CLI, for the coding agents it finds in the project. */
+export const INSTALL_SKILLS_COMMAND = `npx skills add ${SKILLS_REPO}`;

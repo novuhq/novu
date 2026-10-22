@@ -1,20 +1,32 @@
 ---
 title: "Teach your coding agent"
-description: "Install the agent-inbox skill so Claude Code, Cursor, and other coding agents know when to use the inbox."
+description: "Install the Agent Inbox skills so Claude Code, Cursor, Codex, and other coding agents know when and how to use the inbox."
 ---
 
-The skill is an [agentskills.io](https://agentskills.io) `SKILL.md`. It tells a coding agent when to read the inbox, and when to send, reply, ask, approve, or choose.
+The skills are [agentskills.io](https://agentskills.io) `SKILL.md` files in their own repository, [agentinboxhq/skills](https://github.com/agentinboxhq/skills). They tell a coding agent when to read the inbox, when to send, reply, ask, approve, or choose, and how to set up the CLI and the MCP server.
 
-`setup` offers to install it at the end. You can install or reinstall it any time:
+`setup` ends by showing the command that installs them. Run it in the project your agent works in:
 
 ```bash
-npx @agentinbox/cli skill install
-npx @agentinbox/cli skill install --host claude cursor
+npx skills add agentinboxhq/skills
 ```
 
-`--host` accepts `claude`, `cursor`, `windsurf`, `copilot`, `gemini`, `roo`, `opencode`, `kiro`, and `agents`. The default detects which of those the project already has. `--cwd` picks the project directory. The default is the current directory.
+It installs every skill for the coding agents it finds in the project. `--agent claude-code` picks one agent, and `--skill agent-inbox` picks one skill. `npx skills update` gets the latest version later.
 
-Pass `--skill` or `--no-skill` to `setup` when there is no terminal to answer the prompt.
+agentinbox.md publishes the same skills, so `npx skills add https://www.agentinbox.md` installs them too.
+
+In Claude Code, they also install as a plugin:
+
+```text
+/plugin marketplace add agentinboxhq/skills
+/plugin install agent-inbox@agentinbox
+```
+
+| Skill | What it teaches |
+| --- | --- |
+| `agent-inbox` | Ask, approve, choose, and tell; read and answer conversations; reach other contacts |
+| `agent-inbox-cli` | Setup, login, connect, channels, CI and sandboxes, exit codes, and errors |
+| `agent-inbox-mcp` | Connecting Claude, ChatGPT, Cursor, and Claude Code to the MCP server |
 
 ## When the agent should use the inbox
 
@@ -38,6 +50,6 @@ npx @agentinbox/cli inbox send approve "Delete 342 stale records from prod?"
 
 The first one belongs in the chat. The second one belongs in the inbox.
 
-A chat app that already has the MCP tools does not need this file. The operator connects it on agentinbox.md. See [Connect a host](/connect).
+A chat app that already has the MCP tools does not need the skills. The operator connects it on agentinbox.md. See [Connect a host](/connect).
 
-The skill and these docs describe the same commands. When a command changes, both change.
+The skills and these docs describe the same commands. When a command changes, both change.

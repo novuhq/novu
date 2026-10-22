@@ -161,8 +161,8 @@ export interface SetupOptions {
   agentDescription?: string;
   /** A JPEG or PNG for your agent: a file on this computer or a web address. */
   agentPicture?: string;
-  /** Tri-state: undefined = ask (TTY) / skip (non-TTY); true/false = explicit `--skill`/`--no-skill`. */
-  skill?: boolean;
+  /** `false` leaves out the command that installs the skills, for `channel add`, which runs setup again. */
+  showSkills?: boolean;
 }
 
 /**

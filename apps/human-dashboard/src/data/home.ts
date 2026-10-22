@@ -112,6 +112,19 @@ function cli(command: string, ...rest: readonly CommandPart[]): readonly Command
 
 const SPACE: CommandPart = { text: ' ' };
 
+/**
+ * `npx skills add agentinboxhq/skills`: the skills live in their own repository, so the skills CLI installs
+ * them. Coloured like the CLI's commands: the package and the repository orange, the command purple.
+ */
+const SKILLS_ADD: readonly CommandPart[] = [
+  { text: 'npx ' },
+  { text: 'skills', color: 'orange' },
+  SPACE,
+  { text: 'add', color: 'purple' },
+  SPACE,
+  { text: 'agentinboxhq/skills', color: 'orange' },
+];
+
 /** A message in double quotes, in blue. */
 function quoted(message: string): CommandPart {
   return { text: `"${message}"`, color: 'blue' };
@@ -122,7 +135,7 @@ export const HOME_SETUP: readonly HomeCommand[] = [
   { parts: cli('channel add telegram') },
   { parts: cli('channel add slack') },
   { parts: cli('login'), note: '# keep it in your account' },
-  { parts: cli('skill install'), note: '# teach your coding agent' },
+  { parts: SKILLS_ADD, note: '# teach your coding agent' },
 ];
 
 export const HOME_USAGE: readonly HomeCommand[] = [
