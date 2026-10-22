@@ -13,12 +13,19 @@ const WRANGLER = join(HERE, 'node_modules/.bin/wrangler');
 const IMAGE_CONFIG = join(HERE, '.wrangler.box-image.json');
 const HostConfig = z.looseObject({ containers: z.array(z.looseObject({})) });
 const SecretList = z.array(z.object({ name: z.string() }));
-const HOST_ONLY_SECRETS = ['GITHUB_READ_TOKEN', 'SLACK_BOT_TOKEN', 'SLACK_SIGNING_SECRET', 'TESTERARMY_API_KEY'];
+const HOST_ONLY_SECRETS = [
+  'GITHUB_READ_TOKEN',
+  'SLACK_BOT_TOKEN',
+  'SLACK_SIGNING_SECRET',
+  'TESTERARMY_API_KEY',
+  'CURSOR_BOX_TOKEN',
+];
 const OPTIONAL_SECRETS = new Set<string>([
   'NOVU_MANAGED_CLAUDE_API_KEY',
   'BULL_MQ_PRO_NPM_TOKEN',
   'NX_CLOUD_ACCESS_TOKEN',
   'TESTERARMY_API_KEY',
+  'CURSOR_BOX_TOKEN',
 ]);
 
 function missingSecrets(names: ReadonlyArray<string>): { required: Array<string>; optional: Array<string> } {

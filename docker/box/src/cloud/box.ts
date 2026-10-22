@@ -132,13 +132,13 @@ export class Box extends DurableObject<HostEnv> {
       case 'POST /__box/adopt':
         return json(await this.#adopt(url, origin));
       case 'POST /__box/up':
-        return this.#unlessSaving(request, async () => json(await this.#up(request, url, origin)));
+        return this.#unlessSaving(request, async () => json(await this.#up(url, origin)));
       // The body is read before the save check: reading it lets the alarm in, which may begin a save.
       case 'POST /__box/exec': {
         const body = await execBody(request);
         if (body instanceof Response) return body;
 
-        return this.#whenRunning(request, () => execAnswer(this.#shell, request, body, this.env));
+        return this.#whenRunning(request, () => execAnswer(this.#shell, body, this.env));
       }
       case 'PUT /__box/file': {
         const bytes = await request.bytes();
@@ -265,7 +265,7 @@ export class Box extends DurableObject<HostEnv> {
     }
   }
 
-  async #up(request: Request, url: URL, origin: string): Promise<StateAnswer> {
+  async #up(url: URL, origin: string): Promise<StateAnswer> {
     await this.ctx.storage.put('origin', origin);
     const life = await checkBake(this.#shell, this.ctx.storage, await this.#reconcile());
     if (this.#container.running) return { state: life.phase };
@@ -277,7 +277,7 @@ export class Box extends DurableObject<HostEnv> {
       return { state: 'waking' };
     }
     const ref = url.searchParams.get('ref') ?? 'next';
-    const github = readToken(request, this.env);
+    const github = readToken(this.env);
     const image = this.#container.images.box;
     if (!image) throw new Error(`${HOST} was deployed without the box image`);
     await this.#start({ image }, ['tini', '--', 'sleep', 'infinity']);

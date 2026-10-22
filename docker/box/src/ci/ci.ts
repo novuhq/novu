@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 import * as z from 'zod';
 import { type CloudTarget, cloudTarget } from '../cli/cloud.ts';
-import { githubToken, hostBoxes } from '../cli/cloud-http.ts';
+import { hostBoxes, hubToken } from '../cli/cloud-http.ts';
 import { runCommand } from '../node/commands.ts';
 import { fetchJson, HttpError } from '../node/http.ts';
 import { log, main } from '../node/main.ts';
@@ -60,7 +60,7 @@ let oidc: { readonly value: string; readonly exp: number } | undefined;
 
 async function boxToken(): Promise<string> {
   const { ACTIONS_ID_TOKEN_REQUEST_URL: url, ACTIONS_ID_TOKEN_REQUEST_TOKEN: requestToken = '' } = process.env;
-  if (!url) return githubToken();
+  if (!url) return hubToken();
   if (oidc && oidc.exp - 60 > Date.now() / 1000) return oidc.value;
   const { value } = await fetchJson(`${url}&audience=${OIDC_AUDIENCE}`, OidcToken, {
     headers: { Authorization: `Bearer ${requestToken}` },

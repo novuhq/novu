@@ -18,7 +18,7 @@ export async function users(request: Request, env: HostEnv, url: URL): Promise<R
 }
 
 async function route(request: Request, env: HostEnv, url: URL): Promise<Response> {
-  if (!(await authorize(request))) return text("needs the same Authorization as a box's /__box/*\n", 401);
+  if (!(await authorize(request, env))) return text("needs the same Authorization as a box's /__box/*\n", 401);
   const name = decodeURIComponent(url.pathname.slice('/__box/users/'.length));
   if (request.method === 'GET' && !name) return list(env, Number(url.searchParams.get('limit') ?? PRUNE_AT));
   if (request.method === 'POST' && name) return create(env, name);

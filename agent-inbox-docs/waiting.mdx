@@ -1,0 +1,66 @@
+---
+title: "Waiting for an answer"
+description: "How the CLI blocks on a question, and how MCP waits again with inbox_wait."
+---
+
+`ask`, `approve`, and `choose` need an answer before the agent continues. The CLI can wait inside the command. A tool call cannot wait that long, so MCP waits in short steps.
+
+## CLI
+
+The command blocks until the person answers, the question expires, or `--timeout` elapses. Stdout stays the answer. The wait itself is printed on stderr.
+
+```bash
+npx @agentinbox/cli inbox send approve "Deploy to production?" --timeout 10m
+npx @agentinbox/cli inbox send approve "Deploy to production?" --async
+```
+
+`--timeout 10m` exits `11`. The question stays open until its `--ttl`, and the answer shows up in the conversation (`inbox show`). `--async` returns at once. There is no second command to wait again. Look at the conversation when you are ready.
+
+```bash
+if npx @agentinbox/cli inbox send approve "Deploy to production?"; then
+  echo "approved, proceeding"
+else
+  code=$?
+  if [ "$code" -eq 10 ]; then echo "denied, stopping"; exit 1; fi
+  if [ "$code" -eq 11 ]; then echo "no answer yet"; fi
+fi
+```
+
+`inbox list --wait` blocks until a conversation matches the filters. Add `--timeout`. When it runs out, the command prints an empty page and exits `11`. `--wait` alone waits until one matches.
+
+## MCP
+
+`inbox_send` and `inbox_reply` wait up to 45 seconds by default, and never longer than 50 seconds in one call (`wait_seconds`). If nobody has answered, the result says the request is still open and includes its id. Call `inbox_wait` with that id, and call it again for as long as the result says the same. Do not go ahead without the answer.
+
+`inbox_list` takes `wait_seconds`, at most 25. The default is 0, so it returns immediately.
+
+There are no exit codes. Trust the words in the result:
+
+| Result | What to do |
+| --- | --- |
+| `Approved`, `Answered`, `Delivered` | Continue |
+| `Denied` | Stop. The result says not to go ahead |
+| `expired`, `canceled` | Treat it as not approved |
+| `The request is still open` | Call `inbox_wait` with the id |
+
+## The same idea, two shapes
+
+| | CLI | MCP |
+| --- | --- | --- |
+| Wait on a question | The send blocks | `wait_seconds`, then `inbox_wait` |
+| Give up waiting | `--timeout`, exit `11` | Stop calling `inbox_wait` |
+| Do not wait | `--async` | Leave `kind` unset for a plain message, or `wait_seconds: 0` |
+| Wait for new mail | `inbox list --wait --timeout` | `inbox_list` with `wait_seconds` (max 25) |
+| Question lifetime | `--ttl 2h` | `ttl_seconds: 7200` |
+
+Use a short timeout inside a larger job. Use `--async` when there is other work to do. On MCP, loop on `inbox_wait`.
+
+## Paused
+
+The operator can pause the agent on agentinbox.md. Messages keep arriving and wait. Until they resume it, every command that reads the inbox or sends exits `1`, and every MCP tool returns an error:
+
+```text
+This agent is paused: it can’t read its inbox or send until its operator resumes it on agentinbox.md. Messages people send meanwhile wait in the inbox.
+```
+
+Stop retrying. The pause is deliberate. See [Who can reach the agent](/permissions).

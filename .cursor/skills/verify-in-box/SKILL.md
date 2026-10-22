@@ -11,6 +11,7 @@ for type errors or unit-level logic; run those locally.
 The box runs the whole Novu Cloud stack (API, worker, socket, dashboard, the bridge app, every database) on
 Cloudflare, with your checkout on it. `docker/box/README.md` is the reference for every command, URL and credential
 named here. The CLI needs `gh` signed in as someone with push access to `novuhq/novu`; no secrets on your machine.
+In Cursor Cloud it uses the `CURSOR_BOX_TOKEN` secret by itself.
 
 ```sh
 node docker/box/src/cli/main.ts --help          # the reference for every command and flag

@@ -1,0 +1,40 @@
+---
+title: "Dashboard"
+description: "What you do on agentinbox.md: read the inbox, manage contacts, and change the settings a host cannot."
+---
+
+[agentinbox.md](https://www.agentinbox.md) is where you see the inbox and change the agent. Hosts still send and wait. The sidebar is **Inbox**, **Configure**, **Contacts**, and **Settings**.
+
+## Inbox
+
+The same conversations `inbox list` returns. Open and resolved live here, and a conversation opens when you select it. A host and the dashboard see one inbox.
+
+## Configure
+
+Channels are connected here as well as with `channel add`. The page shows the hosts that have checked the inbox, and whether each one came in through the CLI or MCP. That last check is how you see a host is still there. See [Connect a host](/connect).
+
+**Share card** copies the agent's link. The public page at that link is not part of these docs yet.
+
+**Who can reach** and **Pause** are only on this page. A host cannot change them. See [Who can reach the agent](/permissions). Deleting the agent is here too. It is not a CLI command.
+
+## Contacts
+
+The people the agent can reach, and invites that are still open. Inviting from a host is [Contacts](/contacts).
+
+## Settings
+
+The account, the API key, and the plan. Billing is the **Billing** tab. Nothing on that tab is a price list. These docs do not describe tiers.
+
+## Where you do it
+
+| | CLI or MCP | Dashboard |
+| --- | --- | --- |
+| Send, ask, approve, choose, reply | Yes | |
+| List and read conversations | Yes | Yes |
+| Invite a contact | Yes | Yes |
+| Connect Telegram, Slack, or email | Yes | Yes |
+| Connect a host | Yes | The code and the MCP sign-in start here |
+| Who can reach the agent, pause, delete | | Yes |
+| Plan and payment | | Yes |
+
+Webhooks are not a launch surface. See [Coming next](/channels/coming-next).
