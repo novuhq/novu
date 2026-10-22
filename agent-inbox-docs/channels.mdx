@@ -1,0 +1,29 @@
+---
+title: "Channels"
+description: "Telegram, Slack, and email. The agent does not pick a channel. Each person has a default."
+sidebarTitle: "Overview"
+---
+
+Today the agent is on Telegram, Slack, and email.
+
+The agent does not choose a channel per person. Each person has a default: the one they picked when they accepted an invite, or the first channel they connected. Your own default is what `channel default` sets, and it applies when a message goes to you.
+
+```bash
+npx @agentinbox/cli channel list
+npx @agentinbox/cli channel add telegram
+npx @agentinbox/cli channel add slack
+npx @agentinbox/cli channel add email
+npx @agentinbox/cli channel default slack
+```
+
+`channel list` shows the channels you connected and which one is your default. Linked channels live on the server. `channel default` is a preference on this computer for messages to you.
+
+`--via` on `inbox send` is a one-time delivery override. A reply has no `--via`: it stays on the conversation's channel.
+
+| Channel | How you connect it | How someone else connects | A stranger can write first |
+| --- | --- | --- | --- |
+| [Telegram](/channels/telegram) | `channel add telegram` | Invite link | No |
+| [Slack](/channels/slack) | `channel add slack` | Invite link | No |
+| [Email](/channels/email) | Created at setup, or `channel add email` | Verification email, or they email the agent | Yes, when [Who can reach](/permissions) is Anyone |
+
+Voice, iMessage, WhatsApp, webhooks, and a custom email domain are not setup guides yet. See [Coming next](/channels/coming-next).

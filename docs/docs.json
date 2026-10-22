@@ -1086,6 +1086,7 @@
                 "pages": [
                   "framework/studio",
                   "framework/endpoint",
+                  "framework/errors",
                   "framework/tags",
                   "framework/payload",
                   "framework/controls"

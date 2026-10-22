@@ -1,7 +1,7 @@
 import https from 'node:https';
 import { isIP } from 'node:net';
 import axios, { AxiosError, AxiosInstance } from 'axios';
-import { CLI_COMMAND } from '../config';
+import { CLI_COMMAND, DEFAULT_RELAY_AGENT_IDENTIFIER } from '../config';
 
 /**
  * Local dev proxies (portless `*.localhost`, plain localhost) present
@@ -94,12 +94,26 @@ export function createPublicApiClient(apiUrl: string): AxiosInstance {
  */
 export const AGENT_INBOX_VIA_HEADER = 'Agent-Inbox-Via';
 
+/** Matches Novu's `NOVU_ANALYTICS_SOURCE_HEADER`. Tells Novu's analytics the request comes from this CLI. */
+export const ANALYTICS_SOURCE_HEADER = 'Novu-Analytics-Source';
+
 function createAxios(baseURL: string, headers: Record<string, string> = {}): AxiosInstance {
   const instance = axios.create({
     baseURL,
-    headers: { [AGENT_INBOX_VIA_HEADER]: 'cli', ...headers },
+    headers: { [AGENT_INBOX_VIA_HEADER]: 'cli', [ANALYTICS_SOURCE_HEADER]: 'cli', ...headers },
     timeout: 60_000,
     httpsAgent: loopbackHttpsAgent(baseURL),
+  });
+
+  // The API takes the default agent when a call names none, so its name stays out of the address.
+  instance.interceptors.request.use((config) => {
+    if (config.params?.agentIdentifier === DEFAULT_RELAY_AGENT_IDENTIFIER) {
+      config.params = Object.fromEntries(
+        Object.entries(config.params as Record<string, unknown>).filter(([name]) => name !== 'agentIdentifier')
+      );
+    }
+
+    return config;
   });
 
   instance.interceptors.response.use(

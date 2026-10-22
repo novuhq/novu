@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { type JsonBody, readErrorCode, readErrorMessage, safeJson } from './api-response';
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER, NOVU_ANALYTICS_SOURCE_HEADER } from './constants';
 import type { HumanRegion } from './human-accounts-api';
 import { HumanApiError, toHumanApiError } from './human-api-error';
 import { resolveNovuApiUrl } from './novu-api';
@@ -37,8 +38,13 @@ export function requestWithSecretKey(
   return send(region, path, { Authorization: `ApiKey ${secretKey}`, ...dashboardSecretHeader() }, init);
 }
 
+/** An endpoint anyone may call, such as an agent's public card: neither a key nor the secret goes along. */
+export function requestPublic(region: HumanRegion, path: string, init?: HumanApiRequest): Promise<JsonBody> {
+  return send(region, path, {}, init);
+}
+
 function dashboardSecretHeader(): Record<string, string> {
-  return { 'x-human-dashboard-secret': process.env.AGENT_INBOX_DASHBOARD_API_SECRET ?? '' };
+  return { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: process.env.AGENT_INBOX_DASHBOARD_API_SECRET ?? '' };
 }
 
 /** For what the API can't do yet, so the pages can be built against the final function names. */
@@ -59,7 +65,7 @@ async function send(
   try {
     response = await fetch(`${resolveNovuApiUrl(region)}${path}${toQueryString(query)}`, {
       method,
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      headers: { 'Content-Type': 'application/json', [NOVU_ANALYTICS_SOURCE_HEADER]: 'dashboard', ...authHeaders },
       body: body ? JSON.stringify(body) : undefined,
       cache: 'no-store',
     });

@@ -2,16 +2,24 @@ import { encryptCredentials } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   ChannelEndpointRepository,
+  HumanContactRepository,
   HumanInteractionRepository,
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES, HumanInteractionStatusEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  ENDPOINT_TYPES,
+  HumanChannelViaEnum,
+  HumanInteractionStatusEnum,
+} from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import type { ResolvedAgentConfig } from '../../agents/channels/agent-config-resolver.service';
 import { AgentConfigResolver } from '../../agents/channels/agent-config-resolver.service';
+import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 import { ChatInstanceRegistry } from '../../agents/conversation-runtime/ingress/chat-instance.registry';
 import { AgentInboundHandler } from '../../agents/conversation-runtime/ingress/inbound-turn.handler';
 import { startTelegramApiStub, type TelegramApiStub } from '../../agents/e2e/helpers/telegram-api-stub';
@@ -22,6 +30,7 @@ const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
 const channelEndpointRepository = new ChannelEndpointRepository();
 const humanInteractionRepository = new HumanInteractionRepository();
+const humanContactRepository = new HumanContactRepository();
 const subscriberRepository = new SubscriberRepository();
 
 const TELEGRAM_CHAT_ID = '777001';
@@ -514,6 +523,29 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
     });
   });
 
+  async function linkEmailIntegration() {
+    const emailIntegration = await integrationRepository.create({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      providerId: 'agent-email-inbox' as never,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: {},
+      active: true,
+      identifier: `email-human-e2e-${Date.now()}`,
+      priority: 1,
+      primary: false,
+      deleted: false,
+    });
+    await agentIntegrationRepository.create({
+      _agentId: relayAgentId,
+      _integrationId: emailIntegration._id,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    });
+
+    return emailIntegration;
+  }
+
   describe('email channel', () => {
     it('setup ignores email — verification owns Subscriber.email', async () => {
       const withEmail = await session.testAgent
@@ -558,6 +590,132 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
 
       expect(res.status).to.equal(404);
       expect(res.body.message).to.match(/no verified email address/i);
+    });
+
+    it('delivers a typed address without verification and reuses that contact', async () => {
+      const emailIntegration = await linkEmailIntegration();
+      const gateway = testServer.getService(OutboundGateway);
+      const send = sinon.stub(gateway, 'sendDirectMessage').resolves({
+        messageId: 'email-msg-1',
+        platformThreadId: 'email:ada@acme.com:1',
+      });
+
+      try {
+        const first = await session.testAgent.post('/v1/human/interactions').send({
+          kind: 'tell',
+          card: { title: 'hello ada' },
+          to: 'Ada@Acme.com',
+          agentIdentifier: relayAgentIdentifier,
+        });
+
+        expect(first.status).to.equal(201, JSON.stringify(first.body));
+        expect(first.body.data.to).to.deep.equal(['ada']);
+        expect(send.calledOnce).to.equal(true);
+        expect(send.firstCall.args[2]).to.equal('ada@acme.com');
+        expect(send.firstCall.args[1]).to.equal(emailIntegration.identifier);
+
+        const stored = await humanContactRepository.findContact(session.environment._id, relayAgentId, 'ada');
+        expect(stored?.addresses?.[HumanChannelViaEnum.EMAIL]?.declared?.address).to.equal('ada@acme.com');
+        expect(stored?.addresses?.[HumanChannelViaEnum.EMAIL]?.verified).to.equal(undefined);
+        expect(stored?.addresses?.[HumanChannelViaEnum.EMAIL]?.pending).to.equal(undefined);
+
+        const subscriber = await subscriberRepository.findOne({
+          _environmentId: session.environment._id,
+          subscriberId: 'ada',
+        });
+        expect(subscriber?.email).to.equal(undefined);
+
+        const second = await session.testAgent.post('/v1/human/interactions').send({
+          kind: 'tell',
+          card: { title: 'hello again' },
+          to: 'ada@acme.com',
+          agentIdentifier: relayAgentIdentifier,
+        });
+
+        expect(second.status).to.equal(201, JSON.stringify(second.body));
+        expect(second.body.data.to).to.deep.equal(['ada']);
+        expect(send.secondCall.args[2]).to.equal('ada@acme.com');
+        expect(
+          await humanContactRepository.findContactsByEmailAddress(session.environment._id, relayAgentId, 'ada@acme.com')
+        ).to.have.length(1);
+      } finally {
+        send.restore();
+      }
+    });
+
+    it('delivers the typed address when the contact verified a different one', async () => {
+      await subscriberRepository.create({
+        subscriberId: 'ada',
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      });
+      await humanContactRepository.create({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _agentId: relayAgentId,
+        subscriberId: 'ada',
+        addresses: {
+          [HumanChannelViaEnum.EMAIL]: {
+            verified: {
+              address: 'old@example.com',
+              requestedAt: '2026-09-01T00:00:00.000Z',
+              verifiedAt: '2026-09-01T00:05:00.000Z',
+            },
+            pending: { address: 'new@example.com', requestedAt: '2026-09-02T00:00:00.000Z' },
+          },
+        },
+      });
+      await linkEmailIntegration();
+      const gateway = testServer.getService(OutboundGateway);
+      const send = sinon.stub(gateway, 'sendDirectMessage').resolves({
+        messageId: 'email-msg-2',
+        platformThreadId: 'email:new@example.com:1',
+      });
+
+      try {
+        const res = await session.testAgent.post('/v1/human/interactions').send({
+          kind: 'tell',
+          card: { title: 'use the new address' },
+          to: 'new@example.com',
+          agentIdentifier: relayAgentIdentifier,
+        });
+
+        expect(res.status).to.equal(201, JSON.stringify(res.body));
+        expect(res.body.data.to).to.deep.equal(['ada']);
+        expect(send.firstCall.args[2]).to.equal('new@example.com');
+      } finally {
+        send.restore();
+      }
+    });
+
+    it('refuses a typed address for a keyless org and creates no contact', async () => {
+      const original = process.env.KEYLESS_ORGANIZATION_ID;
+      process.env.KEYLESS_ORGANIZATION_ID = session.organization._id;
+
+      try {
+        const res = await session.testAgent.post('/v1/human/interactions').send({
+          kind: 'tell',
+          card: { title: 'nope' },
+          to: 'ada@acme.com',
+          agentIdentifier: relayAgentIdentifier,
+        });
+
+        expect(res.status).to.equal(403, JSON.stringify(res.body));
+        expect(res.body.code).to.equal('KEYLESS_EMAIL_REQUIRES_ACCOUNT');
+        expect(
+          await subscriberRepository.findOne({
+            _environmentId: session.environment._id,
+            subscriberId: 'ada',
+          })
+        ).to.equal(null);
+        expect(await humanContactRepository.findContact(session.environment._id, relayAgentId, 'ada')).to.equal(null);
+      } finally {
+        if (original === undefined) {
+          delete process.env.KEYLESS_ORGANIZATION_ID;
+        } else {
+          process.env.KEYLESS_ORGANIZATION_ID = original;
+        }
+      }
     });
   });
 

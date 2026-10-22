@@ -35,16 +35,15 @@ async function send(url: string, { method = 'GET', body }: FetchInit, token: Tok
   );
 }
 
-function answerOf(response: Response): 'own' | 'page' | 'missing' | 'saving' {
-  if (response.headers.get('content-type')?.includes('text/html')) return response.status === 404 ? 'missing' : 'page';
+function answerOf(response: Response): 'own' | 'page' | 'saving' {
+  if (response.headers.get('content-type')?.includes('text/html')) return 'page';
 
   return response.status === 503 && response.headers.get('x-box-phase') === 'saving' ? 'saving' : 'own';
 }
 
-// Right after a deploy, Cloudflare answers an HTML page, a 404 (the new workers.dev name isn't live everywhere yet) or
-// error 1042 (the host's class isn't reachable yet), for up to a minute; while a box saves, 503 with X-Box-Phase:
-// saving, for up to 15 minutes. Cloudflare's 404 page means the Worker doesn't exist: null when `missing` is set.
-export async function fetchThrough(url: string, init: FetchInit, token: Token, missing: boolean) {
+// Right after a deploy, Cloudflare answers an HTML page or error 1042 (the host's class isn't reachable yet), for up
+// to a minute; while a box saves, 503 with X-Box-Phase: saving, for up to 15 minutes.
+export async function boxFetch(url: string, init: FetchInit, token: Token): Promise<Response> {
   const host = new URL(url).hostname;
   const savingUntil = Date.now() + 15 * 60_000;
   for (let pages = 0; ; ) {
@@ -52,7 +51,6 @@ export async function fetchThrough(url: string, init: FetchInit, token: Token, m
     const answer = answerOf(response);
     if (answer === 'own') return response;
     await response.body?.cancel();
-    if (answer === 'missing' && missing) return null;
     if (answer === 'saving') {
       if (Date.now() > savingUntil) throw new Error(`${host} is still saving after 15 minutes`);
       log(`${host} is saving to its snapshot; waiting`);
@@ -64,13 +62,6 @@ export async function fetchThrough(url: string, init: FetchInit, token: Token, m
   }
 }
 
-export async function boxFetch(url: string, init: FetchInit, token: Token): Promise<Response> {
-  const response = await fetchThrough(url, init, token, false);
-  if (!response) throw new Error(`${url} doesn't exist`);
-
-  return response;
-}
-
 export async function failUnlessOk(response: Response, what: string, allowed?: number): Promise<void> {
   if (response.ok || response.status === allowed) return;
   throw new Error(`${what} -> ${response.status}: ${(await response.text()).slice(0, 300)}`);
@@ -79,17 +70,17 @@ export async function failUnlessOk(response: Response, what: string, allowed?: n
 export async function hostBoxes<T>(
   path: string,
   schema: z.ZodType<T>,
-  { method = 'GET', token }: { readonly method?: 'GET' | 'POST' | 'PUT' | 'DELETE'; readonly token: Token }
+  { token, ...init }: FetchInit & { readonly token: Token }
 ): Promise<T> {
-  const what = `${method} ${HOST}/__box/${path}`;
-  const response = await boxFetch(`https://${HOST}.${DOMAIN}/__box/${path}`, { method }, token);
+  const what = `${init.method ?? 'GET'} ${HOST}/__box/${path}`;
+  const response = await boxFetch(`https://${DOMAIN}/__box/${path}`, init, token);
   await failUnlessOk(response, what);
 
   return decode(schema, await response.text(), what);
 }
 
 export async function hostExists(): Promise<boolean> {
-  const response = await fetch(`https://${HOST}.${DOMAIN}/`, { signal: stopping.signal }).catch(() => null);
+  const response = await fetch(`https://${DOMAIN}/`, { signal: stopping.signal }).catch(() => null);
   await response?.body?.cancel();
 
   return response?.status === 404 && Boolean(response.headers.get('content-type')?.includes('text/plain'));

@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import { join } from 'node:path';
 import * as z from 'zod';
 import { log } from '../node/main.ts';
@@ -14,11 +13,12 @@ const WRANGLER = join(HERE, 'node_modules/.bin/wrangler');
 const IMAGE_CONFIG = join(HERE, '.wrangler.box-image.json');
 const HostConfig = z.looseObject({ containers: z.array(z.looseObject({})) });
 const SecretList = z.array(z.object({ name: z.string() }));
-const HOST_ONLY_SECRETS = ['GITHUB_READ_TOKEN', 'CLOUDFLARE_API_TOKEN', 'SLACK_BOT_TOKEN', 'SLACK_SIGNING_SECRET'];
+const HOST_ONLY_SECRETS = ['GITHUB_READ_TOKEN', 'SLACK_BOT_TOKEN', 'SLACK_SIGNING_SECRET', 'TESTERARMY_API_KEY'];
 const OPTIONAL_SECRETS = new Set<string>([
   'NOVU_MANAGED_CLAUDE_API_KEY',
   'BULL_MQ_PRO_NPM_TOKEN',
   'NX_CLOUD_ACCESS_TOKEN',
+  'TESTERARMY_API_KEY',
 ]);
 
 function missingSecrets(names: ReadonlyArray<string>): { required: Array<string>; optional: Array<string> } {
@@ -54,20 +54,11 @@ export async function deployHost(): Promise<void> {
   const idle = process.env.BOX_IDLE_MINUTES;
   if (idle && !(Number(idle) > 0)) throw new Error(`BOX_IDLE_MINUTES=${idle}: a number of minutes, over 0`);
   await checkSecrets();
-  const dir = fs.mkdtempSync(join(os.tmpdir(), 'box-deploy-'));
   try {
-    await run(WRANGLER, ['deploy', '--dry-run', '--outdir', join(dir, 'thin'), '-c', 'wrangler.slack.jsonc'], {
-      cwd: HERE,
-      stdio: 'ignore',
-    });
-    const thin = fs.readFileSync(join(dir, 'thin/thin.js'), 'utf8');
     const vars = idle ? ['--var', `IDLE_MINUTES:${idle}`] : [];
     log(`deploying ${HOST} with wrangler; this applies to every box`);
-    const define = ['--define', `THIN_WORKER:${JSON.stringify(thin)}`];
-    await run(WRANGLER, ['deploy', ...define, ...vars, ...onImage()], { cwd: HERE });
-    await run(WRANGLER, ['deploy', '-c', 'wrangler.slack.jsonc'], { cwd: HERE });
+    await run(WRANGLER, ['deploy', ...vars, ...onImage()], { cwd: HERE });
   } finally {
-    fs.rmSync(dir, { recursive: true, force: true });
     fs.rmSync(IMAGE_CONFIG, { force: true });
   }
 }

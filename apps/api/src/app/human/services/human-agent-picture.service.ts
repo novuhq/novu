@@ -2,8 +2,13 @@ import { createHash } from 'node:crypto';
 import { BadRequestException, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import { PinoLogger, StorageService } from '@novu/application-generic';
 import { AgentEntity, type AgentPicture, AgentRepository } from '@novu/dal';
+import {
+  resolveHumanDashboardBaseUrl,
+  resolveHumanRegion,
+} from '../../shared/helpers/resolve-human-dashboard-base-url';
 import type { HumanAgentResponseDto } from '../dtos/human-agent.dto';
 import { HumanAgentIdentityService } from './human-agent-identity.service';
+import { HumanOperatorService } from './human-operator.service';
 
 /** Plenty for a picture shown in a small circle, and small enough for every channel to take. */
 export const AGENT_PICTURE_MAX_BYTES = 2 * 1024 * 1024;
@@ -38,9 +43,16 @@ export function agentPictureUrl(agent: Pick<AgentEntity, '_id' | '_environmentId
     return undefined;
   }
 
-  const base = (process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '');
+  const path = `${agent._environmentId}/${agent._id}/${agent.picture.version}`;
 
-  return `${base}/v1/human/agent-pictures/${agent._environmentId}/${agent._id}/${agent.picture.version}`;
+  // Where the Agent Inbox dashboard runs, its API (`/api/v1/agent-pictures/…`) forwards to this one, so the
+  // people who see the picture never see this API's address. It only forwards to the US API; the EU API, and an
+  // API without a dashboard, hand out their own address.
+  if (process.env.HUMAN_DASHBOARD_URL?.trim() && resolveHumanRegion() === 'us') {
+    return `${resolveHumanDashboardBaseUrl()}/api/v1/agent-pictures/${path}`;
+  }
+
+  return `${(process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '')}/v1/human/agent-pictures/${path}`;
 }
 
 type AgentScope = { environmentId: string; organizationId: string; agentIdentifier: string };
@@ -55,6 +67,7 @@ export class HumanAgentPictureService {
     private readonly agentRepository: AgentRepository,
     private readonly storageService: StorageService,
     private readonly humanAgentIdentity: HumanAgentIdentityService,
+    private readonly humanOperator: HumanOperatorService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -78,9 +91,15 @@ export class HumanAgentPictureService {
     };
   }
 
-  /** The relay agent, or a 404 before `human setup` has made it. */
+  /**
+   * The relay agent, or a 404 before `human setup` has made it. This read also names the operator as the agent's
+   * card does, for the Configure page's card; the answers to changes leave that lookup out.
+   */
   async get(scope: AgentScope): Promise<HumanAgentResponseDto> {
-    return this.describe(await this.findRelay(scope));
+    const agent = await this.findRelay(scope);
+    const operator = await this.humanOperator.cardNameFor({ ...scope, agentId: agent._id });
+
+    return { ...this.describe(agent), ...operator };
   }
 
   async save(scope: AgentScope, file: Buffer): Promise<AgentEntity> {

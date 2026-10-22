@@ -4,18 +4,22 @@ import type { User } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import type { AgentReach } from './agent-settings';
+import { buildChannelPrompt } from './agent-setup-prompt';
 import { findCurrentUser } from './auth-page';
+import type { HostStatus } from './host-status';
 import type { HumanAccount } from './human-account';
-import { DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from './human-agent-api';
+import { agentDisplayName, DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from './human-agent-api';
 import { requestForAccount } from './human-api-key';
 import { listChannels } from './human-channels-api';
+import { loadChannelsOverview } from './human-channels-overview';
+import { loadHostStatus } from './human-hosts-api';
 import { getInboxThread, listInboxThreads } from './human-inbox-api';
-import { listConnectedTools } from './human-tools-api';
+import type { SlackSetupState } from './human-slack-setup';
+import type { TelegramSetupState } from './human-telegram-setup';
 import type { InboxMessage, InboxThread } from './inbox';
-import { cardLinkOf, type HostVia, ONBOARDING_PATH, type OnboardingStep, toHandle } from './onboarding';
-import { advanceMocks, connectCode } from './onboarding-mocks';
+import { AGENT_DOMAIN, cardLinkOf, ONBOARDING_PATH, type OnboardingStep, toHandle } from './onboarding';
 import { type OnboardingState, readOnboardingState, writeOnboardingState } from './onboarding-state';
-import { readSiteOrigin } from './site-origin';
+import { readApiUrl, readSiteOrigin } from './site-origin';
 
 /** Where an operator stands: on one of the four steps, or `done` with them. */
 export type SetupStep = OnboardingStep | 'done';
@@ -24,6 +28,7 @@ export type SetupProgress = {
   step: SetupStep;
   state: OnboardingState;
   agent: RelayAgent | null;
+  hostStatus: HostStatus | null;
   /** Missing only when the session outlived its user; the pages have sent that visitor to sign in by then. */
   user: User | null;
 };
@@ -46,20 +51,24 @@ export function wasMadeInTheSteps(agent: Pick<RelayAgent, 'createdAt'>, state: O
 }
 
 /**
- * The step the operator is on. Nothing but the agent and the stored state decide it, so a refresh, another
- * browser and "Continue setup" all open the same one.
+ * The step the operator is on. The agent, its real host status and the stored operator choices decide it,
+ * so a refresh, another browser and "Continue setup" all open the same one.
  *
  * An agent the steps never saw being made came from a terminal: claimed, or set up there after logging in.
  * It has its address and its host already, so there is nothing to walk its operator through.
  */
-export function resolveStep(agent: Pick<RelayAgent, 'createdAt'> | null, state: OnboardingState): SetupStep {
+export function resolveStep(
+  agent: Pick<RelayAgent, 'createdAt'> | null,
+  state: OnboardingState,
+  hostStatus: HostStatus | null
+): SetupStep {
   if (!agent) return 'address';
   if (!wasMadeInTheSteps(agent, state)) return 'done';
+  if (state.finishedAt) return 'done';
   if (!state.testLeftAt) return 'test';
-  if (!state.host) return 'connect';
-  if (!state.finishedAt) return 'reach';
+  if (!hostStatus?.connected) return 'connect';
 
-  return 'done';
+  return 'reach';
 }
 
 /** The agent exists but no host reads its mail yet: what the "setup not finished" banners are about. */
@@ -73,19 +82,19 @@ export function isSetupUnfinished(step: SetupStep): step is 'test' | 'connect' {
  */
 export const loadSetupProgress = cache(async (account: HumanAccount): Promise<SetupProgress> => {
   const [user, agent] = await Promise.all([findCurrentUser(), getRelayAgent(account)]);
+  const hostStatus = agent ? await loadHostStatus(account) : null;
   if (!user) {
-    return { step: resolveStep(agent, {}), state: {}, agent, user };
+    return { step: resolveStep(agent, {}, hostStatus), state: {}, agent, hostStatus, user };
   }
 
   const state = await catchUp(user, account, agent, readOnboardingState(user));
 
-  return { step: resolveStep(agent, state), state, agent, user };
+  return { step: resolveStep(agent, state, hostStatus), state, agent, hostStatus, user };
 });
 
 /**
- * Brings the stored state up to date: the stand-ins that are due (`advanceMocks`), and a connector that
- * signed in to the account, which is a host that really connected. A state that can't be saved is tried
- * again on the next read, so a failure here never takes a page down.
+ * Brings the stored state up to date with a reply that landed after the test email. A state that can't be
+ * saved is tried again on the next read, so a failure here never takes a page down.
  */
 async function catchUp(
   user: User,
@@ -93,18 +102,7 @@ async function catchUp(
   agent: RelayAgent | null,
   state: OnboardingState
 ): Promise<OnboardingState> {
-  let next = await noteTestReply(account, user, agent, state);
-  const advanced = advanceMocks(next);
-  if (advanced) {
-    next = advanced;
-  }
-
-  if (agent && isSetupUnfinished(resolveStep(agent, next)) && !next.host) {
-    const [tool] = await listConnectedTools(account);
-    if (tool) {
-      next = { ...next, host: { via: 'mcp', connectedAt: new Date().toISOString() } };
-    }
-  }
+  const next = await noteTestReply(account, user, agent, state);
 
   if (next === state) {
     return state;
@@ -152,7 +150,7 @@ export async function noteOnboardingStarted(): Promise<void> {
 /**
  * Records that the operator's agent came from a terminal by way of a claim. Such an agent has its address
  * and its host, so the steps are over for it, even for an operator who had opened them before.
- * Like `noteHostConnected`, it never fails what it follows.
+ * Losing this note must not fail the claim it follows.
  */
 export async function noteAgentClaimed(user: User): Promise<void> {
   const state = readOnboardingState(user);
@@ -161,30 +159,11 @@ export async function noteAgentClaimed(user: User): Promise<void> {
   try {
     await writeOnboardingState(user.id, state, {
       ...state,
-      host: state.host ?? { via: 'cli', connectedAt: now },
       testLeftAt: state.testLeftAt ?? now,
       finishedAt: state.finishedAt ?? now,
     });
   } catch (error) {
     console.error('Failed to note the claimed agent', error);
-  }
-}
-
-/**
- * Records that a host connected to the operator's agent, the first time one does. Approving a CLI login
- * calls it: a terminal that was let into the account is a host. Losing this note must not fail the login
- * it comes from, so it never throws.
- */
-export async function noteHostConnected(user: User, via: HostVia): Promise<void> {
-  const state = readOnboardingState(user);
-  if (state.host) {
-    return;
-  }
-
-  try {
-    await writeOnboardingState(user.id, state, { ...state, host: { via, connectedAt: new Date().toISOString() } });
-  } catch (error) {
-    console.error('Failed to note the connected host', error);
   }
 }
 
@@ -204,14 +183,16 @@ export async function requireSetUpAgent(account: HumanAccount): Promise<SetupPro
 }
 
 /** What the onboarding page keeps asking for, to notice a change it has to show. Cheap to work out. */
-export function describeProgress({ step, state, agent }: SetupProgress): string {
+export function describeProgress({ step, state, agent, hostStatus }: SetupProgress): string {
   return [
     step,
     agent?.id,
     state.testSentAt,
     state.testReplyAt,
-    state.host?.connectedAt,
-    state.host?.readAt,
+    agent && state.testLeftAt && !hostStatus ? 'host-status-unavailable' : '',
+    hostStatus?.connected ? 'connected' : '',
+    ...(hostStatus?.hosts ?? []).map((host) => `${host.via}:${host.connectedAt}`),
+    hostStatus?.waitingMessage?.seenAt,
     state.skippedAt,
   ]
     .map((part) => part ?? '')
@@ -300,7 +281,7 @@ export async function loadSetupSummary(
   return {
     step,
     agent: describeAgentIdentity(agent, state, origin, channels.emailAddress),
-    waiting,
+    waiting: waiting ?? 0,
     secondChannelConnected: channels.telegram || channels.slack,
     wentThroughSteps: wasMadeInTheSteps(agent, state),
     doneBannerDismissed: state.doneBannerDismissed === true,
@@ -316,43 +297,117 @@ export type OnboardingView = {
   /** Missing on step 1, where the agent is still being named. */
   agent: AgentIdentity | null;
   test: { sentAt?: string; replyAt?: string };
-  host: OnboardingState['host'] | null;
-  waiting: number;
-  /** The one-time code in the prompt of step 3. */
-  connectCode: string;
+  host: { via: 'cli' | 'mcp'; connectedAt: string } | null;
+  /** True when an agent may already be connected but its host status could not be checked. */
+  hostStatusUnavailable: boolean;
+  waitingMessage: HostStatus['waitingMessage'];
+  /** `null` when the unread count could not be checked. */
+  waiting: number | null;
+  /** The Agent Inbox API (`readApiUrl`), named by the connect command of step 3 and the channel prompts of step 4. */
+  apiUrl: string;
   channels: { telegram: boolean; slack: boolean };
+  /** What the Telegram and Slack drawers of step 4 open with. `null` on the other steps. */
+  channelSetup: OnboardingChannelSetup | null;
   /** Who can reach the agent, for the Share dialog of step 4. `null` while there is no agent, or it couldn't be read. */
   reach: AgentReach | null;
   /** Where the dashboard is served (`readSiteOrigin`): the card link the steps show before there is an agent. */
   origin: string;
+  /** Mailbox domain the API publishes, such as `dev.agentinbox.md`. The address step shows this before an inbox exists. */
+  mailDomain: string;
+};
+
+/** What the Configure page hands its Telegram and Slack drawers, for the same drawers in step 4. */
+export type OnboardingChannelSetup = {
+  /** How far each setup got, so its drawer opens where it was left. `unknown` when it couldn't be read. */
+  telegram: TelegramSetupState;
+  slack: SlackSetupState;
+  /** What the Slack app is called until the operator names it. */
+  slackAppName: string;
+  /** What the operator hands their own agent in each drawer. */
+  prompts: Record<'telegram' | 'slack', string>;
 };
 
 /** What the onboarding page renders. `null` once there is nothing left to walk the operator through. */
 export async function loadOnboardingView(account: HumanAccount): Promise<OnboardingView | null> {
   const progress = await loadSetupProgress(account);
-  const { step, state, agent, user } = progress;
+  const { step, state, agent, hostStatus, user } = progress;
   if (step === 'done' || !user) {
     return null;
   }
 
-  const [channels, waiting] = agent
-    ? await Promise.all([loadChannelFacts(account), countWaitingMessages(account)])
-    : [{ telegram: false, slack: false, emailAddress: undefined }, 0];
-  const origin = await readSiteOrigin();
+  const [channels, waiting, setups] = agent
+    ? await Promise.all([
+        loadChannelFacts(account),
+        countWaitingMessages(account),
+        step === 'reach' ? loadChannelSetups(account) : null,
+      ])
+    : [{ telegram: false, slack: false, emailAddress: undefined }, 0, null];
+  const [origin, mailDomain] = await Promise.all([readSiteOrigin(), readInboxMailDomain(account)]);
+  const host = hostStatus?.hosts.reduce<(typeof hostStatus.hosts)[number] | null>(
+    (earliest, entry) => (!earliest || entry.connectedAt < earliest.connectedAt ? entry : earliest),
+    null
+  );
+  const identity = agent && describeAgentIdentity(agent, state, origin, channels.emailAddress);
+  const apiUrl = await readApiUrl();
 
   return {
     step,
     status: describeProgress(progress),
     operator: { email: user.primaryEmailAddress?.emailAddress ?? null, firstName: user.firstName },
-    agent: agent && describeAgentIdentity(agent, state, origin, channels.emailAddress),
+    agent: identity,
     test: { sentAt: state.testSentAt, replyAt: state.testReplyAt },
-    host: state.host ?? null,
+    host: host ? { via: host.via, connectedAt: host.connectedAt } : null,
+    hostStatusUnavailable: Boolean(agent && state.testLeftAt && !hostStatus),
+    waitingMessage: hostStatus?.waitingMessage ?? null,
     waiting,
-    connectCode: connectCode(user.id),
+    apiUrl,
     channels: { telegram: channels.telegram, slack: channels.slack },
+    channelSetup:
+      agent && identity && setups
+        ? {
+            ...setups,
+            slackAppName: agentDisplayName(agent),
+            prompts: {
+              telegram: buildChannelPrompt({ apiUrl }, 'telegram', identity.handle),
+              slack: buildChannelPrompt({ apiUrl }, 'slack', identity.handle),
+            },
+          }
+        : null,
     reach: agent?.settings?.reach ?? null,
     origin,
+    mailDomain,
   };
+}
+
+/** The domain new inboxes are created on. The production domain stands in when the API has not published one. */
+async function readInboxMailDomain(account: HumanAccount): Promise<string> {
+  try {
+    const result = await requestForAccount<{ domain?: string }>(account, '/v1/human/inbox-address');
+    const domain = result.domain?.trim().toLowerCase();
+    if (domain && !/[\s@]/.test(domain) && domain.includes('.')) {
+      return domain;
+    }
+  } catch {
+    // The address preview keeps the production domain when this call cannot be made.
+  }
+
+  return AGENT_DOMAIN;
+}
+
+/**
+ * The Telegram and Slack setups, read as the Configure page reads them. They are a detail of step 4: when
+ * they can't be read, the drawers find out for themselves once they open.
+ */
+async function loadChannelSetups(account: HumanAccount): Promise<Pick<OnboardingChannelSetup, 'telegram' | 'slack'>> {
+  try {
+    const { telegramSetup, slackSetup } = await loadChannelsOverview(account);
+
+    return { telegram: telegramSetup, slack: slackSetup };
+  } catch (error) {
+    console.error('Failed to read the channel setups for the onboarding', error);
+
+    return { telegram: { step: 'unknown' }, slack: { step: 'unknown' } };
+  }
 }
 
 async function loadChannelFacts(account: HumanAccount) {
@@ -375,7 +430,7 @@ async function loadChannelFacts(account: HumanAccount) {
 }
 
 /** How many messages wait for a host: the unread threads of the inbox. */
-async function countWaitingMessages(account: HumanAccount): Promise<number> {
+async function countWaitingMessages(account: HumanAccount): Promise<number | null> {
   try {
     const counts = await requestForAccount<{ tabs?: { unread?: number } }>(account, '/v1/human/inbox/counts', {
       query: { senders: 'all' },
@@ -385,7 +440,7 @@ async function countWaitingMessages(account: HumanAccount): Promise<number> {
   } catch (error) {
     console.error('Failed to count the waiting messages', error);
 
-    return 0;
+    return null;
   }
 }
 

@@ -1,16 +1,32 @@
 export const HOST = 'novu-box-hub';
-export const ROUTER = 'novu-box-slack';
-export const COMPATIBILITY_DATE = '2026-09-29';
-export const DOMAIN = 'cli-shortener.workers.dev';
+// The hub's own address, whose Custom Domain carries the certificate for *.box.novu-staging.co.
+export const DOMAIN = 'box.novu-staging.co';
+export const SLACK_HOST = `slack.${DOMAIN}`;
+const API = '-api';
 
-export function boxWorker(box: string): string {
-  return `novu-box-${box}`;
+export function boxOrigin(box: string): string {
+  return `https://${box}.${DOMAIN}`;
+}
+
+export function apiOrigin(box: string): string {
+  return `https://${box}${API}.${DOMAIN}`;
+}
+
+// A box name can't be `slack` or end in -api, so every host under DOMAIN is the hub, Slack, or one box.
+export function isBoxName(box: string): boolean {
+  return /^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/.test(box) && box !== 'slack' && !box.endsWith(API);
+}
+
+export function boxOfHost(hostname: string): string | null {
+  if (!hostname.endsWith(`.${DOMAIN}`)) return null;
+  const label = hostname.slice(0, -DOMAIN.length - 1);
+  const box = label.endsWith(API) ? label.slice(0, -API.length) : label;
+
+  return isBoxName(box) ? box : null;
 }
 
 export function boxOfOrigin(origin: string): string {
-  const [label = ''] = new URL(origin).hostname.split('.');
-
-  return label.replace(/^novu-box-/, '');
+  return boxOfHost(new URL(origin).hostname) ?? '';
 }
 
 // Box names have no dots, so the box is everything between `+` and the last dot.

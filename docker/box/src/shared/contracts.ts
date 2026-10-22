@@ -115,12 +115,30 @@ export const NestConfig = z.looseObject({ compilerOptions: z.looseObject({}) });
 
 const Note = z.object({ at: z.string(), message: z.string() });
 const Down = z.object({ tries: z.number() }).nullable();
+// The last snapshot restore: `colo` is the Box object's Cloudflare location, `container` its container's, each
+// absent if it couldn't be looked up.
+export const LastStart = z.object({
+  at: z.string(),
+  snapshot: z.string(),
+  ms: z.number(),
+  colo: z.string().optional(),
+  container: z.string().optional(),
+});
+export type LastStart = z.infer<typeof LastStart>;
+// `placed: false` when base exists but couldn't make the box's first call (see `Box.introduce`).
+export const RegisteredBox = z.object({
+  box: z.string(),
+  origin: z.string(),
+  placed: z.boolean().optional(),
+  warning: z.string().optional(),
+});
 const Status = {
   since: z.string().nullable(),
   running: z.boolean(),
   snapshot: z.object({ id: z.string(), name: z.string().optional(), gigabytes: z.number().nullable() }).nullable(),
   lastActivity: z.string(),
   origin: z.string().nullish(),
+  lastStart: LastStart.optional(),
 };
 export const BoxStatus = z.discriminatedUnion('phase', [
   z.object({ ...Status, phase: z.literal(['new', 'asleep']), error: Note.nullable() }),
@@ -147,9 +165,6 @@ export type StateAnswer = z.infer<typeof StateAnswer>;
 
 export const BoxList = z.object({ boxes: z.array(z.string()) });
 
-export const CloudflareAnswer = z.object({ success: z.boolean(), errors: z.unknown(), result: z.unknown() });
-export const ScriptList = z.array(z.object({ id: z.string() }));
-
 export const CheckRuns = z.object({
   check_runs: z.array(z.object({ status: z.string(), conclusion: z.string().nullable(), html_url: z.string() })),
 });
@@ -159,7 +174,14 @@ export const PullRequestEvent = z.object({
   number: z.number(),
   sender: z.object({ login: z.string() }).optional(),
   label: Label.optional(),
-  pull_request: z.object({ state: z.string(), labels: z.array(Label), head: z.object({ sha: z.string() }) }),
+  pull_request: z.object({
+    state: z.string(),
+    title: z.string(),
+    body: z.string().nullish(),
+    labels: z.array(Label),
+    base: z.object({ ref: z.string() }),
+    head: z.object({ sha: z.string(), ref: z.string() }),
+  }),
 });
 export type PullRequestEvent = z.infer<typeof PullRequestEvent>;
 export const Pull = z.object({ state: z.string(), labels: z.array(Label) });
@@ -190,6 +212,30 @@ const TestUser = z.object({ email: z.string(), box: z.string(), createdAt: z.str
 export const TestUsers = z.object({ users: z.array(TestUser), prune: z.array(z.string()) });
 export const CreatedTestUser = z.object({ email: z.string(), password: z.string(), pruned: z.array(z.string()) });
 export const DeletedBox = z.object({ users: z.array(z.string()).default([]), usersError: z.string().optional() });
+
+const TesterArmyPullRequest = z.object({
+  number: z.number(),
+  title: z.string(),
+  description: z.string().optional(),
+  baseBranch: z.string(),
+  headBranch: z.string(),
+  commitSha: z.string(),
+});
+export type TesterArmyPullRequest = z.infer<typeof TesterArmyPullRequest>;
+// A PR box gets the exploration agent and PR smoke; `full` starts the Full groups (the nightly box of next). The PR
+// shape has no `suite`: PR branches send it with their own ci.ts.
+export const TesterArmyStart = z.union([
+  z.object({ pullRequest: TesterArmyPullRequest }),
+  z.object({ suite: z.literal('full') }),
+]);
+export type TesterArmyStart = z.infer<typeof TesterArmyStart>;
+const StartedGroups = z.array(z.object({ name: z.string(), batchId: z.string(), runs: z.number() }));
+export const TesterArmyStarted = z.object({
+  exploration: z.object({ status: z.string(), runId: z.string() }),
+  groups: StartedGroups,
+  signUpUsersDeleted: z.array(z.string()),
+});
+export const TesterArmyFullStarted = z.object({ groups: StartedGroups, signUpUsersDeleted: z.array(z.string()) });
 
 const data = <T extends z.ZodType>(schema: T) => z.object({ data: schema });
 const ApiId = z.object({ _id: z.string() });

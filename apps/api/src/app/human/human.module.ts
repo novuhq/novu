@@ -28,11 +28,13 @@ import { HumanVerificationEmailSender } from './email/human-verification-email.s
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
 import { HumanDashboardSecretGuard } from './guards/human-dashboard-secret.guard';
 import { HumanAccountsController } from './human-accounts.controller';
+import { HumanAgentCardsPublicController } from './human-agent-cards-public.controller';
 import { HumanAgentPicturesPublicController } from './human-agent-pictures-public.controller';
 import { HumanConnectPublicController, HumanHostsController } from './human-hosts.controller';
 import { HumanInboxController } from './human-inbox.controller';
 import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanInvitesPublicController, HumanVerifyPublicController } from './human-invites-public.controller';
+import { AgentInboxChannelAnalytics } from './services/agent-inbox-channel-analytics.service';
 import { HumanAccountAgentService } from './services/human-account-agent.service';
 import { HumanAgentIdentityService } from './services/human-agent-identity.service';
 import { HumanAgentPictureService } from './services/human-agent-picture.service';
@@ -45,6 +47,7 @@ import { HumanInviteTokenService } from './services/human-invite-token.service';
 import { HumanKeylessCapService } from './services/human-keyless-cap.service';
 import { HumanMessageQuotaService } from './services/human-message-quota.service';
 import { HumanOperatorService } from './services/human-operator.service';
+import { HumanTelegramBotService } from './services/human-telegram-bot.service';
 import { HumanVerificationRateLimitService } from './services/human-verification-rate-limit.service';
 import { HumanVerificationTokenService } from './services/human-verification-token.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
@@ -65,6 +68,7 @@ import { EnsureBackingOrganization } from './usecases/ensure-backing-organizatio
 import { GetBackingSecretKey } from './usecases/get-backing-secret-key/get-backing-secret-key.usecase';
 import { GetConnectCodeStatus } from './usecases/get-connect-code-status/get-connect-code-status.usecase';
 import { GetContact } from './usecases/get-contact/get-contact.usecase';
+import { GetHumanAgentCard } from './usecases/get-human-agent-card/get-human-agent-card.usecase';
 import { GetHumanCliLogin } from './usecases/get-human-cli-login/get-human-cli-login.usecase';
 import { GetHumanInviteStatus } from './usecases/get-human-invite-status/get-human-invite-status.usecase';
 import { GetInboxThread } from './usecases/get-inbox-thread/get-inbox-thread.usecase';
@@ -107,6 +111,7 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     HumanInvitesPublicController,
     HumanVerifyPublicController,
     HumanAgentPicturesPublicController,
+    HumanAgentCardsPublicController,
     HumanAccountsController,
     HumanHostsController,
     HumanConnectPublicController,
@@ -124,6 +129,7 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     DomainRouteRepository,
     AgentMcpServerRepository,
     McpConnectionRepository,
+    AgentInboxChannelAnalytics,
     HumanDeliveryService,
     HumanKeylessCapService,
     HumanMessageQuotaService,
@@ -149,6 +155,8 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     HumanOperatorService,
     HumanAgentIdentityService,
     HumanAgentPictureService,
+    HumanTelegramBotService,
+    GetHumanAgentCard,
     HumanAccountAgentService,
     CreateHumanInvite,
     GetHumanInviteStatus,

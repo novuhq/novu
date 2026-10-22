@@ -9,7 +9,6 @@ import { StepLead, StepTitle } from '@/components/onboarding/onboarding-shell';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import {
-  AGENT_DOMAIN,
   AGENT_NAME_MAX_LENGTH,
   addressOf,
   HANDLE_MAX_LENGTH,
@@ -30,6 +29,8 @@ export type AgentDraft = {
 };
 
 type AddressStepProps = {
+  /** Mailbox domain the API publishes. The preview uses it before an inbox exists. */
+  mailDomain: string;
   onDraftChange: (draft: AgentDraft) => void;
 };
 
@@ -46,7 +47,7 @@ type Availability = { handle: string; available: boolean; suggestion?: string } 
  * Step 1: the operator names the agent, and the name becomes its address. The address follows the name
  * until they edit it themselves. One that is taken is swapped for a free one close to it.
  */
-export function AddressStep({ onDraftChange }: AddressStepProps) {
+export function AddressStep({ mailDomain, onDraftChange }: AddressStepProps) {
   const nameId = useId();
   const [name, setName] = useState('');
   // The address as the operator typed it, once they edit it. Until then it follows the name.
@@ -178,7 +179,7 @@ export function AddressStep({ onDraftChange }: AddressStepProps) {
                     {handle || PLACEHOLDER_HANDLE}
                   </span>
                   <span className={cn('shrink-0 pl-0.5', COLOR_FOLLOWS, handle ? 'text-secondary' : 'text-muted')}>
-                    @{AGENT_DOMAIN}
+                    @{mailDomain}
                   </span>
                 </p>
               )}
@@ -220,7 +221,7 @@ export function AddressStep({ onDraftChange }: AddressStepProps) {
                     handle ? 'text-secondary' : 'text-muted'
                   )}
                 >
-                  &lt;{addressOf(handle || PLACEHOLDER_HANDLE)}&gt;
+                  &lt;{addressOf(handle || PLACEHOLDER_HANDLE, mailDomain)}&gt;
                 </span>
               </p>
               <span aria-hidden="true" className="ml-auto flex shrink-0 items-center gap-1.5">

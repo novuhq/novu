@@ -65,7 +65,10 @@ type SlackSetupProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-/** The drawer that walks through giving the agent a Slack app. The Configure page's channels open it. */
+/**
+ * The drawer that walks through giving the agent a Slack app. The Configure page's channels open it, and so
+ * does the last step of the onboarding.
+ */
 export function SlackSetup({ setup, agentName, handle, prompt, open, onOpenChange }: SlackSetupProps) {
   const router = useRouter();
   const [step, setStep] = useState<SetupStep>(stepOf(setup));
@@ -462,7 +465,7 @@ function InstallStep({
           <ChannelIcon via="slack" className="size-5.5" />
         </span>
         <span className={cn(BADGE, 'relative -ml-3')}>
-          {/* The human.md mark, from the paths the design exports. */}
+          {/* The agentinbox.md mark, from the paths the design exports. */}
           <svg viewBox="0 0 22 22" className="size-6.5" fill="none">
             <path
               className="fill-accent"

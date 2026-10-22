@@ -4,7 +4,7 @@ A full Novu Cloud stack (enterprise API, worker, socket worker, dashboard, every
 channel, and a code-first bridge app with agents) in one container per box on Cloudflare. A PR, or your checkout,
 runs on it with production builds, so people and coding agents can try a change end to end before it merges.
 
-![Where a box runs: you or GitHub Actions reach a box through its own Worker on Cloudflare; the box is a Durable Object with its own container in the novu-box-hub Worker](./docs/01-where-it-runs.svg)
+![Where a box runs: you or GitHub Actions reach a box at its own hostname under box.novu-staging.co; the box is a Durable Object with its own container in the novu-box-hub Worker](./docs/01-where-it-runs.svg)
 
 ## Quick start
 
@@ -16,8 +16,9 @@ node docker/box/src/cli/main.ts up         # your branch's box, with your checko
 node docker/box/src/cli/main.ts doctor     # "ok": true when it's fit to test on
 ```
 
-`up` prints the box's address, `https://novu-box-<branch>.cli-shortener.workers.dev`: the dashboard, the API under
-`/v1`, and the box's Mailpit under `/mail`. After more changes, `sync` puts them on the box. Coding agents follow
+`up` prints the box's addresses: the dashboard at `https://<branch>.box.novu-staging.co` (the box's Mailpit under
+`/mail`), and the API at `https://<branch>-api.box.novu-staging.co`. After more changes, `sync` puts them on the
+box. Coding agents follow
 the `verify-in-box` skill (`.cursor/skills/verify-in-box/SKILL.md`).
 
 ## Commands
@@ -35,7 +36,7 @@ the `verify-in-box` skill (`.cursor/skills/verify-in-box/SKILL.md`).
 | `exec -- <command>` | Runs a command in the box's checkout (`/data/novu`) |
 | `user create \| list \| channels \| team \| delete` | Dashboard test users (below) |
 | `down` | Saves the box to its snapshot and stops it; the next request or `up` wakes it with its data |
-| `delete` | Stops the box, forgets its snapshot, and deletes its address and test users |
+| `delete` | Stops the box, forgets its snapshot, and deletes its test users |
 | `deploy` | Deploys the Cloudflare host (maintainers, below) |
 
 `sync` sends HEAD plus every change, untracked files included (only inside the repo's existing top-level folders)
@@ -45,13 +46,19 @@ baked from, like CI's merge ref, and stops on a conflict: rebase onto `next`, th
 
 ## Per pull request: the `box` label
 
-`.github/workflows/novu-box.yml` gives a PR its own box, `pr-<number>`, when someone with write access to
+`.github/workflows/novu-box-pr.yml` gives a PR its own box, `pr-<number>`, when someone with write access to
 `novuhq/novu` adds the `box` label.
 
 - The box starts from `base` and applies the PR's head; every push applies the new head (a newer push cancels the
   older run).
 - One comment on the PR, edited in place, shows the box's address, the applied commit and what was rebuilt, or what
   failed; ⚠️ when the apply ran but `doctor` then found problems.
+- Once the box is healthy, TesterArmy (project Novu Box) tests it: its exploration agent, which reads the PR and
+  tests what it changes, and `PR smoke`, a few minutes of the main flows (sign-in, every channel, the API key,
+  the editor, digest, an agent in web chat). They report on the PR as checks. The tests live in TesterArmy, not in
+  this repo. Its other groups run every night after the rebake, on `nightly-<run id>`, a fresh copy of `base` that
+  the next night's cleanup deletes: `Full` (everything in the dashboard), `Full: Slack` (the agents in Slack, one
+  test at a time) and `Full: account` (sign up, onboard, delete). Their results are in TesterArmy only.
 - Closing the PR or removing the label deletes the box. At most 30 PR boxes exist at once. PRs from forks get no
   box.
 - The workflow holds no secrets: it signs in to the boxes with its GitHub OIDC token.
@@ -60,7 +67,7 @@ baked from, like CI's merge ref, and stops on a conflict: rebase onto `next`, th
 
 ## What's in a box
 
-![Inside one box: Caddy routes the box's one address by path to the dashboard, the API, the socket worker, Mailpit and S3; jobs go from the API through SQS to the worker](./docs/02-inside-a-box.svg)
+![Inside one box: Caddy routes the box's addresses by path to the dashboard, the API, the socket worker, Mailpit and S3; jobs go from the API through SQS to the worker](./docs/02-inside-a-box.svg)
 
 process-compose (`image/process-compose.yaml`) supervises:
 
@@ -76,9 +83,10 @@ process-compose (`image/process-compose.yaml`) supervises:
 | `s3`, `sqs` | versitygw (S3 API) and ElasticMQ (SQS API, `sqs_bullmq` mode, the Novu queues) |
 | `mail`, `sink` | Mailpit catches every email; the sink (`src/box/sink.ts`) shows SMS, push and chat messages there too |
 
-A box has one address. Caddy (`image/config/Caddyfile`) routes it by path: `/v1`, `/v2` and `/.well-known` to the
-API, `/ws` to the socket worker, `/mail` to Mailpit, `/novu-box` and `/cdn` to S3, the rest to the dashboard. The
-dashboard calls the API on the same origin, so unlike production, CORS isn't exercised.
+A box has two hosts, `<box>` and `<box>-api` under `box.novu-staging.co`, and Caddy (`image/config/Caddyfile`)
+routes both by path: `/v1`, `/v2` and `/.well-known` to the API, `/ws` to the socket worker, `/mail` to Mailpit,
+`/novu-box` and `/cdn` to S3, the rest to the dashboard. The dashboard calls the API on its own host, so CORS is
+exercised as in production.
 
 The bake seeds:
 
@@ -104,7 +112,7 @@ runs at a time; an interrupted one is completed by the next. Measured on Cloudfl
 
 | Step | Time |
 |---|---|
-| A new box from `base` | about 40 s, up to 5 min right after `base` was rebaked (a fresh snapshot's first restore) |
+| A new box from `base` | about 1 min, of which the restore is 3 s; up to 5 min right after `base` was rebaked (a fresh snapshot's first restore) |
 | Wake after sleeping | 30 to 40 s |
 | Apply: an API change / a worker change / the dashboard | 40 s / 16 s / 23 s |
 | Apply: a library / `@novu/framework` / the bridge app | 50 to 120 s / 114 s / 62 s |
@@ -140,28 +148,47 @@ The boxes' agents can be used from the company Slack through one app, Novu Box:
 
 A Slack router (`src/cloud/slack/`) runs on the host and stands between Slack and every box: it holds the real bot
 token, gives each box made-up credentials, and passes only the Slack methods agents use, only in `#novu-box` and
-DMs. No box ever sees the real token.
+DMs. No box ever sees the real token. The Slack app's event, interactivity and `/novu-box` request URLs are all
+`https://slack.box.novu-staging.co/slack`.
 
 ![One Slack message to a box's agent and its reply, through the router, which swaps in the real bot token](./docs/04-slack.svg)
 
 ## Running the host (maintainers)
 
-Every box runs in one Cloudflare Worker, `novu-box-hub` (`src/cloud/`): one Durable Object and one container per
-box, plus a small Worker per box for its address (`novu-box-<box>`, created by the host) and `novu-box-slack` for
-the Slack router. `wrangler.jsonc` and `wrangler.slack.jsonc` define them.
+Every box runs in one Cloudflare Worker, `novu-box-hub` (`src/cloud/`, defined by `wrangler.jsonc`): one Durable
+Object and one container per box, the Slack router, and a registry of the boxes `up` created. It picks what a
+request reaches by hostname: `box.novu-staging.co` is the hub's own API, `slack.box.novu-staging.co` the Slack
+router, and `<box>` or `<box>-api` that box. So a box name can't be `slack` or end in `-api`.
+
+![The parts on Cloudflare: hostnames under box.novu-staging.co reach the one hub Worker, which picks the Registry, a Box or the Router Durable Object; each awake box has a container, an asleep box a snapshot](./docs/07-cloudflare.svg)
+
+**The domain:** staging's zone `novu-staging.co`, in the same Cloudflare account. Universal SSL covers only one
+level of subdomain, so the hub's Custom Domain `box.novu-staging.co` is what brings a free certificate for
+`*.box.novu-staging.co` too; keep it attached. A proxied DNS record `*.box` (AAAA `100::`, set by hand) and the
+route `*.box.novu-staging.co/*` (in `wrangler.jsonc`) send every box's host to the hub. A new box needs no DNS,
+certificate or Worker of its own; a host of a box `up` didn't create gets 404.
+
+**Where boxes live:** a Durable Object stays in the Cloudflare location of its first request, and its container
+runs there. `base` makes the first request to every new box, so new boxes live in base's location (Frankfurt) and
+restore its snapshot in seconds; a box created before that keeps its location, and so does a name deleted and used
+again.
 
 ![Which code runs where: the CLI and CI on Node, the hub on Cloudflare Workers, the in-box CLI in the container](./docs/06-code.svg)
 
 **Deploy:** `node docker/box/src/cli/main.ts deploy`, with `npx wrangler login` on the Novu Cloudflare account and
-Docker (wrangler builds the image). A deploy applies to every box. A new image makes every snapshot unusable
-(snapshots restore only on the image they were taken on): boxes then start again from a rebaked `base`, without
-their data. To deploy only code on the current image, set `BOX_IMAGE` to the image's reference (from
-`npx wrangler containers images list`).
+Docker (wrangler builds the image). A deploy applies to every box. A snapshot restores on the image it was taken
+on, so after a new image a box keeps running the old one until it starts again from `base` rebaked on the new image
+(`box delete`, then `box up --from base`; for `base` itself, Run workflow → `rebake` in Novu Box base). To deploy
+only code on the current image, set `BOX_IMAGE` to the image's reference (from `npx wrangler containers images
+list`).
 
-**`base`:** the box new boxes start from. The workflow refreshes it on every push to `next` (applies the new head,
-about 4 min) and rebakes it nightly. A rebake bakes in a separate box and `base` takes over its snapshot only once
-it's saved, so `base` is never missing; a refresh that fails keeps the last good snapshot. Snapshots expire 30 days
-after they were made or last restored, and nothing deletes old ones.
+**`base`:** the box new boxes start from. `novu-box-base.yml` refreshes it on every push to `next` (applies the new
+head, about 4 min). At 04:17 UTC `novu-box-nightly.yml` rebakes it through that workflow, then runs the full suite
+on `nightly-<run id>`; next to that it deletes the boxes of closed or unlabeled PRs, and those of earlier runs
+(`base-next-*`, `nightly-*`) an hour idle. Its Run workflow button does the same by hand. A rebake bakes in a
+separate box (`base-next-<run id>`, a fresh name every run, see where boxes live above) and `base` takes over its
+snapshot only once it's saved, so `base` is never missing; a refresh that fails keeps the last good snapshot.
+Snapshots expire 30 days after they were made or last restored, and nothing deletes old ones.
 
 **Secrets** are Worker secrets of `novu-box-hub`, set only in Cloudflare (dashboard → Workers → `novu-box-hub` →
 Settings → Variables and Secrets, or `npx wrangler secret put <NAME>`). `deploy` never reads secret files; it warns
@@ -177,21 +204,18 @@ about missing ones.
 | `BULL_MQ_PRO_NPM_TOKEN` | yes, optional | BullMQ Pro; without it, open-source BullMQ |
 | `NX_CLOUD_ACCESS_TOKEN` | yes, optional | Reads CI's Nx Cloud cache. **Read-only only**: PR code can read it |
 | `GITHUB_READ_TOKEN` | no | Read-only access to `novu` and `packages-enterprise` for the boxes' git fetches |
-| `CLOUDFLARE_API_TOKEN` | no | Workers Scripts and Containers edit: creating boxes' Workers |
 | `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET` | no | The Slack router |
+| `TESTERARMY_API_KEY` | no, optional | Starts TesterArmy's runs on PR boxes |
 
 A box runs PR code, which can read its environment: never put production keys in boxes, never name a secret
 `VITE_*` (it would end up in the dashboard's public `index.html`), and never run boxes for PRs from forks.
 
-**Who can get in:** every box command needs a GitHub token with push access to `novuhq/novu`, or the workflow's
-OIDC token. Box addresses are public, like staging's; the dashboard is protected by Clerk. Keep these two Clerk
-settings, or anyone could sign up: email-code sign-in **off** (sign-in needs the password), and test mode **off**
-(it accepts `424242` as any address's code). Sign-up is limited to `@novu.co` addresses.
-
-**With a domain (planned):** one wildcard route would send every box's hostname to the hub, replacing the per-box
-Workers, and give the dashboard and API separate hosts as in production.
-
-![The planned setup with a domain](./docs/07-with-a-domain.svg)
+**Who can get in:** every box command needs a GitHub token with push access to `novuhq/novu`, or the OIDC token of
+one of the Novu Box workflows. Box addresses are public, like staging's; the dashboard is protected by Clerk. Keep
+these two Clerk settings, or anyone could sign up: email-code sign-in **off** (sign-in needs the password), and test
+mode **off** (it accepts `424242` as any address's code). Sign-up is limited to `@novu.co` addresses, and
+`@qa.box.novu-staging.co` for TesterArmy's sign-up tests: Cloudflare Email Routing forwards those addresses to
+TesterArmy's inbox, and each time the hub starts TesterArmy it deletes those users over an hour old.
 
 ## Troubleshooting
 

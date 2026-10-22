@@ -130,6 +130,12 @@ overrides:
   fflate@>=0.8.0 <0.8.3: ^0.8.3
   vite@<4.5.10: ^4.5.10
   vite@>=5.0.0 <6.4.3: ^6.4.3
+  # GHSA-q3jh-wrc6-jgq8 (high): follow-redirects array-form headers bypass
+  # cross-origin credential stripping. GHSA-8r9p-f939-6h3c (high):
+  # sensitiveHeaders regex escaping can expose credential headers. Both are
+  # patched in 1.16.1 (patch bump within the 1.16.x line). Transitive via
+  # axios, nx, probot, and friends across build tooling.
+  follow-redirects@>=1.16.0 <1.16.1: ^1.16.1
   node-forge@<1.4.0: ^1.4.0
   ws@>=8.0.0 <8.21.0: ^8.21.0
   ws@>=7.0.0 <7.5.11: ^7.5.11
@@ -219,7 +225,7 @@ overrides:
   # GHSA-6qxp-vccf-f47h (high): MCP TypeScript SDK OAuth client could send
   # credentials to an authorization server chosen by the MCP server, enabling
   # token exfiltration via a malicious server. Patched in 1.31.0. Pulled
-  # transitively via apps/human-mcp, enterprise/workers/thalamus-observer,
+  # transitively via apps/agent-inbox-mcp, enterprise/workers/thalamus-observer,
   # packages/novu > @anthropic-ai/claude-agent-sdk, and playground/web-chat.
   '@modelcontextprotocol/sdk@>=1.12.0 <1.31.0': ^1.31.0
   # GHSA-6qxp-vccf-f47h (high): the v2 OAuth client can send stored

@@ -1,0 +1,61 @@
+---
+title: "Create an inbox"
+description: "Run setup to create a keyless Agent Inbox, print its address, and optionally connect Telegram or Slack."
+---
+
+`setup` creates an inbox before you have an account. It asks for your first and last name and an email address, creates the agent, and prints its address.
+
+```bash
+npx @agentinbox/cli setup
+```
+
+It then asks whether to connect Telegram or Slack. Press Enter to skip. Add a channel later with [`channel add`](/channels).
+
+```bash
+npx @agentinbox/cli setup telegram
+npx @agentinbox/cli setup slack
+```
+
+Email can receive as soon as setup finishes. The agent does not send email until you claim the setup. See [Email](/channels/email).
+
+## Name the agent
+
+```bash
+npx @agentinbox/cli setup telegram \
+  --agent-name "Deploy bot" \
+  --agent-description "Asks before it ships."
+```
+
+`--agent-picture` takes a JPEG or PNG of up to 2 MB. It needs [`login`](/account) first.
+
+On a terminal, setup draws one screen and updates it in place. In a pipe, in CI, or when an agent runs the command, it prints the same steps as plain text.
+
+## Run it again
+
+Running `setup` again resumes whatever step is left. Without a terminal, pass the answers as flags:
+
+```bash
+npx @agentinbox/cli setup \
+  --name "Nikita Grossman" \
+  --email you@example.com \
+  --agent-name "Deploy bot"
+```
+
+`--telegram-bot-token` and `--slack-config-token` skip the prompt. An agent must not ask you for those tokens. Without a terminal it prints a page and waits. Forward that URL and let the person finish it. See [Telegram](/channels/telegram) and [Slack](/channels/slack).
+
+## The skill
+
+At the end of setup on a terminal, the CLI offers to install the coding-agent skill. `--skill` installs it. `--no-skill` skips it. See [Teach your coding agent](/skills).
+
+## The keyless allowance
+
+A keyless setup can send a small number of messages. When they are used, the next command exits `1` and prints:
+
+```text
+You've used the 5 free messages of this keyless demo.
+To keep your channels and continue, run: npx @agentinbox/cli login
+```
+
+The message also includes a sign-up link, and the same link is sent on your linked channel. Stop retrying. You run `login` yourself. An agent must not run it for you.
+
+See [Account and claim](/account).

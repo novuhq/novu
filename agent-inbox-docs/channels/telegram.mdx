@@ -1,0 +1,40 @@
+---
+title: "Telegram"
+description: "Connect a private Telegram bot by pasting a BotFather token or finishing on an agentinbox.md page."
+---
+
+Telegram connects a private bot that you control. People reach the agent there, and approvals arrive as buttons.
+
+```bash
+npx @agentinbox/cli channel add telegram
+```
+
+On a terminal, the CLI asks whether to paste the BotFather token or finish on a page at agentinbox.md. You can scan a QR code or open the page in a browser. Without a terminal, the CLI prints that page and waits up to 15 minutes:
+
+```text
+https://www.agentinbox.md/connect#…
+```
+
+Create the bot with @BotFather and tap **Start**. The CLI finishes when you do. Running the same command again resumes at the missing step.
+
+```bash
+npx @agentinbox/cli channel add telegram --telegram-bot-token <token>
+```
+
+That flag skips the choice.
+
+<Warning>
+An agent forwards the URL. It does not ask you for the bot token, and it does not paste one.
+</Warning>
+
+Exit code `11` on that wait means you did not finish in time. Nothing is broken. Run the command again.
+
+Invite someone else on Telegram:
+
+```bash
+npx @agentinbox/cli contact invite bob --via telegram --async --name "Bob"
+```
+
+The link works for minutes, and Telegram becomes their default channel.
+
+`choose` renders buttons as A, B, C. The full option text is in the message, because Telegram truncates long button labels. See [Ask, approve, and choose](/questions).

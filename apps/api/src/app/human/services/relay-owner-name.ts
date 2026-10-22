@@ -21,6 +21,22 @@ export function buildRelayOwnerName(firstName?: string | null, lastName?: string
   return full || undefined;
 }
 
+/**
+ * The operator as the agent's public card names them: their first name and the initial of their last name,
+ * "Ada L.". Nothing without a first name, so a card never shows more of a last name than its initial.
+ */
+export function buildRelayOwnerCardName(firstName?: string | null, lastName?: string | null): string | undefined {
+  const first = firstName?.trim();
+  if (!first) {
+    return undefined;
+  }
+
+  // Its first letter: a mark in front of it isn't an initial.
+  const initial = lastName?.match(/\p{L}/u)?.[0];
+
+  return initial ? `${first} ${initial.toUpperCase()}.` : first;
+}
+
 export function resolveRelayAgentName(agent: Pick<AgentEntity, 'name'> | null | undefined): string | undefined {
   const name = agent?.name?.trim();
   if (!name || name === DEFAULT_HUMAN_RELAY_NAME) {

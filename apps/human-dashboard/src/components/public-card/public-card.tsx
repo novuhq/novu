@@ -30,7 +30,12 @@ export function PublicCard({ card }: { card: PublicAgentCard }) {
           state={card.status}
         />
 
-        <CardName name={card.name} operatorName={card.operatorName} createdAt={card.issuedAt} />
+        <CardName
+          name={card.name}
+          operatorName={card.operatorName}
+          createdAt={card.issuedAt}
+          withoutOperator="An agent"
+        />
 
         <ul className="flex flex-col gap-3 p-3">
           <ReachLine via="email">{card.address}</ReachLine>

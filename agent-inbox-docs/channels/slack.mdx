@@ -1,0 +1,38 @@
+---
+title: "Slack"
+description: "Connect Slack with an app configuration token or Add to Slack, and set the Slack-only card icon."
+---
+
+Slack uses the same shape as Telegram: paste a token in the terminal, or finish on a page.
+
+```bash
+npx @agentinbox/cli channel add slack
+```
+
+On a terminal, paste an App Configuration Token (`xoxe.xoxp-…`), or open the setup page and click **Add to Slack**. Without a terminal, the CLI prints the page and waits up to 15 minutes:
+
+```text
+https://www.agentinbox.md/connect?channel=slack#…
+```
+
+```bash
+npx @agentinbox/cli channel add slack --slack-config-token <token>
+```
+
+That flag skips the choice. Exit code `11` means the wait ran out. Run the command again. It resumes at the missing step.
+
+<Warning>
+An agent forwards the URL. It does not ask you for the Slack token, and it does not paste one.
+</Warning>
+
+Add to Slack can require a workspace admin. The docs cannot grant that.
+
+Invite someone else on Slack:
+
+```bash
+npx @agentinbox/cli contact invite bob --via slack --async --name "Bob"
+```
+
+The link works for minutes, and Slack becomes their default channel.
+
+`--icon` is Slack-only. Pass an MCP catalog id (`stripe`, `github`) or an https URL. Other channels ignore it. `--subtitle` and `--body` draw the card on Slack the same way they do elsewhere.

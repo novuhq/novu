@@ -1,4 +1,5 @@
 import type { AgentHostVia } from '@novu/dal';
+import { AGENT_ANALYTICS_SOURCES, type AgentAnalyticsSource } from '@novu/shared';
 import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import {
@@ -69,4 +70,9 @@ export class ListInboxThreadsCommand extends InboxViewCommand {
   @IsOptional()
   @IsIn(AGENT_HOST_VIAS)
   hostVia?: AgentHostVia;
+
+  /** The app that asked, for analytics. */
+  @IsOptional()
+  @IsIn(AGENT_ANALYTICS_SOURCES)
+  analyticsSource?: AgentAnalyticsSource;
 }

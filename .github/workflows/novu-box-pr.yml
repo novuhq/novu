@@ -1,0 +1,77 @@
+name: Novu Box PR
+
+on:
+  pull_request:
+    types: [labeled, unlabeled, synchronize, reopened, closed]
+
+permissions: {}
+
+jobs:
+  pr:
+    name: Box for this PR
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository
+      && (github.event.label.name == 'box'
+          || (github.event.action != 'labeled' && github.event.action != 'unlabeled'
+              && contains(github.event.pull_request.labels.*.name, 'box')))
+    concurrency:
+      group: novu-box-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - name: Checkout docker/box
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: docker/box
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+      - name: Install the box's dependencies
+        run: npm ci --prefix docker/box --omit=dev --omit=peer --ignore-scripts --no-fund --no-audit
+      - name: Start, update or delete the box
+        run: node docker/box/src/ci/ci.ts pr
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  typecheck:
+    name: Typecheck docker/box
+    # Only PRs that change docker/box; the workflow's events can't filter by path without also filtering the box job.
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Does the PR change docker/box?
+        id: changes
+        run: |
+          if gh api --paginate "repos/$REPO/pulls/$NUMBER/files" --jq '.[].filename' | grep -q '^docker/box/'; then
+            echo "box=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+      - name: Checkout docker/box
+        if: steps.changes.outputs.box == 'true'
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: docker/box
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: steps.changes.outputs.box == 'true'
+        with:
+          node-version-file: .nvmrc
+      - name: tsc --noEmit (Node code and Workers)
+        if: steps.changes.outputs.box == 'true'
+        working-directory: docker/box
+        run: npm ci --ignore-scripts --no-fund --no-audit && npm run typecheck
