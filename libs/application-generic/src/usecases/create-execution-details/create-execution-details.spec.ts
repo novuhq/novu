@@ -1,33 +1,53 @@
 import { Test } from '@nestjs/testing';
-import { ExecutionDetailsRepository } from '@novu/dal';
+import { DalService, ExecutionDetailsRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
-import { UserSession } from '@novu/testing';
+import { FeatureFlagsService } from '../../services';
+import { TraceLogRepository } from '../../services/analytic-logs/trace-log';
 import { CreateExecutionDetailsCommand } from './create-execution-details.command';
 import { CreateExecutionDetails } from './create-execution-details.usecase';
 import { DetailEnum } from './types';
 
 describe('Create Execution Details', () => {
+  const dalService = new DalService();
+  const executionDetailsRepository = new ExecutionDetailsRepository();
+  const traceLogRepository = { createStepRun: vi.fn() };
   let useCase: CreateExecutionDetails;
-  let session: UserSession;
+
+  beforeAll(async () => {
+    await dalService.connect(process.env.MONGO_URL as string);
+  });
+
+  afterAll(async () => {
+    await dalService.disconnect();
+  });
 
   beforeEach(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [ExecutionDetailsRepository, CreateExecutionDetails],
-      providers: [],
-    }).compile();
+    traceLogRepository.createStepRun.mockReset();
 
-    session = new UserSession();
-    await session.initialize();
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        CreateExecutionDetails,
+        ExecutionDetailsRepository,
+        { provide: TraceLogRepository, useValue: traceLogRepository },
+        {
+          provide: FeatureFlagsService,
+          useValue: { getFlag: vi.fn(async ({ defaultValue }) => defaultValue) },
+        },
+      ],
+    }).compile();
 
     useCase = moduleRef.get<CreateExecutionDetails>(CreateExecutionDetails);
   });
 
   it('should create the execution details for a job of a notification', async () => {
+    const environmentId = ExecutionDetailsRepository.createObjectId();
+    const jobId = ExecutionDetailsRepository.createObjectId();
     const command = CreateExecutionDetailsCommand.create({
-      organizationId: session.organization._id,
-      environmentId: session.environment._id,
-      subscriberId: session.subscriberId,
-      jobId: ExecutionDetailsRepository.createObjectId(),
+      organizationId: ExecutionDetailsRepository.createObjectId(),
+      environmentId,
+      subscriberId: 'test-subscriber-id',
+      _subscriberId: ExecutionDetailsRepository.createObjectId(),
+      jobId,
       notificationId: ExecutionDetailsRepository.createObjectId(),
       notificationTemplateId: ExecutionDetailsRepository.createObjectId(),
       messageId: ExecutionDetailsRepository.createObjectId(),
@@ -42,9 +62,20 @@ describe('Create Execution Details', () => {
       workflowRunIdentifier: 'test-workflow-run-identifier',
     });
 
-    const result = await useCase.execute(command);
+    await useCase.execute(command);
 
-    expect(result).toHaveProperty('id');
-    expect(result).toHaveProperty('createdAt');
+    const stored = await executionDetailsRepository.findOne({ _environmentId: environmentId, _jobId: jobId });
+    expect(stored?._id).toBeDefined();
+    expect(stored?.createdAt).toBeDefined();
+    expect(stored?.detail).toEqual(DetailEnum.MESSAGE_SENT);
+
+    expect(traceLogRepository.createStepRun).toHaveBeenCalledWith([
+      expect.objectContaining({
+        event_type: 'message_sent',
+        status: 'success',
+        entity_id: jobId,
+        external_subscriber_id: 'test-subscriber-id',
+      }),
+    ]);
   });
 });

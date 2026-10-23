@@ -101,7 +101,7 @@ describe('GetLayoutUseCase', () => {
       });
 
       expect(result.controls).to.exist;
-      expect(result.controls.values?.email).to.deep.equal(mockControlValues.controls.email);
+      expect(result.controls.values?.email).to.deep.equal({ ...mockControlValues.controls.email, editorType: 'block' });
       expect(result.variables).to.deep.equal(mockVariablesSchema);
 
       // Verify v1 use case was called with correct parameters

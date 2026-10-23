@@ -3,16 +3,18 @@ import { packMessagesIntoBatches, SqsService } from './sqs.service';
 import { SqsPartialSendError } from './sqs-partial-send.error';
 import { ISqsMessage, SQS_BATCH_BYTE_BUDGET, SQS_MAX_BATCH_ENTRIES } from './types';
 
-const mockProducerSend = jest.fn();
+const mockProducerSend = vi.fn();
 
-jest.mock('sqs-producer', () => ({
+vi.mock('sqs-producer', () => ({
   Producer: {
-    create: jest.fn(() => ({ send: mockProducerSend })),
+    create: vi.fn(() => ({ send: mockProducerSend })),
   },
 }));
 
-jest.mock('@aws-sdk/client-sqs', () => ({
-  SQSClient: jest.fn(() => ({ destroy: jest.fn() })),
+vi.mock('@aws-sdk/client-sqs', () => ({
+  SQSClient: vi.fn(function () {
+    return { destroy: vi.fn() };
+  }),
 }));
 
 const TOPIC = JobTopicNameEnum.STANDARD;
@@ -101,7 +103,7 @@ describe('SqsService.sendBulk', () => {
   let service: SqsService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env.SQS_QUEUE_URL_STANDARD = 'https://sqs.eu-west-1.amazonaws.com/1/standard';
     mockProducerSend.mockResolvedValue([]);
     service = new SqsService();

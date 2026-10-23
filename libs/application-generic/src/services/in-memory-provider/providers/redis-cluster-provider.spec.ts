@@ -121,7 +121,9 @@ describe('Redis Cluster provider config', () => {
       process.env.REDIS_CLUSTER_SERVICE_PORT = '6379';
       delete process.env.REDIS_CLUSTER_SERVICE_PORTS;
 
-      const clusterSpy = jest.spyOn(Redis, 'Cluster').mockReturnValue({} as any);
+      const clusterSpy = vi.spyOn(Redis, 'Cluster').mockImplementation(function () {
+        return {} as any;
+      });
 
       try {
         getRedisCluster();

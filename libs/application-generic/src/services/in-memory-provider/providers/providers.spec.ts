@@ -74,7 +74,7 @@ describe('Client and config for cluster', () => {
     try {
       const { getConfig } = getClientAndConfigForCluster(InMemoryProviderEnum.ELASTICACHE);
 
-      fail('should not reach here');
+      expect.unreachable('should not reach here');
     } catch (error) {
       expect(error).toBeInstanceOf(Error);
       const { message } = error as Error;
@@ -91,7 +91,7 @@ describe('Client and config for cluster', () => {
     try {
       const { getConfig } = getClientAndConfigForCluster(InMemoryProviderEnum.ELASTICACHE);
 
-      fail('should not reach here');
+      expect.unreachable('should not reach here');
     } catch (error) {
       expect(error).toBeInstanceOf(Error);
       const { message } = error as Error;
