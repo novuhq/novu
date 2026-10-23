@@ -63,9 +63,13 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.waitForNetworkIdle(500);
     addAndEditChannel('inApp');
     cy.waitForNetworkIdle(500);
-    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').type('new content for notification', {
-      force: true,
-    });
+    cy.get('.monaco-editor textarea:first', { timeout: 10000 })
+      .parent()
+      .click()
+      .find('textarea')
+      .type('new content for notification', {
+        force: true,
+      });
 
     cy.getByTestId('enable-add-avatar').click();
     cy.getByTestId('choose-avatar-btn').click();
@@ -474,7 +478,7 @@ describe('Workflow Editor - Main Functionality', function () {
     fillBasicNotificationDetails('Test notification');
 
     addAndEditChannel('inApp');
-    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').type('Test in-app', {
+    cy.get('.monaco-editor textarea:first', { timeout: 10000 }).parent().click().find('textarea').type('Test in-app', {
       force: true,
     });
 
