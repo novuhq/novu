@@ -1,0 +1,45 @@
+{
+  "name": "@novu/ee-agents",
+  "version": "2.0.4",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "node ./check-ee.mjs",
+    "build:esm": "node_modules/.bin/tsc -p tsconfig.json",
+    "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "lint": "echo 'skip lint in the ci'",
+    "test": "echo 'skip test in the ci'",
+    "test-ee": "cross-env TS_NODE_TRANSPILE_ONLY=true NEW_RELIC_ENABLED=false NODE_ENV=test NODE_OPTIONS=--no-experimental-strip-types mocha --timeout 10000 --require ts-node/register --exit 'src/**/*.spec.ts'"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.1.44",
+    "@novu/application-generic": "workspace:*",
+    "@novu/dal": "workspace:*",
+    "@novu/ee-ai": "workspace:*",
+    "@novu/ee-auth": "workspace:*",
+    "@novu/framework": "workspace:*",
+    "@novu/shared": "workspace:*",
+    "@sentry/node": "^10.63.0",
+    "langchain": "^1.2.16",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "11.1.27",
+    "@types/chai": "^4.2.11",
+    "@types/mocha": "^10.0.8",
+    "@types/node": "^22.0.0",
+    "@types/sinon": "^9.0.0",
+    "chai": "^4.2.0",
+    "mocha": "^10.2.0",
+    "rxjs": "7.8.2",
+    "sinon": "^9.2.4",
+    "ts-node": "~10.9.1",
+    "typescript": "5.6.2"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "11.1.27",
+    "@nestjs/core": "11.1.27"
+  }
+}
