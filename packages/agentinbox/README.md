@@ -146,3 +146,4 @@ npx skills update                                         # later: the latest ve
 
 In Claude Code they also install as a plugin, which adds the Agent Inbox MCP server too:
 `/plugin marketplace add agentinboxhq/skills`, then `/plugin install agentinbox@agentinbox`.
+`claude plugin update agentinbox@agentinbox` updates it later.
