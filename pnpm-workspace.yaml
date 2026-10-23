@@ -146,20 +146,28 @@ overrides:
   ws@>=8.0.0 <8.21.0: ^8.21.0
   ws@>=7.0.0 <7.5.11: ^7.5.11
   websocket-driver@<0.7.5: ^0.7.5
-  # Pin playground `nextjs` package's `next` to the patched 15.5.x release
-  # (GHSA-4jqv-mc3x-m676, GHSA-mcj8-r9mp-w47p and friends in >=15.0.0 <15.5.27
-  # are patched in 15.5.27).
-  nextjs>next: ^15.5.27
+  # Pin playground `nextjs` package's `next` to the patched 15.5.x release.
+  # GHSA-2464-fhr4-w9xw (critical): Next.js unauthenticated RCE in the Image
+  # Optimization API when SVG files are used. Patched in 15.5.28 for the 15.x
+  # line (also covers GHSA-4jqv-mc3x-m676, GHSA-mcj8-r9mp-w47p and friends in
+  # >=15.0.0 <15.5.27). Widen the override from 15.5.27 so the playground
+  # picks up 15.5.28.
+  nextjs>next: ^15.5.28
   # GHSA-vcvr-r3jv-pc5j (critical): Next.js remote code execution in
   # next/og ImageResponse. Patched in 16.3.6; widen the override so transitive
   # 16.3.4 resolutions (via better-auth, @better-auth/sso) also pick up the fix.
   # GHSA-cjq9-62q9-8jv4 (high): Next.js SSRF in middleware/image optimization,
   # plus related moderate advisories GHSA-3w37-wq28-93x7, GHSA-4jqv-mc3x-m676,
   # GHSA-f87g-xv8r-7p7x, GHSA-mcj8-r9mp-w47p, and low GHSA-39w2-rjm5-chcv.
-  # Patched in 16.3.8; widen the override from <16.3.6 so transitive consumers
+  # Patched in 16.3.8.
+  # GHSA-2464-fhr4-w9xw (critical): Next.js unauthenticated RCE in the Image
+  # Optimization API when SVG files are used, and GHSA-673q-mjm6-r5xr
+  # (critical): unauthenticated RCE in `use cache` functions returning typed
+  # arrays, plus GHSA-p3m5-59mp-jv5r (high) content-disclosure. All three are
+  # patched in 16.4.1; widen the override from <16.3.8 so transitive consumers
   # (better-auth, @better-auth/sso, @clerk/nextjs, apps/human-dashboard) land
-  # on 16.3.8.
-  next@<16.3.8: ^16.3.8
+  # on 16.4.1+.
+  next@<16.4.1: ^16.4.1
   fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
   fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
   fast-xml-parser@>=5.9.3 <5.10.1: 5.10.1
