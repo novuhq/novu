@@ -104,7 +104,7 @@ jobs:
         uses: cypress-io/github-action@f790eee7a50d9505912f50c2095510be7de06aa7 # v6
         env:
           NODE_ENV: test
-          NODE_OPTIONS: --max_old_space_size=4096
+          NODE_OPTIONS: ''
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WIDGET_KEY }}
         with:
