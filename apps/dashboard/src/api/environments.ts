@@ -123,20 +123,16 @@ export async function getApiKeys({ environment }: { environment: IEnvironment })
 export type DashboardInboxHashes = {
   subscriberHash: string;
   webChatSubscriberHash: string;
-  agentHash?: string;
 };
 
 export async function getDashboardInboxHashes({
   environment,
-  agentIdentifier,
   signal,
 }: {
   environment: IEnvironment;
-  agentIdentifier?: string;
   signal?: AbortSignal;
 }): Promise<DashboardInboxHashes> {
-  const query = agentIdentifier ? `?${new URLSearchParams({ agentIdentifier })}` : '';
-  const { data } = await get<{ data: DashboardInboxHashes }>(`/environments/me/dashboard-inbox-hashes${query}`, {
+  const { data } = await get<{ data: DashboardInboxHashes }>(`/environments/me/dashboard-inbox-hashes`, {
     environment,
     signal,
   });

@@ -28,11 +28,7 @@ function WebChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }
   const { currentUser, isUserLoaded } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const testerSubscriberId = currentUser?._id ? buildDashboardWebChatSubscriberId(currentUser._id) : '';
-  const {
-    webChatSubscriberHash,
-    agentHash,
-    isSettled: isHashSettled,
-  } = useDashboardInboxHashes({ agentIdentifier: agent.identifier });
+  const { webChatSubscriberHash, isSettled: isHashSettled } = useDashboardInboxHashes();
   const isReady =
     isUserLoaded && Boolean(testerSubscriberId) && Boolean(currentEnvironment?.identifier) && isHashSettled;
   const subscriber = useMemo(
@@ -69,7 +65,6 @@ function WebChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <WebChatSurface
           agentId={agent.identifier}
-          agentHash={agentHash}
           agentName={agent.name}
           conversationId={resumeId}
           showAddToAppCallouts={showAddToAppCallouts}
@@ -86,7 +81,6 @@ function WebChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }
 
 function WebChatSurface({
   agentId,
-  agentHash,
   agentName,
   conversationId,
   showAddToAppCallouts,
@@ -97,7 +91,6 @@ function WebChatSurface({
   subscriberId,
 }: {
   agentId: string;
-  agentHash?: string;
   agentName: string;
   conversationId?: string;
   showAddToAppCallouts: boolean;
@@ -131,7 +124,6 @@ function WebChatSurface({
     startNewConversation,
   } = useWebChat({
     agentId,
-    agentHash,
     conversationId,
     onMessage: (message) => {
       if (message.role === 'assistant') {

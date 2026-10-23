@@ -9,7 +9,6 @@ import {
   Param,
   Post,
   Put,
-  Query,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
@@ -39,7 +38,6 @@ import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.dec
 import { UserSession } from '../shared/framework/user.decorator';
 import { assertEnvironmentScopedAccess, isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
-import { DashboardInboxHashesQueryDto } from './dtos/dashboard-inbox-hashes-query.dto';
 import { DashboardInboxHashesResponseDto } from './dtos/dashboard-inbox-hashes-response.dto';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
@@ -108,22 +106,17 @@ export class EnvironmentsControllerV1 {
     summary: 'Sign the dashboard Inbox and web chat identities of the current environment',
     description:
       'Returns HMAC hashes, signed with the current environment API key, for the subscriber ids the dashboard ' +
-      'opens sessions as (the authenticated user and their web chat tester) and, when requested, for an agent ' +
-      'of the current environment.',
+      'opens sessions as (the authenticated user and their web chat tester).',
   })
   @ApiResponse(DashboardInboxHashesResponseDto)
   @ApiExcludeEndpoint()
   @SkipPermissionsCheck()
-  async getDashboardInboxHashes(
-    @UserSession() user: UserSessionData,
-    @Query() query: DashboardInboxHashesQueryDto
-  ): Promise<DashboardInboxHashesResponseDto> {
+  async getDashboardInboxHashes(@UserSession() user: UserSessionData): Promise<DashboardInboxHashesResponseDto> {
     return await this.buildDashboardInboxHashesUsecase.execute(
       BuildDashboardInboxHashesCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        agentIdentifier: query.agentIdentifier,
       })
     );
   }

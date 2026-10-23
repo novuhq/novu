@@ -8,16 +8,15 @@ import { QueryKeys } from '@/utils/query-keys';
  * HMAC hashes for the Inbox and web chat sessions the dashboard opens in the current environment.
  * `isSettled` is true after success or failure: without hashes a session still works while HMAC is off.
  */
-export function useDashboardInboxHashes({ agentIdentifier }: { agentIdentifier?: string } = {}) {
+export function useDashboardInboxHashes() {
   const { currentEnvironment } = useEnvironment();
   const { currentUser } = useAuth();
 
   const { data, isPending } = useQuery({
-    queryKey: [QueryKeys.dashboardInboxHashes, currentEnvironment?._id, currentUser?._id, agentIdentifier],
+    queryKey: [QueryKeys.dashboardInboxHashes, currentEnvironment?._id, currentUser?._id],
     queryFn: ({ signal }) =>
       getDashboardInboxHashes({
         environment: requireEnvironment(currentEnvironment, 'No environment selected'),
-        agentIdentifier,
         signal,
       }),
     enabled: !!currentEnvironment?._id && !!currentUser?._id,
@@ -29,7 +28,6 @@ export function useDashboardInboxHashes({ agentIdentifier }: { agentIdentifier?:
   return {
     subscriberHash: data?.subscriberHash,
     webChatSubscriberHash: data?.webChatSubscriberHash,
-    agentHash: data?.agentHash,
     isSettled: !isPending,
   };
 }
