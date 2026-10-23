@@ -11,22 +11,22 @@ The skills are [agentskills.io](https://agentskills.io) `SKILL.md` files in thei
 npx skills add agentinboxhq/skills
 ```
 
-It installs every skill for the coding agents it finds in the project. `--agent claude-code` picks one agent, and `--skill agent-inbox` picks one skill. `npx skills update` gets the latest version later.
+It installs every skill for the coding agents it finds in the project. `--agent claude-code` picks one agent, and `--skill agentinbox` picks one skill. `npx skills update` gets the latest version later.
 
 agentinbox.md publishes the same skills, so `npx skills add https://www.agentinbox.md` installs them too.
 
-In Claude Code, they also install as a plugin:
+In Claude Code, they also install as a plugin, which adds the Agent Inbox MCP server too. Sign in to Agent Inbox when Claude Code asks, or with `/mcp`.
 
 ```text
 /plugin marketplace add agentinboxhq/skills
-/plugin install agent-inbox@agentinbox
+/plugin install agentinbox@agentinbox
 ```
 
 | Skill | What it teaches |
 | --- | --- |
-| `agent-inbox` | Ask, approve, choose, and tell; read and answer conversations; reach other contacts |
-| `agent-inbox-cli` | Setup, login, connect, channels, CI and sandboxes, exit codes, and errors |
-| `agent-inbox-mcp` | Connecting Claude, ChatGPT, Cursor, and Claude Code to the MCP server, and finishing setup there |
+| `agentinbox` | Ask, approve, choose, and tell; read and answer conversations; reach other contacts |
+| `agentinbox-cli` | Setup, login, connect, channels, CI and sandboxes, exit codes, and errors |
+| `agentinbox-mcp` | Connecting Claude, ChatGPT, Cursor, and Claude Code to the MCP server, and finishing setup there |
 
 ## When the agent should use the inbox
 

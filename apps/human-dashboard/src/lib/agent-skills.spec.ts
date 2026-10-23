@@ -19,13 +19,10 @@ const LONG_REFERENCE = `references/${'a-long-folder-name/'.repeat(5)}commands.md
  */
 const REPOSITORY: Record<string, string> = {
   'README.md': '# Agent Inbox skills\n',
-  'skills/agent-inbox/SKILL.md': skillMd('agent-inbox', 'Reaches a real person. Use when nobody is watching.'),
-  'skills/agent-inbox/references/cli.md': '# CLI\n',
-  [`skills/agent-inbox/${LONG_REFERENCE}`]: '# Commands\n',
-  'skills/agent-inbox-mcp/SKILL.md': skillMd(
-    'agent-inbox-mcp',
-    'Connects an app to the MCP server. Use when adding it.'
-  ),
+  'skills/agentinbox/SKILL.md': skillMd('agentinbox', 'Reaches a real person. Use when nobody is watching.'),
+  'skills/agentinbox/references/cli.md': '# CLI\n',
+  [`skills/agentinbox/${LONG_REFERENCE}`]: '# Commands\n',
+  'skills/agentinbox-mcp/SKILL.md': skillMd('agentinbox-mcp', 'Connects an app to the MCP server. Use when adding it.'),
   'skills/quoted/SKILL.md': skillMd('quoted', '"Quoted. Use when testing."'),
 };
 
@@ -81,16 +78,16 @@ describe('skillsIndex', () => {
     expect(index.$schema).toBe('https://schemas.agentskills.io/discovery/0.2.0/schema.json');
     expect(index.skills.map(({ name, type, description, url }) => ({ name, type, description, url }))).toEqual([
       {
-        name: 'agent-inbox',
+        name: 'agentinbox',
         type: 'archive',
         description: 'Reaches a real person. Use when nobody is watching.',
-        url: `/.well-known/agent-skills/${commit}/agent-inbox.tar.gz`,
+        url: `/.well-known/agent-skills/${commit}/agentinbox.tar.gz`,
       },
       {
-        name: 'agent-inbox-mcp',
+        name: 'agentinbox-mcp',
         type: 'skill-md',
         description: 'Connects an app to the MCP server. Use when adding it.',
-        url: `/.well-known/agent-skills/${commit}/agent-inbox-mcp/SKILL.md`,
+        url: `/.well-known/agent-skills/${commit}/agentinbox-mcp/SKILL.md`,
       },
     ]);
     expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('leaves out skills/quoted'));
@@ -132,13 +129,13 @@ describe('skillsIndex', () => {
 
 describe('findSkill', () => {
   it('finds nothing for a commit or a skill that GitHub does not have', async () => {
-    expect(await findSkill('0'.repeat(40), 'agent-inbox')).toBeNull();
-    expect(await findSkill(commit, 'agent-inbox-api')).toBeNull();
+    expect(await findSkill('0'.repeat(40), 'agentinbox')).toBeNull();
+    expect(await findSkill(commit, 'agentinbox-api')).toBeNull();
   });
 
   it('never reaches GitHub for a path that cannot name a commit and a skill', async () => {
-    expect(await findSkill('main', 'agent-inbox')).toBeNull();
-    expect(await findSkill(commit.slice(0, 12), 'agent-inbox')).toBeNull();
+    expect(await findSkill('main', 'agentinbox')).toBeNull();
+    expect(await findSkill(commit.slice(0, 12), 'agentinbox')).toBeNull();
     expect(await findSkill(commit, 'Agent_Inbox')).toBeNull();
     expect(fetchArchive).not.toHaveBeenCalled();
   });

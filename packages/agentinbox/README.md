@@ -144,5 +144,5 @@ npx skills add agentinboxhq/skills --agent claude-code    # for one agent
 npx skills update                                         # later: the latest version
 ```
 
-In Claude Code they also install as a plugin: `/plugin marketplace add agentinboxhq/skills`, then
-`/plugin install agent-inbox@agentinbox`.
+In Claude Code they also install as a plugin, which adds the Agent Inbox MCP server too:
+`/plugin marketplace add agentinboxhq/skills`, then `/plugin install agentinbox@agentinbox`.
