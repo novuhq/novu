@@ -1,17 +1,16 @@
 import type { AgentMessage, AgentToolPart } from '@novu/js';
+import { AiWorkflowToolsEnum } from '@novu/shared';
 
-/** Mirrors the MCP server workflow write tools. Copied on purpose: the dashboard does not import apps/mcp-server. */
+/** The tools the Copilot agent emits (the same camelCase names on the direct and the MCP-backed suites). */
 const WORKFLOW_WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
-  'add_workflow_step',
-  'insert_workflow_step',
-  'move_workflow_step',
-  'remove_workflow_step',
-  'update_workflow_metadata',
-  'update_workflow_payload_schema',
-  'update_workflow_step_conditions',
-  'update_workflow_step_content',
-  'create_workflow',
-  'update_workflow',
+  AiWorkflowToolsEnum.SET_WORKFLOW_METADATA,
+  AiWorkflowToolsEnum.ADD_STEP,
+  AiWorkflowToolsEnum.ADD_STEP_IN_BETWEEN,
+  AiWorkflowToolsEnum.EDIT_STEP_CONTENT,
+  AiWorkflowToolsEnum.UPDATE_STEP_CONDITIONS,
+  AiWorkflowToolsEnum.REMOVE_STEP,
+  AiWorkflowToolsEnum.MOVE_STEP,
+  AiWorkflowToolsEnum.UPDATE_PAYLOAD_SCHEMA,
 ]);
 
 /** Tool names may arrive namespaced by the MCP server (`server__tool`), so match on the last segment. */
@@ -71,16 +70,14 @@ export type ToolRow = {
 };
 
 const TOOL_LABELS: Record<string, { label: string; change?: ToolChange }> = {
-  add_workflow_step: { label: 'Adding step', change: 'Added' },
-  insert_workflow_step: { label: 'Adding step', change: 'Added' },
-  remove_workflow_step: { label: 'Removing step', change: 'Removed' },
-  move_workflow_step: { label: 'Moving step', change: 'Moved' },
-  update_workflow_step_content: { label: 'Editing step content', change: 'Edited' },
-  update_workflow_step_conditions: { label: 'Editing step conditions', change: 'Edited' },
-  update_workflow_metadata: { label: 'Editing workflow details', change: 'Edited' },
-  update_workflow_payload_schema: { label: 'Editing payload schema', change: 'Edited' },
-  create_workflow: { label: 'Creating workflow', change: 'Added' },
-  update_workflow: { label: 'Editing workflow', change: 'Edited' },
+  [AiWorkflowToolsEnum.SET_WORKFLOW_METADATA]: { label: 'Editing workflow details', change: 'Edited' },
+  [AiWorkflowToolsEnum.ADD_STEP]: { label: 'Adding step', change: 'Added' },
+  [AiWorkflowToolsEnum.ADD_STEP_IN_BETWEEN]: { label: 'Adding step', change: 'Added' },
+  [AiWorkflowToolsEnum.EDIT_STEP_CONTENT]: { label: 'Editing step content', change: 'Edited' },
+  [AiWorkflowToolsEnum.UPDATE_STEP_CONDITIONS]: { label: 'Editing step conditions', change: 'Edited' },
+  [AiWorkflowToolsEnum.REMOVE_STEP]: { label: 'Removing step', change: 'Removed' },
+  [AiWorkflowToolsEnum.MOVE_STEP]: { label: 'Moving step', change: 'Moved' },
+  [AiWorkflowToolsEnum.UPDATE_PAYLOAD_SCHEMA]: { label: 'Editing payload schema', change: 'Edited' },
 };
 
 function humanizeToolName(toolName: string): string {
