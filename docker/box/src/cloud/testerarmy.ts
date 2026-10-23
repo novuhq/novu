@@ -142,7 +142,7 @@ function webhook<T>(url: string, what: string, schema: z.ZodType<T>, body: objec
 }
 
 async function send<T>(url: string, what: string, schema: z.ZodType<T>, init: RequestInit): Promise<T> {
-  const response = await fetch(url, init);
+  const response = await fetch(url, { ...init, signal: AbortSignal.timeout(60_000) });
   const answer = await response.text();
   if (!response.ok) throw new Error(`${what} -> ${response.status}: ${answer.slice(0, 300)}`);
 
