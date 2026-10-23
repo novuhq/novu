@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg style="min-width: 1280px" viewBox="0 0 1280 680" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="pr-flow-title pr-flow-desc" id="d-05-pull-request-root">
-        <title id="pr-flow-title">Novu Box: one pull request, from label to delete</title>
-        <desc id="pr-flow-desc">Swimlane across Developer, GitHub, Cloudflare and the box container: the box label makes ci.ts check the labeler's write access, have the hub register the box, start the box from base's snapshot, apply the PR head, run doctor and edit one sticky PR comment; each push cancels the older run and re-applies; removing the label or closing the PR deletes the box.</desc>
+        <title id="pr-flow-title">Novu Box: one pull request, from ready to delete</title>
+        <desc id="pr-flow-desc">Swimlane across Developer, GitHub, Cloudflare and the box container: a PR ready for review that changes app code, or one a writer labels box, makes ci.ts have the hub register the box, start the box from base's snapshot, apply the PR head, run doctor, start TesterArmy and edit one sticky PR comment and the View deployment link; each push cancels the older run and its TesterArmy runs and re-applies; turning the PR into a draft or closing it deletes the box.</desc>
         <defs>
       <style>#d-05-pull-request-root { --color-paper:   #f5f5f5;
       --color-ink:     #2d3142;
@@ -53,9 +53,9 @@
         <text x="52" y="516" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.18em">THE BOX</text>
 
         <!-- Phase headers -->
-        <text x="160" y="52" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">1 · ADD LABEL</text>
+        <text x="160" y="52" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">1 · READY FOR REVIEW</text>
         <text x="920" y="52" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">2 · EACH PUSH</text>
-        <text x="1072" y="52" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">3 · UNLABEL / CLOSE</text>
+        <text x="1072" y="52" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">3 · DRAFT / CLOSE</text>
 
         <!-- Arrows (drawn before nodes) -->
         <!-- 1 Add label -> ci.ts pr -->
@@ -110,8 +110,8 @@
         <rect x="160" y="100" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
         <rect x="168" y="106" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
         <text x="182" y="115" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PR</text>
-        <text x="224" y="130" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Add label “box”</text>
-        <text x="224" y="146" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">needs write access</text>
+        <text x="224" y="130" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Ready for review</text>
+        <text x="224" y="146" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">or label “box”</text>
 
         <!-- Developer: sync (not part of the PR flow) -->
         <rect x="464" y="100" width="128" height="56" rx="6" fill="#f5f5f5"/>
@@ -129,13 +129,13 @@
         <text x="984" y="130" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Push</text>
         <text x="984" y="146" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">synchronize</text>
 
-        <!-- Developer: Unlabel / close -->
+        <!-- Developer: Draft / close -->
         <rect x="1072" y="100" width="128" height="56" rx="6" fill="#f5f5f5"/>
         <rect x="1072" y="100" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
         <rect x="1080" y="106" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
         <text x="1094" y="115" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PR</text>
-        <text x="1136" y="130" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Unlabel / close</text>
-        <text x="1136" y="146" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">unlabeled · closed</text>
+        <text x="1136" y="130" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Draft / close</text>
+        <text x="1136" y="146" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">draft · closed</text>
 
         <!-- GitHub: ci.ts pr -->
         <rect x="160" y="228" width="128" height="56" rx="6" fill="#f5f5f5"/>
@@ -145,13 +145,13 @@
         <text x="224" y="258" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">ci.ts pr</text>
         <text x="224" y="274" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">OIDC aud novu-box</text>
 
-        <!-- GitHub: Writer check -->
+        <!-- GitHub: Box rule -->
         <rect x="312" y="228" width="128" height="56" rx="6" fill="#f5f5f5"/>
         <rect x="312" y="228" width="128" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
         <rect x="320" y="234" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
         <text x="334" y="243" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CI</text>
-        <text x="376" y="258" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Writer check</text>
-        <text x="376" y="274" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">labeler can write</text>
+        <text x="376" y="258" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Box rule</text>
+        <text x="376" y="274" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">app code, or label</text>
 
         <!-- GitHub: Sticky PR comment (focal) -->
         <rect x="616" y="220" width="280" height="72" rx="6" fill="#f5f5f5"/>
@@ -159,7 +159,7 @@
         <rect x="624" y="226" width="28" height="12" rx="2" fill="none" stroke="#bf4520" stroke-width="0.8" stroke-opacity="0.50"/>
         <text x="638" y="235" fill="#bf4520" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PR</text>
         <text x="756" y="254" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Sticky PR comment</text>
-        <text x="756" y="270" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">URL, or what failed</text>
+        <text x="756" y="270" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">URL · View deployment, or what failed</text>
 
         <!-- GitHub: Cancel old run -->
         <rect x="920" y="228" width="128" height="56" rx="6" fill="#f5f5f5"/>
@@ -167,7 +167,7 @@
         <rect x="928" y="234" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
         <text x="942" y="243" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CI</text>
         <text x="984" y="258" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Cancel old run</text>
-        <text x="984" y="274" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cancel-in-progress</text>
+        <text x="984" y="274" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+ TesterArmy runs</text>
 
         <!-- GitHub: ci.ts pr (delete) -->
         <rect x="1072" y="228" width="128" height="56" rx="6" fill="#f5f5f5"/>
@@ -223,7 +223,7 @@
         <rect x="776" y="490" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.40"/>
         <text x="790" y="499" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">BOX</text>
         <text x="832" y="514" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">doctor</text>
-        <text x="832" y="530" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">health report</text>
+        <text x="832" y="530" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">then TesterArmy</text>
 
         <!-- The box: Stop, re-apply -->
         <rect x="920" y="484" width="128" height="56" rx="6" fill="#f5f5f5"/>

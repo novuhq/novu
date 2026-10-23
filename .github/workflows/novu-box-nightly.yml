@@ -11,7 +11,7 @@ permissions: {}
 
 jobs:
   cleanup:
-    name: Delete boxes of closed or unlabeled PRs and of earlier runs
+    name: Delete boxes of PRs that are closed or no longer get one, and of earlier runs
     if: github.repository == 'novuhq/novu'
     concurrency:
       group: novu-box-cleanup
@@ -20,6 +20,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+      deployments: write
       id-token: write
       pull-requests: write
     steps:

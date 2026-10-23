@@ -17,6 +17,16 @@ export function isBoxName(box: string): boolean {
   return /^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/.test(box) && box !== 'slack' && !box.endsWith(API);
 }
 
+export function prBox(number: number): string {
+  return `pr-${number}`;
+}
+
+export function prOfBox(box: string): number | null {
+  const number = /^pr-(\d+)$/.exec(box)?.[1];
+
+  return number ? Number(number) : null;
+}
+
 export function boxOfHost(hostname: string): string | null {
   if (!hostname.endsWith(`.${DOMAIN}`)) return null;
   const label = hostname.slice(0, -DOMAIN.length - 1);

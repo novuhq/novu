@@ -173,22 +173,26 @@ export const CheckRuns = z.object({
   check_runs: z.array(z.object({ status: z.string(), conclusion: z.string().nullable(), html_url: z.string() })),
 });
 const Label = z.object({ name: z.string() });
+export const Pull = z.object({
+  state: z.string(),
+  draft: z.boolean(),
+  labels: z.array(Label),
+  base: z.object({ ref: z.string() }),
+});
+export type Pull = z.infer<typeof Pull>;
 export const PullRequestEvent = z.object({
   action: z.string(),
   number: z.number(),
   sender: z.object({ login: z.string() }).optional(),
   label: Label.optional(),
-  pull_request: z.object({
-    state: z.string(),
+  pull_request: Pull.extend({
     title: z.string(),
     body: z.string().nullish(),
-    labels: z.array(Label),
-    base: z.object({ ref: z.string() }),
     head: z.object({ sha: z.string(), ref: z.string() }),
   }),
 });
 export type PullRequestEvent = z.infer<typeof PullRequestEvent>;
-export const Pull = z.object({ state: z.string(), labels: z.array(Label) });
+export const PullFile = z.object({ filename: z.string() });
 export const IssueComment = z.object({ id: z.number(), body: z.string().nullish() });
 export const IssueEvent = z.object({
   event: z.string(),
@@ -196,6 +200,8 @@ export const IssueEvent = z.object({
   actor: z.object({ login: z.string() }).nullish(),
 });
 export const Permission = z.object({ permission: z.string() });
+export const Deployment = z.object({ id: z.number() });
+export const DeploymentStatus = z.object({ state: z.string() });
 export const OidcToken = z.object({ value: z.string() });
 
 export const WithId = z.object({ id: z.string() });
@@ -232,7 +238,7 @@ export type TesterArmyPullRequest = z.infer<typeof TesterArmyPullRequest>;
 // shape has no `suite`: PR branches send it with their own ci.ts.
 export const TesterArmyStart = z.union([
   z.object({ pullRequest: TesterArmyPullRequest }),
-  z.object({ suite: z.literal('full') }),
+  z.object({ suite: z.literal('full'), commitSha: z.string().optional() }),
 ]);
 export type TesterArmyStart = z.infer<typeof TesterArmyStart>;
 const StartedGroups = z.array(z.object({ name: z.string(), batchId: z.string(), runs: z.number() }));
@@ -241,7 +247,11 @@ export const TesterArmyStarted = z.object({
   groups: StartedGroups,
   signUpUsersDeleted: z.array(z.string()),
 });
-export const TesterArmyFullStarted = z.object({ groups: StartedGroups, signUpUsersDeleted: z.array(z.string()) });
+export const TesterArmyFullStarted = z.object({
+  groups: z.array(z.object({ name: z.string(), runs: z.number() })),
+  signUpUsersDeleted: z.array(z.string()),
+});
+export const TesterArmyCancelled = z.object({ cancelled: z.array(z.string()) });
 
 const data = <T extends z.ZodType>(schema: T) => z.object({ data: schema });
 const ApiId = z.object({ _id: z.string() });

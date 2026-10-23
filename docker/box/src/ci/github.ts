@@ -1,11 +1,22 @@
 import * as z from 'zod';
 import { githubToken } from '../cli/cloud-http.ts';
 import { fetchJson, HttpError, type JsonInit } from '../node/http.ts';
-import { IssueComment, IssueEvent, Permission, type PullRequestEvent } from '../shared/contracts.ts';
+import {
+  Deployment,
+  DeploymentStatus,
+  IssueComment,
+  IssueEvent,
+  Permission,
+  PullFile,
+  type PullRequestEvent,
+} from '../shared/contracts.ts';
 
 export const REPO = process.env.GITHUB_REPOSITORY ?? 'novuhq/novu';
 export const LABEL = 'box';
 const MARK = '<!-- novu-box -->';
+// One environment for every PR box, each box's deployment told apart by its task. A new one leaves the environment's
+// others active (`auto_inactive`): they're other PRs'.
+const ENVIRONMENT = 'Novu Box';
 
 export async function github<T>(path: string, schema: z.ZodType<T>, init: JsonInit = {}): Promise<T> {
   const headers = {
@@ -49,6 +60,69 @@ export async function comment(number: number, body: string, { onlyUpdate = false
     const created = await github(`/repos/${REPO}/issues/${number}/comments`, IssueComment, { method: 'POST', json });
     commentIds.set(number, created.id);
   }
+}
+
+const deploymentsOf = (box: string, query = '') =>
+  github(
+    `/repos/${REPO}/deployments?environment=${encodeURIComponent(ENVIRONMENT)}&task=${encodeURIComponent(`deploy:${box}`)}&per_page=100${query}`,
+    z.array(Deployment)
+  );
+
+// The PR's "View deployment" button, like a Netlify preview's.
+export async function deployed({
+  box,
+  sha,
+  url,
+  logUrl,
+}: {
+  readonly box: string;
+  readonly sha: string;
+  readonly url: string;
+  readonly logUrl: string | undefined;
+}): Promise<void> {
+  const { id } = await github(`/repos/${REPO}/deployments`, Deployment, {
+    method: 'POST',
+    json: {
+      ref: sha,
+      task: `deploy:${box}`,
+      environment: ENVIRONMENT,
+      transient_environment: true,
+      auto_merge: false,
+      required_contexts: [],
+      description: `Novu Box ${box}`,
+    },
+  });
+  await github(`/repos/${REPO}/deployments/${id}/statuses`, z.unknown(), {
+    method: 'POST',
+    json: { state: 'success', environment_url: url, ...(logUrl && { log_url: logUrl }), auto_inactive: false },
+  });
+}
+
+// Whether the box's apply of this commit finished healthy: only then is there a deployment of it.
+export async function isDeployed(box: string, sha: string): Promise<boolean> {
+  const [deployment] = await deploymentsOf(box, `&sha=${sha}`);
+  if (!deployment) return false;
+  const [status] = await github(
+    `/repos/${REPO}/deployments/${deployment.id}/statuses?per_page=1`,
+    z.array(DeploymentStatus)
+  );
+
+  return status?.state === 'success';
+}
+
+// GitHub deletes only inactive deployments, once a repository has more than one.
+export async function undeployed(box: string): Promise<void> {
+  for (const { id } of await deploymentsOf(box)) {
+    await github(`/repos/${REPO}/deployments/${id}/statuses`, z.unknown(), {
+      method: 'POST',
+      json: { state: 'inactive' },
+    });
+    await github(`/repos/${REPO}/deployments/${id}`, z.unknown(), { method: 'DELETE' });
+  }
+}
+
+export async function pullFiles(number: number): Promise<Array<string>> {
+  return (await everyPage(`/repos/${REPO}/pulls/${number}/files`, PullFile)).map((file) => file.filename);
 }
 
 export async function labeler(event: PullRequestEvent): Promise<string | undefined> {

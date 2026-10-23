@@ -44,26 +44,35 @@ and ignored files not, as a git bundle; your index stays as it is. It stops over
 enterprise submodule's commit, not uncommitted changes inside `.source`. The box merges it onto the commit it was
 baked from, like CI's merge ref, and stops on a conflict: rebase onto `next`, then sync again.
 
-## Per pull request: the `box` label
+## Per pull request
 
-`.github/workflows/novu-box-pr.yml` gives a PR its own box, `pr-<number>`, when someone with write access to
-`novuhq/novu` adds the `box` label.
+`.github/workflows/novu-box-pr.yml` gives a PR its own box, `pr-<number>`, when it's ready for review, targets
+`next`, and changes something a box runs (`BOX_PATHS` in `src/ci/ci.ts`: the apps, `libs/`, `packages/`,
+`enterprise/`, `playground/nextjs/`, the lockfile, the root `package.json`, `nx.json` and `tsconfig.json`). Drafts
+and docs-only PRs get one only when someone with write access to `novuhq/novu` adds the `box` label. Dependabot's
+PRs get none.
 
 - The box starts from `base` and applies the PR's head; every push applies the new head (a newer push cancels the
-  older run).
+  older run, and the TesterArmy runs still going on the older head). Other events (draft, ready, a label, a new base
+  branch) apply only when the box doesn't run the head healthy yet; re-running the job always applies.
 - One comment on the PR, edited in place, shows the box's address, the applied commit and what was rebuilt, or what
-  failed; ⚠️ when the apply ran but `doctor` then found problems.
+  failed; ⚠️ when the apply ran but `doctor` then found problems. A healthy box is also a GitHub deployment
+  (environment `Novu Box`), so the PR shows View deployment; it's removed while the box applies another head, and
+  when the box is deleted.
 - Once the box is healthy, TesterArmy (project Novu Box) tests it: its exploration agent, which reads the PR and
   tests what it changes, and `PR smoke`, a few minutes of the main flows (sign-in, every channel, the API key,
   the editor, digest, an agent in web chat). They report on the PR as checks. The tests live in TesterArmy, not in
   this repo. Its other groups run every night after the rebake, on `nightly-<run id>`, a fresh copy of `base` that
   the next night's cleanup deletes: `Full` (everything in the dashboard), `Full: Slack` (the agents in Slack, one
-  test at a time) and `Full: account` (sign up, onboard, delete). Their results are in TesterArmy only.
-- Closing the PR or removing the label deletes the box. At most 30 PR boxes exist at once. PRs from forks get no
-  box.
+  test at a time) and `Full: account` (sign up, onboard, delete). They start through their group webhooks, so
+  TesterArmy posts their failures to Slack (#eng-feed-deployments; passing runs too if the project's Slack settings
+  say so); it never posts runs started through its API, like the PRs'.
+- Closing the PR deletes the box, and so does turning it into a draft, moving it off `next` or removing the label
+  when it then no longer gets one; the nightly cleanup deletes any such box an event missed. At most 50 PR boxes
+  exist at once. PRs from forks get no box.
 - The workflow holds no secrets: it signs in to the boxes with its GitHub OIDC token.
 
-![A pull request's box: the label starts it from base, each push re-applies, the comment shows the result, unlabel or close deletes it](./docs/05-pull-request.svg)
+![A pull request's box: it starts from base, each push re-applies, the comment shows the result, closing the PR deletes it](./docs/05-pull-request.svg)
 
 ## What's in a box
 
@@ -186,8 +195,8 @@ list`).
 
 **`base`:** the box new boxes start from. `novu-box-base.yml` refreshes it on every push to `next` (applies the new
 head, about 4 min). At 04:17 UTC `novu-box-nightly.yml` rebakes it through that workflow, then runs the full suite
-on `nightly-<run id>`; next to that it deletes the boxes of closed or unlabeled PRs, and those of earlier runs
-(`base-next-*`, `nightly-*`) an hour idle. Its Run workflow button does the same by hand. A rebake bakes in a
+on `nightly-<run id>`; next to that it deletes the boxes of PRs that are closed or no longer get one, and those of
+earlier runs (`base-next-*`, `nightly-*`) an hour idle. Its Run workflow button does the same by hand. A rebake bakes in a
 separate box (`base-next-<run id>`, a fresh name every run, see where boxes live above) and `base` takes over its
 snapshot only once it's saved, so `base` is never missing; a refresh that fails keeps the last good snapshot.
 A new box restores every byte of base's snapshot chain, so the bake and each refresh drop nx's cache before they save
@@ -209,7 +218,8 @@ about missing ones.
 | `NX_CLOUD_ACCESS_TOKEN` | yes, optional | Reads CI's Nx Cloud cache. **Read-only only**: PR code can read it |
 | `GITHUB_READ_TOKEN` | no | Read-only access to `novu` and `packages-enterprise` for the boxes' git fetches |
 | `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET` | no | The Slack router |
-| `TESTERARMY_API_KEY` | no, optional | Starts TesterArmy's runs on PR boxes |
+| `TESTERARMY_API_KEY` | no, optional | Starts and cancels TesterArmy's runs on PR boxes |
+| `TESTERARMY_NIGHTLY_WEBHOOKS` | no, optional | The webhook URLs of `Full`, `Full: account` and `Full: Slack`, in that order, separated by spaces |
 | `CURSOR_BOX_TOKEN` | no, optional | Lets Cursor Cloud agents use boxes. Also a Cursor team Runtime Secret, same name and value |
 
 A box runs PR code, which can read its environment: never put production keys in boxes, never name a secret
