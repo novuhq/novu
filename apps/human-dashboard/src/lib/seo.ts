@@ -40,8 +40,25 @@ export const SITE_PAGES = {
 
 export type SitePage = keyof typeof SITE_PAGES;
 
+/** What a website page says about itself to search engines and link previews. */
+export type PageContent = {
+  path: string;
+  title: string;
+  description: string;
+  image: { path: string; alt: string };
+  /** Its Markdown version, for agents: `/index.md` for the home page. */
+  markdownPath?: string;
+};
+
 export function pageMetadata(page: SitePage, environment = process.env.VERCEL_ENV): Metadata {
-  const content = SITE_PAGES[page];
+  return contentMetadata(
+    { ...SITE_PAGES[page], ...(page === 'home' ? { markdownPath: '/index.md' } : {}) },
+    environment
+  );
+}
+
+/** The metadata of any website page: the two above, and each host's page (`host-seo.ts`). */
+export function contentMetadata(content: PageContent, environment = process.env.VERCEL_ENV): Metadata {
   const url = `${SITE_ORIGIN}${content.path}`;
   const index = SITE_INDEXED && environment !== 'preview' && environment !== 'development';
   const image = {
@@ -59,7 +76,7 @@ export function pageMetadata(page: SitePage, environment = process.env.VERCEL_EN
     description: content.description,
     alternates: {
       canonical: url,
-      ...(page === 'home' ? { types: { 'text/markdown': `${SITE_ORIGIN}/index.md` } } : {}),
+      ...(content.markdownPath ? { types: { 'text/markdown': `${SITE_ORIGIN}${content.markdownPath}` } } : {}),
     },
     robots: {
       index,
@@ -91,7 +108,11 @@ export function pageMetadata(page: SitePage, environment = process.env.VERCEL_EN
 }
 
 export function siteStructuredData(page: SitePage) {
-  const content = SITE_PAGES[page];
+  return contentStructuredData(SITE_PAGES[page]);
+}
+
+/** What search engines read about any website page (JSON-LD). */
+export function contentStructuredData(content: Pick<PageContent, 'path' | 'title' | 'description'>) {
   const url = `${SITE_ORIGIN}${content.path}`;
   const website = `${SITE_ORIGIN}/#website`;
   const code = `${SITE_ORIGIN}/#agentinbox-cli`;

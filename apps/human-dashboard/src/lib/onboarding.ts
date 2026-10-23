@@ -90,3 +90,6 @@ export const SKILLS_REPO = 'agentinboxhq/skills';
 
 /** Installs the skills with the skills CLI, for the coding agents it finds in the project. */
 export const INSTALL_SKILLS_COMMAND = `npx skills add ${SKILLS_REPO}`;
+
+/** What the skills CLI calls each agent it installs for (`--agent claude-code`). */
+export const SKILLS_CLI_AGENTS_URL = 'https://github.com/vercel-labs/skills/blob/main/docs/agents.md';

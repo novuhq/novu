@@ -10,6 +10,7 @@ import { useNow } from '@/hooks/use-now';
 import type { AgentSettings } from '@/lib/agent-settings';
 import type { ToolId } from '@/lib/ai-tools';
 import { type HostStatus, hostLiveness } from '@/lib/host-status';
+import type { HostId } from '@/lib/hosts';
 import type { ChannelVia } from '@/lib/human-channels-api';
 import type { ChannelRow } from '@/lib/human-channels-overview';
 import type { SlackSetupState } from '@/lib/human-slack-setup';
@@ -36,6 +37,8 @@ export type ConfigureAgent = {
 type ConfigureViewProps = {
   /** The drawer the page opens with, when a link asked for one (`?setup=`). */
   initialDrawer: ChannelVia | null;
+  /** "Connect another agent" opens on this host, when a link asked for it (`?connect=`). */
+  connectHost: HostId | null;
   agent: ConfigureAgent;
   /** The operator as the API names them for the public card, "Ada L.", or empty without a first name. */
   operatorName: string;
@@ -65,6 +68,7 @@ type ConfigureViewProps = {
  */
 export function ConfigureView({
   initialDrawer,
+  connectHost,
   agent,
   operatorName,
   channels,
@@ -149,6 +153,7 @@ export function ConfigureView({
             docsUrl={docsUrl}
             mcpUrl={mcpUrl}
             connectedTools={connectedTools}
+            connectHost={connectHost}
           />
           <AgentSettingsCard handle={agent.handle} settings={settings} onPausedChange={setPaused} />
         </div>

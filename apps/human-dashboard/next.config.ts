@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 
+import { HOST_IDS } from './src/lib/host-ids';
 import { SITE_INDEXED, SITE_ORIGIN } from './src/lib/seo';
 
 const usApiUrl = (process.env.NEXT_PUBLIC_NOVU_API_URL || 'https://api.novu.co').replace(/\/$/, '');
@@ -7,8 +8,12 @@ const usApiUrl = (process.env.NEXT_PUBLIC_NOVU_API_URL || 'https://api.novu.co')
 /** Where language models find what this site has for them (`/llms.txt`). */
 const LLMS_LINK = `<${SITE_ORIGIN}/llms.txt>; rel="describedby"`;
 
+/** Each host's public page (`/claude-code`), and its Markdown for agents (`/claude-code.md`). */
+const HOST_PAGE = `/:host(${HOST_IDS.join('|')})`;
+const HOST_MARKDOWN = `${HOST_PAGE}\\.md`;
+
 /** The website pages and their text versions, which search engines leave out while `SITE_INDEXED` is off. */
-const WEBSITE_PATHS = ['/', '/sapien', '/index.md', '/llms.txt'];
+const WEBSITE_PATHS = ['/', '/sapien', '/index.md', '/llms.txt', HOST_PAGE, HOST_MARKDOWN];
 
 const NOINDEX = { key: 'X-Robots-Tag', value: 'noindex, nofollow' };
 
@@ -45,6 +50,13 @@ const nextConfig: NextConfig = {
         ],
       },
       { source: '/sapien', headers: [{ key: 'Link', value: LLMS_LINK }] },
+      // A host's page says where its Markdown is, as the robots page does.
+      {
+        source: HOST_PAGE,
+        headers: [
+          { key: 'Link', value: `<${SITE_ORIGIN}/:host.md>; rel="alternate"; type="text/markdown", ${LLMS_LINK}` },
+        ],
+      },
       // Out of search results until launch, also the Markdown and text, which carry no `<meta name="robots">`.
       ...(SITE_INDEXED ? [] : WEBSITE_PATHS.map((source) => ({ source, headers: [NOINDEX] }))),
       // Preview and development deployments stay out of search results.
@@ -55,6 +67,8 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
+      // A host's Markdown lives next to its page, as `/claude-code/index.md`; agents ask for `/claude-code.md`.
+      { source: HOST_MARKDOWN, destination: '/:host/index.md' },
       {
         source: '/v1/agents/email/actions/preview',
         destination: `${usApiUrl}/v1/agents/email/actions/preview`,

@@ -199,12 +199,6 @@ export async function leaveTestAction(how: 'connect' | 'skip' | 'later'): Promis
   refresh();
 }
 
-/** Leaves the steps unfinished for the dashboard, where the banners keep pointing back to the step left behind. */
-export async function skipForNowAction(destination: Destination = 'inbox'): Promise<void> {
-  await updateOnboardingState((state) => ({ ...state, skippedAt: new Date().toISOString() }));
-  redirect(DESTINATIONS[destination] ?? DASHBOARD_HOME);
-}
-
 /** Leaves step 4, and with it the onboarding, for a page of the dashboard. */
 export async function finishOnboardingAction(destination: Destination): Promise<void> {
   const now = new Date().toISOString();
