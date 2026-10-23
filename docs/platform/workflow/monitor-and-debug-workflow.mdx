@@ -72,7 +72,8 @@ Common trace entries include:
 Open the [Activity Feed](https://dashboard.novu.co/activity-feed), select the workflow run, and read the step that did not send. The step status and execution detail name the cause.
 
 - **Skipped**: a [step condition](/platform/workflow/add-and-configure-steps/step-conditions) did not match, or a throttle limit was exceeded.
-- **Error**: the provider rejected the message, no active integration matched, or required subscriber data is missing, such as an email address or a phone number. See [Common errors](/platform/additional-resources/errors).
+- **Error**: the provider rejected the message or no active integration matched. See [Common errors](/platform/additional-resources/errors).
+- **Canceled**: required subscriber contact data may be missing, such as an email address or a phone number. Open the step details to check the cause.
 - **Subscriber preferences**: the subscriber turned that channel off for the workflow, or globally, and the workflow is not marked critical. See [Preferences](/platform/concepts/preferences).
 - **Wrong environment**: the trigger used a secret key for an environment where the workflow is not published, or the Inbox is using a different application identifier than the environment you triggered.
 - **Demo email**: the [demo email integration](/platform/integrations/demo-integration) only delivers to the email address on your Novu account.
@@ -97,11 +98,11 @@ The **Status** field on a workflow run is Completed, Pending, or Failed. Each st
 | Status | Meaning |
 | --- | --- |
 | **Success** | The step finished. For a channel step, Novu handed the message to the provider or stored the in-app notification. |
-| **Error** | The step failed. Open it for the provider response or the missing field. |
+| **Error** | The step failed. Open it for the provider response. |
 | **Skipped** | The step did not run. A step condition did not match, or a throttle limit was exceeded. After a condition skip, Novu continues with the next step. A throttle skip also skips the steps that follow that throttle step. |
 | **Delayed** | A Delay step is waiting. The following steps have not started. |
 | **Merged** | A Digest step folded this event into an existing digest window. |
-| **Canceled** | The step was canceled before it finished. |
+| **Canceled** | The step was canceled before it finished. A missing subscriber email address or phone number is recorded as Canceled. Open the step details to check the cause. |
 | **Pending**, **Queued**, **Running** | The step has been accepted and has not finished yet. |
 
 Provider delivery events such as delivered, bounced, opened, or clicked are separate from the step status. They appear on the message when [activity tracking](/platform/integrations/email/activity-tracking) is configured for that provider. **Success** means Novu sent the message, not that the recipient opened it.
