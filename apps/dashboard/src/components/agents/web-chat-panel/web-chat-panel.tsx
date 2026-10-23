@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { SOCKET_OPTIONS } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useDashboardInboxHashes } from '@/hooks/use-dashboard-inbox-hashes';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 
 type WebChatPanelProps = {
@@ -27,7 +28,9 @@ function WebChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }
   const { currentUser, isUserLoaded } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const testerSubscriberId = currentUser?._id ? buildDashboardWebChatSubscriberId(currentUser._id) : '';
-  const isReady = isUserLoaded && Boolean(testerSubscriberId) && Boolean(currentEnvironment?.identifier);
+  const { webChatSubscriberHash, isSettled: isHashSettled } = useDashboardInboxHashes();
+  const isReady =
+    isUserLoaded && Boolean(testerSubscriberId) && Boolean(currentEnvironment?.identifier) && isHashSettled;
   const subscriber = useMemo(
     () => ({
       subscriberId: testerSubscriberId,
@@ -53,6 +56,7 @@ function WebChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }
     <NovuProvider
       key={testerSubscriberId}
       subscriber={subscriber}
+      subscriberHash={webChatSubscriberHash}
       applicationIdentifier={currentEnvironment.identifier}
       apiUrl={apiHostnameManager.getHostname()}
       socketUrl={apiHostnameManager.getWebSocketHostname()}
