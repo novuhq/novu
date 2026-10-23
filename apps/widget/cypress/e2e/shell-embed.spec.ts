@@ -105,8 +105,6 @@ describe('Shell Embed', function () {
             $button.get(0).click();
           });
         cy.wrap(body)
-          .find('[data-test-id="notification-list-item"]')
-          .first()
           .find('[data-test-id="notification-mark-as-read"]')
           .should('be.visible')
           .then(($item) => {
