@@ -22,6 +22,13 @@ export const APP_ID = import.meta.env.VITE_NOVU_APP_ID || '';
  */
 export const NOVU_COPILOT_SLACK_INTEGRATION_IDENTIFIER = getEnvVar('VITE_NOVU_COPILOT_SLACK_INTEGRATION_IDENTIFIER');
 
+/**
+ * Public identifier of the hosted Novu Copilot agent on Novu's own account, used by the
+ * workflow editor Copilot popover over the agent web-chat channel (`useWebChat({ agentId })`
+ * takes the agent identifier, not its `_id`).
+ */
+export const NOVU_COPILOT_AGENT_ID = getEnvVar('VITE_NOVU_COPILOT_AGENT_ID') || 'novu-copilot';
+
 export const API_HOSTNAME = window._env_?.VITE_API_HOSTNAME || import.meta.env.VITE_API_HOSTNAME;
 
 /** Publicly reachable API host for agent webhooks/OAuth (e.g. ngrok). Falls back to `API_HOSTNAME`. */

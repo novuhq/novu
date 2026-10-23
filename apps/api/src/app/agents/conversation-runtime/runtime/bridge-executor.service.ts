@@ -12,6 +12,7 @@ import {
   SsrfBlockedError,
   safeOutboundStreamRequest,
 } from '@novu/application-generic';
+import type { WebChatRawMessage } from '@novu/chat-adapter-web-chat';
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
   AgentAction,
@@ -29,6 +30,7 @@ import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
 import type { Message, Root } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
 import { esmImport } from '../../shared/util/esm-import';
@@ -532,6 +534,13 @@ export class BridgeExecutorService {
       },
       timestamp: message.metadata?.dateSent?.toISOString() ?? new Date().toISOString(),
     };
+
+    if (signingContext?.platform === AgentPlatformEnum.WEB_CHAT) {
+      const metadata = (message.raw as WebChatRawMessage | undefined)?.metadata;
+      if (metadata && Object.keys(metadata).length > 0) {
+        mapped.metadata = metadata;
+      }
+    }
 
     if (signingContext?.platform) {
       const replyTo = resolveInboundReplyTo(signingContext.platform, message, signingContext.platformThreadId);
