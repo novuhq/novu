@@ -46,13 +46,13 @@ jobs:
           fi
 
       # checkout with submodules if token is provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
         if: steps.setup.outputs.has_token == 'true'
         with:
           submodules: ${{ inputs.ee }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
       # else checkout without submodules if the token is not provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
         if: steps.setup.outputs.has_token != 'true'
       - uses: ./.github/actions/setup-project
         id: setup-project
@@ -60,7 +60,7 @@ jobs:
           cypress: true
           submodules: true
 
-      - uses: mansagroup/nrwl-nx-action@v3
+      - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         with:
           targets: lint,build
           projects: '@novu/web,@novu/api,@novu/worker'
@@ -97,7 +97,7 @@ jobs:
         working-directory: apps/web
         run: pnpm cypress install
 
-      - uses: browser-actions/setup-chrome@latest
+      - uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # latest
         with:
           chrome-version: "stable"
       - run: |
@@ -105,7 +105,7 @@ jobs:
 
       - name: Cypress run EE e2e
         if: ${{ inputs.ee }}
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@f790eee7a50d9505912f50c2095510be7de06aa7 # v6
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -123,7 +123,7 @@ jobs:
           spec: "cypress/tests/**/*.spec-ee.{js,jsx,ts,tsx}"
 
       - name: Cypress run e2e
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@f790eee7a50d9505912f50c2095510be7de06aa7 # v6
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -140,7 +140,7 @@ jobs:
           config-file: cypress.config.ts
           spec: "cypress/tests/**/*.spec.{js,jsx,ts,tsx}"
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
         if: failure()
         with:
           name: cypress-screenshots
@@ -156,7 +156,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
 
       - uses: ./.github/actions/setup-project
         id: setup-project
@@ -172,7 +172,7 @@ jobs:
         run: pnpm cypress install
 
       - name: Run Component tests 🧪
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@f790eee7a50d9505912f50c2095510be7de06aa7 # v6
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -184,7 +184,7 @@ jobs:
           install: false
           component: true
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
         if: failure()
         with:
           name: cypress-screenshots

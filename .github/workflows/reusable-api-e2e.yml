@@ -60,7 +60,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # checkout with submodules if token is provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
         name: Checkout with submodules
         if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee }}
         with:
@@ -68,7 +68,7 @@ jobs:
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       # else checkout without submodules if the token is not provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
         name: Checkout
         if: ${{ needs.check_submodule_token.outputs.has_token != 'true' || !contains (inputs.job-name,'-ee') }}
 
@@ -80,7 +80,7 @@ jobs:
       - uses: ./.github/actions/setup-redis-cluster
         name: Setup redis cluster
 
-      - uses: mansagroup/nrwl-nx-action@v3
+      - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         name: Run Lint
         with:
           targets: lint

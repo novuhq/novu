@@ -12,16 +12,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout Repository'
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v3
+        uses: actions/dependency-review-action@cc4f6536e38d1126c5e3b0683d469a14f23bfea4 # v3
 
   spellcheck:
     name: Spell check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: streetsidesoftware/cspell-action@v5
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
+      - uses: streetsidesoftware/cspell-action@e6f09063780e6ace11d87ce10d818d4e2bad9b66 # v5
 
   get-affected:
     name: Get Affected Packages
@@ -43,7 +43,7 @@ jobs:
       # Get current branch name
       - name: Get branch name
         id: branch-name
-        uses: tj-actions/branch-names@v7.0.7
+        uses: tj-actions/branch-names@6c999acf206f5561e19f46301bb310e9e70d8815 # v7.0.7
       # Get base branch name to compare with. Base branch on a PR, "main" branch on pushing.
       - name: Get base branch name
         id: get-base-branch-name
@@ -53,7 +53,7 @@ jobs:
           else
             echo "branch=main" >> $GITHUB_OUTPUT
           fi
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-project
@@ -62,7 +62,7 @@ jobs:
 
       # Configure Nx to be able to detect changes between branches when we are in a PR
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@v2
+        uses: nrwl/nx-set-shas@59075b03c42ae79986d96d761eeb15094df7a76e # v2
         with:
           main-branch-name: ${{steps.get-base-branch-name.outputs.branch}}
 
@@ -123,7 +123,7 @@ jobs:
       matrix:
         name: ['novu/api', 'novu/api-ee']
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: ./.github/actions/docker/build-api
@@ -140,11 +140,11 @@ jobs:
     timeout-minutes: 80
     steps:
       - run: echo '${{ needs.get-affected.outputs.test-providers }}'
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
-      - uses: mansagroup/nrwl-nx-action@v3
+      - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         with:
           targets: lint,build,test
           parallel: 5
@@ -166,7 +166,7 @@ jobs:
         run: echo '${{ needs.get-affected.outputs.test-packages }}'
 
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
 
       - name: Setup Project
         uses: ./.github/actions/setup-project
@@ -177,7 +177,7 @@ jobs:
         uses: ./.github/actions/setup-redis-cluster
 
       - name: Run Lint, Build, Test
-        uses: mansagroup/nrwl-nx-action@v3
+        uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         env:
           LOGGING_LEVEL: 'info'
         with:
@@ -192,9 +192,9 @@ jobs:
     timeout-minutes: 80
     steps:
       - run: echo '${{ needs.get-affected.outputs.test-libs }}'
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
       - uses: ./.github/actions/setup-project
-      - uses: mansagroup/nrwl-nx-action@v3
+      - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         with:
           targets: lint,build,test
           projects: ${{join(fromJson(needs.get-affected.outputs.test-libs), ',')}}
@@ -231,13 +231,13 @@ jobs:
       id-token: write
     steps:
       - run: echo ${{ matrix.projectName }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
       - uses: ./.github/actions/setup-project
         with:
           # Don't run redis and etc... for other unit tests
           slim: ${{ !contains(matrix.projectName, '@novu/api') && !contains(matrix.projectName, '@novu/worker') && !contains(matrix.projectName, '@novu/ws') && !contains(matrix.projectName, '@novu/inbound-mail')}}
       - uses: ./.github/actions/setup-redis-cluster
-      - uses: mansagroup/nrwl-nx-action@v3
+      - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         name: Lint and build and test
         with:
           targets: lint,build,test
@@ -255,7 +255,7 @@ jobs:
       deployments: write
       id-token: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: ./.github/actions/run-api

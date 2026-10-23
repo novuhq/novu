@@ -45,13 +45,13 @@ jobs:
             echo "has_token=false" >> $GITHUB_OUTPUT
           fi
       # checkout with submodules if token is provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
         if: steps.setup.outputs.has_token == 'true'
         with:
           submodules: ${{ inputs.ee }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
       # else checkout without submodules if the token is not provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
         if: steps.setup.outputs.has_token != 'true'
       - uses: ./.github/actions/setup-project
         id: setup-project
@@ -60,12 +60,12 @@ jobs:
           cypress: true
       - uses: ./.github/actions/setup-redis-cluster
 
-      - uses: mansagroup/nrwl-nx-action@v3
+      - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         with:
           targets: lint
           projects: '@novu/widget'
 
-      - uses: mansagroup/nrwl-nx-action@v3
+      - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         with:
           targets: build
           projects: '@novu/widget,@novu/embed,@novu/api,@novu/worker,@novu/ws'
@@ -97,7 +97,7 @@ jobs:
         run: pnpm cypress install
 
       - name: Cypress run
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@f790eee7a50d9505912f50c2095510be7de06aa7 # v6
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -111,13 +111,13 @@ jobs:
           parallel: true
           config-file: cypress.config.ts
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
         if: failure()
         with:
           name: cypress-screenshots
           path: apps/widget/cypress/screenshots
       # Test run video was always captured, so this action uses "always()" condition
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
         if: always()
         with:
           name: cypress-videos
