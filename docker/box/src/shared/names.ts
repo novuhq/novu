@@ -29,6 +29,8 @@ export function boxOfOrigin(origin: string): string {
   return boxOfHost(new URL(origin).hostname) ?? '';
 }
 
+export const SEED_EMAIL = 'agent@novu.co';
+
 // Box names have no dots, so the box is everything between `+` and the last dot.
 const TEST_USER = /^agent\+([a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\.([a-z0-9]{6})@novu\.co$/;
 
