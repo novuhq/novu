@@ -14,6 +14,17 @@ Commands below are `node docker/box/src/cli/main.ts <command>`, run from the rep
 reference for every command, URL and credential. The CLI needs `gh` signed in as someone with push access to
 `novuhq/novu`; in Cursor Cloud it uses the `CURSOR_BOX_TOKEN` secret by itself. No secrets on your machine.
 
+```sh
+node docker/box/src/cli/main.ts --help          # the reference for every command and flag
+node docker/box/src/cli/main.ts up              # start your branch's box with your checkout
+node docker/box/src/cli/main.ts sync            # put your latest changes on it
+node docker/box/src/cli/main.ts doctor          # is it fit to test on
+node docker/box/src/cli/main.ts user seed       # a one-time sign-in link for the seeded org
+node docker/box/src/cli/main.ts user create     # a dashboard account for this box only
+node docker/box/src/cli/main.ts mail            # what it sent: email, SMS, push, chat
+node docker/box/src/cli/main.ts logs --errors   # what went wrong
+```
+
 A step is done when its check passes; what it proves goes in your report.
 
 ## 1. Launch
