@@ -145,8 +145,10 @@ Novu picks the next open slot from the schedule at the moment the delay finishes
 When that time arrives, Novu reads the schedule again:
 
 - **That moment is still inside the schedule.** The workflow continues then. An earlier window the subscriber added in the meantime is not used. The step does not send early.
-- **That moment is now outside the schedule.** Novu waits once more, until the next open slot in the updated schedule.
+- **That moment is now outside the schedule.** Novu waits again, until the next open slot in the updated schedule. This includes the first wait, and Novu will do it at most 3 times. If the step wakes after the third wait and the time is still outside the schedule, the delay ends. Email, SMS, push, and chat steps that follow are skipped. In-app steps are still delivered.
 - **The subscriber turns the schedule off.** The step still waits until the time already chosen. When it wakes, the schedule is off, so the workflow continues and sends.
+
+A single edit stays inside that limit. The third wait is reached only when the subscriber moves the window before each wake-up, so every chosen time is still outside the schedule.
 
 For example, a delay ends Friday at 6:00 PM and is waiting for Monday at 9:00 AM. On Saturday the subscriber adds Saturday 10:00 AM–12:00 PM. The notification stays scheduled for Monday at 9:00 AM. Monday is still inside the weekday window, so it sends then. If they turn Monday off and leave only Tuesday 9:00 AM–10:00 AM, the step wakes Monday at 9:00 AM, sees that Monday is closed, and waits until Tuesday at 9:00 AM.
 

@@ -105,7 +105,7 @@ Novu waits once, until the start of the next enabled window. It does not step th
 
 The digest window you configure follows your [plan limit](/platform/developer/limits): 1 day on Free, 7 days on Pro, and 30 days on Team. Enterprise limits are custom. The wait until the next window is separate from that duration, on every plan.
 
-If the subscriber changes the schedule while the digest is waiting, the chosen time stays in place. Novu reads the new schedule when that time arrives. A moment that is still inside the schedule sends then, including when the subscriber added an earlier window. A moment that is now outside the schedule waits until the next open slot. Turning the schedule off does not send immediately. The digest wakes at the time already chosen and then sends, because the schedule is off.
+If the subscriber changes the schedule while the digest is waiting, the chosen time stays in place. Novu reads the new schedule when that time arrives. A moment that is still inside the schedule sends then, including when the subscriber added an earlier window. A moment that is now outside the schedule waits until the next open slot. That wait, including the first one, happens at most 3 times. If the digest wakes after the third wait and the time is still outside the schedule, it ends. Email, SMS, push, and chat steps that follow are skipped. In-app steps are still delivered. Turning the schedule off does not send immediately. The digest wakes at the time already chosen and then sends, because the schedule is off.
 
 The same rules are documented on the [Delay step](/platform/workflow/add-and-configure-steps/configure-action-steps/delay#if-the-subscriber-changes-the-schedule-while-waiting).
 
