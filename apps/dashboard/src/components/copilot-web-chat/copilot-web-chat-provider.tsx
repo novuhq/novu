@@ -51,7 +51,7 @@ type BridgeShell = Pick<ShellState, 'isOpen' | 'close' | 'toggle' | 'pageContext
 
 type ConnectedState = Pick<
   CopilotWebChatContextValue,
-  'chat' | 'sendMessage' | 'retry' | 'startNewConversation' | 'hasUnseenAnswer' | 'hasRunError'
+  'chat' | 'sendMessage' | 'retry' | 'startNewConversation' | 'hasUnseenAnswer' | 'hasRunError' | 'sentContextLabels'
 >;
 
 /**
@@ -84,6 +84,7 @@ export function CopilotWebChatProvider({ children, enabled = true }: { children:
       sendMessage: connected?.sendMessage ?? (async () => {}),
       retry: connected?.retry ?? (async () => {}),
       startNewConversation: connected?.startNewConversation ?? (() => {}),
+      sentContextLabels: connected?.sentContextLabels ?? {},
       draft,
       setDraft,
       hasUnseenAnswer: !!connected?.hasUnseenAnswer && !isOpen,
@@ -118,6 +119,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const { isOpen, close, toggle, pageContext, onRefetchRef } = shell;
   const [unseenAnswer, setUnseenAnswer] = useState(false);
   const [runError, setRunError] = useState(false);
+  const [sentContextLabels, setSentContextLabels] = useState<Record<number, string>>({});
   const isOpenRef = useRef(isOpen);
   isOpenRef.current = isOpen;
 
@@ -165,6 +167,9 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
 
       setRunError(false);
       const metadata = buildCopilotMetadata(pageContextRef.current);
+      const label = pageContextRef.current?.workflowLabel;
+      const userMessageIndex = chatRef.current.messages.filter((message) => message.role === 'user').length;
+      if (label) setSentContextLabels((labels) => ({ ...labels, [userMessageIndex]: label }));
       lastSentRef.current = { text: trimmed, metadata };
       await chatRef.current.sendMessage({ text: trimmed, metadata });
     },
@@ -181,12 +186,13 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
 
   const startNewConversation = useCallback(() => {
     lastSentRef.current = null;
+    setSentContextLabels({});
     setRunError(false);
     chatRef.current.startNewConversation();
   }, []);
 
   const isAvailable = !!connectContext;
-  useCopilotHotkey({ isEnabled: isAvailable, isOpen, toggle, close });
+  useCopilotHotkey({ isEnabled: isAvailable && !!pageContext?.workflowId, isOpen, toggle, close });
 
   const hasRunError = runError || !!chat.error;
 
@@ -197,8 +203,26 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       return;
     }
 
-    onConnected({ chat, sendMessage, retry, startNewConversation, hasUnseenAnswer: unseenAnswer, hasRunError });
-  }, [isAvailable, chat, sendMessage, retry, startNewConversation, unseenAnswer, hasRunError, onConnected]);
+    onConnected({
+      chat,
+      sendMessage,
+      retry,
+      startNewConversation,
+      hasUnseenAnswer: unseenAnswer,
+      hasRunError,
+      sentContextLabels,
+    });
+  }, [
+    isAvailable,
+    chat,
+    sendMessage,
+    retry,
+    startNewConversation,
+    unseenAnswer,
+    hasRunError,
+    sentContextLabels,
+    onConnected,
+  ]);
 
   useEffect(() => () => onConnected(null), [onConnected]);
 

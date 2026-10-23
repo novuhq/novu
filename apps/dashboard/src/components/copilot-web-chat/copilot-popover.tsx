@@ -127,9 +127,10 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
 }
 
 function Thread() {
-  const { chat, retry, pageContext, hasRunError } = useCopilotWebChat();
+  const { chat, retry, sentContextLabels, hasRunError } = useCopilotWebChat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const messages = chat?.messages ?? [];
+  let userIndex = 0;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll on every message update while streaming
   useEffect(() => {
@@ -137,18 +138,16 @@ function Thread() {
     if (element) element.scrollTop = element.scrollHeight;
   }, [messages, hasRunError]);
 
-  const contextLabel = pageContext?.workflowLabel;
-
   return (
     <div className="relative min-h-0 flex-1">
       <div ref={scrollRef} className="flex h-full flex-col gap-4 overflow-y-auto px-4 pb-4 pt-6">
-        {messages.map((message) =>
-          message.role === 'user' ? (
-            <CopilotUserMessage key={message.id} message={message} contextLabel={contextLabel} />
-          ) : (
-            <CopilotAssistantMessage key={message.id} message={message} />
-          )
-        )}
+        {messages.map((message) => {
+          if (message.role !== 'user') return <CopilotAssistantMessage key={message.id} message={message} />;
+
+          const contextLabel = sentContextLabels[userIndex++];
+
+          return <CopilotUserMessage key={message.id} message={message} contextLabel={contextLabel} />;
+        })}
         {hasRunError && !chat?.isRunning && <CopilotErrorNotice onRetry={() => void retry()} />}
       </div>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-bg-white to-transparent" />

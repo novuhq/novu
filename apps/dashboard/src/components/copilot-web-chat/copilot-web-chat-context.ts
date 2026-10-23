@@ -16,6 +16,8 @@ export type CopilotWebChatContextValue = {
   retry: () => Promise<void>;
   startNewConversation: () => void;
   /** Unsent composer text, kept here so minimizing the popover does not discard it. */
+  /** Workflow label each user message was sent for, by the message's position among user messages. */
+  sentContextLabels: Record<number, string>;
   draft: string;
   setDraft: (value: string) => void;
   /** True when an answer finished while the popover was closed and has not been seen yet. */
@@ -34,6 +36,7 @@ export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   sendMessage: async () => {},
   retry: async () => {},
   startNewConversation: noop,
+  sentContextLabels: {},
   draft: '',
   setDraft: noop,
   hasUnseenAnswer: false,

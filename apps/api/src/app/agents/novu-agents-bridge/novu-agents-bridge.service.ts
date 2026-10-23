@@ -21,6 +21,7 @@ type EeAgentsModule = {
 @Injectable()
 export class NovuAgentsBridgeService {
   private agents: Agent[] | null = null;
+  private resolutionFailed = false;
 
   constructor(
     private moduleRef: ModuleRef,
@@ -30,6 +31,10 @@ export class NovuAgentsBridgeService {
   public getAgents(): Agent[] {
     if (this.agents) {
       return this.agents;
+    }
+
+    if (this.resolutionFailed) {
+      return [];
     }
 
     if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
@@ -48,6 +53,7 @@ export class NovuAgentsBridgeService {
 
       return this.agents;
     } catch (error) {
+      this.resolutionFailed = true;
       this.logger.error(
         { err: error },
         'Novu agents bridge could not resolve the agents registry from @novu/ee-agents'

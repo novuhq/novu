@@ -3,6 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -223,6 +224,8 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_READ)
   async listOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
+    this.assertNotInternalAuth(user);
+
     const command = GetApiKeysCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -242,6 +245,8 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
   async createOrganizationApiKey(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
+    this.assertNotInternalAuth(user);
+
     const command = GetApiKeysCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -261,6 +266,8 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
   async deleteOrganizationApiKey(@UserSession() user: UserSessionData, @Param('hash') hash: string): Promise<void> {
+    this.assertNotInternalAuth(user);
+
     const command = DeleteApiKeyCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -276,6 +283,8 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
   async regenerateOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
+    this.assertNotInternalAuth(user);
+
     const command = GetApiKeysCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -307,6 +316,12 @@ export class EnvironmentsControllerV1 {
         restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
+  }
+
+  private assertNotInternalAuth(user: UserSessionData): void {
+    if (isInternalAuthScheme(user.scheme)) {
+      throw new ForbiddenException('Internal tokens cannot manage API keys');
+    }
   }
 
   private async canUserAccessApiKeys(user: UserSessionData): Promise<boolean> {

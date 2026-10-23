@@ -3,7 +3,11 @@ import { z } from "zod";
 import { toSlugIdentifier } from "../utils/slug";
 import type { ToolAccessors } from "../utils/tool-accessors";
 import { type ApiCallResult, type ToolContext, ToolFactory } from "../utils/tool-factory";
-import { normalizeControlValues, type WorkflowResponse } from "../utils/workflow-request";
+import {
+	normalizeControlValues,
+	toUpdateWorkflowRequest,
+	type WorkflowResponse,
+} from "../utils/workflow-request";
 import { apiError, assignOptional, workflowResult } from "../utils/workflow-results";
 import {
 	createWorkflowInputSchema,
@@ -128,21 +132,30 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 			});
 			if (stepValidationError) return stepValidationError;
 
+			// PUT replaces the workflow, so fields the caller omitted keep their current values.
+			const endpoint = `/v2/workflows/${encodeURIComponent(input.workflowId)}`;
+			const fetched = await ToolFactory.callApi(context, { endpoint, method: "GET" });
+			if (!fetched.ok) return apiError("fetch workflow", input.workflowId, fetched);
+			const { steps: _currentSteps, ...current } = toUpdateWorkflowRequest(
+				fetched.data as WorkflowResponse,
+			);
+
 			const requestBody: Record<string, unknown> = {
-				active: input.active ?? false,
-				isTranslationEnabled: input.isTranslationEnabled ?? false,
+				...current,
 				name: input.name,
 				origin: input.origin,
-				preferences: input.preferences,
 				steps: input.steps.map(toStepBody),
 			};
 
 			assignOptional(requestBody, {
 				__source: input.__source,
+				active: input.active,
 				agent: input.agent,
 				critical: input.critical,
 				description: input.description,
+				isTranslationEnabled: input.isTranslationEnabled,
 				payloadSchema: resolvedPayloadSchema,
+				preferences: input.preferences,
 				severity: input.severity,
 				tags: input.tags,
 				validatePayload: input.validatePayload,
@@ -152,7 +165,7 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 				context,
 				{
 					body: requestBody,
-					endpoint: `/v2/workflows/${encodeURIComponent(input.workflowId)}`,
+					endpoint,
 					method: "PUT",
 				},
 				context.idempotencyKey,

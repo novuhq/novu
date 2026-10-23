@@ -348,7 +348,7 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
           messageId: kind.sourceMessageId ?? '',
           threadId,
           user,
-          raw: { ...body, contextKeys: session.contextKeys ?? [] },
+          raw: { ...body, metadata: sanitizeMessageMetadata(body.metadata), contextKeys: session.contextKeys ?? [] },
         },
         options
       );

@@ -59,13 +59,13 @@ describe("toUpdateWorkflowRequest", () => {
 		});
 	});
 
-	it("slugifies step ids the API would reject", () => {
+	it("keeps existing step ids untouched", () => {
 		const workflow = workflowResponseFixture();
 		workflow.steps[0].stepId = "Send In-App  Notice!";
 
 		const request = toUpdateWorkflowRequest(workflow);
 
-		expect(request.steps[0].stepId).toBe("send-in-app-notice");
+		expect(request.steps[0].stepId).toBe("Send In-App  Notice!");
 		expect(request.steps[1].stepId).toBe("email-step");
 	});
 

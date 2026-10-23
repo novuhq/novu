@@ -11,8 +11,6 @@
  *   variables, status, payloadExample, ...) are dropped.
  */
 
-import { toSlugIdentifier } from "./slug";
-
 type JsonObject = Record<string, unknown>;
 
 export interface WorkflowStepResponse {
@@ -104,7 +102,7 @@ export function toStepRequest(step: WorkflowStepResponse): WorkflowStepRequest {
 	const request: WorkflowStepRequest = {
 		controlValues: normalizeControlValues(step.type, step.controlValues),
 		name: step.name,
-		stepId: toSlugIdentifier(step.stepId),
+		stepId: step.stepId,
 		type: step.type,
 	};
 

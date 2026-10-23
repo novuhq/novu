@@ -466,6 +466,27 @@ describe('NovuWebChatAdapterImpl', () => {
     expect(processMessage).not.toHaveBeenCalled();
   });
 
+  it('sanitizes metadata on the action raw payload', async () => {
+    const { adapter, processAction } = await createAdapter(createConfig({ authorizeResume: async () => true }));
+
+    await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        actionId: 'tool-approval:approve:tc1',
+        sourceMessageId: 'act_card0000001',
+        value: 'Approve once',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        metadata: JSON.parse('{"__proto__":{"polluted":true},"keep":"x","nested":{"a":1}}'),
+      })
+    );
+
+    const raw = processAction.mock.calls[0]?.[0].raw;
+    expect(raw.metadata).toEqual(
+      sanitizeMessageMetadata(JSON.parse('{"__proto__":{"polluted":true},"keep":"x","nested":{"a":1}}'))
+    );
+    expect(Object.prototype.hasOwnProperty.call(raw.metadata ?? {}, '__proto__')).toBe(false);
+  });
+
   it('dispatches processAction then returns 200 for actionId ingress', async () => {
     const authorizeResume = vi.fn(async () => true);
     const { adapter, processMessage, processAction } = await createAdapter(createConfig({ authorizeResume }));
