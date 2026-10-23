@@ -70,10 +70,10 @@ export const INTEGRATIONS: readonly Integration[] = [
   {
     id: 'claude',
     label: 'Claude',
-    // Draft copy — not in Figma. Claude Code, taught by the skill; the Claude apps connect through MCP.
+    // Draft copy — not in Figma. Claude Code, taught by the skills; the Claude apps connect through MCP.
     snippet: {
       kind: 'commands',
-      lines: [`${CLI} setup`, '', `${CLI} skill install --host claude`],
+      lines: [`${CLI} setup`, '', 'npx skills add agentinboxhq/skills --agent claude-code'],
     },
   },
   {

@@ -10,7 +10,8 @@ Inbox accounts with their dashboard, and the Agent Inbox API (`/api`).
 | `/sapien`         | The page for people: what Agent Inbox does, with the setup command, a prompt to copy, and a "sign in" link into the dashboard. |
 | `/index.md`, `/llms.txt` | `/` as Markdown, made from the same data, and the index that points language models to it and to `/agents.md`. |
 | `/robots.txt`, `/sitemap.xml` | For search engines: the two website pages, at `https://www.agentinbox.md` (`SITE_ORIGIN` in `src/lib/seo.ts`). Until launch they stay out of search results: the pages, `/index.md` and `/llms.txt` say `noindex`, the sitemap is empty and robots.txt doesn't point to it. `SITE_INDEXED` in `src/lib/seo.ts` turns that off. Preview deployments always send `noindex`. |
-| `/agents.md`      | What agents read, in Markdown: how to connect with the commands from the dashboard, then the agent-inbox skill as the CLI ships it (`SKILL.md` in `packages/agentinbox`, read at build time). The home page links to it. |
+| `/agents.md`      | What agents read, in Markdown: how to connect with the commands from the dashboard, then the agentinbox skill from [agentinboxhq/skills](https://github.com/agentinboxhq/skills), as `npx skills add` installs it. The home page links to it. |
+| `/.well-known/agent-skills/` | The skills from agentinboxhq/skills, for [Agent Skills discovery](https://github.com/cloudflare/agent-skills-discovery-rfc): `index.json` lists them, and each downloads from under the commit it came from, as `<commit>/<name>.tar.gz`, or `<commit>/<name>/SKILL.md` for a skill that is only that file. `npx skills add https://www.agentinbox.md` reads it. |
 | `/p/[handle]`     | An agent's public card: anyone with the link sees the agent and every way to reach it, without signing in. `opengraph-image` is the picture apps show where the link is shared. |
 | `/invite/[token]` | Opened from a `contact invite` link. The person picks which of the agent's channels (Email, Telegram, Slack) it may reach them on, and their default. |
 | `/verify/[token]` | Opened from the "Verify this email" button, sent before the agent emails a new address: the operator's own, or a contact's (invited by email, or picked on the invite page). Confirms it once. |
@@ -63,7 +64,7 @@ An agent that is older than its operator's first visit to step 1 never goes thro
 use before, however the operator came to see that step.
 
 More hosts connect later from Configure, in "Connect another agent": the same commands with a new code, the
-"Install skills" button (it copies `npx @agentinbox/cli skill install`), and the chat apps that connect through the
+"Install skills" button (it copies `npx skills add agentinboxhq/skills`), and the chat apps that connect through the
 MCP server.
 
 The connect box shows only the commands for now. It also had a prompt that asked an agent to run them, but an
@@ -98,8 +99,14 @@ in, send two messages, and open the printed `/claim` link.
 To try `login`, run `npx @agentinbox/cli login`: it opens `/cli/login` here with its code, and you approve it there.
 The API only offers the browser login when `HUMAN_DASHBOARD_URL` is set.
 
-`/agents.md` reads the skill from `packages/agentinbox` each time it's built: in development, a reload shows an
-edit to `SKILL.md`.
+`/agents.md` fetches the agentinbox skill from GitHub (`main` of agentinboxhq/skills) when the site is built, and
+again at most once an hour, so a change merged there shows without a deploy. When GitHub can't be reached, the page
+links to the skill instead.
+
+`/.well-known/agent-skills/index.json` is made the same way, from GitHub's archive of the repository. Each skill's link
+names the commit it came from, and a download under a commit never changes, so clients and the CDN keep it for a year.
+When GitHub fails during a build, the index lists no skills until the next refresh; after that, a failed refresh keeps
+the last index.
 
 ## Agent Inbox API
 

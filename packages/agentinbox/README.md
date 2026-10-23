@@ -78,7 +78,7 @@ npx @agentinbox/cli inbox resolve conv_123              # finished; opens again 
 - `contact invite` gives you a link to share with a **different** person — nothing is sent for you. Without `--via` it opens a page (valid for 3 days) where they connect any channel you set up — Telegram, Slack, and/or Email — and pick their default. With `--via telegram|slack` you get the direct connect link instead (a Slack authorize URL or Telegram deep link, valid for minutes). Pass an email address instead of an id (or `--via email --email <address>`) and a verification email is sent. They must click **Verify this email** before a send that names their contact id can use email. A send that names the address itself does not wait for that click when the organization is claimed. The contact's id comes from the address (`alice@acme.com` becomes `alice`, with a short suffix when `alice` is taken). Then `--to alice` reaches them on their default channel. Pass `--name "Alice Chen"` so they show up by name.
 - `contact list` lists the contacts — every person `--to` can address — so an agent can check who exists before coordinating between people. It's a directory, not a reachability check: if delivery fails with "no linked endpoint", `contact invite` them on that channel.
 - Agents stay channel-blind: routing is the person's preference — the default they picked on the invite page, or the first channel they connected. `--via telegram|slack|email` on `send` is a rare per-call **delivery** override, not how you onboard someone.
-- Every command has the shape `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`, `skill`.
+- Every command has the shape `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`.
 - `ask`, `approve` and `choose` deliver a one-off message (with action buttons where relevant) and **block** until the person answers, the `--ttl` expires, or `--timeout` elapses.
 - Answers flow back through button clicks or plain replies; the CLI prints the answer and your agent continues.
 - In a terminal, `setup`, `login` and `connect` (and `channel add`) draw one screen and keep it up to date in place: your agent's mascot in dots, the command, a list of what it did with a ✔ for each step done, and what it is waiting for. The mascot blinks while it waits for you, smiles once something is connected, and falls asleep when a wait runs out or something fails. Questions are asked below the screen, and your answers join the list. The screen is only drawn for a person at a terminal: never into a pipe, a file or CI, or with `NO_COLOR`, `FORCE_COLOR=0` or `TERM=dumb` set, or in a terminal narrower than 48 columns. There the commands print exactly what they always printed, so what agents read stays the same. The agent-facing commands (`inbox`, `contact`) never draw it. Three settings change how it looks:
@@ -132,16 +132,18 @@ Precedence is always **CLI flags > environment variables > `~/.agentinbox/config
 
 ## Teaching your coding agent to use it
 
-`setup` offers to install a skill (the [agentskills.io](https://agentskills.io) `SKILL.md` format) that teaches
-Claude Code, Cursor, and other coding agents *when* to reach for the inbox — background/autonomous runs, risky or
-irreversible actions, genuine multi-way decisions — versus just asking you directly in an active chat. It
-auto-detects which agents you have configured in the project (`.claude/`, `.cursor/`, etc.) and falls back to the
-most common ones if none are detected.
+The Agent Inbox skills (the [agentskills.io](https://agentskills.io) `SKILL.md` format) teach Claude Code, Cursor,
+Codex and other coding agents *when* to reach for the inbox — background/autonomous runs, risky or irreversible
+actions, genuine multi-way decisions — versus just asking you directly in an active chat, and how to set up the CLI
+and the MCP server. They live in their own repository, [agentinboxhq/skills](https://github.com/agentinboxhq/skills),
+and `setup` ends by showing the command that installs them:
 
 ```bash
-npx @agentinbox/cli setup                        # offers to install the skill at the end (Y/n prompt)
-npx @agentinbox/cli skill install                # install/reinstall explicitly, any time
-npx @agentinbox/cli skill install --host claude cursor   # target specific hosts
+npx skills add agentinboxhq/skills                        # every skill, for the coding agents in this project
+npx skills add agentinboxhq/skills --agent claude-code    # for one agent
+npx skills update                                         # later: the latest version
 ```
 
-Pass `--skill` / `--no-skill` to `setup` to force the choice non-interactively.
+In Claude Code they also install as a plugin, which adds the Agent Inbox MCP server too:
+`/plugin marketplace add agentinboxhq/skills`, then `/plugin install agentinbox@agentinbox`.
+`claude plugin update agentinbox@agentinbox` updates it later.

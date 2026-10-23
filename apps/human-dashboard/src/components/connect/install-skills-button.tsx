@@ -18,7 +18,7 @@ type InstallSkillsButtonProps = {
 };
 
 /**
- * "Install skills": copies the command that installs the agent-inbox skill (`skill install`), which the
+ * "Install skills": copies the command that installs the Agent Inbox skills (`npx skills add`), which the
  * operator runs in the project their coding agent works in. The icon turns into a check mark for a moment
  * once it's on the clipboard, and a toast says what was copied and where to run it.
  */

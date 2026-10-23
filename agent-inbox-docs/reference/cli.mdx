@@ -7,7 +7,7 @@ description: "Every command, flag, exit code, and environment variable for npx @
 npx @agentinbox/cli
 ```
 
-Every command is `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`, `skill`.
+Every command is `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`.
 
 Flags beat environment variables, which beat `~/.agentinbox/config.json`. Environment values are never written back to the config file.
 
@@ -61,7 +61,6 @@ npx @agentinbox/cli setup [telegram|slack|email]
 | `--agent-picture` | JPEG or PNG, up to 2 MB. Needs `login` |
 | `--telegram-bot-token` | BotFather token. Skips the prompt |
 | `--slack-config-token` | Slack App Configuration Token. Skips the prompt |
-| `--skill` / `--no-skill` | Install the coding-agent skill, or skip it |
 | `--api-url` | API URL override |
 | `--secret-key` | Use an existing environment. See [Your own API](#your-own-api) |
 
@@ -193,14 +192,6 @@ npx @agentinbox/cli channel default <telegram|slack|email>
 ```
 
 Sets the channel used when a message goes to you on this computer. Other people keep their own default.
-
-## skill install
-
-```bash
-npx @agentinbox/cli skill install [--host <host...>] [--cwd <dir>]
-```
-
-Hosts: `claude`, `cursor`, `windsurf`, `copilot`, `gemini`, `roo`, `opencode`, `kiro`, `agents`. The default detects which the project has.
 
 ## Errors agents should recognize
 
