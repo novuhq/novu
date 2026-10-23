@@ -2,5 +2,6 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  setupFiles: ['../jest.web-streams-setup.js'],
   modulePathIgnorePatterns: ['build'],
 };

@@ -91,7 +91,7 @@ export class UpdateSubscriberPreference {
        * even if not passing at first enabled to true.
        */
       enabled: command.enabled !== false,
-      channels: command.channel?.type ? channelObj : null,
+      channels: command.channel?.type ? channelObj : undefined,
       level: PreferenceLevelEnum.TEMPLATE,
     });
   }
