@@ -88,6 +88,54 @@ export function extractCardPlainText(card: CardElement): string {
   return childText || title || '[Card]';
 }
 
+type PostableRecord = {
+  type?: string;
+  title?: string;
+  children?: CardElement['children'];
+  markdown?: string;
+  card?: CardElement;
+  files?: unknown[];
+  raw?: string;
+  messageId?: string;
+};
+
+function collectRichContent(record: PostableRecord): Record<string, unknown> {
+  const richContent: Record<string, unknown> = {};
+  if (record.card) {
+    richContent.card = record.card;
+  }
+  if (record.files?.length) {
+    richContent.files = record.files;
+  }
+
+  return richContent;
+}
+
+function parsePostableRecord(message: object): ReturnType<typeof parsePostableMessage> | undefined {
+  const record = message as PostableRecord;
+  const messageId = typeof record.messageId === 'string' ? record.messageId : undefined;
+
+  // chat-sdk `thread.post(card)` passes a bare CardElement for gate replies.
+  if (record.type === 'card') {
+    const card = message as CardElement;
+
+    return { content: extractCardPlainText(card), richContent: { card }, messageId };
+  }
+
+  const richContent = collectRichContent(record);
+  const text = typeof record.markdown === 'string' ? record.markdown : record.raw;
+
+  if (typeof text === 'string') {
+    return { content: text, richContent: Object.keys(richContent).length ? richContent : undefined, messageId };
+  }
+
+  if (record.card) {
+    return { content: extractCardPlainText(record.card), richContent, messageId };
+  }
+
+  return undefined;
+}
+
 export function parsePostableMessage(message: AdapterPostableMessage): {
   content: string;
   richContent?: Record<string, unknown>;
@@ -99,51 +147,9 @@ export function parsePostableMessage(message: AdapterPostableMessage): {
   }
 
   if (message && typeof message === 'object') {
-    const record = message as {
-      type?: string;
-      title?: string;
-      children?: CardElement['children'];
-      markdown?: string;
-      card?: CardElement;
-      files?: unknown[];
-      raw?: string;
-      messageId?: string;
-    };
-    const messageId = typeof record.messageId === 'string' ? record.messageId : undefined;
-
-    // chat-sdk `thread.post(card)` passes a bare CardElement for gate replies.
-    if (record.type === 'card') {
-      const card = message as CardElement;
-
-      return { content: extractCardPlainText(card), richContent: { card }, messageId };
-    }
-
-    const richContent: Record<string, unknown> = {};
-    if (record.card) {
-      richContent.card = record.card;
-    }
-    if (record.files?.length) {
-      richContent.files = record.files;
-    }
-
-    if (typeof record.markdown === 'string') {
-      return {
-        content: record.markdown,
-        richContent: Object.keys(richContent).length ? richContent : undefined,
-        messageId,
-      };
-    }
-
-    if (typeof record.raw === 'string') {
-      return {
-        content: record.raw,
-        richContent: Object.keys(richContent).length ? richContent : undefined,
-        messageId,
-      };
-    }
-
-    if (record.card) {
-      return { content: extractCardPlainText(record.card), richContent, messageId };
+    const parsed = parsePostableRecord(message);
+    if (parsed) {
+      return parsed;
     }
   }
 
