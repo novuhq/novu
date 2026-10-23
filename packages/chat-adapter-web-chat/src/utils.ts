@@ -1,5 +1,6 @@
 import type { AdapterPostableMessage, CardElement } from 'chat';
 import { customAlphabet } from 'nanoid';
+import type { WebChatRawMessage } from './types.js';
 
 const ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
 const nanoid = customAlphabet(ALPHABET);
@@ -147,4 +148,45 @@ export function parsePostableMessage(message: AdapterPostableMessage): {
   }
 
   return { content: '' };
+}
+
+const MAX_METADATA_KEYS = 20;
+const MAX_METADATA_KEY_LENGTH = 64;
+const MAX_METADATA_STRING_LENGTH = 512;
+
+/**
+ * Reduces client-supplied per-message metadata to a flat map of scalars.
+ * Returns undefined when the input is not a plain object or nothing survives.
+ */
+export function sanitizeMessageMetadata(input: unknown): WebChatRawMessage['metadata'] {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+    return undefined;
+  }
+
+  const result: NonNullable<WebChatRawMessage['metadata']> = {};
+  let count = 0;
+
+  for (const [key, value] of Object.entries(input)) {
+    if (count >= MAX_METADATA_KEYS) {
+      break;
+    }
+
+    if (key.length > MAX_METADATA_KEY_LENGTH) {
+      continue;
+    }
+
+    const isScalar =
+      value === null ||
+      typeof value === 'boolean' ||
+      (typeof value === 'number' && Number.isFinite(value)) ||
+      (typeof value === 'string' && value.length <= MAX_METADATA_STRING_LENGTH);
+    if (!isScalar) {
+      continue;
+    }
+
+    result[key] = value as string | number | boolean | null;
+    count += 1;
+  }
+
+  return count > 0 ? result : undefined;
 }

@@ -2032,6 +2032,47 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(capturedPrevious).toBe('where is order 1234?');
   });
 
+  it('should expose per-message metadata on ctx.message', async () => {
+    let capturedMetadata: Record<string, unknown> | undefined;
+
+    const testBot = agent('test-bot', {
+      onMessage: async (message) => {
+        capturedMetadata = message.metadata;
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          platform: 'web_chat',
+          message: {
+            text: 'help me',
+            platformMessageId: 'msg-789',
+            author: { userId: 'u1', fullName: 'Alice', userName: 'alice', isBot: false },
+            timestamp: new Date().toISOString(),
+            metadata: { workflowId: 'wf_1', stepId: 'step_1' },
+          },
+        });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    const result = await handler.createHandler()();
+    expect(result.status).toBe(200);
+    expect(capturedMetadata).toEqual({ workflowId: 'wf_1', stepId: 'step_1' });
+  });
+
   it('should dispatch onMessageDeleted with the removed message', async () => {
     let capturedId = '';
 
