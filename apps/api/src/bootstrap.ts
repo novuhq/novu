@@ -33,6 +33,7 @@ const extendedBodySizeRoutes = [
   '/v1/bridge/sync',
   '/v1/bridge/diff',
   '/v1/novu/bridge',
+  '/v1/bridge/novu',
   '/v1/environments/:environmentId/bridge',
   '/v2/workflows',
 ];

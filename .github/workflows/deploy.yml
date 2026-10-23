@@ -719,6 +719,13 @@ jobs:
         with:
           secret-key: ${{ secrets.NOVU_INTERNAL_SECRET_KEY }}
           bridge-url: ${{ vars.NOVU_BRIDGE_URL }}
+      # The bridge now also serves Novu's own agents. Run the CLI sync explicitly so their bridge URLs are
+      # set too (PUT /v1/agents/:id/bridge from discover), as the action's CLI version is not pinned here.
+      - name: Sync agent bridge URLs to Novu
+        run: npx --yes novu@latest sync --bridge-url "$NOVU_BRIDGE_URL" --secret-key "$NOVU_INTERNAL_SECRET_KEY"
+        env:
+          NOVU_BRIDGE_URL: ${{ vars.NOVU_BRIDGE_URL }}
+          NOVU_INTERNAL_SECRET_KEY: ${{ secrets.NOVU_INTERNAL_SECRET_KEY }}
 
   webhook_notification:
     needs: [deploy, prepare-matrix]
