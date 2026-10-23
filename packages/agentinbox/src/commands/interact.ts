@@ -10,6 +10,7 @@ import {
 } from '../api/agent-inbox';
 import { type ApiClient, ApiError, createApiClient } from '../api/client';
 import { CLI_COMMAND, type CliConfig, NOT_SET_UP_MESSAGE, resolveConfig, resolveVia } from '../config';
+import { isHostId } from '../host';
 import { answerHint, EXIT_TIMEOUT, emitResult, fail, interactionJson, SetupStillPendingError } from '../output';
 import { sleep } from '../poll';
 import { startWaitIndicator } from '../spinner';
@@ -103,6 +104,7 @@ export function clientFromConfig(apiUrl?: string): {
     apiUrl: config.apiUrl,
     secretKey: config.auth.secretKey,
     keylessIdentifier: config.auth.mode === 'keyless' ? config.auth.keylessIdentifier : undefined,
+    host: isHostId(config.host) ? config.host : undefined,
   });
 
   return { client, config };

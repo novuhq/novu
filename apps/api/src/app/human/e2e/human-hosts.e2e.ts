@@ -20,7 +20,7 @@ import {
   CONNECT_CODE_USED,
   connectCodeKey,
 } from '../services/human-connect-code.service';
-import { AGENT_INBOX_VIA_HEADER } from '../services/human-host-status.service';
+import { AGENT_INBOX_HOST_HEADER, AGENT_INBOX_VIA_HEADER } from '../services/human-host-status.service';
 
 const agentRepository = new AgentRepository();
 const conversationRepository = new ConversationRepository();
@@ -36,7 +36,7 @@ const OPERATOR_ID = 'ada';
 
 /**
  * A host connects to the relay agent with a one-time code from the dashboard, and the agent knows its
- * hosts: which way each came in (CLI or MCP), when it last checked the inbox, and what was waiting for it.
+ * hosts by name: which way each came in (CLI or MCP), when it last checked the inbox, and what was waiting.
  */
 describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
   let session: UserSession;
@@ -61,20 +61,22 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
     return session.testAgent[method](path).set('Authorization', `ApiKey ${session.apiKey}`);
   }
 
-  async function issueCode(): Promise<{ code: string; handle: string; expiresAt: string }> {
-    const res = await asAccount('/v1/human/agent/connect-codes', 'post').send({ handle });
+  /** A code as the dashboard asks for one, on a host's tab of the host picker when `host` names one. */
+  async function issueCode(host?: string): Promise<{ code: string; handle: string; expiresAt: string }> {
+    const res = await asAccount('/v1/human/agent/connect-codes', 'post').send(host ? { handle, host } : { handle });
     expect(res.status).to.equal(200, JSON.stringify(res.body));
 
     return res.body.data;
   }
 
-  /** `agentinbox connect`: no credentials, only the agent and the code, from this test's network by default. */
-  function connect(agent: string, code: string, from: string = network) {
-    return session.testAgent
-      .post('/v1/human/connect')
-      .set('Authorization', '')
-      .set('X-Forwarded-For', from)
-      .send({ agent, code });
+  /**
+   * `agentinbox connect`: no credentials, only the agent and the code, from this test's network by default,
+   * saying which host runs it when `host` names one.
+   */
+  function connect(agent: string, code: string, from: string = network, host?: string) {
+    const request = session.testAgent.post('/v1/human/connect').set('Authorization', '').set('X-Forwarded-For', from);
+
+    return (host ? request.set(AGENT_INBOX_HOST_HEADER, host) : request).send({ agent, code });
   }
 
   async function hostStatus(): Promise<Record<string, any>> {
@@ -84,9 +86,16 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
     return res.body.data;
   }
 
-  async function listInbox(via?: string, query: Record<string, string> = {}) {
-    const request = asAccount('/v1/human/inbox').query({ senders: 'all', ...query });
-    const res = await (via ? request.set(AGENT_INBOX_VIA_HEADER, via) : request);
+  /** The inbox, as a host reads it when `via` says how it came in, and `host` which host it is. */
+  async function listInbox(via?: string, query: Record<string, string> = {}, host?: string) {
+    let request = asAccount('/v1/human/inbox').query({ senders: 'all', ...query });
+    if (via) {
+      request = request.set(AGENT_INBOX_VIA_HEADER, via);
+    }
+    if (host) {
+      request = request.set(AGENT_INBOX_HOST_HEADER, host);
+    }
+    const res = await request;
     expect(res.status).to.equal(200, JSON.stringify(res.body));
 
     return res.body;
@@ -129,6 +138,7 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
         apiKey: session.apiKey,
         environmentId: session.environment._id,
         agent: { identifier: 'human-relay', name: res.body.data.agent.name, handle },
+        host: 'general',
       });
 
       const reused = await connect(handle, issued.code);
@@ -385,7 +395,8 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
       expect(status.status).to.equal(200, JSON.stringify(status.body));
       expect(status.body.data.connected).to.equal(true);
       expect(status.body.data.hosts).to.have.length(1);
-      expect(status.body.data.hosts[0]).to.include({ via: 'mcp', lastCheckedAt: null });
+      // The MCP server said nothing of the app here, so it counts as General.
+      expect(status.body.data.hosts[0]).to.include({ id: 'general', via: 'mcp', lastCheckedAt: null });
       expect(status.body.data.hosts[0].connectedAt).to.be.a('string');
 
       const withoutVia = new UserSession();
@@ -408,6 +419,7 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
         connected: false,
         lastCheckedAt: null,
         lastCheckedVia: null,
+        lastCheckedHost: null,
         hosts: [],
         firstCheckedAt: null,
         waitingMessage: null,
@@ -419,7 +431,7 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
       const status = await hostStatus();
       expect(status.connected).to.equal(true);
       expect(status.hosts).to.have.length(1);
-      expect(status.hosts[0]).to.include({ via: 'cli', lastCheckedAt: null });
+      expect(status.hosts[0]).to.include({ id: 'general', via: 'cli', lastCheckedAt: null });
       expect(status.hosts[0].connectedAt).to.be.a('string');
       expect(status.lastCheckedAt).to.equal(null);
       expect(status.firstCheckedAt).to.equal(null);
@@ -427,25 +439,79 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
 
     it('records when a host last checked the inbox, and how; the dashboard’s own reads do not count', async () => {
       await listInbox();
+      await listInbox(undefined, {}, 'claude-code');
       expect((await hostStatus()).connected).to.equal(false);
 
-      await listInbox('cli');
+      await listInbox('cli', {}, 'claude-code');
       const afterCli = await hostStatus();
       expect(afterCli.connected).to.equal(true);
       expect(afterCli.lastCheckedVia).to.equal('cli');
+      expect(afterCli.lastCheckedHost).to.equal('claude-code');
       expect(afterCli.lastCheckedAt).to.be.a('string');
       expect(afterCli.firstCheckedAt).to.equal(afterCli.lastCheckedAt);
       expect(afterCli.waitingMessage).to.equal(null);
 
-      await listInbox('mcp');
+      await listInbox('mcp', {}, 'chatgpt');
       const afterMcp = await hostStatus();
       expect(afterMcp.lastCheckedVia).to.equal('mcp');
-      expect(afterMcp.hosts.map((host: { via: string }) => host.via)).to.deep.equal(['mcp', 'cli']);
+      expect(afterMcp.lastCheckedHost).to.equal('chatgpt');
+      expect(afterMcp.hosts.map((host: { id: string; via: string }) => [host.id, host.via])).to.deep.equal([
+        ['chatgpt', 'mcp'],
+        ['claude-code', 'cli'],
+      ]);
       expect(afterMcp.firstCheckedAt).to.equal(afterCli.firstCheckedAt);
 
-      // A header that names neither is not a host.
-      await listInbox('dashboard');
+      // A header that names neither way is not a host.
+      await listInbox('dashboard', {}, 'codex');
       expect((await hostStatus()).hosts).to.have.length(2);
+    });
+
+    it('names each host, one entry each, whichever way it came in and on however many computers', async () => {
+      // Claude Code connects on two computers, Codex on one; ChatGPT signs in through MCP.
+      for (const host of ['claude-code', 'claude-code', 'codex']) {
+        const { code } = await issueCode();
+        const res = await connect(handle, code, randomNetwork(), host);
+        expect(res.status).to.equal(200, JSON.stringify(res.body));
+        expect(res.body.data.host).to.equal(host);
+      }
+      await listInbox('cli', {}, 'claude-code');
+      await listInbox('cli', {}, 'codex');
+      await listInbox('mcp', {}, 'chatgpt');
+
+      const status = await hostStatus();
+      expect(status.hosts.map((host: { id: string }) => host.id).sort()).to.deep.equal([
+        'chatgpt',
+        'claude-code',
+        'codex',
+      ]);
+      for (const host of status.hosts) {
+        expect(host.lastCheckedAt, host.id).to.be.a('string');
+      }
+
+      // Claude Code through its plugin, which signs in to the MCP server, is the same Claude Code.
+      const claudeCode = status.hosts.find((host: { id: string }) => host.id === 'claude-code');
+      await agentRepository.update(
+        {
+          _environmentId: session.environment._id,
+          _organizationId: session.organization._id,
+          identifier: 'human-relay',
+        },
+        { $set: { 'hosts.byId.claude-code.lastCheckedAt': new Date(Date.now() - 2 * 60 * 1000).toISOString() } }
+      );
+      await listInbox('mcp', {}, 'claude-code');
+      const afterPlugin = await hostStatus();
+      expect(afterPlugin.hosts).to.have.length(3);
+      const sameClaudeCode = afterPlugin.hosts.find((host: { id: string }) => host.id === 'claude-code');
+      expect(sameClaudeCode).to.include({ via: 'mcp', connectedAt: claudeCode.connectedAt });
+      expect(afterPlugin.lastCheckedHost).to.equal('claude-code');
+    });
+
+    it('counts a host that says nothing, or names one Agent Inbox does not know, as General', async () => {
+      await listInbox('cli');
+      await listInbox('mcp', {}, 'windsurf');
+
+      const status = await hostStatus();
+      expect(status.hosts.map((host: { id: string }) => host.id)).to.deep.equal(['general']);
     });
 
     it('says the host saw the message that was waiting for it on its first check', async () => {
@@ -469,12 +535,92 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
       // Looking is not responding: the conversation stays unread for the host to answer.
       expect((await listInbox(undefined, { filter: 'unread' })).data).to.have.length(1);
 
-      // Later checks keep the first one's message.
-      const show = await asAccount(`/v1/human/inbox/${conversation.identifier}`).set(AGENT_INBOX_VIA_HEADER, 'mcp');
+      // Later checks keep the first one's message, another host's too.
+      const show = await asAccount(`/v1/human/inbox/${conversation.identifier}`)
+        .set(AGENT_INBOX_VIA_HEADER, 'mcp')
+        .set(AGENT_INBOX_HOST_HEADER, 'claude');
       expect(show.status).to.equal(200, JSON.stringify(show.body));
       const later = await hostStatus();
       expect(later.waitingMessage).to.deep.equal(status.waitingMessage);
       expect(later.lastCheckedVia).to.equal('mcp');
+      expect(later.lastCheckedHost).to.equal('claude');
+    });
+  });
+
+  describe('host of a one-time code', () => {
+    it('counts the host the code was made for when the CLI does not say which host runs it', async () => {
+      const forHermes = await issueCode('hermes');
+      const forNoHost = await issueCode();
+      expect(forHermes.code).to.not.equal(forNoHost.code);
+      // Asked again on the same tab, the dashboard gets the same code.
+      expect((await issueCode('hermes')).code).to.equal(forHermes.code);
+
+      const res = await connect(handle, forHermes.code);
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect(res.body.data.host).to.equal('hermes');
+
+      const status = await hostStatus();
+      expect(status.hosts).to.have.length(1);
+      expect(status.hosts[0]).to.include({ id: 'hermes', via: 'cli', lastCheckedAt: null });
+    });
+
+    it('goes by the host the CLI says runs it over the tab the code was made on', async () => {
+      const { code } = await issueCode('openclaw');
+
+      const res = await connect(handle, code, network, 'codex');
+
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect(res.body.data.host).to.equal('codex');
+      expect((await hostStatus()).hosts.map((host: { id: string }) => host.id)).to.deep.equal(['codex']);
+    });
+
+    it('is only made for a host Agent Inbox knows', async () => {
+      const res = await asAccount('/v1/human/agent/connect-codes', 'post').send({ handle, host: 'windsurf' });
+
+      expect(res.status).to.equal(422, JSON.stringify(res.body));
+    });
+  });
+
+  describe('hosts from before hosts had names', () => {
+    it('keeps their history as General until a named host checks the inbox', async () => {
+      // As an agent was left before hosts were told apart: one entry for each way in.
+      await agentRepository.update(
+        {
+          _environmentId: session.environment._id,
+          _organizationId: session.organization._id,
+          identifier: 'human-relay',
+        },
+        {
+          $set: {
+            'hosts.cli': { connectedAt: '2026-10-01T10:00:00.000Z', lastCheckedAt: '2026-10-20T10:00:00.000Z' },
+            'hosts.mcp': { connectedAt: '2026-10-05T10:00:00.000Z', lastCheckedAt: '2026-10-21T10:00:00.000Z' },
+            'hosts.firstCheckedAt': '2026-10-01T10:05:00.000Z',
+          },
+        }
+      );
+
+      const before = await hostStatus();
+      expect(before).to.include({
+        connected: true,
+        lastCheckedAt: '2026-10-21T10:00:00.000Z',
+        lastCheckedVia: 'mcp',
+        lastCheckedHost: 'general',
+        firstCheckedAt: '2026-10-01T10:05:00.000Z',
+      });
+      expect(before.hosts).to.deep.equal([
+        {
+          id: 'general',
+          via: 'mcp',
+          connectedAt: '2026-10-01T10:00:00.000Z',
+          lastCheckedAt: '2026-10-21T10:00:00.000Z',
+        },
+      ]);
+
+      await listInbox('cli', {}, 'claude-code');
+
+      const after = await hostStatus();
+      expect(after.hosts.map((host: { id: string }) => host.id)).to.deep.equal(['claude-code']);
+      expect(after.firstCheckedAt).to.equal('2026-10-01T10:05:00.000Z');
     });
   });
 

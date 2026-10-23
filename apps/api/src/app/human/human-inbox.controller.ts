@@ -31,7 +31,12 @@ import {
 } from './dtos/human-inbox.dto';
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
 import { readAnalyticsSource } from './services/agent-inbox-analytics';
-import { AGENT_INBOX_VIA_HEADER, readHostVia } from './services/human-host-status.service';
+import {
+  AGENT_INBOX_HOST_HEADER,
+  AGENT_INBOX_VIA_HEADER,
+  readHostId,
+  readHostVia,
+} from './services/human-host-status.service';
 import { CountInboxThreads } from './usecases/count-inbox-threads/count-inbox-threads.usecase';
 import { GetInboxThreadCommand } from './usecases/get-inbox-thread/get-inbox-thread.command';
 import { GetInboxThread } from './usecases/get-inbox-thread/get-inbox-thread.usecase';
@@ -69,6 +74,7 @@ export class HumanInboxController {
     @UserSession() user: UserSessionData,
     @Query() query: ListInboxQueryDto,
     @Headers(AGENT_INBOX_VIA_HEADER) via?: string,
+    @Headers(AGENT_INBOX_HOST_HEADER) host?: string,
     @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string
   ): Promise<ListInboxResponseDto> {
     return this.listInboxThreadsUsecase.execute(
@@ -87,6 +93,7 @@ export class HumanInboxController {
         waitSeconds: query.wait,
         agentIdentifier: query.agentIdentifier,
         hostVia: readHostVia(via),
+        hostId: readHostId(host),
         analyticsSource: readAnalyticsSource(analyticsSource),
       })
     );
@@ -126,6 +133,7 @@ export class HumanInboxController {
     @Param('identifier') identifier: string,
     @Query() query: GetInboxThreadQueryDto,
     @Headers(AGENT_INBOX_VIA_HEADER) via?: string,
+    @Headers(AGENT_INBOX_HOST_HEADER) host?: string,
     @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string
   ): Promise<GetInboxThreadResponseDto> {
     return this.getInboxThreadUsecase.execute(
@@ -140,6 +148,7 @@ export class HumanInboxController {
         include: query.include,
         agentIdentifier: query.agentIdentifier,
         hostVia: readHostVia(via),
+        hostId: readHostId(host),
         analyticsSource: readAnalyticsSource(analyticsSource),
       })
     );

@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import type { AgentHostVia } from '@novu/dal';
-import { IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
+import { AGENT_HOST_IDS, AGENT_HOST_VIAS, type AgentHostId, type AgentHostVia } from '@novu/dal';
+import { IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 import {
   AGENT_HANDLE_MAX_LENGTH,
   AGENT_HANDLE_PATTERN,
@@ -18,6 +18,15 @@ export class CreateConnectCodeRequestDto extends HumanAgentQueryDto {
   @Matches(AGENT_HANDLE_PATTERN)
   @MaxLength(AGENT_HANDLE_MAX_LENGTH)
   handle: string;
+
+  @ApiPropertyOptional({
+    enum: [...AGENT_HOST_IDS],
+    description:
+      'The host the code is for: the tab of the host picker it was made on. A host that uses it without saying which host it is counts as this one. Each host gets a code of its own.',
+  })
+  @IsOptional()
+  @IsIn(AGENT_HOST_IDS)
+  host?: AgentHostId;
 }
 
 export class ConnectCodeResponseDto {
@@ -93,16 +102,33 @@ export class ConnectHostResponseDto {
 
   @ApiProperty({ description: 'The agent the host acts as from now on.' })
   agent: { identifier: string; name: string; handle: string };
+
+  @ApiProperty({
+    enum: [...AGENT_HOST_IDS],
+    description:
+      'The host this computer counts as: the one the CLI said it runs in, else the one the code was made for, else `general`.',
+  })
+  host: AgentHostId;
 }
 
 export class HumanHostDto {
-  @ApiProperty({ enum: ['cli', 'mcp'], description: 'The `agentinbox` CLI, or the hosted MCP server.' })
+  @ApiProperty({
+    enum: [...AGENT_HOST_IDS],
+    description:
+      'Which host it is. `general` is any other host, one that didn’t say which it is, and the hosts that came in before hosts were told apart.',
+  })
+  id: AgentHostId;
+
+  @ApiProperty({
+    enum: [...AGENT_HOST_VIAS],
+    description: 'The way it came in last: the `agentinbox` CLI, or the hosted MCP server.',
+  })
   via: AgentHostVia;
 
-  @ApiProperty({ description: 'When a host first came in this way: it used a code, or checked the inbox.' })
+  @ApiProperty({ description: 'When it first came in, on any computer: it used a code, or checked the inbox.' })
   connectedAt: string;
 
-  @ApiProperty({ nullable: true, description: 'When a host last checked the inbox this way.' })
+  @ApiProperty({ nullable: true, description: 'When it last checked the inbox, on any computer.' })
   lastCheckedAt: string | null;
 }
 
@@ -130,10 +156,17 @@ export class HumanHostStatusResponseDto {
   @ApiProperty({ nullable: true, description: 'The last time any host checked the inbox.' })
   lastCheckedAt: string | null;
 
-  @ApiProperty({ enum: ['cli', 'mcp'], nullable: true, description: 'How the host of that check came in.' })
+  @ApiProperty({
+    enum: [...AGENT_HOST_VIAS],
+    nullable: true,
+    description: 'The way the host of that check came in last.',
+  })
   lastCheckedVia: AgentHostVia | null;
 
-  @ApiProperty({ type: [HumanHostDto], description: 'One entry for each way hosts came in, last checked first.' })
+  @ApiProperty({ enum: [...AGENT_HOST_IDS], nullable: true, description: 'The host of that check.' })
+  lastCheckedHost: AgentHostId | null;
+
+  @ApiProperty({ type: [HumanHostDto], description: 'One entry for each host, last checked first.' })
   hosts: HumanHostDto[];
 
   @ApiProperty({ nullable: true, description: 'The first time any host checked the inbox.' })

@@ -1,10 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AgentInboxApiError } from './agent-inbox-api';
-import { toolOf } from './connections';
+import { hostOfClientName, hostOfSession, hostOfUserAgent, sessionIdFor } from './connections';
 import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
 import worker from './index';
 import { describeOutcome, type Interaction, sendInteraction, waitForAnswer } from './interactions';
-import { AGENT_INBOX_API, INITIALIZE, ISSUER, NOVU_API, ORIGIN, rpc, setup, stubBackends } from './spec-support';
+import {
+  AGENT_INBOX_API,
+  INITIALIZE,
+  ISSUER,
+  inSession,
+  NOVU_API,
+  ORIGIN,
+  rpc,
+  setup,
+  stubBackends,
+} from './spec-support';
 
 describe('the Agent Inbox MCP server', () => {
   beforeEach(() => {
@@ -52,7 +62,89 @@ describe('the Agent Inbox MCP server', () => {
     expect(((await response.json()) as { result: { serverInfo: { name: string } } }).result.serverInfo.name).toBe(
       'agent-inbox'
     );
-    expect(kv.values.has('tool:user_1:claude')).toBe(true);
+    expect(kv.values.has('tool:user_1:claude-chat')).toBe(true);
+  });
+
+  it('tells Claude Code from Claude, and names the host in every later call to the API', async () => {
+    const calls = stubBackends();
+    const { env, ctx, kv, settle } = setup();
+
+    const initialized = await worker.fetch(
+      rpc('initialize', { ...INITIALIZE, clientInfo: { name: 'claude-code', version: '2.1.309' } }),
+      env,
+      ctx
+    );
+    await settle();
+    const sessionId = initialized.headers.get('Mcp-Session-Id') ?? '';
+
+    expect(sessionId.startsWith('claude-code.')).toBe(true);
+    expect(kv.values.has('tool:user_1:claude-code')).toBe(true);
+    expect(kv.values.has('tool:user_1:claude-chat')).toBe(false);
+
+    // Any Worker instance can take the next call: the session id alone says which host it is.
+    const listed = await worker.fetch(
+      inSession(rpc('tools/call', { name: 'inbox_list', arguments: { filter: 'unread' } }), sessionId),
+      env,
+      ctx
+    );
+    expect(listed.status).toBe(200);
+
+    const inbox = calls.find((call) => call.url.startsWith(`${AGENT_INBOX_API}/v1/inbox?`));
+    expect(inbox?.headers.get('Agent-Inbox-Via')).toBe('mcp');
+    expect(inbox?.headers.get('Agent-Inbox-Host')).toBe('claude-code');
+  });
+
+  it('says nothing of the host for a call outside a session, and counts an app it does not know as general', async () => {
+    const calls = stubBackends();
+    const { env, ctx, kv, settle } = setup();
+
+    await worker.fetch(rpc('tools/call', { name: 'inbox_list', arguments: { filter: 'unread' } }), env, ctx);
+    const outside = calls.find((call) => call.url.startsWith(`${AGENT_INBOX_API}/v1/inbox?`));
+    expect(outside?.headers.get('Agent-Inbox-Via')).toBe('mcp');
+    expect(outside?.headers.has('Agent-Inbox-Host')).toBe(false);
+
+    const initialized = await worker.fetch(
+      rpc('initialize', { ...INITIALIZE, clientInfo: { name: 'Some New Editor', version: '1' } }),
+      env,
+      ctx
+    );
+    await settle();
+    const sessionId = initialized.headers.get('Mcp-Session-Id') ?? '';
+    expect(sessionId.startsWith('general.')).toBe(true);
+    expect([...kv.values.keys()].some((key) => key.startsWith('tool:'))).toBe(false);
+
+    calls.length = 0;
+    await worker.fetch(
+      inSession(rpc('tools/call', { name: 'inbox_list', arguments: { filter: 'unread' } }), sessionId),
+      env,
+      ctx
+    );
+    expect(
+      calls.find((call) => call.url.startsWith(`${AGENT_INBOX_API}/v1/inbox?`))?.headers.get('Agent-Inbox-Host')
+    ).toBe('general');
+  });
+
+  it('names Claude Code, Codex and Cursor by their User-Agent where a call carries no session', async () => {
+    const calls = stubBackends();
+    const { env, ctx } = setup();
+    const request = rpc('tools/call', { name: 'inbox_list', arguments: { filter: 'unread' } });
+    const headers = new Headers(request.headers);
+    headers.set('User-Agent', 'claude-code/2.1.309 (cli)');
+
+    await worker.fetch(new Request(request, { headers }), env, ctx);
+
+    const inbox = calls.find((call) => call.url.startsWith(`${AGENT_INBOX_API}/v1/inbox?`));
+    expect(inbox?.headers.get('Agent-Inbox-Host')).toBe('claude-code');
+  });
+
+  it('lets an app end its session', async () => {
+    const { env, ctx } = setup();
+    const request = new Request(ORIGIN, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer good-token', 'Mcp-Session-Id': sessionIdFor('cursor') },
+    });
+
+    expect((await worker.fetch(request, env, ctx)).status).toBe(200);
   });
 
   it('offers the tools to reach a person and read the inbox', async () => {
@@ -492,7 +584,7 @@ describe('the Agent Inbox MCP server', () => {
     const connect = (name: string) =>
       worker.fetch(rpc('initialize', { ...INITIALIZE, clientInfo: { name, version: '1' } }), env, ctx);
 
-    await Promise.all([connect('claude-ai'), connect('Cursor')]);
+    await Promise.all([connect('claude-ai'), connect('cursor-vscode')]);
     await settle();
 
     const response = await worker.fetch(
@@ -567,12 +659,55 @@ describe('contact_list', () => {
   });
 });
 
-describe('toolOf', () => {
-  it('knows the three tools by the name they connect with', () => {
-    expect(toolOf('claude-ai')).toBe('claude');
-    expect(toolOf('Cursor')).toBe('cursor');
-    expect(toolOf('openai-mcp')).toBe('chatgpt');
-    expect(toolOf('something-else')).toBe(null);
+describe('hostOfClientName', () => {
+  it('knows each host by the name it connects with, and Claude Code is not Claude', () => {
+    expect(hostOfClientName('claude-code')).toBe('claude-code');
+    expect(hostOfClientName('claude-ai')).toBe('claude');
+    expect(hostOfClientName('Anthropic')).toBe('claude');
+    expect(hostOfClientName('Anthropic/ClaudeAI')).toBe('claude');
+    expect(hostOfClientName('codex-mcp-client')).toBe('codex');
+    expect(hostOfClientName(' Cursor-VSCode ')).toBe('cursor');
+    expect(hostOfClientName('opencode')).toBe('opencode');
+    expect(hostOfClientName('hermes-agent')).toBe('hermes');
+    expect(hostOfClientName('openclaw-bundle-mcp')).toBe('openclaw');
+    expect(hostOfClientName('openai-mcp')).toBe('chatgpt');
+    expect(hostOfClientName('ChatGPT')).toBe('chatgpt');
+  });
+
+  it('knows no host for any other name, nor for one that only starts like Claude Code', () => {
+    expect(hostOfClientName('Visual Studio Code')).toBe(null);
+    expect(hostOfClientName('gemini-cli-mcp-client')).toBe(null);
+    expect(hostOfClientName('claude-desktop')).toBe(null);
+    expect(hostOfClientName('claude-code-but-not-really')).toBe(null);
+    expect(hostOfClientName('')).toBe(null);
+  });
+});
+
+describe('hostOfUserAgent', () => {
+  it('knows the apps that name themselves on every request', () => {
+    expect(hostOfUserAgent('claude-code/2.1.309 (cli)')).toBe('claude-code');
+    expect(hostOfUserAgent('codex-mcp-client/0.160.0')).toBe('codex');
+    expect(hostOfUserAgent('Cursor/3.25.6 (darwin arm64)')).toBe('cursor');
+  });
+
+  it('knows no host from any other', () => {
+    expect(hostOfUserAgent('node')).toBe(null);
+    expect(hostOfUserAgent('python-httpx/0.28.1')).toBe(null);
+    expect(hostOfUserAgent(null)).toBe(null);
+  });
+});
+
+describe('hostOfSession', () => {
+  it('reads the host back from a session id it handed out', () => {
+    expect(hostOfSession(sessionIdFor('chatgpt'))).toBe('chatgpt');
+    expect(hostOfSession(sessionIdFor('claude-code'))).toBe('claude-code');
+  });
+
+  it('knows no host for a session id from elsewhere, or none', () => {
+    expect(hostOfSession('6f1c8f3e-2b1a-4c1e-9d55-6c9c0b1f2a3d')).toBe(null);
+    expect(hostOfSession('windsurf.6f1c8f3e')).toBe(null);
+    expect(hostOfSession('')).toBe(null);
+    expect(hostOfSession(null)).toBe(null);
   });
 });
 

@@ -158,5 +158,35 @@ describe('HumanConnectCodeService', () => {
         'expired'
       );
     });
+
+    it('gives each host a code of its own, and keeps the host on it', async () => {
+      const { service, store } = setup();
+
+      const forClaudeCode = await service.issue({ ...target, host: 'claude-code' });
+      const forHermes = await service.issue({ ...target, host: 'hermes' });
+      const forNoHost = await service.issue(target);
+
+      expect(new Set([forClaudeCode.code, forHermes.code, forNoHost.code]).size).to.equal(3);
+      expect((await service.issue({ ...target, host: 'hermes' })).code).to.equal(forHermes.code);
+      expect((await service.issue(target)).code).to.equal(forNoHost.code);
+      expect(JSON.parse(store.get(connectCodeKey('atlas', forHermes.code)) ?? '{}').host).to.equal('hermes');
+      expect(JSON.parse(store.get(connectCodeKey('atlas', forNoHost.code)) ?? '{}')).to.not.have.property('host');
+    });
+  });
+
+  describe('redeem', () => {
+    it('tells the host the code was made for, and leaves out one this API does not know', async () => {
+      const { service, cacheService, store, keep } = setup();
+      // As the script answers for a code that works: the record as it was kept.
+      cacheService.eval.callsFake(async (_script: string, keys: string[]) => store.get(keys[0]) ?? 'INVALID');
+      keep('BCDF-GHJK', { host: 'openclaw' });
+      keep('GHJK-BCDF', { host: 'windsurf' });
+
+      expect((await service.redeem('atlas', 'BCDF-GHJK')).host).to.equal('openclaw');
+
+      const unknownHost = await service.redeem('atlas', 'GHJK-BCDF');
+      expect(unknownHost).to.not.have.property('host');
+      expect(unknownHost.agentId).to.equal('relay1');
+    });
   });
 });

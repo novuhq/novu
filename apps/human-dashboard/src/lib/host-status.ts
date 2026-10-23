@@ -1,5 +1,5 @@
 import type { ToolId } from './ai-tools';
-import type { HostVia } from './onboarding';
+import { HOST_LABELS, type HostVia } from './onboarding';
 
 /*
  * The hosts of the operator's agent, as `GET /v1/human/agent/hosts` describes them, and the one-time codes
@@ -8,14 +8,45 @@ import type { HostVia } from './onboarding';
  * is what the pages work out from them, in the browser as well.
  */
 
-/** One way hosts came in: the `agentinbox` CLI, or the hosted MCP server the chat apps connect through. */
+/**
+ * The hosts the API tells apart (`AGENT_HOST_IDS`), and what the dashboard calls each. `general` is any other
+ * host, and any host that didn't say which one it is. Kept here until there is one list of hosts in code.
+ */
+export const HOST_NAMES = {
+  'claude-code': 'Claude Code',
+  codex: 'Codex',
+  opencode: 'OpenCode',
+  cursor: 'Cursor',
+  hermes: 'Hermes',
+  openclaw: 'OpenClaw',
+  general: 'General',
+  claude: 'Claude',
+  chatgpt: 'ChatGPT',
+  grok: 'Grok Bot',
+} as const;
+
+export type HostId = keyof typeof HOST_NAMES;
+
+export function isHostId(value: unknown): value is HostId {
+  return typeof value === 'string' && Object.hasOwn(HOST_NAMES, value);
+}
+
+/** A host of the agent: one entry however many computers run it, and whichever way it came in. */
 export type AgentHost = {
+  /** Missing from an API from before hosts were told apart, which had one entry for each way in. */
+  id?: HostId;
+  /** The way it came in last: the `agentinbox` CLI, or the hosted MCP server. */
   via: HostVia;
-  /** When a host first came in this way: it used a code, or checked the inbox. */
+  /** When it first came in, on any computer: it used a code, or checked the inbox. */
   connectedAt: string;
-  /** When a host last checked the inbox this way. */
+  /** When it last checked the inbox. */
   lastCheckedAt: string | null;
 };
+
+/** What the dashboard calls a host: its name, or the way it came in when the API didn't say which host. */
+export function hostName(host: Pick<AgentHost, 'id' | 'via'>): string {
+  return isHostId(host.id) ? HOST_NAMES[host.id] : HOST_LABELS[host.via];
+}
 
 export type HostStatus = {
   /** A host used a one-time code, or checked the inbox, at least once. It never goes back to false. */
@@ -23,7 +54,9 @@ export type HostStatus = {
   /** The last time any host checked the inbox. */
   lastCheckedAt: string | null;
   lastCheckedVia: HostVia | null;
-  /** One entry for each way hosts came in, last checked first. */
+  /** The host of that check. Missing from an API from before hosts were told apart. */
+  lastCheckedHost?: HostId | null;
+  /** One entry for each host, last checked first. */
   hosts: AgentHost[];
   /** The first time any host checked the inbox. */
   firstCheckedAt: string | null;
@@ -130,16 +163,15 @@ export function formatCheckedAgo(iso: string, now: number): string {
 }
 
 /**
- * The way a host came in since `before`, or `null`: a way no host had used, or one whose hosts had stopped
- * checking (`HOST_STALE_AFTER_MS`) and checked again.
+ * The way a host came in that came in since `before`, or `null`: a host that wasn't there, or one that had
+ * stopped checking (`HOST_STALE_AFTER_MS`) and checked again.
  *
- * Another host on a way that is already in use doesn't show here: the API keeps when the first one came
- * in, and a check of the new one looks like a check of the old. The code it used tells that one apart
- * (`useCodeWatch`).
+ * The same host on one more computer doesn't show here: it shares its entry with the first one, and a check
+ * of the new one looks like a check of the old. The code it used tells that one apart (`useCodeWatch`).
  */
 export function findNewHost(before: HostStatus, after: HostStatus): HostVia | null {
   for (const host of after.hosts) {
-    const known = before.hosts.find((entry) => entry.via === host.via);
+    const known = before.hosts.find((entry) => entryKey(entry) === entryKey(host));
     if (!known || known.connectedAt !== host.connectedAt) {
       return host.via;
     }
@@ -155,4 +187,30 @@ export function findNewHost(before: HostStatus, after: HostStatus): HostVia | nu
   }
 
   return null;
+}
+
+/** One host's entry, or one way's from an API that didn't tell hosts apart. */
+function entryKey(host: AgentHost): string {
+  return host.id ?? host.via;
+}
+
+/**
+ * The hosts that count as connected now, for the host picker's check marks: each of `hosts` (`HostStatus.hosts`)
+ * that checked the inbox within the last day (`HOST_STALE_AFTER_MS`), or connected within it and hasn't checked
+ * since, and each chat app that signed in through the MCP server (`signedIn`, as `listConnectedTools` reads them).
+ */
+export function connectedHostIds(
+  hosts: readonly AgentHost[] | null | undefined,
+  now: number,
+  signedIn: readonly string[] = []
+): ReadonlySet<HostId> {
+  const ids = new Set<HostId>(signedIn.filter(isHostId));
+
+  for (const host of hosts ?? []) {
+    if (isHostId(host.id) && hostLiveness(host.lastCheckedAt ?? host.connectedAt, now) === 'live') {
+      ids.add(host.id);
+    }
+  }
+
+  return ids;
 }

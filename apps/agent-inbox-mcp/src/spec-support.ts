@@ -584,6 +584,14 @@ export function rpc(method: string, params: unknown, token: string | null = 'goo
   });
 }
 
+/** The same request, sent in the session `initialize` handed out, as an app sends every later one. */
+export function inSession(request: Request, sessionId: string): Request {
+  const headers = new Headers(request.headers);
+  headers.set('Mcp-Session-Id', sessionId);
+
+  return new Request(request, { headers });
+}
+
 export const INITIALIZE = {
   protocolVersion: '2025-06-18',
   capabilities: {},

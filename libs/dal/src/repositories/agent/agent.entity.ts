@@ -48,12 +48,39 @@ export interface AgentPicture {
 /** How a host reaches an Agent Inbox agent: the `agentinbox` CLI, or the hosted MCP server. */
 export type AgentHostVia = 'cli' | 'mcp';
 
-/** The hosts that came in one way. Every time is an ISO timestamp. */
+export const AGENT_HOST_VIAS: readonly AgentHostVia[] = ['cli', 'mcp'];
+
+/**
+ * The hosts Agent Inbox tells apart, by the id the CLI, the MCP server and the dashboard share. `general` is
+ * any other host, and any host that didn't say which one it is.
+ */
+export const AGENT_HOST_IDS = [
+  'claude-code',
+  'codex',
+  'opencode',
+  'cursor',
+  'hermes',
+  'openclaw',
+  'general',
+  'claude',
+  'chatgpt',
+  'grok',
+] as const;
+
+export type AgentHostId = (typeof AGENT_HOST_IDS)[number];
+
+/** When a host, or the hosts that came in one way, connected and last checked. Every time is an ISO timestamp. */
 export interface AgentHostEntry {
-  /** The first time a host came in this way: it used a one-time code, or checked the inbox. */
+  /** The first time it came in: it used a one-time code, or checked the inbox. */
   connectedAt?: string;
-  /** The last time a host checked the inbox this way. */
+  /** The last time it checked the inbox. */
   lastCheckedAt?: string;
+}
+
+/** One host, on every computer it runs on, whichever way it came in. */
+export interface AgentNamedHostEntry extends AgentHostEntry {
+  /** The way it came in last: when it connected, or when it last checked the inbox. */
+  via?: AgentHostVia;
 }
 
 /** The newest unread conversation a host found the first time any host checked the inbox. */
@@ -75,6 +102,12 @@ export type AgentInboxReach = (typeof AGENT_INBOX_REACHES)[number];
 
 /** Which hosts act as an Agent Inbox agent, and when they last checked its inbox. */
 export interface AgentHosts {
+  /** Each host by its id. Two computers with the same host, or one host that came in both ways, share an entry. */
+  byId?: Partial<Record<AgentHostId, AgentNamedHostEntry>>;
+  /**
+   * The hosts that came in through the CLI, and through MCP, from before hosts were told apart: one entry for
+   * each way in, whichever host it was. Only read now, for agents whose hosts haven't come in again since.
+   */
   cli?: AgentHostEntry;
   mcp?: AgentHostEntry;
   /** The first time any host checked the inbox. */

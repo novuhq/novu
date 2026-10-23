@@ -46,7 +46,7 @@ export class GetInboxThread {
     const thread = await this.inbox.toThread(scope, conversation);
 
     if (command.hostVia) {
-      await this.hostStatus.recordCheck(scope, agent, command.hostVia, [thread]);
+      await this.hostStatus.recordCheck(scope, agent, { via: command.hostVia, id: command.hostId }, [thread]);
     }
 
     trackAgentInboxItemRead(

@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
+import type { HostId } from './host';
 
 export type ChannelPlatform = 'telegram' | 'slack' | 'email' | string;
 
@@ -19,6 +20,11 @@ export interface CliConfig {
    * endpoints) — this is only a local preference.
    */
   defaultChannel?: ChannelPlatform;
+  /**
+   * The host this computer was connected for: the one the one-time code was made for, when the shell
+   * `connect` ran in didn't say which host it was. Requests name it while the shell doesn't say either.
+   */
+  host?: HostId;
 }
 
 /**

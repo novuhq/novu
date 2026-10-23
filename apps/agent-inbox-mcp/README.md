@@ -34,7 +34,7 @@ The send and reply tools mirror the Agent Inbox CLI: they support attribution, e
 3. The tool calls again with the token. The server asks Clerk whose token it is (`/oauth/userinfo`); it never trusts what a token says about itself.
 4. When that sign-in has no Agent Inbox account yet, the server opens one (`POST /v1/human/accounts`). It then reads the account's API key from the Novu API with the secret the Agent Inbox dashboard uses, and calls the Agent Inbox Dashboard API as the account. The AI tool never sees the key. Opening the account does not create an agent.
 
-Every request stands alone: there are no sessions, so any instance can answer any call.
+Every request stands alone: nothing is kept between calls, so any instance can answer any call. The one thing `initialize` hands out is a session id that starts with the app's host (`claude-code.…`, see below). The app sends it back with every later request, and the server reads the host from it to tell the API which host is calling (`Agent-Inbox-Host`); it keeps nothing about the session itself. A request without one is served the same: Claude Code, Codex and Cursor are still told by their `User-Agent`, and the API counts any other as General.
 
 ## Where calls go
 
@@ -44,7 +44,7 @@ Every request stands alone: there are no sessions, so any instance can answer an
 
 ## Which tools are connected
 
-When a tool connects, the server notes which one it is (from the name the tool gives) in a KV namespace. The Agent Inbox dashboard reads that from `GET /connections/:agentInboxUserId`, which answers only to the shared secret, and shows the tile as Connected.
+When an app connects, the server tells which host it is from the name the app gives in `initialize` (`clientInfo.name`), matched whole: `claude-code` is Claude Code and `claude-ai` is Claude, so one is never taken for the other (`CLIENT_NAMES` in `src/connections.ts`, with where each name comes from). Any other name is General. It notes the host in a KV namespace; the Agent Inbox dashboard reads that from `GET /connections/:agentInboxUserId`, which answers only to the shared secret, and shows the app as Connected.
 
 ## Configuration
 
