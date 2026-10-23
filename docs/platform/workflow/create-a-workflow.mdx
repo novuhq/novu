@@ -98,6 +98,17 @@ To create a workflow from a template:
   </Tab>
 </Tabs>
 
+## Send the first notification
+
+Creating the workflow stores the definition. It does not send anything.
+
+1. In the workflow editor, add a channel step and write the message.
+2. Click **Test workflow**, choose a subscriber, and send. On Novu Cloud you can do this with the [demo integrations](/platform/integrations/demo-integration) before you connect a provider.
+3. Open the [Activity Feed](/platform/workflow/monitor-and-debug-workflow) and confirm the run.
+4. [Trigger the workflow from your backend](/platform/workflow/trigger-workflow) with the Development secret key and the workflow identifier.
+
+Workflows are created in Development. Production does not accept edits. [Publish](/platform/developer/environments#publish-changes-to-other-environments) before a Production trigger can run the workflow.
+
 ## Manage workflows
 
 Once created, you can manage workflows from the Workflows page:

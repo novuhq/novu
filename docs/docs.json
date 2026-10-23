@@ -169,6 +169,7 @@
               },
               "platform/workflow/trigger-workflow",
               "platform/workflow/monitor-and-debug-workflow",
+              "platform/workflow/usage",
               {
                 "group": "Advanced Features",
                 "pages": [

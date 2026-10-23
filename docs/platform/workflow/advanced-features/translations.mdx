@@ -86,6 +86,8 @@ If you prefer to create/update translations in a JSON file outside the Novu dash
 
 ### How to import translations
 
+Upload translation files from the translations page, or push a directory of locale files with the CLI.
+
 1. Navigate to the translations page.
 2. Select the workflow you want to import translations into.
     - To import locale into all workflows with translations enabled, click the **Import** button.
@@ -152,6 +154,14 @@ Render event-specific values directly inside the loop:
 If the repeated sentence itself must be translated, put the complete loop in the translation value so the loop
 variable is declared within the same translation template. Passing a loop-local event as a parameter to `{{t.*}}` is
 not supported.
+
+## How Novu selects the subscriber locale
+
+Novu selects the translation when the channel step runs, from `subscriber.locale` at that moment. It does not use the locale from trigger time. A locale change that lands before a delayed or digest step runs is the locale that step sees.
+
+If that locale has a translation for the key, Novu uses it. If the key is missing, Novu uses the workflow’s default locale. If the subscriber has no `locale`, lookup starts at `en` and falls back to the default locale. Set `locale` to a `language_REGION` value such as `fr_FR`. Language-only codes are not supported.
+
+Novu stores the translated content on the message when the step executes. It does not translate the message again when the Inbox loads it. Historical messages keep the locale they were created with.
 
 ## Testing translations
 
@@ -293,8 +303,6 @@ Here are some frequently asked questions about translations.
 
 <AccordionGroup>
   <Accordion title="Is translation resolved when the notification is fetched, or when it is sent?">
-    Translation is resolved when the channel step executes, using the subscriber's locale at that moment (not at trigger time, and not when the Inbox loads the message). For delayed or digest workflows, a locale update before the channel step runs is reflected in that notification.
-
-    Once the step has executed, the translated in-app notification content is stored with the message. Novu does not re-translate existing in-app notifications when they are fetched. Historical messages keep the locale they were created with.
+    It is resolved when the channel step runs, and then stored on the message. See [How Novu selects the subscriber locale](#how-novu-selects-the-subscriber-locale).
   </Accordion>
 </AccordionGroup>

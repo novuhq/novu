@@ -30,7 +30,7 @@ Data stored in the subscriber object that you can easily access in your notifica
 
 ### Custom data
 
-Apart from the above fixed structured user data, any unstructured custom data such as user's `address`, `membershipLevel`, `preferredTopics`, or `companySize` can also be stored in the `data` field using key-value pairs.
+Store custom data on a subscriber in the `data` object. Novu keeps that JSON with the profile and does not interpret the keys. Fields such as `address`, `membershipLevel`, or `preferredTopics` belong here. The [ahead of trigger](#ahead-of-trigger) example shows the object on create. Pass the same object on [update subscriber](/api-reference/subscribers/update-a-subscriber) or on a just-in-time trigger. In a template, read a field with `{{subscriber.data.membershipLevel}}`. In [step conditions](/platform/workflow/add-and-configure-steps/step-conditions), use the path `subscriber.data.membershipLevel`.
 
 ### Channel specific credentials
 
@@ -48,7 +48,7 @@ Learn more about subscriber attributes and schema in the [Subscribers API](/api-
 
 ## Subscriber creation in Novu
 
-Before you can send notifications, a subscriber must exist in Novu. Asides from manually creating a subscriber via the Novu dashboard, Novu supports multiple approaches to subscriber creation depending on your application’s architecture and user lifecycle.
+Before you can send notifications, a subscriber must exist in Novu. Create subscribers from your backend with the [Create subscriber](/api-reference/subscribers/create-a-subscriber) API, from the dashboard, or with one of the approaches below. `subscriberId` is required and must be unique in that environment. Use the same id your application uses for that user.
 
 ### Just in time
 

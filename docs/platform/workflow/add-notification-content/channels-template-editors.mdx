@@ -259,10 +259,10 @@ Every layout must include the `{{content}}` variable. This variable dynamically 
 - Reusable across workflows.
 - Support both block and code editors.
 - Each environment maintains its own set of layouts.
-- Supports variables and translations.
+- Supports subscriber variables, such as `{{subscriber.firstName}}`, and [translation keys](/platform/workflow/advanced-features/translations) after translations are enabled on the layout.
 
 <Note>
-  Payload variables are not supported in layouts because one layout can be used across multiple workflows and workflows can have strict payload schema validation.
+  Payload variables are not supported in layouts because one layout can be used across multiple workflows and workflows can have strict payload schema validation. Put payload fields in the email step body, which is injected at `{{content}}`.
 </Note>
 
 #### Apply an email layout to a workflow
