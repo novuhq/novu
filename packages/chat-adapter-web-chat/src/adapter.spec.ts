@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NovuWebChatAdapterImpl } from './adapter.js';
-import { sanitizeMessageMetadata } from './utils.js';
 import type { WebChatAdapterConfig, WebChatSession } from './types.js';
+import { sanitizeMessageMetadata } from './utils.js';
 
 vi.mock('chat', () => {
   class Message {
