@@ -15,6 +15,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 env:
   NX_NO_CLOUD: 'true'
+  NODE_OPTIONS: --no-experimental-strip-types
 
 jobs:
   # This workflow contains a single job called "build"

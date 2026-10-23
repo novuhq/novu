@@ -8,6 +8,7 @@ on:
 
 env:
   NX_NO_CLOUD: 'true'
+  NODE_OPTIONS: --no-experimental-strip-types
 
 jobs:
   dependency-review:
