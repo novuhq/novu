@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { type KeyboardEvent, useEffect, useRef } from 'react';
 import { RiAddLine, RiArrowDownSLine, RiCloseLine, RiCornerDownLeftLine } from 'react-icons/ri';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -10,14 +10,25 @@ import { getUserMessageText } from './copilot-web-chat-utils';
 
 const SUGGESTIONS = ['Autocomplete workflow', 'Audit this workflow', 'Explain this workflow'];
 
-function HeaderButton({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
+function HeaderButton({
+  label,
+  onClick,
+  disabled,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <button
       type="button"
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="flex size-6 items-center justify-center rounded-md text-text-soft hover:bg-bg-soft hover:text-text-strong"
+      disabled={disabled}
+      className="flex size-6 items-center justify-center rounded-md text-text-soft hover:bg-bg-soft hover:text-text-strong disabled:pointer-events-none disabled:opacity-40"
     >
       {children}
     </button>
@@ -51,11 +62,10 @@ function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) 
 }
 
 function Composer({ hasMessages }: { hasMessages: boolean }) {
-  const { chat, sendMessage, pageContext } = useCopilotWebChat();
-  const [value, setValue] = useState('');
+  const { chat, sendMessage, pageContext, draft: value, setDraft: setValue } = useCopilotWebChat();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isRunning = !!chat?.isRunning;
-  const canSend = value.trim().length > 0 && !isRunning;
+  const canSend = value.trim().length > 0 && !isRunning && !chat?.isLoading;
   const contextLabel = [pageContext?.workflowLabel, pageContext?.stepLabel].filter(Boolean).join(' / ');
 
   useEffect(() => {
@@ -117,7 +127,7 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
 }
 
 function Thread() {
-  const { chat, sendMessage, pageContext, hasRunError } = useCopilotWebChat();
+  const { chat, retry, pageContext, hasRunError } = useCopilotWebChat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const messages = chat?.messages ?? [];
 
@@ -127,15 +137,7 @@ function Thread() {
     if (element) element.scrollTop = element.scrollHeight;
   }, [messages, hasRunError]);
 
-  const failedMessage = [...messages]
-    .reverse()
-    .find((message) => message.role === 'user' && message.status === 'failed');
-  const lastUser = [...messages].reverse().find((message) => message.role === 'user');
   const contextLabel = pageContext?.workflowLabel;
-  const retry = () => {
-    if (failedMessage) void chat?.retryMessage(failedMessage.id);
-    else if (lastUser) void sendMessage(getUserMessageText(lastUser));
-  };
 
   return (
     <div className="relative min-h-0 flex-1">
@@ -147,7 +149,7 @@ function Thread() {
             <CopilotAssistantMessage key={message.id} message={message} />
           )
         )}
-        {hasRunError && !chat?.isRunning && <CopilotErrorNotice onRetry={retry} />}
+        {hasRunError && !chat?.isRunning && <CopilotErrorNotice onRetry={() => void retry()} />}
       </div>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-bg-white to-transparent" />
     </div>
@@ -155,7 +157,7 @@ function Thread() {
 }
 
 export function CopilotPopover() {
-  const { isAvailable, isOpen, close, chat, sendMessage } = useCopilotWebChat();
+  const { isAvailable, isOpen, close, chat, sendMessage, startNewConversation } = useCopilotWebChat();
   const track = useTelemetry();
 
   if (!isOpen || !isAvailable) return null;
@@ -174,7 +176,7 @@ export function CopilotPopover() {
       <div className="flex h-11 shrink-0 items-center gap-2 border-b border-stroke-soft bg-bg-weak pl-3.5 pr-2">
         <BroomSparkle className="size-4 shrink-0" isAnimating={!!chat?.isRunning} />
         <span className="min-w-0 flex-1 truncate text-label-sm text-text-sub">{title}</span>
-        <HeaderButton label="New chat" onClick={() => chat?.startNewConversation()}>
+        <HeaderButton label="New chat" disabled={!!chat?.isRunning} onClick={startNewConversation}>
           <RiAddLine className="size-3.5" />
         </HeaderButton>
         <HeaderButton label="Minimize" onClick={close}>

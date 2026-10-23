@@ -123,7 +123,7 @@ export function summarizeToolGroup(rows: readonly ToolRow[]): ToolGroupSummary {
   const writeCount = rows.filter((row) => row.isWrite && row.status === 'done').length;
 
   if (isRunning) return { isRunning, title: 'Editing workflow' };
-  if (writeCount > 0) return { isRunning, title: `Edited ${writeCount} ${writeCount === 1 ? 'step' : 'steps'}` };
+  if (writeCount > 0) return { isRunning, title: `Made ${writeCount} ${writeCount === 1 ? 'change' : 'changes'}` };
 
   return { isRunning, title: `Used ${rows.length} ${rows.length === 1 ? 'tool' : 'tools'}` };
 }

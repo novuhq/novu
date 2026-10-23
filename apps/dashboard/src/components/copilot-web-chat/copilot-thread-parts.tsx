@@ -45,11 +45,14 @@ export function CopilotUserMessage({ message, contextLabel }: { message: AgentMe
 
 function ThinkingBlock({ block }: { block: Extract<AssistantBlock, { kind: 'thinking' }> }) {
   const [open, setOpen] = useState(false);
-  const startedAt = useRef(Date.now());
+  // Only measured while observed streaming; blocks mounted already finished (popover reopened) show "Thought".
+  const startedAt = useRef<number | null>(null);
   const [seconds, setSeconds] = useState(0);
 
+  if (block.streaming && startedAt.current === null) startedAt.current = Date.now();
+
   useEffect(() => {
-    if (!block.streaming) {
+    if (!block.streaming && startedAt.current !== null) {
       setSeconds(Math.max(1, Math.round((Date.now() - startedAt.current) / 1000)));
     }
   }, [block.streaming]);

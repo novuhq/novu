@@ -12,6 +12,12 @@ export type CopilotWebChatContextValue = {
   chat?: UseWebChatResult;
   pageContext?: CopilotPageContext;
   sendMessage: (text: string) => Promise<void>;
+  /** Resends the last message with the workflow/step it was originally sent for. */
+  retry: () => Promise<void>;
+  startNewConversation: () => void;
+  /** Unsent composer text, kept here so minimizing the popover does not discard it. */
+  draft: string;
+  setDraft: (value: string) => void;
   /** True when an answer finished while the popover was closed and has not been seen yet. */
   hasUnseenAnswer: boolean;
   hasRunError: boolean;
@@ -26,6 +32,10 @@ export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   close: noop,
   toggle: noop,
   sendMessage: async () => {},
+  retry: async () => {},
+  startNewConversation: noop,
+  draft: '',
+  setDraft: noop,
   hasUnseenAnswer: false,
   hasRunError: false,
 });

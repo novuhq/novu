@@ -1,6 +1,6 @@
 import type { AgentEventEnvelope } from '@novu/js';
 import { useWebChat } from '@novu/react';
-import { type ComponentProps, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ComponentProps, memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCopilotConnectContext } from '@/components/connect/copilot-connect-context';
 import { CopilotConnectProvider } from '@/components/connect/copilot-connect-provider';
 import { NOVU_COPILOT_AGENT_ID } from '@/config';
@@ -47,7 +47,12 @@ function useShellState(): ShellState {
   return { isOpen, open, close, toggle, pageContext, registerPageContext, onRefetchRef };
 }
 
-type ConnectedState = Pick<CopilotWebChatContextValue, 'chat' | 'sendMessage' | 'hasUnseenAnswer' | 'hasRunError'>;
+type BridgeShell = Pick<ShellState, 'isOpen' | 'close' | 'toggle' | 'pageContext' | 'onRefetchRef'>;
+
+type ConnectedState = Pick<
+  CopilotWebChatContextValue,
+  'chat' | 'sendMessage' | 'retry' | 'startNewConversation' | 'hasUnseenAnswer' | 'hasRunError'
+>;
 
 /**
  * Hosts one Copilot conversation for the whole workflow editor so it survives canvas and step
@@ -57,8 +62,15 @@ type ConnectedState = Pick<CopilotWebChatContextValue, 'chat' | 'sendMessage' | 
  */
 export function CopilotWebChatProvider({ children, enabled = true }: { children: ReactNode; enabled?: boolean }) {
   const shell = useShellState();
+  const [draft, setDraft] = useState('');
   const [connected, setConnected] = useState<ConnectedState | null>(null);
-  const { isOpen, open, close, toggle, pageContext, registerPageContext } = shell;
+  const { isOpen, open, close, toggle, pageContext, registerPageContext, onRefetchRef } = shell;
+  // Memoized so the bridge (wrapped in `memo`) is not re-rendered by the parent's own state updates;
+  // `useWebChat` returns a new object every render, which would otherwise loop through `onConnected`.
+  const bridgeShell = useMemo(
+    () => ({ isOpen, close, toggle, pageContext, onRefetchRef }),
+    [isOpen, close, toggle, pageContext, onRefetchRef]
+  );
 
   const value = useMemo<CopilotWebChatContextValue>(
     () => ({
@@ -70,10 +82,14 @@ export function CopilotWebChatProvider({ children, enabled = true }: { children:
       chat: connected?.chat,
       pageContext,
       sendMessage: connected?.sendMessage ?? (async () => {}),
+      retry: connected?.retry ?? (async () => {}),
+      startNewConversation: connected?.startNewConversation ?? (() => {}),
+      draft,
+      setDraft,
       hasUnseenAnswer: !!connected?.hasUnseenAnswer && !isOpen,
       hasRunError: !!connected?.hasRunError,
     }),
-    [connected, isOpen, open, close, toggle, pageContext]
+    [connected, isOpen, open, close, toggle, pageContext, draft]
   );
 
   return (
@@ -82,7 +98,7 @@ export function CopilotWebChatProvider({ children, enabled = true }: { children:
         {children}
         {enabled && (
           <CopilotConnectProvider>
-            <CopilotWebChatBridge shell={shell} onConnected={setConnected} />
+            <CopilotWebChatBridge shell={bridgeShell} onConnected={setConnected} />
           </CopilotConnectProvider>
         )}
       </CopilotWebChatContext.Provider>
@@ -90,11 +106,11 @@ export function CopilotWebChatProvider({ children, enabled = true }: { children:
   );
 }
 
-function CopilotWebChatBridge({
+const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   shell,
   onConnected,
 }: {
-  shell: ShellState;
+  shell: BridgeShell;
   onConnected: (state: ConnectedState | null) => void;
 }) {
   const track = useTelemetry();
@@ -132,11 +148,12 @@ function CopilotWebChatBridge({
   chatRef.current = chat;
   const pageContextRef = useRef(pageContext);
   pageContextRef.current = pageContext;
+  const lastSentRef = useRef<{ text: string; metadata: ReturnType<typeof buildCopilotMetadata> } | null>(null);
 
   const sendMessage = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
-      if (!trimmed) return;
+      if (!trimmed || chatRef.current.isLoading) return;
 
       const isNewChat = chatRef.current.messages.length === 0;
       track(TelemetryEvent.COPILOT_MESSAGE_SENT, {
@@ -147,10 +164,26 @@ function CopilotWebChatBridge({
       if (isNewChat) track(TelemetryEvent.COPILOT_CHAT_CREATED, { agentId: NOVU_COPILOT_AGENT_ID });
 
       setRunError(false);
-      await chatRef.current.sendMessage({ text: trimmed, metadata: buildCopilotMetadata(pageContextRef.current) });
+      const metadata = buildCopilotMetadata(pageContextRef.current);
+      lastSentRef.current = { text: trimmed, metadata };
+      await chatRef.current.sendMessage({ text: trimmed, metadata });
     },
     [track]
   );
+
+  const retry = useCallback(async () => {
+    const lastSent = lastSentRef.current;
+    if (!lastSent || chatRef.current.isLoading) return;
+
+    setRunError(false);
+    await chatRef.current.sendMessage(lastSent);
+  }, []);
+
+  const startNewConversation = useCallback(() => {
+    lastSentRef.current = null;
+    setRunError(false);
+    chatRef.current.startNewConversation();
+  }, []);
 
   const isAvailable = !!connectContext;
   useCopilotHotkey({ isEnabled: isAvailable, isOpen, toggle, close });
@@ -164,10 +197,10 @@ function CopilotWebChatBridge({
       return;
     }
 
-    onConnected({ chat, sendMessage, hasUnseenAnswer: unseenAnswer, hasRunError });
-  }, [isAvailable, chat, sendMessage, unseenAnswer, hasRunError, onConnected]);
+    onConnected({ chat, sendMessage, retry, startNewConversation, hasUnseenAnswer: unseenAnswer, hasRunError });
+  }, [isAvailable, chat, sendMessage, retry, startNewConversation, unseenAnswer, hasRunError, onConnected]);
 
   useEffect(() => () => onConnected(null), [onConnected]);
 
   return null;
-}
+});
