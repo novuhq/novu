@@ -3,10 +3,10 @@
 import type * as z from 'zod';
 import { fetchJson, type JsonInit } from '../node/http.ts';
 import { ClerkMemberships, ClerkToken, ClerkUsers, WithId } from '../shared/contracts.ts';
-import { boxOfTestUser } from '../shared/names.ts';
+import { boxOfTestUser, SEED_EMAIL } from '../shared/names.ts';
 
 export const SEED = {
-  email: 'agent@novu.co',
+  email: SEED_EMAIL,
   firstName: 'Agent',
   lastName: 'User',
   orgName: 'Agent Organization',

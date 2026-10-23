@@ -8,7 +8,7 @@ import { hostExists, hubToken } from './cloud-http.ts';
 import { deployHost } from './deploy.ts';
 import { mail } from './mail.ts';
 import { sync } from './sync.ts';
-import { createUser, deleteUser, inUserBox, listUsers } from './user.ts';
+import { createUser, deleteUser, inUserBox, listUsers, seedUser } from './user.ts';
 
 const SHARED: ParseArgsOptionsConfig = { box: { type: 'string' } };
 
@@ -101,18 +101,19 @@ const commands: Record<string, Command> = {
     { limit: { type: 'string' }, html: { type: 'boolean' }, 'check-links': { type: 'boolean' } }
   ),
   user: {
-    usage: 'create|list|channels|team|delete [email]',
-    help: "dashboard test users, agent+<box>.<id>@novu.co, each for one box only:\ncreate [--json]: one for the box, with its password; list [--limit <n>]: and which a create\nwould delete first at that many (default 50); after its onboarding, channels <email>: its own\norg's messages to Mailpit and the sink, team <email>: its own org on Team; delete <email>",
+    usage: 'seed|create|list|channels|team|delete [email]',
+    help: "seed [--json]: a link that signs in as agent@novu.co once, within 10 minutes (its org has the bridge app\nand agents); dashboard test users, agent+<box>.<id>@novu.co, each for one box only:\ncreate [--json]: one for the box, with its password; list [--limit <n>]: and which a create\nwould delete first at that many (default 50); after its onboarding, channels <email>: its own\norg's messages to Mailpit and the sink, team <email>: its own org on Team; delete <email>",
     options: { ...SHARED, json: { type: 'boolean' }, limit: { type: 'string' } },
     run: async (parsed) => {
       const [action, email] = parsed.args;
       const limit = Number(parsed.option('limit') ?? 50);
+      if (action === 'seed') return seedUser(parsed.option('box') ?? (await branchBox()), parsed.flag('json'));
       if (action === 'create') return createUser(parsed.option('box') ?? (await branchBox()), parsed.flag('json'));
       if (action === 'list' && Number.isInteger(limit) && limit > 0) return listUsers(limit);
       if ((action === 'team' || action === 'channels') && email) return inUserBox(action, email);
       if (action === 'delete' && email) return deleteUser(email);
       throw new Error(
-        'usage: box user create [--json] | list [--limit <n>] | channels <email> | team <email> | delete <email>'
+        'usage: box user seed [--json] | create [--json] | list [--limit <n>] | channels <email> | team <email> | delete <email>'
       );
     },
   },

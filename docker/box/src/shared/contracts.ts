@@ -215,6 +215,8 @@ export const ClerkUserList = z.array(ClerkUser);
 const TestUser = z.object({ email: z.string(), box: z.string(), createdAt: z.string(), live: z.boolean() });
 export const TestUsers = z.object({ users: z.array(TestUser), prune: z.array(z.string()) });
 export const CreatedTestUser = z.object({ email: z.string(), password: z.string(), pruned: z.array(z.string()) });
+export const ClerkSignInToken = z.object({ token: z.string() });
+export const SeedSignIn = z.object({ email: z.string(), url: z.string() });
 export const DeletedBox = z.object({ users: z.array(z.string()).default([]), usersError: z.string().optional() });
 
 const TesterArmyPullRequest = z.object({

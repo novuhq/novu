@@ -34,7 +34,7 @@ the `verify-in-box` skill (`.cursor/skills/verify-in-box/SKILL.md`).
 | `logs [process]` | The last lines of one process (`api`, `worker`, `bridge`, …) or of all of them. `--errors`, `--follow`, `--tail <n>` |
 | `mail [search \| id]` | What the box sent: email, and SMS, push and chat through the sink. A search (`to:a@b.c`, `subject:Welcome`, `tag:sms`), or one message with its headers, links and an HTML check of which email clients break on what |
 | `exec -- <command>` | Runs a command in the box's checkout (`/data/novu`) |
-| `user create \| list \| channels \| team \| delete` | Dashboard test users (below) |
+| `user seed \| create \| list \| channels \| team \| delete` | A sign-in link for the seed user, and dashboard test users (below) |
 | `down` | Saves the box to its snapshot and stops it; the next request or `up` wakes it with its data |
 | `delete` | Stops the box, forgets its snapshot, and deletes its test users |
 | `deploy` | Deploys the Cloudflare host (maintainers, below) |
@@ -126,7 +126,9 @@ with its data (a "waking up" page meanwhile). While it saves, requests get 503 w
 
 ## Test users: `box user`
 
-The seed user is shared by every box. For a fresh org, a real onboarding, or several users:
+The seed user is shared by every box, and its org is the only one with the bridge app, its agents and Slack.
+`user seed` prints a link that signs in as it once, within 10 minutes (a Clerk sign-in token from the hub), so
+agents never see its password. For a fresh org, a real onboarding, or several users:
 
 ```sh
 node docker/box/src/cli/main.ts user create      # agent+<box>.<id>@novu.co and a random password

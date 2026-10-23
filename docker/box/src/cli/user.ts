@@ -1,6 +1,6 @@
 import * as z from 'zod';
 import { log } from '../node/main.ts';
-import { CreatedTestUser, TestUsers } from '../shared/contracts.ts';
+import { CreatedTestUser, SeedSignIn, TestUsers } from '../shared/contracts.ts';
 import { boxOfTestUser, boxOrigin } from '../shared/names.ts';
 import { cloudTarget } from './cloud.ts';
 import { hostBoxes, hubToken } from './cloud-http.ts';
@@ -17,6 +17,13 @@ export async function createUser(box: string, asJson: boolean): Promise<number> 
       ? JSON.stringify({ box, email, password, url })
       : `email: ${email}\npassword: ${password}\nsign in at: ${url}`
   );
+
+  return 0;
+}
+
+export async function seedUser(box: string, asJson: boolean): Promise<number> {
+  const { email, url } = await hostBoxes(`users/${box}/seed`, SeedSignIn, { method: 'POST', token: hubToken });
+  console.log(asJson ? JSON.stringify({ box, email, url }) : `${email}: open within 10 minutes, once\n${url}`);
 
   return 0;
 }
