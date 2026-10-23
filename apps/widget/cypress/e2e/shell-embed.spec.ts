@@ -95,17 +95,23 @@ describe('Shell Embed', function () {
       .its('0.contentDocument.body')
       .should('not.be.empty')
       .then((body) => {
-        cy.wrap(body).find('[data-test-id="notification-list-item"]').first().trigger('mouseover');
+        cy.wrap(body).find('[data-test-id="notification-list-item"]').first().trigger('mouseenter');
         cy.wrap(body)
           .find('[data-test-id="notification-list-item"]')
           .first()
           .find('[data-test-id="notification-dots-button"]')
-          .click();
+          .should('exist')
+          .then(($button) => {
+            $button.get(0).click();
+          });
         cy.wrap(body)
           .find('[data-test-id="notification-list-item"]')
           .first()
           .find('[data-test-id="notification-mark-as-read"]')
-          .click();
+          .should('be.visible')
+          .then(($item) => {
+            $item.get(0).click();
+          });
         cy.wait('@fetchUnseenCount');
       });
 
