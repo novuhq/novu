@@ -129,6 +129,7 @@ const PHONE_BASED_CHAT_PROVIDERS = new Set<string>([
   ChatProviderIdEnum.WhatsAppBusiness,
   ChatProviderIdEnum.Sendblue,
   ChatProviderIdEnum.PhotonImessage,
+  ChatProviderIdEnum.EightByEightWhatsApp,
 ]);
 
 function isPhoneBasedChatProvider(providerId: string): boolean {
