@@ -101,12 +101,6 @@ jobs:
         working-directory: apps/web
         run: pnpm cypress install
 
-      - uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # latest
-        with:
-          chrome-version: "stable"
-      - run: |
-          echo "BROWSER_PATH=$(which chrome)" >> $GITHUB_ENV
-
       - name: Cypress run EE e2e
         if: ${{ inputs.ee }}
         uses: cypress-io/github-action@f790eee7a50d9505912f50c2095510be7de06aa7 # v6
