@@ -1,4 +1,4 @@
-FROM node:20-alpine3.19 as dev_base
+FROM node:22.23.4-alpine3.23 as dev_base
 RUN apk add g++ make py3-pip
 ENV NX_DAEMON=false
 
