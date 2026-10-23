@@ -147,7 +147,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
-          name: cypress-screenshots
+          name: cypress-screenshots-web-e2e
           path: apps/web/cypress/screenshots
 
   component_web:
@@ -191,5 +191,5 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
-          name: cypress-screenshots
+          name: cypress-screenshots-web-component
           path: apps/web/cypress/screenshots
