@@ -32,6 +32,9 @@ export const useRegenerateApiKeys = () => {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.dashboardInboxHashes, currentEnvironment?._id],
       });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.agentWebChatHash, currentEnvironment?._id],
+      });
     },
   });
 };
@@ -63,6 +66,9 @@ export const useDeleteApiKey = () => {
       });
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.dashboardInboxHashes, currentEnvironment?._id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.agentWebChatHash, currentEnvironment?._id],
       });
     },
   });

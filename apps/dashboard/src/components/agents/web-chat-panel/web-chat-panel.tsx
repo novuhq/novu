@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { SOCKET_OPTIONS } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useAgentWebChatHash } from '@/hooks/use-agent-web-chat-hash';
 import { useDashboardInboxHashes } from '@/hooks/use-dashboard-inbox-hashes';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 
@@ -29,8 +30,13 @@ function WebChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }
   const { currentEnvironment } = useEnvironment();
   const testerSubscriberId = currentUser?._id ? buildDashboardWebChatSubscriberId(currentUser._id) : '';
   const { webChatSubscriberHash, isSettled: isHashSettled } = useDashboardInboxHashes();
+  const { agentHash, isSettled: isAgentHashSettled } = useAgentWebChatHash(agent.identifier);
   const isReady =
-    isUserLoaded && Boolean(testerSubscriberId) && Boolean(currentEnvironment?.identifier) && isHashSettled;
+    isUserLoaded &&
+    Boolean(testerSubscriberId) &&
+    Boolean(currentEnvironment?.identifier) &&
+    isHashSettled &&
+    isAgentHashSettled;
   const subscriber = useMemo(
     () => ({
       subscriberId: testerSubscriberId,
@@ -65,6 +71,7 @@ function WebChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <WebChatSurface
           agentId={agent.identifier}
+          agentHash={agentHash}
           agentName={agent.name}
           conversationId={resumeId}
           showAddToAppCallouts={showAddToAppCallouts}
@@ -81,6 +88,7 @@ function WebChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }
 
 function WebChatSurface({
   agentId,
+  agentHash,
   agentName,
   conversationId,
   showAddToAppCallouts,
@@ -91,6 +99,7 @@ function WebChatSurface({
   subscriberId,
 }: {
   agentId: string;
+  agentHash?: string;
   agentName: string;
   conversationId?: string;
   showAddToAppCallouts: boolean;
@@ -124,6 +133,7 @@ function WebChatSurface({
     startNewConversation,
   } = useWebChat({
     agentId,
+    agentHash,
     conversationId,
     onMessage: (message) => {
       if (message.role === 'assistant') {
