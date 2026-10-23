@@ -1,9 +1,19 @@
+import { EnvironmentTypeEnum } from '@novu/shared';
 import { useLocation, useMatch, useParams } from 'react-router-dom';
 import { AnimatedOutlet } from '@/components/animated-outlet';
+import {
+  CopilotLauncher,
+  CopilotPopover,
+  CopilotWebChatProvider,
+  useCopilotWebChat,
+  useCopilotWebChatEnabled,
+} from '@/components/copilot-web-chat';
 import { FullPageLayout } from '@/components/full-page-layout';
 import { EditorBreadcrumbs } from '@/components/workflow-editor/editor-breadcrumbs';
 import { WorkflowProvider } from '@/components/workflow-editor/workflow-provider';
 import { WorkflowTabs } from '@/components/workflow-editor/workflow-tabs';
+import { IS_SELF_HOSTED } from '@/config';
+import { useEnvironment } from '@/context/environment/hooks';
 import { ROUTES } from '@/utils/routes';
 
 // Define routes that should render without WorkflowTabs (full-page routes)
@@ -41,7 +51,25 @@ function renderTraditionalLayout({ isNewWorkflowSlug }: { isNewWorkflowSlug: boo
   );
 }
 
+/** Shows the launcher/popover only once a page (canvas or step editor) registered a workflow context. */
+function CopilotWebChatMount() {
+  const { pageContext } = useCopilotWebChat();
+
+  if (!pageContext?.workflowId) return null;
+
+  return (
+    <>
+      <CopilotLauncher />
+      <CopilotPopover />
+    </>
+  );
+}
+
 export const EditWorkflowPage = () => {
+  const { currentEnvironment } = useEnvironment();
+  const isCopilotWebChatEnabled =
+    useCopilotWebChatEnabled() && !IS_SELF_HOSTED && currentEnvironment?.type === EnvironmentTypeEnum.DEV;
+
   const location = useLocation();
   const activityMatch = useMatch(ROUTES.EDIT_WORKFLOW_ACTIVITY);
   const { workflowSlug = '' } = useParams<{ workflowSlug?: string; stepSlug?: string }>();
@@ -69,8 +97,11 @@ export const EditWorkflowPage = () => {
   }
 
   return (
-    <WorkflowProvider>
-      <FullPageLayout headerStartItems={<EditorBreadcrumbs />}>{getLayoutContent()}</FullPageLayout>
-    </WorkflowProvider>
+    <CopilotWebChatProvider enabled={isCopilotWebChatEnabled}>
+      <WorkflowProvider>
+        <FullPageLayout headerStartItems={<EditorBreadcrumbs />}>{getLayoutContent()}</FullPageLayout>
+      </WorkflowProvider>
+      <CopilotWebChatMount />
+    </CopilotWebChatProvider>
   );
 };
