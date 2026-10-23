@@ -65,6 +65,7 @@ function ThinkingBlock({ block }: { block: Extract<AssistantBlock, { kind: 'thin
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
         className="flex w-fit items-center gap-1 text-xs leading-4 text-text-soft hover:text-text-sub"
       >
         {open ? <RiArrowDownSLine className="size-3.5" /> : <RiArrowRightSLine className="size-3.5" />}
@@ -120,6 +121,7 @@ function ToolGroup({ block }: { block: Extract<AssistantBlock, { kind: 'tools' }
       <button
         type="button"
         onClick={() => setUserOpen(!expanded)}
+        aria-expanded={expanded}
         className="flex w-fit items-center gap-1 text-xs leading-4 text-text-sub hover:text-text-strong"
       >
         {expanded ? <RiArrowDownSLine className="size-3.5" /> : <RiArrowRightSLine className="size-3.5" />}

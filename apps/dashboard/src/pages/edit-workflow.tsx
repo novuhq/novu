@@ -12,7 +12,6 @@ import { FullPageLayout } from '@/components/full-page-layout';
 import { EditorBreadcrumbs } from '@/components/workflow-editor/editor-breadcrumbs';
 import { WorkflowProvider } from '@/components/workflow-editor/workflow-provider';
 import { WorkflowTabs } from '@/components/workflow-editor/workflow-tabs';
-import { IS_SELF_HOSTED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { ROUTES } from '@/utils/routes';
 
@@ -67,8 +66,8 @@ function CopilotWebChatMount() {
 
 export const EditWorkflowPage = () => {
   const { currentEnvironment } = useEnvironment();
-  const isCopilotWebChatEnabled =
-    useCopilotWebChatEnabled() && !IS_SELF_HOSTED && currentEnvironment?.type === EnvironmentTypeEnum.DEV;
+  // useCopilotWebChatEnabled already excludes self-hosted (IS_AI_FEATURES_ENABLED === IS_CLOUD).
+  const isCopilotWebChatEnabled = useCopilotWebChatEnabled() && currentEnvironment?.type === EnvironmentTypeEnum.DEV;
 
   const location = useLocation();
   const activityMatch = useMatch(ROUTES.EDIT_WORKFLOW_ACTIVITY);

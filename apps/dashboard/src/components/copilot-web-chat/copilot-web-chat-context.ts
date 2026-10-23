@@ -11,7 +11,6 @@ export type CopilotWebChatContextValue = {
   toggle: () => void;
   chat?: UseWebChatResult;
   pageContext?: CopilotPageContext;
-  registerPageContext: (context: CopilotPageContext, onRefetch?: () => void) => () => void;
   sendMessage: (text: string) => Promise<void>;
   /** True when an answer finished while the popover was closed and has not been seen yet. */
   hasUnseenAnswer: boolean;
@@ -26,11 +25,18 @@ export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   open: noop,
   close: noop,
   toggle: noop,
-  registerPageContext: () => noop,
   sendMessage: async () => {},
   hasUnseenAnswer: false,
   hasRunError: false,
 });
+
+type RegisterPageContext = (context: CopilotPageContext, onRefetch?: () => void) => () => void;
+
+/**
+ * Stable on purpose and kept apart from the chat context: pages that only register their
+ * workflow/step (canvas, step editor) must not re-render on every streamed message.
+ */
+export const CopilotRegisterContext = createContext<RegisterPageContext>(() => noop);
 
 export function useCopilotWebChat(): CopilotWebChatContextValue {
   return useContext(CopilotWebChatContext);
@@ -48,7 +54,7 @@ export function useRegisterCopilotContext({
   onRefetch,
   enabled = true,
 }: CopilotPageContext & { onRefetch?: () => void; enabled?: boolean }) {
-  const { registerPageContext } = useCopilotWebChat();
+  const registerPageContext = useContext(CopilotRegisterContext);
   const onRefetchRef = useRef(onRefetch);
   onRefetchRef.current = onRefetch;
 

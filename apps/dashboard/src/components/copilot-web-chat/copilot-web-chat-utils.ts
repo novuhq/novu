@@ -132,7 +132,7 @@ export function summarizeToolGroup(rows: readonly ToolRow[]): ToolGroupSummary {
 }
 
 export type AssistantBlock =
-  | { kind: 'text'; key: string; text: string; streaming: boolean }
+  | { kind: 'text'; key: string; text: string }
   | { kind: 'thinking'; key: string; text: string; streaming: boolean }
   | { kind: 'tools'; key: string; rows: ToolRow[] };
 
@@ -145,7 +145,7 @@ export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
 
     if (part.type === 'text') {
       if (!part.text.trim()) return;
-      blocks.push({ kind: 'text', key, text: part.text, streaming: part.state === 'streaming' });
+      blocks.push({ kind: 'text', key, text: part.text });
     } else if (part.type === 'thinking') {
       blocks.push({ kind: 'thinking', key, text: part.text, streaming: part.state === 'streaming' });
     } else if (part.type === 'tool') {

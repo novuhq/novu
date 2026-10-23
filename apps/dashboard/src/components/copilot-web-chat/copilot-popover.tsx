@@ -84,6 +84,7 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
           ref={textareaRef}
           value={value}
           rows={2}
+          aria-label="Message Copilot"
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={onKeyDown}
           placeholder={hasMessages ? 'Ask a follow-up…' : 'Ask for changes… eg: Make the workflow high severity'}

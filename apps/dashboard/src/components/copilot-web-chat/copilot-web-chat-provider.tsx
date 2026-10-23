@@ -1,12 +1,16 @@
 import type { AgentEventEnvelope } from '@novu/js';
 import { useWebChat } from '@novu/react';
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ComponentProps, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCopilotConnectContext } from '@/components/connect/copilot-connect-context';
 import { CopilotConnectProvider } from '@/components/connect/copilot-connect-provider';
 import { NOVU_COPILOT_AGENT_ID } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { CopilotWebChatContext, type CopilotWebChatContextValue } from './copilot-web-chat-context';
+import {
+  CopilotRegisterContext,
+  CopilotWebChatContext,
+  type CopilotWebChatContextValue,
+} from './copilot-web-chat-context';
 import { buildCopilotMetadata, type CopilotPageContext } from './copilot-web-chat-utils';
 import { useCopilotHotkey } from './use-copilot-hotkey';
 import { useCopilotRefetch } from './use-copilot-refetch';
@@ -17,7 +21,7 @@ type ShellState = {
   close: () => void;
   toggle: () => void;
   pageContext?: CopilotPageContext;
-  registerPageContext: CopilotWebChatContextValue['registerPageContext'];
+  registerPageContext: ComponentProps<typeof CopilotRegisterContext.Provider>['value'];
   onRefetchRef: React.MutableRefObject<(() => void) | undefined>;
 };
 
@@ -65,23 +69,24 @@ export function CopilotWebChatProvider({ children, enabled = true }: { children:
       toggle,
       chat: connected?.chat,
       pageContext,
-      registerPageContext,
       sendMessage: connected?.sendMessage ?? (async () => {}),
       hasUnseenAnswer: !!connected?.hasUnseenAnswer && !isOpen,
       hasRunError: !!connected?.hasRunError,
     }),
-    [connected, isOpen, open, close, toggle, pageContext, registerPageContext]
+    [connected, isOpen, open, close, toggle, pageContext]
   );
 
   return (
-    <CopilotWebChatContext.Provider value={value}>
-      {children}
-      {enabled && (
-        <CopilotConnectProvider>
-          <CopilotWebChatBridge shell={shell} onConnected={setConnected} />
-        </CopilotConnectProvider>
-      )}
-    </CopilotWebChatContext.Provider>
+    <CopilotRegisterContext.Provider value={registerPageContext}>
+      <CopilotWebChatContext.Provider value={value}>
+        {children}
+        {enabled && (
+          <CopilotConnectProvider>
+            <CopilotWebChatBridge shell={shell} onConnected={setConnected} />
+          </CopilotConnectProvider>
+        )}
+      </CopilotWebChatContext.Provider>
+    </CopilotRegisterContext.Provider>
   );
 }
 
