@@ -1,0 +1,58 @@
+---
+title: 'Usage alerts and limits'
+sidebarTitle: 'Usage alerts'
+description: 'See how many workflow runs you have used this billing cycle, what you pay after the included amount, and how to keep sending or stop at a limit you set.'
+---
+
+Novu counts **workflow runs** for the current billing cycle and warns you as that number grows. The count resets each cycle. Every environment in the organization shares one total.
+
+This applies to **Novu Cloud**. See [Billing](/platform/account/billing) for what counts as a workflow run.
+
+## What your plan includes
+
+| Plan | Included workflow runs | After the included runs |
+| ---- | ---------------------- | ----------------------- |
+| **Free** | 10,000 | New workflow runs stop until you upgrade or the next cycle starts. There is no charge for additional runs. |
+| **Pro** | 30,000 | $1.20 per 1,000 workflow runs. Sending continues unless an Owner pauses at a limit. |
+| **Team** | 250,000 | $1.20 per 1,000 workflow runs. Sending continues unless an Owner pauses at a limit. |
+| **Enterprise** | Custom | Custom included runs, overage, and other limits. Email [sales@novu.co](mailto:sales@novu.co) to confirm yours. |
+
+## See this cycle
+
+An **Owner** sees usage on **Settings → Billing**, or at [dashboard.novu.co/settings/billing](https://dashboard.novu.co/settings/billing).
+
+- Inside the included amount, the row shows how much of it is used.
+- Past the included amount, the row shows **Billed on-demand**.
+- If sending is paused at a limit, the row shows **Paused** and the date it resumes.
+
+**Admin**, **Author**, and **Viewer** cannot see this usage. See [Roles and permissions](/platform/account/roles-and-permissions#billing-access).
+
+## Alerts
+
+Novu emails you and notifies you in the Dashboard as usage climbs, when the included runs are used up, and when you reach a limit you set. Each message includes how many runs this cycle has used and whether sending will continue.
+
+Organization **Owners** and **Admins** receive the alerts. An Owner can include every member, or turn the warnings off. If sending is paused, Novu keeps reminding you until it resumes. A banner on the Dashboard tells the whole organization.
+
+## Set a limit
+
+An organization **Owner** on Pro or Team sets this from **Settings → Billing**. Open [usage limits](https://dashboard.novu.co/settings/billing?usageLimits=open).
+
+<Steps>
+  <Step title="Choose how many extra runs to allow">
+    Enter the workflow runs you allow on top of the runs included in your plan. The cycle limit is those two numbers added together.
+
+    Leave the field empty if you do not want a limit. The page shows what the extra runs will cost. Ten thousand extra runs is **$12.00**.
+  </Step>
+  <Step title="Choose whether sending stops">
+    **Pause at limit** is off by default. Leave it off to be warned and keep sending. Turn it on to reject new workflow runs at the limit.
+
+    Sending starts again when you raise the limit, turn pause off, or the next billing cycle starts. If this cycle is already at the limit, saving with pause on stops new runs immediately.
+  </Step>
+  <Step title="Choose who is notified">
+    Leave **Usage alerts** on. Send them to **Only admins** (Owners and Admins) or to **All members**.
+
+    **Reset limits** removes the extra-run amount and turns pause off. Alerts stay on.
+  </Step>
+</Steps>
+
+Other roles cannot change these settings. See [Roles and permissions](/platform/account/roles-and-permissions#billing-access).
