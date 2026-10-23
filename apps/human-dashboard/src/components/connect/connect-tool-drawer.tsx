@@ -26,7 +26,7 @@ type ConnectToolDrawerProps = {
   mcpUrl: string;
   /** How the agent is called in a sentence: its address without the domain. */
   handle: string;
-  /** Whether the app had signed in to the account when the page loaded. */
+  /** Whether the page knows the app has signed in to the account. Once true, the drawer keeps it. */
   connected: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -55,8 +55,12 @@ export function ConnectToolDrawer({
   api,
 }: ConnectToolDrawerProps) {
   const router = useRouter();
-  // Known before the page has been reloaded with it.
-  const [signedIn, setSignedIn] = useState(false);
+  // Known before the page has been reloaded with it. A sign-in the page told it about stays known too, after
+  // the page stops saying so: the onboarding only asks on step 3, and step 4 can come in behind this drawer.
+  const [signedIn, setSignedIn] = useState(connected);
+  if (connected && !signedIn) {
+    setSignedIn(true);
+  }
   const isConnected = connected || signedIn;
 
   useConnectionPoll({

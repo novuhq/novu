@@ -9,23 +9,26 @@ import { InstallSkillsButton } from '@/components/connect/install-skills-button'
 import { DOCS_URL } from '@/components/dashboard/nav';
 import { ToolChips } from '@/components/onboarding/identity-stage';
 import { Eyebrow, StepLead, StepTitle } from '@/components/onboarding/onboarding-shell';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useConnectCode } from '@/hooks/use-connect-code';
+import type { AiTool } from '@/lib/ai-tools';
 import { cn } from '@/lib/utils';
 
 type ConnectStepProps = {
   handle: string;
-  address: string;
   /** The API the account lives on, named by the connect command. */
   apiUrl: string;
   /** Messages already in the inbox, waiting for a host to read them. */
   waiting: number;
+  /** Opens a chat app's MCP drawer, from its logo. Left out while there is no MCP server. */
+  onOpenTool?: (tool: AiTool) => void;
 };
 
 /**
- * Step 3: the operator hands the agent to whatever runs it. One prompt to paste into the agent, or the
- * same commands to run by hand. The page moves on by itself once a host has connected.
+ * Step 3: the operator hands the agent to whatever runs it: the commands to run in their terminal, or a
+ * chat app's MCP drawer, from its logo under them. The page moves on by itself once a host has connected.
  */
-export function ConnectStep({ handle, address, apiUrl, waiting }: ConnectStepProps) {
+export function ConnectStep({ handle, apiUrl, waiting, onOpenTool }: ConnectStepProps) {
   const [leaving, startLeaving] = useTransition();
   const createCode = useCallback(() => createOnboardingConnectCodeAction(handle), [handle]);
   const { state: code, retry } = useConnectCode(createCode, true);
@@ -40,17 +43,22 @@ export function ConnectStep({ handle, address, apiUrl, waiting }: ConnectStepPro
       <StepTitle>
         Hand {handle} to <em>your agent</em>
       </StepTitle>
-      <StepLead>Paste this into your agent, or run the commands where it runs. It connects as {handle}.</StepLead>
+      <StepLead>Run these in your terminal, in the project your agent works in. It connects as {handle}.</StepLead>
 
       <div className="flex flex-col gap-2">
-        <ConnectPromptBox handle={handle} address={address} apiUrl={apiUrl} code={code} onRetry={retry} />
+        <ConnectPromptBox handle={handle} apiUrl={apiUrl} code={code} onRetry={retry} />
 
-        <div className="flex flex-wrap items-center gap-2 text-xs leading-4 text-muted">
-          <span>Works with</span>
-          <ToolChips className="gap-0 [&>*]:-ml-0.75 [&>*:first-child]:ml-0 [&>*:first-child]:-rotate-3 [&>*:last-child]:rotate-3" />
-          <span>and anything that runs a command or MCP</span>
-          <InstallSkillsButton variant="quiet" className="ml-auto" />
-        </div>
+        <TooltipProvider delayDuration={300}>
+          <div className="flex flex-wrap items-center gap-2 text-xs leading-4 text-muted">
+            <span>Works with</span>
+            <ToolChips
+              onOpen={onOpenTool}
+              className="gap-0 [&>*]:-ml-0.75 [&>*:first-child]:ml-0 [&>*:first-child]:-rotate-3 [&>*:last-child]:rotate-3"
+            />
+            <span>and anything that runs a command or MCP</span>
+            <InstallSkillsButton variant="quiet" className="ml-auto" />
+          </div>
+        </TooltipProvider>
       </div>
 
       <div

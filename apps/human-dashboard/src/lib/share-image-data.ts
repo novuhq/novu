@@ -46,9 +46,9 @@ export async function loadOwnShareImage(account: HumanAccount, user: User): Prom
     cardLink: identity.cardLink,
     pictureUrl: identity.pictureUrl,
     createdAt: identity.createdAt,
-    operatorName: [user.firstName, user.lastName].filter(Boolean).join(' '),
-    operatorFirstName: user.firstName ?? '',
-    state: !agent.active ? 'paused' : hostConnected ? 'active' : 'waiting',
+    operatorName: agent.operatorName,
+    operatorFirstName: agent.operatorFirstName,
+    state: !agent.active || agent.settings?.paused ? 'paused' : hostConnected ? 'active' : 'waiting',
     telegram: connected('telegram') ? { bot: telegramBot ? `@${telegramBot}` : null } : null,
     host: { connected: hostConnected },
     slack: connected('slack') ? slackNames || 'Connected' : null,
@@ -65,8 +65,7 @@ export function publicShareImage(card: PublicAgentCard): ShareImageCard {
     pictureUrl: card.pictureUrl ?? undefined,
     createdAt: card.issuedAt,
     operatorName: card.operatorName,
-    // "Run by Dima Grossman" makes "Dima’s agent".
-    operatorFirstName: card.operatorName.split(' ')[0] ?? '',
+    operatorFirstName: card.operatorFirstName,
     state: card.status,
     telegram: card.telegramBot ? { bot: card.telegramBot } : null,
   };

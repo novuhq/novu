@@ -8,11 +8,11 @@ overrides:
   '@openai/codex': 0.142.5
   '@openai/codex-sdk': 0.142.5
   '@hono/node-server': 2.0.12
-  '@modelcontextprotocol/sdk': 1.31.0
+  '@modelcontextprotocol/sdk': 1.32.1
   body-parser: 2.3.0
   brace-expansion: 5.0.12
   fast-uri: 3.1.8
-  hono: 4.13.7
+  hono: 4.13.13
   ip-address: 10.7.1
   proxy-addr: 2.0.8
   qs: 6.16.0
@@ -25,11 +25,11 @@ importers:
   .:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: 1.31.0
-        version: 1.31.0(zod@4.4.3)
+        specifier: 1.32.1
+        version: 1.32.1(zod@4.4.3)
       deepsec:
         specifier: ^2.1.2
-        version: 2.1.2(@anthropic-ai/sdk@0.91.1(zod@4.4.3))(@modelcontextprotocol/sdk@1.31.0(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)
+        version: 2.1.2(@anthropic-ai/sdk@0.91.1(zod@4.4.3))(@modelcontextprotocol/sdk@1.32.1(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)
 
 packages:
 
@@ -78,7 +78,7 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       '@anthropic-ai/sdk': '>=0.93.0'
-      '@modelcontextprotocol/sdk': 1.31.0
+      '@modelcontextprotocol/sdk': 1.32.1
       zod: ^4.0.0
 
   '@anthropic-ai/sdk@0.91.1':
@@ -213,7 +213,7 @@ packages:
     resolution: {integrity: sha512-gwSvbpiN/17O9TbsqSsE/OzZcpv5Fo4RQjdngGgogtuB9RsyJ8ZHhX5KjHj1bp5N9snN2eK8LDGXSaWW2hof8Q==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      '@modelcontextprotocol/sdk': 1.31.0
+      '@modelcontextprotocol/sdk': 1.32.1
     peerDependenciesMeta:
       '@modelcontextprotocol/sdk':
         optional: true
@@ -222,7 +222,7 @@ packages:
     resolution: {integrity: sha512-eWpQYr67tqJLeaSUl0Q+TquuYfUdTibpOJlUMV2FfUP7+KqCC5TufnwnlXL6mobZBJbGAYRd7ZvEBDCbLInjhg==}
     engines: {node: '>=20'}
     peerDependencies:
-      hono: 4.13.7
+      hono: 4.13.13
 
   '@isaacs/fs-minipass@4.0.1':
     resolution: {integrity: sha512-wgm9Ehl2jpeqP3zw/7mo3kRHFp5MEDhqAdwy1fTGkHAwnkGOVsgpvQhL8B5n1qlb01jV3n/bI0ZfZp5lWA1k4w==}
@@ -299,8 +299,8 @@ packages:
       '@opentelemetry/api':
         optional: true
 
-  '@modelcontextprotocol/sdk@1.31.0':
-    resolution: {integrity: sha512-UvTMgnNlnIBO/22ob2RcVGDlcvOslQs8T59+FTGdA0L27a39fdGF/EDETNtDVK4DZGpwomlsYpRdA8UXcVL/pw==}
+  '@modelcontextprotocol/sdk@1.32.1':
+    resolution: {integrity: sha512-2DdE+SJDtzLEEWzY1ZjY7Q+VcPhcV1KisD3zI4u0XZyktsjHum1mwbMI+JaulUBi2OZk+KJAi2uPXzxichPkdw==}
     engines: {node: '>=18'}
     peerDependencies:
       '@cfworker/json-schema': ^4.1.1
@@ -726,8 +726,8 @@ packages:
   highlight.js@10.7.3:
     resolution: {integrity: sha512-tzcUFauisWKNHaRkN4Wjl/ZA07gENAjFl3J/c480dprkGTg5EQstgaNFqBfUqCq54kZRIEcreTsAgF/m2quD7A==}
 
-  hono@4.13.7:
-    resolution: {integrity: sha512-c8/gF9ac8Y78/agExVocyLevgR+JlpNB444Py0FSX8pJoPdYUfUzRcXtYEYGwt6l19qIlVZPN5Mfsw9jFShmQQ==}
+  hono@4.13.13:
+    resolution: {integrity: sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA==}
     engines: {node: '>=16.9.0'}
 
   hosted-git-info@9.0.3:
@@ -1139,10 +1139,10 @@ snapshots:
   '@anthropic-ai/claude-agent-sdk-win32-x64@0.3.201':
     optional: true
 
-  '@anthropic-ai/claude-agent-sdk@0.3.201(@anthropic-ai/sdk@0.91.1(zod@4.4.3))(@modelcontextprotocol/sdk@1.31.0(zod@4.4.3))(zod@4.4.3)':
+  '@anthropic-ai/claude-agent-sdk@0.3.201(@anthropic-ai/sdk@0.91.1(zod@4.4.3))(@modelcontextprotocol/sdk@1.32.1(zod@4.4.3))(zod@4.4.3)':
     dependencies:
       '@anthropic-ai/sdk': 0.91.1(zod@4.4.3)
-      '@modelcontextprotocol/sdk': 1.31.0(zod@4.4.3)
+      '@modelcontextprotocol/sdk': 1.32.1(zod@4.4.3)
       zod: 4.4.3
     optionalDependencies:
       '@anthropic-ai/claude-agent-sdk-darwin-arm64': 0.3.201
@@ -1376,9 +1376,9 @@ snapshots:
 
   '@babel/runtime@7.29.2': {}
 
-  '@earendil-works/pi-agent-core@0.79.10(@modelcontextprotocol/sdk@1.31.0(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)':
+  '@earendil-works/pi-agent-core@0.79.10(@modelcontextprotocol/sdk@1.32.1(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)':
     dependencies:
-      '@earendil-works/pi-ai': 0.79.10(@modelcontextprotocol/sdk@1.31.0(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)
+      '@earendil-works/pi-ai': 0.79.10(@modelcontextprotocol/sdk@1.32.1(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)
       ignore: 7.0.5
       typebox: 1.1.38
       yaml: 2.9.0
@@ -1390,11 +1390,11 @@ snapshots:
       - ws
       - zod
 
-  '@earendil-works/pi-ai@0.79.10(@modelcontextprotocol/sdk@1.31.0(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)':
+  '@earendil-works/pi-ai@0.79.10(@modelcontextprotocol/sdk@1.32.1(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)':
     dependencies:
       '@anthropic-ai/sdk': 0.91.1(zod@4.4.3)
       '@aws-sdk/client-bedrock-runtime': 3.1048.0
-      '@google/genai': 1.52.0(@modelcontextprotocol/sdk@1.31.0(zod@4.4.3))
+      '@google/genai': 1.52.0(@modelcontextprotocol/sdk@1.32.1(zod@4.4.3))
       '@mistralai/mistralai': 2.2.6(@opentelemetry/api@1.9.0)
       '@opentelemetry/api': 1.9.0
       '@smithy/node-http-handler': 4.7.3
@@ -1411,10 +1411,10 @@ snapshots:
       - ws
       - zod
 
-  '@earendil-works/pi-coding-agent@0.79.10(@modelcontextprotocol/sdk@1.31.0(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)':
+  '@earendil-works/pi-coding-agent@0.79.10(@modelcontextprotocol/sdk@1.32.1(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)':
     dependencies:
-      '@earendil-works/pi-agent-core': 0.79.10(@modelcontextprotocol/sdk@1.31.0(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)
-      '@earendil-works/pi-ai': 0.79.10(@modelcontextprotocol/sdk@1.31.0(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)
+      '@earendil-works/pi-agent-core': 0.79.10(@modelcontextprotocol/sdk@1.32.1(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)
+      '@earendil-works/pi-ai': 0.79.10(@modelcontextprotocol/sdk@1.32.1(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)
       '@earendil-works/pi-tui': 0.79.10
       '@silvia-odwyer/photon-node': 0.3.4
       chalk: 5.6.2
@@ -1446,22 +1446,22 @@ snapshots:
       get-east-asian-width: 1.6.0
       marked: 18.0.5
 
-  '@google/genai@1.52.0(@modelcontextprotocol/sdk@1.31.0(zod@4.4.3))':
+  '@google/genai@1.52.0(@modelcontextprotocol/sdk@1.32.1(zod@4.4.3))':
     dependencies:
       google-auth-library: 10.9.0
       p-retry: 4.6.2
       protobufjs: 7.6.5
       ws: 8.21.0
     optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.31.0(zod@4.4.3)
+      '@modelcontextprotocol/sdk': 1.32.1(zod@4.4.3)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
 
-  '@hono/node-server@2.0.12(hono@4.13.7)':
+  '@hono/node-server@2.0.12(hono@4.13.13)':
     dependencies:
-      hono: 4.13.7
+      hono: 4.13.13
 
   '@isaacs/fs-minipass@4.0.1':
     dependencies:
@@ -1523,9 +1523,9 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@modelcontextprotocol/sdk@1.31.0(zod@4.4.3)':
+  '@modelcontextprotocol/sdk@1.32.1(zod@4.4.3)':
     dependencies:
-      '@hono/node-server': 2.0.12(hono@4.13.7)
+      '@hono/node-server': 2.0.12(hono@4.13.13)
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       content-type: 1.0.5
@@ -1535,7 +1535,7 @@ snapshots:
       eventsource-parser: 3.0.8
       express: 5.2.1
       express-rate-limit: 8.5.1(express@5.2.1)
-      hono: 4.13.7
+      hono: 4.13.13
       jose: 6.2.3
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -1780,10 +1780,10 @@ snapshots:
     dependencies:
       ms: 2.1.3
 
-  deepsec@2.1.2(@anthropic-ai/sdk@0.91.1(zod@4.4.3))(@modelcontextprotocol/sdk@1.31.0(zod@4.4.3))(ws@8.21.0)(zod@4.4.3):
+  deepsec@2.1.2(@anthropic-ai/sdk@0.91.1(zod@4.4.3))(@modelcontextprotocol/sdk@1.32.1(zod@4.4.3))(ws@8.21.0)(zod@4.4.3):
     dependencies:
-      '@anthropic-ai/claude-agent-sdk': 0.3.201(@anthropic-ai/sdk@0.91.1(zod@4.4.3))(@modelcontextprotocol/sdk@1.31.0(zod@4.4.3))(zod@4.4.3)
-      '@earendil-works/pi-coding-agent': 0.79.10(@modelcontextprotocol/sdk@1.31.0(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)
+      '@anthropic-ai/claude-agent-sdk': 0.3.201(@anthropic-ai/sdk@0.91.1(zod@4.4.3))(@modelcontextprotocol/sdk@1.32.1(zod@4.4.3))(zod@4.4.3)
+      '@earendil-works/pi-coding-agent': 0.79.10(@modelcontextprotocol/sdk@1.32.1(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)
       '@openai/codex': 0.142.5
       '@openai/codex-sdk': 0.142.5
       '@vercel/oidc': 3.4.0
@@ -1983,7 +1983,7 @@ snapshots:
 
   highlight.js@10.7.3: {}
 
-  hono@4.13.7: {}
+  hono@4.13.13: {}
 
   hosted-git-info@9.0.3:
     dependencies:

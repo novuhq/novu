@@ -81,6 +81,7 @@ export class HumanVerificationEmailSender {
       verifyUrl,
       expiresAt: params.expiresAt,
       claimUrl: params.claimUrl,
+      isOperatorVerification: operatorId === params.subscriberId,
     });
 
     const mailFactory = new MailFactory();
@@ -121,8 +122,9 @@ export class HumanVerificationEmailSender {
   }
 }
 
+/** Agent Inbox is US-only, so a verification link never names a region. */
 function buildVerifyUrl(token: string): string {
   const url = `${resolveHumanDashboardBaseUrl()}/verify/${token}`;
 
-  return process.env.NOVU_REGION?.startsWith('eu-') ? `${url}?region=eu` : url;
+  return url;
 }

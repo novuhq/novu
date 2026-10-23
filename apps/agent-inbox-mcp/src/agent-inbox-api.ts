@@ -4,7 +4,11 @@ import type { Account } from './auth';
 export class AgentInboxApiError extends Error {
   constructor(
     readonly status: number,
-    message: string
+    message: string,
+    /** The API's own code when it sends one, such as `inbox_address_taken`. */
+    readonly code?: string,
+    /** A nearby free handle when a chosen address was taken. */
+    readonly suggestion?: string
   ) {
     super(message);
   }
@@ -64,12 +68,19 @@ export function createAgentInboxApi(account: Account): AgentInboxApi {
       throw new AgentInboxApiError(0, 'Could not reach the Agent Inbox API. Try again in a moment.');
     }
 
-    const json = (await response.json().catch(() => null)) as { data?: T; message?: unknown } | null;
+    const json = (await response.json().catch(() => null)) as {
+      data?: T;
+      message?: unknown;
+      code?: unknown;
+      suggestion?: unknown;
+    } | null;
 
     if (!response.ok) {
       throw new AgentInboxApiError(
         response.status,
-        readMessage(json?.message) ?? `The Agent Inbox API answered ${response.status}.`
+        readMessage(json?.message) ?? `The Agent Inbox API answered ${response.status}.`,
+        typeof json?.code === 'string' ? json.code : undefined,
+        typeof json?.suggestion === 'string' ? json.suggestion : undefined
       );
     }
 

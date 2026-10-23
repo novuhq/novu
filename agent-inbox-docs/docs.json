@@ -1,0 +1,87 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "linden",
+  "name": "Agent Inbox",
+  "description": "An inbox for your agent on Telegram, Slack, and email. People write to it. The agent reads, asks, and waits for the answer.",
+  "colors": {
+    "primary": "#ff5c30",
+    "light": "#ff5c30",
+    "dark": "#ff5c30"
+  },
+  "fonts": {
+    "heading": {
+      "family": "Geist",
+      "weight": 500
+    },
+    "body": {
+      "family": "Geist",
+      "weight": 400
+    }
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "icons": {
+    "library": "lucide"
+  },
+  "seo": {
+    "indexing": "all",
+    "metatags": {
+      "og:type": "website",
+      "twitter:card": "summary_large_image"
+    }
+  },
+  "interaction": {
+    "drilldown": true
+  },
+  "navigation": {
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Agent Inbox",
+          "href": "https://www.agentinbox.md",
+          "icon": "arrow-up-right"
+        }
+      ]
+    },
+    "tabs": [
+      {
+        "tab": "Docs",
+        "groups": [
+          {
+            "group": "Get started",
+            "icon": "rocket",
+            "pages": ["introduction", "quickstart", "concepts"]
+          },
+          {
+            "group": "Set up",
+            "icon": "plug",
+            "pages": ["setup", "account", "connect", "skills"]
+          },
+          {
+            "group": "Inbox",
+            "icon": "inbox",
+            "pages": ["messages", "questions", "conversations", "waiting", "contacts"]
+          },
+          {
+            "group": "Channels",
+            "icon": "radio",
+            "pages": ["channels", "channels/telegram", "channels/slack", "channels/email", "channels/coming-next"]
+          },
+          {
+            "group": "Account",
+            "icon": "layout-dashboard",
+            "pages": ["dashboard", "permissions"]
+          },
+          {
+            "group": "Reference",
+            "icon": "book-open",
+            "pages": ["reference/cli", "reference/mcp", "reference/rest"]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -18,7 +18,7 @@
     {
       "class_name": "Box",
       "scheduling_policy": "durable_object",
-      // The instance type is the Box's choice, at start (box.ts). A box's snapshot only restores on the image it was taken on; the nightly rebake (novu-box.yml) moves `base`
+      // The instance type is the Box's choice, at start (box.ts). A box's snapshot only restores on the image it was taken on; the nightly rebake (novu-box-nightly.yml) moves `base`
       // to a new one.
       "images": { "box": { "dockerfile": "image/Dockerfile", "build_context": "." } }
     }

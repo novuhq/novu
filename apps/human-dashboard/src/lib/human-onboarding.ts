@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import type { AgentReach } from './agent-settings';
 import { buildChannelPrompt } from './agent-setup-prompt';
+import type { ToolId } from './ai-tools';
 import { findCurrentUser } from './auth-page';
 import type { HostStatus } from './host-status';
 import type { HumanAccount } from './human-account';
@@ -16,13 +17,14 @@ import { loadHostStatus } from './human-hosts-api';
 import { getInboxThread, listInboxThreads } from './human-inbox-api';
 import type { SlackSetupState } from './human-slack-setup';
 import type { TelegramSetupState } from './human-telegram-setup';
+import { listConnectedTools, readMcpUrl } from './human-tools-api';
 import type { InboxMessage, InboxThread } from './inbox';
 import { AGENT_DOMAIN, cardLinkOf, ONBOARDING_PATH, type OnboardingStep, toHandle } from './onboarding';
+import { isSetupUnfinished, resolveStep, type SetupStep, wasMadeInTheSteps } from './onboarding-progress';
 import { type OnboardingState, readOnboardingState, writeOnboardingState } from './onboarding-state';
 import { readApiUrl, readSiteOrigin } from './site-origin';
 
-/** Where an operator stands: on one of the four steps, or `done` with them. */
-export type SetupStep = OnboardingStep | 'done';
+export { isSetupUnfinished, resolveStep, type SetupStep, wasMadeInTheSteps };
 
 export type SetupProgress = {
   step: SetupStep;
@@ -32,49 +34,6 @@ export type SetupProgress = {
   /** Missing only when the session outlived its user; the pages have sent that visitor to sign in by then. */
   user: User | null;
 };
-
-/** How far apart the dashboard's clock and the API's may be when a time of one is held against the other's. */
-const CLOCK_SLACK_MS = 60_000;
-
-/**
- * Whether the agent was made while its operator was in the onboarding: after they first saw step 1.
- *
- * An agent that is older than that visit was there all along. Step 1 only showed because the agent
- * couldn't be found for a moment, and that doesn't put an agent that has long been in use through the steps.
- */
-export function wasMadeInTheSteps(agent: Pick<RelayAgent, 'createdAt'>, state: OnboardingState): boolean {
-  if (!state.startedAt) {
-    return false;
-  }
-
-  return !agent.createdAt || Date.parse(agent.createdAt) >= Date.parse(state.startedAt) - CLOCK_SLACK_MS;
-}
-
-/**
- * The step the operator is on. The agent, its real host status and the stored operator choices decide it,
- * so a refresh, another browser and "Continue setup" all open the same one.
- *
- * An agent the steps never saw being made came from a terminal: claimed, or set up there after logging in.
- * It has its address and its host already, so there is nothing to walk its operator through.
- */
-export function resolveStep(
-  agent: Pick<RelayAgent, 'createdAt'> | null,
-  state: OnboardingState,
-  hostStatus: HostStatus | null
-): SetupStep {
-  if (!agent) return 'address';
-  if (!wasMadeInTheSteps(agent, state)) return 'done';
-  if (state.finishedAt) return 'done';
-  if (!state.testLeftAt) return 'test';
-  if (!hostStatus?.connected) return 'connect';
-
-  return 'reach';
-}
-
-/** The agent exists but no host reads its mail yet: what the "setup not finished" banners are about. */
-export function isSetupUnfinished(step: SetupStep): step is 'test' | 'connect' {
-  return step === 'test' || step === 'connect';
-}
 
 /**
  * The operator's progress, read once per request and shared by the shell and the page. Reading it also
@@ -305,6 +264,10 @@ export type OnboardingView = {
   waiting: number | null;
   /** The Agent Inbox API (`readApiUrl`), named by the connect command of step 3 and the channel prompts of step 4. */
   apiUrl: string;
+  /** The hosted MCP server the chat apps of step 3 connect to, or `null` while there is none. */
+  mcpUrl: string | null;
+  /** The chat apps that have signed in to the account. Only asked on step 3, whose drawers show it. */
+  connectedTools: ToolId[];
   channels: { telegram: boolean; slack: boolean };
   /** What the Telegram and Slack drawers of step 4 open with. `null` on the other steps. */
   channelSetup: OnboardingChannelSetup | null;
@@ -342,7 +305,12 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
         step === 'reach' ? loadChannelSetups(account) : null,
       ])
     : [{ telegram: false, slack: false, emailAddress: undefined }, 0, null];
-  const [origin, mailDomain] = await Promise.all([readSiteOrigin(), readInboxMailDomain(account)]);
+  const mcpUrl = readMcpUrl();
+  const [origin, mailDomain, connectedTools] = await Promise.all([
+    readSiteOrigin(),
+    readInboxMailDomain(account),
+    step === 'connect' && mcpUrl ? listConnectedTools(account) : [],
+  ]);
   const host = hostStatus?.hosts.reduce<(typeof hostStatus.hosts)[number] | null>(
     (earliest, entry) => (!earliest || entry.connectedAt < earliest.connectedAt ? entry : earliest),
     null
@@ -361,6 +329,8 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
     waitingMessage: hostStatus?.waitingMessage ?? null,
     waiting,
     apiUrl,
+    mcpUrl,
+    connectedTools,
     channels: { telegram: channels.telegram, slack: channels.slack },
     channelSetup:
       agent && identity && setups

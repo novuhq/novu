@@ -70,6 +70,7 @@ describe('the Agent Inbox MCP server', () => {
         'inbox_reply',
         'inbox_resolve',
         'inbox_send',
+        'inbox_setup',
         'inbox_show',
         'inbox_wait',
       ].sort()
@@ -294,7 +295,7 @@ describe('the Agent Inbox MCP server', () => {
     expect(result.isError).toBe(true);
   });
 
-  it('resolves a verified email address to its contact id', async () => {
+  it('sends a verified email address as typed', async () => {
     const calls = stubBackends({
       contactPages: {
         '': {
@@ -317,11 +318,11 @@ describe('the Agent Inbox MCP server', () => {
 
     expect(result.isError).toBeFalsy();
     const created = calls.find((call) => call.url.endsWith('/v1/inbox/messages') && call.method === 'POST');
-    // A message without a kind is what the API calls `tell`.
-    expect(created?.body).toMatchObject({ kind: 'tell', to: ['alice'] });
+    // A message without a kind is what the API calls `tell`. The address is delivered as typed.
+    expect(created?.body).toMatchObject({ kind: 'tell', to: ['alice@example.com'] });
   });
 
-  it('starts verification for a new email address without sending the message', async () => {
+  it('sends a new email address without waiting for verification', async () => {
     const calls = stubBackends();
     const { env, ctx } = setup();
 
@@ -337,10 +338,10 @@ describe('the Agent Inbox MCP server', () => {
       result: { content: Array<{ text: string }>; isError?: boolean };
     };
 
-    expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('not verified yet');
-    expect(calls.some((call) => call.url.endsWith('/v1/contacts/verifications') && call.method === 'POST')).toBe(true);
-    expect(calls.some((call) => call.url.endsWith('/v1/inbox/messages') && call.method === 'POST')).toBe(false);
+    expect(result.isError).toBeFalsy();
+    const created = calls.find((call) => call.url.endsWith('/v1/inbox/messages') && call.method === 'POST');
+    expect(created?.body).toMatchObject({ to: ['new@example.com'] });
+    expect(calls.some((call) => call.url.endsWith('/v1/contacts/verifications'))).toBe(false);
   });
 
   it('does not invite a new email address while replying', async () => {
@@ -396,7 +397,7 @@ describe('the Agent Inbox MCP server', () => {
 
     await callTool('inbox_send', { kind: 'ask', message: 'Ship it?', wait_seconds: 0 });
     await callTool('inbox_wait', { id: 'hi_1', wait_seconds: 0 });
-    // A new email address: the contacts are searched, then verification starts.
+    // A new email address is delivered as typed. The API creates the contact; this server does not verify it first.
     await callTool('inbox_send', { message: 'Hello', to: 'new@example.com' });
     await callTool('contact_invite', { id: 'alice', name: 'Alice Chen' });
     await callTool('contact_list', {});
@@ -414,11 +415,8 @@ describe('the Agent Inbox MCP server', () => {
         `GET ${AGENT_INBOX_API}/v1/operator`,
         `POST ${AGENT_INBOX_API}/v1/inbox/messages`,
         `GET ${AGENT_INBOX_API}/v1/inbox/messages/hi_1`,
-        // The email lookup reads 100 at a time; contact_list a page as long as the CLI's.
-        `GET ${AGENT_INBOX_API}/v1/contacts?limit=100`,
+        // contact_list reads a page as long as the CLI's. A typed email is sent as-is, so it does not search contacts.
         `GET ${AGENT_INBOX_API}/v1/contacts?limit=50`,
-        `GET ${AGENT_INBOX_API}/v1/contacts/new`,
-        `POST ${AGENT_INBOX_API}/v1/contacts/verifications`,
         `POST ${AGENT_INBOX_API}/v1/contacts/invites`,
         `GET ${AGENT_INBOX_API}/v1/inbox`,
         `GET ${AGENT_INBOX_API}/v1/inbox/conv_1`,
@@ -449,13 +447,33 @@ describe('the Agent Inbox MCP server', () => {
     expect(calls.some((call) => call.url.includes('/secret-key'))).toBe(false);
   });
 
-  it('sends someone signed in without an Agent Inbox account to sign up', async () => {
+  it('opens an Agent Inbox account when the sign-in does not have one yet', async () => {
+    const calls = stubBackends();
     const { env, ctx } = setup();
 
     const response = await worker.fetch(rpc('tools/list', {}, 'newcomer-token'), env, ctx);
 
-    expect(response.status).toBe(403);
-    expect(((await response.json()) as { message: string }).message).toContain('sign up first');
+    expect(response.status).toBe(200);
+    expect(
+      calls.filter((call) => call.url.includes('/v1/human/accounts')).map((call) => `${call.method} ${call.url}`)
+    ).toEqual([
+      `GET ${NOVU_API}/v1/human/accounts/user_2/secret-key`,
+      `POST ${NOVU_API}/v1/human/accounts`,
+      `GET ${NOVU_API}/v1/human/accounts/user_2/secret-key`,
+    ]);
+    const create = calls.find((call) => call.method === 'POST' && call.url === `${NOVU_API}/v1/human/accounts`);
+    expect(create?.body).toEqual({ humanUserId: 'user_2', firstName: 'Ada', lastName: 'Lovelace' });
+    expect(create?.headers.get(AGENT_INBOX_DASHBOARD_SECRET_HEADER)).toBe('shared-secret');
+  });
+
+  it('says to try again when the account is already being set up', async () => {
+    stubBackends({ accountCreateStatus: 409 });
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(rpc('tools/list', {}, 'newcomer-token'), env, ctx);
+
+    expect(response.status).toBe(503);
+    expect(((await response.json()) as { message: string }).message).toContain('being set up');
   });
 
   it('does not renew a remembered token, so one Clerk no longer accepts stops working', async () => {

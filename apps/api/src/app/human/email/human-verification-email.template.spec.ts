@@ -36,12 +36,14 @@ describe('buildHumanVerificationEmail', () => {
     expect(content.text).to.include('https://gethuman.md/verify/tok123');
   });
 
-  it('uses the placeholder agent name when the relay was never renamed', () => {
+  it('leaves the agent out when the relay was never renamed', () => {
     const content = buildHumanVerificationEmail({ ...base, sender: { operatorName: 'Nikita Grossman' } });
 
-    expect(content.subject).to.equal('Nikita Grossman wants to reach you via agent Human');
-    expect(content.html).to.include('Nikita Grossman</strong> wants to reach you via agent');
-    expect(content.html).to.include('Human</strong>. Confirm this address belongs to you:');
+    expect(content.subject).to.equal('Nikita Grossman wants to reach you');
+    expect(content.html).to.include('Nikita Grossman</strong> wants to reach you.');
+    expect(content.html).to.not.include('via agent');
+    expect(content.html).to.not.include('>Human<');
+    expect(content.text).to.not.match(/\b[Hh]uman\b/);
   });
 
   it('says Someone when the operator never set a name', () => {
@@ -49,6 +51,22 @@ describe('buildHumanVerificationEmail', () => {
 
     expect(content.subject).to.equal('Someone wants to reach you via agent Acme Ops');
     expect(content.text).to.include('Someone wants to reach you via agent Acme Ops.');
+  });
+
+  it('asks the operator to verify their address without presenting it as an invitation', () => {
+    const content = buildHumanVerificationEmail({
+      ...base,
+      sender: { agentName: "Nikita's Agent", operatorName: 'Nikita' },
+      inviteeName: 'Nikita',
+      isOperatorVerification: true,
+    });
+
+    expect(content.subject).to.equal('Verify your email for Agent Inbox');
+    expect(content.html).to.include('agent inbox');
+    expect(content.html).to.include('Confirm this address so your agent can reach you through Agent Inbox:');
+    expect(content.text).to.include('Confirm this address so your agent can reach you through Agent Inbox.');
+    expect(content.html).to.not.include('wants to reach you');
+    expect(content.text).to.not.include('wants to reach you');
   });
 
   it('adds the claim section only when a claim link is given', () => {
