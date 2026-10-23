@@ -74,14 +74,19 @@ export class TriggerMulticast {
         );
       }
 
-      const isEnabled = await this.getFeatureFlag.execute(
-        GetFeatureFlagCommand.create({
-          environmentId,
-          organizationId,
-          userId,
-          key: FeatureFlagsKeysEnum.IS_TOPIC_NOTIFICATION_ENABLED,
-        })
-      );
+      const topicFlag = process.env.IS_TOPIC_NOTIFICATION_ENABLED;
+      const isEnabled =
+        process.env.NODE_ENV === 'test' &&
+        (topicFlag === 'true' || topicFlag === 'false')
+          ? topicFlag === 'true'
+          : await this.getFeatureFlag.execute(
+              GetFeatureFlagCommand.create({
+                environmentId,
+                organizationId,
+                userId,
+                key: FeatureFlagsKeysEnum.IS_TOPIC_NOTIFICATION_ENABLED,
+              })
+            );
 
       if (!isEnabled) {
         return;
