@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 import * as z from 'zod';
+import { INSTALL_FILES, PATH_PROCESSES } from '../box/processes.ts';
 import { type CloudTarget, cloudTarget } from '../cli/cloud.ts';
 import { hostBoxes, hubToken } from '../cli/cloud-http.ts';
 import { runCommand } from '../node/commands.ts';
@@ -25,12 +26,13 @@ import {
   TesterArmyStarted,
 } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
-import { BOX_CLI, boxOrigin, detached, OIDC_AUDIENCE } from '../shared/names.ts';
+import { BOX_CLI, boxOrigin, detached, OIDC_AUDIENCE, prBox, prOfBox } from '../shared/names.ts';
 import {
   canWrite,
   comment,
   deployed,
   github,
+  isDeployed,
   LABEL,
   labeler,
   pullFiles,
@@ -40,7 +42,8 @@ import {
 } from './github.ts';
 
 const MAX_BOXES = 50;
-// What a box builds and runs. A PR that changes none of it (docs, CI, agent rules) gets a box only with the label.
+// What a box builds and runs: its apps, what they build from, and the root files every Nx build reads. A PR that
+// changes none of it (docs, CI, agent rules) gets a box only with the label.
 const BOX_PATHS = [
   'apps/api/',
   'apps/worker/',
@@ -49,10 +52,11 @@ const BOX_PATHS = [
   'libs/',
   'packages/',
   'enterprise/',
-  'playground/nextjs/',
-  '.source',
-  'pnpm-lock.yaml',
-  'pnpm-workspace.yaml',
+  ...Object.keys(PATH_PROCESSES),
+  ...INSTALL_FILES,
+  'package.json',
+  'nx.json',
+  'tsconfig.json',
 ];
 // A name of their own every run: a deleted box's name keeps its Durable Object, so its location (see
 // `Box.introduce`). The cleanup deletes those earlier runs left.
@@ -118,36 +122,36 @@ async function pr(): Promise<number> {
 
     return 0;
   }
-  const box = `pr-${number}`;
-  if (action === 'closed') return deleteBox(number, box, 'the PR was closed');
-  if (pull.state !== 'open') {
-    log(`#${number} ${action}: the PR is ${pull.state}`);
+  if (action === 'closed') return deleteBox(number, 'the PR was closed');
+  const policy = await boxPolicy(number, pull);
+  if (!policy.box) return deleteBox(number, policy.why);
+  if (policy.box === 'label') {
+    const by = await labeler(event);
+    if (!(await canWrite(by))) {
+      await comment(
+        number,
+        `🚫 No Novu Box: ${by ? `@${by}` : 'whoever'} added \`${LABEL}\` without write access to ${REPO}. While we battle-test boxes, only Novu members with write access can start one.`
+      );
 
-    return 0;
-  }
-  const why = await noAutoBox(number, pull);
-  if (!why) {
-    if (action !== 'unlabeled') return applyHead(number, pull);
-    log(`#${number}: \`${LABEL}\` was removed, and the PR gets a box without it`);
-
-    return 0;
-  }
-  if (!pull.labels.some((label) => label.name === LABEL))
-    return deleteBox(number, box, `${why}, and it isn't labeled \`${LABEL}\``);
-  const by = await labeler(event);
-  if (!(await canWrite(by))) {
-    await comment(
-      number,
-      `🚫 No Novu Box: ${by ? `@${by}` : 'whoever'} added \`${LABEL}\` without write access to ${REPO}. While we battle-test boxes, only Novu members with write access can start one.`
-    );
-
-    return 0;
+      return 0;
+    }
   }
 
   return applyHead(number, pull);
 }
 
-// Why a PR gets no box unless it's labeled; null when it gets one anyway. A box merges the PR onto next.
+type BoxPolicy = { readonly box: 'auto' | 'label' } | { readonly box: null; readonly why: string };
+
+// A box merges the PR onto next. A PR that gets none on its own gets one with the label.
+async function boxPolicy(number: number, pull: Pull): Promise<BoxPolicy> {
+  if (pull.state !== 'open') return { box: null, why: `the PR is ${pull.state}` };
+  const why = await noAutoBox(number, pull);
+  if (!why) return { box: 'auto' };
+  if (pull.labels.some((label) => label.name === LABEL)) return { box: 'label' };
+
+  return { box: null, why: `${why}, and it isn't labeled \`${LABEL}\`` };
+}
+
 async function noAutoBox(number: number, pull: Pull): Promise<string | null> {
   if (pull.draft) return 'the PR is a draft';
   if (pull.base.ref !== 'next') return `the PR targets ${pull.base.ref}, not next`;
@@ -158,23 +162,29 @@ async function noAutoBox(number: number, pull: Pull): Promise<string | null> {
   return null;
 }
 
-async function deleteBox(number: number, box: string, why: string): Promise<number> {
+async function deleteBox(number: number, why: string): Promise<number> {
+  const box = prBox(number);
   if (!(await hostList()).includes(box)) {
     log(`#${number}: no box, ${why}`);
 
     return 0;
   }
-  await cancelTesterArmy(box);
+  await retire(box);
   await target(box).delete();
-  await undeploy(box);
   await comment(number, `🗑️ Novu Box \`${box}\` deleted: ${why}.`, { onlyUpdate: true });
 
   return 0;
 }
 
 async function applyHead(number: number, pull: PullRequestEvent['pull_request']): Promise<number> {
-  const box = `pr-${number}`;
+  const box = prBox(number);
   const { sha } = pull.head;
+  // A re-run is a request to apply again.
+  if (process.env.GITHUB_RUN_ATTEMPT === '1' && (await isDeployed(box, sha))) {
+    log(`#${number}: ${box} runs ${sha.slice(0, 10)} already`);
+
+    return 0;
+  }
   const short = sha.slice(0, 10);
   const origin = boxOrigin(box);
   const cloud = target(box);
@@ -184,7 +194,7 @@ async function applyHead(number: number, pull: PullRequestEvent['pull_request'])
   const logRows: Array<Row> = RUN_URL ? [['Log', `[this run](${RUN_URL})`]] : [];
   await comment(number, card('⏳ Novu Box applying', [boxRow, commitRow, ...logRows]));
   try {
-    await cancelTesterArmy(box);
+    await retire(box);
     if (!(await startOrReach(cloud, box, number))) return 0;
     const plan = await apply(cloud, sha);
     const report = await cloud.settled(Math.min(SETTLE_SECONDS, (DEADLINE - Date.now()) / 1000));
@@ -230,7 +240,7 @@ async function applyHead(number: number, pull: PullRequestEvent['pull_request'])
       )
     );
     if (!problems.length)
-      await deployed(box, sha, origin, RUN_URL).catch((error: unknown) =>
+      await deployed({ box, sha, url: origin, logUrl: RUN_URL }).catch((error: unknown) =>
         log(`WARN: the GitHub deployment: ${messageOf(error)}`)
       );
 
@@ -278,7 +288,7 @@ function duration(seconds: number): string {
 async function startOrReach(cloud: CloudTarget, box: string, number: number): Promise<boolean> {
   const current = await cloud.state();
   if (!current || needsBake(current)) {
-    const others = (await hostList()).filter((name) => /^pr-\d+$/.test(name) && name !== box);
+    const others = (await hostList()).filter((name) => prOfBox(name) && name !== box);
     if (others.length >= MAX_BOXES) {
       await comment(
         number,
@@ -311,8 +321,9 @@ async function startTesterArmy(box: string, pullRequest: TesterArmyPullRequest):
   log(`TesterArmy started on ${box}: ${suites.join(', ')}`);
 }
 
-// The runs on the earlier head: pointless now, and they'd test the box while it applies. Never fails the job.
-async function cancelTesterArmy(box: string): Promise<void> {
+// Before the box applies another head or is deleted: TesterArmy's runs on the earlier head are pointless now, and
+// they'd test the box while it applies; its deployment would link a box that's changing or gone. Never fails the job.
+async function retire(box: string): Promise<void> {
   try {
     const { cancelled } = await hostBoxes(`testerarmy/${box}`, TesterArmyCancelled, {
       method: 'DELETE',
@@ -322,9 +333,6 @@ async function cancelTesterArmy(box: string): Promise<void> {
   } catch (error) {
     log(`WARN: cancelling TesterArmy's runs: ${messageOf(error)}`);
   }
-}
-
-async function undeploy(box: string): Promise<void> {
   await undeployed(box).catch((error: unknown) => log(`WARN: the GitHub deployment: ${messageOf(error)}`));
 }
 
@@ -377,29 +385,23 @@ async function apply(cloud: CloudTarget, sha: string, { baseline = false } = {})
   return output.match(/plan: .*$/gm)?.at(-1) ?? 'plan: nothing';
 }
 
-async function whyStale(number: number, pull: Pull | null): Promise<string | null> {
-  if (!pull) return 'the PR is missing';
-  if (pull.state !== 'open') return `the PR is ${pull.state}`;
-  if (pull.labels.some((label) => label.name === LABEL)) return null;
-  const why = await noAutoBox(number, pull);
-
-  return why && `${why}, and it isn't labeled \`${LABEL}\``;
-}
-
 async function cleanup(): Promise<number> {
   const boxes = await hostList();
   let failed = await cleanupRunBoxes(boxes);
-  for (const box of boxes.filter((name) => /^pr-\d+$/.test(name))) {
-    const number = Number(box.slice(3));
+  for (const box of boxes) {
+    const number = prOfBox(box);
+    if (!number) continue;
     try {
       const pull = await github(`/repos/${REPO}/pulls/${number}`, Pull).catch(unlessMissing);
-      const why = await whyStale(number, pull);
-      if (!why) continue;
-      log(`${box}: ${why}`);
+      const policy: BoxPolicy = pull ? await boxPolicy(number, pull) : { box: null, why: 'the PR is missing' };
+      if (policy.box) continue;
+      log(`${box}: ${policy.why}`);
+      await retire(box);
       await target(box).delete();
-      await undeploy(box);
       if (pull)
-        await comment(number, `🗑️ Novu Box \`${box}\` deleted by the nightly cleanup: ${why}.`, { onlyUpdate: true });
+        await comment(number, `🗑️ Novu Box \`${box}\` deleted by the nightly cleanup: ${policy.why}.`, {
+          onlyUpdate: true,
+        });
     } catch (error) {
       log(`ERROR: ${box}: ${messageOf(error)}`);
       failed++;
@@ -487,14 +489,15 @@ async function refresh(): Promise<number> {
 }
 
 // The full TesterArmy suite on a fresh copy of base: the tests' data never lands in base; the next cleanup deletes it.
-// TesterArmy posts the results to Slack; the log names the commit they're for.
+// TesterArmy posts the results to Slack; its runs carry the commit they're for.
 async function full(): Promise<number> {
   const box = target(NIGHTLY_BOX);
   await box.delete();
   await box.up({ fromBase: true });
   const { baked, applied } = decode(BoxState, await box.boxOutput(['state']), '`box state`');
-  log(`${NIGHTLY_BOX} runs next at ${applied?.head ?? baked?.sha ?? 'an unknown commit'}`);
-  const start: TesterArmyStart = { suite: 'full' };
+  const commitSha = applied?.head ?? baked?.sha;
+  log(`${NIGHTLY_BOX} runs next at ${commitSha ?? 'an unknown commit'}`);
+  const start: TesterArmyStart = { suite: 'full', ...(commitSha && { commitSha }) };
   const { groups, signUpUsersDeleted } = await hostBoxes(`testerarmy/${NIGHTLY_BOX}`, TesterArmyFullStarted, {
     method: 'POST',
     body: JSON.stringify(start),

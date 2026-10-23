@@ -2,19 +2,21 @@ name: Novu Box PR
 
 on:
   pull_request:
-    types: [opened, ready_for_review, converted_to_draft, labeled, unlabeled, synchronize, reopened, closed]
+    types: [opened, ready_for_review, converted_to_draft, labeled, unlabeled, synchronize, reopened, edited, closed]
 
 permissions: {}
 
 jobs:
   pr:
     name: Box for this PR
-    # Not Dependabot's: each bump is a full rebuild, and CI already covers them.
+    # Not Dependabot's: each bump is a full rebuild, and CI already covers them. Of the edits, only a new base branch:
+    # a title or description edit would cancel an apply in progress.
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository
       && github.event.pull_request.user.login != 'dependabot[bot]'
       && (github.event.label.name == 'box'
           || (github.event.action != 'labeled' && github.event.action != 'unlabeled'))
+      && (github.event.action != 'edited' || github.event.changes.base)
     concurrency:
       group: novu-box-pr-${{ github.event.pull_request.number }}
       cancel-in-progress: true

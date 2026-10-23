@@ -48,24 +48,28 @@ baked from, like CI's merge ref, and stops on a conflict: rebase onto `next`, th
 
 `.github/workflows/novu-box-pr.yml` gives a PR its own box, `pr-<number>`, when it's ready for review, targets
 `next`, and changes something a box runs (`BOX_PATHS` in `src/ci/ci.ts`: the apps, `libs/`, `packages/`,
-`enterprise/`, `playground/nextjs/`, the lockfile). Drafts and docs-only PRs get one only when someone with write
-access to `novuhq/novu` adds the `box` label. Dependabot's PRs get none.
+`enterprise/`, `playground/nextjs/`, the lockfile, the root `package.json`, `nx.json` and `tsconfig.json`). Drafts
+and docs-only PRs get one only when someone with write access to `novuhq/novu` adds the `box` label. Dependabot's
+PRs get none.
 
 - The box starts from `base` and applies the PR's head; every push applies the new head (a newer push cancels the
-  older run, and the TesterArmy runs still going on the older head).
+  older run, and the TesterArmy runs still going on the older head). Other events (draft, ready, a label, a new base
+  branch) apply only when the box doesn't run the head healthy yet; re-running the job always applies.
 - One comment on the PR, edited in place, shows the box's address, the applied commit and what was rebuilt, or what
   failed; ⚠️ when the apply ran but `doctor` then found problems. A healthy box is also a GitHub deployment
-  (environment `Novu Box`), so the PR shows View deployment.
+  (environment `Novu Box`), so the PR shows View deployment; it's removed while the box applies another head, and
+  when the box is deleted.
 - Once the box is healthy, TesterArmy (project Novu Box) tests it: its exploration agent, which reads the PR and
   tests what it changes, and `PR smoke`, a few minutes of the main flows (sign-in, every channel, the API key,
   the editor, digest, an agent in web chat). They report on the PR as checks. The tests live in TesterArmy, not in
   this repo. Its other groups run every night after the rebake, on `nightly-<run id>`, a fresh copy of `base` that
   the next night's cleanup deletes: `Full` (everything in the dashboard), `Full: Slack` (the agents in Slack, one
   test at a time) and `Full: account` (sign up, onboard, delete). They start through their group webhooks, so
-  TesterArmy posts their results to Slack (#eng-feed-deployments); it never posts runs started through its API,
-  like the PRs'.
-- Closing the PR deletes the box, and so does turning it into a draft or removing the label when it then no longer
-  gets one. At most 50 PR boxes exist at once. PRs from forks get no box.
+  TesterArmy posts their failures to Slack (#eng-feed-deployments; passing runs too if the project's Slack settings
+  say so); it never posts runs started through its API, like the PRs'.
+- Closing the PR deletes the box, and so does turning it into a draft, moving it off `next` or removing the label
+  when it then no longer gets one; the nightly cleanup deletes any such box an event missed. At most 50 PR boxes
+  exist at once. PRs from forks get no box.
 - The workflow holds no secrets: it signs in to the boxes with its GitHub OIDC token.
 
 ![A pull request's box: it starts from base, each push re-applies, the comment shows the result, closing the PR deletes it](./docs/05-pull-request.svg)

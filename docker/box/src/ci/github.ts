@@ -3,6 +3,7 @@ import { githubToken } from '../cli/cloud-http.ts';
 import { fetchJson, HttpError, type JsonInit } from '../node/http.ts';
 import {
   Deployment,
+  DeploymentStatus,
   IssueComment,
   IssueEvent,
   Permission,
@@ -13,8 +14,8 @@ import {
 export const REPO = process.env.GITHUB_REPOSITORY ?? 'novuhq/novu';
 export const LABEL = 'box';
 const MARK = '<!-- novu-box -->';
-// One environment for every PR box, each box's deployments told apart by their task. So a new one mustn't mark the
-// environment's others inactive (`auto_inactive`): they're other PRs'.
+// One environment for every PR box, each box's deployment told apart by its task. A new one leaves the environment's
+// others active (`auto_inactive`): they're other PRs'.
 const ENVIRONMENT = 'Novu Box';
 
 export async function github<T>(path: string, schema: z.ZodType<T>, init: JsonInit = {}): Promise<T> {
@@ -61,9 +62,24 @@ export async function comment(number: number, body: string, { onlyUpdate = false
   }
 }
 
+const deploymentsOf = (box: string, query = '') =>
+  github(
+    `/repos/${REPO}/deployments?environment=${encodeURIComponent(ENVIRONMENT)}&task=${encodeURIComponent(`deploy:${box}`)}&per_page=100${query}`,
+    z.array(Deployment)
+  );
+
 // The PR's "View deployment" button, like a Netlify preview's.
-export async function deployed(box: string, sha: string, url: string, logUrl: string | undefined): Promise<void> {
-  await undeployed(box);
+export async function deployed({
+  box,
+  sha,
+  url,
+  logUrl,
+}: {
+  readonly box: string;
+  readonly sha: string;
+  readonly url: string;
+  readonly logUrl: string | undefined;
+}): Promise<void> {
   const { id } = await github(`/repos/${REPO}/deployments`, Deployment, {
     method: 'POST',
     json: {
@@ -82,14 +98,27 @@ export async function deployed(box: string, sha: string, url: string, logUrl: st
   });
 }
 
+// Whether the box's apply of this commit finished healthy: only then is there a deployment of it.
+export async function isDeployed(box: string, sha: string): Promise<boolean> {
+  const [deployment] = await deploymentsOf(box, `&sha=${sha}`);
+  if (!deployment) return false;
+  const [status] = await github(
+    `/repos/${REPO}/deployments/${deployment.id}/statuses?per_page=1`,
+    z.array(DeploymentStatus)
+  );
+
+  return status?.state === 'success';
+}
+
+// GitHub deletes only inactive deployments, once a repository has more than one.
 export async function undeployed(box: string): Promise<void> {
-  const query = `environment=${encodeURIComponent(ENVIRONMENT)}&task=${encodeURIComponent(`deploy:${box}`)}`;
-  const deployments = await github(`/repos/${REPO}/deployments?${query}&per_page=100`, z.array(Deployment));
-  for (const { id } of deployments)
+  for (const { id } of await deploymentsOf(box)) {
     await github(`/repos/${REPO}/deployments/${id}/statuses`, z.unknown(), {
       method: 'POST',
       json: { state: 'inactive' },
     });
+    await github(`/repos/${REPO}/deployments/${id}`, z.unknown(), { method: 'DELETE' });
+  }
 }
 
 export async function pullFiles(number: number): Promise<Array<string>> {

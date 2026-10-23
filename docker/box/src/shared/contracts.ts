@@ -176,7 +176,6 @@ const Label = z.object({ name: z.string() });
 export const Pull = z.object({
   state: z.string(),
   draft: z.boolean(),
-  user: z.object({ login: z.string() }),
   labels: z.array(Label),
   base: z.object({ ref: z.string() }),
 });
@@ -202,6 +201,7 @@ export const IssueEvent = z.object({
 });
 export const Permission = z.object({ permission: z.string() });
 export const Deployment = z.object({ id: z.number() });
+export const DeploymentStatus = z.object({ state: z.string() });
 export const OidcToken = z.object({ value: z.string() });
 
 export const WithId = z.object({ id: z.string() });
@@ -236,7 +236,7 @@ export type TesterArmyPullRequest = z.infer<typeof TesterArmyPullRequest>;
 // shape has no `suite`: PR branches send it with their own ci.ts.
 export const TesterArmyStart = z.union([
   z.object({ pullRequest: TesterArmyPullRequest }),
-  z.object({ suite: z.literal('full') }),
+  z.object({ suite: z.literal('full'), commitSha: z.string().optional() }),
 ]);
 export type TesterArmyStart = z.infer<typeof TesterArmyStart>;
 const StartedGroups = z.array(z.object({ name: z.string(), batchId: z.string(), runs: z.number() }));
