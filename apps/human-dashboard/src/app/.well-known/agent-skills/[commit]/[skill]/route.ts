@@ -1,4 +1,4 @@
-import { findSkill, SKILL_DOWNLOAD_HEADERS } from '@/lib/agent-skills';
+import { artifactOf, findSkill, SKILL_DOWNLOAD_HEADERS } from '@/lib/agent-skills';
 
 const ARCHIVE = '.tar.gz';
 
@@ -11,7 +11,7 @@ export async function GET(_request: Request, { params }: RouteContext<'/.well-kn
   const skill = file.endsWith(ARCHIVE) ? await findSkill(commit, file.slice(0, -ARCHIVE.length)) : null;
   if (skill?.type !== 'archive') return new Response('Not found', { status: 404 });
 
-  return new Response(new Uint8Array(skill.artifact), {
+  return new Response(new Uint8Array(artifactOf(skill)), {
     headers: { 'Content-Type': 'application/gzip', ...SKILL_DOWNLOAD_HEADERS },
   });
 }

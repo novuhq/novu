@@ -36,8 +36,8 @@ export interface Skill {
   description: string;
   /** `skill-md` when the skill is only its SKILL.md, `archive` when it has more files. */
   type: 'skill-md' | 'archive';
-  /** What a client downloads: the SKILL.md itself, or the skill's folder as a .tar.gz. */
-  artifact: Buffer;
+  /** Its files, with paths inside its folder. */
+  files: TarFile[];
 }
 
 interface SkillsAtCommit {
@@ -61,7 +61,7 @@ export async function skillsIndex() {
           skill.type === 'archive'
             ? `${AGENT_SKILLS_PATH}/${repository.commit}/${skill.name}.tar.gz`
             : `${AGENT_SKILLS_PATH}/${repository.commit}/${skill.name}/SKILL.md`,
-        digest: `sha256:${createHash('sha256').update(skill.artifact).digest('hex')}`,
+        digest: `sha256:${createHash('sha256').update(artifactOf(skill)).digest('hex')}`,
       }))
     : [];
 
@@ -70,10 +70,17 @@ export async function skillsIndex() {
 
 /** The skill `name` as it was at `commit`, or `null` when GitHub has no such commit, or the commit no such skill. */
 export async function findSkill(commit: string, name: string): Promise<Skill | null> {
-  if (!COMMIT.test(commit)) return null;
+  // A path that can't name a commit and a skill never reaches GitHub.
+  if (!COMMIT.test(commit) || !SKILL_NAME.test(name)) return null;
   const repository = await loadSkills(commit);
 
   return repository?.skills.find((skill) => skill.name === name) ?? null;
+}
+
+/** What a client downloads: the SKILL.md itself, or the skill's folder as a .tar.gz. */
+export function artifactOf(skill: Skill): Buffer {
+  // A `skill-md` skill's one file is its SKILL.md.
+  return skill.type === 'archive' ? gzipSync(writeTar(skill.files)) : skill.files[0].content;
 }
 
 /**
@@ -114,7 +121,7 @@ async function loadSkills(ref: string): Promise<SkillsAtCommit | null> {
   return { commit: comment, skills: skillsIn(files) };
 }
 
-/** Each folder in `skills/` with a SKILL.md that has a description, as the download a client gets. */
+/** Each folder in `skills/` with a SKILL.md that has a description. */
 function skillsIn(files: TarFile[]): Skill[] {
   const folders = new Map<string, TarFile[]>();
   for (const file of files) {
@@ -134,11 +141,7 @@ function skillsIn(files: TarFile[]): Skill[] {
       continue;
     }
 
-    skills.push(
-      skillFiles.length === 1
-        ? { name, description, type: 'skill-md', artifact: skillMd.content }
-        : { name, description, type: 'archive', artifact: gzipSync(writeTar(skillFiles)) }
-    );
+    skills.push({ name, description, type: skillFiles.length === 1 ? 'skill-md' : 'archive', files: skillFiles });
   }
 
   return skills.sort((a, b) => a.name.localeCompare(b.name));

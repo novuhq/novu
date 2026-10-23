@@ -1,4 +1,4 @@
-import { findSkill, SKILL_DOWNLOAD_HEADERS } from '@/lib/agent-skills';
+import { artifactOf, findSkill, SKILL_DOWNLOAD_HEADERS } from '@/lib/agent-skills';
 
 /** A skill that is only its SKILL.md: `<commit>/<name>/SKILL.md`. */
 export async function GET(
@@ -9,7 +9,7 @@ export async function GET(
   const skill = await findSkill(commit, name);
   if (skill?.type !== 'skill-md') return new Response('Not found', { status: 404 });
 
-  return new Response(new Uint8Array(skill.artifact), {
+  return new Response(new Uint8Array(artifactOf(skill)), {
     headers: { 'Content-Type': 'text/markdown; charset=utf-8', ...SKILL_DOWNLOAD_HEADERS },
   });
 }
