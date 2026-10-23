@@ -11,11 +11,18 @@ import { cn } from '@/lib/utils';
 
 const COPIED_MS = 2000;
 
+type InstallSkillsButtonProps = {
+  /** `secondary` in "Connect another agent", `quiet` on the onboarding's connect step. */
+  variant?: 'secondary' | 'quiet';
+  className?: string;
+};
+
 /**
- * "Install skills": until the skills can be downloaded from here, the button hands over the command that
- * installs them, and its icon turns into a check mark for a moment once it's on the clipboard.
+ * "Install skills": copies the command that installs the agent-inbox skill (`skill install`), which the
+ * operator runs in the project their coding agent works in. The icon turns into a check mark for a moment
+ * once it's on the clipboard, and a toast says what was copied and where to run it.
  */
-export function InstallSkillsButton({ className }: { className?: string }) {
+export function InstallSkillsButton({ variant = 'secondary', className }: InstallSkillsButtonProps) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -32,14 +39,14 @@ export function InstallSkillsButton({ className }: { className?: string }) {
     try {
       await navigator.clipboard.writeText(INSTALL_SKILLS_COMMAND);
       setCopied(true);
-      toast(`Copied: ${INSTALL_SKILLS_COMMAND}`);
+      toast(`Copied: ${INSTALL_SKILLS_COMMAND}`, 'success', 'Run it in the project your agent works in.');
     } catch {
       toast(`Couldn't copy. The command is: ${INSTALL_SKILLS_COMMAND}`, 'error');
     }
   }
 
   return (
-    <button type="button" onClick={install} className={buttonClassName('secondary', cn(SMALL_BUTTON, className))}>
+    <button type="button" onClick={install} className={buttonClassName(variant, cn(SMALL_BUTTON, className))}>
       <CopiedIcon icon={Download} copied={copied} className="size-3.5" />
       Install skills
     </button>

@@ -1,33 +1,34 @@
 'use client';
 
-import { ArrowRight, Download } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useCallback, useTransition } from 'react';
 
 import { createOnboardingConnectCodeAction, skipForNowAction } from '@/app/(account)/onboarding/actions';
 import { ConnectPromptBox } from '@/components/connect/connect-prompt-box';
+import { InstallSkillsButton } from '@/components/connect/install-skills-button';
 import { DOCS_URL } from '@/components/dashboard/nav';
 import { ToolChips } from '@/components/onboarding/identity-stage';
 import { Eyebrow, StepLead, StepTitle } from '@/components/onboarding/onboarding-shell';
-import { buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
-import { toast } from '@/components/ui/toast';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useConnectCode } from '@/hooks/use-connect-code';
-import { INSTALL_SKILLS_COMMAND } from '@/lib/onboarding';
+import type { AiTool } from '@/lib/ai-tools';
 import { cn } from '@/lib/utils';
 
 type ConnectStepProps = {
   handle: string;
-  address: string;
   /** The API the account lives on, named by the connect command. */
   apiUrl: string;
   /** Messages already in the inbox, waiting for a host to read them. */
   waiting: number;
+  /** Opens a chat app's MCP drawer, from its logo. Left out while there is no MCP server. */
+  onOpenTool?: (tool: AiTool) => void;
 };
 
 /**
- * Step 3: the operator hands the agent to whatever runs it. One prompt to paste into the agent, or the
- * same commands to run by hand. The page moves on by itself once a host has connected.
+ * Step 3: the operator hands the agent to whatever runs it: the commands to run in their terminal, or a
+ * chat app's MCP drawer, from its logo under them. The page moves on by itself once a host has connected.
  */
-export function ConnectStep({ handle, address, apiUrl, waiting }: ConnectStepProps) {
+export function ConnectStep({ handle, apiUrl, waiting, onOpenTool }: ConnectStepProps) {
   const [leaving, startLeaving] = useTransition();
   const createCode = useCallback(() => createOnboardingConnectCodeAction(handle), [handle]);
   const { state: code, retry } = useConnectCode(createCode, true);
@@ -42,24 +43,22 @@ export function ConnectStep({ handle, address, apiUrl, waiting }: ConnectStepPro
       <StepTitle>
         Hand {handle} to <em>your agent</em>
       </StepTitle>
-      <StepLead>Paste this into your agent, or run the commands where it runs. It connects as {handle}.</StepLead>
+      <StepLead>Run these in your terminal, in the project your agent works in. It connects as {handle}.</StepLead>
 
       <div className="flex flex-col gap-2">
-        <ConnectPromptBox handle={handle} address={address} apiUrl={apiUrl} code={code} onRetry={retry} />
+        <ConnectPromptBox handle={handle} apiUrl={apiUrl} code={code} onRetry={retry} />
 
-        <div className="flex flex-wrap items-center gap-2 text-xs leading-4 text-muted">
-          <span>Works with</span>
-          <ToolChips className="gap-0 [&>*]:-ml-0.75 [&>*:first-child]:ml-0 [&>*:first-child]:-rotate-3 [&>*:last-child]:rotate-3" />
-          <span>and anything that runs a command or MCP</span>
-          <button
-            type="button"
-            onClick={installSkills}
-            className={buttonClassName('quiet', cn(SMALL_BUTTON, 'ml-auto'))}
-          >
-            <Download aria-hidden="true" className="size-3.5" />
-            Install skills
-          </button>
-        </div>
+        <TooltipProvider delayDuration={300}>
+          <div className="flex flex-wrap items-center gap-2 text-xs leading-4 text-muted">
+            <span>Works with</span>
+            <ToolChips
+              onOpen={onOpenTool}
+              className="gap-0 [&>*]:-ml-0.75 [&>*:first-child]:ml-0 [&>*:first-child]:-rotate-3 [&>*:last-child]:rotate-3"
+            />
+            <span>and anything that runs a command or MCP</span>
+            <InstallSkillsButton variant="quiet" className="ml-auto" />
+          </div>
+        </TooltipProvider>
       </div>
 
       <div
@@ -89,14 +88,4 @@ export function ConnectStep({ handle, address, apiUrl, waiting }: ConnectStepPro
       </div>
     </>
   );
-}
-
-/** Until the skills can be downloaded from here, the button hands over the command that installs them. */
-async function installSkills() {
-  try {
-    await navigator.clipboard.writeText(INSTALL_SKILLS_COMMAND);
-    toast(`Copied: ${INSTALL_SKILLS_COMMAND}`);
-  } catch {
-    toast(`Couldn't copy. The command is: ${INSTALL_SKILLS_COMMAND}`, 'error');
-  }
 }

@@ -74,6 +74,7 @@ import {
   AGENT_PICTURE_MAX_BYTES,
   HumanAgentPictureService,
 } from './services/human-agent-picture.service';
+import { AGENT_INBOX_VIA_HEADER, HumanHostStatusService, readHostVia } from './services/human-host-status.service';
 import { HumanOperatorService } from './services/human-operator.service';
 import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-interaction.command';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
@@ -136,7 +137,8 @@ export class HumanInteractionsController {
     private readonly setOperatorDefaultChannelUsecase: SetOperatorDefaultChannel,
     private readonly changeOperatorEmailUsecase: ChangeOperatorEmail,
     private readonly sendHumanTestEmailUsecase: SendHumanTestEmail,
-    private readonly inboxAddresses: AgentInboxAddressService
+    private readonly inboxAddresses: AgentInboxAddressService,
+    private readonly hostStatus: HumanHostStatusService
   ) {}
 
   @Post('/interactions')
@@ -327,7 +329,7 @@ export class HumanInteractionsController {
 
   /**
    * Whether an Agent Inbox handle is free. Asked while the operator types one. A taken handle comes
-   * back with a nearby free one.
+   * back with a nearby free one. With no handle, the answer is only the mailbox domain this deployment publishes.
    */
   @Get('/inbox-address')
   @KeylessAccessible()
@@ -342,12 +344,13 @@ export class HumanInteractionsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
-  setup(
+  async setup(
     @UserSession() user: UserSessionData,
     @Body() body: SetupHumanRelayRequestDto,
-    @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string
+    @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string,
+    @Headers(AGENT_INBOX_VIA_HEADER) via?: string
   ): Promise<SetupHumanRelayResponseDto> {
-    return this.setupHumanRelayUsecase.execute(
+    const result = await this.setupHumanRelayUsecase.execute(
       SetupHumanRelayCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -365,6 +368,18 @@ export class HumanInteractionsController {
         analyticsSource: readAnalyticsSource(analyticsSource),
       })
     );
+
+    // The hosted MCP server creates the agent and is already the host: record it so the dashboard
+    // shows connected without waiting for a later inbox_list. Recording never fails the setup.
+    if (readHostVia(via) === 'mcp') {
+      await this.hostStatus.recordConnected(
+        { environmentId: user.environmentId, organizationId: user.organizationId },
+        result.agentId,
+        'mcp'
+      );
+    }
+
+    return result;
   }
 
   /**

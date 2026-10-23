@@ -37,7 +37,7 @@ type ConfigureViewProps = {
   /** The drawer the page opens with, when a link asked for one (`?setup=`). */
   initialDrawer: ChannelVia | null;
   agent: ConfigureAgent;
-  /** The operator's full name, or empty when Clerk has none. */
+  /** The operator as the API names them for the public card, "Ada L.", or empty without a first name. */
   operatorName: string;
   channels: ChannelRow[];
   telegramSetup: TelegramSetupState;
@@ -102,7 +102,9 @@ export function ConfigureView({
   const now = useNow(renderedAt);
   const lastCheckedAt = useLastHostCheck(hostStatus?.lastCheckedAt ?? null, now);
   const hostConnected = hostLiveness(lastCheckedAt, now) === 'live';
-  const state: AgentState = !agent.active ? 'paused' : hostConnected ? 'active' : 'waiting';
+  // Paused as the Settings block shows it: as soon as its switch is flipped, and back if saving that fails.
+  const [paused, setPaused] = useState(Boolean(settings?.paused));
+  const state: AgentState = !agent.active || paused ? 'paused' : hostConnected ? 'active' : 'waiting';
 
   return (
     <>
@@ -141,7 +143,6 @@ export function ConfigureView({
           />
           <AgentSetup
             handle={agent.handle}
-            address={email}
             apiUrl={apiUrl}
             lastCheckedAt={lastCheckedAt}
             renderedAt={renderedAt}
@@ -149,7 +150,7 @@ export function ConfigureView({
             mcpUrl={mcpUrl}
             connectedTools={connectedTools}
           />
-          <AgentSettingsCard handle={agent.handle} settings={settings} />
+          <AgentSettingsCard handle={agent.handle} settings={settings} onPausedChange={setPaused} />
         </div>
       </div>
 

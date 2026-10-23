@@ -22,8 +22,9 @@ export interface HumanContactVerifiedAddress {
 }
 
 /**
- * An address the operator typed during setup. It is not opted in and must never
- * be used as a delivery target — only to recognize mail they send to the inbox.
+ * An address that was typed but not confirmed. Contact-id delivery never uses it.
+ * A non-keyless org may email it when one send names that address. It also lets
+ * the inbox recognize mail from that address.
  */
 export interface HumanContactDeclaredAddress {
   /** Normalized address (lowercase email). */
@@ -62,9 +63,10 @@ export class HumanContactEntity {
   defaultSetBy?: HumanContactDefaultSetBy;
 
   /**
-   * Address-based channel verification state, keyed by channel. Delivery to
-   * email requires `addresses.email.verified` — `Subscriber.email` is copied
-   * from that slot only after promote.
+   * Address-based channel verification state, keyed by channel. Contact-id
+   * delivery to email requires `addresses.email.verified` — `Subscriber.email`
+   * is copied from that slot only after promote. A typed address on one send
+   * from a non-keyless org is the exception and does not promote this slot.
    */
   addresses?: Partial<Record<HumanChannelViaEnum, HumanContactChannelAddresses>>;
 

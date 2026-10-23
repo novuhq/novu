@@ -46,8 +46,8 @@ export function toHandle(name: string): string {
     .replace(/-+$/, '');
 }
 
-export function addressOf(handle: string): string {
-  return `${handle}@${AGENT_DOMAIN}`;
+export function addressOf(handle: string, domain: string = AGENT_DOMAIN): string {
+  return `${handle}@${domain}`;
 }
 
 /** Where an agent's public card lives on the site: `/p/atlas`. */
@@ -72,7 +72,7 @@ export function writtenLink(url: string): string {
 const CLI_PACKAGE = '@agentinbox/cli';
 
 /** A command copied on its own runs through npx, which needs nothing installed first. */
-const NPX_CLI = `npx ${CLI_PACKAGE}`;
+export const NPX_CLI = `npx ${CLI_PACKAGE}`;
 
 /**
  * The terminal's way to do step 1. It logs in first, which the operator approves in this browser: on its
@@ -86,10 +86,3 @@ export function setupCommand(name: string): string {
 }
 
 export const INSTALL_SKILLS_COMMAND = `${NPX_CLI} skill install`;
-
-/** A stretch of the prompt. `strong` is what the host acts on; `accent` is the one rule it must keep. */
-export type PromptSpan = { text: string; tone?: 'strong' | 'accent' };
-
-export function promptText(prompt: PromptSpan[][]): string {
-  return prompt.map((line) => line.map((span) => span.text).join('')).join('\n');
-}

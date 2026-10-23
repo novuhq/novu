@@ -11,6 +11,7 @@ for type errors or unit-level logic; run those locally.
 The box runs the whole Novu Cloud stack (API, worker, socket, dashboard, the bridge app, every database) on
 Cloudflare, with your checkout on it. `docker/box/README.md` is the reference for every command, URL and credential
 named here. The CLI needs `gh` signed in as someone with push access to `novuhq/novu`; no secrets on your machine.
+In Cursor Cloud it uses the `CURSOR_BOX_TOKEN` secret by itself.
 
 ```sh
 node docker/box/src/cli/main.ts --help          # the reference for every command and flag
@@ -36,7 +37,9 @@ Done when `sync` exits 0 and ends with `applied sync <branch> at <sha>`. Keep it
 rebuilt and restarted, which is part of the evidence.
 
 - One box per branch, shared by everyone on that branch. When agents work in parallel, give each its own
-  `--box <name>` on every command, and never drive a box you didn't start.
+  `--box <name>` on every command, and never drive a box you didn't start. Start it with
+  `up --box <name> --from base`: without `--from base`, a new box named with `--box` bakes `next` (13 to 16
+  minutes), and `up` doesn't put your checkout on it, so the `sync --box <name>` after it does.
 - `up` is your branch's box: a new one starts from `base` and is ready in 1 to 5 minutes (the first restore of a
   freshly baked `base` takes about 4) and already gets your checkout (the `sync` after it then has nothing to do);
   an existing one wakes in under a minute. Without a `base` snapshot it bakes `next` first (13 to 16 minutes).

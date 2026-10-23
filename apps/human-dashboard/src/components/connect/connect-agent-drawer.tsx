@@ -5,7 +5,7 @@ import { type ReactNode, useCallback, useState } from 'react';
 
 import { useConnectionPoll } from '@/components/channels/setup-parts';
 import { ChatAppList } from '@/components/connect/chat-app-list';
-import { ConnectPromptBox, type ConnectTab } from '@/components/connect/connect-prompt-box';
+import { ConnectPromptBox } from '@/components/connect/connect-prompt-box';
 import { ConnectToolDrawer } from '@/components/connect/connect-tool-drawer';
 import { InstallSkillsButton } from '@/components/connect/install-skills-button';
 import { ToolChips } from '@/components/onboarding/identity-stage';
@@ -31,8 +31,6 @@ const CHECK_EVERY_MS = 5_000;
 type ConnectAgentDrawerProps = {
   /** The agent, as `connect` names it: its address before the `@`. */
   handle: string;
-  /** The agent's address, or `null` while it has none. */
-  address: string | null;
   /** The API the account lives on. */
   apiUrl: string;
   /** The hosted MCP server the chat apps connect to, or `null` while there is none. */
@@ -43,14 +41,13 @@ type ConnectAgentDrawerProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   api: ConnectApi;
-  /** The tab the prompt box opens on. The prompt comes first: not every agent has a terminal. */
-  initialTab?: ConnectTab;
 };
 
 /**
- * "Connect another agent" (`4.7`): the prompt that connects any agent with a one-time code, the same as
- * commands for a terminal, the skills, and the chat apps that connect through the MCP server, each with
- * its own drawer over this one. A fresh code is asked for every time it opens.
+ * "Connect another agent" (`4.7`): the commands that connect an agent with a one-time code, run in the
+ * person's terminal, the skills, and the chat apps that connect through the MCP server, each with its own
+ * drawer over this one. Their logos under the commands open the same drawers. A fresh code is asked for
+ * every time it opens.
  *
  * For as long as it's open it watches for a host that comes in: a way in that's new, or one that came back
  * after a day without checks, or a code it showed getting used, which the API tells (`useCodeWatch`). The
@@ -59,7 +56,6 @@ type ConnectAgentDrawerProps = {
  */
 export function ConnectAgentDrawer({
   handle,
-  address,
   apiUrl,
   mcpUrl,
   docsUrl,
@@ -67,7 +63,6 @@ export function ConnectAgentDrawer({
   open,
   onOpenChange,
   api,
-  initialTab,
 }: ConnectAgentDrawerProps) {
   const router = useRouter();
   const [newHost, setNewHost] = useState<HostVia | null>(null);
@@ -75,7 +70,7 @@ export function ConnectAgentDrawer({
   // The app whose drawer was opened last, so that drawer keeps its words while it slides shut.
   const [drawerTool, setDrawerTool] = useState<AiTool>(AI_TOOLS[0]);
 
-  // Every opening starts over: a new code, the Prompt tab, and nothing connected yet. Done while
+  // Every opening starts over: a new code, and nothing connected yet. Done while
   // rendering, so the drawer never shows what the last opening ended on.
   const [wasOpen, setWasOpen] = useState(open);
   const [openings, setOpenings] = useState(0);
@@ -163,20 +158,17 @@ export function ConnectAgentDrawer({
               ) : (
                 <>
                   <p className="text-[13px] leading-[19px] text-secondary">
-                    Paste this into any agent, or run the command.
+                    Run these in your terminal, in the project your agent works in.
                   </p>
-                  <ConnectPromptBox
-                    handle={handle}
-                    address={address}
-                    apiUrl={apiUrl}
-                    code={code}
-                    onRetry={retry}
-                    initialTab={initialTab}
-                  />
+                  <ConnectPromptBox handle={handle} apiUrl={apiUrl} code={code} onRetry={retry} />
                   <div className="flex flex-wrap items-center gap-2 text-xs leading-4 text-muted">
                     <span>Works with</span>
-                    {/* Claude Code, Cursor and ChatGPT, overlapping by 4px, with Cursor's tilted. */}
-                    <ToolChips className="gap-0 [&_img]:rounded-[3.5px] [&>*:nth-child(2)]:-rotate-4 [&>*:not(:first-child)]:-ml-1" />
+                    {/* Claude, Cursor and ChatGPT, overlapping by 4px, with Cursor's tilted. Each opens its
+                        drawer, as its row under "Chat apps" does. */}
+                    <ToolChips
+                      onOpen={mcpUrl === null ? undefined : openApp}
+                      className="gap-0 [&_img]:rounded-[3.5px] [&>*:nth-child(2)]:-rotate-4 [&>*:not(:first-child)]:-ml-1"
+                    />
                     <span>and anything that runs a command or MCP</span>
                     <InstallSkillsButton className="ml-auto" />
                   </div>

@@ -1,27 +1,167 @@
-import { SiteFrame } from '@/components/site/site-frame';
-import { buttonClassName } from '@/components/ui/button';
+import '@/styles/home.css';
 
-/** Placeholder until the agentinbox.md landing page moves into this app. */
+import type { Viewport } from 'next';
+import localFont from 'next/font/local';
+import Link from 'next/link';
+import { ExitCodes, Flags } from '@/components/home/command-reference';
+import {
+  AsciiRule,
+  CommandLines,
+  DocSection,
+  FlagText,
+  InlineCode,
+  textWidth,
+  WithPackage,
+  WordFlow,
+} from '@/components/home/documentation';
+import { HomeArtwork } from '@/components/home/home-artwork';
+import { HowItWorks } from '@/components/home/how-it-works';
+import { SiteStructuredData } from '@/components/seo/site-structured-data';
+import {
+  HOME_AUTH,
+  HOME_CONTACTS,
+  HOME_CONTACTS_DESCRIPTION,
+  HOME_INTRODUCTION,
+  HOME_INVITE_DESCRIPTION,
+  HOME_INVITES,
+  HOME_LINKS,
+  HOME_SETUP,
+  HOME_USAGE,
+  INSTALL_COMMAND,
+} from '@/data/home';
+import { pageMetadata } from '@/lib/seo';
+
+const semibold = localFont({
+  src: '../../public/fonts/geist-mono-semibold.woff2',
+  weight: '600',
+  style: 'normal',
+  variable: '--font-home-semibold',
+  display: 'swap',
+});
+
+const regular = localFont({
+  src: '../../public/fonts/geist-mono-regular.woff2',
+  weight: '400',
+  style: 'normal',
+  variable: '--font-home-regular',
+  display: 'swap',
+  declarations: [
+    { prop: 'ascent-override', value: '98.25%' },
+    { prop: 'descent-override', value: '15.75%' },
+    { prop: 'line-gap-override', value: '10%' },
+  ],
+});
+
+export const metadata = pageMetadata('home');
+
+export const viewport: Viewport = {
+  themeColor: '#fbfbfb',
+};
+
+/**
+ * agentinbox.md for agents ("for robots"): the CLI on one page of light paper, with `/index.md` as its
+ * Markdown. People go on to `/sapien`; an agent connected from the dashboard reads `/agents.md`.
+ */
 export default function HomePage() {
   return (
-    <SiteFrame className="justify-center px-4 py-20 md:px-8">
-      <section className="max-w-120">
-        <p className="font-mono text-sm tracking-tight text-foreground/50">the inbox API for agents</p>
-        <h1 className="mt-3 text-3xl leading-[1.125] tracking-[-0.04em] md:text-[40px]">
-          Give your agent an inbox on <em className="font-display tracking-tight text-accent">every channel</em>
-        </h1>
-        <p className="mt-3.5 text-[15px] leading-[1.375] tracking-tight text-foreground/70">
-          Agent Inbox is a tiny CLI that gives your AI agent one address on email, Telegram and Slack.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center gap-2">
-          <a href="https://www.npmjs.com/package/@agentinbox/cli" className={buttonClassName('primary')}>
-            Get @agentinbox/cli
-          </a>
-          <a href="/sign-in" className={buttonClassName('text')}>
-            Sign in
-          </a>
-        </div>
-      </section>
-    </SiteFrame>
+    <div className={`home-page ${semibold.variable} ${regular.variable}`}>
+      <SiteStructuredData page="home" />
+      <HomeArtwork />
+      <main className="home-document">
+        <header className="home-introduction">
+          <div className="home-human-banner">
+            <AsciiRule />
+            <p>
+              <span aria-hidden="true" className="home-banner-pipe">
+                |
+              </span>
+              <span>
+                Human? Visit <Link href="/sapien">agentinbox.md/sapien</Link> for the human-readable version.
+              </span>
+              <span aria-hidden="true" className="home-banner-pipe">
+                |
+              </span>
+            </p>
+            <AsciiRule />
+          </div>
+          <h1>
+            agentinbox.md
+            <br />
+            The inbox API for agents
+          </h1>
+          <p className="home-description">
+            {HOME_INTRODUCTION[0]}
+            <br />
+            <WithPackage text={HOME_INTRODUCTION[1]} />
+          </p>
+          <AsciiRule />
+        </header>
+
+        <DocSection anchor="install" title="INSTALL">
+          <CommandLines commands={[INSTALL_COMMAND]} />
+        </DocSection>
+        <DocSection anchor="setup" title="SETUP" subtitle="once, by the human">
+          <CommandLines commands={HOME_SETUP} />
+        </DocSection>
+        <DocSection anchor="usage" title="USAGE" subtitle="forever after, by any agent on the machine">
+          <CommandLines commands={HOME_USAGE} />
+        </DocSection>
+        <DocSection anchor="how-it-works" title="HOW IT WORKS">
+          <HowItWorks />
+        </DocSection>
+        <DocSection anchor="exit-codes" title="EXIT CODES" subtitle="stable contract for agents">
+          <ExitCodes />
+        </DocSection>
+        <DocSection anchor="flags" title="FLAGS">
+          <Flags />
+        </DocSection>
+        <DocSection anchor="invite" title="INVITE" subtitle="link another human">
+          <p>
+            <FlagText text={HOME_INVITE_DESCRIPTION} />
+          </p>
+          <CommandLines commands={HOME_INVITES} fenced />
+        </DocSection>
+        <DocSection anchor="contacts" title="CONTACTS" subtitle="who agents can reach">
+          <p>
+            <FlagText text={HOME_CONTACTS_DESCRIPTION} />
+          </p>
+          <CommandLines commands={HOME_CONTACTS} fenced />
+        </DocSection>
+        <DocSection anchor="auth" title="AUTH">
+          <WordFlow className="home-auth-description">
+            <InlineCode>{`\`${HOME_AUTH.commands[0]}\`,`}</InlineCode>{' '}
+            <InlineCode>{`\`${HOME_AUTH.commands[1]}\``}</InlineCode> and{' '}
+            <InlineCode>{`\`${HOME_AUTH.commands[2]}\``}</InlineCode> store credentials in{' '}
+            <InlineCode>{`${HOME_AUTH.file}.`}</InlineCode> {HOME_AUTH.alternative}
+          </WordFlow>
+        </DocSection>
+        <DocSection anchor="links" title="LINKS">
+          <nav aria-label="Documentation links" className="home-links">
+            {HOME_LINKS.map((item, index) => (
+              <span key={item.label}>
+                {index > 0 ? (
+                  <span aria-hidden="true" className="home-link-divider">
+                    |
+                  </span>
+                ) : null}
+                {/* A page of this site goes client-side; `/agents.md` is a file, so it's an ordinary link. */}
+                {item.href.startsWith('/') && !item.href.endsWith('.md') ? (
+                  <Link href={item.href} style={{ minWidth: textWidth(item.label) }}>
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a href={item.href} style={{ minWidth: textWidth(item.label) }}>
+                    {item.label}
+                  </a>
+                )}
+              </span>
+            ))}
+          </nav>
+        </DocSection>
+        <footer className="home-comment">
+          built by <a href="https://novu.co/">novu</a>
+        </footer>
+      </main>
+    </div>
   );
 }

@@ -7,8 +7,10 @@ import {
   getErrorInterceptor,
   // biome-ignore lint/style/noRestrictedImports: <explanation> x
   Logger,
+  type NovuTlsConfig,
   PinoLogger,
   RequestLogRepository,
+  toNovuTlsServerOptions,
 } from '@novu/application-generic';
 
 import bodyParser from 'body-parser';
@@ -41,6 +43,7 @@ const extendedBodySizeRoutes = [
 validateEnv();
 class BootstrapOptions {
   internalSdkGeneration?: boolean;
+  tlsConfig?: NovuTlsConfig;
 }
 
 export async function bootstrap(
@@ -71,7 +74,11 @@ export async function bootstrap(
     nestOptions.rawBody = true;
   }
 
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true, ...nestOptions });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+    ...nestOptions,
+    ...(bootstrapOptions?.tlsConfig && { httpsOptions: toNovuTlsServerOptions(bootstrapOptions.tlsConfig) }),
+  });
 
   // NestJS 11 defaults to Express v5's simple query parser; keep extended parsing for nested/array query params.
   app.set('query parser', 'extended');
@@ -183,7 +190,11 @@ export async function bootstrap(
 
   app.enableShutdownHooks();
 
-  logger.info(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}.`);
+  logger.info(
+    `Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT} over ${
+      bootstrapOptions?.tlsConfig ? 'https' : 'http'
+    }.`
+  );
 
   return { app, document };
 }

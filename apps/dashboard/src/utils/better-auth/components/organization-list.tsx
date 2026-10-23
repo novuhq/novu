@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
+import type { BetterAuthOrganization } from '../auth-context';
 import { authClient } from '../client';
+import { getCreateOrganizationErrorMessage } from '../organization-errors';
+import { useCanCreateOrganization } from '../use-auth-config';
 
 export function OrganizationList() {
-  const [organizations, setOrganizations] = useState<any[]>([]);
+  const { canCreateOrganization } = useCanCreateOrganization();
+  const [organizations, setOrganizations] = useState<BetterAuthOrganization[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newOrgName, setNewOrgName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +22,7 @@ export function OrganizationList() {
     try {
       const { data } = await authClient.organization.list();
       setOrganizations(data || []);
-    } catch (e: any) {
+    } catch (e) {
       console.error('Failed to load organizations:', e);
     }
   };
@@ -35,14 +39,14 @@ export function OrganizationList() {
       });
 
       if (createError) {
-        throw new Error(createError.message || 'Failed to create organization');
+        throw new Error(getCreateOrganizationErrorMessage(createError));
       }
 
       setNewOrgName('');
       setShowCreateForm(false);
       await loadOrganizations();
-    } catch (e: any) {
-      setError(e.message || 'An unexpected error occurred');
+    } catch (e) {
+      setError(e instanceof Error && e.message ? e.message : 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -54,21 +58,25 @@ export function OrganizationList() {
         organizationId,
       });
       window.location.reload();
-    } catch (e: any) {
+    } catch (e) {
       console.error('Failed to set active organization:', e);
     }
   };
+
+  const isCreateFormOpen = canCreateOrganization && showCreateForm;
 
   return (
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Organizations</h2>
-        <Button variant="primary" mode="filled" size="sm" onClick={() => setShowCreateForm(!showCreateForm)}>
-          {showCreateForm ? 'Cancel' : 'Create New'}
-        </Button>
+        {canCreateOrganization && (
+          <Button variant="primary" mode="filled" size="sm" onClick={() => setShowCreateForm(!showCreateForm)}>
+            {isCreateFormOpen ? 'Cancel' : 'Create New'}
+          </Button>
+        )}
       </div>
 
-      {showCreateForm && (
+      {isCreateFormOpen && (
         <form onSubmit={handleCreateOrganization} className="space-y-3 rounded border-neutral-200 p-4">
           <div>
             <label htmlFor="orgName" className="mb-1 block text-sm font-medium">
@@ -101,7 +109,7 @@ export function OrganizationList() {
             </Button>
           </div>
         ))}
-        {organizations.length === 0 && !showCreateForm && (
+        {organizations.length === 0 && !isCreateFormOpen && (
           <p className="text-center text-foreground-500">No organizations found</p>
         )}
       </div>

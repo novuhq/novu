@@ -7,10 +7,13 @@ import { AGENT_DESCRIPTION_MAX_LENGTH, trimmed } from './setup-human-relay.dto';
 
 /** Whether a mailbox local-part is free on the Agent Inbox domain. */
 export class CheckInboxAddressQueryDto {
-  @ApiProperty({ description: 'The handle to check, such as `atlas`.' })
+  @ApiPropertyOptional({
+    description: 'The handle to check, such as `atlas`. Omit it to read only the mailbox domain.',
+  })
+  @IsOptional()
   @IsString()
   @Matches(/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/)
-  handle: string;
+  handle?: string;
 
   @ApiPropertyOptional({
     description: 'The operator’s email, used only to suggest a nearby free handle when this one is taken.',
@@ -29,6 +32,9 @@ export class CheckInboxAddressResponseDto {
 
   @ApiPropertyOptional()
   suggestion?: string;
+
+  @ApiProperty({ description: 'The mailbox domain this deployment publishes, such as `dev.agentinbox.md`.' })
+  domain: string;
 }
 
 /** Which relay agent a call is about, for a setup made with its own `--agent-identifier`. */
@@ -111,6 +117,17 @@ export class HumanAgentResponseDto {
 
   @ApiPropertyOptional({ description: 'When the agent was paused. Missing while it isn’t.' })
   pausedAt?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Who runs the agent, as its public card names them: their first name and the initial of their last name ("Ada L."). Missing without a first name. Only `GET /v1/human/agent` includes it.',
+  })
+  operatorName?: string;
+
+  @ApiPropertyOptional({
+    description: 'The operator’s whole first name, for "Ada’s agent". There with `operatorName` only.',
+  })
+  operatorFirstName?: string;
 }
 
 /** The onboarding test: mail from the Agent Email Inbox to the operator’s sign-up address. */

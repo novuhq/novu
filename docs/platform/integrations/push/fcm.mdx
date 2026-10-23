@@ -639,3 +639,39 @@ You might come across an error such as: `Sending message failed due to "The regi
   <Accordion title="Subscriber does not have a configured channel error">This error occurs if the FCM integration is active, but the subscriber is missing from the FCM credentials (deviceTokens). The credentials (deviceTokens) for the subscriber needs to be set.</Accordion>
   <Accordion title="How to send desktop notifications using FCM">Desktop notifications for websites can be sent using FCM webpush.</Accordion>
 </AccordionGroup>
+
+## Activity tracking
+
+FCM supports [push activity tracking](/platform/integrations/push/push-activity-tracking). Enable the **Push Activity Tracking** toggle on the FCM integration. Your app reads the Novu message id from the notification and forwards it as `eventId`.
+
+Novu adds `__nvMessageId` to the FCM `data` payload.
+
+- On a notification message, `data` contains `__nvMessageId` and any `data` keys from your FCM override. Other trigger payload fields stay off the FCM message.
+- On a data-only message, set `type` to `data` under `overrides.providers.fcm`. `data` then contains the trigger payload, `__nvMessageId`, `title`, `body`, and `message`.
+
+FCM requires every `data` value to be a string. `__nvMessageId` is already a string. Leave that key in place. An override `data` object is merged on top, and a matching key replaces Novu's value.
+
+```javascript
+import messaging from '@react-native-firebase/messaging';
+
+const trackNotificationOpen = async (remoteMessage) => {
+  await fetch("https://your-api.com/api/notifications/events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      eventType: "opened",
+      eventId: remoteMessage?.data?.__nvMessageId,
+    }),
+  });
+};
+
+messaging().onNotificationOpenedApp(trackNotificationOpen);
+
+messaging().getInitialNotification().then((remoteMessage) => {
+  if (remoteMessage) {
+    trackNotificationOpen(remoteMessage);
+  }
+});
+```
+
+Forward `delivered`, `clicked`, `dismissed`, or `failed` the same way when your app observes those events. Your backend then calls [Novu's activity endpoint](/platform/integrations/push/push-activity-tracking#step-3-forward-events-to-novu-from-your-backend).

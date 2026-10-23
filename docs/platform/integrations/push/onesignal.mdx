@@ -545,3 +545,24 @@ By default, Novu uses player IDs to send notifications. If your OneSignal integr
 <video autoPlay loop muted playsInline src="/images/channels-and-providers/push/onesignal/select-external-id-option.mp4" />
 
 Once enabled, the `deviceTokens` stored in subscriber credentials are treated as external user IDs instead of player IDs.
+
+## Activity tracking
+
+OneSignal supports [push activity tracking](/platform/integrations/push/push-activity-tracking). Enable the **Push Activity Tracking** toggle on the OneSignal integration. Your app reads the Novu message id from the notification and forwards it as `eventId`.
+
+Novu sends the trigger payload as OneSignal `data` and adds `__nvMessageId`. The OneSignal SDK exposes that object as `additionalData`. A `data` override is merged into it. Leave `__nvMessageId` in place.
+
+```javascript
+OneSignal.Notifications.addEventListener("click", async (event) => {
+  await fetch("https://your-api.com/api/notifications/events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      eventType: "clicked",
+      eventId: event.notification.additionalData?.__nvMessageId,
+    }),
+  });
+});
+```
+
+Forward `delivered`, `opened`, `dismissed`, or `failed` the same way when your app observes those events. Your backend then calls [Novu's activity endpoint](/platform/integrations/push/push-activity-tracking#step-3-forward-events-to-novu-from-your-backend).

@@ -3,6 +3,7 @@ import {
   agentInboxHandleCandidates,
   agentInboxIdentitySuffix,
   defaultInboxDomainForProvider,
+  isAgentSharedInboxEnabled,
   isReservedAgentInboxHandle,
   isValidAgentEmailSlugPrefix,
   parseAgentSharedInboxLocalPart,
@@ -17,6 +18,8 @@ export type InboxAddressCheck = {
   available: boolean;
   /** A free address close to the one that is taken. Missing when the walk found none. */
   suggestion?: string;
+  /** The mailbox domain this deployment publishes, such as `agentinbox.md` or `dev.agentinbox.md`. */
+  domain: string;
 };
 
 export type InboxAddressClaim = {
@@ -48,19 +51,19 @@ export class InboxAddressTakenException extends ConflictException {
 export class AgentInboxAddressService {
   constructor(private readonly integrationRepository: IntegrationRepository) {}
 
-  async check(handle: string, operatorEmail?: string): Promise<InboxAddressCheck> {
-    if (!isValidAgentEmailSlugPrefix(handle)) {
-      return { handle, available: false };
+  async check(handle?: string, operatorEmail?: string): Promise<InboxAddressCheck> {
+    if (!handle || !isValidAgentEmailSlugPrefix(handle)) {
+      return { handle: handle ?? '', available: false, domain: publishedInboxDomain() };
     }
 
     const domain = defaultInboxDomainForProvider(EmailProviderIdEnum.AgentEmailInbox);
     if (!(await this.isHandleTaken(handle, domain))) {
-      return { handle, available: true };
+      return { handle, available: true, domain };
     }
 
     const suggestion = await this.firstFree(handle, operatorEmail, domain, 'nearby');
 
-    return { handle, available: false, ...(suggestion ? { suggestion } : {}) };
+    return { handle, available: false, ...(suggestion ? { suggestion } : {}), domain };
   }
 
   /**
@@ -146,4 +149,13 @@ export class AgentInboxAddressService {
 
     return undefined;
   }
+}
+
+/** Domain shown on a new address. The production domain stands in when this deployment has not configured one. */
+function publishedInboxDomain(): string {
+  if (!isAgentSharedInboxEnabled()) {
+    return 'agentinbox.md';
+  }
+
+  return defaultInboxDomainForProvider(EmailProviderIdEnum.AgentEmailInbox);
 }

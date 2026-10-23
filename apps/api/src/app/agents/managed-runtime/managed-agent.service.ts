@@ -48,6 +48,7 @@ export interface ManagedAgentContext {
   unseenThreadMessages?: UnseenThreadMessage[];
   platformThreadId?: string;
   platformMessageId?: string;
+  platformUserId?: string;
 }
 
 interface WebhookSessionMetadata {
@@ -63,6 +64,7 @@ interface WebhookSessionMetadata {
   platform: AgentPlatformEnum;
   platformThreadId: string;
   platformMessageId?: string;
+  platformUserId?: string;
   firstPlatformMessageId?: string;
   acknowledgeOnReceived?: boolean;
   suppressReply?: boolean;
@@ -174,6 +176,7 @@ export class ManagedAgentService implements OnModuleInit {
         platform: context.config.platform,
         platformThreadId: context.platformThreadId ?? context.conversation.channels?.[0]?.platformThreadId ?? '',
         platformMessageId: context.platformMessageId,
+        platformUserId: context.platformUserId,
         firstPlatformMessageId: context.conversation.channels?.[0]?.firstPlatformMessageId,
         acknowledgeOnReceived: context.config.acknowledgeOnReceived,
       }),
@@ -207,6 +210,7 @@ export class ManagedAgentService implements OnModuleInit {
     followUpMessage?: string;
     platform: AgentPlatformEnum;
     platformThreadId: string;
+    platformUserId?: string;
     suppressReply?: boolean;
   }): Promise<void> {
     const conversation = await this.conversationRepository.findOne(
@@ -272,6 +276,7 @@ export class ManagedAgentService implements OnModuleInit {
       subscriberId: params.subscriberId ?? '',
       platform: params.platform,
       platformThreadId: params.platformThreadId,
+      platformUserId: params.platformUserId,
       firstPlatformMessageId: channel?.firstPlatformMessageId,
       suppressReply: params.suppressReply,
     });
@@ -489,6 +494,10 @@ export class ManagedAgentService implements OnModuleInit {
 
     if (input.platformMessageId) {
       metadata.platformMessageId = input.platformMessageId;
+    }
+
+    if (input.platformUserId) {
+      metadata.platformUserId = input.platformUserId;
     }
 
     if (input.firstPlatformMessageId) {

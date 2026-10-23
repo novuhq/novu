@@ -10,6 +10,7 @@ import {
 } from '@novu/application-generic';
 import {
   AgentMcpServerRepository,
+  AgentRepository,
   AgentToolTrustRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
@@ -18,6 +19,7 @@ import {
   ConversationActivationRepository,
   ConversationActivityRepository,
   ConversationRepository,
+  HumanContactRepository,
   HumanInteractionRepository,
   IntegrationRepository,
   McpConnectionRepository,
@@ -154,6 +156,8 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     ConversationActivityRepository,
     IntegrationRepository,
     McpConnectionRepository,
+    AgentRepository,
+    HumanContactRepository,
     MessageRepository,
     SubscriberRepository,
     AgentAttachmentStorage,
