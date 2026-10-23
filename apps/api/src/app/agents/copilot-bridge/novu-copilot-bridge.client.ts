@@ -1,5 +1,4 @@
 import { Inject } from '@nestjs/common';
-import type { Agent } from '@novu/framework';
 import { Client, NovuHandler, NovuRequestHandler } from '@novu/framework/nest';
 import type { Request, Response } from 'express';
 import { NovuAgentsBridgeService } from '../novu-agents-bridge/novu-agents-bridge.service';
@@ -33,7 +32,7 @@ export class NovuCopilotBridgeClient {
       return;
     }
 
-    const agents: Agent[] = this.agentsBridge.getAgents();
+    const agents = this.agentsBridge.getAgents();
     if (agents.length === 0) {
       res.status(404).json({
         error: 'NovuCopilot bridge is unavailable',
