@@ -36,6 +36,7 @@ import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { AiChatProvider, NovuCopilotPanel, useAiChat } from '../ai-sidekick';
 import { SidekickToast } from '../ai-sidekick/sidekick-toast';
+import { useWorkflowEditorCopilot } from '../copilot-web-chat';
 import { DeleteWorkflowDialog } from '../delete-workflow-dialog';
 import { Code2 } from '../icons/code-2';
 import { Button } from '../primitives/button';
@@ -86,7 +87,13 @@ export const WorkflowTabs = () => {
     isExternalWorkflow ||
     !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
     !isDevEnvironment;
-  const showCopilot = isAiWorkflowGenerationEnabled && isDevEnvironment && !isExternalWorkflow;
+  const showCopilot = useWorkflowEditorCopilot({
+    isLegacyCopilotEnabled: isAiWorkflowGenerationEnabled,
+    isAvailable: isDevEnvironment && !isExternalWorkflow,
+    workflowId: workflow?._id,
+    workflowLabel: workflow?.workflowId,
+    onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
+  });
 
   // Memoize subscriber data and payload for integration instructions
   // Use the most recently tested subscriber for this workflow, fallback to current user

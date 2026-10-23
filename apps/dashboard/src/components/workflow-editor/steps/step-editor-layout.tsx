@@ -27,6 +27,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AiChatProvider } from '@/components/ai-sidekick';
 import { NovuCopilotPanel } from '@/components/ai-sidekick/novu-copilot-panel';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { useWorkflowEditorCopilot } from '@/components/copilot-web-chat';
 import { Code2 } from '@/components/icons/code-2';
 import { IssuesPanel } from '@/components/issues-panel';
 import { Badge, BadgeIcon } from '@/components/primitives/badge';
@@ -130,7 +131,15 @@ function StepEditorContent() {
   const isAiEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED) && IS_AI_FEATURES_ENABLED;
   const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
   const isExternalWorkflow = !workflow || workflow.origin === ResourceOriginEnum.EXTERNAL;
-  const showCopilot = isAiEnabled && isDevEnvironment && !isExternalWorkflow;
+  const showCopilot = useWorkflowEditorCopilot({
+    isLegacyCopilotEnabled: isAiEnabled,
+    isAvailable: isDevEnvironment && !isExternalWorkflow,
+    workflowId: workflow?._id,
+    workflowLabel: workflow?.workflowId,
+    stepId: step.stepId,
+    stepLabel: step.stepId,
+    onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
+  });
 
   const editorTitle = getEditorTitle(step.type);
   const isInlineResolverStep =
