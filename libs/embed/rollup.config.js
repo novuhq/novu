@@ -43,7 +43,10 @@ module.exports = {
     // Allow json resolution
     json(),
     // Compile TypeScript files
-    typescript({ useTsconfigDeclarationDir: true }),
+    typescript({
+      useTsconfigDeclarationDir: true,
+      include: ['src/**/*.ts'],
+    }),
     // Allow bundling cjs modules (unlike webpack, rollup doesn't understand cjs)
     commonjs({ extensions: ['.js', '.ts'] }),
     /*

@@ -12,6 +12,9 @@ on:
         type: boolean
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+env:
+  NX_NO_CLOUD: 'true'
+
 jobs:
   # This workflow contains a single job called "build"
   e2e_widget:
@@ -111,13 +114,13 @@ jobs:
           parallel: true
           config-file: cypress.config.ts
 
-      - uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
           name: cypress-screenshots
           path: apps/widget/cypress/screenshots
       # Test run video was always captured, so this action uses "always()" condition
-      - uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: cypress-videos

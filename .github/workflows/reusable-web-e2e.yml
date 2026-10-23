@@ -13,6 +13,9 @@ on:
         type: boolean
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+env:
+  NX_NO_CLOUD: 'true'
+
 jobs:
   # This workflow contains a single job called "build"
   e2e_web:
@@ -140,7 +143,7 @@ jobs:
           config-file: cypress.config.ts
           spec: "cypress/tests/**/*.spec.{js,jsx,ts,tsx}"
 
-      - uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
           name: cypress-screenshots
@@ -184,7 +187,7 @@ jobs:
           install: false
           component: true
 
-      - uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
           name: cypress-screenshots

@@ -6,6 +6,9 @@ concurrency:
 on:
   pull_request:
 
+env:
+  NX_NO_CLOUD: 'true'
+
 jobs:
   dependency-review:
     name: Dependency review

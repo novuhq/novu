@@ -574,7 +574,14 @@
     "HEAY",
     "Pyroscope",
     "PYROSCOPE",
-    "usecases"
+    "usecases",
+    "corepack",
+    "elif",
+    "esac",
+    "materialises",
+    "tini",
+    "workdir",
+    "yarnpkg"
   ],
   "flagWords": [],
   "patterns": [
