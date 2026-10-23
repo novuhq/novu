@@ -69,7 +69,8 @@ const commands: Record<string, Command> = {
     '[process] [--tail <n>] [--follow] [--errors]',
     'the last lines of one process (api, worker, bridge, …) or of all of them\n(--tail default 200; --errors: problems only)',
     async (target, parsed) => {
-      await target.ready();
+      // An unhealthy box is the one whose logs are wanted, so this waits only until it answers.
+      await target.readyFor({ reachable: true });
       const flags = ['follow', 'errors'].filter((name) => parsed.flag(name)).map((name) => `--${name}`);
 
       return target.box(['logs', ...parsed.args.slice(0, 1), '--tail', parsed.option('tail') ?? '200', ...flags]);

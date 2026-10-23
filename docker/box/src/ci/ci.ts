@@ -136,6 +136,11 @@ async function applyHead(number: number, pull: PullRequestEvent['pull_request'])
     const report = await cloud.settled(Math.min(SETTLE_SECONDS, (DEADLINE - Date.now()) / 1000));
     const took = duration(Math.round((Date.now() - started) / 1000));
     const problems = report?.ok ? [] : (report?.problems ?? ['the box gave no doctor report']);
+    // No report: the box didn't answer the doctor, so it wouldn't answer for its logs either.
+    if (report && !report.ok)
+      await cloud
+        .box(['logs', '--errors', '--tail', '100'])
+        .catch((error: unknown) => log(`WARN: the box's logs: ${messageOf(error)}`));
     // A box that's ready stays ready when TesterArmy doesn't start. When it does, its own checks report on the PR.
     const testerArmy = problems.length
       ? []
