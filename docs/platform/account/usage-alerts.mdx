@@ -29,7 +29,11 @@ An **Owner** sees usage on **Settings → Billing**, or at [dashboard.novu.co/se
 
 ## Alerts
 
-Novu emails you and notifies you in the Dashboard as usage climbs, when the included runs are used up, and when you reach a limit you set. Each message includes how many runs this cycle has used and whether sending will continue.
+Novu emails you and notifies you in the Dashboard based on your usage limit. Each message includes how many runs this cycle has used and whether sending will continue.
+
+With no limit, alerts warn when usage is much higher than typical for your plan. They do not arrive when the included runs run out, so on-demand charges can start before the first alert.
+
+With a limit at the included runs, alerts arrive at 75%, 90%, and 100% of those runs. With a higher limit, alerts arrive when the included runs run out, and at 75%, 90%, and 100% of the limit.
 
 Organization **Owners** and **Admins** receive the alerts. An Owner can include every member, or turn the warnings off. If sending is paused, Novu keeps reminding you until it resumes. A banner on the Dashboard tells the whole organization.
 
@@ -41,7 +45,7 @@ An organization **Owner** on Pro or Team sets this from **Settings → Billing**
   <Step title="Choose how many extra runs to allow">
     Enter the workflow runs you allow on top of the runs included in your plan. The cycle limit is those two numbers added together.
 
-    Leave the field empty if you do not want a limit. The page shows what the extra runs will cost. Ten thousand extra runs is **$12.00**.
+    Leave the field empty and keep **Pause at limit** off if you do not want a sending limit. If the field is empty and pause is on, sending stops at your plan's included runs. The page shows what the extra runs will cost. Ten thousand extra runs is **$12.00**.
   </Step>
   <Step title="Choose whether sending stops">
     **Pause at limit** is off by default. Leave it off to be warned and keep sending. Turn it on to reject new workflow runs at the limit.
