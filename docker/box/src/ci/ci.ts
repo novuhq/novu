@@ -18,6 +18,7 @@ import {
   OidcToken,
   Pull,
   PullRequestEvent,
+  TesterArmyCancelled,
   TesterArmyFullStarted,
   type TesterArmyPullRequest,
   type TesterArmyStart,
@@ -25,9 +26,34 @@ import {
 } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
 import { BOX_CLI, boxOrigin, detached, OIDC_AUDIENCE } from '../shared/names.ts';
-import { canWrite, comment, github, LABEL, labeler, REPO, unlessMissing } from './github.ts';
+import {
+  canWrite,
+  comment,
+  deployed,
+  github,
+  LABEL,
+  labeler,
+  pullFiles,
+  REPO,
+  undeployed,
+  unlessMissing,
+} from './github.ts';
 
-const MAX_BOXES = 30;
+const MAX_BOXES = 50;
+// What a box builds and runs. A PR that changes none of it (docs, CI, agent rules) gets a box only with the label.
+const BOX_PATHS = [
+  'apps/api/',
+  'apps/worker/',
+  'apps/ws/',
+  'apps/dashboard/',
+  'libs/',
+  'packages/',
+  'enterprise/',
+  'playground/nextjs/',
+  '.source',
+  'pnpm-lock.yaml',
+  'pnpm-workspace.yaml',
+];
 // A name of their own every run: a deleted box's name keeps its Durable Object, so its location (see
 // `Box.introduce`). The cleanup deletes those earlier runs left.
 const RUN = process.env.GITHUB_RUN_ID ?? String(Date.now());
@@ -87,25 +113,27 @@ async function pr(): Promise<number> {
     'the pull_request event'
   );
   const { action, number, pull_request: pull } = event;
-  const labeled = pull.labels.some((label) => label.name === LABEL);
-  if (['labeled', 'unlabeled'].includes(action) ? event.label?.name !== LABEL : !labeled && action !== 'closed') {
+  if (['labeled', 'unlabeled'].includes(action) && event.label?.name !== LABEL) {
     log(`#${number} ${action}: nothing for the box to do`);
 
     return 0;
   }
   const box = `pr-${number}`;
-  if (action === 'closed' || action === 'unlabeled') {
-    await target(box).delete();
-    const why = action === 'closed' ? 'the PR was closed' : `\`${LABEL}\` was removed`;
-    await comment(number, `🗑️ Novu Box \`${box}\` deleted: ${why}.`, { onlyUpdate: true });
-
-    return 0;
-  }
+  if (action === 'closed') return deleteBox(number, box, 'the PR was closed');
   if (pull.state !== 'open') {
     log(`#${number} ${action}: the PR is ${pull.state}`);
 
     return 0;
   }
+  const why = await noAutoBox(number, pull);
+  if (!why) {
+    if (action !== 'unlabeled') return applyHead(number, pull);
+    log(`#${number}: \`${LABEL}\` was removed, and the PR gets a box without it`);
+
+    return 0;
+  }
+  if (!pull.labels.some((label) => label.name === LABEL))
+    return deleteBox(number, box, `${why}, and it isn't labeled \`${LABEL}\``);
   const by = await labeler(event);
   if (!(await canWrite(by))) {
     await comment(
@@ -117,6 +145,31 @@ async function pr(): Promise<number> {
   }
 
   return applyHead(number, pull);
+}
+
+// Why a PR gets no box unless it's labeled; null when it gets one anyway. A box merges the PR onto next.
+async function noAutoBox(number: number, pull: Pull): Promise<string | null> {
+  if (pull.draft) return 'the PR is a draft';
+  if (pull.base.ref !== 'next') return `the PR targets ${pull.base.ref}, not next`;
+  const files = await pullFiles(number);
+  if (!files.some((file) => BOX_PATHS.some((path) => file.startsWith(path))))
+    return 'the PR changes nothing a box runs';
+
+  return null;
+}
+
+async function deleteBox(number: number, box: string, why: string): Promise<number> {
+  if (!(await hostList()).includes(box)) {
+    log(`#${number}: no box, ${why}`);
+
+    return 0;
+  }
+  await cancelTesterArmy(box);
+  await target(box).delete();
+  await undeploy(box);
+  await comment(number, `🗑️ Novu Box \`${box}\` deleted: ${why}.`, { onlyUpdate: true });
+
+  return 0;
 }
 
 async function applyHead(number: number, pull: PullRequestEvent['pull_request']): Promise<number> {
@@ -131,6 +184,7 @@ async function applyHead(number: number, pull: PullRequestEvent['pull_request'])
   const logRows: Array<Row> = RUN_URL ? [['Log', `[this run](${RUN_URL})`]] : [];
   await comment(number, card('⏳ Novu Box applying', [boxRow, commitRow, ...logRows]));
   try {
+    await cancelTesterArmy(box);
     if (!(await startOrReach(cloud, box, number))) return 0;
     const plan = await apply(cloud, sha);
     const report = await cloud.settled(Math.min(SETTLE_SECONDS, (DEADLINE - Date.now()) / 1000));
@@ -168,13 +222,17 @@ async function applyHead(number: number, pull: PullRequestEvent['pull_request'])
           '',
           `- **Sign in** as \`agent@novu.co\` with the Novu Box seed password from the password manager, or sign up with your own \`@novu.co\` address.`,
           `- **Rebuilt:** ${plan.replace(/^plan: /, '')}.`,
-          `- Every push applies the new head here. The box sleeps after an hour without requests and wakes on the next one (about 40 s). Removing \`${LABEL}\` or closing the PR deletes it.`,
+          `- Every push applies the new head here. The box sleeps after an hour without requests and wakes on the next one (about 40 s). Closing the PR or turning it back into a draft deletes it, unless it's labeled \`${LABEL}\`.`,
           `- **Logs:** \`${CLI} logs --box ${box}\``,
           '',
           '</details>',
         ]
       )
     );
+    if (!problems.length)
+      await deployed(box, sha, origin, RUN_URL).catch((error: unknown) =>
+        log(`WARN: the GitHub deployment: ${messageOf(error)}`)
+      );
 
     return 0;
   } catch (error) {
@@ -224,7 +282,7 @@ async function startOrReach(cloud: CloudTarget, box: string, number: number): Pr
     if (others.length >= MAX_BOXES) {
       await comment(
         number,
-        `⏸️ No Novu Box: ${others.length} PR boxes exist, and ${MAX_BOXES} is the most at once. Remove \`${LABEL}\` from a PR you're done with, then remove and add \`${LABEL}\` here again.`
+        `⏸️ No Novu Box: ${others.length} PR boxes exist, and ${MAX_BOXES} is the most at once. Once one is deleted (its PR closed or turned into a draft), push again or add \`${LABEL}\` here.`
       );
 
       return false;
@@ -251,6 +309,23 @@ async function startTesterArmy(box: string, pullRequest: TesterArmyPullRequest):
     ...groups.map((group) => `${group.name} (${group.runs} runs)`),
   ];
   log(`TesterArmy started on ${box}: ${suites.join(', ')}`);
+}
+
+// The runs on the earlier head: pointless now, and they'd test the box while it applies. Never fails the job.
+async function cancelTesterArmy(box: string): Promise<void> {
+  try {
+    const { cancelled } = await hostBoxes(`testerarmy/${box}`, TesterArmyCancelled, {
+      method: 'DELETE',
+      token: boxToken,
+    });
+    if (cancelled.length) log(`cancelled ${cancelled.length} TesterArmy runs of an earlier head`);
+  } catch (error) {
+    log(`WARN: cancelling TesterArmy's runs: ${messageOf(error)}`);
+  }
+}
+
+async function undeploy(box: string): Promise<void> {
+  await undeployed(box).catch((error: unknown) => log(`WARN: the GitHub deployment: ${messageOf(error)}`));
 }
 
 async function apply(cloud: CloudTarget, sha: string, { baseline = false } = {}): Promise<string> {
@@ -302,8 +377,13 @@ async function apply(cloud: CloudTarget, sha: string, { baseline = false } = {})
   return output.match(/plan: .*$/gm)?.at(-1) ?? 'plan: nothing';
 }
 
-function whyStale(pull: { readonly state: string }): string {
-  return pull.state === 'open' ? `not labeled \`${LABEL}\`` : pull.state;
+async function whyStale(number: number, pull: Pull | null): Promise<string | null> {
+  if (!pull) return 'the PR is missing';
+  if (pull.state !== 'open') return `the PR is ${pull.state}`;
+  if (pull.labels.some((label) => label.name === LABEL)) return null;
+  const why = await noAutoBox(number, pull);
+
+  return why && `${why}, and it isn't labeled \`${LABEL}\``;
 }
 
 async function cleanup(): Promise<number> {
@@ -313,15 +393,13 @@ async function cleanup(): Promise<number> {
     const number = Number(box.slice(3));
     try {
       const pull = await github(`/repos/${REPO}/pulls/${number}`, Pull).catch(unlessMissing);
-      if (pull?.state === 'open' && pull.labels.some((label) => label.name === LABEL)) continue;
-      log(`${box}: the PR is ${pull ? whyStale(pull) : 'missing'}`);
+      const why = await whyStale(number, pull);
+      if (!why) continue;
+      log(`${box}: ${why}`);
       await target(box).delete();
+      await undeploy(box);
       if (pull)
-        await comment(
-          number,
-          `🗑️ Novu Box \`${box}\` deleted by the nightly cleanup: the PR is closed or no longer labeled \`${LABEL}\`.`,
-          { onlyUpdate: true }
-        );
+        await comment(number, `🗑️ Novu Box \`${box}\` deleted by the nightly cleanup: ${why}.`, { onlyUpdate: true });
     } catch (error) {
       log(`ERROR: ${box}: ${messageOf(error)}`);
       failed++;
@@ -409,7 +487,7 @@ async function refresh(): Promise<number> {
 }
 
 // The full TesterArmy suite on a fresh copy of base: the tests' data never lands in base; the next cleanup deletes it.
-// Results are in TesterArmy only, so the log names the commit and each group's batch.
+// TesterArmy posts the results to Slack; the log names the commit they're for.
 async function full(): Promise<number> {
   const box = target(NIGHTLY_BOX);
   await box.delete();
@@ -423,7 +501,7 @@ async function full(): Promise<number> {
     token: boxToken,
   });
   if (signUpUsersDeleted.length) log(`deleted leftover sign-up users: ${signUpUsersDeleted.join(', ')}`);
-  for (const group of groups) log(`TesterArmy started ${group.name} (${group.runs} runs), batch ${group.batchId}`);
+  for (const group of groups) log(`TesterArmy started ${group.name} (${group.runs} runs)`);
 
   return 0;
 }
@@ -443,7 +521,7 @@ await main('ci', () =>
     },
     cleanup: {
       usage: '',
-      help: 'delete pr-* boxes whose PR is closed or no longer labeled `box`, and base-next-* and nightly-* boxes\nof earlier runs idle for an hour',
+      help: 'delete pr-* boxes whose PR is closed or no longer gets a box, and base-next-* and nightly-* boxes\nof earlier runs idle for an hour',
       run: cleanup,
     },
     rebake: { usage: '', help: 'bake base again from next and save it to its snapshot (a new chain)', run: rebake },

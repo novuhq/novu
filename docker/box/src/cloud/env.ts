@@ -15,4 +15,5 @@ export type HostEnv = {
   readonly SLACK_ROUTER_URL?: string;
   readonly SLACK_CHANNEL?: string;
   readonly TESTERARMY_API_KEY?: string;
+  readonly TESTERARMY_NIGHTLY_WEBHOOKS?: string;
 } & { readonly [name in SecretName]?: string };

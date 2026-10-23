@@ -1,11 +1,21 @@
 import * as z from 'zod';
 import { githubToken } from '../cli/cloud-http.ts';
 import { fetchJson, HttpError, type JsonInit } from '../node/http.ts';
-import { IssueComment, IssueEvent, Permission, type PullRequestEvent } from '../shared/contracts.ts';
+import {
+  Deployment,
+  IssueComment,
+  IssueEvent,
+  Permission,
+  PullFile,
+  type PullRequestEvent,
+} from '../shared/contracts.ts';
 
 export const REPO = process.env.GITHUB_REPOSITORY ?? 'novuhq/novu';
 export const LABEL = 'box';
 const MARK = '<!-- novu-box -->';
+// One environment for every PR box, each box's deployments told apart by their task. So a new one mustn't mark the
+// environment's others inactive (`auto_inactive`): they're other PRs'.
+const ENVIRONMENT = 'Novu Box';
 
 export async function github<T>(path: string, schema: z.ZodType<T>, init: JsonInit = {}): Promise<T> {
   const headers = {
@@ -49,6 +59,41 @@ export async function comment(number: number, body: string, { onlyUpdate = false
     const created = await github(`/repos/${REPO}/issues/${number}/comments`, IssueComment, { method: 'POST', json });
     commentIds.set(number, created.id);
   }
+}
+
+// The PR's "View deployment" button, like a Netlify preview's.
+export async function deployed(box: string, sha: string, url: string, logUrl: string | undefined): Promise<void> {
+  await undeployed(box);
+  const { id } = await github(`/repos/${REPO}/deployments`, Deployment, {
+    method: 'POST',
+    json: {
+      ref: sha,
+      task: `deploy:${box}`,
+      environment: ENVIRONMENT,
+      transient_environment: true,
+      auto_merge: false,
+      required_contexts: [],
+      description: `Novu Box ${box}`,
+    },
+  });
+  await github(`/repos/${REPO}/deployments/${id}/statuses`, z.unknown(), {
+    method: 'POST',
+    json: { state: 'success', environment_url: url, ...(logUrl && { log_url: logUrl }), auto_inactive: false },
+  });
+}
+
+export async function undeployed(box: string): Promise<void> {
+  const query = `environment=${encodeURIComponent(ENVIRONMENT)}&task=${encodeURIComponent(`deploy:${box}`)}`;
+  const deployments = await github(`/repos/${REPO}/deployments?${query}&per_page=100`, z.array(Deployment));
+  for (const { id } of deployments)
+    await github(`/repos/${REPO}/deployments/${id}/statuses`, z.unknown(), {
+      method: 'POST',
+      json: { state: 'inactive' },
+    });
+}
+
+export async function pullFiles(number: number): Promise<Array<string>> {
+  return (await everyPage(`/repos/${REPO}/pulls/${number}/files`, PullFile)).map((file) => file.filename);
 }
 
 export async function labeler(event: PullRequestEvent): Promise<string | undefined> {
