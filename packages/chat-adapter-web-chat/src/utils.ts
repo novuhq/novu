@@ -171,7 +171,8 @@ export function sanitizeMessageMetadata(input: unknown): WebChatRawMessage['meta
       break;
     }
 
-    if (key.length > MAX_METADATA_KEY_LENGTH) {
+    // JSON.parse yields an own `__proto__` key; assigning it would swap the result's prototype.
+    if (key === '__proto__' || key.length > MAX_METADATA_KEY_LENGTH) {
       continue;
     }
 

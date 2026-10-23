@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NovuWebChatAdapterImpl } from './adapter.js';
+import { sanitizeMessageMetadata } from './utils.js';
 import type { WebChatAdapterConfig, WebChatSession } from './types.js';
 
 vi.mock('chat', () => {
@@ -710,6 +711,13 @@ describe('NovuWebChatAdapterImpl', () => {
       });
 
       expect(metadata).toEqual({ keep: 'x' });
+    });
+
+    it('ignores a __proto__ key instead of reassigning the prototype', () => {
+      const direct = sanitizeMessageMetadata(JSON.parse('{"__proto__":null,"keep":"x"}'));
+
+      expect(Object.getPrototypeOf(direct)).toBe(Object.prototype);
+      expect(direct).toEqual({ keep: 'x' });
     });
 
     it('caps metadata at 20 keys', async () => {
