@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
-import * as mixpanel from 'mixpanel-browser';
+// Default import. `import *` calls Mixpanel with the module namespace as `this`.
+import mixpanel from 'mixpanel-browser';
 import { useCallback } from 'react';
 import { measure } from '@/api/telemetry';
 import { IS_SELF_HOSTED, MIXPANEL_KEY } from '@/config';
@@ -19,8 +20,15 @@ export const useTelemetry = () => {
       const onboardingSessionId = readPersistedCliOnboardingSessionId();
 
       if (mixpanelEnabled) {
-        // @ts-expect-error missing from types
-        const sessionReplayProperties = mixpanel.get_session_recording_properties();
+        let sessionReplayProperties: Record<string, unknown> = {};
+
+        try {
+          sessionReplayProperties =
+            // @ts-expect-error missing from types
+            mixpanel.get_session_recording_properties();
+        } catch (error) {
+          console.error(error);
+        }
 
         data = {
           ...(data || {}),
