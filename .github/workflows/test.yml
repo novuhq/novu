@@ -115,7 +115,8 @@ jobs:
   build_docker_api:
     name: Build Docker API
     runs-on: ubuntu-latest
-    timeout-minutes: 80
+    # bcrypt 5.0.1 has no Node 22 arm64 musl prebuild, so QEMU compiles it.
+    timeout-minutes: 120
     needs: [get-affected]
     if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
     permissions:
