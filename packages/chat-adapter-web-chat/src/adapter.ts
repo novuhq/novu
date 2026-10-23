@@ -30,6 +30,7 @@ import {
   mintConversationId,
   mintMessageId,
   parsePostableMessage,
+  sanitizeMessageMetadata,
   toThreadId,
 } from './utils.js';
 
@@ -275,12 +276,14 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     }
 
     const messageId = clientMessageId || mintMessageId();
+    const metadata = sanitizeMessageMetadata(body.metadata);
     const message = this.parseMessage({
       id: messageId,
       text: kind.text,
       subscriberId: session.subscriberId,
       createdAt: new Date().toISOString(),
       contextKeys: session.contextKeys ?? [],
+      ...(metadata ? { metadata } : {}),
     });
 
     try {

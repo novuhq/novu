@@ -441,6 +441,29 @@ describe('BridgeExecutorService', () => {
       expect(logger.warn.calledOnce).to.equal(true);
     });
 
+    it('should forward web-chat per-message metadata and leave other platforms untouched', async () => {
+      const { service } = makeService();
+      const message = { ...makeMessage(), raw: { metadata: { workflowId: 'wf_1', stepId: 'step_1' } } };
+      const signing = (platform: AgentPlatformEnum) => ({
+        organizationId: 'org',
+        environmentId: 'env',
+        conversationId: 'conv',
+        platform,
+      });
+
+      const webChat = await (service as any).mapMessage(message, undefined, signing(AgentPlatformEnum.WEB_CHAT));
+      const slack = await (service as any).mapMessage(message, undefined, signing(AgentPlatformEnum.SLACK));
+      const empty = await (service as any).mapMessage(
+        { ...makeMessage(), raw: {} },
+        undefined,
+        signing(AgentPlatformEnum.WEB_CHAT)
+      );
+
+      expect(webChat.metadata).to.deep.equal({ workflowId: 'wf_1', stepId: 'step_1' });
+      expect(slack).to.not.have.property('metadata');
+      expect(empty).to.not.have.property('metadata');
+    });
+
     it('should re-sign stored attachments instead of reusing stored urls', async () => {
       const { service, attachmentStorage } = makeService({
         attachmentStorage: { signRead: sinon.stub().resolves('https://fresh-signed/read') },

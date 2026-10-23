@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NovuWebChatAdapterImpl } from './adapter.js';
+import { sanitizeMessageMetadata } from './utils.js';
 import type { WebChatAdapterConfig, WebChatSession } from './types.js';
 
 vi.mock('chat', () => {
@@ -7,10 +8,12 @@ vi.mock('chat', () => {
     id: string;
     text: string;
     author: { userId: string };
-    constructor(data: { id: string; text: string; author: { userId: string } }) {
+    raw: unknown;
+    constructor(data: { id: string; text: string; author: { userId: string }; raw?: unknown }) {
       this.id = data.id;
       this.text = data.text;
       this.author = data.author;
+      this.raw = data.raw;
     }
   }
 
@@ -681,5 +684,55 @@ describe('NovuWebChatAdapterImpl', () => {
     await adapter.stopTyping('web_chat:conv_abcdefghijkl');
 
     expect(config.startTyping).toHaveBeenCalledWith({ threadId: 'web_chat:conv_abcdefghijkl' });
+  });
+
+  describe('per-message metadata', () => {
+    async function rawMetadataFor(metadata: unknown) {
+      const { adapter, processMessage } = await createAdapter();
+      const response = await adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'hi', metadata }));
+      expect(response.status).toBe(201);
+
+      return (processMessage.mock.calls[0][2] as { raw: { metadata?: Record<string, unknown> } }).raw.metadata;
+    }
+
+    it('forwards sanitized scalar metadata on the raw message', async () => {
+      const metadata = await rawMetadataFor({ workflowId: 'wf_1', stepId: 's1', n: 2, ok: true, none: null });
+
+      expect(metadata).toEqual({ workflowId: 'wf_1', stepId: 's1', n: 2, ok: true, none: null });
+    });
+
+    it('drops non-scalar values, long keys and oversized strings', async () => {
+      const metadata = await rawMetadataFor({
+        keep: 'x',
+        nested: { a: 1 },
+        list: [1],
+        long: 'a'.repeat(513),
+        ['k'.repeat(65)]: 'v',
+      });
+
+      expect(metadata).toEqual({ keep: 'x' });
+    });
+
+    it('ignores a __proto__ key instead of reassigning the prototype', () => {
+      const direct = sanitizeMessageMetadata(JSON.parse('{"__proto__":null,"keep":"x"}'));
+
+      expect(Object.getPrototypeOf(direct)).toBe(Object.prototype);
+      expect(direct).toEqual({ keep: 'x' });
+    });
+
+    it('caps metadata at 20 keys', async () => {
+      const input = Object.fromEntries(Array.from({ length: 30 }, (_, i) => [`k${i}`, i]));
+      const metadata = await rawMetadataFor(input);
+
+      expect(Object.keys(metadata ?? {})).toHaveLength(20);
+    });
+
+    it('omits metadata when it is not a plain object or ends up empty', async () => {
+      expect(await rawMetadataFor('str')).toBeUndefined();
+      expect(await rawMetadataFor([1, 2])).toBeUndefined();
+      expect(await rawMetadataFor(null)).toBeUndefined();
+      expect(await rawMetadataFor({ nested: {} })).toBeUndefined();
+      expect(await rawMetadataFor(undefined)).toBeUndefined();
+    });
   });
 });
