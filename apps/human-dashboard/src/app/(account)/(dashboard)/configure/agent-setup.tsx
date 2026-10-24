@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronDown, Terminal } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { ConnectAgentDrawer } from '@/components/connect/connect-agent-drawer';
 import { CONFIGURE_CONNECT_PARAM } from '@/components/dashboard/nav';
@@ -9,8 +9,15 @@ import { Button, SMALL_BUTTON } from '@/components/ui/button';
 import { Fold } from '@/components/ui/stepper';
 import { useNow } from '@/hooks/use-now';
 import type { ToolId } from '@/lib/ai-tools';
-import { type AgentHost, type ConnectApi, formatCheckedAgo, hostLiveness, hostName, isHostId } from '@/lib/host-status';
-import type { HostId } from '@/lib/hosts';
+import {
+  type AgentHost,
+  type ConnectApi,
+  connectedHostIds,
+  formatCheckedAgo,
+  hostLiveness,
+  hostName,
+} from '@/lib/host-status';
+import { type HostId, isHostId } from '@/lib/hosts';
 import { HOST_LABELS } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
@@ -78,6 +85,9 @@ export function AgentSetup({
   const now = useNow(renderedAt);
   const connected = hostLiveness(lastCheckedAt, now) === 'live';
   const hosts = useHosts(renderedHosts, lastCheckedAt);
+  // The picker ticks each host connected now: one that checked the inbox, or used its code, within the last
+  // day, and each chat app that signed in.
+  const connectedHosts = useMemo(() => [...connectedHostIds(hosts, now, connectedTools)], [hosts, now, connectedTools]);
 
   return (
     <section className="relative overflow-hidden rounded-[10px] border border-border bg-background">
@@ -126,7 +136,7 @@ export function AgentSetup({
       </Fold>
       <ConnectAgentDrawer
         {...drawer}
-        connectedHosts={connectedTools}
+        connectedHosts={connectedHosts}
         initialHost={connectHost ?? undefined}
         open={open}
         onOpenChange={(isOpen) => {

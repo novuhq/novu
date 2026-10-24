@@ -8,7 +8,7 @@ import { HostPicker } from '@/components/connect/host-picker';
 import { HostPanel, hostLead } from '@/components/connect/host-steps';
 import { DOCS_URL } from '@/components/dashboard/nav';
 import { Eyebrow, StepLead, StepTitle } from '@/components/onboarding/onboarding-shell';
-import { useConnectCode } from '@/hooks/use-connect-code';
+import { useHostConnectCode } from '@/hooks/use-connect-code';
 import type { ConnectApi } from '@/lib/host-status';
 import { DEFAULT_HOST, type HostId, hostOf } from '@/lib/hosts';
 
@@ -34,9 +34,9 @@ type ConnectStepProps = {
  * for a chat app, its sign-in. The page moves on by itself once a host has connected.
  */
 export function ConnectStep({ handle, apiUrl, waiting, mcpUrl, connectedHosts, api, initialHost }: ConnectStepProps) {
-  const createCode = useCallback(() => createOnboardingConnectCodeAction(handle), [handle]);
-  const { state: code, retry } = useConnectCode(createCode, true);
   const [host, setHost] = useState<HostId>(initialHost ?? DEFAULT_HOST);
+  const createCode = useCallback((forHost: HostId) => createOnboardingConnectCodeAction(handle, forHost), [handle]);
+  const { state: code, retry } = useHostConnectCode(createCode, host, true);
   const connected = useMemo(() => new Set<HostId>(connectedHosts), [connectedHosts]);
   const chosen = hostOf(host);
   // Commands connect as the agent they name; a chat app's line names the agent already.

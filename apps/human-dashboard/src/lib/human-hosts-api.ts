@@ -2,7 +2,8 @@ import 'server-only';
 
 import { cache } from 'react';
 
-import type { ConnectCode, ConnectCodeCheck, HostId, HostStatus } from './host-status';
+import type { ConnectCode, ConnectCodeCheck, HostStatus } from './host-status';
+import type { HostId } from './hosts';
 import type { HumanAccount } from './human-account';
 import { isHumanApiNotFound } from './human-api-error';
 import { requestForAccount } from './human-api-key';

@@ -13,6 +13,7 @@ import {
   type HostStatus,
   NEVER_CHECKED,
 } from '@/lib/host-status';
+import { isHostId } from '@/lib/hosts';
 import { readHumanAccount, requireHumanAccount } from '@/lib/human-account';
 import { AGENT_NOT_SET_UP_MESSAGE, deleteAgent, updateAgentSettings } from '@/lib/human-agent-api';
 import { readAgentStatus } from '@/lib/human-agent-status';
@@ -117,10 +118,12 @@ export async function deleteAgentAction(): Promise<DeleteAgentResult> {
 }
 
 /**
- * A one-time code for "Connect another agent", for the agent as the page names it. The drawer asks when it
- * opens, shortly before the code runs out, and when the API says the one it shows ran out.
+ * A one-time code for "Connect another agent", for the agent as the page names it, and for the host picker's
+ * tab it shows on (`host`), which a host that doesn't say which one it is then counts as. The drawer asks when
+ * it opens, when another host's tab is chosen, shortly before the code runs out, and when the API says the one
+ * it shows ran out.
  */
-export async function createConnectCodeAction(handle: string): Promise<ConnectCodeResult> {
+export async function createConnectCodeAction(handle: string, host?: string): Promise<ConnectCodeResult> {
   if (!isHandle(handle)) {
     return { ok: false, error: 'This agent can’t be connected by name. Check its address on this page.' };
   }
@@ -128,7 +131,7 @@ export async function createConnectCodeAction(handle: string): Promise<ConnectCo
   const account = await requireHumanAccount({ returnTo: '/configure' });
 
   try {
-    const code = await createConnectCode(account, handle);
+    const code = await createConnectCode(account, handle, isHostId(host) ? host : undefined);
 
     return { ok: true, code, expiresInMs: Date.parse(code.expiresAt) - Date.now() };
   } catch (error) {

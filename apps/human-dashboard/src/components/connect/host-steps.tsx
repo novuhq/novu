@@ -494,7 +494,7 @@ type HostPanelProps = {
 /**
  * The steps of the host chosen in the picker, in the dashboard: its commands with the one-time code, or a
  * chat app's sign-in. Choosing another host fades these out and the next ones in, while the height follows.
- * The code is the page's, so it stays the same from one host to the next.
+ * The code is the one the page holds for the host on show (`useHostConnectCode`).
  */
 export function HostPanel({
   selected,

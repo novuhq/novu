@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { ConnectCode, ConnectCodeResult } from '@/lib/host-status';
+import { DEFAULT_HOST, type HostId, hostOf } from '@/lib/hosts';
 
 /** A code on screen, with when it runs out by the browser's own clock. */
 export type HeldCode = ConnectCode & { deadline: number };
@@ -78,6 +79,41 @@ export function useConnectCode(fetchCode: () => Promise<ConnectCodeResult>, acti
   const retry = useCallback(() => void load('fresh'), [load]);
 
   return { state, renew, retry };
+}
+
+/**
+ * The code for the host the picker shows (`useConnectCode`). Each host that runs commands gets a code of its
+ * own, so the API knows which host used it: choosing another one swaps the code, the one on screen staying
+ * until the new one fades in where it was. A chat app needs no code, so choosing one keeps the last.
+ */
+export function useHostConnectCode(
+  fetchCode: (host: HostId) => Promise<ConnectCodeResult>,
+  selected: HostId,
+  active: boolean
+) {
+  const runsCommands = hostOf(selected).group === 'commands';
+  const [codeHost, setCodeHost] = useState<HostId>(runsCommands ? selected : DEFAULT_HOST);
+  if (runsCommands && selected !== codeHost) {
+    setCodeHost(selected);
+  }
+
+  // The host the last code was asked for: a new one is asked for only once the choice moved on from it.
+  const askedFor = useRef<HostId | null>(null);
+  const fetchForHost = useCallback(() => {
+    askedFor.current = codeHost;
+
+    return fetchCode(codeHost);
+  }, [fetchCode, codeHost]);
+  const connectCode = useConnectCode(fetchForHost, active);
+  const { renew } = connectCode;
+
+  useEffect(() => {
+    if (active && askedFor.current !== null && askedFor.current !== codeHost) {
+      renew();
+    }
+  }, [active, codeHost, renew]);
+
+  return connectCode;
 }
 
 function hold({ code, expiresInMs }: Extract<ConnectCodeResult, { ok: true }>): HeldCode {
