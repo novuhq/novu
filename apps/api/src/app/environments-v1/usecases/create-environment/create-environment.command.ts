@@ -26,4 +26,12 @@ export class CreateEnvironmentCommand extends OrganizationCommand {
   @IsBoolean()
   @IsOptional()
   returnApiKeys?: boolean;
+
+  @IsOptional()
+  @IsMongoId()
+  environmentId?: string;
+
+  @IsOptional()
+  @IsString()
+  apiKey?: string;
 }
