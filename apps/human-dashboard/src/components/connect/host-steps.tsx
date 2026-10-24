@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpRight, ChevronDown } from 'lucide-react';
+import { ArrowUpRight, Check, ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useId, useState } from 'react';
 
@@ -62,6 +62,17 @@ type CommandStepsProps = {
   hideLead?: boolean;
   /** Whether the second way in starts unfolded. The onboarding keeps it folded, to stay short. */
   alternativeOpen?: boolean;
+  /** The dashboard watches for the host's sign-in after its MCP config; a public page has nothing to watch. */
+  signIn?: SignInWatch;
+};
+
+/** Watching in the dashboard for a host's own sign-in to the MCP server, as `ChatAppSignIn` does for a chat app. */
+type SignInWatch = {
+  /** Whether the page knows the host has signed in to the account. Once true, it stays so. */
+  connected: boolean;
+  api: Pick<ConnectApi, 'isToolSignedIn'>;
+  /** Told once it signed in while its steps were on show. */
+  onSignedIn?: () => void;
 };
 
 /** A host that runs commands: its commands with the code in them, then its second way in, if it has one. */
@@ -74,9 +85,12 @@ export function CommandSteps({
   mcpUrl,
   hideLead = false,
   alternativeOpen = true,
+  signIn,
 }: CommandStepsProps) {
   const alternative = host.alternative;
   const showsAlternative = alternative && (alternative.kind === 'plugin' || mcpUrl !== null);
+  // Only the hosts the MCP server tells apart (`isToolId`) can be told signed in: Cursor, after its MCP config.
+  const watch = signIn && alternative?.kind === 'mcp-config' && isToolId(host.id) ? signIn : null;
 
   return (
     <>
@@ -84,20 +98,28 @@ export function CommandSteps({
       <ConnectPromptBox handle={handle} apiUrl={apiUrl} code={code} onRetry={onRetry} host={host} />
       {host.afterCommands && <p className="text-xs leading-4 text-secondary">{host.afterCommands}</p>}
       {showsAlternative && (
-        <AlternativeSteps alternative={alternative} mcpUrl={mcpUrl ?? ''} defaultOpen={alternativeOpen} />
+        <AlternativeSteps alternative={alternative} mcpUrl={mcpUrl ?? ''} defaultOpen={alternativeOpen}>
+          {watch && <HostSignInLine host={host} handle={handle} {...watch} />}
+        </AlternativeSteps>
       )}
     </>
   );
 }
 
-type AlternativeStepsProps = { alternative: HostAlternative; mcpUrl: string; defaultOpen: boolean };
+type AlternativeStepsProps = {
+  alternative: HostAlternative;
+  mcpUrl: string;
+  defaultOpen: boolean;
+  /** Under the steps: whether the host has signed in yet (`HostSignInLine`). */
+  children?: ReactNode;
+};
 
 /**
  * The second way in, under a divider like the onboarding's "or from your terminal" (`0.3 · Connect`): the
  * plugin's commands, or the MCP server's config with the host's own sign-in. The divider's words fold it
  * open and shut.
  */
-function AlternativeSteps({ alternative, mcpUrl, defaultOpen }: AlternativeStepsProps) {
+function AlternativeSteps({ alternative, mcpUrl, defaultOpen, children }: AlternativeStepsProps) {
   const [open, setOpen] = useState(defaultOpen);
   const contentId = useId();
 
@@ -124,6 +146,7 @@ function AlternativeSteps({ alternative, mcpUrl, defaultOpen }: AlternativeSteps
       <Fold open={open}>
         <div id={contentId} className="flex flex-col gap-2.5 pt-2.5">
           <AlternativeContent alternative={alternative} mcpUrl={mcpUrl} />
+          {children}
         </div>
       </Fold>
     </section>
@@ -390,6 +413,56 @@ function HostSignedIn({ host, handle }: { host: ChatApp; handle: string }) {
   );
 }
 
+type HostSignInLineProps = SignInWatch & { host: CommandHost; handle: string };
+
+/**
+ * After a host's MCP config (Cursor's): "Waiting for Cursor to connect…", asking all the while whether it has
+ * signed in to the account, as the MCP server records for each app it tells apart, then "Cursor is now
+ * <agent>", as a chat app says it (`ChatAppSignIn`). The commands above stay, for the CLI.
+ */
+function HostSignInLine({ host, handle, connected, api, onSignedIn }: HostSignInLineProps) {
+  const router = useRouter();
+  // Known before the page has been reloaded with it, and kept after the page stops saying so.
+  const [signedIn, setSignedIn] = useState(connected);
+  if (connected && !signedIn) {
+    setSignedIn(true);
+  }
+
+  const tool = isToolId(host.id) ? host.id : null;
+  useConnectionPoll({
+    waiting: tool !== null && !signedIn,
+    check: async () => (tool !== null && (await api.isToolSignedIn(tool).catch(() => false))) || null,
+    onConnected: () => {
+      setSignedIn(true);
+      onSignedIn?.();
+      router.refresh();
+    },
+  });
+  const { shown, leaving } = useSwap(signedIn ? 'connected' : 'waiting', SWAP_MS);
+
+  return (
+    <div aria-live="polite">
+      <div
+        key={shown}
+        className={cn(
+          leaving
+            ? 'opacity-0 transition-opacity duration-200 ease-in motion-reduce:transition-none'
+            : 'animate-overlay-in motion-reduce:animate-none'
+        )}
+      >
+        {shown === 'connected' ? (
+          <p className="flex items-center gap-2.5 text-xs leading-4 text-secondary">
+            <Check aria-hidden="true" className="size-3 shrink-0 text-success" strokeWidth={2.5} />
+            {host.name} is now {handle}
+          </p>
+        ) : (
+          <WaitingLine className="pl-0">Waiting for {host.name} to connect…</WaitingLine>
+        )}
+      </div>
+    </div>
+  );
+}
+
 type HostPanelProps = {
   /** The host chosen in the picker. */
   selected: HostId;
@@ -402,7 +475,7 @@ type HostPanelProps = {
   /** The hosts that connected already (`HostPicker`). */
   connected: ReadonlySet<HostId>;
   api: Pick<ConnectApi, 'isToolSignedIn'>;
-  /** Told when a chat app signed in while its steps were on show. */
+  /** Told when a chat app, or Cursor after its MCP config, signed in while its steps were on show. */
   onSignedIn?: (host: HostId) => void;
   /** Whether a host's second way in starts unfolded (`CommandSteps`). */
   alternativeOpen?: boolean;
@@ -460,6 +533,7 @@ export function HostPanel({
               mcpUrl={mcpUrl}
               alternativeOpen={alternativeOpen}
               hideLead={hideLead}
+              signIn={{ connected: connected.has(host.id), api, onSignedIn: () => onSignedIn?.(host.id) }}
             />
           ) : (
             <ChatAppSignIn

@@ -24,6 +24,8 @@ type ConnectStepProps = {
   connectedHosts: readonly HostId[];
   /** What a chat app's steps ask this page's server while they wait for its sign-in. */
   api: Pick<ConnectApi, 'isToolSignedIn'>;
+  /** The host chosen first: the one a public host page sent the operator here for (`?connect=codex`). */
+  initialHost?: HostId | null;
 };
 
 /**
@@ -31,10 +33,10 @@ type ConnectStepProps = {
  * steps: the commands to run in their terminal, with the one-time code in them, and its second way in; or,
  * for a chat app, its sign-in. The page moves on by itself once a host has connected.
  */
-export function ConnectStep({ handle, apiUrl, waiting, mcpUrl, connectedHosts, api }: ConnectStepProps) {
+export function ConnectStep({ handle, apiUrl, waiting, mcpUrl, connectedHosts, api, initialHost }: ConnectStepProps) {
   const createCode = useCallback(() => createOnboardingConnectCodeAction(handle), [handle]);
   const { state: code, retry } = useConnectCode(createCode, true);
-  const [host, setHost] = useState<HostId>(DEFAULT_HOST);
+  const [host, setHost] = useState<HostId>(initialHost ?? DEFAULT_HOST);
   const connected = useMemo(() => new Set<HostId>(connectedHosts), [connectedHosts]);
   const chosen = hostOf(host);
   // Commands connect as the agent they name; a chat app's line names the agent already.

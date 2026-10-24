@@ -13,6 +13,17 @@ export const STEP_LABELS: Record<OnboardingStep, string> = {
 /** The onboarding has one address. Which step it shows comes from how far the setup got. */
 export const ONBOARDING_PATH = '/onboarding';
 
+/** The query parameter that starts the "Connect" step on the host it names, as Configure's opens its drawer. */
+export const ONBOARDING_CONNECT_PARAM = 'connect';
+
+/**
+ * The onboarding with its "Connect" step on a host: where a public host page's "sign in to get your code"
+ * (`configureConnectPath`) takes an operator whose setup isn't done yet.
+ */
+export function onboardingConnectPath(host: string): string {
+  return `${ONBOARDING_PATH}?${ONBOARDING_CONNECT_PARAM}=${host}`;
+}
+
 /** Where agent addresses and their public cards live. */
 export const AGENT_DOMAIN = 'agentinbox.md';
 

@@ -16,6 +16,7 @@ import { StatusPoll } from '@/components/ui/status-poll';
 import { toast } from '@/components/ui/toast';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { useSwap } from '@/hooks/use-swap';
+import type { HostId } from '@/lib/hosts';
 import type { OnboardingView } from '@/lib/human-onboarding';
 import { addressOf, cardLinkOf, type OnboardingStep, PLACEHOLDER_HANDLE } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
@@ -49,7 +50,7 @@ const TOOL_API = { isToolSignedIn: checkOnboardingToolConnectedAction };
  * `OnboardingScreen` renders it; anything that changes outside the page (a setup in a terminal, the
  * reply, a host connecting) is noticed here, by asking the server again.
  */
-export function OnboardingFlow({ view }: { view: OnboardingView }) {
+export function OnboardingFlow({ view, initialHost }: OnboardingScreenProps) {
   const router = useRouter();
   const waitingForReply = view.step === 'test' && Boolean(view.test.sentAt) && !view.test.replyAt;
   const waitingForHostRead =
@@ -83,13 +84,19 @@ export function OnboardingFlow({ view }: { view: OnboardingView }) {
   return (
     <>
       {pollMs && <StatusPoll status={view.status} read={readOnboardingStatusAction} everyMs={pollMs} />}
-      <OnboardingScreen view={view} />
+      <OnboardingScreen view={view} initialHost={initialHost} />
     </>
   );
 }
 
+type OnboardingScreenProps = {
+  view: OnboardingView;
+  /** The host the "Connect" step starts on (`?connect=codex`), instead of the first one. */
+  initialHost?: HostId | null;
+};
+
 /** One screen of the onboarding: the page chrome, the step on the left and the agent's card on the right. */
-export function OnboardingScreen({ view }: { view: OnboardingView }) {
+export function OnboardingScreen({ view, initialHost }: OnboardingScreenProps) {
   const { step, agent, operator, test, host } = view;
   // Step 1 has no agent yet: its card is drawn from what the operator is typing.
   const [draft, setDraft] = useState<AgentDraft>({ name: '', handle: '' });
@@ -162,6 +169,7 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
                   mcpUrl={view.mcpUrl}
                   connectedHosts={view.connectedTools}
                   api={TOOL_API}
+                  initialHost={initialHost}
                 />
               )}
               {shown === 'reach' && agent && host && (

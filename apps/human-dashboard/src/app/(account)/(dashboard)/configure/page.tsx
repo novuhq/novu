@@ -56,7 +56,8 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
         ? configureConnectPath(connectHost)
         : CONFIGURE_PATH,
   });
-  const progress = await requireSetUpAgent(account);
+  // An operator whose setup isn't done goes to the onboarding, which starts its "Connect" step on that host.
+  const progress = await requireSetUpAgent(account, connectHost);
   const { agent } = progress;
   const mcpUrl = readMcpUrl();
   const [setup, connectedTools, { rows, telegramSetup, slackSetup }, hostStatus] = await Promise.all([

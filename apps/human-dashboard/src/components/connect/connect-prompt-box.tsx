@@ -311,12 +311,16 @@ function WithSlots({ text, slots }: { text: string; slots: Slot[] }): ReactNode 
   );
 }
 
-/** Text in which a flag (`--yes`, `--api-url=…`) never breaks across two lines: lines break between words. */
+/**
+ * Text in which a flag (`--yes`, `--api-url=…`) moves to the next line whole rather than break at its hyphens:
+ * lines break between words. One longer than a whole line (`--api-url=…` on a phone) wraps inside itself, so
+ * it never runs past the box's edge.
+ */
 function Words({ text }: { text: string }) {
   return text.split(/(\s+)/).map((word, index) =>
     word.startsWith('-') ? (
-      // The words never move, so where one stands is its key.
-      <span key={index} className="whitespace-nowrap">
+      // The words never move, so where one stands is its key. The block keeps none of the line's hanging indent.
+      <span key={index} className="inline-block max-w-full indent-0 [overflow-wrap:anywhere]">
         {word}
       </span>
     ) : (

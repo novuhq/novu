@@ -84,7 +84,7 @@ test('SEO crawler files contain only production canonical pages', async ({ reque
 
 test('SEO text versions follow the pages out of search results', async ({ request }) => {
   test.skip(SITE_INDEXED, 'Only while the website pages are kept out of search results.');
-  for (const path of ['/index.md', '/llms.txt', '/claude-code', '/claude-code.md']) {
+  for (const path of ['/index.md', '/llms.txt', '/claude-code', '/claude-code.md', '/claude-code/index.md']) {
     const response = await request.get(path);
     expect(response.status()).toBe(200);
     expect(response.headers()['x-robots-tag']).toBe('noindex, nofollow');

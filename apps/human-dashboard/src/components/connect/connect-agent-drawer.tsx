@@ -72,8 +72,9 @@ export function ConnectAgentDrawer({
   const [newHost, setNewHost] = useState<HostVia | null>(null);
   const [host, setHost] = useState<HostId>(initialHost ?? DEFAULT_HOST);
   const connected = useMemo(() => new Set<HostId>(connectedHosts), [connectedHosts]);
-  // A chat app that signed in while its steps were on show already said so: its first check through the MCP
-  // server, which the drawer would take for a new host, isn't news.
+  // A host that signed in to the MCP server while its steps were on show (a chat app, or Cursor after its MCP
+  // config) already said so: its first check through the MCP server, which the drawer would take for a new
+  // host, isn't news.
   const [chatSignedIn, setChatSignedIn] = useState(false);
 
   // Every opening starts over: a new code, and nothing connected yet. Done while

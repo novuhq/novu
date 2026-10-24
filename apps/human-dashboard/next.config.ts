@@ -12,8 +12,11 @@ const LLMS_LINK = `<${SITE_ORIGIN}/llms.txt>; rel="describedby"`;
 const HOST_PAGE = `/:host(${HOST_IDS.join('|')})`;
 const HOST_MARKDOWN = `${HOST_PAGE}\\.md`;
 
-/** The website pages and their text versions, which search engines leave out while `SITE_INDEXED` is off. */
-const WEBSITE_PATHS = ['/', '/sapien', '/index.md', '/llms.txt', HOST_PAGE, HOST_MARKDOWN];
+/**
+ * The website pages and their text versions, which search engines leave out while `SITE_INDEXED` is off. A
+ * host's Markdown also answers at its own address (`/claude-code/index.md`), behind the rewrite.
+ */
+const WEBSITE_PATHS = ['/', '/sapien', '/index.md', '/llms.txt', HOST_PAGE, HOST_MARKDOWN, `${HOST_PAGE}/index.md`];
 
 const NOINDEX = { key: 'X-Robots-Tag', value: 'noindex, nofollow' };
 
