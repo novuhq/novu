@@ -20,6 +20,10 @@ inputs:
   docker_name:
     description: 'Name for docker image'
     required: true
+  platforms:
+    description: 'buildx platforms. The test pipeline uses amd64 because QEMU arm64 compiles bcrypt from source on Node 22.'
+    required: false
+    default: 'linux/amd64,linux/arm64'
 
   bullmq_secret:
     description: 'Bullmq secret api token'
@@ -79,6 +83,7 @@ runs:
         IMAGE_TAG: ${{ github.sha }}
         GH_ACTOR: ${{ github.actor }}
         GH_PASSWORD: ${{ inputs.github_token }}
+        DOCKER_PLATFORMS: ${{ inputs.platforms }}
       run: |
         set -x
         cd apps/api && pnpm run docker:build
