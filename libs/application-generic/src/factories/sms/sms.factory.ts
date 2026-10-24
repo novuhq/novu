@@ -4,6 +4,7 @@ import {
   AfroSmsHandler,
   AzureSmsHandler,
   BandwidthHandler,
+  BirdSmsHandler,
   BrevoSmsHandler,
   BulkSmsHandler,
   BurstSmsHandler,
@@ -83,6 +84,7 @@ export class SmsFactory implements ISmsFactory {
     new ISendProSmsHandler(),
     new CmTelecomHandler(),
     new RuachSmsHandler(),
+    new BirdSmsHandler(),
   ];
 
   getHandler(integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>) {

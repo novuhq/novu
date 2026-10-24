@@ -316,6 +316,35 @@ export const sparkpostConfig: IConfigCredential[] = [
   ...mailConfigBase,
 ];
 
+export const birdEmailConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'Bird API key (bk_...). The region is inferred from the key prefix.',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
+export const birdSmsConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'Bird API key (bk_...). The region is inferred from the key prefix.',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'From',
+    description:
+      'Sender for free-text and workspace templates. Leave empty when sending built-in templates, which select their sender automatically.',
+    type: 'string',
+    required: false,
+  },
+];
+
 export const netCoreConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
