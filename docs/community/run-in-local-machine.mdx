@@ -109,6 +109,10 @@ If you used `npm run setup:project` or Jarvis, default `.env` files are created 
     - `JWT_SECRET` - Secret used to sign authentication tokens
     - `STORE_ENCRYPTION_KEY` - Encrypts provider credentials (must be 32 characters)
     - `NOVU_SECRET_KEY` - Server-side API secret key
+    - `NOVU_DEFAULT_PROJECT_NAME`, `NOVU_DEFAULT_PROJECT_ID`, `NOVU_DEFAULT_API_KEY` - Optional self-hosted
+      first-organization defaults. Set all three together to create the Development environment with the specified
+      name, MongoDB ObjectId, and API key when a new organization is created. The API key is encrypted at rest and
+      is never logged. Existing organizations and normal environment creation are unchanged.
     - `S3_LOCAL_STACK`, `S3_BUCKET_NAME`, `S3_REGION` - LocalStack/S3 storage settings
     - `SENTRY_DSN` - Optional Sentry DSN for error reporting
   </Accordion>

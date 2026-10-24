@@ -11,9 +11,13 @@ import {
   StringifyEnv,
 } from '@novu/shared';
 import { bool, CleanedEnv, cleanEnv, json, num, port, str, url, ValidatorSpec } from 'envalid';
+import { getDefaultProjectConfig } from './default-project.config';
 
 export function validateEnv() {
   const env = cleanEnv(process.env, envValidators, { reporter: createThrowingEnvReporter('api') });
+  if (processEnv.IS_SELF_HOSTED === 'true') {
+    getDefaultProjectConfig(env);
+  }
 
   /*
    * The API only produces, and only to these three - inbound parse is enqueued
@@ -108,6 +112,9 @@ export const envValidators = {
   MONGO_MIN_POOL_SIZE: num({ default: 10 }),
   MONGO_URL: str(),
   NOVU_API_KEY: str({ default: '' }),
+  NOVU_DEFAULT_PROJECT_NAME: str({ default: '' }),
+  NOVU_DEFAULT_PROJECT_ID: str({ default: '' }),
+  NOVU_DEFAULT_API_KEY: str({ default: '' }),
   STORE_ENCRYPTION_KEY: str(),
   REDIS_CACHE_SERVICE_HOST: str({ default: '' }),
   REDIS_CACHE_SERVICE_PORT: str({ default: '' }),

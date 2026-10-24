@@ -1,8 +1,8 @@
+import { createHash } from 'node:crypto';
 import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { encryptApiKey, FeatureFlagsService, SYSTEM_LIMITS } from '@novu/application-generic';
 import { EnvironmentEntity, EnvironmentRepository, NotificationGroupRepository } from '@novu/dal';
 import { EnvironmentEnum, EnvironmentTypeEnum, FeatureFlagsKeysEnum, PROTECTED_ENVIRONMENTS } from '@novu/shared';
-import { createHash } from 'crypto';
 import { nanoid } from 'nanoid';
 import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
@@ -54,9 +54,18 @@ export class CreateEnvironment {
       }
     }
 
-    const key = await this.generateUniqueApiKey.execute();
+    const key = command.apiKey || (await this.generateUniqueApiKey.execute());
+    if (!key.trim()) {
+      throw new BadRequestException('API key cannot be empty');
+    }
+
     const encryptedApiKey = encryptApiKey(key);
     const hashedApiKey = createHash('sha256').update(key).digest('hex');
+
+    if (command.apiKey && (await this.environmentRepository.findByApiKey({ hash: hashedApiKey }))) {
+      throw new BadRequestException('API key is already in use');
+    }
+
     const color = this.getEnvironmentColor(command.name, command.color);
 
     if (!color) {
@@ -66,6 +75,7 @@ export class CreateEnvironment {
     const type = await this.getEnvironmentType(command.name, command.type);
 
     const environment = await this.environmentRepository.create({
+      _id: command.environmentId,
       _organizationId: command.organizationId,
       name: normalizedName,
       identifier: nanoid(12),
