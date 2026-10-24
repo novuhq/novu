@@ -81,10 +81,14 @@ export function useConnectCode(fetchCode: () => Promise<ConnectCodeResult>, acti
   return { state, renew, retry };
 }
 
+/** What a host's commands show while their own code is on its way. */
+const LOADING: ConnectCodeState = { status: 'loading' };
+
 /**
  * The code for the host the picker shows (`useConnectCode`). Each host that runs commands gets a code of its
- * own, so the API knows which host used it: choosing another one swaps the code, the one on screen staying
- * until the new one fades in where it was. A chat app needs no code, so choosing one keeps the last.
+ * own, so the API knows which host used it. Choosing another one asks for its code afresh, and its commands
+ * show none until that's there: a code only ever shows, and copies, next to the host it was made for. A chat
+ * app needs no code, so choosing one keeps the last.
  */
 export function useHostConnectCode(
   fetchCode: (host: HostId) => Promise<ConnectCodeResult>,
@@ -97,23 +101,22 @@ export function useHostConnectCode(
     setCodeHost(selected);
   }
 
-  // The host the last code was asked for: a new one is asked for only once the choice moved on from it.
-  const askedFor = useRef<HostId | null>(null);
+  // The host the code on screen, or on its way, was asked for.
+  const [askedFor, setAskedFor] = useState<HostId | null>(null);
   const fetchForHost = useCallback(() => {
-    askedFor.current = codeHost;
+    setAskedFor(codeHost);
 
     return fetchCode(codeHost);
   }, [fetchCode, codeHost]);
-  const connectCode = useConnectCode(fetchForHost, active);
-  const { renew } = connectCode;
+  const { state, renew, retry } = useConnectCode(fetchForHost, active);
 
   useEffect(() => {
-    if (active && askedFor.current !== null && askedFor.current !== codeHost) {
-      renew();
+    if (active && askedFor !== null && askedFor !== codeHost) {
+      retry();
     }
-  }, [active, codeHost, renew]);
+  }, [active, askedFor, codeHost, retry]);
 
-  return connectCode;
+  return { state: askedFor === codeHost ? state : LOADING, renew, retry };
 }
 
 function hold({ code, expiresInMs }: Extract<ConnectCodeResult, { ok: true }>): HeldCode {
