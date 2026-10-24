@@ -99,7 +99,7 @@ export function CommandSteps({
       {host.afterCommands && <p className="text-xs leading-4 text-secondary">{host.afterCommands}</p>}
       {showsAlternative && (
         <AlternativeSteps alternative={alternative} mcpUrl={mcpUrl ?? ''} defaultOpen={alternativeOpen}>
-          {watch && <HostSignInLine host={host} handle={handle} {...watch} />}
+          {(open) => watch && <HostSignInLine host={host} handle={handle} active={open} {...watch} />}
         </AlternativeSteps>
       )}
     </>
@@ -110,8 +110,8 @@ type AlternativeStepsProps = {
   alternative: HostAlternative;
   mcpUrl: string;
   defaultOpen: boolean;
-  /** Under the steps: whether the host has signed in yet (`HostSignInLine`). */
-  children?: ReactNode;
+  /** Under the steps, given whether they're open: whether the host has signed in yet (`HostSignInLine`). */
+  children?: (open: boolean) => ReactNode;
 };
 
 /**
@@ -146,7 +146,7 @@ function AlternativeSteps({ alternative, mcpUrl, defaultOpen, children }: Altern
       <Fold open={open}>
         <div id={contentId} className="flex flex-col gap-2.5 pt-2.5">
           <AlternativeContent alternative={alternative} mcpUrl={mcpUrl} />
-          {children}
+          {children?.(open)}
         </div>
       </Fold>
     </section>
@@ -413,14 +413,22 @@ function HostSignedIn({ host, handle }: { host: ChatApp; handle: string }) {
   );
 }
 
-type HostSignInLineProps = SignInWatch & { host: CommandHost; handle: string };
+type HostSignInLineProps = SignInWatch & {
+  host: CommandHost;
+  handle: string;
+  /**
+   * Whether the steps it follows are open. It only asks then: steps that start folded (the onboarding's) start
+   * asking when they open, and each opening gives it its ten minutes anew (`useConnectionPoll`).
+   */
+  active: boolean;
+};
 
 /**
  * After a host's MCP config (Cursor's): "Waiting for Cursor to connect…", asking all the while whether it has
  * signed in to the account, as the MCP server records for each app it tells apart, then "Cursor is now
  * <agent>", as a chat app says it (`ChatAppSignIn`). The commands above stay, for the CLI.
  */
-function HostSignInLine({ host, handle, connected, api, onSignedIn }: HostSignInLineProps) {
+function HostSignInLine({ host, handle, active, connected, api, onSignedIn }: HostSignInLineProps) {
   const router = useRouter();
   // Known before the page has been reloaded with it, and kept after the page stops saying so.
   const [signedIn, setSignedIn] = useState(connected);
@@ -430,7 +438,7 @@ function HostSignInLine({ host, handle, connected, api, onSignedIn }: HostSignIn
 
   const tool = isToolId(host.id) ? host.id : null;
   useConnectionPoll({
-    waiting: tool !== null && !signedIn,
+    waiting: active && tool !== null && !signedIn,
     check: async () => (tool !== null && (await api.isToolSignedIn(tool).catch(() => false))) || null,
     onConnected: () => {
       setSignedIn(true);
