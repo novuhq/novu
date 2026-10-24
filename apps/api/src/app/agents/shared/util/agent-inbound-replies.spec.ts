@@ -2,6 +2,8 @@ import { expect } from 'chai';
 import { AgentPlatformEnum } from '../enums/agent-platform.enum';
 import {
   buildUnresolvedSubscriberAccessReply,
+  EMAIL_VERIFICATION_FAILED_NOTICE_MARKER,
+  isEmailVerificationFailedNotice,
   UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
   UNRESOLVED_SUBSCRIBER_EMAIL_VERIFICATION_FAILED_REPLY,
   UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY,
@@ -42,8 +44,17 @@ describe('buildUnresolvedSubscriberAccessReply', () => {
 
     expect(reply).to.include('victim@example.com');
     expect(reply).to.include('DKIM/SPF');
+    expect(reply).to.include(EMAIL_VERIFICATION_FAILED_NOTICE_MARKER);
+    expect(isEmailVerificationFailedNotice(reply)).to.equal(true);
+    expect(isEmailVerificationFailedNotice(`${reply}\n\n[https://example.test/open]`)).to.equal(true);
     expect(reply).to.not.include('known user');
     expect(reply).to.not.equal(UNRESOLVED_SUBSCRIBER_ACCESS_REPLY);
+  });
+
+  it('does not treat unrelated mail as a verification notice', () => {
+    expect(isEmailVerificationFailedNotice('hello')).to.equal(false);
+    expect(isEmailVerificationFailedNotice('')).to.equal(false);
+    expect(isEmailVerificationFailedNotice(undefined)).to.equal(false);
   });
 
   it('returns generic verification-failed copy when the unverified sender address is blank', () => {

@@ -152,6 +152,7 @@ describe('AgentInboundHandler', () => {
             (overrides.history ?? []).find((activity: any) => activity?.platformMessageId === platformMessageId) ?? null
         ),
       countAgentMessages: sinon.stub().resolves(0),
+      hasAgentMessageContaining: sinon.stub().resolves(false),
     };
     const bridgeExecutor = {
       execute: overrides.bridgeError ? sinon.stub().rejects(overrides.bridgeError) : sinon.stub().resolves(undefined),
@@ -2078,6 +2079,63 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('DKIM/SPF');
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.not.include('known user');
+    });
+
+    it('should not send another DKIM/SPF notice when this thread already has one', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      const { handler, managedAgentService, outboundGateway, conversationService } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      conversationService.hasAgentMessageContaining.resolves(true);
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage('victim@example.com', { dkim: 'failed', spf: 'failed' });
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(conversationService.hasAgentMessageContaining.calledOnce).to.equal(true);
+      expect(conversationService.hasAgentMessageContaining.firstCall.args[0]).to.include({
+        environmentId: 'env1',
+        organizationId: 'org1',
+        conversationId: 'conversation1',
+        platformThreadId: thread.id,
+      });
+    });
+
+    it('should not reply when the inbound mail is an echo of the DKIM/SPF notice', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const { handler, managedAgentService, outboundGateway, conversationService } = makeHandler({
+        subscriberResolveOrProvision: sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = {
+        ...makeEmailDmMessage('agent@example.com', { dkim: 'failed', spf: 'failed' }),
+        text:
+          "We couldn't verify that this email really came from sender@example.com (DKIM/SPF checks failed), " +
+          "so this agent can't reply yet. Resend from a properly authenticated mailbox, or contact the team that owns this agent.\n\n" +
+          '[https://example.test/open]',
+      };
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(conversationService.hasAgentMessageContaining.called).to.equal(false);
     });
 
     it('should resolve identity for a DKIM/SPF-verified restricted email sender', async () => {

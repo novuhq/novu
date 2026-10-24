@@ -2,6 +2,10 @@ import type { PinoLogger } from '@novu/application-generic';
 import { AgentSubscriberAccessEnum } from '@novu/shared';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import {
+  EMAIL_VERIFICATION_FAILED_NOTICE_MARKER,
+  isEmailVerificationFailedNotice,
+} from '../../shared/util/agent-inbound-replies';
 import type { AgentConversationService } from '../conversation/agent-conversation.service';
 import type { OutboundGateway } from '../egress/outbound.gateway';
 import type { ConversationTurn } from '../runtime/conversation-turn';
@@ -15,7 +19,7 @@ export async function maybeReplyUnresolvedSubscriberAccess(params: {
   turn: ConversationTurn;
   logger: Pick<PinoLogger, 'warn'>;
   outboundGateway: Pick<OutboundGateway, 'replyOnThread'>;
-  conversationService: Pick<AgentConversationService, 'getPrimaryChannel'>;
+  conversationService: Pick<AgentConversationService, 'getPrimaryChannel' | 'hasAgentMessageContaining'>;
   emailSenderUnverified: boolean;
 }): Promise<boolean> {
   const { turn, logger, outboundGateway, conversationService, emailSenderUnverified } = params;
@@ -62,6 +66,10 @@ export async function maybeReplyUnresolvedSubscriberAccess(params: {
     return true;
   }
 
+  if (await shouldSkipDuplicateEmailVerificationNotice({ turn, logger, conversationService, emailSenderUnverified })) {
+    return true;
+  }
+
   await postUnresolvedSubscriberAccessReply({
     turn,
     logger,
@@ -69,6 +77,57 @@ export async function maybeReplyUnresolvedSubscriberAccess(params: {
     getPrimaryChannel: (conversation) => conversationService.getPrimaryChannel(conversation),
     emailSenderUnverified,
   });
+
+  return true;
+}
+
+/**
+ * The verification notice is itself an email. When that mail is ingested back
+ * into the thread it fails DKIM/SPF again and would trigger another copy.
+ * Send it once per thread, then drop later unverified turns without dispatching.
+ */
+async function shouldSkipDuplicateEmailVerificationNotice(params: {
+  turn: ConversationTurn;
+  logger: Pick<PinoLogger, 'warn'>;
+  conversationService: Pick<AgentConversationService, 'hasAgentMessageContaining'>;
+  emailSenderUnverified: boolean;
+}): Promise<boolean> {
+  const { turn, logger, conversationService, emailSenderUnverified } = params;
+  const resolution = turn.subscriberResolution;
+  const isVerificationNotice =
+    emailSenderUnverified && turn.config.platform === AgentPlatformEnum.EMAIL && resolution?.outcome !== 'error';
+
+  if (!isVerificationNotice) {
+    return false;
+  }
+
+  const inboundIsNotice = isEmailVerificationFailedNotice(turn.message?.text);
+  const alreadySent =
+    inboundIsNotice ||
+    (await conversationService.hasAgentMessageContaining({
+      environmentId: turn.config.environmentId,
+      organizationId: turn.config.organizationId,
+      conversationId: turn.conversation._id,
+      platformThreadId: turn.platformThreadId,
+      contentIncludes: EMAIL_VERIFICATION_FAILED_NOTICE_MARKER,
+    }));
+
+  if (!alreadySent) {
+    return false;
+  }
+
+  logger.warn(
+    {
+      agentId: turn.agentId,
+      environmentId: turn.config.environmentId,
+      organizationId: turn.config.organizationId,
+      platform: turn.config.platform,
+      conversationId: turn.conversation._id,
+      platformThreadId: turn.platformThreadId,
+      reason: inboundIsNotice ? 'inbound-echo' : 'already-sent',
+    },
+    'Email verification notice already sent in this thread — skipping another reply'
+  );
 
   return true;
 }
