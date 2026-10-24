@@ -5,13 +5,18 @@ import { type ReactNode, useState, useTransition } from 'react';
 
 import { finishOnboardingAction } from '@/app/(account)/onboarding/actions';
 import { ChannelIcon } from '@/components/channels/channel-icon';
+import { SWAP_LAYER } from '@/components/channels/setup-parts';
+import { SlackSetup } from '@/components/channels/slack-setup';
+import { TelegramSetup } from '@/components/channels/telegram-setup';
 import { ShareDialog } from '@/components/dashboard/share-dialog';
 import { Eyebrow, StepTitle } from '@/components/onboarding/onboarding-shell';
 import { ClockTime } from '@/components/onboarding/parts';
 import { Badge } from '@/components/ui/badge';
 import { Button, SMALL_BUTTON } from '@/components/ui/button';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import type { AgentReach } from '@/lib/agent-settings';
 import type { HostStatus } from '@/lib/host-status';
+import type { OnboardingChannelSetup } from '@/lib/human-onboarding';
 import { HOST_LABELS, type HostVia } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
@@ -23,23 +28,44 @@ type ReachStepProps = {
   /** The unread message the first host check found, when there was one. */
   waitingMessage: HostStatus['waitingMessage'];
   channels: { telegram: boolean; slack: boolean };
+  /** What the Telegram and Slack drawers open with. Without it, "Set up" leaves for Configure instead. */
+  channelSetup: OnboardingChannelSetup | null;
   /** Who can reach the agent, for the Share dialog. */
   reach: AgentReach | null;
 };
 
 type Destination = Parameters<typeof finishOnboardingAction>[0];
 
+/** The channels whose setup opens in a drawer over this step, the one the Configure page has. */
+type DrawerChannel = 'telegram' | 'slack';
+
 /** How long after one line of the trace the next one comes in. */
 const TRACE_BEAT_MS = 140;
 
 /**
  * Step 4: a host is connected, and the setup is complete. What is left is optional: more ways for people
- * to reach the agent. Every way out of this step ends the onboarding.
+ * to reach the agent. Telegram and Slack are set up in their Configure drawers, over this step; every
+ * other way out of it ends the onboarding.
  */
-export function ReachStep({ handle, cardLink, host, waitingMessage, channels, reach }: ReachStepProps) {
+export function ReachStep({ handle, cardLink, host, waitingMessage, channels, channelSetup, reach }: ReachStepProps) {
   const [leaving, startLeaving] = useTransition();
   const [sharing, setSharing] = useState(false);
+  const [drawer, setDrawer] = useState<DrawerChannel | null>(null);
+  // What the page knew when a drawer opened. The page reloads while one is open (once a channel connects, or
+  // the host reads its first message), and a drawer that is handed a new setup starts over from it.
+  const [setupAtOpen, setSetupAtOpen] = useState(channelSetup);
   const leaveFor = (destination: Destination) => () => startLeaving(() => finishOnboardingAction(destination));
+  const setUp = (via: DrawerChannel) =>
+    channelSetup
+      ? () => {
+          setSetupAtOpen(channelSetup);
+          setDrawer(via);
+        }
+      : leaveFor('configure');
+  const drawerProps = (via: DrawerChannel) => ({
+    open: drawer === via,
+    onOpenChange: (open: boolean) => setDrawer(open ? via : null),
+  });
 
   return (
     <>
@@ -98,7 +124,7 @@ export function ReachStep({ handle, cardLink, host, waitingMessage, channels, re
           description={`People DM ${handle}’s bot.`}
           connected={channels.telegram}
           action="Set up"
-          onAction={leaveFor('configure')}
+          onAction={setUp('telegram')}
         />
         <ReachRow
           icon={<ChannelIcon via="slack" className="size-5 [&>svg]:size-4" />}
@@ -106,7 +132,7 @@ export function ReachStep({ handle, cardLink, host, waitingMessage, channels, re
           description="Its own app in your workspace."
           connected={channels.slack}
           action="Set up"
-          onAction={leaveFor('configure')}
+          onAction={setUp('slack')}
         />
         <ReachRow
           icon={
@@ -132,6 +158,24 @@ export function ReachStep({ handle, cardLink, host, waitingMessage, channels, re
       </div>
 
       <ShareDialog open={sharing} onOpenChange={setSharing} handle={handle} cardLink={cardLink} reach={reach} />
+      {setupAtOpen && (
+        // The drawers' refresh buttons have tooltips, which the dashboard's layout provides for on Configure.
+        <TooltipProvider delayDuration={300}>
+          <TelegramSetup
+            setup={setupAtOpen.telegram}
+            handle={handle}
+            prompt={setupAtOpen.prompts.telegram}
+            {...drawerProps('telegram')}
+          />
+          <SlackSetup
+            setup={setupAtOpen.slack}
+            agentName={setupAtOpen.slackAppName}
+            handle={handle}
+            prompt={setupAtOpen.prompts.slack}
+            {...drawerProps('slack')}
+          />
+        </TooltipProvider>
+      )}
     </>
   );
 }
@@ -155,12 +199,19 @@ type ReachRowProps = {
   icon: ReactNode;
   title: string;
   description: string;
+  /** For a channel: whether it is connected, which swaps the button for "Connected". */
   connected?: boolean;
   action: string;
   onAction: () => void;
 };
 
-function ReachRow({ icon, title, description, connected = false, action, onAction }: ReachRowProps) {
+function ReachRow({ icon, title, description, connected, action, onAction }: ReachRowProps) {
+  const button = (
+    <Button variant="secondary" className={SMALL_BUTTON} onClick={onAction}>
+      {action}
+    </Button>
+  );
+
   return (
     <li className="flex items-center gap-3 border-b border-border px-3.5 py-3 last:border-b-0">
       {icon}
@@ -168,12 +219,20 @@ function ReachRow({ icon, title, description, connected = false, action, onActio
         <h3 className="text-[13px] leading-4.5 font-medium text-foreground">{title}</h3>
         <p className="text-xs leading-4 text-secondary">{description}</p>
       </div>
-      {connected ? (
-        <Badge variant="success">Connected</Badge>
+      {connected === undefined ? (
+        button
       ) : (
-        <Button variant="secondary" className={SMALL_BUTTON} onClick={onAction}>
-          {action}
-        </Button>
+        // The button and "Connected" share one spot, as wide as the wider of the two, and cross-fade when the
+        // channel connects, so nothing else in the row moves. The one that's out is inert: clicks go through it
+        // to the one on show, which a see-through "Connected" on top of the button would otherwise take.
+        <div className="grid shrink-0 items-center justify-items-end">
+          <div inert={connected} className={cn(SWAP_LAYER, connected && '-translate-y-1 opacity-0')}>
+            {button}
+          </div>
+          <div inert={!connected} className={cn(SWAP_LAYER, !connected && 'translate-y-1 opacity-0')}>
+            <Badge variant="success">Connected</Badge>
+          </div>
+        </div>
       )}
     </li>
   );

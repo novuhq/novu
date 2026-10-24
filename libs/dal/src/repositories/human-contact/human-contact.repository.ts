@@ -289,8 +289,53 @@ export class HumanContactRepository extends BaseRepositoryV2<
   }
 
   /**
+   * A contact on any relay in this environment that already stores `address` on `subscriberId`.
+   * Subscribers are shared by the environment, so a second agent can keep that id.
+   */
+  async findSubscriberSharingEmailAddress(
+    environmentId: string,
+    subscriberId: string,
+    address: string
+  ): Promise<Pick<HumanContactEntity, 'subscriberId'> | null> {
+    return this.findOne(
+      {
+        _environmentId: environmentId,
+        subscriberId,
+        $or: [
+          { 'addresses.email.verified.address': address },
+          { 'addresses.email.pending.address': address },
+          { 'addresses.email.declared.address': address },
+        ],
+      },
+      ['subscriberId']
+    );
+  }
+
+  /**
+   * Contacts on this relay that already store `address` as verified, pending, or declared.
+   */
+  async findContactsByEmailAddress(
+    environmentId: string,
+    agentId: string,
+    address: string
+  ): Promise<HumanContactEntity[]> {
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _agentId: agentId,
+        $or: [
+          { 'addresses.email.verified.address': address },
+          { 'addresses.email.pending.address': address },
+          { 'addresses.email.declared.address': address },
+        ],
+      },
+      '*'
+    );
+  }
+
+  /**
    * Records an unverified address the person typed. Does not touch pending or
-   * verified, so it cannot make the address deliverable.
+   * verified, so a contact-id send still cannot use it.
    */
   async setDeclaredAddress(params: {
     environmentId: string;
@@ -329,5 +374,26 @@ export class HumanContactRepository extends BaseRepositoryV2<
     }
 
     return declared;
+  }
+
+  /** Drops a declared address this request just stored, when another contact already owns it. */
+  async clearDeclaredAddress(params: {
+    environmentId: string;
+    agentId: string;
+    subscriberId: string;
+    via: HumanChannelViaEnum;
+    address: string;
+  }): Promise<void> {
+    const declaredPath = `addresses.${params.via}.declared`;
+
+    await this.update(
+      {
+        _environmentId: params.environmentId,
+        _agentId: params.agentId,
+        subscriberId: params.subscriberId,
+        [`${declaredPath}.address`]: params.address,
+      },
+      { $unset: { [declaredPath]: '' } }
+    );
   }
 }

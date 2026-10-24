@@ -50,7 +50,10 @@ type TelegramSetupProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-/** The drawer that walks through giving the agent a Telegram bot. The Configure page's channels open it. */
+/**
+ * The drawer that walks through giving the agent a Telegram bot. The Configure page's channels open it, and
+ * so does the last step of the onboarding.
+ */
 export function TelegramSetup({ setup, handle, prompt, open, onOpenChange }: TelegramSetupProps) {
   const router = useRouter();
   const [step, setStep] = useState<SetupStep>(stepOf(setup));

@@ -1,7 +1,6 @@
 import * as z from 'zod';
-import { isOidc } from '../shared/auth.ts';
 import { BoxState, decode, ExecRequest } from '../shared/contracts.ts';
-import { apiOrigin, BOX_CLI, bearer, boxOfOrigin, EXIT_MARK, SECRETS } from '../shared/names.ts';
+import { apiOrigin, BOX_CLI, boxOfOrigin, EXIT_MARK, SECRETS } from '../shared/names.ts';
 import type { HostEnv } from './env.ts';
 import { json, text } from './life.ts';
 
@@ -84,15 +83,14 @@ export async function boxState(shell: Shell, what: string): Promise<BoxState> {
   return decode(BoxState, await output(shell, [...BOX_CLI, 'state'], what), what);
 }
 
-export function readToken(request: Request, env: HostEnv): string | undefined {
-  if (env.GITHUB_READ_TOKEN) return env.GITHUB_READ_TOKEN;
-  const token = bearer(request);
-  if (isOidc(token))
+// Never the caller's token: PR code in the box could read it.
+export function readToken(env: HostEnv): string {
+  if (!env.GITHUB_READ_TOKEN)
     throw new Error(
       'the host has no GITHUB_READ_TOKEN; set it in Cloudflare: `npx wrangler secret put GITHUB_READ_TOKEN` in docker/box'
     );
 
-  return token;
+  return env.GITHUB_READ_TOKEN;
 }
 
 export async function execBody(request: Request): Promise<ExecRequest | Response> {
@@ -101,9 +99,9 @@ export async function execBody(request: Request): Promise<ExecRequest | Response
   return body.success ? body.data : text(`not an exec request: ${z.prettifyError(body.error)}\n`, 400);
 }
 
-export async function execAnswer(shell: Shell, request: Request, body: ExecRequest, env: HostEnv): Promise<Response> {
+export async function execAnswer(shell: Shell, body: ExecRequest, env: HostEnv): Promise<Response> {
   const { cmd, cwd, github } = body;
-  const token = github ? readToken(request, env) : undefined;
+  const token = github ? readToken(env) : undefined;
 
   return streamed(await run(shell, cmd, { cwd, github: token }));
 }

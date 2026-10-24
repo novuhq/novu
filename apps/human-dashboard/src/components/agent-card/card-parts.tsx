@@ -101,20 +101,25 @@ export function CardPortrait({ handle, address, pictureUrl, state }: CardPortrai
 
 type CardNameProps = {
   name: string;
-  /** Who runs the agent: the operator's full name, or empty when there is none. */
+  /** Who runs the agent, as the card names them: "Ada L.". Empty when there is no name to show. */
   operatorName: string;
   createdAt?: string;
+  /**
+   * What stands in for "Run by …" without an operator's name. Not in the design: the operator reads "Your
+   * agent" on the Configure page, and the public card tells a stranger "An agent".
+   */
+  withoutOperator?: string;
 };
 
-/** The agent's name under its portrait, and who runs it since when: "Run by Dima Grossman · issued Oct 3". */
-export function CardName({ name, operatorName, createdAt }: CardNameProps) {
+/** The agent's name under its portrait, and who runs it since when: "Run by Dima G. · issued Oct 3". */
+export function CardName({ name, operatorName, createdAt, withoutOperator = 'Your agent' }: CardNameProps) {
   return (
     <div className="flex flex-col items-center gap-1 px-5 pt-4.5 pb-3.5 text-center">
       <h2 className="max-w-full truncate text-[22px] leading-7 font-medium tracking-[-0.3px] text-foreground">
         {name}
       </h2>
       <p className="text-xs leading-4 text-secondary">
-        {operatorName ? `Run by ${operatorName}` : 'Your agent'}
+        {operatorName ? `Run by ${operatorName}` : withoutOperator}
         {createdAt && (
           <>
             {' · issued '}

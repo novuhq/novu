@@ -38,6 +38,11 @@ export function requestWithSecretKey(
   return send(region, path, { Authorization: `ApiKey ${secretKey}`, ...dashboardSecretHeader() }, init);
 }
 
+/** An endpoint anyone may call, such as an agent's public card: neither a key nor the secret goes along. */
+export function requestPublic(region: HumanRegion, path: string, init?: HumanApiRequest): Promise<JsonBody> {
+  return send(region, path, {}, init);
+}
+
 function dashboardSecretHeader(): Record<string, string> {
   return { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: process.env.AGENT_INBOX_DASHBOARD_API_SECRET ?? '' };
 }

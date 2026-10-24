@@ -41,3 +41,6 @@ export const PATH_PROCESSES: Readonly<Record<string, string>> = Object.fromEntri
 export const DEPLOYED_APPS: Readonly<Record<string, string>> = Object.fromEntries(
   entries.flatMap(([name, entry]) => (entry.deploy ? [[name, entry.deploy]] : []))
 );
+// A dependency change always changes the lockfile (installs are frozen); the deploy refresh copies a changed
+// package.json.
+export const INSTALL_FILES = ['pnpm-lock.yaml', 'pnpm-workspace.yaml', '.source'];

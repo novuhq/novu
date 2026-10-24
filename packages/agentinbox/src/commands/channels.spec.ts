@@ -22,7 +22,8 @@ vi.mock('./interact', async (importOriginal) => ({
 
 vi.mock('./setup', () => ({ setupCommand: vi.fn() }));
 
-const { channelListCommand, renderChannels, toChannelRows } = await import('./channels');
+const { channelAddCommand, channelListCommand, renderChannels, toChannelRows } = await import('./channels');
+const { setupCommand } = await import('./setup');
 
 const config: CliConfig = {
   apiUrl: 'https://api.novu.co',
@@ -128,5 +129,19 @@ describe('channelListCommand', () => {
 
     expect(stdout).toMatch(/email\s+\(default\)/);
     expect(stdout).toContain('telegram');
+  });
+});
+
+describe('channelAddCommand', () => {
+  it('runs setup for the one channel, without the skills command setup ends with', async () => {
+    loadConfig.mockReturnValue(config);
+
+    await channelAddCommand('Slack', { slackConfigToken: 'xoxe.xoxp-1' });
+
+    expect(setupCommand).toHaveBeenCalledWith(
+      'slack',
+      { slackConfigToken: 'xoxe.xoxp-1', showSkills: false },
+      'channel add slack'
+    );
   });
 });

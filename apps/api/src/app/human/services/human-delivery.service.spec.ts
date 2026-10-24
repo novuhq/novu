@@ -200,6 +200,57 @@ describe('HumanDeliveryService.resolveChannel', () => {
     });
   });
 
+  it('delivers a typed address without reading the verified slot', async () => {
+    const { service, agentIntegrationRepository, integrationRepository, humanContactRepository } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'int1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'int1',
+        identifier: 'email-main',
+        providerId: 'agent-email-inbox',
+        channel: ChannelTypeEnum.EMAIL,
+      },
+    ]);
+    humanContactRepository.findVerifiedAddress.resolves({
+      address: 'old@example.com',
+      requestedAt: '2026-09-01T10:00:00.000Z',
+      verifiedAt: '2026-09-01T10:05:00.000Z',
+    });
+
+    const target = await service.resolveChannel({
+      ...params,
+      via: HumanChannelViaEnum.EMAIL,
+      explicitEmail: 'new@example.com',
+    });
+
+    expect(target).to.deep.equal({
+      platform: 'email',
+      platformUserId: 'new@example.com',
+      integrationIdentifier: 'email-main',
+    });
+    expect(humanContactRepository.findVerifiedAddress.called).to.equal(false);
+  });
+
+  it('refuses a typed address for a keyless org before choosing an integration', async () => {
+    const { service, agentIntegrationRepository, keylessEmailGate } = setup();
+    keylessEmailGate.isBlocked.returns(true);
+    keylessEmailGate.assertAllowed.rejects(
+      new ForbiddenException({
+        code: KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE,
+        message: 'Outbound email needs a Human account.',
+      })
+    );
+
+    try {
+      await service.resolveChannel({ ...params, explicitEmail: 'ada@acme.com' });
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(ForbiddenException);
+    }
+
+    expect(agentIntegrationRepository.find.called).to.equal(false);
+  });
+
   it('keeps a verified email deliverable while a newer pending address is outstanding', async () => {
     const { service, agentIntegrationRepository, integrationRepository, humanContactRepository } = setup();
     agentIntegrationRepository.find.resolves([{ _integrationId: 'int1' }]);

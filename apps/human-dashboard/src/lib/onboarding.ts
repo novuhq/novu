@@ -13,6 +13,17 @@ export const STEP_LABELS: Record<OnboardingStep, string> = {
 /** The onboarding has one address. Which step it shows comes from how far the setup got. */
 export const ONBOARDING_PATH = '/onboarding';
 
+/** The query parameter that starts the "Connect" step on the host it names, as Configure's opens its drawer. */
+export const ONBOARDING_CONNECT_PARAM = 'connect';
+
+/**
+ * The onboarding with its "Connect" step on a host: where a public host page's "sign in to get your code"
+ * (`configureConnectPath`) takes an operator whose setup isn't done yet.
+ */
+export function onboardingConnectPath(host: string): string {
+  return `${ONBOARDING_PATH}?${ONBOARDING_CONNECT_PARAM}=${host}`;
+}
+
 /** Where agent addresses and their public cards live. */
 export const AGENT_DOMAIN = 'agentinbox.md';
 
@@ -46,8 +57,8 @@ export function toHandle(name: string): string {
     .replace(/-+$/, '');
 }
 
-export function addressOf(handle: string): string {
-  return `${handle}@${AGENT_DOMAIN}`;
+export function addressOf(handle: string, domain: string = AGENT_DOMAIN): string {
+  return `${handle}@${domain}`;
 }
 
 /** Where an agent's public card lives on the site: `/p/atlas`. */
@@ -72,7 +83,7 @@ export function writtenLink(url: string): string {
 const CLI_PACKAGE = '@agentinbox/cli';
 
 /** A command copied on its own runs through npx, which needs nothing installed first. */
-const NPX_CLI = `npx ${CLI_PACKAGE}`;
+export const NPX_CLI = `npx ${CLI_PACKAGE}`;
 
 /**
  * The terminal's way to do step 1. It logs in first, which the operator approves in this browser: on its
@@ -85,11 +96,11 @@ export function setupCommand(name: string): string {
   return `${NPX_CLI} login && ${NPX_CLI} setup --agent-name ${quoted}`;
 }
 
-export const INSTALL_SKILLS_COMMAND = `${NPX_CLI} skill install`;
+/** The Agent Inbox skills live in their own repository on GitHub, not in the CLI. */
+export const SKILLS_REPO = 'agentinboxhq/skills';
 
-/** A stretch of the prompt. `strong` is what the host acts on; `accent` is the one rule it must keep. */
-export type PromptSpan = { text: string; tone?: 'strong' | 'accent' };
+/** Installs the skills with the skills CLI, for the coding agents it finds in the project. */
+export const INSTALL_SKILLS_COMMAND = `npx skills add ${SKILLS_REPO}`;
 
-export function promptText(prompt: PromptSpan[][]): string {
-  return prompt.map((line) => line.map((span) => span.text).join('')).join('\n');
-}
+/** What the skills CLI calls each agent it installs for (`--agent claude-code`). */
+export const SKILLS_CLI_AGENTS_URL = 'https://github.com/vercel-labs/skills/blob/main/docs/agents.md';

@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   HttpException,
   HttpStatus,
@@ -15,6 +16,7 @@ import {
 } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { contactIdFromEmail } from '../../services/explicit-email-recipient';
 import { HumanKeylessCapService } from '../../services/human-keyless-cap.service';
 import { HumanMessageQuotaExceededException } from '../../services/human-message-quota.service';
 import { CreateInteraction } from './create-interaction.usecase';
@@ -106,6 +108,17 @@ describe('CreateInteraction', () => {
       execute: sinon.stub().resolves({ ...created, _conversationId: 'conv1', subscriberIds: ['sub-1', 'sub-2'] }),
     };
     const keylessEmailGate = { assertAllowed: sinon.stub().resolves() };
+    const humanContactRepository = {
+      findContactsByEmailAddress: sinon.stub().resolves([]),
+      findSubscriberSharingEmailAddress: sinon.stub().resolves(null),
+      findContact: sinon.stub().resolves(null),
+      setDeclaredAddress: sinon.stub().resolves({ address: 'ada@acme.com', declaredAt: 't' }),
+      clearDeclaredAddress: sinon.stub().resolves(),
+    };
+    const subscriberRepository = {
+      findOne: sinon.stub().resolves(null),
+      create: sinon.stub().resolves({ subscriberId: 'ada' }),
+    };
     const analyticsService = { track: sinon.stub() };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
@@ -126,6 +139,8 @@ describe('CreateInteraction', () => {
       conversationService as any,
       createConversationInteraction as any,
       keylessEmailGate as any,
+      humanContactRepository as any,
+      subscriberRepository as any,
       analyticsService as any
     );
     const command = {
@@ -152,6 +167,8 @@ describe('CreateInteraction', () => {
       conversationService,
       createConversationInteraction,
       keylessEmailGate,
+      humanContactRepository,
+      subscriberRepository,
       analyticsService,
     };
   }
@@ -315,19 +332,15 @@ describe('CreateInteraction', () => {
       expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(true);
     });
 
-    it('refuses a question in a thread without a contact unless anyone may answer', async () => {
+    it('sends a question into a thread with no contact to everyone there', async () => {
       const { usecase, command, agentRepository, inbox, createConversationInteraction } = setup();
       agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
       inbox.firstContactId.returns(undefined);
 
-      try {
-        await usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any);
-        expect.fail('expected BadRequestException');
-      } catch (err) {
-        expect(err).to.be.instanceOf(BadRequestException);
-        expect((err as Error).message).to.contain('--anyone');
-      }
-      expect(createConversationInteraction.execute.called).to.equal(false);
+      await usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any);
+
+      expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['sub-1', 'sub-2']);
+      expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(true);
     });
 
     it('tells everyone in the thread, contact or not', async () => {
@@ -957,5 +970,313 @@ describe('CreateInteraction', () => {
     expect(messageQuota.reserveCredits.calledOnceWith('org1', 1)).to.equal(true);
     expect(messageQuota.messageCredits.accept.called).to.equal(false);
     expect(messageQuota.messageCredits.release.calledOnce).to.equal(true);
+  });
+
+  describe('explicit email address', () => {
+    const agent = { _id: 'agent-relay', identifier: 'human-relay' };
+
+    it('stores a typed address as unverified and delivers that address', async () => {
+      const {
+        usecase,
+        command,
+        agentRepository,
+        deliveryService,
+        humanContactRepository,
+        subscriberRepository,
+        keylessEmailGate,
+      } = setup();
+      agentRepository.findOne.resolves(agent);
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'email-main',
+        platform: 'email',
+        platformUserId: 'ada@acme.com',
+      });
+
+      await usecase.execute({ ...command, to: 'Ada@Acme.com', via: undefined } as any);
+
+      expect(keylessEmailGate.assertAllowed.calledOnce).to.equal(true);
+      expect(subscriberRepository.create.firstCall.args[0]).to.deep.equal({
+        subscriberId: 'ada',
+        _environmentId: 'env1',
+        _organizationId: 'org1',
+      });
+      expect(subscriberRepository.create.firstCall.args[0]).to.not.have.property('email');
+      expect(humanContactRepository.setDeclaredAddress.firstCall.args[0]).to.include({
+        subscriberId: 'ada',
+        address: 'ada@acme.com',
+        via: HumanChannelViaEnum.EMAIL,
+      });
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({
+        subscriberId: 'ada',
+        via: HumanChannelViaEnum.EMAIL,
+        explicitEmail: 'ada@acme.com',
+      });
+    });
+
+    it('reuses the contact that already stores the address', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanContactRepository, subscriberRepository } =
+        setup();
+      agentRepository.findOne.resolves(agent);
+      humanContactRepository.findContactsByEmailAddress.resolves([{ subscriberId: 'ada' }]);
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'email-main',
+        platform: 'email',
+        platformUserId: 'ada@acme.com',
+      });
+
+      await usecase.execute({ ...command, to: 'ada@acme.com' } as any);
+
+      expect(subscriberRepository.create.called).to.equal(false);
+      expect(humanContactRepository.setDeclaredAddress.called).to.equal(false);
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({
+        subscriberId: 'ada',
+        explicitEmail: 'ada@acme.com',
+      });
+    });
+
+    it('reuses the subscriber another agent already created for the same address', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanContactRepository, subscriberRepository } =
+        setup();
+      const subscriberId = contactIdFromEmail('ada+work@acme.com', true);
+      agentRepository.findOne.resolves(agent);
+      subscriberRepository.findOne.resolves({ subscriberId });
+      humanContactRepository.findSubscriberSharingEmailAddress.resolves({ subscriberId });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'email-main',
+        platform: 'email',
+        platformUserId: 'ada+work@acme.com',
+      });
+
+      await usecase.execute({ ...command, to: 'ada+work@acme.com', via: undefined } as any);
+
+      expect(subscriberRepository.create.called).to.equal(false);
+      expect(humanContactRepository.findSubscriberSharingEmailAddress.calledOnce).to.equal(true);
+      expect(humanContactRepository.findSubscriberSharingEmailAddress.firstCall.args).to.deep.equal([
+        'env1',
+        subscriberId,
+        'ada+work@acme.com',
+      ]);
+      expect(humanContactRepository.setDeclaredAddress.firstCall.args[0]).to.include({
+        subscriberId,
+        address: 'ada+work@acme.com',
+      });
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({
+        subscriberId,
+        explicitEmail: 'ada+work@acme.com',
+      });
+    });
+
+    it('does not reuse a taken subscriber that stores a different address', async () => {
+      const { usecase, command, agentRepository, subscriberRepository, humanContactRepository } = setup();
+      agentRepository.findOne.resolves(agent);
+      subscriberRepository.findOne.resolves({ subscriberId: 'taken' });
+
+      try {
+        await usecase.execute({ ...command, to: 'ada+work@acme.com', via: undefined } as any);
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(ConflictException);
+      }
+
+      expect(subscriberRepository.create.called).to.equal(false);
+      expect(humanContactRepository.setDeclaredAddress.called).to.equal(false);
+    });
+
+    it("keeps this agent's declared address when another agent stored the new one on that id", async () => {
+      const { usecase, command, agentRepository, deliveryService, humanContactRepository, subscriberRepository } =
+        setup();
+      const hashedId = contactIdFromEmail('ada@new.com', true);
+      agentRepository.findOne.resolves(agent);
+      subscriberRepository.findOne.callsFake(async (query: { subscriberId: string }) =>
+        query.subscriberId === 'ada' ? { subscriberId: 'ada' } : null
+      );
+      humanContactRepository.findSubscriberSharingEmailAddress.callsFake(async (_env: string, subscriberId: string) =>
+        subscriberId === 'ada' ? { subscriberId: 'ada' } : null
+      );
+      humanContactRepository.findContact.resolves({
+        subscriberId: 'ada',
+        addresses: { email: { declared: { address: 'ada@old.com', declaredAt: 't' } } },
+      });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'email-main',
+        platform: 'email',
+        platformUserId: 'ada@new.com',
+      });
+
+      await usecase.execute({ ...command, to: 'ada@new.com', via: undefined } as any);
+
+      expect(subscriberRepository.create.firstCall.args[0].subscriberId).to.equal(hashedId);
+      expect(humanContactRepository.setDeclaredAddress.firstCall.args[0]).to.include({
+        subscriberId: hashedId,
+        address: 'ada@new.com',
+      });
+      expect(humanContactRepository.setDeclaredAddress.calledOnce).to.equal(true);
+    });
+
+    it('sends the typed address when that contact has a different verified address', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanContactRepository } = setup();
+      agentRepository.findOne.resolves(agent);
+      humanContactRepository.findContactsByEmailAddress.resolves([{ subscriberId: 'ada' }]);
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'email-main',
+        platform: 'email',
+        platformUserId: 'new@example.com',
+      });
+
+      await usecase.execute({ ...command, to: 'new@example.com' } as any);
+
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({
+        subscriberId: 'ada',
+        explicitEmail: 'new@example.com',
+      });
+    });
+
+    it('does not create a contact when the org is keyless', async () => {
+      const { usecase, command, agentRepository, keylessEmailGate, subscriberRepository, humanContactRepository } =
+        setup();
+      agentRepository.findOne.resolves(agent);
+      keylessEmailGate.assertAllowed.rejects(
+        new ForbiddenException({ code: 'KEYLESS_EMAIL_REQUIRES_ACCOUNT', message: 'needs an account' })
+      );
+
+      try {
+        await usecase.execute({ ...command, to: 'ada@acme.com' } as any);
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(ForbiddenException);
+      }
+
+      expect(subscriberRepository.create.called).to.equal(false);
+      expect(humanContactRepository.setDeclaredAddress.called).to.equal(false);
+    });
+
+    it('delivers once when the same address is named twice', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanContactRepository, subscriberRepository } =
+        setup();
+      agentRepository.findOne.resolves(agent);
+      humanContactRepository.findContactsByEmailAddress
+        .onCall(0)
+        .resolves([])
+        .onCall(1)
+        .resolves([])
+        .onCall(2)
+        .resolves([{ subscriberId: 'ada' }]);
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'email-inbox',
+        platform: 'email',
+        platformUserId: 'ada@acme.com',
+      });
+
+      await usecase.execute({ ...command, to: ['Ada@Acme.com', 'ada@acme.com'], via: undefined } as any);
+
+      expect(subscriberRepository.create.calledOnce).to.equal(true);
+      expect(deliveryService.resolveChannel.calledOnce).to.equal(true);
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({
+        subscriberId: 'ada',
+        explicitEmail: 'ada@acme.com',
+      });
+    });
+
+    it('drops the later contact when two first sends store the same address', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanContactRepository } = setup();
+      agentRepository.findOne.resolves(agent);
+      humanContactRepository.findContactsByEmailAddress
+        .onCall(0)
+        .resolves([])
+        .onCall(1)
+        .resolves([
+          {
+            subscriberId: 'ada',
+            addresses: { email: { declared: { address: 'ada@acme.com', declaredAt: '2026-01-02T00:00:00.000Z' } } },
+          },
+          {
+            subscriberId: 'ada-earlier',
+            addresses: { email: { declared: { address: 'ada@acme.com', declaredAt: '2026-01-01T00:00:00.000Z' } } },
+          },
+        ]);
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'email-inbox',
+        platform: 'email',
+        platformUserId: 'ada@acme.com',
+      });
+
+      await usecase.execute({ ...command, to: 'ada@acme.com', via: undefined } as any);
+
+      expect(deliveryService.resolveChannel.calledOnce).to.equal(true);
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({ subscriberId: 'ada-earlier' });
+      expect(humanContactRepository.clearDeclaredAddress.calledOnce).to.equal(true);
+      expect(humanContactRepository.clearDeclaredAddress.firstCall.args[0]).to.include({ subscriberId: 'ada' });
+    });
+
+    it('rejects an email address combined with a chat channel', async () => {
+      const { usecase, command, agentRepository, subscriberRepository } = setup();
+      agentRepository.findOne.resolves(agent);
+
+      try {
+        await usecase.execute({ ...command, to: 'ada@acme.com', via: HumanChannelViaEnum.TELEGRAM } as any);
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.include('must be email');
+      }
+
+      expect(subscriberRepository.create.called).to.equal(false);
+    });
+
+    it('does not create a contact when an email is named inside a thread', async () => {
+      const { usecase, command, agentRepository, humanContactRepository, createConversationInteraction } = setup();
+      agentRepository.findOne.resolves(agent);
+
+      try {
+        await usecase.execute({ ...command, to: 'ada@acme.com', thread: 'conv_abc', via: undefined } as any);
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.include('not a confirmed address');
+      }
+
+      expect(humanContactRepository.setDeclaredAddress.called).to.equal(false);
+      expect(createConversationInteraction.execute.called).to.equal(false);
+    });
+
+    it('does not let an unconfirmed address choose who answers a thread', async () => {
+      const { usecase, command, agentRepository, humanContactRepository, createConversationInteraction } = setup();
+      agentRepository.findOne.resolves(agent);
+      humanContactRepository.findContactsByEmailAddress.resolves([
+        {
+          subscriberId: 'ada',
+          addresses: { email: { declared: { address: 'ada@acme.com', declaredAt: 't' } } },
+        },
+      ]);
+
+      try {
+        await usecase.execute({ ...command, to: 'ada@acme.com', thread: 'conv_abc', via: undefined } as any);
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.include('not a confirmed address');
+      }
+
+      expect(createConversationInteraction.execute.called).to.equal(false);
+    });
+
+    it('delivers each distinct address when one contact has both', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanContactRepository, subscriberRepository } =
+        setup();
+      agentRepository.findOne.resolves(agent);
+      humanContactRepository.findContactsByEmailAddress.resolves([{ subscriberId: 'ada' }]);
+      deliveryService.resolveChannel.callsFake(async (params: { explicitEmail?: string }) => ({
+        integrationIdentifier: 'email-inbox',
+        platform: 'email',
+        platformUserId: params.explicitEmail,
+      }));
+
+      await usecase.execute({ ...command, to: ['old@example.com', 'new@example.com'], via: undefined } as any);
+
+      expect(subscriberRepository.create.called).to.equal(false);
+      expect(deliveryService.resolveChannel.callCount).to.equal(2);
+      expect(deliveryService.resolveChannel.getCall(0).args[0]).to.include({ explicitEmail: 'old@example.com' });
+      expect(deliveryService.resolveChannel.getCall(1).args[0]).to.include({ explicitEmail: 'new@example.com' });
+    });
   });
 });

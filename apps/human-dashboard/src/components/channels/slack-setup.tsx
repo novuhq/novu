@@ -65,7 +65,10 @@ type SlackSetupProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-/** The drawer that walks through giving the agent a Slack app. The Configure page's channels open it. */
+/**
+ * The drawer that walks through giving the agent a Slack app. The Configure page's channels open it, and so
+ * does the last step of the onboarding.
+ */
 export function SlackSetup({ setup, agentName, handle, prompt, open, onOpenChange }: SlackSetupProps) {
   const router = useRouter();
   const [step, setStep] = useState<SetupStep>(stepOf(setup));

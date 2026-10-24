@@ -116,23 +116,23 @@ const accountConfig: CliConfig = {
 const run = {
   keylessSetup: async () => {
     loadConfig.mockReturnValue(null);
-    await setupCommand(undefined, { email: 'ada@example.com', skill: false });
+    await setupCommand(undefined, { email: 'ada@example.com' });
   },
   telegramSetup: async () => {
     loadConfig.mockReturnValue(accountConfig);
-    await setupCommand('telegram', { skill: false });
+    await setupCommand('telegram', {});
   },
   telegramSetupTimesOut: async () => {
     loadConfig.mockReturnValue(accountConfig);
     waitForEndpoint.mockRejectedValue(
       new Error("We didn't see your /start on @atlas_bot within 300s. Re-run `npx @agentinbox/cli setup` to continue.")
     );
-    await setupCommand('telegram', { skill: false });
+    await setupCommand('telegram', {});
   },
   telegramConnectedAlready: async () => {
     loadConfig.mockReturnValue(accountConfig);
     hasChannelEndpoint.mockResolvedValue(true);
-    await setupCommand('telegram', { skill: false });
+    await setupCommand('telegram', {});
   },
   login: async () => {
     findOperator.mockResolvedValue('ada_owner');
@@ -306,6 +306,7 @@ describe('without a terminal', () => {
       • Outbound email starts after you claim this setup — use the link in that email, or run \`npx @agentinbox/cli login\`.
       • Saved config to /home/ada/.agentinbox/config.json.
       • This is a free demo without an account. Run npx @agentinbox/cli login anytime to keep it in a Agent Inbox account.
+      • Teach your coding agent to use the inbox: npx skills add agentinboxhq/skills
       "
     `);
     expect(output.stderr).toMatchInlineSnapshot(`
@@ -334,6 +335,7 @@ describe('without a terminal', () => {
         npx @agentinbox/cli inbox send ask "Which environment should I target?"
         npx @agentinbox/cli inbox send approve "Deploy to production?"
         npx @agentinbox/cli inbox send "Build finished."
+      • Teach your coding agent to use the inbox: npx skills add agentinboxhq/skills
       "
     `);
     expect(output.stderr).toMatchInlineSnapshot(`""`);
@@ -374,6 +376,7 @@ describe('without a terminal', () => {
         npx @agentinbox/cli inbox send ask "Which environment should I target?"
         npx @agentinbox/cli inbox send approve "Deploy to production?"
         npx @agentinbox/cli inbox send "Build finished."
+      • Teach your coding agent to use the inbox: npx skills add agentinboxhq/skills
       "
     `);
   });

@@ -1,7 +1,8 @@
 import type { IUserEntity } from '@novu/shared';
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import * as Sentry from '@sentry/react';
-import * as mixpanel from 'mixpanel-browser';
+// Default import: Rolldown's `import *` interop wraps the instance, so methods would run without its state.
+import mixpanel from 'mixpanel-browser';
 import { MIXPANEL_KEY, SEGMENT_KEY } from '@/config';
 
 export class SegmentService {

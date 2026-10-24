@@ -25,7 +25,9 @@ export async function gitWithToken(token: string | undefined, args: ReadonlyArra
 
 export async function fetchRef(ref: string): Promise<string> {
   const refspec = /^\d+$/.test(ref) ? `pull/${ref}/head` : ref;
-  await run('git', ['fetch', '--filter=blob:none', 'origin', refspec]);
+  // Git would fetch a moved `.source` too, over its ssh URL, and the box has no ssh; the checkout fetches it with
+  // the token instead.
+  await run('git', ['fetch', '--no-recurse-submodules', '--filter=blob:none', 'origin', refspec]);
 
   return output('git', ['rev-parse', 'FETCH_HEAD']);
 }

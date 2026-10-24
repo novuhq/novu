@@ -2,6 +2,7 @@ import https from 'node:https';
 import { isIP } from 'node:net';
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import { CLI_COMMAND, DEFAULT_RELAY_AGENT_IDENTIFIER } from '../config';
+import { detectHost, type HostId } from '../host';
 
 /**
  * Local dev proxies (portless `*.localhost`, plain localhost) present
@@ -64,7 +65,16 @@ function extractApiMessage(body: unknown): string | undefined {
   return undefined;
 }
 
-export function createApiClient(input: { apiUrl: string; secretKey?: string; keylessIdentifier?: string }): ApiClient {
+/**
+ * `host` is the host this computer was connected for (`CliConfig.host`): the API is told it when the
+ * environment doesn't say which host runs the CLI.
+ */
+export function createApiClient(input: {
+  apiUrl: string;
+  secretKey?: string;
+  keylessIdentifier?: string;
+  host?: HostId;
+}): ApiClient {
   const baseURL = input.apiUrl.replace(/\/$/, '');
   const keylessIdentifier = input.keylessIdentifier?.trim();
   const isKeyless = Boolean(keylessIdentifier);
@@ -80,7 +90,7 @@ export function createApiClient(input: { apiUrl: string; secretKey?: string; key
       }
     : { Authorization: `ApiKey ${input.secretKey}` };
 
-  return { axios: createAxios(baseURL, headers), apiUrl: baseURL, isKeyless };
+  return { axios: createAxios(baseURL, headers, input.host), apiUrl: baseURL, isKeyless };
 }
 
 /** For the few endpoints that need no credentials, such as starting `login` or a keyless setup. */
@@ -94,13 +104,25 @@ export function createPublicApiClient(apiUrl: string): AxiosInstance {
  */
 export const AGENT_INBOX_VIA_HEADER = 'Agent-Inbox-Via';
 
+/**
+ * Matches the API's `AGENT_INBOX_HOST_HEADER`. Tells the API which host runs this CLI (`detectHost`), so the
+ * dashboard can name it. Left out when the CLI can't tell: the API then counts it as `general`.
+ */
+export const AGENT_INBOX_HOST_HEADER = 'Agent-Inbox-Host';
+
 /** Matches Novu's `NOVU_ANALYTICS_SOURCE_HEADER`. Tells Novu's analytics the request comes from this CLI. */
 export const ANALYTICS_SOURCE_HEADER = 'Novu-Analytics-Source';
 
-function createAxios(baseURL: string, headers: Record<string, string> = {}): AxiosInstance {
+function createAxios(baseURL: string, headers: Record<string, string> = {}, savedHost?: HostId): AxiosInstance {
+  const host = detectHost() ?? savedHost;
   const instance = axios.create({
     baseURL,
-    headers: { [AGENT_INBOX_VIA_HEADER]: 'cli', [ANALYTICS_SOURCE_HEADER]: 'cli', ...headers },
+    headers: {
+      [AGENT_INBOX_VIA_HEADER]: 'cli',
+      ...(host ? { [AGENT_INBOX_HOST_HEADER]: host } : {}),
+      [ANALYTICS_SOURCE_HEADER]: 'cli',
+      ...headers,
+    },
     timeout: 60_000,
     httpsAgent: loopbackHttpsAgent(baseURL),
   });

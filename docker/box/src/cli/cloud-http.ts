@@ -19,6 +19,16 @@ export function githubToken(): Promise<string> {
   return ownToken;
 }
 
+// Cursor Cloud agents have CURSOR_BOX_TOKEN: their `gh` is the Cursor GitHub App, which the hub refuses. It opens boxes
+// only, so it never goes to GitHub.
+export function hubToken(): Promise<string> {
+  if (process.env.CURSOR_BOX_TOKEN) return Promise.resolve(process.env.CURSOR_BOX_TOKEN);
+
+  return githubToken().catch(() => {
+    throw new Error('needs CURSOR_BOX_TOKEN, GITHUB_TOKEN or a signed-in `gh` (gh auth login)');
+  });
+}
+
 export interface FetchInit {
   readonly method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   readonly body?: string | Uint8Array;
@@ -70,10 +80,10 @@ export async function failUnlessOk(response: Response, what: string, allowed?: n
 export async function hostBoxes<T>(
   path: string,
   schema: z.ZodType<T>,
-  { method = 'GET', token }: { readonly method?: 'GET' | 'POST' | 'PUT' | 'DELETE'; readonly token: Token }
+  { token, ...init }: FetchInit & { readonly token: Token }
 ): Promise<T> {
-  const what = `${method} ${HOST}/__box/${path}`;
-  const response = await boxFetch(`https://${DOMAIN}/__box/${path}`, { method }, token);
+  const what = `${init.method ?? 'GET'} ${HOST}/__box/${path}`;
+  const response = await boxFetch(`https://${DOMAIN}/__box/${path}`, init, token);
   await failUnlessOk(response, what);
 
   return decode(schema, await response.text(), what);

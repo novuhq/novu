@@ -28,6 +28,7 @@ export interface SlackBox {
   readonly storage: DurableObjectStorage;
   readonly env: HostEnv;
   readonly running: () => boolean;
+  readonly starting: () => boolean;
   readonly phase: () => Promise<Phase>;
   readonly wake: (origin: string) => Promise<void>;
   readonly output: (cmd: ReadonlyArray<string>, what: string) => Promise<string>;
@@ -167,6 +168,8 @@ export async function slackEvent(box: SlackBox, event: SlackEvent): Promise<Slac
 
     return null;
   }
+  // The port waits until the container is up, minutes for a cold restore.
+  if (box.starting()) return null;
   try {
     return await deliver(box, origin, event);
   } catch (error) {

@@ -154,36 +154,30 @@ describe('resolveEmailContact', () => {
 });
 
 describe('resolveEmailRecipients', () => {
-  it('leaves contact ids alone and swaps addresses for the contacts that have them', async () => {
+  it('leaves contact ids and email addresses for the API to deliver', async () => {
     listContacts.mockResolvedValue({ data: [contact('ally', undefined, 'alice@acme.com')], next: null });
 
     await expect(resolveEmailRecipients(client, 'human-relay', ['bob', 'alice@acme.com'], false)).resolves.toEqual([
       'bob',
-      'ally',
+      'alice@acme.com',
     ]);
     await expect(resolveEmailRecipients(client, 'human-relay', 'bob', false)).resolves.toBe('bob');
     expect(runInvite).not.toHaveBeenCalled();
+    expect(listContacts).not.toHaveBeenCalled();
   });
 
-  it('makes a new address a contact on the same API, sends the verification email and stops the send', async () => {
+  it('passes a new address through without sending a verification email', async () => {
     const onApi = { apiUrl: 'https://eu.api.example' } as never;
 
-    await expect(resolveEmailRecipients(onApi, 'human-relay', 'alice@acme.com', false)).rejects.toThrow(
-      'Your message was not sent: alice@acme.com is not verified yet'
-    );
-    expect(runInvite).toHaveBeenCalledWith('alice', {
-      via: 'email',
-      email: 'alice@acme.com',
-      async: true,
-      apiUrl: 'https://eu.api.example',
-    });
+    await expect(resolveEmailRecipients(onApi, 'human-relay', 'alice@acme.com', false)).resolves.toBe('alice@acme.com');
+    expect(runInvite).not.toHaveBeenCalled();
   });
 
-  it('gives two new addresses with the same name two contacts', async () => {
+  it('passes two new addresses through without inviting either', async () => {
     await expect(
       resolveEmailRecipients(client, 'human-relay', ['alice@acme.com', 'alice@gmail.com'], false)
-    ).rejects.toThrow('alice@acme.com, alice@gmail.com are not verified yet');
-    expect(runInvite.mock.calls.map(([id]) => id)).toEqual(['alice', contactIdFromEmail('alice@gmail.com', true)]);
+    ).resolves.toEqual(['alice@acme.com', 'alice@gmail.com']);
+    expect(runInvite).not.toHaveBeenCalled();
   });
 
   it('refuses an address nobody has in a reply', async () => {

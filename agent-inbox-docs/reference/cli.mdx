@@ -1,0 +1,235 @@
+---
+title: "CLI"
+description: "Every command, flag, exit code, and environment variable for npx @agentinbox/cli."
+---
+
+```bash
+npx @agentinbox/cli
+```
+
+Every command is `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`.
+
+Flags beat environment variables, which beat `~/.agentinbox/config.json`. Environment values are never written back to the config file.
+
+Task pages: [Create an inbox](/setup), [Account and claim](/account), [Connect a host](/connect), [Send a message](/messages), [Ask, approve, and choose](/questions), [Read the inbox](/conversations), [Waiting for an answer](/waiting), [Contacts](/contacts), [Channels](/channels).
+
+## Exit codes
+
+Agents branch on these. Do not parse the prose when a code will do.
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Answered, approved, chosen, or delivered |
+| `10` | Denied |
+| `11` | Timed out waiting. The question or the list is still open. The answer shows up in the conversation |
+| `12` | Expired or canceled |
+| `1` | Error |
+
+## Environment
+
+| Variable | Meaning |
+| --- | --- |
+| `INBOX_SECRET_KEY` | API secret key. Wins over `login` and `setup` |
+| `INBOX_TO` | Default recipient: contact id or ids, comma-separated, as `--to` (max 50) |
+| `INBOX_VIA` | Default channel for `INBOX_TO`: `telegram`, `slack`, or `email`. Ignored when `--to` names someone else |
+| `INBOX_API_URL` | API URL. The default is `https://www.agentinbox.md/api` |
+| `INBOX_CONFIG` | Config file path. The default is `~/.agentinbox/config.json` |
+
+```bash
+docker run -e INBOX_SECRET_KEY=... -e INBOX_TO=alice -e INBOX_VIA=slack agent \
+  npx @agentinbox/cli inbox send approve "Deploy to prod?"
+```
+
+Durations accept `90s`, `10m`, `2h`, and `1d`.
+
+On a terminal, `setup`, `login`, `connect`, and `channel add` draw one updating screen. Pipes, CI, `NO_COLOR`, `FORCE_COLOR=0`, `TERM=dumb`, and a terminal narrower than 48 columns get the plain transcript. `inbox` and `contact` always print plain text. `AGENTINBOX_NO_ANIMATION=1` holds the screen still.
+
+## setup
+
+Creates a keyless inbox, then optionally connects a channel. See [Create an inbox](/setup).
+
+```bash
+npx @agentinbox/cli setup [telegram|slack|email]
+```
+
+| Flag | Meaning |
+| --- | --- |
+| `--name` | Your first and last name |
+| `--email` | Your email address, for the email channel |
+| `--agent-name` | The name people see |
+| `--agent-description` | One line about what the agent does |
+| `--agent-picture` | JPEG or PNG, up to 2 MB. Needs `login` |
+| `--telegram-bot-token` | BotFather token. Skips the prompt |
+| `--slack-config-token` | Slack App Configuration Token. Skips the prompt |
+| `--api-url` | API URL override |
+| `--secret-key` | Use an existing environment. See [Your own API](#your-own-api) |
+
+## login
+
+Opens agentinbox.md. You confirm the code shown in the terminal. A keyless setup on this computer is claimed into the account.
+
+```bash
+npx @agentinbox/cli login
+```
+
+## connect
+
+```bash
+npx @agentinbox/cli connect <agent> --code <code>
+```
+
+`<agent>` is the address before the `@`. `--code` is required. The code works once, for 10 minutes. `--yes` replaces a setup already on this computer without asking.
+
+## inbox list
+
+Open conversations with contacts, newest first, unless you filter.
+
+| Flag | Default |
+| --- | --- |
+| `--filter unread\|read\|all` | `all` |
+| `--status open\|resolved\|all` | `open` |
+| `--senders contacts\|all` | `contacts` |
+| `--wait` | Off. Block until a conversation matches. Exit `11` when `--timeout` runs out |
+| `--timeout` | With `--wait`, how long to block. Without it, `--wait` waits until one matches |
+| `--limit` | 20, max 100 |
+| `--after` | Cursor from `next` |
+| `--json` | `{ data, next }` |
+
+## inbox show
+
+```bash
+npx @agentinbox/cli inbox show <conversation>
+```
+
+Oldest message first. Does not mark the conversation read. `--limit` defaults to 20, max 100. `--before` pages to older messages. `--json` prints `{ conversation, messages, hasMore }`.
+
+## inbox read
+
+```bash
+npx @agentinbox/cli inbox read <conversation>
+```
+
+Marks it read. Nothing is sent.
+
+## inbox resolve
+
+```bash
+npx @agentinbox/cli inbox resolve <conversation>
+```
+
+Marks it finished. Nothing is sent. It opens again when anyone writes.
+
+## inbox send
+
+```bash
+npx @agentinbox/cli inbox send <words...>
+```
+
+A plain message returns when it is delivered. Start the words with `ask`, `approve`, or `choose` to wait for an answer.
+
+| Flag | Meaning |
+| --- | --- |
+| `--to` | Contact id, email, or a comma-separated list (max 50). Default: `INBOX_TO`, then you |
+| `--via` | `telegram`, `slack`, or `email`. Default channel for this send |
+| `--from` | Label shown to the person |
+| `--ttl` | How long a question stays answerable. Default 24h, max 5d |
+| `--timeout` | How long this command waits. Default: until answered or expired |
+| `--async` | Return at once |
+| `--option` | `choose` only. Repeat for each option, 2 to 10. `id:label` keeps a stable id |
+| `--approve-label`, `--deny-label` | `approve` only |
+| `--extra-action` | `approve` only. `id:label` or a label. Repeatable |
+| `--icon` | Slack-only. Catalog id or https URL |
+| `--subtitle`, `--body` | Card text. A plain message becomes a card when one of these, or `--icon`, is set |
+| `--json` | The result as JSON, including the conversation it landed in |
+
+## inbox reply
+
+```bash
+npx @agentinbox/cli inbox reply <conversation> <words...>
+```
+
+Same message flags as `send`, except `--via`. `--to` limits who may answer. `--anyone` lets anyone in the conversation answer, including a stranger. Not with `--to`.
+
+## contact list
+
+```bash
+npx @agentinbox/cli contact list
+```
+
+`--limit` defaults to 50, max 100. `--after` continues from `next`. `--json` prints `{ data, next }`. Your row has `self: true`.
+
+## contact invite
+
+```bash
+npx @agentinbox/cli contact invite <id|email>
+```
+
+| Flag | Meaning |
+| --- | --- |
+| `--via` | `telegram`, `slack`, or `email`. Skips the invite page. Becomes their default |
+| `--email` | Required for `--via email` when there is no terminal, unless the argument is already an email |
+| `--name` | Display name |
+| `--async` | Print the link, or send the verification email, and exit |
+
+The page link works for 3 days. A Telegram or Slack link from `--via` works for minutes.
+
+## channel list
+
+Prints the channels you connected and which one is your default.
+
+## channel add
+
+```bash
+npx @agentinbox/cli channel add <telegram|slack|email>
+```
+
+`--telegram-bot-token`, `--slack-config-token`, and `--email` skip the prompts.
+
+## channel default
+
+```bash
+npx @agentinbox/cli channel default <telegram|slack|email>
+```
+
+Sets the channel used when a message goes to you on this computer. Other people keep their own default.
+
+## Errors agents should recognize
+
+```text
+No inbox set up yet. Ask your operator to run: npx @agentinbox/cli setup (or set INBOX_SECRET_KEY + INBOX_TO).
+```
+
+```text
+You've used the 5 free messages of this keyless demo.
+To keep your channels and continue, run: npx @agentinbox/cli login
+```
+
+```text
+Outbound email needs an Agent Inbox account.
+To claim this setup and send email, run: npx @agentinbox/cli login
+```
+
+```text
+Your message was not sent: alice@acme.com is not verified yet. A verification email is on its way; send again once they have clicked it.
+```
+
+```text
+This agent is paused: it can’t read its inbox or send until its operator resumes it on agentinbox.md. Messages people send meanwhile wait in the inbox.
+```
+
+A missing channel endpoint tells you to `contact invite` that person. Do not invent a contact id.
+
+## Your own API
+
+Point the CLI at a deployment of the Agent Inbox dashboard, not at another product's API:
+
+```bash
+npx @agentinbox/cli setup --secret-key <key>
+```
+
+```bash
+export INBOX_SECRET_KEY=<key>
+export INBOX_API_URL=https://your-dashboard.example/api
+```
+
+`INBOX_API_URL` is that deployment's `/api`. The hosted MCP server is Agent Inbox cloud only. It does not follow this URL.

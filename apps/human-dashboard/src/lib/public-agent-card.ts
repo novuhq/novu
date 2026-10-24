@@ -2,7 +2,10 @@ import 'server-only';
 
 import { cache } from 'react';
 
-import { addressOf, cardLinkOf, HANDLE_MAX_LENGTH } from './onboarding';
+import { unwrapData } from './api-response';
+import { requestPublic } from './human-api';
+import { HumanApiError } from './human-api-error';
+import { cardLinkOf, HANDLE_MAX_LENGTH } from './onboarding';
 import { readSiteOrigin } from './site-origin';
 
 /** How the public card's chip shows the agent: working, or paused by its operator. */
@@ -18,8 +21,10 @@ export type PublicAgentCard = {
   /** The picture the operator gave the agent. Without one the card shows the mascot. */
   pictureUrl: string | null;
   status: PublicAgentStatus;
-  /** The operator's full name: "Run by Dima Grossman". */
+  /** Who runs the agent, as the API names them for the card: "Run by Dima G.". Empty without a first name. */
   operatorName: string;
+  /** The operator's whole first name, for "Dima’s agent". Empty without one. */
+  operatorFirstName: string;
   /** When the agent was made, as an ISO timestamp: "issued Oct 3". */
   issuedAt: string;
   /** Its email address, which the card's code to scan and the page's Email start an email to. */
@@ -28,8 +33,8 @@ export type PublicAgentCard = {
   telegramBot: string | null;
   /**
    * Whether the operator approves a stranger's first message before the agent gets it, which the page then
-   * tells visitors. Not yet: with Who can reach set to Anyone, a stranger's message reaches the agent
-   * straight away, so the placeholder card says no.
+   * tells visitors. Never yet: a card is public only while anyone can reach the agent, and then a stranger's
+   * message reaches it straight away.
    */
   approvesNewPeople: boolean;
   /** The card's own link, `https://agentinbox.md/p/atlas` (`cardLinkOf`). */
@@ -39,47 +44,70 @@ export type PublicAgentCard = {
 /** The card, or that there is none to show at this link. Which of the reasons it was is never told. */
 export type PublicAgentCardResult = { available: true; card: PublicAgentCard } | { available: false };
 
+/** The API's card (`GET /v1/human/agent-cards/:handle`), which holds only what the card shows. */
+type AgentCardResponse = {
+  handle: string;
+  name: string;
+  pictureUrl?: string;
+  paused: boolean;
+  operatorName?: string;
+  operatorFirstName?: string;
+  createdAt: string;
+  address: string;
+  /** Without the `@`. */
+  telegramBotUsername?: string;
+};
+
 const NOT_AVAILABLE: PublicAgentCardResult = { available: false };
 
 /** What a handle can be: lowercase letters and digits, with single hyphens in between (see `toHandle`). */
 const HANDLE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**
- * What every card shows until NV-9032 lets the API find an agent by its handle: the design's sample card,
- * under the handle of the link, with the same sample Telegram bot on every card.
+ * The longest handle a card can be at. An address made before handles could be chosen is `{slug}-{key}`: a slug
+ * as long as a handle, a hyphen and an 8-character key.
  */
-const SAMPLE_CARD = {
-  pictureUrl: null,
-  status: 'active',
-  operatorName: 'Dima Grossman',
-  issuedAt: '2026-10-03T12:00:00.000Z',
-  telegramBot: '@atlas_bot',
-  approvesNewPeople: false,
-} as const satisfies Partial<PublicAgentCard>;
+const CARD_HANDLE_MAX_LENGTH = HANDLE_MAX_LENGTH + 1 + 8;
 
 /**
- * The public card of the agent with this handle, for the page at `/p/{handle}` and its share image. Once
- * the API answers it (NV-9032), there is none for a handle no agent has, for an agent that was deleted, and
- * for one only its contacts can reach (Who can reach, on the Configure page): the card is public only while
- * that is Anyone. Until then every handle shows `SAMPLE_CARD`.
+ * The public card of the agent with this handle, for the page at `/p/{handle}` and its share image. The API
+ * has none for a handle no agent has, for an agent that was deleted, and for one only its contacts can reach
+ * (Who can reach, on the Configure page): the card is public only while that is Anyone.
  *
  * The page and its image of one request share a single lookup.
  */
 export const getPublicAgentCard = cache(async (handle: string): Promise<PublicAgentCardResult> => {
-  if (handle.length > HANDLE_MAX_LENGTH || !HANDLE_PATTERN.test(handle)) {
+  if (handle.length > CARD_HANDLE_MAX_LENGTH || !HANDLE_PATTERN.test(handle)) {
     return NOT_AVAILABLE;
   }
 
-  // Until NV-9032 stores handles, no agent can be found by one. Once it does, this asks the API's public
-  // endpoint for the card instead, and the API applies Who can reach.
+  let found: AgentCardResponse;
+  try {
+    // Agent Inbox has no EU region.
+    found = unwrapData<AgentCardResponse>(await requestPublic('us', `/v1/human/agent-cards/${handle}`));
+  } catch (error) {
+    // Every reason there is no card is the same 404.
+    if (error instanceof HumanApiError && error.status === 404) {
+      return NOT_AVAILABLE;
+    }
+
+    throw error;
+  }
+
   return {
     available: true,
     card: {
-      ...SAMPLE_CARD,
-      name: handle.charAt(0).toUpperCase() + handle.slice(1),
-      handle,
-      address: addressOf(handle),
-      cardLink: cardLinkOf(await readSiteOrigin(), handle),
+      name: found.name,
+      handle: found.handle,
+      pictureUrl: found.pictureUrl ?? null,
+      status: found.paused ? 'paused' : 'active',
+      operatorName: found.operatorName ?? '',
+      operatorFirstName: found.operatorFirstName ?? '',
+      issuedAt: found.createdAt,
+      address: found.address,
+      telegramBot: found.telegramBotUsername ? `@${found.telegramBotUsername}` : null,
+      approvesNewPeople: false,
+      cardLink: cardLinkOf(await readSiteOrigin(), found.handle),
     },
   };
 });
