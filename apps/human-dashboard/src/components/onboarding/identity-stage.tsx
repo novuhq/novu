@@ -9,8 +9,7 @@ import { CornerTicks } from '@/components/onboarding/onboarding-shell';
 import { SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { MascotFace, useBeaming } from '@/components/ui/mascot-face';
-import { Tooltip } from '@/components/ui/tooltip';
-import { AI_TOOLS, type AiTool } from '@/lib/ai-tools';
+import { type HostId, hostOf } from '@/lib/hosts';
 import { HOST_LABELS, type HostVia, PLACEHOLDER_NAME, writtenLink } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
@@ -630,47 +629,25 @@ const CARD_BORDER_START = 0.106;
  */
 const PILL_BORDER_START = 0.655;
 
-/** One tool's chip: its logo on a small raised tile. */
+/** One host's chip: its logo on a small raised tile. */
 const TOOL_CHIP = 'flex size-6 items-center justify-center rounded-md border border-border-strong bg-raised p-0.75';
 
-type ToolChipsProps = {
-  className?: string;
-  /** Opens the tool's MCP drawer. Without it the chips are only a picture. */
-  onOpen?: (tool: AiTool) => void;
-};
+/** The hosts the waiting slot shows, in the order of the design: Claude, Cursor, ChatGPT. */
+const CHIP_HOSTS: readonly HostId[] = ['claude', 'cursor', 'chatgpt'];
 
-/**
- * The logos of the tools an agent can run in, as small chips. Given `onOpen`, each one is a button that
- * opens its drawer, and rises a little, in front of the others, under the pointer.
- */
-export function ToolChips({ className, onOpen }: ToolChipsProps) {
-  // The order of the design: Claude, Cursor, ChatGPT.
-  const tools = ['claude', 'cursor', 'chatgpt'].flatMap((id) => AI_TOOLS.find((tool) => tool.id === id) ?? []);
-
+/** The logos of a few hosts an agent can run in, as small chips: a picture of what can fill the slot. */
+function ToolChips() {
   return (
-    <span aria-hidden={onOpen ? undefined : true} className={cn('flex shrink-0 items-center gap-0.75', className)}>
-      {tools.map((tool) => {
-        const logo = <img src={tool.icon} alt="" className="size-full rounded-[3px] object-contain" />;
+    <span aria-hidden="true" className="flex shrink-0 items-center gap-0.75">
+      {CHIP_HOSTS.map((id) => {
+        const { icon } = hostOf(id);
 
-        return onOpen ? (
-          <Tooltip key={tool.id} label={`Connect ${tool.name}`}>
-            <button
-              type="button"
-              aria-label={`Connect ${tool.name}`}
-              aria-haspopup="dialog"
-              onClick={() => onOpen(tool)}
-              className={cn(
-                TOOL_CHIP,
-                'relative cursor-pointer transition-[translate,border-color] duration-150 ease-out hover:z-10 hover:-translate-y-0.5 hover:border-muted focus-visible:z-10 focus-visible:outline-offset-2 motion-reduce:transition-none'
-              )}
-            >
-              {logo}
-            </button>
-          </Tooltip>
-        ) : (
-          <span key={tool.id} className={TOOL_CHIP}>
-            {logo}
-          </span>
+        return (
+          icon && (
+            <span key={id} className={TOOL_CHIP}>
+              <img src={icon} alt="" className="size-full rounded-[3px] object-contain" />
+            </span>
+          )
         );
       })}
     </span>
