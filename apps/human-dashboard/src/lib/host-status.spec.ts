@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { type AgentHost, connectedHostIds, findNewHost, type HostStatus, hostName, isHostId } from './host-status';
+import { type AgentHost, connectedHostIds, findNewHost, type HostStatus, hostName } from './host-status';
+import { isHostId } from './hosts';
 
 const NOW = Date.parse('2026-10-23T12:00:00.000Z');
 const HOUR = 60 * 60 * 1000;

@@ -7,6 +7,7 @@ import { CONFIGURE_PATH, DASHBOARD_HOME } from '@/components/dashboard/nav';
 import { isToolId } from '@/lib/ai-tools';
 import { findCurrentUser } from '@/lib/auth-page';
 import type { ConnectCodeResult } from '@/lib/host-status';
+import { isHostId } from '@/lib/hosts';
 import { requireHumanAccount } from '@/lib/human-account';
 import { sendAgentTestEmail } from '@/lib/human-agent-api';
 import { HumanApiError, isHumanApiRefusal } from '@/lib/human-api-error';
@@ -157,8 +158,8 @@ export async function sendTestEmailAction(): Promise<SendTestEmailResult> {
   return { ok: true };
 }
 
-/** A real one-time code for the host the operator connects in step 3. */
-export async function createOnboardingConnectCodeAction(handle: string): Promise<ConnectCodeResult> {
+/** A real one-time code for the host the operator connects in step 3, made for the host chosen there (`host`). */
+export async function createOnboardingConnectCodeAction(handle: string, host?: string): Promise<ConnectCodeResult> {
   if (!isHandle(handle)) {
     return { ok: false, error: 'This agent can’t be connected by name. Check its address on this page.' };
   }
@@ -166,7 +167,7 @@ export async function createOnboardingConnectCodeAction(handle: string): Promise
   const account = await requireHumanAccount({ returnTo: ONBOARDING_PATH });
 
   try {
-    const code = await createConnectCode(account, handle);
+    const code = await createConnectCode(account, handle, isHostId(host) ? host : undefined);
 
     return { ok: true, code, expiresInMs: Date.parse(code.expiresAt) - Date.now() };
   } catch (error) {

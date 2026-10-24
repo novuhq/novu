@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
 import { MascotFace } from '@/components/ui/mascot-face';
 import { useCodeWatch } from '@/hooks/use-code-watch';
-import { useConnectCode } from '@/hooks/use-connect-code';
+import { useHostConnectCode } from '@/hooks/use-connect-code';
 import { useHostBaseline } from '@/hooks/use-host-baseline';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { useSwap } from '@/hooks/use-swap';
@@ -34,8 +34,8 @@ type ConnectAgentDrawerProps = {
   mcpUrl: string | null;
   docsUrl: string;
   /**
-   * The hosts that connected already, which the picker ticks. Today these are the chat apps (and Cursor)
-   * that signed in to the MCP server; NV-9146 adds every host the API tells apart.
+   * The hosts connected now, which the picker ticks (`connectedHostIds`): those that checked the inbox, or
+   * used a code, within the last day, and the chat apps (and Cursor) that signed in to the MCP server.
    */
   connectedHosts: readonly HostId[];
   /** The host the picker shows when the drawer opens, such as the one a host page's "sign in" link named. */
@@ -49,7 +49,8 @@ type ConnectAgentDrawerProps = {
  * "Connect another agent" (`4.7`), with a host picker over the steps: the hosts that run commands get the
  * commands that connect them with a one-time code, run in the person's terminal, and their second way in
  * (a plugin, or the MCP server); the chat apps get their sign-in. A fresh code is asked for every time it
- * opens, and stays the same from one host to the next.
+ * opens, and each host that runs commands gets its own (`useHostConnectCode`), so the API knows which host
+ * used it.
  *
  * For as long as it's open it watches for a host that comes in: a way in that's new, or one that came back
  * after a day without checks, or a code it showed getting used, which the API tells (`useCodeWatch`). The
@@ -94,8 +95,8 @@ export function ConnectAgentDrawer({
   }
 
   const watching = open && !newHost;
-  const createCode = useCallback(() => api.createCode(handle), [api, handle]);
-  const { state: code, renew, retry } = useConnectCode(createCode, watching);
+  const createCode = useCallback((forHost: HostId) => api.createCode(handle, forHost), [api, handle]);
+  const { state: code, renew, retry } = useHostConnectCode(createCode, host, watching);
   const hosts = useHostBaseline(api.readHosts, watching);
   const codes = useCodeWatch(api.readCodeStatus, code.status === 'ready' ? code.code : null, watching);
 

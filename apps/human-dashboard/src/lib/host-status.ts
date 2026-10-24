@@ -1,4 +1,5 @@
 import type { ToolId } from './ai-tools';
+import { type HostId, hostOf, isHostId } from './hosts';
 import { HOST_LABELS, type HostVia } from './onboarding';
 
 /*
@@ -7,29 +8,6 @@ import { HOST_LABELS, type HostVia } from './onboarding';
  * (`POST /v1/human/agent/connect-codes/status`). The server reads them (`human-hosts-api.ts`); what's here
  * is what the pages work out from them, in the browser as well.
  */
-
-/**
- * The hosts the API tells apart (`AGENT_HOST_IDS`), and what the dashboard calls each. `general` is any other
- * host, and any host that didn't say which one it is. Kept here until there is one list of hosts in code.
- */
-export const HOST_NAMES = {
-  'claude-code': 'Claude Code',
-  codex: 'Codex',
-  opencode: 'OpenCode',
-  cursor: 'Cursor',
-  hermes: 'Hermes',
-  openclaw: 'OpenClaw',
-  general: 'General',
-  claude: 'Claude',
-  chatgpt: 'ChatGPT',
-  grok: 'Grok Bot',
-} as const;
-
-export type HostId = keyof typeof HOST_NAMES;
-
-export function isHostId(value: unknown): value is HostId {
-  return typeof value === 'string' && Object.hasOwn(HOST_NAMES, value);
-}
 
 /** A host of the agent: one entry however many computers run it, and whichever way it came in. */
 export type AgentHost = {
@@ -43,9 +21,9 @@ export type AgentHost = {
   lastCheckedAt: string | null;
 };
 
-/** What the dashboard calls a host: its name, or the way it came in when the API didn't say which host. */
+/** What the dashboard calls a host: its name in the host list, or the way it came in when the API didn't say. */
 export function hostName(host: Pick<AgentHost, 'id' | 'via'>): string {
-  return isHostId(host.id) ? HOST_NAMES[host.id] : HOST_LABELS[host.via];
+  return isHostId(host.id) ? hostOf(host.id).name : HOST_LABELS[host.via];
 }
 
 export type HostStatus = {
@@ -102,8 +80,11 @@ export type CodeStatusResult = ConnectCodeStatus | 'unknown' | null;
  * a page with other ones (the onboarding) can hand them its own.
  */
 export type ConnectApi = {
-  /** A one-time code for the agent `handle` names. */
-  createCode: (handle: string) => Promise<ConnectCodeResult>;
+  /**
+   * A one-time code for the agent `handle` names, made for the host picker's tab it shows on (`host`): a host
+   * that uses it without saying which host it is counts as that one. Each host gets a code of its own.
+   */
+  createCode: (handle: string, host?: HostId) => Promise<ConnectCodeResult>;
   /** What became of a code the drawer showed for the agent `handle` names (`useCodeWatch`). */
   readCodeStatus: (handle: string, code: string) => Promise<CodeStatusResult>;
   /** The host status, or `null` when it can't be read just now. */
