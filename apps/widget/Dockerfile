@@ -1,4 +1,4 @@
-FROM node:20-alpine3.19
+FROM node:22.23.4-alpine3.23
 ENV NX_DAEMON=false
 
 RUN apk add --no-cache bash g++ make py3-pip

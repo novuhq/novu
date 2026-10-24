@@ -411,7 +411,31 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       { customVar: 'merged' },
     ];
 
-    await Promise.all(events.map((event) => triggerEvent(event)));
+    // Parallel triggers race shouldDelayDigestJobOrMerge: several can miss the
+    // delayed digest and each start their own, so the merged count flaps.
+    await triggerEvent(events[0]);
+    await session.awaitRunningJobs(template?._id, false, 0);
+
+    await triggerEvent(events[1]);
+
+    let delayedDigest: JobEntity | null = null;
+    for (let attempt = 0; attempt < 25 && !delayedDigest; attempt += 1) {
+      delayedDigest = await jobRepository.findOne({
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        _subscriberId: subscriber._id,
+        type: StepTypeEnum.DIGEST,
+        status: JobStatusEnum.DELAYED,
+      });
+
+      if (!delayedDigest) {
+        await promiseTimeout(200);
+      }
+    }
+
+    expect(delayedDigest).to.be.ok;
+
+    await Promise.all(events.slice(2).map((event) => triggerEvent(event)));
 
     await session.awaitRunningJobs(template?._id, false, 0);
 

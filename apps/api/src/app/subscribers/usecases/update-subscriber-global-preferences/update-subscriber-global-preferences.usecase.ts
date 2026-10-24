@@ -67,7 +67,7 @@ export class UpdateSubscriberGlobalPreferences {
        * even if not passing at first enabled to true.
        */
       enabled: command.enabled !== false,
-      channels: command.preferences && command.preferences.length > 0 ? channelObj : null,
+      channels: command.preferences && command.preferences.length > 0 ? channelObj : undefined,
       level: PreferenceLevelEnum.GLOBAL,
     });
   }

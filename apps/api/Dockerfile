@@ -1,4 +1,4 @@
-FROM node:20.20.2-alpine3.23 AS dev_base
+FROM node:22.23.4-alpine3.23 AS dev_base
 RUN apk --no-cache upgrade && apk --no-cache add g++ make py3-pip
 
 ENV NX_DAEMON=false
@@ -71,7 +71,7 @@ RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
 
 # ------- PRODUCTION BUILD ----------
 # Runtime image without build toolchain or package managers
-FROM node:20.20.2-alpine3.23 AS prod
+FROM node:22.23.4-alpine3.23 AS prod
 RUN apk --no-cache upgrade && apk --no-cache add tini && \
     rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
       /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
