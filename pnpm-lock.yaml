@@ -83,9 +83,9 @@ overrides:
   rollup@>=3.0.0 <3.30.0: ^3.30.0
   rollup@<2.80.0: ^2.80.0
   glob@>=10.2.0 <10.5.0: ^10.5.0
-  undici@>=7.0.0 <7.29.1: ^7.29.1
-  undici@>=6.0.0 <6.28.1: ^6.28.1
-  undici@>=8.0.0 <8.10.2: ^8.10.2
+  undici@>=7.0.0 <7.30.1: ^7.30.1
+  undici@>=6.0.0 <6.29.1: ^6.29.1
+  undici@>=8.0.0 <8.12.2: ^8.12.2
   jose@>=3.0.0 <4.15.5: ^4.15.5
   qs@<6.16.0: ^6.16.0
   js-yaml@<3.15.2: ^3.15.2
@@ -104,13 +104,13 @@ overrides:
   express@<4.20.0: ^4.20.0
   serve-static@<1.16.0: ^1.16.0
   send@<0.19.0: ^0.19.0
-  dompurify@>=3.1.3 <3.4.16: ^3.4.16
+  dompurify@>=3.1.3 <3.4.17: ^3.4.17
   '@octokit/endpoint@>=9.0.5 <9.0.6': ^9.0.6
   '@octokit/request-error@<5.1.1': ^5.1.1
   '@octokit/plugin-paginate-rest@<9.2.2': ^9.2.2
   '@octokit/request@<8.4.1': ^8.4.1
   kysely@>=0.26.0 <0.28.17: 0.28.17
-  undici@>=5.0.0 <5.30.0: ^6.28.1
+  undici@>=5.0.0 <5.30.0: ^6.29.1
   markdown-it@>=13.0.0 <14.3.3: ^14.3.3
   mdast-util-to-hast@>=13.0.0 <13.2.1: ^13.2.1
   webpack@>=5.49.0 <5.104.1: ^5.104.1
@@ -201,6 +201,7 @@ overrides:
   colord@<2.9.4: ^2.9.4
   '@ai-sdk/provider-utils@>=4.0.0 <4.0.33': ^4.0.33
   moment@>=2.29.2 <2.31.0: ^2.31.0
+  happy-dom@>=17.0.0 <21.0.4: ^21.0.4
 
 packageExtensionsChecksum: sha256-K7efP6uJ8xzECMUv4MBhVNrJwJl/Tzb5xsaDF0KK4Xw=
 
@@ -407,7 +408,7 @@ importers:
         version: 5.8.3
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
       wrangler:
         specifier: ^4.49.0
         version: 4.68.1(@cloudflare/workers-types@4.20260702.1)(@types/node@22.15.13)
@@ -1404,7 +1405,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
   apps/inbound-mail:
     dependencies:
@@ -2254,7 +2255,7 @@ importers:
     dependencies:
       '@better-auth/sso':
         specifier: ^1.6.23
-        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.2.12)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(ba80f412313afd059386ee1429927ce4))(better-call@1.3.7(zod@4.3.6))
+        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.2.12)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(a96bc260ae2499234c5b0c76c695847c))(better-call@1.3.7(zod@4.3.6))
       '@clerk/backend':
         specifier: ^3.4.11
         version: 3.4.11(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -2293,7 +2294,7 @@ importers:
         version: link:../../../packages/stateless
       better-auth:
         specifier: ^1.6.23
-        version: 1.6.23(ba80f412313afd059386ee1429927ce4)
+        version: 1.6.23(a96bc260ae2499234c5b0c76c695847c)
       better-call:
         specifier: ^1.3.7
         version: 1.3.7(zod@4.3.6)
@@ -2666,10 +2667,10 @@ importers:
         version: 5.6.2
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
       vitest-evals:
         specifier: 0.12.0
-        version: 0.12.0(ai@6.0.50(zod@3.25.76))(tinyrainbow@3.1.0)(vitest@4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)))(zod@3.25.76)
+        version: 0.12.0(ai@6.0.50(zod@3.25.76))(tinyrainbow@3.1.0)(vitest@4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)))(zod@3.25.76)
 
   libs/application-generic:
     dependencies:
@@ -3015,7 +3016,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.0)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.0)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
     optionalDependencies:
       '@novu/ee-shared-services':
         specifier: workspace:*
@@ -3329,7 +3330,7 @@ importers:
         version: 6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
   libs/maily-render:
     dependencies:
@@ -3368,8 +3369,8 @@ importers:
         specifier: ^19.2.8
         version: 19.2.8
       happy-dom:
-        specifier: ^20.8.9
-        version: 20.8.9
+        specifier: ^21.0.4
+        version: 21.0.4
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(@swc/core@1.7.26(@swc/helpers@0.5.23))(jiti@2.7.0)(postcss@8.5.28)(tsx@4.21.0)(typescript@5.6.2)(yaml@2.9.0)
@@ -3381,7 +3382,7 @@ importers:
         version: 6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
   libs/maily-tailwind-config:
     devDependencies:
@@ -3578,7 +3579,7 @@ importers:
         version: 5.8.3
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/agent-event-protocol:
     devDependencies:
@@ -3590,7 +3591,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/agent-toolkit:
     dependencies:
@@ -3649,7 +3650,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@20.19.10)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@20.19.10)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@20.19.10)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@20.19.10)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/chat-adapter:
     dependencies:
@@ -3683,7 +3684,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/chat-adapter-email:
     dependencies:
@@ -3739,7 +3740,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/chat-adapter-sendblue:
     dependencies:
@@ -3758,7 +3759,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
       zod:
         specifier: 3.25.20
         version: 3.25.20
@@ -3780,7 +3781,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
       zod:
         specifier: 3.25.20
         version: 3.25.20
@@ -3898,7 +3899,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.16.2)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.16.2)(yaml@2.9.0))
       zod:
         specifier: ^3.23.8
         version: 3.25.20
@@ -4037,7 +4038,7 @@ importers:
         version: 2.11.14(solid-js@1.9.6)
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
       webpack:
         specifier: ^5.104.1
         version: 5.105.4(@swc/core@1.7.26(@swc/helpers@0.5.23))(esbuild@0.28.1)(uglify-js@3.17.4)(webpack-cli@5.1.4)
@@ -4264,7 +4265,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/providers:
     dependencies:
@@ -4466,7 +4467,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/react:
     dependencies:
@@ -4512,7 +4513,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/react-native:
     dependencies:
@@ -4571,7 +4572,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/stateless:
     dependencies:
@@ -4696,7 +4697,7 @@ importers:
         version: 1.5.1(@swc/core@1.7.26(@swc/helpers@0.5.23))(rollup@4.59.0)(webpack-sources@3.3.4)
       vitest:
         specifier: ^4.1.12
-        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
 
   playground/nextjs:
     dependencies:
@@ -18591,6 +18592,10 @@ packages:
   buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
 
+  buffer-image-size@0.6.4:
+    resolution: {integrity: sha512-nEh+kZOPY1w+gcCMobZ6ETUp9WfibndnosbpwB1iJk/8Gt5ZF2bhS6+B6bPYz424KtwsR6Rflc3tCz1/ghX2dQ==}
+    engines: {node: '>=4.0'}
+
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
 
@@ -20148,8 +20153,8 @@ packages:
     resolution: {integrity: sha512-gYzvtM72ZtxQO0T048kd6HWSbbGCNOUwcnfQ01cqIJ4X2IYKFFHZ5mKvrQETcFXxsRObZulDaKmy//R7TPtsBg==}
     engines: {node: '>=20.19.0'}
 
-  dompurify@3.4.16:
-    resolution: {integrity: sha512-sqo+pNp3qRhCIpbgRi1y8Tgk27Bo2Ry7w0dC1NBeNTdZChWjz9Xb/KOoZbRP/R6pQZ80Qw8YhXw13hWWBbMRnQ==}
+  dompurify@3.4.17:
+    resolution: {integrity: sha512-B/pSlYVHQ58kqISD/yDjuJ1yfzI34m1gF4lAod2bwSRhiN4K5Cl3H8Af7hqB2PmTL911tdEudnnXn5FnhRoz0w==}
 
   domutils@2.8.0:
     resolution: {integrity: sha512-w96Cjofp72M5IIhpjgobBimYEfoPjx1Vx0BSX9P30WBdZW2WIKU0T1Bd0kz2eNZ9ikjKgHbEyKx8BB6H1L3h3A==}
@@ -21600,8 +21605,8 @@ packages:
     engines: {node: '>=0.4.7'}
     hasBin: true
 
-  happy-dom@20.8.9:
-    resolution: {integrity: sha512-Tz23LR9T9jOGVZm2x1EPdXqwA37G/owYMxRwU0E4miurAtFsPMQ1d2Jc2okUaSjZqAFz2oEn3FLXC5a0a+siyA==}
+  happy-dom@21.0.4:
+    resolution: {integrity: sha512-tFm+GaLBgo6o0awHnvHaNoraVo27qJ+2tZEtZ+cIa08hXbeitrxAJajLI05hsUy/2/YTKcUjQYzHe5mCcraLBw==}
     engines: {node: '>=20.0.0'}
 
   hard-rejection@2.1.0:
@@ -24796,7 +24801,7 @@ packages:
   native-fetch@4.0.2:
     resolution: {integrity: sha512-4QcVlKFtv2EYVS5MBgsGX5+NWKtbDbIECdUXDBGDMAZXq3Jkv9zf+y8iS7Ub8fEdga3GpYeazp9gauNqXHJOCg==}
     peerDependencies:
-      undici: ^7.29.1
+      undici: ^7.30.1
 
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
@@ -29254,16 +29259,16 @@ packages:
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
-  undici@6.29.0:
-    resolution: {integrity: sha512-R+RODBqp6i2pPflGdq+xIOUkl+RNfGgHwoinecKu/JCuf2uO06cOKoDbI2P7Dn6KcswdKwrczbU6IYJ6K8X+wg==}
+  undici@6.29.1:
+    resolution: {integrity: sha512-EvRlUt/QqAEvXdQeRMYUfwOQsfzpDztykrG2owGEE/rBOBoYv9uF39ZzsNDh4lTFHhTr2XOZjKkYgueD12ZmGA==}
     engines: {node: '>=18.17'}
 
-  undici@7.30.0:
-    resolution: {integrity: sha512-dkrQXeHSaoamnItlYbmzG0wFYrM0ZwDxCIg0A7aKjTyyhh9svRzCNFEzV+Vm05/yehjCzjDZ31KXfGEjYSztDQ==}
+  undici@7.30.1:
+    resolution: {integrity: sha512-03KrMbjIFDWQR5RNPrSw3bd1r12JpyFQl9/yxjUbJtqkjmllqC5lFjZh6ujeuJCKr8EOQvRW872Oy/az+nLYxg==}
     engines: {node: '>=20.18.1'}
 
-  undici@8.11.2:
-    resolution: {integrity: sha512-u4UB2/IrKdU6lFxumHmmo1a3fCQO5tzQllRorfoRS63txhrB7xTpSn1PftwC4qEHkOaqP95fCWW4lJzwErwzhQ==}
+  undici@8.12.3:
+    resolution: {integrity: sha512-+fdndUTwBP86cVjihTp21hZHo7d6oj1c/47XPA3lL8mM0XHs+C4EkcjmgRsFnFk2f/UONGDy9ItBItmXsLOQHw==}
     engines: {node: '>=22.19.0'}
 
   unenv@2.0.0-rc.24:
@@ -29760,7 +29765,7 @@ packages:
       '@vitest/coverage-istanbul': 4.1.12
       '@vitest/coverage-v8': 4.1.12
       '@vitest/ui': 4.1.12
-      happy-dom: '*'
+      happy-dom: ^21.0.4
       jsdom: '*'
       vite: ^6.4.4
     peerDependenciesMeta:
@@ -30550,7 +30555,7 @@ snapshots:
       '@ai-sdk/provider': 3.0.16
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.1.0
-      undici: 6.29.0
+      undici: 6.29.1
       zod: 3.25.20
 
   '@ai-sdk/provider-utils@4.0.51(zod@3.25.76)':
@@ -30558,7 +30563,7 @@ snapshots:
       '@ai-sdk/provider': 3.0.16
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.1.0
-      undici: 6.29.0
+      undici: 6.29.1
       zod: 3.25.76
 
   '@ai-sdk/provider-utils@4.0.51(zod@4.3.5)':
@@ -30566,7 +30571,7 @@ snapshots:
       '@ai-sdk/provider': 3.0.16
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.1.0
-      undici: 6.29.0
+      undici: 6.29.1
       zod: 4.3.5
 
   '@ai-sdk/provider-utils@5.0.11(zod@3.25.20)':
@@ -30591,7 +30596,7 @@ snapshots:
       '@standard-schema/spec': 1.1.0
       '@workflow/serde': 4.1.0
       eventsource-parser: 3.1.0
-      undici: 7.30.0
+      undici: 7.30.1
       zod: 4.4.3
 
   '@ai-sdk/provider@3.0.16':
@@ -34693,12 +34698,12 @@ snapshots:
       tldts: 6.1.86
       zod: 4.3.6
 
-  '@better-auth/sso@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.2.12)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(ba80f412313afd059386ee1429927ce4))(better-call@1.3.7(zod@4.3.6))':
+  '@better-auth/sso@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.2.12)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(a96bc260ae2499234c5b0c76c695847c))(better-call@1.3.7(zod@4.3.6))':
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.2.12)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
-      better-auth: 1.6.23(ba80f412313afd059386ee1429927ce4)
+      better-auth: 1.6.23(a96bc260ae2499234c5b0c76c695847c)
       better-call: 1.3.7(zod@4.3.6)
       fast-xml-parser: 5.10.1
       jose: 6.1.3
@@ -35833,7 +35838,7 @@ snapshots:
       open: 8.4.2
       picomatch: 4.0.4
       systeminformation: 5.32.0
-      undici: 7.30.0
+      undici: 7.30.1
       which: 4.0.0
       yocto-spinner: 1.2.2
 
@@ -38403,7 +38408,7 @@ snapshots:
       request-ip: 3.3.0
       ringbufferjs: 2.0.0
       semver: 7.8.5
-      undici: 7.30.0
+      undici: 7.30.1
       unescape: 1.0.1
       unescape-js: 1.1.4
       uuid: 11.1.1
@@ -38720,7 +38725,7 @@ snapshots:
       '@octokit/plugin-paginate-rest': 9.2.2(@octokit/core@5.2.0)
       '@octokit/plugin-rest-endpoint-methods': 10.4.1(@octokit/core@5.2.0)
       '@octokit/types': 12.6.0
-      undici: 6.29.0
+      undici: 6.29.1
 
   '@octokit/auth-action@4.1.0':
     dependencies:
@@ -40110,9 +40115,9 @@ snapshots:
 
   '@plunk/node@2.0.0':
     dependencies:
-      native-fetch: 4.0.2(undici@6.29.0)
+      native-fetch: 4.0.2(undici@6.29.1)
       tslib: 2.8.1
-      undici: 6.29.0
+      undici: 6.29.1
 
   '@pnpm/cli-meta@5.0.0':
     dependencies:
@@ -50274,7 +50279,7 @@ snapshots:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
 
-  better-auth@1.6.23(ba80f412313afd059386ee1429927ce4):
+  better-auth@1.6.23(a96bc260ae2499234c5b0c76c695847c):
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/drizzle-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.2.12)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)
@@ -50301,7 +50306,7 @@ snapshots:
       react-dom: 19.2.3(react@19.2.3)
       solid-js: 1.9.6
       svelte: 5.55.7(@typescript-eslint/types@8.39.1)
-      vitest: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+      vitest: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
@@ -50464,6 +50469,10 @@ snapshots:
   buffer-equal-constant-time@1.0.1: {}
 
   buffer-from@1.1.2: {}
+
+  buffer-image-size@0.6.4:
+    dependencies:
+      '@types/node': 22.15.13
 
   buffer@5.7.1:
     dependencies:
@@ -50763,7 +50772,7 @@ snapshots:
       parse5: 7.1.2
       parse5-htmlparser2-tree-adapter: 7.0.0
       parse5-parser-stream: 7.1.2
-      undici: 6.29.0
+      undici: 6.29.1
       whatwg-mimetype: 4.0.0
 
   cheerio@1.0.0-rc.12:
@@ -50787,7 +50796,7 @@ snapshots:
       parse5: 7.3.0
       parse5-htmlparser2-tree-adapter: 7.1.0
       parse5-parser-stream: 7.1.2
-      undici: 7.30.0
+      undici: 7.30.1
       whatwg-mimetype: 4.0.0
 
   chokidar@1.7.0:
@@ -52198,7 +52207,7 @@ snapshots:
     dependencies:
       domelementtype: 3.0.0
 
-  dompurify@3.4.16:
+  dompurify@3.4.17:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -54111,11 +54120,12 @@ snapshots:
     optionalDependencies:
       uglify-js: 3.17.4
 
-  happy-dom@20.8.9:
+  happy-dom@21.0.4:
     dependencies:
       '@types/node': 22.15.13
       '@types/whatwg-mimetype': 3.0.2
       '@types/ws': 8.18.1
+      buffer-image-size: 0.6.4
       entities: 7.0.1
       whatwg-mimetype: 3.0.0
       ws: 8.21.0
@@ -56247,7 +56257,7 @@ snapshots:
       saxes: 6.0.0
       symbol-tree: 3.2.4
       tough-cookie: 6.0.2
-      undici: 8.11.2
+      undici: 8.12.3
       w3c-xmlserializer: 5.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
@@ -57582,7 +57592,7 @@ snapshots:
       d3-sankey: 0.12.3
       dagre-d3-es: 7.0.14
       dayjs: 1.11.21
-      dompurify: 3.4.16
+      dompurify: 3.4.17
       es-toolkit: 1.47.0
       katex: 0.18.10
       khroma: 2.1.0
@@ -57889,7 +57899,7 @@ snapshots:
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       sharp: 0.35.5(@types/node@22.15.13)
-      undici: 7.30.0
+      undici: 7.30.1
       workerd: 1.20260302.0
       ws: 8.21.0
       youch: 4.1.0-beta.10
@@ -58228,9 +58238,9 @@ snapshots:
 
   napi-postinstall@0.3.3: {}
 
-  native-fetch@4.0.2(undici@6.29.0):
+  native-fetch@4.0.2(undici@6.29.1):
     dependencies:
-      undici: 6.29.0
+      undici: 6.29.1
 
   natural-compare@1.4.0: {}
 
@@ -58951,7 +58961,7 @@ snapshots:
       chardet: 2.2.0
       cheerio: 1.2.0
       iconv-lite: 0.7.3
-      undici: 7.30.0
+      undici: 7.30.1
 
   open@10.2.0:
     dependencies:
@@ -61833,7 +61843,7 @@ snapshots:
       tailwind-merge: 3.6.0
       ts-morph: 26.0.0
       tsconfig-paths: 4.2.0
-      undici: 7.30.0
+      undici: 7.30.1
       validate-npm-package-name: 7.0.2
       zod: 3.25.76
       zod-to-json-schema: 3.25.2(zod@3.25.76)
@@ -63807,11 +63817,11 @@ snapshots:
 
   undici-types@6.21.0: {}
 
-  undici@6.29.0: {}
+  undici@6.29.1: {}
 
-  undici@7.30.0: {}
+  undici@7.30.1: {}
 
-  undici@8.11.2: {}
+  undici@8.12.3: {}
 
   unenv@2.0.0-rc.24:
     dependencies:
@@ -64376,17 +64386,17 @@ snapshots:
     optionalDependencies:
       vite: 6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)
 
-  vitest-evals@0.12.0(ai@6.0.50(zod@3.25.76))(tinyrainbow@3.1.0)(vitest@4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)))(zod@3.25.76):
+  vitest-evals@0.12.0(ai@6.0.50(zod@3.25.76))(tinyrainbow@3.1.0)(vitest@4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)))(zod@3.25.76):
     dependencies:
       '@vitest-evals/core': 0.12.0
       '@vitest-evals/report-ui': 0.12.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+      vitest: 4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
     optionalDependencies:
       ai: 6.0.50(zod@3.25.76)
       zod: 3.25.76
 
-  vitest@4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.0)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)):
+  vitest@4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.0)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.12
       '@vitest/mocker': 4.1.12(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
@@ -64412,12 +64422,12 @@ snapshots:
       '@edge-runtime/vm': 3.0.3
       '@opentelemetry/api': 1.9.0
       '@types/node': 22.15.13
-      happy-dom: 20.8.9
+      happy-dom: 21.0.4
       jsdom: 30.0.1(@noble/hashes@2.0.1)
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@20.19.10)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@20.19.10)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)):
+  vitest@4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@20.19.10)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@20.19.10)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.12
       '@vitest/mocker': 4.1.12(vite@6.4.4(@types/node@20.19.10)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
@@ -64443,12 +64453,12 @@ snapshots:
       '@edge-runtime/vm': 3.0.3
       '@opentelemetry/api': 1.9.1
       '@types/node': 20.19.10
-      happy-dom: 20.8.9
+      happy-dom: 21.0.4
       jsdom: 30.0.1(@noble/hashes@2.0.1)
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.16.2)(yaml@2.9.0)):
+  vitest@4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.16.2)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.12
       '@vitest/mocker': 4.1.12(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.16.2)(yaml@2.9.0))
@@ -64474,12 +64484,12 @@ snapshots:
       '@edge-runtime/vm': 3.0.3
       '@opentelemetry/api': 1.9.1
       '@types/node': 22.15.13
-      happy-dom: 20.8.9
+      happy-dom: 21.0.4
       jsdom: 30.0.1(@noble/hashes@2.0.1)
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)):
+  vitest@4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.12
       '@vitest/mocker': 4.1.12(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
@@ -64505,7 +64515,7 @@ snapshots:
       '@edge-runtime/vm': 3.0.3
       '@opentelemetry/api': 1.9.1
       '@types/node': 22.15.13
-      happy-dom: 20.8.9
+      happy-dom: 21.0.4
       jsdom: 30.0.1(@noble/hashes@2.0.1)
     transitivePeerDependencies:
       - msw
