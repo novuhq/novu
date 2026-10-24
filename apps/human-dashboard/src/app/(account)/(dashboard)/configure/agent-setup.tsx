@@ -53,6 +53,9 @@ type AgentSetupProps = {
 /** Stands in for hosts that couldn't be read, the same every render. */
 const NO_HOSTS: AgentHost[] = [];
 
+/** How often the host list is read on its own, as often as the last check is (`useLastHostCheck`). */
+const HOSTS_POLL_MS = 60_000;
+
 /**
  * The row for the agent behind the inbox (`Agent setup` in the design): whether a host reads its mail and
  * when one last checked, each host by name under it, and "Show setup", which opens "Connect another agent".
@@ -151,7 +154,9 @@ function HostRow({ host, now }: { host: AgentHost; now: number }) {
 /**
  * The hosts as the page rendered them, read again whenever the page learns of a check newer than any of
  * theirs: `useLastHostCheck` reads the last check once a minute, so each host's "checked 2m ago" stays as
- * true as the row's.
+ * true as the row's. A host that only used its code changes no check, so the list is also read on its own,
+ * once a minute while the page is in view and when it comes back into view; a read that failed is tried
+ * again then.
  */
 function useHosts(rendered: AgentHost[], lastCheckedAt: string | null): AgentHost[] {
   const [hosts, setHosts] = useState(rendered);
@@ -170,21 +175,31 @@ function useHosts(rendered: AgentHost[], lastCheckedAt: string | null): AgentHos
   const behind = lastCheckedAt !== null && lastCheckedAt > newest ? lastCheckedAt : null;
 
   useEffect(() => {
-    if (!behind) {
-      return;
-    }
-
     let stopped = false;
-    readHostsAction()
-      .then((latest) => {
-        if (!stopped) {
-          setHosts(latest);
-        }
-      })
-      .catch(() => {});
+
+    const read = async () => {
+      if (document.visibilityState !== 'visible') {
+        return;
+      }
+
+      const latest = await readHostsAction().catch(() => null);
+      if (!stopped && latest) {
+        setHosts(latest);
+      }
+    };
+
+    if (behind) {
+      void read();
+    }
+    const interval = window.setInterval(read, HOSTS_POLL_MS);
+    window.addEventListener('focus', read);
+    document.addEventListener('visibilitychange', read);
 
     return () => {
       stopped = true;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', read);
+      document.removeEventListener('visibilitychange', read);
     };
   }, [behind]);
 

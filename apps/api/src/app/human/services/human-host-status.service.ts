@@ -158,11 +158,12 @@ export class HumanHostStatusService {
 /**
  * One entry for each host, last checked first. Before hosts were told apart, the agent kept one entry for
  * each way in (`hosts.cli`, `hosts.mcp`), whichever host it was: those show as one `general` entry, until a
- * host with a name has checked the inbox. Their times still count for the agent as a whole until then.
+ * host with a name has checked the inbox. Their times still count for the agent as a whole until then. A CLI
+ * from before says no name and checks as `general`, which keeps them: they fold into its entry.
  */
 export function describeHosts(hosts: AgentHosts | undefined): HumanHostStatusResponseDto {
   const named = AGENT_HOST_IDS.flatMap((id) => toHosts(id, hosts?.byId?.[id]));
-  const fromBefore = named.some((host) => host.lastCheckedAt)
+  const fromBefore = named.some((host) => host.id !== GENERAL_HOST && host.lastCheckedAt)
     ? []
     : AGENT_HOST_VIAS.flatMap((via) => toHosts(GENERAL_HOST, hosts?.[via], via));
   const list = mergeSameHost([...named, ...fromBefore]).sort(

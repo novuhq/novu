@@ -4,6 +4,7 @@ import { type ApiClient, createApiClient } from '../api/client';
 import { bootstrapKeylessSession } from '../api/setup';
 import { info, success, warn } from '../cli-io';
 import { type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
+import { keptHost } from '../host';
 import { openedScreen, openScreen } from '../screen/screen';
 import { failOnScreen } from './failure';
 import { handleError } from './interact';
@@ -199,6 +200,7 @@ function saveSetupConfig(
     relayAgentIdentifier: provisioned.relay.agentIdentifier,
     subscriberId: provisioned.subscriberId,
     ...(defaultChannel ? { defaultChannel } : {}),
+    ...keptHost(existing, apiUrl),
   });
   success(`Saved config to ${configPath()}.`);
 

@@ -1,3 +1,5 @@
+import type { CliConfig } from './config';
+
 /** Matches the API's `AGENT_HOST_IDS`: the hosts Agent Inbox tells apart. `general` is any other host. */
 export const HOST_IDS = [
   'claude-code',
@@ -16,6 +18,15 @@ export type HostId = (typeof HOST_IDS)[number];
 
 export function isHostId(value: unknown): value is HostId {
   return typeof value === 'string' && (HOST_IDS as readonly string[]).includes(value);
+}
+
+/**
+ * The host a saved config was connected for (`CliConfig.host`), for a command that writes the config anew
+ * (`setup`, `login`): it says which host runs on this computer, so it stays while the config stays on the
+ * same API.
+ */
+export function keptHost(existing: CliConfig | null, apiUrl: string): { host?: HostId } {
+  return existing?.apiUrl === apiUrl && isHostId(existing.host) ? { host: existing.host } : {};
 }
 
 type Env = Record<string, string | undefined>;

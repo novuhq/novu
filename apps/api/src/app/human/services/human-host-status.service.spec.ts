@@ -111,6 +111,24 @@ describe('HumanHostStatusService', () => {
       ]);
     });
 
+    it('keeps the old times when only General has checked, as a CLI from before that says no name does', () => {
+      const status = describeHosts({
+        cli: { connectedAt: '2026-10-01T10:00:00.000Z', lastCheckedAt: '2026-10-22T08:00:00.000Z' },
+        byId: {
+          general: { connectedAt: '2026-10-23T10:00:00.000Z', lastCheckedAt: '2026-10-23T10:01:00.000Z', via: 'cli' },
+        },
+      });
+
+      expect(status.hosts).to.deep.equal([
+        {
+          id: 'general',
+          via: 'cli',
+          connectedAt: '2026-10-01T10:00:00.000Z',
+          lastCheckedAt: '2026-10-23T10:01:00.000Z',
+        },
+      ]);
+    });
+
     it('says nothing is connected for an agent no host came to, and skips hosts this API does not know', () => {
       expect(describeHosts(undefined)).to.deep.equal({
         connected: false,

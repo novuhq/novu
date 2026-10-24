@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { detectHost, HOST_MARKER_VARIABLES, isHostId } from './host';
+import type { CliConfig } from './config';
+import { detectHost, HOST_MARKER_VARIABLES, isHostId, keptHost } from './host';
 
 describe('detectHost', () => {
   it('knows each host by what it sets for the commands its agent runs', () => {
@@ -58,5 +59,25 @@ describe('isHostId', () => {
     expect(isHostId('grok')).toBe(true);
     expect(isHostId('windsurf')).toBe(false);
     expect(isHostId(undefined)).toBe(false);
+  });
+});
+
+describe('keptHost', () => {
+  const saved: CliConfig = {
+    apiUrl: 'https://www.agentinbox.md/api',
+    auth: { mode: 'apiKey', secretKey: 'sk_1' },
+    relayAgentIdentifier: 'human-relay',
+    host: 'codex',
+  };
+
+  it('keeps the host this computer was connected for while the config stays on the same API', () => {
+    expect(keptHost(saved, 'https://www.agentinbox.md/api')).toEqual({ host: 'codex' });
+  });
+
+  it('drops it for another API, and keeps nothing it does not know or was not given', () => {
+    expect(keptHost(saved, 'http://localhost:3000')).toEqual({});
+    expect(keptHost({ ...saved, host: 'windsurf' as never }, 'https://www.agentinbox.md/api')).toEqual({});
+    expect(keptHost({ ...saved, host: undefined }, 'https://www.agentinbox.md/api')).toEqual({});
+    expect(keptHost(null, 'https://www.agentinbox.md/api')).toEqual({});
   });
 });
