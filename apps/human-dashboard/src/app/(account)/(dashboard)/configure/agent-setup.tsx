@@ -4,11 +4,13 @@ import { ChevronDown, Terminal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { ConnectAgentDrawer } from '@/components/connect/connect-agent-drawer';
+import { CONFIGURE_CONNECT_PARAM } from '@/components/dashboard/nav';
 import { Button, SMALL_BUTTON } from '@/components/ui/button';
 import { Fold } from '@/components/ui/stepper';
 import { useNow } from '@/hooks/use-now';
 import type { ToolId } from '@/lib/ai-tools';
 import { type AgentHost, type ConnectApi, formatCheckedAgo, hostLiveness, hostName, isHostId } from '@/lib/host-status';
+import type { HostId } from '@/lib/hosts';
 import { HOST_LABELS } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
@@ -48,6 +50,8 @@ type AgentSetupProps = {
   mcpUrl: string | null;
   /** The chat apps that have signed in to the account. */
   connectedTools: ToolId[];
+  /** The host a link asked for (`?connect=claude-code`): the page opens with the drawer on it. */
+  connectHost?: HostId | null;
 };
 
 /** Stands in for hosts that couldn't be read, the same every render. */
@@ -62,8 +66,15 @@ const HOSTS_POLL_MS = 60_000;
  * A host counts as connected while one checked the inbox within the last day; until one does, the page
  * reloads once it has.
  */
-export function AgentSetup({ lastCheckedAt, hosts: renderedHosts = NO_HOSTS, renderedAt, ...drawer }: AgentSetupProps) {
-  const [open, setOpen] = useState(false);
+export function AgentSetup({
+  lastCheckedAt,
+  hosts: renderedHosts = NO_HOSTS,
+  renderedAt,
+  connectedTools,
+  connectHost = null,
+  ...drawer
+}: AgentSetupProps) {
+  const [open, setOpen] = useState(connectHost !== null);
   const now = useNow(renderedAt);
   const connected = hostLiveness(lastCheckedAt, now) === 'live';
   const hosts = useHosts(renderedHosts, lastCheckedAt);
@@ -113,7 +124,19 @@ export function AgentSetup({ lastCheckedAt, hosts: renderedHosts = NO_HOSTS, ren
           ))}
         </ul>
       </Fold>
-      <ConnectAgentDrawer {...drawer} open={open} onOpenChange={setOpen} api={CONNECT_API} />
+      <ConnectAgentDrawer
+        {...drawer}
+        connectedHosts={connectedTools}
+        initialHost={connectHost ?? undefined}
+        open={open}
+        onOpenChange={(isOpen) => {
+          setOpen(isOpen);
+          if (!isOpen) {
+            forgetConnectParam();
+          }
+        }}
+        api={CONNECT_API}
+      />
     </section>
   );
 }
@@ -204,4 +227,15 @@ function useHosts(rendered: AgentHost[], lastCheckedAt: string | null): AgentHos
   }, [behind]);
 
   return hosts;
+}
+
+/** Takes `?connect=` off the address once the drawer is closed, so a reload doesn't open it again. */
+function forgetConnectParam() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has(CONFIGURE_CONNECT_PARAM)) {
+    return;
+  }
+
+  url.searchParams.delete(CONFIGURE_CONNECT_PARAM);
+  window.history.replaceState(null, '', url);
 }

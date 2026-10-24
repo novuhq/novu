@@ -8,9 +8,10 @@ Inbox accounts with their dashboard, and the Agent Inbox API (`/api`).
 | ----------------- | ------------------------------------------------------------------------------------------- |
 | `/`               | The page for agents ("for robots"): the CLI on one page of light paper, from install to exit codes and flags, beside a dithered robot arm. People go on to `/sapien`. See [the ADR](../../packages/agentinbox/docs/adr/0002-agentinbox-md-root-is-the-page-for-agents.md). |
 | `/sapien`         | The page for people: what Agent Inbox does, with the setup command, a prompt to copy, and a "sign in" link into the dashboard. |
-| `/index.md`, `/llms.txt` | `/` as Markdown, made from the same data, and the index that points language models to it and to `/agents.md`. |
-| `/robots.txt`, `/sitemap.xml` | For search engines: the two website pages, at `https://www.agentinbox.md` (`SITE_ORIGIN` in `src/lib/seo.ts`). Until launch they stay out of search results: the pages, `/index.md` and `/llms.txt` say `noindex`, the sitemap is empty and robots.txt doesn't point to it. `SITE_INDEXED` in `src/lib/seo.ts` turns that off. Preview deployments always send `noindex`. |
-| `/agents.md`      | What agents read, in Markdown: how to connect with the commands from the dashboard, then the agentinbox skill from [agentinboxhq/skills](https://github.com/agentinboxhq/skills), as `npx skills add` installs it. The home page links to it. |
+| `/index.md`, `/llms.txt` | `/` as Markdown, made from the same data, and the index that points language models to it, to `/agents.md` and to each host's page. |
+| `/[host]`, `/[host].md` | A page for each host Agent Inbox has steps for (`/claude-code`, `/codex`, `/chatgpt`, …), and the same as Markdown for agents (`/claude-code.md`, rewritten to `/claude-code/index.md`). Each opens with what to tell the agent, then the same steps as the dashboard's host picker, with "sign in to get your code" where the dashboard has the code. Built from the host list in `src/lib/hosts.ts`; any other address at that level is not found. |
+| `/robots.txt`, `/sitemap.xml` | For search engines: the website pages (the two above and the host pages), at `https://www.agentinbox.md` (`SITE_ORIGIN` in `src/lib/seo.ts`). Until launch they stay out of search results: the pages and their Markdown and `/llms.txt` say `noindex`, the sitemap is empty and robots.txt doesn't point to it. `SITE_INDEXED` in `src/lib/seo.ts` turns that off. Preview deployments always send `noindex`. |
+| `/agents.md`      | What agents read, in Markdown: how to connect with the commands from the dashboard, how to set themselves up without a code (`setup` and `login`, which the operator approves), each host's page, then the agentinbox skill from [agentinboxhq/skills](https://github.com/agentinboxhq/skills), as `npx skills add` installs it. The home page links to it. |
 | `/.well-known/agent-skills/` | The skills from agentinboxhq/skills, for [Agent Skills discovery](https://github.com/cloudflare/agent-skills-discovery-rfc): `index.json` lists them, and each downloads from under the commit it came from, as `<commit>/<name>.tar.gz`, or `<commit>/<name>/SKILL.md` for a skill that is only that file. `npx skills add https://www.agentinbox.md` reads it. |
 | `/p/[handle]`     | An agent's public card: anyone with the link sees the agent and every way to reach it, without signing in. `opengraph-image` is the picture apps show where the link is shared. |
 | `/invite/[token]` | Opened from a `contact invite` link. The person picks which of the agent's channels (Email, Telegram, Slack) it may reach them on, and their default. |
@@ -41,7 +42,8 @@ Each Agent Inbox account has a backing organization, which the API creates throu
 
 Both pages show the CLI's commands as text written by hand. When a command, flag or exit code changes, change
 `src/data/home.ts` (also `/index.md`), the examples in `src/data/sapien-building-blocks.ts` and
-`src/data/sapien-integrations.ts`, and the prompt in `src/data/sapien-closing.ts`.
+`src/data/sapien-integrations.ts`, the prompt in `src/data/sapien-closing.ts`, and the hosts' steps in
+`src/lib/hosts.ts` (the host picker and the host pages).
 
 `/sapien` has its own black, text and surface colours (`--color-sapien-*` in `src/styles/globals.css`) and its own
 faces, Inter and IvyPresto (`src/lib/sapien-fonts.ts`); `/` styles itself in `src/styles/home.css` with Geist Mono.
@@ -52,10 +54,10 @@ Neither changes how the dashboard looks. The dither effect on `/` is vendored (`
 An operator gets an agent in one of two ways, and both end in the dashboard:
 
 - **Sign-up in the dashboard.** `/onboarding` walks them through the four steps. Step 3 hands the agent to a
-  host with commands the operator runs in their terminal, carrying a one-time code, or through a chat app's
-  MCP drawer, opened from its logo; step 4 sets up Telegram and Slack in the
-  same drawers as Configure, over the step. "Later" or "Skip the test" on step 2 and the connector link on
-  step 3 open the dashboard early; banners on Inbox and Configure lead back to the step that was left.
+  host: the operator picks it from the host picker and gets its steps, the commands they run in their
+  terminal, carrying a one-time code, or a chat app's sign-in; step 4 sets up Telegram and Slack in the
+  same drawers as Configure, over the step. "Later" or "Skip the test" on step 2 open the dashboard early;
+  banners on Inbox and Configure lead back to the step that was left.
 - **Claim from the CLI.** The agent was made in a terminal and comes with the claim (`/claim`, or
   `/cli/login` with a setup to keep). It has its address and its host, so its operator skips the steps.
 
@@ -63,9 +65,15 @@ How far an operator got is kept in the private metadata of their Clerk user (`li
 An agent that is older than its operator's first visit to step 1 never goes through the steps: it was in
 use before, however the operator came to see that step.
 
-More hosts connect later from Configure, in "Connect another agent": the same commands with a new code, the
-"Install skills" button (it copies `npx skills add agentinboxhq/skills`), and the chat apps that connect through the
-MCP server.
+More hosts connect later from Configure, in "Connect another agent": the same host picker, with a new code.
+
+The hosts are one list, `src/lib/hosts.ts`, which the picker and the public host pages (`/claude-code`) are built
+from. A host that runs commands (Claude Code, Codex, OpenCode, Cursor, Hermes, OpenClaw, General) gets the commands
+first, with its own skills line (`npx skills add … --agent claude-code -y`), and its second way in under them: a
+plugin, or the MCP server in its own config. A chat app (Claude, ChatGPT, Grok Bot) only signs in to the MCP server.
+The picker ticks the hosts that connected already; today that's the apps the MCP server tells apart
+(`connectedTools`). `?connect=codex` on `/configure` opens "Connect another agent" on that host, which is where a
+host page's "sign in to get your code" leads.
 
 The connect box shows only the commands for now. It also had a prompt that asked an agent to run them, but an
 agent's own permission checks (Claude Code's auto mode) stop it from saving a key and installing a skill on a

@@ -8,6 +8,7 @@ import { buildChannelPrompt } from './agent-setup-prompt';
 import type { ToolId } from './ai-tools';
 import { findCurrentUser } from './auth-page';
 import type { HostStatus } from './host-status';
+import type { HostId } from './hosts';
 import type { HumanAccount } from './human-account';
 import { agentDisplayName, DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from './human-agent-api';
 import { requestForAccount } from './human-api-key';
@@ -19,7 +20,14 @@ import type { SlackSetupState } from './human-slack-setup';
 import type { TelegramSetupState } from './human-telegram-setup';
 import { listConnectedTools, readMcpUrl } from './human-tools-api';
 import type { InboxMessage, InboxThread } from './inbox';
-import { AGENT_DOMAIN, cardLinkOf, ONBOARDING_PATH, type OnboardingStep, toHandle } from './onboarding';
+import {
+  AGENT_DOMAIN,
+  cardLinkOf,
+  ONBOARDING_PATH,
+  type OnboardingStep,
+  onboardingConnectPath,
+  toHandle,
+} from './onboarding';
 import { isSetupUnfinished, resolveStep, type SetupStep, wasMadeInTheSteps } from './onboarding-progress';
 import { type OnboardingState, readOnboardingState, writeOnboardingState } from './onboarding-state';
 import { readApiUrl, readSiteOrigin } from './site-origin';
@@ -128,14 +136,18 @@ export async function noteAgentClaimed(user: User): Promise<void> {
 
 /**
  * For a dashboard page: the operator's progress, once they may be there. Without an agent they belong in
- * the onboarding, and so do they in the middle of it, until they choose "Skip for now".
+ * the onboarding, and so do they in the middle of it, until they choose "Skip for now". `connect` is a host
+ * the page was asked to connect (`?connect=codex`), which the onboarding's "Connect" step then starts on.
  */
-export async function requireSetUpAgent(account: HumanAccount): Promise<SetupProgress & { agent: RelayAgent }> {
+export async function requireSetUpAgent(
+  account: HumanAccount,
+  connect: HostId | null = null
+): Promise<SetupProgress & { agent: RelayAgent }> {
   const progress = await loadSetupProgress(account);
   const { agent } = progress;
 
   if (!agent || (isSetupUnfinished(progress.step) && !progress.state.skippedAt)) {
-    redirect(ONBOARDING_PATH);
+    redirect(connect ? onboardingConnectPath(connect) : ONBOARDING_PATH);
   }
 
   return { ...progress, agent };

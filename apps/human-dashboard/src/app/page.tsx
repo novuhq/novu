@@ -21,11 +21,13 @@ import {
   HOME_AUTH,
   HOME_CONTACTS,
   HOME_CONTACTS_DESCRIPTION,
+  HOME_HOSTS,
   HOME_INTRODUCTION,
   HOME_INVITE_DESCRIPTION,
   HOME_INVITES,
   HOME_LINKS,
   HOME_SETUP,
+  HOME_SETUP_DESCRIPTION,
   HOME_USAGE,
   INSTALL_COMMAND,
 } from '@/data/home';
@@ -60,7 +62,8 @@ export const viewport: Viewport = {
 
 /**
  * agentinbox.md for agents ("for robots"): the CLI on one page of light paper, with `/index.md` as its
- * Markdown. People go on to `/sapien`; an agent connected from the dashboard reads `/agents.md`.
+ * Markdown. People go on to `/sapien`; an agent connected from the dashboard reads `/agents.md`, and each
+ * host has its own page of steps (`/claude-code`), linked under HOSTS.
  */
 export default function HomePage() {
   return (
@@ -100,8 +103,31 @@ export default function HomePage() {
         <DocSection anchor="install" title="INSTALL">
           <CommandLines commands={[INSTALL_COMMAND]} />
         </DocSection>
-        <DocSection anchor="setup" title="SETUP" subtitle="once, by the human">
+        <DocSection anchor="setup" title="SETUP" subtitle="once, by you or by your agent">
+          <p>
+            <FlagText text={HOME_SETUP_DESCRIPTION} />
+          </p>
           <CommandLines commands={HOME_SETUP} />
+        </DocSection>
+        <DocSection anchor="hosts" title="HOSTS" subtitle="step by step, wherever your agent runs">
+          <nav aria-label="Setup for each host" className="home-links">
+            {HOME_HOSTS.map((item, index) => (
+              <span key={item.label}>
+                {index > 0 ? (
+                  <span aria-hidden="true" className="home-link-divider">
+                    |
+                  </span>
+                ) : null}
+                <Link
+                  href={item.href}
+                  title={`Agent Inbox for ${item.name}`}
+                  style={{ minWidth: textWidth(item.label) }}
+                >
+                  {item.label}
+                </Link>
+              </span>
+            ))}
+          </nav>
         </DocSection>
         <DocSection anchor="usage" title="USAGE" subtitle="forever after, by any agent on the machine">
           <CommandLines commands={HOME_USAGE} />

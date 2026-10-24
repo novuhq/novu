@@ -1,3 +1,4 @@
+import { HOSTS, hostPath } from '@/lib/hosts';
 import { PACKAGE_URL, SOURCE_URL } from '@/lib/seo';
 
 /** The CLI's package. Every command on the page runs it through npx, which needs nothing installed first. */
@@ -130,6 +131,14 @@ function quoted(message: string): CommandPart {
   return { text: `"${message}"`, color: 'blue' };
 }
 
+/**
+ * Who runs setup: the operator, or their agent when they ask it to (the skills say the same). The agent
+ * passes the operator's email and name, since nobody is there to type them, and the operator approves its
+ * `login` in the browser.
+ */
+export const HOME_SETUP_DESCRIPTION =
+  "Your agent may run setup and login for you when you ask it to: it passes your --email and --name, and you approve the login on agentinbox.md. It installs the skills with --agent and its own id, and -y. It never asks for a Telegram or Slack token; channel add prints a link where you finish. When its host won't let it save a key, it tells you the command to run.";
+
 export const HOME_SETUP: readonly HomeCommand[] = [
   { parts: cli('setup'), note: '# creates the inbox, offers a channel' },
   { parts: cli('channel add telegram') },
@@ -137,6 +146,9 @@ export const HOME_SETUP: readonly HomeCommand[] = [
   { parts: cli('login'), note: '# keep it in your account' },
   { parts: SKILLS_ADD, note: '# teach your coding agent' },
 ];
+
+/** Each host's page of steps, as the robots page lists them: by the address they live at. */
+export const HOME_HOSTS = HOSTS.map((host) => ({ label: host.id, href: hostPath(host.id), name: host.name }));
 
 export const HOME_USAGE: readonly HomeCommand[] = [
   { parts: cli('inbox send ask', SPACE, quoted('Which environment should I deploy to?')) },

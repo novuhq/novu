@@ -1,14 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { type ReactNode, useCallback, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
 
 import { useConnectionPoll } from '@/components/channels/setup-parts';
-import { ChatAppList } from '@/components/connect/chat-app-list';
-import { ConnectPromptBox } from '@/components/connect/connect-prompt-box';
-import { ConnectToolDrawer } from '@/components/connect/connect-tool-drawer';
-import { InstallSkillsButton } from '@/components/connect/install-skills-button';
-import { ToolChips } from '@/components/onboarding/identity-stage';
+import { HostPicker } from '@/components/connect/host-picker';
+import { HostPanel } from '@/components/connect/host-steps';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
 import { MascotFace } from '@/components/ui/mascot-face';
@@ -17,8 +14,8 @@ import { useConnectCode } from '@/hooks/use-connect-code';
 import { useHostBaseline } from '@/hooks/use-host-baseline';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { useSwap } from '@/hooks/use-swap';
-import { AI_TOOLS, type AiTool, type ToolId } from '@/lib/ai-tools';
 import type { ConnectApi } from '@/lib/host-status';
+import { DEFAULT_HOST, type HostId } from '@/lib/hosts';
 import type { HostVia } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
@@ -36,39 +33,49 @@ type ConnectAgentDrawerProps = {
   /** The hosted MCP server the chat apps connect to, or `null` while there is none. */
   mcpUrl: string | null;
   docsUrl: string;
-  /** The chat apps that have signed in to the account. */
-  connectedTools: ToolId[];
+  /**
+   * The hosts that connected already, which the picker ticks. Today these are the chat apps (and Cursor)
+   * that signed in to the MCP server; NV-9146 adds every host the API tells apart.
+   */
+  connectedHosts: readonly HostId[];
+  /** The host the picker shows when the drawer opens, such as the one a host page's "sign in" link named. */
+  initialHost?: HostId;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   api: ConnectApi;
 };
 
 /**
- * "Connect another agent" (`4.7`): the commands that connect an agent with a one-time code, run in the
- * person's terminal, the skills, and the chat apps that connect through the MCP server, each with its own
- * drawer over this one. Their logos under the commands open the same drawers. A fresh code is asked for
- * every time it opens.
+ * "Connect another agent" (`4.7`), with a host picker over the steps: the hosts that run commands get the
+ * commands that connect them with a one-time code, run in the person's terminal, and their second way in
+ * (a plugin, or the MCP server); the chat apps get their sign-in. A fresh code is asked for every time it
+ * opens, and stays the same from one host to the next.
  *
  * For as long as it's open it watches for a host that comes in: a way in that's new, or one that came back
  * after a day without checks, or a code it showed getting used, which the API tells (`useCodeWatch`). The
  * drawer then says so, and the page reloads so the agent's card and the Agent setup row show it. A code the
- * API says ran out, or doesn't know, is swapped for a fresh one.
+ * API says ran out, or doesn't know, is swapped for a fresh one. A chat app watches for its own sign-in
+ * (`ChatAppSignIn`) and says so in its own place, under the picker.
  */
 export function ConnectAgentDrawer({
   handle,
   apiUrl,
   mcpUrl,
   docsUrl,
-  connectedTools,
+  connectedHosts,
+  initialHost,
   open,
   onOpenChange,
   api,
 }: ConnectAgentDrawerProps) {
   const router = useRouter();
   const [newHost, setNewHost] = useState<HostVia | null>(null);
-  const [openTool, setOpenTool] = useState<ToolId | null>(null);
-  // The app whose drawer was opened last, so that drawer keeps its words while it slides shut.
-  const [drawerTool, setDrawerTool] = useState<AiTool>(AI_TOOLS[0]);
+  const [host, setHost] = useState<HostId>(initialHost ?? DEFAULT_HOST);
+  const connected = useMemo(() => new Set<HostId>(connectedHosts), [connectedHosts]);
+  // A host that signed in to the MCP server while its steps were on show (a chat app, or Cursor after its MCP
+  // config) already said so: its first check through the MCP server, which the drawer would take for a new
+  // host, isn't news.
+  const [chatSignedIn, setChatSignedIn] = useState(false);
 
   // Every opening starts over: a new code, and nothing connected yet. Done while
   // rendering, so the drawer never shows what the last opening ended on.
@@ -78,21 +85,22 @@ export function ConnectAgentDrawer({
     setWasOpen(open);
     if (open) {
       setNewHost(null);
-      setOpenTool(null);
+      setChatSignedIn(false);
       setOpenings((count) => count + 1);
+      if (initialHost) {
+        setHost(initialHost);
+      }
     }
   }
 
   const watching = open && !newHost;
   const createCode = useCallback(() => api.createCode(handle), [api, handle]);
   const { state: code, renew, retry } = useConnectCode(createCode, watching);
-  // A chat app's drawer watches for its own sign-in while it covers this one.
-  const hosts = useHostBaseline(api.readHosts, watching && openTool === null);
-  // The codes outlive a chat app's drawer: one used while it covered this one still counts.
+  const hosts = useHostBaseline(api.readHosts, watching);
   const codes = useCodeWatch(api.readCodeStatus, code.status === 'ready' ? code.code : null, watching);
 
   useConnectionPoll<HostVia>({
-    waiting: watching && openTool === null,
+    waiting: watching,
     // It watches for as long as it's open: the code on screen is renewed before it runs out, so a host can
     // come in with it at any time, from a copy made long after the drawer opened.
     giveUpAfterMs: null,
@@ -104,7 +112,10 @@ export function ConnectAgentDrawer({
       }
 
       const [via, codeWatch] = await Promise.all([hosts.check(), codes.check()]);
-      if (via) {
+      if (via === 'mcp' && chatSignedIn) {
+        // Compared from here on: another host that comes in after it still counts.
+        hosts.reset();
+      } else if (via) {
         return via;
       }
 
@@ -125,79 +136,51 @@ export function ConnectAgentDrawer({
     },
   });
 
-  function openApp(tool: AiTool) {
-    setDrawerTool(tool);
-    setOpenTool(tool.id);
-  }
-
   return (
-    <>
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent
-          breadcrumb="Configure / Agent setup"
-          title="Connect another agent"
-          className="max-w-140"
-          // 14px above and below the header, 20px on the left and 14px on the right, next to the close button.
-          headerClassName="items-center gap-2.5 border-b border-border py-3.5 pr-3.5 pl-5 [&>button]:m-0 [&>div]:gap-px"
-          titleClassName="leading-5.5"
-          bodyClassName="gap-0 p-5"
-          footerClassName="px-5 py-3.5"
-          footer={
-            <>
-              <p className="mr-auto text-xs leading-4 text-muted">New agents show up in Agent setup.</p>
-              <DrawerClose asChild>
-                <Button>Done</Button>
-              </DrawerClose>
-            </>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent
+        breadcrumb="Configure / Agent setup"
+        title="Connect another agent"
+        className="max-w-140"
+        // 14px above and below the header, 20px on the left and 14px on the right, next to the close button.
+        headerClassName="items-center gap-2.5 border-b border-border py-3.5 pr-3.5 pl-5 [&>button]:m-0 [&>div]:gap-px"
+        titleClassName="leading-5.5"
+        bodyClassName="gap-0 p-5"
+        footerClassName="px-5 py-3.5"
+        footer={
+          <>
+            <p className="mr-auto text-xs leading-4 text-muted">New agents show up in Agent setup.</p>
+            <DrawerClose asChild>
+              <Button>Done</Button>
+            </DrawerClose>
+          </>
+        }
+      >
+        <Swapping key={openings} view={newHost ? 'connected' : 'connect'}>
+          {(shown) =>
+            shown === 'connected' ? (
+              <Connected handle={handle} />
+            ) : (
+              <>
+                <HostPicker selected={host} onSelect={setHost} connected={connected} />
+                <HostPanel
+                  selected={host}
+                  handle={handle}
+                  apiUrl={apiUrl}
+                  code={code}
+                  onRetry={retry}
+                  mcpUrl={mcpUrl}
+                  docsUrl={docsUrl}
+                  connected={connected}
+                  api={api}
+                  onSignedIn={() => setChatSignedIn(true)}
+                />
+              </>
+            )
           }
-        >
-          <Swapping key={openings} view={newHost ? 'connected' : 'connect'}>
-            {(shown) =>
-              shown === 'connected' ? (
-                <Connected handle={handle} />
-              ) : (
-                <>
-                  <p className="text-[13px] leading-[19px] text-secondary">
-                    Run these in your terminal, in the project your agent works in.
-                  </p>
-                  <ConnectPromptBox handle={handle} apiUrl={apiUrl} code={code} onRetry={retry} />
-                  <div className="flex flex-wrap items-center gap-2 text-xs leading-4 text-muted">
-                    <span>Works with</span>
-                    {/* Claude, Cursor and ChatGPT, overlapping by 4px, with Cursor's tilted. Each opens its
-                        drawer, as its row under "Chat apps" does. */}
-                    <ToolChips
-                      onOpen={mcpUrl === null ? undefined : openApp}
-                      className="gap-0 [&_img]:rounded-[3.5px] [&>*:nth-child(2)]:-rotate-4 [&>*:not(:first-child)]:-ml-1"
-                    />
-                    <span>and anything that runs a command or MCP</span>
-                    <InstallSkillsButton className="ml-auto" />
-                  </div>
-                  <h3 className="font-mono text-[11px] leading-4 font-medium text-muted uppercase">Chat apps</h3>
-                  <ChatAppList connectedTools={connectedTools} mcpUrl={mcpUrl} docsUrl={docsUrl} onOpen={openApp} />
-                </>
-              )
-            }
-          </Swapping>
-        </DrawerContent>
-      </Drawer>
-
-      {mcpUrl !== null && (
-        <ConnectToolDrawer
-          // Each app gets a drawer of its own, so what one learned about its connection stays with it.
-          key={drawerTool.id}
-          tool={drawerTool}
-          mcpUrl={mcpUrl}
-          handle={handle}
-          connected={connectedTools.includes(drawerTool.id)}
-          open={open && openTool !== null}
-          onOpenChange={(isOpen) => setOpenTool(isOpen ? drawerTool.id : null)}
-          // Connected, the app's "Done" closes this drawer too: there is nothing left to do here.
-          onDone={() => onOpenChange(false)}
-          nested
-          api={api}
-        />
-      )}
-    </>
+        </Swapping>
+      </DrawerContent>
+    </Drawer>
   );
 }
 
@@ -232,8 +215,8 @@ function Swapping({ view, children }: { view: View; children: (shown: View) => R
 }
 
 /**
- * What replaces the prompt once a new host came in. The design draws none for this drawer; it follows
- * the chat apps' "connected" (`4c.2`), without an app to open.
+ * What replaces the picker and the steps once a new host came in through the CLI. The design draws none for
+ * this drawer; it follows the chat apps' "connected" (`4c.2`), without an app to open.
  */
 function Connected({ handle }: { handle: string }) {
   return (
