@@ -183,6 +183,7 @@ export enum ChatProviderIdEnum {
   ChatWebhook = 'chat-webhook',
   Novu = 'novu-slack',
   Telegram = 'telegram',
+  WeChat = 'wechat',
   Sendblue = 'sendblue',
   NovuWebChat = 'novu-web-chat',
   PhotonImessage = 'photon-imessage',
