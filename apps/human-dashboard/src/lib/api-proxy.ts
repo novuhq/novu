@@ -25,6 +25,7 @@ const ROUTES = PROXY_ROUTES;
  */
 const FORWARDED_REQUEST_HEADERS = [
   'accept',
+  'agent-inbox-host',
   'agent-inbox-via',
   'authorization',
   'content-type',

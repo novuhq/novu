@@ -2,14 +2,14 @@ import 'server-only';
 
 import { cache } from 'react';
 
-import type { ConnectCode, ConnectCodeCheck, HostStatus } from './host-status';
+import type { ConnectCode, ConnectCodeCheck, HostId, HostStatus } from './host-status';
 import type { HumanAccount } from './human-account';
 import { isHumanApiNotFound } from './human-api-error';
 import { requestForAccount } from './human-api-key';
 
 /**
- * Whether a host reads the agent's mail: the hosts that came in through the CLI or the MCP server, and
- * when each last checked the inbox. Pages and the drawers' checks read it fresh every time.
+ * Whether a host reads the agent's mail: each host by name, the way it came in, and when it last checked
+ * the inbox. Pages and the drawers' checks read it fresh every time.
  */
 export function readHostStatus(account: HumanAccount): Promise<HostStatus> {
   return requestForAccount<HostStatus>(account, '/v1/human/agent/hosts');
@@ -32,11 +32,14 @@ export const loadHostStatus = cache(async (account: HumanAccount): Promise<HostS
 /**
  * A one-time code for `agentinbox connect <handle> --code <code>`. Asked again while the last one is
  * unused and has a few minutes left, the API hands that one back; a used one is never handed out again.
+ *
+ * `host` is the host picker's tab the code is shown on: each host gets a code of its own, and a host that
+ * uses it without saying which one it is counts as that host.
  */
-export function createConnectCode(account: HumanAccount, handle: string): Promise<ConnectCode> {
+export function createConnectCode(account: HumanAccount, handle: string, host?: HostId): Promise<ConnectCode> {
   return requestForAccount<ConnectCode>(account, '/v1/human/agent/connect-codes', {
     method: 'POST',
-    body: { handle },
+    body: host ? { handle, host } : { handle },
   });
 }
 

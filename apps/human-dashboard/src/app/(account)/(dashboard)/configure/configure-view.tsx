@@ -149,6 +149,7 @@ export function ConfigureView({
             handle={agent.handle}
             apiUrl={apiUrl}
             lastCheckedAt={lastCheckedAt}
+            hosts={hostStatus?.hosts}
             renderedAt={renderedAt}
             docsUrl={docsUrl}
             mcpUrl={mcpUrl}

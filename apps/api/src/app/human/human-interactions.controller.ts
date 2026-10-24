@@ -74,7 +74,13 @@ import {
   AGENT_PICTURE_MAX_BYTES,
   HumanAgentPictureService,
 } from './services/human-agent-picture.service';
-import { AGENT_INBOX_VIA_HEADER, HumanHostStatusService, readHostVia } from './services/human-host-status.service';
+import {
+  AGENT_INBOX_HOST_HEADER,
+  AGENT_INBOX_VIA_HEADER,
+  HumanHostStatusService,
+  readHostId,
+  readHostVia,
+} from './services/human-host-status.service';
 import { HumanOperatorService } from './services/human-operator.service';
 import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-interaction.command';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
@@ -348,7 +354,8 @@ export class HumanInteractionsController {
     @UserSession() user: UserSessionData,
     @Body() body: SetupHumanRelayRequestDto,
     @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string,
-    @Headers(AGENT_INBOX_VIA_HEADER) via?: string
+    @Headers(AGENT_INBOX_VIA_HEADER) via?: string,
+    @Headers(AGENT_INBOX_HOST_HEADER) host?: string
   ): Promise<SetupHumanRelayResponseDto> {
     const result = await this.setupHumanRelayUsecase.execute(
       SetupHumanRelayCommand.create({
@@ -375,7 +382,7 @@ export class HumanInteractionsController {
       await this.hostStatus.recordConnected(
         { environmentId: user.environmentId, organizationId: user.organizationId },
         result.agentId,
-        'mcp'
+        { via: 'mcp', id: readHostId(host) }
       );
     }
 

@@ -2,7 +2,7 @@ import { AGENT_ANALYTICS_SOURCES, AgentReplyPolicyEnum, AgentSubscriberAccessEnu
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
-import { AGENT_INBOX_REACHES, AgentDBModel } from './agent.entity';
+import { AGENT_HOST_VIAS, AGENT_INBOX_REACHES, AgentDBModel } from './agent.entity';
 
 const agentSchema = new Schema<AgentDBModel>(
   {
@@ -21,6 +21,20 @@ const agentSchema = new Schema<AgentDBModel>(
       version: Schema.Types.String,
     },
     hosts: {
+      byId: {
+        type: Map,
+        of: new Schema(
+          {
+            connectedAt: Schema.Types.String,
+            lastCheckedAt: Schema.Types.String,
+            via: {
+              type: Schema.Types.String,
+              enum: [...AGENT_HOST_VIAS],
+            },
+          },
+          { _id: false }
+        ),
+      },
       cli: {
         connectedAt: Schema.Types.String,
         lastCheckedAt: Schema.Types.String,

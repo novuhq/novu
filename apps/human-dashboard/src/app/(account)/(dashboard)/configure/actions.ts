@@ -6,7 +6,13 @@ import { revalidatePath } from 'next/cache';
 import { CONFIGURE_PATH, DASHBOARD_HOME } from '@/components/dashboard/nav';
 import { AGENT_REACHES, type AgentSettings, type AgentSettingsChange } from '@/lib/agent-settings';
 import { isToolId } from '@/lib/ai-tools';
-import { type CodeStatusResult, type ConnectCodeResult, type HostStatus, NEVER_CHECKED } from '@/lib/host-status';
+import {
+  type AgentHost,
+  type CodeStatusResult,
+  type ConnectCodeResult,
+  type HostStatus,
+  NEVER_CHECKED,
+} from '@/lib/host-status';
 import { readHumanAccount, requireHumanAccount } from '@/lib/human-account';
 import { AGENT_NOT_SET_UP_MESSAGE, deleteAgent, updateAgentSettings } from '@/lib/human-agent-api';
 import { readAgentStatus } from '@/lib/human-agent-status';
@@ -183,6 +189,21 @@ export async function readHostCheckAction(): Promise<string> {
   }
 
   return (await readHostStatus(account)).lastCheckedAt ?? NEVER_CHECKED;
+}
+
+/**
+ * Each host with its last check, for the Agent setup row once a check newer than any it shows comes in. Like
+ * `readHostCheckAction` it runs in the background: a failure throws, and a session that ended doesn't send
+ * the operator to sign in from here.
+ */
+export async function readHostsAction(): Promise<AgentHost[]> {
+  const user = await currentUser();
+  const account = user && readHumanAccount(user);
+  if (!account) {
+    throw new Error('Not signed in');
+  }
+
+  return (await readHostStatus(account)).hosts;
 }
 
 function isHandle(handle: unknown): handle is string {
