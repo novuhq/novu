@@ -49,6 +49,12 @@ export const useCreateApiKey = () => {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.getApiKeys, currentEnvironment?._id],
       });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.dashboardInboxHashes, currentEnvironment?._id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.agentWebChatHash, currentEnvironment?._id],
+      });
     },
   });
 };

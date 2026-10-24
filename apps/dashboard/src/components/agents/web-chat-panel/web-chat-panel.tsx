@@ -80,6 +80,7 @@ function WebChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }
           onNewChat={() => setResumeId(undefined)}
           environmentIdentifier={currentEnvironment.identifier}
           subscriberId={testerSubscriberId}
+          subscriberHash={webChatSubscriberHash}
         />
       </div>
     </NovuProvider>
@@ -97,6 +98,7 @@ function WebChatSurface({
   onNewChat,
   environmentIdentifier,
   subscriberId,
+  subscriberHash,
 }: {
   agentId: string;
   agentHash?: string;
@@ -108,12 +110,13 @@ function WebChatSurface({
   onNewChat: () => void;
   environmentIdentifier: string;
   subscriberId: string;
+  subscriberHash?: string;
 }) {
   const {
     items: conversations,
     failed: conversationListFailed,
     reload,
-  } = useWebChatConversationList(agentId, environmentIdentifier, subscriberId);
+  } = useWebChatConversationList(agentId, environmentIdentifier, subscriberId, subscriberHash);
   const {
     messages,
     pendingActions,

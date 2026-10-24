@@ -15,8 +15,9 @@ const MAX_PAGES = 5;
 const webChatConversationListQueryKey = (
   agentIdentifier: string,
   environmentIdentifier: string,
-  subscriberId: string
-) => ['web-chat-conversation-list', agentIdentifier, environmentIdentifier, subscriberId] as const;
+  subscriberId: string,
+  subscriberHash?: string
+) => ['web-chat-conversation-list', agentIdentifier, environmentIdentifier, subscriberId, subscriberHash ?? null] as const;
 
 function collectAgentMatches(
   conversations: WebChatConversation[],
@@ -85,12 +86,13 @@ async function fetchAgentConversations(
 export function useWebChatConversationList(
   agentIdentifier: string,
   environmentIdentifier: string,
-  subscriberId: string
+  subscriberId: string,
+  subscriberHash?: string
 ) {
   const novu = useNovu();
   const queryClient = useQueryClient();
   const query = useQuery({
-    queryKey: webChatConversationListQueryKey(agentIdentifier, environmentIdentifier, subscriberId),
+    queryKey: webChatConversationListQueryKey(agentIdentifier, environmentIdentifier, subscriberId, subscriberHash),
     queryFn: ({ signal }) => fetchAgentConversations(novu, agentIdentifier, signal),
     enabled: Boolean(agentIdentifier && environmentIdentifier && subscriberId),
     refetchOnWindowFocus: false,
@@ -98,9 +100,9 @@ export function useWebChatConversationList(
 
   const reload = useCallback(() => {
     void queryClient.invalidateQueries({
-      queryKey: webChatConversationListQueryKey(agentIdentifier, environmentIdentifier, subscriberId),
+      queryKey: webChatConversationListQueryKey(agentIdentifier, environmentIdentifier, subscriberId, subscriberHash),
     });
-  }, [agentIdentifier, environmentIdentifier, queryClient, subscriberId]);
+  }, [agentIdentifier, environmentIdentifier, queryClient, subscriberHash, subscriberId]);
 
   return {
     items: query.data ?? [],
