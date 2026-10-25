@@ -58,7 +58,7 @@ export function validateSlackAppName(name: string): string | undefined {
 /**
  * What's wrong with a pasted App Configuration Token, or `undefined` when it looks like one. Slack has
  * several kinds of token and they're easy to mix up, so each wrong kind gets its own message. The same
- * checks as `human setup slack`.
+ * checks as `channel add slack`.
  */
 export function validateSlackConfigToken(token: string): string | undefined {
   const trimmed = token.trim();

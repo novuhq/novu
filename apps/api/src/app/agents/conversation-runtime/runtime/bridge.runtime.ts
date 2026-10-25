@@ -105,7 +105,7 @@ export class BridgeRuntime implements AgentRuntime {
           }
         );
       },
-      onEventStream: this.bridgeLiveReplies.readerFor(turn.config, turn.conversation, turn.platformThreadId),
+      onEventStream: this.bridgeLiveReplies.readerFor(turn),
     };
   }
 

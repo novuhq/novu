@@ -50,7 +50,7 @@ export class KeylessEmailGateService {
     throw new ForbiddenException({
       code: KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE,
       message: browserLogin
-        ? 'Outbound email needs a Human account. Run `human login` to claim this setup.'
+        ? 'Outbound email needs an Agent Inbox account. Run `npx @agentinbox/cli login` to claim this setup.'
         : 'Outbound email needs a Novu account. Sign up to claim this setup.',
       browserLogin,
       ...(claimUrl ? { claimUrl } : {}),

@@ -166,6 +166,22 @@ describe('AgentEventOutbox', () => {
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 
+  it('still posts later batches after a batch is rejected', async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 400, text: () => Promise.resolve('bad file') })
+      .mockResolvedValue(okResponse());
+    const outbox = new AgentEventOutbox({ ...BASE_OPTIONS, fetchFn });
+
+    const rejected = outbox.emit({ type: 'run-start' });
+    const finished = outbox.emit({ type: 'run-finish', outcome: 'aborted' });
+
+    await expect(rejected).rejects.toBeInstanceOf(AgentDeliveryError);
+    await expect(finished).resolves.toBeUndefined();
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetchFn.mock.calls[1][1].body).events[0].event.type).toBe('run-finish');
+  });
+
   it('does not fetch when flush is called on an empty buffer', async () => {
     const fetchFn = vi.fn();
     const outbox = new AgentEventOutbox({ ...BASE_OPTIONS, fetchFn });

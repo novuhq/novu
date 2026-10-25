@@ -41,7 +41,7 @@ type ConnectPageProps = {
 };
 
 /**
- * Public page opened by `human setup` when the operator pastes credentials in the browser.
+ * Public page opened by `setup` when the operator pastes credentials in the browser.
  * The token in the URL fragment is the only credential.
  */
 export function ConnectPage({ apiUrl, channel }: ConnectPageProps) {

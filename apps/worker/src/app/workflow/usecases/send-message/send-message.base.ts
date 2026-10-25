@@ -27,13 +27,14 @@ import {
   layerClaimsExclusiveGroup,
   ProvidersIdEnum,
   providers,
+  resolveExclusiveRoutingKeys,
   SmsProviderIdEnum,
   TriggerOverrides,
   unpackProviderOverrideOutput,
 } from '@novu/shared';
 import { format } from 'date-fns';
 import i18next from 'i18next';
-import { cloneDeep, mergeWith } from 'lodash';
+import { cloneDeep, isPlainObject, mergeWith } from 'lodash';
 import { PlatformException, TRANSLATIONS_SERVICE } from '../../../shared/utils';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
@@ -123,14 +124,12 @@ export function combineProviderOverrides(
   providerId: string,
   integrationIdentifier?: string
 ): Record<string, unknown> {
-  const { providerOverride, integrationOverrides } = unpackProviderOverrideOutput(bridgeData?.providers?.[providerId]);
-  const integrationOverride = integrationIdentifier ? (integrationOverrides[integrationIdentifier] ?? {}) : {};
-  const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
-  const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
-
-  const [providerLayer, integrationLayer, workflowLayer, stepLayer] = applyExclusiveKeyGroups(
-    [providerOverride, integrationOverride, workflowGlobalProviderOverrides, stepScopedOverrides],
-    resolveExclusiveKeyGroups(providerId)
+  const [providerLayer, integrationLayer, workflowLayer, stepLayer] = resolveOverrideLayers(
+    bridgeData,
+    overrides,
+    stepId,
+    providerId,
+    integrationIdentifier
   );
 
   const combined: Record<string, unknown> = mergeWith(
@@ -144,6 +143,85 @@ export function combineProviderOverrides(
   delete combined[INTEGRATION_OVERRIDES_OUTPUT_KEY];
 
   return combined;
+}
+
+const INTEGRATION_LAYER_INDEX = 1;
+
+/**
+ * True when the sending integration's own override supplies the winning exclusive key group, i.e. it
+ * chose the destination rather than a provider-wide or trigger layer. Mirrors
+ * `resolveExclusiveRoutingKeys`: a `_passthrough.body` claim on any layer outranks top-level keys.
+ */
+export function integrationOverrideClaimsExclusiveKeys(
+  bridgeData: BridgeProviderOverrides | null | undefined,
+  overrides: TriggerOverrides | undefined,
+  stepId: string | undefined,
+  providerId: string,
+  integrationIdentifier: string
+): boolean {
+  const layers = resolveOverrideLayers(bridgeData, overrides, stepId, providerId, integrationIdentifier);
+  const mergedPassthroughBody = mergeWith({}, ...layers.map(readPassthroughBody), replaceArrays);
+
+  return resolveExclusiveKeyGroups(providerId).some((group) => {
+    const [passthroughKey] = Object.keys(
+      resolveExclusiveRoutingKeys({ _passthrough: { body: mergedPassthroughBody } }, [group])
+    );
+    const claims = passthroughKey
+      ? layers.map((layer) => layerClaimsExclusiveGroup(readPassthroughBody(layer), [passthroughKey]))
+      : layers.map((layer) => layerClaimsExclusiveGroup(layer, group));
+
+    return claims.lastIndexOf(true) === INTEGRATION_LAYER_INDEX;
+  });
+}
+
+function readPassthroughBody(layer: Record<string, unknown>): Record<string, unknown> {
+  const body = (layer._passthrough as { body?: unknown } | undefined)?.body;
+
+  return isPlainObject(body) ? (body as Record<string, unknown>) : {};
+}
+
+function resolveOverrideLayers(
+  bridgeData: BridgeProviderOverrides | null | undefined,
+  overrides: TriggerOverrides | undefined,
+  stepId: string | undefined,
+  providerId: string,
+  integrationIdentifier?: string
+): Record<string, unknown>[] {
+  const { providerOverride, integrationOverrides } = unpackProviderOverrideOutput(bridgeData?.providers?.[providerId]);
+  const integrationOverride = integrationIdentifier ? (integrationOverrides[integrationIdentifier] ?? {}) : {};
+  const workflowGlobalProviderOverrides = overrides?.providers?.[providerId] || {};
+  const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
+
+  return applyExclusiveKeyGroups(
+    [providerOverride, integrationOverride, workflowGlobalProviderOverrides, stepScopedOverrides],
+    resolveExclusiveKeyGroups(providerId)
+  );
+}
+
+/**
+ * Merges every trigger override shape addressed to one provider, lowest priority first:
+ *   1. Deprecated channel bucket:    `overrides.<channel>`
+ *   2. Deprecated flat provider key: `overrides.<providerId>`
+ *   3. Workflow-wide provider:       `overrides.providers.<providerId>`
+ *   4. Step-scoped provider:         `overrides.steps.<stepId>.providers.<providerId>`
+ *
+ * Use it for fields the worker reads itself (e.g. SMS `to`/`from`, email `cc`) — provider request
+ * bodies get the nested shapes through `combineProviderOverrides` instead.
+ */
+export function mergeTriggerProviderOverrides(
+  overrides: TriggerOverrides | undefined,
+  channel: string | undefined,
+  providerId: string | undefined,
+  stepId: string | undefined
+): Record<string, unknown> {
+  const legacyOverrides = overrides as Record<string, Record<string, unknown> | undefined> | undefined;
+
+  return {
+    ...(channel ? legacyOverrides?.[channel] || {} : {}),
+    ...(providerId ? legacyOverrides?.[providerId] || {} : {}),
+    ...(providerId ? overrides?.providers?.[providerId] || {} : {}),
+    ...(providerId && stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {}),
+  };
 }
 
 export abstract class SendMessageBase extends SendMessageType {

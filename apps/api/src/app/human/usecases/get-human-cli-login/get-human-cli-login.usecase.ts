@@ -17,7 +17,7 @@ export class GetHumanCliLogin {
     if (!pending) {
       // Approved, denied, expired and never-issued codes all look the same from here.
       throw new NotFoundException({
-        message: 'No login is waiting for this code. Run `human login` again.',
+        message: 'No login is waiting for this code. Run `npx @agentinbox/cli login` again.',
         code: CLI_LOGIN_NOT_FOUND_CODE,
       });
     }

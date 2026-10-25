@@ -1,4 +1,4 @@
-/** Letters of the codes `human login` prints (`CLI_USER_CODE_ALPHABET` in `@novu/shared`). */
+/** Letters of the codes the CLI's `login` prints (`CLI_USER_CODE_ALPHABET` in `@novu/shared`). */
 const USER_CODE_LETTERS = /^[BCDFGHJKLMNPQRSTVWXZ]{8}$/;
 
 /**

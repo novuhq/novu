@@ -18386,7 +18386,7 @@
             "name": "email",
             "required": false,
             "in": "query",
-            "description": "Email address of the subscriber to filter results.",
+            "description": "Exact email address of the subscriber. The value must match the stored email field.",
             "schema": {
               "type": "string"
             }
@@ -18404,7 +18404,7 @@
             "name": "phone",
             "required": false,
             "in": "query",
-            "description": "Phone number of the subscriber to filter results.",
+            "description": "Exact phone number of the subscriber. The value must match the stored phone field.",
             "schema": {
               "type": "string"
             }

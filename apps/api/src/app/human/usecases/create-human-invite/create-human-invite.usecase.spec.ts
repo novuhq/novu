@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { HumanChannelViaEnum } from '@novu/shared';
+import { AGENT_INBOX_EVENTS, HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { CreateHumanInviteCommand } from './create-human-invite.command';
@@ -28,9 +28,15 @@ describe('CreateHumanInvite', () => {
     const inviteTokens = {
       issue: sinon.stub().resolves({ token: 'T'.repeat(32), expiresAt: '2026-10-02T10:00:00.000Z' }),
     };
-    const usecase = new CreateHumanInvite(setupHumanRelay as never, deliveryService as never, inviteTokens as never);
+    const analyticsService = { track: sinon.stub() };
+    const usecase = new CreateHumanInvite(
+      setupHumanRelay as never,
+      deliveryService as never,
+      inviteTokens as never,
+      analyticsService as never
+    );
 
-    return { usecase, setupHumanRelay, inviteTokens };
+    return { usecase, setupHumanRelay, inviteTokens, analyticsService };
   }
 
   const command = CreateHumanInviteCommand.create({
@@ -80,12 +86,26 @@ describe('CreateHumanInvite', () => {
   });
 
   it('refuses when the relay has no invite channels set up', async () => {
-    const { usecase, inviteTokens } = setup([]);
+    const { usecase, inviteTokens, analyticsService } = setup([]);
 
     const err = await usecase.execute(command).catch((error) => error);
 
     expect(err).to.be.instanceOf(NotFoundException);
-    expect((err as NotFoundException).message).to.include('human setup');
+    expect((err as NotFoundException).message).to.include('npx @agentinbox/cli setup');
     expect(inviteTokens.issue.called).to.equal(false);
+    expect(analyticsService.track.called).to.equal(false);
+  });
+
+  it('counts the invite for the owner, with the app that asked', async () => {
+    const { usecase, setupHumanRelay, analyticsService } = setup([
+      { via: HumanChannelViaEnum.TELEGRAM, integrationIdentifier: 'tg', connected: false },
+    ]);
+
+    await usecase.execute(CreateHumanInviteCommand.create({ ...command, analyticsSource: 'dashboard' }));
+
+    expect(setupHumanRelay.execute.firstCall.args[0]).to.include({ analyticsSource: 'dashboard' });
+    expect(analyticsService.track.args).to.deep.equal([
+      [AGENT_INBOX_EVENTS.CONTACT_INVITED, 'user1', { _organization: 'org1', agentId: 'relay1', source: 'dashboard' }],
+    ]);
   });
 });

@@ -4,19 +4,31 @@ import { ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { DASHBOARD_HOME, FOOTER_NAV, findNavItem, MAIN_NAV, type NavItem } from '@/components/dashboard/nav';
+import {
+  CONFIGURE_PATH,
+  DASHBOARD_HOME,
+  FOOTER_NAV,
+  findNavItem,
+  MAIN_NAV,
+  type NavItem,
+} from '@/components/dashboard/nav';
 import { Brand } from '@/components/site/brand';
 import { AgentAvatar } from '@/components/ui/agent-avatar';
+import { formatInboxCount } from '@/lib/inbox';
 import { cn } from '@/lib/utils';
 
 export type SidebarAgent = {
   name: string;
   /** The line under the name: "Not set up" before the first setup, then "Your agent". */
   status: string;
-  /** Whether `human setup` has made the agent yet. Its picture sleeps until then. */
+  /** Whether `setup` has made the agent yet. Its picture sleeps until then. */
   setUp: boolean;
   /** The picture the operator gave the agent, when there is one. */
   pictureUrl?: string;
+  /** The operator left the onboarding before a host was connected. Configure is where they pick it up. */
+  setupUnfinished?: boolean;
+  /** Threads with something the agent hasn't read: the number on Inbox, "at least" when `capped`. */
+  unreadThreads?: { count: number; capped: boolean };
 };
 
 export function Sidebar({ agent }: { agent: SidebarAgent }) {
@@ -41,26 +53,46 @@ export function Sidebar({ agent }: { agent: SidebarAgent }) {
         aria-label="Dashboard"
         className="flex flex-1 flex-row flex-wrap gap-1 md:flex-col md:flex-nowrap md:justify-between"
       >
-        <NavList items={MAIN_NAV} current={current} />
+        <NavList
+          items={MAIN_NAV}
+          current={current}
+          flagged={agent.setupUnfinished ? CONFIGURE_PATH : undefined}
+          counts={{
+            [DASHBOARD_HOME]: agent.unreadThreads
+              ? formatInboxCount(agent.unreadThreads.count, agent.unreadThreads.capped)
+              : '',
+          }}
+        />
         <NavList items={FOOTER_NAV} current={current} />
       </nav>
     </aside>
   );
 }
 
-function NavList({ items, current }: { items: NavItem[]; current: NavItem | undefined }) {
+type NavListProps = {
+  items: NavItem[];
+  current: NavItem | undefined;
+  /** The page that has something waiting for the operator: its link gets a dot. */
+  flagged?: string;
+  /** A number to show on a page's link, by its address, as written (`formatInboxCount`). None shows for zero. */
+  counts?: Record<string, string>;
+};
+
+function NavList({ items, current, flagged, counts }: NavListProps) {
   return (
     <ul className="flex flex-row flex-wrap gap-1 md:flex-col md:flex-nowrap">
       {items.map((item) => (
         <li key={item.href}>
-          <NavLink item={item} active={item === current} />
+          <NavLink item={item} active={item === current} flagged={item.href === flagged} count={counts?.[item.href]} />
         </li>
       ))}
     </ul>
   );
 }
 
-function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+type NavLinkProps = { item: NavItem; active: boolean; flagged: boolean; count?: string };
+
+function NavLink({ item, active, flagged, count }: NavLinkProps) {
   const Icon = item.icon;
   const className = cn(
     'flex h-8 items-center gap-2.5 rounded px-2 text-sm tracking-tight transition-colors motion-reduce:transition-none',
@@ -95,6 +127,18 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   return (
     <Link href={item.href} aria-current={active ? 'page' : undefined} className={className}>
       {content}
+      {flagged && (
+        <>
+          <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-accent" />
+          <span className="sr-only">(setup not finished)</span>
+        </>
+      )}
+      {count && count !== '0' && (
+        <span className="rounded bg-accent/14 px-1.5 py-px font-mono text-[11px] leading-3.5 font-medium text-accent">
+          {count}
+          <span className="sr-only"> unread</span>
+        </span>
+      )}
     </Link>
   );
 }

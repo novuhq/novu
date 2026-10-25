@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes } from 'react';
 
 import { cn } from '@/lib/utils';
 
-type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline' | 'text';
+type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'quiet' | 'outline' | 'text';
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary:
@@ -13,6 +13,9 @@ const VARIANTS: Record<ButtonVariant, string> = {
     'h-8 gap-1.5 rounded bg-danger-strong px-3 text-[13px] leading-4.5 font-medium text-foreground hover:bg-danger-strong/90 disabled:hover:bg-danger-strong',
   ghost:
     'size-8 rounded text-secondary hover:bg-raised hover:text-foreground disabled:hover:bg-transparent disabled:hover:text-secondary',
+  // The design's "Ghost" button with a label: no fill until it's hovered.
+  quiet:
+    'h-8 gap-1.5 rounded px-3 text-[13px] leading-4.5 font-medium text-secondary hover:bg-raised hover:text-foreground disabled:hover:bg-transparent disabled:hover:text-secondary',
   outline:
     'h-8 rounded-sm px-4 font-mono text-sm tracking-tight text-foreground ring-1 ring-border hover:bg-border disabled:hover:bg-transparent',
   text: 'h-8 px-2 font-mono text-sm tracking-tight text-foreground/50 underline-offset-4 hover:text-foreground hover:underline',

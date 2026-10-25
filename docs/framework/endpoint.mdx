@@ -66,6 +66,11 @@ Retries are also triggered for transient **network error codes** such as `EAI_AG
 
 Other responses - for example most `4xx` errors outside `408` and `429` - are not retried. Each bridge request has a **5 second** timeout.
 
+## Bridge request errors
+
+A preview or a step returns `code` and `message` when a call to your bridge fails. `novu sync` returns `400` and the message only. [Bridge request errors](/framework/errors) quotes each message and says what to run, including the `novu-signature` check behind `SignatureMismatchError`.
+
+
 ## Writing a custom `serve` function
 
 If we currently don't support your framework, you can write a custom `serve` function like the following example:
@@ -115,7 +120,7 @@ export const serve = (options: ServeHandlerOptions) => {
   </Accordion>
   
   <Accordion title="Is it necessary to have bridge url publicly accessible?">
-    Yes, the bridge url must be publicly accessible. We recommend having https enabled for the bridge url.
+    Yes, the bridge url must be publicly accessible. We recommend having https enabled for the bridge url. A failed call returns `message` and `code`. See [Bridge request errors](/framework/errors) for the message, the debug checks, and the fix for each code.
   </Accordion>
 
   <Accordion title="Can endpoint other than /api/novu be used?">

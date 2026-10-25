@@ -259,13 +259,17 @@ export type HumanContactChannelStatus = {
   verifiedRequestedAt?: string;
   /** Set while a newer request is pending (the pending slot's `requestedAt`). */
   requestedAt?: string;
+  /** How the contact shows on a connected chat app: `@username` on Telegram (else their name), their name on Slack. */
+  handle?: string;
+  /** The Slack workspace the contact is in, such as `acme.slack.com`. */
+  workspace?: string;
 };
 
 /** Default lifetime of a pending interaction. */
 export const HUMAN_INTERACTION_DEFAULT_TTL_SECONDS = 24 * 60 * 60;
 
 /**
- * Hard cap on `--ttl`. Card action tokens are cached for 5 days
- * (see AgentActionTokenService); buttons must not outlive their tokens.
+ * Hard cap on interaction lifetime. Chat and email action tokens default to this
+ * same duration, so a button stays clickable for as long as the question is open.
  */
 export const HUMAN_INTERACTION_MAX_TTL_SECONDS = 5 * 24 * 60 * 60;

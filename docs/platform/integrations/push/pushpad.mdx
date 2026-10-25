@@ -86,6 +86,41 @@ Add these credentials to your Pushpad integration in the Novu dashboard.
   </Step>
 </Steps>
 
+## Activity tracking
+
+Pushpad supports [push activity tracking](/platform/integrations/push/push-activity-tracking). Enable the **Push Activity Tracking** toggle on the Pushpad integration, then forward events from your site.
+
+Novu sends the Novu message id as Pushpad `custom_data`. Pushpad passes that string only to [action button](https://pushpad.xyz/docs/action_buttons) callbacks. A tap on the notification body does not include it. Chrome is the only browser that shows action buttons, and it shows at most two.
+
+Add a button whose `action` matches a function on `self.notificationActions`. Leave `custom_data` as the value Novu sets. Replacing it removes the message id.
+
+```json
+{
+  "actions": [
+    { "title": "View", "action": "trackClick" }
+  ]
+}
+```
+
+You can set `actions` with a [provider content override](/platform/integrations/push#every-other-push-provider-is-a-raw-passthrough). In the service worker, `customData` is the message id:
+
+```javascript
+self.notificationActions = {
+  trackClick: function (customData) {
+    return fetch("https://your-api.com/api/notifications/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventType: "clicked",
+        eventId: customData,
+      }),
+    });
+  },
+};
+```
+
+Your backend then calls [Novu's activity endpoint](/platform/integrations/push/push-activity-tracking#step-3-forward-events-to-novu-from-your-backend). `delivered`, `opened`, `dismissed`, and `failed` use the same `eventId`.
+
 ## Using Pushpad with Novu
 
 Once your integration is configured, in other to send push notification using the PushPad provider, you must do the following:

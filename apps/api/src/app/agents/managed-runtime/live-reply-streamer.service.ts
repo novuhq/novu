@@ -116,6 +116,7 @@ export class LiveReplyStreamer implements OnApplicationShutdown {
       platform: channel.platform,
       platformThreadId: channel.platformThreadId,
       workspaceId: channel.workspace?.id,
+      recipientPlatformUserId: context.platformUserId,
     };
 
     let previewMessageId: string;

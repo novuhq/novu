@@ -1,0 +1,130 @@
+---
+title: "MCP"
+description: "The hosted Agent Inbox MCP server: the URL, sign-in, and every tool."
+---
+
+Add this address to a chat app that speaks MCP:
+
+```text
+https://mcp.agentinbox.md
+```
+
+You sign in with your Agent Inbox account when the app asks. The app never sees the API key. Someone without an agent yet can create it from the app with `inbox_setup`, or in the onboarding on the dashboard.
+
+Opening that address in a browser redirects here.
+
+There are no tools for `login`, `connect`, or `channel`. You do those on agentinbox.md or with the [CLI](/reference/cli). `inbox_setup` covers only the agent and its email inbox.
+
+The tools are named after the CLI. `inbox send` is `inbox_send`. `contact list` is `contact_list`. `inbox_wait` is the one the CLI does not have.
+
+## How a result reads
+
+There are no exit codes. The result says what happened.
+
+| Words | Meaning |
+| --- | --- |
+| `Approved`, `Answered`, `Delivered` | Continue |
+| `Denied. Do not go ahead.` | Stop |
+| `Nobody answered in time, so the request expired.` | Treat it as not approved |
+| `The request was canceled.` | Treat it as not approved |
+| `The request is still open` | Call `inbox_wait` with the id it gives you |
+| `Agent Inbox is not set up yet.` | Ask for a name and an address, then call `inbox_setup` |
+
+A plain message returns `Delivered` as soon as delivery is confirmed.
+
+## inbox_setup
+
+Creates the agent and its email inbox, sends the owner a confirmation link, or says how far setup got. With no arguments, it reports the status and may suggest the email you signed in with.
+
+| Argument | Meaning |
+| --- | --- |
+| `agent_name` | What the agent is called. Up to 60 characters. Pass it with `handle` to create the agent |
+| `handle` | The inbox address before the `@`, such as `atlas`. Letters, digits, and hyphens, up to 32. Alone, it finishes a mailbox that was not created |
+| `email` | The owner's email, after they confirm it. A confirmation link goes out |
+
+Ask for the name and the address before you create the agent. A name never renames an existing agent, and a handle never moves an existing mailbox. An email that is already confirmed is changed on agentinbox.md. Telegram and Slack are set up on agentinbox.md or with the CLI.
+
+## inbox_send
+
+Starts a conversation. Leave `kind` out for a plain message.
+
+| Argument | Meaning |
+| --- | --- |
+| `message` | The main text. Required |
+| `kind` | `ask`, `approve`, or `choose`. Omit for a plain message |
+| `to` | Contact id, email, or up to 50 of them. Omit to reach you |
+| `via` | `telegram`, `slack`, or `email` |
+| `from` | Attribution, such as `deploy-bot` |
+| `ttl_seconds` | How long a question stays answerable. Default 86400, min 60, max 432000 |
+| `wait_seconds` | How long to wait now. Default 45, max 50. Questions only |
+| `options` | `choose` only. 2 to 10 labels, or `{ id, label }` |
+| `approve_label`, `deny_label` | `approve` only |
+| `extra_actions` | `approve` only, max 4 |
+| `subtitle`, `body` | Card text |
+| `icon` | Slack-only. Catalog id, display name, or https URL |
+
+Before you send, call `inbox_list` with `filter` `unread`.
+
+## inbox_reply
+
+Sends into an existing conversation. Same arguments as `inbox_send`, plus:
+
+| Argument | Meaning |
+| --- | --- |
+| `conversation` | Conversation id (`conv_...`) from `inbox_list`. Required |
+| `anyone_may_answer` | Anyone in the conversation may answer. Not together with `to` |
+
+There is no `via`. A reply goes out on the conversation's channel.
+
+## inbox_wait
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | The id from the earlier result. Required |
+| `wait_seconds` | Default 45, max 50 |
+
+Call it again while the result says the request is still open. Do not go ahead without the answer.
+
+## inbox_list
+
+| Argument | Default |
+| --- | --- |
+| `filter` | `unread`, `read`, or `all`. Default `all` |
+| `status` | `open`, `resolved`, or `all`. Default `open` |
+| `senders` | `contacts` or `all`. Default `contacts`. `all` includes strangers |
+| `limit` | 20, max 100 |
+| `after` | Cursor from the previous page |
+| `wait_seconds` | Hold until a conversation matches. Max 25. Default 0 |
+
+## inbox_show
+
+`conversation` is required. `limit` defaults to 20, max 100. `before` pages to older messages. Showing a conversation does not mark it read. People and messages are labelled contact or stranger.
+
+## inbox_read
+
+`conversation`. Marks it read. Nothing is sent.
+
+## inbox_resolve
+
+`conversation`. Marks it resolved. It opens again when anyone writes in it.
+
+## contact_list
+
+`limit` defaults to 50. `after` is the cursor from the previous page. Your operator is marked `(you)`. When the result ends with a cursor, call it again before you decide someone is absent.
+
+## contact_invite
+
+| Argument | Meaning |
+| --- | --- |
+| `id` | A short id, such as `alice`. You pass it later as `to` |
+| `name` | Their name, such as `Alice Chen` |
+
+Returns a link. Nothing is sent for you. Give the link to the operator to pass on. This tool does not take a channel. To reach someone by email, put the address in `to` on `inbox_send`. A new address gets a verification email first. Send again after they confirm it.
+
+## Limits
+
+Agent Inbox is in the US region only. There is no EU address.
+
+A connector you remove can still read as connected. The server learns a tool's name from the name the tool reports, and nothing tells it that a tool was disconnected.
+
+`inbox_send` and `inbox_reply` wait at most 50 seconds. Keep waiting with `inbox_wait`.

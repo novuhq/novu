@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg style="min-width: 1280px" viewBox="0 0 1280 840" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="box-lifecycle-title box-lifecycle-desc" id="d-03-a-request-reaches-a-box-root">
+        <title id="box-lifecycle-title">What happens when something reaches a box</title>
+        <desc id="box-lifecycle-desc">Two flowcharts for a Novu Box on Cloudflare: a request gets 503 while the box saves, is served when the container runs, wakes an asleep box by restoring its snapshot, and otherwise waits for box up to bake or restore from base; after 60 idle minutes or box down, the box stops its processes, snapshots its disk and goes to sleep, or starts its processes again if the save fails; box delete stops it, forgets its snapshot and deletes its test users.</desc>
+        <defs>
+      <style>#d-03-a-request-reaches-a-box-root { --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace; }
+      #d-03-a-request-reaches-a-box-root { font-family: var(--font-sans); color: var(--color-ink); }
+      #d-03-a-request-reaches-a-box-root .diagram-container { width: 100%; overflow-x: auto; }
+      #d-03-a-request-reaches-a-box-root .subtitle { font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--color-muted);
+      max-width: 78ch;
+      margin-bottom: 1.5rem; }
+      #d-03-a-request-reaches-a-box-root .diagram-container { overflow-x: visible; }
+      #d-03-a-request-reaches-a-box-root .diagram-container { overflow-x: visible; }
+      #d-03-a-request-reaches-a-box-root nav { margin: 0 0 3rem; display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; }
+      #d-03-a-request-reaches-a-box-root nav a { color: var(--color-muted); text-decoration: none; border-bottom: 1px solid rgba(45,49,66,0.2); }
+      #d-03-a-request-reaches-a-box-root nav a:hover { color: var(--color-accent); border-color: var(--color-accent); }
+      #d-03-a-request-reaches-a-box-root section { padding: 3rem 0 4rem; border-top: 1px solid rgba(45,49,66,0.12); }
+      #d-03-a-request-reaches-a-box-root section:first-of-type { border-top: 0; padding-top: 0; }</style>
+          <marker id="d-03-a-request-reaches-a-box-box-lifecycle-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="d-03-a-request-reaches-a-box-box-lifecycle-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
+          <marker id="d-03-a-request-reaches-a-box-box-lifecycle-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- Zones (drawn first) -->
+        <rect x="40" y="40" width="704" height="704" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="0.8" fill-opacity="0.02" stroke-opacity="0.10"/>
+        <rect x="52" y="44" width="56" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="56" y="53" fill="#5a6580" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">REQUEST</text>
+
+        <rect x="784" y="40" width="456" height="580" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="0.8" fill-opacity="0.02" stroke-opacity="0.10"/>
+        <rect x="796" y="44" width="40" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="800" y="53" fill="#5a6580" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">SLEEP</text>
+
+        <rect x="784" y="644" width="456" height="100" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="0.8" fill-opacity="0.02" stroke-opacity="0.10"/>
+        <rect x="796" y="648" width="48" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="800" y="657" fill="#5a6580" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">DELETE</text>
+
+        <!-- Arrows (behind nodes) -->
+        <!-- A request reaches the box -->
+        <line x1="184" y1="120" x2="184" y2="148" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <line x1="268" y1="188" x2="352" y2="188" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <line x1="184" y1="228" x2="184" y2="260" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <line x1="268" y1="300" x2="584" y2="300" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <line x1="184" y1="340" x2="184" y2="372" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <line x1="184" y1="452" x2="184" y2="484" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <path d="M 268,412 H 440 Q 448,412 448,420 V 484" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <line x1="184" y1="540" x2="184" y2="572" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <path d="M 268,612 H 440 Q 448,612 448,604 V 540" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <path d="M 544,512 H 624 Q 632,512 632,504 V 324" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <path d="M 184,652 V 676 Q 184,684 192,684 H 672 Q 680,684 680,676 V 324" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+
+        <!-- The box goes to sleep -->
+        <line x1="904" y1="120" x2="904" y2="148" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <line x1="988" y1="188" x2="1048" y2="188" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <line x1="904" y1="228" x2="904" y2="260" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <line x1="904" y1="316" x2="904" y2="348" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <line x1="904" y1="404" x2="904" y2="436" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <line x1="988" y1="476" x2="1048" y2="476" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <line x1="904" y1="516" x2="904" y2="548" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+
+        <!-- The box is deleted -->
+        <line x1="1000" y1="704" x2="1048" y2="704" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+
+        <!-- Arrow labels (opaque masks, 6-10px clear of their stroke) -->
+        <g font-family="'Geist Mono', monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle">
+          <rect x="298" y="168" width="24" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="310" y="177" fill="#4f5d75">YES</text>
+          <rect x="192" y="238" width="20" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="202" y="247" fill="#4f5d75">NO</text>
+          <rect x="414" y="280" width="24" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="426" y="289" fill="#4f5d75">YES</text>
+          <rect x="192" y="350" width="20" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="202" y="359" fill="#4f5d75">NO</text>
+          <rect x="192" y="462" width="24" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="204" y="471" fill="#4f5d75">YES</text>
+          <rect x="326" y="392" width="56" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="354" y="401" fill="#4f5d75">NEW · LOST</text>
+          <rect x="326" y="592" width="56" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="354" y="601" fill="#4f5d75">NO · LOST</text>
+          <rect x="562" y="492" width="44" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="584" y="501" fill="#4f5d75">RUNNING</text>
+          <rect x="396" y="664" width="72" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="432" y="673" fill="#4f5d75">YES · RELOAD</text>
+
+          <rect x="1006" y="168" width="24" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="1018" y="177" fill="#4f5d75">YES</text>
+          <rect x="912" y="238" width="20" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="922" y="247" fill="#4f5d75">NO</text>
+          <rect x="1008" y="456" width="20" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="1018" y="465" fill="#4f5d75">NO</text>
+          <rect x="912" y="526" width="24" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="924" y="535" fill="#4f5d75">YES</text>
+        </g>
+
+        <!-- Nodes: a request reaches the box -->
+        <rect x="88" y="72" width="192" height="48" rx="20" fill="#f5f5f5"/>
+        <rect x="88" y="72" width="192" height="48" rx="20" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <text x="184" y="93" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">A request arrives</text>
+        <text x="184" y="108" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">at its hostname</text>
+
+        <polygon points="184,148 268,188 184,228 100,188" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="184" y="192" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Box saving?</text>
+
+        <rect x="352" y="160" width="192" height="56" rx="20" fill="#f5f5f5"/>
+        <rect x="352" y="160" width="192" height="56" rx="20" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <text x="448" y="184" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Answer 503</text>
+        <text x="448" y="200" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Retry-After 30 s</text>
+
+        <polygon points="184,260 268,300 184,340 100,300" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="184" y="298" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Container</text>
+        <text x="184" y="312" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">running?</text>
+
+        <rect x="584" y="276" width="144" height="48" rx="20" fill="#f5f5f5"/>
+        <rect x="584" y="276" width="144" height="48" rx="20" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+        <text x="656" y="297" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Serve it</text>
+        <text x="656" y="312" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Caddy, port 18080</text>
+
+        <polygon points="184,372 268,412 184,452 100,412" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="184" y="416" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Box asleep?</text>
+
+        <rect x="88" y="484" width="192" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="88" y="484" width="192" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="184" y="508" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Restore the snapshot</text>
+        <text x="184" y="524" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">≈40 s</text>
+
+        <rect x="352" y="484" width="192" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="352" y="484" width="192" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="448" y="508" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Someone runs box up</text>
+        <text x="448" y="524" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">bake, or start from base</text>
+
+        <polygon points="184,572 268,612 184,652 100,612" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="184" y="616" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Restore worked?</text>
+
+        <!-- Nodes: the box goes to sleep -->
+        <rect x="808" y="72" width="192" height="48" rx="20" fill="#f5f5f5"/>
+        <rect x="808" y="72" width="192" height="48" rx="20" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <text x="904" y="93" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">No requests for 60 min</text>
+        <text x="904" y="108" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">or box down</text>
+
+        <polygon points="904,148 988,188 904,228 820,188" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="904" y="186" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Bake or apply</text>
+        <text x="904" y="200" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">running?</text>
+
+        <rect x="1048" y="164" width="176" height="48" rx="20" fill="#f5f5f5"/>
+        <rect x="1048" y="164" width="176" height="48" rx="20" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <text x="1136" y="185" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Try again next minute</text>
+        <text x="1136" y="200" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">stays running</text>
+
+        <rect x="808" y="260" width="192" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="808" y="260" width="192" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="904" y="284" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Stop every process</text>
+        <text x="904" y="300" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">requests get 503</text>
+
+        <rect x="808" y="348" width="192" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="808" y="348" width="192" height="56" rx="6" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+        <text x="904" y="372" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Snapshot the disk</text>
+        <text x="904" y="388" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">/data, kept 30 days</text>
+
+        <polygon points="904,436 988,476 904,516 820,476" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="904" y="474" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Snapshot</text>
+        <text x="904" y="488" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">saved?</text>
+
+        <rect x="1048" y="452" width="176" height="48" rx="20" fill="#f5f5f5"/>
+        <rect x="1048" y="452" width="176" height="48" rx="20" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <text x="1136" y="473" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Start processes again</text>
+        <text x="1136" y="488" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">stays running</text>
+
+        <rect x="808" y="548" width="192" height="48" rx="20" fill="#f5f5f5"/>
+        <rect x="808" y="548" width="192" height="48" rx="20" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <text x="904" y="569" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Asleep</text>
+        <text x="904" y="584" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">container stopped</text>
+
+        <!-- Nodes: the box is deleted -->
+        <rect x="808" y="676" width="192" height="56" rx="20" fill="#f5f5f5"/>
+        <rect x="808" y="676" width="192" height="56" rx="20" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <text x="904" y="700" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">box delete</text>
+        <text x="904" y="716" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">even mid-save</text>
+
+        <rect x="1048" y="676" width="176" height="56" rx="20" fill="#f5f5f5"/>
+        <rect x="1048" y="676" width="176" height="56" rx="20" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <text x="1136" y="700" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Stopped and gone</text>
+        <text x="1136" y="716" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">its test users deleted</text>
+
+        <!-- Legend strip -->
+        <line x1="40" y1="776" x2="1240" y2="776" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.10"/>
+        <text x="40" y="796" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+        <rect x="40" y="808" width="24" height="12" rx="6" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <text x="72" y="818" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Start / outcome</text>
+
+        <rect x="176" y="808" width="24" height="12" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="208" y="818" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Step</text>
+
+        <polygon points="260,814 272,808 284,814 272,820" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="292" y="818" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Decision</text>
+
+        <rect x="352" y="808" width="24" height="12" rx="2" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+        <text x="384" y="818" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Focal</text>
+
+        <line x1="440" y1="814" x2="468" y2="814" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-03-a-request-reaches-a-box-box-lifecycle-arrow)"/>
+        <text x="476" y="818" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Branch</text>
+      </svg>

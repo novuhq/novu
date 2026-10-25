@@ -163,7 +163,7 @@ describe('Human invites (invite link → page → connect) #novu-v2', () => {
     const res = await session.testAgent.post('/v1/human/invites').send({ subscriberId });
 
     expect(res.status).to.equal(404);
-    expect(res.body.message).to.include('human setup');
+    expect(res.body.message).to.include('npx @agentinbox/cli setup');
   });
 
   it('mints fresh Telegram and Slack connect links from the page', async () => {

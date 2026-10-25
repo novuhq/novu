@@ -35,7 +35,7 @@ import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret
 /**
  * Private endpoints for the Human dashboard's server (agentinbox.md), which signs operators in with its
  * own Clerk app. Each Human account is backed by a hidden Novu organization; see
- * packages/human/docs/adr/0001-separate-clerk-app-with-backing-organizations.md.
+ * packages/agentinbox/docs/adr/0001-separate-clerk-app-with-backing-organizations.md.
  */
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()

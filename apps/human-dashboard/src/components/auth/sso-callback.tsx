@@ -6,7 +6,7 @@ import { useEffect, useRef } from 'react';
 
 import { type AuthPage, authHref, SSO_ERROR_PARAM } from '@/lib/auth-redirect';
 
-import { AuthCard, useEnterApp } from './auth-form';
+import { AuthCard, AuthLoading, useEnterApp } from './auth-form';
 
 type SsoCallbackProps = {
   /** The form the visitor left for GitHub or Google from, which is where a failure goes back to. */
@@ -109,12 +109,7 @@ export function SsoCallback({ page, redirectPath }: SsoCallbackProps) {
 
   return (
     <AuthCard step="sso-callback" title="Signing you in" description="One moment while we finish with your provider.">
-      <output className="font-mono text-[13px] leading-4.5 text-secondary">
-        Loading
-        <span aria-hidden="true" className="ml-0.5 animate-terminal-cursor text-accent">
-          ▍
-        </span>
-      </output>
+      <AuthLoading />
       {/* Clerk puts its bot check here when a new account needs one. */}
       {/* biome-ignore lint/correctness/useUniqueElementIds: Clerk looks the element up by this id */}
       <div id="clerk-captcha" className="empty:hidden" />

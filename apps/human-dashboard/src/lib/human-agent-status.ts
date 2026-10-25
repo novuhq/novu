@@ -6,7 +6,7 @@ import { type ChannelVia, listChannels } from './human-channels-api';
 
 type ConnectedChannel = { via: ChannelVia; connected: boolean };
 
-/** What the Agent page says before `human setup` has made the agent. */
+/** What the Agent page says before `setup` has made the agent. */
 const NOT_SET_UP = 'none';
 
 /**

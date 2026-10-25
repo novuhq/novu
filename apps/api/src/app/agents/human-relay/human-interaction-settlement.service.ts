@@ -1,6 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
+import { ConversationEntity, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
 import { HumanInteractionResponse, HumanInteractionStatusEnum, parseToolApprovalRequestId } from '@novu/shared';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { ResumeManagedHuman } from '../managed-runtime/novu-human/resume-managed-human.usecase';
@@ -30,10 +30,15 @@ export class HumanInteractionSettlementService {
     this.logger.setContext(this.constructor.name);
   }
 
+  /**
+   * `answeredIn` is the conversation of the message or button press that settles it, when a person did:
+   * the answer is recorded in that thread, which matters when one question went to several contacts.
+   */
   async settle(
     interaction: HumanInteractionEntity,
     status: HumanInteractionStatusEnum,
-    response?: HumanInteractionResponse
+    response?: HumanInteractionResponse,
+    answeredIn?: ConversationEntity
   ): Promise<HumanInteractionEntity | null> {
     const settled = await this.humanInteractionRepository.settleIfPending(
       interaction._environmentId,
@@ -44,7 +49,7 @@ export class HumanInteractionSettlementService {
 
     if (settled) {
       await this.editDeliveredMessage(settled);
-      await this.resumeAfterSettlement(settled);
+      await this.resumeAfterSettlement(settled, answeredIn);
     } else {
       await this.expireIfOverdue(interaction);
     }
@@ -105,8 +110,11 @@ export class HumanInteractionSettlementService {
     await editDeliveredHumanCards(this.outboundGateway, this.logger, interaction, buildResolvedContent(interaction));
   }
 
-  private async resumeAfterSettlement(interaction: HumanInteractionEntity): Promise<void> {
-    await this.activityRecorder.recordResponse(interaction);
+  private async resumeAfterSettlement(
+    interaction: HumanInteractionEntity,
+    answeredIn?: ConversationEntity
+  ): Promise<void> {
+    await this.activityRecorder.recordResponse(interaction, answeredIn);
     await this.resumeManagedHuman.execute(interaction);
     await this.resumeToolApprovalFromHitl.execute(interaction);
   }

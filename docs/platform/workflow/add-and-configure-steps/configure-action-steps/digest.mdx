@@ -81,9 +81,33 @@ You can schedule delivery:
 
 ## Extend to subscriber’s schedule
 
-When enabled, digest delivery respects the subscriber’s delivery schedule.
+**Extend to subscriber’s schedule** is off by default. Turn it on when the digest should wait for the subscriber’s [delivery schedule](/platform/inbox/features/schedule) instead of sending as soon as the digest window ends.
 
-If the digest window ends outside the subscriber’s available hours, the notification is delayed until the next available time slot. This option is disabled by default.
+The schedule is weekly hours from the Inbox. It has no holiday calendar. Days the subscriber turns off are skipped. Days they leave on are delivery days, including public holidays.
+
+- **The digest window ends inside an open window.** Novu sends immediately.
+- **The window ends outside the schedule, and the toggle is on.** Novu holds the digest until the start of the next enabled window, then sends.
+- **The window ends outside the schedule, and the toggle is off.** Email, SMS, push, and chat steps after the digest are skipped. In-app steps, and every step in a critical workflow, are still delivered.
+
+Steps after the Digest step, including in-app, stay paused until the digest finishes, including the wait for the next window.
+
+### Example
+
+Schedule: Monday–Friday, 9:00 AM–5:00 PM. Digest window: 1 hour. Toggle: on. The window ends Friday at 5:30 PM.
+
+Novu holds the digest until Monday at 9:00 AM, then sends the summary. With the toggle off, the Friday 5:30 PM email, SMS, push, or chat step is skipped.
+
+A Monday-only window of 9:00 AM–10:00 AM works the same way. If the digest ends Monday at 10:01 AM and the toggle is on, Novu sends the following Monday at 9:00 AM.
+
+### How long Novu waits
+
+Novu waits once, until the start of the next enabled window. It does not step through each closed day. A digest that ends Friday at 5:30 PM resumes Monday at 9:00 AM. A digest that ends Monday at 10:01 AM, when the only window is Monday 9:00 AM–10:00 AM, resumes the following Monday at 9:00 AM.
+
+The digest window you configure follows your [plan limit](/platform/developer/limits): 1 day on Free, 7 days on Pro, and 30 days on Team. Enterprise limits are custom. The wait until the next window is separate from that duration, on every plan.
+
+If the subscriber changes the schedule while the digest is waiting, the chosen time stays in place. Novu reads the new schedule when that time arrives. A moment that is still inside the schedule sends then, including when the subscriber added an earlier window. A moment that is now outside the schedule waits until the next open slot. That wait, including the first one, happens at most 3 times. If the digest wakes after the third wait and the time is still outside the schedule, it ends. Email, SMS, push, and chat steps that follow are skipped. In-app steps are still delivered. Turning the schedule off does not send immediately. The digest wakes at the time already chosen and then sends, because the schedule is off.
+
+The same rules are documented on the [Delay step](/platform/workflow/add-and-configure-steps/configure-action-steps/delay#if-the-subscriber-changes-the-schedule-while-waiting).
 
 ## FAQs
 

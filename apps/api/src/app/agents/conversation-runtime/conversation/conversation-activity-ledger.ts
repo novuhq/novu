@@ -777,7 +777,7 @@ export class ConversationActivityLedger {
       params.environmentId,
       params.organizationId
     );
-    const identifier = `human:${params.interactionIdentifier}:${suffix}`;
+    const identifier = humanInteractionActivityIdentifier(params, suffix);
 
     try {
       const activity = await this.activityRepository.createToolActivity({
@@ -1080,6 +1080,22 @@ export class ConversationActivityLedger {
       activity,
     });
   }
+}
+
+/**
+ * `human:<interaction>:request` and `human:<interaction>:response`, the rows one card is stored as.
+ * A send to several contacts lands in a thread for each, and identifiers are unique per environment,
+ * so the rows of the threads after the first also carry their conversation id:
+ * `human:<interaction>:<conversation>:request`. The first thread, and every interaction that has
+ * only one, keep the identifiers they always had.
+ */
+function humanInteractionActivityIdentifier(
+  params: PersistHumanInteractionActivityParams,
+  suffix: 'request' | 'response'
+): string {
+  return params.inOtherThread
+    ? `human:${params.interactionIdentifier}:${params.conversationId}:${suffix}`
+    : `human:${params.interactionIdentifier}:${suffix}`;
 }
 
 function humanInteractionActivityContent(

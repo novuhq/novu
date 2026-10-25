@@ -61,3 +61,15 @@ For more detail, see [View your bridge URL](/framework/endpoint#view-your-bridge
 In free tier, vercel preview urls for non production deployments are not publicly accessible. You will need to enable [Protection Bypass for Automation](https://vercel.com/docs/security/deployment-protection/methods-to-bypass-deployment-protection/protection-bypass-automation#protection-bypass-for-automation) from settings to make the preview url publicly accessible. Use vercel generated secret key in query params with bridge url to make the bridge url accessible to novu.
 
 Example: `https://my-app-preview-url.vercel.app/api/novu?x-vercel-protection-bypass=BYPASS_SECRET_KEY`
+
+## Sync failed while calling the bridge
+
+`novu sync` always returns `400`. The body is only a `message`. It does not include the `code` a step failure includes.
+
+A URL rejected before sync connects looks like `bridgeUrl: Invalid URL format.` or `bridgeUrl: Requests to private or reserved IP addresses are not allowed (resolved: <ip>).` A URL rejected while sync is calling the bridge keeps this message, with no reason code:
+
+```
+The provided bridge URL is blocked by the outbound SSRF policy.
+```
+
+A preview deployment that is down or not in DNS yet is one cause of that sentence. Sync retries that call once, after 1 second. [Bridge request errors](/framework/errors) has the message for each failure and what to run to tell them apart.

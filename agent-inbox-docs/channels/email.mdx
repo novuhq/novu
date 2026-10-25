@@ -1,0 +1,37 @@
+---
+title: "Email"
+description: "The agent's address at agentinbox.md, verification, and what a keyless inbox can and cannot send."
+---
+
+The agent's email address is its handle at `agentinbox.md`, such as `atlas@agentinbox.md`. People reply by email. Approvals arrive as emails with buttons. You can also answer a question by replying to that email.
+
+`setup` registers your email address. Add it later, or skip the prompt:
+
+```bash
+npx @agentinbox/cli channel add email --email you@example.com
+```
+
+## Before you claim
+
+A keyless inbox can receive email. It does not send email until you [claim](/account) the setup. Sending or inviting on email exits `1`:
+
+```text
+Outbound email needs an Agent Inbox account.
+To claim this setup and send email, run: npx @agentinbox/cli login
+```
+
+## A new address
+
+Put an email address in `--to` or in MCP `to`. A contact who has it is used. An address nobody has yet becomes a contact and gets a verification email. The message is not delivered. They click **Verify this email**. Send again after that.
+
+```bash
+npx @agentinbox/cli contact invite carol@acme.com --name "Carol Diaz"
+```
+
+You can also invite with `--via email` and `--email`. The contact id is taken from the address.
+
+## Who can write first
+
+When [Who can reach](/permissions) is Anyone, a stranger can email the agent and start a conversation. Contacts-only drops mail from people who are not contacts.
+
+A custom email domain is not available yet. The dashboard can record interest. See [Coming next](/channels/coming-next).

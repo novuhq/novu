@@ -16,7 +16,7 @@ import {
   RiSparklingLine,
   RiUserLine,
 } from 'react-icons/ri';
-import { useSupportDrawer } from '@/components/header-navigation/support-drawer';
+import { useHelpPanel } from '@/components/help-panel';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { openMintlifyAssistant } from '@/utils/mintlify-assistant';
@@ -106,7 +106,7 @@ function CommandFooter({ commands }: { commands: CommandType[] }) {
 
 export function CommandPalette() {
   const { isOpen, closeCommandPalette } = useCommandPalette();
-  const { closeSupportDrawer } = useSupportDrawer();
+  const { closeHelpPanel } = useHelpPanel();
   const track = useTelemetry();
   const [search, setSearch] = useState('');
   const commandGroups = useCommandRegistry(search);
@@ -130,9 +130,9 @@ export function CommandPalette() {
     });
 
     closeCommandPalette();
-    closeSupportDrawer();
+    closeHelpPanel();
     void openMintlifyAssistant({ source: 'command-palette', query: search });
-  }, [search, closeCommandPalette, closeSupportDrawer, track]);
+  }, [search, closeCommandPalette, closeHelpPanel, track]);
 
   const executeCommand = useCallback(
     async (command: CommandType) => {

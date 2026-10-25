@@ -17,15 +17,7 @@ function transformOptionalBoolean({ value }: { value: unknown }): boolean | unde
 export class GetInAppNotificationsFeedForSubscriberDto extends PaginationRequestDto(LIMIT.DEFAULT, LIMIT.MAX) {
   @ApiPropertyOptional({
     required: false,
-    oneOf: [
-      { type: 'string' },
-      {
-        type: 'array',
-        items: {
-          type: 'string',
-        },
-      },
-    ],
+    type: [String],
   })
   feedIdentifier: string | string[];
 

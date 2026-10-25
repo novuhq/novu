@@ -14,6 +14,7 @@ import { ParseEventRequest } from '../../../../events/usecases/parse-event-reque
 import { CreateConversationInteractionCommand } from '../../../../human/usecases/create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../../../../human/usecases/create-conversation-interaction/create-conversation-interaction.usecase';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../../channels/agent-config-resolver.service';
+import { agentPausedError } from '../../../human-relay/agent-paused.error';
 import { trackAgentReplyProcessed } from '../../../shared/analytics/agent-analytics';
 import type {
   EditPayloadDto,
@@ -328,7 +329,7 @@ export class HandleAgentReply {
         _organizationId: command.organizationId,
         identifier: command.agentIdentifier,
       },
-      { _id: 1, name: 1, identifier: 1 }
+      { _id: 1, name: 1, identifier: 1, runtime: 1, pausedAt: 1 }
     );
 
     if (!agent) {
@@ -337,6 +338,12 @@ export class HandleAgentReply {
 
     if (String(agent._id) !== conversation._agentId) {
       throw new ForbiddenException('Agent identifier does not match this conversation');
+    }
+
+    // An Agent Inbox agent sends through its own endpoints; while its operator has paused it, nothing goes
+    // out through this route either.
+    if (agent.runtime === 'human_relay' && agent.pausedAt) {
+      throw agentPausedError(agent.pausedAt);
     }
 
     return agent.name;
