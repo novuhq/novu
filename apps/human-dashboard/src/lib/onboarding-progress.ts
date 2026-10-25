@@ -47,3 +47,31 @@ export function resolveStep(agent: StepAgent | null, state: OnboardingState, hos
 export function isSetupUnfinished(step: SetupStep): step is 'test' | 'connect' {
   return step === 'test' || step === 'connect';
 }
+
+/**
+ * The operator is still on the test step of an agent this onboarding created. A claimed agent is
+ * not, and neither is anyone who already left that step.
+ */
+export function awaitsTestMail(agent: StepAgent | null, state: OnboardingState): boolean {
+  return Boolean(agent && wasMadeInTheSteps(agent, state) && !state.finishedAt && !state.testLeftAt);
+}
+
+/**
+ * The time a human email arrived. The sender and the subject are not kept: an older build stored them
+ * beside this time, and they are dropped here. The same state comes back when the time is unchanged
+ * and those fields are already gone.
+ */
+export function rememberTestReply(state: OnboardingState, replyAt: string | undefined): OnboardingState {
+  const stored = state as OnboardingState & { testInboundFrom?: string; testInboundSubject?: string };
+  const hasCopy = stored.testInboundFrom != null || stored.testInboundSubject != null;
+  if (state.testReplyAt === replyAt && !hasCopy) {
+    return state;
+  }
+
+  const { testReplyAt: _at, testInboundFrom: _from, testInboundSubject: _subject, ...rest } = stored;
+  if (!replyAt) {
+    return rest;
+  }
+
+  return { ...rest, testReplyAt: replyAt };
+}
