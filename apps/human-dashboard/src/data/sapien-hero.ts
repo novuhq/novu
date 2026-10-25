@@ -68,7 +68,7 @@ export const heroAssets = {
 
 export const HERO_TITLE = {
   lead: 'The',
-  highlight: 'E-mail',
+  highlight: 'Email',
   rest: 'inbox',
   accent: 'for AI agents',
 } as const;
@@ -80,8 +80,8 @@ export const HERO_TITLE_WORDS = [HERO_TITLE.highlight, 'Telegram', 'Slack'] as c
 export const HERO_WORD_INTERVAL = 3000;
 
 export const HERO_DESCRIPTION = [
-  'A dedicated inbox for each agent, so it can start conversations,',
-  'handle replies, get emails, and keep context across every thread.',
+  'Give your agent its own inbox to start conversations, receive messages, and',
+  'handle replies. It can ask questions and request approvals when it needs human input.',
 ] as const;
 
 export const HERO_COMMAND_LABEL = 'Hero setup command';

@@ -16,7 +16,7 @@ export const SITE_INDEXED = false;
 export const SITE_PAGES = {
   home: {
     path: '/',
-    title: 'Agent Inbox CLI docs — The inbox API for AI agents',
+    title: 'Agent Inbox CLI docs — The inbox for AI agents',
     description:
       'Give any AI agent a one-line way to reach a real person. Install @agentinbox/cli, connect a channel, and let agents ask, approve, choose, and tell.',
     // The people page's picture until the robots page has its own; alt text as in its .alt.txt.
@@ -27,13 +27,13 @@ export const SITE_PAGES = {
   },
   sapien: {
     path: '/sapien',
-    title: 'Agent Inbox — Bring human decisions into your AI workflows',
+    title: 'Agent Inbox | Email and chat inbox for AI agents',
     description:
-      'Add human approvals, questions, choices, and updates to AI workflows with @agentinbox/cli. Connect a messaging channel and let agents wait for your decision.',
+      'An inbox for AI agents to receive messages, reply, and request input or approvals across email, Slack, Telegram, WhatsApp and iMessage.',
     // The route segment's opengraph-image file; alt text as in its .alt.txt.
     image: {
       path: '/sapien/opengraph-image.jpg',
-      alt: 'agentinbox — The E-mail, Telegram and Slack inbox for AI agents',
+      alt: 'Agent Inbox connects your AI agent to Email, Slack, Telegram and iMessage inbox for AI agents',
     },
   },
 } as const;

@@ -20,14 +20,7 @@ export const buildingBlocksAssets = {
     width: 24,
     height: 24,
     nodeId: '724:4942',
-    purpose: 'Thread and replies feature icon (chat bubble)',
-  },
-  imgFrame2: {
-    src: '/images/sapien/building-blocks/imgFrame2.svg',
-    width: 24,
-    height: 24,
-    nodeId: '724:4957',
-    purpose: 'Attachments feature icon (paperclip)',
+    purpose: 'Two-way messaging feature icon (chat bubble)',
   },
   imgFrame3: {
     src: '/images/sapien/building-blocks/imgFrame3.svg',
@@ -42,6 +35,28 @@ export const buildingBlocksAssets = {
     height: 24,
     nodeId: '724:6863',
     purpose: 'Conversation History feature icon (watch)',
+  },
+  // The Scale section's icons, in the same pixel style.
+  imgThreads: {
+    src: '/images/sapien/scale/imgFrame1.svg',
+    width: 24,
+    height: 24,
+    nodeId: '724:4405',
+    purpose: 'Thread and replies feature icon (grid with a plus), shared with the Scale section',
+  },
+  imgPersistent: {
+    src: '/images/sapien/scale/imgFrame2.svg',
+    width: 24,
+    height: 24,
+    nodeId: '724:4426',
+    purpose: 'Persistent conversations feature icon (document), shared with the Scale section',
+  },
+  imgContactCard: {
+    src: '/images/sapien/scale/imgFrame.svg',
+    width: 24,
+    height: 24,
+    nodeId: '724:4378',
+    purpose: 'Shareable contact card feature icon (globe), shared with the Scale section',
   },
 } satisfies SectionAssets;
 
@@ -73,9 +88,13 @@ const CONTINUED: TerminalToken = { text: '\\', tone: 'muted' };
 
 /**
  * `$ npx @agentinbox/cli inbox send \`, then the question (`ask`, `approve`, `choose`, or none for a plain
- * message) as the CLI takes it, then its flags, a line each so the command fits the terminal.
+ * message) as the CLI takes it, then its flags, a line each so the command fits the terminal. A long question
+ * passes its parts as an array, a line each.
  */
-function command(question: string, flagLines: readonly (readonly Flag[])[]): readonly TerminalLine[] {
+function command(
+  question: string | readonly string[],
+  flagLines: readonly (readonly Flag[])[]
+): readonly TerminalLine[] {
   return [
     [
       { text: '$', tone: 'accent' },
@@ -84,7 +103,9 @@ function command(question: string, flagLines: readonly (readonly Flag[])[]): rea
       { text: ' ' },
       CONTINUED,
     ],
-    [{ text: `    ${question} ` }, CONTINUED],
+    ...(typeof question === 'string' ? [question] : question).map(
+      (part): TerminalLine => [{ text: `    ${part} ` }, CONTINUED]
+    ),
     ...flagLines.map(
       (flags, index): TerminalLine => [
         { text: '   ' },
@@ -100,8 +121,15 @@ function command(question: string, flagLines: readonly (readonly Flag[])[]): rea
 }
 
 /**
+ * The line every send prints first (on stderr, `formatConversationReport` in `packages/agentinbox`): the
+ * conversation it landed in.
+ */
+export const SEND_REPORT: TerminalLine = [{ text: 'conversation: conv_123' }];
+
+/**
  * What the CLI prints once the question is settled (`describeInteraction` in `packages/agentinbox`): the
- * outcome in orange, the person and the answer bright.
+ * outcome in orange, the person and the answer bright. "by" names the person as the API records them, by
+ * first name; "Delivered to" lists the `--to` contact ids.
  */
 function result(outcome: string, ...rest: readonly (string | readonly [bright: string])[]): TerminalLine {
   return [
@@ -133,6 +161,8 @@ export type NotificationCard = Readonly<{
 export type BuildingBlockExample = Readonly<{
   id: 'ask' | 'approve' | 'choose' | 'tell';
   label: string;
+  /** Supporting copy: what the message type is for, above its command. */
+  description: string;
   command: readonly TerminalLine[];
   result: TerminalLine;
   card: NotificationCard;
@@ -140,42 +170,44 @@ export type BuildingBlockExample = Readonly<{
 
 export const BUILDING_BLOCKS_DEFAULT_TAB: BuildingBlockExample['id'] = 'approve';
 
+// Draft copy — not in Figma. One deploy story across the four tabs.
 export const BUILDING_BLOCK_EXAMPLES: readonly BuildingBlockExample[] = [
   {
     id: 'ask',
     label: 'Ask',
-    // Draft copy — not in Figma
-    command: command('ask "Where should I ship the order?"', [
+    description: 'Get a written answer when your agent needs more information.',
+    command: command(
+      ['ask', '"Which environment should I deploy to?"'],
       [
-        ['--to', 'maya'],
-        ['--ttl', '1d'],
-      ],
-    ]),
-    // Draft copy — not in Figma
-    result: result('Answered', ' by ', ['maya'], ' at ', ['14:02:11'], ': ', ['Berlin office']),
-    // Draft copy — not in Figma
+        [
+          ['--to', 'maya'],
+          ['--ttl', '1d'],
+        ],
+      ]
+    ),
+    result: result('Answered', ' by ', ['Maya'], ' at ', ['14:02:11'], ': ', ['staging']),
     card: {
       author: 'ops-agent',
       time: 'just now',
-      message: 'Where should I ship the order?',
-      response: { kind: 'reply', value: 'Berlin office', action: 'Reply' },
+      message: 'Which environment should I deploy to?',
+      response: { kind: 'reply', value: 'staging', action: 'Reply' },
     },
   },
   {
     id: 'approve',
     label: 'Approve',
-    // Single quotes: in double ones the shell would read `$2` as a variable.
-    command: command("approve 'Refund $240 to Acme Corp?'", [
+    description: 'Request approval before the agent takes the next step.',
+    command: command('approve "Deploy the fix to staging?"', [
       [
         ['--to', 'maya'],
         ['--ttl', '2h'],
       ],
     ]),
-    result: result('Approved', ' by ', ['maya'], ' at ', ['14:02:11'], '.'),
+    result: result('Approved', ' by ', ['Maya'], ' at ', ['14:02:11'], '.'),
     card: {
       author: 'ops-agent',
       time: 'just now',
-      message: 'Refund $240 to Acme Corp?',
+      message: 'Deploy the fix to staging?',
       response: {
         kind: 'buttons',
         buttons: [{ label: 'Approve', primary: true }, { label: 'Deny' }],
@@ -185,43 +217,42 @@ export const BUILDING_BLOCK_EXAMPLES: readonly BuildingBlockExample[] = [
   {
     id: 'choose',
     label: 'Choose',
-    // Draft copy — not in Figma
-    command: command('choose "How should I resolve Acme?"', [
+    description: 'Let a person select from the options your agent provides.',
+    command: command(
+      ['choose', '"Which release strategy should I use?"'],
       [
-        ['--option', 'Refund'],
-        ['--option', 'Credit'],
-      ],
-      [
-        ['--option', 'Replace'],
-        ['--to', 'maya'],
-      ],
-    ]),
-    // Draft copy — not in Figma
-    result: result('Chose', ' ', ['"Credit"'], ' by ', ['maya'], ' at ', ['14:02:11'], '.'),
-    // Draft copy — not in Figma
+        [
+          ['--option', 'Canary'],
+          ['--option', 'Blue-green'],
+        ],
+        [
+          ['--option', 'Rolling'],
+          ['--to', 'maya'],
+        ],
+      ]
+    ),
+    result: result('Chose', ' ', ['"Canary"'], ' by ', ['Maya'], ' at ', ['14:02:11'], '.'),
     card: {
       author: 'ops-agent',
       time: 'just now',
-      message: 'How should I resolve Acme?',
+      message: 'Which release strategy should I use?',
       response: {
         kind: 'buttons',
-        buttons: [{ label: 'Refund' }, { label: 'Credit', primary: true }, { label: 'Replace' }],
+        buttons: [{ label: 'Canary', primary: true }, { label: 'Blue-green' }, { label: 'Rolling' }],
       },
     },
   },
   {
     id: 'tell',
     label: 'Tell',
-    // Draft copy — not in Figma
+    description: 'Send an update without waiting for a response.',
     // A plain message: `send` with no question, which doesn't wait.
-    command: command('"Refund sent to Acme Corp"', [[['--to', 'maya']]]),
-    // Draft copy — not in Figma
+    command: command('"The staging checks passed."', [[['--to', 'maya']]]),
     result: result('Delivered', ' to ', ['maya'], ' on ', ['slack'], '.'),
-    // Draft copy — not in Figma
     card: {
       author: 'ops-agent',
       time: 'just now',
-      message: 'Refund sent to Acme Corp',
+      message: 'The staging checks passed.',
       response: { kind: 'note', text: 'No reply needed' },
     },
   },
@@ -233,32 +264,42 @@ export type BuildingBlockFeature = Readonly<{
   icon: DesignAsset;
 }>;
 
+// Attachments are out until they can be verified.
 export const BUILDING_BLOCK_FEATURES: readonly BuildingBlockFeature[] = [
   {
-    title: 'Reactions.',
-    description: 'Read emoji reactions as signals and react back, so a thumbs-up can count as a reply.',
-    icon: buildingBlocksAssets.imgFrame,
+    title: 'Two-way messaging.',
+    description: 'People can write to your agent first. It can read the message and reply in the same conversation.',
+    icon: buildingBlocksAssets.imgFrame1,
   },
   {
     title: 'Thread and replies.',
     description: 'Reply in the right thread with full context, on any channel, through one API.',
-    icon: buildingBlocksAssets.imgFrame1,
+    icon: buildingBlocksAssets.imgThreads,
   },
   {
-    title: 'Attachments.',
-    // Figma joins these word pairs with a non-wrapping "\r", so they move to the next line together.
+    title: 'Persistent conversations.',
     description:
-      'Send and receive\u00a0files, images, and documents\u00a0on any channel your agent is\u00a0connected to.',
-    icon: buildingBlocksAssets.imgFrame2,
-  },
-  {
-    title: 'Contacts.',
-    description: 'Reach each person on the channel they prefer, with one identity across Slack, email, and chat.',
-    icon: buildingBlocksAssets.imgFrame3,
+      'Keep the exchange available across agent runs, so your agent can return to earlier messages and replies.',
+    icon: buildingBlocksAssets.imgPersistent,
   },
   {
     title: 'Conversation History.',
     description: 'Every message across every channel, merged into one timeline your agent can read.',
     icon: buildingBlocksAssets.imgFrame4,
+  },
+  {
+    title: 'Contacts.',
+    description: 'Invite the people your agent works with and reach them on their connected channels.',
+    icon: buildingBlocksAssets.imgFrame3,
+  },
+  {
+    title: 'Shareable contact card.',
+    description: "Give people one place to find your agent's available email and chat identities.",
+    icon: buildingBlocksAssets.imgContactCard,
+  },
+  {
+    title: 'Reactions.',
+    description: 'Read emoji reactions as signals and react back, so a thumbs-up can count as a reply.',
+    icon: buildingBlocksAssets.imgFrame,
   },
 ];

@@ -24,11 +24,11 @@ test('each tab group changes only its own panel', async ({ page }) => {
   await inbox.getByRole('tab', { name: 'Personal Assistant' }).click();
   await expect(inbox.getByRole('tabpanel')).toContainText('assistant@agentinbox.md');
   await blocks.getByRole('tab', { name: 'Ask', exact: true }).click();
-  await expect(blocks.getByRole('tabpanel')).toContainText('Where should I ship the order?');
+  await expect(blocks.getByRole('tabpanel')).toContainText('Which environment should I deploy to?');
   await blocks.getByRole('tab', { name: 'Choose', exact: true }).click();
-  await expect(blocks.getByRole('tabpanel')).toContainText('How should I resolve Acme?');
+  await expect(blocks.getByRole('tabpanel')).toContainText('Which release strategy should I use?');
   await blocks.getByRole('tab', { name: 'Tell', exact: true }).click();
-  await expect(blocks.getByRole('tabpanel')).toContainText('Refund sent to Acme Corp');
+  await expect(blocks.getByRole('tabpanel')).toContainText('The staging checks passed.');
   await expect(inbox.getByRole('tab', { name: 'Personal Assistant' })).toHaveAttribute('aria-selected', 'true');
 });
 
@@ -92,7 +92,7 @@ for (const width of [1440, 390]) {
     const cli = section.getByRole('tab', { name: 'CLI', exact: true });
     await cli.focus();
     await page.keyboard.press('ArrowDown');
-    const claude = section.getByRole('tab', { name: 'Claude', exact: true });
+    const claude = section.getByRole('tab', { name: 'Skills', exact: true });
     await expect(claude).toBeFocused();
     await expect(claude).toHaveAttribute('aria-selected', 'true');
     await expect(claude).toHaveCSS('transition-duration', '0s');
@@ -106,22 +106,21 @@ test('copy commands copies the selected snippet without prompts', async ({ page 
   await page.goto('/sapien');
   const section = page.locator('#integrations');
   await section.getByRole('button', { name: 'Copy Commands' }).click();
-  await expect(page.locator('html')).toHaveAttribute(
-    'data-copied-text',
-    [
-      'npx @agentinbox/cli setup',
-      '',
-      'npx @agentinbox/cli channel add telegram',
-      'npx @agentinbox/cli inbox list --filter unread',
-      'npx @agentinbox/cli inbox send approve \\',
-      "    'Refund $240?'",
-    ].join('\n')
-  );
+  await expect(page.locator('html')).toHaveAttribute('data-copied-text', 'npx @agentinbox/cli setup');
   await expect(section.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
   await section.getByRole('tab', { name: 'Cursor', exact: true }).click();
   await section.getByRole('button', { name: 'Copy Config' }).click();
   const copied = await page.evaluate(() => document.documentElement.dataset.copiedText ?? '');
   expect(JSON.parse(copied)).toHaveProperty('mcpServers.inbox.url', 'https://mcp.agentinbox.md');
+  await section.getByRole('tab', { name: 'Hermes', exact: true }).click();
+  await section.getByRole('button', { name: 'Copy Commands' }).click();
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-copied-text',
+    ['npx skills add agentinboxhq/skills \\', '    -g --agent hermes-agent -y'].join('\n')
+  );
+  await section.getByRole('tab', { name: 'MCP', exact: true }).click();
+  await section.getByRole('button', { name: 'Copy URL' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-copied-text', 'https://mcp.agentinbox.md');
 });
 
 test('FAQ starts with the first answer open and toggles from the keyboard', async ({ page }) => {
@@ -131,7 +130,7 @@ test('FAQ starts with the first answer open and toggles from the keyboard', asyn
   const second = faq.locator('details').nth(1);
   const last = faq.locator('details').last();
   await expect(first).toHaveAttribute('open');
-  await expect(first).toContainText('its own inbox');
+  await expect(first).toContainText('its own email address');
   await expect(second).not.toHaveAttribute('open');
   await second.locator('summary').focus();
   await page.keyboard.press('Enter');
@@ -139,7 +138,7 @@ test('FAQ starts with the first answer open and toggles from the keyboard', asyn
   await last.locator('summary').click();
   await expect(last).toHaveAttribute('open');
   await expect(first).toHaveAttribute('open');
-  await expect(last).toContainText('100 conversations a month');
+  await expect(last).toContainText('contacts only');
   await first.locator('summary').focus();
   await page.keyboard.press('Enter');
   await expect(first).not.toHaveAttribute('open');
