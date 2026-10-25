@@ -113,10 +113,16 @@ export function inviteDraftFromId(draft: InviteDraft, contactId: string): Invite
   return { ...draft, contactId, idCustomized: true };
 }
 
-/** Drops a field's error once that field has something in it, so a filled id is not still "Enter an ID." */
+/** Drops a field's error once that field is valid, so a filled id is not still "Enter an ID." */
 export function clearFilledInviteErrors(errors: InviteFieldErrors, draft: InviteDraft): InviteFieldErrors {
+  const parsed = parseInviteFields(draft);
+
+  if (!parsed.errors) {
+    return {};
+  }
+
   return {
-    ...(draft.contactId.trim() ? {} : { contactId: errors.contactId }),
-    ...(draft.name.trim() ? {} : { name: errors.name }),
+    ...(parsed.errors.contactId && errors.contactId ? { contactId: errors.contactId } : {}),
+    ...(parsed.errors.name && errors.name ? { name: errors.name } : {}),
   };
 }

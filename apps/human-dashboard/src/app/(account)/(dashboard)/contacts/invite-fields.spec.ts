@@ -114,4 +114,15 @@ describe('invite draft', () => {
       contactId: 'Enter an ID.',
     });
   });
+
+  it('keeps an id format error when the name changes and the id stays invalid', () => {
+    const errors = {
+      contactId: 'Use lowercase letters, numbers, dashes, dots or underscores, with no spaces.',
+    };
+    const custom = inviteDraftFromId(inviteDraftFromName(initialInviteDraft(), 'John Doe'), 'John!');
+    const renamed = inviteDraftFromName(custom, 'Jane Doe');
+
+    expect(renamed.contactId).toBe('John!');
+    expect(clearFilledInviteErrors(errors, renamed)).toEqual(errors);
+  });
 });
