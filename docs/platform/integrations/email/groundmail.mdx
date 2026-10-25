@@ -33,6 +33,8 @@ You should now be able to send notifications using Groundmail in Novu.
 
 ## Provider options
 
-Novu forwards the email subject, HTML and text bodies, `cc`, `bcc`, reply-to, attachments and custom headers. Novu's message id is sent as the `Idempotency-Key`, so a retried delivery does not send twice.
+Novu forwards the email subject, HTML and text bodies, `cc`, `bcc`, reply-to, attachments and custom headers. Header names you set are sent exactly as given.
+
+Each send carries an `Idempotency-Key` built from the Novu job id, which stays the same when Novu retries that job. Groundmail keeps the key for 24 hours. If a retry repeats a send Groundmail already accepted, Groundmail returns the original result instead of sending again. If the retried email differs from the first attempt, Groundmail rejects it with a conflict error and the step fails rather than sending a second copy.
 
 To store tags on the email in Groundmail, pass `tags` in the step's custom data, either as an object (`{ order_id: "ord_123" }`) or as a list of `{ name, value }` pairs. Up to 10 tags are kept.

@@ -186,7 +186,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Groundmail',
     channel: ChannelTypeEnum.EMAIL,
     credentials: groundmailConfig,
-    docReference: 'https://docs.groundmail.dev',
+    docReference: `https://docs.novu.co/platform/integrations/email/groundmail${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'groundmail.svg', dark: 'groundmail.svg' },
   },
   {

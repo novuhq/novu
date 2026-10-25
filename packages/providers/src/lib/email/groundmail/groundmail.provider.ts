@@ -9,6 +9,7 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { providerFetch } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 const GROUNDMAIL_API_URL = 'https://api.groundmail.dev';
@@ -66,7 +67,13 @@ export class GroundmailEmailProvider extends BaseProvider implements IEmailProvi
       throw new Error('Groundmail requires a from address');
     }
 
-    const headers = { ...this.correlationHeaders(options), ...options.headers };
+    // Bridge `headers` skip the snake_case conversion below: header names are sent exactly as given.
+    const { headers: bridgeHeaders, ...bridgeData } = bridgeProviderData;
+    const headers = {
+      ...this.correlationHeaders(options),
+      ...options.headers,
+      ...this.stringRecord(bridgeHeaders),
+    };
     const tags = this.mapTags(options.customData?.tags);
     const attachments = this.mapAttachments(options.attachments);
 
@@ -84,15 +91,15 @@ export class GroundmailEmailProvider extends BaseProvider implements IEmailProvi
       ...(attachments?.length ? { attachments } : {}),
     };
 
-    const { body, headers: passthroughHeaders } = this.transform<IGroundmailSendRequest>(bridgeProviderData, mailData);
+    const { body, headers: passthroughHeaders } = this.transform<IGroundmailSendRequest>(bridgeData, mailData);
+    const idempotencyKey = this.idempotencyKey(options);
 
-    // Novu's message id doubles as the idempotency key so a retried job cannot double-send.
-    const response = await fetch(`${GROUNDMAIL_API_URL}/emails`, {
+    const response = await providerFetch(`${GROUNDMAIL_API_URL}/emails`, {
       method: 'POST',
       headers: {
         ...this.authHeaders(),
         'Content-Type': 'application/json',
-        ...(options.id ? { 'Idempotency-Key': options.id } : {}),
+        ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
         ...passthroughHeaders,
       },
       body: JSON.stringify(body),
@@ -113,7 +120,7 @@ export class GroundmailEmailProvider extends BaseProvider implements IEmailProvi
   async checkIntegration(_options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
       // A cheap authenticated read; validates the API key without sending a probe email.
-      const response = await fetch(`${GROUNDMAIL_API_URL}/emails?limit=1`, {
+      const response = await providerFetch(`${GROUNDMAIL_API_URL}/emails?limit=1`, {
         method: 'GET',
         headers: this.authHeaders(),
       });
@@ -193,21 +200,49 @@ export class GroundmailEmailProvider extends BaseProvider implements IEmailProvi
     return tags.slice(0, MAX_TAGS);
   }
 
-  // Novu correlation ids ride as X-Novu-* headers so they appear on the stored email.
+  /*
+   * The Novu job id is the same on every attempt of one job, and each job is one step for one
+   * subscriber, so a retried job replays the original send instead of sending again. The message
+   * id cannot be used: the worker creates a new message, with a new id, on every attempt.
+   * Callers outside the worker that set no job id fall back to their own `id`.
+   */
+  private idempotencyKey(options: IEmailOptions): string | undefined {
+    const jobId = (options.notificationDetails as Record<string, unknown> | undefined)?.jobId;
+
+    if (typeof jobId === 'string' && jobId.length > 0) {
+      return `novu-job-${jobId}`;
+    }
+
+    return options.id || undefined;
+  }
+
+  /*
+   * Novu correlation ids ride as X-Novu-* headers so they appear on the stored email. Only ids
+   * that stay the same across retries belong here: Groundmail replays an idempotent request
+   * only when the body matches the original.
+   */
   private correlationHeaders(options: IEmailOptions): Record<string, string> {
     const details = (options.notificationDetails ?? {}) as Record<string, unknown>;
-    const candidates: Record<string, unknown> = {
-      'X-Novu-Transaction-Id': details.transactionId,
-      'X-Novu-Message-Id': options.id,
-    };
 
-    const headers: Record<string, string> = {};
-    for (const [key, value] of Object.entries(candidates)) {
+    return this.stringRecord({
+      'X-Novu-Transaction-Id': details.transactionId,
+      'X-Novu-Job-Id': details.jobId,
+    });
+  }
+
+  private stringRecord(raw: unknown): Record<string, string> {
+    const record: Record<string, string> = {};
+
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      return record;
+    }
+
+    for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
       if (typeof value === 'string' && value.length > 0) {
-        headers[key] = value;
+        record[key] = value;
       }
     }
 
-    return headers;
+    return record;
   }
 }

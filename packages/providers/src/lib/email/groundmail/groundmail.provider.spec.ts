@@ -37,6 +37,7 @@ test('should POST the mapped message to the Groundmail API', async () => {
   const result = await provider.sendMessage({
     ...mockNovuMessage,
     id: 'novu-message-1',
+    notificationDetails: { transactionId: 'txn_1', jobId: 'job_1' },
     cc: ['cc@example.com'],
     bcc: ['bcc@example.com'],
     replyTo: 'reply@example.com',
@@ -50,7 +51,8 @@ test('should POST the mapped message to the Groundmail API', async () => {
   expect(url).toBe('https://api.groundmail.dev/emails');
   expect(init.method).toBe('POST');
   expect(init.headers.Authorization).toBe('Bearer gm_test_key');
-  expect(init.headers['Idempotency-Key']).toBe('novu-message-1');
+  expect(init.headers['Idempotency-Key']).toBe('novu-job-job_1');
+  expect(init.signal).toBeInstanceOf(AbortSignal);
 
   expect(JSON.parse(init.body)).toEqual({
     from: { email: 'hello@example.com', name: 'Acme' },
@@ -61,7 +63,7 @@ test('should POST the mapped message to the Groundmail API', async () => {
     cc: ['cc@example.com'],
     bcc: ['bcc@example.com'],
     reply_to: 'reply@example.com',
-    headers: { 'X-Novu-Message-Id': 'novu-message-1', 'X-Entity-ID': 'ord_1' },
+    headers: { 'X-Novu-Transaction-Id': 'txn_1', 'X-Novu-Job-Id': 'job_1', 'X-Entity-ID': 'ord_1' },
     tags: [{ name: 'order_id', value: 'ord_1' }],
     attachments: [
       { name: 'a.txt', content_type: 'text/plain', data: Buffer.from('hello').toString('base64'), content_id: 'cid1' },
@@ -80,6 +82,59 @@ test('should fall back to the configured from address and omit the idempotency k
   const [, init] = fetchMock.mock.calls[0];
   expect(init.headers['Idempotency-Key']).toBeUndefined();
   expect(JSON.parse(init.body).from).toBe('default@example.com');
+});
+
+test('should send the same idempotency key and body when a job is retried', async () => {
+  fetchMock.mockResolvedValue(jsonResponse(200, { id: 'msg_1', status: 'sent' }));
+  const provider = new GroundmailEmailProvider(mockConfig);
+  const notificationDetails = { transactionId: 'txn_1', jobId: 'job_1' };
+
+  // Each attempt of a job gets a new Novu message id.
+  await provider.sendMessage({ ...mockNovuMessage, id: 'message-attempt-1', notificationDetails });
+  await provider.sendMessage({ ...mockNovuMessage, id: 'message-attempt-2', notificationDetails });
+
+  const [first, second] = fetchMock.mock.calls.map(([, init]) => init);
+  expect(first.headers['Idempotency-Key']).toBe('novu-job-job_1');
+  expect(second.headers['Idempotency-Key']).toBe(first.headers['Idempotency-Key']);
+  expect(second.body).toBe(first.body);
+});
+
+test('should send different idempotency keys for different jobs in one transaction', async () => {
+  fetchMock.mockResolvedValue(jsonResponse(200, { id: 'msg_1', status: 'sent' }));
+  const provider = new GroundmailEmailProvider(mockConfig);
+
+  await provider.sendMessage({ ...mockNovuMessage, notificationDetails: { transactionId: 'txn_1', jobId: 'job_a' } });
+  await provider.sendMessage({ ...mockNovuMessage, notificationDetails: { transactionId: 'txn_1', jobId: 'job_b' } });
+
+  const keys = fetchMock.mock.calls.map(([, init]) => init.headers['Idempotency-Key']);
+  expect(keys).toEqual(['novu-job-job_a', 'novu-job-job_b']);
+});
+
+test('should use the caller id as the idempotency key when there is no job id', async () => {
+  fetchMock.mockResolvedValue(jsonResponse(200, { id: 'msg_1', status: 'sent' }));
+  const provider = new GroundmailEmailProvider(mockConfig);
+
+  await provider.sendMessage({ ...mockNovuMessage, id: 'caller-id-1' });
+
+  expect(fetchMock.mock.calls[0][1].headers['Idempotency-Key']).toBe('caller-id-1');
+});
+
+test('should keep header names from bridge provider data as given', async () => {
+  fetchMock.mockResolvedValue(jsonResponse(200, { id: 'msg_1', status: 'sent' }));
+  const provider = new GroundmailEmailProvider(mockConfig);
+
+  await provider.sendMessage(
+    { ...mockNovuMessage, headers: { 'X-Trigger-Header': 'trigger' } },
+    { replyTo: 'bridge@example.com', headers: { 'X-Entity-ID': 'ord_1', 'List-Unsubscribe': '<https://u.example>' } }
+  );
+
+  const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+  expect(body.reply_to).toBe('bridge@example.com');
+  expect(body.headers).toEqual({
+    'X-Trigger-Header': 'trigger',
+    'X-Entity-ID': 'ord_1',
+    'List-Unsubscribe': '<https://u.example>',
+  });
 });
 
 test('should apply bridge provider data overrides', async () => {
@@ -121,6 +176,7 @@ test('checkIntegration succeeds on an authenticated read', async () => {
 
   expect(fetchMock.mock.calls[0][0]).toBe('https://api.groundmail.dev/emails?limit=1');
   expect(fetchMock.mock.calls[0][1].method).toBe('GET');
+  expect(fetchMock.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
   expect(result.success).toBe(true);
   expect(result.code).toBe('success');
 });
