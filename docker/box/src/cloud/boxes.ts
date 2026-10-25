@@ -16,7 +16,7 @@ export async function boxes(request: Request, env: HostEnv, url: URL): Promise<R
 const registry = (env: HostEnv) => env.REGISTRY.get(env.REGISTRY.idFromName('registry'));
 
 async function route(request: Request, env: HostEnv, url: URL): Promise<Response> {
-  if (!(await authorize(request))) return text("needs the same Authorization as a box's /__box/*\n", 401);
+  if (!(await authorize(request, env))) return text("needs the same Authorization as a box's /__box/*\n", 401);
   if (request.method === 'GET' && url.pathname === '/__box/boxes') return json({ boxes: await liveBoxes(env) });
   const box = url.pathname.slice('/__box/boxes/'.length);
   if (!isBoxName(box))

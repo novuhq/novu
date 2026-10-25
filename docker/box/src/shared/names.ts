@@ -17,6 +17,16 @@ export function isBoxName(box: string): boolean {
   return /^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/.test(box) && box !== 'slack' && !box.endsWith(API);
 }
 
+export function prBox(number: number): string {
+  return `pr-${number}`;
+}
+
+export function prOfBox(box: string): number | null {
+  const number = /^pr-(\d+)$/.exec(box)?.[1];
+
+  return number ? Number(number) : null;
+}
+
 export function boxOfHost(hostname: string): string | null {
   if (!hostname.endsWith(`.${DOMAIN}`)) return null;
   const label = hostname.slice(0, -DOMAIN.length - 1);
@@ -28,6 +38,8 @@ export function boxOfHost(hostname: string): string | null {
 export function boxOfOrigin(origin: string): string {
   return boxOfHost(new URL(origin).hostname) ?? '';
 }
+
+export const SEED_EMAIL = 'agent@novu.co';
 
 // Box names have no dots, so the box is everything between `+` and the last dot.
 const TEST_USER = /^agent\+([a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\.([a-z0-9]{6})@novu\.co$/;

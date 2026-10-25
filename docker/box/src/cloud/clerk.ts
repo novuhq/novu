@@ -1,6 +1,6 @@
 import * as z from 'zod';
-import { type ClerkUser, ClerkUserList, decode, WithId } from '../shared/contracts.ts';
-import { boxOfTestUser, testUserEmail } from '../shared/names.ts';
+import { ClerkSignInToken, type ClerkUser, ClerkUserList, decode, WithId } from '../shared/contracts.ts';
+import { boxOfTestUser, boxOrigin, SEED_EMAIL, testUserEmail } from '../shared/names.ts';
 import type { HostEnv } from './env.ts';
 
 export interface TestUser {
@@ -66,6 +66,19 @@ export async function createTestUser(env: HostEnv, box: string): Promise<{ email
   });
 
   return { email, password };
+}
+
+// A link that signs in as the seed user once, within 10 minutes, so its password never reaches agents: one pasted
+// into a PR is already spent or expired.
+export async function seedSignInUrl(env: HostEnv, box: string): Promise<string> {
+  const [user] = await clerk(env, `/users?email_address=${encodeURIComponent(SEED_EMAIL)}`, ClerkUserList);
+  if (!user) throw new Error(`Clerk has no ${SEED_EMAIL}; a bake creates it`);
+  const { token } = await clerk(env, '/sign_in_tokens', ClerkSignInToken, {
+    method: 'POST',
+    body: JSON.stringify({ user_id: user.id, expires_in_seconds: 600 }),
+  });
+
+  return `${boxOrigin(box)}/auth/sign-in?__clerk_ticket=${token}`;
 }
 
 export async function deleteTestUser(env: HostEnv, user: TestUser): Promise<void> {

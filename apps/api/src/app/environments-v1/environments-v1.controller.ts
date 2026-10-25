@@ -42,8 +42,11 @@ import {
   isInternalAuthScheme,
 } from '../shared/utils/auth.utils';
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
+import { DashboardInboxHashesResponseDto } from './dtos/dashboard-inbox-hashes-response.dto';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
+import { BuildDashboardInboxHashesCommand } from './usecases/build-dashboard-inbox-hashes/build-dashboard-inbox-hashes.command';
+import { BuildDashboardInboxHashes } from './usecases/build-dashboard-inbox-hashes/build-dashboard-inbox-hashes.usecase';
 import { CreateApiKey } from './usecases/create-api-key/create-api-key.usecase';
 import { CreateEnvironmentCommand } from './usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from './usecases/create-environment/create-environment.usecase';
@@ -79,6 +82,7 @@ export class EnvironmentsControllerV1 {
     private getEnvironmentUsecase: GetEnvironment,
     private getMyEnvironmentsUsecase: GetMyEnvironments,
     private deleteEnvironmentUsecase: DeleteEnvironment,
+    private buildDashboardInboxHashesUsecase: BuildDashboardInboxHashes,
     private organizationRepository: CommunityOrganizationRepository,
     private featureFlagService: FeatureFlagsService
   ) {}
@@ -97,6 +101,26 @@ export class EnvironmentsControllerV1 {
         environmentId: user.environmentId,
         userId: user._id,
         organizationId: user.organizationId,
+      })
+    );
+  }
+
+  @Get('/me/dashboard-inbox-hashes')
+  @ApiOperation({
+    summary: 'Sign the dashboard Inbox and web chat identities of the current environment',
+    description:
+      'Returns HMAC hashes, signed with the current environment API key, for the subscriber ids the dashboard ' +
+      'opens sessions as (the authenticated user and their web chat tester).',
+  })
+  @ApiResponse(DashboardInboxHashesResponseDto)
+  @ApiExcludeEndpoint()
+  @SkipPermissionsCheck()
+  async getDashboardInboxHashes(@UserSession() user: UserSessionData): Promise<DashboardInboxHashesResponseDto> {
+    return await this.buildDashboardInboxHashesUsecase.execute(
+      BuildDashboardInboxHashesCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
       })
     );
   }

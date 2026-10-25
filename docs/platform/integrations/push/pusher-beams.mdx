@@ -346,3 +346,48 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 ```
   </Tab>
 </Tabs>
+
+## Activity tracking
+
+Pusher Beams supports [push activity tracking](/platform/integrations/push/push-activity-tracking). Enable the **Push Activity Tracking** toggle on the Pusher Beams integration. Your app reads the Novu message id from the notification and forwards it as `eventId`.
+
+Novu puts the trigger payload, including `__nvMessageId`, in the `data` object on all three platform blocks:
+
+- Android: FCM `data.__nvMessageId`
+- Web: the default Beams service worker stores the web payload at `notification.data.pusher.customerPayload`. The message id is `notification.data.pusher.customerPayload.data.__nvMessageId`.
+- iOS: the same `data` object beside `aps`, so the id is `data.__nvMessageId` in the APNs `userInfo`
+
+```json
+{
+  "aps": {
+    "alert": { "title": "Hello", "body": "Hello, world!" }
+  },
+  "data": {
+    "__nvMessageId": "65c0d71c0959a38e8857b999"
+  }
+}
+```
+
+A `data` override on `fcm`, `web`, or `apns` is merged into that object. Leave `__nvMessageId` in place.
+
+On web, read the id from the default Beams service worker shape:
+
+```javascript
+self.addEventListener("notificationclick", (event) => {
+  const messageId =
+    event.notification.data?.pusher?.customerPayload?.data?.__nvMessageId;
+
+  event.waitUntil(
+    fetch("https://your-api.com/api/notifications/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventType: "clicked",
+        eventId: messageId,
+      }),
+    })
+  );
+});
+```
+
+Forward `delivered`, `opened`, `dismissed`, or `failed` the same way when your app observes those events. Your backend then calls [Novu's activity endpoint](/platform/integrations/push/push-activity-tracking#step-3-forward-events-to-novu-from-your-backend).

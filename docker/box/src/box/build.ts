@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import { dirname, relative } from 'node:path';
@@ -91,7 +91,8 @@ async function buildViaNx(libs: ReadonlyArray<string>): Promise<void> {
   if (libs.includes(FRAMEWORK)) fs.rmSync(FRAMEWORK_TYPES_STALE, { force: true });
 }
 
-// The libraries the projects run on, which nx's cache replays when unchanged.
+// The libraries the projects run on. base saves without nx's cache, so a box's first apply builds them all; later
+// applies replay the unchanged ones from it.
 function libraryClosure(
   graph: Graph,
   projects: ReadonlyArray<string>,
@@ -474,10 +475,18 @@ async function refreshWorkspacePackages(target: string): Promise<void> {
   }
 }
 
+// A box restores every byte of its snapshot chain, and deleting in a later snapshot doesn't shrink it. nx's cache
+// replays builds an apply rarely repeats, so base saves without it. pnpm's store and metadata cache stay: without
+// them a lockfile change took 2 to 3 minutes longer.
+export async function dropNxCache(): Promise<void> {
+  await fs.promises.rm(`${REPO}/.nx/cache`, { recursive: true, force: true });
+}
+
 export function prepareDashboard(): void {
   const target = `${RUN}/dashboard`;
   fs.rmSync(target, { recursive: true, force: true });
-  fs.cpSync(`${REPO}/apps/dashboard/dist`, target, { recursive: true });
+  // Every start makes this copy; a reflinked one shares the build's blocks instead of adding them to the next snapshot.
+  execFileSync('cp', ['-R', '--reflink=auto', `${REPO}/apps/dashboard/dist`, target]);
 
   const viteEnv = Object.fromEntries(Object.entries(vars).filter(([key]) => key.startsWith('VITE_')));
   const script = `<script>window._env_ = ${JSON.stringify(viteEnv).replace(/</g, '\\u003c')};</script>`;

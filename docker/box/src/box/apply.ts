@@ -11,6 +11,7 @@ import {
   type Changes,
   dashboardBundleChanged,
   deployApp,
+  dropNxCache,
   pnpmInstall,
   prepareDashboard,
   writeBoxJson,
@@ -19,7 +20,7 @@ import { fetchRef, gitWithToken, mergeOntoBaked, unbundle } from './git.ts';
 import { withLock } from './lock.ts';
 import { migrate } from './migrate.ts';
 import { API_HEALTH, APPLIED, APPLYING, BAKED, NX, REPO_URL } from './paths.ts';
-import { CODE_PROCESSES, DEPLOYED_APPS, PATH_PROCESSES, PROJECT_PROCESSES } from './processes.ts';
+import { CODE_PROCESSES, DEPLOYED_APPS, INSTALL_FILES, PATH_PROCESSES, PROJECT_PROCESSES } from './processes.ts';
 import { allSettled, output, readJson, run, step, vars, waitForHttp } from './runtime.ts';
 import { pc, startSkipped, stopRunning, storesReady } from './supervisor.ts';
 
@@ -90,6 +91,7 @@ async function applyLocked({ ref = '', bundle, full: fullAsked, baseline, token 
   await applyPlan(plan);
 
   if (baseline) {
+    await step('drop the nx cache', dropNxCache);
     // Later applies, and boxes started from this one's snapshot, merge onto this commit instead of the bake's; `at`
     // stays the bake's time.
     const refreshed: Baked = { ref: target.ref, sha: target.sha, at: baked.at };
@@ -103,10 +105,6 @@ async function applyLocked({ ref = '', bundle, full: fullAsked, baseline, token 
   writeBoxJson();
   log(`applied ${target.ref} at ${target.sha}`);
 }
-
-// A dependency change always changes the lockfile (installs are frozen); the deploy refresh copies a changed
-// package.json.
-const INSTALL_FILES = ['pnpm-lock.yaml', 'pnpm-workspace.yaml', '.source'];
 
 async function planFor(
   files: ReadonlyArray<string>,

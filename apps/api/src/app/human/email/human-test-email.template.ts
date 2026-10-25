@@ -13,7 +13,7 @@ export type HumanTestEmailContent = {
 };
 
 /**
- * The onboarding test, in the same Human mail as the verification email: black, cream, orange,
+ * The onboarding test, in the same Agent Inbox mail as the verification email: black, cream, orange,
  * a serif headline and a mono mark. No Novu watermark.
  */
 export function buildHumanTestEmail(params: { agentName: string }): HumanTestEmailContent {
@@ -30,7 +30,7 @@ export function buildHumanTestEmail(params: { agentName: string }): HumanTestEma
     '<tr><td align="center" style="padding:40px 16px;">',
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:480px;background:#000000;">',
     `<tr><td style="font-family:${MONO};font-size:13px;letter-spacing:0.02em;color:rgba(238,229,216,0.5);padding-bottom:12px;">`,
-    'human',
+    'agent inbox',
     '</td></tr>',
     `<tr><td style="font-family:${SERIF};font-size:32px;line-height:1.15;letter-spacing:-0.04em;color:#eee5d8;padding-bottom:16px;">`,
     `Hi, I’m <span style="color:#ff5c30;font-style:italic;">${escapedName}</span>`,

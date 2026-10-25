@@ -1,0 +1,41 @@
+---
+title: "Contacts"
+description: "List the people your agent can reach, and invite someone new onto Telegram, Slack, or email."
+---
+
+A contact is anyone the agent can reach with `--to`, including you. `contact list` marks you with `self: true`. MCP marks you `(you)`.
+
+```bash
+npx @agentinbox/cli contact list --json
+```
+
+Each row has `id`, `firstName`, `lastName`, `email`, `phone`, and free-form `data`. Pages are 50 by default, 100 at most. When `next` is set, fetch the rest with `--after` before you decide someone is missing. On MCP, pass `after` to `contact_list`.
+
+The list is a directory, not a promise that a message will arrive. If delivery fails because they have no linked endpoint, invite them on that channel and retry after they connect.
+
+## Invite
+
+An invite does not send the message for you, and it does not change who this computer is. You share the link.
+
+```bash
+npx @agentinbox/cli contact invite alice --name "Alice Chen"
+```
+
+Without `--via`, the link opens a page that works for 3 days. They connect any channel you have set up and pick their default. Prefer this unless you already know the one channel they use.
+
+```bash
+npx @agentinbox/cli contact invite bob --via telegram --name "Bob" --async
+npx @agentinbox/cli contact invite carol@acme.com --name "Carol Diaz"
+```
+
+`--via telegram` or `--via slack` skips the page and prints that channel's link. It works for minutes, and that channel becomes their default. `--async` prints the link and returns.
+
+Passing an email address invites them on email. The contact id comes from the address (`carol@acme.com` becomes `carol`, with a short suffix when `carol` is taken). They must click **Verify this email** before the agent can message that address.
+
+`--name` is what `contact list` shows next to the id.
+
+On MCP, `contact_invite` takes `id` and `name` and returns the page link only. To reach someone by email from MCP, put their address in `to` on `inbox_send`. The same verification rule applies.
+
+After they connect or verify, address them with `--to alice`. Messages go to the default they picked unless you pass `--via` on send.
+
+The same person on email and on Telegram can be two contacts. These docs do not cover merging them.

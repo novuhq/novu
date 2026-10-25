@@ -1,8 +1,16 @@
 import type { Metadata } from 'next';
 
-import { CONFIGURE_DRAWER_PARAM, CONFIGURE_PATH, configureChannelPath, DOCS_URL } from '@/components/dashboard/nav';
+import {
+  CONFIGURE_CONNECT_PARAM,
+  CONFIGURE_DRAWER_PARAM,
+  CONFIGURE_PATH,
+  configureChannelPath,
+  configureConnectPath,
+  DOCS_URL,
+} from '@/components/dashboard/nav';
 import { ResumeSetupCard, SetupDoneBanner } from '@/components/dashboard/setup-banners';
 import { buildChannelPrompt, type PromptContext } from '@/lib/agent-setup-prompt';
+import { isHostId } from '@/lib/hosts';
 import { requireHumanAccount } from '@/lib/human-account';
 import { agentDisplayName } from '@/lib/human-agent-api';
 import { describeAgentStatus } from '@/lib/human-agent-status';
@@ -33,14 +41,23 @@ const CHANNELS_POLL_MS = 5000;
  * by the onboarding's own record (NV-9050).
  *
  * `?setup=telegram` (`configureChannelPath`) opens with that channel's drawer, for links such as the
- * Inbox checklist's "Add Telegram".
+ * Inbox checklist's "Add Telegram", and `?connect=codex` (`configureConnectPath`) with "Connect another
+ * agent" on that host, for a public host page's "sign in to get your code".
  */
 export default async function ConfigurePage(props: PageProps<'/configure'>) {
-  const openDrawer = readDrawerParam((await props.searchParams)[CONFIGURE_DRAWER_PARAM]);
+  const searchParams = await props.searchParams;
+  const openDrawer = readDrawerParam(searchParams[CONFIGURE_DRAWER_PARAM]);
+  const connectParam = searchParams[CONFIGURE_CONNECT_PARAM];
+  const connectHost = isHostId(connectParam) ? connectParam : null;
   const account = await requireHumanAccount({
-    returnTo: openDrawer ? configureChannelPath(openDrawer) : CONFIGURE_PATH,
+    returnTo: openDrawer
+      ? configureChannelPath(openDrawer)
+      : connectHost
+        ? configureConnectPath(connectHost)
+        : CONFIGURE_PATH,
   });
-  const progress = await requireSetUpAgent(account);
+  // An operator whose setup isn't done goes to the onboarding, which starts its "Connect" step on that host.
+  const progress = await requireSetUpAgent(account, connectHost);
   const { agent } = progress;
   const mcpUrl = readMcpUrl();
   const [setup, connectedTools, { rows, telegramSetup, slackSetup }, hostStatus] = await Promise.all([
@@ -66,6 +83,7 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
       )}
       <ConfigureView
         initialDrawer={openDrawer}
+        connectHost={connectHost}
         agent={{ ...setup.agent, active: agent.active }}
         operatorName={agent.operatorName}
         channels={rows}
