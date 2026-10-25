@@ -42,7 +42,14 @@ Novu Cloud measures usage on a **monthly billing cycle** tied to your organizati
 - **Usage is aggregated** across every environment in the organization during that cycle.
 - **Paid plans** are billed monthly by default. Annual billing and volume discounts are available - see the [pricing page](https://novu.co/pricing) or contact sales for Enterprise.
 
-If you exceed the workflow runs included in your plan, Novu does **not** stop or throttle your notifications. Additional usage rolls into on-demand pricing on paid plans, or is billed at your contract rate on Enterprise. See [What happens when I exceed my limit?](#what-happens-when-i-exceed-my-monthly-workflow-run-limit) below.
+What happens when you reach the workflow runs included in your plan depends on the plan:
+
+- **Free** stops new workflow runs at its 10,000 included runs until the billing period resets or you upgrade.
+- **Trials** stop new workflow runs at the workflow runs included in their plan, 30,000 on the 14-day Pro trial, until you upgrade to a paid plan.
+- **Paid Pro and Team** plans do not stop or throttle your notifications by default. Additional usage rolls into on-demand pricing, unless you set a usage limit with **pause at limit** turned on.
+- **Enterprise** usage above your commitment is billed at your contract rate.
+
+When a stop applies, trigger requests for new workflow runs are rejected with HTTP `402`. See [What happens when I exceed my limit?](#what-happens-when-i-exceed-my-monthly-workflow-run-limit) below.
 
 Only **organization Owners** can view billing details, change plans, and manage payment methods. Admins, Authors, and Viewers can use the dashboard for workflows, subscribers, and integrations, but they cannot open billing settings or complete checkout. See the [roles and permissions matrix](/platform/account/roles-and-permissions#permissions-matrix) for the full breakdown.
 
@@ -125,7 +132,14 @@ From billing settings, Owners can:
   </Accordion>
 
   <Accordion title="What happens when I exceed my monthly workflow run limit?">
-    Novu does not stop or throttle your notifications when you go over your included workflow runs. Usage above your plan rolls into on-demand pricing on paid plans, or is billed at your contract rate on Enterprise. For volume or annual pricing, see the [pricing page](https://novu.co/pricing) or contact the Novu team.
+    It depends on your plan:
+
+    - **Free** stops new workflow runs at its included 10,000 runs per month. Trigger requests are rejected with HTTP `402` until the billing period resets or you upgrade to a paid plan.
+    - **Trials** are capped at the workflow runs included in their plan per billing period, 30,000 on the 14-day Pro trial. At the cap, new trigger requests are rejected with HTTP `402` until you upgrade to a paid plan. A trial cannot configure usage limits, and upgrading lifts the stop.
+    - **Paid Pro and Team** plans do not stop or throttle your notifications by default. Usage above your included runs rolls into on-demand pricing. If you set a usage limit with **pause at limit** turned on, new workflow runs stop at that limit and trigger requests are rejected with HTTP `402`.
+    - **Enterprise** usage above your commitment is billed at your contract rate.
+
+    Novu sends email and in-app usage alerts as you approach a stop: at 75%, 90%, and 100% of the limit. On a trial, these thresholds apply to the trial's workflow run cap. For volume or annual pricing, see the [pricing page](https://novu.co/pricing) or contact the Novu team.
   </Accordion>
 
   <Accordion title="Do you charge per notification or per user?">
