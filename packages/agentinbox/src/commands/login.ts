@@ -21,6 +21,7 @@ import {
   resolveTargetApiUrl,
   saveConfig,
 } from '../config';
+import { keptHost } from '../host';
 import { openInBrowser } from '../open-browser';
 import { sleep } from '../poll';
 import { openedScreen, openScreen } from '../screen/screen';
@@ -142,6 +143,7 @@ export async function runLogin(options: LoginOptions): Promise<LoginResult> {
     // The default channel saved here is that contact's own preference, so it only stays with them.
     ...(keptSetup ? { subscriberId: savedId, defaultChannel: current?.defaultChannel } : {}),
     ...(operatorId && !keptSetup ? { subscriberId: operatorId } : {}),
+    ...keptHost(existing, apiUrl),
   };
   saveConfig(config);
 

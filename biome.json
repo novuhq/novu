@@ -29,6 +29,7 @@
       "!scripts",
       "!packages/framework/scripts",
       "!packages/framework/src/jsonSchemaFaker.js",
+      "!apps/human-dashboard/src/vendor/**/*",
       "!libs/maily-tsconfig/*",
       "!libs/maily-tailwind-config/*",
       "!packages/add-inbox/vitest.config.js"

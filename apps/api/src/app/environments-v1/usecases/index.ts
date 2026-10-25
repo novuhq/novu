@@ -1,4 +1,5 @@
 import { GetMxRecord } from '../../inbound-parse/usecases/get-mx-record/get-mx-record.usecase';
+import { BuildDashboardInboxHashes } from './build-dashboard-inbox-hashes/build-dashboard-inbox-hashes.usecase';
 import { CreateApiKey } from './create-api-key/create-api-key.usecase';
 import { CreateEnvironment } from './create-environment/create-environment.usecase';
 import { DeleteApiKey } from './delete-api-key/delete-api-key.usecase';
@@ -22,4 +23,5 @@ export const USE_CASES = [
   GetEnvironment,
   GetMyEnvironments,
   DeleteEnvironment,
+  BuildDashboardInboxHashes,
 ];

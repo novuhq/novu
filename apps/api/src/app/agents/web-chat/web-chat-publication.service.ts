@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
-import { validateHmacEncryption } from '../../inbox/utils/encryption';
+import { isWebChatAgentHashValidForAnyKey } from './web-chat-agent-hash';
 
 const WEB_CHAT_UNAVAILABLE_MESSAGE = 'This agent is not available on web chat';
 
@@ -61,7 +61,7 @@ export class WebChatPublicationService {
     const linkedIntegrationIds = links.map((link) => link._integrationId);
     const integration = await this.integrationRepository.findOne(
       {
-        _id: { $in: linkedIntegrationIds } as unknown as string,
+        _id: { $in: linkedIntegrationIds },
         _environmentId: environmentId,
         _organizationId: organizationId,
         providerId: ChatProviderIdEnum.NovuWebChat,
@@ -83,11 +83,11 @@ export class WebChatPublicationService {
         throw new BadRequestException('Please provide a valid HMAC hash');
       }
 
-      validateHmacEncryption({
-        apiKeys: environment.apiKeys.map((apiKey) => apiKey.key),
-        subscriberId: agentIdentifier,
-        subscriberHash: agentHash,
-      });
+      const apiKeys = environment.apiKeys.map((apiKey) => apiKey.key);
+
+      if (!isWebChatAgentHashValidForAnyKey(apiKeys, agentIdentifier, agentHash)) {
+        throw new BadRequestException('Please provide a valid HMAC hash');
+      }
     }
 
     return {
