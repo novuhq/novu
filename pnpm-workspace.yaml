@@ -446,13 +446,17 @@ overrides:
   # patched in nodemailer 9.1.0. GHSA-prgh-xp8r-p3m5 (high, 9.1.0-10.0.4)
   # and GHSA-v53p-9fqp-m79j (high, <=10.0.5) require the 10.x line and
   # GHSA-g57g-f23g-4646 (moderate, 9.1.0-10.0.9) pushes the floor to 10.0.9.
-  # Widen the override so transitive 9.x resolutions via mailparser, mailtrap,
-  # smtp-server, and nextjs pick up the 10.0.x patch line. Nodemailer 10
+  # GHSA-8c8m-p3m8-cjg8 (moderate, SMTP response smuggling via CRLF),
+  # GHSA-m943-m63m-w62w (moderate, header injection in DKIM signing path), and
+  # GHSA-85x2-q946-cp5h (moderate, address-list parser quadratic complexity):
+  # all three are patched in 10.1.4 (patch bump within the 10.1.x line).
+  # Widen the override from 10.0.9 so transitive consumers (mailparser,
+  # mailtrap, smtp-server, nextjs) pick up the 10.1.x patch line. Nodemailer 10
   # preserves backward-compatible subpath exports (`./lib/*` → `./dist/cjs/*`)
   # so consumers that `require('nodemailer/lib/addressparser')` and
   # `require('nodemailer/lib/shared')` keep resolving. Repo-wide `engines`
   # already requires Node >=22, satisfying nodemailer 10's `>=20` floor.
-  nodemailer@<10.0.9: ^10.0.9
+  nodemailer@<10.1.4: ^10.1.4
   # GHSA-pqg4-j6r4-53mv (critical): shell-quote `quote()` command injection via a
   # line terminator in a token following a `{ comment }` token. Patched in 1.11.0
   # (minor bump within the 1.x line). Widen the previous <1.8.5 override so
