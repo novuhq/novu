@@ -260,6 +260,19 @@ overrides:
   '@modelcontextprotocol/client@>=2.0.0 <2.3.0': 2.3.1
   '@modelcontextprotocol/server@>=2.0.0 <2.3.0': 2.3.1
   '@babel/runtime@<7.26.10': ^7.26.10
+  # GHSA-xcx6-jx8p-x3h5 (high): @azure/msal-node confidential-client cache
+  # confusion that can leak tokens across tenants when concurrent
+  # acquireTokenByClientCredential calls race through the in-memory cache.
+  # Patched in 7.1.0. Transitive via @microsoft/teams.apps > @azure/msal-node
+  # across apps/api > @chat-adapter/teams and packages/providers >
+  # @chat-adapter/teams. teams.apps declares `@azure/msal-node: ^5.2.2` but
+  # only uses the confidential-client / token-acquisition surface, which is
+  # stable across 5.x -> 7.x — the 6.0.0 and 7.0.0 breaking changes
+  # (loopbackClient/ILoopbackClient removal, acquireTokenInteractive
+  # responseMode removal) only affect public-client interactive flows that
+  # teams.apps does not use. msal-node 7 requires Node >= 20, which is
+  # satisfied by the repo-wide engines pin.
+  '@azure/msal-node@>=5.0.0-beta.0 <7.1.0': ^7.1.0
   altcha-lib@<1.4.1: ^1.4.1
   lodash-es@<=4.17.23: ^4.18.0
   lodash@<=4.17.23: ^4.18.0
@@ -375,7 +388,15 @@ overrides:
   '@tootallnate/once@<3.0.1': ^3.0.1
   protobufjs@<7.6.5: ^7.6.5
   protobufjs@>=8.0.0 <8.6.6: ^8.6.6
-  ip-address@<10.7.1: ^10.7.1
+  # GHSA-rxp7-6hxx-x8q5 (moderate): ip-address denial of service / inefficient
+  # IPv6 parsing in `Address6` normalization paths. Patched in 10.7.4 (patch
+  # bump within the 10.7.x line). Widen the previous `<10.7.1` floor so
+  # transitive consumers (socks > ip-address via mongoose/mongodb across
+  # apps/api > @nestjs/terminus, apps/dashboard > @better-auth/sso >
+  # better-auth > @better-auth/mongo-adapter > mongodb, and
+  # apps/agent-inbox-mcp > @modelcontextprotocol/sdk > express-rate-limit)
+  # pick up the fix.
+  ip-address@<10.7.4: ^10.7.4
   mongoose@>=8.0.0 <8.24.1: ^8.24.1
   newrelic: 13.19.2
   # GHSA-5jgf-p345-68v8 / GHSA-f65p-4m7j-42xc / GHSA-fph4-wmhf-6fwf /
@@ -433,13 +454,17 @@ overrides:
   # patched in nodemailer 9.1.0. GHSA-prgh-xp8r-p3m5 (high, 9.1.0-10.0.4)
   # and GHSA-v53p-9fqp-m79j (high, <=10.0.5) require the 10.x line and
   # GHSA-g57g-f23g-4646 (moderate, 9.1.0-10.0.9) pushes the floor to 10.0.9.
-  # Widen the override so transitive 9.x resolutions via mailparser, mailtrap,
-  # smtp-server, and nextjs pick up the 10.0.x patch line. Nodemailer 10
+  # GHSA-8c8m-p3m8-cjg8 (moderate, SMTP response smuggling via CRLF),
+  # GHSA-m943-m63m-w62w (moderate, header injection in DKIM signing path), and
+  # GHSA-85x2-q946-cp5h (moderate, address-list parser quadratic complexity):
+  # all three are patched in 10.1.4 (patch bump within the 10.1.x line).
+  # Widen the override from 10.0.9 so transitive consumers (mailparser,
+  # mailtrap, smtp-server, nextjs) pick up the 10.1.x patch line. Nodemailer 10
   # preserves backward-compatible subpath exports (`./lib/*` → `./dist/cjs/*`)
   # so consumers that `require('nodemailer/lib/addressparser')` and
   # `require('nodemailer/lib/shared')` keep resolving. Repo-wide `engines`
   # already requires Node >=22, satisfying nodemailer 10's `>=20` floor.
-  nodemailer@<10.0.9: ^10.0.9
+  nodemailer@<10.1.4: ^10.1.4
   # GHSA-pqg4-j6r4-53mv (critical): shell-quote `quote()` command injection via a
   # line terminator in a token following a `{ comment }` token. Patched in 1.11.0
   # (minor bump within the 1.x line). Widen the previous <1.8.5 override so

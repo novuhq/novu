@@ -97,6 +97,7 @@ overrides:
   '@modelcontextprotocol/client@>=2.0.0 <2.3.0': 2.3.1
   '@modelcontextprotocol/server@>=2.0.0 <2.3.0': 2.3.1
   '@babel/runtime@<7.26.10': ^7.26.10
+  '@azure/msal-node@>=5.0.0-beta.0 <7.1.0': ^7.1.0
   altcha-lib@<1.4.1: ^1.4.1
   lodash-es@<=4.17.23: ^4.18.0
   lodash@<=4.17.23: ^4.18.0
@@ -158,7 +159,7 @@ overrides:
   '@tootallnate/once@<3.0.1': ^3.0.1
   protobufjs@<7.6.5: ^7.6.5
   protobufjs@>=8.0.0 <8.6.6: ^8.6.6
-  ip-address@<10.7.1: ^10.7.1
+  ip-address@<10.7.4: ^10.7.4
   mongoose@>=8.0.0 <8.24.1: ^8.24.1
   newrelic: 13.19.2
   fast-uri@<3.1.7: ^3.1.7
@@ -184,7 +185,7 @@ overrides:
   samlify@<2.13.0: ^2.13.0
   better-auth@<1.6.13: ^1.6.23
   '@better-auth/sso@<1.6.13': ^1.6.23
-  nodemailer@<10.0.9: ^10.0.9
+  nodemailer@<10.1.4: ^10.1.4
   shell-quote@<1.11.0: ^1.11.0
   piscina@<4.9.4: ^4.9.4
   vitest@<4.1.12: ^4.1.12
@@ -4367,7 +4368,7 @@ importers:
         version: 8.2.1(debug@4.4.3)
       mailtrap:
         specifier: ^3.1.1
-        version: 3.2.0(@types/nodemailer@8.0.0)(debug@4.4.3)(nodemailer@10.0.13)
+        version: 3.2.0(@types/nodemailer@8.0.0)(debug@4.4.3)(nodemailer@10.2.0)
       messagebird:
         specifier: ^4.0.1
         version: 4.0.1
@@ -4381,8 +4382,8 @@ importers:
         specifier: ^6.0.8
         version: 6.0.8(debug@4.4.3)
       nodemailer:
-        specifier: ^10.0.9
-        version: 10.0.13
+        specifier: ^10.1.4
+        version: 10.2.0
       plivo:
         specifier: ^4.70.0
         version: 4.70.0(debug@4.4.3)
@@ -4852,8 +4853,8 @@ importers:
         specifier: ^15.5.28
         version: 15.5.28(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       nodemailer:
-        specifier: ^10.0.9
-        version: 10.0.13
+        specifier: ^10.1.4
+        version: 10.2.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -6123,12 +6124,12 @@ packages:
     resolution: {integrity: sha512-ustrPY8MryhloQj7OWGe+HrYx+aoiOxzbXTtgblbV3xwCqpzUK36phH3XNHQKj3EPonyFUuDTfR3qFhTEAuZEg==}
     engines: {node: '>=14.0.0'}
 
-  '@azure/msal-common@16.13.0':
-    resolution: {integrity: sha512-rOAy0KUcyBbdwVJ+f3uPpthXatFLLZN+/KWAsTLzk1aB23Xl9DRmmXYwSvBFOZyXj4jUQQ5FKxxRkhAFW1fOow==}
+  '@azure/msal-common@16.14.3':
+    resolution: {integrity: sha512-tz3GvMrR9V/plb2lDdW8qaO8CPpfZevdExBKjltzzbAtyhK0eB2UIvji1aU+gkyHj3fxQ2ie+LNHyMXdmo8wOg==}
     engines: {node: '>=0.8.0'}
 
-  '@azure/msal-node@5.6.0':
-    resolution: {integrity: sha512-uFY9NxrWHw8PwZx7gAX6PDn+9vdfS05+levc/kwkx77IkjfaldnQbbcQzzDIZ5Hq5Zdr6/z92oAIoRWKp6MnOA==}
+  '@azure/msal-node@7.1.1':
+    resolution: {integrity: sha512-zHXTJB38XVrsNaXrPBCMqEUjeyQysFfgmKtUHRDsEKTRjNIPckJ/w6fE5wBXrmJXBim1D3C7O7LOag0msPTrgw==}
     engines: {node: '>=20'}
 
   '@azure/storage-blob@12.13.0':
@@ -22131,8 +22132,8 @@ packages:
     resolution: {integrity: sha512-ehuGcf94bQXhfagULNXrJdfnWO38v070jxSx/qE87Kjzmu2fU7ro5EFAb+OPituLqgfyuQaym5DlrNydW2sJ9A==}
     engines: {node: '>=12.22.0'}
 
-  ip-address@10.7.2:
-    resolution: {integrity: sha512-7H/2gFSIitxc0hG3nOI1glS8QLo/EHBFFLk8vEUjXY/xu0AdL8jZ9U1IzO2PUm0d2D/ofQcAifb0g6OBkt8U7w==}
+  ip-address@10.7.4:
+    resolution: {integrity: sha512-DWBMKyeM25D70nrIiTkgQth59/G+naKOTep6huF9j+GmeK3DMD60Zvxg5d5qQnz+38AHgou6ean2LECX+lrKDg==}
     engines: {node: '>= 12'}
 
   ipaddr.js@1.9.1:
@@ -24017,7 +24018,7 @@ packages:
     engines: {node: '>=16.20.1', yarn: '>=1.22.17'}
     peerDependencies:
       '@types/nodemailer': ^6.4.9
-      nodemailer: ^10.0.9
+      nodemailer: ^10.1.4
     peerDependenciesMeta:
       '@types/nodemailer':
         optional: true
@@ -25051,8 +25052,8 @@ packages:
     resolution: {integrity: sha512-1uiY543L+N7Og4yswvlm5NCKgPKDEXd9AUR9Jh3gen6oOeBsesr6LqhXom1er3eRzSUcVRWXzhv8tSNrIfGHKw==}
     engines: {node: '>=18'}
 
-  nodemailer@10.0.13:
-    resolution: {integrity: sha512-SzG86OlvcW/NNhUFC6uROMwRTL4n7MswfQqC/T8mhkmnY1YVa23zUEMYi4ijSeXSl9GLz9ZeTJDUatEDuY5FeQ==}
+  nodemailer@10.2.0:
+    resolution: {integrity: sha512-/XyGw6kX2stMdKGUJdAQmYAeY1FscWfdRydfd2NtK3A3KDfUUXCqZzExSNAt2xhh90X2qLCR+o2Gd48YPJcJwA==}
     engines: {node: '>=20.0.0'}
 
   nodemon@3.0.1:
@@ -33376,11 +33377,11 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@azure/msal-common@16.13.0': {}
+  '@azure/msal-common@16.14.3': {}
 
-  '@azure/msal-node@5.6.0':
+  '@azure/msal-node@7.1.1':
     dependencies:
-      '@azure/msal-common': 16.13.0
+      '@azure/msal-common': 16.14.3
       jsonwebtoken: 9.0.3
 
   '@azure/storage-blob@12.13.0':
@@ -37727,7 +37728,7 @@ snapshots:
 
   '@microsoft/teams.apps@2.0.16(debug@4.4.3)':
     dependencies:
-      '@azure/msal-node': 5.6.0
+      '@azure/msal-node': 7.1.1
       '@microsoft/teams.api': 2.0.16(debug@4.4.3)
       '@microsoft/teams.common': 2.0.16(debug@4.4.3)
       '@microsoft/teams.graph': 2.0.16(debug@4.4.3)
@@ -52965,7 +52966,7 @@ snapshots:
   express-rate-limit@8.5.2(express@5.2.1):
     dependencies:
       express: 5.2.1
-      ip-address: 10.7.2
+      ip-address: 10.7.4
 
   express@4.21.2:
     dependencies:
@@ -54805,7 +54806,7 @@ snapshots:
       redis-parser: 3.0.0
       standard-as-callback: 2.1.0
 
-  ip-address@10.7.2: {}
+  ip-address@10.7.4: {}
 
   ipaddr.js@1.9.1: {}
 
@@ -57245,16 +57246,16 @@ snapshots:
       iconv-lite: 0.7.3
       libmime: 5.4.2
       linkify-it: 5.0.2
-      nodemailer: 10.0.13
+      nodemailer: 10.2.0
       punycode.js: 2.3.1
       tlds: 1.261.0
 
-  mailtrap@3.2.0(@types/nodemailer@8.0.0)(debug@4.4.3)(nodemailer@10.0.13):
+  mailtrap@3.2.0(@types/nodemailer@8.0.0)(debug@4.4.3)(nodemailer@10.2.0):
     dependencies:
       axios: 1.20.0(debug@4.4.3)
     optionalDependencies:
       '@types/nodemailer': 8.0.0
-      nodemailer: 10.0.13
+      nodemailer: 10.2.0
     transitivePeerDependencies:
       - debug
 
@@ -58584,7 +58585,7 @@ snapshots:
     dependencies:
       '@babel/parser': 7.29.7
 
-  nodemailer@10.0.13: {}
+  nodemailer@10.2.0: {}
 
   nodemon@3.0.1:
     dependencies:
@@ -62078,7 +62079,7 @@ snapshots:
   smtp-server@3.18.4:
     dependencies:
       ipv6-normalize: 1.0.1
-      nodemailer: 10.0.13
+      nodemailer: 10.2.0
       punycode.js: 2.3.1
 
   snake-case@2.1.0:
@@ -62130,12 +62131,12 @@ snapshots:
 
   socks@2.8.7:
     dependencies:
-      ip-address: 10.7.2
+      ip-address: 10.7.4
       smart-buffer: 4.2.0
 
   socks@2.8.9:
     dependencies:
-      ip-address: 10.7.2
+      ip-address: 10.7.4
       smart-buffer: 4.2.0
 
   solid-devtools@0.30.1(solid-js@1.9.6):
