@@ -2890,6 +2890,22 @@ describe('WebChat', () => {
   });
 
   describe('idempotency and concurrency', () => {
+    it('retryMessage replays the original send metadata', async () => {
+      sendMessage.mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce({
+        identifier: 'conv_abcdefghijkl',
+        messageId: 'msg_retry000002',
+      });
+      const metadata = { workflowId: 'wf_1' };
+
+      await webChat.sendMessage({ agentId: 'agent_1', text: 'retry me', key: 'local_meta', metadata });
+      const optimisticId = webChat.getConversation({ agentId: 'agent_1', key: 'local_meta' })?.messages[0]?.id;
+
+      sendMessage.mockClear();
+      await webChat.retryMessage({ agentId: 'agent_1', key: 'local_meta', messageId: optimisticId! });
+
+      expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({ text: 'retry me', metadata }));
+    });
+
     it('retryMessage resubmits with the original idempotency key', async () => {
       sendMessage.mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce({
         identifier: 'conv_abcdefghijkl',

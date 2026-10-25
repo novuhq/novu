@@ -181,6 +181,15 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     if (!lastSent || chatRef.current.isLoading) return;
 
     setRunError(false);
+
+    // A send that never got accepted is replayed with its original idempotency key, so a lost response can't apply the edit twice.
+    const lastUserMessage = chatRef.current.messages.filter((message) => message.role === 'user').at(-1);
+    if (lastUserMessage?.status === 'failed') {
+      await chatRef.current.retryMessage(lastUserMessage.id);
+
+      return;
+    }
+
     await chatRef.current.sendMessage(lastSent);
   }, []);
 
