@@ -39,8 +39,8 @@ export const INTEGRATION_COPY_LABELS = {
   config: 'Copy Config',
 } as const satisfies Record<IntegrationSnippet['kind'], string>;
 
-/** How every command starts: through npx, which needs nothing installed first. */
-const CLI = 'npx @agentinbox/cli';
+/** The installed binary. `npm install -g @agentinbox/cli` puts `inbox` on the path. */
+const CLI = 'inbox';
 
 // Draft copy — not in Figma. The hosted MCP server, as the dashboard writes it for Cursor (`cursorMcpConfig`).
 const MCP_SERVER_CONFIG = `{
@@ -60,9 +60,9 @@ export const INTEGRATIONS: readonly Integration[] = [
         `${CLI} setup`,
         '',
         `${CLI} channel add telegram`,
-        `${CLI} inbox list --filter unread`,
+        `${CLI} list --filter unread`,
         // Single quotes: in double ones the shell would read `$2` as a variable.
-        `${CLI} inbox send approve \\`,
+        `${CLI} send approve \\`,
         `    'Refund $240?'`,
       ],
     },
@@ -96,7 +96,7 @@ export const INTEGRATIONS: readonly Integration[] = [
         `${CLI} setup --agent-name "Grok Bot"`,
         '',
         `${CLI} channel add slack`,
-        `${CLI} inbox send ask \\`,
+        `${CLI} send ask \\`,
         '    "Post the launch thread?"',
       ],
     },
@@ -111,7 +111,7 @@ export const INTEGRATIONS: readonly Integration[] = [
         `${CLI} setup --agent-name Hermes`,
         '',
         `${CLI} channel add telegram`,
-        `${CLI} inbox send choose \\`,
+        `${CLI} send choose \\`,
         '    "Friday or Monday?" --option Friday \\',
         '    --option Monday',
       ],
@@ -127,7 +127,7 @@ export const INTEGRATIONS: readonly Integration[] = [
         `${CLI} setup --agent-name OpenClaw`,
         '',
         `${CLI} channel add slack`,
-        `${CLI} inbox send \\`,
+        `${CLI} send \\`,
         '    "Nightly backup finished"',
       ],
     },
@@ -144,7 +144,7 @@ export const INTEGRATIONS: readonly Integration[] = [
         // Outbound email starts once the setup is in an account.
         `${CLI} login`,
         `${CLI} channel add email`,
-        `${CLI} inbox send approve \\`,
+        `${CLI} send approve \\`,
         '    "Send the Q3 invoice?"',
       ],
     },

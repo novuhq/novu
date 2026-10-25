@@ -109,11 +109,11 @@ test('copy commands copies the selected snippet without prompts', async ({ page 
   await expect(page.locator('html')).toHaveAttribute(
     'data-copied-text',
     [
-      'npx @agentinbox/cli setup',
+      'inbox setup',
       '',
-      'npx @agentinbox/cli channel add telegram',
-      'npx @agentinbox/cli inbox list --filter unread',
-      'npx @agentinbox/cli inbox send approve \\',
+      'inbox channel add telegram',
+      'inbox list --filter unread',
+      'inbox send approve \\',
       "    'Refund $240?'",
     ].join('\n')
   );
@@ -150,7 +150,7 @@ test('closing prompt copy is independent of the setup command', async ({ page })
   await page.goto('/sapien');
   const closing = page.locator('#get-started');
   await closing.getByRole('button', { name: 'Copy Prompt' }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-copied-text', /npx @agentinbox\/cli setup/);
+  await expect(page.locator('html')).toHaveAttribute('data-copied-text', /inbox setup/);
   await expect(closing.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
   const command = page.getByRole('group', { name: 'Closing setup command' });
   await expect(command.getByRole('status')).toHaveText('');

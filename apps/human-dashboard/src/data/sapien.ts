@@ -1,7 +1,7 @@
 import { logoAssets } from '@/data/sapien-assets';
 import { PACKAGE_URL, SOURCE_URL } from '@/lib/seo';
 
-export const SETUP_COMMAND = 'npx @agentinbox/cli setup';
+export const SETUP_COMMAND = 'inbox setup';
 export type NavigationItem = {
   label: string;
   href: string;

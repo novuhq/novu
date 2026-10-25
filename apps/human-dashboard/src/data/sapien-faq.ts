@@ -58,7 +58,7 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
     question: 'How Agent Inbox compares to SendGrid/AWS SES?',
     // Draft copy — not in Figma
     answer:
-      'Agent Inbox is designed for agents that hold conversations with humans across channels. Alongside email it covers Slack, Telegram, WhatsApp and iMessage, with contacts, conversation history and activity logs in one place, and it is set up with one command: npx @agentinbox/cli setup.',
+      'Agent Inbox is designed for agents that hold conversations with humans across channels. Alongside email it covers Slack, Telegram, WhatsApp and iMessage, with contacts, conversation history and activity logs in one place, and it is set up with one command: inbox setup.',
   },
   {
     id: 'multi-tenant',
