@@ -37,7 +37,14 @@ import {
   onboardingConnectPath,
   toHandle,
 } from './onboarding';
-import { isSetupUnfinished, resolveStep, type SetupStep, wasMadeInTheSteps } from './onboarding-progress';
+import {
+  awaitsTestMail,
+  isSetupUnfinished,
+  rememberTestReply,
+  resolveStep,
+  type SetupStep,
+  wasMadeInTheSteps,
+} from './onboarding-progress';
 import { type OnboardingState, readOnboardingState, writeOnboardingState } from './onboarding-state';
 import { readApiUrl, readSiteOrigin } from './site-origin';
 
@@ -50,6 +57,11 @@ export type SetupProgress = {
   hostStatus: HostStatus | null;
   /** Missing only when the session outlived its user; the pages have sent that visitor to sign in by then. */
   user: User | null;
+  /**
+   * Who the test step's inbound email was from, and what it was about, from this request's inbox read.
+   * Absent once that step is over. Not written to the operator's account.
+   */
+  testMail: { from: string; subject: string } | null;
 };
 
 /**
@@ -60,36 +72,55 @@ export const loadSetupProgress = cache(async (account: HumanAccount): Promise<Se
   const [user, agent] = await Promise.all([findCurrentUser(), getRelayAgent(account)]);
   const hostStatus = agent ? await loadHostStatus(account) : null;
   if (!user) {
-    return { step: resolveStep(agent, {}, hostStatus), state: {}, agent, hostStatus, user };
+    return { step: resolveStep(agent, {}, hostStatus), state: {}, agent, hostStatus, user, testMail: null };
   }
 
-  const state = await catchUp(user, account, agent, readOnboardingState(user));
+  const { state, testMail } = await catchUp(user, account, agent, readOnboardingState(user));
 
-  return { step: resolveStep(agent, state, hostStatus), state, agent, hostStatus, user };
+  return { step: resolveStep(agent, state, hostStatus), state, agent, hostStatus, user, testMail };
 });
 
 /**
- * Brings the stored state up to date with mail that landed after the agent was created. A state that can't
- * be saved is tried again on the next read, so a failure here never takes a page down.
+ * Brings the stored state up to date with mail that landed after the agent was created. Only the time is
+ * stored. Who sent it stays on `testMail` for this request, and only while the test step is still open.
+ * A state that can't be saved is tried again on the next read, so a failure here never takes a page down.
  */
 async function catchUp(
   user: User,
   account: HumanAccount,
   agent: RelayAgent | null,
   state: OnboardingState
-): Promise<OnboardingState> {
-  const next = await noteTestReply(account, agent, state);
+): Promise<{ state: OnboardingState; testMail: SetupProgress['testMail'] }> {
+  let replyAt = state.testReplyAt;
+  let inbound: InboundEmail | null = null;
+  if (awaitsTestMail(agent, state)) {
+    const lookup = await readTestMail(account, agent, state);
+    if (lookup.ok) {
+      replyAt = lookup.inbound?.at;
+      inbound = lookup.inbound;
+    }
+  }
 
-  if (next === state) {
-    return state;
+  const saved = await saveProgress(user, state, rememberTestReply(state, replyAt));
+  if (!inbound || saved.testReplyAt !== inbound.at) {
+    return { state: saved, testMail: null };
+  }
+
+  return { state: saved, testMail: { from: inbound.from, subject: inbound.subject } };
+}
+
+/** Writes `next` when it differs from `before`. A failed write leaves `before` in place for the next read. */
+async function saveProgress(user: User, before: OnboardingState, next: OnboardingState): Promise<OnboardingState> {
+  if (next === before) {
+    return before;
   }
 
   try {
-    return await writeOnboardingState(user.id, state, next);
+    return await writeOnboardingState(user.id, before, next);
   } catch (error) {
     console.error('Failed to save the onboarding progress', error);
 
-    return state;
+    return before;
   }
 }
 
@@ -169,8 +200,6 @@ export function describeProgress({ step, state, agent, hostStatus }: SetupProgre
     agent?.id,
     state.testSentAt,
     state.testReplyAt,
-    state.testInboundFrom,
-    state.testInboundSubject,
     agent && state.testLeftAt && !hostStatus ? 'host-status-unavailable' : '',
     hostStatus?.connected ? 'connected' : '',
     ...(hostStatus?.hosts ?? []).map((host) => `${host.via}:${host.connectedAt}`),
@@ -349,8 +378,8 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
     test: {
       sentAt: state.testSentAt,
       replyAt: state.testReplyAt,
-      from: state.testInboundFrom,
-      subject: state.testInboundSubject,
+      from: progress.testMail?.from,
+      subject: progress.testMail?.subject,
     },
     host: host ? { via: host.via, connectedAt: host.connectedAt } : null,
     hostStatusUnavailable: Boolean(agent && state.testLeftAt && !hostStatus),
@@ -443,49 +472,26 @@ async function countWaitingMessages(account: HumanAccount): Promise<number | nul
 }
 
 /**
- * Records a human email that arrived after the agent was created, or forgets one the inbox no longer has.
- * A lookup that fails leaves the stored mail where it is. With no time to measure from, nothing is recorded.
+ * The newest human email after the agent was created. A failed read leaves the stored time alone, so the
+ * step stays passed and this request shows no sender. With no time to measure from, nothing is recorded.
  */
-async function noteTestReply(
+async function readTestMail(
   account: HumanAccount,
   agent: RelayAgent | null,
   state: OnboardingState
-): Promise<OnboardingState> {
+): Promise<{ ok: true; inbound: InboundEmail | null } | { ok: false }> {
   const floor = agent?.createdAt ?? state.startedAt;
   if (!agent || !floor) {
-    return state;
+    return { ok: true, inbound: null };
   }
 
-  let inbound: InboundEmail | null;
   try {
-    inbound = await findInboundEmail(account, floor);
+    return { ok: true, inbound: await findInboundEmail(account, floor) };
   } catch (error) {
     console.error('Failed to look for inbound email', error);
 
-    return state;
+    return { ok: false };
   }
-
-  if (inbound) {
-    return sameStoredInbound(state, inbound)
-      ? state
-      : { ...state, testReplyAt: inbound.at, testInboundFrom: inbound.from, testInboundSubject: inbound.subject };
-  }
-
-  if (!state.testReplyAt && !state.testInboundFrom && !state.testInboundSubject) {
-    return state;
-  }
-
-  const { testReplyAt: _at, testInboundFrom: _from, testInboundSubject: _subject, ...rest } = state;
-
-  return rest;
-}
-
-function sameStoredInbound(state: OnboardingState, inbound: InboundEmail): boolean {
-  return (
-    state.testReplyAt === inbound.at &&
-    state.testInboundFrom === inbound.from &&
-    state.testInboundSubject === inbound.subject
-  );
 }
 
 /**
