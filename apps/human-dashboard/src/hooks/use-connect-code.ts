@@ -111,7 +111,13 @@ export function useHostConnectCode(
   const { state, renew, retry } = useConnectCode(fetchForHost, active);
 
   useEffect(() => {
-    if (active && askedFor !== null && askedFor !== codeHost) {
+    if (!active) {
+      setAskedFor(null);
+
+      return;
+    }
+
+    if (askedFor !== null && askedFor !== codeHost) {
       retry();
     }
   }, [active, askedFor, codeHost, retry]);
