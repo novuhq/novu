@@ -97,6 +97,7 @@ overrides:
   '@modelcontextprotocol/client@>=2.0.0 <2.3.0': 2.3.1
   '@modelcontextprotocol/server@>=2.0.0 <2.3.0': 2.3.1
   '@babel/runtime@<7.26.10': ^7.26.10
+  '@azure/msal-node@>=5.0.0-beta.0 <7.1.0': ^7.1.0
   altcha-lib@<1.4.1: ^1.4.1
   lodash-es@<=4.17.23: ^4.18.0
   lodash@<=4.17.23: ^4.18.0
@@ -6123,12 +6124,12 @@ packages:
     resolution: {integrity: sha512-ustrPY8MryhloQj7OWGe+HrYx+aoiOxzbXTtgblbV3xwCqpzUK36phH3XNHQKj3EPonyFUuDTfR3qFhTEAuZEg==}
     engines: {node: '>=14.0.0'}
 
-  '@azure/msal-common@16.13.0':
-    resolution: {integrity: sha512-rOAy0KUcyBbdwVJ+f3uPpthXatFLLZN+/KWAsTLzk1aB23Xl9DRmmXYwSvBFOZyXj4jUQQ5FKxxRkhAFW1fOow==}
+  '@azure/msal-common@16.14.3':
+    resolution: {integrity: sha512-tz3GvMrR9V/plb2lDdW8qaO8CPpfZevdExBKjltzzbAtyhK0eB2UIvji1aU+gkyHj3fxQ2ie+LNHyMXdmo8wOg==}
     engines: {node: '>=0.8.0'}
 
-  '@azure/msal-node@5.6.0':
-    resolution: {integrity: sha512-uFY9NxrWHw8PwZx7gAX6PDn+9vdfS05+levc/kwkx77IkjfaldnQbbcQzzDIZ5Hq5Zdr6/z92oAIoRWKp6MnOA==}
+  '@azure/msal-node@7.1.1':
+    resolution: {integrity: sha512-zHXTJB38XVrsNaXrPBCMqEUjeyQysFfgmKtUHRDsEKTRjNIPckJ/w6fE5wBXrmJXBim1D3C7O7LOag0msPTrgw==}
     engines: {node: '>=20'}
 
   '@azure/storage-blob@12.13.0':
@@ -33376,11 +33377,11 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@azure/msal-common@16.13.0': {}
+  '@azure/msal-common@16.14.3': {}
 
-  '@azure/msal-node@5.6.0':
+  '@azure/msal-node@7.1.1':
     dependencies:
-      '@azure/msal-common': 16.13.0
+      '@azure/msal-common': 16.14.3
       jsonwebtoken: 9.0.3
 
   '@azure/storage-blob@12.13.0':
@@ -37727,7 +37728,7 @@ snapshots:
 
   '@microsoft/teams.apps@2.0.16(debug@4.4.3)':
     dependencies:
-      '@azure/msal-node': 5.6.0
+      '@azure/msal-node': 7.1.1
       '@microsoft/teams.api': 2.0.16(debug@4.4.3)
       '@microsoft/teams.common': 2.0.16(debug@4.4.3)
       '@microsoft/teams.graph': 2.0.16(debug@4.4.3)

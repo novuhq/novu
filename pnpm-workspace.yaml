@@ -260,6 +260,19 @@ overrides:
   '@modelcontextprotocol/client@>=2.0.0 <2.3.0': 2.3.1
   '@modelcontextprotocol/server@>=2.0.0 <2.3.0': 2.3.1
   '@babel/runtime@<7.26.10': ^7.26.10
+  # GHSA-xcx6-jx8p-x3h5 (high): @azure/msal-node confidential-client cache
+  # confusion that can leak tokens across tenants when concurrent
+  # acquireTokenByClientCredential calls race through the in-memory cache.
+  # Patched in 7.1.0. Transitive via @microsoft/teams.apps > @azure/msal-node
+  # across apps/api > @chat-adapter/teams and packages/providers >
+  # @chat-adapter/teams. teams.apps declares `@azure/msal-node: ^5.2.2` but
+  # only uses the confidential-client / token-acquisition surface, which is
+  # stable across 5.x -> 7.x — the 6.0.0 and 7.0.0 breaking changes
+  # (loopbackClient/ILoopbackClient removal, acquireTokenInteractive
+  # responseMode removal) only affect public-client interactive flows that
+  # teams.apps does not use. msal-node 7 requires Node >= 20, which is
+  # satisfied by the repo-wide engines pin.
+  '@azure/msal-node@>=5.0.0-beta.0 <7.1.0': ^7.1.0
   altcha-lib@<1.4.1: ^1.4.1
   lodash-es@<=4.17.23: ^4.18.0
   lodash@<=4.17.23: ^4.18.0
