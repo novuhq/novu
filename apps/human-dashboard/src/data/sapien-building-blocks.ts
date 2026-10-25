@@ -72,12 +72,18 @@ type Flag = readonly [flag: string, value: string];
 const CONTINUED: TerminalToken = { text: '\\', tone: 'muted' };
 
 /**
- * `$ inbox send \`, then the question (`ask`, `approve`, `choose`, or none for a plain
+ * `$ agentinbox inbox send \`, then the question (`ask`, `approve`, `choose`, or none for a plain
  * message) as the CLI takes it, then its flags, a line each so the command fits the terminal.
  */
 function command(question: string, flagLines: readonly (readonly Flag[])[]): readonly TerminalLine[] {
   return [
-    [{ text: '$', tone: 'accent' }, { text: ' ' }, { text: 'inbox send', tone: 'muted' }, { text: ' ' }, CONTINUED],
+    [
+      { text: '$', tone: 'accent' },
+      { text: ' ' },
+      { text: 'agentinbox inbox send', tone: 'muted' },
+      { text: ' ' },
+      CONTINUED,
+    ],
     [{ text: `    ${question} ` }, CONTINUED],
     ...flagLines.map(
       (flags, index): TerminalLine => [

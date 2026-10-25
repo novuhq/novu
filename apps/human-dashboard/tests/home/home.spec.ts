@@ -11,10 +11,12 @@ test('home serves readable agent documentation and links to Sapien', async ({ pa
   await page.getByRole('tab', { name: 'MCP' }).click();
   await expect(page.locator('#install-panel-mcp')).toHaveText('https://mcp.agentinbox.md');
   await expect(page.locator('#install-panel-cli')).toBeHidden();
-  await expect(page.locator('#quickstart')).toContainText('inbox send "Build finished — 0 failures." --via email');
-  await expect(page.locator('#quickstart')).toContainText('inbox reply conv_123 "On it."');
+  await expect(page.locator('#quickstart')).toContainText(
+    'agentinbox inbox send "Build finished — 0 failures." --via email'
+  );
+  await expect(page.locator('#quickstart')).toContainText('agentinbox inbox reply conv_123 "On it."');
   await expect(page.locator('#flags')).toContainText('--to <id|email>[,...]');
-  await expect(page.locator('#contacts')).toContainText('inbox contact list --limit 20 --after <cursor>');
+  await expect(page.locator('#contacts')).toContainText('agentinbox contact list --limit 20 --after <cursor>');
   await page.getByRole('link', { name: 'agentinbox.md/sapien' }).click();
   await expect(page).toHaveURL(/\/sapien$/);
   await page.getByRole('navigation', { name: 'Header navigation' }).getByRole('link', { name: 'for robots' }).click();
@@ -30,7 +32,7 @@ test('legacy human-readable URL reaches Sapien', async ({ page }) => {
 test('home inline commands copy as one valid command', async ({ page }) => {
   await page.goto('/');
   const command = page.locator('#how-it-works code').filter({
-    hasText: 'inbox contact invite',
+    hasText: 'agentinbox contact invite',
   });
   const selected = await command.evaluate((node) => {
     const range = document.createRange();
@@ -42,7 +44,7 @@ test('home inline commands copy as one valid command', async ({ page }) => {
     selection.removeAllRanges();
     return text;
   });
-  expect(selected).toBe('inbox contact invite');
+  expect(selected).toBe('agentinbox contact invite');
 });
 
 for (const width of [320, 390, 768, 1024, 1440, 1920, 2560]) {
@@ -84,7 +86,7 @@ for (const width of [320, 768, 1920]) {
     );
     expect(overflow).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-    await expect(page.locator('#how-it-works')).toContainText('inbox contact invite');
+    await expect(page.locator('#how-it-works')).toContainText('agentinbox contact invite');
     await expect(page.locator('#auth')).toContainText('INBOX_SECRET_KEY');
   });
 }

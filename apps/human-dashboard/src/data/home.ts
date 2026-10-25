@@ -1,11 +1,11 @@
 import { HOSTS, hostPath, MCP_URL } from '@/lib/hosts';
 import { PACKAGE_URL, SOURCE_URL } from '@/lib/seo';
 
-/** The CLI's package. `npm install -g` puts `inbox` on the path. */
+/** The CLI's package. `npm install -g` puts `agentinbox` on the path. */
 export const CLI_PACKAGE = '@agentinbox/cli';
 
-/** The installed command. Examples after INSTALL run this, not `npx`. */
-export const CLI_BIN = 'inbox';
+/** The installed command. `npm install -g` puts `agentinbox` on the path. */
+export const CLI_BIN = 'agentinbox';
 
 export const HOME_INTRODUCTION = [
   'You are connected to everything except the humans you work with and for.',
@@ -82,26 +82,26 @@ export type HomeProsePart = string | { code: string; compact?: boolean; tall?: b
 
 export const HOME_HOW_IT_WORKS: readonly (readonly HomeProsePart[])[] = [
   [
-    { code: 'inbox setup', compact: true },
+    { code: 'agentinbox setup', compact: true },
     ' creates your inbox and gives it an email address. It can also connect Telegram and Slack. All three share that one inbox.',
   ],
   [
-    { code: 'inbox list', compact: true },
+    { code: 'agentinbox inbox list', compact: true },
     ' shows what arrived, and ',
-    { code: 'inbox reply', compact: true },
+    { code: 'agentinbox inbox reply', compact: true },
     ' answers the thread, whichever channel it came from. ',
-    { code: 'inbox contact invite', compact: true },
-    ' makes a person a contact. To reach an email address without adding them as a contact, pass it to ',
-    { code: 'inbox send', compact: true },
+    { code: 'agentinbox contact invite', compact: true },
+    ' makes a person a contact. On a new conversation, pass an email to ',
+    { code: 'agentinbox inbox send', compact: true },
     ' with ',
     { code: '--to' },
-    ' and that address.',
+    ' and they become a contact. A reply still needs one.',
   ],
   [
     'On ',
-    { code: 'inbox send', compact: true },
+    { code: 'agentinbox inbox send', compact: true },
     ' and ',
-    { code: 'inbox reply,', compact: true },
+    { code: 'agentinbox inbox reply,', compact: true },
     'plain text is a message. Start it with ',
     { code: 'ask,' },
     { code: 'approve,' },
@@ -112,7 +112,7 @@ export const HOME_HOW_IT_WORKS: readonly (readonly HomeProsePart[])[] = [
 ];
 
 export const HOME_CONTACTS_DESCRIPTION =
-  'Contacts are the people you reach often. inbox contact list shows them. Invite someone with inbox contact invite so they can connect and join that list. You can also send an anonymous email to an address that is not a contact: inbox send with --to and that address.';
+  'Contacts are the people you reach often. agentinbox contact list shows them. Invite someone with agentinbox contact invite so they can connect and join that list. On a new conversation, agentinbox inbox send with --to and an email delivers to that address and they become a contact. A reply still needs a contact.';
 export const HOME_AUTH = {
   commands: ['login', 'connect', 'setup'],
   file: '~/.agentinbox/config.json',
@@ -152,15 +152,13 @@ export const INSTALL_OPTIONS: readonly InstallOption[] = [
 ];
 
 /**
- * `inbox <command>` and what follows it, coloured as the design colours setup: `inbox` orange, the subcommand
- * purple. A call that already starts with `inbox` keeps that one word, so it doesn't read `inbox inbox`.
+ * `agentinbox <command>` and what follows it: `agentinbox` orange, the subcommand purple. `inbox list` and
+ * `inbox send` keep the `inbox` group, because that is a command under the binary, not the binary itself.
  * Flags keep the design's colours too: a value's orange, `--name` and `--after` blue, and a switch such as
  * `--json` green. A quoted message is blue, like `--name "Alice Chen"`.
  */
 function cli(command: string, ...rest: readonly CommandPart[]): readonly CommandPart[] {
-  const subcommand = command.startsWith(`${CLI_BIN} `) ? command.slice(CLI_BIN.length + 1) : command;
-
-  return [{ text: CLI_BIN, color: 'orange' }, { text: ' ' }, { text: subcommand, color: 'purple' }, ...rest];
+  return [{ text: CLI_BIN, color: 'orange' }, { text: ' ' }, { text: command, color: 'purple' }, ...rest];
 }
 
 const SPACE: CommandPart = { text: ' ' };
@@ -171,8 +169,8 @@ function quoted(message: string): CommandPart {
 }
 
 /**
- * The first commands, in order. `inbox send` starts a conversation (a plain message does not wait);
- * `--via email` delivers that one on email. `inbox reply` takes the conversation id from `inbox list`.
+ * The first commands, in order. `agentinbox inbox send` starts a conversation (a plain message does not wait);
+ * `--via email` delivers that one on email. `agentinbox inbox reply` takes the conversation id from `agentinbox inbox list`.
  */
 export const HOME_QUICKSTART: readonly HomeCommand[] = [
   { parts: cli('setup'), note: '# once' },
@@ -244,13 +242,13 @@ export const HOME_FLAGS = [
     flag: '--to',
     argument: '<id|email>[,...]',
     description: [
-      '# address a linked human, or comma-separated humans\n# (find them with `contact list`; link others\n# first with `contact invite`)',
+      '# a contact, or comma-separated contacts (max 50)\n# an email that is not a contact yet becomes one on a new conversation',
     ],
   },
   {
     flag: '--via',
     argument: '<channel>',
-    description: ['# deliver on a specific linked channel instead of default'],
+    description: ["# telegram, slack, or email, instead of that contact's default"],
   },
 ] as const;
 
