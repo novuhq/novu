@@ -19,7 +19,16 @@ import { getInboxThread, listInboxThreads } from './human-inbox-api';
 import type { SlackSetupState } from './human-slack-setup';
 import type { TelegramSetupState } from './human-telegram-setup';
 import { listConnectedTools, readMcpUrl } from './human-tools-api';
-import type { InboxMessage, InboxThread } from './inbox';
+import {
+  activityIsAfter,
+  humanMessageAfter,
+  type InboundEmail,
+  inboundEmailFrom,
+  latestHumanMessageAt,
+  newestInboundEmail,
+  preferNewerInbound,
+} from './inbound-email';
+import type { InboxThread } from './inbox';
 import {
   AGENT_DOMAIN,
   cardLinkOf,
@@ -60,8 +69,8 @@ export const loadSetupProgress = cache(async (account: HumanAccount): Promise<Se
 });
 
 /**
- * Brings the stored state up to date with a reply that landed after the test email. A state that can't be
- * saved is tried again on the next read, so a failure here never takes a page down.
+ * Brings the stored state up to date with mail that landed after the agent was created. A state that can't
+ * be saved is tried again on the next read, so a failure here never takes a page down.
  */
 async function catchUp(
   user: User,
@@ -69,7 +78,7 @@ async function catchUp(
   agent: RelayAgent | null,
   state: OnboardingState
 ): Promise<OnboardingState> {
-  const next = await noteTestReply(account, user, agent, state);
+  const next = await noteTestReply(account, agent, state);
 
   if (next === state) {
     return state;
@@ -160,6 +169,8 @@ export function describeProgress({ step, state, agent, hostStatus }: SetupProgre
     agent?.id,
     state.testSentAt,
     state.testReplyAt,
+    state.testInboundFrom,
+    state.testInboundSubject,
     agent && state.testLeftAt && !hostStatus ? 'host-status-unavailable' : '',
     hostStatus?.connected ? 'connected' : '',
     ...(hostStatus?.hosts ?? []).map((host) => `${host.via}:${host.connectedAt}`),
@@ -267,7 +278,7 @@ export type OnboardingView = {
   operator: { email: string | null; firstName: string | null };
   /** Missing on step 1, where the agent is still being named. */
   agent: AgentIdentity | null;
-  test: { sentAt?: string; replyAt?: string };
+  test: { sentAt?: string; replyAt?: string; from?: string; subject?: string };
   host: { via: 'cli' | 'mcp'; connectedAt: string } | null;
   /** True when an agent may already be connected but its host status could not be checked. */
   hostStatusUnavailable: boolean;
@@ -335,7 +346,12 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
     status: describeProgress(progress),
     operator: { email: user.primaryEmailAddress?.emailAddress ?? null, firstName: user.firstName },
     agent: identity,
-    test: { sentAt: state.testSentAt, replyAt: state.testReplyAt },
+    test: {
+      sentAt: state.testSentAt,
+      replyAt: state.testReplyAt,
+      from: state.testInboundFrom,
+      subject: state.testInboundSubject,
+    },
     host: host ? { via: host.via, connectedAt: host.connectedAt } : null,
     hostStatusUnavailable: Boolean(agent && state.testLeftAt && !hostStatus),
     waitingMessage: hostStatus?.waitingMessage ?? null,
@@ -427,98 +443,92 @@ async function countWaitingMessages(account: HumanAccount): Promise<number | nul
 }
 
 /**
- * Records the operator's reply to the test email, or forgets a reply the old timer had painted in when
- * the inbox has none. A lookup that fails leaves the stored reply where it is.
+ * Records a human email that arrived after the agent was created, or forgets one the inbox no longer has.
+ * A lookup that fails leaves the stored mail where it is. With no time to measure from, nothing is recorded.
  */
 async function noteTestReply(
   account: HumanAccount,
-  user: User,
   agent: RelayAgent | null,
   state: OnboardingState
 ): Promise<OnboardingState> {
-  if (!agent || !state.testSentAt) {
+  const floor = agent?.createdAt ?? state.startedAt;
+  if (!agent || !floor) {
     return state;
   }
 
-  const email = user.primaryEmailAddress?.emailAddress;
-  if (!email) {
-    return state;
-  }
-
-  let replyAt: string | null;
+  let inbound: InboundEmail | null;
   try {
-    replyAt = await findOperatorReplyAt(account, email, state.testSentAt);
+    inbound = await findInboundEmail(account, floor);
   } catch (error) {
-    console.error('Failed to look for the reply to the test email', error);
+    console.error('Failed to look for inbound email', error);
 
     return state;
   }
 
-  if (replyAt) {
-    return state.testReplyAt === replyAt ? state : { ...state, testReplyAt: replyAt };
+  if (inbound) {
+    return sameStoredInbound(state, inbound)
+      ? state
+      : { ...state, testReplyAt: inbound.at, testInboundFrom: inbound.from, testInboundSubject: inbound.subject };
   }
 
-  if (!state.testReplyAt) {
+  if (!state.testReplyAt && !state.testInboundFrom && !state.testInboundSubject) {
     return state;
   }
 
-  const { testReplyAt: _painted, ...rest } = state;
+  const { testReplyAt: _at, testInboundFrom: _from, testInboundSubject: _subject, ...rest } = state;
 
   return rest;
 }
 
-/** When the operator wrote to the agent by email, after `sentAt`. Null when they have not. */
-async function findOperatorReplyAt(
-  account: HumanAccount,
-  operatorEmail: string,
-  sentAt: string
-): Promise<string | null> {
-  const page = await listInboxThreads(account, { tab: 'all', channel: 'email' });
-  const sentMs = Date.parse(sentAt);
-
-  for (const thread of page.threads) {
-    if (!sameEmail(thread.fromAddress, operatorEmail)) {
-      continue;
-    }
-
-    const latest = humanMessageAfter(thread.lastMessage, sentMs);
-    if (latest) {
-      return latest;
-    }
-
-    if (Date.parse(thread.lastActivityAt) <= sentMs) {
-      continue;
-    }
-
-    const reply = await humanReplyInThread(account, thread, sentMs);
-    if (reply) {
-      return reply;
-    }
-  }
-
-  return null;
+function sameStoredInbound(state: OnboardingState, inbound: InboundEmail): boolean {
+  return (
+    state.testReplyAt === inbound.at &&
+    state.testInboundFrom === inbound.from &&
+    state.testInboundSubject === inbound.subject
+  );
 }
 
-/** A later human message in the thread, for when the agent wrote something after the reply. */
-async function humanReplyInThread(account: HumanAccount, thread: InboxThread, sentMs: number): Promise<string | null> {
-  const view = await getInboxThread(account, thread.id);
-
-  return view.messages.reduce<string | null>((found, message) => found ?? humanMessageAfter(message, sentMs), null);
-}
-
-function humanMessageAfter(
-  message: { from: InboxMessage['from']; at: string } | null | undefined,
-  sentMs: number
-): string | null {
-  if (!message || message.from !== 'human') {
+/**
+ * The newest human email after `floor`. The newest page is enough: a message that arrives while the
+ * operator is on this step is at the top. The agent's own test email is from the agent, so it does not count.
+ */
+async function findInboundEmail(account: HumanAccount, floor: string): Promise<InboundEmail | null> {
+  const sinceMs = Date.parse(floor);
+  if (!Number.isFinite(sinceMs)) {
     return null;
   }
 
-  const at = Date.parse(message.at);
+  const page = await listInboxThreads(account, { tab: 'all', channel: 'email' });
+  let newest = newestInboundEmail(page.threads, sinceMs);
 
-  return Number.isFinite(at) && at > sentMs ? message.at : null;
+  for (const thread of page.threads) {
+    if (!activityIsAfter(thread.lastActivityAt, sinceMs)) {
+      break;
+    }
+
+    // This thread's latest message is already the newest human email on the page. Older threads cannot beat it.
+    if (humanMessageAfter(thread.lastMessage, sinceMs)) {
+      break;
+    }
+
+    const at = await latestHumanInThread(account, thread, sinceMs);
+    if (!at) {
+      continue;
+    }
+
+    newest = preferNewerInbound(newest, inboundEmailFrom(thread, at));
+  }
+
+  return newest;
 }
 
-function sameEmail(left: string | undefined, right: string): boolean {
-  return (left ?? '').trim().toLowerCase() === right.trim().toLowerCase();
+/** A human message inside the thread, for when the agent wrote something after it. */
+async function latestHumanInThread(
+  account: HumanAccount,
+  thread: InboxThread,
+  sinceMs: number
+): Promise<string | null> {
+  const view = await getInboxThread(account, thread.id);
+
+  return latestHumanMessageAt(view.messages, sinceMs);
 }

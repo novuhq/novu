@@ -36,7 +36,7 @@ const HOST_POLL_MS = 3000;
 /** How often each step asks whether something happened outside the page. */
 const POLL_MS: Partial<Record<OnboardingStep, number>> = { address: 3000, test: 4000, connect: HOST_POLL_MS };
 
-/** Quicker while the reply to the test email is on its way. */
+/** Quicker while a message to the inbox is on its way. */
 const REPLY_POLL_MS = 2000;
 
 /** How long a step takes to fade out before the next one rises in. */
@@ -52,7 +52,7 @@ const TOOL_API = { isToolSignedIn: checkOnboardingToolConnectedAction };
  */
 export function OnboardingFlow({ view, initialHost }: OnboardingScreenProps) {
   const router = useRouter();
-  const waitingForReply = view.step === 'test' && Boolean(view.test.sentAt) && !view.test.replyAt;
+  const waitingForReply = view.step === 'test' && !view.test.replyAt;
   const waitingForHostRead =
     view.step === 'reach' && (view.waiting === null || view.waiting > 0) && !view.waitingMessage;
   let pollMs = POLL_MS[view.step];
@@ -104,7 +104,7 @@ export function OnboardingScreen({ view, initialHost }: OnboardingScreenProps) {
   // Everything around it (the steps across the top, the agent's card) moves on at once.
   const { shown, leaving } = useSwap(step, SWAP_MS);
   const { ref, height } = useMeasuredHeight();
-  // The reply is in: the test has passed, though the operator is still on its step.
+  // Mail is in: the test has passed, though the operator is still on its step.
   const testPassed = step === 'test' && Boolean(test.replyAt);
 
   return (
@@ -159,6 +159,8 @@ export function OnboardingScreen({ view, initialHost }: OnboardingScreenProps) {
                   operatorEmail={operator.email}
                   sentAt={test.sentAt}
                   replyAt={test.replyAt}
+                  inboundFrom={test.from}
+                  inboundSubject={test.subject}
                 />
               )}
               {shown === 'connect' && agent && (

@@ -21,9 +21,12 @@ export type OnboardingState = {
    * agent's name, and the mailbox is the address the API assigned.
    */
   handle?: string;
-  /** When the test email was sent from the Agent Email Inbox, and when the operator's reply landed. */
+  /** When the optional test email was sent from the Agent Email Inbox. */
   testSentAt?: string;
+  /** When a human email arrived after the agent was created, and who it was from. */
   testReplyAt?: string;
+  testInboundFrom?: string;
+  testInboundSubject?: string;
   /** The operator moved on from step 2, with or without the test. */
   testLeftAt?: string;
   /** "Skip for now" or "Later": the dashboard is open, with its banners, while the setup isn't finished. */
