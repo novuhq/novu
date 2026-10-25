@@ -26,7 +26,7 @@ export async function bootstrapKeylessSession(apiUrl: string): Promise<string> {
 
   let res: { data?: { data?: { applicationIdentifier?: string }; applicationIdentifier?: string } };
   try {
-    res = await createPublicApiClient(baseUrl).post('/v1/inbox/session', {});
+    res = await createPublicApiClient(baseUrl).post('/v1/setup/keyless', {});
   } catch (err) {
     throw new Error(describeKeylessBootstrapFailure(baseUrl, err));
   }
@@ -63,14 +63,14 @@ function describeKeylessBootstrapFailure(baseUrl: string, err: unknown): string 
 }
 
 export async function listIntegrations(client: ApiClient): Promise<IntegrationRecord[]> {
-  const res = await client.axios.get<{ data?: IntegrationRecord[] } | IntegrationRecord[]>('/v1/integrations');
+  const res = await client.axios.get<{ data?: IntegrationRecord[] } | IntegrationRecord[]>('/v1/channels/apps');
   const body = unwrap(res.data);
 
   return Array.isArray(body) ? body : [];
 }
 
 export async function createTelegramIntegration(client: ApiClient, name: string): Promise<IntegrationRecord> {
-  const res = await client.axios.post<{ data?: IntegrationRecord } | IntegrationRecord>('/v1/integrations', {
+  const res = await client.axios.post<{ data?: IntegrationRecord } | IntegrationRecord>('/v1/channels/apps', {
     providerId: 'telegram',
     channel: 'chat',
     name,
@@ -86,10 +86,9 @@ export async function listAgentIntegrations(
   agentIdentifier: string,
   query?: { integrationIdentifier?: string }
 ): Promise<AgentIntegrationLink[]> {
-  const res = await client.axios.get<{ data?: AgentIntegrationLink[] } | AgentIntegrationLink[]>(
-    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`,
-    { params: query }
-  );
+  const res = await client.axios.get<{ data?: AgentIntegrationLink[] } | AgentIntegrationLink[]>('/v1/channels', {
+    params: { ...query, agentIdentifier },
+  });
   const body = unwrap(res.data);
 
   return Array.isArray(body) ? body : [];
@@ -100,9 +99,7 @@ export async function linkAgentIntegration(
   agentIdentifier: string,
   integrationIdentifier: string
 ): Promise<void> {
-  await client.axios.post(`/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`, {
-    integrationIdentifier,
-  });
+  await client.axios.post('/v1/channels', { integrationIdentifier }, { params: { agentIdentifier } });
 }
 
 /**
@@ -116,8 +113,9 @@ export async function addAgentEmailIntegration(
   agentIdentifier: string
 ): Promise<AgentIntegrationLink> {
   const res = await client.axios.post<{ data?: AgentIntegrationLink } | AgentIntegrationLink>(
-    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`,
-    { providerId: 'agent-email-inbox' }
+    '/v1/channels',
+    { providerId: 'agent-email-inbox' },
+    { params: { agentIdentifier } }
   );
 
   return unwrap(res.data);
@@ -135,7 +133,7 @@ export async function issueTelegramMobileLink(
   subscriberId?: string
 ): Promise<TelegramMobileLink> {
   const res = await client.axios.post<{ data?: TelegramMobileLink } | TelegramMobileLink>(
-    `/v1/integrations/${encodeURIComponent(integrationIdentifier)}/mobile-link`,
+    `/v1/channels/apps/${encodeURIComponent(integrationIdentifier)}/telegram-link`,
     subscriberId ? { subscriberId } : {}
   );
 
@@ -149,7 +147,7 @@ export async function getTelegramMobileLinkStatus(
   const res = await client.axios.get<
     | { data?: { valid: boolean; reason?: 'expired' | 'used' | 'invalid' } }
     | { valid: boolean; reason?: 'expired' | 'used' | 'invalid' }
-  >('/v1/integrations/mobile-configure/status', { params: { token } });
+  >('/v1/channels/telegram/setup', { params: { token } });
 
   return unwrap(res.data);
 }
@@ -165,7 +163,7 @@ export async function consumeTelegramMobileLink(
         botUsername: string;
         deepLinkUrl?: string;
       }
-  >('/v1/integrations/mobile-configure', input);
+  >('/v1/channels/telegram/setup', input);
 
   return unwrap(res.data);
 }
@@ -181,14 +179,14 @@ export async function issueTelegramSubscriberLink(
         url: string;
         providerMetadata?: { botUsername?: string };
       }
-  >('/v1/integrations/channel-endpoints/link', { integrationIdentifier, subscriberId });
+  >('/v1/channels/telegram/link', { integrationIdentifier, subscriberId });
   const payload = unwrap(res.data);
 
   return { deepLinkUrl: payload.url, botUsername: payload.providerMetadata?.botUsername ?? '' };
 }
 
 export async function createSlackIntegration(client: ApiClient, name: string): Promise<IntegrationRecord> {
-  const res = await client.axios.post<{ data?: IntegrationRecord } | IntegrationRecord>('/v1/integrations', {
+  const res = await client.axios.post<{ data?: IntegrationRecord } | IntegrationRecord>('/v1/channels/apps', {
     providerId: 'slack',
     channel: 'chat',
     name,
@@ -204,7 +202,7 @@ export async function slackQuickSetup(
   integrationId: string,
   input: { configToken: string; agentId: string }
 ): Promise<void> {
-  await client.axios.post(`/v1/integrations/${encodeURIComponent(integrationId)}/slack-quick-setup`, {
+  await client.axios.post(`/v1/channels/apps/${encodeURIComponent(integrationId)}/slack-quick-setup`, {
     configToken: input.configToken,
     agentId: input.agentId,
   });
@@ -220,7 +218,7 @@ export async function generateConnectOauthUrl(
   input: { integrationIdentifier: string; agentIdentifier: string; subscriberId: string }
 ): Promise<string> {
   const res = await client.axios.post<{ data?: { url?: string } } | { url?: string } | string>(
-    '/v1/integrations/channel-connections/oauth',
+    '/v1/channels/slack/install-link',
     {
       integrationIdentifier: input.integrationIdentifier,
       subscriberId: input.subscriberId,
@@ -246,10 +244,9 @@ export async function issueSlackSetupLink(
 ): Promise<{ token: string; url: string; expiresAt: string }> {
   const res = await client.axios.post<
     { data?: { token: string; url: string; expiresAt: string } } | { token: string; url: string; expiresAt: string }
-  >(
-    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/slack/setup-link`,
-    subscriberId ? { subscriberId } : {}
-  );
+  >(`/v1/channels/apps/${encodeURIComponent(integrationId)}/slack-setup-link`, subscriberId ? { subscriberId } : {}, {
+    params: { agentIdentifier },
+  });
 
   return unwrap(res.data);
 }
@@ -264,7 +261,7 @@ export async function getSlackSetupLinkStatus(
         valid: boolean;
         reason?: 'expired' | 'used' | 'invalid';
       }
-  >('/v1/agents/public/slack/setup/status', { params: { token } });
+  >('/v1/channels/slack/setup', { params: { token } });
 
   return unwrap(res.data);
 }
@@ -274,25 +271,10 @@ export async function hasChannelEndpoint(
   integrationIdentifier: string,
   subscriberId: string
 ): Promise<boolean> {
-  const res = await client.axios.get<{ data?: unknown[] } | unknown[]>('/v1/channel-endpoints', {
+  const res = await client.axios.get<{ data?: unknown[] } | unknown[]>('/v1/channels/links', {
     params: { subscriberId, integrationIdentifier, limit: 1 },
   });
   const body = unwrap(res.data);
 
   return Array.isArray(body) && body.length > 0;
-}
-
-/** Best-effort; GET /v2/subscribers is not always available (e.g. keyless). */
-export async function getSubscriberEmail(client: ApiClient, subscriberId: string): Promise<string | undefined> {
-  try {
-    const res = await client.axios.get<{ data?: { email?: string } } | { email?: string }>(
-      `/v2/subscribers/${encodeURIComponent(subscriberId)}`
-    );
-    const body = unwrap(res.data);
-    const email = typeof body.email === 'string' ? body.email.trim() : '';
-
-    return email || undefined;
-  } catch {
-    return undefined;
-  }
 }

@@ -1,6 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AGENT_INBOX_VIA_HEADER, ApiError, createApiClient, createPublicApiClient } from '../api/client';
+import {
+  AGENT_INBOX_HOST_HEADER,
+  AGENT_INBOX_VIA_HEADER,
+  ANALYTICS_SOURCE_HEADER,
+  ApiError,
+  createApiClient,
+  createPublicApiClient,
+} from '../api/client';
 import type { CliConfig } from '../config';
+import { HOST_MARKER_VARIABLES } from '../host';
+
+/** As in a shell no host started: whatever ran these tests, no host's variables are set. */
+function clearHostMarkers() {
+  for (const name of HOST_MARKER_VARIABLES) {
+    vi.stubEnv(name, '');
+  }
+}
 
 const connectWithCode = vi.fn();
 const findOperator = vi.fn();
@@ -36,7 +51,7 @@ const CONNECTED = {
 };
 
 const keylessConfig: CliConfig = {
-  apiUrl: 'https://api.novu.co',
+  apiUrl: 'https://www.agentinbox.md/api',
   auth: { mode: 'keyless', keylessIdentifier: 'pk_keyless_1' },
   relayAgentIdentifier: 'human-relay',
   subscriberId: 'ada',
@@ -44,7 +59,7 @@ const keylessConfig: CliConfig = {
 };
 
 const loggedInConfig: CliConfig = {
-  apiUrl: 'https://api.novu.co',
+  apiUrl: 'https://www.agentinbox.md/api',
   auth: { mode: 'apiKey', secretKey: 'sk_account' },
   relayAgentIdentifier: 'human-relay',
   subscriberId: 'ada',
@@ -98,6 +113,7 @@ describe('runConnect', () => {
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs();
     if (originalApiUrl === undefined) {
       delete process.env.INBOX_API_URL;
     } else {
@@ -110,10 +126,13 @@ describe('runConnect', () => {
 
     const result = await runConnect('Atlas', { code: 'bcdf ghjk' }, io);
 
-    expect(connectWithCode).toHaveBeenCalledWith('https://api.novu.co', { agent: 'atlas', code: 'BCDF-GHJK' });
+    expect(connectWithCode).toHaveBeenCalledWith('https://www.agentinbox.md/api', {
+      agent: 'atlas',
+      code: 'BCDF-GHJK',
+    });
     expect(prompt).not.toHaveBeenCalled();
     expect(saveConfig).toHaveBeenCalledWith({
-      apiUrl: 'https://api.novu.co',
+      apiUrl: 'https://www.agentinbox.md/api',
       auth: { mode: 'apiKey', secretKey: 'sk_account' },
       relayAgentIdentifier: 'human-relay',
       subscriberId: 'ada',
@@ -181,6 +200,29 @@ describe('runConnect', () => {
     expect(saved.defaultChannel).toBeUndefined();
   });
 
+  it('remembers the host the code was made for, when the shell doesn’t say which host runs the CLI', async () => {
+    clearHostMarkers();
+    connectWithCode.mockResolvedValue({ ...CONNECTED, host: 'hermes' });
+
+    await runConnect('atlas', { code: 'BCDF-GHJK' }, ioAnswering(null).io);
+
+    expect((saveConfig.mock.calls[0][0] as CliConfig).host).toBe('hermes');
+  });
+
+  it('remembers no host when the shell says which one runs the CLI, or when it would be General', async () => {
+    clearHostMarkers();
+    vi.stubEnv('AI_AGENT', 'claude-code_2-1-309_agent');
+    connectWithCode.mockResolvedValue({ ...CONNECTED, host: 'claude-code' });
+    await runConnect('atlas', { code: 'BCDF-GHJK' }, ioAnswering(null).io);
+
+    clearHostMarkers();
+    connectWithCode.mockResolvedValue({ ...CONNECTED, host: 'general' });
+    await runConnect('atlas', { code: 'BCDF-GHJK' }, ioAnswering(null).io);
+
+    expect(saveConfig.mock.calls[0][0]).not.toHaveProperty('host');
+    expect(saveConfig.mock.calls[1][0]).not.toHaveProperty('host');
+  });
+
   it('still saves the key when the owner can’t be looked up: the code is used up by then', async () => {
     findOperator.mockRejectedValue(new Error('network down'));
 
@@ -192,7 +234,7 @@ describe('runConnect', () => {
 
   it('passes the API’s words on for a used, expired or wrong code, and saves nothing', async () => {
     connectWithCode.mockRejectedValue(
-      new ApiError('This code was used already.', 409, 'POST /v1/human/connect', { code: 'connect_code_used' })
+      new ApiError('This code was used already.', 409, 'POST /v1/connect', { code: 'connect_code_used' })
     );
 
     await expect(runConnect('atlas', { code: 'BCDF-GHJK' }, ioAnswering(null).io)).rejects.toThrow(
@@ -203,7 +245,7 @@ describe('runConnect', () => {
 
   it('tells an API without one-time codes apart from a wrong code', async () => {
     connectWithCode.mockRejectedValue(
-      new ApiError('Cannot POST /v1/human/connect', 404, 'POST /v1/human/connect', { statusCode: 404 })
+      new ApiError('Cannot POST /v1/connect', 404, 'POST /v1/connect', { statusCode: 404 })
     );
 
     await expect(runConnect('atlas', { code: 'BCDF-GHJK' }, ioAnswering(null).io)).rejects.toThrow(
@@ -211,7 +253,7 @@ describe('runConnect', () => {
     );
 
     connectWithCode.mockRejectedValue(
-      new ApiError('No agent has this code.', 404, 'POST /v1/human/connect', { code: 'connect_code_invalid' })
+      new ApiError('No agent has this code.', 404, 'POST /v1/connect', { code: 'connect_code_invalid' })
     );
 
     await expect(runConnect('atlas', { code: 'BCDF-GHJK' }, ioAnswering(null).io)).rejects.toThrow(
@@ -221,11 +263,51 @@ describe('runConnect', () => {
 });
 
 describe('API requests', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('say which host runs the CLI, from the shell it runs in, over the host this computer was connected for', () => {
+    clearHostMarkers();
+    vi.stubEnv('AI_AGENT', 'claude-code_2-1-309_agent');
+
+    const authed = createApiClient({
+      apiUrl: 'https://www.agentinbox.md/api',
+      secretKey: 'sk_account',
+      host: 'hermes',
+    });
+    const anonymous = createPublicApiClient('https://www.agentinbox.md/api');
+
+    expect(authed.axios.defaults.headers[AGENT_INBOX_HOST_HEADER]).toBe('claude-code');
+    expect(anonymous.defaults.headers[AGENT_INBOX_HOST_HEADER]).toBe('claude-code');
+  });
+
+  it('name the host this computer was connected for when the shell does not say, and no host otherwise', () => {
+    clearHostMarkers();
+
+    const connected = createApiClient({ apiUrl: 'https://www.agentinbox.md/api', secretKey: 'sk', host: 'hermes' });
+    const unnamed = createApiClient({ apiUrl: 'https://www.agentinbox.md/api', secretKey: 'sk' });
+
+    expect(connected.axios.defaults.headers[AGENT_INBOX_HOST_HEADER]).toBe('hermes');
+    expect(unnamed.axios.defaults.headers).not.toHaveProperty(AGENT_INBOX_HOST_HEADER);
+    expect(createPublicApiClient('https://www.agentinbox.md/api').defaults.headers).not.toHaveProperty(
+      AGENT_INBOX_HOST_HEADER
+    );
+  });
+
   it('say they come from the CLI, so reading the inbox counts as this host checking it', () => {
-    const authed = createApiClient({ apiUrl: 'https://api.novu.co', secretKey: 'sk_account' });
-    const anonymous = createPublicApiClient('https://api.novu.co');
+    const authed = createApiClient({ apiUrl: 'https://www.agentinbox.md/api', secretKey: 'sk_account' });
+    const anonymous = createPublicApiClient('https://www.agentinbox.md/api');
 
     expect(authed.axios.defaults.headers[AGENT_INBOX_VIA_HEADER]).toBe('cli');
     expect(anonymous.defaults.headers[AGENT_INBOX_VIA_HEADER]).toBe('cli');
+  });
+
+  it("say they come from the CLI for Novu's analytics", () => {
+    const authed = createApiClient({ apiUrl: 'https://api.novu.co', secretKey: 'sk_account' });
+    const anonymous = createPublicApiClient('https://api.novu.co');
+
+    expect(authed.axios.defaults.headers[ANALYTICS_SOURCE_HEADER]).toBe('cli');
+    expect(anonymous.defaults.headers[ANALYTICS_SOURCE_HEADER]).toBe('cli');
   });
 });

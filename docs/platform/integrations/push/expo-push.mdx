@@ -580,3 +580,26 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 ```
   </Tab>
 </Tabs>
+
+## Activity tracking
+
+Expo supports [push activity tracking](/platform/integrations/push/push-activity-tracking). Enable the **Push Activity Tracking** toggle on the Expo integration. Your app reads the Novu message id from the notification and forwards it as `eventId`.
+
+Novu sets Expo `data` to the trigger payload and adds `__nvMessageId`. A `data` override is merged into that object. Leave `__nvMessageId` in place.
+
+```javascript
+import * as Notifications from "expo-notifications";
+
+Notifications.addNotificationResponseReceivedListener(async (response) => {
+  await fetch("https://your-api.com/api/notifications/events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      eventType: "clicked",
+      eventId: response.notification.request.content.data?.__nvMessageId,
+    }),
+  });
+});
+```
+
+Forward `delivered`, `opened`, `dismissed`, or `failed` the same way when your app observes those events. Your backend then calls [Novu's activity endpoint](/platform/integrations/push/push-activity-tracking#step-3-forward-events-to-novu-from-your-backend).

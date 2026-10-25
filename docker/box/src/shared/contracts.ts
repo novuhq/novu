@@ -115,12 +115,34 @@ export const NestConfig = z.looseObject({ compilerOptions: z.looseObject({}) });
 
 const Note = z.object({ at: z.string(), message: z.string() });
 const Down = z.object({ tries: z.number() }).nullable();
+// The last snapshot restore: `colo` is the Box object's Cloudflare location, `container` its container's, each
+// absent if it couldn't be looked up. `ms` counts from the first attempt; `attempts` is 2 when a hung restore was
+// started again (absent in records from before).
+export const LastStart = z.object({
+  at: z.string(),
+  snapshot: z.string(),
+  ms: z.number(),
+  attempts: z.number().optional(),
+  colo: z.string().optional(),
+  container: z.string().optional(),
+});
+export type LastStart = z.infer<typeof LastStart>;
+// Healthy cold restores took 231 to 352 s (up to 6 minutes elsewhere), so one that hasn't answered in 8 is hung.
+export const RESTORE_MS = 8 * 60 * 1000;
+// `placed: false` when base exists but couldn't make the box's first call (see `Box.introduce`).
+export const RegisteredBox = z.object({
+  box: z.string(),
+  origin: z.string(),
+  placed: z.boolean().optional(),
+  warning: z.string().optional(),
+});
 const Status = {
   since: z.string().nullable(),
   running: z.boolean(),
   snapshot: z.object({ id: z.string(), name: z.string().optional(), gigabytes: z.number().nullable() }).nullable(),
   lastActivity: z.string(),
   origin: z.string().nullish(),
+  lastStart: LastStart.optional(),
 };
 export const BoxStatus = z.discriminatedUnion('phase', [
   z.object({ ...Status, phase: z.literal(['new', 'asleep']), error: Note.nullable() }),
@@ -147,22 +169,30 @@ export type StateAnswer = z.infer<typeof StateAnswer>;
 
 export const BoxList = z.object({ boxes: z.array(z.string()) });
 
-export const CloudflareAnswer = z.object({ success: z.boolean(), errors: z.unknown(), result: z.unknown() });
-export const ScriptList = z.array(z.object({ id: z.string() }));
-
 export const CheckRuns = z.object({
   check_runs: z.array(z.object({ status: z.string(), conclusion: z.string().nullable(), html_url: z.string() })),
 });
 const Label = z.object({ name: z.string() });
+export const Pull = z.object({
+  state: z.string(),
+  draft: z.boolean(),
+  labels: z.array(Label),
+  base: z.object({ ref: z.string() }),
+});
+export type Pull = z.infer<typeof Pull>;
 export const PullRequestEvent = z.object({
   action: z.string(),
   number: z.number(),
   sender: z.object({ login: z.string() }).optional(),
   label: Label.optional(),
-  pull_request: z.object({ state: z.string(), labels: z.array(Label), head: z.object({ sha: z.string() }) }),
+  pull_request: Pull.extend({
+    title: z.string(),
+    body: z.string().nullish(),
+    head: z.object({ sha: z.string(), ref: z.string() }),
+  }),
 });
 export type PullRequestEvent = z.infer<typeof PullRequestEvent>;
-export const Pull = z.object({ state: z.string(), labels: z.array(Label) });
+export const PullFile = z.object({ filename: z.string() });
 export const IssueComment = z.object({ id: z.number(), body: z.string().nullish() });
 export const IssueEvent = z.object({
   event: z.string(),
@@ -170,6 +200,8 @@ export const IssueEvent = z.object({
   actor: z.object({ login: z.string() }).nullish(),
 });
 export const Permission = z.object({ permission: z.string() });
+export const Deployment = z.object({ id: z.number() });
+export const DeploymentStatus = z.object({ state: z.string() });
 export const OidcToken = z.object({ value: z.string() });
 
 export const WithId = z.object({ id: z.string() });
@@ -189,7 +221,37 @@ export const ClerkUserList = z.array(ClerkUser);
 const TestUser = z.object({ email: z.string(), box: z.string(), createdAt: z.string(), live: z.boolean() });
 export const TestUsers = z.object({ users: z.array(TestUser), prune: z.array(z.string()) });
 export const CreatedTestUser = z.object({ email: z.string(), password: z.string(), pruned: z.array(z.string()) });
+export const ClerkSignInToken = z.object({ token: z.string() });
+export const SeedSignIn = z.object({ email: z.string(), url: z.string() });
 export const DeletedBox = z.object({ users: z.array(z.string()).default([]), usersError: z.string().optional() });
+
+const TesterArmyPullRequest = z.object({
+  number: z.number(),
+  title: z.string(),
+  description: z.string().optional(),
+  baseBranch: z.string(),
+  headBranch: z.string(),
+  commitSha: z.string(),
+});
+export type TesterArmyPullRequest = z.infer<typeof TesterArmyPullRequest>;
+// A PR box gets the exploration agent and PR smoke; `full` starts the Full groups (the nightly box of next). The PR
+// shape has no `suite`: PR branches send it with their own ci.ts.
+export const TesterArmyStart = z.union([
+  z.object({ pullRequest: TesterArmyPullRequest }),
+  z.object({ suite: z.literal('full'), commitSha: z.string().optional() }),
+]);
+export type TesterArmyStart = z.infer<typeof TesterArmyStart>;
+const StartedGroups = z.array(z.object({ name: z.string(), batchId: z.string(), runs: z.number() }));
+export const TesterArmyStarted = z.object({
+  exploration: z.object({ status: z.string(), runId: z.string() }),
+  groups: StartedGroups,
+  signUpUsersDeleted: z.array(z.string()),
+});
+export const TesterArmyFullStarted = z.object({
+  groups: z.array(z.object({ name: z.string(), runs: z.number() })),
+  signUpUsersDeleted: z.array(z.string()),
+});
+export const TesterArmyCancelled = z.object({ cancelled: z.array(z.string()) });
 
 const data = <T extends z.ZodType>(schema: T) => z.object({ data: schema });
 const ApiId = z.object({ _id: z.string() });

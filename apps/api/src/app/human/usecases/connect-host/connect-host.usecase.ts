@@ -1,13 +1,13 @@
 import { GoneException, Injectable, NotFoundException } from '@nestjs/common';
 import { decryptApiKey } from '@novu/application-generic';
-import { AgentRepository, EnvironmentRepository } from '@novu/dal';
+import { type AgentHostId, AgentRepository, EnvironmentRepository } from '@novu/dal';
 import type { ConnectHostResponseDto } from '../../dtos/human-host.dto';
 import {
   CONNECT_CODE_EXPIRED,
   HumanConnectCodeService,
   keyFingerprint,
 } from '../../services/human-connect-code.service';
-import { HumanHostStatusService } from '../../services/human-host-status.service';
+import { GENERAL_HOST, HumanHostStatusService } from '../../services/human-host-status.service';
 import { ConnectHostCommand } from './connect-host.command';
 
 /** Code on the 404 for a code whose agent was deleted after the code was made. */
@@ -17,7 +17,8 @@ export const CONNECT_AGENT_GONE = 'connect_agent_gone';
  * `agentinbox connect <agent> --code <code>`: trades a one-time code for the key of the agent's account,
  * the same key `agentinbox login` saves, so the CLI on that computer acts as the agent from then on. The
  * code is used up first, so a key is handed out at most once per code. The host counts as connected
- * through the CLI from here, before it has looked at the inbox.
+ * through the CLI from here, before it has looked at the inbox: the host the CLI said it runs in, else the
+ * one the code was made for, else `general`.
  */
 @Injectable()
 export class ConnectHost {
@@ -58,12 +59,26 @@ export class ConnectHost {
     }
 
     const apiKey = decryptApiKey(current.key);
-    await this.hostStatus.recordConnected(scope, agent._id, 'cli');
+    const host = connectingHost(command.host, target.host);
+    await this.hostStatus.recordConnected(scope, agent._id, { via: 'cli', id: host });
 
     return {
       apiKey,
       environmentId: scope.environmentId,
       agent: { identifier: agent.identifier, name: agent.name, handle: target.handle },
+      host,
     };
   }
+}
+
+/**
+ * The host the CLI said it runs in wins over the one the code was made for: it is what runs the command. A
+ * CLI that could only say `general` knows less than the code does.
+ */
+function connectingHost(said: AgentHostId | undefined, codeFor: AgentHostId | undefined): AgentHostId {
+  if (said && said !== GENERAL_HOST) {
+    return said;
+  }
+
+  return codeFor ?? GENERAL_HOST;
 }

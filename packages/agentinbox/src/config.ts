@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
+import type { HostId } from './host';
 
 export type ChannelPlatform = 'telegram' | 'slack' | 'email' | string;
 
@@ -19,22 +20,29 @@ export interface CliConfig {
    * endpoints) — this is only a local preference.
    */
   defaultChannel?: ChannelPlatform;
+  /**
+   * The host this computer was connected for: the one the one-time code was made for, when the shell
+   * `connect` ran in didn't say which host it was. Requests name it while the shell doesn't say either.
+   */
+  host?: HostId;
 }
 
-export const DEFAULT_API_URL = 'https://api.novu.co';
+/**
+ * The Agent Inbox site (`apps/human-dashboard`). It hosts the credential landing pages (`/connect#<token>`
+ * for Telegram and Slack), and its `/api` forwards to Novu Cloud's API, so people only ever see this address.
+ * The pages are only used with the default API: a self-hosted or local API falls back to the URL the server
+ * itself returns (that deployment's own dashboard page).
+ */
+export const SETUP_PAGE_ORIGIN = 'https://www.agentinbox.md';
+
+/** The API the CLI talks to unless told otherwise: the Agent Inbox API on agentinbox.md. */
+export const DEFAULT_API_URL = `${SETUP_PAGE_ORIGIN}/api`;
+
 /** The relay agent the API sets up by default. It is an API name, not shown to people. */
 export const DEFAULT_RELAY_AGENT_IDENTIFIER = 'human-relay';
 
 /** How people run the CLI. Every hint and error that names a command starts with it. */
 export const CLI_COMMAND = 'npx @agentinbox/cli';
-
-/**
- * Static site that hosts the credential landing pages (e.g. `/connect#<token>`
- * for Telegram). Only used against Novu Cloud: the page is hardcoded to call
- * `api.novu.co`, so self-hosted / local APIs fall back to the URL the server
- * itself returns (that deployment's own dashboard page).
- */
-export const SETUP_PAGE_ORIGIN = 'https://www.agentinbox.md';
 
 export const SUPPORTED_CHANNELS = ['telegram', 'slack', 'email'] as const;
 

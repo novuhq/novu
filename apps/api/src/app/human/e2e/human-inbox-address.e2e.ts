@@ -14,6 +14,7 @@ const DASHBOARD_SECRET = 'e2e-inbox-address-dashboard-secret';
 
 /**
  * Creating an Agent Inbox at an address the operator chose, and the same mailbox from `setup --agent-name`.
+ * Onboarding also asks for the mailbox domain before a handle exists.
  * The shared domain is turned on for this file only: the test env leaves it unset, which skips the mailbox.
  */
 describe('Agent Inbox address (create, taken, test email, CLI) #novu-v2', () => {
@@ -49,7 +50,7 @@ describe('Agent Inbox address (create, taken, test email, CLI) #novu-v2', () => 
     const chosen = freshHandle();
 
     const free = await checkAddress(session, chosen);
-    expect(free).to.deep.equal({ handle: chosen, available: true });
+    expect(free).to.deep.equal({ handle: chosen, available: true, domain: INBOX_DOMAIN });
 
     const created = await createFromDashboard(session, { agentName: 'Atlas', inboxHandle: chosen });
 
@@ -70,7 +71,12 @@ describe('Agent Inbox address (create, taken, test email, CLI) #novu-v2', () => 
 
     const second = await startSession();
     const check = await checkAddress(second, chosen);
-    expect(check).to.deep.equal({ handle: chosen, available: false, suggestion: `${chosen}-acme` });
+    expect(check).to.deep.equal({
+      handle: chosen,
+      available: false,
+      suggestion: `${chosen}-acme`,
+      domain: INBOX_DOMAIN,
+    });
 
     const refused = await asDashboard(second, 'post', '/v1/human/setup').send(
       dashboardSetup({ agentName: 'Atlas', inboxHandle: chosen })
@@ -154,6 +160,36 @@ describe('Agent Inbox address (create, taken, test email, CLI) #novu-v2', () => 
     expect(collided.emailAddress).to.equal(addressOf(`${slug}-acme`));
     await expectVanityInbox(other, `${slug}-acme`);
   });
+
+  it('names the mailbox this deployment publishes when onboarding has not chosen a handle', async () => {
+    const devDomain = 'dev.agentinbox.md';
+    process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = devDomain;
+
+    try {
+      const session = await startSession();
+      const published = await readPublishedDomain(session);
+
+      expect(published).to.deep.equal({ handle: '', available: false, domain: devDomain });
+    } finally {
+      process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = INBOX_DOMAIN;
+    }
+  });
+
+  it('stands in with the production domain when the shared inbox is turned off', async () => {
+    process.env.IS_SELF_HOSTED = 'true';
+    process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = 'dev.agentinbox.md';
+
+    try {
+      const session = await startSession();
+      const published = await readPublishedDomain(session);
+
+      // Off means the production domain, even while a staging domain is still configured.
+      expect(published).to.deep.equal({ handle: '', available: false, domain: 'agentinbox.md' });
+    } finally {
+      delete process.env.IS_SELF_HOSTED;
+      process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = INBOX_DOMAIN;
+    }
+  });
 });
 
 function freshHandle(): string {
@@ -215,7 +251,15 @@ async function checkAddress(session: UserSession, handle: string) {
   });
   expect(res.status).to.equal(200, JSON.stringify(res.body));
 
-  return res.body.data as { handle: string; available: boolean; suggestion?: string };
+  return res.body.data as { handle: string; available: boolean; suggestion?: string; domain: string };
+}
+
+/** Onboarding reads the domain before the operator has typed a handle. */
+async function readPublishedDomain(session: UserSession) {
+  const res = await asDashboard(session, 'get', '/v1/human/inbox-address');
+  expect(res.status).to.equal(200, JSON.stringify(res.body));
+
+  return res.body.data as { handle: string; available: boolean; domain: string };
 }
 
 async function createFromDashboard(session: UserSession, input: { agentName: string; inboxHandle: string }) {

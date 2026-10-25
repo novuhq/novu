@@ -97,8 +97,9 @@ export function isMissingBotTokenError(err: unknown): boolean {
  * Against Novu Cloud we use the agentinbox.md `/connect` page with the token in the
  * URL fragment (never sent to the server, so it stays out of access logs and
  * Referer headers). Any other API URL means self-hosted or local dev, where the
- * agentinbox.md page could not reach the API anyway (CORS, mixed content), so we
- * hand back the URL the server minted — that deployment's own dashboard page.
+ * agentinbox.md page could not use the token anyway (it calls Novu Cloud's API
+ * through its own `/api`), so we hand back the URL the server minted — that
+ * deployment's own dashboard page.
  */
 export function buildSetupPageUrl(
   apiUrl: string,

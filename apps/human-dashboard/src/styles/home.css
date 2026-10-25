@@ -1,0 +1,443 @@
+.home-page {
+  /* The artwork's canvas overhangs the right edge (its drawing doesn't). */
+  overflow-x: clip;
+  --home-background: #fbfbfb;
+  --home-foreground: #403b34;
+  --home-muted: #8c8985;
+  --home-document-width: 744px;
+  --home-inset: 56px;
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  padding: var(--home-inset);
+  background: var(--home-background);
+  color: var(--home-foreground);
+  font-family: var(--font-home-regular), var(--font-geist-mono), monospace;
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: -0.02em;
+  color-scheme: light;
+}
+
+.home-document {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(100%, var(--home-document-width));
+  flex-direction: column;
+  gap: 60px;
+}
+
+.home-page p,
+.home-page h1,
+.home-page h2,
+.home-page dl,
+.home-page dd,
+.home-page figure {
+  margin: 0;
+}
+
+.home-page code {
+  font: inherit;
+  overflow-wrap: anywhere;
+}
+
+.home-page h1,
+.home-section-title {
+  font-family: var(--font-home-semibold), var(--font-geist-mono), monospace;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 22.5px;
+  letter-spacing: -0.02em;
+}
+
+.home-page h1 {
+  margin-top: 28px;
+  line-height: 23px;
+  text-transform: uppercase;
+}
+
+.home-page a {
+  text-underline-offset: 3px;
+}
+
+.home-page a:hover {
+  color: #ff5c30;
+}
+
+.home-ascii-rule {
+  height: 20px;
+  overflow: hidden;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.home-human-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home-human-banner > p {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) 10px;
+  gap: 20px;
+}
+
+.home-human-banner a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.home-page .home-description {
+  margin-top: 156px;
+  margin-bottom: 28px;
+}
+
+.home-section {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.home-section-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  min-height: 23px;
+}
+
+.home-comment {
+  color: var(--home-muted);
+}
+
+.home-command-list {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-command-line {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.home-command-line code {
+  min-width: 0;
+  white-space: pre-wrap;
+}
+
+.home-command-line .home-comment {
+  flex-shrink: 0;
+}
+
+.home-page [data-color="orange"] {
+  color: #ff5c30;
+}
+
+.home-page [data-color="purple"] {
+  color: #8458d0;
+}
+
+.home-page [data-color="blue"] {
+  color: #426ce0;
+}
+
+.home-page [data-color="green"] {
+  color: #2d8665;
+}
+
+.home-inline-code {
+  display: inline-block;
+  min-height: 20px;
+  max-width: 100%;
+  padding-inline: 4px;
+  border-radius: 4px;
+  background: #f9f5f1;
+  box-shadow:
+    0 0 0 0.5px #eee5d8,
+    inset 0 0 0 0.5px #eee5d8;
+  word-spacing: -0.33em;
+  white-space: nowrap;
+  vertical-align: top;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.home-inline-code-tall {
+  min-height: 22px;
+  border: 1px solid #eee5d8;
+  box-shadow: none;
+}
+
+.home-prose {
+  line-height: calc(20px + var(--home-prose-row-gap, 0px));
+  word-spacing: -0.33em;
+}
+
+.home-page .home-prose {
+  margin-bottom: calc(0px - var(--home-prose-bottom-trim, var(--home-prose-row-gap, 0px)));
+}
+
+.home-page .home-inline-code,
+.home-prose-word {
+  line-height: 20px;
+}
+
+.home-prose-word {
+  min-width: var(--home-word-width);
+  max-width: 100%;
+  display: inline-block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+
+.home-inline-code .home-prose-word {
+  word-spacing: normal;
+}
+
+.home-boxes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-box-row {
+  display: flow-root;
+  position: relative;
+  padding-inline: 30px;
+}
+
+.home-box-row:nth-child(2) {
+  --home-prose-row-gap: 4px;
+  --home-prose-bottom-trim: 0px;
+}
+
+.home-box-row:nth-child(2) > .home-prose {
+  min-height: 120px;
+}
+
+.home-box-row:nth-child(4) {
+  --home-prose-row-gap: 4px;
+  --home-prose-bottom-trim: 2px;
+}
+
+.home-box-row:nth-child(8) {
+  --home-prose-row-gap: 4px;
+}
+
+.home-box-side {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 10px;
+  height: round(down, 100%, 20px);
+  overflow: hidden;
+  line-height: 20px;
+  white-space: pre;
+  user-select: none;
+}
+
+.home-box-side-right {
+  right: 0;
+  left: auto;
+}
+
+.home-definitions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-definitions > div {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.home-flags > div {
+  grid-template-columns: 156px minmax(0, 1fr);
+}
+
+.home-flags dd {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  white-space: pre-line;
+}
+
+.home-flags [data-color="orange"] {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.home-resume-description {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.home-resume-description > span {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.home-auth-description {
+  --home-prose-row-gap: 4px;
+}
+
+#links.home-section {
+  gap: 16px;
+}
+
+.home-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.home-links > span {
+  display: inline-flex;
+  gap: 20px;
+}
+
+.home-links a {
+  text-decoration: underline;
+}
+
+.home-link-divider {
+  width: 10px;
+}
+
+/*
+ * Figma 923:2846 (1920×1080 background frame): the dither canvas is 1323px wide
+ * (1187:1018) at y = 74, starts 13px right of the document column and runs
+ * 216px past the right edge. The drawing only fills the middle of the canvas
+ * (x 22–79%, y 24–72%), so the overhang stays empty; its top (20.7% of the
+ * width below the canvas top) lines up with the description at y = 348, and
+ * stays there when narrower or shorter windows scale it down. Only when that
+ * would cut it off at the bottom does it rise, keeping 16px clear.
+ */
+.home-artwork {
+  --home-artwork-width: min(
+    1323px,
+    calc((100vw - var(--home-inset) - var(--home-document-width) - 13px) * 1323 / 1107),
+    calc(100svh * 1323 / 1080)
+  );
+  position: fixed;
+  top: min(
+    calc(74px + (1323px - var(--home-artwork-width)) * 0.207),
+    calc(100svh - 16px - var(--home-artwork-width) * 0.616)
+  );
+  right: calc(var(--home-artwork-width) * -216 / 1323);
+  width: var(--home-artwork-width);
+  aspect-ratio: 1187 / 1018;
+  pointer-events: none;
+}
+
+.home-artwork-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+@media (min-width: 1200px) and (max-width: 1599px) {
+  .home-page {
+    --home-document-width: min(744px, 52vw);
+  }
+}
+
+@media (max-width: 1199px) {
+  .home-page {
+    --home-inset: 32px;
+  }
+
+  /* The drawing (57% of the canvas width, from 20.7% of it below the top) takes the
+     slot above the description: as wide as min(320px, 60vw), from y = 152. */
+  .home-artwork {
+    --home-artwork-width: calc(min(320px, 60vw) / 0.573);
+    position: absolute;
+    top: calc(152px - var(--home-artwork-width) * 0.207);
+  }
+
+  .home-page .home-description {
+    margin-top: 212px;
+  }
+}
+
+@media (max-width: 799px) {
+  .home-page {
+    --home-inset: 24px;
+  }
+
+  .home-command-line {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .home-command-line .home-comment {
+    padding-left: 2ch;
+  }
+
+  .home-flags > div {
+    grid-template-columns: 140px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 479px) {
+  .home-document {
+    gap: 48px;
+  }
+
+  .home-artwork {
+    --home-artwork-width: calc(240px / 0.573);
+    top: calc(224px - var(--home-artwork-width) * 0.207);
+  }
+
+  .home-page .home-description {
+    margin-top: 216px;
+  }
+
+  .home-human-banner > p {
+    gap: 10px;
+  }
+
+  .home-flags > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .home-flags dd {
+    padding-left: 2ch;
+  }
+
+  .home-exit-codes > div {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+
+  .home-box-row {
+    padding-inline: 20px;
+  }
+
+  .home-inline-code {
+    white-space: normal;
+  }
+
+  .home-inline-code .home-prose-word {
+    min-width: 0;
+  }
+
+  .home-box-row,
+  .home-box-row:nth-child(2),
+  .home-box-row:nth-child(4),
+  .home-box-row:nth-child(8) {
+    --home-prose-row-gap: 4px;
+  }
+}

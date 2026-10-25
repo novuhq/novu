@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   type CliConfig,
   configPath,
+  DEFAULT_API_URL,
   loadConfig,
   resolveConfig,
   resolveTargetApiUrl,
@@ -13,7 +14,7 @@ import {
 } from './config';
 
 const base: CliConfig = {
-  apiUrl: 'https://api.novu.co',
+  apiUrl: DEFAULT_API_URL,
   auth: { mode: 'keyless', keylessIdentifier: 'pk_keyless_x' },
   relayAgentIdentifier: 'human-relay',
 };
@@ -138,7 +139,7 @@ describe('resolveConfig', () => {
     process.env.INBOX_SECRET_KEY = 'api_key_private';
 
     expect(resolveConfig()).toEqual({
-      apiUrl: 'https://api.novu.co',
+      apiUrl: DEFAULT_API_URL,
       relayAgentIdentifier: 'human-relay',
       auth: { mode: 'apiKey', secretKey: 'api_key_private' },
     });
@@ -154,12 +155,12 @@ describe('resolveTargetApiUrl', () => {
     expect(resolveTargetApiUrl(undefined, eu)).toBe('http://127.0.0.1:3000');
     delete process.env.INBOX_API_URL;
     expect(resolveTargetApiUrl(undefined, eu)).toBe('https://eu.api.novu.co');
-    expect(resolveTargetApiUrl(undefined, null)).toBe('https://api.novu.co');
+    expect(resolveTargetApiUrl(undefined, null)).toBe('https://www.agentinbox.md/api');
   });
 
   it('ignores an empty INBOX_API_URL', () => {
     process.env.INBOX_API_URL = ' ';
 
-    expect(resolveTargetApiUrl(undefined, base)).toBe('https://api.novu.co');
+    expect(resolveTargetApiUrl(undefined, base)).toBe(DEFAULT_API_URL);
   });
 });

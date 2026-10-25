@@ -7,7 +7,7 @@ Agent Inbox lets AI agents reach the people they work for on Telegram, Slack or 
 ### People
 
 **Operator**:
-The person who sets Agent Inbox up for their agents and signs up on agentinbox.md.
+The person the agents work for, who signs up on agentinbox.md; they set Agent Inbox up, or approve what an agent set up for them.
 _Avoid_: owner, user, inviter
 
 **Contact**:
@@ -28,6 +28,10 @@ _Avoid_: relay, bot
 The program that acts as an agent for an operator, such as Claude Code or a scheduled routine; an agent can have several, each reaching it through the CLI or through MCP.
 _Avoid_: caller, client, AI agent
 
+**Chat app**:
+A host that lives in a browser or an app, such as ChatGPT or Claude, and cannot run commands on a computer, so it connects only by signing in.
+_Avoid_: AI tool, connector
+
 **Connect**:
 Letting a host act as an agent: in a terminal with a one-time code (`agentinbox connect <agent> --code <code>`), or by signing in to the hosted MCP server.
 _Avoid_: pair, link, log in
@@ -39,6 +43,18 @@ _Avoid_: pairing code, token, user code
 **Last check**:
 When a host last read the agent's inbox, and whether through the CLI or MCP; it is how the dashboard tells whether a host is still there.
 _Avoid_: last seen, heartbeat, last active
+
+**Wake**:
+Starting a host because the operator, or a contact they allowed, wrote to its agent, instead of a person starting it by hand; a stranger never wakes a host.
+_Avoid_: trigger, invoke, activate
+
+**Awake**:
+An agent is awake while one computer is ready to wake a host for it; only one computer keeps an agent awake at a time.
+_Avoid_: online, listening, claimed
+
+**Session**:
+A host's working memory of one conversation, kept between wakes until the conversation is resolved.
+_Avoid_: thread, context, chat
 
 ### Inbox
 
@@ -73,7 +89,7 @@ The hidden Novu organization, with its hidden Novu user, behind an Agent Inbox a
 _Avoid_: shadow org, Novu account, workspace
 
 **Keyless setup**:
-What an operator builds with the CLI before signing up.
+What an operator, or an agent for them, builds with the CLI before signing up.
 _Avoid_: demo, demo workspace
 
 **Claim**:

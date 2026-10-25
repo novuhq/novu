@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 import { ConnectPage } from '@/components/connect/connect-page';
 import { InviteFrame } from '@/components/invite/invite-frame';
-import { resolveNovuApiUrl } from '@/lib/novu-api';
+import { API_PROXY_PATH } from '@/lib/novu-api';
 import { setupChannelOf } from '@/lib/setup-link';
 
 export const metadata: Metadata = {
@@ -17,11 +17,11 @@ export const metadata: Metadata = {
  * browser. The token stays in the fragment, so this server component never sees it.
  */
 export default async function Page(props: PageProps<'/connect'>) {
-  const { channel, region } = await props.searchParams;
+  const { channel } = await props.searchParams;
 
   return (
     <InviteFrame>
-      <ConnectPage apiUrl={resolveNovuApiUrl(region)} channel={setupChannelOf(channel)} />
+      <ConnectPage apiUrl={API_PROXY_PATH} channel={setupChannelOf(channel)} />
     </InviteFrame>
   );
 }

@@ -20,7 +20,6 @@ vi.mock('../api/setup', () => ({
   issueSlackSetupLink: vi.fn(),
   getSlackSetupLinkStatus: vi.fn(),
   hasChannelEndpoint: vi.fn(),
-  getSubscriberEmail: vi.fn(),
 }));
 
 vi.mock('../api/agent-inbox', async (importOriginal) => ({

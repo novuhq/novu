@@ -9,7 +9,6 @@ import { runSend } from './commands/interact';
 import { inviteCommand } from './commands/invite';
 import { loginCommand } from './commands/login';
 import { setupCommand } from './commands/setup';
-import { installSkillCommand } from './commands/skill';
 import { CLI_COMMAND } from './config';
 
 const program = new Command();
@@ -18,7 +17,7 @@ program
   .name(CLI_COMMAND)
   .description(
     'An inbox for your agent. People write to it on Telegram, Slack or email; it reads, asks and answers.\n\n' +
-      'Every command is `<command> <action>`: setup, login, connect, inbox, contact, channel, skill.\n\n' +
+      'Every command is `<command> <action>`: setup, login, connect, inbox, contact, channel.\n\n' +
       'Exit codes: 0 answered/approved · 10 denied · 11 timed out (the answer shows up in the conversation) · 12 expired/canceled · 1 error'
   )
   .version(version);
@@ -42,7 +41,7 @@ function collect(value: string, previous: string[]): string[] {
 function withSendOptions(command: Command): Command {
   return command
     .option('--from <name>', 'attribution label shown to the person (e.g. "deploy-bot")')
-    .option('--ttl <duration>', 'time until a question expires (e.g. 90s, 10m, 2h; max 72h; default 24h)')
+    .option('--ttl <duration>', 'time until a question expires (e.g. 90s, 10m, 2h, 1d; max 5d; default 24h)')
     .option('--timeout <duration>', 'max time to block waiting for an answer (default: until answered or expired)')
     .option('--async', 'return at once instead of waiting for an answer')
     .option('--option <label...>', 'choose: a choice (repeat for each option, 2-10). Also accepts id:label')
@@ -198,7 +197,7 @@ channel
   .description('Set the channel used when a message goes to you')
   .action(channelDefaultCommand);
 
-// --- setup, login, connect, skill ---
+// --- setup, login, connect ---
 
 program
   .command('setup')
@@ -216,8 +215,6 @@ program
   .option('--agent-description <text>', 'a line about what your agent does, shown with its name')
   .option('--agent-picture <file-or-url>', 'your agent’s picture: a JPEG or PNG of up to 2 MB (needs `login`)')
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
-  .option('--skill', 'also install the agent-inbox skill for coding agents (default: prompt on a TTY)')
-  .option('--no-skill', 'skip the coding-agent skill install')
   .description('Create your agent inbox, then optionally connect Telegram or Slack')
   .action(setupCommand);
 
@@ -237,22 +234,5 @@ program
   .option('--api-url <url>', 'API URL override')
   .description('Connect this computer to an agent with a one-time code from agentinbox.md')
   .action(connectCommand);
-
-const skill = program
-  .command('skill')
-  .description('Teach coding agents (Claude Code, Cursor, ...) how to use this CLI');
-
-skill
-  .command('install')
-  .option(
-    '--host <host...>',
-    'install for specific hosts (claude, cursor, windsurf, copilot, gemini, roo, opencode, kiro, agents) — default: auto-detect'
-  )
-  .option('--cwd <dir>', 'project directory to install into (default: current directory)')
-  .option('--json', 'print JSON')
-  .description(
-    'Install the agent-inbox skill so agents know how to read the inbox and when to send, reply, ask, approve or choose'
-  )
-  .action(installSkillCommand);
 
 program.parse(process.argv);

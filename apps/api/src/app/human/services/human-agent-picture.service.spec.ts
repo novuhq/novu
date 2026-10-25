@@ -1,6 +1,11 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { AGENT_PICTURE_MAX_BYTES, detectPictureType, HumanAgentPictureService } from './human-agent-picture.service';
+import {
+  AGENT_PICTURE_MAX_BYTES,
+  agentPictureUrl,
+  detectPictureType,
+  HumanAgentPictureService,
+} from './human-agent-picture.service';
 
 const ENV = '69f84d848bed9b0a73216d98';
 const AGENT = '69f84d848bed9b0a73216d97';
@@ -27,16 +32,34 @@ describe('HumanAgentPictureService', () => {
       getFile: sinon.stub().resolves(PNG),
     };
     const humanAgentIdentity = { updateTelegramBots: sinon.stub().resolves() };
+    const humanOperator = {
+      cardNameFor: sinon.stub().resolves({ operatorName: 'Ada L.', operatorFirstName: 'Ada' }),
+    };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
     const service = new HumanAgentPictureService(
       agentRepository as never,
       storageService as never,
       humanAgentIdentity as never,
+      humanOperator as never,
       logger as never
     );
 
-    return { service, agentRepository, storageService, humanAgentIdentity };
+    return { service, agentRepository, storageService, humanAgentIdentity, humanOperator };
   }
+
+  it('names the operator as the agent’s card does when the agent is read', async () => {
+    const { service, humanOperator } = setup();
+
+    expect(await service.get(scope)).to.include({ operatorName: 'Ada L.', operatorFirstName: 'Ada' });
+    expect(humanOperator.cardNameFor.firstCall.args[0]).to.include({
+      environmentId: ENV,
+      organizationId: 'org1',
+      agentId: AGENT,
+    });
+
+    humanOperator.cardNameFor.resolves(undefined);
+    expect(await service.get(scope)).to.not.have.any.keys('operatorName', 'operatorFirstName');
+  });
 
   it('tells a JPEG and a PNG by their first bytes, and nothing else', () => {
     expect(detectPictureType(JPEG)?.contentType).to.equal('image/jpeg');
@@ -114,6 +137,50 @@ describe('HumanAgentPictureService', () => {
     });
 
     expect(await service.read({ environmentId: ENV, agentId: AGENT, version: 'v1' })).to.equal(null);
+  });
+});
+
+describe('agentPictureUrl', () => {
+  const agent = {
+    _id: AGENT,
+    _environmentId: ENV,
+    picture: { storageKey: 'key', contentType: 'image/png', version: 'v1' },
+  };
+  const names = ['HUMAN_DASHBOARD_URL', 'NOVU_REGION', 'API_ROOT_URL'] as const;
+  const saved = Object.fromEntries(names.map((name) => [name, process.env[name]]));
+
+  afterEach(() => {
+    for (const name of names) {
+      if (saved[name] === undefined) {
+        delete process.env[name];
+      } else {
+        process.env[name] = saved[name];
+      }
+    }
+  });
+
+  it('goes through the Agent Inbox dashboard, whose /api forwards to the US API', () => {
+    process.env.HUMAN_DASHBOARD_URL = 'https://www.agentinbox.md/';
+    process.env.NOVU_REGION = 'us-east-1';
+    process.env.API_ROOT_URL = 'https://api.novu.co';
+
+    expect(agentPictureUrl(agent)).to.equal(`https://www.agentinbox.md/api/v1/agent-pictures/${ENV}/${AGENT}/v1`);
+  });
+
+  it('keeps the API address in the EU, which the dashboard does not forward to, and without a dashboard', () => {
+    process.env.HUMAN_DASHBOARD_URL = 'https://www.agentinbox.md';
+    process.env.NOVU_REGION = 'eu-west-2';
+    process.env.API_ROOT_URL = 'https://eu.api.novu.co/';
+    expect(agentPictureUrl(agent)).to.equal(`https://eu.api.novu.co/v1/human/agent-pictures/${ENV}/${AGENT}/v1`);
+
+    process.env.HUMAN_DASHBOARD_URL = '';
+    process.env.NOVU_REGION = 'us-east-1';
+    process.env.API_ROOT_URL = 'https://novu.example.com';
+    expect(agentPictureUrl(agent)).to.equal(`https://novu.example.com/v1/human/agent-pictures/${ENV}/${AGENT}/v1`);
+  });
+
+  it('has no address for an agent without a picture', () => {
+    expect(agentPictureUrl({ _id: AGENT, _environmentId: ENV })).to.equal(undefined);
   });
 });
 

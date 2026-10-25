@@ -5,6 +5,7 @@ import {
   createContext,
   type TransitionStartFunction,
   useContext,
+  useEffect,
   useId,
   useLayoutEffect,
   useOptimistic,
@@ -65,6 +66,8 @@ type AgentSettingsCardProps = {
   handle: string;
   /** `null` when the page couldn't read them: the two controls then wait, and the block says so. */
   settings: AgentSettings | null;
+  /** Told whether the agent shows as paused, for the card on the page: the switch's state, as it changes. */
+  onPausedChange?: (paused: boolean) => void;
 };
 
 type SettingRow = 'reach' | 'pause';
@@ -75,7 +78,7 @@ type SettingRow = 'reach' | 'pause';
  * what was saved, and the row says what went wrong. Settings the page couldn't read aren't shown as if they
  * were saved: the controls can't be used until a reload reads them.
  */
-export function AgentSettingsCard({ handle, settings }: AgentSettingsCardProps) {
+export function AgentSettingsCard({ handle, settings, onPausedChange }: AgentSettingsCardProps) {
   const actions = useContext(AgentSettingsActionsContext);
   const unavailable = settings === null;
   // What was saved last: the page's settings, or what a save answered with before the page caught up.
@@ -87,6 +90,11 @@ export function AgentSettingsCard({ handle, settings }: AgentSettingsCardProps) 
   }
 
   const [shown, showChange] = useOptimistic(saved, applyChange);
+  // The card shows the pause as the switch does: at once, and undone with it when saving fails.
+  const pausedShown = Boolean(shown.paused);
+  useEffect(() => {
+    onPausedChange?.(pausedShown);
+  }, [pausedShown, onPausedChange]);
   const [errors, setErrors] = useState<Partial<Record<SettingRow, string>>>({});
   const [reachSaving, startReachSave] = useTransition();
   const [pauseSaving, startPauseSave] = useTransition();

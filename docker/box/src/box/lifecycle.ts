@@ -5,7 +5,7 @@ import * as proc from '../node/process.ts';
 import { type Baked, PackageJson } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
 import { seedBridge, seedManagedAgent, syncBridge } from './bridge.ts';
-import { build, buildBridge, deployApp, pnpmInstall, prepareDashboard } from './build.ts';
+import { build, buildBridge, deployApp, dropNxCache, pnpmInstall, prepareDashboard } from './build.ts';
 import { fetchRef, gitWithToken } from './git.ts';
 import { lockHolder, withLock } from './lock.ts';
 import {
@@ -71,6 +71,7 @@ async function bakeLocked(ref: string, token: string | undefined): Promise<void>
   } finally {
     await step('shutdown', supervisor.stop);
   }
+  await step('drop the nx cache', dropNxCache);
 
   const baked: Baked = { ref, sha, at: new Date().toISOString() };
   fs.writeFileSync(BAKED, JSON.stringify(baked, null, 2));

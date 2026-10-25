@@ -22,7 +22,13 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
-import { ApiAuthSchemeEnum, ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import {
+  ApiAuthSchemeEnum,
+  ApiRateLimitCategoryEnum,
+  NOVU_ANALYTICS_SOURCE_HEADER,
+  PermissionsEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { AgentInboxAddressService } from '../agents/email/novu-email/agent-inbox-address.service';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -62,11 +68,19 @@ import {
 } from './dtos/setup-human-relay.dto';
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
 import { assertFromHumanDashboard } from './guards/human-dashboard-secret.guard';
+import { readAnalyticsSource } from './services/agent-inbox-analytics';
 import {
   AGENT_PICTURE_FIELD,
   AGENT_PICTURE_MAX_BYTES,
   HumanAgentPictureService,
 } from './services/human-agent-picture.service';
+import {
+  AGENT_INBOX_HOST_HEADER,
+  AGENT_INBOX_VIA_HEADER,
+  HumanHostStatusService,
+  readHostId,
+  readHostVia,
+} from './services/human-host-status.service';
 import { HumanOperatorService } from './services/human-operator.service';
 import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-interaction.command';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
@@ -129,7 +143,8 @@ export class HumanInteractionsController {
     private readonly setOperatorDefaultChannelUsecase: SetOperatorDefaultChannel,
     private readonly changeOperatorEmailUsecase: ChangeOperatorEmail,
     private readonly sendHumanTestEmailUsecase: SendHumanTestEmail,
-    private readonly inboxAddresses: AgentInboxAddressService
+    private readonly inboxAddresses: AgentInboxAddressService,
+    private readonly hostStatus: HumanHostStatusService
   ) {}
 
   @Post('/interactions')
@@ -140,7 +155,8 @@ export class HumanInteractionsController {
   createInteraction(
     @UserSession() user: UserSessionData,
     @Body(new ValidationPipe({ transform: true, whitelist: true, forbidUnknownValues: false }))
-    body: CreateInteractionRequestDto
+    body: CreateInteractionRequestDto,
+    @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string
   ): Promise<InteractionResponseDto> {
     return this.createInteractionUsecase.execute(
       CreateInteractionCommand.create({
@@ -156,6 +172,7 @@ export class HumanInteractionsController {
         agentIdentifier: body.agentIdentifier,
         from: body.from,
         ttlSeconds: body.ttlSeconds,
+        analyticsSource: readAnalyticsSource(analyticsSource),
       })
     );
   }
@@ -318,7 +335,7 @@ export class HumanInteractionsController {
 
   /**
    * Whether an Agent Inbox handle is free. Asked while the operator types one. A taken handle comes
-   * back with a nearby free one.
+   * back with a nearby free one. With no handle, the answer is only the mailbox domain this deployment publishes.
    */
   @Get('/inbox-address')
   @KeylessAccessible()
@@ -333,11 +350,14 @@ export class HumanInteractionsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
-  setup(
+  async setup(
     @UserSession() user: UserSessionData,
-    @Body() body: SetupHumanRelayRequestDto
+    @Body() body: SetupHumanRelayRequestDto,
+    @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string,
+    @Headers(AGENT_INBOX_VIA_HEADER) via?: string,
+    @Headers(AGENT_INBOX_HOST_HEADER) host?: string
   ): Promise<SetupHumanRelayResponseDto> {
-    return this.setupHumanRelayUsecase.execute(
+    const result = await this.setupHumanRelayUsecase.execute(
       SetupHumanRelayCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -352,8 +372,21 @@ export class HumanInteractionsController {
         firstName: body.firstName,
         lastName: body.lastName,
         defaultVia: body.defaultVia,
+        analyticsSource: readAnalyticsSource(analyticsSource),
       })
     );
+
+    // The hosted MCP server creates the agent and is already the host: record it so the dashboard
+    // shows connected without waiting for a later inbox_list. Recording never fails the setup.
+    if (readHostVia(via) === 'mcp') {
+      await this.hostStatus.recordConnected(
+        { environmentId: user.environmentId, organizationId: user.organizationId },
+        result.agentId,
+        { via: 'mcp', id: readHostId(host) }
+      );
+    }
+
+    return result;
   }
 
   /**
@@ -578,7 +611,8 @@ export class HumanInteractionsController {
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   createInvite(
     @UserSession() user: UserSessionData,
-    @Body() body: CreateHumanInviteRequestDto
+    @Body() body: CreateHumanInviteRequestDto,
+    @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string
   ): Promise<CreateHumanInviteResponseDto> {
     return this.createHumanInviteUsecase.execute(
       CreateHumanInviteCommand.create({
@@ -589,6 +623,7 @@ export class HumanInteractionsController {
         agentIdentifier: body.agentIdentifier,
         firstName: body.firstName,
         lastName: body.lastName,
+        analyticsSource: readAnalyticsSource(analyticsSource),
       })
     );
   }

@@ -6,7 +6,7 @@ import { readStoredBackingAccount, type StoredBackingAccount, storeBackingAccoun
 import { approveCliLogin, denyCliLogin, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
 import { HumanApiError } from '@/lib/human-api-error';
 import { claimPastSignUp } from '@/lib/human-claim';
-import { noteAgentClaimed, noteHostConnected } from '@/lib/human-onboarding';
+import { noteAgentClaimed } from '@/lib/human-onboarding';
 
 import { normalizeUserCode } from './user-code';
 
@@ -102,9 +102,11 @@ export async function approveCliLoginAction(request: CliLoginRequest): Promise<A
     return describeApproveError(error);
   }
 
-  // A terminal that was let into the account is a host of its agent. One that brought its setup along
-  // brought the agent too, and that operator has no steps left to go through.
-  await (account.keptSetup ? noteAgentClaimed(user) : noteHostConnected(user, 'cli'));
+  // A terminal that brought its setup along brought the agent too, so its operator has no onboarding
+  // steps left. A plain login counts as a host only once the API sees it read the inbox.
+  if (account.keptSetup) {
+    await noteAgentClaimed(user);
+  }
 
   // The CLI is logged in at this point, so a failed write here must not read as a failed login.
   const remembered =

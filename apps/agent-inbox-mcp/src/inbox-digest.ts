@@ -101,7 +101,9 @@ export function formatThreadDigest(view: InboxThreadView): string {
   let hasStranger = thread.people.some((person) => person.kind === 'stranger');
 
   if (view.hasMore && view.messages[0]) {
-    parts.push(`(older messages: call inbox_show with thread "${thread.id}" and before "${view.messages[0].id}")`);
+    parts.push(
+      `(older messages: call inbox_show with conversation "${thread.id}" and before "${view.messages[0].id}")`
+    );
   }
 
   if (view.messages.length === 0) {
@@ -125,10 +127,10 @@ export function formatThreadDigest(view: InboxThreadView): string {
 export function formatInboxPage(page: InboxPage, now: number = Date.now()): string {
   if (page.data.length === 0) {
     if (page.next) {
-      return `No threads match so far. Keep looking with after: "${page.next}".`;
+      return `No conversations match so far. Keep looking with after: "${page.next}".`;
     }
 
-    return 'No threads match. Threads from strangers are hidden unless senders is "all".';
+    return 'No conversations match. Conversations with strangers are hidden unless senders is "all".';
   }
 
   const lines = page.data.map((thread) => formatThreadLine(thread, now));

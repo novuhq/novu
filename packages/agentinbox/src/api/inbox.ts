@@ -87,11 +87,11 @@ export interface ListInboxQuery {
 
 /** The API still calls a conversation a thread; the CLI never shows that name. */
 function conversationPath(id: string, suffix = ''): string {
-  return `/v1/human/inbox/${encodeURIComponent(id)}${suffix}`;
+  return `/v1/inbox/${encodeURIComponent(id)}${suffix}`;
 }
 
 export async function listInbox(client: ApiClient, query: ListInboxQuery): Promise<InboxPage> {
-  const res = await client.axios.get<InboxPage>('/v1/human/inbox', {
+  const res = await client.axios.get<InboxPage>('/v1/inbox', {
     params: query,
     // A held long-poll must outlive the default request timeout.
     ...(query.wait ? { timeout: (query.wait + 30) * 1000 } : {}),

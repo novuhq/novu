@@ -1,5 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { InstrumentUsecase, isAgentSharedInboxEnabled, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, InstrumentUsecase, isAgentSharedInboxEnabled, PinoLogger } from '@novu/application-generic';
 import {
   AgentEntity,
   AgentRepository,
@@ -20,6 +20,7 @@ import { NovuEmailProvisioningService } from '../../../agents/email/novu-email/f
 import { HUMAN_RELAY_DEFAULT_NAME } from '../../../agents/human-relay/human-relay-identity';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../../agents/shared/util/email-normalization';
 import type { SetupHumanRelayResponseDto } from '../../dtos/setup-human-relay.dto';
+import { trackAgentInboxChannelConnected, trackAgentInboxCreated } from '../../services/agent-inbox-analytics';
 import { HumanAgentIdentityService } from '../../services/human-agent-identity.service';
 import { HumanOperatorService } from '../../services/human-operator.service';
 import { SetupHumanRelayCommand } from './setup-human-relay.command';
@@ -47,7 +48,8 @@ export class SetupHumanRelay {
     private readonly humanOperator: HumanOperatorService,
     private readonly humanAgentIdentity: HumanAgentIdentityService,
     private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly analyticsService: AnalyticsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -60,6 +62,10 @@ export class SetupHumanRelay {
     const subscriberId = await this.resolveSubscriberId(command, agent);
     await this.ensureSubscriber(command, subscriberId);
     const inbox = await this.ensureAgentEmailInbox(command, agent);
+    // Only an address made just now comes back, so each inbox is counted once.
+    if (inbox.emailAddress) {
+      this.trackNewInbox(command, agent);
+    }
     await this.rememberDeclaredEmail(command, agent._id, subscriberId);
 
     if (command.defaultVia) {
@@ -242,6 +248,17 @@ export class SetupHumanRelay {
 
       return {};
     }
+  }
+
+  /** The agent's own address is its inbox, and also its email channel: the dashboard shows it connected at once. */
+  private trackNewInbox(command: SetupHumanRelayCommand, agent: AgentEntity): void {
+    const owner = { userId: command.userId, organizationId: command.organizationId };
+
+    trackAgentInboxCreated(this.analyticsService, owner, { agentId: agent._id, source: command.analyticsSource });
+    trackAgentInboxChannelConnected(this.analyticsService, owner, {
+      agentId: agent._id,
+      channel: HumanChannelViaEnum.EMAIL,
+    });
   }
 
   /** Stored unverified. Delivery still requires the verified slot. */

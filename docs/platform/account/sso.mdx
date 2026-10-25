@@ -104,6 +104,17 @@ A few consequences that are easy to miss:
 - If the connection is removed, Novu accounts are not deleted. Those people need another sign-in method that is still available on the account, such as a password, Google, or GitHub.
 - Starting login from an app tile inside the IdP (IdP-initiated SAML) is a separate switch. It is not part of the Security tab, and it is not available for OIDC. The sign-in flow above is the one to use. Ask us if you have a specific reason to start from the IdP.
 
+### Team members who sign in currently with Google or GitHub
+
+**Continue with Google** and **Continue with GitHub** on the sign-in page are available to every Novu Cloud account. They are separate from the SSO connection for your organization. Using one of those buttons is not the same as having SSO configured.
+
+After you activate the connection, a person whose email is on a verified domain keeps the same Novu account. Sign-in for that email goes through the IdP. They can start in either of these ways:
+
+- Enter the work email and select **Continue**. Novu sends them to the IdP. There is no password step for that email.
+- Select **Continue with Google** or **Continue with GitHub** and choose the account that uses that work email. Google or GitHub confirms the account, then Novu sends them to the IdP before opening the dashboard.
+
+A person whose email is not on a verified domain can keep using Google, GitHub, or a password. A person the IdP does not assign to the Novu application cannot sign in, including someone who previously used the Google button.
+
 Without directory sync, a person is created in Novu when they first sign in through SSO. That is just-in-time provisioning. Directory sync creates and deactivates people from the directory itself, so a leaver loses access without having to open Novu again.
 
 ## Provider guides

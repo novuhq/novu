@@ -4,13 +4,18 @@ import { refresh } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 import { CONFIGURE_PATH, DASHBOARD_HOME } from '@/components/dashboard/nav';
+import { isToolId } from '@/lib/ai-tools';
 import { findCurrentUser } from '@/lib/auth-page';
+import type { ConnectCodeResult } from '@/lib/host-status';
+import { isHostId } from '@/lib/hosts';
 import { requireHumanAccount } from '@/lib/human-account';
 import { sendAgentTestEmail } from '@/lib/human-agent-api';
-import { HumanApiError } from '@/lib/human-api-error';
+import { HumanApiError, isHumanApiRefusal } from '@/lib/human-api-error';
 import { requestForAccount } from '@/lib/human-api-key';
+import { createConnectCode } from '@/lib/human-hosts-api';
 import { describeProgress, loadSetupProgress, updateOnboardingState } from '@/lib/human-onboarding';
 import { ensureRelay } from '@/lib/human-operator';
+import { listConnectedTools } from '@/lib/human-tools-api';
 import { AGENT_NAME_MAX_LENGTH, ONBOARDING_PATH, toHandle } from '@/lib/onboarding';
 
 const DESTINATIONS = { inbox: DASHBOARD_HOME, configure: CONFIGURE_PATH, contacts: '/contacts' };
@@ -153,6 +158,29 @@ export async function sendTestEmailAction(): Promise<SendTestEmailResult> {
   return { ok: true };
 }
 
+/** A real one-time code for the host the operator connects in step 3, made for the host chosen there (`host`). */
+export async function createOnboardingConnectCodeAction(handle: string, host?: string): Promise<ConnectCodeResult> {
+  if (!isHandle(handle)) {
+    return { ok: false, error: 'This agent can’t be connected by name. Check its address on this page.' };
+  }
+
+  const account = await requireHumanAccount({ returnTo: ONBOARDING_PATH });
+
+  try {
+    const code = await createConnectCode(account, handle, isHostId(host) ? host : undefined);
+
+    return { ok: true, code, expiresInMs: Date.parse(code.expiresAt) - Date.now() };
+  } catch (error) {
+    if (isHumanApiRefusal(error) && error instanceof Error) {
+      return { ok: false, error: error.message };
+    }
+
+    console.error('Failed to get an onboarding connect code', error);
+
+    return { ok: false, error: 'We couldn’t get a code just now.' };
+  }
+}
+
 /**
  * Leaves step 2: on to connecting the agent, with the test or without it, or out to the dashboard for
  * now. Either way the test is behind the operator, and "Continue setup" opens step 3.
@@ -172,18 +200,6 @@ export async function leaveTestAction(how: 'connect' | 'skip' | 'later'): Promis
   refresh();
 }
 
-/** Step 3: the operator copied the prompt or its commands. The stand-in host connects a moment later. */
-export async function notePromptCopiedAction(): Promise<void> {
-  const now = new Date().toISOString();
-  await updateOnboardingState((state) => (state.promptCopiedAt ? state : { ...state, promptCopiedAt: now }));
-}
-
-/** Leaves the steps unfinished for the dashboard, where the banners keep pointing back to the step left behind. */
-export async function skipForNowAction(destination: Destination = 'inbox'): Promise<void> {
-  await updateOnboardingState((state) => ({ ...state, skippedAt: new Date().toISOString() }));
-  redirect(DESTINATIONS[destination] ?? DASHBOARD_HOME);
-}
-
 /** Leaves step 4, and with it the onboarding, for a page of the dashboard. */
 export async function finishOnboardingAction(destination: Destination): Promise<void> {
   const now = new Date().toISOString();
@@ -194,8 +210,12 @@ export async function finishOnboardingAction(destination: Destination): Promise<
 /** How far the setup got right now (`describeProgress`). The onboarding page reloads on a new answer. */
 export async function readOnboardingStatusAction(): Promise<string> {
   const account = await requireHumanAccount({ returnTo: ONBOARDING_PATH });
+  const progress = await loadSetupProgress(account);
+  if (progress.agent && progress.state.testLeftAt && !progress.hostStatus) {
+    throw new Error('Failed to read the host status');
+  }
 
-  return describeProgress(await loadSetupProgress(account));
+  return describeProgress(progress);
 }
 
 /** Configure: the "is set up" banner was dismissed and stays away. */
@@ -208,6 +228,17 @@ export async function dismissDoneBannerAction(): Promise<void> {
 export async function hideChecklistAction(): Promise<void> {
   await updateOnboardingState((state) => ({ ...state, checklist: { ...state.checklist, hidden: true } }));
   refresh();
+}
+
+/** Whether a chat app has signed in to the account. Its drawer on step 3 asks while it's open. */
+export async function checkOnboardingToolConnectedAction(tool: string): Promise<boolean> {
+  if (!isToolId(tool)) {
+    return false;
+  }
+
+  const account = await requireHumanAccount({ returnTo: ONBOARDING_PATH });
+
+  return (await listConnectedTools(account)).includes(tool);
 }
 
 /** Inbox: ticks an item of the list off, once the operator did what it asks. */

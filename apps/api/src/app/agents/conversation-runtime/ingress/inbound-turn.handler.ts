@@ -1255,6 +1255,7 @@ export class AgentInboundHandler implements OnModuleInit {
         platform: config.platform,
         platformUserId,
         integrationIdentifier: config.integrationIdentifier,
+        agentIdentifier: config.agentIdentifier,
       });
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed (${operation}), continuing without it`);

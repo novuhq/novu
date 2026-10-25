@@ -1,14 +1,14 @@
 /**
- * The API the CLI talks to when it isn't told otherwise (`DEFAULT_API_URL` in `packages/agentinbox`). The
- * commands name their API only when it is another one: staging, a local API while developing, and the EU
- * API, which a key alone doesn't lead the CLI to.
+ * The API the CLI talks to when it isn't told otherwise (`DEFAULT_API_URL` in `packages/agentinbox`): this
+ * site's Agent Inbox API. The commands name their API only when it is another one: staging, or a local
+ * dashboard while developing.
  */
-const CLI_DEFAULT_API_URL = 'https://api.novu.co';
+const CLI_DEFAULT_API_URL = 'https://www.agentinbox.md/api';
 
 const CLI = 'npx @agentinbox/cli';
 
 export type PromptContext = {
-  /** The API the account lives on. */
+  /** The Agent Inbox API the CLI reaches the account through (`readCliApiUrl`): this site's `/api`. */
   apiUrl: string;
 };
 

@@ -20,7 +20,7 @@ describe('generateConnectOauthUrl', () => {
     // An `agent:<identifier>` context key would scope the resulting SLACK_USER endpoint,
     // hiding it from every unscoped workflow trigger. Setup, invite, and link-channel
     // all go through this helper.
-    expect(post).toHaveBeenCalledWith('/v1/integrations/channel-connections/oauth', {
+    expect(post).toHaveBeenCalledWith('/v1/channels/slack/install-link', {
       integrationIdentifier: 'slack-main',
       subscriberId: 'user_1',
       connectionMode: 'subscriber',

@@ -6,7 +6,14 @@ import { revalidatePath } from 'next/cache';
 import { CONFIGURE_PATH, DASHBOARD_HOME } from '@/components/dashboard/nav';
 import { AGENT_REACHES, type AgentSettings, type AgentSettingsChange } from '@/lib/agent-settings';
 import { isToolId } from '@/lib/ai-tools';
-import { type CodeStatusResult, type ConnectCodeResult, type HostStatus, NEVER_CHECKED } from '@/lib/host-status';
+import {
+  type AgentHost,
+  type CodeStatusResult,
+  type ConnectCodeResult,
+  type HostStatus,
+  NEVER_CHECKED,
+} from '@/lib/host-status';
+import { isHostId } from '@/lib/hosts';
 import { readHumanAccount, requireHumanAccount } from '@/lib/human-account';
 import { AGENT_NOT_SET_UP_MESSAGE, deleteAgent, updateAgentSettings } from '@/lib/human-agent-api';
 import { readAgentStatus } from '@/lib/human-agent-status';
@@ -111,10 +118,12 @@ export async function deleteAgentAction(): Promise<DeleteAgentResult> {
 }
 
 /**
- * A one-time code for "Connect another agent", for the agent as the page names it. The drawer asks when it
- * opens, shortly before the code runs out, and when the API says the one it shows ran out.
+ * A one-time code for "Connect another agent", for the agent as the page names it, and for the host picker's
+ * tab it shows on (`host`), which a host that doesn't say which one it is then counts as. The drawer asks when
+ * it opens, when another host's tab is chosen, shortly before the code runs out, and when the API says the one
+ * it shows ran out.
  */
-export async function createConnectCodeAction(handle: string): Promise<ConnectCodeResult> {
+export async function createConnectCodeAction(handle: string, host?: string): Promise<ConnectCodeResult> {
   if (!isHandle(handle)) {
     return { ok: false, error: 'This agent can’t be connected by name. Check its address on this page.' };
   }
@@ -122,7 +131,7 @@ export async function createConnectCodeAction(handle: string): Promise<ConnectCo
   const account = await requireHumanAccount({ returnTo: '/configure' });
 
   try {
-    const code = await createConnectCode(account, handle);
+    const code = await createConnectCode(account, handle, isHostId(host) ? host : undefined);
 
     return { ok: true, code, expiresInMs: Date.parse(code.expiresAt) - Date.now() };
   } catch (error) {
@@ -183,6 +192,21 @@ export async function readHostCheckAction(): Promise<string> {
   }
 
   return (await readHostStatus(account)).lastCheckedAt ?? NEVER_CHECKED;
+}
+
+/**
+ * Each host with its last check, for the Agent setup row once a check newer than any it shows comes in. Like
+ * `readHostCheckAction` it runs in the background: a failure throws, and a session that ended doesn't send
+ * the operator to sign in from here.
+ */
+export async function readHostsAction(): Promise<AgentHost[]> {
+  const user = await currentUser();
+  const account = user && readHumanAccount(user);
+  if (!account) {
+    throw new Error('Not signed in');
+  }
+
+  return (await readHostStatus(account)).hosts;
 }
 
 function isHandle(handle: unknown): handle is string {

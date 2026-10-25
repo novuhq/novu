@@ -31,7 +31,6 @@ type Way = {
  */
 export function Reach({ card }: { card: PublicAgentCard }) {
   const titleId = useId();
-  const operatorFirstName = card.operatorName.split(' ')[0] ?? '';
 
   return (
     <section
@@ -63,7 +62,7 @@ export function Reach({ card }: { card: PublicAgentCard }) {
         <p className="mt-4 flex items-center gap-2 text-xs leading-4 text-muted">
           <ShieldCheck aria-hidden="true" className="size-3.25 shrink-0" />
           {/* Not in the design without an operator: "the owner" stands in for their name. */}
-          <span>Someone new? {operatorFirstName || 'The owner'} approves your first message.</span>
+          <span>Someone new? {card.operatorFirstName || 'The owner'} approves your first message.</span>
         </p>
       )}
 

@@ -45,6 +45,7 @@ export class CreateConnectCode {
       handle: command.handle,
       // The code only hands out the key that is current now: one replaced since makes it stale.
       keyFingerprint: keyFingerprint(environment.apiKeys?.[0]),
+      ...(command.host ? { host: command.host } : {}),
     });
   }
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useClerk } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { AddressStep, type AgentDraft } from '@/components/onboarding/address-step';
@@ -10,15 +11,17 @@ import { OnboardingShell, SetupCard, StepRail } from '@/components/onboarding/on
 import { TimeAgo } from '@/components/onboarding/parts';
 import { ReachStep } from '@/components/onboarding/reach-step';
 import { TestStep } from '@/components/onboarding/test-step';
+import { Button } from '@/components/ui/button';
 import { StatusPoll } from '@/components/ui/status-poll';
 import { toast } from '@/components/ui/toast';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { useSwap } from '@/hooks/use-swap';
+import type { HostId } from '@/lib/hosts';
 import type { OnboardingView } from '@/lib/human-onboarding';
 import { addressOf, cardLinkOf, type OnboardingStep, PLACEHOLDER_HANDLE } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
-import { readOnboardingStatusAction } from './actions';
+import { checkOnboardingToolConnectedAction, readOnboardingStatusAction } from './actions';
 
 const IDENTITY_STATE: Record<OnboardingStep, IdentityState> = {
   address: 'draft',
@@ -27,8 +30,11 @@ const IDENTITY_STATE: Record<OnboardingStep, IdentityState> = {
   reach: 'connected',
 };
 
-/** How often each step asks whether something happened outside the page. Step 4 waits for nothing. */
-const POLL_MS: Partial<Record<OnboardingStep, number>> = { address: 3000, test: 4000, connect: 3000 };
+/** How often the host status is checked while connecting or waiting for its first inbox read. */
+const HOST_POLL_MS = 3000;
+
+/** How often each step asks whether something happened outside the page. */
+const POLL_MS: Partial<Record<OnboardingStep, number>> = { address: 3000, test: 4000, connect: HOST_POLL_MS };
 
 /** Quicker while the reply to the test email is on its way. */
 const REPLY_POLL_MS = 2000;
@@ -36,25 +42,61 @@ const REPLY_POLL_MS = 2000;
 /** How long a step takes to fade out before the next one rises in. */
 const SWAP_MS = 200;
 
+/** What a chat app's steps ask this page's server while they wait for its sign-in. */
+const TOOL_API = { isToolSignedIn: checkOnboardingToolConnectedAction };
+
 /**
  * The onboarding, on whichever step the setup has reached. The server decides the step and
  * `OnboardingScreen` renders it; anything that changes outside the page (a setup in a terminal, the
  * reply, a host connecting) is noticed here, by asking the server again.
  */
-export function OnboardingFlow({ view }: { view: OnboardingView }) {
+export function OnboardingFlow({ view, initialHost }: OnboardingScreenProps) {
+  const router = useRouter();
   const waitingForReply = view.step === 'test' && Boolean(view.test.sentAt) && !view.test.replyAt;
-  const pollMs = waitingForReply ? REPLY_POLL_MS : POLL_MS[view.step];
+  const waitingForHostRead =
+    view.step === 'reach' && (view.waiting === null || view.waiting > 0) && !view.waitingMessage;
+  let pollMs = POLL_MS[view.step];
+  if (waitingForReply) {
+    pollMs = REPLY_POLL_MS;
+  } else if (waitingForHostRead) {
+    pollMs = HOST_POLL_MS;
+  }
+
+  if (view.hostStatusUnavailable) {
+    return (
+      <>
+        <StatusPoll status={view.status} read={readOnboardingStatusAction} everyMs={HOST_POLL_MS} />
+        <OnboardingShell aside={<Aside email={view.operator.email} />}>
+          <section className="flex w-full max-w-lg flex-col items-start gap-4 rounded-xl border border-border bg-background p-8">
+            <h1 className="text-xl font-medium text-foreground">We couldn’t check your agent’s connection</h1>
+            <p className="text-sm leading-5 text-secondary">
+              Your agent may already be connected. Try again instead of connecting it a second time.
+            </p>
+            <Button variant="secondary" onClick={() => router.refresh()}>
+              Try again
+            </Button>
+          </section>
+        </OnboardingShell>
+      </>
+    );
+  }
 
   return (
     <>
       {pollMs && <StatusPoll status={view.status} read={readOnboardingStatusAction} everyMs={pollMs} />}
-      <OnboardingScreen view={view} />
+      <OnboardingScreen view={view} initialHost={initialHost} />
     </>
   );
 }
 
+type OnboardingScreenProps = {
+  view: OnboardingView;
+  /** The host the "Connect" step starts on (`?connect=codex`), instead of the first one. */
+  initialHost?: HostId | null;
+};
+
 /** One screen of the onboarding: the page chrome, the step on the left and the agent's card on the right. */
-export function OnboardingScreen({ view }: { view: OnboardingView }) {
+export function OnboardingScreen({ view, initialHost }: OnboardingScreenProps) {
   const { step, agent, operator, test, host } = view;
   // Step 1 has no agent yet: its card is drawn from what the operator is typing.
   const [draft, setDraft] = useState<AgentDraft>({ name: '', handle: '' });
@@ -82,7 +124,7 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
                 'Your agent’s inbox · not created yet'
               )
             }
-            address={agent?.address || (draft.handle ? addressOf(draft.handle) : '')}
+            address={agent?.address || (draft.handle ? addressOf(draft.handle, view.mailDomain) : '')}
             cardLink={agent?.cardLink ?? cardLinkOf(view.origin, draft.handle || PLACEHOLDER_HANDLE)}
             telegramConnected={view.channels.telegram}
             gotMail={testPassed}
@@ -109,7 +151,7 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
                   : 'animate-rise-in motion-reduce:animate-none'
               )}
             >
-              {shown === 'address' && <AddressStep onDraftChange={setDraft} />}
+              {shown === 'address' && <AddressStep mailDomain={view.mailDomain} onDraftChange={setDraft} />}
               {shown === 'test' && agent && (
                 <TestStep
                   name={agent.name}
@@ -122,9 +164,12 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
               {shown === 'connect' && agent && (
                 <ConnectStep
                   handle={agent.handle}
-                  address={agent.address}
-                  code={view.connectCode}
-                  waiting={view.waiting}
+                  apiUrl={view.apiUrl}
+                  waiting={view.waiting ?? 0}
+                  mcpUrl={view.mcpUrl}
+                  connectedHosts={view.connectedTools}
+                  api={TOOL_API}
+                  initialHost={initialHost}
                 />
               )}
               {shown === 'reach' && agent && host && (
@@ -132,8 +177,9 @@ export function OnboardingScreen({ view }: { view: OnboardingView }) {
                   handle={agent.handle}
                   cardLink={agent.cardLink}
                   host={host}
-                  readFrom={operator.email}
+                  waitingMessage={view.waitingMessage}
                   channels={view.channels}
+                  channelSetup={view.channelSetup}
                   reach={view.reach}
                 />
               )}

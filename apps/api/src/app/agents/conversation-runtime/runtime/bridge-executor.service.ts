@@ -6,6 +6,7 @@ import {
   buildNovuSignatureHeader,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
+  isNovuTlsEnabled,
   PinoLogger,
   resolvePublicAddresses,
   type SafeOutboundStreamResponse,
@@ -80,24 +81,28 @@ function isLoopbackHttpsUrl(rawUrl: string): boolean {
  * on the same machine can reach it directly, and TLS (with its untrusted
  * private dev CA) never enters the picture. An explicit AGENT_API_HOSTNAME is
  * trusted verbatim so unusual self-host topologies keep full control.
+ *
+ * Under NOVU_TLS_ENABLED there is no plain-HTTP port to fall back to and the
+ * operator's CA is trusted deployment-wide, so the downgrade is skipped.
  */
 function resolveAgentReplyApiOrigin(): string {
   const port = process.env.PORT || '3000';
-  const localHttpOrigin = `http://localhost:${port}`;
+  const tlsEnabled = isNovuTlsEnabled();
+  const localOrigin = tlsEnabled ? `https://localhost:${port}` : `http://localhost:${port}`;
 
   let rootUrl: string;
   try {
     rootUrl = buildAgentApiRootUrl();
   } catch {
-    return localHttpOrigin;
+    return localOrigin;
   }
 
   if (process.env.AGENT_API_HOSTNAME?.trim()) {
     return rootUrl;
   }
 
-  if (isLoopbackHttpsUrl(rootUrl)) {
-    return localHttpOrigin;
+  if (!tlsEnabled && isLoopbackHttpsUrl(rootUrl)) {
+    return localOrigin;
   }
 
   return rootUrl;
