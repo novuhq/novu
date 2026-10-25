@@ -388,7 +388,15 @@ overrides:
   '@tootallnate/once@<3.0.1': ^3.0.1
   protobufjs@<7.6.5: ^7.6.5
   protobufjs@>=8.0.0 <8.6.6: ^8.6.6
-  ip-address@<10.7.1: ^10.7.1
+  # GHSA-rxp7-6hxx-x8q5 (moderate): ip-address denial of service / inefficient
+  # IPv6 parsing in `Address6` normalization paths. Patched in 10.7.4 (patch
+  # bump within the 10.7.x line). Widen the previous `<10.7.1` floor so
+  # transitive consumers (socks > ip-address via mongoose/mongodb across
+  # apps/api > @nestjs/terminus, apps/dashboard > @better-auth/sso >
+  # better-auth > @better-auth/mongo-adapter > mongodb, and
+  # apps/agent-inbox-mcp > @modelcontextprotocol/sdk > express-rate-limit)
+  # pick up the fix.
+  ip-address@<10.7.4: ^10.7.4
   mongoose@>=8.0.0 <8.24.1: ^8.24.1
   newrelic: 13.19.2
   # GHSA-5jgf-p345-68v8 / GHSA-f65p-4m7j-42xc / GHSA-fph4-wmhf-6fwf /
