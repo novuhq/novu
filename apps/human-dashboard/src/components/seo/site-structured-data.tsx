@@ -1,3 +1,4 @@
+import { HOME_FAQ } from '@/data/home';
 import { contentStructuredData, type PageContent, SITE_ORIGIN, type SitePage, siteStructuredData } from '@/lib/seo';
 
 type SiteStructuredDataProps = { page: SitePage; content?: never } | { content: PageContent; page?: never };
@@ -8,6 +9,7 @@ type SiteStructuredDataProps = { page: SitePage; content?: never } | { content: 
  */
 export function SiteStructuredData({ page, content }: SiteStructuredDataProps) {
   const data = page ? siteStructuredData(page) : contentStructuredData(content);
+  const graph = page === 'home' ? [...data['@graph'], homeFaq()] : data['@graph'];
 
   return (
     <>
@@ -17,9 +19,27 @@ export function SiteStructuredData({ page, content }: SiteStructuredDataProps) {
         type="application/ld+json"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is the script's text; `<` is escaped, so it can't end the script early
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(data).replace(/</g, '\\u003c'),
+          __html: JSON.stringify({ ...data, '@graph': graph }).replace(/</g, '\\u003c'),
         }}
       />
     </>
   );
+}
+
+/** The home page's questions, matching the sentences on the page. */
+function homeFaq() {
+  return {
+    '@type': 'FAQPage',
+    '@id': `${SITE_ORIGIN}/#faq`,
+    url: `${SITE_ORIGIN}/`,
+    isPartOf: { '@id': `${SITE_ORIGIN}/#webpage` },
+    mainEntity: HOME_FAQ.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  };
 }
