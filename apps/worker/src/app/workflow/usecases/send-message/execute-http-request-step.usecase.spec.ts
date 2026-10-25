@@ -169,6 +169,34 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
     expect(requestArgs.body).to.deep.equal({ eventCount: 2 });
   });
 
+  it('compiles previous HTTP request step outputs into downstream HTTP step request body', async () => {
+    const { usecase, httpClientService, executeBridgeJob } = buildUsecase({
+      url: 'https://example.com/webhook',
+      method: 'POST',
+      body: '{"content":"{{steps.http-request-step.content}}","title":"{{steps.http-request-step.title}}","status":{{steps.http-request-step.status}}}',
+    });
+
+    executeBridgeJob.buildStepsMap.resolves({
+      'http-request-step': {
+        status: true,
+        content: 'This is an example message.',
+        title: 'example text',
+      },
+    });
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(executeBridgeJob.buildStepsMap.calledOnce).to.equal(true);
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+
+    const requestArgs = httpClientService.request.firstCall.args[0];
+    expect(requestArgs.body).to.deep.equal({
+      content: 'This is an example message.',
+      title: 'example text',
+      status: true,
+    });
+  });
+
   it('uses the condition evaluation detail instead of a generic bridge skip detail when tracing succeeds', async () => {
     const { usecase, createExecutionDetails, createStepConditionEvaluationDetail } = buildUsecase(
       {

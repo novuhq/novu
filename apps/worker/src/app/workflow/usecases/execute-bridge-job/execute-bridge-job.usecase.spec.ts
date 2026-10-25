@@ -442,4 +442,40 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
 
     expect(stepsMap['digest-step'].events).to.deep.equal([{ id: 'latest' }]);
   });
+
+  it('buildStepsMap maps http_request parent outputs to steps.<stepId> namespace', async () => {
+    const { usecase, jobRepository } = buildUsecase();
+
+    const httpRequestJob = {
+      _id: 'http_job_1',
+      _parentId: undefined,
+      _environmentId: 'env_1',
+      type: 'http_request',
+      status: 'completed',
+      createdAt: new Date('2026-07-23T09:00:00.000Z'),
+      step: { stepId: 'http-request-step', uuid: 'http-request-step' },
+      stepOutput: {
+        status: true,
+        content: 'This is an example message.',
+        title: 'example text',
+      },
+    };
+
+    jobRepository.findOne.withArgs({ _id: 'http_job_1', _environmentId: 'env_1' }).resolves(httpRequestJob);
+
+    const downstreamJob = {
+      _id: 'downstream_job_1',
+      _parentId: 'http_job_1',
+      _environmentId: 'env_1',
+      step: { stepId: 'downstream-step', uuid: 'downstream-step' },
+    } as never;
+
+    const stepsMap = await usecase.buildStepsMap(downstreamJob, 'env_1');
+
+    expect(stepsMap['http-request-step']).to.deep.equal({
+      status: true,
+      content: 'This is an example message.',
+      title: 'example text',
+    });
+  });
 });
