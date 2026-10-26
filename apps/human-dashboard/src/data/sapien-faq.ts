@@ -23,56 +23,48 @@ export type FaqItem = {
   defaultOpen?: boolean;
 };
 
-// Questions are from Figma (node 874:9992). Figma only answers the first one.
 export const FAQ_ITEMS: readonly FaqItem[] = [
   {
     id: 'what-is-agent-inbox',
-    question: 'What is Agent Inbox?',
+    question: 'What is AgentInbox?',
     answer:
-      "Agent Inbox gives every AI agent its own inbox, with a real email address and handles on Slack, Telegram, and iMessage. Your agent can start conversations, handle replies, and keep context across every thread and channel, all through one CLI or API. It's built by Novu, the open-source communication infrastructure behind 1.5B messages a month.",
+      'AgentInbox is an inbox for AI agents. It gives your agent its own email address and connects it to Slack, Telegram, WhatsApp and iMessage to receive messages, start conversations, ask for approvals or choice, and handle replies.',
     defaultOpen: true,
   },
   {
-    id: 'what-is-a-conversation',
-    question: 'What is a conversation?',
-    // Draft copy — not in Figma
+    id: 'which-ai-tools',
+    question: 'Which AI tools can use AgentInbox?',
     answer:
-      'A conversation is a thread between your agent and a person: the first message plus every reply, attachment and reaction that follows. Agent Inbox keeps the full history in one timeline, so your agent has context even when someone switches channels.',
+      'Agents that run terminal commands can use the CLI. Compatible apps can connect through MCP. Official skills are available for coding agents such as Claude Code, Codex, Grok Bot and Cursor.',
   },
   {
-    id: 'compare-agentmail',
-    question: 'How Agent Inbox compares to AgentMail?',
-    // Draft copy — not in Figma
+    id: 'contact-directly',
+    question: 'Can people and services contact my agent directly?',
     answer:
-      'Agent Inbox is built around two-way conversations between agents and the people they work with. Each agent gets its own address, can continue the same thread across email, Slack, Telegram, WhatsApp and iMessage, and gets structured responses back, like an approval or a choice. The right fit depends on what your agent needs to do with the replies it receives.',
+      'Yes. People can message your agent through its connected channels, and services can send email to its address. Your account settings control who can reach it.',
   },
   {
-    id: 'compare-resend',
-    question: 'How Agent Inbox compares to Resend?',
-    // Draft copy — not in Figma
+    id: 'human-approvals',
+    question: 'How do human approvals work?',
     answer:
-      'Agent Inbox focuses on what happens after your agent sends a message: it receives replies, keeps them in the right thread and turns them into structured responses your agent can act on. Approve, ask, choose and tell are built in, so pausing for a human decision takes a single command.',
+      'Your agent sends an approval request to a contact. The contact approves or denies it, and AgentInbox returns the result. Your agent or application uses that result to decide whether to continue.',
   },
   {
-    id: 'compare-sendgrid-ses',
-    question: 'How Agent Inbox compares to SendGrid/AWS SES?',
-    // Draft copy — not in Figma
+    id: 'kept-between-runs',
+    question: 'Are conversations kept between agent runs?',
     answer:
       'Agent Inbox is designed for agents that hold conversations with humans across channels. Alongside email it covers Slack, Telegram, WhatsApp and iMessage, with contacts, conversation history and activity logs in one place, and it is set up with one command: agentinbox setup.',
   },
   {
-    id: 'multi-tenant',
-    // Figma typo "usec ases" fixed to "use cases".
-    question: 'Does Agent Inbox support multi-tenant use cases?',
-    // Draft copy — not in Figma
+    id: 'get-an-inbox',
+    question: 'How do I get my agent an Inbox?',
     answer:
-      'Yes. Multi-tenancy lets you run many agents, each with its own inbox, across multiple channels. Combine it with custom domains to send from an address your users already trust, and use activity logs to search and monitor every conversation.',
+      'Run npx @agentinbox/cli setup. You get an inbox that receives email straight away, with no account needed. When you want your agent to send, claim the inbox with a new or existing account, and you keep the address, threads and contacts. You can also sign up on agentinbox.md, or install the skills with npx skills add agentinboxhq/skills.',
   },
   {
-    id: 'is-it-free',
-    question: 'Is Agent Inbox free?',
-    // Draft copy — not in Figma
+    id: 'who-can-message',
+    question: 'Who can message my agent?',
     answer:
-      'You can start for free with 100 conversations a month, and no credit card is required. Agent Inbox is built by Novu.',
+      'You choose: anyone, or contacts only. With anyone, strangers can message your agent directly. With contacts only, messages from strangers are dropped, not held for review. Add people with an invite link; they verify on email, Telegram or Slack. Before your agent can send to a new email address, that address has to verify.',
   },
 ];

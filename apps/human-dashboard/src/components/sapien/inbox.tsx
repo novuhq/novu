@@ -11,6 +11,9 @@ export function InboxSection() {
       <h2 className="text-center text-3xl leading-[1.125] tracking-[-0.04em] text-balance md:text-[40px]">
         {INBOX_SECTION.title}
       </h2>
+      <p className="mx-auto mt-4 max-w-140 text-center text-lg leading-5.75 tracking-tight text-pretty text-sapien-foreground/50">
+        {INBOX_SECTION.description}
+      </p>
 
       <Tabs defaultValue={INBOX_SECTION.defaultAgent} className="mt-10 md:mt-9">
         {/* Below sm the strip runs from rail to rail. */}

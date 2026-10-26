@@ -20,21 +20,21 @@ export const scaleAssets = {
     width: 24,
     height: 24,
     nodeId: '724:4378',
-    purpose: 'Custom Domains feature icon',
+    purpose: 'Custom domains feature icon',
   },
   imgFrame1: {
     src: '/images/sapien/scale/imgFrame1.svg',
     width: 24,
     height: 24,
     nodeId: '724:4405',
-    purpose: 'Multi-tenancy feature icon',
+    purpose: 'Owner control feature icon',
   },
   imgFrame2: {
     src: '/images/sapien/scale/imgFrame2.svg',
     width: 24,
     height: 24,
     nodeId: '724:4426',
-    purpose: 'Activity logs feature icon',
+    purpose: 'Activity history feature icon',
   },
 } satisfies SectionAssets;
 
@@ -55,18 +55,18 @@ export type ScaleFeature = Readonly<{
 
 export const SCALE_FEATURES = [
   {
-    title: 'Custom Domains.',
-    description: 'Send and receive messages from your own domain, the one your users already trust.',
-    icon: scaleAssets.imgFrame,
-  },
-  {
-    title: 'Multi-tenancy.',
-    description: 'Deploy thousands of agents communicating on multiple channels with ease.',
+    title: 'Owner control.',
+    description: 'See every conversation and decision, set who can reach your agent, and pause it anytime.',
     icon: scaleAssets.imgFrame1,
   },
   {
-    title: 'Activity logs.',
-    description: 'A single unified conversation history that you can search and monitor at any time.',
+    title: 'Activity history.',
+    description: 'Search every conversation by channel and state.',
     icon: scaleAssets.imgFrame2,
+  },
+  {
+    title: 'Custom domains.',
+    description: 'Send from your own subdomain and keep your original address.',
+    icon: scaleAssets.imgFrame,
   },
 ] as const satisfies readonly ScaleFeature[];

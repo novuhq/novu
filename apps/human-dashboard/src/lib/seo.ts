@@ -65,13 +65,13 @@ export const SITE_PAGES = {
   },
   sapien: {
     path: '/sapien',
-    title: 'Agent Inbox — Bring human decisions into your AI workflows',
+    title: 'Agent Inbox | Email and chat inbox for AI agents',
     description:
-      'Add human approvals, questions, choices, and updates to AI workflows with @agentinbox/cli. Connect a messaging channel and let agents wait for your decision.',
+      'An inbox for AI agents to receive messages, reply, and request input or approvals across email, Slack, Telegram, WhatsApp and iMessage.',
     // The route segment's opengraph-image file; alt text as in its .alt.txt.
     image: {
       path: '/sapien/opengraph-image.jpg',
-      alt: 'agentinbox — The E-mail, Telegram and Slack inbox for AI agents',
+      alt: 'Agent Inbox connects your AI agent to Email, Slack, Telegram and iMessage inbox for AI agents',
     },
   },
 } as const;
