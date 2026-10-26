@@ -99,7 +99,7 @@ export function Hero() {
               command={SETUP_COMMAND}
               label={HERO_COMMAND_LABEL}
               variant="icon"
-              className="w-full text-left sm:w-[283px]"
+              className="w-full text-left sm:w-[292px]"
             />
             <CopyButton
               text={CLOSING_PROMPT}

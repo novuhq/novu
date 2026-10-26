@@ -2,7 +2,9 @@ import { logoAssets } from '@/data/sapien-assets';
 import { BOOK_DEMO_HREF } from '@/data/sapien-security';
 import { PACKAGE_URL, SOURCE_URL } from '@/lib/seo';
 
-export const SETUP_COMMAND = 'agentinbox setup';
+/** The setup command on /sapien. `npx` runs it without a global install. */
+export const SETUP_COMMAND = 'npx @agentinbox/cli setup';
+
 export type NavigationItem = {
   label: string;
   href: string;
