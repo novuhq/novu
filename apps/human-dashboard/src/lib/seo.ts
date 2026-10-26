@@ -7,14 +7,12 @@ export const SOURCE_URL = 'https://github.com/novuhq/novu/tree/next/packages/age
 export const PACKAGE_URL = 'https://www.npmjs.com/package/@agentinbox/cli';
 
 /**
- * Whether search engines may index the website pages. Off until launch: the pages and their text versions say
- * `noindex`. Crawling stays allowed, so engines read the `noindex` (a page robots.txt blocks can still be
- * listed, without its content). The sitemap still names the public pages, and robots.txt points to it.
- *
- * `SITE_NOINDEX=true` forces `noindex` on a deployment even after this is on. Set it on staging
- * (`staging.agentinbox.md`). It is read at build time, which is when Vercel bakes the headers.
+ * Whether search engines may index the public website pages on production (`www.agentinbox.md`).
+ * Preview and development stay out. `SITE_NOINDEX=true` forces `noindex` on every route of a deployment
+ * that must stay unindexed, such as `staging.agentinbox.md`. It is read at build time, which is when
+ * Vercel bakes the headers. Crawling stays allowed either way, so engines read a `noindex` where it is set.
  */
-export const SITE_INDEXED = false;
+export const SITE_INDEXED = true;
 
 /** `SITE_NOINDEX=true` (or `1`) on a deployment that must stay out of search results, such as staging. */
 export function siteNoindex(value: string | undefined = process.env.SITE_NOINDEX): boolean {
@@ -25,7 +23,7 @@ export function siteNoindex(value: string | undefined = process.env.SITE_NOINDEX
 
 /**
  * Where `X-Robots-Tag: noindex` is sent. Staging (`SITE_NOINDEX`), preview, and development cover every
- * route. Until launch, the website pages and their text versions do.
+ * route. With `SITE_INDEXED` off, only the website pages and their text versions do.
  */
 export function noindexPaths(
   environment = process.env.VERCEL_ENV,
@@ -42,7 +40,7 @@ export function noindexPaths(
   return 'none';
 }
 
-/** Whether a website page may be indexed: off until launch, and off on staging, preview, and development. */
+/** Whether a website page may be indexed: on in production, off on staging, preview, and development. */
 export function searchEnginesMayIndex(
   environment: string | undefined,
   noindex: boolean,
