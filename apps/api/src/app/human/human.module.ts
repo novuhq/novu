@@ -93,6 +93,7 @@ import { SetContactCanWake } from './usecases/set-contact-can-wake/set-contact-c
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
+import { ShowWakeTyping } from './usecases/show-wake-typing/show-wake-typing.usecase';
 import { TakeWakeLease } from './usecases/take-wake-lease/take-wake-lease.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 import { VerifyAddress } from './usecases/verify-address/verify-address.usecase';
@@ -206,6 +207,7 @@ import { WaitForWakeMessages } from './usecases/wait-for-wake-messages/wait-for-
     GetWakeLease,
     ReleaseWakeLease,
     WaitForWakeMessages,
+    ShowWakeTyping,
     SetContactCanWake,
   ],
 })

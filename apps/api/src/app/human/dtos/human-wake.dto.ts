@@ -73,6 +73,22 @@ export class TakeWakeLeaseRequestDto extends WakeHolderDto {
 
 export class ReleaseWakeLeaseRequestDto extends WakeHolderDto {}
 
+export class WakeTypingRequestDto extends WakeHolderDto {
+  @ApiProperty({
+    description: 'The conversation the woken host works on, as the messages wait gave it.',
+    maxLength: 100,
+  })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  conversationId: string;
+}
+
+export class WakeTypingResponseDto {
+  @ApiProperty({ description: 'Whether the chat shows it: false where it has no typing indicator, as in email.' })
+  typing: boolean;
+}
+
 export class WakeMessagesQueryDto extends WakeHolderDto {
   @ApiPropertyOptional({ description: 'The `next` of the last answer. Without it, only messages from now on count.' })
   @IsOptional()

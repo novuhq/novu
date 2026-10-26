@@ -822,6 +822,50 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
     });
   });
 
+  describe('typing while a host works', () => {
+    function showTyping(body: Record<string, unknown>) {
+      return asHost('post', '/v1/human/wake/typing').send({
+        computerId: MACBOOK.computerId,
+        host: MACBOOK.host,
+        ...body,
+      });
+    }
+
+    it('shows typing in the chat of its agent’s conversation, for the computer holding the lease', async () => {
+      await holdLease(MACBOOK);
+      await write('what files are in this folder?');
+      const thread = await threadWith(operatorId);
+      telegramApiStub.reset();
+
+      const res = await showTyping({ conversationId: thread });
+
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect(res.body.data).to.deep.equal({ typing: true });
+      const typing = telegramApiStub.calls.filter((call) => call.method === 'sendChatAction');
+      expect(typing.map((call) => [String(call.payload.chat_id), call.payload.action])).to.deep.equal([
+        [OPERATOR_CHAT_ID, 'typing'],
+      ]);
+    });
+
+    it('refuses a computer without the lease, a conversation that isn’t its agent’s, and a paused agent', async () => {
+      await holdLease(MACBOOK);
+      await write('hello');
+      const thread = await threadWith(operatorId);
+
+      expectRefused(
+        await showTyping({ computerId: STUDIO.computerId, host: STUDIO.host, conversationId: thread }),
+        409,
+        NOT_AWAKE
+      );
+      expect((await showTyping({ conversationId: 'conv_not_there' })).status).to.equal(404);
+      expect((await showTyping({ conversationId: '' })).status).to.equal(422);
+
+      const pause = await asDashboard('patch', '/v1/human/agent').send({ paused: true });
+      expect(pause.status).to.equal(200, JSON.stringify(pause.body));
+      expectRefused(await showTyping({ conversationId: thread }), 403, AGENT_PAUSED);
+    });
+  });
+
   describe('who can wake: the contact switch', () => {
     async function listContacts(): Promise<Map<string, Record<string, any>>> {
       const res = await asDashboard('get', '/v1/human/contacts');

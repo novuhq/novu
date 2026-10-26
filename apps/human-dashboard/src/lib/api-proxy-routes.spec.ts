@@ -15,11 +15,12 @@ describe('api proxy routes for MCP setup', () => {
 });
 
 describe('api proxy routes for wake', () => {
-  it('forwards the lease, letting go of it, and the wait for messages', () => {
+  it('forwards the lease, letting go of it, the wait for messages, and typing while a host works', () => {
     expect(isProxiedRoute('POST', '/v1/wake/lease')).toBe(true);
     expect(isProxiedRoute('GET', '/v1/wake/lease')).toBe(true);
     expect(isProxiedRoute('POST', '/v1/wake/lease/release')).toBe(true);
     expect(isProxiedRoute('GET', '/v1/wake/messages')).toBe(true);
+    expect(isProxiedRoute('POST', '/v1/wake/typing')).toBe(true);
   });
 
   it('lets the CLI withdraw a question it sent', () => {

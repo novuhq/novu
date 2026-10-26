@@ -17,6 +17,7 @@ export const PROXY_ROUTES: readonly ProxyRoute[] = [
   ['GET', '/v1/wake/lease', '/v1/human/wake/lease'],
   ['POST', '/v1/wake/lease/release', '/v1/human/wake/lease/release'],
   ['GET', '/v1/wake/messages', '/v1/human/wake/messages'],
+  ['POST', '/v1/wake/typing', '/v1/human/wake/typing'],
 
   ['GET', '/v1/contacts', '/v1/human/contacts'],
   ['GET', '/v1/contacts/:contactId', '/v1/human/contacts/:contactId'],
