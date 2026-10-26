@@ -1,8 +1,8 @@
 import { authorize } from '../shared/auth.ts';
 import { messageOf } from '../shared/errors.ts';
-import { boxOfTestUser } from '../shared/names.ts';
+import { boxOfTestUser, SEED_EMAIL } from '../shared/names.ts';
 import { liveBoxes } from './boxes.ts';
-import { createTestUser, deleteTestUser, testUsers, toPrune } from './clerk.ts';
+import { createTestUser, deleteTestUser, seedSignInUrl, testUsers, toPrune } from './clerk.ts';
 import type { HostEnv } from './env.ts';
 import { json, text } from './life.ts';
 
@@ -21,6 +21,7 @@ async function route(request: Request, env: HostEnv, url: URL): Promise<Response
   if (!(await authorize(request, env))) return text("needs the same Authorization as a box's /__box/*\n", 401);
   const name = decodeURIComponent(url.pathname.slice('/__box/users/'.length));
   if (request.method === 'GET' && !name) return list(env, Number(url.searchParams.get('limit') ?? PRUNE_AT));
+  if (request.method === 'POST' && name.endsWith('/seed')) return seed(env, name.slice(0, -'/seed'.length));
   if (request.method === 'POST' && name) return create(env, name);
   if (request.method === 'DELETE' && name) return remove(env, name);
 
@@ -50,6 +51,12 @@ async function create(env: HostEnv, box: string): Promise<Response> {
   const created = await createTestUser(env, box);
 
   return json({ ...created, pruned: pruned.map((user) => user.email) });
+}
+
+async function seed(env: HostEnv, box: string): Promise<Response> {
+  if (!(await liveBoxes(env)).includes(box)) return text(`no box ${box}: \`box up --box ${box}\` first\n`, 404);
+
+  return json({ email: SEED_EMAIL, url: await seedSignInUrl(env, box) });
 }
 
 async function remove(env: HostEnv, email: string): Promise<Response> {

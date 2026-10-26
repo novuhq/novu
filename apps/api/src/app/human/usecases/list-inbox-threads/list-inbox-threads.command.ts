@@ -1,4 +1,4 @@
-import type { AgentHostVia } from '@novu/dal';
+import { AGENT_HOST_IDS, AGENT_HOST_VIAS, type AgentHostId, type AgentHostVia } from '@novu/dal';
 import { AGENT_ANALYTICS_SOURCES, type AgentAnalyticsSource } from '@novu/shared';
 import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -14,7 +14,6 @@ import {
   type InboxStatusFilter,
   type InboxTab,
 } from '../../dtos/human-inbox.dto';
-import { AGENT_HOST_VIAS } from '../../services/human-host-status.service';
 
 /** The filters the thread list and its counts share. */
 export class InboxViewCommand extends EnvironmentWithUserCommand {
@@ -70,6 +69,11 @@ export class ListInboxThreadsCommand extends InboxViewCommand {
   @IsOptional()
   @IsIn(AGENT_HOST_VIAS)
   hostVia?: AgentHostVia;
+
+  /** Which host it said it is, when it said. One that didn't counts as `general`. */
+  @IsOptional()
+  @IsIn(AGENT_HOST_IDS)
+  hostId?: AgentHostId;
 
   /** The app that asked, for analytics. */
   @IsOptional()

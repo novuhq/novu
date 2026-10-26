@@ -46,7 +46,7 @@ function describeNextStep({ handle, step, waiting }: UnfinishedSetup): { title: 
   if (step === 'test') {
     return {
       title: `Try ${handle}’s address`,
-      description: 'Send a test email and reply to it, then connect your agent.',
+      description: 'Email the address, or send a test email, then connect your agent.',
     };
   }
 

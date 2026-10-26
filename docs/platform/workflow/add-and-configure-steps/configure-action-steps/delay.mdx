@@ -14,10 +14,9 @@ This page focuses on how to configure the Delay step for your use case.
 
 ## Delivery behavior and scheduling
 
-Delay supports delivery-aware execution:
-- Notifications sent after a delay can respect a subscriber’s delivery schedule.
-- Notifications are delivered using the subscriber’s time zone if a `timezone` attribute is set.
-- If no time zone is available, UTC is used.
+A Delay step can line up with a subscriber’s [delivery schedule](/platform/inbox/features/schedule). Turn on **Extend to subscriber’s schedule** on the step when the workflow should wait for the next open window. With the toggle off, email, SMS, push, and chat steps that become ready outside the window are skipped.
+
+Delivery uses the subscriber’s `timezone` when that attribute is set. Otherwise Novu uses UTC.
 
 <Note>
   Changing the step content after triggering the workflow with delay step will affect the existing pending delayed notification content.
@@ -101,9 +100,57 @@ If a dynamic delay using an ISO date is added as the first step in a workflow, i
 
 ## Extend to subscriber’s schedule
 
-When enabled, delayed execution respects the [subscriber’s delivery schedule](/platform/inbox/features/schedule).
+**Extend to subscriber’s schedule** is off by default. Turn it on when steps after the delay should wait for the subscriber’s [delivery schedule](/platform/inbox/features/schedule) instead of running as soon as the delay ends.
 
-If the delay completes outside the subscriber’s available delivery window, execution resumes during the next available time slot. This option is disabled by default.
+The schedule is a weekly set of hours from the Inbox. It has no holiday calendar. A day the subscriber turns off, such as Saturday or Sunday, is skipped. A day they leave on is a delivery day, including public holidays.
+
+Novu checks the schedule when the delay finishes. Times below are in the subscriber’s time zone (UTC when no `timezone` is set):
+
+- **The delay finishes inside an open window.** The workflow continues immediately. The toggle adds no extra wait.
+- **The delay finishes outside the window, and the toggle is on.** Novu holds the workflow until the start of the next enabled window, then continues.
+- **The delay finishes outside the window, and the toggle is off.** The delay ends on time. Email, SMS, push, and chat steps after it are skipped. Novu does not retry them when the window opens. In-app steps, and every step in a critical workflow, are still delivered.
+
+Steps placed before the Delay step already ran. Steps placed after it, including in-app, stay paused until the delay finishes, including the wait for the next window. An in-app step is only exempt from the schedule once the workflow reaches it.
+
+Critical workflows ignore the schedule. The toggle does not hold them.
+
+### Examples
+
+Schedule: Monday–Friday, 9:00 AM–5:00 PM. Delay: 1 hour. Toggle: on.
+
+| Delay finishes | Result |
+| --- | --- |
+| Tuesday 2:00 PM | Inside the window. The next step runs at 2:00 PM. |
+| Friday 6:00 PM | Outside the window. Novu resumes Monday at 9:00 AM. |
+| Saturday 10:00 AM | Saturday is off. Novu resumes Monday at 9:00 AM. |
+
+Schedule: Monday only, 9:00 AM–10:00 AM. The delay finishes Monday at 10:01 AM. Toggle: on.
+
+Novu resumes the following Monday at 9:00 AM. That is one wait, straight to the next open slot.
+
+The same Monday-only schedule with the toggle off skips the following email, SMS, push, or chat step at 10:01 AM.
+
+### How long Novu waits
+
+Novu waits once, until the start of the next enabled window. It does not step through each closed day. A delay that ends Friday at 6:00 PM resumes Monday at 9:00 AM. A delay that ends Monday at 10:01 AM, when the only window is Monday 9:00 AM–10:00 AM, resumes the following Monday at 9:00 AM.
+
+The duration you configure on the Delay step follows your [plan limit](/platform/developer/limits): 1 day on Free, 7 days on Pro, and 30 days on Team. Enterprise limits are custom. The wait until the next window is separate from that duration, on every plan. The Friday evening example above still resumes Monday morning on the Free plan.
+
+If the schedule is on and no day has an open window, there is no later slot to wait for. The delay ends, and email, SMS, push, and chat steps are skipped.
+
+### If the subscriber changes the schedule while waiting
+
+Novu picks the next open slot from the schedule at the moment the delay finishes, and keeps that time. A later edit in the Inbox does not move a step that is already waiting.
+
+When that time arrives, Novu reads the schedule again:
+
+- **That moment is still inside the schedule.** The workflow continues then. An earlier window the subscriber added in the meantime is not used. The step does not send early.
+- **That moment is now outside the schedule.** Novu waits again, until the next open slot in the updated schedule. This includes the first wait, and Novu will do it at most 3 times. If the step wakes after the third wait and the time is still outside the schedule, the delay ends. Email, SMS, push, and chat steps that follow are skipped. In-app steps are still delivered.
+- **The subscriber turns the schedule off.** The step still waits until the time already chosen. When it wakes, the schedule is off, so the workflow continues and sends.
+
+A single edit stays inside that limit. The third wait is reached only when the subscriber moves the window before each wake-up, so every chosen time is still outside the schedule.
+
+For example, a delay ends Friday at 6:00 PM and is waiting for Monday at 9:00 AM. On Saturday the subscriber adds Saturday 10:00 AM–12:00 PM. The notification stays scheduled for Monday at 9:00 AM. Monday is still inside the weekday window, so it sends then. If they turn Monday off and leave only Tuesday 9:00 AM–10:00 AM, the step wakes Monday at 9:00 AM, sees that Monday is closed, and waits until Tuesday at 9:00 AM.
 
 ## FAQs
 
@@ -113,5 +160,11 @@ If the delay completes outside the subscriber’s available delivery window, exe
     - Invalid ISO date format.
     - Invalid duration object format.
     - Past datetime is specified.
+  </Accordion>
+  <Accordion title="Will Extend to subscriber’s schedule hold a notification longer than my plan’s delay limit?">
+    Yes. The plan limit applies to the duration you set on the Delay step. The wait until the next open window is separate. A short delay that ends after hours on Friday can still resume Monday morning on the Free plan, where the configured delay maximum is 1 day.
+  </Accordion>
+  <Accordion title="Does the schedule skip weekends and holidays?">
+    A weekend day is skipped when the subscriber turns that day off. There is no holiday calendar. If Monday is enabled, Novu delivers on Monday even when Monday is a public holiday. Novu waits once for the next enabled window, so Friday evening goes directly to Monday morning.
   </Accordion>
 </AccordionGroup>

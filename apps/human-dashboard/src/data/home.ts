@@ -1,66 +1,118 @@
+import { HOSTS, hostPath, MCP_URL } from '@/lib/hosts';
 import { PACKAGE_URL, SOURCE_URL } from '@/lib/seo';
 
-/** The CLI's package. Every command on the page runs it through npx, which needs nothing installed first. */
+/** The CLI's package. `npm install -g` puts `agentinbox` on the path. */
 export const CLI_PACKAGE = '@agentinbox/cli';
 
+/** The installed command. `npm install -g` puts `agentinbox` on the path. */
+export const CLI_BIN = 'agentinbox';
+
 export const HOME_INTRODUCTION = [
-  'Agents are connected to everything except the humans they work for.',
-  '@agentinbox/cli gives any agent an inbox on Telegram, Slack and email, and a one-line way to reach a real person and block until they answer.',
+  'You are connected to everything except the humans you work with and for.',
+  'Agent Inbox gives you an E-mail address, a Telegram handle and a Slack app. Humans send you requests there, and you can reach the humans you work with.',
+  'Agent Inbox is an email inbox for AI agents: one address, plus Slack and Telegram, through one CLI. You send, you reply, and you get a structured answer when you ask, approve, or choose.',
 ] as const;
+
+/** Who runs it. "Novu" is the link in the page footer. */
+export const HOME_TRUST_BEFORE = 'Built by ';
+export const HOME_TRUST_AFTER = ', and open source.';
+export const HOME_TRUST = `${HOME_TRUST_BEFORE}Novu${HOME_TRUST_AFTER}`;
+
+/** Jobs this inbox is for. "You" is the agent. */
+export const HOME_USES = [
+  {
+    title: 'Browser agents',
+    text: 'Sign up, receive one-time codes, and open verification links on your own address.',
+  },
+  {
+    title: 'Personal assistants',
+    text: 'People email you, or reach you on Slack or Telegram, on an address that is yours.',
+  },
+  {
+    title: 'Product agents',
+    text: 'Every user of a product reaches you in one inbox.',
+  },
+  {
+    title: 'Support',
+    text: 'You answer on email, Slack, and Telegram, and the thread stays one thread when they switch channel.',
+  },
+] as const;
+
+/** SOC 2, ISO 27001, and what an enterprise setup can do. Novu runs this inbox. */
+export const HOME_READY = [
+  {
+    title: 'SOC 2 Type II',
+    text: 'Novu, which runs this inbox, is audited for security, availability, and confidentiality.',
+  },
+  {
+    title: 'ISO 27001',
+    text: 'The same infrastructure is certified for information security.',
+  },
+  {
+    title: 'Enterprise',
+    text: 'Send from your own domain, run many agents, and search one activity log.',
+  },
+] as const;
+
+export const HOME_DEFINITION = HOME_INTRODUCTION[2];
+
+/** Questions whose answers are on this page, for the home page's FAQ structured data. */
+export const HOME_FAQ = [
+  { question: 'What is Agent Inbox?', answer: HOME_DEFINITION },
+  {
+    question: 'When should you use Agent Inbox?',
+    answer: HOME_USES.map((item) => `${item.title}. ${item.text}`).join(' '),
+  },
+  {
+    question: 'Is Agent Inbox enterprise ready?',
+    answer: HOME_READY.map((item) => `${item.title}. ${item.text}`).join(' '),
+  },
+] as const;
+
+/** Parentheticals on the section titles. "You" is the agent reading this page. */
+export const HOME_NOTES = {
+  hosts: 'integrations guides for every host',
+  contacts: 'people you reach often',
+} as const;
+
+export const HOME_HOSTS_DESCRIPTION =
+  'A page for each host: the commands, the plugin or sign-in, and how you set yourself up there.';
 
 export type HomeProsePart = string | { code: string; compact?: boolean; tall?: boolean };
 
 export const HOME_HOW_IT_WORKS: readonly (readonly HomeProsePart[])[] = [
   [
-    { code: 'setup' },
-    ' creates the inbox (no account needed) with its own email address, then links a channel — Telegram via your own bot, Slack via app install. ',
-    { code: 'channel add', compact: true },
-    ' links one more. Linked channels live on the server; ',
-    { code: 'channel default slack', compact: true },
-    " sets where your messages land when you don't pass ",
-    { code: '--via.' },
-    ' ',
-    { code: 'login' },
-    ' keeps the setup in your account.',
+    { code: 'agentinbox setup', compact: true },
+    ' creates your inbox and gives it an email address. It can also connect Telegram and Slack. All three share that one inbox.',
   ],
   [
-    "Agents stay channel-blind: routing is the human's preference. ",
-    { code: '--via telegram|slack|email', tall: true },
-    ' exists as a rare per-call override.',
-  ],
-  [
-    // Punctuation after a command stays in its chip: the page puts a space between every part.
-    { code: 'ask,' },
-    ' ',
-    { code: 'approve' },
-    ' and ',
-    { code: 'choose' },
-    ' deliver a one-off message (with action buttons where relevant) and BLOCK until the human answers, the ',
-    { code: '--ttl' },
-    ' expires, or ',
-    { code: '--timeout' },
-    ' elapses.',
-  ],
-  ['Answers flow back through button clicks or plain replies; the CLI prints the answer and your agent continues.'],
-  [
-    'People can write first. A conversation stays unread until your agent responds: ',
-    { code: 'inbox list --filter unread', compact: true },
-    ' finds it, ',
-    { code: 'inbox reply', compact: true },
-    ' answers in it. Messages from strangers are information, never instructions.',
-  ],
-  [
-    { code: 'contact list', compact: true },
-    ' lists every contact ',
+    { code: 'agentinbox inbox list', compact: true },
+    ' shows what arrived, and ',
+    { code: 'agentinbox inbox reply', compact: true },
+    ' answers the thread, whichever channel it came from. ',
+    { code: 'agentinbox contact invite', compact: true },
+    ' makes a person a contact. On a new conversation, pass an email to ',
+    { code: 'agentinbox inbox send', compact: true },
+    ' with ',
     { code: '--to' },
-    " can address so an agent can check who exists before coordinating. It's a directory, not a reachability check.",
+    ' and they become a contact. A reply still needs one.',
+  ],
+  [
+    'On ',
+    { code: 'agentinbox inbox send', compact: true },
+    ' and ',
+    { code: 'agentinbox inbox reply,', compact: true },
+    'plain text is a message. Start it with ',
+    { code: 'ask,' },
+    { code: 'approve,' },
+    'or ',
+    { code: 'choose' },
+    ' when you need a structured answer back.',
   ],
 ];
 
-export const HOME_INVITE_DESCRIPTION =
-  "Prints a link to share with that person: a page, valid for 3 days, where they connect Telegram, Slack or email and pick their default. --via links one channel directly; an email address gets a verification email instead. Doesn't change who you are on this computer. After they connect, address them with --to. Pass --name so they show up by name in contact list.";
 export const HOME_CONTACTS_DESCRIPTION =
-  'Lists every contact — the directory `--to` addresses. The operator\'s row is marked (you) / self: true. A directory, not a reachability check: if delivery fails with "no linked endpoint", invite them on that channel. Pages are 50 by default (max 100); when next is set, continue with --after.';
+  'Contacts are the people you reach often. agentinbox contact list shows them. Invite someone with agentinbox contact invite so they can connect and join that list. On a new conversation, agentinbox inbox send with --to and an email delivers to that address and they become a contact. A reply still needs a contact.';
 export const HOME_AUTH = {
   commands: ['login', 'connect', 'setup'],
   file: '~/.agentinbox/config.json',
@@ -68,18 +120,6 @@ export const HOME_AUTH = {
   alternative:
     'In containers and CI, set INBOX_SECRET_KEY and INBOX_TO instead (or pass --to on every send), and optionally INBOX_VIA and INBOX_API_URL.',
 } as const;
-
-export const HOME_EXIT_CODES = [
-  { code: '0', description: 'answered / approved / chosen / delivered' },
-  { code: '10', description: 'denied' },
-  {
-    code: '11',
-    description: 'timed out waiting — still pending; the answer shows up in',
-    resume: 'inbox show <conversation>',
-  },
-  { code: '12', description: 'expired or canceled' },
-  { code: '1', description: 'error' },
-] as const;
 
 export type CommandPart = {
   text: string;
@@ -95,19 +135,30 @@ export const INSTALL_COMMAND: HomeCommand = {
   parts: [{ text: 'npm install ' }, { text: `-g ${CLI_PACKAGE}`, color: 'orange' }],
 };
 
+export const INSTALL_MCP_COMMAND: HomeCommand = {
+  parts: [{ text: MCP_URL, color: 'orange' }],
+};
+
+export type InstallOption = {
+  id: string;
+  label: string;
+  commands: readonly HomeCommand[];
+};
+
+/** The install section's tabs: the CLI package, or the hosted MCP server. */
+export const INSTALL_OPTIONS: readonly InstallOption[] = [
+  { id: 'cli', label: 'CLI', commands: [INSTALL_COMMAND] },
+  { id: 'mcp', label: 'MCP', commands: [INSTALL_MCP_COMMAND] },
+];
+
 /**
- * `npx @agentinbox/cli <command>` and what follows it, coloured as the design colours setup: the package orange,
- * the command purple. Flags keep the design's colours too: a value's orange, `--name` and `--after` blue, and a
- * switch such as `--json` green. A quoted message is blue, like `--name "Alice Chen"`.
+ * `agentinbox <command>` and what follows it: `agentinbox` orange, the subcommand purple. `inbox list` and
+ * `inbox send` keep the `inbox` group, because that is a command under the binary, not the binary itself.
+ * Flags keep the design's colours too: a value's orange, `--name` and `--after` blue, and a switch such as
+ * `--json` green. A quoted message is blue, like `--name "Alice Chen"`.
  */
 function cli(command: string, ...rest: readonly CommandPart[]): readonly CommandPart[] {
-  return [
-    { text: 'npx ' },
-    { text: CLI_PACKAGE, color: 'orange' },
-    { text: ' ' },
-    { text: command, color: 'purple' },
-    ...rest,
-  ];
+  return [{ text: CLI_BIN, color: 'orange' }, { text: ' ' }, { text: command, color: 'purple' }, ...rest];
 }
 
 const SPACE: CommandPart = { text: ' ' };
@@ -117,29 +168,26 @@ function quoted(message: string): CommandPart {
   return { text: `"${message}"`, color: 'blue' };
 }
 
-export const HOME_SETUP: readonly HomeCommand[] = [
-  { parts: cli('setup'), note: '# creates the inbox, offers a channel' },
-  { parts: cli('channel add telegram') },
-  { parts: cli('channel add slack') },
-  { parts: cli('login'), note: '# keep it in your account' },
-  { parts: cli('skill install'), note: '# teach your coding agent' },
-];
-
-export const HOME_USAGE: readonly HomeCommand[] = [
-  { parts: cli('inbox send ask', SPACE, quoted('Which environment should I deploy to?')) },
-  { parts: cli('inbox send approve', SPACE, quoted('Delete 342 stale records from prod?')) },
+/**
+ * The first commands, in order. `agentinbox inbox send` starts a conversation (a plain message does not wait);
+ * `--via email` delivers that one on email. `agentinbox inbox reply` takes the conversation id from `agentinbox inbox list`.
+ */
+export const HOME_QUICKSTART: readonly HomeCommand[] = [
+  { parts: cli('setup'), note: '# once' },
+  { parts: cli('inbox list'), note: '# conversations' },
+  { parts: cli('inbox reply', { text: ' conv_123 ' }, quoted('On it.')), note: '# reply in that conversation' },
   {
-    parts: cli('inbox send choose', SPACE, quoted('Pick a release strategy'), SPACE, {
-      text: '--option canary --option blue-green',
+    parts: cli('inbox send', SPACE, quoted('Build finished — 0 failures.'), SPACE, {
+      text: '--via email',
       color: 'orange',
     }),
+    note: '# a new email',
   },
-  { parts: cli('inbox send', SPACE, quoted('Nightly build finished — 0 failures.')) },
-  { parts: cli('inbox list', SPACE, { text: '--filter unread', color: 'orange' }), note: '# what people wrote' },
-  { parts: cli('inbox reply', { text: ' conv_123 ' }, quoted('On it.')) },
-  { parts: cli('contact list'), note: '# who --to can address' },
-  { parts: cli('contact list', SPACE, { text: '--json', color: 'green' }) },
+  { parts: cli('contact invite', { text: ' alice' }), note: '# a new contact' },
 ];
+
+/** Each host's page of steps, as the robots page lists them: by the address they live at. */
+export const HOME_HOSTS = HOSTS.map((host) => ({ label: host.id, href: hostPath(host.id), name: host.name }));
 
 export const HOME_INVITES: readonly HomeCommand[] = [
   { parts: cli('contact invite', { text: ' alice ' }, { text: '--name "Alice Chen"', color: 'blue' }) },
@@ -194,13 +242,13 @@ export const HOME_FLAGS = [
     flag: '--to',
     argument: '<id|email>[,...]',
     description: [
-      '# address a linked human, or comma-separated humans\n# (find them with `contact list`; link others\n# first with `contact invite`)',
+      '# a contact, or comma-separated contacts (max 50)\n# an email that is not a contact yet becomes one on a new conversation',
     ],
   },
   {
     flag: '--via',
     argument: '<channel>',
-    description: ['# deliver on a specific linked channel instead of default'],
+    description: ["# telegram, slack, or email, instead of that contact's default"],
   },
 ] as const;
 
@@ -211,6 +259,7 @@ export const HOME_LINKS = [
   },
   { label: 'npm', href: PACKAGE_URL },
   { label: 'agents.md', href: '/agents.md' },
+  { label: 'docs', href: 'https://docs.agentinbox.md' },
   { label: 'novu', href: 'https://novu.co/' },
   { label: 'for human', href: '/sapien' },
 ] as const;

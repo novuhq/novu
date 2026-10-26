@@ -7,6 +7,7 @@ import { CONFIGURE_PATH, DASHBOARD_HOME } from '@/components/dashboard/nav';
 import { isToolId } from '@/lib/ai-tools';
 import { findCurrentUser } from '@/lib/auth-page';
 import type { ConnectCodeResult } from '@/lib/host-status';
+import { isHostId } from '@/lib/hosts';
 import { requireHumanAccount } from '@/lib/human-account';
 import { sendAgentTestEmail } from '@/lib/human-agent-api';
 import { HumanApiError, isHumanApiRefusal } from '@/lib/human-api-error';
@@ -125,7 +126,7 @@ export type SendTestEmailResult = { ok: true } | { ok: false; message: string };
 
 /**
  * Step 2: sends a real email from the Agent Email Inbox to the operator’s sign-up address.
- * `testSentAt` moves forward only after that send, so a reply is measured from the latest one.
+ * Optional. The step already listens for any inbound mail, so a message already received stays received.
  */
 export async function sendTestEmailAction(): Promise<SendTestEmailResult> {
   const account = await requireHumanAccount({ returnTo: ONBOARDING_PATH });
@@ -147,18 +148,14 @@ export async function sendTestEmailAction(): Promise<SendTestEmailResult> {
     };
   }
 
-  await updateOnboardingState((state) => {
-    const { testReplyAt: _previousReply, ...rest } = state;
-
-    return { ...rest, testSentAt: new Date().toISOString() };
-  });
+  await updateOnboardingState((state) => ({ ...state, testSentAt: new Date().toISOString() }));
   refresh();
 
   return { ok: true };
 }
 
-/** A real one-time code for the host the operator connects in step 3. */
-export async function createOnboardingConnectCodeAction(handle: string): Promise<ConnectCodeResult> {
+/** A real one-time code for the host the operator connects in step 3, made for the host chosen there (`host`). */
+export async function createOnboardingConnectCodeAction(handle: string, host?: string): Promise<ConnectCodeResult> {
   if (!isHandle(handle)) {
     return { ok: false, error: 'This agent can’t be connected by name. Check its address on this page.' };
   }
@@ -166,7 +163,7 @@ export async function createOnboardingConnectCodeAction(handle: string): Promise
   const account = await requireHumanAccount({ returnTo: ONBOARDING_PATH });
 
   try {
-    const code = await createConnectCode(account, handle);
+    const code = await createConnectCode(account, handle, isHostId(host) ? host : undefined);
 
     return { ok: true, code, expiresInMs: Date.parse(code.expiresAt) - Date.now() };
   } catch (error) {
@@ -197,12 +194,6 @@ export async function leaveTestAction(how: 'connect' | 'skip' | 'later'): Promis
   }
 
   refresh();
-}
-
-/** Leaves the steps unfinished for the dashboard, where the banners keep pointing back to the step left behind. */
-export async function skipForNowAction(destination: Destination = 'inbox'): Promise<void> {
-  await updateOnboardingState((state) => ({ ...state, skippedAt: new Date().toISOString() }));
-  redirect(DESTINATIONS[destination] ?? DASHBOARD_HOME);
 }
 
 /** Leaves step 4, and with it the onboarding, for a page of the dashboard. */

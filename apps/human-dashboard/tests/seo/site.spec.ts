@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 
+import { HOST_IDS } from '../../src/lib/host-ids';
 import { SITE_INDEXED } from '../../src/lib/seo';
 
 const origin = 'https://www.agentinbox.md';
@@ -76,12 +77,14 @@ test('SEO crawler files contain only production canonical pages', async ({ reque
   expect(sitemap.status()).toBe(200);
   expect(sitemap.headers()['content-type']).toContain('xml');
   const locations = [...(await sitemap.text()).matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
-  expect(locations.sort()).toEqual(SITE_INDEXED ? [`${origin}/`, `${origin}/sapien`].sort() : []);
+  expect(locations.sort()).toEqual(
+    SITE_INDEXED ? [`${origin}/`, `${origin}/sapien`, ...HOST_IDS.map((id) => `${origin}/${id}`)].sort() : []
+  );
 });
 
 test('SEO text versions follow the pages out of search results', async ({ request }) => {
   test.skip(SITE_INDEXED, 'Only while the website pages are kept out of search results.');
-  for (const path of ['/index.md', '/llms.txt']) {
+  for (const path of ['/index.md', '/llms.txt', '/claude-code', '/claude-code.md', '/claude-code/index.md']) {
     const response = await request.get(path);
     expect(response.status()).toBe(200);
     expect(response.headers()['x-robots-tag']).toBe('noindex, nofollow');
@@ -126,4 +129,32 @@ test('SEO page metadata prevents preview indexing and retains production canonic
     index: SITE_INDEXED,
     follow: SITE_INDEXED,
   });
+});
+
+test('every host has a page and its Markdown, linked from llms.txt', async ({ page, request }) => {
+  const llms = await (await request.get('/llms.txt')).text();
+  for (const id of HOST_IDS) {
+    expect(llms).toContain(`${origin}/${id}.md`);
+    const markdown = await request.get(`/${id}.md`);
+    expect(markdown.status()).toBe(200);
+    expect(markdown.headers()['content-type']).toContain('text/markdown');
+    expect(markdown.headers().link).toContain(`<${origin}/${id}>; rel="canonical"`);
+    expect(await markdown.text()).toContain(`> Set up Agent Inbox from agentinbox.md/${id}`);
+  }
+
+  const response = await page.goto('/codex');
+  expect(response?.status()).toBe(200);
+  const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
+  expect(canonical).toBe(`${origin}/codex`);
+  await expect(page.locator('link[rel="alternate"][type="text/markdown"]')).toHaveAttribute(
+    'href',
+    `${origin}/codex.md`
+  );
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Agent Inbox for Codex');
+  await expect(page.getByText('Set up Agent Inbox from agentinbox.md/codex')).toBeVisible();
+  await expect(page.getByText('sign in to get your code')).toBeVisible();
+
+  for (const path of ['/not-a-host', '/not-a-host.md']) {
+    expect((await request.get(path)).status()).toBe(404);
+  }
 });

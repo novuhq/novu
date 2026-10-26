@@ -9,7 +9,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
-import type { IApiKey } from '@novu/dal';
+import { AGENT_HOST_IDS, type AgentHostId, type IApiKey } from '@novu/dal';
 import { CLI_USER_CODE_ALPHABET } from '@novu/shared';
 
 /** How long a one-time code connects a host. */
@@ -53,6 +53,11 @@ export type ConnectCodeTarget = {
   handle: string;
   /** Which of the environment's keys was current when the code was made (`keyFingerprint`). */
   keyFingerprint: string;
+  /**
+   * The host the code was made for, on that host's tab of the dashboard's host picker. A host that uses the
+   * code without saying which host it is counts as this one. Missing on a code made for no host in particular.
+   */
+  host?: AgentHostId;
 };
 
 type ConnectCodeRecord = ConnectCodeTarget & {
@@ -124,7 +129,10 @@ export class HumanConnectCodeService {
     this.logger.setContext(this.constructor.name);
   }
 
-  /** The agent's code for this handle. One it got a moment ago comes back while it is unused and has time left. */
+  /**
+   * The agent's code for this handle and host. One it got a moment ago comes back while it is unused and has
+   * time left. Each host gets a code of its own, so a code tells which host's tab it was made on.
+   */
   async issue(target: ConnectCodeTarget): Promise<IssuedConnectCode> {
     if (!this.cacheService.cacheEnabled()) {
       this.logger.warn('Cache unavailable — cannot issue an Agent Inbox connect code');
@@ -152,7 +160,7 @@ export class HumanConnectCodeService {
       );
 
       if (reserved === 'OK') {
-        await this.cacheService.set(currentCodeKey(target.agentId), code, {
+        await this.cacheService.set(currentCodeKey(target.agentId, target.host), code, {
           ttl: CONNECT_CODE_TTL_SECONDS,
           jitter: false,
         });
@@ -227,6 +235,7 @@ export class HumanConnectCodeService {
           agentIdentifier: record.agentIdentifier,
           handle: record.handle,
           keyFingerprint: record.keyFingerprint,
+          ...(record.host ? { host: record.host } : {}),
         };
       }
     }
@@ -272,7 +281,7 @@ export class HumanConnectCodeService {
   }
 
   private async findReusable(target: ConnectCodeTarget): Promise<IssuedConnectCode | null> {
-    const code = await this.cacheService.get(currentCodeKey(target.agentId));
+    const code = await this.cacheService.get(currentCodeKey(target.agentId, target.host));
     const raw = code ? await this.cacheService.get(connectCodeKey(target.handle, code)) : null;
     const record = raw ? parseRecord(raw) : null;
 
@@ -282,6 +291,7 @@ export class HumanConnectCodeService {
       record.usedAt ||
       record.agentId !== target.agentId ||
       record.environmentId !== target.environmentId ||
+      record.host !== target.host ||
       // Made with a key that was replaced since, it can't connect anything (`ConnectHost`).
       record.keyFingerprint !== target.keyFingerprint ||
       record.expiresAt - Math.floor(Date.now() / 1000) < CONNECT_CODE_REUSE_MIN_SECONDS
@@ -355,8 +365,9 @@ export function keyFingerprint(apiKey: Pick<IApiKey, 'hash'> | undefined): strin
   return apiKey?.hash?.slice(0, 32) ?? '';
 }
 
-function currentCodeKey(agentId: string): string {
-  return `agent-inbox-connect-current:${agentId}`;
+/** The code the agent was handed last for a host, or for no host in particular. */
+function currentCodeKey(agentId: string, host: AgentHostId | undefined): string {
+  return host ? `agent-inbox-connect-current:${agentId}:${host}` : `agent-inbox-connect-current:${agentId}`;
 }
 
 function parseRecord(raw: string): ConnectCodeRecord | null {
@@ -374,7 +385,10 @@ function parseRecord(raw: string): ConnectCodeRecord | null {
       return null;
     }
 
-    return parsed as ConnectCodeRecord;
+    // A host this API doesn't know leaves the code working, for no host in particular.
+    const { host, ...record } = parsed as ConnectCodeRecord;
+
+    return AGENT_HOST_IDS.includes(host as AgentHostId) ? { ...record, host } : record;
   } catch {
     return null;
   }
