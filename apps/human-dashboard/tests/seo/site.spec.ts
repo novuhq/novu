@@ -71,15 +71,19 @@ test('SEO crawler files contain only production canonical pages', async ({ reque
   expect(text).toContain('Allow: /');
   // Crawling stays allowed either way, so search engines read the `noindex`.
   expect(text).not.toContain('Disallow: /');
-  if (SITE_INDEXED) expect(text).toContain(`Sitemap: ${origin}/sitemap.xml`);
-  else expect(text).not.toContain('Sitemap:');
+  expect(text).toContain(`Sitemap: ${origin}/sitemap.xml`);
   const sitemap = await request.get('/sitemap.xml');
   expect(sitemap.status()).toBe(200);
   expect(sitemap.headers()['content-type']).toContain('xml');
-  const locations = [...(await sitemap.text()).matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
+  const body = await sitemap.text();
+  const locations = [...body.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
   expect(locations.sort()).toEqual(
-    SITE_INDEXED ? [`${origin}/`, `${origin}/sapien`, ...HOST_IDS.map((id) => `${origin}/${id}`)].sort() : []
+    [`${origin}/`, `${origin}/sapien`, ...HOST_IDS.map((id) => `${origin}/${id}`)].sort()
   );
+  expect(body).toContain(`<loc>${origin}/sapien</loc>`);
+  expect(body).toContain('<changefreq>weekly</changefreq>');
+  expect(body).toContain('<priority>0.8</priority>');
+  expect(body).toContain(`${origin}/sapien/opengraph-image.jpg`);
 });
 
 test('SEO text versions follow the pages out of search results', async ({ request }) => {
@@ -129,6 +133,8 @@ test('SEO page metadata prevents preview indexing and retains production canonic
     index: SITE_INDEXED,
     follow: SITE_INDEXED,
   });
+  // staging.agentinbox.md sets SITE_NOINDEX, which is the third argument here.
+  expect(pageMetadata('home', 'production', true).robots).toMatchObject({ index: false, follow: false });
 });
 
 test('every host has a page and its Markdown, linked from llms.txt', async ({ page, request }) => {

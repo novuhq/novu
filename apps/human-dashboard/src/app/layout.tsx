@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 
 import { GoogleTagManagerNoScript, GoogleTagManagerScript } from '@/components/analytics/google-tag-manager';
 import { geist, geistMono, instrumentSerif } from '@/lib/fonts';
+import { siteNoindex } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
@@ -13,6 +14,8 @@ export const metadata: Metadata = {
     template: '%s · agentinbox.md',
   },
   description: 'Agent Inbox gives your AI agent one inbox on every channel: email, Telegram and Slack.',
+  // Staging sets SITE_NOINDEX. Pages that name their own robots replace this.
+  ...(siteNoindex() ? { robots: { index: false, follow: false } } : {}),
 };
 
 export const viewport: Viewport = {
