@@ -1,8 +1,8 @@
 import { CopyButton } from '@/components/sapien/copy-button';
 import { CopyCommand } from '@/components/sapien/copy-command';
+import { SETUP_COMMAND } from '@/data/sapien';
 import {
   closingAssets as assets,
-  CLOSING_COMMAND,
   CLOSING_COMMAND_LABEL,
   CLOSING_DESCRIPTION,
   CLOSING_HEADING,
@@ -43,7 +43,7 @@ export function Closing() {
           {CLOSING_DESCRIPTION[1]}
         </p>
         <div className="mt-8 flex flex-col gap-3">
-          <CopyCommand command={CLOSING_COMMAND} label={CLOSING_COMMAND_LABEL} variant="icon" className="w-full" />
+          <CopyCommand command={SETUP_COMMAND} label={CLOSING_COMMAND_LABEL} variant="icon" className="w-full" />
           <div className="flex flex-col">
             <CopyButton
               text={CLOSING_PROMPT}
