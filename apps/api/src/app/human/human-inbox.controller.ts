@@ -11,7 +11,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, NOVU_ANALYTICS_SOURCE_HEADER, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
@@ -66,6 +66,7 @@ export class HumanInboxController {
   ) {}
 
   @Get('/')
+  @ApiOperation({ summary: 'List the threads in an inbox' })
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
@@ -124,6 +125,7 @@ export class HumanInboxController {
   }
 
   @Get('/:identifier')
+  @ApiOperation({ summary: 'Read one inbox thread and its messages' })
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
@@ -156,6 +158,7 @@ export class HumanInboxController {
 
   @Post('/:identifier/read')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Mark an inbox thread as read' })
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
@@ -170,6 +173,7 @@ export class HumanInboxController {
 
   @Post('/:identifier/resolve')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resolve an inbox thread' })
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)

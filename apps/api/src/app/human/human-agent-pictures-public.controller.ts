@@ -1,5 +1,5 @@
 import { Controller, Get, NotFoundException, Param, Res } from '@nestjs/common';
-import { ApiExcludeController } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { ApiRateLimitCategoryEnum } from '@novu/shared';
 import type { Response } from 'express';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -16,6 +16,7 @@ export class HumanAgentPicturesPublicController {
   constructor(private readonly humanAgentPicture: HumanAgentPictureService) {}
 
   @Get('/:environmentId/:agentId/:version')
+  @ApiOperation({ summary: 'Read an agent picture' })
   async getPicture(
     @Param('environmentId') environmentId: string,
     @Param('agentId') agentId: string,

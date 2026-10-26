@@ -22,6 +22,8 @@
       "!**/*.generated.ts",
       "!**/pnpm-lock.yaml",
       "!**/swagger-spec.json",
+      "!apps/human-dashboard/public/openapi.json",
+      "!apps/human-dashboard/public/openapi.yaml",
       "!playground/**/*",
       "!packages/novu/src/commands/connect/templates/web-chat",
       "!libs/internal-sdk",

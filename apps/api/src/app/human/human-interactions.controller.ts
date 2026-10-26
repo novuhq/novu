@@ -20,7 +20,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiExcludeController } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import {
   ApiAuthSchemeEnum,
@@ -148,6 +148,7 @@ export class HumanInteractionsController {
   ) {}
 
   @Post('/interactions')
+  @ApiOperation({ summary: 'Send a message into the inbox' })
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
@@ -200,6 +201,7 @@ export class HumanInteractionsController {
   }
 
   @Get('/interactions/:identifier')
+  @ApiOperation({ summary: 'Read one inbox message' })
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
@@ -245,6 +247,7 @@ export class HumanInteractionsController {
    * invite link still waiting for them (`invite`).
    */
   @Get('/contacts')
+  @ApiOperation({ summary: 'List the people an agent can reach' })
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
@@ -289,6 +292,7 @@ export class HumanInteractionsController {
   }
 
   @Get('/contacts/:subscriberId')
+  @ApiOperation({ summary: 'Read one contact' })
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
@@ -310,6 +314,7 @@ export class HumanInteractionsController {
 
   @Post('/verifications')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send an address verification' })
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
@@ -338,6 +343,7 @@ export class HumanInteractionsController {
    * back with a nearby free one. With no handle, the answer is only the mailbox domain this deployment publishes.
    */
   @Get('/inbox-address')
+  @ApiOperation({ summary: 'Check whether an inbox address is free' })
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
@@ -347,6 +353,7 @@ export class HumanInteractionsController {
 
   @Post('/setup')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Create the relay agent and its inbox' })
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
@@ -479,6 +486,7 @@ export class HumanInteractionsController {
    * before `human setup` has made it.
    */
   @Get('/agent')
+  @ApiOperation({ summary: 'Read the relay agent' })
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
@@ -491,6 +499,21 @@ export class HumanInteractionsController {
    * account, because the picture is then served to anyone who opens an invite.
    */
   @Put('/agent/picture')
+  @ApiOperation({ summary: 'Set the relay agent picture' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: [AGENT_PICTURE_FIELD],
+      properties: {
+        [AGENT_PICTURE_FIELD]: {
+          type: 'string',
+          format: 'binary',
+          description: 'One JPEG or PNG of up to 2 MB.',
+        },
+      },
+    },
+  })
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   @UseInterceptors(FileInterceptor(AGENT_PICTURE_FIELD, { limits: { files: 1, fileSize: AGENT_PICTURE_MAX_BYTES } }))
@@ -527,6 +550,7 @@ export class HumanInteractionsController {
    * Nothing is created here; `POST /human/setup` with `operator` records one.
    */
   @Get('/operator')
+  @ApiOperation({ summary: 'Read the account owner' })
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
@@ -593,6 +617,7 @@ export class HumanInteractionsController {
    */
   @Post('/claim-token')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Read the keyless claim token' })
   @KeylessAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   createClaimToken(@UserSession() user: UserSessionData): Promise<KeylessClaimTokenResponseDto> {
@@ -606,6 +631,7 @@ export class HumanInteractionsController {
   }
 
   @Post('/invites')
+  @ApiOperation({ summary: 'Invite a contact to the inbox' })
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)

@@ -13,6 +13,13 @@ runs:
         targets: lint:openapi
         projects: '@novu/api-service'
 
+    - name: Check the Agent Inbox OpenAPI spec
+      shell: bash
+      env:
+        NODE_ENV: test
+        PORT: '1337'
+      run: pnpm --filter @novu/api-service generate:agent-inbox-openapi -- --check
+
     - name: Kill port for api 1336 for unit tests
       shell: bash
       run: sudo kill -9 $(sudo lsof -t -i:1336)
