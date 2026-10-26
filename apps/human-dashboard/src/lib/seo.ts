@@ -8,8 +8,8 @@ export const PACKAGE_URL = 'https://www.npmjs.com/package/@agentinbox/cli';
 
 /**
  * Whether search engines may index the website pages. Off until launch: the pages and their text versions say
- * `noindex`, the sitemap is empty and robots.txt doesn't point to it. Crawling stays allowed, so engines read
- * the `noindex` (a page robots.txt blocks can still be listed, without its content).
+ * `noindex`. Crawling stays allowed, so engines read the `noindex` (a page robots.txt blocks can still be
+ * listed, without its content). The sitemap still names the public pages, and robots.txt points to it.
  */
 export const SITE_INDEXED = false;
 
