@@ -1,5 +1,14 @@
 import { connectCommands } from './connect-prompt';
-import { type ChatApp, type CommandHost, type Host, hostPath, MCP_SERVER_NAME, MCP_URL, tellYourAgent } from './hosts';
+import {
+  type ChatApp,
+  type CommandHost,
+  type Host,
+  hostPath,
+  MCP_SERVER_NAME,
+  MCP_URL,
+  tellYourAgent,
+  wakeCommand,
+} from './hosts';
 import { AGENT_DOMAIN, INSTALL_SKILLS_COMMAND, NPX_CLI, SKILLS_CLI_AGENTS_URL, SKILLS_REPO } from './onboarding';
 import { SITE_ORIGIN } from './seo';
 
@@ -65,7 +74,21 @@ function commandSections(host: CommandHost): string[] {
       `4. \`${skillsLine}\`, then \`${check.command}\`.${host.afterCommands ? ` ${host.afterCommands}` : ''}`,
     ].join('\n'),
     `Never ask for a Telegram bot token or a Slack token: \`${NPX_CLI} channel add telegram\` (or \`slack\`) prints a link where your operator finishes in their browser. When ${runner} won't let you run a command, for example one that saves a key, tell your operator the exact command and let them run it.`,
+    ...wakeSections(host),
     ...(host.alternative ? alternativeSections(host) : []),
+  ];
+}
+
+/** The optional last step, for a host `wake` can start: keeping it awake on the computer. */
+function wakeSections(host: CommandHost): string[] {
+  const command = wakeCommand(host);
+  if (!command) {
+    return [];
+  }
+
+  return [
+    '## Optional: keep it awake',
+    `When your operator wants a message to reach you while nobody runs ${host.name}, run \`${command}\` in the project folder. They get an Allow/Deny message, and nothing starts until they allow it. From then on a message from them, or from a contact they let wake you, starts ${host.name} there, in the background and after restarts, and anything your settings don't allow asks them first. \`${NPX_CLI} wake status\` shows where you are awake; \`${NPX_CLI} wake stop\` ends it.`,
   ];
 }
 

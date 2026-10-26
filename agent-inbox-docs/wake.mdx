@@ -1,0 +1,100 @@
+---
+title: "Keep a host awake"
+description: "A message to your agent starts Claude Code on your computer, in your project. It asks you before anything its settings don't allow."
+sidebarTitle: "Keep it awake"
+---
+
+A host only reads the inbox while someone runs it. `wake` starts it instead: you write to the agent on Telegram, Slack, or email, and Claude Code starts on your computer, in your project, and answers in the conversation.
+
+Run it in the project folder, on the computer you connected:
+
+```bash
+npx @agentinbox/cli wake claude-code
+```
+
+Claude Code is the first host it starts. Codex, OpenCode, and Cursor come next.
+
+## Turning it on
+
+`wake` asks before anything is kept awake. At a terminal, it asks there. When an agent runs it, you get an Allow and Deny message on your channel:
+
+```text
+Keep Claude Code awake on MacBook, in ~/projects/app?
+```
+
+Nothing starts until you allow it. Without an answer, the command waits until the question expires in an hour. `--timeout 10m` stops waiting sooner and exits `11`. Run the same command again to keep waiting for the same answer. Deny exits `10`.
+
+It needs Claude Code installed and signed in on that computer, and it uses your own Claude Code plan. If Claude Code is missing, `wake` says how to install it.
+
+It also needs an Agent Inbox account. A keyless setup can't keep a host awake, because a woken host would use up its free messages fast. Run `npx @agentinbox/cli login` first to claim it.
+
+## Who wakes it
+
+- **You** always can.
+- **A contact** can when you turn on their switch on agentinbox.md. It is off by default.
+- **A stranger** never can.
+
+## Sessions
+
+Each conversation gets one Claude Code session. The next message in it goes on with the same session, so Claude Code remembers what was said and done. When the conversation is resolved, the session ends, and the next message starts a fresh one. The conversation's history stays readable with `inbox show`.
+
+A message that comes while Claude Code works joins the same run. Send `/stop` to stop the run in that conversation.
+
+Claude Code replies in the conversation itself. When a turn ends without a reply, its last words are sent as the reply. Reading and answering in its own conversation never asks you, whether Claude Code uses the CLI or the Agent Inbox MCP tools.
+
+While Claude Code works on a message, the chat shows it typing, until its reply goes out. It doesn't while you're asked to allow something. Email has no typing.
+
+## Permissions
+
+Claude Code follows its own settings for the project, from your user settings and the project's, and may edit files inside the project. Anything else waits for you:
+
+- a command its settings don't allow
+- the network
+- files outside the project
+- writing to anyone else
+
+Each of these is an Allow and Deny message to you, even when a contact woke it. **Allow for this session** lets the same request through until the session ends, and writes nothing to your settings. No answer in 10 minutes counts as Deny.
+
+A project Claude Code hasn't been opened in yet doesn't get its own allow list (`.claude/settings.json`). Open Claude Code there once and trust the folder. `wake` says so when it applies.
+
+When Claude Code asks a question that isn't a permission, such as which of two options to take, it goes to the person who wrote, in the conversation.
+
+## Limits
+
+| Limit | Default | Flag |
+| --- | --- | --- |
+| Wakes an hour | 20 | `--wakes-per-hour <n>` |
+| One run | 30 minutes | `--max-run <duration>` |
+
+Messages over the hourly limit wait, and you hear about it once an hour. A run that goes on too long stops and says so in the conversation.
+
+## Where it runs
+
+It runs in the background and starts again after a restart:
+
+| System | How |
+| --- | --- |
+| macOS | a launchd agent for your user, listed as `agentinbox-wake` in System Settings → General → Login Items & Extensions |
+| Linux | a systemd user service. `loginctl enable-linger` keeps it running while you're logged out |
+| Windows | inside WSL, with systemd on |
+
+`--foreground` keeps it awake in that terminal only, until Ctrl-C.
+
+One computer keeps an agent awake at a time. Running `wake` on another computer asks to move it there. Running it again on the same computer, for another project, replaces the one running.
+
+## See it and stop it
+
+```bash
+npx @agentinbox/cli wake status
+npx @agentinbox/cli wake stop
+```
+
+`wake status` says where the agent is awake, what this computer does, and where its log is. `wake stop` stops it on this computer. It leaves another computer alone. Both work while the agent is paused.
+
+The dashboard shows where the agent is awake, such as "Awake on MacBook (Claude Code)".
+
+## When it stops by itself
+
+- **The key changed.** After you regenerate the key on agentinbox.md, it stops and says "The key changed on agentinbox.md. Connect again, then wake again." It doesn't retry.
+- **Another computer took over.** It stops, and `wake status` says where the agent is awake now.
+- **The agent is paused.** It waits, and wakes again once you resume the agent.

@@ -17,7 +17,7 @@ program
   .name(CLI_COMMAND)
   .description(
     'An inbox for your agent. People write to it on Telegram, Slack or email; it reads, asks and answers.\n\n' +
-      'Every command is `<command> <action>`: setup, login, connect, inbox, contact, channel.\n\n' +
+      'Every command is `<command> <action>`: setup, login, connect, inbox, contact, channel, wake.\n\n' +
       'Exit codes: 0 answered/approved · 10 denied · 11 timed out (the answer shows up in the conversation) · 12 expired/canceled · 1 error'
   )
   .version(version);
@@ -234,5 +234,24 @@ program
   .option('--api-url <url>', 'API URL override')
   .description('Connect this computer to an agent with a one-time code from agentinbox.md')
   .action(connectCommand);
+
+// --- wake ---
+
+program
+  .command('wake')
+  .argument('<host|status|stop>', 'the host to keep awake on this computer (claude-code), or status, or stop')
+  .option('--foreground', 'keep it awake in this terminal only, instead of in the background')
+  .option(
+    '--timeout <duration>',
+    'when an agent runs this: how long to wait for your operator to allow it (default: until the question expires, in 1h)'
+  )
+  .option('--wakes-per-hour <n>', 'how many runs may start in an hour (default 20)')
+  .option('--max-run <duration>', 'how long one run may go on (e.g. 30m, 2h; default 30m)')
+  .option('--json', 'status: print JSON')
+  .description(
+    'Keep a host awake: a message from you, or from a contact you let wake it, starts it on this computer, in this folder. Asks you first'
+  )
+  // Loaded only when it runs, with the hosts it starts, so the other commands stay as light.
+  .action(async (what: string, options) => (await import('./commands/wake')).wakeCommand(what, options));
 
 program.parse(process.argv);

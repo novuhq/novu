@@ -40,9 +40,8 @@ vi.mock('../config', async (importOriginal) => {
   };
 });
 
-const { CONNECT_CANCELED_MESSAGE, CONNECT_UNAVAILABLE_MESSAGE, readAgent, readCode, runConnect } = await import(
-  './connect'
-);
+const { CONNECT_CANCELED_MESSAGE, CONNECT_UNAVAILABLE_MESSAGE, readAgent, readCode, runConnect, wakeHint } =
+  await import('./connect');
 
 const CONNECTED = {
   apiKey: 'sk_account',
@@ -309,5 +308,27 @@ describe('API requests', () => {
 
     expect(authed.axios.defaults.headers[ANALYTICS_SOURCE_HEADER]).toBe('cli');
     expect(anonymous.defaults.headers[ANALYTICS_SOURCE_HEADER]).toBe('cli');
+  });
+});
+
+describe('wakeHint', () => {
+  it('offers keeping Claude Code awake as the optional last step, and nothing for hosts wake can’t start yet', () => {
+    expect(wakeHint('claude-code', 'atlas')).toContain(
+      'Optional: keep Claude Code awake, so a message to atlas starts it'
+    );
+    expect(wakeHint('claude-code', 'atlas')).toContain('npx @agentinbox/cli wake claude-code');
+    expect(wakeHint('codex', 'atlas')).toBeUndefined();
+    expect(wakeHint(undefined, 'atlas')).toBeUndefined();
+  });
+});
+
+describe('a client for wake', () => {
+  it('names the host it wakes, whatever the shell says', () => {
+    vi.stubEnv('CODEX_THREAD_ID', 'thread_1');
+
+    const client = createApiClient({ apiUrl: 'https://www.agentinbox.md/api', secretKey: 'sk', asHost: 'claude-code' });
+
+    expect(client.axios.defaults.headers[AGENT_INBOX_HOST_HEADER]).toBe('claude-code');
+    vi.unstubAllEnvs();
   });
 });

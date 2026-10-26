@@ -53,6 +53,16 @@ describe('config file', () => {
 
     expect(loadConfig()).toEqual({ ...base, auth: base.auth });
   });
+
+  it('keeps this computer’s id when setup, login or connect write the config anew', () => {
+    const path = join(mkdtempSync(join(tmpdir(), 'inbox-config-')), 'config.json');
+    process.env.INBOX_CONFIG = path;
+    saveConfig({ ...base, computerId: 'cmp_kept_for_the_lease' });
+
+    saveConfig({ ...base, auth: { mode: 'apiKey', secretKey: 'sk_new' } });
+
+    expect(loadConfig()?.computerId).toBe('cmp_kept_for_the_lease');
+  });
 });
 
 describe('resolveVia', () => {
