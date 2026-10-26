@@ -2,6 +2,7 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationEntity, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
 import { HumanInteractionResponse, HumanInteractionStatusEnum, parseToolApprovalRequestId } from '@novu/shared';
+import { HumanVoiceMinuteQuotaService } from '../../human/services/human-voice-minute-quota.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { ResumeManagedHuman } from '../managed-runtime/novu-human/resume-managed-human.usecase';
 import { editDeliveredHumanCards } from './edit-delivered-card';
@@ -25,7 +26,8 @@ export class HumanInteractionSettlementService {
     private readonly resumeManagedHuman: ResumeManagedHuman,
     private readonly resumeToolApprovalFromHitl: ResumeToolApprovalFromHitl,
     private readonly logger: PinoLogger,
-    private readonly activityRecorder: HumanInteractionActivityRecorder
+    private readonly activityRecorder: HumanInteractionActivityRecorder,
+    private readonly voiceMinuteQuota: HumanVoiceMinuteQuotaService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -48,6 +50,7 @@ export class HumanInteractionSettlementService {
     );
 
     if (settled) {
+      await this.releaseVoiceReservation(settled);
       await this.editDeliveredMessage(settled);
       await this.resumeAfterSettlement(settled, answeredIn);
     } else {
@@ -86,6 +89,7 @@ export class HumanInteractionSettlementService {
       );
     }
 
+    await this.releaseVoiceReservation(expired);
     await this.editDeliveredMessage(expired);
     await this.resumeAfterSettlement(expired);
 
@@ -102,6 +106,20 @@ export class HumanInteractionSettlementService {
    * agents edit it in place), so editing here too would double-write and race
    * the managed delete.
    */
+  /** Exactly one of settle or expiry wins the pending flip, so the minutes are returned once. */
+  private async releaseVoiceReservation(interaction: HumanInteractionEntity): Promise<void> {
+    const minutes = interaction.voiceMinutesReserved;
+    if (!minutes || minutes <= 0) {
+      return;
+    }
+
+    const reservedAt = interaction.voiceMinutesReservedAt
+      ? new Date(interaction.voiceMinutesReservedAt)
+      : new Date(interaction.createdAt);
+
+    await this.voiceMinuteQuota.releaseReserved(String(interaction._organizationId), minutes, reservedAt);
+  }
+
   private async editDeliveredMessage(interaction: HumanInteractionEntity): Promise<void> {
     if (parseToolApprovalRequestId(interaction.requestId) !== null) {
       return;

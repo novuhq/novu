@@ -50,6 +50,7 @@ import { HumanOperatorService } from './services/human-operator.service';
 import { HumanTelegramBotService } from './services/human-telegram-bot.service';
 import { HumanVerificationRateLimitService } from './services/human-verification-rate-limit.service';
 import { HumanVerificationTokenService } from './services/human-verification-token.service';
+import { HumanVoiceMinuteQuotaService } from './services/human-voice-minute-quota.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { ChangeOperatorEmail } from './usecases/change-operator-email/change-operator-email.usecase';
@@ -133,6 +134,7 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     HumanDeliveryService,
     HumanKeylessCapService,
     HumanMessageQuotaService,
+    HumanVoiceMinuteQuotaService,
     CreateInteraction,
     GetInteraction,
     ListInteractions,

@@ -34,6 +34,12 @@ export interface PendingHumanInteractionInput {
   ttlSeconds?: number;
   requestId?: string;
   conversationId?: string;
+  /** Minutes held for a voice send that stays pending. Omitted for every other channel. */
+  voiceMinutesReserved?: number;
+  /** ISO time the Redis day and month keys were chosen. */
+  voiceMinutesReservedAt?: string;
+  /** Contacts this row will call. Set before delivery so the live-call check is per person. */
+  voiceSubscriberIds?: string[];
 }
 
 export interface HumanDeliveryRefs {
@@ -317,7 +323,35 @@ export function buildPendingHumanInteraction(input: PendingHumanInteractionInput
     expiresAt: new Date(Date.now() + ttlSeconds * 1000).toISOString(),
     _environmentId: input.environmentId,
     _organizationId: input.organizationId,
+    ...(input.voiceMinutesReserved ? { voiceMinutesReserved: input.voiceMinutesReserved } : {}),
+    ...(input.voiceMinutesReservedAt ? { voiceMinutesReservedAt: input.voiceMinutesReservedAt } : {}),
+    ...(input.voiceSubscriberIds?.length ? { voiceSubscriberIds: input.voiceSubscriberIds } : {}),
   };
+}
+
+/** One live call per contact. A second voice send is rejected until the first settles. */
+export async function assertNoLiveVoiceCall(
+  repository: HumanInteractionRepository,
+  params: { environmentId: string; subscriberIds: string[] }
+): Promise<void> {
+  const counts = await Promise.all(
+    [...new Set(params.subscriberIds)].map(async (subscriberId) => ({
+      subscriberId,
+      pendingCount: await repository.countPendingVoiceForSubscriber(params.environmentId, subscriberId),
+    }))
+  );
+
+  for (const { subscriberId, pendingCount } of counts) {
+    if (pendingCount > 0) {
+      throw new HttpException(
+        {
+          code: 'voice_live_call',
+          message: `Human "${subscriberId}" is already on a call. Wait for it to finish before calling again.`,
+        },
+        429
+      );
+    }
+  }
 }
 
 export async function assertHumanPendingCap(

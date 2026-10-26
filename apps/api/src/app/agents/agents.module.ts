@@ -31,6 +31,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { ConnectModule } from '../connect/connect.module';
 import { EventsModule } from '../events/events.module';
+import { HumanVoiceMinuteQuotaService } from '../human/services/human-voice-minute-quota.service';
 import { CreateConversationInteraction } from '../human/usecases/create-conversation-interaction/create-conversation-interaction.usecase';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { KeylessModule } from '../keyless/keyless.module';
@@ -40,6 +41,7 @@ import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
 import { PhotonDeviceAuthBindingService } from './channels/photon-imessage/shared/photon-device-auth-binding.service';
 import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
+import { NovuVoiceProvisioningService } from './channels/voice/find-or-create-novu-voice/find-or-create-novu-voice.service';
 import { NovuWebChatProvisioningService } from './channels/web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
@@ -186,6 +188,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     ContactHandleService,
     HumanConversationInboundInterceptor,
     HumanInteractionInboundService,
+    HumanVoiceMinuteQuotaService,
     HumanInteractionSettlementService,
     SyncAgentEmailSenderName,
     CreateConversationInteraction,
@@ -209,6 +212,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     AgentInboxAddressService,
     NovuEmailProvisioningService,
     NovuWebChatProvisioningService,
+    NovuVoiceProvisioningService,
     WebChatPublicationService,
     WebChatSessionVerifier,
     WebChatAcceptIdempotencyService,

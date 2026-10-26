@@ -44,7 +44,7 @@ export const DEFAULT_RELAY_AGENT_IDENTIFIER = 'human-relay';
 /** How people run the CLI. Every hint and error that names a command starts with it. */
 export const CLI_COMMAND = 'npx @agentinbox/cli';
 
-export const SUPPORTED_CHANNELS = ['telegram', 'slack', 'email'] as const;
+export const SUPPORTED_CHANNELS = ['telegram', 'slack', 'email', 'voice'] as const;
 
 export const NOT_SET_UP_MESSAGE = `No inbox set up yet. Ask your operator to run: ${CLI_COMMAND} setup (or set INBOX_SECRET_KEY + INBOX_TO).`;
 

@@ -184,6 +184,8 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   [ChatProviderIdEnum.PhotonImessage]: escapeHatch('text'),
   // Web Chat has no stable override schema yet — free-form passthrough keyed like Discord.
   [ChatProviderIdEnum.NovuWebChat]: escapeHatch('content'),
+  // Voice is not a workflow chat step. The hatch exists so the provider enum stays exhaustive.
+  [ChatProviderIdEnum.AgentVoiceCall]: escapeHatch('content'),
 } satisfies Record<ChatProviderIdEnum, ProviderOverrideConfig>;
 
 /**

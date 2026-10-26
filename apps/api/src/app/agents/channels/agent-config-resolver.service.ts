@@ -21,7 +21,7 @@ import {
   type AgentAnalyticsSource,
   AgentReplyPolicyEnum,
   AgentSubscriberAccessEnum,
-  isAgentInboxProvider,
+  EmailProviderIdEnum,
 } from '@novu/shared';
 import axios from 'axios';
 import type { WellKnownEmoji } from 'chat';
@@ -258,7 +258,10 @@ export class AgentConfigResolver {
     // ("Enable email inbox" toggle in the dashboard). When false the email channel
     // for this agent is disabled - reject resolve here so both inbound webhook and
     // outbound chat paths fail fast with a clear error.
-    if (isAgentInboxProvider(integration.providerId) && integration.active === false) {
+    const isSharedEmailInbox =
+      integration.providerId === EmailProviderIdEnum.NovuAgent ||
+      integration.providerId === EmailProviderIdEnum.AgentEmailInbox;
+    if (isSharedEmailInbox && integration.active === false) {
       throw new UnprocessableEntityException(`Email channel is disabled for agent ${agentId}`);
     }
 

@@ -7,12 +7,14 @@ const INVITE_VIAS: HumanInviteVia[] = [
   HumanChannelViaEnum.TELEGRAM,
   HumanChannelViaEnum.SLACK,
   HumanChannelViaEnum.EMAIL,
+  HumanChannelViaEnum.VOICE,
 ];
 
 export const HUMAN_INVITE_APP_NAMES: Record<HumanInviteVia, string> = {
   [HumanChannelViaEnum.TELEGRAM]: 'Telegram',
   [HumanChannelViaEnum.SLACK]: 'Slack',
   [HumanChannelViaEnum.EMAIL]: 'Email',
+  [HumanChannelViaEnum.VOICE]: 'Voice',
 };
 
 export class CreateHumanInviteRequestDto {

@@ -1,4 +1,5 @@
 import {
+  ChatProviderIdEnum,
   type ContentOverrideProviderId,
   getContentOverrideProviderIds,
   getProviderOverrideConfig,
@@ -16,6 +17,9 @@ import {
   type ProviderOverrides,
   providerSource,
 } from './override-source';
+
+/** In the override registry so the chat enum stays exhaustive, and not a workflow step. */
+const HIDDEN_WORKFLOW_OVERRIDE_PROVIDER_IDS = new Set<string>([ChatProviderIdEnum.AgentVoiceCall]);
 
 export type ActiveOverrideIntegration = {
   providerId: string;
@@ -158,6 +162,7 @@ export function buildProviderOverrideOptions({
 
   return (
     getContentOverrideProviderIds(channel)
+      .filter((providerId) => !HIDDEN_WORKFLOW_OVERRIDE_PROVIDER_IDS.has(providerId))
       .filter(
         (providerId) =>
           activeIntegrationsByProvider.has(providerId) ||

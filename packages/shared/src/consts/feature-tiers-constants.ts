@@ -76,6 +76,8 @@ export enum FeatureNameEnum {
   AGENT_EMAIL_INBOX_MONTHLY_LIMIT = 'agentEmailInboxMonthlyLimit',
   HUMAN_MESSAGE_DAILY_LIMIT = 'humanMessageDailyLimit',
   HUMAN_MESSAGE_MONTHLY_LIMIT = 'humanMessageMonthlyLimit',
+  HUMAN_VOICE_MINUTE_DAILY_LIMIT = 'humanVoiceMinuteDailyLimit',
+  HUMAN_VOICE_MINUTE_MONTHLY_LIMIT = 'humanVoiceMinuteMonthlyLimit',
   AGENT_MAX_AGENTS = 'agentMaxAgents',
   AGENT_MAX_ACTIVE_CHANNELS = 'agentMaxActiveChannels',
   AGENT_MAX_CUSTOM_EMAIL_DOMAINS = 'agentMaxCustomEmailDomains',
@@ -551,6 +553,23 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.BUSINESS]: { label: '300 messages per month', value: 300 },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: '300 messages per month', value: 300 },
     [ApiServiceLevelEnum.UNLIMITED]: { label: '300 messages per month', value: 300 },
+  },
+  // Beta abuse ceilings for outbound voice minutes. A call reserves its maximum
+  // duration up front, so these are minutes, not calls. Every current tier shares
+  // them; a later tier can diverge by editing this table.
+  [FeatureNameEnum.HUMAN_VOICE_MINUTE_DAILY_LIMIT]: {
+    [ApiServiceLevelEnum.FREE]: { label: '5 call minutes per day', value: 5 },
+    [ApiServiceLevelEnum.PRO]: { label: '5 call minutes per day', value: 5 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '5 call minutes per day', value: 5 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: '5 call minutes per day', value: 5 },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: '5 call minutes per day', value: 5 },
+  },
+  [FeatureNameEnum.HUMAN_VOICE_MINUTE_MONTHLY_LIMIT]: {
+    [ApiServiceLevelEnum.FREE]: { label: '15 call minutes per month', value: 15 },
+    [ApiServiceLevelEnum.PRO]: { label: '15 call minutes per month', value: 15 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '15 call minutes per month', value: 15 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: '15 call minutes per month', value: 15 },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: '15 call minutes per month', value: 15 },
   },
   [FeatureNameEnum.AGENT_MAX_AGENTS]: {
     [ApiServiceLevelEnum.FREE]: { label: '2 agents', value: 2 },

@@ -19,6 +19,7 @@ const MARK: Record<ChannelVia, Record<ChannelLogoProps['size'], string>> = {
   email: { 16: 'size-4 [&>svg]:size-2.25', 24: 'size-6 [&>svg]:size-3' },
   telegram: { 16: 'size-4 [&>svg]:size-2.5', 24: 'size-6 [&>svg]:size-3.5' },
   slack: { 16: 'size-4 [&>svg]:size-3', 24: 'size-6 [&>svg]:size-4.75' },
+  voice: { 16: 'size-4 [&>svg]:size-2.25', 24: 'size-6 [&>svg]:size-3' },
 };
 
 export function ChannelLogo({ via, size }: ChannelLogoProps) {

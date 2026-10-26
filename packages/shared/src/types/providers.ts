@@ -166,6 +166,8 @@ export enum ChatProviderIdEnum {
   Sendblue = 'sendblue',
   PhotonImessage = 'photon-imessage',
   NovuWebChat = 'novu-web-chat',
+  /** Human-only voice channel. No per-account credentials; the number is deployment-wide. */
+  AgentVoiceCall = 'agent-voice-call',
 }
 
 export enum PushProviderIdEnum {

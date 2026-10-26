@@ -98,6 +98,9 @@ const humanContactSchema = new Schema<HumanContactDBModel>(
           email: {
             type: humanContactChannelAddressesSchema,
           },
+          voice: {
+            type: humanContactChannelAddressesSchema,
+          },
         },
         { _id: false }
       ),

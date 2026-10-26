@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { resolvePublishedAgentInboxAddress } from '@novu/application-generic';
+import { FeatureFlagsService, resolvePublishedAgentInboxAddress } from '@novu/application-generic';
 import {
   type AgentEntity,
   AgentIntegrationRepository,
@@ -20,8 +20,10 @@ import {
 } from '@novu/shared';
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card.builder';
+import { assertVoiceEnabled, isVoiceFeatureEnabled } from '../../agents/shared/assert-voice-enabled';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
 import { KeylessEmailGateService } from '../../keyless/keyless-email-gate.service';
+import { KeylessVoiceGateService } from '../../keyless/keyless-voice-gate.service';
 import { type ContactHandle, describeContactHandle, readContactHandle } from './contact-handle';
 import { VIA_PROVIDER_IDS, viaForProviderId } from './human-channel-via';
 import { maskEmail } from './mask-email';
@@ -41,14 +43,22 @@ export interface ReachableHumanTarget extends ResolvedHumanTarget {
   handle?: ContactHandle;
 }
 
-/** Apps a human can connect themselves from the invite page. */
-export type HumanInviteVia = HumanChannelViaEnum.TELEGRAM | HumanChannelViaEnum.SLACK | HumanChannelViaEnum.EMAIL;
+/** Apps a human can connect themselves from the invite page. Voice is listed, and unavailable, until phone verification exists. */
+export type HumanInviteVia =
+  | HumanChannelViaEnum.TELEGRAM
+  | HumanChannelViaEnum.SLACK
+  | HumanChannelViaEnum.EMAIL
+  | HumanChannelViaEnum.VOICE;
 
 const INVITE_VIAS: readonly HumanChannelViaEnum[] = [
   HumanChannelViaEnum.TELEGRAM,
   HumanChannelViaEnum.SLACK,
   HumanChannelViaEnum.EMAIL,
+  HumanChannelViaEnum.VOICE,
 ];
+
+/** Channels whose reachability is a verified address on HumanContact, not a ChannelEndpoint. */
+const ADDRESS_BASED_VIAS = new Set<HumanChannelViaEnum>([HumanChannelViaEnum.EMAIL, HumanChannelViaEnum.VOICE]);
 
 export type InviteChannelDescription = {
   via: HumanInviteVia;
@@ -139,7 +149,9 @@ export class HumanDeliveryService {
     private readonly integrationRepository: IntegrationRepository,
     private readonly humanContactRepository: HumanContactRepository,
     private readonly outboundGateway: OutboundGateway,
-    private readonly keylessEmailGate: KeylessEmailGateService
+    private readonly keylessEmailGate: KeylessEmailGateService,
+    private readonly featureFlagsService: FeatureFlagsService,
+    private readonly keylessVoiceGate: KeylessVoiceGateService
   ) {}
 
   async resolveChannel(params: {
@@ -159,6 +171,10 @@ export class HumanDeliveryService {
       return this.resolveExplicitEmail({ ...params, explicitEmail });
     }
 
+    if (params.via === HumanChannelViaEnum.VOICE) {
+      await assertVoiceEnabled(this.featureFlagsService, params.organizationId, params.environmentId);
+    }
+
     const integrations = await this.findLinkedIntegrations(params);
 
     if (integrations.length === 0) {
@@ -168,9 +184,19 @@ export class HumanDeliveryService {
     }
 
     const { via } = params;
+    const contact = via
+      ? undefined
+      : await this.humanContactRepository.findContact(params.environmentId, params.agentId, params.subscriberId);
+    const voiceAsDefault =
+      contact?.defaultVia === HumanChannelViaEnum.VOICE &&
+      (await isVoiceFeatureEnabled(this.featureFlagsService, params.organizationId, params.environmentId));
     const candidates = via
       ? integrations.filter((integration) => VIA_PROVIDER_IDS[via].includes(integration.providerId))
-      : integrations;
+      : integrations.filter((integration) => {
+          const candidateVia = viaForProviderId(integration.providerId);
+
+          return candidateVia !== HumanChannelViaEnum.VOICE || voiceAsDefault;
+        });
 
     if (params.via && candidates.length === 0) {
       throw new NotFoundException(
@@ -181,34 +207,62 @@ export class HumanDeliveryService {
     const deliverable = await this.findReachableTargets(params, candidates);
 
     if (deliverable.length === 0) {
-      // A keyless org can never reach email, so an email-only agent is a gate
-      // problem (403 with a claim link), not a missing endpoint (404).
-      if (candidates.every((integration) => integration.channel === ChannelTypeEnum.EMAIL)) {
-        await this.keylessEmailGate.assertAllowed(params);
-      }
-
-      if (params.via === HumanChannelViaEnum.EMAIL) {
-        throw new NotFoundException(await this.emailUnreachableMessage(params));
-      }
-
-      throw new NotFoundException(
-        params.via
-          ? `Human "${params.subscriberId}" has no linked ${params.via} endpoint. Run \`human contact invite ${params.subscriberId} --via ${params.via}\`.`
-          : `Human "${params.subscriberId}" has no linked channel. Run \`human contact invite ${params.subscriberId}\`.`
-      );
+      await this.throwUnreachable(params, candidates);
     }
 
     if (params.via || deliverable.length === 1) {
       return toResolvedTarget(deliverable[0]);
     }
 
-    const contact = await this.humanContactRepository.findContact(
-      params.environmentId,
-      params.agentId,
-      params.subscriberId
-    );
+    const saved =
+      contact ??
+      (await this.humanContactRepository.findContact(params.environmentId, params.agentId, params.subscriberId));
 
-    return toResolvedTarget(pickDefaultTarget(deliverable, contact?.defaultVia) ?? deliverable[0]);
+    return toResolvedTarget(pickDefaultTarget(deliverable, saved?.defaultVia) ?? deliverable[0]);
+  }
+
+  /**
+   * Nothing can be delivered. Keyless orgs get a 403 with a claim link when every
+   * candidate is email or voice; everyone else gets a 404 for the missing endpoint.
+   */
+  private async throwUnreachable(
+    params: {
+      environmentId: string;
+      organizationId: string;
+      agentId: string;
+      subscriberId: string;
+      via?: HumanChannelViaEnum;
+    },
+    candidates: IntegrationEntity[]
+  ): Promise<never> {
+    if (candidates.every((integration) => integration.channel === ChannelTypeEnum.EMAIL)) {
+      await this.keylessEmailGate.assertAllowed(params);
+    }
+
+    const voiceOnly =
+      params.via === HumanChannelViaEnum.VOICE ||
+      (candidates.length > 0 &&
+        candidates.every((integration) => viaForProviderId(integration.providerId) === HumanChannelViaEnum.VOICE));
+
+    if (voiceOnly) {
+      await this.keylessVoiceGate.assertAllowed(params);
+    }
+
+    if (params.via === HumanChannelViaEnum.EMAIL) {
+      throw new NotFoundException(await this.emailUnreachableMessage(params));
+    }
+
+    if (params.via === HumanChannelViaEnum.VOICE) {
+      throw new NotFoundException(
+        `Human "${params.subscriberId}" has no verified phone number. Voice verification is not available yet.`
+      );
+    }
+
+    const inviteHint = params.via
+      ? `Human "${params.subscriberId}" has no linked ${params.via} endpoint. Run \`human contact invite ${params.subscriberId} --via ${params.via}\`.`
+      : `Human "${params.subscriberId}" has no linked channel. Run \`human contact invite ${params.subscriberId}\`.`;
+
+    throw new NotFoundException(inviteHint);
   }
 
   /**
@@ -274,7 +328,7 @@ export class HumanDeliveryService {
   }): Promise<HumanChannelViaEnum[]> {
     const integrations = await this.findLinkedIntegrations({ ...params, agentId: params.agent._id });
     const channels = await Promise.all(
-      integrations.map(async (integration) => {
+      integrations.map(async (integration): Promise<HumanChannelViaEnum | null> => {
         const via = viaForProviderId(integration.providerId);
         if (!via) {
           return null;
@@ -282,6 +336,10 @@ export class HumanDeliveryService {
 
         if (via === HumanChannelViaEnum.EMAIL) {
           return resolvePublishedAgentInboxAddress(integration.credentials, params.agent) ? via : null;
+        }
+
+        if (via === HumanChannelViaEnum.VOICE) {
+          return null;
         }
 
         const chat = await this.channelEndpointRepository.findOne(
@@ -314,6 +372,16 @@ export class HumanDeliveryService {
     ]);
 
     return channels.map((channel) => {
+      if (channel.via === HumanChannelViaEnum.VOICE) {
+        return {
+          ...channel,
+          connected: false,
+          isDefault: false,
+          available: false,
+          status: HumanAddressVerificationStateEnum.UNVERIFIED,
+        };
+      }
+
       if (channel.via === HumanChannelViaEnum.EMAIL) {
         const described = describeEmailInviteChannel(
           channel,
@@ -360,7 +428,9 @@ export class HumanDeliveryService {
     subscriberId: string;
   }): Promise<HumanContactChannelStatus[]> {
     const channels = await this.describeInviteChannels(params);
-    const statuses = channels.map(toContactChannelStatus);
+    const statuses = channels
+      .filter((channel) => channel.via !== HumanChannelViaEnum.VOICE || channel.available)
+      .map(toContactChannelStatus);
 
     if (statuses.some((channel) => channel.via === HumanChannelViaEnum.EMAIL)) {
       return statuses;
@@ -402,8 +472,16 @@ export class HumanDeliveryService {
       params.agentId,
       params.subscriberId
     );
+    const voiceOn = await isVoiceFeatureEnabled(this.featureFlagsService, params.organizationId, params.environmentId);
+    const eligible = targets.filter((target) => {
+      if (target.via !== HumanChannelViaEnum.VOICE) {
+        return true;
+      }
 
-    return { targets, defaultVia: pickDefaultTarget(targets, contact?.defaultVia)?.via };
+      return voiceOn && contact?.defaultVia === HumanChannelViaEnum.VOICE;
+    });
+
+    return { targets: eligible, defaultVia: pickDefaultTarget(eligible, contact?.defaultVia)?.via };
   }
 
   /**
@@ -425,7 +503,11 @@ export class HumanDeliveryService {
     }
 
     const chatIdentifiers = integrations
-      .filter((integration) => integration.channel !== ChannelTypeEnum.EMAIL)
+      .filter((integration) => {
+        const via = viaForProviderId(integration.providerId);
+
+        return via !== null && !ADDRESS_BASED_VIAS.has(via);
+      })
       .map((integration) => integration.identifier);
     const [endpoints, contacts] = await Promise.all([
       chatIdentifiers.length > 0
@@ -448,6 +530,12 @@ export class HumanDeliveryService {
     const savedDefaults = new Map(contacts.map((contact) => [contact.subscriberId, contact.defaultVia]));
     // Keyless orgs cannot send email, so no address counts as reachable here.
     const emailBlocked = this.keylessEmailGate.isBlocked(params.organizationId);
+    const voiceBlocked = this.keylessVoiceGate.isBlocked(params.organizationId);
+    const voiceEnabled = await isVoiceFeatureEnabled(
+      this.featureFlagsService,
+      params.organizationId,
+      params.environmentId
+    );
     const verifiedEmails = new Map(
       contacts.flatMap((contact) => {
         const verified = emailBlocked ? undefined : contact.addresses?.[HumanChannelViaEnum.EMAIL]?.verified;
@@ -458,13 +546,26 @@ export class HumanDeliveryService {
         return [[contact.subscriberId, verified] as const];
       })
     );
+    const verifiedVoices = new Map(
+      contacts.flatMap((contact) => {
+        const verified = voiceBlocked ? undefined : contact.addresses?.[HumanChannelViaEnum.VOICE]?.verified;
+        if (!verified) {
+          return [];
+        }
+
+        return [[contact.subscriberId, verified] as const];
+      })
+    );
 
     for (const subscriber of params.subscribers) {
+      const defaultVia = savedDefaults.get(subscriber.subscriberId);
+      const voiceEligible = voiceEnabled && defaultVia === HumanChannelViaEnum.VOICE;
       const targets = this.reachableTargetsOf(
         subscriber.subscriberId,
         integrations,
         endpoints,
-        verifiedEmails.get(subscriber.subscriberId)
+        verifiedEmails.get(subscriber.subscriberId),
+        voiceEligible ? verifiedVoices.get(subscriber.subscriberId) : undefined
       );
 
       result.set(subscriber.subscriberId, {
@@ -481,7 +582,8 @@ export class HumanDeliveryService {
     subscriberId: string,
     integrations: IntegrationEntity[],
     endpoints: ChannelEndpointEntity[],
-    verifiedEmail: { address: string; verifiedAt: string } | undefined
+    verifiedEmail: { address: string; verifiedAt: string } | undefined,
+    verifiedVoice: { address: string; verifiedAt: string } | undefined
   ): ReachableHumanTarget[] {
     const targets: ReachableHumanTarget[] = [];
 
@@ -491,9 +593,10 @@ export class HumanDeliveryService {
         continue;
       }
 
-      if (integration.channel === ChannelTypeEnum.EMAIL) {
-        if (verifiedEmail) {
-          targets.push(emailTarget(verifiedEmail.address, via, integration.identifier, verifiedEmail.verifiedAt));
+      if (ADDRESS_BASED_VIAS.has(via)) {
+        const verified = via === HumanChannelViaEnum.VOICE ? verifiedVoice : verifiedEmail;
+        if (verified) {
+          targets.push(emailTarget(verified.address, via, integration.identifier, verified.verifiedAt));
         }
 
         continue;
@@ -518,6 +621,14 @@ export class HumanDeliveryService {
     interaction: HumanInteractionEntity,
     target: ResolvedHumanTarget
   ): Promise<{ platformMessageId: string; platformThreadId: string }> {
+    // No call is placed in this ticket. NV-9170 replaces this stamp with the outbound dial.
+    if (target.platform === HumanChannelViaEnum.VOICE) {
+      return {
+        platformMessageId: `voice:${interaction.identifier}`,
+        platformThreadId: `voice:${interaction.identifier}`,
+      };
+    }
+
     return this.deliverContent(interaction._agentId, target, buildPendingDeliveryContent(interaction));
   }
 
@@ -610,8 +721,12 @@ export class HumanDeliveryService {
       return null;
     }
 
-    if (integration.channel === ChannelTypeEnum.EMAIL) {
-      if (this.keylessEmailGate.isBlocked(params.organizationId)) {
+    if (ADDRESS_BASED_VIAS.has(via)) {
+      if (via === HumanChannelViaEnum.EMAIL && this.keylessEmailGate.isBlocked(params.organizationId)) {
+        return null;
+      }
+
+      if (via === HumanChannelViaEnum.VOICE && this.keylessVoiceGate.isBlocked(params.organizationId)) {
         return null;
       }
 
@@ -619,7 +734,7 @@ export class HumanDeliveryService {
         params.environmentId,
         params.agentId,
         params.subscriberId,
-        HumanChannelViaEnum.EMAIL
+        via
       );
 
       if (!verified) {
@@ -628,7 +743,7 @@ export class HumanDeliveryService {
 
       return {
         via,
-        platform: HumanChannelViaEnum.EMAIL,
+        platform: via,
         platformUserId: verified.address,
         integrationIdentifier: integration.identifier,
         connectedAt: verified.verifiedAt,
@@ -741,7 +856,7 @@ function emailTarget(
 ): ReachableHumanTarget {
   return {
     via,
-    platform: HumanChannelViaEnum.EMAIL,
+    platform: via,
     platformUserId: email,
     integrationIdentifier,
     ...(connectedAt ? { connectedAt } : {}),

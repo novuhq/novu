@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationQuery, IntegrationRepository, TenantEntity, TenantRepository } from '@novu/dal';
-import { CHANNELS_WITH_PRIMARY, EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { CHANNELS_WITH_PRIMARY, ChatProviderIdEnum, EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { FeatureFlagsService } from '../../services/feature-flags';
 import {
@@ -80,9 +80,12 @@ export class SelectIntegration {
     };
   }
 
-  /** Agent Email Inbox is a Human channel. Workflow selection must never return it. */
+  /** Human-only channels. Workflow selection must never return them. */
   private isHiddenFromWorkflows(integration: IntegrationEntity): boolean {
-    return integration.providerId === EmailProviderIdEnum.AgentEmailInbox;
+    return (
+      integration.providerId === EmailProviderIdEnum.AgentEmailInbox ||
+      integration.providerId === ChatProviderIdEnum.AgentVoiceCall
+    );
   }
 
   private async resolveTenant(command: SelectIntegrationCommand): Promise<TenantEntity | null> {

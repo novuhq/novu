@@ -235,7 +235,16 @@ export enum HumanChannelViaEnum {
   TELEGRAM = 'telegram',
   SLACK = 'slack',
   EMAIL = 'email',
+  VOICE = 'voice',
 }
+
+/**
+ * Minutes reserved for one outbound voice call. This is the ElevenLabs shell
+ * agent's maximum duration, so the budget held at send time and the real
+ * ceiling cannot drift. It matches the daily minute cap: one full call per day.
+ * A later ticket reconciles the unused remainder from the actual duration.
+ */
+export const VOICE_CALL_MAX_MINUTES = 5;
 
 /**
  * Address-channel verification lifecycle surfaced on human contact / invite

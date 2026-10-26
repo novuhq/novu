@@ -14,7 +14,6 @@ import { isHostId } from '@/lib/hosts';
 import { requireHumanAccount } from '@/lib/human-account';
 import { agentDisplayName } from '@/lib/human-agent-api';
 import { describeAgentStatus } from '@/lib/human-agent-status';
-import type { ChannelVia } from '@/lib/human-channels-api';
 import { loadChannelsOverview } from '@/lib/human-channels-overview';
 import { loadHostStatus } from '@/lib/human-hosts-api';
 import { isSetupUnfinished, loadSetupSummary, requireSetUpAgent } from '@/lib/human-onboarding';
@@ -107,6 +106,6 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
 }
 
 /** The channel whose drawer a link asked for, when it names one this page has a drawer for. */
-function readDrawerParam(value: string | string[] | undefined): ChannelVia | null {
+function readDrawerParam(value: string | string[] | undefined): 'email' | 'telegram' | 'slack' | null {
   return value === 'email' || value === 'telegram' || value === 'slack' ? value : null;
 }

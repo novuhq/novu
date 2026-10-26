@@ -3,7 +3,7 @@ import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@no
 import {
   AgentRuntimeProviderIdEnum,
   buildClaudePlatformAgentConsoleUrl,
-  isAgentInboxProvider,
+  EmailProviderIdEnum,
   isClaudePlatformConsoleProvider,
 } from '@novu/shared';
 
@@ -96,6 +96,11 @@ export function toAgentResponse(
   };
 }
 
+/** The two email inboxes. Voice is an Agent Inbox provider too, and it has no mailbox. */
+function isSharedEmailInbox(providerId: string): boolean {
+  return providerId === EmailProviderIdEnum.NovuAgent || providerId === EmailProviderIdEnum.AgentEmailInbox;
+}
+
 /**
  * Compute the synthetic Novu shared inbox address
  * (`{slug}-{inboxRoutingKey}@<shared-domain>`) for a NovuAgent email
@@ -110,7 +115,7 @@ function resolveSharedInboxAddress(
   agent: SharedInboxAgentContext,
   integration: AgentIntegrationEmbeddedSource
 ): string | undefined {
-  if (!isAgentInboxProvider(integration.providerId)) {
+  if (!isSharedEmailInbox(integration.providerId)) {
     return undefined;
   }
 
@@ -140,7 +145,7 @@ export function toAgentIntegrationResponse(
   agent: SharedInboxAgentContext
 ): AgentIntegrationResponseDto {
   const sharedInboundAddress = resolveSharedInboxAddress(agent, integration);
-  const defaultSenderName = isAgentInboxProvider(integration.providerId)
+  const defaultSenderName = isSharedEmailInbox(integration.providerId)
     ? integration.credentials?.senderName || agent.name
     : undefined;
 
@@ -156,7 +161,7 @@ export function toAgentIntegrationResponse(
       active: integration.active,
       sharedInboundAddress,
       defaultSenderName,
-      sharedInboxDisabled: isAgentInboxProvider(integration.providerId)
+      sharedInboxDisabled: isSharedEmailInbox(integration.providerId)
         ? Boolean(integration.credentials?.sharedInboxDisabled)
         : undefined,
     },

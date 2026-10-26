@@ -185,6 +185,14 @@ export const envValidators = {
    * Agent Inbox agents are pinned to that Connect domain instead. US only.
    */
   NOVU_AGENT_INBOX_INBOUND_DOMAIN: str({ default: undefined }),
+  /** E.164 of the one Twilio number every voice call shares. Unset disables provisioning. */
+  NOVU_VOICE_TWILIO_NUMBER: str({ default: undefined }),
+  /** ElevenLabs phone-number id for that Twilio number. Twilio credentials stay in ElevenLabs. */
+  NOVU_VOICE_ELEVENLABS_PHONE_NUMBER_ID: str({ default: undefined }),
+  /** ElevenLabs shell agent id. It speaks only the lines Novu supplies. */
+  NOVU_VOICE_ELEVENLABS_AGENT_ID: str({ default: undefined }),
+  /** ElevenLabs API key for the shared shell. Not a per-account credential. */
+  NOVU_VOICE_ELEVENLABS_API_KEY: str({ default: undefined }),
   NOVU_WHATSAPP_APP_ID: str({ default: undefined }),
   NOVU_WHATSAPP_APP_SECRET: str({ default: undefined }),
   NOVU_WHATSAPP_CONFIG_ID: str({ default: undefined }),

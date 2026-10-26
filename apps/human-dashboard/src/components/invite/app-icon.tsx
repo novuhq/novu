@@ -1,4 +1,4 @@
-import { Mail } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 
 import type { InviteChannelVia } from '@/lib/invite-api';
 import { cn } from '@/lib/utils';
@@ -31,6 +31,21 @@ export function AppIcon({ via, size = 'medium', className }: AppIconProps) {
         )}
       >
         <Mail className="size-[58%]" />
+      </span>
+    );
+  }
+
+  if (via === 'voice') {
+    return (
+      <span
+        aria-hidden="true"
+        className={cn(
+          'flex shrink-0 items-center justify-center rounded-full bg-foreground text-background',
+          SIZES[size],
+          className
+        )}
+      >
+        <Phone className="size-[58%]" />
       </span>
     );
   }

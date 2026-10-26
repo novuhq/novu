@@ -41,7 +41,8 @@ describe('HumanInteractionSettlementService', () => {
       { execute: sinon.stub().resolves(undefined) } as any,
       { execute: sinon.stub().resolves(undefined) } as any,
       logger as any,
-      { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any
+      { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any,
+      { releaseReserved: sinon.stub().resolves() } as any
     );
 
     await service.settle(
@@ -75,7 +76,8 @@ describe('HumanInteractionSettlementService', () => {
       { execute: sinon.stub().resolves(undefined) } as any,
       { execute: sinon.stub().resolves(undefined) } as any,
       logger as any,
-      { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any
+      { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any,
+      { releaseReserved: sinon.stub().resolves() } as any
     );
 
     await service.settle(
@@ -108,7 +110,8 @@ describe('HumanInteractionSettlementService', () => {
       resumeManagedHuman as any,
       resumeToolApprovalFromHitl as any,
       logger as any,
-      { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any
+      { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any,
+      { releaseReserved: sinon.stub().resolves() } as any
     );
 
     await service.settle({ _id: 'hi1', _environmentId: 'env1' } as any, HumanInteractionStatusEnum.APPROVED);
@@ -140,7 +143,8 @@ describe('HumanInteractionSettlementService', () => {
       resumeManagedHuman as any,
       resumeToolApprovalFromHitl as any,
       logger as any,
-      { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any
+      { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any,
+      { releaseReserved: sinon.stub().resolves() } as any
     );
 
     await service.expireIfOverdue(pending as any);
