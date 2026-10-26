@@ -57,7 +57,7 @@ const MACBOOK = {
 };
 const STUDIO = { computerId: 'studio-e2e-0123456789', computerName: 'Studio', host: 'codex' };
 
-/** Long enough for everything stored before it to be read: the wait only reads what has settled. */
+/** Long enough for everything stored before it to be read: the wait reads only what has settled. */
 const SETTLE = WAKE_SETTLE_MS + 600;
 
 function sleep(ms: number): Promise<void> {
