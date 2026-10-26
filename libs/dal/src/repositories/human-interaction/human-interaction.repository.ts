@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { HumanInteractionKindEnum, HumanInteractionResponse, HumanInteractionStatusEnum } from '@novu/shared';
+import {
+  HumanChannelViaEnum,
+  HumanInteractionKindEnum,
+  HumanInteractionResponse,
+  HumanInteractionStatusEnum,
+} from '@novu/shared';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
 import { HumanInteractionDBModel, HumanInteractionDelivery, HumanInteractionEntity } from './human-interaction.entity';
@@ -39,6 +44,16 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       _environmentId: environmentId,
       subscriberIds: subscriberId,
       status: HumanInteractionStatusEnum.PENDING,
+    });
+  }
+
+  /** A live call is a pending voice interaction, including one whose delivery stamp has not landed yet. */
+  async countPendingVoiceForSubscriber(environmentId: string, subscriberId: string): Promise<number> {
+    return this.count({
+      _environmentId: environmentId,
+      subscriberIds: subscriberId,
+      status: HumanInteractionStatusEnum.PENDING,
+      $or: [{ 'deliveries.platform': HumanChannelViaEnum.VOICE }, { voiceMinutesReserved: { $gt: 0 } }],
     });
   }
 

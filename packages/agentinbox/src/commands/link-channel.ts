@@ -11,11 +11,11 @@ import {
 import { DEFAULT_API_URL, SETUP_PAGE_ORIGIN } from '../config';
 import { pollUntil, sleep } from '../poll';
 
-export const CHANNEL_NAMES = ['telegram', 'slack', 'email'] as const;
+export const CHANNEL_NAMES = ['telegram', 'slack', 'email', 'voice'] as const;
 export type ChannelName = (typeof CHANNEL_NAMES)[number];
 
-/** The channels that need a connect dance. Email is verified on the inbox instead. */
-export type ChatChannel = Exclude<ChannelName, 'email'>;
+/** The channels that need a connect dance. Email is verified on the inbox. Voice has no connect dance yet. */
+export type ChatChannel = Exclude<ChannelName, 'email' | 'voice'>;
 
 export const CHANNEL_POLL_INTERVAL_MS = 2_000;
 export const CHANNEL_POLL_TIMEOUT_MS = 5 * 60_000;
@@ -43,6 +43,8 @@ export function viaForProviderId(providerId: string): ChannelName | null {
       return 'slack';
     case 'agent-email-inbox':
       return 'email';
+    case 'agent-voice-call':
+      return 'voice';
     default:
       return null;
   }
@@ -56,6 +58,8 @@ export function providerIdsForVia(via: ChannelName): readonly string[] {
       return ['slack', 'novu-slack'];
     case 'email':
       return ['agent-email-inbox'];
+    case 'voice':
+      return ['agent-voice-call'];
     default: {
       const exhaustive: never = via;
 

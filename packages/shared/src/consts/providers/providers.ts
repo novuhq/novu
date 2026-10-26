@@ -36,16 +36,22 @@ export const NOVU_PROVIDERS: ProvidersIdEnum[] = [
   EmailProviderIdEnum.AgentEmailInbox,
   ChatProviderIdEnum.Novu,
   ChatProviderIdEnum.NovuWebChat,
+  ChatProviderIdEnum.AgentVoiceCall,
   AgentRuntimeProviderIdEnum.NovuAnthropic,
 ];
 
 export const NOVU_SMS_EMAIL_PROVIDERS: ProvidersIdEnum[] = [SmsProviderIdEnum.Novu, EmailProviderIdEnum.Novu];
 
 /**
- * Inbound agent inboxes that share the `{slug}-{routingKey}@domain` address.
- * `novu-email-agent` is the dashboard agent inbox. `agent-email-inbox` is Human-only.
+ * Agent Inbox providers kept out of workflow integration pickers.
+ * `novu-email-agent` and `agent-email-inbox` share the `{slug}-{routingKey}@domain`
+ * address. `agent-voice-call` is the Human voice channel and holds no address.
  */
-export const AGENT_INBOX_PROVIDER_IDS = [EmailProviderIdEnum.NovuAgent, EmailProviderIdEnum.AgentEmailInbox] as const;
+export const AGENT_INBOX_PROVIDER_IDS = [
+  EmailProviderIdEnum.NovuAgent,
+  EmailProviderIdEnum.AgentEmailInbox,
+  ChatProviderIdEnum.AgentVoiceCall,
+] as const;
 
 export type AgentInboxProviderId = (typeof AGENT_INBOX_PROVIDER_IDS)[number];
 

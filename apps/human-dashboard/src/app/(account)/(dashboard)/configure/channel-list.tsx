@@ -24,6 +24,7 @@ const PLACEHOLDERS: Record<ChannelVia, (handle: string) => string> = {
   email: () => 'Its own email address',
   telegram: (handle) => `People DM ${handle}’s bot.`,
   slack: () => 'Its own app in your workspace',
+  voice: () => 'A shared phone number',
 };
 
 const COMING_SOON: { via: ComingSoonVia; name: string }[] = [

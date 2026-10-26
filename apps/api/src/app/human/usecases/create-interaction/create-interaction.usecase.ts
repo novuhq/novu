@@ -32,6 +32,7 @@ import {
   HumanInteractionStatusEnum,
   humanInteractionCardTitle,
   normalizeHumanTo,
+  VOICE_CALL_MAX_MINUTES,
 } from '@novu/shared';
 import { AgentConversationService } from '../../../agents/conversation-runtime/conversation/agent-conversation.service';
 import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/human-interaction-activity.recorder';
@@ -50,6 +51,7 @@ import { HumanInboxService, type InboxScope } from '../../services/human-inbox.s
 import {
   assertHumanCardActions,
   assertHumanPendingCap,
+  assertNoLiveVoiceCall,
   buildPendingHumanInteraction,
   deliverToTargets,
   type HumanDeliveryTarget,
@@ -57,6 +59,10 @@ import {
 } from '../../services/human-interaction-lifecycle';
 import { HumanKeylessCapService, isHumanBrowserLoginAvailable } from '../../services/human-keyless-cap.service';
 import { type HumanMessageCredits, HumanMessageQuotaService } from '../../services/human-message-quota.service';
+import {
+  type HumanVoiceMinuteCredits,
+  HumanVoiceMinuteQuotaService,
+} from '../../services/human-voice-minute-quota.service';
 import { CreateConversationInteractionCommand } from '../create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../create-conversation-interaction/create-conversation-interaction.usecase';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
@@ -98,7 +104,8 @@ export class CreateInteraction {
     private readonly keylessEmailGate: KeylessEmailGateService,
     private readonly humanContactRepository: HumanContactRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly voiceMinuteQuota: HumanVoiceMinuteQuotaService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -179,8 +186,10 @@ export class CreateInteraction {
 
     const resolved = await this.resolveTargets(command, agent, recipients);
     const emailCount = resolved.filter((item) => item.target.platform === HumanChannelViaEnum.EMAIL).length;
+    const voiceTargets = resolved.filter((item) => item.target.platform === HumanChannelViaEnum.VOICE);
     let credits: AgentEmailInboxCredits | undefined;
     let messageCredits: HumanMessageCredits | undefined;
+    let voiceCredits: HumanVoiceMinuteCredits | undefined;
     let emailCapError: HttpException | undefined;
 
     try {
@@ -205,6 +214,15 @@ export class CreateInteraction {
         messageCredits = await this.messageQuota.reserveCredits(command.organizationId, messageCount);
       }
 
+      const voiceMinutes = voiceTargets.length * VOICE_CALL_MAX_MINUTES;
+      if (voiceTargets.length > 0) {
+        await assertNoLiveVoiceCall(this.humanInteractionRepository, {
+          environmentId: command.environmentId,
+          subscriberIds: voiceTargets.map((item) => item.subscriberId),
+        });
+        voiceCredits = await this.voiceMinuteQuota.reserveMinutes(command.organizationId, voiceMinutes);
+      }
+
       const interaction = await this.humanInteractionRepository.create(
         buildPendingHumanInteraction({
           kind: command.kind,
@@ -215,6 +233,7 @@ export class CreateInteraction {
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           ttlSeconds: command.ttlSeconds,
+          ...(voiceCredits && !voiceCredits.unlimited ? { voiceMinutesReserved: voiceMinutes } : {}),
         })
       );
 
@@ -249,6 +268,7 @@ export class CreateInteraction {
           logMessage: 'Human interaction delivery failed for one recipient',
         });
       const delivered = credits ? await credits.run(deliver) : await deliver();
+      await this.keepVoiceReservation(interaction, delivered.interaction, voiceCredits, voiceMinutes);
 
       // Each contact gets the message in a thread of their own, so each delivery is one message sent.
       for (const { platform } of delivered.interaction.deliveries ?? []) {
@@ -265,7 +285,38 @@ export class CreateInteraction {
     } finally {
       await credits?.release();
       await messageCredits?.release();
+      await voiceCredits?.release();
     }
+  }
+
+  /**
+   * A pending voice send keeps the minutes it actually delivered. A tell, or a
+   * voice target that never went out, gives them back when `release` runs.
+   */
+  private async keepVoiceReservation(
+    created: HumanInteractionEntity,
+    delivered: HumanInteractionEntity,
+    voiceCredits: HumanVoiceMinuteCredits | undefined,
+    reservedMinutes: number
+  ): Promise<void> {
+    if (!voiceCredits || voiceCredits.unlimited) {
+      return;
+    }
+
+    const voiceDelivered = (delivered.deliveries ?? []).filter(
+      (delivery) => delivery.platform === HumanChannelViaEnum.VOICE
+    ).length;
+    const kept = delivered.status === HumanInteractionStatusEnum.PENDING ? voiceDelivered * VOICE_CALL_MAX_MINUTES : 0;
+    voiceCredits.accept(kept);
+
+    if (kept === reservedMinutes) {
+      return;
+    }
+
+    await this.humanInteractionRepository.update(
+      { _id: created._id, _environmentId: created._environmentId },
+      kept > 0 ? { $set: { voiceMinutesReserved: kept } } : { $unset: { voiceMinutesReserved: 1 } }
+    );
   }
 
   /**

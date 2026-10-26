@@ -58,6 +58,12 @@ export class HumanInteractionEntity {
   /** Conversation the delivery/reply is threaded on, once one exists. */
   _conversationId?: string;
 
+  /**
+   * Minutes still held against the voice cap for this interaction. Set when a
+   * voice send stays pending; settlement releases them. Absent for every other channel.
+   */
+  voiceMinutesReserved?: number;
+
   response?: HumanInteractionResponse;
 
   expiresAt: string;

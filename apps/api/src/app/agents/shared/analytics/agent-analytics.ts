@@ -70,7 +70,8 @@ export function trackAgentIntegrationConnected(
       | 'existing_integration'
       | 'novu_email_provisioned'
       | 'agent_email_inbox_provisioned'
-      | 'novu_web_chat_provisioned';
+      | 'novu_web_chat_provisioned'
+      | 'agent_voice_provisioned';
   }
 ): void {
   analytics.track(`Agent Integration Connected - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {

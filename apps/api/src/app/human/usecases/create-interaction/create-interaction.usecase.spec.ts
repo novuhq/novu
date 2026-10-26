@@ -36,6 +36,7 @@ describe('CreateInteraction', () => {
     };
     const humanInteractionRepository = {
       countPendingForSubscriber: sinon.stub().resolves(0),
+      countPendingVoiceForSubscriber: sinon.stub().resolves(0),
       count: sinon.stub().resolves(0),
       create: sinon.stub().resolves(created),
       stampDelivery: sinon.stub().resolves(undefined),
@@ -120,6 +121,14 @@ describe('CreateInteraction', () => {
       create: sinon.stub().resolves({ subscriberId: 'ada' }),
     };
     const analyticsService = { track: sinon.stub() };
+    const voiceCredits = {
+      unlimited: false,
+      accept: sinon.stub(),
+      release: sinon.stub().resolves(),
+    };
+    const voiceMinuteQuota = {
+      reserveMinutes: sinon.stub().resolves(voiceCredits),
+    };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
@@ -141,7 +150,8 @@ describe('CreateInteraction', () => {
       keylessEmailGate as any,
       humanContactRepository as any,
       subscriberRepository as any,
-      analyticsService as any
+      analyticsService as any,
+      voiceMinuteQuota as any
     );
     const command = {
       userId: 'user1',
@@ -172,6 +182,30 @@ describe('CreateInteraction', () => {
       analyticsService,
     };
   }
+
+  describe('voice', () => {
+    it('rejects a second call while one is still pending', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanInteractionRepository } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'voice-main',
+        platform: HumanChannelViaEnum.VOICE,
+        platformUserId: '+15551212',
+      });
+      humanInteractionRepository.countPendingVoiceForSubscriber.resolves(1);
+
+      try {
+        await usecase.execute(command as never);
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(HttpException);
+        expect((err as HttpException).getStatus()).to.equal(429);
+        expect((err as HttpException).getResponse()).to.include({ code: 'voice_live_call' });
+      }
+
+      expect(humanInteractionRepository.create.called).to.equal(false);
+    });
+  });
 
   describe('analytics', () => {
     it('counts one message for each contact it reached, with its type, channel and the app that asked', async () => {

@@ -145,6 +145,8 @@ export async function runInvite(contactArg: string, inviteOptions: InviteOptions
       await setupRelay(client, { subscriberId: contactId, agentIdentifier, ...name, defaultVia: via });
       result = await inviteSlack(client, contactId, agentIdentifier, linked.integration.identifier, options);
       break;
+    case 'voice':
+      throw new Error('Voice cannot be connected from an invite yet. Phone verification is not available.');
     default: {
       const exhaustive: never = via;
       throw new Error(`Unhandled channel: ${exhaustive}`);

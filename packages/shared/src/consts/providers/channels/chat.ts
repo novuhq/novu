@@ -178,4 +178,12 @@ export const chatProviders: IProviderConfig[] = [
     docReference: `https://docs.novu.co/agents/channels/web-chat${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'novu-web-chat.svg', dark: 'novu-web-chat.svg' },
   },
+  {
+    id: ChatProviderIdEnum.AgentVoiceCall,
+    displayName: 'Agent Voice Call',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [],
+    docReference: `https://docs.novu.co/agents/get-started/agents-and-providers${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'novu.png', dark: 'novu.png' },
+  },
 ];

@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import { AppIcon } from './app-icon';
 
 const APP_LABELS: Record<InviteChannelVia, string> = {
+  voice: 'Voice',
   email: 'Email',
   telegram: 'Telegram',
   slack: 'Slack',
@@ -896,6 +897,8 @@ function channelDescription(channel: InviteChannel, telegramBot?: string): strin
       }
 
       return 'Email it';
+    case 'voice':
+      return 'A phone call';
     default: {
       const unreachable: never = channel.via;
 

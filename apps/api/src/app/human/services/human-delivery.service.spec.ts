@@ -1,4 +1,4 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, HttpException, NotFoundException } from '@nestjs/common';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
@@ -10,6 +10,7 @@ import {
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE } from '../../keyless/keyless-email-gate.service';
+import { KEYLESS_VOICE_REQUIRES_ACCOUNT_CODE } from '../../keyless/keyless-voice-gate.service';
 import { HumanDeliveryService, pickDefaultTarget, type ReachableHumanTarget } from './human-delivery.service';
 
 function emailGate(blocked = false) {
@@ -26,8 +27,21 @@ function emailGate(blocked = false) {
   };
 }
 
+function voiceFlag(enabled = true) {
+  return { getFlag: sinon.stub().resolves(enabled) };
+}
+
+function voiceGate(blocked = false) {
+  return {
+    isBlocked: sinon.stub().returns(blocked),
+    assertAllowed: blocked
+      ? sinon.stub().rejects(new HttpException({ code: KEYLESS_VOICE_REQUIRES_ACCOUNT_CODE }, 403))
+      : sinon.stub().resolves(),
+  };
+}
+
 describe('HumanDeliveryService.resolveChannel', () => {
-  function setup() {
+  function setup(options: { voiceEnabled?: boolean; voiceBlocked?: boolean } = {}) {
     const agentIntegrationRepository = { find: sinon.stub() };
     const channelEndpointRepository = { findOne: sinon.stub().resolves(null) };
     const integrationRepository = { find: sinon.stub() };
@@ -45,7 +59,9 @@ describe('HumanDeliveryService.resolveChannel', () => {
       integrationRepository as never,
       humanContactRepository as never,
       outboundGateway as never,
-      keylessEmailGate as never
+      keylessEmailGate as never,
+      voiceFlag(options.voiceEnabled ?? true) as never,
+      voiceGate(options.voiceBlocked ?? false) as never
     );
 
     return {
@@ -329,6 +345,174 @@ describe('HumanDeliveryService.resolveChannel', () => {
     expect(reach.get('bob')?.targets).to.deep.equal([]);
   });
 
+  it('resolves a verified phone number when via is voice', async () => {
+    const { service, agentIntegrationRepository, integrationRepository, humanContactRepository } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'voice1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'voice1',
+        identifier: 'voice-main',
+        providerId: ChatProviderIdEnum.AgentVoiceCall,
+        channel: ChannelTypeEnum.CHAT,
+        active: true,
+      },
+    ]);
+    humanContactRepository.findVerifiedAddress.resolves({
+      address: '+15551212',
+      verifiedAt: '2026-01-02T00:00:00.000Z',
+    });
+
+    const target = await service.resolveChannel({ ...params, via: HumanChannelViaEnum.VOICE });
+
+    expect(target).to.deep.equal({
+      platform: HumanChannelViaEnum.VOICE,
+      platformUserId: '+15551212',
+      integrationIdentifier: 'voice-main',
+    });
+  });
+
+  it('404s when the phone number is not verified', async () => {
+    const { service, agentIntegrationRepository, integrationRepository } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'voice1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'voice1',
+        identifier: 'voice-main',
+        providerId: ChatProviderIdEnum.AgentVoiceCall,
+        channel: ChannelTypeEnum.CHAT,
+        active: true,
+      },
+    ]);
+
+    try {
+      await service.resolveChannel({ ...params, via: HumanChannelViaEnum.VOICE });
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(NotFoundException);
+      expect((err as NotFoundException).message).to.include('no verified phone number');
+    }
+  });
+
+  it('rejects an explicit voice send when the flag is off', async () => {
+    const { service, agentIntegrationRepository } = setup({ voiceEnabled: false });
+
+    try {
+      await service.resolveChannel({ ...params, via: HumanChannelViaEnum.VOICE });
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(NotFoundException);
+      expect((err as NotFoundException).message).to.equal('Voice is not enabled for this workspace.');
+    }
+
+    expect(agentIntegrationRepository.find.called).to.equal(false);
+  });
+
+  it('blocks a keyless organization from placing a call', async () => {
+    const { service, agentIntegrationRepository, integrationRepository, humanContactRepository } = setup({
+      voiceBlocked: true,
+    });
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'voice1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'voice1',
+        identifier: 'voice-main',
+        providerId: ChatProviderIdEnum.AgentVoiceCall,
+        channel: ChannelTypeEnum.CHAT,
+        active: true,
+      },
+    ]);
+    humanContactRepository.findVerifiedAddress.resolves({
+      address: '+15551212',
+      verifiedAt: '2026-01-02T00:00:00.000Z',
+    });
+
+    try {
+      await service.resolveChannel({ ...params, via: HumanChannelViaEnum.VOICE });
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(HttpException);
+      expect((err as HttpException).getStatus()).to.equal(403);
+      expect((err as HttpException).getResponse()).to.include({ code: KEYLESS_VOICE_REQUIRES_ACCOUNT_CODE });
+    }
+  });
+
+  it('does not auto-pick voice when another channel is also reachable', async () => {
+    const {
+      service,
+      agentIntegrationRepository,
+      integrationRepository,
+      channelEndpointRepository,
+      humanContactRepository,
+    } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'voice1' }, { _integrationId: 'tg1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'voice1',
+        identifier: 'voice-main',
+        providerId: ChatProviderIdEnum.AgentVoiceCall,
+        channel: ChannelTypeEnum.CHAT,
+        active: true,
+      },
+      {
+        _id: 'tg1',
+        identifier: 'telegram-main',
+        providerId: ChatProviderIdEnum.Telegram,
+        channel: ChannelTypeEnum.CHAT,
+        active: true,
+      },
+    ]);
+    channelEndpointRepository.findOne.resolves({
+      subscriberId: 'alice',
+      integrationIdentifier: 'telegram-main',
+      type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+      endpoint: { chatId: '111' },
+      createdAt: '2026-06-01T00:00:00.000Z',
+    });
+    humanContactRepository.findVerifiedAddress.resolves({
+      address: '+15551212',
+      verifiedAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    const target = await service.resolveChannel(params);
+
+    expect(target.integrationIdentifier).to.equal('telegram-main');
+    expect(target.platform).to.not.equal(HumanChannelViaEnum.VOICE);
+  });
+
+  it('uses voice when it is the saved default and the flag is on', async () => {
+    const { service, agentIntegrationRepository, integrationRepository, humanContactRepository } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'voice1' }, { _integrationId: 'tg1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'voice1',
+        identifier: 'voice-main',
+        providerId: ChatProviderIdEnum.AgentVoiceCall,
+        channel: ChannelTypeEnum.CHAT,
+        active: true,
+      },
+      {
+        _id: 'tg1',
+        identifier: 'telegram-main',
+        providerId: ChatProviderIdEnum.Telegram,
+        channel: ChannelTypeEnum.CHAT,
+        active: true,
+      },
+    ]);
+    humanContactRepository.findContact.resolves({ defaultVia: HumanChannelViaEnum.VOICE });
+    humanContactRepository.findVerifiedAddress.resolves({
+      address: '+15551212',
+      verifiedAt: '2026-01-02T00:00:00.000Z',
+    });
+
+    const target = await service.resolveChannel(params);
+
+    expect(target).to.deep.equal({
+      platform: HumanChannelViaEnum.VOICE,
+      platformUserId: '+15551212',
+      integrationIdentifier: 'voice-main',
+    });
+  });
+
   describe('when the human is reachable on several channels', () => {
     function setupTelegramAndSlack() {
       const context = setup();
@@ -467,7 +651,9 @@ describe('HumanDeliveryService keyless email', () => {
       integrationRepository as never,
       humanContactRepository as never,
       { sendDirectMessage: sinon.stub() } as never,
-      keylessEmailGate as never
+      keylessEmailGate as never,
+      voiceFlag() as never,
+      voiceGate() as never
     );
 
     return { service, humanContactRepository, agentIntegrationRepository, integrationRepository, keylessEmailGate };
@@ -575,7 +761,9 @@ describe('HumanDeliveryService.listInviteChannels', () => {
       integrationRepository as never,
       {} as never,
       {} as never,
-      emailGate() as never
+      emailGate() as never,
+      voiceFlag() as never,
+      voiceGate() as never
     );
 
     const channels = await service.listInviteChannels({ environmentId: 'env1', organizationId: 'org1', agentId: 'a1' });
@@ -613,7 +801,9 @@ describe('HumanDeliveryService.listWorkingChannels', () => {
       integrationRepository as never,
       {} as never,
       {} as never,
-      emailGate() as never
+      emailGate() as never,
+      voiceFlag() as never,
+      voiceGate() as never
     );
 
     const channels = await service.listWorkingChannels({
