@@ -87,19 +87,21 @@ export class HumanHostStatusService {
   /**
    * A host checked the inbox: it listed conversations or opened one, and was shown `seen`. The first check
    * of any host keeps the newest unread conversation it was shown: the message that was waiting for it.
+   * `null` is a check that showed no conversations (the wake program's wait): it counts as the host's last
+   * check, but leaves the first look at the inbox, and its waiting message, to a real one.
    */
   async recordCheck(
     scope: InboxScope,
     agent: InboxRelayAgent,
     host: RequestingHost,
-    seen: InboxThreadDto[]
+    seen: InboxThreadDto[] | null
   ): Promise<void> {
     try {
       const now = new Date();
       const stored = await this.agentRepository.findOne(agentQuery(scope, agent._id), ['hosts']);
       const hosts = stored?.hosts;
 
-      if (!hosts?.firstCheckedAt) {
+      if (seen && !hosts?.firstCheckedAt) {
         const waiting = seen.find((thread) => thread.unreadCount > 0);
 
         await this.agentRepository.update(

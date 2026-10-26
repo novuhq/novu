@@ -40,24 +40,31 @@ describe('HumanWakeMessagesService', () => {
 
   function setup({
     rows = [] as Array<Record<string, any>>,
-    deletions = [] as Array<Record<string, any>>,
+    revisions = [] as Array<Record<string, any>>,
+    earlier = [] as Array<Record<string, any>>,
     resolves = [] as Array<Record<string, any>>,
     questions = [] as Array<Record<string, any>>,
+    answeredSince = [] as Array<Record<string, any>>,
     cards = [] as Array<Record<string, any>>,
     conversations = [{ _id: 'conv1', identifier: 'conv_one' }] as Array<Record<string, any>>,
   } = {}) {
     const conversationRepository = { find: sinon.stub().resolves(conversations) };
     const activityRepository = {
-      find: sinon.stub().callsFake(async (query: { type: unknown }) => {
-        if (query.type === ConversationActivityTypeEnum.DELETE) {
-          return deletions;
+      find: sinon.stub().callsFake(async (query: { type: any; createdAt?: { $lt?: Date } }) => {
+        if (query.type?.$in?.includes(ConversationActivityTypeEnum.EDIT)) {
+          return revisions;
+        }
+        if (query.type === ConversationActivityTypeEnum.SIGNAL) {
+          return resolves;
         }
 
-        return query.type === ConversationActivityTypeEnum.SIGNAL ? resolves : rows;
+        // Before the look's first message: the replies a question may have gone to already.
+        return query.createdAt?.$lt ? earlier : rows;
       }),
     };
     const humanInteractionRepository = {
-      find: sinon.stub().resolves(questions),
+      // The questions replies may have answered, or those answered since the cursor, for their conversations.
+      find: sinon.stub().callsFake(async (query: { kind?: string }) => (query.kind ? questions : answeredSince)),
       findByIdentifiers: sinon.stub().resolves(cards),
     };
     const service = new HumanWakeMessagesService(
@@ -145,12 +152,61 @@ describe('HumanWakeMessagesService', () => {
     const deleted = row({ platformMessageId: 'tg-2' });
     const { service } = setup({
       rows: [kept, deleted],
-      deletions: [{ _conversationId: 'conv1', platformMessageId: 'tg-2' }],
+      revisions: [{ _conversationId: 'conv1', platformMessageId: 'tg-2', type: ConversationActivityTypeEnum.DELETE }],
     });
 
     const page = await service.read(scope, agent, wakers, { at: now.getTime() - 120_000 }, 20, now);
 
     expect(page.data.map((message) => message.id)).to.deep.equal([kept.identifier]);
+  });
+
+  it('gives an edited message as it reads now, told apart from the same platform id in another chat', async () => {
+    const edited = row({ platformMessageId: 'tg-7', content: 'deploy production' });
+    const elsewhere = row({ _conversationId: 'conv2', platformMessageId: 'tg-7', content: 'hello from another chat' });
+    const edit = (_id: string, content: string, sequence: number) => ({
+      _id,
+      _conversationId: 'conv1',
+      platformMessageId: 'tg-7',
+      type: ConversationActivityTypeEnum.EDIT,
+      content,
+      sequence,
+    });
+    const { service } = setup({
+      rows: [edited, elsewhere],
+      revisions: [edit('e2', 'deploy staging', 2), edit('e1', 'deploy qa', 1)],
+      conversations: [
+        { _id: 'conv1', identifier: 'conv_one' },
+        { _id: 'conv2', identifier: 'conv_two' },
+      ],
+    });
+
+    const page = await service.read(scope, agent, wakers, { at: now.getTime() - 120_000 }, 20, now);
+
+    expect(page.data.map(({ id, text }) => ({ id, text }))).to.deep.equal([
+      { id: edited.identifier, text: 'deploy staging' },
+      { id: elsewhere.identifier, text: 'hello from another chat' },
+    ]);
+  });
+
+  it('reads every conversation where something happened since the cursor, however many the agent has', async () => {
+    const { service, conversationRepository } = setup({
+      rows: [row({})],
+      answeredSince: [{ _conversationId: 'conv9' }, {}],
+    });
+    const cursor = { at: now.getTime() - 120_000 };
+
+    await service.read(scope, agent, wakers, cursor, 20, now);
+
+    const [query, , options] = conversationRepository.find.firstCall.args;
+    // Written in since the cursor, with a few seconds for the clocks; or where a button was pressed since.
+    expect(query.$or).to.deep.equal([
+      {
+        'participants.id': { $in: ['ada', 'bob'] },
+        lastActivityAt: { $gte: new Date(cursor.at - 5_000).toISOString() },
+      },
+      { _id: { $in: ['conv9'] } },
+    ]);
+    expect(options).to.equal(undefined);
   });
 
   it('marks a reply that answered a question, and leaves out the answer row of that question', async () => {
@@ -183,6 +239,44 @@ describe('HumanWakeMessagesService', () => {
       answersMessageId: 'hi_ask',
       answer: { status: 'answered', text: 'staging' },
     });
+  });
+
+  it('gives a question to the earliest reply that fits, even one an earlier look gave', async () => {
+    const first = row({ content: 'yes', createdAt: new Date(now.getTime() - 30_000) });
+    const again = row({ content: 'yes', createdAt: new Date(now.getTime() - 28_000) });
+    const { service } = setup({
+      rows: [again],
+      earlier: [first],
+      questions: [
+        {
+          identifier: 'hi_yes',
+          response: {
+            type: 'text',
+            text: 'yes',
+            respondedBySubscriberId: 'ada',
+            respondedAt: new Date(first.createdAt.getTime() + 300).toISOString(),
+          },
+        },
+      ],
+    });
+
+    const page = await service.read(scope, agent, wakers, { at: first.createdAt.getTime() }, 20, now);
+
+    expect(page.data).to.have.length(1);
+    expect(page.data[0]).to.not.have.property('answersMessageId');
+  });
+
+  it('marks a reply to a question whoever answered it, also someone it wasn’t sent to', async () => {
+    const { service, humanInteractionRepository } = setup({ rows: [row({ senderId: 'bob', content: 'staging' })] });
+
+    await service.read(scope, agent, wakers, { at: now.getTime() - 120_000 }, 20, now);
+
+    const query = humanInteractionRepository.find
+      .getCalls()
+      .map((call) => call.args[0])
+      .find((args) => args.kind);
+    expect(query).to.not.have.property('subscriberIds');
+    expect(query['response.respondedBySubscriberId']).to.deep.equal({ $in: ['bob'] });
   });
 
   it('gives a pressed button as the answer to its card, saying what the button says', async () => {
@@ -304,7 +398,11 @@ describe('HumanWakeMessagesService', () => {
     const rows = Array.from({ length: 200 }, (_, index) => row({ platformMessageId: `tg-${index}` }));
     const { service } = setup({
       rows,
-      deletions: rows.map((deleted) => ({ _conversationId: 'conv1', platformMessageId: deleted.platformMessageId })),
+      revisions: rows.map((deleted) => ({
+        _conversationId: 'conv1',
+        platformMessageId: deleted.platformMessageId,
+        type: ConversationActivityTypeEnum.DELETE,
+      })),
     });
 
     const page = await service.read(scope, agent, wakers, { at: now.getTime() - 120_000 }, 20, now);

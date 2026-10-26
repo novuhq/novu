@@ -7,6 +7,7 @@ import {
   ConversationRepository,
   type HumanInteractionEntity,
   HumanInteractionRepository,
+  indexRevisions,
 } from '@novu/dal';
 import {
   HUMAN_INTERACTION_MAX_TTL_SECONDS,
@@ -34,13 +35,7 @@ export const WAKE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 /** The rows one look reads at most. The cursor goes on from the last of them. */
 const ROWS_PER_LOOK = 200;
 
-/** The conversations one look reads at most: those someone who can wake was in most recently. */
-const MAX_CONVERSATIONS = 500;
-
-/**
- * How long before it is answered a question can have been sent: the longest a question lives, and an hour to
- * spare. A pressed button leaves its conversation as it was, so its conversation is found by the question.
- */
+/** How long before it is answered a question can have been sent: the longest a question lives, and an hour to spare. */
 const QUESTION_LIFETIME_MS = HUMAN_INTERACTION_MAX_TTL_SECONDS * 1000 + 60 * 60 * 1000;
 
 /** A question is settled this soon after the reply that answers it is stored, or the reply isn't taken for its answer. */
@@ -79,11 +74,16 @@ type CardAnswer = {
 /** A question a reply answered, with the words it was settled with. */
 type AnsweredQuestion = Pick<HumanInteractionEntity, 'identifier' | 'response'>;
 
+/** What became of a look's messages since they were stored, by `messageKey`. */
+type Revisions = {
+  edits: Map<string, Pick<ConversationActivityEntity, 'content' | 'richContent'>>;
+  deleted: Set<string>;
+};
+
 /** What one look knows about its rows besides the rows themselves. */
-type LookContext = {
+type LookContext = Revisions & {
   conversations: Map<string, WakeConversation>;
   wakers: Wakers;
-  deleted: Set<string>;
   questionsAnswered: Map<string, AnsweredQuestion>;
   cards: Map<string, HumanInteractionEntity>;
   resolves: Map<string, RowPosition[]>;
@@ -98,7 +98,8 @@ export type WakeMessagesPage = { data: WakeMessageDto[]; next: WakeCursor; more:
 /**
  * The messages that may wake an agent's host, read for the wake program's wait: what the people who can wake
  * the host wrote to the agent, and their answers to its cards, oldest first. The agent's own messages, the
- * system's and strangers' never count, nor a message that was deleted before it was read.
+ * system's and strangers' never count, nor a message that was deleted before it was read; one edited before it
+ * was read is given as it reads now.
  *
  * Each message is one entry. A reply that answers a question is the person's message, marked with the question
  * it answered (`answersMessageId`); the question's own answer row then adds nothing. A pressed button leaves no
@@ -157,13 +158,13 @@ export class HumanWakeMessagesService {
       return lookedAtAll;
     }
 
-    const [deleted, questionsAnswered, cards, resolves] = await Promise.all([
-      this.deletedMessages(scope, rows),
+    const [revisions, questionsAnswered, cards, resolves] = await Promise.all([
+      this.revisionsOf(scope, rows),
       this.questionsAnsweredBy(scope, agent, rows),
       this.answeredCards(scope, rows),
       this.resolvesBefore(scope, rows),
     ]);
-    const context: LookContext = { conversations, wakers, deleted, questionsAnswered, cards, resolves };
+    const context: LookContext = { ...revisions, conversations, wakers, questionsAnswered, cards, resolves };
 
     const data: WakeMessageDto[] = [];
     for (const [index, row] of rows.entries()) {
@@ -185,9 +186,10 @@ export class HumanWakeMessagesService {
   }
 
   /**
-   * The agent's conversations someone who can wake was in, active since a question that is answered now could
-   * have been sent. Writing in a conversation makes the writer one of its people and marks it active; pressing a
-   * button does neither, but the question it answers marked it active when it was sent.
+   * Every conversation of the agent where a row after the cursor can be: those someone who can wake is in that
+   * were active since it (writing makes the writer one of its people and marks it active), and those of questions
+   * answered since it (pressing a button does neither). Only what happened since the cursor counts, so none is
+   * left out however many conversations the agent has.
    */
   private async conversationsOf(
     scope: InboxScope,
@@ -195,16 +197,27 @@ export class HumanWakeMessagesService {
     wakers: Wakers,
     cursor: WakeCursor
   ): Promise<Map<string, WakeConversation>> {
+    const since = new Date(cursor.at - CLOCK_SLACK_MS).toISOString();
+    const answered = await this.humanInteractionRepository.find(
+      {
+        _environmentId: scope.environmentId,
+        _organizationId: scope.organizationId,
+        _agentId: agent._id,
+        'response.respondedAt': { $gte: since },
+      },
+      ['_conversationId']
+    );
     const found = await this.conversationRepository.find(
       {
         _environmentId: scope.environmentId,
         _organizationId: scope.organizationId,
         _agentId: agent._id,
-        'participants.id': { $in: [...wakers.keys()] },
-        lastActivityAt: { $gte: new Date(cursor.at - QUESTION_LIFETIME_MS).toISOString() },
+        $or: [
+          { 'participants.id': { $in: [...wakers.keys()] }, lastActivityAt: { $gte: since } },
+          { _id: { $in: answered.flatMap((question) => question._conversationId ?? []) } },
+        ],
       },
-      ['_id', 'identifier', 'isDirectMessage'],
-      { sort: { lastActivityAt: -1 }, limit: MAX_CONVERSATIONS }
+      ['_id', 'identifier', 'isDirectMessage']
     );
 
     return new Map(
@@ -216,31 +229,52 @@ export class HumanWakeMessagesService {
     );
   }
 
-  /** The messages among `rows` that were deleted since: a deletion is a row of its own, with the message's platform id. */
-  private async deletedMessages(scope: InboxScope, rows: ConversationActivityEntity[]): Promise<Set<string>> {
+  /**
+   * What became of the messages among `rows` since: the newest edit of each, and which were deleted, as the inbox
+   * folds them. Each is a row of its own with the message's platform id, which is only unique in its conversation
+   * (a Telegram message id is a number per chat), so they are told apart by conversation too.
+   */
+  private async revisionsOf(scope: InboxScope, rows: ConversationActivityEntity[]): Promise<Revisions> {
     const messages = rows.filter((row) => row.type === ConversationActivityTypeEnum.MESSAGE && row.platformMessageId);
     if (messages.length === 0) {
-      return new Set();
+      return { edits: new Map(), deleted: new Set() };
     }
 
-    const deletions = await this.activityRepository.find(
+    const revisions = await this.activityRepository.find(
       {
         _environmentId: scope.environmentId,
         _organizationId: scope.organizationId,
         _conversationId: { $in: [...new Set(messages.map((row) => String(row._conversationId)))] },
-        type: ConversationActivityTypeEnum.DELETE,
+        type: { $in: [ConversationActivityTypeEnum.EDIT, ConversationActivityTypeEnum.DELETE] },
         platformMessageId: { $in: messages.map((row) => row.platformMessageId as string) },
       },
-      ['_conversationId', 'platformMessageId']
+      ['_id', '_conversationId', 'type', 'platformMessageId', 'content', 'richContent', 'sequence', 'createdAt']
     );
+    const byConversation = new Map<string, typeof revisions>();
+    for (const revision of revisions) {
+      const conversationId = String(revision._conversationId);
+      byConversation.set(conversationId, [...(byConversation.get(conversationId) ?? []), revision]);
+    }
 
-    return new Set(deletions.map(messageKey));
+    const found: Revisions = { edits: new Map(), deleted: new Set() };
+    for (const [conversationId, ofConversation] of byConversation) {
+      const { latestEdit, deletedIds } = indexRevisions(ofConversation);
+      for (const [platformMessageId, edit] of latestEdit) {
+        found.edits.set(`${conversationId}:${platformMessageId}`, edit);
+      }
+      for (const platformMessageId of deletedIds) {
+        found.deleted.add(`${conversationId}:${platformMessageId}`);
+      }
+    }
+
+    return found;
   }
 
   /**
    * Which of the messages among `rows` answered a question, and which. A reply settles the question it answers
    * with its own words, by the same person, moments after it is stored; each question is the answer of one
-   * message at most.
+   * message at most, the earliest that fits, even one an earlier look gave. Whoever answered counts, also someone
+   * the question wasn't sent to, where anyone in the conversation may answer.
    */
   private async questionsAnsweredBy(
     scope: InboxScope,
@@ -260,7 +294,6 @@ export class HumanWakeMessagesService {
         _environmentId: scope.environmentId,
         _organizationId: scope.organizationId,
         _agentId: agent._id,
-        subscriberIds: { $in: senders },
         kind: HumanInteractionKindEnum.ASK,
         status: HumanInteractionStatusEnum.ANSWERED,
         createdAt: { $gte: new Date(first - QUESTION_LIFETIME_MS) },
@@ -272,8 +305,31 @@ export class HumanWakeMessagesService {
       },
       ['identifier', 'response']
     );
+    if (questions.length === 0) {
+      return new Map();
+    }
 
-    return matchAnswers(messages, questions);
+    // The same words sent twice, a moment apart, can land on two pages: the earlier ones are read again, so a
+    // question already given to a reply isn't given to the next one too.
+    const answeredFrom = Math.min(...questions.map(({ response }) => Date.parse(response?.respondedAt ?? '')));
+    const earlier = await this.activityRepository.find(
+      {
+        _environmentId: scope.environmentId,
+        _organizationId: scope.organizationId,
+        _conversationId: { $in: [...new Set(messages.map((row) => String(row._conversationId)))] },
+        senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+        senderId: { $in: senders },
+        type: ConversationActivityTypeEnum.MESSAGE,
+        createdAt: { $gte: new Date(answeredFrom - ANSWER_WINDOW_MS), $lt: new Date(first) },
+      },
+      ['_id', 'senderId', 'content', 'createdAt'],
+      { sort: { createdAt: 1, _id: 1 } }
+    );
+    const ours = new Set(messages.map((row) => String(row._id)));
+
+    return new Map(
+      [...matchAnswers([...earlier, ...messages], questions)].filter(([messageId]) => ours.has(messageId))
+    );
   }
 
   /** The cards whose answers are among `rows`, by their ids, for what their buttons say. */
@@ -389,17 +445,26 @@ export function roundOf(
   return resolves.filter(({ at, id }) => at < position.at || (at === position.at && id < String(position.id))).length;
 }
 
-/** A deleted message counts for nothing; a reply that answered a question is marked with it. */
+/**
+ * A deleted message counts for nothing, and an edited one reads as it does now; a reply that answered a question
+ * is marked with it.
+ */
 function toMessage(row: ConversationActivityEntity, context: LookContext): WakeMessageDto | null {
-  const question = context.questionsAnswered.get(String(row._id));
-  const attachments = readAttachments(row);
-
-  if (context.deleted.has(messageKey(row))) {
+  const key = messageKey(row);
+  if (context.deleted.has(key)) {
     return null;
   }
 
+  const question = context.questionsAnswered.get(String(row._id));
+  // As the inbox folds an edit: its words, and what came with it when it brought anything.
+  const edit = context.edits.get(key);
+  const current = edit
+    ? { ...row, content: edit.content, ...(edit.richContent !== undefined ? { richContent: edit.richContent } : {}) }
+    : row;
+  const attachments = readAttachments(current);
+
   return entryOf(row, context, {
-    text: row.content ?? '',
+    text: current.content ?? '',
     ...(question
       ? {
           answersMessageId: question.identifier,

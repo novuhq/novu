@@ -792,6 +792,24 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
       }
     });
 
+    it('leaves the first look at the inbox to a real one, which keeps the message that was waiting', async () => {
+      await holdLease(MACBOOK);
+      await write('are you there?');
+
+      const wait = await waitFor({}, 'claude-code');
+      expect(wait.status).to.equal(200, JSON.stringify(wait.body));
+      const afterWait = await hostStatus();
+      expect(afterWait.firstCheckedAt).to.equal(null);
+      expect(afterWait.waitingMessage).to.equal(null);
+
+      // The host then lists its inbox: that is its first look, and the message it found waiting is kept.
+      const list = await asHost('get', '/v1/human/inbox');
+      expect(list.status).to.equal(200, JSON.stringify(list.body));
+      const afterList = await hostStatus();
+      expect(afterList.firstCheckedAt).to.be.a('string');
+      expect(afterList.waitingMessage).to.deep.include({ conversationId: await threadWith(operatorId) });
+    });
+
     it('refuses a cursor it did not hand out, and a computer that does not hold the lease', async () => {
       await holdLease(MACBOOK);
 

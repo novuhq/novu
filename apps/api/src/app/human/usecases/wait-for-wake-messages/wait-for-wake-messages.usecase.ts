@@ -62,11 +62,12 @@ export class WaitForWakeMessages {
       page = await this.look(scope, agent, page.next, limit);
     }
 
+    // A wait shows no conversations: it isn't the first look at the inbox, whose waiting message onboarding shows.
     await this.hostStatus.recordCheck(
       scope,
       agent,
       { via: command.hostVia ?? 'cli', id: command.hostId ?? command.host },
-      []
+      null
     );
 
     return { data: page.data, next: encodeWakeCursor(page.next) };
