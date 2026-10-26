@@ -63,6 +63,7 @@ export const USE_CASES_SECTION = {
   titleStart: 'Built for',
   titleAccent: 'Agents',
   titleEnd: 'that do real work',
+  description: 'Connect the agent you already use to the conversations its work depends on.',
 } as const;
 
 export type UseCase = Readonly<{
@@ -72,14 +73,16 @@ export type UseCase = Readonly<{
 
 export const USE_CASES: readonly UseCase[] = [
   {
-    title: 'Browser Agents',
-    description:
-      'Sign up for services, receive one-time codes, and click verification links without borrowing a human’s email.',
+    title: 'Personal assistants',
+    description: 'Coordinate with permitted contacts, handle replies, and ask you when a plan needs approval.',
   },
   {
-    title: 'Personal Assistants',
-    description:
-      'Give your Claude, OpenClaw, or Hermes agent its own address so people can email, Slack, or text it directly.',
+    title: 'Browser agents',
+    description: 'Receive verification emails, invoices, receipts, and service updates at your agent’s own address.',
+  },
+  {
+    title: 'Agents as teammates',
+    description: 'Coordinate interview times, follow up on a vendor quote, or ask a teammate for missing information.',
   },
   {
     title: 'SaaS Agents',

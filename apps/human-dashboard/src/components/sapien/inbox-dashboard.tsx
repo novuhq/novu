@@ -1,7 +1,7 @@
 import {
   INBOX_LABELS,
-  INBOX_SECTION,
   type InboxAgent,
+  type InboxClient,
   type InboxMessage,
   type InboxTag,
   type InboxThread,
@@ -68,7 +68,7 @@ export function InboxDashboard({ agent }: { agent: InboxAgent }) {
               ))}
             </ul>
           </div>
-          <FrameworkTile />
+          <ClientTile client={agent.client} />
         </div>
       </div>
 
@@ -77,8 +77,12 @@ export function InboxDashboard({ agent }: { agent: InboxAgent }) {
         <div className="hidden w-62 shrink-0 flex-col border-r border-sapien-foreground/7 bg-sapien-border/30 md:flex lg:w-70">
           <div className="flex h-14 shrink-0 items-center justify-between border-b border-sapien-foreground/7 px-5 whitespace-nowrap">
             <p className="text-sm leading-4.5 font-medium tracking-[-0.01em]">{INBOX_LABELS.inbox}</p>
-            <p className="text-xs leading-4 tracking-[-0.01em] text-sapien-foreground/50">
-              {INBOX_LABELS.unreadFilter}
+            <p className="flex gap-2.5 text-xs leading-4 tracking-[-0.01em] text-sapien-foreground/50">
+              {INBOX_LABELS.states.map((state, index) => (
+                <span key={state} className={cn(index === 0 && 'text-sapien-foreground')}>
+                  {state}
+                </span>
+              ))}
             </p>
           </div>
           <ul aria-label={INBOX_LABELS.threadList} className="flex flex-col gap-0.5 p-2">
@@ -94,18 +98,18 @@ export function InboxDashboard({ agent }: { agent: InboxAgent }) {
   );
 }
 
-function FrameworkTile() {
-  const { framework } = INBOX_SECTION;
+/** The client that runs this agent: its artwork, cropped to fill the tile's picture, then its name and maker. */
+function ClientTile({ client }: { client: InboxClient }) {
   return (
     <div className="mt-7.5 mr-3 ml-4 flex gap-2 rounded-lg bg-sapien-surface p-2 text-white">
-      <Artwork asset={inboxAssets.hermes} className="h-[86px] w-[60px]" />
+      <Artwork asset={client.art} className="h-[86px] w-[60px] shrink-0 rounded-md object-cover" />
       <div className="flex flex-col justify-between leading-[1.1]">
         <p className="text-[15px] font-medium tracking-tight">
-          {framework.name[0]}
+          {client.name[0]}
           <br />
-          {framework.name[1]}
+          {client.name[1]}
         </p>
-        <p className="text-xs leading-[1.1] tracking-tight opacity-50">{framework.maker}</p>
+        <p className="text-xs leading-[1.1] tracking-tight opacity-50">{client.maker}</p>
       </div>
     </div>
   );
@@ -230,7 +234,9 @@ function Message({ agent, message }: { agent: InboxAgent; message: InboxMessage 
             <div className="rounded-[10px] border border-sapien-foreground/9 bg-sapien-foreground/4">
               <div className="flex flex-col gap-1 px-3.5 py-3 text-[13px] tracking-[-0.01em]">
                 <p className="leading-4 font-medium">{message.approval.title}</p>
-                <p className="leading-4.5 text-sapien-foreground/70">{message.approval.description}</p>
+                {message.approval.description ? (
+                  <p className="leading-4.5 text-sapien-foreground/70">{message.approval.description}</p>
+                ) : null}
               </div>
               <p className="flex min-h-8.5 items-center gap-1.5 border-t border-sapien-foreground/9 px-3.5 py-2 text-xs leading-4 tracking-[-0.01em] text-accent">
                 <Artwork asset={inboxAssets.imgIconCheck} className="size-3" />

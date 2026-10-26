@@ -1,4 +1,4 @@
-import type { SectionAssets } from '@/data/sapien-assets';
+import type { DesignAsset, SectionAssets } from '@/data/sapien-assets';
 
 export const inboxAssets = {
   hermes: {
@@ -7,6 +7,20 @@ export const inboxAssets = {
     height: 172,
     nodeId: '874:10382',
     purpose: 'Figma 2x render of the Nous Research artwork on the Hermes Agent tile',
+  },
+  grokBot: {
+    src: '/images/sapien/inbox/grok-bot.webp',
+    width: 240,
+    height: 240,
+    nodeId: '',
+    purpose: 'Grok Bot artwork on its tile (square, cropped to the tile)',
+  },
+  claudeCode: {
+    src: '/tools/claude.png',
+    width: 128,
+    height: 128,
+    nodeId: '',
+    purpose: "Claude's app icon on the Claude Code tile, as the dashboard shows it (square, cropped to the tile)",
   },
   imgIconCheck: {
     src: '/images/sapien/inbox/imgIconCheck.svg',
@@ -41,8 +55,17 @@ export type InboxMessage = Readonly<{
   from: 'agent' | 'contact';
   via: string;
   text?: string;
-  approval?: Readonly<{ title: string; description: string; status: string }>;
+  approval?: Readonly<{ title: string; description?: string; status: string }>;
   attachment?: string;
+}>;
+
+/** The tile under the channels: the client that runs this agent. */
+export type InboxClient = Readonly<{
+  /** Rendered on two lines. */
+  name: readonly [string, string];
+  maker: string;
+  /** Fills the tile's 60×86 picture, cropped to it. */
+  art: DesignAsset;
 }>;
 
 export type InboxAgent = Readonly<{
@@ -54,6 +77,7 @@ export type InboxAgent = Readonly<{
   email: string;
   initial: string;
   channels: readonly InboxChannel[];
+  client: InboxClient;
   threads: readonly InboxThread[];
   conversation: Readonly<{
     contact: string;
@@ -64,10 +88,10 @@ export type InboxAgent = Readonly<{
 }>;
 
 export const INBOX_SECTION = {
-  title: 'One inbox. Every agent you run',
+  title: 'One Inbox. Every channel',
+  description: 'Keep conversations available across runs, so your agent can pick up replies and continue the work.',
   // Draft copy — not in Figma (accessible name for the tab list)
   tabsLabel: 'Example agents',
-  framework: { name: ['Hermes', 'Agent'], maker: 'by Nous Research.' },
   defaultAgent: 'ops',
 } as const;
 
@@ -75,12 +99,13 @@ export const INBOX_LABELS = {
   inbox: 'Inbox',
   contacts: 'Contacts',
   channels: 'Channels',
-  unreadFilter: 'Unread',
+  // The dashboard inbox's own states (`INBOX_TAB_LABELS`); the first is selected.
+  states: ['New', 'Waiting', 'Resolved'],
   soon: 'Soon',
   // Draft copy — not in Figma (screen-reader-only labels)
   unreadCount: 'unread',
   // Draft copy — not in Figma (screen-reader-only labels)
-  unreadThread: 'Unread',
+  unreadThread: 'New',
   // Draft copy — not in Figma (screen-reader-only labels)
   threadList: 'Conversations',
   // Draft copy — not in Figma (screen-reader-only labels)
@@ -94,6 +119,7 @@ const CHANNELS: readonly InboxChannel[] = [
   { name: 'Slack' },
   { name: 'Telegram' },
   { name: 'WhatsApp', soon: true },
+  { name: 'iMessage', soon: true },
 ];
 
 export const INBOX_AGENTS: readonly InboxAgent[] = [
@@ -105,6 +131,8 @@ export const INBOX_AGENTS: readonly InboxAgent[] = [
     email: 'assistant@agentinbox.md',
     initial: 'A',
     channels: CHANNELS,
+    // Draft copy — not in Figma
+    client: { name: ['Grok', 'Bot'], maker: 'by xAI.', art: inboxAssets.grokBot },
     threads: [
       {
         sender: 'Priya Shah',
@@ -131,7 +159,7 @@ export const INBOX_AGENTS: readonly InboxAgent[] = [
         sender: 'no-reply@acme.dev',
         time: '4h',
         preview: 'Your one-time passcode',
-        tags: [{ label: 'email' }, { label: 'anonymous', outline: true }],
+        tags: [{ label: 'email' }, { label: 'stranger', outline: true }],
       },
     ],
     conversation: {
@@ -169,11 +197,12 @@ export const INBOX_AGENTS: readonly InboxAgent[] = [
     email: 'ops-agent@agentinbox.md',
     initial: 'O',
     channels: CHANNELS,
+    client: { name: ['Hermes', 'Agent'], maker: 'by Nous Research.', art: inboxAssets.hermes },
     threads: [
       {
         sender: 'Maya Chen',
         time: '2m',
-        preview: 'Approved: Refund $240 to Acme',
+        preview: 'Approved: $240 refund from Acme',
         selected: true,
         tags: [{ label: 'slack' }, { label: 'telegram' }],
       },
@@ -195,7 +224,7 @@ export const INBOX_AGENTS: readonly InboxAgent[] = [
         sender: 'verify@acme.dev',
         time: '3h',
         preview: 'Your verification code',
-        tags: [{ label: 'email' }, { label: 'anonymous', outline: true }],
+        tags: [{ label: 'email' }, { label: 'stranger', outline: true }],
       },
     ],
     conversation: {
@@ -207,8 +236,7 @@ export const INBOX_AGENTS: readonly InboxAgent[] = [
           from: 'agent',
           via: 'Slack',
           approval: {
-            title: 'Refund $240 to Acme Corp?',
-            description: 'Order 8831 arrived damaged. Customer asked for a full refund.',
+            title: 'Acme offered a $240 refund for order 8831. Accept?',
             status: 'Approved by Maya in 41s',
           },
         },
@@ -220,7 +248,7 @@ export const INBOX_AGENTS: readonly InboxAgent[] = [
         {
           from: 'agent',
           via: 'Telegram',
-          text: 'Done. Sent to billing@acme.com.',
+          text: 'Done. Receipt attached.',
           attachment: 'receipt-8831.pdf',
         },
       ],
@@ -234,11 +262,13 @@ export const INBOX_AGENTS: readonly InboxAgent[] = [
     email: 'sales-agent@agentinbox.md',
     initial: 'S',
     channels: CHANNELS,
+    // Draft copy — not in Figma
+    client: { name: ['Claude', 'Code'], maker: 'by Anthropic.', art: inboxAssets.claudeCode },
     threads: [
       {
         sender: 'Nina Patel',
         time: '4m',
-        preview: 'Approved: 15% off for Globex',
+        preview: 'Approved: Northwind renewal, 15% off',
         selected: true,
         tags: [{ label: 'slack' }, { label: 'email' }],
       },
@@ -260,7 +290,7 @@ export const INBOX_AGENTS: readonly InboxAgent[] = [
         sender: 'demo@acme.dev',
         time: '2h',
         preview: 'New demo request from the site',
-        tags: [{ label: 'email' }, { label: 'anonymous', outline: true }],
+        tags: [{ label: 'email' }, { label: 'stranger', outline: true }],
       },
     ],
     conversation: {
@@ -272,21 +302,15 @@ export const INBOX_AGENTS: readonly InboxAgent[] = [
           from: 'agent',
           via: 'Slack',
           approval: {
-            title: 'Offer Globex 15% off the annual plan?',
-            description: 'They’ll sign for 40 seats if we match last quarter’s quote.',
+            title: 'Northwind offered 15% off a two-year renewal. Accept?',
             status: 'Approved by Nina in 52s',
           },
         },
         {
-          from: 'contact',
-          via: 'Slack',
-          text: 'Go for it. Send the order form too',
-        },
-        {
           from: 'agent',
-          via: 'Email',
-          text: 'Done. Sent to procurement@globex.dev.',
-          attachment: 'order-form-globex.pdf',
+          via: 'Slack',
+          text: 'Done. Signed order form attached.',
+          attachment: 'order-form-northwind.pdf',
         },
       ],
     },

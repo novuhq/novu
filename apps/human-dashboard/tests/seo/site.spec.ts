@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 
 import { HOST_IDS } from '../../src/lib/host-ids';
-import { SITE_INDEXED } from '../../src/lib/seo';
+import { SITE_INDEXED, SITE_PAGES } from '../../src/lib/seo';
 
 const origin = 'https://www.agentinbox.md';
 test.use({ javaScriptEnabled: false });
@@ -22,7 +22,9 @@ for (const path of ['/', '/sapien']) {
     expect(response?.status()).toBe(200);
     const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
     expect(new URL(canonical!).href).toBe(`${origin}${path}`);
-    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /@agentinbox\/cli/);
+    // Each page's own description, as `SITE_PAGES` writes it.
+    const description = Object.values(SITE_PAGES).find((item) => item.path === path)!.description;
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', description);
     const sharedUrl = await page.locator('meta[property="og:url"]').getAttribute('content');
     expect(new URL(sharedUrl!).href).toBe(`${origin}${path}`);
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', await page.title());

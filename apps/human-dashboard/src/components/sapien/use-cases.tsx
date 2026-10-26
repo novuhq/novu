@@ -60,6 +60,9 @@ export function UseCases() {
         </span>{' '}
         {USE_CASES_SECTION.titleEnd}
       </h2>
+      <p className="mt-4 max-w-140 text-lg leading-5.75 tracking-tight text-pretty text-sapien-foreground/50">
+        {USE_CASES_SECTION.description}
+      </p>
 
       <ul className="mt-8 overflow-hidden rounded-xl border border-sapien-border md:mt-8.5">
         {USE_CASES.map((useCase) => (
