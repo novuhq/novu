@@ -421,7 +421,13 @@ class ClaudeCodeSession implements HostSession {
     switch (line.type) {
       case 'assistant':
         for (const use of toolUses(line.message?.content)) {
-          this.handlers.progress(use.note, use.subject);
+          this.handlers.progress(use.note, use.subject, use.id);
+        }
+        break;
+      case 'user':
+        // A tool's result comes back as the user's: the tool ended.
+        for (const id of toolResults(line.message?.content)) {
+          this.handlers.toolEnded(id);
         }
         break;
       case 'control_request':
@@ -666,7 +672,10 @@ export function subjectOf(request: CanUseToolRequest): PermissionQuestion['subje
   return { kind: 'other' };
 }
 
-/** What Claude Code asks to do, as the operator reads it on their phone. */
+/**
+ * What Claude Code asks to do, as the operator reads it on their phone. A command or an address is given whole,
+ * as it would run: the operator allows what they read.
+ */
 export function describeAction(request: CanUseToolRequest): string {
   const input = request.input ?? {};
   const tool = request.tool_name ?? 'a tool';
@@ -675,7 +684,7 @@ export function describeAction(request: CanUseToolRequest): string {
   switch (tool) {
     case 'Bash':
     case 'PowerShell':
-      return `run \`${clip(stringOf(input.command) ?? '', 300)}\``;
+      return `run \`${stringOf(input.command) ?? ''}\``;
     case 'Edit':
     case 'Write':
     case 'MultiEdit':
@@ -686,7 +695,7 @@ export function describeAction(request: CanUseToolRequest): string {
     case 'Grep':
       return path || request.blocked_path ? `read ${shortPath(path ?? request.blocked_path ?? '')}` : 'read files';
     case 'WebFetch':
-      return stringOf(input.url) ? `fetch ${clip(String(input.url), 300)}` : 'fetch a web page';
+      return stringOf(input.url) ? `fetch ${String(input.url)}` : 'fetch a web page';
     case 'WebSearch':
       return stringOf(input.query) ? `search the web for “${clip(String(input.query))}”` : 'search the web';
   }
@@ -732,13 +741,16 @@ function describeDetails(request: CanUseToolRequest): string[] {
   ].filter(Boolean);
 }
 
-/** Each tool an assistant message starts: "Bash: npm test" for the log, and what it is, as `subjectOf` says. */
-function toolUses(content: unknown): Array<{ note: string; subject: PermissionQuestion['subject'] }> {
+/**
+ * Each tool an assistant message starts: "Bash: npm test" for the log, what it is, as `subjectOf` says, and its id,
+ * which its result names.
+ */
+function toolUses(content: unknown): Array<{ note: string; subject: PermissionQuestion['subject']; id?: string }> {
   if (!Array.isArray(content)) {
     return [];
   }
 
-  return content.flatMap((block: { type?: string; name?: string; input?: Record<string, unknown> }) => {
+  return content.flatMap((block: { type?: string; id?: string; name?: string; input?: Record<string, unknown> }) => {
     if (block?.type !== 'tool_use' || !block.name) {
       return [];
     }
@@ -750,7 +762,19 @@ function toolUses(content: unknown): Array<{ note: string; subject: PermissionQu
       {
         note: what ? `${block.name}: ${clip(what)}` : block.name,
         subject: subjectOf({ tool_name: block.name, input }),
+        ...(block.id ? { id: block.id } : {}),
       },
     ];
   });
+}
+
+/** The tools whose results a user message brings back, by their ids. */
+function toolResults(content: unknown): string[] {
+  if (!Array.isArray(content)) {
+    return [];
+  }
+
+  return content.flatMap((block: { type?: string; tool_use_id?: string }) =>
+    block?.type === 'tool_result' && block.tool_use_id ? [block.tool_use_id] : []
+  );
 }

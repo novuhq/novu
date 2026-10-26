@@ -11,20 +11,37 @@ import {
   releaseLease,
   takeLease,
   type WakeHostId,
+  waitForWakeMessages,
 } from '../api/wake';
 import { info, promptLine, success, warn } from '../cli-io';
-import { CLI_COMMAND, type CliConfig, loadConfig, resolveConfig } from '../config';
+import { CLI_COMMAND, type CliConfig, loadConfig } from '../config';
 import { detectHost } from '../host';
 import { EXIT_DENIED, EXIT_ERROR, EXIT_GONE, EXIT_OK, EXIT_TIMEOUT, fail, formatRelativeTime } from '../output';
 import { openScreen, type Screen } from '../screen/screen';
 import { type AllowIo, type AllowOutcome, type AskedStore, askToAllow, fileAsked } from '../wake/allow';
 import { computerName, ensureComputerId, projectLabel } from '../wake/computer';
+import { type ForegroundStore, fileForeground, stopForeground } from '../wake/foreground';
 import type { HostAdapter, HostProgram } from '../wake/host-adapter';
 import { isWakeHostId, loadHost, wakeableHosts, wakeHostName } from '../wake/hosts';
 import { type LoopEnd, runWakeLoop, type WakeTiming } from '../wake/loop';
 import { backgroundCommand, isUnsupported, type ServiceSetup, serviceManager } from '../wake/service';
-import { DEFAULT_LIMITS, fileState, logPath, newState, type StateStore, type WakeState } from '../wake/state';
-import { KEY_CHANGED_MESSAGE, movedMessage, NEEDS_ACCOUNT_MESSAGE, PAUSED_MESSAGE } from '../wake/words';
+import {
+  connectionOf,
+  DEFAULT_LIMITS,
+  fileState,
+  logPath,
+  newState,
+  type StateStore,
+  sameConnection,
+  type WakeState,
+} from '../wake/state';
+import {
+  connectionChangedMessage,
+  KEY_CHANGED_MESSAGE,
+  movedMessage,
+  NEEDS_ACCOUNT_MESSAGE,
+  PAUSED_MESSAGE,
+} from '../wake/words';
 import { failOnScreen } from './failure';
 import { handleError, parseDuration } from './interact';
 
@@ -42,6 +59,8 @@ export interface WakeOptions {
 export interface WakeDeps {
   store: StateStore;
   asked: AskedStore;
+  /** A wake running in a terminal, which another wake, or `wake stop`, stops first. */
+  foreground: ForegroundStore;
   service: () => ServiceSetup;
   loadHost: (id: WakeHostId) => Promise<HostAdapter | null>;
   computerName: () => string;
@@ -112,6 +131,7 @@ function realDeps(signal: AbortSignal): WakeDeps {
   return {
     store: fileState,
     asked: fileAsked,
+    foreground: fileForeground,
     service: () => serviceManager(),
     loadHost,
     computerName,
@@ -127,10 +147,10 @@ function realDeps(signal: AbortSignal): WakeDeps {
 
 /**
  * The connection saved on this computer, which is all the background program has: it never sees this
- * shell's variables. `file` is as saved; `config` also has the API that INBOX_API_URL names, which the
- * background program is given too.
+ * shell's variables. The key goes only to the API it was saved for: INBOX_API_URL could send it anywhere,
+ * even before the operator is asked, and set by an agent it isn't the operator's choice.
  */
-function savedConfig(env: NodeJS.ProcessEnv): { file: CliConfig; config: CliConfig } {
+function savedConfig(env: NodeJS.ProcessEnv): CliConfig {
   const file = loadConfig();
   if (!file) {
     throw new Error(
@@ -142,8 +162,12 @@ function savedConfig(env: NodeJS.ProcessEnv): { file: CliConfig; config: CliConf
   if (key && key !== file.auth.secretKey) {
     warn('INBOX_SECRET_KEY is set in this shell, but wake uses the connection saved on this computer.');
   }
+  const apiUrl = env.INBOX_API_URL?.trim().replace(/\/$/, '');
+  if (apiUrl && apiUrl !== file.apiUrl.replace(/\/$/, '')) {
+    warn(`INBOX_API_URL is set in this shell, but wake uses the API saved on this computer: ${file.apiUrl}.`);
+  }
 
-  return { file, config: { ...file, apiUrl: resolveConfig().apiUrl } };
+  return file;
 }
 
 function clientFor(config: CliConfig, host: WakeHostId): ApiClient {
@@ -207,7 +231,7 @@ async function planWake(hostInput: string, options: WakeOptions, deps: WakeDeps)
     wakesPerHour: positive(options.wakesPerHour, '--wakes-per-hour') ?? DEFAULT_LIMITS.wakesPerHour,
     maxRunSeconds: options.maxRun ? parseDuration(options.maxRun) : DEFAULT_LIMITS.maxRunSeconds,
   };
-  const { file, config } = savedConfig(deps.env);
+  const config = savedConfig(deps.env);
   if (config.auth.mode === 'keyless') {
     throw new Error(NEEDS_ACCOUNT_MESSAGE);
   }
@@ -228,7 +252,7 @@ async function planWake(hostInput: string, options: WakeOptions, deps: WakeDeps)
     throw new Error(service.unsupported);
   }
 
-  const computerId = ensureComputerId(file);
+  const computerId = ensureComputerId(config);
   const client = clientFor(config, host.id);
   const { awake: holder, paused } = await getLease(client, config.relayAgentIdentifier).catch(rethrowKey);
   if (paused) {
@@ -237,7 +261,11 @@ async function planWake(hostInput: string, options: WakeOptions, deps: WakeDeps)
   // The holder is a computer and a host: another host on this computer counts as elsewhere too.
   const heldHere = holder?.computerId === computerId && holder.host === host.id;
   const previous = deps.store.load();
-  const same = previous?.host === host.id && previous.project === project;
+  // Sessions belong to this project's conversations, with this agent: another one starts them anew.
+  const same =
+    previous?.host === host.id &&
+    previous.project === project &&
+    sameConnection(previous.connection, connectionOf(config));
 
   return {
     host,
@@ -298,9 +326,15 @@ function notAllowed(outcome: AllowOutcome, plan: WakePlan, deps: WakeDeps): numb
   }
 }
 
-/** Once allowed: what was allowed is kept, and the lease is taken (over, when the operator agreed to move it). */
-async function takeIt(plan: WakePlan, deps: WakeDeps): Promise<void> {
-  // A wake already running here stops first: it writes the same state, and it may be for another project.
+/**
+ * Once allowed: what was allowed is kept, the lease is taken (over, when the operator agreed to move it), and
+ * where waiting starts is kept too, before anything says it is awake: what is sent while the background program
+ * starts isn't missed.
+ */
+async function takeIt(plan: WakePlan, deps: WakeDeps): Promise<WakeState> {
+  // A wake already running here stops first, in a terminal or in the background: it writes the same state, and it
+  // may be for another project.
+  await stopForeground(deps.foreground);
   if (!isUnsupported(plan.service) && plan.service.isInstalled()) {
     plan.service.uninstall();
   }
@@ -312,7 +346,7 @@ async function takeIt(plan: WakePlan, deps: WakeDeps): Promise<void> {
       program: { ...plan.program, args: [...plan.program.args] },
       limits: plan.limits,
     }),
-    // Sessions belong to this project's conversations; another project starts them anew.
+    connection: connectionOf(plan.config),
     ...(plan.previous ? { sessions: plan.previous.sessions, own: plan.previous.own } : {}),
     allowedAt: new Date().toISOString(),
   };
@@ -327,8 +361,18 @@ async function takeIt(plan: WakePlan, deps: WakeDeps): Promise<void> {
       takeOver: Boolean(plan.elsewhere),
       agentIdentifier: plan.config.relayAgentIdentifier,
     });
+    const from = await waitForWakeMessages(plan.client, {
+      computerId: plan.computerId,
+      host: plan.host.id,
+      wait: 0,
+      agentIdentifier: plan.config.relayAgentIdentifier,
+    });
+    const started: WakeState = { ...state, cursor: from.next, queue: from.data };
+    deps.store.save(started);
+
+    return started;
   } catch (err) {
-    deps.store.save({ ...state, allowedAt: undefined });
+    await undoStart(plan, deps, state);
     if (isKeyRejected(err)) {
       throw new Error(KEY_CHANGED_MESSAGE);
     }
@@ -339,6 +383,19 @@ async function takeIt(plan: WakePlan, deps: WakeDeps): Promise<void> {
     }
     throw err;
   }
+}
+
+/** A start that failed leaves nothing behind: no lease, no service, nothing allowed. The next try asks again. */
+async function undoStart(plan: WakePlan, deps: WakeDeps, state: WakeState): Promise<void> {
+  if (!isUnsupported(plan.service)) {
+    plan.service.uninstall();
+  }
+  await releaseLease(plan.client, {
+    computerId: plan.computerId,
+    host: plan.host.id,
+    agentIdentifier: plan.config.relayAgentIdentifier,
+  }).catch(() => false);
+  deps.store.save({ ...state, allowedAt: undefined });
 }
 
 /** The background program, from now on and after every restart. */
@@ -416,18 +473,29 @@ export async function wakeOn(hostInput: string, options: WakeOptions, deps: Wake
     return refused;
   }
 
-  await takeIt(plan, deps);
+  const state = await takeIt(plan, deps);
 
   if (!options.foreground) {
-    return startBackground(plan, deps);
+    try {
+      return startBackground(plan, deps);
+    } catch (err) {
+      // On macOS a failed bootstrap leaves the service's file: it, and the lease, go too.
+      await undoStart(plan, deps, state);
+      throw err;
+    }
   }
 
   success(`${host.name} is awake on ${plan.computer}, in ${plan.label}, while this terminal stays open.`);
   info('Messages from you, and from contacts you let wake it, start it here. Ctrl-C stops it.');
   await deps.beforeLoop?.();
-  const end = await loopFor(plan.config, plan.computerId, plan.computer, host, deps);
+  deps.foreground.claim(process.pid);
+  try {
+    const end = await loopFor(plan.config, plan.computerId, plan.computer, host, deps);
 
-  return end.reason === 'signal' ? EXIT_OK : EXIT_ERROR;
+    return end.reason === 'signal' ? EXIT_OK : EXIT_ERROR;
+  } finally {
+    deps.foreground.release(process.pid);
+  }
 }
 
 function loopFor(
@@ -477,6 +545,15 @@ export async function wakeRun(deps: WakeDeps): Promise<number> {
     return EXIT_OK;
   }
 
+  // What was queued and allowed belongs to the connection it was turned on for, never to whichever is saved now.
+  if (!sameConnection(state.connection, connectionOf(file))) {
+    const message = connectionChangedMessage(state.host);
+    deps.store.save({ ...state, stopped: { reason: 'connection_changed', message, at: new Date().toISOString() } });
+    deps.out(`Stopped: ${message}`);
+
+    return EXIT_OK;
+  }
+
   // The host may have moved, gone or signed out since it was turned on.
   const checked = host.check(state.project, deps.env);
   if (!checked.ok) {
@@ -492,8 +569,7 @@ export async function wakeRun(deps: WakeDeps): Promise<number> {
     deps.store.save({ ...state, program: { ...checked.program, args: [...checked.program.args] } });
   }
 
-  const config = { ...file, apiUrl: resolveConfig().apiUrl };
-  await loopFor(config, file.computerId, deps.computerName(), host, deps);
+  await loopFor(file, file.computerId, deps.computerName(), host, deps);
 
   return EXIT_OK;
 }
@@ -513,7 +589,7 @@ interface StatusFacts {
 }
 
 async function statusFacts(deps: WakeDeps): Promise<StatusFacts> {
-  const { config } = savedConfig(deps.env);
+  const config = savedConfig(deps.env);
   const state = deps.store.load();
   const client = clientFor(config, state?.host ?? 'claude-code');
   const { awake, paused } = await getLease(client, config.relayAgentIdentifier).catch(rethrowKey);
@@ -613,10 +689,12 @@ function describeAwake(awake: Awake | null, here: boolean): string {
 
 /** `wake stop`: the agent isn't kept awake here any more. Another computer's wake is left alone. */
 export async function wakeStop(deps: WakeDeps): Promise<number> {
-  const { config } = savedConfig(deps.env);
+  const config = savedConfig(deps.env);
+  // One in a terminal ends first, so it can't write the state this resets.
+  const stoppedTerminal = await stopForeground(deps.foreground);
   const state = deps.store.load();
   const service = deps.service();
-  const removed = !isUnsupported(service) && service.uninstall();
+  const removed = (!isUnsupported(service) && service.uninstall()) || stoppedTerminal;
   const host = state?.host ?? 'claude-code';
   const client = clientFor(config, host);
 
@@ -632,7 +710,7 @@ export async function wakeStop(deps: WakeDeps): Promise<number> {
 
   if (state) {
     // The sessions stay until their conversations are resolved; what was allowed and where it got to don't.
-    deps.store.save({ ...newState(state), sessions: state.sessions, own: state.own });
+    deps.store.save({ ...newState(state), connection: state.connection, sessions: state.sessions, own: state.own });
   }
   deps.asked.save(null);
 

@@ -53,6 +53,9 @@ interface Told {
   turns: TurnEnded[];
   progress: string[];
   subjects: PermissionQuestion['subject'][];
+  /** The ids of the tools it started, and of those that ended. */
+  started: string[];
+  ended: string[];
   asked: PermissionQuestion[];
   questions: HostQuestion[];
   lost: Array<{ error: string; sessionGone: boolean }>;
@@ -66,7 +69,16 @@ function open(
     question?: (question: HostQuestion) => Promise<HostAnswer | undefined>;
   } = {}
 ): { session: HostSession; told: Told; turn: () => Promise<TurnEnded> } {
-  const told: Told = { turns: [], progress: [], subjects: [], asked: [], questions: [], lost: [] };
+  const told: Told = {
+    turns: [],
+    progress: [],
+    subjects: [],
+    started: [],
+    ended: [],
+    asked: [],
+    questions: [],
+    lost: [],
+  };
   const waiting: Array<(turn: TurnEnded) => void> = [];
   const session = claudeCode.open(
     {
@@ -76,10 +88,14 @@ function open(
       instructions: 'You were woken.',
     },
     {
-      progress: (note, subject) => {
+      progress: (note, subject, toolId) => {
         told.progress.push(note);
         told.subjects.push(subject);
+        if (toolId) {
+          told.started.push(toolId);
+        }
       },
+      toolEnded: (toolId) => told.ended.push(toolId),
       turnEnded: (turn) => {
         told.turns.push(turn);
         waiting.shift()?.(turn);
@@ -142,6 +158,11 @@ describe('claudeArgs', () => {
 describe('describeAction and subjectOf', () => {
   it('say what Claude Code wants to do, for the operator and for the core', () => {
     expect(describeAction({ tool_name: 'Bash', input: { command: 'npm publish' } })).toBe('run `npm publish`');
+    // Whole, as it would run: the operator allows what they read.
+    const long = `echo ${'x'.repeat(400)}\nrm -rf ~`;
+    expect(describeAction({ tool_name: 'Bash', input: { command: long } })).toBe(`run \`${long}\``);
+    const url = `https://example.com/?q=${'y'.repeat(400)}`;
+    expect(describeAction({ tool_name: 'WebFetch', input: { url } })).toBe(`fetch ${url}`);
     expect(subjectOf({ tool_name: 'Bash', input: { command: 'npm publish' } })).toEqual({
       kind: 'command',
       command: 'npm publish',
@@ -430,6 +451,17 @@ describe('a Claude Code session', { timeout: 15_000 }, () => {
     await turn();
     expect(told.progress).toEqual(['Bash: sleep']);
     expect(told.subjects).toEqual([{ kind: 'command', command: 'sleep' }]);
+    await session.close();
+  });
+
+  it('names each tool it starts by its id, and says when that tool ended', async () => {
+    const { session, turn, told } = open();
+
+    session.send(message('m1', 'wait-for:10'));
+
+    await turn();
+    expect(told.started).toHaveLength(1);
+    expect(told.ended).toEqual(told.started);
     await session.close();
   });
 

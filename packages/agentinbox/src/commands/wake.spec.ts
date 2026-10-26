@@ -1,13 +1,17 @@
+import { type ChildProcess, spawn } from 'node:child_process';
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createApiClient } from '../api/client';
+import { waitForWakeMessages } from '../api/wake';
 import type { CliConfig } from '../config';
 import { EXIT_DENIED, EXIT_OK, EXIT_TIMEOUT } from '../output';
 import type { AskedAllow, AskedStore } from '../wake/allow';
 import { CLAUDE_CODE_MISSING_HELP } from '../wake/claude-code';
 import { FakeApi } from '../wake/fake-api.fixture';
+import { fileForeground } from '../wake/foreground';
 import { loadHost } from '../wake/hosts';
 import type { BackgroundCommand, ServiceManager } from '../wake/service';
 import { memoryState, newState } from '../wake/state';
@@ -18,6 +22,8 @@ const FAKE_CLAUDE = fileURLToPath(new URL('../wake/fake-claude.fixture.mjs', imp
 
 let dir: string;
 let api: FakeApi;
+/** Processes a test started, ended after it. */
+const children: ChildProcess[] = [];
 
 beforeEach(async () => {
   dir = mkdtempSync(join(tmpdir(), 'wake-command-'));
@@ -36,6 +42,9 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  for (const child of children.splice(0)) {
+    child.kill('SIGKILL');
+  }
   vi.restoreAllMocks();
   vi.unstubAllEnvs();
   await api.stop();
@@ -54,26 +63,30 @@ function fakeClaudeOnPath(): string {
 
 function fakeService() {
   const installed: BackgroundCommand[] = [];
-  let present = false;
+  /** `failing`: the service manager turns it down after its file is written, as launchctl's bootstrap can. */
+  const status = { present: false, failing: false };
   const service: ServiceManager = {
     kind: 'launchd',
     file: join(dir, 'md.agentinbox.wake.plist'),
     render: () => '',
     install: (command) => {
+      status.present = true;
+      if (status.failing) {
+        throw new Error('Couldn’t start the background service: launchctl bootstrap: 5: Input/output error');
+      }
       installed.push(command);
-      present = true;
     },
     uninstall: () => {
-      const had = present;
-      present = false;
+      const had = status.present;
+      status.present = false;
 
       return had;
     },
-    isInstalled: () => present,
-    isRunning: () => present,
+    isInstalled: () => status.present,
+    isRunning: () => status.present,
   };
 
-  return { service, installed };
+  return { service, installed, status };
 }
 
 function memoryAsked(): AskedStore & { current: AskedAllow | null } {
@@ -92,13 +105,14 @@ function deps(overrides: Partial<WakeDeps> & { answer?: string; personAtTerminal
   const lines: string[] = [];
   const project = join(dir, 'project');
   mkdirSync(project, { recursive: true });
-  const { service, installed } = fakeService();
+  const { service, installed, status } = fakeService();
   const store = memoryState();
   const asked = memoryAsked();
   const prompt = vi.fn().mockResolvedValue(overrides.answer ?? 'y');
   const result: WakeDeps = {
     store,
     asked,
+    foreground: fileForeground,
     service: () => service,
     loadHost,
     computerName: () => 'MacBook',
@@ -111,11 +125,42 @@ function deps(overrides: Partial<WakeDeps> & { answer?: string; personAtTerminal
     ...overrides,
   };
 
-  return { deps: result, lines, store, asked, service, installed, prompt, project };
+  return { deps: result, lines, store, asked, service, installed, status, prompt, project };
+}
+
+/** A process that looks like a wake in a terminal (`wake claude-code --foreground`), with its number kept. */
+function foregroundWake(): ChildProcess {
+  const terminal = spawn(process.execPath, [
+    '-e',
+    'setInterval(() => {}, 1000)',
+    'wake',
+    'claude-code',
+    '--foreground',
+  ]);
+  children.push(terminal);
+  fileForeground.claim(terminal.pid ?? 0);
+
+  return terminal;
 }
 
 function config(): CliConfig {
   return JSON.parse(readFileSync(join(dir, 'config.json'), 'utf8')) as CliConfig;
+}
+
+async function eventually(check: () => void, timeoutMs = 8000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    try {
+      check();
+
+      return;
+    } catch (err) {
+      if (Date.now() > deadline) {
+        throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 40));
+    }
+  }
 }
 
 describe('wake <host>', { timeout: 20_000 }, () => {
@@ -212,6 +257,80 @@ describe('wake <host>', { timeout: 20_000 }, () => {
     expect(api.lease?.computerId).toBe(config().computerId);
   });
 
+  it('knows where waiting starts before it says it is awake, so a message sent meanwhile isn’t missed', async () => {
+    api.deliver({ text: 'before it was turned on' });
+    const { deps: wake, store } = deps();
+
+    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+
+    expect(api.callsTo('GET', '/v1/wake/messages')[0].query).toMatchObject({ wait: '0' });
+    expect(store.current?.cursor).toBe('c1');
+    // The background program, starting later, waits from there.
+    const meanwhile = api.deliver({ text: 'while the background program starts' });
+    const client = createApiClient({ apiUrl: api.url, secretKey: 'sk_test', asHost: 'claude-code' });
+    const page = await waitForWakeMessages(client, {
+      computerId: config().computerId ?? '',
+      host: 'claude-code',
+      after: store.current?.cursor,
+    });
+    expect(page.data.map((message) => message.id)).toEqual([meanwhile.id]);
+  });
+
+  it('lets go of the lease and the service when the service can’t start, so the next try starts over', async () => {
+    const { deps: wake, store, status, service, prompt } = deps();
+    status.failing = true;
+
+    await expect(wakeOn('claude-code', {}, wake)).rejects.toThrow('launchctl bootstrap');
+
+    expect(api.lease).toBeNull();
+    expect(store.current?.allowedAt).toBeUndefined();
+    expect(service.isInstalled()).toBe(false);
+
+    status.failing = false;
+    prompt.mockClear();
+    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+    expect(prompt).toHaveBeenCalled();
+  });
+
+  it('carries no sessions over from another agent this computer was connected to', async () => {
+    const { deps: wake, store } = deps();
+    await wakeOn('claude-code', {}, wake);
+    store.current = store.current && {
+      ...store.current,
+      sessions: { conv_1: { sessionId: 's1', round: 0, lastWakeAt: new Date().toISOString() } },
+      own: ['int_1'],
+    };
+    writeFileSync(join(dir, 'config.json'), JSON.stringify({ ...config(), relayAgentIdentifier: 'other-agent' }));
+
+    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+
+    expect(store.current?.sessions).toEqual({});
+    expect(store.current?.own).toEqual([]);
+  });
+
+  it('stops a wake running in a terminal before it keeps it awake in the background', async () => {
+    const terminal = foregroundWake();
+    const { deps: wake, installed } = deps();
+
+    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+
+    await eventually(() => expect(terminal.exitCode ?? terminal.signalCode).not.toBeNull());
+    expect(installed).toHaveLength(1);
+  });
+
+  it('leaves a process alone that only took the number of a wake that ended', async () => {
+    const other = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)']);
+    children.push(other);
+    mkdirSync(join(dir, 'wake'), { recursive: true });
+    writeFileSync(join(dir, 'wake', 'foreground.json'), JSON.stringify({ pid: other.pid }));
+    const { deps: wake } = deps();
+
+    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(other.exitCode ?? other.signalCode).toBeNull();
+  });
+
   it('says when it is awake here already', async () => {
     const { deps: wake, prompt } = deps();
     await wakeOn('claude-code', {}, wake);
@@ -282,6 +401,24 @@ describe('wake <host>', { timeout: 20_000 }, () => {
     expect(installed).toHaveLength(0);
   });
 
+  it('sends the key only to the API it was saved for, whatever INBOX_API_URL says, and doesn’t hand that on', async () => {
+    const other = await new FakeApi().start();
+    try {
+      vi.stubEnv('INBOX_API_URL', other.url);
+      const { deps: wake, installed } = deps({ personAtTerminal: false });
+      wake.env = { ...wake.env, INBOX_API_URL: other.url };
+      api.decide = () => 'approved';
+
+      expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+
+      expect(other.calls).toHaveLength(0);
+      expect(api.callsTo('POST', '/v1/wake/lease')).toHaveLength(1);
+      expect(installed[0].env.INBOX_API_URL).toBeUndefined();
+    } finally {
+      await other.stop();
+    }
+  });
+
   it('says the key changed when the API turns the key down', async () => {
     const { deps: wake, installed } = deps();
     api.keyRejected = true;
@@ -325,6 +462,17 @@ describe('wake stop', () => {
     expect(service.isInstalled()).toBe(false);
     expect(api.lease).toBeNull();
     expect(lines).toEqual(['Claude Code isn’t kept awake on this computer any more.']);
+  });
+
+  it('stops a wake running in a terminal too', async () => {
+    const { deps: wake } = deps();
+    await wakeOn('claude-code', {}, wake);
+    const terminal = foregroundWake();
+
+    expect(await wakeStop(wake)).toBe(EXIT_OK);
+
+    await eventually(() => expect(terminal.exitCode ?? terminal.signalCode).not.toBeNull());
+    expect(fileForeground.running()).toBeNull();
   });
 
   it('leaves another computer’s wake alone and says where it is', async () => {
@@ -386,7 +534,7 @@ describe('wake status', () => {
   });
 });
 
-describe('wake run', () => {
+describe('wake run', { timeout: 20_000 }, () => {
   it('exits cleanly, without waiting, once it stopped for good', async () => {
     const { deps: wake, store, lines } = deps();
     store.current = {
@@ -404,6 +552,44 @@ describe('wake run', () => {
 
     expect(lines).toEqual([`Stopped: ${KEY_CHANGED_MESSAGE}`]);
     expect(api.calls).toHaveLength(0);
+  });
+
+  it('waits on the API it was saved for, whatever INBOX_API_URL says', async () => {
+    const other = await new FakeApi().start();
+    const controller = new AbortController();
+    try {
+      const { deps: wake } = deps({ signal: controller.signal });
+      await wakeOn('claude-code', {}, wake);
+      const waits = api.callsTo('GET', '/v1/wake/messages').length;
+      vi.stubEnv('INBOX_API_URL', other.url);
+
+      const running = wakeRun({ ...wake, env: { ...wake.env, INBOX_API_URL: other.url } });
+      await eventually(() => expect(api.callsTo('GET', '/v1/wake/messages').length).toBeGreaterThan(waits));
+      controller.abort();
+
+      expect(await running).toBe(EXIT_OK);
+      expect(other.calls).toHaveLength(0);
+    } finally {
+      controller.abort();
+      await other.stop();
+    }
+  });
+
+  it('stops, without running anything, once this computer is connected anew', async () => {
+    for (const change of [{ relayAgentIdentifier: 'other-agent' }, { auth: { mode: 'apiKey', secretKey: 'sk_new' } }]) {
+      const { deps: wake, store, lines } = deps();
+      await wakeOn('claude-code', {}, wake);
+      const saved = config();
+      writeFileSync(join(dir, 'config.json'), JSON.stringify({ ...saved, ...change }));
+      const waits = api.callsTo('GET', '/v1/wake/messages').length;
+
+      expect(await wakeRun(wake)).toBe(EXIT_OK);
+
+      expect(lines.at(-1)).toMatch(/^Stopped: This computer was connected anew/);
+      expect(store.current?.stopped?.reason).toBe('connection_changed');
+      expect(api.callsTo('GET', '/v1/wake/messages')).toHaveLength(waits);
+      writeFileSync(join(dir, 'config.json'), JSON.stringify(saved));
+    }
   });
 
   it('does nothing where wake was never allowed', async () => {

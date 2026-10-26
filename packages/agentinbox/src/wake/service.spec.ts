@@ -48,6 +48,7 @@ const COMMAND = backgroundCommand({
   version: '0.1.0',
   env: {
     PATH: '/opt/node/bin:/usr/bin',
+    INBOX_CONFIG: '/Users/ada/.agentinbox-local/config.json',
     INBOX_API_URL: 'https://agentinbox.example/api',
     INBOX_SECRET_KEY: 'sk_never_written',
     HOME: '/Users/ada',
@@ -63,11 +64,11 @@ function installable() {
 }
 
 describe('backgroundCommand', () => {
-  it('starts the same CLI file, with only the variables it needs and never a secret', () => {
+  it('starts the same CLI file, with only the variables it needs: never a secret, nor an API to send the key to', () => {
     expect(COMMAND).toEqual({
       argv: ['/opt/node/bin/node', '/opt/agentinbox/dist/src/index.js', 'wake', 'run'],
       workingDirectory: '/Users/ada/projects/app & co',
-      env: { PATH: '/opt/node/bin:/usr/bin', INBOX_API_URL: 'https://agentinbox.example/api' },
+      env: { PATH: '/opt/node/bin:/usr/bin', INBOX_CONFIG: '/Users/ada/.agentinbox-local/config.json' },
       logFile: '/Users/ada/.agentinbox/wake/wake.log',
       description: 'Keeps Claude Code awake for Agent Inbox',
     });
@@ -105,7 +106,8 @@ describe('launchd', () => {
     // Not Background: throttled, Claude Code misses its 2-second limit for reading its sign-in from the Keychain.
     expect(plist).toContain('<key>ProcessType</key>\n  <string>Standard</string>');
     expect(plist).toContain('<key>StandardOutPath</key>\n  <string>/Users/ada/.agentinbox/wake/wake.log</string>');
-    expect(plist).toContain('<key>INBOX_API_URL</key>');
+    expect(plist).toContain('<key>INBOX_CONFIG</key>');
+    expect(plist).not.toContain('INBOX_API_URL');
     expect(plist).not.toContain('sk_never_written');
   });
 
@@ -174,7 +176,10 @@ describe('launchd', () => {
 
 describe('systemd', () => {
   it('writes a user unit that starts with the session and after a crash, but not after a clean stop', () => {
-    const unit = systemdUnit({ ...COMMAND, env: { PATH: '/opt/node/bin:/usr/bin', INBOX_API_URL: 'https://x/%20' } });
+    const unit = systemdUnit({
+      ...COMMAND,
+      env: { PATH: '/opt/node/bin:/usr/bin', INBOX_CONFIG: '/x/%20/config.json' },
+    });
 
     expect(unit).toBe(
       [
@@ -187,7 +192,7 @@ describe('systemd', () => {
         'Type=simple',
         'WorkingDirectory=/Users/ada/projects/app & co',
         'Environment="PATH=/opt/node/bin:/usr/bin"',
-        'Environment="INBOX_API_URL=https://x/%%20"',
+        'Environment="INBOX_CONFIG=/x/%%20/config.json"',
         'ExecStart="/opt/node/bin/node" "/opt/agentinbox/dist/src/index.js" "wake" "run"',
         'Restart=on-failure',
         'RestartSec=30',

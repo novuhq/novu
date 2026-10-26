@@ -8,6 +8,9 @@ const CARD_TEXT_MAX = 4000;
 /** What a chat shows of a card's title (a Slack header's most): the API moves the rest below, cut mid-word. */
 const CARD_TITLE_SHOWN = 150;
 
+/** The most a card's body shows whole on every channel: a Slack section's (a Telegram message holds 4096). */
+const CARD_BODY_SHOWN = 3000;
+
 /**
  * What a woken host is told for the whole session, on top of its own system prompt. A session belongs to one
  * conversation, so the conversation is named here once; each message names it again for clarity.
@@ -97,7 +100,10 @@ export function spanWords(seconds: number): string {
   return `${amount} ${unit}${amount === 1 ? '' : 's'}`;
 }
 
-/** The `approve` that asks the operator before the host does what its settings don't allow. */
+/**
+ * The `approve` that asks the operator before the host does what its settings don't allow, or undefined when
+ * the action is too long to show whole: allowing it would run what the operator never read.
+ */
 export function permissionCard(input: {
   hostName: string;
   action: string;
@@ -108,11 +114,15 @@ export function permissionCard(input: {
   computerName: string;
   wokenBy: string;
   timeoutSeconds: number;
-}): { title: string; body: string } {
+}): { title: string; body: string } | undefined {
   const woken = input.wokenBy === 'you' ? 'you woke it' : `${input.wokenBy} woke it`;
   const wants = `${input.hostName} wants to ${input.action}`;
-  // A long command doesn't fit the title: the title says what kind of thing it is, and the body has all of it.
-  const whole = wants.length > CARD_TITLE_SHOWN ? `${input.action[0]?.toUpperCase()}${input.action.slice(1)}.` : '';
+  // A long command, or one over several lines, doesn't fit the title: the title says what kind of thing it is, and
+  // the body has all of it.
+  const whole =
+    wants.length > CARD_TITLE_SHOWN || wants.includes('\n')
+      ? `${input.action[0]?.toUpperCase()}${input.action.slice(1)}.`
+      : '';
   const rest = [
     input.detail,
     `In ${input.project} on ${input.computerName}; ${woken}. Its settings for this project don’t allow this.`,
@@ -120,12 +130,16 @@ export function permissionCard(input: {
   ]
     .filter(Boolean)
     .join(' ');
+  const body = whole ? `${whole}\n\n${rest}` : rest;
 
-  return {
-    title: whole ? `${input.hostName} wants to ${input.brief}` : wants,
-    body: clipCard(whole ? `${whole}\n\n${rest}` : rest),
-  };
+  return body.length > CARD_BODY_SHOWN
+    ? undefined
+    : { title: whole ? `${input.hostName} wants to ${input.brief}` : wants, body };
 }
+
+/** Told to the host instead of asking, when what it wants is too long for the operator to read whole. */
+export const TOO_LONG_TO_ASK =
+  'It is too long to show your operator whole, so it isn’t allowed. Do it in shorter steps.';
 
 /** The `approve` that asks the operator before a computer is kept awake: the words the contract gives. */
 export function allowCard(input: {
@@ -173,6 +187,11 @@ export function runLimitReply(maxRunSeconds: number): string {
   return `Stopped after ${spanWords(maxRunSeconds)}, the longest one run may take here. Send another message to go on.`;
 }
 
+/** Said in a conversation whose run was cut off when the program running it stopped. */
+export function interruptedReply(hostName: string): string {
+  return `${hostName} stopped before it could finish: the computer it runs on restarted, or its program was stopped. Send your message again to go on.`;
+}
+
 /** Told to the operator once an hour when the hourly limit holds messages back. */
 export function wakeLimitNotice(hostName: string, wakesPerHour: number): string {
   return `${hostName} was woken ${wakesPerHour} ${wakesPerHour === 1 ? 'time' : 'times'} in the last hour, the most it may be. New messages wait, and wake it as the hour allows.`;
@@ -188,6 +207,11 @@ export const KEY_CHANGED_MESSAGE = 'The key changed on agentinbox.md. Connect ag
 
 /** Why `wake` won't start on a keyless setup: its few free messages would go on the first wakes. */
 export const NEEDS_ACCOUNT_MESSAGE = `Keeping a host awake needs an Agent Inbox account: this computer has a keyless setup, and wake would use up its free messages fast. Run \`${CLI_COMMAND} login\` to claim it, then wake again.`;
+
+/** What `wake run` says and keeps when this computer was connected anew since wake was turned on. */
+export function connectionChangedMessage(host: string): string {
+  return `This computer was connected anew since wake was turned on here, so it stopped: nothing left for the old connection runs. Turn it on again with: ${CLI_COMMAND} wake ${host}`;
+}
 
 /** What `wake` and `wake status` say while the operator has the agent paused. */
 export const PAUSED_MESSAGE = 'The agent is paused on agentinbox.md: nothing wakes it until you resume it there.';

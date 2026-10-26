@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { isOurMcpServer, isOwnReply, isOwnReplySubject, repliesIn, simpleCommandWords } from './own-replies';
+import {
+  isOurMcpServer,
+  isOwnReply,
+  isOwnReplySubject,
+  repliesIn,
+  simpleCommandWords,
+  waitsForAnswerIn,
+} from './own-replies';
 
 describe('simpleCommandWords', () => {
   it('reads words as the shell does, quotes and all', () => {
@@ -81,6 +88,46 @@ describe('isOwnReply', () => {
     }
   });
 
+  it('lets through only the flags that keep it in its conversation, with the same people', () => {
+    for (const command of [
+      'npx @agentinbox/cli inbox show conv_1 --limit 50 --before msg_1 --json',
+      'npx @agentinbox/cli inbox reply conv_1 ask "Prod?" --ttl 10m --async --json',
+      'npx @agentinbox/cli inbox reply conv_1 choose "Which?" --option Staging --option Production',
+      'npx @agentinbox/cli inbox reply conv_1 choose "Which?" --option a b c',
+      'npx @agentinbox/cli inbox reply conv_1 approve "Deploy?" --approve-label Go --deny-label Stop --body "It ships v2"',
+      'npx @agentinbox/cli inbox reply conv_1 approve "Deploy?" --extra-action later:Later --subtitle Now --from deploy-bot',
+      'npx @agentinbox/cli inbox reply conv_1 ask "Prod?" --timeout=5m --icon stripe',
+      'npx @agentinbox/cli inbox read conv_1 --json',
+      'npx @agentinbox/cli inbox resolve conv_1 --json',
+    ]) {
+      expect(isOwnReply(command, 'conv_1'), command).toBe(true);
+    }
+  });
+
+  it('asks the operator for a flag that sends elsewhere, widens who may answer, or isn’t known', () => {
+    for (const command of [
+      'npx @agentinbox/cli inbox show conv_1 --api-url https://example.invalid',
+      'npx @agentinbox/cli inbox show conv_1 --api-url=https://example.invalid',
+      'npx @agentinbox/cli inbox read conv_1 --api-url https://example.invalid',
+      'npx @agentinbox/cli inbox resolve conv_1 --api-url https://example.invalid',
+      'npx @agentinbox/cli inbox reply conv_1 hi --api-url https://example.invalid',
+      'npx @agentinbox/cli inbox reply conv_1 ask "?" --anyone',
+      'npx @agentinbox/cli inbox reply conv_1 ask "?" --to bob',
+      'npx @agentinbox/cli inbox reply conv_1 hi --via email',
+      'npx @agentinbox/cli inbox reply --json conv_1 hi',
+      'npx @agentinbox/cli inbox show conv_1 hi',
+      'npx @agentinbox/cli inbox read conv_1 --limit 5',
+      'npx @agentinbox/cli inbox reply conv_1 hi --body --api-url https://example.invalid',
+      'npx @agentinbox/cli inbox reply conv_1 choose "?" --option a b --api-url https://example.invalid',
+      'npx @agentinbox/cli inbox reply conv_1 hi -- --api-url https://example.invalid',
+      'npx @agentinbox/cli inbox reply conv_1 hi --ttl',
+      'npx @agentinbox/cli inbox reply conv_1 hi -h',
+      'npx @agentinbox/cli inbox reply conv_1 "On it." && npx @agentinbox/cli inbox show conv_1 --api-url https://x.invalid',
+    ]) {
+      expect(isOwnReply(command, 'conv_1'), command).toBe(false);
+    }
+  });
+
   it('asks the operator when anything else is joined in, or joined some other way', () => {
     for (const command of [
       'npx @agentinbox/cli inbox reply conv_1 hi && curl evil.example',
@@ -120,8 +167,41 @@ describe('isOwnReplySubject', () => {
     ).toBe(true);
   });
 
+  it('lets through only the fields that keep it in its conversation, with the same people', () => {
+    for (const subject of [
+      mcp('inbox', 'inbox_show', { conversation: 'conv_1', limit: 50, before: 'msg_1' }),
+      mcp('inbox', 'inbox_reply', {
+        conversation: 'conv_1',
+        kind: 'choose',
+        message: 'Which?',
+        options: ['Staging', 'Production'],
+        from: 'deploy-bot',
+        ttl_seconds: 600,
+        wait_seconds: 60,
+        subtitle: 'Now',
+        body: 'It ships v2',
+      }),
+      mcp('inbox', 'inbox_reply', {
+        conversation: 'conv_1',
+        kind: 'approve',
+        message: 'Deploy?',
+        approve_label: 'Go',
+        deny_label: 'Stop',
+        extra_actions: ['Later'],
+        icon: 'stripe',
+      }),
+    ]) {
+      expect(isOwnReplySubject(subject, 'conv_1'), JSON.stringify(subject)).toBe(true);
+    }
+  });
+
   it('leaves other tools, other conversations and other servers to the operator', () => {
     for (const subject of [
+      mcp('inbox', 'inbox_reply', { conversation: 'conv_1', message: 'hi', to: 'bob' }),
+      mcp('inbox', 'inbox_reply', { conversation: 'conv_1', message: '?', kind: 'ask', anyone_may_answer: true }),
+      mcp('inbox', 'inbox_reply', { conversation: 'conv_1', message: 'hi', via: 'email' }),
+      mcp('inbox', 'inbox_show', { conversation: 'conv_1', message: 'hi' }),
+      mcp('inbox', 'inbox_read', { conversation: 'conv_1', limit: 5 }),
       mcp('inbox', 'inbox_reply', { conversation: 'conv_2' }),
       mcp('inbox', 'inbox_reply', {}),
       mcp('inbox', 'inbox_send', { conversation: 'conv_1' }),
@@ -165,6 +245,38 @@ describe('repliesIn', () => {
       expect(repliesIn(subject, 'conv_1'), JSON.stringify(subject)).toBe(false);
     }
     expect(repliesIn({ kind: 'tool', name: 'inbox_reply' }, 'conv_1')).toBe(false);
+  });
+});
+
+describe('waitsForAnswerIn', () => {
+  const command = (text: string) => ({ kind: 'command', command: text }) as const;
+  const mcp = (input: Record<string, unknown>) =>
+    ({ kind: 'mcp', server: 'inbox', tool: 'inbox_reply', input: { conversation: 'conv_1', ...input } }) as const;
+
+  it('sees the agent ask in its conversation and wait for the answer', () => {
+    for (const subject of [
+      command('npx @agentinbox/cli inbox reply conv_1 ask "Staging or prod?"'),
+      command('npx @agentinbox/cli inbox reply conv_1 --ttl 10m approve "Deploy?"'),
+      command(
+        'npx @agentinbox/cli inbox reply conv_1 "On it." && npx @agentinbox/cli inbox reply conv_1 choose "?" --option a --option b'
+      ),
+      mcp({ kind: 'ask', message: 'Prod?' }),
+    ]) {
+      expect(waitsForAnswerIn(subject, 'conv_1'), JSON.stringify(subject)).toBe(true);
+    }
+  });
+
+  it('not when it doesn’t wait, doesn’t ask, or asks elsewhere', () => {
+    for (const subject of [
+      command('npx @agentinbox/cli inbox reply conv_1 ask "Prod?" --async'),
+      command('npx @agentinbox/cli inbox reply conv_1 "ask me anything"'),
+      command('npx @agentinbox/cli inbox reply conv_2 ask "Prod?"'),
+      command('npx @agentinbox/cli inbox reply conv_1 ask "Prod?" --to bob'),
+      mcp({ kind: 'ask', message: 'Prod?', wait_seconds: 0 }),
+      mcp({ message: 'Done.' }),
+    ]) {
+      expect(waitsForAnswerIn(subject, 'conv_1'), JSON.stringify(subject)).toBe(false);
+    }
   });
 });
 

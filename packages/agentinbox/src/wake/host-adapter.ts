@@ -70,9 +70,11 @@ export interface SessionInput {
 export interface SessionHandlers {
   /**
    * What the host is doing: a line for the log ("Bash: npm test"), and what it is, as a permission question
-   * names it, so the core knows the agent's own reply when it starts.
+   * names it, so the core knows the agent's own reply when it starts. `toolId` comes back in `toolEnded`.
    */
-  progress(note: string, subject: PermissionQuestion['subject']): void;
+  progress(note: string, subject: PermissionQuestion['subject'], toolId?: string): void;
+  /** A tool `progress` named by its id ended: a command that waited for an answer doesn't wait any more. */
+  toolEnded(toolId: string): void;
   /** A turn ended. Every input sent comes back in exactly one, or the session is lost. */
   turnEnded(turn: TurnEnded): void;
   /**

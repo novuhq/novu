@@ -21,11 +21,13 @@ export const SYSTEMD_UNIT = 'agentinbox-wake.service';
  */
 const RESTART_SECONDS = 30;
 
-/** Variables the background program needs from the shell `wake` was turned on in. Never a secret. */
+/**
+ * Variables the background program needs from the shell `wake` was turned on in. Never a secret, nor
+ * INBOX_API_URL: the program sends the key only to the API it was saved for.
+ */
 const KEPT_VARIABLES = [
   'PATH',
   'INBOX_CONFIG',
-  'INBOX_API_URL',
   'HTTPS_PROXY',
   'HTTP_PROXY',
   'NO_PROXY',

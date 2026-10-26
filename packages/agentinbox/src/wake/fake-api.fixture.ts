@@ -78,6 +78,8 @@ export class FakeApi {
   lease: Awake | null = null;
   paused = false;
   keyRejected = false;
+  /** Agent Inbox can't be reached: every call fails, as in an outage. */
+  down = false;
   /** Answers each new question (`approve`, `choose`, `ask`) as it comes, or leaves it pending (undefined). */
   decide: (interaction: FakeInteraction) => FakeDecision | undefined = () => undefined;
   private server?: Server;
@@ -153,6 +155,19 @@ export class FakeApi {
     }
   }
 
+  /** People write in a conversation without waking anything, as strangers in a group do. */
+  chatter(conversationId: string, count: number): void {
+    const conversation = this.conversation(conversationId);
+    for (let index = 0; index < count; index++) {
+      conversation.messages.push({
+        id: `msg_${randomUUID().slice(0, 8)}`,
+        from: 'human',
+        text: `chatter ${index + 1}`,
+        at: new Date().toISOString(),
+      });
+    }
+  }
+
   /** The operator resolves a conversation on agentinbox.md. */
   resolve(conversationId: string): void {
     const conversation = this.conversation(conversationId);
@@ -219,6 +234,11 @@ export class FakeApi {
       res.end(JSON.stringify(payload));
     };
 
+    if (this.down) {
+      send(503, { message: 'Service Unavailable' });
+
+      return;
+    }
     if (this.keyRejected) {
       send(401, { statusCode: 401, message: 'API Key not found' });
 
@@ -443,11 +463,19 @@ export class FakeApi {
   private showConversation({ query }: FakeCall, id: string, send: Send): void {
     const conversation = this.conversation(id);
     const limit = Number(query.limit ?? 20);
+    // Older pages end before the message `before` names.
+    const end = query.before
+      ? Math.max(
+          0,
+          conversation.messages.findIndex((message) => message.id === query.before)
+        )
+      : conversation.messages.length;
+    const older = conversation.messages.slice(0, end);
     send(200, {
       data: {
         thread: this.threadView(conversation),
-        messages: conversation.messages.slice(-limit),
-        hasMore: conversation.messages.length > limit,
+        messages: older.slice(-limit),
+        hasMore: older.length > limit,
       },
     });
   }

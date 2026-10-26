@@ -102,6 +102,19 @@ describe('permissionCard', () => {
     });
   });
 
+  it('gives no card for a command too long to show whole, rather than cut its end off', () => {
+    const command = `echo ${'x'.repeat(3000)} && rm -rf ~`;
+
+    expect(card(`run \`${command}\``)).toBeUndefined();
+  });
+
+  it('keeps a command over several lines out of the title, and whole in the body', () => {
+    const command = 'echo ready\nnpm publish';
+
+    expect(card(`run \`${command}\``)?.title).toBe('Claude Code wants to run a command');
+    expect(card(`run \`${command}\``)?.body).toContain(`Run \`${command}\`.`);
+  });
+
   it('keeps a command too long for a card title whole in the body, where it isn’t cut', () => {
     const command = `npx @agentinbox/cli inbox reply conv_1 "${'The folder is empty. '.repeat(6).trim()}"`;
 

@@ -1,7 +1,8 @@
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { WakeHostId, WakeMessage } from '../api/wake';
-import { configPath } from '../config';
+import { type CliConfig, configPath } from '../config';
 
 /** Where wake keeps what it needs between runs: a `wake` folder next to the config. */
 export function wakeDir(): string {
@@ -31,11 +32,38 @@ export interface WakeLimits {
 export const DEFAULT_LIMITS: WakeLimits = { wakesPerHour: 20, maxRunSeconds: 30 * 60 };
 
 /** Why it stopped for good: retrying would not help, so it waits until wake is turned on again. */
-export type StopReason = 'key_changed' | 'awake_elsewhere' | 'host_missing';
+export type StopReason = 'key_changed' | 'awake_elsewhere' | 'host_missing' | 'connection_changed';
+
+/**
+ * The connection wake was turned on for: the API, the agent, and the key, as a fingerprint (never the key).
+ * What is saved belongs to it: queued messages, sessions and what was allowed mean nothing to another.
+ */
+export interface WakeConnection {
+  apiUrl: string;
+  agentIdentifier: string;
+  key: string;
+}
+
+export function connectionOf(config: CliConfig): WakeConnection {
+  return {
+    apiUrl: config.apiUrl.replace(/\/$/, ''),
+    agentIdentifier: config.relayAgentIdentifier,
+    key: createHash('sha256')
+      .update(config.auth.secretKey ?? config.auth.keylessIdentifier ?? '')
+      .digest('hex')
+      .slice(0, 16),
+  };
+}
+
+export function sameConnection(a: WakeConnection | undefined, b: WakeConnection): boolean {
+  return a?.apiUrl === b.apiUrl && a.agentIdentifier === b.agentIdentifier && a.key === b.key;
+}
 
 /** One computer's wake: what was allowed, where it got to, and the sessions it keeps. */
 export interface WakeState {
   host: WakeHostId;
+  /** The connection it was turned on for. */
+  connection?: WakeConnection;
   /** The folder the host works in, absolute. */
   project: string;
   /** How to start the host, as it was found when wake was turned on. */
@@ -63,6 +91,11 @@ export interface WakeState {
   sessions: Record<string, { sessionId: string; round: number; lastWakeAt: string }>;
   /** When runs started within the last hour. */
   wakes: string[];
+  /**
+   * The run in progress, while it is: one the program's end cut off is still here when it starts again, and its
+   * conversation is told.
+   */
+  running?: { conversationId: string; at: string };
   /** When the operator was last told the hourly limit holds messages back. */
   limitToldAt?: string;
   /** Set when it stopped for good. */

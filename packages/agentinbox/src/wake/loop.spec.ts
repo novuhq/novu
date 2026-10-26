@@ -55,7 +55,12 @@ interface Harness {
 
 let harness: Harness | undefined;
 
-async function start(overrides: Partial<WakeState> = {}, timing: Partial<WakeTiming> = {}): Promise<Harness> {
+async function start(
+  overrides: Partial<WakeState> = {},
+  timing: Partial<WakeTiming> = {},
+  /** Sets the API up before the loop's first call. */
+  prepare: (api: FakeApi) => void = () => undefined
+): Promise<Harness> {
   const api = await new FakeApi().start();
   const dir = mkdtempSync(join(tmpdir(), 'wake-loop-'));
   vi.stubEnv('FAKE_CLAUDE_LOG', join(dir, 'claude.log'));
@@ -70,6 +75,7 @@ async function start(overrides: Partial<WakeState> = {}, timing: Partial<WakeTim
     renewedAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 180_000).toISOString(),
   };
+  prepare(api);
 
   const store = memoryState({
     ...newState({
@@ -264,7 +270,7 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
 
   it('names a long command in the card’s title, and keeps it whole in the body', async () => {
     const { api } = await start();
-    const command = `echo ${'long '.repeat(40)}`.trim();
+    const command = `echo ${'long '.repeat(200)}`.trim();
 
     api.deliver({ text: `ask:${command}` });
 
@@ -274,6 +280,18 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
     const question = api.interactions.find((interaction) => interaction.kind === 'approve');
     expect(question?.card.title).toBe('Claude Code wants to run a command');
     expect(question?.card.body).toContain(`Run \`${command}\`.\n\n`);
+  });
+
+  it('refuses a command too long to show the operator whole, without asking them', async () => {
+    const { api } = await start();
+    const command = `echo ${'x'.repeat(3000)} && rm -rf ~`;
+
+    api.deliver({ text: `ask:${command}` });
+
+    await eventually(() =>
+      expect(api.sentInto('conv_1').some((text) => text.startsWith('Not allowed: It is too long to show'))).toBe(true)
+    );
+    expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
   });
 
   it('shows typing in the conversation while the host works, from waking it until its answer goes out', async () => {
@@ -652,6 +670,103 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
     api.deliver({ text: 'still awake?' });
 
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: still awake?'));
+  });
+
+  it('starts nothing it had queued while it can’t renew the lease, and goes on once it can', async () => {
+    const left = {
+      id: 'msg_left',
+      conversationId: 'conv_1',
+      channel: 'telegram',
+      from: { id: 'ada', name: 'Ada', isOperator: true },
+      text: 'left from before',
+      at: new Date().toISOString(),
+      round: 0,
+      isDirectMessage: true,
+    };
+    const { api, starts } = await start({ queue: [left] }, {}, (fake) => {
+      fake.down = true;
+    });
+
+    await pause(600);
+    expect(starts()).toHaveLength(0);
+
+    api.down = false;
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: left from before'));
+  });
+
+  it('marks when a conversation’s session last ran, each time it runs', async () => {
+    const { api, store } = await start();
+
+    api.deliver({ text: 'first' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: first'));
+    const first = store.current?.sessions.conv_1?.lastWakeAt ?? '';
+    await pause(20);
+    api.deliver({ text: 'second' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: second'));
+
+    expect((store.current?.sessions.conv_1?.lastWakeAt ?? '') > first).toBe(true);
+  });
+
+  it('sees its own reply however much was written after it, and doesn’t reply twice', async () => {
+    const { api, logs } = await start();
+
+    api.deliver({ text: 'reply-myself:600' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('I replied myself; all good.'));
+    api.chatter('conv_1', 30);
+
+    await eventually(() => expect(logs.some((line) => line.includes('conv_1: done.'))).toBe(true));
+    expect(api.sentInto('conv_1')).not.toContain('Replied in the conversation.');
+  });
+
+  it('tells a conversation whose run a restart cut off, instead of running it again', async () => {
+    const { api, starts, store } = await start({ running: { conversationId: 'conv_1', at: new Date().toISOString() } });
+
+    await eventually(() =>
+      expect(api.sentInto('conv_1').some((text) => text.startsWith('Claude Code stopped before it could finish'))).toBe(
+        true
+      )
+    );
+    expect(starts()).toHaveLength(0);
+    expect(store.current?.running).toBeUndefined();
+  });
+
+  it('keeps the run it was stopped in, to tell its conversation when it starts again', async () => {
+    const { api, starts, store, stop } = await start();
+
+    api.deliver({ text: 'sleep:20000' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    await stop();
+
+    expect(store.current?.running?.conversationId).toBe('conv_1');
+  });
+
+  it('passes the answer to the agent’s own question into the run when no command waits for it', async () => {
+    const { api, starts } = await start();
+
+    api.deliver({ text: 'sleep:1500' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    api.deliver({
+      text: 'Production',
+      answersMessageId: 'int_asked_with_async',
+      answer: { status: 'answered', text: 'Production' },
+    });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Done sleeping. Also: Production'));
+  });
+
+  it('leaves the answer to the agent’s command that still waits for it', async () => {
+    const { api, starts } = await start();
+
+    api.deliver({ text: 'wait-for:1200' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    await pause(200);
+    api.deliver({
+      text: 'prod',
+      answersMessageId: 'int_asked_and_waiting',
+      answer: { status: 'answered', text: 'prod' },
+    });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Asked and got the answer.'));
   });
 
   it('handles each message once, even when it comes back', async () => {

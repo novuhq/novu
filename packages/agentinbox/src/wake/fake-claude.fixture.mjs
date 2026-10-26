@@ -11,6 +11,8 @@
 //   sleep:<ms>           works for <ms> (a tool that doesn't ask); messages that come meanwhile join the turn
 //   reply-myself[:<ms>]  asks to run `npx @agentinbox/cli inbox reply <conversation> …`, then replies through the
 //                        fake API, as that command would; with <ms>, works that long more after replying
+//   wait-for:<ms>        runs `npx @agentinbox/cli inbox reply <conversation> ask …`, which its settings allow,
+//                        and which waits <ms> for the answer before it ends (a `tool_result`)
 //   mcp:<tool> [conv]    asks to use the MCP tool <tool> (`mcp__<server>__<name>`) on <conv>, by default the
 //                        conversation that woke it; an allowed `…__inbox_reply` replies through the fake API
 //   resolve              resolves the conversation through the fake API
@@ -222,6 +224,26 @@ const BEHAVIORS = [
       if (more > 0) await interruptible(sleep(more));
 
       return { answer: 'Replied in the conversation.' };
+    },
+  ],
+  [
+    'wait-for:',
+    async (rest, { interruptible, content }) => {
+      const id = `toolu_${randomUUID()}`;
+      const command = `npx @agentinbox/cli inbox reply ${conversationOf(content)} ask "Staging or prod?"`;
+      out({
+        type: 'assistant',
+        message: { content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] },
+        session_id: sessionId,
+      });
+      await interruptible(sleep(Number(rest)));
+      out({
+        type: 'user',
+        message: { content: [{ type: 'tool_result', tool_use_id: id, content: 'Answered: prod' }] },
+        session_id: sessionId,
+      });
+
+      return { answer: 'Asked and got the answer.' };
     },
   ],
   [

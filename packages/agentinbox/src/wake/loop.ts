@@ -6,7 +6,7 @@ import {
   type Interaction,
 } from '../api/agent-inbox';
 import type { ApiClient } from '../api/client';
-import { getConversation } from '../api/inbox';
+import { type ConversationView, getConversation } from '../api/inbox';
 import {
   AGENT_PAUSED_CODE,
   AWAKE_ELSEWHERE_CODE,
@@ -33,12 +33,13 @@ import type {
   TurnEnded,
 } from './host-adapter';
 import { wakeHostName } from './hosts';
-import { isOwnReplySubject, repliesIn } from './own-replies';
+import { isOwnReplySubject, repliesIn, waitsForAnswerIn } from './own-replies';
 import { IDS_KEPT, SESSIONS_KEPT, type StateStore, type StopReason, type WakeState } from './state';
 import { Typing } from './typing';
 import {
   clipCard,
   hostInstructions,
+  interruptedReply,
   KEY_CHANGED_MESSAGE,
   messageForHost,
   movedMessage,
@@ -49,6 +50,7 @@ import {
   runLimitReply,
   STOPPED_REPLY,
   spanWords,
+  TOO_LONG_TO_ASK,
   wakeLimitNotice,
   wokenBy,
 } from './words';
@@ -57,6 +59,10 @@ const HOUR_MS = 3_600_000;
 
 /** Messages older than this aren't worth a wake: the API never sends them, and the queue drops them too. */
 const STALE_MS = 24 * HOUR_MS;
+
+/** The most messages one look at a conversation reads (the API's most), and how many looks back a reply is sought. */
+const PAGE_LIMIT = 100;
+const PAGES_BACK = 10;
 
 export interface WakeTiming {
   /** How long the server holds one wait for messages, in seconds. */
@@ -121,6 +127,11 @@ interface ActiveRun {
   session?: HostSession;
   /** Messages handed to the host that no turn has answered yet. */
   pending: Set<string>;
+  /**
+   * The host's commands that asked in the conversation and wait for the answer, by tool id: an answer to the host's
+   * own question goes to them while they wait, not into the run.
+   */
+  waiting: Set<string>;
   /** The conversation's latest message before the host's turn: whatever the agent sent after it is the host's. */
   watermark?: string;
   stopping?: 'stop' | 'limit' | 'paused' | 'shutdown';
@@ -165,6 +176,8 @@ class WakeLoop {
   private end?: LoopEnd;
   private paused = false;
   private renewAt = 0;
+  /** Until then the lease is surely this computer's: no run starts after it, until the lease is renewed. */
+  private leaseUntil = 0;
   private failures = 0;
 
   constructor(private readonly options: WakeLoopOptions) {
@@ -188,6 +201,7 @@ class WakeLoop {
         continue;
       }
 
+      await this.tellInterrupted();
       const page = await this.poll();
       if (page) {
         this.failures = 0;
@@ -236,10 +250,30 @@ class WakeLoop {
         this.log('The agent was resumed: waking again.');
       }
       this.failures = 0;
-      this.renewAt = Date.now() + (this.timing.renewMs ?? (lease.renewInSeconds || 60) * 1000);
+      const renewIn = (lease.renewInSeconds || 60) * 1000;
+      this.renewAt = Date.now() + (this.timing.renewMs ?? renewIn);
+      // As long as it lasts, by this computer's clock: the API's may differ.
+      const lasts = Date.parse(lease.awake.expiresAt) - Date.parse(lease.awake.renewedAt);
+      this.leaseUntil = Date.now() + (Number.isFinite(lasts) && lasts > 0 ? lasts : renewIn);
     } catch (err) {
       await this.onError(err);
     }
+  }
+
+  /**
+   * A run the program stopped in (a restart, a logout, a crash) isn't run again, so nothing is done twice: its
+   * conversation is told instead, once the lease is this computer's again.
+   */
+  private async tellInterrupted(): Promise<void> {
+    const cut = this.state.running;
+    if (!cut || this.active || Date.now() >= this.leaseUntil) {
+      return;
+    }
+
+    this.state.running = undefined;
+    this.save();
+    this.log(`${cut.conversationId}: the run it was in when it last stopped didn’t finish; telling the conversation.`);
+    await this.reply(cut.conversationId, interruptedReply(this.options.host.name));
   }
 
   private async poll(): Promise<WakeMessagesPage | null> {
@@ -287,6 +321,7 @@ class WakeLoop {
     if (code === NOT_AWAKE_CODE) {
       // The lease lapsed, or another holder took it: asking for it again tells which.
       this.renewAt = 0;
+      this.leaseUntil = 0;
 
       return;
     }
@@ -319,6 +354,7 @@ class WakeLoop {
    */
   private markPaused(): void {
     this.renewAt = 0;
+    this.leaseUntil = 0;
     if (this.paused) {
       return;
     }
@@ -424,8 +460,9 @@ class WakeLoop {
       return;
     }
 
+    // A run starts only while the lease is surely this computer's: by then another may have taken it, and run it too.
     const next = this.state.queue[0];
-    if (!next || !this.mayWake(now)) {
+    if (!next || now >= this.leaseUntil || !this.mayWake(now)) {
       return;
     }
 
@@ -455,8 +492,9 @@ class WakeLoop {
 
     const joining = this.state.queue.filter((message) => this.belongs(message, active.conversationId, active.round));
     for (const message of joining) {
-      // An answer to the host's own question is already in hand: the command that asked it is waiting for it.
-      if (!message.answersMessageId) {
+      // An answer to the host's own question goes to its command that still waits for one. Any other, such as the
+      // answer to a question asked with --async, or one whose command gave up waiting, joins the run.
+      if (!message.answersMessageId || active.waiting.size === 0) {
         if (!this.sendInto(active, message)) {
           // The run is ending: the message waits for the next one.
           break;
@@ -510,6 +548,7 @@ class WakeLoop {
       wokenBy: wokenBy(first),
       messages,
       pending: new Set(),
+      waiting: new Set(),
       closing: false,
       failures: [],
       replies: Promise.resolve(),
@@ -517,6 +556,7 @@ class WakeLoop {
     };
     this.active = active;
     this.state.wakes.push(new Date().toISOString());
+    this.state.running = { conversationId, at: new Date().toISOString() };
     this.save();
 
     try {
@@ -536,6 +576,11 @@ class WakeLoop {
     } catch (err) {
       this.log(`${conversationId}: the run failed: ${describeError(err)}`);
     } finally {
+      // A run the program's end cut off stays on record: the next start tells its conversation.
+      if (active.stopping !== 'shutdown') {
+        this.state.running = undefined;
+        this.save();
+      }
       this.active = undefined;
       this.pump();
     }
@@ -543,6 +588,7 @@ class WakeLoop {
 
   private async runOnce(active: ActiveRun, resume: string | undefined): Promise<RunOutcome> {
     active.pending = new Set();
+    active.waiting = new Set();
     active.closing = false;
     // From the start: the host takes a while to come up, and the person sees it is on its way.
     active.typing.start();
@@ -566,13 +612,17 @@ class WakeLoop {
         }),
       },
       {
-        progress: (note, subject) => {
+        progress: (note, subject, toolId) => {
           this.log(`${active.conversationId}: ${note}`);
           if (repliesIn(subject, active.conversationId)) {
             // Its answer is on its way: the chat gets that, not "typing…" after it.
             active.typing.stop();
           }
+          if (toolId && waitsForAnswerIn(subject, active.conversationId)) {
+            active.waiting.add(toolId);
+          }
         },
+        toolEnded: (toolId) => active.waiting.delete(toolId),
         turnEnded: (turn) => this.onTurn(active, session, turn),
         askPermission: (question, signal) =>
           this.withoutTyping(active, () => this.askOperator(active, question, signal)),
@@ -635,6 +685,8 @@ class WakeLoop {
     for (const id of turn.inputIds) {
       active.pending.delete(id);
     }
+    // A turn ends with its tools: no command of it waits any more.
+    active.waiting.clear();
     if (active.pending.size === 0) {
       // Nothing left to work on: its answer goes out now, not "typing…" after it.
       active.typing.stop();
@@ -685,12 +737,8 @@ class WakeLoop {
     this.log(`${active.conversationId}: done.`);
   }
 
+  /** The session goes on with the conversation's next run in this round; when it last ran keeps it among the kept. */
   private keepSession(active: ActiveRun, sessionId: string): void {
-    const kept = this.state.sessions[active.conversationId];
-    if (kept?.sessionId === sessionId && kept.round === active.round) {
-      return;
-    }
-
     this.state.sessions[active.conversationId] = {
       sessionId,
       round: active.round,
@@ -746,10 +794,10 @@ class WakeLoop {
    */
   private async deliver(active: ActiveRun, text: string): Promise<void> {
     const since = active.watermark;
-    const view = await this.recentMessages(active.conversationId);
-    active.watermark = view?.[view.length - 1]?.id ?? since;
+    const after = await this.messagesAfter(active.conversationId, since);
+    active.watermark = after?.[after.length - 1]?.id ?? since;
 
-    if (view && this.hostReplied(view, since)) {
+    if (after && this.hostReplied(after)) {
       this.log(`${active.conversationId}: the agent replied itself.`);
 
       return;
@@ -758,26 +806,51 @@ class WakeLoop {
     await this.reply(active.conversationId, text);
   }
 
-  private hostReplied(
-    messages: Array<{ id: string; from: string; interaction?: { id: string } }>,
-    since?: string
-  ): boolean {
-    const start = since ? messages.findIndex((message) => message.id === since) + 1 : 0;
+  private hostReplied(messages: Array<{ from: string; interaction?: { id: string } }>): boolean {
     const own = new Set(this.state.own);
 
-    return messages
-      .slice(start)
-      .some((message) => message.from === 'agent' && !(message.interaction && own.has(message.interaction.id)));
+    return messages.some(
+      (message) => message.from === 'agent' && !(message.interaction && own.has(message.interaction.id))
+    );
   }
 
-  private async recentMessages(conversationId: string) {
+  /**
+   * The conversation's messages after `since`, oldest first: read back page by page until `since` shows up, as
+   * the host's own reply can be far behind the latest message in a busy chat. Null when they can't be read.
+   */
+  private async messagesAfter(conversationId: string, since: string | undefined) {
+    const found: ConversationView['messages'] = [];
+    let before: string | undefined;
+
+    for (let page = 0; page < PAGES_BACK; page++) {
+      const view = await this.readConversation(conversationId, { limit: PAGE_LIMIT, before });
+      if (!view) {
+        return null;
+      }
+
+      const at = since ? view.messages.findIndex((message) => message.id === since) : -1;
+      if (at >= 0) {
+        return [...view.messages.slice(at + 1), ...found];
+      }
+      found.unshift(...view.messages);
+      if (!since || !view.hasMore || view.messages.length === 0) {
+        break;
+      }
+      before = view.messages[0].id;
+    }
+
+    return found;
+  }
+
+  private async readConversation(
+    conversationId: string,
+    query: { limit: number; before?: string }
+  ): Promise<ConversationView | null> {
     try {
-      const view = await getConversation(this.options.client, conversationId, {
-        limit: 20,
+      return await getConversation(this.options.client, conversationId, {
+        ...query,
         agentIdentifier: this.options.agentIdentifier,
       });
-
-      return view.messages;
     } catch (err) {
       await this.onErrorDuringRun(err);
 
@@ -786,9 +859,9 @@ class WakeLoop {
   }
 
   private async latestMessageId(conversationId: string): Promise<string | undefined> {
-    const messages = await this.recentMessages(conversationId);
+    const view = await this.readConversation(conversationId, { limit: 1 });
 
-    return messages?.[messages.length - 1]?.id;
+    return view?.messages[view.messages.length - 1]?.id;
   }
 
   /**
@@ -853,8 +926,9 @@ class WakeLoop {
     const allowSession = question.options.find((option) => option.kind === 'allow_session');
     const deny = question.options.find((option) => option.kind === 'deny') ?? { id: 'deny' };
 
+    const action = oneLine(question.action);
     if (allowOnce && isOwnReplySubject(question.subject, active.conversationId)) {
-      this.log(`${active.conversationId}: allowed the agent’s own ${question.action}`);
+      this.log(`${active.conversationId}: allowed the agent’s own ${action}`);
 
       return { optionId: allowOnce.id };
     }
@@ -874,6 +948,11 @@ class WakeLoop {
       wokenBy: active.wokenBy,
       timeoutSeconds,
     });
+    if (!card) {
+      this.log(`${active.conversationId}: too long to ask the operator, so denied: ${action}`);
+
+      return { optionId: deny.id, message: TOO_LONG_TO_ASK };
+    }
 
     let asked: Interaction;
     try {
@@ -898,9 +977,9 @@ class WakeLoop {
       return { optionId: deny.id, message: 'Your operator couldn’t be asked, so it isn’t allowed.' };
     }
 
-    this.log(`${active.conversationId}: asked the operator to allow: ${question.action}`);
+    this.log(`${active.conversationId}: asked the operator to allow: ${action}`);
     const outcome = await this.waitForAnswer(asked.id, signal);
-    this.log(`${active.conversationId}: ${question.action}: ${outcome.status}.`);
+    this.log(`${active.conversationId}: ${action}: ${outcome.status}.`);
 
     if (outcome.status === 'approved') {
       return { optionId: allowSession && outcome.optionId === allowSession.id ? allowSession.id : allowOnce.id };
@@ -1066,6 +1145,13 @@ function roundOf(message: WakeMessage): number {
 /** "/stop" (any case, nothing else) stops the run of the conversation it is sent in. */
 export function isStop(text: string): boolean {
   return text.trim().toLowerCase() === '/stop';
+}
+
+/** A long or several-line text as one line of the log. */
+function oneLine(text: string, length = 300): string {
+  const line = text.replace(/\s+/g, ' ').trim();
+
+  return line.length > length ? `${line.slice(0, length - 1)}…` : line;
 }
 
 function describeError(err: unknown): string {
