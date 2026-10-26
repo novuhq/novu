@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { noindexPaths, SITE_INDEXED, searchEnginesMayIndex, siteNoindex } from './seo';
+import { noindexPaths, pageMetadata, SITE_INDEXED, searchEnginesMayIndex, siteNoindex } from './seo';
 
 describe('SITE_NOINDEX', () => {
   it('is on only for true or 1', () => {
@@ -25,5 +25,17 @@ describe('SITE_NOINDEX', () => {
     expect(searchEnginesMayIndex('preview', false, true)).toBe(false);
     expect(searchEnginesMayIndex('development', false, true)).toBe(false);
     expect(searchEnginesMayIndex('production', false, false)).toBe(false);
+  });
+
+  it('indexes production website pages', () => {
+    expect(SITE_INDEXED).toBe(true);
+    expect(noindexPaths('production', false)).toBe('none');
+    expect(pageMetadata('home', 'production', false).robots).toMatchObject({
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true },
+    });
+    expect(pageMetadata('sapien', 'production', false).robots).toMatchObject({ index: true, follow: true });
+    expect(pageMetadata('home', 'production', true).robots).toMatchObject({ index: false, follow: false });
   });
 });
