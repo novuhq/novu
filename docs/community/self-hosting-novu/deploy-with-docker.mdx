@@ -89,9 +89,62 @@ docker compose up -d
 To keep the setup simple, we made some choices that may not be optimal for production:
 
 - the database is in the same machine as the servers
-- the storage uses localstack instead of S3
+- the storage settings point to a LocalStack endpoint instead of a real bucket
 
-We strongly recommend that you decouple your database before deploying.
+We strongly recommend that you decouple your database and configure object storage before deploying.
+
+### Object storage
+
+The API and Worker services use object storage for files such as email attachments. When you trigger a workflow with `attachments` in the payload, the API uploads each file to the bucket before queuing the event. See [Trigger](/platform/concepts/trigger). If the bucket is unreachable, triggers that include attachments fail, while triggers without attachments still succeed.
+
+The default `.env` sets `S3_LOCAL_STACK=${HOST_NAME}:4566`, but the community `docker-compose.yml` does not start a LocalStack container. Point the storage variables at a real bucket before you send attachments.
+
+#### Amazon S3 and S3-compatible storage
+
+S3 is the default storage backend. Set these variables in your `.env` file. Both the `api` and `worker` services receive them:
+
+| Variable | Description |
+| --- | --- |
+| `S3_BUCKET_NAME` | Name of the bucket. |
+| `S3_REGION` | Region of the bucket. |
+| `AWS_ACCESS_KEY_ID` | Access key with read and write access to the bucket. |
+| `AWS_SECRET_ACCESS_KEY` | Secret for the access key. |
+| `S3_LOCAL_STACK` | Custom S3 endpoint URL. Leave it empty for Amazon S3. |
+
+Novu passes `S3_LOCAL_STACK` to the S3 client as its endpoint and uses path-style requests. To use an S3-compatible service such as DigitalOcean Spaces or MinIO, set `S3_LOCAL_STACK` to that service's endpoint and use the access keys it issues:
+
+```bash
+S3_LOCAL_STACK=https://<region>.digitaloceanspaces.com
+S3_BUCKET_NAME=<bucket-name>
+S3_REGION=<region>
+AWS_ACCESS_KEY_ID=<access-key>
+AWS_SECRET_ACCESS_KEY=<secret-key>
+```
+
+For Amazon S3, clear the endpoint:
+
+```bash
+S3_LOCAL_STACK=
+S3_BUCKET_NAME=<bucket-name>
+S3_REGION=<region>
+AWS_ACCESS_KEY_ID=<access-key>
+AWS_SECRET_ACCESS_KEY=<secret-key>
+```
+
+Restart the services after changing the variables:
+
+```bash
+docker compose up -d
+```
+
+#### Google Cloud Storage and Azure Blob Storage
+
+Set `STORAGE_SERVICE` to `GCS` or `AZURE` to use a different backend. Any other value, or no value, uses S3.
+
+- **GCS:** set `GCS_BUCKET_NAME`, plus `GCS_DOMAIN` or `CDN_URL`. Novu authenticates with Google Application Default Credentials.
+- **Azure:** set `AZURE_ACCOUNT_NAME`, `AZURE_ACCOUNT_KEY`, and `AZURE_CONTAINER_NAME`. Optionally set `AZURE_HOST_NAME` to override the default `https://<account-name>.blob.core.windows.net` host.
+
+The community `docker-compose.yml` only forwards the S3 variables. Add `STORAGE_SERVICE` and the backend-specific variables to the `environment` section of both the `api` and `worker` services.
 
 ## Setting Up the Inbox Component
 
