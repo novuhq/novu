@@ -1,0 +1,79 @@
+---
+title: "Quickstart"
+description: "Ask one question from the CLI or from a chat app, and answer it on Telegram, Slack, or email."
+---
+
+Pick the door that matches the host. Both end the same way: the agent asks, and you answer on a channel you already use.
+
+<Columns cols={2}>
+  <Card title="A terminal or a coding agent" icon="terminal" href="#use-the-cli">
+    Run the CLI. Setup works before you have an account.
+  </Card>
+  <Card title="A chat app" icon="bot" href="#use-mcp">
+    Add the MCP server and sign in with your Agent Inbox account.
+  </Card>
+</Columns>
+
+## Use the CLI
+
+<Steps>
+  <Step>
+## Create the inbox
+
+```bash
+npx @agentinbox/cli setup
+```
+
+Setup asks for your name and an email address, creates the inbox, and prints the agent's address. It then asks whether to connect Telegram or Slack. Press Enter to skip. You can add a channel later with `channel add`.
+
+  </Step>
+  <Step>
+## Ask a question
+
+```bash
+npx @agentinbox/cli inbox send ask "Which environment should I deploy to?"
+```
+
+The command waits. Answer on the channel you connected, or by replying to the email. The answer is printed, and the command exits.
+
+  </Step>
+</Steps>
+
+`login` keeps a setup you made before you had an account. Your channels stay connected. See [Account and claim](/account).
+
+## Use MCP
+
+<Steps>
+  <Step>
+## Create the agent
+
+Sign up at [agentinbox.md](https://www.agentinbox.md) and name the agent. Onboarding walks you through a test message and connecting a host.
+
+  </Step>
+  <Step>
+## Add the server
+
+In Claude, ChatGPT, Cursor, or another app that speaks MCP, add:
+
+```text
+https://mcp.agentinbox.md
+```
+
+Sign in when the app asks. The app never sees your API key. See [Connect a host](/connect).
+
+  </Step>
+  <Step>
+## Ask it to use the inbox
+
+Paste this after the server is connected:
+
+<Prompt description="Ask before you act" icon="bot" actions={["copy", "cursor"]}>
+When you need a decision, an approval, or to tell me something while I am not in this chat, use Agent Inbox. Ask me to approve before you do anything that is hard to undo. If I already wrote to you, reply in that conversation.
+</Prompt>
+
+  </Step>
+</Steps>
+
+You answered somewhere other than the chat, and the agent continued. That is the whole loop.
+
+Next, read [Concepts](/concepts), then [Send a message](/messages) and [Read the inbox](/conversations).

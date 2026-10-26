@@ -211,7 +211,7 @@ export class NotificationFeedItemDto implements INotificationDto {
     description: 'The payload that was used to send the notification trigger.',
     type: 'object',
     additionalProperties: true,
-    required: false,
+    selfRequired: false,
     example: { key: 'value' },
   })
   payload?: Record<string, unknown>;
@@ -229,7 +229,7 @@ export class NotificationFeedItemDto implements INotificationDto {
     description: 'Provider-specific overrides used when triggering the notification.',
     type: 'object',
     additionalProperties: true,
-    required: false,
+    selfRequired: false,
     example: { overrideKey: 'overrideValue' },
   })
   overrides?: Record<string, unknown>;

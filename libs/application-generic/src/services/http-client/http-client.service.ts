@@ -40,7 +40,7 @@ type GotRequestParams = {
   timeout: number;
   body: unknown;
   retryOptions: object;
-  httpsOptions: { rejectUnauthorized: boolean };
+  httpsOptions: { rejectUnauthorized: boolean; certificateAuthority?: string[] };
 };
 
 interface SafeRequestParams {
@@ -89,8 +89,13 @@ export class HttpClientService {
       responseType = 'json',
       retry,
       rejectUnauthorized = true,
+      ca,
       onRetry,
     } = options;
+
+    if (ca && options.enforceSsrfProtection) {
+      throw new Error('HttpClientService: `ca` cannot be combined with `enforceSsrfProtection`.');
+    }
 
     const retriesLimit = retry?.limit ?? 0;
     const retryStatusCodes = retry?.statusCodes ?? RETRYABLE_HTTP_CODES;
@@ -124,7 +129,7 @@ export class HttpClientService {
       },
     };
 
-    const httpsOptions = { rejectUnauthorized };
+    const httpsOptions = ca ? { rejectUnauthorized, certificateAuthority: ca } : { rejectUnauthorized };
 
     try {
       if (options.enforceSsrfProtection) {
@@ -261,6 +266,7 @@ export class HttpClientService {
     const response = await got(gotOptions);
 
     return {
+      // biome-ignore lint/plugin: got types a text body as string, while callers of responseType 'text' pick T themselves
       body: response.body as unknown as T,
       statusCode: response.statusCode,
       headers: normalizeHeaders(response.headers),
@@ -303,6 +309,7 @@ export class HttpClientService {
     return body ?? undefined;
   }
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: one flat branch per got error class, mapped onto HttpClientErrorType
   private normalizeError(error: unknown): HttpClientError {
     if (error instanceof HttpClientError) {
       return error;

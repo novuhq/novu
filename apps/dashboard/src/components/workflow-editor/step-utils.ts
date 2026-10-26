@@ -143,30 +143,46 @@ export const flattenIssues = (controlIssues?: Record<string, RuntimeIssue[]>): R
   }, {});
 };
 
-function splitProviderOverridesFromControlValues(controlValues: Record<string, unknown> | null | undefined): {
-  controlValues: Record<string, unknown> | null | undefined;
-  providerOverrides: StepUpdateDto['providerOverrides'] | undefined;
-} {
-  if (!controlValues || typeof controlValues !== 'object') {
-    return { controlValues, providerOverrides: undefined };
+type StepOverrides = Pick<StepUpdateDto, 'providerOverrides' | 'integrationOverrides'>;
+
+/** Drops undefined fields: an omitted override field leaves the stored overrides unchanged on the server. */
+function withoutUndefinedOverrides({ providerOverrides, integrationOverrides }: StepOverrides): StepOverrides {
+  const overrides: StepOverrides = {};
+
+  if (providerOverrides !== undefined) {
+    overrides.providerOverrides = providerOverrides;
   }
 
-  const { providerOverrides, ...rest } = controlValues as Record<string, unknown> & {
-    providerOverrides?: StepUpdateDto['providerOverrides'];
-  };
+  if (integrationOverrides !== undefined) {
+    overrides.integrationOverrides = integrationOverrides;
+  }
 
-  return {
-    controlValues: rest,
-    providerOverrides: providerOverrides === undefined ? undefined : (providerOverrides ?? null),
-  };
+  return overrides;
+}
+
+function splitOverridesFromControlValues(controlValues: Record<string, unknown> | null | undefined): {
+  controlValues: Record<string, unknown> | null | undefined;
+  overrides: StepOverrides;
+} {
+  if (!controlValues || typeof controlValues !== 'object') {
+    return { controlValues, overrides: {} };
+  }
+
+  const { providerOverrides, integrationOverrides, ...rest } = controlValues as Record<string, unknown> & StepOverrides;
+
+  return { controlValues: rest, overrides: withoutUndefinedOverrides({ providerOverrides, integrationOverrides }) };
 }
 
 function toStepUpsertShape(step: StepResponseDto): StepUpdateDto {
-  // Never coerce missing providerOverrides to null — omit means leave unchanged on the server.
-  const { providerOverrides: _existingProviderOverrides, ...stepWithoutProviderOverrides } = step;
+  // Never coerce missing overrides to null — omit means leave unchanged on the server.
+  const {
+    providerOverrides: _existingProviderOverrides,
+    integrationOverrides: _existingIntegrationOverrides,
+    ...stepWithoutOverrides
+  } = step;
 
   return {
-    ...stepWithoutProviderOverrides,
+    ...stepWithoutOverrides,
     controlValues: step.controls?.values || {},
   };
 }
@@ -179,40 +195,39 @@ export const updateStepInWorkflow = (
   return {
     ...workflow,
     steps: workflow.steps.map((step) => {
-      const stepWithoutProviderOverrides = toStepUpsertShape(step);
+      const stepWithoutOverrides = toStepUpsertShape(step);
 
       if (step.stepId === stepId) {
         const existingControlValues = step.controls?.values || {};
         const incomingControlValues =
           updateStep.controlValues !== undefined ? updateStep.controlValues : existingControlValues;
 
-        // Deleting control values also clears per-provider override docs (server cascade).
+        // Deleting control values also clears the override docs (server cascade).
         if (incomingControlValues === null) {
           return {
-            ...stepWithoutProviderOverrides,
+            ...stepWithoutOverrides,
             ...updateStep,
             controlValues: null,
             providerOverrides: null,
+            integrationOverrides: null,
           };
         }
 
-        // Form state nests providerOverrides beside control fields; lift to the step DTO sibling.
-        const splitFromForm =
-          updateStep.providerOverrides === undefined
-            ? splitProviderOverridesFromControlValues(incomingControlValues as Record<string, unknown>)
-            : { controlValues: incomingControlValues, providerOverrides: updateStep.providerOverrides };
+        // Form state nests the override fields beside control fields; lift them to step DTO siblings.
+        // Values passed explicitly on `updateStep` win over the ones nested in the form.
+        const { providerOverrides, integrationOverrides, ...updateStepFields } = updateStep;
+        const splitFromForm = splitOverridesFromControlValues(incomingControlValues as Record<string, unknown>);
 
         return {
-          ...stepWithoutProviderOverrides,
-          ...updateStep,
+          ...stepWithoutOverrides,
+          ...updateStepFields,
           controlValues: splitFromForm.controlValues,
-          ...(splitFromForm.providerOverrides !== undefined
-            ? { providerOverrides: splitFromForm.providerOverrides }
-            : {}),
+          ...splitFromForm.overrides,
+          ...withoutUndefinedOverrides({ providerOverrides, integrationOverrides }),
         };
       }
 
-      return stepWithoutProviderOverrides;
+      return stepWithoutOverrides;
     }),
   };
 };

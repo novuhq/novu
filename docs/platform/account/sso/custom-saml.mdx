@@ -1,0 +1,102 @@
+---
+title: 'Custom SAML SSO'
+sidebarTitle: 'Custom SAML'
+description: 'Connect any SAML 2.0 identity provider to Novu with the ACS URL, entity ID, and mail attribute.'
+---
+
+<Note>
+  This is an Enterprise feature on [Novu Cloud](https://dashboard.novu.co). Configure it as the organization **Owner** from **Settings** > **Organization** > **Security** after we enable self-serve, or email [support@novu.co](mailto:support@novu.co) and we will do the Novu side with you. Domain verification and activation are covered in [SAML SSO & SCIM](/platform/account/sso).
+</Note>
+
+Use this for a SAML 2.0 identity provider other than Okta Workforce, Microsoft Entra ID, or Google Workspace. If you use one of those, follow its own guide. The attribute names and metadata fields on this page are for a generic SAML connection, and they differ from the named providers.
+
+Novu is the service provider. Your IdP checks the password. Screen labels vary. The values do not.
+
+| If your IdP says | Paste this from Novu |
+| --- | --- |
+| ACS URL, Reply URL, Single sign-on URL, or Assertion Consumer Service URL | Assertion Consumer Service (ACS) URL |
+| Audience URI, SP Entity ID, or Identifier | Entity ID |
+
+## Before you start
+
+- An Enterprise organization on Novu Cloud.
+- One or more email domains verified on the Security tab. For SAML, the match is exact. `alex@acme.com` matches `acme.com`. `alex@sales.acme.com` does not, unless we have enabled subdomain matching. The domain on the connection has to be a registrable domain, such as `acme.com`, before that can be enabled.
+- An administrator of the IdP who can create a SAML 2.0 application, set attribute statements, and assign users.
+- The ACS URL and entity ID from the Security tab when **Custom SAML Provider** is selected, or from the message we send.
+
+## Create the SAML 2.0 application
+
+<Steps>
+  <Step title="Create the application and set the service provider values">
+    In the IdP, create a SAML 2.0 application. Set the ACS URL and entity ID to the values from Novu. Some products call these **Single sign-on URL** and **Audience URI (SP Entity ID)**. Paste Novu's values into those fields. Do not generate a new entity ID in the IdP and expect Novu to match it.
+  </Step>
+  <Step title="Send these attributes">
+    The attribute name has to match. An email sent as `email`, `emailAddress`, or `user.email` is not read on a custom SAML connection.
+
+    | Attribute name | Required | Value |
+    | --- | --- | --- |
+    | `mail` | Yes | Primary email address |
+    | `firstName` | No | First name |
+    | `lastName` | No | Last name |
+
+    `mail` is required. Without it, the person can authenticate at the IdP and Novu still has no email to attach to an account. Name ID format can also be the email address. Novu still reads the `mail` attribute. Do not rely on Name ID alone.
+  </Step>
+  <Step title="Assign users or groups">
+    Assign the people who should sign in. The control is different in every product. Unassigned users cannot authenticate to the application, even when their email is on the verified domain.
+  </Step>
+  <Step title="Return the IdP metadata">
+    Prefer a metadata URL or a metadata file. That document contains the IdP's SSO URL, entity ID, and signing certificate, and it is the least error-prone way to hand them over. Paste or upload it on the Security tab, or send it to us.
+
+    If the IdP has no metadata document, choose manual configuration and provide these three fields:
+
+    | Field | What it is |
+    | --- | --- |
+    | SSO URL | The IdP URL Novu redirects to so the person can authenticate. |
+    | Entity ID (Issuer) | The IdP application's own identifier. This is not the entity ID Novu gave you. |
+    | Signing certificate | The certificate the IdP uses to sign the SAML response. Novu uses it to verify that the response came from this IdP. |
+
+    When that certificate is rotated, update the connection with the new certificate before the IdP stops signing with the old one. On a live connection, the update applies immediately.
+  </Step>
+</Steps>
+
+Custom SAML does not send the IdP a login hint. Okta, Entra, and Google Workspace send the email address so the IdP can pick the right account. If your IdP needs a hint and shows an account picker or an error without one, tell us and we can set a login hint on the connection.
+
+## Test it, then turn it on
+
+Run a test sign-in with an assigned user whose email is on a verified domain. For a new connection, the test does not change sign-in for anyone else. Activate only after it succeeds.
+
+<Warning>
+  After activation, anyone with an email on a verified domain must sign in through this IdP, including people who already had a Novu account. A wrong ACS URL, issuer, or `mail` attribute locks that domain out as soon as you save it on a live connection. Keep someone available who can revert the IdP or the connection.
+</Warning>
+
+## What your users experience
+
+- They enter their work email on the Novu sign-in page. Novu sends them to the IdP and, after a valid SAML response, opens the dashboard.
+- An existing Novu account with that email is linked to this login. They keep the account.
+- Multi-factor authentication already enabled on the Novu account still runs after the IdP accepts them. MFA at the IdP is the IdP's own policy.
+- IdP-initiated login, where the person starts from an app tile inside the IdP, is not turned on from the Security tab. Ask us if you need it. The flow above, starting at Novu, is the one to use.
+- Removing the connection does not delete Novu accounts.
+- The first successful sign-in creates the person in Novu if you have not set up [custom SCIM](/platform/account/directory-sync/custom-scim). Directory sync is optional, and only if this IdP can push SCIM 2.0.
+
+## If sign-in fails
+
+<AccordionGroup>
+  <Accordion title="The IdP login works and Novu has no email">
+    The attribute is not named `mail`, or the value is empty. Rename it to `mail` and map it to the primary email. Do not use the Okta expression `user.profile.email` or the Google app attribute `email` on this connection unless that string is actually the attribute name your IdP sends.
+  </Accordion>
+  <Accordion title="The audience or destination does not match">
+    The ACS URL and entity ID in the IdP have to be the values from Novu. The SSO URL and issuer you send back are the IdP's values. Mixing those two pairs fails validation.
+  </Accordion>
+  <Accordion title="The user has an account in the directory">
+    They still need to be assigned to the SAML application. How you assign them depends on the product.
+  </Accordion>
+  <Accordion title="A certificate error started after a renewal">
+    The connection is still verifying signatures with the previous certificate. Upload the new signing certificate, or send it to us, before you remove the old one at the IdP.
+  </Accordion>
+</AccordionGroup>
+
+## Next
+
+If this IdP supports SCIM 2.0, continue with [custom SCIM directory sync](/platform/account/directory-sync/custom-scim). The directory is attached to this SAML connection.
+
+Email [support@novu.co](mailto:support@novu.co) or your Slack Connect channel if the test still fails. Include the IdP name, the organization, the domain, and the email address you tried.

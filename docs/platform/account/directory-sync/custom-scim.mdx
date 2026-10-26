@@ -1,0 +1,103 @@
+---
+title: 'Custom SCIM directory sync'
+sidebarTitle: 'Custom SCIM'
+description: 'Point a SCIM 2.0 identity provider at Novu with a base URL and bearer token, for a custom SAML or OpenID Connect connection.'
+---
+
+import DirectorySyncPauseAndRemove from "/snippets/directory-sync-pause-and-remove.mdx";
+
+<Note>
+  Directory sync is an Enterprise feature on [Novu Cloud](https://dashboard.novu.co). It sits under SSO on **Settings** > **Organization** > **Security**, which the organization **Owner** sees after we enable self-serve. Shared behavior is on [Directory sync](/platform/account/directory-sync).
+</Note>
+
+Use this when SSO is a [custom SAML](/platform/account/sso/custom-saml) connection or an [OpenID Connect](/platform/account/sso/oidc) connection, and the identity provider can provision users with SCIM 2.0. Okta Workforce, Microsoft Entra ID, and Google Workspace have their own pages. Google Workspace does not use SCIM.
+
+Novu follows SCIM 2.0. Products still differ in where the settings live and in which operations they actually send. The values below are what every one of them needs.
+
+## Before you start
+
+- A custom SAML or OIDC SSO connection already exists. **Start configuration** stays disabled, with an **SSO Required** badge, until it does. The SSO connection does not have to be activated. Users can be provisioned and still be unable to sign in until SSO is active.
+- The email domain is verified on that connection. Other domains are ignored.
+- An administrator who can create a SCIM 2.0 provisioning integration and set a base URL plus a bearer token.
+- The **SCIM endpoint URL** and **bearer token** from the Security tab. The directory provider is chosen for you: custom SAML and custom OIDC both use custom SCIM.
+
+<Warning>
+  The bearer token is shown once. Copy it into the IdP before you close the page. **Generate new token** leaves the previous token valid for 10 minutes so you can update the IdP without a gap. After that, calls with the old token are rejected.
+</Warning>
+
+There is no extra activate button. The IdP can start pushing after you save the base URL and the bearer token and enable create, update, and deactivate.
+
+## Configure the IdP
+
+<Steps>
+  <Step title="Create a SCIM 2.0 integration">
+    Create the provisioning integration on the same application people use to sign in, when the product ties SCIM to that application. Point it at the SCIM endpoint and bearer token from this connection. Another application's provisioning settings do not update Novu unless they use this endpoint and token. People still sign in through the SSO connection. Provisioning alone does not create a dashboard session.
+  </Step>
+  <Step title="Set the base URL and bearer token">
+    | What the IdP asks for | What Novu shows |
+    | --- | --- |
+    | SCIM base URL, tenant URL, or connector URL | SCIM endpoint URL |
+    | API token, secret token, or bearer token | Bearer token |
+
+    If the IdP asks how to send the token, it is a bearer credential on the SCIM requests. Paste the token itself into the token field. Do not add the word `Bearer` in front of it unless that product tells you the field is the full header value.
+
+    Run the IdP's connection test if it has one, then save.
+  </Step>
+  <Step title="Push create, update, and deactivate">
+    Enable provisioning for user create, user update, and user deactivate. A product that only creates users will not revoke sessions when someone leaves.
+
+    Map the user's email to the SCIM `emails` attribute. Also send `userName`, `name.givenName`, `name.familyName`, and `active` when the IdP lets you map them.
+  </Step>
+</Steps>
+
+## Attributes Novu accepts
+
+The Security tab shows these mappings as read-only:
+
+| SCIM attribute | Novu user field |
+| --- | --- |
+| `userName` | Username / primary identifier |
+| `emails[0].value` | Email address |
+| `name.givenName` | First name |
+| `name.familyName` | Last name |
+
+`active` controls whether the account is enabled. A SCIM `DELETE` deactivates that directory's link. It does not delete the Novu account.
+
+<Warning>
+  `emails` is required for every user. If your `userName` is already the email address, you still have to send `emails`. Novu does not fall back to `userName`. Users whose payloads omit an email fail to provision.
+</Warning>
+
+Attributes that are not in the table are not applied from the Security tab. Groups, if your IdP pushes them, do not change Novu roles (Owner, Admin, Author, Viewer) from this page. Ask us if you need a group to set a role. Only direct group membership would be used.
+
+## Test a user
+
+Push or assign one user whose email is on a verified domain. The test step lists recent activity with the email, name, time, and **Active** or **Deprovisioned**.
+
+How fast that row appears depends on the IdP's provisioning schedule. Some products push immediately. Others wait for a cycle.
+
+**Complete** closes the wizard. It does not start provisioning. Provisioning starts when the IdP saves the endpoint and token and begins sending events.
+
+## When someone leaves
+
+Deactivate them, or send a SCIM delete, and wait for the IdP to push that change. Novu revokes their sessions and deactivates the account. If they were also invited from **Settings** > **Team**, that membership stays until you remove it there.
+
+If this person is also provisioned by another directory, they stay active until every enabled directory has deprovisioned them.
+
+<DirectorySyncPauseAndRemove />
+
+## If provisioning fails
+
+<AccordionGroup>
+  <Accordion title="The IdP's connection test returns 401">
+    The bearer token does not match, or the 10-minute overlap after **Generate new token** has ended. Generate a token and paste the new value.
+  </Accordion>
+  <Accordion title="Users are skipped or rejected for email">
+    The payload has no `emails` value. Map the primary email to `emails` even when `userName` is that same address.
+  </Accordion>
+  <Accordion title="The test user never appears">
+    Their email is not on a verified domain, or the IdP has not run a cycle yet. Check the IdP's provisioning log for the HTTP status Novu returned.
+  </Accordion>
+  <Accordion title="Your product's SCIM dialect does not match">
+    IdPs do not all implement SCIM the same way. If the base URL, the bearer token, and `emails` are correct and pushes still fail, email [support@novu.co](mailto:support@novu.co) with the provisioning error from the IdP and the email address it tried to send.
+  </Accordion>
+</AccordionGroup>

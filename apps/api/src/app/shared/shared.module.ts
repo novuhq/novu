@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import {
+  AgentEmailInboxQuotaService,
   analyticsService,
   CacheServiceHealthIndicator,
   ComputeJobWaitDurationService,
@@ -149,6 +150,7 @@ const ANALYTICS_PROVIDERS = [
 
 const PROVIDERS = [
   ActivityRetentionService,
+  AgentEmailInboxQuotaService,
   analyticsService,
   cacheService,
   CacheServiceHealthIndicator,

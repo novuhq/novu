@@ -75,22 +75,32 @@ export interface ICredentials {
   fromAddressOverride?: string;
   /**
    * Agent default shared inbox: the slug prefix used in
-   * `{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`. Only meaningful on
-   * the NovuAgent email integration. Snapshotted from the linked agent's
-   * identifier at provisioning time; editable by the user. Validated against
+   * `{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`. A new Agent Inbox
+   * with no routing key publishes `{emailSlugPrefix}@<shared-domain>` instead,
+   * and that slug stays the one chosen at creation. A keyed inbox may still
+   * edit its prefix. Validated against
    * `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$` server-side.
    */
   emailSlugPrefix?: string;
   /**
    * Agent default shared inbox: the trailing routing key in
-   * `{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`. Only meaningful on
-   * the NovuAgent email integration. Generated server-side at provisioning
-   * time, globally unique under a partial index on `credentials.inboxRoutingKey`
-   * scoped to `providerId = novu-email-agent`. Not user-editable: the API
-   * update path pins this field to its existing value to prevent rotation
-   * through the standard integration update endpoint.
+   * `{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`. Absent on a vanity
+   * Agent Inbox, whose address is the slug alone. Generated server-side at
+   * provisioning time, globally unique under a partial index on
+   * `credentials.inboxRoutingKey` scoped to both inbox providers. Not
+   * user-editable: the API update path pins this field to its existing value
+   * to prevent rotation through the standard integration update endpoint.
    */
   inboxRoutingKey?: string;
+  /**
+   * Domain half of the shared inbox address, pinned when the integration is
+   * provisioned. Agent Email Inbox gets `NOVU_AGENT_INBOX_INBOUND_DOMAIN`
+   * (falling back to the Connect domain when that is unset). Novu Email gets
+   * `NOVU_AGENT_SHARED_INBOUND_DOMAIN`. A missing pin means the Connect domain,
+   * so rows created before this field keep their existing address.
+   * Server-managed: the integration update path restores the stored value.
+   */
+  inboxDomain?: string;
   /**
    * Kill switch for the Novu shared inbox
    * (`{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`). When `true`, the

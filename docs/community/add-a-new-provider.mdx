@@ -21,7 +21,7 @@ We have multiple providers for each channel (SMS, Email, Push and Chat). To get 
 
 ## Requirements
 
-- Node.js version v20.8.1
+- Node.js v22 (see `.nvmrc`)
 - MongoDB
 - Redis
 - **(Optional)** pnpm - Needed if you want to install new packages
@@ -90,18 +90,30 @@ import {
   IEmailOptions,
   IEmailProvider,
 } from '@novu/stateless';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
-export class ExampleProviderEmailProvider implements IEmailProvider {
+export class ExampleProviderEmailProvider extends BaseProvider implements IEmailProvider {
   id = 'example-provider';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
+  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
 
   constructor(
     private config: {
       apiKey: string;
     }
-  ) {}
+  ) {
+    super();
+  }
 
-  async sendMessage(options: IEmailOptions): Promise<ISendMessageSuccessResponse> {
+  async sendMessage(
+    options: IEmailOptions,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+  ): Promise<ISendMessageSuccessResponse> {
+    const data = this.transform(bridgeProviderData, options);
+
+    // Send data.body (and data.headers) to the provider API here.
+
     return {
       id: 'id_returned_by_provider',
       date: 'current_time',
@@ -112,7 +124,7 @@ export class ExampleProviderEmailProvider implements IEmailProvider {
 
 ### Template test case for `example-provider`.
 
-```ts packages/providers/src/lib/example-provider/example-provider.provider.sepc.ts
+```ts packages/providers/src/lib/email/example-provider/example-provider.test.provider.spec.ts
 import { ExampleProviderEmailProvider } from './example-provider.provider';
 
 test('should trigger example-provider library correctly', async () => {});
@@ -126,7 +138,7 @@ Use the provider name as the file name. The sample name for our above-added prov
 
 ## Add config items to the list
 
-In order to build the UI integration store, we need to provide it list of all provider integrations. This part is made up of two parts:
+In order to build the UI integration store, we need to provide it list of all provider integrations. This part is made up of four parts:
 
 - Create credentials config
 - Add ProviderId Enum
@@ -138,7 +150,7 @@ In order to build the UI integration store, we need to provide it list of all pr
     Every provider requires some credentials to create an instance. Novu will add these credentials fields in the integration store provider's form so that users can use their credentials to connect to their preferred provider to use for that channel notification. For example, in the above added `example-provider`, we have only one credential `ApiKey`. We will need to add a config object for `example-provider` with all existing provider's configs like below.
 
     ```ts title="packages/shared/src/consts/providers/credentials/provider-credentials.ts"
-    export const exampleProviderConfig: IConfigCredentials[] = [
+    export const exampleProviderConfig: IConfigCredential[] = [
       {
         key: CredentialsKeyEnum.ApiKey,
         displayName: 'API Key',
@@ -152,11 +164,11 @@ In order to build the UI integration store, we need to provide it list of all pr
 
     1. Here the `key` is of type `CredentialsKeyEnum`.
 
-    > If a new key is added, add this key at these 3 places:-
+    > If a new key is added, add this key at these 4 places:-
     >
     > - In `CredentialsKeyEnum` at file `packages/shared/src/types/providers.ts`
     > - In `ICredentials` at file `packages/shared/src/entities/integration/credential.interface.ts`
-    > - In `CredentialsDto` at file `apps/api/src/app/integrations/dtos/credentials.dto.ts`
+    > - In `CredentialsDto` at file `libs/application-generic/src/dtos/credentials.dto.ts`
     > - In `credentials` field of `integrationSchema` at file `libs/dal/src/repositories/integration/integration.schema.ts`
 
     2. `displayName` is a human-friendly easy to understand name which will be shown in the provider integration form for this credential.
@@ -191,7 +203,7 @@ In order to build the UI integration store, we need to provide it list of all pr
 
     ```ts title="packages/framework/src/schemas/providers/email/index.ts"
 
-    export const emailProviderSchema = {
+    export const emailProviderSchemas = {
       'example-provider': genericProviderSchemas,
     }
     ```

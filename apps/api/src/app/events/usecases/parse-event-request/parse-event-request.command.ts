@@ -1,5 +1,5 @@
 import { IsValidContextPayload } from '@novu/application-generic';
-import { NotificationTemplateEntity } from '@novu/dal';
+import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import {
   AddressingTypeEnum,
   ContextPayload,
@@ -13,12 +13,20 @@ import {
 import { IsDefined, IsEnum, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
+export type TriggerWorkflow = Pick<
+  NotificationTemplateEntity,
+  '_id' | 'active' | 'payloadSchema' | 'validatePayload'
+> & {
+  steps: Pick<NotificationStepEntity, '_id'>[];
+};
+
 export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   @IsString()
   identifier: string;
 
   @IsDefined()
+  // biome-ignore lint/suspicious/noExplicitAny: arbitrary customer payload, validated against the workflow payloadSchema in ParseEventRequest
   payload: any;
 
   @IsDefined()
@@ -68,7 +76,7 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   requestId: string;
 
   @IsOptional()
-  workflow?: Pick<NotificationTemplateEntity, '_id' | 'active' | 'payloadSchema' | 'validatePayload'>;
+  workflow?: TriggerWorkflow;
 
   @IsOptional()
   @IsValidContextPayload({ maxCount: 5 })

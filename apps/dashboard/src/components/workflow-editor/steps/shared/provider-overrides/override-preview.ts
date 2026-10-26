@@ -1,51 +1,92 @@
-import {
-  type AnnotatedPreviewLine,
-  buildAnnotatedPreviewLines,
-  getProviderPrimaryContentKey,
-  mergeProviderPreview,
-} from '@novu/shared';
+import { type AnnotatedPreviewLine, buildAnnotatedPreviewLines, isRecord, mergeProviderPreview } from '@novu/shared';
 import { useMemo } from 'react';
+import { hasOwn, type OverrideContentSource, type OverrideValues } from './override-source';
 
 export const PREVIEW_PANEL_CLASS =
   'bg-neutral-alpha-50 text-foreground-950 min-h-16 overflow-auto rounded-md border border-neutral-100 p-2 font-mono text-[11px] leading-4 [scrollbar-gutter:stable]';
 
+export const PROVIDER_OVERRIDES_DOCS_URL =
+  'https://docs.novu.co/platform/integrations/trigger-overrides#provider-overrides';
+
+/** Where a resolved payload value comes from: the step's default content, or one of the override layers. */
+export type OverridePreviewLineOrigin = 'default' | 'provider' | 'integration';
+
+export type OverridePreviewLine = AnnotatedPreviewLine & {
+  /** Set on root key lines and on the default content line. */
+  origin?: OverridePreviewLineOrigin;
+};
+
+/** `buildAnnotatedPreviewLines` indents two spaces per level, so a root key line starts with exactly two. */
+const ROOT_KEY_LINE_PATTERN = /^ {2}("(?:[^"\\]|\\.)*"):/;
+
+/**
+ * Tags each root key line with the layer its value comes from. Keys the override does not set were
+ * filled from the default content; an integration source's keys come from it unless wholly inherited.
+ */
+export function tagPreviewLineOrigins(
+  lines: OverridePreviewLine[],
+  {
+    override,
+    inheritedPaths,
+    isIntegrationSource,
+  }: { override: Record<string, unknown> | undefined; inheritedPaths: string[]; isIntegrationSource: boolean }
+): OverridePreviewLine[] {
+  const inheritedRootKeys = new Set(inheritedPaths.filter((path) => !path.includes('.')));
+
+  return lines.map((line): OverridePreviewLine => {
+    if (line.isDefaultContentKey) {
+      return { ...line, origin: 'default' };
+    }
+
+    const match = ROOT_KEY_LINE_PATTERN.exec(line.json);
+    if (!match) {
+      return line;
+    }
+
+    const key = JSON.parse(match[1]) as string;
+
+    if (!hasOwn(override, key)) {
+      return { ...line, origin: 'default' };
+    }
+
+    return { ...line, origin: isIntegrationSource && !inheritedRootKeys.has(key) ? 'integration' : 'provider' };
+  });
+}
+
 export type AnnotatedOverridePreview = {
-  annotatedLines: AnnotatedPreviewLine[];
-  defaultContentKey?: string;
+  annotatedLines: OverridePreviewLine[];
   hasOverride: boolean;
 };
 
-type ProviderOverrideMap = Partial<Record<string, Record<string, unknown>>> | undefined;
+type OverrideMap = Partial<Record<string, Record<string, unknown>>> | null | undefined;
 
 /**
  * Form state is the source of truth for whether an override exists. Preview may lag
  * (`keepPreviousData`, payload hydration) and briefly omit or invent keys — never let that
  * flip the footer/JSON between "no override" and "merged".
+ *
+ * `key` is a providerId in the provider map, or an integration identifier in one provider's
+ * integration map.
  */
 export function resolveOverrideForPreview({
-  providerId,
+  key,
   formOverrides,
   previewOverrides,
 }: {
-  providerId: string | undefined;
-  formOverrides: ProviderOverrideMap;
-  previewOverrides: ProviderOverrideMap;
+  key: string;
+  formOverrides: OverrideMap;
+  previewOverrides: OverrideMap;
 }): {
   hasOverride: boolean;
   override: Record<string, unknown> | undefined;
 } {
-  if (!providerId) {
+  if (!hasOwn(formOverrides, key)) {
     return { hasOverride: false, override: undefined };
   }
 
-  const hasOverride = providerId in (formOverrides ?? {});
-  if (!hasOverride) {
-    return { hasOverride: false, override: undefined };
-  }
-
-  const formOverride = formOverrides?.[providerId];
-  const previewHasKey = !!previewOverrides && providerId in previewOverrides;
-  const previewOverride = previewHasKey ? previewOverrides[providerId] : undefined;
+  const formOverride = formOverrides?.[key];
+  const previewHasKey = hasOwn(previewOverrides, key);
+  const previewOverride = previewHasKey ? previewOverrides?.[key] : undefined;
 
   // Prefer liquid-resolved preview content when present. An empty preview echo while the form
   // still has fields is lag — keep the form override so the merge preview does not blank out.
@@ -59,70 +100,147 @@ export function resolveOverrideForPreview({
 }
 
 /**
- * Merges the compiled step body into the provider override the same way the send path does, so the
- * preview marks which line the default content filled in.
+ * Whether the merge keeps the provider value under an overlay key. Mirrors the worker's lodash
+ * `mergeWith` with array replacement: an `undefined` overlay is skipped, and an object merged into
+ * an array leaves the array as sent.
+ */
+function keepsBaseValue(baseValue: unknown, overlayValue: unknown): boolean {
+  return overlayValue === undefined || (Array.isArray(baseValue) && isRecord(overlayValue));
+}
+
+/**
+ * Layers an integration override over its provider override the way the send path does: objects
+ * merge key by key, while arrays and scalars from the integration replace the provider's value whole.
+ */
+export function mergeOverrideLayers(
+  base: Record<string, unknown>,
+  overlay: Record<string, unknown>
+): Record<string, unknown> {
+  const keys = new Set([...Object.keys(base), ...Object.keys(overlay)]);
+
+  // `Object.fromEntries` defines own properties, so a `__proto__` key stays data.
+  return Object.fromEntries(
+    [...keys].map((key) => {
+      const baseValue = base[key];
+      const overlayValue = overlay[key];
+
+      if (!hasOwn(overlay, key) || keepsBaseValue(baseValue, overlayValue)) {
+        return [key, baseValue];
+      }
+
+      return [
+        key,
+        isRecord(baseValue) && isRecord(overlayValue) ? mergeOverrideLayers(baseValue, overlayValue) : overlayValue,
+      ];
+    })
+  );
+}
+
+/** Dotted paths in `mergeOverrideLayers(base, overlay)` whose value comes from `base` alone. */
+export function getInheritedOverridePaths(base: Record<string, unknown>, overlay: Record<string, unknown>): string[] {
+  return Object.keys(base).flatMap((key) => {
+    const baseValue = base[key];
+    const overlayValue = overlay[key];
+
+    if (!hasOwn(overlay, key) || keepsBaseValue(baseValue, overlayValue)) {
+      return [key];
+    }
+
+    return isRecord(baseValue) && isRecord(overlayValue)
+      ? getInheritedOverridePaths(baseValue, overlayValue).map((path) => `${key}.${path}`)
+      : [];
+  });
+}
+
+/**
+ * Resolves what a content source sends, before the default content is merged in: a provider
+ * source's own override, or an integration's override layered over its provider's.
+ */
+export function resolveSourceOverrideForPreview({
+  source,
+  formOverrides,
+  previewOverrides,
+}: {
+  source: OverrideContentSource;
+  formOverrides: OverrideValues;
+  previewOverrides: OverrideValues | undefined;
+}): {
+  hasOverride: boolean;
+  override: Record<string, unknown> | undefined;
+  inheritedPaths: string[];
+} {
+  const providerLayer = resolveOverrideForPreview({
+    key: source.providerId,
+    formOverrides: formOverrides.providerOverrides,
+    previewOverrides: previewOverrides?.providerOverrides,
+  });
+
+  if (source.kind === 'provider') {
+    return { ...providerLayer, inheritedPaths: [] };
+  }
+
+  const integrationLayer = resolveOverrideForPreview({
+    key: source.integrationIdentifier,
+    formOverrides: formOverrides.integrationOverrides?.[source.providerId],
+    previewOverrides: previewOverrides?.integrationOverrides?.[source.providerId],
+  });
+
+  if (!providerLayer.hasOverride && !integrationLayer.hasOverride) {
+    return { hasOverride: false, override: undefined, inheritedPaths: [] };
+  }
+
+  const base = providerLayer.override ?? {};
+  const overlay = integrationLayer.override ?? {};
+
+  return {
+    hasOverride: true,
+    override: mergeOverrideLayers(base, overlay),
+    inheritedPaths: getInheritedOverridePaths(base, overlay),
+  };
+}
+
+/** The preview response's override maps under a stable identity, so the preview memo only reruns on new data. */
+export function usePreviewOverrideValues(preview: OverrideValues | undefined): OverrideValues {
+  const providerOverrides = preview?.providerOverrides;
+  const integrationOverrides = preview?.integrationOverrides;
+
+  return useMemo(() => ({ providerOverrides, integrationOverrides }), [providerOverrides, integrationOverrides]);
+}
+
+/**
+ * Merges the compiled step body into the source's override the same way the send path does, so the
+ * preview marks which layer each root key comes from. `source` must keep its identity across renders.
  */
 export function useAnnotatedOverridePreview({
   body,
-  providerId,
+  source,
   formOverrides,
   previewOverrides,
 }: {
   body: string;
-  providerId: string | undefined;
-  formOverrides: ProviderOverrideMap;
-  previewOverrides: ProviderOverrideMap;
+  source: OverrideContentSource | undefined;
+  formOverrides: OverrideValues;
+  previewOverrides: OverrideValues | undefined;
 }): AnnotatedOverridePreview | undefined {
   return useMemo(() => {
-    if (!providerId) {
+    if (!source) {
       return undefined;
     }
 
-    const { hasOverride, override } = resolveOverrideForPreview({
-      providerId,
+    const { hasOverride, override, inheritedPaths } = resolveSourceOverrideForPreview({
+      source,
       formOverrides,
       previewOverrides,
     });
-    const { merged, defaultContentKey } = mergeProviderPreview({ body, providerId, override });
+    const { merged, defaultContentKey } = mergeProviderPreview({ body, providerId: source.providerId, override });
 
     return {
-      annotatedLines: buildAnnotatedPreviewLines(merged, defaultContentKey),
-      defaultContentKey,
+      annotatedLines: tagPreviewLineOrigins(buildAnnotatedPreviewLines(merged, defaultContentKey), {
+        override,
+        inheritedPaths,
+        isIntegrationSource: source.kind === 'integration',
+      }),
       hasOverride,
     };
-  }, [body, providerId, formOverrides, previewOverrides]);
-}
-
-/** Explains, under the merged JSON, where each half of the payload came from. */
-export function getMergedOverrideHint({
-  hasOverride,
-  defaultContentKey,
-  body,
-  providerId,
-  displayName,
-}: {
-  hasOverride: boolean;
-  defaultContentKey: string | undefined;
-  body: string;
-  providerId: string;
-  displayName: string;
-}): string {
-  if (hasOverride) {
-    if (!defaultContentKey) {
-      return 'Override merged over the default content.';
-    }
-
-    if (!body) {
-      return `Override merged over the default content. "${defaultContentKey}" is taken from your default message (currently empty).`;
-    }
-
-    return `Override merged over the default content. "${defaultContentKey}" is taken from your default message.`;
-  }
-
-  const primaryKey = getProviderPrimaryContentKey(providerId);
-  if (!primaryKey) {
-    return `No override for this provider. ${displayName} nests its message content, so the default message is not merged in.`;
-  }
-
-  return `No override for this provider. Default message maps to "${primaryKey}".`;
+  }, [body, source, formOverrides, previewOverrides]);
 }

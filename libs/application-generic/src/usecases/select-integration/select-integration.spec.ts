@@ -126,6 +126,26 @@ describe('select integration', () => {
     );
   });
 
+  it('does not select an Agent Email Inbox integration for a workflow', async () => {
+    findOneMock.mockReturnValue({
+      ...testIntegration,
+      providerId: EmailProviderIdEnum.AgentEmailInbox,
+      identifier: 'agent-email-inbox-id',
+    });
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {},
+      })
+    );
+
+    expect(integration).toBeUndefined();
+  });
+
   it('should select the integration', async () => {
     const integration = await useCase.execute(
       SelectIntegrationCommand.create({

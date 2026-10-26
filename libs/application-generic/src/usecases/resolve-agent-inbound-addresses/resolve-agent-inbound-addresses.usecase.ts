@@ -8,12 +8,8 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { DomainRouteTypeEnum, EmailProviderIdEnum, slugify, type WorkflowAgentConfig } from '@novu/shared';
-import {
-  buildAgentSharedInbox,
-  isAgentSharedInboxEnabled,
-  isValidAgentEmailSlugPrefix,
-} from '../../utils/agent-shared-inbox';
+import { DomainRouteTypeEnum, EmailProviderIdEnum, type WorkflowAgentConfig } from '@novu/shared';
+import { isAgentSharedInboxEnabled, resolvePublishedAgentInboxAddress } from '../../utils/agent-shared-inbox';
 
 export type ResolveAgentInboundAddressesParams = {
   agentIdentifier: string;
@@ -364,26 +360,10 @@ export class ResolveAgentInboundAddresses {
       return undefined;
     }
 
-    const rawSlug = novuAgent.credentials?.emailSlugPrefix;
-    const slug =
-      rawSlug && isValidAgentEmailSlugPrefix(rawSlug)
-        ? rawSlug
-        : deriveFallbackSlug(params.agentIdentifier, params.agentName);
-
-    if (!slug) {
-      return undefined;
-    }
-
-    const inboxRoutingKey = novuAgent.credentials?.inboxRoutingKey;
-    if (!inboxRoutingKey) {
-      return undefined;
-    }
-
-    try {
-      return buildAgentSharedInbox(slug, inboxRoutingKey);
-    } catch {
-      return undefined;
-    }
+    return resolvePublishedAgentInboxAddress(novuAgent.credentials, {
+      identifier: params.agentIdentifier,
+      name: params.agentName,
+    });
   }
 
   private async resolveCustomDomainAddresses(params: {
@@ -439,13 +419,4 @@ function pickEffectiveReplyTo(agent: WorkflowAgentConfig, addresses: string[]): 
   }
 
   return addresses[0];
-}
-
-function deriveFallbackSlug(identifier: string, name: string): string | undefined {
-  const candidate = slugify(identifier || name || '')
-    .slice(0, 32)
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
-
-  return isValidAgentEmailSlugPrefix(candidate) ? candidate : undefined;
 }

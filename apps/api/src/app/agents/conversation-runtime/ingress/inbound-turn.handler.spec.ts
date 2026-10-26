@@ -1,4 +1,7 @@
+import { ConversationActivitySenderTypeEnum } from '@novu/dal';
 import {
+  AGENT_PLATFORM_PROVISION_SOURCE,
+  AGENT_PROVISION_DATA_KEYS,
   AGENT_REPLY_METADATA_KEYS,
   AgentReplyPolicyEnum,
   AgentSubscriberAccessEnum,
@@ -180,6 +183,7 @@ describe('AgentInboundHandler', () => {
 
         return { messageId: result.id, platformThreadId: result.threadId };
       }),
+      replyOnThreadWithCard: sinon.stub().resolves({ messageId: 'card-1', platformThreadId: 'email:thread1:' }),
     };
     const inboundAck = {
       showWorkingSignal: sinon.stub().resolves(undefined),
@@ -194,6 +198,7 @@ describe('AgentInboundHandler', () => {
       conversationService as any,
       environmentRepository as any,
       expireSupersededApprovals as any,
+      { readerFor: () => undefined } as any,
       logger as any
     );
     const managedRuntime = new ManagedRuntime(
@@ -246,6 +251,7 @@ describe('AgentInboundHandler', () => {
       issueOrGetForEnvironment: sinon.stub().resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
       isSignupCtaPosted: sinon.stub().resolves(false),
       tryMarkSignupCtaPosted: sinon.stub().resolves(true),
+      releaseSignupCtaPosted: sinon.stub().resolves(),
     };
     const keylessAbuseGuard = {
       isKeylessAgentAiEnabled: sinon.stub().resolves(true),
@@ -276,6 +282,12 @@ describe('AgentInboundHandler', () => {
       hasPendingConversationAsk: sinon.stub().resolves(false),
     };
     const humanConversationInbound = new HumanConversationInboundInterceptor(humanInteractionInbound as any);
+    const keylessEmailGate = {
+      isBlocked: sinon.stub().returns(false),
+      assertAllowed: sinon.stub().resolves(),
+      resolveOperatorClaimCard: sinon.stub().resolves(undefined),
+    };
+    const contactHandles = { refresh: sinon.stub().resolves() };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -299,7 +311,9 @@ describe('AgentInboundHandler', () => {
       replyApprovalInterceptor as any,
       workflowOriginService as any,
       humanConversationInbound,
-      agentConfigResolver as any
+      agentConfigResolver as any,
+      keylessEmailGate as any,
+      contactHandles as any
     );
 
     return {
@@ -324,6 +338,9 @@ describe('AgentInboundHandler', () => {
       outboundGateway,
       inboundAck,
       planLimitGate,
+      connectClaimTokenService,
+      keylessEmailGate,
+      contactHandles,
     };
   }
 
@@ -1339,6 +1356,77 @@ describe('AgentInboundHandler', () => {
       expect(humanRelayRuntime.dispatch.calledOnce).to.equal(true);
     });
 
+    describe('an Agent Inbox agent open to contacts only', () => {
+      const contactsOnly = { ...config, isHumanRelay: true, inboxReach: 'contacts' };
+      const relayAgent = () => sinon.stub().resolves({ _id: 'agent1', runtime: 'human_relay' });
+
+      async function receive(handler: AgentInboundHandler, agentConfig: Record<string, unknown> = contactsOnly) {
+        const thread = makeSlackDmThread();
+
+        await handler.handle(
+          'agent1',
+          agentConfig as any,
+          thread as any,
+          makeSlackDmMessage() as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        return thread;
+      }
+
+      it('drops a message from someone who is not a contact before anything about it is saved', async () => {
+        const { handler, conversationService, humanRelayRuntime, agentIntegrationRepository } = makeHandler({
+          agentFindOne: relayAgent(),
+        });
+
+        const thread = await receive(handler);
+
+        expect(conversationService.createOrGetConversation.called).to.equal(false);
+        expect(conversationService.persistInboundMessage.called).to.equal(false);
+        expect(agentIntegrationRepository.updateOne.called).to.equal(false);
+        expect(humanRelayRuntime.dispatch.called).to.equal(false);
+        expect(thread.post.called).to.equal(false);
+      });
+
+      it('drops a message from a subscriber an agent made up for an unknown sender', async () => {
+        const { handler, conversationService, humanRelayRuntime } = makeHandler({
+          agentFindOne: relayAgent(),
+          subscriberResolve: sinon.stub().resolves('stranger1'),
+          subscriberFindById: sinon.stub().resolves({
+            _id: 'subscriber-mongo-2',
+            subscriberId: 'stranger1',
+            data: { [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE },
+          }),
+        });
+
+        await receive(handler);
+
+        expect(conversationService.createOrGetConversation.called).to.equal(false);
+        expect(humanRelayRuntime.dispatch.called).to.equal(false);
+      });
+
+      it('takes a message from a contact', async () => {
+        const { handler, conversationService, humanRelayRuntime } = makeHandler({
+          agentFindOne: relayAgent(),
+          ...makeResolvedSubscriberOverrides('ada'),
+        });
+
+        await receive(handler);
+
+        expect(conversationService.createOrGetConversation.calledOnce).to.equal(true);
+        expect(humanRelayRuntime.dispatch.calledOnce).to.equal(true);
+      });
+
+      it('takes a message from anyone while anyone can reach the agent', async () => {
+        const { handler, conversationService, humanRelayRuntime } = makeHandler({ agentFindOne: relayAgent() });
+
+        await receive(handler, { ...contactsOnly, inboxReach: 'anyone' });
+
+        expect(conversationService.createOrGetConversation.calledOnce).to.equal(true);
+        expect(humanRelayRuntime.dispatch.calledOnce).to.equal(true);
+      });
+    });
+
     it('should post no-bridge Slack DM auto-replies with the message-rooted platform thread id', async () => {
       const { handler } = makeHandler({ bridgeError: new NoBridgeUrlError('support-agent') });
       const thread = makeSlackDmThread();
@@ -1728,7 +1816,7 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.equal(UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY);
     });
 
-    it('should dispatch keyless managed agent even when subscriber is unresolved (email)', async () => {
+    it('never dispatches a keyless email turn, even when the subscriber is unresolved', async () => {
       const emailConfig = {
         ...config,
         platform: AgentPlatformEnum.EMAIL,
@@ -1737,7 +1825,7 @@ describe('AgentInboundHandler', () => {
         isManaged: true,
       };
       const senderEmail = 'tester@example.com';
-      const { handler, managedAgentService, outboundGateway } = makeHandler({
+      const { handler, managedAgentService, outboundGateway, conversationService } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberFindById: sinon.stub().resolves(null),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
@@ -1748,7 +1836,9 @@ describe('AgentInboundHandler', () => {
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(outboundGateway.replyOnThread.called).to.equal(false);
-      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThreadWithCard.called).to.equal(false);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
     });
 
     it('should still gate keyless managed agents on non-email platforms when subscriber is unresolved', async () => {
@@ -1833,8 +1923,97 @@ describe('AgentInboundHandler', () => {
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(resolveOrProvision.called).to.equal(false);
-      // Keyless demo agents bypass the subscriber gate and still dispatch.
-      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+    });
+
+    it('replies with the claim card the gate hands back, and keeps the once-flag', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isKeyless: true,
+      };
+      const address = 'owner@example.com';
+      const {
+        handler,
+        managedAgentService,
+        outboundGateway,
+        keylessEmailGate,
+        connectClaimTokenService,
+        conversationService,
+      } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      keylessEmailGate.resolveOperatorClaimCard.resolves({ title: 'Sign up free', url: 'https://claim.test' });
+      const thread = { ...makeEmailDmThread(), id: `email:${encodeURIComponent(address)}:abc` };
+      const message = makeEmailDmMessage(address);
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThreadWithCard.calledOnce).to.equal(true);
+      // The gate takes the flag before it returns a card. A sent card keeps it.
+      expect(connectClaimTokenService.tryMarkSignupCtaPosted.called).to.equal(false);
+      expect(connectClaimTokenService.releaseSignupCtaPosted.called).to.equal(false);
+      expect(keylessEmailGate.resolveOperatorClaimCard.firstCall.args[0]).to.deep.equal({
+        environmentId: 'env1',
+        organizationId: 'org1',
+        agentId: 'agent1',
+        sender: address,
+      });
+    });
+
+    it('releases the once-flag when the claim email fails to send', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isKeyless: true,
+      };
+      const address = 'owner@example.com';
+      const { handler, outboundGateway, keylessEmailGate, connectClaimTokenService } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      keylessEmailGate.resolveOperatorClaimCard.resolves({ title: 'Sign up free', url: 'https://claim.test' });
+      outboundGateway.replyOnThreadWithCard.rejects(new Error('smtp down'));
+      const thread = { ...makeEmailDmThread(), id: `email:${encodeURIComponent(address)}:abc` };
+
+      await handler.handle(
+        'agent1',
+        emailConfig as any,
+        thread as any,
+        makeEmailDmMessage(address) as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(connectClaimTokenService.releaseSignupCtaPosted.calledOnceWith('human-email:env1')).to.equal(true);
+    });
+
+    it('stays silent, and marks nothing, when the gate withholds a card', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isKeyless: true,
+      };
+      const address = 'owner@example.com';
+      const thread = { ...makeEmailDmThread(), id: `email:${encodeURIComponent(address)}:abc` };
+      const withheld = makeHandler({ subscriberResolve: sinon.stub().resolves(null) });
+
+      await withheld.handler.handle(
+        'agent1',
+        emailConfig as any,
+        thread as any,
+        makeEmailDmMessage(address) as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(withheld.outboundGateway.replyOnThreadWithCard.called).to.equal(false);
+      expect(withheld.connectClaimTokenService.tryMarkSignupCtaPosted.called).to.equal(false);
+      expect(withheld.managedAgentService.dispatch.called).to.equal(false);
     });
 
     it('should not resolve or provision an identity for a spoofed (unverified) open-access email sender', async () => {
@@ -2261,6 +2440,35 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
+    it('keeps the handle of the person who linked, for the chat they linked', async () => {
+      const linkTelegramExecute = sinon.stub().resolves({
+        created: true,
+        subscriberId: 'ext-sub-1',
+        linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
+      });
+      const { handler, contactHandles } = makeHandler({
+        linkTelegramExecute,
+        startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: matchingStartPayload }),
+      });
+      const message = makeStartMessage('/start validcode');
+
+      await handler.handle(
+        'agent1',
+        telegramConfig as any,
+        makeTelegramThread() as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(contactHandles.refresh.calledOnce).to.equal(true);
+      expect(contactHandles.refresh.firstCall.args[0]).to.deep.equal({
+        config: telegramConfig,
+        subscriberId: 'ext-sub-1',
+        platformUserId: '42',
+        message,
+      });
+    });
+
     it('does not mark the integration connected on /start alone for the dashboard test identity', async () => {
       const connectPayload = { ...matchingStartPayload, subscriberId: 'user-123' };
       const { handler, agentIntegrationRepository } = makeHandler({
@@ -2595,6 +2803,23 @@ describe('AgentInboundHandler', () => {
       expect(humanInteractionInbound.tryHandleAction.called).to.equal(false);
       expect(bridgeExecutor.execute.called).to.equal(false);
       expect(humanRelayRuntime.dispatch.calledOnce).to.equal(true);
+    });
+
+    it('should drop a click from someone who is not a contact when an Agent Inbox agent takes contacts only', async () => {
+      const { handler, conversationService, humanRelayRuntime } = makeHandler({
+        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'human_relay' }),
+      });
+
+      await handler.handleAction(
+        'agent1',
+        { ...config, isHumanRelay: true, inboxReach: 'contacts' } as any,
+        makeActionThread() as any,
+        { id: 'human:hi_1:approve', value: undefined } as any,
+        'user1'
+      );
+
+      expect(conversationService.createOrGetConversation.called).to.equal(false);
+      expect(humanRelayRuntime.dispatch.called).to.equal(false);
     });
 
     it('should hydrate workflow origin when an action is the first interaction on the thread', async () => {
@@ -2990,6 +3215,114 @@ describe('AgentInboundHandler', () => {
 
       expect(bridgeExecutor.execute.calledOnce).to.equal(true);
       expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_MESSAGE_DELETED);
+    });
+  });
+
+  describe('edits, deletes and reactions on an Agent Inbox agent open to contacts only', () => {
+    const contactsOnly = { ...config, isHumanRelay: true, inboxReach: 'contacts' };
+    const author = { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false };
+
+    async function editDeleteAndReact(handler: AgentInboundHandler) {
+      await handler.handleMessageUpdated(
+        'agent1',
+        contactsOnly as any,
+        { id: 'thread1', isDM: true } as any,
+        { id: 'msg-1', text: 'replaced text', author, raw: {} } as any
+      );
+      await handler.handleMessageDeleted(
+        'agent1',
+        contactsOnly as any,
+        {
+          messageId: 'msg-1',
+          threadId: 'thread1',
+          channelId: 'C1',
+          previousMessage: { id: 'msg-1', text: 'hello', author },
+          raw: {},
+        } as any
+      );
+      await handler.handleReaction('agent1', contactsOnly as any, { ...makeReactionEvent(), user: author } as any);
+    }
+
+    it('keeps someone who is not a contact from changing what the inbox holds', async () => {
+      const { handler, conversationService, bridgeExecutor, humanRelayRuntime } = makeHandler();
+
+      await editDeleteAndReact(handler);
+
+      expect(conversationService.updateInboundMessage.called).to.equal(false);
+      expect(conversationService.deleteInboundMessage.called).to.equal(false);
+      expect(conversationService.persistInboundReaction.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+      expect(humanRelayRuntime.dispatch.called).to.equal(false);
+    });
+
+    it('keeps out a subscriber an agent made up for an unknown sender', async () => {
+      const { handler, conversationService } = makeHandler({
+        subscriberResolve: sinon.stub().resolves('stranger1'),
+        subscriberFindById: sinon.stub().resolves({
+          _id: 'subscriber-mongo-2',
+          subscriberId: 'stranger1',
+          data: { [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE },
+        }),
+      });
+
+      await editDeleteAndReact(handler);
+
+      expect(conversationService.updateInboundMessage.called).to.equal(false);
+      expect(conversationService.deleteInboundMessage.called).to.equal(false);
+      expect(conversationService.persistInboundReaction.called).to.equal(false);
+    });
+
+    it('still takes them from a contact', async () => {
+      const { handler, conversationService } = makeHandler(makeResolvedSubscriberOverrides('ada'));
+
+      await editDeleteAndReact(handler);
+
+      expect(conversationService.updateInboundMessage.calledOnce).to.equal(true);
+      expect(conversationService.deleteInboundMessage.calledOnce).to.equal(true);
+      expect(conversationService.findSourceActivity.called).to.equal(true);
+    });
+
+    function deleteWithoutAuthor(handler: AgentInboundHandler) {
+      return handler.handleMessageDeleted(
+        'agent1',
+        contactsOnly as any,
+        { messageId: 'msg-1', threadId: 'thread1', channelId: 'C1', raw: {} } as any
+      );
+    }
+
+    it('takes a delete with no author on the event from a contact, as the stored message names them', async () => {
+      const { handler, conversationService } = makeHandler({
+        history: [
+          {
+            platformMessageId: 'msg-1',
+            content: 'hello',
+            senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+            senderId: 'ada',
+          },
+        ],
+        subscriberFindById: sinon.stub().resolves({ _id: 'subscriber-mongo-1', subscriberId: 'ada' }),
+      });
+
+      await deleteWithoutAuthor(handler);
+
+      expect(conversationService.deleteInboundMessage.calledOnce).to.equal(true);
+    });
+
+    it('drops a delete with no author on the event when the stored message came from a stranger', async () => {
+      const { handler, conversationService } = makeHandler({
+        history: [
+          {
+            platformMessageId: 'msg-1',
+            content: 'hello',
+            senderType: ConversationActivitySenderTypeEnum.PLATFORM_USER,
+            senderId: 'slack:user1',
+          },
+        ],
+      });
+
+      await deleteWithoutAuthor(handler);
+
+      expect(conversationService.deleteInboundMessage.called).to.equal(false);
     });
   });
 });

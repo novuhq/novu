@@ -1,31 +1,8 @@
-import { File as NodeFile } from 'node:buffer';
 import { APIError } from '@anthropic-ai/sdk';
 import { CLAUDE_BUILTIN_TOOLS } from '@novu/shared';
 import { expect } from 'chai';
 import { AgentRuntimeBadRequestError } from '../errors';
 import type { UploadSkillInput } from '../i-agent-runtime-provider';
-
-// Polyfill `File` and `FormData` for the auto-version path, which constructs
-// `new File(...)` and `new FormData()` when building the multipart body. Jest
-// 27's `node` test environment strips Web globals, so we provide just enough
-// surface for the provider and these tests.
-if (typeof globalThis.File === 'undefined') {
-  (globalThis as unknown as { File: typeof NodeFile }).File = NodeFile;
-}
-if (typeof globalThis.FormData === 'undefined') {
-  class MinimalFormData {
-    private readonly entries: Array<[string, unknown]> = [];
-
-    append(key: string, value: unknown) {
-      this.entries.push([key, value]);
-    }
-
-    getAll(key: string): unknown[] {
-      return this.entries.filter(([k]) => k === key).map(([, v]) => v);
-    }
-  }
-  (globalThis as unknown as { FormData: typeof MinimalFormData }).FormData = MinimalFormData;
-}
 
 // We replace the default export of `@anthropic-ai/sdk` with a jest mock so the
 // constructor returns whatever client we set per-test. Error classes keep
@@ -86,9 +63,11 @@ interface MockClient {
     skills: {
       create: jest.Mock;
       list: jest.Mock;
+      versions: {
+        create: jest.Mock;
+      };
     };
   };
-  post: jest.Mock;
 }
 
 function buildMockClient(): MockClient {
@@ -97,9 +76,11 @@ function buildMockClient(): MockClient {
       skills: {
         create: jest.fn(),
         list: jest.fn(),
+        versions: {
+          create: jest.fn(),
+        },
       },
     },
-    post: jest.fn(),
   };
 }
 
@@ -121,21 +102,6 @@ function asPagedAsyncIterable<T>(pages: T[][]): AsyncIterable<T> {
   };
 }
 
-function collectFormDataFileNames(body: unknown): string[] {
-  if (!(body instanceof FormData)) {
-    throw new Error('Expected `body` to be a FormData instance.');
-  }
-
-  const names: string[] = [];
-  for (const value of body.getAll('files[]')) {
-    if (typeof value === 'object' && value !== null && 'name' in value && typeof value.name === 'string') {
-      names.push(value.name);
-    }
-  }
-
-  return names;
-}
-
 interface AgentToolsetConfigEntry {
   name: string;
   enabled: boolean;
@@ -151,24 +117,9 @@ interface AgentToolsetPayloadEntry {
   };
 }
 
-function installUpdateConfigMockClient(
-  provider: AnthropicAgentRuntimeProvider,
-  options: {
-    retrieve: jest.Mock;
-    update: jest.Mock;
-  }
-) {
-  const mockClient = {
-    beta: {
-      agents: {
-        retrieve: options.retrieve,
-        update: options.update,
-      },
-    },
-  };
-
-  // `buildClient` is private; injecting via cast keeps the test independent of the SDK constructor.
-  (provider as unknown as { buildClient: () => unknown }).buildClient = () => mockClient;
+function installAgentsMockClient(agents: { retrieve: jest.Mock; update?: jest.Mock }) {
+  (Anthropic as unknown as jest.Mock).mockReset();
+  (Anthropic as unknown as jest.Mock).mockImplementation(() => ({ beta: { agents } }));
 }
 
 function getToolsetPayload(updatePayload: {
@@ -211,7 +162,7 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
         betas: ['skills-2025-10-02'],
       });
       expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(1);
-      expect(mockClient.post.mock.calls).to.have.lengthOf(0);
+      expect(mockClient.beta.skills.versions.create.mock.calls).to.have.lengthOf(0);
 
       const createArgs = mockClient.beta.skills.create.mock.calls[0][0];
       expect(createArgs.display_title).to.equal('samber-golang-benchmark');
@@ -229,7 +180,7 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
           ],
         ])
       );
-      mockClient.post.mockResolvedValue({ id: 'sv_17', version: 'v17' });
+      mockClient.beta.skills.versions.create.mockResolvedValue({ id: 'sv_17', version: 'v17' });
 
       const result = await provider.uploadSkill(
         buildInput({
@@ -251,15 +202,15 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
         betas: ['skills-2025-10-02'],
       });
 
-      expect(mockClient.post.mock.calls).to.have.lengthOf(1);
-      const [pathArg, optsArg] = mockClient.post.mock.calls[0];
-      expect(pathArg).to.equal('/v1/skills/skill_existing/versions?beta=true');
-      expect(optsArg.headers).to.deep.equal({ 'anthropic-beta': 'skills-2025-10-02' });
-      // Regression check for the @anthropic-ai/sdk@0.95.x bug we work around:
-      // the multipart filenames must retain the `<directoryName>/` prefix —
+      expect(mockClient.beta.skills.versions.create.mock.calls).to.have.lengthOf(1);
+      const [skillIdArg, paramsArg] = mockClient.beta.skills.versions.create.mock.calls[0];
+      expect(skillIdArg).to.equal('skill_existing');
+      expect(paramsArg.betas).to.deep.equal(['skills-2025-10-02']);
+      // The provider must hand the SDK `<directoryName>/`-prefixed filenames,
       // otherwise the API rejects the bundle as "SKILL.md must be exactly in
-      // the top-level folder" (see provider class comment).
-      const fileNames = collectFormDataFileNames(optsArg.body);
+      // the top-level folder". `toFile` is stubbed, so this does not cover the
+      // SDK's own multipart encoding.
+      const fileNames = (paramsArg.files as Array<{ path: string }>).map((file) => file.path);
       expect(fileNames.sort()).to.deep.equal(['my-skill/SKILL.md', 'my-skill/lib/helpers.py']);
     });
 
@@ -271,13 +222,13 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
           [{ id: 'skill_match', display_title: 'samber-golang-benchmark', source: 'custom' }],
         ])
       );
-      mockClient.post.mockResolvedValue({ id: 'sv_42', version: 'v42' });
+      mockClient.beta.skills.versions.create.mockResolvedValue({ id: 'sv_42', version: 'v42' });
 
       const result = await provider.uploadSkill(buildInput());
 
       expect(result).to.deep.equal({ skillId: 'skill_match', version: 'v42' });
       expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(0);
-      expect(mockClient.post.mock.calls[0][0]).to.equal('/v1/skills/skill_match/versions?beta=true');
+      expect(mockClient.beta.skills.versions.create.mock.calls[0][0]).to.equal('skill_match');
     });
 
     it('ignores Anthropic built-ins and falls through to create when the only matching skill has source !== "custom"', async () => {
@@ -298,7 +249,7 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
 
       expect(result).to.deep.equal({ skillId: 'skill_new', version: 'v1' });
       expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(1);
-      expect(mockClient.post.mock.calls).to.have.lengthOf(0);
+      expect(mockClient.beta.skills.versions.create.mock.calls).to.have.lengthOf(0);
     });
 
     it('surfaces a versions endpoint failure from the proactive path as a bad-request', async () => {
@@ -306,7 +257,7 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
         asPagedAsyncIterable([[{ id: 'skill_existing', display_title: 'samber-golang-benchmark', source: 'custom' }]])
       );
       const versionBody = { type: 'error', error: { type: 'invalid_request_error', message: 'Bundle malformed' } };
-      mockClient.post.mockRejectedValue(
+      mockClient.beta.skills.versions.create.mockRejectedValue(
         new APIError(400, versionBody, JSON.stringify(versionBody), undefined as unknown as Headers)
       );
 
@@ -332,15 +283,15 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
           asPagedAsyncIterable([[{ id: 'skill_existing', display_title: 'samber-golang-benchmark', source: 'custom' }]])
         );
       mockClient.beta.skills.create.mockRejectedValue(buildDuplicateDisplayTitleError());
-      mockClient.post.mockResolvedValue({ id: 'sv_99', version: 'v99' });
+      mockClient.beta.skills.versions.create.mockResolvedValue({ id: 'sv_99', version: 'v99' });
 
       const result = await provider.uploadSkill(buildInput());
 
       expect(result).to.deep.equal({ skillId: 'skill_existing', version: 'v99' });
       expect(mockClient.beta.skills.list.mock.calls).to.have.lengthOf(2);
       expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(1);
-      expect(mockClient.post.mock.calls).to.have.lengthOf(1);
-      expect(mockClient.post.mock.calls[0][0]).to.equal('/v1/skills/skill_existing/versions?beta=true');
+      expect(mockClient.beta.skills.versions.create.mock.calls).to.have.lengthOf(1);
+      expect(mockClient.beta.skills.versions.create.mock.calls[0][0]).to.equal('skill_existing');
     });
 
     it('re-throws the original duplicate error when neither lookup finds the skill', async () => {
@@ -356,7 +307,7 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
 
       expect(thrown, 'should reject').to.be.instanceOf(AgentRuntimeBadRequestError);
       expect(mockClient.beta.skills.list.mock.calls).to.have.lengthOf(2);
-      expect(mockClient.post.mock.calls).to.have.lengthOf(0);
+      expect(mockClient.beta.skills.versions.create.mock.calls).to.have.lengthOf(0);
     });
 
     it('surfaces a non-duplicate 400 from create directly without a fallback lookup', async () => {
@@ -382,7 +333,7 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
       // Only the proactive lookup ran — the race-fallback lookup is reserved
       // for duplicate-title errors so non-duplicate 400s short-circuit.
       expect(mockClient.beta.skills.list.mock.calls).to.have.lengthOf(1);
-      expect(mockClient.post.mock.calls).to.have.lengthOf(0);
+      expect(mockClient.beta.skills.versions.create.mock.calls).to.have.lengthOf(0);
     });
   });
 
@@ -399,11 +350,11 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
 
       expect(thrown).to.be.instanceOf(AgentRuntimeBadRequestError);
       // Full SDK-isolation check: neither the proactive lookup (`list`) nor
-      // the version-append path (`post`) should run when validation rejects
+      // the version-append path (`versions.create`) should run when validation rejects
       // the bundle before any network call.
       expect(mockClient.beta.skills.list.mock.calls).to.have.lengthOf(0);
       expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(0);
-      expect(mockClient.post.mock.calls).to.have.lengthOf(0);
+      expect(mockClient.beta.skills.versions.create.mock.calls).to.have.lengthOf(0);
     });
   });
 });
@@ -429,15 +380,7 @@ describe('AnthropicAgentRuntimeProvider.getConfig', () => {
       skills: [],
     });
 
-    const mockClient = {
-      beta: {
-        agents: {
-          retrieve,
-        },
-      },
-    };
-
-    (provider as unknown as { buildClient: () => unknown }).buildClient = () => mockClient;
+    installAgentsMockClient({ retrieve });
 
     const result = await provider.getConfig('ext-agent-id');
 
@@ -445,6 +388,48 @@ describe('AnthropicAgentRuntimeProvider.getConfig', () => {
     expect(result.mcpServers).to.deep.equal([
       { externalId: 'HubSpot', name: 'HubSpot', url: 'https://mcp.hubspot.com/mcp' },
     ]);
+  });
+
+  it('reads the model from object, bare string, or missing model responses', async () => {
+    const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
+    const cases: Array<[unknown, string]> = [
+      [{ id: 'claude-opus-4-1' }, 'claude-opus-4-1'],
+      ['claude-sonnet-4-5', 'claude-sonnet-4-5'],
+      [undefined, 'claude-sonnet-4-6'],
+    ];
+
+    for (const [model, expected] of cases) {
+      installAgentsMockClient({
+        retrieve: jest.fn().mockResolvedValue({ model, system: '', tools: [], mcp_servers: [], skills: [] }),
+      });
+
+      const result = await provider.getConfig('ext-agent-id');
+
+      expect(result.model).to.equal(expected);
+    }
+  });
+
+  it('keeps builtin tools whose config omits enabled', async () => {
+    const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
+
+    installAgentsMockClient({
+      retrieve: jest.fn().mockResolvedValue({
+        model: { id: 'claude-sonnet-4-6' },
+        system: '',
+        tools: [
+          {
+            type: 'agent_toolset_20260401',
+            configs: [{ name: 'bash' }, { name: 'read', enabled: false }],
+          },
+        ],
+        mcp_servers: [],
+        skills: [],
+      }),
+    });
+
+    const result = await provider.getConfig('ext-agent-id');
+
+    expect(result.tools).to.deep.equal([{ externalId: 'bash', name: 'bash', type: 'builtin' }]);
   });
 });
 
@@ -456,6 +441,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       version: 1,
       tools: [],
       mcp_servers: [],
+      skills: [],
     });
 
     const update = jest.fn().mockResolvedValue({
@@ -471,7 +457,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       skills: [],
     });
 
-    installUpdateConfigMockClient(provider, { retrieve, update });
+    installAgentsMockClient({ retrieve, update });
 
     const result = await provider.updateConfig('ext-agent-id', {
       tools: [{ externalId: 'bash', name: 'Bash', type: 'builtin' }],
@@ -509,6 +495,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
         },
       ],
       mcp_servers: [],
+      skills: [],
     });
 
     const update = jest.fn().mockResolvedValue({
@@ -519,7 +506,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       skills: [],
     });
 
-    installUpdateConfigMockClient(provider, { retrieve, update });
+    installAgentsMockClient({ retrieve, update });
 
     await provider.updateConfig('ext-agent-id', { tools: [] });
 
@@ -530,7 +517,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
     );
 
     expect(toolset?.configs?.every((c) => c.enabled === false)).to.equal(true);
-    expect(platformTools?.map((t) => t.name)).to.deep.equal(['novu_tool_catalog', 'novu_resolve']);
+    expect(platformTools?.map((t) => t.name)).to.deep.equal(['novu_tool_catalog', 'novu_resolve', 'novu_human']);
   });
 
   it('preserves currently-enabled tools (by externalId) when only mcpServers is patched', async () => {
@@ -568,7 +555,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       skills: [],
     });
 
-    installUpdateConfigMockClient(provider, { retrieve, update });
+    installAgentsMockClient({ retrieve, update });
 
     await provider.updateConfig('ext-agent-id', {
       mcpServers: [{ externalId: 'Slack', name: 'Slack', url: 'https://mcp.slack.com/mcp' }],
@@ -614,7 +601,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       skills: [{ type: 'anthropic', skill_id: 'pdf', version: null }],
     });
 
-    installUpdateConfigMockClient(provider, { retrieve, update });
+    installAgentsMockClient({ retrieve, update });
 
     await provider.updateConfig('ext-agent-id', {
       skills: [{ type: 'anthropic', skillId: 'pdf', version: null }],
@@ -646,7 +633,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       skills: [{ type: 'anthropic', skill_id: 'pdf', version: null }],
     });
 
-    installUpdateConfigMockClient(provider, { retrieve, update });
+    installAgentsMockClient({ retrieve, update });
 
     await provider.updateConfig('ext-agent-id', {
       tools: [{ externalId: 'web_search', name: 'Web Search', type: 'builtin' }],

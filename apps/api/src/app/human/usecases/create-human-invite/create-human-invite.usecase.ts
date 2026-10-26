@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
-import { buildHumanWebsiteUrl } from '../../../shared/helpers/resolve-human-website-base-url';
+import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
+import { buildHumanDashboardUrl } from '../../../shared/helpers/resolve-human-dashboard-base-url';
 import type { CreateHumanInviteResponseDto } from '../../dtos/human-invite.dto';
+import { trackAgentInboxContactInvited } from '../../services/agent-inbox-analytics';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import { HumanInviteTokenService, toHttpError } from '../../services/human-invite-token.service';
 import { SetupHumanRelayCommand } from '../setup-human-relay/setup-human-relay.command';
@@ -9,8 +10,8 @@ import { SetupHumanRelay } from '../setup-human-relay/setup-human-relay.usecase'
 import { CreateHumanInviteCommand } from './create-human-invite.command';
 
 /**
- * Behind `human invite <id>` without `--via`: mints a link to the invite page
- * on the Human website, where the human connects any of the relay's chat apps
+ * Behind `human contact invite <id>` without `--via`: mints a link to the invite page
+ * on the Human dashboard, where the human connects any of the relay's chat apps
  * and picks their default. The page only ever offers apps the inviter set up.
  */
 @Injectable()
@@ -18,7 +19,8 @@ export class CreateHumanInvite {
   constructor(
     private readonly setupHumanRelay: SetupHumanRelay,
     private readonly deliveryService: HumanDeliveryService,
-    private readonly inviteTokens: HumanInviteTokenService
+    private readonly inviteTokens: HumanInviteTokenService,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   @InstrumentUsecase()
@@ -32,6 +34,7 @@ export class CreateHumanInvite {
         agentIdentifier: command.agentIdentifier,
         firstName: command.firstName,
         lastName: command.lastName,
+        analyticsSource: command.analyticsSource,
       })
     );
 
@@ -44,7 +47,7 @@ export class CreateHumanInvite {
 
     if (channels.length === 0) {
       throw new NotFoundException(
-        'No Telegram or Slack channel is linked to the relay agent. Run `human setup telegram` or `human setup slack` first.'
+        'No Telegram, Slack, or Email channel is linked to the relay agent. Run `npx @agentinbox/cli setup` first.'
       );
     }
 
@@ -60,8 +63,14 @@ export class CreateHumanInvite {
       throw toHttpError(err);
     }
 
+    trackAgentInboxContactInvited(
+      this.analyticsService,
+      { userId: command.userId, organizationId: command.organizationId },
+      { agentId: relay.agentId, source: command.analyticsSource }
+    );
+
     return {
-      url: buildHumanWebsiteUrl(`/invite/${issued.token}`),
+      url: buildHumanDashboardUrl(`/invite/${issued.token}`),
       expiresAt: issued.expiresAt,
       channels: channels.map(({ via, integrationIdentifier, connected }) => ({
         via,

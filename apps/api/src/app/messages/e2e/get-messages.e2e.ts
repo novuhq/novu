@@ -1,6 +1,6 @@
 import { Novu } from '@novu/api';
 import { ChannelTypeEnum } from '@novu/api/models/components';
-import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import { MessageRepository, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import { CreateWorkflowDto, StepTypeEnum, WorkflowCreationSourceEnum, WorkflowResponseDto } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -134,6 +134,50 @@ describe('Get Message - /messages (GET) #novu-v2', () => {
       contextKeys: ['teamId:team-beta'],
     });
     expect(response.result.data.length).to.be.equal(1);
+  });
+
+  it('should fetch messages by subscriber and channel regardless of seen, read and archived state', async () => {
+    const messageRepository = new MessageRepository();
+
+    for (let i = 0; i < 3; i += 1) {
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {},
+      });
+      await session.waitForJobCompletion(template._id);
+    }
+
+    const inAppMessages = await messageRepository.find(
+      { _environmentId: session.environment._id, _subscriberId: subscriber._id, channel: ChannelTypeEnum.InApp },
+      '_id',
+      { sort: { createdAt: -1 } }
+    );
+    expect(inAppMessages.length).to.equal(3);
+    const [newest, middle, oldest] = inAppMessages.map((message) => message._id);
+
+    await messageRepository.update(
+      { _environmentId: session.environment._id, _id: newest },
+      { $set: { seen: true, read: true, archived: true } }
+    );
+    await messageRepository.update(
+      { _environmentId: session.environment._id, _id: middle },
+      { $unset: { seen: 1, read: 1, archived: 1 } }
+    );
+
+    const response = await novuClient.messages.retrieve({
+      subscriberId: subscriber.subscriberId,
+      channel: ChannelTypeEnum.InApp,
+    });
+    expect(response.result.data.map((message) => message.id)).to.deep.equal([newest, middle, oldest]);
+
+    const secondPage = await novuClient.messages.retrieve({
+      subscriberId: subscriber.subscriberId,
+      channel: ChannelTypeEnum.InApp,
+      limit: 1,
+      page: 1,
+    });
+    expect(secondPage.result.data.map((message) => message.id)).to.deep.equal([middle]);
   });
 
   async function triggerEventWithTransactionId(

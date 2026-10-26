@@ -22,7 +22,7 @@
  */
 
 import { Novu } from '@novu/api';
-import type { ContextPayload } from '@novu/shared';
+import type { ContextPayload, ContextValue } from '@novu/shared';
 import {
   findConnectionForProvider,
   findMatchingUserEndpoint,
@@ -137,7 +137,7 @@ export async function ensureMsTeamsUserDmEndpoint(args: {
       connectionIdentifier,
       type: MS_TEAMS_USER_TYPE,
       endpoint: { userId: aadObjectId },
-      ...(args.context && { context: args.context }),
+      ...(args.context && { context: args.context as Record<string, ContextValue> }),
     });
 
     return { ok: true, aadObjectId };

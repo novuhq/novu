@@ -270,4 +270,38 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', () => 
 
     expect(dtoList[1].status).to.equal('processed');
   });
+
+  it('should skip events for workflows without steps and still process the rest', async () => {
+    const emptyTemplate = await session.createTemplate({ steps: [] });
+
+    const bulkTriggerResponse = await triggerBulk(novuCore, {
+      events: [
+        {
+          transactionId: 'empty-workflow-txn',
+          workflowId: emptyTemplate.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: { pollId: 'poll-123' },
+        },
+        {
+          transactionId: 'regular-workflow-txn',
+          workflowId: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: { firstName: 'Testing of User Name' },
+        },
+      ],
+    });
+    if (!bulkTriggerResponse.ok) {
+      throw new Error(`failed to bulk trigger:${JSON.stringify(bulkTriggerResponse.error)}`);
+    }
+
+    const [emptyEvent, regularEvent] = bulkTriggerResponse.value.result;
+    expect(emptyEvent.status).to.equal('no_workflow_steps_defined');
+    expect(emptyEvent.transactionId).to.equal('empty-workflow-txn');
+    expect(regularEvent.status).to.equal('processed');
+
+    await session.waitForJobCompletion(template._id);
+
+    const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
+    expect(notifications.map((notification) => notification._templateId)).to.deep.equal([template._id]);
+  });
 });

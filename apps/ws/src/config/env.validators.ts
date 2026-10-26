@@ -1,9 +1,13 @@
-import { assertQueueBackendConfig, requiresStandaloneRedis } from '@novu/application-generic';
+import {
+  assertQueueBackendConfig,
+  createThrowingEnvReporter,
+  requiresStandaloneRedis,
+} from '@novu/application-generic';
 import { JobTopicNameEnum, QueueBackend, StringifyEnv } from '@novu/shared';
 import { bool, CleanedEnv, cleanEnv, json, num, port, str, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
-  const env = cleanEnv(process.env, envValidators);
+  const env = cleanEnv(process.env, envValidators, { reporter: createThrowingEnvReporter('ws') });
 
   // Sockets are the only topic this service touches, and they never carry a
   // delay, so no scheduler config is required here.
@@ -48,6 +52,19 @@ export const envValidators = {
   REDIS_MASTER_PORT: str({ default: '' }),
   REDIS_SLAVE_HOST: str({ default: '' }),
   REDIS_SLAVE_PORT: str({ default: '' }),
+  /*
+   * Opt-in HTTPS listener for enterprise self-hosted. Only presence is checked here:
+   * loadNovuTlsConfig does the real validation at boot. Keeping these optional means
+   * deployments that never set them validate exactly as they do today.
+   */
+  NOVU_TLS_ENABLED: bool({ default: false }),
+  NOVU_TLS_CERT_BASE64: str({ default: undefined }),
+  NOVU_TLS_CERT_FILE: str({ default: undefined }),
+  NOVU_TLS_KEY_BASE64: str({ default: undefined }),
+  NOVU_TLS_KEY_FILE: str({ default: undefined }),
+  NOVU_TLS_KEY_PASSPHRASE: str({ default: undefined }),
+  NOVU_TLS_CA_BASE64: str({ default: undefined }),
+  NOVU_TLS_CA_FILE: str({ default: undefined }),
   SENTRY_DSN: str({ default: undefined }),
   TZ: str({ default: 'UTC' }),
   WORKER_DEFAULT_CONCURRENCY: num({ default: undefined }),

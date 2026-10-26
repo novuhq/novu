@@ -23,7 +23,7 @@
   "dependencies": {
     "@clerk/backend": "^3.4.11",
     "@clerk/shared": "^4.12.2",
-    "@faker-js/faker": "^6.0.0",
+    "@faker-js/faker": "^10.5.0",
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
     "JSONStream": "^1.3.5",

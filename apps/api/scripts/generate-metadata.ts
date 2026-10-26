@@ -14,8 +14,10 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { TsConfigProvider } from '@nestjs/cli/lib/compiler/helpers/tsconfig-provider';
 import { PluginMetadataGenerator } from '@nestjs/cli/lib/compiler/plugins/plugin-metadata-generator';
-import { ReadonlyVisitor } from '@nestjs/swagger/dist/plugin';
+import { TypeScriptBinaryLoader } from '@nestjs/cli/lib/compiler/typescript-loader';
+import { ReadonlyVisitor } from '@nestjs/swagger/plugin';
 
 const tsconfigPath = 'tsconfig.build.json';
 const srcPath = path.join(__dirname, '..', 'src');
@@ -44,12 +46,17 @@ const restoreOriginalMetadata = () => {
 };
 
 try {
+  const typescriptLoader = new TypeScriptBinaryLoader();
+  const { options, fileNames, projectReferences } = new TsConfigProvider(typescriptLoader).getByConfigFilename(
+    tsconfigPath
+  );
   const generator = new PluginMetadataGenerator();
   generator.generate({
     visitors: [new ReadonlyVisitor({ introspectComments: true, pathToSource: srcPath })],
     outputDir: srcPath,
     filename: tmpMetadataFilename,
-    tsconfigPath,
+    // Passing a program skips the CLI's own full type-check; `nest build` type-checks anyway.
+    tsProgramRef: typescriptLoader.load().createProgram({ rootNames: fileNames, options, projectReferences }),
   });
 
   const nextContent = fs.readFileSync(tmpMetadataPath, 'utf8');

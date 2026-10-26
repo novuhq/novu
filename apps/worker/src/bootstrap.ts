@@ -2,7 +2,12 @@ import './instrument';
 
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
+import {
+  getErrorInterceptor,
+  type NovuTlsConfig,
+  Logger as PinoLogger,
+  toNovuTlsServerOptions,
+} from '@novu/application-generic';
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import { ResponseInterceptor } from './app/shared/response.interceptor';
@@ -15,10 +20,13 @@ const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
 
-export async function bootstrap(): Promise<INestApplication> {
-  BullMqService.haveProInstalled();
-
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+export async function bootstrap(tlsConfig?: NovuTlsConfig): Promise<INestApplication> {
+  // abortOnError: false so init errors reach runWithHydratedSecrets instead of process.abort(), which drops New Relic data.
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+    abortOnError: false,
+    ...(tlsConfig && { httpsOptions: toNovuTlsServerOptions(tlsConfig) }),
+  });
   app.useLogger(app.get(PinoLogger));
   app.flushLogs();
 
@@ -67,16 +75,15 @@ export async function bootstrap(): Promise<INestApplication> {
 
   await app.init();
 
-  try {
-    await startAppInfra(app);
-  } catch (e) {
-    Logger.error('[@novu/worker]: Failed to start app infra', e.message, e.start);
-    process.exit(1);
-  }
+  await startAppInfra(app);
 
-  await app.listen(process.env.PORT!);
+  await app.listen(process.env.PORT as string);
 
-  Logger.log(`[@novu/worker]: Listening for NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
+  Logger.log(
+    `[@novu/worker]: Listening for NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT} over ${
+      tlsConfig ? 'https' : 'http'
+    }`
+  );
 
   return app;
 }

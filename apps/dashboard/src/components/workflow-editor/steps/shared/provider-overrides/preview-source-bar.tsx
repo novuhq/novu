@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { type ContentSource, type ProviderOverrideOption } from './content-source';
 import { ContentSourceSelector } from './content-source-selector';
+import type { ProviderOverrideOption } from './override-options';
+import type { ContentSource } from './override-source';
 
 type PreviewSourceBarProps = {
   visible: boolean;

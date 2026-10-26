@@ -71,7 +71,7 @@
     "nanoid": "^3.1.20",
     "node-fetch": "^3.2.10",
     "node-mailjet": "^6.0.8",
-    "nodemailer": "^9.0.1",
+    "nodemailer": "^10.0.9",
     "plivo": "^4.70.0",
     "postmark": "^4.0.2",
     "proxy-agent": "^6.5.0",

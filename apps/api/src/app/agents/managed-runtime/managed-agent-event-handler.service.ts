@@ -45,6 +45,7 @@ export class ManagedAgentEventHandler {
       subscriberId: metadata.subscriberId,
       platform: parsePlatform(metadata.platform),
       platformThreadId: metadata.platformThreadId,
+      platformUserId: metadata.platformUserId,
       channel: channelFromWebhookMetadata(metadata),
       sessionId,
       suppressReply: metadata.suppressReply === 'true',

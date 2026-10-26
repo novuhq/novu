@@ -17,6 +17,11 @@ class ValidationPipeError {
   response: { message: string[] | string };
 }
 
+interface MulterErrorLike extends Error {
+  code: string;
+  field?: string;
+}
+
 export class AllExceptionsFilter implements ExceptionFilter {
   constructor(
     private readonly logger: PinoLogger,
@@ -109,12 +114,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     );
   }
 
-  private buildErrorDto(
-    request: RequestWithReqId,
-    statusCode: number,
-    message: string,
-    ctx?: Object | object
-  ): ErrorDto {
+  private buildErrorDto(request: RequestWithReqId, statusCode: number, message: string, ctx?: object): ErrorDto {
     return {
       statusCode,
       timestamp: new Date().toISOString(),
@@ -147,6 +147,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return this.handleOtherHttpExceptions(new PayloadTooLargeException(), request);
     }
 
+    if (this.isMulterError(exception)) {
+      return this.handleMulterError(exception, request);
+    }
+
     return this.buildA5xxError(request, exception);
   }
 
@@ -154,13 +158,36 @@ export class AllExceptionsFilter implements ExceptionFilter {
     return exception?.constructor?.name === 'PayloadTooLargeError';
   }
 
+  /**
+   * @nestjs/platform-express maps multer errors to HTTP errors by message text, so any
+   * message it doesn't know (multer 2.4 renamed LIMIT_UNEXPECTED_FILE, and added new codes)
+   * reaches this filter as a raw MulterError. These are always caused by the client's upload.
+   */
+  private isMulterError(exception: unknown): exception is MulterErrorLike {
+    return (
+      exception instanceof Error &&
+      exception.name === 'MulterError' &&
+      typeof (exception as MulterErrorLike).code === 'string'
+    );
+  }
+
+  private handleMulterError(exception: MulterErrorLike, request: RequestWithReqId): ErrorDto {
+    if (exception.code === 'LIMIT_FILE_SIZE') {
+      return this.handleOtherHttpExceptions(new PayloadTooLargeException(exception.message), request);
+    }
+
+    const message = exception.field ? `${exception.message} - ${exception.field}` : exception.message;
+
+    return this.buildErrorDto(request, HttpStatus.BAD_REQUEST, message);
+  }
+
   private isBadRequestWithMultipleExceptions(exception: unknown): exception is ValidationPipeError {
     // noinspection UnnecessaryLocalVariableJS
     const isBadRequestExceptionFromValidationPipe =
       exception instanceof Object &&
       safeHasProperty(exception, 'response') &&
-      safeHasProperty((exception as any).response, 'message') &&
-      Array.isArray((exception as any).response.message);
+      safeHasProperty((exception as { response: unknown }).response, 'message') &&
+      Array.isArray((exception as { response: { message: unknown } }).response.message);
 
     return isBadRequestExceptionFromValidationPipe;
   }

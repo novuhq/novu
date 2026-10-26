@@ -39,6 +39,7 @@ export type {
   LinkButtonElement,
   MessageContent,
   ReplyHandle,
+  ReplyStream,
   TableElement,
   ToolApprovalCard,
   ToolApprovalConfig,

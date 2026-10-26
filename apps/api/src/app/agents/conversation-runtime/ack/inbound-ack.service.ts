@@ -61,7 +61,8 @@ export class InboundAckService {
   /**
    * Active turn: typing platforms show the typing indicator; non-typing
    * platforms get an `eyes` reaction on the conversation's first message.
-   * Used by bridge ingress and managed active dispatch.
+   * Used by bridge ingress and managed active dispatch. Agent Inbox skips
+   * typing: a person answers later, so the indicator would sit with no reply.
    */
   async showWorkingSignal(params: WorkingSignalParams): Promise<void> {
     const { agentId, config, platformThreadId, platformMessageId, isFirstMessage } = params;
@@ -71,6 +72,12 @@ export class InboundAckService {
     }
 
     if (this.isTypingPlatform(config.platform)) {
+      // Agent Inbox keeps the message for a person to answer later, so a typing
+      // indicator would claim a reply is coming in this moment.
+      if (config.isHumanRelay) {
+        return;
+      }
+
       await this.guard(agentId, 'working-signal-typing', () =>
         this.outboundGateway.startTypingInConversation(agentId, config.integrationIdentifier, platformThreadId)
       );

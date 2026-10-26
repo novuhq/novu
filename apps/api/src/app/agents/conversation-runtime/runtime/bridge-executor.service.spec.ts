@@ -161,6 +161,46 @@ describe('BridgeExecutorService', () => {
       );
     });
 
+    describe('reply origin scheme', () => {
+      let originalEnv: NodeJS.ProcessEnv;
+
+      beforeEach(() => {
+        originalEnv = { ...process.env };
+        delete process.env.AGENT_API_HOSTNAME;
+        delete process.env.NOVU_TLS_ENABLED;
+        process.env.PORT = '3000';
+        process.env.API_ROOT_URL = 'https://api.novu.localhost';
+      });
+
+      afterEach(() => {
+        process.env = originalEnv;
+      });
+
+      async function replyOrigin() {
+        const { service } = makeService();
+        const payload = await (service as any).buildPayload(makeExecutionParams());
+
+        return payload.replyUrl.replace('/v1/agents/agent-1/reply', '');
+      }
+
+      it('downgrades a loopback HTTPS root URL to plain HTTP when TLS is off', async () => {
+        expect(await replyOrigin()).to.equal('http://localhost:3000');
+      });
+
+      it('keeps the HTTPS origin when TLS is on, since there is no plain-HTTP port to reach', async () => {
+        process.env.NOVU_TLS_ENABLED = 'true';
+
+        expect(await replyOrigin()).to.equal('https://api.novu.localhost');
+      });
+
+      it('still honours an explicit AGENT_API_HOSTNAME when TLS is on', async () => {
+        process.env.NOVU_TLS_ENABLED = 'true';
+        process.env.AGENT_API_HOSTNAME = 'https://agents.example.com';
+
+        expect(await replyOrigin()).to.equal('https://agents.example.com');
+      });
+    });
+
     it('should map workflowOrigin onto notification for the bridge wire', async () => {
       const { service } = makeService();
       const workflowOrigin = {

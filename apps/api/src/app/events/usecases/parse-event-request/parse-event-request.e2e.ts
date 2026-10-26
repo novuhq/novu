@@ -4,6 +4,7 @@ import { AgentRepository, NotificationTemplateEntity, SubscriberRepository } fro
 import {
   AddressingTypeEnum,
   AgentSubscriberAccessEnum,
+  TriggerEventStatusEnum,
   TriggerRecipients,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
@@ -353,6 +354,27 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
     const result = await parseEventRequestUsecase.execute(command);
 
     expect(result.acknowledged).to.be.true;
+  });
+
+  it('should not dispatch a workflow that has no steps', async () => {
+    const subscriber = await subscribersService.createSubscriber();
+    const emptyTemplate = await session.createTemplate({ steps: [] });
+
+    const command = buildCommand(
+      session,
+      uuid(),
+      [{ subscriberId: subscriber.subscriberId }],
+      emptyTemplate.triggers[0].identifier
+    );
+    command.payload = { pollId: 'poll-123' };
+    command.skipQueueInsertion = true;
+
+    const result = await parseEventRequestUsecase.execute(command);
+
+    expect(result.acknowledged).to.be.true;
+    expect(result.status).to.equal(TriggerEventStatusEnum.NO_WORKFLOW_STEPS);
+    expect(result.transactionId).to.equal(command.transactionId);
+    expect(result.jobData).to.be.undefined;
   });
 
   describe('trigger agent validation', () => {

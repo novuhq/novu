@@ -8,7 +8,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc -p tsconfig.json",
-    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/inbound-mail --load -t novu-inbound-mail - $DOCKER_BUILD_ARGUMENTS",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | docker buildx build --build-arg PACKAGE_PATH=apps/inbound-mail --load -t novu-inbound-mail - $DOCKER_BUILD_ARGUMENTS",
     "start": "tsx watch src/main.ts",
     "start:dev": "tsx watch src/main.ts",
     "start:test": "cross-env NODE_ENV=test tsx watch src/main.ts",

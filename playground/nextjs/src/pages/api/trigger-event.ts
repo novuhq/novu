@@ -15,6 +15,7 @@ type RequestBody = {
   name?: string;
   to?: unknown;
   payload?: unknown;
+  overrides?: unknown;
 };
 
 type ResponseData = Record<string, unknown>;

@@ -35,6 +35,7 @@ describe('HumanInviteTokenService', () => {
         return 'OK';
       }),
       get: sinon.stub().callsFake(async (key: string) => cacheStore.get(key) ?? null),
+      mget: sinon.stub().callsFake(async (keys: string[]) => keys.map((key) => cacheStore.get(key) ?? null)),
       del: sinon.stub().callsFake(async (key: string) => cacheStore.delete(key)),
       eval: sinon.stub().callsFake(async (_script: string, keys: string[]) => runClaimScript(cacheStore, keys)),
     };
@@ -93,6 +94,127 @@ describe('HumanInviteTokenService', () => {
     );
 
     expect(reasons).to.deep.equal(['expired', 'invalid']);
+  });
+
+  describe('pending links of a contact', () => {
+    const lookup = { environmentId: payload.env, agentId: payload.agentId, subscriberIds: ['alice', 'bob'] };
+
+    it('finds the newest link that still works, per contact', async () => {
+      const { service } = makeService();
+      const older = await service.issue(payload);
+      const newest = await service.issue(payload);
+
+      expect(await service.findPending(lookup)).to.deep.equal(new Map([['alice', newest]]));
+
+      await service.decline(newest.token);
+
+      expect(await service.findPending(lookup)).to.deep.equal(new Map([['alice', older]]));
+    });
+
+    it('keeps links of another relay agent apart', async () => {
+      const { service } = makeService();
+      await service.issue({ ...payload, agentId: 'agent-2' });
+
+      expect((await service.findPending(lookup)).size).to.equal(0);
+    });
+
+    it('reports nothing instead of failing while the cache is down', async () => {
+      const { service, cacheService } = makeService();
+      await service.issue(payload);
+      cacheService.mget.rejects(new Error('redis down'));
+
+      expect((await service.findPending(lookup)).size).to.equal(0);
+      expect((await makeService({ cacheEnabled: false }).service.findPending(lookup)).size).to.equal(0);
+    });
+
+    it('still issues the link when it cannot be remembered', async () => {
+      const { service, cacheService } = makeService();
+      cacheService.set.onSecondCall().rejects(new Error('redis down'));
+
+      const { token } = await service.issue(payload);
+
+      expect((await service.peek(token)).payload).to.deep.equal(payload);
+    });
+
+    it('retires every link of the contact on revokeAll', async () => {
+      const { service } = makeService();
+      const first = await service.issue(payload);
+      const second = await service.issue(payload);
+
+      await service.revokeAll(payload);
+
+      const reasons = await Promise.all(
+        [first.token, second.token].map((token) =>
+          service.peek(token).catch((err: InactiveHumanInviteError) => err.reason)
+        )
+      );
+      expect(reasons).to.deep.equal(['declined', 'declined']);
+      expect((await service.findPending(lookup)).size).to.equal(0);
+    });
+
+    it('retires a link on revokeAll even when it was never listed', async () => {
+      const { service, cacheService } = makeService();
+      cacheService.set.onSecondCall().rejects(new Error('redis down'));
+      const { token } = await service.issue(payload);
+
+      await service.revokeAll(payload);
+
+      expect(await service.peek(token).catch((err: InactiveHumanInviteError) => err.reason)).to.equal('declined');
+    });
+
+    it('lets a link issued after revokeAll work, and leaves other contacts alone', async () => {
+      const clock = sinon.useFakeTimers({ now: Date.now(), toFake: ['Date'] });
+
+      try {
+        const { service } = makeService();
+        const bob = await service.issue({ ...payload, subscriberId: 'bob' });
+
+        await service.revokeAll(payload);
+        clock.tick(1);
+        const invitedAgain = await service.issue(payload);
+
+        expect((await service.peek(invitedAgain.token)).payload).to.deep.equal(payload);
+        expect((await service.peek(bob.token)).payload.subscriberId).to.equal('bob');
+      } finally {
+        clock.restore();
+      }
+    });
+
+    it('refuses to remove the contact when the links cannot be retired', async () => {
+      const { service, cacheService } = makeService();
+      cacheService.set.rejects(new Error('redis down'));
+
+      const error = await service.revokeAll(payload).catch((err) => err);
+
+      expect(error).to.be.instanceOf(ServiceUnavailableException);
+    });
+
+    it('lists only the newest few links of a contact', async () => {
+      const { service, cacheStore } = makeService();
+
+      for (let count = 0; count < 12; count += 1) {
+        await service.issue(payload);
+      }
+
+      const listed = JSON.parse(cacheStore.get('human_invite_pending:env-1:agent-1:alice') ?? '[]');
+      expect(listed).to.have.length(10);
+    });
+
+    it('stops working at its stated expiry even if the key is still there', async () => {
+      const clock = sinon.useFakeTimers({ now: Date.now(), toFake: ['Date'] });
+
+      try {
+        const { service } = makeService();
+        const { token } = await service.issue(payload);
+
+        clock.tick(HUMAN_INVITE_LINK_TTL_SECONDS * 1000 + 1000);
+
+        expect(await service.peek(token).catch((err: InactiveHumanInviteError) => err.reason)).to.equal('expired');
+        expect((await service.findPending(lookup)).size).to.equal(0);
+      } finally {
+        clock.restore();
+      }
+    });
   });
 
   describe('requireActive', () => {

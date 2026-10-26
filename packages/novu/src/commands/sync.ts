@@ -52,7 +52,10 @@ export async function executeSync(apiUrl: string, bridgeUrl: string, secretKey: 
 async function syncAgentBridgeUrls(bridgeUrl: string, secretKey: string, apiUrl: string) {
   try {
     const discoverUrl = `${bridgeUrl}?action=discover`;
-    const discoverRes = await axios.get<DiscoverResponse>(discoverUrl, { timeout: 5000 });
+    const discoverRes = await axios.get<DiscoverResponse>(discoverUrl, {
+      timeout: 5000,
+      headers: { 'novu-signature': buildSignature(secretKey) },
+    });
     const agents = discoverRes.data?.agents ?? [];
 
     if (agents.length === 0) {

@@ -8,6 +8,8 @@ export enum CasingEnum {
   SNAKE_CASE = 'snake_case',
   KEBAB_CASE = 'kebab-case',
   CONSTANT_CASE = 'CONSTANT_CASE',
+  /** Identity — no deep key rename (APNs kebab-case, opaque FCM `data` keys). */
+  NONE = 'none',
 }
 
 type MergedPassthrough<T> = {
@@ -27,6 +29,7 @@ export abstract class BaseProvider {
    * - snake_case
    * - kebab-case
    * - CONSTANT_CASE
+   * - none (identity — no deep key rename; preserves kebab-case / opaque keys)
    */
   protected abstract casing: CasingEnum;
 
@@ -124,8 +127,12 @@ export abstract class BaseProvider {
       case CasingEnum.CAMEL_CASE:
         casing = camelCase;
         break;
-      default:
-        throw new Error(`Unknown casing: ${this.casing}`);
+      case CasingEnum.NONE:
+        return data;
+      default: {
+        const _exhaustiveCheck: never = this.casing;
+        throw new Error(`Unknown casing: ${_exhaustiveCheck}`);
+      }
     }
 
     return casing(data, {
