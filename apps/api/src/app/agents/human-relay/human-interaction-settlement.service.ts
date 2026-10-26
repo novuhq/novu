@@ -113,7 +113,9 @@ export class HumanInteractionSettlementService {
       return;
     }
 
-    const reservedAt = new Date(interaction.createdAt);
+    const reservedAt = interaction.voiceMinutesReservedAt
+      ? new Date(interaction.voiceMinutesReservedAt)
+      : new Date(interaction.createdAt);
 
     await this.voiceMinuteQuota.releaseReserved(String(interaction._organizationId), minutes, reservedAt);
   }

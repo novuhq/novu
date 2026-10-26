@@ -64,6 +64,15 @@ export class HumanInteractionEntity {
    */
   voiceMinutesReserved?: number;
 
+  /** When those minutes were reserved. Settlement refunds that Redis day, not `createdAt`. */
+  voiceMinutesReservedAt?: string;
+
+  /**
+   * Contacts this pending row is calling. A fan-out can mix voice with other
+   * channels, so the row's `subscriberIds` alone is not "on a call".
+   */
+  voiceSubscriberIds?: string[];
+
   response?: HumanInteractionResponse;
 
   expiresAt: string;

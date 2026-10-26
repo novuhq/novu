@@ -82,6 +82,8 @@ interface HumanVoiceMinuteReservation {
  */
 export interface HumanVoiceMinuteCredits {
   readonly unlimited: boolean;
+  /** UTC time the Redis day and month keys were chosen, before the organization lookup. */
+  readonly reservedAt: Date;
   /** Minutes that stay on the interaction. The rest is returned by `release`. */
   accept(minutes?: number): void;
   /** Gives back whatever was not accepted. Idempotent. */
@@ -104,10 +106,12 @@ export class HumanVoiceMinuteQuotaService {
   }
 
   async reserveMinutes(organizationId: string, minutes: number): Promise<HumanVoiceMinuteCredits> {
-    const reservation = await this.reserve(organizationId, minutes);
+    const reservedAt = new Date();
+    const reservation = await this.reserve(organizationId, minutes, reservedAt);
 
     return {
       unlimited: reservation.unlimited,
+      reservedAt,
       accept: (accepted = minutes) => {
         if (reservation.unlimited || accepted <= 0) {
           return;
@@ -135,7 +139,11 @@ export class HumanVoiceMinuteQuotaService {
     }
   }
 
-  private async reserve(organizationId: string, minutes: number): Promise<HumanVoiceMinuteReservation> {
+  private async reserve(
+    organizationId: string,
+    minutes: number,
+    reservedAt: Date
+  ): Promise<HumanVoiceMinuteReservation> {
     if (minutes <= 0 || process.env.IS_SELF_HOSTED === 'true') {
       return { organizationId, remaining: 0, unlimited: true };
     }
@@ -146,9 +154,8 @@ export class HumanVoiceMinuteQuotaService {
       return { organizationId, remaining: 0, unlimited: true };
     }
 
-    const now = new Date();
     const limits = await this.limitsFor(organizationId);
-    const keys = humanVoiceMinuteQuotaKeys(organizationId, now);
+    const keys = humanVoiceMinuteQuotaKeys(organizationId, reservedAt);
 
     let outcome: string | null | undefined;
     try {
@@ -159,8 +166,8 @@ export class HumanVoiceMinuteQuotaService {
           minutes,
           limits.daily,
           limits.monthly,
-          secondsUntilNextUtcDay(now) + DAY_TTL_BUFFER_SECONDS,
-          secondsUntilNextUtcMonth(now) + MONTH_TTL_BUFFER_SECONDS,
+          secondsUntilNextUtcDay(reservedAt) + DAY_TTL_BUFFER_SECONDS,
+          secondsUntilNextUtcMonth(reservedAt) + MONTH_TTL_BUFFER_SECONDS,
         ]
       );
     } catch (err) {
@@ -187,8 +194,9 @@ export class HumanVoiceMinuteQuotaService {
 
     const cap: HumanVoiceMinuteCap = outcome === 'monthly' ? 'monthly' : 'daily';
     const limit = cap === 'monthly' ? limits.monthly : limits.daily;
-    const retryAfterSeconds = cap === 'monthly' ? secondsUntilNextUtcMonth(now) : secondsUntilNextUtcDay(now);
-    const resetsAt = (cap === 'monthly' ? nextUtcMonth(now) : nextUtcDay(now)).toISOString();
+    const retryAfterSeconds =
+      cap === 'monthly' ? secondsUntilNextUtcMonth(reservedAt) : secondsUntilNextUtcDay(reservedAt);
+    const resetsAt = (cap === 'monthly' ? nextUtcMonth(reservedAt) : nextUtcDay(reservedAt)).toISOString();
 
     throw new HumanVoiceMinuteQuotaExceededException(cap, limit, retryAfterSeconds, resetsAt);
   }

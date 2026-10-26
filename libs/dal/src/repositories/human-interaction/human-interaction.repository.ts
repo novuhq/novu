@@ -10,6 +10,31 @@ import { BaseRepositoryV2 } from '../base-repository-v2';
 import { HumanInteractionDBModel, HumanInteractionDelivery, HumanInteractionEntity } from './human-interaction.entity';
 import { HumanInteraction } from './human-interaction.schema';
 
+/**
+ * A contact is on a call only when their own delivery is voice, or they are
+ * listed before that stamp lands. Another recipient on the same row is not.
+ */
+function pendingVoiceFilter(environmentId: string, subscriberIds: string[]) {
+  const subscriberMatch = subscriberIds.length === 1 ? subscriberIds[0] : { $in: subscriberIds };
+
+  return {
+    _environmentId: environmentId,
+    subscriberIds: subscriberMatch,
+    status: HumanInteractionStatusEnum.PENDING,
+    $or: [
+      {
+        deliveries: {
+          $elemMatch: {
+            platform: HumanChannelViaEnum.VOICE,
+            subscriberId: subscriberMatch,
+          },
+        },
+      },
+      { voiceSubscriberIds: subscriberMatch },
+    ],
+  };
+}
+
 @Injectable()
 export class HumanInteractionRepository extends BaseRepositoryV2<
   HumanInteractionDBModel,
@@ -47,14 +72,21 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     });
   }
 
-  /** A live call is a pending voice interaction, including one whose delivery stamp has not landed yet. */
+  /** A live call is this contact's pending voice delivery, including one whose stamp has not landed yet. */
   async countPendingVoiceForSubscriber(environmentId: string, subscriberId: string): Promise<number> {
-    return this.count({
-      _environmentId: environmentId,
-      subscriberIds: subscriberId,
-      status: HumanInteractionStatusEnum.PENDING,
-      $or: [{ 'deliveries.platform': HumanChannelViaEnum.VOICE }, { voiceMinutesReserved: { $gt: 0 } }],
-    });
+    return this.count(pendingVoiceFilter(environmentId, [subscriberId]));
+  }
+
+  /** Pending voice rows for these contacts, so a send can expire them before treating them as busy. */
+  async findPendingVoiceForSubscribers(
+    environmentId: string,
+    subscriberIds: string[]
+  ): Promise<HumanInteractionEntity[]> {
+    if (subscriberIds.length === 0) {
+      return [];
+    }
+
+    return this.find(pendingVoiceFilter(environmentId, subscriberIds), '*');
   }
 
   /**

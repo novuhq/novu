@@ -36,6 +36,7 @@ import {
 } from '@novu/shared';
 import { AgentConversationService } from '../../../agents/conversation-runtime/conversation/agent-conversation.service';
 import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/human-interaction-activity.recorder';
+import { HumanInteractionSettlementService } from '../../../agents/human-relay/human-interaction-settlement.service';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { KeylessEmailGateService } from '../../../keyless/keyless-email-gate.service';
 import { isKeylessOrganization } from '../../../keyless/keyless-organization.helpers';
@@ -55,6 +56,7 @@ import {
   buildPendingHumanInteraction,
   deliverToTargets,
   type HumanDeliveryTarget,
+  type PendingHumanInteractionInput,
   toStoredContent,
 } from '../../services/human-interaction-lifecycle';
 import { HumanKeylessCapService, isHumanBrowserLoginAvailable } from '../../services/human-keyless-cap.service';
@@ -73,6 +75,34 @@ type ExplicitRecipient = {
   /** Set when this send named a mailbox. Absent for a contact id. */
   explicitEmail?: string;
 };
+
+function voiceHoldFields(hold: {
+  credits?: HumanVoiceMinuteCredits;
+  minutes: number;
+  subscriberIds: string[];
+}): Pick<PendingHumanInteractionInput, 'voiceMinutesReserved' | 'voiceMinutesReservedAt' | 'voiceSubscriberIds'> {
+  const holdsMinutes = Boolean(hold.credits && !hold.credits.unlimited);
+
+  return {
+    ...(hold.subscriberIds.length > 0 ? { voiceSubscriberIds: hold.subscriberIds } : {}),
+    ...(holdsMinutes
+      ? {
+          voiceMinutesReserved: hold.minutes,
+          voiceMinutesReservedAt: hold.credits?.reservedAt.toISOString(),
+        }
+      : {}),
+  };
+}
+
+function sameSubscriberIds(left: string[], right: string[]): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  const pending = new Set(right);
+
+  return left.every((id) => pending.has(id));
+}
 
 /**
  * Where the Human dashboard runs, setups are claimed there and the CLI continues with `human login`.
@@ -105,7 +135,8 @@ export class CreateInteraction {
     private readonly humanContactRepository: HumanContactRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly analyticsService: AnalyticsService,
-    private readonly voiceMinuteQuota: HumanVoiceMinuteQuotaService
+    private readonly voiceMinuteQuota: HumanVoiceMinuteQuotaService,
+    private readonly settlement: HumanInteractionSettlementService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -191,6 +222,8 @@ export class CreateInteraction {
     let messageCredits: HumanMessageCredits | undefined;
     let voiceCredits: HumanVoiceMinuteCredits | undefined;
     let emailCapError: HttpException | undefined;
+    let createdInteraction: HumanInteractionEntity | undefined;
+    let voiceHoldRecorded = false;
 
     try {
       if (emailCount > 0) {
@@ -214,15 +247,8 @@ export class CreateInteraction {
         messageCredits = await this.messageQuota.reserveCredits(command.organizationId, messageCount);
       }
 
-      const voiceMinutes = voiceTargets.length * VOICE_CALL_MAX_MINUTES;
-      if (voiceTargets.length > 0) {
-        await assertNoLiveVoiceCall(this.humanInteractionRepository, {
-          environmentId: command.environmentId,
-          subscriberIds: voiceTargets.map((item) => item.subscriberId),
-        });
-        voiceCredits = await this.voiceMinuteQuota.reserveMinutes(command.organizationId, voiceMinutes);
-      }
-
+      const voiceHold = await this.reserveVoiceHold(command.environmentId, command.organizationId, voiceTargets);
+      voiceCredits = voiceHold.credits;
       const interaction = await this.humanInteractionRepository.create(
         buildPendingHumanInteraction({
           kind: command.kind,
@@ -233,9 +259,10 @@ export class CreateInteraction {
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           ttlSeconds: command.ttlSeconds,
-          ...(voiceCredits && !voiceCredits.unlimited ? { voiceMinutesReserved: voiceMinutes } : {}),
+          ...voiceHoldFields(voiceHold),
         })
       );
+      createdInteraction = interaction;
 
       const threads: InteractionThreadDto[] = [];
       const targets: HumanDeliveryTarget[] = resolved.map(({ subscriberId, target }) => {
@@ -268,7 +295,8 @@ export class CreateInteraction {
           logMessage: 'Human interaction delivery failed for one recipient',
         });
       const delivered = credits ? await credits.run(deliver) : await deliver();
-      await this.keepVoiceReservation(interaction, delivered.interaction, voiceCredits, voiceMinutes);
+      await this.keepVoiceReservation(interaction, delivered.interaction, voiceCredits);
+      voiceHoldRecorded = true;
 
       // Each contact gets the message in a thread of their own, so each delivery is one message sent.
       for (const { platform } of delivered.interaction.deliveries ?? []) {
@@ -282,6 +310,10 @@ export class CreateInteraction {
       }
 
       return toInteractionResponse(delivered.interaction, delivered.failedSubscriberIds, threads);
+    } catch (err) {
+      await this.clearUnrecordedVoiceHold(createdInteraction, voiceHoldRecorded);
+
+      throw err;
     } finally {
       await credits?.release();
       await messageCredits?.release();
@@ -289,33 +321,102 @@ export class CreateInteraction {
     }
   }
 
+  private async reserveVoiceHold(
+    environmentId: string,
+    organizationId: string,
+    voiceTargets: Array<{ subscriberId: string }>
+  ): Promise<{ credits?: HumanVoiceMinuteCredits; minutes: number; subscriberIds: string[] }> {
+    const subscriberIds = voiceTargets.map((item) => item.subscriberId);
+    if (subscriberIds.length === 0) {
+      return { minutes: 0, subscriberIds };
+    }
+
+    await this.expirePendingVoice(environmentId, subscriberIds);
+    await assertNoLiveVoiceCall(this.humanInteractionRepository, { environmentId, subscriberIds });
+    const minutes = subscriberIds.length * VOICE_CALL_MAX_MINUTES;
+    const credits = await this.voiceMinuteQuota.reserveMinutes(organizationId, minutes);
+
+    return { credits, minutes, subscriberIds };
+  }
+
+  /** An overdue voice request is not a live call, and its minutes go back before the next send is judged. */
+  private async expirePendingVoice(environmentId: string, subscriberIds: string[]): Promise<void> {
+    const pending = await this.humanInteractionRepository.findPendingVoiceForSubscribers(environmentId, subscriberIds);
+
+    await Promise.all(pending.map((interaction) => this.settlement.expireIfOverdue(interaction)));
+  }
+
+  /** The Redis hold is returned by `release`. Drop the row's copy so settlement cannot return it again. */
+  private async clearUnrecordedVoiceHold(
+    interaction: HumanInteractionEntity | undefined,
+    voiceHoldRecorded: boolean
+  ): Promise<void> {
+    if (!interaction || voiceHoldRecorded) {
+      return;
+    }
+
+    await this.clearVoiceHold(interaction);
+  }
+
+  private async clearVoiceHold(interaction: HumanInteractionEntity): Promise<void> {
+    await this.humanInteractionRepository
+      .update(
+        { _id: interaction._id, _environmentId: interaction._environmentId },
+        { $unset: { voiceMinutesReserved: 1, voiceMinutesReservedAt: 1, voiceSubscriberIds: 1 } }
+      )
+      .catch(() => undefined);
+  }
+
   /**
-   * A pending voice send keeps the minutes it actually delivered. A tell, or a
-   * voice target that never went out, gives them back when `release` runs.
+   * A pending voice send keeps the minutes and contacts it actually reached.
+   * A tell, or a voice target that never went out, gives the minutes back when `release` runs.
    */
   private async keepVoiceReservation(
     created: HumanInteractionEntity,
     delivered: HumanInteractionEntity,
-    voiceCredits: HumanVoiceMinuteCredits | undefined,
-    reservedMinutes: number
+    voiceCredits: HumanVoiceMinuteCredits | undefined
   ): Promise<void> {
-    if (!voiceCredits || voiceCredits.unlimited) {
+    const pending = delivered.status === HumanInteractionStatusEnum.PENDING;
+    const deliveredVoiceSubscriberIds = pending
+      ? (delivered.deliveries ?? [])
+          .filter((delivery) => delivery.platform === HumanChannelViaEnum.VOICE)
+          .map((delivery) => delivery.subscriberId)
+      : [];
+    const keptMinutes =
+      voiceCredits && !voiceCredits.unlimited ? deliveredVoiceSubscriberIds.length * VOICE_CALL_MAX_MINUTES : 0;
+
+    if (voiceCredits && !voiceCredits.unlimited) {
+      voiceCredits.accept(keptMinutes);
+    }
+
+    const minutesMatch = (created.voiceMinutesReserved ?? 0) === keptMinutes;
+    const subscribersMatch = sameSubscriberIds(created.voiceSubscriberIds ?? [], deliveredVoiceSubscriberIds);
+    if (minutesMatch && subscribersMatch) {
       return;
     }
 
-    const voiceDelivered = (delivered.deliveries ?? []).filter(
-      (delivery) => delivery.platform === HumanChannelViaEnum.VOICE
-    ).length;
-    const kept = delivered.status === HumanInteractionStatusEnum.PENDING ? voiceDelivered * VOICE_CALL_MAX_MINUTES : 0;
-    voiceCredits.accept(kept);
+    const set: { voiceSubscriberIds?: string[]; voiceMinutesReserved?: number } = {};
+    const unset: { voiceSubscriberIds?: 1; voiceMinutesReserved?: 1; voiceMinutesReservedAt?: 1 } = {};
 
-    if (kept === reservedMinutes) {
-      return;
+    if (deliveredVoiceSubscriberIds.length > 0) {
+      set.voiceSubscriberIds = deliveredVoiceSubscriberIds;
+    } else {
+      unset.voiceSubscriberIds = 1;
+    }
+
+    if (keptMinutes > 0) {
+      set.voiceMinutesReserved = keptMinutes;
+    } else {
+      unset.voiceMinutesReserved = 1;
+      unset.voiceMinutesReservedAt = 1;
     }
 
     await this.humanInteractionRepository.update(
       { _id: created._id, _environmentId: created._environmentId },
-      kept > 0 ? { $set: { voiceMinutesReserved: kept } } : { $unset: { voiceMinutesReserved: 1 } }
+      {
+        ...(Object.keys(set).length > 0 ? { $set: set } : {}),
+        ...(Object.keys(unset).length > 0 ? { $unset: unset } : {}),
+      }
     );
   }
 

@@ -131,4 +131,19 @@ describe('buildProviderOverrideOptions', () => {
 
     expect(webhookOption.integrations.map((integration) => integration.name)).toEqual(['Zeta', 'alpha', 'Beta']);
   });
+
+  it('does not offer voice as a workflow content override', () => {
+    const options = buildProviderOverrideOptions({
+      channel: ChannelTypeEnum.CHAT,
+      activeIntegrations: [
+        { providerId: ChatProviderIdEnum.AgentVoiceCall, identifier: 'voice-1', name: 'Voice' },
+        { providerId: ChatProviderIdEnum.Slack, identifier: 'slack-1', name: 'Slack' },
+      ],
+      providerOverrides: { [ChatProviderIdEnum.AgentVoiceCall]: { content: 'hello' } },
+      integrationOverrides: undefined,
+      includeIntegrationOptions: false,
+    });
+
+    expect(options.map((option) => option.providerId)).toEqual([ChatProviderIdEnum.Slack]);
+  });
 });

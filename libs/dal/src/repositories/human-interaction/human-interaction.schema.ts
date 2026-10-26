@@ -63,6 +63,13 @@ const humanInteractionSchema = new Schema<HumanInteractionDBModel>(
     voiceMinutesReserved: {
       type: Schema.Types.Number,
     },
+    voiceMinutesReservedAt: {
+      type: Schema.Types.String,
+    },
+    voiceSubscriberIds: {
+      type: [Schema.Types.String],
+      default: undefined,
+    },
     response: {
       type: new Schema(
         {

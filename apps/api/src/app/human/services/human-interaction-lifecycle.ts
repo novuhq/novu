@@ -36,6 +36,10 @@ export interface PendingHumanInteractionInput {
   conversationId?: string;
   /** Minutes held for a voice send that stays pending. Omitted for every other channel. */
   voiceMinutesReserved?: number;
+  /** ISO time the Redis day and month keys were chosen. */
+  voiceMinutesReservedAt?: string;
+  /** Contacts this row will call. Set before delivery so the live-call check is per person. */
+  voiceSubscriberIds?: string[];
 }
 
 export interface HumanDeliveryRefs {
@@ -320,6 +324,8 @@ export function buildPendingHumanInteraction(input: PendingHumanInteractionInput
     _environmentId: input.environmentId,
     _organizationId: input.organizationId,
     ...(input.voiceMinutesReserved ? { voiceMinutesReserved: input.voiceMinutesReserved } : {}),
+    ...(input.voiceMinutesReservedAt ? { voiceMinutesReservedAt: input.voiceMinutesReservedAt } : {}),
+    ...(input.voiceSubscriberIds?.length ? { voiceSubscriberIds: input.voiceSubscriberIds } : {}),
   };
 }
 

@@ -37,8 +37,10 @@ describe('CreateInteraction', () => {
     const humanInteractionRepository = {
       countPendingForSubscriber: sinon.stub().resolves(0),
       countPendingVoiceForSubscriber: sinon.stub().resolves(0),
+      findPendingVoiceForSubscribers: sinon.stub().resolves([]),
       count: sinon.stub().resolves(0),
       create: sinon.stub().resolves(created),
+      update: sinon.stub().resolves(undefined),
       stampDelivery: sinon.stub().resolves(undefined),
       markDeliveredIfPending: sinon.stub().resolves({ ...created, status: HumanInteractionStatusEnum.DELIVERED }),
       delete: sinon.stub().resolves(undefined),
@@ -123,12 +125,14 @@ describe('CreateInteraction', () => {
     const analyticsService = { track: sinon.stub() };
     const voiceCredits = {
       unlimited: false,
+      reservedAt: new Date('2026-01-01T00:00:00.000Z'),
       accept: sinon.stub(),
       release: sinon.stub().resolves(),
     };
     const voiceMinuteQuota = {
       reserveMinutes: sinon.stub().resolves(voiceCredits),
     };
+    const settlement = { expireIfOverdue: sinon.stub().callsFake(async (interaction) => interaction) };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
@@ -151,7 +155,8 @@ describe('CreateInteraction', () => {
       humanContactRepository as any,
       subscriberRepository as any,
       analyticsService as any,
-      voiceMinuteQuota as any
+      voiceMinuteQuota as any,
+      settlement as any
     );
     const command = {
       userId: 'user1',
@@ -180,6 +185,7 @@ describe('CreateInteraction', () => {
       humanContactRepository,
       subscriberRepository,
       analyticsService,
+      settlement,
     };
   }
 
@@ -204,6 +210,31 @@ describe('CreateInteraction', () => {
       }
 
       expect(humanInteractionRepository.create.called).to.equal(false);
+    });
+
+    it('expires an overdue voice request before treating the contact as busy', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanInteractionRepository, settlement } = setup();
+      const overdue = { _id: 'old', _environmentId: 'env1', status: HumanInteractionStatusEnum.PENDING };
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'voice-main',
+        platform: HumanChannelViaEnum.VOICE,
+        platformUserId: '+15551212',
+      });
+      humanInteractionRepository.findPendingVoiceForSubscribers.resolves([overdue]);
+      humanInteractionRepository.countPendingVoiceForSubscriber.resolves(0);
+
+      try {
+        await usecase.execute(command as never);
+      } catch {
+        // Delivery after the live-call check is outside this assertion.
+      }
+
+      expect(settlement.expireIfOverdue.calledOnce).to.equal(true);
+      const expiredFirst = settlement.expireIfOverdue.calledBefore(
+        humanInteractionRepository.countPendingVoiceForSubscriber
+      );
+      expect(expiredFirst).to.equal(true);
     });
   });
 
