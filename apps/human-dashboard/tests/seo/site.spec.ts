@@ -165,3 +165,35 @@ test('every host has a page and its Markdown, linked from llms.txt', async ({ pa
     expect((await request.get(path)).status()).toBe(404);
   }
 });
+
+test('a missing page is Markdown when the agent asks for Markdown', async ({ request }) => {
+  for (const path of ['/some-path-that-does-not-exist', '/not-a-host', '/not-a-host.md']) {
+    const response = await request.get(path, {
+      headers: { accept: 'text/markdown' },
+      maxRedirects: 5,
+    });
+    expect(response.status()).toBe(404);
+    expect(response.headers()['content-type']).toContain('text/markdown');
+    const body = await response.text();
+    const explanation = body
+      .replace(/\[[^\]]+\]\([^)]+\)/g, '')
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/[#>*_`-]/g, ' ')
+      .trim();
+    expect(explanation.length).toBeGreaterThanOrEqual(20);
+    expect(body).toContain(`${origin}/llms.txt`);
+    expect(body).toContain(`${origin}/sitemap.xml`);
+    expect(body).toContain(`${origin}/index.md`);
+    expect(body).not.toContain('<html');
+  }
+
+  const browser = await request.get('/some-path-that-does-not-exist', {
+    headers: { accept: 'text/html,application/xhtml+xml' },
+  });
+  expect(browser.status()).toBe(404);
+  expect(browser.headers()['content-type']).toContain('text/html');
+
+  const home = await request.get('/', { headers: { accept: 'text/markdown' } });
+  expect(home.status()).toBe(200);
+  expect(home.headers()['content-type']).toContain('text/html');
+});
