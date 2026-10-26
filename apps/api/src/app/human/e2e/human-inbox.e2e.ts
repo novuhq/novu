@@ -990,11 +990,17 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
       expect((await listInbox({ channel: 'email' })).data).to.deep.equal([]);
 
       const counts = await getCounts();
-      expect(counts.channels).to.deep.equal({ all: 2, telegram: 1, slack: 1, email: 0 });
+      expect(counts.channels).to.deep.equal({ all: 2, telegram: 1, slack: 1, email: 0, voice: 0 });
       expect(counts.capped).to.equal(false);
 
       // A channel is counted within the chosen tab, and a tab within the chosen channel.
-      expect((await getCounts({ tab: 'unread' })).channels).to.deep.equal({ all: 1, telegram: 1, slack: 0, email: 0 });
+      expect((await getCounts({ tab: 'unread' })).channels).to.deep.equal({
+        all: 1,
+        telegram: 1,
+        slack: 0,
+        email: 0,
+        voice: 0,
+      });
       expect((await getCounts({ channel: 'slack' })).tabs).to.deep.equal({
         all: 1,
         unread: 0,
