@@ -3,6 +3,7 @@ import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { ApiRateLimitCategoryEnum } from '@novu/shared';
 import type { Response } from 'express';
 import { ThrottlerCategory } from '../rate-limiting/guards';
+import { ApiOkResponse } from '../shared/framework/response.decorator';
 import { HumanAgentPictureService } from './services/human-agent-picture.service';
 
 /**
@@ -17,6 +18,13 @@ export class HumanAgentPicturesPublicController {
 
   @Get('/:environmentId/:agentId/:version')
   @ApiOperation({ summary: 'Read an agent picture' })
+  @ApiOkResponse({
+    description: 'The agent picture.',
+    content: {
+      'image/jpeg': { schema: { type: 'string', format: 'binary' } },
+      'image/png': { schema: { type: 'string', format: 'binary' } },
+    },
+  })
   async getPicture(
     @Param('environmentId') environmentId: string,
     @Param('agentId') agentId: string,

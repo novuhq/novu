@@ -32,6 +32,7 @@ import {
   CreateConnectCodeRequestDto,
   type HumanHostStatusResponseDto,
 } from './dtos/human-host.dto';
+import { OptionalHeaders } from './optional-headers.decorator';
 import { AGENT_INBOX_HOST_HEADER, HumanHostStatusService, readHostId } from './services/human-host-status.service';
 import { HumanInboxService } from './services/human-inbox.service';
 import { ConnectHostCommand } from './usecases/connect-host/connect-host.command';
@@ -137,6 +138,7 @@ export class HumanConnectPublicController {
   @Post('/')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Connect a host to an agent with a one-time code from agentinbox.md' })
+  @OptionalHeaders(AGENT_INBOX_HOST_HEADER)
   connect(
     @Body() body: ConnectHostRequestDto,
     @Req() request: Request,

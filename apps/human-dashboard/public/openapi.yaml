@@ -30,7 +30,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HumanAgentResponseDto'
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/HumanAgentResponseDto'
       security:
         - ApiKey: []
         - Keyless: []
@@ -58,7 +63,31 @@ paths:
             type: string
       responses:
         '200':
-          description: ''
+          description: The agent picture.
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Type:
+              $ref: '#/components/headers/Content-Type'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            RateLimit-Policy:
+              $ref: '#/components/headers/RateLimit-Policy'
+            Idempotency-Key:
+              $ref: '#/components/headers/Idempotency-Key'
+            Idempotency-Replay:
+              $ref: '#/components/headers/Idempotency-Replay'
       summary: Read an agent picture
       tags:
         - HumanAgentPicturesPublic
@@ -94,7 +123,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HumanAgentResponseDto'
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/HumanAgentResponseDto'
       security:
         - ApiKey: []
       summary: Set the relay agent picture
@@ -187,9 +221,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/ListAgentIntegrationsResponseDto'
+                $ref: '#/components/schemas/ListAgentIntegrationsResponseDto'
         '400':
           description: Bad Request
           headers:
@@ -465,8 +497,9 @@ paths:
       operationId: AgentIntegrationsController_addAgentIntegration
       parameters:
         - name: Novu-Analytics-Source
-          required: true
+          required: false
           in: header
+          description: 'Where the call came from: `cli`, `mcp`, or `dashboard`.'
           schema:
             type: string
         - name: agentIdentifier
@@ -814,9 +847,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/IntegrationResponseDto'
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IntegrationResponseDto'
         '400':
           description: Bad Request
           headers:
@@ -2491,9 +2529,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/ListChannelEndpointsResponseDto'
+                $ref: '#/components/schemas/ListChannelEndpointsResponseDto'
         '400':
           description: Bad Request
           headers:
@@ -4626,8 +4662,9 @@ paths:
       operationId: HumanConnectPublicController_connect
       parameters:
         - name: agent-inbox-host
-          required: true
+          required: false
           in: header
+          description: Which host sent the call, such as `claude-code`. Absent when the caller is not a host.
           schema:
             type: string
       requestBody:
@@ -4642,7 +4679,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectHostResponseDto'
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ConnectHostResponseDto'
         '400':
           description: Bad Request
           headers:
@@ -4970,8 +5012,9 @@ paths:
       operationId: HumanInteractionsController_createInvite
       parameters:
         - name: Novu-Analytics-Source
-          required: true
+          required: false
           in: header
+          description: 'Where the call came from: `cli`, `mcp`, or `dashboard`.'
           schema:
             type: string
         - name: Novu-Application-Identifier
@@ -4992,7 +5035,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateHumanInviteResponseDto'
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CreateHumanInviteResponseDto'
       security:
         - ApiKey: []
         - Keyless: []
@@ -5021,7 +5069,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RequestAddressVerificationResponseDto'
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RequestAddressVerificationResponseDto'
       security:
         - ApiKey: []
         - Keyless: []
@@ -5038,8 +5091,9 @@ paths:
           schema:
             type: string
         - name: agentIdentifier
-          required: true
+          required: false
           in: query
+          description: Relay agent whose channels are reported. Defaults to `human-relay`.
           schema:
             type: string
         - name: Novu-Application-Identifier
@@ -5050,11 +5104,28 @@ paths:
             type: string
       responses:
         '200':
-          description: ''
+          description: OK
+          headers:
+            Content-Type:
+              $ref: '#/components/headers/Content-Type'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            RateLimit-Policy:
+              $ref: '#/components/headers/RateLimit-Policy'
+            Idempotency-Key:
+              $ref: '#/components/headers/Idempotency-Key'
+            Idempotency-Replay:
+              $ref: '#/components/headers/Idempotency-Replay'
           content:
             application/json:
               schema:
-                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GetContactResponseDto'
       security:
         - ApiKey: []
         - Keyless: []
@@ -5150,18 +5221,21 @@ paths:
             minimum: 0
             type: number
         - name: agent-inbox-via
-          required: true
+          required: false
           in: header
+          description: 'Which way a host came in: `cli` or `mcp`. Absent for the dashboard.'
           schema:
             type: string
         - name: agent-inbox-host
-          required: true
+          required: false
           in: header
+          description: Which host sent the call, such as `claude-code`. Absent when the caller is not a host.
           schema:
             type: string
         - name: Novu-Analytics-Source
-          required: true
+          required: false
           in: header
+          description: 'Where the call came from: `cli`, `mcp`, or `dashboard`.'
           schema:
             type: string
         - name: Novu-Application-Identifier
@@ -5172,11 +5246,26 @@ paths:
             type: string
       responses:
         '200':
-          description: ''
+          description: OK
+          headers:
+            Content-Type:
+              $ref: '#/components/headers/Content-Type'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            RateLimit-Policy:
+              $ref: '#/components/headers/RateLimit-Policy'
+            Idempotency-Key:
+              $ref: '#/components/headers/Idempotency-Key'
+            Idempotency-Replay:
+              $ref: '#/components/headers/Idempotency-Replay'
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/ListInboxResponseDto'
       security:
         - ApiKey: []
         - Keyless: []
@@ -5213,7 +5302,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CheckInboxAddressResponseDto'
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CheckInboxAddressResponseDto'
       security:
         - ApiKey: []
         - Keyless: []
@@ -5225,8 +5319,9 @@ paths:
       operationId: HumanInteractionsController_createInteraction
       parameters:
         - name: Novu-Analytics-Source
-          required: true
+          required: false
           in: header
+          description: 'Where the call came from: `cli`, `mcp`, or `dashboard`.'
           schema:
             type: string
         - name: Novu-Application-Identifier
@@ -5247,7 +5342,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InteractionResponseDto'
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InteractionResponseDto'
       security:
         - ApiKey: []
         - Keyless: []
@@ -5275,7 +5375,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InteractionResponseDto'
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InteractionResponseDto'
       security:
         - ApiKey: []
         - Keyless: []
@@ -5328,18 +5433,21 @@ paths:
           schema:
             type: string
         - name: agent-inbox-via
-          required: true
+          required: false
           in: header
+          description: 'Which way a host came in: `cli` or `mcp`. Absent for the dashboard.'
           schema:
             type: string
         - name: agent-inbox-host
-          required: true
+          required: false
           in: header
+          description: Which host sent the call, such as `claude-code`. Absent when the caller is not a host.
           schema:
             type: string
         - name: Novu-Analytics-Source
-          required: true
+          required: false
           in: header
+          description: 'Where the call came from: `cli`, `mcp`, or `dashboard`.'
           schema:
             type: string
         - name: Novu-Application-Identifier
@@ -5350,11 +5458,28 @@ paths:
             type: string
       responses:
         '200':
-          description: ''
+          description: OK
+          headers:
+            Content-Type:
+              $ref: '#/components/headers/Content-Type'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            RateLimit-Policy:
+              $ref: '#/components/headers/RateLimit-Policy'
+            Idempotency-Key:
+              $ref: '#/components/headers/Idempotency-Key'
+            Idempotency-Replay:
+              $ref: '#/components/headers/Idempotency-Replay'
           content:
             application/json:
               schema:
-                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GetInboxThreadResponseDto'
       security:
         - ApiKey: []
         - Keyless: []
@@ -5384,11 +5509,28 @@ paths:
             type: string
       responses:
         '200':
-          description: ''
+          description: OK
+          headers:
+            Content-Type:
+              $ref: '#/components/headers/Content-Type'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            RateLimit-Policy:
+              $ref: '#/components/headers/RateLimit-Policy'
+            Idempotency-Key:
+              $ref: '#/components/headers/Idempotency-Key'
+            Idempotency-Replay:
+              $ref: '#/components/headers/Idempotency-Replay'
           content:
             application/json:
               schema:
-                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InboxThreadDto'
       security:
         - ApiKey: []
         - Keyless: []
@@ -5418,11 +5560,28 @@ paths:
             type: string
       responses:
         '200':
-          description: ''
+          description: OK
+          headers:
+            Content-Type:
+              $ref: '#/components/headers/Content-Type'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            RateLimit-Policy:
+              $ref: '#/components/headers/RateLimit-Policy'
+            Idempotency-Key:
+              $ref: '#/components/headers/Idempotency-Key'
+            Idempotency-Replay:
+              $ref: '#/components/headers/Idempotency-Replay'
           content:
             application/json:
               schema:
-                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InboxThreadDto'
       security:
         - ApiKey: []
         - Keyless: []
@@ -5446,6 +5605,11 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
         '400':
           description: Bad Request
           headers:
@@ -6298,6 +6462,11 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
         '400':
           description: Bad Request
           headers:
@@ -6883,11 +7052,28 @@ paths:
             type: string
       responses:
         '200':
-          description: ''
+          description: OK
+          headers:
+            Content-Type:
+              $ref: '#/components/headers/Content-Type'
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimit-Limit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimit-Remaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimit-Reset'
+            RateLimit-Policy:
+              $ref: '#/components/headers/RateLimit-Policy'
+            Idempotency-Key:
+              $ref: '#/components/headers/Idempotency-Key'
+            Idempotency-Replay:
+              $ref: '#/components/headers/Idempotency-Replay'
           content:
             application/json:
               schema:
-                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/KeylessClaimTokenResponseDto'
       security:
         - ApiKey: []
         - Keyless: []
@@ -7212,7 +7398,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HumanOperatorResponseDto'
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/HumanOperatorResponseDto'
       security:
         - ApiKey: []
         - Keyless: []
@@ -7224,18 +7415,21 @@ paths:
       operationId: HumanInteractionsController_setup
       parameters:
         - name: Novu-Analytics-Source
-          required: true
+          required: false
           in: header
+          description: 'Where the call came from: `cli`, `mcp`, or `dashboard`.'
           schema:
             type: string
         - name: agent-inbox-via
-          required: true
+          required: false
           in: header
+          description: 'Which way a host came in: `cli` or `mcp`. Absent for the dashboard.'
           schema:
             type: string
         - name: agent-inbox-host
-          required: true
+          required: false
           in: header
+          description: Which host sent the call, such as `claude-code`. Absent when the caller is not a host.
           schema:
             type: string
         - name: Novu-Application-Identifier
@@ -7256,7 +7450,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SetupHumanRelayResponseDto'
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SetupHumanRelayResponseDto'
       security:
         - ApiKey: []
         - Keyless: []
@@ -7284,7 +7483,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SubscriberSessionResponseDto'
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SubscriberSessionResponseDto'
         '400':
           description: Bad Request
           headers:
@@ -7570,7 +7774,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VerifyAddressResponseDto'
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/VerifyAddressResponseDto'
         '400':
           description: Bad Request
           headers:
@@ -8276,7 +8485,7 @@ components:
           nullable: true
           description: JSONLogic used at send time to select this integration. Takes precedence over `conditions`.
           example:
-            ==:
+            '==':
               - var: context.tenant.id
               - acme
         configurations:
@@ -8885,6 +9094,94 @@ components:
         - endpoint
         - createdAt
         - updatedAt
+    GetContactChannelDto:
+      type: object
+      properties:
+        via:
+          type: string
+          enum:
+            - telegram
+            - slack
+            - email
+        status:
+          type: string
+          enum:
+            - unverified
+            - pending
+            - verified
+        address:
+          type: string
+          description: Masked address for address-based channels, such as `a***@b.com`.
+        verifiedAt:
+          type: string
+        verifiedRequestedAt:
+          type: string
+          description: '`requestedAt` of the request that produced the verified slot. Lets a caller match its own request.'
+        requestedAt:
+          type: string
+          description: Set while a newer request is pending (the pending slot’s `requestedAt`).
+        handle:
+          type: string
+          description: >-
+            How the contact shows on a connected chat app: `@username` on Telegram (else their name), their name on
+            Slack.
+        workspace:
+          type: string
+          description: The Slack workspace the contact is in, such as `acme.slack.com`.
+      required:
+        - via
+        - status
+    GetContactResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The contact’s subscriberId.
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+          description: Free-form custom data on the subscriber.
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetContactChannelDto'
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - channels
+    GetInboxThreadResponseDto:
+      type: object
+      properties:
+        thread:
+          $ref: '#/components/schemas/InboxThreadDto'
+        messages:
+          description: Oldest first.
+          type: array
+          items:
+            $ref: '#/components/schemas/InboxMessageDto'
+        hasMore:
+          type: boolean
+          description: 'More messages lie past this page: older ones, or with `after`, newer ones.'
+        details:
+          $ref: '#/components/schemas/InboxThreadDetailsDto'
+      required:
+        - thread
+        - messages
+        - hasMore
+        - details
     GrafanaOnCallIntegrationEndpointDto:
       type: object
       properties:
@@ -9117,17 +9414,34 @@ components:
           type: string
           description: Deny button label. Defaults to Deny.
         extraActions:
-          description: Extra approve buttons after Approve / Deny (max 4). Do not invent trust-tool or trust-server.
           type: array
+          description: >-
+            Extra approve buttons after Approve / Deny (max 4). Each item is a label, or `{ id, label }` for a stable
+            id. Do not invent trust-tool or trust-server.
           items:
-            type: string
+            oneOf:
+              - type: string
+              - $ref: '#/components/schemas/HumanInteractionOptionDto'
         options:
-          description: Choose options (2–10). String label or `{ id, label }`.
           type: array
+          description: Choose options (2–10). Each item is a label, or `{ id, label }` for a stable id.
           items:
-            type: string
+            oneOf:
+              - type: string
+              - $ref: '#/components/schemas/HumanInteractionOptionDto'
       required:
         - title
+    HumanInteractionOptionDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Stable action id. A string option mints one instead.
+        label:
+          type: string
+      required:
+        - id
+        - label
     HumanInviteChannelDto:
       type: object
       properties:
@@ -9194,6 +9508,388 @@ components:
         subscriberId:
           type: string
           description: subscriberId of the account owner’s contact. Missing before any setup.
+    InboxAttachmentDto:
+      type: object
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: number
+          description: In bytes.
+    InboxCardChoiceDto:
+      type: object
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+      required:
+        - id
+        - label
+    InboxCardDto:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        title:
+          type: string
+        subtitle:
+          type: string
+        body:
+          type: string
+        icon:
+          type: string
+        requestedBy:
+          type: string
+          description: The `--from` attribution, when the host gave one.
+        buttons:
+          description: '`approve`: the buttons, in the order they are shown.'
+          type: array
+          items:
+            $ref: '#/components/schemas/InboxCardChoiceDto'
+        options:
+          description: '`choose`: the options.'
+          type: array
+          items:
+            $ref: '#/components/schemas/InboxCardChoiceDto'
+        presentation:
+          $ref: '#/components/schemas/InboxCardPresentationDto'
+        state:
+          $ref: '#/components/schemas/InboxCardStateDto'
+        expiresAt:
+          type: string
+      required:
+        - id
+        - kind
+        - title
+        - presentation
+        - state
+        - expiresAt
+    InboxCardPresentationDto:
+      type: object
+      properties:
+        channel:
+          type: string
+        style:
+          type: string
+          enum:
+            - buttons
+            - reply
+            - card
+            - text
+        label:
+          type: string
+          description: 'How the channel shows the card: "Telegram buttons", "Slack reply", "Slack blocks".'
+      required:
+        - channel
+        - style
+        - label
+    InboxCardResponderDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      required:
+        - name
+    InboxCardStateDto:
+      type: object
+      properties:
+        status:
+          type: string
+        label:
+          type: string
+          description: 'Ready to show, without the time: "waiting for Maya", "Approved by Omer in Slack", "no reply needed".'
+        waitingOn:
+          description: 'Set while the card waits: who may answer. Empty when anyone in the thread may.'
+          type: array
+          items:
+            $ref: '#/components/schemas/InboxPersonDto'
+        respondedBy:
+          description: Set once a person settled the card.
+          allOf:
+            - $ref: '#/components/schemas/InboxCardResponderDto'
+        respondedAt:
+          type: string
+        optionId:
+          type: string
+          description: The picked option or pressed button.
+        optionLabel:
+          type: string
+        text:
+          type: string
+          description: The reply to an `ask`.
+      required:
+        - status
+        - label
+    InboxLastMessageDto:
+      type: object
+      properties:
+        text:
+          type: string
+        at:
+          type: string
+        from:
+          type: string
+          enum:
+            - human
+            - agent
+            - system
+      required:
+        - text
+        - at
+        - from
+    InboxMessageDto:
+      type: object
+      properties:
+        id:
+          type: string
+        from:
+          type: string
+          enum:
+            - human
+            - agent
+            - system
+        direction:
+          type: string
+          enum:
+            - in
+            - out
+          description: '`in` from a person, `out` from the agent. Absent on a system line.'
+        senderKind:
+          type: string
+          enum:
+            - contact
+            - stranger
+          description: Set on messages from a human.
+        senderName:
+          type: string
+        sender:
+          description: Who sent it, with the agent's name on its own messages. Absent on a system line.
+          allOf:
+            - $ref: '#/components/schemas/InboxMessageSenderDto'
+        channel:
+          type: string
+        text:
+          type: string
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/InboxAttachmentDto'
+        interaction:
+          $ref: '#/components/schemas/InboxMessageInteractionDto'
+        card:
+          description: Set on the one row a `tell`, `ask`, `approve` or `choose` has in the thread.
+          allOf:
+            - $ref: '#/components/schemas/InboxCardDto'
+        at:
+          type: string
+      required:
+        - id
+        - from
+        - channel
+        - text
+        - at
+    InboxMessageInteractionDto:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        status:
+          type: string
+      required:
+        - id
+        - kind
+    InboxMessageSenderDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        kind:
+          type: string
+          enum:
+            - contact
+            - stranger
+            - agent
+      required:
+        - kind
+    InboxPersonDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The contact's subscriberId. A stranger has no subscriber, so theirs is the channel's own id for them.
+        name:
+          type: string
+        kind:
+          type: string
+          enum:
+            - contact
+            - stranger
+      required:
+        - id
+        - kind
+    InboxThreadAgentDto:
+      type: object
+      properties:
+        identifier:
+          type: string
+        name:
+          type: string
+      required:
+        - identifier
+        - name
+    InboxThreadContactDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The contact's subscriberId. A stranger has no subscriber, so theirs is the channel's own id for them.
+        name:
+          type: string
+        kind:
+          type: string
+          enum:
+            - contact
+            - stranger
+        verified:
+          type: boolean
+      required:
+        - id
+        - kind
+        - verified
+    InboxThreadDetailsDto:
+      type: object
+      properties:
+        threadId:
+          type: string
+        channel:
+          type: string
+        contact:
+          nullable: true
+          description: The first contact in the thread, or its first stranger when it has no contact.
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/InboxThreadContactDto'
+        status:
+          type: string
+          enum:
+            - unread
+            - waiting_on_person
+            - waiting_on_you
+            - open
+            - resolved
+        openedAt:
+          type: string
+        lastReadAt:
+          type: string
+          nullable: true
+        agent:
+          description: 'The agent whose inbox this is: who "read by" refers to.'
+          allOf:
+            - $ref: '#/components/schemas/InboxThreadAgentDto'
+        messageCount:
+          type: number
+      required:
+        - threadId
+        - channel
+        - contact
+        - status
+        - openedAt
+        - lastReadAt
+        - agent
+        - messageCount
+    InboxThreadDto:
+      type: object
+      properties:
+        id:
+          type: string
+        channel:
+          type: string
+        kind:
+          type: string
+          enum:
+            - contact
+            - stranger
+          description: '`contact` once at least one contact is in the thread.'
+        people:
+          type: array
+          items:
+            $ref: '#/components/schemas/InboxPersonDto'
+        status:
+          type: string
+          enum:
+            - open
+            - resolved
+        state:
+          type: string
+          enum:
+            - unread
+            - waiting_on_person
+            - waiting_on_you
+            - open
+            - resolved
+          description: 'Where an open thread stands: unread, waiting on a person, waiting on the agent, open, or resolved.'
+        waitingOn:
+          description: 'Set while `state` is `waiting_on_person`: who may answer the oldest open question. Empty when anyone may.'
+          type: array
+          items:
+            $ref: '#/components/schemas/InboxPersonDto'
+        from:
+          type: string
+          description: 'Who the thread is with: the names of its people, or their ids where a name is unknown.'
+        subject:
+          type: string
+        preview:
+          type: string
+          description: The newest message, shortened.
+        unreadCount:
+          type: number
+        lastMessage:
+          nullable: true
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/InboxLastMessageDto'
+        fromAddress:
+          type: string
+          description: The address on the other side of an email thread. Missing for chat.
+        isDirectMessage:
+          type: boolean
+        openedAt:
+          type: string
+        lastReadAt:
+          type: string
+          nullable: true
+          description: When the agent last read the thread, or null if it never did.
+        lastActivityAt:
+          type: string
+      required:
+        - id
+        - channel
+        - kind
+        - people
+        - status
+        - state
+        - from
+        - subject
+        - preview
+        - unreadCount
+        - lastMessage
+        - isDirectMessage
+        - openedAt
+        - lastReadAt
+        - lastActivityAt
     IntegrationResponseDto:
       type: object
       properties:
@@ -9281,7 +9977,7 @@ components:
           additionalProperties: true
           nullable: true
           example:
-            ==:
+            '==':
               - var: context.tenant.id
               - acme
       required:
@@ -9421,6 +10117,14 @@ components:
         - token
         - url
         - expiresAt
+    KeylessClaimTokenResponseDto:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Hand this to `human login` so signing in moves the setup into the operator’s account.
+      required:
+        - token
     LineUserEndpointDto:
       type: object
       properties:
@@ -9558,7 +10262,21 @@ components:
           items:
             $ref: '#/components/schemas/HumanContactDto'
         next:
-          type: object
+          type: string
+          nullable: true
+          description: Cursor for the next page, or null when this is the last page.
+      required:
+        - data
+        - next
+    ListInboxResponseDto:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/InboxThreadDto'
+        next:
+          type: string
           nullable: true
           description: Cursor for the next page, or null when this is the last page.
       required:
@@ -10377,6 +11095,57 @@ components:
                 end: 05:00 PM
           allOf:
             - $ref: '#/components/schemas/DayScheduleDto'
+  headers:
+    Content-Type:
+      required: true
+      description: The MIME type of the response body.
+      schema:
+        type: string
+      example: application/json
+    Idempotency-Key:
+      required: false
+      description: The idempotency key used to evaluate the request.
+      schema:
+        type: string
+      example: '8'
+    Idempotency-Replay:
+      required: false
+      description: Whether the request was a replay of a previous request.
+      schema:
+        type: string
+      example: 'true'
+    RateLimit-Limit:
+      required: false
+      description: >-
+        The number of requests that the client is permitted to make per second. The actual maximum may differ when burst
+        is enabled.
+      schema:
+        type: string
+      example: '100'
+    RateLimit-Policy:
+      required: false
+      description: The rate limit policy that was used to evaluate the request.
+      schema:
+        type: string
+      example: 100;w=1;burst=110;comment="token bucket";category="trigger";cost="single"
+    RateLimit-Remaining:
+      required: false
+      description: The number of requests remaining until the next window.
+      schema:
+        type: string
+      example: '93'
+    RateLimit-Reset:
+      required: false
+      description: The remaining seconds until a request of the same cost will be refreshed.
+      schema:
+        type: string
+      example: '8'
+    Retry-After:
+      required: false
+      description: The number of seconds after which the client may retry the request that was previously rejected.
+      schema:
+        type: string
+      example: '8'
   securitySchemes:
     ApiKey:
       type: apiKey

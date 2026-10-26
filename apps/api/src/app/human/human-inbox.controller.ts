@@ -17,19 +17,21 @@ import { ApiRateLimitCategoryEnum, NOVU_ANALYTICS_SOURCE_HEADER, PermissionsEnum
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
+import { ApiResponse } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { UserSession } from '../shared/framework/user.decorator';
 import {
   GetInboxThreadQueryDto,
-  type GetInboxThreadResponseDto,
+  GetInboxThreadResponseDto,
   type InboxCountsResponseDto,
   InboxThreadActionQueryDto,
-  type InboxThreadDto,
+  InboxThreadDto,
   InboxViewQueryDto,
   ListInboxQueryDto,
-  type ListInboxResponseDto,
+  ListInboxResponseDto,
 } from './dtos/human-inbox.dto';
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
+import { OptionalHeaders } from './optional-headers.decorator';
 import { readAnalyticsSource } from './services/agent-inbox-analytics';
 import {
   AGENT_INBOX_HOST_HEADER,
@@ -67,6 +69,8 @@ export class HumanInboxController {
 
   @Get('/')
   @ApiOperation({ summary: 'List the threads in an inbox' })
+  @OptionalHeaders(AGENT_INBOX_VIA_HEADER, AGENT_INBOX_HOST_HEADER, NOVU_ANALYTICS_SOURCE_HEADER)
+  @ApiResponse(ListInboxResponseDto)
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
@@ -126,6 +130,8 @@ export class HumanInboxController {
 
   @Get('/:identifier')
   @ApiOperation({ summary: 'Read one inbox thread and its messages' })
+  @OptionalHeaders(AGENT_INBOX_VIA_HEADER, AGENT_INBOX_HOST_HEADER, NOVU_ANALYTICS_SOURCE_HEADER)
+  @ApiResponse(GetInboxThreadResponseDto)
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
@@ -159,6 +165,7 @@ export class HumanInboxController {
   @Post('/:identifier/read')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Mark an inbox thread as read' })
+  @ApiResponse(InboxThreadDto)
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
@@ -174,6 +181,7 @@ export class HumanInboxController {
   @Post('/:identifier/resolve')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Resolve an inbox thread' })
+  @ApiResponse(InboxThreadDto)
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)

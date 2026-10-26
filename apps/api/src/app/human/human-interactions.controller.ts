@@ -20,7 +20,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiExcludeController, ApiOperation } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiExcludeController, ApiExtraModels, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import {
   ApiAuthSchemeEnum,
@@ -33,10 +33,12 @@ import { AgentInboxAddressService } from '../agents/email/novu-email/agent-inbox
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
+import { ApiResponse } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { UserSession } from '../shared/framework/user.decorator';
 import { isResolvedKeylessAuthScheme } from '../shared/utils/auth.utils';
-import { CreateInteractionRequestDto } from './dtos/create-interaction-request.dto';
+import { CreateInteractionRequestDto, HumanInteractionOptionDto } from './dtos/create-interaction-request.dto';
+import { GetContactResponseDto } from './dtos/get-contact-response.dto';
 import {
   CheckInboxAddressQueryDto,
   type CheckInboxAddressResponseDto,
@@ -58,7 +60,7 @@ import {
   SetOperatorDefaultChannelResponseDto,
 } from './dtos/human-operator-contact.dto';
 import { InteractionResponseDto } from './dtos/interaction-response.dto';
-import type { KeylessClaimTokenResponseDto } from './dtos/keyless-claim-token.dto';
+import { KeylessClaimTokenResponseDto } from './dtos/keyless-claim-token.dto';
 import { ListContactsQueryDto, ListContactsResponseDto, RemoveContactResponseDto } from './dtos/list-contacts.dto';
 import { ListInteractionsQueryDto } from './dtos/list-interactions-query.dto';
 import {
@@ -68,6 +70,7 @@ import {
 } from './dtos/setup-human-relay.dto';
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
 import { assertFromHumanDashboard } from './guards/human-dashboard-secret.guard';
+import { OptionalHeaders } from './optional-headers.decorator';
 import { readAnalyticsSource } from './services/agent-inbox-analytics';
 import {
   AGENT_PICTURE_FIELD,
@@ -93,7 +96,7 @@ import { CreateInteraction } from './usecases/create-interaction/create-interact
 import { DeleteHumanAgentCommand } from './usecases/delete-human-agent/delete-human-agent.command';
 import { DeleteHumanAgent } from './usecases/delete-human-agent/delete-human-agent.usecase';
 import { GetContactCommand } from './usecases/get-contact/get-contact.command';
-import { GetContact, type GetContactResult } from './usecases/get-contact/get-contact.usecase';
+import { GetContact } from './usecases/get-contact/get-contact.usecase';
 import { GetInteractionCommand } from './usecases/get-interaction/get-interaction.command';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { GetKeylessClaimTokenCommand } from './usecases/get-keyless-claim-token/get-keyless-claim-token.command';
@@ -149,6 +152,8 @@ export class HumanInteractionsController {
 
   @Post('/interactions')
   @ApiOperation({ summary: 'Send a message into the inbox' })
+  @ApiExtraModels(HumanInteractionOptionDto)
+  @OptionalHeaders(NOVU_ANALYTICS_SOURCE_HEADER)
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
@@ -293,6 +298,12 @@ export class HumanInteractionsController {
 
   @Get('/contacts/:subscriberId')
   @ApiOperation({ summary: 'Read one contact' })
+  @ApiQuery({
+    name: 'agentIdentifier',
+    required: false,
+    description: 'Relay agent whose channels are reported. Defaults to `human-relay`.',
+  })
+  @ApiResponse(GetContactResponseDto)
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
@@ -300,7 +311,7 @@ export class HumanInteractionsController {
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Query('agentIdentifier') agentIdentifier?: string
-  ): Promise<GetContactResult> {
+  ): Promise<GetContactResponseDto> {
     return this.getContactUsecase.execute(
       GetContactCommand.create({
         environmentId: user.environmentId,
@@ -354,6 +365,7 @@ export class HumanInteractionsController {
   @Post('/setup')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Create the relay agent and its inbox' })
+  @OptionalHeaders(NOVU_ANALYTICS_SOURCE_HEADER, AGENT_INBOX_VIA_HEADER, AGENT_INBOX_HOST_HEADER)
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
@@ -618,6 +630,7 @@ export class HumanInteractionsController {
   @Post('/claim-token')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Read the keyless claim token' })
+  @ApiResponse(KeylessClaimTokenResponseDto)
   @KeylessAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   createClaimToken(@UserSession() user: UserSessionData): Promise<KeylessClaimTokenResponseDto> {
@@ -632,6 +645,7 @@ export class HumanInteractionsController {
 
   @Post('/invites')
   @ApiOperation({ summary: 'Invite a contact to the inbox' })
+  @OptionalHeaders(NOVU_ANALYTICS_SOURCE_HEADER)
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)

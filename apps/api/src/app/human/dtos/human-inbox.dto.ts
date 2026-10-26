@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
@@ -163,130 +163,350 @@ export type InboxThreadStatus = 'open' | 'resolved';
  */
 export type InboxThreadState = 'unread' | 'waiting_on_person' | 'waiting_on_you' | 'open' | 'resolved';
 
-export interface InboxPersonDto {
-  /** The contact's subscriberId. A stranger has no subscriber, so theirs is the channel's own id for them. */
+export class InboxPersonDto {
+  @ApiProperty({
+    description:
+      "The contact's subscriberId. A stranger has no subscriber, so theirs is the channel's own id for them.",
+  })
   id: string;
+
+  @ApiPropertyOptional()
   name?: string;
+
+  @ApiProperty({ enum: ['contact', 'stranger'] })
   kind: InboxPersonKind;
 }
 
-export interface InboxThreadDto {
+export class InboxLastMessageDto {
+  @ApiProperty()
+  text: string;
+
+  @ApiProperty()
+  at: string;
+
+  @ApiProperty({ enum: ['human', 'agent', 'system'] })
+  from: InboxSender;
+}
+
+export class InboxThreadDto {
+  @ApiProperty()
   id: string;
+
+  @ApiProperty()
   channel: string;
-  /** `contact` once at least one contact is in the thread. */
+
+  @ApiProperty({ enum: ['contact', 'stranger'], description: '`contact` once at least one contact is in the thread.' })
   kind: InboxPersonKind;
+
+  @ApiProperty({ type: [InboxPersonDto] })
   people: InboxPersonDto[];
+
+  @ApiProperty({ enum: ['open', 'resolved'] })
   status: InboxThreadStatus;
+
+  @ApiProperty({
+    enum: ['unread', 'waiting_on_person', 'waiting_on_you', 'open', 'resolved'],
+    description: 'Where an open thread stands: unread, waiting on a person, waiting on the agent, open, or resolved.',
+  })
   state: InboxThreadState;
-  /** Set while `state` is `waiting_on_person`: who may answer the oldest open question. Empty when anyone may. */
+
+  @ApiPropertyOptional({
+    type: [InboxPersonDto],
+    description:
+      'Set while `state` is `waiting_on_person`: who may answer the oldest open question. Empty when anyone may.',
+  })
   waitingOn?: InboxPersonDto[];
-  /** Who the thread is with: the names of its people, or their ids where a name is unknown. */
+
+  @ApiProperty({
+    description: 'Who the thread is with: the names of its people, or their ids where a name is unknown.',
+  })
   from: string;
+
+  @ApiProperty()
   subject: string;
-  /** The newest message, shortened. */
+
+  @ApiProperty({ description: 'The newest message, shortened.' })
   preview: string;
+
+  @ApiProperty()
   unreadCount: number;
-  lastMessage: { text: string; at: string; from: InboxSender } | null;
-  /** The address on the other side of an email thread. Missing for chat. */
+
+  @ApiProperty({ type: InboxLastMessageDto, nullable: true })
+  lastMessage: InboxLastMessageDto | null;
+
+  @ApiPropertyOptional({ description: 'The address on the other side of an email thread. Missing for chat.' })
   fromAddress?: string;
+
+  @ApiProperty()
   isDirectMessage: boolean;
+
+  @ApiProperty()
   openedAt: string;
-  /** When the agent last read the thread, or null if it never did. */
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'When the agent last read the thread, or null if it never did.',
+  })
   lastReadAt: string | null;
+
+  @ApiProperty()
   lastActivityAt: string;
 }
 
-export interface InboxAttachmentDto {
+export class InboxAttachmentDto {
+  @ApiPropertyOptional()
   type?: string;
+
+  @ApiPropertyOptional()
   name?: string;
+
+  @ApiPropertyOptional()
   mimeType?: string;
-  /** In bytes. */
+
+  @ApiPropertyOptional({ description: 'In bytes.' })
   size?: number;
 }
 
 /** `card` is a card without controls: Block Kit blocks on Slack. `text` is a plain message. */
 export type InboxCardPresentationStyle = 'buttons' | 'reply' | 'card' | 'text';
 
-export interface InboxCardStateDto {
+export class InboxCardResponderDto {
+  @ApiPropertyOptional()
+  id?: string;
+
+  @ApiProperty()
+  name: string;
+}
+
+export class InboxCardStateDto {
+  @ApiProperty()
   status: string;
-  /** Ready to show, without the time: "waiting for Maya", "Approved by Omer in Slack", "no reply needed". */
+
+  @ApiProperty({
+    description: 'Ready to show, without the time: "waiting for Maya", "Approved by Omer in Slack", "no reply needed".',
+  })
   label: string;
-  /** Set while the card waits: who may answer. Empty when anyone in the thread may. */
+
+  @ApiPropertyOptional({
+    type: [InboxPersonDto],
+    description: 'Set while the card waits: who may answer. Empty when anyone in the thread may.',
+  })
   waitingOn?: InboxPersonDto[];
-  /** Set once a person settled the card. */
-  respondedBy?: { id?: string; name: string };
+
+  @ApiPropertyOptional({ type: InboxCardResponderDto, description: 'Set once a person settled the card.' })
+  respondedBy?: InboxCardResponderDto;
+
+  @ApiPropertyOptional()
   respondedAt?: string;
-  /** The picked option or pressed button. */
+
+  @ApiPropertyOptional({ description: 'The picked option or pressed button.' })
   optionId?: string;
+
+  @ApiPropertyOptional()
   optionLabel?: string;
-  /** The reply to an `ask`. */
+
+  @ApiPropertyOptional({ description: 'The reply to an `ask`.' })
   text?: string;
 }
 
-/** A `tell`, `ask`, `approve` or `choose` as it was sent, and what became of it. */
-export interface InboxCardDto {
+export class InboxCardChoiceDto {
+  @ApiProperty()
   id: string;
+
+  @ApiProperty()
+  label: string;
+}
+
+export class InboxCardPresentationDto {
+  @ApiProperty()
+  channel: string;
+
+  @ApiProperty({ enum: ['buttons', 'reply', 'card', 'text'] })
+  style: InboxCardPresentationStyle;
+
+  @ApiProperty({ description: 'How the channel shows the card: "Telegram buttons", "Slack reply", "Slack blocks".' })
+  label: string;
+}
+
+/** A `tell`, `ask`, `approve` or `choose` as it was sent, and what became of it. */
+export class InboxCardDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
   kind: string;
+
+  @ApiProperty()
   title: string;
+
+  @ApiPropertyOptional()
   subtitle?: string;
+
+  @ApiPropertyOptional()
   body?: string;
+
+  @ApiPropertyOptional()
   icon?: string;
-  /** The `--from` attribution, when the host gave one. */
+
+  @ApiPropertyOptional({ description: 'The `--from` attribution, when the host gave one.' })
   requestedBy?: string;
-  /** `approve`: the buttons, in the order they are shown. */
-  buttons?: Array<{ id: string; label: string }>;
-  /** `choose`: the options. */
-  options?: Array<{ id: string; label: string }>;
-  /** How the channel shows the card: "Telegram buttons", "Slack reply", "Slack blocks". */
-  presentation: { channel: string; style: InboxCardPresentationStyle; label: string };
+
+  @ApiPropertyOptional({
+    type: [InboxCardChoiceDto],
+    description: '`approve`: the buttons, in the order they are shown.',
+  })
+  buttons?: InboxCardChoiceDto[];
+
+  @ApiPropertyOptional({ type: [InboxCardChoiceDto], description: '`choose`: the options.' })
+  options?: InboxCardChoiceDto[];
+
+  @ApiProperty({ type: InboxCardPresentationDto })
+  presentation: InboxCardPresentationDto;
+
+  @ApiProperty({ type: InboxCardStateDto })
   state: InboxCardStateDto;
+
+  @ApiProperty()
   expiresAt: string;
 }
 
-export interface InboxMessageDto {
+export class InboxMessageSenderDto {
+  @ApiPropertyOptional()
+  id?: string;
+
+  @ApiPropertyOptional()
+  name?: string;
+
+  @ApiProperty({ enum: ['contact', 'stranger', 'agent'] })
+  kind: InboxPersonKind | 'agent';
+}
+
+export class InboxMessageInteractionDto {
+  @ApiProperty()
   id: string;
+
+  @ApiProperty()
+  kind: string;
+
+  @ApiPropertyOptional()
+  status?: string;
+}
+
+export class InboxMessageDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty({ enum: ['human', 'agent', 'system'] })
   from: InboxSender;
-  /** `in` from a person, `out` from the agent. Absent on a system line. */
+
+  @ApiPropertyOptional({
+    enum: ['in', 'out'],
+    description: '`in` from a person, `out` from the agent. Absent on a system line.',
+  })
   direction?: 'in' | 'out';
-  /** Set on messages from a human. */
+
+  @ApiPropertyOptional({ enum: ['contact', 'stranger'], description: 'Set on messages from a human.' })
   senderKind?: InboxPersonKind;
+
+  @ApiPropertyOptional()
   senderName?: string;
-  /** Who sent it, with the agent's name on its own messages. Absent on a system line. */
-  sender?: { id?: string; name?: string; kind: InboxPersonKind | 'agent' };
+
+  @ApiPropertyOptional({
+    type: InboxMessageSenderDto,
+    description: "Who sent it, with the agent's name on its own messages. Absent on a system line.",
+  })
+  sender?: InboxMessageSenderDto;
+
+  @ApiProperty()
   channel: string;
+
+  @ApiProperty()
   text: string;
+
+  @ApiPropertyOptional({ type: [InboxAttachmentDto] })
   attachments?: InboxAttachmentDto[];
-  interaction?: { id: string; kind: string; status?: string };
-  /** Set on the one row a `tell`, `ask`, `approve` or `choose` has in the thread. */
+
+  @ApiPropertyOptional({ type: InboxMessageInteractionDto })
+  interaction?: InboxMessageInteractionDto;
+
+  @ApiPropertyOptional({
+    type: InboxCardDto,
+    description: 'Set on the one row a `tell`, `ask`, `approve` or `choose` has in the thread.',
+  })
   card?: InboxCardDto;
+
+  @ApiProperty()
   at: string;
 }
 
-export interface ListInboxResponseDto {
+export class ListInboxResponseDto {
+  @ApiProperty({ type: [InboxThreadDto] })
   data: InboxThreadDto[];
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Cursor for the next page, or null when this is the last page.',
+  })
   next: string | null;
 }
 
+export class InboxThreadContactDto extends InboxPersonDto {
+  @ApiProperty()
+  verified: boolean;
+}
+
+export class InboxThreadAgentDto {
+  @ApiProperty()
+  identifier: string;
+
+  @ApiProperty()
+  name: string;
+}
+
 /** The "Details" block of a thread. */
-export interface InboxThreadDetailsDto {
+export class InboxThreadDetailsDto {
+  @ApiProperty()
   threadId: string;
+
+  @ApiProperty()
   channel: string;
-  /** The first contact in the thread, or its first stranger when it has no contact. */
-  contact: (InboxPersonDto & { verified: boolean }) | null;
+
+  @ApiProperty({
+    type: InboxThreadContactDto,
+    nullable: true,
+    description: 'The first contact in the thread, or its first stranger when it has no contact.',
+  })
+  contact: InboxThreadContactDto | null;
+
+  @ApiProperty({ enum: ['unread', 'waiting_on_person', 'waiting_on_you', 'open', 'resolved'] })
   status: InboxThreadState;
+
+  @ApiProperty()
   openedAt: string;
+
+  @ApiProperty({ type: String, nullable: true })
   lastReadAt: string | null;
-  /** The agent whose inbox this is: who "read by" refers to. */
-  agent: { identifier: string; name: string };
+
+  @ApiProperty({ type: InboxThreadAgentDto, description: 'The agent whose inbox this is: who "read by" refers to.' })
+  agent: InboxThreadAgentDto;
+
+  @ApiProperty()
   messageCount: number;
 }
 
-export interface GetInboxThreadResponseDto {
+export class GetInboxThreadResponseDto {
+  @ApiProperty({ type: InboxThreadDto })
   thread: InboxThreadDto;
-  /** Oldest first. */
+
+  @ApiProperty({ type: [InboxMessageDto], description: 'Oldest first.' })
   messages: InboxMessageDto[];
-  /** More messages lie past this page: older ones, or with `after`, newer ones. */
+
+  @ApiProperty({ description: 'More messages lie past this page: older ones, or with `after`, newer ones.' })
   hasMore: boolean;
+
+  @ApiProperty({ type: InboxThreadDetailsDto })
   details: InboxThreadDetailsDto;
 }
 

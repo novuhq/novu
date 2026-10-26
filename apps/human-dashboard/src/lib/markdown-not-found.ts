@@ -29,6 +29,8 @@ const EXACT_PATHS = new Set([
   '/llms.txt',
   '/mcp/connect',
   '/onboarding',
+  '/openapi.json',
+  '/openapi.yaml',
   '/robots.txt',
   '/sapien',
   '/settings',

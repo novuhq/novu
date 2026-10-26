@@ -75,6 +75,8 @@ describe('markdown 404', () => {
       expect(servesAppResource(`/${id}/index.md`)).toBe(true);
     }
 
+    expect(servesAppResource('/openapi.json')).toBe(true);
+    expect(servesAppResource('/openapi.yaml')).toBe(true);
     expect(servesAppResource('/sapien/')).toBe(true);
     expect(servesAppResource('/some-path-that-does-not-exist')).toBe(false);
     expect(servesAppResource('/not-a-host')).toBe(false);

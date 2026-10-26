@@ -189,7 +189,11 @@ export class ListContactsResponseDto {
   @ApiProperty({ type: [HumanContactDto] })
   data: HumanContactDto[];
 
-  @ApiProperty({ nullable: true, description: 'Cursor for the next page, or null when this is the last page.' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Cursor for the next page, or null when this is the last page.',
+  })
   next: string | null;
 }
 

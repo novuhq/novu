@@ -12,6 +12,7 @@ import {
   projectAgentInboxOpenApi,
 } from './src/app/shared/framework/swagger/agent-inbox-openapi';
 import { includeProxiedHandlers, routeKey } from './src/app/shared/framework/swagger/include-agent-inbox-controllers';
+import { injectDocumentComponents } from './src/app/shared/framework/swagger/injection';
 import { readProxyRoutes } from './src/app/shared/framework/swagger/read-proxy-routes';
 import { bootstrap } from './src/bootstrap';
 
@@ -34,15 +35,13 @@ async function exportAgentInboxOpenAPI() {
 
     const routes = agentInboxRoutes();
     const authByRoute = includeProxiedHandlers(app, routes);
-    const source = SwaggerModule.createDocument(
-      app,
-      new DocumentBuilder().setTitle('Agent Inbox').setVersion('0').build(),
-      {
+    const source = injectDocumentComponents(
+      SwaggerModule.createDocument(app, new DocumentBuilder().setTitle('Agent Inbox').setVersion('0').build(), {
         operationIdFactory: (controllerKey: string, methodKey: string) => `${controllerKey}_${methodKey}`,
         deepScanRoutes: true,
         ignoreGlobalPrefix: false,
         include: [],
-      }
+      })
     );
     const spec = projectAgentInboxOpenApi({
       document: source,

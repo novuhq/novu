@@ -3,6 +3,7 @@ import type {
   OperationObject,
   ParameterObject,
   PathItemObject,
+  ReferenceObject,
   SchemaObject,
   SecuritySchemeObject,
 } from '@nestjs/swagger';
@@ -183,6 +184,7 @@ function projectRoute(document: OpenAPIObject, route: AgentInboxRoute): { path: 
   operation.parameters = rewriteParameters(operationParameters(match.pathItem, match.operation), match.path, route);
   delete operation.servers;
   applySecurity(operation, route.auth);
+  publishInterceptorBody(operation, document);
 
   return { path: toOpenApiPath(route.path), operation };
 }
@@ -361,6 +363,117 @@ function ensurePublicPathParameters(parameters: ParameterObject[], publicPath: s
   );
 
   return [...parameters, ...added];
+}
+
+/**
+ * `ResponseInterceptor` returns a paginated body unchanged when it already has `data` and no `id`.
+ * Every other JSON body is returned as `{ data }`. `@ApiResponse` always adds that wrapper, so a page
+ * is documented one level too deep until this removes it.
+ */
+function publishInterceptorBody(operation: OperationObject, document: OpenAPIObject): void {
+  const responses = operation.responses;
+  if (!responses) {
+    return;
+  }
+
+  for (const [status, response] of Object.entries(responses)) {
+    if (!status.startsWith('2') || !response || !('content' in response)) {
+      continue;
+    }
+
+    const json = response.content?.['application/json'];
+    if (!json?.schema) {
+      continue;
+    }
+
+    json.schema = responseBodySchema(json.schema, document);
+  }
+}
+
+function responseBodySchema(
+  schema: SchemaObject | ReferenceObject,
+  document: OpenAPIObject
+): SchemaObject | ReferenceObject {
+  if (isResponseEnvelope(schema)) {
+    const inner = schema.properties?.data;
+    if (inner && interceptorPassesThrough(inner, document)) {
+      return inner;
+    }
+
+    return schema;
+  }
+
+  if (interceptorPassesThrough(schema, document)) {
+    return schema;
+  }
+
+  return {
+    type: 'object',
+    required: ['data'],
+    properties: { data: schema },
+  };
+}
+
+/** The wrapper `@ApiResponse` writes: `{ properties: { data } }` and nothing else. */
+function isResponseEnvelope(
+  schema: SchemaObject | ReferenceObject
+): schema is SchemaObject & { properties: { data: SchemaObject | ReferenceObject } } {
+  if (isReference(schema) || schema.type || schema.allOf || schema.oneOf || schema.anyOf || !schema.properties) {
+    return false;
+  }
+
+  const keys = Object.keys(schema);
+  if (keys.some((key) => key !== 'properties' && key !== 'description')) {
+    return false;
+  }
+
+  return Object.keys(schema.properties).length === 1 && schema.properties.data !== undefined;
+}
+
+function interceptorPassesThrough(schema: SchemaObject | ReferenceObject, document: OpenAPIObject): boolean {
+  const names = propertyNames(schema, document, new Set<string>());
+
+  return names.includes('data') && !names.includes('id') && !names.includes('_id');
+}
+
+function propertyNames(schema: SchemaObject | ReferenceObject, document: OpenAPIObject, seen: Set<string>): string[] {
+  const resolved = resolveSchema(schema, document);
+  if (!resolved) {
+    return [];
+  }
+
+  const names = Object.keys(resolved.properties ?? {});
+  for (const part of resolved.allOf ?? []) {
+    if (isReference(part) && seen.has(part.$ref)) {
+      continue;
+    }
+
+    if (isReference(part)) {
+      seen.add(part.$ref);
+    }
+
+    names.push(...propertyNames(part, document, seen));
+  }
+
+  return names;
+}
+
+function resolveSchema(schema: SchemaObject | ReferenceObject, document: OpenAPIObject): SchemaObject | undefined {
+  if (!isReference(schema)) {
+    return schema;
+  }
+
+  const name = schema.$ref.replace('#/components/schemas/', '');
+  const target = document.components?.schemas?.[name];
+  if (!target || isReference(target)) {
+    return undefined;
+  }
+
+  return target;
+}
+
+function isReference(schema: SchemaObject | ReferenceObject): schema is ReferenceObject {
+  return '$ref' in schema && typeof schema.$ref === 'string';
 }
 
 function applySecurity(operation: OperationObject, auth: AgentInboxRouteAuth): void {

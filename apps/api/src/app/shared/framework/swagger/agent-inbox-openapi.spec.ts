@@ -101,6 +101,83 @@ describe('Agent Inbox OpenAPI projection', () => {
     expect(projected.components?.schemas?.Unused).to.equal(undefined);
   });
 
+  it('matches the response body ResponseInterceptor returns', () => {
+    const projected = projectAgentInboxOpenApi({
+      document: {
+        ...document,
+        paths: {
+          ...document.paths,
+          '/v1/human/agent': {
+            get: {
+              operationId: 'getAgent',
+              responses: {
+                '200': {
+                  description: 'agent',
+                  content: { 'application/json': { schema: { $ref: '#/components/schemas/Agent' } } },
+                },
+              },
+            },
+          },
+          '/v1/agents/{identifier}/integrations': {
+            get: {
+              operationId: 'listChannels',
+              parameters: [{ name: 'identifier', in: 'path', required: true, schema: { type: 'string' } }],
+              responses: {
+                '200': {
+                  description: 'channels',
+                  headers: { 'Content-Type': { $ref: '#/components/headers/Content-Type' } },
+                  content: {
+                    'application/json': {
+                      schema: { properties: { data: { $ref: '#/components/schemas/ChannelPage' } } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        components: {
+          schemas: {
+            ...document.components?.schemas,
+            Agent: { type: 'object', properties: { agentId: { type: 'string' } } },
+            ChannelPage: {
+              type: 'object',
+              properties: { data: { type: 'array', items: { type: 'object' } }, next: { type: 'string' } },
+            },
+          },
+          headers: { 'Content-Type': { schema: { type: 'string' } } },
+        },
+      },
+      version: '0.1.0',
+      routes: [
+        route('get', '/v1/agent', '/v1/human/agent', 'apiKey'),
+        route('get', '/v1/channels', '/v1/agents/:agentIdentifier/integrations', 'apiKey'),
+        route('get', '/v1/contacts', '/v1/human/inbox', 'apiKey'),
+      ],
+    });
+
+    expect(projected.paths['/v1/agent']?.get?.responses?.['200']).to.deep.include({
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['data'],
+            properties: { data: { $ref: '#/components/schemas/Agent' } },
+          },
+        },
+      },
+    });
+    expect(projected.paths['/v1/channels']?.get?.responses?.['200']).to.deep.include({
+      content: { 'application/json': { schema: { $ref: '#/components/schemas/ChannelPage' } } },
+    });
+    expect(projected.paths['/v1/contacts']?.get?.responses?.['200']).to.deep.include({
+      content: { 'application/json': { schema: { $ref: '#/components/schemas/InboxPage' } } },
+    });
+    expect(projected.components?.headers?.['Content-Type']).to.deep.equal({ schema: { type: 'string' } });
+    expect(projected.components?.schemas?.Agent).to.not.equal(undefined);
+    expect(projected.components?.schemas?.ChannelPage).to.not.equal(undefined);
+  });
+
   it('fails when a proxy route has no operation or two routes claim one public operation', () => {
     expect(() =>
       projectAgentInboxOpenApi({

@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
   HUMAN_INTERACTION_MAX_TTL_SECONDS,
   HumanChannelViaEnum,
@@ -22,6 +22,19 @@ import {
 } from 'class-validator';
 import { IsValidHumanTo } from '../validators/is-valid-human-to';
 
+export class HumanInteractionOptionDto {
+  @ApiProperty({ description: 'Stable action id. A string option mints one instead.' })
+  id: string;
+
+  @ApiProperty()
+  label: string;
+}
+
+const HUMAN_OPTION_ITEM = {
+  oneOf: [{ type: 'string' }, { $ref: getSchemaPath(HumanInteractionOptionDto) }],
+};
+
+@ApiExtraModels(HumanInteractionOptionDto)
 export class HumanInteractionCardDto {
   @ApiProperty({ description: 'Card title. Required. Shown on every channel.' })
   @IsString()
@@ -59,13 +72,20 @@ export class HumanInteractionCardDto {
   denyLabel?: string;
 
   @ApiPropertyOptional({
-    description: 'Extra approve buttons after Approve / Deny (max 4). Do not invent trust-tool or trust-server.',
+    description:
+      'Extra approve buttons after Approve / Deny (max 4). Each item is a label, or `{ id, label }` for a stable id. Do not invent trust-tool or trust-server.',
+    type: 'array',
+    items: HUMAN_OPTION_ITEM,
   })
   @IsOptional()
   @IsArray()
   extraActions?: HumanOptionInput[];
 
-  @ApiPropertyOptional({ description: 'Choose options (2–10). String label or `{ id, label }`.' })
+  @ApiPropertyOptional({
+    description: 'Choose options (2–10). Each item is a label, or `{ id, label }` for a stable id.',
+    type: 'array',
+    items: HUMAN_OPTION_ITEM,
+  })
   @IsOptional()
   @IsArray()
   options?: HumanOptionInput[];

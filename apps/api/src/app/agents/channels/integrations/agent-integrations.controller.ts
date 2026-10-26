@@ -13,7 +13,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ProductFeature, RequirePermissions } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
@@ -164,6 +164,11 @@ export class AgentIntegrationsController {
     summary: 'Create an agent integration',
     description:
       'Create a link between an agent (by identifier) and an integration (by integration **identifier**, not the internal _id).',
+  })
+  @ApiHeader({
+    name: NOVU_ANALYTICS_SOURCE_HEADER,
+    required: false,
+    description: 'Where the call came from: `cli`, `mcp`, or `dashboard`.',
   })
   @ApiNotFoundResponse({
     description: 'The agent or integration was not found.',
