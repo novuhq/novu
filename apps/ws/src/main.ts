@@ -1,8 +1,18 @@
 // Deep-path import (not the package barrel) so hydrating secrets doesn't evaluate
 // @novu/application-generic before OTEL instrumentation is installed in ./bootstrap.
 import { runWithHydratedSecrets } from '@novu/application-generic/build/main/services/secrets-manager';
+import { loadNovuTlsConfig } from '@novu/application-generic/build/main/services/tls';
 
 void runWithHydratedSecrets(async () => {
+  /*
+   * The TLS settings may come from the container, the secret store, or a dotenv
+   * file, so dotenv has to be loaded before they are read. It loads after
+   * hydration, and neither source overwrites a key that is already set, which keeps
+   * the existing precedence.
+   */
+  await import('./config/env.config');
+  const tlsConfig = loadNovuTlsConfig();
+
   const { bootstrap } = await import('./bootstrap');
-  await bootstrap();
+  await bootstrap(tlsConfig);
 });

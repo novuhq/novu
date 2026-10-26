@@ -350,13 +350,13 @@ You do not need to hand-build the `aps` dictionary or set raw headers yourself. 
 | `threadId` | `aps.thread-id` | `string` | Groups related notifications |
 | `priority` | `apns-priority` header | `10` (default) or `5` | `10` delivers immediately, `5` conserves device power. Use `10` for VoIP |
 | `topic` | `apns-topic` header | `string` | Defaults to your integration Bundle ID. For VoIP, use `<bundle-id>.voip` |
-| `collapseId` | `apns-collapse-id` header | `string` | Collapses notifications that share the same id |
+| `collapseId` | `apns-collapse-id` header | `string` | Collapses notifications that share the same id. When you omit it, Novu sets this header to the Novu message id |
 | `pushType` | `apns-push-type` header | `"alert"`, `"background"`, or `"voip"` | Must match the payload contents. Use `"voip"` for CallKit / PushKit |
 | `expiry` | `apns-expiration` header | `number` (UNIX timestamp) | `0` tells APNS not to retry |
 | `rawPayload` | Full notification body | `object` | Sent as-is. Skips the usual `aps` / title / body mapping. Use this for CallKit payloads |
 
 <Note>
-  Anything you send in the trigger `payload` is delivered alongside the `aps` dictionary as the notification's custom data, so you usually do not need to override the payload to pass app-specific values. If you set `rawPayload`, that object becomes the entire body instead.
+  Anything you send in the trigger `payload` is delivered alongside the `aps` dictionary as the notification's custom data, together with `__nvMessageId`. You usually do not need to override the payload to pass app-specific values. If you set `rawPayload`, that object becomes the entire body instead, and `__nvMessageId` is included only when that object contains it.
 </Note>
 
 Here is an example that sets the sound and badge, and adjusts the `apns-priority` and `apns-topic` headers. The `topic` field is optional since it defaults to your integration Bundle ID:
@@ -733,7 +733,7 @@ curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' 
   </Tab>
 </Tabs>
 
-Then trigger with VoIP overrides. `rawPayload` is the CallKit payload your app expects. When it is set, Novu sends that object as the full notification body (no generated `aps.alert` from the Push step Subject / Body):
+Then trigger with VoIP overrides. `rawPayload` is the CallKit payload your app expects. When it is set, Novu sends that object as the full notification body (no generated `aps.alert` from the Push step Subject / Body, and no `__nvMessageId`). The message id is assigned at send time, so a trigger-time `rawPayload` cannot include it. The device has no id to report, and [activity tracking](/platform/integrations/push/apns#activity-tracking) does not apply to that push.
 
 <Tabs>
   <Tab title="Node.js">
@@ -950,3 +950,58 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 <Note>
   Passing raw APNS HTTP headers under `_passthrough.headers` (for example `apns-push-type`) is not supported for the native APNS provider. Use `pushType`, `topic`, and `priority` instead. Those map to the correct headers through `@parse/node-apn`.
 </Note>
+
+## Activity tracking
+
+APNs supports [push activity tracking](/platform/integrations/push/push-activity-tracking). Enable the **Push Activity Tracking** toggle on the APNs integration. Your app reads the Novu message id from the notification and forwards it as `eventId`.
+
+Novu adds `__nvMessageId` beside `aps`, along with the trigger payload. On iOS, read it from the notification `userInfo`. This is separate from `apns-collapse-id`, which Novu also sets to the message id when you omit `collapseId`.
+
+```json
+{
+  "aps": {
+    "alert": {
+      "title": "New comment from Albert",
+      "body": "Looks great, ship it!"
+    }
+  },
+  "__nvMessageId": "65c0d71c0959a38e8857b999"
+}
+```
+
+```swift
+import UserNotifications
+
+func userNotificationCenter(
+  _ center: UNUserNotificationCenter,
+  didReceive response: UNNotificationResponse,
+  withCompletionHandler completionHandler: @escaping () -> Void
+) {
+  let messageId = response.notification.request.content.userInfo["__nvMessageId"] as? String
+
+  guard
+    let messageId,
+    let url = URL(string: "https://your-api.com/api/notifications/events")
+  else {
+    completionHandler()
+
+    return
+  }
+
+  var request = URLRequest(url: url)
+  request.httpMethod = "POST"
+  request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+  request.httpBody = try? JSONSerialization.data(withJSONObject: [
+    "eventType": "clicked",
+    "eventId": messageId,
+  ])
+
+  URLSession.shared.dataTask(with: request) { _, _, _ in
+    completionHandler()
+  }.resume()
+}
+```
+
+A `rawPayload` override replaces this body. The device then has no `__nvMessageId` to report.
+
+Forward `delivered`, `opened`, `dismissed`, or `failed` the same way when your app observes those events. Your backend then calls [Novu's activity endpoint](/platform/integrations/push/push-activity-tracking#step-3-forward-events-to-novu-from-your-backend).

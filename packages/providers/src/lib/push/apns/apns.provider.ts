@@ -1,13 +1,13 @@
 import { PushProviderIdEnum } from '@novu/shared';
-import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
+import { IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
 import apn from '@parse/node-apn';
-import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+import { PushBaseProvider } from '../push.base-provider';
 
-export class APNSPushProvider extends BaseProvider implements IPushProvider {
+export class APNSPushProvider extends PushBaseProvider implements IPushProvider {
   id = PushProviderIdEnum.APNS;
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
-  channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
   protected override keyCaseObject: Record<string, string> = {
     contentAvailable: 'content-available',

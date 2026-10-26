@@ -122,11 +122,15 @@ export async function saveTelegramTokenAction(botToken: string): Promise<SaveTel
   }
 }
 
-/** Whether someone has pressed Start in the bot. The drawer asks while it waits. */
+/**
+ * Whether the operator has pressed Start in the bot. The drawer asks while it waits. Another contact
+ * pressing it first doesn't count: the drawer is about the operator's own Telegram, as Slack's is.
+ */
 export async function checkTelegramConnectedAction(): Promise<boolean> {
   const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
-  const channels = await listChannels(account);
-  const connected = channels.some((channel) => channel.via === 'telegram' && channel.active && channel.connected);
+  const [channels, contactId] = await Promise.all([listChannels(account), findOperatorContactId(account)]);
+  const telegram = channels.find((channel) => channel.via === 'telegram' && channel.active && channel.connected);
+  const connected = Boolean(telegram && contactId && (await hasLinkedChannel(account, telegram.identifier, contactId)));
 
   if (connected) {
     revalidatePath(CHANNELS_PATH);
@@ -153,7 +157,7 @@ export async function loadSlackSetupAction(): Promise<SlackSetupState> {
 
 /**
  * Creates the agent's Slack app under `appName`, in the workspace the App Configuration Token is for.
- * The token goes to the API for this one call and is kept nowhere. Same steps as `human setup slack`.
+ * The token goes to the API for this one call and is kept nowhere. Same steps as `channel add slack`.
  */
 export async function createSlackAppAction(appName: string, configToken: string): Promise<CreateSlackAppResult> {
   const name = appName.trim();
@@ -242,7 +246,7 @@ export async function checkSlackConnectedAction(): Promise<SlackWorkspace | null
 }
 
 /**
- * Has the agent send the operator a DM, right after the install, as `human setup slack` does. `false`
+ * Has the agent send the operator a DM, right after the install, as `channel add slack` does. `false`
  * when it couldn't be sent; Slack is connected either way.
  */
 export async function sendSlackTestMessageAction(): Promise<boolean> {
@@ -280,7 +284,7 @@ async function findChannel(account: HumanAccount, via: ChannelVia): Promise<stri
 }
 
 /**
- * The operator's own contact. `human setup` makes it with the agent, so this is a lookup; only an agent
+ * The operator's own contact. `setup` makes it with the agent, so this is a lookup; only an agent
  * that has no operator on record yet gets one here. Callers check that the agent exists first: this must
  * never be what creates it.
  */

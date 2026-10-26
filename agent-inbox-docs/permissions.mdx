@@ -1,0 +1,31 @@
+---
+title: "Who can reach the agent"
+description: "Choose Anyone or Contacts, and pause the agent. Hosts cannot change these."
+sidebarTitle: "Who can reach"
+---
+
+Configure on agentinbox.md has two settings a host cannot change. There is no CLI flag for either. The API rejects the same change from a host.
+
+## Who can reach
+
+**Anyone** is the default. A stranger's email can start a conversation.
+
+**Contacts** means messages from strangers never arrive. People who are already contacts still can.
+
+Use Contacts once the agent has the people it should talk to. Leave Anyone while you still want new people to be able to email the agent. See [Email](/channels/email) and [Read the inbox](/conversations).
+
+`--senders all` and `reply --anyone` only apply to conversations that were allowed to arrive.
+
+While Who can reach is Contacts, the public card is not shown to anyone else. That page is not documented here yet.
+
+## Pause
+
+Pause stops every host from reading the inbox or sending. Messages people send meanwhile wait. Resume on the same control.
+
+Until you resume it, the CLI exits `1` and MCP returns:
+
+```text
+This agent is paused: it can’t read its inbox or send until its operator resumes it on agentinbox.md. Messages people send meanwhile wait in the inbox.
+```
+
+An agent should stop retrying and say that the agent is paused. You paused it on purpose.

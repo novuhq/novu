@@ -47,14 +47,14 @@ export class ErrorDto {
   @ApiProperty({
     description: 'Optional context object for additional error details.',
     type: 'object',
-    required: false,
+    selfRequired: false,
     additionalProperties: true,
     example: {
       workflowId: 'some_wf_id',
       stepId: 'some_wf_id',
     },
   })
-  ctx?: object | Object;
+  ctx?: object;
 
   /**
    * Optional unique identifier for the error, useful for tracking using Sentry and New Relic, only available for 500.
@@ -103,7 +103,7 @@ export class PayloadValidationErrorDto {
     required: false,
     example: { age: 25 },
   })
-  value?: any;
+  value?: unknown;
 
   @ApiProperty({
     description: 'JSON Schema path where the validation failed',
@@ -137,7 +137,7 @@ export class PayloadValidationExceptionDto extends ErrorDto {
 
   @ApiProperty({
     description: 'The JSON schema that was used for validation',
-    type: 'object',
+    type: Object,
     required: false,
     example: {
       type: 'object',
@@ -148,7 +148,7 @@ export class PayloadValidationExceptionDto extends ErrorDto {
       required: ['name'],
     },
   })
-  schema?: any;
+  schema?: unknown;
 }
 
 @ApiExtraModels(ConstraintValidation)

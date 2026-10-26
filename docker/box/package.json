@@ -1,0 +1,22 @@
+{
+  "name": "novu-box",
+  "private": true,
+  "type": "module",
+  "description": "Novu Box: the Novu Cloud stack in one container on Cloudflare. Not part of the pnpm workspace.",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "box": "node src/cli/main.ts",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src/cloud"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261016.1",
+    "@types/node": "22.20.5",
+    "typescript": "6.0.3",
+    "wrangler": "4.150.0"
+  }
+}

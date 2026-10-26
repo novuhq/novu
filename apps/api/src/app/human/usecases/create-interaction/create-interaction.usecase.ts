@@ -1,7 +1,15 @@
-import { BadRequestException, ForbiddenException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  HttpException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   type AgentEmailInboxCredits,
   AgentEmailInboxQuotaService,
+  AnalyticsService,
   InstrumentUsecase,
   isAgentEmailInboxQuotaExceeded,
   PinoLogger,
@@ -12,8 +20,11 @@ import {
   AgentRepository,
   ConversationEntity,
   ConversationParticipantTypeEnum,
+  HumanContactRepository,
   HumanInteractionEntity,
   HumanInteractionRepository,
+  isDuplicateKeyError,
+  SubscriberRepository,
 } from '@novu/dal';
 import {
   HumanChannelViaEnum,
@@ -32,6 +43,8 @@ import {
   type InteractionThreadDto,
   toInteractionResponse,
 } from '../../dtos/interaction-response.dto';
+import { trackAgentInboxMessageSent } from '../../services/agent-inbox-analytics';
+import { contactIdCandidates, explicitEmailAddress } from '../../services/explicit-email-recipient';
 import { HumanDeliveryService, type ResolvedHumanTarget } from '../../services/human-delivery.service';
 import { HumanInboxService, type InboxScope } from '../../services/human-inbox.service';
 import {
@@ -43,10 +56,17 @@ import {
   toStoredContent,
 } from '../../services/human-interaction-lifecycle';
 import { HumanKeylessCapService, isHumanBrowserLoginAvailable } from '../../services/human-keyless-cap.service';
+import { type HumanMessageCredits, HumanMessageQuotaService } from '../../services/human-message-quota.service';
 import { CreateConversationInteractionCommand } from '../create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../create-conversation-interaction/create-conversation-interaction.usecase';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
 import { CreateInteractionCommand } from './create-interaction.command';
+
+type ExplicitRecipient = {
+  subscriberId: string;
+  /** Set when this send named a mailbox. Absent for a contact id. */
+  explicitEmail?: string;
+};
 
 /**
  * Where the Human dashboard runs, setups are claimed there and the CLI continues with `human login`.
@@ -54,10 +74,10 @@ import { CreateInteractionCommand } from './create-interaction.command';
  */
 function keylessHumanClaimedMessage(): string {
   if (isHumanBrowserLoginAvailable()) {
-    return 'This setup was moved into your Human account. Run `human login` to keep using it.';
+    return 'This setup was moved into your Agent Inbox account. Run `npx @agentinbox/cli login` to keep using it.';
   }
 
-  return 'This demo workspace was claimed into your Novu account. Run `human setup --secret-key <your Development environment key>` (or set NOVU_SECRET_KEY) to continue.';
+  return 'This demo workspace was claimed into your Novu account. Run `npx @agentinbox/cli setup --secret-key <your Development environment key>` (or set INBOX_SECRET_KEY) to continue.';
 }
 
 @Injectable()
@@ -70,11 +90,15 @@ export class CreateInteraction {
     private readonly logger: PinoLogger,
     private readonly activityRecorder: HumanInteractionActivityRecorder,
     private readonly inboxQuota: AgentEmailInboxQuotaService,
+    private readonly messageQuota: HumanMessageQuotaService,
     private readonly keylessCap: HumanKeylessCapService,
     private readonly inbox: HumanInboxService,
     private readonly conversationService: AgentConversationService,
     private readonly createConversationInteraction: CreateConversationInteraction,
-    private readonly keylessEmailGate: KeylessEmailGateService
+    private readonly keylessEmailGate: KeylessEmailGateService,
+    private readonly humanContactRepository: HumanContactRepository,
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly analyticsService: AnalyticsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -102,7 +126,7 @@ export class CreateInteraction {
     const to = command.to === undefined ? [] : normalizeHumanTo(command.to);
 
     if (command.thread) {
-      return this.sendIntoThread(command, agent, to);
+      return this.sendIntoThread(command, agent, await this.resolveThreadEmails(command, agent, to));
     }
 
     if (command.anyoneMayAnswer) {
@@ -113,9 +137,13 @@ export class CreateInteraction {
       throw new BadRequestException('Pass `to` to start a new thread, or `thread` to send into an existing one.');
     }
 
-    await this.assertContacts(scope, to);
+    const recipients = await this.resolveExplicitRecipients(command, agent, to);
+    await this.assertContacts(
+      scope,
+      recipients.map((recipient) => recipient.subscriberId)
+    );
 
-    return this.sendToContacts(command, agent, to, title);
+    return this.sendToContacts(command, agent, recipients, title);
   }
 
   /** `to` reaches contacts only: a stranger is answered in the thread they wrote in. */
@@ -133,9 +161,10 @@ export class CreateInteraction {
   private async sendToContacts(
     command: CreateInteractionCommand,
     agent: AgentEntity,
-    subscriberIds: string[],
+    recipients: ExplicitRecipient[],
     title: string
   ): Promise<InteractionResponseDto> {
+    const subscriberIds = [...new Set(recipients.map((recipient) => recipient.subscriberId))];
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
 
     await this.keylessCap.assertWithinCap({ ...scope, agentId: agent._id, subscriberIds, via: command.via });
@@ -148,26 +177,34 @@ export class CreateInteraction {
         `Human "${subscriberId}" already has ${pendingCount} pending interactions (cap ${cap}). Wait for answers or cancel stale ones with \`human interaction list\`.`,
     });
 
-    const resolved = await this.resolveTargets(command, agent, subscriberIds);
+    const resolved = await this.resolveTargets(command, agent, recipients);
     const emailCount = resolved.filter((item) => item.target.platform === HumanChannelViaEnum.EMAIL).length;
     let credits: AgentEmailInboxCredits | undefined;
+    let messageCredits: HumanMessageCredits | undefined;
     let emailCapError: HttpException | undefined;
 
-    if (emailCount > 0) {
-      try {
-        credits = await this.inboxQuota.reserveCredits(command.organizationId, emailCount);
-      } catch (err) {
-        // Email-only interactions fail outright on the cap. When other channels
-        // can still be reached, they go out and the email recipients fail alone.
-        if (!isAgentEmailInboxQuotaExceeded(err) || emailCount === resolved.length) {
-          throw err;
-        }
-
-        emailCapError = err;
-      }
-    }
-
     try {
+      if (emailCount > 0) {
+        try {
+          credits = await this.inboxQuota.reserveCredits(command.organizationId, emailCount);
+        } catch (err) {
+          // Email-only interactions fail outright on the cap. When other channels
+          // can still be reached, they go out and the email recipients fail alone.
+          if (!isAgentEmailInboxQuotaExceeded(err) || emailCount === resolved.length) {
+            throw err;
+          }
+
+          emailCapError = err;
+        }
+      }
+
+      if (!isKeylessOrganization(command.organizationId)) {
+        // Capped email recipients are not delivered, so they stay out of this
+        // hold. Counting them would reject the other channels when one credit remains.
+        const messageCount = emailCapError ? resolved.length - emailCount : resolved.length;
+        messageCredits = await this.messageQuota.reserveCredits(command.organizationId, messageCount);
+      }
+
       const interaction = await this.humanInteractionRepository.create(
         buildPendingHumanInteraction({
           kind: command.kind,
@@ -195,6 +232,7 @@ export class CreateInteraction {
             }
 
             const sent = await this.deliveryService.deliver(interaction, target);
+            messageCredits?.accept();
             const thread = await this.landInThread(scope, interaction, subscriberId, target, sent.platformThreadId);
 
             if (thread) {
@@ -212,6 +250,11 @@ export class CreateInteraction {
         });
       const delivered = credits ? await credits.run(deliver) : await deliver();
 
+      // Each contact gets the message in a thread of their own, so each delivery is one message sent.
+      for (const { platform } of delivered.interaction.deliveries ?? []) {
+        this.trackMessageSent(command, agent, platform);
+      }
+
       await this.activityRecorder.recordRequest(delivered.interaction);
 
       if (delivered.interaction.status === HumanInteractionStatusEnum.DELIVERED) {
@@ -221,6 +264,7 @@ export class CreateInteraction {
       return toInteractionResponse(delivered.interaction, delivered.failedSubscriberIds, threads);
     } finally {
       await credits?.release();
+      await messageCredits?.release();
     }
   }
 
@@ -286,7 +330,11 @@ export class CreateInteraction {
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
     const relay = await this.inbox.resolveRelayAgent(scope, agent.identifier);
     const conversation = await this.inbox.findThread(scope, relay, command.thread as string);
-    const recipients = to.length > 0 ? to : await this.threadRecipients(command, scope, conversation);
+    const audience =
+      to.length > 0
+        ? { recipients: to, anyoneMayAnswer: command.anyoneMayAnswer === true }
+        : await this.threadAudience(command, scope, conversation);
+    const recipients = audience.recipients;
 
     if (to.length > 0) {
       await this.assertThreadContacts(scope, conversation, to);
@@ -306,25 +354,37 @@ export class CreateInteraction {
     }
 
     const integrationIdentifier = await this.inbox.resolveIntegrationIdentifier(scope, channel);
-    const interaction = await this.createConversationInteraction.execute(
-      CreateConversationInteractionCommand.create({
-        ...scope,
-        userId: command.userId,
-        conversation,
-        channel,
-        agentIdentifier: relay.identifier,
-        agentName: relay.name,
-        integrationIdentifier,
-        kind: command.kind,
-        requestId: `inbox_${shortId(12)}`,
-        anyoneMayAnswer: command.anyoneMayAnswer === true,
-        card: command.card,
-        from: command.from,
-        ttlSeconds: command.ttlSeconds,
-        to: recipients,
-      })
-    );
+    let messageCredits: HumanMessageCredits | undefined;
+    if (!isKeylessOrganization(command.organizationId)) {
+      messageCredits = await this.messageQuota.reserveCredits(command.organizationId, recipients.length);
+    }
 
+    let interaction: Awaited<ReturnType<CreateConversationInteraction['execute']>>;
+    try {
+      interaction = await this.createConversationInteraction.execute(
+        CreateConversationInteractionCommand.create({
+          ...scope,
+          userId: command.userId,
+          conversation,
+          channel,
+          agentIdentifier: relay.identifier,
+          agentName: relay.name,
+          integrationIdentifier,
+          kind: command.kind,
+          requestId: `inbox_${shortId(12)}`,
+          anyoneMayAnswer: audience.anyoneMayAnswer,
+          card: command.card,
+          from: command.from,
+          ttlSeconds: command.ttlSeconds,
+          to: recipients,
+        })
+      );
+      messageCredits?.accept(recipients.length);
+    } finally {
+      await messageCredits?.release();
+    }
+
+    this.trackMessageSent(command, agent, channel.platform);
     const unreadBefore = await this.inbox.markSentInto(scope, conversation);
 
     return toInteractionResponse(interaction, undefined, [{ id: conversation.identifier, unreadBefore }]);
@@ -332,27 +392,28 @@ export class CreateInteraction {
 
   /**
    * Who a send into a thread goes to when the host names nobody. A question goes to the contact the
-   * thread belongs to, the same as on any other agent; everyone in the thread only when the host says so.
+   * thread belongs to. A thread with no contact still gets the reply: everyone already in it may answer.
    * A `tell` waits for no answer, so it is for everyone there.
    */
-  private async threadRecipients(
+  private async threadAudience(
     command: CreateInteractionCommand,
     scope: InboxScope,
     conversation: ConversationEntity
-  ): Promise<string[]> {
+  ): Promise<{ recipients: string[]; anyoneMayAnswer: boolean }> {
     if (command.anyoneMayAnswer || command.kind === HumanInteractionKindEnum.TELL) {
-      return this.inbox.peopleIds(conversation);
+      return {
+        recipients: this.inbox.peopleIds(conversation),
+        anyoneMayAnswer: command.anyoneMayAnswer === true,
+      };
     }
 
     const contact = await this.inbox.firstContactId(scope, conversation);
 
     if (!contact) {
-      throw new BadRequestException(
-        'This thread has no contact in it, so nobody could answer. Pass `anyoneMayAnswer` (`--anyone`) to let anyone in the thread answer.'
-      );
+      return { recipients: this.inbox.peopleIds(conversation), anyoneMayAnswer: true };
     }
 
-    return [contact];
+    return { recipients: [contact], anyoneMayAnswer: false };
   }
 
   /**
@@ -382,16 +443,298 @@ export class CreateInteraction {
     }
   }
 
-  private async resolveTargets(command: CreateInteractionCommand, agent: AgentEntity, subscriberIds: string[]) {
-    return Promise.all(
-      subscriberIds.map(async (subscriberId) => ({
+  /**
+   * An email address in `to` is this send's mailbox. A contact id still goes through
+   * the verified-address lookup. Keyless orgs are refused before anyone is created.
+   */
+  private async resolveExplicitRecipients(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    to: string[]
+  ): Promise<ExplicitRecipient[]> {
+    const addresses = to.flatMap((value) => {
+      const address = explicitEmailAddress(value);
+
+      return address ? [address] : [];
+    });
+
+    if (addresses.length === 0) {
+      return to.map((subscriberId) => ({ subscriberId }));
+    }
+
+    if (command.via && command.via !== HumanChannelViaEnum.EMAIL) {
+      throw new BadRequestException('`via` must be email when `to` includes an email address.');
+    }
+
+    await this.keylessEmailGate.assertAllowed({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
+
+    const reserved = new Set<string>();
+    const recipients: ExplicitRecipient[] = [];
+
+    for (const value of to) {
+      const address = explicitEmailAddress(value);
+      const subscriberId = address ? await this.contactForExplicitEmail(command, agent, address, reserved) : value;
+      const prior = recipients.find(
+        (recipient) =>
+          recipient.subscriberId === subscriberId &&
+          (!address || !recipient.explicitEmail || recipient.explicitEmail === address)
+      );
+      if (prior) {
+        if (address && !prior.explicitEmail) {
+          prior.explicitEmail = address;
+        }
+        continue;
+      }
+
+      reserved.add(subscriberId);
+      recipients.push(address ? { subscriberId, explicitEmail: address } : { subscriberId });
+    }
+
+    return recipients;
+  }
+
+  /**
+   * `thread` never creates a contact, and an unconfirmed address cannot choose who
+   * may answer. Settlement is by subscriber id, including from another conversation.
+   */
+  private async resolveThreadEmails(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    to: string[]
+  ): Promise<string[]> {
+    const recipients: string[] = [];
+
+    for (const value of to) {
+      const address = explicitEmailAddress(value);
+      if (!address) {
+        recipients.push(value);
+        continue;
+      }
+
+      const subscriberId = await this.verifiedContactForEmail(command, agent, address);
+      if (!subscriberId) {
+        throw new BadRequestException(
+          `"${address}" is not a confirmed address, so it cannot choose who answers in this thread. Leave \`to\` out, or pass the contact id.`
+        );
+      }
+
+      recipients.push(subscriberId);
+    }
+
+    return recipients;
+  }
+
+  private async contactForExplicitEmail(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    address: string,
+    reserved: ReadonlySet<string>
+  ): Promise<string> {
+    const existing = await this.existingContactForEmail(command, agent, address);
+    if (existing) {
+      return existing;
+    }
+
+    const subscriberId = await this.allocateContactId(command, agent, address, reserved);
+    await this.humanContactRepository.setDeclaredAddress({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      agentId: agent._id,
+      subscriberId,
+      via: HumanChannelViaEnum.EMAIL,
+      address,
+    });
+
+    const winner = await this.winningContactForEmail(command, agent, address);
+    if (winner && winner !== subscriberId) {
+      await this.humanContactRepository.clearDeclaredAddress({
+        environmentId: command.environmentId,
+        agentId: agent._id,
         subscriberId,
+        via: HumanChannelViaEnum.EMAIL,
+        address,
+      });
+
+      return winner;
+    }
+
+    return subscriberId;
+  }
+
+  private trackMessageSent(command: CreateInteractionCommand, agent: AgentEntity, channel: string): void {
+    trackAgentInboxMessageSent(
+      this.analyticsService,
+      { userId: command.userId, organizationId: command.organizationId },
+      { agentId: agent._id, type: command.kind, channel, source: command.analyticsSource }
+    );
+  }
+
+  /**
+   * The contact that keeps `address` when two first sends stored it at once.
+   * The earlier declaration wins; a tie takes the smaller id so both requests agree.
+   */
+  private async winningContactForEmail(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    address: string
+  ): Promise<string | null> {
+    const matches = await this.humanContactRepository.findContactsByEmailAddress(
+      command.environmentId,
+      agent._id,
+      address
+    );
+    const ranked = [...matches].sort((left, right) => {
+      const leftAt = left.addresses?.[HumanChannelViaEnum.EMAIL]?.declared?.declaredAt ?? '';
+      const rightAt = right.addresses?.[HumanChannelViaEnum.EMAIL]?.declared?.declaredAt ?? '';
+      if (leftAt !== rightAt) {
+        return leftAt < rightAt ? -1 : 1;
+      }
+
+      if (left.subscriberId === right.subscriberId) {
+        return 0;
+      }
+
+      return left.subscriberId < right.subscriberId ? -1 : 1;
+    });
+
+    return ranked[0]?.subscriberId ?? null;
+  }
+
+  /** Who may answer a thread when `to` names an email: only a verified address. */
+  private async verifiedContactForEmail(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    address: string
+  ): Promise<string | null> {
+    const matches = await this.humanContactRepository.findContactsByEmailAddress(
+      command.environmentId,
+      agent._id,
+      address
+    );
+    const verified = matches.filter(
+      (match) => match.addresses?.[HumanChannelViaEnum.EMAIL]?.verified?.address === address
+    );
+    const subscriberIds = [...new Set(verified.map((match) => match.subscriberId))];
+
+    if (subscriberIds.length > 1) {
+      throw new ConflictException(
+        `${address} is verified for more than one contact (${subscriberIds.join(', ')}). Pass the contact id instead.`
+      );
+    }
+
+    return subscriberIds[0] ?? null;
+  }
+
+  private async existingContactForEmail(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    address: string
+  ): Promise<string | null> {
+    const matches = await this.humanContactRepository.findContactsByEmailAddress(
+      command.environmentId,
+      agent._id,
+      address
+    );
+    const subscriberIds = [...new Set(matches.map((match) => match.subscriberId))];
+
+    if (subscriberIds.length > 1) {
+      throw new ConflictException(
+        `${address} is stored for more than one contact (${subscriberIds.join(', ')}). Pass the contact id instead.`
+      );
+    }
+
+    return subscriberIds[0] ?? null;
+  }
+
+  /** Same id order as the CLI: the local part, then a short hash when that id is already someone else. */
+  private async allocateContactId(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    address: string,
+    reserved: ReadonlySet<string>
+  ): Promise<string> {
+    for (const subscriberId of contactIdCandidates(address)) {
+      if (reserved.has(subscriberId)) {
+        continue;
+      }
+
+      if (await this.claimSubscriber(command, subscriberId)) {
+        return subscriberId;
+      }
+
+      // The id is taken. Reuse it only when it already is this address, so two agents can write to the same mailbox.
+      // Skip it when this agent already stored a different address there: writing this one would replace that.
+      const shared = await this.humanContactRepository.findSubscriberSharingEmailAddress(
+        command.environmentId,
+        subscriberId,
+        address
+      );
+      if (!shared || (await this.agentStoredDifferentAddress(command, agent, subscriberId, address))) {
+        continue;
+      }
+
+      return subscriberId;
+    }
+
+    throw new ConflictException(`Could not pick a contact id for ${address}. Pass a contact id instead.`);
+  }
+
+  /** This agent already keeps a different declared address on `subscriberId`. */
+  private async agentStoredDifferentAddress(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    subscriberId: string,
+    address: string
+  ): Promise<boolean> {
+    const contact = await this.humanContactRepository.findContact(command.environmentId, agent._id, subscriberId);
+    const declared = contact?.addresses?.[HumanChannelViaEnum.EMAIL]?.declared?.address;
+
+    return declared !== undefined && declared !== address;
+  }
+
+  /** Creates the subscriber with no email. Returns false when that id is already taken. */
+  private async claimSubscriber(command: CreateInteractionCommand, subscriberId: string): Promise<boolean> {
+    const existing = await this.subscriberRepository.findOne({
+      subscriberId,
+      _environmentId: command.environmentId,
+    });
+
+    if (existing) {
+      return false;
+    }
+
+    try {
+      await this.subscriberRepository.create({
+        subscriberId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      });
+    } catch (err) {
+      if (!isDuplicateKeyError(err)) {
+        throw err;
+      }
+
+      return false;
+    }
+
+    return true;
+  }
+
+  private async resolveTargets(command: CreateInteractionCommand, agent: AgentEntity, recipients: ExplicitRecipient[]) {
+    return Promise.all(
+      recipients.map(async (recipient) => ({
+        subscriberId: recipient.subscriberId,
         target: await this.deliveryService.resolveChannel({
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           agentId: agent._id,
-          subscriberId,
-          via: command.via,
+          subscriberId: recipient.subscriberId,
+          ...(recipient.explicitEmail
+            ? { via: HumanChannelViaEnum.EMAIL, explicitEmail: recipient.explicitEmail }
+            : { via: command.via }),
         }),
       }))
     );
@@ -411,7 +754,9 @@ export class CreateInteraction {
 
     if (!agent) {
       if (identifier === DEFAULT_HUMAN_RELAY_IDENTIFIER) {
-        throw new NotFoundException(`Relay agent "${identifier}" was not found. Run \`human setup\` first.`);
+        throw new NotFoundException(
+          `Relay agent "${identifier}" was not found. Run \`npx @agentinbox/cli setup\` first.`
+        );
       }
 
       throw new NotFoundException(`Agent "${identifier}" was not found.`);

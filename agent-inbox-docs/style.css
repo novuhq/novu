@@ -1,0 +1,28 @@
+html,
+body {
+  letter-spacing: -0.01em;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: -0.02em;
+}
+
+header,
+nav,
+#sidebar-content,
+button,
+input {
+  letter-spacing: -0.012em;
+}
+
+code,
+pre,
+kbd,
+samp {
+  letter-spacing: -0.02em;
+}

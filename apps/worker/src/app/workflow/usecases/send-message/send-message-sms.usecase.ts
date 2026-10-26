@@ -28,7 +28,7 @@ import {
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
-import { combineProviderOverrides, SendMessageBase } from './send-message.base';
+import { combineProviderOverrides, mergeTriggerProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -155,10 +155,12 @@ export class SendMessageSms extends SendMessageBase {
 
     await this.sendSelectedIntegrationExecution(command.job, selection);
 
-    const overrides = {
-      ...(integration?.channel ? command.overrides[integration.channel] || {} : {}),
-      ...(command.overrides[integration?.providerId] || {}),
-    };
+    const overrides = mergeTriggerProviderOverrides(
+      command.overrides,
+      integration?.channel,
+      integration?.providerId,
+      command.step.stepId
+    ) as SmsMessageOverrides;
 
     const messagePayload = { ...command.payload };
     delete messagePayload.attachments;

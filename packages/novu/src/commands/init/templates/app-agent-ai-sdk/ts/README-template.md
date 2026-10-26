@@ -2,7 +2,7 @@
 
 A conversational AI agent powered by [Novu](https://novu.co), the [Vercel AI SDK](https://sdk.vercel.ai/), and [Next.js](https://nextjs.org).
 
-The scaffold uses `@novu/framework/ai-sdk` and ships with an **echo demo** that works without any LLM API key. The `ai` package (v6) is already installed — when you're ready, uncomment the `generateText` example in your agent handler and add your model provider.
+The scaffold uses `@novu/framework/ai-sdk` and ships with an **echo demo** that works without any LLM API key. The `ai` package (v6) is already installed — when you're ready, uncomment the `streamText` example in your agent handler and add your model provider.
 
 ## Getting Started
 
@@ -28,7 +28,7 @@ The scaffold uses `@novu/framework/ai-sdk` and ships with an **echo demo** that 
 
    - Set your provider API key (e.g. `OPENAI_API_KEY` in `.env.local`).
 
-   - Uncomment the `generateText` block at the bottom of `app/novu/agents/support-agent.tsx` (the `searchNovuDocs` tool is already defined above).
+   - Uncomment the `streamText` block at the bottom of `app/novu/agents/support-agent.tsx` (the `searchNovuDocs` tool is already defined above).
 
 Your agent is served at `/api/novu` and handles incoming messages via the Novu Bridge protocol.
 
@@ -67,7 +67,7 @@ Your `onMessage` handler is called with `(message, ctx)`:
 Uncomment the LLM imports at the top of `app/novu/agents/support-agent.tsx`, then replace the echo `return` with:
 
 ```typescript
-return generateText({
+return streamText({
   model: openai('gpt-4o-mini'),
   instructions:
     'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.',
@@ -76,9 +76,9 @@ return generateText({
 });
 ```
 
-The scaffold includes a `searchNovuDocs` tool with `needsApproval: true` — it fetches the live Novu docs index. Uncomment the `generateText` return to wire your LLM, then try asking "how does tool approval work in Novu?" to see the approval card flow.
+The scaffold includes a `searchNovuDocs` tool with `needsApproval: true` — it fetches the live Novu docs index. Uncomment the `streamText` return to wire your LLM, then try asking "how does tool approval work in Novu?" to see the approval card flow.
 
-Use `generateText` for simple non-streaming responses. For streaming, return `streamText(...)` from `onMessage` instead — see the AI SDK DX guide.
+Returning `streamText(...)` shows the reply as the model writes it on Slack, Telegram, and Web Chat; other channels get it once it is complete. Return `generateText(...)` instead if you don't need streaming.
 
 ## Learn More
 

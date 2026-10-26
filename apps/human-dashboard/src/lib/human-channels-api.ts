@@ -54,14 +54,14 @@ export type TelegramStartLink = { botUsername: string; url: string };
 const TELEGRAM_PROVIDER_ID = 'telegram';
 const SLACK_PROVIDER_ID = 'slack';
 
-/** The name a channel gets when the operator doesn't pick one, same as `human setup`. */
+/** The name a channel gets when the operator doesn't pick one, same as `setup`. */
 const DEFAULT_CHANNEL_NAME = 'Human';
 
 const RETRY_MS = 1000;
 
-/** What `human setup` sends too, once a channel works. */
+/** What `setup` sends too, once a channel works. */
 const TEST_MESSAGE =
-  'You’re connected. Agents can now reach you here. Try `human inbox approve "Deploy to production?"` in your terminal.';
+  'You’re connected. Agents can now reach you here. Try `npx @agentinbox/cli inbox send approve "Deploy to production?"` in your terminal.';
 
 const CHANNEL_LABELS: Record<ChannelVia, string> = { telegram: 'Telegram', slack: 'Slack', email: 'Email' };
 
@@ -120,7 +120,7 @@ export async function findSlackWorkspace(
 
 /**
  * Whether a contact has linked the channel themselves. A channel counts as connected as soon as anyone
- * has, so this is how to tell that the operator did, the way `human setup` waits for it.
+ * has, so this is how to tell that the operator did, the way `setup` waits for it.
  */
 export async function hasLinkedChannel(
   account: HumanAccount,
@@ -147,7 +147,7 @@ export function slackAgentHandle(channel: Channel): string | undefined {
 
 /**
  * The relay's Telegram channel, made and linked to the relay when it has none. Same steps as
- * `human setup telegram`; the relay has to exist first.
+ * `channel add telegram`; the relay has to exist first.
  */
 export async function ensureTelegramChannel(account: HumanAccount): Promise<string> {
   return (await ensureChatChannel(account, 'telegram', TELEGRAM_PROVIDER_ID)).identifier;
@@ -155,7 +155,7 @@ export async function ensureTelegramChannel(account: HumanAccount): Promise<stri
 
 /**
  * The relay's Slack channel, made under `name` and linked to the relay when it has none. Same steps as
- * `human setup slack`. A channel that's there already keeps its name; `renameChannel` changes it.
+ * `channel add slack`. A channel that's there already keeps its name; `renameChannel` changes it.
  */
 export function ensureSlackChannel(account: HumanAccount, name: string): Promise<LinkedChannel> {
   return ensureChatChannel(account, 'slack', SLACK_PROVIDER_ID, name);

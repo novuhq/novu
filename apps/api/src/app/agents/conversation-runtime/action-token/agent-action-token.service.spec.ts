@@ -1,3 +1,4 @@
+import { HUMAN_INTERACTION_MAX_TTL_SECONDS } from '@novu/shared';
 import { expect } from 'chai';
 import type { ActionsElement, ButtonElement, CardElement, LinkButtonElement, SectionElement } from 'chat';
 import sinon from 'sinon';
@@ -50,6 +51,7 @@ describe('AgentActionTokenService', () => {
     expect(token.length).to.be.lessThan(30);
     expect(encodedTelegramCallbackDataByteLength(token)).to.be.at.most(64);
     expect(cacheService.set.calledOnce).to.equal(true);
+    expect(cacheService.set.firstCall.args[2]).to.deep.equal({ ttl: HUMAN_INTERACTION_MAX_TTL_SECONDS });
   });
 
   it('resolves a minted token to the original id and value', async () => {

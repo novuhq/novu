@@ -20,8 +20,12 @@ export type Contact = {
   channels: ContactChannel[];
   /** The channel used when a question doesn't name one. */
   defaultVia?: ContactChannelVia;
+  /** Their email and how far its confirmation got. Missing when no address is known for them. */
+  emailVerification?: ContactEmail;
   /** `joined` once they're reachable on a channel; `invite_sent` until then. */
   status: ContactStatus;
+  /** The account owner's own contact: the "You" row. */
+  isOperator: boolean;
   /** The newest invite link that still works. Missing when none was sent, or it expired or was declined. */
   invite?: ContactInvite;
   createdAt: string;
@@ -32,9 +36,29 @@ export type ContactChannelVia = 'telegram' | 'slack' | 'email';
 
 export type ContactChannel = {
   via: ContactChannelVia;
-  /** ISO timestamp when they connected it. Email has none. */
+  /** ISO timestamp when they connected it; for email, when the address was confirmed. */
   connectedAt?: string;
+  /**
+   * How they show on that app: `@username` on Telegram (their name when they have none), their name on Slack.
+   * Missing until the agent learns it, when they connect or write.
+   */
+  handle?: string;
+  /** The Slack workspace they're in, such as `acme.slack.com`. */
+  workspace?: string;
   isDefault: boolean;
+};
+
+/**
+ * A contact's email. Agents only write to a `verified` one. `pending` waits for the link that was sent to
+ * it; `unverified` was typed at sign-up or setup and never confirmed.
+ */
+export type ContactEmail = {
+  /** The verified address, else the one waiting for its link, else the one never confirmed. */
+  address: string;
+  status: 'verified' | 'pending' | 'unverified';
+  verifiedAt?: string;
+  /** A link that's out and not used yet. Next to a verified address it's the new one that replaces it. */
+  pending?: { address: string; requestedAt: string };
 };
 
 export type ContactStatus = 'joined' | 'invite_sent';
@@ -58,9 +82,17 @@ export type RemovedContact = {
   canceledInteractions: number;
 };
 
-type ApiContact = Omit<Contact, 'name' | 'channels' | 'status'> & {
+/** What changing the email sends back: where the link went (masked) and how soon another may go. */
+export type EmailLinkSent = {
+  requestedAt: string;
+  expiresAt: string;
+  retryAfterSeconds: number;
+};
+
+type ApiContact = Omit<Contact, 'name' | 'channels' | 'status' | 'isOperator'> & {
   channels?: ContactChannel[];
   status?: ContactStatus;
+  isOperator?: boolean;
 };
 
 /** One page of the operator's contacts. */
@@ -88,6 +120,25 @@ export function removeContact(account: HumanAccount, contactId: string): Promise
   });
 }
 
+/**
+ * Makes one of the channels the operator is connected on the one agents use when a message names none.
+ * The API turns down a channel they aren't connected on (400 `channel_not_connected`).
+ */
+export async function setOperatorDefaultChannel(account: HumanAccount, via: ContactChannelVia): Promise<void> {
+  await requestForAccount(account, '/v1/human/operator/default-channel', { method: 'PUT', body: { via } });
+}
+
+/**
+ * Sends a confirmation link to a new address for the operator, or to the one they signed up with. Agents
+ * keep using a verified address until the new one is confirmed, and the default channel stays as it is.
+ */
+export function changeOperatorEmail(account: HumanAccount, address: string): Promise<EmailLinkSent> {
+  return requestForAccount<EmailLinkSent>(account, '/v1/human/operator/email', {
+    method: 'POST',
+    body: { address },
+  });
+}
+
 function toContact(contact: ApiContact): Contact {
   return {
     id: contact.id,
@@ -98,7 +149,9 @@ function toContact(contact: ApiContact): Contact {
     phone: contact.phone,
     channels: Array.isArray(contact.channels) ? contact.channels : [],
     defaultVia: contact.defaultVia,
+    ...(contact.emailVerification ? { emailVerification: contact.emailVerification } : {}),
     status: contact.status === 'joined' ? 'joined' : 'invite_sent',
+    isOperator: contact.isOperator === true,
     invite: contact.invite,
     createdAt: contact.createdAt,
     updatedAt: contact.updatedAt,

@@ -11,14 +11,14 @@ import { CliLogin } from './cli-login';
 import { normalizeUserCode } from './user-code';
 
 export const metadata: Metadata = {
-  title: 'Authorize the human CLI',
+  title: 'Authorize the Agent Inbox CLI',
   robots: { index: false, follow: false },
   // The login code and a claim token can be in the URL; keep them out of the Referer.
   referrer: 'origin',
 };
 
 /**
- * Opened by `human login` (`…/cli/login?code=BCDF-GHJK`, plus `&region=eu` from the EU API). The page shows
+ * Opened by the CLI's `login` (`…/cli/login?code=BCDF-GHJK`, plus `&region=eu` from the EU API). The page shows
  * the code and the computer's name to compare with the terminal, and the signed-in person approves or denies.
  * The code in the link only says which login this is: opening the page approves nothing, and a code that was
  * denied, used or ran out shows the expired card. Links from older CLIs have no code; it's typed then.

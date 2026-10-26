@@ -1,5 +1,5 @@
-import { HumanChannelViaEnum } from '@novu/shared';
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
+import { AGENT_ANALYTICS_SOURCES, type AgentAnalyticsSource, HumanChannelViaEnum } from '@novu/shared';
+import { IsBoolean, IsEnum, IsIn, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
@@ -22,6 +22,14 @@ export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
   @IsString()
   agentName?: string;
 
+  /**
+   * Mailbox local-part the operator chose. Missing means derive one from the agent name
+   * and walk to a free neighbour when that is taken.
+   */
+  @IsOptional()
+  @IsString()
+  inboxHandle?: string;
+
   @IsOptional()
   @IsString()
   agentDescription?: string;
@@ -41,4 +49,9 @@ export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsEnum(HumanChannelViaEnum)
   defaultVia?: HumanChannelViaEnum;
+
+  /** The app that asked, for analytics. */
+  @IsOptional()
+  @IsIn(AGENT_ANALYTICS_SOURCES)
+  analyticsSource?: AgentAnalyticsSource;
 }

@@ -81,6 +81,12 @@ export const envValidators = {
    * per-tenant Domain/DomainRoute lookup.
    */
   NOVU_AGENT_SHARED_INBOUND_DOMAIN: str({ default: undefined }),
+  /**
+   * Shared inbound domain for Agent Inbox (Human) agents, e.g. `agentinbox.md`.
+   * The worker accepts mail for both domains. When unset, only the Connect domain
+   * is recognized. US only.
+   */
+  NOVU_AGENT_INBOX_INBOUND_DOMAIN: str({ default: undefined }),
   STORAGE_SERVICE: str({ default: undefined }),
   /*
    * Standalone Redis. Cluster mode uses ElastiCache for cache, and SQS-only
@@ -111,6 +117,19 @@ export const envValidators = {
   REDIS_MASTER_PORT: str({ default: '' }),
   REDIS_SLAVE_HOST: str({ default: '' }),
   REDIS_SLAVE_PORT: str({ default: '' }),
+  /*
+   * Opt-in HTTPS listener for enterprise self-hosted. Only presence is checked here:
+   * loadNovuTlsConfig does the real validation at boot. Keeping these optional means
+   * deployments that never set them validate exactly as they do today.
+   */
+  NOVU_TLS_ENABLED: bool({ default: false }),
+  NOVU_TLS_CERT_BASE64: str({ default: undefined }),
+  NOVU_TLS_CERT_FILE: str({ default: undefined }),
+  NOVU_TLS_KEY_BASE64: str({ default: undefined }),
+  NOVU_TLS_KEY_FILE: str({ default: undefined }),
+  NOVU_TLS_KEY_PASSPHRASE: str({ default: undefined }),
+  NOVU_TLS_CA_BASE64: str({ default: undefined }),
+  NOVU_TLS_CA_FILE: str({ default: undefined }),
   IS_IN_MEMORY_CLUSTER_MODE_ENABLED: bool({ default: false }),
   REDIS_CLUSTER_SERVICE_HOST: str({ default: undefined }),
   REDIS_CLUSTER_SERVICE_PORT: str({ default: undefined }),

@@ -82,7 +82,7 @@ await orderFailed.trigger({
 
 Use the `providers` option to pass fields the shared `body` schema does not cover. Keys are Tool provider IDs: `pagerduty`, `opsgenie`, `grafana`, and `tool-webhook`.
 
-Only the override for the integration that actually sends is applied. You can define several; unused ones are ignored.
+Only the override for the provider that sends is applied. You can define several; unused ones are ignored. Each key applies to every integration of that provider. A Tool step authored in the dashboard can store a separate [override for one integration](/platform/integrations/chat#overrides-for-one-integration).
 
 <Tabs>
   <Tab title="PagerDuty">

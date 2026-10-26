@@ -25,7 +25,9 @@ import {
   resolveHumanInteractionCard,
 } from '@novu/shared';
 import { isAgentProvisionedSubscriber } from '../../agents/conversation-runtime/conversation/agent-subscriber-resolver.service';
+import { parseEmailThreadAddress } from '../../agents/conversation-runtime/ingress/email-thread-id';
 import { parseHumanActionId } from '../../agents/human-relay/human-action-id';
+import { isValidEmailForLookup, normalizeEmailForLookup } from '../../agents/shared/util/email-normalization';
 import type {
   InboxAttachmentDto,
   InboxCardDto,
@@ -732,6 +734,7 @@ function toThread(
   latest: ConversationActivityEntity | undefined
 ): InboxThreadDto {
   const threadPeople = peopleOf(conversation, people);
+  const fromAddress = emailCounterpart(conversation);
 
   return {
     id: conversation.identifier,
@@ -750,6 +753,7 @@ function toThread(
     lastMessage: latest
       ? { text: latest.content ?? '', at: new Date(latest.createdAt).toISOString(), from: senderOf(latest) }
       : null,
+    ...(fromAddress ? { fromAddress } : {}),
     isDirectMessage: conversation.isDirectMessage !== false,
     openedAt: new Date(conversation.createdAt).toISOString(),
     lastReadAt: conversation.lastReadAt ?? null,
@@ -801,6 +805,23 @@ function isListedAfter(conversation: ConversationEntity, cursor: ConversationEnt
 
 function channelOf(conversation: ConversationEntity): string {
   return conversation.channels?.[0]?.platform ?? 'unknown';
+}
+
+/** The person on the other side of an email thread, taken from its platform thread id. */
+function emailCounterpart(conversation: ConversationEntity): string | undefined {
+  const channel = conversation.channels?.find((item) => item.platform === 'email');
+  if (!channel) {
+    return undefined;
+  }
+
+  const raw = parseEmailThreadAddress(channel.platformThreadId);
+  if (!raw) {
+    return undefined;
+  }
+
+  const address = normalizeEmailForLookup(raw);
+
+  return isValidEmailForLookup(address) ? address : undefined;
 }
 
 function fromLabel(people: InboxPersonDto[]): string {

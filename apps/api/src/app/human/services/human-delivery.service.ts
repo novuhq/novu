@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { resolvePublishedAgentInboxAddress } from '@novu/application-generic';
 import {
+  type AgentEntity,
   AgentIntegrationRepository,
   ChannelEndpointEntity,
   ChannelEndpointRepository,
@@ -11,8 +13,6 @@ import {
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  ChatProviderIdEnum,
-  EmailProviderIdEnum,
   ENDPOINT_TYPES,
   HumanAddressVerificationStateEnum,
   HumanChannelViaEnum,
@@ -22,6 +22,8 @@ import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbou
 import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card.builder';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
 import { KeylessEmailGateService } from '../../keyless/keyless-email-gate.service';
+import { type ContactHandle, describeContactHandle, readContactHandle } from './contact-handle';
+import { VIA_PROVIDER_IDS, viaForProviderId } from './human-channel-via';
 import { maskEmail } from './mask-email';
 
 export interface ResolvedHumanTarget {
@@ -30,29 +32,13 @@ export interface ResolvedHumanTarget {
   integrationIdentifier: string;
 }
 
-const VIA_PROVIDER_IDS: Record<HumanChannelViaEnum, readonly string[]> = {
-  [HumanChannelViaEnum.TELEGRAM]: [ChatProviderIdEnum.Telegram],
-  [HumanChannelViaEnum.SLACK]: [ChatProviderIdEnum.Slack, ChatProviderIdEnum.Novu],
-  [HumanChannelViaEnum.EMAIL]: [EmailProviderIdEnum.AgentEmailInbox],
-};
-
-function viaForProviderId(providerId: string): HumanChannelViaEnum | null {
-  for (const [via, providerIds] of Object.entries(VIA_PROVIDER_IDS) as Array<
-    [HumanChannelViaEnum, readonly string[]]
-  >) {
-    if (providerIds.includes(providerId)) {
-      return via;
-    }
-  }
-
-  return null;
-}
-
 /** A channel the human can receive on right now. */
 export interface ReachableHumanTarget extends ResolvedHumanTarget {
   via: HumanChannelViaEnum;
   /** When the human connected / verified it. */
   connectedAt?: string;
+  /** How they show on that chat app, as far as it is known. Absent for email. */
+  handle?: ContactHandle;
 }
 
 /** Apps a human can connect themselves from the invite page. */
@@ -77,6 +63,10 @@ export type InviteChannelDescription = {
   verifiedAt?: string;
   verifiedRequestedAt?: string;
   requestedAt?: string;
+  /** How the human shows on a connected chat app: `@username` on Telegram, their name on Slack. */
+  handle?: string;
+  /** The Slack workspace they are in, such as `acme.slack.com`. */
+  workspace?: string;
 };
 
 /**
@@ -158,12 +148,22 @@ export class HumanDeliveryService {
     agentId: string;
     subscriberId: string;
     via?: HumanChannelViaEnum;
+    /**
+     * Mailbox named on this send. Skips the verified-address lookup and delivers
+     * here. Contact-id sends omit it. Not a reachability signal.
+     */
+    explicitEmail?: string;
   }): Promise<ResolvedHumanTarget> {
+    const explicitEmail = params.explicitEmail;
+    if (explicitEmail) {
+      return this.resolveExplicitEmail({ ...params, explicitEmail });
+    }
+
     const integrations = await this.findLinkedIntegrations(params);
 
     if (integrations.length === 0) {
       throw new NotFoundException(
-        `Agent has no linked channels. Connect telegram, slack, or email to this agent, or run \`human setup\`.`
+        `Agent has no linked channels. Connect telegram, slack, or email to this agent, or run \`npx @agentinbox/cli setup\`.`
       );
     }
 
@@ -174,7 +174,7 @@ export class HumanDeliveryService {
 
     if (params.via && candidates.length === 0) {
       throw new NotFoundException(
-        `No ${params.via} channel is linked to this agent. Connect ${params.via} or run \`human setup ${params.via}\`.`
+        `No ${params.via} channel is linked to this agent. Connect ${params.via} or run \`npx @agentinbox/cli channel add ${params.via}\`.`
       );
     }
 
@@ -211,6 +211,39 @@ export class HumanDeliveryService {
     return toResolvedTarget(pickDefaultTarget(deliverable, contact?.defaultVia) ?? deliverable[0]);
   }
 
+  /**
+   * One send to an address the caller typed. Does not consult `addresses.email.verified`
+   * and does not mark the address reachable for later contact-id sends.
+   */
+  private async resolveExplicitEmail(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    explicitEmail: string;
+  }): Promise<ResolvedHumanTarget> {
+    if (this.keylessEmailGate.isBlocked(params.organizationId)) {
+      await this.keylessEmailGate.assertAllowed(params);
+    }
+
+    const email = (await this.findLinkedIntegrations(params)).find(
+      (integration) =>
+        integration.channel === ChannelTypeEnum.EMAIL &&
+        viaForProviderId(integration.providerId) === HumanChannelViaEnum.EMAIL
+    );
+
+    if (!email) {
+      throw new NotFoundException(
+        `No ${HumanChannelViaEnum.EMAIL} channel is linked to this agent. Connect ${HumanChannelViaEnum.EMAIL} or run \`npx @agentinbox/cli channel add ${HumanChannelViaEnum.EMAIL}\`.`
+      );
+    }
+
+    return {
+      platform: HumanChannelViaEnum.EMAIL,
+      platformUserId: params.explicitEmail,
+      integrationIdentifier: email.identifier,
+    };
+  }
+
   /** The agent's active invite-page integrations (Telegram, Slack, Email). */
   async listInviteChannels(params: {
     environmentId: string;
@@ -228,6 +261,43 @@ export class HumanDeliveryService {
     }
 
     return channels;
+  }
+
+  /**
+   * The agent's channels that work, as the dashboard shows them connected: email once the agent has its
+   * address, Telegram and Slack once someone linked their chat.
+   */
+  async listWorkingChannels(params: {
+    environmentId: string;
+    organizationId: string;
+    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>;
+  }): Promise<HumanChannelViaEnum[]> {
+    const integrations = await this.findLinkedIntegrations({ ...params, agentId: params.agent._id });
+    const channels = await Promise.all(
+      integrations.map(async (integration) => {
+        const via = viaForProviderId(integration.providerId);
+        if (!via) {
+          return null;
+        }
+
+        if (via === HumanChannelViaEnum.EMAIL) {
+          return resolvePublishedAgentInboxAddress(integration.credentials, params.agent) ? via : null;
+        }
+
+        const chat = await this.channelEndpointRepository.findOne(
+          {
+            _environmentId: params.environmentId,
+            _organizationId: params.organizationId,
+            integrationIdentifier: integration.identifier,
+          },
+          '_id'
+        );
+
+        return chat ? via : null;
+      })
+    );
+
+    return [...new Set(channels.filter((via): via is HumanChannelViaEnum => via !== null))];
   }
 
   /** The invite page's apps, with connection / verification state and default. */
@@ -265,7 +335,8 @@ export class HumanDeliveryService {
         return described;
       }
 
-      const connected = targets.some((target) => target.integrationIdentifier === channel.integrationIdentifier);
+      const target = targets.find((candidate) => candidate.integrationIdentifier === channel.integrationIdentifier);
+      const connected = Boolean(target);
 
       return {
         ...channel,
@@ -273,6 +344,7 @@ export class HumanDeliveryService {
         available: true,
         isDefault: connected && defaultVia === channel.via,
         status: connected ? HumanAddressVerificationStateEnum.VERIFIED : HumanAddressVerificationStateEnum.UNVERIFIED,
+        ...describeContactHandle(channel.via, target?.handle),
       };
     });
   }
@@ -588,12 +660,15 @@ export class HumanDeliveryService {
       return null;
     }
 
+    const handle = readContactHandle(endpoint.endpoint);
+
     return {
       via,
       platform: via,
       platformUserId,
       integrationIdentifier,
       connectedAt: endpoint.createdAt,
+      ...(Object.keys(handle).length > 0 ? { handle } : {}),
     };
   }
 }
@@ -633,7 +708,7 @@ function describeStoredEmail(slot: HumanContactChannelAddresses | undefined): {
     status = HumanAddressVerificationStateEnum.PENDING;
   }
 
-  const rawAddress = verified?.address ?? pending?.address;
+  const rawAddress = verified?.address ?? pending?.address ?? slot?.declared?.address;
 
   return {
     connected: Boolean(verified),
@@ -653,6 +728,8 @@ function toContactChannelStatus(channel: InviteChannelDescription): HumanContact
     ...(channel.verifiedAt ? { verifiedAt: channel.verifiedAt } : {}),
     ...(channel.verifiedRequestedAt ? { verifiedRequestedAt: channel.verifiedRequestedAt } : {}),
     ...(channel.requestedAt ? { requestedAt: channel.requestedAt } : {}),
+    ...(channel.handle ? { handle: channel.handle } : {}),
+    ...(channel.workspace ? { workspace: channel.workspace } : {}),
   };
 }
 

@@ -1,9 +1,16 @@
 import { serve } from '@novu/framework/next';
-import { humanHitlAgent } from '@/app/novu/agents';
-import { langchainVisionAgent } from '@/app/novu/langchain-vision';
-import { welcomeWorkflow } from '@/app/novu/workflows';
+import { aiSdkAgent } from '@/app/novu/agents/ai-sdk-agent';
+import { customCodeAgent } from '@/app/novu/agents/custom-code-agent';
+import { langchainAgent } from '@/app/novu/agents/langchain-agent';
+import {
+  allChannelsWorkflow,
+  delayCustomWorkflow,
+  digestWorkflow,
+  throttleWorkflow,
+  welcomeWorkflow,
+} from '@/app/novu/workflows';
 
 export const { GET, POST, OPTIONS } = serve({
-  workflows: [welcomeWorkflow],
-  agents: [langchainVisionAgent, humanHitlAgent],
+  workflows: [welcomeWorkflow, allChannelsWorkflow, delayCustomWorkflow, digestWorkflow, throttleWorkflow],
+  agents: [customCodeAgent, aiSdkAgent, langchainAgent],
 });

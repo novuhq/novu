@@ -1,10 +1,6 @@
-import { PushProviderIdEnum } from '@novu/shared';
+import { INTEGRATION_OVERRIDES_OUTPUT_KEY, PushProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
-import {
-  extractFcmRoutingCredentials,
-  hasDestinationRoutingOverride,
-  isFcmBroadcastRoutingOverride,
-} from './fcm-routing-overrides';
+import { extractFcmRoutingCredentials, isFcmBroadcastRoutingOverride, resolvePushRoute } from './fcm-routing-overrides';
 
 describe('isFcmBroadcastRoutingOverride', () => {
   it('returns true for topic routing', () => {
@@ -41,38 +37,111 @@ describe('isFcmBroadcastRoutingOverride', () => {
   });
 });
 
-describe('hasDestinationRoutingOverride', () => {
+describe('resolvePushRoute', () => {
+  function routeFor(
+    providerOverride: Record<string, unknown>,
+    providerId = PushProviderIdEnum.FCM,
+    identifier?: string
+  ) {
+    return resolvePushRoute(
+      { bridgeData: { providers: { [providerId]: providerOverride } } } as never,
+      providerId,
+      identifier
+    );
+  }
+
   it('detects a schematized routing key', () => {
-    expect(hasDestinationRoutingOverride(PushProviderIdEnum.FCM, { topic: 'news_updates' })).to.equal(true);
+    expect(routeFor({ topic: 'news_updates' }).credentials).to.deep.equal({ topic: 'news_updates' });
   });
 
   it('detects a routing key set only in _passthrough.body', () => {
-    expect(
-      hasDestinationRoutingOverride(PushProviderIdEnum.FCM, { _passthrough: { body: { topic: 'news_updates' } } })
-    ).to.equal(true);
+    expect(routeFor({ _passthrough: { body: { topic: 'news_updates' } } }).credentials).to.deep.equal({
+      topic: 'news_updates',
+    });
   });
 
   it('ignores content-only overrides', () => {
-    expect(
-      hasDestinationRoutingOverride(PushProviderIdEnum.FCM, {
-        notification: { title: 'hi' },
-        _passthrough: { body: { android: { priority: 'high' } } },
-      })
-    ).to.equal(false);
+    const route = routeFor({
+      notification: { title: 'hi' },
+      _passthrough: { body: { android: { priority: 'high' } } },
+    });
+
+    expect(route.credentials).to.equal(null);
   });
 
   it('detects token and tokens, which choose the destination instead of the stored device tokens', () => {
-    expect(hasDestinationRoutingOverride(PushProviderIdEnum.FCM, { token: 'abc' })).to.equal(true);
-    expect(hasDestinationRoutingOverride(PushProviderIdEnum.FCM, { tokens: ['a', 'b'] })).to.equal(true);
+    expect(routeFor({ token: 'abc' }).credentials).to.deep.equal({ deviceTokens: [] });
+    expect(routeFor({ tokens: ['a', 'b'] }).credentials).to.deep.equal({ deviceTokens: ['a', 'b'] });
   });
 
   it('ignores routing keys with no usable value', () => {
-    expect(hasDestinationRoutingOverride(PushProviderIdEnum.FCM, { topic: '' })).to.equal(false);
-    expect(hasDestinationRoutingOverride(PushProviderIdEnum.FCM, { tokens: [] })).to.equal(false);
+    expect(routeFor({ topic: '' }).credentials).to.equal(null);
+    expect(routeFor({ tokens: [] }).credentials).to.equal(null);
   });
 
-  it('returns false for providers without exclusive routing groups', () => {
-    expect(hasDestinationRoutingOverride(PushProviderIdEnum.EXPO, { topic: 'news_updates' })).to.equal(false);
+  it('returns no destination for providers without exclusive routing groups', () => {
+    expect(routeFor({ topic: 'news_updates' }, PushProviderIdEnum.EXPO).credentials).to.equal(null);
+  });
+
+  it('applies the integration override only for the matching integration identifier', () => {
+    const providerOverride = { [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'fcm-main': { topic: 'updates' } } };
+
+    expect(routeFor(providerOverride, PushProviderIdEnum.FCM, 'fcm-main')).to.deep.equal({
+      bridgeProviderData: { topic: 'updates' },
+      credentials: { topic: 'updates' },
+      isIntegrationScoped: true,
+    });
+    expect(routeFor(providerOverride, PushProviderIdEnum.FCM, 'fcm-other').credentials).to.equal(null);
+    expect(routeFor(providerOverride).credentials).to.equal(null);
+  });
+
+  it('is integration-scoped when the integration override repeats the provider-wide topic', () => {
+    const providerOverride = { topic: 'news', [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'fcm-main': { topic: 'news' } } };
+
+    expect(routeFor(providerOverride, PushProviderIdEnum.FCM, 'fcm-main').isIntegrationScoped).to.equal(true);
+    expect(routeFor(providerOverride, PushProviderIdEnum.FCM, 'fcm-other').isIntegrationScoped).to.equal(false);
+  });
+
+  it('is integration-scoped when the integration override sets the topic in _passthrough.body', () => {
+    const providerOverride = {
+      tokens: ['provider-token'],
+      [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'fcm-main': { _passthrough: { body: { topic: 'updates' } } } },
+    };
+
+    const route = routeFor(providerOverride, PushProviderIdEnum.FCM, 'fcm-main');
+
+    expect(route.credentials).to.deep.equal({ topic: 'updates' });
+    expect(route.isIntegrationScoped).to.equal(true);
+  });
+
+  it('is not integration-scoped when a lower-layer passthrough key wins the merged passthrough body', () => {
+    const providerOverride = {
+      _passthrough: { body: { topic: 'news' } },
+      [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'fcm-main': { _passthrough: { body: { tokens: ['vip-token'] } } } },
+    };
+
+    const route = routeFor(providerOverride, PushProviderIdEnum.FCM, 'fcm-main');
+
+    expect(route.credentials).to.deep.equal({ topic: 'news' });
+    expect(route.isIntegrationScoped).to.equal(false);
+  });
+
+  it('is not integration-scoped when a trigger override evicts the integration topic', () => {
+    const route = resolvePushRoute(
+      {
+        bridgeData: {
+          providers: {
+            [PushProviderIdEnum.FCM]: { [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'fcm-main': { topic: 'a' } } },
+          },
+        },
+        overrides: { providers: { [PushProviderIdEnum.FCM]: { topic: 'b' } } },
+      } as never,
+      PushProviderIdEnum.FCM,
+      'fcm-main'
+    );
+
+    expect(route.credentials).to.deep.equal({ topic: 'b' });
+    expect(route.isIntegrationScoped).to.equal(false);
   });
 });
 

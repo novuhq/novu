@@ -18,9 +18,23 @@ export type MascotPose = {
   pitch: number;
   /** 0 with the eyes open, 1 with them shut. */
   blink: number;
+  /**
+   * 0 with the eyes open, 1 with them curved up into the happy arcs. Anything in between is an eye on
+   * its way from one to the other, which is how an awake mascot turns happy and back.
+   */
+  joy: number;
 };
 
-export const MASCOT_AT_REST: MascotPose = { yaw: 0, pitch: 0, blink: 0 };
+export const MASCOT_AT_REST: MascotPose = { yaw: 0, pitch: 0, blink: 0, joy: 0 };
+
+export type MascotLook = {
+  /**
+   * Faces straight ahead at rest. The design's awake drawing looks a touch to the right, and so does the
+   * mascot drawn here unless this is set. Where it goes back and forth between open and happy eyes it
+   * has to face ahead: the happy drawing does, and the eyes would step sideways with every change.
+   */
+  ahead?: boolean;
+};
 
 /** From the halo's darkest dot to the highlight. Level 0 is nothing at all. */
 const PALETTE = [
@@ -83,6 +97,12 @@ const HAPPY_EYE_HALF_HEIGHT = 0.216;
 const HAPPY_EYE_HEIGHT = 0.054;
 const HAPPY_EYE_CUT = { width: 0.864, height: 0.574, drop: 0.125 };
 
+/** How far below the middle of its oval the arc ends, as a share of the oval's height. */
+const HAPPY_EYE_LID = 0.1;
+
+/** Where the cut sits while the eye is still open: right under the oval, touching its lowest point. */
+const HAPPY_EYE_CUT_BELOW = 1 + HAPPY_EYE_CUT.height;
+
 /** The awake drawing already looks a touch to the right. The other two face straight ahead. */
 const REST_YAW = 0.08;
 
@@ -95,7 +115,8 @@ export function drawMascot(
   size: number,
   pose: MascotPose,
   radiusShare: number,
-  mood: MascotMood = 'awake'
+  mood: MascotMood = 'awake',
+  look: MascotLook = {}
 ): void {
   const radius = size * radiusShare;
   const centerX = size / 2;
@@ -107,7 +128,7 @@ export function drawMascot(
   const light = { x: lightX / lightLength, y: lightY / lightLength, z: LIGHT.z / lightLength };
 
   const eyes = matchEyes(
-    [placeEye(-EYE_SPREAD, pose, radius, mood), placeEye(EYE_SPREAD, pose, radius, mood)],
+    [placeEye(-EYE_SPREAD, pose, radius, mood, look), placeEye(EYE_SPREAD, pose, radius, mood, look)],
     radius,
     centerX,
     centerY
@@ -176,17 +197,29 @@ type Eye = {
   halfHeight: number;
   /** 2 draws an oval; the higher it goes, the squarer the corners. */
   corners: number;
-  /** Only the arc of the oval is drawn. */
-  arc: boolean;
+  /** 0 draws the whole oval, 1 only its arc, and in between an oval that is turning into the arc. */
+  joy: number;
 };
 
-/** Where an eye lands once the sphere has turned, or `null` when it has gone round the back. */
-function placeEye(side: number, pose: MascotPose, radius: number, mood: MascotMood): Eye | null {
+/** `from` at 0 and `to` at 1, exactly: the drawings at either end stay the ones of the design. */
+function mix(from: number, to: number, share: number): number {
+  return from * (1 - share) + to * share;
+}
+
+/**
+ * Where an eye lands once the sphere has turned, or `null` when it has gone round the back.
+ *
+ * An eye that is turning happy is every measure of the open eye on its way to that of the happy one:
+ * it sinks, widens and stops looking to the side, while `isInEye` brings its lower lid up.
+ */
+function placeEye(side: number, pose: MascotPose, radius: number, mood: MascotMood, look: MascotLook): Eye | null {
+  const joy = mood === 'happy' ? 1 : mood === 'asleep' ? 0 : Math.max(0, Math.min(1, pose.joy));
   const front = Math.sqrt(1 - side * side - EYE_HEIGHT * EYE_HEIGHT);
-  const yaw = (mood === 'awake' ? REST_YAW : 0) + pose.yaw;
-  const blink = mood === 'asleep' ? 1 : mood === 'happy' ? 0 : pose.blink;
+  const yaw = (mood === 'awake' && !look.ahead ? REST_YAW * (1 - joy) : 0) + pose.yaw;
+  // A happy eye doesn't blink.
+  const blink = mood === 'asleep' ? 1 : pose.blink * (1 - joy);
   // The lid comes down: a shutting eye ends up at its own lower edge, not at its middle.
-  const height = mood === 'happy' ? HAPPY_EYE_HEIGHT : EYE_HEIGHT + EYE_HALF_HEIGHT * SHUT_EYE_DROP * blink;
+  const height = mix(EYE_HEIGHT + EYE_HALF_HEIGHT * SHUT_EYE_DROP * blink, HAPPY_EYE_HEIGHT, joy);
 
   // Turn about the upright axis, then about the level one.
   const x = side * Math.cos(yaw) + front * Math.sin(yaw);
@@ -200,27 +233,21 @@ function placeEye(side: number, pose: MascotPose, radius: number, mood: MascotMo
   // An eye near the edge is seen from the side, so it gets narrower.
   const narrowing = z / front;
 
-  if (mood === 'happy') {
-    return {
-      x,
-      y,
-      halfWidth: HAPPY_EYE_HALF_WIDTH * narrowing,
-      halfHeight: HAPPY_EYE_HALF_HEIGHT,
-      corners: 2,
-      arc: true,
-    };
-  }
-
   const openWidth = EYE_HALF_WIDTH + (SHUT_EYE_HALF_WIDTH - EYE_HALF_WIDTH) * blink;
+  const openHalfWidth = Math.max(openWidth * narrowing, 0.6 / radius);
+  // A shut eye is a whole number of pixel rows: two on the small grid, four on the large one.
+  const openHalfHeight = Math.max(
+    EYE_HALF_HEIGHT * (1 - blink),
+    Math.max(1, Math.round(radius * SHUT_EYE_HEIGHT)) / 2 / radius
+  );
 
   return {
     x,
     y,
-    halfWidth: Math.max(openWidth * narrowing, 0.6 / radius),
-    // A shut eye is a whole number of pixel rows: two on the small grid, four on the large one.
-    halfHeight: Math.max(EYE_HALF_HEIGHT * (1 - blink), Math.max(1, Math.round(radius * SHUT_EYE_HEIGHT)) / 2 / radius),
-    corners: 2 + SHUT_EYE_CORNERS * blink,
-    arc: false,
+    halfWidth: mix(openHalfWidth, HAPPY_EYE_HALF_WIDTH * narrowing, joy),
+    halfHeight: mix(openHalfHeight, HAPPY_EYE_HALF_HEIGHT, joy),
+    corners: mix(2 + SHUT_EYE_CORNERS * blink, 2, joy),
+    joy,
   };
 }
 
@@ -260,8 +287,11 @@ function snap(position: number, halfSize: number): number {
 }
 
 function isInEye(eye: Eye, x: number, y: number): boolean {
-  if (eye.arc) {
+  if (eye.joy >= 1) {
     return isInArc(eye, x, y);
+  }
+  if (eye.joy > 0) {
+    return isInTurningEye(eye, x, y);
   }
 
   const across = Math.abs((x - eye.x) / eye.halfWidth);
@@ -274,12 +304,30 @@ function isInEye(eye: Eye, x: number, y: number): boolean {
 function isInArc(eye: Eye, x: number, y: number): boolean {
   const across = (x - eye.x) / eye.halfWidth;
   const along = (y - eye.y) / eye.halfHeight;
-  if (along > 0.1 || across * across + along * along > 1) {
+  if (along > HAPPY_EYE_LID || across * across + along * along > 1) {
     return false;
   }
 
   const cutAcross = across / HAPPY_EYE_CUT.width;
   const cutAlong = (along - HAPPY_EYE_CUT.drop) / HAPPY_EYE_CUT.height;
+
+  return cutAcross * cutAcross + cutAlong * cutAlong > 1;
+}
+
+/**
+ * An eye between the open oval and the happy arc: its lower lid is coming up. The line the arc ends at
+ * rises from the oval's lowest point to its place, and the oval that hollows the arc out comes up from
+ * underneath it. Both are where the arc has them once `joy` is 1, and out of the way while it is 0.
+ */
+function isInTurningEye(eye: Eye, x: number, y: number): boolean {
+  const across = (x - eye.x) / eye.halfWidth;
+  const along = (y - eye.y) / eye.halfHeight;
+  if (along > mix(1, HAPPY_EYE_LID, eye.joy) || Math.abs(across) ** eye.corners + Math.abs(along) ** eye.corners > 1) {
+    return false;
+  }
+
+  const cutAcross = across / HAPPY_EYE_CUT.width;
+  const cutAlong = (along - mix(HAPPY_EYE_CUT_BELOW, HAPPY_EYE_CUT.drop, eye.joy)) / HAPPY_EYE_CUT.height;
 
   return cutAcross * cutAcross + cutAlong * cutAlong > 1;
 }

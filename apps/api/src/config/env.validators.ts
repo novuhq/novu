@@ -80,7 +80,7 @@ export const envValidators = {
   FRONT_BASE_URL: str(),
   DASHBOARD_URL: str({ default: '' }),
   HUMAN_DASHBOARD_URL: str({ default: '' }),
-  HUMAN_DASHBOARD_API_SECRET: str({ default: '' }),
+  AGENT_INBOX_DASHBOARD_API_SECRET: str({ default: '' }),
   DISABLE_USER_REGISTRATION: bool({ default: false }),
   /*
    * Standalone Redis. Cluster mode uses ElastiCache for cache, and SQS-only
@@ -100,6 +100,19 @@ export const envValidators = {
   REDIS_MASTER_PORT: str({ default: '' }),
   REDIS_SLAVE_HOST: str({ default: '' }),
   REDIS_SLAVE_PORT: str({ default: '' }),
+  /*
+   * Opt-in HTTPS listener for enterprise self-hosted. Only presence is checked here:
+   * loadNovuTlsConfig does the real validation at boot. Keeping these optional means
+   * deployments that never set them validate exactly as they do today.
+   */
+  NOVU_TLS_ENABLED: bool({ default: false }),
+  NOVU_TLS_CERT_BASE64: str({ default: undefined }),
+  NOVU_TLS_CERT_FILE: str({ default: undefined }),
+  NOVU_TLS_KEY_BASE64: str({ default: undefined }),
+  NOVU_TLS_KEY_FILE: str({ default: undefined }),
+  NOVU_TLS_KEY_PASSPHRASE: str({ default: undefined }),
+  NOVU_TLS_CA_BASE64: str({ default: undefined }),
+  NOVU_TLS_CA_FILE: str({ default: undefined }),
   JWT_SECRET: str(),
   SENDGRID_API_KEY: str({ default: '' }),
   MONGO_AUTO_CREATE_INDEXES: bool({ default: false }),
@@ -166,6 +179,12 @@ export const envValidators = {
    * per-tenant Domain/DomainRoute lookup.
    */
   NOVU_AGENT_SHARED_INBOUND_DOMAIN: str({ default: undefined }),
+  /**
+   * Shared inbound domain for Agent Inbox (Human) agents, e.g. `agentinbox.md`.
+   * Connect agents stay on `NOVU_AGENT_SHARED_INBOUND_DOMAIN`. When unset, new
+   * Agent Inbox agents are pinned to that Connect domain instead. US only.
+   */
+  NOVU_AGENT_INBOX_INBOUND_DOMAIN: str({ default: undefined }),
   NOVU_WHATSAPP_APP_ID: str({ default: undefined }),
   NOVU_WHATSAPP_APP_SECRET: str({ default: undefined }),
   NOVU_WHATSAPP_CONFIG_ID: str({ default: undefined }),

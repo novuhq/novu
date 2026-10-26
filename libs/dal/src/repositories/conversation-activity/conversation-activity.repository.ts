@@ -309,8 +309,10 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
 
   /**
    * Messages and human-interaction rows of a thread for the Human inbox, newest first. `before` is
-   * the identifier of the oldest row of the previous page. `includeSystem` adds the system lines:
-   * messages from the system and timeline signals such as "resolved".
+   * the identifier of the oldest row of the previous page. `after` is the identifier of the newest
+   * row already read: the page is then the oldest rows that came after it, and `hasMore` says more
+   * came after those. A cursor that is no row of the thread gives an empty page. `includeSystem` adds
+   * the system lines: messages from the system and timeline signals such as "resolved".
    */
   async findInboxMessages(params: {
     environmentId: string;
@@ -318,6 +320,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     conversationId: string;
     limit: number;
     before?: string;
+    after?: string;
     includeSystem?: boolean;
   }): Promise<{ data: ConversationActivityEntity[]; hasMore: boolean }> {
     const scope = {
@@ -347,9 +350,12 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     };
 
     let cursor: Pick<ConversationActivityEntity, '_id' | 'createdAt'> | null = null;
+    // `after` reads on from the cursor towards the newest row; otherwise the rows go back in time.
+    const newer = params.after !== undefined;
+    const cursorIdentifier = newer ? params.after : params.before;
 
-    if (params.before) {
-      cursor = await this.findOne({ ...scope, identifier: params.before }, ['_id', 'createdAt']);
+    if (cursorIdentifier !== undefined) {
+      cursor = await this.findOne({ ...scope, identifier: cursorIdentifier }, ['_id', 'createdAt']);
 
       if (!cursor) {
         return { data: [], hasMore: false };
@@ -360,6 +366,8 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     // read until the page and the one row that proves there is more are filled.
     const batchSize = params.limit + 1;
     const rows: ConversationActivityEntity[] = [];
+    // Past the cursor in the direction of reading: later rows with `after`, earlier ones otherwise.
+    const beyond = (value: Date | Types.ObjectId) => (newer ? { $gt: value } : { $lt: value });
 
     while (rows.length < batchSize) {
       const batch = await this.find(
@@ -369,15 +377,15 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
               $and: [
                 {
                   $or: [
-                    { createdAt: { $lt: new Date(cursor.createdAt) } },
-                    { createdAt: new Date(cursor.createdAt), _id: { $lt: new Types.ObjectId(cursor._id) } },
+                    { createdAt: beyond(new Date(cursor.createdAt)) },
+                    { createdAt: new Date(cursor.createdAt), _id: beyond(new Types.ObjectId(cursor._id)) },
                   ],
                 },
               ],
             }
           : query,
         '*',
-        { sort: { createdAt: -1, _id: -1 }, limit: batchSize }
+        { sort: newer ? { createdAt: 1, _id: 1 } : { createdAt: -1, _id: -1 }, limit: batchSize }
       );
 
       rows.push(...(await this.foldViewPage(params, await this.withoutInteractionCardCopies(scope, batch))));
@@ -389,7 +397,10 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       cursor = batch[batch.length - 1];
     }
 
-    return { data: rows.slice(0, params.limit), hasMore: rows.length > params.limit };
+    const page = rows.slice(0, params.limit);
+
+    // Newest first either way, as the callers take every page.
+    return { data: newer ? page.reverse() : page, hasMore: rows.length > params.limit };
   }
 
   /**

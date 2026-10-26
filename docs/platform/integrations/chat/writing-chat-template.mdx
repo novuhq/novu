@@ -67,7 +67,7 @@ The Chat step preview gives you an approximate view of the message for providers
 
 Use the provider switcher in the preview panel to inspect each rendering. Some providers support native rich layouts (Slack Block Kit, Microsoft Teams Adaptive Cards). Others receive a text or Markdown-style fallback derived from the same card.
 
-If a block cannot be represented fully on a provider, the preview may surface a warning. Treat that as a signal to simplify the card or add a [provider content override](/platform/integrations/chat#provider-content-overrides) for that provider.
+If a block cannot be represented fully on a provider, the preview may surface a warning. Treat that as a signal to simplify the card or add a [provider content override](/platform/integrations/chat#provider-content-overrides) for that provider. When you have several integrations of the same provider, you can save that override on one integration. See [Overrides for one integration](/platform/integrations/chat#overrides-for-one-integration).
 
 ## Text editor
 
@@ -90,7 +90,7 @@ These layers solve different problems:
 | Approach | What it is | Use when |
 | --- | --- | --- |
 | **Block editor (default content)** | Novu card model, authored once, rendered per provider | You want one shared rich message across chat providers |
-| **Provider content override** | Provider-native JSON saved on the step (Slack Block Kit, WhatsApp fields, and so on) | You need a format or field that only that provider supports |
+| **Provider content override** | Provider-native JSON saved on the step (Slack Block Kit, WhatsApp fields, and so on), for every integration of that provider or for one integration | You need a format or field that only that provider supports, or a different payload for one integration |
 | **Trigger overrides** | Provider payload passed at trigger time | The shape depends on runtime data outside the workflow definition |
 
 The block editor does not replace provider overrides. Overrides still apply for provider-specific APIs when you set them. If both exist, follow the precedence rules in [Provider content overrides](/platform/integrations/chat#provider-content-overrides) and [Trigger overrides](/platform/integrations/trigger-overrides).

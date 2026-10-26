@@ -110,7 +110,7 @@ Passing `"acme-corp"` or `{ id: "acme-corp" }` both set `context.tenant.id` to `
 
 ## Example: a separate email provider for one tenant
 
-Say your default email provider is SendGrid, and your customer Acme wants their emails sent from their own account.
+You can use different providers per tenant. Say your default email provider is SendGrid, and your customer Acme wants their emails sent from their own account.
 
 1. Keep your default SendGrid integration active and primary, with no conditions.
 2. Add a second email integration using Acme's credentials. Don't make it primary.

@@ -1,0 +1,113 @@
+---
+title: 'Microsoft Entra ID SSO'
+sidebarTitle: 'Microsoft Entra ID'
+description: 'Create a non-gallery Microsoft Entra enterprise app, set the SAML reply URL and identifier, and return the federation metadata URL.'
+---
+
+<Note>
+  This is an Enterprise feature on [Novu Cloud](https://dashboard.novu.co). Configure it as the organization **Owner** from **Settings** > **Organization** > **Security** after we enable self-serve, or email [support@novu.co](mailto:support@novu.co) and we will do the Novu side with you. Domain verification and activation are covered in [SAML SSO & SCIM](/platform/account/sso).
+</Note>
+
+Use this when your company signs in through Microsoft Entra ID, formerly Azure Active Directory. Novu is the service provider. Entra is the identity provider.
+
+You create a non-gallery enterprise application, assign the people who should reach Novu, paste two values from Novu into the SAML configuration, confirm the email claim, and give Novu the app's federation metadata URL.
+
+## Before you start
+
+- An Enterprise organization on Novu Cloud.
+- One or more email domains verified on the Security tab. For SAML, `alex@acme.com` matches a connection for `acme.com`. `alex@sales.acme.com` does not, unless we have enabled subdomain matching. Ask us if you need that. The domain has to be a registrable domain, such as `acme.com`, before subdomain matching can be turned on.
+- Someone who can create enterprise applications in the Entra tenant and assign users or groups.
+- The two values below. They appear on the Security tab when **Microsoft Entra** is selected. If we are configuring the connection, we send them to you.
+
+## Values to paste into Entra
+
+Entra uses Microsoft's names for the service provider values.
+
+| Entra field | What Novu gives you |
+| --- | --- |
+| Identifier (Entity ID) | The service provider entity ID. |
+| Reply URL (Assertion Consumer Service URL) | The URL Entra posts the SAML response to. |
+
+If **Identifier (Entity ID)** already contains a value, replace it with the identifier from Novu. Paste the reply URL into **Reply URL**, not into the identifier.
+
+## Create the enterprise application
+
+<Steps>
+  <Step title="Create a non-gallery application">
+    In the [Microsoft Entra admin center](https://entra.microsoft.com), go to **Enterprise applications**. Select **New application**, then **Create your own application**. Enter a name, select **Integrate any other application you don't find in the gallery (Non-gallery)**, then **Create**.
+
+    Use a non-gallery app. A gallery app for a different product will not have Novu's reply URL.
+  </Step>
+  <Step title="Assign users or groups">
+    In **Getting Started**, select **Assign users and groups**. Select **Add user/group**, choose who should reach Novu, then **Assign**.
+
+    Unassigned accounts cannot sign in. If a group does not appear, Entra is limiting which group types this application can use. Microsoft's docs for that tenant describe the allowed group types. Assignment here is who may use SSO. Provisioning those users on a schedule is [Entra directory sync](/platform/account/directory-sync/microsoft-entra), and it uses this same application.
+  </Step>
+  <Step title="Turn on SAML">
+    Under **Manage**, open **Single sign-on** and select **SAML**.
+  </Step>
+  <Step title="Paste the Novu values">
+    In **Basic SAML Configuration**, select **Edit**. Paste the **Identifier (Entity ID)** and **Reply URL (Assertion Consumer Service URL)**. Select **Save**, then close the panel.
+  </Step>
+  <Step title="Check the claims">
+    In **Attributes & Claims**, select **Edit**. These claims are usually already present. Confirm them. Incorrect attribute mappings are a common cause of SAML errors.
+
+    | What Novu needs | Required | Claim name | Source attribute |
+    | --- | --- | --- | --- |
+    | Email address | Yes | `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress` | `user.mail` |
+    | First name | No | `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname` | `user.givenname` |
+    | Last name | No | `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname` | `user.surname` |
+
+    `user.mail` has to be the person's email address in Entra. `user.userprincipalname` is not a substitute when it is a different address. If `mail` is empty, sign-in can succeed in Entra and still fail in Novu because the email claim is blank.
+  </Step>
+  <Step title="Copy the federation metadata URL">
+    In **SAML Certificates**, copy **App Federation Metadata Url**. Paste it into the Security tab, or send it to us.
+
+    That URL carries Entra's sign-on URL, identifier, and signing certificate. When Entra rotates the signing certificate, update the connection from the current metadata URL before the old certificate stops being used.
+  </Step>
+</Steps>
+
+## Test it, then turn it on
+
+On the Security tab, run a test sign-in with a person who is assigned to the application and whose email is on a verified domain. For a new connection, that test does not change sign-in for anyone else. The connection is not live until you activate it.
+
+If we are configuring the connection, send us the **App Federation Metadata Url** and a time when you can try a sign-in with us.
+
+<Warning>
+  After you activate, anyone with an email on a verified domain must sign in through Entra. That includes people who already had a Novu account on that domain. Editing the live connection applies immediately. A wrong reply URL, identifier, or email claim can stop the whole domain from signing in. Change it when someone can fix a failed login, and run the test again.
+</Warning>
+
+## What your users experience
+
+- They start on the Novu sign-in page, enter their work email, and are sent to Entra. Entra checks their credentials and any MFA the tenant requires, then sends them back.
+- An existing Novu account with that email is linked to the Entra login. They keep the same account.
+- If they also have multi-factor authentication on the Novu account, they still complete that step after Entra accepts them.
+- Starting from an Entra or My Apps tile (IdP-initiated SAML) is not part of this setup. Ask us if you have a reason to allow it.
+- Removing the connection does not delete Novu accounts. Those people need another sign-in method that is still available, such as a password, Google, or GitHub.
+- Without [directory sync](/platform/account/directory-sync/microsoft-entra), a person is created in Novu the first time they sign in.
+
+## If Entra sign-in fails
+
+<AccordionGroup>
+  <Accordion title="Entra accepts the login and Novu has no email">
+    The email claim is missing, named differently, or sourced from an attribute that is empty. Confirm the claim `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress` comes from `user.mail`, and that `mail` is populated for the test user.
+  </Accordion>
+  <Accordion title="The user exists in Entra but is denied at the app">
+    They are not assigned under **Users and groups**. A group only helps if that group is assigned to this enterprise application.
+  </Accordion>
+  <Accordion title="The identifier or reply URL was rejected">
+    Compare both fields with the values on the Security tab, or with the values we sent. The reply URL is the assertion consumer service URL. The identifier is the entity ID. They are not interchangeable.
+  </Accordion>
+  <Accordion title="The test works and colleagues are not redirected yet">
+    Activate the connection. Until then, only the test uses Entra.
+  </Accordion>
+  <Accordion title="Sign-in fails just after a certificate rollover">
+    Copy **App Federation Metadata Url** again and update the connection, or send us the URL, before Entra retires the old certificate.
+  </Accordion>
+</AccordionGroup>
+
+## Next
+
+Turn on provisioning for this same enterprise application in [Microsoft Entra ID directory sync](/platform/account/directory-sync/microsoft-entra).
+
+Email [support@novu.co](mailto:support@novu.co) or your Slack Connect channel if the test still fails. Include the organization name, the domain, and the email address you tried.

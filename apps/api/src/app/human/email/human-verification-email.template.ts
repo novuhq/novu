@@ -1,4 +1,4 @@
-import { DEFAULT_HUMAN_RELAY_NAME, type RelaySender } from '../services/relay-owner-name';
+import type { RelaySender } from '../services/relay-owner-name';
 
 function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -8,13 +8,16 @@ function strong(text: string): string {
   return `<strong style="color:#eee5d8;font-weight:500;">${escapeHtml(text)}</strong>`;
 }
 
-/** "Nikita Grossman wants to reach you via agent Deploy bot". */
+/** "Nikita Grossman wants to reach you via agent Deploy bot". An unnamed agent is left out. */
 function reachLine(sender: RelaySender): { text: string; html: string } {
   const operator = sender.operatorName?.trim() || 'Someone';
-  const agent = sender.agentName?.trim() || DEFAULT_HUMAN_RELAY_NAME;
-  const text = `${operator} wants to reach you via agent ${agent}`;
+  const agent = sender.agentName?.trim();
+  const text = agent ? `${operator} wants to reach you via agent ${agent}` : `${operator} wants to reach you`;
+  const html = agent
+    ? `${strong(operator)} wants to reach you via agent ${strong(agent)}`
+    : `${strong(operator)} wants to reach you`;
 
-  return { text, html: `${strong(operator)} wants to reach you via agent ${strong(agent)}` };
+  return { text, html };
 }
 
 export type HumanVerificationEmailContent = {
@@ -25,7 +28,7 @@ export type HumanVerificationEmailContent = {
 
 /**
  * Builds the double-opt-in verification email. Styled with agentinbox.md tokens
- * (black / cream / orange) and no Novu watermark — this is Human branding only.
+ * (black / cream / orange) and no Novu watermark — this is Agent Inbox branding only.
  *
  * `sender` carries the agent's own name (absent while it still has the
  * placeholder name) and the operator who ran `human setup`, so the recipient
@@ -37,6 +40,7 @@ export function buildHumanVerificationEmail(params: {
   verifyUrl: string;
   expiresAt: string;
   claimUrl?: string;
+  isOperatorVerification?: boolean;
 }): HumanVerificationEmailContent {
   const who = reachLine(params.sender);
   const inviteeName = params.inviteeName?.trim();
@@ -44,8 +48,13 @@ export function buildHumanVerificationEmail(params: {
   const greetingHtml = inviteeName ? `Hi ${escapeHtml(inviteeName)},` : 'Hi,';
   const expiresLabel = formatExpiry(params.expiresAt);
   const verifyUrl = escapeHtml(params.verifyUrl);
-
-  const subject = who.text;
+  const subject = params.isOperatorVerification ? 'Verify your email for Agent Inbox' : who.text;
+  const explanationHtml = params.isOperatorVerification
+    ? 'Confirm this address so your agent can reach you through Agent Inbox:'
+    : `${who.html}. Confirm this address belongs to you:`;
+  const explanationText = params.isOperatorVerification
+    ? 'Confirm this address so your agent can reach you through Agent Inbox.'
+    : `${who.text}.`;
 
   const html = [
     '<!DOCTYPE html><html><head><meta charset="utf-8"/>',
@@ -56,14 +65,14 @@ export function buildHumanVerificationEmail(params: {
     '<tr><td align="center" style="padding:40px 16px;">',
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:480px;background:#000000;">',
     '<tr><td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;letter-spacing:0.02em;color:rgba(238,229,216,0.5);padding-bottom:12px;">',
-    'human',
+    'agent inbox',
     '</td></tr>',
     '<tr><td style="font-family:Georgia,\'Times New Roman\',serif;font-size:32px;line-height:1.15;letter-spacing:-0.04em;color:#eee5d8;padding-bottom:16px;">',
     'Verify your <span style="color:#ff5c30;font-style:italic;">email</span>',
     '</td></tr>',
     `<tr><td style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.4;color:rgba(238,229,216,0.7);padding-bottom:8px;">${greetingHtml}</td></tr>`,
     '<tr><td style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif;font-size:15px;line-height:1.4;color:rgba(238,229,216,0.7);padding-bottom:28px;">',
-    `${who.html}. Confirm this address belongs to you:`,
+    explanationHtml,
     '</td></tr>',
     '<tr><td align="center" style="padding-bottom:28px;">',
     `<a href="${verifyUrl}" style="display:inline-block;background:#ff5c30;color:#000000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:12px 24px;border-radius:6px;">Verify this email</a>`,
@@ -79,7 +88,7 @@ export function buildHumanVerificationEmail(params: {
   const text = [
     greetingText.replace(/,$/, ''),
     '',
-    `${who.text}.`,
+    explanationText,
     '',
     `Verify this email: ${params.verifyUrl}`,
     '',

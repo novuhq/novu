@@ -187,7 +187,7 @@ export function UsageLimitsForm({ view, onClose }: UsageLimitsFormProps) {
           mode="gradient"
           size="xs"
           className="px-2.5"
-          disabled={!form.formState.isDirty || !form.formState.isValid || isResetting}
+          disabled={!form.formState.isDirty || isResetting}
           isLoading={isSaving}
         >
           Save changes

@@ -132,7 +132,7 @@ export function buildKeylessHumanSignupCard(claimUrl: string): CardElement {
       {
         type: 'text',
         content:
-          "You've reached the limit of this free `human` demo. Sign up for a free Novu account to keep this " +
+          "You've reached the limit of this free Agent Inbox demo. Sign up for a free Agent Inbox account to keep this " +
           'channel and your setup — your agents pick up right where they left off.',
       },
       { type: 'divider' },

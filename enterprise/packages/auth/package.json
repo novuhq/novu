@@ -49,7 +49,7 @@
     "@nestjs/core": "11.1.27",
     "@nestjs/jwt": "11.0.2",
     "@nestjs/passport": "11.0.5",
-    "@nestjs/swagger": "7.4.0",
+    "@nestjs/swagger": "11.4.7",
     "passport": "0.7.0",
     "passport-jwt": "^4.0.0"
   }

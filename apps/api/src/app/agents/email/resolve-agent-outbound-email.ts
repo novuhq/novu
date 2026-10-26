@@ -1,7 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
-import { buildAgentSharedInbox, decryptCredentials, isAgentSharedInboxEnabled } from '@novu/application-generic';
+import { decryptCredentials, resolvePublishedAgentInboxAddress } from '@novu/application-generic';
 import { AgentIntegrationRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { type AgentInboxProviderId, ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { resolveAgentEmailIpPoolName } from './agent-email-ip-pool';
 
 export type ResolvedAgentOutboundEmail = {
   /** Decrypted (or demo-hydrated) integration ready for MailFactory. */
@@ -54,7 +55,7 @@ export async function resolveAgentOutboundEmail(params: {
   }
 
   const outboundIntegrationId = emailIntegration.credentials?.outboundIntegrationId as string | undefined;
-  const agentInboundFrom = resolveAgentInboundFrom(emailIntegration);
+  const agentInboundFrom = resolveAgentInboundFrom(emailIntegration, params.agentName);
   const senderName = resolveAgentSenderName(emailIntegration, params.agentName);
 
   const senderIntegration = await findSenderIntegration(
@@ -62,7 +63,8 @@ export async function resolveAgentOutboundEmail(params: {
     params.environmentId,
     params.organizationId,
     outboundIntegrationId,
-    { agentInboundFrom, senderName }
+    { agentInboundFrom, senderName },
+    params.providerId
   );
   const outboundFrom = senderIntegration.credentials?.from as string | undefined;
   const from = agentInboundFrom || outboundFrom;
@@ -74,19 +76,8 @@ export async function resolveAgentOutboundEmail(params: {
   return { senderIntegration, from, senderName, emailIntegration };
 }
 
-function resolveAgentInboundFrom(emailIntegration: IntegrationEntity): string | undefined {
-  const slug = emailIntegration.credentials?.emailSlugPrefix;
-  const inboxRoutingKey = emailIntegration.credentials?.inboxRoutingKey;
-  const sharedInboxDisabled = Boolean(emailIntegration.credentials?.sharedInboxDisabled);
-  if (!isAgentSharedInboxEnabled() || !slug || !inboxRoutingKey || sharedInboxDisabled) {
-    return undefined;
-  }
-
-  try {
-    return buildAgentSharedInbox(slug, inboxRoutingKey);
-  } catch {
-    return undefined;
-  }
+function resolveAgentInboundFrom(emailIntegration: IntegrationEntity, agentName: string): string | undefined {
+  return resolvePublishedAgentInboxAddress(emailIntegration.credentials, { name: agentName });
 }
 
 function resolveAgentSenderName(emailIntegration: IntegrationEntity, agentName: string): string {
@@ -103,7 +94,8 @@ async function findSenderIntegration(
   environmentId: string,
   organizationId: string,
   outboundIntegrationId: string | undefined,
-  delivery: { agentInboundFrom?: string; senderName: string }
+  delivery: { agentInboundFrom?: string; senderName: string },
+  providerId: AgentInboxProviderId
 ): Promise<IntegrationEntity> {
   if (!outboundIntegrationId) {
     throw new BadRequestException('Agent has no outbound email integration configured.');
@@ -130,7 +122,7 @@ async function findSenderIntegration(
         apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
         from: delivery.agentInboundFrom ?? 'no-reply@novu.co',
         senderName: delivery.senderName,
-        ipPoolName: 'Demo',
+        ipPoolName: resolveAgentEmailIpPoolName(providerId),
       },
     };
   }

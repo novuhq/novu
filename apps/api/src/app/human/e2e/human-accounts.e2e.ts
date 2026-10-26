@@ -4,7 +4,8 @@ import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ConnectClaimTokenService } from '../../connect/services/connect-claim-token.service';
-import { HUMAN_DASHBOARD_SECRET_HEADER } from '../guards/human-dashboard-secret.guard';
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from '../guards/human-dashboard-secret.guard';
+import { HumanBackingAccounts } from '../services/human-backing-accounts.service';
 import { EnsureBackingOrganization } from '../usecases/ensure-backing-organization/ensure-backing-organization.usecase';
 
 /**
@@ -13,7 +14,7 @@ import { EnsureBackingOrganization } from '../usecases/ensure-backing-organizati
  * backing organization is needed, the test session's own organization stands in for it.
  */
 describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', () => {
-  const originalSecret = process.env.HUMAN_DASHBOARD_API_SECRET;
+  const originalSecret = process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
   let session: UserSession;
 
   beforeEach(async () => {
@@ -23,9 +24,9 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
 
   afterEach(() => {
     if (originalSecret === undefined) {
-      delete process.env.HUMAN_DASHBOARD_API_SECRET;
+      delete process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
     } else {
-      process.env.HUMAN_DASHBOARD_API_SECRET = originalSecret;
+      process.env.AGENT_INBOX_DASHBOARD_API_SECRET = originalSecret;
     }
   });
 
@@ -34,17 +35,20 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
   }
 
   it('does not exist while no shared secret is configured', async () => {
-    delete process.env.HUMAN_DASHBOARD_API_SECRET;
+    delete process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
 
-    const res = await ensureAccount({ [HUMAN_DASHBOARD_SECRET_HEADER]: '' }, { humanUserId: 'user_e2e' });
+    const res = await ensureAccount({ [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: '' }, { humanUserId: 'user_e2e' });
 
     expect(res.status).to.equal(404, JSON.stringify(res.body));
   });
 
   it('rejects callers without the shared secret, including dashboard sessions', async () => {
-    process.env.HUMAN_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
+    process.env.AGENT_INBOX_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
 
-    const anonymous = await ensureAccount({ [HUMAN_DASHBOARD_SECRET_HEADER]: 'wrong' }, { humanUserId: 'user_e2e' });
+    const anonymous = await ensureAccount(
+      { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: 'wrong' },
+      { humanUserId: 'user_e2e' }
+    );
     expect(anonymous.status).to.equal(401, JSON.stringify(anonymous.body));
 
     const dashboardSession = await session.testAgent.post('/v1/human/accounts').send({ humanUserId: 'user_e2e' });
@@ -52,10 +56,10 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
   });
 
   it('validates the Human user ID before touching Clerk', async () => {
-    process.env.HUMAN_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
+    process.env.AGENT_INBOX_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
 
     const res = await ensureAccount(
-      { [HUMAN_DASHBOARD_SECRET_HEADER]: 'e2e-human-dashboard-secret' },
+      { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: 'e2e-human-dashboard-secret' },
       { humanUserId: 'not an id@example.com' }
     );
 
@@ -67,16 +71,104 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
       session.testAgent
         .post('/v1/human/accounts/user_e2e/secret-key/regenerate')
         .set('Authorization', '')
-        .set(HUMAN_DASHBOARD_SECRET_HEADER, secret);
+        .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, secret);
 
-    delete process.env.HUMAN_DASHBOARD_API_SECRET;
+    delete process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
     expect((await regenerate('')).status).to.equal(404);
 
-    process.env.HUMAN_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
+    process.env.AGENT_INBOX_DASHBOARD_API_SECRET = 'e2e-human-dashboard-secret';
     expect((await regenerate('wrong')).status).to.equal(401);
 
     const dashboardSession = await session.testAgent.post('/v1/human/accounts/user_e2e/secret-key/regenerate');
     expect(dashboardSession.status).to.equal(401, JSON.stringify(dashboardSession.body));
+  });
+
+  describe('the sign-up webhook and the first page at the same time', () => {
+    const SECRET = 'e2e-human-dashboard-secret';
+    let finishFirstSetup: () => void = () => undefined;
+    // The requests a test sent, and whether it has ended, so nothing it started outlives it.
+    let inFlight: Promise<unknown>[] = [];
+    let ended = false;
+
+    beforeEach(() => {
+      process.env.AGENT_INBOX_DASHBOARD_API_SECRET = SECRET;
+      inFlight = [];
+      ended = false;
+    });
+
+    afterEach(async () => {
+      // A test that failed halfway still lets the held setup end, and both requests finish before the stubs
+      // go: neither may reach the real setup, and Clerk with it, afterwards.
+      ended = true;
+      finishFirstSetup();
+      await Promise.allSettled(inFlight);
+      sinon.restore();
+    });
+
+    async function waitUntil(condition: () => boolean) {
+      while (!condition() && !ended) {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+    }
+
+    it('gives both the account, set up once, instead of telling one to try again', async () => {
+      // A new ID each run, so a lock that an earlier run left behind can't hold this one up.
+      const humanUserId = `user_e2e_${Date.now()}`;
+      // The test session's own organization stands in for the backing organization, so Clerk isn't needed.
+      const backingAccount = {
+        clerkUserId: 'user_backing_e2e',
+        clerkOrganizationId: session.organization.externalId,
+        novuUserId: session.user._id,
+      };
+      const setup = sinon.stub(testServer.getService(HumanBackingAccounts), 'findOrCreate').resolves(backingAccount);
+      setup.onFirstCall().returns(
+        new Promise((resolve) => {
+          finishFirstSetup = () => resolve(backingAccount);
+        })
+      );
+      const ensureCalls = sinon.spy(testServer.getService(EnsureBackingOrganization), 'execute');
+
+      const answered = new Set<string>();
+      const ensure = (caller: string) => {
+        const request = ensureAccount(
+          { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: SECRET },
+          { humanUserId, firstName: 'Ada' }
+        ).then((res) => {
+          answered.add(caller);
+
+          return res;
+        });
+        inFlight.push(request);
+
+        return request;
+      };
+
+      // The webhook gets there first, and its setup stays in Clerk until the test lets it finish.
+      const webhook = ensure('webhook');
+      await waitUntil(() => setup.called || answered.has('webhook'));
+      expect(setup.called).to.equal(true, 'the webhook was answered before it got to the setup');
+
+      // The first page arrives in the middle of it. It used to be told at once that the account was busy;
+      // a second is far longer than that answer takes, and the page must still be waiting after it.
+      const firstPage = ensure('first page');
+      await waitUntil(() => ensureCalls.calledTwice || answered.has('first page'));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      expect(answered.has('first page')).to.equal(false, 'the first page did not wait for the setup under way');
+      expect(setup.calledOnce).to.equal(true, 'the first page started a second setup alongside the webhook');
+
+      finishFirstSetup();
+      const [webhookRes, firstPageRes] = await Promise.all([webhook, firstPage]);
+
+      expect(webhookRes.status).to.equal(200, JSON.stringify(webhookRes.body));
+      expect(firstPageRes.status).to.equal(200, JSON.stringify(firstPageRes.body));
+      expect(firstPageRes.body.data).to.deep.equal(webhookRes.body.data);
+      expect(webhookRes.body.data).to.deep.include({
+        organizationId: session.organization._id,
+        environmentId: session.environment._id,
+      });
+      // The first page took its turn once the webhook was done, and found the account the webhook made.
+      expect(setup.calledTwice).to.equal(true);
+    });
   });
 
   describe('human login', () => {
@@ -85,7 +177,7 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
     let ensureBackingOrganization: sinon.SinonStub;
 
     beforeEach(() => {
-      process.env.HUMAN_DASHBOARD_API_SECRET = SECRET;
+      process.env.AGENT_INBOX_DASHBOARD_API_SECRET = SECRET;
       ensureBackingOrganization = sinon
         .stub(testServer.getService(EnsureBackingOrganization), 'execute')
         .resolves(backingAccount());
@@ -125,7 +217,7 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
       return session.testAgent
         .post('/v1/human/accounts/cli-login')
         .set('Authorization', '')
-        .set(HUMAN_DASHBOARD_SECRET_HEADER, SECRET)
+        .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, SECRET)
         .send({ humanUserId: 'user_e2e', firstName: 'Ada', email: 'ada@example.com', ...body });
     }
 
@@ -133,7 +225,7 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
       return session.testAgent
         .post('/v1/human/accounts/cli-login/lookup')
         .set('Authorization', '')
-        .set(HUMAN_DASHBOARD_SECRET_HEADER, SECRET)
+        .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, SECRET)
         .send({ userCode });
     }
 
@@ -141,7 +233,7 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
       return session.testAgent
         .post('/v1/human/accounts/cli-login/deny')
         .set('Authorization', '')
-        .set(HUMAN_DASHBOARD_SECRET_HEADER, SECRET)
+        .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, SECRET)
         .send({ userCode });
     }
 
