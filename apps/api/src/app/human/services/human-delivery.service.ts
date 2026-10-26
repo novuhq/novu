@@ -328,7 +328,7 @@ export class HumanDeliveryService {
   }): Promise<HumanChannelViaEnum[]> {
     const integrations = await this.findLinkedIntegrations({ ...params, agentId: params.agent._id });
     const channels = await Promise.all(
-      integrations.map(async (integration) => {
+      integrations.map(async (integration): Promise<HumanChannelViaEnum | null> => {
         const via = viaForProviderId(integration.providerId);
         if (!via) {
           return null;
