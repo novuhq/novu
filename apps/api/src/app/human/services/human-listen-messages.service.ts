@@ -17,20 +17,20 @@ import {
   humanInteractionChooseOptions,
 } from '@novu/shared';
 import { Types } from 'mongoose';
-import type { WakeAnswerDto, WakeMessageDto } from '../dtos/human-wake.dto';
+import type { ListenAnswerDto, ListenMessageDto } from '../dtos/human-listen.dto';
 import { type InboxRelayAgent, type InboxScope, readAttachments } from './human-inbox.service';
-import type { Wakers } from './human-wake-access.service';
-import type { WakeCursor } from './wake-cursor';
+import type { ListenedTo } from './human-listen-access.service';
+import type { ListenCursor } from './listen-cursor';
 
 /**
  * How long a message has to be stored before a wait looks at it. By then the inbox has finished with it: the
  * conversation knows of it, and a reply that answers a question has settled that question, so it goes out
  * marked as the answer. A wait never reads past this, so a row stored a moment late is still read.
  */
-export const WAKE_SETTLE_MS = 2_000;
+export const LISTEN_SETTLE_MS = 2_000;
 
-/** Messages older than this never wake a host, however far back the cursor is: a computer that was off for a week doesn't wake for old news. */
-export const WAKE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+/** Messages older than this never start a host, however far back the cursor is: a computer off for a week doesn't start one for old news. */
+export const LISTEN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 /** The rows one look reads at most. The cursor goes on from the last of them. */
 const ROWS_PER_LOOK = 200;
@@ -57,7 +57,7 @@ const APPROVE_BUTTONS: readonly string[] = ['approve', 'deny'];
 /** The signal resolving a conversation leaves in its history (`AgentConversationService.resolveConversation`). */
 const RESOLVE_SIGNAL = 'resolve';
 
-type WakeConversation = { identifier: string; isDirectMessage: boolean };
+type ListenConversation = { identifier: string; isDirectMessage: boolean };
 
 /** Where a row sits in the order rows are read in. */
 type RowPosition = { at: number; id: string };
@@ -82,8 +82,8 @@ type Revisions = {
 
 /** What one look knows about its rows besides the rows themselves. */
 type LookContext = Revisions & {
-  conversations: Map<string, WakeConversation>;
-  wakers: Wakers;
+  conversations: Map<string, ListenConversation>;
+  listenedTo: ListenedTo;
   questionsAnswered: Map<string, AnsweredQuestion>;
   cards: Map<string, HumanInteractionEntity>;
   resolves: Map<string, RowPosition[]>;
@@ -93,11 +93,11 @@ type LookContext = Revisions & {
  * What one look found, and where the next goes on from. `more` when it stopped at the most rows one look reads,
  * so there may be more to read already, rather than at `limit` or at the end.
  */
-export type WakeMessagesPage = { data: WakeMessageDto[]; next: WakeCursor; more: boolean };
+export type ListenMessagesPage = { data: ListenMessageDto[]; next: ListenCursor; more: boolean };
 
 /**
- * The messages that may wake an agent's host, read for the wake program's wait: what the people who can wake
- * the host wrote to the agent, and their answers to its cards, oldest first. The agent's own messages, the
+ * The messages that may start an agent's host, read for the listener's wait: what the people the agent listens to
+ * wrote to it, and their answers to its cards, oldest first. The agent's own messages, the
  * system's and strangers' never count, nor a message that was deleted before it was read; one edited before it
  * was read is given as it reads now.
  *
@@ -107,7 +107,7 @@ export type WakeMessagesPage = { data: WakeMessageDto[]; next: WakeCursor; more:
  * conversation was resolved before it (`round`): a host keeps one session for each conversation and round.
  */
 @Injectable()
-export class HumanWakeMessagesService {
+export class HumanListenMessagesService {
   constructor(
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
@@ -115,26 +115,26 @@ export class HumanWakeMessagesService {
   ) {}
 
   /**
-   * One look: up to `limit` messages after `cursor` that were stored at least `WAKE_SETTLE_MS` before `now`, and
+   * One look: up to `limit` messages after `cursor` that were stored at least `LISTEN_SETTLE_MS` before `now`, and
    * the cursor to go on from. The cursor moves past the rows that were looked at and didn't count as well, so
    * the next look doesn't read them again.
    */
   async read(
     scope: InboxScope,
     agent: Pick<InboxRelayAgent, '_id'>,
-    wakers: Wakers,
-    cursor: WakeCursor,
+    listenedTo: ListenedTo,
+    cursor: ListenCursor,
     limit: number,
     now: Date
-  ): Promise<WakeMessagesPage> {
-    const until = now.getTime() - WAKE_SETTLE_MS;
-    const lookedAtAll: WakeMessagesPage = { data: [], next: until > cursor.at ? { at: until } : cursor, more: false };
+  ): Promise<ListenMessagesPage> {
+    const until = now.getTime() - LISTEN_SETTLE_MS;
+    const lookedAtAll: ListenMessagesPage = { data: [], next: until > cursor.at ? { at: until } : cursor, more: false };
 
-    if (wakers.size === 0 || until <= cursor.at) {
+    if (listenedTo.size === 0 || until <= cursor.at) {
       return lookedAtAll;
     }
 
-    const conversations = await this.conversationsOf(scope, agent, wakers, cursor);
+    const conversations = await this.conversationsOf(scope, agent, listenedTo, cursor);
     if (conversations.size === 0) {
       return lookedAtAll;
     }
@@ -145,7 +145,7 @@ export class HumanWakeMessagesService {
         _organizationId: scope.organizationId,
         _conversationId: { $in: [...conversations.keys()] },
         senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
-        senderId: { $in: [...wakers.keys()] },
+        senderId: { $in: [...listenedTo.keys()] },
         type: {
           $in: [ConversationActivityTypeEnum.MESSAGE, ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE],
         },
@@ -164,9 +164,9 @@ export class HumanWakeMessagesService {
       this.answeredCards(scope, rows),
       this.resolvesBefore(scope, rows),
     ]);
-    const context: LookContext = { ...revisions, conversations, wakers, questionsAnswered, cards, resolves };
+    const context: LookContext = { ...revisions, conversations, listenedTo, questionsAnswered, cards, resolves };
 
-    const data: WakeMessageDto[] = [];
+    const data: ListenMessageDto[] = [];
     for (const [index, row] of rows.entries()) {
       const message =
         row.type === ConversationActivityTypeEnum.MESSAGE ? toMessage(row, context) : toCardAnswer(row, context);
@@ -186,7 +186,7 @@ export class HumanWakeMessagesService {
   }
 
   /**
-   * Every conversation of the agent where a row after the cursor can be: those someone who can wake is in that
+   * Every conversation of the agent where a row after the cursor can be: those someone it listens to is in that
    * were active since it (writing makes the writer one of its people and marks it active), and those of questions
    * answered since it (pressing a button does neither). Only what happened since the cursor counts, so none is
    * left out however many conversations the agent has.
@@ -194,9 +194,9 @@ export class HumanWakeMessagesService {
   private async conversationsOf(
     scope: InboxScope,
     agent: Pick<InboxRelayAgent, '_id'>,
-    wakers: Wakers,
-    cursor: WakeCursor
-  ): Promise<Map<string, WakeConversation>> {
+    listenedTo: ListenedTo,
+    cursor: ListenCursor
+  ): Promise<Map<string, ListenConversation>> {
     const since = new Date(cursor.at - CLOCK_SLACK_MS).toISOString();
     const answered = await this.humanInteractionRepository.find(
       {
@@ -213,7 +213,7 @@ export class HumanWakeMessagesService {
         _organizationId: scope.organizationId,
         _agentId: agent._id,
         $or: [
-          { 'participants.id': { $in: [...wakers.keys()] }, lastActivityAt: { $gte: since } },
+          { 'participants.id': { $in: [...listenedTo.keys()] }, lastActivityAt: { $gte: since } },
           { _id: { $in: answered.flatMap((question) => question._conversationId ?? []) } },
         ],
       },
@@ -449,7 +449,7 @@ export function roundOf(
  * A deleted message counts for nothing, and an edited one reads as it does now; a reply that answered a question
  * is marked with it.
  */
-function toMessage(row: ConversationActivityEntity, context: LookContext): WakeMessageDto | null {
+function toMessage(row: ConversationActivityEntity, context: LookContext): ListenMessageDto | null {
   const key = messageKey(row);
   if (context.deleted.has(key)) {
     return null;
@@ -479,7 +479,7 @@ function toMessage(row: ConversationActivityEntity, context: LookContext): WakeM
 }
 
 /** A pressed button. An answer typed as a reply is the person's message already, so its answer row is left out. */
-function toCardAnswer(row: ConversationActivityEntity, context: LookContext): WakeMessageDto | null {
+function toCardAnswer(row: ConversationActivityEntity, context: LookContext): ListenMessageDto | null {
   const answer = readCardAnswer(row);
 
   if (!answer || answer.kind === HumanInteractionKindEnum.ASK || !SETTLED_BY_A_PERSON.includes(answer.status ?? '')) {
@@ -503,13 +503,13 @@ function entryOf(
   content: {
     text: string;
     answersMessageId?: string;
-    answer?: WakeAnswerDto;
-    attachments?: WakeMessageDto['attachments'];
+    answer?: ListenAnswerDto;
+    attachments?: ListenMessageDto['attachments'];
   }
-): WakeMessageDto | null {
+): ListenMessageDto | null {
   const conversationId = String(row._conversationId);
   const conversation = context.conversations.get(conversationId);
-  const sender = senderOf(row, context.wakers);
+  const sender = senderOf(row, context.listenedTo);
 
   if (!conversation || !sender) {
     return null;
@@ -530,15 +530,15 @@ function entryOf(
   };
 }
 
-function senderOf(row: ConversationActivityEntity, wakers: Wakers): WakeMessageDto['from'] | null {
-  const waker = wakers.get(row.senderId);
-  if (!waker) {
+function senderOf(row: ConversationActivityEntity, listenedTo: ListenedTo): ListenMessageDto['from'] | null {
+  const person = listenedTo.get(row.senderId);
+  if (!person) {
     return null;
   }
 
-  const name = waker.name ?? row.senderName?.trim();
+  const name = person.name ?? row.senderName?.trim();
 
-  return { id: waker.id, ...(name ? { name } : {}), isOperator: waker.isOperator };
+  return { id: person.id, ...(name ? { name } : {}), isOperator: person.isOperator };
 }
 
 /** The answer an answer row records, as `HumanInteractionActivityRecorder` writes it. */
@@ -562,7 +562,7 @@ function readCardAnswer(row: ConversationActivityEntity): CardAnswer | null {
 }
 
 /** Rows stored after the cursor: later, or at the same moment and after it in the order rows are read in. */
-function afterCursor(cursor: WakeCursor) {
+function afterCursor(cursor: ListenCursor) {
   const at = new Date(cursor.at);
 
   return cursor.id

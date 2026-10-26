@@ -2,20 +2,20 @@ import { ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum } from
 import { HumanInteractionKindEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import type { Waker } from './human-wake-access.service';
+import type { ListenedPerson } from './human-listen-access.service';
 import {
   answerText,
-  HumanWakeMessagesService,
+  HumanListenMessagesService,
+  LISTEN_SETTLE_MS,
   matchAnswers,
   roundOf,
-  WAKE_SETTLE_MS,
-} from './human-wake-messages.service';
+} from './human-listen-messages.service';
 
-describe('HumanWakeMessagesService', () => {
+describe('HumanListenMessagesService', () => {
   const scope = { environmentId: 'env1', organizationId: 'org1' };
   const agent = { _id: 'relay1' };
   const now = new Date('2026-10-24T12:00:00.000Z');
-  const wakers = new Map<string, Waker>([
+  const listenedTo = new Map<string, ListenedPerson>([
     ['ada', { id: 'ada', name: 'Ada', isOperator: true }],
     ['bob', { id: 'bob', name: 'Bob', isOperator: false }],
   ]);
@@ -67,7 +67,7 @@ describe('HumanWakeMessagesService', () => {
       find: sinon.stub().callsFake(async (query: { kind?: string }) => (query.kind ? questions : answeredSince)),
       findByIdentifiers: sinon.stub().resolves(cards),
     };
-    const service = new HumanWakeMessagesService(
+    const service = new HumanListenMessagesService(
       conversationRepository as never,
       activityRepository as never,
       humanInteractionRepository as never
@@ -78,20 +78,20 @@ describe('HumanWakeMessagesService', () => {
 
   it('reads nothing that was stored too recently to have settled, and goes on from there', async () => {
     const { service, conversationRepository } = setup();
-    const cursor = { at: now.getTime() - WAKE_SETTLE_MS + 1 };
+    const cursor = { at: now.getTime() - LISTEN_SETTLE_MS + 1 };
 
-    const page = await service.read(scope, agent, wakers, cursor, 20, now);
+    const page = await service.read(scope, agent, listenedTo, cursor, 20, now);
 
     expect(page).to.deep.equal({ data: [], next: cursor, more: false });
     expect(conversationRepository.find.called).to.equal(false);
   });
 
-  it('reads nothing while nobody can wake the hosts, and moves past what was stored meanwhile', async () => {
+  it('reads nothing while it listens to nobody, and moves past what was stored meanwhile', async () => {
     const { service } = setup();
 
     const page = await service.read(scope, agent, new Map(), { at: now.getTime() - 60_000 }, 20, now);
 
-    expect(page).to.deep.equal({ data: [], next: { at: now.getTime() - WAKE_SETTLE_MS }, more: false });
+    expect(page).to.deep.equal({ data: [], next: { at: now.getTime() - LISTEN_SETTLE_MS }, more: false });
   });
 
   it('gives each message with its conversation, channel, sender and time, oldest first', async () => {
@@ -99,7 +99,7 @@ describe('HumanWakeMessagesService', () => {
     const second = row({ senderId: 'bob', senderName: 'Bob on Telegram', platform: 'slack', content: 'me too' });
     const { service, activityRepository } = setup({ rows: [first, second] });
 
-    const page = await service.read(scope, agent, wakers, { at: now.getTime() - 120_000 }, 20, now);
+    const page = await service.read(scope, agent, listenedTo, { at: now.getTime() - 120_000 }, 20, now);
 
     expect(page.data).to.deep.equal([
       {
@@ -123,9 +123,9 @@ describe('HumanWakeMessagesService', () => {
         isDirectMessage: true,
       },
     ]);
-    expect(page.next).to.deep.equal({ at: now.getTime() - WAKE_SETTLE_MS });
+    expect(page.next).to.deep.equal({ at: now.getTime() - LISTEN_SETTLE_MS });
 
-    // Only what the people who can wake the hosts wrote is read, in this environment.
+    // Only what the people it listens to wrote is read, in this environment.
     const query = activityRepository.find.firstCall.args[0];
     expect(query).to.deep.include({
       _environmentId: 'env1',
@@ -140,7 +140,7 @@ describe('HumanWakeMessagesService', () => {
     const rows = [row({}), row({}), row({})];
     const { service } = setup({ rows });
 
-    const page = await service.read(scope, agent, wakers, { at: now.getTime() - 120_000 }, 2, now);
+    const page = await service.read(scope, agent, listenedTo, { at: now.getTime() - 120_000 }, 2, now);
 
     expect(page.data.map((message) => message.id)).to.deep.equal([rows[0].identifier, rows[1].identifier]);
     expect(page.next).to.deep.equal({ at: rows[1].createdAt.getTime(), id: rows[1]._id });
@@ -155,7 +155,7 @@ describe('HumanWakeMessagesService', () => {
       revisions: [{ _conversationId: 'conv1', platformMessageId: 'tg-2', type: ConversationActivityTypeEnum.DELETE }],
     });
 
-    const page = await service.read(scope, agent, wakers, { at: now.getTime() - 120_000 }, 20, now);
+    const page = await service.read(scope, agent, listenedTo, { at: now.getTime() - 120_000 }, 20, now);
 
     expect(page.data.map((message) => message.id)).to.deep.equal([kept.identifier]);
   });
@@ -180,7 +180,7 @@ describe('HumanWakeMessagesService', () => {
       ],
     });
 
-    const page = await service.read(scope, agent, wakers, { at: now.getTime() - 120_000 }, 20, now);
+    const page = await service.read(scope, agent, listenedTo, { at: now.getTime() - 120_000 }, 20, now);
 
     expect(page.data.map(({ id, text }) => ({ id, text }))).to.deep.equal([
       { id: edited.identifier, text: 'deploy staging' },
@@ -195,7 +195,7 @@ describe('HumanWakeMessagesService', () => {
     });
     const cursor = { at: now.getTime() - 120_000 };
 
-    await service.read(scope, agent, wakers, cursor, 20, now);
+    await service.read(scope, agent, listenedTo, cursor, 20, now);
 
     const [query, , options] = conversationRepository.find.firstCall.args;
     // Written in since the cursor, with a few seconds for the clocks; or where a button was pressed since.
@@ -230,7 +230,7 @@ describe('HumanWakeMessagesService', () => {
       ],
     });
 
-    const page = await service.read(scope, agent, wakers, { at: now.getTime() - 120_000 }, 20, now);
+    const page = await service.read(scope, agent, listenedTo, { at: now.getTime() - 120_000 }, 20, now);
 
     expect(page.data).to.have.length(1);
     expect(page.data[0]).to.deep.include({
@@ -260,7 +260,7 @@ describe('HumanWakeMessagesService', () => {
       ],
     });
 
-    const page = await service.read(scope, agent, wakers, { at: first.createdAt.getTime() }, 20, now);
+    const page = await service.read(scope, agent, listenedTo, { at: first.createdAt.getTime() }, 20, now);
 
     expect(page.data).to.have.length(1);
     expect(page.data[0]).to.not.have.property('answersMessageId');
@@ -269,7 +269,7 @@ describe('HumanWakeMessagesService', () => {
   it('marks a reply to a question whoever answered it, also someone it wasn’t sent to', async () => {
     const { service, humanInteractionRepository } = setup({ rows: [row({ senderId: 'bob', content: 'staging' })] });
 
-    await service.read(scope, agent, wakers, { at: now.getTime() - 120_000 }, 20, now);
+    await service.read(scope, agent, listenedTo, { at: now.getTime() - 120_000 }, 20, now);
 
     const query = humanInteractionRepository.find
       .getCalls()
@@ -323,7 +323,7 @@ describe('HumanWakeMessagesService', () => {
       ],
     });
 
-    const page = await service.read(scope, agent, wakers, { at: now.getTime() - 120_000 }, 20, now);
+    const page = await service.read(scope, agent, listenedTo, { at: now.getTime() - 120_000 }, 20, now);
 
     expect(
       page.data.map(({ id, text, answersMessageId, answer, from }) => ({
@@ -365,7 +365,7 @@ describe('HumanWakeMessagesService', () => {
       ],
     });
 
-    const page = await service.read(scope, agent, wakers, { at: now.getTime() - 120_000 }, 20, now);
+    const page = await service.read(scope, agent, listenedTo, { at: now.getTime() - 120_000 }, 20, now);
 
     expect(page.data.map(({ text, round, isDirectMessage }) => ({ text, round, isDirectMessage }))).to.deep.equal([
       { text: 'first matter', round: 0, isDirectMessage: true },
@@ -385,7 +385,7 @@ describe('HumanWakeMessagesService', () => {
     });
     const { service } = setup({ rows: [photo] });
 
-    const page = await service.read(scope, agent, wakers, { at: now.getTime() - 120_000 }, 20, now);
+    const page = await service.read(scope, agent, listenedTo, { at: now.getTime() - 120_000 }, 20, now);
 
     expect(page.data[0]).to.deep.include({
       text: '',
@@ -405,7 +405,7 @@ describe('HumanWakeMessagesService', () => {
       })),
     });
 
-    const page = await service.read(scope, agent, wakers, { at: now.getTime() - 120_000 }, 20, now);
+    const page = await service.read(scope, agent, listenedTo, { at: now.getTime() - 120_000 }, 20, now);
 
     expect(page.data).to.have.length(0);
     expect(page.more).to.equal(true);

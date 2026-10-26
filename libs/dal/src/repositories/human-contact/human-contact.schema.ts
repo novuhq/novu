@@ -105,7 +105,7 @@ const humanContactSchema = new Schema<HumanContactDBModel>(
     isOperator: {
       type: Schema.Types.Boolean,
     },
-    canWake: {
+    listenTo: {
       type: Schema.Types.Boolean,
     },
   },

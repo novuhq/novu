@@ -11,14 +11,14 @@ import { useNow } from '@/hooks/use-now';
 import type { ToolId } from '@/lib/ai-tools';
 import {
   type AgentHost,
-  type Awake,
   type ConnectApi,
   connectedHostIds,
-  describeAwake,
+  describeListening,
   formatCheckedAgo,
   hostLiveness,
   hostName,
-  liveAwake,
+  type Listening,
+  liveListening,
 } from '@/lib/host-status';
 import { type HostId, isHostId } from '@/lib/hosts';
 import { HOST_LABELS } from '@/lib/onboarding';
@@ -53,8 +53,8 @@ type AgentSetupProps = {
   lastCheckedAt: string | null;
   /** Each host as the page rendered it, last checked first. Missing when they couldn't be read. */
   hosts?: AgentHost[];
-  /** Where the agent is awake as the page rendered it: `null` while no computer keeps it awake. */
-  awake?: Awake | null;
+  /** Where the agent is listening as the page rendered it: `null` while no computer keeps it listening. */
+  listening?: Listening | null;
   /** When the server rendered the page, so "2m ago" starts out as the server said it. */
   renderedAt: string;
   docsUrl: string;
@@ -74,14 +74,14 @@ const HOSTS_POLL_MS = 60_000;
 
 /**
  * The row for the agent behind the inbox (`Agent setup` in the design): whether a host reads its mail and
- * when one last checked, where the agent is awake, each host by name under it, and "Show setup", which opens
+ * when one last checked, where the agent is listening, each host by name under it, and "Show setup", which opens
  * "Connect another agent". A host counts as connected while one checked the inbox within the last day; until
  * one does, the page reloads once it has.
  */
 export function AgentSetup({
   lastCheckedAt,
   hosts: renderedHosts = NO_HOSTS,
-  awake: renderedAwake = null,
+  listening: renderedListening = null,
   renderedAt,
   connectedTools,
   connectHost = null,
@@ -90,7 +90,7 @@ export function AgentSetup({
   const [open, setOpen] = useState(connectHost !== null);
   const now = useNow(renderedAt);
   const connected = hostLiveness(lastCheckedAt, now) === 'live';
-  const { hosts, awake } = useHosts(renderedHosts, renderedAwake, lastCheckedAt);
+  const { hosts, listening } = useHosts(renderedHosts, renderedListening, lastCheckedAt);
   // The picker ticks each host connected now: one that checked the inbox, or used its code, within the last
   // day, and each chat app that signed in.
   const connectedHosts = useMemo(() => [...connectedHostIds(hosts, now, connectedTools)], [hosts, now, connectedTools]);
@@ -126,7 +126,7 @@ export function AgentSetup({
               {lastCheckedAt && `Last checked ${formatCheckedAgo(lastCheckedAt, now)}`}
             </p>
           </Fold>
-          <AwakeLine awake={liveAwake(awake, now)} />
+          <ListeningLine listening={liveListening(listening, now)} />
         </div>
         <Button variant="quiet" className={SMALL_BUTTON} aria-haspopup="dialog" onClick={() => setOpen(true)}>
           <ChevronDown aria-hidden="true" className="size-3.5 text-foreground" />
@@ -159,31 +159,31 @@ export function AgentSetup({
 }
 
 /**
- * "Awake on MacBook (Claude Code)", and the folder it runs in: the computer whose `agentinbox wake` starts a host
- * when someone who can wake it writes. The line grows in when a computer takes the lease and folds away once the
+ * "Listening on MacBook (Claude Code)", and the folder it runs in: the computer whose `agentinbox listen` starts a
+ * host when someone the agent listens to writes. The line grows in when a computer takes the lease and folds away once the
  * lease lapses or is let go; another computer taking it over fades its words into the new ones.
  */
-function AwakeLine({ awake }: { awake: Awake | null }) {
+function ListeningLine({ listening }: { listening: Listening | null }) {
   // The last lease stays in place while the line folds away.
-  const [last, setLast] = useState(awake);
-  if (awake && awake !== last) {
-    setLast(awake);
+  const [last, setLast] = useState(listening);
+  if (listening && listening !== last) {
+    setLast(listening);
   }
-  const shown = awake ?? last;
+  const shown = listening ?? last;
 
   return (
-    <Fold open={awake !== null}>
+    <Fold open={listening !== null}>
       {shown && (
         <p
           key={`${shown.computerId}:${shown.host}`}
-          title={[describeAwake(shown), shown.project].filter(Boolean).join(', in ')}
+          title={[describeListening(shown), shown.project].filter(Boolean).join(', in ')}
           className="flex min-w-0 animate-overlay-in items-center gap-1.5 pt-0.5 text-xs leading-4 motion-reduce:animate-none"
         >
           <span
             aria-hidden="true"
             className="size-1.5 shrink-0 animate-breathe rounded-full bg-accent motion-reduce:animate-none"
           />
-          <span className="min-w-0 truncate text-secondary">{describeAwake(shown)}</span>
+          <span className="min-w-0 truncate text-secondary">{describeListening(shown)}</span>
           {/* Short of room, the folder gives way before the computer and the host do. */}
           {shown.project && (
             <span className="min-w-0 shrink-[999] truncate font-mono text-[11px] leading-3.5 text-muted">
@@ -230,25 +230,25 @@ function HostRow({ host, now }: { host: AgentHost; now: number }) {
 }
 
 /**
- * The hosts and where the agent is awake as the page rendered them, read again whenever the page learns of a
+ * The hosts and where the agent is listening as the page rendered them, read again whenever the page learns of a
  * check newer than any of theirs: `useLastHostCheck` reads the last check once a minute, so each host's
  * "checked 2m ago" stays as true as the row's. A host that only used its code changes no check, and a computer
- * keeping the agent awake changes none either, so both are also read on their own, once a minute while the
+ * keeping the agent listening changes none either, so both are also read on their own, once a minute while the
  * page is in view and when it comes back into view; a read that failed is tried again then.
  */
 function useHosts(
   rendered: AgentHost[],
-  renderedAwake: Awake | null,
+  renderedListening: Listening | null,
   lastCheckedAt: string | null
-): { hosts: AgentHost[]; awake: Awake | null } {
+): { hosts: AgentHost[]; listening: Listening | null } {
   const [hosts, setHosts] = useState(rendered);
-  const [awake, setAwake] = useState(renderedAwake);
+  const [listening, setListening] = useState(renderedListening);
   // A reload brings the server's list, which then counts from scratch.
-  const [synced, setSynced] = useState({ hosts: rendered, awake: renderedAwake });
-  if (rendered !== synced.hosts || renderedAwake !== synced.awake) {
-    setSynced({ hosts: rendered, awake: renderedAwake });
+  const [synced, setSynced] = useState({ hosts: rendered, listening: renderedListening });
+  if (rendered !== synced.hosts || renderedListening !== synced.listening) {
+    setSynced({ hosts: rendered, listening: renderedListening });
     setHosts(rendered);
-    setAwake(renderedAwake);
+    setListening(renderedListening);
   }
 
   // ISO times in UTC compare as strings.
@@ -269,7 +269,7 @@ function useHosts(
       const latest = await readHostsAction().catch(() => null);
       if (!stopped && latest) {
         setHosts(latest.hosts);
-        setAwake(latest.awake);
+        setListening(latest.listening);
       }
     };
 
@@ -288,7 +288,7 @@ function useHosts(
     };
   }, [behind]);
 
-  return { hosts, awake };
+  return { hosts, listening };
 }
 
 /** Takes `?connect=` off the address once the drawer is closed, so a reload doesn't open it again. */

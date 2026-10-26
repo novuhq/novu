@@ -4,42 +4,42 @@ import { isAgentProvisionedSubscriber } from '../../agents/conversation-runtime/
 import type { InboxRelayAgent, InboxScope } from './human-inbox.service';
 import { HumanOperatorService } from './human-operator.service';
 
-/** Someone who can wake the agent's hosts: the operator, or a contact the operator allowed to. */
-export type Waker = { id: string; name?: string; isOperator: boolean };
+/** Someone the agent listens to: the operator, or a contact the operator turned "Listen to" on for. */
+export type ListenedPerson = { id: string; name?: string; isOperator: boolean };
 
-/** Everyone who can wake an agent's hosts right now, by subscriberId. */
-export type Wakers = ReadonlyMap<string, Waker>;
+/** Everyone the agent listens to right now, by subscriberId. */
+export type ListenedTo = ReadonlyMap<string, ListenedPerson>;
 
 /**
- * Who can wake an Agent Inbox agent's hosts: the operator always; a contact only while the operator has their
- * "can wake" switch on; a stranger never, nor anyone whose contact is gone. It is read when it is needed, so a
- * switch turned off counts at once. The wake program's wait asks here, and so does sending new messages out
- * to the chat apps that wake in their makers' clouds.
+ * Whom an Agent Inbox agent listens to, so that their messages start its hosts: the operator always; a contact only
+ * while the operator has their "Listen to" switch on; a stranger never, nor anyone whose contact is gone. It is read
+ * when it is needed, so a switch turned off counts at once. The listener's wait asks here, and so does sending new
+ * messages out to the chat apps that run in their makers' clouds.
  */
 @Injectable()
-export class HumanWakeAccessService {
+export class HumanListenAccessService {
   constructor(
     private readonly humanOperator: HumanOperatorService,
     private readonly humanContactRepository: HumanContactRepository,
     private readonly subscriberRepository: SubscriberRepository
   ) {}
 
-  /** Everyone who can wake the agent's hosts right now: the operator and the contacts allowed to. */
-  async whoCanWake(scope: InboxScope, agent: Pick<InboxRelayAgent, '_id'>): Promise<Wakers> {
+  /** Everyone the agent listens to right now: the operator, and the contacts with "Listen to" on. */
+  async whoIsListenedTo(scope: InboxScope, agent: Pick<InboxRelayAgent, '_id'>): Promise<ListenedTo> {
     const [operatorId, allowed] = await Promise.all([
       this.humanOperator.findForAgent({ ...scope, agentId: agent._id }),
-      this.humanContactRepository.findCanWakeSubscriberIds(scope.environmentId, agent._id),
+      this.humanContactRepository.findListenToSubscriberIds(scope.environmentId, agent._id),
     ]);
 
     return this.contactsAmong(scope, operatorId, allowed);
   }
 
-  /** Those of `subscriberIds` who can wake the agent's hosts right now. */
-  async whichCanWake(
+  /** Those of `subscriberIds` the agent listens to right now. */
+  async whichAreListenedTo(
     scope: InboxScope,
     agent: Pick<InboxRelayAgent, '_id'>,
     subscriberIds: readonly string[]
-  ): Promise<Wakers> {
+  ): Promise<ListenedTo> {
     const asked = [...new Set(subscriberIds)];
     if (asked.length === 0) {
       return new Map();
@@ -48,7 +48,7 @@ export class HumanWakeAccessService {
     const [operatorId, rows] = await Promise.all([
       this.humanOperator.findForAgent({ ...scope, agentId: agent._id }),
       this.humanContactRepository.find(
-        { _environmentId: scope.environmentId, _agentId: agent._id, subscriberId: { $in: asked }, canWake: true },
+        { _environmentId: scope.environmentId, _agentId: agent._id, subscriberId: { $in: asked }, listenTo: true },
         ['subscriberId']
       ),
     ]);
@@ -60,15 +60,15 @@ export class HumanWakeAccessService {
     );
   }
 
-  async canWake(scope: InboxScope, agent: Pick<InboxRelayAgent, '_id'>, subscriberId: string): Promise<boolean> {
-    return (await this.whichCanWake(scope, agent, [subscriberId])).has(subscriberId);
+  async listenTo(scope: InboxScope, agent: Pick<InboxRelayAgent, '_id'>, subscriberId: string): Promise<boolean> {
+    return (await this.whichAreListenedTo(scope, agent, [subscriberId])).has(subscriberId);
   }
 
   /**
    * The operator and the allowed contacts that are still contacts: a subscriber the agent made up for someone
    * who wrote unasked is a stranger, whatever their switch says, and one that is gone can't write anymore.
    */
-  private async contactsAmong(scope: InboxScope, operatorId: string | null, allowed: string[]): Promise<Wakers> {
+  private async contactsAmong(scope: InboxScope, operatorId: string | null, allowed: string[]): Promise<ListenedTo> {
     const ids = [...new Set([...(operatorId ? [operatorId] : []), ...allowed])];
     if (ids.length === 0) {
       return new Map();
@@ -82,7 +82,7 @@ export class HumanWakeAccessService {
     return new Map(
       subscribers
         .filter((subscriber) => !isAgentProvisionedSubscriber(subscriber))
-        .map((subscriber): [string, Waker] => {
+        .map((subscriber): [string, ListenedPerson] => {
           const name = [subscriber.firstName, subscriber.lastName].filter(Boolean).join(' ').trim();
 
           return [

@@ -27,15 +27,15 @@ export function hostName(host: Pick<AgentHost, 'id' | 'via'>): string {
 }
 
 /**
- * Where the agent is awake: the computer whose `agentinbox wake` is ready to start a host when someone who can
- * wake it writes. One computer at a time, by a lease its program renews every minute; it lapses three minutes
+ * Where the agent is listening: the computer whose `agentinbox listen` is ready to start a host when someone the
+ * agent listens to writes. One computer at a time, by a lease its program renews every minute; it lapses three minutes
  * after the last renewal.
  */
-export type Awake = {
+export type Listening = {
   computerId: string;
   /** What the operator calls the computer: "MacBook". */
   computerName: string;
-  /** The host it wakes there. */
+  /** The host it starts there. */
   host: HostId;
   /** The folder the host runs in, as the operator reads it: "~/projects/app". */
   project?: string;
@@ -46,15 +46,15 @@ export type Awake = {
 };
 
 /** The lease while it is live, or `null` once it has lapsed: the page keeps the last one it read, which ages. */
-export function liveAwake(awake: Awake | null | undefined, now: number): Awake | null {
-  return awake && Date.parse(awake.expiresAt) > now ? awake : null;
+export function liveListening(listening: Listening | null | undefined, now: number): Listening | null {
+  return listening && Date.parse(listening.expiresAt) > now ? listening : null;
 }
 
-/** "Awake on MacBook (Claude Code)", as the Agent setup row says it. */
-export function describeAwake(awake: Pick<Awake, 'computerName' | 'host'>): string {
-  const host = isHostId(awake.host) ? hostOf(awake.host).name : awake.host;
+/** "Listening on MacBook (Claude Code)", as the Agent setup row says it. */
+export function describeListening(listening: Pick<Listening, 'computerName' | 'host'>): string {
+  const host = isHostId(listening.host) ? hostOf(listening.host).name : listening.host;
 
-  return `Awake on ${awake.computerName} (${host})`;
+  return `Listening on ${listening.computerName} (${host})`;
 }
 
 export type HostStatus = {
@@ -71,8 +71,8 @@ export type HostStatus = {
   firstCheckedAt: string | null;
   /** The newest unread conversation the first check found. */
   waitingMessage: { conversationId: string; from: string; subject: string; at: string; seenAt: string } | null;
-  /** Where the agent is awake, or `null` when no computer keeps it awake. Missing from an API from before wake. */
-  awake?: Awake | null;
+  /** Where the agent is listening, or `null` when no computer keeps it listening. Missing from an older API. */
+  listening?: Listening | null;
 };
 
 /** A one-time code for `agentinbox connect <handle> --code <code>`. It works once, for ten minutes. */

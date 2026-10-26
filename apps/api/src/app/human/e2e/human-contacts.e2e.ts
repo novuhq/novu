@@ -397,7 +397,7 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
         'defaultVia',
         'status',
         'isOperator',
-        'canWake',
+        'listenTo',
         'invite',
         'createdAt',
         'updatedAt',

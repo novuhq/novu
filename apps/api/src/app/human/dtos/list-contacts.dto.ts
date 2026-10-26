@@ -174,10 +174,10 @@ export class HumanContactDto {
 
   @ApiProperty({
     description:
-      'Whether a message from them may wake one of the agent’s hosts (`agentinbox wake`). Always true for the operator; ' +
+      'Whether the agent listens to them: a message from them may start one of its hosts (`agentinbox listen`). Always true for the operator; ' +
       'for anyone else, only once the operator turned it on, on agentinbox.md.',
   })
-  canWake: boolean;
+  listenTo: boolean;
 
   @ApiPropertyOptional({
     type: HumanContactInviteDto,
@@ -204,10 +204,10 @@ export class ListContactsResponseDto {
 export class UpdateContactRequestDto {
   @ApiProperty({
     description:
-      'Whether a message from them may wake one of the agent’s hosts. The operator always can, so their own row has no switch.',
+      'Whether the agent listens to them. It always listens to the operator, so their own row has no switch.',
   })
   @IsBoolean()
-  canWake: boolean;
+  listenTo: boolean;
 
   @ApiPropertyOptional({ description: 'Relay agent the switch is for. Defaults to `human-relay`.' })
   @IsOptional()
@@ -221,8 +221,8 @@ export class UpdateContactResponseDto {
   @ApiProperty({ description: 'The subscriberId of the contact.' })
   id: string;
 
-  @ApiProperty({ description: 'Whether a message from them may wake one of the agent’s hosts now.' })
-  canWake: boolean;
+  @ApiProperty({ description: 'Whether the agent listens to them now.' })
+  listenTo: boolean;
 }
 
 export class RemoveContactResponseDto {

@@ -7,7 +7,7 @@ import {
   type ConnectCodeStatus,
 } from '../services/human-connect-code.service';
 import { HumanAgentQueryDto } from './human-agent.dto';
-import { AwakeDto } from './human-wake.dto';
+import { ListeningDto } from './human-listen.dto';
 
 export class CreateConnectCodeRequestDto extends HumanAgentQueryDto {
   @ApiProperty({
@@ -182,10 +182,10 @@ export class HumanHostStatusResponseDto {
   waitingMessage: HumanHostWaitingMessageDto | null;
 
   @ApiProperty({
-    type: AwakeDto,
+    type: ListeningDto,
     nullable: true,
     description:
-      'Where the agent is awake: the computer whose `agentinbox wake` is ready to wake a host for it. Null when no computer holds a live lease.',
+      'Where the agent is listening: the computer whose `agentinbox listen` is ready to start a host for it. Null when no computer holds a live lease.',
   })
-  awake: AwakeDto | null;
+  listening: ListeningDto | null;
 }

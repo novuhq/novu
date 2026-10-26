@@ -150,7 +150,7 @@ export function ConfigureView({
             apiUrl={apiUrl}
             lastCheckedAt={lastCheckedAt}
             hosts={hostStatus?.hosts}
-            awake={hostStatus?.awake ?? null}
+            listening={hostStatus?.listening ?? null}
             renderedAt={renderedAt}
             docsUrl={docsUrl}
             mcpUrl={mcpUrl}

@@ -1,19 +1,19 @@
-import { WAKE_HOST_IDS, type WakeHostId } from '@novu/dal';
+import { LISTEN_HOST_IDS, type ListenHostId } from '@novu/dal';
 import { IsIn, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { WAKE_COMPUTER_ID_PATTERN } from '../../dtos/human-wake.dto';
+import { LISTEN_COMPUTER_ID_PATTERN } from '../../dtos/human-listen.dto';
 
-export class ShowWakeTypingCommand extends EnvironmentWithUserCommand {
+export class ShowListenTypingCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   agentIdentifier?: string;
 
   @IsString()
-  @Matches(WAKE_COMPUTER_ID_PATTERN)
+  @Matches(LISTEN_COMPUTER_ID_PATTERN)
   computerId: string;
 
-  @IsIn(WAKE_HOST_IDS)
-  host: WakeHostId;
+  @IsIn(LISTEN_HOST_IDS)
+  host: ListenHostId;
 
   @IsString()
   @MinLength(1)

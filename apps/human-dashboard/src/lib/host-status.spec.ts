@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   type AgentHost,
-  type Awake,
   connectedHostIds,
-  describeAwake,
+  describeListening,
   findNewHost,
   type HostStatus,
   hostName,
-  liveAwake,
+  type Listening,
+  liveListening,
 } from './host-status';
 import { isHostId } from './hosts';
 
@@ -105,8 +105,8 @@ describe('findNewHost', () => {
   });
 });
 
-describe('awake', () => {
-  const awake: Awake = {
+describe('listening', () => {
+  const listening: Listening = {
     computerId: 'macbook-0123456789abcdef',
     computerName: 'MacBook',
     host: 'claude-code',
@@ -116,15 +116,15 @@ describe('awake', () => {
     expiresAt: new Date(NOW + 150_000).toISOString(),
   };
 
-  it('says where the agent is awake, naming the host the way the dashboard does', () => {
-    expect(describeAwake(awake)).toBe('Awake on MacBook (Claude Code)');
-    expect(describeAwake({ computerName: 'Studio', host: 'openclaw' })).toBe('Awake on Studio (OpenClaw)');
+  it('says where the agent is listening, naming the host the way the dashboard does', () => {
+    expect(describeListening(listening)).toBe('Listening on MacBook (Claude Code)');
+    expect(describeListening({ computerName: 'Studio', host: 'openclaw' })).toBe('Listening on Studio (OpenClaw)');
   });
 
   it('keeps the lease the page read only until it lapses', () => {
-    expect(liveAwake(awake, NOW)).toBe(awake);
-    expect(liveAwake(awake, NOW + 150_000)).toBe(null);
-    expect(liveAwake(null, NOW)).toBe(null);
-    expect(liveAwake(undefined, NOW)).toBe(null);
+    expect(liveListening(listening, NOW)).toBe(listening);
+    expect(liveListening(listening, NOW + 150_000)).toBe(null);
+    expect(liveListening(null, NOW)).toBe(null);
+    expect(liveListening(undefined, NOW)).toBe(null);
   });
 });

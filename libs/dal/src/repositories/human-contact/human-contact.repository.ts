@@ -85,13 +85,13 @@ export class HumanContactRepository extends BaseRepositoryV2<
     return params.subscriberId;
   }
 
-  /** Turns a contact's "can wake" switch on or off for one relay agent, making their row when they have none yet. */
-  async setCanWake(params: {
+  /** Turns a contact's "Listen to" switch on or off for one relay agent, making their row when they have none yet. */
+  async setListenTo(params: {
     environmentId: string;
     organizationId: string;
     agentId: string;
     subscriberId: string;
-    canWake: boolean;
+    listenTo: boolean;
   }): Promise<void> {
     const filter = {
       _environmentId: params.environmentId,
@@ -102,7 +102,7 @@ export class HumanContactRepository extends BaseRepositoryV2<
     try {
       await this.findOneAndUpdate(
         filter,
-        { $set: { canWake: params.canWake }, $setOnInsert: { _organizationId: params.organizationId } },
+        { $set: { listenTo: params.listenTo }, $setOnInsert: { _organizationId: params.organizationId } },
         { upsert: true }
       );
     } catch (err) {
@@ -111,13 +111,15 @@ export class HumanContactRepository extends BaseRepositoryV2<
         throw err;
       }
 
-      await this.findOneAndUpdate(filter, { $set: { canWake: params.canWake } });
+      await this.findOneAndUpdate(filter, { $set: { listenTo: params.listenTo } });
     }
   }
 
-  /** The contacts of a relay agent whose "can wake" switch is on, by subscriberId. */
-  async findCanWakeSubscriberIds(environmentId: string, agentId: string): Promise<string[]> {
-    const rows = await this.find({ _environmentId: environmentId, _agentId: agentId, canWake: true }, ['subscriberId']);
+  /** The contacts of a relay agent whose "Listen to" switch is on, by subscriberId. */
+  async findListenToSubscriberIds(environmentId: string, agentId: string): Promise<string[]> {
+    const rows = await this.find({ _environmentId: environmentId, _agentId: agentId, listenTo: true }, [
+      'subscriberId',
+    ]);
 
     return rows.map((row) => row.subscriberId);
   }

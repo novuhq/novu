@@ -114,8 +114,8 @@ import { RequestAddressVerificationCommand } from './usecases/request-address-ve
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
 import { SendHumanTestEmailCommand } from './usecases/send-human-test-email/send-human-test-email.command';
 import { SendHumanTestEmail } from './usecases/send-human-test-email/send-human-test-email.usecase';
-import { SetContactCanWakeCommand } from './usecases/set-contact-can-wake/set-contact-can-wake.command';
-import { SetContactCanWake } from './usecases/set-contact-can-wake/set-contact-can-wake.usecase';
+import { SetContactListenToCommand } from './usecases/set-contact-listen-to/set-contact-listen-to.command';
+import { SetContactListenTo } from './usecases/set-contact-listen-to/set-contact-listen-to.usecase';
 import { SetOperatorDefaultChannelCommand } from './usecases/set-operator-default-channel/set-operator-default-channel.command';
 import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelayCommand } from './usecases/setup-human-relay/setup-human-relay.command';
@@ -153,7 +153,7 @@ export class HumanInteractionsController {
     private readonly sendHumanTestEmailUsecase: SendHumanTestEmail,
     private readonly inboxAddresses: AgentInboxAddressService,
     private readonly hostStatus: HumanHostStatusService,
-    private readonly setContactCanWakeUsecase: SetContactCanWake
+    private readonly setContactListenToUsecase: SetContactListenTo
   ) {}
 
   @Post('/interactions')
@@ -318,8 +318,8 @@ export class HumanInteractionsController {
   }
 
   /**
-   * Turns a contact's "can wake" switch on or off: whether a message from them may wake one of the agent's hosts
-   * (`agentinbox wake`). Only the operator, on the dashboard; a host gets 403 `dashboard_only`. The operator
+   * Turns a contact's "Listen to" switch on or off: whether a message from them may start one of the agent's hosts
+   * (`agentinbox listen`). Only the operator, on the dashboard; a host gets 403 `dashboard_only`. The operator
    * always can, so their own contact is a 400.
    */
   @Patch('/contacts/:subscriberId')
@@ -332,15 +332,15 @@ export class HumanInteractionsController {
     @Body() body: UpdateContactRequestDto,
     @Headers() headers: Record<string, unknown>
   ): Promise<UpdateContactResponseDto> {
-    assertFromHumanDashboard(headers, 'Only the operator can choose who can wake the agent’s hosts, on agentinbox.md.');
+    assertFromHumanDashboard(headers, 'Only the operator can choose whom the agent listens to, on agentinbox.md.');
 
-    return this.setContactCanWakeUsecase.execute(
-      SetContactCanWakeCommand.create({
+    return this.setContactListenToUsecase.execute(
+      SetContactListenToCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
         subscriberId,
-        canWake: body.canWake,
+        listenTo: body.listenTo,
         agentIdentifier: body.agentIdentifier,
       })
     );

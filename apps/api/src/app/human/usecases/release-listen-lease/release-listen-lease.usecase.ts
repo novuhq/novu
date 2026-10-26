@@ -1,20 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import type { ReleaseWakeLeaseResponseDto } from '../../dtos/human-wake.dto';
+import type { ReleaseListenLeaseResponseDto } from '../../dtos/human-listen.dto';
 import { HumanInboxService } from '../../services/human-inbox.service';
-import { HumanWakeLeaseService } from '../../services/human-wake-lease.service';
-import { ReleaseWakeLeaseCommand } from './release-wake-lease.command';
+import { HumanListenLeaseService } from '../../services/human-listen-lease.service';
+import { ReleaseListenLeaseCommand } from './release-listen-lease.command';
 
-/** `agentinbox wake stop`: the computer lets go of the lease it holds for a host. Another holder's is never touched. */
+/** `agentinbox listen stop`: the computer lets go of the lease it holds for a host. Another holder's is never touched. */
 @Injectable()
-export class ReleaseWakeLease {
+export class ReleaseListenLease {
   constructor(
     private readonly inbox: HumanInboxService,
-    private readonly lease: HumanWakeLeaseService
+    private readonly lease: HumanListenLeaseService
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: ReleaseWakeLeaseCommand): Promise<ReleaseWakeLeaseResponseDto> {
+  async execute(command: ReleaseListenLeaseCommand): Promise<ReleaseListenLeaseResponseDto> {
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
     const agent = await this.inbox.resolveRelayAgent(scope, command.agentIdentifier);
 

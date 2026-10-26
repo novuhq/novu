@@ -3,7 +3,7 @@ import { InstrumentUsecase } from '@novu/application-generic';
 import { AgentRepository, SubscriberRepository } from '@novu/dal';
 import type { HumanContactChannelStatus } from '@novu/shared';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
-import { HumanWakeAccessService } from '../../services/human-wake-access.service';
+import { HumanListenAccessService } from '../../services/human-listen-access.service';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
 import { GetContactCommand } from './get-contact.command';
 
@@ -17,15 +17,15 @@ export type GetContactResult = {
   createdAt: string;
   updatedAt: string;
   channels: HumanContactChannelStatus[];
-  /** Whether a message from them may wake one of the agent's hosts: always for the operator. */
-  canWake: boolean;
+  /** Whether the agent listens to them: always to the operator. */
+  listenTo: boolean;
 };
 
 /**
  * Single-contact lookup for the CLI (polling after invite, and richer
  * `human contact list` output). Channel status comes from HumanDeliveryService —
  * never from public subscriber APIs, and never from `Subscriber.email` alone.
- * Whether they can wake the agent's hosts comes from HumanWakeAccessService.
+ * Whether the agent listens to them comes from HumanListenAccessService.
  */
 @Injectable()
 export class GetContact {
@@ -33,7 +33,7 @@ export class GetContact {
     private readonly subscriberRepository: SubscriberRepository,
     private readonly agentRepository: AgentRepository,
     private readonly deliveryService: HumanDeliveryService,
-    private readonly wakeAccess: HumanWakeAccessService
+    private readonly listenAccess: HumanListenAccessService
   ) {}
 
   @InstrumentUsecase()
@@ -58,14 +58,14 @@ export class GetContact {
     );
 
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
-    const [channels, canWake]: [HumanContactChannelStatus[], boolean] = agent
+    const [channels, listenTo]: [HumanContactChannelStatus[], boolean] = agent
       ? await Promise.all([
           this.deliveryService.describeContactChannels({
             ...scope,
             agentId: agent._id,
             subscriberId: command.subscriberId,
           }),
-          this.wakeAccess.canWake(scope, agent, command.subscriberId),
+          this.listenAccess.listenTo(scope, agent, command.subscriberId),
         ])
       : [[], false];
 
@@ -79,7 +79,7 @@ export class GetContact {
       createdAt: subscriber.createdAt,
       updatedAt: subscriber.updatedAt,
       channels,
-      canWake,
+      listenTo,
     };
   }
 }

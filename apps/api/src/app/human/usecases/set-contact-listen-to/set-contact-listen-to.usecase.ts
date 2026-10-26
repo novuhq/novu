@@ -5,7 +5,7 @@ import { isAgentProvisionedSubscriber } from '../../../agents/conversation-runti
 import type { UpdateContactResponseDto } from '../../dtos/list-contacts.dto';
 import { HumanInboxService } from '../../services/human-inbox.service';
 import { HumanOperatorService } from '../../services/human-operator.service';
-import { SetContactCanWakeCommand } from './set-contact-can-wake.command';
+import { SetContactListenToCommand } from './set-contact-listen-to.command';
 
 /** Machine-readable code of the answer to a switch on the operator's own contact, which has none. */
 export const CONTACT_IS_OPERATOR = 'contact_is_operator';
@@ -14,12 +14,12 @@ export const CONTACT_IS_OPERATOR = 'contact_is_operator';
 export const CONTACT_IS_STRANGER = 'contact_is_stranger';
 
 /**
- * The "can wake" switch of one contact: whether a message from them may wake one of the agent's hosts. Off
- * until the operator turns it on. The operator always can, so their own contact has none, and a stranger
- * never can, so theirs can't be turned on.
+ * The "Listen to" switch of one contact: whether a message from them may start one of the agent's hosts. Off
+ * until the operator turns it on. The agent always listens to the operator, so their own contact has none, and
+ * never to a stranger, so theirs can't be turned on.
  */
 @Injectable()
-export class SetContactCanWake {
+export class SetContactListenTo {
   constructor(
     private readonly inbox: HumanInboxService,
     private readonly humanOperator: HumanOperatorService,
@@ -28,7 +28,7 @@ export class SetContactCanWake {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: SetContactCanWakeCommand): Promise<UpdateContactResponseDto> {
+  async execute(command: SetContactListenToCommand): Promise<UpdateContactResponseDto> {
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
     const agent = await this.inbox.resolveRelayAgent(scope, command.agentIdentifier);
     const [subscriber, operatorId] = await Promise.all([
@@ -50,24 +50,24 @@ export class SetContactCanWake {
     if (subscriber.subscriberId === operatorId) {
       throw new BadRequestException({
         code: CONTACT_IS_OPERATOR,
-        message: 'You can always wake your agent’s hosts, so your own contact has no switch.',
+        message: 'Your agent always listens to you, so your own contact has no switch.',
       });
     }
 
     if (isAgentProvisionedSubscriber(subscriber)) {
       throw new BadRequestException({
         code: CONTACT_IS_STRANGER,
-        message: 'Only your contacts can wake your agent’s hosts. Invite them first.',
+        message: 'Your agent listens only to your contacts. Invite them first.',
       });
     }
 
-    await this.humanContactRepository.setCanWake({
+    await this.humanContactRepository.setListenTo({
       ...scope,
       agentId: agent._id,
       subscriberId: subscriber.subscriberId,
-      canWake: command.canWake,
+      listenTo: command.listenTo,
     });
 
-    return { id: subscriber.subscriberId, canWake: command.canWake };
+    return { id: subscriber.subscriberId, listenTo: command.listenTo };
   }
 }

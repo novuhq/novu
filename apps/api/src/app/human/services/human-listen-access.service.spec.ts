@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { HumanWakeAccessService } from './human-wake-access.service';
+import { HumanListenAccessService } from './human-listen-access.service';
 
-describe('HumanWakeAccessService', () => {
+describe('HumanListenAccessService', () => {
   const scope = { environmentId: 'env1', organizationId: 'org1' };
   const agent = { _id: 'relay1' };
   const STRANGER_DATA = { __novu_source: 'agent-platform-provision', __novu_platform: 'telegram' };
@@ -14,7 +14,7 @@ describe('HumanWakeAccessService', () => {
   } = {}) {
     const humanOperator = { findForAgent: sinon.stub().resolves(operatorId) };
     const humanContactRepository = {
-      findCanWakeSubscriberIds: sinon.stub().resolves(allowed),
+      findListenToSubscriberIds: sinon.stub().resolves(allowed),
       find: sinon
         .stub()
         .callsFake(async (query: { subscriberId: { $in: string[] } }) =>
@@ -28,7 +28,7 @@ describe('HumanWakeAccessService', () => {
           subscribers.filter((subscriber) => query.subscriberId.$in.includes(subscriber.subscriberId))
         ),
     };
-    const service = new HumanWakeAccessService(
+    const service = new HumanListenAccessService(
       humanOperator as never,
       humanContactRepository as never,
       subscriberRepository as never
@@ -37,7 +37,7 @@ describe('HumanWakeAccessService', () => {
     return { service, humanOperator, humanContactRepository, subscriberRepository };
   }
 
-  it('lets the operator wake the hosts without a switch, and the contacts whose switch is on', async () => {
+  it('listens to the operator without a switch, and to the contacts whose switch is on', async () => {
     const { service } = setup({
       allowed: ['bob'],
       subscribers: [
@@ -47,30 +47,30 @@ describe('HumanWakeAccessService', () => {
       ],
     });
 
-    const wakers = await service.whoCanWake(scope, agent);
+    const listenedTo = await service.whoIsListenedTo(scope, agent);
 
-    expect([...wakers.values()]).to.deep.equal([
+    expect([...listenedTo.values()]).to.deep.equal([
       { id: 'ada', name: 'Ada Lovelace', isOperator: true },
       { id: 'bob', name: 'Bob', isOperator: false },
     ]);
   });
 
-  it('never lets a stranger wake them, whatever their switch says, nor a contact who is gone', async () => {
+  it('never listens to a stranger, whatever their switch says, nor to a contact who is gone', async () => {
     const { service } = setup({
       allowed: ['phantom', 'gone'],
       subscribers: [{ subscriberId: 'ada' }, { subscriberId: 'phantom', data: STRANGER_DATA }],
     });
 
-    const wakers = await service.whoCanWake(scope, agent);
+    const listenedTo = await service.whoIsListenedTo(scope, agent);
 
-    expect([...wakers.keys()]).to.deep.equal(['ada']);
-    expect(wakers.get('ada')).to.deep.equal({ id: 'ada', isOperator: true });
+    expect([...listenedTo.keys()]).to.deep.equal(['ada']);
+    expect(listenedTo.get('ada')).to.deep.equal({ id: 'ada', isOperator: true });
   });
 
-  it('lets nobody wake them before there is an operator or an allowed contact', async () => {
+  it('listens to nobody before there is an operator or a contact with the switch on', async () => {
     const { service, subscriberRepository } = setup({ operatorId: null });
 
-    expect((await service.whoCanWake(scope, agent)).size).to.equal(0);
+    expect((await service.whoIsListenedTo(scope, agent)).size).to.equal(0);
     expect(subscriberRepository.find.called).to.equal(false);
   });
 
@@ -80,10 +80,12 @@ describe('HumanWakeAccessService', () => {
       subscribers: [{ subscriberId: 'ada' }, { subscriberId: 'bob' }, { subscriberId: 'carol' }],
     });
 
-    expect([...(await service.whichCanWake(scope, agent, ['bob', 'carol', 'bob'])).keys()]).to.deep.equal(['bob']);
-    expect(await service.canWake(scope, agent, 'ada')).to.equal(true);
-    expect(await service.canWake(scope, agent, 'carol')).to.equal(false);
-    expect((await service.whichCanWake(scope, agent, [])).size).to.equal(0);
+    expect([...(await service.whichAreListenedTo(scope, agent, ['bob', 'carol', 'bob'])).keys()]).to.deep.equal([
+      'bob',
+    ]);
+    expect(await service.listenTo(scope, agent, 'ada')).to.equal(true);
+    expect(await service.listenTo(scope, agent, 'carol')).to.equal(false);
+    expect((await service.whichAreListenedTo(scope, agent, [])).size).to.equal(0);
   });
 
   it('reads the operator and the switches of the agent asked about, in its own environment', async () => {
@@ -91,10 +93,10 @@ describe('HumanWakeAccessService', () => {
       subscribers: [{ subscriberId: 'ada' }],
     });
 
-    await service.whoCanWake(scope, agent);
+    await service.whoIsListenedTo(scope, agent);
 
     expect(humanOperator.findForAgent.firstCall.args[0]).to.deep.equal({ ...scope, agentId: 'relay1' });
-    expect(humanContactRepository.findCanWakeSubscriberIds.firstCall.args).to.deep.equal(['env1', 'relay1']);
+    expect(humanContactRepository.findListenToSubscriberIds.firstCall.args).to.deep.equal(['env1', 'relay1']);
     expect(subscriberRepository.find.firstCall.args[0]).to.deep.include({
       _environmentId: 'env1',
       _organizationId: 'org1',

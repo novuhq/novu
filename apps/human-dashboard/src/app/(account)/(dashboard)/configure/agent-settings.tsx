@@ -337,7 +337,7 @@ type SwitchProps = {
 /**
  * The toggle of the design: off, a grey knob on the left of a bordered track; on, a larger dark knob on
  * the right of an orange one. The knob slides and grows, and the track changes colour, together. The Contacts
- * page has it too, for who can wake the agent's hosts.
+ * page has it too, for whom the agent listens to.
  */
 export function Switch({ labelledBy, label, describedBy, on, busy, disabled = false, onChange }: SwitchProps) {
   return (

@@ -56,7 +56,7 @@ export const DASHBOARD_ONLY = 'dashboard_only';
 
 /**
  * Refuses a change only the operator makes, on the Human dashboard: who can reach the agent, pausing or
- * resuming it, deleting it, and which contacts can wake its hosts. Hosts hold the same key, so the key alone
+ * resuming it, deleting it, and which contacts it listens to. Hosts hold the same key, so the key alone
  * doesn't count. `message` says what the host tried, for a change that isn't one of the agent's settings.
  */
 export function assertFromHumanDashboard(

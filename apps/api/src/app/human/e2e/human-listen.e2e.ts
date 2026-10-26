@@ -25,13 +25,13 @@ import { AgentEventEnum } from '../../agents/shared/enums/agent-event.enum';
 import { AGENT_PAUSED } from '../guards/human-agent-paused.guard';
 import { AGENT_INBOX_DASHBOARD_SECRET_HEADER, DASHBOARD_ONLY } from '../guards/human-dashboard-secret.guard';
 import { AGENT_INBOX_HOST_HEADER, AGENT_INBOX_VIA_HEADER } from '../services/human-host-status.service';
-import { AWAKE_ELSEWHERE, NOT_AWAKE, WAKE_NEEDS_ACCOUNT } from '../services/human-wake-lease.service';
-import { WAKE_SETTLE_MS } from '../services/human-wake-messages.service';
-import { encodeWakeCursor, INVALID_WAKE_CURSOR } from '../services/wake-cursor';
+import { LISTEN_NEEDS_ACCOUNT, LISTENING_ELSEWHERE, NOT_LISTENING } from '../services/human-listen-lease.service';
+import { LISTEN_SETTLE_MS } from '../services/human-listen-messages.service';
+import { encodeListenCursor, INVALID_LISTEN_CURSOR } from '../services/listen-cursor';
 import {
   CONTACT_IS_OPERATOR,
   CONTACT_IS_STRANGER,
-} from '../usecases/set-contact-can-wake/set-contact-can-wake.usecase';
+} from '../usecases/set-contact-listen-to/set-contact-listen-to.usecase';
 
 const agentRepository = new AgentRepository();
 const integrationRepository = new IntegrationRepository();
@@ -47,7 +47,7 @@ const BOB_CHAT_ID = '777502';
 const CAROL_CHAT_ID = '777503';
 const PHANTOM_CHAT_ID = '777504';
 const STRANGER_CHAT_ID = '888505';
-const DASHBOARD_SECRET = 'e2e-wake-dashboard-secret';
+const DASHBOARD_SECRET = 'e2e-listen-dashboard-secret';
 
 const MACBOOK = {
   computerId: 'macbook-e2e-0123456789',
@@ -58,18 +58,18 @@ const MACBOOK = {
 const STUDIO = { computerId: 'studio-e2e-0123456789', computerName: 'Studio', host: 'codex' };
 
 /** Long enough for everything stored before it to be read: the wait reads only what has settled. */
-const SETTLE = WAKE_SETTLE_MS + 600;
+const SETTLE = LISTEN_SETTLE_MS + 600;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
- * Wake: one computer keeps the agent awake by a lease it renews, and only that computer waits for the messages
- * that may wake a host, which come only from the operator and the contacts the operator allowed to wake it. The
- * CLI calls with the account's key; the operator's dashboard with the same key and its own secret.
+ * Listen: one computer keeps the agent listening by a lease it renews, and only that computer waits for the messages
+ * that may start a host, which come only from the operator and the contacts the agent listens to. The CLI calls with
+ * the account's key; the operator's dashboard with the same key and its own secret.
  */
-describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2', () => {
+describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) #novu-v2', () => {
   const originalSecret = process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
   let session: UserSession;
   let telegramApiStub: TelegramApiStub;
@@ -88,7 +88,7 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
     await session.initialize();
     telegramApiStub.reset();
 
-    operatorId = `wake-e2e-${Date.now()}`;
+    operatorId = `listen-e2e-${Date.now()}`;
     const setupRes = await session.testAgent
       .post('/v1/human/setup')
       .send({ subscriberId: operatorId, operator: true, firstName: 'Ada' });
@@ -102,10 +102,10 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
       channel: ChannelTypeEnum.CHAT,
       credentials: encryptCredentials({
         apiToken: '12345678:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-        token: 'e2e-wake-telegram-secret',
+        token: 'e2e-listen-telegram-secret',
       }),
       active: true,
-      identifier: `telegram-wake-e2e-${Date.now()}`,
+      identifier: `telegram-listen-e2e-${Date.now()}`,
       priority: 1,
       primary: false,
       deleted: false,
@@ -131,7 +131,7 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
     await testServer.getService(ChatInstanceRegistry).onModuleDestroy();
   });
 
-  /** As the wake program calls: the account's key, through the CLI, for the host it wakes. */
+  /** As the listener calls: the account's key, through the CLI, for the host it starts. */
   function asHost(method: 'get' | 'post' | 'patch', path: string, host = 'claude-code', user = session) {
     return user.testAgent[method](path)
       .set('Authorization', `ApiKey ${user.apiKey}`)
@@ -147,19 +147,19 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
   }
 
   function takeLease(body: Record<string, unknown>, user = session) {
-    return asHost('post', '/v1/human/wake/lease', 'claude-code', user).send(body);
+    return asHost('post', '/v1/human/listen/lease', 'claude-code', user).send(body);
   }
 
   async function holdLease(computer: Record<string, unknown> = MACBOOK, user = session) {
     const res = await takeLease(computer, user);
     expect(res.status).to.equal(200, JSON.stringify(res.body));
 
-    return res.body.data.awake as Record<string, any>;
+    return res.body.data.listening as Record<string, any>;
   }
 
-  /** The wake program's wait, for MacBook's Claude Code unless `query` names another holder. */
+  /** The listener's wait, for MacBook's Claude Code unless `query` names another holder. */
   function waitFor(query: Record<string, unknown>, host?: string, user = session) {
-    const request = asHost('get', '/v1/human/wake/messages', host, user).query({
+    const request = asHost('get', '/v1/human/listen/messages', host, user).query({
       computerId: MACBOOK.computerId,
       host: MACBOOK.host,
       ...query,
@@ -188,7 +188,7 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
 
   async function linkTelegram(subscriberId: string, chatId: string) {
     await channelEndpointRepository.create({
-      identifier: `ce-wake-e2e-${subscriberId}-${Date.now()}`,
+      identifier: `ce-listen-e2e-${subscriberId}-${Date.now()}`,
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
       integrationIdentifier,
@@ -202,7 +202,7 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
   }
 
   async function addContact(firstName: string, chatId: string): Promise<string> {
-    const contactId = `wake-e2e-${firstName.toLowerCase()}-${Date.now()}`;
+    const contactId = `listen-e2e-${firstName.toLowerCase()}-${Date.now()}`;
     const setupRes = await session.testAgent.post('/v1/human/setup').send({ subscriberId: contactId, firstName });
     expect(setupRes.status).to.equal(200, JSON.stringify(setupRes.body));
     await linkTelegram(contactId, chatId);
@@ -276,8 +276,8 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
     return res.body.data as { id: string; content: { cardChrome: { options?: Array<{ id: string; label: string }> } } };
   }
 
-  function setCanWake(contactId: string, canWake: boolean) {
-    return asDashboard('patch', `/v1/human/contacts/${contactId}`).send({ canWake });
+  function setListenTo(contactId: string, listenTo: boolean) {
+    return asDashboard('patch', `/v1/human/contacts/${contactId}`).send({ listenTo });
   }
 
   async function hostStatus(): Promise<Record<string, any>> {
@@ -295,55 +295,55 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
   async function lapseLease() {
     await agentRepository.update(
       { _id: relayAgentId, _environmentId: session.environment._id, _organizationId: session.organization._id },
-      { $set: { 'awake.expiresAt': new Date(Date.now() - 1000).toISOString() } },
+      { $set: { 'listening.expiresAt': new Date(Date.now() - 1000).toISOString() } },
       { timestamps: false }
     );
   }
 
   describe('the lease', () => {
-    it('keeps the agent awake on one computer, renewed by it, and says where on the dashboard', async () => {
+    it('keeps the agent listening on one computer, renewed by it, and says where on the dashboard', async () => {
       const res = await takeLease(MACBOOK);
 
       expect(res.status).to.equal(200, JSON.stringify(res.body));
       expect(res.body.data.renewInSeconds).to.equal(60);
-      const { awake } = res.body.data;
-      expect(awake).to.include({ ...MACBOOK, since: awake.renewedAt });
-      expect(Date.parse(awake.expiresAt) - Date.parse(awake.renewedAt)).to.equal(180_000);
+      const { listening } = res.body.data;
+      expect(listening).to.include({ ...MACBOOK, since: listening.renewedAt });
+      expect(Date.parse(listening.expiresAt) - Date.parse(listening.renewedAt)).to.equal(180_000);
 
-      const status = await asHost('get', '/v1/human/wake/lease');
+      const status = await asHost('get', '/v1/human/listen/lease');
       expect(status.status).to.equal(200, JSON.stringify(status.body));
-      expect(status.body.data).to.deep.equal({ awake, paused: false });
-      expect((await hostStatus()).awake).to.deep.equal(awake);
+      expect(status.body.data).to.deep.equal({ listening, paused: false });
+      expect((await hostStatus()).listening).to.deep.equal(listening);
 
-      // Renewing keeps when it was taken; what it wakes may change.
+      // Renewing keeps when it was taken; what it starts may change.
       await sleep(20);
       const renewed = await holdLease({ ...MACBOOK, project: '~/projects/api' });
-      expect(renewed).to.include({ since: awake.since, project: '~/projects/api' });
-      expect(renewed.renewedAt > awake.renewedAt).to.equal(true);
+      expect(renewed).to.include({ since: listening.since, project: '~/projects/api' });
+      expect(renewed.renewedAt > listening.renewedAt).to.equal(true);
     });
 
-    it('refuses another computer with awake_elsewhere, and hands over when asked to take over', async () => {
+    it('refuses another computer with listening_elsewhere, and hands over when asked to take over', async () => {
       const macbook = await holdLease(MACBOOK);
 
       const refused = await takeLease(STUDIO);
-      expectRefused(refused, 409, AWAKE_ELSEWHERE);
-      expect(refused.body.awake).to.deep.equal(macbook);
+      expectRefused(refused, 409, LISTENING_ELSEWHERE);
+      expect(refused.body.listening).to.deep.equal(macbook);
 
       const takenRes = await takeLease({ ...STUDIO, takeOver: true });
       expect(takenRes.status).to.equal(200, JSON.stringify(takenRes.body));
-      const studio = takenRes.body.data.awake;
+      const studio = takenRes.body.data.listening;
       expect(studio).to.include({ computerId: STUDIO.computerId, host: 'codex' });
       expect(studio).to.not.have.property('project');
       expect(studio.since > macbook.since).to.equal(true);
 
       // The computer it was taken from learns at its next call, and stops.
       const renew = await takeLease(MACBOOK);
-      expectRefused(renew, 409, AWAKE_ELSEWHERE);
-      expect(renew.body.awake).to.deep.equal(studio);
+      expectRefused(renew, 409, LISTENING_ELSEWHERE);
+      expect(renew.body.listening).to.deep.equal(studio);
       const wait = await waitFor({});
-      expectRefused(wait, 409, NOT_AWAKE);
-      expect(wait.body.awake).to.deep.equal(studio);
-      expect((await hostStatus()).awake).to.deep.equal(studio);
+      expectRefused(wait, 409, NOT_LISTENING);
+      expect(wait.body.listening).to.deep.equal(studio);
+      expect((await hostStatus()).listening).to.deep.equal(studio);
     });
 
     it('counts the same computer waking another host as another holder', async () => {
@@ -351,25 +351,28 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
 
       const codexHere = { ...MACBOOK, host: 'codex' };
       const refused = await takeLease(codexHere);
-      expectRefused(refused, 409, AWAKE_ELSEWHERE);
-      expect(refused.body.awake).to.deep.equal(claudeCode);
-      expectRefused(await waitFor({ host: 'codex' }), 409, NOT_AWAKE);
+      expectRefused(refused, 409, LISTENING_ELSEWHERE);
+      expect(refused.body.listening).to.deep.equal(claudeCode);
+      expectRefused(await waitFor({ host: 'codex' }), 409, NOT_LISTENING);
 
       const taken = await takeLease({ ...codexHere, takeOver: true });
       expect(taken.status).to.equal(200, JSON.stringify(taken.body));
-      expect(taken.body.data.awake).to.include({ computerId: MACBOOK.computerId, host: 'codex' });
-      expectRefused(await waitFor({}), 409, NOT_AWAKE);
+      expect(taken.body.data.listening).to.include({ computerId: MACBOOK.computerId, host: 'codex' });
+      expectRefused(await waitFor({}), 409, NOT_LISTENING);
     });
 
     it('counts a lapsed lease as none: nothing shows, the old holder may not wait, and any computer takes it', async () => {
       await holdLease(MACBOOK);
       await lapseLease();
 
-      expect((await asHost('get', '/v1/human/wake/lease')).body.data).to.deep.equal({ awake: null, paused: false });
-      expect((await hostStatus()).awake).to.equal(null);
+      expect((await asHost('get', '/v1/human/listen/lease')).body.data).to.deep.equal({
+        listening: null,
+        paused: false,
+      });
+      expect((await hostStatus()).listening).to.equal(null);
       const wait = await waitFor({});
-      expectRefused(wait, 409, NOT_AWAKE);
-      expect(wait.body.awake).to.equal(null);
+      expectRefused(wait, 409, NOT_LISTENING);
+      expect(wait.body.listening).to.equal(null);
 
       expect((await holdLease(STUDIO)).computerId).to.equal(STUDIO.computerId);
     });
@@ -377,39 +380,42 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
     it('lets go only of its own lease', async () => {
       const macbook = await holdLease(MACBOOK);
 
-      const other = await asHost('post', '/v1/human/wake/lease/release').send({
+      const other = await asHost('post', '/v1/human/listen/lease/release').send({
         computerId: STUDIO.computerId,
         host: STUDIO.host,
       });
       expect(other.status).to.equal(200, JSON.stringify(other.body));
       expect(other.body.data).to.deep.equal({ released: false });
-      expect((await asHost('get', '/v1/human/wake/lease')).body.data.awake).to.deep.equal(macbook);
+      expect((await asHost('get', '/v1/human/listen/lease')).body.data.listening).to.deep.equal(macbook);
 
       // The same computer lets go only of the lease it holds for that host.
-      const otherHost = await asHost('post', '/v1/human/wake/lease/release').send({
+      const otherHost = await asHost('post', '/v1/human/listen/lease/release').send({
         computerId: MACBOOK.computerId,
         host: 'codex',
       });
       expect(otherHost.body.data).to.deep.equal({ released: false });
       expect(
-        (await asHost('post', '/v1/human/wake/lease/release').send({ computerId: MACBOOK.computerId })).status
+        (await asHost('post', '/v1/human/listen/lease/release').send({ computerId: MACBOOK.computerId })).status
       ).to.equal(422);
 
-      const own = await asHost('post', '/v1/human/wake/lease/release').send({
+      const own = await asHost('post', '/v1/human/listen/lease/release').send({
         computerId: MACBOOK.computerId,
         host: MACBOOK.host,
       });
       expect(own.body.data).to.deep.equal({ released: true });
-      expect((await asHost('get', '/v1/human/wake/lease')).body.data).to.deep.equal({ awake: null, paused: false });
+      expect((await asHost('get', '/v1/human/listen/lease')).body.data).to.deep.equal({
+        listening: null,
+        paused: false,
+      });
 
-      const again = await asHost('post', '/v1/human/wake/lease/release').send({
+      const again = await asHost('post', '/v1/human/listen/lease/release').send({
         computerId: MACBOOK.computerId,
         host: MACBOOK.host,
       });
       expect(again.body.data).to.deep.equal({ released: false });
     });
 
-    it('only wakes hosts that run on a computer, and checks what the computer sends', async () => {
+    it('only starts hosts that run on a computer, and checks what the computer sends', async () => {
       for (const body of [
         { ...MACBOOK, host: 'chatgpt' },
         { ...MACBOOK, host: 'general' },
@@ -425,15 +431,18 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
         expect(res.status, JSON.stringify(body)).to.equal(422);
       }
 
-      expect((await asHost('get', '/v1/human/wake/lease')).body.data).to.deep.equal({ awake: null, paused: false });
+      expect((await asHost('get', '/v1/human/listen/lease')).body.data).to.deep.equal({
+        listening: null,
+        paused: false,
+      });
     });
 
-    it('needs an account: a keyless setup can’t keep a host awake', async () => {
+    it('needs an account: a keyless setup can’t keep the agent listening', async () => {
       const original = process.env.KEYLESS_ORGANIZATION_ID;
       process.env.KEYLESS_ORGANIZATION_ID = session.organization._id;
 
       try {
-        expectRefused(await takeLease(MACBOOK), 403, WAKE_NEEDS_ACCOUNT);
+        expectRefused(await takeLease(MACBOOK), 403, LISTEN_NEEDS_ACCOUNT);
       } finally {
         if (original === undefined) {
           delete process.env.KEYLESS_ORGANIZATION_ID;
@@ -442,7 +451,10 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
         }
       }
 
-      expect((await asHost('get', '/v1/human/wake/lease')).body.data).to.deep.equal({ awake: null, paused: false });
+      expect((await asHost('get', '/v1/human/listen/lease')).body.data).to.deep.equal({
+        listening: null,
+        paused: false,
+      });
     });
 
     it('keeps another account’s agent apart', async () => {
@@ -451,16 +463,16 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
       await other.initialize();
       const setupRes = await other.testAgent
         .post('/v1/human/setup')
-        .send({ subscriberId: `wake-e2e-other-${Date.now()}`, operator: true, firstName: 'Grace' });
+        .send({ subscriberId: `listen-e2e-other-${Date.now()}`, operator: true, firstName: 'Grace' });
       expect(setupRes.status).to.equal(200, JSON.stringify(setupRes.body));
 
       // Its agent is asleep, the same computer id is free there, and it never sees this account's lease.
-      expect((await asHost('get', '/v1/human/wake/lease', 'claude-code', other)).body.data).to.deep.equal({
-        awake: null,
+      expect((await asHost('get', '/v1/human/listen/lease', 'claude-code', other)).body.data).to.deep.equal({
+        listening: null,
         paused: false,
       });
       expect((await holdLease(MACBOOK, other)).computerId).to.equal(MACBOOK.computerId);
-      expect((await hostStatus()).awake.computerId).to.equal(MACBOOK.computerId);
+      expect((await hostStatus()).listening.computerId).to.equal(MACBOOK.computerId);
 
       // What this account's operator writes never reaches the other account's wait.
       const otherCursor = await startCursor(other);
@@ -487,30 +499,36 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
       expectRefused(await takeLease(MACBOOK), 403, AGENT_PAUSED);
       expectRefused(await waitFor({ after: cursor }), 403, AGENT_PAUSED);
 
-      // `wake status` and `wake stop` still work: where it is awake, that it is paused, and letting go.
-      const status = await asHost('get', '/v1/human/wake/lease');
+      // `listen status` and `listen stop` still work: where it is listening, that it is paused, and letting go.
+      const status = await asHost('get', '/v1/human/listen/lease');
       expect(status.status).to.equal(200, JSON.stringify(status.body));
-      expect(status.body.data).to.deep.equal({ awake: macbook, paused: true });
-      const release = await asHost('post', '/v1/human/wake/lease/release').send({
+      expect(status.body.data).to.deep.equal({ listening: macbook, paused: true });
+      const release = await asHost('post', '/v1/human/listen/lease/release').send({
         computerId: MACBOOK.computerId,
         host: MACBOOK.host,
       });
       expect(release.status).to.equal(200, JSON.stringify(release.body));
       expect(release.body.data).to.deep.equal({ released: true });
-      expect((await asHost('get', '/v1/human/wake/lease')).body.data).to.deep.equal({ awake: null, paused: true });
+      expect((await asHost('get', '/v1/human/listen/lease')).body.data).to.deep.equal({
+        listening: null,
+        paused: true,
+      });
 
       const resume = await asDashboard('patch', '/v1/human/agent').send({ paused: false });
       expect(resume.status).to.equal(200, JSON.stringify(resume.body));
-      expect((await asHost('get', '/v1/human/wake/lease')).body.data).to.deep.equal({ awake: null, paused: false });
+      expect((await asHost('get', '/v1/human/listen/lease')).body.data).to.deep.equal({
+        listening: null,
+        paused: false,
+      });
       expect((await takeLease(MACBOOK)).status).to.equal(200);
     });
   });
 
   describe('waiting for messages', () => {
-    it('gives only what the operator and the contacts allowed to wake wrote, oldest first', async () => {
+    it('gives only what the operator and the contacts it listens to wrote, oldest first', async () => {
       const bobId = await addContact('Bob', BOB_CHAT_ID);
       const carolId = await addContact('Carol', CAROL_CHAT_ID);
-      expect((await setCanWake(bobId, true)).status).to.equal(200);
+      expect((await setListenTo(bobId, true)).status).to.equal(200);
       await holdLease(MACBOOK);
       const cursor = await startCursor();
 
@@ -569,8 +587,8 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
       expect(next.body.next).to.be.a('string');
     });
 
-    it('never lets a stranger wake a host, even one the API made a contact row for', async () => {
-      const phantomId = `wake-e2e-phantom-${Date.now()}`;
+    it('never lets a stranger start a host, even one the API made a contact row for', async () => {
+      const phantomId = `listen-e2e-phantom-${Date.now()}`;
       await subscriberRepository.create({
         subscriberId: phantomId,
         _environmentId: session.environment._id,
@@ -579,13 +597,13 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
       });
       await linkTelegram(phantomId, PHANTOM_CHAT_ID);
       // The dashboard never turns a stranger's switch on; written straight to the database, it still counts for nothing.
-      expectRefused(await setCanWake(phantomId, true), 400, CONTACT_IS_STRANGER);
-      await humanContactRepository.setCanWake({
+      expectRefused(await setListenTo(phantomId, true), 400, CONTACT_IS_STRANGER);
+      await humanContactRepository.setListenTo({
         environmentId: session.environment._id,
         organizationId: session.organization._id,
         agentId: relayAgentId,
         subscriberId: phantomId,
-        canWake: true,
+        listenTo: true,
       });
       await holdLease(MACBOOK);
       const cursor = await startCursor();
@@ -635,7 +653,7 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
       }
 
       // A computer that was off for two days goes on from its old cursor.
-      const old = await waitFor({ after: encodeWakeCursor({ at: Date.now() - 2 * 24 * 60 * 60 * 1000 }), limit: 50 });
+      const old = await waitFor({ after: encodeListenCursor({ at: Date.now() - 2 * 24 * 60 * 60 * 1000 }), limit: 50 });
       expect(old.status).to.equal(200, JSON.stringify(old.body));
       const texts = old.body.data.map((message: { text: string }) => message.text);
       expect(texts).to.include('an hour ago');
@@ -765,12 +783,12 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
       const before = await readAfter(cursor);
       expect(before.data).to.deep.equal([]);
 
-      expect((await setCanWake(bobId, true)).body.data).to.deep.equal({ id: bobId, canWake: true });
+      expect((await setListenTo(bobId, true)).body.data).to.deep.equal({ id: bobId, listenTo: true });
       await write('after the switch', BOB_CHAT_ID);
       const on = await readAfter(before.next);
       expect(on.data.map((message) => message.text)).to.deep.equal(['after the switch']);
 
-      expect((await setCanWake(bobId, false)).body.data).to.deep.equal({ id: bobId, canWake: false });
+      expect((await setListenTo(bobId, false)).body.data).to.deep.equal({ id: bobId, listenTo: false });
       await write('switched off again', BOB_CHAT_ID);
       expect((await readAfter(on.next)).data).to.deep.equal([]);
     });
@@ -813,10 +831,10 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
     it('refuses a cursor it did not hand out, and a computer that does not hold the lease', async () => {
       await holdLease(MACBOOK);
 
-      expectRefused(await waitFor({ after: 'not-a-cursor' }), 400, INVALID_WAKE_CURSOR);
-      expectRefused(await waitFor({ computerId: STUDIO.computerId, host: STUDIO.host }), 409, NOT_AWAKE);
+      expectRefused(await waitFor({ after: 'not-a-cursor' }), 400, INVALID_LISTEN_CURSOR);
+      expectRefused(await waitFor({ computerId: STUDIO.computerId, host: STUDIO.host }), 409, NOT_LISTENING);
       // The same computer waiting for another host doesn't hold it either, and a wait must say which host.
-      expectRefused(await waitFor({ host: 'codex' }), 409, NOT_AWAKE);
+      expectRefused(await waitFor({ host: 'codex' }), 409, NOT_LISTENING);
       expect((await waitFor({ host: undefined })).status).to.equal(422);
       expect((await waitFor({ host: 'chatgpt' })).status).to.equal(422);
       expect((await waitFor({ wait: 26 })).status).to.equal(422);
@@ -825,7 +843,7 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
   });
 
   describe('a permission question', () => {
-    it('can be withdrawn by the wake program that sent it, with the account’s key', async () => {
+    it('can be withdrawn by the listener that sent it, with the account’s key', async () => {
       const sent = await asHost('post', '/v1/human/interactions').send({
         kind: 'approve',
         card: { title: 'Run `rm -rf build`?' },
@@ -842,7 +860,7 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
 
   describe('typing while a host works', () => {
     function showTyping(body: Record<string, unknown>) {
-      return asHost('post', '/v1/human/wake/typing').send({
+      return asHost('post', '/v1/human/listen/typing').send({
         computerId: MACBOOK.computerId,
         host: MACBOOK.host,
         ...body,
@@ -873,7 +891,7 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
       expectRefused(
         await showTyping({ computerId: STUDIO.computerId, host: STUDIO.host, conversationId: thread }),
         409,
-        NOT_AWAKE
+        NOT_LISTENING
       );
       expect((await showTyping({ conversationId: 'conv_not_there' })).status).to.equal(404);
       expect((await showTyping({ conversationId: '' })).status).to.equal(422);
@@ -884,7 +902,7 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
     });
   });
 
-  describe('who can wake: the contact switch', () => {
+  describe('whom it listens to: the contact switch', () => {
     async function listContacts(): Promise<Map<string, Record<string, any>>> {
       const res = await asDashboard('get', '/v1/human/contacts');
       expect(res.status).to.equal(200, JSON.stringify(res.body));
@@ -897,53 +915,53 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
       const carolId = await addContact('Carol', CAROL_CHAT_ID);
 
       const before = await listContacts();
-      expect(before.get(operatorId)).to.include({ isOperator: true, canWake: true });
-      expect(before.get(bobId)).to.include({ canWake: false });
-      expect(before.get(carolId)).to.include({ canWake: false });
+      expect(before.get(operatorId)).to.include({ isOperator: true, listenTo: true });
+      expect(before.get(bobId)).to.include({ listenTo: false });
+      expect(before.get(carolId)).to.include({ listenTo: false });
 
-      const res = await setCanWake(bobId, true);
+      const res = await setListenTo(bobId, true);
       expect(res.status).to.equal(200, JSON.stringify(res.body));
-      expect(res.body.data).to.deep.equal({ id: bobId, canWake: true });
+      expect(res.body.data).to.deep.equal({ id: bobId, listenTo: true });
 
       const after = await listContacts();
-      expect(after.get(bobId)).to.include({ canWake: true });
-      expect(after.get(carolId)).to.include({ canWake: false });
+      expect(after.get(bobId)).to.include({ listenTo: true });
+      expect(after.get(carolId)).to.include({ listenTo: false });
 
       // The CLI's single-contact read says so too.
       const bob = await asHost('get', `/v1/human/contacts/${bobId}`);
       expect(bob.status).to.equal(200, JSON.stringify(bob.body));
-      expect(bob.body.data.canWake).to.equal(true);
-      expect((await asHost('get', `/v1/human/contacts/${operatorId}`)).body.data.canWake).to.equal(true);
-      expect((await asHost('get', `/v1/human/contacts/${carolId}`)).body.data.canWake).to.equal(false);
+      expect(bob.body.data.listenTo).to.equal(true);
+      expect((await asHost('get', `/v1/human/contacts/${operatorId}`)).body.data.listenTo).to.equal(true);
+      expect((await asHost('get', `/v1/human/contacts/${carolId}`)).body.data.listenTo).to.equal(false);
     });
 
     it('can only be set by the operator, on the dashboard', async () => {
       const bobId = await addContact('Bob', BOB_CHAT_ID);
 
-      const byHost = await asHost('patch', `/v1/human/contacts/${bobId}`).send({ canWake: true });
+      const byHost = await asHost('patch', `/v1/human/contacts/${bobId}`).send({ listenTo: true });
       expectRefused(byHost, 403, DASHBOARD_ONLY);
-      expect(byHost.body.message).to.contain('who can wake');
+      expect(byHost.body.message).to.contain('whom the agent listens to');
       const wrongSecret = await session.testAgent
         .patch(`/v1/human/contacts/${bobId}`)
         .set('Authorization', `ApiKey ${session.apiKey}`)
         .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, 'guess')
-        .send({ canWake: true });
+        .send({ listenTo: true });
       expectRefused(wrongSecret, 403, DASHBOARD_ONLY);
 
-      expect((await listContacts()).get(bobId)).to.include({ canWake: false });
+      expect((await listContacts()).get(bobId)).to.include({ listenTo: false });
     });
 
     it('has no switch for the operator, nor for someone who isn’t a contact', async () => {
-      expectRefused(await setCanWake(operatorId, false), 400, CONTACT_IS_OPERATOR);
-      expect((await setCanWake('nobody-here', true)).status).to.equal(404);
-      expect((await asDashboard('patch', `/v1/human/contacts/${operatorId}`).send({ canWake: 'yes' })).status).to.equal(
-        422
-      );
+      expectRefused(await setListenTo(operatorId, false), 400, CONTACT_IS_OPERATOR);
+      expect((await setListenTo('nobody-here', true)).status).to.equal(404);
+      expect(
+        (await asDashboard('patch', `/v1/human/contacts/${operatorId}`).send({ listenTo: 'yes' })).status
+      ).to.equal(422);
     });
 
     it('goes with the contact when they are removed', async () => {
       const bobId = await addContact('Bob', BOB_CHAT_ID);
-      expect((await setCanWake(bobId, true)).status).to.equal(200);
+      expect((await setListenTo(bobId, true)).status).to.equal(200);
 
       const remove = await session.testAgent
         .delete(`/v1/human/contacts/${bobId}`)
@@ -953,7 +971,7 @@ describe('Agent Inbox wake (the lease, the messages wait, who can wake) #novu-v2
       // Added again under the same id, they start with the switch off.
       const setupRes = await session.testAgent.post('/v1/human/setup').send({ subscriberId: bobId, firstName: 'Bob' });
       expect(setupRes.status).to.equal(200, JSON.stringify(setupRes.body));
-      expect((await listContacts()).get(bobId)).to.include({ canWake: false });
+      expect((await listContacts()).get(bobId)).to.include({ listenTo: false });
     });
   });
 });

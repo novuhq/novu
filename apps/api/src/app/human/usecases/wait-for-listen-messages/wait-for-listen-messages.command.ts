@@ -3,26 +3,26 @@ import {
   AGENT_HOST_VIAS,
   type AgentHostId,
   type AgentHostVia,
-  WAKE_HOST_IDS,
-  type WakeHostId,
+  LISTEN_HOST_IDS,
+  type ListenHostId,
 } from '@novu/dal';
 import { IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { HUMAN_INBOX_MAX_WAIT_SECONDS } from '../../dtos/human-inbox.dto';
-import { WAKE_COMPUTER_ID_PATTERN, WAKE_MESSAGES_MAX_LIMIT } from '../../dtos/human-wake.dto';
+import { LISTEN_COMPUTER_ID_PATTERN, LISTEN_MESSAGES_MAX_LIMIT } from '../../dtos/human-listen.dto';
 
-export class WaitForWakeMessagesCommand extends EnvironmentWithUserCommand {
+export class WaitForListenMessagesCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   agentIdentifier?: string;
 
   /** Only the computer and host holding the lease may wait. */
   @IsString()
-  @Matches(WAKE_COMPUTER_ID_PATTERN)
+  @Matches(LISTEN_COMPUTER_ID_PATTERN)
   computerId: string;
 
-  @IsIn(WAKE_HOST_IDS)
-  host: WakeHostId;
+  @IsIn(LISTEN_HOST_IDS)
+  host: ListenHostId;
 
   @IsOptional()
   @IsString()
@@ -38,10 +38,10 @@ export class WaitForWakeMessagesCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(WAKE_MESSAGES_MAX_LIMIT)
+  @Max(LISTEN_MESSAGES_MAX_LIMIT)
   limit?: number;
 
-  /** The way the wake program came in, for the host's last check: always the CLI so far. */
+  /** The way the listener came in, for the host's last check: always the CLI so far. */
   @IsOptional()
   @IsIn(AGENT_HOST_VIAS)
   hostVia?: AgentHostVia;

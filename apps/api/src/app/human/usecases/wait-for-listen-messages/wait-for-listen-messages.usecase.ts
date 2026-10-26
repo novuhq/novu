@@ -1,50 +1,55 @@
 import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { type ListWakeMessagesResponseDto, WAKE_MESSAGES_DEFAULT_LIMIT } from '../../dtos/human-wake.dto';
+import { LISTEN_MESSAGES_DEFAULT_LIMIT, type ListenMessagesResponseDto } from '../../dtos/human-listen.dto';
 import { HumanHostStatusService } from '../../services/human-host-status.service';
 import { HumanInboxService, type InboxRelayAgent, type InboxScope } from '../../services/human-inbox.service';
-import { HumanWakeAccessService } from '../../services/human-wake-access.service';
-import { HumanWakeLeaseService } from '../../services/human-wake-lease.service';
+import { HumanListenAccessService } from '../../services/human-listen-access.service';
+import { HumanListenLeaseService } from '../../services/human-listen-lease.service';
 import {
-  HumanWakeMessagesService,
-  WAKE_MAX_AGE_MS,
-  type WakeMessagesPage,
-} from '../../services/human-wake-messages.service';
-import { clampWakeCursor, decodeWakeCursor, encodeWakeCursor, type WakeCursor } from '../../services/wake-cursor';
+  HumanListenMessagesService,
+  LISTEN_MAX_AGE_MS,
+  type ListenMessagesPage,
+} from '../../services/human-listen-messages.service';
+import {
+  clampListenCursor,
+  decodeListenCursor,
+  encodeListenCursor,
+  type ListenCursor,
+} from '../../services/listen-cursor';
 import { INBOX_WAIT_POLL_INTERVAL_MS } from '../list-inbox-threads/list-inbox-threads.usecase';
-import { WaitForWakeMessagesCommand } from './wait-for-wake-messages.command';
+import { WaitForListenMessagesCommand } from './wait-for-listen-messages.command';
 
 /**
- * The wake program's wait: the messages that may wake a host, from the people who can wake it, oldest first,
+ * The listener's wait: the messages that may start a host, from the people the agent listens to, oldest first,
  * after the cursor it passes. With `waitSeconds` the request is held until at least one comes or the time is up,
- * as `GET /human/inbox?wait=` holds. Only the computer and host that keep the agent awake may wait, and only
+ * as `GET /human/inbox?wait=` holds. Only the computer and host that keep the agent listening may wait, and only
  * while the agent isn't paused: both are read again before each look, so a wait taken over or paused meanwhile
  * stops. Each wait counts as a last check of the host it is for.
  */
 @Injectable()
-export class WaitForWakeMessages {
+export class WaitForListenMessages {
   constructor(
     private readonly inbox: HumanInboxService,
-    private readonly lease: HumanWakeLeaseService,
-    private readonly access: HumanWakeAccessService,
-    private readonly messages: HumanWakeMessagesService,
+    private readonly lease: HumanListenLeaseService,
+    private readonly access: HumanListenAccessService,
+    private readonly messages: HumanListenMessagesService,
     private readonly hostStatus: HumanHostStatusService
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: WaitForWakeMessagesCommand): Promise<ListWakeMessagesResponseDto> {
+  async execute(command: WaitForListenMessagesCommand): Promise<ListenMessagesResponseDto> {
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
     const agent = await this.inbox.resolveRelayAgent(scope, command.agentIdentifier);
     const startedAt = Date.now();
     const holder = { computerId: command.computerId, host: command.host };
     await this.lease.assertHolds(scope, agent, holder);
     const deadline = startedAt + (command.waitSeconds ?? 0) * 1000;
-    const limit = command.limit ?? WAKE_MESSAGES_DEFAULT_LIMIT;
+    const limit = command.limit ?? LISTEN_MESSAGES_DEFAULT_LIMIT;
     // Without a cursor only what arrives from now on counts.
     let page = await this.look(
       scope,
       agent,
-      command.after ? decodeWakeCursor(command.after) : { at: startedAt },
+      command.after ? decodeListenCursor(command.after) : { at: startedAt },
       limit
     );
 
@@ -70,24 +75,24 @@ export class WaitForWakeMessages {
       null
     );
 
-    return { data: page.data, next: encodeWakeCursor(page.next) };
+    return { data: page.data, next: encodeListenCursor(page.next) };
   }
 
-  /** Who can wake the host is read at every look, so a switch turned on or off counts at once. */
+  /** Whom the agent listens to is read at every look, so a switch turned on or off counts at once. */
   private async look(
     scope: InboxScope,
     agent: InboxRelayAgent,
-    cursor: WakeCursor,
+    cursor: ListenCursor,
     limit: number
-  ): Promise<WakeMessagesPage> {
+  ): Promise<ListenMessagesPage> {
     const now = new Date();
-    const wakers = await this.access.whoCanWake(scope, agent);
+    const listenedTo = await this.access.whoIsListenedTo(scope, agent);
 
     return this.messages.read(
       scope,
       agent,
-      wakers,
-      clampWakeCursor(cursor, now.getTime() - WAKE_MAX_AGE_MS, now.getTime()),
+      listenedTo,
+      clampListenCursor(cursor, now.getTime() - LISTEN_MAX_AGE_MS, now.getTime()),
       limit,
       now
     );

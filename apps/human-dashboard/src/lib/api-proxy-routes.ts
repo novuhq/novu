@@ -13,11 +13,11 @@ export const PROXY_ROUTES: readonly ProxyRoute[] = [
   ['POST', '/v1/inbox/:conversationId/read', '/v1/human/inbox/:conversationId/read'],
   ['POST', '/v1/inbox/:conversationId/resolve', '/v1/human/inbox/:conversationId/resolve'],
 
-  ['POST', '/v1/wake/lease', '/v1/human/wake/lease'],
-  ['GET', '/v1/wake/lease', '/v1/human/wake/lease'],
-  ['POST', '/v1/wake/lease/release', '/v1/human/wake/lease/release'],
-  ['GET', '/v1/wake/messages', '/v1/human/wake/messages'],
-  ['POST', '/v1/wake/typing', '/v1/human/wake/typing'],
+  ['POST', '/v1/listen/lease', '/v1/human/listen/lease'],
+  ['GET', '/v1/listen/lease', '/v1/human/listen/lease'],
+  ['POST', '/v1/listen/lease/release', '/v1/human/listen/lease/release'],
+  ['GET', '/v1/listen/messages', '/v1/human/listen/messages'],
+  ['POST', '/v1/listen/typing', '/v1/human/listen/typing'],
 
   ['GET', '/v1/contacts', '/v1/human/contacts'],
   ['GET', '/v1/contacts/:contactId', '/v1/human/contacts/:contactId'],

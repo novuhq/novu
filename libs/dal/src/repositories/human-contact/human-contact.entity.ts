@@ -74,10 +74,11 @@ export class HumanContactEntity {
   isOperator?: boolean;
 
   /**
-   * Whether a message from this contact may wake one of the agent's hosts (`agentinbox wake`). Only the operator
-   * turns it on, on the dashboard; missing reads as off. The operator can always wake them, whatever it says.
+   * Whether the agent listens to this contact: a message from them may start one of its hosts (`agentinbox listen`).
+   * Only the operator turns it on, on the dashboard; missing reads as off. It always listens to the operator,
+   * whatever this says.
    */
-  canWake?: boolean;
+  listenTo?: boolean;
 
   _environmentId: EnvironmentId;
 

@@ -21,16 +21,16 @@ import { KeylessAccessible } from '../shared/framework/swagger/keyless.security'
 import { UserSession } from '../shared/framework/user.decorator';
 import { HumanAgentQueryDto } from './dtos/human-agent.dto';
 import {
-  type ListWakeMessagesResponseDto,
-  ReleaseWakeLeaseRequestDto,
-  type ReleaseWakeLeaseResponseDto,
-  TakeWakeLeaseRequestDto,
-  type WakeLeaseResponseDto,
-  type WakeLeaseStatusResponseDto,
-  WakeMessagesQueryDto,
-  WakeTypingRequestDto,
-  type WakeTypingResponseDto,
-} from './dtos/human-wake.dto';
+  type ListenLeaseResponseDto,
+  type ListenLeaseStatusResponseDto,
+  ListenMessagesQueryDto,
+  type ListenMessagesResponseDto,
+  ListenTypingRequestDto,
+  type ListenTypingResponseDto,
+  ReleaseListenLeaseRequestDto,
+  type ReleaseListenLeaseResponseDto,
+  TakeListenLeaseRequestDto,
+} from './dtos/human-listen.dto';
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
 import {
   AGENT_INBOX_HOST_HEADER,
@@ -38,36 +38,36 @@ import {
   readHostId,
   readHostVia,
 } from './services/human-host-status.service';
-import { GetWakeLeaseCommand } from './usecases/get-wake-lease/get-wake-lease.command';
-import { GetWakeLease } from './usecases/get-wake-lease/get-wake-lease.usecase';
-import { ReleaseWakeLeaseCommand } from './usecases/release-wake-lease/release-wake-lease.command';
-import { ReleaseWakeLease } from './usecases/release-wake-lease/release-wake-lease.usecase';
-import { ShowWakeTypingCommand } from './usecases/show-wake-typing/show-wake-typing.command';
-import { ShowWakeTyping } from './usecases/show-wake-typing/show-wake-typing.usecase';
-import { TakeWakeLeaseCommand } from './usecases/take-wake-lease/take-wake-lease.command';
-import { TakeWakeLease } from './usecases/take-wake-lease/take-wake-lease.usecase';
-import { WaitForWakeMessagesCommand } from './usecases/wait-for-wake-messages/wait-for-wake-messages.command';
-import { WaitForWakeMessages } from './usecases/wait-for-wake-messages/wait-for-wake-messages.usecase';
+import { GetListenLeaseCommand } from './usecases/get-listen-lease/get-listen-lease.command';
+import { GetListenLease } from './usecases/get-listen-lease/get-listen-lease.usecase';
+import { ReleaseListenLeaseCommand } from './usecases/release-listen-lease/release-listen-lease.command';
+import { ReleaseListenLease } from './usecases/release-listen-lease/release-listen-lease.usecase';
+import { ShowListenTypingCommand } from './usecases/show-listen-typing/show-listen-typing.command';
+import { ShowListenTyping } from './usecases/show-listen-typing/show-listen-typing.usecase';
+import { TakeListenLeaseCommand } from './usecases/take-listen-lease/take-listen-lease.command';
+import { TakeListenLease } from './usecases/take-listen-lease/take-listen-lease.usecase';
+import { WaitForListenMessagesCommand } from './usecases/wait-for-listen-messages/wait-for-listen-messages.command';
+import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-for-listen-messages.usecase';
 
 /**
- * Wake (`agentinbox wake`): the program that starts a host on the operator's computer when someone who can wake
- * it writes. One computer keeps the agent awake at a time, by a lease it renews, and only that computer waits for
- * the messages that may wake a host, and shows typing while its host works. Like the inbox, a paused agent's hosts
- * can't take the lease, wait or show typing; they can still see where it is awake and let go of it (`wake status`,
- * `wake stop`).
+ * The listener (`agentinbox listen`): the program that starts a host on the operator's computer when someone the
+ * agent listens to writes. One computer keeps the agent listening at a time, by a lease it renews, and only that
+ * computer waits for the messages that may start a host, and shows typing while its host works. Like the inbox, a
+ * paused agent's hosts can't take the lease, wait or show typing; they can still see where it is listening and let go
+ * of it (`listen status`, `listen stop`).
  */
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
-@Controller('/human/wake')
+@Controller('/human/listen')
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiExcludeController()
 @RequireAuthentication()
-export class HumanWakeController {
+export class HumanListenController {
   constructor(
-    private readonly takeWakeLeaseUsecase: TakeWakeLease,
-    private readonly getWakeLeaseUsecase: GetWakeLease,
-    private readonly releaseWakeLeaseUsecase: ReleaseWakeLease,
-    private readonly waitForWakeMessagesUsecase: WaitForWakeMessages,
-    private readonly showWakeTypingUsecase: ShowWakeTyping
+    private readonly takeListenLeaseUsecase: TakeListenLease,
+    private readonly getListenLeaseUsecase: GetListenLease,
+    private readonly releaseListenLeaseUsecase: ReleaseListenLease,
+    private readonly waitForListenMessagesUsecase: WaitForListenMessages,
+    private readonly showListenTypingUsecase: ShowListenTyping
   ) {}
 
   /** Takes the lease, renews it, or with `takeOver` takes it from the computer that holds it. */
@@ -79,10 +79,10 @@ export class HumanWakeController {
   @UseGuards(HumanAgentPausedGuard)
   takeLease(
     @UserSession() user: UserSessionData,
-    @Body() body: TakeWakeLeaseRequestDto
-  ): Promise<WakeLeaseResponseDto> {
-    return this.takeWakeLeaseUsecase.execute(
-      TakeWakeLeaseCommand.create({
+    @Body() body: TakeListenLeaseRequestDto
+  ): Promise<ListenLeaseResponseDto> {
+    return this.takeListenLeaseUsecase.execute(
+      TakeListenLeaseCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -96,7 +96,7 @@ export class HumanWakeController {
     );
   }
 
-  /** Where the agent is awake now, if anywhere, and whether it is paused. */
+  /** Where the agent is listening now, if anywhere, and whether it is paused. */
   @Get('/lease')
   @KeylessAccessible()
   @ExternalApiAccessible()
@@ -104,9 +104,9 @@ export class HumanWakeController {
   getLease(
     @UserSession() user: UserSessionData,
     @Query() query: HumanAgentQueryDto
-  ): Promise<WakeLeaseStatusResponseDto> {
-    return this.getWakeLeaseUsecase.execute(
-      GetWakeLeaseCommand.create({
+  ): Promise<ListenLeaseStatusResponseDto> {
+    return this.getListenLeaseUsecase.execute(
+      GetListenLeaseCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -115,7 +115,7 @@ export class HumanWakeController {
     );
   }
 
-  /** Lets go of the lease (`agentinbox wake stop`), also while the agent is paused. */
+  /** Lets go of the lease (`agentinbox listen stop`), also while the agent is paused. */
   @Post('/lease/release')
   @HttpCode(HttpStatus.OK)
   @KeylessAccessible()
@@ -123,10 +123,10 @@ export class HumanWakeController {
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   releaseLease(
     @UserSession() user: UserSessionData,
-    @Body() body: ReleaseWakeLeaseRequestDto
-  ): Promise<ReleaseWakeLeaseResponseDto> {
-    return this.releaseWakeLeaseUsecase.execute(
-      ReleaseWakeLeaseCommand.create({
+    @Body() body: ReleaseListenLeaseRequestDto
+  ): Promise<ReleaseListenLeaseResponseDto> {
+    return this.releaseListenLeaseUsecase.execute(
+      ReleaseListenLeaseCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -137,7 +137,7 @@ export class HumanWakeController {
     );
   }
 
-  /** Waits for the messages that may wake a host. Only the computer and host holding the lease may. */
+  /** Waits for the messages that may start a host. Only the computer and host holding the lease may. */
   @Get('/messages')
   @KeylessAccessible()
   @ExternalApiAccessible()
@@ -145,12 +145,12 @@ export class HumanWakeController {
   @UseGuards(HumanAgentPausedGuard)
   waitForMessages(
     @UserSession() user: UserSessionData,
-    @Query() query: WakeMessagesQueryDto,
+    @Query() query: ListenMessagesQueryDto,
     @Headers(AGENT_INBOX_VIA_HEADER) via?: string,
     @Headers(AGENT_INBOX_HOST_HEADER) host?: string
-  ): Promise<ListWakeMessagesResponseDto> {
-    return this.waitForWakeMessagesUsecase.execute(
-      WaitForWakeMessagesCommand.create({
+  ): Promise<ListenMessagesResponseDto> {
+    return this.waitForListenMessagesUsecase.execute(
+      WaitForListenMessagesCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -166,16 +166,19 @@ export class HumanWakeController {
     );
   }
 
-  /** Shows in the chat that a reply is coming, while the woken host works on a message there. Asked again every few seconds. */
+  /** Shows in the chat that a reply is coming, while the started host works on a message there. Asked again every few seconds. */
   @Post('/typing')
   @HttpCode(HttpStatus.OK)
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   @UseGuards(HumanAgentPausedGuard)
-  showTyping(@UserSession() user: UserSessionData, @Body() body: WakeTypingRequestDto): Promise<WakeTypingResponseDto> {
-    return this.showWakeTypingUsecase.execute(
-      ShowWakeTypingCommand.create({
+  showTyping(
+    @UserSession() user: UserSessionData,
+    @Body() body: ListenTypingRequestDto
+  ): Promise<ListenTypingResponseDto> {
+    return this.showListenTypingUsecase.execute(
+      ShowListenTypingCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,

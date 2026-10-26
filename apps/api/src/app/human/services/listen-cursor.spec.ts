@@ -1,16 +1,16 @@
 import { BadRequestException } from '@nestjs/common';
 import { expect } from 'chai';
-import { clampWakeCursor, decodeWakeCursor, encodeWakeCursor, INVALID_WAKE_CURSOR } from './wake-cursor';
+import { clampListenCursor, decodeListenCursor, encodeListenCursor, INVALID_LISTEN_CURSOR } from './listen-cursor';
 
-describe('wake cursor', () => {
+describe('listen cursor', () => {
   it('reads back what it handed out, with and without a row', () => {
     const atRow = { at: 1_761_300_000_123, id: '6720aa0b1c2d3e4f5a6b7c8d' };
     const atTime = { at: 1_761_300_000_123 };
 
-    expect(decodeWakeCursor(encodeWakeCursor(atRow))).to.deep.equal(atRow);
-    expect(decodeWakeCursor(encodeWakeCursor(atTime))).to.deep.equal(atTime);
+    expect(decodeListenCursor(encodeListenCursor(atRow))).to.deep.equal(atRow);
+    expect(decodeListenCursor(encodeListenCursor(atTime))).to.deep.equal(atTime);
     // Opaque, and safe in an address as it is.
-    expect(encodeWakeCursor(atRow)).to.match(/^[A-Za-z0-9_-]+$/);
+    expect(encodeListenCursor(atRow)).to.match(/^[A-Za-z0-9_-]+$/);
   });
 
   it('refuses anything it did not hand out', () => {
@@ -24,7 +24,7 @@ describe('wake cursor', () => {
     ]) {
       const error = (() => {
         try {
-          decodeWakeCursor(value);
+          decodeListenCursor(value);
 
           return null;
         } catch (caught) {
@@ -33,7 +33,7 @@ describe('wake cursor', () => {
       })();
 
       expect(error, value).to.be.instanceOf(BadRequestException);
-      expect((error as BadRequestException).getResponse()).to.include({ code: INVALID_WAKE_CURSOR });
+      expect((error as BadRequestException).getResponse()).to.include({ code: INVALID_LISTEN_CURSOR });
     }
   });
 
@@ -42,8 +42,8 @@ describe('wake cursor', () => {
     const oldest = now - 24 * 60 * 60 * 1000;
     const cursor = { at: now - 1000, id: '6720aa0b1c2d3e4f5a6b7c8d' };
 
-    expect(clampWakeCursor(cursor, oldest, now)).to.equal(cursor);
-    expect(clampWakeCursor({ at: oldest - 1, id: cursor.id }, oldest, now)).to.deep.equal({ at: oldest });
-    expect(clampWakeCursor({ at: now + 60_000 }, oldest, now)).to.deep.equal({ at: now });
+    expect(clampListenCursor(cursor, oldest, now)).to.equal(cursor);
+    expect(clampListenCursor({ at: oldest - 1, id: cursor.id }, oldest, now)).to.deep.equal({ at: oldest });
+    expect(clampListenCursor({ at: now + 60_000 }, oldest, now)).to.deep.equal({ at: now });
   });
 });

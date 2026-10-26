@@ -12,7 +12,7 @@ import {
 import type { HumanHostDto, HumanHostStatusResponseDto } from '../dtos/human-host.dto';
 import type { InboxThreadDto } from '../dtos/human-inbox.dto';
 import type { InboxRelayAgent, InboxScope } from './human-inbox.service';
-import { liveAwake } from './human-wake-lease.service';
+import { liveListening } from './human-listen-lease.service';
 
 /**
  * The request header that says which way a host came in: `cli` from the `agentinbox` CLI, `mcp` from the
@@ -87,7 +87,7 @@ export class HumanHostStatusService {
   /**
    * A host checked the inbox: it listed conversations or opened one, and was shown `seen`. The first check
    * of any host keeps the newest unread conversation it was shown: the message that was waiting for it.
-   * `null` is a check that showed no conversations (the wake program's wait): it counts as the host's last
+   * `null` is a check that showed no conversations (the listener's wait): it counts as the host's last
    * check, but leaves the first look at the inbox, and its waiting message, to a real one.
    */
   async recordCheck(
@@ -152,12 +152,12 @@ export class HumanHostStatusService {
 
   /**
    * Which hosts are connected, each with its last check, what the first one found waiting when it looked, and
-   * where the agent is awake.
+   * where the agent is listening.
    */
   async describe(scope: InboxScope, agent: InboxRelayAgent): Promise<HumanHostStatusResponseDto> {
-    const stored = await this.agentRepository.findOne(agentQuery(scope, agent._id), ['hosts', 'awake']);
+    const stored = await this.agentRepository.findOne(agentQuery(scope, agent._id), ['hosts', 'listening']);
 
-    return { ...describeHosts(stored?.hosts), awake: liveAwake(stored?.awake, new Date()) };
+    return { ...describeHosts(stored?.hosts), listening: liveListening(stored?.listening, new Date()) };
   }
 }
 
@@ -167,7 +167,7 @@ export class HumanHostStatusService {
  * host with a name has checked the inbox. Their times still count for the agent as a whole until then. A CLI
  * from before says no name and checks as `general`, which keeps them: they fold into its entry.
  */
-export function describeHosts(hosts: AgentHosts | undefined): Omit<HumanHostStatusResponseDto, 'awake'> {
+export function describeHosts(hosts: AgentHosts | undefined): Omit<HumanHostStatusResponseDto, 'listening'> {
   const named = AGENT_HOST_IDS.flatMap((id) => toHosts(id, hosts?.byId?.[id]));
   const fromBefore = named.some((host) => host.id !== GENERAL_HOST && host.lastCheckedAt)
     ? []

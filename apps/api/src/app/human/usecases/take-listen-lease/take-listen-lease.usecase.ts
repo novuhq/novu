@@ -1,29 +1,29 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { isKeylessOrganization } from '../../../keyless/keyless-organization.helpers';
-import type { WakeLeaseResponseDto } from '../../dtos/human-wake.dto';
+import type { ListenLeaseResponseDto } from '../../dtos/human-listen.dto';
 import { HumanInboxService } from '../../services/human-inbox.service';
-import { HumanWakeLeaseService, WAKE_NEEDS_ACCOUNT } from '../../services/human-wake-lease.service';
-import { TakeWakeLeaseCommand } from './take-wake-lease.command';
+import { HumanListenLeaseService, LISTEN_NEEDS_ACCOUNT } from '../../services/human-listen-lease.service';
+import { TakeListenLeaseCommand } from './take-listen-lease.command';
 
 /**
- * `agentinbox wake` keeps the agent awake on its computer: it takes the lease, renews it every minute, and with
- * `takeOver` takes it from the computer that holds it. Another computer's live lease is a 409 `awake_elsewhere`.
- * A keyless setup can't keep a host awake: its few free messages would go on the first wakes.
+ * `agentinbox listen` keeps the agent listening on its computer: it takes the lease, renews it every minute, and with
+ * `takeOver` takes it from the computer that holds it. Another computer's live lease is a 409 `listening_elsewhere`.
+ * A keyless setup can't keep the agent listening: its few free messages would go on the first runs.
  */
 @Injectable()
-export class TakeWakeLease {
+export class TakeListenLease {
   constructor(
     private readonly inbox: HumanInboxService,
-    private readonly lease: HumanWakeLeaseService
+    private readonly lease: HumanListenLeaseService
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: TakeWakeLeaseCommand): Promise<WakeLeaseResponseDto> {
+  async execute(command: TakeListenLeaseCommand): Promise<ListenLeaseResponseDto> {
     if (isKeylessOrganization(command.organizationId)) {
       throw new ForbiddenException({
-        code: WAKE_NEEDS_ACCOUNT,
-        message: 'Keeping a host awake needs an Agent Inbox account. Run `npx @agentinbox/cli login` first.',
+        code: LISTEN_NEEDS_ACCOUNT,
+        message: 'Keeping the agent listening needs an Agent Inbox account. Run `npx @agentinbox/cli login` first.',
       });
     }
 

@@ -17,7 +17,7 @@ import type { Contact, ContactChannelVia } from '@/lib/human-contacts-api';
 import { cn } from '@/lib/utils';
 import { Switch } from '../configure/agent-settings';
 import { ChannelLogo } from '../configure/channel-logo';
-import { removeContactAction, setCanWakeAction } from './actions';
+import { removeContactAction, setListenToAction } from './actions';
 import { ContactAvatar } from './contact-avatar';
 import { ContactCardDrawer, type ContactCardSetup, type ContactCardStart } from './contact-card-drawer';
 import { DialogMark } from './dialog-mark';
@@ -36,7 +36,7 @@ export const CHANNEL_NAMES: Record<ContactChannelVia, string> = {
 
 /**
  * The design's columns: Person 276, Email 200, Channels 240, Status 140, Added 100 and the actions 130,
- * with the row's 16px on the outer two. "Can wake" isn't drawn yet: it takes 96 of Channels' 240, which
+ * with the row's 16px on the outer two. "Listen to" isn't drawn yet: it takes 96 of Channels' 240, which
  * never needs more than three logos.
  */
 const COLUMNS = {
@@ -44,7 +44,7 @@ const COLUMNS = {
   email: 'w-50',
   channels: 'w-36',
   status: 'w-35',
-  wake: 'w-24',
+  listenTo: 'w-24',
   added: 'w-25',
   actions: 'w-36.5 pr-4',
 };
@@ -139,7 +139,7 @@ export function ContactsTable({
             <TableHeaderCell className={cn(COLUMNS.email, 'px-0')}>Email</TableHeaderCell>
             <TableHeaderCell className={cn(COLUMNS.channels, 'px-0')}>Channels</TableHeaderCell>
             <TableHeaderCell className={cn(COLUMNS.status, 'px-0')}>Status</TableHeaderCell>
-            <TableHeaderCell className={cn(COLUMNS.wake, 'px-0')}>Can wake</TableHeaderCell>
+            <TableHeaderCell className={cn(COLUMNS.listenTo, 'px-0')}>Listen to</TableHeaderCell>
             <TableHeaderCell className={cn(COLUMNS.added, 'px-0')}>Added</TableHeaderCell>
             <TableHeaderCell className={cn(COLUMNS.actions, 'pl-0')}>
               <span className="sr-only">Actions</span>
@@ -338,7 +338,7 @@ function ContactRow({ contact, agentHandle, appearing, leaving, onOpenCard, onRe
           <Badge variant="success">Joined</Badge>
         )
       )}
-      {cell(COLUMNS.wake, <WakeSwitch contact={contact} agentHandle={agentHandle} />)}
+      {cell(COLUMNS.listenTo, <ListenToSwitch contact={contact} agentHandle={agentHandle} />)}
       {cell(
         COLUMNS.added,
         <span className="text-[13px] leading-4.5 whitespace-nowrap text-secondary">
@@ -415,25 +415,25 @@ function EmailCell({ contact }: { contact: Contact }) {
 }
 
 /**
- * Whether a message from them may wake one of the agent's hosts (`agentinbox wake`): off until the operator turns
- * it on. A change shows at once and is saved behind it; when saving fails the switch slides back and a toast says
- * why. The operator's own row is always on and can't be turned: they can always wake their agent's hosts.
+ * Whether the agent listens to them, so that their messages start its hosts (`agentinbox listen`): off until the
+ * operator turns it on. A change shows at once and is saved behind it; when saving fails the switch slides back and
+ * a toast says why. The operator's own row is always on and can't be turned: the agent always listens to them.
  */
-function WakeSwitch({ contact, agentHandle }: { contact: Contact; agentHandle: string }) {
+function ListenToSwitch({ contact, agentHandle }: { contact: Contact; agentHandle: string }) {
   // What was saved last: the page's, or what a save answered before the page caught up.
-  const [saved, setSaved] = useState(contact.canWake);
-  const [synced, setSynced] = useState(contact.canWake);
-  if (contact.canWake !== synced) {
-    setSynced(contact.canWake);
-    setSaved(contact.canWake);
+  const [saved, setSaved] = useState(contact.listenTo);
+  const [synced, setSynced] = useState(contact.listenTo);
+  if (contact.listenTo !== synced) {
+    setSynced(contact.listenTo);
+    setSaved(contact.listenTo);
   }
   const [shown, show] = useOptimistic(saved, (_: boolean, next: boolean) => next);
   const [saving, startSaving] = useTransition();
-  const label = `${contact.name} can wake ${agentHandle}’s hosts`;
+  const label = `${agentHandle} listens to ${contact.name}`;
 
   if (contact.isOperator) {
     return (
-      <Tooltip label="You can always wake your agent’s hosts">
+      <Tooltip label="Your agent always listens to you">
         {/* A disabled button gets no pointer events, so the tooltip hangs on the box around it. */}
         <span className="inline-flex">
           <Switch label={label} on busy={false} disabled onChange={() => {}} />
@@ -445,7 +445,10 @@ function WakeSwitch({ contact, agentHandle }: { contact: Contact; agentHandle: s
   function change(next: boolean) {
     startSaving(async () => {
       show(next);
-      const result = await setCanWakeAction(contact.id, next).catch(() => ({ ok: false as const, error: SAVE_FAILED }));
+      const result = await setListenToAction(contact.id, next).catch(() => ({
+        ok: false as const,
+        error: SAVE_FAILED,
+      }));
 
       if (result.ok) {
         setSaved(next);
@@ -457,7 +460,11 @@ function WakeSwitch({ contact, agentHandle }: { contact: Contact; agentHandle: s
 
   return (
     <Tooltip
-      label={shown ? `${contact.name}’s messages can wake a host` : `Let ${contact.name}’s messages wake a host`}
+      label={
+        shown
+          ? `Listening to ${contact.name}: their messages start a host`
+          : `Listen to ${contact.name}’s messages, so they start a host`
+      }
     >
       <span className="inline-flex">
         <Switch label={label} on={shown} busy={saving} onChange={change} />

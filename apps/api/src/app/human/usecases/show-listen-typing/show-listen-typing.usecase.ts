@@ -5,26 +5,26 @@ import {
   type AgentPlatformEnum,
   PLATFORMS_WITH_TYPING_INDICATOR,
 } from '../../../agents/shared/enums/agent-platform.enum';
-import type { WakeTypingResponseDto } from '../../dtos/human-wake.dto';
+import type { ListenTypingResponseDto } from '../../dtos/human-listen.dto';
 import { HumanInboxService } from '../../services/human-inbox.service';
-import { HumanWakeLeaseService } from '../../services/human-wake-lease.service';
-import { ShowWakeTypingCommand } from './show-wake-typing.command';
+import { HumanListenLeaseService } from '../../services/human-listen-lease.service';
+import { ShowListenTypingCommand } from './show-listen-typing.command';
 
 /**
- * While a woken host works on a message, the chat shows that a reply is coming. A chat's typing indicator lasts
- * only a few seconds (Telegram's five), so the wake program asks again every few for as long as the host works.
+ * While a started host works on a message, the chat shows that a reply is coming. A chat's typing indicator lasts
+ * only a few seconds (Telegram's five), so the listener asks again every few for as long as the host works.
  * Only the computer and host holding the lease may, in a conversation of its agent, where the chat has typing.
  */
 @Injectable()
-export class ShowWakeTyping {
+export class ShowListenTyping {
   constructor(
     private readonly inbox: HumanInboxService,
-    private readonly lease: HumanWakeLeaseService,
+    private readonly lease: HumanListenLeaseService,
     private readonly outboundGateway: OutboundGateway
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: ShowWakeTypingCommand): Promise<WakeTypingResponseDto> {
+  async execute(command: ShowListenTypingCommand): Promise<ListenTypingResponseDto> {
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
     const agent = await this.inbox.resolveRelayAgent(scope, command.agentIdentifier);
     await this.lease.assertHolds(scope, agent, { computerId: command.computerId, host: command.host });
