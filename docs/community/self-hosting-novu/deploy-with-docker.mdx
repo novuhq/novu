@@ -141,10 +141,26 @@ docker compose up -d
 
 Set `STORAGE_SERVICE` to `GCS` or `AZURE` to use a different backend. Any other value, or no value, uses S3.
 
-- **GCS:** set `GCS_BUCKET_NAME`, plus `GCS_DOMAIN` or `CDN_URL`. Novu authenticates with Google Application Default Credentials.
+- **GCS:** set `GCS_BUCKET_NAME` and `GCS_DOMAIN`. The API requires `GCS_DOMAIN` at startup. `CDN_URL` overrides the public URL for branding and profile uploads. The worker needs `GCS_BUCKET_NAME`. `GCS_DOMAIN` is optional on the worker.
 - **Azure:** set `AZURE_ACCOUNT_NAME`, `AZURE_ACCOUNT_KEY`, and `AZURE_CONTAINER_NAME`. Optionally set `AZURE_HOST_NAME` to override the default `https://<account-name>.blob.core.windows.net` host.
 
-The community `docker-compose.yml` only forwards the S3 variables. Add `STORAGE_SERVICE` and the backend-specific variables to the `environment` section of both the `api` and `worker` services.
+Novu authenticates to Google Cloud Storage with [Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials). On Google Cloud, the metadata server provides them. Outside Google Cloud, mount a service account key into the `api` and `worker` containers and set `GOOGLE_APPLICATION_CREDENTIALS` to that path:
+
+```yaml
+services:
+  api:
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/gcp.json
+    volumes:
+      - ./gcp.json:/secrets/gcp.json:ro
+  worker:
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/gcp.json
+    volumes:
+      - ./gcp.json:/secrets/gcp.json:ro
+```
+
+The community `docker-compose.yml` only forwards the S3 variables. Add `STORAGE_SERVICE`, the backend-specific variables, and `GOOGLE_APPLICATION_CREDENTIALS` to the `environment` section of both the `api` and `worker` services. Add the key file under `volumes` on both services.
 
 ## Setting Up the Inbox Component
 
