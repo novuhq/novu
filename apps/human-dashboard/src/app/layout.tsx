@@ -3,6 +3,7 @@ import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 
+import { GoogleTagManagerNoScript, GoogleTagManagerScript } from '@/components/analytics/google-tag-manager';
 import { geist, geistMono, instrumentSerif } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 
@@ -21,7 +22,13 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={cn(geist.variable, geistMono.variable, instrumentSerif.variable)}>
-      <body>{children}</body>
+      <head>
+        <GoogleTagManagerScript />
+      </head>
+      <body>
+        <GoogleTagManagerNoScript />
+        {children}
+      </body>
     </html>
   );
 }
