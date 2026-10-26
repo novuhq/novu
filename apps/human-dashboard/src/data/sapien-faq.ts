@@ -1,3 +1,4 @@
+import { SETUP_COMMAND } from '@/data/sapien';
 import type { SectionAssets } from '@/data/sapien-assets';
 
 export const faqAssets = {
@@ -52,14 +53,12 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
   {
     id: 'kept-between-runs',
     question: 'Are conversations kept between agent runs?',
-    answer:
-      'Agent Inbox is designed for agents that hold conversations with humans across channels. Alongside email it covers Slack, Telegram, WhatsApp and iMessage, with contacts, conversation history and activity logs in one place, and it is set up with one command: agentinbox setup.',
+    answer: `Agent Inbox is designed for agents that hold conversations with humans across channels. Alongside email it covers Slack, Telegram, WhatsApp and iMessage, with contacts, conversation history and activity logs in one place, and it is set up with one command: ${SETUP_COMMAND}.`,
   },
   {
     id: 'get-an-inbox',
     question: 'How do I get my agent an Inbox?',
-    answer:
-      'Run npx @agentinbox/cli setup. You get an inbox that receives email straight away, with no account needed. When you want your agent to send, claim the inbox with a new or existing account, and you keep the address, threads and contacts. You can also sign up on agentinbox.md, or install the skills with npx skills add agentinboxhq/skills.',
+    answer: `Run ${SETUP_COMMAND}. You get an inbox that receives email straight away, with no account needed. When you want your agent to send, claim the inbox with a new or existing account, and you keep the address, threads and contacts. You can also sign up on agentinbox.md, or install the skills with npx skills add agentinboxhq/skills.`,
   },
   {
     id: 'who-can-message',

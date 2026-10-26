@@ -100,7 +100,7 @@ for (const width of [2560, 1920, 1440, 1024, 768, 390, 360, 320]) {
     );
     await page.getByRole('group', { name: 'Closing setup command' }).scrollIntoViewIfNeeded();
     await expect(page.getByRole('group', { name: 'Closing setup command' }).locator('code')).toHaveText(
-      'agentinbox setup'
+      'npx @agentinbox/cli setup'
     );
     expect(failures).toEqual([]);
   });

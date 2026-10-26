@@ -106,7 +106,7 @@ test('copy commands copies the selected snippet without prompts', async ({ page 
   await page.goto('/sapien');
   const section = page.locator('#integrations');
   await section.getByRole('button', { name: 'Copy Commands' }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-copied-text', 'agentinbox setup');
+  await expect(page.locator('html')).toHaveAttribute('data-copied-text', 'npx @agentinbox/cli setup');
   await expect(section.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
   await section.getByRole('tab', { name: 'Cursor', exact: true }).click();
   await section.getByRole('button', { name: 'Copy Config' }).click();
@@ -149,7 +149,10 @@ test('closing prompt copy is independent of the setup command', async ({ page })
   await page.goto('/sapien');
   const closing = page.locator('#get-started');
   await closing.getByRole('button', { name: 'Copy Prompt' }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-copied-text', /agentinbox setup/);
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-copied-text',
+    'Set up an agentinbox inbox for yourself using https://www.agentinbox.md/agents.md'
+  );
   await expect(closing.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
   const command = page.getByRole('group', { name: 'Closing setup command' });
   await expect(command.getByRole('status')).toHaveText('');
