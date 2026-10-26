@@ -11,7 +11,14 @@ const MINTLIFY_EMBED_VERSION = '0.0.61';
 const MINTLIFY_EMBED_URL = `https://widget.mintlify.com/versions/${MINTLIFY_EMBED_VERSION}/embed.js`;
 const MINTLIFY_EMBED_INTEGRITY = 'sha384-bSqvMIpnn7junQOtOOcmXzbErlvtTW6+lG3TXYc5L/aEISuuwVTmW0kH+3Tw7urd';
 const MINTLIFY_SCRIPT_ID = 'mintlify-assistant-embed';
-const MINTLIFY_STYLE_ID = 'mintlify-assistant-hide-trigger';
+const HIDE_TRIGGER_STYLE_ID = 'novu-hide-mintlify-trigger';
+const HIDE_TRIGGER_CSS = `
+  [data-mintlify-assistant-trigger] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+`;
 
 const APPEARANCE = {
   variant: 'panel' as const,
@@ -46,9 +53,6 @@ type MintlifyAssistantConfig = {
   appearance?: typeof APPEARANCE;
   labels?: typeof LABELS;
   starterQuestions?: string[];
-  hooks?: {
-    event?: (event: { type: string }) => void;
-  };
 };
 
 type MintlifyAssistantApi = {
@@ -65,6 +69,49 @@ declare global {
 }
 
 let initPromise: Promise<MintlifyAssistantApi> | undefined;
+let triggerHiderInstalled = false;
+
+function hideTriggerInShadow(root: ShadowRoot): void {
+  if (root.getElementById(HIDE_TRIGGER_STYLE_ID)) {
+    return;
+  }
+
+  const style = document.createElement('style');
+  style.id = HIDE_TRIGGER_STYLE_ID;
+  style.textContent = HIDE_TRIGGER_CSS;
+  root.appendChild(style);
+}
+
+/**
+ * Mintlify paints "Ask assistant" inside a closed shadow root, and its own
+ * :host styles beat any page rule — including display:none !important on the host.
+ * Capture the shadow root as it is created and hide only the launcher there.
+ */
+function installMintlifyTriggerHider(): void {
+  if (triggerHiderInstalled) {
+    return;
+  }
+
+  triggerHiderInstalled = true;
+  const originalAttachShadow = Element.prototype.attachShadow;
+
+  Element.prototype.attachShadow = function attachShadow(init: ShadowRootInit): ShadowRoot {
+    const root = originalAttachShadow.call(this, init);
+
+    if (this.localName !== 'mintlify-assistant') {
+      return root;
+    }
+
+    hideTriggerInShadow(root);
+
+    const observer = new MutationObserver(() => {
+      hideTriggerInShadow(root);
+    });
+    observer.observe(root, { childList: true });
+
+    return root;
+  };
+}
 
 function waitForMintlifyAssistant(timeoutMs = 10_000): Promise<MintlifyAssistantApi> {
   if (window.MintlifyAssistant) {
@@ -128,44 +175,8 @@ async function loadEmbedScript(): Promise<MintlifyAssistantApi> {
   }
 }
 
-function setAssistantVisible(isOpen: boolean): void {
-  for (const node of document.querySelectorAll('mintlify-assistant')) {
-    if (!(node instanceof HTMLElement)) {
-      continue;
-    }
-
-    if (isOpen) {
-      node.dataset.novuOpen = 'true';
-    } else {
-      delete node.dataset.novuOpen;
-    }
-  }
-}
-
-function ensureHideTriggerStyles(): void {
-  if (document.getElementById(MINTLIFY_STYLE_ID)) {
-    return;
-  }
-
-  const style = document.createElement('style');
-  style.id = MINTLIFY_STYLE_ID;
-  // Hide Mintlify's built-in floating trigger; we use Ask AI entry points instead.
-  style.textContent = `
-    mintlify-assistant:not([data-novu-open='true']) {
-      display: none !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-      width: 0 !important;
-      height: 0 !important;
-      overflow: hidden !important;
-      opacity: 0 !important;
-    }
-  `;
-  document.head.appendChild(style);
-}
-
 async function ensureInitialized(): Promise<MintlifyAssistantApi> {
-  ensureHideTriggerStyles();
+  installMintlifyTriggerHider();
 
   if (!initPromise) {
     initPromise = (async () => {
@@ -177,19 +188,6 @@ async function ensureInitialized(): Promise<MintlifyAssistantApi> {
         appearance: APPEARANCE,
         labels: LABELS,
         starterQuestions: STARTER_QUESTIONS,
-        hooks: {
-          event(event) {
-            if (event.type === 'open') {
-              setAssistantVisible(true);
-
-              return;
-            }
-
-            if (event.type === 'close') {
-              setAssistantVisible(false);
-            }
-          },
-        },
       });
 
       // Ensure copy/appearance win over widget dashboard defaults.
@@ -198,8 +196,6 @@ async function ensureInitialized(): Promise<MintlifyAssistantApi> {
         labels: LABELS,
         starterQuestions: STARTER_QUESTIONS,
       });
-
-      setAssistantVisible(false);
 
       return api;
     })().catch((error) => {
@@ -225,8 +221,6 @@ export async function openMintlifyAssistant({ source, query }: OpenMintlifyAssis
     const api = await ensureInitialized();
     const trimmedQuery = query?.trim();
 
-    setAssistantVisible(true);
-
     if (trimmedQuery) {
       await api.ask(trimmedQuery, {
         source,
@@ -242,7 +236,6 @@ export async function openMintlifyAssistant({ source, query }: OpenMintlifyAssis
       focus: true,
     });
   } catch (error) {
-    setAssistantVisible(false);
     console.error('Failed to open Mintlify assistant', error);
     showErrorToast('Unable to open Ask AI right now. Please try again.', 'Ask AI unavailable');
   }
