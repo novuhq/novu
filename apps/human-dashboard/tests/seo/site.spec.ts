@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 
 import { HOST_IDS } from '../../src/lib/host-ids';
-import { SITE_INDEXED } from '../../src/lib/seo';
+import { SITE_INDEXED, SITE_PAGES } from '../../src/lib/seo';
 
 const origin = 'https://www.agentinbox.md';
 test.use({ javaScriptEnabled: false });

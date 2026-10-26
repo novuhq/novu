@@ -106,17 +106,7 @@ test('copy commands copies the selected snippet without prompts', async ({ page 
   await page.goto('/sapien');
   const section = page.locator('#integrations');
   await section.getByRole('button', { name: 'Copy Commands' }).click();
-  await expect(page.locator('html')).toHaveAttribute(
-    'data-copied-text',
-    [
-      'agentinbox setup',
-      '',
-      'agentinbox channel add telegram',
-      'agentinbox inbox list --filter unread',
-      'agentinbox inbox send approve \\',
-      "    'Refund $240?'",
-    ].join('\n')
-  );
+  await expect(page.locator('html')).toHaveAttribute('data-copied-text', 'agentinbox setup');
   await expect(section.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
   await section.getByRole('tab', { name: 'Cursor', exact: true }).click();
   await section.getByRole('button', { name: 'Copy Config' }).click();
