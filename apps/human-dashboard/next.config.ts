@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 import { HOST_IDS } from './src/lib/host-ids';
-import { SITE_INDEXED, SITE_ORIGIN } from './src/lib/seo';
+import { noindexPaths, SITE_ORIGIN } from './src/lib/seo';
 
 const usApiUrl = (process.env.NEXT_PUBLIC_NOVU_API_URL || 'https://api.novu.co').replace(/\/$/, '');
 
@@ -15,8 +15,10 @@ const HOST_MARKDOWN = `${HOST_PAGE}\\.md`;
 /**
  * The website pages and their text versions, which search engines leave out while `SITE_INDEXED` is off. A
  * host's Markdown also answers at its own address (`/claude-code/index.md`), behind the rewrite.
+ * `noindexPaths` widens this to every route on staging (`SITE_NOINDEX`), preview, and development.
  */
 const WEBSITE_PATHS = ['/', '/sapien', '/index.md', '/llms.txt', HOST_PAGE, HOST_MARKDOWN, `${HOST_PAGE}/index.md`];
+const NOINDEX_SCOPE = noindexPaths();
 
 const NOINDEX = { key: 'X-Robots-Tag', value: 'noindex, nofollow' };
 
@@ -61,11 +63,10 @@ const nextConfig: NextConfig = {
         ],
       },
       // Out of search results until launch, also the Markdown and text, which carry no `<meta name="robots">`.
-      ...(SITE_INDEXED ? [] : WEBSITE_PATHS.map((source) => ({ source, headers: [NOINDEX] }))),
-      // Preview and development deployments stay out of search results.
-      ...(process.env.VERCEL_ENV === 'preview' || process.env.VERCEL_ENV === 'development'
-        ? [{ source: '/:path*', headers: [NOINDEX] }]
-        : []),
+      ...(NOINDEX_SCOPE === 'website' ? WEBSITE_PATHS.map((source) => ({ source, headers: [NOINDEX] })) : []),
+      // Staging (`SITE_NOINDEX`), preview, and development stay out of search results on every route.
+      // `/` is named on its own: `/:path*` does not match a URL with no path segment.
+      ...(NOINDEX_SCOPE === 'all' ? ['/', '/:path*'].map((source) => ({ source, headers: [NOINDEX] })) : []),
     ];
   },
   async rewrites() {

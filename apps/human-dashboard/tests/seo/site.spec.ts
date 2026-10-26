@@ -133,6 +133,8 @@ test('SEO page metadata prevents preview indexing and retains production canonic
     index: SITE_INDEXED,
     follow: SITE_INDEXED,
   });
+  // staging.agentinbox.md sets SITE_NOINDEX, which is the third argument here.
+  expect(pageMetadata('home', 'production', true).robots).toMatchObject({ index: false, follow: false });
 });
 
 test('every host has a page and its Markdown, linked from llms.txt', async ({ page, request }) => {
