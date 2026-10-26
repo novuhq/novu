@@ -16,9 +16,9 @@ export const SITE_INDEXED = false;
 export const SITE_PAGES = {
   home: {
     path: '/',
-    title: 'Agent Inbox CLI docs — The inbox API for AI agents',
+    title: 'Agent Inbox — The email, Slack, and Telegram inbox for AI agents',
     description:
-      'Give any AI agent a one-line way to reach a real person. Install @agentinbox/cli, connect a channel, and let agents ask, approve, choose, and tell.',
+      'An email inbox for AI agents, plus Slack and Telegram, through one CLI. Install @agentinbox/cli to ask, approve, choose, or send.',
     // The people page's picture until the robots page has its own; alt text as in its .alt.txt.
     image: {
       path: '/sapien/opengraph-image.jpg',

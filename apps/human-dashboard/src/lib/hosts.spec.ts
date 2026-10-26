@@ -186,7 +186,14 @@ describe('the Markdown for agents', () => {
       expect(llms).toContain(`(https://www.agentinbox.md/${id}.md)`);
       expect(index).toContain(`(https://www.agentinbox.md/${id}.md)`);
     }
-    expect(index).toContain('Your agent may run setup and login for you when you ask it to');
-    expect(llms).toContain('An agent may run setup and login when its operator asks it to');
+    expect(index).toContain('agentinbox inbox send "Build finished — 0 failures." --via email');
+    expect(index).toContain('Agent Inbox is an email inbox for AI agents');
+    expect(index).not.toContain('What comes back');
+    expect(index).toContain('Built by Novu, and open source.');
+    expect(index).toContain('SOC 2 Type II');
+    expect(index).toContain('ISO 27001');
+    expect(index).not.toContain('100 conversations');
+    expect(llms).toContain('Run setup and login when your human asks you to');
+    expect(llms).toContain('The email, Slack, and Telegram inbox for AI agents');
   });
 });

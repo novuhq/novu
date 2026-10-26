@@ -39,8 +39,8 @@ export const INTEGRATION_COPY_LABELS = {
   config: 'Copy Config',
 } as const satisfies Record<IntegrationSnippet['kind'], string>;
 
-/** How every command starts: through npx, which needs nothing installed first. */
-const CLI = 'npx @agentinbox/cli';
+/** The installed binary. `npm install -g @agentinbox/cli` puts `agentinbox` on the path. */
+const CLI = 'agentinbox';
 
 // Draft copy — not in Figma. The hosted MCP server, as the dashboard writes it for Cursor (`cursorMcpConfig`).
 const MCP_SERVER_CONFIG = `{

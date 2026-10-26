@@ -42,13 +42,13 @@ export const CLOSING_HEADING = {
 
 export const CLOSING_DESCRIPTION = ['Free for 100 conversations a month.', 'No credit card required.'] as const;
 
-export const CLOSING_COMMAND = 'npx @agentinbox/cli setup';
+export const CLOSING_COMMAND = 'agentinbox setup';
 export const CLOSING_COMMAND_LABEL = 'Closing setup command';
 
 export const CLOSING_PROMPT_LABEL = 'Copy Prompt';
 // Draft copy — not in Figma. An agent has no terminal to answer setup's questions, so it asks first.
 export const CLOSING_PROMPT =
-  'Set up an agentinbox inbox for yourself: ask me for my name and email, run `npx @agentinbox/cli setup --name "<my name>" --email <my email>`, then tell me your new address.';
+  'Set up an agentinbox inbox for yourself: ask me for my name and email, run `agentinbox setup --name "<my name>" --email <my email>`, then tell me your new address.';
 // Draft copy — not in Figma
 export const CLOSING_PROMPT_SUCCESS_MESSAGE = 'Prompt copied to clipboard';
 // Draft copy — not in Figma. The prompt follows it, as the page shows it nowhere else.
