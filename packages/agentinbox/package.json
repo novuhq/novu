@@ -9,8 +9,9 @@
   "private": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/novuhq/novu.git"
+    "url": "https://github.com/agentinboxhq/skills"
   },
+  "homepage": "https://agentinbox.md",
   "files": [
     "dist",
     "package.json",
