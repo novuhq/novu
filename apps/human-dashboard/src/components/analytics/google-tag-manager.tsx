@@ -21,7 +21,10 @@ export function GoogleTagManagerScript() {
   );
 }
 
-/** Immediately after the opening `<body>` tag, for browsers with JavaScript off. */
+/**
+ * The `<noscript>` iframe Google asks for at the start of `<body>`. Next writes an empty hidden
+ * marker before the layout's children, so this is the first content in the body.
+ */
 export function GoogleTagManagerNoScript() {
   return (
     <noscript>
