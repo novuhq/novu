@@ -67,13 +67,15 @@ function extractApiMessage(body: unknown): string | undefined {
 
 /**
  * `host` is the host this computer was connected for (`CliConfig.host`): the API is told it when the
- * environment doesn't say which host runs the CLI.
+ * environment doesn't say which host runs the CLI. `asHost` is told whatever the environment says: `wake`
+ * calls for the host it wakes, wherever it was started from.
  */
 export function createApiClient(input: {
   apiUrl: string;
   secretKey?: string;
   keylessIdentifier?: string;
   host?: HostId;
+  asHost?: HostId;
 }): ApiClient {
   const baseURL = input.apiUrl.replace(/\/$/, '');
   const keylessIdentifier = input.keylessIdentifier?.trim();
@@ -90,7 +92,11 @@ export function createApiClient(input: {
       }
     : { Authorization: `ApiKey ${input.secretKey}` };
 
-  return { axios: createAxios(baseURL, headers, input.host), apiUrl: baseURL, isKeyless };
+  return {
+    axios: createAxios(baseURL, headers, input.host, input.asHost),
+    apiUrl: baseURL,
+    isKeyless,
+  };
 }
 
 /** For the few endpoints that need no credentials, such as starting `login` or a keyless setup. */
@@ -113,8 +119,13 @@ export const AGENT_INBOX_HOST_HEADER = 'Agent-Inbox-Host';
 /** Matches Novu's `NOVU_ANALYTICS_SOURCE_HEADER`. Tells Novu's analytics the request comes from this CLI. */
 export const ANALYTICS_SOURCE_HEADER = 'Novu-Analytics-Source';
 
-function createAxios(baseURL: string, headers: Record<string, string> = {}, savedHost?: HostId): AxiosInstance {
-  const host = detectHost() ?? savedHost;
+function createAxios(
+  baseURL: string,
+  headers: Record<string, string> = {},
+  savedHost?: HostId,
+  asHost?: HostId
+): AxiosInstance {
+  const host = asHost ?? detectHost() ?? savedHost;
   const instance = axios.create({
     baseURL,
     headers: {

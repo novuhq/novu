@@ -57,10 +57,11 @@ export async function connectCommand(agent: string, options: ConnectOptions): Pr
     }
 
     const check = `Check it works: ${pc.bold(`${CLI_COMMAND} inbox list`)}`;
+    const wake = wakeHint(detectHost() ?? result.config.host, handle);
     if (screen) {
-      screen.add({ mark: 'next', value: check });
+      screen.add({ mark: 'next', value: check }, ...(wake ? [{ mark: 'next' as const, value: wake }] : []));
     } else {
-      process.stdout.write(`${check}\n`);
+      process.stdout.write(`${check}\n${wake ? `${wake}\n` : ''}`);
     }
 
     if (process.env.INBOX_SECRET_KEY?.trim()) {
@@ -127,6 +128,18 @@ export async function runConnect(
   saveConfig(config);
 
   return { config, agent: connected.agent, keptSetup };
+}
+
+/**
+ * The optional last step, for a host `wake` can start (Claude Code for now): keeping it awake, so a message
+ * to the agent starts it on this computer. Undefined for every other host.
+ */
+export function wakeHint(host: HostId | undefined, handle: string): string | undefined {
+  if (host !== 'claude-code') {
+    return undefined;
+  }
+
+  return `Optional: keep Claude Code awake, so a message to ${handle} starts it in this folder: ${pc.bold(`${CLI_COMMAND} wake claude-code`)}`;
 }
 
 /**

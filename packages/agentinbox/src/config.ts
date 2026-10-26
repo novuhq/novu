@@ -25,6 +25,11 @@ export interface CliConfig {
    * `connect` ran in didn't say which host it was. Requests name it while the shell doesn't say either.
    */
   host?: HostId;
+  /**
+   * This computer's own random id, made the first time `wake` runs here. The API knows which computer keeps
+   * an agent awake by it, so it stays whatever writes the config anew (see `saveConfig`).
+   */
+  computerId?: string;
 }
 
 /**
@@ -68,8 +73,13 @@ export function loadConfig(): CliConfig | null {
 
 export function saveConfig(config: CliConfig): void {
   const path = configPath();
+  // `setup`, `login` and `connect` write the config anew, but the computer is still the same one, and the
+  // lease it may hold is under its id.
+  const computerId = config.computerId ?? loadConfig()?.computerId;
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
+  writeFileSync(path, `${JSON.stringify(computerId ? { ...config, computerId } : config, null, 2)}\n`, {
+    mode: 0o600,
+  });
 }
 
 /**

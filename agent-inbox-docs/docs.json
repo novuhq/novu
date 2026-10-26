@@ -58,7 +58,7 @@
           {
             "group": "Set up",
             "icon": "plug",
-            "pages": ["setup", "account", "connect", "skills"]
+            "pages": ["setup", "account", "connect", "wake", "skills"]
           },
           {
             "group": "Inbox",

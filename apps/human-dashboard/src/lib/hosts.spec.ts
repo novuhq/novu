@@ -16,6 +16,8 @@ import {
   opencodeMcpConfig,
   skillsCommand,
   tellYourAgent,
+  wakeCommand,
+  wakeLead,
 } from './hosts';
 
 const APP = join(__dirname, '..', 'app');
@@ -130,6 +132,33 @@ describe('the steps', () => {
       $schema: 'https://opencode.ai/config.json',
       mcp: { inbox: { type: 'remote', url: 'https://mcp.agentinbox.md' } },
     });
+  });
+});
+
+describe('keeping a host awake', () => {
+  it('is the optional last step for Claude Code only, for now', () => {
+    const commandHosts = HOSTS.filter((host): host is CommandHost => host.group === 'commands');
+
+    expect(commandHosts.filter((host) => wakeCommand(host)).map((host) => host.id)).toEqual(['claude-code']);
+    expect(wakeCommand(hostOf('claude-code') as CommandHost)).toBe('npx @agentinbox/cli wake claude-code');
+  });
+
+  it('says what it does, for the agent when it’s known', () => {
+    const claudeCode = hostOf('claude-code') as CommandHost;
+
+    expect(wakeLead(claudeCode, 'atlas')).toBe(
+      'Then a message to atlas starts Claude Code in this project, and it asks you before anything its settings don’t allow. You allow it first, on your channel or in the terminal.'
+    );
+    expect(wakeLead(claudeCode)).toContain('a message to your agent starts Claude Code');
+  });
+
+  it('is in Claude Code’s Markdown for agents, and in no other host’s', () => {
+    const markdown = hostMarkdown(hostOf('claude-code'));
+
+    expect(markdown).toContain('## Optional: keep it awake');
+    expect(markdown).toContain('`npx @agentinbox/cli wake claude-code`');
+    expect(markdown).toContain('nothing starts until they allow it');
+    expect(hostMarkdown(hostOf('codex'))).not.toContain('keep it awake');
   });
 });
 

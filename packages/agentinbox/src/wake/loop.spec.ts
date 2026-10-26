@@ -1,0 +1,669 @@
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createApiClient } from '../api/client';
+import { claudeCode } from './claude-code';
+import { FakeApi } from './fake-api.fixture';
+import { type LoopEnd, runWakeLoop, type WakeTiming } from './loop';
+import { memoryState, newState, type WakeState } from './state';
+import { KEY_CHANGED_MESSAGE } from './words';
+
+const FAKE_CLAUDE = fileURLToPath(new URL('./fake-claude.fixture.mjs', import.meta.url));
+const COMPUTER_ID = 'cmp_this_computer_0001';
+
+/** Fast enough for a test, with the same shape as the real timing. */
+const FAST: Partial<WakeTiming> = {
+  waitSeconds: 1,
+  pausedRetryMs: 150,
+  retryMs: [50],
+  questionTimeoutMs: 1500,
+  answerPollMs: 40,
+};
+
+async function eventually(check: () => void, timeoutMs = 8000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    try {
+      check();
+
+      return;
+    } catch (err) {
+      if (Date.now() > deadline) {
+        throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 40));
+    }
+  }
+}
+
+function pause(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+interface Harness {
+  api: FakeApi;
+  dir: string;
+  store: ReturnType<typeof memoryState>;
+  logs: string[];
+  loop: Promise<LoopEnd>;
+  stop: () => Promise<LoopEnd>;
+  /** Each start of the fake `claude`: its arguments and folder. */
+  starts: () => Array<{ argv: string[]; cwd: string }>;
+}
+
+let harness: Harness | undefined;
+
+async function start(overrides: Partial<WakeState> = {}, timing: Partial<WakeTiming> = {}): Promise<Harness> {
+  const api = await new FakeApi().start();
+  const dir = mkdtempSync(join(tmpdir(), 'wake-loop-'));
+  vi.stubEnv('FAKE_CLAUDE_LOG', join(dir, 'claude.log'));
+  vi.stubEnv('FAKE_CLAUDE_SESSIONS', join(dir, 'sessions'));
+  vi.stubEnv('FAKE_API_URL', api.url);
+  // The command took the lease before the loop began.
+  api.lease = {
+    computerId: COMPUTER_ID,
+    computerName: 'MacBook',
+    host: 'claude-code',
+    since: new Date().toISOString(),
+    renewedAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 180_000).toISOString(),
+  };
+
+  const store = memoryState({
+    ...newState({
+      host: 'claude-code',
+      project: dir,
+      program: { command: process.execPath, args: [FAKE_CLAUDE] },
+      limits: { wakesPerHour: 20, maxRunSeconds: 60 },
+    }),
+    allowedAt: new Date().toISOString(),
+    ...overrides,
+  });
+  const logs: string[] = [];
+  const controller = new AbortController();
+  const loop = runWakeLoop({
+    client: createApiClient({ apiUrl: api.url, secretKey: 'sk_test', asHost: 'claude-code' }),
+    agentIdentifier: 'human-relay',
+    operatorId: 'ada',
+    computerId: COMPUTER_ID,
+    computerName: 'MacBook',
+    host: claudeCode,
+    store,
+    timing: { ...FAST, ...timing },
+    log: (line) => logs.push(line),
+    signal: controller.signal,
+  });
+  const starts = () => {
+    try {
+      return readFileSync(join(dir, 'claude.log'), 'utf8')
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line) as { argv: string[]; cwd: string });
+    } catch {
+      return [];
+    }
+  };
+  harness = {
+    api,
+    dir,
+    store,
+    logs,
+    loop,
+    starts,
+    stop: async () => {
+      controller.abort();
+
+      return loop;
+    },
+  };
+
+  // The loop is waiting once it has asked for messages.
+  await eventually(() => expect(api.callsTo('GET', '/v1/wake/messages').length).toBeGreaterThan(0));
+
+  return harness;
+}
+
+beforeEach(() => {
+  harness = undefined;
+});
+
+afterEach(async () => {
+  if (harness) {
+    await harness.stop();
+    await harness.api.stop();
+    rmSync(harness.dir, { recursive: true, force: true });
+  }
+  vi.unstubAllEnvs();
+});
+
+describe('runWakeLoop', { timeout: 20_000 }, () => {
+  it('wakes Claude Code for a message and posts its last words when it didn’t reply itself', async () => {
+    const { api, starts, store, dir } = await start();
+
+    api.deliver({ text: 'hello there' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: hello there'));
+    const [first] = starts();
+    expect(first.cwd).toBe(dir);
+    expect(first.argv).toEqual(
+      expect.arrayContaining([
+        '-p',
+        '--input-format',
+        'stream-json',
+        '--output-format',
+        'stream-json',
+        '--verbose',
+        '--permission-prompt-tool',
+        'stdio',
+      ])
+    );
+    expect(first.argv[first.argv.indexOf('--permission-mode') + 1]).toBe('acceptEdits');
+    expect(first.argv).not.toContain('--allowedTools');
+    expect(first.argv).not.toContain('--resume');
+    const sessionId = first.argv[first.argv.indexOf('--session-id') + 1];
+    expect(first.argv[first.argv.indexOf('--append-system-prompt') + 1]).toContain('conv_1');
+    expect(store.current?.sessions.conv_1).toMatchObject({ sessionId, round: 0 });
+    // Every call is the woken host's check.
+    expect(api.calls.every((call) => call.host === 'claude-code')).toBe(true);
+  });
+
+  it('goes on with the same session for the next message in the conversation', async () => {
+    const { api, starts, store } = await start();
+
+    api.deliver({ text: 'first' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: first'));
+    const sessionId = store.current?.sessions.conv_1?.sessionId;
+
+    api.deliver({ text: 'remember' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('This session has seen 1 messages before.'));
+    const second = starts()[1];
+    expect(second.argv[second.argv.indexOf('--resume') + 1]).toBe(sessionId);
+    expect(second.argv).not.toContain('--session-id');
+  });
+
+  it('keeps one session per conversation', async () => {
+    const { api, store } = await start();
+
+    api.deliver({ text: 'in one', conversationId: 'conv_1' });
+    api.deliver({ text: 'in two', conversationId: 'conv_2' });
+
+    await eventually(() => {
+      expect(api.sentInto('conv_1')).toContain('Echo: in one');
+      expect(api.sentInto('conv_2')).toContain('Echo: in two');
+    });
+    expect(store.current?.sessions.conv_1?.sessionId).not.toBe(store.current?.sessions.conv_2?.sessionId);
+  });
+
+  it('lets a message that comes while it works join the same run', async () => {
+    const { api, starts } = await start();
+
+    api.deliver({ text: 'sleep:800' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    api.deliver({ text: 'and this too' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Done sleeping. Also: and this too'));
+    expect(starts()).toHaveLength(1);
+  });
+
+  it('starts it without the marks of a session it was started from', async () => {
+    vi.stubEnv('CLAUDECODE', '1');
+    vi.stubEnv('AI_AGENT', 'claude-code_2-1-310_agent');
+    vi.stubEnv('CODEX_THREAD_ID', 'thread_1');
+    const { api } = await start();
+
+    api.deliver({ text: 'env' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Parent marks: none.'));
+  });
+
+  it('stops the run on /stop and says so', async () => {
+    const { api, starts, logs } = await start();
+
+    api.deliver({ text: 'sleep:20000' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    const startedAt = Date.now();
+    api.deliver({ text: '/stop' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Stopped.'));
+    expect(Date.now() - startedAt).toBeLessThan(10_000);
+    expect(api.sentInto('conv_1')).not.toContain('Done sleeping.');
+    expect(logs.some((line) => line.includes('stopped (stop)'))).toBe(true);
+  });
+
+  it('answers /stop with nothing to stop when nothing runs', async () => {
+    const { api, starts } = await start();
+
+    api.deliver({ text: '/STOP ' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Nothing was running.'));
+    expect(starts()).toHaveLength(0);
+  });
+
+  it('lets the agent reply in its own conversation without asking anyone, and doesn’t reply twice', async () => {
+    const { api } = await start();
+
+    api.deliver({ text: 'reply-myself' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('I replied myself; all good.'));
+    await pause(400);
+    expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+    expect(api.sentInto('conv_1')).not.toContain('Replied in the conversation.');
+  });
+
+  it('lets the agent reply and resolve in one command, joined with &&, without asking the operator', async () => {
+    const { api } = await start();
+    const command = 'npx @agentinbox/cli inbox reply conv_1 "Done." && npx @agentinbox/cli inbox resolve conv_1';
+
+    api.deliver({ text: `ask:${command}` });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain(`Ran ${command}.`));
+    expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+  });
+
+  it('names a long command in the card’s title, and keeps it whole in the body', async () => {
+    const { api } = await start();
+    const command = `echo ${'long '.repeat(40)}`.trim();
+
+    api.deliver({ text: `ask:${command}` });
+
+    await eventually(() =>
+      expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(1)
+    );
+    const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+    expect(question?.card.title).toBe('Claude Code wants to run a command');
+    expect(question?.card.body).toContain(`Run \`${command}\`.\n\n`);
+  });
+
+  it('shows typing in the conversation while the host works, from waking it until its answer goes out', async () => {
+    const { api } = await start({}, { typingMs: 100 });
+
+    api.deliver({ text: 'sleep:800' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Done sleeping.'));
+    const shown = api.typing.filter((typing) => typing.conversationId === 'conv_1').length;
+    expect(shown).toBeGreaterThanOrEqual(4);
+    await pause(400);
+    expect(api.typing).toHaveLength(shown);
+  });
+
+  it('stops typing once the agent starts its own reply, even while it works on after it', async () => {
+    const { api } = await start({}, { typingMs: 100 });
+
+    api.deliver({ text: 'reply-myself:800' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('I replied myself; all good.'));
+    const shown = api.typing.length;
+    expect(shown).toBeGreaterThan(0);
+    await pause(500);
+    expect(api.typing).toHaveLength(shown);
+  });
+
+  it('holds typing while the operator is asked, and goes on once they answer', async () => {
+    const { api } = await start({}, { typingMs: 100 });
+
+    api.deliver({ text: 'ask:npm publish' });
+
+    await eventually(() =>
+      expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(1)
+    );
+    const asked = api.typing.length;
+    await pause(400);
+    expect(api.typing).toHaveLength(asked);
+
+    const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+    api.answer(question?.id as string, 'approved');
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm publish.'));
+    expect(api.typing.length).toBeGreaterThan(asked);
+  });
+
+  it('asks only once in a conversation whose chat has no typing, such as email', async () => {
+    const { api } = await start({}, { typingMs: 100 });
+
+    api.deliver({ text: 'sleep:500', conversationId: 'conv_mail', channel: 'email' });
+
+    await eventually(() => expect(api.sentInto('conv_mail')).toContain('Done sleeping.'));
+    expect(api.callsTo('POST', '/v1/wake/typing')).toHaveLength(1);
+    expect(api.typing).toHaveLength(0);
+  });
+
+  it('asks the operator before a command its settings don’t allow, and passes the Allow back', async () => {
+    const { api } = await start();
+    api.decide = () => 'approved';
+
+    api.deliver({ text: 'ask:npm publish', from: { id: 'ben', name: 'Ben', isOperator: false } });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm publish.'));
+    const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+    // To the operator, even though a contact woke it.
+    expect(question?.to).toBe('ada');
+    expect(question?.card.title).toBe('Claude Code wants to run `npm publish`');
+    expect(question?.card.body).toContain('Ben woke it');
+    expect(question?.card.body).toContain('No answer in 2 seconds counts as Deny.');
+    expect(question?.card).toMatchObject({
+      approveLabel: 'Allow',
+      denyLabel: 'Deny',
+      extraActions: [{ id: 'allow_session', label: 'Allow for this session' }],
+    });
+    expect(question?.ttlSeconds).toBe(60);
+  });
+
+  it('asks the operator before the agent writes into another conversation', async () => {
+    const { api } = await start();
+    api.decide = () => 'denied';
+
+    api.deliver({ text: 'ask:npx @agentinbox/cli inbox reply conv_9 "hi"' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Not allowed: Your operator said no.'));
+    expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(1);
+  });
+
+  it('lets the agent reply with our MCP server’s tool in its own conversation without asking anyone', async () => {
+    const { api } = await start();
+
+    api.deliver({ text: 'mcp:mcp__plugin_agentinbox_inbox__inbox_reply' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('I replied through MCP.'));
+    await pause(400);
+    expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+    expect(api.sentInto('conv_1')).not.toContain('Used mcp__plugin_agentinbox_inbox__inbox_reply.');
+  });
+
+  it('asks the operator before an MCP reply into another conversation, or through another server', async () => {
+    const { api } = await start();
+    api.decide = () => 'denied';
+    const approves = () => api.interactions.filter((interaction) => interaction.kind === 'approve');
+
+    api.deliver({ text: 'mcp:mcp__inbox__inbox_reply conv_9' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Not allowed: Your operator said no.'));
+    expect(approves()).toHaveLength(1);
+
+    api.deliver({ text: 'mcp:mcp__mail__inbox_reply' });
+    await eventually(() => expect(approves()).toHaveLength(2));
+    expect(approves()[1].card.title).toBe('Claude Code wants to use inbox_reply from mail');
+  });
+
+  it('keeps an "Allow for this session" for the rest of the session', async () => {
+    const { api } = await start();
+    api.decide = () => ({ status: 'approved', optionId: 'allow_session' });
+
+    api.deliver({ text: 'ask-twice:npm test' });
+
+    await eventually(() =>
+      expect(api.sentInto('conv_1')).toContain('Ran npm test twice, and was allowed for the session.')
+    );
+    expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(1);
+  });
+
+  it('passes a Deny back', async () => {
+    const { api } = await start();
+    api.decide = () => 'denied';
+
+    api.deliver({ text: 'ask:rm -rf build' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Not allowed: Your operator said no.'));
+  });
+
+  it('passes the operator’s words on when they answer a permission question in words', async () => {
+    const { api } = await start();
+    api.decide = (interaction) =>
+      interaction.kind === 'approve' ? { status: 'answered', text: 'not now, run the tests first' } : undefined;
+
+    api.deliver({ text: 'ask:npm publish' });
+
+    await eventually(() =>
+      expect(api.sentInto('conv_1')).toContain(
+        'Not allowed: Your operator answered in words instead of allowing it: “not now, run the tests first”. It isn’t allowed; follow what they wrote if it says what to do instead.'
+      )
+    );
+  });
+
+  it('counts no answer in time as Deny, and takes the question back', async () => {
+    const { api } = await start({}, { questionTimeoutMs: 300 });
+
+    api.deliver({ text: 'ask:curl example.com' });
+
+    await eventually(() =>
+      expect(api.sentInto('conv_1')).toContain('Not allowed: Nobody answered within 1 second, which counts as Deny.')
+    );
+    expect(api.interactions.find((interaction) => interaction.kind === 'approve')?.status).toBe('canceled');
+  });
+
+  it('takes the operator’s question back when the run stops while it waits', async () => {
+    const { api } = await start();
+
+    api.deliver({ text: 'ask:deploy' });
+    await eventually(() => expect(api.interactions.some((interaction) => interaction.kind === 'approve')).toBe(true));
+    api.deliver({ text: '/stop' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Stopped.'));
+    expect(api.interactions.find((interaction) => interaction.kind === 'approve')?.status).toBe('canceled');
+  });
+
+  it('puts the agent’s own question to the person who woke it, in the conversation', async () => {
+    const { api } = await start();
+    api.decide = (interaction) =>
+      interaction.kind === 'choose' ? { status: 'answered', optionId: 'opt_2' } : undefined;
+
+    api.deliver({ text: 'askuser', from: { id: 'ben', name: 'Ben', isOperator: false } });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Answers: {"Which one?":"Production"}'));
+    const question = api.interactions.find((interaction) => interaction.kind === 'choose');
+    expect(question).toMatchObject({ thread: 'conv_1' });
+    expect(question?.card.options).toEqual([
+      { id: 'opt_1', label: 'Staging' },
+      { id: 'opt_2', label: 'Production' },
+    ]);
+    expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+  });
+
+  it('settles its own question from the answer that comes with the messages', async () => {
+    const { api } = await start({}, { answerPollMs: 60_000, questionTimeoutMs: 120_000 });
+    api.decide = () => 'approved';
+
+    api.deliver({ text: 'ask:npm run build' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm run build.'), 4000);
+    // One lookup when it asked; the answer itself came with the messages.
+    const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+    expect(api.callsTo('GET', `/v1/inbox/messages/${question?.id}`)).toHaveLength(1);
+  });
+
+  it('never wakes the host for the answer to its own question', async () => {
+    const { api, starts } = await start();
+    api.decide = () => 'approved';
+
+    api.deliver({ text: 'ask:npm test' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm test.'));
+    await pause(400);
+
+    // The operator's tap came in as a message too, and woke nothing.
+    expect(api.wakeMessages.some((message) => message.answersMessageId)).toBe(true);
+    expect(starts()).toHaveLength(1);
+  });
+
+  it('starts a fresh session once the host resolved the conversation', async () => {
+    const { api, store, starts } = await start();
+
+    api.deliver({ text: 'resolve' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Resolved.'));
+    const resolvedSession = store.current?.sessions.conv_1?.sessionId;
+
+    // The next message comes in the next round.
+    api.deliver({ text: 'remember' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('This session has seen 0 messages before.'));
+    expect(starts()[1].argv).not.toContain('--resume');
+    expect(store.current?.sessions.conv_1).toMatchObject({ round: 1 });
+    expect(store.current?.sessions.conv_1?.sessionId).not.toBe(resolvedSession);
+  });
+
+  it('starts a fresh session after the operator resolved the conversation on agentinbox.md', async () => {
+    const { api, starts } = await start();
+
+    api.deliver({ text: 'hi' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: hi'));
+    api.resolve('conv_1');
+    api.deliver({ text: 'remember' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('This session has seen 0 messages before.'));
+    expect(starts()[1].argv).not.toContain('--resume');
+  });
+
+  it('keeps a message of the next round out of the run of the round before', async () => {
+    const { api, starts } = await start();
+
+    api.deliver({ text: 'sleep:800' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    api.resolve('conv_1');
+    api.deliver({ text: 'a new matter' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: a new matter'));
+    expect(api.sentInto('conv_1')).toContain('Done sleeping.');
+    expect(starts()).toHaveLength(2);
+    expect(starts()[1].argv).not.toContain('--resume');
+  });
+
+  it('starts a fresh session when the host no longer has the old one', async () => {
+    const { api, store, starts } = await start({
+      sessions: {
+        conv_1: { sessionId: '11111111-2222-4333-8444-555555555555', round: 0, lastWakeAt: new Date().toISOString() },
+      },
+    });
+
+    api.deliver({ text: 'still there?' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: still there?'));
+    expect(starts()[0].argv).toContain('--resume');
+    expect(starts()[1].argv).not.toContain('--resume');
+    expect(store.current?.sessions.conv_1?.sessionId).not.toBe('11111111-2222-4333-8444-555555555555');
+  });
+
+  it('tells the operator when a run fails', async () => {
+    const { api } = await start();
+
+    api.deliver({ text: 'fail' });
+
+    await eventually(() =>
+      expect(api.sentInto('conv_operator')).toContain('Claude Code couldn’t answer in conv_1: boom')
+    );
+  });
+
+  it('stops for good when another computer took the lease', async () => {
+    const { api, store } = await start();
+
+    api.takeOverElsewhere('codex');
+    const end = await harness?.loop;
+
+    expect(end).toMatchObject({ reason: 'awake_elsewhere' });
+    expect(store.current?.stopped?.reason).toBe('awake_elsewhere');
+    expect(store.current?.stopped?.message).toContain('Desktop (Codex, in ~/work)');
+  });
+
+  it('stops for good when another host took the lease on this same computer', async () => {
+    const { api, store } = await start();
+
+    api.takeOverElsewhere('codex', COMPUTER_ID);
+    const end = await harness?.loop;
+
+    expect(end).toMatchObject({ reason: 'awake_elsewhere' });
+    expect(store.current?.stopped?.message).toBe(
+      'It is awake on this computer for Codex, in ~/work now, so wake for Claude Code stopped.'
+    );
+  });
+
+  it('stops for good, without retrying, when the key stops working', async () => {
+    const { api, store } = await start();
+
+    api.keyRejected = true;
+    const end = await harness?.loop;
+    const calls = api.calls.length;
+    await pause(300);
+
+    expect(end).toEqual({ reason: 'key_changed', message: KEY_CHANGED_MESSAGE });
+    expect(store.current?.stopped?.message).toBe('The key changed on agentinbox.md. Connect again, then wake again.');
+    expect(api.calls.length).toBe(calls);
+  });
+
+  it('waits while the agent is paused, and wakes again once it is resumed', async () => {
+    const { api, logs } = await start();
+
+    api.paused = true;
+    await eventually(() => expect(logs.some((line) => line.includes('paused'))).toBe(true));
+    const leaseCalls = api.callsTo('POST', '/v1/wake/lease').length;
+    await eventually(() => expect(api.callsTo('POST', '/v1/wake/lease').length).toBeGreaterThan(leaseCalls + 1));
+
+    api.paused = false;
+    api.deliver({ text: 'back again' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: back again'));
+  });
+
+  it('holds messages back past the hourly limit, and tells the operator once', async () => {
+    const { api, store, starts } = await start({ limits: { wakesPerHour: 1, maxRunSeconds: 60 } });
+
+    api.deliver({ text: 'one', conversationId: 'conv_1' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: one'));
+    api.deliver({ text: 'two', conversationId: 'conv_2' });
+    api.deliver({ text: 'three', conversationId: 'conv_3' });
+
+    await eventually(() =>
+      expect(api.sentInto('conv_operator')).toContain(
+        'Claude Code was woken 1 time in the last hour, the most it may be. New messages wait, and wake it as the hour allows.'
+      )
+    );
+    await pause(400);
+    expect(starts()).toHaveLength(1);
+    expect(store.current?.queue.map((message) => message.text)).toEqual(['two', 'three']);
+    expect(api.sentInto('conv_operator').filter((text) => text.includes('the last hour'))).toHaveLength(1);
+  });
+
+  it('stops a run that goes on too long', async () => {
+    const { api } = await start({ limits: { wakesPerHour: 20, maxRunSeconds: 1 } });
+
+    api.deliver({ text: 'sleep:20000' });
+
+    await eventually(() =>
+      expect(api.sentInto('conv_1')).toContain(
+        'Stopped after 1 second, the longest one run may take here. Send another message to go on.'
+      )
+    );
+  });
+
+  it('lets go of the lease when it is stopped on purpose', async () => {
+    const { api, stop } = await start();
+
+    const end = await stop();
+
+    expect(end).toEqual({ reason: 'signal' });
+    expect(api.callsTo('POST', '/v1/wake/lease/release').map((call) => call.body)).toEqual([
+      { computerId: COMPUTER_ID, host: 'claude-code' },
+    ]);
+    expect(api.lease).toBeNull();
+    // Each wait named the host it waits for.
+    expect(api.callsTo('GET', '/v1/wake/messages').every((call) => call.query.host === 'claude-code')).toBe(true);
+  });
+
+  it('goes on from now when the API doesn’t know the cursor it had', async () => {
+    const { api, logs } = await start({ cursor: 'from-another-deployment' });
+
+    await eventually(() => expect(logs.some((line) => line.includes('going on from now'))).toBe(true));
+    api.deliver({ text: 'still awake?' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: still awake?'));
+  });
+
+  it('handles each message once, even when it comes back', async () => {
+    const { api, starts } = await start();
+
+    const message = api.deliver({ text: 'only once' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: only once'));
+    api.wakeMessages.push(message);
+    api.deliver({ text: 'next' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: next'));
+    expect(starts()).toHaveLength(2);
+    expect(api.sentInto('conv_1').filter((text) => text === 'Echo: only once')).toHaveLength(1);
+  });
+});
