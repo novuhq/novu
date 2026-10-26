@@ -2,7 +2,15 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { createAgentInboxApi } from './agent-inbox-api';
 import { AuthError, authenticate, bearerTokenOf } from './auth';
-import { clientNameOf, listConnections, recordConnection, toolOf } from './connections';
+import {
+  clientNameOf,
+  hostOfClientName,
+  hostOfSession,
+  hostOfUserAgent,
+  listConnections,
+  recordConnection,
+  sessionIdFor,
+} from './connections';
 import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
 import { type Env, issuerOf } from './env';
 import { registerTools } from './tools';
@@ -67,32 +75,43 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
   }
 }
 
-/** One request, one server: nothing is kept between calls, so any Worker instance can answer any of them. */
+/**
+ * One request, one server: nothing is kept between calls, so any Worker instance can answer any of them.
+ * An app says its name once, on `initialize`. The session id it gets back starts with its host, and it sends
+ * that id with every later request, so each one tells the API which host is calling. A request without one,
+ * from a session that began before sessions carried the host, still names Claude Code, Codex and Cursor by
+ * their `User-Agent`.
+ */
 async function serveMcp(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const account = await authenticate(request, env);
 
-  if (request.method === 'POST') {
-    const tool = toolOf(
-      clientNameOf(
-        await request
-          .clone()
-          .json()
-          .catch(() => null)
-      )
-    );
-    if (tool) {
-      ctx.waitUntil(recordConnection(env, account.agentInboxUserId, tool));
-    }
+  const clientName =
+    request.method === 'POST'
+      ? clientNameOf(
+          await request
+            .clone()
+            .json()
+            .catch(() => null)
+        )
+      : null;
+  const userAgentHost = hostOfUserAgent(request.headers.get('User-Agent'));
+  // The host an `initialize` names: any app Agent Inbox doesn't know is General.
+  const connecting = clientName === null ? null : (hostOfClientName(clientName) ?? userAgentHost ?? 'general');
+  const host = connecting ?? hostOfSession(request.headers.get('Mcp-Session-Id')) ?? userAgentHost;
+  if (connecting && connecting !== 'general') {
+    ctx.waitUntil(recordConnection(env, account.agentInboxUserId, connecting));
   }
 
   const server = new McpServer(SERVER, {
     instructions:
       'Agent Inbox lets you reach a real person and wait for their answer. If tools say the account is not set up yet, call inbox_setup: ask the user for an agent name and inbox address, create with agent_name and handle, then confirm their email with them and pass email so a confirmation link goes out. An email that is already confirmed is not replaced from here. Use inbox_send to start a conversation and inbox_reply to continue one. Leave kind out for news that needs no answer; use approve before anything hard to undo, ask for information only a person has, and choose for a pick between options. A person may write to the agent first: call inbox_list with filter "unread" before you send, then use inbox_show and reply in that conversation rather than starting a new one. inbox_show does not mark a conversation read; use inbox_read when no reply is needed and inbox_resolve when you are done. When a result says the request is still open, call inbox_wait with its id; never go ahead without the answer.',
   });
-  registerTools(server, createAgentInboxApi(account), account.email);
+  registerTools(server, createAgentInboxApi(account, host), account.email);
 
+  // Only `initialize` hands out a session. Every other request is served without one, as before: the id it
+  // sends is read above for its host, and needs nothing kept here to be accepted.
   const transport = new WebStandardStreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
+    sessionIdGenerator: connecting === null ? undefined : () => sessionIdFor(connecting),
     enableJsonResponse: true,
   });
   await server.connect(transport);

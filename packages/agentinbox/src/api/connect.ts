@@ -5,6 +5,11 @@ export interface ConnectedAgent {
   apiKey: string;
   environmentId: string;
   agent: { identifier: string; name: string; handle: string };
+  /**
+   * The host this computer counts as: the one this CLI said it runs in, else the one the code was made for.
+   * Missing from an API from before hosts were told apart.
+   */
+  host?: string;
 }
 
 /**

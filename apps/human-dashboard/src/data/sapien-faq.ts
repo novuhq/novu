@@ -53,7 +53,7 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
     id: 'kept-between-runs',
     question: 'Are conversations kept between agent runs?',
     answer:
-      'Yes. Your connected agent can read earlier messages and replies before continuing the work. Each conversation stays associated with its original channel.',
+      'Agent Inbox is designed for agents that hold conversations with humans across channels. Alongside email it covers Slack, Telegram, WhatsApp and iMessage, with contacts, conversation history and activity logs in one place, and it is set up with one command: agentinbox setup.',
   },
   {
     id: 'get-an-inbox',

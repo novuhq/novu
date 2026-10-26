@@ -191,6 +191,16 @@ describe('runLogin', () => {
     expect(hasSubscriber).not.toHaveBeenCalled();
   });
 
+  it('keeps the host this computer was connected for, on the same API', async () => {
+    loadConfig.mockReturnValue({ ...keylessConfig, host: 'codex' });
+    findOperator.mockResolvedValue('ada');
+
+    const result = await runLogin({});
+
+    // Without it, a shell that doesn't say which host it is would check the inbox as General from now on.
+    expect(result.config.host).toBe('codex');
+  });
+
   it('lets the account owner win over another contact saved on this computer', async () => {
     loadConfig.mockReturnValue(keylessConfig);
     findOperator.mockResolvedValue('ada_owner');

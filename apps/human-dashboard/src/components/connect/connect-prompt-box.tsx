@@ -1,14 +1,24 @@
 'use client';
 
-import { Copy, TriangleAlert } from 'lucide-react';
-import { type CSSProperties, type KeyboardEvent, useId, useLayoutEffect, useRef, useState } from 'react';
+import { Copy, LogIn, TriangleAlert } from 'lucide-react';
+import Link from 'next/link';
+import {
+  type CSSProperties,
+  type KeyboardEvent,
+  type ReactNode,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
-import { Button, SMALL_BUTTON } from '@/components/ui/button';
+import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import type { ConnectCodeState } from '@/hooks/use-connect-code';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { useSwap } from '@/hooks/use-swap';
 import { connectCommands } from '@/lib/connect-prompt';
+import type { CommandHost } from '@/lib/hosts';
 import { cn } from '@/lib/utils';
 
 type ConnectTab = 'cli';
@@ -28,14 +38,26 @@ const SWAP_MS = 150;
 /** The lines of the skeleton, as wide as the commands' lines are about: `connect` takes two. */
 const SKELETON_LINES = ['96%', '40%', '56%', '52%'];
 
+/**
+ * A public host page has no account, so no code: it shows the commands with the agent and the code left
+ * open, and a way to sign in where the code would be.
+ */
+export type SignedOutCode = { status: 'signed-out'; signInHref: string };
+
+/** What stands in the commands for what a public page can't know. Never valid, so never mistaken for real. */
+const AGENT_PLACEHOLDER = '<agent>';
+const CODE_PLACEHOLDER = '<code>';
+
 type ConnectPromptBoxProps = {
   /** The agent, as the page names it. */
   handle: string;
-  /** The API the account lives on, which `connect` names when it isn't the CLI's default. */
-  apiUrl: string;
-  /** The one-time code (`useConnectCode`). */
-  code: ConnectCodeState;
-  onRetry: () => void;
+  /** The API the account lives on, which `connect` names. Left out on a public page. */
+  apiUrl?: string;
+  /** The one-time code (`useConnectCode`), or `signed-out` on a public page. */
+  code: ConnectCodeState | SignedOutCode;
+  onRetry?: () => void;
+  /** The host the commands are for: its skills go to it alone. */
+  host?: CommandHost;
 };
 
 /**
@@ -43,39 +65,50 @@ type ConnectPromptBoxProps = {
  * terminal, with the one-time code in them, and the button that copies them. A quiet skeleton stands in
  * while the code is on its way, and a short error with "Try again" when it couldn't be had. Whatever it
  * shows, it fades from one to the next while its height follows.
+ *
+ * On a public host page the code's place says "sign in to get your code" instead, and the button signs in.
  */
-export function ConnectPromptBox({ handle, apiUrl, code, onRetry }: ConnectPromptBoxProps) {
+export function ConnectPromptBox({ handle, apiUrl, code, onRetry, host }: ConnectPromptBoxProps) {
   const [tab, setTab] = useState<ConnectTab>('cli');
   // Ties each tab to the panel it shows, for screen readers.
   const tabsId = useId();
+  const signedOut = code.status === 'signed-out' ? code : null;
   const ready = code.status === 'ready' ? code.code : null;
-  const commands = connectCommands({ handle: ready?.handle ?? handle, code: ready?.code ?? '', apiUrl }).map(
-    ({ command }) => command
-  );
+  const details = signedOut
+    ? { handle: AGENT_PLACEHOLDER, code: CODE_PLACEHOLDER }
+    : { handle: ready?.handle ?? handle, code: ready?.code ?? '', apiUrl };
+  const commands = connectCommands(details, host).map(({ command }) => command);
   const current = TABS.find(({ id }) => id === tab) ?? TABS[0];
 
-  const { shown, leaving } = useSwap(ready ? tab : code.status, SWAP_MS);
+  const { shown, leaving } = useSwap(ready || signedOut ? tab : code.status, SWAP_MS);
   const { ref, height } = useMeasuredHeight();
 
   return (
     <div className="overflow-hidden rounded-[10px] border border-border-strong bg-subtle">
       <div className="flex items-center gap-2.5 bg-raised p-2">
         <Tabs tab={tab} onChange={setTab} idPrefix={tabsId} />
-        {ready ? (
-          <CopyButton
-            value={commands.join('\n')}
-            label={current.copyLabel}
-            variant="primary"
-            className={cn(SMALL_BUTTON, 'ml-auto')}
-          >
-            <Label text={current.copy} />
-          </CopyButton>
-        ) : (
-          <Button className={cn(SMALL_BUTTON, 'ml-auto')} disabled>
-            <Copy aria-hidden="true" className="size-3.5" />
-            <Label text={current.copy} />
-          </Button>
+        {signedOut && (
+          <Link href={signedOut.signInHref} className={buttonClassName('primary', cn(SMALL_BUTTON, 'ml-auto'))}>
+            <LogIn aria-hidden="true" className="size-3.5" />
+            Sign in
+          </Link>
         )}
+        {!signedOut &&
+          (ready ? (
+            <CopyButton
+              value={commands.join('\n')}
+              label={current.copyLabel}
+              variant="primary"
+              className={cn(SMALL_BUTTON, 'ml-auto')}
+            >
+              <Label text={current.copy} />
+            </CopyButton>
+          ) : (
+            <Button className={cn(SMALL_BUTTON, 'ml-auto')} disabled>
+              <Copy aria-hidden="true" className="size-3.5" />
+              <Label text={current.copy} />
+            </Button>
+          ))}
       </div>
 
       {/* The views differ in height; the box follows while one fades into the next. */}
@@ -99,13 +132,37 @@ export function ConnectPromptBox({ handle, apiUrl, code, onRetry }: ConnectPromp
             )}
           >
             {shown === 'loading' && <Skeleton />}
-            {shown === 'error' && <CodeError error={code.status === 'error' ? code.error : ''} onRetry={onRetry} />}
+            {shown === 'error' && (
+              <CodeError error={code.status === 'error' ? code.error : ''} onRetry={onRetry ?? (() => {})} />
+            )}
             {shown === 'cli' && ready && (
               <div className="flex flex-col gap-3 p-4">
                 <pre className="font-mono text-[12.5px] leading-5 wrap-anywhere whitespace-pre-wrap text-default">
-                  <CommandLines commands={commands} code={ready.code} />
+                  <CommandLines
+                    commands={commands}
+                    slots={[{ text: ready.code, render: (text) => <SwappingCode code={text} /> }]}
+                  />
                 </pre>
                 <Caption />
+              </div>
+            )}
+            {shown === 'cli' && signedOut && (
+              <div className="flex flex-col gap-3 p-4">
+                <pre className="font-mono text-[12.5px] leading-5 wrap-anywhere whitespace-pre-wrap text-default">
+                  <CommandLines
+                    commands={commands}
+                    slots={[
+                      { text: AGENT_PLACEHOLDER, render: (text) => <span className="text-muted">{text}</span> },
+                      {
+                        text: CODE_PLACEHOLDER,
+                        render: () => <SignInSlot href={signedOut.signInHref} />,
+                      },
+                    ]}
+                  />
+                </pre>
+                <p className="font-mono text-[11px] leading-3.5 text-muted">
+                  Sign in to fill in your agent and a code. It works once and expires in 10 min.
+                </p>
               </div>
             )}
           </div>
@@ -216,33 +273,59 @@ function Tabs({ tab, onChange, idPrefix }: TabsProps) {
   );
 }
 
+/** A stretch of a command to show differently: the code, or what a public page leaves open. */
+type Slot = { text: string; render: (text: string) => ReactNode };
+
 /** The commands as they're run, one to a line after the shell's `$`. */
-function CommandLines({ commands, code }: { commands: string[]; code: string }) {
+function CommandLines({ commands, slots }: { commands: string[]; slots: Slot[] }) {
   return commands.map((command) => (
     <span key={command} className="block pl-[2ch] -indent-[2ch]">
       <span aria-hidden="true" className="font-medium text-accent select-none">
         ${' '}
       </span>
       <span className="font-medium text-foreground">
-        <WithCode text={command} code={code} />
+        <WithSlots text={command} slots={slots} />
       </span>
     </span>
   ));
 }
 
-/** A stretch of text with the code in it set apart, so a new code fades in where the old one was. */
-function WithCode({ text, code }: { text: string; code: string }) {
-  const at = code ? text.indexOf(code) : -1;
-  if (at < 0) {
-    return text;
+/** A stretch of text with each slot in it drawn its own way, such as the code, which fades in where the old one was. */
+function WithSlots({ text, slots }: { text: string; slots: Slot[] }): ReactNode {
+  const found = slots
+    .map((slot) => ({ slot, at: slot.text ? text.indexOf(slot.text) : -1 }))
+    .filter(({ at }) => at >= 0)
+    .sort((a, b) => a.at - b.at)[0];
+  if (!found) {
+    return <Words text={text} />;
   }
+
+  const { slot, at } = found;
 
   return (
     <>
-      {text.slice(0, at)}
-      <SwappingCode code={code} />
-      {text.slice(at + code.length)}
+      <Words text={text.slice(0, at)} />
+      {slot.render(slot.text)}
+      <WithSlots text={text.slice(at + slot.text.length)} slots={slots} />
     </>
+  );
+}
+
+/**
+ * Text in which a flag (`--yes`, `--api-url=…`) moves to the next line whole rather than break at its hyphens:
+ * lines break between words. One longer than a whole line (`--api-url=…` on a phone) wraps inside itself, so
+ * it never runs past the box's edge.
+ */
+function Words({ text }: { text: string }) {
+  return text.split(/(\s+)/).map((word, index) =>
+    word.startsWith('-') ? (
+      // The words never move, so where one stands is its key. The block keeps none of the line's hanging indent.
+      <span key={index} className="inline-block max-w-full indent-0 [overflow-wrap:anywhere]">
+        {word}
+      </span>
+    ) : (
+      word
+    )
   );
 }
 
@@ -260,6 +343,18 @@ function SwappingCode({ code }: { code: string }) {
     >
       {shown}
     </span>
+  );
+}
+
+/** Where the code goes on a public page: a link to sign in, which gets it. */
+function SignInSlot({ href }: { href: string }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-sm text-accent underline decoration-accent/40 decoration-dashed underline-offset-4 transition-colors duration-150 hover:decoration-accent focus-visible:outline-offset-2 motion-reduce:transition-none"
+    >
+      sign in to get your code
+    </Link>
   );
 }
 

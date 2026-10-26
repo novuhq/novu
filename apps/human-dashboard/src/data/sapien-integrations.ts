@@ -48,8 +48,8 @@ export const INTEGRATION_COPY_LABELS = {
   steps: 'Copy URL',
 } as const satisfies Record<IntegrationSnippet['kind'], string>;
 
-/** How every command starts: through npx, which needs nothing installed first. */
-const CLI = 'npx @agentinbox/cli';
+/** The installed binary. `npm install -g @agentinbox/cli` puts `agentinbox` on the path. */
+const CLI = 'agentinbox';
 
 /** The hosted MCP server: OAuth sign-in, no API key or custom headers. */
 const MCP_SERVER_URL = 'https://mcp.agentinbox.md';

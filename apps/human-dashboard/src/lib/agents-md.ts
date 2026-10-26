@@ -1,6 +1,8 @@
 import 'server-only';
 
-import { AGENT_DOMAIN, INSTALL_SKILLS_COMMAND, NPX_CLI, SKILLS_REPO } from './onboarding';
+import { HOSTS, hostMarkdownPath, hostPath } from './hosts';
+import { AGENT_DOMAIN, INSTALL_SKILLS_COMMAND, NPX_CLI, SKILLS_CLI_AGENTS_URL, SKILLS_REPO } from './onboarding';
+import { SITE_ORIGIN } from './seo';
 
 /** The skill this page ends with: agentinbox, as `npx skills add` installs it from its own repository. */
 const SKILL_URL = `https://raw.githubusercontent.com/${SKILLS_REPO}/main/skills/agentinbox/SKILL.md`;
@@ -13,7 +15,8 @@ const SKILL_FETCH_TIMEOUT_MS = 10_000;
 
 /**
  * `/agents.md`, what an agent reads to use Agent Inbox. The home page links to it. It explains the connect
- * commands first, then the rest is the agentinbox skill.
+ * commands first, then how an agent sets itself up without a code and where each host's steps are; the rest
+ * is the agentinbox skill.
  */
 export async function agentsMarkdown(): Promise<string> {
   const skill = await fetchSkill();
@@ -25,21 +28,43 @@ export async function agentsMarkdown(): Promise<string> {
     '',
     `## Connect with the commands from ${AGENT_DOMAIN}`,
     '',
-    `Your operator gets three commands on ${AGENT_DOMAIN} that name the agent and carry a one-time code, and runs them in their terminal, in the project you work in:`,
+    `Your operator gets three commands on ${AGENT_DOMAIN} that name the agent and carry a one-time code. Run them when they hand them to you, in the project you work in; when your host won't let you, for example because \`connect\` saves a key, ask your operator to run them in their terminal instead:`,
     '',
     `1. **Connect:** \`${NPX_CLI} connect <agent> --code <code> --yes --api-url=<api>\``,
     '   - `<agent>` is the agent’s address before the `@`, such as `atlas`.',
     '   - The code works once, for 10 minutes. A used, expired or wrong code exits 1 and says which: ask your operator for a new one rather than guessing, since the agent stops taking codes for a while after a few wrong ones.',
     '   - `--yes` replaces a setup already on this computer. The commands have it so they can be pasted together. Without it, `connect` stops and asks.',
     '   - Keep `--api-url` as the commands give it: a code only works on the API that made it. From then on, every command on this computer acts as that agent.',
-    `2. **Add the skills:** \`${INSTALL_SKILLS_COMMAND}\` installs the Agent Inbox skills into the project you are in, for Claude Code, Cursor, Codex and the other agents it finds there: agentinbox (everything after this section), agentinbox-cli and agentinbox-mcp. \`--agent claude-code\` picks one agent.`,
+    `2. **Add the skills:** \`${INSTALL_SKILLS_COMMAND} --agent <your id> -y\` installs the Agent Inbox skills into the project you are in: agentinbox (everything after this section), agentinbox-cli and agentinbox-mcp.`,
+    `   - \`<your id>\` is what the skills CLI calls the program you run in: \`claude-code\`, \`codex\`, \`cursor\`, \`opencode\`, \`hermes-agent\` or \`openclaw\` ([the list](${SKILLS_CLI_AGENTS_URL})). Hermes and OpenClaw add \`-g\`, for every session on the computer.`,
+    '   - Without `--agent` and `-y` it installs nothing when nobody is at the terminal: add them when the command you were given lacks them.',
     `3. **Check it works:** \`${NPX_CLI} inbox list\` lists the open conversations.`,
     '',
     `From now on, run \`${NPX_CLI} inbox list --filter unread\` at the start of every task. Reply in the same conversation. Ask your operator before you message anyone new.`,
     '',
+    '## No code? Set yourself up',
+    '',
+    'When your operator asks you to set up Agent Inbox and gave you no code:',
+    '',
+    '1. Ask them for their first and last name and their email address. Never make them up.',
+    `2. \`${NPX_CLI} setup --email <their email> --name "<their name>"\` creates the inbox without an account: a free demo with a few messages, whose email inbox only receives until your operator claims it. Add \`--agent-name "<name>"\` when they told you what to call you.`,
+    `3. \`${NPX_CLI} login\` prints a link and a code. Give both to your operator: they sign in on ${AGENT_DOMAIN}, check that the code matches and approve. The setup then moves into their account.`,
+    '4. Add the skills and check that it works, as above.',
+    '',
+    `Never ask for a Telegram bot token or a Slack token: \`${NPX_CLI} channel add telegram\` (or \`slack\`) prints a link where your operator finishes in their browser. When your host won't let you run a command, for example one that saves a key, tell your operator the exact command and let them run it.`,
+    '',
+    '## Steps for your host',
+    '',
+    'Each host has its own page of steps, with its plugin or sign-in:',
+    '',
+    ...HOSTS.map(
+      (host) =>
+        `- [${host.id === 'general' ? 'Any agent' : host.name}](${SITE_ORIGIN}${hostMarkdownPath(host.id)}): ${AGENT_DOMAIN}${hostPath(host.id)}`
+    ),
+    '',
     '## No terminal?',
     '',
-    `Chat apps such as ChatGPT, or Claude in the browser, connect through the Agent Inbox MCP server instead. Your operator adds it on ${AGENT_DOMAIN}, in Configure, under "Connect another agent". Its tools match the CLI's commands: see [the MCP tools](${SKILL_FOLDER_URL}references/mcp-tools.md).`,
+    `Chat apps such as ChatGPT, Claude in the browser and Grok Bot connect through the Agent Inbox MCP server instead: your operator adds it in the app and signs in, as their pages above show. Its tools match the CLI's commands: see [the MCP tools](${SKILL_FOLDER_URL}references/mcp-tools.md).`,
     '',
     '## Using the inbox',
     '',

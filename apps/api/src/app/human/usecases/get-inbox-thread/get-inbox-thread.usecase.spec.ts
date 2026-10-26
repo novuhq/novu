@@ -119,6 +119,14 @@ describe('GetInboxThread', () => {
     await usecase.execute(command({ after: 'm1', hostVia: 'cli' as never }));
 
     expect(hostStatus.recordCheck.calledOnce).to.equal(true);
-    expect(hostStatus.recordCheck.firstCall.args[2]).to.equal('cli');
+    expect(hostStatus.recordCheck.firstCall.args[2]).to.deep.equal({ via: 'cli', id: undefined });
+  });
+
+  it('counts the check for the host that said which one it is', async () => {
+    const { usecase, hostStatus } = setup();
+
+    await usecase.execute(command({ hostVia: 'mcp' as never, hostId: 'claude-code' as never }));
+
+    expect(hostStatus.recordCheck.firstCall.args[2]).to.deep.equal({ via: 'mcp', id: 'claude-code' });
   });
 });
