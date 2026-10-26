@@ -48,6 +48,11 @@ export function isSetupUnfinished(step: SetupStep): step is 'test' | 'connect' {
   return step === 'test' || step === 'connect';
 }
 
+/** Whether the test step is actively waiting for an inbound reply after an email was sent. */
+export function isWaitingForReply(step: SetupStep, test: { sentAt?: string; replyAt?: string }): boolean {
+  return step === 'test' && Boolean(test.sentAt) && !test.replyAt;
+}
+
 /**
  * The operator is still on the test step of an agent this onboarding created. A claimed agent is
  * not, and neither is anyone who already left that step.

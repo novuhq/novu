@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { awaitsTestMail, rememberTestReply, resolveStep, wasMadeInTheSteps } from './onboarding-progress';
+import { awaitsTestMail, isWaitingForReply, rememberTestReply, resolveStep, wasMadeInTheSteps } from './onboarding-progress';
 import type { OnboardingState } from './onboarding-state';
 
 describe('wasMadeInTheSteps', () => {
@@ -111,5 +111,31 @@ describe('resolveStep', () => {
         }
       )
     ).toBe('done');
+  });
+});
+
+
+describe('isWaitingForReply', () => {
+  it('is false when on a different step', () => {
+    expect(isWaitingForReply('address', { sentAt: '2026-10-22T12:00:00.000Z' })).toBe(false);
+    expect(isWaitingForReply('connect', { sentAt: '2026-10-22T12:00:00.000Z' })).toBe(false);
+  });
+
+  it('is false when test email has not been sent yet', () => {
+    expect(isWaitingForReply('test', {})).toBe(false);
+    expect(isWaitingForReply('test', { sentAt: undefined })).toBe(false);
+  });
+
+  it('is true when test email was sent and awaiting reply', () => {
+    expect(isWaitingForReply('test', { sentAt: '2026-10-22T12:00:00.000Z' })).toBe(true);
+  });
+
+  it('is false once reply has arrived', () => {
+    expect(
+      isWaitingForReply('test', {
+        sentAt: '2026-10-22T12:00:00.000Z',
+        replyAt: '2026-10-22T12:01:00.000Z',
+      })
+    ).toBe(false);
   });
 });

@@ -19,6 +19,7 @@ import { useSwap } from '@/hooks/use-swap';
 import type { HostId } from '@/lib/hosts';
 import type { OnboardingView } from '@/lib/human-onboarding';
 import { addressOf, cardLinkOf, type OnboardingStep, PLACEHOLDER_HANDLE } from '@/lib/onboarding';
+import { isWaitingForReply } from '@/lib/onboarding-progress';
 import { cn } from '@/lib/utils';
 
 import { checkOnboardingToolConnectedAction, readOnboardingStatusAction } from './actions';
@@ -52,7 +53,7 @@ const TOOL_API = { isToolSignedIn: checkOnboardingToolConnectedAction };
  */
 export function OnboardingFlow({ view, initialHost }: OnboardingScreenProps) {
   const router = useRouter();
-  const waitingForReply = view.step === 'test' && !view.test.replyAt;
+  const waitingForReply = isWaitingForReply(view.step, view.test);
   const waitingForHostRead =
     view.step === 'reach' && (view.waiting === null || view.waiting > 0) && !view.waitingMessage;
   let pollMs = POLL_MS[view.step];
