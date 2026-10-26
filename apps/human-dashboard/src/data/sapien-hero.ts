@@ -79,10 +79,8 @@ export const HERO_TITLE_WORDS = [HERO_TITLE.highlight, 'Telegram', 'Slack'] as c
 /** Each title word stays in the pill for this long before the next one swaps in. */
 export const HERO_WORD_INTERVAL = 3000;
 
-export const HERO_DESCRIPTION = [
-  'Give your agent its own inbox to start conversations, receive messages, and',
-  'handle replies. It can ask questions and request approvals when it needs human input.',
-] as const;
+export const HERO_DESCRIPTION =
+  'Give your agent its own inbox to start conversations, receive messages, and handle replies. It can ask questions and request approvals when it needs human input.';
 
 export const HERO_COMMAND_LABEL = 'Hero setup command';
 

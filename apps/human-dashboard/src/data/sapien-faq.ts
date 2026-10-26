@@ -65,6 +65,6 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
     id: 'who-can-message',
     question: 'Who can message my agent?',
     answer:
-      "You choose: anyone, or contacts only. With anyone, strangers can message your agent directly. With contacts only, messages from strangers are dropped, not held for review. Add people with an invite link; they verify on email, Telegram or Slack. Before your agent can send to a new email address, that address has to verify.",
+      'You choose: anyone, or contacts only. With anyone, strangers can message your agent directly. With contacts only, messages from strangers are dropped, not held for review. Add people with an invite link; they verify on email, Telegram or Slack. Before your agent can send to a new email address, that address has to verify.',
   },
 ];
