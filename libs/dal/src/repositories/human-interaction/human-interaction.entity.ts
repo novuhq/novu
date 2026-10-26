@@ -3,6 +3,7 @@ import type {
   HumanInteractionKindEnum,
   HumanInteractionResponse,
   HumanInteractionStatusEnum,
+  VoiceCallFailure,
 } from '@novu/shared';
 import { ChangePropsValueType } from '../../types/helpers';
 import { EnvironmentId } from '../environment';
@@ -66,6 +67,12 @@ export class HumanInteractionEntity {
 
   /** When those minutes were reserved. Settlement refunds that Redis day, not `createdAt`. */
   voiceMinutesReservedAt?: string;
+
+  /**
+   * Set when an outbound call never connected. The status is `failed`.
+   * Absent for every other channel and for a call that connected.
+   */
+  voiceFailure?: VoiceCallFailure;
 
   /**
    * Contacts this pending row is calling. A fan-out can mix voice with other

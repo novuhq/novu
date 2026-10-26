@@ -193,6 +193,10 @@ export const envValidators = {
   NOVU_VOICE_ELEVENLABS_AGENT_ID: str({ default: undefined }),
   /** ElevenLabs API key for the shared shell. Not a per-account credential. */
   NOVU_VOICE_ELEVENLABS_API_KEY: str({ default: undefined }),
+  /** ElevenLabs API host. Defaults to the global host. Must match the number's region. */
+  NOVU_VOICE_ELEVENLABS_API_BASE: str({ default: undefined }),
+  /** HMAC secret for the ElevenLabs call-initiation-failure webhook. */
+  NOVU_VOICE_ELEVENLABS_WEBHOOK_SECRET: str({ default: undefined }),
   NOVU_WHATSAPP_APP_ID: str({ default: undefined }),
   NOVU_WHATSAPP_APP_SECRET: str({ default: undefined }),
   NOVU_WHATSAPP_CONFIG_ID: str({ default: undefined }),

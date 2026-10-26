@@ -152,4 +152,50 @@ describe('HumanInteractionSettlementService', () => {
     expect(resumeManagedHuman.execute.calledOnceWithExactly(expired)).to.equal(true);
     expect(resumeToolApprovalFromHitl.execute.calledOnceWithExactly(expired)).to.equal(true);
   });
+
+  it('releases voice minutes once when a call never connects, and not on a second webhook', async () => {
+    const failed = {
+      _id: 'hi1',
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+      identifier: 'hi_1',
+      status: HumanInteractionStatusEnum.FAILED,
+      voiceMinutesReserved: 5,
+      voiceMinutesReservedAt: '2026-01-01T00:00:00.000Z',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      deliveries: [
+        {
+          platform: 'voice',
+          platformMessageId: 'conv_1',
+          platformThreadId: 'CA1',
+          subscriberId: 'sub-1',
+          integrationIdentifier: 'voice-main',
+        },
+      ],
+    };
+    const humanInteractionRepository = {
+      failVoiceIfPending: sinon.stub().onFirstCall().resolves(failed).onSecondCall().resolves(null),
+    };
+    const outboundGateway = { editInConversation: sinon.stub().resolves(undefined) };
+    const releaseReserved = sinon.stub().resolves();
+    const service = new HumanInteractionSettlementService(
+      humanInteractionRepository as any,
+      outboundGateway as any,
+      { execute: sinon.stub().resolves() } as any,
+      { execute: sinon.stub().resolves() } as any,
+      { setContext: sinon.stub(), warn: sinon.stub() } as any,
+      { recordResponse: sinon.stub().resolves() } as any,
+      { releaseReserved } as any
+    );
+    const pending = { _id: 'hi1', _environmentId: 'env1' } as any;
+    const reason = { code: 'voice_busy' as const, message: 'The line was busy.' };
+
+    await service.failVoiceCall(pending, reason);
+    await service.failVoiceCall(pending, reason);
+
+    expect(releaseReserved.calledOnce).to.equal(true);
+    expect(releaseReserved.firstCall.args[0]).to.equal('org1');
+    expect(releaseReserved.firstCall.args[1]).to.equal(5);
+    expect(outboundGateway.editInConversation.called).to.equal(false);
+  });
 });

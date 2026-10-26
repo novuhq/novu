@@ -277,7 +277,7 @@ export class CreateInteraction {
               throw capped;
             }
 
-            const sent = await this.deliveryService.deliver(interaction, target);
+            const sent = await this.deliveryService.deliver(interaction, target, subscriberId);
             messageCredits?.accept();
             const thread = await this.landInThread(scope, interaction, subscriberId, target, sent.platformThreadId);
 

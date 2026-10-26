@@ -1001,6 +1001,10 @@ function cardStateOf(interaction: HumanInteractionEntity, channel: string, peopl
   const status = statusOf(interaction, new Date());
   const { response } = interaction;
 
+  if (status === HumanInteractionStatusEnum.FAILED) {
+    return { status, label: interaction.voiceFailure?.message ?? 'The call failed.' };
+  }
+
   if (status === HumanInteractionStatusEnum.PENDING) {
     const waitingOn = interaction.anyoneMayAnswer
       ? []
@@ -1047,6 +1051,8 @@ function settledLabel(
       return 'no reply needed';
     case HumanInteractionStatusEnum.CANCELED:
       return 'canceled by the agent';
+    case HumanInteractionStatusEnum.FAILED:
+      return 'The call failed.';
     default:
       return 'expired, nobody answered';
   }

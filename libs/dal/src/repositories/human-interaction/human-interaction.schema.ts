@@ -70,6 +70,15 @@ const humanInteractionSchema = new Schema<HumanInteractionDBModel>(
       type: [Schema.Types.String],
       default: undefined,
     },
+    voiceFailure: {
+      type: new Schema(
+        {
+          code: { type: Schema.Types.String, required: true },
+          message: { type: Schema.Types.String, required: true },
+        },
+        { _id: false }
+      ),
+    },
     response: {
       type: new Schema(
         {

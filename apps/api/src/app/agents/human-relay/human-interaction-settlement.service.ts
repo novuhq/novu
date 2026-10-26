@@ -1,7 +1,13 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationEntity, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
-import { HumanInteractionResponse, HumanInteractionStatusEnum, parseToolApprovalRequestId } from '@novu/shared';
+import {
+  HumanChannelViaEnum,
+  HumanInteractionResponse,
+  HumanInteractionStatusEnum,
+  parseToolApprovalRequestId,
+  type VoiceCallFailure,
+} from '@novu/shared';
 import { HumanVoiceMinuteQuotaService } from '../../human/services/human-voice-minute-quota.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { ResumeManagedHuman } from '../managed-runtime/novu-human/resume-managed-human.usecase';
@@ -58,6 +64,35 @@ export class HumanInteractionSettlementService {
     }
 
     return settled;
+  }
+
+  /**
+   * The call never connected. Releases the minute hold and the one-live-call
+   * lock. There is no chat card to edit: the delivery is the phone call itself.
+   */
+  async failVoiceCall(
+    interaction: HumanInteractionEntity,
+    voiceFailure: VoiceCallFailure
+  ): Promise<HumanInteractionEntity | null> {
+    const failed = await this.humanInteractionRepository.failVoiceIfPending(
+      interaction._environmentId,
+      interaction._id,
+      voiceFailure
+    );
+
+    if (!failed) {
+      return null;
+    }
+
+    await this.releaseVoiceReservation(failed);
+    const voiceOnly = (failed.deliveries ?? []).every((delivery) => delivery.platform === HumanChannelViaEnum.VOICE);
+    if (!voiceOnly) {
+      await this.editDeliveredMessage(failed);
+    }
+
+    await this.resumeAfterSettlement(failed);
+
+    return failed;
   }
 
   /**

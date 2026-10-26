@@ -2,7 +2,15 @@ import { ApiClient, unwrap } from './client';
 
 export type InteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
 
-export type InteractionStatus = 'pending' | 'answered' | 'approved' | 'denied' | 'expired' | 'canceled' | 'delivered';
+export type InteractionStatus =
+  | 'pending'
+  | 'answered'
+  | 'approved'
+  | 'denied'
+  | 'expired'
+  | 'canceled'
+  | 'delivered'
+  | 'failed';
 
 export type InteractionOption = { id: string; label: string };
 
@@ -61,6 +69,8 @@ export interface Interaction {
     respondedAt: string;
   };
   failedTo?: string[];
+  /** Set when a voice call never connected. `message` is the sentence to show. */
+  voiceFailure?: { code: string; message: string };
   /**
    * On create: the conversation each message landed in, and how many messages in it were unread.
    * The API calls them threads; the CLI prints them as `conversations`.

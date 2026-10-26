@@ -18,6 +18,7 @@ import {
   HumanChannelViaEnum,
   type HumanContactChannelStatus,
 } from '@novu/shared';
+import { openingLineFor, PlaceVoiceCall } from '../../agents/channels/voice/place-voice-call';
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card.builder';
 import { assertVoiceEnabled, isVoiceFeatureEnabled } from '../../agents/shared/assert-voice-enabled';
@@ -151,7 +152,8 @@ export class HumanDeliveryService {
     private readonly outboundGateway: OutboundGateway,
     private readonly keylessEmailGate: KeylessEmailGateService,
     private readonly featureFlagsService: FeatureFlagsService,
-    private readonly keylessVoiceGate: KeylessVoiceGateService
+    private readonly keylessVoiceGate: KeylessVoiceGateService,
+    private readonly placeVoiceCall: PlaceVoiceCall
   ) {}
 
   async resolveChannel(params: {
@@ -619,13 +621,22 @@ export class HumanDeliveryService {
   /** Delivers the pending message and returns the platform refs for stamping. */
   async deliver(
     interaction: HumanInteractionEntity,
-    target: ResolvedHumanTarget
+    target: ResolvedHumanTarget,
+    subscriberId: string
   ): Promise<{ platformMessageId: string; platformThreadId: string }> {
-    // No call is placed in this ticket. NV-9170 replaces this stamp with the outbound dial.
     if (target.platform === HumanChannelViaEnum.VOICE) {
+      const placed = await this.placeVoiceCall.execute({
+        interactionId: interaction.identifier,
+        environmentId: String(interaction._environmentId),
+        organizationId: String(interaction._organizationId),
+        subscriberId,
+        toNumber: target.platformUserId,
+        openingLine: openingLineFor(interaction),
+      });
+
       return {
-        platformMessageId: `voice:${interaction.identifier}`,
-        platformThreadId: `voice:${interaction.identifier}`,
+        platformMessageId: placed.conversationId,
+        platformThreadId: placed.callSid ?? placed.conversationId,
       };
     }
 

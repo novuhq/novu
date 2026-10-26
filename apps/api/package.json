@@ -42,6 +42,7 @@
     "migration": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly",
     "seed:clickhouse": "cross-env NODE_ENV=local ts-node --transpileOnly scripts/seed-clickhouse.ts",
     "seed:triggers": "cross-env NODE_ENV=local ts-node --transpileOnly scripts/seed-triggers.ts",
+    "provision:voice-shell": "cross-env NODE_ENV=local ts-node --transpileOnly scripts/provision-voice-shell.ts",
     "clickhouse:migrate:local": "clickhouse-migrations migrate --host=http://localhost:8123 --user=default --password= --db=novu-local --migrations-home=./migrations/clickhouse-migrations",
     "clickhouse:migrate:prod": "clickhouse-migrations migrate --migrations-home=./migrations/clickhouse-migrations",
     "link:submodules": "pnpm link ../../enterprise/packages/auth && pnpm link ../../enterprise/packages/translation && pnpm link ../../enterprise/packages/billing",

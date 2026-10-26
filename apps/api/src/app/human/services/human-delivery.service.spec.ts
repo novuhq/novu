@@ -6,6 +6,7 @@ import {
   ENDPOINT_TYPES,
   HumanAddressVerificationStateEnum,
   HumanChannelViaEnum,
+  HumanInteractionKindEnum,
 } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -29,6 +30,10 @@ function emailGate(blocked = false) {
 
 function voiceFlag(enabled = true) {
   return { getFlag: sinon.stub().resolves(enabled) };
+}
+
+function unusedPlaceVoiceCall() {
+  return { execute: sinon.stub() };
 }
 
 function voiceGate(blocked = false) {
@@ -61,7 +66,8 @@ describe('HumanDeliveryService.resolveChannel', () => {
       outboundGateway as never,
       keylessEmailGate as never,
       voiceFlag(options.voiceEnabled ?? true) as never,
-      voiceGate(options.voiceBlocked ?? false) as never
+      voiceGate(options.voiceBlocked ?? false) as never,
+      unusedPlaceVoiceCall() as never
     );
 
     return {
@@ -653,7 +659,8 @@ describe('HumanDeliveryService keyless email', () => {
       { sendDirectMessage: sinon.stub() } as never,
       keylessEmailGate as never,
       voiceFlag() as never,
-      voiceGate() as never
+      voiceGate() as never,
+      unusedPlaceVoiceCall() as never
     );
 
     return { service, humanContactRepository, agentIntegrationRepository, integrationRepository, keylessEmailGate };
@@ -763,7 +770,8 @@ describe('HumanDeliveryService.listInviteChannels', () => {
       {} as never,
       emailGate() as never,
       voiceFlag() as never,
-      voiceGate() as never
+      voiceGate() as never,
+      unusedPlaceVoiceCall() as never
     );
 
     const channels = await service.listInviteChannels({ environmentId: 'env1', organizationId: 'org1', agentId: 'a1' });
@@ -803,7 +811,8 @@ describe('HumanDeliveryService.listWorkingChannels', () => {
       {} as never,
       emailGate() as never,
       voiceFlag() as never,
-      voiceGate() as never
+      voiceGate() as never,
+      unusedPlaceVoiceCall() as never
     );
 
     const channels = await service.listWorkingChannels({
@@ -813,6 +822,76 @@ describe('HumanDeliveryService.listWorkingChannels', () => {
     });
 
     expect(channels).to.deep.equal([HumanChannelViaEnum.TELEGRAM]);
+  });
+});
+
+describe('HumanDeliveryService.deliver', () => {
+  it('stamps the ElevenLabs conversation id and keeps the Twilio call sid', async () => {
+    const placeVoiceCall = {
+      execute: sinon.stub().resolves({ conversationId: 'conv_1', callSid: 'CA1' }),
+    };
+    const service = new HumanDeliveryService(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      emailGate() as never,
+      voiceFlag() as never,
+      voiceGate() as never,
+      placeVoiceCall as never
+    );
+    const interaction = {
+      identifier: 'hi_1',
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+      kind: HumanInteractionKindEnum.APPROVE,
+      content: { cardChrome: { title: 'Approve the deploy?', body: 'Now.' } },
+    };
+
+    const sent = await service.deliver(
+      interaction as never,
+      { platform: HumanChannelViaEnum.VOICE, platformUserId: '+15551212', integrationIdentifier: 'voice-main' },
+      'sub-1'
+    );
+
+    expect(sent).to.deep.equal({ platformMessageId: 'conv_1', platformThreadId: 'CA1' });
+    expect(placeVoiceCall.execute.firstCall.args[0]).to.include({
+      interactionId: 'hi_1',
+      subscriberId: 'sub-1',
+      toNumber: '+15551212',
+      openingLine: 'Approve the deploy? Now.',
+    });
+  });
+
+  it('uses the conversation id as the thread when Twilio does not return a call sid', async () => {
+    const placeVoiceCall = { execute: sinon.stub().resolves({ conversationId: 'conv_1' }) };
+    const service = new HumanDeliveryService(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      emailGate() as never,
+      voiceFlag() as never,
+      voiceGate() as never,
+      placeVoiceCall as never
+    );
+
+    const sent = await service.deliver(
+      {
+        identifier: 'hi_1',
+        _environmentId: 'env1',
+        _organizationId: 'org1',
+        kind: HumanInteractionKindEnum.ASK,
+        content: { cardChrome: { title: 'What is the code?' } },
+      } as never,
+      { platform: HumanChannelViaEnum.VOICE, platformUserId: '+15551212', integrationIdentifier: 'voice-main' },
+      'sub-1'
+    );
+
+    expect(sent.platformMessageId).to.equal('conv_1');
+    expect(sent.platformThreadId).to.equal('conv_1');
   });
 });
 

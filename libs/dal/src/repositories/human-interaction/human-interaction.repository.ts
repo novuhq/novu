@@ -4,6 +4,7 @@ import {
   HumanInteractionKindEnum,
   HumanInteractionResponse,
   HumanInteractionStatusEnum,
+  VoiceCallFailure,
 } from '@novu/shared';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
@@ -232,6 +233,26 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
         expiresAt: { $gte: new Date().toISOString() },
       },
       { $set: { status, ...(response ? { response } : {}) } },
+      { new: true }
+    );
+  }
+
+  /**
+   * A call that never connected. Pending is the guard, so a second webhook
+   * cannot fail the row again or release its minutes twice.
+   */
+  async failVoiceIfPending(
+    environmentId: string,
+    id: string,
+    voiceFailure: VoiceCallFailure
+  ): Promise<HumanInteractionEntity | null> {
+    return this.findOneAndUpdate(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        status: HumanInteractionStatusEnum.PENDING,
+      },
+      { $set: { status: HumanInteractionStatusEnum.FAILED, voiceFailure } },
       { new: true }
     );
   }

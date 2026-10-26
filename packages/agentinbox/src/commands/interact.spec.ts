@@ -24,7 +24,7 @@ const {
   resolveTo,
 } = await import('./interact');
 const { ApiError } = await import('../api/client');
-const { exitCodeFor, EXIT_DENIED, EXIT_GONE, EXIT_OK, EXIT_TIMEOUT } = await import('../output');
+const { exitCodeFor, EXIT_DENIED, EXIT_ERROR, EXIT_GONE, EXIT_OK, EXIT_TIMEOUT } = await import('../output');
 
 type CliConfig = import('../config').CliConfig;
 
@@ -192,6 +192,7 @@ describe('exit code contract', () => {
     expect(exitCodeFor({ ...base, status: 'denied' })).toBe(EXIT_DENIED);
     expect(exitCodeFor({ ...base, status: 'expired' })).toBe(EXIT_GONE);
     expect(exitCodeFor({ ...base, status: 'canceled' })).toBe(EXIT_GONE);
+    expect(exitCodeFor({ ...base, status: 'failed' })).toBe(EXIT_ERROR);
     expect(exitCodeFor({ ...base, status: 'pending' })).toBe(EXIT_TIMEOUT);
   });
 });

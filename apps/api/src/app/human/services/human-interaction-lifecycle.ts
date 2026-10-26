@@ -443,8 +443,8 @@ export async function deliverToTargets(
       .delete({ _id: interaction._id, _environmentId: interaction._environmentId })
       .catch(() => undefined);
 
-    // The inbox cap is a 429 with a reset time. Wrapping it as a gateway error drops that.
-    if (isAgentEmailInboxQuotaExceeded(lastError)) {
+    // A coded failure (voice dial, inbox cap) must keep its code. A generic wrap drops it.
+    if (isAgentEmailInboxQuotaExceeded(lastError) || codedHttpException(lastError)) {
       throw lastError;
     }
 
@@ -487,4 +487,14 @@ export async function deliverToTargets(
   }
 
   return { interaction: delivered, failedSubscriberIds };
+}
+
+function codedHttpException(error: unknown): error is HttpException {
+  if (!(error instanceof HttpException)) {
+    return false;
+  }
+
+  const body = error.getResponse();
+
+  return typeof body === 'object' && body !== null && typeof (body as { code?: unknown }).code === 'string';
 }

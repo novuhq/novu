@@ -13,5 +13,6 @@ export function toAgentHumanResponse(interaction: HumanInteractionEntity): Agent
     optionId: interaction.response?.optionId,
     respondedBy: interaction.response?.respondedBy,
     respondedBySubscriberId: interaction.response?.respondedBySubscriberId,
+    ...(interaction.voiceFailure ? { voiceFailure: interaction.voiceFailure } : {}),
   };
 }
