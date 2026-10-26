@@ -1,12 +1,18 @@
-import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, GatewayTimeoutException, Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { HumanInteractionEntity } from '@novu/dal';
 import { resolveHumanInteractionCard, VoiceCallFailureCodeEnum } from '@novu/shared';
-import { voiceCallFailure, voiceFailureFromDialError } from './voice-call-failure';
+import { unconfirmedVoiceDialBody, voiceCallFailure, voiceFailureFromDialError } from './voice-call-failure';
 import { elevenLabsApiBase, readVoiceChannelConfig } from './voice-config';
 
 /** ElevenLabs retries the failure webhook for about 40 minutes. Two hours covers that. */
 export const VOICE_CALL_REGISTRY_TTL_SECONDS = 2 * 60 * 60;
+
+/** MCP stops waiting for a send after 30 seconds, so one dial has to finish inside that. */
+export const VOICE_DIAL_TIMEOUT_MS = 20_000;
+
+const REGISTRY_WRITE_ATTEMPTS = 3;
+const REGISTRY_RETRY_INTERVAL_MS = 5_000;
 
 const OPENING_LINE_MAX_CHARS = 500;
 
@@ -92,14 +98,24 @@ export class PlaceVoiceCall {
       },
     };
 
-    const response = await fetch(`${elevenLabsApiBase()}/v1/convai/twilio/outbound-call`, {
-      method: 'POST',
-      headers: {
-        'xi-api-key': config.elevenLabsApiKey,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${elevenLabsApiBase()}/v1/convai/twilio/outbound-call`, {
+        method: 'POST',
+        headers: {
+          'xi-api-key': config.elevenLabsApiKey,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(VOICE_DIAL_TIMEOUT_MS),
+      });
+    } catch (err) {
+      if (isDialTimeout(err)) {
+        throw new GatewayTimeoutException(unconfirmedVoiceDialBody());
+      }
+
+      throw new BadGatewayException(voiceCallFailure(VoiceCallFailureCodeEnum.CARRIER_FAILURE));
+    }
     const bodyText = await response.text();
 
     if (!response.ok) {
@@ -126,6 +142,20 @@ export class PlaceVoiceCall {
   }
 
   private async remember(conversationId: string, input: PlaceVoiceCallInput): Promise<void> {
+    for (let attempt = 1; attempt <= REGISTRY_WRITE_ATTEMPTS; attempt += 1) {
+      if (await this.writeRegistry(conversationId, input, true)) {
+        return;
+      }
+    }
+
+    this.retryRegistry(conversationId, input);
+  }
+
+  private async writeRegistry(
+    conversationId: string,
+    input: PlaceVoiceCallInput,
+    logFailure: boolean
+  ): Promise<boolean> {
     try {
       await this.cacheService.set(
         voiceCallRegistryKey(conversationId),
@@ -135,11 +165,44 @@ export class PlaceVoiceCall {
         }),
         { ttl: VOICE_CALL_REGISTRY_TTL_SECONDS, jitter: false }
       );
+
+      return true;
     } catch (err) {
-      this.logger.warn(
-        { err, conversationId, interactionId: input.interactionId },
-        'Voice call was placed but the failure-webhook lookup was not stored'
-      );
+      if (logFailure) {
+        this.logger.warn(
+          { err, conversationId, interactionId: input.interactionId },
+          'Voice call was placed but the failure-webhook lookup was not stored'
+        );
+      }
+
+      return false;
     }
   }
+
+  /** Redis can recover after the dial. The webhook keeps retrying for about 40 minutes. */
+  private retryRegistry(conversationId: string, input: PlaceVoiceCallInput): void {
+    const startedAt = Date.now();
+    const retryWindowMs = VOICE_CALL_REGISTRY_TTL_SECONDS * 1000;
+    const timer = setInterval(() => {
+      void this.writeRegistry(conversationId, input, false).then((saved) => {
+        const expired = Date.now() - startedAt >= retryWindowMs;
+        if (!saved && !expired) {
+          return;
+        }
+
+        clearInterval(timer);
+        if (!saved) {
+          this.logger.warn(
+            { conversationId, interactionId: input.interactionId },
+            'Stopped retrying the voice-call failure lookup'
+          );
+        }
+      });
+    }, REGISTRY_RETRY_INTERVAL_MS);
+    timer.unref?.();
+  }
+}
+
+function isDialTimeout(err: unknown): boolean {
+  return err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError');
 }

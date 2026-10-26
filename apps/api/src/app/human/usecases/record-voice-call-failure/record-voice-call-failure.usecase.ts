@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import { HumanInteractionRepository } from '@novu/dal';
 import { voiceCallRegistryKey } from '../../../agents/channels/voice/place-voice-call';
@@ -15,8 +15,9 @@ interface VoiceCallRegistryEntry {
 
 /**
  * ElevenLabs reports busy, no-answer, and carrier failures after the dial has
- * already returned a conversation id. A missing lookup still returns success
- * so a retry storm cannot disable the webhook.
+ * already returned a conversation id. An unknown conversation returns success
+ * so a retry storm cannot disable the webhook. A known call whose delivery is
+ * not stored yet asks ElevenLabs to retry.
  */
 @Injectable()
 export class RecordVoiceCallFailure {
@@ -48,20 +49,15 @@ export class RecordVoiceCallFailure {
       return;
     }
 
-    const interaction = await this.humanInteractionRepository.findPendingByPlatformMessageId(entry.environmentId, [
+    const interaction = await this.humanInteractionRepository.findByPlatformMessageId(entry.environmentId, [
       conversationId,
     ]);
     if (!interaction) {
-      this.logger.warn(
-        { conversationId, environmentId: entry.environmentId },
-        'Voice initiation failure matched no pending call'
-      );
-
-      return;
+      throw new ServiceUnavailableException('The voice call is not stored yet.');
     }
 
     const failure = voiceFailureFromInitiation(event);
-    const settled = await this.settlement.failVoiceCall(interaction, failure);
+    const settled = await this.settlement.failVoiceCall(interaction, failure, conversationId);
     if (!settled) {
       this.logger.warn({ conversationId, interactionId: interaction.identifier }, 'Voice call was no longer pending');
     }

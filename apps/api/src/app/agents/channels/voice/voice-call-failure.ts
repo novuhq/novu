@@ -1,4 +1,8 @@
+import { HttpException } from '@nestjs/common';
 import { VoiceCallFailure, VoiceCallFailureCodeEnum } from '@novu/shared';
+
+/** The dial request ended before ElevenLabs confirmed it. The phone may still be ringing. */
+export const VOICE_DIAL_UNCONFIRMED_CODE = 'voice_dial_unconfirmed';
 
 const MESSAGES: Record<VoiceCallFailureCodeEnum, string> = {
   [VoiceCallFailureCodeEnum.BUSY]: 'The line was busy.',
@@ -16,6 +20,23 @@ const REJECTED_SIP_CODES = new Set(['603', '607']);
 
 export function voiceCallFailure(code: VoiceCallFailureCodeEnum): VoiceCallFailure {
   return { code, message: MESSAGES[code] };
+}
+
+export function unconfirmedVoiceDialBody(): { code: string; message: string } {
+  return {
+    code: VOICE_DIAL_UNCONFIRMED_CODE,
+    message: 'The call was not confirmed in time. It may still be ringing, so wait before calling this person again.',
+  };
+}
+
+export function isUnconfirmedVoiceDial(error: unknown): boolean {
+  if (!(error instanceof HttpException)) {
+    return false;
+  }
+
+  const body = error.getResponse();
+
+  return typeof body === 'object' && body !== null && (body as { code?: unknown }).code === VOICE_DIAL_UNCONFIRMED_CODE;
 }
 
 export interface CallInitiationFailureEvent {

@@ -154,27 +154,31 @@ describe('HumanInteractionSettlementService', () => {
   });
 
   it('releases voice minutes once when a call never connects, and not on a second webhook', async () => {
-    const failed = {
+    const delivery = {
+      platform: 'voice',
+      platformMessageId: 'conv_1',
+      platformThreadId: 'CA1',
+      subscriberId: 'sub-1',
+      integrationIdentifier: 'voice-main',
+    };
+    const reason = { code: 'voice_busy' as const, message: 'The line was busy.' };
+    const marked = {
       _id: 'hi1',
       _environmentId: 'env1',
       _organizationId: 'org1',
       identifier: 'hi_1',
-      status: HumanInteractionStatusEnum.FAILED,
+      kind: HumanInteractionKindEnum.ASK,
+      status: HumanInteractionStatusEnum.PENDING,
       voiceMinutesReserved: 5,
       voiceMinutesReservedAt: '2026-01-01T00:00:00.000Z',
       createdAt: '2026-01-01T00:00:00.000Z',
-      deliveries: [
-        {
-          platform: 'voice',
-          platformMessageId: 'conv_1',
-          platformThreadId: 'CA1',
-          subscriberId: 'sub-1',
-          integrationIdentifier: 'voice-main',
-        },
-      ],
+      voiceSubscriberIds: [],
+      deliveries: [{ ...delivery, voiceFailure: reason }],
     };
+    const failed = { ...marked, status: HumanInteractionStatusEnum.FAILED, voiceFailure: reason };
     const humanInteractionRepository = {
-      failVoiceIfPending: sinon.stub().onFirstCall().resolves(failed).onSecondCall().resolves(null),
+      markVoiceDeliveryFailed: sinon.stub().onFirstCall().resolves(marked).onSecondCall().resolves(null),
+      failVoiceIfOpen: sinon.stub().resolves(failed),
     };
     const outboundGateway = { editInConversation: sinon.stub().resolves(undefined) };
     const releaseReserved = sinon.stub().resolves();
@@ -187,15 +191,131 @@ describe('HumanInteractionSettlementService', () => {
       { recordResponse: sinon.stub().resolves() } as any,
       { releaseReserved } as any
     );
-    const pending = { _id: 'hi1', _environmentId: 'env1' } as any;
-    const reason = { code: 'voice_busy' as const, message: 'The line was busy.' };
+    const pending = {
+      _id: 'hi1',
+      _environmentId: 'env1',
+      kind: HumanInteractionKindEnum.ASK,
+      status: HumanInteractionStatusEnum.PENDING,
+      deliveries: [delivery],
+    } as any;
 
-    await service.failVoiceCall(pending, reason);
-    await service.failVoiceCall(pending, reason);
+    await service.failVoiceCall(pending, reason, 'conv_1');
+    await service.failVoiceCall(pending, reason, 'conv_1');
 
     expect(releaseReserved.calledOnce).to.equal(true);
     expect(releaseReserved.firstCall.args[0]).to.equal('org1');
     expect(releaseReserved.firstCall.args[1]).to.equal(5);
     expect(outboundGateway.editInConversation.called).to.equal(false);
+  });
+
+  it('keeps the interaction open when another recipient can still answer', async () => {
+    const reason = { code: 'voice_busy' as const, message: 'The line was busy.' };
+    const marked = {
+      _id: 'hi1',
+      _environmentId: 'env1',
+      identifier: 'hi_1',
+      kind: HumanInteractionKindEnum.ASK,
+      status: HumanInteractionStatusEnum.PENDING,
+      voiceSubscriberIds: [],
+      deliveries: [
+        {
+          platform: 'voice',
+          platformMessageId: 'conv_1',
+          platformThreadId: 'CA1',
+          subscriberId: 'sub-1',
+          integrationIdentifier: 'voice-main',
+          voiceFailure: reason,
+        },
+        {
+          platform: 'telegram',
+          platformMessageId: 'msg-2',
+          platformThreadId: 'thread-2',
+          subscriberId: 'sub-2',
+          integrationIdentifier: 'telegram-main',
+        },
+      ],
+    };
+    const humanInteractionRepository = {
+      markVoiceDeliveryFailed: sinon.stub().resolves(marked),
+      failVoiceIfOpen: sinon.stub().resolves(null),
+    };
+    const releaseReserved = sinon.stub().resolves();
+    const resume = sinon.stub().resolves();
+    const service = new HumanInteractionSettlementService(
+      humanInteractionRepository as any,
+      { editInConversation: sinon.stub().resolves() } as any,
+      { execute: resume } as any,
+      { execute: sinon.stub().resolves() } as any,
+      { setContext: sinon.stub(), warn: sinon.stub() } as any,
+      { recordResponse: sinon.stub().resolves() } as any,
+      { releaseReserved } as any
+    );
+    const pending = {
+      _id: 'hi1',
+      _environmentId: 'env1',
+      kind: HumanInteractionKindEnum.ASK,
+      deliveries: marked.deliveries.map((delivery) => ({ ...delivery, voiceFailure: undefined })),
+    } as any;
+
+    const result = await service.failVoiceCall(pending, reason, 'conv_1');
+
+    expect(result).to.equal(marked);
+    expect(humanInteractionRepository.failVoiceIfOpen.called).to.equal(false);
+    expect(releaseReserved.called).to.equal(false);
+    expect(resume.called).to.equal(false);
+  });
+
+  it('records a busy tell after the dial was accepted', async () => {
+    const reason = { code: 'voice_busy' as const, message: 'The line was busy.' };
+    const delivery = {
+      platform: 'voice',
+      platformMessageId: 'conv_1',
+      platformThreadId: 'CA1',
+      subscriberId: 'sub-1',
+      integrationIdentifier: 'voice-main',
+    };
+    const marked = {
+      _id: 'hi1',
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+      identifier: 'hi_1',
+      kind: HumanInteractionKindEnum.TELL,
+      status: HumanInteractionStatusEnum.DELIVERED,
+      deliveries: [{ ...delivery, voiceFailure: reason }],
+    };
+    const failed = { ...marked, status: HumanInteractionStatusEnum.FAILED, voiceFailure: reason };
+    const humanInteractionRepository = {
+      markVoiceDeliveryFailed: sinon.stub().resolves(marked),
+      failVoiceIfOpen: sinon.stub().resolves(failed),
+    };
+    const releaseReserved = sinon.stub().resolves();
+    const service = new HumanInteractionSettlementService(
+      humanInteractionRepository as any,
+      { editInConversation: sinon.stub().resolves() } as any,
+      { execute: sinon.stub().resolves() } as any,
+      { execute: sinon.stub().resolves() } as any,
+      { setContext: sinon.stub(), warn: sinon.stub() } as any,
+      { recordResponse: sinon.stub().resolves() } as any,
+      { releaseReserved } as any
+    );
+
+    await service.failVoiceCall(
+      {
+        _id: 'hi1',
+        _environmentId: 'env1',
+        kind: HumanInteractionKindEnum.TELL,
+        status: HumanInteractionStatusEnum.DELIVERED,
+        deliveries: [delivery],
+      } as any,
+      reason,
+      'conv_1'
+    );
+
+    expect(humanInteractionRepository.failVoiceIfOpen.calledOnce).to.equal(true);
+    expect(humanInteractionRepository.failVoiceIfOpen.firstCall.args[3]).to.deep.equal([
+      HumanInteractionStatusEnum.PENDING,
+      HumanInteractionStatusEnum.DELIVERED,
+    ]);
+    expect(releaseReserved.called).to.equal(false);
   });
 });

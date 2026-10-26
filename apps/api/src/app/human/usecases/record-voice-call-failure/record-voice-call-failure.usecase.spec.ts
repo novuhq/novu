@@ -1,3 +1,4 @@
+import { ServiceUnavailableException } from '@nestjs/common';
 import { HumanInteractionStatusEnum, VoiceCallFailureCodeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -21,7 +22,7 @@ describe('RecordVoiceCallFailure', () => {
       status: HumanInteractionStatusEnum.PENDING,
     };
     const humanInteractionRepository = {
-      findPendingByPlatformMessageId: sinon.stub().resolves(interaction),
+      findByPlatformMessageId: sinon.stub().resolves(interaction),
     };
     const settlement = {
       failVoiceCall: sinon.stub().resolves({ ...interaction, status: HumanInteractionStatusEnum.FAILED }),
@@ -45,16 +46,31 @@ describe('RecordVoiceCallFailure', () => {
     expect(cacheService.get.calledOnceWith(voiceCallRegistryKey('conv_1'))).to.equal(true);
     expect(settlement.failVoiceCall.calledOnce).to.equal(true);
     expect(settlement.failVoiceCall.firstCall.args[1].code).to.equal(VoiceCallFailureCodeEnum.BUSY);
+    expect(settlement.failVoiceCall.firstCall.args[2]).to.equal('conv_1');
   });
 
-  it('does not fail the call again when the conversation is no longer pending', async () => {
+  it('does not throw when the call was already recorded', async () => {
+    const { usecase, settlement } = setup();
+    settlement.failVoiceCall.onSecondCall().resolves(null);
+
+    await usecase.execute(event);
+    await usecase.execute(event);
+
+    expect(settlement.failVoiceCall.calledTwice).to.equal(true);
+  });
+
+  it('asks the provider to retry when the dial is known but not stored yet', async () => {
     const { usecase, humanInteractionRepository, settlement } = setup();
-    humanInteractionRepository.findPendingByPlatformMessageId.onSecondCall().resolves(null);
+    humanInteractionRepository.findByPlatformMessageId.resolves(null);
 
-    await usecase.execute(event);
-    await usecase.execute(event);
+    try {
+      await usecase.execute(event);
+      expect.fail('expected a retry');
+    } catch (err) {
+      expect(err).to.be.instanceOf(ServiceUnavailableException);
+    }
 
-    expect(settlement.failVoiceCall.calledOnce).to.equal(true);
+    expect(settlement.failVoiceCall.called).to.equal(false);
   });
 
   it('acknowledges a failure whose lookup has expired', async () => {

@@ -28,6 +28,7 @@ function pendingVoiceFilter(environmentId: string, subscriberIds: string[]) {
           $elemMatch: {
             platform: HumanChannelViaEnum.VOICE,
             subscriberId: subscriberMatch,
+            voiceFailure: { $exists: false },
           },
         },
       },
@@ -153,6 +154,24 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     );
   }
 
+  /** Any status. A voice failure can arrive after a tell has already been marked delivered. */
+  async findByPlatformMessageId(
+    environmentId: string,
+    platformMessageIds: string[]
+  ): Promise<HumanInteractionEntity | null> {
+    if (platformMessageIds.length === 0) {
+      return null;
+    }
+
+    return this.findOne(
+      {
+        _environmentId: environmentId,
+        'deliveries.platformMessageId': { $in: platformMessageIds },
+      },
+      '*'
+    );
+  }
+
   /** The interactions behind the cards of an inbox thread, by their public identifiers. */
   async findByIdentifiers(
     environmentId: string,
@@ -238,23 +257,75 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
   }
 
   /**
-   * A call that never connected. Pending is the guard, so a second webhook
-   * cannot fail the row again or release its minutes twice.
+   * One recipient's call never connected. A second webhook for that conversation
+   * does not match. The row stays open when someone else can still answer.
    */
+  async markVoiceDeliveryFailed(
+    environmentId: string,
+    id: string,
+    platformMessageId: string,
+    subscriberId: string,
+    voiceFailure: VoiceCallFailure,
+    statuses: HumanInteractionStatusEnum[]
+  ): Promise<HumanInteractionEntity | null> {
+    if (statuses.length === 0) {
+      return null;
+    }
+
+    return this.findOneAndUpdate(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        status: { $in: statuses },
+        deliveries: {
+          $elemMatch: {
+            platformMessageId,
+            voiceFailure: { $exists: false },
+          },
+        },
+      },
+      {
+        $set: { 'deliveries.$[failed].voiceFailure': voiceFailure },
+        $pull: { voiceSubscriberIds: subscriberId },
+      },
+      {
+        new: true,
+        arrayFilters: [{ 'failed.platformMessageId': platformMessageId, 'failed.voiceFailure': { $exists: false } }],
+      }
+    );
+  }
+
+  /**
+   * The interaction itself failed. Pending is the usual guard. A voice tell is
+   * already `delivered` once the dial is accepted, and can still fail here.
+   */
+  async failVoiceIfOpen(
+    environmentId: string,
+    id: string,
+    voiceFailure: VoiceCallFailure,
+    statuses: HumanInteractionStatusEnum[]
+  ): Promise<HumanInteractionEntity | null> {
+    if (statuses.length === 0) {
+      return null;
+    }
+
+    return this.findOneAndUpdate(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        status: { $in: statuses },
+      },
+      { $set: { status: HumanInteractionStatusEnum.FAILED, voiceFailure } },
+      { new: true }
+    );
+  }
+
   async failVoiceIfPending(
     environmentId: string,
     id: string,
     voiceFailure: VoiceCallFailure
   ): Promise<HumanInteractionEntity | null> {
-    return this.findOneAndUpdate(
-      {
-        _id: id,
-        _environmentId: environmentId,
-        status: HumanInteractionStatusEnum.PENDING,
-      },
-      { $set: { status: HumanInteractionStatusEnum.FAILED, voiceFailure } },
-      { new: true }
-    );
+    return this.failVoiceIfOpen(environmentId, id, voiceFailure, [HumanInteractionStatusEnum.PENDING]);
   }
 
   async markDeliveredIfPending(environmentId: string, id: string): Promise<HumanInteractionEntity | null> {

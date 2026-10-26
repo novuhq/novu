@@ -1,4 +1,4 @@
-import { BadGatewayException } from '@nestjs/common';
+import { BadGatewayException, GatewayTimeoutException } from '@nestjs/common';
 import { HumanInteractionKindEnum, VoiceCallFailureCodeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -87,6 +87,7 @@ describe('PlaceVoiceCall', () => {
     const bodies = fetchStub.getCalls().map((call) => {
       expect(String(call.args[0])).to.equal('https://api.elevenlabs.test/v1/convai/twilio/outbound-call');
       expect((call.args[1] as RequestInit).method).to.equal('POST');
+      expect((call.args[1] as RequestInit).signal).to.be.instanceOf(AbortSignal);
 
       return JSON.parse(String((call.args[1] as RequestInit).body));
     });
@@ -127,6 +128,70 @@ describe('PlaceVoiceCall', () => {
       expect(err).to.be.instanceOf(BadGatewayException);
       expect((err as BadGatewayException).getResponse()).to.include({ code: VoiceCallFailureCodeEnum.INVALID_NUMBER });
     }
+  });
+
+  it('reports an unconfirmed dial when ElevenLabs does not answer in time', async () => {
+    const timeout = new Error('timed out');
+    timeout.name = 'TimeoutError';
+    sinon.stub(globalThis, 'fetch').rejects(timeout);
+    const { place, cacheService } = service();
+
+    try {
+      await place.execute({
+        interactionId: 'hi_1',
+        environmentId: 'env1',
+        organizationId: 'org1',
+        subscriberId: 'sub-1',
+        toNumber: '+15551212',
+        openingLine: 'Hello',
+      });
+      expect.fail('expected an unconfirmed dial');
+    } catch (err) {
+      expect(err).to.be.instanceOf(GatewayTimeoutException);
+      expect((err as GatewayTimeoutException).getResponse()).to.include({ code: 'voice_dial_unconfirmed' });
+    }
+
+    expect(cacheService.set.called).to.equal(false);
+  });
+
+  it('retries the call lookup and still reports the dial when Redis fails twice', async () => {
+    sinon.stub(globalThis, 'fetch').resolves(ok('conv_a'));
+    const { place, cacheService } = service();
+    cacheService.set.onFirstCall().rejects(new Error('redis down'));
+    cacheService.set.onSecondCall().rejects(new Error('redis down'));
+    cacheService.set.onThirdCall().resolves('OK');
+
+    const placed = await place.execute({
+      interactionId: 'hi_1',
+      environmentId: 'env1',
+      organizationId: 'org1',
+      subscriberId: 'sub-1',
+      toNumber: '+15551212',
+      openingLine: 'Hello',
+    });
+
+    expect(placed.conversationId).to.equal('conv_a');
+    expect(cacheService.set.calledThrice).to.equal(true);
+  });
+
+  it('keeps the placed call and retries the lookup later when Redis stays down', async () => {
+    sinon.stub(globalThis, 'fetch').resolves(ok('conv_a'));
+    const timer = sinon.stub(global, 'setInterval').returns(0 as unknown as ReturnType<typeof setInterval>);
+    const { place, cacheService } = service();
+    cacheService.set.rejects(new Error('redis down'));
+
+    const placed = await place.execute({
+      interactionId: 'hi_1',
+      environmentId: 'env1',
+      organizationId: 'org1',
+      subscriberId: 'sub-1',
+      toNumber: '+15551212',
+      openingLine: 'Hello',
+    });
+
+    expect(placed.conversationId).to.equal('conv_a');
+    expect(cacheService.set.callCount).to.equal(3);
+    expect(timer.calledOnce).to.equal(true);
   });
 });
 

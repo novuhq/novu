@@ -99,6 +99,8 @@ export interface HumanInteractionDelivery {
   platform: string;
   platformMessageId: string;
   platformThreadId: string;
+  /** This recipient's call never connected. Other recipients on the row can still answer. */
+  voiceFailure?: VoiceCallFailure;
 }
 
 export function primaryHumanInteractionDelivery(

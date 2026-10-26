@@ -42,6 +42,7 @@ describe('CreateInteraction', () => {
       create: sinon.stub().resolves(created),
       update: sinon.stub().resolves(undefined),
       stampDelivery: sinon.stub().resolves(undefined),
+      findByIdentifier: sinon.stub().resolves(null),
       markDeliveredIfPending: sinon.stub().resolves({ ...created, status: HumanInteractionStatusEnum.DELIVERED }),
       delete: sinon.stub().resolves(undefined),
     };
@@ -132,7 +133,10 @@ describe('CreateInteraction', () => {
     const voiceMinuteQuota = {
       reserveMinutes: sinon.stub().resolves(voiceCredits),
     };
-    const settlement = { expireIfOverdue: sinon.stub().callsFake(async (interaction) => interaction) };
+    const settlement = {
+      expireIfOverdue: sinon.stub().callsFake(async (interaction) => interaction),
+      closeVoiceCallIfUnanswerable: sinon.stub().resolves(null),
+    };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
@@ -661,7 +665,7 @@ describe('CreateInteraction', () => {
 
     expect(deliveryService.resolveChannel.calledTwice).to.equal(true);
     expect(deliveryService.deliver.calledTwice).to.equal(true);
-    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].deliveries).to.have.length(2);
+    expect(humanInteractionRepository.stampDelivery.lastCall.args[2].deliveries).to.have.length(2);
     expect(result.to).to.deep.equal(['sub-1', 'sub-2']);
   });
 
@@ -724,9 +728,8 @@ describe('CreateInteraction', () => {
     const result = await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any);
 
     expect(humanInteractionRepository.delete.called).to.equal(false);
-    expect(humanInteractionRepository.stampDelivery.calledOnce).to.equal(true);
-    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].deliveries).to.have.length(1);
-    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberIds).to.deep.equal(['sub-1']);
+    expect(humanInteractionRepository.stampDelivery.lastCall.args[2].deliveries).to.have.length(1);
+    expect(humanInteractionRepository.stampDelivery.lastCall.args[2].subscriberIds).to.deep.equal(['sub-1']);
     expect(result.to).to.deep.equal(['sub-1']);
     expect(result.failedTo).to.deep.equal(['sub-2']);
     expect(result.id).to.equal('hi_1');
@@ -750,7 +753,7 @@ describe('CreateInteraction', () => {
 
     const result = await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any);
 
-    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberIds).to.deep.equal(['sub-2']);
+    expect(humanInteractionRepository.stampDelivery.lastCall.args[2].subscriberIds).to.deep.equal(['sub-2']);
     expect(result.to).to.deep.equal(['sub-2']);
     expect(result.failedTo).to.deep.equal(['sub-1']);
   });

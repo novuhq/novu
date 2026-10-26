@@ -3,6 +3,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { ConversationEntity, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
 import {
   HumanChannelViaEnum,
+  HumanInteractionKindEnum,
   HumanInteractionResponse,
   HumanInteractionStatusEnum,
   parseToolApprovalRequestId,
@@ -67,32 +68,66 @@ export class HumanInteractionSettlementService {
   }
 
   /**
-   * The call never connected. Releases the minute hold and the one-live-call
-   * lock. There is no chat card to edit: the delivery is the phone call itself.
+   * One recipient's call never connected. The interaction fails only when nobody
+   * else can still answer. Minutes for a partial failure stay on the row until
+   * that later settlement, which returns them once.
    */
   async failVoiceCall(
     interaction: HumanInteractionEntity,
-    voiceFailure: VoiceCallFailure
+    voiceFailure: VoiceCallFailure,
+    conversationId: string
   ): Promise<HumanInteractionEntity | null> {
-    const failed = await this.humanInteractionRepository.failVoiceIfPending(
-      interaction._environmentId,
-      interaction._id,
-      voiceFailure
-    );
-
-    if (!failed) {
+    const delivery = (interaction.deliveries ?? []).find((item) => item.platformMessageId === conversationId);
+    if (!delivery) {
       return null;
     }
 
-    await this.releaseVoiceReservation(failed);
-    const voiceOnly = (failed.deliveries ?? []).every((delivery) => delivery.platform === HumanChannelViaEnum.VOICE);
-    if (!voiceOnly) {
-      await this.editDeliveredMessage(failed);
+    const statuses = openVoiceFailureStatuses(interaction);
+    const marked = await this.humanInteractionRepository.markVoiceDeliveryFailed(
+      interaction._environmentId,
+      interaction._id,
+      conversationId,
+      delivery.subscriberId,
+      voiceFailure,
+      statuses
+    );
+
+    if (!marked) {
+      return null;
     }
 
-    await this.resumeAfterSettlement(failed);
+    if (voiceCallCanStillBeAnswered(marked, false)) {
+      return marked;
+    }
 
-    return failed;
+    return this.finishFailedVoiceCall(marked, voiceFailure, statuses);
+  }
+
+  /**
+   * After every recipient has been dialed, close a call that no longer has
+   * anyone who can answer. In-flight webhooks leave the row open while later
+   * recipients are still being placed.
+   */
+  async closeVoiceCallIfUnanswerable(interaction: HumanInteractionEntity): Promise<HumanInteractionEntity | null> {
+    const current =
+      (await this.humanInteractionRepository.findByIdentifier(interaction._environmentId, interaction.identifier)) ??
+      interaction;
+    const statuses = openVoiceFailureStatuses(current);
+
+    if (!statuses.includes(current.status)) {
+      return current.status === HumanInteractionStatusEnum.FAILED ? current : null;
+    }
+
+    if (voiceCallCanStillBeAnswered(current, true)) {
+      return null;
+    }
+
+    const voiceFailure = current.deliveries?.find((delivery) => delivery.voiceFailure)?.voiceFailure;
+    if (!voiceFailure) {
+      return null;
+    }
+
+    return this.finishFailedVoiceCall(current, voiceFailure, statuses);
   }
 
   /**
@@ -141,6 +176,33 @@ export class HumanInteractionSettlementService {
    * agents edit it in place), so editing here too would double-write and race
    * the managed delete.
    */
+  private async finishFailedVoiceCall(
+    interaction: HumanInteractionEntity,
+    voiceFailure: VoiceCallFailure,
+    statuses: HumanInteractionStatusEnum[]
+  ): Promise<HumanInteractionEntity | null> {
+    const failed = await this.humanInteractionRepository.failVoiceIfOpen(
+      interaction._environmentId,
+      interaction._id,
+      voiceFailure,
+      statuses
+    );
+
+    if (!failed) {
+      return null;
+    }
+
+    await this.releaseVoiceReservation(failed);
+    const voiceOnly = (failed.deliveries ?? []).every((delivery) => delivery.platform === HumanChannelViaEnum.VOICE);
+    if (!voiceOnly) {
+      await this.editDeliveredMessage(failed);
+    }
+
+    await this.resumeAfterSettlement(failed);
+
+    return failed;
+  }
+
   /** Exactly one of settle or expiry wins the pending flip, so the minutes are returned once. */
   private async releaseVoiceReservation(interaction: HumanInteractionEntity): Promise<void> {
     const minutes = interaction.voiceMinutesReserved;
@@ -171,4 +233,36 @@ export class HumanInteractionSettlementService {
     await this.resumeManagedHuman.execute(interaction);
     await this.resumeToolApprovalFromHitl.execute(interaction);
   }
+}
+
+function openVoiceFailureStatuses(interaction: Pick<HumanInteractionEntity, 'kind'>): HumanInteractionStatusEnum[] {
+  if (interaction.kind === HumanInteractionKindEnum.TELL) {
+    return [HumanInteractionStatusEnum.PENDING, HumanInteractionStatusEnum.DELIVERED];
+  }
+
+  return [HumanInteractionStatusEnum.PENDING];
+}
+
+/**
+ * A non-voice delivery can still be answered. A voice delivery can, until it
+ * has a failure. While the fan-out is still dialing, a contact with no delivery
+ * yet is not a reason to close the row.
+ */
+function voiceCallCanStillBeAnswered(interaction: HumanInteractionEntity, fanOutComplete: boolean): boolean {
+  const deliveries = interaction.deliveries ?? [];
+
+  if (!fanOutComplete) {
+    const stillDialing = (interaction.voiceSubscriberIds ?? []).some(
+      (subscriberId) =>
+        !deliveries.some(
+          (delivery) => delivery.subscriberId === subscriberId && delivery.platform === HumanChannelViaEnum.VOICE
+        )
+    );
+
+    if (stillDialing) {
+      return true;
+    }
+  }
+
+  return deliveries.some((delivery) => delivery.platform !== HumanChannelViaEnum.VOICE || !delivery.voiceFailure);
 }
