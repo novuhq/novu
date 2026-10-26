@@ -154,6 +154,41 @@ export function siteStructuredData(page: SitePage) {
   return contentStructuredData(SITE_PAGES[page]);
 }
 
+/**
+ * Novu, which the page footer names as who runs this inbox. The office and the support address are the ones
+ * Novu publishes in its privacy policy (https://novu.co/privacy). That policy gives no phone number.
+ */
+export function publisherOrganization(id = 'https://novu.co/#organization') {
+  return {
+    '@type': 'Organization' as const,
+    '@id': id,
+    name: 'Novu',
+    legalName: 'Noti-Fire Apps Ltd.',
+    description: 'Novu runs Agent Inbox and builds open-source notification infrastructure.',
+    url: 'https://novu.co/',
+    logo: {
+      '@type': 'ImageObject' as const,
+      url: `${SITE_ORIGIN}/illustrations/novu-logo.svg`,
+      width: 63,
+      height: 20,
+    },
+    email: 'support@novu.co',
+    address: {
+      '@type': 'PostalAddress' as const,
+      streetAddress: 'Derech Ben Gurion 132',
+      addressLocality: 'Ramat Gan',
+      addressCountry: 'IL',
+    },
+    contactPoint: {
+      '@type': 'ContactPoint' as const,
+      contactType: 'customer support',
+      email: 'support@novu.co',
+      url: 'https://novu.co/',
+    },
+    sameAs: ['https://github.com/novuhq'],
+  };
+}
+
 /** What search engines read about any website page (JSON-LD). */
 export function contentStructuredData(content: Pick<PageContent, 'path' | 'title' | 'description'>) {
   const url = `${SITE_ORIGIN}${content.path}`;
@@ -163,12 +198,7 @@ export function contentStructuredData(content: Pick<PageContent, 'path' | 'title
   return {
     '@context': 'https://schema.org',
     '@graph': [
-      {
-        '@type': 'Organization',
-        '@id': publisher,
-        name: 'Novu',
-        url: 'https://novu.co/',
-      },
+      publisherOrganization(publisher),
       {
         '@type': 'WebSite',
         '@id': website,
