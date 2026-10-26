@@ -6,6 +6,7 @@ import {
   HumanInteractionStatusEnum,
   VoiceCallFailure,
 } from '@novu/shared';
+import { Types } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
 import { HumanInteractionDBModel, HumanInteractionDelivery, HumanInteractionEntity } from './human-interaction.entity';
@@ -263,7 +264,8 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     const $set: Record<string, unknown> = {
       deliveries: deliveriesKeepingStoredFailures(delivery.deliveries),
     };
-    if (delivery._conversationId) $set._conversationId = delivery._conversationId;
+    // Pipeline updates skip Mongoose casts. This field is stored as an ObjectId.
+    if (delivery._conversationId) $set._conversationId = new Types.ObjectId(delivery._conversationId);
     if (delivery.subscriberIds) $set.subscriberIds = delivery.subscriberIds;
 
     await this.update({ _id: id, _environmentId: environmentId }, [{ $set }] as never);

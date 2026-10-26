@@ -319,7 +319,9 @@ export class CreateInteraction {
       return toInteractionResponse(deliveredInteraction, delivered.failedSubscriberIds, threads);
     } catch (err) {
       if (isUnconfirmedVoiceDial(err)) {
-        voiceCredits?.accept(await this.voiceMinutesStillHeld(createdInteraction));
+        // A failed reload must not refund a call that may still be ringing.
+        const kept = await this.voiceMinutesStillHeld(createdInteraction).catch(() => undefined);
+        voiceCredits?.accept(kept);
         voiceHoldRecorded = true;
       } else {
         await this.clearUnrecordedVoiceHold(createdInteraction, voiceHoldRecorded);

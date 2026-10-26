@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  GatewayTimeoutException,
   HttpException,
   HttpStatus,
   NotFoundException,
@@ -16,6 +17,7 @@ import {
 } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { unconfirmedVoiceDialBody } from '../../../agents/channels/voice/voice-call-failure';
 import { contactIdFromEmail } from '../../services/explicit-email-recipient';
 import { HumanKeylessCapService } from '../../services/human-keyless-cap.service';
 import { HumanMessageQuotaExceededException } from '../../services/human-message-quota.service';
@@ -299,6 +301,35 @@ describe('CreateInteraction', () => {
 
       expect(humanInteractionRepository.replaceVoiceHold.firstCall.args).to.deep.equal(['env1', 'hi1', 5, 0, []]);
       expect(voiceCredits.accept.calledOnceWithExactly(0)).to.equal(true);
+    });
+
+    it('keeps the full voice hold when an unconfirmed dial cannot be reloaded', async () => {
+      const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository, voiceCredits } =
+        setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'voice-main',
+        platform: HumanChannelViaEnum.VOICE,
+        platformUserId: '+15551212',
+      });
+      humanInteractionRepository.create.resolves({
+        ...created,
+        voiceMinutesReserved: 5,
+        voiceSubscriberIds: ['sub-1'],
+      });
+      deliveryService.deliver.rejects(new GatewayTimeoutException(unconfirmedVoiceDialBody()));
+      humanInteractionRepository.findByIdentifier.rejects(new Error('mongo down'));
+
+      try {
+        await usecase.execute(command as never);
+        expect.fail('expected the unconfirmed dial');
+      } catch (err) {
+        expect(err).to.be.instanceOf(GatewayTimeoutException);
+        expect((err as GatewayTimeoutException).getResponse()).to.include({ code: 'voice_dial_unconfirmed' });
+      }
+
+      expect(voiceCredits.accept.calledOnceWithExactly(undefined)).to.equal(true);
+      expect(humanInteractionRepository.update.called).to.equal(false);
     });
   });
 
