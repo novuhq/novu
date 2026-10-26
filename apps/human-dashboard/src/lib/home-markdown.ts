@@ -16,6 +16,7 @@ import {
   INSTALL_OPTIONS,
 } from '@/data/home';
 
+import { ARD_HREF } from './ard-catalog';
 import { HOSTS, type Host, hostMarkdownPath } from './hosts';
 import { PACKAGE_URL, SITE_ORIGIN, SOURCE_URL } from './seo';
 
@@ -99,6 +100,7 @@ The website's command examples are available as clean Markdown. Consult the offi
 - [Agent Inbox CLI documentation](${SITE_ORIGIN}/index.md): Installation, setup, commands, when to use it, security, flags, contacts, and authentication.
 - [Instructions for agents](${SITE_ORIGIN}/agents.md): Connecting with a one-time code from agentinbox.md, or setting yourself up without one, then how to use the inbox.
 - [Official CLI README](https://raw.githubusercontent.com/novuhq/novu/next/packages/agentinbox/README.md): Current package documentation maintained with the CLI source.
+- [Agentic resources](${ARD_HREF}): The MCP server and the Agent Skills index, for a client discovering what this domain offers.
 
 ## Hosts
 

@@ -8,6 +8,9 @@ const usApiUrl = (process.env.NEXT_PUBLIC_NOVU_API_URL || 'https://api.novu.co')
 /** Where language models find what this site has for them (`/llms.txt`). */
 const LLMS_LINK = `<${SITE_ORIGIN}/llms.txt>; rel="describedby"`;
 
+/** Where an AI client finds this domain's agentic resources (`/.well-known/ard.json`). */
+const ARD_LINK = `<${SITE_ORIGIN}/.well-known/ard.json>; rel="ard"; type="application/json"`;
+
 /** Each host's public page (`/claude-code`), and its Markdown for agents (`/claude-code.md`). */
 const HOST_PAGE = `/:host(${HOST_IDS.join('|')})`;
 const HOST_MARKDOWN = `${HOST_PAGE}\\.md`;
@@ -49,15 +52,21 @@ const nextConfig: NextConfig = {
       {
         source: '/',
         headers: [
-          { key: 'Link', value: `<${SITE_ORIGIN}/index.md>; rel="alternate"; type="text/markdown", ${LLMS_LINK}` },
+          {
+            key: 'Link',
+            value: `<${SITE_ORIGIN}/index.md>; rel="alternate"; type="text/markdown", ${LLMS_LINK}, ${ARD_LINK}`,
+          },
         ],
       },
-      { source: '/sapien', headers: [{ key: 'Link', value: LLMS_LINK }] },
+      { source: '/sapien', headers: [{ key: 'Link', value: `${LLMS_LINK}, ${ARD_LINK}` }] },
       // A host's page says where its Markdown is, as the robots page does.
       {
         source: HOST_PAGE,
         headers: [
-          { key: 'Link', value: `<${SITE_ORIGIN}/:host.md>; rel="alternate"; type="text/markdown", ${LLMS_LINK}` },
+          {
+            key: 'Link',
+            value: `<${SITE_ORIGIN}/:host.md>; rel="alternate"; type="text/markdown", ${LLMS_LINK}, ${ARD_LINK}`,
+          },
         ],
       },
       // Out of search results until launch, also the Markdown and text, which carry no `<meta name="robots">`.
