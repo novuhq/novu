@@ -1,5 +1,5 @@
 import { BadGatewayException, BadRequestException, GatewayTimeoutException } from '@nestjs/common';
-import { HumanInteractionKindEnum, VoiceCallFailureCodeEnum } from '@novu/shared';
+import { HumanInteractionKindEnum, HumanInteractionStatusEnum, VoiceCallFailureCodeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { unconfirmedVoiceDialBody } from '../../agents/channels/voice/voice-call-failure';
@@ -114,6 +114,117 @@ describe('deliverToTargets', () => {
     }
 
     expect(repository.delete.called).to.equal(false);
+  });
+
+  it('keeps an unconfirmed dial when a later recipient is a known failure', async () => {
+    const repository = {
+      delete: sinon.stub().resolves(undefined),
+      update: sinon.stub().resolves(undefined),
+    };
+    const logger = { warn: sinon.stub() };
+
+    try {
+      await deliverToTargets(
+        repository as never,
+        logger as never,
+        {
+          _id: '1',
+          _environmentId: 'env1',
+          identifier: 'hi_1',
+          subscriberIds: ['sub-1', 'sub-2'],
+          voiceSubscriberIds: ['sub-1', 'sub-2'],
+          voiceMinutesReserved: 10,
+        } as never,
+        [
+          {
+            subscriberId: 'sub-1',
+            integrationIdentifier: 'voice-main',
+            platform: 'voice',
+            deliver: async () => {
+              throw new GatewayTimeoutException(unconfirmedVoiceDialBody());
+            },
+          },
+          {
+            subscriberId: 'sub-2',
+            integrationIdentifier: 'voice-main',
+            platform: 'voice',
+            deliver: async () => {
+              throw new BadGatewayException({
+                code: VoiceCallFailureCodeEnum.INVALID_NUMBER,
+                message: 'That phone number is not valid.',
+              });
+            },
+          },
+        ],
+        { logMessage: 'failed' }
+      );
+      expect.fail('expected the unconfirmed dial');
+    } catch (err) {
+      expect(err).to.be.instanceOf(GatewayTimeoutException);
+      expect((err as GatewayTimeoutException).getResponse()).to.include({ code: 'voice_dial_unconfirmed' });
+    }
+
+    expect(repository.delete.called).to.equal(false);
+    expect(repository.update.firstCall.args[1].$set).to.deep.equal({
+      subscriberIds: ['sub-1'],
+      voiceSubscriberIds: ['sub-1'],
+      voiceMinutesReserved: 5,
+    });
+  });
+
+  it('keeps an unconfirmed recipient when a later call connects', async () => {
+    const repository = {
+      stampDelivery: sinon.stub().resolves(undefined),
+      markDeliveredIfPending: sinon.stub().resolves({ status: HumanInteractionStatusEnum.DELIVERED }),
+    };
+    const logger = { warn: sinon.stub() };
+
+    const result = await deliverToTargets(
+      repository as never,
+      logger as never,
+      {
+        _id: '1',
+        _environmentId: 'env1',
+        identifier: 'hi_1',
+        kind: HumanInteractionKindEnum.TELL,
+        status: HumanInteractionStatusEnum.PENDING,
+        subscriberIds: ['sub-1', 'sub-2', 'sub-3'],
+      } as never,
+      [
+        {
+          subscriberId: 'sub-1',
+          integrationIdentifier: 'voice-main',
+          platform: 'voice',
+          deliver: async () => {
+            throw new GatewayTimeoutException(unconfirmedVoiceDialBody());
+          },
+        },
+        {
+          subscriberId: 'sub-2',
+          integrationIdentifier: 'voice-main',
+          platform: 'voice',
+          deliver: async () => ({ platformMessageId: 'conv_2', platformThreadId: 'conv_2' }),
+        },
+        {
+          subscriberId: 'sub-3',
+          integrationIdentifier: 'voice-main',
+          platform: 'voice',
+          deliver: async () => {
+            throw new BadGatewayException({
+              code: VoiceCallFailureCodeEnum.INVALID_NUMBER,
+              message: 'That phone number is not valid.',
+            });
+          },
+        },
+      ],
+      { logMessage: 'failed' }
+    );
+
+    expect(result.unconfirmedSubscriberIds).to.deep.equal(['sub-1']);
+    expect(result.interaction.status).to.equal(HumanInteractionStatusEnum.PENDING);
+    expect(result.interaction.subscriberIds).to.deep.equal(['sub-2', 'sub-1']);
+    expect(repository.markDeliveredIfPending.called).to.equal(false);
+    expect(repository.stampDelivery.lastCall.args[2].subscriberIds).to.deep.equal(['sub-2', 'sub-1']);
   });
 
   it('stamps each delivery before dialing the next recipient', async () => {

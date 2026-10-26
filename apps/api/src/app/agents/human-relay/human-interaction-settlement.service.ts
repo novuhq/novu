@@ -92,15 +92,11 @@ export class HumanInteractionSettlementService {
       statuses
     );
 
-    if (!marked) {
-      return null;
+    if (marked) {
+      return this.closeVoiceFailure(marked, voiceFailure, statuses);
     }
 
-    if (voiceCallCanStillBeAnswered(marked, false)) {
-      return marked;
-    }
-
-    return this.finishFailedVoiceCall(marked, voiceFailure, statuses);
+    return this.retryVoiceFailure(interaction, conversationId);
   }
 
   /**
@@ -203,18 +199,63 @@ export class HumanInteractionSettlementService {
     return failed;
   }
 
-  /** Exactly one of settle or expiry wins the pending flip, so the minutes are returned once. */
+  /**
+   * One saved minute is returned once. The create request can release the same
+   * hold, so this takes whatever is still stored instead of trusting a stale read.
+   */
   private async releaseVoiceReservation(interaction: HumanInteractionEntity): Promise<void> {
-    const minutes = interaction.voiceMinutesReserved;
-    if (!minutes || minutes <= 0) {
+    if (!interaction.voiceMinutesReserved || interaction.voiceMinutesReserved <= 0) {
       return;
     }
 
-    const reservedAt = interaction.voiceMinutesReservedAt
-      ? new Date(interaction.voiceMinutesReservedAt)
-      : new Date(interaction.createdAt);
+    const claimed = await this.humanInteractionRepository.takeVoiceMinutes(interaction._environmentId, interaction._id);
+    if (!claimed) {
+      return;
+    }
 
-    await this.voiceMinuteQuota.releaseReserved(String(interaction._organizationId), minutes, reservedAt);
+    const reservedAt = claimed.reservedAt ? new Date(claimed.reservedAt) : new Date(interaction.createdAt);
+
+    await this.voiceMinuteQuota.releaseReserved(String(interaction._organizationId), claimed.minutes, reservedAt);
+  }
+
+  private async closeVoiceFailure(
+    interaction: HumanInteractionEntity,
+    voiceFailure: VoiceCallFailure,
+    statuses: HumanInteractionStatusEnum[]
+  ): Promise<HumanInteractionEntity | null> {
+    if (voiceCallCanStillBeAnswered(interaction, false)) {
+      return interaction;
+    }
+
+    return this.finishFailedVoiceCall(interaction, voiceFailure, statuses);
+  }
+
+  /** A retry already stored the failure. Finish closing the interaction when the first attempt stopped short. */
+  private async retryVoiceFailure(
+    interaction: HumanInteractionEntity,
+    conversationId: string
+  ): Promise<HumanInteractionEntity | null> {
+    const current = await this.humanInteractionRepository.findByIdentifier(
+      interaction._environmentId,
+      interaction.identifier
+    );
+    if (!current) {
+      return null;
+    }
+
+    const statuses = openVoiceFailureStatuses(current);
+    if (!statuses.includes(current.status)) {
+      return current.status === HumanInteractionStatusEnum.FAILED ? current : null;
+    }
+
+    const failedDelivery = (current.deliveries ?? []).find((item) => {
+      return item.platformMessageId === conversationId && item.voiceFailure;
+    });
+    if (!failedDelivery?.voiceFailure) {
+      return null;
+    }
+
+    return this.closeVoiceFailure(current, failedDelivery.voiceFailure, statuses);
   }
 
   private async editDeliveredMessage(interaction: HumanInteractionEntity): Promise<void> {

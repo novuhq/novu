@@ -299,7 +299,12 @@ export class CreateInteraction {
       await this.activityRecorder.recordRequest(delivered.interaction);
       const closed = await this.settlement.closeVoiceCallIfUnanswerable(delivered.interaction);
       const deliveredInteraction = closed ?? delivered.interaction;
-      await this.keepVoiceReservation(interaction, deliveredInteraction, voiceCredits);
+      await this.keepVoiceReservation(
+        interaction,
+        deliveredInteraction,
+        voiceCredits,
+        delivered.unconfirmedSubscriberIds
+      );
       voiceHoldRecorded = true;
 
       // Each contact gets the message in a thread of their own, so each delivery is one message sent.
@@ -314,7 +319,7 @@ export class CreateInteraction {
       return toInteractionResponse(deliveredInteraction, delivered.failedSubscriberIds, threads);
     } catch (err) {
       if (isUnconfirmedVoiceDial(err)) {
-        voiceCredits?.accept();
+        voiceCredits?.accept(await this.voiceMinutesStillHeld(createdInteraction));
         voiceHoldRecorded = true;
       } else {
         await this.clearUnrecordedVoiceHold(createdInteraction, voiceHoldRecorded);
@@ -365,6 +370,20 @@ export class CreateInteraction {
     await this.clearVoiceHold(interaction);
   }
 
+  /** Minutes still stored after an unconfirmed dial. `undefined` keeps the whole Redis hold. */
+  private async voiceMinutesStillHeld(interaction: HumanInteractionEntity | undefined): Promise<number | undefined> {
+    if (!interaction) {
+      return undefined;
+    }
+
+    const current = await this.humanInteractionRepository.findByIdentifier(
+      interaction._environmentId,
+      interaction.identifier
+    );
+
+    return current?.voiceMinutesReserved ?? interaction.voiceMinutesReserved;
+  }
+
   private async clearVoiceHold(interaction: HumanInteractionEntity): Promise<void> {
     await this.humanInteractionRepository
       .update(
@@ -377,11 +396,13 @@ export class CreateInteraction {
   /**
    * A pending voice send keeps the minutes and contacts it actually reached.
    * A tell, or a voice target that never went out, gives the minutes back when `release` runs.
+   * An unconfirmed dial keeps its share: the phone may still be ringing.
    */
   private async keepVoiceReservation(
     created: HumanInteractionEntity,
     delivered: HumanInteractionEntity,
-    voiceCredits: HumanVoiceMinuteCredits | undefined
+    voiceCredits: HumanVoiceMinuteCredits | undefined,
+    unconfirmedSubscriberIds: string[]
   ): Promise<void> {
     const current =
       (await this.humanInteractionRepository.findByIdentifier(created._environmentId, created.identifier)) ?? delivered;
@@ -391,16 +412,26 @@ export class CreateInteraction {
     }
 
     const pending = current.status === HumanInteractionStatusEnum.PENDING;
-    const deliveredVoiceSubscriberIds = pending ? connectedVoiceSubscriberIds(current, delivered) : [];
+    const deliveredVoiceSubscriberIds = pending
+      ? connectedVoiceSubscriberIds(current, delivered, unconfirmedSubscriberIds)
+      : [];
     const keptMinutes =
       voiceCredits && !voiceCredits.unlimited ? deliveredVoiceSubscriberIds.length * VOICE_CALL_MAX_MINUTES : 0;
+    const storedMinutes = current.voiceMinutesReserved ?? 0;
+    const minutesMatch = storedMinutes === keptMinutes;
+    const subscribersMatch = sameSubscriberIds(current.voiceSubscriberIds ?? [], deliveredVoiceSubscriberIds);
+
+    if (
+      voiceCredits &&
+      (await this.claimVoiceHoldChange(created, voiceCredits, storedMinutes, keptMinutes, deliveredVoiceSubscriberIds))
+    ) {
+      return;
+    }
 
     if (voiceCredits && !voiceCredits.unlimited) {
       voiceCredits.accept(keptMinutes);
     }
 
-    const minutesMatch = (created.voiceMinutesReserved ?? 0) === keptMinutes;
-    const subscribersMatch = sameSubscriberIds(created.voiceSubscriberIds ?? [], deliveredVoiceSubscriberIds);
     if (minutesMatch && subscribersMatch) {
       return;
     }
@@ -428,6 +459,33 @@ export class CreateInteraction {
         ...(Object.keys(unset).length > 0 ? { $unset: unset } : {}),
       }
     );
+  }
+
+  /**
+   * Changes the saved hold only when it still holds `storedMinutes`.
+   * A failure webhook may have returned those minutes already; then this request keeps its Redis hold.
+   */
+  private async claimVoiceHoldChange(
+    created: HumanInteractionEntity,
+    voiceCredits: HumanVoiceMinuteCredits,
+    storedMinutes: number,
+    keptMinutes: number,
+    subscriberIds: string[]
+  ): Promise<boolean> {
+    if (voiceCredits.unlimited || storedMinutes <= 0 || storedMinutes === keptMinutes) {
+      return false;
+    }
+
+    const claimed = await this.humanInteractionRepository.replaceVoiceHold(
+      created._environmentId,
+      created._id,
+      storedMinutes,
+      keptMinutes,
+      subscriberIds
+    );
+    voiceCredits.accept(claimed ? keptMinutes : (created.voiceMinutesReserved ?? storedMinutes));
+
+    return true;
   }
 
   /**
@@ -945,14 +1003,19 @@ function acceptFailedVoiceHold(
   return true;
 }
 
-function connectedVoiceSubscriberIds(current: HumanInteractionEntity, delivered: HumanInteractionEntity): string[] {
+function connectedVoiceSubscriberIds(
+  current: HumanInteractionEntity,
+  delivered: HumanInteractionEntity,
+  unconfirmedSubscriberIds: string[]
+): string[] {
   const failedCalls = new Set(
     (current.deliveries ?? []).filter((delivery) => delivery.voiceFailure).map((delivery) => delivery.platformMessageId)
   );
-
-  return (delivered.deliveries ?? [])
+  const connected = (delivered.deliveries ?? [])
     .filter((delivery) => {
       return delivery.platform === HumanChannelViaEnum.VOICE && !failedCalls.has(delivery.platformMessageId);
     })
     .map((delivery) => delivery.subscriberId);
+
+  return [...new Set([...connected, ...unconfirmedSubscriberIds])];
 }

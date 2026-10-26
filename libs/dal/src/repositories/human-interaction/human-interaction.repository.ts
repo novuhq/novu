@@ -11,6 +11,39 @@ import { BaseRepositoryV2 } from '../base-repository-v2';
 import { HumanInteractionDBModel, HumanInteractionDelivery, HumanInteractionEntity } from './human-interaction.entity';
 import { HumanInteraction } from './human-interaction.schema';
 
+/** Copies `voiceFailure` from the stored delivery onto the stamp that shares its conversation id. */
+function deliveriesKeepingStoredFailures(deliveries: HumanInteractionDelivery[]): Record<string, unknown> {
+  return {
+    $map: {
+      input: deliveries,
+      as: 'next',
+      in: {
+        $let: {
+          vars: {
+            previous: {
+              $first: {
+                $filter: {
+                  input: { $ifNull: ['$deliveries', []] },
+                  as: 'prev',
+                  cond: { $eq: ['$$prev.platformMessageId', '$$next.platformMessageId'] },
+                },
+              },
+            },
+          },
+          in: {
+            $mergeObjects: [
+              '$$next',
+              {
+                $cond: [{ $ne: ['$$previous.voiceFailure', null] }, { voiceFailure: '$$previous.voiceFailure' }, {}],
+              },
+            ],
+          },
+        },
+      },
+    },
+  };
+}
+
 /**
  * A contact is on a call only when their own delivery is voice, or they are
  * listed before that stamp lands. Another recipient on the same row is not.
@@ -225,11 +258,84 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       subscriberIds?: string[];
     }
   ): Promise<void> {
-    const $set: Record<string, unknown> = { deliveries: delivery.deliveries };
+    // A failure webhook can mark a call while the next recipient is still being
+    // dialed. Replacing the array from memory would drop that voiceFailure.
+    const $set: Record<string, unknown> = {
+      deliveries: deliveriesKeepingStoredFailures(delivery.deliveries),
+    };
     if (delivery._conversationId) $set._conversationId = delivery._conversationId;
     if (delivery.subscriberIds) $set.subscriberIds = delivery.subscriberIds;
 
-    await this.update({ _id: id, _environmentId: environmentId }, { $set });
+    await this.update({ _id: id, _environmentId: environmentId }, [{ $set }] as never);
+  }
+
+  /**
+   * Moves the saved hold from `expectedMinutes` to `nextMinutes`.
+   * Returns false when another path already took the minutes.
+   */
+  async replaceVoiceHold(
+    environmentId: string,
+    id: string,
+    expectedMinutes: number,
+    nextMinutes: number,
+    subscriberIds: string[]
+  ): Promise<boolean> {
+    const update =
+      nextMinutes > 0
+        ? {
+            $set: {
+              voiceMinutesReserved: nextMinutes,
+              ...(subscriberIds.length > 0 ? { voiceSubscriberIds: subscriberIds } : {}),
+            },
+            ...(subscriberIds.length === 0 ? { $unset: { voiceSubscriberIds: 1 as const } } : {}),
+          }
+        : {
+            $unset: {
+              voiceMinutesReserved: 1 as const,
+              voiceMinutesReservedAt: 1 as const,
+              voiceSubscriberIds: 1 as const,
+            },
+          };
+
+    const previous = await this.findOneAndUpdate(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        voiceMinutesReserved: expectedMinutes,
+      },
+      update,
+      { new: false }
+    );
+
+    return previous !== null;
+  }
+
+  /** Clears the saved hold and returns the minutes that were still stored. A second caller gets nothing. */
+  async takeVoiceMinutes(environmentId: string, id: string): Promise<{ minutes: number; reservedAt?: string } | null> {
+    const previous = await this.findOneAndUpdate(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        voiceMinutesReserved: { $gt: 0 },
+      },
+      {
+        $unset: {
+          voiceMinutesReserved: 1,
+          voiceMinutesReservedAt: 1,
+          voiceSubscriberIds: 1,
+        },
+      },
+      { new: false }
+    );
+
+    if (!previous?.voiceMinutesReserved || previous.voiceMinutesReserved <= 0) {
+      return null;
+    }
+
+    return {
+      minutes: previous.voiceMinutesReserved,
+      reservedAt: previous.voiceMinutesReservedAt,
+    };
   }
 
   /**

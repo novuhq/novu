@@ -43,6 +43,7 @@ describe('CreateInteraction', () => {
       update: sinon.stub().resolves(undefined),
       stampDelivery: sinon.stub().resolves(undefined),
       findByIdentifier: sinon.stub().resolves(null),
+      replaceVoiceHold: sinon.stub().resolves(true),
       markDeliveredIfPending: sinon.stub().resolves({ ...created, status: HumanInteractionStatusEnum.DELIVERED }),
       delete: sinon.stub().resolves(undefined),
     };
@@ -190,6 +191,7 @@ describe('CreateInteraction', () => {
       subscriberRepository,
       analyticsService,
       settlement,
+      voiceCredits,
     };
   }
 
@@ -239,6 +241,64 @@ describe('CreateInteraction', () => {
         humanInteractionRepository.countPendingVoiceForSubscriber
       );
       expect(expiredFirst).to.equal(true);
+    });
+
+    it('does not refund minutes a failure webhook already returned', async () => {
+      const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository, voiceCredits } =
+        setup();
+      const voiceRow = {
+        ...created,
+        kind: HumanInteractionKindEnum.TELL,
+        voiceMinutesReserved: 5,
+        voiceMinutesReservedAt: '2026-01-01T00:00:00.000Z',
+        voiceSubscriberIds: ['sub-1'],
+      };
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'voice-main',
+        platform: HumanChannelViaEnum.VOICE,
+        platformUserId: '+15551212',
+      });
+      humanInteractionRepository.create.resolves(voiceRow);
+      humanInteractionRepository.markDeliveredIfPending.resolves({
+        ...voiceRow,
+        status: HumanInteractionStatusEnum.DELIVERED,
+      });
+      humanInteractionRepository.replaceVoiceHold.resolves(false);
+
+      await usecase.execute({ ...command, kind: HumanInteractionKindEnum.TELL } as never);
+
+      expect(humanInteractionRepository.replaceVoiceHold.firstCall.args).to.deep.equal(['env1', 'hi1', 5, 0, []]);
+      expect(voiceCredits.accept.calledOnceWithExactly(5)).to.equal(true);
+      expect(humanInteractionRepository.update.called).to.equal(false);
+    });
+
+    it('returns a tell hold when this request wins the reservation', async () => {
+      const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository, voiceCredits } =
+        setup();
+      const voiceRow = {
+        ...created,
+        kind: HumanInteractionKindEnum.TELL,
+        voiceMinutesReserved: 5,
+        voiceMinutesReservedAt: '2026-01-01T00:00:00.000Z',
+        voiceSubscriberIds: ['sub-1'],
+      };
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'voice-main',
+        platform: HumanChannelViaEnum.VOICE,
+        platformUserId: '+15551212',
+      });
+      humanInteractionRepository.create.resolves(voiceRow);
+      humanInteractionRepository.markDeliveredIfPending.resolves({
+        ...voiceRow,
+        status: HumanInteractionStatusEnum.DELIVERED,
+      });
+
+      await usecase.execute({ ...command, kind: HumanInteractionKindEnum.TELL } as never);
+
+      expect(humanInteractionRepository.replaceVoiceHold.firstCall.args).to.deep.equal(['env1', 'hi1', 5, 0, []]);
+      expect(voiceCredits.accept.calledOnceWithExactly(0)).to.equal(true);
     });
   });
 

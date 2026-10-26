@@ -179,6 +179,8 @@ describe('HumanInteractionSettlementService', () => {
     const humanInteractionRepository = {
       markVoiceDeliveryFailed: sinon.stub().onFirstCall().resolves(marked).onSecondCall().resolves(null),
       failVoiceIfOpen: sinon.stub().resolves(failed),
+      findByIdentifier: sinon.stub().resolves(failed),
+      takeVoiceMinutes: sinon.stub().resolves({ minutes: 5, reservedAt: '2026-01-01T00:00:00.000Z' }),
     };
     const outboundGateway = { editInConversation: sinon.stub().resolves(undefined) };
     const releaseReserved = sinon.stub().resolves();
@@ -193,6 +195,7 @@ describe('HumanInteractionSettlementService', () => {
     );
     const pending = {
       _id: 'hi1',
+      identifier: 'hi_1',
       _environmentId: 'env1',
       kind: HumanInteractionKindEnum.ASK,
       status: HumanInteractionStatusEnum.PENDING,
@@ -206,6 +209,65 @@ describe('HumanInteractionSettlementService', () => {
     expect(releaseReserved.firstCall.args[0]).to.equal('org1');
     expect(releaseReserved.firstCall.args[1]).to.equal(5);
     expect(outboundGateway.editInConversation.called).to.equal(false);
+    expect(humanInteractionRepository.takeVoiceMinutes.calledOnce).to.equal(true);
+  });
+
+  it('closes a call that was already marked when the first attempt did not finish', async () => {
+    const delivery = {
+      platform: 'voice',
+      platformMessageId: 'conv_1',
+      platformThreadId: 'CA1',
+      subscriberId: 'sub-1',
+      integrationIdentifier: 'voice-main',
+    };
+    const reason = { code: 'voice_busy' as const, message: 'The line was busy.' };
+    const marked = {
+      _id: 'hi1',
+      identifier: 'hi_1',
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+      kind: HumanInteractionKindEnum.ASK,
+      status: HumanInteractionStatusEnum.PENDING,
+      voiceMinutesReserved: 5,
+      voiceMinutesReservedAt: '2026-01-01T00:00:00.000Z',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      voiceSubscriberIds: [],
+      deliveries: [{ ...delivery, voiceFailure: reason }],
+    };
+    const failed = { ...marked, status: HumanInteractionStatusEnum.FAILED, voiceFailure: reason };
+    const humanInteractionRepository = {
+      markVoiceDeliveryFailed: sinon.stub().resolves(null),
+      findByIdentifier: sinon.stub().resolves(marked),
+      failVoiceIfOpen: sinon.stub().resolves(failed),
+      takeVoiceMinutes: sinon.stub().resolves({ minutes: 5, reservedAt: '2026-01-01T00:00:00.000Z' }),
+    };
+    const releaseReserved = sinon.stub().resolves();
+    const service = new HumanInteractionSettlementService(
+      humanInteractionRepository as any,
+      { editInConversation: sinon.stub().resolves() } as any,
+      { execute: sinon.stub().resolves() } as any,
+      { execute: sinon.stub().resolves() } as any,
+      { setContext: sinon.stub(), warn: sinon.stub() } as any,
+      { recordResponse: sinon.stub().resolves() } as any,
+      { releaseReserved } as any
+    );
+
+    await service.failVoiceCall(
+      {
+        _id: 'hi1',
+        identifier: 'hi_1',
+        _environmentId: 'env1',
+        kind: HumanInteractionKindEnum.ASK,
+        status: HumanInteractionStatusEnum.PENDING,
+        deliveries: [delivery],
+      } as any,
+      reason,
+      'conv_1'
+    );
+
+    expect(humanInteractionRepository.failVoiceIfOpen.calledOnce).to.equal(true);
+    expect(releaseReserved.calledOnce).to.equal(true);
+    expect(releaseReserved.firstCall.args[1]).to.equal(5);
   });
 
   it('keeps the interaction open when another recipient can still answer', async () => {
