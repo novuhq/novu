@@ -8,10 +8,48 @@ export const PACKAGE_URL = 'https://www.npmjs.com/package/@agentinbox/cli';
 
 /**
  * Whether search engines may index the website pages. Off until launch: the pages and their text versions say
- * `noindex`, the sitemap is empty and robots.txt doesn't point to it. Crawling stays allowed, so engines read
- * the `noindex` (a page robots.txt blocks can still be listed, without its content).
+ * `noindex`. Crawling stays allowed, so engines read the `noindex` (a page robots.txt blocks can still be
+ * listed, without its content). The sitemap still names the public pages, and robots.txt points to it.
+ *
+ * `SITE_NOINDEX=true` forces `noindex` on a deployment even after this is on. Set it on staging
+ * (`staging.agentinbox.md`). It is read at build time, which is when Vercel bakes the headers.
  */
 export const SITE_INDEXED = false;
+
+/** `SITE_NOINDEX=true` (or `1`) on a deployment that must stay out of search results, such as staging. */
+export function siteNoindex(value: string | undefined = process.env.SITE_NOINDEX): boolean {
+  const flag = value?.trim().toLowerCase();
+
+  return flag === 'true' || flag === '1';
+}
+
+/**
+ * Where `X-Robots-Tag: noindex` is sent. Staging (`SITE_NOINDEX`), preview, and development cover every
+ * route. Until launch, the website pages and their text versions do.
+ */
+export function noindexPaths(
+  environment = process.env.VERCEL_ENV,
+  noindex = siteNoindex()
+): 'all' | 'website' | 'none' {
+  if (noindex || environment === 'preview' || environment === 'development') {
+    return 'all';
+  }
+
+  if (!SITE_INDEXED) {
+    return 'website';
+  }
+
+  return 'none';
+}
+
+/** Whether a website page may be indexed: off until launch, and off on staging, preview, and development. */
+export function searchEnginesMayIndex(
+  environment: string | undefined,
+  noindex: boolean,
+  siteIndexed = SITE_INDEXED
+): boolean {
+  return siteIndexed && !noindex && environment !== 'preview' && environment !== 'development';
+}
 
 export const SITE_PAGES = {
   home: {
@@ -50,17 +88,22 @@ export type PageContent = {
   markdownPath?: string;
 };
 
-export function pageMetadata(page: SitePage, environment = process.env.VERCEL_ENV): Metadata {
+export function pageMetadata(page: SitePage, environment = process.env.VERCEL_ENV, noindex = siteNoindex()): Metadata {
   return contentMetadata(
     { ...SITE_PAGES[page], ...(page === 'home' ? { markdownPath: '/index.md' } : {}) },
-    environment
+    environment,
+    noindex
   );
 }
 
 /** The metadata of any website page: the two above, and each host's page (`host-seo.ts`). */
-export function contentMetadata(content: PageContent, environment = process.env.VERCEL_ENV): Metadata {
+export function contentMetadata(
+  content: PageContent,
+  environment = process.env.VERCEL_ENV,
+  noindex = siteNoindex()
+): Metadata {
   const url = `${SITE_ORIGIN}${content.path}`;
-  const index = SITE_INDEXED && environment !== 'preview' && environment !== 'development';
+  const index = searchEnginesMayIndex(environment, noindex);
   const image = {
     url: `${SITE_ORIGIN}${content.image.path}`,
     type: 'image/jpeg',
