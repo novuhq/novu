@@ -222,7 +222,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     return new Date(Date.now() - RUNNING_CLAIM_STALE_AFTER_MS);
   }
 
-  public async setError(organizationId: string, jobId: string, error: any): Promise<void> {
+  public async setError(organizationId: string, jobId: string, error: Error): Promise<void> {
     const result = await this._model.updateOne(
       {
         _organizationId: this.convertStringToObjectId(organizationId),
@@ -400,16 +400,22 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     selectNotification?: ProjectionType<NotificationEntity>;
     selectSubscriber?: ProjectionType<SubscriberEntity>;
     selectEnvironment?: ProjectionType<EnvironmentEntity>;
-  }) {
+  }): Promise<JobEntityPopulated> {
     const job = this.MongooseModel.findOne(query, select)
-      .populate('template', selectTemplate)
+      .populate<{
+        template: NotificationTemplateEntity;
+        notification: NotificationEntity;
+        subscriber: SubscriberEntity;
+        environment: EnvironmentEntity;
+      }>('template', selectTemplate)
       .populate('notification', selectNotification)
       .populate('subscriber', selectSubscriber)
       .populate('environment', selectEnvironment)
-      .lean()
+      .lean<JobEntityPopulated>()
+      .orFail()
       .exec();
 
-    return job as unknown as JobEntityPopulated;
+    return job;
   }
 
   public async markJobAsDigestMaster(job: JobEntity) {
@@ -437,6 +443,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         _environmentId: this.convertStringToObjectId(job._environmentId),
         _subscriberId: this.convertStringToObjectId(job._subscriberId),
         'digest.digestValue': digestMeta?.digestValue,
+        ...this.buildContextExactMatchQuery(job.contextKeys),
       },
       '_id _notificationId'
     );
@@ -483,6 +490,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       _environmentId: job._environmentId,
       _subscriberId: job._subscriberId,
       'digest.digestValue': metadata?.digestValue,
+      ...this.buildContextExactMatchQuery(job.contextKeys),
     };
   }
 

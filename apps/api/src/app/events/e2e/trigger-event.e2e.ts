@@ -5203,6 +5203,137 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
       expect(messages[0].content).to.contain('Testing context-aware schedule');
     });
 
+    it('should keep digest schedule extension isolated by context', async () => {
+      const scheduledSubscriber = await subscriberService.createSubscriber({
+        subscriberId: 'context-digest-schedule-subscriber',
+        timezone: 'America/New_York',
+      });
+
+      const { weeklySchedule: scheduleOutside } = createScheduleOutsideCurrentTime('America/New_York');
+      await session.testAgent
+        .patch(`/v2/subscribers/${scheduledSubscriber.subscriberId}/preferences`)
+        .send({
+          schedule: {
+            isEnabled: true,
+            weeklySchedule: scheduleOutside,
+          },
+          context: { tenant: 'acme' },
+        })
+        .set('Authorization', `ApiKey ${session.apiKey}`);
+
+      await session.testAgent
+        .patch(`/v2/subscribers/${scheduledSubscriber.subscriberId}/preferences`)
+        .send({
+          schedule: {
+            isEnabled: false,
+          },
+          context: { tenant: 'globex' },
+        })
+        .set('Authorization', `ApiKey ${session.apiKey}`);
+
+      const workflowBody: CreateWorkflowDto = {
+        name: 'Context Digest Schedule Test Workflow',
+        workflowId: 'context-digest-schedule-test-workflow',
+        __source: WorkflowCreationSourceEnum.DASHBOARD,
+        steps: [
+          {
+            type: StepTypeEnum.DIGEST,
+            name: 'Digest Step',
+            controlValues: {
+              amount: 1,
+              unit: DigestUnitEnum.SECONDS,
+              extendToSchedule: true,
+            },
+          },
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Email Step',
+            controlValues: {
+              subject: 'Context Digest Schedule Test',
+              body: 'Testing context-aware digest schedule extension',
+              disableOutputSanitization: false,
+            },
+          },
+        ],
+      };
+
+      const workflow: WorkflowResponseDto = (await session.testAgent.post('/v2/workflows').send(workflowBody)).body
+        .data;
+
+      await novuClient.trigger({
+        workflowId: workflowBody.workflowId,
+        to: [{ subscriberId: scheduledSubscriber.subscriberId }],
+        payload: { firstName: 'Test' },
+        context: { tenant: 'acme' },
+      });
+
+      const acmeDigestJobs = await pollForJobStatusChange({
+        jobRepository,
+        query: {
+          _environmentId: session.environment._id,
+          _subscriberId: scheduledSubscriber._id,
+          _templateId: workflow._id,
+          type: StepTypeEnum.DIGEST,
+          contextKeys: ['tenant:acme'],
+        },
+        timeout: 15000,
+        findMultiple: true,
+        expectedCount: 1,
+        until: (jobs) => (jobs[0].scheduleExtensionsCount ?? 0) > 0,
+      });
+      const acmeDigestJob = acmeDigestJobs?.[0];
+
+      expect(acmeDigestJob).to.exist;
+      expect(acmeDigestJob?.status).to.equal(JobStatusEnum.DELAYED);
+      expect(acmeDigestJob?.scheduleExtensionsCount).to.be.greaterThan(0);
+
+      await novuClient.trigger({
+        workflowId: workflowBody.workflowId,
+        to: [{ subscriberId: scheduledSubscriber.subscriberId }],
+        payload: { firstName: 'Test' },
+        context: { tenant: 'globex' },
+      });
+
+      const globexDigestJobs = await pollForJobStatusChange({
+        jobRepository,
+        query: {
+          _environmentId: session.environment._id,
+          _subscriberId: scheduledSubscriber._id,
+          _templateId: workflow._id,
+          type: StepTypeEnum.DIGEST,
+          contextKeys: ['tenant:globex'],
+        },
+        timeout: 15000,
+        findMultiple: true,
+        expectedCount: 1,
+        until: (jobs) => jobs[0].status === JobStatusEnum.COMPLETED,
+      });
+      const globexDigestJob = globexDigestJobs?.[0];
+
+      expect(globexDigestJob).to.exist;
+      expect(globexDigestJob?.status).to.equal(JobStatusEnum.COMPLETED);
+
+      const globexEmailJobs = await pollForJobStatusChange({
+        jobRepository,
+        query: {
+          _environmentId: session.environment._id,
+          _subscriberId: scheduledSubscriber._id,
+          _templateId: workflow._id,
+          type: StepTypeEnum.EMAIL,
+          contextKeys: ['tenant:globex'],
+        },
+        timeout: 15000,
+        findMultiple: true,
+        expectedCount: 1,
+        until: (jobs) => jobs[0].status === JobStatusEnum.COMPLETED,
+      });
+      const globexEmailJob = globexEmailJobs?.[0];
+
+      expect(globexEmailJob?.status).to.equal(JobStatusEnum.COMPLETED);
+      expect(acmeDigestJob?.contextKeys).to.deep.equal(['tenant:acme']);
+      expect(globexDigestJob?.contextKeys).to.deep.equal(['tenant:globex']);
+    });
+
     it('should use default schedule (no context) when triggered without context', async () => {
       const scheduledSubscriber = await subscriberService.createSubscriber({
         subscriberId: 'default-schedule-subscriber',
