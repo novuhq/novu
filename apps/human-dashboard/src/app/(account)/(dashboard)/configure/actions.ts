@@ -8,6 +8,7 @@ import { AGENT_REACHES, type AgentSettings, type AgentSettingsChange } from '@/l
 import { isToolId } from '@/lib/ai-tools';
 import {
   type AgentHost,
+  type Awake,
   type CodeStatusResult,
   type ConnectCodeResult,
   type HostStatus,
@@ -195,18 +196,20 @@ export async function readHostCheckAction(): Promise<string> {
 }
 
 /**
- * Each host with its last check, for the Agent setup row once a check newer than any it shows comes in. Like
- * `readHostCheckAction` it runs in the background: a failure throws, and a session that ended doesn't send
- * the operator to sign in from here.
+ * Each host with its last check, and where the agent is awake, for the Agent setup row: once a check newer than
+ * any it shows comes in, and once a minute. Like `readHostCheckAction` it runs in the background: a failure
+ * throws, and a session that ended doesn't send the operator to sign in from here.
  */
-export async function readHostsAction(): Promise<AgentHost[]> {
+export async function readHostsAction(): Promise<{ hosts: AgentHost[]; awake: Awake | null }> {
   const user = await currentUser();
   const account = user && readHumanAccount(user);
   if (!account) {
     throw new Error('Not signed in');
   }
 
-  return (await readHostStatus(account)).hosts;
+  const { hosts, awake } = await readHostStatus(account);
+
+  return { hosts, awake: awake ?? null };
 }
 
 function isHandle(handle: unknown): handle is string {

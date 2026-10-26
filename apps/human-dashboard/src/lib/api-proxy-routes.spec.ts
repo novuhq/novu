@@ -13,3 +13,21 @@ describe('api proxy routes for MCP setup', () => {
     expect(isProxiedRoute('POST', '/v1/contacts/verifications')).toBe(true);
   });
 });
+
+describe('api proxy routes for wake', () => {
+  it('forwards the lease, letting go of it, and the wait for messages', () => {
+    expect(isProxiedRoute('POST', '/v1/wake/lease')).toBe(true);
+    expect(isProxiedRoute('GET', '/v1/wake/lease')).toBe(true);
+    expect(isProxiedRoute('POST', '/v1/wake/lease/release')).toBe(true);
+    expect(isProxiedRoute('GET', '/v1/wake/messages')).toBe(true);
+  });
+
+  it('lets the CLI withdraw a question it sent', () => {
+    expect(isProxiedRoute('POST', '/v1/inbox/messages/:messageId/cancel')).toBe(true);
+  });
+
+  it('never lets the CLI choose who can wake: only the dashboard does', () => {
+    expect(isProxiedRoute('PATCH', '/v1/contacts/:contactId')).toBe(false);
+    expect(isProxiedRoute('DELETE', '/v1/wake/lease')).toBe(false);
+  });
+});

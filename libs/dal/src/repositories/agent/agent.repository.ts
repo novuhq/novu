@@ -4,7 +4,7 @@ import { FilterQuery } from 'mongoose';
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
-import { AgentDBModel, AgentEntity } from './agent.entity';
+import { AgentAwake, AgentDBModel, AgentEntity } from './agent.entity';
 import { Agent } from './agent.schema';
 
 /**
@@ -187,5 +187,91 @@ export class AgentRepository extends BaseRepositoryV2<AgentDBModel, AgentEntity,
       totalCount: pagination.totalCount,
       totalCountCapped: pagination.totalCountCapped,
     };
+  }
+
+  /**
+   * Takes the lease that keeps a Human relay agent awake for `holder`, a computer and the host it wakes there:
+   * when nobody holds a live one, when that same computer and host hold it already (a renewal), or with
+   * `takeOver` from whoever holds it. The same computer with another host is another holder. One conditional
+   * write decides, so of two asking at once only one gets it. A renewal keeps `since`; anything else starts it
+   * anew. Returns the lease as stored, or `null` when another holder has a live one and `takeOver` isn't set.
+   */
+  async takeAwake(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    holder: Pick<AgentAwake, 'computerId' | 'computerName' | 'host' | 'project'>;
+    takeOver: boolean;
+    now: Date;
+    leaseMs: number;
+  }): Promise<AgentAwake | null> {
+    const { holder } = params;
+    const now = params.now.toISOString();
+    const free = {
+      $or: [
+        { 'awake.expiresAt': { $exists: false } },
+        { 'awake.expiresAt': { $lte: now } },
+        { 'awake.computerId': holder.computerId, 'awake.host': holder.host },
+      ],
+    };
+    // An update pipeline, so the same write can keep `since` for the holder renewing it. What the CLI sent goes
+    // in as `$literal`: in a pipeline a string that starts with `$` would be read as a field of the agent.
+    const renewing = {
+      $and: [
+        { $eq: ['$awake.computerId', { $literal: holder.computerId }] },
+        { $eq: ['$awake.host', { $literal: holder.host }] },
+        { $gt: ['$awake.expiresAt', now] },
+      ],
+    };
+    const awake = {
+      computerId: { $literal: holder.computerId },
+      computerName: { $literal: holder.computerName },
+      host: { $literal: holder.host },
+      ...(holder.project ? { project: { $literal: holder.project } } : {}),
+      since: { $cond: [renewing, '$awake.since', now] },
+      renewedAt: now,
+      expiresAt: new Date(params.now.getTime() + params.leaseMs).toISOString(),
+    };
+
+    const updated = await this.MongooseModel.findOneAndUpdate(
+      {
+        _id: params.agentId,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        ...(params.takeOver ? {} : free),
+      },
+      // `$mergeObjects` builds a new document, so nothing of the last holder's, such as its project, stays behind.
+      [{ $set: { awake: { $mergeObjects: [awake] } } }],
+      { new: true, projection: { awake: 1 }, timestamps: false }
+    ).lean();
+
+    return updated?.awake ?? null;
+  }
+
+  /**
+   * Lets go of the lease when `holder`, a computer and its host, holds it, live or lapsed. Says whether it held a
+   * live one: another holder's lease is never touched, and a lapsed one was no lease anymore.
+   */
+  async releaseAwake(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    holder: Pick<AgentAwake, 'computerId' | 'host'>;
+    now: Date;
+  }): Promise<boolean> {
+    const before = await this.findOneAndUpdate(
+      {
+        _id: params.agentId,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        'awake.computerId': params.holder.computerId,
+        'awake.host': params.holder.host,
+      },
+      { $unset: { awake: '' } },
+      { projection: { awake: 1 }, timestamps: false }
+    );
+    const expiresAt = before?.awake?.expiresAt;
+
+    return Boolean(expiresAt && expiresAt > params.now.toISOString());
   }
 }

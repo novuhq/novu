@@ -9,6 +9,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { HumanAddressVerificationStateEnum, HumanChannelViaEnum } from '@novu/shared';
+import { isAgentProvisionedSubscriber } from '../../../agents/conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { DirectionEnum } from '../../../shared/dtos/base-responses';
 import { buildHumanDashboardUrl } from '../../../shared/helpers/resolve-human-dashboard-base-url';
 import {
@@ -31,6 +32,8 @@ interface ContactReach {
   invite?: PendingHumanInvite;
   /** The email slots stored for this relay: verified, waiting for its link, and typed during setup. */
   storedEmail?: HumanContactChannelAddresses;
+  /** The operator turned their "can wake" switch on. */
+  canWake?: boolean;
 }
 
 interface PageReach {
@@ -44,8 +47,9 @@ interface PageReach {
  * repository pagination as `GET /v2/subscribers`, but exposed under
  * `/v1/human` so it is keyless-reachable by the `human` CLI. Each contact
  * also says where the relay agent can reach them, how far their email's
- * double opt-in got, whether they are the operator and whether an invite
- * link is still waiting for them.
+ * double opt-in got, whether they are the operator, whether a message from
+ * them may wake one of the agent's hosts, and whether an invite link is still
+ * waiting for them.
  */
 @Injectable()
 export class ListContacts {
@@ -124,7 +128,7 @@ export class ListContacts {
       }),
       this.humanContactRepository.find(
         { _environmentId: command.environmentId, _agentId: agent._id, subscriberId: { $in: subscriberIds } },
-        ['subscriberId', 'addresses']
+        ['subscriberId', 'addresses', 'canWake']
       ),
       this.humanOperator.findForAgent({
         environmentId: command.environmentId,
@@ -135,6 +139,9 @@ export class ListContacts {
     const storedEmails = new Map(
       stored.map((contact) => [contact.subscriberId, contact.addresses?.[HumanChannelViaEnum.EMAIL]])
     );
+    const allowedToWake = new Set(
+      stored.filter((contact) => contact.canWake === true).map(({ subscriberId }) => subscriberId)
+    );
 
     for (const subscriberId of subscriberIds) {
       contacts.set(subscriberId, {
@@ -142,6 +149,7 @@ export class ListContacts {
         defaultVia: reachability.get(subscriberId)?.defaultVia,
         invite: invites.get(subscriberId),
         storedEmail: storedEmails.get(subscriberId),
+        canWake: allowedToWake.has(subscriberId),
       });
     }
 
@@ -169,6 +177,8 @@ function toContact(
     ...(reach?.defaultVia ? { defaultVia: reach.defaultVia } : {}),
     status: channels.length > 0 ? 'joined' : 'invite_sent',
     isOperator,
+    // The operator always can; a stranger never does, whatever their row says.
+    canWake: isOperator || (reach?.canWake === true && !isAgentProvisionedSubscriber(subscriber)),
     ...(reach?.invite
       ? {
           invite: {

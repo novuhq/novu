@@ -7,6 +7,7 @@ import {
   type ConnectCodeStatus,
 } from '../services/human-connect-code.service';
 import { HumanAgentQueryDto } from './human-agent.dto';
+import { AwakeDto } from './human-wake.dto';
 
 export class CreateConnectCodeRequestDto extends HumanAgentQueryDto {
   @ApiProperty({
@@ -179,4 +180,12 @@ export class HumanHostStatusResponseDto {
       'The newest unread conversation the first check found, which the host has seen since. Null before the first check, and when nothing was waiting then.',
   })
   waitingMessage: HumanHostWaitingMessageDto | null;
+
+  @ApiProperty({
+    type: AwakeDto,
+    nullable: true,
+    description:
+      'Where the agent is awake: the computer whose `agentinbox wake` is ready to wake a host for it. Null when no computer holds a live lease.',
+  })
+  awake: AwakeDto | null;
 }

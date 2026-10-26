@@ -69,6 +69,42 @@ export const AGENT_HOST_IDS = [
 
 export type AgentHostId = (typeof AGENT_HOST_IDS)[number];
 
+/**
+ * The hosts `agentinbox wake` can start on a computer. Chat apps and `general` run nowhere a program on the
+ * operator's computer can start them, so they are never woken there.
+ */
+export const WAKE_HOST_IDS = [
+  'claude-code',
+  'codex',
+  'opencode',
+  'cursor',
+  'hermes',
+  'openclaw',
+] as const satisfies readonly AgentHostId[];
+
+export type WakeHostId = (typeof WAKE_HOST_IDS)[number];
+
+/**
+ * Where an Agent Inbox agent is awake: the one computer whose `agentinbox wake` is ready to wake a host for it.
+ * It is a lease that program renews; once `expiresAt` has passed it counts as no lease at all. The holder is the
+ * computer and the host together: the same computer waking another host is another holder. Every time is an ISO
+ * timestamp.
+ */
+export interface AgentAwake {
+  /** The computer holding the lease: a random id its CLI made, of `[A-Za-z0-9_-]`. */
+  computerId: string;
+  /** What the operator calls that computer, e.g. "MacBook". */
+  computerName: string;
+  /** The host it wakes there. */
+  host: WakeHostId;
+  /** The folder the host runs in, as the operator reads it, e.g. "~/projects/app". */
+  project?: string;
+  /** When this computer took it. Renewing keeps it; taking it again after it lapsed, or over, starts it anew. */
+  since: string;
+  renewedAt: string;
+  expiresAt: string;
+}
+
 /** When a host, or the hosts that came in one way, connected and last checked. Every time is an ISO timestamp. */
 export interface AgentHostEntry {
   /** The first time it came in: it used a one-time code, or checked the inbox. */
@@ -130,6 +166,12 @@ export class AgentEntity {
 
   /** Set for Human relay agents only, once a host has connected or checked the inbox. */
   hosts?: AgentHosts;
+
+  /**
+   * Set for Human relay agents only, once a computer has kept the agent awake (`agentinbox wake`). It stays
+   * after it lapses, and reads as no lease then.
+   */
+  awake?: AgentAwake;
 
   /** Set for Human relay agents only, once the operator chose on the dashboard. Missing reads as `anyone`. */
   reach?: AgentInboxReach;

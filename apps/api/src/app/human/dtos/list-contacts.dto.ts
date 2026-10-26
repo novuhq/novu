@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { HumanAddressVerificationStateEnum, HumanChannelViaEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 
 export const DEFAULT_CONTACTS_LIMIT = 50;
 export const MAX_CONTACTS_LIMIT = 100;
@@ -172,6 +172,13 @@ export class HumanContactDto {
   @ApiProperty({ description: 'Whether this is the account owner’s own contact (`GET /human/operator`).' })
   isOperator: boolean;
 
+  @ApiProperty({
+    description:
+      'Whether a message from them may wake one of the agent’s hosts (`agentinbox wake`). Always true for the operator; ' +
+      'for anyone else, only once the operator turned it on, on agentinbox.md.',
+  })
+  canWake: boolean;
+
   @ApiPropertyOptional({
     type: HumanContactInviteDto,
     description: 'The newest invite link that still works. Absent when none was sent, or it expired or was declined.',
@@ -191,6 +198,31 @@ export class ListContactsResponseDto {
 
   @ApiProperty({ nullable: true, description: 'Cursor for the next page, or null when this is the last page.' })
   next: string | null;
+}
+
+/** What the operator changes about a contact on the dashboard. A host can't: it holds the same key. */
+export class UpdateContactRequestDto {
+  @ApiProperty({
+    description:
+      'Whether a message from them may wake one of the agent’s hosts. The operator always can, so their own row has no switch.',
+  })
+  @IsBoolean()
+  canWake: boolean;
+
+  @ApiPropertyOptional({ description: 'Relay agent the switch is for. Defaults to `human-relay`.' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z0-9-_]+$/i)
+  @MaxLength(64)
+  agentIdentifier?: string;
+}
+
+export class UpdateContactResponseDto {
+  @ApiProperty({ description: 'The subscriberId of the contact.' })
+  id: string;
+
+  @ApiProperty({ description: 'Whether a message from them may wake one of the agent’s hosts now.' })
+  canWake: boolean;
 }
 
 export class RemoveContactResponseDto {

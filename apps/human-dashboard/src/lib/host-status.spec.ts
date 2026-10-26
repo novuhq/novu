@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { type AgentHost, connectedHostIds, findNewHost, type HostStatus, hostName } from './host-status';
+import {
+  type AgentHost,
+  type Awake,
+  connectedHostIds,
+  describeAwake,
+  findNewHost,
+  type HostStatus,
+  hostName,
+  liveAwake,
+} from './host-status';
 import { isHostId } from './hosts';
 
 const NOW = Date.parse('2026-10-23T12:00:00.000Z');
@@ -93,5 +102,29 @@ describe('findNewHost', () => {
     expect(
       findNewHost(statusWith([cli]), statusWith([cli, { via: 'mcp', connectedAt: ago(0), lastCheckedAt: null }]))
     ).toBe('mcp');
+  });
+});
+
+describe('awake', () => {
+  const awake: Awake = {
+    computerId: 'macbook-0123456789abcdef',
+    computerName: 'MacBook',
+    host: 'claude-code',
+    project: '~/projects/app',
+    since: ago(2 * HOUR),
+    renewedAt: ago(30_000),
+    expiresAt: new Date(NOW + 150_000).toISOString(),
+  };
+
+  it('says where the agent is awake, naming the host the way the dashboard does', () => {
+    expect(describeAwake(awake)).toBe('Awake on MacBook (Claude Code)');
+    expect(describeAwake({ computerName: 'Studio', host: 'openclaw' })).toBe('Awake on Studio (OpenClaw)');
+  });
+
+  it('keeps the lease the page read only until it lapses', () => {
+    expect(liveAwake(awake, NOW)).toBe(awake);
+    expect(liveAwake(awake, NOW + 150_000)).toBe(null);
+    expect(liveAwake(null, NOW)).toBe(null);
+    expect(liveAwake(undefined, NOW)).toBe(null);
   });
 });

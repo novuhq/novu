@@ -12,6 +12,7 @@ import {
 import type { HumanHostDto, HumanHostStatusResponseDto } from '../dtos/human-host.dto';
 import type { InboxThreadDto } from '../dtos/human-inbox.dto';
 import type { InboxRelayAgent, InboxScope } from './human-inbox.service';
+import { liveAwake } from './human-wake-lease.service';
 
 /**
  * The request header that says which way a host came in: `cli` from the `agentinbox` CLI, `mcp` from the
@@ -147,11 +148,14 @@ export class HumanHostStatusService {
     }
   }
 
-  /** Which hosts are connected, each with its last check, and what the first one found waiting when it looked. */
+  /**
+   * Which hosts are connected, each with its last check, what the first one found waiting when it looked, and
+   * where the agent is awake.
+   */
   async describe(scope: InboxScope, agent: InboxRelayAgent): Promise<HumanHostStatusResponseDto> {
-    const stored = await this.agentRepository.findOne(agentQuery(scope, agent._id), ['hosts']);
+    const stored = await this.agentRepository.findOne(agentQuery(scope, agent._id), ['hosts', 'awake']);
 
-    return describeHosts(stored?.hosts);
+    return { ...describeHosts(stored?.hosts), awake: liveAwake(stored?.awake, new Date()) };
   }
 }
 
@@ -161,7 +165,7 @@ export class HumanHostStatusService {
  * host with a name has checked the inbox. Their times still count for the agent as a whole until then. A CLI
  * from before says no name and checks as `general`, which keeps them: they fold into its entry.
  */
-export function describeHosts(hosts: AgentHosts | undefined): HumanHostStatusResponseDto {
+export function describeHosts(hosts: AgentHosts | undefined): Omit<HumanHostStatusResponseDto, 'awake'> {
   const named = AGENT_HOST_IDS.flatMap((id) => toHosts(id, hosts?.byId?.[id]));
   const fromBefore = named.some((host) => host.id !== GENERAL_HOST && host.lastCheckedAt)
     ? []

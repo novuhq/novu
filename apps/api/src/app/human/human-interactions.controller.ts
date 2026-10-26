@@ -59,7 +59,13 @@ import {
 } from './dtos/human-operator-contact.dto';
 import { InteractionResponseDto } from './dtos/interaction-response.dto';
 import type { KeylessClaimTokenResponseDto } from './dtos/keyless-claim-token.dto';
-import { ListContactsQueryDto, ListContactsResponseDto, RemoveContactResponseDto } from './dtos/list-contacts.dto';
+import {
+  ListContactsQueryDto,
+  ListContactsResponseDto,
+  RemoveContactResponseDto,
+  UpdateContactRequestDto,
+  type UpdateContactResponseDto,
+} from './dtos/list-contacts.dto';
 import { ListInteractionsQueryDto } from './dtos/list-interactions-query.dto';
 import {
   HumanOperatorResponseDto,
@@ -108,6 +114,8 @@ import { RequestAddressVerificationCommand } from './usecases/request-address-ve
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
 import { SendHumanTestEmailCommand } from './usecases/send-human-test-email/send-human-test-email.command';
 import { SendHumanTestEmail } from './usecases/send-human-test-email/send-human-test-email.usecase';
+import { SetContactCanWakeCommand } from './usecases/set-contact-can-wake/set-contact-can-wake.command';
+import { SetContactCanWake } from './usecases/set-contact-can-wake/set-contact-can-wake.usecase';
 import { SetOperatorDefaultChannelCommand } from './usecases/set-operator-default-channel/set-operator-default-channel.command';
 import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelayCommand } from './usecases/setup-human-relay/setup-human-relay.command';
@@ -144,7 +152,8 @@ export class HumanInteractionsController {
     private readonly changeOperatorEmailUsecase: ChangeOperatorEmail,
     private readonly sendHumanTestEmailUsecase: SendHumanTestEmail,
     private readonly inboxAddresses: AgentInboxAddressService,
-    private readonly hostStatus: HumanHostStatusService
+    private readonly hostStatus: HumanHostStatusService,
+    private readonly setContactCanWakeUsecase: SetContactCanWake
   ) {}
 
   @Post('/interactions')
@@ -304,6 +313,35 @@ export class HumanInteractionsController {
         userId: user._id,
         subscriberId,
         agentIdentifier,
+      })
+    );
+  }
+
+  /**
+   * Turns a contact's "can wake" switch on or off: whether a message from them may wake one of the agent's hosts
+   * (`agentinbox wake`). Only the operator, on the dashboard; a host gets 403 `dashboard_only`. The operator
+   * always can, so their own contact is a 400.
+   */
+  @Patch('/contacts/:subscriberId')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  updateContact(
+    @UserSession() user: UserSessionData,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: UpdateContactRequestDto,
+    @Headers() headers: Record<string, unknown>
+  ): Promise<UpdateContactResponseDto> {
+    assertFromHumanDashboard(headers, 'Only the operator can choose who can wake the agent’s hosts, on agentinbox.md.');
+
+    return this.setContactCanWakeUsecase.execute(
+      SetContactCanWakeCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        subscriberId,
+        canWake: body.canWake,
+        agentIdentifier: body.agentIdentifier,
       })
     );
   }

@@ -85,6 +85,43 @@ export class HumanContactRepository extends BaseRepositoryV2<
     return params.subscriberId;
   }
 
+  /** Turns a contact's "can wake" switch on or off for one relay agent, making their row when they have none yet. */
+  async setCanWake(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    subscriberId: string;
+    canWake: boolean;
+  }): Promise<void> {
+    const filter = {
+      _environmentId: params.environmentId,
+      _agentId: params.agentId,
+      subscriberId: params.subscriberId,
+    };
+
+    try {
+      await this.findOneAndUpdate(
+        filter,
+        { $set: { canWake: params.canWake }, $setOnInsert: { _organizationId: params.organizationId } },
+        { upsert: true }
+      );
+    } catch (err) {
+      // A first-time write raced this one on the unique index, so the row exists now.
+      if (!isDuplicateKeyError(err)) {
+        throw err;
+      }
+
+      await this.findOneAndUpdate(filter, { $set: { canWake: params.canWake } });
+    }
+  }
+
+  /** The contacts of a relay agent whose "can wake" switch is on, by subscriberId. */
+  async findCanWakeSubscriberIds(environmentId: string, agentId: string): Promise<string[]> {
+    const rows = await this.find({ _environmentId: environmentId, _agentId: agentId, canWake: true }, ['subscriberId']);
+
+    return rows.map((row) => row.subscriberId);
+  }
+
   /**
    * Saves the human's default channel. An inviter's pick (`human contact invite --via`)
    * never replaces a default the person chose themselves on the invite page.

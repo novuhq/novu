@@ -56,14 +56,15 @@ export const DASHBOARD_ONLY = 'dashboard_only';
 
 /**
  * Refuses a change only the operator makes, on the Human dashboard: who can reach the agent, pausing or
- * resuming it, and deleting it. Hosts hold the same key, so the key alone doesn't count.
+ * resuming it, deleting it, and which contacts can wake its hosts. Hosts hold the same key, so the key alone
+ * doesn't count. `message` says what the host tried, for a change that isn't one of the agent's settings.
  */
-export function assertFromHumanDashboard(headers: Record<string, unknown> | undefined): void {
+export function assertFromHumanDashboard(
+  headers: Record<string, unknown> | undefined,
+  message = 'Only the operator can change who can reach the agent, pause it or delete it, on agentinbox.md.'
+): void {
   if (!carriesHumanDashboardSecret(headers)) {
-    throw new ForbiddenException({
-      code: DASHBOARD_ONLY,
-      message: 'Only the operator can change who can reach the agent, pause it or delete it, on agentinbox.md.',
-    });
+    throw new ForbiddenException({ code: DASHBOARD_ONLY, message });
   }
 }
 

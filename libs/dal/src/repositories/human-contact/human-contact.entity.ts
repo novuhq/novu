@@ -73,6 +73,12 @@ export class HumanContactEntity {
   /** The account owner's own contact. A relay agent has at most one. */
   isOperator?: boolean;
 
+  /**
+   * Whether a message from this contact may wake one of the agent's hosts (`agentinbox wake`). Only the operator
+   * turns it on, on the dashboard; missing reads as off. The operator can always wake them, whatever it says.
+   */
+  canWake?: boolean;
+
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;
