@@ -14,6 +14,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { AgentsModule } from '../agents/agents.module';
+import { PlaceVoiceCall } from '../agents/channels/voice/place-voice-call';
 import { AuthModule } from '../auth/auth.module';
 import { CliAuthModule } from '../cli-auth/cli-auth.module';
 import { ConnectModule } from '../connect/connect.module';
@@ -79,6 +80,7 @@ import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInboxThreads } from './usecases/list-inbox-threads/list-inbox-threads.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
 import { MarkInboxRead } from './usecases/mark-inbox-read/mark-inbox-read.usecase';
+import { RecordVoiceCallFailure } from './usecases/record-voice-call-failure/record-voice-call-failure.usecase';
 import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
@@ -89,6 +91,7 @@ import { SetOperatorDefaultChannel } from './usecases/set-operator-default-chann
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 import { VerifyAddress } from './usecases/verify-address/verify-address.usecase';
+import { VoiceCallFailureController } from './voice-call-failure.controller';
 
 /**
  * The human-in-the-loop interaction API. State lives here.
@@ -116,6 +119,7 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     HumanAccountsController,
     HumanHostsController,
     HumanConnectPublicController,
+    VoiceCallFailureController,
   ],
   providers: [
     HumanInteractionRepository,
@@ -132,6 +136,8 @@ import { VerifyAddress } from './usecases/verify-address/verify-address.usecase'
     McpConnectionRepository,
     AgentInboxChannelAnalytics,
     HumanDeliveryService,
+    PlaceVoiceCall,
+    RecordVoiceCallFailure,
     HumanKeylessCapService,
     HumanMessageQuotaService,
     HumanVoiceMinuteQuotaService,

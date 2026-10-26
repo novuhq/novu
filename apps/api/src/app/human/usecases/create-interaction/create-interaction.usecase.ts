@@ -34,6 +34,7 @@ import {
   normalizeHumanTo,
   VOICE_CALL_MAX_MINUTES,
 } from '@novu/shared';
+import { isUnconfirmedVoiceDial } from '../../../agents/channels/voice/voice-call-failure';
 import { AgentConversationService } from '../../../agents/conversation-runtime/conversation/agent-conversation.service';
 import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/human-interaction-activity.recorder';
 import { HumanInteractionSettlementService } from '../../../agents/human-relay/human-interaction-settlement.service';
@@ -277,7 +278,7 @@ export class CreateInteraction {
               throw capped;
             }
 
-            const sent = await this.deliveryService.deliver(interaction, target);
+            const sent = await this.deliveryService.deliver(interaction, target, subscriberId);
             messageCredits?.accept();
             const thread = await this.landInThread(scope, interaction, subscriberId, target, sent.platformThreadId);
 
@@ -295,23 +296,36 @@ export class CreateInteraction {
           logMessage: 'Human interaction delivery failed for one recipient',
         });
       const delivered = credits ? await credits.run(deliver) : await deliver();
-      await this.keepVoiceReservation(interaction, delivered.interaction, voiceCredits);
+      await this.activityRecorder.recordRequest(delivered.interaction);
+      const closed = await this.settlement.closeVoiceCallIfUnanswerable(delivered.interaction);
+      const deliveredInteraction = closed ?? delivered.interaction;
+      await this.keepVoiceReservation(
+        interaction,
+        deliveredInteraction,
+        voiceCredits,
+        delivered.unconfirmedSubscriberIds
+      );
       voiceHoldRecorded = true;
 
       // Each contact gets the message in a thread of their own, so each delivery is one message sent.
-      for (const { platform } of delivered.interaction.deliveries ?? []) {
+      for (const { platform } of deliveredInteraction.deliveries ?? []) {
         this.trackMessageSent(command, agent, platform);
       }
 
-      await this.activityRecorder.recordRequest(delivered.interaction);
-
-      if (delivered.interaction.status === HumanInteractionStatusEnum.DELIVERED) {
-        await this.activityRecorder.recordResponse(delivered.interaction);
+      if (deliveredInteraction.status === HumanInteractionStatusEnum.DELIVERED) {
+        await this.activityRecorder.recordResponse(deliveredInteraction);
       }
 
-      return toInteractionResponse(delivered.interaction, delivered.failedSubscriberIds, threads);
+      return toInteractionResponse(deliveredInteraction, delivered.failedSubscriberIds, threads);
     } catch (err) {
-      await this.clearUnrecordedVoiceHold(createdInteraction, voiceHoldRecorded);
+      if (isUnconfirmedVoiceDial(err)) {
+        // A failed reload must not refund a call that may still be ringing.
+        const kept = await this.voiceMinutesStillHeld(createdInteraction).catch(() => undefined);
+        voiceCredits?.accept(kept);
+        voiceHoldRecorded = true;
+      } else {
+        await this.clearUnrecordedVoiceHold(createdInteraction, voiceHoldRecorded);
+      }
 
       throw err;
     } finally {
@@ -358,6 +372,20 @@ export class CreateInteraction {
     await this.clearVoiceHold(interaction);
   }
 
+  /** Minutes still stored after an unconfirmed dial. `undefined` keeps the whole Redis hold. */
+  private async voiceMinutesStillHeld(interaction: HumanInteractionEntity | undefined): Promise<number | undefined> {
+    if (!interaction) {
+      return undefined;
+    }
+
+    const current = await this.humanInteractionRepository.findByIdentifier(
+      interaction._environmentId,
+      interaction.identifier
+    );
+
+    return current?.voiceMinutesReserved ?? interaction.voiceMinutesReserved;
+  }
+
   private async clearVoiceHold(interaction: HumanInteractionEntity): Promise<void> {
     await this.humanInteractionRepository
       .update(
@@ -370,27 +398,42 @@ export class CreateInteraction {
   /**
    * A pending voice send keeps the minutes and contacts it actually reached.
    * A tell, or a voice target that never went out, gives the minutes back when `release` runs.
+   * An unconfirmed dial keeps its share: the phone may still be ringing.
    */
   private async keepVoiceReservation(
     created: HumanInteractionEntity,
     delivered: HumanInteractionEntity,
-    voiceCredits: HumanVoiceMinuteCredits | undefined
+    voiceCredits: HumanVoiceMinuteCredits | undefined,
+    unconfirmedSubscriberIds: string[]
   ): Promise<void> {
-    const pending = delivered.status === HumanInteractionStatusEnum.PENDING;
+    const current =
+      (await this.humanInteractionRepository.findByIdentifier(created._environmentId, created.identifier)) ?? delivered;
+
+    if (acceptFailedVoiceHold(current, created, voiceCredits)) {
+      return;
+    }
+
+    const pending = current.status === HumanInteractionStatusEnum.PENDING;
     const deliveredVoiceSubscriberIds = pending
-      ? (delivered.deliveries ?? [])
-          .filter((delivery) => delivery.platform === HumanChannelViaEnum.VOICE)
-          .map((delivery) => delivery.subscriberId)
+      ? connectedVoiceSubscriberIds(current, delivered, unconfirmedSubscriberIds)
       : [];
     const keptMinutes =
       voiceCredits && !voiceCredits.unlimited ? deliveredVoiceSubscriberIds.length * VOICE_CALL_MAX_MINUTES : 0;
+    const storedMinutes = current.voiceMinutesReserved ?? 0;
+    const minutesMatch = storedMinutes === keptMinutes;
+    const subscribersMatch = sameSubscriberIds(current.voiceSubscriberIds ?? [], deliveredVoiceSubscriberIds);
+
+    if (
+      voiceCredits &&
+      (await this.claimVoiceHoldChange(created, voiceCredits, storedMinutes, keptMinutes, deliveredVoiceSubscriberIds))
+    ) {
+      return;
+    }
 
     if (voiceCredits && !voiceCredits.unlimited) {
       voiceCredits.accept(keptMinutes);
     }
 
-    const minutesMatch = (created.voiceMinutesReserved ?? 0) === keptMinutes;
-    const subscribersMatch = sameSubscriberIds(created.voiceSubscriberIds ?? [], deliveredVoiceSubscriberIds);
     if (minutesMatch && subscribersMatch) {
       return;
     }
@@ -418,6 +461,33 @@ export class CreateInteraction {
         ...(Object.keys(unset).length > 0 ? { $unset: unset } : {}),
       }
     );
+  }
+
+  /**
+   * Changes the saved hold only when it still holds `storedMinutes`.
+   * A failure webhook may have returned those minutes already; then this request keeps its Redis hold.
+   */
+  private async claimVoiceHoldChange(
+    created: HumanInteractionEntity,
+    voiceCredits: HumanVoiceMinuteCredits,
+    storedMinutes: number,
+    keptMinutes: number,
+    subscriberIds: string[]
+  ): Promise<boolean> {
+    if (voiceCredits.unlimited || storedMinutes <= 0 || storedMinutes === keptMinutes) {
+      return false;
+    }
+
+    const claimed = await this.humanInteractionRepository.replaceVoiceHold(
+      created._environmentId,
+      created._id,
+      storedMinutes,
+      keptMinutes,
+      subscriberIds
+    );
+    voiceCredits.accept(claimed ? keptMinutes : (created.voiceMinutesReserved ?? storedMinutes));
+
+    return true;
   }
 
   /**
@@ -916,4 +986,38 @@ export class CreateInteraction {
 
     return agent;
   }
+}
+
+function acceptFailedVoiceHold(
+  current: HumanInteractionEntity,
+  created: HumanInteractionEntity,
+  voiceCredits: HumanVoiceMinuteCredits | undefined
+): boolean {
+  if (current.status !== HumanInteractionStatusEnum.FAILED) {
+    return false;
+  }
+
+  // A failure webhook already returned these minutes. Accepting them here keeps `release` from returning them again.
+  if (voiceCredits && !voiceCredits.unlimited) {
+    voiceCredits.accept(created.voiceMinutesReserved ?? 0);
+  }
+
+  return true;
+}
+
+function connectedVoiceSubscriberIds(
+  current: HumanInteractionEntity,
+  delivered: HumanInteractionEntity,
+  unconfirmedSubscriberIds: string[]
+): string[] {
+  const failedCalls = new Set(
+    (current.deliveries ?? []).filter((delivery) => delivery.voiceFailure).map((delivery) => delivery.platformMessageId)
+  );
+  const connected = (delivered.deliveries ?? [])
+    .filter((delivery) => {
+      return delivery.platform === HumanChannelViaEnum.VOICE && !failedCalls.has(delivery.platformMessageId);
+    })
+    .map((delivery) => delivery.subscriberId);
+
+  return [...new Set([...connected, ...unconfirmedSubscriberIds])];
 }

@@ -3,6 +3,7 @@ import type {
   HumanInteractionKindEnum,
   HumanInteractionResponse,
   HumanInteractionStatusEnum,
+  VoiceCallFailure,
 } from '@novu/shared';
 import { ChangePropsValueType } from '../../types/helpers';
 import { EnvironmentId } from '../environment';
@@ -68,6 +69,12 @@ export class HumanInteractionEntity {
   voiceMinutesReservedAt?: string;
 
   /**
+   * Set when an outbound call never connected. The status is `failed`.
+   * Absent for every other channel and for a call that connected.
+   */
+  voiceFailure?: VoiceCallFailure;
+
+  /**
    * Contacts this pending row is calling. A fan-out can mix voice with other
    * channels, so the row's `subscriberIds` alone is not "on a call".
    */
@@ -92,6 +99,8 @@ export interface HumanInteractionDelivery {
   platform: string;
   platformMessageId: string;
   platformThreadId: string;
+  /** This recipient's call never connected. Other recipients on the row can still answer. */
+  voiceFailure?: VoiceCallFailure;
 }
 
 export function primaryHumanInteractionDelivery(

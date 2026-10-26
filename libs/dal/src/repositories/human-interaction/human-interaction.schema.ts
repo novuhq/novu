@@ -3,6 +3,14 @@ import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { HumanInteractionDBModel } from './human-interaction.entity';
 
+const voiceFailureSchema = new Schema(
+  {
+    code: { type: Schema.Types.String, required: true },
+    message: { type: Schema.Types.String, required: true },
+  },
+  { _id: false }
+);
+
 const humanInteractionDeliverySchema = new Schema(
   {
     subscriberId: { type: Schema.Types.String, required: true },
@@ -10,6 +18,7 @@ const humanInteractionDeliverySchema = new Schema(
     platform: { type: Schema.Types.String, required: true },
     platformMessageId: { type: Schema.Types.String, required: true },
     platformThreadId: { type: Schema.Types.String, required: true },
+    voiceFailure: { type: voiceFailureSchema },
   },
   { _id: false }
 );
@@ -69,6 +78,9 @@ const humanInteractionSchema = new Schema<HumanInteractionDBModel>(
     voiceSubscriberIds: {
       type: [Schema.Types.String],
       default: undefined,
+    },
+    voiceFailure: {
+      type: voiceFailureSchema,
     },
     response: {
       type: new Schema(

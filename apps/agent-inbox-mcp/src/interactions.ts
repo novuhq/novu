@@ -9,9 +9,11 @@ export type OptionInput = string | Option;
 export type Interaction = {
   id: string;
   kind: InteractionKind;
-  status: 'pending' | 'answered' | 'approved' | 'denied' | 'expired' | 'canceled' | 'delivered';
+  status: 'pending' | 'answered' | 'approved' | 'denied' | 'expired' | 'canceled' | 'delivered' | 'failed';
   content?: { cardChrome?: { options?: Option[] } };
   response?: { type: 'text' | 'option'; text?: string; optionId?: string; respondedBy?: string };
+  /** Set when a voice call never connected. */
+  voiceFailure?: { code: string; message: string };
   failedTo?: string[];
   /** Threads the send landed in. Sending marks each one read; `unreadBefore` is what was unread then. */
   threads?: Array<{ id: string; unreadBefore: number }>;
@@ -229,6 +231,8 @@ export function describeOutcome(interaction: Interaction): string {
       return 'Nobody answered in time, so the request expired. Treat it as not approved.';
     case 'canceled':
       return 'The request was canceled. Treat it as not approved.';
+    case 'failed':
+      return `${interaction.voiceFailure?.message ?? 'The call failed before it connected.'} Do not treat this as an answer.`;
     default:
       return `The request is ${status}.${threadNote}`;
   }

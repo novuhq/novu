@@ -4,11 +4,46 @@ import {
   HumanInteractionKindEnum,
   HumanInteractionResponse,
   HumanInteractionStatusEnum,
+  VoiceCallFailure,
 } from '@novu/shared';
+import { Types } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
 import { HumanInteractionDBModel, HumanInteractionDelivery, HumanInteractionEntity } from './human-interaction.entity';
 import { HumanInteraction } from './human-interaction.schema';
+
+/** Copies `voiceFailure` from the stored delivery onto the stamp that shares its conversation id. */
+function deliveriesKeepingStoredFailures(deliveries: HumanInteractionDelivery[]): Record<string, unknown> {
+  return {
+    $map: {
+      input: deliveries,
+      as: 'next',
+      in: {
+        $let: {
+          vars: {
+            previous: {
+              $first: {
+                $filter: {
+                  input: { $ifNull: ['$deliveries', []] },
+                  as: 'prev',
+                  cond: { $eq: ['$$prev.platformMessageId', '$$next.platformMessageId'] },
+                },
+              },
+            },
+          },
+          in: {
+            $mergeObjects: [
+              '$$next',
+              {
+                $cond: [{ $ne: ['$$previous.voiceFailure', null] }, { voiceFailure: '$$previous.voiceFailure' }, {}],
+              },
+            ],
+          },
+        },
+      },
+    },
+  };
+}
 
 /**
  * A contact is on a call only when their own delivery is voice, or they are
@@ -27,6 +62,7 @@ function pendingVoiceFilter(environmentId: string, subscriberIds: string[]) {
           $elemMatch: {
             platform: HumanChannelViaEnum.VOICE,
             subscriberId: subscriberMatch,
+            voiceFailure: { $exists: false },
           },
         },
       },
@@ -152,6 +188,24 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     );
   }
 
+  /** Any status. A voice failure can arrive after a tell has already been marked delivered. */
+  async findByPlatformMessageId(
+    environmentId: string,
+    platformMessageIds: string[]
+  ): Promise<HumanInteractionEntity | null> {
+    if (platformMessageIds.length === 0) {
+      return null;
+    }
+
+    return this.findOne(
+      {
+        _environmentId: environmentId,
+        'deliveries.platformMessageId': { $in: platformMessageIds },
+      },
+      '*'
+    );
+  }
+
   /** The interactions behind the cards of an inbox thread, by their public identifiers. */
   async findByIdentifiers(
     environmentId: string,
@@ -205,11 +259,85 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       subscriberIds?: string[];
     }
   ): Promise<void> {
-    const $set: Record<string, unknown> = { deliveries: delivery.deliveries };
-    if (delivery._conversationId) $set._conversationId = delivery._conversationId;
+    // A failure webhook can mark a call while the next recipient is still being
+    // dialed. Replacing the array from memory would drop that voiceFailure.
+    const $set: Record<string, unknown> = {
+      deliveries: deliveriesKeepingStoredFailures(delivery.deliveries),
+    };
+    // Pipeline updates skip Mongoose casts. This field is stored as an ObjectId.
+    if (delivery._conversationId) $set._conversationId = new Types.ObjectId(delivery._conversationId);
     if (delivery.subscriberIds) $set.subscriberIds = delivery.subscriberIds;
 
-    await this.update({ _id: id, _environmentId: environmentId }, { $set });
+    await this.update({ _id: id, _environmentId: environmentId }, [{ $set }] as never);
+  }
+
+  /**
+   * Moves the saved hold from `expectedMinutes` to `nextMinutes`.
+   * Returns false when another path already took the minutes.
+   */
+  async replaceVoiceHold(
+    environmentId: string,
+    id: string,
+    expectedMinutes: number,
+    nextMinutes: number,
+    subscriberIds: string[]
+  ): Promise<boolean> {
+    const update =
+      nextMinutes > 0
+        ? {
+            $set: {
+              voiceMinutesReserved: nextMinutes,
+              ...(subscriberIds.length > 0 ? { voiceSubscriberIds: subscriberIds } : {}),
+            },
+            ...(subscriberIds.length === 0 ? { $unset: { voiceSubscriberIds: 1 as const } } : {}),
+          }
+        : {
+            $unset: {
+              voiceMinutesReserved: 1 as const,
+              voiceMinutesReservedAt: 1 as const,
+              voiceSubscriberIds: 1 as const,
+            },
+          };
+
+    const previous = await this.findOneAndUpdate(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        voiceMinutesReserved: expectedMinutes,
+      },
+      update,
+      { new: false }
+    );
+
+    return previous !== null;
+  }
+
+  /** Clears the saved hold and returns the minutes that were still stored. A second caller gets nothing. */
+  async takeVoiceMinutes(environmentId: string, id: string): Promise<{ minutes: number; reservedAt?: string } | null> {
+    const previous = await this.findOneAndUpdate(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        voiceMinutesReserved: { $gt: 0 },
+      },
+      {
+        $unset: {
+          voiceMinutesReserved: 1,
+          voiceMinutesReservedAt: 1,
+          voiceSubscriberIds: 1,
+        },
+      },
+      { new: false }
+    );
+
+    if (!previous?.voiceMinutesReserved || previous.voiceMinutesReserved <= 0) {
+      return null;
+    }
+
+    return {
+      minutes: previous.voiceMinutesReserved,
+      reservedAt: previous.voiceMinutesReservedAt,
+    };
   }
 
   /**
@@ -234,6 +362,78 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       { $set: { status, ...(response ? { response } : {}) } },
       { new: true }
     );
+  }
+
+  /**
+   * One recipient's call never connected. A second webhook for that conversation
+   * does not match. The row stays open when someone else can still answer.
+   */
+  async markVoiceDeliveryFailed(
+    environmentId: string,
+    id: string,
+    platformMessageId: string,
+    subscriberId: string,
+    voiceFailure: VoiceCallFailure,
+    statuses: HumanInteractionStatusEnum[]
+  ): Promise<HumanInteractionEntity | null> {
+    if (statuses.length === 0) {
+      return null;
+    }
+
+    return this.findOneAndUpdate(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        status: { $in: statuses },
+        deliveries: {
+          $elemMatch: {
+            platformMessageId,
+            voiceFailure: { $exists: false },
+          },
+        },
+      },
+      {
+        $set: { 'deliveries.$[failed].voiceFailure': voiceFailure },
+        $pull: { voiceSubscriberIds: subscriberId },
+      },
+      {
+        new: true,
+        arrayFilters: [{ 'failed.platformMessageId': platformMessageId, 'failed.voiceFailure': { $exists: false } }],
+      }
+    );
+  }
+
+  /**
+   * The interaction itself failed. Pending is the usual guard. A voice tell is
+   * already `delivered` once the dial is accepted, and can still fail here.
+   */
+  async failVoiceIfOpen(
+    environmentId: string,
+    id: string,
+    voiceFailure: VoiceCallFailure,
+    statuses: HumanInteractionStatusEnum[]
+  ): Promise<HumanInteractionEntity | null> {
+    if (statuses.length === 0) {
+      return null;
+    }
+
+    return this.findOneAndUpdate(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        status: { $in: statuses },
+      },
+      { $set: { status: HumanInteractionStatusEnum.FAILED, voiceFailure } },
+      { new: true }
+    );
+  }
+
+  async failVoiceIfPending(
+    environmentId: string,
+    id: string,
+    voiceFailure: VoiceCallFailure
+  ): Promise<HumanInteractionEntity | null> {
+    return this.failVoiceIfOpen(environmentId, id, voiceFailure, [HumanInteractionStatusEnum.PENDING]);
   }
 
   async markDeliveredIfPending(environmentId: string, id: string): Promise<HumanInteractionEntity | null> {

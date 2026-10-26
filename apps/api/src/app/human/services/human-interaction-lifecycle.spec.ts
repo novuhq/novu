@@ -1,7 +1,9 @@
-import { BadRequestException } from '@nestjs/common';
-import { HumanInteractionKindEnum } from '@novu/shared';
+import { BadGatewayException, BadRequestException, GatewayTimeoutException } from '@nestjs/common';
+import { HumanInteractionKindEnum, HumanInteractionStatusEnum, VoiceCallFailureCodeEnum } from '@novu/shared';
 import { expect } from 'chai';
-import { assertHumanCardActions } from './human-interaction-lifecycle';
+import sinon from 'sinon';
+import { unconfirmedVoiceDialBody } from '../../agents/channels/voice/voice-call-failure';
+import { assertHumanCardActions, deliverToTargets } from './human-interaction-lifecycle';
 
 describe('assertHumanCardActions', () => {
   function cardElement(buttons: Array<Record<string, unknown>>, extra: Record<string, unknown> = {}) {
@@ -45,5 +47,226 @@ describe('assertHumanCardActions', () => {
     const chrome = { title: 'Approve this?', extraActions: [{ id: 'approve', label: 'Yes' }] };
 
     expect(() => assertHumanCardActions(HumanInteractionKindEnum.APPROVE, chrome)).to.throw(BadRequestException);
+  });
+});
+
+describe('deliverToTargets', () => {
+  it('rethrows a coded voice failure instead of wrapping it as a generic gateway error', async () => {
+    const repository = { delete: sinon.stub().resolves(undefined) };
+    const logger = { warn: sinon.stub() };
+
+    try {
+      await deliverToTargets(
+        repository as never,
+        logger as never,
+        { _id: '1', _environmentId: 'env1', identifier: 'hi_1' } as never,
+        [
+          {
+            subscriberId: 'sub-1',
+            integrationIdentifier: 'voice-main',
+            platform: 'voice',
+            deliver: async () => {
+              throw new BadGatewayException({
+                code: VoiceCallFailureCodeEnum.INVALID_NUMBER,
+                message: 'That phone number is not valid.',
+              });
+            },
+          },
+        ],
+        { logMessage: 'failed' }
+      );
+      expect.fail('expected the coded failure');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadGatewayException);
+      expect((err as BadGatewayException).getResponse()).to.include({
+        code: VoiceCallFailureCodeEnum.INVALID_NUMBER,
+      });
+    }
+
+    expect(repository.delete.calledOnce).to.equal(true);
+  });
+
+  it('keeps the row when the dial is not confirmed', async () => {
+    const repository = { delete: sinon.stub().resolves(undefined) };
+    const logger = { warn: sinon.stub() };
+
+    try {
+      await deliverToTargets(
+        repository as never,
+        logger as never,
+        { _id: '1', _environmentId: 'env1', identifier: 'hi_1' } as never,
+        [
+          {
+            subscriberId: 'sub-1',
+            integrationIdentifier: 'voice-main',
+            platform: 'voice',
+            deliver: async () => {
+              throw new GatewayTimeoutException(unconfirmedVoiceDialBody());
+            },
+          },
+        ],
+        { logMessage: 'failed' }
+      );
+      expect.fail('expected the unconfirmed dial');
+    } catch (err) {
+      expect(err).to.be.instanceOf(GatewayTimeoutException);
+      expect((err as GatewayTimeoutException).getResponse()).to.include({ code: 'voice_dial_unconfirmed' });
+    }
+
+    expect(repository.delete.called).to.equal(false);
+  });
+
+  it('keeps an unconfirmed dial when a later recipient is a known failure', async () => {
+    const repository = {
+      delete: sinon.stub().resolves(undefined),
+      update: sinon.stub().resolves(undefined),
+    };
+    const logger = { warn: sinon.stub() };
+
+    try {
+      await deliverToTargets(
+        repository as never,
+        logger as never,
+        {
+          _id: '1',
+          _environmentId: 'env1',
+          identifier: 'hi_1',
+          subscriberIds: ['sub-1', 'sub-2'],
+          voiceSubscriberIds: ['sub-1', 'sub-2'],
+          voiceMinutesReserved: 10,
+        } as never,
+        [
+          {
+            subscriberId: 'sub-1',
+            integrationIdentifier: 'voice-main',
+            platform: 'voice',
+            deliver: async () => {
+              throw new GatewayTimeoutException(unconfirmedVoiceDialBody());
+            },
+          },
+          {
+            subscriberId: 'sub-2',
+            integrationIdentifier: 'voice-main',
+            platform: 'voice',
+            deliver: async () => {
+              throw new BadGatewayException({
+                code: VoiceCallFailureCodeEnum.INVALID_NUMBER,
+                message: 'That phone number is not valid.',
+              });
+            },
+          },
+        ],
+        { logMessage: 'failed' }
+      );
+      expect.fail('expected the unconfirmed dial');
+    } catch (err) {
+      expect(err).to.be.instanceOf(GatewayTimeoutException);
+      expect((err as GatewayTimeoutException).getResponse()).to.include({ code: 'voice_dial_unconfirmed' });
+    }
+
+    expect(repository.delete.called).to.equal(false);
+    expect(repository.update.firstCall.args[1].$set).to.deep.equal({
+      subscriberIds: ['sub-1'],
+      voiceSubscriberIds: ['sub-1'],
+      voiceMinutesReserved: 5,
+    });
+  });
+
+  it('keeps an unconfirmed recipient when a later call connects', async () => {
+    const repository = {
+      stampDelivery: sinon.stub().resolves(undefined),
+      markDeliveredIfPending: sinon.stub().resolves({ status: HumanInteractionStatusEnum.DELIVERED }),
+    };
+    const logger = { warn: sinon.stub() };
+
+    const result = await deliverToTargets(
+      repository as never,
+      logger as never,
+      {
+        _id: '1',
+        _environmentId: 'env1',
+        identifier: 'hi_1',
+        kind: HumanInteractionKindEnum.TELL,
+        status: HumanInteractionStatusEnum.PENDING,
+        subscriberIds: ['sub-1', 'sub-2', 'sub-3'],
+      } as never,
+      [
+        {
+          subscriberId: 'sub-1',
+          integrationIdentifier: 'voice-main',
+          platform: 'voice',
+          deliver: async () => {
+            throw new GatewayTimeoutException(unconfirmedVoiceDialBody());
+          },
+        },
+        {
+          subscriberId: 'sub-2',
+          integrationIdentifier: 'voice-main',
+          platform: 'voice',
+          deliver: async () => ({ platformMessageId: 'conv_2', platformThreadId: 'conv_2' }),
+        },
+        {
+          subscriberId: 'sub-3',
+          integrationIdentifier: 'voice-main',
+          platform: 'voice',
+          deliver: async () => {
+            throw new BadGatewayException({
+              code: VoiceCallFailureCodeEnum.INVALID_NUMBER,
+              message: 'That phone number is not valid.',
+            });
+          },
+        },
+      ],
+      { logMessage: 'failed' }
+    );
+
+    expect(result.unconfirmedSubscriberIds).to.deep.equal(['sub-1']);
+    expect(result.interaction.status).to.equal(HumanInteractionStatusEnum.PENDING);
+    expect(result.interaction.subscriberIds).to.deep.equal(['sub-2', 'sub-1']);
+    expect(repository.markDeliveredIfPending.called).to.equal(false);
+    expect(repository.stampDelivery.lastCall.args[2].subscriberIds).to.deep.equal(['sub-2', 'sub-1']);
+  });
+
+  it('stamps each delivery before dialing the next recipient', async () => {
+    const order: string[] = [];
+    const repository = {
+      stampDelivery: sinon.stub().callsFake(async () => {
+        order.push('stamp');
+      }),
+    };
+    const logger = { warn: sinon.stub() };
+
+    await deliverToTargets(
+      repository as never,
+      logger as never,
+      { _id: '1', _environmentId: 'env1', identifier: 'hi_1' } as never,
+      [
+        {
+          subscriberId: 'sub-1',
+          integrationIdentifier: 'voice-main',
+          platform: 'voice',
+          deliver: async () => {
+            order.push('first');
+
+            return { platformMessageId: 'conv_1', platformThreadId: 'conv_1' };
+          },
+        },
+        {
+          subscriberId: 'sub-2',
+          integrationIdentifier: 'voice-main',
+          platform: 'voice',
+          deliver: async () => {
+            order.push('second');
+
+            return { platformMessageId: 'conv_2', platformThreadId: 'conv_2' };
+          },
+        },
+      ],
+      { logMessage: 'failed' }
+    );
+
+    expect(order).to.deep.equal(['first', 'stamp', 'second', 'stamp']);
+    expect(repository.stampDelivery.firstCall.args[2].deliveries).to.have.length(1);
+    expect(repository.stampDelivery.secondCall.args[2].deliveries).to.have.length(2);
   });
 });

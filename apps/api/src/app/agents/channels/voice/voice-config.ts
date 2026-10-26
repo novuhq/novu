@@ -22,3 +22,10 @@ export function readVoiceChannelConfig(): VoiceChannelConfig | null {
 
   return { twilioNumber, elevenLabsPhoneNumberId, elevenLabsAgentId, elevenLabsApiKey };
 }
+
+/** Global host unless the deployment pinned a residency region. */
+export function elevenLabsApiBase(): string {
+  const configured = process.env.NOVU_VOICE_ELEVENLABS_API_BASE?.trim();
+
+  return (configured || 'https://api.elevenlabs.io').replace(/\/$/, '');
+}

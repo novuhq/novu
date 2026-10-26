@@ -18,7 +18,9 @@ import {
   isHumanCardElementContent,
   isHumanChromeContent,
   mintHumanOptions,
+  VOICE_CALL_MAX_MINUTES,
 } from '@novu/shared';
+import { isUnconfirmedVoiceDial } from '../../agents/channels/voice/voice-call-failure';
 import { parseHumanActionId } from '../../agents/human-relay/human-action-id';
 
 const DEFAULT_PENDING_CAP = 25;
@@ -388,6 +390,7 @@ export async function assertHumanPendingCap(
  * the card. Partial fan-out failures stay on the row; the caller surfaces them.
  * Recipients whose DM failed are dropped from the settlement allow-list so they
  * cannot settle, appear in `human list`, or consume pending quota.
+ * An unconfirmed dial stays on the row: the phone may still be ringing.
  *
  * In-thread `ctx.*` posts one card and uses `to` only as an allow-list — that
  * path has no failed recipients, so the listed ids are left intact.
@@ -403,10 +406,16 @@ export async function deliverToTargets(
     logMessage: string;
     logContext?: Record<string, unknown>;
   }
-): Promise<{ interaction: HumanInteractionEntity; failedSubscriberIds: string[] }> {
+): Promise<{
+  interaction: HumanInteractionEntity;
+  failedSubscriberIds: string[];
+  unconfirmedSubscriberIds: string[];
+}> {
   const deliveries: HumanInteractionDelivery[] = [];
   const failedSubscriberIds: string[] = [];
+  const unconfirmedSubscriberIds: string[] = [];
   let lastError: unknown;
+  let unconfirmedError: unknown;
   let conversationId: string | undefined;
 
   for (const target of targets) {
@@ -425,6 +434,10 @@ export async function deliverToTargets(
     } catch (err) {
       lastError = err;
       failedSubscriberIds.push(target.subscriberId);
+      if (isUnconfirmedVoiceDial(err)) {
+        unconfirmedSubscriberIds.push(target.subscriberId);
+        unconfirmedError ??= err;
+      }
       logger.warn(
         {
           err,
@@ -435,38 +448,36 @@ export async function deliverToTargets(
         },
         options.logMessage
       );
+      continue;
     }
+
+    // Stamp before the next recipient so a fast failure webhook can find this call.
+    await stampDeliveries(repository, interaction, deliveries, conversationId);
   }
 
   if (deliveries.length === 0) {
-    await repository
-      .delete({ _id: interaction._id, _environmentId: interaction._environmentId })
-      .catch(() => undefined);
-
-    // The inbox cap is a 429 with a reset time. Wrapping it as a gateway error drops that.
-    if (isAgentEmailInboxQuotaExceeded(lastError)) {
-      throw lastError;
-    }
-
-    throw new BadGatewayException(
-      `Failed to deliver to ${failedSubscriberIds.join(', ') || 'any recipient'}: ${
-        lastError instanceof Error ? lastError.message : 'no recipient received the interaction'
-      }`
+    await rejectWhenNobodyReceived(
+      repository,
+      interaction,
+      failedSubscriberIds,
+      unconfirmedError ?? lastError,
+      unconfirmedSubscriberIds
     );
   }
 
-  const recipientPatch =
-    failedSubscriberIds.length > 0
-      ? {
-          subscriberIds: deliveries.map((delivery) => delivery.subscriberId),
-        }
-      : {};
-
-  await repository.stampDelivery(interaction._environmentId, interaction._id, {
-    deliveries,
-    ...(conversationId ? { _conversationId: conversationId } : {}),
-    ...recipientPatch,
+  const retainedSubscriberIds = [
+    ...new Set([...deliveries.map((delivery) => delivery.subscriberId), ...unconfirmedSubscriberIds]),
+  ];
+  const droppedSubscriberIds = failedSubscriberIds.filter((subscriberId) => {
+    return !unconfirmedSubscriberIds.includes(subscriberId);
   });
+  const recipientPatch = droppedSubscriberIds.length > 0 ? { subscriberIds: retainedSubscriberIds } : {};
+
+  if (droppedSubscriberIds.length > 0) {
+    await stampDeliveries(repository, interaction, deliveries, conversationId, {
+      subscriberIds: retainedSubscriberIds,
+    });
+  }
 
   const delivered: HumanInteractionEntity = {
     ...interaction,
@@ -475,16 +486,127 @@ export async function deliverToTargets(
     ...recipientPatch,
   };
 
-  if (interaction.kind === HumanInteractionKindEnum.TELL) {
-    const settled = await repository.markDeliveredIfPending(interaction._environmentId, interaction._id);
+  if (interaction.kind === HumanInteractionKindEnum.TELL && unconfirmedSubscriberIds.length === 0) {
+    return finishTellDelivery(repository, interaction, delivered, deliveries, failedSubscriberIds);
+  }
 
+  return { interaction: delivered, failedSubscriberIds, unconfirmedSubscriberIds };
+}
+
+function stampDeliveries(
+  repository: HumanInteractionRepository,
+  interaction: HumanInteractionEntity,
+  deliveries: HumanInteractionDelivery[],
+  conversationId: string | undefined,
+  extra?: { subscriberIds: string[] }
+): Promise<void> {
+  return repository.stampDelivery(interaction._environmentId, interaction._id, {
+    deliveries: [...deliveries],
+    ...(conversationId ? { _conversationId: conversationId } : {}),
+    ...extra,
+  });
+}
+
+async function rejectWhenNobodyReceived(
+  repository: HumanInteractionRepository,
+  interaction: HumanInteractionEntity,
+  failedSubscriberIds: string[],
+  lastError: unknown,
+  unconfirmedSubscriberIds: string[]
+): Promise<never> {
+  // An unconfirmed dial may still be ringing. Deleting the row would let the caller place another.
+  if (unconfirmedSubscriberIds.length === 0) {
+    await repository
+      .delete({ _id: interaction._id, _environmentId: interaction._environmentId })
+      .catch(() => undefined);
+  } else if (unconfirmedSubscriberIds.length < failedSubscriberIds.length) {
+    await retainUnconfirmedCallers(repository, interaction, unconfirmedSubscriberIds);
+  }
+
+  // A coded failure (voice dial, inbox cap) must keep its code. A generic wrap drops it.
+  if (isAgentEmailInboxQuotaExceeded(lastError) || codedHttpException(lastError)) {
+    throw lastError;
+  }
+
+  throw new BadGatewayException(
+    `Failed to deliver to ${failedSubscriberIds.join(', ') || 'any recipient'}: ${
+      lastError instanceof Error ? lastError.message : 'no recipient received the interaction'
+    }`
+  );
+}
+
+async function finishTellDelivery(
+  repository: HumanInteractionRepository,
+  interaction: HumanInteractionEntity,
+  delivered: HumanInteractionEntity,
+  deliveries: HumanInteractionDelivery[],
+  failedSubscriberIds: string[]
+): Promise<{
+  interaction: HumanInteractionEntity;
+  failedSubscriberIds: string[];
+  unconfirmedSubscriberIds: string[];
+}> {
+  const settled = await repository.markDeliveredIfPending(interaction._environmentId, interaction._id);
+  if (settled) {
     return {
-      interaction: settled
-        ? { ...settled, deliveries }
-        : { ...delivered, status: HumanInteractionStatusEnum.DELIVERED },
+      interaction: { ...settled, deliveries },
       failedSubscriberIds,
+      unconfirmedSubscriberIds: [],
     };
   }
 
-  return { interaction: delivered, failedSubscriberIds };
+  const current = await repository.findByIdentifier(interaction._environmentId, interaction.identifier);
+  if (current) {
+    return { interaction: current, failedSubscriberIds, unconfirmedSubscriberIds: [] };
+  }
+
+  return {
+    interaction: { ...delivered, status: HumanInteractionStatusEnum.DELIVERED },
+    failedSubscriberIds,
+    unconfirmedSubscriberIds: [],
+  };
+}
+
+/** A known failure must not delete the lock or the minutes of a call that may still be ringing. */
+async function retainUnconfirmedCallers(
+  repository: HumanInteractionRepository,
+  interaction: HumanInteractionEntity,
+  unconfirmedSubscriberIds: string[]
+): Promise<void> {
+  const reserved = interaction.voiceMinutesReserved ?? 0;
+  const minutes = Math.min(reserved, unconfirmedSubscriberIds.length * VOICE_CALL_MAX_MINUTES);
+  const set: {
+    subscriberIds: string[];
+    voiceSubscriberIds: string[];
+    voiceMinutesReserved?: number;
+  } = {
+    subscriberIds: unconfirmedSubscriberIds,
+    voiceSubscriberIds: unconfirmedSubscriberIds,
+  };
+  const unset: { voiceMinutesReserved?: 1; voiceMinutesReservedAt?: 1 } = {};
+
+  if (minutes > 0) {
+    set.voiceMinutesReserved = minutes;
+  } else if (reserved > 0) {
+    unset.voiceMinutesReserved = 1;
+    unset.voiceMinutesReservedAt = 1;
+  }
+
+  await repository.update(
+    { _id: interaction._id, _environmentId: interaction._environmentId },
+    {
+      $set: set,
+      ...(Object.keys(unset).length > 0 ? { $unset: unset } : {}),
+    }
+  );
+}
+
+function codedHttpException(error: unknown): error is HttpException {
+  if (!(error instanceof HttpException)) {
+    return false;
+  }
+
+  const body = error.getResponse();
+
+  return typeof body === 'object' && body !== null && typeof (body as { code?: unknown }).code === 'string';
 }

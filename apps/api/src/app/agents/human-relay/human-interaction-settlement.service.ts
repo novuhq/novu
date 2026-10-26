@@ -1,7 +1,14 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationEntity, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
-import { HumanInteractionResponse, HumanInteractionStatusEnum, parseToolApprovalRequestId } from '@novu/shared';
+import {
+  HumanChannelViaEnum,
+  HumanInteractionKindEnum,
+  HumanInteractionResponse,
+  HumanInteractionStatusEnum,
+  parseToolApprovalRequestId,
+  type VoiceCallFailure,
+} from '@novu/shared';
 import { HumanVoiceMinuteQuotaService } from '../../human/services/human-voice-minute-quota.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { ResumeManagedHuman } from '../managed-runtime/novu-human/resume-managed-human.usecase';
@@ -61,6 +68,65 @@ export class HumanInteractionSettlementService {
   }
 
   /**
+   * One recipient's call never connected. The interaction fails only when nobody
+   * else can still answer. Minutes for a partial failure stay on the row until
+   * that later settlement, which returns them once.
+   */
+  async failVoiceCall(
+    interaction: HumanInteractionEntity,
+    voiceFailure: VoiceCallFailure,
+    conversationId: string
+  ): Promise<HumanInteractionEntity | null> {
+    const delivery = (interaction.deliveries ?? []).find((item) => item.platformMessageId === conversationId);
+    if (!delivery) {
+      return null;
+    }
+
+    const statuses = openVoiceFailureStatuses(interaction);
+    const marked = await this.humanInteractionRepository.markVoiceDeliveryFailed(
+      interaction._environmentId,
+      interaction._id,
+      conversationId,
+      delivery.subscriberId,
+      voiceFailure,
+      statuses
+    );
+
+    if (marked) {
+      return this.closeVoiceFailure(marked, voiceFailure, statuses);
+    }
+
+    return this.retryVoiceFailure(interaction, conversationId);
+  }
+
+  /**
+   * After every recipient has been dialed, close a call that no longer has
+   * anyone who can answer. In-flight webhooks leave the row open while later
+   * recipients are still being placed.
+   */
+  async closeVoiceCallIfUnanswerable(interaction: HumanInteractionEntity): Promise<HumanInteractionEntity | null> {
+    const current =
+      (await this.humanInteractionRepository.findByIdentifier(interaction._environmentId, interaction.identifier)) ??
+      interaction;
+    const statuses = openVoiceFailureStatuses(current);
+
+    if (!statuses.includes(current.status)) {
+      return current.status === HumanInteractionStatusEnum.FAILED ? current : null;
+    }
+
+    if (voiceCallCanStillBeAnswered(current, true)) {
+      return null;
+    }
+
+    const voiceFailure = current.deliveries?.find((delivery) => delivery.voiceFailure)?.voiceFailure;
+    if (!voiceFailure) {
+      return null;
+    }
+
+    return this.finishFailedVoiceCall(current, voiceFailure, statuses);
+  }
+
+  /**
    * Lazy expiry — every read path calls this so an overdue interaction flips
    * to `expired` (and its card is disabled) the moment anyone looks at it.
    * Returns the up-to-date row.
@@ -106,18 +172,90 @@ export class HumanInteractionSettlementService {
    * agents edit it in place), so editing here too would double-write and race
    * the managed delete.
    */
-  /** Exactly one of settle or expiry wins the pending flip, so the minutes are returned once. */
+  private async finishFailedVoiceCall(
+    interaction: HumanInteractionEntity,
+    voiceFailure: VoiceCallFailure,
+    statuses: HumanInteractionStatusEnum[]
+  ): Promise<HumanInteractionEntity | null> {
+    const failed = await this.humanInteractionRepository.failVoiceIfOpen(
+      interaction._environmentId,
+      interaction._id,
+      voiceFailure,
+      statuses
+    );
+
+    if (!failed) {
+      return null;
+    }
+
+    await this.releaseVoiceReservation(failed);
+    const voiceOnly = (failed.deliveries ?? []).every((delivery) => delivery.platform === HumanChannelViaEnum.VOICE);
+    if (!voiceOnly) {
+      await this.editDeliveredMessage(failed);
+    }
+
+    await this.resumeAfterSettlement(failed);
+
+    return failed;
+  }
+
+  /**
+   * One saved minute is returned once. The create request can release the same
+   * hold, so this takes whatever is still stored instead of trusting a stale read.
+   */
   private async releaseVoiceReservation(interaction: HumanInteractionEntity): Promise<void> {
-    const minutes = interaction.voiceMinutesReserved;
-    if (!minutes || minutes <= 0) {
+    if (!interaction.voiceMinutesReserved || interaction.voiceMinutesReserved <= 0) {
       return;
     }
 
-    const reservedAt = interaction.voiceMinutesReservedAt
-      ? new Date(interaction.voiceMinutesReservedAt)
-      : new Date(interaction.createdAt);
+    const claimed = await this.humanInteractionRepository.takeVoiceMinutes(interaction._environmentId, interaction._id);
+    if (!claimed) {
+      return;
+    }
 
-    await this.voiceMinuteQuota.releaseReserved(String(interaction._organizationId), minutes, reservedAt);
+    const reservedAt = claimed.reservedAt ? new Date(claimed.reservedAt) : new Date(interaction.createdAt);
+
+    await this.voiceMinuteQuota.releaseReserved(String(interaction._organizationId), claimed.minutes, reservedAt);
+  }
+
+  private async closeVoiceFailure(
+    interaction: HumanInteractionEntity,
+    voiceFailure: VoiceCallFailure,
+    statuses: HumanInteractionStatusEnum[]
+  ): Promise<HumanInteractionEntity | null> {
+    if (voiceCallCanStillBeAnswered(interaction, false)) {
+      return interaction;
+    }
+
+    return this.finishFailedVoiceCall(interaction, voiceFailure, statuses);
+  }
+
+  /** A retry already stored the failure. Finish closing the interaction when the first attempt stopped short. */
+  private async retryVoiceFailure(
+    interaction: HumanInteractionEntity,
+    conversationId: string
+  ): Promise<HumanInteractionEntity | null> {
+    const current = await this.humanInteractionRepository.findByIdentifier(
+      interaction._environmentId,
+      interaction.identifier
+    );
+    if (!current) {
+      return null;
+    }
+
+    const statuses = openVoiceFailureStatuses(current);
+    if (!statuses.includes(current.status)) {
+      return current.status === HumanInteractionStatusEnum.FAILED ? current : null;
+    }
+
+    const failedDelivery = (current.deliveries ?? []).find((item) => {
+      return item.platformMessageId === conversationId && item.voiceFailure;
+    });
+    if (!failedDelivery?.voiceFailure) {
+      return null;
+    }
+
+    return this.closeVoiceFailure(current, failedDelivery.voiceFailure, statuses);
   }
 
   private async editDeliveredMessage(interaction: HumanInteractionEntity): Promise<void> {
@@ -136,4 +274,36 @@ export class HumanInteractionSettlementService {
     await this.resumeManagedHuman.execute(interaction);
     await this.resumeToolApprovalFromHitl.execute(interaction);
   }
+}
+
+function openVoiceFailureStatuses(interaction: Pick<HumanInteractionEntity, 'kind'>): HumanInteractionStatusEnum[] {
+  if (interaction.kind === HumanInteractionKindEnum.TELL) {
+    return [HumanInteractionStatusEnum.PENDING, HumanInteractionStatusEnum.DELIVERED];
+  }
+
+  return [HumanInteractionStatusEnum.PENDING];
+}
+
+/**
+ * A non-voice delivery can still be answered. A voice delivery can, until it
+ * has a failure. While the fan-out is still dialing, a contact with no delivery
+ * yet is not a reason to close the row.
+ */
+function voiceCallCanStillBeAnswered(interaction: HumanInteractionEntity, fanOutComplete: boolean): boolean {
+  const deliveries = interaction.deliveries ?? [];
+
+  if (!fanOutComplete) {
+    const stillDialing = (interaction.voiceSubscriberIds ?? []).some(
+      (subscriberId) =>
+        !deliveries.some(
+          (delivery) => delivery.subscriberId === subscriberId && delivery.platform === HumanChannelViaEnum.VOICE
+        )
+    );
+
+    if (stillDialing) {
+      return true;
+    }
+  }
+
+  return deliveries.some((delivery) => delivery.platform !== HumanChannelViaEnum.VOICE || !delivery.voiceFailure);
 }

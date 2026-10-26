@@ -28,6 +28,8 @@ export enum HumanInteractionStatusEnum {
   CANCELED = 'canceled',
   /** Terminal state for `tell` — nothing to wait on. */
   DELIVERED = 'delivered',
+  /** A voice call never connected. Distinct from `expired`, which is the TTL. */
+  FAILED = 'failed',
 }
 
 export const HUMAN_INTERACTION_TERMINAL_STATUSES: readonly HumanInteractionStatusEnum[] = [
@@ -37,7 +39,25 @@ export const HUMAN_INTERACTION_TERMINAL_STATUSES: readonly HumanInteractionStatu
   HumanInteractionStatusEnum.EXPIRED,
   HumanInteractionStatusEnum.CANCELED,
   HumanInteractionStatusEnum.DELIVERED,
+  HumanInteractionStatusEnum.FAILED,
 ];
+
+/**
+ * Why an outbound voice call never connected. The sentence is what the agent reads.
+ * A connected call that ends without a commitment is a later status, not one of these.
+ */
+export enum VoiceCallFailureCodeEnum {
+  BUSY = 'voice_busy',
+  NO_ANSWER = 'voice_no_answer',
+  REJECTED = 'voice_rejected',
+  INVALID_NUMBER = 'voice_invalid_number',
+  CARRIER_FAILURE = 'voice_carrier_failure',
+}
+
+export type VoiceCallFailure = {
+  code: VoiceCallFailureCodeEnum;
+  message: string;
+};
 
 export type HumanInteractionOption = {
   id: string;

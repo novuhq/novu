@@ -301,6 +301,8 @@ function resolveStatusLine(interaction: HumanInteractionEntity): string {
     }
     case HumanInteractionStatusEnum.CANCELED:
       return '🚫 _Canceled by the requesting agent._';
+    case HumanInteractionStatusEnum.FAILED:
+      return interaction.voiceFailure?.message ?? 'The call failed.';
     default:
       return '⌛ _Expired — no longer actionable._';
   }

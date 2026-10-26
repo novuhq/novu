@@ -6,6 +6,7 @@ import {
   HumanInteractionResponse,
   HumanInteractionStatusEnum,
   humanInteractionRecipientIds,
+  VoiceCallFailureCodeEnum,
 } from '@novu/shared';
 
 export class InteractionThreadDto {
@@ -14,6 +15,14 @@ export class InteractionThreadDto {
 
   @ApiProperty({ description: 'Messages in the thread that were unread when this was sent.' })
   unreadBefore: number;
+}
+
+export class VoiceCallFailureDto {
+  @ApiProperty({ enum: VoiceCallFailureCodeEnum })
+  code: VoiceCallFailureCodeEnum;
+
+  @ApiProperty()
+  message: string;
 }
 
 export class InteractionResponseDto {
@@ -46,6 +55,12 @@ export class InteractionResponseDto {
 
   @ApiPropertyOptional({ description: 'Present once the interaction reached a terminal, answered state.' })
   response?: HumanInteractionResponse;
+
+  @ApiPropertyOptional({
+    description: 'Present when a voice call never connected. `code` is the reason; `message` is the sentence to show.',
+    type: () => VoiceCallFailureDto,
+  })
+  voiceFailure?: VoiceCallFailureDto;
 
   @ApiPropertyOptional({
     description:
@@ -85,6 +100,7 @@ export function toInteractionResponse(
     integrationIdentifier: primary?.integrationIdentifier ?? '',
     platform: primary?.platform ?? '',
     response: entity.response,
+    ...(entity.voiceFailure ? { voiceFailure: entity.voiceFailure } : {}),
     ...(failedSubscriberIds && failedSubscriberIds.length > 0 ? { failedTo: failedSubscriberIds } : {}),
     ...(threads && threads.length > 0 ? { threads } : {}),
     expiresAt: entity.expiresAt,
