@@ -7,7 +7,7 @@ import { SITE_INDEXED, SITE_PAGES } from '../../src/lib/seo';
 const origin = 'https://www.agentinbox.md';
 test.use({ javaScriptEnabled: false });
 
-/** What search engines are told about the website pages: left out of results until launch (`SITE_INDEXED`). */
+/** What search engines are told about the website pages (`SITE_INDEXED`). */
 const robotsDirective = SITE_INDEXED ? /(^|, )index, follow/ : /noindex, nofollow/;
 
 // Both pages share the agentinbox card of /sapien until the docs page has its own.
@@ -30,7 +30,7 @@ for (const path of ['/', '/sapien']) {
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', await page.title());
     await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', robotsDirective);
-    if (!SITE_INDEXED) expect(response?.headers()['x-robots-tag']).toBe('noindex, nofollow');
+    expect(response?.headers()['x-robots-tag']).toBe(SITE_INDEXED ? undefined : 'noindex, nofollow');
     const image = new URL((await page.locator('meta[property="og:image"]').first().getAttribute('content'))!);
     expect(image.origin).toBe(origin);
     expect(image.pathname).toBe(sharedImages[path]);
@@ -88,12 +88,11 @@ test('SEO crawler files contain only production canonical pages', async ({ reque
   expect(body).toContain(`${origin}/sapien/opengraph-image.jpg`);
 });
 
-test('SEO text versions follow the pages out of search results', async ({ request }) => {
-  test.skip(SITE_INDEXED, 'Only while the website pages are kept out of search results.');
+test('SEO text versions follow whether the website pages are indexed', async ({ request }) => {
   for (const path of ['/index.md', '/llms.txt', '/claude-code', '/claude-code.md', '/claude-code/index.md']) {
     const response = await request.get(path);
     expect(response.status()).toBe(200);
-    expect(response.headers()['x-robots-tag']).toBe('noindex, nofollow');
+    expect(response.headers()['x-robots-tag']).toBe(SITE_INDEXED ? undefined : 'noindex, nofollow');
   }
 });
 

@@ -16,7 +16,7 @@ const HOST_PAGE = `/:host(${HOST_IDS.join('|')})`;
 const HOST_MARKDOWN = `${HOST_PAGE}\\.md`;
 
 /**
- * The website pages and their text versions, which search engines leave out while `SITE_INDEXED` is off. A
+ * The website pages and their text versions. Search engines leave them out while `SITE_INDEXED` is off. A
  * host's Markdown also answers at its own address (`/claude-code/index.md`), behind the rewrite.
  * `noindexPaths` widens this to every route on staging (`SITE_NOINDEX`), preview, and development.
  */
@@ -71,7 +71,7 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      // Out of search results until launch, also the Markdown and text, which carry no `<meta name="robots">`.
+      // While `SITE_INDEXED` is off: also the Markdown and text, which carry no `<meta name="robots">`.
       ...(NOINDEX_SCOPE === 'website' ? WEBSITE_PATHS.map((source) => ({ source, headers: [NOINDEX] })) : []),
       // Staging (`SITE_NOINDEX`), preview, and development stay out of search results on every route.
       // `/` is named on its own: `/:path*` does not match a URL with no path segment.
