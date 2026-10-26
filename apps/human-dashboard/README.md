@@ -30,6 +30,8 @@ Inbox accounts with their dashboard, and the Agent Inbox API (`/api`).
 | `/api/*`          | The Agent Inbox API, which forwards to the Novu API, so people only ever see this site's address. See [Agent Inbox API](#agent-inbox-api). |
 | `/api/webhooks/clerk` | The Agent Inbox Clerk app's webhook: a sign-up (`user.created`) gets its account before the operator opens any page. Off without `CLERK_WEBHOOK_SIGNING_SECRET`; the first dashboard visit does the same then. |
 
+A request for an address that is not in this list is a 404. When it sends `Accept: text/markdown`, the body is Markdown (`Content-Type: text/markdown`) and links to `/llms.txt`, `/sitemap.xml`, and `/index.md`. A browser still gets the HTML page.
+
 Each Agent Inbox account has a backing organization, which the API creates through the private
 `/v1/human/accounts` endpoints. See
 [the ADR](../../packages/agentinbox/docs/adr/0001-separate-clerk-app-with-backing-organizations.md) and the
