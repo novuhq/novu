@@ -1,5 +1,6 @@
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
+import { installMintlifyTriggerHider } from '@/utils/mintlify-trigger-hider';
 
 const MINTLIFY_WIDGET_ID = 'mint_widget_9890b2a3-6a4f-4516-8331-24a3b12e6162';
 /**
@@ -11,14 +12,6 @@ const MINTLIFY_EMBED_VERSION = '0.0.61';
 const MINTLIFY_EMBED_URL = `https://widget.mintlify.com/versions/${MINTLIFY_EMBED_VERSION}/embed.js`;
 const MINTLIFY_EMBED_INTEGRITY = 'sha384-bSqvMIpnn7junQOtOOcmXzbErlvtTW6+lG3TXYc5L/aEISuuwVTmW0kH+3Tw7urd';
 const MINTLIFY_SCRIPT_ID = 'mintlify-assistant-embed';
-const HIDE_TRIGGER_STYLE_ID = 'novu-hide-mintlify-trigger';
-const HIDE_TRIGGER_CSS = `
-  [data-mintlify-assistant-trigger] {
-    display: none !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-  }
-`;
 
 const APPEARANCE = {
   variant: 'panel' as const,
@@ -69,49 +62,6 @@ declare global {
 }
 
 let initPromise: Promise<MintlifyAssistantApi> | undefined;
-let triggerHiderInstalled = false;
-
-function hideTriggerInShadow(root: ShadowRoot): void {
-  if (root.getElementById(HIDE_TRIGGER_STYLE_ID)) {
-    return;
-  }
-
-  const style = document.createElement('style');
-  style.id = HIDE_TRIGGER_STYLE_ID;
-  style.textContent = HIDE_TRIGGER_CSS;
-  root.appendChild(style);
-}
-
-/**
- * Mintlify paints "Ask assistant" inside a closed shadow root, and its own
- * :host styles beat any page rule — including display:none !important on the host.
- * Capture the shadow root as it is created and hide only the launcher there.
- */
-function installMintlifyTriggerHider(): void {
-  if (triggerHiderInstalled) {
-    return;
-  }
-
-  triggerHiderInstalled = true;
-  const originalAttachShadow = Element.prototype.attachShadow;
-
-  Element.prototype.attachShadow = function attachShadow(init: ShadowRootInit): ShadowRoot {
-    const root = originalAttachShadow.call(this, init);
-
-    if (this.localName !== 'mintlify-assistant') {
-      return root;
-    }
-
-    hideTriggerInShadow(root);
-
-    const observer = new MutationObserver(() => {
-      hideTriggerInShadow(root);
-    });
-    observer.observe(root, { childList: true });
-
-    return root;
-  };
-}
 
 function waitForMintlifyAssistant(timeoutMs = 10_000): Promise<MintlifyAssistantApi> {
   if (window.MintlifyAssistant) {
