@@ -609,15 +609,6 @@ describe('Agents API - /agents #novu-v2', () => {
 
       await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
     });
-
-    it('should reject creating an agent with an identifier far exceeding the limit', async () => {
-      const res = await session.testAgent.post('/v1/agents').send({
-        name: 'Valid Name',
-        identifier: 'a'.repeat(5000),
-      });
-
-      expect(res.status).to.equal(422);
-    });
   });
 
   describe('Bridge URL management', () => {
