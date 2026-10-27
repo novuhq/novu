@@ -92,16 +92,27 @@ export async function listenCommand(what: string, options: ListenOptions): Promi
     }
   };
 
-  // Only a loop listens for Ctrl-C and the service manager: everywhere else they end the command as usual.
+  // Only a loop listens for Ctrl-C and the service manager: everywhere else they end the command as usual. A
+  // foreground one does from just before its loop starts, so Ctrl-C while it asks ends the command, and nothing starts.
   const controller = new AbortController();
-  if (word === 'run' || options.foreground) {
+  const stopOnSignals = () => {
     for (const signal of ['SIGINT', 'SIGTERM'] as const) {
       process.once(signal, () => controller.abort());
     }
+  };
+  if (word === 'run') {
+    stopOnSignals();
   }
 
   try {
-    const deps: ListenDeps = { ...realDeps(controller.signal), beforeLoop: () => endScreen('happy') };
+    const deps: ListenDeps = {
+      ...realDeps(controller.signal),
+      beforeLoop: () => {
+        stopOnSignals();
+
+        return endScreen('happy');
+      },
+    };
     const code =
       word === 'status'
         ? await listenStatus(options, deps)

@@ -215,9 +215,12 @@ function executable(file: string): string | undefined {
   }
 }
 
-/** The environment a session the listener starts runs in: the program's own, without a parent session's marks. */
+/**
+ * The environment a session the listener starts runs in: the program's own, without a parent session's marks,
+ * nor a connection the shell names. Its own commands use the one the listener uses, saved on this computer.
+ */
 export function sessionEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  const dropped = new Set([...PARENT_SESSION_VARIABLES, ...HOST_MARKER_VARIABLES]);
+  const dropped = new Set([...PARENT_SESSION_VARIABLES, ...HOST_MARKER_VARIABLES, 'INBOX_API_URL', 'INBOX_SECRET_KEY']);
 
   return withAccount(Object.fromEntries(Object.entries(env).filter(([name]) => !dropped.has(name))));
 }
@@ -721,12 +724,20 @@ export function describeAction(request: CanUseToolRequest): string {
   }
 
   if (tool.startsWith('mcp__')) {
-    const [, server, name] = tool.split('__');
+    // Whole, with what it would be called with, as a command is: the operator allows what they read.
+    const args = Object.entries(input).map(([name, value]) => `${name} ${JSON.stringify(value)}`);
 
-    return `use ${name ?? tool} from ${server ?? 'an MCP server'}`;
+    return `${mcpTool(tool)}${args.length > 0 ? ` with ${args.join(', ')}` : ''}`;
   }
 
   return `use ${request.display_name ?? tool}`;
+}
+
+/** "use create_issue from github": an MCP server's tool, by the name Claude Code gives it, `mcp__<server>__<tool>`. */
+function mcpTool(tool: string): string {
+  const [, server, name] = tool.split('__');
+
+  return `use ${name ?? tool} from ${server ?? 'an MCP server'}`;
 }
 
 /** What `describeAction` says, short, for a card title the whole doesn't fit. */
@@ -750,7 +761,7 @@ export function describeBrief(request: CanUseToolRequest): string {
       return 'search the web';
     default:
       // An MCP tool or another tool goes by its name, which is short already.
-      return describeAction(request);
+      return request.tool_name?.startsWith('mcp__') ? mcpTool(request.tool_name) : describeAction(request);
   }
 }
 

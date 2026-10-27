@@ -8,7 +8,7 @@ import { claudeCode } from './claude-code';
 import { FakeApi } from './fake-api.fixture';
 import { type ListenTiming, type LoopEnd, runListenLoop } from './loop';
 import { type ListenState, memoryState, newState } from './state';
-import { KEY_CHANGED_MESSAGE } from './words';
+import { KEY_CHANGED_MESSAGE, STOPPED_REPLY } from './words';
 
 const FAKE_CLAUDE = fileURLToPath(new URL('./fake-claude.fixture.mjs', import.meta.url));
 const COMPUTER_ID = 'cmp_this_computer_0001';
@@ -145,6 +145,42 @@ afterEach(async () => {
 });
 
 describe('runListenLoop', { timeout: 20_000 }, () => {
+  it('doesn’t start listening when it was stopped before it began, as by Ctrl-C while it asked', async () => {
+    const api = await new FakeApi().start();
+    const dir = mkdtempSync(join(tmpdir(), 'listen-loop-'));
+    const stopped = new AbortController();
+    stopped.abort();
+
+    try {
+      const end = await runListenLoop({
+        client: createApiClient({ apiUrl: api.url, secretKey: 'sk_test', asHost: 'claude-code' }),
+        agentIdentifier: 'human-relay',
+        operatorId: 'ada',
+        computerId: COMPUTER_ID,
+        computerName: 'MacBook',
+        host: claudeCode,
+        store: memoryState({
+          ...newState({
+            host: 'claude-code',
+            project: dir,
+            program: { command: process.execPath, args: [FAKE_CLAUDE] },
+            limits: { runsPerHour: 20, maxRunSeconds: 60 },
+          }),
+          allowedAt: new Date().toISOString(),
+        }),
+        timing: FAST,
+        log: () => undefined,
+        signal: stopped.signal,
+      });
+
+      expect(end).toEqual({ reason: 'signal' });
+      expect(api.callsTo('GET', '/v1/listen/messages')).toHaveLength(0);
+    } finally {
+      await api.stop();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('starts Claude Code for a message and posts its last words when it didn’t reply itself', async () => {
     const { api, starts, store, dir } = await start();
 
@@ -236,6 +272,22 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     expect(Date.now() - startedAt).toBeLessThan(10_000);
     expect(api.sentInto('conv_1')).not.toContain('Done sleeping.');
     expect(logs.some((line) => line.includes('stopped (stop)'))).toBe(true);
+  });
+
+  it('drops what came with a /stop for the conversation, not only the run going on', async () => {
+    const { api, starts, logs } = await start();
+
+    api.deliver({ text: 'sleep:20000' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    // In one look: more work, then the stop.
+    api.deliver({ text: 'and then deploy' });
+    api.deliver({ text: '/stop' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain(STOPPED_REPLY));
+    await eventually(() => expect(logs.some((line) => line.includes('stopped (stop)'))).toBe(true));
+    await pause(600);
+    expect(starts()).toHaveLength(1);
+    expect(api.sentInto('conv_1')).not.toContain('Echo: and then deploy');
   });
 
   it('answers /stop with nothing to stop when nothing runs', async () => {
@@ -400,7 +452,10 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
 
     api.deliver({ text: 'mcp:mcp__mail__inbox_reply' });
     await eventually(() => expect(approves()).toHaveLength(2));
-    expect(approves()[1].card.title).toBe('Claude Code wants to use inbox_reply from mail');
+    // What it would be called with is on the card: the operator allows what they read.
+    expect(approves()[1].card.title).toBe(
+      'Claude Code wants to use inbox_reply from mail with conversation "conv_1", message "I replied through MCP."'
+    );
   });
 
   it('keeps an "Allow for this session" for the rest of the session', async () => {

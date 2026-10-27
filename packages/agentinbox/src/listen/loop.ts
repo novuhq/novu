@@ -189,6 +189,10 @@ class ListenLoop {
     this.state = state;
     this.timing = { ...DEFAULT_TIMING, ...options.timing };
     this.log = options.log ?? ((line) => process.stdout.write(`${new Date().toISOString()} ${line}\n`));
+    // Stopped already, say by Ctrl-C while listening was being turned on: it doesn't begin.
+    if (options.signal?.aborted) {
+      this.finish({ reason: 'signal' });
+    }
     options.signal?.addEventListener('abort', () => this.finish({ reason: 'signal' }), { once: true });
   }
 
@@ -767,14 +771,8 @@ class ListenLoop {
     this.save();
   }
 
-  /** "/stop" in a conversation: stops its run, or drops what waits for it. */
+  /** "/stop" in a conversation: stops its run, and drops what waits for it, such as more work sent with the stop. */
   private async stopConversation(conversationId: string): Promise<void> {
-    if (this.active?.conversationId === conversationId) {
-      await this.stopRun('stop');
-
-      return;
-    }
-
     const waiting = this.state.queue.filter((message) => message.conversationId === conversationId);
     if (waiting.length > 0) {
       this.state.queue = this.state.queue.filter((message) => message.conversationId !== conversationId);
@@ -782,12 +780,15 @@ class ListenLoop {
         this.markHandled(message);
       }
       this.save();
-      await this.reply(conversationId, STOPPED_REPLY);
+    }
+
+    if (this.active?.conversationId === conversationId) {
+      await this.stopRun('stop');
 
       return;
     }
 
-    await this.reply(conversationId, NOTHING_TO_STOP_REPLY);
+    await this.reply(conversationId, waiting.length > 0 ? STOPPED_REPLY : NOTHING_TO_STOP_REPLY);
   }
 
   /** Stops the run in progress; one still starting stops as soon as its host is up. */

@@ -29,8 +29,12 @@ export interface AllowIo {
 export interface AskedAllow {
   interactionId: string;
   expiresAt: string;
-  /** Its title: the same request asks no new question. */
+  /**
+   * Its words: the same request asks no new question. One that reads otherwise now, say because another computer
+   * listens meanwhile and allowing it moves listening from there, asks anew: the operator allows what they read.
+   */
   title: string;
+  body?: string;
 }
 
 /**
@@ -156,7 +160,7 @@ function outcomeOf(question: Interaction): AllowOutcome {
 async function openQuestion(request: AllowRequest, card: { title: string; body: string }): Promise<Interaction> {
   const asked = request.asked.load();
 
-  if (asked && asked.title === card.title && Date.parse(asked.expiresAt) > Date.now()) {
+  if (asked && asked.title === card.title && asked.body === card.body && Date.parse(asked.expiresAt) > Date.now()) {
     const earlier = await getInteraction(request.client, asked.interactionId).catch(() => null);
     if (earlier && (earlier.status === 'pending' || earlier.status === 'approved')) {
       request.io.say('Your operator was asked already: waiting for their answer.');
@@ -173,7 +177,7 @@ async function openQuestion(request: AllowRequest, card: { title: string; body: 
     ttlSeconds: ALLOW_TTL_SECONDS,
     agentIdentifier: request.agentIdentifier,
   });
-  request.asked.save({ interactionId: question.id, expiresAt: question.expiresAt, title: card.title });
+  request.asked.save({ interactionId: question.id, expiresAt: question.expiresAt, title: card.title, body: card.body });
 
   return question;
 }

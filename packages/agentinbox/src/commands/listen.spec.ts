@@ -244,6 +244,23 @@ describe('listen <host>', { timeout: 20_000 }, () => {
     expect(installed).toHaveLength(1);
   });
 
+  it('asks anew when it is run again after another computer started listening', async () => {
+    const { deps: listener, asked } = deps({ personAtTerminal: false });
+
+    expect(await listenOn('claude-code', { timeout: '1s' }, listener)).toBe(EXIT_TIMEOUT);
+    const first = asked.current?.interactionId;
+    api.takeOverElsewhere('codex');
+    api.decide = () => 'approved';
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
+
+    // The first card didn't say it moves listening from that computer: the operator allows what they read.
+    const approves = api.interactions.filter((interaction) => interaction.kind === 'approve');
+    expect(approves).toHaveLength(2);
+    expect(approves[1].id).not.toBe(first);
+    expect(approves[1].card.body).toContain('this moves it here');
+    expect(api.callsTo('POST', '/v1/listen/lease').at(-1)?.body).toMatchObject({ takeOver: true });
+  });
+
   it('asks before moving it from another computer, and takes it over once allowed', async () => {
     api.takeOverElsewhere('codex');
     const { deps: listener } = deps({ personAtTerminal: false });

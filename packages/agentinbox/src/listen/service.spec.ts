@@ -52,6 +52,7 @@ const COMMAND = backgroundCommand({
     INBOX_API_URL: 'https://agentinbox.example/api',
     INBOX_SECRET_KEY: 'sk_never_written',
     HOME: '/Users/ada',
+    CLAUDE_CONFIG_DIR: '/Users/ada/.claude-work',
   },
   project: '/Users/ada/projects/app & co',
   logFile: '/Users/ada/.agentinbox/listen/listen.log',
@@ -68,7 +69,12 @@ describe('backgroundCommand', () => {
     expect(COMMAND).toEqual({
       argv: ['/opt/node/bin/node', '/opt/agentinbox/dist/src/index.js', 'listen', 'run'],
       workingDirectory: '/Users/ada/projects/app & co',
-      env: { PATH: '/opt/node/bin:/usr/bin', INBOX_CONFIG: '/Users/ada/.agentinbox-local/config.json' },
+      // Where Claude Code keeps its settings and sign-in, when it isn't its default folder.
+      env: {
+        PATH: '/opt/node/bin:/usr/bin',
+        INBOX_CONFIG: '/Users/ada/.agentinbox-local/config.json',
+        CLAUDE_CONFIG_DIR: '/Users/ada/.claude-work',
+      },
       logFile: '/Users/ada/.agentinbox/listen/listen.log',
       description: 'Listens for Agent Inbox messages for Claude Code',
     });

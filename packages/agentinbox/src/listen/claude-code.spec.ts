@@ -182,6 +182,15 @@ describe('describeAction and subjectOf', () => {
     );
     expect(describeAction({ tool_name: 'Read', input: {}, blocked_path: '/etc/hosts' })).toBe('read /etc/hosts');
     expect(describeAction({ tool_name: 'mcp__github__create_issue', input: {} })).toBe('use create_issue from github');
+    // An MCP tool with what it would be called with, whole, as a command is: who it writes to, and what.
+    expect(
+      describeAction({
+        tool_name: 'mcp__inbox__inbox_reply',
+        input: { conversation: 'conv_1', kind: 'approve', message: `Ship it?\n${'x'.repeat(300)}`, to: ['carol'] },
+      })
+    ).toBe(
+      `use inbox_reply from inbox with conversation "conv_1", kind "approve", message ${JSON.stringify(`Ship it?\n${'x'.repeat(300)}`)}, to ["carol"]`
+    );
     expect(subjectOf({ tool_name: 'mcp__github__create_issue', input: { title: 'Bug' } })).toEqual({
       kind: 'mcp',
       server: 'github',
@@ -201,7 +210,9 @@ describe('describeAction and subjectOf', () => {
     expect(describeBrief({ tool_name: 'Grep', input: {} })).toBe('read files');
     expect(describeBrief({ tool_name: 'WebFetch', input: { url: 'https://example.com/a' } })).toBe('fetch a web page');
     expect(describeBrief({ tool_name: 'WebSearch', input: { query: 'release notes' } })).toBe('search the web');
-    expect(describeBrief({ tool_name: 'mcp__github__create_issue', input: {} })).toBe('use create_issue from github');
+    expect(describeBrief({ tool_name: 'mcp__github__create_issue', input: { title: 'Bug' } })).toBe(
+      'use create_issue from github'
+    );
     expect(describeBrief({ tool_name: 'Task', input: {}, display_name: 'Agent' })).toBe('use Agent');
   });
 });
@@ -218,8 +229,18 @@ describe('sessionEnv', () => {
         CODEX_THREAD_ID: 't',
         CLAUDE_CODE_USE_BEDROCK: '1',
         ANTHROPIC_MODEL: 'opus',
+        // A session's own commands use the connection the listener uses, the one saved on this computer.
+        INBOX_API_URL: 'https://other.example/api',
+        INBOX_SECRET_KEY: 'sk_other',
+        INBOX_CONFIG: '/Users/ada/.agentinbox-local/config.json',
       })
-    ).toEqual({ PATH: '/bin', USER: 'ada', CLAUDE_CODE_USE_BEDROCK: '1', ANTHROPIC_MODEL: 'opus' });
+    ).toEqual({
+      PATH: '/bin',
+      USER: 'ada',
+      CLAUDE_CODE_USE_BEDROCK: '1',
+      ANTHROPIC_MODEL: 'opus',
+      INBOX_CONFIG: '/Users/ada/.agentinbox-local/config.json',
+    });
   });
 
   it('names the account Claude Code signs in under when the environment doesn’t, as under launchd', () => {

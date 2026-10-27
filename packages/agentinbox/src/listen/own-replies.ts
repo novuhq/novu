@@ -325,6 +325,13 @@ function readFlag(
 /** What ends a plain command, outside quotes: chaining, pipes, the background, redirections, subshells. */
 const OPERATORS = ';&|<>()`\n\r';
 
+/**
+ * What the shell expands outside quotes into words of its own: a variable (`$`), a file name pattern (`*`, `?`,
+ * `[`) and braces (`{`). Any of them could become a flag the command never showed, such as `--api-url`: an
+ * unset variable's default, or a file the agent made named like one.
+ */
+const EXPANDS = '$*?[{';
+
 /** A stretch in single quotes, from just after the quote: its text and where it ends, or null if unclosed. */
 function singleQuoted(command: string, at: number): [string, number] | null {
   const end = command.indexOf("'", at);
@@ -333,8 +340,8 @@ function singleQuoted(command: string, at: number): [string, number] | null {
 }
 
 /**
- * A stretch in double quotes, from just after the quote: its text and where it ends. Null if unclosed, or if it
- * runs a command (`$(…)` or backticks), which double quotes don't stop.
+ * A stretch in double quotes, from just after the quote: its text and where it ends. Null if unclosed, or if the
+ * shell would change it there, which double quotes don't stop: a variable or a command (`$`, backticks).
  */
 function doubleQuoted(command: string, at: number): [string, number] | null {
   let text = '';
@@ -344,7 +351,7 @@ function doubleQuoted(command: string, at: number): [string, number] | null {
     if (char === '"') {
       return [text, index + 1];
     }
-    if (char === '`' || (char === '$' && next === '(')) {
+    if (char === '`' || char === '$') {
       return null;
     }
     if (char === '\\' && next !== undefined && '"\\$`\n'.includes(next)) {
@@ -372,7 +379,7 @@ function piece(command: string, at: number): [string, number] | null {
   if (char === '\\') {
     return next === undefined || next === '\n' ? null : [next, at + 2];
   }
-  if (OPERATORS.includes(char) || (char === '$' && next === '(')) {
+  if (OPERATORS.includes(char) || EXPANDS.includes(char)) {
     return null;
   }
 
@@ -381,8 +388,9 @@ function piece(command: string, at: number): [string, number] | null {
 
 /**
  * The words of one plain shell command, or `null` when it is more than that: commands chained, piped or in
- * the background, a redirection, a subshell or a command substitution, even inside double quotes. Quotes and
- * backslashes are read as the shell reads them, so a reply may say anything inside its quotes.
+ * the background, a redirection, a subshell, or anything the shell expands, such as a variable or a command
+ * substitution, even inside double quotes. Quotes and backslashes are read as the shell reads them, so a reply
+ * may say anything in single quotes.
  */
 export function simpleCommandWords(command: string): string[] | null {
   const words: string[] = [];
