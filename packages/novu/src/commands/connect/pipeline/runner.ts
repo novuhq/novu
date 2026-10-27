@@ -258,7 +258,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       });
 
       await ui.awaitDashboardChannelOpen({ channel: handoffChannel, agentDetailsUrl });
-      void open(agentDetailsUrl).catch(() => undefined);
+      void open(agentDetailsUrl).catch((): undefined => undefined);
       dashboardRedirectChannel = handoffChannel;
     };
 
@@ -580,7 +580,11 @@ async function resolveAgentConnectMode(
     return options.runtime;
   }
 
-  if (shouldSkipAgentConnectModePicker(options) && preselectedAgent) {
+  if (shouldSkipAgentConnectModePicker(options)) {
+    if (!preselectedAgent) {
+      throw new Error('Cannot skip the connect mode picker without a preselected agent');
+    }
+
     const connectMode = preselectedAgent.connectMode;
     track(CONNECT_EVENTS.RUNTIME_SELECTED, {
       connectMode,

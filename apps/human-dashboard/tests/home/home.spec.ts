@@ -87,7 +87,7 @@ for (const width of [320, 768, 1920]) {
     expect(overflow).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
     await expect(page.locator('#how-it-works')).toContainText('agentinbox contact invite');
-    await expect(page.locator('#auth')).toContainText('INBOX_SECRET_KEY');
+    await expect(page.locator('#auth')).toHaveCount(0);
   });
 }
 

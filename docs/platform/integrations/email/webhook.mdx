@@ -31,7 +31,29 @@ For each email, Novu sends a `POST` request to your webhook URL with:
 
 Verify the signature before processing the payload. Reject requests that do not match.
 
-The JSON body includes the rendered email fields Novu already prepared for the subscriber (to, from, subject, html/text content, and related metadata).
+The JSON body contains the rendered email Novu prepared for the subscriber. Keys use camelCase:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | `string` | Novu message ID for this email. |
+| `to` | `string[]` | Recipient email addresses, including any `to` addresses added through email overrides. |
+| `from` | `string` | Sender email address. |
+| `senderName` | `string` | Sender display name. |
+| `subject` | `string` | Rendered subject line. |
+| `html` | `string` | Rendered HTML body. |
+| `text` | `string` | Plain text body. Present only when set through email overrides. |
+| `cc` | `string[]` | CC addresses. Empty array when not set. |
+| `bcc` | `string[]` | BCC addresses. Empty array when not set. |
+| `replyTo` | `string` | Reply-to address, when configured. |
+| `attachments` | `object[]` | Attachments passed in the trigger payload, when present. |
+| `headers` | `object` | Custom email headers from email overrides. Empty object when not set. |
+| `customData` | `object` | Custom data from email overrides. Empty object when not set. |
+| `notificationDetails` | `object` | Contains `transactionId`, `workflowIdentifier`, and `subscriberId` for the trigger that produced this email. |
+| `payloadDetails` | `object` | Step details and the variables Novu used to render the email, including the trigger payload. |
+
+Fields with no value are omitted from the JSON body. To confirm the exact shape for your workflows, trigger a test email to an endpoint that logs the raw request body.
+
+If your endpoint fails, Novu retries the request up to 3 times. See [Delivery retries](/platform/developer/delivery-retries) for details.
 
 ### Secret Hmac Key encoding
 
