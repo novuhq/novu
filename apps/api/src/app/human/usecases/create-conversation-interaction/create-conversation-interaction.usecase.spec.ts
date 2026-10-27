@@ -260,6 +260,37 @@ describe('CreateConversationInteraction', () => {
     expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberIds).to.equal(undefined);
   });
 
+  it('posts the thread’s card for someone in it, so one reached only in their own chat is dropped when that fails', async () => {
+    const { usecase, command, humanInteractionRepository } = setup();
+    humanInteractionRepository.create.callsFake(async (row: { subscriberIds: string[] }) => ({
+      _id: 'hi1',
+      identifier: 'hi_abc',
+      kind: HumanInteractionKindEnum.ASK,
+      status: HumanInteractionStatusEnum.PENDING,
+      _environmentId: 'env1',
+      subscriberIds: row.subscriberIds,
+    }));
+
+    // Only Carol may answer, and she isn't in this direct conversation: her own chat is her only way in.
+    await usecase.execute({ ...command, kind: HumanInteractionKindEnum.ASK, to: ['carol'] } as any, () => [
+      {
+        subscriberId: 'carol',
+        integrationIdentifier: 'telegram-main',
+        platform: 'telegram',
+        deliver: async () => {
+          throw new Error('Forbidden: bot was blocked by the user');
+        },
+      },
+    ]);
+
+    const stamped = humanInteractionRepository.stampDelivery.firstCall.args[2];
+    // The card in the thread is for sub-1, whose thread it is; it never reached Carol, so nobody's reply counts.
+    expect(stamped.deliveries.map((delivery: { subscriberId: string }) => delivery.subscriberId)).to.deep.equal([
+      'sub-1',
+    ]);
+    expect(stamped.subscriberIds).to.deep.equal([]);
+  });
+
   it('allows explicit `to` when the conversation has no subscriber participant', async () => {
     const { usecase, command, humanInteractionRepository } = setup();
 

@@ -300,6 +300,7 @@ describe('HumanListenMessagesService', () => {
           {
             identifier: 'hi_env',
             _conversationId: 'conv1',
+            createdAt: new Date(now.getTime() - 10 * 60_000),
             response: {
               type: 'text',
               text: 'prod',
@@ -335,6 +336,7 @@ describe('HumanListenMessagesService', () => {
           {
             identifier: 'hi_env',
             _conversationId: 'conv1',
+            createdAt: new Date(now.getTime() - 10 * 60_000),
             answerReadAt: read,
             response: {
               type: 'text',
@@ -363,6 +365,7 @@ describe('HumanListenMessagesService', () => {
       questions: [
         {
           identifier: 'hi_ask',
+          createdAt: new Date(now.getTime() - 10 * 60_000),
           response: {
             type: 'text',
             text: 'staging',
@@ -393,6 +396,7 @@ describe('HumanListenMessagesService', () => {
       questions: [
         {
           identifier: 'hi_yes',
+          createdAt: new Date(now.getTime() - 10 * 60_000),
           response: {
             type: 'text',
             text: 'yes',
@@ -563,8 +567,15 @@ describe('HumanListenMessagesService', () => {
       content,
       createdAt: new Date(at + offset).toISOString(),
     });
-    const question = (identifier: string, text: string, respondedBySubscriberId: string, offset: number) => ({
+    const question = (
+      identifier: string,
+      text: string,
+      respondedBySubscriberId: string,
+      offset: number,
+      askedOffset = -60_000
+    ) => ({
       identifier,
+      createdAt: new Date(at + askedOffset).toISOString(),
       response: {
         type: 'text' as const,
         text,
@@ -596,6 +607,15 @@ describe('HumanListenMessagesService', () => {
 
       expect(matchAnswers([message('m1', 'ada', 'yes'), message('m2', 'ada', 'yes', 500)], [yes])).to.deep.equal(
         new Map([['m1', yes]])
+      );
+    });
+
+    it('gives a question to no message written before it was asked, however alike', () => {
+      // "yes" about something else, then the question, then the "yes" that answers it.
+      const yes = question('hi_1', 'yes', 'ada', 60_300, 30_000);
+
+      expect(matchAnswers([message('m1', 'ada', 'yes'), message('m2', 'ada', 'yes', 60_000)], [yes])).to.deep.equal(
+        new Map([['m2', yes]])
       );
     });
   });
