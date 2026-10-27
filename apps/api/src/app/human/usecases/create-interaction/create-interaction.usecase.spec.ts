@@ -409,6 +409,35 @@ describe('CreateInteraction', () => {
       expect(messageQuota.reserveCredits.firstCall.args).to.deep.equal(['org1', 2]);
     });
 
+    it('takes no message credit for a contact outside the thread whose own chat failed, and says who', async () => {
+      const {
+        usecase,
+        command,
+        created,
+        agentRepository,
+        inbox,
+        createConversationInteraction,
+        deliveryService,
+        messageQuota,
+      } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      inbox.outsiders.returns(['sub-9']);
+      deliveryService.deliver.rejects(new Error('Forbidden: bot was blocked by the user'));
+      createConversationInteraction.execute.callsFake(async (_command: unknown, alsoTo?: (row: unknown) => any[]) => {
+        for (const target of alsoTo?.(created) ?? []) {
+          await target.deliver().catch(() => undefined);
+        }
+
+        return { ...created, _conversationId: 'conv1', subscriberIds: ['sub-1'] };
+      });
+
+      const result = await usecase.execute({ ...command, to: ['sub-1', 'sub-9'], thread: 'conv_abc' } as any);
+
+      expect(messageQuota.reserveCredits.firstCall.args).to.deep.equal(['org1', 2]);
+      expect(messageQuota.messageCredits.accept.firstCall.args).to.deep.equal([1]);
+      expect(result.failedTo).to.deep.equal(['sub-9']);
+    });
+
     it('refuses a question to someone outside the thread who can’t be reached, before anything is sent', async () => {
       const { usecase, command, agentRepository, inbox, createConversationInteraction, deliveryService } = setup();
       agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });

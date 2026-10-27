@@ -79,8 +79,14 @@ type CardAnswer = {
   answeredElsewhere?: boolean;
 };
 
-/** A question a reply answered: the words it was settled with, where it was asked, and whether the agent read it. */
-type AnsweredQuestion = Pick<HumanInteractionEntity, 'identifier' | 'response' | '_conversationId' | 'answerReadAt'>;
+/**
+ * A question a reply answered: when it was asked, the words it was settled with, where it was asked, and whether
+ * the agent read the answer.
+ */
+type AnsweredQuestion = Pick<
+  HumanInteractionEntity,
+  'identifier' | 'createdAt' | 'response' | '_conversationId' | 'answerReadAt'
+>;
 
 /** What became of a look's messages since they were stored, by `messageKey`. */
 type Revisions = {
@@ -320,7 +326,7 @@ export class HumanListenMessagesService {
           $lte: new Date(Math.max(...times) + ANSWER_WINDOW_MS).toISOString(),
         },
       },
-      ['identifier', 'response', '_conversationId', 'answerReadAt']
+      ['identifier', 'createdAt', 'response', '_conversationId', 'answerReadAt']
     );
     if (questions.length === 0) {
       return new Map();
@@ -394,9 +400,9 @@ export class HumanListenMessagesService {
 }
 
 /**
- * Pairs each message with the question it answered, if it answered one: the same person settled that question
- * with the same words, at most `ANSWER_WINDOW_MS` after the message was stored. A question goes to the earliest
- * message that fits it.
+ * Pairs each message with the question it answered, if it answered one: one written after the question was asked,
+ * whose sender settled it with the same words at most `ANSWER_WINDOW_MS` after the message was stored. A question
+ * goes to the earliest message that fits it, never to the same words said before it was asked.
  */
 export function matchAnswers(
   messages: Pick<ConversationActivityEntity, '_id' | 'senderId' | 'content' | 'createdAt'>[],
@@ -408,11 +414,12 @@ export function matchAnswers(
   for (const message of messages) {
     const at = timeOf(message);
     const text = message.content?.trim();
-    const question = questions.find(({ identifier, response }) => {
+    const question = questions.find(({ identifier, createdAt, response }) => {
       const respondedAt = response?.respondedAt ? Date.parse(response.respondedAt) : Number.NaN;
 
       return (
         !taken.has(identifier) &&
+        at >= new Date(createdAt).getTime() - CLOCK_SLACK_MS &&
         response?.respondedBySubscriberId === message.senderId &&
         response.text?.trim() === text &&
         respondedAt >= at - CLOCK_SLACK_MS &&

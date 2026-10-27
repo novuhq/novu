@@ -108,7 +108,7 @@ export class CreateConversationInteraction {
       interaction,
       [
         {
-          subscriberId: primarySubscriberId,
+          subscriberId: this.threadSubscriberId(command, subscriberIds),
           integrationIdentifier: command.integrationIdentifier,
           platform: command.channel.platform,
           deliver: async () => {
@@ -186,6 +186,18 @@ export class CreateConversationInteraction {
         'Failed to subscribe the thread after delivering a human interaction'
       );
     }
+  }
+
+  /**
+   * Who the thread's own card is for: someone `to` names who is in the thread, else the contact the thread belongs
+   * to. It never reaches a contact outside it, who gets the card in their own chat, and can't answer when that fails.
+   */
+  private threadSubscriberId(command: CreateConversationInteractionCommand, subscriberIds: string[]): string {
+    const inThread = command.conversation.participants
+      .filter((participant) => participant.type === ConversationParticipantTypeEnum.SUBSCRIBER)
+      .map((participant) => participant.id);
+
+    return subscriberIds.find((subscriberId) => inThread.includes(subscriberId)) ?? inThread[0] ?? subscriberIds[0];
   }
 
   private resolveRecipientIds(command: CreateConversationInteractionCommand): string[] {

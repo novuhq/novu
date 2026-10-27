@@ -421,6 +421,7 @@ export class CreateInteraction {
 
     const threads: InteractionThreadDto[] = [];
     const reached = new Set<string>();
+    let failedTo: string[] = [];
     let credits: AgentEmailInboxCredits | undefined;
     let interaction: Awaited<ReturnType<CreateConversationInteraction['execute']>>;
     try {
@@ -460,7 +461,9 @@ export class CreateInteraction {
               })
           : undefined
       );
-      messageCredits?.accept(recipients.length);
+      // A contact outside the thread whose own chat failed got nothing, so their credit goes back.
+      failedTo = outsiders.filter((subscriberId) => !reached.has(subscriberId));
+      messageCredits?.accept(recipients.length - failedTo.length);
     } finally {
       await credits?.release();
       await messageCredits?.release();
@@ -468,7 +471,6 @@ export class CreateInteraction {
 
     this.trackMessageSent(command, agent, channel.platform);
     const unreadBefore = await this.inbox.markSentInto(scope, conversation);
-    const failedTo = outsiders.filter((subscriberId) => !reached.has(subscriberId));
 
     return toInteractionResponse(interaction, failedTo.length > 0 ? failedTo : undefined, [
       { id: conversation.identifier, unreadBefore },
