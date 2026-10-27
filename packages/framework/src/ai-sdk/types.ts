@@ -8,6 +8,7 @@ import type {
   AgentMessageUpdatedContext,
   MessageContent,
   ReplyHandle,
+  ReplyStream,
   ToolApprovalDecision,
 } from '../resources/agent/agent.types';
 import type { Awaitable } from '../types/util.types';
@@ -27,12 +28,17 @@ export type AiSdkApprovalRequestPart = Extract<
  *
  * Extends {@link AgentHandlers}: same events and config (`toolApproval`, etc.),
  * but `onMessage` and `onToolApproval` may return an AI SDK result for automatic delivery.
+ * `onMessage` may also return a {@link ReplyStream} directly (e.g. `result.textStream`),
+ * same as core `agent()` — it is passed through to the reply for streaming.
  */
 export type AiSdkAgentHandlers = Omit<
   AgentHandlers,
   'onMessage' | 'onToolApproval' | 'onMessageUpdated' | 'onMessageDeleted'
 > & {
-  onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | AiSdkResult | void>;
+  onMessage: (
+    message: AgentMessage,
+    ctx: AgentMessageContext
+  ) => Awaitable<MessageContent | ReplyStream | AiSdkResult | void>;
   onMessageUpdated?: (
     message: AgentMessage,
     ctx: AgentMessageUpdatedContext
