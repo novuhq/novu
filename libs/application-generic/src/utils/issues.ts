@@ -160,6 +160,10 @@ export const getSchemaValidator = (
   return validate;
 };
 
+/** Validator for a workflow `payloadSchema`, shared by save-time checks and trigger-time validation. */
+export const getPayloadSchemaValidator = (schema: AnySchema): ValidateFunction =>
+  getSchemaValidator(schema, { useDefaults: true });
+
 const joinIssuePath = (pathPrefix: string | undefined, errorPath: string | undefined): string | undefined => {
   const segments = [pathPrefix, errorPath].filter((segment): segment is string => Boolean(segment?.trim()));
 

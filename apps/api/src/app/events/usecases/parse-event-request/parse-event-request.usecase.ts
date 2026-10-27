@@ -8,7 +8,7 @@ import {
   ExecuteBridgeRequestCommand,
   ExecuteBridgeRequestDto,
   FeatureFlagsService,
-  getSchemaValidator,
+  getPayloadSchemaValidator,
   Instrument,
   InstrumentUsecase,
   IWorkflowDataDto,
@@ -588,7 +588,7 @@ export class ParseEventRequest {
 
   @Instrument()
   private validateAndApplyPayloadDefaults(payload: Record<string, unknown>, schema: object): Record<string, unknown> {
-    const validate = getSchemaValidator(schema, { useDefaults: true });
+    const validate = getPayloadSchemaValidator(schema);
     const payloadWithDefaults = JSON.parse(JSON.stringify(payload));
     const valid = validate(payloadWithDefaults);
 

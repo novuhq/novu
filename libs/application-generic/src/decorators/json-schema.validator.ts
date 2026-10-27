@@ -1,6 +1,6 @@
 import type { AnySchema } from 'ajv';
 import { registerDecorator, ValidationArguments, ValidationOptions } from 'class-validator';
-import { getSchemaValidator } from '../utils/issues';
+import { getPayloadSchemaValidator } from '../utils/issues';
 
 export function IsValidJsonSchema(validationOptions?: ValidationOptions & { nullable?: boolean }) {
   return (object: object, propertyName: string) => {
@@ -20,8 +20,7 @@ export function IsValidJsonSchema(validationOptions?: ValidationOptions & { null
           }
 
           try {
-            // Same options as trigger payload validation, so this compile is reused at trigger time.
-            getSchemaValidator(value as AnySchema, { useDefaults: true });
+            getPayloadSchemaValidator(value as AnySchema);
 
             return true;
           } catch (error) {
