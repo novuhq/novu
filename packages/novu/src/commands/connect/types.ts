@@ -78,6 +78,8 @@ export type WebChatConnectOutcome = {
   envPaths?: string[];
   /** Project already has handler + chat UI wired — skip setup prompt by default. */
   alreadyWired?: boolean;
+  /** Subscriber id written without a signed-in user; the success summary warns to replace it. */
+  demoSubscriberId?: string;
 };
 
 export type ConnectWebChatHandoff = {

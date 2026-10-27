@@ -146,6 +146,21 @@ export function mergeWebChatEnv(input: WebChatEnvInput): WebChatEnvMergeResult {
   };
 }
 
+export function readWebChatSubscriberId(projectDir: string): string | undefined {
+  for (const envPath of resolveProjectEnvPaths(projectDir)) {
+    if (!fs.existsSync(envPath)) {
+      continue;
+    }
+
+    const subscriberId = parseEnvFile(fs.readFileSync(envPath, 'utf8')).get('NEXT_PUBLIC_NOVU_SUBSCRIBER_ID')?.trim();
+    if (subscriberId) {
+      return subscriberId;
+    }
+  }
+
+  return undefined;
+}
+
 export function hasWebChatEnvConfigured(projectDir: string): boolean {
   for (const envPath of resolveProjectEnvPaths(projectDir)) {
     if (!fs.existsSync(envPath)) {

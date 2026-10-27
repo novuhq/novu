@@ -13,6 +13,7 @@ import { type ConnectApiClient, createConnectApiClient, NovuApiError } from '../
 import { deleteIntegration, type IntegrationRecord } from '../api/integrations';
 import { upsertSubscriber } from '../api/subscribers';
 import { type ResolvedConnectAuth, resolveConnectAuth, resolveConnectAuthMethod } from '../auth/resolve-connect-auth';
+import { resolveConnectSubscriberId } from '../auth/resolve-connect-subscriber-id';
 import { type ConnectSession, upgradeKeylessSessionToDashboardAuth } from '../auth/upgrade-keyless-session';
 import { buildConnectAgentDetailsUrl, buildConnectClaimUrl, channelDisplayName } from '../dashboard-urls';
 import { ConnectChannelBackError } from '../errors';
@@ -824,29 +825,15 @@ async function generateAndPreviewAgent(
 }
 
 async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedConnectAuth): Promise<string> {
-  if (auth.user?.id) {
-    const subscriberId = auth.user.id;
-    await upsertSubscriber(client, {
-      subscriberId,
-      firstName: auth.user.firstName ?? undefined,
-      lastName: auth.user.lastName ?? undefined,
-      email: auth.user.email ?? undefined,
-    });
+  const subscriberId = resolveConnectSubscriberId(auth);
+  await upsertSubscriber(client, {
+    subscriberId,
+    firstName: auth.user?.firstName,
+    lastName: auth.user?.lastName,
+    email: auth.user?.email,
+  });
 
-    return subscriberId;
-  }
-
-  if (auth.isKeyless && auth.keylessApplicationIdentifier) {
-    const subscriberId = `connect-keyless:${auth.keylessApplicationIdentifier}`;
-    await upsertSubscriber(client, { subscriberId });
-
-    return subscriberId;
-  }
-
-  const fallback = `cli:${auth.organizationId ?? 'anonymous'}:${Date.now()}`;
-  await upsertSubscriber(client, { subscriberId: fallback });
-
-  return fallback;
+  return subscriberId;
 }
 
 function toSummary(agent: AgentRecord | AgentSummary): AgentSummary {

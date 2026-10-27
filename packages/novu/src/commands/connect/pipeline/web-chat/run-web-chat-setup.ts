@@ -1,9 +1,9 @@
-import { randomBytes } from 'node:crypto';
 import path from 'node:path';
-import { buildConnectEmbedPrompt, type ConnectEmbedRuntime } from '@novu/shared';
+import { buildConnectEmbedPrompt, type ConnectEmbedRuntime, SUBSCRIBER_ID_PLACEHOLDER } from '@novu/shared';
 import chalk from 'chalk';
 import { resolveConnectApplicationIdentifier } from '../../auth/resolve-connect-application-identifier';
 import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
+import { resolveConnectSubscriberId } from '../../auth/resolve-connect-subscriber-id';
 import type {
   AgentConnectMode,
   AgentSummary,
@@ -20,34 +20,27 @@ import {
   resolveWebChatProjectWiringState,
 } from './resolve-web-chat-wiring-state';
 import { defaultWebChatScaffoldDirName, detectWebChatProjectKind, scaffoldWebChatProject } from './scaffold-web-chat';
-import { mergeWebChatEnv } from './wire-web-chat-env';
+import { mergeWebChatEnv, readWebChatSubscriberId } from './wire-web-chat-env';
 
 export type { BridgeSetupSnapshot } from './resolve-web-chat-wiring-state';
 export { resolveHandlerWired } from './resolve-web-chat-wiring-state';
 
-/**
- * `--secret-key` / keyless connect has no authenticated user, so there is no real
- * subscriber id to wire in. A unique per-run demo id (instead of a fixed shared
- * placeholder) keeps parallel scaffolds from colliding on one subscriber's history.
- */
-export function generateDemoSubscriberId(): string {
-  return `web-chat-demo-${randomBytes(4).toString('hex')}`;
-}
-
-export function resolveWebChatSubscriberId(auth: ResolvedConnectAuth): string {
+function resolveWebChatSubscriber(
+  auth: ResolvedConnectAuth,
+  envProjectDir: string
+): { subscriberId: string; demoSubscriberId?: string } {
   if (auth.user?.id) {
-    return auth.user.id;
+    return { subscriberId: auth.user.id };
   }
 
-  const demoSubscriberId = generateDemoSubscriberId();
-  console.warn(
-    chalk.yellow(
-      `Web Chat: no authenticated user — using demo subscriber id "${demoSubscriberId}". ` +
-        "Replace it with your real subscriber id (from your app's auth) before production."
-    )
-  );
+  // Re-runs keep the demo subscriber already in env so its conversation history survives.
+  const existingSubscriberId = readWebChatSubscriberId(envProjectDir);
+  const subscriberId =
+    existingSubscriberId && existingSubscriberId !== SUBSCRIBER_ID_PLACEHOLDER
+      ? existingSubscriberId
+      : resolveConnectSubscriberId(auth);
 
-  return demoSubscriberId;
+  return { subscriberId, demoSubscriberId: subscriberId };
 }
 
 export async function runWebChatProjectSetup(input: {
@@ -90,7 +83,7 @@ export async function runWebChatProjectSetup(input: {
   }
 
   const applicationIdentifier = await resolveConnectApplicationIdentifier(input.auth);
-  const subscriberId = resolveWebChatSubscriberId(input.auth);
+  const { subscriberId, demoSubscriberId } = resolveWebChatSubscriber(input.auth, input.bridgeProjectDir ?? projectDir);
 
   if (input.ui.interactive) {
     await input.ui.releaseTerminal();
@@ -118,6 +111,7 @@ export async function runWebChatProjectSetup(input: {
     scaffolded: result.scaffolded,
     mergedIntoBridge: result.mergedIntoBridge,
     chatPath: result.chatPath,
+    demoSubscriberId,
   };
 }
 
@@ -135,7 +129,7 @@ async function runWebChatEmbedSetup(
   opts: { alreadyWired: boolean }
 ): Promise<WebChatConnectOutcome> {
   const applicationIdentifier = await resolveConnectApplicationIdentifier(input.auth);
-  const subscriberId = resolveWebChatSubscriberId(input.auth);
+  const { subscriberId, demoSubscriberId } = resolveWebChatSubscriber(input.auth, projectDir);
   const envResult = mergeWebChatEnv({
     projectDir,
     applicationIdentifier,
@@ -170,6 +164,7 @@ async function runWebChatEmbedSetup(
     embedPromptFile,
     envPaths: envResult.envPaths,
     alreadyWired: opts.alreadyWired,
+    demoSubscriberId,
   };
 }
 

@@ -5,6 +5,7 @@ import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outc
 import {
   type ConnectSuccessResult,
   describeEmbedSuccessNextStep,
+  formatDemoSubscriberWarning,
   resolveWebChatSuccessPresentation,
 } from './format-web-chat-success';
 import type { ConnectUI } from './ui';
@@ -28,6 +29,7 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
   }
 
   const webChatPresentation = resolveWebChatSuccessPresentation(result);
+  const demoSubscriberWarning = formatDemoSubscriberWarning(result);
   if (webChatPresentation?.kind === 'merged-scaffold') {
     console.log('');
     console.log(`${chalk.green('✓')} Agent app ready with Web Chat.`);
@@ -42,6 +44,7 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     if (webChatPresentation.editAgentHint) {
       console.log(`  ${chalk.gray(webChatPresentation.editAgentHint)}`);
     }
+    printDemoSubscriberWarning(demoSubscriberWarning);
     printDevCommandBox(webChatPresentation.devCommand);
 
     return;
@@ -56,6 +59,7 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
       }
       console.log(`  ${chalk.bold('Status:')} This project is already wired for Web Chat.`);
       console.log(`  ${chalk.dim('Run npm run dev:novu to start local dev.')}`);
+      printDemoSubscriberWarning(demoSubscriberWarning);
 
       return;
     }
@@ -63,6 +67,7 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     if (webChatPresentation.envSummary) {
       console.log(`  ${chalk.dim(`Updated ${webChatPresentation.envSummary} with your Novu keys.`)}`);
     }
+    printDemoSubscriberWarning(demoSubscriberWarning);
     console.log(`  ${chalk.bold('Next:')} Copy the setup prompt below into your coding agent.`);
     console.log(`  ${chalk.dim(describeEmbedSuccessNextStep(webChatPresentation.connectMode))}`);
     if (webChatPresentation.embedPromptFile) {
@@ -80,6 +85,7 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     console.log('');
     console.log(`${chalk.green('✓')} Web Chat app ready.`);
     console.log(`  ${chalk.bold('Local URL:')} ${chalk.underline(webChatPresentation.chatUrl)}`);
+    printDemoSubscriberWarning(demoSubscriberWarning);
     printDevCommandBox(webChatPresentation.devCommand);
 
     return;
@@ -145,6 +151,12 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     !result.chatSdkOutcome.coreReady
   ) {
     console.log(`  ${chalk.gray('Finish the remaining setup steps above.')}`);
+  }
+}
+
+function printDemoSubscriberWarning(warning: string | null): void {
+  if (warning) {
+    console.log(`  ${chalk.yellow(warning)}`);
   }
 }
 

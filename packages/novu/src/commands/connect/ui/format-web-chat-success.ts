@@ -148,6 +148,15 @@ export function resolveWebChatSuccessPresentation(result: ConnectSuccessResult):
   };
 }
 
+export function formatDemoSubscriberWarning(result: ConnectSuccessResult): string | null {
+  const subscriberId = result.webChatOutcome?.demoSubscriberId;
+  if (!subscriberId) {
+    return null;
+  }
+
+  return `Demo subscriber id "${subscriberId}" (no signed-in user): every visitor shares one conversation. Replace it with your app's signed-in user id before production.`;
+}
+
 export function describeEmbedSuccessNextStep(connectMode: ReturnType<typeof resolveConnectEmbedRuntime>): string {
   return describeConnectEmbedPromptAction(connectMode);
 }
