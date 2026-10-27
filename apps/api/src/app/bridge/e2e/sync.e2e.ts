@@ -1,3 +1,4 @@
+import http from 'node:http';
 import {
   ControlValuesRepository,
   EnvironmentRepository,
@@ -803,6 +804,48 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', () => {
       expect(result.status).to.equal(400);
       expect(JSON.stringify(result.body)).to.match(/bridgeUrl/i);
       expect(JSON.stringify(result.body)).to.match(/private or reserved/i);
+    });
+  });
+
+  describe('when the bridge URL does not answer with a discover response', () => {
+    const syncAgainstStaticResponse = async (contentType: string, body: string) => {
+      const server = http.createServer((_req, res) => {
+        res.writeHead(200, { 'content-type': contentType });
+        res.end(body);
+      });
+      const port = await getPort();
+      await new Promise<void>((resolve) => server.listen(port, '127.0.0.1', resolve));
+
+      try {
+        return await session.testAgent.post(`/v1/bridge/sync`).send({ bridgeUrl: `http://127.0.0.1:${port}` });
+      } finally {
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+      }
+    };
+
+    beforeEach(async () => {
+      const existingWorkflow = workflow('existing-workflow', async ({ step }) => {
+        await step.email('send-email', () => ({ subject: 'Welcome!', body: 'Hello there' }));
+      });
+      await bridgeServer.start({ workflows: [existingWorkflow] });
+      const result = await session.testAgent.post(`/v1/bridge/sync`).send({ bridgeUrl: bridgeServer.serverPath });
+      expect(result.status).to.equal(201);
+    });
+
+    it('should reject an HTML page and keep the existing workflows', async () => {
+      const result = await syncAgainstStaticResponse('text/html', '<!DOCTYPE html><html><body>Welcome</body></html>');
+
+      expect(result.status).to.equal(400);
+      expect(result.body.message).to.contain('parsing body failed');
+      expect(await workflowsRepository.count({ _environmentId: session.environment._id })).to.equal(1);
+    });
+
+    it('should reject JSON without a workflows list and keep the existing workflows', async () => {
+      const result = await syncAgainstStaticResponse('application/json', JSON.stringify({ status: 'ok' }));
+
+      expect(result.status).to.equal(400);
+      expect(result.body.message).to.contain('does not contain a workflows list');
+      expect(await workflowsRepository.count({ _environmentId: session.environment._id })).to.equal(1);
     });
   });
 
