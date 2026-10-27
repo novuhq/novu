@@ -2,13 +2,14 @@ import { Box, Text, useInput } from 'ink';
 import React from 'react';
 import { resolveConnectEmbedRuntime } from '../../pipeline/web-chat/run-web-chat-setup';
 import type { WebChatSetupMode } from '../../types';
-import { WebChatEmbedFinishContent } from '../web-chat-embed-finish-content';
 import { CopyableLink } from '../copyable-link';
 import {
   type ConnectSuccessResult,
   describeEmbedSuccessNextStep,
+  formatDemoSubscriberWarning,
   resolveWebChatSuccessPresentation,
 } from '../format-web-chat-success';
+import { WebChatEmbedFinishContent } from '../web-chat-embed-finish-content';
 
 export function WebChatHandoffContent({
   dashboardUrl,
@@ -97,11 +98,14 @@ export function WebChatInkSuccessContent({
   onDismiss?: () => void | Promise<void>;
 }): React.ReactElement | null {
   const presentation = resolveWebChatSuccessPresentation(result);
+  const demoSubscriberWarning = formatDemoSubscriberWarning(result);
+  const demoSubscriberNotice = demoSubscriberWarning ? <Text color="yellow">{demoSubscriberWarning}</Text> : null;
 
   if (presentation?.kind === 'embed') {
     return (
       <Box flexDirection="column" gap={1}>
         <Text color="green">✓ Web Chat connected</Text>
+        {demoSubscriberNotice}
         <WebChatEmbedFinishContent
           embedPrompt={embedPrompt ?? presentation.embedPrompt ?? ''}
           embedPromptFile={embedPromptFile ?? presentation.embedPromptFile}
@@ -128,6 +132,7 @@ export function WebChatInkSuccessContent({
         <Text color="cyan">Web Chat UI {presentation.chatUrl}</Text>
         <Text color="cyan">Agent handler {presentation.handlerRoute}</Text>
         {presentation.editAgentHint ? <Text dimColor>{presentation.editAgentHint}</Text> : null}
+        {demoSubscriberNotice}
         <Text dimColor>{presentation.devCommand}</Text>
       </Box>
     );
@@ -140,6 +145,7 @@ export function WebChatInkSuccessContent({
         <Text>
           <Text bold>Local URL:</Text> {presentation.chatUrl}
         </Text>
+        {demoSubscriberNotice}
         <Text dimColor>{presentation.devCommand}</Text>
       </Box>
     );

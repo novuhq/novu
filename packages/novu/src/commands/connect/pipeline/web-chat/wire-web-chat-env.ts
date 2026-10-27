@@ -64,6 +64,10 @@ export function buildWebChatEnvEntries(input: WebChatEnvInput): Record<string, s
   return entries;
 }
 
+function unquoteEnvValue(value: string): string {
+  return value.replace(/^(['"])(.*)\1$/, '$2');
+}
+
 function mergeEnvFileAtPath(envPath: string, entriesToSet: Record<string, string>): string[] {
   const created = !fs.existsSync(envPath);
   const existingContents = created ? '' : fs.readFileSync(envPath, 'utf8');
@@ -71,7 +75,9 @@ function mergeEnvFileAtPath(envPath: string, entriesToSet: Record<string, string
   const updatedKeys: string[] = [];
 
   for (const [key, value] of Object.entries(entriesToSet)) {
-    if (entries.get(key) === value) {
+    const existing = entries.get(key);
+    // Leave an already-correct quoted line alone; dotenv cuts unquoted values at `#`.
+    if (existing !== undefined && unquoteEnvValue(existing) === value) {
       continue;
     }
 
@@ -144,6 +150,22 @@ export function mergeWebChatEnv(input: WebChatEnvInput): WebChatEnvMergeResult {
     envPaths,
     updatedKeys: [...updatedKeys],
   };
+}
+
+export function readWebChatSubscriberId(projectDir: string): string | undefined {
+  for (const envPath of resolveProjectEnvPaths(projectDir)) {
+    if (!fs.existsSync(envPath)) {
+      continue;
+    }
+
+    const rawSubscriberId = parseEnvFile(fs.readFileSync(envPath, 'utf8')).get('NEXT_PUBLIC_NOVU_SUBSCRIBER_ID');
+    const subscriberId = rawSubscriberId === undefined ? undefined : unquoteEnvValue(rawSubscriberId);
+    if (subscriberId) {
+      return subscriberId;
+    }
+  }
+
+  return undefined;
 }
 
 export function hasWebChatEnvConfigured(projectDir: string): boolean {
