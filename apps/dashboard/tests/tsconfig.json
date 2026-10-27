@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
+    "strict": false,
     "target": "ESNext",
     "module": "commonjs",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "sourceMap": true,
     "esModuleInterop": true
   }

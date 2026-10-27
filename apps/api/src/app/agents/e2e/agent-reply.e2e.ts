@@ -64,6 +64,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
 
       expect(res.status).to.equal(200);
       expect(res.body.data?.messageId).to.equal('platform-msg-1');
+      expect(res.body.data?.platformThreadId).to.equal('platform-thread-1');
 
       const convAfter = await conversationRepository.findOne(
         { _id: conversationId, _environmentId: ctx.session.environment._id },
@@ -79,20 +80,6 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       );
       expect(agentActivity).to.exist;
       expect(agentActivity!.content).to.equal('Hello from agent');
-    });
-
-    it('should return messageId/platformThreadId on successful reply', async () => {
-      const conversationId = await seedConversation(ctx);
-
-      const res = await postReply({
-        conversationId,
-        integrationIdentifier: ctx.integrationIdentifier,
-        reply: { markdown: 'Hello' },
-      });
-
-      expect(res.status).to.equal(200);
-      expect(res.body.data.messageId).to.equal('platform-msg-1');
-      expect(res.body.data.platformThreadId).to.equal('platform-thread-1');
     });
 
     it('should deliver generic copy when bridge reports error: true', async () => {

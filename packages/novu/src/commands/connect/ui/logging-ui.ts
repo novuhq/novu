@@ -74,7 +74,7 @@ export function createLoggingUI(): ConnectUI {
       if (!url) {
         if (authUrlFilePromise) {
           void authUrlFilePromise.then((filePath) => {
-            if (filePath) void unlink(filePath).catch(() => undefined);
+            if (filePath) void unlink(filePath).catch((): undefined => undefined);
           });
           authUrlFilePromise = undefined;
         }
@@ -90,7 +90,7 @@ export function createLoggingUI(): ConnectUI {
 
             return authUrlFile;
           })
-          .catch(() => undefined);
+          .catch((): undefined => undefined);
       }
 
       if (spinner) {
@@ -324,7 +324,7 @@ export function createLoggingUI(): ConnectUI {
       logTelegramSetupLinkHandoffEvent({ setupUrl: mobileUrl });
       void renderQRPngFile(mobileUrl)
         .then((setupQrPngPath) => logTelegramSetupLinkQrPngHandoffEvent({ setupQrPngPath }))
-        .catch(() => undefined);
+        .catch((): undefined => undefined);
     },
     savingTelegramBotToken() {
       start('Saving your Telegram bot token…');
@@ -335,7 +335,7 @@ export function createLoggingUI(): ConnectUI {
       logTelegramDeepLinkHandoffEvents({ deepLinkUrl, botUsername });
       void renderQRPngFile(deepLinkUrl)
         .then((deepLinkQrPngPath) => logTelegramDeepLinkQrPngHandoffEvent({ deepLinkQrPngPath }))
-        .catch(() => undefined);
+        .catch((): undefined => undefined);
     },
     telegramConnected() {
       succeed('Telegram connected');
@@ -423,7 +423,7 @@ export function createLoggingUI(): ConnectUI {
       if (waMeUrl) {
         void renderQRPngFile(waMeUrl)
           .then((waMeQrPngPath) => logWhatsAppWaMeQrPngHandoffEvent({ waMeQrPngPath }))
-          .catch(() => undefined);
+          .catch((): undefined => undefined);
       }
       start('Waiting for your first inbound WhatsApp message…');
     },
