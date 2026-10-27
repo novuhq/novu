@@ -154,8 +154,7 @@ export function readWebChatSubscriberId(projectDir: string): string | undefined 
 
     const subscriberId = parseEnvFile(fs.readFileSync(envPath, 'utf8'))
       .get('NEXT_PUBLIC_NOVU_SUBSCRIBER_ID')
-      ?.trim()
-      .replace(/^(['"])(.*)\1$/, '$2');
+      ?.replace(/^(['"])(.*)\1$/, '$2');
     if (subscriberId) {
       return subscriberId;
     }

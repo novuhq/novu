@@ -27,20 +27,20 @@ export { resolveHandlerWired } from './resolve-web-chat-wiring-state';
 
 function resolveWebChatSubscriber(
   auth: ResolvedConnectAuth,
-  envProjectDir: string
-): { subscriberId: string; demoSubscriberId?: string } {
+  existingEnvDir: string | undefined
+): { subscriberId: string; isDemo: boolean } {
   if (auth.user?.id) {
-    return { subscriberId: auth.user.id };
+    return { subscriberId: auth.user.id, isDemo: false };
   }
 
   // Re-runs keep the demo subscriber already in env so its conversation history survives.
-  const existingSubscriberId = readWebChatSubscriberId(envProjectDir);
+  const existingSubscriberId = existingEnvDir ? readWebChatSubscriberId(existingEnvDir) : undefined;
   const subscriberId =
     existingSubscriberId && existingSubscriberId !== SUBSCRIBER_ID_PLACEHOLDER
       ? existingSubscriberId
       : resolveConnectSubscriberId(auth);
 
-  return { subscriberId, demoSubscriberId: subscriberId };
+  return { subscriberId, isDemo: true };
 }
 
 export async function runWebChatProjectSetup(input: {
@@ -83,7 +83,8 @@ export async function runWebChatProjectSetup(input: {
   }
 
   const applicationIdentifier = await resolveConnectApplicationIdentifier(input.auth);
-  const { subscriberId, demoSubscriberId } = resolveWebChatSubscriber(input.auth, input.bridgeProjectDir ?? projectDir);
+  // A standalone scaffold writes into a new empty directory, so only a bridge merge has env to reuse.
+  const { subscriberId, isDemo } = resolveWebChatSubscriber(input.auth, input.bridgeProjectDir);
 
   if (input.ui.interactive) {
     await input.ui.releaseTerminal();
@@ -111,7 +112,7 @@ export async function runWebChatProjectSetup(input: {
     scaffolded: result.scaffolded,
     mergedIntoBridge: result.mergedIntoBridge,
     chatPath: result.chatPath,
-    demoSubscriberId,
+    demoSubscriberId: isDemo ? subscriberId : undefined,
   };
 }
 
@@ -129,7 +130,7 @@ async function runWebChatEmbedSetup(
   opts: { alreadyWired: boolean }
 ): Promise<WebChatConnectOutcome> {
   const applicationIdentifier = await resolveConnectApplicationIdentifier(input.auth);
-  const { subscriberId, demoSubscriberId } = resolveWebChatSubscriber(input.auth, projectDir);
+  const { subscriberId, isDemo } = resolveWebChatSubscriber(input.auth, projectDir);
   const envResult = mergeWebChatEnv({
     projectDir,
     applicationIdentifier,
@@ -164,7 +165,7 @@ async function runWebChatEmbedSetup(
     embedPromptFile,
     envPaths: envResult.envPaths,
     alreadyWired: opts.alreadyWired,
-    demoSubscriberId,
+    demoSubscriberId: isDemo ? subscriberId : undefined,
   };
 }
 
