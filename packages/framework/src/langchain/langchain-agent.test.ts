@@ -141,6 +141,21 @@ describe('langchain agent adapter', () => {
 
       expect(ctx.reply).toHaveBeenCalledWith('done');
     });
+
+    it('passes a returned ReplyStream (async iterable) through unchanged for dispatch to stream', async () => {
+      async function* streamReply() {
+        yield 'one ';
+        yield 'two';
+      }
+      const stream = streamReply();
+      const supportAgent = agent('support', async () => stream);
+      const ctx = fakeMessageCtx();
+
+      const result = await supportAgent.handlers.onMessage({} as never, ctx);
+
+      expect(result).toBe(stream);
+      expect(ctx.reply).not.toHaveBeenCalled();
+    });
   });
 
   describe('onToolApproval', () => {
