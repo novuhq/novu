@@ -7,7 +7,9 @@ import {
   describeEmbedSuccessNextStep,
   formatDemoSubscriberWarning,
   resolveWebChatSuccessPresentation,
+  UNKNOWN_SOCKET_HOST_WARNING,
 } from './format-web-chat-success';
+
 export function shouldSkipConnectSuccessSummary(result: ConnectSuccessResult): boolean {
   if (result.connectedChannel === 'web-chat') {
     return false;
@@ -19,6 +21,14 @@ export function shouldSkipConnectSuccessSummary(result: ConnectSuccessResult): b
     result.aiSdkOutcome?.scaffolded === true ||
     result.langChainOutcome?.scaffolded === true
   );
+}
+
+function printUnknownSocketHostWarning(unknownSocketHost: boolean): void {
+  if (!unknownSocketHost) {
+    return;
+  }
+
+  console.log(`  ${chalk.yellow('!')} ${UNKNOWN_SOCKET_HOST_WARNING}`);
 }
 
 export function printConnectSuccess(result: ConnectSuccessResult): void {
@@ -96,6 +106,7 @@ function printWebChatAppSuccess(
     }
     printDemoSubscriberWarning(demoSubscriberWarning);
     printDevCommandBox(webChatPresentation.devCommand);
+    printUnknownSocketHostWarning(webChatPresentation.unknownSocketHost);
 
     return true;
   }
@@ -110,6 +121,7 @@ function printWebChatAppSuccess(
       console.log(`  ${chalk.bold('Status:')} This project is already wired for Web Chat.`);
       console.log(`  ${chalk.dim('Run npm run dev:novu to start local dev.')}`);
       printDemoSubscriberWarning(demoSubscriberWarning);
+      printUnknownSocketHostWarning(webChatPresentation.unknownSocketHost);
 
       return true;
     }
@@ -123,6 +135,7 @@ function printWebChatAppSuccess(
     if (webChatPresentation.embedPromptFile) {
       console.log(`  ${chalk.dim('Prompt file:')} ${webChatPresentation.embedPromptFile}`);
     }
+    printUnknownSocketHostWarning(webChatPresentation.unknownSocketHost);
     if (webChatPresentation.embedPrompt) {
       console.log('');
       console.log(webChatPresentation.embedPrompt);
@@ -137,6 +150,7 @@ function printWebChatAppSuccess(
     console.log(`  ${chalk.bold('Local URL:')} ${chalk.underline(webChatPresentation.chatUrl)}`);
     printDemoSubscriberWarning(demoSubscriberWarning);
     printDevCommandBox(webChatPresentation.devCommand);
+    printUnknownSocketHostWarning(webChatPresentation.unknownSocketHost);
 
     return true;
   }

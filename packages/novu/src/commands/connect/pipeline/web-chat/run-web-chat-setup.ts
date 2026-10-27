@@ -20,7 +20,7 @@ import {
   resolveWebChatProjectWiringState,
 } from './resolve-web-chat-wiring-state';
 import { defaultWebChatScaffoldDirName, detectWebChatProjectKind, scaffoldWebChatProject } from './scaffold-web-chat';
-import { mergeWebChatEnv, readWebChatSubscriberId } from './wire-web-chat-env';
+import { mergeWebChatEnv, readWebChatSubscriberId, resolveUnknownSocketHostWarning } from './wire-web-chat-env';
 
 export type { BridgeSetupSnapshot } from './resolve-web-chat-wiring-state';
 export { resolveHandlerWired } from './resolve-web-chat-wiring-state';
@@ -113,6 +113,7 @@ export async function runWebChatProjectSetup(input: {
     mergedIntoBridge: result.mergedIntoBridge,
     chatPath: result.chatPath,
     demoSubscriberId: isDemo ? subscriberId : undefined,
+    unknownSocketHost: resolveUnknownSocketHostWarning(input.auth.apiUrl, result.projectDir),
   };
 }
 
@@ -166,6 +167,7 @@ async function runWebChatEmbedSetup(
     envPaths: envResult.envPaths,
     alreadyWired: opts.alreadyWired,
     demoSubscriberId: isDemo ? subscriberId : undefined,
+    unknownSocketHost: resolveUnknownSocketHostWarning(input.auth.apiUrl, projectDir),
   };
 }
 
