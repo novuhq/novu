@@ -815,6 +815,26 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
         });
       });
 
+      it('lets only who was asked answer: the card in Bob’s chat, asked of Carol, is hers', async () => {
+        const bobId = await addContact('Bob', BOB_CHAT_ID);
+        const carolId = await addContact('Carol', CAROL_CHAT_ID);
+        await write('can we ship?', BOB_CHAT_ID);
+        const bobThread = await threadWith(bobId);
+        const sent = await session.testAgent
+          .post('/v1/human/interactions')
+          .send({ kind: 'approve', card: { title: 'Ship it?' }, thread: bobThread, to: [carolId] });
+        expect(sent.status).to.equal(201, JSON.stringify(sent.body));
+        const cardId = sent.body.data.id as string;
+        const statusOf = async () =>
+          (await session.testAgent.get(`/v1/human/interactions/${cardId}`)).body.data.status as string;
+
+        await press(`human:${cardId}:approve`, BOB_CHAT_ID);
+        expect(await statusOf()).to.equal('pending');
+
+        await press(`human:${cardId}:approve`, CAROL_CHAT_ID);
+        expect(await statusOf()).to.equal('approved');
+      });
+
       it('leaves out the answer the agent already read, waiting for it', async () => {
         const { cardId, cursor } = await askBobAndCarol(true);
 

@@ -43,7 +43,13 @@ export interface HumanDeliveryRefs {
 }
 
 export interface HumanDeliveryTarget {
+  /** Who the delivery is addressed to: whose platform identity may answer it. */
   subscriberId: string;
+  /**
+   * Who it reaches, when not `subscriberId` alone: a card posted in a thread reaches the people in it, never a
+   * contact outside it, who has a delivery of their own.
+   */
+  reaches?: string[];
   integrationIdentifier: string;
   platform: string;
   deliver: () => Promise<HumanDeliveryRefs>;
@@ -373,6 +379,7 @@ export async function deliverToTargets(
 ): Promise<{ interaction: HumanInteractionEntity; failedSubscriberIds: string[] }> {
   const deliveries: HumanInteractionDelivery[] = [];
   const failedSubscriberIds: string[] = [];
+  const reached: string[] = [];
   let lastError: unknown;
   let conversationId: string | undefined;
 
@@ -386,6 +393,7 @@ export async function deliverToTargets(
         platformMessageId: refs.platformMessageId,
         platformThreadId: refs.platformThreadId,
       });
+      reached.push(...(target.reaches ?? [target.subscriberId]));
       if (!conversationId && refs._conversationId) {
         conversationId = refs._conversationId;
       }
@@ -422,11 +430,9 @@ export async function deliverToTargets(
     );
   }
 
-  // Only who got the card nowhere is dropped: a question asked in a thread reaches people in it through the
-  // thread's card, and may reach someone outside it in their own chat too.
-  const unreached = failedSubscriberIds.filter(
-    (subscriberId) => !deliveries.some((delivery) => delivery.subscriberId === subscriberId)
-  );
+  // Only who got the card nowhere is dropped: a question asked in a thread reaches the people in it through the
+  // thread's card, and someone outside it only in their own chat.
+  const unreached = failedSubscriberIds.filter((subscriberId) => !reached.includes(subscriberId));
   const recipientPatch =
     unreached.length > 0
       ? {

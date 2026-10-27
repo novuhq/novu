@@ -108,7 +108,8 @@ export class CreateConversationInteraction {
       interaction,
       [
         {
-          subscriberId: this.threadSubscriberId(command, subscriberIds),
+          subscriberId: primarySubscriberId,
+          reaches: this.inThread(command, subscriberIds),
           integrationIdentifier: command.integrationIdentifier,
           platform: command.channel.platform,
           deliver: async () => {
@@ -189,15 +190,17 @@ export class CreateConversationInteraction {
   }
 
   /**
-   * Who the thread's own card is for: someone `to` names who is in the thread, else the contact the thread belongs
-   * to. It never reaches a contact outside it, who gets the card in their own chat, and can't answer when that fails.
+   * Who of `subscriberIds` the thread's own card reaches: those in the thread. A contact outside it gets the card in
+   * their own chat, and can't answer when that fails.
    */
-  private threadSubscriberId(command: CreateConversationInteractionCommand, subscriberIds: string[]): string {
-    const inThread = command.conversation.participants
-      .filter((participant) => participant.type === ConversationParticipantTypeEnum.SUBSCRIBER)
-      .map((participant) => participant.id);
+  private inThread(command: CreateConversationInteractionCommand, subscriberIds: string[]): string[] {
+    const people = new Set(
+      command.conversation.participants
+        .filter((participant) => participant.type === ConversationParticipantTypeEnum.SUBSCRIBER)
+        .map((participant) => participant.id)
+    );
 
-    return subscriberIds.find((subscriberId) => inThread.includes(subscriberId)) ?? inThread[0] ?? subscriberIds[0];
+    return subscriberIds.filter((subscriberId) => people.has(subscriberId));
   }
 
   private resolveRecipientIds(command: CreateConversationInteractionCommand): string[] {
