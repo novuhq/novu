@@ -126,19 +126,22 @@ function unquoteEnvValue(value: string): string {
   return value.replace(/^(['"])(.*)\1$/, '$2');
 }
 
-function mergeEnvFileAtPath(envPath: string, entriesToSet: Record<string, string>, canInferSocket: boolean): string[] {
+function mergeEnvFileAtPath(envPath: string, entriesToSet: Record<string, string>): string[] {
   const created = !fs.existsSync(envPath);
   const existingContents = created ? '' : fs.readFileSync(envPath, 'utf8');
   const entries = parseEnvFile(existingContents);
   const updatedKeys: string[] = [];
 
-  // Clear a previously-written web-chat key that no longer applies to this run (e.g. a socket
-  // URL/type written for a prior API host) so a stale value can't survive a re-run against a
-  // different host. Skip the socket keys when the current host is unrecognised: we have no
-  // value to replace them with, and clearing them would delete a socket URL the user set by
-  // hand after a previous unknownSocketHost warning.
+  // A socket URL/type is only valid for the API host it was written for. If the backend URL
+  // already in this file matches the one this run would write, the host hasn't changed: preserve
+  // any socket settings this run didn't resupply (e.g. a value the user set by hand after a
+  // previous unknownSocketHost warning). If the host changed — including to/from one we can't
+  // infer a socket for — the old socket settings no longer apply, so clear them like any other
+  // stale key.
+  const hostUnchanged = entries.get('NEXT_PUBLIC_NOVU_BACKEND_URL') === entriesToSet.NEXT_PUBLIC_NOVU_BACKEND_URL;
+
   for (const key of WEB_CHAT_ENV_KEYS) {
-    if (!canInferSocket && (SOCKET_ENV_KEYS as readonly string[]).includes(key)) {
+    if (hostUnchanged && (SOCKET_ENV_KEYS as readonly string[]).includes(key)) {
       continue;
     }
 
@@ -211,11 +214,10 @@ function serializeEnvWithComment(existingContents: string, entries: Map<string, 
 export function mergeWebChatEnv(input: WebChatEnvInput): WebChatEnvMergeResult {
   const envPaths = resolveProjectEnvPaths(input.projectDir);
   const entriesToSet = buildWebChatEnvEntries(input);
-  const canInferSocket = isKnownScaffoldApiHost(input.apiUrl);
   const updatedKeys = new Set<string>();
 
   for (const envPath of envPaths) {
-    for (const key of mergeEnvFileAtPath(envPath, entriesToSet, canInferSocket)) {
+    for (const key of mergeEnvFileAtPath(envPath, entriesToSet)) {
       updatedKeys.add(key);
     }
   }

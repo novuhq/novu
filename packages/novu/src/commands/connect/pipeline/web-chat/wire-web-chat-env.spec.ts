@@ -77,10 +77,26 @@ describe('buildWebChatEnvEntries', () => {
 });
 
 describe('mergeWebChatEnv', () => {
-  it('keeps a previously-written socket URL/type when re-run against a host it cannot infer one for', () => {
+  it('keeps a manually-set socket URL when re-run against the same unrecognised host', () => {
     // Regression test: re-running connect against an unrecognised host used to delete any
-    // socket URL/type already in the file — including one the user set by hand after a
-    // previous unknownSocketHost warning. See NV-9195.
+    // socket URL already in the file — including one the user set by hand after a previous
+    // unknownSocketHost warning — even though the API host hadn't changed. See NV-9195.
+    const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-env-'));
+    fs.writeFileSync(
+      path.join(projectDir, '.env.local'),
+      'NEXT_PUBLIC_NOVU_BACKEND_URL=https://api.my-company.com\nNEXT_PUBLIC_NOVU_SOCKET_URL=wss://chat.my-company.com\n'
+    );
+
+    mergeWebChatEnv({ ...baseInput, projectDir, apiUrl: 'https://api.my-company.com' });
+    const afterRerun = fs.readFileSync(path.join(projectDir, '.env.local'), 'utf8');
+    expect(afterRerun).toContain('NEXT_PUBLIC_NOVU_SOCKET_URL=wss://chat.my-company.com');
+  });
+
+  it('clears a stale socket URL/type when re-run against a different, unrecognised host', () => {
+    // Regression test: a socket URL/type inferred for a prior known host (e.g. a Novu Box)
+    // must not survive a switch to a different, unrecognised host — otherwise Web Chat keeps
+    // connecting to the old deployment and resolveUnknownSocketHostWarning never fires because
+    // a socket URL still appears to be configured. See NV-9195.
     const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-env-'));
     fs.writeFileSync(path.join(projectDir, '.env.local'), '');
 
@@ -92,8 +108,9 @@ describe('mergeWebChatEnv', () => {
     mergeWebChatEnv({ ...baseInput, projectDir, apiUrl: 'https://api.my-company.com' });
     const afterSelfHostedRun = fs.readFileSync(path.join(projectDir, '.env.local'), 'utf8');
     expect(afterSelfHostedRun).toContain('NEXT_PUBLIC_NOVU_BACKEND_URL=https://api.my-company.com');
-    expect(afterSelfHostedRun).toContain('NEXT_PUBLIC_NOVU_SOCKET_URL=wss://my-box.box.novu-staging.co/ws');
-    expect(afterSelfHostedRun).toContain('NEXT_PUBLIC_NOVU_SOCKET_TYPE=cloud');
+    expect(afterSelfHostedRun).not.toContain('NEXT_PUBLIC_NOVU_SOCKET_URL');
+    expect(afterSelfHostedRun).not.toContain('NEXT_PUBLIC_NOVU_SOCKET_TYPE');
+    expect(resolveUnknownSocketHostWarning('https://api.my-company.com', projectDir)).toBe(true);
   });
 
   it('clears a stale socket URL/type when re-run against a different known host', () => {
