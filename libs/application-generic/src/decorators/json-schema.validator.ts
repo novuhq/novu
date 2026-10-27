@@ -1,6 +1,6 @@
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
+import type { AnySchema } from 'ajv';
 import { registerDecorator, ValidationArguments, ValidationOptions } from 'class-validator';
+import { getSchemaValidator } from '../utils/issues';
 
 export function IsValidJsonSchema(validationOptions?: ValidationOptions & { nullable?: boolean }) {
   return (object: object, propertyName: string) => {
@@ -10,7 +10,7 @@ export function IsValidJsonSchema(validationOptions?: ValidationOptions & { null
       propertyName,
       options: validationOptions,
       validator: {
-        validate(value: any, args: ValidationArguments) {
+        validate(value: unknown) {
           if (!value || typeof value !== 'object') {
             if (validationOptions?.nullable && !value) {
               return true;
@@ -20,10 +20,7 @@ export function IsValidJsonSchema(validationOptions?: ValidationOptions & { null
           }
 
           try {
-            const ajv = new Ajv({ strict: false });
-            addFormats(ajv);
-
-            ajv.compile(value);
+            getSchemaValidator(value as AnySchema);
 
             return true;
           } catch (error) {
