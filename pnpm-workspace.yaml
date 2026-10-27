@@ -413,9 +413,16 @@ overrides:
   # scheme/hostname normalization. Patched in 3.1.6.
   # GHSA-qw65-cvwx-89v3: additional host-confusion regression affecting
   # 3.1.6 (and 3.1.6 is separately called out by GHSA-58mr-gqgx-xq4g).
-  # Patched in 3.1.7. Widen the override so the transitive verdaccio > ajv
-  # consumer picks up the fix.
-  fast-uri@<3.1.7: ^3.1.7
+  # Patched in 3.1.7.
+  # GHSA-w74x-v6f9-j3xg (moderate) / GHSA-wjr9-j795-jxcr (moderate) /
+  # GHSA-xhq7-xmqj-769h (low) / GHSA-333x-w4r6-6crp (low): fast-uri URI
+  # scheme spoofing via percent-encoded scheme decoding, host confusion via
+  # unchecked WHATWG host canonicalization, improper path equivalence in
+  # relative reference normalization, and scheme injection via an unescaped
+  # first-segment colon in suffix references. All patched in 3.1.9 (patch
+  # bump within the 3.1.x line). Widen the override so the transitive
+  # verdaccio > ajv consumer picks up the fix.
+  fast-uri@<3.1.9: ^3.1.9
   # GHSA-c83g-rgw3-j3cx / GHSA-73wf-gq98-2v4g: browserslist unbounded memory
   # growth (OOM) via distinct query results and uncaught crash / prototype
   # write via untrusted browserslist-stats.json. Patched in 4.28.7.
