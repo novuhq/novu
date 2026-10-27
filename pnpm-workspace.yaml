@@ -211,7 +211,11 @@ overrides:
   jws@>=4.0.0 <4.0.1: ^4.0.1
   validator@<13.15.22: ^13.15.22
   msgpackr: ^1.10.1
-  multer@<2.4.0: ^2.4.0
+  # GHSA-q7qp-rjg7-q26m (high): multer DoS via a pending asynchronous
+  # fileFilter after request teardown. Patched in 2.5.0 (patch bump within
+  # the 2.x line). Widen the previous <2.4.0 floor so transitive consumers
+  # (@nestjs/platform-express, api/worker upload routes) pick up the fix.
+  multer@<2.5.0: ^2.5.0
   jws@<3.2.3: ^3.2.3
   svgo@>=3.0.0 <3.3.5: ^3.3.5
   flatted@<3.4.2: ^3.4.2
