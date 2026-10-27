@@ -26,6 +26,37 @@ export function hostName(host: Pick<AgentHost, 'id' | 'via'>): string {
   return isHostId(host.id) ? hostOf(host.id).name : HOST_LABELS[host.via];
 }
 
+/**
+ * Where the agent is listening: the computer whose `agentinbox listen` is ready to start a host when someone the
+ * agent listens to writes. One computer at a time, by a lease its program renews every minute; it lapses three minutes
+ * after the last renewal.
+ */
+export type Listening = {
+  computerId: string;
+  /** What the operator calls the computer: "MacBook". */
+  computerName: string;
+  /** The host it starts there. */
+  host: HostId;
+  /** The folder the host runs in, as the operator reads it: "~/projects/app". */
+  project?: string;
+  since: string;
+  renewedAt: string;
+  /** When the lease lapses unless it is renewed before. */
+  expiresAt: string;
+};
+
+/** The lease while it is live, or `null` once it has lapsed: the page keeps the last one it read, which ages. */
+export function liveListening(listening: Listening | null | undefined, now: number): Listening | null {
+  return listening && Date.parse(listening.expiresAt) > now ? listening : null;
+}
+
+/** "Listening on MacBook (Claude Code)", as the Agent setup row says it. */
+export function describeListening(listening: Pick<Listening, 'computerName' | 'host'>): string {
+  const host = isHostId(listening.host) ? hostOf(listening.host).name : listening.host;
+
+  return `Listening on ${listening.computerName} (${host})`;
+}
+
 export type HostStatus = {
   /** A host used a one-time code, or checked the inbox, at least once. It never goes back to false. */
   connected: boolean;
@@ -40,6 +71,8 @@ export type HostStatus = {
   firstCheckedAt: string | null;
   /** The newest unread conversation the first check found. */
   waitingMessage: { conversationId: string; from: string; subject: string; at: string; seenAt: string } | null;
+  /** Where the agent is listening, or `null` when no computer keeps it listening. Missing from an older API. */
+  listening?: Listening | null;
 };
 
 /** A one-time code for `agentinbox connect <handle> --code <code>`. It works once, for ten minutes. */

@@ -37,7 +37,7 @@ const to = z
   .union([recipient, z.array(recipient).min(1).max(50)])
   .optional()
   .describe(
-    'Contact id, email address, or up to 50 of them. With inbox_send, omit to reach the account owner. With inbox_reply, these are the only contacts who may answer.'
+    'Contact id, email address, or up to 50 of them. With inbox_send, omit to reach the account owner. With inbox_reply, these are the only contacts who may answer; one who is not in a direct conversation gets it in their own chat too, and the answer comes back to this conversation.'
   );
 
 const waitSeconds = z

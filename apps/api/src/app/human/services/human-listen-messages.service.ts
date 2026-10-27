@@ -1,0 +1,642 @@
+import { Injectable } from '@nestjs/common';
+import {
+  type ConversationActivityEntity,
+  ConversationActivityRepository,
+  ConversationActivitySenderTypeEnum,
+  ConversationActivityTypeEnum,
+  ConversationRepository,
+  type HumanInteractionEntity,
+  HumanInteractionRepository,
+  indexRevisions,
+} from '@novu/dal';
+import {
+  HUMAN_INTERACTION_MAX_TTL_SECONDS,
+  HumanInteractionKindEnum,
+  HumanInteractionStatusEnum,
+  humanInteractionApproveExtraActions,
+  humanInteractionChooseOptions,
+} from '@novu/shared';
+import { Types } from 'mongoose';
+import type { ListenAnswerDto, ListenMessageDto } from '../dtos/human-listen.dto';
+import { type InboxRelayAgent, type InboxScope, readAttachments } from './human-inbox.service';
+import type { ListenedTo } from './human-listen-access.service';
+import type { ListenCursor } from './listen-cursor';
+
+/**
+ * How long a message has to be stored before a wait looks at it. By then the inbox has finished with it: the
+ * conversation knows of it, and a reply that answers a question has settled that question, so it goes out
+ * marked as the answer. A wait never reads past this, so a row stored a moment late is still read.
+ */
+export const LISTEN_SETTLE_MS = 2_000;
+
+/** Messages older than this never start a host, however far back the cursor is: a computer off for a week doesn't start one for old news. */
+export const LISTEN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+/** The rows one look reads at most. The cursor goes on from the last of them. */
+const ROWS_PER_LOOK = 200;
+
+/** How long before it is answered a question can have been sent: the longest a question lives, and an hour to spare. */
+const QUESTION_LIFETIME_MS = HUMAN_INTERACTION_MAX_TTL_SECONDS * 1000 + 60 * 60 * 1000;
+
+/** A question is settled this soon after the reply that answers it is stored, or the reply isn't taken for its answer. */
+const ANSWER_WINDOW_MS = 2 * 60 * 1000;
+
+/** Leeway between the clocks of the servers that stored a reply and settled its question. */
+const CLOCK_SLACK_MS = 5_000;
+
+/**
+ * How long after its question is settled an answer's row can be stored: the card is edited on the chat app first,
+ * which a slow app can make take a while. A look goes this far back for questions whose rows may still come.
+ */
+const ANSWER_ROW_LAG_MS = 10 * 60 * 1000;
+
+/** How a person settles a question. Expired, canceled and delivered are the system's doing. */
+const SETTLED_BY_A_PERSON: readonly string[] = [
+  HumanInteractionStatusEnum.ANSWERED,
+  HumanInteractionStatusEnum.APPROVED,
+  HumanInteractionStatusEnum.DENIED,
+];
+
+/** The approve card's own two buttons; any other id is one of its extra actions. */
+const APPROVE_BUTTONS: readonly string[] = ['approve', 'deny'];
+
+/** The signal resolving a conversation leaves in its history (`AgentConversationService.resolveConversation`). */
+const RESOLVE_SIGNAL = 'resolve';
+
+type ListenConversation = { identifier: string; isDirectMessage: boolean };
+
+/** Where a row sits in the order rows are read in. */
+type RowPosition = { at: number; id: string };
+
+/** A person's answer to a card, as the inbox records it on the answer's row. */
+type CardAnswer = {
+  interactionIdentifier: string;
+  kind: string;
+  status?: string;
+  optionId?: string;
+  text?: string;
+  /** On the row in the question's own conversation, when the answer was given in another. */
+  answeredElsewhere?: boolean;
+};
+
+/**
+ * A question a reply answered: when it was asked, the words it was settled with, where it was asked, and whether
+ * the agent read the answer.
+ */
+type AnsweredQuestion = Pick<
+  HumanInteractionEntity,
+  'identifier' | 'createdAt' | 'response' | '_conversationId' | 'answerReadAt'
+>;
+
+/** What became of a look's messages since they were stored, by `messageKey`. */
+type Revisions = {
+  edits: Map<string, Pick<ConversationActivityEntity, 'content' | 'richContent'>>;
+  deleted: Set<string>;
+};
+
+/** What one look knows about its rows besides the rows themselves. */
+type LookContext = Revisions & {
+  conversations: Map<string, ListenConversation>;
+  listenedTo: ListenedTo;
+  questionsAnswered: Map<string, AnsweredQuestion>;
+  cards: Map<string, HumanInteractionEntity>;
+  resolves: Map<string, RowPosition[]>;
+};
+
+/**
+ * What one look found, and where the next goes on from. `more` when it stopped at the most rows one look reads,
+ * so there may be more to read already, rather than at `limit` or at the end.
+ */
+export type ListenMessagesPage = { data: ListenMessageDto[]; next: ListenCursor; more: boolean };
+
+/**
+ * The messages that may start an agent's host, read for the listener's wait: what the people the agent listens to
+ * wrote to it, and every answer to a question it asked, whoever gave it, oldest first. The agent's own messages,
+ * the system's and what else strangers write never count, nor a message that was deleted before it was read; one
+ * edited before it was read is given as it reads now.
+ *
+ * Each message is one entry. An answer comes back to the conversation its question was asked in, wherever it was
+ * given: a question sent to people outside that conversation is answered in their own chats, and its answer's row
+ * in the question's own conversation is the entry. Given there, a reply that answers a question is the person's
+ * message, marked with the question it answered (`answersMessageId`), and the answer's row adds nothing; a pressed
+ * button leaves no message, so its row is the entry, saying what the button says. An answer the agent already
+ * read, by waiting for it, is left out. Each entry says how many times its conversation was resolved before it
+ * (`round`): a host keeps one session for each conversation and round.
+ */
+@Injectable()
+export class HumanListenMessagesService {
+  constructor(
+    private readonly conversationRepository: ConversationRepository,
+    private readonly activityRepository: ConversationActivityRepository,
+    private readonly humanInteractionRepository: HumanInteractionRepository
+  ) {}
+
+  /**
+   * One look: up to `limit` messages after `cursor` that were stored at least `LISTEN_SETTLE_MS` before `now`, and
+   * the cursor to go on from. The cursor moves past the rows that were looked at and didn't count as well, so
+   * the next look doesn't read them again.
+   */
+  async read(
+    scope: InboxScope,
+    agent: Pick<InboxRelayAgent, '_id'>,
+    listenedTo: ListenedTo,
+    cursor: ListenCursor,
+    limit: number,
+    now: Date
+  ): Promise<ListenMessagesPage> {
+    const until = now.getTime() - LISTEN_SETTLE_MS;
+    const lookedAtAll: ListenMessagesPage = { data: [], next: until > cursor.at ? { at: until } : cursor, more: false };
+
+    if (listenedTo.size === 0 || until <= cursor.at) {
+      return lookedAtAll;
+    }
+
+    const conversations = await this.conversationsOf(scope, agent, listenedTo, cursor);
+    if (conversations.size === 0) {
+      return lookedAtAll;
+    }
+
+    const rows = await this.activityRepository.find(
+      {
+        _environmentId: scope.environmentId,
+        _organizationId: scope.organizationId,
+        _conversationId: { $in: [...conversations.keys()] },
+        senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+        $and: [
+          { createdAt: { $lte: new Date(until) } },
+          afterCursor(cursor),
+          // What the people it listens to write, and anyone's answer: the agent asked for that.
+          {
+            $or: [
+              { type: ConversationActivityTypeEnum.MESSAGE, senderId: { $in: [...listenedTo.keys()] } },
+              { type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE },
+            ],
+          },
+        ],
+      },
+      '*',
+      { sort: { createdAt: 1, _id: 1 }, limit: ROWS_PER_LOOK }
+    );
+    if (rows.length === 0) {
+      return lookedAtAll;
+    }
+
+    const [revisions, questionsAnswered, cards, resolves] = await Promise.all([
+      this.revisionsOf(scope, rows),
+      this.questionsAnsweredBy(scope, agent, rows),
+      this.answeredCards(scope, rows),
+      this.resolvesBefore(scope, rows),
+    ]);
+    const context: LookContext = { ...revisions, conversations, listenedTo, questionsAnswered, cards, resolves };
+
+    const data: ListenMessageDto[] = [];
+    for (const [index, row] of rows.entries()) {
+      const message =
+        row.type === ConversationActivityTypeEnum.MESSAGE ? toMessage(row, context) : toCardAnswer(row, context);
+
+      if (message) {
+        data.push(message);
+      }
+
+      // Full, or the look read all the rows it takes: the next one goes on from this row.
+      const more = index === rows.length - 1 && rows.length === ROWS_PER_LOOK;
+      if (data.length === limit || more) {
+        return { data, next: positionOf(row), more };
+      }
+    }
+
+    return { ...lookedAtAll, data };
+  }
+
+  /**
+   * Every conversation of the agent where a row after the cursor can be: those someone it listens to is in that
+   * were active since it (writing makes the writer one of its people and marks it active), and those a question
+   * answered since it was asked in, where its answer comes back (an answer doesn't mark it active). Only what
+   * happened since the cursor counts, so none is left out however many conversations the agent has.
+   */
+  private async conversationsOf(
+    scope: InboxScope,
+    agent: Pick<InboxRelayAgent, '_id'>,
+    listenedTo: ListenedTo,
+    cursor: ListenCursor
+  ): Promise<Map<string, ListenConversation>> {
+    const since = new Date(cursor.at - CLOCK_SLACK_MS);
+    const answered = await this.humanInteractionRepository.find(
+      {
+        _environmentId: scope.environmentId,
+        _organizationId: scope.organizationId,
+        _agentId: agent._id,
+        'response.respondedAt': { $gte: new Date(since.getTime() - ANSWER_ROW_LAG_MS).toISOString() },
+      },
+      ['_conversationId']
+    );
+    const found = await this.conversationRepository.find(
+      {
+        _environmentId: scope.environmentId,
+        _organizationId: scope.organizationId,
+        _agentId: agent._id,
+        $or: [
+          { 'participants.id': { $in: [...listenedTo.keys()] }, lastActivityAt: { $gte: since.toISOString() } },
+          { _id: { $in: [...new Set(answered.flatMap((question) => question._conversationId ?? []))] } },
+        ],
+      },
+      ['_id', 'identifier', 'isDirectMessage']
+    );
+
+    return new Map(
+      found.map((conversation) => [
+        String(conversation._id),
+        // As the inbox reads it: a conversation from before this was stored was a direct one.
+        { identifier: conversation.identifier, isDirectMessage: conversation.isDirectMessage !== false },
+      ])
+    );
+  }
+
+  /**
+   * What became of the messages among `rows` since: the newest edit of each, and which were deleted, as the inbox
+   * folds them. Each is a row of its own with the message's platform id, which is only unique in its conversation
+   * (a Telegram message id is a number per chat), so they are told apart by conversation too.
+   */
+  private async revisionsOf(scope: InboxScope, rows: ConversationActivityEntity[]): Promise<Revisions> {
+    const messages = rows.filter((row) => row.type === ConversationActivityTypeEnum.MESSAGE && row.platformMessageId);
+    if (messages.length === 0) {
+      return { edits: new Map(), deleted: new Set() };
+    }
+
+    const revisions = await this.activityRepository.find(
+      {
+        _environmentId: scope.environmentId,
+        _organizationId: scope.organizationId,
+        _conversationId: { $in: [...new Set(messages.map((row) => String(row._conversationId)))] },
+        type: { $in: [ConversationActivityTypeEnum.EDIT, ConversationActivityTypeEnum.DELETE] },
+        platformMessageId: { $in: messages.map((row) => row.platformMessageId as string) },
+      },
+      ['_id', '_conversationId', 'type', 'platformMessageId', 'content', 'richContent', 'sequence', 'createdAt']
+    );
+    const byConversation = new Map<string, typeof revisions>();
+    for (const revision of revisions) {
+      const conversationId = String(revision._conversationId);
+      byConversation.set(conversationId, [...(byConversation.get(conversationId) ?? []), revision]);
+    }
+
+    const found: Revisions = { edits: new Map(), deleted: new Set() };
+    for (const [conversationId, ofConversation] of byConversation) {
+      const { latestEdit, deletedIds } = indexRevisions(ofConversation);
+      for (const [platformMessageId, edit] of latestEdit) {
+        found.edits.set(`${conversationId}:${platformMessageId}`, edit);
+      }
+      for (const platformMessageId of deletedIds) {
+        found.deleted.add(`${conversationId}:${platformMessageId}`);
+      }
+    }
+
+    return found;
+  }
+
+  /**
+   * Which of the messages among `rows` answered a question, and which. A reply settles the question it answers
+   * with its own words, by the same person, moments after it is stored; each question is the answer of one
+   * message at most, the earliest that fits, even one an earlier look gave. Whoever answered counts, also someone
+   * the question wasn't sent to, where anyone in the conversation may answer.
+   */
+  private async questionsAnsweredBy(
+    scope: InboxScope,
+    agent: Pick<InboxRelayAgent, '_id'>,
+    rows: ConversationActivityEntity[]
+  ): Promise<Map<string, AnsweredQuestion>> {
+    const messages = rows.filter((row) => row.type === ConversationActivityTypeEnum.MESSAGE && row.content?.trim());
+    if (messages.length === 0) {
+      return new Map();
+    }
+
+    const senders = [...new Set(messages.map((row) => row.senderId))];
+    const times = messages.map(timeOf);
+    const first = Math.min(...times);
+    const questions = await this.humanInteractionRepository.find(
+      {
+        _environmentId: scope.environmentId,
+        _organizationId: scope.organizationId,
+        _agentId: agent._id,
+        kind: HumanInteractionKindEnum.ASK,
+        status: HumanInteractionStatusEnum.ANSWERED,
+        createdAt: { $gte: new Date(first - QUESTION_LIFETIME_MS) },
+        'response.respondedBySubscriberId': { $in: senders },
+        'response.respondedAt': {
+          $gte: new Date(first - CLOCK_SLACK_MS).toISOString(),
+          $lte: new Date(Math.max(...times) + ANSWER_WINDOW_MS).toISOString(),
+        },
+      },
+      ['identifier', 'createdAt', 'response', '_conversationId', 'answerReadAt']
+    );
+    if (questions.length === 0) {
+      return new Map();
+    }
+
+    // The same words sent twice, a moment apart, can land on two pages: the earlier ones are read again, so a
+    // question already given to a reply isn't given to the next one too.
+    const answeredFrom = Math.min(...questions.map(({ response }) => Date.parse(response?.respondedAt ?? '')));
+    const earlier = await this.activityRepository.find(
+      {
+        _environmentId: scope.environmentId,
+        _organizationId: scope.organizationId,
+        _conversationId: { $in: [...new Set(messages.map((row) => String(row._conversationId)))] },
+        senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+        senderId: { $in: senders },
+        type: ConversationActivityTypeEnum.MESSAGE,
+        createdAt: { $gte: new Date(answeredFrom - ANSWER_WINDOW_MS), $lt: new Date(first) },
+      },
+      ['_id', 'senderId', 'content', 'createdAt'],
+      { sort: { createdAt: 1, _id: 1 } }
+    );
+    const ours = new Set(messages.map((row) => String(row._id)));
+
+    return new Map(
+      [...matchAnswers([...earlier, ...messages], questions)].filter(([messageId]) => ours.has(messageId))
+    );
+  }
+
+  /** The cards whose answers are among `rows`, by their ids, for what their buttons say. */
+  private async answeredCards(
+    scope: InboxScope,
+    rows: ConversationActivityEntity[]
+  ): Promise<Map<string, HumanInteractionEntity>> {
+    const identifiers = rows.flatMap((row) => readCardAnswer(row)?.interactionIdentifier ?? []);
+    const found = await this.humanInteractionRepository.findByIdentifiers(scope.environmentId, scope.organizationId, [
+      ...new Set(identifiers),
+    ]);
+
+    return new Map(found.map((interaction) => [interaction.identifier, interaction]));
+  }
+
+  /** When each conversation of `rows` was resolved, up to the newest of them, oldest first. */
+  private async resolvesBefore(
+    scope: InboxScope,
+    rows: ConversationActivityEntity[]
+  ): Promise<Map<string, RowPosition[]>> {
+    const signals = await this.activityRepository.find(
+      {
+        _environmentId: scope.environmentId,
+        _organizationId: scope.organizationId,
+        _conversationId: { $in: [...new Set(rows.map((row) => String(row._conversationId)))] },
+        type: ConversationActivityTypeEnum.SIGNAL,
+        'signalData.type': RESOLVE_SIGNAL,
+        createdAt: { $lte: new Date(Math.max(...rows.map(timeOf))) },
+      },
+      ['_id', '_conversationId', 'createdAt'],
+      { sort: { createdAt: 1, _id: 1 } }
+    );
+    const resolves = new Map<string, RowPosition[]>();
+
+    for (const signal of signals) {
+      const conversationId = String(signal._conversationId);
+      resolves.set(conversationId, [
+        ...(resolves.get(conversationId) ?? []),
+        { at: timeOf(signal), id: String(signal._id) },
+      ]);
+    }
+
+    return resolves;
+  }
+}
+
+/**
+ * Pairs each message with the question it answered, if it answered one: one written after the question was asked,
+ * whose sender settled it with the same words at most `ANSWER_WINDOW_MS` after the message was stored. A question
+ * goes to the earliest message that fits it, never to the same words said before it was asked.
+ */
+export function matchAnswers(
+  messages: Pick<ConversationActivityEntity, '_id' | 'senderId' | 'content' | 'createdAt'>[],
+  questions: AnsweredQuestion[]
+): Map<string, AnsweredQuestion> {
+  const answered = new Map<string, AnsweredQuestion>();
+  const taken = new Set<string>();
+
+  for (const message of messages) {
+    const at = timeOf(message);
+    const text = message.content?.trim();
+    const question = questions.find(({ identifier, createdAt, response }) => {
+      const respondedAt = response?.respondedAt ? Date.parse(response.respondedAt) : Number.NaN;
+
+      return (
+        !taken.has(identifier) &&
+        at >= new Date(createdAt).getTime() - CLOCK_SLACK_MS &&
+        response?.respondedBySubscriberId === message.senderId &&
+        response.text?.trim() === text &&
+        respondedAt >= at - CLOCK_SLACK_MS &&
+        respondedAt <= at + ANSWER_WINDOW_MS
+      );
+    });
+
+    if (question) {
+      taken.add(question.identifier);
+      answered.set(String(message._id), question);
+    }
+  }
+
+  return answered;
+}
+
+/**
+ * What a pressed button says: the option picked, the approve card's extra action, or that it was approved or
+ * denied. The card's own labels when it can still be read, else its ids.
+ */
+export function answerText(answer: CardAnswer, card?: Pick<HumanInteractionEntity, 'kind' | 'content'>): string {
+  const isApprove = answer.kind === HumanInteractionKindEnum.APPROVE;
+
+  if (answer.optionId && card && !(isApprove && APPROVE_BUTTONS.includes(answer.optionId))) {
+    const choices = isApprove ? humanInteractionApproveExtraActions(card) : humanInteractionChooseOptions(card);
+    const label = choices.find((choice) => choice.id === answer.optionId)?.label;
+
+    if (label) {
+      return label;
+    }
+  }
+
+  if (isApprove && (!answer.optionId || APPROVE_BUTTONS.includes(answer.optionId))) {
+    return answer.status === HumanInteractionStatusEnum.APPROVED ? 'Approved' : 'Denied';
+  }
+
+  return answer.optionId ?? answer.text ?? '';
+}
+
+/** How many times the conversation was resolved before `row`: 0 if never. */
+export function roundOf(
+  row: Pick<ConversationActivityEntity, '_id' | 'createdAt'>,
+  resolves: RowPosition[] = []
+): number {
+  const position = positionOf(row);
+
+  return resolves.filter(({ at, id }) => at < position.at || (at === position.at && id < String(position.id))).length;
+}
+
+/**
+ * A deleted message counts for nothing, and an edited one reads as it does now; a reply that answered a question
+ * is marked with it. A reply that answered a question asked in another conversation comes back there instead, as
+ * the answer's row, and one the agent already read counts for nothing.
+ */
+function toMessage(row: ConversationActivityEntity, context: LookContext): ListenMessageDto | null {
+  const key = messageKey(row);
+  if (context.deleted.has(key)) {
+    return null;
+  }
+
+  const question = context.questionsAnswered.get(String(row._id));
+  if (question && (question.answerReadAt || !askedIn(question, row))) {
+    return null;
+  }
+  // As the inbox folds an edit: its words, and what came with it when it brought anything.
+  const edit = context.edits.get(key);
+  const current = edit
+    ? { ...row, content: edit.content, ...(edit.richContent !== undefined ? { richContent: edit.richContent } : {}) }
+    : row;
+  const attachments = readAttachments(current);
+
+  return entryOf(row, context, {
+    text: current.content ?? '',
+    ...(question
+      ? {
+          answersMessageId: question.identifier,
+          answer: {
+            status: HumanInteractionStatusEnum.ANSWERED,
+            ...(question.response?.text ? { text: question.response.text } : {}),
+          },
+        }
+      : {}),
+    ...(attachments.length ? { attachments } : {}),
+  });
+}
+
+/**
+ * An answer, from whoever gave it, in the conversation its question was asked in: a pressed button, or words given
+ * in another conversation. Words given in the question's own conversation are the person's message already, and
+ * the copies of an answer in other conversations add nothing. One the agent already read counts for nothing.
+ */
+function toCardAnswer(row: ConversationActivityEntity, context: LookContext): ListenMessageDto | null {
+  const answer = readCardAnswer(row);
+  const question = answer && context.cards.get(answer.interactionIdentifier);
+
+  if (
+    !answer ||
+    (answer.kind === HumanInteractionKindEnum.ASK && !answer.answeredElsewhere) ||
+    !SETTLED_BY_A_PERSON.includes(answer.status ?? '') ||
+    (question && (question.answerReadAt || !askedIn(question, row)))
+  ) {
+    return null;
+  }
+
+  return entryOf(
+    row,
+    context,
+    {
+      text: answerText(answer, question ?? undefined),
+      answersMessageId: answer.interactionIdentifier,
+      answer: {
+        status: answer.status as string,
+        ...(answer.optionId ? { optionId: answer.optionId } : {}),
+        ...(answer.text ? { text: answer.text } : {}),
+      },
+    },
+    { fromAnyone: true }
+  );
+}
+
+/** Whether `row` is in the conversation `question` was asked in: one with none is taken as its own. */
+function askedIn(
+  question: Pick<HumanInteractionEntity, '_conversationId'>,
+  row: Pick<ConversationActivityEntity, '_conversationId'>
+): boolean {
+  return !question._conversationId || String(question._conversationId) === String(row._conversationId);
+}
+
+function entryOf(
+  row: ConversationActivityEntity,
+  context: LookContext,
+  content: {
+    text: string;
+    answersMessageId?: string;
+    answer?: ListenAnswerDto;
+    attachments?: ListenMessageDto['attachments'];
+  },
+  options: { fromAnyone?: boolean } = {}
+): ListenMessageDto | null {
+  const conversationId = String(row._conversationId);
+  const conversation = context.conversations.get(conversationId);
+  const sender = senderOf(row, context.listenedTo, options.fromAnyone === true);
+
+  if (!conversation || !sender) {
+    return null;
+  }
+
+  return {
+    id: row.identifier,
+    conversationId: conversation.identifier,
+    channel: row.platform,
+    from: sender,
+    text: content.text,
+    at: new Date(timeOf(row)).toISOString(),
+    ...(content.answersMessageId ? { answersMessageId: content.answersMessageId } : {}),
+    round: roundOf(row, context.resolves.get(conversationId)),
+    isDirectMessage: conversation.isDirectMessage,
+    ...(content.answer ? { answer: content.answer } : {}),
+    ...(content.attachments ? { attachments: content.attachments } : {}),
+  };
+}
+
+/** Who wrote `row`: someone the agent listens to, or, `fromAnyone`, whoever it was. */
+function senderOf(
+  row: ConversationActivityEntity,
+  listenedTo: ListenedTo,
+  fromAnyone: boolean
+): ListenMessageDto['from'] | null {
+  const person = listenedTo.get(row.senderId);
+  if (!person && !fromAnyone) {
+    return null;
+  }
+
+  const name = person?.name ?? row.senderName?.trim();
+
+  return { id: person?.id ?? row.senderId, ...(name ? { name } : {}), isOperator: person?.isOperator ?? false };
+}
+
+/** The answer an answer row records, as `HumanInteractionActivityRecorder` writes it. */
+function readCardAnswer(row: ConversationActivityEntity): CardAnswer | null {
+  if (row.type !== ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE) {
+    return null;
+  }
+
+  const raw = row.richContent?.humanInteraction as Partial<CardAnswer> | undefined;
+  if (!raw?.interactionIdentifier || !raw.kind) {
+    return null;
+  }
+
+  return {
+    interactionIdentifier: raw.interactionIdentifier,
+    kind: raw.kind,
+    ...(raw.status ? { status: raw.status } : {}),
+    ...(raw.optionId ? { optionId: raw.optionId } : {}),
+    ...(raw.text ? { text: raw.text } : {}),
+    ...(raw.answeredElsewhere ? { answeredElsewhere: true } : {}),
+  };
+}
+
+/** Rows stored after the cursor: later, or at the same moment and after it in the order rows are read in. */
+function afterCursor(cursor: ListenCursor) {
+  const at = new Date(cursor.at);
+
+  return cursor.id
+    ? { $or: [{ createdAt: { $gt: at } }, { createdAt: at, _id: { $gt: new Types.ObjectId(cursor.id) } }] }
+    : { createdAt: { $gt: at } };
+}
+
+function positionOf(row: Pick<ConversationActivityEntity, '_id' | 'createdAt'>): RowPosition {
+  return { at: timeOf(row), id: String(row._id) };
+}
+
+function messageKey(row: Pick<ConversationActivityEntity, '_conversationId' | 'platformMessageId'>): string {
+  return `${String(row._conversationId)}:${row.platformMessageId}`;
+}
+
+/** A row's `createdAt`, which the database hands back as a date, in epoch ms. */
+function timeOf(row: Pick<ConversationActivityEntity, 'createdAt'>): number {
+  return new Date(row.createdAt).getTime();
+}

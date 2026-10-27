@@ -60,6 +60,12 @@ export class HumanInteractionEntity {
 
   response?: HumanInteractionResponse;
 
+  /**
+   * When the agent first read a person's answer, by asking for the interaction while it waited for it. The
+   * listener then leaves the answer out of the messages it gets: the agent has it already.
+   */
+  answerReadAt?: string;
+
   expiresAt: string;
 
   _environmentId: EnvironmentId;

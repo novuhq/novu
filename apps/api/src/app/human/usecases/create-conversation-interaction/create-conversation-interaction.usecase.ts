@@ -11,6 +11,7 @@ import {
   assertHumanPendingCap,
   buildPendingHumanInteraction,
   deliverToTargets,
+  type HumanDeliveryTarget,
   toStoredContent,
 } from '../../services/human-interaction-lifecycle';
 import { CreateConversationInteractionCommand } from './create-conversation-interaction.command';
@@ -47,8 +48,15 @@ export class CreateConversationInteraction {
     this.logger.setContext(this.constructor.name);
   }
 
+  /**
+   * `alsoTo` gives the deliveries to people outside the conversation, each in a chat of their own. The question
+   * stays the conversation's, so its answer comes back there.
+   */
   @InstrumentUsecase()
-  async execute(command: CreateConversationInteractionCommand): Promise<HumanInteractionEntity> {
+  async execute(
+    command: CreateConversationInteractionCommand,
+    alsoTo?: (interaction: HumanInteractionEntity) => HumanDeliveryTarget[]
+  ): Promise<HumanInteractionEntity> {
     const title = command.card.title?.trim();
     if (!title) {
       throw new BadRequestException('`card` is required (chrome or a Card element).');
@@ -101,6 +109,7 @@ export class CreateConversationInteraction {
       [
         {
           subscriberId: primarySubscriberId,
+          reaches: this.inThread(command, subscriberIds),
           integrationIdentifier: command.integrationIdentifier,
           platform: command.channel.platform,
           deliver: async () => {
@@ -131,6 +140,7 @@ export class CreateConversationInteraction {
             };
           },
         },
+        ...(alsoTo?.(interaction) ?? []),
       ],
       {
         logMessage: 'Conversation human-interaction delivery failed',
@@ -177,6 +187,20 @@ export class CreateConversationInteraction {
         'Failed to subscribe the thread after delivering a human interaction'
       );
     }
+  }
+
+  /**
+   * Who of `subscriberIds` the thread's own card reaches: those in the thread. A contact outside it gets the card in
+   * their own chat, and can't answer when that fails.
+   */
+  private inThread(command: CreateConversationInteractionCommand, subscriberIds: string[]): string[] {
+    const people = new Set(
+      command.conversation.participants
+        .filter((participant) => participant.type === ConversationParticipantTypeEnum.SUBSCRIBER)
+        .map((participant) => participant.id)
+    );
+
+    return subscriberIds.filter((subscriberId) => people.has(subscriberId));
   }
 
   private resolveRecipientIds(command: CreateConversationInteractionCommand): string[] {

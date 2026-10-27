@@ -2,7 +2,7 @@ import { AGENT_ANALYTICS_SOURCES, AgentReplyPolicyEnum, AgentSubscriberAccessEnu
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
-import { AGENT_HOST_VIAS, AGENT_INBOX_REACHES, AgentDBModel } from './agent.entity';
+import { AGENT_HOST_VIAS, AGENT_INBOX_REACHES, AgentDBModel, LISTEN_HOST_IDS } from './agent.entity';
 
 const agentSchema = new Schema<AgentDBModel>(
   {
@@ -51,6 +51,18 @@ const agentSchema = new Schema<AgentDBModel>(
         at: Schema.Types.String,
         seenAt: Schema.Types.String,
       },
+    },
+    listening: {
+      computerId: Schema.Types.String,
+      computerName: Schema.Types.String,
+      host: {
+        type: Schema.Types.String,
+        enum: [...LISTEN_HOST_IDS],
+      },
+      project: Schema.Types.String,
+      since: Schema.Types.String,
+      renewedAt: Schema.Types.String,
+      expiresAt: Schema.Types.String,
     },
     reach: {
       type: Schema.Types.String,
