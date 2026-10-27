@@ -114,11 +114,11 @@ function usesDraft2020Schema(schema: AnySchema): boolean {
   return schemaId === DRAFT_2020_12_SCHEMA_ID || schemaId?.includes('2020-12') === true;
 }
 
-type SchemaValidationOptions = {
+interface SchemaValidationOptions {
   verbose?: boolean;
   /** Fill in schema `default`s on the validated value, mutating it. */
   useDefaults?: boolean;
-};
+}
 
 /** Single AJV configuration for every JSON schema check, so issues stay consistent. */
 export const createSchemaValidationAjv = ({
@@ -134,7 +134,7 @@ export const createSchemaValidationAjv = ({
   return ajv;
 };
 
-const compiledSchemaValidators = new LRUCache<string, ValidateFunction>({ max: 1000 });
+const compiledSchemaValidators = new LRUCache<string, ValidateFunction>({ max: 5000 });
 
 /**
  * Returns a compiled validator for `schema`, reusing the one compiled earlier for the same schema
@@ -143,14 +143,17 @@ const compiledSchemaValidators = new LRUCache<string, ValidateFunction>({ max: 1
  * Every schema gets its own AJV instance: a shared instance keeps every schema it has compiled
  * in memory and refuses a second schema that declares an `$id` it has already seen.
  */
-export const getSchemaValidator = (schema: AnySchema, options: SchemaValidationOptions = {}): ValidateFunction => {
+export const getSchemaValidator = (
+  schema: AnySchema,
+  { useDefaults = false }: Pick<SchemaValidationOptions, 'useDefaults'> = {}
+): ValidateFunction => {
   const key = createHash('sha256')
-    .update(JSON.stringify([options.verbose ?? false, options.useDefaults ?? false, schema]))
+    .update(JSON.stringify([useDefaults, schema]))
     .digest('hex');
   let validate = compiledSchemaValidators.get(key);
 
   if (!validate) {
-    validate = createSchemaValidationAjv({ ...options, schema }).compile(schema);
+    validate = createSchemaValidationAjv({ useDefaults, schema }).compile(schema);
     compiledSchemaValidators.set(key, validate);
   }
 

@@ -20,7 +20,8 @@ export function IsValidJsonSchema(validationOptions?: ValidationOptions & { null
           }
 
           try {
-            getSchemaValidator(value as AnySchema);
+            // Same options as trigger payload validation, so this compile is reused at trigger time.
+            getSchemaValidator(value as AnySchema, { useDefaults: true });
 
             return true;
           } catch (error) {
