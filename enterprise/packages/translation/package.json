@@ -21,12 +21,14 @@
     "class-validator": "^0.14.0",
     "multer": "^1.4.5-lts.1",
     "nanoid": "^3.1.20",
+    "shortid": "^2.2.16",
     "slugify": "^1.4.6"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
     "@types/mocha": "^8.0.1",
     "@types/multer": "^1.4.10",
+    "@types/shortid": "^0.0.29",
     "@types/node": "^14.6.0",
     "@types/sinon": "^9.0.0",
     "chai": "^4.2.0",

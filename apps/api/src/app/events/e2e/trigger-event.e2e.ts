@@ -3319,12 +3319,23 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         expect(triggerResponse.status).to.equal(201);
         expect(triggerResponse.data.data.status).to.equal('processed');
 
-        await session.awaitRunningJobs();
+        await session.awaitRunningJobs(workflow._id);
 
-        const messages = await messageRepository.find({
+        let messages = await messageRepository.find({
           _environmentId: session.environment._id,
           _templateId: workflow._id,
         });
+
+        if (messages.length === 0) {
+          await new Promise((resolve) => {
+            setTimeout(resolve, 1000);
+          });
+          await session.awaitRunningJobs(workflow._id);
+          messages = await messageRepository.find({
+            _environmentId: session.environment._id,
+            _templateId: workflow._id,
+          });
+        }
 
         expect(messages.length).to.equal(1);
 

@@ -64,22 +64,16 @@ export class JobsService {
     delay?: boolean;
     unfinishedJobs?: number;
   }) {
-    let runningJobs = 0;
-    let totalCount = 0;
+    const observedWork = await this.waitUntilJobsSettle(templateId, organizationId, delay, unfinishedJobs);
 
-    do {
-      totalCount = (await this.getQueueMetric()).totalCount;
-      runningJobs = await this.jobRepository.count({
-        _organizationId: organizationId,
-        type: {
-          $nin: [delay ? StepTypeEnum.DELAY : StepTypeEnum.DIGEST],
-        },
-        _templateId: Array.isArray(templateId) ? { $in: templateId } : templateId,
-        status: {
-          $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
-        },
+    // The trigger response can return in the gap before BullMQ exposes the new job.
+    // One quiet poll then looks like "nothing to wait for" and the assertion reads too early.
+    if (!observedWork) {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 500);
       });
-    } while (totalCount > 0 || runningJobs > unfinishedJobs);
+      await this.waitUntilJobsSettle(templateId, organizationId, delay, unfinishedJobs);
+    }
 
     return {
       getDelayedTimestamp: async () => {
@@ -109,6 +103,37 @@ export class JobsService {
         }
       },
     };
+  }
+
+  private async waitUntilJobsSettle(
+    templateId: string | string[] | undefined,
+    organizationId: string,
+    delay: boolean | undefined,
+    unfinishedJobs: number
+  ) {
+    let observedWork = false;
+    let totalCount = 0;
+    let runningJobs = 0;
+
+    do {
+      totalCount = (await this.getQueueMetric()).totalCount;
+      runningJobs = await this.jobRepository.count({
+        _organizationId: organizationId,
+        type: {
+          $nin: [delay ? StepTypeEnum.DELAY : StepTypeEnum.DIGEST],
+        },
+        _templateId: Array.isArray(templateId) ? { $in: templateId } : templateId,
+        status: {
+          $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
+        },
+      });
+
+      if (totalCount > 0 || runningJobs > unfinishedJobs) {
+        observedWork = true;
+      }
+    } while (totalCount > 0 || runningJobs > unfinishedJobs);
+
+    return observedWork;
   }
 
   private async getQueueMetric() {

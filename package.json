@@ -188,7 +188,7 @@
     }
   },
   "engines": {
-    "node": ">=20 <21",
+    "node": ">=22 <23",
     "pnpm": "^8.9.0"
   },
   "dependencies": {

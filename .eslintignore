@@ -8,5 +8,8 @@
 # https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
 node_modules
 
+# Node config, not part of the embed TypeScript project
+libs/embed/rollup.config.js
+
 # OSX
 .DS_Store

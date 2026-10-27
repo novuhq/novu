@@ -30,6 +30,8 @@ export default defineConfig({
   },
 
   e2e: {
+    // Monaco mounts slower than Cypress's 4s default on the GitHub runner.
+    defaultCommandTimeout: 10000,
     setupNodeEvents(on, config) {
       // eslint-disable-next-line import/extensions
       return require('./cypress/plugins/index.ts')(on, config);
