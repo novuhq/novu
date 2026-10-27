@@ -355,8 +355,9 @@ export async function assertHumanPendingCap(
  * Recipients whose DM failed are dropped from the settlement allow-list so they
  * cannot settle, appear in `human list`, or consume pending quota.
  *
- * In-thread `ctx.*` posts one card and uses `to` only as an allow-list — that
- * path has no failed recipients, so the listed ids are left intact.
+ * In-thread `ctx.*` posts one card and uses `to` only as an allow-list, so the
+ * people in the thread stay listed. Named contacts outside a direct-message
+ * thread get a DM of their own besides, and only those are dropped when it fails.
  *
  * Sends stay serial to avoid bursting a single chat provider.
  */
@@ -421,10 +422,15 @@ export async function deliverToTargets(
     );
   }
 
+  // Only who got the card nowhere is dropped: a question asked in a thread reaches people in it through the
+  // thread's card, and may reach someone outside it in their own chat too.
+  const unreached = failedSubscriberIds.filter(
+    (subscriberId) => !deliveries.some((delivery) => delivery.subscriberId === subscriberId)
+  );
   const recipientPatch =
-    failedSubscriberIds.length > 0
+    unreached.length > 0
       ? {
-          subscriberIds: deliveries.map((delivery) => delivery.subscriberId),
+          subscriberIds: interaction.subscriberIds.filter((subscriberId) => !unreached.includes(subscriberId)),
         }
       : {};
 

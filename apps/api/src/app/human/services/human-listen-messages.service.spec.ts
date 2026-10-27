@@ -125,14 +125,19 @@ describe('HumanListenMessagesService', () => {
     ]);
     expect(page.next).to.deep.equal({ at: now.getTime() - LISTEN_SETTLE_MS });
 
-    // Only what the people it listens to wrote is read, in this environment.
+    // What the people it listens to wrote, and anyone's answer to the agent's questions, in this environment.
     const query = activityRepository.find.firstCall.args[0];
     expect(query).to.deep.include({
       _environmentId: 'env1',
       _organizationId: 'org1',
       _conversationId: { $in: ['conv1'] },
       senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
-      senderId: { $in: ['ada', 'bob'] },
+    });
+    expect(query.$and[2]).to.deep.equal({
+      $or: [
+        { type: ConversationActivityTypeEnum.MESSAGE, senderId: { $in: ['ada', 'bob'] } },
+        { type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE },
+      ],
     });
   });
 
@@ -198,7 +203,7 @@ describe('HumanListenMessagesService', () => {
     await service.read(scope, agent, listenedTo, cursor, 20, now);
 
     const [query, , options] = conversationRepository.find.firstCall.args;
-    // Written in since the cursor, with a few seconds for the clocks; or where a button was pressed since.
+    // Written in since the cursor, with a few seconds for the clocks; or where a question answered since was asked.
     expect(query.$or).to.deep.equal([
       {
         'participants.id': { $in: ['ada', 'bob'] },
@@ -207,6 +212,144 @@ describe('HumanListenMessagesService', () => {
       { _id: { $in: ['conv9'] } },
     ]);
     expect(options).to.equal(undefined);
+  });
+
+  it('reads where the questions answered since were asked, from a while back: an answer’s row comes once the card is edited', async () => {
+    const { service, conversationRepository, humanInteractionRepository } = setup({
+      rows: [row({})],
+      answeredSince: [{ _conversationId: 'conv9' }, { _conversationId: 'conv9' }],
+    });
+    const cursor = { at: now.getTime() - 120_000 };
+
+    await service.read(scope, agent, listenedTo, cursor, 20, now);
+
+    const [answeredQuery, answeredFields] = humanInteractionRepository.find.firstCall.args;
+    expect(answeredQuery['response.respondedAt']).to.deep.equal({
+      $gte: new Date(cursor.at - 5_000 - 10 * 60_000).toISOString(),
+    });
+    expect(answeredFields).to.deep.equal(['_conversationId']);
+    expect(conversationRepository.find.firstCall.args[0].$or[1]).to.deep.equal({ _id: { $in: ['conv9'] } });
+  });
+
+  describe('answers to a question sent to people outside its conversation', () => {
+    const SHIP_IT = {
+      identifier: 'hi_ship',
+      kind: HumanInteractionKindEnum.APPROVE,
+      _conversationId: 'conv1',
+      content: { cardChrome: { title: 'Ship it?' } },
+    };
+    const conversations = [
+      { _id: 'conv1', identifier: 'conv_bob' },
+      { _id: 'conv2', identifier: 'conv_carol' },
+    ];
+    const answerRow = (fields: Record<string, unknown>, answer: Record<string, unknown>) =>
+      row({
+        type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+        senderId: 'carol',
+        senderName: 'Carol',
+        ...fields,
+        richContent: { humanInteraction: { interactionIdentifier: 'hi_ship', kind: 'approve', ...answer } },
+      });
+
+    it('gives the answer in the conversation the question was asked in, from whoever pressed, and leaves out its copy', async () => {
+      const own = answerRow(
+        { identifier: 'human:hi_ship:response' },
+        { status: 'approved', optionId: 'approve', answeredElsewhere: true }
+      );
+      const copy = answerRow(
+        { identifier: 'human:hi_ship:conv2:response', _conversationId: 'conv2' },
+        { status: 'approved', optionId: 'approve' }
+      );
+      const { service } = setup({ rows: [own, copy], cards: [SHIP_IT], conversations });
+
+      const page = await service.read(scope, agent, listenedTo, { at: now.getTime() - 120_000 }, 20, now);
+
+      expect(page.data).to.have.length(1);
+      expect(page.data[0]).to.deep.include({
+        id: 'human:hi_ship:response',
+        conversationId: 'conv_bob',
+        from: { id: 'carol', name: 'Carol', isOperator: false },
+        text: 'Approved',
+        answersMessageId: 'hi_ship',
+        answer: { status: 'approved', optionId: 'approve' },
+      });
+    });
+
+    it('gives words answered in another conversation from the row in the question’s own, not the reply where they were written', async () => {
+      const ask = { ...SHIP_IT, identifier: 'hi_env', kind: HumanInteractionKindEnum.ASK };
+      const reply = row({ _conversationId: 'conv2', senderId: 'bob', content: 'prod' });
+      const own = row({
+        type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+        identifier: 'human:hi_env:response',
+        senderId: 'bob',
+        richContent: {
+          humanInteraction: {
+            interactionIdentifier: 'hi_env',
+            kind: 'ask',
+            status: 'answered',
+            text: 'prod',
+            answeredElsewhere: true,
+          },
+        },
+      });
+      const { service } = setup({
+        rows: [reply, own],
+        cards: [ask],
+        conversations,
+        questions: [
+          {
+            identifier: 'hi_env',
+            _conversationId: 'conv1',
+            response: {
+              type: 'text',
+              text: 'prod',
+              respondedBySubscriberId: 'bob',
+              respondedAt: new Date(reply.createdAt.getTime() + 300).toISOString(),
+            },
+          },
+        ],
+      });
+
+      const page = await service.read(scope, agent, listenedTo, { at: now.getTime() - 120_000 }, 20, now);
+
+      expect(page.data).to.have.length(1);
+      expect(page.data[0]).to.deep.include({
+        id: 'human:hi_env:response',
+        conversationId: 'conv_bob',
+        from: { id: 'bob', name: 'Bob', isOperator: false },
+        text: 'prod',
+        answersMessageId: 'hi_env',
+        answer: { status: 'answered', text: 'prod' },
+      });
+    });
+
+    it('leaves out an answer the agent already read, pressed or written', async () => {
+      const read = '2026-10-24T11:59:00.000Z';
+      const pressed = answerRow({ identifier: 'human:hi_ship:response' }, { status: 'approved', optionId: 'approve' });
+      const reply = row({ content: 'staging' });
+      const { service } = setup({
+        rows: [pressed, reply],
+        cards: [{ ...SHIP_IT, answerReadAt: read }],
+        conversations,
+        questions: [
+          {
+            identifier: 'hi_env',
+            _conversationId: 'conv1',
+            answerReadAt: read,
+            response: {
+              type: 'text',
+              text: 'staging',
+              respondedBySubscriberId: 'ada',
+              respondedAt: new Date(reply.createdAt.getTime() + 300).toISOString(),
+            },
+          },
+        ],
+      });
+
+      const page = await service.read(scope, agent, listenedTo, { at: now.getTime() - 120_000 }, 20, now);
+
+      expect(page.data).to.deep.equal([]);
+    });
   });
 
   it('marks a reply that answered a question, and leaves out the answer row of that question', async () => {

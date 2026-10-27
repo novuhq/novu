@@ -218,6 +218,25 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     );
   }
 
+  /** Notes when the agent first read a person's answer; a later read keeps that time. */
+  async markAnswerRead(environmentId: string, id: string, readAt: string): Promise<void> {
+    await this.update(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        status: {
+          $in: [
+            HumanInteractionStatusEnum.APPROVED,
+            HumanInteractionStatusEnum.DENIED,
+            HumanInteractionStatusEnum.ANSWERED,
+          ],
+        },
+        answerReadAt: { $exists: false },
+      },
+      { $set: { answerReadAt: readAt } }
+    );
+  }
+
   async listInteractions(params: {
     environmentId: string;
     organizationId: string;
