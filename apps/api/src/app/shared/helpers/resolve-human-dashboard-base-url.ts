@@ -2,11 +2,11 @@ export type HumanRegion = 'us' | 'eu';
 
 /**
  * Base URL of the Human dashboard (`apps/human-dashboard`), which hosts the pages
- * that `human invite` links point to. `HUMAN_DASHBOARD_URL` wins, falling back
- * to gethuman.md. The trailing slash is stripped so callers can append paths.
+ * that `human contact invite` links point to. `HUMAN_DASHBOARD_URL` wins, falling back
+ * to agentinbox.md. The trailing slash is stripped so callers can append paths.
  */
 export function resolveHumanDashboardBaseUrl(): string {
-  return (process.env.HUMAN_DASHBOARD_URL || 'https://gethuman.md').replace(/\/$/, '');
+  return (process.env.HUMAN_DASHBOARD_URL || 'https://agentinbox.md').replace(/\/$/, '');
 }
 
 /**
@@ -36,14 +36,16 @@ export function buildHumanDashboardUrl(path: string, params: Record<string, stri
 }
 
 /**
- * Page where an operator approves `human login` by typing the code their terminal shows. Approving goes
- * through the Human accounts endpoints, which only run where the Human dashboard is configured, so there's
- * no browser login without it.
+ * Page where an operator approves or denies `human login`. With the session's user code, the page shows it
+ * next to the name of the computer, to compare with the terminal; without one (older CLIs) it's typed there.
+ * The code in the link approves nothing: a signed-in person has to press Approve. Approving goes through the
+ * Human accounts endpoints, which only run where the Human dashboard is configured, so there's no browser
+ * login without it.
  */
-export function buildHumanCliLoginUrl(): string | undefined {
+export function buildHumanCliLoginUrl(userCode?: string): string | undefined {
   if (!process.env.HUMAN_DASHBOARD_URL?.trim()) {
     return undefined;
   }
 
-  return buildHumanDashboardUrl('/cli/login');
+  return buildHumanDashboardUrl('/cli/login', userCode ? { code: userCode } : {});
 }

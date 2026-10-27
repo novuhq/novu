@@ -217,3 +217,21 @@ describe('HttpClientService — SSRF-safe path retries', () => {
     expect((caught as HttpClientError).networkCode).to.equal('ETIMEDOUT');
   });
 });
+
+describe('HttpClientService — per-request ca', () => {
+  it('refuses a custom ca on the SSRF-safe path, which follows redirects to arbitrary hosts', async () => {
+    let caught: unknown;
+    try {
+      await createService().request({
+        url: 'https://example.com/',
+        method: 'GET',
+        ca: ['-----BEGIN CERTIFICATE-----'],
+        enforceSsrfProtection: true,
+      });
+    } catch (error) {
+      caught = error;
+    }
+
+    expect((caught as Error).message).to.contain('`ca` cannot be combined with `enforceSsrfProtection`');
+  });
+});

@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
+import { HUMAN_INTERACTION_MAX_TTL_SECONDS } from '@novu/shared';
+import { resolveHumanDashboardBaseUrl } from '../../shared/helpers/resolve-human-dashboard-base-url';
 import {
   buildOpaqueStorageKey,
   mintRandomToken,
@@ -8,13 +10,16 @@ import {
 
 const KEY_PREFIX = 'agent:email:action:';
 const MESSAGE_KEY_PREFIX = 'agent:email:action:msg:';
-const DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 3; // 3 days
+/** An email button has to outlive the longest question the Human API will keep open. */
+const DEFAULT_TTL_SECONDS = HUMAN_INTERACTION_MAX_TTL_SECONDS;
 /** 256 bits of entropy. Encoded as base64url → 43 URL-safe characters. */
 const TOKEN_BYTES = 32;
 /** Hosts where plaintext HTTP is acceptable because the link never leaves the developer's
  *  loopback interface. Every other host must use https — the action token is bearer
  *  authority and intercepting it in transit is equivalent to dispatching the action. */
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+/** Cloud US is the only API whose email action pages are served from agentinbox.md. */
+const US_CLOUD_API_HOST = 'api.novu.co';
 
 /**
  * Action context forwarded to the agent's `onAction` handler when a recipient clicks an
@@ -115,7 +120,7 @@ export class AgentEmailActionTokenService {
 
     await this.cacheService.set(this.storageKey(token), JSON.stringify(entry), { ttl: this.ttlSeconds });
 
-    const url = `${this.resolveApiBaseUrl()}/v1/agents/email/actions/preview?t=${encodeURIComponent(token)}`;
+    const url = `${this.resolveActionPageBaseUrl()}/v1/agents/email/actions/preview?t=${encodeURIComponent(token)}`;
 
     return { token, url };
   }
@@ -133,22 +138,45 @@ export class AgentEmailActionTokenService {
       throw new Error('API_ROOT_URL is not configured — cannot build email action URL');
     }
 
+    return this.assertActionUrlUsesHttps(baseRaw, 'API_ROOT_URL');
+  }
+
+  /**
+   * The action token is bearer authority. Plaintext HTTP is only acceptable on loopback,
+   * where the link never leaves the machine. The same rule applies to whichever host
+   * actually appears in the email.
+   */
+  private assertActionUrlUsesHttps(baseUrl: string, envName: string): string {
     let parsed: URL;
     try {
-      parsed = new URL(baseRaw);
+      parsed = new URL(baseUrl);
     } catch {
-      throw new Error(`API_ROOT_URL is not a valid URL: ${baseRaw}`);
+      throw new Error(`${envName} is not a valid URL: ${baseUrl}`);
     }
 
     const isLoopback = LOOPBACK_HOSTS.has(parsed.hostname);
     if (parsed.protocol !== 'https:' && !(parsed.protocol === 'http:' && isLoopback)) {
       throw new Error(
-        `API_ROOT_URL must use https:// (got ${parsed.protocol}//${parsed.hostname}). ` +
+        `${envName} must use https:// (got ${parsed.protocol}//${parsed.hostname}). ` +
           'Email action tokens grant action-execution authority and must not travel over plaintext HTTP.'
       );
     }
 
-    return baseRaw;
+    return baseUrl;
+  }
+
+  /**
+   * Host of the page a recipient opens. US cloud links use the Agent Inbox site so the
+   * address bar never shows the API. EU, self-hosted, and local links stay on the API,
+   * which is where the confirmation page is actually rendered.
+   */
+  private resolveActionPageBaseUrl(): string {
+    const apiBase = this.resolveApiBaseUrl();
+    if (new URL(apiBase).hostname === US_CLOUD_API_HOST) {
+      return this.assertActionUrlUsesHttps(resolveHumanDashboardBaseUrl(), 'HUMAN_DASHBOARD_URL');
+    }
+
+    return apiBase;
   }
 
   /**

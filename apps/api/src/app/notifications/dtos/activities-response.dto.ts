@@ -97,7 +97,7 @@ export class DigestMetadataDto {
     enum: [...Object.values(DigestTypeEnum)],
     enumName: 'DigestTypeEnum',
     description: 'The Digest Type',
-    type: String,
+    type: 'string',
   })
   type: DigestTypeEnum;
 
@@ -153,10 +153,10 @@ export class ActivityNotificationStepResponseDto {
   controlVariables?: Record<string, unknown>;
 
   @ApiPropertyOptional({ description: 'Metadata for the workflow step', type: Object })
-  metadata?: any; // Adjust the type based on your actual metadata structure
+  metadata?: unknown; // Adjust the type based on your actual metadata structure
 
   @ApiPropertyOptional({ description: 'Step issues', type: Object })
-  issues?: any; // Adjust the type based on your actual issues structure
+  issues?: unknown; // Adjust the type based on your actual issues structure
 
   @ApiProperty({ description: 'Filter criteria for the step', isArray: true, type: StepFilterDto })
   filters: StepFilterDto[];
@@ -188,7 +188,7 @@ export class ActivityNotificationExecutionDetailResponseDto {
     enum: [...Object.values(ExecutionDetailsStatusEnum)],
     enumName: 'ExecutionDetailsStatusEnum',
     description: 'Status of the execution detail',
-    type: String,
+    type: 'string',
   })
   status: ExecutionDetailsStatusEnum;
 
@@ -205,7 +205,7 @@ export class ActivityNotificationExecutionDetailResponseDto {
     enum: [...new Set([...Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj))])],
     enumName: 'ProvidersIdEnum',
     description: 'Provider ID of the execution',
-    type: String,
+    type: 'string',
   })
   @IsString()
   @IsOptional()
@@ -219,7 +219,7 @@ export class ActivityNotificationExecutionDetailResponseDto {
     enum: [...Object.values(ExecutionDetailsSourceEnum)],
     enumName: 'ExecutionDetailsSourceEnum',
     description: 'Source of the execution detail',
-    type: String,
+    type: 'string',
   })
   @IsString()
   @IsEnum(ExecutionDetailsSourceEnum)
@@ -255,7 +255,6 @@ export class ActivityNotificationJobResponseDto {
   @ApiPropertyOptional({
     description: 'Optional context object for additional error details.',
     type: 'object',
-    required: false,
     additionalProperties: true,
     example: {
       workflowId: 'some_wf_id',
@@ -271,7 +270,7 @@ export class ActivityNotificationJobResponseDto {
     enum: [...new Set([...Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj))])],
     enumName: 'ProvidersIdEnum',
     description: 'Provider ID of the job',
-    type: String, // Explicit type reference for enum
+    type: 'string',
   })
   providerId: ProvidersIdEnum;
 
@@ -351,7 +350,7 @@ export class ActivityNotificationTemplateResponseDto {
     enum: [...Object.values(ResourceOriginEnum)],
     enumName: 'ResourceOriginEnum',
     description: 'Origin of the workflow',
-    type: String,
+    type: 'string',
   })
   @IsString()
   @IsEnum(ResourceOriginEnum)
@@ -431,7 +430,6 @@ export class ActivityNotificationResponseDto {
   @ApiPropertyOptional({
     description: 'Payload of the notification',
     type: 'object',
-    required: false,
     additionalProperties: true,
   })
   payload?: Record<string, unknown>; // Added to align with NotificationEntity
@@ -445,7 +443,6 @@ export class ActivityNotificationResponseDto {
   @ApiPropertyOptional({
     description: 'Controls associated with the notification',
     type: 'object',
-    required: false,
     additionalProperties: true,
   })
   controls?: Record<string, unknown>; // Added to align with NotificationEntity
@@ -453,7 +450,6 @@ export class ActivityNotificationResponseDto {
   @ApiPropertyOptional({
     description: 'To field for subscriber definition',
     type: 'object',
-    required: false,
     additionalProperties: true,
   })
   to?: Record<string, unknown>; // Added to align with NotificationEntity

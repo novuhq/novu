@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -17,6 +18,8 @@ import { ProductFeature, RequirePermissions } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
   DirectionEnum,
+  isAgentAnalyticsSource,
+  NOVU_ANALYTICS_SOURCE_HEADER,
   PermissionsEnum,
   ProductFeatureKeyEnum,
   UserSessionData,
@@ -53,7 +56,10 @@ import {
 } from '../../shared/dtos/configure-photon-webhook.dto';
 import { ConfigureSendblueWebhookResponseDto } from '../../shared/dtos/configure-sendblue-webhook-response.dto';
 import { ConfigureWhatsAppWebhookResponseDto } from '../../shared/dtos/configure-whatsapp-webhook-response.dto';
-import { IssueSlackSetupLinkResponseDto } from '../../shared/dtos/issue-slack-setup-link-response.dto';
+import {
+  IssueSlackSetupLinkRequestDto,
+  IssueSlackSetupLinkResponseDto,
+} from '../../shared/dtos/issue-slack-setup-link-response.dto';
 import {
   PollPhotonDeviceAuthRequestDto,
   PollPhotonDeviceAuthResponseDto,
@@ -166,7 +172,8 @@ export class AgentIntegrationsController {
   addAgentIntegration(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
-    @Body() body: AddAgentIntegrationRequestDto
+    @Body() body: AddAgentIntegrationRequestDto,
+    @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string
   ): Promise<AgentIntegrationResponseDto> {
     return this.addAgentIntegrationUsecase.execute(
       AddAgentIntegrationCommand.create({
@@ -176,6 +183,7 @@ export class AgentIntegrationsController {
         agentIdentifier: identifier,
         integrationIdentifier: body.integrationIdentifier,
         providerId: body.providerId,
+        analyticsSource: isAgentAnalyticsSource(analyticsSource) ? analyticsSource : undefined,
       })
     );
   }
@@ -724,7 +732,8 @@ export class AgentIntegrationsController {
   createSlackSetupLink(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
-    @Param('integrationId') integrationId: string
+    @Param('integrationId') integrationId: string,
+    @Body() body: IssueSlackSetupLinkRequestDto
   ): Promise<IssueSlackSetupLinkResponseDto> {
     return this.issueSlackSetupLinkUsecase.execute(
       IssueSlackSetupLinkCommand.create({
@@ -733,6 +742,7 @@ export class AgentIntegrationsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         integrationId,
+        subscriberId: body?.subscriberId,
       })
     );
   }

@@ -128,6 +128,15 @@ export class ConnectClaimTokenService {
     return acquired === 'OK';
   }
 
+  /** Drops the once-flag so a failed send can be retried. No-op when cache is down. */
+  async releaseSignupCtaPosted(conversationId: string): Promise<void> {
+    if (!this.cacheService.cacheEnabled()) {
+      return;
+    }
+
+    await this.cacheService.del(`${CTA_POSTED_KEY_PREFIX}{${conversationId}}`);
+  }
+
   async tryAcquireClaimLock(token: string): Promise<boolean> {
     this.assertCacheAvailable('tryAcquireClaimLock');
 

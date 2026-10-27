@@ -3,18 +3,19 @@
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationMap": true,
-    "downlevelIteration": true,
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "lib": ["es2015", "dom"],
-    "moduleResolution": "node",
+    "module": "commonjs",
     "noImplicitAny": false,
+    "noUncheckedSideEffectImports": false,
     "removeComments": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
+    "strict": false,
     "strictNullChecks": false,
     "strictPropertyInitialization": false,
-    "target": "es5"
+    "target": "es2015"
   }
 }

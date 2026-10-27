@@ -6,10 +6,10 @@ import {
   CLI_DEVICE_SESSION_DEFAULT_TTL_SECONDS,
   CLI_DEVICE_SESSION_NAME_HUMAN_CLI,
   CLI_USER_CODE_ALPHABET,
-  type CliDeviceSessionPollResponse,
   type CliDeviceSessionUser,
   type CreateCliDeviceSessionResponse,
   resolveCliDeviceSessionConfig,
+  type CliDeviceSessionPollResponse as SharedCliDeviceSessionPollResponse,
 } from '@novu/shared';
 
 import { buildHumanCliLoginUrl } from '../../shared/helpers/resolve-human-dashboard-base-url';
@@ -22,6 +22,36 @@ const USER_CODE_KEY_PREFIX = 'cli-device-session-user-code:';
 
 const USER_CODE_ATTEMPTS = 5;
 
+/** A denied session is kept this long, so the waiting CLI's next poll can tell it apart from an expired one. */
+const DENIED_SESSION_TTL_SECONDS = 5 * 60;
+
+/**
+ * How long one approval may hold a session while it prepares the account, before anything that can't be undone.
+ * An approval that fails gives the session back at once; this only ends the hold of one that never came back.
+ * From the step that can't be undone on, the hold is kept instead: see `keepApprovalHold`.
+ */
+const APPROVAL_HOLD_SECONDS = 60;
+
+/** Longest machine name kept with a session. Hostnames can be far longer than anyone reads on a page. */
+export const CLI_MACHINE_NAME_MAX_LENGTH = 64;
+
+/** `denied` is only ever answered to `human login`, the one CLI whose approval page has a Deny button. */
+export type CliDeviceSessionPollResponse = SharedCliDeviceSessionPollResponse | { status: 'denied' };
+
+/** A session still waiting for an answer, as the page that approves or denies it sees it. */
+export type PendingCliDeviceSession = {
+  deviceCode: string;
+  /** Name of the computer the CLI runs on, as that CLI reported it. Never verified: show it as plain text. */
+  machineName?: string;
+};
+
+/** A session held for one approval, which keeps the hold, approves the session or gives it back with this. */
+export type CliDeviceSessionApprovalHold = {
+  deviceCode: string;
+  /** Tells this approval's hold from a later one's. */
+  holdId: string;
+};
+
 export class CliDeviceSessionNotFoundError extends Error {
   constructor(message = 'CLI device session not found or expired') {
     super(message);
@@ -29,7 +59,15 @@ export class CliDeviceSessionNotFoundError extends Error {
   }
 }
 
-type CliDeviceSessionStatus = 'pending' | 'approved';
+/** An approval holds the session, so nothing else can answer it until that approval is done. */
+export class CliDeviceSessionBeingApprovedError extends Error {
+  constructor(message = 'CLI device session is being approved') {
+    super(message);
+    this.name = 'CliDeviceSessionBeingApprovedError';
+  }
+}
+
+type CliDeviceSessionStatus = 'pending' | 'approved' | 'denied';
 
 interface CliDeviceSessionRecord {
   status: CliDeviceSessionStatus;
@@ -47,14 +85,59 @@ interface CliDeviceSessionRecord {
   user?: CliDeviceSessionUser | null;
   approvedByUserId?: string;
   userCode?: string;
+  machineName?: string;
+  /** Both set while an approval holds the session. Only the scripts read them: `parseRecord` leaves them out. */
+  approvalHoldId?: string;
+  approvalHeldUntilEpoch?: number;
 }
 
+/**
+ * Approves a pending session. An approval that holds the session names its hold, and is only written while
+ * that hold is still the one on the session: one whose hold went to a later approval lets nobody in.
+ */
 const APPROVE_IF_PENDING_SCRIPT = `
 local v = redis.call('get', KEYS[1])
 if not v then return 0 end
 local ok, payload = pcall(cjson.decode, v)
 if not ok or payload.status ~= 'pending' then return 0 end
+if ARGV[3] ~= '' and payload.approvalHoldId ~= ARGV[3] then return 0 end
 redis.call('setex', KEYS[1], ARGV[1], ARGV[2])
+return 1
+`;
+
+/** What the script below answers for a pending session that an approval holds. */
+const HELD_BY_AN_APPROVAL = 2;
+
+/**
+ * Replaces a pending session that no approval holds: with a denied one that only says so (the poll that reads
+ * it gets no key), or with one held for an approval. A session an approval holds is left as it is.
+ */
+const REPLACE_IF_PENDING_AND_NOT_HELD_SCRIPT = `
+local v = redis.call('get', KEYS[1])
+if not v then return 0 end
+local ok, payload = pcall(cjson.decode, v)
+if not ok or payload.status ~= 'pending' then return 0 end
+if (tonumber(payload.approvalHeldUntilEpoch) or 0) > tonumber(ARGV[3]) then return ${HELD_BY_AN_APPROVAL} end
+redis.call('setex', KEYS[1], ARGV[1], ARGV[2])
+return 1
+`;
+
+/**
+ * Replaces a pending session that one approval holds, to keep that hold or to end it. A later approval's hold
+ * is left alone, even after this one's ran out. How long the session still lives stays as it is.
+ */
+const REPLACE_IF_HELD_BY_SCRIPT = `
+local v = redis.call('get', KEYS[1])
+if not v then return 0 end
+local ok, payload = pcall(cjson.decode, v)
+if not ok or payload.status ~= 'pending' then return 0 end
+if payload.approvalHoldId ~= ARGV[3] then return 0 end
+local ttl = redis.call('pttl', KEYS[1])
+if ttl > 0 then
+  redis.call('psetex', KEYS[1], ttl, ARGV[2])
+else
+  redis.call('setex', KEYS[1], ARGV[1], ARGV[2])
+end
 return 1
 `;
 
@@ -87,6 +170,10 @@ if payload.status == 'approved' and payload.apiKey and payload.environmentId the
   redis.call('del', KEYS[1])
   return v
 end
+if payload.status == 'denied' then
+  redis.call('del', KEYS[1])
+  return 'DENIED'
+end
 redis.call('del', KEYS[1])
 return 'CORRUPT'
 `;
@@ -100,7 +187,7 @@ export class CliDeviceSessionService {
     this.logger.setContext(this.constructor.name);
   }
 
-  async create(params: { name?: string }): Promise<CreateCliDeviceSessionResponse> {
+  async create(params: { name?: string; machineName?: string }): Promise<CreateCliDeviceSessionResponse> {
     const deviceCode = randomBytes(24).toString('base64url');
     const sessionConfig = resolveCliDeviceSessionConfig(params.name);
 
@@ -110,10 +197,13 @@ export class CliDeviceSessionService {
       throw new Error('Cache is required to issue CLI device sessions');
     }
 
-    // `human login` is approved on the Human dashboard by typing a short user code, so the device code the CLI
-    // polls with never reaches a browser, and a link alone can't approve anything.
-    const verificationUrl = params.name === CLI_DEVICE_SESSION_NAME_HUMAN_CLI ? buildHumanCliLoginUrl() : undefined;
-    const userCode = verificationUrl ? await this.reserveUserCode(deviceCode, sessionConfig.ttlSeconds) : undefined;
+    // `human login` is approved on the Human dashboard under a short user code, so the device code the CLI polls
+    // with never reaches a browser. The link carries the user code for the page to show next to the terminal's;
+    // it approves nothing by itself: a signed-in person still has to press Approve there.
+    const isHumanLogin = params.name === CLI_DEVICE_SESSION_NAME_HUMAN_CLI && Boolean(buildHumanCliLoginUrl());
+    const userCode = isHumanLogin ? await this.reserveUserCode(deviceCode, sessionConfig.ttlSeconds) : undefined;
+    const verificationUrl = userCode ? buildHumanCliLoginUrl(userCode) : undefined;
+    const machineName = isHumanLogin ? cleanMachineName(params.machineName) : undefined;
 
     const record: CliDeviceSessionRecord = {
       status: 'pending',
@@ -123,6 +213,7 @@ export class CliDeviceSessionService {
       sessionTtlSeconds: sessionConfig.ttlSeconds,
       slideTtlOnPoll: sessionConfig.slideTtlOnPoll,
       ...(userCode ? { userCode } : {}),
+      ...(machineName ? { machineName } : {}),
     };
 
     await this.cacheService.set(this.cacheKey(deviceCode), JSON.stringify(record), {
@@ -137,17 +228,89 @@ export class CliDeviceSessionService {
     };
   }
 
-  /** The device code of the session still waiting for approval under this user code, if there is one. */
-  async findPendingByUserCode(userCode: string): Promise<string | null> {
-    if (!userCode || !this.cacheService.cacheEnabled()) {
+  /** The session still waiting for an answer under this user code. Approved, denied and expired ones are gone. */
+  async getPendingByUserCode(userCode: string): Promise<PendingCliDeviceSession | null> {
+    const pending = await this.readPendingByUserCode(userCode);
+    if (!pending) {
       return null;
     }
 
-    const deviceCode = await this.cacheService.get(this.userCodeKey(userCode));
-    const raw = deviceCode ? await this.cacheService.get(this.cacheKey(deviceCode)) : null;
-    const record = raw ? this.parseRecord(raw) : null;
+    const { deviceCode, record } = pending;
 
-    return deviceCode && record?.status === 'pending' && record.userCode === userCode ? deviceCode : null;
+    return { deviceCode, ...(record.machineName ? { machineName: record.machineName } : {}) };
+  }
+
+  /**
+   * Holds the session waiting under this user code for one approval. Until that approval is written, the hold
+   * is released or `APPROVAL_HOLD_SECONDS` pass, the session can't be denied or held a second time.
+   * Null when no session is waiting; throws `CliDeviceSessionBeingApprovedError` when another approval holds it.
+   */
+  async holdForApprovalByUserCode(userCode: string): Promise<CliDeviceSessionApprovalHold | null> {
+    const pending = await this.readPendingByUserCode(userCode);
+    if (!pending) {
+      return null;
+    }
+
+    const { deviceCode, record } = pending;
+    const hold: CliDeviceSessionApprovalHold = { deviceCode, holdId: randomBytes(12).toString('base64url') };
+    const held = await this.replacePendingUnlessHeld(
+      deviceCode,
+      heldBy(record, hold, APPROVAL_HOLD_SECONDS),
+      record.sessionTtlSeconds
+    );
+
+    return held ? hold : null;
+  }
+
+  /**
+   * Keeps the hold for as long as the session lives, instead of `APPROVAL_HOLD_SECONDS`. For an approval
+   * about to do what can't be undone: from here on the session can't be denied or go to another approval,
+   * however long this one takes. Only this approval ends the hold, by approving the session or giving it back.
+   * False when the session is no longer held for this approval: it was approved, denied or ran out, or the
+   * hold ran out and another approval took the session.
+   */
+  async keepApprovalHold(hold: CliDeviceSessionApprovalHold): Promise<boolean> {
+    const existing = await this.readRecord(hold.deviceCode);
+    if (!existing) {
+      return false;
+    }
+
+    // Polling keeps a session waiting for at most the polling window plus one more TTL, so this outlasts it.
+    const restOfTheSession = CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS + existing.sessionTtlSeconds;
+
+    return this.replaceHeldBy(hold, heldBy(existing, hold, restOfTheSession));
+  }
+
+  /**
+   * Gives back a session whose approval didn't go through, so it can be approved again or denied right away.
+   * Changes nothing once the session was approved, or once another approval holds it.
+   */
+  async releaseApprovalHold(hold: CliDeviceSessionApprovalHold): Promise<void> {
+    const existing = await this.readRecord(hold.deviceCode);
+    if (!existing) {
+      return;
+    }
+
+    // The parsed record comes without the hold, so writing it back is what releases the session.
+    await this.replaceHeldBy(hold, existing);
+  }
+
+  /**
+   * Ends the session waiting under this user code without letting the CLI in: the code stops working at once,
+   * and the CLI's next poll is told it was denied. False when no session was waiting (anymore); throws
+   * `CliDeviceSessionBeingApprovedError` when an approval holds it, since that approval may still let the CLI in.
+   */
+  async denyByUserCode(userCode: string): Promise<boolean> {
+    const pending = await this.readPendingByUserCode(userCode);
+    if (!pending) {
+      return false;
+    }
+
+    return this.replacePendingUnlessHeld(
+      pending.deviceCode,
+      { ...pending.record, status: 'denied' },
+      DENIED_SESSION_TTL_SECONDS
+    );
   }
 
   async poll(deviceCode: string): Promise<CliDeviceSessionPollResponse> {
@@ -185,6 +348,10 @@ export class CliDeviceSessionService {
       return { status: 'expired' };
     }
 
+    if (pollResult === 'DENIED') {
+      return { status: 'denied' };
+    }
+
     const record = this.parseRecord(pollResult);
     if (!record || record.status !== 'approved' || !record.apiKey || !record.environmentId) {
       return { status: 'expired' };
@@ -210,6 +377,8 @@ export class CliDeviceSessionService {
     environmentName?: string | null;
     organizationId?: string | null;
     user?: CliDeviceSessionUser | null;
+    /** The hold of the approval doing this. It is then only written while that hold is still on the session. */
+    approvalHoldId?: string;
   }): Promise<void> {
     if (!params.deviceCode || !this.cacheService.cacheEnabled()) {
       throw new CliDeviceSessionNotFoundError();
@@ -239,12 +408,73 @@ export class CliDeviceSessionService {
     const approved = await this.cacheService.eval<number>(
       APPROVE_IF_PENDING_SCRIPT,
       [key],
-      [existing.sessionTtlSeconds, JSON.stringify(record)]
+      [existing.sessionTtlSeconds, JSON.stringify(record), params.approvalHoldId ?? '']
     );
 
     if (approved !== 1) {
       throw new CliDeviceSessionNotFoundError();
     }
+  }
+
+  private async readPendingByUserCode(
+    userCode: string
+  ): Promise<{ deviceCode: string; record: CliDeviceSessionRecord } | null> {
+    if (!userCode || !this.cacheService.cacheEnabled()) {
+      return null;
+    }
+
+    const deviceCode = await this.cacheService.get(this.userCodeKey(userCode));
+    const raw = deviceCode ? await this.cacheService.get(this.cacheKey(deviceCode)) : null;
+    const record = raw ? this.parseRecord(raw) : null;
+
+    if (!deviceCode || record?.status !== 'pending' || record.userCode !== userCode) {
+      return null;
+    }
+
+    return { deviceCode, record };
+  }
+
+  /**
+   * Swaps a pending session for `record` in one step. False when the session wasn't pending anymore; throws
+   * `CliDeviceSessionBeingApprovedError` when an approval holds it.
+   */
+  private async replacePendingUnlessHeld(
+    deviceCode: string,
+    record: CliDeviceSessionRecord,
+    ttlSeconds: number
+  ): Promise<boolean> {
+    const replaced = await this.cacheService.eval<number>(
+      REPLACE_IF_PENDING_AND_NOT_HELD_SCRIPT,
+      [this.cacheKey(deviceCode)],
+      [ttlSeconds, JSON.stringify(record), Math.floor(Date.now() / 1000)]
+    );
+
+    if (replaced === HELD_BY_AN_APPROVAL) {
+      throw new CliDeviceSessionBeingApprovedError();
+    }
+
+    return replaced === 1;
+  }
+
+  /** Swaps a pending session that `hold` is on for `record` in one step. False when that hold isn't on it. */
+  private async replaceHeldBy(hold: CliDeviceSessionApprovalHold, record: CliDeviceSessionRecord): Promise<boolean> {
+    const replaced = await this.cacheService.eval<number>(
+      REPLACE_IF_HELD_BY_SCRIPT,
+      [this.cacheKey(hold.deviceCode)],
+      [record.sessionTtlSeconds, JSON.stringify(record), hold.holdId]
+    );
+
+    return replaced === 1;
+  }
+
+  private async readRecord(deviceCode: string): Promise<CliDeviceSessionRecord | null> {
+    if (!deviceCode || !this.cacheService.cacheEnabled()) {
+      return null;
+    }
+
+    const raw = await this.cacheService.get(this.cacheKey(deviceCode));
+
+    return raw ? this.parseRecord(raw) : null;
   }
 
   private parseRecord(raw: string): CliDeviceSessionRecord | null {
@@ -274,6 +504,7 @@ export class CliDeviceSessionService {
         user: parsed.user,
         approvedByUserId: parsed.approvedByUserId,
         userCode: parsed.userCode,
+        machineName: parsed.machineName,
       };
     } catch {
       return null;
@@ -308,6 +539,35 @@ export class CliDeviceSessionService {
   private userCodeKey(userCode: string): string {
     return `${USER_CODE_KEY_PREFIX}${userCode}`;
   }
+}
+
+/** The session as `hold` has it for the next `seconds`. */
+function heldBy(
+  record: CliDeviceSessionRecord,
+  hold: CliDeviceSessionApprovalHold,
+  seconds: number
+): CliDeviceSessionRecord {
+  return {
+    ...record,
+    approvalHoldId: hold.holdId,
+    approvalHeldUntilEpoch: Math.floor(Date.now() / 1000) + seconds,
+  };
+}
+
+/**
+ * The machine name is whatever the CLI sent, so it's cut down to one short line of visible characters
+ * before it's kept. Pages still have to render it as text.
+ */
+function cleanMachineName(input: string | undefined): string | undefined {
+  const cleaned = (input ?? '')
+    // Control and invisible formatting characters (bidi overrides, zero-width joiners) could disguise the name.
+    .replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, CLI_MACHINE_NAME_MAX_LENGTH)
+    .trim();
+
+  return cleaned || undefined;
 }
 
 /** Eight letters, e.g. `BCDF-GHJK`: about 2.5e10 codes, against at most a handful waiting at once. */

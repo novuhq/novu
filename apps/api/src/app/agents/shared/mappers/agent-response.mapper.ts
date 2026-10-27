@@ -1,16 +1,10 @@
-import {
-  buildAgentSharedInbox,
-  getSharedAgentDomain,
-  isAgentSharedInboxEnabled,
-  isValidAgentEmailSlugPrefix,
-} from '@novu/application-generic';
+import { isAgentSharedInboxEnabled, resolvePublishedAgentInboxAddress } from '@novu/application-generic';
 import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
 import {
   AgentRuntimeProviderIdEnum,
   buildClaudePlatformAgentConsoleUrl,
-  EmailProviderIdEnum,
+  isAgentInboxProvider,
   isClaudePlatformConsoleProvider,
-  slugify,
 } from '@novu/shared';
 
 import type { AgentIntegrationResponseDto, AgentIntegrationSummaryDto, AgentResponseDto } from '../dtos';
@@ -116,7 +110,7 @@ function resolveSharedInboxAddress(
   agent: SharedInboxAgentContext,
   integration: AgentIntegrationEmbeddedSource
 ): string | undefined {
-  if (integration.providerId !== EmailProviderIdEnum.NovuAgent) {
+  if (!isAgentInboxProvider(integration.providerId)) {
     return undefined;
   }
 
@@ -124,38 +118,7 @@ function resolveSharedInboxAddress(
     return undefined;
   }
 
-  try {
-    getSharedAgentDomain();
-  } catch {
-    return undefined;
-  }
-
-  const rawSlug = integration.credentials?.emailSlugPrefix;
-  const slug = rawSlug && isValidAgentEmailSlugPrefix(rawSlug) ? rawSlug : deriveFallbackSlug(agent);
-
-  if (!slug) {
-    return undefined;
-  }
-
-  const inboxRoutingKey = integration.credentials?.inboxRoutingKey;
-  if (!inboxRoutingKey) {
-    return undefined;
-  }
-
-  try {
-    return buildAgentSharedInbox(slug, inboxRoutingKey);
-  } catch {
-    return undefined;
-  }
-}
-
-function deriveFallbackSlug(agent: SharedInboxAgentContext): string | undefined {
-  const candidate = slugify(agent.identifier ?? agent.name ?? '')
-    .slice(0, 32)
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
-
-  return isValidAgentEmailSlugPrefix(candidate) ? candidate : undefined;
+  return resolvePublishedAgentInboxAddress(integration.credentials, agent);
 }
 
 export function toAgentIntegrationSummary(
@@ -177,10 +140,9 @@ export function toAgentIntegrationResponse(
   agent: SharedInboxAgentContext
 ): AgentIntegrationResponseDto {
   const sharedInboundAddress = resolveSharedInboxAddress(agent, integration);
-  const defaultSenderName =
-    integration.providerId === EmailProviderIdEnum.NovuAgent
-      ? integration.credentials?.senderName || agent.name
-      : undefined;
+  const defaultSenderName = isAgentInboxProvider(integration.providerId)
+    ? integration.credentials?.senderName || agent.name
+    : undefined;
 
   return {
     _id: link._id,
@@ -194,10 +156,9 @@ export function toAgentIntegrationResponse(
       active: integration.active,
       sharedInboundAddress,
       defaultSenderName,
-      sharedInboxDisabled:
-        integration.providerId === EmailProviderIdEnum.NovuAgent
-          ? Boolean(integration.credentials?.sharedInboxDisabled)
-          : undefined,
+      sharedInboxDisabled: isAgentInboxProvider(integration.providerId)
+        ? Boolean(integration.credentials?.sharedInboxDisabled)
+        : undefined,
     },
     _environmentId: link._environmentId,
     _organizationId: link._organizationId,

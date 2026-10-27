@@ -10,6 +10,7 @@ import {
 } from '@novu/application-generic';
 import {
   AgentMcpServerRepository,
+  AgentRepository,
   AgentToolTrustRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
@@ -18,6 +19,7 @@ import {
   ConversationActivationRepository,
   ConversationActivityRepository,
   ConversationRepository,
+  HumanContactRepository,
   HumanInteractionRepository,
   IntegrationRepository,
   McpConnectionRepository,
@@ -64,13 +66,17 @@ import { AgentReplyController } from './conversation-runtime/reply/agent-reply.c
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
 import { BridgeExpireSupersededApprovalsService } from './conversation-runtime/runtime/bridge-expire-superseded-approvals.service';
+import { BridgeLiveReplies } from './conversation-runtime/runtime/bridge-live-replies.service';
 import { RuntimeResolver } from './conversation-runtime/runtime/runtime-resolver.service';
 import { NovuCopilotBridgeModule } from './copilot-bridge/novu-copilot-bridge.module';
 import { AgentEmailActionTokenService } from './email/agent-email-action-token.service';
 import { AgentEmailActionsController } from './email/agent-email-actions.controller';
 import { AgentEmailSender } from './email/agent-email-sender.service';
+import { AgentInboxAddressService } from './email/novu-email/agent-inbox-address.service';
 import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
+import { SyncAgentEmailSenderName } from './email/sync-agent-email-sender-name.service';
+import { ContactHandleService } from './human-relay/contact-handle.service';
 import { HumanConversationInboundInterceptor } from './human-relay/human-conversation-inbound.interceptor';
 import { HumanInteractionActivityRecorder } from './human-relay/human-interaction-activity.recorder';
 import { HumanInteractionInboundService } from './human-relay/human-interaction-inbound.service';
@@ -150,6 +156,8 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     ConversationActivityRepository,
     IntegrationRepository,
     McpConnectionRepository,
+    AgentRepository,
+    HumanContactRepository,
     MessageRepository,
     SubscriberRepository,
     AgentAttachmentStorage,
@@ -172,11 +180,14 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     BridgeExecutorService,
     BridgeExpireSupersededApprovalsService,
     BridgeRuntime,
+    BridgeLiveReplies,
     ManagedRuntime,
     HumanRelayRuntime,
+    ContactHandleService,
     HumanConversationInboundInterceptor,
     HumanInteractionInboundService,
     HumanInteractionSettlementService,
+    SyncAgentEmailSenderName,
     CreateConversationInteraction,
     HumanInteractionActivityRecorder,
     HumanInteractionRepository,
@@ -195,6 +206,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     EnsureNovuHumanSkill,
     AgentMcpSessionService,
     NovuEmailCleanupService,
+    AgentInboxAddressService,
     NovuEmailProvisioningService,
     NovuWebChatProvisioningService,
     WebChatPublicationService,
@@ -232,7 +244,12 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     ConfirmLinkedAuthCards,
     ConversationActivityLedger,
     HumanInteractionSettlementService,
+    SyncAgentEmailSenderName,
     HumanInteractionActivityRecorder,
+    AgentInboxAddressService,
+    NovuEmailProvisioningService,
+    AgentConversationService,
+    CreateConversationInteraction,
   ],
 })
 export class AgentsModule {}

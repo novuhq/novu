@@ -88,6 +88,7 @@ describe('CreateDomain usecase', () => {
       process.env.NOVU_ENTERPRISE = 'true';
       delete process.env.IS_SELF_HOSTED;
       process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = 'agentconnect.sh';
+      process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = 'agentinbox.md';
     });
 
     it('rejects creation when the domain matches the configured shared agent inbox domain', async () => {
@@ -113,6 +114,20 @@ describe('CreateDomain usecase', () => {
         throw new Error('Expected execute to throw');
       } catch (err) {
         expect(err).to.be.instanceOf(BadRequestException);
+      }
+
+      expect(domainRepositoryMock.create.called).to.equal(false);
+    });
+
+    it('rejects creation of the Agent Inbox shared domain', async () => {
+      const usecase = buildUsecase();
+
+      try {
+        await usecase.execute({ ...baseCommand, name: 'agentinbox.md' });
+        throw new Error('Expected execute to throw');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.include("reserved for Novu's shared agent inbox");
       }
 
       expect(domainRepositoryMock.create.called).to.equal(false);

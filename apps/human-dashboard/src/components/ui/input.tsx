@@ -24,6 +24,8 @@ export function Input({ invalid = false, className, ...rest }: InputProps) {
 type FieldProps = {
   label: string;
   required?: boolean;
+  /** The asterisk of a required field: orange, or in the label's own color where a design writes it so. */
+  requiredMark?: 'accent' | 'plain';
   /** Help text under the input. Replaced by `error` when there is one. */
   hint?: ReactNode;
   error?: ReactNode;
@@ -32,7 +34,7 @@ type FieldProps = {
 };
 
 /** A labelled input with a hint or an error message underneath. */
-export function Field({ label, required = false, hint, error, children }: FieldProps) {
+export function Field({ label, required = false, requiredMark = 'accent', hint, error, children }: FieldProps) {
   const id = useId();
   const messageId = `${id}-message`;
   const message = error ?? hint;
@@ -42,7 +44,7 @@ export function Field({ label, required = false, hint, error, children }: FieldP
       <label htmlFor={id} className="text-[13px] leading-4.5 font-medium text-foreground">
         {label}
         {required && (
-          <span aria-hidden="true" className="text-accent">
+          <span aria-hidden="true" className={requiredMark === 'accent' ? 'text-accent' : undefined}>
             {' '}
             *
           </span>
@@ -51,9 +53,14 @@ export function Field({ label, required = false, hint, error, children }: FieldP
       {children({ id, invalid: Boolean(error), 'aria-describedby': message ? messageId : undefined })}
       {message && (
         <p
+          // A new key when an error takes the hint's place, so it fades in instead of jumping.
+          key={error ? 'error' : 'hint'}
           id={messageId}
           role={error ? 'alert' : undefined}
-          className={cn('text-xs leading-4', error ? 'text-danger' : 'text-muted')}
+          className={cn(
+            'text-xs leading-4',
+            error ? 'animate-overlay-in text-danger motion-reduce:animate-none' : 'text-muted'
+          )}
         >
           {message}
         </p>

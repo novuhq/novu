@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { HumanChannelViaEnum } from '@novu/shared';
+import { HumanAddressVerificationStateEnum, HumanChannelViaEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 
@@ -20,6 +20,12 @@ export class ListContactsQueryDto {
   @IsString()
   after?: string;
 
+  @ApiPropertyOptional({ description: 'Return only the contact with this subscriberId.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  subscriberId?: string;
+
   @ApiPropertyOptional({
     description: 'Relay agent whose channels, defaults and invites are reported. Defaults to `human-relay`.',
   })
@@ -39,11 +45,70 @@ export class HumanContactChannelDto {
   @ApiProperty({ enum: HumanChannelViaEnum })
   via: HumanChannelViaEnum;
 
-  @ApiPropertyOptional({ description: 'ISO timestamp when the contact connected the channel. Absent for email.' })
+  @ApiPropertyOptional({
+    description: 'ISO timestamp when the contact connected the channel; for email, when the address was verified.',
+  })
   connectedAt?: string;
+
+  @ApiPropertyOptional({
+    description: 'Address verified for this relay. Set for email. Absent for chat channels.',
+  })
+  address?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'How the contact shows on a chat channel: `@username` on Telegram (their name when they have no username), ' +
+      'their display name on Slack. Learned when they connect or write; absent until then, and for email.',
+  })
+  handle?: string;
+
+  @ApiPropertyOptional({
+    description: 'The Slack workspace the contact is in, such as `acme.slack.com`. Slack only, once known.',
+  })
+  workspace?: string;
 
   @ApiProperty({ description: 'Whether this is the channel used when an interaction doesn’t pass `via`.' })
   isDefault: boolean;
+}
+
+export class HumanContactPendingEmailDto {
+  @ApiProperty({ description: 'The address the confirmation link went to.' })
+  address: string;
+
+  @ApiProperty({ description: 'ISO timestamp when the link was sent.' })
+  requestedAt: string;
+}
+
+/**
+ * The contact's email for this relay and how far its double opt-in got. Agents only email a verified
+ * address; a pending one starts working once its confirmation link is used.
+ */
+export class HumanContactEmailDto {
+  @ApiProperty({
+    description:
+      'The address to show: the verified one, otherwise the one waiting for its confirmation link, otherwise ' +
+      'one known for the contact that was never confirmed (typed during setup, or on the profile).',
+  })
+  address: string;
+
+  @ApiProperty({
+    enum: HumanAddressVerificationStateEnum,
+    description:
+      '`verified`: agents can email `address`. `pending`: a confirmation link was sent and not used yet. ' +
+      '`unverified`: nobody confirmed it.',
+  })
+  status: HumanAddressVerificationStateEnum;
+
+  @ApiPropertyOptional({ description: 'ISO timestamp when `address` was confirmed. Set when verified.' })
+  verifiedAt?: string;
+
+  @ApiPropertyOptional({
+    type: HumanContactPendingEmailDto,
+    description:
+      'A confirmation link that is out and not used yet. Next to a verified address it is the new one that ' +
+      'replaces it once confirmed.',
+  })
+  pending?: HumanContactPendingEmailDto;
 }
 
 export class HumanContactInviteDto {
@@ -73,8 +138,14 @@ export class HumanContactDto {
   @ApiPropertyOptional()
   lastName?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'The subscriber’s email. `emailVerification` says whether agents may use it.' })
   email?: string;
+
+  @ApiPropertyOptional({
+    type: HumanContactEmailDto,
+    description: 'The contact’s email for this relay and its double opt-in. Absent when no address is known.',
+  })
+  emailVerification?: HumanContactEmailDto;
 
   @ApiPropertyOptional()
   phone?: string;
@@ -97,6 +168,9 @@ export class HumanContactDto {
 
   @ApiProperty({ enum: HUMAN_CONTACT_STATUSES })
   status: HumanContactStatus;
+
+  @ApiProperty({ description: 'Whether this is the account owner’s own contact (`GET /human/operator`).' })
+  isOperator: boolean;
 
   @ApiPropertyOptional({
     type: HumanContactInviteDto,

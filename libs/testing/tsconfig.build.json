@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "module": "commonjs",
+    "customConditions": ["require"],
     "target": "es6",
     "declaration": true,
     "outDir": "./dist",

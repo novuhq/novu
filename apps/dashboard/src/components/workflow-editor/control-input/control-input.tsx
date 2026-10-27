@@ -1,5 +1,5 @@
 import { type CompletionSource } from '@codemirror/autocomplete';
-import { EditorView } from '@uiw/react-codemirror';
+import { EditorView, type Extension } from '@uiw/react-codemirror';
 import { cva } from 'class-variance-authority';
 import { useMemo, useRef } from 'react';
 import { EditorOverlays } from '@/components/editor-overlays';
@@ -44,6 +44,8 @@ type ControlInputProps = {
   disabled?: boolean;
   readOnly?: boolean;
   completionSources?: CompletionSource[];
+  /** Must keep a stable identity: a new array rebuilds the editor's extensions. */
+  extensions?: Extension[];
 };
 
 export function ControlInput({
@@ -63,6 +65,7 @@ export function ControlInput({
   disabled = false,
   readOnly = false,
   completionSources,
+  extensions: externalExtensions,
 }: ControlInputProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
@@ -106,10 +109,14 @@ export function ControlInput({
   });
 
   const extensions = useMemo(() => {
-    if (!translationPluginExtension) return [];
+    const merged = [...(externalExtensions ?? [])];
 
-    return [translationPluginExtension];
-  }, [translationPluginExtension]);
+    if (translationPluginExtension) {
+      merged.push(translationPluginExtension);
+    }
+
+    return merged;
+  }, [externalExtensions, translationPluginExtension]);
 
   const mergedCompletionSources = useMemo(
     () => [...(translationCompletionSource ?? []), ...(completionSources ?? [])],

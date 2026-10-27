@@ -203,11 +203,6 @@ subscriberSchema.index({
   _id: 1,
 });
 
-subscriberSchema.index(
-  { _environmentId: 1, subscriberId: 1 },
-  { name: 'unique_subscriber_per_environment', unique: true, partialFilterExpression: { deleted: false } }
-);
-
 /*
  * Supports the per-organization cap on agent-auto-provisioned subscribers
  * (`AgentSubscriberResolver.resolveOrProvision` counts rows whose

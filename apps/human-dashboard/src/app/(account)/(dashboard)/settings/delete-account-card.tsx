@@ -11,7 +11,7 @@ import { DIALOG_HEADER } from './api-key-card';
 import { CardHeading, SettingsCard } from './settings-card';
 
 type DeleteAccountCardProps = {
-  /** How the operator's agent is called in a sentence: its own name, or "Human assistant". */
+  /** How the operator's agent is called in a sentence: its own name, or "your agent". */
   agentName: string;
 };
 
@@ -30,7 +30,7 @@ export function DeleteAccountCard({ agentName }: DeleteAccountCardProps) {
       <CardHeading
         muted
         title="Delete account"
-        description={`Deletes ${agentName} with its channels, contacts and API key. This can't be undone.`}
+        description={`Deletes ${agentName} with its inbox, channels, contacts and API key. This can't be undone.`}
       />
       <Button variant="secondary" onClick={openDialog}>
         Delete account
@@ -76,7 +76,7 @@ function DeleteDialogContent({ agentName }: DeleteAccountCardProps) {
       icon={<DialogMark glyph="warning" />}
       title="Delete your account?"
       locked={busy}
-      description={`This deletes your Human account and ${agentName} with its channels, contacts and API key. Agents using the key can no longer reach anyone, and it can't be undone.`}
+      description={`This deletes your Agent Inbox account and ${agentName} with its inbox, channels, contacts and API key. Agents using the key can no longer reach anyone, and it can't be undone.`}
       footer={
         <>
           <DialogClose asChild>

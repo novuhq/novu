@@ -1,0 +1,199 @@
+import { expect, test } from '@playwright/test';
+import sharp from 'sharp';
+
+import { HOST_IDS } from '../../src/lib/host-ids';
+import { SITE_INDEXED, SITE_PAGES } from '../../src/lib/seo';
+
+const origin = 'https://www.agentinbox.md';
+test.use({ javaScriptEnabled: false });
+
+/** What search engines are told about the website pages (`SITE_INDEXED`). */
+const robotsDirective = SITE_INDEXED ? /(^|, )index, follow/ : /noindex, nofollow/;
+
+// Both pages share the agentinbox card of /sapien until the docs page has its own.
+const sharedImages: Record<string, string> = {
+  '/': '/sapien/opengraph-image.jpg',
+  '/sapien': '/sapien/opengraph-image.jpg',
+};
+
+for (const path of ['/', '/sapien']) {
+  test(`SEO canonical and sharing metadata are present without JavaScript on ${path}`, async ({ page, request }) => {
+    const response = await page.goto(`${path}?utm_source=seo-check`);
+    expect(response?.status()).toBe(200);
+    const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
+    expect(new URL(canonical!).href).toBe(`${origin}${path}`);
+    // Each page's own description, as `SITE_PAGES` writes it.
+    const description = Object.values(SITE_PAGES).find((item) => item.path === path)!.description;
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', description);
+    const sharedUrl = await page.locator('meta[property="og:url"]').getAttribute('content');
+    expect(new URL(sharedUrl!).href).toBe(`${origin}${path}`);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', await page.title());
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', robotsDirective);
+    expect(response?.headers()['x-robots-tag']).toBe(SITE_INDEXED ? undefined : 'noindex, nofollow');
+    const image = new URL((await page.locator('meta[property="og:image"]').first().getAttribute('content'))!);
+    expect(image.origin).toBe(origin);
+    expect(image.pathname).toBe(sharedImages[path]);
+    const twitterImage = new URL((await page.locator('meta[name="twitter:image"]').getAttribute('content'))!);
+    expect(twitterImage.origin).toBe(origin);
+    expect(twitterImage.pathname).toBe(image.pathname);
+    const card = await request.get(`${image.pathname}${image.search}`);
+    expect(card.status()).toBe(200);
+    expect(card.headers()['content-type']).toContain('image/jpeg');
+    const imageMetadata = await sharp(await card.body()).metadata();
+    expect(imageMetadata.format).toBe('jpeg');
+    expect(imageMetadata.width).toBe(1200);
+    expect(imageMetadata.height).toBe(630);
+    expect(response?.headers().link).toContain('rel="describedby"');
+  });
+
+  test(`SEO structured data describes the visible site on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    const scripts = await page.locator('script[type="application/ld+json"]').allTextContents();
+    expect(scripts.length).toBeGreaterThan(0);
+    const nodes = scripts.flatMap((text) => JSON.parse(text)['@graph']);
+    expect(nodes.find((node) => node['@type'] === 'WebPage').url).toBe(`${origin}${path}`);
+    expect(nodes.find((node) => node['@type'] === 'WebSite').url).toBe(`${origin}/`);
+    expect(nodes.find((node) => node['@type'] === 'Organization').name).toBe('Novu');
+    expect(nodes.find((node) => node['@type'] === 'SoftwareSourceCode').codeRepository).toBe(
+      'https://github.com/novuhq/novu/tree/next/packages/agentinbox'
+    );
+    expect(nodes.some((node) => node['@type'] === 'AggregateRating' || node.offers || node.aggregateRating)).toBe(
+      false
+    );
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+  });
+}
+
+test('SEO crawler files contain only production canonical pages', async ({ request }) => {
+  const robots = await request.get('/robots.txt');
+  expect(robots.status()).toBe(200);
+  const text = await robots.text();
+  expect(text).toContain('User-Agent: *');
+  expect(text).toContain('Allow: /');
+  // Crawling stays allowed either way, so search engines read the `noindex`.
+  expect(text).not.toContain('Disallow: /');
+  expect(text).toContain(`Sitemap: ${origin}/sitemap.xml`);
+  const sitemap = await request.get('/sitemap.xml');
+  expect(sitemap.status()).toBe(200);
+  expect(sitemap.headers()['content-type']).toContain('xml');
+  const body = await sitemap.text();
+  const locations = [...body.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
+  expect(locations.sort()).toEqual(
+    [`${origin}/`, `${origin}/sapien`, ...HOST_IDS.map((id) => `${origin}/${id}`)].sort()
+  );
+  expect(body).toContain(`<loc>${origin}/sapien</loc>`);
+  expect(body).toContain('<changefreq>weekly</changefreq>');
+  expect(body).toContain('<priority>0.8</priority>');
+  expect(body).toContain(`${origin}/sapien/opengraph-image.jpg`);
+});
+
+test('SEO text versions follow whether the website pages are indexed', async ({ request }) => {
+  for (const path of ['/index.md', '/llms.txt', '/claude-code', '/claude-code.md', '/claude-code/index.md']) {
+    const response = await request.get(path);
+    expect(response.status()).toBe(200);
+    expect(response.headers()['x-robots-tag']).toBe(SITE_INDEXED ? undefined : 'noindex, nofollow');
+  }
+});
+
+test('GEO discovery and Markdown expose the same commands without HTML noise', async ({ request, page }) => {
+  const discovery = await request.get('/llms.txt');
+  expect(discovery.status()).toBe(200);
+  const index = await discovery.text();
+  expect(index).toMatch(/^# Agent Inbox\b/);
+  expect(index).toContain(`${origin}/index.md`);
+  const document = await request.get('/index.md');
+  expect(document.status()).toBe(200);
+  expect(document.headers()['content-type']).toContain('text/markdown');
+  expect(document.headers().link).toContain(`<${origin}/>; rel="canonical"`);
+  const markdown = await document.text();
+  await page.goto('/');
+  const commands = await page.locator('.home-command-line code, #flags dt code').allTextContents();
+  for (const command of commands) expect(markdown).toContain(command);
+  expect(markdown).toContain('agentinbox contact invite');
+  expect(markdown).not.toContain('~/.agentinbox/config.json');
+  expect(markdown).not.toContain('<script');
+  expect(markdown).not.toContain('='.repeat(80));
+  await expect(page.locator('link[rel="alternate"][type="text/markdown"]')).toHaveAttribute(
+    'href',
+    `${origin}/index.md`
+  );
+  const alias = await request.get('/human.md', { maxRedirects: 0 });
+  expect(alias.status()).toBe(308);
+  expect(alias.headers().location).toBe('/index.md');
+});
+
+test('SEO page metadata prevents preview indexing and retains production canonicals', async () => {
+  const { pageMetadata } = await import('../../src/lib/seo');
+  for (const environment of ['preview', 'development']) {
+    const metadata = pageMetadata('home', environment);
+    expect(metadata.robots).toMatchObject({ index: false, follow: false });
+    expect(metadata.alternates?.canonical).toBe(`${origin}/`);
+  }
+  expect(pageMetadata('home', 'production').robots).toMatchObject({
+    index: SITE_INDEXED,
+    follow: SITE_INDEXED,
+  });
+  // staging.agentinbox.md sets SITE_NOINDEX, which is the third argument here.
+  expect(pageMetadata('home', 'production', true).robots).toMatchObject({ index: false, follow: false });
+});
+
+test('every host has a page and its Markdown, linked from llms.txt', async ({ page, request }) => {
+  const llms = await (await request.get('/llms.txt')).text();
+  for (const id of HOST_IDS) {
+    expect(llms).toContain(`${origin}/${id}.md`);
+    const markdown = await request.get(`/${id}.md`);
+    expect(markdown.status()).toBe(200);
+    expect(markdown.headers()['content-type']).toContain('text/markdown');
+    expect(markdown.headers().link).toContain(`<${origin}/${id}>; rel="canonical"`);
+    expect(await markdown.text()).toContain(`> Set up Agent Inbox from agentinbox.md/${id}`);
+  }
+
+  const response = await page.goto('/codex');
+  expect(response?.status()).toBe(200);
+  const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
+  expect(canonical).toBe(`${origin}/codex`);
+  await expect(page.locator('link[rel="alternate"][type="text/markdown"]')).toHaveAttribute(
+    'href',
+    `${origin}/codex.md`
+  );
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Agent Inbox for Codex');
+  await expect(page.getByText('Set up Agent Inbox from agentinbox.md/codex')).toBeVisible();
+  await expect(page.getByText('sign in to get your code')).toBeVisible();
+
+  for (const path of ['/not-a-host', '/not-a-host.md']) {
+    expect((await request.get(path)).status()).toBe(404);
+  }
+});
+
+test('a missing page is Markdown when the agent asks for Markdown', async ({ request }) => {
+  for (const path of ['/some-path-that-does-not-exist', '/not-a-host', '/not-a-host.md']) {
+    const response = await request.get(path, {
+      headers: { accept: 'text/markdown' },
+      maxRedirects: 5,
+    });
+    expect(response.status()).toBe(404);
+    expect(response.headers()['content-type']).toContain('text/markdown');
+    const body = await response.text();
+    const explanation = body
+      .replace(/\[[^\]]+\]\([^)]+\)/g, '')
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/[#>*_`-]/g, ' ')
+      .trim();
+    expect(explanation.length).toBeGreaterThanOrEqual(20);
+    expect(body).toContain(`${origin}/llms.txt`);
+    expect(body).toContain(`${origin}/sitemap.xml`);
+    expect(body).toContain(`${origin}/index.md`);
+    expect(body).not.toContain('<html');
+  }
+
+  const browser = await request.get('/some-path-that-does-not-exist', {
+    headers: { accept: 'text/html,application/xhtml+xml' },
+  });
+  expect(browser.status()).toBe(404);
+  expect(browser.headers()['content-type']).toContain('text/html');
+
+  const home = await request.get('/', { headers: { accept: 'text/markdown' } });
+  expect(home.status()).toBe(200);
+  expect(home.headers()['content-type']).toContain('text/html');
+});

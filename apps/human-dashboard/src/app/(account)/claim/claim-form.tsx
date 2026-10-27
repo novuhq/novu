@@ -34,7 +34,7 @@ function SubmitButton() {
 
   return (
     <Button type="submit" pending={pending}>
-      Keep this setup
+      Claim
     </Button>
   );
 }

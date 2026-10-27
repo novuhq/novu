@@ -276,6 +276,21 @@ describe('TelegramMobileLinkTokenService', () => {
     expect(payload.kind).to.equal('integration-store');
   });
 
+  it('keeps the subscriber id on slack-agent-setup tokens', async () => {
+    const { service } = makeService();
+    const { token } = await service.issueForSlackAgentSetup({
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      agentIdentifier: 'agent-1',
+      integrationId: 'int-1',
+      subscriberId: 'sub-1',
+    });
+
+    const payload = await service.verifySlackAgentSetup(token);
+    expect(payload.kind).to.equal('slack-agent-setup');
+    expect(payload.sid).to.equal('sub-1');
+  });
+
   it('surfaces cache failures from isTokenUsed', async () => {
     const { service, cacheService } = makeService();
     cacheService.get.rejects(new Error('redis down'));

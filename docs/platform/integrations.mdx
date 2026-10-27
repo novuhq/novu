@@ -18,18 +18,18 @@ This approach means you can add, remove, or switch providers at any time without
 
 Understanding the difference between a provider and an integration is key to managing your channels.
 
-- **Provider**: A provider is the third-party service responsible for sending the actual notification such as, Twilio, SendGrid, or Slack. Every provider supported by Novu is identified by a providerId. Refer to this resource to see the full list of provider IDs used in Novu.
+- **Provider**: A provider is the third-party service responsible for sending the actual notification such as, Twilio, SendGrid, or Slack. Every provider supported by Novu is identified by a providerId. Refer to [this resource](https://github.com/novuhq/novu/blob/next/packages/shared/src/types/providers.ts) to see the full list of provider IDs used in Novu.
 
 - **Integration**: An integration is your specific, configured instance of that provider. It's the provider plus your unique credentials and settings. When creating an integration, you are required to assign it a name and identifier. 
 
-  While the name can be changged, the identifier cannot be changed after creation. This identifier is called the `integrationIdentifier`.
+  While the name can be changed, the identifier cannot be changed after creation. This identifier is called the `integrationIdentifier`.
 
 ![Integration identifier field in the Novu Dashboard for naming a provider connection](/images/channels-and-providers/integrationidentifier.png)
 
-This means that you can have provider but two separate integrations for that particular provider. Each of these is a unique integration that you can manage and trigger independently.
+This means that you can have one provider but two separate integrations for that particular provider. Each of these is a unique integration that you can manage and trigger independently.
 
 <Note>
-  Novu providers demo integrations. To learn more about how to use them for testing, see the [Demo Integration](/platform/integrations/demo-integration) guide.
+  Novu provides demo integrations. To learn more about how to use them for testing, see the [Demo Integration](/platform/integrations/demo-integration) guide.
 </Note>
 
 ### Primary vs. Active integrations

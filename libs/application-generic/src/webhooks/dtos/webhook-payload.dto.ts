@@ -16,7 +16,7 @@ export class WrapperDto<T> {
 
   @ApiProperty({
     description: 'The payload of the webhook',
-    type: 'object',
+    type: Object,
   })
   data: T;
 

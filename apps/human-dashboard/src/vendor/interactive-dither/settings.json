@@ -1,0 +1,65 @@
+{
+  "format": "interactive-dither",
+  "version": 1,
+  "image": "image.png",
+  "values": {
+    "tone.blackPoint": 0,
+    "tone.blur": 0,
+    "tone.gamma": 2,
+    "tone.grain": 0,
+    "tone.whitePoint": 171,
+    "dither.algorithm": "bayer",
+    "dither.invert": false,
+    "dither.threshold": 145,
+    "dither.pixelSize": 3,
+    "dither.ink": "#707070",
+    "appearance.background": "#0A0A0A",
+    "motion.breathing.amount": 0.08,
+    "motion.breathing.enabled": false,
+    "motion.flicker.amount": 0.65,
+    "motion.flicker.enabled": false,
+    "motion.flicker.speed": 1,
+    "pointer.enabled": false,
+    "pointer.radius": 85,
+    "pointer.repelRadius": 200,
+    "pointer.repelForce": 1.2,
+    "pointer.attractForce": 0.06,
+    "pointer.return": 0.008,
+    "pointer.damping": 0.92,
+    "pins.items": [
+      {
+        "position": {
+          "x": -0.19,
+          "y": -0.1495
+        },
+        "color": "#FF4F2E",
+        "radius": 215,
+        "coverage": 1,
+        "noise": 0,
+        "speed": 4,
+        "softness": 0.92,
+        "scatter": 0.03
+      }
+    ]
+  },
+  "transform": {},
+  "scene": {
+    "height": 1018,
+    "width": 1187,
+    "x": -593.5,
+    "y": -509
+  },
+  "output": {
+    "height": 1018,
+    "width": 1187,
+    "x": -593.5,
+    "y": -509
+  },
+  "includeBackground": false,
+  "renderScale": 2,
+  "playback": {
+    "durationSeconds": 7.2,
+    "initialTimeSeconds": 6.113699999998405,
+    "loop": true
+  }
+}

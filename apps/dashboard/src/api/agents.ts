@@ -270,6 +270,19 @@ export async function getAgentDemoQuota(
   return 'data' in response ? response.data : response;
 }
 
+export async function getAgentWebChatHash(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  signal?: AbortSignal
+): Promise<string> {
+  const { data } = await get<{ data: { agentHash: string } }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/web-chat-hash`,
+    { environment, signal }
+  );
+
+  return data.agentHash;
+}
+
 export type ConversationUsage = {
   current: number;
   /** `null` when the tier is unlimited. */
@@ -1205,6 +1218,7 @@ export async function getSlackSetupStatus(token: string, signal?: AbortSignal): 
 
 export type SubmitSlackSetupCredentialsResult = {
   success: true;
+  authorizeUrl?: string;
 };
 
 export type SubmitSlackSetupCredentialsError = {

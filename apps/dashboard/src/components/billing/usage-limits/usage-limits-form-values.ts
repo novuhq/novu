@@ -1,4 +1,7 @@
 import {
+  ApiServiceLevelEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsNumber,
   getWorkflowRunLimit,
   type IOrganizationUsageLimits,
   MAX_ON_DEMAND_LIMIT,
@@ -24,10 +27,48 @@ export type UsageLimitsFormValues = z.infer<typeof usageLimitsFormSchema>;
 export type WorkflowRunLimitSettings = Pick<IOrganizationUsageLimits, 'workflowRuns' | 'pauseAtLimit'>;
 
 const usdFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+const wholeUsdFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+const compactUsdFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  notation: 'compact',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1,
+});
+
+export function formatWholeUsd(amount: number): string {
+  return wholeUsdFormatter.format(amount);
+}
+
+const COMPACT_USD_FROM = 1_000;
+
+function isCompactUsd(amount: number): boolean {
+  return Math.abs(Math.round(amount)) >= COMPACT_USD_FROM;
+}
+
+/** `$250` stays whole; `$147,778` becomes `$147.8k`. */
+export function formatCompactUsd(amount: number): string {
+  const whole = Math.round(amount);
+
+  if (!isCompactUsd(whole)) {
+    return formatWholeUsd(whole);
+  }
+
+  return compactUsdFormatter.format(whole).toLowerCase();
+}
 
 /** Usage at which new workflow runs pause; null when they never pause. */
 function getPauseThreshold(included: number, settings: WorkflowRunLimitSettings): number | null {
   return settings.pauseAtLimit ? getWorkflowRunLimit(included, settings) : null;
+}
+
+function getOnDemandSpend(onDemandLimit: number, onDemandPricePer1k: number): number {
+  return (onDemandLimit / 1000) * onDemandPricePer1k;
 }
 
 /** USD cost of using the whole on-demand limit; null without a limit or a known price. */
@@ -36,7 +77,145 @@ export function getOnDemandCost(onDemandLimit: number | null, onDemandPricePer1k
     return null;
   }
 
-  return usdFormatter.format((onDemandLimit / 1000) * onDemandPricePer1k);
+  const spend = getOnDemandSpend(onDemandLimit, onDemandPricePer1k);
+
+  if (isCompactUsd(spend)) {
+    return formatCompactUsd(spend);
+  }
+
+  return usdFormatter.format(spend);
+}
+
+/** `monthlyCost` is the plan price plus on-demand, at the limit or so far this cycle depending on the caller. */
+export type TierSuggestion =
+  | { kind: 'upgrade_to_teams'; monthlyCost: number; teamsCost: number }
+  | { kind: 'contact_sales'; monthlyCost: number; fromPlan: 'PRO' | 'TEAM' };
+
+export const CONTACT_SALES_MONTHLY_COST_THRESHOLD = 600;
+
+const TEAMS_MONTHLY_COST = getFeatureForTierAsNumber(
+  FeatureNameEnum.PLATFORM_MONTHLY_COST,
+  ApiServiceLevelEnum.BUSINESS,
+  false
+);
+
+const TEAMS_INCLUDED_RUNS = getFeatureForTierAsNumber(
+  FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
+  ApiServiceLevelEnum.BUSINESS,
+  false
+);
+
+/** Plan monthly list price, even on annual billing, plus the on-demand spend. */
+function getMonthlyCost(apiServiceLevel: ApiServiceLevelEnum, onDemandSpend: number): number {
+  return getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MONTHLY_COST, apiServiceLevel, false) + onDemandSpend;
+}
+
+/**
+ * Suggests Team when Team's price at this run volume is lower by at least a dollar and still under $600.
+ * Once the cost reaches $600, suggests Enterprise. Never on a trial or without a positive limit.
+ */
+export function getTierSuggestion({
+  apiServiceLevel,
+  isOnTrial,
+  onDemandLimit,
+  onDemandPricePer1k,
+  included,
+}: {
+  apiServiceLevel: ApiServiceLevelEnum;
+  isOnTrial: boolean;
+  onDemandLimit: number | null;
+  onDemandPricePer1k: number | null;
+  included: number;
+}): TierSuggestion | null {
+  if (isOnTrial || onDemandLimit === null || onDemandLimit <= 0 || onDemandPricePer1k === null) {
+    return null;
+  }
+
+  return suggestTierForMonthlyCost({
+    apiServiceLevel,
+    monthlyCost: getMonthlyCost(apiServiceLevel, getOnDemandSpend(onDemandLimit, onDemandPricePer1k)),
+    totalRuns: included + onDemandLimit,
+    onDemandPricePer1k,
+  });
+}
+
+/** Same thresholds as `getTierSuggestion`, priced on the runs used so far this cycle. */
+export function getUsageTierSuggestion({
+  apiServiceLevel,
+  isOnTrial,
+  current,
+  included,
+  onDemandPricePer1k,
+}: {
+  apiServiceLevel: ApiServiceLevelEnum;
+  isOnTrial: boolean;
+  current: number;
+  included: number;
+  onDemandPricePer1k: number | null;
+}): TierSuggestion | null {
+  if (isOnTrial || onDemandPricePer1k === null || current <= included) {
+    return null;
+  }
+
+  return suggestTierForMonthlyCost({
+    apiServiceLevel,
+    monthlyCost: getMonthlyCost(apiServiceLevel, getOnDemandSpend(current - included, onDemandPricePer1k)),
+    totalRuns: current,
+    onDemandPricePer1k,
+  });
+}
+
+/** Team list price plus on-demand above Team's included runs, at the same per-1k rate. */
+function getTeamsMonthlyCost(totalRuns: number, onDemandPricePer1k: number): number {
+  const onDemandRuns = Math.max(0, totalRuns - TEAMS_INCLUDED_RUNS);
+
+  return TEAMS_MONTHLY_COST + getOnDemandSpend(onDemandRuns, onDemandPricePer1k);
+}
+
+/** Costs are compared in whole dollars, the same unit the suggestion copy shows. */
+function suggestTierForMonthlyCost({
+  apiServiceLevel,
+  monthlyCost: exactMonthlyCost,
+  totalRuns,
+  onDemandPricePer1k,
+}: {
+  apiServiceLevel: ApiServiceLevelEnum;
+  monthlyCost: number;
+  totalRuns: number;
+  onDemandPricePer1k: number;
+}): TierSuggestion | null {
+  const monthlyCost = Math.round(exactMonthlyCost);
+
+  switch (apiServiceLevel) {
+    case ApiServiceLevelEnum.PRO: {
+      const teamsCost = Math.round(getTeamsMonthlyCost(totalRuns, onDemandPricePer1k));
+
+      if (monthlyCost - teamsCost >= 1 && teamsCost < CONTACT_SALES_MONTHLY_COST_THRESHOLD) {
+        return { kind: 'upgrade_to_teams', monthlyCost, teamsCost };
+      }
+
+      if (monthlyCost >= CONTACT_SALES_MONTHLY_COST_THRESHOLD) {
+        return { kind: 'contact_sales', monthlyCost, fromPlan: 'PRO' };
+      }
+
+      return null;
+    }
+    case ApiServiceLevelEnum.BUSINESS:
+      if (monthlyCost >= CONTACT_SALES_MONTHLY_COST_THRESHOLD) {
+        return { kind: 'contact_sales', monthlyCost, fromPlan: 'TEAM' };
+      }
+
+      return null;
+    case ApiServiceLevelEnum.FREE:
+    case ApiServiceLevelEnum.ENTERPRISE:
+    case ApiServiceLevelEnum.UNLIMITED:
+      return null;
+    default: {
+      const exhaustiveCheck: never = apiServiceLevel;
+
+      return exhaustiveCheck;
+    }
+  }
 }
 
 export function getPauseAtLimitDescription(included: number, settings: WorkflowRunLimitSettings) {

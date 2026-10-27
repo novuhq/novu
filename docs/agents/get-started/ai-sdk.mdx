@@ -5,7 +5,7 @@ sidebarTitle: Connect AI SDK
 boost: 3
 ---
 
-Connect a [Vercel AI SDK](https://ai-sdk.dev/) agent to Novu Connect. Return `generateText()` from `onMessage`; Novu delivers the reply on Slack. After you add other providers, the same handler serves Teams, WhatsApp, Telegram, and email.
+Connect a [Vercel AI SDK](https://ai-sdk.dev/) agent to Slack. Return `generateText()` from `onMessage`; Novu delivers the reply. After you add other providers, the same handler serves Teams, WhatsApp, Telegram, and email.
 
 This guide uses **Slack** first and assumes an existing Node.js app. Examples use OpenAI or Anthropic via the AI SDK.
 
@@ -206,7 +206,7 @@ For an existing codebase, use [Connect an existing app](#connect-an-existing-app
     Use `toModelMessages(ctx)`. See the [AI SDK reference](/agents/custom-code-agent/frameworks/ai-sdk#tomodelmessages).
   </Accordion>
   <Accordion title="Where is the adapter API documented?">
-    [AI SDK reference](/agents/custom-code-agent/frameworks/ai-sdk): return types, tools, MCP, streaming edits, and `onError`.
+    [AI SDK reference](/agents/custom-code-agent/frameworks/ai-sdk): return types, tools, MCP, streaming, and `onError`.
   </Accordion>
 </AccordionGroup>
 

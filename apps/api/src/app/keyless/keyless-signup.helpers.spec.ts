@@ -4,6 +4,7 @@ import { getWelcomeText } from '../agents/shared/util/agent-welcome-text';
 import {
   buildConnectClaimUrl,
   buildHumanClaimUrl,
+  buildKeylessHumanSignupCard,
   buildKeylessSignupCard,
   buildKeylessWelcomeCard,
   resolveConnectClaimBaseUrl,
@@ -97,6 +98,14 @@ describe('keyless-signup.helpers', () => {
       url: 'https://example.com/claim',
       style: 'primary',
     });
+  });
+
+  it('buildKeylessHumanSignupCard asks for an Agent Inbox account', () => {
+    const card = buildKeylessHumanSignupCard('https://agentinbox.md/claim?token=abc');
+    const text = card.children?.find((child) => child.type === 'text');
+
+    expect(text && 'content' in text ? text.content : '').to.contain('free Agent Inbox account');
+    expect(JSON.stringify(card)).to.not.contain('Novu');
   });
 
   it('buildKeylessSignupCard includes a primary signup button', () => {

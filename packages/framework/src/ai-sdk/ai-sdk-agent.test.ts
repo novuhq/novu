@@ -1,24 +1,26 @@
 import { describe, expect, it, vi } from 'vitest';
 import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from '../resources/agent/agent.runtime';
-import type {
-  Agent,
-  AgentActionContext,
-  AgentHistoryEntry,
-  AgentMessageContext,
-  ToolApprovalDecision,
+import {
+  type Agent,
+  type AgentActionContext,
+  type AgentHistoryEntry,
+  type AgentMessageContext,
+  type ToolApprovalDecision,
 } from '../resources/agent/agent.types';
+import { fakeReply } from '../resources/agent/reply.fixture';
 import { agent } from './ai-sdk-agent';
 import type { AiSdkGenerateResult, AiSdkStreamResult } from './types';
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
 
 function fakeRuntimeCtx(overrides: Partial<{ history: AgentHistoryEntry[] }> = {}) {
-  const reply = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
+  const { reply, sent } = fakeReply();
   const replyApprovalCard = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
   const history = overrides.history ?? [];
   const ctx = {
     [RUNTIME_CONTEXT_BRAND]: true as const,
     reply,
+    sent,
     replyApprovalCard,
     history,
     emitToolResult: vi.fn(),
@@ -28,6 +30,7 @@ function fakeRuntimeCtx(overrides: Partial<{ history: AgentHistoryEntry[] }> = {
 
   return ctx as unknown as AgentRuntimeContext & {
     reply: ReturnType<typeof vi.fn>;
+    sent: ReturnType<typeof vi.fn>;
     replyApprovalCard: ReturnType<typeof vi.fn>;
     history: AgentHistoryEntry[];
   };
@@ -36,6 +39,7 @@ function fakeRuntimeCtx(overrides: Partial<{ history: AgentHistoryEntry[] }> = {
 function fakeMessageCtx(overrides: Partial<{ history: AgentHistoryEntry[] }> = {}) {
   return fakeRuntimeCtx(overrides) as unknown as AgentMessageContext & {
     reply: ReturnType<typeof vi.fn>;
+    sent: ReturnType<typeof vi.fn>;
     replyApprovalCard: ReturnType<typeof vi.fn>;
     emitToolApprovalRequest: ReturnType<typeof vi.fn>;
     history: AgentHistoryEntry[];
@@ -45,16 +49,25 @@ function fakeMessageCtx(overrides: Partial<{ history: AgentHistoryEntry[] }> = {
 function fakeActionCtx(overrides: Partial<{ history: AgentHistoryEntry[] }> = {}) {
   return fakeRuntimeCtx(overrides) as unknown as AgentActionContext & {
     reply: ReturnType<typeof vi.fn>;
+    sent: ReturnType<typeof vi.fn>;
     history: AgentHistoryEntry[];
   };
 }
 
-function streamTextMock(overrides: Record<string, unknown> = {}): AiSdkStreamResult {
+async function* fullStreamOf(text: string) {
+  yield { type: 'start-step' };
+  if (text) {
+    yield { type: 'text-delta', id: 't', text };
+  }
+}
+
+function streamTextMock(text = '', overrides: Record<string, unknown> = {}): AiSdkStreamResult {
   return {
-    text: Promise.resolve(''),
+    text: Promise.resolve(text),
     content: Promise.resolve([]),
     responseMessages: Promise.resolve([]),
     consumeStream: async () => {},
+    fullStream: fullStreamOf(text),
     ...overrides,
   } as unknown as AiSdkStreamResult;
 }
@@ -71,7 +84,7 @@ function generateTextMock(overrides: Record<string, unknown> = {}): AiSdkGenerat
 }
 
 function aiSdkTextResult(text: string): AiSdkStreamResult {
-  return streamTextMock({ text: Promise.resolve(text) });
+  return streamTextMock(text);
 }
 
 /** Ledger snapshot after Novu persists an approval decision (before resume). */
@@ -156,13 +169,13 @@ describe('ai-sdk agent adapter', () => {
     });
 
     it('auto-delivers streamText-style results and returns void', async () => {
-      const supportAgent = agent('support', async () => streamTextMock({ text: Promise.resolve('model reply') }));
+      const supportAgent = agent('support', async () => streamTextMock('model reply'));
       const ctx = fakeMessageCtx();
 
       const result = await supportAgent.handlers.onMessage({} as never, ctx);
 
       expect(result).toBeUndefined();
-      expect(ctx.reply).toHaveBeenCalledWith('model reply');
+      expect(ctx.sent).toHaveBeenCalledWith('model reply');
     });
 
     it('auto-delivers generateText-style results', async () => {
@@ -176,8 +189,7 @@ describe('ai-sdk agent adapter', () => {
 
     it('posts an approval card when the model returns a gated tool (no text reply)', async () => {
       const supportAgent = agent('support', async () =>
-        streamTextMock({
-          text: Promise.resolve(''),
+        streamTextMock('', {
           content: Promise.resolve([
             {
               type: 'tool-approval-request',
@@ -199,7 +211,7 @@ describe('ai-sdk agent adapter', () => {
         input: { amount: 300 },
       });
       expect(ctx.replyApprovalCard.mock.calls[0]).toEqual([{ type: 'tool-approval-card' }]);
-      expect(ctx.reply).not.toHaveBeenCalled();
+      expect(ctx.sent).not.toHaveBeenCalled();
     });
   });
 
@@ -221,7 +233,7 @@ describe('ai-sdk agent adapter', () => {
 
       expect(historySnapshots.at(-1)).toEqual(history);
       expect(ctx.history).toHaveLength(2);
-      expect(ctx.reply).toHaveBeenCalledWith('done');
+      expect(ctx.sent).toHaveBeenCalledWith('done');
     });
 
     it('posts string returns from onToolApproval, then auto-resumes', async () => {
@@ -238,8 +250,8 @@ describe('ai-sdk agent adapter', () => {
 
       await invokeToolApproval(billingAgent, ctx);
 
-      expect(ctx.reply).toHaveBeenCalledWith('test123');
-      expect(ctx.reply).toHaveBeenCalledWith('done');
+      expect(ctx.sent).toHaveBeenCalledWith('test123');
+      expect(ctx.sent).toHaveBeenCalledWith('done');
     });
 
     it('does not double-reply when handler returns ctx.reply() (ReplyHandle)', async () => {
@@ -252,9 +264,9 @@ describe('ai-sdk agent adapter', () => {
 
       await invokeToolApproval(billingAgent, ctx);
 
-      expect(ctx.reply).toHaveBeenCalledTimes(2);
-      expect(ctx.reply).toHaveBeenNthCalledWith(1, 'already posted');
-      expect(ctx.reply).toHaveBeenNthCalledWith(2, 'done');
+      expect(ctx.sent).toHaveBeenCalledTimes(2);
+      expect(ctx.sent).toHaveBeenNthCalledWith(1, 'already posted');
+      expect(ctx.sent).toHaveBeenNthCalledWith(2, 'done');
     });
 
     it('skips auto-resume when handler returns a custom AiSdkResult', async () => {
@@ -269,7 +281,7 @@ describe('ai-sdk agent adapter', () => {
       await invokeToolApproval(billingAgent, ctx);
 
       expect(onMessage).not.toHaveBeenCalled();
-      expect(ctx.reply).toHaveBeenCalledWith('custom resume');
+      expect(ctx.sent).toHaveBeenCalledWith('custom resume');
     });
   });
 });

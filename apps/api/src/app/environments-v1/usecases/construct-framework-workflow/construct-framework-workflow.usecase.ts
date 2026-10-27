@@ -41,8 +41,10 @@ import {
   type ContentOverrideProviderId,
   EnvironmentTypeEnum,
   getContentOverrideProviderIds,
+  isRecord,
   LAYOUT_PREVIEW_EMAIL_STEP,
   LAYOUT_PREVIEW_WORKFLOW_ID,
+  packProviderOverrideOutput,
   StepTypeEnum,
   withProviderOverridesRuntimeSchema,
 } from '@novu/shared';
@@ -89,6 +91,15 @@ type PersistedControlSchema = {
  */
 function toFrameworkSchema(schema: PersistedControlSchema): Schema {
   return schema as Schema;
+}
+
+function getProviderEntry(
+  overridesByProvider: unknown,
+  providerId: ContentOverrideProviderId
+): Record<string, unknown> | undefined {
+  const entry = isRecord(overridesByProvider) ? overridesByProvider[providerId] : undefined;
+
+  return isRecord(entry) ? entry : undefined;
 }
 
 function getStepTemplate(staticStep: NotificationStepEntity): MessageTemplateEntity {
@@ -533,8 +544,10 @@ export class ConstructFrameworkWorkflow {
   }
 
   /**
-   * Chat/tool/push step options: canonical control schema plus runtime `providerOverrides`,
-   * and resolvers that project a provider slice from the shared translated controls.
+   * Chat/tool/push step options: canonical control schema plus runtime `providerOverrides` and
+   * `integrationOverrides`, and resolvers that project a provider slice from the shared translated
+   * controls. Bridge provider keys must be known provider ids, so a provider's integration overrides
+   * ride inside its slice under `INTEGRATION_OVERRIDES_OUTPUT_KEY` for the worker to unpack.
    */
   @Instrument()
   private constructProviderOverrideStepOptions(
@@ -564,12 +577,10 @@ export class ConstructFrameworkWorkflow {
           organization,
           locale,
         });
-        const blob = (translated.providerOverrides as Record<string, unknown> | undefined)?.[providerId];
-        if (!blob || typeof blob !== 'object' || Array.isArray(blob)) {
-          return {};
-        }
-
-        return blob as Record<string, unknown>;
+        return packProviderOverrideOutput(
+          getProviderEntry(translated.providerOverrides, providerId) ?? {},
+          getProviderEntry(translated.integrationOverrides, providerId)
+        );
       };
 
     const providers = Object.fromEntries(

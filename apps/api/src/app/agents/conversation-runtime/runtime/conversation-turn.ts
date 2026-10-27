@@ -39,6 +39,8 @@ export interface ConversationTurn {
   /** Distinguishes edit/delete deliveries that reuse the same platform message id. */
   deliveryRevision?: string;
   action?: AgentAction;
+  /** The platform's own payload for the action (a Telegram callback query, a Slack `block_actions`). Set on action turns. */
+  actionRaw?: unknown;
   reaction?: BridgeReaction;
   workflowOrigin?: WorkflowOriginSnapshot | null;
   unseenThreadMessages?: UnseenThreadMessage[];
