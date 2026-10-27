@@ -268,7 +268,12 @@ function copyTemplateDir(from: string, to: string): void {
   }
 }
 
-const POSTCSS_CONFIG_FILENAMES = ['postcss.config.mjs', 'postcss.config.js', 'postcss.config.cjs', 'postcss.config.ts'] as const;
+const POSTCSS_CONFIG_FILENAMES = [
+  'postcss.config.mjs',
+  'postcss.config.js',
+  'postcss.config.cjs',
+  'postcss.config.ts',
+] as const;
 
 const HOST_GLOBALS_CSS_PATHS = ['src/app/globals.css', 'app/globals.css', 'styles/globals.css'] as const;
 
@@ -397,6 +402,7 @@ function skipQuotedString(source: string, index: number): number | null {
   return null;
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing template-patching logic is outside this change
 function findMatchingDelimitedEnd(
   source: string,
   openIndex: number,
@@ -455,9 +461,7 @@ function findMatchingBracketEnd(source: string, openIndex: number): number | nul
   return findMatchingDelimitedEnd(source, openIndex, '[', ']');
 }
 
-function matchTranspilePackagesInlineArray(
-  source: string
-): { full: string; inner: string } | null {
+function matchTranspilePackagesInlineArray(source: string): { full: string; inner: string } | null {
   const labelMatch = source.match(/transpilePackages\s*:\s*\[/);
   if (!labelMatch || labelMatch.index === undefined) {
     return null;
@@ -479,9 +483,7 @@ function matchVariableArrayAssignment(
   source: string,
   variableName: string
 ): { full: string; prefix: string; inner: string } | null {
-  const headerPattern = new RegExp(
-    `((?:const|let|var)\\s+${variableName}(?:\\s*:\\s*[^=]+)?\\s*=\\s*)\\[`
-  );
+  const headerPattern = new RegExp(`((?:const|let|var)\\s+${variableName}(?:\\s*:\\s*[^=]+)?\\s*=\\s*)\\[`);
   const headerMatch = source.match(headerPattern);
   if (!headerMatch || headerMatch.index === undefined) {
     return null;
@@ -500,6 +502,7 @@ function matchVariableArrayAssignment(
   };
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing template-patching logic is outside this change
 function patchNextConfigSource(source: string): string | null {
   const missingPackages = WEB_CHAT_TRANSPILE_PACKAGES.filter(
     (pkg) => !source.includes(`'${pkg}'`) && !source.includes(`"${pkg}"`)
@@ -775,10 +778,7 @@ function resolveWebChatNovuDependenciesForProject(
  * resolve them inside the app. Symlinks to the monorepo (`file:/abs/path`)
  * break Turbopack; tarballs fail on `workspace:*` deps.
  */
-export function vendorLocalNovuSdks(
-  projectDir: string,
-  local: { react: string; js: string }
-): WebChatNovuDependencies {
+export function vendorLocalNovuSdks(projectDir: string, local: { react: string; js: string }): WebChatNovuDependencies {
   const reactVendor = path.join(projectDir, 'vendor', '@novu', 'react');
   const jsVendor = path.join(projectDir, 'vendor', '@novu', 'js');
 

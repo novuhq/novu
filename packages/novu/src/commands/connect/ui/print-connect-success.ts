@@ -31,6 +31,7 @@ function printUnknownSocketHostWarning(unknownSocketHost: boolean): void {
   console.log(`  ${chalk.yellow('!')} ${UNKNOWN_SOCKET_HOST_WARNING}`);
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing per-channel success-summary branching is outside this change
 export function printConnectSuccess(result: ConnectSuccessResult): void {
   if (shouldSkipConnectSuccessSummary(result)) {
     return;
