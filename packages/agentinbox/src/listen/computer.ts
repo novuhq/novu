@@ -11,7 +11,7 @@ const COMPUTER_NAME_MAX = 64;
 const PROJECT_MAX = 200;
 
 /**
- * This computer's id for the lease: made the first time `wake` runs here and kept in the config, so the API
+ * This computer's id for the lease: made the first time `listen` runs here and kept in the config, so the API
  * knows the computer again after a restart, a new connection or a new key.
  */
 export function ensureComputerId(config: CliConfig): string {

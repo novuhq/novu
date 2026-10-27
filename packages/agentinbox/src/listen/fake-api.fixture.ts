@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import type { Awake, WakeHostId, WakeMessage } from '../api/wake';
+import type { ListenHostId, Listening, ListenMessage } from '../api/listen';
 
 /** One HTTP call the fake took, for the tests to look at. */
 export interface FakeCall {
@@ -58,12 +58,12 @@ type Send = (status: number, payload: unknown) => void;
 
 type Handler = (call: FakeCall, match: RegExpExecArray, send: Send) => void | Promise<void>;
 
-/** How long a lease lasts: the contract's `AWAKE_LEASE_SECONDS`. */
+/** How long a lease lasts: the contract's `LISTEN_LEASE_SECONDS`. */
 const LEASE_MS = 180_000;
 
 /**
- * The Agent Inbox API as wake sees it, after WAKE/CONTRACT.md: the lease, the wait for messages, typing, and
- * the inbox calls wake makes (questions, replies, conversations). Tests drive it: they deliver messages, answer
+ * The Agent Inbox API as the listener sees it: the lease, the wait for messages, typing, and the inbox calls it
+ * makes (questions, replies, conversations). Tests drive it: they deliver messages, answer
  * questions, pause the agent, turn the key bad, or move the lease to another computer.
  */
 export class FakeApi {
@@ -73,9 +73,9 @@ export class FakeApi {
   readonly conversations = new Map<string, FakeConversation>();
   /** When "typing…" was shown, and in which conversation, in order. */
   readonly typing: Array<{ conversationId: string; at: number }> = [];
-  /** Every message that may wake a host, in order; a cursor is a position in it. */
-  readonly wakeMessages: WakeMessage[] = [];
-  lease: Awake | null = null;
+  /** Every message that may start a host, in order; a cursor is a position in it. */
+  readonly listenMessages: ListenMessage[] = [];
+  lease: Listening | null = null;
   paused = false;
   keyRejected = false;
   /** Agent Inbox can't be reached: every call fails, as in an outage. */
@@ -96,16 +96,16 @@ export class FakeApi {
   }
 
   async stop(): Promise<void> {
-    for (const wake of this.waiters.splice(0)) wake();
+    for (const done of this.waiters.splice(0)) done();
     this.server?.closeAllConnections();
     await new Promise<void>((resolve) => this.server?.close(() => resolve()));
   }
 
-  /** A person writes: the message lands in its conversation and may wake the host. */
-  deliver(input: Partial<WakeMessage> & { text: string }): WakeMessage {
+  /** A person writes: the message lands in its conversation and may start the host. */
+  deliver(input: Partial<ListenMessage> & { text: string }): ListenMessage {
     const conversationId = input.conversationId ?? 'conv_1';
     const conversation = this.conversation(conversationId, input.channel);
-    const message: WakeMessage = {
+    const message: ListenMessage = {
       id: input.id ?? `msg_${randomUUID().slice(0, 8)}`,
       conversationId,
       channel: input.channel ?? conversation.channel,
@@ -120,8 +120,8 @@ export class FakeApi {
     };
     conversation.status = 'open';
     conversation.messages.push({ id: message.id, from: 'human', text: message.text, at: message.at });
-    this.wakeMessages.push(message);
-    for (const wake of this.waiters.splice(0)) wake();
+    this.listenMessages.push(message);
+    for (const done of this.waiters.splice(0)) done();
 
     return message;
   }
@@ -176,7 +176,7 @@ export class FakeApi {
   }
 
   /** Another holder takes the lease, as a take-over there would: another computer, unless one is named. */
-  takeOverElsewhere(host: WakeHostId = 'codex', computerId = 'cmp_other_computer_0001'): void {
+  takeOverElsewhere(host: ListenHostId = 'codex', computerId = 'cmp_other_computer_0001'): void {
     const now = new Date();
     this.lease = {
       computerId,
@@ -189,7 +189,7 @@ export class FakeApi {
     };
   }
 
-  /** The agent's messages and wake's own cards in a conversation, newest last. */
+  /** The agent's messages and the listener's own cards in a conversation, newest last. */
   sentInto(conversationId: string): string[] {
     return (this.conversations.get(conversationId)?.messages ?? [])
       .filter((m) => m.from === 'agent')
@@ -210,7 +210,7 @@ export class FakeApi {
     return conversation;
   }
 
-  private liveLease(): Awake | null {
+  private liveLease(): Listening | null {
     return this.lease && Date.parse(this.lease.expiresAt) > Date.now() ? this.lease : null;
   }
 
@@ -244,9 +244,9 @@ export class FakeApi {
 
       return;
     }
-    // A paused agent's hosts may still see where it is awake and let go of the lease (`wake status`, `wake stop`).
+    // A paused agent's hosts may still see where it is listening and let go of the lease (`listen status`, `listen stop`).
     const openWhilePaused =
-      call.path === '/v1/wake/lease' ? call.method === 'GET' : call.path === '/v1/wake/lease/release';
+      call.path === '/v1/listen/lease' ? call.method === 'GET' : call.path === '/v1/listen/lease/release';
     if (this.paused && !openWhilePaused) {
       send(403, { code: 'agent_paused', message: 'This agent is paused.', pausedAt: new Date().toISOString() });
 
@@ -262,15 +262,15 @@ export class FakeApi {
 
   /** The routes the fake answers, in the order they are tried. */
   private readonly routes: Array<[method: string, path: RegExp, handle: Handler]> = [
-    ['POST', /^\/v1\/wake\/lease$/, (call, _match, send) => this.takeLease(call, send)],
+    ['POST', /^\/v1\/listen\/lease$/, (call, _match, send) => this.takeLease(call, send)],
     [
       'GET',
-      /^\/v1\/wake\/lease$/,
-      (_call, _match, send) => send(200, { data: { awake: this.liveLease(), paused: this.paused } }),
+      /^\/v1\/listen\/lease$/,
+      (_call, _match, send) => send(200, { data: { listening: this.liveLease(), paused: this.paused } }),
     ],
-    ['POST', /^\/v1\/wake\/lease\/release$/, (call, _match, send) => this.release(call, send)],
-    ['GET', /^\/v1\/wake\/messages$/, (call, _match, send) => this.waitForMessages(call, send)],
-    ['POST', /^\/v1\/wake\/typing$/, (call, _match, send) => this.showTyping(call, send)],
+    ['POST', /^\/v1\/listen\/lease\/release$/, (call, _match, send) => this.release(call, send)],
+    ['GET', /^\/v1\/listen\/messages$/, (call, _match, send) => this.waitForMessages(call, send)],
+    ['POST', /^\/v1\/listen\/typing$/, (call, _match, send) => this.showTyping(call, send)],
     ['POST', /^\/v1\/inbox\/messages$/, (call, _match, send) => this.createInteraction(call, send)],
     ['POST', /^\/v1\/inbox\/messages\/([^/]+)\/cancel$/, (_call, match, send) => this.cancel(match[1], send)],
     ['GET', /^\/v1\/inbox\/messages\/([^/]+)$/, (_call, match, send) => this.showInteraction(match[1], send)],
@@ -304,7 +304,7 @@ export class FakeApi {
     // The holder is a computer and a host together.
     const theirs = holder && (holder.computerId !== body.computerId || holder.host !== body.host);
     if (theirs && !body.takeOver) {
-      send(409, { code: 'awake_elsewhere', message: 'Awake elsewhere.', awake: holder });
+      send(409, { code: 'listening_elsewhere', message: 'Listening elsewhere.', listening: holder });
 
       return;
     }
@@ -313,13 +313,13 @@ export class FakeApi {
     this.lease = {
       computerId: String(body.computerId),
       computerName: String(body.computerName),
-      host: body.host as WakeHostId,
+      host: body.host as ListenHostId,
       ...(body.project ? { project: String(body.project) } : {}),
       since: holder && !theirs ? holder.since : now,
       renewedAt: now,
       expiresAt: new Date(Date.now() + LEASE_MS).toISOString(),
     };
-    send(200, { data: { awake: this.lease, renewInSeconds: 60 } });
+    send(200, { data: { listening: this.lease, renewInSeconds: 60 } });
   }
 
   private release({ body }: FakeCall, send: Send): void {
@@ -348,36 +348,36 @@ export class FakeApi {
       return;
     }
     if (query.after && !/^c\d+$/.test(query.after)) {
-      send(400, { code: 'invalid_wake_cursor', message: 'This cursor was not handed out here.' });
+      send(400, { code: 'invalid_listen_cursor', message: 'This cursor was not handed out here.' });
 
       return;
     }
     if (!this.holds(query)) {
-      send(409, { code: 'not_awake', message: 'Not awake here.', awake: this.liveLease() });
+      send(409, { code: 'not_listening', message: 'Not listening here.', listening: this.liveLease() });
 
       return;
     }
 
-    const from = query.after ? Number(query.after.slice(1)) : this.wakeMessages.length;
+    const from = query.after ? Number(query.after.slice(1)) : this.listenMessages.length;
     const wait = Number(query.wait ?? 0) * 1000;
-    if (this.wakeMessages.length <= from && wait > 0) {
+    if (this.listenMessages.length <= from && wait > 0) {
       await this.held(wait);
     }
     // A take-over meanwhile ends this holder's wait.
     if (!this.holds(query)) {
-      send(409, { code: 'not_awake', message: 'Not awake here.', awake: this.liveLease() });
+      send(409, { code: 'not_listening', message: 'Not listening here.', listening: this.liveLease() });
 
       return;
     }
 
-    const data = this.wakeMessages.slice(from, from + Number(query.limit ?? 20));
+    const data = this.listenMessages.slice(from, from + Number(query.limit ?? 20));
     send(200, { data, next: `c${from + data.length}` });
   }
 
   /** "Typing…" for a few seconds, for the holder only; an email conversation has none. */
   private showTyping({ body }: FakeCall, send: Send): void {
     if (!this.holds(body as Record<string, string>)) {
-      send(409, { code: 'not_awake', message: 'Not awake here.', awake: this.liveLease() });
+      send(409, { code: 'not_listening', message: 'Not listening here.', listening: this.liveLease() });
 
       return;
     }

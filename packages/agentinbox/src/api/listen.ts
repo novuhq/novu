@@ -2,18 +2,18 @@ import { DEFAULT_RELAY_AGENT_IDENTIFIER } from '../config';
 import { type ApiClient, ApiError, unwrap } from './client';
 import { INBOX_MAX_SERVER_WAIT_SECONDS } from './inbox';
 
-/** Matches the API's `WakeHostId`: the hosts that can be woken on a computer. Chat apps and `general` never are. */
-export const WAKE_HOST_IDS = ['claude-code', 'codex', 'opencode', 'cursor', 'hermes', 'openclaw'] as const;
+/** Matches the API's `ListenHostId`: the hosts that can be started on a computer. Chat apps and `general` never are. */
+export const LISTEN_HOST_IDS = ['claude-code', 'codex', 'opencode', 'cursor', 'hermes', 'openclaw'] as const;
 
-export type WakeHostId = (typeof WAKE_HOST_IDS)[number];
+export type ListenHostId = (typeof LISTEN_HOST_IDS)[number];
 
-/** Where an agent is awake: the one computer ready to wake a host for it, and since when. */
-export interface Awake {
+/** Where an agent is listening: the one computer ready to start a host for it, and since when. */
+export interface Listening {
   /** The computer holding the lease (`CliConfig.computerId` there). */
   computerId: string;
   /** As the operator knows it, e.g. "MacBook". */
   computerName: string;
-  host: WakeHostId;
+  host: ListenHostId;
   /** The folder the host runs in, as the operator reads it, e.g. "~/projects/app". */
   project?: string;
   since: string;
@@ -23,33 +23,33 @@ export interface Awake {
 }
 
 export interface Lease {
-  awake: Awake;
+  listening: Listening;
   /** How soon to renew it. */
   renewInSeconds: number;
 }
 
-/** Where the agent is awake, and whether its operator paused it. */
+/** Where the agent is listening, and whether its operator paused it. */
 export interface LeaseStatus {
   /** `null` when no computer holds a live lease. */
-  awake: Awake | null;
-  /** Paused on agentinbox.md: no computer takes the lease or wakes a host until it is resumed. */
+  listening: Listening | null;
+  /** Paused on agentinbox.md: no computer takes the lease or starts a host until it is resumed. */
   paused: boolean;
 }
 
-/** Another computer holds a live lease. The error carries the holder as `awake`. */
-export const AWAKE_ELSEWHERE_CODE = 'awake_elsewhere';
+/** Another computer holds a live lease. The error carries the holder as `listening`. */
+export const LISTENING_ELSEWHERE_CODE = 'listening_elsewhere';
 
 /** This computer doesn't hold a live lease, so it may not wait for messages. Carries the holder, if any. */
-export const NOT_AWAKE_CODE = 'not_awake';
+export const NOT_LISTENING_CODE = 'not_listening';
 
 /** Matches the API's `AGENT_PAUSED`: the operator paused the agent on agentinbox.md. */
 export const AGENT_PAUSED_CODE = 'agent_paused';
 
 /** The API didn't hand out the cursor (another deployment's, say): waiting goes on from now. */
-export const INVALID_WAKE_CURSOR_CODE = 'invalid_wake_cursor';
+export const INVALID_LISTEN_CURSOR_CODE = 'invalid_listen_cursor';
 
-/** A message that may wake a host: written by the operator, or by a contact they let wake it. */
-export interface WakeMessage {
+/** A message that may start a host: written by the operator, or by a contact the agent listens to. */
+export interface ListenMessage {
   /** Stable and unique: a message is handled once, however often it comes back. */
   id: string;
   /** The id `inbox show` and `inbox reply` take. */
@@ -74,9 +74,9 @@ export interface WakeMessage {
   attachments?: Array<{ type?: string; name?: string; mimeType?: string; size?: number }>;
 }
 
-export interface WakeMessagesPage {
+export interface ListenMessagesPage {
   /** Oldest first. */
-  data: WakeMessage[];
+  data: ListenMessage[];
   /** Always set: where to go on from next time. */
   next: string;
 }
@@ -92,14 +92,14 @@ export async function takeLease(
   input: {
     computerId: string;
     computerName: string;
-    host: WakeHostId;
+    host: ListenHostId;
     project?: string;
     takeOver?: boolean;
     agentIdentifier?: string;
   }
 ): Promise<Lease> {
   const { agentIdentifier, takeOver, ...rest } = input;
-  const res = await client.axios.post<{ data?: Lease } | Lease>('/v1/wake/lease', {
+  const res = await client.axios.post<{ data?: Lease } | Lease>('/v1/listen/lease', {
     ...rest,
     ...(takeOver ? { takeOver: true } : {}),
     ...agentOf(agentIdentifier),
@@ -108,14 +108,14 @@ export async function takeLease(
   return unwrap<Lease>(res.data);
 }
 
-/** Where the agent is awake now, and whether it is paused: a paused agent's hosts may ask too. */
+/** Where the agent is listening now, and whether it is paused: a paused agent's hosts may ask too. */
 export async function getLease(client: ApiClient, agentIdentifier?: string): Promise<LeaseStatus> {
-  const res = await client.axios.get<{ data?: Partial<LeaseStatus> }>('/v1/wake/lease', {
+  const res = await client.axios.get<{ data?: Partial<LeaseStatus> }>('/v1/listen/lease', {
     params: agentOf(agentIdentifier),
   });
   const status = unwrap<Partial<LeaseStatus>>(res.data);
 
-  return { awake: status.awake ?? null, paused: status.paused === true };
+  return { listening: status.listening ?? null, paused: status.paused === true };
 }
 
 /**
@@ -124,9 +124,9 @@ export async function getLease(client: ApiClient, agentIdentifier?: string): Pro
  */
 export async function releaseLease(
   client: ApiClient,
-  input: { computerId: string; host: WakeHostId; agentIdentifier?: string }
+  input: { computerId: string; host: ListenHostId; agentIdentifier?: string }
 ): Promise<boolean> {
-  const res = await client.axios.post<{ data?: { released: boolean } }>('/v1/wake/lease/release', {
+  const res = await client.axios.post<{ data?: { released: boolean } }>('/v1/listen/lease/release', {
     computerId: input.computerId,
     host: input.host,
     ...agentOf(input.agentIdentifier),
@@ -136,14 +136,14 @@ export async function releaseLease(
 }
 
 /**
- * Shows in the chat of `conversationId` that a reply is coming, for a few seconds (Telegram's five): wake asks
+ * Shows in the chat of `conversationId` that a reply is coming, for a few seconds (Telegram's five): the listener asks
  * again while its host works. False where the chat has no typing, as in email. Only the holder of the lease may.
  */
 export async function showTyping(
   client: ApiClient,
-  input: { computerId: string; host: WakeHostId; conversationId: string; agentIdentifier?: string }
+  input: { computerId: string; host: ListenHostId; conversationId: string; agentIdentifier?: string }
 ): Promise<boolean> {
-  const res = await client.axios.post<{ data?: { typing: boolean } }>('/v1/wake/typing', {
+  const res = await client.axios.post<{ data?: { typing: boolean } }>('/v1/listen/typing', {
     computerId: input.computerId,
     host: input.host,
     conversationId: input.conversationId,
@@ -155,23 +155,23 @@ export async function showTyping(
 
 /**
  * Waits up to `wait` seconds (the server holds the request, at most `INBOX_MAX_SERVER_WAIT_SECONDS`) for
- * messages that may wake a host. Only the holder of the lease, this computer with this host, may wait.
+ * messages that may start a host. Only the holder of the lease, this computer with this host, may wait.
  */
-export async function waitForWakeMessages(
+export async function waitForListenMessages(
   client: ApiClient,
   query: {
     computerId: string;
-    host: WakeHostId;
+    host: ListenHostId;
     after?: string;
     wait?: number;
     limit?: number;
     agentIdentifier?: string;
   },
   signal?: AbortSignal
-): Promise<WakeMessagesPage> {
+): Promise<ListenMessagesPage> {
   const { agentIdentifier, ...rest } = query;
   const wait = Math.min(rest.wait ?? 0, INBOX_MAX_SERVER_WAIT_SECONDS);
-  const res = await client.axios.get<{ data?: WakeMessage[]; next?: string }>('/v1/wake/messages', {
+  const res = await client.axios.get<{ data?: ListenMessage[]; next?: string }>('/v1/listen/messages', {
     params: { ...rest, wait, ...agentOf(agentIdentifier) },
     // A held long-poll must outlive the default request timeout.
     timeout: (wait + 30) * 1000,
@@ -181,7 +181,7 @@ export async function waitForWakeMessages(
   return { data: res.data.data ?? [], next: res.data.next ?? query.after ?? '' };
 }
 
-/** The `code` the API put on an error, which is what wake acts on. */
+/** The `code` the API put on an error, which is what the listener acts on. */
 export function errorCode(err: unknown): string | undefined {
   if (!(err instanceof ApiError) || !err.body || typeof err.body !== 'object') {
     return undefined;
@@ -192,15 +192,15 @@ export function errorCode(err: unknown): string | undefined {
   return typeof code === 'string' ? code : undefined;
 }
 
-/** The holder an `awake_elsewhere` or `not_awake` error names, if it names one. */
-export function awakeOf(err: unknown): Awake | null {
+/** The holder an `listening_elsewhere` or `not_listening` error names, if it names one. */
+export function listeningOf(err: unknown): Listening | null {
   if (!(err instanceof ApiError) || !err.body || typeof err.body !== 'object') {
     return null;
   }
 
-  const awake = (err.body as { awake?: unknown }).awake;
+  const listening = (err.body as { listening?: unknown }).listening;
 
-  return awake && typeof awake === 'object' && 'computerId' in awake ? (awake as Awake) : null;
+  return listening && typeof listening === 'object' && 'computerId' in listening ? (listening as Listening) : null;
 }
 
 /** Any `401`: the key was regenerated on agentinbox.md, so no retry will work. */

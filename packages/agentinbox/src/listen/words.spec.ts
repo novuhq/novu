@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { WakeMessage } from '../api/wake';
-import { wakeHostName } from './hosts';
+import type { ListenMessage } from '../api/listen';
+import { hostNameOf } from './hosts';
 import {
   allowCard,
   hostInstructions,
@@ -11,7 +11,7 @@ import {
   spanWords,
 } from './words';
 
-const MESSAGE: WakeMessage = {
+const MESSAGE: ListenMessage = {
   id: 'msg_1',
   conversationId: 'conv_1',
   channel: 'telegram',
@@ -52,7 +52,7 @@ describe('messageForHost', () => {
 });
 
 describe('hostInstructions', () => {
-  it('tells the woken host which conversation is its own and how to answer in it', () => {
+  it('tells the host it started which conversation is its own and how to answer in it', () => {
     const text = hostInstructions({ conversationId: 'conv_1', channel: 'telegram', project: '~/app' });
 
     expect(text).toContain('started you in ~/app');
@@ -91,14 +91,14 @@ describe('permissionCard', () => {
       detail: 'Send the reply.',
       project: '~/app',
       computerName: 'MacBook',
-      wokenBy: 'you',
+      startedBy: 'you',
       timeoutSeconds: 600,
     });
 
   it('says in the title what the host wants to do', () => {
     expect(card('run `npm publish`')).toEqual({
       title: 'Claude Code wants to run `npm publish`',
-      body: 'Send the reply. In ~/app on MacBook; you woke it. Its settings for this project don’t allow this. No answer in 10 minutes counts as Deny.',
+      body: 'Send the reply. In ~/app on MacBook, for your message. Its settings for this project don’t allow this. No answer in 10 minutes counts as Deny.',
     });
   });
 
@@ -120,7 +120,7 @@ describe('permissionCard', () => {
 
     expect(card(`run \`${command}\``)).toEqual({
       title: 'Claude Code wants to run a command',
-      body: `Run \`${command}\`.\n\nSend the reply. In ~/app on MacBook; you woke it. Its settings for this project don’t allow this. No answer in 10 minutes counts as Deny.`,
+      body: `Run \`${command}\`.\n\nSend the reply. In ~/app on MacBook, for your message. Its settings for this project don’t allow this. No answer in 10 minutes counts as Deny.`,
     });
   });
 });
@@ -132,13 +132,13 @@ describe('allowCard', () => {
         hostName: 'Claude Code',
         computerName: 'MacBook',
         project: '~/projects/app',
-        hostNames: wakeHostName,
+        hostNames: hostNameOf,
       }).title
-    ).toBe('Keep Claude Code awake on MacBook, in ~/projects/app?');
+    ).toBe('Listen for messages on MacBook, and start Claude Code in ~/projects/app?');
   });
 
   it('says it moves the agent from another computer, or replaces another host here', () => {
-    const awake = {
+    const listening = {
       computerId: 'cmp_desktop_000000001',
       computerName: 'Desktop',
       host: 'codex' as const,
@@ -147,21 +147,21 @@ describe('allowCard', () => {
       renewedAt: '',
       expiresAt: '',
     };
-    const base = { hostName: 'Claude Code', computerName: 'MacBook', project: '~/app', hostNames: wakeHostName };
+    const base = { hostName: 'Claude Code', computerName: 'MacBook', project: '~/app', hostNames: hostNameOf };
 
-    expect(allowCard({ ...base, elsewhere: awake, computerId: 'cmp_macbook_0000000001' }).body).toContain(
-      'It is awake on Desktop now (Codex, in ~/work); this moves it here.'
+    expect(allowCard({ ...base, elsewhere: listening, computerId: 'cmp_macbook_0000000001' }).body).toContain(
+      'It is listening on Desktop now (Codex, in ~/work); this moves it here.'
     );
-    expect(allowCard({ ...base, elsewhere: awake, computerId: awake.computerId }).body).toContain(
-      'It is awake on this computer now for Codex, in ~/work; this replaces that.'
+    expect(allowCard({ ...base, elsewhere: listening, computerId: listening.computerId }).body).toContain(
+      'It is listening on this computer now for Codex, in ~/work; this replaces that.'
     );
   });
 });
 
 describe('movedMessage and spanWords', () => {
   it('say what happened in plain words', () => {
-    expect(movedMessage(null, wakeHostName)).toBe(
-      'It is awake on another computer now, so this computer stopped. Run `npx @agentinbox/cli wake <host>` here to take it back.'
+    expect(movedMessage(null, hostNameOf)).toBe(
+      'It is listening on another computer now, so this computer stopped. Run `npx @agentinbox/cli listen <host>` here to take it back.'
     );
     expect(spanWords(600)).toBe('10 minutes');
     expect(spanWords(60)).toBe('1 minute');

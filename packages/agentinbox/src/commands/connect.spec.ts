@@ -40,7 +40,7 @@ vi.mock('../config', async (importOriginal) => {
   };
 });
 
-const { CONNECT_CANCELED_MESSAGE, CONNECT_UNAVAILABLE_MESSAGE, readAgent, readCode, runConnect, wakeHint } =
+const { CONNECT_CANCELED_MESSAGE, CONNECT_UNAVAILABLE_MESSAGE, readAgent, readCode, runConnect, listenHint } =
   await import('./connect');
 
 const CONNECTED = {
@@ -311,19 +311,19 @@ describe('API requests', () => {
   });
 });
 
-describe('wakeHint', () => {
-  it('offers keeping Claude Code awake as the optional last step, and nothing for hosts wake can’t start yet', () => {
-    expect(wakeHint('claude-code', 'atlas')).toContain(
-      'Optional: keep Claude Code awake, so a message to atlas starts it'
+describe('listenHint', () => {
+  it('offers listening for messages as the optional last step, and nothing for hosts listen can’t start yet', () => {
+    expect(listenHint('claude-code', 'atlas')).toContain(
+      'Optional: keep Claude Code listening, so a message to atlas starts it'
     );
-    expect(wakeHint('claude-code', 'atlas')).toContain('npx @agentinbox/cli wake claude-code');
-    expect(wakeHint('codex', 'atlas')).toBeUndefined();
-    expect(wakeHint(undefined, 'atlas')).toBeUndefined();
+    expect(listenHint('claude-code', 'atlas')).toContain('npx @agentinbox/cli listen claude-code');
+    expect(listenHint('codex', 'atlas')).toBeUndefined();
+    expect(listenHint(undefined, 'atlas')).toBeUndefined();
   });
 });
 
-describe('a client for wake', () => {
-  it('names the host it wakes, whatever the shell says', () => {
+describe('a client for listen', () => {
+  it('names the host it starts, whatever the shell says', () => {
     vi.stubEnv('CODEX_THREAD_ID', 'thread_1');
 
     const client = createApiClient({ apiUrl: 'https://www.agentinbox.md/api', secretKey: 'sk', asHost: 'claude-code' });

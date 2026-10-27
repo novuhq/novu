@@ -67,7 +67,7 @@ describe('isOwnReply', () => {
       'npx @agentinbox/cli inbox send "hi" --to bob',
       'npx @agentinbox/cli inbox list',
       'npx @agentinbox/cli contact list',
-      'npx @agentinbox/cli wake stop',
+      'npx @agentinbox/cli listen stop',
       'npx @agentinbox/cli inbox reply conv_1 "hi"; npm publish',
       'npx agentinbox inbox reply conv_1 hi',
       'npx @agentinbox/cli-evil inbox reply conv_1 hi',

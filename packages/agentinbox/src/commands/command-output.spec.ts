@@ -170,7 +170,7 @@ const ENV_KEYS = [
   'INBOX_SECRET_KEY',
   'AGENTINBOX_NO_ANIMATION',
   'AGENTINBOX_MASCOT_ASPECT',
-  // Which host runs the CLI: `connect` offers keeping Claude Code awake.
+  // Which host runs the CLI: `connect` offers keeping Claude Code listening.
   ...HOST_MARKER_VARIABLES,
 ];
 const STREAM_PROPERTIES = ['isTTY', 'columns', 'rows'] as const;
@@ -443,7 +443,7 @@ describe('without a terminal', () => {
     expect(output.stderr).toMatchInlineSnapshot(`""`);
   });
 
-  it('offers keeping Claude Code awake when Claude Code connects', async () => {
+  it('offers keeping Claude Code listening when Claude Code connects', async () => {
     process.env.AI_AGENT = 'claude-code_2-1-310_agent';
     const output = await printed('connect');
 
@@ -453,7 +453,7 @@ describe('without a terminal', () => {
       ✔ Connected to atlas.
       • Saved to /home/ada/.agentinbox/config.json.
       Check it works: npx @agentinbox/cli inbox list
-      Optional: keep Claude Code awake, so a message to atlas starts it in this folder: npx @agentinbox/cli wake claude-code
+      Optional: keep Claude Code listening, so a message to atlas starts it in this folder: npx @agentinbox/cli listen claude-code
       "
     `);
   });

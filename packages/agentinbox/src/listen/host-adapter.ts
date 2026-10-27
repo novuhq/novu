@@ -1,20 +1,20 @@
-import type { WakeHostId } from '../api/wake';
+import type { ListenHostId } from '../api/listen';
 
 /**
- * What wake needs from a host, and all it knows of one. The core (`loop.ts`) keeps the lease, waits for
+ * What the listener needs from a host, and all it knows of one. The core (`loop.ts`) keeps the lease, waits for
  * messages, keeps one session per conversation and round, holds the limits, gets the answers out and asks the
  * operator; an adapter only turns its host's own interface into these few calls. Claude Code drives
  * `claude -p` over stream-json (`claude-code.ts`); Codex (`codex app-server`), OpenCode (`opencode serve`) and
- * Cursor (`agent acp`) fit the same shape (WAKE/research/host-interfaces.md, section 9): each opens or goes on
+ * Cursor (`agent acp`) fit the same shape: each opens or goes on
  * with a session, takes messages while it works, says when a turn ends, asks before what its settings don't
  * allow and waits for the answer, and stops when told.
  */
 export interface HostAdapter {
-  readonly id: WakeHostId;
+  readonly id: ListenHostId;
   /** As people see it: "Claude Code". */
   readonly name: string;
   /**
-   * Whether the host can be woken here: installed, signed in, and what about the project the operator should
+   * Whether the host can be started here: installed, signed in, and what about the project the operator should
    * know. Never runs a model.
    */
   check(project: string, env?: NodeJS.ProcessEnv): HostCheck;
@@ -38,7 +38,7 @@ export interface OpenOptions {
   project: string;
   /** The host's own id of the session to go on with (`HostSession.id` from before). Without it, a new one. */
   resume?: string;
-  /** What the host is told for the whole session about being woken: who writes, how to answer them. */
+  /** What the host is told for the whole session about being started for a message: who writes, how to answer them. */
   instructions: string;
   /** Where the host's environment comes from; the process's by default. */
   env?: NodeJS.ProcessEnv;
@@ -46,7 +46,7 @@ export interface OpenOptions {
 
 /** One session: one conversation, in one round (until it is resolved). */
 export interface HostSession {
-  /** The host's own id for it, kept for the conversation so the next wake goes on with it. */
+  /** The host's own id for it, kept for the conversation so the next run goes on with it. */
   readonly id: string;
   /**
    * Hands the host a message: it starts a turn, or joins the one running. False once the session is ending,
@@ -122,7 +122,7 @@ export interface PermissionOption {
   id: string;
   label: string;
   /**
-   * `allow_session` lasts until the session ends; `allow_always` writes the host's settings, which wake never
+   * `allow_session` lasts until the session ends; `allow_always` writes the host's settings, which the listener never
    * offers the operator.
    */
   kind: 'allow_once' | 'allow_session' | 'allow_always' | 'deny';

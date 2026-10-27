@@ -1,9 +1,9 @@
 import type { PermissionQuestion } from './host-adapter';
 
 /**
- * The woken agent answers people with the CLI (`inbox reply <conversation> …`), or with our MCP server's tools
+ * The started agent answers people with the CLI (`inbox reply <conversation> …`), or with our MCP server's tools
  * when its host has them, and its host asks before running either. Those questions aren't for the operator:
- * wake allows them by itself, but only the agent's reading and replying in the very conversation that woke it,
+ * the listener allows them by itself, but only the agent's reading and replying in the very conversation it was started for,
  * as plain commands (one, or several joined with `&&`) or one tool call, and only with what keeps them there:
  * nothing that sends elsewhere (`--api-url`, `--to`) or lets more people answer (`--anyone`). Anything else,
  * writing to someone new included, still asks the operator.

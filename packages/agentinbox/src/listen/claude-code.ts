@@ -40,8 +40,8 @@ const CLOSE_GRACE_MS = 5_000;
 const NOTE_LENGTH = 120;
 
 /**
- * Variables a parent Claude Code session (an agent that ran `wake --foreground`, say) leaves in the
- * environment. The woken session is a session of its own, so they go, with every host's marks.
+ * Variables a parent Claude Code session (an agent that ran `listen --foreground`, say) leaves in the
+ * environment. The session the listener starts is one of its own, so they go, with every host's marks.
  */
 const PARENT_SESSION_VARIABLES = [
   'CLAUDECODE',
@@ -70,13 +70,13 @@ export const claudeCode: HostAdapter = {
 };
 
 /**
- * The flags of a woken session, as Claude Code 2.1.310 takes them:
+ * The flags of a session the listener starts, as Claude Code 2.1.310 takes them:
  * - `-p` with `--input-format` and `--output-format stream-json`, which needs `--verbose`.
  * - `--permission-prompt-tool stdio` sends its permission questions here as `can_use_tool` requests. It is
  *   what the Agent SDK passes; without it, print mode denies them by itself.
  * - `--permission-mode acceptEdits`: edits and file commands inside the project go ahead, and so does what the
  *   user's and the project's settings allow; anything else asks. Named on purpose, so the operator's own
- *   default mode (`auto`, say) never decides for a woken run.
+ *   default mode (`auto`, say) never decides for a run.
  * - `--session-id` names a new session, so its id is known before it starts; `--resume` goes on with one.
  */
 export function claudeArgs(
@@ -214,14 +214,14 @@ function executable(file: string): string | undefined {
   }
 }
 
-/** The environment a woken session starts in: the program's own, without a parent session's marks. */
+/** The environment a session the listener starts runs in: the program's own, without a parent session's marks. */
 export function sessionEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const dropped = new Set([...PARENT_SESSION_VARIABLES, ...HOST_MARKER_VARIABLES]);
 
   return Object.fromEntries(Object.entries(env).filter(([name]) => !dropped.has(name)));
 }
 
-/** One line of Claude Code's stream-json output, as far as wake reads it. */
+/** One line of Claude Code's stream-json output, as far as the listener reads it. */
 type Line = {
   type?: string;
   subtype?: string;
@@ -249,7 +249,7 @@ type CanUseToolRequest = {
   decision_reason?: string;
   /** The file outside the project that made it ask, when that is why. */
   blocked_path?: string;
-  /** Rules that would let it through next time; wake only ever takes them for the session. */
+  /** Rules that would let it through next time; the listener only ever takes them for the session. */
   permission_suggestions?: Array<{ type?: string; rules?: unknown[]; behavior?: string; destination?: string }>;
   /** Claude Code asks not to offer an "always". */
   suppress_always_allow_rule?: boolean;
@@ -507,7 +507,7 @@ class ClaudeCodeSession implements HostSession {
         response: {
           subtype: 'error',
           request_id: requestId,
-          error: 'The Agent Inbox wake program doesn’t handle this.',
+          error: 'The Agent Inbox listener doesn’t handle this.',
         },
       });
 

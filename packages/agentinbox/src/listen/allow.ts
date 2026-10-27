@@ -2,14 +2,14 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createInteraction, getInteraction, type Interaction } from '../api/agent-inbox';
 import type { ApiClient } from '../api/client';
-import type { Awake } from '../api/wake';
+import type { Listening } from '../api/listen';
 import { sleep } from '../poll';
 import { startWaitIndicator } from '../spinner';
-import { wakeHostName } from './hosts';
-import { wakeDir } from './state';
+import { hostNameOf } from './hosts';
+import { listenDir } from './state';
 import { allowCard } from './words';
 
-/** How long the operator has to answer an agent's request to keep a host awake. */
+/** How long the operator has to answer an agent's request to start listening. */
 export const ALLOW_TTL_SECONDS = 60 * 60;
 
 const POLL_MS = 2_000;
@@ -34,7 +34,7 @@ export interface AskedAllow {
 }
 
 /**
- * Where that question is kept between runs of the command, apart from the state a running wake writes: an
+ * Where that question is kept between runs of the command, apart from the state a running listener writes: an
  * agent whose command stopped waiting runs it again and goes on waiting on the same question.
  */
 export interface AskedStore {
@@ -45,19 +45,19 @@ export interface AskedStore {
 export const fileAsked: AskedStore = {
   load() {
     try {
-      return JSON.parse(readFileSync(join(wakeDir(), 'allow.json'), 'utf8')) as AskedAllow;
+      return JSON.parse(readFileSync(join(listenDir(), 'allow.json'), 'utf8')) as AskedAllow;
     } catch {
       return null;
     }
   },
   save(asked) {
-    const file = join(wakeDir(), 'allow.json');
+    const file = join(listenDir(), 'allow.json');
     if (!asked) {
       rmSync(file, { force: true });
 
       return;
     }
-    mkdirSync(wakeDir(), { recursive: true });
+    mkdirSync(listenDir(), { recursive: true });
     writeFileSync(file, `${JSON.stringify(asked, null, 2)}\n`, { mode: 0o600 });
   },
 };
@@ -72,8 +72,8 @@ export interface AllowRequest {
   computerName: string;
   /** The project as the operator reads it. */
   project: string;
-  /** Where the agent is awake now, when it's another computer or another host here: allowing moves it. */
-  elsewhere: Awake | null;
+  /** Where the agent is listening now, when it's another computer or another host here: allowing moves it. */
+  elsewhere: Listening | null;
   /** What the operator should know before they allow it, such as a project Claude Code hasn't trusted yet. */
   notes?: readonly string[];
   asked: AskedStore;
@@ -83,7 +83,7 @@ export interface AllowRequest {
 }
 
 /**
- * Asks before anything is kept awake, and before it is moved from another computer. A person at a terminal
+ * Asks before it starts listening, and before listening moves here from another computer. A person at a terminal
  * answers there. When an agent ran the command, the operator gets an `approve` with Allow and Deny, and
  * nothing is taken until they allow it.
  */
@@ -95,7 +95,7 @@ export async function askToAllow(request: AllowRequest): Promise<AllowOutcome> {
     elsewhere: request.elsewhere,
     computerId: request.computerId,
     notes: request.notes,
-    hostNames: wakeHostName,
+    hostNames: hostNameOf,
   });
 
   if (request.io.personAtTerminal) {

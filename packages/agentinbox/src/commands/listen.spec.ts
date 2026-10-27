@@ -5,20 +5,20 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApiClient } from '../api/client';
-import { waitForWakeMessages } from '../api/wake';
+import { waitForListenMessages } from '../api/listen';
 import type { CliConfig } from '../config';
+import type { AskedAllow, AskedStore } from '../listen/allow';
+import { CLAUDE_CODE_MISSING_HELP } from '../listen/claude-code';
+import { FakeApi } from '../listen/fake-api.fixture';
+import { fileForeground } from '../listen/foreground';
+import { loadHost } from '../listen/hosts';
+import type { BackgroundCommand, ServiceManager } from '../listen/service';
+import { memoryState, newState } from '../listen/state';
+import { KEY_CHANGED_MESSAGE, NEEDS_ACCOUNT_MESSAGE, PAUSED_MESSAGE } from '../listen/words';
 import { EXIT_DENIED, EXIT_OK, EXIT_TIMEOUT } from '../output';
-import type { AskedAllow, AskedStore } from '../wake/allow';
-import { CLAUDE_CODE_MISSING_HELP } from '../wake/claude-code';
-import { FakeApi } from '../wake/fake-api.fixture';
-import { fileForeground } from '../wake/foreground';
-import { loadHost } from '../wake/hosts';
-import type { BackgroundCommand, ServiceManager } from '../wake/service';
-import { memoryState, newState } from '../wake/state';
-import { KEY_CHANGED_MESSAGE, NEEDS_ACCOUNT_MESSAGE, PAUSED_MESSAGE } from '../wake/words';
-import { type WakeDeps, wakeOn, wakeRun, wakeStatus, wakeStop } from './wake';
+import { type ListenDeps, listenOn, listenRun, listenStatus, listenStop } from './listen';
 
-const FAKE_CLAUDE = fileURLToPath(new URL('../wake/fake-claude.fixture.mjs', import.meta.url));
+const FAKE_CLAUDE = fileURLToPath(new URL('../listen/fake-claude.fixture.mjs', import.meta.url));
 
 let dir: string;
 let api: FakeApi;
@@ -26,7 +26,7 @@ let api: FakeApi;
 const children: ChildProcess[] = [];
 
 beforeEach(async () => {
-  dir = mkdtempSync(join(tmpdir(), 'wake-command-'));
+  dir = mkdtempSync(join(tmpdir(), 'listen-command-'));
   api = await new FakeApi().start();
   const config: CliConfig = {
     apiUrl: api.url,
@@ -67,7 +67,7 @@ function fakeService() {
   const status = { present: false, failing: false };
   const service: ServiceManager = {
     kind: 'launchd',
-    file: join(dir, 'md.agentinbox.wake.plist'),
+    file: join(dir, 'md.agentinbox.listen.plist'),
     render: () => '',
     install: (command) => {
       status.present = true;
@@ -101,7 +101,7 @@ function memoryAsked(): AskedStore & { current: AskedAllow | null } {
   return store;
 }
 
-function deps(overrides: Partial<WakeDeps> & { answer?: string; personAtTerminal?: boolean } = {}) {
+function deps(overrides: Partial<ListenDeps> & { answer?: string; personAtTerminal?: boolean } = {}) {
   const lines: string[] = [];
   const project = join(dir, 'project');
   mkdirSync(project, { recursive: true });
@@ -109,7 +109,7 @@ function deps(overrides: Partial<WakeDeps> & { answer?: string; personAtTerminal
   const store = memoryState();
   const asked = memoryAsked();
   const prompt = vi.fn().mockResolvedValue(overrides.answer ?? 'y');
-  const result: WakeDeps = {
+  const result: ListenDeps = {
     store,
     asked,
     foreground: fileForeground,
@@ -128,12 +128,12 @@ function deps(overrides: Partial<WakeDeps> & { answer?: string; personAtTerminal
   return { deps: result, lines, store, asked, service, installed, status, prompt, project };
 }
 
-/** A process that looks like a wake in a terminal (`wake claude-code --foreground`), with its number kept. */
-function foregroundWake(): ChildProcess {
+/** A process that looks like a listener in a terminal (`listen claude-code --foreground`), with its number kept. */
+function foregroundListener(): ChildProcess {
   const terminal = spawn(process.execPath, [
     '-e',
     'setInterval(() => {}, 1000)',
-    'wake',
+    'listen',
     'claude-code',
     '--foreground',
   ]);
@@ -163,28 +163,28 @@ async function eventually(check: () => void, timeoutMs = 8000): Promise<void> {
   }
 }
 
-describe('wake <host>', { timeout: 20_000 }, () => {
-  it('asks a person at the terminal, then keeps Claude Code awake in the background', async () => {
-    const { deps: wake, prompt, installed, store, project } = deps();
+describe('listen <host>', { timeout: 20_000 }, () => {
+  it('asks a person at the terminal, then listens in the background', async () => {
+    const { deps: listener, prompt, installed, store, project } = deps();
 
-    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
 
-    expect(prompt).toHaveBeenCalledWith(`Keep Claude Code awake on MacBook, in ${project}? [y/N] `);
+    expect(prompt).toHaveBeenCalledWith(`Listen for messages on MacBook, and start Claude Code in ${project}? [y/N] `);
     const computerId = config().computerId;
     expect(computerId).toMatch(/^cmp_[A-Za-z0-9_-]{16,}$/);
-    expect(api.callsTo('POST', '/v1/wake/lease')[0].body).toEqual({
+    expect(api.callsTo('POST', '/v1/listen/lease')[0].body).toEqual({
       computerId,
       computerName: 'MacBook',
       host: 'claude-code',
       project,
     });
     expect(api.lease).toMatchObject({ computerId, host: 'claude-code' });
-    expect(installed[0].argv).toEqual([process.execPath, '/opt/agentinbox/dist/src/index.js', 'wake', 'run']);
+    expect(installed[0].argv).toEqual([process.execPath, '/opt/agentinbox/dist/src/index.js', 'listen', 'run']);
     expect(installed[0].workingDirectory).toBe(project);
     expect(store.current).toMatchObject({
       host: 'claude-code',
       project,
-      limits: { wakesPerHour: 20, maxRunSeconds: 1800 },
+      limits: { runsPerHour: 20, maxRunSeconds: 1800 },
     });
     expect(store.current?.allowedAt).toBeTruthy();
     // Every call is Claude Code's.
@@ -192,24 +192,24 @@ describe('wake <host>', { timeout: 20_000 }, () => {
   });
 
   it('takes nothing when the person says no', async () => {
-    const { deps: wake, installed } = deps({ answer: 'n' });
+    const { deps: listener, installed } = deps({ answer: 'n' });
 
-    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_DENIED);
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_DENIED);
 
-    expect(api.callsTo('POST', '/v1/wake/lease')).toHaveLength(0);
+    expect(api.callsTo('POST', '/v1/listen/lease')).toHaveLength(0);
     expect(installed).toHaveLength(0);
   });
 
   it('asks the operator with an approve when an agent ran it, and takes nothing until they allow it', async () => {
-    const { deps: wake, installed, project } = deps({ personAtTerminal: false });
+    const { deps: listener, installed, project } = deps({ personAtTerminal: false });
     api.decide = () => 'approved';
 
-    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
 
     const question = api.interactions.find((interaction) => interaction.kind === 'approve');
     expect(question).toMatchObject({ to: 'ada', from: 'Claude Code', ttlSeconds: 3600 });
     expect(question?.card).toMatchObject({
-      title: `Keep Claude Code awake on MacBook, in ${project}?`,
+      title: `Listen for messages on MacBook, and start Claude Code in ${project}?`,
       approveLabel: 'Allow',
       denyLabel: 'Deny',
     });
@@ -218,26 +218,26 @@ describe('wake <host>', { timeout: 20_000 }, () => {
   });
 
   it('stops when the operator denies it', async () => {
-    const { deps: wake, installed, lines } = deps({ personAtTerminal: false });
+    const { deps: listener, installed, lines } = deps({ personAtTerminal: false });
     api.decide = () => 'denied';
 
-    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_DENIED);
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_DENIED);
 
-    expect(lines).toContain('Not kept awake: your operator said no.');
+    expect(lines).toContain('Not listening: your operator said no.');
     expect(api.lease).toBeNull();
     expect(installed).toHaveLength(0);
   });
 
   it('goes on waiting on the same question when it is run again', async () => {
-    const { deps: wake, asked, installed } = deps({ personAtTerminal: false });
+    const { deps: listener, asked, installed } = deps({ personAtTerminal: false });
 
-    expect(await wakeOn('claude-code', { timeout: '1s' }, wake)).toBe(EXIT_TIMEOUT);
+    expect(await listenOn('claude-code', { timeout: '1s' }, listener)).toBe(EXIT_TIMEOUT);
     expect(asked.current?.interactionId).toBeTruthy();
     expect(installed).toHaveLength(0);
 
     const questionId = asked.current?.interactionId ?? '';
     setTimeout(() => api.answer(questionId, 'approved'), 300);
-    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
 
     expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(1);
     expect(asked.current).toBeNull();
@@ -246,29 +246,29 @@ describe('wake <host>', { timeout: 20_000 }, () => {
 
   it('asks before moving it from another computer, and takes it over once allowed', async () => {
     api.takeOverElsewhere('codex');
-    const { deps: wake } = deps({ personAtTerminal: false });
+    const { deps: listener } = deps({ personAtTerminal: false });
     api.decide = () => 'approved';
 
-    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
 
     const question = api.interactions.find((interaction) => interaction.kind === 'approve');
-    expect(question?.card.body).toContain('It is awake on Desktop now (Codex, in ~/work); this moves it here.');
-    expect(api.callsTo('POST', '/v1/wake/lease')[0].body).toMatchObject({ takeOver: true });
+    expect(question?.card.body).toContain('It is listening on Desktop now (Codex, in ~/work); this moves it here.');
+    expect(api.callsTo('POST', '/v1/listen/lease')[0].body).toMatchObject({ takeOver: true });
     expect(api.lease?.computerId).toBe(config().computerId);
   });
 
-  it('knows where waiting starts before it says it is awake, so a message sent meanwhile isn’t missed', async () => {
+  it('knows where waiting starts before it says it is listening, so a message sent meanwhile isn’t missed', async () => {
     api.deliver({ text: 'before it was turned on' });
-    const { deps: wake, store } = deps();
+    const { deps: listener, store } = deps();
 
-    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
 
-    expect(api.callsTo('GET', '/v1/wake/messages')[0].query).toMatchObject({ wait: '0' });
+    expect(api.callsTo('GET', '/v1/listen/messages')[0].query).toMatchObject({ wait: '0' });
     expect(store.current?.cursor).toBe('c1');
     // The background program, starting later, waits from there.
     const meanwhile = api.deliver({ text: 'while the background program starts' });
     const client = createApiClient({ apiUrl: api.url, secretKey: 'sk_test', asHost: 'claude-code' });
-    const page = await waitForWakeMessages(client, {
+    const page = await waitForListenMessages(client, {
       computerId: config().computerId ?? '',
       host: 'claude-code',
       after: store.current?.cursor,
@@ -277,10 +277,10 @@ describe('wake <host>', { timeout: 20_000 }, () => {
   });
 
   it('lets go of the lease and the service when the service can’t start, so the next try starts over', async () => {
-    const { deps: wake, store, status, service, prompt } = deps();
+    const { deps: listener, store, status, service, prompt } = deps();
     status.failing = true;
 
-    await expect(wakeOn('claude-code', {}, wake)).rejects.toThrow('launchctl bootstrap');
+    await expect(listenOn('claude-code', {}, listener)).rejects.toThrow('launchctl bootstrap');
 
     expect(api.lease).toBeNull();
     expect(store.current?.allowedAt).toBeUndefined();
@@ -288,115 +288,119 @@ describe('wake <host>', { timeout: 20_000 }, () => {
 
     status.failing = false;
     prompt.mockClear();
-    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
     expect(prompt).toHaveBeenCalled();
   });
 
   it('carries no sessions over from another agent this computer was connected to', async () => {
-    const { deps: wake, store } = deps();
-    await wakeOn('claude-code', {}, wake);
+    const { deps: listener, store } = deps();
+    await listenOn('claude-code', {}, listener);
     store.current = store.current && {
       ...store.current,
-      sessions: { conv_1: { sessionId: 's1', round: 0, lastWakeAt: new Date().toISOString() } },
+      sessions: { conv_1: { sessionId: 's1', round: 0, lastRunAt: new Date().toISOString() } },
       own: ['int_1'],
     };
     writeFileSync(join(dir, 'config.json'), JSON.stringify({ ...config(), relayAgentIdentifier: 'other-agent' }));
 
-    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
 
     expect(store.current?.sessions).toEqual({});
     expect(store.current?.own).toEqual([]);
   });
 
-  it('stops a wake running in a terminal before it keeps it awake in the background', async () => {
-    const terminal = foregroundWake();
-    const { deps: wake, installed } = deps();
+  it('stops a listener running in a terminal before it listens in the background', async () => {
+    const terminal = foregroundListener();
+    const { deps: listener, installed } = deps();
 
-    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
 
     await eventually(() => expect(terminal.exitCode ?? terminal.signalCode).not.toBeNull());
     expect(installed).toHaveLength(1);
   });
 
-  it('leaves a process alone that only took the number of a wake that ended', async () => {
+  it('leaves a process alone that only took the number of a listener that ended', async () => {
     const other = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)']);
     children.push(other);
-    mkdirSync(join(dir, 'wake'), { recursive: true });
-    writeFileSync(join(dir, 'wake', 'foreground.json'), JSON.stringify({ pid: other.pid }));
-    const { deps: wake } = deps();
+    mkdirSync(join(dir, 'listen'), { recursive: true });
+    writeFileSync(join(dir, 'listen', 'foreground.json'), JSON.stringify({ pid: other.pid }));
+    const { deps: listener } = deps();
 
-    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
 
     await new Promise((resolve) => setTimeout(resolve, 300));
     expect(other.exitCode ?? other.signalCode).toBeNull();
   });
 
-  it('says when it is awake here already', async () => {
-    const { deps: wake, prompt } = deps();
-    await wakeOn('claude-code', {}, wake);
+  it('says when it is listening here already', async () => {
+    const { deps: listener, prompt } = deps();
+    await listenOn('claude-code', {}, listener);
     prompt.mockClear();
 
-    expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
 
     expect(prompt).not.toHaveBeenCalled();
   });
 
   it('tells the operator in the question when the project’s allow list won’t apply yet', async () => {
-    const { deps: wake, project } = deps({ personAtTerminal: false });
+    const { deps: listener, project } = deps({ personAtTerminal: false });
     mkdirSync(join(project, '.claude'), { recursive: true });
     writeFileSync(
       join(project, '.claude', 'settings.json'),
       JSON.stringify({ permissions: { allow: ['Bash(npm test)'] } })
     );
-    wake.env = { ...wake.env, CLAUDE_CONFIG_DIR: join(dir, 'claude-config') };
+    listener.env = { ...listener.env, CLAUDE_CONFIG_DIR: join(dir, 'claude-config') };
     api.decide = () => 'approved';
 
-    await wakeOn('claude-code', {}, wake);
+    await listenOn('claude-code', {}, listener);
 
     const question = api.interactions.find((interaction) => interaction.kind === 'approve');
     expect(question?.card.body).toContain('the project’s own allow list won’t apply until it is');
   });
 
   it('says how to install Claude Code when it isn’t there', async () => {
-    const { deps: wake } = deps();
-    wake.env = { PATH: join(dir, 'nowhere'), HOME: dir };
+    const { deps: listener } = deps();
+    listener.env = { PATH: join(dir, 'nowhere'), HOME: dir };
     vi.stubEnv('HOME', dir);
 
-    await expect(wakeOn('claude-code', {}, wake)).rejects.toThrow(CLAUDE_CODE_MISSING_HELP);
+    await expect(listenOn('claude-code', {}, listener)).rejects.toThrow(CLAUDE_CODE_MISSING_HELP);
   });
 
-  it('names the hosts it can wake', async () => {
-    const { deps: wake } = deps();
+  it('names the hosts it can start', async () => {
+    const { deps: listener } = deps();
 
-    await expect(wakeOn('chatgpt', {}, wake)).rejects.toThrow('Wake starts a host on this computer: claude-code.');
-    await expect(wakeOn('codex', {}, wake)).rejects.toThrow('Wake doesn’t start Codex yet, only Claude Code.');
+    await expect(listenOn('chatgpt', {}, listener)).rejects.toThrow(
+      'Listening starts a host on this computer: claude-code.'
+    );
+    await expect(listenOn('codex', {}, listener)).rejects.toThrow(
+      'Listening doesn’t start Codex yet, only Claude Code.'
+    );
   });
 
   it('needs the computer connected first', async () => {
     rmSync(join(dir, 'config.json'));
-    const { deps: wake } = deps();
+    const { deps: listener } = deps();
 
-    await expect(wakeOn('claude-code', {}, wake)).rejects.toThrow('Connect this computer first');
+    await expect(listenOn('claude-code', {}, listener)).rejects.toThrow('Connect this computer first');
   });
 
-  it('needs an account: a keyless setup isn’t kept awake, and nothing is asked', async () => {
+  it('needs an account: a keyless setup doesn’t listen, and nothing is asked', async () => {
     writeFileSync(
       join(dir, 'config.json'),
       JSON.stringify({ ...config(), auth: { mode: 'keyless', keylessIdentifier: 'pk_keyless_test' } })
     );
-    const { deps: wake, prompt, installed } = deps();
+    const { deps: listener, prompt, installed } = deps();
 
-    await expect(wakeOn('claude-code', {}, wake)).rejects.toThrow(NEEDS_ACCOUNT_MESSAGE);
+    await expect(listenOn('claude-code', {}, listener)).rejects.toThrow(NEEDS_ACCOUNT_MESSAGE);
     expect(prompt).not.toHaveBeenCalled();
     expect(installed).toHaveLength(0);
     expect(api.calls).toHaveLength(0);
   });
 
   it('asks nothing while the agent is paused', async () => {
-    const { deps: wake, prompt, installed } = deps();
+    const { deps: listener, prompt, installed } = deps();
     api.paused = true;
 
-    await expect(wakeOn('claude-code', {}, wake)).rejects.toThrow(PAUSED_MESSAGE);
+    await expect(listenOn('claude-code', {}, listener)).rejects.toThrow(PAUSED_MESSAGE);
     expect(prompt).not.toHaveBeenCalled();
     expect(installed).toHaveLength(0);
   });
@@ -405,14 +409,14 @@ describe('wake <host>', { timeout: 20_000 }, () => {
     const other = await new FakeApi().start();
     try {
       vi.stubEnv('INBOX_API_URL', other.url);
-      const { deps: wake, installed } = deps({ personAtTerminal: false });
-      wake.env = { ...wake.env, INBOX_API_URL: other.url };
+      const { deps: listener, installed } = deps({ personAtTerminal: false });
+      listener.env = { ...listener.env, INBOX_API_URL: other.url };
       api.decide = () => 'approved';
 
-      expect(await wakeOn('claude-code', {}, wake)).toBe(EXIT_OK);
+      expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
 
       expect(other.calls).toHaveLength(0);
-      expect(api.callsTo('POST', '/v1/wake/lease')).toHaveLength(1);
+      expect(api.callsTo('POST', '/v1/listen/lease')).toHaveLength(1);
       expect(installed[0].env.INBOX_API_URL).toBeUndefined();
     } finally {
       await other.stop();
@@ -420,28 +424,28 @@ describe('wake <host>', { timeout: 20_000 }, () => {
   });
 
   it('says the key changed when the API turns the key down', async () => {
-    const { deps: wake, installed } = deps();
+    const { deps: listener, installed } = deps();
     api.keyRejected = true;
 
-    await expect(wakeOn('claude-code', {}, wake)).rejects.toThrow(KEY_CHANGED_MESSAGE);
+    await expect(listenOn('claude-code', {}, listener)).rejects.toThrow(KEY_CHANGED_MESSAGE);
     expect(installed).toHaveLength(0);
   });
 });
 
-describe('wake stop', () => {
+describe('listen stop', () => {
   it('stops the background program, lets go of the lease, and keeps only the sessions', async () => {
-    const { deps: wake, store, service } = deps();
-    await wakeOn('claude-code', {}, wake);
+    const { deps: listener, store, service } = deps();
+    await listenOn('claude-code', {}, listener);
     store.current = store.current && {
       ...store.current,
       cursor: 'c4',
-      sessions: { conv_1: { sessionId: 's1', round: 0, lastWakeAt: new Date().toISOString() } },
+      sessions: { conv_1: { sessionId: 's1', round: 0, lastRunAt: new Date().toISOString() } },
     };
 
-    expect(await wakeStop(wake)).toBe(EXIT_OK);
+    expect(await listenStop(listener)).toBe(EXIT_OK);
 
     expect(service.isInstalled()).toBe(false);
-    expect(api.callsTo('POST', '/v1/wake/lease/release')[0].body).toEqual({
+    expect(api.callsTo('POST', '/v1/listen/lease/release')[0].body).toEqual({
       computerId: config().computerId,
       host: 'claude-code',
     });
@@ -452,103 +456,106 @@ describe('wake stop', () => {
   });
 
   it('lets go of the lease even while the agent is paused', async () => {
-    const { deps: wake, service, lines } = deps();
-    await wakeOn('claude-code', {}, wake);
+    const { deps: listener, service, lines } = deps();
+    await listenOn('claude-code', {}, listener);
     api.paused = true;
     lines.length = 0;
 
-    expect(await wakeStop(wake)).toBe(EXIT_OK);
+    expect(await listenStop(listener)).toBe(EXIT_OK);
 
     expect(service.isInstalled()).toBe(false);
     expect(api.lease).toBeNull();
-    expect(lines).toEqual(['Claude Code isn’t kept awake on this computer any more.']);
+    expect(lines).toEqual(['This computer isn’t listening for Claude Code any more.']);
   });
 
-  it('stops a wake running in a terminal too', async () => {
-    const { deps: wake } = deps();
-    await wakeOn('claude-code', {}, wake);
-    const terminal = foregroundWake();
+  it('stops a listener running in a terminal too', async () => {
+    const { deps: listener } = deps();
+    await listenOn('claude-code', {}, listener);
+    const terminal = foregroundListener();
 
-    expect(await wakeStop(wake)).toBe(EXIT_OK);
+    expect(await listenStop(listener)).toBe(EXIT_OK);
 
     await eventually(() => expect(terminal.exitCode ?? terminal.signalCode).not.toBeNull());
     expect(fileForeground.running()).toBeNull();
   });
 
-  it('leaves another computer’s wake alone and says where it is', async () => {
+  it('leaves another computer’s listener alone and says where it is', async () => {
     api.takeOverElsewhere('codex');
-    const { deps: wake, lines } = deps();
+    const { deps: listener, lines } = deps();
 
-    await wakeStop(wake);
+    await listenStop(listener);
 
-    expect(lines).toContain('Nothing was kept awake on this computer.');
-    expect(lines).toContain('It’s awake on Desktop: run `npx @agentinbox/cli wake stop` there to stop it.');
+    expect(lines).toContain('Nothing was listening on this computer.');
+    expect(lines).toContain('It’s listening on Desktop: run `npx @agentinbox/cli listen stop` there to stop it.');
     expect(api.lease?.computerName).toBe('Desktop');
   });
 });
 
-describe('wake status', () => {
-  it('says where the agent is awake and what this computer does', async () => {
-    const { deps: wake, lines, project } = deps();
-    await wakeOn('claude-code', {}, wake);
+describe('listen status', () => {
+  it('says where the agent is listening and what this computer does', async () => {
+    const { deps: listener, lines, project } = deps();
+    await listenOn('claude-code', {}, listener);
     lines.length = 0;
 
-    expect(await wakeStatus({}, wake)).toBe(EXIT_OK);
+    expect(await listenStatus({}, listener)).toBe(EXIT_OK);
 
     expect(lines[0]).toMatch(
-      new RegExp(`^Awake on MacBook \\(this computer\\): Claude Code, in ${project}, for \\d+s now\\.$`)
+      new RegExp(`^Listening on MacBook \\(this computer\\): Claude Code, in ${project}, for \\d+s now\\.$`)
     );
-    expect(lines[1]).toBe(`This computer keeps Claude Code awake for ${project}, in the background (launchd).`);
+    expect(lines[1]).toBe(`This computer listens for Claude Code in ${project}, in the background (launchd).`);
   });
 
-  it('says the agent is paused, where it is still awake, and what this computer does', async () => {
-    const { deps: wake, lines, project } = deps();
-    await wakeOn('claude-code', {}, wake);
+  it('says the agent is paused, where it is still listening, and what this computer does', async () => {
+    const { deps: listener, lines, project } = deps();
+    await listenOn('claude-code', {}, listener);
     api.paused = true;
     lines.length = 0;
 
-    expect(await wakeStatus({}, wake)).toBe(EXIT_OK);
+    expect(await listenStatus({}, listener)).toBe(EXIT_OK);
 
     expect(lines[0]).toBe(PAUSED_MESSAGE);
-    expect(lines[1]).toMatch(/^Awake on MacBook \(this computer\): Claude Code, in .+, for \d+s now\.$/);
-    expect(lines[2]).toBe(`This computer keeps Claude Code awake for ${project}, in the background (launchd).`);
+    expect(lines[1]).toMatch(/^Listening on MacBook \(this computer\): Claude Code, in .+, for \d+s now\.$/);
+    expect(lines[2]).toBe(`This computer listens for Claude Code in ${project}, in the background (launchd).`);
 
     // Once the lease lapsed while paused, the pause says it all.
     api.lease = null;
     lines.length = 0;
-    await wakeStatus({}, wake);
+    await listenStatus({}, listener);
     expect(lines[0]).toBe(PAUSED_MESSAGE);
-    expect(lines[1]).toBe(`This computer keeps Claude Code awake for ${project}, in the background (launchd).`);
+    expect(lines[1]).toBe(`This computer listens for Claude Code in ${project}, in the background (launchd).`);
 
     lines.length = 0;
-    await wakeStatus({ json: true }, wake);
-    expect(JSON.parse(lines.join('\n'))).toMatchObject({ awake: null, paused: true });
+    await listenStatus({ json: true }, listener);
+    expect(JSON.parse(lines.join('\n'))).toMatchObject({ listening: null, paused: true });
   });
 
   it('prints JSON for agents', async () => {
-    const { deps: wake, lines } = deps();
+    const { deps: listener, lines } = deps();
 
-    await wakeStatus({ json: true }, wake);
+    await listenStatus({ json: true }, listener);
 
-    expect(JSON.parse(lines.join('\n'))).toMatchObject({ awake: null, thisComputer: { awakeHere: false, host: null } });
+    expect(JSON.parse(lines.join('\n'))).toMatchObject({
+      listening: null,
+      thisComputer: { listeningHere: false, host: null },
+    });
   });
 });
 
-describe('wake run', { timeout: 20_000 }, () => {
+describe('listen run', { timeout: 20_000 }, () => {
   it('exits cleanly, without waiting, once it stopped for good', async () => {
-    const { deps: wake, store, lines } = deps();
+    const { deps: listener, store, lines } = deps();
     store.current = {
       ...newState({
         host: 'claude-code',
         project: dir,
         program: { command: 'claude', args: [] },
-        limits: { wakesPerHour: 20, maxRunSeconds: 60 },
+        limits: { runsPerHour: 20, maxRunSeconds: 60 },
       }),
       allowedAt: new Date().toISOString(),
       stopped: { reason: 'key_changed', message: KEY_CHANGED_MESSAGE, at: new Date().toISOString() },
     };
 
-    expect(await wakeRun(wake)).toBe(EXIT_OK);
+    expect(await listenRun(listener)).toBe(EXIT_OK);
 
     expect(lines).toEqual([`Stopped: ${KEY_CHANGED_MESSAGE}`]);
     expect(api.calls).toHaveLength(0);
@@ -558,13 +565,13 @@ describe('wake run', { timeout: 20_000 }, () => {
     const other = await new FakeApi().start();
     const controller = new AbortController();
     try {
-      const { deps: wake } = deps({ signal: controller.signal });
-      await wakeOn('claude-code', {}, wake);
-      const waits = api.callsTo('GET', '/v1/wake/messages').length;
+      const { deps: listener } = deps({ signal: controller.signal });
+      await listenOn('claude-code', {}, listener);
+      const waits = api.callsTo('GET', '/v1/listen/messages').length;
       vi.stubEnv('INBOX_API_URL', other.url);
 
-      const running = wakeRun({ ...wake, env: { ...wake.env, INBOX_API_URL: other.url } });
-      await eventually(() => expect(api.callsTo('GET', '/v1/wake/messages').length).toBeGreaterThan(waits));
+      const running = listenRun({ ...listener, env: { ...listener.env, INBOX_API_URL: other.url } });
+      await eventually(() => expect(api.callsTo('GET', '/v1/listen/messages').length).toBeGreaterThan(waits));
       controller.abort();
 
       expect(await running).toBe(EXIT_OK);
@@ -577,26 +584,26 @@ describe('wake run', { timeout: 20_000 }, () => {
 
   it('stops, without running anything, once this computer is connected anew', async () => {
     for (const change of [{ relayAgentIdentifier: 'other-agent' }, { auth: { mode: 'apiKey', secretKey: 'sk_new' } }]) {
-      const { deps: wake, store, lines } = deps();
-      await wakeOn('claude-code', {}, wake);
+      const { deps: listener, store, lines } = deps();
+      await listenOn('claude-code', {}, listener);
       const saved = config();
       writeFileSync(join(dir, 'config.json'), JSON.stringify({ ...saved, ...change }));
-      const waits = api.callsTo('GET', '/v1/wake/messages').length;
+      const waits = api.callsTo('GET', '/v1/listen/messages').length;
 
-      expect(await wakeRun(wake)).toBe(EXIT_OK);
+      expect(await listenRun(listener)).toBe(EXIT_OK);
 
       expect(lines.at(-1)).toMatch(/^Stopped: This computer was connected anew/);
       expect(store.current?.stopped?.reason).toBe('connection_changed');
-      expect(api.callsTo('GET', '/v1/wake/messages')).toHaveLength(waits);
+      expect(api.callsTo('GET', '/v1/listen/messages')).toHaveLength(waits);
       writeFileSync(join(dir, 'config.json'), JSON.stringify(saved));
     }
   });
 
-  it('does nothing where wake was never allowed', async () => {
-    const { deps: wake, lines } = deps();
+  it('does nothing where listening was never allowed', async () => {
+    const { deps: listener, lines } = deps();
 
-    expect(await wakeRun(wake)).toBe(EXIT_OK);
+    expect(await listenRun(listener)).toBe(EXIT_OK);
 
-    expect(lines[0]).toContain('Wake isn’t turned on here.');
+    expect(lines[0]).toContain('Listening isn’t turned on here.');
   });
 });

@@ -20,7 +20,7 @@ import {
 let home: string;
 
 beforeEach(() => {
-  home = mkdtempSync(join(tmpdir(), 'wake-service-'));
+  home = mkdtempSync(join(tmpdir(), 'listen-service-'));
 });
 
 afterEach(() => {
@@ -54,23 +54,23 @@ const COMMAND = backgroundCommand({
     HOME: '/Users/ada',
   },
   project: '/Users/ada/projects/app & co',
-  logFile: '/Users/ada/.agentinbox/wake/wake.log',
-  description: 'Keeps Claude Code awake for Agent Inbox',
+  logFile: '/Users/ada/.agentinbox/listen/listen.log',
+  description: 'Listens for Agent Inbox messages for Claude Code',
 });
 
 /** The same command, with its log in the test's own home, where installing it may make the log's folder. */
 function installable() {
-  return { ...COMMAND, logFile: join(home, '.agentinbox', 'wake', 'wake.log') };
+  return { ...COMMAND, logFile: join(home, '.agentinbox', 'listen', 'listen.log') };
 }
 
 describe('backgroundCommand', () => {
   it('starts the same CLI file, with only the variables it needs: never a secret, nor an API to send the key to', () => {
     expect(COMMAND).toEqual({
-      argv: ['/opt/node/bin/node', '/opt/agentinbox/dist/src/index.js', 'wake', 'run'],
+      argv: ['/opt/node/bin/node', '/opt/agentinbox/dist/src/index.js', 'listen', 'run'],
       workingDirectory: '/Users/ada/projects/app & co',
       env: { PATH: '/opt/node/bin:/usr/bin', INBOX_CONFIG: '/Users/ada/.agentinbox-local/config.json' },
-      logFile: '/Users/ada/.agentinbox/wake/wake.log',
-      description: 'Keeps Claude Code awake for Agent Inbox',
+      logFile: '/Users/ada/.agentinbox/listen/listen.log',
+      description: 'Listens for Agent Inbox messages for Claude Code',
     });
   });
 
@@ -81,11 +81,11 @@ describe('backgroundCommand', () => {
       version: '0.1.0',
       env: {},
       project: '/Users/ada/app',
-      logFile: '/tmp/wake.log',
+      logFile: '/tmp/listen.log',
       description: 'd',
     });
 
-    expect(fromCache.argv).toEqual(['/opt/node/bin/npx', '--yes', '@agentinbox/cli@0.1.0', 'wake', 'run']);
+    expect(fromCache.argv).toEqual(['/opt/node/bin/npx', '--yes', '@agentinbox/cli@0.1.0', 'listen', 'run']);
   });
 });
 
@@ -105,18 +105,18 @@ describe('launchd', () => {
     expect(plist).toContain('<key>KeepAlive</key>\n  <dict>\n    <key>SuccessfulExit</key>\n    <false/>\n  </dict>');
     // Not Background: throttled, Claude Code misses its 2-second limit for reading its sign-in from the Keychain.
     expect(plist).toContain('<key>ProcessType</key>\n  <string>Standard</string>');
-    expect(plist).toContain('<key>StandardOutPath</key>\n  <string>/Users/ada/.agentinbox/wake/wake.log</string>');
+    expect(plist).toContain('<key>StandardOutPath</key>\n  <string>/Users/ada/.agentinbox/listen/listen.log</string>');
     expect(plist).toContain('<key>INBOX_CONFIG</key>');
     expect(plist).not.toContain('INBOX_API_URL');
     expect(plist).not.toContain('sk_never_written');
   });
 
-  it('starts the CLI through a script named agentinbox-wake, the name macOS lists it by', () => {
+  it('starts the CLI through a script named agentinbox-listen, the name macOS lists it by', () => {
     expect(launchdLauncher(COMMAND)).toBe(
       [
         '#!/bin/sh',
-        '# Keeps Claude Code awake for Agent Inbox. `npx @agentinbox/cli wake stop` turns it off and removes this file.',
-        "exec '/opt/node/bin/node' '/opt/agentinbox/dist/src/index.js' 'wake' 'run'",
+        '# Listens for Agent Inbox messages for Claude Code. `npx @agentinbox/cli listen stop` turns it off and removes this file.',
+        "exec '/opt/node/bin/node' '/opt/agentinbox/dist/src/index.js' 'listen' 'run'",
         '',
       ].join('\n')
     );
@@ -141,7 +141,7 @@ describe('launchd', () => {
     expect(readFileSync(file, 'utf8')).toBe(launchdPlist(installable(), launcher));
     expect(readFileSync(launcher, 'utf8')).toBe(launchdLauncher(installable()));
     expect(statSync(launcher).mode & 0o777).toBe(0o755);
-    expect(existsSync(join(home, '.agentinbox', 'wake'))).toBe(true);
+    expect(existsSync(join(home, '.agentinbox', 'listen'))).toBe(true);
     expect(ran).toEqual([`launchctl bootout gui/501/${LAUNCHD_LABEL}`, `launchctl bootstrap gui/501 ${file}`]);
     expect(service.isInstalled()).toBe(true);
 
@@ -184,7 +184,7 @@ describe('systemd', () => {
     expect(unit).toBe(
       [
         '[Unit]',
-        'Description=Keeps Claude Code awake for Agent Inbox',
+        'Description=Listens for Agent Inbox messages for Claude Code',
         'After=network-online.target',
         'Wants=network-online.target',
         '',
@@ -193,11 +193,11 @@ describe('systemd', () => {
         'WorkingDirectory=/Users/ada/projects/app & co',
         'Environment="PATH=/opt/node/bin:/usr/bin"',
         'Environment="INBOX_CONFIG=/x/%%20/config.json"',
-        'ExecStart="/opt/node/bin/node" "/opt/agentinbox/dist/src/index.js" "wake" "run"',
+        'ExecStart="/opt/node/bin/node" "/opt/agentinbox/dist/src/index.js" "listen" "run"',
         'Restart=on-failure',
         'RestartSec=30',
-        'StandardOutput=append:/Users/ada/.agentinbox/wake/wake.log',
-        'StandardError=append:/Users/ada/.agentinbox/wake/wake.log',
+        'StandardOutput=append:/Users/ada/.agentinbox/listen/listen.log',
+        'StandardError=append:/Users/ada/.agentinbox/listen/listen.log',
         '',
         '[Install]',
         'WantedBy=default.target',

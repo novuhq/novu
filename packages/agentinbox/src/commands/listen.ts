@@ -2,67 +2,67 @@ import pc from 'picocolors';
 import { version } from '../../package.json';
 import { type ApiClient, createApiClient } from '../api/client';
 import {
-  AWAKE_ELSEWHERE_CODE,
-  type Awake,
-  awakeOf,
   errorCode,
   getLease,
   isKeyRejected,
+  LISTENING_ELSEWHERE_CODE,
+  type ListenHostId,
+  type Listening,
+  listeningOf,
   releaseLease,
   takeLease,
-  type WakeHostId,
-  waitForWakeMessages,
-} from '../api/wake';
+  waitForListenMessages,
+} from '../api/listen';
 import { info, promptLine, success, warn } from '../cli-io';
 import { CLI_COMMAND, type CliConfig, loadConfig } from '../config';
 import { detectHost } from '../host';
-import { EXIT_DENIED, EXIT_ERROR, EXIT_GONE, EXIT_OK, EXIT_TIMEOUT, fail, formatRelativeTime } from '../output';
-import { openScreen, type Screen } from '../screen/screen';
-import { type AllowIo, type AllowOutcome, type AskedStore, askToAllow, fileAsked } from '../wake/allow';
-import { computerName, ensureComputerId, projectLabel } from '../wake/computer';
-import { type ForegroundStore, fileForeground, stopForeground } from '../wake/foreground';
-import type { HostAdapter, HostProgram } from '../wake/host-adapter';
-import { isWakeHostId, loadHost, wakeableHosts, wakeHostName } from '../wake/hosts';
-import { type LoopEnd, runWakeLoop, type WakeTiming } from '../wake/loop';
-import { backgroundCommand, isUnsupported, type ServiceSetup, serviceManager } from '../wake/service';
+import { type AllowIo, type AllowOutcome, type AskedStore, askToAllow, fileAsked } from '../listen/allow';
+import { computerName, ensureComputerId, projectLabel } from '../listen/computer';
+import { type ForegroundStore, fileForeground, stopForeground } from '../listen/foreground';
+import type { HostAdapter, HostProgram } from '../listen/host-adapter';
+import { hostNameOf, isListenHostId, loadHost, startableHosts } from '../listen/hosts';
+import { type ListenTiming, type LoopEnd, runListenLoop } from '../listen/loop';
+import { backgroundCommand, isUnsupported, type ServiceSetup, serviceManager } from '../listen/service';
 import {
   connectionOf,
   DEFAULT_LIMITS,
   fileState,
+  type ListenState,
   logPath,
   newState,
   type StateStore,
   sameConnection,
-  type WakeState,
-} from '../wake/state';
+} from '../listen/state';
 import {
   connectionChangedMessage,
   KEY_CHANGED_MESSAGE,
   movedMessage,
   NEEDS_ACCOUNT_MESSAGE,
   PAUSED_MESSAGE,
-} from '../wake/words';
+} from '../listen/words';
+import { EXIT_DENIED, EXIT_ERROR, EXIT_GONE, EXIT_OK, EXIT_TIMEOUT, fail, formatRelativeTime } from '../output';
+import { openScreen, type Screen } from '../screen/screen';
 import { failOnScreen } from './failure';
 import { handleError, parseDuration } from './interact';
 
-export interface WakeOptions {
-  /** Keeps it awake in this terminal only, instead of in the background. */
+export interface ListenOptions {
+  /** Listens in this terminal only, instead of in the background. */
   foreground?: boolean;
   /** How long to wait for the operator's Allow when an agent ran the command. */
   timeout?: string;
-  wakesPerHour?: string;
+  runsPerHour?: string;
   maxRun?: string;
   json?: boolean;
 }
 
-/** Everything `wake` reaches outside itself, so tests can stand in for each. */
-export interface WakeDeps {
+/** Everything `listen` reaches outside itself, so tests can stand in for each. */
+export interface ListenDeps {
   store: StateStore;
   asked: AskedStore;
-  /** A wake running in a terminal, which another wake, or `wake stop`, stops first. */
+  /** A listener running in a terminal, which another one, or `listen stop`, stops first. */
   foreground: ForegroundStore;
   service: () => ServiceSetup;
-  loadHost: (id: WakeHostId) => Promise<HostAdapter | null>;
+  loadHost: (id: ListenHostId) => Promise<HostAdapter | null>;
   computerName: () => string;
   io: AllowIo;
   /** The CLI's own entry file and Node, for the background service to start. */
@@ -72,18 +72,18 @@ export interface WakeDeps {
   cwd: string;
   /** Lines for the person or agent that ran the command, and the loop's log. */
   out: (line: string) => void;
-  timing?: Partial<WakeTiming>;
+  timing?: Partial<ListenTiming>;
   /** Ends a loop: Ctrl-C in the foreground, the service manager stopping the background program. */
   signal?: AbortSignal;
   /** Called just before a foreground loop starts, which then prints its log. */
   beforeLoop?: () => unknown;
 }
 
-/** `wake claude-code`, `wake status`, `wake stop`, and `wake run`, which the background service starts. */
-export async function wakeCommand(what: string, options: WakeOptions): Promise<never> {
+/** `listen claude-code`, `listen status`, `listen stop`, and `listen run`, which the background service starts. */
+export async function listenCommand(what: string, options: ListenOptions): Promise<never> {
   const word = what.trim().toLowerCase();
   const turningOn = word !== 'run' && word !== 'status' && word !== 'stop';
-  const screen = turningOn && personAtTerminal() ? await openScreen({ command: `wake ${word}` }) : null;
+  const screen = turningOn && personAtTerminal() ? await openScreen({ command: `listen ${word}` }) : null;
   let ended = false;
   const endScreen = async (emotion: 'happy' | 'asleep') => {
     if (screen && !ended) {
@@ -101,15 +101,15 @@ export async function wakeCommand(what: string, options: WakeOptions): Promise<n
   }
 
   try {
-    const deps: WakeDeps = { ...realDeps(controller.signal), beforeLoop: () => endScreen('happy') };
+    const deps: ListenDeps = { ...realDeps(controller.signal), beforeLoop: () => endScreen('happy') };
     const code =
       word === 'status'
-        ? await wakeStatus(options, deps)
+        ? await listenStatus(options, deps)
         : word === 'stop'
-          ? await wakeStop(deps)
+          ? await listenStop(deps)
           : word === 'run'
-            ? await wakeRun(deps)
-            : await wakeOn(word, options, deps);
+            ? await listenRun(deps)
+            : await listenOn(word, options, deps);
 
     await endScreen(code === EXIT_OK ? 'happy' : 'asleep');
     process.exit(code);
@@ -127,7 +127,7 @@ function personAtTerminal(): boolean {
   return Boolean(process.stdin.isTTY && process.stdout.isTTY) && detectHost() === null;
 }
 
-function realDeps(signal: AbortSignal): WakeDeps {
+function realDeps(signal: AbortSignal): ListenDeps {
   return {
     store: fileState,
     asked: fileAsked,
@@ -160,22 +160,22 @@ function savedConfig(env: NodeJS.ProcessEnv): CliConfig {
 
   const key = env.INBOX_SECRET_KEY?.trim();
   if (key && key !== file.auth.secretKey) {
-    warn('INBOX_SECRET_KEY is set in this shell, but wake uses the connection saved on this computer.');
+    warn('INBOX_SECRET_KEY is set in this shell, but listen uses the connection saved on this computer.');
   }
   const apiUrl = env.INBOX_API_URL?.trim().replace(/\/$/, '');
   if (apiUrl && apiUrl !== file.apiUrl.replace(/\/$/, '')) {
-    warn(`INBOX_API_URL is set in this shell, but wake uses the API saved on this computer: ${file.apiUrl}.`);
+    warn(`INBOX_API_URL is set in this shell, but listen uses the API saved on this computer: ${file.apiUrl}.`);
   }
 
   return file;
 }
 
-function clientFor(config: CliConfig, host: WakeHostId): ApiClient {
+function clientFor(config: CliConfig, host: ListenHostId): ApiClient {
   return createApiClient({
     apiUrl: config.apiUrl,
     secretKey: config.auth.secretKey,
     keylessIdentifier: config.auth.mode === 'keyless' ? config.auth.keylessIdentifier : undefined,
-    // Wake's calls count as checks by the host it wakes, wherever `wake` was started from.
+    // The listener's calls count as checks by the host it starts, wherever `listen` was started from.
     asHost: host,
   });
 }
@@ -203,10 +203,10 @@ function since(iso: string): string {
   return formatRelativeTime(iso).replace(/ ago$/, '');
 }
 
-/** What `wake <host>` works with, once it has checked it can go ahead. */
-interface WakePlan {
+/** What `listen <host>` works with, once it has checked it can go ahead. */
+interface ListenPlan {
   host: HostAdapter;
-  limits: WakeState['limits'];
+  limits: ListenState['limits'];
   config: CliConfig;
   program: HostProgram;
   version?: string;
@@ -217,18 +217,18 @@ interface WakePlan {
   computer: string;
   computerId: string;
   client: ApiClient;
-  /** Where the agent is awake now, when that's another computer or another host here. */
-  elsewhere: Awake | null;
-  /** Wake runs here already, for the same host and project. */
-  awakeHere: boolean;
-  previous: WakeState | null;
+  /** Where the agent is listening now, when that's another computer or another host here. */
+  elsewhere: Listening | null;
+  /** It listens here already, for the same host and project. */
+  listeningHere: boolean;
+  previous: ListenState | null;
 }
 
 /** Every check before anything is asked: the host, the connection, the host's program, the service manager. */
-async function planWake(hostInput: string, options: WakeOptions, deps: WakeDeps): Promise<WakePlan> {
+async function planListen(hostInput: string, options: ListenOptions, deps: ListenDeps): Promise<ListenPlan> {
   const host = await hostFor(hostInput, deps);
   const limits = {
-    wakesPerHour: positive(options.wakesPerHour, '--wakes-per-hour') ?? DEFAULT_LIMITS.wakesPerHour,
+    runsPerHour: positive(options.runsPerHour, '--runs-per-hour') ?? DEFAULT_LIMITS.runsPerHour,
     maxRunSeconds: options.maxRun ? parseDuration(options.maxRun) : DEFAULT_LIMITS.maxRunSeconds,
   };
   const config = savedConfig(deps.env);
@@ -237,7 +237,7 @@ async function planWake(hostInput: string, options: WakeOptions, deps: WakeDeps)
   }
   if (!config.subscriberId) {
     throw new Error(
-      `Wake asks you before ${host.name} does what its settings don’t allow, and this computer doesn’t know who you are yet. Run \`${CLI_COMMAND} setup\`, then wake again.`
+      `Listening asks you before ${host.name} does what its settings don’t allow, and this computer doesn’t know who you are yet. Run \`${CLI_COMMAND} setup\`, then listen again.`
     );
   }
 
@@ -254,7 +254,7 @@ async function planWake(hostInput: string, options: WakeOptions, deps: WakeDeps)
 
   const computerId = ensureComputerId(config);
   const client = clientFor(config, host.id);
-  const { awake: holder, paused } = await getLease(client, config.relayAgentIdentifier).catch(rethrowKey);
+  const { listening: holder, paused } = await getLease(client, config.relayAgentIdentifier).catch(rethrowKey);
   if (paused) {
     throw new Error(PAUSED_MESSAGE);
   }
@@ -281,23 +281,23 @@ async function planWake(hostInput: string, options: WakeOptions, deps: WakeDeps)
     computerId,
     client,
     elsewhere: holder && !heldHere ? holder : null,
-    awakeHere: Boolean(same && previous?.allowedAt && !previous.stopped && heldHere),
+    listeningHere: Boolean(same && previous?.allowedAt && !previous.stopped && heldHere),
     previous: same ? previous : null,
   };
 }
 
-async function hostFor(hostInput: string, deps: WakeDeps): Promise<HostAdapter> {
-  const supported = wakeableHosts();
-  if (!isWakeHostId(hostInput)) {
+async function hostFor(hostInput: string, deps: ListenDeps): Promise<HostAdapter> {
+  const supported = startableHosts();
+  if (!isListenHostId(hostInput)) {
     throw new Error(
-      `Wake starts a host on this computer: ${supported.join(', ')}. For example: ${CLI_COMMAND} wake ${supported[0]}`
+      `Listening starts a host on this computer: ${supported.join(', ')}. For example: ${CLI_COMMAND} listen ${supported[0]}`
     );
   }
 
   const host = await deps.loadHost(hostInput);
   if (!host) {
     throw new Error(
-      `Wake doesn’t start ${wakeHostName(hostInput)} yet, only ${supported.map(wakeHostName).join(', ')}.`
+      `Listening doesn’t start ${hostNameOf(hostInput)} yet, only ${supported.map(hostNameOf).join(', ')}.`
     );
   }
 
@@ -305,19 +305,19 @@ async function hostFor(hostInput: string, deps: WakeDeps): Promise<HostAdapter> 
 }
 
 /** What the command says and exits with when the answer isn't an Allow; undefined for an Allow. */
-function notAllowed(outcome: AllowOutcome, plan: WakePlan, deps: WakeDeps): number | undefined {
+function notAllowed(outcome: AllowOutcome, plan: ListenPlan, deps: ListenDeps): number | undefined {
   switch (outcome) {
     case 'denied':
-      deps.out(`Not kept awake: ${deps.io.personAtTerminal ? 'you said no' : 'your operator said no'}.`);
+      deps.out(`Not listening: ${deps.io.personAtTerminal ? 'you said no' : 'your operator said no'}.`);
 
       return EXIT_DENIED;
     case 'expired':
-      deps.out('The question expired without an answer, so nothing is kept awake.');
+      deps.out('The question expired without an answer, so it isn’t listening.');
 
       return EXIT_GONE;
     case 'pending':
       deps.out(
-        `Your operator hasn’t answered yet, so nothing is kept awake. Run \`${CLI_COMMAND} wake ${plan.host.id}\` again to go on waiting for the same answer.`
+        `Your operator hasn’t answered yet, so it isn’t listening. Run \`${CLI_COMMAND} listen ${plan.host.id}\` again to go on waiting for the same answer.`
       );
 
       return EXIT_TIMEOUT;
@@ -328,18 +328,18 @@ function notAllowed(outcome: AllowOutcome, plan: WakePlan, deps: WakeDeps): numb
 
 /**
  * Once allowed: what was allowed is kept, the lease is taken (over, when the operator agreed to move it), and
- * where waiting starts is kept too, before anything says it is awake: what is sent while the background program
+ * where waiting starts is kept too, before anything says it is listening: what is sent while the background program
  * starts isn't missed.
  */
-async function takeIt(plan: WakePlan, deps: WakeDeps): Promise<WakeState> {
-  // A wake already running here stops first, in a terminal or in the background: it writes the same state, and it
+async function takeIt(plan: ListenPlan, deps: ListenDeps): Promise<ListenState> {
+  // A listener already running here stops first, in a terminal or in the background: it writes the same state, and it
   // may be for another project.
   await stopForeground(deps.foreground);
   if (!isUnsupported(plan.service) && plan.service.isInstalled()) {
     plan.service.uninstall();
   }
 
-  const state: WakeState = {
+  const state: ListenState = {
     ...newState({
       host: plan.host.id,
       project: plan.project,
@@ -361,13 +361,13 @@ async function takeIt(plan: WakePlan, deps: WakeDeps): Promise<WakeState> {
       takeOver: Boolean(plan.elsewhere),
       agentIdentifier: plan.config.relayAgentIdentifier,
     });
-    const from = await waitForWakeMessages(plan.client, {
+    const from = await waitForListenMessages(plan.client, {
       computerId: plan.computerId,
       host: plan.host.id,
       wait: 0,
       agentIdentifier: plan.config.relayAgentIdentifier,
     });
-    const started: WakeState = { ...state, cursor: from.next, queue: from.data };
+    const started: ListenState = { ...state, cursor: from.next, queue: from.data };
     deps.store.save(started);
 
     return started;
@@ -376,9 +376,9 @@ async function takeIt(plan: WakePlan, deps: WakeDeps): Promise<WakeState> {
     if (isKeyRejected(err)) {
       throw new Error(KEY_CHANGED_MESSAGE);
     }
-    if (errorCode(err) === AWAKE_ELSEWHERE_CODE) {
+    if (errorCode(err) === LISTENING_ELSEWHERE_CODE) {
       throw new Error(
-        movedMessage(awakeOf(err), wakeHostName, { computerId: plan.computerId, hostName: plan.host.name })
+        movedMessage(listeningOf(err), hostNameOf, { computerId: plan.computerId, hostName: plan.host.name })
       );
     }
     throw err;
@@ -386,7 +386,7 @@ async function takeIt(plan: WakePlan, deps: WakeDeps): Promise<WakeState> {
 }
 
 /** A start that failed leaves nothing behind: no lease, no service, nothing allowed. The next try asks again. */
-async function undoStart(plan: WakePlan, deps: WakeDeps, state: WakeState): Promise<void> {
+async function undoStart(plan: ListenPlan, deps: ListenDeps, state: ListenState): Promise<void> {
   if (!isUnsupported(plan.service)) {
     plan.service.uninstall();
   }
@@ -399,7 +399,7 @@ async function undoStart(plan: WakePlan, deps: WakeDeps, state: WakeState): Prom
 }
 
 /** The background program, from now on and after every restart. */
-function startBackground(plan: WakePlan, deps: WakeDeps): number {
+function startBackground(plan: ListenPlan, deps: ListenDeps): number {
   const { service, host } = plan;
   if (isUnsupported(service)) {
     throw new Error(service.unsupported);
@@ -413,33 +413,33 @@ function startBackground(plan: WakePlan, deps: WakeDeps): number {
       env: deps.env,
       project: plan.project,
       logFile: logPath(),
-      description: `Keeps ${host.name} awake for Agent Inbox`,
+      description: `Listens for Agent Inbox messages for ${host.name}`,
     })
   );
 
-  success(`${host.name} is awake on ${plan.computer}, in ${plan.label}.`);
+  success(`Listening on ${plan.computer}, for ${host.name} in ${plan.label}.`);
   info(
-    'Messages from you, and from contacts you let wake it, start it here. It asks you before anything its settings don’t allow.'
+    `Messages from you, and from the contacts it listens to, start ${host.name} here. It asks you before anything its settings don’t allow.`
   );
   if (service.kind === 'systemd') {
-    info(`To keep it awake while you’re logged out too: ${pc.bold('loginctl enable-linger')}`);
+    info(`To keep listening while you’re logged out too: ${pc.bold('loginctl enable-linger')}`);
   }
-  info(`See it: ${pc.bold(`${CLI_COMMAND} wake status`)} · stop it: ${pc.bold(`${CLI_COMMAND} wake stop`)}`);
+  info(`See it: ${pc.bold(`${CLI_COMMAND} listen status`)} · stop it: ${pc.bold(`${CLI_COMMAND} listen stop`)}`);
 
   return EXIT_OK;
 }
 
 /**
- * `wake <host>`: asks the operator, then keeps the host awake on this computer, for this folder: in the
+ * `listen <host>`: asks the operator, then listens on this computer, starting the host in this folder: in the
  * background, where it starts again after a restart, or in this terminal with `--foreground`.
  */
-export async function wakeOn(hostInput: string, options: WakeOptions, deps: WakeDeps): Promise<number> {
-  const plan = await planWake(hostInput, options, deps);
+export async function listenOn(hostInput: string, options: ListenOptions, deps: ListenDeps): Promise<number> {
+  const plan = await planListen(hostInput, options, deps);
   const { host, service } = plan;
 
-  if (plan.awakeHere && !options.foreground && !isUnsupported(service) && service.isInstalled()) {
-    success(`${host.name} is awake on ${plan.computer} already, in ${plan.label}.`);
-    info(`See it: ${pc.bold(`${CLI_COMMAND} wake status`)} · stop it: ${pc.bold(`${CLI_COMMAND} wake stop`)}`);
+  if (plan.listeningHere && !options.foreground && !isUnsupported(service) && service.isInstalled()) {
+    success(`Listening on ${plan.computer} already, for ${host.name} in ${plan.label}.`);
+    info(`See it: ${pc.bold(`${CLI_COMMAND} listen status`)} · stop it: ${pc.bold(`${CLI_COMMAND} listen stop`)}`);
 
     return EXIT_OK;
   }
@@ -485,8 +485,8 @@ export async function wakeOn(hostInput: string, options: WakeOptions, deps: Wake
     }
   }
 
-  success(`${host.name} is awake on ${plan.computer}, in ${plan.label}, while this terminal stays open.`);
-  info('Messages from you, and from contacts you let wake it, start it here. Ctrl-C stops it.');
+  success(`Listening on ${plan.computer}, for ${host.name} in ${plan.label}, while this terminal stays open.`);
+  info(`Messages from you, and from the contacts it listens to, start ${host.name} here. Ctrl-C stops it.`);
   await deps.beforeLoop?.();
   deps.foreground.claim(process.pid);
   try {
@@ -503,9 +503,9 @@ function loopFor(
   computerId: string,
   computer: string,
   host: HostAdapter,
-  deps: WakeDeps
+  deps: ListenDeps
 ): Promise<LoopEnd> {
-  return runWakeLoop({
+  return runListenLoop({
     client: clientFor(config, host.id),
     agentIdentifier: config.relayAgentIdentifier,
     operatorId: config.subscriberId ?? '',
@@ -520,13 +520,13 @@ function loopFor(
 }
 
 /**
- * `wake run`: the background program the service starts, at login and after a crash. It only runs what the
+ * `listen run`: the background program the service starts, at login and after a crash. It only runs what the
  * operator allowed. Whenever it stops on purpose or for good, it exits cleanly, so it isn't started again.
  */
-export async function wakeRun(deps: WakeDeps): Promise<number> {
+export async function listenRun(deps: ListenDeps): Promise<number> {
   const state = deps.store.load();
   if (!state?.allowedAt) {
-    deps.out(`Wake isn’t turned on here. Turn it on with: ${CLI_COMMAND} wake claude-code`);
+    deps.out(`Listening isn’t turned on here. Turn it on with: ${CLI_COMMAND} listen claude-code`);
 
     return EXIT_OK;
   }
@@ -540,7 +540,7 @@ export async function wakeRun(deps: WakeDeps): Promise<number> {
   const host = await deps.loadHost(state.host);
   const file = loadConfig();
   if (!host || !file?.computerId || !file.subscriberId) {
-    deps.out(`Wake can’t run here any more. Turn it on again with: ${CLI_COMMAND} wake ${state.host}`);
+    deps.out(`Listening can’t run here any more. Turn it on again with: ${CLI_COMMAND} listen ${state.host}`);
 
     return EXIT_OK;
   }
@@ -574,43 +574,43 @@ export async function wakeRun(deps: WakeDeps): Promise<number> {
   return EXIT_OK;
 }
 
-/** What `wake status` says: where the agent is awake, and what this computer does. */
+/** What `listen status` says: where the agent is listening, and what this computer does. */
 interface StatusFacts {
-  awake: Awake | null;
-  /** The operator paused the agent on agentinbox.md: nothing wakes it until it is resumed. */
+  listening: Listening | null;
+  /** The operator paused the agent on agentinbox.md: nothing starts it until it is resumed. */
   paused: boolean;
   here: boolean;
-  state: WakeState | null;
+  state: ListenState | null;
   service: ServiceSetup;
   installed: boolean;
   running: boolean | undefined;
   sessions: number;
-  lastWake?: string;
+  lastRun?: string;
 }
 
-async function statusFacts(deps: WakeDeps): Promise<StatusFacts> {
+async function statusFacts(deps: ListenDeps): Promise<StatusFacts> {
   const config = savedConfig(deps.env);
   const state = deps.store.load();
   const client = clientFor(config, state?.host ?? 'claude-code');
-  const { awake, paused } = await getLease(client, config.relayAgentIdentifier).catch(rethrowKey);
+  const { listening, paused } = await getLease(client, config.relayAgentIdentifier).catch(rethrowKey);
   const service = deps.service();
   const installed = !isUnsupported(service) && service.isInstalled();
   const sessions = state
     ? Object.values(state.sessions)
-        .map((session) => session.lastWakeAt)
+        .map((session) => session.lastRunAt)
         .sort()
     : [];
 
   return {
-    awake,
+    listening,
     paused,
-    here: Boolean(awake && config.computerId && awake.computerId === config.computerId),
+    here: Boolean(listening && config.computerId && listening.computerId === config.computerId),
     state,
     service,
     installed,
     running: installed && !isUnsupported(service) ? service.isRunning() : false,
     sessions: sessions.length,
-    lastWake: sessions[sessions.length - 1],
+    lastRun: sessions[sessions.length - 1],
   };
 }
 
@@ -618,17 +618,17 @@ function statusJson(facts: StatusFacts): Record<string, unknown> {
   const { state, service } = facts;
 
   return {
-    awake: facts.awake,
+    listening: facts.listening,
     ...(facts.paused ? { paused: true } : {}),
     thisComputer: {
-      awakeHere: facts.here,
+      listeningHere: facts.here,
       host: state?.allowedAt ? state.host : null,
       project: state?.allowedAt ? projectLabel(state.project) : null,
       background:
         facts.installed && !isUnsupported(service) ? { kind: service.kind, running: facts.running ?? null } : null,
       stopped: state?.stopped ?? null,
       sessions: facts.sessions,
-      lastWakeAt: facts.lastWake ?? null,
+      lastRunAt: facts.lastRun ?? null,
       log: logPath(),
     },
   };
@@ -643,14 +643,14 @@ function thisComputerLine(facts: StatusFacts): string | undefined {
   if (facts.installed && state?.allowedAt && !isUnsupported(service)) {
     const notRunning = facts.running === false ? ', but it isn’t running right now' : '';
 
-    return `This computer keeps ${wakeHostName(state.host)} awake for ${projectLabel(state.project)}, in the background (${service.kind})${notRunning}.`;
+    return `This computer listens for ${hostNameOf(state.host)} in ${projectLabel(state.project)}, in the background (${service.kind})${notRunning}.`;
   }
 
-  return facts.here ? undefined : `This computer doesn’t keep it awake. To start: ${CLI_COMMAND} wake claude-code`;
+  return facts.here ? undefined : `This computer isn’t listening. To start: ${CLI_COMMAND} listen claude-code`;
 }
 
-/** `wake status`: where the agent is awake, and what this computer does about it. */
-export async function wakeStatus(options: Pick<WakeOptions, 'json'>, deps: WakeDeps): Promise<number> {
+/** `listen status`: where the agent is listening, and what this computer does about it. */
+export async function listenStatus(options: Pick<ListenOptions, 'json'>, deps: ListenDeps): Promise<number> {
   const facts = await statusFacts(deps);
   if (options.json) {
     deps.out(JSON.stringify(statusJson(facts), null, 2));
@@ -661,9 +661,9 @@ export async function wakeStatus(options: Pick<WakeOptions, 'json'>, deps: WakeD
   if (facts.paused) {
     deps.out(PAUSED_MESSAGE);
   }
-  // Paused, a lease lapses within minutes: "not awake anywhere" would say nothing the line above doesn't.
-  if (facts.awake || !facts.paused) {
-    deps.out(describeAwake(facts.awake, facts.here));
+  // Paused, a lease lapses within minutes: "not listening anywhere" would say nothing the line above doesn't.
+  if (facts.listening || !facts.paused) {
+    deps.out(describeListening(facts.listening, facts.here));
   }
   const here = thisComputerLine(facts);
   if (here) {
@@ -671,7 +671,7 @@ export async function wakeStatus(options: Pick<WakeOptions, 'json'>, deps: WakeD
   }
   if (facts.sessions > 0) {
     const kept = facts.sessions === 1 ? 'conversation has' : 'conversations have';
-    const last = facts.lastWake ? `; the last wake was ${formatRelativeTime(facts.lastWake)}` : '';
+    const last = facts.lastRun ? `; the last run started ${formatRelativeTime(facts.lastRun)}` : '';
     deps.out(`${facts.sessions} ${kept} a session${last}.`);
   }
   deps.out(`Log: ${logPath()}`);
@@ -679,16 +679,16 @@ export async function wakeStatus(options: Pick<WakeOptions, 'json'>, deps: WakeD
   return EXIT_OK;
 }
 
-function describeAwake(awake: Awake | null, here: boolean): string {
-  if (!awake) {
-    return 'Not awake anywhere.';
+function describeListening(listening: Listening | null, here: boolean): string {
+  if (!listening) {
+    return 'Not listening anywhere.';
   }
 
-  return `Awake on ${awake.computerName}${here ? ' (this computer)' : ''}: ${wakeHostName(awake.host)}${awake.project ? `, in ${awake.project}` : ''}, for ${since(awake.since)} now.`;
+  return `Listening on ${listening.computerName}${here ? ' (this computer)' : ''}: ${hostNameOf(listening.host)}${listening.project ? `, in ${listening.project}` : ''}, for ${since(listening.since)} now.`;
 }
 
-/** `wake stop`: the agent isn't kept awake here any more. Another computer's wake is left alone. */
-export async function wakeStop(deps: WakeDeps): Promise<number> {
+/** `listen stop`: this computer doesn't listen any more. Another computer's listener is left alone. */
+export async function listenStop(deps: ListenDeps): Promise<number> {
   const config = savedConfig(deps.env);
   // One in a terminal ends first, so it can't write the state this resets.
   const stoppedTerminal = await stopForeground(deps.foreground);
@@ -698,7 +698,7 @@ export async function wakeStop(deps: WakeDeps): Promise<number> {
   const host = state?.host ?? 'claude-code';
   const client = clientFor(config, host);
 
-  // Only this computer's own lease, for the host it keeps awake, is let go of, also while the agent is paused.
+  // Only this computer's own lease, for the host it listens for, is let go of, also while the agent is paused.
   // It stops here either way.
   const released = config.computerId
     ? await releaseLease(client, {
@@ -714,19 +714,19 @@ export async function wakeStop(deps: WakeDeps): Promise<number> {
   }
   deps.asked.save(null);
 
-  const hostName = wakeHostName(host);
+  const hostName = hostNameOf(host);
   deps.out(
     removed || released
-      ? `${hostName} isn’t kept awake on this computer any more.`
-      : 'Nothing was kept awake on this computer.'
+      ? `This computer isn’t listening for ${hostName} any more.`
+      : 'Nothing was listening on this computer.'
   );
   if (released === undefined) {
     deps.out('Agent Inbox couldn’t be told just now: the lease lapses within 3 minutes.');
   }
 
-  const awake = (await getLease(client, config.relayAgentIdentifier).catch(() => null))?.awake;
-  if (awake && awake.computerId !== config.computerId) {
-    deps.out(`It’s awake on ${awake.computerName}: run \`${CLI_COMMAND} wake stop\` there to stop it.`);
+  const listening = (await getLease(client, config.relayAgentIdentifier).catch(() => null))?.listening;
+  if (listening && listening.computerId !== config.computerId) {
+    deps.out(`It’s listening on ${listening.computerName}: run \`${CLI_COMMAND} listen stop\` there to stop it.`);
   }
 
   return EXIT_OK;

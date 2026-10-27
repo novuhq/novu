@@ -26,8 +26,8 @@ export interface CliConfig {
    */
   host?: HostId;
   /**
-   * This computer's own random id, made the first time `wake` runs here. The API knows which computer keeps
-   * an agent awake by it, so it stays whatever writes the config anew (see `saveConfig`).
+   * This computer's own random id, made the first time `listen` runs here. The API knows which computer keeps
+   * an agent listening by it, so it stays whatever writes the config anew (see `saveConfig`).
    */
   computerId?: string;
 }

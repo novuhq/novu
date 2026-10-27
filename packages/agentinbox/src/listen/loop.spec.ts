@@ -6,15 +6,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApiClient } from '../api/client';
 import { claudeCode } from './claude-code';
 import { FakeApi } from './fake-api.fixture';
-import { type LoopEnd, runWakeLoop, type WakeTiming } from './loop';
-import { memoryState, newState, type WakeState } from './state';
+import { type ListenTiming, type LoopEnd, runListenLoop } from './loop';
+import { type ListenState, memoryState, newState } from './state';
 import { KEY_CHANGED_MESSAGE } from './words';
 
 const FAKE_CLAUDE = fileURLToPath(new URL('./fake-claude.fixture.mjs', import.meta.url));
 const COMPUTER_ID = 'cmp_this_computer_0001';
 
 /** Fast enough for a test, with the same shape as the real timing. */
-const FAST: Partial<WakeTiming> = {
+const FAST: Partial<ListenTiming> = {
   waitSeconds: 1,
   pausedRetryMs: 150,
   retryMs: [50],
@@ -56,13 +56,13 @@ interface Harness {
 let harness: Harness | undefined;
 
 async function start(
-  overrides: Partial<WakeState> = {},
-  timing: Partial<WakeTiming> = {},
+  overrides: Partial<ListenState> = {},
+  timing: Partial<ListenTiming> = {},
   /** Sets the API up before the loop's first call. */
   prepare: (api: FakeApi) => void = () => undefined
 ): Promise<Harness> {
   const api = await new FakeApi().start();
-  const dir = mkdtempSync(join(tmpdir(), 'wake-loop-'));
+  const dir = mkdtempSync(join(tmpdir(), 'listen-loop-'));
   vi.stubEnv('FAKE_CLAUDE_LOG', join(dir, 'claude.log'));
   vi.stubEnv('FAKE_CLAUDE_SESSIONS', join(dir, 'sessions'));
   vi.stubEnv('FAKE_API_URL', api.url);
@@ -82,14 +82,14 @@ async function start(
       host: 'claude-code',
       project: dir,
       program: { command: process.execPath, args: [FAKE_CLAUDE] },
-      limits: { wakesPerHour: 20, maxRunSeconds: 60 },
+      limits: { runsPerHour: 20, maxRunSeconds: 60 },
     }),
     allowedAt: new Date().toISOString(),
     ...overrides,
   });
   const logs: string[] = [];
   const controller = new AbortController();
-  const loop = runWakeLoop({
+  const loop = runListenLoop({
     client: createApiClient({ apiUrl: api.url, secretKey: 'sk_test', asHost: 'claude-code' }),
     agentIdentifier: 'human-relay',
     operatorId: 'ada',
@@ -126,7 +126,7 @@ async function start(
   };
 
   // The loop is waiting once it has asked for messages.
-  await eventually(() => expect(api.callsTo('GET', '/v1/wake/messages').length).toBeGreaterThan(0));
+  await eventually(() => expect(api.callsTo('GET', '/v1/listen/messages').length).toBeGreaterThan(0));
 
   return harness;
 }
@@ -144,8 +144,8 @@ afterEach(async () => {
   vi.unstubAllEnvs();
 });
 
-describe('runWakeLoop', { timeout: 20_000 }, () => {
-  it('wakes Claude Code for a message and posts its last words when it didn’t reply itself', async () => {
+describe('runListenLoop', { timeout: 20_000 }, () => {
+  it('starts Claude Code for a message and posts its last words when it didn’t reply itself', async () => {
     const { api, starts, store, dir } = await start();
 
     api.deliver({ text: 'hello there' });
@@ -171,7 +171,7 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
     const sessionId = first.argv[first.argv.indexOf('--session-id') + 1];
     expect(first.argv[first.argv.indexOf('--append-system-prompt') + 1]).toContain('conv_1');
     expect(store.current?.sessions.conv_1).toMatchObject({ sessionId, round: 0 });
-    // Every call is the woken host's check.
+    // Every call is the started host's check.
     expect(api.calls.every((call) => call.host === 'claude-code')).toBe(true);
   });
 
@@ -343,7 +343,7 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
     api.deliver({ text: 'sleep:500', conversationId: 'conv_mail', channel: 'email' });
 
     await eventually(() => expect(api.sentInto('conv_mail')).toContain('Done sleeping.'));
-    expect(api.callsTo('POST', '/v1/wake/typing')).toHaveLength(1);
+    expect(api.callsTo('POST', '/v1/listen/typing')).toHaveLength(1);
     expect(api.typing).toHaveLength(0);
   });
 
@@ -355,10 +355,10 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
 
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm publish.'));
     const question = api.interactions.find((interaction) => interaction.kind === 'approve');
-    // To the operator, even though a contact woke it.
+    // To the operator, even though a contact's message started it.
     expect(question?.to).toBe('ada');
     expect(question?.card.title).toBe('Claude Code wants to run `npm publish`');
-    expect(question?.card.body).toContain('Ben woke it');
+    expect(question?.card.body).toContain('for Ben’s message');
     expect(question?.card.body).toContain('No answer in 2 seconds counts as Deny.');
     expect(question?.card).toMatchObject({
       approveLabel: 'Allow',
@@ -460,7 +460,7 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
     expect(api.interactions.find((interaction) => interaction.kind === 'approve')?.status).toBe('canceled');
   });
 
-  it('puts the agent’s own question to the person who woke it, in the conversation', async () => {
+  it('puts the agent’s own question to the person whose message started it, in the conversation', async () => {
     const { api } = await start();
     api.decide = (interaction) =>
       interaction.kind === 'choose' ? { status: 'answered', optionId: 'opt_2' } : undefined;
@@ -489,7 +489,7 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
     expect(api.callsTo('GET', `/v1/inbox/messages/${question?.id}`)).toHaveLength(1);
   });
 
-  it('never wakes the host for the answer to its own question', async () => {
+  it('never starts the host for the answer to its own question', async () => {
     const { api, starts } = await start();
     api.decide = () => 'approved';
 
@@ -497,8 +497,8 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm test.'));
     await pause(400);
 
-    // The operator's tap came in as a message too, and woke nothing.
-    expect(api.wakeMessages.some((message) => message.answersMessageId)).toBe(true);
+    // The operator's tap came in as a message too, and started nothing.
+    expect(api.listenMessages.some((message) => message.answersMessageId)).toBe(true);
     expect(starts()).toHaveLength(1);
   });
 
@@ -546,7 +546,7 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
   it('starts a fresh session when the host no longer has the old one', async () => {
     const { api, store, starts } = await start({
       sessions: {
-        conv_1: { sessionId: '11111111-2222-4333-8444-555555555555', round: 0, lastWakeAt: new Date().toISOString() },
+        conv_1: { sessionId: '11111111-2222-4333-8444-555555555555', round: 0, lastRunAt: new Date().toISOString() },
       },
     });
 
@@ -574,8 +574,8 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
     api.takeOverElsewhere('codex');
     const end = await harness?.loop;
 
-    expect(end).toMatchObject({ reason: 'awake_elsewhere' });
-    expect(store.current?.stopped?.reason).toBe('awake_elsewhere');
+    expect(end).toMatchObject({ reason: 'listening_elsewhere' });
+    expect(store.current?.stopped?.reason).toBe('listening_elsewhere');
     expect(store.current?.stopped?.message).toContain('Desktop (Codex, in ~/work)');
   });
 
@@ -585,9 +585,9 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
     api.takeOverElsewhere('codex', COMPUTER_ID);
     const end = await harness?.loop;
 
-    expect(end).toMatchObject({ reason: 'awake_elsewhere' });
+    expect(end).toMatchObject({ reason: 'listening_elsewhere' });
     expect(store.current?.stopped?.message).toBe(
-      'It is awake on this computer for Codex, in ~/work now, so wake for Claude Code stopped.'
+      'It is listening on this computer for Codex, in ~/work now, so listening for Claude Code stopped.'
     );
   });
 
@@ -600,17 +600,17 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
     await pause(300);
 
     expect(end).toEqual({ reason: 'key_changed', message: KEY_CHANGED_MESSAGE });
-    expect(store.current?.stopped?.message).toBe('The key changed on agentinbox.md. Connect again, then wake again.');
+    expect(store.current?.stopped?.message).toBe('The key changed on agentinbox.md. Connect again, then listen again.');
     expect(api.calls.length).toBe(calls);
   });
 
-  it('waits while the agent is paused, and wakes again once it is resumed', async () => {
+  it('waits while the agent is paused, and listens again once it is resumed', async () => {
     const { api, logs } = await start();
 
     api.paused = true;
     await eventually(() => expect(logs.some((line) => line.includes('paused'))).toBe(true));
-    const leaseCalls = api.callsTo('POST', '/v1/wake/lease').length;
-    await eventually(() => expect(api.callsTo('POST', '/v1/wake/lease').length).toBeGreaterThan(leaseCalls + 1));
+    const leaseCalls = api.callsTo('POST', '/v1/listen/lease').length;
+    await eventually(() => expect(api.callsTo('POST', '/v1/listen/lease').length).toBeGreaterThan(leaseCalls + 1));
 
     api.paused = false;
     api.deliver({ text: 'back again' });
@@ -619,7 +619,7 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
   });
 
   it('holds messages back past the hourly limit, and tells the operator once', async () => {
-    const { api, store, starts } = await start({ limits: { wakesPerHour: 1, maxRunSeconds: 60 } });
+    const { api, store, starts } = await start({ limits: { runsPerHour: 1, maxRunSeconds: 60 } });
 
     api.deliver({ text: 'one', conversationId: 'conv_1' });
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: one'));
@@ -628,7 +628,7 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
 
     await eventually(() =>
       expect(api.sentInto('conv_operator')).toContain(
-        'Claude Code was woken 1 time in the last hour, the most it may be. New messages wait, and wake it as the hour allows.'
+        'Claude Code was started 1 time in the last hour, the most it may be. New messages wait, and start it as the hour allows.'
       )
     );
     await pause(400);
@@ -638,7 +638,7 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
   });
 
   it('stops a run that goes on too long', async () => {
-    const { api } = await start({ limits: { wakesPerHour: 20, maxRunSeconds: 1 } });
+    const { api } = await start({ limits: { runsPerHour: 20, maxRunSeconds: 1 } });
 
     api.deliver({ text: 'sleep:20000' });
 
@@ -655,21 +655,21 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
     const end = await stop();
 
     expect(end).toEqual({ reason: 'signal' });
-    expect(api.callsTo('POST', '/v1/wake/lease/release').map((call) => call.body)).toEqual([
+    expect(api.callsTo('POST', '/v1/listen/lease/release').map((call) => call.body)).toEqual([
       { computerId: COMPUTER_ID, host: 'claude-code' },
     ]);
     expect(api.lease).toBeNull();
     // Each wait named the host it waits for.
-    expect(api.callsTo('GET', '/v1/wake/messages').every((call) => call.query.host === 'claude-code')).toBe(true);
+    expect(api.callsTo('GET', '/v1/listen/messages').every((call) => call.query.host === 'claude-code')).toBe(true);
   });
 
   it('goes on from now when the API doesn’t know the cursor it had', async () => {
     const { api, logs } = await start({ cursor: 'from-another-deployment' });
 
     await eventually(() => expect(logs.some((line) => line.includes('going on from now'))).toBe(true));
-    api.deliver({ text: 'still awake?' });
+    api.deliver({ text: 'still listening?' });
 
-    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: still awake?'));
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: still listening?'));
   });
 
   it('starts nothing it had queued while it can’t renew the lease, and goes on once it can', async () => {
@@ -699,12 +699,12 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
 
     api.deliver({ text: 'first' });
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: first'));
-    const first = store.current?.sessions.conv_1?.lastWakeAt ?? '';
+    const first = store.current?.sessions.conv_1?.lastRunAt ?? '';
     await pause(20);
     api.deliver({ text: 'second' });
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: second'));
 
-    expect((store.current?.sessions.conv_1?.lastWakeAt ?? '') > first).toBe(true);
+    expect((store.current?.sessions.conv_1?.lastRunAt ?? '') > first).toBe(true);
   });
 
   it('sees its own reply however much was written after it, and doesn’t reply twice', async () => {
@@ -774,7 +774,7 @@ describe('runWakeLoop', { timeout: 20_000 }, () => {
 
     const message = api.deliver({ text: 'only once' });
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: only once'));
-    api.wakeMessages.push(message);
+    api.listenMessages.push(message);
     api.deliver({ text: 'next' });
 
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: next'));

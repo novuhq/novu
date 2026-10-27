@@ -1,5 +1,5 @@
-// A stand-in for `claude -p` in stream-json mode, for the wake tests. It speaks the protocol as Claude Code
-// 2.1.310 was seen speaking it (NV-9150's notes, WAKE/research/host-interfaces.md section 3):
+// A stand-in for `claude -p` in stream-json mode, for the listener's tests. It speaks the protocol as Claude Code
+// 2.1.310 was seen speaking it:
 // `system/init` with the session at each turn, `command_lifecycle` for each message, `can_use_tool` control
 // requests (with `permission_suggestions`) answered with `control_response`, `control_cancel_request` for an
 // open question on an interrupt, `interrupt` with `cancel_queued`, and one `result` per turn listing the
@@ -14,7 +14,7 @@
 //   wait-for:<ms>        runs `npx @agentinbox/cli inbox reply <conversation> ask …`, which its settings allow,
 //                        and which waits <ms> for the answer before it ends (a `tool_result`)
 //   mcp:<tool> [conv]    asks to use the MCP tool <tool> (`mcp__<server>__<name>`) on <conv>, by default the
-//                        conversation that woke it; an allowed `…__inbox_reply` replies through the fake API
+//                        conversation it was started for; an allowed `…__inbox_reply` replies through the fake API
 //   resolve              resolves the conversation through the fake API
 //   fail                 ends the turn with an error
 //   api-error            ends the turn as a failed model call does: the reason is its answer, with no `errors`
@@ -366,7 +366,7 @@ function endRan(current, outcome) {
   const answer = joined.length > 0 && outcome.answer ? `${outcome.answer} Also: ${also}` : outcome.answer;
   const uuids = current.messages.map((message) => message.uuid);
   if (outcome.apiError) {
-    // As a woken Claude Code 2.1.310 ended a turn whose model call failed (2026-10-26): the reason is the
+    // As a Claude Code 2.1.310 the listener started ended a turn whose model call failed (2026-10-26): the reason is the
     // assistant's text and the result's, and the result has no `errors`.
     out({
       type: 'assistant',

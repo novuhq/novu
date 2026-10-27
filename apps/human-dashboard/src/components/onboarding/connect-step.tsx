@@ -72,9 +72,9 @@ export function ConnectStep({ handle, apiUrl, waiting, mcpUrl, connectedHosts, a
         connected={connected}
         api={api}
         // The card stays as tall as its tallest step: the second way in waits folded until it's asked for, and
-        // keeping the host awake waits for the host's page and the drawer.
+        // listening for messages waits for the host's page and the drawer.
         alternativeOpen={false}
-        showWake={false}
+        showListen={false}
         hideLead
       />
 

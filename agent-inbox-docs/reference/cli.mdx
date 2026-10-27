@@ -7,7 +7,7 @@ description: "Every command, flag, exit code, and environment variable for npx @
 npx @agentinbox/cli
 ```
 
-Every command is `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`, `wake`.
+Every command is `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`, `listen`.
 
 Flags beat environment variables, which beat `~/.agentinbox/config.json`. Environment values are never written back to the config file.
 
@@ -193,23 +193,23 @@ npx @agentinbox/cli channel default <telegram|slack|email>
 
 Sets the channel used when a message goes to you on this computer. Other people keep their own default.
 
-## wake
+## listen
 
 ```bash
-npx @agentinbox/cli wake claude-code
-npx @agentinbox/cli wake status
-npx @agentinbox/cli wake stop
+npx @agentinbox/cli listen claude-code
+npx @agentinbox/cli listen status
+npx @agentinbox/cli listen stop
 ```
 
-Keeps a host awake on this computer, in the folder it runs in: a message from the operator, or from a contact allowed to wake it, starts the host. It asks the operator first and takes nothing until they allow it. It needs an Agent Inbox account: on a keyless setup, run `login` first. See [Keep a host awake](/wake).
+Listens for messages on this computer: one from the operator, or from a contact the agent listens to, starts the host in the folder it runs in. It asks the operator first and takes nothing until they allow it. It needs an Agent Inbox account: on a keyless setup, run `login` first. See [Listen for messages](/listen).
 
 | Flag | What it does |
 | --- | --- |
-| `--foreground` | Keep it awake in this terminal only, instead of in the background |
+| `--foreground` | Listen in this terminal only, instead of in the background |
 | `--timeout <duration>` | When an agent runs it: how long to wait for the operator's Allow. Exits `11` when it runs out |
-| `--wakes-per-hour <n>` | How many runs may start in an hour. Default 20 |
+| `--runs-per-hour <n>` | How many runs may start in an hour. Default 20 |
 | `--max-run <duration>` | How long one run may go on. Default 30 minutes |
-| `--json` | `wake status` only: print JSON |
+| `--json` | `listen status` only: print JSON |
 
 Exit codes as for `approve`: `0` allowed, `10` denied, `11` still waiting, `12` the question expired, `1` an error.
 

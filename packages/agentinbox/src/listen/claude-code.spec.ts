@@ -28,7 +28,7 @@ const FAKE_CLAUDE = fileURLToPath(new URL('./fake-claude.fixture.mjs', import.me
 let dir: string;
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'wake-claude-'));
+  dir = mkdtempSync(join(tmpdir(), 'listen-claude-'));
   vi.stubEnv('FAKE_CLAUDE_SESSIONS', join(dir, 'sessions'));
   vi.stubEnv('FAKE_CLAUDE_LOG', join(dir, 'claude.log'));
 });
@@ -85,7 +85,7 @@ function open(
       program: { command: process.execPath, args: [FAKE_CLAUDE] },
       project: dir,
       resume: options.resume,
-      instructions: 'You were woken.',
+      instructions: 'Agent Inbox started you.',
     },
     {
       progress: (note, subject, toolId) => {
@@ -127,7 +127,7 @@ function message(id: string, words: string) {
 
 describe('claudeArgs', () => {
   it('drives print mode with stream-json both ways, asks this program, and accepts edits in the project', () => {
-    expect(claudeArgs({ instructions: 'Woken.', sessionId: 'abc', resume: false })).toEqual([
+    expect(claudeArgs({ instructions: 'Started.', sessionId: 'abc', resume: false })).toEqual([
       '-p',
       '--input-format',
       'stream-json',
@@ -141,14 +141,14 @@ describe('claudeArgs', () => {
       '--permission-prompt-tool',
       'stdio',
       '--append-system-prompt',
-      'Woken.',
+      'Started.',
       '--session-id',
       'abc',
     ]);
   });
 
   it('goes on with a session it is given', () => {
-    expect(claudeArgs({ instructions: 'Woken.', sessionId: 'abc', resume: true }).slice(-2)).toEqual([
+    expect(claudeArgs({ instructions: 'Started.', sessionId: 'abc', resume: true }).slice(-2)).toEqual([
       '--resume',
       'abc',
     ]);
@@ -207,7 +207,7 @@ describe('describeAction and subjectOf', () => {
 });
 
 describe('sessionEnv', () => {
-  it('leaves out the marks of a session wake was started from, and keeps the rest', () => {
+  it('leaves out the marks of a session listen was started from, and keeps the rest', () => {
     expect(
       sessionEnv({
         PATH: '/bin',

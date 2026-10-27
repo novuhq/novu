@@ -1,14 +1,14 @@
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { wakeDir } from './state';
+import { listenDir } from './state';
 
 /**
- * The wake that runs in a terminal (`wake <host> --foreground`), by its process: `wake stop`, and a wake turned
- * on again, stop it first, so two never hold the same lease and answer the same messages.
+ * The listener that runs in a terminal (`listen <host> --foreground`), by its process: `listen stop`, and listening
+ * turned on again, stop it first, so two never hold the same lease and answer the same messages.
  */
 export interface ForegroundStore {
-  /** The process of a wake still running in a terminal on this computer, other than this one, or null. */
+  /** The process of a listener still running in a terminal on this computer, other than this one, or null. */
   running(): number | null;
   /** This process runs one from now on. */
   claim(pid: number): void;
@@ -17,7 +17,7 @@ export interface ForegroundStore {
 }
 
 function claimPath(): string {
-  return join(wakeDir(), 'foreground.json');
+  return join(listenDir(), 'foreground.json');
 }
 
 function claimed(): number | null {
@@ -41,10 +41,10 @@ function isAlive(pid: number): boolean {
 }
 
 /**
- * Whether `pid` is a wake running in a terminal: alive, and started as one. A wake that ended without saying so
+ * Whether `pid` is a listener running in a terminal: alive, and started as one. One that ended without saying so
  * leaves its number behind, and another process may get that number later: such a process is never stopped.
  */
-function isForegroundWake(pid: number): boolean {
+function isForegroundListener(pid: number): boolean {
   if (!isAlive(pid)) {
     return false;
   }
@@ -52,17 +52,17 @@ function isForegroundWake(pid: number): boolean {
   const ran = spawnSync('ps', ['-o', 'command=', '-p', String(pid)], { encoding: 'utf8', timeout: 5000 });
   const words = ran.status === 0 ? ran.stdout.trim().split(/\s+/) : [];
 
-  return words.includes('wake') && words.includes('--foreground');
+  return words.includes('listen') && words.includes('--foreground');
 }
 
 export const fileForeground: ForegroundStore = {
   running() {
     const pid = claimed();
 
-    return pid !== null && pid !== process.pid && isForegroundWake(pid) ? pid : null;
+    return pid !== null && pid !== process.pid && isForegroundListener(pid) ? pid : null;
   },
   claim(pid) {
-    mkdirSync(wakeDir(), { recursive: true });
+    mkdirSync(listenDir(), { recursive: true });
     writeFileSync(claimPath(), `${JSON.stringify({ pid })}\n`, { mode: 0o600 });
   },
   release(pid) {
@@ -73,7 +73,7 @@ export const fileForeground: ForegroundStore = {
 };
 
 /**
- * Stops a wake running in a terminal here, if there is one, and waits for it to end: it finishes its run and
+ * Stops a listener running in a terminal here, if there is one, and waits for it to end: it finishes its run and
  * lets go of the lease first. False when there was none.
  */
 export async function stopForeground(store: ForegroundStore, timeoutMs = 10_000): Promise<boolean> {

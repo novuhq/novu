@@ -5,24 +5,24 @@ import { dirname, join, sep } from 'node:path';
 import { CLI_COMMAND } from '../config';
 
 /** The launchd agent's label, which is also its file's name. */
-export const LAUNCHD_LABEL = 'md.agentinbox.wake';
+export const LAUNCHD_LABEL = 'md.agentinbox.listen';
 
 /**
  * What launchd starts on macOS: a small script that starts the CLI. macOS lists a background item by the name of
  * the program it starts (System Settings → General → Login Items & Extensions), which would otherwise be `node`.
  */
-export const LAUNCHER_NAME = 'agentinbox-wake';
+export const LAUNCHER_NAME = 'agentinbox-listen';
 
-export const SYSTEMD_UNIT = 'agentinbox-wake.service';
+export const SYSTEMD_UNIT = 'agentinbox-listen.service';
 
 /**
- * What a wake that has to restart waits first: long enough that a broken setup doesn't spin, short enough
+ * What a listener that has to restart waits first: long enough that a broken setup doesn't spin, short enough
  * that a crash costs only a moment.
  */
 const RESTART_SECONDS = 30;
 
 /**
- * Variables the background program needs from the shell `wake` was turned on in. Never a secret, nor
+ * Variables the background program needs from the shell `listen` was turned on in. Never a secret, nor
  * INBOX_API_URL: the program sends the key only to the API it was saved for.
  */
 const KEPT_VARIABLES = [
@@ -34,13 +34,13 @@ const KEPT_VARIABLES = [
   'NODE_EXTRA_CA_CERTS',
 ] as const;
 
-/** How the background program starts: the CLI's own program, absolute, run as `wake run`. */
+/** How the background program starts: the CLI's own program, absolute, run as `listen run`. */
 export interface BackgroundCommand {
   argv: string[];
   workingDirectory: string;
   env: Record<string, string>;
   logFile: string;
-  /** "Keeps Claude Code awake for Agent Inbox". */
+  /** "Listens for Agent Inbox messages for Claude Code". */
   description: string;
 }
 
@@ -60,8 +60,8 @@ export function backgroundCommand(input: {
   const script = realpathOr(input.script);
   const fromNpxCache = script.includes(`${sep}_npx${sep}`);
   const argv = fromNpxCache
-    ? [join(dirname(input.nodePath), 'npx'), '--yes', `@agentinbox/cli@${input.version}`, 'wake', 'run']
-    : [input.nodePath, script, 'wake', 'run'];
+    ? [join(dirname(input.nodePath), 'npx'), '--yes', `@agentinbox/cli@${input.version}`, 'listen', 'run']
+    : [input.nodePath, script, 'listen', 'run'];
   const env = Object.fromEntries(
     KEPT_VARIABLES.flatMap((name) => (input.env[name] ? [[name, String(input.env[name])]] : []))
   );
@@ -95,7 +95,7 @@ function shellWord(text: string): string {
 export function launchdLauncher(command: BackgroundCommand): string {
   return [
     '#!/bin/sh',
-    `# ${command.description}. \`${CLI_COMMAND} wake stop\` turns it off and removes this file.`,
+    `# ${command.description}. \`${CLI_COMMAND} listen stop\` turns it off and removes this file.`,
     `exec ${command.argv.map(shellWord).join(' ')}`,
     '',
   ].join('\n');
@@ -134,7 +134,7 @@ export function launchdPlist(command: BackgroundCommand, launcher: string): stri
     '  <key>ThrottleInterval</key>',
     `  <integer>${RESTART_SECONDS}</integer>`,
     // Not Background: macOS throttles a Background job and what it starts, and Claude Code gives up reading its
-    // sign-in from the Keychain after 2 seconds, so a woken run said "Not logged in" (its sign-in check took
+    // sign-in from the Keychain after 2 seconds, so a run said "Not logged in" (its sign-in check took
     // 1.7–10.4 s as Background, 0.2 s as Standard).
     '  <key>ProcessType</key>',
     '  <string>Standard</string>',
@@ -258,12 +258,12 @@ export function serviceManager(options: ServiceOptions = {}): ServiceSetup {
   if (platform === 'win32') {
     return {
       unsupported:
-        'On Windows, wake runs inside WSL, where Claude Code runs too: open your WSL terminal and run the same command there.',
+        'On Windows, listen runs inside WSL, where Claude Code runs too: open your WSL terminal and run the same command there.',
     };
   }
 
   return {
-    unsupported: `Wake can’t keep a host awake on ${platform} yet: only on macOS, Linux and Windows through WSL.`,
+    unsupported: `The listener can’t run on ${platform} yet: only on macOS, Linux and Windows through WSL.`,
   };
 }
 
@@ -338,8 +338,8 @@ function systemd(file: string, runner: ServiceRunner, wsl: boolean): ServiceMana
       if (systemctl('show-environment').status !== 0) {
         throw new Error(
           wsl
-            ? `systemd isn’t running in this WSL distribution. Turn it on with \`[boot] systemd=true\` in /etc/wsl.conf, run \`wsl --shutdown\` in Windows and open WSL again; or keep it awake in this terminal with \`${CLI_COMMAND} wake <host> --foreground\`.`
-            : `systemd’s user services aren’t available here. Keep it awake in this terminal instead: \`${CLI_COMMAND} wake <host> --foreground\`.`
+            ? `systemd isn’t running in this WSL distribution. Turn it on with \`[boot] systemd=true\` in /etc/wsl.conf, run \`wsl --shutdown\` in Windows and open WSL again; or keep it listening in this terminal with \`${CLI_COMMAND} listen <host> --foreground\`.`
+            : `systemd’s user services aren’t available here. Listen in this terminal instead: \`${CLI_COMMAND} listen <host> --foreground\`.`
         );
       }
 

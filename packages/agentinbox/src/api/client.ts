@@ -67,8 +67,8 @@ function extractApiMessage(body: unknown): string | undefined {
 
 /**
  * `host` is the host this computer was connected for (`CliConfig.host`): the API is told it when the
- * environment doesn't say which host runs the CLI. `asHost` is told whatever the environment says: `wake`
- * calls for the host it wakes, wherever it was started from.
+ * environment doesn't say which host runs the CLI. `asHost` is told whatever the environment says: `listen`
+ * calls for the host it starts, wherever it was started from.
  */
 export function createApiClient(input: {
   apiUrl: string;

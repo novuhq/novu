@@ -9,19 +9,19 @@ import type { ApiClient } from '../api/client';
 import { type ConversationView, getConversation } from '../api/inbox';
 import {
   AGENT_PAUSED_CODE,
-  AWAKE_ELSEWHERE_CODE,
-  awakeOf,
   errorCode,
-  INVALID_WAKE_CURSOR_CODE,
+  INVALID_LISTEN_CURSOR_CODE,
   isKeyRejected,
-  NOT_AWAKE_CODE,
+  LISTENING_ELSEWHERE_CODE,
+  type ListenMessage,
+  type ListenMessagesPage,
+  listeningOf,
+  NOT_LISTENING_CODE,
   releaseLease,
   showTyping,
   takeLease,
-  type WakeMessage,
-  type WakeMessagesPage,
-  waitForWakeMessages,
-} from '../api/wake';
+  waitForListenMessages,
+} from '../api/listen';
 import { projectLabel } from './computer';
 import type {
   HostAdapter,
@@ -32,13 +32,14 @@ import type {
   PermissionQuestion,
   TurnEnded,
 } from './host-adapter';
-import { wakeHostName } from './hosts';
+import { hostNameOf } from './hosts';
 import { isOwnReplySubject, repliesIn, waitsForAnswerIn } from './own-replies';
-import { IDS_KEPT, SESSIONS_KEPT, type StateStore, type StopReason, type WakeState } from './state';
+import { IDS_KEPT, type ListenState, SESSIONS_KEPT, type StateStore, type StopReason } from './state';
 import { Typing } from './typing';
 import {
   clipCard,
   hostInstructions,
+  hourlyLimitNotice,
   interruptedReply,
   KEY_CHANGED_MESSAGE,
   messageForHost,
@@ -50,21 +51,20 @@ import {
   runLimitReply,
   STOPPED_REPLY,
   spanWords,
+  startedBy,
   TOO_LONG_TO_ASK,
-  wakeLimitNotice,
-  wokenBy,
 } from './words';
 
 const HOUR_MS = 3_600_000;
 
-/** Messages older than this aren't worth a wake: the API never sends them, and the queue drops them too. */
+/** Messages older than this aren't worth a run: the API never sends them, and the queue drops them too. */
 const STALE_MS = 24 * HOUR_MS;
 
 /** The most messages one look at a conversation reads (the API's most), and how many looks back a reply is sought. */
 const PAGE_LIMIT = 100;
 const PAGES_BACK = 10;
 
-export interface WakeTiming {
+export interface ListenTiming {
   /** How long the server holds one wait for messages, in seconds. */
   waitSeconds: number;
   /** How often a paused agent is tried again. */
@@ -84,7 +84,7 @@ export interface WakeTiming {
   renewMs?: number;
 }
 
-export const DEFAULT_TIMING: WakeTiming = {
+export const DEFAULT_TIMING: ListenTiming = {
   waitSeconds: 25,
   // "Every few minutes", as the contract has it: a pause is the operator's choice, not an outage.
   pausedRetryMs: 3 * 60_000,
@@ -95,7 +95,7 @@ export const DEFAULT_TIMING: WakeTiming = {
   typingMs: 4_000,
 };
 
-export interface WakeLoopOptions {
+export interface ListenLoopOptions {
   client: ApiClient;
   agentIdentifier: string;
   /** The operator's contact id: permission questions and notices go to them. */
@@ -104,7 +104,7 @@ export interface WakeLoopOptions {
   computerName: string;
   host: HostAdapter;
   store: StateStore;
-  timing?: Partial<WakeTiming>;
+  timing?: Partial<ListenTiming>;
   log?: (line: string) => void;
   /** Ends the loop: the background service is being stopped. */
   signal?: AbortSignal;
@@ -115,15 +115,15 @@ export type LoopEnd = { reason: 'signal' } | { reason: StopReason; message: stri
 /** How a session's run ended. */
 type RunOutcome = { kind: 'idle' } | { kind: 'interrupted' } | { kind: 'lost'; error: string; sessionGone: boolean };
 
-/** The run in progress: one conversation's session in one round, and what it was woken with. */
+/** The run in progress: one conversation's session in one round, and what it was started with. */
 interface ActiveRun {
   conversationId: string;
   round: number;
   channel: string;
-  /** Who woke it, as the operator reads it in a question: "you" or a contact's name. */
-  wokenBy: string;
+  /** Whose message started it, as the operator reads it in a question: "you" or a contact's name. */
+  startedBy: string;
   /** Every message this run carries, so a run can start again with them. */
-  messages: WakeMessage[];
+  messages: ListenMessage[];
   session?: HostSession;
   /** Messages handed to the host that no turn has answered yet. */
   pending: Set<string>;
@@ -151,25 +151,25 @@ type QuestionOutcome =
   | { status: 'approved' | 'denied' | 'answered'; optionId?: string; text?: string }
   | { status: 'unanswered' | 'withdrawn' };
 
-/** The answer to one of wake's own questions, as it came with the messages. */
-type StreamAnswer = NonNullable<WakeMessage['answer']>;
+/** The answer to one of the listener's own questions, as it came with the messages. */
+type StreamAnswer = NonNullable<ListenMessage['answer']>;
 
 /**
- * Keeps an agent awake on this computer until it is stopped: holds the lease, waits for messages, wakes the
+ * Keeps an agent listening on this computer until it is stopped: holds the lease, waits for messages, starts the
  * host with one session per conversation and round, gets its answers out, and asks the operator before the
  * host does what its settings don't allow. It stops for good, without retrying, when the key stops working or
  * another holder takes the agent over; a paused agent only waits.
  */
-export async function runWakeLoop(options: WakeLoopOptions): Promise<LoopEnd> {
-  return new WakeLoop(options).run();
+export async function runListenLoop(options: ListenLoopOptions): Promise<LoopEnd> {
+  return new ListenLoop(options).run();
 }
 
-class WakeLoop {
-  private state: WakeState;
-  private readonly timing: WakeTiming;
+class ListenLoop {
+  private state: ListenState;
+  private readonly timing: ListenTiming;
   private readonly log: (line: string) => void;
   private readonly abort = new AbortController();
-  /** Wake's own questions waiting for an answer, which the messages may bring before a lookup does. */
+  /** The listener's own questions waiting for an answer, which the messages may bring before a lookup does. */
   private readonly questions = new Map<string, (answer: StreamAnswer) => void>();
   private active?: ActiveRun;
   private activeDone?: Promise<void>;
@@ -180,10 +180,10 @@ class WakeLoop {
   private leaseUntil = 0;
   private failures = 0;
 
-  constructor(private readonly options: WakeLoopOptions) {
+  constructor(private readonly options: ListenLoopOptions) {
     const state = options.store.load();
     if (!state?.allowedAt) {
-      throw new Error('Wake isn’t turned on here: nothing was allowed yet.');
+      throw new Error('Listening isn’t turned on here: nothing was allowed yet.');
     }
 
     this.state = state;
@@ -193,7 +193,7 @@ class WakeLoop {
   }
 
   async run(): Promise<LoopEnd> {
-    this.log(`Keeping ${this.options.host.name} awake on ${this.options.computerName}, in ${this.project}.`);
+    this.log(`Keeping ${this.options.host.name} listening on ${this.options.computerName}, in ${this.project}.`);
 
     while (!this.end) {
       await this.keepLease();
@@ -253,7 +253,7 @@ class WakeLoop {
       const renewIn = (lease.renewInSeconds || 60) * 1000;
       this.renewAt = Date.now() + (this.timing.renewMs ?? renewIn);
       // As long as it lasts, by this computer's clock: the API's may differ.
-      const lasts = Date.parse(lease.awake.expiresAt) - Date.parse(lease.awake.renewedAt);
+      const lasts = Date.parse(lease.listening.expiresAt) - Date.parse(lease.listening.renewedAt);
       this.leaseUntil = Date.now() + (Number.isFinite(lasts) && lasts > 0 ? lasts : renewIn);
     } catch (err) {
       await this.onError(err);
@@ -276,9 +276,9 @@ class WakeLoop {
     await this.reply(cut.conversationId, interruptedReply(this.options.host.name));
   }
 
-  private async poll(): Promise<WakeMessagesPage | null> {
+  private async poll(): Promise<ListenMessagesPage | null> {
     try {
-      return await waitForWakeMessages(
+      return await waitForListenMessages(
         this.options.client,
         {
           computerId: this.options.computerId,
@@ -311,14 +311,14 @@ class WakeLoop {
     }
 
     const code = errorCode(err);
-    if (code === AWAKE_ELSEWHERE_CODE) {
+    if (code === LISTENING_ELSEWHERE_CODE) {
       const here = { computerId: this.options.computerId, hostName: this.options.host.name };
-      this.stopForGood('awake_elsewhere', movedMessage(awakeOf(err), wakeHostName, here));
+      this.stopForGood('listening_elsewhere', movedMessage(listeningOf(err), hostNameOf, here));
 
       return;
     }
 
-    if (code === NOT_AWAKE_CODE) {
+    if (code === NOT_LISTENING_CODE) {
       // The lease lapsed, or another holder took it: asking for it again tells which.
       this.renewAt = 0;
       this.leaseUntil = 0;
@@ -326,7 +326,7 @@ class WakeLoop {
       return;
     }
 
-    if (code === INVALID_WAKE_CURSOR_CODE) {
+    if (code === INVALID_LISTEN_CURSOR_CODE) {
       // Not a cursor this API handed out: waiting goes on from now.
       this.log('The API didn’t know where the last wait got to: going on from now.');
       this.state.cursor = undefined;
@@ -349,7 +349,7 @@ class WakeLoop {
   }
 
   /**
-   * The operator paused the agent: what runs stops, since it can't answer anyway, and nothing wakes until the
+   * The operator paused the agent: what runs stops, since it can't answer anyway, and nothing starts until the
    * lease can be taken again. The main loop tries every few minutes.
    */
   private markPaused(): void {
@@ -385,7 +385,7 @@ class WakeLoop {
     await this.activeDone;
 
     if (this.end?.reason === 'signal') {
-      // Stopped on purpose (`wake stop`, a logout): the dashboard should say so now, not in three minutes.
+      // Stopped on purpose (`listen stop`, a logout): the dashboard should say so now, not in three minutes.
       await releaseLease(this.options.client, {
         computerId: this.options.computerId,
         host: this.state.host,
@@ -401,7 +401,7 @@ class WakeLoop {
   // --- messages ---
 
   /** Takes in a page of messages: each is handled once, and the cursor moves on only together with them. */
-  private accept(page: WakeMessagesPage): void {
+  private accept(page: ListenMessagesPage): void {
     const known = new Set([...this.state.handled, ...this.state.queue.map((message) => message.id)]);
 
     for (const message of page.data) {
@@ -411,7 +411,7 @@ class WakeLoop {
       known.add(message.id);
 
       if (message.answersMessageId && this.state.own.includes(message.answersMessageId)) {
-        // An answer to wake's own question: it settles the question, and wakes nothing.
+        // An answer to the listener's own question: it settles the question, and starts nothing.
         this.markHandled(message);
         if (message.answer) {
           this.questions.get(message.answersMessageId)?.(message.answer);
@@ -432,7 +432,7 @@ class WakeLoop {
     this.save();
   }
 
-  private markHandled(message: WakeMessage): void {
+  private markHandled(message: ListenMessage): void {
     this.state.handled = [...this.state.handled.filter((id) => id !== message.id), message.id].slice(-IDS_KEPT);
   }
 
@@ -462,20 +462,20 @@ class WakeLoop {
 
     // A run starts only while the lease is surely this computer's: by then another may have taken it, and run it too.
     const next = this.state.queue[0];
-    if (!next || now >= this.leaseUntil || !this.mayWake(now)) {
+    if (!next || now >= this.leaseUntil || !this.mayRun(now)) {
       return;
     }
 
-    this.activeDone = this.wake(next);
+    this.activeDone = this.startRun(next);
   }
 
   /** Whether a queued message belongs to the session a run has: the same conversation, in the same round. */
-  private belongs(message: WakeMessage, conversationId: string, round: number): boolean {
+  private belongs(message: ListenMessage, conversationId: string, round: number): boolean {
     return message.conversationId === conversationId && roundOf(message) === round;
   }
 
   /** Hands the host a message, and remembers that a turn owes it an answer. */
-  private sendInto(active: ActiveRun, message: WakeMessage): boolean {
+  private sendInto(active: ActiveRun, message: ListenMessage): boolean {
     if (!active.session?.send({ id: message.id, text: messageForHost(message) })) {
       return false;
     }
@@ -512,9 +512,9 @@ class WakeLoop {
   }
 
   /** Whether another run may start this hour; tells the operator once an hour when not. */
-  private mayWake(now: number): boolean {
-    this.state.wakes = this.state.wakes.filter((at) => now - Date.parse(at) < HOUR_MS);
-    if (this.state.wakes.length < this.state.limits.wakesPerHour) {
+  private mayRun(now: number): boolean {
+    this.state.runs = this.state.runs.filter((at) => now - Date.parse(at) < HOUR_MS);
+    if (this.state.runs.length < this.state.limits.runsPerHour) {
       return true;
     }
 
@@ -522,8 +522,8 @@ class WakeLoop {
     if (now - toldAt >= HOUR_MS) {
       this.state.limitToldAt = new Date(now).toISOString();
       this.save();
-      this.log(`The hourly limit of ${this.state.limits.wakesPerHour} wakes is reached: messages wait.`);
-      void this.notifyOperator(wakeLimitNotice(this.options.host.name, this.state.limits.wakesPerHour));
+      this.log(`The hourly limit of ${this.state.limits.runsPerHour} runs is reached: messages wait.`);
+      void this.notifyOperator(hourlyLimitNotice(this.options.host.name, this.state.limits.runsPerHour));
     }
 
     return false;
@@ -531,8 +531,8 @@ class WakeLoop {
 
   // --- runs ---
 
-  /** Wakes the host for a conversation with everything queued for its session, and sees the run through. */
-  private async wake(first: WakeMessage): Promise<void> {
+  /** Starts the host for a conversation with everything queued for its session, and sees the run through. */
+  private async startRun(first: ListenMessage): Promise<void> {
     const { conversationId } = first;
     const round = roundOf(first);
     const messages = this.state.queue.filter((message) => this.belongs(message, conversationId, round));
@@ -545,7 +545,7 @@ class WakeLoop {
       conversationId,
       round,
       channel: first.channel,
-      wokenBy: wokenBy(first),
+      startedBy: startedBy(first),
       messages,
       pending: new Set(),
       waiting: new Set(),
@@ -555,7 +555,7 @@ class WakeLoop {
       typing: this.typingIn(conversationId),
     };
     this.active = active;
-    this.state.wakes.push(new Date().toISOString());
+    this.state.runs.push(new Date().toISOString());
     this.state.running = { conversationId, at: new Date().toISOString() };
     this.save();
 
@@ -597,7 +597,7 @@ class WakeLoop {
       active.finish = resolve;
     });
     this.log(
-      `Woke ${this.options.host.name} for ${active.conversationId} (${active.wokenBy})${resume ? `, going on with session ${resume}` : ''}.`
+      `Started ${this.options.host.name} for ${active.conversationId} (${active.startedBy})${resume ? `, going on with session ${resume}` : ''}.`
     );
 
     const session = this.options.host.open(
@@ -691,7 +691,7 @@ class WakeLoop {
       // Nothing left to work on: its answer goes out now, not "typing…" after it.
       active.typing.stop();
     }
-    // A turn ran, so the session exists: the conversation's next wake in this round goes on with it.
+    // A turn ran, so the session exists: the conversation's next run in this round goes on with it.
     this.keepSession(active, session.id);
 
     if (turn.outcome === 'completed' && turn.text) {
@@ -742,10 +742,10 @@ class WakeLoop {
     this.state.sessions[active.conversationId] = {
       sessionId,
       round: active.round,
-      lastWakeAt: new Date().toISOString(),
+      lastRunAt: new Date().toISOString(),
     };
     const recent = Object.entries(this.state.sessions)
-      .sort(([, a], [, b]) => b.lastWakeAt.localeCompare(a.lastWakeAt))
+      .sort(([, a], [, b]) => b.lastRunAt.localeCompare(a.lastRunAt))
       .slice(0, SESSIONS_KEPT);
     this.state.sessions = Object.fromEntries(recent);
     this.save();
@@ -907,15 +907,15 @@ class WakeLoop {
     }
   }
 
-  /** A question wake asked that isn't wanted any more comes off the person's phone. */
+  /** A question the listener asked that isn't wanted any more comes off the person's phone. */
   private async withdraw(id: string): Promise<void> {
     await cancelInteraction(this.options.client, id).catch(() => undefined);
   }
 
   /**
    * The host wants to do what its settings don't allow. The agent's own reading and replying in its
-   * conversation goes ahead; anything else is the operator's to decide, with an `approve`, even when a contact
-   * woke the host. No answer in time is a Deny.
+   * conversation goes ahead; anything else is the operator's to decide, with an `approve`, even when a contact's
+   * message started the host. No answer in time is a Deny.
    */
   private async askOperator(
     active: ActiveRun,
@@ -934,7 +934,7 @@ class WakeLoop {
     }
 
     if (!allowOnce) {
-      return { optionId: deny.id, message: 'Wake can’t allow this.' };
+      return { optionId: deny.id, message: 'The listener can’t allow this.' };
     }
 
     const timeoutSeconds = this.timing.questionTimeoutMs / 1000;
@@ -945,7 +945,7 @@ class WakeLoop {
       detail: question.details.join(' ') || undefined,
       project: this.project,
       computerName: this.options.computerName,
-      wokenBy: active.wokenBy,
+      startedBy: active.startedBy,
       timeoutSeconds,
     });
     if (!card) {
@@ -962,7 +962,7 @@ class WakeLoop {
           ...card,
           approveLabel: 'Allow',
           denyLabel: 'Deny',
-          // Only for as long as the session lasts: wake never writes the host's settings for the operator.
+          // Only for as long as the session lasts: the listener never writes the host's settings for the operator.
           ...(allowSession ? { extraActions: [{ id: allowSession.id, label: allowSession.label }] } : {}),
         },
         to: this.options.operatorId,
@@ -1056,7 +1056,7 @@ class WakeLoop {
     return { answers };
   }
 
-  /** Waits for an answer to one of wake's questions: as it comes with the messages, or as a lookup finds it. */
+  /** Waits for an answer to one of the listener's questions: as it comes with the messages, or as a lookup finds it. */
   private async waitForAnswer(id: string, signal: AbortSignal): Promise<QuestionOutcome> {
     const deadline = Date.now() + this.timing.questionTimeoutMs;
     let streamed: StreamAnswer | undefined;
@@ -1138,7 +1138,7 @@ function anyOf(...signals: AbortSignal[]): AbortSignal {
 }
 
 /** The message's round: how many times its conversation was resolved before it. */
-function roundOf(message: WakeMessage): number {
+function roundOf(message: ListenMessage): number {
   return typeof message.round === 'number' ? message.round : 0;
 }
 

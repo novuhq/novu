@@ -1,4 +1,4 @@
-import type { Awake, WakeMessage } from '../api/wake';
+import type { Listening, ListenMessage } from '../api/listen';
 import { CLI_COMMAND } from '../config';
 import { stripTerminalControls } from '../output';
 
@@ -12,16 +12,16 @@ const CARD_TITLE_SHOWN = 150;
 const CARD_BODY_SHOWN = 3000;
 
 /**
- * What a woken host is told for the whole session, on top of its own system prompt. A session belongs to one
+ * What a host the listener started is told for the whole session, on top of its own system prompt. A session belongs to one
  * conversation, so the conversation is named here once; each message names it again for clarity.
  */
 export function hostInstructions(input: { conversationId: string; channel: string; project: string }): string {
   const { conversationId: id } = input;
 
   return [
-    '# You were woken by Agent Inbox',
+    '# Agent Inbox started you',
     '',
-    `Someone wrote to your agent on Agent Inbox, so its wake program started you in ${input.project}. Nobody is at this terminal: people only read what reaches them in the conversation.`,
+    `Someone wrote to your agent on Agent Inbox, so its listener started you in ${input.project}. Nobody is at this terminal: people only read what reaches them in the conversation.`,
     '',
     `- This session belongs to one conversation, ${id}, on ${input.channel}. Each message in it comes to you starting with "New message in ${id}", with who wrote it.`,
     `- Reply in it yourself: \`${CLI_COMMAND} inbox reply ${id} "…"\`. To ask them something and wait for the answer: \`${CLI_COMMAND} inbox reply ${id} ask "…"\`, or \`approve "…"\`, or \`choose "…" --option … --option …\`. The conversation so far: \`${CLI_COMMAND} inbox show ${id}\`. These commands, for this conversation, run without asking anyone, on their own or joined to each other with \`&&\`.`,
@@ -33,7 +33,7 @@ export function hostInstructions(input: { conversationId: string; channel: strin
 }
 
 /**
- * A question the agent puts to the person who woke it: `choose` for one pick among 2–10 options, `ask` for
+ * A question the agent puts to the person whose message started it: `choose` for one pick among 2–10 options, `ask` for
  * anything else (several picks, more options, or none), with the options written out.
  */
 export function questionCard(question: {
@@ -54,7 +54,7 @@ export function questionCard(question: {
 }
 
 /** Who wrote, as the host reads it: "your operator, Ada" or "Ben, a contact". */
-function writer(message: WakeMessage): string {
+function writer(message: ListenMessage): string {
   const name = message.from.name ? stripTerminalControls(message.from.name) : undefined;
 
   if (message.from.isOperator) {
@@ -65,7 +65,7 @@ function writer(message: WakeMessage): string {
 }
 
 /** A message as the host reads it: where it came, who wrote it, and what they wrote. */
-export function messageForHost(message: WakeMessage): string {
+export function messageForHost(message: ListenMessage): string {
   const text = stripTerminalControls(message.text).trim();
   // A group's other people read the reply too.
   const where = `${message.conversationId} (${message.channel}${message.isDirectMessage === false ? ', a group' : ''})`;
@@ -83,8 +83,8 @@ export function messageForHost(message: WakeMessage): string {
   return `New message in ${where} from ${writer(message)}, at ${message.at}:\n\n${text}${attached}`;
 }
 
-/** Who woke the host, in a few words for the operator: "you" or "Ben". */
-export function wokenBy(message: WakeMessage): string {
+/** Whose message started the host, in a few words for the operator: "you" or "Ben". */
+export function startedBy(message: ListenMessage): string {
   return message.from.isOperator ? 'you' : stripTerminalControls(message.from.name ?? message.from.id);
 }
 
@@ -112,10 +112,10 @@ export function permissionCard(input: {
   detail?: string;
   project: string;
   computerName: string;
-  wokenBy: string;
+  startedBy: string;
   timeoutSeconds: number;
 }): { title: string; body: string } | undefined {
-  const woken = input.wokenBy === 'you' ? 'you woke it' : `${input.wokenBy} woke it`;
+  const forWhom = input.startedBy === 'you' ? 'for your message' : `for ${input.startedBy}’s message`;
   const wants = `${input.hostName} wants to ${input.action}`;
   // A long command, or one over several lines, doesn't fit the title: the title says what kind of thing it is, and
   // the body has all of it.
@@ -125,7 +125,7 @@ export function permissionCard(input: {
       : '';
   const rest = [
     input.detail,
-    `In ${input.project} on ${input.computerName}; ${woken}. Its settings for this project don’t allow this.`,
+    `In ${input.project} on ${input.computerName}, ${forWhom}. Its settings for this project don’t allow this.`,
     `No answer in ${spanWords(input.timeoutSeconds)} counts as Deny.`,
   ]
     .filter(Boolean)
@@ -141,13 +141,13 @@ export function permissionCard(input: {
 export const TOO_LONG_TO_ASK =
   'It is too long to show your operator whole, so it isn’t allowed. Do it in shorter steps.';
 
-/** The `approve` that asks the operator before a computer is kept awake: the words the contract gives. */
+/** The `approve` that asks the operator before a computer starts listening: the words the contract gives. */
 export function allowCard(input: {
   hostName: string;
   computerName: string;
   project: string;
-  /** Where the agent is awake now, when that's another computer, or another host on this one. */
-  elsewhere?: Awake | null;
+  /** Where the agent is listening now, when that's another computer, or another host on this one. */
+  elsewhere?: Listening | null;
   /** This computer's id, to tell the two apart. */
   computerId?: string;
   /** More the operator should know before they allow it. */
@@ -159,14 +159,14 @@ export function allowCard(input: {
   const moves = !other
     ? ''
     : other.computerId === input.computerId
-      ? ` It is awake on this computer now for ${its}; this replaces that.`
-      : ` It is awake on ${other.computerName} now (${its}); this moves it here.`;
+      ? ` It is listening on this computer now for ${its}; this replaces that.`
+      : ` It is listening on ${other.computerName} now (${its}); this moves it here.`;
 
   return {
-    title: `Keep ${input.hostName} awake on ${input.computerName}, in ${input.project}?`,
+    title: `Listen for messages on ${input.computerName}, and start ${input.hostName} in ${input.project}?`,
     body: clipCard(
       [
-        `Messages from you, and from contacts you let wake it, then start ${input.hostName} there.${moves}`,
+        `Messages from you, and from the contacts it listens to, then start ${input.hostName} there.${moves}`,
         ...(input.notes ?? []),
       ].join(' ')
     ),
@@ -193,8 +193,8 @@ export function interruptedReply(hostName: string): string {
 }
 
 /** Told to the operator once an hour when the hourly limit holds messages back. */
-export function wakeLimitNotice(hostName: string, wakesPerHour: number): string {
-  return `${hostName} was woken ${wakesPerHour} ${wakesPerHour === 1 ? 'time' : 'times'} in the last hour, the most it may be. New messages wait, and wake it as the hour allows.`;
+export function hourlyLimitNotice(hostName: string, runsPerHour: number): string {
+  return `${hostName} was started ${runsPerHour} ${runsPerHour === 1 ? 'time' : 'times'} in the last hour, the most it may be. New messages wait, and start it as the hour allows.`;
 }
 
 /** Told to the operator when a run couldn't answer. */
@@ -202,32 +202,32 @@ export function runFailedNotice(hostName: string, conversationId: string, error:
   return clipCard(`${hostName} couldn’t answer in ${conversationId}: ${error}`);
 }
 
-/** What `wake` says and keeps when the key stops working: the words the contract gives. */
-export const KEY_CHANGED_MESSAGE = 'The key changed on agentinbox.md. Connect again, then wake again.';
+/** What `listen` says and keeps when the key stops working: the words the contract gives. */
+export const KEY_CHANGED_MESSAGE = 'The key changed on agentinbox.md. Connect again, then listen again.';
 
-/** Why `wake` won't start on a keyless setup: its few free messages would go on the first wakes. */
-export const NEEDS_ACCOUNT_MESSAGE = `Keeping a host awake needs an Agent Inbox account: this computer has a keyless setup, and wake would use up its free messages fast. Run \`${CLI_COMMAND} login\` to claim it, then wake again.`;
+/** Why `listen` won't start on a keyless setup: its few free messages would go on the first runs. */
+export const NEEDS_ACCOUNT_MESSAGE = `Listening needs an Agent Inbox account: this computer has a keyless setup, and listening would use up its free messages fast. Run \`${CLI_COMMAND} login\` to claim it, then listen again.`;
 
-/** What `wake run` says and keeps when this computer was connected anew since wake was turned on. */
+/** What `listen run` says and keeps when this computer was connected anew since listening was turned on. */
 export function connectionChangedMessage(host: string): string {
-  return `This computer was connected anew since wake was turned on here, so it stopped: nothing left for the old connection runs. Turn it on again with: ${CLI_COMMAND} wake ${host}`;
+  return `This computer was connected anew since listening was turned on here, so it stopped: nothing left for the old connection runs. Turn it on again with: ${CLI_COMMAND} listen ${host}`;
 }
 
-/** What `wake` and `wake status` say while the operator has the agent paused. */
-export const PAUSED_MESSAGE = 'The agent is paused on agentinbox.md: nothing wakes it until you resume it there.';
+/** What `listen` and `listen status` say while the operator has the agent paused. */
+export const PAUSED_MESSAGE = 'The agent is paused on agentinbox.md: nothing starts it until you resume it there.';
 
-/** What `wake` says and keeps when another computer, or another host here, took the agent over. */
+/** What `listen` says and keeps when another computer, or another host here, took the agent over. */
 export function movedMessage(
-  awake: Awake | null,
+  listening: Listening | null,
   hostNames: (host: string) => string,
   here?: { computerId: string; hostName: string }
 ): string {
-  const its = awake ? `${hostNames(awake.host)}${awake.project ? `, in ${awake.project}` : ''}` : '';
-  if (awake && here && awake.computerId === here.computerId) {
-    return `It is awake on this computer for ${its} now, so wake for ${here.hostName} stopped.`;
+  const its = listening ? `${hostNames(listening.host)}${listening.project ? `, in ${listening.project}` : ''}` : '';
+  if (listening && here && listening.computerId === here.computerId) {
+    return `It is listening on this computer for ${its} now, so listening for ${here.hostName} stopped.`;
   }
 
-  const where = awake ? `${awake.computerName} (${its})` : 'another computer';
+  const where = listening ? `${listening.computerName} (${its})` : 'another computer';
 
-  return `It is awake on ${where} now, so this computer stopped. Run \`${CLI_COMMAND} wake <host>\` here to take it back.`;
+  return `It is listening on ${where} now, so this computer stopped. Run \`${CLI_COMMAND} listen <host>\` here to take it back.`;
 }
