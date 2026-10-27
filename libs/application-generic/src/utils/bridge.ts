@@ -94,6 +94,11 @@ export const BRIDGE_EXECUTION_ERROR = {
     code: 'ResponseParseError',
     message: (url: string) => `Bridge URL response code is 2xx, but parsing body failed for \`${url}\``,
   },
+  INVALID_DISCOVER_RESPONSE: {
+    code: 'InvalidDiscoverResponse',
+    message: (url: string) =>
+      `Bridge URL response for \`${url}\` does not contain a workflows list. Check that the URL points at your Novu bridge endpoint.`,
+  },
   SELF_SIGNED_CERTIFICATE: {
     code: 'SelfSignedCertificate',
     message: (url: string) => `Bridge Endpoint can't use a self signed certificate in production environments.`,

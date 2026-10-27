@@ -127,9 +127,8 @@ export class Sync {
   }
 
   private async executeDiscover(command: SyncCommand): Promise<DiscoverOutput> {
-    let discover: DiscoverOutput | undefined;
     try {
-      discover = (await this.executeBridgeRequest.execute({
+      return (await this.executeBridgeRequest.execute({
         statelessBridgeUrl: command.bridgeUrl,
         environmentId: command.environmentId,
         action: GetActionEnum.DISCOVER,
@@ -147,12 +146,6 @@ export class Sync {
 
       throw error;
     }
-
-    if (!discover) {
-      throw new BadRequestException('Invalid Bridge URL Response');
-    }
-
-    return discover;
   }
 
   private async findEnvironment(command: SyncCommand): Promise<EnvironmentEntity> {

@@ -280,6 +280,8 @@ export interface SafeOutboundJsonResponse<T = unknown> {
   statusMessage: string;
   headers: http.IncomingHttpHeaders;
   body: T;
+  /** False when a non-empty body could not be parsed as JSON, in which case `body` is the raw text. */
+  isJson: boolean;
 }
 
 const SENSITIVE_HEADER_PATTERNS = [
@@ -628,10 +630,12 @@ export async function safeOutboundJsonRequest<T = unknown>(
 
   const contentType = headerString(response.headers['content-type']) ?? '';
   let parsed: unknown = response.body.toString('utf8');
+  let isJson = (parsed as string).trim().length === 0;
 
   if (contentType.includes('application/json') || contentType.includes('+json')) {
     try {
       parsed = response.body.length === 0 ? undefined : JSON.parse(response.body.toString('utf8'));
+      isJson = true;
     } catch {
       // Leave parsed as string if JSON parsing fails.
     }
@@ -640,6 +644,7 @@ export async function safeOutboundJsonRequest<T = unknown>(
     if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
       try {
         parsed = JSON.parse(trimmed);
+        isJson = true;
       } catch {
         // Leave parsed as string if JSON parsing fails.
       }
@@ -651,5 +656,6 @@ export async function safeOutboundJsonRequest<T = unknown>(
     statusMessage: response.statusMessage,
     headers: response.headers,
     body: parsed as T,
+    isJson,
   };
 }
