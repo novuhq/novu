@@ -368,17 +368,58 @@ describe('CreateInteraction', () => {
       expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(false);
     });
 
-    it('refuses to name someone who is not in a direct-message thread', async () => {
-      const { usecase, command, agentRepository, inbox, createConversationInteraction } = setup();
+    it('puts a question to someone outside a direct-message thread in their own chat too, and it stays the thread’s', async () => {
+      const {
+        usecase,
+        command,
+        created,
+        agentRepository,
+        inbox,
+        createConversationInteraction,
+        deliveryService,
+        conversationService,
+        messageQuota,
+      } = setup();
       agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
       inbox.outsiders.returns(['sub-9']);
+      conversationService.createOrGetConversation.resolves({ _id: 'conv9', identifier: 'conv_carol' });
+      const outside: Array<Record<string, unknown>> = [];
+      createConversationInteraction.execute.callsFake(async (_command: unknown, alsoTo?: (row: unknown) => any[]) => {
+        for (const target of alsoTo?.(created) ?? []) {
+          outside.push({ subscriberId: target.subscriberId, refs: await target.deliver() });
+        }
+
+        return { ...created, _conversationId: 'conv1', subscriberIds: ['sub-1', 'sub-9'] };
+      });
+
+      const result = await usecase.execute({ ...command, to: ['sub-9', 'sub-1'], thread: 'conv_abc' } as any);
+
+      // Someone in the thread is named first: the thread's own card is theirs.
+      expect(createConversationInteraction.execute.firstCall.args[0].to).to.deep.equal(['sub-1', 'sub-9']);
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({ subscriberId: 'sub-9' });
+      // Delivered in their own chat, and filed under their thread there, yet the question isn't moved to it.
+      expect(outside).to.deep.equal([
+        { subscriberId: 'sub-9', refs: { platformMessageId: 'msg-1', platformThreadId: 'thread-1' } },
+      ]);
+      expect(conversationService.createOrGetConversation.firstCall.args[0]).to.include({ participantId: 'sub-9' });
+      expect(result.threads).to.deep.equal([
+        { id: 'conv_abc', unreadBefore: 0 },
+        { id: 'conv_carol', unreadBefore: 0 },
+      ]);
+      expect(messageQuota.reserveCredits.firstCall.args).to.deep.equal(['org1', 2]);
+    });
+
+    it('refuses a question to someone outside the thread who can’t be reached, before anything is sent', async () => {
+      const { usecase, command, agentRepository, inbox, createConversationInteraction, deliveryService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      inbox.outsiders.returns(['sub-9']);
+      deliveryService.resolveChannel.rejects(new BadRequestException('"sub-9" has no channel connected.'));
 
       try {
-        await usecase.execute({ ...command, to: 'sub-9', thread: 'conv_abc' } as any);
+        await usecase.execute({ ...command, to: ['sub-1', 'sub-9'], thread: 'conv_abc' } as any);
         expect.fail('expected BadRequestException');
       } catch (err) {
         expect(err).to.be.instanceOf(BadRequestException);
-        expect((err as Error).message).to.contain('not in this thread');
       }
       expect(createConversationInteraction.execute.called).to.equal(false);
     });

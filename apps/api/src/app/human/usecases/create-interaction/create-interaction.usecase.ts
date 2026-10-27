@@ -68,6 +68,9 @@ type ExplicitRecipient = {
   explicitEmail?: string;
 };
 
+/** A contact, and the chat a message to them goes to. */
+type ResolvedRecipient = { subscriberId: string; target: ResolvedHumanTarget };
+
 /**
  * Where the Human dashboard runs, setups are claimed there and the CLI continues with `human login`.
  * Elsewhere (self-hosted) they're claimed on the dashboard, and the CLI needs the environment's key.
@@ -184,19 +187,11 @@ export class CreateInteraction {
     let emailCapError: HttpException | undefined;
 
     try {
-      if (emailCount > 0) {
-        try {
-          credits = await this.inboxQuota.reserveCredits(command.organizationId, emailCount);
-        } catch (err) {
-          // Email-only interactions fail outright on the cap. When other channels
-          // can still be reached, they go out and the email recipients fail alone.
-          if (!isAgentEmailInboxQuotaExceeded(err) || emailCount === resolved.length) {
-            throw err;
-          }
-
-          emailCapError = err;
-        }
-      }
+      ({ credits, emailCapError } = await this.reserveEmailCredits(
+        command.organizationId,
+        emailCount,
+        emailCount < resolved.length
+      ));
 
       if (!isKeylessOrganization(command.organizationId)) {
         // Capped email recipients are not delivered, so they stay out of this
@@ -219,29 +214,9 @@ export class CreateInteraction {
       );
 
       const threads: InteractionThreadDto[] = [];
-      const targets: HumanDeliveryTarget[] = resolved.map(({ subscriberId, target }) => {
-        const capped = emailCapError && target.platform === HumanChannelViaEnum.EMAIL ? emailCapError : undefined;
-
-        return {
-          subscriberId,
-          integrationIdentifier: target.integrationIdentifier,
-          platform: target.platform,
-          deliver: async () => {
-            if (capped) {
-              throw capped;
-            }
-
-            const sent = await this.deliveryService.deliver(interaction, target);
-            messageCredits?.accept();
-            const thread = await this.landInThread(scope, interaction, subscriberId, target, sent.platformThreadId);
-
-            if (thread) {
-              threads.push({ id: thread.id, unreadBefore: thread.unreadBefore });
-            }
-
-            return { ...sent, ...(thread ? { _conversationId: thread.conversationId } : {}) };
-          },
-        };
+      const targets = this.contactTargets(scope, interaction, resolved, threads, {
+        emailCapError,
+        onSent: () => messageCredits?.accept(),
       });
 
       const deliver = () =>
@@ -266,6 +241,76 @@ export class CreateInteraction {
       await credits?.release();
       await messageCredits?.release();
     }
+  }
+
+  /**
+   * Holds an email credit for each of `emailCount` deliveries. Email-only interactions fail outright on the cap.
+   * When other channels can still be reached (`othersReached`), they go out and the email recipients fail alone.
+   */
+  private async reserveEmailCredits(
+    organizationId: string,
+    emailCount: number,
+    othersReached: boolean
+  ): Promise<{ credits?: AgentEmailInboxCredits; emailCapError?: HttpException }> {
+    if (emailCount === 0) {
+      return {};
+    }
+
+    try {
+      return { credits: await this.inboxQuota.reserveCredits(organizationId, emailCount) };
+    } catch (err) {
+      if (!isAgentEmailInboxQuotaExceeded(err) || !othersReached) {
+        throw err;
+      }
+
+      return { emailCapError: err };
+    }
+  }
+
+  /**
+   * A delivery to each contact in a chat of their own, filed under their thread there. In a send, the first thread
+   * filed becomes the interaction's own; a question asked in a thread stays that thread's (`staysInThread`), and its
+   * email deliveries use the credits held for them (`withCredits`).
+   */
+  private contactTargets(
+    scope: InboxScope,
+    interaction: HumanInteractionEntity,
+    resolved: ResolvedRecipient[],
+    threads: InteractionThreadDto[],
+    options: {
+      emailCapError?: HttpException;
+      onSent?: (subscriberId: string, platform: string) => void;
+      staysInThread?: boolean;
+      withCredits?: AgentEmailInboxCredits;
+    }
+  ): HumanDeliveryTarget[] {
+    return resolved.map(({ subscriberId, target }) => {
+      const isEmail = target.platform === HumanChannelViaEnum.EMAIL;
+      const capped = isEmail ? options.emailCapError : undefined;
+      const credits = isEmail ? options.withCredits : undefined;
+
+      return {
+        subscriberId,
+        integrationIdentifier: target.integrationIdentifier,
+        platform: target.platform,
+        deliver: async () => {
+          if (capped) {
+            throw capped;
+          }
+
+          const send = () => this.deliveryService.deliver(interaction, target);
+          const sent = credits ? await credits.run(send) : await send();
+          options.onSent?.(subscriberId, target.platform);
+          const thread = await this.landInThread(scope, interaction, subscriberId, target, sent.platformThreadId);
+
+          if (thread) {
+            threads.push({ id: thread.id, unreadBefore: thread.unreadBefore });
+          }
+
+          return { ...sent, ...(thread && !options.staysInThread ? { _conversationId: thread.conversationId } : {}) };
+        },
+      };
+    });
   }
 
   /**
@@ -311,7 +356,11 @@ export class CreateInteraction {
     }
   }
 
-  /** Into an existing thread: its contact may answer, unless `to` or `anyoneMayAnswer` says otherwise. */
+  /**
+   * Into an existing thread: its contact may answer, unless `to` or `anyoneMayAnswer` says otherwise. A contact
+   * `to` names who isn't in a direct-message thread gets the message in their own chat as well. The question stays
+   * the thread's either way, so its answer comes back there, wherever it is given.
+   */
   private async sendIntoThread(
     command: CreateInteractionCommand,
     agent: AgentEntity,
@@ -334,11 +383,22 @@ export class CreateInteraction {
       to.length > 0
         ? { recipients: to, anyoneMayAnswer: command.anyoneMayAnswer === true }
         : await this.threadAudience(command, scope, conversation);
-    const recipients = audience.recipients;
 
     if (to.length > 0) {
-      await this.assertThreadContacts(scope, conversation, to);
+      await this.assertThreadContacts(scope, to);
     }
+
+    const outsiders = to.length > 0 ? this.inbox.outsiders(conversation, to) : [];
+    // Someone in the thread first: the thread's own card is theirs.
+    const recipients = [
+      ...audience.recipients.filter((subscriberId) => !outsiders.includes(subscriberId)),
+      ...outsiders,
+    ];
+    const outside = await this.resolveTargets(
+      command,
+      agent,
+      outsiders.map((subscriberId) => ({ subscriberId }))
+    );
 
     await this.keylessCap.assertWithinCap({ ...scope, agentId: agent._id, subscriberIds: recipients });
 
@@ -359,8 +419,17 @@ export class CreateInteraction {
       messageCredits = await this.messageQuota.reserveCredits(command.organizationId, recipients.length);
     }
 
+    const threads: InteractionThreadDto[] = [];
+    const reached = new Set<string>();
+    let credits: AgentEmailInboxCredits | undefined;
     let interaction: Awaited<ReturnType<CreateConversationInteraction['execute']>>;
     try {
+      const reserved = await this.reserveEmailCredits(
+        command.organizationId,
+        outside.filter(({ target }) => target.platform === HumanChannelViaEnum.EMAIL).length,
+        true
+      );
+      credits = reserved.credits;
       interaction = await this.createConversationInteraction.execute(
         CreateConversationInteractionCommand.create({
           ...scope,
@@ -377,17 +446,34 @@ export class CreateInteraction {
           from: command.from,
           ttlSeconds: command.ttlSeconds,
           to: recipients,
-        })
+        }),
+        outside.length > 0
+          ? (created) =>
+              this.contactTargets(scope, created, outside, threads, {
+                emailCapError: reserved.emailCapError,
+                withCredits: credits,
+                staysInThread: true,
+                onSent: (subscriberId, platform) => {
+                  reached.add(subscriberId);
+                  this.trackMessageSent(command, agent, platform);
+                },
+              })
+          : undefined
       );
       messageCredits?.accept(recipients.length);
     } finally {
+      await credits?.release();
       await messageCredits?.release();
     }
 
     this.trackMessageSent(command, agent, channel.platform);
     const unreadBefore = await this.inbox.markSentInto(scope, conversation);
+    const failedTo = outsiders.filter((subscriberId) => !reached.has(subscriberId));
 
-    return toInteractionResponse(interaction, undefined, [{ id: conversation.identifier, unreadBefore }]);
+    return toInteractionResponse(interaction, failedTo.length > 0 ? failedTo : undefined, [
+      { id: conversation.identifier, unreadBefore },
+      ...threads,
+    ]);
   }
 
   /**
@@ -416,24 +502,8 @@ export class CreateInteraction {
     return { recipients: [contact], anyoneMayAnswer: false };
   }
 
-  /**
-   * `to` with `thread` names who may answer there: only a contact, and in a direct message only
-   * someone who is in it. Otherwise that person never sees the question, yet their next message
-   * anywhere would count as its answer.
-   */
-  private async assertThreadContacts(
-    scope: InboxScope,
-    conversation: ConversationEntity,
-    subscriberIds: string[]
-  ): Promise<void> {
-    const [outsider] = this.inbox.outsiders(conversation, subscriberIds);
-
-    if (outsider) {
-      throw new BadRequestException(
-        `"${outsider}" is not in this thread, so they would never see the message. Leave \`to\` out, or start a thread with them by passing \`to\` without \`thread\`.`
-      );
-    }
-
+  /** `to` with `thread` names who may answer: contacts only. */
+  private async assertThreadContacts(scope: InboxScope, subscriberIds: string[]): Promise<void> {
     const [stranger] = await this.inbox.findStrangers(scope, subscriberIds);
 
     if (stranger) {

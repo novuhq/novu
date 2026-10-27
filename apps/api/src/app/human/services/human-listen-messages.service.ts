@@ -44,6 +44,12 @@ const ANSWER_WINDOW_MS = 2 * 60 * 1000;
 /** Leeway between the clocks of the servers that stored a reply and settled its question. */
 const CLOCK_SLACK_MS = 5_000;
 
+/**
+ * How long after its question is settled an answer's row can be stored: the card is edited on the chat app first,
+ * which a slow app can make take a while. A look goes this far back for questions whose rows may still come.
+ */
+const ANSWER_ROW_LAG_MS = 10 * 60 * 1000;
+
 /** How a person settles a question. Expired, canceled and delivered are the system's doing. */
 const SETTLED_BY_A_PERSON: readonly string[] = [
   HumanInteractionStatusEnum.ANSWERED,
@@ -69,10 +75,12 @@ type CardAnswer = {
   status?: string;
   optionId?: string;
   text?: string;
+  /** On the row in the question's own conversation, when the answer was given in another. */
+  answeredElsewhere?: boolean;
 };
 
-/** A question a reply answered, with the words it was settled with. */
-type AnsweredQuestion = Pick<HumanInteractionEntity, 'identifier' | 'response'>;
+/** A question a reply answered: the words it was settled with, where it was asked, and whether the agent read it. */
+type AnsweredQuestion = Pick<HumanInteractionEntity, 'identifier' | 'response' | '_conversationId' | 'answerReadAt'>;
 
 /** What became of a look's messages since they were stored, by `messageKey`. */
 type Revisions = {
@@ -97,14 +105,17 @@ export type ListenMessagesPage = { data: ListenMessageDto[]; next: ListenCursor;
 
 /**
  * The messages that may start an agent's host, read for the listener's wait: what the people the agent listens to
- * wrote to it, and their answers to its cards, oldest first. The agent's own messages, the
- * system's and strangers' never count, nor a message that was deleted before it was read; one edited before it
- * was read is given as it reads now.
+ * wrote to it, and every answer to a question it asked, whoever gave it, oldest first. The agent's own messages,
+ * the system's and what else strangers write never count, nor a message that was deleted before it was read; one
+ * edited before it was read is given as it reads now.
  *
- * Each message is one entry. A reply that answers a question is the person's message, marked with the question
- * it answered (`answersMessageId`); the question's own answer row then adds nothing. A pressed button leaves no
- * message, so the answer row is the entry, saying what the button says. Each entry says how many times its
- * conversation was resolved before it (`round`): a host keeps one session for each conversation and round.
+ * Each message is one entry. An answer comes back to the conversation its question was asked in, wherever it was
+ * given: a question sent to people outside that conversation is answered in their own chats, and its answer's row
+ * in the question's own conversation is the entry. Given there, a reply that answers a question is the person's
+ * message, marked with the question it answered (`answersMessageId`), and the answer's row adds nothing; a pressed
+ * button leaves no message, so its row is the entry, saying what the button says. An answer the agent already
+ * read, by waiting for it, is left out. Each entry says how many times its conversation was resolved before it
+ * (`round`): a host keeps one session for each conversation and round.
  */
 @Injectable()
 export class HumanListenMessagesService {
@@ -145,11 +156,17 @@ export class HumanListenMessagesService {
         _organizationId: scope.organizationId,
         _conversationId: { $in: [...conversations.keys()] },
         senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
-        senderId: { $in: [...listenedTo.keys()] },
-        type: {
-          $in: [ConversationActivityTypeEnum.MESSAGE, ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE],
-        },
-        $and: [{ createdAt: { $lte: new Date(until) } }, afterCursor(cursor)],
+        $and: [
+          { createdAt: { $lte: new Date(until) } },
+          afterCursor(cursor),
+          // What the people it listens to write, and anyone's answer: the agent asked for that.
+          {
+            $or: [
+              { type: ConversationActivityTypeEnum.MESSAGE, senderId: { $in: [...listenedTo.keys()] } },
+              { type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE },
+            ],
+          },
+        ],
       },
       '*',
       { sort: { createdAt: 1, _id: 1 }, limit: ROWS_PER_LOOK }
@@ -187,9 +204,9 @@ export class HumanListenMessagesService {
 
   /**
    * Every conversation of the agent where a row after the cursor can be: those someone it listens to is in that
-   * were active since it (writing makes the writer one of its people and marks it active), and those of questions
-   * answered since it (pressing a button does neither). Only what happened since the cursor counts, so none is
-   * left out however many conversations the agent has.
+   * were active since it (writing makes the writer one of its people and marks it active), and those a question
+   * answered since it was asked in, where its answer comes back (an answer doesn't mark it active). Only what
+   * happened since the cursor counts, so none is left out however many conversations the agent has.
    */
   private async conversationsOf(
     scope: InboxScope,
@@ -197,13 +214,13 @@ export class HumanListenMessagesService {
     listenedTo: ListenedTo,
     cursor: ListenCursor
   ): Promise<Map<string, ListenConversation>> {
-    const since = new Date(cursor.at - CLOCK_SLACK_MS).toISOString();
+    const since = new Date(cursor.at - CLOCK_SLACK_MS);
     const answered = await this.humanInteractionRepository.find(
       {
         _environmentId: scope.environmentId,
         _organizationId: scope.organizationId,
         _agentId: agent._id,
-        'response.respondedAt': { $gte: since },
+        'response.respondedAt': { $gte: new Date(since.getTime() - ANSWER_ROW_LAG_MS).toISOString() },
       },
       ['_conversationId']
     );
@@ -213,8 +230,8 @@ export class HumanListenMessagesService {
         _organizationId: scope.organizationId,
         _agentId: agent._id,
         $or: [
-          { 'participants.id': { $in: [...listenedTo.keys()] }, lastActivityAt: { $gte: since } },
-          { _id: { $in: answered.flatMap((question) => question._conversationId ?? []) } },
+          { 'participants.id': { $in: [...listenedTo.keys()] }, lastActivityAt: { $gte: since.toISOString() } },
+          { _id: { $in: [...new Set(answered.flatMap((question) => question._conversationId ?? []))] } },
         ],
       },
       ['_id', 'identifier', 'isDirectMessage']
@@ -303,7 +320,7 @@ export class HumanListenMessagesService {
           $lte: new Date(Math.max(...times) + ANSWER_WINDOW_MS).toISOString(),
         },
       },
-      ['identifier', 'response']
+      ['identifier', 'response', '_conversationId', 'answerReadAt']
     );
     if (questions.length === 0) {
       return new Map();
@@ -447,7 +464,8 @@ export function roundOf(
 
 /**
  * A deleted message counts for nothing, and an edited one reads as it does now; a reply that answered a question
- * is marked with it.
+ * is marked with it. A reply that answered a question asked in another conversation comes back there instead, as
+ * the answer's row, and one the agent already read counts for nothing.
  */
 function toMessage(row: ConversationActivityEntity, context: LookContext): ListenMessageDto | null {
   const key = messageKey(row);
@@ -456,6 +474,9 @@ function toMessage(row: ConversationActivityEntity, context: LookContext): Liste
   }
 
   const question = context.questionsAnswered.get(String(row._id));
+  if (question && (question.answerReadAt || !askedIn(question, row))) {
+    return null;
+  }
   // As the inbox folds an edit: its words, and what came with it when it brought anything.
   const edit = context.edits.get(key);
   const current = edit
@@ -478,23 +499,46 @@ function toMessage(row: ConversationActivityEntity, context: LookContext): Liste
   });
 }
 
-/** A pressed button. An answer typed as a reply is the person's message already, so its answer row is left out. */
+/**
+ * An answer, from whoever gave it, in the conversation its question was asked in: a pressed button, or words given
+ * in another conversation. Words given in the question's own conversation are the person's message already, and
+ * the copies of an answer in other conversations add nothing. One the agent already read counts for nothing.
+ */
 function toCardAnswer(row: ConversationActivityEntity, context: LookContext): ListenMessageDto | null {
   const answer = readCardAnswer(row);
+  const question = answer && context.cards.get(answer.interactionIdentifier);
 
-  if (!answer || answer.kind === HumanInteractionKindEnum.ASK || !SETTLED_BY_A_PERSON.includes(answer.status ?? '')) {
+  if (
+    !answer ||
+    (answer.kind === HumanInteractionKindEnum.ASK && !answer.answeredElsewhere) ||
+    !SETTLED_BY_A_PERSON.includes(answer.status ?? '') ||
+    (question && (question.answerReadAt || !askedIn(question, row)))
+  ) {
     return null;
   }
 
-  return entryOf(row, context, {
-    text: answerText(answer, context.cards.get(answer.interactionIdentifier)),
-    answersMessageId: answer.interactionIdentifier,
-    answer: {
-      status: answer.status as string,
-      ...(answer.optionId ? { optionId: answer.optionId } : {}),
-      ...(answer.text ? { text: answer.text } : {}),
+  return entryOf(
+    row,
+    context,
+    {
+      text: answerText(answer, question ?? undefined),
+      answersMessageId: answer.interactionIdentifier,
+      answer: {
+        status: answer.status as string,
+        ...(answer.optionId ? { optionId: answer.optionId } : {}),
+        ...(answer.text ? { text: answer.text } : {}),
+      },
     },
-  });
+    { fromAnyone: true }
+  );
+}
+
+/** Whether `row` is in the conversation `question` was asked in: one with none is taken as its own. */
+function askedIn(
+  question: Pick<HumanInteractionEntity, '_conversationId'>,
+  row: Pick<ConversationActivityEntity, '_conversationId'>
+): boolean {
+  return !question._conversationId || String(question._conversationId) === String(row._conversationId);
 }
 
 function entryOf(
@@ -505,11 +549,12 @@ function entryOf(
     answersMessageId?: string;
     answer?: ListenAnswerDto;
     attachments?: ListenMessageDto['attachments'];
-  }
+  },
+  options: { fromAnyone?: boolean } = {}
 ): ListenMessageDto | null {
   const conversationId = String(row._conversationId);
   const conversation = context.conversations.get(conversationId);
-  const sender = senderOf(row, context.listenedTo);
+  const sender = senderOf(row, context.listenedTo, options.fromAnyone === true);
 
   if (!conversation || !sender) {
     return null;
@@ -530,15 +575,20 @@ function entryOf(
   };
 }
 
-function senderOf(row: ConversationActivityEntity, listenedTo: ListenedTo): ListenMessageDto['from'] | null {
+/** Who wrote `row`: someone the agent listens to, or, `fromAnyone`, whoever it was. */
+function senderOf(
+  row: ConversationActivityEntity,
+  listenedTo: ListenedTo,
+  fromAnyone: boolean
+): ListenMessageDto['from'] | null {
   const person = listenedTo.get(row.senderId);
-  if (!person) {
+  if (!person && !fromAnyone) {
     return null;
   }
 
-  const name = person.name ?? row.senderName?.trim();
+  const name = person?.name ?? row.senderName?.trim();
 
-  return { id: person.id, ...(name ? { name } : {}), isOperator: person.isOperator };
+  return { id: person?.id ?? row.senderId, ...(name ? { name } : {}), isOperator: person?.isOperator ?? false };
 }
 
 /** The answer an answer row records, as `HumanInteractionActivityRecorder` writes it. */
@@ -558,6 +608,7 @@ function readCardAnswer(row: ConversationActivityEntity): CardAnswer | null {
     ...(raw.status ? { status: raw.status } : {}),
     ...(raw.optionId ? { optionId: raw.optionId } : {}),
     ...(raw.text ? { text: raw.text } : {}),
+    ...(raw.answeredElsewhere ? { answeredElsewhere: true } : {}),
   };
 }
 

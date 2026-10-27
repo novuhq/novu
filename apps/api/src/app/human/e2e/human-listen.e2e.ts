@@ -9,6 +9,7 @@ import {
   ConversationActivityTypeEnum,
   ConversationRepository,
   HumanContactRepository,
+  HumanInteractionRepository,
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
@@ -40,6 +41,7 @@ const channelEndpointRepository = new ChannelEndpointRepository();
 const conversationRepository = new ConversationRepository();
 const conversationActivityRepository = new ConversationActivityRepository();
 const humanContactRepository = new HumanContactRepository();
+const humanInteractionRepository = new HumanInteractionRepository();
 const subscriberRepository = new SubscriberRepository();
 
 const OPERATOR_CHAT_ID = '777501';
@@ -722,6 +724,108 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       }
       // Each is its own message, never the same one twice.
       expect(new Set(page.data.map((message) => message.id)).size).to.equal(4);
+    });
+
+    it('gives a button pressed in another recipient’s chat in the conversation the card is filed under', async () => {
+      const bobId = await addContact('Bob', BOB_CHAT_ID);
+      const carolId = await addContact('Carol', CAROL_CHAT_ID);
+      expect((await setListenTo(bobId, true)).status).to.equal(200);
+      expect((await setListenTo(carolId, true)).status).to.equal(200);
+      await holdLease(MACBOOK);
+      const cursor = await startCursor();
+
+      const sent = await session.testAgent
+        .post('/v1/human/interactions')
+        .send({ kind: 'approve', card: { title: 'Ship it?' }, to: [bobId, carolId] });
+      expect(sent.status).to.equal(201, JSON.stringify(sent.body));
+      const cardId = sent.body.data.id as string;
+      const question = await humanInteractionRepository.findOne(
+        { _environmentId: session.environment._id, identifier: cardId },
+        ['_conversationId']
+      );
+      const chats = await Promise.all(
+        [
+          { id: bobId, chatId: BOB_CHAT_ID },
+          { id: carolId, chatId: CAROL_CHAT_ID },
+        ].map(async (contact) => {
+          const threadId = await threadWith(contact.id);
+          const conversation = await conversationRepository.findByAgentAndIdentifier(
+            session.environment._id,
+            session.organization._id,
+            relayAgentId,
+            threadId
+          );
+
+          return { ...contact, threadId, own: String(conversation?._id) === String(question?._conversationId) };
+        })
+      );
+      const own = chats.find((chat) => chat.own);
+      const other = chats.find((chat) => !chat.own);
+      expect(own && other, 'the card’s own chat, and another').to.not.equal(undefined);
+
+      await press(`human:${cardId}:approve`, other?.chatId);
+
+      const page = await readAfter(cursor);
+      const answers = page.data.filter((message) => message.answersMessageId === cardId);
+      expect(answers.map(({ text, conversationId, from }) => ({ text, conversationId, from: from.id }))).to.deep.equal([
+        { text: 'Approved', conversationId: own?.threadId, from: other?.id },
+      ]);
+    });
+
+    describe('a question asked in a conversation, to someone outside it', () => {
+      /** Bob writes; the agent replies in his chat with a card Carol, outside it, gets in her own chat too. */
+      async function askBobAndCarol(listenToCarol: boolean) {
+        const bobId = await addContact('Bob', BOB_CHAT_ID);
+        const carolId = await addContact('Carol', CAROL_CHAT_ID);
+        expect((await setListenTo(bobId, true)).status).to.equal(200);
+        expect((await setListenTo(carolId, listenToCarol)).status).to.equal(200);
+        await holdLease(MACBOOK);
+        await write('can we ship?', BOB_CHAT_ID);
+        const bobThread = await threadWith(bobId);
+        const cursor = await startCursor();
+
+        const sent = await session.testAgent
+          .post('/v1/human/interactions')
+          .send({ kind: 'approve', card: { title: 'Ship it?' }, thread: bobThread, to: [bobId, carolId] });
+        expect(sent.status).to.equal(201, JSON.stringify(sent.body));
+        const carolThread = await threadWith(carolId);
+        expect(sent.body.data.threads.map((thread: { id: string }) => thread.id)).to.deep.equal([
+          bobThread,
+          carolThread,
+        ]);
+
+        return { bobThread, carolThread, carolId, cardId: sent.body.data.id as string, cursor };
+      }
+
+      it('brings the answer back to that conversation, from a contact it doesn’t listen to', async () => {
+        const { bobThread, carolThread, carolId, cardId, cursor } = await askBobAndCarol(false);
+
+        await press(`human:${cardId}:approve`, CAROL_CHAT_ID);
+
+        const page = await readAfter(cursor);
+        const answers = page.data.filter((message) => message.answersMessageId === cardId);
+        expect(page.data.some((message) => message.conversationId === carolThread)).to.equal(false);
+        expect(answers).to.have.length(1);
+        expect(answers[0]).to.deep.include({
+          conversationId: bobThread,
+          from: { id: carolId, name: 'Carol', isOperator: false },
+          text: 'Approved',
+          answersMessageId: cardId,
+          answer: { status: 'approved', optionId: 'approve' },
+        });
+      });
+
+      it('leaves out the answer the agent already read, waiting for it', async () => {
+        const { cardId, cursor } = await askBobAndCarol(true);
+
+        await press(`human:${cardId}:approve`, CAROL_CHAT_ID);
+        const read = await session.testAgent.get(`/v1/human/interactions/${cardId}`);
+        expect(read.status).to.equal(200, JSON.stringify(read.body));
+        expect(read.body.data.status).to.equal('approved');
+
+        const page = await readAfter(cursor);
+        expect(page.data.filter((message) => message.answersMessageId === cardId)).to.deep.equal([]);
+      });
     });
 
     it('leaves out a message deleted before it was read', async () => {
