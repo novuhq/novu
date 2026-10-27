@@ -126,7 +126,7 @@ export type SendTestEmailResult = { ok: true } | { ok: false; message: string };
 
 /**
  * Step 2: sends a real email from the Agent Email Inbox to the operator’s sign-up address.
- * `testSentAt` moves forward only after that send, so a reply is measured from the latest one.
+ * Optional. The step already listens for any inbound mail, so a message already received stays received.
  */
 export async function sendTestEmailAction(): Promise<SendTestEmailResult> {
   const account = await requireHumanAccount({ returnTo: ONBOARDING_PATH });
@@ -148,11 +148,7 @@ export async function sendTestEmailAction(): Promise<SendTestEmailResult> {
     };
   }
 
-  await updateOnboardingState((state) => {
-    const { testReplyAt: _previousReply, ...rest } = state;
-
-    return { ...rest, testSentAt: new Date().toISOString() };
-  });
+  await updateOnboardingState((state) => ({ ...state, testSentAt: new Date().toISOString() }));
   refresh();
 
   return { ok: true };

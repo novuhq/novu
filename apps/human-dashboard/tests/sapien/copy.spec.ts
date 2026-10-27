@@ -129,6 +129,7 @@ test('hero and closing copy feedback remain independent', async ({ page }) => {
   await copyButton(page, hero).click();
   await expect(hero.getByRole('status')).toHaveText(copied);
   await expect(closing.getByRole('status')).toHaveText(copied);
+  await expect(page.locator('html')).toHaveAttribute('data-copied-text', 'npx @agentinbox/cli setup');
 });
 
 test('hero prompt copy uses the shared setup prompt', async ({ page }) => {
@@ -145,7 +146,10 @@ test('hero prompt copy uses the shared setup prompt', async ({ page }) => {
   await page.goto('/sapien');
   const hero = page.locator('#hero');
   await hero.getByRole('button', { name: 'Copy Prompt' }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-copied-text', /npx @agentinbox\/cli setup/);
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-copied-text',
+    'Set up an agentinbox inbox for yourself using https://www.agentinbox.md/agents.md'
+  );
   await expect(hero.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
 });
 
@@ -169,7 +173,7 @@ for (const width of [390, 1440]) {
       // The page shows the prompt nowhere else, so the failure shows it to select.
       const status = area.getByRole('status').filter({ hasText: "Couldn't copy. Select the prompt" });
       await expect(status).toBeVisible();
-      await expect(status).toContainText('npx @agentinbox/cli setup --name');
+      await expect(status).toContainText('https://www.agentinbox.md/agents.md');
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   });

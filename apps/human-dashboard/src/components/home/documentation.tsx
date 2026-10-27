@@ -1,5 +1,5 @@
 import { Children, type CSSProperties, Fragment, type ReactNode } from 'react';
-import { CLI_PACKAGE, type HomeCommand } from '@/data/home';
+import type { HomeCommand } from '@/data/home';
 
 import { cn } from '@/lib/utils';
 
@@ -54,24 +54,10 @@ export function FlagText({ text }: { text: string }) {
   );
 }
 
-/** Text with the CLI's package name in orange, as the commands show it. */
-export function WithPackage({ text }: { text: string }) {
-  return text.split(CLI_PACKAGE).flatMap((part, index) =>
-    index === 0
-      ? [part]
-      : [
-          <span key={index} data-color="orange">
-            {CLI_PACKAGE}
-          </span>,
-          part,
-        ]
-  );
-}
-
-export function AsciiRule({ box = false }: { box?: boolean }) {
+export function AsciiRule() {
   return (
     <div aria-hidden="true" className="home-ascii-rule">
-      {box ? `+${'-'.repeat(78)}+` : '='.repeat(80)}
+      {'='.repeat(80)}
     </div>
   );
 }
@@ -82,7 +68,7 @@ export function DocSection({
   subtitle,
   children,
 }: {
-  /** The section's id, so a link can end in `#install`. */
+  /** The section's id, so a link can end in `#quickstart`. */
   anchor: string;
   title: string;
   subtitle?: string;
@@ -152,19 +138,5 @@ export function InlineCode({
         </Fragment>
       ))}
     </code>
-  );
-}
-
-export function AsciiBox({ children }: { children: ReactNode }) {
-  return (
-    <div className="home-box-row">
-      <span className="home-box-side" aria-hidden="true">
-        {'|\n'.repeat(100)}
-      </span>
-      <WordFlow>{children}</WordFlow>
-      <span className="home-box-side home-box-side-right" aria-hidden="true">
-        {'|\n'.repeat(100)}
-      </span>
-    </div>
   );
 }

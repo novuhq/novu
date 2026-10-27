@@ -1,22 +1,27 @@
 import type { NextConfig } from 'next';
 
 import { HOST_IDS } from './src/lib/host-ids';
-import { SITE_INDEXED, SITE_ORIGIN } from './src/lib/seo';
+import { noindexPaths, SITE_ORIGIN } from './src/lib/seo';
 
 const usApiUrl = (process.env.NEXT_PUBLIC_NOVU_API_URL || 'https://api.novu.co').replace(/\/$/, '');
 
 /** Where language models find what this site has for them (`/llms.txt`). */
 const LLMS_LINK = `<${SITE_ORIGIN}/llms.txt>; rel="describedby"`;
 
+/** Where an AI client finds this domain's agentic resources (`/.well-known/ard.json`). */
+const ARD_LINK = `<${SITE_ORIGIN}/.well-known/ard.json>; rel="ard"; type="application/json"`;
+
 /** Each host's public page (`/claude-code`), and its Markdown for agents (`/claude-code.md`). */
 const HOST_PAGE = `/:host(${HOST_IDS.join('|')})`;
 const HOST_MARKDOWN = `${HOST_PAGE}\\.md`;
 
 /**
- * The website pages and their text versions, which search engines leave out while `SITE_INDEXED` is off. A
+ * The website pages and their text versions. Search engines leave them out while `SITE_INDEXED` is off. A
  * host's Markdown also answers at its own address (`/claude-code/index.md`), behind the rewrite.
+ * `noindexPaths` widens this to every route on staging (`SITE_NOINDEX`), preview, and development.
  */
 const WEBSITE_PATHS = ['/', '/sapien', '/index.md', '/llms.txt', HOST_PAGE, HOST_MARKDOWN, `${HOST_PAGE}/index.md`];
+const NOINDEX_SCOPE = noindexPaths();
 
 const NOINDEX = { key: 'X-Robots-Tag', value: 'noindex, nofollow' };
 
@@ -49,23 +54,28 @@ const nextConfig: NextConfig = {
       {
         source: '/',
         headers: [
-          { key: 'Link', value: `<${SITE_ORIGIN}/index.md>; rel="alternate"; type="text/markdown", ${LLMS_LINK}` },
+          {
+            key: 'Link',
+            value: `<${SITE_ORIGIN}/index.md>; rel="alternate"; type="text/markdown", ${LLMS_LINK}, ${ARD_LINK}`,
+          },
         ],
       },
-      { source: '/sapien', headers: [{ key: 'Link', value: LLMS_LINK }] },
+      { source: '/sapien', headers: [{ key: 'Link', value: `${LLMS_LINK}, ${ARD_LINK}` }] },
       // A host's page says where its Markdown is, as the robots page does.
       {
         source: HOST_PAGE,
         headers: [
-          { key: 'Link', value: `<${SITE_ORIGIN}/:host.md>; rel="alternate"; type="text/markdown", ${LLMS_LINK}` },
+          {
+            key: 'Link',
+            value: `<${SITE_ORIGIN}/:host.md>; rel="alternate"; type="text/markdown", ${LLMS_LINK}, ${ARD_LINK}`,
+          },
         ],
       },
-      // Out of search results until launch, also the Markdown and text, which carry no `<meta name="robots">`.
-      ...(SITE_INDEXED ? [] : WEBSITE_PATHS.map((source) => ({ source, headers: [NOINDEX] }))),
-      // Preview and development deployments stay out of search results.
-      ...(process.env.VERCEL_ENV === 'preview' || process.env.VERCEL_ENV === 'development'
-        ? [{ source: '/:path*', headers: [NOINDEX] }]
-        : []),
+      // While `SITE_INDEXED` is off: also the Markdown and text, which carry no `<meta name="robots">`.
+      ...(NOINDEX_SCOPE === 'website' ? WEBSITE_PATHS.map((source) => ({ source, headers: [NOINDEX] })) : []),
+      // Staging (`SITE_NOINDEX`), preview, and development stay out of search results on every route.
+      // `/` is named on its own: `/:path*` does not match a URL with no path segment.
+      ...(NOINDEX_SCOPE === 'all' ? ['/', '/:path*'].map((source) => ({ source, headers: [NOINDEX] })) : []),
     ];
   },
   async rewrites() {
