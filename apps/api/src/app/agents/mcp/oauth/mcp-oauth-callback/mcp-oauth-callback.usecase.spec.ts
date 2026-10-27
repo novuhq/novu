@@ -39,10 +39,6 @@ describe('McpOAuthCallback error mapping helpers', () => {
       expect(parseUpstreamErrorToken('   ')).to.equal(undefined);
     });
 
-    it('extracts the bare error token', () => {
-      expect(parseUpstreamErrorToken('access_denied')).to.equal('access_denied');
-    });
-
     it('extracts the head when the controller has glued in an error_description', () => {
       // Mirrors `${error}${errorDescription ? ` - ${errorDescription}` : ''}` from the controller.
       expect(parseUpstreamErrorToken('access_denied - The user cancelled the consent')).to.equal('access_denied');

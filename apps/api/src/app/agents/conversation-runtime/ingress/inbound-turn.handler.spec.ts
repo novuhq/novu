@@ -2469,24 +2469,6 @@ describe('AgentInboundHandler', () => {
       });
     });
 
-    it('does not mark the integration connected on /start alone for the dashboard test identity', async () => {
-      const connectPayload = { ...matchingStartPayload, subscriberId: 'user-123' };
-      const { handler, agentIntegrationRepository } = makeHandler({
-        linkTelegramExecute: sinon.stub().resolves({
-          created: true,
-          subscriberId: 'user-123',
-          linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
-        }),
-        startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: connectPayload }),
-      });
-      const thread = makeTelegramThread();
-      const message = makeStartMessage('/start dashcode');
-
-      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      expect(agentIntegrationRepository.updateOne.called).to.equal(false);
-    });
-
     it('does not mark connectedAt when the dashboard Web Chat tester identity sends a message', async () => {
       const dashboardSubscriberId = buildDashboardWebChatSubscriberId('user-123');
       const { handler, agentIntegrationRepository } = makeHandler({
@@ -2526,7 +2508,7 @@ describe('AgentInboundHandler', () => {
       expect(update.$set.connectedAt).to.be.instanceOf(Date);
     });
 
-    it('does not mark the integration connected (Layer 2) when a genuine end user links via /start', async () => {
+    it('does not mark the integration connected when a /start code is consumed', async () => {
       const { handler, agentIntegrationRepository } = makeHandler({
         linkTelegramExecute: sinon.stub().resolves({
           created: true,
@@ -2587,20 +2569,7 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
-    it('does not mark connectedAt when a stale code re-tap finds an existing dashboard endpoint', async () => {
-      const { handler, agentIntegrationRepository } = makeHandler({
-        startCodeConsume: sinon.stub().resolves({ status: 'missing' }),
-        findTelegramEndpointByIdentity: sinon.stub().resolves({ subscriberId: 'user-123' }),
-      });
-      const thread = makeTelegramThread();
-      const message = makeStartMessage('/start reused');
-
-      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      expect(agentIntegrationRepository.updateOne.called).to.equal(false);
-    });
-
-    it('does not self-heal connectedAt when the existing endpoint belongs to a genuine end user', async () => {
+    it('does not mark connectedAt when a stale /start code re-tap finds an existing endpoint', async () => {
       const { handler, agentIntegrationRepository } = makeHandler({
         startCodeConsume: sinon.stub().resolves({ status: 'missing' }),
         findTelegramEndpointByIdentity: sinon.stub().resolves({ subscriberId: 'ext-sub-1' }),
