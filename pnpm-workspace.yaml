@@ -37,9 +37,14 @@ packageExtensions:
 
 # Settings migrated from package.json#pnpm (pnpm v11 no longer reads the `pnpm` field).
 overrides:
-  body-parser@<1.20.6: ^1.20.6
+  # GHSA-27r3-jxmh-p828 (high): body-parser DoS via trailing bytes after a
+  # compressed request body. Patched in 1.20.9 (1.x line) and 2.4.0 (2.x line).
+  # Widen the previous <1.20.6 / <2.3.0 floors so transitive consumers across
+  # the api, worker, ws, dashboard, and dev tooling (express, serve-static,
+  # @nestjs/*, verdaccio) pick up the fix.
+  body-parser@<1.20.9: ^1.20.9
   deepmerge-ts@<8.0.0: ^8.0.0
-  body-parser@>=2.0.0 <2.3.0: ^2.3.0
+  body-parser@>=2.0.0 <2.4.0: ^2.4.0
   # GHSA-8r5x-fm3f-whwj (critical): Handlebars JavaScript injection via AST
   # type confusion in compile (bypass of CVE-2026-33937).
   # GHSA-p8wg-vrv2-v86f (critical): Handlebars JavaScript injection via own
