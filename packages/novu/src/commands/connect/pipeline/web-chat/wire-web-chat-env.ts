@@ -61,10 +61,6 @@ function resolveScaffoldSocketConfig(apiUrl: string): ScaffoldSocketConfig | und
   }
 }
 
-export function resolveScaffoldSocketUrl(apiUrl: string): string | undefined {
-  return resolveScaffoldSocketConfig(apiUrl)?.socketUrl;
-}
-
 /**
  * False when the API host isn't one of the deployments we can infer a socket
  * address for (US Cloud default, EU, staging, localhost, or a Novu Box).

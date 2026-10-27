@@ -1,36 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildWebChatEnvEntries, isKnownScaffoldApiHost, resolveScaffoldSocketUrl } from './wire-web-chat-env';
-
-describe('resolveScaffoldSocketUrl', () => {
-  it('resolves localhost and *.novu.localhost to the local dev socket', () => {
-    expect(resolveScaffoldSocketUrl('http://localhost:3000')).toBe('ws://127.0.0.1:8787');
-    expect(resolveScaffoldSocketUrl('http://127.0.0.1:3000')).toBe('ws://127.0.0.1:8787');
-    expect(resolveScaffoldSocketUrl('https://api.novu.localhost')).toBe('ws://127.0.0.1:8787');
-  });
-
-  it('resolves the EU and staging API hosts to their sockets', () => {
-    expect(resolveScaffoldSocketUrl('https://eu.api.novu.co')).toBe('wss://eu.socket.novu.co');
-    expect(resolveScaffoldSocketUrl('https://api.novu-staging.co')).toBe('wss://socket.novu-staging.co');
-  });
-
-  it('resolves US Cloud default to no socket override (SDK default applies)', () => {
-    expect(resolveScaffoldSocketUrl('https://api.novu.co')).toBeUndefined();
-  });
-
-  it('maps a Novu Box API host to its socket URL', () => {
-    expect(resolveScaffoldSocketUrl('https://my-box-api.box.novu-staging.co')).toBe(
-      'wss://my-box.box.novu-staging.co/ws'
-    );
-  });
-
-  it('returns undefined for unrecognised self-hosted API hosts', () => {
-    expect(resolveScaffoldSocketUrl('https://api.my-company.com')).toBeUndefined();
-  });
-
-  it('returns undefined for an invalid URL', () => {
-    expect(resolveScaffoldSocketUrl('not-a-url')).toBeUndefined();
-  });
-});
+import { buildWebChatEnvEntries, isKnownScaffoldApiHost } from './wire-web-chat-env';
 
 describe('isKnownScaffoldApiHost', () => {
   it('is true for the US default, EU, staging, localhost, and Novu Box hosts', () => {
@@ -63,10 +32,15 @@ describe('buildWebChatEnvEntries', () => {
     expect(entries.NEXT_PUBLIC_NOVU_SOCKET_TYPE).toBeUndefined();
   });
 
-  it('sets the socket URL for a known host without a socket type', () => {
-    const entries = buildWebChatEnvEntries({ ...baseInput, apiUrl: 'https://eu.api.novu.co' });
+  it.each([
+    { apiUrl: 'http://localhost:3000', socketUrl: 'ws://127.0.0.1:8787' },
+    { apiUrl: 'https://api.novu.localhost', socketUrl: 'ws://127.0.0.1:8787' },
+    { apiUrl: 'https://eu.api.novu.co', socketUrl: 'wss://eu.socket.novu.co' },
+    { apiUrl: 'https://api.novu-staging.co', socketUrl: 'wss://socket.novu-staging.co' },
+  ])('sets the socket URL for a known host ($apiUrl) without a socket type', ({ apiUrl, socketUrl }) => {
+    const entries = buildWebChatEnvEntries({ ...baseInput, apiUrl });
 
-    expect(entries.NEXT_PUBLIC_NOVU_SOCKET_URL).toBe('wss://eu.socket.novu.co');
+    expect(entries.NEXT_PUBLIC_NOVU_SOCKET_URL).toBe(socketUrl);
     expect(entries.NEXT_PUBLIC_NOVU_SOCKET_TYPE).toBeUndefined();
   });
 
@@ -82,6 +56,13 @@ describe('buildWebChatEnvEntries', () => {
     const entries = buildWebChatEnvEntries({ ...baseInput, apiUrl: 'https://api.my-company.com' });
 
     expect(entries.NEXT_PUBLIC_NOVU_BACKEND_URL).toBe('https://api.my-company.com');
+    expect(entries.NEXT_PUBLIC_NOVU_SOCKET_URL).toBeUndefined();
+    expect(entries.NEXT_PUBLIC_NOVU_SOCKET_TYPE).toBeUndefined();
+  });
+
+  it('does not throw and omits socket entries for a malformed API URL', () => {
+    const entries = buildWebChatEnvEntries({ ...baseInput, apiUrl: 'not-a-url' });
+
     expect(entries.NEXT_PUBLIC_NOVU_SOCKET_URL).toBeUndefined();
     expect(entries.NEXT_PUBLIC_NOVU_SOCKET_TYPE).toBeUndefined();
   });
