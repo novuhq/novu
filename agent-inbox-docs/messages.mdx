@@ -1,0 +1,52 @@
+---
+title: "Send a message"
+description: "Start a conversation with inbox send or inbox_send. A plain message returns as soon as it is delivered."
+---
+
+`inbox send` starts a conversation. A plain message does not wait.
+
+<Tabs>
+  <Tab title="CLI">
+```bash
+npx @agentinbox/cli inbox send "Nightly build finished — 0 failures."
+```
+  </Tab>
+  <Tab title="MCP">
+Call `inbox_send` with `message` and no `kind`. It returns once delivery is confirmed.
+  </Tab>
+</Tabs>
+
+Leave out a recipient and the message goes to you, or to `INBOX_TO` when that is set. `--to alice` starts a conversation with that contact. `--to alice,bob` reaches each of them (max 50). On a question, the first valid answer wins.
+
+Every send prints the conversation it landed in. Continue there with [reply](/conversations).
+
+<Warning>
+A send can land in a conversation that person already opened, and it marks that conversation read. The command warns you when it had unread messages. Read it with `inbox show` before you continue.
+</Warning>
+
+## An email address
+
+`--to` accepts an email address. A contact who already has that address is used. An address nobody has yet becomes a new contact and gets a verification email. The command exits `1` and does not deliver:
+
+```text
+Your message was not sent: alice@acme.com is not verified yet. A verification email is on its way; send again once they have clicked it.
+```
+
+Send the message again after they verify.
+
+## Cards
+
+A plain message arrives as text. Pass `--subtitle`, `--body`, or `--icon` and it becomes a card. `--icon` is Slack-only: an MCP catalog id such as `stripe`, or an https URL. Other channels ignore it.
+
+```bash
+npx @agentinbox/cli inbox send "Refund issued" \
+  --subtitle "ORD-42" \
+  --body "Refund $25.00" \
+  --from "deploy-bot"
+```
+
+`--from` is the label the person sees, such as `deploy-bot`. `--via telegram`, `--via slack`, or `--via email` delivers on that channel instead of the person's default. `--via` exists on send only.
+
+On MCP, the same fields are `subtitle`, `body`, `icon`, `from`, and `via`.
+
+`ask`, `approve`, and `choose` are the next page. They start a conversation the same way, and they wait.

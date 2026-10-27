@@ -8,7 +8,8 @@ export default defineConfig([
     outDir: 'dist/client', // Output directory for client-side build
     sourcemap: true,
     clean: true,
-    dts: true,
+    // tsup 8 injects the deprecated `baseUrl` option into the dts build
+    dts: { compilerOptions: { ignoreDeprecations: '6.0' } },
     treeshake: false,
     bundle: false,
   },

@@ -19,8 +19,20 @@ describe('GetHumanInviteStatus', () => {
     const inviteTokens = { peek: sinon.stub().resolves(invite) };
     const deliveryService = {
       describeInviteChannels: sinon.stub().resolves([
-        { via: HumanChannelViaEnum.TELEGRAM, integrationIdentifier: 'tg', connected: true, isDefault: true },
-        { via: HumanChannelViaEnum.SLACK, integrationIdentifier: 'slack', connected: false, isDefault: false },
+        {
+          via: HumanChannelViaEnum.TELEGRAM,
+          integrationIdentifier: 'tg',
+          connected: true,
+          isDefault: true,
+          status: 'verified',
+        },
+        {
+          via: HumanChannelViaEnum.SLACK,
+          integrationIdentifier: 'slack',
+          connected: false,
+          isDefault: false,
+          status: 'unverified',
+        },
       ]),
     };
     const agentRepository = { findOne: sinon.stub().resolves({ name: 'Deploy bot' }) };
@@ -51,8 +63,8 @@ describe('GetHumanInviteStatus', () => {
       inviteeName: 'Alice Chen',
       expiresAt: '2026-10-02T10:00:00.000Z',
       channels: [
-        { via: HumanChannelViaEnum.TELEGRAM, connected: true, isDefault: true },
-        { via: HumanChannelViaEnum.SLACK, connected: false, isDefault: false },
+        { via: HumanChannelViaEnum.TELEGRAM, connected: true, isDefault: true, status: 'verified' },
+        { via: HumanChannelViaEnum.SLACK, connected: false, isDefault: false, status: 'unverified' },
       ],
     });
   });

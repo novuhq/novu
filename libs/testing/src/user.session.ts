@@ -108,15 +108,15 @@ export class UserSession {
 
   private async initializeCommunity(options: UserSessionOptions = {}) {
     const card = {
-      firstName: faker.name.firstName(),
-      lastName: faker.name.lastName(),
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
     };
 
     const userService = new UserService();
     const userEntity: Partial<UserEntity> = {
       lastName: card.lastName,
       firstName: card.firstName,
-      email: `${card.firstName}_${card.lastName}_${faker.datatype.uuid()}@gmail.com`.toLowerCase(),
+      email: `${card.firstName}_${card.lastName}_${faker.string.uuid()}@gmail.com`.toLowerCase(),
       profilePicture: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 60) + 1}.jpg`,
       tokens: [],
       password: TEST_USER_PASSWORD,

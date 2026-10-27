@@ -1,6 +1,6 @@
 import { getProviderOverrideConfig } from '@novu/shared';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { getProviderDocReference } from './content-source';
+import { getProviderDocReference } from './override-options';
 
 type EscapeHatchCalloutProps = {
   providerId: string;

@@ -20,7 +20,7 @@ export default function NovuAgentPlayground() {
   const [result, setResult] = useState<SimResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function run(overrides?: { text?: string; event?: SimEvent }) {
+  async function run(overrides?: { text?: string; event?: SimEvent; ongoing?: boolean }) {
     setLoading(true);
     setError(null);
     setResult(null);
@@ -32,7 +32,7 @@ export default function NovuAgentPlayground() {
           text: overrides?.text ?? text,
           platform,
           event: overrides?.event ?? event,
-          ongoing,
+          ongoing: overrides?.ongoing ?? ongoing,
           isDM,
         }),
       });

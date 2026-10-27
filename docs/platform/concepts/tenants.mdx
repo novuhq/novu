@@ -276,7 +276,7 @@ curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
     on {{context.tenant.data.name}} just renewed.
     ```
 
-    You can also branch workflow logic on tenant data in [step conditions](/platform/workflow/add-and-configure-steps/step-conditions). To route a tenant to a different provider, see [Integration conditions](/platform/integrations/integration-conditions).
+    You can also branch workflow logic on tenant data in [step conditions](/platform/workflow/add-and-configure-steps/step-conditions). To use a different provider per tenant, see [a separate email provider for one tenant](/platform/integrations/integration-conditions#example-a-separate-email-provider-for-one-tenant).
   </Step>
 </Steps>
 
@@ -295,10 +295,6 @@ Each subscriber gets a separate Inbox feed and preference configuration per tena
 ## Frequently asked questions
 
 <AccordionGroup>
-  <Accordion title="Can I use a different delivery provider for each tenant?">
-    Yes. Add [integration conditions](/platform/integrations/integration-conditions) on `context.tenant.id`, and pass the tenant on the trigger as `context: { tenant: "acme-corp" }`.
-  </Accordion>
-
   <Accordion title="Can subscribers manage different preferences per tenant?">
     Yes. When you scope the Inbox with a tenant context, preferences are stored per subscriber and tenant context combination. A subscriber can enable email for one tenant and disable it for another.
   </Accordion>

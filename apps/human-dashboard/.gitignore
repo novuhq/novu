@@ -8,3 +8,7 @@ next-env.d.ts
 
 # TypeScript
 *.tsbuildinfo
+
+# Playwright
+/test-results/
+/playwright-report/

@@ -138,7 +138,7 @@
     "ts-loader": "~9.4.0",
     "tsup": "^8.1.0",
     "tsup-preset-solid": "^2.2.0",
-    "typescript": "5.6.2",
+    "typescript": "6.0.3",
     "vite-plugin-solid": "^2.11.14",
     "vitest": "^4.1.0",
     "webpack": "^5.74.0",

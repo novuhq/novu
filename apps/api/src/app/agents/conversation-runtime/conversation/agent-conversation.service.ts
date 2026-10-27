@@ -351,6 +351,16 @@ export class AgentConversationService {
     return this.ledger.persistInboundMessage(params);
   }
 
+  async countInboundMessagesSince(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    since?: string;
+    until?: string;
+  }): Promise<number> {
+    return this.ledger.countInboundMessagesSince(params);
+  }
+
   async updateInboundMessage(params: UpdateInboundMessageParams): Promise<ConversationActivityEntity | null> {
     return this.ledger.updateInboundMessage(params);
   }

@@ -1,0 +1,112 @@
+---
+title: 'Okta Workforce SSO'
+sidebarTitle: 'Okta Workforce'
+description: 'Create an Okta Workforce SAML 2.0 app for Novu, map the email attribute, and return the metadata URL.'
+---
+
+<Note>
+  This is an Enterprise feature on [Novu Cloud](https://dashboard.novu.co). Configure it as the organization **Owner** from **Settings** > **Organization** > **Security** after we enable self-serve, or email [support@novu.co](mailto:support@novu.co) and we will do the Novu side with you. Domain verification and activation are covered in [SAML SSO & SCIM](/platform/account/sso).
+</Note>
+
+Use this when your employees sign in through an Okta Workforce org. This is the Okta tenant your company uses for internal apps. It is not an Okta customer-identity tenant.
+
+Novu is the service provider. Okta is the identity provider. You create a SAML 2.0 application, paste two values from Novu, send the user's email in the SAML response, assign the people who should get in, and give Novu Okta's metadata URL.
+
+## Before you start
+
+- An Enterprise organization on Novu Cloud.
+- One or more email domains verified on the Security tab. The connection cannot be finished until a domain is verified. For SAML, `alex@acme.com` matches a connection for `acme.com`. `alex@sales.acme.com` does not, unless we have enabled subdomain matching. Ask us if you need that. The domain has to be a registrable domain, such as `acme.com`, before subdomain matching can be turned on.
+- An Okta admin who can create app integrations and assign users or groups.
+- The two values in the next section. They appear on the Security tab when **Okta Workforce** is selected. If we are configuring the connection, we send them to you.
+
+## Values to paste into Okta
+
+| Okta field | What Novu gives you |
+| --- | --- |
+| Single sign-on URL | The URL Okta posts the SAML response to. This is the assertion consumer service (ACS) URL. |
+| Audience URI (SP Entity ID) | The service provider entity ID. Okta puts this in the SAML audience. |
+
+Paste them exactly. A trailing slash, or the two values swapped, makes the test sign-in fail.
+
+## Create the SAML application
+
+<Steps>
+  <Step title="Start a SAML 2.0 app">
+    In the Okta Admin Console, go to **Applications**. Select **Create App Integration**, then **SAML 2.0**.
+  </Step>
+  <Step title="Name the app">
+    On **General Settings**, enter an app name your employees will recognize, such as Novu. The name is required. Select **Next**. This opens **Configure SAML**.
+  </Step>
+  <Step title="Paste the Novu URLs">
+    Paste the **Single sign-on URL** and **Audience URI (SP Entity ID)** from Novu into the fields with those names.
+  </Step>
+  <Step title="Add attribute statements">
+    The SAML response has to include the email address. First and last name are optional, and they are what Novu stores on the account. In **Attribute Statements**, select **Add Expression** for each row. The attribute name is what Novu reads. The expression is the Okta profile field.
+
+    | Attribute name | Required | Expression |
+    | --- | --- | --- |
+    | `mail` | Yes | `user.profile.email` |
+    | `firstName` | No | `user.profile.firstName` |
+    | `lastName` | No | `user.profile.lastName` |
+
+    The email attribute name is `mail`. An attribute named `email` is not read on this Okta connection. If `user.profile.email` is empty for a person, that person cannot finish sign-in even when Okta accepts their password.
+  </Step>
+  <Step title="Finish the wizard">
+    On the **Feedback** page, select **This is an internal app that we have created**, then **Finish**.
+  </Step>
+  <Step title="Assign users or groups">
+    Open the **Assignments** tab. Open **Assign**, then **Assign to people** or **Assign to groups**. Search for the user or group, select **Assign**, then **Done**.
+
+    People who are not assigned cannot sign in, even if they know the Novu URL and their email is on the verified domain. Assignment here is who may use SSO. It is not [SCIM provisioning](/platform/account/directory-sync/okta). You can assign a group now and push that group later if you turn on directory sync.
+  </Step>
+  <Step title="Copy the metadata URL">
+    Open the **Sign On** tab. Under **Sign on methods**, copy the **Metadata URL**.
+
+    That URL is how Novu loads Okta's sign-on URL, entity ID, and signing certificate. Paste it into the Security tab, or send it to us. Keep the URL rather than a screenshot or a one-time certificate download. When Okta rotates the signing certificate, the connection needs the current metadata before the old certificate stops being used.
+  </Step>
+</Steps>
+
+## Test it, then turn it on
+
+On the Security tab, run a test sign-in with a person who is assigned to the app and whose email is on a verified domain. For a new connection, that test does not change sign-in for anyone else. The connection is not live until you activate it.
+
+If we are configuring the connection, send us the metadata URL and a time when you can try a sign-in with us. We turn it on after that test.
+
+<Warning>
+  After you activate, anyone with an email on a verified domain must sign in through Okta. That includes people who already had a Novu account on that domain. Editing the live connection applies immediately. A wrong URL, certificate, or `mail` mapping can stop the whole domain from signing in. Change it when someone can fix a failed login, and run the test again.
+</Warning>
+
+## What your users experience
+
+- They start on the Novu sign-in page, enter their work email, and are sent to Okta. Okta checks their password and any MFA Okta requires, then sends them back.
+- An existing Novu account with that email is linked to the Okta login. They keep the same account. They are not asked to create a second one.
+- If they also have multi-factor authentication on the Novu account, they still complete that step after Okta accepts them.
+- Starting from an Okta app tile (IdP-initiated SAML) is not part of this setup. Ask us if you have a reason to allow it.
+- Removing the connection does not delete Novu accounts. Those people need another sign-in method that is still available, such as a password, Google, or GitHub.
+- Without [directory sync](/platform/account/directory-sync/okta), a person is created in Novu the first time they sign in. Directory sync creates and deactivates them from Okta itself.
+
+## If Okta sign-in fails
+
+<AccordionGroup>
+  <Accordion title="Okta accepts the password and Novu reports no email">
+    The attribute name is not `mail`, or `user.profile.email` is empty. Confirm the three expressions in **Attribute Statements**, then run the test again.
+  </Accordion>
+  <Accordion title="The user exists in Okta but cannot open the app">
+    They are not assigned on the **Assignments** tab. Group membership only counts if that group is assigned to the app.
+  </Accordion>
+  <Accordion title="The test works and the rest of the company is unchanged">
+    The connection is not activated yet. Activate it when you are ready for the domain to use Okta.
+  </Accordion>
+  <Accordion title="A subdomain address is rejected">
+    `alex@sales.acme.com` does not use a connection for `acme.com` unless we enabled subdomain matching. The address also has to sit on a domain you verified with the TXT record.
+  </Accordion>
+  <Accordion title="Sign-in fails just after an Okta certificate change">
+    The connection still has the previous signing certificate. Update it from the current **Metadata URL**, or send us that URL, before Okta stops using the old certificate.
+  </Accordion>
+</AccordionGroup>
+
+## Next
+
+Provision and deprovision these same users from Okta with [Okta directory sync](/platform/account/directory-sync/okta). Use this same application.
+
+Email [support@novu.co](mailto:support@novu.co) or your Slack Connect channel if the test still fails. Include the organization name, the domain, and the email address you tried.

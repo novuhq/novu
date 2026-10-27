@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { ApproveCliDeviceSessionRequest, CreateCliDeviceSessionResponse } from '@novu/shared';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateCliDeviceSessionRequestDto {
   @ApiProperty({
@@ -11,6 +11,16 @@ export class CreateCliDeviceSessionRequestDto {
   @IsOptional()
   @IsString()
   name?: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    description: 'Name of the computer the CLI runs on, shown on the page that approves the session (human login).',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  machineName?: string;
 }
 
 export class CreateCliDeviceSessionResponseDto implements CreateCliDeviceSessionResponse {
@@ -31,14 +41,14 @@ export class CreateCliDeviceSessionResponseDto implements CreateCliDeviceSession
 
   @ApiPropertyOptional({
     type: String,
-    description: 'Short code the person types on the verification page to approve the session (human login).',
+    description: 'Short code the verification page shows, to compare with the terminal before approving (human login).',
   })
   userCode?: string;
 }
 
 export class CliDeviceSessionPollResponseDto {
-  @ApiProperty({ enum: ['pending', 'approved', 'expired'] })
-  status: 'pending' | 'approved' | 'expired';
+  @ApiProperty({ enum: ['pending', 'approved', 'expired', 'denied'] })
+  status: 'pending' | 'approved' | 'expired' | 'denied';
 
   @ApiProperty({ type: Number, required: false })
   expiresIn?: number;

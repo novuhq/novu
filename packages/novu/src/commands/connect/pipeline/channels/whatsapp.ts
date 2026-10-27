@@ -144,7 +144,7 @@ async function runSignupBrowserHandoff(
   await ui.awaitWhatsAppSignupOpen({ signupUrl });
   track(CONNECT_EVENTS.WHATSAPP_SIGNUP_OPENED, { agent: agent.identifier });
 
-  void open(signupUrl).catch(() => undefined);
+  void open(signupUrl).catch((): undefined => undefined);
   ui.showWhatsAppSignupWaiting({ signupUrl });
 
   let latestStatus: WhatsAppSignupProgress = { credentialsSaved: false };

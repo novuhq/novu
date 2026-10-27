@@ -1,45 +1,97 @@
 ---
 title: "Custom SMTP Email Integration with Novu"
 sidebarTitle: "Custom SMTP"
-description: "Connect a custom SMTP server to Novu to send transactional emails through workflows. Configure host, port, TLS, and credentials for any SMTP provider."
+description: "Connect any SMTP server to Novu. Configure host, port, authentication, Secure, Require TLS, Ignore TLS, TLS options, and DKIM so delivery matches your mail server."
 ---
 
-You can use a Custom SMTP provider like [Nodemailer](https://nodemailer.com/about/) to send transactional emails through your custom SMTP server to your customers using the Novu Platform with a single API.
+Send transactional email through your own SMTP server. Novu opens the connection with the same settings [Nodemailer](https://nodemailer.com/smtp/) uses, and the fields on the integration form map directly to those settings.
 
-## Getting Started
+## Create the integration
 
-To use the Custom SMTP provider in the email channel, you will need to have your personal SMTP server configured and add `host`, `port`, `user`, and `password` to the Custom SMTP integration on the Novu platform.
+<Steps>
+  <Step>
+    ## Add the Custom SMTP provider
 
-You can also provide value **`true`** for the `secure` field if you want the connection to be secure, and if not, leave it empty.
+    Open the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-customsmtp) page, select **Add a provider**, then select **Custom SMTP**.
+  </Step>
+  <Step>
+    ## Fill in the server and the sender
 
-### DKIM (DomainKeys Identified Mail)
+    **Host**, **Port**, **From email address**, and **Sender name** are required. Set **User** and **Password** when the server requires authentication. Pick the TLS toggles for your port as described in [TLS settings](#tls-settings).
+  </Step>
+  <Step>
+    ## Activate the integration
 
-DKIM options can be used in order to sign messages sent using Custom SMTP with DKIM keys.
+    Switch the integration from **Disabled** to **Active**, then select **Update**.
+  </Step>
+</Steps>
 
-Those options are:
+## Configuration fields
 
-- `DKIM Domain`
-- `DKIM Private Key`
-- `DKIM Key Selector`
+| Field | Required | What to enter |
+| --- | --- | --- |
+| **User** | No | SMTP username. |
+| **Password** | No | SMTP password or the app password your provider issued for SMTP. |
+| **Host** | Yes | Hostname of the SMTP server, with no `smtp://` prefix, port, or path. |
+| **Port** | Yes | TCP port, an integer from 1 to 65535. |
+| **Secure** | No | Use implicit TLS. |
+| **Require TLS** | No | Fail the send if the server does not offer STARTTLS. |
+| **Ignore TLS** | No | Skip STARTTLS and send on a plain connection. |
+| **TLS options** | No | The only JSON field. Paste one JSON object of extra [Node.js TLS settings](https://nodejs.org/api/tls.html#tlsconnectoptions-callback). Every other field on this form is plain text. |
+| **DKIM: Domain name** | No | Domain placed in the DKIM signature (`d=`). |
+| **DKIM: Private key** | No | PEM private key, including the `-----BEGIN` and `-----END` lines. |
+| **DKIM: Key selector** | No | Selector placed in the DKIM signature (`s=`). |
+| **From email address** | Yes | Address recipients see in **From**. The SMTP account must be allowed to send as this address. |
+| **Sender name** | Yes | Display name shown next to the From address, such as `Acme`. |
 
-## Creating a Custom SMTP integration with Novu
+Novu authenticates only when both **User** and **Password** have a value. Novu waits 10 seconds to open the TCP connection and 10 seconds on the socket after that.
 
-- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-customsmtp) page on Novu.
-- Click on Add a Provider.
-- Select Custom SMTP service.
-- Enter your SMTP credentials
-  - `host`
-  - `port`
-  - `username`
-  - `password`
-  - `secure` (on demand)
-  - And `DKIM` options if you want to sign messages with *DKIM*
-- Fill in the `From email address` field using the authenticated email from the previous step.
-- Click on the `Disabled` button and mark it as `Active`.
-- Click on the **Update** button.
-- You should now be able to send notifications using Custom SMTP in Novu.
+## TLS settings
 
-## Next Steps
+**Secure** selects the connection mode, and the other TLS controls depend on it.
+
+| Port | Secure | Require TLS | Ignore TLS | TLS options |
+| --- | --- | --- | --- | --- |
+| `465` | On | Ignored | Ignored | Applied |
+| `587` or `25` | Off | Optional | Optional | Ignored |
+
+With **Secure** on, the connection is encrypted before the first SMTP command. With **Secure** off, Novu opens a plain connection and upgrades with STARTTLS when the server advertises it. **Require TLS** fails the send if that upgrade does not happen. **Ignore TLS** skips the upgrade, and it wins if both toggles are on.
+
+**TLS options** is a text area. Paste one JSON object into it. Novu rejects a string, an array, or invalid JSON, and ignores the field while **Secure** is off.
+
+```json
+{
+  "minVersion": "TLSv1.2"
+}
+```
+
+To trust a private certificate authority, turn **Secure** on and set `ca` to that authority's PEM certificate. `ca` replaces the default public authorities for this connection, so the server certificate must chain to the authority you supply. Keep line breaks in the PEM as `\n` inside the JSON string.
+
+```json
+{
+  "ca": "-----BEGIN CERTIFICATE-----\nMIIC...\n-----END CERTIFICATE-----\n"
+}
+```
+
+Keep certificate checks enabled. `{"rejectUnauthorized":false}` turns them off, so a host on the connection path can impersonate the mail server and receive the SMTP credentials.
+
+Novu checks the server certificate against **Host**. A `servername` key in **TLS options** is replaced with **Host**. If a send fails with `Host: ... is not in the cert's altnames: DNS:...`, set **Host** to one of the `DNS:` names in that error or to a name covered by a listed wildcard. An internal alias, a different domain, or an IP address fails this check even when it reaches the same server. Enter **Host** without the trailing dot Node prints in the error.
+
+## DKIM
+
+Novu signs the message only when all three DKIM fields are set. Publish the matching public key at `{selector}._domainkey.{domain}`. For domain `example.com` and selector `novu`, that name is `novu._domainkey.example.com`.
+
+## Troubleshooting
+
+| Symptom | Action |
+| --- | --- |
+| Authentication failed | Set both **User** and **Password**, and confirm the account may send as **From email address**. |
+| Connection timed out | Confirm **Host** and **Port**, and allow SMTP from the public internet. Novu Cloud workers do not use a fixed IP address. |
+| `Requests to private or reserved IP addresses are not allowed` | Set **Host** to a hostname that resolves to the private address, and add that hostname or address to `NOVU_SAFE_OUTBOUND_ALLOW` on the API and worker. `localhost` cannot be allow-listed. A literal private IP such as `10.0.0.1` is also rejected in **Host**. See [Deploy Novu with Docker](/community/self-hosting-novu/deploy-with-docker#faqs). |
+| TLS handshake failed on `587` or `25` | Turn **Secure** off. Those ports use STARTTLS. |
+| `is not in the cert's altnames` | Set **Host** to a name on the certificate, as described in [TLS settings](#tls-settings). |
+
+## Next steps
 
 <Columns cols={2}>
   <Card title="Configure bcc, cc, and reply-to" href="/platform/integrations/email#sending-email-overrides">

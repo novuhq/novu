@@ -1,0 +1,35 @@
+---
+title: "Account and claim"
+description: "Sign in on agentinbox.md and keep a keyless setup, including the channels you already connected."
+---
+
+An Agent Inbox account is your sign-in on [agentinbox.md](https://www.agentinbox.md). It keeps the inbox, lets you connect more hosts, and holds the settings a host cannot change.
+
+## From the terminal
+
+```bash
+npx @agentinbox/cli login
+```
+
+The CLI opens agentinbox.md. The page shows the same code as your terminal. Approve it. Deny on that page stops the login. If the codes differ, stop and start `login` again.
+
+A keyless setup on this computer moves into the account on that same page. The channels you already connected keep working. After login, the contact your account has for you becomes the person agents reach when a command leaves out `--to`.
+
+The CLI saves the account key in `~/.agentinbox/config.json`. `INBOX_SECRET_KEY` takes priority over that file. See the [CLI reference](/reference/cli).
+
+## From the browser
+
+Sign up on agentinbox.md, name the agent, and you land in the inbox. Onboarding then asks you to send a test message and [connect a host](/connect).
+
+## Email before you claim
+
+Until you claim a keyless setup, that inbox can receive email and cannot send it. Sending or inviting on email exits `1`:
+
+```text
+Outbound email needs an Agent Inbox account.
+To claim this setup and send email, run: npx @agentinbox/cli login
+```
+
+Mailing the inbox from the address you gave at setup gets one reply with a sign-up button.
+
+The account is also where you [pause the agent](/permissions) and choose who can write to it. Plan and payment live under **Settings**. These docs do not list prices.

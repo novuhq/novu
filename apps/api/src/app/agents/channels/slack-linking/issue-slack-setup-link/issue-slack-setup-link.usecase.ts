@@ -75,6 +75,7 @@ export class IssueSlackSetupLink {
       organizationId: command.organizationId,
       agentIdentifier: agent.identifier,
       integrationId: integration._id,
+      subscriberId: command.subscriberId,
     });
 
     return {

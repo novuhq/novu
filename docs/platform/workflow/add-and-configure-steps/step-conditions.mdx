@@ -132,14 +132,24 @@ The following workflow variables are available:
 
 ### Previous step result
 
-For workflows involving sequential steps, conditions can also depend on the outcome of a previous step. For example, if the prior step was an in-app notification, then the condition could check:
+For workflows involving sequential steps, conditions can also depend on the outcome of a previous step. If the prior step was an in-app notification, the condition can check:
 
-- `steps.in-app-step.seen`
-- `steps.in-app-step.read`
-- `steps.in-app-step.lastSeenDate`
-- `steps.in-app-step.lastReadDate`
+- `steps.<in-app-step-id>.seen`
+- `steps.<in-app-step-id>.read`
+- `steps.<in-app-step-id>.lastSeenDate`
+- `steps.<in-app-step-id>.lastReadDate`
 
-This can be used for follow-up notifications. For instance, send an email only if the in-app notification was not read within 24 hours.
+The step id is the identifier of that in-app step.
+
+#### Skip the email when the in-app notification was read
+
+You can skip the email if the in-app notification was read:
+
+1. Add an In-App step, then a [Delay](/platform/workflow/add-and-configure-steps/configure-action-steps/delay), then an Email step.
+2. On the Email step, open **Step conditions**.
+3. Require `steps.<in-app-step-id>.read` to be false.
+
+A common follow-up waits 24 hours on the Delay step, then sends the email only when the in-app message is still unread. If the condition does not match, the Activity Feed marks the email step **Skipped** and records that it was skipped by conditions. Novu continues with any step after that email step.
 
 ### Context
 

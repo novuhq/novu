@@ -53,7 +53,7 @@ import {
 import inlineCss from 'inline-css';
 
 import { PlatformException } from '../../../shared/utils';
-import { combineProviderOverrides, SendMessageBase } from './send-message.base';
+import { combineProviderOverrides, mergeTriggerProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -801,36 +801,20 @@ export class SendMessageEmail extends SendMessageBase {
   }
 
   /**
-   * Builds the merged provider overrides object for email sending.
-   *
-   * Provider-specific fields (cc/bcc/from/replyTo/etc.) can arrive in three shapes:
-   *   1. Deprecated channel bucket:     `overrides.email`
-   *   2. Deprecated flat provider key:  `overrides.<providerId>`
-   *   3. Modern nested providers shape: `overrides.providers.<providerId>`
-   *                                     `overrides.steps.<stepId>.providers.<providerId>`
-   *
-   * All three are merged (step-level wins) so values like `cc` reach `createMailData`
-   * and downstream providers (e.g. SendGrid `personalizations[0].cc`).
+   * Merged so values like `cc` reach `createMailData` and downstream providers
+   * (e.g. SendGrid `personalizations[0].cc`).
    */
   private buildEmailProviderOverrides(
     command: SendMessageChannelCommand,
     providerId: string | undefined,
     stepId: string | undefined
   ): EmailMessageOverrides {
-    const deprecatedFlatEmailOverride = command.overrides?.email || {};
-    const deprecatedFlatProviderOverride = providerId
-      ? (command.overrides as Record<string, Record<string, unknown>>)?.[providerId] || {}
-      : {};
-    const providerOverride = providerId ? command.overrides?.providers?.[providerId] || {} : {};
-    const stepProviderOverride =
-      providerId && stepId ? command.overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
-
-    return {
-      ...deprecatedFlatEmailOverride,
-      ...deprecatedFlatProviderOverride,
-      ...providerOverride,
-      ...stepProviderOverride,
-    };
+    return mergeTriggerProviderOverrides(
+      command.overrides,
+      ChannelTypeEnum.EMAIL,
+      providerId,
+      stepId
+    ) as EmailMessageOverrides;
   }
 
   public buildFactoryIntegration(integration: IntegrationEntity) {

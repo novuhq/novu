@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal';
+import { actionStepSchemas, channelStepSchemas, parseLiquidControlValue } from '@novu/framework/internal';
 import { ResourceOriginEnum } from '@novu/shared';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
@@ -166,10 +166,8 @@ export class ControlValueSanitizerService {
   }
 
   private sanitizeControlValuesByLiquidCompilationFailure(key: string, value: unknown): unknown {
-    const parserEngine = buildLiquidParser();
-
     try {
-      parserEngine.parse(JSON.stringify(value));
+      parseLiquidControlValue(buildLiquidParser(), value);
 
       return value;
     } catch (error) {

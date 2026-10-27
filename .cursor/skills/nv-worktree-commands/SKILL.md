@@ -1,8 +1,8 @@
 ---
 name: nv-worktree-commands
 description: >-
-  Git worktree command reference: path naming, create/remove/prune, `.env*`
-  copy, package-manager install, and cleanup. Use when implementing or
+  Git worktree command reference: path naming, create/remove/prune, `.env`
+  copy and cleanup. Use when implementing or
   debugging worktree setup — not as the primary user-facing workflow (see
   nv-worktree-create).
 ---
@@ -56,72 +56,39 @@ git -C <worktree-path> rev-parse HEAD
 
 ## Copy local env files
 
-`git worktree add` does not bring gitignored files. Copy **local secret env files only** from the main checkout — not `.env.example` / `.env.template` (those are already in git).
+`git worktree add` does not bring gitignored files. Only plain `.env` files are gitignored in Novu; `.env.development`, `.env.agent`, `.env.test`, etc. are tracked and already present in the worktree.
 
-**Preferred — `rsync` with explicit includes** (from main repo root):
-
-```bash
-rsync -a \
-  --prune-empty-dirs \
-  --include='*/' \
-  --include='.env' \
-  --include='.env.*' \
-  --exclude='.env.example' \
-  --exclude='.env.template' \
-  --exclude='*' \
-  --exclude='node_modules/' \
-  --exclude='dist/' \
-  --exclude='build/' \
-  --exclude='.next/' \
-  --exclude='.turbo/' \
-  "<main-repo-root>/" "<worktree-path>/"
-```
-
-**Alternative — copy only gitignored env files** (when `rsync` is unavailable):
+**Default — ask git for the ignored `.env` files (~0.1s).** `--directory` stops git from descending into ignored dirs like `node_modules`, `.nx`, `dist`:
 
 ```bash
 cd <main-repo-root>
-git ls-files -z --others --ignored --exclude-standard \
-| while IFS= read -r -d '' f; do
-    base="$(basename "$f")"
-    case "$base" in
-      .env|.env.*)
-        case "$base" in
-          .env.example|.env.template) continue ;;
-        esac
-        mkdir -p "<worktree-path>/$(dirname "$f")"
-        cp -a "$f" "<worktree-path>/$f"
-        ;;
-    esac
-  done
+git ls-files -z -o -i --exclude-standard --directory \
+| grep -zE '(^|/)\.env$' \
+| rsync -a --from0 --files-from=- ./ "<worktree-path>/"
 ```
 
-After copying, list what landed (e.g. `find <worktree-path> -type f \( -name '.env' -o -name '.env.*' \) ! -name '.env.example' ! -name '.env.template'`).
+**`--lite` — core apps only** (no search at all):
+
+```bash
+cd <main-repo-root>
+for f in apps/api/src/.env apps/worker/src/.env apps/ws/src/.env apps/dashboard/.env; do
+  [ -f "$f" ] && echo "$f"
+done | rsync -a --files-from=- ./ "<worktree-path>/"
+```
+
+**Never** use `rsync --include='*/'` over the whole repo: it descends into `node_modules` and `.nx` (measured ~11s vs ~0.1s).
+
+After copying, report the list that was sent (the commands above copy ~8 files).
 
 ### Novu-specific
 
 - Copy from the **parent checkout**, not `node scripts/setup-env-files.js`. That script generates a **new** `STORE_ENCRYPTION_KEY` when `.env` is missing — a worktree would then disagree with the parent and shared local Mongo/Redis.
-- Typical files copied: `apps/api/src/.env`, `.env.agent`, `.env.development`, `apps/dashboard/.env`, `apps/worker/src/.env`, `apps/ws/src/.env`, etc.
+- Typical files copied: `apps/api/src/.env`, `apps/dashboard/.env`, `apps/worker/src/.env`, `apps/ws/src/.env`, plus `apps/inbound-mail`, `libs/agent-evals`.
 - Skip `playground/` env unless the task needs it.
 
-## Install dependencies
+## Install / build
 
-| Lockfile | Command |
-|---|---|
-| `pnpm-lock.yaml` | `pnpm install` |
-| `yarn.lock` | `yarn install` |
-| `package-lock.json` | `npm install` |
-| `bun.lockb` | `bun install` |
-
-Run from the worktree root.
-
-## Build
-
-```bash
-pnpm build   # or npm/yarn/bun equivalent
-```
-
-Skip if no build script exists.
+**Never run install or build** (`pnpm install`, `pnpm build`, `pnpm setup:agent`) as part of worktree creation. If the user wants them, they will ask.
 
 ## Remove
 

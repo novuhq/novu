@@ -1,7 +1,7 @@
 import { ActionTypeEnum, CardElement, ChannelTypeEnum, ContextPayload } from '../../types';
 import { SubscriberDto } from '../subscriber';
 import { JSONSchemaDto } from './json-schema-dto';
-import type { StepProviderOverrides } from './step.dto';
+import type { StepIntegrationOverrides, StepProviderOverrides } from './step.dto';
 
 export class RenderOutput {}
 
@@ -13,11 +13,13 @@ export class ChatRenderOutput extends RenderOutput {
    */
   card?: CardElement;
   providerOverrides?: StepProviderOverrides;
+  integrationOverrides?: StepIntegrationOverrides;
 }
 
 export class ToolRenderOutput extends RenderOutput {
   body: string;
   providerOverrides?: StepProviderOverrides;
+  integrationOverrides?: StepIntegrationOverrides;
 }
 
 export class SmsRenderOutput extends RenderOutput {

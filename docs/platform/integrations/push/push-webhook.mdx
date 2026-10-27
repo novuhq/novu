@@ -337,6 +337,7 @@ When you trigger a workflow, Novu sends a `POST` request to your webhook URL wit
 The payload includes:
 * The `title` and `content` from your workflow editor.
 * The `target` (the device token you set).
+* `messageId`, the Novu message id. The same value is also `payload.__nvMessageId`. Use either value as `eventId` when you [forward activity events](/platform/integrations/push/push-activity-tracking).
 * Your `overrides`.
 * The full payload from your trigger.
 * The subscriber's profile.
@@ -346,6 +347,7 @@ The payload includes:
   "target": ["subscriber-token-for-push-webhook-provider"],
   "title": "Push Webhook message title",
   "content": "push Webhook content body",
+  "messageId": "65c0d71c0959a38e8857b999",
   "overrides": {
     "data": {
       "custom_message": "this is custom message from payload push webhook demo"
@@ -353,6 +355,7 @@ The payload includes:
   },
   "payload": {
     "custom_message": "this is custom message from payload push webhook demo",
+    "__nvMessageId": "65c0d71c0959a38e8857b999",
     "__source": "test-workflow",
     "subscriber": {
       // subscriber fields
@@ -392,6 +395,23 @@ The payload includes:
   }
 }
 ```
+
+## Activity tracking
+
+Push Webhook supports [push activity tracking](/platform/integrations/push/push-activity-tracking). Enable the **Push Activity Tracking** toggle on the Push Webhook integration.
+
+Novu includes the message id twice on the POST to your webhook URL: `messageId`, and the same value as `payload.__nvMessageId`. Your endpoint delivers the push, so put that id on the notification the device receives. When the subscriber interacts with it, forward the id as `eventId`.
+
+```javascript
+app.post("/push-webhook", (request, response) => {
+  const messageId = request.body.messageId ?? request.body.payload?.__nvMessageId;
+
+  // Include messageId on the notification you deliver, then report it as eventId.
+  response.sendStatus(200);
+});
+```
+
+Accepted `eventType` values are `delivered`, `opened`, `clicked`, `dismissed`, and `failed`. Your backend then calls [Novu's activity endpoint](/platform/integrations/push/push-activity-tracking#step-3-forward-events-to-novu-from-your-backend).
 
 ## Checking authenticity
 

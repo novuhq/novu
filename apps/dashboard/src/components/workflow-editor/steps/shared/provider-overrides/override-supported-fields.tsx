@@ -1,5 +1,5 @@
 import { getProviderPrimaryContentKey } from '@novu/shared';
-import { useMemo } from 'react';
+import { type ReactElement, useMemo } from 'react';
 import { RiAddLine, RiCheckLine, RiListUnordered } from 'react-icons/ri';
 import { LinkButton } from '@/components/primitives/button-link';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
@@ -75,6 +75,8 @@ type OverrideSupportedFieldsProps = {
   usedKeys: Set<string>;
   canInsert: boolean;
   annotateField?: AnnotateOverrideField;
+  /** Replaces the default "Supported fields" link; must forward its ref to a focusable element. */
+  trigger?: ReactElement;
   onInsertField: (key: string) => void;
 };
 
@@ -85,6 +87,7 @@ export function OverrideSupportedFields({
   usedKeys,
   canInsert,
   annotateField,
+  trigger,
   onInsertField,
 }: OverrideSupportedFieldsProps) {
   const fields = useMemo(() => (resolver ? buildSupportedFields(providerId, resolver) : []), [providerId, resolver]);
@@ -97,11 +100,13 @@ export function OverrideSupportedFields({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <LinkButton size="sm" variant="gray" leadingIcon={RiListUnordered} className="[&_svg]:size-3">
-          Supported fields
-        </LinkButton>
+        {trigger ?? (
+          <LinkButton size="sm" variant="gray" leadingIcon={RiListUnordered} className="[&_svg]:size-3">
+            Supported fields
+          </LinkButton>
+        )}
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-96 p-0">
+      <PopoverContent align={trigger ? 'center' : 'end'} className="w-96 p-0">
         <div className="border-b border-neutral-100 px-3 py-2">
           <span className="text-label-xs text-text-strong block">Supported fields</span>
           <p className="text-text-soft text-xs">

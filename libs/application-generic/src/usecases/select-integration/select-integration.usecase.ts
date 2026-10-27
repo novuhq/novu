@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationQuery, IntegrationRepository, TenantEntity, TenantRepository } from '@novu/dal';
-import { CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
+import { CHANNELS_WITH_PRIMARY, EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { FeatureFlagsService } from '../../services/feature-flags';
 import {
@@ -49,10 +49,12 @@ export class SelectIntegration {
         { sort: { priority: -1, createdAt: -1 } }
       );
 
-      if (integrations.length > 0) {
+      const selectable = integrations.filter((currentIntegration) => !this.isHiddenFromWorkflows(currentIntegration));
+
+      if (selectable.length > 0) {
         const tenant = await this.resolveTenant(command);
 
-        for (const currentIntegration of integrations) {
+        for (const currentIntegration of selectable) {
           const passed = await this.integrationMatchesConditions(command, currentIntegration, tenant);
 
           if (passed) {
@@ -76,6 +78,11 @@ export class SelectIntegration {
       integration: decryptedIntegration,
       ...(matchedConditions && { matchedConditions }),
     };
+  }
+
+  /** Agent Email Inbox is a Human channel. Workflow selection must never return it. */
+  private isHiddenFromWorkflows(integration: IntegrationEntity): boolean {
+    return integration.providerId === EmailProviderIdEnum.AgentEmailInbox;
   }
 
   private async resolveTenant(command: SelectIntegrationCommand): Promise<TenantEntity | null> {
@@ -161,9 +168,15 @@ export class SelectIntegration {
         }
       : this.getIntegrationQuery(command, isCrossEnvironmentIntegrationEnabled, isChannelSupportsPrimary);
 
-    return await this.integrationRepository.findOne(query, undefined, {
+    const integration = await this.integrationRepository.findOne(query, undefined, {
       query: { sort: { createdAt: -1 } },
     });
+
+    if (integration && this.isHiddenFromWorkflows(integration)) {
+      return null;
+    }
+
+    return integration;
   }
 
   private async isCrossEnvironmentIntegrationEnabled(command: SelectIntegrationCommand): Promise<boolean> {

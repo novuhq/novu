@@ -1,5 +1,5 @@
 import { ConflictException } from '@nestjs/common';
-import { EnvironmentTypeEnum } from '@novu/shared';
+import { EnvironmentTypeEnum, HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ClaimKeylessConnectCommand } from './claim-keyless-connect.command';
@@ -43,7 +43,10 @@ describe('ClaimKeylessConnect', () => {
     };
     agentRepository.findOne.onFirstCall().resolves(null);
     agentRepository.findOne.resolves({ identifier: 'human-relay' });
-    const humanContactRepository = repository();
+    const humanContactRepository = {
+      ...repository(),
+      findOperatorInEnvironment: sinon.stub().resolves(null),
+    };
 
     const usecase = new ClaimKeylessConnect(
       connectClaimTokenService as never,
@@ -106,5 +109,20 @@ describe('ClaimKeylessConnect', () => {
     expect(error).to.be.instanceOf(ConflictException);
     expect((error as ConflictException).getResponse()).to.include({ code: 'claim_conflict' });
     expect(connectClaimTokenService.claim.called).to.equal(false);
+  });
+
+  it('refuses to claim while the operator email is still awaiting verification', async () => {
+    const { usecase, humanContactRepository, connectClaimTokenService, agentRepository } = setup();
+    humanContactRepository.findOperatorInEnvironment.resolves({
+      addresses: { [HumanChannelViaEnum.EMAIL]: { pending: { address: 'ada@example.com', requestedAt: 't1' } } },
+    });
+
+    const error = await usecase.execute(command).catch((caught) => caught);
+
+    expect(error).to.be.instanceOf(ConflictException);
+    expect((error as ConflictException).getResponse()).to.include({ code: 'verify_email_before_claim' });
+    expect(agentRepository.withTransaction.called).to.equal(false);
+    expect(connectClaimTokenService.claim.called).to.equal(false);
+    expect(connectClaimTokenService.releaseClaimLock.calledOnce).to.equal(true);
   });
 });

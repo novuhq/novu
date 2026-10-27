@@ -19,13 +19,19 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import {
+  type AgentInboxProviderId,
   ApiServiceLevelEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
   EnvironmentTypeEnum,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
+  HumanChannelViaEnum,
 } from '@novu/shared';
+import {
+  trackAgentInboxChannelConnected,
+  trackAgentInboxCreated,
+} from '../../../../human/services/agent-inbox-analytics';
 import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { trackAgentIntegrationConnected } from '../../../shared/analytics/agent-analytics';
 import { assertWebChatEnabledForConnect } from '../../../shared/assert-web-chat-enabled';
@@ -65,11 +71,40 @@ export class AddAgentIntegration {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_id', 'identifier', 'name']
+      ['_id', 'identifier', 'name', 'runtime']
     );
 
     if (!agent) {
       throw new NotFoundException(`Agent with identifier "${command.agentIdentifier}" was not found.`);
+    }
+
+    if (command.providerId === EmailProviderIdEnum.AgentEmailInbox) {
+      this.assertHumanRelay(agent);
+
+      const { response, provisionedNewLink } = await this.findOrCreateNovuEmail.execute(
+        agent._id,
+        command.environmentId,
+        command.organizationId,
+        EmailProviderIdEnum.AgentEmailInbox
+      );
+
+      if (provisionedNewLink) {
+        trackAgentIntegrationConnected(this.analyticsService, {
+          userId: command.userId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          agentId: agent._id,
+          agentIdentifier: command.agentIdentifier,
+          integrationId: response.integration._id,
+          integrationIdentifier: response.integration.identifier,
+          providerId: response.integration.providerId,
+          channel: response.integration.channel,
+          connectionSource: 'agent_email_inbox_provisioned',
+        });
+        this.trackAgentInboxEmail(agent, command, { newInbox: true });
+      }
+
+      return response;
     }
 
     if (command.providerId === EmailProviderIdEnum.NovuAgent) {
@@ -132,7 +167,7 @@ export class AddAgentIntegration {
   }
 
   private async linkExistingIntegration(
-    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>,
+    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name' | 'runtime'>,
     command: AddAgentIntegrationCommand
   ): Promise<AgentIntegrationResponseDto> {
     const integration = await this.integrationRepository.findOne(
@@ -148,9 +183,16 @@ export class AddAgentIntegration {
       throw new NotFoundException(`Integration with identifier "${command.integrationIdentifier}" was not found.`);
     }
 
+    if (integration.providerId === EmailProviderIdEnum.AgentEmailInbox) {
+      this.assertHumanRelay(agent);
+      await this.enforceEmailTier(command.organizationId);
+      await this.enforceSingletonEmail(agent._id, command, EmailProviderIdEnum.AgentEmailInbox);
+      await this.seedEmailSecretKey(integration._id, command.environmentId, command.organizationId);
+    }
+
     if (integration.providerId === EmailProviderIdEnum.NovuAgent) {
       await this.enforceEmailTier(command.organizationId);
-      await this.enforceSingletonEmail(agent._id, command);
+      await this.enforceSingletonEmail(agent._id, command, EmailProviderIdEnum.NovuAgent);
       await this.seedEmailSecretKey(integration._id, command.environmentId, command.organizationId);
     }
 
@@ -158,7 +200,7 @@ export class AddAgentIntegration {
   }
 
   private async createLink(
-    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>,
+    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name' | 'runtime'>,
     integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'>,
     command: AddAgentIntegrationCommand
   ): Promise<AgentIntegrationResponseDto> {
@@ -216,8 +258,36 @@ export class AddAgentIntegration {
       channel: integration.channel,
       connectionSource: 'existing_integration',
     });
+    if (integration.providerId === EmailProviderIdEnum.AgentEmailInbox) {
+      this.trackAgentInboxEmail(agent, command, { newInbox: false });
+    }
 
     return response;
+  }
+
+  /**
+   * The Agent Inbox sets its email up through these same endpoints, besides the event every agent gets. A new
+   * address is a new inbox too: setup can't always make it, and the CLI then asks for it here. Telegram and
+   * Slack only work once someone links their chat, so they count then (`AgentInboxChannelAnalytics`).
+   */
+  private trackAgentInboxEmail(
+    agent: Pick<AgentEntity, '_id' | 'runtime'>,
+    command: AddAgentIntegrationCommand,
+    { newInbox }: { newInbox: boolean }
+  ): void {
+    if (agent.runtime !== 'human_relay') {
+      return;
+    }
+
+    const owner = { userId: command.userId, organizationId: command.organizationId };
+    if (newInbox) {
+      trackAgentInboxCreated(this.analyticsService, owner, { agentId: agent._id, source: command.analyticsSource });
+    }
+
+    trackAgentInboxChannelConnected(this.analyticsService, owner, {
+      agentId: agent._id,
+      channel: HumanChannelViaEnum.EMAIL,
+    });
   }
 
   private async enforceEmailTier(organizationId: string): Promise<void> {
@@ -234,7 +304,17 @@ export class AddAgentIntegration {
     }
   }
 
-  private async enforceSingletonEmail(agentId: string, command: AddAgentIntegrationCommand): Promise<void> {
+  private assertHumanRelay(agent: Pick<AgentEntity, 'runtime'>): void {
+    if (agent.runtime !== 'human_relay') {
+      throw new ForbiddenException('Agent Email Inbox is only available for the Human project.');
+    }
+  }
+
+  private async enforceSingletonEmail(
+    agentId: string,
+    command: AddAgentIntegrationCommand,
+    providerId: AgentInboxProviderId
+  ): Promise<void> {
     const links = await this.agentIntegrationRepository.find(
       {
         _agentId: agentId,
@@ -252,7 +332,7 @@ export class AddAgentIntegration {
         _id: { $in: linkedIntegrationIds },
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
+        providerId,
       },
       '_id'
     );

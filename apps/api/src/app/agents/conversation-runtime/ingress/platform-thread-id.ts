@@ -22,7 +22,7 @@ function slackStyleThreadRoot(message: Message): string | undefined {
   return message.id;
 }
 
-export function supportsNestedThreads(platform: AgentPlatformEnum): boolean {
+function supportsNestedThreads(platform: AgentPlatformEnum): boolean {
   return NESTED_THREAD_PLATFORMS.has(platform);
 }
 

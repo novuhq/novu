@@ -1,9 +1,23 @@
 ---
 title: 'Activity Tracking'
-description: "Manually forward push notification delivery, open, and dismissal events from your mobile or web app to Novu for unified activity tracking across channels."
+description: "Forward push delivery and engagement events from your app to Novu. Supported for FCM, APNs, Expo, OneSignal, Pusher Beams, Pushpad, and Push Webhook."
 ---
 
-To enable activity tracking for Push channel notifications, Novu supports a manual integration approach for push notifications. Where your application captures and forwards push notification events to Novu. Once received, Novu processes and displays these events on the dashboard for a unified tracking experience.
+Your app captures push delivery and engagement events and forwards them to Novu. Novu records each event on the matching message in the **Activity Feed**.
+
+## Supported providers
+
+The **Push Activity Tracking** toggle is available on these integrations:
+
+- [Firebase Cloud Messaging (FCM)](/platform/integrations/push/fcm)
+- [APNs](/platform/integrations/push/apns)
+- [Expo](/platform/integrations/push/expo-push)
+- [OneSignal](/platform/integrations/push/onesignal)
+- [Pusher Beams](/platform/integrations/push/pusher-beams)
+- [Pushpad](/platform/integrations/push/pushpad)
+- [Push Webhook](/platform/integrations/push/push-webhook)
+
+AppIO has no **Push Activity Tracking** toggle, and Novu rejects activity events for an AppIO integration. AppIO delivers into the IO app, where you cannot run code, and its message API has no custom data field for the Novu message id.
 
 ## How it works
 
@@ -27,20 +41,48 @@ Enable push activity tracking in your Novu dashboard and get the necessary crede
 
 ## Step 2: Listen for push events in your application
 
-When push notifications are delivered or interacted with, your application must capture those events and forward them to your backend. The exact code implementation depends on the push provider that you use.
+When a push notification is delivered or the subscriber interacts with it, capture that event and forward it to your backend. The listener depends on the provider.
 
-The goal is to capture the event and send a JSON payload to your backend. You must send these fields:
-- `eventType`: A string describing the event (for example, `opened`, `clicked`).
-- `eventId`: The unique identifier for the notification, which Novu includes in the push payload as `__nvMessageId`.
+Send these fields:
+
+- `eventType`: One of `delivered`, `opened`, `clicked`, `dismissed`, or `failed`. Novu ignores any other value.
+- `eventId`: The Novu message id for that notification.
+
+| `eventType` | What Novu records |
+| --- | --- |
+| `delivered` | A delivery time on the message |
+| `opened` | The message as seen |
+| `clicked` | The message as seen, plus a click |
+| `dismissed` | The message as seen, plus a read |
+| `failed` | The message as failed |
+
+Novu puts that message id on the notification before it is sent. Read it from the field for your provider and send it back as `eventId`.
+
+| Provider | Where to read the message id |
+| --- | --- |
+| Expo | `data.__nvMessageId` |
+| FCM | `data.__nvMessageId` |
+| APNs | `__nvMessageId` beside `aps` |
+| OneSignal | `additionalData.__nvMessageId` |
+| Pusher Beams | Android: FCM `data.__nvMessageId`. Web: `notification.data.pusher.customerPayload.data.__nvMessageId`. iOS: `data.__nvMessageId`, with `data` beside `aps`. |
+| Push Webhook | `messageId` on the webhook body. The same value is `payload.__nvMessageId`. |
+| Pushpad | `custom_data`. This value is the message id string. |
+
+On a standard FCM notification, `data` contains `__nvMessageId` and any `data` keys from your FCM override. The rest of the trigger payload is included only on a data-only message (`overrides.providers.fcm.type` set to `data`).
+
+An APNs `rawPayload` override replaces the notification body. `__nvMessageId` is on the device only when that object contains it. A trigger-time `rawPayload` does not, because Novu assigns the message id at send time.
+
+<Warning>
+  Pushpad passes `custom_data` only to [action button](https://pushpad.xyz/docs/action_buttons) callbacks. A tap on the notification body does not include the message id, so that tap cannot be forwarded. Add an action button and read the id from the callback argument. Chrome is the only browser that shows action buttons, and it shows at most two. Keep the `custom_data` value Novu sets. Replacing it removes the message id.
+</Warning>
 
 <Tabs>
   <Tab title="expo">
   ```jsx
-
   // Listen for notification interactions
   Notifications.addNotificationResponseReceivedListener(async (response) => {
     const eventData = {
-      eventType: "opened",
+      eventType: "clicked",
       eventId: response.notification.request.content.data?.__nvMessageId,
       timestamp: new Date().toISOString(),
       actionIdentifier: response.actionIdentifier,
@@ -52,13 +94,14 @@ The goal is to capture the event and send a JSON payload to your backend. You mu
       // Optional device context
       deviceId: Constants.sessionId,
       platform: Platform.OS,
-    }});
+    };
 
     await fetch("https://your-api.com/api/notifications/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(eventData),
     });
+  });
   ```
   </Tab>
   <Tab title="fcm">
@@ -107,23 +150,18 @@ messaging()
   </Tab>
   <Tab title="onesignal">
   ```js
-
-  OneSignal.setNotificationOpenedHandler((openedEvent) => {
-    const { notification } = openedEvent;
-
+  OneSignal.Notifications.addEventListener("click", async (event) => {
     const eventData = {
-      eventType: "opened",
-      eventId: notification.additionalData?.__nvMessageId,
+      eventType: "clicked",
+      eventId: event.notification.additionalData?.__nvMessageId,
       timestamp: new Date().toISOString(),
       content: {
-        title: notification.title,
-        body: notification.body,
+        title: event.notification.title,
+        body: event.notification.body,
       },
-      deviceId: notification.notificationId,
-      platform: 'ios',
     };
 
-    fetch("https://your-api.com/api/notifications/events", {
+    await fetch("https://your-api.com/api/notifications/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(eventData),
@@ -131,7 +169,36 @@ messaging()
   });
   ```
   </Tab>
+  <Tab title="pushpad">
+  ```js
+  // service-worker.js
+  // Bind this function to a Pushpad action button whose Action is "trackClick".
+  // customData is the Novu message id from custom_data.
+  self.notificationActions = {
+    trackClick: function (customData) {
+      return fetch("https://your-api.com/api/notifications/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventType: "clicked",
+          eventId: customData,
+        }),
+      });
+    },
+  };
+  ```
+  </Tab>
 </Tabs>
+
+Add the Pushpad button on the notification, for example with a [provider content override](/platform/integrations/push#every-other-push-provider-is-a-raw-passthrough):
+
+```json
+{
+  "actions": [
+    { "title": "View", "action": "trackClick" }
+  ]
+}
+```
 
 ## Step 3: Forward events to Novu from your backend
 

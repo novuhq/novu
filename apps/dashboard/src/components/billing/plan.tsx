@@ -1,5 +1,6 @@
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsText, StripeBillingIntervalEnum } from '@novu/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ActionType } from '@/components/billing/utils/action.button.constants.ts';
 import { useAuth } from '@/context/auth/hooks';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
@@ -12,6 +13,17 @@ import { ActivePlanBanner } from './active-plan-banner';
 import { Features } from './features';
 import { PlanSwitcher } from './plan-switcher';
 import { type PlanConfig, PlansRow } from './plans-row';
+import { UsageTierSuggestionBanner } from './usage-limits/usage-tier-suggestion-banner';
+
+const COMPARE_PLANS_SCROLL_OPTIONS = { behavior: 'smooth', block: 'start' } as const satisfies ScrollIntoViewOptions;
+
+export type ComparePlansLocationState = {
+  scrollToComparePlans?: boolean;
+};
+
+function scrollToComparePlans(element: HTMLElement | null) {
+  element?.scrollIntoView(COMPARE_PLANS_SCROLL_OPTIONS);
+}
 
 function createPlanConfig(plan: ApiServiceLevelEnum, interval: StripeBillingIntervalEnum): PlanConfig {
   const price = getFeatureForTierAsText(
@@ -54,12 +66,14 @@ function getPlansConfig(interval: StripeBillingIntervalEnum): Record<DisplayedPl
 
 export function Plan() {
   const track = useTelemetry();
+  const location = useLocation();
   const { currentOrganization } = useAuth();
   const { subscription: data } = useFetchSubscription();
   const [selectedBillingInterval, setSelectedBillingInterval] = useState<'month' | 'year'>(
     data?.billingInterval || 'month'
   );
   const plans = getPlansConfig(selectedBillingInterval as StripeBillingIntervalEnum);
+  const comparePlansRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkoutResult = new URLSearchParams(window.location.search).get('result');
@@ -103,6 +117,20 @@ export function Plan() {
     });
   }, [data?.apiServiceLevel, data?.trial?.isActive, selectedBillingInterval, track]);
 
+  useEffect(() => {
+    const shouldScroll = (location.state as ComparePlansLocationState | null)?.scrollToComparePlans === true;
+
+    if (!shouldScroll) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      scrollToComparePlans(comparePlansRef.current);
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [location.key, location.state]);
+
   const handleBillingIntervalChange = (interval: StripeBillingIntervalEnum) => {
     track(TelemetryEvent.BILLING_INTERVAL_CHANGED, {
       from: selectedBillingInterval,
@@ -115,10 +143,16 @@ export function Plan() {
   return (
     <div className={cn('flex w-full flex-col gap-6 p-6 pt-0')}>
       <ActivePlanBanner selectedBillingInterval={selectedBillingInterval} />
-      <PlanSwitcher
-        selectedBillingInterval={selectedBillingInterval}
-        setSelectedBillingInterval={handleBillingIntervalChange}
+      <UsageTierSuggestionBanner
+        source="billing_page_tier_suggestion"
+        onComparePlans={() => scrollToComparePlans(comparePlansRef.current)}
       />
+      <div ref={comparePlansRef}>
+        <PlanSwitcher
+          selectedBillingInterval={selectedBillingInterval}
+          setSelectedBillingInterval={handleBillingIntervalChange}
+        />
+      </div>
       <PlansRow
         selectedBillingInterval={selectedBillingInterval as StripeBillingIntervalEnum}
         currentPlan={data?.apiServiceLevel as ApiServiceLevelEnum}

@@ -46,6 +46,26 @@ export function configurationToCredential(config: ConfigConfiguration): IConfigC
 
 const OBJECT_CREDENTIAL_KEYS = new Set<string>([CredentialsKeyEnum.TlsOptions]);
 
+function isPlainJsonObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+export function credentialValueToInputString(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (value === undefined || value === null) {
+    return '';
+  }
+
+  if (typeof value === 'object') {
+    return JSON.stringify(value, null, 2);
+  }
+
+  return String(value);
+}
+
 export function cleanCredentials(credentials: Record<string, unknown>): Record<string, unknown> {
   const cleaned: Record<string, unknown> = {};
 
@@ -55,7 +75,8 @@ export function cleanCredentials(credentials: Record<string, unknown>): Record<s
     if (OBJECT_CREDENTIAL_KEYS.has(key) && typeof value === 'string') {
       try {
         const parsed = JSON.parse(value);
-        if (typeof parsed === 'object' && parsed !== null) {
+
+        if (isPlainJsonObject(parsed)) {
           cleaned[key] = parsed;
           continue;
         }

@@ -17,6 +17,7 @@ export type {
   WebChatRequestBody,
   WebChatSession,
   WebChatStartTypingParams,
+  WebChatStreamMessageParams,
   WebChatThreadId,
 } from './types.js';
 export {

@@ -163,7 +163,7 @@ export function extractTelegramChatIdFromThreadId(platformThreadId: string): str
  * Sendblue 1:1 threads are `sendblue:{from}:{contact}` (exactly 3 segments). Unrecognized
  * shapes fail closed so a group thread never receives a personally-addressed payload.
  */
-export function isSendblueDirectThreadId(platformThreadId: string): boolean {
+function isSendblueDirectThreadId(platformThreadId: string): boolean {
   const segments = platformThreadId.split(':');
 
   return segments.length === 3 && segments[0] === 'sendblue' && segments[1].length > 0 && segments[2].length > 0;
@@ -181,7 +181,7 @@ export function isImessageDirectThreadId(platform: AgentPlatformEnum, platformTh
     : isPhotonImessageDirectThreadId(platformThreadId);
 }
 
-export function isPhotonImessageDirectThreadId(platformThreadId: string): boolean {
+function isPhotonImessageDirectThreadId(platformThreadId: string): boolean {
   if (!platformThreadId.startsWith('imessage:')) {
     return false;
   }

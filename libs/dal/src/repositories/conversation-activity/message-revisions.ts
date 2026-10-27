@@ -17,7 +17,8 @@ function revisionOrderKey(row: MessageRevisionRow): string {
   return `${sequence}:${createdAt}:${row._id ?? ''}`;
 }
 
-function indexRevisions<T extends MessageRevisionRow>(
+/** The newest edit of each message and the messages that were deleted, by `platformMessageId`. */
+export function indexRevisions<T extends MessageRevisionRow>(
   revisions: T[]
 ): {
   latestEdit: Map<string, T>;

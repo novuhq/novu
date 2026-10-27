@@ -98,6 +98,8 @@ export enum EmailProviderIdEnum {
   EmailWebhook = 'email-webhook',
   Braze = 'braze',
   NovuAgent = 'novu-email-agent',
+  /** Human-only shared inbox. Workflows must not send through it. */
+  AgentEmailInbox = 'agent-email-inbox',
 }
 
 export enum SmsProviderIdEnum {

@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom';
 import { SOCKET_OPTIONS } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useDashboardInboxHashes } from '@/hooks/use-dashboard-inbox-hashes';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { createContextHook } from '@/utils/context';
 
@@ -28,6 +29,7 @@ type NovuProviderChildren = ComponentProps<typeof NovuProvider>['children'];
 export function ConnectSubscriberProvider({ children }: ConnectSubscriberProviderProps) {
   const { currentUser, isUserLoaded } = useAuth();
   const { currentEnvironment } = useEnvironment();
+  const { subscriberHash, isSettled: isHashSettled } = useDashboardInboxHashes();
 
   const isReady = isUserLoaded && !!currentUser?._id && !!currentEnvironment?.identifier;
   const subscriberId = currentUser?._id || '';
@@ -51,11 +53,17 @@ export function ConnectSubscriberProvider({ children }: ConnectSubscriberProvide
     );
   }
 
+  // Wrapping the page in NovuProvider later would remount it, so it waits for the hash unrendered.
+  if (!isHashSettled) {
+    return null;
+  }
+
   return (
     <ConnectSubscriberContext.Provider value={{ subscriberId, isReady: true }}>
       <NovuProvider
         key={subscriberId}
         subscriber={subscriber}
+        subscriberHash={subscriberHash}
         applicationIdentifier={currentEnvironment.identifier}
         apiUrl={apiHostnameManager.getHostname()}
         socketUrl={apiHostnameManager.getWebSocketHostname()}

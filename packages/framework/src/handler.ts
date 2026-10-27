@@ -24,6 +24,7 @@ import { isPlatformError } from './errors/guard.errors';
 import type { Agent } from './resources/agent';
 import type { AgentBridgeRequest } from './resources/agent/agent.types';
 import { dispatchAgentEvent } from './resources/agent/agent-dispatch';
+import { AgentLiveStream } from './resources/agent/agent-live-stream';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { createHmacSubtle, initApiClient, timingSafeEqual } from './utils';
 import { parseSignatureHeader } from './utils/bridge-signature';
@@ -58,6 +59,7 @@ export interface ServeHandlerOptions {
   waitUntil?: (promise: Promise<unknown>) => void;
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: each framework adapter supplies its own request and response types
 export type INovuRequestHandlerOptions<Input extends any[] = any[], Output = any> = ServeHandlerOptions & {
   frameworkName: string;
   client?: Client;
@@ -66,15 +68,20 @@ export type INovuRequestHandlerOptions<Input extends any[] = any[], Output = any
   handler: Handler<Input, Output>;
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: each framework adapter supplies its own request and response types
 type Handler<Input extends any[] = any[], Output = any> = (...args: Input) => HandlerResponse<Output>;
 
+// biome-ignore lint/suspicious/noExplicitAny: each framework adapter supplies its own response type
 type HandlerResponse<Output = any> = {
+  // biome-ignore lint/suspicious/noExplicitAny: request bodies are not validated per action yet
   body: () => Awaitable<any>;
   headers: (key: string) => Awaitable<string | null | undefined>;
   method: () => Awaitable<string>;
   queryString?: (key: string, url: URL) => Awaitable<string | null | undefined>;
   url: () => Awaitable<URL>;
   transformResponse: (res: IActionResponse<string>) => Output;
+  /** Sends a streamed body. Adapters without it (e.g. Lambda behind API Gateway) never stream. */
+  transformStreamResponse?: (res: IActionStreamResponse) => Output;
   waitUntil?: (promise: Promise<unknown>) => void;
 };
 
@@ -82,8 +89,13 @@ export type IActionResponse<TBody extends string = string> = {
   status: number;
   headers: Record<string, string>;
   body: TBody;
+  /** Replaces `body` on adapters that implement `transformStreamResponse`. */
+  stream?: ReadableStream<Uint8Array>;
 };
 
+export type IActionStreamResponse = Omit<IActionResponse, 'body' | 'stream'> & { body: ReadableStream<Uint8Array> };
+
+// biome-ignore lint/suspicious/noExplicitAny: each framework adapter supplies its own request and response types
 export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   public readonly frameworkName: string;
 
@@ -112,9 +124,21 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     return async (...args: Input) => {
       await this.client.addWorkflows(this.workflows);
       const actions = await this.handler(...args);
-      const actionResponse = await this.handleAction({
+      const { stream, ...actionResponse } = await this.handleAction({
         actions,
       });
+
+      if (stream && actions.transformStreamResponse) {
+        const headers: Record<string, string> = {
+          ...actionResponse.headers,
+          [HttpHeaderKeysEnum.CONTENT_TYPE]: 'text/event-stream',
+          [HttpHeaderKeysEnum.CACHE_CONTROL]: 'no-cache',
+        };
+        // Only Novu reads live replies, server to server; no browser origin may read them.
+        delete headers[HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_ORIGIN];
+
+        return actions.transformStreamResponse({ status: actionResponse.status, headers, body: stream });
+      }
 
       return actions.transformResponse(actionResponse);
     };
@@ -168,6 +192,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     const agentId = url.searchParams.get(HttpQueryKeysEnum.AGENT_ID) || '';
     const agentEvent = url.searchParams.get(HttpQueryKeysEnum.EVENT) || '';
     const signatureHeader = (await actions.headers(HttpHeaderKeysEnum.NOVU_SIGNATURE)) || '';
+    const acceptHeader = (await actions.headers(HttpHeaderKeysEnum.ACCEPT)) || '';
+    const streamReplies = !!actions.transformStreamResponse && acceptHeader.includes('text/event-stream');
 
     let body: Record<string, unknown> = {};
     try {
@@ -191,7 +217,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         agentId,
         agentEvent,
         // An explicitly provided `waitUntil` overrides the adapter's automatic detection.
-        this.waitUntil ?? actions.waitUntil
+        this.waitUntil ?? actions.waitUntil,
+        streamReplies
       );
       const getActionMap = this.getGetActionMap(workflowId, stepId);
 
@@ -215,13 +242,15 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
 
   private getPostActionMap(
     // TODO: add validation for body per action.
+    // biome-ignore lint/suspicious/noExplicitAny: request bodies are not validated per action yet
     body: any,
     workflowId: string,
     stepId: string,
     action: string,
     agentId: string,
     agentEvent: string,
-    waitUntil?: (promise: Promise<unknown>) => void
+    waitUntil?: (promise: Promise<unknown>) => void,
+    streamReplies = false
   ): Record<PostActionEnum, () => Promise<IActionResponse>> {
     return {
       [PostActionEnum.TRIGGER]: this.triggerAction({ workflowId, ...body }),
@@ -252,21 +281,25 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
           return this.createResponse(HttpStatusEnum.NOT_FOUND, { error: `Agent '${agentId}' not registered` });
         }
 
+        const live = streamReplies ? new AgentLiveStream() : undefined;
         const handlerPromise = dispatchAgentEvent({
           agent: registeredAgent,
           event: agentEvent,
           bridge: body as AgentBridgeRequest,
           secretKey: this.client.secretKey,
           logger: this.client.logger,
+          live,
         });
 
         if (waitUntil) {
           waitUntil(handlerPromise);
-        } else {
+        } else if (!live) {
           this.warnOnUnprotectedServerlessRuntime(agentId);
         }
 
-        return this.createResponse(HttpStatusEnum.OK, { status: 'ack' });
+        const ack = this.createResponse(HttpStatusEnum.OK, { status: 'ack' });
+
+        return live ? { ...ack, stream: live.body } : ack;
       },
     };
   }

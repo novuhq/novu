@@ -1,0 +1,14 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Frame">
+<path id="Vector" d="M8 18H16" stroke="#FF5C30" stroke-width="2" stroke-miterlimit="10" stroke-linecap="square"/>
+<path id="Vector_2" d="M8 14H11" stroke="#FF5C30" stroke-width="2" stroke-miterlimit="10" stroke-linecap="square"/>
+<path id="Vector_3" d="M12 4V10H8" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_4" d="M4 20V10" stroke="#FF5C30" stroke-width="2" stroke-miterlimit="10" stroke-linecap="square"/>
+<path id="Vector_5" d="M20 20V4" stroke="#FF5C30" stroke-width="2" stroke-miterlimit="10" stroke-linecap="square"/>
+<path id="Vector_6" d="M12 2H18" stroke="#FF5C30" stroke-width="2" stroke-miterlimit="10" stroke-linecap="square"/>
+<path id="Vector_7" d="M6 22H18" stroke="#FF5C30" stroke-width="2" stroke-miterlimit="10" stroke-linecap="square"/>
+<path id="Vector_8" d="M6 8H6.01" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_9" d="M8 6H8.01" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_10" d="M10 4H10.01" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+</g>
+</svg>

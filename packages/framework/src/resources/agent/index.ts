@@ -61,6 +61,7 @@ export type {
   MessageContent,
   QuoteReplyTarget,
   ReplyHandle,
+  ReplyStream,
   ToolApprovalCard,
   ToolApprovalConfig,
   ToolApprovalDecision,

@@ -5,8 +5,6 @@ import { redirect } from 'next/navigation';
 import { cache } from 'react';
 
 import { ensureBackingAccount, type HumanRegion } from './human-accounts-api';
-import { HumanApiError } from './human-api-error';
-import { ensureOperatorContact, findOperatorContactId } from './human-operator';
 
 /** Where the operator's backing organization lives, kept in the Human Clerk user's private metadata. */
 export type StoredBackingAccount = {
@@ -30,29 +28,27 @@ const loadHumanAccount = cache(async (): Promise<HumanAccount | null> => {
   }
 
   return {
-    ...(await ensureStoredBackingAccount(user, DEFAULT_REGION, { withAgent: true })),
+    ...(await ensureStoredBackingAccount(user, DEFAULT_REGION)),
     humanUserId: user.id,
   };
 });
 
 /**
- * What the sign-up webhook runs for a new operator (`app/api/webhooks/clerk`): the account and its agent,
- * remembered on the Clerk user. A dashboard visit that got there first leaves nothing to do.
+ * What the sign-up webhook runs for a new operator (`app/api/webhooks/clerk`): the account, remembered on
+ * the Clerk user. A dashboard visit that got there first leaves nothing to do. The agent is not made
+ * here: the operator creates it with `setup`, as the Agent page asks them to.
  */
 export async function ensureAccountForSignUp(humanUserId: string): Promise<void> {
   const clerk = await clerkClient();
   const user = await clerk.users.getUser(humanUserId);
 
-  await ensureStoredBackingAccount(user, DEFAULT_REGION, { withAgent: true });
+  await ensureStoredBackingAccount(user, DEFAULT_REGION);
 }
-
-/** How long to wait for an account that the sign-up webhook is creating at this very moment. */
-const BUSY_RETRIES = 5;
-const BUSY_RETRY_MS = 1000;
 
 /**
  * The signed-in operator's backing account. It's there from sign-up; a first visit that gets ahead of
- * the sign-up webhook creates it itself, so the dashboard never opens on a missing one. Sends signed-out visitors to `/sign-in`, and back to `returnTo` afterwards.
+ * the sign-up webhook creates it itself, or waits for the webhook to finish creating it, so the dashboard
+ * never opens on a missing one. Sends signed-out visitors to `/sign-in`, and back to `returnTo` afterwards.
  *
  * Server components of one request share a single lookup, so each of them can call this.
  */
@@ -88,23 +84,23 @@ export function readStoredBackingAccount(user: User): StoredBackingAccount | nul
 
 /**
  * Makes sure an operator has a backing organization and the dashboard knows where it lives. The sign-up
- * webhook runs this with the agent; so does the first dashboard visit of an operator it hasn't reached,
- * and nothing does once the account is remembered. The two API calls are safe to repeat, so a webhook that
- * is late, or can't reach a local dashboard at all, leaves nothing missing.
+ * webhook runs this; so does the first dashboard visit of an operator it hasn't reached, and nothing does
+ * once the account is remembered. The API call is safe to repeat, so a webhook that is late, or can't
+ * reach a local dashboard at all, leaves nothing missing.
  *
- * A claim brings its own agent, so it asks for the account alone.
+ * The webhook and the first page usually call at the same moment. The API sets an account up for one
+ * request at a time and holds the other until that setup is done, then answers both with the same account,
+ * so nothing here retries or guesses how long a setup takes.
+ *
+ * The account starts without an agent. `setup` creates it, or a claim brings its own.
  */
-export async function ensureStoredBackingAccount(
-  user: User,
-  regionForNewAccount: HumanRegion,
-  { withAgent = false }: { withAgent?: boolean } = {}
-) {
+export async function ensureStoredBackingAccount(user: User, regionForNewAccount: HumanRegion) {
   const stored = readStoredBackingAccount(user);
   if (stored) {
     return stored;
   }
 
-  const created = await ensureBackingAccountWhenFree(regionForNewAccount, {
+  const created = await ensureBackingAccount(regionForNewAccount, {
     humanUserId: user.id,
     firstName: user.firstName,
     lastName: user.lastName,
@@ -115,30 +111,7 @@ export async function ensureStoredBackingAccount(
     userId: created.userId,
   };
 
-  if (withAgent) {
-    const operator = { ...account, humanUserId: user.id };
-    // A contact that exists keeps its name: the operator may have chosen it in the CLI.
-    const hasContact = Boolean(await findOperatorContactId(operator));
-    await ensureOperatorContact(operator, hasContact ? {} : { firstName: user.firstName, lastName: user.lastName });
-  }
-
-  // Remembered last, so a visit that failed halfway starts over instead of leaving an account without an agent.
   return storeBackingAccount(user.id, account);
-}
-
-/** The API answers "busy" while another request, usually the webhook, is creating the same account. */
-async function ensureBackingAccountWhenFree(...args: Parameters<typeof ensureBackingAccount>) {
-  for (let attempt = 1; ; attempt += 1) {
-    try {
-      return await ensureBackingAccount(...args);
-    } catch (error) {
-      if (!(error instanceof HumanApiError) || error.code !== 'human_account_busy' || attempt > BUSY_RETRIES) {
-        throw error;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, BUSY_RETRY_MS));
-    }
-  }
 }
 
 /** Remembers where the operator's backing organization lives, for the dashboard. */

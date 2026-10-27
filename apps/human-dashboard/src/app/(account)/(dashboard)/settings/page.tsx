@@ -1,9 +1,9 @@
 import type { User } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
-import { PageHeader } from '@/components/dashboard/page-header';
-import { Badge } from '@/components/ui/badge';
+import { buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { findCurrentUser } from '@/lib/auth-page';
 import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
 import { getRelayAgent } from '@/lib/human-agent-api';
@@ -13,6 +13,7 @@ import { ApiKeyCard } from './api-key-card';
 import { DeleteAccountCard } from './delete-account-card';
 import { LogOutButton } from './log-out-button';
 import { SettingsCard } from './settings-card';
+import { PlanHeading, SettingsHeader } from './settings-header';
 
 export const metadata: Metadata = {
   title: 'Settings',
@@ -23,8 +24,8 @@ const SETTINGS_PATH = '/settings';
 /** What the relay agent is called until the operator names it (the Agent page, NV-8966). */
 const UNNAMED_AGENT_NAME = 'Human';
 
-/** How the dashboard calls an agent that has no name of its own yet, as in the sidebar. */
-const UNNAMED_AGENT_LABEL = 'Human assistant';
+/** How a sentence calls an agent that has no name of its own yet. */
+const UNNAMED_AGENT_LABEL = 'your agent';
 
 /** How Clerk calls the sign-in services whose name isn't just the capitalized id. */
 const PROVIDER_NAMES: Record<string, string> = { github: 'GitHub', gitlab: 'GitLab', linkedin: 'LinkedIn' };
@@ -45,7 +46,7 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Settings" description="You, your API key and your plan." />
+      <SettingsHeader tab="general" />
       <SettingsCard className="flex flex-wrap items-center gap-x-3.5 gap-y-3">
         <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface text-sm font-medium text-foreground ring-1 ring-border-strong/60">
           {user.hasImage ? (
@@ -64,12 +65,11 @@ export default async function SettingsPage() {
       </SettingsCard>
       <ApiKeyCard apiKey={apiKey} />
       {/* The design's `Dither` here is 434px wide at 20%. */}
-      <SettingsCard className="dither-side flex flex-col gap-3 [--dither-opacity:0.2] [--dither-width:434px]">
-        <h2 className="flex items-center gap-2.5 text-[13px] leading-4.5 font-medium text-foreground">
-          Plan
-          <Badge variant="accent">Beta</Badge>
-        </h2>
-        <p className="text-xs leading-4 text-secondary">Everything is free while we&apos;re in beta.</p>
+      <SettingsCard className="dither-side flex flex-wrap items-center gap-x-4 gap-y-3 [--dither-opacity:0.2] [--dither-width:434px]">
+        <PlanHeading />
+        <Link href="/settings/billing" className={buttonClassName('secondary', SMALL_BUTTON)}>
+          Billing
+        </Link>
       </SettingsCard>
       <DeleteAccountCard agentName={agentName} />
     </>

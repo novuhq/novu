@@ -150,6 +150,13 @@ export const pushConfigurations: ConfigConfiguration[] = [
   },
 ];
 
+const pushActivityTrackingGroup = (setupWebhookUrlGuide: string): ConfigConfigurationGroup => ({
+  groupType: 'inboundWebhook',
+  configurations: pushConfigurations,
+  enabler: 'inboundWebhookEnabled',
+  setupWebhookUrlGuide,
+});
+
 export const sendgridGroupConfigurations: ConfigConfigurationGroup[] = [
   {
     groupType: 'inboundWebhook',
@@ -200,21 +207,11 @@ export const sesGroupConfigurations: ConfigConfigurationGroup[] = [
 ];
 
 export const pushpadGroupConfigurations: ConfigConfigurationGroup[] = [
-  {
-    groupType: 'inboundWebhook',
-    configurations: pushConfigurations,
-    enabler: 'inboundWebhookEnabled',
-    setupWebhookUrlGuide: 'https://developer.android.com/develop/ui/views/notifications/build-notification',
-  },
+  pushActivityTrackingGroup('https://developer.android.com/develop/ui/views/notifications/build-notification'),
 ];
 
 export const fcmGroupConfigurations: ConfigConfigurationGroup[] = [
-  {
-    groupType: 'inboundWebhook',
-    configurations: pushConfigurations,
-    enabler: 'inboundWebhookEnabled',
-    setupWebhookUrlGuide: 'https://developer.android.com/develop/ui/views/notifications/build-notification',
-  },
+  pushActivityTrackingGroup('https://developer.android.com/develop/ui/views/notifications/build-notification'),
   {
     groupType: 'crossChannelConfigs',
     configurations: [
@@ -239,29 +236,23 @@ export const fcmGroupConfigurations: ConfigConfigurationGroup[] = [
 ];
 
 export const expoGroupConfigurations: ConfigConfigurationGroup[] = [
-  {
-    groupType: 'inboundWebhook',
-    configurations: pushConfigurations,
-    enabler: 'inboundWebhookEnabled',
-    setupWebhookUrlGuide: 'https://docs.expo.dev/push-notifications/sending-notifications/',
-  },
+  pushActivityTrackingGroup('https://docs.expo.dev/push-notifications/sending-notifications/'),
 ];
 
 export const apnsGroupConfigurations: ConfigConfigurationGroup[] = [
-  {
-    groupType: 'inboundWebhook',
-    configurations: pushConfigurations,
-    enabler: 'inboundWebhookEnabled',
-    setupWebhookUrlGuide:
-      'https://developer.apple.com/documentation/usernotifications/unusernotificationcenterdelegate',
-  },
+  pushActivityTrackingGroup(
+    'https://developer.apple.com/documentation/usernotifications/unusernotificationcenterdelegate'
+  ),
 ];
 
 export const pushWebhookGroupConfigurations: ConfigConfigurationGroup[] = [
-  {
-    groupType: 'inboundWebhook',
-    configurations: pushConfigurations,
-    enabler: 'inboundWebhookEnabled',
-    setupWebhookUrlGuide: 'https://docs.novu.co/platform/integrations/push/push-webhook?utm_campaign=in-app',
-  },
+  pushActivityTrackingGroup('https://docs.novu.co/platform/integrations/push/push-webhook?utm_campaign=in-app'),
+];
+
+export const oneSignalGroupConfigurations: ConfigConfigurationGroup[] = [
+  pushActivityTrackingGroup('https://docs.novu.co/platform/integrations/push/onesignal'),
+];
+
+export const pusherBeamsGroupConfigurations: ConfigConfigurationGroup[] = [
+  pushActivityTrackingGroup('https://docs.novu.co/platform/integrations/push/pusher-beams'),
 ];

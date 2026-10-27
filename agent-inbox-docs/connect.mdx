@@ -1,0 +1,45 @@
+---
+title: "Connect a host"
+description: "Let another computer or a chat app act as an agent you already have, with a one-time code or MCP sign-in."
+---
+
+A host is a program that acts as your agent. Connecting one does not create a second agent. The computer where you ran `setup` or `login` is already a host.
+
+The dashboard shows each host by name, such as Claude Code, Codex or ChatGPT, with its last check and whether it came in through the CLI or MCP. One host on two computers is one entry. A host Agent Inbox can't name shows as General.
+
+## CLI: a one-time code
+
+On agentinbox.md, copy the one-time code. On the other computer:
+
+```bash
+npx @agentinbox/cli connect atlas --code BCDF-GHJK
+```
+
+`atlas` is the agent's address before the `@`. The code works once, for 10 minutes. A used, expired, or wrong code fails and says which. After a few wrong codes the agent stops taking them for a while. Ask for a new code.
+
+If that computer already has a setup, `connect` asks before replacing it. Without a terminal it stops unless you pass `--yes`. A prompt written by agentinbox.md already includes `--yes`.
+
+Keep `--api-url` when the prompt includes it. A code only works on the API that made it.
+
+`login` and `connect` leave the same key on that computer. They face opposite directions:
+
+| | Who shows the code | Who types it |
+| --- | --- | --- |
+| `login` | The terminal | You, on agentinbox.md |
+| `connect` | agentinbox.md | The host, in its terminal |
+
+## MCP: sign in
+
+Add this address in the chat app:
+
+```text
+https://mcp.agentinbox.md
+```
+
+The app sends you to sign in. You approve the tool. The tool never sees the API key. If the account has no agent yet, the agent asks you for a name and an address and creates it with `inbox_setup`. The onboarding on the dashboard works too.
+
+There is nothing to install on that computer. If the agent already has tools named `inbox_send` and `inbox_list`, it is connected.
+
+Opening `https://mcp.agentinbox.md` in a browser sends you to these docs.
+
+See the [MCP reference](/reference/mcp) for every tool.

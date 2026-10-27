@@ -81,7 +81,7 @@ You may need to provide credentials specific to your chat provider, such as an A
 Each provider has different requirements.
 
 <Note>
-  For detailed setup guides for each provider integration, refer to the supported chat providers list at the end of this page .
+  For detailed setup guides for each provider integration, refer to the supported chat providers list at the end of this page.
 </Note>
 
 ## How to manages Chat credentials
@@ -251,9 +251,24 @@ An override is a JSON object that Novu merges into the request it sends to that 
   Provider content overrides in the workflow editor are rolling out gradually and may not be available on your Chat step yet. [Trigger overrides](/platform/integrations/trigger-overrides) work regardless.
 </Note>
 
+### Overrides for one integration
+
+A provider-wide override applies to every integration of that provider. When the environment has more than one integration for the same provider, such as three Slack workspaces, you can save a separate override for each one.
+Open the content source dropdown on the Chat step. It reads **Default content** until you switch it. Under **Overrides**:
+
+- With one active integration and no integration-specific override saved, the row is the provider name, such as **Slack**. The integration identifier appears beside it. The JSON you save there applies to every integration of that provider.
+- With two or more active integrations, Novu groups them under the provider. Novu also shows this grouped view when an integration-specific override is already saved. **All integrations** is the provider-wide override. Each integration is listed by name, with its identifier when the name and identifier differ.
+- On a row that has no JSON yet, choose **Override**. On an integration row, add only the keys that should differ.
+
+Novu sends an integration override only when that integration delivers the step. The other integrations of the same provider keep the provider-wide override. When there is no provider-wide override, they keep the default step content.
+
+The **Merges over** row shows how Novu builds the payload. An integration-specific override starts with **Default content**, includes the provider-wide override when one is saved, and then applies the integration-specific keys.
+
+Novu matches an integration-specific override by the integration identifier shown in the Integration Store. If the matching integration is removed, Novu keeps the override on the step and marks it **disconnected** in the editor.
+
 ### Slack is schema-backed
 
-Slack overrides are validated against the [`chat.postMessage`](https://api.slack.com/methods/chat.postMessage) argument set, and the editor autocompletes field names as you type — including inside `blocks[].elements[]`. The editor validates the JSON and flags unsupported fields.
+Slack overrides are validated against the [`chat.postMessage`](https://api.slack.com/methods/chat.postMessage) argument set, and the editor autocompletes field names as you type, including inside `blocks[].elements[]`. The editor validates the JSON and flags unsupported fields.
 
 <Card title="Configure Slack overrides" icon="messages-square" href="/platform/integrations/chat/slack#configure-slack-overrides-in-the-dashboard">
   Field-by-field reference, a Block Kit example with Liquid variables, and the incoming-webhook caveats.
@@ -281,9 +296,16 @@ Use this when a provider supports something Novu's step editor does not expose, 
 
 ### Liquid, fallback, and precedence
 
-Override values may contain [Liquid](/platform/workflow/add-notification-content/personalize-content#apply-logic-with-liquidjs) templates, which Novu compiles at send time. Where a provider has a primary content field — `text` for Slack, `text.body` for WhatsApp — and your override omits it, Novu fills it with the rendered Chat step body.
+Override values may contain [Liquid](/platform/workflow/add-notification-content/personalize-content#apply-logic-with-liquidjs) templates, which Novu compiles at send time. Where a provider has a primary content field (`text` for Slack, `text.body` for WhatsApp) and your override omits it, Novu fills it with the rendered Chat step body.
 
-When the same field is set both on the step and at trigger time, the trigger value wins, and arrays replace rather than merge. See [provider override scopes](/platform/integrations/trigger-overrides#provider-override-scopes).
+When the same field is set in more than one place, Novu merges the objects in this order, lowest priority first:
+
+1. Provider-wide override saved on the step.
+2. Integration override saved on the step, for the integration that sends.
+3. Workflow-level trigger override, `overrides.providers.<providerId>`.
+4. Step-level trigger override, `overrides.steps.<step-id>.providers.<providerId>`.
+
+A higher layer replaces the same field. Fields it leaves unset keep the value from the layer below. Arrays replace as a whole. Trigger overrides are keyed by provider id, so `overrides.providers.slack` applies to every Slack integration that sends the step. See [provider override scopes](/platform/integrations/trigger-overrides#provider-override-scopes).
 
 ## Supported providers
 

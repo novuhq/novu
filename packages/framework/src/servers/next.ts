@@ -5,7 +5,7 @@ import * as NextServer from 'next/server.js';
 
 import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
 import { type Either, type SupportedFrameworkName } from '../types';
-import { getResponse } from '../utils';
+import { getResponse, pipeToNodeResponse } from '../utils';
 
 /*
  * Re-export all top level exports from the main package.
@@ -69,6 +69,19 @@ const isNext12ApiResponse = (val: unknown): val is NextApiResponse => {
     typeof (val as NextApiResponse).status === 'function' &&
     typeof (val as NextApiResponse).send === 'function'
   );
+};
+
+const devAwareProtocol = (): 'http' | 'https' => {
+  try {
+    // biome-ignore lint/suspicious/noExplicitAny: Needed for some edge cases
+    if (process.env.NODE_ENV === 'development' || (process.env.NODE_ENV as any) === 'dev') {
+      return 'http';
+    }
+  } catch (error) {
+    // no-op
+  }
+
+  return 'https';
 };
 
 /**
@@ -174,19 +187,8 @@ export const serve = (
             return absoluteUrl;
           }
 
-          let protocol: 'http' | 'https' = 'https';
           const hostHeader = extractHeader('host') || '';
-
-          try {
-            // biome-ignore lint/suspicious/noExplicitAny: Needed for some edge cases
-            if (process.env.NODE_ENV === 'development' || (process.env.NODE_ENV as any) === 'dev') {
-              protocol = 'http';
-            }
-          } catch (error) {
-            // no-op
-          }
-
-          const url = new URL(request.url as string, `${protocol}://${hostHeader}`);
+          const url = new URL(request.url as string, `${devAwareProtocol()}://${hostHeader}`);
 
           return url;
         },
@@ -210,6 +212,7 @@ export const serve = (
              * `Response`, so we still enforce that as we cannot dynamically
              * adjust typing based on the environment.
              */
+            // biome-ignore lint/plugin: Next.js 12 API routes ignore the return value; Next.js 13 needs it typed as `Response`
             return undefined as unknown as Response;
           }
 
@@ -223,6 +226,17 @@ export const serve = (
           const Res = getResponse();
 
           return new Res(body, { status, headers });
+        },
+        transformStreamResponse: (streamResponse): Response => {
+          if (isNext12ApiResponse(response)) {
+            // Settles when the stream ends, which keeps the serverless function alive until then.
+            // biome-ignore lint/plugin: Next.js 12 API routes ignore the return value; Next.js 13 needs it typed as `Response`
+            return pipeToNodeResponse(response, streamResponse) as unknown as Response;
+          }
+
+          const Res = getResponse();
+
+          return new Res(streamResponse.body, { status: streamResponse.status, headers: streamResponse.headers });
         },
       };
     },

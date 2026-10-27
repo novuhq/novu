@@ -1,6 +1,12 @@
 import { createHmac } from 'node:crypto';
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { createLiquidEngine, ExecuteOutput, HttpQueryKeysEnum, State } from '@novu/framework/internal';
+import {
+  createLiquidEngine,
+  ExecuteOutput,
+  HttpQueryKeysEnum,
+  renderLiquidJson,
+  State,
+} from '@novu/framework/internal';
 import got, { HTTPError } from 'got';
 import { InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
@@ -62,6 +68,17 @@ class StepResolverRequestError extends HttpException {
       }
     );
   }
+}
+
+interface KnownHttpBodyError {
+  bodyCode: string;
+  responseCode: string;
+  fallbackMessage: string;
+  includeDetails: boolean;
+}
+
+function isRequestTimeout(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ETIMEDOUT';
 }
 
 type StepResolverResponse = {
@@ -203,9 +220,6 @@ export class ExecuteStepResolverRequest {
     }
 
     try {
-      const liquidEngine = createLiquidEngine();
-      const parsedTemplate = liquidEngine.parse(JSON.stringify(controls));
-
       const stateArray = Array.isArray(event.state) ? (event.state as State[]) : [];
       const stepsMap = stateArray.reduce<Record<string, Record<string, unknown>>>((acc, state) => {
         acc[state.stepId] = state.outputs ?? {};
@@ -221,7 +235,7 @@ export class ExecuteStepResolverRequest {
         env: (event.env ?? {}) as Record<string, string>,
       };
 
-      const compiledString = await liquidEngine.render(parsedTemplate, renderVariables);
+      const compiledString = await renderLiquidJson(createLiquidEngine(), JSON.stringify(controls), renderVariables);
 
       return { ...event, controls: JSON.parse(compiledString) };
     } catch (cause) {
@@ -288,66 +302,109 @@ export class ExecuteStepResolverRequest {
 
   private buildErrorResponse(error: unknown, url: string, stepResolverHash: string): BridgeError {
     if (error instanceof HTTPError) {
-      const statusCode = error.response.statusCode;
+      return this.buildHttpErrorResponse(error, url, stepResolverHash);
+    }
 
-      if (statusCode === 400) {
-        const parsedBody = this.tryParseBody(error.response.body);
+    return this.buildTransportErrorResponse(error, url, stepResolverHash);
+  }
 
-        if (parsedBody?.error === 'INVALID_CONTROLS') {
-          return {
-            url,
-            code: 'STEP_RESOLVER_INVALID_CONTROLS',
-            message:
-              typeof parsedBody.message === 'string' ? parsedBody.message : 'Step controls failed schema validation',
-            statusCode,
-            data: parsedBody.details ?? error.response.body,
-            cause: error,
-          };
-        }
-      }
+  private buildHttpErrorResponse(error: HTTPError, url: string, stepResolverHash: string): BridgeError {
+    const statusCode = error.response.statusCode;
+    const knownError = this.buildKnownHttpError(error, url, statusCode);
 
-      if (statusCode === 500) {
-        const parsedBody = this.tryParseBody(error.response.body);
+    if (knownError) {
+      return knownError;
+    }
 
-        if (parsedBody?.error === 'STEP_HANDLER_ERROR') {
-          return {
-            url,
-            code: 'STEP_HANDLER_ERROR',
-            message:
-              typeof parsedBody.message === 'string' ? parsedBody.message : 'An error occurred in your template code',
-            statusCode,
-            cause: error,
-          };
-        }
-      }
+    if (statusCode >= 500) {
+      this.logger.error({ error, statusCode, url, stepResolverHash }, `Step resolver HTTP error: ${statusCode}`);
+    }
 
-      if (statusCode >= 500) {
-        this.logger.error({ error, statusCode, url, stepResolverHash }, `Step resolver HTTP error: ${statusCode}`);
-      }
+    return this.buildStatusMappedError(error, url, statusCode);
+  }
 
-      const mapping = HTTP_ERROR_MAPPINGS[statusCode];
-      const code = mapping?.code ?? 'STEP_RESOLVER_HTTP_ERROR';
-      const message = mapping?.message ?? `Step resolver returned status ${statusCode}`;
+  private buildKnownHttpError(error: HTTPError, url: string, statusCode: number): BridgeError | undefined {
+    if (statusCode === 400) {
+      return this.buildBodyError(error, url, statusCode, {
+        bodyCode: 'INVALID_CONTROLS',
+        responseCode: 'STEP_RESOLVER_INVALID_CONTROLS',
+        fallbackMessage: 'Step controls failed schema validation',
+        includeDetails: true,
+      });
+    }
 
+    if (statusCode === 500) {
+      return this.buildBodyError(error, url, statusCode, {
+        bodyCode: 'STEP_HANDLER_ERROR',
+        responseCode: 'STEP_HANDLER_ERROR',
+        fallbackMessage: 'An error occurred in your template code',
+        includeDetails: false,
+      });
+    }
+
+    return undefined;
+  }
+
+  private buildBodyError(
+    error: HTTPError,
+    url: string,
+    statusCode: number,
+    mapping: KnownHttpBodyError
+  ): BridgeError | undefined {
+    const parsedBody = this.tryParseBody(error.response.body);
+
+    if (parsedBody?.error !== mapping.bodyCode) {
+      return undefined;
+    }
+
+    const response: BridgeError = {
+      url,
+      code: mapping.responseCode,
+      message: typeof parsedBody.message === 'string' ? parsedBody.message : mapping.fallbackMessage,
+      statusCode,
+      cause: error,
+    };
+
+    if (mapping.includeDetails) {
+      response.data = parsedBody.details ?? error.response.body;
+    }
+
+    return response;
+  }
+
+  private buildStatusMappedError(error: HTTPError, url: string, statusCode: number): BridgeError {
+    const mapping = HTTP_ERROR_MAPPINGS[statusCode];
+    const code = mapping?.code ?? 'STEP_RESOLVER_HTTP_ERROR';
+    const message = mapping?.message ?? `Step resolver returned status ${statusCode}`;
+
+    return {
+      url,
+      code,
+      message: `${message}: ${url}`,
+      statusCode,
+      data: error.response.body,
+      cause: error,
+    };
+  }
+
+  private buildTransportErrorResponse(error: unknown, url: string, stepResolverHash: string): BridgeError {
+    this.logger.error({ error, url, stepResolverHash }, `Step resolver request failed: ${url}`);
+
+    if (isRequestTimeout(error)) {
       return {
         url,
-        code,
-        message: `${message}: ${url}`,
-        statusCode,
-        data: error.response.body,
+        code: 'STEP_RESOLVER_TIMEOUT',
+        message: `Step resolver request timeout: ${url}`,
+        statusCode: HttpStatus.REQUEST_TIMEOUT,
         cause: error,
       };
     }
 
-    this.logger.error({ error, url, stepResolverHash }, `Step resolver request failed: ${url}`);
-
-    const isTimeout = typeof error === 'object' && error !== null && 'code' in error && error.code === 'ETIMEDOUT';
-
     return {
       url,
-      code: isTimeout ? 'STEP_RESOLVER_TIMEOUT' : 'STEP_RESOLVER_ERROR',
-      message: isTimeout ? `Step resolver request timeout: ${url}` : `Step resolver request failed: ${url}`,
-      statusCode: isTimeout ? HttpStatus.REQUEST_TIMEOUT : HttpStatus.INTERNAL_SERVER_ERROR,
+      code: 'STEP_RESOLVER_ERROR',
+      message: `Step resolver request failed: ${url}`,
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       cause: error,
     };
   }

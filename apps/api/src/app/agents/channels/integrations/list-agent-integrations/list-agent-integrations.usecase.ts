@@ -12,7 +12,7 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { DirectionEnum, EmailProviderIdEnum } from '@novu/shared';
+import { DirectionEnum, isAgentInboxProvider } from '@novu/shared';
 
 import { ListAgentIntegrationsResponseDto } from '../../../shared/dtos/list-agent-integrations-response.dto';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
@@ -119,7 +119,7 @@ export class ListAgentIntegrations {
             providerId: i.providerId,
             channel: i.channel,
             active: i.active,
-            credentials: i.providerId === EmailProviderIdEnum.NovuAgent ? i.credentials : undefined,
+            credentials: isAgentInboxProvider(i.providerId) ? i.credentials : undefined,
           } satisfies IntegrationSummary,
         ])
       );

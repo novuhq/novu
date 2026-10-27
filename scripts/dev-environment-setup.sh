@@ -362,7 +362,7 @@ check_nvm () {
 }
 
 install_node () {
-    NODE_JS_VERSION="22.23.0"
+    NODE_JS_VERSION="22.23.4"
 
     SKIP="$(check_nvm)"
 
@@ -419,7 +419,7 @@ install_nvm () {
 }
 
 install_pnpm () {
-    PNPM_VERSION="11.0.9"
+    PNPM_VERSION="11.28.2"
     load_nvm
     TEST_PNPM_CMD=$(execute_command_without_error_print "pnpm --version")
     if [[ -z "$TEST_PNPM_CMD" ]] || [[ "$TEST_PNPM_CMD" == *"command not found"* ]] || [[ "$TEST_PNPM_CMD" != "$PNPM_VERSION" ]]; then

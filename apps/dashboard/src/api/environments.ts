@@ -38,6 +38,7 @@ export interface IResourceDiffResult {
   resourceType: string;
   sourceResource?: IResourceInfo | null;
   targetResource?: IResourceInfo | null;
+  // biome-ignore lint/suspicious/noExplicitAny: the change shape is defined by the API sync types and not shared with the dashboard
   changes: any[];
   summary: IDiffSummary;
   dependencies?: IResourceDependency[];
@@ -117,6 +118,26 @@ export async function getApiKeys({ environment }: { environment: IEnvironment })
   // TODO: This is a technical debt on the API side.
   // This endpoints should be /environments/:environmentId/api-keys
   return get<{ data: IApiKey[] }>(`/environments/api-keys`, { environment });
+}
+
+export type DashboardInboxHashes = {
+  subscriberHash: string;
+  webChatSubscriberHash: string;
+};
+
+export async function getDashboardInboxHashes({
+  environment,
+  signal,
+}: {
+  environment: IEnvironment;
+  signal?: AbortSignal;
+}): Promise<DashboardInboxHashes> {
+  const { data } = await get<{ data: DashboardInboxHashes }>(`/environments/me/dashboard-inbox-hashes`, {
+    environment,
+    signal,
+  });
+
+  return data;
 }
 
 export async function getTags({ environment }: { environment: IEnvironment }): Promise<ITagsResponse> {

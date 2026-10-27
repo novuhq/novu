@@ -1,6 +1,7 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { AGENT_PAUSED } from '../../../human-relay/agent-paused.error';
 import { HandleAgentReply } from './handle-agent-reply.usecase';
 
 describe('HandleAgentReply - active-conversation counting', () => {
@@ -64,6 +65,7 @@ describe('HandleAgentReply - active-conversation counting', () => {
     return {
       usecase,
       baseCommand,
+      agentRepository,
       outboundGateway,
       conversationActivation,
       conversation,
@@ -73,6 +75,35 @@ describe('HandleAgentReply - active-conversation counting', () => {
       channel,
     };
   }
+
+  it('sends nothing for a paused Agent Inbox agent, whichever action is asked', async () => {
+    const { usecase, baseCommand, outboundGateway, agentRepository } = setup();
+    agentRepository.findOne.resolves({
+      _id: 'agent1',
+      name: 'Atlas',
+      identifier: 'agent-1',
+      runtime: 'human_relay',
+      pausedAt: '2026-10-15T08:00:00.000Z',
+    });
+
+    for (const action of [{ reply: { markdown: 'hi' } }, { error: true }, { deleteMessages: [{ messageId: 'm1' }] }]) {
+      const error = await usecase.execute({ ...baseCommand, ...action } as any).catch((caught: unknown) => caught);
+
+      expect(error).to.be.instanceOf(ForbiddenException);
+      expect((error as ForbiddenException).getResponse()).to.include({ code: AGENT_PAUSED });
+    }
+    expect(outboundGateway.deliver.called).to.equal(false);
+    expect(outboundGateway.deleteInConversation.called).to.equal(false);
+  });
+
+  it('still delivers for an Agent Inbox agent that is not paused', async () => {
+    const { usecase, baseCommand, outboundGateway, agentRepository } = setup();
+    agentRepository.findOne.resolves({ _id: 'agent1', name: 'Atlas', identifier: 'agent-1', runtime: 'human_relay' });
+
+    await usecase.execute({ ...baseCommand, reply: { markdown: 'hi' } } as any);
+
+    expect(outboundGateway.deliver.calledOnce).to.equal(true);
+  });
 
   it('rejects quoteReply without reply', async () => {
     const { usecase, baseCommand } = setup();

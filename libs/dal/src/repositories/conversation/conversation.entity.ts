@@ -153,6 +153,15 @@ export class ConversationEntity {
 
   contextKeys?: string[];
 
+  /** ISO timestamp of the newest inbound message from a subscriber or platform user. */
+  lastHumanMessageAt?: string;
+
+  /**
+   * ISO timestamp the Human inbox was read up to. The conversation is unread while
+   * `lastHumanMessageAt` is newer than this.
+   */
+  lastReadAt?: string;
+
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;

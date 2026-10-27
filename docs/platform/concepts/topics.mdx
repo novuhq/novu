@@ -29,12 +29,14 @@ When you trigger a workflow using a topic:
 Topics let you target large groups with a single API call, removing the need to loop through subscribers or send multiple workflow triggers.
 
 <Note>
-  Topics don’t replace individual targeting. You can still trigger workflows for specific subscribers or arrays of subscribers when needed.
+  Topics don’t replace individual targeting. Trigger to subscribers when you already know the recipient ids. Use a topic when the same group should receive the workflow many times without sending that list on every trigger.
 </Note>
 
 ## Topic subscriptions and Context scoping
 
-Adding a subscriber to a topic creates a **topic subscription**, the subscriber’s opt-in to receive notifications sent to that `topicKey`. Subscriptions support:
+Add subscribers to a topic from the [Topics](https://dashboard.novu.co/topics) page, or with `POST /v2/topics/{topicKey}/subscriptions`. If the topic key does not exist yet, that request creates the topic. See [Automatic topic creation](#automatic-topic-creation).
+
+Adding a subscriber creates a **topic subscription**, the subscriber’s opt-in to receive notifications sent to that `topicKey`. Subscriptions support:
 
 - **JSON Logic conditions**: deliver only when trigger **payload** fields match (for example, `payload.tier` is `premium`). Conditions do not support subscriber profile, Context data, or step results. See [Manage topic subscriptions](/platform/subscription/manage-topic-subscriptions).
 - **Context scoping**: isolate subscriptions per tenant, app, or region using the same [Context](/platform/concepts/contexts) metadata you pass on workflow triggers.
@@ -84,7 +86,7 @@ Some operations still require the topic to exist first. For example, [`GET /v2/t
 
 ## Trigger workflow
 
-As mentioned above, a workflow can be triggered to a topic in the same way as it is triggered to subscribers.
+Send a notification to a topic by triggering the workflow once with the topic as the recipient, instead of a subscriber id. Novu creates a workflow run for each subscriber whose subscription matches.
 
 ### To a single topic
 

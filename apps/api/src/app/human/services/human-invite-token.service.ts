@@ -4,7 +4,7 @@ import { CacheService, PinoLogger } from '@novu/application-generic';
 import { SingleUseTokenCache } from '../../shared/services/single-use-link-token.service';
 
 /**
- * Lifetime of a `human invite` link (seconds). The inviter forwards the link
+ * Lifetime of a `human contact invite` link (seconds). The inviter forwards the link
  * by hand and the person often opens it the next day, so it lives far longer
  * than the Telegram start code (10 min) or Slack OAuth state (5 min) — those
  * are minted fresh from the invite page each time the person picks an app.
