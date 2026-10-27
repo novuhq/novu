@@ -1,12 +1,13 @@
 import { NotificationTemplateEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum, ISubscribersDefine, ResourceEnum, SubscriberSourceEnum } from '@novu/shared';
+import type { Mock } from 'vitest';
 import { IProcessSubscriberBulkJobDto } from '../../dtos';
 import { buildUsageKey } from '../../services/cache/key-builders';
 import { BaseTriggerCommand, TriggerBase } from './trigger-base.usecase';
 
 // ESM-only dependency pulled in transitively (feature-flags → LaunchDarkly); jest 27 cannot parse it,
 // and the spec injects its own feature flags mock anyway.
-jest.mock('@launchdarkly/node-server-sdk', () => ({ init: jest.fn() }));
+vi.mock('@launchdarkly/node-server-sdk', () => ({ init: vi.fn() }));
 
 const ENVIRONMENT_ID = 'aaaaaaaaaaaaaaaaaaaaaaa1';
 const ORGANIZATION_ID = 'aaaaaaaaaaaaaaaaaaaaaaa2';
@@ -23,10 +24,10 @@ class TestTrigger extends TriggerBase {
 
 describe('TriggerBase', () => {
   function buildTrigger({ workerIncrementEnabled = false } = {}) {
-    const subscriberProcessQueueService = { addBulk: jest.fn().mockResolvedValue(undefined) };
-    const cacheService = { incrIfExistsAtomic: jest.fn().mockResolvedValue(1) };
-    const featureFlagsService = { getFlag: jest.fn().mockResolvedValue(workerIncrementEnabled) };
-    const logger = { setContext: jest.fn(), warn: jest.fn() };
+    const subscriberProcessQueueService = { addBulk: vi.fn().mockResolvedValue(undefined) };
+    const cacheService = { incrIfExistsAtomic: vi.fn().mockResolvedValue(1) };
+    const featureFlagsService = { getFlag: vi.fn().mockResolvedValue(workerIncrementEnabled) };
+    const logger = { setContext: vi.fn(), warn: vi.fn() };
 
     const trigger = new TestTrigger(
       subscriberProcessQueueService as never,
@@ -58,7 +59,7 @@ describe('TriggerBase', () => {
     return Array.from({ length: count }, (_, index) => ({ subscriberId: `subscriber-${index + 1}` }));
   }
 
-  function enqueuedJobs(addBulk: jest.Mock): IProcessSubscriberBulkJobDto[] {
+  function enqueuedJobs(addBulk: Mock): IProcessSubscriberBulkJobDto[] {
     return addBulk.mock.calls.flatMap(([chunk]) => chunk);
   }
 

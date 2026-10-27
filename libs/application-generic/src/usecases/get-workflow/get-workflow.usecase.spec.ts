@@ -1,8 +1,8 @@
-jest.mock('../../utils/provider-overrides', () => ({
+vi.mock('../../utils/provider-overrides', () => ({
   stitchProviderOverridesFromDocs: () => undefined,
 }));
 
-jest.mock('../../services/feature-flags', () => ({
+vi.mock('../../services/feature-flags', () => ({
   FeatureFlagsService: class FeatureFlagsService {},
 }));
 

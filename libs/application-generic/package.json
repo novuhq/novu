@@ -18,7 +18,8 @@
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "watch:build": "tsc -p tsconfig.json -w",
-    "watch:test": "jest src --watch",
+    "test": "vitest run",
+    "watch:test": "vitest",
     "reset-hard": "git clean -dfx && git reset --hard && pnpm install"
   },
   "engines": {
@@ -128,7 +129,6 @@
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/got": "^9.6.12",
-    "@types/jest": "29.5.2",
     "@types/json-logic-js": "^2.0.8",
     "@types/newrelic": "^9.14.8",
     "@types/sanitize-html": "^2.11.0",
@@ -137,15 +137,13 @@
     "codecov": "^3.5.0",
     "cpx": "^1.5.0",
     "dotenv": "^16.6.1",
-    "jest": "^27.1.0",
-    "jest-environment-node": "^27.5.1",
     "npm-run-all": "^4.1.5",
     "nyc": "^15.1.0",
     "rimraf": "^3.0.2",
     "sinon": "^9.2.4",
-    "ts-jest": "^27.0.5",
     "ts-node": "~10.9.1",
     "typescript": "5.6.2",
+    "unplugin-swc": "^1.5.1",
     "vitest": "^4.1.0"
   },
   "files": [

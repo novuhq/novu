@@ -68,7 +68,7 @@ describe('WorkerBaseService.wrapForSqs', () => {
 
   it('acks (does not throw) when processor throws a permanent client error and no failed handler is registered', async () => {
     const worker = new TestableWorker();
-    const processor = jest.fn().mockRejectedValue(new BadRequestException('payload is missing required key(s)'));
+    const processor = vi.fn().mockRejectedValue(new BadRequestException('payload is missing required key(s)'));
 
     const wrapped = worker.invokeWrapForSqs(processor);
 
@@ -78,7 +78,7 @@ describe('WorkerBaseService.wrapForSqs', () => {
 
   it('rethrows (retries) when processor throws a generic error and no failed handler is registered', async () => {
     const worker = new TestableWorker();
-    const processor = jest.fn().mockRejectedValue(new Error('mongo timeout'));
+    const processor = vi.fn().mockRejectedValue(new Error('mongo timeout'));
 
     const wrapped = worker.invokeWrapForSqs(processor);
 
@@ -87,7 +87,7 @@ describe('WorkerBaseService.wrapForSqs', () => {
 
   it('rethrows (retries) when processor throws a transient 4xx (408/429)', async () => {
     const worker = new TestableWorker();
-    const processor = jest.fn().mockRejectedValue(new RequestTimeoutException());
+    const processor = vi.fn().mockRejectedValue(new RequestTimeoutException());
 
     const wrapped = worker.invokeWrapForSqs(processor);
 
@@ -96,11 +96,11 @@ describe('WorkerBaseService.wrapForSqs', () => {
 
   it('defers to the registered failed handler regardless of error type when one is set', async () => {
     const worker = new TestableWorker();
-    const failedHandler = jest.fn().mockResolvedValue(true);
+    const failedHandler = vi.fn().mockResolvedValue(true);
     worker.setSqsFailedHandler(failedHandler);
 
     const error = new BadRequestException('payload is missing required key(s)');
-    const processor = jest.fn().mockRejectedValue(error);
+    const processor = vi.fn().mockRejectedValue(error);
 
     const wrapped = worker.invokeWrapForSqs(processor);
 
@@ -110,10 +110,10 @@ describe('WorkerBaseService.wrapForSqs', () => {
 
   it('acks when the registered failed handler returns false', async () => {
     const worker = new TestableWorker();
-    const failedHandler = jest.fn().mockResolvedValue(false);
+    const failedHandler = vi.fn().mockResolvedValue(false);
     worker.setSqsFailedHandler(failedHandler);
 
-    const processor = jest.fn().mockRejectedValue(new Error('non-retryable per handler'));
+    const processor = vi.fn().mockRejectedValue(new Error('non-retryable per handler'));
     const wrapped = worker.invokeWrapForSqs(processor);
 
     await expect(wrapped(data, meta)).resolves.toBeUndefined();
@@ -122,10 +122,10 @@ describe('WorkerBaseService.wrapForSqs', () => {
 
   it('retries when the registered failed handler returns the object form with retry true', async () => {
     const worker = new TestableWorker();
-    worker.setSqsFailedHandler(jest.fn().mockResolvedValue({ retry: true }));
+    worker.setSqsFailedHandler(vi.fn().mockResolvedValue({ retry: true }));
 
     const error = new Error('transient');
-    const wrapped = worker.invokeWrapForSqs(jest.fn().mockRejectedValue(error));
+    const wrapped = worker.invokeWrapForSqs(vi.fn().mockRejectedValue(error));
 
     // No delay requested, so the original error propagates unwrapped.
     await expect(wrapped(data, meta)).rejects.toBe(error);
@@ -133,19 +133,19 @@ describe('WorkerBaseService.wrapForSqs', () => {
 
   it('acks when the registered failed handler returns the object form with retry false', async () => {
     const worker = new TestableWorker();
-    worker.setSqsFailedHandler(jest.fn().mockResolvedValue({ retry: false, retryDelayMs: 5_000 }));
+    worker.setSqsFailedHandler(vi.fn().mockResolvedValue({ retry: false, retryDelayMs: 5_000 }));
 
-    const wrapped = worker.invokeWrapForSqs(jest.fn().mockRejectedValue(new Error('permanent')));
+    const wrapped = worker.invokeWrapForSqs(vi.fn().mockRejectedValue(new Error('permanent')));
 
     await expect(wrapped(data, meta)).resolves.toBeUndefined();
   });
 
   it('wraps the error in SqsRetryError when the failed handler asks for a delay', async () => {
     const worker = new TestableWorker();
-    worker.setSqsFailedHandler(jest.fn().mockResolvedValue({ retry: true, retryDelayMs: 4_000 }));
+    worker.setSqsFailedHandler(vi.fn().mockResolvedValue({ retry: true, retryDelayMs: 4_000 }));
 
     const error = new Error('webhook filter failed');
-    const wrapped = worker.invokeWrapForSqs(jest.fn().mockRejectedValue(error));
+    const wrapped = worker.invokeWrapForSqs(vi.fn().mockRejectedValue(error));
 
     const thrown = await wrapped(data, meta).catch((err: unknown) => err);
     expect(thrown).toBeInstanceOf(SqsRetryError);
@@ -157,9 +157,9 @@ describe('WorkerBaseService.wrapForSqs', () => {
   it('treats a zero delay as a request to retry immediately, not as no request', async () => {
     const worker = new TestableWorker();
     // Randomised backoffs round down to 0 on early attempts.
-    worker.setSqsFailedHandler(jest.fn().mockResolvedValue({ retry: true, retryDelayMs: 0 }));
+    worker.setSqsFailedHandler(vi.fn().mockResolvedValue({ retry: true, retryDelayMs: 0 }));
 
-    const wrapped = worker.invokeWrapForSqs(jest.fn().mockRejectedValue(new Error('no backoff')));
+    const wrapped = worker.invokeWrapForSqs(vi.fn().mockRejectedValue(new Error('no backoff')));
 
     const thrown = await wrapped(data, meta).catch((err: unknown) => err);
     expect(thrown).toBeInstanceOf(SqsRetryError);
@@ -168,21 +168,21 @@ describe('WorkerBaseService.wrapForSqs', () => {
 
   it('falls through to the flat visibility timeout when no delay is supplied', async () => {
     const worker = new TestableWorker();
-    worker.setSqsFailedHandler(jest.fn().mockResolvedValue({ retry: true }));
+    worker.setSqsFailedHandler(vi.fn().mockResolvedValue({ retry: true }));
 
     const error = new Error('no opinion on cadence');
-    const wrapped = worker.invokeWrapForSqs(jest.fn().mockRejectedValue(error));
+    const wrapped = worker.invokeWrapForSqs(vi.fn().mockRejectedValue(error));
 
     await expect(wrapped(data, meta)).rejects.toBe(error);
   });
 
   it('defaults to retry when the registered failed handler itself throws', async () => {
     const worker = new TestableWorker();
-    const failedHandler = jest.fn().mockRejectedValue(new Error('handler exploded'));
+    const failedHandler = vi.fn().mockRejectedValue(new Error('handler exploded'));
     worker.setSqsFailedHandler(failedHandler);
 
     const error = new Error('processor failure');
-    const processor = jest.fn().mockRejectedValue(error);
+    const processor = vi.fn().mockRejectedValue(error);
     const wrapped = worker.invokeWrapForSqs(processor);
 
     await expect(wrapped(data, meta)).rejects.toBe(error);
@@ -190,10 +190,10 @@ describe('WorkerBaseService.wrapForSqs', () => {
 
   it('invokes the completed handler on success', async () => {
     const worker = new TestableWorker();
-    const completedHandler = jest.fn().mockResolvedValue(undefined);
+    const completedHandler = vi.fn().mockResolvedValue(undefined);
     worker.setSqsCompletedHandler(completedHandler);
 
-    const processor = jest.fn().mockResolvedValue(undefined);
+    const processor = vi.fn().mockResolvedValue(undefined);
     const wrapped = worker.invokeWrapForSqs(processor);
 
     await wrapped(data, meta);

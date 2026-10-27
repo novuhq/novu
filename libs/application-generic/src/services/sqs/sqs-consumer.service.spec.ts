@@ -18,12 +18,12 @@ const UNCAPTURED_CONFIG: ConsumerConfig = {
 
 let capturedConfig: ConsumerConfig = UNCAPTURED_CONFIG;
 
-jest.mock('sqs-consumer', () => ({
+vi.mock('sqs-consumer', () => ({
   Consumer: {
-    create: jest.fn((config: ConsumerConfig) => {
+    create: vi.fn((config: ConsumerConfig) => {
       capturedConfig = config;
 
-      return { on: jest.fn(), start: jest.fn(), stop: jest.fn() };
+      return { on: vi.fn(), start: vi.fn(), stop: vi.fn() };
     }),
   },
 }));
@@ -31,8 +31,8 @@ jest.mock('sqs-consumer', () => ({
 const VISIBILITY_TIMEOUT = 90;
 const HEARTBEAT_INTERVAL_MS = (VISIBILITY_TIMEOUT * 1000) / 2;
 
-const mockClientSend = jest.fn();
-const mockMaybeResolve = jest.fn();
+const mockClientSend = vi.fn();
+const mockMaybeResolve = vi.fn();
 
 function buildMessage(overrides: Partial<Message> = {}): Message {
   return {
@@ -83,7 +83,7 @@ function commandCalls(commandType: unknown): unknown[] {
 
 describe('SqsConsumerService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset so a failed createConsumer cannot leave the previous test's handler
     // in place and make the next one pass for the wrong reason.
     capturedConfig = UNCAPTURED_CONFIG;
@@ -92,12 +92,12 @@ describe('SqsConsumerService', () => {
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe('visibility heartbeat ordering', () => {
     it('should have cleared the heartbeat while the delete is still in flight', async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       let finishProcessing: () => void = () => {};
       const processing = new Promise<void>((resolve) => {
@@ -124,7 +124,7 @@ describe('SqsConsumerService', () => {
 
       // The delete is in flight; this is exactly the window the heartbeat used
       // to tick into and fail with "Message does not exist".
-      jest.advanceTimersByTime(HEARTBEAT_INTERVAL_MS * 3);
+      vi.advanceTimersByTime(HEARTBEAT_INTERVAL_MS * 3);
       await flushMicrotasks();
 
       expect(commandCalls(ChangeMessageVisibilityCommand)).toHaveLength(0);
@@ -135,13 +135,13 @@ describe('SqsConsumerService', () => {
     });
 
     it('should extend visibility while the processor is still running', async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       createConsumer(async () => new Promise<void>(() => {}));
       await capturedConfig.handleMessage(buildMessage());
       await flushMicrotasks();
 
-      jest.advanceTimersByTime(HEARTBEAT_INTERVAL_MS * 2);
+      vi.advanceTimersByTime(HEARTBEAT_INTERVAL_MS * 2);
       await flushMicrotasks();
 
       expect(commandCalls(ChangeMessageVisibilityCommand)).toHaveLength(2);
@@ -177,7 +177,7 @@ describe('SqsConsumerService', () => {
 
   describe('offloaded payloads', () => {
     it('should fail rather than hand an unresolved S3 pointer to the processor', async () => {
-      const processor = jest.fn();
+      const processor = vi.fn();
       const pointer = JSON.stringify({ [SQS_LARGE_PAYLOAD_MARKER]: { bucket: 'b', key: 'k' } });
       // A consumer without the bucket configured returns the body untouched.
       mockMaybeResolve.mockImplementation(async (body: string) => body);
@@ -192,7 +192,7 @@ describe('SqsConsumerService', () => {
     });
 
     it('should process a pointer that resolves successfully', async () => {
-      const processor = jest.fn().mockResolvedValue(undefined);
+      const processor = vi.fn().mockResolvedValue(undefined);
       const pointer = JSON.stringify({ [SQS_LARGE_PAYLOAD_MARKER]: { bucket: 'b', key: 'k' } });
       mockMaybeResolve.mockResolvedValue(JSON.stringify({ _id: 'job-1' }));
 
@@ -207,7 +207,7 @@ describe('SqsConsumerService', () => {
 
   describe('in-flight accounting on stop', () => {
     it('should keep counting a timed-out consumer until its processor finishes', async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       let finishProcessing: () => void = () => {};
       const processing = new Promise<void>((resolve) => {
@@ -226,7 +226,7 @@ describe('SqsConsumerService', () => {
       expect(SqsConsumerService.getTotalInFlightCount()).toEqual(otherConsumersInFlight + 1);
 
       const stopping = consumer.stop({ drainTimeoutMs: 1_000 });
-      jest.advanceTimersByTime(1_000);
+      vi.advanceTimersByTime(1_000);
       await stopping;
 
       // The drain timed out, but the processor is still running and may still be

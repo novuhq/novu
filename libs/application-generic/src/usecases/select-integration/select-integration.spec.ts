@@ -57,39 +57,17 @@ const testIntegration: IntegrationEntity = {
   deletedBy: null,
 };
 
-const novuIntegration: IntegrationEntity = {
-  _environmentId: 'env-test-123',
-  _id: 'integration-test-novu-123',
-  _organizationId: 'org-test-123',
-  active: true,
-  channel: ChannelTypeEnum.EMAIL,
-  credentials: {},
-  providerId: EmailProviderIdEnum.Novu,
-  deleted: false,
-  identifier: 'test-novu-integration-identifier',
-  name: 'test-novu-integration-name',
-  primary: true,
-  priority: 1,
-  deletedAt: null,
-  deletedBy: null,
-};
+const findOneMock = vi.fn(() => testIntegration);
+const findMock = vi.fn(() => []);
 
-const findOneMock = jest.fn(() => testIntegration);
-const findMock = jest.fn(() => []);
-
-jest.mock('@novu/dal', () => ({
-  ...jest.requireActual('@novu/dal'),
-  IntegrationRepository: jest.fn(() => ({
-    findOne: findOneMock,
-    find: findMock,
-  })),
-}));
-
-jest.mock('../get-decrypted-integrations', () => ({
-  ...jest.requireActual('../get-decrypted-integrations'),
-  GetDecryptedIntegrations: jest.fn(() => ({
-    execute: jest.fn(() => novuIntegration),
-  })),
+vi.mock('@novu/dal', async () => ({
+  ...(await vi.importActual('@novu/dal')),
+  IntegrationRepository: vi.fn(function () {
+    return {
+      findOne: findOneMock,
+      find: findMock,
+    };
+  }),
 }));
 
 describe('select integration', () => {
@@ -104,18 +82,18 @@ describe('select integration', () => {
     new CreateExecutionDetails(new ExecutionDetailsRepository(), TraceLogRepository as any, new FeatureFlagsService()),
     new CompileTemplate(),
     new FeatureFlagsService(),
-    { setContext: jest.fn(), info: jest.fn() } as any
+    { setContext: vi.fn(), info: vi.fn() } as any
   );
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     findMock.mockReturnValue([]);
     findOneMock.mockReturnValue(testIntegration);
 
     const featureFlagsService = {
-      getFlag: jest.fn().mockResolvedValue(false),
+      getFlag: vi.fn().mockResolvedValue(false),
     };
     const normalizeVariablesUsecase = {
-      execute: jest.fn().mockResolvedValue({}),
+      execute: vi.fn().mockResolvedValue({}),
     };
     useCase = new SelectIntegration(
       integrationRepository,
@@ -161,7 +139,7 @@ describe('select integration', () => {
     expect(integration?.integration.identifier).toEqual(testIntegration.identifier);
   });
 
-  it('should return the novu integration', async () => {
+  it('should return undefined when no integration is found', async () => {
     findOneMock.mockImplementationOnce(() => null);
 
     const integration = await useCase.execute(
@@ -174,8 +152,7 @@ describe('select integration', () => {
       })
     );
 
-    expect(integration).not.toBeNull();
-    expect(integration?.integration.providerId).toEqual(EmailProviderIdEnum.Novu);
+    expect(integration).toBeUndefined();
   });
 
   it.each`

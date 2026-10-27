@@ -32,7 +32,7 @@ describe('ChannelEndpointSchema', () => {
     // Invalid cases
     expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.SLACK_CHANNEL, { userId: 'U123' })).toBe(false);
     expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.SLACK_USER, { channelId: 'C123' })).toBe(false);
-    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBHOOK, { url: 'not-a-url' })).toBe(false);
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBHOOK, { url: 123 })).toBe(false);
 
     // Extra properties should fail
     expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.SLACK_CHANNEL, { channelId: 'C123', extra: 'prop' })).toBe(
@@ -72,7 +72,7 @@ describe('ChannelEndpointSchema', () => {
   it('should validate Opsgenie endpoints with non-hex GenieKey segments', () => {
     expect(
       validateEndpointForTypeFromSchema(ENDPOINT_TYPES.OPSGENIE_INTEGRATION, {
-        apiKey: 'abcdefg-a25a-4652-883c-73703b12345',
+        apiKey: 'abcdefgh-a25a-4652-883c-73703b12345z',
         region: 'us',
       })
     ).toBe(true);

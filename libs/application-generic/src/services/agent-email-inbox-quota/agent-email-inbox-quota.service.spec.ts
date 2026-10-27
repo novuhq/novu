@@ -1,5 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
 import { ApiServiceLevelEnum } from '@novu/shared';
+import type { Mock } from 'vitest';
 import {
   AgentEmailInboxQuotaExceededException,
   AgentEmailInboxQuotaService,
@@ -65,9 +66,9 @@ describe('AgentEmailInboxQuotaService', () => {
   const organizationId = 'org-1';
   let store: CounterStore;
   let cacheEnabled: boolean;
-  let evalImpl: jest.Mock;
+  let evalImpl: Mock;
   let service: AgentEmailInboxQuotaService;
-  const logger = { setContext: jest.fn(), warn: jest.fn(), debug: jest.fn() };
+  const logger = { setContext: vi.fn(), warn: vi.fn(), debug: vi.fn() };
 
   const dailyCount = () => store.get(quotaKeys(organizationId, new Date()).daily);
   const monthlyCount = () => store.get(quotaKeys(organizationId, new Date()).monthly);
@@ -76,7 +77,7 @@ describe('AgentEmailInboxQuotaService', () => {
     store = new Map();
     cacheEnabled = true;
     delete process.env.IS_SELF_HOSTED;
-    evalImpl = jest.fn(async (script: string, keys: string[], args: Array<string | number>) => {
+    evalImpl = vi.fn(async (script: string, keys: string[], args: Array<string | number>) => {
       if (script.includes('INCRBY')) {
         return applyReserve(store, keys, args);
       }
@@ -85,7 +86,7 @@ describe('AgentEmailInboxQuotaService', () => {
     });
     service = new AgentEmailInboxQuotaService(
       { cacheEnabled: () => cacheEnabled, eval: evalImpl } as never,
-      { findById: jest.fn().mockResolvedValue({ apiServiceLevel: ApiServiceLevelEnum.FREE }) } as never,
+      { findById: vi.fn().mockResolvedValue({ apiServiceLevel: ApiServiceLevelEnum.FREE }) } as never,
       logger as never
     );
   });
