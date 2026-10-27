@@ -5,21 +5,12 @@ import localFont from 'next/font/local';
 import Link from 'next/link';
 import { Fragment } from 'react';
 import { Flags } from '@/components/home/command-reference';
-import {
-  AsciiRule,
-  CommandLines,
-  DocSection,
-  FlagText,
-  InlineCode,
-  textWidth,
-  WordFlow,
-} from '@/components/home/documentation';
+import { AsciiRule, CommandLines, DocSection, FlagText, textWidth } from '@/components/home/documentation';
 import { HomeArtwork } from '@/components/home/home-artwork';
 import { HowItWorks } from '@/components/home/how-it-works';
 import { InstallTabs } from '@/components/home/install-tabs';
 import { SiteStructuredData } from '@/components/seo/site-structured-data';
 import {
-  HOME_AUTH,
   HOME_CONTACTS,
   HOME_CONTACTS_DESCRIPTION,
   HOME_HOSTS,
@@ -170,14 +161,6 @@ export default function HomePage() {
             </h3>
             <CommandLines commands={HOME_INVITES} fenced />
           </div>
-        </DocSection>
-        <DocSection anchor="auth" title="AUTH">
-          <WordFlow className="home-auth-description">
-            <InlineCode>{`\`${HOME_AUTH.commands[0]}\`,`}</InlineCode>{' '}
-            <InlineCode>{`\`${HOME_AUTH.commands[1]}\``}</InlineCode> and{' '}
-            <InlineCode>{`\`${HOME_AUTH.commands[2]}\``}</InlineCode> store credentials in{' '}
-            <InlineCode>{`${HOME_AUTH.file}.`}</InlineCode> {HOME_AUTH.alternative}
-          </WordFlow>
         </DocSection>
         <DocSection anchor="links" title="LINKS">
           <nav aria-label="Documentation links" className="home-links">

@@ -17,29 +17,6 @@ function ProseWord({ text }: { text: string }) {
   );
 }
 
-export function WordFlow({ children, className = '' }: { children: ReactNode; className?: string }) {
-  const words = Children.toArray(children).flatMap<ReactNode>((child) =>
-    typeof child === 'string'
-      ? child
-          .trim()
-          .split(/\s+/)
-          .filter(Boolean)
-          .map((text) => <ProseWord key={text} text={text} />)
-      : [child]
-  );
-
-  return (
-    <p className={`home-prose ${className}`}>
-      {words.map((word, index) => (
-        <Fragment key={index}>
-          {index > 0 ? ' ' : null}
-          {word}
-        </Fragment>
-      ))}
-    </p>
-  );
-}
-
 /** Prose with CLI flags in it, each flag (`--name`) kept on one line instead of breaking at its hyphens. */
 export function FlagText({ text }: { text: string }) {
   return text.split(/(--[a-z][\w-]*)/).map((part, index) =>
