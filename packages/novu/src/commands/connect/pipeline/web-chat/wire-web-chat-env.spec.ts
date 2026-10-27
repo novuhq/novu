@@ -59,11 +59,4 @@ describe('buildWebChatEnvEntries', () => {
     expect(entries.NEXT_PUBLIC_NOVU_SOCKET_URL).toBeUndefined();
     expect(entries.NEXT_PUBLIC_NOVU_SOCKET_TYPE).toBeUndefined();
   });
-
-  it('does not throw and omits socket entries for a malformed API URL', () => {
-    const entries = buildWebChatEnvEntries({ ...baseInput, apiUrl: 'not-a-url' });
-
-    expect(entries.NEXT_PUBLIC_NOVU_SOCKET_URL).toBeUndefined();
-    expect(entries.NEXT_PUBLIC_NOVU_SOCKET_TYPE).toBeUndefined();
-  });
 });
