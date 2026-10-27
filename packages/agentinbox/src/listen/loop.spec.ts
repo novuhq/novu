@@ -18,6 +18,7 @@ const FAST: Partial<ListenTiming> = {
   waitSeconds: 1,
   pausedRetryMs: 150,
   retryMs: [50],
+  resendAfterMs: 50,
   questionTimeoutMs: 1500,
   answerPollMs: 40,
 };
@@ -771,6 +772,70 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
 
     await eventually(() => expect(logs.some((line) => line.includes('conv_1: done.'))).toBe(true));
     expect(api.sentInto('conv_1')).not.toContain('Replied in the conversation.');
+  });
+
+  it('gets its answer out once Agent Inbox can be reached again, without doing the work again', async () => {
+    const { api, starts, logs } = await start();
+
+    api.deliver({ text: 'sleep:600' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    api.down = true;
+    await eventually(() => expect(logs.join('\n')).toMatch(/^conv_1: couldn’t reply .*; trying again/m));
+    api.down = false;
+
+    await eventually(() => expect(api.sentInto('conv_1')).toEqual(['Done sleeping.']));
+    expect(starts()).toHaveLength(1);
+  });
+
+  it('gives up on an answer Agent Inbox can’t take for as long as it tries, and goes on with the next', async () => {
+    const { api, logs, starts } = await start({}, { resendForMs: 300 });
+
+    api.deliver({ text: 'sleep:600' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    api.down = true;
+    await eventually(() => expect(logs.join('\n')).toMatch(/^conv_1: couldn’t reply .*; gave up after/m));
+    api.down = false;
+
+    api.deliver({ text: 'next one' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: next one'));
+    expect(api.sentInto('conv_1')).not.toContain('Done sleeping.');
+  });
+
+  it('doesn’t post its answer twice when a try went through but its answer was lost on the way back', async () => {
+    const { api, logs } = await start();
+
+    api.loseNextAnswer = true;
+    api.deliver({ text: 'hello there' });
+
+    await eventually(() => expect(logs.some((line) => line.includes('conv_1: done.'))).toBe(true));
+    expect(logs.join('\n')).toMatch(/^conv_1: couldn’t reply .*; trying again/m);
+    expect(api.sentInto('conv_1')).toEqual(['Echo: hello there']);
+  });
+
+  it('tries a notice to the operator again too', async () => {
+    const now = new Date().toISOString();
+    const waiting = {
+      id: 'msg_waiting',
+      conversationId: 'conv_1',
+      channel: 'telegram',
+      from: { id: 'ada', name: 'Ada', isOperator: true },
+      text: 'one more',
+      at: now,
+      round: 0,
+      isDirectMessage: true,
+    };
+    const { api, logs } = await start({ limits: { runsPerHour: 1, maxRunSeconds: 60 }, runs: [now], queue: [waiting] });
+
+    // The first wait is under way: the hourly limit's notice goes once it ends, while Agent Inbox can't be reached.
+    api.down = true;
+    await eventually(() => expect(logs.join('\n')).toMatch(/^Couldn’t tell the operator .*; trying again/m));
+    api.down = false;
+
+    await eventually(() =>
+      expect(api.sentInto('conv_operator')).toContain(
+        'Claude Code was started 1 time in the last hour, the most it may be. New messages wait, and start it as the hour allows.'
+      )
+    );
   });
 
   it('tells a conversation whose run a restart cut off, instead of running it again', async () => {

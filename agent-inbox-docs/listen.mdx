@@ -48,6 +48,8 @@ While Claude Code works on a message, the chat shows it typing, until its reply 
 
 When the computer restarts, or the listener is stopped, in the middle of a run, that run isn't started again. Its conversation is told it stopped before it could finish, so the message can be sent again.
 
+When Agent Inbox can't be reached as a reply goes out, the listener tries again for up to 10 minutes, waiting longer each time. A short outage loses no reply, and Claude Code doesn't do the work again.
+
 ## Permissions
 
 Claude Code follows its own settings for the project, from your user settings and the project's, and may edit files inside the project. Anything else waits for you:

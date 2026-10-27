@@ -207,3 +207,19 @@ export function listeningOf(err: unknown): Listening | null {
 export function isKeyRejected(err: unknown): boolean {
   return err instanceof ApiError && err.status === 401;
 }
+
+/**
+ * Agent Inbox wasn't reached, or was too busy for a moment: the same call may go through a little later. A limit
+ * with a code of its own, such as the day's messages, lasts too long to wait for.
+ */
+export function isOutage(err: unknown): boolean {
+  if (!(err instanceof ApiError)) {
+    return false;
+  }
+
+  if (err.status === 429) {
+    return errorCode(err) === undefined;
+  }
+
+  return err.status === 0 || err.status === 408 || err.status >= 500;
+}

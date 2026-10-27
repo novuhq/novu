@@ -82,6 +82,8 @@ export class FakeApi {
   keyRejected = false;
   /** Agent Inbox can't be reached: every call fails, as in an outage. */
   down = false;
+  /** The next send goes through, but its answer is lost on the way back, as when the connection drops. */
+  loseNextAnswer = false;
   /** Answers each new question (`approve`, `choose`, `ask`) as it comes, or leaves it pending (undefined). */
   decide: (interaction: FakeInteraction) => FakeDecision | undefined = () => undefined;
   private server?: Server;
@@ -234,6 +236,12 @@ export class FakeApi {
     this.calls.push(call);
 
     const send = (status: number, payload: unknown) => {
+      if (this.loseNextAnswer && call.method === 'POST' && call.path === '/v1/inbox/messages') {
+        this.loseNextAnswer = false;
+        res.destroy();
+
+        return;
+      }
       res.writeHead(status, { 'content-type': 'application/json' });
       res.end(JSON.stringify(payload));
     };

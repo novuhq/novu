@@ -12,6 +12,7 @@ import {
   errorCode,
   INVALID_LISTEN_CURSOR_CODE,
   isKeyRejected,
+  isOutage,
   LISTENING_ELSEWHERE_CODE,
   type ListenMessage,
   type ListenMessagesPage,
@@ -64,6 +65,9 @@ const STALE_MS = 24 * HOUR_MS;
 const PAGE_LIMIT = 100;
 const PAGES_BACK = 10;
 
+/** The longest wait between tries of a send: a minute, as the main loop's longest. */
+const RESEND_MOST_MS = 60_000;
+
 export interface ListenTiming {
   /** How long the server holds one wait for messages, in seconds. */
   waitSeconds: number;
@@ -71,6 +75,13 @@ export interface ListenTiming {
   pausedRetryMs: number;
   /** How long to wait after one, two, three… failures in a row. */
   retryMs: readonly number[];
+  /**
+   * How long a reply or notice is tried again while Agent Inbox can't be reached: a short outage loses nothing the
+   * host worked for, and the work isn't done again.
+   */
+  resendForMs: number;
+  /** The wait before its first try again; each wait after is twice as long, up to a minute. */
+  resendAfterMs: number;
   /** How long the operator has to answer a permission question, and a person a question from the agent. */
   questionTimeoutMs: number;
   /**
@@ -89,6 +100,8 @@ export const DEFAULT_TIMING: ListenTiming = {
   // "Every few minutes", as the contract has it: a pause is the operator's choice, not an outage.
   pausedRetryMs: 3 * 60_000,
   retryMs: [5_000, 15_000, 30_000, 60_000],
+  resendForMs: 10 * 60_000,
+  resendAfterMs: 5_000,
   // Ten minutes, as Inkbox gives its own: time to notice a phone, short enough that no run hangs for hours.
   questionTimeoutMs: 10 * 60_000,
   answerPollMs: 5_000,
@@ -807,20 +820,23 @@ class ListenLoop {
 
   /**
    * A turn's last words go into the conversation, unless the agent already replied there itself during the
-   * turn, as its instructions ask.
+   * turn, as its instructions ask. That is looked at again before each try, so a try that got through without
+   * hearing back isn't posted twice.
    */
   private async deliver(active: ActiveRun, text: string): Promise<void> {
-    const since = active.watermark;
-    const after = await this.messagesAfter(active.conversationId, since);
-    active.watermark = after?.[after.length - 1]?.id ?? since;
+    await this.keepTrying(`${active.conversationId}: couldn’t reply`, async () => {
+      const since = active.watermark;
+      const after = await this.messagesAfter(active.conversationId, since);
+      active.watermark = after[after.length - 1]?.id ?? since;
 
-    if (after && this.hostReplied(after)) {
-      this.log(`${active.conversationId}: the agent replied itself.`);
+      if (this.hostReplied(after)) {
+        this.log(`${active.conversationId}: the agent replied itself.`);
 
-      return;
-    }
+        return;
+      }
 
-    await this.reply(active.conversationId, text);
+      await this.post(active.conversationId, text);
+    });
   }
 
   private hostReplied(messages: Array<{ from: string; interaction?: { id: string } }>): boolean {
@@ -833,7 +849,7 @@ class ListenLoop {
 
   /**
    * The conversation's messages after `since`, oldest first: read back page by page until `since` shows up, as
-   * the host's own reply can be far behind the latest message in a busy chat. Null when they can't be read.
+   * the host's own reply can be far behind the latest message in a busy chat.
    */
   private async messagesAfter(conversationId: string, since: string | undefined) {
     const found: ConversationView['messages'] = [];
@@ -841,10 +857,6 @@ class ListenLoop {
 
     for (let page = 0; page < PAGES_BACK; page++) {
       const view = await this.readConversation(conversationId, { limit: PAGE_LIMIT, before });
-      if (!view) {
-        return null;
-      }
-
       const at = since ? view.messages.findIndex((message) => message.id === since) : -1;
       if (at >= 0) {
         return [...view.messages.slice(at + 1), ...found];
@@ -859,26 +871,23 @@ class ListenLoop {
     return found;
   }
 
-  private async readConversation(
-    conversationId: string,
-    query: { limit: number; before?: string }
-  ): Promise<ConversationView | null> {
-    try {
-      return await getConversation(this.options.client, conversationId, {
-        ...query,
-        agentIdentifier: this.options.agentIdentifier,
-      });
-    } catch (err) {
-      await this.onErrorDuringRun(err);
-
-      return null;
-    }
+  private readConversation(conversationId: string, query: { limit: number; before?: string }) {
+    return getConversation(this.options.client, conversationId, {
+      ...query,
+      agentIdentifier: this.options.agentIdentifier,
+    });
   }
 
   private async latestMessageId(conversationId: string): Promise<string | undefined> {
-    const view = await this.readConversation(conversationId, { limit: 1 });
+    try {
+      const view = await this.readConversation(conversationId, { limit: 1 });
 
-    return view?.messages[view.messages.length - 1]?.id;
+      return view.messages[view.messages.length - 1]?.id;
+    } catch (err) {
+      await this.onErrorDuringRun(err);
+
+      return undefined;
+    }
   }
 
   /**
@@ -907,20 +916,54 @@ class ListenLoop {
   }
 
   private async reply(conversationId: string, text: string): Promise<void> {
-    try {
-      await this.send({ kind: 'tell', card: { title: clipCard(text) }, thread: conversationId });
-    } catch (err) {
-      this.log(`${conversationId}: couldn’t reply (${describeError(err)}).`);
-      await this.onErrorDuringRun(err);
-    }
+    await this.keepTrying(`${conversationId}: couldn’t reply`, () => this.post(conversationId, text));
+  }
+
+  private async post(conversationId: string, text: string): Promise<void> {
+    await this.send({ kind: 'tell', card: { title: clipCard(text) }, thread: conversationId });
   }
 
   private async notifyOperator(text: string): Promise<void> {
-    try {
+    await this.keepTrying('Couldn’t tell the operator', async () => {
       await this.send({ kind: 'tell', card: { title: clipCard(text) }, to: this.options.operatorId });
-    } catch (err) {
-      this.log(`Couldn’t tell the operator (${describeError(err)}).`);
-      await this.onErrorDuringRun(err);
+    });
+  }
+
+  /**
+   * Tries a send again while Agent Inbox can't be reached, each wait twice the one before, for as long as
+   * `resendForMs`. Anything else ends the trying at once, and is only logged: a refusal, a paused agent, a changed
+   * key, or the program stopping.
+   */
+  private async keepTrying(failed: string, attempt: () => Promise<void>): Promise<void> {
+    const until = Date.now() + this.timing.resendForMs;
+    let wait = this.timing.resendAfterMs;
+
+    for (;;) {
+      try {
+        await attempt();
+
+        return;
+      } catch (err) {
+        await this.onErrorDuringRun(err);
+        const left = until - Date.now();
+        if (!isOutage(err) || this.end) {
+          this.log(`${failed} (${describeError(err)}).`);
+
+          return;
+        }
+        if (left <= 0) {
+          this.log(`${failed} (${describeError(err)}); gave up after ${spanWords(this.timing.resendForMs / 1000)}.`);
+
+          return;
+        }
+
+        this.log(`${failed} (${describeError(err)}); trying again in ${spanWords(Math.min(wait, left) / 1000)}.`);
+        await this.sleep(Math.min(wait, left));
+        if (this.end) {
+          return;
+        }
+        wait = Math.min(wait * 2, RESEND_MOST_MS);
+      }
     }
   }
 
