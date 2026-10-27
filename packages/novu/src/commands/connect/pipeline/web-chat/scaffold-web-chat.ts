@@ -8,7 +8,7 @@ import { install } from '../../../init/helpers/install';
 import { isFolderEmpty } from '../../../init/helpers/is-folder-empty';
 import { getOnline } from '../../../init/helpers/is-online';
 import { detectBridgeProject } from '../bridge/detect-project';
-import { buildWebChatEnvEntries, mergeWebChatEnv } from './wire-web-chat-env';
+import { buildWebChatEnvEntries, isKnownScaffoldApiHost, mergeWebChatEnv } from './wire-web-chat-env';
 
 export type ScaffoldWebChatProjectInput = {
   parentDir: string;
@@ -31,6 +31,8 @@ export type ScaffoldWebChatProjectResult = {
   mergedIntoBridge: boolean;
   /** Browser path where Web Chat is served inside the app. */
   chatPath: string;
+  /** API host isn't recognised, so a socket URL couldn't be inferred. */
+  unknownSocketHost: boolean;
 };
 
 /**
@@ -70,6 +72,7 @@ function resolveScaffoldAppName(input: ScaffoldWebChatProjectInput): string {
 export async function scaffoldWebChatProject(
   input: ScaffoldWebChatProjectInput
 ): Promise<ScaffoldWebChatProjectResult> {
+  const unknownSocketHost = !isKnownScaffoldApiHost(input.apiUrl);
   const mergeTarget = input.mergeIntoProjectDir?.trim();
   if (mergeTarget) {
     await mergeWebChatIntoProject(mergeTarget, input);
@@ -81,6 +84,7 @@ export async function scaffoldWebChatProject(
       scaffolded: true,
       mergedIntoBridge: true,
       chatPath,
+      unknownSocketHost,
     };
   }
 
@@ -96,7 +100,7 @@ export async function scaffoldWebChatProject(
   await writeStandaloneWebChatApp(root, input);
   tryGitInit(root);
 
-  return { projectDir: root, appName, scaffolded: true, mergedIntoBridge: false, chatPath: '/' };
+  return { projectDir: root, appName, scaffolded: true, mergedIntoBridge: false, chatPath: '/', unknownSocketHost };
 }
 
 async function mergeWebChatIntoProject(projectDir: string, input: ScaffoldWebChatProjectInput): Promise<void> {
@@ -619,6 +623,7 @@ export default function Page() {
       subscriberId={config.subscriberId}
       apiUrl={config.backendUrl}
       socketUrl={config.socketUrl}
+      {...(config.socketType ? { socketOptions: { socketType: config.socketType } } : {})}
     >
       <WebChat agentId={config.agentId} />
     </NovuProvider>
@@ -666,6 +671,7 @@ function renderConfigModule(input: {
   agentId: process.env.NEXT_PUBLIC_NOVU_AGENT_ID ?? '${escapeJs(input.agentIdentifier)}',
   backendUrl: process.env.NEXT_PUBLIC_NOVU_BACKEND_URL ?? '${escapeJs(input.apiUrl)}',
   socketUrl: process.env.NEXT_PUBLIC_NOVU_SOCKET_URL,
+  socketType: process.env.NEXT_PUBLIC_NOVU_SOCKET_TYPE as 'cloud' | 'self-hosted' | undefined,
 } as const;
 `;
 }

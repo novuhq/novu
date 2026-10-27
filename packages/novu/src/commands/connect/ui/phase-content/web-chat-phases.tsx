@@ -8,6 +8,7 @@ import {
   describeEmbedSuccessNextStep,
   formatDemoSubscriberWarning,
   resolveWebChatSuccessPresentation,
+  UNKNOWN_SOCKET_HOST_WARNING,
 } from '../format-web-chat-success';
 import { WebChatEmbedFinishContent } from '../web-chat-embed-finish-content';
 
@@ -86,6 +87,14 @@ export function WebChatSetupPickContent({
   );
 }
 
+function UnknownSocketHostWarning({ show }: { show: boolean }): React.ReactElement | null {
+  if (!show) {
+    return null;
+  }
+
+  return <Text color="yellow">{UNKNOWN_SOCKET_HOST_WARNING}</Text>;
+}
+
 export function WebChatInkSuccessContent({
   result,
   embedPrompt,
@@ -114,6 +123,7 @@ export function WebChatInkSuccessContent({
           alreadyWired={presentation.alreadyWired}
           onDismiss={onDismiss}
         />
+        <UnknownSocketHostWarning show={presentation.unknownSocketHost} />
       </Box>
     );
   }
@@ -134,6 +144,7 @@ export function WebChatInkSuccessContent({
         {presentation.editAgentHint ? <Text dimColor>{presentation.editAgentHint}</Text> : null}
         {demoSubscriberNotice}
         <Text dimColor>{presentation.devCommand}</Text>
+        <UnknownSocketHostWarning show={presentation.unknownSocketHost} />
       </Box>
     );
   }
@@ -147,6 +158,7 @@ export function WebChatInkSuccessContent({
         </Text>
         {demoSubscriberNotice}
         <Text dimColor>{presentation.devCommand}</Text>
+        <UnknownSocketHostWarning show={presentation.unknownSocketHost} />
       </Box>
     );
   }

@@ -80,6 +80,8 @@ export type WebChatConnectOutcome = {
   alreadyWired?: boolean;
   /** Subscriber id written without a signed-in user; the success summary warns to replace it. */
   demoSubscriberId?: string;
+  /** API host isn't recognised, so a socket URL couldn't be inferred — caller should warn. */
+  unknownSocketHost?: boolean;
 };
 
 export type ConnectWebChatHandoff = {

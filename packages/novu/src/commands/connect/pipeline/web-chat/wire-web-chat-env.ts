@@ -20,6 +20,7 @@ const WEB_CHAT_ENV_KEYS = [
   'NEXT_PUBLIC_NOVU_AGENT_ID',
   'NEXT_PUBLIC_NOVU_BACKEND_URL',
   'NEXT_PUBLIC_NOVU_SOCKET_URL',
+  'NEXT_PUBLIC_NOVU_SOCKET_TYPE',
 ] as const;
 
 const DEFAULT_US_API_URL = 'https://api.novu.co';
@@ -29,22 +30,60 @@ const API_HOST_SOCKET_URL: Record<string, string> = {
   'api.novu-staging.co': 'wss://socket.novu-staging.co',
 };
 
-export function resolveScaffoldSocketUrl(apiUrl: string): string | undefined {
+// Novu Box preview environments, e.g. https://my-box-api.box.novu-staging.co
+const NOVU_BOX_API_HOST_PATTERN = /^(?<box>[a-z0-9-]+)-api\.box\.novu-staging\.co$/;
+
+type ScaffoldSocketConfig = {
+  socketUrl: string;
+  socketType?: 'cloud';
+};
+
+function resolveScaffoldSocketConfig(apiUrl: string): ScaffoldSocketConfig | undefined {
   try {
     const hostname = new URL(apiUrl).hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.novu.localhost')) {
-      return 'ws://127.0.0.1:8787';
+      return { socketUrl: 'ws://127.0.0.1:8787' };
     }
 
-    return API_HOST_SOCKET_URL[hostname];
+    const knownSocketUrl = API_HOST_SOCKET_URL[hostname];
+    if (knownSocketUrl) {
+      return { socketUrl: knownSocketUrl };
+    }
+
+    const boxHost = hostname.match(NOVU_BOX_API_HOST_PATTERN)?.groups?.box;
+    if (boxHost) {
+      return { socketUrl: `wss://${boxHost}.box.novu-staging.co/ws`, socketType: 'cloud' };
+    }
+
+    return undefined;
   } catch {
     return undefined;
   }
 }
 
+export function resolveScaffoldSocketUrl(apiUrl: string): string | undefined {
+  return resolveScaffoldSocketConfig(apiUrl)?.socketUrl;
+}
+
+/**
+ * False when the API host isn't one of the deployments we can infer a socket
+ * address for (US Cloud default, EU, staging, localhost, or a Novu Box).
+ * Self-hosted/unknown deployments can't be guessed — the caller should warn
+ * that NEXT_PUBLIC_NOVU_SOCKET_URL needs to be set manually.
+ */
+export function isKnownScaffoldApiHost(apiUrl: string): boolean {
+  try {
+    const hostname = new URL(apiUrl).hostname;
+
+    return hostname === new URL(DEFAULT_US_API_URL).hostname || resolveScaffoldSocketConfig(apiUrl) !== undefined;
+  } catch {
+    return false;
+  }
+}
+
 export function buildWebChatEnvEntries(input: WebChatEnvInput): Record<string, string> {
   const backendUrl = input.apiUrl.replace(/\/$/, '');
-  const socketUrl = resolveScaffoldSocketUrl(input.apiUrl);
+  const socketConfig = resolveScaffoldSocketConfig(input.apiUrl);
   const entries: Record<string, string> = {
     NEXT_PUBLIC_NOVU_APP_ID: input.applicationIdentifier,
     NEXT_PUBLIC_NOVU_SUBSCRIBER_ID: input.subscriberId,
@@ -56,9 +95,12 @@ export function buildWebChatEnvEntries(input: WebChatEnvInput): Record<string, s
     entries.NEXT_PUBLIC_NOVU_BACKEND_URL = backendUrl;
   }
 
-  // Only non-default sockets (local, EU, staging). US Cloud defaults to wss://socket.novu.co.
-  if (socketUrl) {
-    entries.NEXT_PUBLIC_NOVU_SOCKET_URL = socketUrl;
+  // Only non-default sockets (local, EU, staging, Novu Box). US Cloud defaults to wss://socket.novu.co.
+  if (socketConfig) {
+    entries.NEXT_PUBLIC_NOVU_SOCKET_URL = socketConfig.socketUrl;
+    if (socketConfig.socketType) {
+      entries.NEXT_PUBLIC_NOVU_SOCKET_TYPE = socketConfig.socketType;
+    }
   }
 
   return entries;
