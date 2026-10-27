@@ -2,7 +2,6 @@ import { Box, Text, useInput } from 'ink';
 import React from 'react';
 import { resolveConnectEmbedRuntime } from '../../pipeline/web-chat/run-web-chat-setup';
 import type { WebChatSetupMode } from '../../types';
-import { WebChatEmbedFinishContent } from '../web-chat-embed-finish-content';
 import { CopyableLink } from '../copyable-link';
 import {
   type ConnectSuccessResult,
@@ -10,6 +9,7 @@ import {
   formatDemoSubscriberWarning,
   resolveWebChatSuccessPresentation,
 } from '../format-web-chat-success';
+import { WebChatEmbedFinishContent } from '../web-chat-embed-finish-content';
 
 export function WebChatHandoffContent({
   dashboardUrl,
