@@ -52,6 +52,20 @@ const OWN_ACTIONS = new Map<string, Allowed>([
   ],
 ]);
 
+/**
+ * A reply in the conversation, also one that reaches more people (`--to`, `--anyone`), which asks the operator
+ * first: it still goes into the conversation, and the answer to a question it asks comes back there.
+ */
+const REPLY_IN_CONVERSATION = new Map<string, Allowed>([
+  [
+    'reply',
+    {
+      words: true,
+      flags: new Map([...(OWN_ACTIONS.get('reply')?.flags ?? []), ['--to', true], ['--anyone', false]]),
+    },
+  ],
+]);
+
 /** The same, as our MCP server's tools and the fields each may be called with: never `to` or `anyone_may_answer`. */
 const OWN_TOOLS = new Map<string, ReadonlySet<string>>([
   ['inbox_show', new Set(['conversation', 'limit', 'before'])],
@@ -144,7 +158,11 @@ export function isOwnReply(command: string, conversationId: string): boolean {
 export function repliesIn(subject: PermissionQuestion['subject'], conversationId: string): boolean {
   switch (subject.kind) {
     case 'command':
-      return andParts(subject.command)?.some((part) => ownCommand(part, conversationId)?.action === 'reply') ?? false;
+      return (
+        andParts(subject.command)?.some(
+          (part) => ownCommand(part, conversationId, REPLY_IN_CONVERSATION)?.action === 'reply'
+        ) ?? false
+      );
     case 'mcp':
       return (
         isOurMcpServer(subject.server) &&
@@ -162,14 +180,15 @@ const ASKING = new Set(['ask', 'approve', 'choose']);
 /**
  * Whether the host is about to ask someone in `conversationId` and wait for the answer: `inbox reply` there with
  * `ask`, `approve` or `choose` and without `--async`, or our MCP server's `inbox_reply` with such a kind, which
- * waits unless `wait_seconds` is 0. The answer goes to that command while it waits.
+ * waits unless `wait_seconds` is 0. Whoever else it asks, the answer comes back to the conversation, and goes to
+ * that command while it waits.
  */
 export function waitsForAnswerIn(subject: PermissionQuestion['subject'], conversationId: string): boolean {
   switch (subject.kind) {
     case 'command':
       return (
         andParts(subject.command)?.some((part) => {
-          const own = ownCommand(part, conversationId);
+          const own = ownCommand(part, conversationId, REPLY_IN_CONVERSATION);
 
           return own?.action === 'reply' && ASKING.has(own.words[0] ?? '') && !own.flags.has('--async');
         }) ?? false
@@ -224,8 +243,15 @@ interface OwnCommand {
   flags: Set<string>;
 }
 
-/** What one plain command does in `conversationId` (`show`, `reply`, `read`, `resolve`), when that is all it does. */
-function ownCommand(command: string, conversationId: string): OwnCommand | undefined {
+/**
+ * What one plain command does in `conversationId` (`show`, `reply`, `read`, `resolve`), when that is all it does,
+ * with no more than `actions` lets it.
+ */
+function ownCommand(
+  command: string,
+  conversationId: string,
+  actions: ReadonlyMap<string, Allowed> = OWN_ACTIONS
+): OwnCommand | undefined {
   const words = simpleCommandWords(command);
   if (!words) {
     return undefined;
@@ -233,7 +259,7 @@ function ownCommand(command: string, conversationId: string): OwnCommand | undef
 
   const start = cliLength(words);
   const action = words[start + 1] ?? '';
-  const allowed = OWN_ACTIONS.get(action);
+  const allowed = actions.get(action);
   if (start === 0 || words[start] !== 'inbox' || !allowed || words[start + 2] !== conversationId) {
     return undefined;
   }

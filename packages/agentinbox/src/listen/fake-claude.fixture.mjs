@@ -13,6 +13,10 @@
 //                        fake API, as that command would; with <ms>, works that long more after replying
 //   wait-for:<ms>        runs `npx @agentinbox/cli inbox reply <conversation> ask …`, which its settings allow,
 //                        and which waits <ms> for the answer before it ends (a `tool_result`)
+//   ask-others:<to>[:wait|:<ms>]
+//                        asks to run `npx @agentinbox/cli inbox reply <conversation> approve "Ship it?" --to <to>`,
+//                        then sends it through the fake API, as that command would: with `wait`, it waits for the
+//                        answer; else it doesn't (`--async`), and with <ms> works that long more
 //   mcp:<tool> [conv]    asks to use the MCP tool <tool> (`mcp__<server>__<name>`) on <conv>, by default the
 //                        conversation it was started for; an allowed `…__inbox_reply` replies through the fake API
 //   resolve              resolves the conversation through the fake API
@@ -40,9 +44,10 @@ if (argv[0] === '--version') {
   process.exit(0);
 }
 if (argv[0] === 'auth' && argv[1] === 'status') {
-  process.stdout.write(
-    `${JSON.stringify({ loggedIn: process.env.FAKE_CLAUDE_SIGNED_OUT !== '1', apiProvider: 'firstParty' })}\n`
-  );
+  // As Claude Code 2.1.311 does on macOS: it finds its sign-in under the account USER names, and without it says
+  // it isn't signed in (seen 2026-10-27).
+  const loggedIn = process.env.FAKE_CLAUDE_SIGNED_OUT !== '1' && Boolean(process.env.USER);
+  process.stdout.write(`${JSON.stringify({ loggedIn, apiProvider: 'firstParty' })}\n`);
   process.exit(0);
 }
 
@@ -244,6 +249,46 @@ const BEHAVIORS = [
       });
 
       return { answer: 'Asked and got the answer.' };
+    },
+  ],
+  [
+    'ask-others:',
+    async (rest, { interruptible, content }) => {
+      const [to, then] = rest.trim().split(':');
+      const waits = then === 'wait';
+      const conversation = conversationOf(content);
+      const id = `toolu_${randomUUID()}`;
+      const command = `npx @agentinbox/cli inbox reply ${conversation} approve "Ship it?" --to ${to}${waits ? '' : ' --async'}`;
+      out({
+        type: 'assistant',
+        message: { content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] },
+        session_id: sessionId,
+      });
+      // It reaches someone else, so it isn't one of its own commands: the operator allows it first.
+      const decision = await interruptible(permission(command));
+      if (decision === 'aborted') return {};
+      if (decision.behavior !== 'allow') return { answer: `Not allowed: ${decision.message}` };
+
+      const sent = await api('POST', '/v1/inbox/messages', {
+        kind: 'approve',
+        card: { title: 'Ship it?' },
+        thread: conversation,
+        to: to.split(','),
+      });
+      let outcome = sent.data;
+      while (waits && outcome.status === 'pending') {
+        await sleep(40);
+        outcome = (await api('GET', `/v1/inbox/messages/${sent.data.id}`)).data;
+      }
+      const result = waits ? `: ${outcome.status === 'approved' ? 'Approved' : 'Denied'}.` : '.';
+      out({
+        type: 'user',
+        message: { content: [{ type: 'tool_result', tool_use_id: id, content: `Asked${result}` }] },
+        session_id: sessionId,
+      });
+      if (Number(then) > 0) await interruptible(sleep(Number(then)));
+
+      return { answer: `Asked ${to}${result}` };
     },
   ],
   [

@@ -769,6 +769,77 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Asked and got the answer.'));
   });
 
+  describe('a question the agent puts to someone outside its conversation too', () => {
+    const BOB = { id: 'bob', name: 'Bob', isOperator: false };
+    const CAROL = { id: 'carol', name: 'Carol', isOperator: false };
+
+    /** Bob's message starts the host, which asks Bob and Carol "Ship it?" once the operator allows it. */
+    async function askBobAndCarol(api: FakeApi, words: string): Promise<string> {
+      api.decide = (interaction) => (interaction.card.title === 'Ship it?' ? undefined : 'approved');
+      api.deliver({ text: words, conversationId: 'conv_bob', from: BOB });
+      let id: string | undefined;
+      await eventually(() => {
+        id = api.interactions.find((interaction) => interaction.card.title === 'Ship it?')?.id;
+        expect(id).toBeDefined();
+      });
+
+      return id as string;
+    }
+
+    it('goes on with the session that asked when the answer comes back, and starts nothing for whoever gave it', async () => {
+      const { api, starts, logs } = await start();
+      const ship = await askBobAndCarol(api, 'ask-others:bob,carol');
+      await eventually(() => expect(logs).toContain('conv_bob: done.'));
+
+      // Carol presses in her own chat; the answer comes back to Bob's conversation, where it was asked.
+      api.answer(ship, 'approved', false, CAROL);
+
+      await eventually(() => expect(api.sentInto('conv_bob')).toContain('Echo: Approved'));
+      const [first, second] = starts();
+      expect(second.argv).toContain('--resume');
+      expect(second.argv).toContain(first.argv[first.argv.indexOf('--session-id') + 1]);
+      expect(starts()).toHaveLength(2);
+      expect(logs.filter((line) => line.startsWith('Started'))).toEqual([
+        'Started Claude Code for conv_bob (Bob).',
+        expect.stringMatching(/^Started Claude Code for conv_bob \(Carol\), going on with session /),
+      ]);
+    });
+
+    it('starts nothing for an answer to a question no session here asked, as another host’s', async () => {
+      const { api, starts, logs } = await start();
+
+      api.deliver({
+        text: 'Approved',
+        conversationId: 'conv_carol',
+        from: CAROL,
+        answersMessageId: 'int_asked_by_another_host',
+        answer: { status: 'approved', optionId: 'approve' },
+      });
+
+      await eventually(() =>
+        expect(logs).toContain(
+          'conv_carol: the answer to int_asked_by_another_host starts nothing: no session here asked it.'
+        )
+      );
+      expect(starts()).toHaveLength(0);
+    });
+
+    it('leaves the answer to the command that asked and waits for it', async () => {
+      const { api, starts, logs } = await start();
+      const ship = await askBobAndCarol(api, 'ask-others:bob,carol:wait');
+
+      api.answer(ship, 'approved', false, CAROL);
+
+      await eventually(() => expect(logs).toContain('conv_bob: done.'));
+      await pause(400);
+      // The command read the answer, and nothing else got it: no new message in the run, no run after it.
+      expect(api.interactions.find((interaction) => interaction.id === ship)?.answerReadAt).toBeDefined();
+      expect(starts()).toHaveLength(1);
+      // The card is the agent's own reply in the conversation, so its last words don't follow it.
+      expect(api.sentInto('conv_bob')).toEqual(['Ship it?']);
+    });
+  });
+
   it('handles each message once, even when it comes back', async () => {
     const { api, starts } = await start();
 

@@ -129,7 +129,10 @@ withSendOptions(
     .command('reply')
     .argument('<conversation>', 'conversation id (conv_...)')
     .argument('<words...>', '[ask|approve|choose] and the text to send')
-    .option('--to <id|email>', 'only these contacts may answer (default: the contact the conversation belongs to)')
+    .option(
+      '--to <id|email>',
+      'only these contacts may answer (default: the contact the conversation belongs to). One who is not in a direct conversation gets it in their own chat too; the answer comes back here'
+    )
     .option(
       '--anyone',
       'let anyone in the conversation answer, strangers included. The way to ask a stranger. Not with --to'

@@ -222,11 +222,12 @@ describe('repliesIn', () => {
   const mcp = (tool: string, input: Record<string, unknown>) =>
     ({ kind: 'mcp', server: 'inbox', tool, input }) as const;
 
-  it('sees the agent about to answer in its conversation, alone or joined with &&', () => {
+  it('sees the agent about to answer in its conversation, alone or joined with &&, whoever else it reaches', () => {
     for (const subject of [
       command('npx @agentinbox/cli inbox reply conv_1 "Done."'),
       command('npx @agentinbox/cli inbox reply conv_1 ask "Prod?"'),
       command('npx @agentinbox/cli inbox reply conv_1 "Done." && npx @agentinbox/cli inbox resolve conv_1'),
+      command('npx @agentinbox/cli inbox reply conv_1 approve "Ship it?" --to bob,carol'),
       mcp('inbox_reply', { conversation: 'conv_1', message: 'Done.' }),
     ]) {
       expect(repliesIn(subject, 'conv_1'), JSON.stringify(subject)).toBe(true);
@@ -253,25 +254,30 @@ describe('waitsForAnswerIn', () => {
   const mcp = (input: Record<string, unknown>) =>
     ({ kind: 'mcp', server: 'inbox', tool: 'inbox_reply', input: { conversation: 'conv_1', ...input } }) as const;
 
-  it('sees the agent ask in its conversation and wait for the answer', () => {
+  it('sees the agent ask in its conversation and wait for the answer, also from people outside it', () => {
     for (const subject of [
       command('npx @agentinbox/cli inbox reply conv_1 ask "Staging or prod?"'),
       command('npx @agentinbox/cli inbox reply conv_1 --ttl 10m approve "Deploy?"'),
       command(
         'npx @agentinbox/cli inbox reply conv_1 "On it." && npx @agentinbox/cli inbox reply conv_1 choose "?" --option a --option b'
       ),
+      // The answer comes back to the conversation, whoever gives it.
+      command('npx @agentinbox/cli inbox reply conv_1 approve "Ship it?" --to bob,carol'),
+      command('npx @agentinbox/cli inbox reply conv_1 ask "Who is on call?" --anyone'),
       mcp({ kind: 'ask', message: 'Prod?' }),
+      mcp({ kind: 'approve', message: 'Ship it?', to: ['bob', 'carol'] }),
     ]) {
       expect(waitsForAnswerIn(subject, 'conv_1'), JSON.stringify(subject)).toBe(true);
     }
   });
 
-  it('not when it doesn’t wait, doesn’t ask, or asks elsewhere', () => {
+  it('not when it doesn’t wait, doesn’t ask, or asks in another conversation', () => {
     for (const subject of [
       command('npx @agentinbox/cli inbox reply conv_1 ask "Prod?" --async'),
+      command('npx @agentinbox/cli inbox reply conv_1 approve "Ship it?" --to carol --async'),
       command('npx @agentinbox/cli inbox reply conv_1 "ask me anything"'),
       command('npx @agentinbox/cli inbox reply conv_2 ask "Prod?"'),
-      command('npx @agentinbox/cli inbox reply conv_1 ask "Prod?" --to bob'),
+      command('npx @agentinbox/cli inbox send ask "Prod?" --to bob'),
       mcp({ kind: 'ask', message: 'Prod?', wait_seconds: 0 }),
       mcp({ message: 'Done.' }),
     ]) {

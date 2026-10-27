@@ -460,6 +460,22 @@ class ListenLoop {
       return;
     }
 
+    // An answer goes on with the session that asked. With no session here for its conversation, another host
+    // asked: it starts nothing, and stays in the conversation for whoever asked.
+    const unasked = this.state.queue.filter(
+      (message) => message.answersMessageId && this.state.sessions[message.conversationId]?.round !== roundOf(message)
+    );
+    if (unasked.length > 0) {
+      for (const message of unasked) {
+        this.log(
+          `${message.conversationId}: the answer to ${message.answersMessageId} starts nothing: no session here asked it.`
+        );
+        this.markHandled(message);
+      }
+      this.state.queue = this.state.queue.filter((message) => !unasked.includes(message));
+      this.save();
+    }
+
     // A run starts only while the lease is surely this computer's: by then another may have taken it, and run it too.
     const next = this.state.queue[0];
     if (!next || now >= this.leaseUntil || !this.mayRun(now)) {

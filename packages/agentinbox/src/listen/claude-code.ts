@@ -1,7 +1,7 @@
 import { type ChildProcessWithoutNullStreams, spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { accessSync, constants, readFileSync, realpathSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { homedir, userInfo } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { HOST_MARKER_VARIABLES } from '../host';
@@ -102,7 +102,8 @@ export function claudeArgs(
   ];
 }
 
-function checkClaude(project: string, env: NodeJS.ProcessEnv = process.env): HostCheck {
+function checkClaude(project: string, given: NodeJS.ProcessEnv = process.env): HostCheck {
+  const env = withAccount(given);
   // The native installer's launcher, which is often only on the PATH of a login shell.
   const command = onPath('claude', env.PATH) ?? executable(join(homedir(), '.local', 'bin', 'claude'));
   if (!command) {
@@ -218,7 +219,26 @@ function executable(file: string): string | undefined {
 export function sessionEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const dropped = new Set([...PARENT_SESSION_VARIABLES, ...HOST_MARKER_VARIABLES]);
 
-  return Object.fromEntries(Object.entries(env).filter(([name]) => !dropped.has(name)));
+  return withAccount(Object.fromEntries(Object.entries(env).filter(([name]) => !dropped.has(name))));
+}
+
+/**
+ * Claude Code finds its sign-in in the Keychain under the account `USER` names, and a service launchd starts has
+ * no `USER` (nor `LOGNAME` or `HOME`): the account this program runs as stands in, else it says it isn't signed in.
+ */
+function withAccount(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  if (env.USER) {
+    return env;
+  }
+
+  const account = userInfo();
+
+  return {
+    ...env,
+    USER: account.username,
+    LOGNAME: env.LOGNAME || account.username,
+    HOME: env.HOME || account.homedir,
+  };
 }
 
 /** One line of Claude Code's stream-json output, as far as the listener reads it. */

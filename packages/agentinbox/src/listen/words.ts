@@ -25,6 +25,7 @@ export function hostInstructions(input: { conversationId: string; channel: strin
     '',
     `- This session belongs to one conversation, ${id}, on ${input.channel}. Each message in it comes to you starting with "New message in ${id}", with who wrote it.`,
     `- Reply in it yourself: \`${CLI_COMMAND} inbox reply ${id} "…"\`. To ask them something and wait for the answer: \`${CLI_COMMAND} inbox reply ${id} ask "…"\`, or \`approve "…"\`, or \`choose "…" --option … --option …\`. The conversation so far: \`${CLI_COMMAND} inbox show ${id}\`. These commands, for this conversation, run without asking anyone, on their own or joined to each other with \`&&\`.`,
+    `- To ask someone outside it too, add \`--to <contact>\` to that reply: they get the question in their own chat, and the answer comes back to you here. Your operator allows that first.`,
     '- When a turn ends without a reply, your last message is sent as the reply. Either way, write for them: short and plain, without tables or long code.',
     `- When nothing more is owed, resolve it: \`${CLI_COMMAND} inbox resolve ${id}\`. The next message then starts a fresh session.`,
     '- You follow your own settings for this project and may edit files inside it. Anything else, such as a command your settings don’t allow, the network, other folders, or writing to anyone else, waits for your operator to allow it. When they don’t, don’t look for another way.',

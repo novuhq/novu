@@ -37,6 +37,8 @@ interface FakeInteraction {
   ttlSeconds?: number;
   expiresAt: string;
   createdAt: string;
+  /** When the agent read a person's answer, by asking for the interaction. */
+  answerReadAt?: string;
 }
 
 interface FakeConversation {
@@ -128,9 +130,10 @@ export class FakeApi {
 
   /**
    * The operator presses a button on a question: it is settled, and the press comes with the messages as an
-   * answer to it, unless `quietly` (the answer is then only there for a lookup).
+   * answer to it, unless `quietly` (the answer is then only there for a lookup). `by` is someone else answering,
+   * also from their own chat: as the API gives it, the answer comes back to the question's conversation.
    */
-  answer(id: string, decision: FakeDecision, quietly = false): void {
+  answer(id: string, decision: FakeDecision, quietly = false, by?: ListenMessage['from']): void {
     const interaction = this.interactions.find((candidate) => candidate.id === id);
     if (!interaction || interaction.status !== 'pending') return;
     const { status, optionId, text } = typeof decision === 'string' ? { status: decision } : decision;
@@ -147,6 +150,7 @@ export class FakeApi {
         ...(text ? {} : { id: `human:${id}:response` }),
         text: text ?? label,
         conversationId: interaction.thread ?? 'conv_operator',
+        ...(by ? { from: by } : {}),
         answersMessageId: id,
         answer: text
           ? { status, text }
@@ -370,8 +374,14 @@ export class FakeApi {
       return;
     }
 
-    const data = this.listenMessages.slice(from, from + Number(query.limit ?? 20));
-    send(200, { data, next: `c${from + data.length}` });
+    const looked = this.listenMessages.slice(from, from + Number(query.limit ?? 20));
+    // As the API does: an answer the agent already read, waiting for it, is left out.
+    const data = looked.filter(
+      (message) =>
+        !message.answersMessageId ||
+        !this.interactions.find((interaction) => interaction.id === message.answersMessageId)?.answerReadAt
+    );
+    send(200, { data, next: `c${from + looked.length}` });
   }
 
   /** "Typing…" for a few seconds, for the holder only; an email conversation has none. */
@@ -449,6 +459,10 @@ export class FakeApi {
 
   private showInteraction(id: string, send: Send): void {
     const interaction = this.interactions.find((candidate) => candidate.id === id);
+    // Reading a person's answer hands it to the agent: the listener's wait leaves it out from then on.
+    if (interaction && ['approved', 'denied', 'answered'].includes(interaction.status)) {
+      interaction.answerReadAt ??= new Date().toISOString();
+    }
     send(interaction ? 200 : 404, interaction ? { data: this.interactionView(interaction) } : { message: 'Not found' });
   }
 

@@ -58,6 +58,7 @@ describe('hostInstructions', () => {
     expect(text).toContain('started you in ~/app');
     expect(text).toContain('`npx @agentinbox/cli inbox reply conv_1 "…"`');
     expect(text).toContain('run without asking anyone');
+    expect(text).toContain('add `--to <contact>` to that reply');
     expect(text).toContain('`npx @agentinbox/cli inbox resolve conv_1`');
     expect(text).toContain('only your operator allows things');
   });

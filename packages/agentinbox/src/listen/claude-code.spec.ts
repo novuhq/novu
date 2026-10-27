@@ -1,5 +1,5 @@
 import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { homedir, tmpdir } from 'node:os';
+import { homedir, tmpdir, userInfo } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -211,6 +211,7 @@ describe('sessionEnv', () => {
     expect(
       sessionEnv({
         PATH: '/bin',
+        USER: 'ada',
         CLAUDECODE: '1',
         CLAUDE_CODE_SESSION_ID: 's',
         AI_AGENT: 'claude-code_2-1-310_agent',
@@ -218,7 +219,18 @@ describe('sessionEnv', () => {
         CLAUDE_CODE_USE_BEDROCK: '1',
         ANTHROPIC_MODEL: 'opus',
       })
-    ).toEqual({ PATH: '/bin', CLAUDE_CODE_USE_BEDROCK: '1', ANTHROPIC_MODEL: 'opus' });
+    ).toEqual({ PATH: '/bin', USER: 'ada', CLAUDE_CODE_USE_BEDROCK: '1', ANTHROPIC_MODEL: 'opus' });
+  });
+
+  it('names the account Claude Code signs in under when the environment doesn’t, as under launchd', () => {
+    const account = userInfo();
+
+    expect(sessionEnv({ PATH: '/bin' })).toEqual({
+      PATH: '/bin',
+      USER: account.username,
+      LOGNAME: account.username,
+      HOME: account.homedir,
+    });
   });
 });
 
@@ -254,6 +266,12 @@ describe('claudeCode.check', () => {
     const checked = claudeCode.check(dir, { PATH: dir });
 
     expect(checked.ok === false && checked.message).toContain('didn’t start: broken install');
+  });
+
+  it('finds the sign-in when the environment doesn’t name the account, as a service launchd starts', () => {
+    const bin = installFake();
+
+    expect(claudeCode.check(dir, { PATH: bin })).toMatchObject({ ok: true });
   });
 
   it('asks to sign in to Claude Code first', () => {
