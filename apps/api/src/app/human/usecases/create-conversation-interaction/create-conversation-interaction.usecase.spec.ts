@@ -260,7 +260,7 @@ describe('CreateConversationInteraction', () => {
     expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberIds).to.equal(undefined);
   });
 
-  it('posts the thread’s card for someone in it, so one reached only in their own chat is dropped when that fails', async () => {
+  it('addresses the thread’s card to who may answer, yet drops one reached only in their own chat when that fails', async () => {
     const { usecase, command, humanInteractionRepository } = setup();
     humanInteractionRepository.create.callsFake(async (row: { subscriberIds: string[] }) => ({
       _id: 'hi1',
@@ -284,9 +284,10 @@ describe('CreateConversationInteraction', () => {
     ]);
 
     const stamped = humanInteractionRepository.stampDelivery.firstCall.args[2];
-    // The card in the thread is for sub-1, whose thread it is; it never reached Carol, so nobody's reply counts.
+    // The card in sub-1's thread is addressed to Carol, never to sub-1, who may not answer and is matched by
+    // who a card was addressed to. It didn't reach Carol, so with her own chat failed, nobody's reply counts.
     expect(stamped.deliveries.map((delivery: { subscriberId: string }) => delivery.subscriberId)).to.deep.equal([
-      'sub-1',
+      'carol',
     ]);
     expect(stamped.subscriberIds).to.deep.equal([]);
   });
