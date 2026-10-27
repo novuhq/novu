@@ -8,7 +8,7 @@ import { install } from '../../../init/helpers/install';
 import { isFolderEmpty } from '../../../init/helpers/is-folder-empty';
 import { getOnline } from '../../../init/helpers/is-online';
 import { detectBridgeProject } from '../bridge/detect-project';
-import { buildWebChatEnvEntries, isKnownScaffoldApiHost, mergeWebChatEnv } from './wire-web-chat-env';
+import { buildWebChatEnvEntries, mergeWebChatEnv } from './wire-web-chat-env';
 
 export type ScaffoldWebChatProjectInput = {
   parentDir: string;
@@ -31,8 +31,6 @@ export type ScaffoldWebChatProjectResult = {
   mergedIntoBridge: boolean;
   /** Browser path where Web Chat is served inside the app. */
   chatPath: string;
-  /** API host isn't recognised, so a socket URL couldn't be inferred. */
-  unknownSocketHost: boolean;
 };
 
 /**
@@ -72,7 +70,6 @@ function resolveScaffoldAppName(input: ScaffoldWebChatProjectInput): string {
 export async function scaffoldWebChatProject(
   input: ScaffoldWebChatProjectInput
 ): Promise<ScaffoldWebChatProjectResult> {
-  const unknownSocketHost = !isKnownScaffoldApiHost(input.apiUrl);
   const mergeTarget = input.mergeIntoProjectDir?.trim();
   if (mergeTarget) {
     await mergeWebChatIntoProject(mergeTarget, input);
@@ -84,7 +81,6 @@ export async function scaffoldWebChatProject(
       scaffolded: true,
       mergedIntoBridge: true,
       chatPath,
-      unknownSocketHost,
     };
   }
 
@@ -100,7 +96,7 @@ export async function scaffoldWebChatProject(
   await writeStandaloneWebChatApp(root, input);
   tryGitInit(root);
 
-  return { projectDir: root, appName, scaffolded: true, mergedIntoBridge: false, chatPath: '/', unknownSocketHost };
+  return { projectDir: root, appName, scaffolded: true, mergedIntoBridge: false, chatPath: '/' };
 }
 
 async function mergeWebChatIntoProject(projectDir: string, input: ScaffoldWebChatProjectInput): Promise<void> {

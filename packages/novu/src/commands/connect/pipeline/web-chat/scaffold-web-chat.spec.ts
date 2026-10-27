@@ -83,54 +83,6 @@ describe('scaffoldWebChatProject', () => {
     expect(page).toContain('...(socketUrl ? { socketUrl } : {})');
   });
 
-  it('flags an unrecognised API host as unknownSocketHost when scaffolding a standalone app', async () => {
-    const parentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-unknown-host-'));
-
-    const result = await scaffoldWebChatProject({
-      parentDir,
-      agentIdentifier: 'support-agent',
-      applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
-      apiUrl: 'https://api.my-company.com',
-    });
-
-    expect(result.unknownSocketHost).toBe(true);
-  });
-
-  it('does not flag a known API host as unknownSocketHost when scaffolding a standalone app', async () => {
-    const parentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-known-host-'));
-
-    const result = await scaffoldWebChatProject({
-      parentDir,
-      agentIdentifier: 'support-agent',
-      applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
-      apiUrl: 'https://api.novu.co',
-    });
-
-    expect(result.unknownSocketHost).toBe(false);
-  });
-
-  it('flags an unrecognised API host as unknownSocketHost when merging Web Chat into an existing project', async () => {
-    const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-merge-unknown-host-'));
-    fs.writeFileSync(
-      path.join(projectDir, 'package.json'),
-      JSON.stringify({ name: 'agent-app', dependencies: { '@novu/react': 'latest', '@novu/js': 'latest' } }, null, 2)
-    );
-
-    const result = await scaffoldWebChatProject({
-      parentDir: projectDir,
-      agentIdentifier: 'support-agent',
-      applicationIdentifier: 'app-id',
-      subscriberId: 'subscriber-id',
-      apiUrl: 'https://api.my-company.com',
-      mergeIntoProjectDir: projectDir,
-      mergeAtRoot: true,
-    });
-
-    expect(result.unknownSocketHost).toBe(true);
-  });
-
   it('bootstraps the Tailwind toolchain when merging into a project without Tailwind', async () => {
     const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-web-chat-merge-no-tw-'));
     fs.writeFileSync(

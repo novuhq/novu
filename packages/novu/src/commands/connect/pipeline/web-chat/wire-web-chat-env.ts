@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { parseEnvFile, resolveProjectEnvPaths } from '../bridge/wire-env';
+import { parseEnvFile, readProjectEnvValue, resolveProjectEnvPaths } from '../bridge/wire-env';
 
 export type WebChatEnvInput = {
   projectDir: string;
@@ -22,6 +22,8 @@ const WEB_CHAT_ENV_KEYS = [
   'NEXT_PUBLIC_NOVU_SOCKET_URL',
   'NEXT_PUBLIC_NOVU_SOCKET_TYPE',
 ] as const;
+
+const SOCKET_ENV_KEYS = ['NEXT_PUBLIC_NOVU_SOCKET_URL', 'NEXT_PUBLIC_NOVU_SOCKET_TYPE'] as const;
 
 const DEFAULT_US_API_URL = 'https://api.novu.co';
 
@@ -82,6 +84,19 @@ export function isKnownScaffoldApiHost(apiUrl: string): boolean {
   return isDefaultUsApiHost(apiUrl) || resolveScaffoldSocketConfig(apiUrl) !== undefined;
 }
 
+/**
+ * Whether connect should warn that it couldn't infer a socket URL for apiUrl: the host is
+ * unrecognised AND the project doesn't already have a socket URL configured (e.g. the user set
+ * one by hand after a previous warning — don't nag them again every run).
+ */
+export function resolveUnknownSocketHostWarning(apiUrl: string, projectDir: string): boolean {
+  if (isKnownScaffoldApiHost(apiUrl)) {
+    return false;
+  }
+
+  return !readProjectEnvValue(projectDir, 'NEXT_PUBLIC_NOVU_SOCKET_URL');
+}
+
 export function buildWebChatEnvEntries(input: WebChatEnvInput): Record<string, string> {
   const backendUrl = input.apiUrl.replace(/\/$/, '');
   const socketConfig = resolveScaffoldSocketConfig(input.apiUrl);
@@ -111,7 +126,7 @@ function unquoteEnvValue(value: string): string {
   return value.replace(/^(['"])(.*)\1$/, '$2');
 }
 
-function mergeEnvFileAtPath(envPath: string, entriesToSet: Record<string, string>): string[] {
+function mergeEnvFileAtPath(envPath: string, entriesToSet: Record<string, string>, canInferSocket: boolean): string[] {
   const created = !fs.existsSync(envPath);
   const existingContents = created ? '' : fs.readFileSync(envPath, 'utf8');
   const entries = parseEnvFile(existingContents);
@@ -119,8 +134,14 @@ function mergeEnvFileAtPath(envPath: string, entriesToSet: Record<string, string
 
   // Clear a previously-written web-chat key that no longer applies to this run (e.g. a socket
   // URL/type written for a prior API host) so a stale value can't survive a re-run against a
-  // different host.
+  // different host. Skip the socket keys when the current host is unrecognised: we have no
+  // value to replace them with, and clearing them would delete a socket URL the user set by
+  // hand after a previous unknownSocketHost warning.
   for (const key of WEB_CHAT_ENV_KEYS) {
+    if (!canInferSocket && (SOCKET_ENV_KEYS as readonly string[]).includes(key)) {
+      continue;
+    }
+
     if (!(key in entriesToSet) && entries.delete(key)) {
       updatedKeys.push(key);
     }
@@ -190,10 +211,11 @@ function serializeEnvWithComment(existingContents: string, entries: Map<string, 
 export function mergeWebChatEnv(input: WebChatEnvInput): WebChatEnvMergeResult {
   const envPaths = resolveProjectEnvPaths(input.projectDir);
   const entriesToSet = buildWebChatEnvEntries(input);
+  const canInferSocket = isKnownScaffoldApiHost(input.apiUrl);
   const updatedKeys = new Set<string>();
 
   for (const envPath of envPaths) {
-    for (const key of mergeEnvFileAtPath(envPath, entriesToSet)) {
+    for (const key of mergeEnvFileAtPath(envPath, entriesToSet, canInferSocket)) {
       updatedKeys.add(key);
     }
   }
