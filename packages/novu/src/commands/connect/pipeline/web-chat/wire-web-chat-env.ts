@@ -32,13 +32,24 @@ const API_HOST_SOCKET_URL: Record<string, string> = {
   'api.novu-staging.co': 'wss://socket.novu-staging.co',
 };
 
-// Novu Box preview environments, e.g. https://my-box-api.box.novu-staging.co
-const NOVU_BOX_API_HOST_PATTERN = /^(?<box>[a-z0-9-]+)-api\.box\.novu-staging\.co$/;
+// Novu's own internal PR-preview environments (e.g. https://my-box-api.box.novu-staging.co),
+// used by Novu engineers to test changes against a real deployment — not a deployment type
+// customers configure.
+const NOVU_INTERNAL_BOX_PREVIEW_HOST_PATTERN = /^(?<box>[a-z0-9-]+)-api\.box\.novu-staging\.co$/;
 
 type ScaffoldSocketConfig = {
   socketUrl: string;
   socketType?: 'cloud';
 };
+
+function resolveNovuInternalBoxPreviewSocket(hostname: string): ScaffoldSocketConfig | undefined {
+  const boxHost = hostname.match(NOVU_INTERNAL_BOX_PREVIEW_HOST_PATTERN)?.groups?.box;
+  if (!boxHost) {
+    return undefined;
+  }
+
+  return { socketUrl: `wss://${boxHost}.box.novu-staging.co/ws`, socketType: 'cloud' };
+}
 
 function resolveScaffoldSocketConfig(apiUrl: string): ScaffoldSocketConfig | undefined {
   try {
@@ -52,12 +63,7 @@ function resolveScaffoldSocketConfig(apiUrl: string): ScaffoldSocketConfig | und
       return { socketUrl: knownSocketUrl };
     }
 
-    const boxHost = hostname.match(NOVU_BOX_API_HOST_PATTERN)?.groups?.box;
-    if (boxHost) {
-      return { socketUrl: `wss://${boxHost}.box.novu-staging.co/ws`, socketType: 'cloud' };
-    }
-
-    return undefined;
+    return resolveNovuInternalBoxPreviewSocket(hostname);
   } catch {
     return undefined;
   }
