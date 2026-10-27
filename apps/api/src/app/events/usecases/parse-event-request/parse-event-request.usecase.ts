@@ -333,7 +333,7 @@ export class ParseEventRequest {
       })
     )) as ExecuteBridgeRequestDto<GetActionEnum.DISCOVER>;
 
-    return discover?.workflows?.find((findWorkflow) => findWorkflow.workflowId === command.identifier) || null;
+    return discover.workflows.find((findWorkflow) => findWorkflow.workflowId === command.identifier) || null;
   }
 
   // The trigger pipeline performs an outbound DISCOVER request against the

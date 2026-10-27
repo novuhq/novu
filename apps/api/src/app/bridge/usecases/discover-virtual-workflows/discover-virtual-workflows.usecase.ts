@@ -29,7 +29,7 @@ export class DiscoverVirtualWorkflows {
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       userId: command.userId,
-      discoveredWorkflows: discover.workflows ?? [],
+      discoveredWorkflows: discover.workflows,
     });
 
     return { workflows };

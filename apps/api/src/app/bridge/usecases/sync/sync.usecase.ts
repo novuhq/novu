@@ -77,7 +77,7 @@ export class Sync {
     const environment = await this.findEnvironment(command);
     const discover = await this.executeDiscover(command);
     this.sendAnalytics(command, environment, discover);
-    const persistedWorkflowsInBridge = await this.processWorkflows(command, discover.workflows ?? []);
+    const persistedWorkflowsInBridge = await this.processWorkflows(command, discover.workflows);
 
     await this.disposeOldWorkflows(command, persistedWorkflowsInBridge);
     await this.updateBridgeUrl(command);
@@ -119,7 +119,7 @@ export class Sync {
         _organization: command.organizationId,
         _environment: command.environmentId,
         environmentName: environment.name,
-        workflowsCount: discover.workflows?.length || 0,
+        workflowsCount: discover.workflows.length,
         localEnvironment: !!command.bridgeUrl?.includes('novu.sh'),
         source: command.source,
       });
