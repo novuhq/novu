@@ -57,6 +57,12 @@ export function agent(id: string, handlers: LangChainMessageHandler | LangChainA
     const result = await h.onMessage(RESUME_MESSAGE, runtime.asMessageContext());
     if (isLangChainResult(result)) {
       await handleLangChainResult(result, runtime, config);
+
+      return;
+    }
+
+    if (result != null && !isReplyHandle(result)) {
+      await runtime.reply(result);
     }
   };
 

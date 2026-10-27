@@ -177,6 +177,29 @@ describe('langchain agent adapter', () => {
       expect(ctx.reply).toHaveBeenCalledWith('done');
     });
 
+    it('delivers a plain MessageContent returned by the resumed onMessage', async () => {
+      const billingAgent = agent('billing', async () => 'resumed reply');
+      const ctx = fakeActionCtx({ history: approvedCycleHistory() });
+
+      await invokeToolApproval(billingAgent, ctx);
+
+      expect(ctx.reply).toHaveBeenCalledWith('resumed reply');
+    });
+
+    it('delivers a ReplyStream returned by the resumed onMessage', async () => {
+      async function* streamReply() {
+        yield 'resumed ';
+        yield 'stream';
+      }
+      const stream = streamReply();
+      const billingAgent = agent('billing', async () => stream);
+      const ctx = fakeActionCtx({ history: approvedCycleHistory() });
+
+      await invokeToolApproval(billingAgent, ctx);
+
+      expect(ctx.reply).toHaveBeenCalledWith(stream);
+    });
+
     it('posts string returns from onToolApproval, then auto-resumes', async () => {
       const billingAgent = agent('billing', {
         onMessage: async () => invokeResult('done'),

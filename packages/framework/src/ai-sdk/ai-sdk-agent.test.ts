@@ -251,6 +251,28 @@ describe('ai-sdk agent adapter', () => {
       expect(ctx.sent).toHaveBeenCalledWith('done');
     });
 
+    it('delivers a plain MessageContent returned by the resumed onMessage', async () => {
+      const billingAgent = agent('billing', async () => 'resumed reply');
+      const ctx = fakeActionCtx({ history: approvedCycleHistory() });
+
+      await invokeToolApproval(billingAgent, ctx);
+
+      expect(ctx.sent).toHaveBeenCalledWith('resumed reply');
+    });
+
+    it('delivers a ReplyStream returned by the resumed onMessage', async () => {
+      async function* streamReply() {
+        yield 'resumed ';
+        yield 'stream';
+      }
+      const billingAgent = agent('billing', async () => streamReply());
+      const ctx = fakeActionCtx({ history: approvedCycleHistory() });
+
+      await invokeToolApproval(billingAgent, ctx);
+
+      expect(ctx.sent).toHaveBeenCalledWith('resumed stream');
+    });
+
     it('posts string returns from onToolApproval, then auto-resumes', async () => {
       const billingAgent = agent('billing', {
         onMessage: async () => aiSdkTextResult('done'),

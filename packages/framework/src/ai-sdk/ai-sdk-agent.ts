@@ -49,6 +49,12 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
     const result = await h.onMessage(RESUME_MESSAGE, runtime.asMessageContext());
     if (isAiSdkResult(result)) {
       await handleAiSdkResult(result, runtime, config);
+
+      return;
+    }
+
+    if (result != null && !isReplyHandle(result)) {
+      await runtime.reply(result);
     }
   };
 
