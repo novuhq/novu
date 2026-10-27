@@ -61,6 +61,17 @@ function resolveScaffoldSocketConfig(apiUrl: string): ScaffoldSocketConfig | und
   }
 }
 
+// Compares hostnames (not the raw string) so http vs https, a trailing slash, or an explicit
+// default port don't make buildWebChatEnvEntries and isKnownScaffoldApiHost disagree on
+// whether an apiUrl is the US Cloud default.
+function isDefaultUsApiHost(apiUrl: string): boolean {
+  try {
+    return new URL(apiUrl).hostname === new URL(DEFAULT_US_API_URL).hostname;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * False when the API host isn't one of the deployments we can infer a socket
  * address for (US Cloud default, EU, staging, localhost, or a Novu Box).
@@ -68,13 +79,7 @@ function resolveScaffoldSocketConfig(apiUrl: string): ScaffoldSocketConfig | und
  * that NEXT_PUBLIC_NOVU_SOCKET_URL needs to be set manually.
  */
 export function isKnownScaffoldApiHost(apiUrl: string): boolean {
-  try {
-    const hostname = new URL(apiUrl).hostname;
-
-    return hostname === new URL(DEFAULT_US_API_URL).hostname || resolveScaffoldSocketConfig(apiUrl) !== undefined;
-  } catch {
-    return false;
-  }
+  return isDefaultUsApiHost(apiUrl) || resolveScaffoldSocketConfig(apiUrl) !== undefined;
 }
 
 export function buildWebChatEnvEntries(input: WebChatEnvInput): Record<string, string> {
@@ -87,7 +92,7 @@ export function buildWebChatEnvEntries(input: WebChatEnvInput): Record<string, s
   };
 
   // US Cloud defaults to https://api.novu.co — omit so NovuProvider uses SDK defaults.
-  if (backendUrl !== DEFAULT_US_API_URL) {
+  if (!isDefaultUsApiHost(input.apiUrl)) {
     entries.NEXT_PUBLIC_NOVU_BACKEND_URL = backendUrl;
   }
 
@@ -111,6 +116,15 @@ function mergeEnvFileAtPath(envPath: string, entriesToSet: Record<string, string
   const existingContents = created ? '' : fs.readFileSync(envPath, 'utf8');
   const entries = parseEnvFile(existingContents);
   const updatedKeys: string[] = [];
+
+  // Clear a previously-written web-chat key that no longer applies to this run (e.g. a socket
+  // URL/type written for a prior API host) so a stale value can't survive a re-run against a
+  // different host.
+  for (const key of WEB_CHAT_ENV_KEYS) {
+    if (!(key in entriesToSet) && entries.delete(key)) {
+      updatedKeys.push(key);
+    }
+  }
 
   for (const [key, value] of Object.entries(entriesToSet)) {
     const existing = entries.get(key);

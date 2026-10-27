@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CONNECT_HELP_TEXT } from '../help-text';
-import { type ConnectSuccessResult, UNKNOWN_SOCKET_HOST_WARNING } from './format-web-chat-success';
+import type { ConnectSuccessResult } from './format-web-chat-success';
 import { printConnectSuccess } from './print-connect-success';
+
+// Fixed substring, independent of the UNKNOWN_SOCKET_HOST_WARNING constant: asserting against
+// the same constant the production code emits can't catch a regression in the warning's wording.
+const SOCKET_WARNING_INSTRUCTION = 'NEXT_PUBLIC_NOVU_SOCKET_URL';
 
 const baseResult: ConnectSuccessResult = {
   agent: {
@@ -135,7 +139,7 @@ describe('unknown socket host warning', () => {
       webChatOutcome,
     });
 
-    expect(log).toHaveBeenCalledWith(expect.stringContaining(UNKNOWN_SOCKET_HOST_WARNING));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining(SOCKET_WARNING_INSTRUCTION));
   });
 
   it('does not warn for a known API host', () => {
@@ -151,6 +155,6 @@ describe('unknown socket host warning', () => {
       },
     });
 
-    expect(log).not.toHaveBeenCalledWith(expect.stringContaining(UNKNOWN_SOCKET_HOST_WARNING));
+    expect(log).not.toHaveBeenCalledWith(expect.stringContaining(SOCKET_WARNING_INSTRUCTION));
   });
 });
