@@ -104,7 +104,8 @@ export function HostSetupBox({
       {/* The header and the words differ in height from one view to the next; the box follows while they fade. */}
       <div style={{ height }} className="transition-[height] duration-300 ease-out motion-reduce:transition-none">
         <div ref={ref}>
-          <div className="flex items-center gap-2.5 bg-raised py-2 pr-2 pl-4">
+          {/* Where the tabs and the button don't fit side by side, as on a phone, the button goes under them. */}
+          <div className="flex flex-wrap items-center gap-2.5 bg-raised py-2 pr-2 pl-4">
             <div
               key={lead.shown}
               className={cn(

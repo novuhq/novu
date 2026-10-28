@@ -41,8 +41,10 @@ export async function signInAppHost(token: string, env: Env): Promise<HostId | n
     return null;
   }
 
+  // What's remembered only saves asking Clerk again. A KV that fails, or refuses a write made too soon after
+  // another one to the same key, never stops an app from connecting.
   const cacheKey = `sign-in-app:${clientId}`;
-  const remembered = await env.CONNECTIONS?.get<{ host: HostId | null }>(cacheKey, 'json');
+  const remembered = await env.CONNECTIONS?.get<{ host: HostId | null }>(cacheKey, 'json').catch(() => null);
   if (remembered) {
     return remembered.host;
   }
@@ -53,7 +55,9 @@ export async function signInAppHost(token: string, env: Env): Promise<HostId | n
   }
 
   const host = hostOfRedirectUris(redirectUris);
-  await env.CONNECTIONS?.put(cacheKey, JSON.stringify({ host }), { expirationTtl: SIGN_IN_APP_TTL_SECONDS });
+  await env.CONNECTIONS?.put(cacheKey, JSON.stringify({ host }), { expirationTtl: SIGN_IN_APP_TTL_SECONDS }).catch(
+    () => undefined
+  );
 
   return host;
 }

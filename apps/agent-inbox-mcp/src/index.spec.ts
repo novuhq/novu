@@ -164,6 +164,24 @@ describe('the Agent Inbox MCP server', () => {
     expect(calls.filter((call) => call.url.startsWith('https://api.clerk.com/v1/oauth_applications?'))).toHaveLength(2);
   });
 
+  it('connects Grok Bot when the KV can’t keep its sign-in app’s host', async () => {
+    stubBackends();
+    const { env, ctx, kv, settle } = setup({ CLERK_SECRET_KEY: CLERK_SECRET });
+    const get = kv.get.bind(kv);
+    const put = kv.put.bind(kv);
+    kv.get = async (key, type) =>
+      key.startsWith('sign-in-app:') ? Promise.reject(new Error('KV GET failed')) : get(key, type);
+    kv.put = async (key, value, options) =>
+      key.startsWith('sign-in-app:') ? Promise.reject(new Error('KV PUT failed: 429')) : put(key, value, options);
+
+    const response = await worker.fetch(fromCursorRuntime('grok-bot-token'), env, ctx);
+    await settle();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Mcp-Session-Id')?.startsWith('grok.')).toBe(true);
+    expect(kv.values.has('tool:user_1:grok')).toBe(true);
+  });
+
   it('reads Cursor’s agent runtime as Cursor without the Clerk app’s secret key', async () => {
     const calls = stubBackends();
     const { env, ctx } = setup();

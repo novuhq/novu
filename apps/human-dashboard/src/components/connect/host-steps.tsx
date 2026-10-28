@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, Check, ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { type ReactNode, useEffect, useId, useState } from 'react';
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 
 import { useConnectionPoll, WaitingLine } from '@/components/channels/setup-parts';
 import { ConnectPromptBox, type SignedOutCode } from '@/components/connect/connect-prompt-box';
@@ -455,13 +455,18 @@ export function HostPanel({
   const way = wayFor(host);
 
   const watched = watchesSignIn(host, way, mcpUrl);
+  // The host on show when an answer comes back, which may no longer be the one it was asked for.
+  const hostOnShow = useRef(host.id);
+  useEffect(() => {
+    hostOnShow.current = host.id;
+  });
   useConnectionPoll<HostId>({
     waiting: watched && !isSignedIn(host.id),
     // It asks for as long as the steps are on show: installing a plugin, signing in and then the host's first
     // connection (Codex's comes when a session starts) can take far longer than a drawer usually waits.
     giveUpAfterMs: null,
     // Only this app's own sign-in counts: the MCP server is shared by every app, so a check through it could
-    // be another app's. The answer names the host it was asked for, in case the picker moved on meanwhile.
+    // be another app's.
     check: async () => {
       // A tab out of sight asks nothing; it picks up again as soon as the operator comes back to it.
       if (document.visibilityState === 'hidden') {
@@ -469,8 +474,11 @@ export function HostPanel({
       }
 
       const id = host.id;
+      const hasSignedIn = isToolId(id) && (await api.isToolSignedIn(id).catch(() => false));
 
-      return isToolId(id) && (await api.isToolSignedIn(id).catch(() => false)) ? id : null;
+      // An answer about a host the picker has moved on from is dropped: it would end the asking for the host on
+      // show, and `waiting` doesn't start it again while that one waits too. The other is asked again once back.
+      return hasSignedIn && id === hostOnShow.current ? id : null;
     },
     onConnected: (id) => {
       setSignedIn((hosts) => new Set(hosts).add(id));
