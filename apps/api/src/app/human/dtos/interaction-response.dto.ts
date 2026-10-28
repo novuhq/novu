@@ -9,7 +9,7 @@ import {
 } from '@novu/shared';
 
 export class InteractionThreadDto {
-  @ApiProperty({ description: 'Inbox thread identifier, as `human inbox list` shows it.' })
+  @ApiProperty({ description: 'Inbox thread identifier, as `agentinbox list` shows it.' })
   id: string;
 
   @ApiProperty({ description: 'Messages in the thread that were unread when this was sent.' })

@@ -1,14 +1,14 @@
 ---
 title: "Send a message"
-description: "Start a conversation with inbox send or inbox_send. A plain message returns as soon as it is delivered."
+description: "Start a conversation with send in the CLI, or inbox_send over MCP. A plain message returns as soon as it is delivered."
 ---
 
-`inbox send` starts a conversation. A plain message does not wait.
+`send` starts a conversation. A plain message does not wait.
 
 <Tabs>
   <Tab title="CLI">
 ```bash
-npx @agentinbox/cli inbox send "Nightly build finished — 0 failures."
+npx @agentinbox/cli send "Nightly build finished — 0 failures."
 ```
   </Tab>
   <Tab title="MCP">
@@ -21,7 +21,7 @@ Leave out a recipient and the message goes to you, or to `INBOX_TO` when that is
 Every send prints the conversation it landed in. Continue there with [reply](/conversations).
 
 <Warning>
-A send can land in a conversation that person already opened, and it marks that conversation read. The command warns you when it had unread messages. Read it with `inbox show` before you continue.
+A send can land in a conversation that person already opened, and it marks that conversation read. The command warns you when it had unread messages. Read it with `show` before you continue.
 </Warning>
 
 ## An email address
@@ -39,7 +39,7 @@ Send the message again after they verify.
 A plain message arrives as text. Pass `--subtitle`, `--body`, or `--icon` and it becomes a card. `--icon` is Slack-only: an MCP catalog id such as `stripe`, or an https URL. Other channels ignore it.
 
 ```bash
-npx @agentinbox/cli inbox send "Refund issued" \
+npx @agentinbox/cli send "Refund issued" \
   --subtitle "ORD-42" \
   --body "Refund $25.00" \
   --from "deploy-bot"

@@ -17,10 +17,10 @@ npx @agentinbox/cli login
 npx @agentinbox/cli connect atlas --code BCDF-GHJK
 
 # Forever after, by any agent on the machine:
-npx @agentinbox/cli inbox send ask "Which environment should I deploy to?"
-npx @agentinbox/cli inbox send approve "Delete 342 stale records from prod?"
-npx @agentinbox/cli inbox send choose "Pick a release strategy" --option canary --option blue-green
-npx @agentinbox/cli inbox send "Nightly build finished — 0 failures."
+npx @agentinbox/cli send ask "Which environment should I deploy to?"
+npx @agentinbox/cli send approve "Delete 342 stale records from prod?"
+npx @agentinbox/cli send choose "Pick a release strategy" --option canary --option blue-green
+npx @agentinbox/cli send "Nightly build finished — 0 failures."
 
 # Invite another person — share the printed link; they pick Telegram, Slack or email on a page
 # and choose their default (does not change who you are on this computer):
@@ -42,14 +42,14 @@ npx @agentinbox/cli contact list --json
 People can also write to your agent first. Everything said in one place on one channel is a conversation.
 
 ```bash
-npx @agentinbox/cli inbox list                          # open conversations with your contacts
-npx @agentinbox/cli inbox list --filter unread --wait --timeout 10m   # block until something arrives (exit 11 on timeout)
-npx @agentinbox/cli inbox list --senders all            # include conversations with strangers
-npx @agentinbox/cli inbox show conv_123                 # read a conversation; this does not mark it read
-npx @agentinbox/cli inbox reply conv_123 "On it."                        # reply in the conversation
-npx @agentinbox/cli inbox reply conv_123 approve "Deploy?" --to alice    # ask one person inside a conversation
-npx @agentinbox/cli inbox read conv_123                 # seen, no reply needed
-npx @agentinbox/cli inbox resolve conv_123              # finished; opens again when anyone writes
+npx @agentinbox/cli list                          # open conversations with your contacts
+npx @agentinbox/cli list --filter unread --wait --timeout 10m   # block until something arrives (exit 11 on timeout)
+npx @agentinbox/cli list --senders all            # include conversations with strangers
+npx @agentinbox/cli show conv_123                 # read a conversation; this does not mark it read
+npx @agentinbox/cli reply conv_123 "On it."                        # reply in the conversation
+npx @agentinbox/cli reply conv_123 approve "Deploy?" --to alice    # ask one person inside a conversation
+npx @agentinbox/cli read conv_123                 # seen, no reply needed
+npx @agentinbox/cli resolve conv_123              # finished; opens again when anyone writes
 ```
 
 | Command | Where it lands | Who may answer |
@@ -82,7 +82,7 @@ npx @agentinbox/cli listen stop          # not here any more
 - It asks first. A person at the terminal answers there; when an agent runs it, you get an Allow/Deny message on your channel, and nothing listens until you allow it (`--timeout 10m` bounds the wait; exit codes as for `approve`). One computer keeps an agent listening at a time: starting it on another asks to move it.
 - It runs in the background and starts again after a restart or a crash: a launchd agent on macOS, a systemd user service on Linux. On Windows, run it inside WSL. `--foreground` listens in that terminal only, and `listen stop` stops that one too.
 - One Claude Code session per conversation: the next message in the conversation goes on with it, until the conversation is resolved. A message that comes while it works joins the run, as does the answer to a question it asked with `--async`, and `/stop` stops it. A run cut off by a restart isn't started again: its conversation is told.
-- Claude Code follows its own settings for the project and may edit files inside it. Anything else (a command its settings don't allow, the network, other folders, writing to other people) waits for your Allow, even when a contact's message started it, and shows the whole command; **Allow for this session** lets the same thing through until the session ends, and no answer in 10 minutes counts as Deny. Reading and answering in its own conversation never asks, as long as it writes to no one else: it replies with `inbox reply` (or the Agent Inbox MCP tools, when Claude Code has them), and when a turn ends without a reply, its last words are sent as the reply.
+- Claude Code follows its own settings for the project and may edit files inside it. Anything else (a command its settings don't allow, the network, other folders, writing to other people) waits for your Allow, even when a contact's message started it, and shows the whole command; **Allow for this session** lets the same thing through until the session ends, and no answer in 10 minutes counts as Deny. Reading and answering in its own conversation never asks, as long as it writes to no one else: it replies with `reply` (or the Agent Inbox MCP tools, when Claude Code has them), and when a turn ends without a reply, its last words are sent as the reply.
 - Limits: 20 runs an hour (`--runs-per-hour`) and 30 minutes a run (`--max-run`). Messages over the limit wait, and you hear about it once an hour.
 - When the key changes on agentinbox.md, it stops for good and says so in `listen status`: connect again, then listen again. It stops too when this computer is connected anew, rather than run anything left for the old connection. While the agent is paused, it waits; `listen status` and `listen stop` still work.
 - It needs an Agent Inbox account: on a keyless setup, run `login` first. It uses the connection saved on this computer and sends the key only to the API saved with it; `INBOX_SECRET_KEY` and `INBOX_API_URL` in the shell don't count.
@@ -98,10 +98,10 @@ npx @agentinbox/cli listen stop          # not here any more
 - `contact invite` gives you a link to share with a **different** person — nothing is sent for you. Without `--via` it opens a page (valid for 3 days) where they connect any channel you set up — Telegram, Slack, and/or Email — and pick their default. With `--via telegram|slack` you get the direct connect link instead (a Slack authorize URL or Telegram deep link, valid for minutes). Pass an email address instead of an id (or `--via email --email <address>`) and a verification email is sent. They must click **Verify this email** before a send that names their contact id can use email. A send that names the address itself does not wait for that click when the organization is claimed. The contact's id comes from the address (`alice@acme.com` becomes `alice`, with a short suffix when `alice` is taken). Then `--to alice` reaches them on their default channel. Pass `--name "Alice Chen"` so they show up by name.
 - `contact list` lists the contacts — every person `--to` can address — so an agent can check who exists before coordinating between people. It's a directory, not a reachability check: if delivery fails with "no linked endpoint", `contact invite` them on that channel.
 - Agents stay channel-blind: routing is the person's preference — the default they picked on the invite page, or the first channel they connected. `--via telegram|slack|email` on `send` is a rare per-call **delivery** override, not how you onboard someone.
-- Every command has the shape `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`, `listen`.
+- The conversation commands stand alone: `list`, `show`, `read`, `resolve`, `send`, `reply`. `contact` and `channel` take an action, as in `contact list`. The rest are `setup`, `login`, `connect` and `listen`.
 - `ask`, `approve` and `choose` deliver a one-off message (with action buttons where relevant) and **block** until the person answers, the `--ttl` expires, or `--timeout` elapses.
 - Answers flow back through button clicks or plain replies; the CLI prints the answer and your agent continues.
-- In a terminal, `setup`, `login` and `connect` (and `channel add`) draw one screen and keep it up to date in place: your agent's mascot in dots, the command, a list of what it did with a ✔ for each step done, and what it is waiting for. The mascot blinks while it waits for you, smiles once something is connected, and falls asleep when a wait runs out or something fails. Questions are asked below the screen, and your answers join the list. The screen is only drawn for a person at a terminal: never into a pipe, a file or CI, or with `NO_COLOR`, `FORCE_COLOR=0` or `TERM=dumb` set, or in a terminal narrower than 48 columns. There the commands print exactly what they always printed, so what agents read stays the same. The agent-facing commands (`inbox`, `contact`) never draw it. Three settings change how it looks:
+- In a terminal, `setup`, `login` and `connect` (and `channel add`) draw one screen and keep it up to date in place: your agent's mascot in dots, the command, a list of what it did with a ✔ for each step done, and what it is waiting for. The mascot blinks while it waits for you, smiles once something is connected, and falls asleep when a wait runs out or something fails. Questions are asked below the screen, and your answers join the list. The screen is only drawn for a person at a terminal: never into a pipe, a file or CI, or with `NO_COLOR`, `FORCE_COLOR=0` or `TERM=dumb` set, or in a terminal narrower than 48 columns. There the commands print exactly what they always printed, so what agents read stays the same. The agent-facing commands (the conversation commands and `contact`) never draw it. Three settings change how it looks:
   - `AGENTINBOX_NO_ANIMATION=1` stands it still: the mascot's still faces, no blinking and no spinner.
   - `AGENTINBOX_THEME=light` or `dark` says whether your terminal's background is light or dark, where the terminal can't be asked (the CLI asks it, then goes by `COLORFGBG`, then takes dark).
   - `AGENTINBOX_MASCOT_ASPECT=1.2` says how tall a row of braille dots is for a dot's width (1 is square), where the mascot comes out oval because the terminal doesn't say how big its characters are.
@@ -112,7 +112,7 @@ npx @agentinbox/cli listen stop          # not here any more
 | ---- | ------- |
 | `0`  | answered / approved / chosen / delivered |
 | `10` | denied |
-| `11` | timed out waiting — still pending; the answer shows up in the conversation (`inbox show <id>`) |
+| `11` | timed out waiting — still pending; the answer shows up in the conversation (`show <id>`) |
 | `12` | expired or canceled |
 | `1`  | error |
 
@@ -140,7 +140,7 @@ In containers, sandboxes, and CI — anywhere no config file exists — the CLI 
 
 ```bash
 docker run -e INBOX_SECRET_KEY=... -e INBOX_TO=alice -e INBOX_VIA=slack agent \
-  npx @agentinbox/cli inbox send approve "Deploy to prod?"
+  npx @agentinbox/cli send approve "Deploy to prod?"
 ```
 
 - `INBOX_TO` — default recipient contact id(s), comma-separated like `--to` (max 50).

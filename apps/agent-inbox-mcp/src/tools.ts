@@ -58,7 +58,7 @@ const anyoneMayAnswer = z
 const CHECK_INBOX_HINT =
   ' Before you send, call inbox_list with filter "unread" so you do not miss a conversation a person started.';
 
-/** The kinds that ask something. Without one, a send is a plain message, as `inbox send <text>` is in the CLI. */
+/** The kinds that ask something. Without one, a send is a plain message, as `send <text>` is in the CLI. */
 type QuestionKind = Exclude<InteractionKind, 'tell'>;
 
 const questionKind = z
