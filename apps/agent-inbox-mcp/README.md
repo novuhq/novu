@@ -46,6 +46,8 @@ Every request stands alone: nothing is kept between calls, so any instance can a
 
 When an app connects, the server tells which host it is from the name the app gives in `initialize` (`clientInfo.name`), matched whole: `claude-code` is Claude Code and `claude-ai` is Claude, so one is never taken for the other (`CLIENT_NAMES` in `src/connections.ts`, with where each name comes from). Any other name is General. It notes the host in a KV namespace; the Agent Inbox dashboard reads that from `GET /connections/:agentInboxUserId`, which answers only to the shared secret, and shows the app as Connected.
 
+Cursor's agent runtime is Cursor only by its User-Agent (`Cursor/1.0.0`, with the name `Cursor`), in the Cursor editor and in Cursor's cloud, where Grok Bot runs on it, and both register a sign-in app called Cursor. For it the server asks Clerk which sign-in app the token was issued to (`src/sign-in-apps.ts`): one whose sign-ins return to `cursor://` is the editor, one that returns only to `https://www.cursor.com/agents/…` is Grok Bot. Without `CLERK_SECRET_KEY`, both read as Cursor.
+
 ## Configuration
 
 | Name | Kind | What it is |
@@ -55,7 +57,8 @@ When an app connects, the server tells which host it is from the name the app gi
 | `NOVU_API_URL` | variable | The Novu API of the US region, used to open an account and read its key with the dashboard's secret. |
 | `DOCS_URL` | variable | Where a person who opens the address in a browser is sent. |
 | `AGENT_INBOX_DASHBOARD_API_SECRET` | secret | The secret the Agent Inbox dashboard shares with the Novu API. |
-| `CONNECTIONS` | KV namespace | Remembers connected tools and, for five minutes, whose token is whose. Optional: without it nothing reads as connected. |
+| `CLERK_SECRET_KEY` | secret | The Agent Inbox Clerk app's secret key, to ask Clerk which sign-in app a token was issued to. Optional: without it Grok Bot reads as Cursor. |
+| `CONNECTIONS` | KV namespace | Remembers connected tools, for five minutes whose token is whose, and for 30 days which host each sign-in app is. Optional: without it nothing reads as connected. `wrangler dev` keeps the local one in `.wrangler/state`. |
 
 ## Run and deploy
 
@@ -70,12 +73,12 @@ Before the first deploy of an environment:
 1. Turn on OAuth with dynamic client registration in that environment's Agent Inbox Clerk app, and put its address in `CLERK_OAUTH_ISSUER` in `wrangler.jsonc`.
 2. Check that `AGENT_INBOX_API_URL` in `wrangler.jsonc` points at that environment's dashboard (`/api`), and that the dashboard there already serves it.
 3. Create the KV namespace (`wrangler kv namespace create CONNECTIONS --env <env>`) and add the binding it prints to `wrangler.jsonc`.
-4. Set the secret: `wrangler secret put AGENT_INBOX_DASHBOARD_API_SECRET --env <env>`.
+4. Set the secrets: `wrangler secret put AGENT_INBOX_DASHBOARD_API_SECRET --env <env>`, and `wrangler secret put CLERK_SECRET_KEY --env <env>` with the secret key of that environment's Agent Inbox Clerk app.
 5. `pnpm --filter @novu/agent-inbox-mcp deploy:<env>`.
 6. Set `AGENT_INBOX_MCP_URL` on the Agent Inbox dashboard to the server's address. The Connect drawers on the Agent page appear only once it is set.
 
 ## Known limits
 
 - A token is accepted when Clerk says it is valid. The server does not check that the token was issued for this server in particular: Clerk puts the client's id in a token's audience, not this server's address, and any client may register. So keep OAuth in the Agent Inbox Clerk app for this server alone. If another service ever accepts tokens from that app, this server needs an audience check first.
-- Which tool connected is read from the name the tool reports, so another client that calls itself "cursor" reads as Cursor.
+- Which tool connected is read from the name the tool reports, so another client that calls itself "cursor" reads as Cursor. Cursor's own cloud agents sign in the way Grok Bot does, so they read as Grok Bot.
 - A removed connector still reads as Connected: nothing tells the server that a tool was disconnected.

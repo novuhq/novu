@@ -4,6 +4,7 @@ import { createAgentInboxApi } from './agent-inbox-api';
 import { AuthError, authenticate, bearerTokenOf } from './auth';
 import {
   clientNameOf,
+  type HostId,
   hostOfClientName,
   hostOfSession,
   hostOfUserAgent,
@@ -13,6 +14,7 @@ import {
 } from './connections';
 import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
 import { type Env, issuerOf } from './env';
+import { signInAppHost } from './sign-in-apps';
 import { registerTools } from './tools';
 
 const SERVER = { name: 'agent-inbox', version: '0.0.1' };
@@ -95,8 +97,7 @@ async function serveMcp(request: Request, env: Env, ctx: ExecutionContext): Prom
         )
       : null;
   const userAgentHost = hostOfUserAgent(request.headers.get('User-Agent'));
-  // The host an `initialize` names: any app Agent Inbox doesn't know is General.
-  const connecting = clientName === null ? null : (hostOfClientName(clientName) ?? userAgentHost ?? 'general');
+  const connecting = clientName === null ? null : await hostOfInitialize(clientName, userAgentHost, request, env);
   const host = connecting ?? hostOfSession(request.headers.get('Mcp-Session-Id')) ?? userAgentHost;
   if (connecting && connecting !== 'general') {
     ctx.waitUntil(recordConnection(env, account.agentInboxUserId, connecting));
@@ -117,6 +118,30 @@ async function serveMcp(request: Request, env: Env, ctx: ExecutionContext): Prom
   await server.connect(transport);
 
   return transport.handleRequest(request);
+}
+
+/**
+ * The host an `initialize` names: by the app's name, or else by its User-Agent. Any app Agent Inbox doesn't
+ * know is General. Cursor's agent runtime is Cursor only by its User-Agent, in the Cursor editor and under
+ * Grok Bot alike, so the sign-in app its token was issued to tells which (`signInAppHost`).
+ */
+async function hostOfInitialize(
+  clientName: string,
+  userAgentHost: HostId | null,
+  request: Request,
+  env: Env
+): Promise<HostId> {
+  const named = hostOfClientName(clientName);
+  if (named) {
+    return named;
+  }
+
+  const token = bearerTokenOf(request);
+  if (userAgentHost === 'cursor' && token) {
+    return (await signInAppHost(token, env)) ?? 'cursor';
+  }
+
+  return userAgentHost ?? 'general';
 }
 
 /** Tells a tool where to sign in: the Agent Inbox Clerk app itself, so what it reads there is Clerk's own word. */

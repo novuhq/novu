@@ -14,6 +14,8 @@
   //                        the dashboard secret: the one call the Dashboard API doesn't offer
   // Secrets, set per environment with `wrangler secret put <NAME> --env <env>` (local: `.dev.vars`):
   //   AGENT_INBOX_DASHBOARD_API_SECRET  the secret the Agent Inbox dashboard shares with the Novu API
+  //   CLERK_SECRET_KEY                  the Agent Inbox Clerk app's secret key, optional: tells Grok Bot from the
+  //                                     Cursor editor by its sign-in app, as both connect as Cursor
   "env": {
     // Local development against a local dashboard and API. Sign-in needs the Agent Inbox Clerk app's address in
     // CLERK_OAUTH_ISSUER; put it in `.dev.vars` next to the secret.
@@ -25,7 +27,10 @@
         "AGENT_INBOX_API_URL": "http://localhost:4300/api",
         "NOVU_API_URL": "http://localhost:3000",
         "DOCS_URL": "https://www.npmjs.com/package/@agentinbox/cli"
-      }
+      },
+      // Kept by `wrangler dev` in `.wrangler/state`, never deployed: connected apps show on the local dashboard,
+      // and its onboarding moves on when an app signs in.
+      "kv_namespaces": [{ "binding": "CONNECTIONS", "id": "local-connections" }]
     },
     "staging": {
       "name": "agent-inbox-mcp-staging",

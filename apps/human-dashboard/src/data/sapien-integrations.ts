@@ -55,7 +55,7 @@ const MCP_SERVER_URL = 'https://mcp.agentinbox.md';
 // The hosted MCP server, as the dashboard writes it for Cursor (`cursorMcpConfig`).
 const MCP_SERVER_CONFIG = `{
   "mcpServers": {
-    "inbox": {
+    "AgentInbox": {
       "url": "${MCP_SERVER_URL}"
     }
   }

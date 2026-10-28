@@ -434,12 +434,12 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
   it('lets the agent reply with our MCP server’s tool in its own conversation without asking anyone', async () => {
     const { api } = await start();
 
-    api.deliver({ text: 'mcp:mcp__plugin_agentinbox_inbox__inbox_reply' });
+    api.deliver({ text: 'mcp:mcp__plugin_agentinbox_AgentInbox__inbox_reply' });
 
     await eventually(() => expect(api.sentInto('conv_1')).toContain('I replied through MCP.'));
     await pause(400);
     expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
-    expect(api.sentInto('conv_1')).not.toContain('Used mcp__plugin_agentinbox_inbox__inbox_reply.');
+    expect(api.sentInto('conv_1')).not.toContain('Used mcp__plugin_agentinbox_AgentInbox__inbox_reply.');
   });
 
   it('asks the operator before an MCP reply into another conversation, or through another server', async () => {
@@ -447,7 +447,7 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     api.decide = () => 'denied';
     const approves = () => api.interactions.filter((interaction) => interaction.kind === 'approve');
 
-    api.deliver({ text: 'mcp:mcp__inbox__inbox_reply conv_9' });
+    api.deliver({ text: 'mcp:mcp__AgentInbox__inbox_reply conv_9' });
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Not allowed: Your operator said no.'));
     expect(approves()).toHaveLength(1);
 

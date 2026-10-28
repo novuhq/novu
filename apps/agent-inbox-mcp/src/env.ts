@@ -4,6 +4,11 @@ export type Env = {
   CLERK_OAUTH_ISSUER?: string;
   /** The secret the Agent Inbox dashboard shares with the Novu API. It lets this server act for an account. */
   AGENT_INBOX_DASHBOARD_API_SECRET?: string;
+  /**
+   * The Agent Inbox Clerk app's secret key. With it the server asks Clerk which sign-in app a token belongs to,
+   * which tells Grok Bot from the Cursor editor (`signInAppHost`). Optional: without it both read as Cursor.
+   */
+  CLERK_SECRET_KEY?: string;
   /** The Agent Inbox Dashboard API, which every tool calls as the account: `https://www.agentinbox.md/api`. */
   AGENT_INBOX_API_URL?: string;
   /**

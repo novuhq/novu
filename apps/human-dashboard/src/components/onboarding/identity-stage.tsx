@@ -5,11 +5,13 @@ import type { ReactNode } from 'react';
 import QRCode from 'react-qr-code';
 
 import { ChannelIcon } from '@/components/channels/channel-icon';
+import { HostLogo } from '@/components/connect/host-logo';
 import { CornerTicks } from '@/components/onboarding/onboarding-shell';
 import { SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { MascotFace, useBeaming } from '@/components/ui/mascot-face';
-import { type HostId, hostOf } from '@/lib/hosts';
+import { MorphingText } from '@/components/ui/morphing-text';
+import { type Host, hostSubject } from '@/lib/hosts';
 import { HOST_LABELS, type HostVia, PLACEHOLDER_NAME, writtenLink } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
@@ -17,7 +19,7 @@ import { cn } from '@/lib/utils';
  * How far the agent's identity got:
  * - `draft`: being named on step 1, nothing exists yet;
  * - `issued`: it has its address;
- * - `waiting`: the same, with the slot for a host shown empty above it;
+ * - `waiting`: the same, with the slot above it waiting for the host chosen on step 3;
  * - `connected`: a host reads its mail.
  */
 export type IdentityState = 'draft' | 'issued' | 'waiting' | 'connected';
@@ -36,6 +38,8 @@ type IdentityStageProps = {
   gotMail?: boolean;
   /** How the host connected, once one has. */
   hostVia?: HostVia;
+  /** The host the slot above the card waits for while `waiting`: the one chosen on step 3. */
+  waitingFor?: Host;
   /** The caption in the corner of the stage, such as "fig. 01  naming". */
   caption: string;
 };
@@ -49,15 +53,14 @@ type IdentityStageProps = {
  * once issued, 130px while waiting). The card here turns around its own middle, so `top` and `left` are
  * those places worked out for the card before it turns: 78, 117, 136 and 169.5px from the top.
  *
- * The stage is as tall as the tallest step, taller than any frame of the design, so each of those places
- * is kept as a distance from the middle of the stage. In a stage as tall as its frame (600, 676, 644 and
- * 679px) the card is exactly where the design has it; in a taller one it stays as centered as it was.
- * The slot above the card and the ring behind it are placed the same way.
+ * Each of those places is kept as a distance from the middle of the stage, so in a taller stage the card
+ * stays as centered as it was. In a stage as tall as its frame (600, 676, 721 and 679px) the card is exactly
+ * where the design has it. The slot above the card and the ring behind it are placed the same way.
  */
 const CARD_POSE: Record<IdentityState, string> = {
   draft: 'top-[calc(var(--mid)-222px)] left-[33.5px] rotate-2',
   issued: 'top-[calc(var(--mid)-221px)] left-[38px] rotate-2',
-  waiting: 'top-[calc(var(--mid)-186px)] left-[41px] rotate-2',
+  waiting: 'top-[calc(var(--mid)-224px)] left-[42px] rotate-2',
   connected: 'top-[calc(var(--mid)-170px)] left-[39px]',
 };
 
@@ -92,7 +95,6 @@ const CAPTION_PLACE: Record<IdentityState, string> = {
 
 const PORTRAIT_CAPTION: Partial<Record<IdentityState, string>> = {
   issued: 'fig. 02  issued, not connected',
-  waiting: 'fig. 03  waiting for your agent',
 };
 
 /**
@@ -122,9 +124,12 @@ export function IdentityStage({
   telegramConnected = false,
   gotMail = false,
   hostVia,
+  waitingFor,
   caption,
 }: IdentityStageProps) {
   const draft = state === 'draft';
+  // Who the card waits for, in a sentence: "Claude Code", or "your agent" for General and before any choice.
+  const awaited = waitingFor ? hostSubject(waitingFor) : 'your agent';
 
   return (
     <div
@@ -136,7 +141,7 @@ export function IdentityStage({
     >
       <StageTexture state={state} />
       <Slot shown={state === 'waiting'}>
-        <WaitingSlot />
+        <WaitingSlot host={waitingFor} awaited={awaited} />
       </Slot>
       <Slot shown={state === 'connected'}>
         <ConnectedSlot via={hostVia ?? 'cli'} shown={state === 'connected'} />
@@ -155,7 +160,7 @@ export function IdentityStage({
             CARD_LOOK[state]
           )}
         >
-          <Portrait state={state} name={name} address={address} gotMail={gotMail} />
+          <Portrait state={state} name={name} address={address} gotMail={gotMail} awaited={awaited} />
 
           <div className="flex flex-col items-center gap-1 px-5 pt-4 pb-3 text-center">
             <p className="flex max-w-full items-center">
@@ -245,19 +250,27 @@ const MASCOT_MOOD = { draft: 'awake', issued: 'asleep', waiting: 'asleep', conne
  */
 const FACE = 'absolute top-10 left-1/2 size-30 -translate-x-1/2';
 
-type PortraitProps = Pick<IdentityStageProps, 'state' | 'name' | 'address'> & { gotMail: boolean };
+type PortraitProps = Pick<IdentityStageProps, 'state' | 'name' | 'address'> & {
+  gotMail: boolean;
+  /** Who the card waits for while `waiting`, as its caption names it. */
+  awaited: string;
+};
 
 /**
  * The top of the card: the mascot on its dither, with the labels of an ID photo around it, and a code to
  * scan that starts an email to the agent once it has its address.
  */
-function Portrait({ state, name, address, gotMail }: PortraitProps) {
+function Portrait({ state, name, address, gotMail, awaited }: PortraitProps) {
   const draft = state === 'draft';
   const connected = state === 'connected';
   const beaming = useBeaming(connected);
   // The first mail to land wakes it up, on the step that waits for that mail.
   const mood = beaming ? 'happy' : state === 'issued' && gotMail ? 'awake' : MASCOT_MOOD[state];
-  const caption = draft ? null : (PORTRAIT_CAPTION[state] ?? `fig. 04  ${name}`);
+  const caption = draft
+    ? null
+    : state === 'waiting'
+      ? `fig. 03  waiting for ${awaited}`
+      : (PORTRAIT_CAPTION[state] ?? `fig. 04  ${name}`);
 
   return (
     <div className="relative isolate h-50 overflow-hidden bg-subtle">
@@ -515,17 +528,24 @@ function Slot({ shown, children }: { shown: boolean; children: ReactNode }) {
   );
 }
 
-/** The dashed slot above the card that a host will fill, with the tools that can. */
-function WaitingSlot() {
+/**
+ * The dashed slot above the card that a host will fill (`Brain slot`): the host chosen on step 3, by its logo
+ * and its name. Another choice fades the logo and the words across, and the slot slides to their width.
+ */
+function WaitingSlot({ host, awaited }: { host?: Host; awaited: string }) {
   return (
     <>
-      <p className="absolute top-[calc(var(--mid)-286px)] left-[88px] flex items-center gap-2 rounded-[20px] border border-dashed border-border-strong bg-subtle px-3 py-2 font-mono text-[11px] leading-3.5 whitespace-nowrap text-secondary">
-        <ToolChips />
-        waiting for your agent
+      <p className="absolute top-[calc(var(--mid)-324px)] left-[89px] flex items-center gap-2 rounded-[20px] border border-dashed border-border-strong bg-subtle px-3 py-2 font-mono text-[11px] leading-3.5 whitespace-nowrap text-secondary">
+        {host && (
+          <span key={host.id} className="flex animate-overlay-in motion-reduce:animate-none">
+            <HostLogo host={host} size="medium" />
+          </span>
+        )}
+        <MorphingText text={`waiting for ${awaited}`} />
       </p>
       <span
         aria-hidden="true"
-        className="absolute top-[calc(var(--mid)-236px)] left-1/2 h-13 border-l-[1.5px] border-dashed border-muted"
+        className="absolute top-[calc(var(--mid)-274px)] left-1/2 h-13 border-l-[1.5px] border-dashed border-muted"
       />
     </>
   );
@@ -628,28 +648,3 @@ const CARD_BORDER_START = 0.106;
  * less of width move the spot by less than a pixel.
  */
 const PILL_BORDER_START = 0.655;
-
-/** One host's chip: its logo on a small raised tile. */
-const TOOL_CHIP = 'flex size-6 items-center justify-center rounded-md border border-border-strong bg-raised p-0.75';
-
-/** The hosts the waiting slot shows, in the order of the design: Claude, Cursor, ChatGPT. */
-const CHIP_HOSTS: readonly HostId[] = ['claude', 'cursor', 'chatgpt'];
-
-/** The logos of a few hosts an agent can run in, as small chips: a picture of what can fill the slot. */
-function ToolChips() {
-  return (
-    <span aria-hidden="true" className="flex shrink-0 items-center gap-0.75">
-      {CHIP_HOSTS.map((id) => {
-        const { icon } = hostOf(id);
-
-        return (
-          icon && (
-            <span key={id} className={TOOL_CHIP}>
-              <img src={icon} alt="" className="size-full rounded-[3px] object-contain" />
-            </span>
-          )
-        );
-      })}
-    </span>
-  );
-}

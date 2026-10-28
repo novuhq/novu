@@ -84,7 +84,7 @@ describe('findNewHost', () => {
       { ...claudeCode, lastCheckedAt: ago(0) },
     ]);
 
-    expect(findNewHost(before, after)).toBe('cli');
+    expect(findNewHost(before, after)).toMatchObject({ id: 'codex', via: 'cli' });
   });
 
   it('tells nothing for a host that keeps checking, and tells one that comes back after a day', () => {
@@ -92,7 +92,7 @@ describe('findNewHost', () => {
     expect(findNewHost(statusWith([claudeCode]), checking)).toBe(null);
 
     const gone = statusWith([{ ...claudeCode, lastCheckedAt: ago(30 * HOUR) }]);
-    expect(findNewHost(gone, checking)).toBe('cli');
+    expect(findNewHost(gone, checking)).toMatchObject({ id: 'claude-code', via: 'cli' });
   });
 
   it('still works with an API from before hosts had names', () => {
@@ -101,7 +101,7 @@ describe('findNewHost', () => {
     expect(findNewHost(statusWith([cli]), statusWith([{ ...cli, lastCheckedAt: ago(0) }]))).toBe(null);
     expect(
       findNewHost(statusWith([cli]), statusWith([cli, { via: 'mcp', connectedAt: ago(0), lastCheckedAt: null }]))
-    ).toBe('mcp');
+    ).toMatchObject({ via: 'mcp' });
   });
 });
 

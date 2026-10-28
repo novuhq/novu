@@ -185,9 +185,10 @@ describe('isOwnReplySubject', () => {
       true
     );
     for (const tool of ['inbox_show', 'inbox_reply', 'inbox_read', 'inbox_resolve']) {
-      expect(isOwnReplySubject(mcp('plugin_agentinbox_inbox', tool, { conversation: 'conv_1' }), 'conv_1'), tool).toBe(
-        true
-      );
+      expect(
+        isOwnReplySubject(mcp('plugin_agentinbox_AgentInbox', tool, { conversation: 'conv_1' }), 'conv_1'),
+        tool
+      ).toBe(true);
     }
     expect(
       isOwnReplySubject(
@@ -318,7 +319,15 @@ describe('waitsForAnswerIn', () => {
 
 describe('isOurMcpServer', () => {
   it('knows our server by the names hosts give it', () => {
-    for (const server of ['inbox', 'plugin_agentinbox_inbox', 'claude_ai_Agent_Inbox', 'agentinbox', 'agent-inbox']) {
+    for (const server of [
+      'AgentInbox',
+      'plugin_agentinbox_AgentInbox',
+      'claude_ai_Agent_Inbox',
+      'agentinbox',
+      'agent-inbox',
+      'inbox',
+      'plugin_agentinbox_inbox',
+    ]) {
       expect(isOurMcpServer(server), server).toBe(true);
     }
     for (const server of ['mail', 'github', 'plugin_mail_inbox', 'claude_ai_Gmail', 'inboxes', 'my_inbox']) {
