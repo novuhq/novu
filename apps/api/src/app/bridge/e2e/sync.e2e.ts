@@ -807,6 +807,102 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', () => {
     });
   });
 
+  describe('when re-syncing workflows', () => {
+    const buildWorkflow = (workflowId: string, subject = 'Welcome') =>
+      workflow(workflowId, async ({ step }) => {
+        await step.email('send-email', async (controls) => ({ subject: controls.subject, body: 'Hello' }), {
+          controlSchema: {
+            type: 'object',
+            properties: { subject: { type: 'string', default: subject } },
+          } as const,
+        });
+        await step.inApp('send-in-app', async () => ({ body: 'Hello' }));
+      });
+
+    const sync = async (workflows: ReturnType<typeof buildWorkflow>[]) => {
+      await bridgeServer.stop();
+      bridgeServer = new TestBridgeServer(await getPort());
+      await bridgeServer.start({ workflows });
+      const result = await session.testAgent.post(`/v1/bridge/sync`).send({ bridgeUrl: bridgeServer.serverPath });
+      expect(result.status).to.equal(201);
+
+      return result.body.data;
+    };
+
+    const findWorkflow = (workflowId: string) =>
+      workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+
+    const updatedAtSnapshot = async () => {
+      const workflows = await workflowsRepository.find({ _environmentId: session.environment._id });
+      const templates = await messageTemplateRepository.find({ _environmentId: session.environment._id });
+
+      return {
+        workflows: workflows.map((item) => [item.triggers[0].identifier, item.updatedAt]),
+        templates: templates.map((item) => [item._id, item.updatedAt]),
+      };
+    };
+
+    it('should not rewrite workflows that did not change', async () => {
+      await sync([buildWorkflow('welcome'), buildWorkflow('digest')]);
+      const before = await updatedAtSnapshot();
+
+      const data = await sync([buildWorkflow('welcome'), buildWorkflow('digest')]);
+
+      expect(await updatedAtSnapshot()).to.deep.equal(before);
+      expect(data.map((item) => item.triggers[0].identifier)).to.deep.equal(['welcome', 'digest']);
+    });
+
+    it('should rewrite only the workflow that changed', async () => {
+      await sync([buildWorkflow('welcome'), buildWorkflow('digest')]);
+      const welcomeBefore = await findWorkflow('welcome');
+      const digestBefore = await findWorkflow('digest');
+
+      await sync([buildWorkflow('welcome', 'Hi there'), buildWorkflow('digest')]);
+      const welcomeAfter = await findWorkflow('welcome');
+      const digestAfter = await findWorkflow('digest');
+
+      expect(welcomeAfter?.updatedAt).to.not.equal(welcomeBefore?.updatedAt);
+      expect(welcomeAfter?.rawData.steps[0].controls.schema.properties.subject.default).to.equal('Hi there');
+      expect(digestAfter?.updatedAt).to.equal(digestBefore?.updatedAt);
+    });
+
+    it('should turn a workflow paused through the API back on', async () => {
+      const [synced] = await sync([buildWorkflow('welcome')]);
+      const patch = await session.testAgent.patch(`/v2/workflows/${synced._id}`).send({ active: false });
+      expect(patch.status).to.equal(200);
+      expect((await findWorkflow('welcome'))?.active).to.equal(false);
+
+      await sync([buildWorkflow('welcome')]);
+
+      expect((await findWorkflow('welcome'))?.active).to.equal(true);
+    });
+
+    it('should return the same response for an unchanged workflow as for an updated one', async () => {
+      const [synced] = await sync([buildWorkflow('welcome')]);
+      const preferences = await session.testAgent.post(`/v1/preferences`).send({
+        preferences: {
+          all: { enabled: true, readOnly: false },
+          channels: {
+            email: { enabled: false },
+            sms: { enabled: true },
+            in_app: { enabled: true },
+            chat: { enabled: true },
+            push: { enabled: true },
+            tool: { enabled: true },
+          },
+        },
+        workflowId: synced._id,
+      });
+      expect(preferences.status).to.equal(201);
+
+      const updated = await sync([buildWorkflow('welcome', 'Hi there')]);
+      const unchanged = await sync([buildWorkflow('welcome', 'Hi there')]);
+
+      expect(updated[0].userPreferences.channels.email.enabled).to.equal(false);
+      expect(unchanged).to.deep.equal(updated);
+    });
+  });
+
   describe('when the bridge URL does not answer with a discover response', () => {
     const syncAgainstStaticResponse = async (contentType: string, body: string) => {
       const server = http.createServer((_req, res) => {
