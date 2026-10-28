@@ -36,7 +36,12 @@ export class VoiceBridgeController {
     res.flushHeaders?.();
 
     const abort = new AbortController();
-    req.on('close', () => abort.abort());
+    // `req` closes when the JSON body is consumed. The stream stays open until ElevenLabs drops it.
+    res.on('close', () => {
+      if (!res.writableEnded) {
+        abort.abort();
+      }
+    });
 
     try {
       await this.voiceBridgeCompletions.execute({

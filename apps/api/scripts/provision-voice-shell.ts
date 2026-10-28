@@ -11,8 +11,6 @@
  * Required:
  *   NOVU_VOICE_ELEVENLABS_API_KEY or ELEVENLABS_API_KEY
  *   NOVU_VOICE_PUBLIC_API_URL          public origin of this API, no path
- *
- * Bridge auth (NV-9171), strongly recommended:
  *   NOVU_VOICE_BRIDGE_SECRET           Bearer token ElevenLabs sends to the custom LLM
  *
  * Phone import, skipped when any of these are missing:
@@ -86,7 +84,7 @@ async function elFetch<T = Record<string, never>>(path: string, init: RequestIni
 
 function shellPayload(publicApiUrl: string) {
   const bridge = `${publicApiUrl.replace(/\/$/, '')}/v1/human/voice`;
-  const bridgeSecret = env('NOVU_VOICE_BRIDGE_SECRET');
+  const bridgeSecret = requireEnv('NOVU_VOICE_BRIDGE_SECRET');
 
   return {
     name: 'Novu voice shell',
@@ -110,7 +108,7 @@ function shellPayload(publicApiUrl: string) {
             model_id: 'novu-voice-bridge',
             api_type: 'chat_completions',
             // ElevenLabs sends this as `Authorization: Bearer …` on every bridge request.
-            ...(bridgeSecret ? { api_key: bridgeSecret } : {}),
+            api_key: bridgeSecret,
           },
           // Never cascade to a hosted model — invented speech in the customer's agent voice is worse than ending the call.
           backup_llm_config: { mode: 'disabled' },

@@ -1,3 +1,4 @@
+import { ServiceUnavailableException } from '@nestjs/common';
 import { HumanInteractionStatusEnum, VoiceCallEndReasonEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -71,6 +72,45 @@ describe('RecordVoiceCallEnded', () => {
     expect(ended.durationSeconds).to.equal(33);
     expect(settlement.settle.calledOnce).to.equal(true);
     expect(settlement.settle.firstCall.args[1]).to.equal(HumanInteractionStatusEnum.EXPIRED);
+  });
+
+  it('keeps the interaction open while a later recipient is still being dialed', async () => {
+    const { usecase, humanInteractionRepository, settlement } = setup();
+    humanInteractionRepository.markVoiceDeliveryEnded.callsFake(async (...args: unknown[]) => ({
+      _id: 'row1',
+      _environmentId: 'env1',
+      identifier: 'hi_1',
+      status: HumanInteractionStatusEnum.PENDING,
+      voiceSubscriberIds: ['sub-2'],
+      deliveries: [
+        {
+          subscriberId: 'sub-1',
+          platform: 'voice',
+          platformMessageId: 'conv_1',
+          platformThreadId: 'CA_1',
+          integrationIdentifier: 'agent-voice-call',
+          voiceCallEnded: args[4],
+        },
+      ],
+    }));
+
+    await usecase.execute(event);
+
+    expect(settlement.settle.called).to.equal(false);
+  });
+
+  it('asks the provider to retry when the dial is known but not stored yet', async () => {
+    const { usecase, humanInteractionRepository, settlement } = setup();
+    humanInteractionRepository.findByPlatformMessageId.resolves(null);
+
+    try {
+      await usecase.execute(event);
+      expect.fail('expected a retry');
+    } catch (err) {
+      expect(err).to.be.instanceOf(ServiceUnavailableException);
+    }
+
+    expect(settlement.settle.called).to.equal(false);
   });
 
   it('acknowledges a post-call whose lookup has expired', async () => {

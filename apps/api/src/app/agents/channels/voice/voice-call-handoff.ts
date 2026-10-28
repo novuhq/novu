@@ -119,19 +119,52 @@ export async function readVoiceCallHandoff(
   return parseVoiceCallHandoff(raw);
 }
 
-/** Appends new person lines and marks the call live. Null when the call is already over or unknown. */
+export type RecordedInboundUtterances = {
+  handoff: VoiceCallHandoff;
+  /** Lines this call appended. Empty when a concurrent request already stored them. */
+  appended: string[];
+};
+
+/**
+ * Appends person lines past the stored count and marks the call live.
+ * `userTexts` is the full history, not a pre-sliced tail — the count check and
+ * the append run in one Redis script so two overlapping requests cannot both write.
+ * Null when the call is already over or unknown.
+ */
 export async function recordInboundUtterances(
   cache: CacheService,
   conversationId: string,
-  utterances: string[]
-): Promise<VoiceCallHandoff | null> {
+  userTexts: string[]
+): Promise<RecordedInboundUtterances | null> {
   const raw = await cache.eval<unknown>(
     RECORD_INBOUND_SCRIPT,
     [voiceCallRegistryKey(conversationId)],
-    [String(VOICE_CALL_REGISTRY_TTL_SECONDS), new Date().toISOString(), JSON.stringify(utterances)]
+    [String(VOICE_CALL_REGISTRY_TTL_SECONDS), new Date().toISOString(), JSON.stringify(userTexts)]
   );
+  if (typeof raw !== 'string') {
+    return null;
+  }
 
-  return typeof raw === 'string' ? parseVoiceCallHandoff(raw) : null;
+  let parsed: { handoffJson?: unknown; appendedJson?: unknown };
+  try {
+    parsed = JSON.parse(raw) as { handoffJson?: unknown; appendedJson?: unknown };
+  } catch {
+    return null;
+  }
+
+  if (typeof parsed.handoffJson !== 'string') {
+    return null;
+  }
+
+  const handoff = parseVoiceCallHandoff(parsed.handoffJson);
+  if (!handoff) {
+    return null;
+  }
+
+  return {
+    handoff,
+    appended: typeof parsed.appendedJson === 'string' ? utterancesOf(parsed.appendedJson) : [],
+  };
 }
 
 /** One bridge request takes the pending line. A second request sees it already gone. */
@@ -210,9 +243,9 @@ end
 if data.status ~= 'live' then
   data.status = 'live'
 end
-local added = cjson.decode(ARGV[3])
-if type(added) ~= 'table' then
-  added = {}
+local incoming = cjson.decode(ARGV[3])
+if type(incoming) ~= 'table' then
+  incoming = {}
 end
 local list = {}
 if type(data.utterancesJson) == 'string' and data.utterancesJson ~= '' then
@@ -221,22 +254,27 @@ if type(data.utterancesJson) == 'string' and data.utterancesJson ~= '' then
     list = decoded
   end
 end
-local count = 0
-for _, text in ipairs(added) do
+local stored = tonumber(data.inboundSeq) or 0
+local index = 0
+local appended = {}
+for _, text in ipairs(incoming) do
   if type(text) == 'string' and text ~= '' then
-    table.insert(list, text)
-    count = count + 1
+    index = index + 1
+    if index > stored then
+      table.insert(list, text)
+      table.insert(appended, text)
+    end
   end
 end
-if count > 0 then
+if #appended > 0 then
   data.utterancesJson = cjson.encode(list)
-  data.inboundSeq = (tonumber(data.inboundSeq) or 0) + count
+  data.inboundSeq = stored + #appended
 elseif type(data.utterancesJson) ~= 'string' then
   data.utterancesJson = '[]'
 end
 data.lastBridgeRequestAt = ARGV[2]
 ${SAVE_HANDOFF}
-return cjson.encode(data)
+return cjson.encode({ handoffJson = cjson.encode(data), appendedJson = cjson.encode(appended) })
 `;
 
 const CLAIM_LINE_SCRIPT = `

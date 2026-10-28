@@ -17,7 +17,11 @@ import {
 } from './human-interaction.entity';
 import { HumanInteraction } from './human-interaction.schema';
 
-/** Copies `voiceFailure` from the stored delivery onto the stamp that shares its conversation id. */
+/**
+ * Copies `voiceFailure` and `voiceCallEnded` from the stored delivery onto the
+ * stamp that shares its conversation id. A webhook can land while the next
+ * recipient is still being dialed, and replacing the array from memory would drop it.
+ */
 function deliveriesKeepingStoredFailures(deliveries: HumanInteractionDelivery[]): Record<string, unknown> {
   return {
     $map: {
@@ -41,6 +45,13 @@ function deliveriesKeepingStoredFailures(deliveries: HumanInteractionDelivery[])
               '$$next',
               {
                 $cond: [{ $ne: ['$$previous.voiceFailure', null] }, { voiceFailure: '$$previous.voiceFailure' }, {}],
+              },
+              {
+                $cond: [
+                  { $ne: ['$$previous.voiceCallEnded', null] },
+                  { voiceCallEnded: '$$previous.voiceCallEnded' },
+                  {},
+                ],
               },
             ],
           },
@@ -265,8 +276,8 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       subscriberIds?: string[];
     }
   ): Promise<void> {
-    // A failure webhook can mark a call while the next recipient is still being
-    // dialed. Replacing the array from memory would drop that voiceFailure.
+    // A webhook can mark a call while the next recipient is still being dialed.
+    // Replacing the array from memory would drop that voiceFailure or voiceCallEnded.
     const $set: Record<string, unknown> = {
       deliveries: deliveriesKeepingStoredFailures(delivery.deliveries),
     };

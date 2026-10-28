@@ -11,7 +11,7 @@ import {
 } from '@novu/dal';
 import { HUMAN_INTERACTION_TERMINAL_STATUSES, HumanChannelViaEnum, HumanInteractionStatusEnum } from '@novu/shared';
 import type { Response } from 'express';
-import { extractNewInboundUtterances } from '../../../agents/channels/voice/extract-inbound-utterances';
+import { userUtteranceTexts } from '../../../agents/channels/voice/extract-inbound-utterances';
 import {
   type ChatCompletionRequest,
   sseChunk,
@@ -68,13 +68,16 @@ export class VoiceBridgeCompletions {
       throw new BadRequestException('This voice call has already ended.');
     }
 
-    const utterances = extractNewInboundUtterances(params.body.messages, known.inboundSeq);
-    const recorded = await recordInboundUtterances(this.cacheService, resolved.delivery.platformMessageId, utterances);
+    const recorded = await recordInboundUtterances(
+      this.cacheService,
+      resolved.delivery.platformMessageId,
+      userUtteranceTexts(params.body.messages)
+    );
     if (!recorded) {
       throw new BadRequestException('This voice call has already ended.');
     }
 
-    await this.appendInboundUtterances(resolved, utterances);
+    await this.appendInboundUtterances(resolved, recorded.appended);
 
     const claimed = await this.parkForAgentLine({
       conversationId: resolved.delivery.platformMessageId,
@@ -82,7 +85,7 @@ export class VoiceBridgeCompletions {
       signal: params.signal,
     });
 
-    if (params.res.writableEnded) {
+    if (params.res.writableEnded || params.res.destroyed) {
       return;
     }
 
@@ -111,7 +114,7 @@ export class VoiceBridgeCompletions {
       {
         interactionId: correlation.interactionId,
         conversationId: resolved.conversation._id,
-        inboundSeq: recorded.inboundSeq,
+        inboundSeq: recorded.handoff.inboundSeq,
         spoke: Boolean(claimed),
         hangup: Boolean(claimed?.hangupRequested),
       },
@@ -222,7 +225,7 @@ export class VoiceBridgeCompletions {
     let keepaliveIn = 0;
 
     while (Date.now() < deadline) {
-      if (params.signal?.aborted || params.res.writableEnded) {
+      if (responseClosed(params.res, params.signal)) {
         return null;
       }
 
@@ -238,6 +241,10 @@ export class VoiceBridgeCompletions {
       }
 
       await sleep(VOICE_BRIDGE_CLAIM_POLL_MS);
+    }
+
+    if (responseClosed(params.res, params.signal)) {
+      return null;
     }
 
     return claimAgentLine(this.cacheService, params.conversationId);
@@ -266,6 +273,10 @@ function stringField(source: Record<string, unknown>, key: string): string | und
   const value = source[key];
 
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function responseClosed(res: Response, signal?: AbortSignal): boolean {
+  return Boolean(signal?.aborted || res.writableEnded || res.destroyed);
 }
 
 function sleep(ms: number): Promise<void> {

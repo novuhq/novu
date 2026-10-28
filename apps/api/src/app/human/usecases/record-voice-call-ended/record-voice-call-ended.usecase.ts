@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import { HumanInteractionEntity, HumanInteractionRepository, type VoiceCallEnded } from '@novu/dal';
 import { HumanChannelViaEnum, HumanInteractionStatusEnum, VoiceCallEndReasonEnum } from '@novu/shared';
@@ -61,9 +61,9 @@ export class RecordVoiceCallEnded {
       conversationId,
     ]);
     if (!interaction) {
-      this.logger.warn({ conversationId }, 'Voice post-call event had no interaction');
-
-      return;
+      // Dial and Redis registration happen before the delivery stamp. A short call
+      // can end in that window. Ask ElevenLabs to retry, the same as a failure webhook.
+      throw new ServiceUnavailableException('The voice call is not stored yet.');
     }
 
     await this.closeConnectedCall({
@@ -111,7 +111,9 @@ export class RecordVoiceCallEnded {
       return current;
     }
 
-    if (voiceCallCanStillBeAnswered(current, true)) {
+    // Later recipients may still be dialing. Closing here would expire the row
+    // before their delivery is stamped. The failure webhook uses the same guard.
+    if (voiceCallCanStillBeAnswered(current, false)) {
       return current;
     }
 
@@ -128,8 +130,8 @@ export class RecordVoiceCallEnded {
 
   /**
    * Lazy backstop when ElevenLabs drops a post-call webhook. Called from
-   * voice_turn the way `expireIfOverdue` is called on reads. A call that has
-   * not reached the bridge yet has no `lastBridgeRequestAt` and is left alone.
+   * voice_turn, interaction reads, and the live-call check before a new dial.
+   * A call that has not reached the bridge yet has no `lastBridgeRequestAt` and is left alone.
    */
   async expireIfStale(interaction: HumanInteractionEntity): Promise<HumanInteractionEntity> {
     if (interaction.status !== HumanInteractionStatusEnum.PENDING) {
@@ -140,7 +142,11 @@ export class RecordVoiceCallEnded {
       (delivery) =>
         delivery.platform === HumanChannelViaEnum.VOICE && !delivery.voiceFailure && !delivery.voiceCallEnded
     );
+    if (liveDeliveries.length === 0) {
+      return interaction;
+    }
 
+    let closed = false;
     for (const delivery of liveDeliveries) {
       const handoff = await readVoiceCallHandoff(this.cacheService, delivery.platformMessageId);
       if (!handoff) {
@@ -157,6 +163,11 @@ export class RecordVoiceCallEnded {
         elevenLabsConversationId: delivery.platformMessageId,
         endReason: alreadyEnded ? VoiceCallEndReasonEnum.OTHER : VoiceCallEndReasonEnum.STALE,
       });
+      closed = true;
+    }
+
+    if (!closed) {
+      return interaction;
     }
 
     return (
