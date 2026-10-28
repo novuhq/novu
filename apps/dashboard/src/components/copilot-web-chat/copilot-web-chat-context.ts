@@ -24,6 +24,8 @@ export type CopilotWebChatContextValue = {
   sentContextLabels: Record<number, string>;
   draft: string;
   setDraft: (value: string) => void;
+  /** Bumps on every `open()`, including while already open, so the composer can re-take focus. */
+  focusRequest: number;
   /** True when an answer finished while the popover was closed and has not been seen yet. */
   hasUnseenAnswer: boolean;
   hasRunError: boolean;
@@ -45,6 +47,7 @@ export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   sentContextLabels: {},
   draft: '',
   setDraft: noop,
+  focusRequest: 0,
   hasUnseenAnswer: false,
   hasRunError: false,
   isBusy: false,

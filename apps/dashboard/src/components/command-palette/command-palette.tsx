@@ -1,5 +1,5 @@
 import { useCommandState } from 'cmdk';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   RiArrowDownLine,
   RiArrowUpLine,
@@ -114,6 +114,7 @@ export function CommandPalette() {
   const [search, setSearch] = useState('');
   const commandGroups = useCommandRegistry(search);
   const openCopilot = useCopilotEntry();
+  const pendingCopilotPrefillRef = useRef<string>();
 
   // Create a flat list of all commands for easy lookup
   const allCommands = commandGroups.flatMap((group) => group.commands);
@@ -147,11 +148,22 @@ export function CommandPalette() {
       commandCategory: 'help',
     });
 
-    const prefill = search.trim();
+    pendingCopilotPrefillRef.current = search.trim();
     closeCommandPalette();
-    // Wait for the dialog to release focus so the composer keeps it.
-    setTimeout(() => openCopilot({ prefill }), 100);
   }, [openCopilot, search, closeCommandPalette, track]);
+
+  // Opens the Copilot once the dialog has released focus, so the composer is not stolen back.
+  const handleCloseAutoFocus = useCallback(
+    (event: Event) => {
+      const prefill = pendingCopilotPrefillRef.current;
+      if (prefill === undefined) return;
+
+      event.preventDefault();
+      pendingCopilotPrefillRef.current = undefined;
+      openCopilot?.({ prefill });
+    },
+    [openCopilot]
+  );
 
   const executeCommand = useCallback(
     async (command: CommandType) => {
@@ -176,7 +188,7 @@ export function CommandPalette() {
   );
 
   return (
-    <CommandMenu.Dialog open={isOpen} onOpenChange={closeCommandPalette}>
+    <CommandMenu.Dialog open={isOpen} onOpenChange={closeCommandPalette} onCloseAutoFocus={handleCloseAutoFocus}>
       <div className="group/cmd-input flex items-center gap-2 p-3 bg-bg-weak">
         <RiSearchLine className={cn('size-5 text-text-soft')} />
         <CommandMenu.Input

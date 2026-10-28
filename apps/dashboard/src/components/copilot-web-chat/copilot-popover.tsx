@@ -88,16 +88,30 @@ function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) 
 }
 
 function Composer({ hasMessages }: { hasMessages: boolean }) {
-  const { chat, sendMessage, retry, pageContext, draft: value, setDraft: setValue, isBusy } = useCopilotWebChat();
+  const {
+    chat,
+    sendMessage,
+    retry,
+    pageContext,
+    draft: value,
+    setDraft: setValue,
+    isBusy,
+    focusRequest,
+  } = useCopilotWebChat();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // The failure stays until retried or a new chat starts: the strip is the only place it can be retried.
   const showFailureStrip = !!getFailedSend(chat?.messages ?? []);
   const canSend = value.trim().length > 0 && !isBusy && !chat?.isLoading;
   const contextLabel = [pageContext?.workflowLabel, pageContext?.stepLabel].filter(Boolean).join(' / ');
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-focus whenever open() is called again
   useEffect(() => {
-    textareaRef.current?.focus();
-  }, []);
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.focus();
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+  }, [focusRequest]);
 
   const submit = () => {
     if (!canSend) return;

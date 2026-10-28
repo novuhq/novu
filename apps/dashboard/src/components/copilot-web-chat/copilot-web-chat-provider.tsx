@@ -28,23 +28,26 @@ type ShellState = {
   open: CopilotWebChatContextValue['open'];
   close: () => void;
   toggle: () => void;
+  draft: string;
+  setDraft: (value: string) => void;
+  focusRequest: number;
   pageContext?: CopilotPageContext;
   registerPageContext: ComponentProps<typeof CopilotRegisterContext.Provider>['value'];
   onRefetchRef: React.MutableRefObject<(() => void) | undefined>;
 };
 
-function useShellState(setDraft: (value: string) => void): ShellState {
+function useShellState(): ShellState {
   const [isOpen, setIsOpen] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [focusRequest, setFocusRequest] = useState(0);
   const [pageContext, setPageContext] = useState<CopilotPageContext>();
   const onRefetchRef = useRef<(() => void) | undefined>(undefined);
 
-  const open = useCallback<ShellState['open']>(
-    (options) => {
-      if (options?.prefill) setDraft(options.prefill);
-      setIsOpen(true);
-    },
-    [setDraft]
-  );
+  const open = useCallback<ShellState['open']>((options) => {
+    if (options?.prefill) setDraft(options.prefill);
+    setIsOpen(true);
+    setFocusRequest((count) => count + 1);
+  }, []);
   const close = useCallback(() => setIsOpen(false), []);
   const toggle = useCallback(() => setIsOpen((value) => !value), []);
 
@@ -58,7 +61,7 @@ function useShellState(setDraft: (value: string) => void): ShellState {
     };
   }, []);
 
-  return { isOpen, open, close, toggle, pageContext, registerPageContext, onRefetchRef };
+  return { isOpen, open, close, toggle, draft, setDraft, focusRequest, pageContext, registerPageContext, onRefetchRef };
 }
 
 type BridgeShell = Pick<ShellState, 'isOpen' | 'open' | 'close' | 'toggle' | 'pageContext' | 'onRefetchRef'>;
@@ -91,10 +94,10 @@ export function CopilotWebChatProvider({
   /** Environment + workflow the thread belongs to; it is resumed after a reload and reset when the scope changes. */
   conversationScope?: string;
 }) {
-  const [draft, setDraft] = useState('');
-  const shell = useShellState(setDraft);
+  const shell = useShellState();
   const [connected, setConnected] = useState<ConnectedState | null>(null);
-  const { isOpen, open, close, toggle, pageContext, registerPageContext, onRefetchRef } = shell;
+  const { isOpen, open, close, toggle, draft, setDraft, focusRequest, pageContext, registerPageContext, onRefetchRef } =
+    shell;
   // Memoized so the bridge (wrapped in `memo`) is not re-rendered by the parent's own state updates;
   // `useWebChat` returns a new object every render, which would otherwise loop through `onConnected`.
   const bridgeShell = useMemo(
@@ -117,11 +120,12 @@ export function CopilotWebChatProvider({
       sentContextLabels: connected?.sentContextLabels ?? {},
       draft,
       setDraft,
+      focusRequest,
       hasUnseenAnswer: !!connected?.hasUnseenAnswer && !isOpen,
       hasRunError: !!connected?.hasRunError,
       isBusy: !!connected?.isBusy,
     }),
-    [connected, isOpen, open, close, toggle, pageContext, draft]
+    [connected, isOpen, open, close, toggle, pageContext, draft, setDraft, focusRequest]
   );
 
   return (
