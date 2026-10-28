@@ -286,10 +286,10 @@ function openVoiceFailureStatuses(interaction: Pick<HumanInteractionEntity, 'kin
 
 /**
  * A non-voice delivery can still be answered. A voice delivery can, until it
- * has a failure. While the fan-out is still dialing, a contact with no delivery
- * yet is not a reason to close the row.
+ * has a failure or the connected call has ended. While the fan-out is still
+ * dialing, a contact with no delivery yet is not a reason to close the row.
  */
-function voiceCallCanStillBeAnswered(interaction: HumanInteractionEntity, fanOutComplete: boolean): boolean {
+export function voiceCallCanStillBeAnswered(interaction: HumanInteractionEntity, fanOutComplete: boolean): boolean {
   const deliveries = interaction.deliveries ?? [];
 
   if (!fanOutComplete) {
@@ -305,5 +305,8 @@ function voiceCallCanStillBeAnswered(interaction: HumanInteractionEntity, fanOut
     }
   }
 
-  return deliveries.some((delivery) => delivery.platform !== HumanChannelViaEnum.VOICE || !delivery.voiceFailure);
+  return deliveries.some(
+    (delivery) =>
+      delivery.platform !== HumanChannelViaEnum.VOICE || (!delivery.voiceFailure && !delivery.voiceCallEnded)
+  );
 }

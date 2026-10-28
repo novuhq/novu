@@ -3,6 +3,7 @@ import type {
   HumanInteractionKindEnum,
   HumanInteractionResponse,
   HumanInteractionStatusEnum,
+  VoiceCallEndReasonEnum,
   VoiceCallFailure,
 } from '@novu/shared';
 import { ChangePropsValueType } from '../../types/helpers';
@@ -93,6 +94,13 @@ export class HumanInteractionEntity {
   updatedAt: string;
 }
 
+/** A connected call ended. Absent while the call can still be answered. */
+export interface VoiceCallEnded {
+  reason: VoiceCallEndReasonEnum;
+  endedAt: string;
+  durationSeconds?: number;
+}
+
 export interface HumanInteractionDelivery {
   subscriberId: string;
   integrationIdentifier: string;
@@ -101,6 +109,11 @@ export interface HumanInteractionDelivery {
   platformThreadId: string;
   /** This recipient's call never connected. Other recipients on the row can still answer. */
   voiceFailure?: VoiceCallFailure;
+  /**
+   * This recipient's call connected and later ended without a commitment.
+   * Excluded from the live-call lock; does not make the interaction `failed`.
+   */
+  voiceCallEnded?: VoiceCallEnded;
 }
 
 export function primaryHumanInteractionDelivery(

@@ -1,4 +1,4 @@
-import { HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
+import { HumanInteractionKindEnum, HumanInteractionStatusEnum, VoiceCallEndReasonEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { HumanInteractionDBModel } from './human-interaction.entity';
@@ -11,6 +11,15 @@ const voiceFailureSchema = new Schema(
   { _id: false }
 );
 
+const voiceCallEndedSchema = new Schema(
+  {
+    reason: { type: Schema.Types.String, enum: Object.values(VoiceCallEndReasonEnum), required: true },
+    endedAt: { type: Schema.Types.String, required: true },
+    durationSeconds: { type: Schema.Types.Number },
+  },
+  { _id: false }
+);
+
 const humanInteractionDeliverySchema = new Schema(
   {
     subscriberId: { type: Schema.Types.String, required: true },
@@ -19,6 +28,7 @@ const humanInteractionDeliverySchema = new Schema(
     platformMessageId: { type: Schema.Types.String, required: true },
     platformThreadId: { type: Schema.Types.String, required: true },
     voiceFailure: { type: voiceFailureSchema },
+    voiceCallEnded: { type: voiceCallEndedSchema },
   },
   { _id: false }
 );

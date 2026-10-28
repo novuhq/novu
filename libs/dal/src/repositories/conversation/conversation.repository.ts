@@ -836,4 +836,15 @@ export class ConversationRepository extends BaseRepositoryV2<
       select: '*',
     });
   }
+
+  /** Voice (and other) threads keyed by the platform thread id alone within an environment. */
+  async findByChannelThread(environmentId: string, platformThreadId: string): Promise<ConversationEntity | null> {
+    return this.findOne(
+      {
+        _environmentId: environmentId,
+        'channels.platformThreadId': platformThreadId,
+      },
+      '*'
+    );
+  }
 }

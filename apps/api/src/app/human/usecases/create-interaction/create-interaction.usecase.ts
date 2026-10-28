@@ -68,6 +68,7 @@ import {
 } from '../../services/human-voice-minute-quota.service';
 import { CreateConversationInteractionCommand } from '../create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../create-conversation-interaction/create-conversation-interaction.usecase';
+import { RecordVoiceCallEnded } from '../record-voice-call-ended/record-voice-call-ended.usecase';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
 import { CreateInteractionCommand } from './create-interaction.command';
 
@@ -137,7 +138,8 @@ export class CreateInteraction {
     private readonly subscriberRepository: SubscriberRepository,
     private readonly analyticsService: AnalyticsService,
     private readonly voiceMinuteQuota: HumanVoiceMinuteQuotaService,
-    private readonly settlement: HumanInteractionSettlementService
+    private readonly settlement: HumanInteractionSettlementService,
+    private readonly recordVoiceCallEnded: RecordVoiceCallEnded
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -353,11 +355,20 @@ export class CreateInteraction {
     return { credits, minutes, subscriberIds };
   }
 
-  /** An overdue voice request is not a live call, and its minutes go back before the next send is judged. */
+  /**
+   * An overdue or abandoned voice request is not a live call. Release it before
+   * the next send is judged, including when the post-call webhook never arrived.
+   */
   private async expirePendingVoice(environmentId: string, subscriberIds: string[]): Promise<void> {
     const pending = await this.humanInteractionRepository.findPendingVoiceForSubscribers(environmentId, subscriberIds);
 
-    await Promise.all(pending.map((interaction) => this.settlement.expireIfOverdue(interaction)));
+    await Promise.all(
+      pending.map(async (interaction) => {
+        const released = await this.recordVoiceCallEnded.expireIfStale(interaction);
+
+        return this.settlement.expireIfOverdue(released);
+      })
+    );
   }
 
   /** The Redis hold is returned by `release`. Drop the row's copy so settlement cannot return it again. */
@@ -1010,12 +1021,14 @@ function connectedVoiceSubscriberIds(
   delivered: HumanInteractionEntity,
   unconfirmedSubscriberIds: string[]
 ): string[] {
-  const failedCalls = new Set(
-    (current.deliveries ?? []).filter((delivery) => delivery.voiceFailure).map((delivery) => delivery.platformMessageId)
+  const closedCalls = new Set(
+    (current.deliveries ?? [])
+      .filter((delivery) => delivery.voiceFailure || delivery.voiceCallEnded)
+      .map((delivery) => delivery.platformMessageId)
   );
   const connected = (delivered.deliveries ?? [])
     .filter((delivery) => {
-      return delivery.platform === HumanChannelViaEnum.VOICE && !failedCalls.has(delivery.platformMessageId);
+      return delivery.platform === HumanChannelViaEnum.VOICE && !closedCalls.has(delivery.platformMessageId);
     })
     .map((delivery) => delivery.subscriberId);
 

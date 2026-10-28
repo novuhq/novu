@@ -9,10 +9,19 @@ import {
 import { Types } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
-import { HumanInteractionDBModel, HumanInteractionDelivery, HumanInteractionEntity } from './human-interaction.entity';
+import {
+  HumanInteractionDBModel,
+  HumanInteractionDelivery,
+  HumanInteractionEntity,
+  VoiceCallEnded,
+} from './human-interaction.entity';
 import { HumanInteraction } from './human-interaction.schema';
 
-/** Copies `voiceFailure` from the stored delivery onto the stamp that shares its conversation id. */
+/**
+ * Copies `voiceFailure` and `voiceCallEnded` from the stored delivery onto the
+ * stamp that shares its conversation id. A webhook can land while the next
+ * recipient is still being dialed, and replacing the array from memory would drop it.
+ */
 function deliveriesKeepingStoredFailures(deliveries: HumanInteractionDelivery[]): Record<string, unknown> {
   return {
     $map: {
@@ -36,6 +45,13 @@ function deliveriesKeepingStoredFailures(deliveries: HumanInteractionDelivery[])
               '$$next',
               {
                 $cond: [{ $ne: ['$$previous.voiceFailure', null] }, { voiceFailure: '$$previous.voiceFailure' }, {}],
+              },
+              {
+                $cond: [
+                  { $ne: ['$$previous.voiceCallEnded', null] },
+                  { voiceCallEnded: '$$previous.voiceCallEnded' },
+                  {},
+                ],
               },
             ],
           },
@@ -63,6 +79,7 @@ function pendingVoiceFilter(environmentId: string, subscriberIds: string[]) {
             platform: HumanChannelViaEnum.VOICE,
             subscriberId: subscriberMatch,
             voiceFailure: { $exists: false },
+            voiceCallEnded: { $exists: false },
           },
         },
       },
@@ -259,8 +276,8 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       subscriberIds?: string[];
     }
   ): Promise<void> {
-    // A failure webhook can mark a call while the next recipient is still being
-    // dialed. Replacing the array from memory would drop that voiceFailure.
+    // A webhook can mark a call while the next recipient is still being dialed.
+    // Replacing the array from memory would drop that voiceFailure or voiceCallEnded.
     const $set: Record<string, unknown> = {
       deliveries: deliveriesKeepingStoredFailures(delivery.deliveries),
     };
@@ -399,6 +416,47 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       {
         new: true,
         arrayFilters: [{ 'failed.platformMessageId': platformMessageId, 'failed.voiceFailure': { $exists: false } }],
+      }
+    );
+  }
+
+  /**
+   * A connected call ended without a commitment. Releases the live-call lock
+   * for this recipient without marking the dial as a failure.
+   */
+  async markVoiceDeliveryEnded(
+    environmentId: string,
+    id: string,
+    platformMessageId: string,
+    subscriberId: string,
+    voiceCallEnded: VoiceCallEnded
+  ): Promise<HumanInteractionEntity | null> {
+    return this.findOneAndUpdate(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        status: HumanInteractionStatusEnum.PENDING,
+        deliveries: {
+          $elemMatch: {
+            platformMessageId,
+            voiceFailure: { $exists: false },
+            voiceCallEnded: { $exists: false },
+          },
+        },
+      },
+      {
+        $set: { 'deliveries.$[ended].voiceCallEnded': voiceCallEnded },
+        $pull: { voiceSubscriberIds: subscriberId },
+      },
+      {
+        new: true,
+        arrayFilters: [
+          {
+            'ended.platformMessageId': platformMessageId,
+            'ended.voiceFailure': { $exists: false },
+            'ended.voiceCallEnded': { $exists: false },
+          },
+        ],
       }
     );
   }

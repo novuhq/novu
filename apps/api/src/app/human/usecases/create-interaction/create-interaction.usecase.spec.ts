@@ -140,6 +140,9 @@ describe('CreateInteraction', () => {
       expireIfOverdue: sinon.stub().callsFake(async (interaction) => interaction),
       closeVoiceCallIfUnanswerable: sinon.stub().resolves(null),
     };
+    const recordVoiceCallEnded = {
+      expireIfStale: sinon.stub().callsFake(async (interaction) => interaction),
+    };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
@@ -163,7 +166,8 @@ describe('CreateInteraction', () => {
       subscriberRepository as any,
       analyticsService as any,
       voiceMinuteQuota as any,
-      settlement as any
+      settlement as any,
+      recordVoiceCallEnded as any
     );
     const command = {
       userId: 'user1',
@@ -193,6 +197,7 @@ describe('CreateInteraction', () => {
       subscriberRepository,
       analyticsService,
       settlement,
+      recordVoiceCallEnded,
       voiceCredits,
     };
   }
@@ -221,7 +226,15 @@ describe('CreateInteraction', () => {
     });
 
     it('expires an overdue voice request before treating the contact as busy', async () => {
-      const { usecase, command, agentRepository, deliveryService, humanInteractionRepository, settlement } = setup();
+      const {
+        usecase,
+        command,
+        agentRepository,
+        deliveryService,
+        humanInteractionRepository,
+        settlement,
+        recordVoiceCallEnded,
+      } = setup();
       const overdue = { _id: 'old', _environmentId: 'env1', status: HumanInteractionStatusEnum.PENDING };
       agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
       deliveryService.resolveChannel.resolves({
@@ -238,11 +251,14 @@ describe('CreateInteraction', () => {
         // Delivery after the live-call check is outside this assertion.
       }
 
+      expect(recordVoiceCallEnded.expireIfStale.calledOnce).to.equal(true);
       expect(settlement.expireIfOverdue.calledOnce).to.equal(true);
-      const expiredFirst = settlement.expireIfOverdue.calledBefore(
-        humanInteractionRepository.countPendingVoiceForSubscriber
-      );
-      expect(expiredFirst).to.equal(true);
+      expect(
+        recordVoiceCallEnded.expireIfStale.calledBefore(humanInteractionRepository.countPendingVoiceForSubscriber)
+      ).to.equal(true);
+      expect(
+        settlement.expireIfOverdue.calledBefore(humanInteractionRepository.countPendingVoiceForSubscriber)
+      ).to.equal(true);
     });
 
     it('does not refund minutes a failure webhook already returned', async () => {

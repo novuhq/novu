@@ -3,10 +3,15 @@ import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { HumanInteractionEntity } from '@novu/dal';
 import { resolveHumanInteractionCard, VoiceCallFailureCodeEnum } from '@novu/shared';
 import { unconfirmedVoiceDialBody, voiceCallFailure, voiceFailureFromDialError } from './voice-call-failure';
+import {
+  createDialingHandoff,
+  serializeVoiceCallHandoff,
+  VOICE_CALL_REGISTRY_TTL_SECONDS,
+  voiceCallRegistryKey,
+} from './voice-call-handoff';
 import { elevenLabsApiBase, readVoiceChannelConfig } from './voice-config';
 
-/** ElevenLabs retries the failure webhook for about 40 minutes. Two hours covers that. */
-export const VOICE_CALL_REGISTRY_TTL_SECONDS = 2 * 60 * 60;
+export { VOICE_CALL_REGISTRY_TTL_SECONDS, voiceCallRegistryKey };
 
 /** MCP stops waiting for a send after 30 seconds, so one dial has to finish inside that. */
 export const VOICE_DIAL_TIMEOUT_MS = 20_000;
@@ -35,14 +40,6 @@ interface OutboundCallResponse {
   message?: string;
   conversation_id?: string;
   callSid?: string;
-}
-
-/**
- * Redis lookup for the initiation-failure webhook, which only carries a conversation id.
- * The hash tag keeps the key on one cluster slot.
- */
-export function voiceCallRegistryKey(conversationId: string): string {
-  return `voice-call:{${conversationId}}`;
 }
 
 /** The card title, then the body. Nothing is wrapped around it, so the spoken line is the one we passed. */
@@ -159,10 +156,7 @@ export class PlaceVoiceCall {
     try {
       await this.cacheService.set(
         voiceCallRegistryKey(conversationId),
-        JSON.stringify({
-          environmentId: input.environmentId,
-          organizationId: input.organizationId,
-        }),
+        serializeVoiceCallHandoff(createDialingHandoff(input)),
         { ttl: VOICE_CALL_REGISTRY_TTL_SECONDS, jitter: false }
       );
 

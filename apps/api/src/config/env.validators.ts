@@ -197,6 +197,13 @@ export const envValidators = {
   NOVU_VOICE_ELEVENLABS_API_BASE: str({ default: undefined }),
   /** HMAC secret for the ElevenLabs call-initiation-failure webhook. */
   NOVU_VOICE_ELEVENLABS_WEBHOOK_SECRET: str({ default: undefined }),
+  /** Bearer secret ElevenLabs sends to the custom LLM bridge. Workspace secret on the shell. */
+  NOVU_VOICE_BRIDGE_SECRET: str({ default: undefined }),
+  /**
+   * How long one bridge SSE request parks waiting for the agent's next line (ms).
+   * Keep under ElevenLabs cascade_timeout_seconds (max 15s) until keepalives are proven to reset it.
+   */
+  NOVU_VOICE_BRIDGE_PARK_MS: num({ default: undefined }),
   NOVU_WHATSAPP_APP_ID: str({ default: undefined }),
   NOVU_WHATSAPP_APP_SECRET: str({ default: undefined }),
   NOVU_WHATSAPP_CONFIG_ID: str({ default: undefined }),

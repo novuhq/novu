@@ -59,6 +59,23 @@ export type VoiceCallFailure = {
   message: string;
 };
 
+/**
+ * Why a connected voice call ended. Distinct from `VoiceCallFailureCodeEnum`,
+ * which covers dials that never connected. Stored on the voice delivery.
+ */
+export enum VoiceCallEndReasonEnum {
+  /** Agent asked to hang up without settling. */
+  AGENT_HANGUP = 'agent_hangup',
+  /** The person hung up. */
+  PERSON_HANGUP = 'person_hangup',
+  /** ElevenLabs `max_duration_seconds` ended the call. */
+  MAX_DURATION = 'max_duration',
+  /** Lost webhooks / staleness check closed a wedged call. */
+  STALE = 'stale',
+  /** Unknown / other provider termination. */
+  OTHER = 'other',
+}
+
 export type HumanInteractionOption = {
   id: string;
   label: string;
