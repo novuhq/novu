@@ -154,4 +154,9 @@ export interface ICredentials {
    * when the verification side (e.g. AWS KMS) holds the key as binary material.
    */
   hmacSecretKeyEncoding?: 'text' | 'base64' | 'hex';
+  /**
+   * Twilio: `'apiKey'` authenticates with `apiKey` (API Key SID) and `secretKey`
+   * (API Key Secret) on behalf of `accountSid`. Missing or `'authToken'` uses `token`.
+   */
+  authMethod?: 'authToken' | 'apiKey';
 }

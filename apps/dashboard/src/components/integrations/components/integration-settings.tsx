@@ -5,6 +5,7 @@ import {
   IIntegration,
   IProviderConfig,
   PermissionsEnum,
+  SmsProviderIdEnum,
   slackConfig,
   ToolProviderIdEnum,
 } from '@novu/shared';
@@ -31,7 +32,7 @@ import { TelegramCredentialsPaste, type TelegramCredentialsPasteMobileSetup } fr
 import { ToolWebhookSettings } from './tool-webhook-settings';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
-import { isDemoIntegration } from './utils/helpers';
+import { getUnusedTwilioAuthCredentialKeys, isDemoIntegration } from './utils/helpers';
 import { WhatsAppCredentialsPaste } from './whatsapp-credentials-paste';
 import { WhatsAppCredentialsValidator } from './whatsapp-credentials-validator';
 
@@ -118,6 +119,11 @@ export function IntegrationSettings({
 
   const name = useWatch({ control, name: 'name' });
   const environmentId = useWatch({ control, name: 'environmentId' });
+  const authMethod = useWatch({ control, name: `credentials.${CredentialsKeyEnum.AuthMethod}` });
+  const unusedCredentialKeys = useMemo(
+    () => (provider.id === SmsProviderIdEnum.Twilio ? getUnusedTwilioAuthCredentialKeys(authMethod) : []),
+    [provider.id, authMethod]
+  );
 
   useEffect(() => {
     if (mode === 'create') {
@@ -180,20 +186,30 @@ export function IntegrationSettings({
       }
     }
 
-    const visibleCredentials = credentials.filter((credential) => credential.hidden !== true);
+    const visibleCredentials = credentials.filter(
+      (credential) => credential.hidden !== true && !unusedCredentialKeys.includes(credential.key)
+    );
 
     if (isAgentOnboarding) {
       return visibleCredentials.filter((credential) => credential.key !== CredentialsKeyEnum.RedirectUrl);
     }
 
     return visibleCredentials;
-  }, [provider.id, provider.credentials, mode, integration?.credentials, isAgentOnboarding]);
+  }, [provider.id, provider.credentials, mode, integration?.credentials, isAgentOnboarding, unusedCredentialKeys]);
+
+  const submitWithoutUnusedCredentials = (data: IntegrationFormData) => {
+    const credentials = Object.fromEntries(
+      Object.entries(data.credentials ?? {}).filter(([key]) => !unusedCredentialKeys.includes(key))
+    );
+
+    onSubmit({ ...data, credentials });
+  };
 
   return (
     <Form {...form}>
       <FormRoot
         id={`integration-configuration-form-${provider.id}`}
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(submitWithoutUnusedCredentials)}
         className="flex flex-col"
       >
         <ProviderDeprecationNotice provider={provider} replaceOnNavigate={mode === 'create'} />

@@ -44,6 +44,13 @@ export function configurationToCredential(config: ConfigConfiguration): IConfigC
   } as IConfigCredential;
 }
 
+/** Credentials of the Twilio authentication method that is not selected. */
+export function getUnusedTwilioAuthCredentialKeys(authMethod: unknown): string[] {
+  return authMethod === 'apiKey'
+    ? [CredentialsKeyEnum.Token]
+    : [CredentialsKeyEnum.ApiKey, CredentialsKeyEnum.SecretKey];
+}
+
 const OBJECT_CREDENTIAL_KEYS = new Set<string>([CredentialsKeyEnum.TlsOptions]);
 
 function isPlainJsonObject(value: unknown): value is Record<string, unknown> {

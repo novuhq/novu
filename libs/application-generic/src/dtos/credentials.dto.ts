@@ -37,6 +37,17 @@ export class CredentialsDto implements ICredentials {
   @IsOptional()
   hmacSecretKeyEncoding?: (typeof HMAC_SECRET_KEY_ENCODINGS)[number];
 
+  @ApiPropertyOptional({
+    description:
+      'Twilio: `apiKey` authenticates with `apiKey` (API Key SID) and `secretKey` (API Key Secret) ' +
+      'on behalf of `accountSid`. Defaults to `authToken`, which uses `token`.',
+    enum: ['authToken', 'apiKey'],
+  })
+  @IsString()
+  @IsIn(['authToken', 'apiKey'])
+  @IsOptional()
+  authMethod?: 'authToken' | 'apiKey';
+
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()

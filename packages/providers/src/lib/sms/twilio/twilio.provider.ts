@@ -23,6 +23,8 @@ export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
     private config: {
       accountSid?: string;
       authToken?: string;
+      apiKeySid?: string;
+      apiKeySecret?: string;
       from?: string;
       region?: string;
     }
@@ -30,7 +32,9 @@ export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
     super();
     const regionConfig = getTwilioSmsClientRegionConfig(config.region);
 
-    this.twilioClient = new Twilio(config.accountSid, config.authToken, regionConfig);
+    this.twilioClient = config.apiKeySid
+      ? new Twilio(config.apiKeySid, config.apiKeySecret, { ...regionConfig, accountSid: config.accountSid })
+      : new Twilio(config.accountSid, config.authToken, regionConfig);
   }
 
   async sendMessage(
