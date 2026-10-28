@@ -35,6 +35,14 @@ export async function validateOutboundIntegrationCredentials(
       assertAllowedSinchSmsRegion(credentials.region);
     }
 
+    if (
+      providerId === SmsProviderIdEnum.Twilio &&
+      credentials.authMethod === 'apiKey' &&
+      (!credentials.apiKey || !credentials.secretKey)
+    ) {
+      throw new Error('Twilio API key authentication requires apiKey (API Key SID) and secretKey (API Key Secret).');
+    }
+
     if (providerId === EmailProviderIdEnum.Infobip) {
       resolveSafeInfobipBaseUrl(credentials.baseUrl);
     }

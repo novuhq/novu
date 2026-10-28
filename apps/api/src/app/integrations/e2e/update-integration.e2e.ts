@@ -14,6 +14,7 @@ import {
   InAppProviderIdEnum,
   ITenantFilterPart,
   PushProviderIdEnum,
+  SmsProviderIdEnum,
   StepTypeEnum,
   ToolProviderIdEnum,
   WorkflowCreationSourceEnum,
@@ -416,6 +417,86 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
       updatedNodeMailerProviderPayload.credentials.tlsOptions
     );
     expect(nodeMailerIntegration?.active).to.equal(true);
+  });
+
+  describe('Twilio authentication method', () => {
+    async function createTwilioIntegration() {
+      const response = await session.testAgent.post('/v1/integrations').send({
+        providerId: SmsProviderIdEnum.Twilio,
+        channel: ChannelTypeEnum.SMS,
+        credentials: { accountSid: 'AC123', token: 'auth-token', from: '+15550000000' },
+        active: true,
+        check: false,
+      });
+      expect(response.status).to.equal(201);
+
+      return response.body.data._id as string;
+    }
+
+    async function findTwilioCredentials(integrationId: string) {
+      const integrations = await integrationRepository.findByEnvironmentId(session.environment._id);
+
+      return integrations.find((integration) => integration._id === integrationId)?.credentials;
+    }
+
+    it('should switch to API key authentication and drop the auth token', async () => {
+      const integrationId = await createTwilioIntegration();
+
+      const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: {
+          authMethod: 'apiKey',
+          accountSid: 'AC123',
+          apiKey: 'SK123',
+          secretKey: 'api-key-secret',
+          from: '+15550000000',
+        },
+        check: false,
+      });
+      expect(response.status).to.equal(200);
+
+      const credentials = await findTwilioCredentials(integrationId);
+      expect(credentials?.authMethod).to.equal('apiKey');
+      expect(credentials?.apiKey).to.be.a('string');
+      expect(credentials?.secretKey).to.be.a('string');
+      expect(credentials?.token).to.equal(undefined);
+    });
+
+    it('should store the authToken method as the default', async () => {
+      const integrationId = await createTwilioIntegration();
+
+      const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: { authMethod: 'authToken', accountSid: 'AC123', token: 'auth-token', from: '+15550000000' },
+        check: false,
+      });
+      expect(response.status).to.equal(200);
+
+      const credentials = await findTwilioCredentials(integrationId);
+      expect(credentials?.authMethod).to.equal(undefined);
+      expect(credentials?.token).to.be.a('string');
+    });
+
+    it('should reject an unknown authentication method', async () => {
+      const integrationId = await createTwilioIntegration();
+
+      const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: { authMethod: 'password', accountSid: 'AC123', token: 'auth-token' },
+        check: false,
+      });
+
+      expect(response.status).to.equal(422);
+    });
+
+    it('should reject API key authentication without the API key secret', async () => {
+      const integrationId = await createTwilioIntegration();
+
+      const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: { authMethod: 'apiKey', accountSid: 'AC123', apiKey: 'SK123' },
+        check: false,
+      });
+
+      expect(response.status).to.equal(400);
+      expect(response.body.message).to.contain('requires apiKey (API Key SID) and secretKey (API Key Secret)');
+    });
   });
 
   it('should not calculate primary and priority if active is not defined', async () => {

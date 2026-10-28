@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ICredentials } from '@novu/shared';
+import { ICredentials, TWILIO_AUTH_METHODS, TwilioAuthMethod } from '@novu/shared';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsEmail, IsIn, IsObject, IsOptional, IsString, Matches, ValidateIf } from 'class-validator';
 import { TransformToBoolean } from '../decorators/to-boolean';
@@ -41,12 +41,14 @@ export class CredentialsDto implements ICredentials {
     description:
       'Twilio: `apiKey` authenticates with `apiKey` (API Key SID) and `secretKey` (API Key Secret) ' +
       'on behalf of `accountSid`. Defaults to `authToken`, which uses `token`.',
-    enum: ['authToken', 'apiKey'],
+    enum: [...TWILIO_AUTH_METHODS],
   })
+  // Stored as missing: the dashboard picker shows a missing value as the default option.
+  @Transform(({ value }) => (value === 'authToken' ? undefined : value))
   @IsString()
-  @IsIn(['authToken', 'apiKey'])
+  @IsIn(TWILIO_AUTH_METHODS)
   @IsOptional()
-  authMethod?: 'authToken' | 'apiKey';
+  authMethod?: TwilioAuthMethod;
 
   @ApiPropertyOptional()
   @IsString()
