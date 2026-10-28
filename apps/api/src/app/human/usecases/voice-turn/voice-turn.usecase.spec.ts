@@ -16,6 +16,7 @@ describe('VoiceTurn', () => {
       handoff?: Record<string, unknown> | null;
       deliveryEnded?: boolean;
       nonVoice?: boolean;
+      expiresAt?: string;
     } = {}
   ) {
     const interaction = {
@@ -54,6 +55,7 @@ describe('VoiceTurn', () => {
       ],
       _environmentId: 'env1',
       _organizationId: 'org1',
+      ...(overrides.expiresAt ? { expiresAt: overrides.expiresAt } : {}),
     };
 
     const humanInteractionRepository = {
@@ -224,6 +226,7 @@ describe('VoiceTurn', () => {
       status: HumanInteractionStatusEnum.EXPIRED,
       handoff: null,
       deliveryEnded: true,
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
     });
     settlement.settle.resolves(null);
     settlement.settleExpiredVoice.callsFake(async (row: object, status: string, response: unknown) => ({
@@ -242,6 +245,49 @@ describe('VoiceTurn', () => {
     expect(result).to.deep.include({ decision: 'approve', answer: 'yeah go ahead' });
     expect(settlement.settle.calledOnce).to.equal(true);
     expect(settlement.settleExpiredVoice.calledOnce).to.equal(true);
+  });
+
+  it('does not revive a voice request whose deadline has passed', async () => {
+    const { usecase, settlement } = setup({
+      status: HumanInteractionStatusEnum.EXPIRED,
+      handoff: null,
+      deliveryEnded: true,
+      expiresAt: new Date(Date.now() - 60_000).toISOString(),
+    });
+
+    try {
+      await usecase.execute({
+        ...command,
+        answer: 'yeah go ahead',
+        decision: 'approve',
+      } as never);
+      expect.fail('expected rejection');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadRequestException);
+    }
+
+    expect(settlement.settleExpiredVoice.called).to.equal(false);
+  });
+
+  it('does not revive an expired voice request whose call never ended', async () => {
+    const { usecase, settlement } = setup({
+      status: HumanInteractionStatusEnum.EXPIRED,
+      handoff: null,
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    });
+
+    try {
+      await usecase.execute({
+        ...command,
+        answer: 'yeah go ahead',
+        decision: 'approve',
+      } as never);
+      expect.fail('expected rejection');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadRequestException);
+    }
+
+    expect(settlement.settleExpiredVoice.called).to.equal(false);
   });
 
   it('rejects an approve settle without decision', async () => {

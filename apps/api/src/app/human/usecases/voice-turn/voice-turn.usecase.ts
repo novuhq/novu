@@ -88,7 +88,13 @@ export class VoiceTurn {
     }
 
     if (interaction.status === HumanInteractionStatusEnum.EXPIRED) {
-      if (!settleIntent) {
+      if (!settleIntent || !canRecoverExpiredVoice(interaction)) {
+        if (settleIntent) {
+          throw new BadRequestException(
+            `Interaction ${command.identifier} is already expired; it cannot be settled again.`
+          );
+        }
+
         return {
           status: 'ended',
           interactionStatus: interaction.status,
@@ -459,6 +465,17 @@ function voiceSubscriberForTurn(interaction: HumanInteractionEntity): string | u
   }
 
   return interaction.voiceSubscriberIds?.[0];
+}
+
+/** Call-end expiry only, and only while the request deadline has not passed. */
+function canRecoverExpiredVoice(interaction: HumanInteractionEntity): boolean {
+  if (!interaction.expiresAt || interaction.expiresAt < new Date().toISOString()) {
+    return false;
+  }
+
+  return (interaction.deliveries ?? []).some(
+    (delivery) => delivery.platform === HumanChannelViaEnum.VOICE && Boolean(delivery.voiceCallEnded)
+  );
 }
 
 function isStillRinging(status: VoiceCallHandoffStatus, sawDialing: boolean): boolean {

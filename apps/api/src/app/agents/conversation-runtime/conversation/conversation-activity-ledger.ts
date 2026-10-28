@@ -792,19 +792,7 @@ export class ConversationActivityLedger {
         content: humanInteractionActivityContent(params, suffix),
         type,
         toolData: {},
-        richContent: {
-          humanInteraction: {
-            interactionIdentifier: params.interactionIdentifier,
-            kind: params.kind,
-            title: params.title,
-            ...(params.requestId ? { requestId: params.requestId } : {}),
-            ...(params.subtitle ? { subtitle: params.subtitle } : {}),
-            ...(params.body ? { body: params.body } : {}),
-            ...(params.status ? { status: params.status } : {}),
-            ...(params.optionId ? { optionId: params.optionId } : {}),
-            ...(params.text ? { text: params.text } : {}),
-          },
-        },
+        richContent: { humanInteraction: humanInteractionDetails(params) },
         sequence,
         environmentId: params.environmentId,
         organizationId: params.organizationId,
@@ -825,6 +813,11 @@ export class ConversationActivityLedger {
           '*'
         );
 
+        const replaced = await this.replaceExpiredResponse(params, suffix, identifier, existing);
+        if (replaced) {
+          return replaced;
+        }
+
         if (existing) {
           return existing;
         }
@@ -832,6 +825,37 @@ export class ConversationActivityLedger {
 
       throw err;
     }
+  }
+
+  /**
+   * Call-end expiry already stored `human:<id>:response` as Expired. Recording the
+   * commitment the agent heard has to replace that row, or inbox show keeps the expiry.
+   */
+  private async replaceExpiredResponse(
+    params: PersistHumanInteractionActivityParams,
+    suffix: 'request' | 'response',
+    identifier: string,
+    existing: ConversationActivityEntity | null
+  ): Promise<ConversationActivityEntity | null> {
+    if (!existing || suffix !== 'response' || !isRecoveredVoiceAnswer(params)) {
+      return null;
+    }
+
+    const previous = humanInteractionStatusOf(existing);
+    if (previous !== 'expired') {
+      return null;
+    }
+
+    return this.activityRepository.replaceExpiredHumanInteractionResponse({
+      environmentId: params.environmentId,
+      conversationId: params.conversationId,
+      identifier,
+      content: humanInteractionActivityContent(params, 'response'),
+      senderType: params.actorType,
+      senderId: params.actorId,
+      senderName: params.actorName,
+      humanInteraction: humanInteractionDetails(params),
+    });
   }
 
   private async persistAndEmitClientEvent(
@@ -1096,6 +1120,37 @@ function humanInteractionActivityIdentifier(
   return params.inOtherThread
     ? `human:${params.interactionIdentifier}:${params.conversationId}:${suffix}`
     : `human:${params.interactionIdentifier}:${suffix}`;
+}
+
+const RECOVERED_VOICE_ANSWER = new Set(['approved', 'denied', 'answered']);
+
+function isRecoveredVoiceAnswer(params: PersistHumanInteractionActivityParams): boolean {
+  return Boolean(params.status && RECOVERED_VOICE_ANSWER.has(params.status));
+}
+
+function humanInteractionStatusOf(activity: ConversationActivityEntity): string | undefined {
+  const details = activity.richContent?.['humanInteraction'];
+  if (!details || typeof details !== 'object') {
+    return undefined;
+  }
+
+  const status = (details as { status?: unknown }).status;
+
+  return typeof status === 'string' ? status : undefined;
+}
+
+function humanInteractionDetails(params: PersistHumanInteractionActivityParams): Record<string, unknown> {
+  return {
+    interactionIdentifier: params.interactionIdentifier,
+    kind: params.kind,
+    title: params.title,
+    ...(params.requestId ? { requestId: params.requestId } : {}),
+    ...(params.subtitle ? { subtitle: params.subtitle } : {}),
+    ...(params.body ? { body: params.body } : {}),
+    ...(params.status ? { status: params.status } : {}),
+    ...(params.optionId ? { optionId: params.optionId } : {}),
+    ...(params.text ? { text: params.text } : {}),
+  };
 }
 
 function humanInteractionActivityContent(

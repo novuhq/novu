@@ -67,24 +67,37 @@ Exit codes match the rest of the CLI:
 | `12` | Call ended without a settle |
 | `1` | Error or the call never connected |
 
-Listen, then settle with the words you heard. Stop on an error or a call that already ended:
+Listen, then settle only when the words are a clear yes or no. Keep listening when they are not, and stop on an error or a call that already ended:
 
 ```bash
 id=$(npx @agentinbox/cli inbox send approve "Ship it?" --via voice --to alice --json | jq -r .id)
 npx @agentinbox/cli inbox voice-turn "$id" --json > turn.json
 code=$?
-if [ "$code" -eq 1 ] || [ "$code" -eq 12 ]; then
+if [ "$code" -ne 11 ]; then
   exit "$code"
 fi
-if [ "$code" -eq 11 ]; then
-  npx @agentinbox/cli inbox voice-turn "$id" \
-    --say "Got it — hanging up. Thanks." \
-    --answer "$(jq -r '.utterance // empty' turn.json)" \
-    --approve
-fi
+
+utterance=$(jq -r '.utterance // empty' turn.json)
+case "$utterance" in
+  [Yy]es*)
+    npx @agentinbox/cli inbox voice-turn "$id" \
+      --say "Got it — hanging up. Thanks." \
+      --answer "$utterance" \
+      --approve
+    ;;
+  [Nn]o*)
+    npx @agentinbox/cli inbox voice-turn "$id" \
+      --say "Understood — I won't ship it." \
+      --answer "$utterance" \
+      --deny
+    ;;
+  *)
+    npx @agentinbox/cli inbox voice-turn "$id"
+    ;;
+esac
 ```
 
-Exit `11` means still on the call (heard something, still ringing, or nothing new yet). Call `inbox voice-turn` again to keep listening, and settle on the turn where you hear the commitment. Do not retry exit `1`.
+Exit `11` means still on the call (heard something, still ringing, or nothing new yet). A refusal is `--deny`, not another `--approve`. Do not retry exit `1`.
 
 ## Rules
 

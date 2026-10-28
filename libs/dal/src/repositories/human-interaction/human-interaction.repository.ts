@@ -383,8 +383,9 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
 
   /**
    * A connected voice call can expire when the person hangs up before the agent
-   * records the commitment it already heard. Only an expired row with a voice
-   * delivery matches, so a text or tool-approval row cannot be rewritten from here.
+   * records the commitment it already heard. Only a call that actually ended,
+   * and only while the request is still inside its TTL. A text row, a failed
+   * dial, or a request whose deadline passed cannot be rewritten from here.
    */
   async settleIfExpired(
     environmentId: string,
@@ -397,7 +398,13 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
         _id: id,
         _environmentId: environmentId,
         status: HumanInteractionStatusEnum.EXPIRED,
-        deliveries: { $elemMatch: { platform: HumanChannelViaEnum.VOICE } },
+        expiresAt: { $gte: new Date().toISOString() },
+        deliveries: {
+          $elemMatch: {
+            platform: HumanChannelViaEnum.VOICE,
+            voiceCallEnded: { $exists: true },
+          },
+        },
       },
       { $set: { status, ...(response ? { response } : {}) } },
       { new: true }
