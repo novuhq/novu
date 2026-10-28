@@ -9,12 +9,12 @@
 //   ask:<command>        asks to run <command> and reports what it was told
 //   ask-twice:<command>  asks for <command> twice in one turn; a grant for the session skips the second
 //   sleep:<ms>           works for <ms> (a tool that doesn't ask); messages that come meanwhile join the turn
-//   reply-myself[:<ms>]  asks to run `npx @agentinbox/cli inbox reply <conversation> …`, then replies through the
+//   reply-myself[:<ms>]  asks to run `npx @agentinbox/cli reply <conversation> …`, then replies through the
 //                        fake API, as that command would; with <ms>, works that long more after replying
-//   wait-for:<ms>        runs `npx @agentinbox/cli inbox reply <conversation> ask …`, which its settings allow,
+//   wait-for:<ms>        runs `npx @agentinbox/cli reply <conversation> ask …`, which its settings allow,
 //                        and which waits <ms> for the answer before it ends (a `tool_result`)
 //   ask-others:<to>[:wait|:<ms>]
-//                        asks to run `npx @agentinbox/cli inbox reply <conversation> approve "Ship it?" --to <to>`,
+//                        asks to run `npx @agentinbox/cli reply <conversation> approve "Ship it?" --to <to>`,
 //                        then sends it through the fake API, as that command would: with `wait`, it waits for the
 //                        answer; else it doesn't (`--async`), and with <ms> works that long more
 //   mcp:<tool> [conv]    asks to use the MCP tool <tool> (`mcp__<server>__<name>`) on <conv>, by default the
@@ -215,7 +215,7 @@ const BEHAVIORS = [
     'reply-myself',
     async (rest, { interruptible, content }) => {
       const conversation = conversationOf(content);
-      const command = `npx @agentinbox/cli inbox reply ${conversation} "I replied myself; all good."`;
+      const command = `npx @agentinbox/cli reply ${conversation} "I replied myself; all good."`;
       tool(command);
       const decision = await interruptible(permission(command));
       if (decision === 'aborted') return {};
@@ -235,7 +235,7 @@ const BEHAVIORS = [
     'wait-for:',
     async (rest, { interruptible, content }) => {
       const id = `toolu_${randomUUID()}`;
-      const command = `npx @agentinbox/cli inbox reply ${conversationOf(content)} ask "Staging or prod?"`;
+      const command = `npx @agentinbox/cli reply ${conversationOf(content)} ask "Staging or prod?"`;
       out({
         type: 'assistant',
         message: { content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] },
@@ -258,7 +258,7 @@ const BEHAVIORS = [
       const waits = then === 'wait';
       const conversation = conversationOf(content);
       const id = `toolu_${randomUUID()}`;
-      const command = `npx @agentinbox/cli inbox reply ${conversation} approve "Ship it?" --to ${to}${waits ? '' : ' --async'}`;
+      const command = `npx @agentinbox/cli reply ${conversation} approve "Ship it?" --to ${to}${waits ? '' : ' --async'}`;
       out({
         type: 'assistant',
         message: { content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] },

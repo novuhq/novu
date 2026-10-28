@@ -11,10 +11,8 @@ test('home serves readable agent documentation and links to Sapien', async ({ pa
   await page.getByRole('tab', { name: 'MCP' }).click();
   await expect(page.locator('#install-panel-mcp')).toHaveText('https://mcp.agentinbox.md');
   await expect(page.locator('#install-panel-cli')).toBeHidden();
-  await expect(page.locator('#quickstart')).toContainText(
-    'agentinbox inbox send "Build finished — 0 failures." --via email'
-  );
-  await expect(page.locator('#quickstart')).toContainText('agentinbox inbox reply conv_123 "On it."');
+  await expect(page.locator('#quickstart')).toContainText('agentinbox send "Build finished — 0 failures." --via email');
+  await expect(page.locator('#quickstart')).toContainText('agentinbox reply conv_123 "On it."');
   await expect(page.locator('#flags')).toContainText('--to <id|email>[,...]');
   await expect(page.locator('#contacts')).toContainText('agentinbox contact list --limit 20 --after <cursor>');
   await page.getByRole('link', { name: 'agentinbox.md/sapien' }).click();

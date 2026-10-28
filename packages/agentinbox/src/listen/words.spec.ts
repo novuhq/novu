@@ -39,7 +39,7 @@ describe('messageForHost', () => {
       attachments: [{ name: 'report.pdf' }, { type: 'image' }],
     });
     expect(text).toContain('conv_1 (telegram, a group)');
-    expect(text).toContain('(With 2 files: report.pdf, image. See npx @agentinbox/cli inbox show conv_1.)');
+    expect(text).toContain('(With 2 files: report.pdf, image. See npx @agentinbox/cli show conv_1.)');
 
     expect(
       messageForHost({ ...MESSAGE, answersMessageId: 'int_9', answer: { status: 'answered', optionId: 'b' } })
@@ -56,10 +56,10 @@ describe('hostInstructions', () => {
     const text = hostInstructions({ conversationId: 'conv_1', channel: 'telegram', project: '~/app' });
 
     expect(text).toContain('started you in ~/app');
-    expect(text).toContain('`npx @agentinbox/cli inbox reply conv_1 "…"`');
+    expect(text).toContain('`npx @agentinbox/cli reply conv_1 "…"`');
     expect(text).toContain('run without asking anyone');
     expect(text).toContain('add `--to <contact>` to that reply');
-    expect(text).toContain('`npx @agentinbox/cli inbox resolve conv_1`');
+    expect(text).toContain('`npx @agentinbox/cli resolve conv_1`');
     expect(text).toContain('only your operator allows things');
   });
 });
@@ -117,7 +117,7 @@ describe('permissionCard', () => {
   });
 
   it('keeps a command too long for a card title whole in the body, where it isn’t cut', () => {
-    const command = `npx @agentinbox/cli inbox reply conv_1 "${'The folder is empty. '.repeat(6).trim()}"`;
+    const command = `npx @agentinbox/cli reply conv_1 "${'The folder is empty. '.repeat(6).trim()}"`;
 
     expect(card(`run \`${command}\``)).toEqual({
       title: 'Claude Code wants to run a command',

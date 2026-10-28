@@ -38,7 +38,7 @@ It uses the connection saved on this computer by `setup`, `login` or `connect`, 
 
 ## Sessions
 
-Each conversation gets one Claude Code session. The next message in it goes on with the same session, so Claude Code remembers what was said and done. When the conversation is resolved, the session ends, and the next message starts a fresh one. The conversation's history stays readable with `inbox show`.
+Each conversation gets one Claude Code session. The next message in it goes on with the same session, so Claude Code remembers what was said and done. When the conversation is resolved, the session ends, and the next message starts a fresh one. The conversation's history stays readable with `show`.
 
 A message that comes while Claude Code works joins the same run, and so does the answer to a question it asked without waiting (`--async`). An answer comes back to the conversation the question was asked in, also when Claude Code asked someone outside it (`--to`), and whatever their "Listen to" switch says. Once the run is over, it goes on with that conversation's session. Send `/stop` to stop the run in that conversation.
 

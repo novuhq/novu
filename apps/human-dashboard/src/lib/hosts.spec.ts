@@ -108,7 +108,7 @@ describe('the steps', () => {
     expect(commands).toEqual([
       'npx @agentinbox/cli connect atlas --code BCDF-GHJK --yes --api-url=https://www.agentinbox.md/api',
       'npx skills add agentinboxhq/skills --agent codex -y',
-      'npx @agentinbox/cli inbox list',
+      'npx @agentinbox/cli list',
     ]);
   });
 
@@ -215,7 +215,7 @@ describe('the Markdown for agents', () => {
       expect(llms).toContain(`(https://www.agentinbox.md/${id}.md)`);
       expect(index).toContain(`(https://www.agentinbox.md/${id}.md)`);
     }
-    expect(index).toContain('agentinbox inbox send "Build finished — 0 failures." --via email');
+    expect(index).toContain('agentinbox send "Build finished — 0 failures." --via email');
     expect(index).toContain('Agent Inbox is an email inbox for AI agents');
     expect(index).not.toContain('What comes back');
     expect(index).toContain('Built by Novu, and open source.');

@@ -335,9 +335,9 @@ describe('without a terminal', () => {
       • Saved config to /home/ada/.agentinbox/config.json.
 
       ✔ telegram connected. Agents on this machine can now run:
-        npx @agentinbox/cli inbox send ask "Which environment should I target?"
-        npx @agentinbox/cli inbox send approve "Deploy to production?"
-        npx @agentinbox/cli inbox send "Build finished."
+        npx @agentinbox/cli send ask "Which environment should I target?"
+        npx @agentinbox/cli send approve "Deploy to production?"
+        npx @agentinbox/cli send "Build finished."
       • Teach your coding agent to use the inbox: npx skills add agentinboxhq/skills
       "
     `);
@@ -376,9 +376,9 @@ describe('without a terminal', () => {
       • Saved config to /home/ada/.agentinbox/config.json.
 
       ✔ telegram connected. Agents on this machine can now run:
-        npx @agentinbox/cli inbox send ask "Which environment should I target?"
-        npx @agentinbox/cli inbox send approve "Deploy to production?"
-        npx @agentinbox/cli inbox send "Build finished."
+        npx @agentinbox/cli send ask "Which environment should I target?"
+        npx @agentinbox/cli send approve "Deploy to production?"
+        npx @agentinbox/cli send "Build finished."
       • Teach your coding agent to use the inbox: npx skills add agentinboxhq/skills
       "
     `);
@@ -437,7 +437,7 @@ describe('without a terminal', () => {
       "
       ✔ Connected to atlas.
       • Saved to /home/ada/.agentinbox/config.json.
-      Check it works: npx @agentinbox/cli inbox list
+      Check it works: npx @agentinbox/cli list
       "
     `);
     expect(output.stderr).toMatchInlineSnapshot(`""`);
@@ -452,7 +452,7 @@ describe('without a terminal', () => {
       "
       ✔ Connected to atlas.
       • Saved to /home/ada/.agentinbox/config.json.
-      Check it works: npx @agentinbox/cli inbox list
+      Check it works: npx @agentinbox/cli list
       Optional: keep Claude Code listening, so a message to atlas starts it in this folder: npx @agentinbox/cli listen claude-code
       "
     `);

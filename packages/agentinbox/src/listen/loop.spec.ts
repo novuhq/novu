@@ -313,7 +313,7 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
 
   it('lets the agent reply and resolve in one command, joined with &&, without asking the operator', async () => {
     const { api } = await start();
-    const command = 'npx @agentinbox/cli inbox reply conv_1 "Done." && npx @agentinbox/cli inbox resolve conv_1';
+    const command = 'npx @agentinbox/cli reply conv_1 "Done." && npx @agentinbox/cli resolve conv_1';
 
     api.deliver({ text: `ask:${command}` });
 
@@ -425,7 +425,7 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     const { api } = await start();
     api.decide = () => 'denied';
 
-    api.deliver({ text: 'ask:npx @agentinbox/cli inbox reply conv_9 "hi"' });
+    api.deliver({ text: 'ask:npx @agentinbox/cli reply conv_9 "hi"' });
 
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Not allowed: Your operator said no.'));
     expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(1);

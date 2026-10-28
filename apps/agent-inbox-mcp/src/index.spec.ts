@@ -314,7 +314,7 @@ describe('the Agent Inbox MCP server', () => {
     });
   });
 
-  it('sends a plain message when the kind is left out, as `inbox send <text>` does in the CLI', async () => {
+  it('sends a plain message when the kind is left out, as `send <text>` does in the CLI', async () => {
     const calls = stubBackends({ status: 'delivered' });
     const { env, ctx } = setup();
 
