@@ -327,6 +327,8 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
   const agentHash = sharedRuntime ? undefined : props.agentHash;
 
   const ownedRuntimeRef = useRef<OwnedRuntimeEntry | null>(null);
+  // The conversation a new chat created, so a rebuilt runtime (e.g. a new `novu` instance) resumes it instead of starting empty.
+  const createdConversationRef = useRef<{ key: string; conversationId: string } | null>(null);
   const [managedRuntime, setManagedRuntime] = useState<ManagedRuntimeEntry | null>(null);
   const [createEpoch, setCreateEpoch] = useState(0);
   const managedRuntimeKey = sharedRuntime
@@ -356,8 +358,11 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
       runtime = current.runtime;
     } else {
       current?.runtime.dispose();
-      runtime = conversationIdProp
-        ? novu.webChat.conversation({ agentId, conversationId: conversationIdProp, agentHash })
+      const resumeConversationId =
+        conversationIdProp ??
+        (createdConversationRef.current?.key === key ? createdConversationRef.current.conversationId : undefined);
+      runtime = resumeConversationId
+        ? novu.webChat.conversation({ agentId, conversationId: resumeConversationId, agentHash })
         : novu.webChat.conversation({ agentId, agentHash });
       ownedRuntimeRef.current = { key, novu, runtime };
     }
@@ -365,6 +370,8 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     setManagedRuntime({ key, runtime });
 
     return () => {
+      const conversationId = ownedRuntimeRef.current?.runtime.getSnapshot().conversationId;
+      if (conversationId) createdConversationRef.current = { key, conversationId };
       ownedRuntimeRef.current?.runtime.dispose();
       ownedRuntimeRef.current = null;
       setManagedRuntime(null);
