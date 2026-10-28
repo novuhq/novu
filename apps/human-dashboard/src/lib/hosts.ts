@@ -216,7 +216,7 @@ export const HOSTS: readonly Host[] = [
       ],
       signIn: 'Then run /reload-plugins and /mcp in Claude Code, and sign in to Agent Inbox when the browser opens.',
       agentNotes: [
-        'Without the plugin, `claude mcp add --transport http inbox https://mcp.agentinbox.md` adds the MCP server alone; `/mcp` signs in. Not both: every tool would show up twice.',
+        `Without the plugin, \`claude mcp add --transport http ${MCP_SERVER_NAME} ${MCP_URL}\` adds the MCP server alone; \`/mcp\` signs in. Not both: every tool would show up twice.`,
         'Claude Code updates the plugin with `claude plugin update agentinbox@agentinbox`.',
       ],
     },
