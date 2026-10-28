@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { ApiError } from '../api/client';
 import type { CliConfig } from '../config';
+import { HOST_MARKER_VARIABLES } from '../host';
 import { setOpenedScreen } from '../screen/opened';
 import { stripEscapes } from '../screen/terminal';
 import { VirtualTerminal } from '../screen/virtual-terminal.fixture';
@@ -169,6 +170,8 @@ const ENV_KEYS = [
   'INBOX_SECRET_KEY',
   'AGENTINBOX_NO_ANIMATION',
   'AGENTINBOX_MASCOT_ASPECT',
+  // Which host runs the CLI: `connect` offers keeping Claude Code listening.
+  ...HOST_MARKER_VARIABLES,
 ];
 const STREAM_PROPERTIES = ['isTTY', 'columns', 'rows'] as const;
 
@@ -438,6 +441,21 @@ describe('without a terminal', () => {
       "
     `);
     expect(output.stderr).toMatchInlineSnapshot(`""`);
+  });
+
+  it('offers keeping Claude Code listening when Claude Code connects', async () => {
+    process.env.AI_AGENT = 'claude-code_2-1-310_agent';
+    const output = await printed('connect');
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stdout).toMatchInlineSnapshot(`
+      "
+      ✔ Connected to atlas.
+      • Saved to /home/ada/.agentinbox/config.json.
+      Check it works: npx @agentinbox/cli inbox list
+      Optional: keep Claude Code listening, so a message to atlas starts it in this folder: npx @agentinbox/cli listen claude-code
+      "
+    `);
   });
 
   it('keeps a code that expired as it was', async () => {

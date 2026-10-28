@@ -15,7 +15,8 @@
     "outDir": "./dist",
     "experimentalDecorators": true,
     "allowJs": true,
-    "strict": true
+    "strict": true,
+    "types": ["node"]
   },
   "include": ["./src/**/*", "scripts/devtool.ts"],
   "exclude": ["node_modules"]

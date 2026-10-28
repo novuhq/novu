@@ -113,13 +113,6 @@ export const HOME_HOW_IT_WORKS: readonly (readonly HomeProsePart[])[] = [
 
 export const HOME_CONTACTS_DESCRIPTION =
   'Contacts are the people you reach often. agentinbox contact list shows them. Invite someone with agentinbox contact invite so they can connect and join that list. On a new conversation, agentinbox inbox send with --to and an email delivers to that address and they become a contact. A reply still needs a contact.';
-export const HOME_AUTH = {
-  commands: ['login', 'connect', 'setup'],
-  file: '~/.agentinbox/config.json',
-  // A send needs someone to reach: without a saved setup, that is INBOX_TO or `--to`.
-  alternative:
-    'In containers and CI, set INBOX_SECRET_KEY and INBOX_TO instead (or pass --to on every send), and optionally INBOX_VIA and INBOX_API_URL.',
-} as const;
 
 export type CommandPart = {
   text: string;

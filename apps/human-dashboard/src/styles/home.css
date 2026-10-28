@@ -228,15 +228,6 @@
   box-shadow: none;
 }
 
-.home-prose {
-  line-height: calc(20px + var(--home-prose-row-gap, 0px));
-  word-spacing: -0.33em;
-}
-
-.home-page .home-prose {
-  margin-bottom: calc(0px - var(--home-prose-bottom-trim, var(--home-prose-row-gap, 0px)));
-}
-
 .home-page .home-inline-code,
 .home-prose-word {
   line-height: 20px;
@@ -305,10 +296,6 @@
 .home-flags [data-color="orange"] {
   display: inline-block;
   white-space: nowrap;
-}
-
-.home-auth-description {
-  --home-prose-row-gap: 4px;
 }
 
 #links.home-section {

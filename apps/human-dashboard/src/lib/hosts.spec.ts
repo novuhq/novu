@@ -12,6 +12,8 @@ import {
   HOSTS,
   hostOf,
   isToolId,
+  listenCommand,
+  listenLead,
   MCP_URL,
   opencodeMcpConfig,
   skillsCommand,
@@ -130,6 +132,33 @@ describe('the steps', () => {
       $schema: 'https://opencode.ai/config.json',
       mcp: { inbox: { type: 'remote', url: 'https://mcp.agentinbox.md' } },
     });
+  });
+});
+
+describe('listening for messages', () => {
+  it('is the optional last step for Claude Code only, for now', () => {
+    const commandHosts = HOSTS.filter((host): host is CommandHost => host.group === 'commands');
+
+    expect(commandHosts.filter((host) => listenCommand(host)).map((host) => host.id)).toEqual(['claude-code']);
+    expect(listenCommand(hostOf('claude-code') as CommandHost)).toBe('npx @agentinbox/cli listen claude-code');
+  });
+
+  it('says what it does, for the agent when it’s known', () => {
+    const claudeCode = hostOf('claude-code') as CommandHost;
+
+    expect(listenLead(claudeCode, 'atlas')).toBe(
+      'Then a message to atlas starts Claude Code in this project, and it asks you before anything its settings don’t allow. You allow it first, on your channel or in the terminal.'
+    );
+    expect(listenLead(claudeCode)).toContain('a message to your agent starts Claude Code');
+  });
+
+  it('is in Claude Code’s Markdown for agents, and in no other host’s', () => {
+    const markdown = hostMarkdown(hostOf('claude-code'));
+
+    expect(markdown).toContain('## Optional: listen for messages');
+    expect(markdown).toContain('`npx @agentinbox/cli listen claude-code`');
+    expect(markdown).toContain('nothing starts until they allow it');
+    expect(hostMarkdown(hostOf('codex'))).not.toContain('listen for messages');
   });
 });
 

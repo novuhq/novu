@@ -31,6 +31,8 @@ const baseConfig: Options = {
   clean: true,
   dts: {
     resolve: ['@novu/agent-event-protocol'],
+    // tsup 8 injects the deprecated `baseUrl` option into the dts build
+    compilerOptions: { ignoreDeprecations: '6.0' },
   },
   minify: true,
   minifyWhitespace: true,

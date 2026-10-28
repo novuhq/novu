@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "module": "commonjs",
+    "customConditions": ["require"],
     "declaration": true,
-    "esModuleInterop": false,
     "noImplicitAny": false,
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
@@ -12,7 +12,6 @@
     "target": "es6",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./src",
     "types": ["node", "mocha"]
   },
   "include": ["src/**/*", "src/**/*.d.ts"],

@@ -12,8 +12,8 @@
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { type Decorator, Project, type SourceFile } from 'ts-morph';
-import { SyntaxKind } from 'typescript';
+// SyntaxKind must come from ts-morph's bundled TypeScript: its enum values differ between TypeScript versions.
+import { type Decorator, Project, type SourceFile, SyntaxKind } from 'ts-morph';
 
 const REPORT_VERSION = 1 as const;
 

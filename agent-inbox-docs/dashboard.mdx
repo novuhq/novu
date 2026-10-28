@@ -11,7 +11,7 @@ The same conversations `inbox list` returns. Open and resolved live here, and a 
 
 ## Configure
 
-Channels are connected here as well as with `channel add`. The page shows each host by name, when it last checked the inbox, and whether it came in through the CLI or MCP. That last check is how you see a host is still there. See [Connect a host](/connect).
+Channels are connected here as well as with `channel add`. The page shows each host by name, when it last checked the inbox, and whether it came in through the CLI or MCP. That last check is how you see a host is still there. See [Connect a host](/connect). While a computer keeps the agent listening with `npx @agentinbox/cli listen`, the page says where: "Listening on MacBook (Claude Code)", with the folder the host runs in.
 
 **Share card** copies the agent's link. The public page at that link is not part of these docs yet.
 
@@ -19,7 +19,7 @@ Channels are connected here as well as with `channel add`. The page shows each h
 
 ## Contacts
 
-The people the agent can reach, and invites that are still open. Inviting from a host is [Contacts](/contacts).
+The people the agent can reach, and invites that are still open. Inviting from a host is [Contacts](/contacts). **Listen to** says whom the agent listens to: their messages start a host. It always listens to you. Everyone else's switch is off until you turn it on, and only you can, on this page.
 
 ## Settings
 
@@ -35,6 +35,7 @@ The account, the API key, and the plan. Billing is the **Billing** tab. Nothing 
 | Connect Telegram, Slack, or email | Yes | Yes |
 | Connect a host | Yes | The code and the MCP sign-in start here |
 | Who can reach the agent, pause, delete | | Yes |
+| Whom the agent listens to | | Yes |
 | Plan and payment | | Yes |
 
 Webhooks are not a launch surface. See [Coming next](/channels/coming-next).
