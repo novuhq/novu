@@ -60,7 +60,7 @@ export function CopilotLauncher() {
     <button
       type="button"
       disabled={isOff}
-      onClick={open}
+      onClick={() => open()}
       aria-label={isOff ? 'Copilot is off' : 'Ask Copilot'}
       className={cn(
         'fixed bottom-4 right-4 z-40 flex h-[38px] items-center gap-2 rounded-full border border-stroke-soft py-2 pl-3 pr-2.5 transition-colors',

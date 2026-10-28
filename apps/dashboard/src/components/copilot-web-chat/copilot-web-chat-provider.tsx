@@ -6,6 +6,7 @@ import { CopilotConnectProvider } from '@/components/connect/copilot-connect-pro
 import { NOVU_COPILOT_AGENT_ID } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { registerCopilotEntry } from './copilot-entry-store';
 import {
   CopilotRegisterContext,
   CopilotWebChatContext,
@@ -24,7 +25,7 @@ import { useCopilotRefetch } from './use-copilot-refetch';
 
 type ShellState = {
   isOpen: boolean;
-  open: () => void;
+  open: CopilotWebChatContextValue['open'];
   close: () => void;
   toggle: () => void;
   pageContext?: CopilotPageContext;
@@ -32,12 +33,18 @@ type ShellState = {
   onRefetchRef: React.MutableRefObject<(() => void) | undefined>;
 };
 
-function useShellState(): ShellState {
+function useShellState(setDraft: (value: string) => void): ShellState {
   const [isOpen, setIsOpen] = useState(false);
   const [pageContext, setPageContext] = useState<CopilotPageContext>();
   const onRefetchRef = useRef<(() => void) | undefined>(undefined);
 
-  const open = useCallback(() => setIsOpen(true), []);
+  const open = useCallback<ShellState['open']>(
+    (options) => {
+      if (options?.prefill) setDraft(options.prefill);
+      setIsOpen(true);
+    },
+    [setDraft]
+  );
   const close = useCallback(() => setIsOpen(false), []);
   const toggle = useCallback(() => setIsOpen((value) => !value), []);
 
@@ -54,7 +61,7 @@ function useShellState(): ShellState {
   return { isOpen, open, close, toggle, pageContext, registerPageContext, onRefetchRef };
 }
 
-type BridgeShell = Pick<ShellState, 'isOpen' | 'close' | 'toggle' | 'pageContext' | 'onRefetchRef'>;
+type BridgeShell = Pick<ShellState, 'isOpen' | 'open' | 'close' | 'toggle' | 'pageContext' | 'onRefetchRef'>;
 
 type ConnectedState = Pick<
   CopilotWebChatContextValue,
@@ -84,15 +91,15 @@ export function CopilotWebChatProvider({
   /** Environment + workflow the thread belongs to; it is resumed after a reload and reset when the scope changes. */
   conversationScope?: string;
 }) {
-  const shell = useShellState();
   const [draft, setDraft] = useState('');
+  const shell = useShellState(setDraft);
   const [connected, setConnected] = useState<ConnectedState | null>(null);
   const { isOpen, open, close, toggle, pageContext, registerPageContext, onRefetchRef } = shell;
   // Memoized so the bridge (wrapped in `memo`) is not re-rendered by the parent's own state updates;
   // `useWebChat` returns a new object every render, which would otherwise loop through `onConnected`.
   const bridgeShell = useMemo(
-    () => ({ isOpen, close, toggle, pageContext, onRefetchRef }),
-    [isOpen, close, toggle, pageContext, onRefetchRef]
+    () => ({ isOpen, open, close, toggle, pageContext, onRefetchRef }),
+    [isOpen, open, close, toggle, pageContext, onRefetchRef]
   );
 
   const value = useMemo<CopilotWebChatContextValue>(
@@ -147,7 +154,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
 }) {
   const track = useTelemetry();
   const connectContext = useCopilotConnectContext();
-  const { isOpen, close, toggle, pageContext, onRefetchRef } = shell;
+  const { isOpen, open, close, toggle, pageContext, onRefetchRef } = shell;
   const [unseenAnswer, setUnseenAnswer] = useState(false);
   const [runError, setRunError] = useState(false);
   const [awaitingReply, setAwaitingReply] = useState(false);
@@ -269,7 +276,9 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   }, [conversationScope]);
 
   const isAvailable = !!connectContext;
-  useCopilotHotkey({ isEnabled: isAvailable && !!pageContext?.workflowId, isOpen, toggle, close });
+  const isEntryEnabled = isAvailable && !!pageContext?.workflowId;
+  useCopilotHotkey({ isEnabled: isEntryEnabled, isOpen, toggle, close });
+  useEffect(() => (isEntryEnabled ? registerCopilotEntry(open) : undefined), [isEntryEnabled, open]);
 
   // `chat.error` stays set while a failed send is retried, so failures are read from the run and the message instead.
   const hasRunError = runError || !!getFailedSend(chat.messages);

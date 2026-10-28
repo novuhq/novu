@@ -2,11 +2,14 @@ import type { UseWebChatResult } from '@novu/react';
 import { createContext, useContext, useEffect, useRef } from 'react';
 import type { CopilotPageContext } from './copilot-web-chat-utils';
 
+export type CopilotOpenOptions = { prefill?: string };
+
 export type CopilotWebChatContextValue = {
   /** False on self-hosted or while the tenant context is unavailable. */
   isAvailable: boolean;
   isOpen: boolean;
-  open: () => void;
+  /** Opens the popover; `prefill` replaces the composer text without sending it. */
+  open: (options?: CopilotOpenOptions) => void;
   close: () => void;
   toggle: () => void;
   chat?: UseWebChatResult;

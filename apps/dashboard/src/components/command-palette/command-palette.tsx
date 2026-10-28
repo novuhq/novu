@@ -16,6 +16,7 @@ import {
   RiSparklingLine,
   RiUserLine,
 } from 'react-icons/ri';
+import { useCopilotEntry } from '@/components/copilot-web-chat';
 import { useHelpPanel } from '@/components/help-panel';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -23,7 +24,7 @@ import { openMintlifyAssistant } from '@/utils/mintlify-assistant';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { Button } from '../primitives/button';
-import { Kbd } from '../primitives/kbd';
+import { IconCmd, Kbd } from '../primitives/kbd';
 import * as CommandMenu from './command-menu';
 import { CommandCategory, Command as CommandType } from './command-types';
 import { useCommandPalette } from './hooks/use-command-palette';
@@ -67,6 +68,8 @@ const getCategoryActionLabel = (category: CommandCategory | undefined, value: st
 
   if (value.includes('Ask AI')) {
     return 'Ask AI';
+  } else if (value.includes('Ask Copilot')) {
+    return 'Ask Copilot';
   } else if (!category) {
     return 'Open Command';
   }
@@ -110,6 +113,7 @@ export function CommandPalette() {
   const track = useTelemetry();
   const [search, setSearch] = useState('');
   const commandGroups = useCommandRegistry(search);
+  const openCopilot = useCopilotEntry();
 
   // Create a flat list of all commands for easy lookup
   const allCommands = commandGroups.flatMap((group) => group.commands);
@@ -133,6 +137,21 @@ export function CommandPalette() {
     closeHelpPanel();
     void openMintlifyAssistant({ source: 'command-palette', query: search });
   }, [search, closeCommandPalette, closeHelpPanel, track]);
+
+  const openCopilotWithQuery = useCallback(() => {
+    if (!openCopilot) return;
+
+    track(TelemetryEvent.COMMAND_PALETTE_COMMAND_SELECTED, {
+      commandId: 'copilot-ask',
+      commandLabel: 'Ask Copilot',
+      commandCategory: 'help',
+    });
+
+    const prefill = search.trim();
+    closeCommandPalette();
+    // Wait for the dialog to release focus so the composer keeps it.
+    setTimeout(() => openCopilot({ prefill }), 100);
+  }, [openCopilot, search, closeCommandPalette, track]);
 
   const executeCommand = useCallback(
     async (command: CommandType) => {
@@ -208,6 +227,29 @@ export function CommandPalette() {
             })}
           </CommandMenu.Group>
         ))}
+
+        {openCopilot && (
+          <CommandMenu.Group heading="Copilot" className="px-2.5">
+            <CommandMenu.Item
+              value={`Ask Copilot ${search} copilot ai assistant workflow`}
+              onSelect={openCopilotWithQuery}
+              className="px-1.5 rounded-8"
+            >
+              <div className="flex items-center gap-1.5 flex-1">
+                <CategoryIconWrapper>
+                  <RiSparklingLine />
+                </CategoryIconWrapper>
+                <span className="text-text-sub text-label-sm flex-1 truncate">
+                  {search.trim() ? `Ask Copilot "${search.trim()}"` : 'Ask Copilot'}
+                </span>
+              </div>
+              <Kbd className="gap-0.5 px-1.5">
+                <IconCmd className="size-2.5" />
+                <span>J</span>
+              </Kbd>
+            </CommandMenu.Item>
+          </CommandMenu.Group>
+        )}
 
         {showDocsAssistant && search.trim() && (
           <CommandMenu.Group heading="AI Assistant" className="px-2.5">

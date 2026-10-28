@@ -1,3 +1,4 @@
+export { useCopilotEntry } from './copilot-entry-store';
 export { CopilotLauncher } from './copilot-launcher';
 export { CopilotPopover } from './copilot-popover';
 export { useCopilotWebChat, useRegisterCopilotContext } from './copilot-web-chat-context';
