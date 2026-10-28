@@ -59,6 +59,12 @@ export interface LangChainAgentConfig {
    * are not streamed.
    */
   formatReply?: (text: string) => Awaitable<MessageContent | void>;
+  /**
+   * Optional text streamed after the model's reply once the run completes (e.g. a link),
+   * so the reply itself still streams. Ignored when `formatReply` is set or the run ends
+   * on a tool approval. Return `undefined` or an empty string to add nothing.
+   */
+  replyFooter?: () => string | undefined;
 }
 
 /**
