@@ -1,3 +1,4 @@
+import { AGENT_CONTENT_FLAGGED_MESSAGE } from '@novu/shared';
 import { CredentialExpiredError, McpServerError } from '@novu/thalamus';
 
 /**
@@ -33,15 +34,14 @@ export const CONTENT_FLAGGED_REPLY =
   'Your message was flagged by our content safety check. Try rephrasing it and send it again.';
 
 /**
- * The Copilot's input moderation middleware aborts the turn with this violation
- * message. OpenAI's moderation can flag benign prompts (for example "write a very
- * long, detailed description"), so the user should be told to rephrase rather
- * than that the agent is down.
+ * OpenAI's moderation can flag benign prompts (for example "write a very long,
+ * detailed description"), so the user should be told to rephrase rather than
+ * that the agent is down.
  */
 export function isContentFlaggedError(err: unknown): boolean {
   const message = extractErrorMessage(err);
 
-  return !!message && /flagged as inappropriate/i.test(message);
+  return message === AGENT_CONTENT_FLAGGED_MESSAGE;
 }
 
 function extractErrorMessage(err: unknown): string | undefined {
