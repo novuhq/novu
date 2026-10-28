@@ -24,4 +24,8 @@ describe('getSidebarPlanCardVariant', () => {
     expect(getSidebarPlanCardVariant(buildSubscription(ApiServiceLevelEnum.PRO), 'paid')).toBe('paused_usage');
     expect(getSidebarPlanCardVariant(buildSubscription(ApiServiceLevelEnum.PRO), null)).toBeNull();
   });
+
+  it('shows the paused card for a paused trial the subscription no longer reports', () => {
+    expect(getSidebarPlanCardVariant(buildSubscription(ApiServiceLevelEnum.PRO), 'trial')).toBe('paused_usage');
+  });
 });
