@@ -10,12 +10,12 @@ import {
   MessageRepository,
   NotificationRepository,
   SubscriberRepository,
+  Types,
 } from '@novu/dal';
 import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import type { EmojiValue } from 'chat';
-import { Types } from 'mongoose';
 import sinon from 'sinon';
 import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
 import { ChatInstanceRegistry } from '../conversation-runtime/ingress/chat-instance.registry';

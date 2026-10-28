@@ -9,12 +9,12 @@ import {
   MessageRepository,
   NotificationTemplateEntity,
   SubscriberRepository,
+  Types,
 } from '@novu/dal';
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, PushProviderIdEnum, StepTypeEnum } from '@novu/shared';
 import { PushEventStatusEnum } from '@novu/stateless';
 import { NotificationTemplateService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { Types } from 'mongoose';
 import { initNovuClassSdk } from '../../../src/app/shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Process Inbound Webhook E2E #novu-v2', () => {
