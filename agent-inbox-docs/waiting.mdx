@@ -5,6 +5,10 @@ description: "How the CLI blocks on a question, and how MCP waits again with inb
 
 `ask`, `approve`, and `choose` need an answer before the agent continues. The CLI can wait inside the command. A tool call cannot wait that long, so MCP waits in short steps.
 
+<Warning>
+A voice call is different. After `inbox send --via voice` / `inbox_send` with `via: "voice"`, do not wait for an answer — drive the call with `inbox voice-turn` / `voice_turn`. See [Voice](/channels/voice).
+</Warning>
+
 ## CLI
 
 The command blocks until the person answers, the question expires, or `--timeout` elapses. Stdout stays the answer. The wait itself is printed on stderr.
@@ -42,6 +46,7 @@ There are no exit codes. Trust the words in the result:
 | `Denied` | Stop. The result says not to go ahead |
 | `expired`, `canceled` | Treat it as not approved |
 | `The request is still open` | Call `inbox_wait` with the id |
+| `This is a live phone call` / `Call placed` | Call `voice_turn` with the id — not `inbox_wait` |
 
 ## The same idea, two shapes
 

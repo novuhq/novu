@@ -7,11 +7,25 @@ import {
   type Interaction,
   type InteractionKind,
   type OptionInput,
+  type VoiceTurnResult,
+  voiceTurn,
 } from '../api/agent-inbox';
 import { type ApiClient, ApiError, createApiClient } from '../api/client';
 import { CLI_COMMAND, type CliConfig, NOT_SET_UP_MESSAGE, resolveConfig, resolveVia } from '../config';
 import { isHostId } from '../host';
-import { answerHint, EXIT_TIMEOUT, emitResult, fail, interactionJson, SetupStillPendingError } from '../output';
+import {
+  answerHint,
+  EXIT_DENIED,
+  EXIT_ERROR,
+  EXIT_GONE,
+  EXIT_OK,
+  EXIT_TIMEOUT,
+  emitResult,
+  emitVoiceCallPlaced,
+  fail,
+  interactionJson,
+  SetupStillPendingError,
+} from '../output';
 import { sleep } from '../poll';
 import { startWaitIndicator } from '../spinner';
 import { isEmailAddress, resolveEmailContact } from './email-contact';
@@ -216,6 +230,12 @@ export async function runSend(words: string[], options: SendOptions, conversatio
       process.exit(emitResult(created, Boolean(options.json)));
     }
 
+    // A voice call needs the agent on the line immediately — waiting here would
+    // burn the bridge park on fillers before anyone posts a turn.
+    if (created.platform === 'voice' || address.via === 'voice') {
+      process.exit(emitVoiceCallPlaced(created, Boolean(options.json)));
+    }
+
     process.exit(await waitForResolution(client, created, options));
   } catch (err) {
     handleError(err);
@@ -338,6 +358,18 @@ export async function waitForResolution(
   interaction: Interaction,
   options: Pick<SendOptions, 'timeout' | 'json'>
 ): Promise<number> {
+  if (interaction.platform === 'voice' && interaction.status === 'pending') {
+    if (options.json) {
+      process.stdout.write(`${JSON.stringify(interactionJson(interaction), null, 2)}\n`);
+    } else {
+      process.stdout.write(
+        `This is a live phone call, not a text wait. Drive it with: ${CLI_COMMAND} inbox voice-turn ${interaction.id}\n`
+      );
+    }
+
+    return EXIT_TIMEOUT;
+  }
+
   const timeoutSeconds = options.timeout ? parseDuration(options.timeout) : Infinity;
   const deadline = Number.isFinite(timeoutSeconds) ? Date.now() + timeoutSeconds * 1000 : Infinity;
 
@@ -540,6 +572,154 @@ function formatKeylessEmailMessage(details: KeylessCapDetails): string {
   ];
 
   return lines.join('\n');
+}
+
+export interface VoiceTurnOptions {
+  say?: string;
+  answer?: string;
+  approve?: boolean;
+  deny?: boolean;
+  option?: string;
+  hangup?: boolean;
+  json?: boolean;
+  apiUrl?: string;
+  host?: string;
+}
+
+/**
+ * One turn on a live voice call. Exit 11 while still on the call (utterance /
+ * timeout / ringing), 0 when settled approved/answered, 10 denied, 12 ended
+ * without a settle, 1 on error.
+ */
+export async function runVoiceTurn(id: string, options: VoiceTurnOptions): Promise<never> {
+  try {
+    const interactionId = id.trim();
+    if (!interactionId) {
+      fail(`\`inbox voice-turn\` needs an interaction id from \`inbox send --via voice\`.`);
+    }
+
+    if (options.approve && options.deny) {
+      fail('Pass either `--approve` or `--deny`, not both.');
+    }
+    if ((options.approve || options.deny) && options.option) {
+      fail('Pass either `--approve`/`--deny` or `--option`, not both.');
+    }
+    if ((options.approve || options.deny || options.option) && !options.answer?.trim()) {
+      fail("Settling needs `--answer` with the person's own words.");
+    }
+
+    let decision: 'approve' | 'deny' | undefined;
+    if (options.approve) {
+      decision = 'approve';
+    } else if (options.deny) {
+      decision = 'deny';
+    }
+    const { client } = clientFromConfig(options.apiUrl);
+    const result = await voiceTurn(client, interactionId, {
+      ...(options.say?.trim() ? { say: options.say.trim() } : {}),
+      ...(options.answer?.trim() ? { answer: options.answer.trim() } : {}),
+      ...(decision ? { decision } : {}),
+      ...(options.option?.trim() ? { optionId: options.option.trim() } : {}),
+      ...(options.hangup ? { hangup: true } : {}),
+    });
+
+    process.exit(emitVoiceTurn(interactionId, result, Boolean(options.json)));
+  } catch (err) {
+    handleError(err);
+  }
+}
+
+export function exitCodeForVoiceTurn(result: VoiceTurnResult): number {
+  switch (result.status) {
+    case 'settled': {
+      if (result.decision === 'deny' || result.interactionStatus === 'denied') {
+        return EXIT_DENIED;
+      }
+      if (
+        result.interactionStatus === 'expired' ||
+        result.interactionStatus === 'canceled' ||
+        result.interactionStatus === 'failed'
+      ) {
+        return result.interactionStatus === 'failed' ? EXIT_ERROR : EXIT_GONE;
+      }
+
+      return EXIT_OK;
+    }
+    case 'ended': {
+      if (result.interactionStatus === 'denied') {
+        return EXIT_DENIED;
+      }
+      if (
+        result.interactionStatus === 'approved' ||
+        result.interactionStatus === 'answered' ||
+        result.interactionStatus === 'delivered'
+      ) {
+        return EXIT_OK;
+      }
+      if (result.interactionStatus === 'failed') {
+        return EXIT_ERROR;
+      }
+
+      return EXIT_GONE;
+    }
+    case 'utterance':
+    case 'timeout':
+    case 'ringing':
+      return EXIT_TIMEOUT;
+    default: {
+      const _exhaustive: never = result.status;
+
+      return EXIT_ERROR;
+    }
+  }
+}
+
+function emitVoiceTurn(id: string, result: VoiceTurnResult, asJson: boolean): number {
+  if (asJson) {
+    process.stdout.write(`${JSON.stringify({ id, ...result }, null, 2)}\n`);
+  } else {
+    process.stdout.write(`${describeVoiceTurn(id, result)}\n`);
+  }
+
+  return exitCodeForVoiceTurn(result);
+}
+
+function describeVoiceTurn(id: string, result: VoiceTurnResult): string {
+  switch (result.status) {
+    case 'utterance': {
+      const heard = result.utterance?.trim() || result.utterances?.join('\n').trim() || '';
+
+      return heard
+        ? `${heard}\n(Still on the call — run \`${CLI_COMMAND} inbox voice-turn ${id}\` again to reply or settle.)`
+        : `(Still on the call — run \`${CLI_COMMAND} inbox voice-turn ${id}\` again.)`;
+    }
+    case 'ringing':
+      return `Phone still ringing (${id}). Run \`${CLI_COMMAND} inbox voice-turn ${id}\` again.`;
+    case 'timeout':
+      return `(No new words yet — still on the call. Run \`${CLI_COMMAND} inbox voice-turn ${id}\` again to keep listening.)`;
+    case 'ended':
+      return `Call ended (${result.endReason ?? 'call_ended'}${
+        result.interactionStatus ? `, ${result.interactionStatus}` : ''
+      }).`;
+    case 'settled': {
+      let headline = 'Answered';
+      if (result.decision === 'approve' || result.interactionStatus === 'approved') {
+        headline = 'Approved';
+      } else if (result.decision === 'deny' || result.interactionStatus === 'denied') {
+        headline = 'Denied';
+      } else if (result.optionId) {
+        headline = `Chose "${result.optionId}"`;
+      }
+      const words = result.answer ? `: ${result.answer}` : '.';
+
+      return `${headline}${words} Call hanging up.`;
+    }
+    default: {
+      const _exhaustive: never = result.status;
+
+      return `Unexpected voice turn status: ${_exhaustive}`;
+    }
+  }
 }
 
 export function handleError(err: unknown): never {

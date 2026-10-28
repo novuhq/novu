@@ -17,6 +17,12 @@ export interface VoiceCallHandoff {
   subscriberId: string;
   status: VoiceCallHandoffStatus;
   inboundSeq: number;
+  /**
+   * How many inbound utterances have already been handed to the calling agent.
+   * Advanced atomically by `takeUtterances` so overlapping turns cannot both claim
+   * the same words.
+   */
+  agentSeq: number;
   utterances: string[];
   pendingAgentLine?: string;
   hangupRequested?: boolean;
@@ -30,6 +36,7 @@ interface StoredVoiceCallHandoff {
   subscriberId?: string;
   status?: string;
   inboundSeq?: number;
+  agentSeq?: number;
   /** JSON array. A string so Redis cjson does not turn an empty list into an object. */
   utterancesJson?: string;
   pendingAgentLine?: string;
@@ -60,6 +67,7 @@ export function createDialingHandoff(input: DialingVoiceCall): VoiceCallHandoff 
     subscriberId: input.subscriberId,
     status: 'dialing',
     inboundSeq: 0,
+    agentSeq: 0,
     utterances: [],
   };
 }
@@ -72,6 +80,7 @@ export function serializeVoiceCallHandoff(handoff: VoiceCallHandoff): string {
     subscriberId: handoff.subscriberId,
     status: handoff.status,
     inboundSeq: handoff.inboundSeq,
+    agentSeq: handoff.agentSeq,
     utterancesJson: JSON.stringify(handoff.utterances),
     ...(handoff.pendingAgentLine ? { pendingAgentLine: handoff.pendingAgentLine } : {}),
     ...(handoff.hangupRequested ? { hangupRequested: true } : {}),
@@ -100,6 +109,7 @@ export function parseVoiceCallHandoff(raw: string): VoiceCallHandoff | null {
     subscriberId: stored.subscriberId ?? '',
     status: statusOf(stored.status),
     inboundSeq: typeof stored.inboundSeq === 'number' && stored.inboundSeq >= 0 ? stored.inboundSeq : 0,
+    agentSeq: typeof stored.agentSeq === 'number' && stored.agentSeq >= 0 ? stored.agentSeq : 0,
     utterances: utterancesOf(stored.utterancesJson),
     ...(stored.pendingAgentLine ? { pendingAgentLine: stored.pendingAgentLine } : {}),
     ...(stored.hangupRequested ? { hangupRequested: true } : {}),
@@ -210,6 +220,49 @@ export async function postAgentLine(
   );
 
   return Number(result) === 1;
+}
+
+export type TakenUtterances = {
+  handoff: VoiceCallHandoff;
+  /** Lines this take handed to the agent. Empty when nothing new has arrived. */
+  utterances: string[];
+};
+
+/**
+ * Hands every utterance past `agentSeq` to the calling agent and advances the
+ * cursor in one Redis script, so two overlapping turns cannot both claim the
+ * same words. Null when the call is unknown or already ended.
+ */
+export async function takeUtterances(cache: CacheService, conversationId: string): Promise<TakenUtterances | null> {
+  const raw = await cache.eval<unknown>(
+    TAKE_UTTERANCES_SCRIPT,
+    [voiceCallRegistryKey(conversationId)],
+    [String(VOICE_CALL_REGISTRY_TTL_SECONDS)]
+  );
+  if (typeof raw !== 'string') {
+    return null;
+  }
+
+  let parsed: { handoffJson?: unknown; takenJson?: unknown };
+  try {
+    parsed = JSON.parse(raw) as { handoffJson?: unknown; takenJson?: unknown };
+  } catch {
+    return null;
+  }
+
+  if (typeof parsed.handoffJson !== 'string') {
+    return null;
+  }
+
+  const handoff = parseVoiceCallHandoff(parsed.handoffJson);
+  if (!handoff) {
+    return null;
+  }
+
+  return {
+    handoff,
+    utterances: typeof parsed.takenJson === 'string' ? utterancesOf(parsed.takenJson) : [],
+  };
 }
 
 /**
@@ -328,6 +381,36 @@ else
 end
 ${SAVE_HANDOFF}
 return 1
+`;
+
+const TAKE_UTTERANCES_SCRIPT = `
+${LOAD_HANDOFF}
+if data.status == 'ended' then
+  return nil
+end
+local list = {}
+if type(data.utterancesJson) == 'string' and data.utterancesJson ~= '' then
+  local decodedOk, decoded = pcall(cjson.decode, data.utterancesJson)
+  if decodedOk and type(decoded) == 'table' then
+    list = decoded
+  end
+end
+local agentSeq = tonumber(data.agentSeq) or 0
+local inboundSeq = tonumber(data.inboundSeq) or 0
+local taken = {}
+for i = agentSeq + 1, #list do
+  local text = list[i]
+  if type(text) == 'string' and text ~= '' then
+    table.insert(taken, text)
+  end
+end
+if inboundSeq > agentSeq then
+  data.agentSeq = inboundSeq
+elseif type(data.agentSeq) ~= 'number' then
+  data.agentSeq = agentSeq
+end
+${SAVE_HANDOFF}
+return cjson.encode({ handoffJson = cjson.encode(data), takenJson = cjson.encode(taken) })
 `;
 
 const END_CALL_SCRIPT = `

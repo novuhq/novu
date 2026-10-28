@@ -1,0 +1,91 @@
+---
+title: "Voice"
+description: "Place a phone call and drive it turn by turn until the person commits to an answer."
+---
+
+Voice places an outbound phone call to a contact with a verified phone number. The agent speaks its own words on the call, hears the person as text, and settles the question when it hears a clear commitment.
+
+A call is one conversation. Pass a single contact, and use `ask`, `approve`, or `choose` — not a plain message.
+
+## MCP
+
+```text
+inbox_send
+  kind: "approve"
+  message: "Approve the deploy to production?"
+  via: "voice"
+  to: "alice"
+```
+
+The result names the interaction id and tells you to call `voice_turn` now. Do not call `inbox_wait` on a voice call.
+
+```text
+voice_turn
+  id: "hi_…"
+```
+
+Leave `say` out on the first call. The opening question was already spoken; this listens for their answer.
+
+```text
+voice_turn
+  id: "hi_…"
+  say: "Got it — hanging up. Thanks."
+  answer: "yeah, go ahead"
+  decision: "approve"
+```
+
+Speak one or two short sentences. The words are spoken verbatim to a person on a phone. Settle as soon as you hear a clear commitment: pass `answer` (their own words) plus `decision` for approve, or `option_id` for choose. An answer hangs up.
+
+Call `voice_turn` again while the result says the call is still open (no new words yet, or still ringing).
+
+## CLI
+
+```bash
+npx @agentinbox/cli inbox send approve "Approve the deploy to production?" --via voice --to alice
+```
+
+Exit `0` means the call was placed. Drive it with `inbox voice-turn`:
+
+```bash
+id=hi_…
+# Listen for their answer to the opening question
+npx @agentinbox/cli inbox voice-turn "$id"
+# Speak and settle
+npx @agentinbox/cli inbox voice-turn "$id" \
+  --say "Got it — hanging up. Thanks." \
+  --answer "yeah, go ahead" \
+  --approve
+```
+
+Exit codes match the rest of the CLI:
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Settled approved / answered |
+| `10` | Denied |
+| `11` | Still on the call (heard something, ringing, or timed out listening) |
+| `12` | Call ended without a settle |
+| `1` | Error or the call never connected |
+
+A shell loop keeps going on `11`:
+
+```bash
+id=$(npx @agentinbox/cli inbox send approve "Ship it?" --via voice --to alice --json | jq -r .id)
+while true; do
+  npx @agentinbox/cli inbox voice-turn "$id" --say "Can you approve the deploy?"
+  code=$?
+  if [ "$code" -eq 0 ] || [ "$code" -eq 10 ] || [ "$code" -eq 12 ]; then break; fi
+done
+```
+
+Prefer settling on the turn where you hear the commitment, with `--answer` and `--approve` / `--deny` / `--option`, rather than inventing a second listen loop.
+
+## Rules
+
+- One or two short sentences per turn. The words are spoken verbatim.
+- Leave `say` / `--say` out when you only need to listen.
+- Settle as soon as you hear a clear commitment. Do not keep chatting.
+- Never use `inbox_wait` on a voice interaction — use `voice_turn` / `inbox voice-turn`.
+- Replies cannot pick `--via voice`: a call is not a thread you reply into later.
+
+See [Waiting for an answer](/waiting) for how text channels wait instead.

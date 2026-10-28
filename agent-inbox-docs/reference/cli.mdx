@@ -31,7 +31,7 @@ Agents branch on these. Do not parse the prose when a code will do.
 | --- | --- |
 | `INBOX_SECRET_KEY` | API secret key. Wins over `login` and `setup` |
 | `INBOX_TO` | Default recipient: contact id or ids, comma-separated, as `--to` (max 50) |
-| `INBOX_VIA` | Default channel for `INBOX_TO`: `telegram`, `slack`, or `email`. Ignored when `--to` names someone else |
+| `INBOX_VIA` | Default channel for `INBOX_TO`: `telegram`, `slack`, `email`, or `voice`. Ignored when `--to` names someone else |
 | `INBOX_API_URL` | API URL. The default is `https://www.agentinbox.md/api` |
 | `INBOX_CONFIG` | Config file path. The default is `~/.agentinbox/config.json` |
 
@@ -130,7 +130,7 @@ A plain message returns when it is delivered. Start the words with `ask`, `appro
 | Flag | Meaning |
 | --- | --- |
 | `--to` | Contact id, email, or a comma-separated list (max 50). Default: `INBOX_TO`, then you |
-| `--via` | `telegram`, `slack`, or `email`. Default channel for this send |
+| `--via` | `telegram`, `slack`, `email`, or `voice`. Default channel for this send. Voice returns when the call is placed — then use `inbox voice-turn` |
 | `--from` | Label shown to the person |
 | `--ttl` | How long a question stays answerable. Default 24h, max 5d |
 | `--timeout` | How long this command waits. Default: until answered or expired |
@@ -149,6 +149,25 @@ npx @agentinbox/cli inbox reply <conversation> <words...>
 ```
 
 Same message flags as `send`, except `--via`. `--to` limits who may answer. `--anyone` lets anyone in the conversation answer, including a stranger. Not with `--to`.
+
+## inbox voice-turn
+
+```bash
+npx @agentinbox/cli inbox voice-turn <id>
+```
+
+Speak or listen on a live voice call from `inbox send --via voice`.
+
+| Flag | Meaning |
+| --- | --- |
+| `--say` | Words spoken verbatim. Omit to listen only |
+| `--answer` | The person's own words when settling |
+| `--approve` / `--deny` | Settle an approve interaction (needs `--answer`) |
+| `--option` | Settle a choose interaction with this option id (needs `--answer`) |
+| `--hangup` | Hang up after `--say` without settling |
+| `--json` | Print JSON |
+
+Exit `11` while still on the call (utterance, ringing, or listen timeout). `0` when settled approved/answered, `10` denied, `12` ended without a settle. See [Voice](/channels/voice).
 
 ## contact list
 

@@ -10,6 +10,8 @@ export type Interaction = {
   id: string;
   kind: InteractionKind;
   status: 'pending' | 'answered' | 'approved' | 'denied' | 'expired' | 'canceled' | 'delivered' | 'failed';
+  /** Delivery channel when the API names one (`telegram`, `slack`, `email`, `voice`). */
+  platform?: string;
   content?: { cardChrome?: { options?: Option[] } };
   response?: { type: 'text' | 'option'; text?: string; optionId?: string; respondedBy?: string };
   /** Set when a voice call never connected. */
@@ -17,6 +19,28 @@ export type Interaction = {
   failedTo?: string[];
   /** Threads the send landed in. Sending marks each one read; `unreadBefore` is what was unread then. */
   threads?: Array<{ id: string; unreadBefore: number }>;
+};
+
+/** Result of one `voice_turn` call against the API. */
+export type VoiceTurnResult = {
+  status: 'utterance' | 'ringing' | 'timeout' | 'ended' | 'settled';
+  utterance?: string;
+  utterances?: string[];
+  endReason?: string;
+  interactionStatus?: string;
+  answer?: string;
+  decision?: 'approve' | 'deny';
+  optionId?: string;
+};
+
+export type VoiceTurnInput = {
+  id: string;
+  say?: string;
+  answer?: string;
+  decision?: 'approve' | 'deny';
+  optionId?: string;
+  hangup?: boolean;
+  waitSeconds?: number;
 };
 
 export type Card = {
@@ -174,6 +198,11 @@ export async function waitForAnswer(
 
   let interaction = typeof sent === 'string' ? await check() : sent;
 
+  // A live voice call needs voice_turn, not a 50s poll that burns the bridge park.
+  if (interaction.status === 'pending' && interaction.platform === 'voice') {
+    return interaction;
+  }
+
   while (interaction.status === 'pending' && Date.now() + POLL_EVERY_MS <= deadline) {
     await sleep(POLL_EVERY_MS);
 
@@ -183,6 +212,10 @@ export async function waitForAnswer(
       interaction = keepCreateDetails(await check(), sent);
     } catch {
       // One missed check is not an answer: keep what is known and try again while there is time.
+    }
+
+    if (interaction.status === 'pending' && interaction.platform === 'voice') {
+      return interaction;
     }
   }
 
@@ -216,6 +249,10 @@ export function describeOutcome(interaction: Interaction): string {
     ? ` Warning: delivery failed for ${interaction.failedTo.join(', ')}.`
     : '';
 
+  if (status === 'pending' && interaction.platform === 'voice') {
+    return `This is a live phone call, not a text wait. Call voice_turn with id "${id}" to listen and speak. Do not call inbox_wait.${threadNote}${failureNote}`;
+  }
+
   switch (status) {
     case 'pending':
       return `No answer yet. The request is still open: call inbox_wait with id "${id}" to keep waiting. Do not go ahead without the answer.${threadNote}${failureNote}`;
@@ -235,6 +272,114 @@ export function describeOutcome(interaction: Interaction): string {
       return `${interaction.voiceFailure?.message ?? 'The call failed before it connected.'} Do not treat this as an answer.`;
     default:
       return `The request is ${status}.${threadNote}`;
+  }
+}
+
+/** Voice send: return as soon as the dial is accepted — never wait for an answer on the call. */
+export function describeVoiceCallPlaced(interaction: Interaction): string {
+  const threadNote = describeThreads(interaction.threads);
+
+  return `Call placed (id "${interaction.id}"). Call voice_turn with that id now — leave say out on the first call to hear their answer to the opening question. Speak one or two short sentences; the words are spoken verbatim to a person on a phone. Settle as soon as you hear a clear commitment (pass answer plus decision or option_id).${threadNote}`;
+}
+
+function firstVoiceTurnBody(input: VoiceTurnInput): Record<string, unknown> {
+  return {
+    ...(input.say ? { say: input.say } : {}),
+    ...(input.answer ? { answer: input.answer } : {}),
+    ...(input.decision ? { decision: input.decision } : {}),
+    ...(input.optionId ? { optionId: input.optionId } : {}),
+    ...(input.hangup ? { hangup: true } : {}),
+  };
+}
+
+function voiceTurnRequestTimeout(remainingMs: number): number {
+  const budget = remainingMs > 0 ? remainingMs : VOICE_TURN_API_WAIT_MS;
+
+  return Math.max(SHORTEST_CHECK_MS, Math.min(budget, VOICE_TURN_API_WAIT_MS + 5_000));
+}
+
+function voiceTurnStillListening(status: VoiceTurnResult['status']): boolean {
+  return status === 'timeout' || status === 'ringing';
+}
+
+/**
+ * Posts a voice turn, then re-calls line-lessly until the wait budget is spent or the
+ * turn leaves the "still listening" states. The server cursor makes re-calls safe.
+ */
+export async function voiceTurn(
+  api: AgentInboxApi,
+  input: VoiceTurnInput,
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  since: number = Date.now()
+): Promise<VoiceTurnResult> {
+  const seconds = input.waitSeconds ?? DEFAULT_WAIT_SECONDS;
+  const deadline = since + Math.min(Math.max(seconds, 0), MAX_WAIT_SECONDS) * 1000;
+  const path = `/v1/inbox/messages/${encodeURIComponent(input.id)}/voice/turn`;
+  let first = true;
+
+  while (true) {
+    const remainingMs = deadline - Date.now();
+    if (!first && remainingMs <= 0) {
+      return { status: 'timeout' };
+    }
+
+    const result = await api.post<VoiceTurnResult>(
+      path,
+      first ? firstVoiceTurnBody(input) : {},
+      voiceTurnRequestTimeout(remainingMs)
+    );
+
+    if (!voiceTurnStillListening(result.status)) {
+      return result;
+    }
+
+    first = false;
+    const wait = Math.min(POLL_EVERY_MS, deadline - Date.now());
+    if (wait <= 0) {
+      return result;
+    }
+    await sleep(wait);
+  }
+}
+
+/** How long one API voice_turn parks (matches the API's VOICE_TURN_MAX_WAIT_SECONDS). */
+const VOICE_TURN_API_WAIT_MS = 25_000;
+
+export function describeVoiceTurn(id: string, result: VoiceTurnResult): string {
+  switch (result.status) {
+    case 'utterance': {
+      const heard = result.utterance?.trim() || result.utterances?.join('\n').trim() || '';
+
+      return heard
+        ? `They said: ${heard}. Still on the call (id "${id}"): call voice_turn again to reply or settle. Speak one or two short sentences; settle as soon as you hear a clear commitment.`
+        : `Still on the call (id "${id}"): call voice_turn again.`;
+    }
+    case 'ringing':
+      return `The phone is still ringing (id "${id}"). Call voice_turn again to keep waiting.`;
+    case 'timeout':
+      return `No new words yet. Still on the call (id "${id}"): call voice_turn again to keep listening. Do not invent a new line just to wait.`;
+    case 'ended':
+      return `The call ended (${result.endReason ?? 'call_ended'}${
+        result.interactionStatus ? `, interaction ${result.interactionStatus}` : ''
+      }). Do not treat this as an answer unless you already settled.`;
+    case 'settled': {
+      let headline = 'Answered';
+      if (result.decision === 'approve') {
+        headline = 'Approved';
+      } else if (result.decision === 'deny') {
+        headline = 'Denied';
+      } else if (result.optionId) {
+        headline = `Answered (chose ${result.optionId})`;
+      }
+      const words = result.answer ? ` They said: ${result.answer}` : '';
+
+      return `${headline}.${words} The call is hanging up.`;
+    }
+    default: {
+      const _exhaustive: never = result.status;
+
+      return `Unexpected voice turn status: ${_exhaustive}`;
+    }
   }
 }
 

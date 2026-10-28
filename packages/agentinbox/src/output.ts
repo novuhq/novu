@@ -115,6 +115,20 @@ export function emitResult(interaction: Interaction, asJson: boolean): number {
   return exitCodeFor(interaction);
 }
 
+/** Voice send: the dial was accepted — exit 0 and point the agent at `inbox voice-turn`. */
+export function emitVoiceCallPlaced(interaction: Interaction, asJson: boolean): number {
+  if (asJson) {
+    process.stdout.write(`${JSON.stringify(interactionJson(interaction), null, 2)}\n`);
+  } else {
+    process.stdout.write(
+      `${pc.green('Call placed')} (${interaction.id}). Drive it with: ${CLI_COMMAND} inbox voice-turn ${interaction.id}\n` +
+        `Leave --say out on the first turn to hear their answer. Settle with --answer and --approve/--deny or --option.\n`
+    );
+  }
+
+  return EXIT_OK;
+}
+
 const PREVIEW_LENGTH = 60;
 
 /** ANSI CSI / OSC escape sequences, then any remaining C0/C1 control character except tab and newline. */

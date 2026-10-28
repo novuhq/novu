@@ -221,6 +221,7 @@ export class CreateInteraction {
     const resolved = await this.resolveTargets(command, agent, recipients);
     const emailCount = resolved.filter((item) => item.target.platform === HumanChannelViaEnum.EMAIL).length;
     const voiceTargets = resolved.filter((item) => item.target.platform === HumanChannelViaEnum.VOICE);
+    this.assertVoiceSendAllowed(command, voiceTargets.length);
     let credits: AgentEmailInboxCredits | undefined;
     let messageCredits: HumanMessageCredits | undefined;
     let voiceCredits: HumanVoiceMinuteCredits | undefined;
@@ -337,6 +338,28 @@ export class CreateInteraction {
     }
   }
 
+  /**
+   * A voice call is one conversation the agent drives turn by turn. Fan-out and
+   * `tell` leave nobody to settle, so the person gets fillers and a hangup.
+   */
+  private assertVoiceSendAllowed(command: CreateInteractionCommand, voiceTargetCount: number): void {
+    if (voiceTargetCount === 0) {
+      return;
+    }
+
+    if (command.kind === HumanInteractionKindEnum.TELL) {
+      throw new BadRequestException(
+        'Voice cannot deliver a `tell`: there is nothing to settle, and nobody drives the call. Use ask, approve, or choose.'
+      );
+    }
+
+    if (voiceTargetCount > 1) {
+      throw new BadRequestException(
+        'Voice reaches one person at a time. Pass a single contact in `to`, or leave `via` unset so each contact uses their own channel.'
+      );
+    }
+  }
+
   private async reserveVoiceHold(
     environmentId: string,
     organizationId: string,
@@ -408,7 +431,7 @@ export class CreateInteraction {
 
   /**
    * A pending voice send keeps the minutes and contacts it actually reached.
-   * A tell, or a voice target that never went out, gives the minutes back when `release` runs.
+   * A voice target that never went out gives the minutes back when `release` runs.
    * An unconfirmed dial keeps its share: the phone may still be ringing.
    */
   private async keepVoiceReservation(

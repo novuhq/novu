@@ -223,8 +223,9 @@ export class HumanInteractionsController {
   }
 
   /**
-   * Minimal turn handoff for the voice bridge (NV-9171). Not part of the public
-   * SDK surface yet — NV-9172 wraps this for CLI/MCP with settle semantics.
+   * Speak and/or listen on a live voice call. Posts the next line into the
+   * bridge rendezvous, waits (bounded) for the person's utterance, and settles
+   * the interaction when the agent hears a commitment.
    */
   @Post('/interactions/:identifier/voice/turn')
   @HttpCode(HttpStatus.OK)
@@ -244,7 +245,10 @@ export class HumanInteractionsController {
         organizationId: user.organizationId,
         userId: user._id,
         identifier,
-        line: body.line,
+        say: body.say,
+        answer: body.answer,
+        decision: body.decision,
+        optionId: body.optionId,
         hangup: body.hangup,
       })
     );

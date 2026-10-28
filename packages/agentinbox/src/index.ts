@@ -5,7 +5,7 @@ import { channelAddCommand, channelDefaultCommand, channelListCommand } from './
 import { connectCommand } from './commands/connect';
 import { contactsCommand } from './commands/contacts';
 import { inboxListCommand, inboxReadCommand, inboxResolveCommand, inboxShowCommand } from './commands/inbox';
-import { runSend } from './commands/interact';
+import { runSend, runVoiceTurn } from './commands/interact';
 import { inviteCommand } from './commands/invite';
 import { loginCommand } from './commands/login';
 import { setupCommand } from './commands/setup';
@@ -27,7 +27,7 @@ program.addHelpText(
   '\nEnvironment variables (headless/containerized use, no config file needed):\n' +
     '  INBOX_SECRET_KEY  API secret key (takes priority over `login` and `setup`)\n' +
     '  INBOX_TO          default recipient: contact id(s), comma-separated (as --to)\n' +
-    '  INBOX_VIA         default channel for INBOX_TO: telegram, slack, or email (as --via; ignored when --to names someone else)\n' +
+    '  INBOX_VIA         default channel for INBOX_TO: telegram, slack, email, or voice (as --via; ignored when --to names someone else)\n' +
     '  INBOX_API_URL     API URL override\n' +
     '  INBOX_CONFIG      config file path override\n' +
     'Precedence: CLI flags > environment variables > ~/.agentinbox/config.json\n'
@@ -119,7 +119,7 @@ withSendOptions(
     )
     .option(
       '--via <channel>',
-      "deliver on a specific channel (telegram, slack, email) instead of each contact's default (env: INBOX_VIA, ignored when --to names someone else)"
+      "deliver on a specific channel (telegram, slack, email, voice) instead of each contact's default (env: INBOX_VIA, ignored when --to names someone else)"
     )
     .description(`Start a conversation. ${SEND_USAGE}`)
 ).action((words: string[], options) => runSend(words, options));
@@ -136,6 +136,22 @@ withSendOptions(
     )
     .description(`Send into an existing conversation. ${SEND_USAGE}`)
 ).action((conversation: string, words: string[], options) => runSend(words, options, conversation));
+
+inbox
+  .command('voice-turn')
+  .argument('<id>', 'interaction id from `inbox send --via voice`')
+  .option('--say <text>', 'words spoken verbatim to the person; omit to listen only')
+  .option('--answer <text>', "the person's own words that commit to the answer (required when settling)")
+  .option('--approve', 'settle an approve interaction as approved (needs --answer)')
+  .option('--deny', 'settle an approve interaction as denied (needs --answer)')
+  .option('--option <id>', 'settle a choose interaction with this option id (needs --answer)')
+  .option('--hangup', 'hang up after speaking --say, without settling')
+  .option('--json', 'print JSON')
+  .option('--api-url <url>', 'API URL override')
+  .description(
+    'Speak or listen on a live voice call. Exit 11 while still on the call; 0 when settled; 10 denied; 12 ended without a settle'
+  )
+  .action((id: string, options) => runVoiceTurn(id, options));
 
 // --- contact ---
 

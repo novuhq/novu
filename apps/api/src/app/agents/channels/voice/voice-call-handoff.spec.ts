@@ -20,6 +20,7 @@ describe('voice call handoff', () => {
       subscriberId: 'sub-1',
       status: 'dialing',
       inboundSeq: 0,
+      agentSeq: 0,
       utterances: [],
     });
 
@@ -30,6 +31,7 @@ describe('voice call handoff', () => {
       subscriberId: '',
       status: 'dialing',
       inboundSeq: 0,
+      agentSeq: 0,
       utterances: [],
     });
   });
