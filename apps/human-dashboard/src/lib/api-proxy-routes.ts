@@ -8,6 +8,7 @@ export const PROXY_ROUTES: readonly ProxyRoute[] = [
   ['GET', '/v1/inbox', '/v1/human/inbox'],
   ['POST', '/v1/inbox/messages', '/v1/human/interactions'],
   ['GET', '/v1/inbox/messages/:messageId', '/v1/human/interactions/:messageId'],
+  ['POST', '/v1/inbox/messages/:messageId/voice/turn', '/v1/human/interactions/:messageId/voice/turn'],
   ['GET', '/v1/inbox/:conversationId', '/v1/human/inbox/:conversationId'],
   ['POST', '/v1/inbox/:conversationId/read', '/v1/human/inbox/:conversationId/read'],
   ['POST', '/v1/inbox/:conversationId/resolve', '/v1/human/inbox/:conversationId/resolve'],

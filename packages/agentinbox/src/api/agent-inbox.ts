@@ -167,6 +167,36 @@ export async function getInteraction(client: ApiClient, id: string): Promise<Int
   return unwrap(res.data);
 }
 
+export type VoiceTurnStatus = 'utterance' | 'ringing' | 'timeout' | 'ended' | 'settled';
+
+export interface VoiceTurnResult {
+  status: VoiceTurnStatus;
+  utterance?: string;
+  utterances?: string[];
+  endReason?: string;
+  interactionStatus?: string;
+  answer?: string;
+  decision?: 'approve' | 'deny';
+  optionId?: string;
+}
+
+export interface VoiceTurnInput {
+  say?: string;
+  answer?: string;
+  decision?: 'approve' | 'deny';
+  optionId?: string;
+  hangup?: boolean;
+}
+
+export async function voiceTurn(client: ApiClient, id: string, input: VoiceTurnInput): Promise<VoiceTurnResult> {
+  const res = await client.axios.post<{ data?: VoiceTurnResult } | VoiceTurnResult>(
+    `/v1/inbox/messages/${encodeURIComponent(id)}/voice/turn`,
+    input
+  );
+
+  return unwrap(res.data);
+}
+
 export interface SetupRelayResult {
   agentId: string;
   agentIdentifier: string;

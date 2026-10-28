@@ -382,6 +382,36 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
   }
 
   /**
+   * A connected voice call can expire when the person hangs up before the agent
+   * records the commitment it already heard. Only a call that actually ended,
+   * and only while the request is still inside its TTL. A text row, a failed
+   * dial, or a request whose deadline passed cannot be rewritten from here.
+   */
+  async settleIfExpired(
+    environmentId: string,
+    id: string,
+    status: HumanInteractionStatusEnum,
+    response?: HumanInteractionResponse
+  ): Promise<HumanInteractionEntity | null> {
+    return this.findOneAndUpdate(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        status: HumanInteractionStatusEnum.EXPIRED,
+        expiresAt: { $gte: new Date().toISOString() },
+        deliveries: {
+          $elemMatch: {
+            platform: HumanChannelViaEnum.VOICE,
+            voiceCallEnded: { $exists: true },
+          },
+        },
+      },
+      { $set: { status, ...(response ? { response } : {}) } },
+      { new: true }
+    );
+  }
+
+  /**
    * One recipient's call never connected. A second webhook for that conversation
    * does not match. The row stays open when someone else can still answer.
    */

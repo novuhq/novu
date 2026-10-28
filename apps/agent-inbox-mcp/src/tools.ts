@@ -17,10 +17,13 @@ import {
   type Card,
   DEFAULT_WAIT_SECONDS,
   describeOutcome,
+  describeVoiceCallPlaced,
+  describeVoiceTurn,
   type InteractionKind,
   MAX_WAIT_SECONDS,
   type OptionInput,
   sendInteraction,
+  voiceTurn,
   waitForAnswer,
 } from './interactions';
 import { resolveEmailRecipients } from './recipients';
@@ -107,7 +110,7 @@ type SendToolInput = {
   kind?: QuestionKind;
   message: string;
   to?: string | string[];
-  via?: 'telegram' | 'slack' | 'email';
+  via?: 'telegram' | 'slack' | 'email' | 'voice';
   from?: string;
   ttl_seconds?: number;
   wait_seconds?: number;
@@ -219,6 +222,16 @@ async function sendOrReply(api: AgentInboxApi, input: SendToolInput | ReplyToolI
     return describeOutcome({ ...created, status: 'delivered' });
   }
 
+  // A voice call needs the agent on the line immediately — waiting here would
+  // burn the bridge park on fillers before anyone posts a turn.
+  if (!isReply && (input.via === 'voice' || created.platform === 'voice')) {
+    if (created.status === 'pending') {
+      return describeVoiceCallPlaced(created);
+    }
+
+    return describeOutcome(created);
+  }
+
   return describeOutcome(
     await waitForAnswer(api, created, input.wait_seconds ?? DEFAULT_WAIT_SECONDS, undefined, since)
   );
@@ -272,7 +285,12 @@ export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEm
         kind: questionKind,
         message,
         to,
-        via: z.enum(['telegram', 'slack', 'email']).optional().describe("Override each contact's default channel."),
+        via: z
+          .enum(['telegram', 'slack', 'email', 'voice'])
+          .optional()
+          .describe(
+            "Override each contact's default channel. voice places a phone call; then use voice_turn to speak and listen."
+          ),
         from,
         ttl_seconds: ttlSeconds,
         wait_seconds: waitSeconds,
@@ -322,7 +340,7 @@ export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEm
     {
       title: 'Wait for an answer',
       description:
-        'Keep waiting for the answer to an earlier ask, approve or choose that had no answer yet. Call it again while the result says the request is still open.',
+        'Keep waiting for the answer to an earlier ask, approve or choose that had no answer yet. Call it again while the result says the request is still open. Do not use this for voice — use voice_turn instead.',
       inputSchema: {
         id: z.string().min(1).max(128).describe('The id from the earlier result.'),
         wait_seconds: waitSeconds,
@@ -331,6 +349,53 @@ export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEm
     },
     ({ id, wait_seconds }) =>
       run(async () => describeOutcome(await waitForAnswer(api, id, wait_seconds ?? DEFAULT_WAIT_SECONDS)))
+  );
+
+  server.registerTool(
+    'voice_turn',
+    {
+      title: 'Speak or listen on a voice call',
+      description:
+        'Hold a live phone call started with inbox_send via voice. Leave say out on the first call (and whenever you only need to listen): the person\'s words come back as text. When you speak, use one or two short sentences — the words are spoken verbatim to a person on a phone. Settle as soon as you hear a clear commitment: pass answer (their own words) plus decision ("approve"/"deny") for approve, or option_id for choose. An answer hangs up. Call again while the result says the call is still open.',
+      inputSchema: {
+        id: z.string().min(1).max(128).describe('The interaction id from inbox_send.'),
+        say: z.string().min(1).max(2000).optional().describe('Words spoken verbatim. Omit to listen only.'),
+        answer: z
+          .string()
+          .min(1)
+          .max(4000)
+          .optional()
+          .describe("The person's own words that commit to the answer. Required when settling."),
+        decision: z
+          .enum(['approve', 'deny'])
+          .optional()
+          .describe("For approve interactions: 'approve' or 'deny'. Implies hangup."),
+        option_id: z
+          .string()
+          .min(1)
+          .max(128)
+          .optional()
+          .describe('For choose interactions: the picked option id. Implies hangup.'),
+        hangup: z.boolean().optional().describe('Hang up after speaking say, without settling.'),
+        wait_seconds: waitSeconds,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    },
+    ({ id, say, answer, decision, option_id, hangup, wait_seconds }) =>
+      run(async () =>
+        describeVoiceTurn(
+          id,
+          await voiceTurn(api, {
+            id,
+            ...(say ? { say } : {}),
+            ...(answer ? { answer } : {}),
+            ...(decision ? { decision } : {}),
+            ...(option_id ? { optionId: option_id } : {}),
+            ...(hangup ? { hangup: true } : {}),
+            waitSeconds: wait_seconds ?? DEFAULT_WAIT_SECONDS,
+          })
+        )
+      )
   );
 
   server.registerTool(

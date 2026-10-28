@@ -972,6 +972,40 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
+  /**
+   * Replaces the expiry row written when a voice call ended, once the agent records
+   * the commitment it heard. A response that is not still `expired` is left alone.
+   */
+  async replaceExpiredHumanInteractionResponse(params: {
+    environmentId: string;
+    conversationId: string;
+    identifier: string;
+    content: string;
+    senderType: ConversationActivitySenderTypeEnum;
+    senderId: string;
+    senderName?: string;
+    humanInteraction: Record<string, unknown>;
+  }): Promise<ConversationActivityEntity | null> {
+    return this.findOneAndUpdate(
+      {
+        _environmentId: params.environmentId,
+        _conversationId: params.conversationId,
+        identifier: params.identifier,
+        'richContent.humanInteraction.status': 'expired',
+      },
+      {
+        $set: {
+          content: params.content,
+          senderType: params.senderType,
+          senderId: params.senderId,
+          ...(params.senderName ? { senderName: params.senderName } : {}),
+          'richContent.humanInteraction': params.humanInteraction,
+        },
+      },
+      { new: true }
+    );
+  }
+
   async createRunActivity(params: {
     identifier: string;
     conversationId: string;

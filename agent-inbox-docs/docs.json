@@ -68,7 +68,14 @@
           {
             "group": "Channels",
             "icon": "radio",
-            "pages": ["channels", "channels/telegram", "channels/slack", "channels/email", "channels/coming-next"]
+            "pages": [
+              "channels",
+              "channels/telegram",
+              "channels/slack",
+              "channels/email",
+              "channels/voice",
+              "channels/coming-next"
+            ]
           },
           {
             "group": "Account",

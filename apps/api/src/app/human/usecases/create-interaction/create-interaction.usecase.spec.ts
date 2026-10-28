@@ -261,62 +261,81 @@ describe('CreateInteraction', () => {
       ).to.equal(true);
     });
 
-    it('does not refund minutes a failure webhook already returned', async () => {
-      const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository, voiceCredits } =
-        setup();
-      const voiceRow = {
-        ...created,
-        kind: HumanInteractionKindEnum.TELL,
-        voiceMinutesReserved: 5,
-        voiceMinutesReservedAt: '2026-01-01T00:00:00.000Z',
-        voiceSubscriberIds: ['sub-1'],
-      };
+    it('rejects a tell over voice', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanInteractionRepository } = setup();
       agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
       deliveryService.resolveChannel.resolves({
         integrationIdentifier: 'voice-main',
         platform: HumanChannelViaEnum.VOICE,
         platformUserId: '+15551212',
       });
-      humanInteractionRepository.create.resolves(voiceRow);
-      humanInteractionRepository.markDeliveredIfPending.resolves({
-        ...voiceRow,
-        status: HumanInteractionStatusEnum.DELIVERED,
-      });
-      humanInteractionRepository.replaceVoiceHold.resolves(false);
 
-      await usecase.execute({ ...command, kind: HumanInteractionKindEnum.TELL } as never);
+      try {
+        await usecase.execute({ ...command, kind: HumanInteractionKindEnum.TELL } as never);
+        expect.fail('expected tell over voice to be rejected');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.match(/tell/i);
+      }
 
-      expect(humanInteractionRepository.replaceVoiceHold.firstCall.args).to.deep.equal(['env1', 'hi1', 5, 0, []]);
-      expect(voiceCredits.accept.calledOnceWithExactly(5)).to.equal(true);
-      expect(humanInteractionRepository.update.called).to.equal(false);
+      expect(humanInteractionRepository.create.called).to.equal(false);
     });
 
-    it('returns a tell hold when this request wins the reservation', async () => {
-      const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository, voiceCredits } =
-        setup();
-      const voiceRow = {
-        ...created,
-        kind: HumanInteractionKindEnum.TELL,
-        voiceMinutesReserved: 5,
-        voiceMinutesReservedAt: '2026-01-01T00:00:00.000Z',
-        voiceSubscriberIds: ['sub-1'],
-      };
+    it('rejects voice with more than one recipient', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanInteractionRepository } = setup();
       agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
       deliveryService.resolveChannel.resolves({
         integrationIdentifier: 'voice-main',
         platform: HumanChannelViaEnum.VOICE,
         platformUserId: '+15551212',
       });
-      humanInteractionRepository.create.resolves(voiceRow);
-      humanInteractionRepository.markDeliveredIfPending.resolves({
-        ...voiceRow,
-        status: HumanInteractionStatusEnum.DELIVERED,
+
+      try {
+        await usecase.execute({
+          ...command,
+          via: HumanChannelViaEnum.VOICE,
+          to: ['sub-1', 'sub-2'],
+        } as never);
+        expect.fail('expected multi-recipient voice to be rejected');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.match(/one person/i);
+      }
+
+      expect(humanInteractionRepository.create.called).to.equal(false);
+    });
+
+    it('rejects a voice contact mixed with another channel', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanInteractionRepository } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.callsFake(async ({ subscriberId }: { subscriberId: string }) => {
+        if (subscriberId === 'sub-2') {
+          return {
+            integrationIdentifier: 'voice-main',
+            platform: HumanChannelViaEnum.VOICE,
+            platformUserId: '+15551212',
+          };
+        }
+
+        return {
+          integrationIdentifier: 'email-main',
+          platform: HumanChannelViaEnum.EMAIL,
+          platformUserId: 'ada@example.com',
+        };
       });
 
-      await usecase.execute({ ...command, kind: HumanInteractionKindEnum.TELL } as never);
+      try {
+        await usecase.execute({
+          ...command,
+          to: ['sub-1', 'sub-2'],
+        } as never);
+        expect.fail('expected a mixed voice send to be rejected');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.match(/one person/i);
+      }
 
-      expect(humanInteractionRepository.replaceVoiceHold.firstCall.args).to.deep.equal(['env1', 'hi1', 5, 0, []]);
-      expect(voiceCredits.accept.calledOnceWithExactly(0)).to.equal(true);
+      expect(humanInteractionRepository.create.called).to.equal(false);
     });
 
     it('keeps the full voice hold when an unconfirmed dial cannot be reloaded', async () => {

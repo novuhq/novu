@@ -64,6 +64,15 @@ export class VoiceBridgeCompletions {
   async execute(params: { body: ChatCompletionRequest; res: Response; signal?: AbortSignal }): Promise<void> {
     const correlation = readCorrelation(params.body);
     const resolved = await this.resolveLiveCall(correlation);
+    const settled = (HUMAN_INTERACTION_TERMINAL_STATUSES as readonly HumanInteractionStatusEnum[]).includes(
+      resolved.interaction.status
+    );
+    if (settled) {
+      await this.speakQueuedGoodbye(resolved, params);
+
+      return;
+    }
+
     const known = await readVoiceCallHandoff(this.cacheService, resolved.delivery.platformMessageId);
     if (!known || known.status === 'ended') {
       throw new BadRequestException('This voice call has already ended.');
@@ -90,7 +99,7 @@ export class VoiceBridgeCompletions {
       return;
     }
 
-    if (claimed) {
+    if (claimed?.line) {
       await this.appendOutboundUtterance(resolved, claimed.line);
       params.res.write(sseChunk(claimed.line));
     }
@@ -123,6 +132,53 @@ export class VoiceBridgeCompletions {
     );
   }
 
+  /**
+   * Settlement can land between bridge requests. Speak a queued goodbye, then
+   * hang up, instead of rejecting the request before the line is claimed.
+   */
+  private async speakQueuedGoodbye(
+    resolved: ResolvedVoiceCall,
+    params: { body: ChatCompletionRequest; res: Response }
+  ): Promise<void> {
+    const conversationId = resolved.delivery.platformMessageId;
+    const known = await readVoiceCallHandoff(this.cacheService, conversationId);
+    if (!known || known.status === 'ended') {
+      throw new BadRequestException('This interaction is already settled.');
+    }
+
+    if (known.status === 'dialing') {
+      const recorded = await recordInboundUtterances(
+        this.cacheService,
+        conversationId,
+        userUtteranceTexts(params.body.messages)
+      );
+      if (recorded) {
+        await this.appendInboundUtterances(resolved, recorded.appended);
+      }
+    }
+
+    const claimed = await claimAgentLine(this.cacheService, conversationId);
+    if (params.res.writableEnded || params.res.destroyed) {
+      return;
+    }
+
+    if (claimed?.line) {
+      await this.appendOutboundUtterance(resolved, claimed.line);
+      params.res.write(sseChunk(claimed.line));
+    }
+
+    params.res.write(
+      sseToolCallChunk({
+        id: `call_${shortId(8)}`,
+        type: 'function',
+        function: { name: 'end_call', arguments: '{}' },
+      })
+    );
+    params.res.write(sseFinish('tool_calls'));
+    params.res.write(sseDone());
+    params.res.end();
+  }
+
   private async resolveLiveCall(correlation: VoiceBridgeCorrelation): Promise<ResolvedVoiceCall> {
     const interaction = await this.humanInteractionRepository.findByIdentifier(
       correlation.environmentId,
@@ -132,11 +188,10 @@ export class VoiceBridgeCompletions {
       throw new NotFoundException('Unknown voice call.');
     }
 
-    if ((HUMAN_INTERACTION_TERMINAL_STATUSES as readonly HumanInteractionStatusEnum[]).includes(interaction.status)) {
-      throw new BadRequestException('This interaction is already settled.');
-    }
-
-    if (interaction.status !== HumanInteractionStatusEnum.PENDING) {
+    const terminal = (HUMAN_INTERACTION_TERMINAL_STATUSES as readonly HumanInteractionStatusEnum[]).includes(
+      interaction.status
+    );
+    if (!terminal && interaction.status !== HumanInteractionStatusEnum.PENDING) {
       throw new BadRequestException('This interaction is not waiting on a call.');
     }
 
@@ -148,6 +203,10 @@ export class VoiceBridgeCompletions {
         !item.voiceCallEnded
     );
     if (!delivery) {
+      if (terminal) {
+        throw new BadRequestException('This interaction is already settled.');
+      }
+
       throw new NotFoundException('No live voice delivery for this contact.');
     }
 
