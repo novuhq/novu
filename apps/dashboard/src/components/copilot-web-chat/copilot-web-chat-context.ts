@@ -24,8 +24,8 @@ export type CopilotWebChatContextValue = {
   /** True when an answer finished while the popover was closed and has not been seen yet. */
   hasUnseenAnswer: boolean;
   hasRunError: boolean;
-  /** True from a send until its run settles, covering the gap before the server reports `run-start`. */
-  isAwaitingReply: boolean;
+  /** True from a send until the reply settles, including the gap before the server reports `run-start`. */
+  isBusy: boolean;
 };
 
 const noop = () => {};
@@ -44,7 +44,7 @@ export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   setDraft: noop,
   hasUnseenAnswer: false,
   hasRunError: false,
-  isAwaitingReply: false,
+  isBusy: false,
 });
 
 type RegisterPageContext = (context: CopilotPageContext, onRefetch?: () => void) => () => void;

@@ -13,6 +13,7 @@ import { EditorBreadcrumbs } from '@/components/workflow-editor/editor-breadcrum
 import { WorkflowProvider } from '@/components/workflow-editor/workflow-provider';
 import { WorkflowTabs } from '@/components/workflow-editor/workflow-tabs';
 import { useEnvironment } from '@/context/environment/hooks';
+import { getIdFromSlug, WORKFLOW_DIVIDER } from '@/utils/id-utils';
 import { ROUTES } from '@/utils/routes';
 
 // Define routes that should render without WorkflowTabs (full-page routes)
@@ -99,7 +100,9 @@ export const EditWorkflowPage = () => {
     <CopilotWebChatProvider
       enabled={isCopilotWebChatEnabled}
       conversationScope={
-        currentEnvironment?._id && !isNewWorkflowSlug ? `${currentEnvironment._id}:${workflowSlug}` : undefined
+        currentEnvironment?._id && !isNewWorkflowSlug
+          ? `${currentEnvironment._id}:${getIdFromSlug({ slug: workflowSlug, divider: WORKFLOW_DIVIDER })}`
+          : undefined
       }
     >
       <WorkflowProvider>

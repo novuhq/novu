@@ -2,24 +2,9 @@ import { RiArrowUpSLine, RiErrorWarningFill } from 'react-icons/ri';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { IconCmd, Kbd } from '@/components/primitives/kbd';
 import { cn } from '@/utils/ui';
+import { DotGrid } from './copilot-thread-parts';
 import { useCopilotWebChat } from './copilot-web-chat-context';
 import { deriveLauncherState, type LauncherState } from './copilot-web-chat-utils';
-
-const DOT_DELAYS = [0, 120, 240, 120, 240, 360, 240, 360, 480];
-
-function DotGrid() {
-  return (
-    <span className="grid size-4 shrink-0 grid-cols-3 place-content-center gap-[2px]" aria-hidden="true">
-      {DOT_DELAYS.map((delay, index) => (
-        <span
-          key={index}
-          className="size-[3px] animate-pulse rounded-full bg-text-soft"
-          style={{ animationDelay: `${delay}ms` }}
-        />
-      ))}
-    </span>
-  );
-}
 
 function LauncherStatus({ state }: { state: LauncherState }) {
   switch (state) {
@@ -47,7 +32,7 @@ function LauncherStatus({ state }: { state: LauncherState }) {
 }
 
 export function CopilotLauncher() {
-  const { isAvailable, isOpen, open, close, chat, hasUnseenAnswer, hasRunError, isAwaitingReply } = useCopilotWebChat();
+  const { isAvailable, isOpen, open, close, hasUnseenAnswer, hasRunError, isBusy } = useCopilotWebChat();
 
   if (isOpen) {
     return (
@@ -58,14 +43,14 @@ export function CopilotLauncher() {
         title="Close Copilot"
         className="fixed bottom-4 right-4 z-40 flex size-[38px] items-center justify-center rounded-full border border-stroke-soft bg-bg-white shadow-[0_8px_12px_rgba(15,23,41,0.04),0_1px_1px_rgba(15,23,41,0.04)] transition-colors hover:bg-bg-weak"
       >
-        <BroomSparkle className="size-4" isAnimating={!!chat?.isRunning || isAwaitingReply} />
+        <BroomSparkle className="size-4" isAnimating={isBusy} />
       </button>
     );
   }
 
   const state = deriveLauncherState({
     isAvailable,
-    isRunning: !!chat?.isRunning || isAwaitingReply,
+    isRunning: isBusy,
     hasError: hasRunError,
     hasUnseenAnswer,
   });
@@ -85,7 +70,7 @@ export function CopilotLauncher() {
       )}
     >
       {state === 'working' ? (
-        <DotGrid />
+        <DotGrid columns={3} stepMs={120} className="size-4 gap-[2px] [&>span]:size-[3px] [&>span]:bg-text-soft" />
       ) : state === 'error' ? (
         <RiErrorWarningFill className="size-4 text-error-base" />
       ) : (

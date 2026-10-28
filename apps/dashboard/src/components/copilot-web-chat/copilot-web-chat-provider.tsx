@@ -14,6 +14,8 @@ import {
 import {
   buildCopilotMetadata,
   type CopilotPageContext,
+  getFailedSend,
+  hasPendingReplyGap,
   readStoredConversationId,
   writeStoredConversationId,
 } from './copilot-web-chat-utils';
@@ -63,7 +65,7 @@ type ConnectedState = Pick<
   | 'hasUnseenAnswer'
   | 'hasRunError'
   | 'sentContextLabels'
-  | 'isAwaitingReply'
+  | 'isBusy'
 >;
 
 /**
@@ -110,7 +112,7 @@ export function CopilotWebChatProvider({
       setDraft,
       hasUnseenAnswer: !!connected?.hasUnseenAnswer && !isOpen,
       hasRunError: !!connected?.hasRunError,
-      isAwaitingReply: !!connected?.isAwaitingReply,
+      isBusy: !!connected?.isBusy,
     }),
     [connected, isOpen, open, close, toggle, pageContext, draft]
   );
@@ -149,7 +151,6 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const [unseenAnswer, setUnseenAnswer] = useState(false);
   const [runError, setRunError] = useState(false);
   const [awaitingReply, setAwaitingReply] = useState(false);
-  const isAwaitingReplyRef = useRef(false);
   const [sentContextLabels, setSentContextLabels] = useState<Record<number, string>>({});
   const isOpenRef = useRef(isOpen);
   isOpenRef.current = isOpen;
@@ -163,6 +164,8 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       const { event } = envelope;
 
       if (event.type === 'run-start') {
+        // From here `chat.isRunning` reports the run; the local flag only bridges send → run-start.
+        setAwaitingReply(false);
         setRunError(false);
       } else if (event.type === 'run-finish') {
         setAwaitingReply(false);
@@ -182,6 +185,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const chat = useWebChat({ agentId: NOVU_COPILOT_AGENT_ID, conversationId: resumeConversationId, onEvent });
   const chatRef = useRef(chat);
   chatRef.current = chat;
+  const isBusyRef = useRef(false);
   const resumeConversationIdRef = useRef(resumeConversationId);
   resumeConversationIdRef.current = resumeConversationId;
 
@@ -189,14 +193,12 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     if (chat.conversationId) writeStoredConversationId(conversationScope, chat.conversationId);
   }, [conversationScope, chat.conversationId]);
 
-  // A stored conversation that can no longer be loaded (deleted, other user) falls back to a new chat.
+  // A stored conversation that fails to load opens a new chat. The stored id is kept, so a transient error
+  // can't drop the thread; the next conversation's id overwrites it.
   const isResumeBroken = !!resumeConversationId && !!chat.error && !chat.isLoading && chat.messages.length === 0;
   useEffect(() => {
-    if (!isResumeBroken) return;
-
-    writeStoredConversationId(conversationScope, undefined);
-    setResumeConversationId(undefined);
-  }, [isResumeBroken, conversationScope]);
+    if (isResumeBroken) setResumeConversationId(undefined);
+  }, [isResumeBroken]);
   const pageContextRef = useRef(pageContext);
   pageContextRef.current = pageContext;
   const lastSentRef = useRef<{ text: string; metadata: ReturnType<typeof buildCopilotMetadata> } | null>(null);
@@ -205,9 +207,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     async (text: string) => {
       const trimmed = text.trim();
       // The client rejects sends during a run, so refuse up front and let the composer keep the text.
-      if (!trimmed || chatRef.current.isLoading || chatRef.current.isRunning || isAwaitingReplyRef.current) {
-        return false;
-      }
+      if (!trimmed || chatRef.current.isLoading || isBusyRef.current) return false;
 
       const isNewChat = chatRef.current.messages.length === 0;
       track(TelemetryEvent.COPILOT_MESSAGE_SENT, {
@@ -271,9 +271,10 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const isAvailable = !!connectContext;
   useCopilotHotkey({ isEnabled: isAvailable && !!pageContext?.workflowId, isOpen, toggle, close });
 
-  const hasRunError = runError || !!chat.error;
-  const isAwaitingReply = (awaitingReply || chat.isRunning) && !hasRunError;
-  isAwaitingReplyRef.current = isAwaitingReply;
+  // `chat.error` stays set while a failed send is retried, so failures are read from the run and the message instead.
+  const hasRunError = runError || !!getFailedSend(chat.messages);
+  const isBusy = !hasRunError && (chat.isRunning || (awaitingReply && hasPendingReplyGap(chat.messages)));
+  isBusyRef.current = isBusy;
 
   useEffect(() => {
     if (!isAvailable) {
@@ -290,7 +291,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       hasUnseenAnswer: unseenAnswer,
       hasRunError,
       sentContextLabels,
-      isAwaitingReply,
+      isBusy,
     });
   }, [
     isAvailable,
@@ -301,7 +302,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     unseenAnswer,
     hasRunError,
     sentContextLabels,
-    isAwaitingReply,
+    isBusy,
     onConnected,
   ]);
 

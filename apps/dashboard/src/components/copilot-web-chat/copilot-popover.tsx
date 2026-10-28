@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { type KeyboardEvent, useEffect, useRef } from 'react';
 import {
   RiAddLine,
   RiArrowDownSLine,
@@ -73,7 +73,6 @@ function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) 
             <button
               key={suggestion}
               type="button"
-              aria-label={suggestion}
               title={suggestion}
               onClick={() => onSuggestion(suggestion)}
               className="flex h-9 items-center gap-2 px-3 text-left text-xs leading-4 text-text-sub outline-none last:rounded-b-lg hover:bg-bg-weak hover:text-text-strong focus-visible:bg-bg-weak focus-visible:text-text-strong"
@@ -89,21 +88,11 @@ function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) 
 }
 
 function Composer({ hasMessages }: { hasMessages: boolean }) {
-  const {
-    chat,
-    sendMessage,
-    retry,
-    pageContext,
-    draft: value,
-    setDraft: setValue,
-    isAwaitingReply,
-  } = useCopilotWebChat();
+  const { chat, sendMessage, retry, pageContext, draft: value, setDraft: setValue, isBusy } = useCopilotWebChat();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const failedSend = getFailedSend(chat?.messages ?? []);
-  const [dismissedFailureId, setDismissedFailureId] = useState<string>();
-  const showFailureStrip = !!failedSend && failedSend.id !== dismissedFailureId;
-  const isRunning = !!chat?.isRunning || isAwaitingReply;
-  const canSend = value.trim().length > 0 && !isRunning && !chat?.isLoading;
+  // The failure stays until retried or a new chat starts: the strip is the only place it can be retried.
+  const showFailureStrip = !!getFailedSend(chat?.messages ?? []);
+  const canSend = value.trim().length > 0 && !isBusy && !chat?.isLoading;
   const contextLabel = [pageContext?.workflowLabel, pageContext?.stepLabel].filter(Boolean).join(' / ');
 
   useEffect(() => {
@@ -138,18 +127,10 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
             <button
               type="button"
               onClick={() => void retry()}
-              disabled={isRunning}
+              disabled={isBusy}
               className="font-medium text-text-strong hover:underline disabled:opacity-40"
             >
               Retry
-            </button>
-            <button
-              type="button"
-              aria-label="Dismiss"
-              onClick={() => setDismissedFailureId(failedSend.id)}
-              className="flex size-4 items-center justify-center rounded text-text-soft hover:text-text-strong"
-            >
-              <RiCloseLine className="size-3.5" />
             </button>
           </div>
         )}
@@ -190,10 +171,10 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
 }
 
 function Thread() {
-  const { chat, retry, sentContextLabels, hasRunError, isAwaitingReply } = useCopilotWebChat();
+  const { chat, retry, sentContextLabels, hasRunError, isBusy } = useCopilotWebChat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const messages = chat?.messages ?? [];
-  const showThinking = (isAwaitingReply || !!chat?.typing) && hasPendingReplyGap(messages);
+  const showThinking = (isBusy || !!chat?.typing) && hasPendingReplyGap(messages);
   let userIndex = 0;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll on every message update while streaming
@@ -224,9 +205,8 @@ function Thread() {
 }
 
 export function CopilotPopover() {
-  const { isAvailable, isOpen, close, chat, sendMessage, startNewConversation, isAwaitingReply } = useCopilotWebChat();
+  const { isAvailable, isOpen, close, chat, sendMessage, startNewConversation, isBusy } = useCopilotWebChat();
   const track = useTelemetry();
-  const isWorking = !!chat?.isRunning || isAwaitingReply;
 
   if (!isOpen || !isAvailable) return null;
 
@@ -242,9 +222,9 @@ export function CopilotPopover() {
       className="fixed bottom-[66px] right-4 z-40 flex h-[600px] max-h-[min(600px,calc(100vh-82px))] w-[400px] flex-col overflow-hidden rounded-xl border border-stroke-soft bg-bg-white shadow-[0_2px_4px_rgba(15,18,26,0.04),0_12px_32px_-8px_rgba(15,18,26,0.08)]"
     >
       <div className="flex h-11 shrink-0 items-center gap-2 border-b border-stroke-soft bg-bg-weak pl-3.5 pr-2">
-        <BroomSparkle className="size-4 shrink-0" isAnimating={isWorking} />
+        <BroomSparkle className="size-4 shrink-0" isAnimating={isBusy} />
         <span className="min-w-0 flex-1 truncate text-label-sm text-text-sub">{title}</span>
-        <HeaderButton label="New chat" disabled={isWorking} onClick={startNewConversation}>
+        <HeaderButton label="New chat" disabled={!!chat?.isRunning} onClick={startNewConversation}>
           <RiAddLine className="size-3.5" />
         </HeaderButton>
         <HeaderButton label="Minimize" onClick={close}>

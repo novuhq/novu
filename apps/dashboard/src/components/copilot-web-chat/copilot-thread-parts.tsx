@@ -49,16 +49,19 @@ export function CopilotUserMessage({ message, contextLabel }: { message: AgentMe
   );
 }
 
-const DOT_GRID_DELAYS = [0, 150, 300, 450, 150, 300, 450, 600, 300, 450, 600, 750, 450, 600, 750, 900];
-
-function DotGrid() {
+/** Animated dot grid; the pulse sweeps diagonally (delay grows with row + column). */
+export function DotGrid({ columns, stepMs, className }: { columns: number; stepMs: number; className?: string }) {
   return (
-    <span aria-hidden className="grid size-3 shrink-0 grid-cols-4 gap-px">
-      {DOT_GRID_DELAYS.map((delay, index) => (
+    <span
+      aria-hidden
+      className={cn('grid shrink-0 place-content-center gap-px', className)}
+      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+    >
+      {Array.from({ length: columns * columns }, (_, index) => (
         <span
           key={index}
           className="size-0.5 animate-pulse rounded-full bg-text-sub motion-reduce:animate-none"
-          style={{ animationDelay: `${delay}ms` }}
+          style={{ animationDelay: `${(Math.floor(index / columns) + (index % columns)) * stepMs}ms` }}
         />
       ))}
     </span>
@@ -69,7 +72,7 @@ function DotGrid() {
 export function CopilotThinkingIndicator({ label = 'Thinking…' }: { label?: string }) {
   return (
     <output className="flex items-center gap-2 text-xs leading-4 text-text-soft">
-      <DotGrid />
+      <DotGrid columns={4} stepMs={150} className="size-3" />
       <Shimmer key={label} as="span" className="text-xs leading-4">
         {label}
       </Shimmer>
