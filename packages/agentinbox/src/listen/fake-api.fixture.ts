@@ -84,6 +84,8 @@ export class FakeApi {
   down = false;
   /** The next send goes through, but its answer is lost on the way back, as when the connection drops. */
   loseNextAnswer = false;
+  /** How long an interaction takes to come back once it was asked for: the read it is happens at once. */
+  showDelayMs = 0;
   /** Answers each new question (`approve`, `choose`, `ask`) as it comes, or leaves it pending (undefined). */
   decide: (interaction: FakeInteraction) => FakeDecision | undefined = () => undefined;
   private server?: Server;
@@ -465,7 +467,7 @@ export class FakeApi {
     send(200, { data: this.interactionView(interaction) });
   }
 
-  private showInteraction(id: string, send: Send): void {
+  private async showInteraction(id: string, send: Send): Promise<void> {
     const interaction = this.interactions.find((candidate) => candidate.id === id);
     if (!interaction) {
       send(404, { message: 'Not found' });
@@ -478,6 +480,9 @@ export class FakeApi {
     const view = this.interactionView(interaction);
     if (['approved', 'denied', 'answered'].includes(interaction.status)) {
       interaction.answerReadAt ??= new Date().toISOString();
+    }
+    if (this.showDelayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, this.showDelayMs));
     }
     send(200, { data: view });
   }

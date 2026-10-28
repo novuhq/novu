@@ -236,6 +236,14 @@ export function backgroundSignInMessage(input: {
   return `${shellOnly} Or keep it listening in this terminal: ${CLI_COMMAND} listen ${input.hostId} --foreground`;
 }
 
+/**
+ * Why the host may not sign in in the background without the shell's secrets: it reaches a provider that it signs
+ * in to its own way, and only a run tells whether it can.
+ */
+export function uncheckedSignInMessage(hostName: string, provider: string, secrets: string[]): string {
+  return `${hostName} can reach ${provider} only with a sign-in it finds on this computer, which isn’t checked before it runs. If it has one, run this again with ${secrets.length > 1 ? 'them' : 'it'} unset.`;
+}
+
 /** Said before the operator is asked: in the background the host signs in its own way, not with these secrets. */
 export function backgroundSecretsWarning(hostName: string, secrets: string[]): string {
   return `${hostName} signs in here with ${names(secrets)} from this shell, which listening in the background doesn’t get: there it uses the sign-in it has without ${secrets.length > 1 ? 'them' : 'it'}. To use ${secrets.length > 1 ? 'them' : 'it'}, listen in this terminal with --foreground.`;

@@ -266,7 +266,30 @@ describe('claudeCode.check', () => {
       program: { command: join(bin, 'claude'), args: [] },
       version: '2.1.310',
       warnings: [],
+      secrets: [],
     });
+  });
+
+  it('names the secrets from the shell it signs in with, to the provider it reaches', () => {
+    const bin = installFake();
+    const shell = {
+      PATH: bin,
+      HOME: dir,
+      ANTHROPIC_API_KEY: 'sk-ant-secret',
+      AWS_ACCESS_KEY_ID: 'AKIA',
+      AWS_SECRET_ACCESS_KEY: 'secret',
+    };
+
+    expect(claudeCode.check(dir, shell)).toMatchObject({ ok: true, secrets: ['ANTHROPIC_API_KEY'] });
+    expect(claudeCode.check(dir, { ...shell, ANTHROPIC_API_KEY: ' ' })).toMatchObject({ ok: true, secrets: [] });
+    // Bedrock says it is signed in whatever it has: it names the provider, as a sign-in that isn't checked.
+    const bedrock = claudeCode.check(dir, { ...shell, CLAUDE_CODE_USE_BEDROCK: '1' });
+    expect(bedrock).toMatchObject({ secrets: ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'] });
+    expect(bedrock.ok && bedrock.provider).toBe('Amazon Bedrock');
+    // A gateway signs in for it.
+    expect(
+      claudeCode.check(dir, { ...shell, CLAUDE_CODE_USE_BEDROCK: '1', CLAUDE_CODE_SKIP_BEDROCK_AUTH: 'true' })
+    ).toMatchObject({ ok: true, secrets: [] });
   });
 
   it('says how to install Claude Code when it isn’t there', () => {
@@ -371,20 +394,6 @@ describe('Claude Code’s settings from the shell', () => {
       VERTEX_REGION_CLAUDE_5_5_OPUS: 'us-east5',
       CLAUDE_CONFIG_DIR: '/Users/ada/.claude-work',
     });
-  });
-
-  it('names the secrets it can sign in with from the shell', () => {
-    expect(claudeCode.signInSecretsIn(SHELL)).toEqual([
-      'ANTHROPIC_API_KEY',
-      'ANTHROPIC_AUTH_TOKEN',
-      'CLAUDE_CODE_OAUTH_TOKEN',
-      'AWS_BEARER_TOKEN_BEDROCK',
-      'AWS_ACCESS_KEY_ID',
-      'AWS_SECRET_ACCESS_KEY',
-      'AWS_SESSION_TOKEN',
-      'ANTHROPIC_FOUNDRY_API_KEY',
-    ]);
-    expect(claudeCode.signInSecretsIn({ PATH: '/usr/bin', ANTHROPIC_API_KEY: ' ' })).toEqual([]);
   });
 });
 

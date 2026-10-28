@@ -23,14 +23,27 @@ export interface HostAdapter {
    * models it uses, and how it reaches them. Never a secret: anyone on the computer can read the service's file.
    */
   settingsIn(env: NodeJS.ProcessEnv): Record<string, string>;
-  /** The secrets among the shell's variables that the host can sign in with, by name: the background goes without. */
-  signInSecretsIn(env: NodeJS.ProcessEnv): string[];
   /** Starts a session in `options.project`, or goes on with the one `options.resume` names. */
   open(options: OpenOptions, handlers: SessionHandlers): HostSession;
 }
 
 export type HostCheck =
-  | { ok: true; program: HostProgram; version?: string; warnings: string[] }
+  | {
+      ok: true;
+      program: HostProgram;
+      version?: string;
+      warnings: string[];
+      /**
+       * The secrets among the variables it was checked with that it signs in with, by name: the background program
+       * goes without them.
+       */
+      secrets: string[];
+      /**
+       * The provider it reaches, when it isn't the host maker's own ("Amazon Bedrock"): the host signs in there its
+       * own way, which the check doesn't see, so whether it can shows only once it runs.
+       */
+      provider?: string;
+    }
   | { ok: false; message: string };
 
 /** How to start the host: the program and the arguments before the adapter's own. */

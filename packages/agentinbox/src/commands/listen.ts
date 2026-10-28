@@ -47,6 +47,7 @@ import {
   movedMessage,
   NEEDS_ACCOUNT_MESSAGE,
   PAUSED_MESSAGE,
+  uncheckedSignInMessage,
 } from '../listen/words';
 import { EXIT_DENIED, EXIT_ERROR, EXIT_GONE, EXIT_OK, EXIT_TIMEOUT, fail, formatRelativeTime } from '../output';
 import { openScreen, type Screen } from '../screen/screen';
@@ -273,19 +274,11 @@ async function planListen(hostInput: string, options: ListenOptions, deps: Liste
     throw new Error(service.unsupported);
   }
 
-  // The background program gets only some of this shell's variables: the host has to work with those alone.
   const background = options.foreground ? undefined : backgroundFor(host, project, deps);
-  const warnings = [...checked.warnings];
-  if (background) {
-    const secrets = host.signInSecretsIn(deps.env);
-    const there = host.check(project, background.env);
-    if (!there.ok) {
-      throw new Error(backgroundSignInMessage({ hostName: host.name, hostId: host.id, secrets, why: there.message }));
-    }
-    if (secrets.length > 0) {
-      warnings.push(backgroundSecretsWarning(host.name, secrets));
-    }
-  }
+  const warnings = [
+    ...checked.warnings,
+    ...(background ? checkBackground(host, project, checked.secrets, background) : []),
+  ];
 
   const computerId = ensureComputerId(config);
   const client = clientFor(config, host.id);
@@ -320,6 +313,30 @@ async function planListen(hostInput: string, options: ListenOptions, deps: Liste
     listeningHere: Boolean(same && previous?.allowedAt && !previous.stopped && heldHere),
     previous: same ? previous : null,
   };
+}
+
+/**
+ * The background program gets only some of this shell's variables, and none of the `secrets` the host signs in with
+ * here: the host has to work with those alone. Stops when it doesn't, or may not; else says what the operator should
+ * know before they allow it.
+ */
+function checkBackground(
+  host: HostAdapter,
+  project: string,
+  secrets: string[],
+  background: BackgroundCommand
+): string[] {
+  const there = host.check(project, background.env);
+  if (!there.ok) {
+    throw new Error(backgroundSignInMessage({ hostName: host.name, hostId: host.id, secrets, why: there.message }));
+  }
+  if (secrets.length > 0 && there.provider) {
+    // It may sign in to that provider with these alone, and the check can't tell.
+    const why = uncheckedSignInMessage(host.name, there.provider, secrets);
+    throw new Error(backgroundSignInMessage({ hostName: host.name, hostId: host.id, secrets, why }));
+  }
+
+  return secrets.length > 0 ? [backgroundSecretsWarning(host.name, secrets)] : [];
 }
 
 /** How the background program starts: with the host's own settings from this shell, never its secrets. */

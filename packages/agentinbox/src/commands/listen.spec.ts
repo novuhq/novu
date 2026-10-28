@@ -388,8 +388,7 @@ describe('listen <host>', { timeout: 20_000 }, () => {
       AWS_PROFILE: 'work',
       AWS_REGION: 'eu-west-1',
       ANTHROPIC_MODEL: 'claude-opus-5-5',
-      AWS_ACCESS_KEY_ID: 'AKIA_NEVER_WRITTEN',
-      AWS_SECRET_ACCESS_KEY: 'never written',
+      ANTHROPIC_API_KEY: 'sk-ant-never-written',
       ANTHROPIC_CUSTOM_HEADERS: 'X-Secret: never written',
     };
 
@@ -402,6 +401,28 @@ describe('listen <host>', { timeout: 20_000 }, () => {
       AWS_REGION: 'eu-west-1',
       ANTHROPIC_MODEL: 'claude-opus-5-5',
     });
+  });
+
+  it('says how to go on, before asking anything, when Claude Code reaches Bedrock with keys from this shell', async () => {
+    const { deps: listener, prompt, installed } = deps();
+    listener.env = {
+      ...listener.env,
+      CLAUDE_CODE_USE_BEDROCK: '1',
+      AWS_ACCESS_KEY_ID: 'AKIA_NEVER_WRITTEN',
+      AWS_SECRET_ACCESS_KEY: 'never written',
+    };
+
+    const failed = listenOn('claude-code', {}, listener);
+
+    await expect(failed).rejects.toThrow(
+      'Claude Code signs in here with AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY from this shell, which listening in the background doesn’t get'
+    );
+    await expect(failed).rejects.toThrow(
+      'Claude Code can reach Amazon Bedrock only with a sign-in it finds on this computer, which isn’t checked before it runs. If it has one, run this again with them unset.'
+    );
+    await expect(failed).rejects.toThrow('listen claude-code --foreground');
+    expect(prompt).not.toHaveBeenCalled();
+    expect(installed).toHaveLength(0);
   });
 
   it('says how to go on, before asking anything, when Claude Code signs in only with a key from this shell', async () => {

@@ -62,6 +62,8 @@ interface Harness {
   logs: string[];
   loop: Promise<LoopEnd>;
   stop: () => Promise<LoopEnd>;
+  /** Listens again with what it saved, as after a restart, once it was stopped. */
+  restart: () => Promise<LoopEnd>;
   /** Each start of the fake `claude`: its arguments and folder. */
   starts: () => Array<{ argv: string[]; cwd: string }>;
 }
@@ -102,20 +104,25 @@ async function start(
     ...overrides,
   });
   const logs: string[] = [];
-  const controller = new AbortController();
-  const loop = runListenLoop({
-    client: createApiClient({ apiUrl: api.url, secretKey: 'sk_test', asHost: 'claude-code' }),
-    agentIdentifier: 'human-relay',
-    operatorId: 'ada',
-    computerId: COMPUTER_ID,
-    computerName: 'MacBook',
-    host: claudeCode,
-    store,
-    timing: { ...FAST, ...timing },
-    log: (line) => logs.push(line),
-    signal: controller.signal,
-    ...more,
-  });
+  let controller = new AbortController();
+  const listen = () => {
+    controller = new AbortController();
+
+    return runListenLoop({
+      client: createApiClient({ apiUrl: api.url, secretKey: 'sk_test', asHost: 'claude-code' }),
+      agentIdentifier: 'human-relay',
+      operatorId: 'ada',
+      computerId: COMPUTER_ID,
+      computerName: 'MacBook',
+      host: claudeCode,
+      store,
+      timing: { ...FAST, ...timing },
+      log: (line) => logs.push(line),
+      signal: controller.signal,
+      ...more,
+    });
+  };
+  let loop = listen();
   const starts = () => {
     try {
       return readFileSync(join(dir, 'claude.log'), 'utf8')
@@ -135,6 +142,11 @@ async function start(
     starts,
     stop: async () => {
       controller.abort();
+
+      return loop;
+    },
+    restart: () => {
+      loop = listen();
 
       return loop;
     },
@@ -918,6 +930,41 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     api.deliver({ text: 'remember' });
     await eventually(() => expect(api.sentInto('conv_1')).toContain('This session has seen 2 messages before.'));
     expect(starts()).toHaveLength(2);
+  });
+
+  it('passes on an answer it looked up while the run ended, without looking again', async () => {
+    const { api, logs } = await start();
+
+    api.deliver({ text: 'ask-async-and-sleep:800' });
+    const region = await asked(api, 'Which region?');
+    // The look reads the answer at once, but what it found comes back only after the run ended.
+    api.showDelayMs = 2000;
+    api.answer(region, { status: 'answered', text: 'eu-west' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: eu-west'));
+    expect(logs).not.toContain('conv_1: a new message joined the run.');
+    expect(api.callsTo('GET', `/v1/inbox/messages/${region}`)).toHaveLength(1);
+  });
+
+  it('passes on an answer it looked up when it was stopped meanwhile, once it starts again', async () => {
+    const { api, logs, store, stop, restart } = await start();
+    api.deliver({ text: 'ask-async-and-sleep:0' });
+    const region = await asked(api, 'Which region?');
+    await eventually(() => expect(logs).toContain('conv_1: done.'));
+
+    api.showDelayMs = 1000;
+    api.answer(region, { status: 'answered', text: 'eu-west' });
+    await eventually(() => expect(api.callsTo('GET', `/v1/inbox/messages/${region}`)).toHaveLength(1));
+    await stop();
+
+    expect(store.current?.queue.map((message) => message.answersMessageId)).toEqual([region]);
+    expect(store.current?.lookedUp).toEqual(store.current?.queue.map((message) => message.id));
+    api.showDelayMs = 0;
+    void restart();
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: eu-west'));
+    expect(api.callsTo('GET', `/v1/inbox/messages/${region}`)).toHaveLength(1);
+    expect(store.current?.lookedUp).toEqual([]);
   });
 
   describe('once this computer is connected anew', () => {

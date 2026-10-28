@@ -200,11 +200,8 @@ class ListenLoop {
   private readonly abort = new AbortController();
   /** The listener's own questions waiting for an answer, which the messages may bring before a lookup does. */
   private readonly questions = new Map<string, (answer: StreamAnswer) => void>();
-  /**
-   * Answers to the host's questions that were looked up and that none of its commands got: looking one up hands it
-   * over to the agent as well, so another look would take it for one a command got.
-   */
-  private readonly unreadAnswers = new Set<string>();
+  /** Answers to the host's questions being looked up: whatever else needs one waits for that look. */
+  private readonly lookups = new Map<string, Promise<boolean>>();
   private active?: ActiveRun;
   private activeDone?: Promise<void>;
   private end?: LoopEnd;
@@ -421,6 +418,8 @@ class ListenLoop {
   private async windDown(): Promise<void> {
     await this.stopRun('shutdown');
     await this.activeDone;
+    // What a look found is kept: an answer a command got isn't passed on after a restart.
+    await Promise.allSettled(this.lookups.values());
 
     if (this.end?.reason === 'signal') {
       // Stopped on purpose (`listen stop`, a logout): the dashboard should say so now, not in three minutes.
@@ -472,7 +471,7 @@ class ListenLoop {
 
   private markHandled(message: ListenMessage): void {
     this.state.handled = [...this.state.handled.filter((id) => id !== message.id), message.id].slice(-IDS_KEPT);
-    this.unreadAnswers.delete(message.id);
+    this.state.lookedUp = this.state.lookedUp?.filter((id) => id !== message.id);
   }
 
   /** Hands the queue on: messages of the running session join it; the next conversation waits its turn. */
@@ -567,7 +566,7 @@ class ListenLoop {
       // An answer to the host's own question may be the one a command of it still waits for, which gets it then. It
       // waits until no command does, and joins unless one of them got it: the answer to a question asked with
       // --async doesn't go to another command, nor one whose command gave up waiting. What came after it waits too.
-      if (message.answersMessageId && !this.unreadAnswers.has(message.id)) {
+      if (!this.mayJoin(message)) {
         if (active.waiting.size === 0) {
           void this.lookUpAnswer(active, message);
         }
@@ -604,12 +603,34 @@ class ListenLoop {
     this.joinActive(active);
   }
 
+  /** Whether a message joins a run as it is: anything but an answer to the host's question, until it was looked up. */
+  private mayJoin(message: ListenMessage): boolean {
+    return (
+      !message.answersMessageId || (Boolean(this.state.lookedUp?.includes(message.id)) && !this.lookups.has(message.id))
+    );
+  }
+
   /**
    * Whether a command of the host got this answer already, waiting for it: it asked for the question then. Asking
-   * here hands the answer over too, so each is asked about once. When it can't be told, the answer isn't held back:
-   * given twice costs less than lost.
+   * here hands the answer over too, so each is asked about once, and whatever else needs it meanwhile waits for that
+   * look. When it can't be told, the answer isn't held back: given twice costs less than lost.
    */
-  private async answerGot(message: ListenMessage): Promise<boolean> {
+  private answerGot(message: ListenMessage): Promise<boolean> {
+    let lookup = this.lookups.get(message.id);
+    if (!lookup) {
+      lookup = this.askWhetherGot(message).finally(() => this.lookups.delete(message.id));
+      this.lookups.set(message.id, lookup);
+    }
+
+    return lookup;
+  }
+
+  private async askWhetherGot(message: ListenMessage): Promise<boolean> {
+    // Saved before the look, which reads the answer: one that the program's end cuts off passes the answer on when
+    // it starts again, instead of taking that read for a command's.
+    this.state.lookedUp = [...(this.state.lookedUp ?? []), message.id];
+    this.save();
+
     let got = false;
     try {
       got = Boolean((await getInteraction(this.options.client, message.answersMessageId as string)).answerReadAt);
@@ -621,8 +642,6 @@ class ListenLoop {
       this.log(
         `${message.conversationId}: the answer to ${message.answersMessageId} went to the command that waited for it.`
       );
-    } else {
-      this.unreadAnswers.add(message.id);
     }
 
     return got;
@@ -672,7 +691,7 @@ class ListenLoop {
     try {
       // An answer that a command of the session's last run got already, waiting for it, isn't given again.
       for (const message of active.messages) {
-        if (message.answersMessageId && !this.unreadAnswers.has(message.id) && (await this.answerGot(message))) {
+        if (!this.mayJoin(message) && (await this.answerGot(message))) {
           active.messages = active.messages.filter((kept) => kept !== message);
           this.state.queue = this.state.queue.filter((queued) => queued !== message);
           this.markHandled(message);
