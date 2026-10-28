@@ -86,6 +86,8 @@ It runs in the background and starts again after a restart:
 
 `--foreground` listens in that terminal only, until Ctrl-C.
 
+In the background, Claude Code keeps the settings from your shell that pick its provider and models, such as `CLAUDE_CODE_USE_BEDROCK`, `AWS_PROFILE` or `ANTHROPIC_MODEL`, but no secret: anyone on the computer can read the service's file. If Claude Code signs in only with a key from your shell, such as `ANTHROPIC_API_KEY`, `listen` says so before it asks anything: sign Claude Code in another way, or use `--foreground`, which keeps your shell's variables.
+
 One computer keeps an agent listening at a time. Running `listen` on another computer asks to move it there. Running it again on the same computer, for another project or in a terminal, replaces the one running.
 
 ## See it and stop it

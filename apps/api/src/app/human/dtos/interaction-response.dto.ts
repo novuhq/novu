@@ -61,6 +61,12 @@ export class InteractionResponseDto {
   })
   threads?: InteractionThreadDto[];
 
+  @ApiPropertyOptional({
+    description:
+      'When the agent first got a person’s answer, by asking for the interaction. Missing on the read that hands it over, so a reader can tell whether it was handed over before.',
+  })
+  answerReadAt?: string;
+
   @ApiProperty()
   expiresAt: string;
 
@@ -87,6 +93,7 @@ export function toInteractionResponse(
     response: entity.response,
     ...(failedSubscriberIds && failedSubscriberIds.length > 0 ? { failedTo: failedSubscriberIds } : {}),
     ...(threads && threads.length > 0 ? { threads } : {}),
+    ...(entity.answerReadAt ? { answerReadAt: entity.answerReadAt } : {}),
     expiresAt: entity.expiresAt,
     createdAt: entity.createdAt,
   };

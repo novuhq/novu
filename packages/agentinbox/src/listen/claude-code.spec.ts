@@ -331,6 +331,63 @@ describe('claudeCode.check', () => {
   });
 });
 
+describe('Claude Code’s settings from the shell', () => {
+  const SHELL = {
+    PATH: '/usr/bin',
+    HOME: '/Users/ada',
+    CLAUDE_CODE_USE_BEDROCK: '1',
+    CLAUDE_CODE_SKIP_BEDROCK_AUTH: '1',
+    AWS_PROFILE: 'work',
+    AWS_REGION: 'us-east-1',
+    ANTHROPIC_BEDROCK_BASE_URL: 'https://bedrock.example',
+    ANTHROPIC_MODEL: 'claude-opus-5-5',
+    ANTHROPIC_DEFAULT_HAIKU_MODEL: 'claude-haiku-5-5',
+    CLAUDE_CODE_SUBAGENT_MODEL: 'claude-sonnet-5-5',
+    VERTEX_REGION_CLAUDE_5_5_OPUS: 'us-east5',
+    CLAUDE_CONFIG_DIR: '/Users/ada/.claude-work',
+    ANTHROPIC_API_KEY: 'sk-ant-secret',
+    ANTHROPIC_AUTH_TOKEN: 'secret',
+    ANTHROPIC_CUSTOM_HEADERS: 'X-Key: secret',
+    ANTHROPIC_FOUNDRY_API_KEY: 'secret',
+    CLAUDE_CODE_OAUTH_TOKEN: 'secret',
+    AWS_ACCESS_KEY_ID: 'AKIA',
+    AWS_SECRET_ACCESS_KEY: 'secret',
+    AWS_SESSION_TOKEN: 'secret',
+    AWS_BEARER_TOKEN_BEDROCK: 'secret',
+    CLAUDE_CODE_SESSION_ID: 'a parent session',
+    CLAUDE_CODE_ENTRYPOINT: 'cli',
+  };
+
+  it('keeps which provider and models it uses, and how it reaches them, never a secret nor a session’s marks', () => {
+    expect(claudeCode.settingsIn(SHELL)).toEqual({
+      CLAUDE_CODE_USE_BEDROCK: '1',
+      CLAUDE_CODE_SKIP_BEDROCK_AUTH: '1',
+      AWS_PROFILE: 'work',
+      AWS_REGION: 'us-east-1',
+      ANTHROPIC_BEDROCK_BASE_URL: 'https://bedrock.example',
+      ANTHROPIC_MODEL: 'claude-opus-5-5',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'claude-haiku-5-5',
+      CLAUDE_CODE_SUBAGENT_MODEL: 'claude-sonnet-5-5',
+      VERTEX_REGION_CLAUDE_5_5_OPUS: 'us-east5',
+      CLAUDE_CONFIG_DIR: '/Users/ada/.claude-work',
+    });
+  });
+
+  it('names the secrets it can sign in with from the shell', () => {
+    expect(claudeCode.signInSecretsIn(SHELL)).toEqual([
+      'ANTHROPIC_API_KEY',
+      'ANTHROPIC_AUTH_TOKEN',
+      'CLAUDE_CODE_OAUTH_TOKEN',
+      'AWS_BEARER_TOKEN_BEDROCK',
+      'AWS_ACCESS_KEY_ID',
+      'AWS_SECRET_ACCESS_KEY',
+      'AWS_SESSION_TOKEN',
+      'ANTHROPIC_FOUNDRY_API_KEY',
+    ]);
+    expect(claudeCode.signInSecretsIn({ PATH: '/usr/bin', ANTHROPIC_API_KEY: ' ' })).toEqual([]);
+  });
+});
+
 describe('a Claude Code session', { timeout: 15_000 }, () => {
   it('names its session up front, and reports each turn with the inputs it answered', async () => {
     const { session, told, turn } = open();

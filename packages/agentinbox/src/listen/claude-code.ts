@@ -58,6 +58,31 @@ const PARENT_SESSION_VARIABLES = [
 ];
 
 /**
+ * Claude Code's own settings among the shell's variables (code.claude.com/docs/en/env-vars): which provider it uses
+ * and how it reaches it (`CLAUDE_CODE_USE_BEDROCK`, `AWS_PROFILE`, `CLOUD_ML_REGION`, `ANTHROPIC_BASE_URL`…), which
+ * models, and where its own settings are.
+ */
+const SETTINGS =
+  /^(ANTHROPIC_\w+|CLAUDE_CODE_(USE|SKIP)_\w+|CLAUDE_CODE_SUBAGENT_MODEL|CLAUDE_CONFIG_DIR|CLOUD_ML_REGION|VERTEX_REGION_\w+|AWS_(PROFILE|REGION|DEFAULT_REGION|CONFIG_FILE|SHARED_CREDENTIALS_FILE)|GOOGLE_APPLICATION_CREDENTIALS)$/;
+
+/** A name that says it holds a secret: a key, a token, or headers that carry one. */
+const SECRET = /KEY|TOKEN|SECRET|PASSWORD|PASSPHRASE|HEADERS/;
+
+/** What Claude Code can sign in with from the shell, instead of the sign-in it keeps itself. */
+const SIGN_IN_SECRETS = [
+  'ANTHROPIC_API_KEY',
+  'ANTHROPIC_AUTH_TOKEN',
+  'CLAUDE_CODE_OAUTH_TOKEN',
+  'AWS_BEARER_TOKEN_BEDROCK',
+  'AWS_ACCESS_KEY_ID',
+  'AWS_SECRET_ACCESS_KEY',
+  'AWS_SESSION_TOKEN',
+  'ANTHROPIC_AWS_API_KEY',
+  'ANTHROPIC_FOUNDRY_API_KEY',
+  'ANTHROPIC_FOUNDRY_AUTH_TOKEN',
+];
+
+/**
  * Claude Code, driven in print mode with stream-json both ways: messages go in on stdin while it works, and
  * everything it does comes out on stdout, one JSON object a line. It is the operator's own `claude`, with
  * their sign-in, settings, plugins and plan; nothing of Claude Code ships with the CLI.
@@ -66,6 +91,13 @@ export const claudeCode: HostAdapter = {
   id: 'claude-code',
   name: 'Claude Code',
   check: checkClaude,
+  settingsIn: (env) =>
+    Object.fromEntries(
+      Object.entries(env).flatMap(([name, value]) =>
+        value && SETTINGS.test(name) && !SECRET.test(name) ? [[name, value]] : []
+      )
+    ),
+  signInSecretsIn: (env) => SIGN_IN_SECRETS.filter((name) => env[name]?.trim()),
   open: (options, handlers) => new ClaudeCodeSession(options, handlers),
 };
 

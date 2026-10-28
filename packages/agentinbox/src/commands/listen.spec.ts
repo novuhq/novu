@@ -10,7 +10,7 @@ import type { CliConfig } from '../config';
 import type { AskedAllow, AskedStore } from '../listen/allow';
 import { CLAUDE_CODE_MISSING_HELP } from '../listen/claude-code';
 import { FakeApi } from '../listen/fake-api.fixture';
-import { fileForeground } from '../listen/foreground';
+import { fileForeground, stopForeground } from '../listen/foreground';
 import { loadHost } from '../listen/hosts';
 import type { BackgroundCommand, ServiceManager } from '../listen/service';
 import { memoryState, newState } from '../listen/state';
@@ -51,11 +51,17 @@ afterEach(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-/** A `claude` on a PATH of its own: the fake, behind a small launcher. */
-function fakeClaudeOnPath(): string {
-  const bin = join(dir, 'bin');
+/**
+ * A `claude` on a PATH of its own: the fake, behind a small launcher. `keyOnly`: signed in only with
+ * ANTHROPIC_API_KEY, whatever environment it is started with.
+ */
+function fakeClaudeOnPath({ keyOnly = false } = {}): string {
+  const bin = join(dir, keyOnly ? 'key-only-bin' : 'bin');
   mkdirSync(bin, { recursive: true });
-  writeFileSync(join(bin, 'claude'), `#!/bin/sh\nexec "${process.execPath}" "${FAKE_CLAUDE}" "$@"\n`);
+  writeFileSync(
+    join(bin, 'claude'),
+    `#!/bin/sh\n${keyOnly ? 'export FAKE_CLAUDE_KEY_ONLY=1\n' : ''}exec "${process.execPath}" "${FAKE_CLAUDE}" "$@"\n`
+  );
   chmodSync(join(bin, 'claude'), 0o755);
 
   return bin;
@@ -374,6 +380,70 @@ describe('listen <host>', { timeout: 20_000 }, () => {
     expect(question?.card.body).toContain('the project’s own allow list won’t apply until it is');
   });
 
+  it('keeps Claude Code’s provider and model for the background program, and none of its secrets', async () => {
+    const { deps: listener, installed } = deps();
+    listener.env = {
+      ...listener.env,
+      CLAUDE_CODE_USE_BEDROCK: '1',
+      AWS_PROFILE: 'work',
+      AWS_REGION: 'eu-west-1',
+      ANTHROPIC_MODEL: 'claude-opus-5-5',
+      AWS_ACCESS_KEY_ID: 'AKIA_NEVER_WRITTEN',
+      AWS_SECRET_ACCESS_KEY: 'never written',
+      ANTHROPIC_CUSTOM_HEADERS: 'X-Secret: never written',
+    };
+
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
+
+    expect(installed[0].env).toEqual({
+      PATH: listener.env.PATH,
+      CLAUDE_CODE_USE_BEDROCK: '1',
+      AWS_PROFILE: 'work',
+      AWS_REGION: 'eu-west-1',
+      ANTHROPIC_MODEL: 'claude-opus-5-5',
+    });
+  });
+
+  it('says how to go on, before asking anything, when Claude Code signs in only with a key from this shell', async () => {
+    const { deps: listener, prompt, installed } = deps();
+    listener.env = { PATH: fakeClaudeOnPath({ keyOnly: true }), HOME: dir, ANTHROPIC_API_KEY: 'sk-ant-never-written' };
+
+    const failed = listenOn('claude-code', {}, listener);
+
+    await expect(failed).rejects.toThrow(
+      'Claude Code signs in here with ANTHROPIC_API_KEY from this shell, which listening in the background doesn’t get'
+    );
+    await expect(failed).rejects.toThrow('listen claude-code --foreground');
+    expect(prompt).not.toHaveBeenCalled();
+    expect(installed).toHaveLength(0);
+    expect(api.callsTo('POST', '/v1/listen/lease')).toHaveLength(0);
+  });
+
+  it('listens in this terminal with that key, as it has the shell’s variables there', async () => {
+    const controller = new AbortController();
+    const { deps: listener, installed } = deps({ signal: controller.signal });
+    listener.env = { PATH: fakeClaudeOnPath({ keyOnly: true }), HOME: dir, ANTHROPIC_API_KEY: 'sk-ant-test' };
+    listener.beforeLoop = () => controller.abort();
+
+    expect(await listenOn('claude-code', { foreground: true }, listener)).toBe(EXIT_OK);
+
+    expect(installed).toHaveLength(0);
+  });
+
+  it('tells the operator when Claude Code would sign in another way in the background than in this shell', async () => {
+    const { deps: listener } = deps({ personAtTerminal: false });
+    listener.env = { ...listener.env, ANTHROPIC_API_KEY: 'sk-ant-never-written' };
+    api.decide = () => 'approved';
+
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
+
+    const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+    expect(question?.card.body).toContain(
+      'there it uses the sign-in it has without it. To use it, listen in this terminal with --foreground.'
+    );
+    expect(JSON.stringify(question)).not.toContain('sk-ant-never-written');
+  });
+
   it('says how to install Claude Code when it isn’t there', async () => {
     const { deps: listener } = deps();
     listener.env = { PATH: join(dir, 'nowhere'), HOME: dir };
@@ -496,6 +566,25 @@ describe('listen stop', () => {
     expect(fileForeground.running()).toBeNull();
   });
 
+  it('ends a listener in a terminal that doesn’t stop in time, so it can’t touch the next one’s lease or state', async () => {
+    // One still stopping its run: it doesn't end on SIGTERM by itself.
+    const terminal = spawn(process.execPath, [
+      '-e',
+      'process.on("SIGTERM", () => {}); setInterval(() => {}, 1000)',
+      'listen',
+      'claude-code',
+      '--foreground',
+    ]);
+    children.push(terminal);
+    fileForeground.claim(terminal.pid ?? 0);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    expect(await stopForeground(fileForeground, 300)).toBe(true);
+
+    await eventually(() => expect(terminal.signalCode).toBe('SIGKILL'));
+    expect(fileForeground.running()).toBeNull();
+  });
+
   it('leaves another computer’s listener alone and says where it is', async () => {
     api.takeOverElsewhere('codex');
     const { deps: listener, lines } = deps();
@@ -614,6 +703,21 @@ describe('listen run', { timeout: 20_000 }, () => {
       expect(api.callsTo('GET', '/v1/listen/messages')).toHaveLength(waits);
       writeFileSync(join(dir, 'config.json'), JSON.stringify(saved));
     }
+  });
+
+  it('stops, and starts nothing more, once this computer is connected anew while it listens', async () => {
+    const { deps: listener, store } = deps();
+    await listenOn('claude-code', {}, listener);
+    const waits = api.callsTo('GET', '/v1/listen/messages').length;
+    const running = listenRun(listener);
+    await eventually(() => expect(api.callsTo('GET', '/v1/listen/messages').length).toBeGreaterThan(waits));
+
+    writeFileSync(join(dir, 'config.json'), JSON.stringify({ ...config(), relayAgentIdentifier: 'other-agent' }));
+    api.deliver({ text: 'hello' });
+
+    expect(await running).toBe(EXIT_OK);
+    expect(store.current?.stopped?.reason).toBe('connection_changed');
+    expect(api.sentInto('conv_1')).toEqual([]);
   });
 
   it('does nothing where listening was never allowed', async () => {

@@ -18,6 +18,13 @@ export interface HostAdapter {
    * know. Never runs a model.
    */
   check(project: string, env?: NodeJS.ProcessEnv): HostCheck;
+  /**
+   * The host's own settings among the shell's variables, which the background program keeps: which provider and
+   * models it uses, and how it reaches them. Never a secret: anyone on the computer can read the service's file.
+   */
+  settingsIn(env: NodeJS.ProcessEnv): Record<string, string>;
+  /** The secrets among the shell's variables that the host can sign in with, by name: the background goes without. */
+  signInSecretsIn(env: NodeJS.ProcessEnv): string[];
   /** Starts a session in `options.project`, or goes on with the one `options.resume` names. */
   open(options: OpenOptions, handlers: SessionHandlers): HostSession;
 }

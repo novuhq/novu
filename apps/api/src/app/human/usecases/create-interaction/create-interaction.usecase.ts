@@ -421,6 +421,7 @@ export class CreateInteraction {
 
     const threads: InteractionThreadDto[] = [];
     const reached = new Set<string>();
+    let postedInThread = false;
     let failedTo: string[] = [];
     let credits: AgentEmailInboxCredits | undefined;
     let interaction: Awaited<ReturnType<CreateConversationInteraction['execute']>>;
@@ -448,34 +449,48 @@ export class CreateInteraction {
           ttlSeconds: command.ttlSeconds,
           to: recipients,
         }),
-        outside.length > 0
-          ? (created) =>
-              this.contactTargets(scope, created, outside, threads, {
-                emailCapError: reserved.emailCapError,
-                withCredits: credits,
-                staysInThread: true,
-                onSent: (subscriberId, platform) => {
-                  reached.add(subscriberId);
-                  this.trackMessageSent(command, agent, platform);
-                },
-              })
-          : undefined
+        {
+          alsoTo:
+            outside.length > 0
+              ? (created) =>
+                  this.contactTargets(scope, created, outside, threads, {
+                    emailCapError: reserved.emailCapError,
+                    withCredits: credits,
+                    staysInThread: true,
+                    onSent: (subscriberId, platform) => {
+                      reached.add(subscriberId);
+                      this.trackMessageSent(command, agent, platform);
+                    },
+                  })
+              : undefined,
+          onPosted: () => {
+            postedInThread = true;
+          },
+        }
       );
-      // A contact outside the thread whose own chat failed got nothing, so their credit goes back.
-      failedTo = outsiders.filter((subscriberId) => !reached.has(subscriberId));
+      // Whoever got nothing takes no credit: the people in the thread when its post failed while a contact outside
+      // it got theirs, and a contact outside it whose own chat failed.
+      failedTo = [
+        ...(postedInThread ? [] : recipients.filter((subscriberId) => !outsiders.includes(subscriberId))),
+        ...outsiders.filter((subscriberId) => !reached.has(subscriberId)),
+      ];
       messageCredits?.accept(recipients.length - failedTo.length);
     } finally {
       await credits?.release();
       await messageCredits?.release();
     }
 
-    this.trackMessageSent(command, agent, channel.platform);
-    const unreadBefore = await this.inbox.markSentInto(scope, conversation);
+    // Nothing landed in the thread when its post failed: it isn't marked read, and isn't reported as sent into.
+    const intoThread: InteractionThreadDto[] = [];
+    if (postedInThread) {
+      this.trackMessageSent(command, agent, channel.platform);
+      intoThread.push({
+        id: conversation.identifier,
+        unreadBefore: await this.inbox.markSentInto(scope, conversation),
+      });
+    }
 
-    return toInteractionResponse(interaction, failedTo.length > 0 ? failedTo : undefined, [
-      { id: conversation.identifier, unreadBefore },
-      ...threads,
-    ]);
+    return toInteractionResponse(interaction, failedTo.length > 0 ? failedTo : undefined, [...intoThread, ...threads]);
   }
 
   /**

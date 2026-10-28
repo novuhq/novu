@@ -22,7 +22,13 @@ import { type ForegroundStore, fileForeground, stopForeground } from '../listen/
 import type { HostAdapter, HostProgram } from '../listen/host-adapter';
 import { hostNameOf, isListenHostId, loadHost, startableHosts } from '../listen/hosts';
 import { type ListenTiming, type LoopEnd, runListenLoop } from '../listen/loop';
-import { backgroundCommand, isUnsupported, type ServiceSetup, serviceManager } from '../listen/service';
+import {
+  type BackgroundCommand,
+  backgroundCommand,
+  isUnsupported,
+  type ServiceSetup,
+  serviceManager,
+} from '../listen/service';
 import {
   connectionOf,
   DEFAULT_LIMITS,
@@ -34,6 +40,8 @@ import {
   sameConnection,
 } from '../listen/state';
 import {
+  backgroundSecretsWarning,
+  backgroundSignInMessage,
   connectionChangedMessage,
   KEY_CHANGED_MESSAGE,
   movedMessage,
@@ -223,6 +231,8 @@ interface ListenPlan {
   version?: string;
   warnings: string[];
   service: ServiceSetup;
+  /** How the background program starts, unless it listens in this terminal. */
+  background?: BackgroundCommand;
   project: string;
   label: string;
   computer: string;
@@ -263,6 +273,20 @@ async function planListen(hostInput: string, options: ListenOptions, deps: Liste
     throw new Error(service.unsupported);
   }
 
+  // The background program gets only some of this shell's variables: the host has to work with those alone.
+  const background = options.foreground ? undefined : backgroundFor(host, project, deps);
+  const warnings = [...checked.warnings];
+  if (background) {
+    const secrets = host.signInSecretsIn(deps.env);
+    const there = host.check(project, background.env);
+    if (!there.ok) {
+      throw new Error(backgroundSignInMessage({ hostName: host.name, hostId: host.id, secrets, why: there.message }));
+    }
+    if (secrets.length > 0) {
+      warnings.push(backgroundSecretsWarning(host.name, secrets));
+    }
+  }
+
   const computerId = ensureComputerId(config);
   const client = clientFor(config, host.id);
   const { listening: holder, paused } = await getLease(client, config.relayAgentIdentifier).catch(rethrowKey);
@@ -284,8 +308,9 @@ async function planListen(hostInput: string, options: ListenOptions, deps: Liste
     config,
     program: checked.program,
     version: checked.version,
-    warnings: checked.warnings,
+    warnings,
     service,
+    background,
     project,
     label: projectLabel(project),
     computer: deps.computerName(),
@@ -295,6 +320,20 @@ async function planListen(hostInput: string, options: ListenOptions, deps: Liste
     listeningHere: Boolean(same && previous?.allowedAt && !previous.stopped && heldHere),
     previous: same ? previous : null,
   };
+}
+
+/** How the background program starts: with the host's own settings from this shell, never its secrets. */
+function backgroundFor(host: HostAdapter, project: string, deps: ListenDeps): BackgroundCommand {
+  return backgroundCommand({
+    script: deps.script,
+    nodePath: deps.nodePath,
+    version,
+    env: deps.env,
+    hostSettings: host.settingsIn(deps.env),
+    project,
+    logFile: logPath(),
+    description: `Listens for Agent Inbox messages for ${host.name}`,
+  });
 }
 
 async function hostFor(hostInput: string, deps: ListenDeps): Promise<HostAdapter> {
@@ -416,17 +455,7 @@ function startBackground(plan: ListenPlan, deps: ListenDeps): number {
     throw new Error(service.unsupported);
   }
 
-  service.install(
-    backgroundCommand({
-      script: deps.script,
-      nodePath: deps.nodePath,
-      version,
-      env: deps.env,
-      project: plan.project,
-      logFile: logPath(),
-      description: `Listens for Agent Inbox messages for ${host.name}`,
-    })
-  );
+  service.install(plan.background ?? backgroundFor(host, plan.project, deps));
 
   success(`Listening on ${plan.computer}, for ${host.name} in ${plan.label}.`);
   info(
@@ -527,6 +556,11 @@ function loopFor(
     timing: deps.timing,
     signal: deps.signal,
     log: (line) => deps.out(`${new Date().toISOString()} ${line}`),
+    savedConnection: () => {
+      const saved = loadConfig();
+
+      return saved ? connectionOf(saved) : null;
+    },
   });
 }
 

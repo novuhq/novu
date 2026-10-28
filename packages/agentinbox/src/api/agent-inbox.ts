@@ -66,6 +66,11 @@ export interface Interaction {
    * The API calls them threads; the CLI prints them as `conversations`.
    */
   threads?: InteractionConversation[];
+  /**
+   * When the agent first got a person's answer, by asking for the interaction. Not on the read that hands it
+   * over: the listener tells by it whether a command that waited got the answer already.
+   */
+  answerReadAt?: string;
   expiresAt: string;
   createdAt: string;
 }

@@ -13,6 +13,11 @@
 //                        fake API, as that command would; with <ms>, works that long more after replying
 //   wait-for:<ms>        runs `npx @agentinbox/cli reply <conversation> ask …`, which its settings allow,
 //                        and which waits <ms> for the answer before it ends (a `tool_result`)
+//   ask-and-wait:<ms>    runs `npx @agentinbox/cli inbox reply <conversation> ask "Staging or prod?"` through the
+//                        fake API, as that command would: it waits up to <ms> for the answer, asking for it every
+//                        40 ms; then it works a moment more
+//   ask-async-and-wait:<ms>
+//                        the same, after `… ask "Which region?" --async`, which doesn't wait
 //   ask-others:<to>[:wait|:<ms>]
 //                        asks to run `npx @agentinbox/cli reply <conversation> approve "Ship it?" --to <to>`,
 //                        then sends it through the fake API, as that command would: with `wait`, it waits for the
@@ -45,8 +50,11 @@ if (argv[0] === '--version') {
 }
 if (argv[0] === 'auth' && argv[1] === 'status') {
   // As Claude Code 2.1.311 does on macOS: it finds its sign-in under the account USER names, and without it says
-  // it isn't signed in (seen 2026-10-27).
-  const loggedIn = process.env.FAKE_CLAUDE_SIGNED_OUT !== '1' && Boolean(process.env.USER);
+  // it isn't signed in (seen 2026-10-27). FAKE_CLAUDE_KEY_ONLY: it is signed in only with ANTHROPIC_API_KEY.
+  const loggedIn =
+    process.env.FAKE_CLAUDE_SIGNED_OUT !== '1' &&
+    Boolean(process.env.USER) &&
+    (process.env.FAKE_CLAUDE_KEY_ONLY !== '1' || Boolean(process.env.ANTHROPIC_API_KEY));
   process.stdout.write(`${JSON.stringify({ loggedIn, apiProvider: 'firstParty' })}\n`);
   process.exit(0);
 }
@@ -175,6 +183,35 @@ function tool(command) {
   });
 }
 
+/**
+ * Runs `inbox reply <conversation> ask "<title>"` as the CLI does, through the fake API: it sends the question and,
+ * unless `async`, asks for its answer every 40 ms for up to `ms`. Ends with the tool's result, which it returns.
+ */
+async function askIn(conversation, title, { async = false, ms = 0 }, interruptible) {
+  const id = `toolu_${randomUUID()}`;
+  const command = `npx @agentinbox/cli inbox reply ${conversation} ask "${title}"${async ? ' --async' : ''}`;
+  out({
+    type: 'assistant',
+    message: { content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] },
+    session_id: sessionId,
+  });
+  const sent = (await api('POST', '/v1/inbox/messages', { kind: 'ask', card: { title }, thread: conversation })).data;
+  let outcome = sent;
+  const deadline = Date.now() + ms;
+  while (!async && outcome.status === 'pending' && Date.now() < deadline) {
+    if ((await interruptible(sleep(40))) === 'aborted') break;
+    outcome = (await api('GET', `/v1/inbox/messages/${sent.id}`)).data;
+  }
+  const result = async ? 'Sent.' : outcome.response?.text ? `Answered: ${outcome.response.text}` : 'No answer yet.';
+  out({
+    type: 'user',
+    message: { content: [{ type: 'tool_result', tool_use_id: id, content: result }] },
+    session_id: sessionId,
+  });
+
+  return result;
+}
+
 /** What it does for the words of a message: its answer, or `error` for a turn that fails. */
 const BEHAVIORS = [
   [
@@ -249,6 +286,27 @@ const BEHAVIORS = [
       });
 
       return { answer: 'Asked and got the answer.' };
+    },
+  ],
+  [
+    'ask-and-wait:',
+    async (rest, { interruptible, content }) => {
+      const result = await askIn(conversationOf(content), 'Staging or prod?', { ms: Number(rest) }, interruptible);
+      // The model reads the answer, and works on a moment before its turn ends.
+      await interruptible(sleep(300));
+
+      return { answer: `Asked. ${result}` };
+    },
+  ],
+  [
+    'ask-async-and-wait:',
+    async (rest, { interruptible, content }) => {
+      const conversation = conversationOf(content);
+      await askIn(conversation, 'Which region?', { async: true }, interruptible);
+      const result = await askIn(conversation, 'Staging or prod?', { ms: Number(rest) }, interruptible);
+      await interruptible(sleep(300));
+
+      return { answer: `Asked twice. ${result}` };
     },
   ],
   [

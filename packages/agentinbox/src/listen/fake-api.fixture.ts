@@ -467,11 +467,19 @@ export class FakeApi {
 
   private showInteraction(id: string, send: Send): void {
     const interaction = this.interactions.find((candidate) => candidate.id === id);
-    // Reading a person's answer hands it to the agent: the listener's wait leaves it out from then on.
-    if (interaction && ['approved', 'denied', 'answered'].includes(interaction.status)) {
+    if (!interaction) {
+      send(404, { message: 'Not found' });
+
+      return;
+    }
+
+    // As it was before this read, which hands a person's answer to the agent: the listener's wait leaves it out from
+    // then on.
+    const view = this.interactionView(interaction);
+    if (['approved', 'denied', 'answered'].includes(interaction.status)) {
       interaction.answerReadAt ??= new Date().toISOString();
     }
-    send(interaction ? 200 : 404, interaction ? { data: this.interactionView(interaction) } : { message: 'Not found' });
+    send(200, { data: view });
   }
 
   private listConversations({ query }: FakeCall, send: Send): void {
@@ -522,6 +530,7 @@ export class FakeApi {
       platform: 'telegram',
       expiresAt: interaction.expiresAt,
       createdAt: interaction.createdAt,
+      ...(interaction.answerReadAt ? { answerReadAt: interaction.answerReadAt } : {}),
       ...(conversationId ? { threads: [{ id: conversationId, unreadBefore: 0 }] } : {}),
     };
   }

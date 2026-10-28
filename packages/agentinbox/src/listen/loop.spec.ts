@@ -1,3 +1,4 @@
+import { getEventListeners } from 'node:events';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -6,9 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApiClient } from '../api/client';
 import { claudeCode } from './claude-code';
 import { FakeApi } from './fake-api.fixture';
-import { type ListenTiming, type LoopEnd, runListenLoop } from './loop';
-import { type ListenState, memoryState, newState } from './state';
-import { KEY_CHANGED_MESSAGE, STOPPED_REPLY } from './words';
+import { anyOf, type ListenLoopOptions, type ListenTiming, type LoopEnd, runListenLoop } from './loop';
+import { type ListenConnection, type ListenState, memoryState, newState } from './state';
+import { connectionChangedMessage, KEY_CHANGED_MESSAGE, STOPPED_REPLY } from './words';
 
 const FAKE_CLAUDE = fileURLToPath(new URL('./fake-claude.fixture.mjs', import.meta.url));
 const COMPUTER_ID = 'cmp_this_computer_0001';
@@ -43,6 +44,17 @@ function pause(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** The id of the question the host asked with this title, once it has. */
+async function asked(api: FakeApi, title: string): Promise<string> {
+  let id: string | undefined;
+  await eventually(() => {
+    id = api.interactions.find((interaction) => interaction.card.title === title)?.id;
+    expect(id).toBeDefined();
+  });
+
+  return id as string;
+}
+
 interface Harness {
   api: FakeApi;
   dir: string;
@@ -60,7 +72,8 @@ async function start(
   overrides: Partial<ListenState> = {},
   timing: Partial<ListenTiming> = {},
   /** Sets the API up before the loop's first call. */
-  prepare: (api: FakeApi) => void = () => undefined
+  prepare: (api: FakeApi) => void = () => undefined,
+  more: Pick<ListenLoopOptions, 'savedConnection'> = {}
 ): Promise<Harness> {
   const api = await new FakeApi().start();
   const dir = mkdtempSync(join(tmpdir(), 'listen-loop-'));
@@ -101,6 +114,7 @@ async function start(
     timing: { ...FAST, ...timing },
     log: (line) => logs.push(line),
     signal: controller.signal,
+    ...more,
   });
   const starts = () => {
     try {
@@ -875,18 +889,80 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
   });
 
   it('leaves the answer to the agent’s command that still waits for it', async () => {
-    const { api, starts } = await start();
+    const { api, starts, logs } = await start();
 
-    api.deliver({ text: 'wait-for:1200' });
-    await eventually(() => expect(starts()).toHaveLength(1));
-    await pause(200);
-    api.deliver({
-      text: 'prod',
-      answersMessageId: 'int_asked_and_waiting',
-      answer: { status: 'answered', text: 'prod' },
+    api.deliver({ text: 'ask-and-wait:4000' });
+    api.answer(await asked(api, 'Staging or prod?'), { status: 'answered', text: 'prod' });
+    await eventually(() => expect(logs).toContain('conv_1: done.'));
+
+    // The command got it: the session wasn't given it again, and no run started for it.
+    api.deliver({ text: 'remember' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('This session has seen 1 messages before.'));
+    expect(starts()).toHaveLength(2);
+  });
+
+  it('passes on the answer to a question asked with --async that comes while another command waits', async () => {
+    const { api, starts, logs } = await start();
+
+    api.deliver({ text: 'ask-async-and-wait:4000' });
+    const region = await asked(api, 'Which region?');
+    const stage = await asked(api, 'Staging or prod?');
+    // The first answer comes while the command that asked the second question waits for its own.
+    api.answer(region, { status: 'answered', text: 'eu-west' });
+    await pause(300);
+    api.answer(stage, { status: 'answered', text: 'prod' });
+    await eventually(() => expect(logs).toContain('conv_1: done.'));
+
+    // The first answer joined the run once the command ended; the second went to the command alone.
+    expect(logs.filter((line) => line === 'conv_1: a new message joined the run.')).toHaveLength(1);
+    api.deliver({ text: 'remember' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('This session has seen 2 messages before.'));
+    expect(starts()).toHaveLength(2);
+  });
+
+  describe('once this computer is connected anew', () => {
+    const CONNECTION: ListenConnection = {
+      apiUrl: 'https://api.agentinbox.md',
+      agentIdentifier: 'human-relay',
+      key: '0123456789abcdef',
+    };
+
+    it('starts nothing more and stops for good: what it starts would answer with the new connection', async () => {
+      let saved: ListenConnection | null = CONNECTION;
+      const { api, starts, store, loop } = await start({ connection: CONNECTION }, {}, undefined, {
+        savedConnection: () => saved,
+      });
+
+      saved = { ...CONNECTION, agentIdentifier: 'other-agent' };
+      api.deliver({ text: 'hello' });
+
+      const message = connectionChangedMessage('claude-code');
+      expect(await loop).toEqual({ reason: 'connection_changed', message });
+      expect(store.current?.stopped).toMatchObject({ reason: 'connection_changed', message });
+      expect(starts()).toHaveLength(0);
     });
 
-    await eventually(() => expect(api.sentInto('conv_1')).toContain('Asked and got the answer.'));
+    it('stops the run going on too', async () => {
+      let saved: ListenConnection | null = CONNECTION;
+      const { api, starts, logs, loop } = await start({ connection: CONNECTION }, {}, undefined, {
+        savedConnection: () => saved,
+      });
+      api.deliver({ text: 'sleep:5000' });
+      await eventually(() => expect(starts()).toHaveLength(1));
+
+      saved = { ...CONNECTION, key: 'fedcba9876543210' };
+
+      expect(await loop).toMatchObject({ reason: 'connection_changed' });
+      expect(logs).toContain('conv_1: stopped (shutdown).');
+    });
+
+    it('goes on while the saved connection can’t be read, as while it is being written', async () => {
+      const { api } = await start({ connection: CONNECTION }, {}, undefined, { savedConnection: () => null });
+
+      api.deliver({ text: 'hello' });
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: hello'));
+    });
   });
 
   describe('a question the agent puts to someone outside its conversation too', () => {
@@ -958,6 +1034,27 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
       // The card is the agent's own reply in the conversation, so its last words don't follow it.
       expect(api.sentInto('conv_bob')).toEqual(['Ship it?']);
     });
+  });
+
+  it('keeps nothing of a finished wait for the operator on what lasts as long as the listener', () => {
+    const lasting = new AbortController();
+
+    // As many looks as a ten-minute wait takes, each one on the signal of the whole wait.
+    for (let wait = 0; wait < 120; wait++) {
+      anyOf(lasting.signal, new AbortController().signal).dispose();
+    }
+
+    expect(getEventListeners(lasting.signal, 'abort')).toHaveLength(0);
+  });
+
+  it('wakes a wait as soon as any of its signals ends it', () => {
+    const question = new AbortController();
+    const woken = anyOf(new AbortController().signal, question.signal);
+
+    question.abort();
+
+    expect(woken.signal.aborted).toBe(true);
+    woken.dispose();
   });
 
   it('handles each message once, even when it comes back', async () => {
