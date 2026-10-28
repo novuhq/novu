@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { decryptCredentials } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   ControlValuesRepository,
@@ -436,16 +437,19 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
     async function findTwilioCredentials(integrationId: string) {
       const integrations = await integrationRepository.findByEnvironmentId(session.environment._id);
 
-      return integrations.find((integration) => integration._id === integrationId)?.credentials;
+      const credentials = integrations.find((integration) => integration._id === integrationId)?.credentials;
+
+      return credentials ? decryptCredentials(credentials) : undefined;
     }
 
-    it('should switch to API key authentication and drop the auth token', async () => {
+    it('should store only the API key when switching to API key authentication', async () => {
       const integrationId = await createTwilioIntegration();
 
       const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
         credentials: {
           authMethod: 'apiKey',
           accountSid: 'AC123',
+          token: 'auth-token',
           apiKey: 'SK123',
           secretKey: 'api-key-secret',
           from: '+15550000000',
@@ -456,30 +460,38 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
 
       const credentials = await findTwilioCredentials(integrationId);
       expect(credentials?.authMethod).to.equal('apiKey');
-      expect(credentials?.apiKey).to.be.a('string');
-      expect(credentials?.secretKey).to.be.a('string');
+      expect(credentials?.apiKey).to.equal('SK123');
+      expect(credentials?.secretKey).to.equal('api-key-secret');
       expect(credentials?.token).to.equal(undefined);
     });
 
-    it('should store the authToken method as the default', async () => {
+    it('should store only the auth token when no authentication method is set', async () => {
       const integrationId = await createTwilioIntegration();
 
       const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
-        credentials: { authMethod: 'authToken', accountSid: 'AC123', token: 'auth-token', from: '+15550000000' },
+        credentials: {
+          accountSid: 'AC123',
+          token: 'auth-token',
+          apiKey: 'SK123',
+          secretKey: 'api-key-secret',
+          from: '+15550000000',
+        },
         check: false,
       });
       expect(response.status).to.equal(200);
 
       const credentials = await findTwilioCredentials(integrationId);
       expect(credentials?.authMethod).to.equal(undefined);
-      expect(credentials?.token).to.be.a('string');
+      expect(credentials?.token).to.equal('auth-token');
+      expect(credentials?.apiKey).to.equal(undefined);
+      expect(credentials?.secretKey).to.equal(undefined);
     });
 
     it('should reject an unknown authentication method', async () => {
       const integrationId = await createTwilioIntegration();
 
       const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
-        credentials: { authMethod: 'password', accountSid: 'AC123', token: 'auth-token' },
+        credentials: { authMethod: 'authToken', accountSid: 'AC123', token: 'auth-token' },
         check: false,
       });
 

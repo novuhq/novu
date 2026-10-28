@@ -82,7 +82,7 @@ In your Twilio integration, set **Authentication method** to **API key**, then e
   API keys belong to a Twilio region. If you use **EU (Ireland)** as the data residency region, create the API key in the IE1 region.
 </Note>
 
-To configure API key authentication through the Novu API, set `authMethod` to `apiKey` and send the key in `apiKey` (API Key SID) and `secretKey` (API Key Secret) inside `credentials`.
+To configure API key authentication through the Novu API, set `authMethod` to `apiKey` and send the key in `apiKey` (API Key SID) and `secretKey` (API Key Secret) inside `credentials`. Novu does not store `token` in this mode. To use the Auth Token, leave `authMethod` out.
 
 ## Multi-region data residency
 

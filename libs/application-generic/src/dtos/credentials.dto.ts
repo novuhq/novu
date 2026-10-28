@@ -40,11 +40,9 @@ export class CredentialsDto implements ICredentials {
   @ApiPropertyOptional({
     description:
       'Twilio: `apiKey` authenticates with `apiKey` (API Key SID) and `secretKey` (API Key Secret) ' +
-      'on behalf of `accountSid`. Defaults to `authToken`, which uses `token`.',
+      'on behalf of `accountSid`. When omitted, `token` (Auth Token) is used.',
     enum: [...TWILIO_AUTH_METHODS],
   })
-  // Stored as missing: the dashboard picker shows a missing value as the default option.
-  @Transform(({ value }) => (value === 'authToken' ? undefined : value))
   @IsString()
   @IsIn(TWILIO_AUTH_METHODS)
   @IsOptional()

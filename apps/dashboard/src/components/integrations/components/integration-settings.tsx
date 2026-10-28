@@ -2,6 +2,7 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   CredentialsKeyEnum,
+  getUnusedTwilioAuthCredentialKeys,
   IIntegration,
   IProviderConfig,
   PermissionsEnum,
@@ -32,7 +33,7 @@ import { TelegramCredentialsPaste, type TelegramCredentialsPasteMobileSetup } fr
 import { ToolWebhookSettings } from './tool-webhook-settings';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
-import { getUnusedTwilioAuthCredentialKeys, isDemoIntegration } from './utils/helpers';
+import { isDemoIntegration } from './utils/helpers';
 import { WhatsAppCredentialsPaste } from './whatsapp-credentials-paste';
 import { WhatsAppCredentialsValidator } from './whatsapp-credentials-validator';
 
@@ -197,19 +198,11 @@ export function IntegrationSettings({
     return visibleCredentials;
   }, [provider.id, provider.credentials, mode, integration?.credentials, isAgentOnboarding, unusedCredentialKeys]);
 
-  const submitWithoutUnusedCredentials = (data: IntegrationFormData) => {
-    const credentials = Object.fromEntries(
-      Object.entries(data.credentials ?? {}).filter(([key]) => !unusedCredentialKeys.includes(key))
-    );
-
-    onSubmit({ ...data, credentials });
-  };
-
   return (
     <Form {...form}>
       <FormRoot
         id={`integration-configuration-form-${provider.id}`}
-        onSubmit={handleSubmit(submitWithoutUnusedCredentials)}
+        onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col"
       >
         <ProviderDeprecationNotice provider={provider} replaceOnNavigate={mode === 'create'} />

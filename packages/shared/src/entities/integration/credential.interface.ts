@@ -158,7 +158,7 @@ export interface ICredentials {
   hmacSecretKeyEncoding?: 'text' | 'base64' | 'hex';
   /**
    * Twilio: `'apiKey'` authenticates with `apiKey` (API Key SID) and `secretKey`
-   * (API Key Secret) on behalf of `accountSid`. Missing or `'authToken'` uses `token`.
+   * (API Key Secret) on behalf of `accountSid`. Missing uses `token` (Auth Token).
    */
   authMethod?: TwilioAuthMethod;
 }

@@ -28,17 +28,6 @@ describe('TwilioHandler', () => {
     });
   });
 
-  it('uses the auth token for the authToken auth method', () => {
-    new TwilioHandler().buildProvider({ ...credentials, authMethod: 'authToken' });
-
-    expect(TwilioSmsProvider).toHaveBeenCalledWith({
-      accountSid: 'AC123',
-      authToken: 'auth-token',
-      from: '+15550000000',
-      region: 'eu',
-    });
-  });
-
   it('uses the API key SID and secret for the apiKey auth method', () => {
     new TwilioHandler().buildProvider({ ...credentials, authMethod: 'apiKey' });
 
