@@ -21,7 +21,7 @@ import {
 import { useCopilotWebChat } from './copilot-web-chat-context';
 import { getFailedSend, getUserMessageText, hasPendingReplyGap } from './copilot-web-chat-utils';
 
-const SUGGESTIONS = ['Autocomplete workflow', 'Audit this workflow', 'Explain this workflow'];
+const SUGGESTIONS = ['Autocomplete workflow', 'Audit this workflow'];
 
 function HeaderButton({
   label,
