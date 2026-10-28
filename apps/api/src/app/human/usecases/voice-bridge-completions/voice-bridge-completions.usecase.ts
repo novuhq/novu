@@ -27,6 +27,7 @@ import {
 } from '../../../agents/channels/voice/voice-bridge-config';
 import {
   claimAgentLine,
+  noteVoiceBridgeAlive,
   readVoiceCallHandoff,
   recordInboundUtterances,
 } from '../../../agents/channels/voice/voice-call-handoff';
@@ -238,6 +239,7 @@ export class VoiceBridgeCompletions {
       if (keepaliveIn >= VOICE_BRIDGE_KEEPALIVE_MS) {
         params.res.write(sseKeepAlive());
         keepaliveIn = 0;
+        await noteVoiceBridgeAlive(this.cacheService, params.conversationId);
       }
 
       await sleep(VOICE_BRIDGE_CLAIM_POLL_MS);

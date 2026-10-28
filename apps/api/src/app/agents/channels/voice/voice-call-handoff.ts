@@ -212,6 +212,18 @@ export async function postAgentLine(
   return Number(result) === 1;
 }
 
+/**
+ * An open park is still a live call. Keepalives bump this so a long
+ * `NOVU_VOICE_BRIDGE_PARK_MS` is not treated as a dropped webhook.
+ */
+export async function noteVoiceBridgeAlive(cache: CacheService, conversationId: string): Promise<void> {
+  await cache.eval<unknown>(
+    TOUCH_BRIDGE_SCRIPT,
+    [voiceCallRegistryKey(conversationId)],
+    [String(VOICE_CALL_REGISTRY_TTL_SECONDS), new Date().toISOString()]
+  );
+}
+
 export async function endVoiceCallHandoff(cache: CacheService, conversationId: string): Promise<void> {
   await cache.eval<unknown>(
     END_CALL_SCRIPT,
@@ -275,6 +287,16 @@ end
 data.lastBridgeRequestAt = ARGV[2]
 ${SAVE_HANDOFF}
 return cjson.encode({ handoffJson = cjson.encode(data), appendedJson = cjson.encode(appended) })
+`;
+
+const TOUCH_BRIDGE_SCRIPT = `
+${LOAD_HANDOFF}
+if data.status ~= 'live' then
+  return 0
+end
+data.lastBridgeRequestAt = ARGV[2]
+${SAVE_HANDOFF}
+return 1
 `;
 
 const CLAIM_LINE_SCRIPT = `

@@ -1,4 +1,7 @@
-/** A live call with no bridge request for this long is treated as abandoned. */
+/**
+ * A live call with no open bridge stream for this long is treated as abandoned.
+ * Keepalives on a parked stream refresh `lastBridgeRequestAt`, so a long park stays locked.
+ */
 export const VOICE_CALL_STALE_AFTER_MS = 90_000;
 
 export function isVoiceCallStale(lastBridgeRequestAt: string | undefined, now = Date.now()): boolean {
