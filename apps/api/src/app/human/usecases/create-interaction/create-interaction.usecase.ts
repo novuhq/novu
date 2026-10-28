@@ -221,7 +221,7 @@ export class CreateInteraction {
     const resolved = await this.resolveTargets(command, agent, recipients);
     const emailCount = resolved.filter((item) => item.target.platform === HumanChannelViaEnum.EMAIL).length;
     const voiceTargets = resolved.filter((item) => item.target.platform === HumanChannelViaEnum.VOICE);
-    this.assertVoiceSendAllowed(command, voiceTargets.length);
+    this.assertVoiceSendAllowed(command, voiceTargets.length, resolved.length);
     let credits: AgentEmailInboxCredits | undefined;
     let messageCredits: HumanMessageCredits | undefined;
     let voiceCredits: HumanVoiceMinuteCredits | undefined;
@@ -342,7 +342,11 @@ export class CreateInteraction {
    * A voice call is one conversation the agent drives turn by turn. Fan-out and
    * `tell` leave nobody to settle, so the person gets fillers and a hangup.
    */
-  private assertVoiceSendAllowed(command: CreateInteractionCommand, voiceTargetCount: number): void {
+  private assertVoiceSendAllowed(
+    command: CreateInteractionCommand,
+    voiceTargetCount: number,
+    totalTargetCount: number
+  ): void {
     if (voiceTargetCount === 0) {
       return;
     }
@@ -353,7 +357,7 @@ export class CreateInteraction {
       );
     }
 
-    if (voiceTargetCount > 1) {
+    if (voiceTargetCount > 1 || totalTargetCount > 1) {
       throw new BadRequestException(
         'Voice reaches one person at a time. Pass a single contact in `to`, or leave `via` unset so each contact uses their own channel.'
       );

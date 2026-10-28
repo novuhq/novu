@@ -231,9 +231,14 @@ export async function runSend(words: string[], options: SendOptions, conversatio
     }
 
     // A voice call needs the agent on the line immediately — waiting here would
-    // burn the bridge park on fillers before anyone posts a turn.
+    // burn the bridge park on fillers before anyone posts a turn. A call that
+    // already failed keeps the normal error exit instead of looking placed.
     if (created.platform === 'voice' || address.via === 'voice') {
-      process.exit(emitVoiceCallPlaced(created, Boolean(options.json)));
+      if (created.status === 'pending') {
+        process.exit(emitVoiceCallPlaced(created, Boolean(options.json)));
+      }
+
+      process.exit(emitResult(created, Boolean(options.json)));
     }
 
     process.exit(await waitForResolution(client, created, options));

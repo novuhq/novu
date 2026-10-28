@@ -198,8 +198,8 @@ export async function claimAgentLine(
     return null;
   }
 
-  const line = parsed.line?.trim();
-  if (!line) {
+  const line = typeof parsed.line === 'string' ? parsed.line.trim() : '';
+  if (!line && !parsed.hangupRequested) {
     return null;
   }
 
@@ -358,10 +358,13 @@ if data.status ~= 'live' then
   return nil
 end
 local line = data.pendingAgentLine
-if type(line) ~= 'string' or line == '' then
-  return nil
+if type(line) ~= 'string' then
+  line = ''
 end
 local hangup = data.hangupRequested == true
+if line == '' and not hangup then
+  return nil
+end
 data.pendingAgentLine = nil
 data.hangupRequested = nil
 ${SAVE_HANDOFF}
@@ -370,7 +373,7 @@ return cjson.encode({ line = line, hangupRequested = hangup })
 
 const POST_LINE_SCRIPT = `
 ${LOAD_HANDOFF}
-if data.status ~= 'live' then
+if data.status ~= 'live' and data.status ~= 'dialing' then
   return 0
 end
 data.pendingAgentLine = ARGV[2]

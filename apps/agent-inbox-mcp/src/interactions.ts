@@ -315,17 +315,18 @@ export async function voiceTurn(
   const seconds = input.waitSeconds ?? DEFAULT_WAIT_SECONDS;
   const deadline = since + Math.min(Math.max(seconds, 0), MAX_WAIT_SECONDS) * 1000;
   const path = `/v1/inbox/messages/${encodeURIComponent(input.id)}/voice/turn`;
-  let first = true;
+  let sendBody = true;
+  let lastListening: VoiceTurnResult | undefined;
 
   while (true) {
     const remainingMs = deadline - Date.now();
-    if (!first && remainingMs <= 0) {
-      return { status: 'timeout' };
+    if (lastListening && remainingMs < VOICE_TURN_API_WAIT_MS) {
+      return lastListening;
     }
 
     const result = await api.post<VoiceTurnResult>(
       path,
-      first ? firstVoiceTurnBody(input) : {},
+      sendBody ? firstVoiceTurnBody(input) : {},
       voiceTurnRequestTimeout(remainingMs)
     );
 
@@ -333,7 +334,11 @@ export async function voiceTurn(
       return result;
     }
 
-    first = false;
+    // Ringing means the line was not spoken yet. A live timeout means it was.
+    if (result.status !== 'ringing') {
+      sendBody = false;
+    }
+    lastListening = result;
     const wait = Math.min(POLL_EVERY_MS, deadline - Date.now());
     if (wait <= 0) {
       return result;

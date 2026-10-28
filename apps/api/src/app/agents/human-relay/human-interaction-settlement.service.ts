@@ -68,6 +68,32 @@ export class HumanInteractionSettlementService {
   }
 
   /**
+   * Records a commitment the agent heard on a voice call that already expired
+   * because the person hung up. Pending rows still go through `settle`.
+   */
+  async settleExpiredVoice(
+    interaction: HumanInteractionEntity,
+    status: HumanInteractionStatusEnum,
+    response?: HumanInteractionResponse
+  ): Promise<HumanInteractionEntity | null> {
+    const settled = await this.humanInteractionRepository.settleIfExpired(
+      interaction._environmentId,
+      interaction._id,
+      status,
+      response
+    );
+    if (!settled) {
+      return null;
+    }
+
+    await this.releaseVoiceReservation(settled);
+    await this.editDeliveredMessage(settled);
+    await this.resumeAfterSettlement(settled);
+
+    return settled;
+  }
+
+  /**
    * One recipient's call never connected. The interaction fails only when nobody
    * else can still answer. Minutes for a partial failure stay on the row until
    * that later settlement, which returns them once.

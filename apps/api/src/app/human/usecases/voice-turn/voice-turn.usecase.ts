@@ -65,7 +65,15 @@ export class VoiceTurn {
     }
 
     const interaction = await this.recordVoiceCallEnded.expireIfStale(loaded);
-    if (interaction.status !== HumanInteractionStatusEnum.PENDING) {
+    const voiceSubscriberId = voiceSubscriberForTurn(interaction);
+    if (!voiceSubscriberId) {
+      throw new BadRequestException('Voice turn only applies to a voice call.');
+    }
+
+    if (
+      interaction.status !== HumanInteractionStatusEnum.PENDING &&
+      interaction.status !== HumanInteractionStatusEnum.EXPIRED
+    ) {
       if (settleIntent) {
         throw new BadRequestException(
           `Interaction ${command.identifier} is already ${interaction.status}; it cannot be settled again.`
@@ -79,10 +87,22 @@ export class VoiceTurn {
       };
     }
 
+    if (interaction.status === HumanInteractionStatusEnum.EXPIRED) {
+      if (!settleIntent) {
+        return {
+          status: 'ended',
+          interactionStatus: interaction.status,
+          endReason: interaction.voiceFailure?.code,
+        };
+      }
+
+      return this.settleWithoutCall(interaction, settleIntent, voiceSubscriberId);
+    }
+
     const delivery = openVoiceDelivery(interaction);
     if (!delivery) {
       if (settleIntent) {
-        return this.settleWithoutCall(interaction, settleIntent);
+        return this.settleWithoutCall(interaction, settleIntent, voiceSubscriberId);
       }
 
       return endedResponse(interaction);
@@ -222,9 +242,10 @@ export class VoiceTurn {
     const respondedBy = await this.resolveResponderName(command.environmentId, subscriberId);
     const settlePlan = this.buildSettlePlan(interaction, params.settleIntent, respondedBy, subscriberId);
 
-    // An answer always hangs up: a settled interaction must never stay on a live call.
-    if (say && handoff?.status === 'live') {
-      await postAgentLine(this.cacheService, delivery.platformMessageId, say, true);
+    // An answer always hangs up, including when the agent has no goodbye to speak.
+    // A line queued while still dialing is spoken once the bridge promotes the call.
+    if (handoff && (handoff.status === 'live' || handoff.status === 'dialing')) {
+      await postAgentLine(this.cacheService, delivery.platformMessageId, say ?? '', true);
     }
 
     const settled = await this.settlement.settle(interaction, settlePlan.status, settlePlan.response);
@@ -247,20 +268,15 @@ export class VoiceTurn {
 
   private async settleWithoutCall(
     interaction: HumanInteractionEntity,
-    settleIntent: SettleIntent
+    settleIntent: SettleIntent,
+    subscriberId: string
   ): Promise<VoiceTurnResponseDto> {
-    const subscriberId =
-      interaction.voiceSubscriberIds?.[0] ??
-      interaction.deliveries?.find((d) => d.platform === HumanChannelViaEnum.VOICE)?.subscriberId ??
-      interaction.subscriberIds?.[0];
-    if (!subscriberId) {
-      throw new BadRequestException('This voice interaction has no recipient to attribute the answer to.');
-    }
-
     const respondedBy = await this.resolveResponderName(interaction._environmentId, subscriberId);
     const settlePlan = this.buildSettlePlan(interaction, settleIntent, respondedBy, subscriberId);
 
-    const settled = await this.settlement.settle(interaction, settlePlan.status, settlePlan.response);
+    const settled =
+      (await this.settlement.settle(interaction, settlePlan.status, settlePlan.response)) ??
+      (await this.settlement.settleExpiredVoice(interaction, settlePlan.status, settlePlan.response));
     if (!settled) {
       throw new BadRequestException(
         `Interaction ${interaction.identifier} is already settled; it cannot be settled again.`
@@ -320,10 +336,15 @@ export class VoiceTurn {
     switch (handoff.status) {
       case 'ended':
         return this.currentEndedTurn(command, interaction, delivery.platformMessageId);
-      case 'dialing':
+      case 'dialing': {
         state.sawDialing = true;
+        const queued = await this.ensureLinePosted(delivery.platformMessageId, params.say, params.hangup, state);
+        if (queued === 'ended') {
+          return this.currentEndedTurn(command, interaction, delivery.platformMessageId);
+        }
 
         return undefined;
+      }
       case 'live':
         return this.pollLiveTurn(params);
       default: {
@@ -371,11 +392,11 @@ export class VoiceTurn {
     hangup: boolean,
     state: { linePosted: boolean }
   ): Promise<'ready' | 'ended'> {
-    if (!say || state.linePosted) {
+    if (state.linePosted || (!say && !hangup)) {
       return 'ready';
     }
 
-    const posted = await postAgentLine(this.cacheService, platformMessageId, say, hangup);
+    const posted = await postAgentLine(this.cacheService, platformMessageId, say ?? '', hangup);
     if (!posted) {
       return 'ended';
     }
@@ -423,6 +444,21 @@ export class VoiceTurn {
 
     return subscriberId;
   }
+}
+
+/** A voice turn may record a commitment only for a voice call, never for another channel on the same row. */
+function voiceSubscriberForTurn(interaction: HumanInteractionEntity): string | undefined {
+  const deliveries = interaction.deliveries ?? [];
+  if (deliveries.some((delivery) => delivery.platform !== HumanChannelViaEnum.VOICE)) {
+    return undefined;
+  }
+
+  const voiceDelivery = deliveries.find((delivery) => delivery.platform === HumanChannelViaEnum.VOICE);
+  if (voiceDelivery?.subscriberId) {
+    return voiceDelivery.subscriberId;
+  }
+
+  return interaction.voiceSubscriberIds?.[0];
 }
 
 function isStillRinging(status: VoiceCallHandoffStatus, sawDialing: boolean): boolean {

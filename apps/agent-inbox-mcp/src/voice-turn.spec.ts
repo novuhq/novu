@@ -78,6 +78,51 @@ describe('voice turn helpers', () => {
     expect(sleep).toHaveBeenCalled();
   });
 
+  it('repeats unspoken words while the phone is still ringing', async () => {
+    const api = {
+      get: vi.fn(),
+      getRaw: vi.fn(),
+      post: vi
+        .fn()
+        .mockResolvedValueOnce({ status: 'ringing' })
+        .mockResolvedValueOnce({ status: 'utterance', utterance: 'hello' }),
+    } satisfies AgentInboxApi;
+
+    const result = await voiceTurn(
+      api,
+      { id: 'hi_1', say: 'Hello there', waitSeconds: 50 },
+      async () => undefined,
+      Date.now()
+    );
+
+    expect(result).toEqual({ status: 'utterance', utterance: 'hello' });
+    expect(api.post.mock.calls[1][1]).toEqual({ say: 'Hello there' });
+  });
+
+  it('returns the last listening state when another full wait will not fit', async () => {
+    const start = 1_700_000_000_000;
+    let now = start;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+    const api = {
+      get: vi.fn(),
+      getRaw: vi.fn(),
+      post: vi.fn(async () => {
+        now += 25_000;
+
+        return { status: 'timeout' as const };
+      }),
+    } satisfies AgentInboxApi;
+
+    try {
+      const result = await voiceTurn(api, { id: 'hi_1', waitSeconds: 45 }, async () => undefined, start);
+
+      expect(result).toEqual({ status: 'timeout' });
+      expect(api.post).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
   it('describes a settled approve turn', () => {
     expect(
       describeVoiceTurn('hi_1', {

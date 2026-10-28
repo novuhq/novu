@@ -67,18 +67,24 @@ Exit codes match the rest of the CLI:
 | `12` | Call ended without a settle |
 | `1` | Error or the call never connected |
 
-A shell loop keeps going on `11`:
+Listen, then settle with the words you heard. Stop on an error or a call that already ended:
 
 ```bash
 id=$(npx @agentinbox/cli inbox send approve "Ship it?" --via voice --to alice --json | jq -r .id)
-while true; do
-  npx @agentinbox/cli inbox voice-turn "$id" --say "Can you approve the deploy?"
-  code=$?
-  if [ "$code" -eq 0 ] || [ "$code" -eq 10 ] || [ "$code" -eq 12 ]; then break; fi
-done
+npx @agentinbox/cli inbox voice-turn "$id" --json > turn.json
+code=$?
+if [ "$code" -eq 1 ] || [ "$code" -eq 12 ]; then
+  exit "$code"
+fi
+if [ "$code" -eq 11 ]; then
+  npx @agentinbox/cli inbox voice-turn "$id" \
+    --say "Got it — hanging up. Thanks." \
+    --answer "$(jq -r '.utterance // empty' turn.json)" \
+    --approve
+fi
 ```
 
-Prefer settling on the turn where you hear the commitment, with `--answer` and `--approve` / `--deny` / `--option`, rather than inventing a second listen loop.
+Exit `11` means still on the call (heard something, still ringing, or nothing new yet). Call `inbox voice-turn` again to keep listening, and settle on the turn where you hear the commitment. Do not retry exit `1`.
 
 ## Rules
 

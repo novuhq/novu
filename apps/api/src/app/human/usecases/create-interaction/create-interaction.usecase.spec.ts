@@ -305,6 +305,39 @@ describe('CreateInteraction', () => {
       expect(humanInteractionRepository.create.called).to.equal(false);
     });
 
+    it('rejects a voice contact mixed with another channel', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanInteractionRepository } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.callsFake(async ({ subscriberId }: { subscriberId: string }) => {
+        if (subscriberId === 'sub-2') {
+          return {
+            integrationIdentifier: 'voice-main',
+            platform: HumanChannelViaEnum.VOICE,
+            platformUserId: '+15551212',
+          };
+        }
+
+        return {
+          integrationIdentifier: 'email-main',
+          platform: HumanChannelViaEnum.EMAIL,
+          platformUserId: 'ada@example.com',
+        };
+      });
+
+      try {
+        await usecase.execute({
+          ...command,
+          to: ['sub-1', 'sub-2'],
+        } as never);
+        expect.fail('expected a mixed voice send to be rejected');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.match(/one person/i);
+      }
+
+      expect(humanInteractionRepository.create.called).to.equal(false);
+    });
+
     it('keeps the full voice hold when an unconfirmed dial cannot be reloaded', async () => {
       const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository, voiceCredits } =
         setup();

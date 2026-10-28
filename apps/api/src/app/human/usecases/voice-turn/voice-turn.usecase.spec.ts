@@ -15,6 +15,7 @@ describe('VoiceTurn', () => {
       status?: HumanInteractionStatusEnum;
       handoff?: Record<string, unknown> | null;
       deliveryEnded?: boolean;
+      nonVoice?: boolean;
     } = {}
   ) {
     const interaction = {
@@ -32,16 +33,24 @@ describe('VoiceTurn', () => {
         },
       },
       subscriberIds: ['sub-1'],
-      voiceSubscriberIds: ['sub-1'],
+      voiceSubscriberIds: overrides.nonVoice ? [] : ['sub-1'],
       deliveries: [
-        {
-          subscriberId: 'sub-1',
-          platform: HumanChannelViaEnum.VOICE,
-          platformMessageId: 'conv_el_1',
-          platformThreadId: 'CA_1',
-          integrationIdentifier: 'voice',
-          ...(overrides.deliveryEnded ? { voiceCallEnded: { reason: 'person_hangup' } } : {}),
-        },
+        overrides.nonVoice
+          ? {
+              subscriberId: 'sub-1',
+              platform: HumanChannelViaEnum.EMAIL,
+              platformMessageId: 'msg_1',
+              platformThreadId: 'thread_1',
+              integrationIdentifier: 'email',
+            }
+          : {
+              subscriberId: 'sub-1',
+              platform: HumanChannelViaEnum.VOICE,
+              platformMessageId: 'conv_el_1',
+              platformThreadId: 'CA_1',
+              integrationIdentifier: 'voice',
+              ...(overrides.deliveryEnded ? { voiceCallEnded: { reason: 'person_hangup' } } : {}),
+            },
       ],
       _environmentId: 'env1',
       _organizationId: 'org1',
@@ -68,6 +77,7 @@ describe('VoiceTurn', () => {
           status,
           response,
         })),
+      settleExpiredVoice: sinon.stub().resolves(null),
     };
 
     const handoff =
@@ -100,7 +110,7 @@ describe('VoiceTurn', () => {
       cacheService.eval.callsFake(async (script: string) => {
         // POST_LINE_SCRIPT returns 1 when the call is live.
         if (script.includes('pendingAgentLine = ARGV[2]')) {
-          return handoff.status === 'live' ? 1 : 0;
+          return handoff.status === 'live' || handoff.status === 'dialing' ? 1 : 0;
         }
         // TAKE_UTTERANCES_SCRIPT hands over everything past agentSeq.
         if (script.includes('takenJson')) {
@@ -178,6 +188,62 @@ describe('VoiceTurn', () => {
     expect(settlement.settle.calledOnce).to.equal(true);
   });
 
+  it('hangs up when settling without a spoken line', async () => {
+    const { usecase, cacheService } = setup();
+
+    await usecase.execute({
+      ...command,
+      answer: 'yeah go ahead',
+      decision: 'approve',
+    } as never);
+
+    expect(cacheService.eval.firstCall.args[2][1]).to.equal('');
+    expect(cacheService.eval.firstCall.args[2][2]).to.equal('1');
+  });
+
+  it('does not settle a text interaction from a voice turn', async () => {
+    const { usecase, settlement } = setup({ nonVoice: true });
+
+    try {
+      await usecase.execute({
+        ...command,
+        answer: 'yeah go ahead',
+        decision: 'approve',
+      } as never);
+      expect.fail('expected rejection');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadRequestException);
+      expect((err as BadRequestException).message).to.match(/voice call/i);
+    }
+
+    expect(settlement.settle.called).to.equal(false);
+  });
+
+  it('records a voice answer after the call-end expiry', async () => {
+    const { usecase, settlement } = setup({
+      status: HumanInteractionStatusEnum.EXPIRED,
+      handoff: null,
+      deliveryEnded: true,
+    });
+    settlement.settle.resolves(null);
+    settlement.settleExpiredVoice.callsFake(async (row: object, status: string, response: unknown) => ({
+      ...row,
+      status,
+      response,
+    }));
+
+    const result = await usecase.execute({
+      ...command,
+      answer: 'yeah go ahead',
+      decision: 'approve',
+    } as never);
+
+    expect(result.status).to.equal('settled');
+    expect(result).to.deep.include({ decision: 'approve', answer: 'yeah go ahead' });
+    expect(settlement.settle.calledOnce).to.equal(true);
+    expect(settlement.settleExpiredVoice.calledOnce).to.equal(true);
+  });
+
   it('rejects an approve settle without decision', async () => {
     const { usecase } = setup();
 
@@ -199,6 +265,24 @@ describe('VoiceTurn', () => {
     } catch (err) {
       expect(err).to.be.instanceOf(BadRequestException);
       expect((err as BadRequestException).message).to.match(/unknown option/i);
+    }
+  });
+
+  it('queues a line while the call is still dialing', async () => {
+    const { usecase, cacheService } = setup({
+      handoff: { status: 'dialing', inboundSeq: 0, agentSeq: 0, utterances: [] },
+    });
+    const clock = sinon.useFakeTimers({ now: Date.now(), shouldAdvanceTime: false });
+
+    try {
+      const pending = usecase.execute({ ...command, say: 'Hello there' } as never);
+      await clock.tickAsync(26_000);
+      const result = await pending;
+
+      expect(result.status).to.equal('ringing');
+      expect(cacheService.eval.firstCall.args[2][1]).to.equal('Hello there');
+    } finally {
+      clock.restore();
     }
   });
 

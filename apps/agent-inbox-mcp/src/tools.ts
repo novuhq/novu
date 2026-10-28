@@ -224,8 +224,12 @@ async function sendOrReply(api: AgentInboxApi, input: SendToolInput | ReplyToolI
 
   // A voice call needs the agent on the line immediately — waiting here would
   // burn the bridge park on fillers before anyone posts a turn.
-  if (!isReply && input.via === 'voice') {
-    return describeVoiceCallPlaced(created);
+  if (!isReply && (input.via === 'voice' || created.platform === 'voice')) {
+    if (created.status === 'pending') {
+      return describeVoiceCallPlaced(created);
+    }
+
+    return describeOutcome(created);
   }
 
   return describeOutcome(
