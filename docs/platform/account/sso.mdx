@@ -33,7 +33,7 @@ You need someone who can publish a DNS TXT record for the email domain, and some
 
 ### We configure it with you
 
-Email [support@novu.co](mailto:support@novu.co) or message your Slack Connect channel and tell us the email domain and the IdP. We send you the service provider values for that provider (the URLs and IDs in the provider guide). You create the application, then send us the IdP metadata, or the OIDC client credentials if that is the protocol you are using. We test with you and turn the connection on.
+Email support@novu.co or message your Slack Connect channel and tell us the email domain and the IdP. We send you the service provider values for that provider (the URLs and IDs in the provider guide). You create the application, then send us the IdP metadata, or the OIDC client credentials if that is the protocol you are using. We test with you and turn the connection on.
 
 Use this when you want us to own the Novu side, or when the Security tab described next is not available yet.
 
@@ -58,7 +58,7 @@ The Security tab walks through domain verification, the IdP, a test sign-in, and
   <Step title="Verify the email domain">
     Add the domain people will sign in with, such as `acme.com`. The page shows a DNS TXT record. Publish that record, then come back and confirm the domain is verified. You can add more than one domain. The connection cannot be configured until at least one domain is verified.
 
-    For SAML, the match is exact. A connection for `acme.com` accepts `alex@acme.com` and does not accept `alex@sales.acme.com`. Subdomain matching is not on this page. Ask us if you need it. The domain on the connection has to be a registrable domain, such as `acme.com`, before subdomain matching can be enabled.
+    For SAML, the match is exact. A connection for `acme.com` accepts *alex@acme.com* and does not accept *alex@sales.acme.com*. Subdomain matching is not on this page. Ask us if you need it. The domain on the connection has to be a registrable domain, such as `acme.com`, before subdomain matching can be enabled.
   </Step>
   <Step title="Choose the provider">
     Under SAML, the choices are **Okta Workforce**, **Microsoft Entra** (formerly AD), **Google Workspace**, and **Custom SAML Provider**. Under OpenID Connect, the choice is **OIDC Provider**.
@@ -174,7 +174,7 @@ Directory sync provisions and deprovisions the people who can sign in to this or
     They also have to be assigned to the Novu application. In Google Workspace, the SAML app has to be **ON** for their organizational unit.
   </Accordion>
   <Accordion title="A subdomain address does not match">
-    For SAML, `sales.acme.com` does not use a connection registered for `acme.com` unless we have enabled subdomain matching. The address also has to be on a domain you verified with the TXT record.
+    For SAML, sales.acme.com does not use a connection registered for acme.com unless we have enabled subdomain matching. The address also has to be on a domain you verified with the TXT record.
   </Accordion>
   <Accordion title="SCIM says the token is invalid">
     The bearer token was copied incompletely, or a new token was generated and the 10-minute overlap has passed. Generate a new token, put it in the IdP, and save. Details are on [Directory sync](/platform/account/directory-sync).
@@ -189,7 +189,7 @@ Directory sync provisions and deprovisions the people who can sign in to this or
 
 ## Ask us for help
 
-Email [support@novu.co](mailto:support@novu.co) or your Slack Connect channel. Tell us the organization name, the email domain, and the IdP. If a test sign-in or a SCIM push failed, include the error from the IdP and the email address you tried. That is enough for us to see whether the connection, the claim mapping, or the directory is what rejected it.
+Email support@novu.co or your Slack Connect channel. Tell us the organization name, the email domain, and the IdP. If a test sign-in or a SCIM push failed, include the error from the IdP and the email address you tried. That is enough for us to see whether the connection, the claim mapping, or the directory is what rejected it.
 
 ## Related topics
 

@@ -5,7 +5,7 @@ description: 'Create an Okta Workforce SAML 2.0 app for Novu, map the email attr
 ---
 
 <Note>
-  This is an Enterprise feature on [Novu Cloud](https://dashboard.novu.co). Configure it as the organization **Owner** from **Settings** > **Organization** > **Security** after we enable self-serve, or email [support@novu.co](mailto:support@novu.co) and we will do the Novu side with you. Domain verification and activation are covered in [SAML SSO & SCIM](/platform/account/sso).
+  This is an Enterprise feature on [Novu Cloud](https://dashboard.novu.co). Configure it as the organization **Owner** from **Settings** > **Organization** > **Security** after we enable self-serve, or email support@novu.co and we will do the Novu side with you. Domain verification and activation are covered in [SAML SSO & SCIM](/platform/account/sso).
 </Note>
 
 Use this when your employees sign in through an Okta Workforce org. This is the Okta tenant your company uses for internal apps. It is not an Okta customer-identity tenant.
@@ -15,7 +15,7 @@ Novu is the service provider. Okta is the identity provider. You create a SAML 2
 ## Before you start
 
 - An Enterprise organization on Novu Cloud.
-- One or more email domains verified on the Security tab. The connection cannot be finished until a domain is verified. For SAML, `alex@acme.com` matches a connection for `acme.com`. `alex@sales.acme.com` does not, unless we have enabled subdomain matching. Ask us if you need that. The domain has to be a registrable domain, such as `acme.com`, before subdomain matching can be turned on.
+- One or more email domains verified on the Security tab. The connection cannot be finished until a domain is verified. For SAML, *alex@acme.com* matches a connection for *acme.com*. *alex@sales.acme.com* does not, unless we have enabled subdomain matching. Ask us if you need that. The domain has to be a registrable domain, such as `acme.com`, before subdomain matching can be turned on.
 - An Okta admin who can create app integrations and assign users or groups.
 - The two values in the next section. They appear on the Security tab when **Okta Workforce** is selected. If we are configuring the connection, we send them to you.
 
@@ -98,7 +98,7 @@ If we are configuring the connection, send us the metadata URL and a time when y
     The connection is not activated yet. Activate it when you are ready for the domain to use Okta.
   </Accordion>
   <Accordion title="A subdomain address is rejected">
-    `alex@sales.acme.com` does not use a connection for `acme.com` unless we enabled subdomain matching. The address also has to sit on a domain you verified with the TXT record.
+    *alex@sales.acme.com* does not use a connection for *acme.com* unless we enabled subdomain matching. The address also has to sit on a domain you verified with the TXT record.
   </Accordion>
   <Accordion title="Sign-in fails just after an Okta certificate change">
     The connection still has the previous signing certificate. Update it from the current **Metadata URL**, or send us that URL, before Okta stops using the old certificate.
@@ -109,4 +109,4 @@ If we are configuring the connection, send us the metadata URL and a time when y
 
 Provision and deprovision these same users from Okta with [Okta directory sync](/platform/account/directory-sync/okta). Use this same application.
 
-Email [support@novu.co](mailto:support@novu.co) or your Slack Connect channel if the test still fails. Include the organization name, the domain, and the email address you tried.
+Email support@novu.co or your Slack Connect channel if the test still fails. Include the organization name, the domain, and the email address you tried.
