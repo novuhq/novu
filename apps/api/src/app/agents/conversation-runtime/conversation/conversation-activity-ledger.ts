@@ -803,6 +803,7 @@ export class ConversationActivityLedger {
             ...(params.status ? { status: params.status } : {}),
             ...(params.optionId ? { optionId: params.optionId } : {}),
             ...(params.text ? { text: params.text } : {}),
+            ...(params.answeredElsewhere ? { answeredElsewhere: true } : {}),
           },
         },
         sequence,

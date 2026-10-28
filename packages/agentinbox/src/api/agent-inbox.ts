@@ -157,6 +157,16 @@ export async function getInteraction(client: ApiClient, id: string): Promise<Int
   return unwrap(res.data);
 }
 
+/** Withdraws a question that is still open: it can't be answered any more, and shows as canceled. */
+export async function cancelInteraction(client: ApiClient, id: string): Promise<Interaction> {
+  const res = await client.axios.post<{ data?: Interaction } | Interaction>(
+    `/v1/inbox/messages/${encodeURIComponent(id)}/cancel`,
+    {}
+  );
+
+  return unwrap(res.data);
+}
+
 export interface SetupRelayResult {
   agentId: string;
   agentIdentifier: string;

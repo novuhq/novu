@@ -56,6 +56,8 @@ A reply stays on the conversation's channel. There is no `--via` on reply.
 
 `--anyone` and `--to` together fail. A question in a conversation with no contact in it needs `--anyone`, because otherwise nobody could answer. A plain reply does not need it.
 
+When `--to` names a contact who is not in a direct conversation, they get the message in their own chat as well. A question stays this conversation's: its answer comes back here, wherever it was given, and shows in `show`.
+
 On MCP, `inbox_reply` takes `conversation` and the same `kind` as send. `anyone_may_answer` is `--anyone`.
 
 ## Strangers

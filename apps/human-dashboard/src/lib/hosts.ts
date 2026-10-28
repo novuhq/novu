@@ -1,5 +1,5 @@
 import { HOST_IDS, type HostId } from './host-ids';
-import { AGENT_DOMAIN, INSTALL_SKILLS_COMMAND } from './onboarding';
+import { AGENT_DOMAIN, INSTALL_SKILLS_COMMAND, NPX_CLI } from './onboarding';
 
 export { HOST_IDS, type HostId, isHostId } from './host-ids';
 
@@ -93,6 +93,11 @@ export type CommandHost = HostBase & {
   skillsAgent?: string;
   /** What to do once the commands ran, for a host that needs it: Hermes loads new skills in a new session. */
   afterCommands?: string;
+  /**
+   * `listen` can start it on a computer when a message to the agent comes: the optional last step after its
+   * commands. Claude Code for now; the other hosts that run commands follow.
+   */
+  listenStarts?: true;
   alternative?: HostAlternative;
 };
 
@@ -160,6 +165,7 @@ export const HOSTS: readonly Host[] = [
     // Claude's mark, which Claude Code shares, until the Claude Code logo is added.
     icon: '/tools/claude.png',
     skillsAgent: 'claude-code',
+    listenStarts: true,
     docsUrl: 'https://code.claude.com/docs/en/discover-plugins',
     alternative: {
       kind: 'plugin',
@@ -381,6 +387,18 @@ export function skillsCommand(host: CommandHost): string {
   return host.skillsAgent
     ? `${INSTALL_SKILLS_COMMAND}${scope} --agent ${host.skillsAgent} -y`
     : `${INSTALL_SKILLS_COMMAND}${scope} -y`;
+}
+
+/** The command that listens for messages and starts the host (`npx @agentinbox/cli listen claude-code`), when it can. */
+export function listenCommand(host: CommandHost): string | undefined {
+  return host.listenStarts ? `${NPX_CLI} listen ${host.id}` : undefined;
+}
+
+/** What listening does, in a line under the command, for the agent `handle` names when it's known. */
+export function listenLead(host: CommandHost, handle?: string): string {
+  const agent = handle ? handle : 'your agent';
+
+  return `Then a message to ${agent} starts ${host.name} in this project, and it asks you before anything its settings don’t allow. You allow it first, on your channel or in the terminal.`;
 }
 
 /**
