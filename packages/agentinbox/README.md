@@ -68,6 +68,26 @@ npx @agentinbox/cli inbox resolve conv_123              # finished; opens again 
 - Every send prints the conversation it landed in, and warns when that conversation had unread messages.
 - Who can reach your agent, pausing it and deleting it are settings on [agentinbox.md](https://www.agentinbox.md), not commands. While the agent is paused, every command that reads the inbox or sends exits `1` with an error that says so; messages people send meanwhile wait in the inbox.
 
+## Listen for messages
+
+A host only reads the inbox while someone runs it. `listen` starts it instead, when a message comes:
+
+```bash
+npx @agentinbox/cli listen claude-code   # in the project folder: asks you, then starts Claude Code there for messages
+npx @agentinbox/cli listen status        # where the agent is listening, and what this computer does
+npx @agentinbox/cli listen stop          # not here any more
+```
+
+- A message from you, or from a contact the agent listens to (their **Listen to** switch on [agentinbox.md](https://www.agentinbox.md)), starts Claude Code on this computer, in the folder you ran `listen` in. A stranger's message never does.
+- It asks first. A person at the terminal answers there; when an agent runs it, you get an Allow/Deny message on your channel, and nothing listens until you allow it (`--timeout 10m` bounds the wait; exit codes as for `approve`). One computer keeps an agent listening at a time: starting it on another asks to move it.
+- It runs in the background and starts again after a restart or a crash: a launchd agent on macOS, a systemd user service on Linux. On Windows, run it inside WSL. `--foreground` listens in that terminal only, and `listen stop` stops that one too.
+- One Claude Code session per conversation: the next message in the conversation goes on with it, until the conversation is resolved. A message that comes while it works joins the run, as does the answer to a question it asked with `--async`, and `/stop` stops it. A run cut off by a restart isn't started again: its conversation is told.
+- Claude Code follows its own settings for the project and may edit files inside it. Anything else (a command its settings don't allow, the network, other folders, writing to other people) waits for your Allow, even when a contact's message started it, and shows the whole command; **Allow for this session** lets the same thing through until the session ends, and no answer in 10 minutes counts as Deny. Reading and answering in its own conversation never asks, as long as it writes to no one else: it replies with `inbox reply` (or the Agent Inbox MCP tools, when Claude Code has them), and when a turn ends without a reply, its last words are sent as the reply.
+- Limits: 20 runs an hour (`--runs-per-hour`) and 30 minutes a run (`--max-run`). Messages over the limit wait, and you hear about it once an hour.
+- When the key changes on agentinbox.md, it stops for good and says so in `listen status`: connect again, then listen again. It stops too when this computer is connected anew, rather than run anything left for the old connection. While the agent is paused, it waits; `listen status` and `listen stop` still work.
+- It needs an Agent Inbox account: on a keyless setup, run `login` first. It uses the connection saved on this computer and sends the key only to the API saved with it; `INBOX_SECRET_KEY` and `INBOX_API_URL` in the shell don't count.
+- It uses your own Claude Code: installed and signed in, with your plan. A project Claude Code hasn't been opened in yet doesn't get its own allow list until you open it there once and trust the folder; `listen` says so. The log is in `~/.agentinbox/listen/listen.log`.
+
 ## How it works
 
 - `setup` provisions a keyless environment (no account needed), a hidden relay agent, and links **your** channel — Telegram via QR, Slack via app install, Email by registering your address (approvals arrive as button emails; answer questions by replying). Add more channels with `channel add <channel>`. `channel list` shows the channels you connected and marks your default. Linked channels live on the server; `channel default slack` sets a local preference for where **your** messages land when you don't pass `--via` (other people get their own default).
@@ -78,7 +98,7 @@ npx @agentinbox/cli inbox resolve conv_123              # finished; opens again 
 - `contact invite` gives you a link to share with a **different** person — nothing is sent for you. Without `--via` it opens a page (valid for 3 days) where they connect any channel you set up — Telegram, Slack, and/or Email — and pick their default. With `--via telegram|slack` you get the direct connect link instead (a Slack authorize URL or Telegram deep link, valid for minutes). Pass an email address instead of an id (or `--via email --email <address>`) and a verification email is sent. They must click **Verify this email** before a send that names their contact id can use email. A send that names the address itself does not wait for that click when the organization is claimed. The contact's id comes from the address (`alice@acme.com` becomes `alice`, with a short suffix when `alice` is taken). Then `--to alice` reaches them on their default channel. Pass `--name "Alice Chen"` so they show up by name.
 - `contact list` lists the contacts — every person `--to` can address — so an agent can check who exists before coordinating between people. It's a directory, not a reachability check: if delivery fails with "no linked endpoint", `contact invite` them on that channel.
 - Agents stay channel-blind: routing is the person's preference — the default they picked on the invite page, or the first channel they connected. `--via telegram|slack|email` on `send` is a rare per-call **delivery** override, not how you onboard someone.
-- Every command has the shape `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`.
+- Every command has the shape `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`, `listen`.
 - `ask`, `approve` and `choose` deliver a one-off message (with action buttons where relevant) and **block** until the person answers, the `--ttl` expires, or `--timeout` elapses.
 - Answers flow back through button clicks or plain replies; the CLI prints the answer and your agent continues.
 - In a terminal, `setup`, `login` and `connect` (and `channel add`) draw one screen and keep it up to date in place: your agent's mascot in dots, the command, a list of what it did with a ✔ for each step done, and what it is waiting for. The mascot blinks while it waits for you, smiles once something is connected, and falls asleep when a wait runs out or something fails. Questions are asked below the screen, and your answers join the list. The screen is only drawn for a person at a terminal: never into a pipe, a file or CI, or with `NO_COLOR`, `FORCE_COLOR=0` or `TERM=dumb` set, or in a terminal narrower than 48 columns. There the commands print exactly what they always printed, so what agents read stays the same. The agent-facing commands (`inbox`, `contact`) never draw it. Three settings change how it looks:
