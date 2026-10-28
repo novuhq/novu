@@ -487,7 +487,7 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
       expect(credentials?.secretKey).to.equal(undefined);
     });
 
-    it('should reject an unknown authentication method', async () => {
+    it('should reject authMethod values other than apiKey', async () => {
       const integrationId = await createTwilioIntegration();
 
       const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
@@ -496,6 +496,7 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
       });
 
       expect(response.status).to.equal(422);
+      expect(JSON.stringify(response.body)).to.contain('credentials.authMethod must be one of the following values');
     });
 
     it('should reject API key authentication without the API key secret', async () => {

@@ -58,29 +58,4 @@ describe('validateOutboundIntegrationCredentials', () => {
       port: '13013',
     });
   });
-
-  it('requires the API key SID and secret for Twilio API key authentication', async () => {
-    let error: Error | undefined;
-
-    try {
-      await validateOutboundIntegrationCredentials(SmsProviderIdEnum.Twilio, {
-        authMethod: 'apiKey',
-        accountSid: 'AC123',
-        apiKey: 'SK123',
-      });
-    } catch (caughtError) {
-      error = caughtError as Error;
-    }
-
-    expect(error?.message).to.contain('requires apiKey (API Key SID) and secretKey (API Key Secret)');
-  });
-
-  it('accepts Twilio API key authentication with the API key SID and secret', async () => {
-    await validateOutboundIntegrationCredentials(SmsProviderIdEnum.Twilio, {
-      authMethod: 'apiKey',
-      accountSid: 'AC123',
-      apiKey: 'SK123',
-      secretKey: 'secret',
-    });
-  });
 });
