@@ -29,6 +29,21 @@ export function isMissingReadToolForSkillsError(err: unknown): boolean {
   return /skills require the read tool/i.test(message);
 }
 
+export const CONTENT_FLAGGED_REPLY =
+  'Your message was flagged by our content safety check. Try rephrasing it and send it again.';
+
+/**
+ * The Copilot's input moderation middleware aborts the turn with this violation
+ * message. OpenAI's moderation can flag benign prompts (for example "write a very
+ * long, detailed description"), so the user should be told to rephrase rather
+ * than that the agent is down.
+ */
+export function isContentFlaggedError(err: unknown): boolean {
+  const message = extractErrorMessage(err);
+
+  return !!message && /flagged as inappropriate/i.test(message);
+}
+
 function extractErrorMessage(err: unknown): string | undefined {
   if (err instanceof Error) {
     return err.message;
@@ -55,6 +70,10 @@ export function buildErrorMessage(err: unknown): string {
 
   if (isMissingReadToolForSkillsError(err)) {
     return MISSING_READ_TOOL_FOR_SKILLS_REPLY;
+  }
+
+  if (isContentFlaggedError(err)) {
+    return CONTENT_FLAGGED_REPLY;
   }
 
   return 'The agent is temporarily unavailable. Please try again later.';
