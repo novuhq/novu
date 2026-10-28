@@ -80,6 +80,7 @@ import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInboxThreads } from './usecases/list-inbox-threads/list-inbox-threads.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
 import { MarkInboxRead } from './usecases/mark-inbox-read/mark-inbox-read.usecase';
+import { RecordVoiceCallEnded } from './usecases/record-voice-call-ended/record-voice-call-ended.usecase';
 import { RecordVoiceCallFailure } from './usecases/record-voice-call-failure/record-voice-call-failure.usecase';
 import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
@@ -91,7 +92,10 @@ import { SetOperatorDefaultChannel } from './usecases/set-operator-default-chann
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 import { VerifyAddress } from './usecases/verify-address/verify-address.usecase';
-import { VoiceCallFailureController } from './voice-call-failure.controller';
+import { VoiceBridgeCompletions } from './usecases/voice-bridge-completions/voice-bridge-completions.usecase';
+import { VoiceTurn } from './usecases/voice-turn/voice-turn.usecase';
+import { VoiceBridgeController } from './voice-bridge.controller';
+import { VoiceCallWebhookController } from './voice-call-failure.controller';
 
 /**
  * The human-in-the-loop interaction API. State lives here.
@@ -119,7 +123,8 @@ import { VoiceCallFailureController } from './voice-call-failure.controller';
     HumanAccountsController,
     HumanHostsController,
     HumanConnectPublicController,
-    VoiceCallFailureController,
+    VoiceCallWebhookController,
+    VoiceBridgeController,
   ],
   providers: [
     HumanInteractionRepository,
@@ -138,6 +143,9 @@ import { VoiceCallFailureController } from './voice-call-failure.controller';
     HumanDeliveryService,
     PlaceVoiceCall,
     RecordVoiceCallFailure,
+    RecordVoiceCallEnded,
+    VoiceBridgeCompletions,
+    VoiceTurn,
     HumanKeylessCapService,
     HumanMessageQuotaService,
     HumanVoiceMinuteQuotaService,

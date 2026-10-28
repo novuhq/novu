@@ -1,17 +1,12 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import { HumanInteractionRepository } from '@novu/dal';
-import { voiceCallRegistryKey } from '../../../agents/channels/voice/place-voice-call';
 import {
   type CallInitiationFailureEvent,
   voiceFailureFromInitiation,
 } from '../../../agents/channels/voice/voice-call-failure';
+import { readVoiceCallHandoff } from '../../../agents/channels/voice/voice-call-handoff';
 import { HumanInteractionSettlementService } from '../../../agents/human-relay/human-interaction-settlement.service';
-
-interface VoiceCallRegistryEntry {
-  environmentId: string;
-  organizationId: string;
-}
 
 /**
  * ElevenLabs reports busy, no-answer, and carrier failures after the dial has
@@ -42,7 +37,7 @@ export class RecordVoiceCallFailure {
       return;
     }
 
-    const entry = await this.readRegistry(conversationId);
+    const entry = await readVoiceCallHandoff(this.cacheService, conversationId);
     if (!entry) {
       this.logger.warn({ conversationId }, 'Voice initiation failure had no call lookup');
 
@@ -60,24 +55,6 @@ export class RecordVoiceCallFailure {
     const settled = await this.settlement.failVoiceCall(interaction, failure, conversationId);
     if (!settled) {
       this.logger.warn({ conversationId, interactionId: interaction.identifier }, 'Voice call was no longer pending');
-    }
-  }
-
-  private async readRegistry(conversationId: string): Promise<VoiceCallRegistryEntry | null> {
-    const raw = await this.cacheService.get(voiceCallRegistryKey(conversationId));
-    if (!raw) {
-      return null;
-    }
-
-    try {
-      const parsed = JSON.parse(raw) as VoiceCallRegistryEntry;
-      if (!parsed.environmentId || !parsed.organizationId) {
-        return null;
-      }
-
-      return parsed;
-    } catch {
-      return null;
     }
   }
 }

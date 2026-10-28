@@ -8,6 +8,7 @@ import {
   VOICE_CALL_REGISTRY_TTL_SECONDS,
   voiceCallRegistryKey,
 } from './place-voice-call';
+import { parseVoiceCallHandoff } from './voice-call-handoff';
 
 const ENV_KEYS = [
   'NOVU_VOICE_TWILIO_NUMBER',
@@ -108,6 +109,14 @@ describe('PlaceVoiceCall', () => {
         jitter: false,
       })
     ).to.equal(true);
+    const storedCall = cacheService.set.getCalls().find((call) => call.args[0] === voiceCallRegistryKey('conv_a'));
+    expect(parseVoiceCallHandoff(String(storedCall?.args[1]))).to.include({
+      environmentId: 'env1',
+      organizationId: 'org1',
+      interactionId: 'hi_a',
+      subscriberId: 'sub-1',
+      status: 'dialing',
+    });
   });
 
   it('turns an invalid-number response into a coded delivery failure', async () => {

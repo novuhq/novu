@@ -12,12 +12,15 @@
  *   NOVU_VOICE_ELEVENLABS_API_KEY or ELEVENLABS_API_KEY
  *   NOVU_VOICE_PUBLIC_API_URL          public origin of this API, no path
  *
+ * Bridge auth (NV-9171), strongly recommended:
+ *   NOVU_VOICE_BRIDGE_SECRET           Bearer token ElevenLabs sends to the custom LLM
+ *
  * Phone import, skipped when any of these are missing:
  *   NOVU_VOICE_TWILIO_NUMBER           E.164 of the shared number
  *   TWILIO_ACCOUNT_SID                 printed back; not a Novu runtime secret
  *   TWILIO_AUTH_TOKEN                  script input only
  *
- * Failure webhook, skipped when the URL is missing:
+ * Failure + post-call webhook, skipped when the URL is missing:
  *   NOVU_VOICE_WEBHOOK_URL             https://<api>/v1/human/voice/calls/failure
  *
  * Live proof of two opening lines, skipped unless two destinations are set:
@@ -83,6 +86,7 @@ async function elFetch<T = Record<string, never>>(path: string, init: RequestIni
 
 function shellPayload(publicApiUrl: string) {
   const bridge = `${publicApiUrl.replace(/\/$/, '')}/v1/human/voice`;
+  const bridgeSecret = env('NOVU_VOICE_BRIDGE_SECRET');
 
   return {
     name: 'Novu voice shell',
@@ -91,6 +95,7 @@ function shellPayload(publicApiUrl: string) {
       agent: {
         first_message: '{{opening_line}}',
         language: 'en',
+        max_conversation_duration_message: 'I have to go now. Goodbye.',
         dynamic_variables: {
           dynamic_variable_placeholders: {
             opening_line: 'Hello.',
@@ -104,9 +109,17 @@ function shellPayload(publicApiUrl: string) {
             url: bridge,
             model_id: 'novu-voice-bridge',
             api_type: 'chat_completions',
+            // ElevenLabs sends this as `Authorization: Bearer …` on every bridge request.
+            ...(bridgeSecret ? { api_key: bridgeSecret } : {}),
           },
+          // Never cascade to a hosted model — invented speech in the customer's agent voice is worse than ending the call.
+          backup_llm_config: { mode: 'disabled' },
+          cascade_timeout_seconds: 15,
           max_tokens: 200,
           tools: [],
+          built_in_tools: {
+            end_call: {},
+          },
         },
       },
       asr: {
@@ -121,6 +134,14 @@ function shellPayload(publicApiUrl: string) {
       turn: {
         turn_timeout: 7,
         mode: 'turn',
+        soft_timeout_config: {
+          timeout_seconds: 3,
+          message: 'Hmm.',
+          additional_soft_timeout_messages: ['One moment.', 'Still with you.', 'Let me check.'],
+          randomize_fillers: true,
+          max_soft_timeouts_per_generation: 8,
+          disable_until_first_user_message: true,
+        },
       },
       conversation: {
         max_duration_seconds: 300,
@@ -292,7 +313,7 @@ async function registerWebhook(): Promise<void> {
     body: JSON.stringify({
       webhooks: {
         post_call_webhook_id: created.webhook_id,
-        events: ['call_initiation_failure'],
+        events: ['call_initiation_failure', 'transcript'],
       },
     }),
   });

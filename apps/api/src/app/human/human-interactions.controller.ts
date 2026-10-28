@@ -66,6 +66,7 @@ import {
   SetupHumanRelayRequestDto,
   SetupHumanRelayResponseDto,
 } from './dtos/setup-human-relay.dto';
+import { VoiceTurnRequestDto, type VoiceTurnResponseDto } from './dtos/voice-turn.dto';
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
 import { assertFromHumanDashboard } from './guards/human-dashboard-secret.guard';
 import { readAnalyticsSource } from './services/agent-inbox-analytics';
@@ -117,6 +118,8 @@ import {
 } from './usecases/setup-human-relay/setup-human-relay.usecase';
 import { UpdateHumanAgentCommand } from './usecases/update-human-agent/update-human-agent.command';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
+import { VoiceTurnCommand } from './usecases/voice-turn/voice-turn.command';
+import { VoiceTurn } from './usecases/voice-turn/voice-turn.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @Controller('/human')
@@ -129,6 +132,7 @@ export class HumanInteractionsController {
     private readonly getInteractionUsecase: GetInteraction,
     private readonly listInteractionsUsecase: ListInteractions,
     private readonly cancelInteractionUsecase: CancelInteraction,
+    private readonly voiceTurnUsecase: VoiceTurn,
     private readonly setupHumanRelayUsecase: SetupHumanRelay,
     private readonly listContactsUsecase: ListContacts,
     private readonly getContactUsecase: GetContact,
@@ -214,6 +218,34 @@ export class HumanInteractionsController {
         organizationId: user.organizationId,
         userId: user._id,
         identifier,
+      })
+    );
+  }
+
+  /**
+   * Minimal turn handoff for the voice bridge (NV-9171). Not part of the public
+   * SDK surface yet — NV-9172 wraps this for CLI/MCP with settle semantics.
+   */
+  @Post('/interactions/:identifier/voice/turn')
+  @HttpCode(HttpStatus.OK)
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseGuards(HumanAgentPausedGuard)
+  voiceTurn(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body(new ValidationPipe({ transform: true, whitelist: true, forbidUnknownValues: false }))
+    body: VoiceTurnRequestDto
+  ): Promise<VoiceTurnResponseDto> {
+    return this.voiceTurnUsecase.execute(
+      VoiceTurnCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        identifier,
+        line: body.line,
+        hangup: body.hangup,
       })
     );
   }
