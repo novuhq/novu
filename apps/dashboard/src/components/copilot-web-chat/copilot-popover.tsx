@@ -1,12 +1,5 @@
 import { type KeyboardEvent, useEffect, useRef } from 'react';
-import {
-  RiAddLine,
-  RiArrowDownSLine,
-  RiArrowRightSLine,
-  RiCloseLine,
-  RiCornerDownLeftLine,
-  RiErrorWarningFill,
-} from 'react-icons/ri';
+import { RiAddLine, RiArrowRightSLine, RiCloseLine, RiCornerDownLeftLine, RiErrorWarningFill } from 'react-icons/ri';
 import { CopilotSlackConnectBanner } from '@/components/agents/copilot-slack-connect-banner';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -240,9 +233,6 @@ export function CopilotPopover() {
         <span className="min-w-0 flex-1 truncate text-label-sm text-text-sub">{title}</span>
         <HeaderButton label="New chat" disabled={!!chat?.isRunning} onClick={startNewConversation}>
           <RiAddLine className="size-3.5" />
-        </HeaderButton>
-        <HeaderButton label="Minimize" onClick={close}>
-          <RiArrowDownSLine className="size-3.5" />
         </HeaderButton>
         <HeaderButton label="Close" onClick={close}>
           <RiCloseLine className="size-3.5" />
