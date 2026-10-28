@@ -7,7 +7,7 @@ description: "Every command, flag, exit code, and environment variable for npx @
 npx @agentinbox/cli
 ```
 
-Every command is `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`.
+Every command is `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`, `listen`.
 
 Flags beat environment variables, which beat `~/.agentinbox/config.json`. Environment values are never written back to the config file.
 
@@ -192,6 +192,26 @@ npx @agentinbox/cli channel default <telegram|slack|email>
 ```
 
 Sets the channel used when a message goes to you on this computer. Other people keep their own default.
+
+## listen
+
+```bash
+npx @agentinbox/cli listen claude-code
+npx @agentinbox/cli listen status
+npx @agentinbox/cli listen stop
+```
+
+Listens for messages on this computer: one from the operator, or from a contact the agent listens to, starts the host in the folder it runs in. It asks the operator first and takes nothing until they allow it. It needs an Agent Inbox account: on a keyless setup, run `login` first. See [Listen for messages](/listen).
+
+| Flag | What it does |
+| --- | --- |
+| `--foreground` | Listen in this terminal only, instead of in the background |
+| `--timeout <duration>` | When an agent runs it: how long to wait for the operator's Allow. Exits `11` when it runs out |
+| `--runs-per-hour <n>` | How many runs may start in an hour. Default 20 |
+| `--max-run <duration>` | How long one run may go on. Default 30 minutes |
+| `--json` | `listen status` only: print JSON |
+
+Exit codes as for `approve`: `0` allowed, `10` denied, `11` still waiting, `12` the question expired, `1` an error.
 
 ## Errors agents should recognize
 

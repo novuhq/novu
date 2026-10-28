@@ -7,11 +7,11 @@ import {
   ConversationRepository,
   ConversationStatusEnum,
   EnvironmentRepository,
+  Types,
 } from '@novu/dal';
 import { CLI_USER_CODE_PATTERN } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { Types } from 'mongoose';
 import {
   CONNECT_CODE_EXPIRED,
   CONNECT_CODE_INVALID,
@@ -423,6 +423,7 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
         hosts: [],
         firstCheckedAt: null,
         waitingMessage: null,
+        listening: null,
       });
 
       const { code } = await issueCode();

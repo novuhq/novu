@@ -23,6 +23,8 @@ import {
   type HostId,
   hostOf,
   isToolId,
+  listenCommand,
+  listenLead,
 } from '@/lib/hosts';
 import { cn } from '@/lib/utils';
 
@@ -62,6 +64,11 @@ type CommandStepsProps = {
   hideLead?: boolean;
   /** Whether the second way in starts unfolded. The onboarding keeps it folded, to stay short. */
   alternativeOpen?: boolean;
+  /**
+   * Whether the optional last step shows for a host `listen` can start: listening for messages. The onboarding leaves
+   * it out, to stay short.
+   */
+  showListen?: boolean;
   /** The dashboard watches for the host's sign-in after its MCP config; a public page has nothing to watch. */
   signIn?: SignInWatch;
 };
@@ -85,9 +92,11 @@ export function CommandSteps({
   mcpUrl,
   hideLead = false,
   alternativeOpen = true,
+  showListen = true,
   signIn,
 }: CommandStepsProps) {
   const alternative = host.alternative;
+  const listen = showListen ? listenCommand(host) : undefined;
   const showsAlternative = alternative && (alternative.kind === 'plugin' || mcpUrl !== null);
   // Only the hosts the MCP server tells apart (`isToolId`) can be told signed in: Cursor, after its MCP config.
   const watch = signIn && alternative?.kind === 'mcp-config' && isToolId(host.id) ? signIn : null;
@@ -97,12 +106,30 @@ export function CommandSteps({
       {!hideLead && <p className="text-[13px] leading-[19px] text-secondary">{commandsLead(host)}</p>}
       <ConnectPromptBox handle={handle} apiUrl={apiUrl} code={code} onRetry={onRetry} host={host} />
       {host.afterCommands && <p className="text-xs leading-4 text-secondary">{host.afterCommands}</p>}
+      {listen && <ListenStep host={host} handle={handle} command={listen} />}
       {showsAlternative && (
         <AlternativeSteps alternative={alternative} mcpUrl={mcpUrl ?? ''} defaultOpen={alternativeOpen}>
           {(open) => watch && <HostSignInLine host={host} handle={handle} active={open} {...watch} />}
         </AlternativeSteps>
       )}
     </>
+  );
+}
+
+/**
+ * The optional last step for a host `listen` can start (Claude Code for now): listening for messages, so a message
+ * to the agent starts it on that computer. Not in the design yet: built from this panel's own parts, the small
+ * line of the second way in and its copy field. It comes and goes with the host's steps, which fade.
+ */
+function ListenStep({ host, handle, command }: { host: CommandHost; handle: string; command: string }) {
+  return (
+    <section aria-label={`Let a message start ${host.name}`} className="flex flex-col gap-2">
+      <p className="text-xs leading-4 text-secondary">
+        <span className="font-medium text-foreground">Optional: listen for messages.</span>{' '}
+        {listenLead(host, handle || undefined)}
+      </p>
+      <CopyField value={command} label={`Copy the command that listens for messages for ${host.name}`} command />
+    </section>
   );
 }
 
@@ -487,6 +514,8 @@ type HostPanelProps = {
   onSignedIn?: (host: HostId) => void;
   /** Whether a host's second way in starts unfolded (`CommandSteps`). */
   alternativeOpen?: boolean;
+  /** Whether the optional "listen for messages" step shows, for a host `listen` can start (`CommandSteps`). */
+  showListen?: boolean;
   /** Leaves out the line above the steps, for a page that says it in its own words (`hostLead`). */
   hideLead?: boolean;
 };
@@ -508,6 +537,7 @@ export function HostPanel({
   api,
   onSignedIn,
   alternativeOpen,
+  showListen,
   hideLead,
 }: HostPanelProps) {
   const { shown, leaving } = useSwap(selected, HOST_SWAP_MS);
@@ -540,6 +570,7 @@ export function HostPanel({
               onRetry={onRetry}
               mcpUrl={mcpUrl}
               alternativeOpen={alternativeOpen}
+              showListen={showListen}
               hideLead={hideLead}
               signIn={{ connected: connected.has(host.id), api, onSignedIn: () => onSignedIn?.(host.id) }}
             />

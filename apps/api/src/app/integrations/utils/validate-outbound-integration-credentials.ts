@@ -8,7 +8,7 @@ import {
   SmsProviderIdEnum,
 } from '@novu/shared';
 
-type ValidateSmtpOutboundTargetModule = typeof import('@novu/shared/dist/cjs/utils/validate-smtp-outbound-target');
+type ValidateSmtpOutboundTargetModule = typeof import('@novu/shared/utils/validate-smtp-outbound-target');
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { assertSafeSmtpOutboundTargetSync } =
@@ -33,6 +33,14 @@ export async function validateOutboundIntegrationCredentials(
 
     if (providerId === SmsProviderIdEnum.Sinch) {
       assertAllowedSinchSmsRegion(credentials.region);
+    }
+
+    if (
+      providerId === SmsProviderIdEnum.Twilio &&
+      credentials.authMethod === 'apiKey' &&
+      (!credentials.apiKey || !credentials.secretKey)
+    ) {
+      throw new Error('Twilio API key authentication requires apiKey (API Key SID) and secretKey (API Key Secret).');
     }
 
     if (providerId === EmailProviderIdEnum.Infobip) {

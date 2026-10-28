@@ -3,7 +3,7 @@
 import { Link as LinkIcon, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { type MouseEvent, type ReactNode, useEffect, useRef, useState, useTransition } from 'react';
+import { type MouseEvent, type ReactNode, useEffect, useOptimistic, useRef, useState, useTransition } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
@@ -15,14 +15,15 @@ import { toast } from '@/components/ui/toast';
 import { Tooltip } from '@/components/ui/tooltip';
 import type { Contact, ContactChannelVia } from '@/lib/human-contacts-api';
 import { cn } from '@/lib/utils';
+import { Switch } from '../configure/agent-settings';
 import { ChannelLogo } from '../configure/channel-logo';
-import { removeContactAction } from './actions';
+import { removeContactAction, setListenToAction } from './actions';
 import { ContactAvatar } from './contact-avatar';
 import { ContactCardDrawer, type ContactCardSetup, type ContactCardStart } from './contact-card-drawer';
 import { DialogMark } from './dialog-mark';
 import { ShortDate } from './short-date';
 
-const COLUMN_COUNT = 6;
+const COLUMN_COUNT = 7;
 
 /** How long a removed row takes to fold away before the list is read again. */
 const FOLD_MS = 300;
@@ -35,16 +36,20 @@ export const CHANNEL_NAMES: Record<ContactChannelVia, string> = {
 
 /**
  * The design's columns: Person 276, Email 200, Channels 240, Status 140, Added 100 and the actions 130,
- * with the row's 16px on the outer two.
+ * with the row's 16px on the outer two. "Listen to" isn't drawn yet: it takes 96 of Channels' 240, which
+ * never needs more than three logos.
  */
 const COLUMNS = {
   person: 'w-73 pl-4',
   email: 'w-50',
-  channels: 'w-60',
+  channels: 'w-36',
   status: 'w-35',
+  listenTo: 'w-24',
   added: 'w-25',
   actions: 'w-36.5 pr-4',
 };
+
+const SAVE_FAILED = 'Couldn’t save that. Try again.';
 
 /**
  * The small copy icon after an id or an email. It fades in on hover of the row, and whenever the keyboard
@@ -134,6 +139,7 @@ export function ContactsTable({
             <TableHeaderCell className={cn(COLUMNS.email, 'px-0')}>Email</TableHeaderCell>
             <TableHeaderCell className={cn(COLUMNS.channels, 'px-0')}>Channels</TableHeaderCell>
             <TableHeaderCell className={cn(COLUMNS.status, 'px-0')}>Status</TableHeaderCell>
+            <TableHeaderCell className={cn(COLUMNS.listenTo, 'px-0')}>Listen to</TableHeaderCell>
             <TableHeaderCell className={cn(COLUMNS.added, 'px-0')}>Added</TableHeaderCell>
             <TableHeaderCell className={cn(COLUMNS.actions, 'pl-0')}>
               <span className="sr-only">Actions</span>
@@ -155,6 +161,7 @@ export function ContactsTable({
             <ContactRow
               key={contact.id}
               contact={contact}
+              agentHandle={agentHandle}
               appearing={appearing.has(contact.id)}
               leaving={leaving.has(contact.id)}
               onOpenCard={() => openCard(contact)}
@@ -225,13 +232,14 @@ function useAppearingRows(contacts: Contact[], pageKey: string): ReadonlySet<str
 
 type ContactRowProps = {
   contact: Contact;
+  agentHandle: string;
   appearing: boolean;
   leaving: boolean;
   onOpenCard: () => void;
   onRemove: () => void;
 };
 
-function ContactRow({ contact, appearing, leaving, onOpenCard, onRemove }: ContactRowProps) {
+function ContactRow({ contact, agentHandle, appearing, leaving, onOpenCard, onRemove }: ContactRowProps) {
   const pending = contact.status === 'invite_sent';
   const { isOperator } = contact;
   // Someone still invited has no card yet: there's no way to reach them to show.
@@ -330,6 +338,7 @@ function ContactRow({ contact, appearing, leaving, onOpenCard, onRemove }: Conta
           <Badge variant="success">Joined</Badge>
         )
       )}
+      {cell(COLUMNS.listenTo, <ListenToSwitch contact={contact} agentHandle={agentHandle} />)}
       {cell(
         COLUMNS.added,
         <span className="text-[13px] leading-4.5 whitespace-nowrap text-secondary">
@@ -402,6 +411,65 @@ function EmailCell({ contact }: { contact: Contact }) {
         iconClassName="size-3"
       />
     </span>
+  );
+}
+
+/**
+ * Whether the agent listens to them, so that their messages start its hosts (`agentinbox listen`): off until the
+ * operator turns it on. A change shows at once and is saved behind it; when saving fails the switch slides back and
+ * a toast says why. The operator's own row is always on and can't be turned: the agent always listens to them.
+ */
+function ListenToSwitch({ contact, agentHandle }: { contact: Contact; agentHandle: string }) {
+  // What was saved last: the page's, or what a save answered before the page caught up.
+  const [saved, setSaved] = useState(contact.listenTo);
+  const [synced, setSynced] = useState(contact.listenTo);
+  if (contact.listenTo !== synced) {
+    setSynced(contact.listenTo);
+    setSaved(contact.listenTo);
+  }
+  const [shown, show] = useOptimistic(saved, (_: boolean, next: boolean) => next);
+  const [saving, startSaving] = useTransition();
+  const label = `${agentHandle} listens to ${contact.name}`;
+
+  if (contact.isOperator) {
+    return (
+      <Tooltip label="Your agent always listens to you">
+        {/* A disabled button gets no pointer events, so the tooltip hangs on the box around it. */}
+        <span className="inline-flex">
+          <Switch label={label} on busy={false} disabled onChange={() => {}} />
+        </span>
+      </Tooltip>
+    );
+  }
+
+  function change(next: boolean) {
+    startSaving(async () => {
+      show(next);
+      const result = await setListenToAction(contact.id, next).catch(() => ({
+        ok: false as const,
+        error: SAVE_FAILED,
+      }));
+
+      if (result.ok) {
+        setSaved(next);
+      } else {
+        toast(result.error, 'error');
+      }
+    });
+  }
+
+  return (
+    <Tooltip
+      label={
+        shown
+          ? `Listening to ${contact.name}: their messages start a host`
+          : `Listen to ${contact.name}’s messages, so they start a host`
+      }
+    >
+      <span className="inline-flex">
+        <Switch label={label} on={shown} busy={saving} onChange={change} />
+      </span>
+    </Tooltip>
   );
 }
 

@@ -52,12 +52,12 @@ test('the title word cycles every 3 seconds and pauses with the toggle', async (
   await openOnPausedClock(page);
   const word = page.locator('#hero h1 [data-word]');
   const heading = page.getByRole('heading', { level: 1 });
-  await expect(word).toHaveAttribute('data-word', 'E-mail');
+  await expect(word).toHaveAttribute('data-word', 'Email');
   await page.clock.fastForward(3100);
   await expect(word).toHaveAttribute('data-word', 'Telegram');
   await page.clock.fastForward(3000);
   await expect(word).toHaveAttribute('data-word', 'Slack');
-  await expect(heading).toHaveAccessibleName('The E-mail inbox for AI agents');
+  await expect(heading).toHaveAccessibleName('The Email inbox for AI agents');
   await toggle(page).click();
   await page.mouse.move(0, 0);
   await page.clock.fastForward(12000);
@@ -177,6 +177,10 @@ test('the mobile header menu opens, closes on Escape and restores focus', async 
   const nav = page.getByRole('navigation', { name: 'Header navigation' });
   await expect(nav.getByRole('link', { name: 'npm' })).toBeVisible();
   await expect(nav.getByRole('link', { name: 'sign in' })).toHaveAttribute('href', '/sign-in');
+  await expect(nav.getByRole('link', { name: 'book a demo' })).toHaveAttribute(
+    'href',
+    'https://cal.com/team/novu/novu-meeting'
+  );
   await page.keyboard.press('Escape');
   await expect(menu).toHaveAttribute('aria-expanded', 'false');
   await expect(menu).toBeFocused();

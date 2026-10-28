@@ -2,9 +2,11 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   CredentialsKeyEnum,
+  getUnusedTwilioAuthCredentialKeys,
   IIntegration,
   IProviderConfig,
   PermissionsEnum,
+  SmsProviderIdEnum,
   slackConfig,
   ToolProviderIdEnum,
 } from '@novu/shared';
@@ -60,6 +62,7 @@ function generateSlug(name: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: long-standing per-provider settings form; splitting it is out of scope here
 export function IntegrationSettings({
   provider,
   integration,
@@ -118,6 +121,11 @@ export function IntegrationSettings({
 
   const name = useWatch({ control, name: 'name' });
   const environmentId = useWatch({ control, name: 'environmentId' });
+  const authMethod = useWatch({ control, name: `credentials.${CredentialsKeyEnum.AuthMethod}` });
+  const unusedCredentialKeys = useMemo(
+    () => (provider.id === SmsProviderIdEnum.Twilio ? getUnusedTwilioAuthCredentialKeys(authMethod) : []),
+    [provider.id, authMethod]
+  );
 
   useEffect(() => {
     if (mode === 'create') {
@@ -180,14 +188,16 @@ export function IntegrationSettings({
       }
     }
 
-    const visibleCredentials = credentials.filter((credential) => credential.hidden !== true);
+    const visibleCredentials = credentials.filter(
+      (credential) => credential.hidden !== true && !unusedCredentialKeys.includes(credential.key)
+    );
 
     if (isAgentOnboarding) {
       return visibleCredentials.filter((credential) => credential.key !== CredentialsKeyEnum.RedirectUrl);
     }
 
     return visibleCredentials;
-  }, [provider.id, provider.credentials, mode, integration?.credentials, isAgentOnboarding]);
+  }, [provider.id, provider.credentials, mode, integration?.credentials, isAgentOnboarding, unusedCredentialKeys]);
 
   return (
     <Form {...form}>

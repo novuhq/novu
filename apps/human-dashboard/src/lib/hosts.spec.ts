@@ -12,6 +12,8 @@ import {
   HOSTS,
   hostOf,
   isToolId,
+  listenCommand,
+  listenLead,
   MCP_URL,
   opencodeMcpConfig,
   skillsCommand,
@@ -133,6 +135,33 @@ describe('the steps', () => {
   });
 });
 
+describe('listening for messages', () => {
+  it('is the optional last step for Claude Code only, for now', () => {
+    const commandHosts = HOSTS.filter((host): host is CommandHost => host.group === 'commands');
+
+    expect(commandHosts.filter((host) => listenCommand(host)).map((host) => host.id)).toEqual(['claude-code']);
+    expect(listenCommand(hostOf('claude-code') as CommandHost)).toBe('npx @agentinbox/cli listen claude-code');
+  });
+
+  it('says what it does, for the agent when it’s known', () => {
+    const claudeCode = hostOf('claude-code') as CommandHost;
+
+    expect(listenLead(claudeCode, 'atlas')).toBe(
+      'Then a message to atlas starts Claude Code in this project, and it asks you before anything its settings don’t allow. You allow it first, on your channel or in the terminal.'
+    );
+    expect(listenLead(claudeCode)).toContain('a message to your agent starts Claude Code');
+  });
+
+  it('is in Claude Code’s Markdown for agents, and in no other host’s', () => {
+    const markdown = hostMarkdown(hostOf('claude-code'));
+
+    expect(markdown).toContain('## Optional: listen for messages');
+    expect(markdown).toContain('`npx @agentinbox/cli listen claude-code`');
+    expect(markdown).toContain('nothing starts until they allow it');
+    expect(hostMarkdown(hostOf('codex'))).not.toContain('listen for messages');
+  });
+});
+
 describe('the Markdown for agents', () => {
   it('opens every host’s page with what the operator tells their agent', () => {
     for (const host of HOSTS) {
@@ -186,7 +215,14 @@ describe('the Markdown for agents', () => {
       expect(llms).toContain(`(https://www.agentinbox.md/${id}.md)`);
       expect(index).toContain(`(https://www.agentinbox.md/${id}.md)`);
     }
-    expect(index).toContain('Your agent may run setup and login for you when you ask it to');
-    expect(llms).toContain('An agent may run setup and login when its operator asks it to');
+    expect(index).toContain('agentinbox inbox send "Build finished — 0 failures." --via email');
+    expect(index).toContain('Agent Inbox is an email inbox for AI agents');
+    expect(index).not.toContain('What comes back');
+    expect(index).toContain('Built by Novu, and open source.');
+    expect(index).toContain('SOC 2 Type II');
+    expect(index).toContain('ISO 27001');
+    expect(index).not.toContain('100 conversations');
+    expect(llms).toContain('Run setup and login when your human asks you to');
+    expect(llms).toContain('The email, Slack, and Telegram inbox for AI agents');
   });
 });

@@ -7,12 +7,16 @@ test('home serves readable agent documentation and links to Sapien', async ({ pa
   const response = await page.goto('/');
   expect(response?.status()).toBe(200);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('agentinbox.mdThe inbox API for agents');
-  await expect(page.locator('#install code')).toHaveText('npm install -g @agentinbox/cli');
-  await expect(page.locator('#usage')).toContainText(
-    'npx @agentinbox/cli inbox send choose "Pick a release strategy" --option canary --option blue-green'
+  await expect(page.locator('#install-panel-cli')).toHaveText('npm install -g @agentinbox/cli');
+  await page.getByRole('tab', { name: 'MCP' }).click();
+  await expect(page.locator('#install-panel-mcp')).toHaveText('https://mcp.agentinbox.md');
+  await expect(page.locator('#install-panel-cli')).toBeHidden();
+  await expect(page.locator('#quickstart')).toContainText(
+    'agentinbox inbox send "Build finished — 0 failures." --via email'
   );
+  await expect(page.locator('#quickstart')).toContainText('agentinbox inbox reply conv_123 "On it."');
   await expect(page.locator('#flags')).toContainText('--to <id|email>[,...]');
-  await expect(page.locator('#contacts')).toContainText('npx @agentinbox/cli contact list --limit 20 --after <cursor>');
+  await expect(page.locator('#contacts')).toContainText('agentinbox contact list --limit 20 --after <cursor>');
   await page.getByRole('link', { name: 'agentinbox.md/sapien' }).click();
   await expect(page).toHaveURL(/\/sapien$/);
   await page.getByRole('navigation', { name: 'Header navigation' }).getByRole('link', { name: 'for robots' }).click();
@@ -28,7 +32,7 @@ test('legacy human-readable URL reaches Sapien', async ({ page }) => {
 test('home inline commands copy as one valid command', async ({ page }) => {
   await page.goto('/');
   const command = page.locator('#how-it-works code').filter({
-    hasText: 'channel default slack',
+    hasText: 'agentinbox contact invite',
   });
   const selected = await command.evaluate((node) => {
     const range = document.createRange();
@@ -40,7 +44,7 @@ test('home inline commands copy as one valid command', async ({ page }) => {
     selection.removeAllRanges();
     return text;
   });
-  expect(selected).toBe('channel default slack');
+  expect(selected).toBe('agentinbox contact invite');
 });
 
 for (const width of [320, 390, 768, 1024, 1440, 1920, 2560]) {
@@ -82,8 +86,8 @@ for (const width of [320, 768, 1920]) {
     );
     expect(overflow).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-    await expect(page.locator('#how-it-works')).toContainText('channel default slack');
-    await expect(page.locator('#auth')).toContainText('INBOX_SECRET_KEY');
+    await expect(page.locator('#how-it-works')).toContainText('agentinbox contact invite');
+    await expect(page.locator('#auth')).toHaveCount(0);
   });
 }
 
@@ -219,7 +223,7 @@ test('home artwork survives a source image failure', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByAltText(POSTER_ALT)).toBeVisible();
   await expect(artworkCanvas(page)).toHaveCount(0);
-  await expect(page.locator('#install')).toContainText('npm install -g @agentinbox/cli');
+  await expect(page.locator('#quickstart')).toContainText('npm install -g @agentinbox/cli');
 });
 
 test('home animation suspends offscreen and resumes on mobile', async ({ page }) => {
@@ -241,7 +245,7 @@ test('home documentation and artwork work without JavaScript', async ({ browser 
   const page = await context.newPage();
   await page.goto('/');
   await expect(page.getByAltText(POSTER_ALT)).toBeVisible();
-  await expect(page.locator('#invite')).toContainText('carol@acme.com');
+  await expect(page.locator('#contacts')).toContainText('carol@acme.com');
   await page.getByRole('link', { name: 'agentinbox.md/sapien' }).click();
   await expect(page).toHaveURL(/\/sapien$/);
   await context.close();
