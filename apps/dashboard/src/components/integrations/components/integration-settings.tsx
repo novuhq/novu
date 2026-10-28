@@ -62,6 +62,7 @@ function generateSlug(name: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: long-standing per-provider settings form; splitting it is out of scope here
 export function IntegrationSettings({
   provider,
   integration,

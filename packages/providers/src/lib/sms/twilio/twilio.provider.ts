@@ -55,6 +55,7 @@ export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
     };
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: untyped Twilio status callback payload
   getMessageId(body: any | any[]): string[] {
     if (Array.isArray(body)) {
       return body.map((item) => item.MessageSid);
@@ -63,6 +64,7 @@ export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
     return [body.MessageSid];
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: untyped Twilio status callback payload, passed through raw as `row`
   parseEventBody(body: any | any[], identifier: string): ISMSEventBody | undefined {
     if (Array.isArray(body)) {
       body = body.find((item) => item.MessageSid === identifier);
