@@ -11,7 +11,12 @@ import {
   CopilotWebChatContext,
   type CopilotWebChatContextValue,
 } from './copilot-web-chat-context';
-import { buildCopilotMetadata, type CopilotPageContext } from './copilot-web-chat-utils';
+import {
+  buildCopilotMetadata,
+  type CopilotPageContext,
+  readStoredConversationId,
+  writeStoredConversationId,
+} from './copilot-web-chat-utils';
 import { useCopilotHotkey } from './use-copilot-hotkey';
 import { useCopilotRefetch } from './use-copilot-refetch';
 
@@ -51,7 +56,14 @@ type BridgeShell = Pick<ShellState, 'isOpen' | 'close' | 'toggle' | 'pageContext
 
 type ConnectedState = Pick<
   CopilotWebChatContextValue,
-  'chat' | 'sendMessage' | 'retry' | 'startNewConversation' | 'hasUnseenAnswer' | 'hasRunError' | 'sentContextLabels'
+  | 'chat'
+  | 'sendMessage'
+  | 'retry'
+  | 'startNewConversation'
+  | 'hasUnseenAnswer'
+  | 'hasRunError'
+  | 'sentContextLabels'
+  | 'isAwaitingReply'
 >;
 
 /**
@@ -60,7 +72,16 @@ type ConnectedState = Pick<
  * tenant context is minted, never on self-hosted) so children are never remounted when it
  * becomes ready; until then the context reports `isAvailable: false` ("Copilot is off").
  */
-export function CopilotWebChatProvider({ children, enabled = true }: { children: ReactNode; enabled?: boolean }) {
+export function CopilotWebChatProvider({
+  children,
+  enabled = true,
+  conversationScope,
+}: {
+  children: ReactNode;
+  enabled?: boolean;
+  /** Environment + workflow the thread belongs to; it is resumed after a reload and reset when the scope changes. */
+  conversationScope?: string;
+}) {
   const shell = useShellState();
   const [draft, setDraft] = useState('');
   const [connected, setConnected] = useState<ConnectedState | null>(null);
@@ -81,7 +102,7 @@ export function CopilotWebChatProvider({ children, enabled = true }: { children:
       toggle,
       chat: connected?.chat,
       pageContext,
-      sendMessage: connected?.sendMessage ?? (async () => {}),
+      sendMessage: connected?.sendMessage ?? (async () => false),
       retry: connected?.retry ?? (async () => {}),
       startNewConversation: connected?.startNewConversation ?? (() => {}),
       sentContextLabels: connected?.sentContextLabels ?? {},
@@ -89,6 +110,7 @@ export function CopilotWebChatProvider({ children, enabled = true }: { children:
       setDraft,
       hasUnseenAnswer: !!connected?.hasUnseenAnswer && !isOpen,
       hasRunError: !!connected?.hasRunError,
+      isAwaitingReply: !!connected?.isAwaitingReply,
     }),
     [connected, isOpen, open, close, toggle, pageContext, draft]
   );
@@ -99,7 +121,12 @@ export function CopilotWebChatProvider({ children, enabled = true }: { children:
         {children}
         {enabled && (
           <CopilotConnectProvider>
-            <CopilotWebChatBridge shell={bridgeShell} onConnected={setConnected} />
+            <CopilotWebChatBridge
+              key={conversationScope}
+              shell={bridgeShell}
+              conversationScope={conversationScope}
+              onConnected={setConnected}
+            />
           </CopilotConnectProvider>
         )}
       </CopilotWebChatContext.Provider>
@@ -109,9 +136,11 @@ export function CopilotWebChatProvider({ children, enabled = true }: { children:
 
 const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   shell,
+  conversationScope,
   onConnected,
 }: {
   shell: BridgeShell;
+  conversationScope?: string;
   onConnected: (state: ConnectedState | null) => void;
 }) {
   const track = useTelemetry();
@@ -119,6 +148,8 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const { isOpen, close, toggle, pageContext, onRefetchRef } = shell;
   const [unseenAnswer, setUnseenAnswer] = useState(false);
   const [runError, setRunError] = useState(false);
+  const [awaitingReply, setAwaitingReply] = useState(false);
+  const isAwaitingReplyRef = useRef(false);
   const [sentContextLabels, setSentContextLabels] = useState<Record<number, string>>({});
   const isOpenRef = useRef(isOpen);
   isOpenRef.current = isOpen;
@@ -134,9 +165,11 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       if (event.type === 'run-start') {
         setRunError(false);
       } else if (event.type === 'run-finish') {
+        setAwaitingReply(false);
         track(TelemetryEvent.COPILOT_GENERATION_COMPLETED, { outcome: event.outcome, agentId: NOVU_COPILOT_AGENT_ID });
         if (event.outcome === 'completed' && !isOpenRef.current) setUnseenAnswer(true);
       } else if (event.type === 'run-error') {
+        setAwaitingReply(false);
         track(TelemetryEvent.COPILOT_GENERATION_ERROR, { code: event.code, agentId: NOVU_COPILOT_AGENT_ID });
         setRunError(true);
       }
@@ -145,9 +178,25 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   );
 
   const onEvent = useCopilotRefetch(onRefetchRef, handleRunEvent);
-  const chat = useWebChat({ agentId: NOVU_COPILOT_AGENT_ID, onEvent });
+  const [resumeConversationId, setResumeConversationId] = useState(() => readStoredConversationId(conversationScope));
+  const chat = useWebChat({ agentId: NOVU_COPILOT_AGENT_ID, conversationId: resumeConversationId, onEvent });
   const chatRef = useRef(chat);
   chatRef.current = chat;
+  const resumeConversationIdRef = useRef(resumeConversationId);
+  resumeConversationIdRef.current = resumeConversationId;
+
+  useEffect(() => {
+    if (chat.conversationId) writeStoredConversationId(conversationScope, chat.conversationId);
+  }, [conversationScope, chat.conversationId]);
+
+  // A stored conversation that can no longer be loaded (deleted, other user) falls back to a new chat.
+  const isResumeBroken = !!resumeConversationId && !!chat.error && !chat.isLoading && chat.messages.length === 0;
+  useEffect(() => {
+    if (!isResumeBroken) return;
+
+    writeStoredConversationId(conversationScope, undefined);
+    setResumeConversationId(undefined);
+  }, [isResumeBroken, conversationScope]);
   const pageContextRef = useRef(pageContext);
   pageContextRef.current = pageContext;
   const lastSentRef = useRef<{ text: string; metadata: ReturnType<typeof buildCopilotMetadata> } | null>(null);
@@ -155,7 +204,10 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const sendMessage = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
-      if (!trimmed || chatRef.current.isLoading) return;
+      // The client rejects sends during a run, so refuse up front and let the composer keep the text.
+      if (!trimmed || chatRef.current.isLoading || chatRef.current.isRunning || isAwaitingReplyRef.current) {
+        return false;
+      }
 
       const isNewChat = chatRef.current.messages.length === 0;
       track(TelemetryEvent.COPILOT_MESSAGE_SENT, {
@@ -171,39 +223,57 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       const userMessageIndex = chatRef.current.messages.filter((message) => message.role === 'user').length;
       if (label) setSentContextLabels((labels) => ({ ...labels, [userMessageIndex]: label }));
       lastSentRef.current = { text: trimmed, metadata };
-      await chatRef.current.sendMessage({ text: trimmed, metadata });
+      setAwaitingReply(true);
+      const { error } = await chatRef.current.sendMessage({ text: trimmed, metadata });
+      if (error) setAwaitingReply(false);
+
+      return true;
     },
     [track]
   );
 
   const retry = useCallback(async () => {
-    const lastSent = lastSentRef.current;
-    if (!lastSent || chatRef.current.isLoading) return;
-
-    setRunError(false);
+    if (chatRef.current.isLoading) return;
 
     // A send that never got accepted is replayed with its original idempotency key, so a lost response can't apply the edit twice.
+    // Checked first: the failed message is in the thread even when `lastSentRef` was lost to a reload.
     const lastUserMessage = chatRef.current.messages.filter((message) => message.role === 'user').at(-1);
     if (lastUserMessage?.status === 'failed') {
-      await chatRef.current.retryMessage(lastUserMessage.id);
+      setRunError(false);
+      setAwaitingReply(true);
+      const { error } = await chatRef.current.retryMessage(lastUserMessage.id);
+      if (error) setAwaitingReply(false);
 
       return;
     }
 
-    await chatRef.current.sendMessage(lastSent);
+    const lastSent = lastSentRef.current;
+    if (!lastSent) return;
+
+    setRunError(false);
+    setAwaitingReply(true);
+    const { error } = await chatRef.current.sendMessage(lastSent);
+    if (error) setAwaitingReply(false);
   }, []);
 
   const startNewConversation = useCallback(() => {
     lastSentRef.current = null;
     setSentContextLabels({});
     setRunError(false);
-    chatRef.current.startNewConversation();
-  }, []);
+    setAwaitingReply(false);
+    writeStoredConversationId(conversationScope, undefined);
+
+    // `startNewConversation` is a no-op on a resumed conversation; dropping the id switches the hook to a new chat.
+    if (resumeConversationIdRef.current) setResumeConversationId(undefined);
+    else chatRef.current.startNewConversation();
+  }, [conversationScope]);
 
   const isAvailable = !!connectContext;
   useCopilotHotkey({ isEnabled: isAvailable && !!pageContext?.workflowId, isOpen, toggle, close });
 
   const hasRunError = runError || !!chat.error;
+  const isAwaitingReply = (awaitingReply || chat.isRunning) && !hasRunError;
+  isAwaitingReplyRef.current = isAwaitingReply;
 
   useEffect(() => {
     if (!isAvailable) {
@@ -220,6 +290,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       hasUnseenAnswer: unseenAnswer,
       hasRunError,
       sentContextLabels,
+      isAwaitingReply,
     });
   }, [
     isAvailable,
@@ -230,6 +301,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     unseenAnswer,
     hasRunError,
     sentContextLabels,
+    isAwaitingReply,
     onConnected,
   ]);
 

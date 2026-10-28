@@ -41,6 +41,31 @@ export function buildCopilotMetadata(context: CopilotPageContext | undefined): R
   return metadata;
 }
 
+const CONVERSATION_STORAGE_PREFIX = 'novu-copilot-conversation:';
+
+/** Last Copilot conversation for a scope (environment + workflow), so a reload resumes it. */
+export function readStoredConversationId(scope: string | undefined): string | undefined {
+  if (!scope) return undefined;
+
+  try {
+    return window.localStorage.getItem(`${CONVERSATION_STORAGE_PREFIX}${scope}`) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function writeStoredConversationId(scope: string | undefined, conversationId: string | undefined): void {
+  if (!scope) return;
+
+  try {
+    const key = `${CONVERSATION_STORAGE_PREFIX}${scope}`;
+    if (conversationId) window.localStorage.setItem(key, conversationId);
+    else window.localStorage.removeItem(key);
+  } catch {
+    // Storage can be unavailable (private mode, blocked site data); resuming is best-effort.
+  }
+}
+
 export type LauncherState = 'idle' | 'working' | 'ready' | 'error' | 'off';
 
 export function deriveLauncherState(input: {
@@ -129,7 +154,7 @@ export function summarizeToolGroup(rows: readonly ToolRow[]): ToolGroupSummary {
 }
 
 export type AssistantBlock =
-  | { kind: 'text'; key: string; text: string }
+  | { kind: 'text'; key: string; text: string; streaming: boolean }
   | { kind: 'thinking'; key: string; text: string; streaming: boolean }
   | { kind: 'tools'; key: string; rows: ToolRow[] };
 
@@ -142,7 +167,7 @@ export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
 
     if (part.type === 'text') {
       if (!part.text.trim()) return;
-      blocks.push({ kind: 'text', key, text: part.text });
+      blocks.push({ kind: 'text', key, text: part.text, streaming: part.state === 'streaming' });
     } else if (part.type === 'thinking') {
       blocks.push({ kind: 'thinking', key, text: part.text, streaming: part.state === 'streaming' });
     } else if (part.type === 'tool') {
@@ -155,6 +180,22 @@ export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
   });
 
   return blocks;
+}
+
+/** The last message is a user send the server never accepted (it stays in the thread and can be retried). */
+export function getFailedSend(messages: readonly AgentMessage[]): AgentMessage | undefined {
+  const last = messages[messages.length - 1];
+
+  return last?.role === 'user' && last.status === 'failed' ? last : undefined;
+}
+
+/** Whether the thread still needs a placeholder: nothing from the agent is visible after the last user message. */
+export function hasPendingReplyGap(messages: readonly AgentMessage[]): boolean {
+  const last = messages[messages.length - 1];
+  if (!last) return false;
+  if (last.role === 'user') return last.status !== 'failed';
+
+  return buildAssistantBlocks(last).length === 0;
 }
 
 export function getUserMessageText(message: AgentMessage): string {

@@ -47,13 +47,25 @@ function LauncherStatus({ state }: { state: LauncherState }) {
 }
 
 export function CopilotLauncher() {
-  const { isAvailable, isOpen, open, chat, hasUnseenAnswer, hasRunError } = useCopilotWebChat();
+  const { isAvailable, isOpen, open, close, chat, hasUnseenAnswer, hasRunError, isAwaitingReply } = useCopilotWebChat();
 
-  if (isOpen) return null;
+  if (isOpen) {
+    return (
+      <button
+        type="button"
+        onClick={close}
+        aria-label="Close Copilot"
+        title="Close Copilot"
+        className="fixed bottom-4 right-4 z-40 flex size-[38px] items-center justify-center rounded-full border border-stroke-soft bg-bg-white shadow-[0_8px_12px_rgba(15,23,41,0.04),0_1px_1px_rgba(15,23,41,0.04)] transition-colors hover:bg-bg-weak"
+      >
+        <BroomSparkle className="size-4" isAnimating={!!chat?.isRunning || isAwaitingReply} />
+      </button>
+    );
+  }
 
   const state = deriveLauncherState({
     isAvailable,
-    isRunning: !!chat?.isRunning,
+    isRunning: !!chat?.isRunning || isAwaitingReply,
     hasError: hasRunError,
     hasUnseenAnswer,
   });

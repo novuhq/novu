@@ -11,7 +11,8 @@ export type CopilotWebChatContextValue = {
   toggle: () => void;
   chat?: UseWebChatResult;
   pageContext?: CopilotPageContext;
-  sendMessage: (text: string) => Promise<void>;
+  /** Resolves false when the send was refused before reaching the conversation (empty, loading or mid-run). */
+  sendMessage: (text: string) => Promise<boolean>;
   /** Resends the last message with the workflow/step it was originally sent for. */
   retry: () => Promise<void>;
   startNewConversation: () => void;
@@ -23,6 +24,8 @@ export type CopilotWebChatContextValue = {
   /** True when an answer finished while the popover was closed and has not been seen yet. */
   hasUnseenAnswer: boolean;
   hasRunError: boolean;
+  /** True from a send until its run settles, covering the gap before the server reports `run-start`. */
+  isAwaitingReply: boolean;
 };
 
 const noop = () => {};
@@ -33,7 +36,7 @@ export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   open: noop,
   close: noop,
   toggle: noop,
-  sendMessage: async () => {},
+  sendMessage: async () => false,
   retry: async () => {},
   startNewConversation: noop,
   sentContextLabels: {},
@@ -41,6 +44,7 @@ export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   setDraft: noop,
   hasUnseenAnswer: false,
   hasRunError: false,
+  isAwaitingReply: false,
 });
 
 type RegisterPageContext = (context: CopilotPageContext, onRefetch?: () => void) => () => void;

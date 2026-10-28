@@ -9,6 +9,7 @@ import {
   RiRefreshLine,
 } from 'react-icons/ri';
 import { MessageResponse } from '@/components/ai-elements/message';
+import { Shimmer } from '@/components/ai-elements/shimmer';
 import { cn } from '@/utils/ui';
 import {
   type AssistantBlock,
@@ -36,10 +37,43 @@ export function CopilotUserMessage({ message, contextLabel }: { message: AgentMe
           {contextLabel}
         </span>
       )}
-      <div className="max-w-[352px] whitespace-pre-wrap break-words rounded-2xl rounded-tr-[4px] bg-[#f4f4f5] px-3 py-2 text-xs leading-4 text-text-strong">
+      <div
+        className={cn(
+          'max-w-[352px] whitespace-pre-wrap break-words rounded-2xl rounded-tr-[4px] bg-[#f4f4f5] px-3 py-2 text-xs leading-4 text-text-strong',
+          message.status === 'failed' && 'opacity-60'
+        )}
+      >
         {text}
       </div>
     </div>
+  );
+}
+
+const DOT_GRID_DELAYS = [0, 150, 300, 450, 150, 300, 450, 600, 300, 450, 600, 750, 450, 600, 750, 900];
+
+function DotGrid() {
+  return (
+    <span aria-hidden className="grid size-3 shrink-0 grid-cols-4 gap-px">
+      {DOT_GRID_DELAYS.map((delay, index) => (
+        <span
+          key={index}
+          className="size-0.5 animate-pulse rounded-full bg-text-sub motion-reduce:animate-none"
+          style={{ animationDelay: `${delay}ms` }}
+        />
+      ))}
+    </span>
+  );
+}
+
+/** Shown from a send until the agent produces content, and while its reasoning streams. */
+export function CopilotThinkingIndicator({ label = 'Thinking…' }: { label?: string }) {
+  return (
+    <output className="flex items-center gap-2 text-xs leading-4 text-text-soft">
+      <DotGrid />
+      <Shimmer key={label} as="span" className="text-xs leading-4">
+        {label}
+      </Shimmer>
+    </output>
   );
 }
 
@@ -58,7 +92,16 @@ function ThinkingBlock({ block }: { block: Extract<AssistantBlock, { kind: 'thin
   }, [block.streaming]);
 
   if (block.streaming) {
-    return <div className="animate-pulse text-xs leading-4 text-text-soft">Thinking…</div>;
+    return (
+      <div className="flex flex-col gap-1">
+        <CopilotThinkingIndicator />
+        {block.text.trim() && (
+          <div className="flex max-h-24 flex-col justify-end overflow-hidden border-l border-stroke-soft pl-3">
+            <p className="whitespace-pre-wrap text-xs leading-4 text-text-soft">{block.text}</p>
+          </div>
+        )}
+      </div>
+    );
   }
 
   if (!block.text.trim()) return null;
@@ -153,9 +196,12 @@ export function CopilotAssistantMessage({ message }: { message: AgentMessage }) 
           return (
             <div
               key={block.key}
-              className="text-xs leading-4 text-text-strong [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-4"
+              className="text-xs leading-4 text-text-strong [&_ol]:list-outside [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_ul]:list-outside [&_ul]:list-disc [&_ul]:pl-4"
             >
               <MessageResponse>{block.text}</MessageResponse>
+              {block.streaming && (
+                <span aria-hidden className="inline-block h-3.5 w-[7px] animate-pulse bg-text-strong align-middle" />
+              )}
             </div>
           );
         }

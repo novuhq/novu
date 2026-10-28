@@ -1,12 +1,25 @@
-import { type KeyboardEvent, useEffect, useRef } from 'react';
-import { RiAddLine, RiArrowDownSLine, RiCloseLine, RiCornerDownLeftLine } from 'react-icons/ri';
+import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
+import {
+  RiAddLine,
+  RiArrowDownSLine,
+  RiArrowRightSLine,
+  RiCloseLine,
+  RiCornerDownLeftLine,
+  RiErrorWarningFill,
+} from 'react-icons/ri';
+import { CopilotSlackConnectBanner } from '@/components/agents/copilot-slack-connect-banner';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
-import { CopilotAssistantMessage, CopilotErrorNotice, CopilotUserMessage } from './copilot-thread-parts';
+import {
+  CopilotAssistantMessage,
+  CopilotErrorNotice,
+  CopilotThinkingIndicator,
+  CopilotUserMessage,
+} from './copilot-thread-parts';
 import { useCopilotWebChat } from './copilot-web-chat-context';
-import { getUserMessageText } from './copilot-web-chat-utils';
+import { getFailedSend, getUserMessageText, hasPendingReplyGap } from './copilot-web-chat-utils';
 
 const SUGGESTIONS = ['Autocomplete workflow', 'Audit this workflow', 'Explain this workflow'];
 
@@ -37,34 +50,59 @@ function HeaderButton({
 
 function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
-      <div className="flex flex-col items-center gap-2">
-        <BroomSparkle className="size-6" />
-        <div className="text-label-sm text-text-strong">Novu Copilot</div>
-        <p className="text-xs leading-4 text-text-soft">
+    <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
+      <div className="relative flex flex-1 flex-col items-center justify-center gap-2 px-4 py-6 text-center">
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--stroke-soft))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--stroke-soft))_1px,transparent_1px)] bg-[size:16px_16px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]"
+        />
+        <div className="relative flex size-11 items-center justify-center rounded-xl border border-stroke-soft bg-bg-white shadow-xs">
+          <BroomSparkle className="size-6" />
+        </div>
+        <div className="relative text-label-sm text-text-strong">Novu Copilot</div>
+        <p className="relative text-xs leading-4 text-text-soft">
           Suggests improvements, fills gaps, and applies best practices as you build.
         </p>
       </div>
-      <div className="flex flex-wrap justify-center gap-2">
-        {SUGGESTIONS.map((suggestion) => (
-          <button
-            key={suggestion}
-            type="button"
-            onClick={() => onSuggestion(suggestion)}
-            className="rounded-full border border-stroke-soft bg-bg-white px-3 py-1 text-xs leading-4 text-text-sub hover:bg-bg-weak hover:text-text-strong"
-          >
-            {suggestion}
-          </button>
-        ))}
+      <div className="flex flex-col rounded-lg border border-stroke-soft bg-bg-white">
+        <div className="px-3 pb-1 pt-2.5 text-[10px] font-medium uppercase leading-4 tracking-wider text-text-soft">
+          Try asking
+        </div>
+        <div className="flex flex-col divide-y divide-stroke-soft">
+          {SUGGESTIONS.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              aria-label={suggestion}
+              title={suggestion}
+              onClick={() => onSuggestion(suggestion)}
+              className="flex h-9 items-center gap-2 px-3 text-left text-xs leading-4 text-text-sub outline-none last:rounded-b-lg hover:bg-bg-weak hover:text-text-strong focus-visible:bg-bg-weak focus-visible:text-text-strong"
+            >
+              <span className="min-w-0 flex-1 truncate">{suggestion}</span>
+              <RiArrowRightSLine className="size-4 shrink-0 text-text-soft" />
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
 function Composer({ hasMessages }: { hasMessages: boolean }) {
-  const { chat, sendMessage, pageContext, draft: value, setDraft: setValue } = useCopilotWebChat();
+  const {
+    chat,
+    sendMessage,
+    retry,
+    pageContext,
+    draft: value,
+    setDraft: setValue,
+    isAwaitingReply,
+  } = useCopilotWebChat();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const isRunning = !!chat?.isRunning;
+  const failedSend = getFailedSend(chat?.messages ?? []);
+  const [dismissedFailureId, setDismissedFailureId] = useState<string>();
+  const showFailureStrip = !!failedSend && failedSend.id !== dismissedFailureId;
+  const isRunning = !!chat?.isRunning || isAwaitingReply;
   const canSend = value.trim().length > 0 && !isRunning && !chat?.isLoading;
   const contextLabel = [pageContext?.workflowLabel, pageContext?.stepLabel].filter(Boolean).join(' / ');
 
@@ -77,7 +115,9 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
 
     const text = value;
     setValue('');
-    void sendMessage(text);
+    void sendMessage(text).then((accepted) => {
+      if (!accepted) setValue(text);
+    });
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -88,8 +128,31 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
   };
 
   return (
-    <div className="p-3 pt-0">
+    <div className="flex flex-col gap-2 p-3 pt-0">
+      {!showFailureStrip && <CopilotSlackConnectBanner />}
       <div className="flex flex-col gap-2 rounded-md bg-bg-white p-2 shadow-[0_1px_3px_rgba(14,18,27,0.12)] ring-1 ring-stroke-soft">
+        {showFailureStrip && (
+          <div role="alert" className="flex items-center gap-1.5 border-b border-stroke-soft pb-2 text-xs leading-4">
+            <RiErrorWarningFill className="size-3.5 shrink-0 text-error-base" />
+            <span className="min-w-0 flex-1 text-text-sub">Couldn't send. Your message is saved.</span>
+            <button
+              type="button"
+              onClick={() => void retry()}
+              disabled={isRunning}
+              className="font-medium text-text-strong hover:underline disabled:opacity-40"
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              aria-label="Dismiss"
+              onClick={() => setDismissedFailureId(failedSend.id)}
+              className="flex size-4 items-center justify-center rounded text-text-soft hover:text-text-strong"
+            >
+              <RiCloseLine className="size-3.5" />
+            </button>
+          </div>
+        )}
         <textarea
           ref={textareaRef}
           value={value}
@@ -127,16 +190,17 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
 }
 
 function Thread() {
-  const { chat, retry, sentContextLabels, hasRunError } = useCopilotWebChat();
+  const { chat, retry, sentContextLabels, hasRunError, isAwaitingReply } = useCopilotWebChat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const messages = chat?.messages ?? [];
+  const showThinking = (isAwaitingReply || !!chat?.typing) && hasPendingReplyGap(messages);
   let userIndex = 0;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll on every message update while streaming
   useEffect(() => {
     const element = scrollRef.current;
     if (element) element.scrollTop = element.scrollHeight;
-  }, [messages, hasRunError]);
+  }, [messages, hasRunError, showThinking]);
 
   return (
     <div className="relative min-h-0 flex-1">
@@ -148,7 +212,11 @@ function Thread() {
 
           return <CopilotUserMessage key={message.id} message={message} contextLabel={contextLabel} />;
         })}
-        {hasRunError && !chat?.isRunning && <CopilotErrorNotice onRetry={() => void retry()} />}
+        {showThinking && <CopilotThinkingIndicator label={chat?.typing?.status || undefined} />}
+        {/* A failed send is surfaced by the composer strip instead. */}
+        {hasRunError && !chat?.isRunning && !getFailedSend(messages) && (
+          <CopilotErrorNotice onRetry={() => void retry()} />
+        )}
       </div>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-bg-white to-transparent" />
     </div>
@@ -156,8 +224,9 @@ function Thread() {
 }
 
 export function CopilotPopover() {
-  const { isAvailable, isOpen, close, chat, sendMessage, startNewConversation } = useCopilotWebChat();
+  const { isAvailable, isOpen, close, chat, sendMessage, startNewConversation, isAwaitingReply } = useCopilotWebChat();
   const track = useTelemetry();
+  const isWorking = !!chat?.isRunning || isAwaitingReply;
 
   if (!isOpen || !isAvailable) return null;
 
@@ -170,12 +239,12 @@ export function CopilotPopover() {
     <div
       role="dialog"
       aria-label="Novu Copilot"
-      className="fixed bottom-[66px] right-4 z-40 flex h-[640px] max-h-[min(640px,calc(100vh-82px))] w-[400px] flex-col overflow-hidden rounded-xl border border-stroke-soft bg-bg-white shadow-[0_2px_4px_rgba(15,18,26,0.04),0_12px_32px_-8px_rgba(15,18,26,0.08)]"
+      className="fixed bottom-[66px] right-4 z-40 flex h-[600px] max-h-[min(600px,calc(100vh-82px))] w-[400px] flex-col overflow-hidden rounded-xl border border-stroke-soft bg-bg-white shadow-[0_2px_4px_rgba(15,18,26,0.04),0_12px_32px_-8px_rgba(15,18,26,0.08)]"
     >
       <div className="flex h-11 shrink-0 items-center gap-2 border-b border-stroke-soft bg-bg-weak pl-3.5 pr-2">
-        <BroomSparkle className="size-4 shrink-0" isAnimating={!!chat?.isRunning} />
+        <BroomSparkle className="size-4 shrink-0" isAnimating={isWorking} />
         <span className="min-w-0 flex-1 truncate text-label-sm text-text-sub">{title}</span>
-        <HeaderButton label="New chat" disabled={!!chat?.isRunning} onClick={startNewConversation}>
+        <HeaderButton label="New chat" disabled={isWorking} onClick={startNewConversation}>
           <RiAddLine className="size-3.5" />
         </HeaderButton>
         <HeaderButton label="Minimize" onClick={close}>
@@ -187,6 +256,10 @@ export function CopilotPopover() {
       </div>
       {hasMessages ? (
         <Thread />
+      ) : chat?.isLoading ? (
+        <div className="flex flex-1 items-center justify-center">
+          <CopilotThinkingIndicator label="Loading…" />
+        </div>
       ) : (
         <EmptyState
           onSuggestion={(text) => {

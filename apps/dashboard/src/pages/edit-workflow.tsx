@@ -96,7 +96,12 @@ export const EditWorkflowPage = () => {
   }
 
   return (
-    <CopilotWebChatProvider enabled={isCopilotWebChatEnabled}>
+    <CopilotWebChatProvider
+      enabled={isCopilotWebChatEnabled}
+      conversationScope={
+        currentEnvironment?._id && !isNewWorkflowSlug ? `${currentEnvironment._id}:${workflowSlug}` : undefined
+      }
+    >
       <WorkflowProvider>
         <FullPageLayout headerStartItems={<EditorBreadcrumbs />}>{getLayoutContent()}</FullPageLayout>
       </WorkflowProvider>
