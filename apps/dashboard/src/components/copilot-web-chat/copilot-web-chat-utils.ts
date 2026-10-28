@@ -92,6 +92,8 @@ export type ToolRow = {
   status: ToolRowStatus;
   change?: ToolChange;
   isWrite: boolean;
+  /** The existing or new step a write tool targets; absent for workflow-level writes. */
+  stepId?: string;
 };
 
 const TOOL_LABELS: Record<string, { label: string; change?: ToolChange }> = {
@@ -124,6 +126,16 @@ function pickKeyArg(input: Record<string, unknown> | undefined): string | undefi
   return undefined;
 }
 
+/** Step tools send `stepId` at the top level, except add/edit content which nest it under `step`. */
+function pickTargetStepId(input: Record<string, unknown> | undefined): string | undefined {
+  const nested = input?.step;
+  const nestedStepId =
+    typeof nested === 'object' && nested !== null ? (nested as { stepId?: unknown }).stepId : undefined;
+  const stepId = input?.stepId ?? nestedStepId;
+
+  return typeof stepId === 'string' && stepId ? stepId : undefined;
+}
+
 export function toolPartToRow(part: Pick<AgentToolPart, 'toolUseId' | 'toolName' | 'input' | 'state'>): ToolRow {
   const known = TOOL_LABELS[normalizeToolName(part.toolName)];
   let status: ToolRowStatus = 'active';
@@ -138,6 +150,7 @@ export function toolPartToRow(part: Pick<AgentToolPart, 'toolUseId' | 'toolName'
     status,
     change: known?.change,
     isWrite: isWorkflowWriteTool(part.toolName),
+    stepId: pickTargetStepId(part.input),
   };
 }
 
@@ -145,10 +158,12 @@ export type ToolGroupSummary = { isRunning: boolean; title: string };
 
 export function summarizeToolGroup(rows: readonly ToolRow[]): ToolGroupSummary {
   const isRunning = rows.some((row) => row.status === 'active' || row.status === 'pending');
-  const writeCount = rows.filter((row) => row.isWrite && row.status === 'done').length;
+  const doneWrites = rows.filter((row) => row.isWrite && row.status === 'done');
+  const stepCount = new Set(doneWrites.flatMap((row) => (row.stepId ? [row.stepId] : []))).size;
 
   if (isRunning) return { isRunning, title: 'Editing workflow' };
-  if (writeCount > 0) return { isRunning, title: `Made ${writeCount} ${writeCount === 1 ? 'change' : 'changes'}` };
+  if (stepCount > 0) return { isRunning, title: `Edited ${stepCount} ${stepCount === 1 ? 'step' : 'steps'}` };
+  if (doneWrites.length > 0) return { isRunning, title: 'Edited workflow' };
 
   return { isRunning, title: `Used ${rows.length} ${rows.length === 1 ? 'tool' : 'tools'}` };
 }
