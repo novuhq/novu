@@ -185,11 +185,11 @@ describe('describeAction and subjectOf', () => {
     // An MCP tool with what it would be called with, whole, as a command is: who it writes to, and what.
     expect(
       describeAction({
-        tool_name: 'mcp__inbox__inbox_reply',
+        tool_name: 'mcp__AgentInbox__inbox_reply',
         input: { conversation: 'conv_1', kind: 'approve', message: `Ship it?\n${'x'.repeat(300)}`, to: ['carol'] },
       })
     ).toBe(
-      `use inbox_reply from inbox with conversation "conv_1", kind "approve", message ${JSON.stringify(`Ship it?\n${'x'.repeat(300)}`)}, to ["carol"]`
+      `use inbox_reply from AgentInbox with conversation "conv_1", kind "approve", message ${JSON.stringify(`Ship it?\n${'x'.repeat(300)}`)}, to ["carol"]`
     );
     expect(subjectOf({ tool_name: 'mcp__github__create_issue', input: { title: 'Bug' } })).toEqual({
       kind: 'mcp',

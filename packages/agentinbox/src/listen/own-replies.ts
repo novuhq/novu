@@ -112,9 +112,9 @@ export function isOwnReplySubject(subject: PermissionQuestion['subject'], conver
 }
 
 /**
- * Our MCP server, by the names hosts give it: `inbox` (`claude mcp add … inbox`, the name our docs use), the
- * agentinbox plugin's `plugin_agentinbox_inbox`, and a claude.ai connector named after Agent Inbox
- * (`claude_ai_Agent_Inbox`).
+ * Our MCP server, by the names hosts give it: `AgentInbox` (`codex mcp add AgentInbox …`, the name our docs use),
+ * the agentinbox plugin's `plugin_agentinbox_AgentInbox`, a claude.ai connector named after Agent Inbox
+ * (`claude_ai_Agent_Inbox`), and `inbox`, the name the docs used before.
  */
 export function isOurMcpServer(server: string): boolean {
   const name = server
