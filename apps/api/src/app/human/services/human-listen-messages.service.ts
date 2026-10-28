@@ -8,6 +8,7 @@ import {
   type HumanInteractionEntity,
   HumanInteractionRepository,
   indexRevisions,
+  Types,
 } from '@novu/dal';
 import {
   HUMAN_INTERACTION_MAX_TTL_SECONDS,
@@ -16,7 +17,6 @@ import {
   humanInteractionApproveExtraActions,
   humanInteractionChooseOptions,
 } from '@novu/shared';
-import { Types } from 'mongoose';
 import type { ListenAnswerDto, ListenMessageDto } from '../dtos/human-listen.dto';
 import { type InboxRelayAgent, type InboxScope, readAttachments } from './human-inbox.service';
 import type { ListenedTo } from './human-listen-access.service';

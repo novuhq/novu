@@ -1,8 +1,7 @@
 import { ConflictException, ForbiddenException } from '@nestjs/common';
-import { AgentRepository, type ListenHostId } from '@novu/dal';
+import { AgentRepository, type ListenHostId, Types } from '@novu/dal';
 import { AgentSubscriberAccessEnum } from '@novu/shared';
 import { expect } from 'chai';
-import { Types } from 'mongoose';
 import { AGENT_PAUSED } from '../../agents/human-relay/agent-paused.error';
 import {
   HumanListenLeaseService,

@@ -12,11 +12,11 @@ import {
   HumanInteractionRepository,
   IntegrationRepository,
   SubscriberRepository,
+  Types,
 } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { Types } from 'mongoose';
 import sinon from 'sinon';
 import { AgentConfigResolver } from '../../agents/channels/agent-config-resolver.service';
 import { ChatInstanceRegistry } from '../../agents/conversation-runtime/ingress/chat-instance.registry';

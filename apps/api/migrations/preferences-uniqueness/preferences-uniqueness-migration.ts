@@ -2,9 +2,8 @@ import '../../src/config';
 
 import { NestFactory } from '@nestjs/core';
 import { PinoLogger } from '@novu/application-generic';
-import { PreferencesRepository } from '@novu/dal';
+import { type Expression, PreferencesRepository } from '@novu/dal';
 import { PreferencesTypeEnum } from '@novu/shared';
-import { Expression } from 'mongoose';
 import { AppModule } from '../../src/app.module';
 
 export async function run() {
