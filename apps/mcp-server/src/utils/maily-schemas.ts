@@ -61,7 +61,7 @@ function createMailyTextNodeSchema() {
 					createMailyLinkMarkSchema(),
 				]),
 			)
-			.nullable(),
+			.nullish(),
 		text: z.string(),
 		type: z.enum(["text"]),
 	});

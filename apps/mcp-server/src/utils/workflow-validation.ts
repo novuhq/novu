@@ -68,7 +68,7 @@ export class WorkflowValidationUtils {
 		step: Extract<WorkflowStep, { type: "http_request" }>,
 	): ApiResponse | null {
 		const { method, body } = step.controlValues;
-		const hasBody = Array.isArray(body) && body.length > 0;
+		const hasBody = Array.isArray(body) ? body.length > 0 : Boolean(body?.trim());
 		const bodyMethods = new Set(["POST", "PUT", "PATCH"]);
 
 		if (hasBody && !bodyMethods.has(method)) {

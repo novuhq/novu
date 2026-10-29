@@ -145,6 +145,44 @@ describe("workflow step tools", () => {
 			expect(result.structuredContent).toMatchObject({ error: { status: 400 } });
 		});
 
+		it("saves unformatted email text that has no marks", async () => {
+			const api = fakeWorkflowsApi();
+			const doc = {
+				content: [
+					{ attrs: null, content: [{ text: "Hello", type: "text" }], type: "paragraph" },
+				],
+				type: "doc",
+			};
+
+			const result = await callTool(await client(), "update_workflow_step_content", {
+				content: {
+					controlValues: { body: doc, editorType: "block", subject: "Hello" },
+					type: "email",
+				},
+				stepId: "email-step",
+				workflowId: "welcome",
+			});
+
+			expect(result.isError).toBeFalsy();
+			expect(api.puts[0].body!.steps[1].controlValues.body).toBe(JSON.stringify(doc));
+		});
+
+		it("rejects a raw HTTP body on a method that does not send one", async () => {
+			const api = fakeWorkflowsApi();
+
+			const result = await callTool(await client(), "add_workflow_step", {
+				step: {
+					controlValues: { body: '{"id":1}', method: "GET", url: "https://example.com" },
+					name: "Fetch",
+					type: "http_request",
+				},
+				workflowId: "welcome",
+			});
+
+			expect(api.puts).toHaveLength(0);
+			expect(result.structuredContent).toMatchObject({ error: { status: 400 } });
+		});
+
 		it("rejects content for a different step type with a 400", async () => {
 			const api = fakeWorkflowsApi();
 
