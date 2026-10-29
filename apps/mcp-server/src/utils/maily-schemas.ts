@@ -51,14 +51,7 @@ function createMailyLinkMarkSchema() {
 	});
 }
 
-function createMailyTextNodeSchema({ plainText = false } = {}) {
-	if (plainText) {
-		return z.object({
-			text: z.string(),
-			type: z.enum(["text"]),
-		});
-	}
-
+function createMailyTextNodeSchema() {
 	return z.object({
 		marks: z
 			.array(
@@ -148,16 +141,16 @@ function createMailyButtonSchema() {
 	});
 }
 
-function createMailyInlineContentSchema({ plainText = false } = {}) {
+function createMailyInlineContentSchema() {
 	return z.discriminatedUnion("type", [
-		createMailyTextNodeSchema({ plainText }),
+		createMailyTextNodeSchema(),
 		createMailyVariableNodeSchema(),
 		createMailyHardBreakSchema(),
 		createMailyButtonSchema(),
 	]);
 }
 
-function createMailyParagraphSchema({ plainText = false } = {}) {
+function createMailyParagraphSchema() {
 	return z.object({
 		attrs: z
 			.object({
@@ -165,12 +158,12 @@ function createMailyParagraphSchema({ plainText = false } = {}) {
 				textAlign: z.enum(["left", "center", "right"]).nullable(),
 			})
 			.nullable(),
-		content: z.array(createMailyInlineContentSchema({ plainText })).nullable(),
+		content: z.array(createMailyInlineContentSchema()).nullable(),
 		type: z.enum(["paragraph"]),
 	});
 }
 
-function createMailyHeadingSchema({ plainText = false } = {}) {
+function createMailyHeadingSchema() {
 	return z.object({
 		attrs: z.object({
 			level: z
@@ -179,7 +172,7 @@ function createMailyHeadingSchema({ plainText = false } = {}) {
 			showIfKey: z.string().nullable(),
 			textAlign: z.enum(["left", "center", "right"]).nullable(),
 		}),
-		content: z.array(createMailyInlineContentSchema({ plainText })).nullable(),
+		content: z.array(createMailyInlineContentSchema()).nullable(),
 		type: z.enum(["heading"]),
 	});
 }
@@ -317,7 +310,7 @@ function createMailyLogoSchema() {
 	});
 }
 
-function createMailyFooterSchema({ plainText = false } = {}) {
+function createMailyFooterSchema() {
 	return z.object({
 		attrs: z
 			.object({
@@ -325,35 +318,35 @@ function createMailyFooterSchema({ plainText = false } = {}) {
 				textAlign: z.enum(["left", "center", "right"]).nullable(),
 			})
 			.nullable(),
-		content: z.array(createMailyInlineContentSchema({ plainText })).nullable(),
+		content: z.array(createMailyInlineContentSchema()).nullable(),
 		type: z.enum(["footer"]),
 	});
 }
 
-function createMailyBlockquoteSchema({ plainText = false } = {}) {
+function createMailyBlockquoteSchema() {
 	return z.object({
-		content: z.array(createMailyParagraphSchema({ plainText })).nullable(),
+		content: z.array(createMailyParagraphSchema()).nullable(),
 		type: z.enum(["blockquote"]),
 	});
 }
 
-function createMailyListItemSchema({ plainText = false } = {}) {
+function createMailyListItemSchema() {
 	return z.object({
-		content: z.array(createMailyParagraphSchema({ plainText })).nullable(),
+		content: z.array(createMailyParagraphSchema()).nullable(),
 		type: z.enum(["listItem"]),
 	});
 }
 
-function createMailyOrderedListSchema({ plainText = false } = {}) {
+function createMailyOrderedListSchema() {
 	return z.object({
-		content: z.array(createMailyListItemSchema({ plainText })).nullable(),
+		content: z.array(createMailyListItemSchema()).nullable(),
 		type: z.enum(["orderedList"]),
 	});
 }
 
-function createMailyBulletListSchema({ plainText = false } = {}) {
+function createMailyBulletListSchema() {
 	return z.object({
-		content: z.array(createMailyListItemSchema({ plainText })).nullable(),
+		content: z.array(createMailyListItemSchema()).nullable(),
 		type: z.enum(["bulletList"]),
 	});
 }
@@ -373,7 +366,7 @@ function createMailyLinkCardSchema() {
 	});
 }
 
-function createMailyLeafNodeSchema({ plainText = false } = {}) {
+function createMailyLeafNodeSchema() {
 	return z.discriminatedUnion("type", [
 		createMailyLinkCardSchema(),
 		createMailyDividerSchema(),
@@ -381,8 +374,8 @@ function createMailyLeafNodeSchema({ plainText = false } = {}) {
 		createMailyButtonSchema(),
 		createMailyImageSchema(),
 		createMailyInlineImageSchema(),
-		createMailyParagraphSchema({ plainText }),
-		createMailyHeadingSchema({ plainText }),
+		createMailyParagraphSchema(),
+		createMailyHeadingSchema(),
 		createMailyLogoSchema(),
 	]);
 }
@@ -422,18 +415,18 @@ function createMailyRepeatAttrsSchema() {
 		.nullable();
 }
 
-function createMailyRepeatSchema({ plainText = false } = {}) {
+function createMailyRepeatSchema() {
 	return z.object({
 		attrs: createMailyRepeatAttrsSchema(),
-		content: z.array(createMailyLeafNodeSchema({ plainText })).nullable(),
+		content: z.array(createMailyLeafNodeSchema()).nullable(),
 		type: z.enum(["repeat"]),
 	});
 }
 
-function createMailySectionContentSchema({ plainText = false } = {}) {
+function createMailySectionContentSchema() {
 	return z.discriminatedUnion("type", [
-		createMailyParagraphSchema({ plainText }),
-		createMailyHeadingSchema({ plainText }),
+		createMailyParagraphSchema(),
+		createMailyHeadingSchema(),
 		createMailyButtonSchema(),
 		createMailySpacerSchema(),
 		createMailyDividerSchema(),
@@ -441,14 +434,14 @@ function createMailySectionContentSchema({ plainText = false } = {}) {
 		createMailyInlineImageSchema(),
 		createMailyLogoSchema(),
 		createMailyLinkCardSchema(),
-		createMailyRepeatSchema({ plainText }),
+		createMailyRepeatSchema(),
 	]);
 }
 
-function createMailySectionSchema({ plainText = false } = {}) {
+function createMailySectionSchema() {
 	return z.object({
 		attrs: createMailySectionAttrsSchema(),
-		content: z.array(createMailySectionContentSchema({ plainText })).nullable(),
+		content: z.array(createMailySectionContentSchema()).nullable(),
 		type: z.enum(["section"]),
 	});
 }
@@ -461,8 +454,6 @@ function createMailyHtmlCodeBlockSchema() {
 }
 
 function createMailyNodeSchema() {
-	const plainText = { plainText: true };
-
 	return z.discriminatedUnion("type", [
 		createMailyParagraphSchema(),
 		createMailyHeadingSchema(),
@@ -475,10 +466,10 @@ function createMailyNodeSchema() {
 		createMailyHtmlCodeBlockSchema(),
 		createMailyFooterSchema(),
 		createMailyBlockquoteSchema(),
-		createMailyOrderedListSchema(plainText),
-		createMailyBulletListSchema(plainText),
-		createMailySectionSchema(plainText),
-		createMailyRepeatSchema(plainText),
+		createMailyOrderedListSchema(),
+		createMailyBulletListSchema(),
+		createMailySectionSchema(),
+		createMailyRepeatSchema(),
 	]);
 }
 

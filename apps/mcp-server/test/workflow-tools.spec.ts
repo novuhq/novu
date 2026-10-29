@@ -132,10 +132,31 @@ describe("create_workflow", () => {
 									required: ["city"],
 								},
 							},
+							required: ["address"],
 						},
 					},
 				},
 			},
+		});
+	});
+
+	it("requires the parents of a required nested property", async () => {
+		const api = fakeWorkflowsApi();
+
+		await callTool(await client(), "create_workflow", {
+			name: "Orders",
+			payloadProperties: [
+				{ name: "order.total", type: "number" },
+				{ isRequired: false, name: "meta.source", type: "string" },
+			],
+			steps: [inAppStep],
+		});
+
+		const schema = (api.requests[0].body as { payloadSchema: Record<string, unknown> })
+			.payloadSchema;
+		expect(schema.required).toEqual(["order"]);
+		expect(schema).toMatchObject({
+			properties: { meta: { required: [] }, order: { required: ["total"] } },
 		});
 	});
 

@@ -34,6 +34,8 @@ export type StepType = z.infer<typeof stepTypeSchema>;
 
 export const timeUnitSchema = z.enum(["seconds", "minutes", "hours", "days", "weeks", "months"]);
 export type TimeUnit = z.infer<typeof timeUnitSchema>;
+// Throttle windows only accept these units (framework `throttleActionSchemas.output`).
+const throttleUnitSchema = z.enum(["minutes", "hours", "days"]);
 
 export const delayTypeSchema = z.enum(["regular", "timed"]);
 export type DelayType = z.infer<typeof delayTypeSchema>;
@@ -206,6 +208,12 @@ function createEmailControlSchema() {
 function createDelayRegularControlSchema() {
 	return z.object({
 		amount: z.number().min(1).describe("Amount of time to delay (must be >= 1)."),
+		extendToSchedule: z
+			.boolean()
+			.optional()
+			.describe(
+				"When true, extend the delay to the subscriber's next allowed schedule window.",
+			),
 		skip: createSkipConditionSchema(),
 		type: z.literal("regular").describe('Regular delay type ("wait for amount + unit").'),
 		unit: timeUnitSchema.describe("Time unit for the delay."),
@@ -215,6 +223,12 @@ function createDelayRegularControlSchema() {
 function createDelayTimedControlSchema() {
 	return z.object({
 		cron: z.string().describe("Cron expression for the timed delay (non-empty)."),
+		extendToSchedule: z
+			.boolean()
+			.optional()
+			.describe(
+				"When true, extend the delay to the subscriber's next allowed schedule window.",
+			),
 		skip: createSkipConditionSchema(),
 		type: z.literal("timed").describe('Timed delay type ("wait until cron schedule").'),
 	});
@@ -308,7 +322,7 @@ function createThrottleFixedControlSchema() {
 			.describe(
 				"Fixed throttle. Allows up to `threshold` notifications per fixed window of `amount` + `unit`.",
 			),
-		unit: timeUnitSchema.describe("Time unit for the throttle window."),
+		unit: throttleUnitSchema.describe("Time unit for the throttle window."),
 	});
 }
 
@@ -363,10 +377,10 @@ function createHttpResponsePropertySchema() {
 function createHttpRequestControlSchema() {
 	return z.object({
 		body: z
-			.array(createHttpKeyValuePairSchema())
+			.union([z.string().max(65536), z.array(createHttpKeyValuePairSchema())])
 			.optional()
 			.describe(
-				"Request body as key-value pairs (only for POST/PUT/PATCH). Use template variables for dynamic values.",
+				"Request body (only for POST/PUT/PATCH): a raw JSON string, or key-value pairs for legacy workflows. Use template variables for dynamic values.",
 			),
 		continueOnFailure: z
 			.boolean()

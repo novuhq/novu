@@ -407,7 +407,10 @@ export function payloadPropertiesToJsonSchema(
 	return root as unknown as Record<string, unknown>;
 }
 
-/** Sets `node` at a dot-notation `path` under `root`, creating intermediate objects. */
+/**
+ * Sets `node` at a dot-notation `path` under `root`, creating intermediate objects.
+ * A required leaf also requires its parents, otherwise a payload missing the parent skips the nested check.
+ */
 function setNestedProperty(
 	root: JsonSchemaObjectNode,
 	path: string,
@@ -427,12 +430,17 @@ function setNestedProperty(
 				: { properties: {}, required: [], type: "object" };
 
 		cursor.properties[segment] = nextNode;
+		markRequired(cursor, segment, isRequired);
 		cursor = nextNode;
 	}
 
 	cursor.properties[leaf] = node;
-	if (isRequired && !cursor.required.includes(leaf)) {
-		cursor.required.push(leaf);
+	markRequired(cursor, leaf, isRequired);
+}
+
+function markRequired(parent: JsonSchemaObjectNode, key: string, isRequired: boolean): void {
+	if (isRequired && !parent.required.includes(key)) {
+		parent.required.push(key);
 	}
 }
 
