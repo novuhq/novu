@@ -236,6 +236,37 @@ describe('handleLangChainResult', () => {
       expect(ctx.reply).toHaveBeenCalledWith('plain answer');
     });
 
+    it('streams the model text followed by the replyFooter', async () => {
+      const ctx = fakeRuntimeCtx();
+      streams([new AIMessage({ id: 'ai_1', content: 'Created it' })]);
+
+      await handleLangChainResult(config({ replyFooter: () => '[Open](https://x)' }), ctx, undefined);
+
+      expect(ctx.sent).toHaveBeenCalledWith('Created it\n\n[Open](https://x)');
+    });
+
+    it('streams only the replyFooter when the model returns no text', async () => {
+      const ctx = fakeRuntimeCtx();
+      streams([new AIMessage({ id: 'ai_1', content: '' })]);
+
+      await handleLangChainResult(config({ replyFooter: () => 'footer' }), ctx, undefined);
+
+      expect(ctx.sent).toHaveBeenCalledWith('footer');
+    });
+
+    it('skips the replyFooter when formatReply is set', async () => {
+      const ctx = fakeRuntimeCtx();
+      streams([new AIMessage({ id: 'ai_1', content: 'Created it' })]);
+
+      await handleLangChainResult(
+        config({ formatReply: () => undefined, replyFooter: () => 'footer' }),
+        ctx,
+        undefined
+      );
+
+      expect(ctx.sent).toHaveBeenCalledWith('Created it');
+    });
+
     it('does not call formatReply when the model returns no text', async () => {
       const ctx = fakeRuntimeCtx();
       streams([new AIMessage({ id: 'ai_1', content: '' })]);

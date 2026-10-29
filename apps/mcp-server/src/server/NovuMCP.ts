@@ -37,6 +37,11 @@ export class NovuMCP extends McpAgent<Env, unknown, NovuProps> {
 		console.log("All Novu tools registered successfully");
 	}
 
+	/** Stored session token, so refresh requests can skip the probe when unchanged. */
+	async getSessionToken(): Promise<string | null> {
+		return this.props?.token ?? null;
+	}
+
 	/** Update session credentials without re-running tool registration. */
 	async updateSessionProps(props: NovuProps): Promise<void> {
 		await this.ctx.storage.put("props", props);

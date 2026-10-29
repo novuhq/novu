@@ -191,6 +191,11 @@ export interface AgentMessage {
   attachments?: AgentAttachment[];
   /** Set when the user quote-replied to a prior message (WhatsApp, Telegram, Teams). */
   replyTo?: AgentReplyToContext;
+  /**
+   * Client-supplied per-message metadata (web chat only), e.g. what the user has open in the UI.
+   * Sanitized to a flat map of string | number | boolean | null values; absent when empty.
+   */
+  metadata?: Record<string, unknown>;
 }
 
 /** Live state of the current conversation thread. */

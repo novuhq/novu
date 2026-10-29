@@ -92,6 +92,14 @@ function modelChunkText(message: BaseMessage, metadata: Record<string, unknown> 
   return textFromContent(message.content);
 }
 
+/** The `replyFooter` text, paragraph-separated from the streamed reply; none when `formatReply` buffers it. */
+function replyFooterText(config: LangChainAgentConfig, wroteText: boolean): string | undefined {
+  const footer = config.formatReply ? undefined : config.replyFooter?.();
+  if (!footer) return undefined;
+
+  return wroteText ? `\n\n${footer}` : footer;
+}
+
 /**
  * Replies with the model's text, model calls separated as paragraphs: as it streams, or whole once
  * `formatReply` formatted it. A gated tool ends the run: the text before it is kept, then the
@@ -141,6 +149,9 @@ async function replyAgentText(
 
     // Queued before the reply is sent, so the results are recorded ahead of it.
     emitExecutedToolResults(finalMessages, ctx, executed);
+
+    const footer = replyFooterText(config, wroteText);
+    if (footer) yield footer;
   }
 
   if (config.formatReply) {

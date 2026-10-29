@@ -119,6 +119,8 @@ export type WebChatRawMessage = {
   subscriberId: string;
   createdAt: string;
   contextKeys?: string[];
+  /** Sanitized client per-message metadata (scalar values only). */
+  metadata?: Record<string, string | number | boolean | null>;
 };
 
 export type WebChatRequestBody = {
@@ -147,4 +149,6 @@ export type WebChatRequestBody = {
   messageId?: string;
   /** Client idempotency key for action accepts (`idem_<shortId>`). */
   idempotencyKey?: string;
+  /** Per-message client metadata; sanitized to a flat scalar map before reaching the agent. */
+  metadata?: unknown;
 };

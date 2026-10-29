@@ -10,8 +10,7 @@
  * - Response-only fields (ids, slugs, timestamps, issues, controls metadata,
  *   variables, status, payloadExample, ...) are dropped.
  */
-
-import { toSlugIdentifier } from "./slug";
+import { SLUG_IDENTIFIER_REGEX } from "./slug";
 
 type JsonObject = Record<string, unknown>;
 
@@ -134,10 +133,12 @@ export function toStepRequest(step: WorkflowStepResponse): WorkflowStepRequest {
 	const request: WorkflowStepRequest = {
 		controlValues: normalizeControlValues(step.type, step.controlValues),
 		name: step.name,
-		stepId: toSlugIdentifier(step.stepId),
 		type: step.type,
 	};
 
+	// The API keeps an existing step's stepId by `_id` but rejects a non-slug one, so legacy ids are omitted.
+	if (step._id === undefined || SLUG_IDENTIFIER_REGEX.test(step.stepId))
+		request.stepId = step.stepId;
 	if (step._id !== undefined) request._id = step._id;
 	if (step.providerOverrides !== undefined) request.providerOverrides = step.providerOverrides;
 	if (step.integrationOverrides !== undefined) {

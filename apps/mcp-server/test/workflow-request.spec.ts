@@ -59,13 +59,14 @@ describe("toUpdateWorkflowRequest", () => {
 		});
 	});
 
-	it("slugifies step ids the API would reject", () => {
+	it("omits a legacy non-slug step id so the API keeps it by _id", () => {
 		const workflow = workflowResponseFixture();
 		workflow.steps[0].stepId = "Send In-App  Notice!";
 
 		const request = toUpdateWorkflowRequest(workflow);
 
-		expect(request.steps[0].stepId).toBe("send-in-app-notice");
+		expect(request.steps[0]).not.toHaveProperty("stepId");
+		expect(request.steps[0]._id).toBe("6650f0c2a1b2c3d4e5f60801");
 		expect(request.steps[1].stepId).toBe("email-step");
 	});
 

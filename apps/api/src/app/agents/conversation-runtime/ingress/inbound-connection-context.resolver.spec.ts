@@ -171,4 +171,46 @@ describe('InboundConnectionContextResolver', () => {
       expect(result.bridgeUrl).to.equal('https://workspace.example.com/api/novu');
     });
   });
+
+  describe('session scope (web chat)', () => {
+    function build(contexts: FakeContext[]) {
+      const channelConnectionRepository = { findOne: sinon.stub().resolves(null) };
+      const channelEndpointRepository = { findByPlatformIdentity: sinon.stub().resolves(null) };
+      const contextRepository = makeContextRepository(contexts);
+      const resolver = new InboundConnectionContextResolver(
+        channelConnectionRepository as any,
+        channelEndpointRepository as any,
+        contextRepository as any,
+        makeLogger() as any
+      );
+
+      return { resolver, channelConnectionRepository, channelEndpointRepository };
+    }
+
+    it('resolves the session contextKeys the same way connect-time context resolves', async () => {
+      const { resolver, channelConnectionRepository, channelEndpointRepository } = build([
+        makeContext('tenant', 'acme', undefined, { plan: 'pro' }),
+        makeContext('region', 'eu'),
+      ]);
+
+      const result = await resolver.resolve(
+        makeConfig(AgentPlatformEnum.WEB_CHAT),
+        { contextKeys: ['tenant:acme', 'region:eu'] },
+        'sub-1'
+      );
+
+      expect(result.context).to.deep.equal({ tenant: { id: 'acme', data: { plan: 'pro' } }, region: 'eu' });
+      expect(channelConnectionRepository.findOne.called).to.equal(false);
+      expect(channelEndpointRepository.findByPlatformIdentity.called).to.equal(false);
+    });
+
+    it('returns an empty context when the session has no contextKeys', async () => {
+      const { resolver } = build([makeContext('tenant', 'acme')]);
+      const config = makeConfig(AgentPlatformEnum.WEB_CHAT);
+
+      expect((await resolver.resolve(config, { contextKeys: [] }, 'sub-1')).context).to.equal(null);
+      expect((await resolver.resolve(config, {}, 'sub-1')).context).to.equal(null);
+      expect((await resolver.resolve(config, undefined, 'sub-1')).context).to.equal(null);
+    });
+  });
 });

@@ -1,5 +1,6 @@
 import type { AdapterPostableMessage, CardElement } from 'chat';
 import { customAlphabet } from 'nanoid';
+import type { WebChatRawMessage } from './types.js';
 
 const ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
 const nanoid = customAlphabet(ALPHABET);
@@ -87,6 +88,54 @@ export function extractCardPlainText(card: CardElement): string {
   return childText || title || '[Card]';
 }
 
+type PostableRecord = {
+  type?: string;
+  title?: string;
+  children?: CardElement['children'];
+  markdown?: string;
+  card?: CardElement;
+  files?: unknown[];
+  raw?: string;
+  messageId?: string;
+};
+
+function collectRichContent(record: PostableRecord): Record<string, unknown> {
+  const richContent: Record<string, unknown> = {};
+  if (record.card) {
+    richContent.card = record.card;
+  }
+  if (record.files?.length) {
+    richContent.files = record.files;
+  }
+
+  return richContent;
+}
+
+function parsePostableRecord(message: object): ReturnType<typeof parsePostableMessage> | undefined {
+  const record = message as PostableRecord;
+  const messageId = typeof record.messageId === 'string' ? record.messageId : undefined;
+
+  // chat-sdk `thread.post(card)` passes a bare CardElement for gate replies.
+  if (record.type === 'card') {
+    const card = message as CardElement;
+
+    return { content: extractCardPlainText(card), richContent: { card }, messageId };
+  }
+
+  const richContent = collectRichContent(record);
+  const text = typeof record.markdown === 'string' ? record.markdown : record.raw;
+
+  if (typeof text === 'string') {
+    return { content: text, richContent: Object.keys(richContent).length ? richContent : undefined, messageId };
+  }
+
+  if (record.card) {
+    return { content: extractCardPlainText(record.card), richContent, messageId };
+  }
+
+  return undefined;
+}
+
 export function parsePostableMessage(message: AdapterPostableMessage): {
   content: string;
   richContent?: Record<string, unknown>;
@@ -98,53 +147,53 @@ export function parsePostableMessage(message: AdapterPostableMessage): {
   }
 
   if (message && typeof message === 'object') {
-    const record = message as {
-      type?: string;
-      title?: string;
-      children?: CardElement['children'];
-      markdown?: string;
-      card?: CardElement;
-      files?: unknown[];
-      raw?: string;
-      messageId?: string;
-    };
-    const messageId = typeof record.messageId === 'string' ? record.messageId : undefined;
-
-    // chat-sdk `thread.post(card)` passes a bare CardElement for gate replies.
-    if (record.type === 'card') {
-      const card = message as CardElement;
-
-      return { content: extractCardPlainText(card), richContent: { card }, messageId };
-    }
-
-    const richContent: Record<string, unknown> = {};
-    if (record.card) {
-      richContent.card = record.card;
-    }
-    if (record.files?.length) {
-      richContent.files = record.files;
-    }
-
-    if (typeof record.markdown === 'string') {
-      return {
-        content: record.markdown,
-        richContent: Object.keys(richContent).length ? richContent : undefined,
-        messageId,
-      };
-    }
-
-    if (typeof record.raw === 'string') {
-      return {
-        content: record.raw,
-        richContent: Object.keys(richContent).length ? richContent : undefined,
-        messageId,
-      };
-    }
-
-    if (record.card) {
-      return { content: extractCardPlainText(record.card), richContent, messageId };
+    const parsed = parsePostableRecord(message);
+    if (parsed) {
+      return parsed;
     }
   }
 
   return { content: '' };
+}
+
+const MAX_METADATA_KEYS = 20;
+const MAX_METADATA_KEY_LENGTH = 64;
+const MAX_METADATA_STRING_LENGTH = 512;
+
+/**
+ * Reduces client-supplied per-message metadata to a flat map of scalars.
+ * Returns undefined when the input is not a plain object or nothing survives.
+ */
+export function sanitizeMessageMetadata(input: unknown): WebChatRawMessage['metadata'] {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+    return undefined;
+  }
+
+  const result: NonNullable<WebChatRawMessage['metadata']> = {};
+  let count = 0;
+
+  for (const [key, value] of Object.entries(input)) {
+    if (count >= MAX_METADATA_KEYS) {
+      break;
+    }
+
+    // JSON.parse yields an own `__proto__` key; assigning it would swap the result's prototype.
+    if (key === '__proto__' || key.length > MAX_METADATA_KEY_LENGTH) {
+      continue;
+    }
+
+    const isScalar =
+      value === null ||
+      typeof value === 'boolean' ||
+      (typeof value === 'number' && Number.isFinite(value)) ||
+      (typeof value === 'string' && value.length <= MAX_METADATA_STRING_LENGTH);
+    if (!isScalar) {
+      continue;
+    }
+
+    result[key] = value as string | number | boolean | null;
+    count += 1;
+  }
+
+  return count > 0 ? result : undefined;
 }

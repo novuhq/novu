@@ -69,6 +69,8 @@ export class WebChat extends BaseModule {
   #socket: Pick<BaseSocketInterface, 'connect'>;
   #liveSubscriberCount = 0;
   #runtimes = new Map<string, AgentConversationRuntime>();
+  /** Metadata of in-flight sends, keyed by idempotency key, so a retry replays the original request. */
+  #pendingMetadata = new Map<string, SendMessageArgs['metadata']>();
   /** Map key means a sync of that conversation is queued or running, so its live envelopes are buffered. */
   #syncQueues = new Map<string, ConversationSyncQueue>();
 
@@ -125,6 +127,7 @@ export class WebChat extends BaseModule {
     }
 
     this.#store.clear();
+    this.#pendingMetadata.clear();
     this.#syncQueues.clear();
     this.#runtimes.clear();
   }
@@ -442,6 +445,9 @@ export class WebChat extends BaseModule {
 
       const idempotencyKey = createMessageIdempotencyKey();
       const optimisticId = this.#store.appendSending(entry, args.text, idempotencyKey);
+      if (args.metadata) {
+        this.#pendingMetadata.set(idempotencyKey, args.metadata);
+      }
 
       return this.#deliverOutboundMessage(entry, {
         agentId: args.agentId,
@@ -520,6 +526,7 @@ export class WebChat extends BaseModule {
         text,
         conversationId: entry.conversationId ?? args.conversationId,
         agentHash: args.agentHash,
+        metadata: this.#pendingMetadata.get(message.idempotencyKey),
         optimisticId: args.messageId,
         idempotencyKey: message.idempotencyKey,
       });
@@ -555,6 +562,7 @@ export class WebChat extends BaseModule {
           conversationId: data.identifier,
           idempotencyKey: args.idempotencyKey,
         });
+        this.#pendingMetadata.delete(args.idempotencyKey);
 
         this.#requestCatchUp();
 
