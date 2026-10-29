@@ -8,7 +8,6 @@ import { DASHBOARD_HOME } from '@/components/dashboard/nav';
 import { Button, buttonClassName } from '@/components/ui/button';
 import { CopyField } from '@/components/ui/copy-field';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
-import type { HumanRegion } from '@/lib/human-accounts-api';
 import { cn } from '@/lib/utils';
 
 import { approveCliLoginAction, denyCliLoginAction } from './actions';
@@ -25,7 +24,6 @@ type CliLoginProps = {
   userCode: string;
   /** The computer the login was started on, as its CLI reported it. Untrusted, so it's only ever rendered as text. */
   machineName?: string;
-  region: HumanRegion;
   /** Claim token of a setup made without an account, when approving should move it into the account. */
   claim: string;
   /** The link asked to keep such a setup, but this account's agent is already in use. */
@@ -45,7 +43,7 @@ type View =
  * The card `login` opens: approve or deny the login, then what happened. The code and the computer's
  * name are there to compare with the terminal; nothing is approved until Approve is pressed.
  */
-export function CliLogin({ userCode, machineName, region, claim, cannotKeepSetup, email, expired }: CliLoginProps) {
+export function CliLogin({ userCode, machineName, claim, cannotKeepSetup, email, expired }: CliLoginProps) {
   const [view, setView] = useState<View>(expired ? { name: 'expired' } : { name: 'authorize' });
   const { ref, height } = useMeasuredHeight();
 
@@ -69,7 +67,6 @@ export function CliLogin({ userCode, machineName, region, claim, cannotKeepSetup
               <Authorize
                 userCode={userCode}
                 machineName={machineName}
-                region={region}
                 claim={claim}
                 cannotKeepSetup={cannotKeepSetup}
                 onDone={setView}
@@ -107,11 +104,11 @@ export function CliLogin({ userCode, machineName, region, claim, cannotKeepSetup
   );
 }
 
-type AuthorizeProps = Pick<CliLoginProps, 'userCode' | 'machineName' | 'region' | 'claim' | 'cannotKeepSetup'> & {
+type AuthorizeProps = Pick<CliLoginProps, 'userCode' | 'machineName' | 'claim' | 'cannotKeepSetup'> & {
   onDone: (view: View) => void;
 };
 
-function Authorize({ userCode, machineName, region, claim, cannotKeepSetup, onDone }: AuthorizeProps) {
+function Authorize({ userCode, machineName, claim, cannotKeepSetup, onDone }: AuthorizeProps) {
   const [typedCode, setTypedCode] = useState('');
   const [error, setError] = useState<string>();
   // Once the setup can't be kept, approving without it is the only way to log in from here.
@@ -142,7 +139,7 @@ function Authorize({ userCode, machineName, region, claim, cannotKeepSetup, onDo
 
     setPending('approve');
     startTransition(async () => {
-      const result = await approveCliLoginAction({ userCode: code, region, claim: keepsSetup ? claim : undefined });
+      const result = await approveCliLoginAction({ userCode: code, claim: keepsSetup ? claim : undefined });
       setPending(undefined);
 
       if (result.status === 'approved') {
@@ -159,7 +156,7 @@ function Authorize({ userCode, machineName, region, claim, cannotKeepSetup, onDo
   function deny() {
     setPending('deny');
     startTransition(async () => {
-      const result = await denyCliLoginAction({ userCode: code, region });
+      const result = await denyCliLoginAction({ userCode: code });
       setPending(undefined);
 
       if (result.status === 'denied') {

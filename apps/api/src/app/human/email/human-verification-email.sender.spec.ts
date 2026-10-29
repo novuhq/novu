@@ -6,7 +6,6 @@ import { HumanVerificationEmailSender } from './human-verification-email.sender'
 describe('HumanVerificationEmailSender', () => {
   const savedEnv = {
     HUMAN_DASHBOARD_URL: process.env.HUMAN_DASHBOARD_URL,
-    NOVU_REGION: process.env.NOVU_REGION,
     KEYLESS_ORGANIZATION_ID: process.env.KEYLESS_ORGANIZATION_ID,
   };
 
@@ -14,7 +13,6 @@ describe('HumanVerificationEmailSender', () => {
 
   beforeEach(() => {
     process.env.HUMAN_DASHBOARD_URL = 'https://agentinbox.md/';
-    process.env.NOVU_REGION = 'eu-central-1';
     delete process.env.KEYLESS_ORGANIZATION_ID;
 
     handlerSend = sinon.stub().resolves();
@@ -33,7 +31,7 @@ describe('HumanVerificationEmailSender', () => {
     }
   });
 
-  it('sends a verification link without a region, including from an EU API', async () => {
+  it('sends a link to the verify page on the Human dashboard', async () => {
     const sender = new HumanVerificationEmailSender(
       { findOne: sinon.stub().resolves({ _id: 'agent-1', name: 'Acme Ops' }) } as never,
       { findOne: sinon.stub().resolves(null) } as never,
@@ -61,8 +59,6 @@ describe('HumanVerificationEmailSender', () => {
     const mail = handlerSend.firstCall.args[0];
 
     expect(mail.html).to.include('https://agentinbox.md/verify/tok123');
-    expect(mail.html).to.not.include('region=');
     expect(mail.text).to.include('Verify this email: https://agentinbox.md/verify/tok123');
-    expect(mail.text).to.not.include('region=');
   });
 });

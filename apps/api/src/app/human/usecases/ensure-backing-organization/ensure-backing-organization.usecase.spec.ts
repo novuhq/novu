@@ -6,16 +6,6 @@ import { EnsureBackingOrganizationCommand } from './ensure-backing-organization.
 import { EnsureBackingOrganization, LOCK_WAIT_MS } from './ensure-backing-organization.usecase';
 
 describe('EnsureBackingOrganization', () => {
-  const originalRegion = process.env.NOVU_REGION;
-
-  afterEach(() => {
-    if (originalRegion === undefined) {
-      delete process.env.NOVU_REGION;
-    } else {
-      process.env.NOVU_REGION = originalRegion;
-    }
-  });
-
   function setup({ existingOrganization }: { existingOrganization?: 'complete' | 'without-environments' } = {}) {
     const humanBackingAccounts = {
       findOrCreate: sinon
@@ -104,7 +94,6 @@ describe('EnsureBackingOrganization', () => {
   });
 
   it('runs the normal organization setup the first time', async () => {
-    process.env.NOVU_REGION = 'us-east-1';
     const { usecase, humanBackingAccounts, syncExternalOrganization } = setup();
 
     const result = await usecase.execute(command);
@@ -123,7 +112,6 @@ describe('EnsureBackingOrganization', () => {
       organizationId: 'novu_org',
       userId: 'novu_user',
       environmentId: 'dev_env',
-      region: 'us',
     });
   });
 
@@ -138,7 +126,6 @@ describe('EnsureBackingOrganization', () => {
   });
 
   it('reuses the organization on later visits', async () => {
-    process.env.NOVU_REGION = 'eu-central-1';
     const { usecase, syncExternalOrganization, cacheService, heldLocks, analyticsService } = setup({
       existingOrganization: 'complete',
     });
@@ -147,7 +134,7 @@ describe('EnsureBackingOrganization', () => {
 
     expect(analyticsService.track.called).to.equal(false);
     expect(syncExternalOrganization.execute.called).to.equal(false);
-    expect(result).to.include({ organizationId: 'novu_org', environmentId: 'dev_env', region: 'eu' });
+    expect(result).to.include({ organizationId: 'novu_org', environmentId: 'dev_env' });
     expect(cacheService.eval.firstCall.args[1]).to.deep.equal(['human_backing_account_lock:{user_2AbC}']);
     expect(heldLocks.size).to.equal(0);
   });

@@ -70,14 +70,14 @@ describe('buildHumanVerificationEmail', () => {
   });
 
   it('adds the claim section only when a claim link is given', () => {
-    const claimUrl = 'https://gethuman.md/claim?token=a&region=eu';
+    const claimUrl = 'https://gethuman.md/claim?token=a';
     const withClaim = buildHumanVerificationEmail({ ...base, sender: {}, claimUrl });
     const without = buildHumanVerificationEmail({ ...base, sender: {} });
 
     expect(withClaim.html).to.include('Verify this email first');
     expect(withClaim.text).to.include('Verify this email first');
     expect(withClaim.html).to.include('Claim this setup');
-    expect(withClaim.html).to.include('https://gethuman.md/claim?token=a&amp;region=eu');
+    expect(withClaim.html).to.include(claimUrl);
     expect(withClaim.text).to.include(`Claim this setup: ${claimUrl}`);
     expect(without.html).to.not.include('Claim this setup');
     expect(without.text).to.not.include('Claim this setup');

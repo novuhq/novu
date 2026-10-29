@@ -92,14 +92,6 @@ export function VerifyPage({ apiUrl, token }: { apiUrl: string; token: string })
   return <FailedVerification reason={state.reason} />;
 }
 
-/**
- * A verification link this site can't open: one the EU API issued, as Agent Inbox's API only reaches the US
- * region. It shows as not valid, and its token is sent nowhere.
- */
-export function UnsupportedVerification() {
-  return <FailedVerification reason="invalid" />;
-}
-
 function FailedVerification({ reason }: { reason: FailedReason }) {
   const failed = failedCopy(reason);
 

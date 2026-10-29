@@ -4,18 +4,16 @@ import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 
 import { Button } from '@/components/ui/button';
-import type { HumanRegion } from '@/lib/human-accounts-api';
 
 import { type ClaimFormState, claimSetupAction } from './actions';
 
 /** A button instead of claiming on page load, so link previews and prefetching never claim a setup. */
-export function ClaimForm({ token, region }: { token: string; region: HumanRegion }) {
+export function ClaimForm({ token }: { token: string }) {
   const [state, formAction] = useActionState<ClaimFormState, FormData>(claimSetupAction, {});
 
   return (
     <form action={formAction}>
       <input type="hidden" name="token" value={token} />
-      <input type="hidden" name="region" value={region} />
       <SubmitButton />
       {state.error && (
         <p

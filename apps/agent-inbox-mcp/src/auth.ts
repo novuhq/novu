@@ -37,7 +37,7 @@ const ACCOUNT_SETUP_TIMEOUT_MS = 30_000;
  */
 const IDENTITY_TTL_SECONDS = 300;
 
-/** What is remembered about a token. An entry from before Agent Inbox was US only also has a `region`, unused now. */
+/** What is remembered about a token. */
 type Identity = { agentInboxUserId: string; email?: string; firstName?: string; lastName?: string };
 
 /**

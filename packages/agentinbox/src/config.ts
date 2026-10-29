@@ -84,7 +84,7 @@ export function saveConfig(config: CliConfig): void {
 
 /**
  * The API that `setup` and `login` save credentials for: `--api-url`, then INBOX_API_URL,
- * then the API the saved config already belongs to, so a later run keeps using the same region.
+ * then the API the saved config already belongs to, so a later run keeps using it.
  */
 export function resolveTargetApiUrl(apiUrlFlag: string | undefined, saved: CliConfig | null): string {
   return (apiUrlFlag || process.env.INBOX_API_URL?.trim() || saved?.apiUrl || DEFAULT_API_URL).replace(/\/$/, '');
