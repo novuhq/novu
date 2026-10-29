@@ -41,6 +41,7 @@ describe('detectChatSdkProject', () => {
 
   it('classifies a Chat SDK project without the Novu adapter as project', () => {
     const dir = makeTempDir();
+    // Older existing project. Detection only checks that the chat package is present.
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ dependencies: { chat: '4.40.0' } }));
 
     expect(detectChatSdkProject(dir).kind).toBe('project');
