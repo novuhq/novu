@@ -156,6 +156,18 @@ export type CardElementChartElement = {
   chart: CardElementChartDefinition;
 };
 
+/** Chat SDK `TextInput` as a card child. Teams renders it; other platforms show the label or omit it. */
+export type CardElementTextInputElement = {
+  type: 'text_input';
+  id: string;
+  label: string;
+  placeholder?: string;
+  initialValue?: string;
+  multiline?: boolean;
+  optional?: boolean;
+  maxLength?: number;
+};
+
 export type CardElementSectionElement = {
   type: 'section';
   children: CardElementChild[];
@@ -172,7 +184,8 @@ export type CardElementChild =
   | CardElementSectionElement
   | CardElementFieldsElement
   | CardElementTableElement
-  | CardElementChartElement;
+  | CardElementChartElement
+  | CardElementTextInputElement;
 
 export type CardElement = {
   type: 'card';
