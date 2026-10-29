@@ -82,7 +82,7 @@ export function registerSubscriberTools(server: McpServer, accessors: ToolAccess
 				context,
 				{
 					body,
-					endpoint: `/v2/subscribers/${subscriberId}`,
+					endpoint: `/v2/subscribers/${encodeURIComponent(subscriberId)}`,
 					identifier: subscriberId,
 					method: "PATCH",
 					successMessage: "updated subscriber",

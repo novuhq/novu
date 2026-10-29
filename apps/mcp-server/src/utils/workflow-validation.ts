@@ -1,4 +1,5 @@
 import type { ApiResponse } from "../types";
+import { ToolFactory } from "./tool-factory";
 import type { WorkflowStep } from "./workflow-schemas";
 
 /**
@@ -161,7 +162,5 @@ function schemaHasPath(schema: Record<string, unknown>, path: string[]): boolean
 }
 
 function errorResponse(text: string): ApiResponse {
-	return {
-		content: [{ text: `Error: ${text}`, type: "text" as const }],
-	};
+	return ToolFactory.errorResult({ message: `Error: ${text}`, status: 400 });
 }

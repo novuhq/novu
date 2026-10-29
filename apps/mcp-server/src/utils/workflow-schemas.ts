@@ -396,30 +396,44 @@ export function payloadPropertiesToJsonSchema(
 	};
 
 	for (const prop of properties) {
-		const isRequired = prop.isRequired !== false;
-		const segments = prop.name.split(".");
-		const leaf = segments[segments.length - 1];
-
-		let cursor: JsonSchemaObjectNode = root;
-		for (let i = 0; i < segments.length - 1; i++) {
-			const segment = segments[i];
-			const existing = cursor.properties[segment];
-			const nextNode: JsonSchemaObjectNode =
-				existing && existing.type === "object"
-					? existing
-					: { properties: {}, required: [], type: "object" };
-
-			cursor.properties[segment] = nextNode;
-			cursor = nextNode;
-		}
-
-		cursor.properties[leaf] = propertyDescriptorToJsonSchemaNode(prop);
-		if (isRequired && !cursor.required.includes(leaf)) {
-			cursor.required.push(leaf);
-		}
+		setNestedProperty(
+			root,
+			prop.name,
+			propertyDescriptorToJsonSchemaNode(prop),
+			prop.isRequired !== false,
+		);
 	}
 
 	return root as unknown as Record<string, unknown>;
+}
+
+/** Sets `node` at a dot-notation `path` under `root`, creating intermediate objects. */
+function setNestedProperty(
+	root: JsonSchemaObjectNode,
+	path: string,
+	node: JsonSchemaNode,
+	isRequired: boolean,
+): void {
+	const segments = path.split(".");
+	const leaf = segments[segments.length - 1];
+
+	let cursor = root;
+	for (let i = 0; i < segments.length - 1; i++) {
+		const segment = segments[i];
+		const existing = cursor.properties[segment];
+		const nextNode: JsonSchemaObjectNode =
+			existing && existing.type === "object"
+				? existing
+				: { properties: {}, required: [], type: "object" };
+
+		cursor.properties[segment] = nextNode;
+		cursor = nextNode;
+	}
+
+	cursor.properties[leaf] = node;
+	if (isRequired && !cursor.required.includes(leaf)) {
+		cursor.required.push(leaf);
+	}
 }
 
 function propertyDescriptorToJsonSchemaNode(
@@ -437,17 +451,16 @@ function propertyDescriptorToJsonSchemaNode(
 			return { properties: {}, required: [], type: "object" };
 		case "array": {
 			if (prop.arrayItemsType === "object") {
-				const itemProperties: Record<string, JsonSchemaNode> = {};
-				const required: string[] = [];
+				const items: JsonSchemaObjectNode = {
+					properties: {},
+					required: [],
+					type: "object",
+				};
 				for (const item of prop.arrayItemProperties ?? []) {
-					itemProperties[item.name] = { type: item.type };
-					required.push(item.name);
+					setNestedProperty(items, item.name, { type: item.type }, true);
 				}
 
-				return {
-					items: { properties: itemProperties, required, type: "object" },
-					type: "array",
-				};
+				return { items, type: "array" };
 			}
 
 			return { items: { type: prop.arrayItemsType }, type: "array" };

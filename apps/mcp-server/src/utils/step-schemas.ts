@@ -350,11 +350,14 @@ function createHttpKeyValuePairSchema() {
 }
 
 function createHttpResponsePropertySchema() {
-	return z.object({
-		type: z
-			.enum(["string", "number", "boolean", "integer", "array", "object"])
-			.describe("JSON Schema type for this property."),
-	});
+	// Passthrough keeps nested `properties`, `items` and `required`, so nested response fields survive a save.
+	return z
+		.object({
+			type: z
+				.enum(["string", "number", "boolean", "integer", "array", "object"])
+				.describe("JSON Schema type for this property."),
+		})
+		.passthrough();
 }
 
 function createHttpRequestControlSchema() {

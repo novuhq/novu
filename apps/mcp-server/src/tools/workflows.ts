@@ -7,6 +7,7 @@ import {
 	normalizeControlValues,
 	toUpdateWorkflowRequest,
 	type WorkflowResponse,
+	withCriticalPreferences,
 } from "../utils/workflow-request";
 import { apiError, assignOptional, workflowResult } from "../utils/workflow-results";
 import {
@@ -97,10 +98,9 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 
 			assignOptional(requestBody, {
 				agent: input.agent,
-				critical: input.critical,
 				description: input.description,
 				payloadSchema: resolvedPayloadSchema,
-				preferences: input.preferences,
+				preferences: withCriticalPreferences(input.preferences, input.critical),
 				severity: input.severity,
 				tags: input.tags,
 				validatePayload: input.validatePayload,
@@ -151,11 +151,13 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 				__source: input.__source,
 				active: input.active,
 				agent: input.agent,
-				critical: input.critical,
 				description: input.description,
 				isTranslationEnabled: input.isTranslationEnabled,
 				payloadSchema: resolvedPayloadSchema,
-				preferences: input.preferences,
+				preferences: withCriticalPreferences(
+					input.preferences ?? current.preferences,
+					input.critical,
+				),
 				severity: input.severity,
 				tags: input.tags,
 				validatePayload: input.validatePayload,

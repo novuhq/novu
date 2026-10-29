@@ -37,7 +37,7 @@ export function registerPreferenceTools(server: McpServer, accessors: ToolAccess
 				context,
 				{
 					body: requestBody,
-					endpoint: `/v2/subscribers/${subscriberId}/preferences`,
+					endpoint: `/v2/subscribers/${encodeURIComponent(subscriberId)}/preferences`,
 					formatSuccess: (data) =>
 						`Successfully updated subscriber preferences for ${subscriberId} ${scopeText}.\nUpdated channels: ${channelsList}\n\nResponse:\n${JSON.stringify(data, null, 2)}`,
 					identifier: subscriberId,
