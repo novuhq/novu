@@ -100,6 +100,36 @@ export function toUpdateWorkflowRequest(workflow: WorkflowResponse): UpdateWorkf
 	return request;
 }
 
+const CRITICAL_CHANNELS = ["in_app", "email", "sms", "push", "chat", "tool"] as const;
+
+/**
+ * The API has no `critical` field: a critical workflow is one whose subscriber-level
+ * preferences are read-only with every channel on. Returns `preferences` with `user`
+ * set from `critical`, or unchanged when `critical` is undefined.
+ */
+export function withCriticalPreferences<T extends { user?: unknown }>(
+	preferences: T | undefined,
+	critical: boolean | undefined,
+): T | undefined {
+	if (critical === undefined) return preferences;
+
+	return { ...preferences, user: criticalUserPreferences(critical, preferences?.user) } as T;
+}
+
+function criticalUserPreferences(critical: boolean, user: unknown): JsonObject | null {
+	if (critical) {
+		return {
+			all: { enabled: true, readOnly: true },
+			channels: Object.fromEntries(CRITICAL_CHANNELS.map((c) => [c, { enabled: true }])),
+		};
+	}
+
+	const existing = user as { all?: JsonObject } | null | undefined;
+	if (!existing) return null;
+
+	return { ...existing, all: { ...existing.all, readOnly: false } };
+}
+
 export function toStepRequest(step: WorkflowStepResponse): WorkflowStepRequest {
 	const request: WorkflowStepRequest = {
 		controlValues: normalizeControlValues(step.type, step.controlValues),

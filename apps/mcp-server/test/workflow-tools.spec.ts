@@ -56,6 +56,112 @@ describe("create_workflow", () => {
 		});
 	});
 
+	it("keeps nested HTTP response fields", async () => {
+		const api = fakeWorkflowsApi();
+		const responseBodySchema = {
+			properties: {
+				customer: {
+					properties: { id: { type: "string" } },
+					required: ["id"],
+					type: "object",
+				},
+			},
+			type: "object",
+		};
+
+		await callTool(await client(), "create_workflow", {
+			name: "Nested",
+			steps: [
+				{
+					controlValues: {
+						method: "GET",
+						responseBodySchema,
+						url: "https://example.com",
+					},
+					name: "Lookup",
+					type: "http_request",
+				},
+			],
+		});
+
+		expect(api.requests[0].body).toMatchObject({
+			steps: [{ controlValues: { responseBodySchema } }],
+		});
+	});
+
+	it("maps critical to read-only subscriber preferences", async () => {
+		const api = fakeWorkflowsApi();
+
+		await callTool(await client(), "create_workflow", {
+			critical: true,
+			name: "Password reset",
+			steps: [inAppStep],
+		});
+
+		const body = api.requests[0].body as Record<string, unknown>;
+		expect(body.critical).toBeUndefined();
+		expect(body).toMatchObject({
+			preferences: { user: { all: { enabled: true, readOnly: true } } },
+		});
+	});
+
+	it("builds nested properties for array items in dot notation", async () => {
+		const api = fakeWorkflowsApi();
+
+		await callTool(await client(), "create_workflow", {
+			name: "Orders",
+			payloadProperties: [
+				{
+					arrayItemProperties: [{ name: "address.city", type: "string" }],
+					arrayItemsType: "object",
+					name: "orders",
+					type: "array",
+				},
+			],
+			steps: [inAppStep],
+		});
+
+		expect(api.requests[0].body).toMatchObject({
+			payloadSchema: {
+				properties: {
+					orders: {
+						items: {
+							properties: {
+								address: {
+									properties: { city: { type: "string" } },
+									required: ["city"],
+								},
+							},
+						},
+					},
+				},
+			},
+		});
+	});
+
+	it("flags rejected step validation as an error", async () => {
+		const api = fakeWorkflowsApi();
+
+		const result = await callTool(await client(), "create_workflow", {
+			name: "Bad HTTP",
+			steps: [
+				{
+					controlValues: {
+						body: [{ key: "a", value: "b" }],
+						method: "GET",
+						url: "https://x.io",
+					},
+					name: "Call",
+					type: "http_request",
+				},
+			],
+		});
+
+		expect(result.isError).toBe(true);
+		expect(result.structuredContent).toMatchObject({ error: { status: 400 } });
+		expect(api.requests).toHaveLength(0);
+	});
+
 	it("rejects boolean channel preferences", async () => {
 		fakeWorkflowsApi();
 

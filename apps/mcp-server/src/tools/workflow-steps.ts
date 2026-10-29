@@ -16,6 +16,7 @@ import {
 	type UpdateWorkflowRequest,
 	type WorkflowResponse,
 	type WorkflowStepRequest,
+	withCriticalPreferences,
 } from "../utils/workflow-request";
 import { apiError, workflowResult } from "../utils/workflow-results";
 import {
@@ -294,10 +295,9 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 					...(tags !== undefined && { tags }),
 				};
 				if (critical !== undefined) {
-					updated.preferences = {
-						...request.preferences,
-						user: criticalPreferences(critical, request),
-					};
+					updated.preferences =
+						withCriticalPreferences(request.preferences, critical) ??
+						request.preferences;
 				}
 
 				return { message: "Updated workflow metadata", request: updated };
@@ -331,26 +331,6 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 			workflowId: workflowIdField,
 		}),
 	});
-}
-
-const CRITICAL_CHANNELS = ["in_app", "email", "sms", "push", "chat", "tool"] as const;
-
-/** Subscriber-level preferences: read-only and all channels on when critical. */
-function criticalPreferences(
-	critical: boolean,
-	request: UpdateWorkflowRequest,
-): Record<string, unknown> | null {
-	if (critical) {
-		return {
-			all: { enabled: true, readOnly: true },
-			channels: Object.fromEntries(CRITICAL_CHANNELS.map((c) => [c, { enabled: true }])),
-		};
-	}
-
-	const user = request.preferences.user as { all?: Record<string, unknown> } | null | undefined;
-	if (!user) return null;
-
-	return { ...user, all: { ...user.all, readOnly: false } };
 }
 
 async function mutateWorkflow(

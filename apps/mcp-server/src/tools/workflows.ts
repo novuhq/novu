@@ -3,7 +3,11 @@ import { z } from "zod";
 import { toSlugIdentifier } from "../utils/slug";
 import type { ToolAccessors } from "../utils/tool-accessors";
 import { type ApiCallResult, type ToolContext, ToolFactory } from "../utils/tool-factory";
-import { normalizeControlValues, type WorkflowResponse } from "../utils/workflow-request";
+import {
+	normalizeControlValues,
+	type WorkflowResponse,
+	withCriticalPreferences,
+} from "../utils/workflow-request";
 import { apiError, assignOptional, workflowResult } from "../utils/workflow-results";
 import {
 	createWorkflowInputSchema,
@@ -93,10 +97,9 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 
 			assignOptional(requestBody, {
 				agent: input.agent,
-				critical: input.critical,
 				description: input.description,
 				payloadSchema: resolvedPayloadSchema,
-				preferences: input.preferences,
+				preferences: withCriticalPreferences(input.preferences, input.critical),
 				severity: input.severity,
 				tags: input.tags,
 				validatePayload: input.validatePayload,
@@ -133,14 +136,13 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 				isTranslationEnabled: input.isTranslationEnabled ?? false,
 				name: input.name,
 				origin: input.origin,
-				preferences: input.preferences,
+				preferences: withCriticalPreferences(input.preferences, input.critical),
 				steps: input.steps.map(toStepBody),
 			};
 
 			assignOptional(requestBody, {
 				__source: input.__source,
 				agent: input.agent,
-				critical: input.critical,
 				description: input.description,
 				payloadSchema: resolvedPayloadSchema,
 				severity: input.severity,
