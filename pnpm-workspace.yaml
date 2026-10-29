@@ -82,7 +82,14 @@ overrides:
   # express (verdaccio, @nx/js dev tooling).
   proxy-addr@<2.0.8: ^2.0.8
   semver@>=7.0.0 <7.5.2: ^7.5.2
-  systeminformation@<5.31.7: ^5.31.7
+  # GHSA-3f7j-7jwc-fxfj (high) plus GHSA-7648-jmwf-vw7j (moderate) and
+  # GHSA-4vjg-vx72-qq4g (low): systeminformation command-injection / argument
+  # smuggling in several `getFoo` helpers via shell metacharacters. All three
+  # are patched in 5.33.16 (patch bump within the 5.x line). Widen the previous
+  # <5.31.7 floor so transitive consumers (@opentelemetry/host-metrics,
+  # nestjs-otel, @dotenvx/dotenvx > shadcn) pick up the fix. 5.33.17 and
+  # 5.33.18 land past the 72h minimumReleaseAge gate on the next run.
+  systeminformation@<5.33.16: ^5.33.16
   tar: 7.5.21
   tar-fs: '>=3.1.1'
   tough-cookie@<4.1.3: ^4.1.3
