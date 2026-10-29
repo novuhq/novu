@@ -4,6 +4,7 @@ import { type ComponentProps, memo, type ReactNode, useCallback, useEffect, useM
 import { useCopilotConnectContext } from '@/components/connect/copilot-connect-context';
 import { CopilotConnectProvider } from '@/components/connect/copilot-connect-provider';
 import { NOVU_COPILOT_AGENT_ID } from '@/config';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { registerCopilotEntry } from './copilot-entry-store';
@@ -213,6 +214,9 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   }, [isResumeBroken]);
   const pageContextRef = useRef(pageContext);
   pageContextRef.current = pageContext;
+  const { currentEnvironment } = useEnvironment();
+  const environmentIdRef = useRef(currentEnvironment?._id);
+  environmentIdRef.current = currentEnvironment?._id;
   const lastSentRef = useRef<{ text: string; metadata: ReturnType<typeof buildCopilotMetadata> } | null>(null);
 
   const sendMessage = useCallback(
@@ -230,7 +234,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       if (isNewChat) track(TelemetryEvent.COPILOT_CHAT_CREATED, { agentId: NOVU_COPILOT_AGENT_ID });
 
       setRunError(false);
-      const metadata = buildCopilotMetadata(pageContextRef.current);
+      const metadata = buildCopilotMetadata(pageContextRef.current, environmentIdRef.current);
       const label = pageContextRef.current?.workflowLabel;
       const userMessageIndex = chatRef.current.messages.filter((message) => message.role === 'user').length;
       if (label) setSentContextLabels((labels) => ({ ...labels, [userMessageIndex]: label }));
@@ -279,7 +283,10 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     const lastSent =
       lastSentRef.current ??
       (lastUserMessage
-        ? { text: getUserMessageText(lastUserMessage), metadata: buildCopilotMetadata(pageContextRef.current) }
+        ? {
+            text: getUserMessageText(lastUserMessage),
+            metadata: buildCopilotMetadata(pageContextRef.current, environmentIdRef.current),
+          }
         : null);
     if (!lastSent?.text) return;
 

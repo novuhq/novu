@@ -32,9 +32,14 @@ export type CopilotPageContext = {
   stepLabel?: string;
 };
 
-export function buildCopilotMetadata(context: CopilotPageContext | undefined): Record<string, string> {
+export function buildCopilotMetadata(
+  context: CopilotPageContext | undefined,
+  environmentId: string | undefined
+): Record<string, string> {
   const metadata: Record<string, string> = {};
 
+  // The hosted tenant context is shared across environments, so the agent reads the viewed one from here.
+  if (environmentId) metadata.environmentId = environmentId;
   if (context?.workflowId) metadata.workflowId = context.workflowId;
   if (context?.stepId) metadata.stepId = context.stepId;
 
