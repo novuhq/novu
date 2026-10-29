@@ -205,6 +205,7 @@ export function buildRepoSkillDisplayTitle(owner: string, repo: string, path: st
   return truncateWithEllipsis(`${owner}-${name}`, MAX_SKILL_DISPLAY_TITLE_LENGTH);
 }
 
+// `max` counts UTF-16 code units. A code point that does not fit is left out, so a surrogate pair is never split.
 function truncateWithEllipsis(value: string, max: number): string {
   if (value.length <= max) {
     return value;
@@ -418,7 +419,7 @@ async function streamTarballToParser(parsed: ParsedGithubUrl, onEntry: (ctx: Ent
 
     const parser = new Parser();
 
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing tar entry handler is outside this title-cut change
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: tar entry handling branches on abort, size, path, and skill files, and scores above the limit
     parser.on('entry', (entry: TarEntry) => {
       if (aborted) {
         entry.resume();
@@ -634,7 +635,7 @@ type RawTarEntry = {
  * Throws `Error` with user-facing messages on validation failures — callers
  * should wrap in `BadRequestException`.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing bundle discovery is outside this title-cut change
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: bundle discovery branches on the GitHub response, the tar parse, and basename matching, and scores above the limit
 export async function fetchAndDiscoverSkillBundles(
   parsed: ParsedGithubUrl,
   basenames: string[]
@@ -781,7 +782,7 @@ function findDeepestBundleRoot(entryPath: string, sortedRoots: string[]): string
   return deepest;
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing basename filter is outside this title-cut change
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: basename filtering branches on duplicates, missing names, and ambiguous paths, and scores above the limit
 function filterByBasenames(discovered: DiscoveredSkillBundle[], basenames: string[]): DiscoveredSkillBundle[] {
   const basenameToPaths = new Map<string, string[]>();
 

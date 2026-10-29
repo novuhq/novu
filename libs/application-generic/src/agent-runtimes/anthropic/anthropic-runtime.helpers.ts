@@ -51,6 +51,7 @@ export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// `max` counts UTF-16 code units. A code point that does not fit is left out, so a surrogate pair is never split.
 export function truncateWithEllipsis(value: string, max: number): string {
   if (value.length <= max) {
     return value;
