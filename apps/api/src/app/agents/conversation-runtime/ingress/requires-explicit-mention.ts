@@ -247,11 +247,6 @@ function collectSlackUserElements(value: unknown, ids: string[]): void {
 
 type SlackProse = string & { readonly __slackProse: unique symbol };
 
-/**
- * Chat SDK 4.43 `maskCodeSpans`. A closed inline span or fence becomes one
- * space, so `<@U` and `BOT>` cannot join into a mention. An unclosed span,
- * and an inline span that contains a newline, stay plain text.
- */
 function maskSlackCodeSpans(text: string): SlackProse {
   let result = '';
   let index = 0;
