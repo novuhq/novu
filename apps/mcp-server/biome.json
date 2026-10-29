@@ -1,0 +1,80 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+	"assist": {
+		"actions": {
+			"source": {
+				"useSortedKeys": "on"
+			}
+		},
+		"enabled": true
+	},
+	"files": {
+		"includes": ["**", "!worker-configuration.d.ts", "!wrangler.jsonc", "!dist"]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentWidth": 4,
+		"lineWidth": 100
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"complexity": {
+				"noStaticOnlyClass": "off"
+			},
+			"recommended": true,
+			"style": {
+				"noInferrableTypes": "error",
+				"noNonNullAssertion": "off",
+				"noParameterAssign": "error",
+				"noUnusedTemplateLiteral": "error",
+				"noUselessElse": "error",
+				"useAsConstAssertion": "error",
+				"useDefaultParameterLast": "error",
+				"useEnumInitializers": "error",
+				"useNumberNamespace": "error",
+				"useSelfClosingElements": "error",
+				"useSingleVarDeclarator": "error"
+			},
+			"suspicious": {
+				"noConfusingVoidType": "off",
+				"noDebugger": "off",
+				"noExplicitAny": "off",
+				"useIterableCallbackReturn": "off"
+			}
+		}
+	},
+	"overrides": [
+		{
+			"includes": ["src/tools/**", "src/utils/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"paths": {
+									"agents": "src/tools and src/utils ship as @novu/mcp-server/tools and run inside the Novu API (Node). Keep Worker-only code in src/server, src/oauth or src/index.ts.",
+									"wrangler": "src/tools and src/utils ship as @novu/mcp-server/tools and run inside the Novu API (Node). Keep Worker-only code in src/server, src/oauth or src/index.ts."
+								},
+								"patterns": [
+									{
+										"group": [
+											"agents/**",
+											"cloudflare:*",
+											"../server/**",
+											"../oauth/**",
+											"../index"
+										],
+										"message": "src/tools and src/utils ship as @novu/mcp-server/tools and run inside the Novu API (Node). Keep Worker-only code in src/server, src/oauth or src/index.ts."
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		}
+	],
+	"root": false
+}

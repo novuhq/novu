@@ -114,6 +114,8 @@ export const envValidators = {
   NOVU_TLS_CA_BASE64: str({ default: undefined }),
   NOVU_TLS_CA_FILE: str({ default: undefined }),
   JWT_SECRET: str(),
+  // Signs `Authorization: Internal <jwt>` loopback tokens (EE only). Empty disables the scheme.
+  NOVU_INTERNAL_AUTH_SECRET: str({ default: '' }),
   SENDGRID_API_KEY: str({ default: '' }),
   MONGO_AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_MAX_IDLE_TIME_IN_MS: num({ default: 1000 * 30 }),

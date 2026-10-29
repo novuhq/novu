@@ -3,8 +3,14 @@ import { ApiAuthSchemeEnum } from '@novu/shared';
 
 import { KEYLESS_ENVIRONMENT_PREFIX } from '../../inbox/utils/keyless.constants';
 
+/** `Authorization: Internal <jwt>`: a short-lived token Novu's own backend mints to act as a member (EE only). */
+export function isInternalAuthScheme(scheme: string | undefined): boolean {
+  return scheme === ApiAuthSchemeEnum.INTERNAL;
+}
+
 export function isEnvironmentScopedAuthScheme(scheme: ApiAuthSchemeEnum): boolean {
-  return scheme === ApiAuthSchemeEnum.API_KEY || scheme === ApiAuthSchemeEnum.KEYLESS;
+  // An `Internal` token is minted for one environment, so it cannot be pointed at another.
+  return scheme === ApiAuthSchemeEnum.API_KEY || scheme === ApiAuthSchemeEnum.KEYLESS || isInternalAuthScheme(scheme);
 }
 
 export function assertEnvironmentScopedAccess(
