@@ -182,17 +182,30 @@ function Thread() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const messages = chat?.messages ?? [];
   const showThinking = (isBusy || !!chat?.typing) && hasPendingReplyGap(messages);
+  const lastMessage = messages[messages.length - 1];
+  const pagination = chat?.pagination;
   let userIndex = 0;
 
+  // Keyed on the newest message (a new object on every streamed update), so loading older pages doesn't jump to the bottom.
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll on every message update while streaming
   useEffect(() => {
     const element = scrollRef.current;
     if (element) element.scrollTop = element.scrollHeight;
-  }, [messages, hasRunError, showThinking]);
+  }, [lastMessage, hasRunError, showThinking]);
 
   return (
     <div className="relative min-h-0 flex-1">
       <div ref={scrollRef} className="flex h-full flex-col gap-4 overflow-y-auto px-4 pb-4 pt-6">
+        {pagination?.hasMore && (
+          <button
+            type="button"
+            disabled={pagination.status === 'loading'}
+            onClick={() => void pagination.fetchMore()}
+            className="self-center text-xs leading-4 text-text-sub hover:text-text-strong hover:underline disabled:opacity-60"
+          >
+            {pagination.status === 'loading' ? 'Loading…' : 'Load earlier messages'}
+          </button>
+        )}
         {messages.map((message) => {
           if (message.role !== 'user') return <CopilotAssistantMessage key={message.id} message={message} />;
 
@@ -212,7 +225,8 @@ function Thread() {
 }
 
 export function CopilotPopover() {
-  const { isAvailable, isOpen, close, chat, sendMessage, startNewConversation, isBusy } = useCopilotWebChat();
+  const { isAvailable, isOpen, close, chat, sendMessage, startNewConversation, isBusy, hasRunError } =
+    useCopilotWebChat();
   const track = useTelemetry();
 
   if (!isOpen || !isAvailable) return null;
@@ -238,7 +252,7 @@ export function CopilotPopover() {
           <RiCloseLine className="size-3.5" />
         </HeaderButton>
       </div>
-      {hasMessages ? (
+      {hasMessages || hasRunError ? (
         <Thread />
       ) : chat?.isLoading ? (
         <div className="flex flex-1 items-center justify-center">

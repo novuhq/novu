@@ -206,12 +206,9 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     if (chat.conversationId) writeStoredConversationId(conversationScope, chat.conversationId);
   }, [conversationScope, chat.conversationId]);
 
-  // A stored conversation that fails to load opens a new chat. The stored id is kept, so a transient error
-  // can't drop the thread; the next conversation's id overwrites it.
+  // A stored conversation that fails to load stays selected: the error notice offers Retry (reload history), and
+  // New chat drops it. Abandoning it here would let a transient error replace the saved thread.
   const isResumeBroken = !!resumeConversationId && !!chat.error && !chat.isLoading && chat.messages.length === 0;
-  useEffect(() => {
-    if (isResumeBroken) setResumeConversationId(undefined);
-  }, [isResumeBroken]);
   const pageContextRef = useRef(pageContext);
   pageContextRef.current = pageContext;
   const { currentEnvironment } = useEnvironment();
@@ -259,8 +256,10 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const retry = useCallback(async () => {
     if (chatRef.current.isLoading) return;
 
-    // Reconnect catch-up failed, so the run state is stale: reload the thread instead of resending the edit.
-    if (chatRef.current.catchUpError) {
+    // Reconnect catch-up or the resumed history load failed: reload the thread instead of resending the edit.
+    const isHistoryBroken =
+      !!resumeConversationIdRef.current && !!chatRef.current.error && chatRef.current.messages.length === 0;
+    if (chatRef.current.catchUpError || isHistoryBroken) {
       setRunError(false);
       await chatRef.current.refetch();
 
@@ -314,7 +313,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   useEffect(() => (isEntryEnabled ? registerCopilotEntry(open) : undefined), [isEntryEnabled, open]);
 
   // `chat.error` stays set while a failed send is retried, so failures are read from the run and the message instead.
-  const hasRunError = runError || !!chat.catchUpError || !!getFailedSend(chat.messages);
+  const hasRunError = runError || isResumeBroken || !!chat.catchUpError || !!getFailedSend(chat.messages);
   const isBusy = !hasRunError && (chat.isRunning || (awaitingReply && hasPendingReplyGap(chat.messages)));
   isBusyRef.current = isBusy;
 
