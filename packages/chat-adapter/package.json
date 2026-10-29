@@ -46,7 +46,7 @@
     "check:fix": "biome check --write ."
   },
   "dependencies": {
-    "@chat-adapter/shared": "4.40.0"
+    "@chat-adapter/shared": "4.43.0"
   },
   "peerDependencies": {
     "chat": "^4.40.0",
@@ -58,7 +58,7 @@
     }
   },
   "devDependencies": {
-    "@chat-adapter/state-memory": "4.40.0",
+    "@chat-adapter/state-memory": "4.43.0",
     "@novu/agent-event-protocol": "workspace:*",
     "@types/react": "^19.0.0",
     "rimraf": "~3.0.2",
