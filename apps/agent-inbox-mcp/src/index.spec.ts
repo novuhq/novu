@@ -261,6 +261,29 @@ describe('the Agent Inbox MCP server', () => {
     );
   });
 
+  it('spells out all three hints on every tool, as OpenAI’s app review requires', async () => {
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(rpc('tools/list', {}), env, ctx);
+    const { result } = (await response.json()) as {
+      result: { tools: Array<{ name: string; annotations?: Record<string, boolean> }> };
+    };
+
+    // The review blocks a tool that leaves one out, even destructiveHint on a tool that only reads.
+    expect(Object.fromEntries(result.tools.map((tool) => [tool.name, tool.annotations]))).toEqual({
+      inbox_setup: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+      inbox_send: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+      inbox_reply: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+      inbox_wait: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
+      contact_invite: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+      contact_list: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      inbox_list: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      inbox_show: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      inbox_read: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+      inbox_resolve: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    });
+  });
+
   it('asks the owner of the account for approval through the Dashboard API', async () => {
     const calls = stubBackends({ status: 'approved', response: { type: 'option', respondedBy: 'Dima' } as never });
     const { env, ctx } = setup();
