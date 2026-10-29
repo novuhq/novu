@@ -22,8 +22,7 @@
     "@novu/framework": "workspace:*",
     "@novu/shared": "workspace:*",
     "@sentry/node": "^10.63.0",
-    "langchain": "^1.2.16",
-    "zod": "^3.23.8"
+    "langchain": "^1.2.16"
   },
   "devDependencies": {
     "@nestjs/testing": "11.1.27",
