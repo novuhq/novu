@@ -16,6 +16,7 @@ import {
   buildCopilotMetadata,
   type CopilotPageContext,
   getFailedSend,
+  getUserMessageText,
   hasPendingReplyGap,
   readStoredConversationId,
   writeStoredConversationId,
@@ -236,15 +237,31 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       lastSentRef.current = { text: trimmed, metadata };
       setAwaitingReply(true);
       const { error } = await chatRef.current.sendMessage({ text: trimmed, metadata });
-      if (error) setAwaitingReply(false);
+      if (!error) return true;
 
-      return true;
+      setAwaitingReply(false);
+      // A send rejected before it reached the thread (e.g. the session failed to start) leaves no failed message to retry,
+      // so surface the error and let the composer keep the prompt.
+      const savedUserMessages = chatRef.current.messages.filter((message) => message.role === 'user').length;
+      if (savedUserMessages > userMessageIndex) return true;
+
+      setRunError(true);
+
+      return false;
     },
     [track]
   );
 
   const retry = useCallback(async () => {
     if (chatRef.current.isLoading) return;
+
+    // Reconnect catch-up failed, so the run state is stale: reload the thread instead of resending the edit.
+    if (chatRef.current.catchUpError) {
+      setRunError(false);
+      await chatRef.current.refetch();
+
+      return;
+    }
 
     // A send that never got accepted is replayed with its original idempotency key, so a lost response can't apply the edit twice.
     // Checked first: the failed message is in the thread even when `lastSentRef` was lost to a reload.
@@ -258,8 +275,13 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       return;
     }
 
-    const lastSent = lastSentRef.current;
-    if (!lastSent) return;
+    // After a reload `lastSentRef` is empty; the stored conversation is scoped to this workflow, so rebuild from the page.
+    const lastSent =
+      lastSentRef.current ??
+      (lastUserMessage
+        ? { text: getUserMessageText(lastUserMessage), metadata: buildCopilotMetadata(pageContextRef.current) }
+        : null);
+    if (!lastSent?.text) return;
 
     setRunError(false);
     setAwaitingReply(true);
@@ -285,7 +307,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   useEffect(() => (isEntryEnabled ? registerCopilotEntry(open) : undefined), [isEntryEnabled, open]);
 
   // `chat.error` stays set while a failed send is retried, so failures are read from the run and the message instead.
-  const hasRunError = runError || !!getFailedSend(chat.messages);
+  const hasRunError = runError || !!chat.catchUpError || !!getFailedSend(chat.messages);
   const isBusy = !hasRunError && (chat.isRunning || (awaitingReply && hasPendingReplyGap(chat.messages)));
   isBusyRef.current = isBusy;
 
