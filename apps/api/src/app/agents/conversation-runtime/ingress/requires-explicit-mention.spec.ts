@@ -351,6 +351,16 @@ describe('messageMentionsOtherHuman', () => {
     ).to.equal(false);
   });
 
+  it('ignores a Slack teammate id written only in inline code when the bot user id is unknown', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: 'see `<@U99>`', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        undefined
+      )
+    ).to.equal(false);
+  });
+
   it('ignores a Slack teammate id written only in inline code', () => {
     expect(
       messageMentionsOtherHuman(
