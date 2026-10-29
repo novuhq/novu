@@ -227,6 +227,21 @@ describe("workflow step tools", () => {
 
 			expect(api.puts[0].body!.steps[0].controlValues).not.toHaveProperty("skip");
 		});
+
+		it("rejects a bare variable and an empty and/or group, which the dashboard shows as no conditions", async () => {
+			const api = fakeWorkflowsApi();
+
+			for (const skip of [{ var: "payload.isTest" }, { and: [] }, { or: [] }]) {
+				const result = await callTool(await client(), "update_workflow_step_conditions", {
+					skip,
+					stepId: "in-app-step",
+					workflowId: "welcome",
+				});
+
+				expect(result.isError).toBe(true);
+			}
+			expect(api.requests).toHaveLength(0);
+		});
 	});
 
 	describe("remove_workflow_step", () => {
