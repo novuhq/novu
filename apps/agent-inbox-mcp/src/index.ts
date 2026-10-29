@@ -20,6 +20,7 @@ import { registerTools } from './tools';
 const SERVER = { name: 'agent-inbox', version: '0.0.1' };
 const DEFAULT_DOCS_URL = 'https://www.npmjs.com/package/@agentinbox/cli';
 const RESOURCE_METADATA_PATH = '/.well-known/oauth-protected-resource';
+const OPENAI_APPS_CHALLENGE_PATH = '/.well-known/openai-apps-challenge';
 const CONNECTIONS_PATH = /^\/connections\/([^/]+)$/;
 
 const CORS = {
@@ -50,6 +51,10 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
 
   if (url.pathname.startsWith('/.well-known/oauth-authorization-server')) {
     return authorizationServerMetadata(env);
+  }
+
+  if (url.pathname === OPENAI_APPS_CHALLENGE_PATH) {
+    return openAiAppsChallenge(env);
   }
 
   const connections = CONNECTIONS_PATH.exec(url.pathname);
@@ -170,6 +175,18 @@ async function authorizationServerMetadata(env: Env): Promise<Response> {
   const response = await fetch(`${issuer}/.well-known/oauth-authorization-server`);
 
   return response.ok ? json(await response.json()) : json({ error: 'sign_in_unavailable' }, 502);
+}
+
+/** For OpenAI, to check this domain is ours before the ChatGPT app goes out: the token alone, as plain text. */
+function openAiAppsChallenge(env: Env): Response {
+  const token = env.OPENAI_APPS_CHALLENGE?.trim();
+  if (!token) {
+    return json({ error: 'not_found' }, 404);
+  }
+
+  return new Response(token, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' },
+  });
 }
 
 function authFailure(error: AuthError, url: URL): Response {
