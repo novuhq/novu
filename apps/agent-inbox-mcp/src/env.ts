@@ -18,6 +18,11 @@ export type Env = {
   NOVU_API_URL?: string;
   /** Where a person who opens the server's address in a browser is sent. */
   DOCS_URL?: string;
+  /**
+   * The token OpenAI gives to verify the domain for the ChatGPT app, served as plain text at
+   * `/.well-known/openai-apps-challenge`. Without one that address is not found.
+   */
+  OPENAI_APPS_CHALLENGE?: string;
   /** Remembers which AI tools signed in, and for a few minutes who a token belongs to. Optional. */
   CONNECTIONS?: KVNamespace;
 };

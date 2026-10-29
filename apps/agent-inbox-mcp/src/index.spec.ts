@@ -54,6 +54,24 @@ describe('the Agent Inbox MCP server', () => {
     expect(await response.json()).toMatchObject({ resource: ORIGIN, authorization_servers: [ISSUER] });
   });
 
+  it('shows OpenAI the domain is ours with its token alone, as plain text, to anyone', async () => {
+    const { env, ctx } = setup({ OPENAI_APPS_CHALLENGE: 'openai-token' });
+
+    const response = await worker.fetch(new Request(`${ORIGIN}/.well-known/openai-apps-challenge`), env, ctx);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('text/plain; charset=utf-8');
+    expect(await response.text()).toBe('openai-token');
+  });
+
+  it('has no OpenAI token to show on a domain without one', async () => {
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(new Request(`${ORIGIN}/.well-known/openai-apps-challenge`), env, ctx);
+
+    expect(response.status).toBe(404);
+  });
+
   it('turns away a token Clerk does not know', async () => {
     const { env, ctx } = setup();
 

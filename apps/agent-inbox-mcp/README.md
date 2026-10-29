@@ -56,6 +56,7 @@ Cursor's agent runtime is Cursor only by its User-Agent (`Cursor/1.0.0`, with th
 | `AGENT_INBOX_API_URL` | variable | The Agent Inbox Dashboard API, which every tool calls: `https://www.agentinbox.md/api` (staging `https://staging.agentinbox.md/api`, local `http://localhost:4300/api`). Without it the server answers `503`. |
 | `NOVU_API_URL` | variable | The Novu API of the US region, used to open an account and read its key with the dashboard's secret. |
 | `DOCS_URL` | variable | Where a person who opens the address in a browser is sent. |
+| `OPENAI_APPS_CHALLENGE` | variable | The token OpenAI gives to verify the domain for the ChatGPT app. The server returns it as plain text at `/.well-known/openai-apps-challenge`, without sign-in. Set on staging and production; without it that address answers `404`. |
 | `AGENT_INBOX_DASHBOARD_API_SECRET` | secret | The secret the Agent Inbox dashboard shares with the Novu API. |
 | `CLERK_SECRET_KEY` | secret | The Agent Inbox Clerk app's secret key, to ask Clerk which sign-in app a token was issued to. Optional: without it Grok Bot reads as Cursor. |
 | `CONNECTIONS` | KV namespace | Remembers connected tools, for five minutes whose token is whose, and for 30 days which host each sign-in app is. Optional: without it nothing reads as connected. `wrangler dev` keeps the local one in `.wrangler/state`. |
