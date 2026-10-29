@@ -52,7 +52,10 @@ async function handleMcpRequest(
 		return unauthorizedResponse(oauth);
 	}
 
-	await syncSessionProps(env, request, props);
+	const sync = await syncSessionProps(env, request, props, oauth);
+	if (sync) {
+		return sync.reject;
+	}
 
 	const gate = await gateInitializeWithOAuthProbe(request, props.token, env.NOVU_API_URL, oauth);
 	if ("reject" in gate) {
