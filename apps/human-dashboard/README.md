@@ -81,7 +81,8 @@ host page's "sign in to get your code" leads.
 In the dashboard the box under the picker has a tab for each way a host has (`src/lib/host-ways.ts`), and opens
 on the first: for Claude Code and Codex their plugin (one install brings the skills and the inbox tools), and for
 Cursor and OpenCode the MCP server in their own config, then the commands; for any other host that runs commands, the
-commands (one paste, no sign-in, and the code connects it at once); for Claude and ChatGPT, the server added in the
+commands (one paste, no sign-in, and the code connects it at once), then for Hermes the MCP server in its own config
+(it often runs on a server, with no browser there to sign in with); for Claude and ChatGPT, the server added in the
 app's settings, then a prompt to paste once it's there. Grok Bot adds the server itself when asked, so a prompt is all it gets. A host with one way still has
 its one tab, so every host's box looks the same. Only the chat apps get a prompt: a coding agent's own permission
 checks (Claude Code's auto mode) stop it from saving a key and installing a skill on a pasted request, so the

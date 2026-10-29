@@ -245,13 +245,15 @@ function actionOf(host: Host, way: HostWay, code: ConnectCodeState, details: Det
     return { kind: 'link', label: alternative.installLink.label, href: alternative.installLink.href(details.mcpUrl) };
   }
 
-  // A host that adds the server with a command copies that and its sign-in; any other copies its config.
+  // A host that adds the server with a command copies that, with its sign-in command where it has one (OpenCode;
+  // Hermes signs in within the first); any other copies its config.
   const commands = alternative?.kind === 'mcp-config' && alternative.addCommand !== undefined;
+  const what = commands ? (alternative?.signInCommand ? 'commands' : 'command') : 'config';
 
   return {
     kind: 'copy',
-    label: commands ? 'Copy commands' : 'Copy config',
-    copyLabel: commands ? 'Copy the commands' : 'Copy the config',
+    label: `Copy ${what}`,
+    copyLabel: `Copy the ${what}`,
     value: mcpScript(host, details.mcpUrl).copy,
   };
 }
