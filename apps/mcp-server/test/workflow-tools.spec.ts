@@ -172,6 +172,34 @@ describe("create_workflow", () => {
 		});
 	});
 
+	it("keeps an explicitly optional parent optional, whichever entry comes first", async () => {
+		const parent = { isRequired: false, name: "order", type: "object" };
+		const child = { name: "order.total", type: "number" };
+
+		for (const payloadProperties of [
+			[parent, child],
+			[child, parent],
+		]) {
+			const api = fakeWorkflowsApi();
+
+			await callTool(await client(), "create_workflow", {
+				name: "Orders",
+				payloadProperties,
+				steps: [inAppStep],
+			});
+
+			const schema = (api.requests[0].body as { payloadSchema: Record<string, unknown> })
+				.payloadSchema;
+			expect(schema).toMatchObject({
+				properties: {
+					order: { properties: { total: { type: "number" } }, required: ["total"] },
+				},
+				required: [],
+			});
+			vi.unstubAllGlobals();
+		}
+	});
+
 	it("flags rejected step validation as an error", async () => {
 		const api = fakeWorkflowsApi();
 

@@ -395,14 +395,10 @@ export function payloadPropertiesToJsonSchema(
 		required: [],
 		type: "object",
 	};
+	const declared = new Map(properties.map((prop) => [prop.name, prop.isRequired !== false]));
 
 	for (const prop of properties) {
-		setNestedProperty(
-			root,
-			prop.name,
-			propertyDescriptorToJsonSchemaNode(prop),
-			prop.isRequired !== false,
-		);
+		setNestedProperty(root, prop.name, propertyDescriptorToJsonSchemaNode(prop), declared);
 	}
 
 	return root as unknown as Record<string, unknown>;
@@ -410,16 +406,18 @@ export function payloadPropertiesToJsonSchema(
 
 /**
  * Sets `node` at a dot-notation `path` under `root`, creating intermediate objects.
- * A required leaf also requires its parents, otherwise a payload missing the parent skips the nested check.
+ * A path listed in `declared` keeps its own isRequired. Any other parent is required when the
+ * level below it is, otherwise a payload missing the parent skips the nested check.
  */
 function setNestedProperty(
 	root: JsonSchemaObjectNode,
 	path: string,
 	node: JsonSchemaNode,
-	isRequired: boolean,
+	declared: ReadonlyMap<string, boolean> = new Map(),
 ): void {
 	const segments = path.split(".");
 	const leaf = segments[segments.length - 1];
+	const parents: JsonSchemaObjectNode[] = [];
 
 	let cursor = root;
 	for (let i = 0; i < segments.length - 1; i++) {
@@ -431,12 +429,22 @@ function setNestedProperty(
 				: { properties: {}, required: [], type: "object" };
 
 		cursor.properties[segment] = nextNode;
-		markRequired(cursor, segment, isRequired);
+		parents.push(cursor);
 		cursor = nextNode;
 	}
 
-	cursor.properties[leaf] = node;
-	markRequired(cursor, leaf, isRequired);
+	// An object listed after its children keeps them.
+	const existing = cursor.properties[leaf];
+	if (!(existing?.type === "object" && node.type === "object")) {
+		cursor.properties[leaf] = node;
+	}
+	parents.push(cursor);
+
+	let isRequired = true;
+	for (let i = segments.length - 1; i >= 0; i--) {
+		isRequired = declared.get(segments.slice(0, i + 1).join(".")) ?? isRequired;
+		markRequired(parents[i], segments[i], isRequired);
+	}
 }
 
 function markRequired(parent: JsonSchemaObjectNode, key: string, isRequired: boolean): void {
@@ -466,7 +474,7 @@ function propertyDescriptorToJsonSchemaNode(
 					type: "object",
 				};
 				for (const item of prop.arrayItemProperties ?? []) {
-					setNestedProperty(items, item.name, { type: item.type }, true);
+					setNestedProperty(items, item.name, { type: item.type });
 				}
 
 				return { items, type: "array" };
