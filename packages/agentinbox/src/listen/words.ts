@@ -209,9 +209,44 @@ export const KEY_CHANGED_MESSAGE = 'The key changed on agentinbox.md. Connect ag
 /** Why `listen` won't start on a keyless setup: its few free messages would go on the first runs. */
 export const NEEDS_ACCOUNT_MESSAGE = `Listening needs an Agent Inbox account: this computer has a keyless setup, and listening would use up its free messages fast. Run \`${CLI_COMMAND} login\` to claim it, then listen again.`;
 
-/** What `listen run` says and keeps when this computer was connected anew since listening was turned on. */
+/** What the listener says and keeps when this computer was connected anew since listening was turned on. */
 export function connectionChangedMessage(host: string): string {
   return `This computer was connected anew since listening was turned on here, so it stopped: nothing left for the old connection runs. Turn it on again with: ${CLI_COMMAND} listen ${host}`;
+}
+
+/** "ANTHROPIC_API_KEY", "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY". */
+function names(variables: string[]): string {
+  return variables.length > 1 ? `${variables.slice(0, -1).join(', ')} and ${variables.at(-1)}` : (variables[0] ?? '');
+}
+
+/**
+ * Why `listen` won't listen in the background: the host works in this shell, but not with the variables the
+ * background program gets, often because it signs in with a secret only the shell has.
+ */
+export function backgroundSignInMessage(input: {
+  hostName: string;
+  hostId: string;
+  secrets: string[];
+  why: string;
+}): string {
+  const shellOnly = input.secrets.length
+    ? `${input.hostName} signs in here with ${names(input.secrets)} from this shell, which listening in the background doesn’t get: anyone on this computer can read the background service’s file. Without ${input.secrets.length > 1 ? 'them' : 'it'}: ${input.why}`
+    : `${input.hostName} works in this shell, but not the way listening in the background starts it: ${input.why}`;
+
+  return `${shellOnly} Or keep it listening in this terminal: ${CLI_COMMAND} listen ${input.hostId} --foreground`;
+}
+
+/**
+ * Why the host may not sign in in the background without the shell's secrets: it reaches a provider that it signs
+ * in to its own way, and only a run tells whether it can.
+ */
+export function uncheckedSignInMessage(hostName: string, provider: string, secrets: string[]): string {
+  return `${hostName} can reach ${provider} only with a sign-in it finds on this computer, which isn’t checked before it runs. If it has one, run this again with ${secrets.length > 1 ? 'them' : 'it'} unset.`;
+}
+
+/** Said before the operator is asked: in the background the host signs in its own way, not with these secrets. */
+export function backgroundSecretsWarning(hostName: string, secrets: string[]): string {
+  return `${hostName} signs in here with ${names(secrets)} from this shell, which listening in the background doesn’t get: there it uses the sign-in it has without ${secrets.length > 1 ? 'them' : 'it'}. To use ${secrets.length > 1 ? 'them' : 'it'}, listen in this terminal with --foreground.`;
 }
 
 /** What `listen` and `listen status` say while the operator has the agent paused. */

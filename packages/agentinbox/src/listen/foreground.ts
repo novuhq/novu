@@ -4,6 +4,15 @@ import { join } from 'node:path';
 import { listenDir } from './state';
 
 /**
+ * How long a listener in a terminal may take to stop: it stops its host's run first (Claude Code gets up to 20
+ * seconds), closes the host (up to 10 more), and lets go of the lease.
+ */
+const SHUTDOWN_MS = 45_000;
+
+/** How long a listener that was killed may take to be gone. */
+const KILLED_MS = 5_000;
+
+/**
  * The listener that runs in a terminal (`listen <host> --foreground`), by its process: `listen stop`, and listening
  * turned on again, stop it first, so two never hold the same lease and answer the same messages.
  */
@@ -74,9 +83,11 @@ export const fileForeground: ForegroundStore = {
 
 /**
  * Stops a listener running in a terminal here, if there is one, and waits for it to end: it finishes its run and
- * lets go of the lease first. False when there was none.
+ * lets go of the lease first. One still running after `timeoutMs` is killed: left to finish later, it would let
+ * go of the next listener's lease, which is for the same computer and host, and write over its state. False when
+ * there was none.
  */
-export async function stopForeground(store: ForegroundStore, timeoutMs = 10_000): Promise<boolean> {
+export async function stopForeground(store: ForegroundStore, timeoutMs = SHUTDOWN_MS): Promise<boolean> {
   const pid = store.running();
   if (pid === null) {
     return false;
@@ -88,11 +99,29 @@ export async function stopForeground(store: ForegroundStore, timeoutMs = 10_000)
     return false;
   }
 
-  const deadline = Date.now() + timeoutMs;
-  while (isAlive(pid) && Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, 100));
+  // Still the listener it was: a process that ended meanwhile leaves its number to whatever starts next.
+  if (!(await ended(pid, timeoutMs)) && store.running() === pid) {
+    try {
+      process.kill(pid, 'SIGKILL');
+    } catch {
+      // It ended just now.
+    }
+    await ended(pid, KILLED_MS);
   }
   store.release(pid);
+
+  return true;
+}
+
+/** Waits up to `ms` for the process to end; whether it did. */
+async function ended(pid: number, ms: number): Promise<boolean> {
+  const deadline = Date.now() + ms;
+  while (isAlive(pid)) {
+    if (Date.now() >= deadline) {
+      return false;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
 
   return true;
 }

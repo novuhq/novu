@@ -266,7 +266,30 @@ describe('claudeCode.check', () => {
       program: { command: join(bin, 'claude'), args: [] },
       version: '2.1.310',
       warnings: [],
+      secrets: [],
     });
+  });
+
+  it('names the secrets from the shell it signs in with, to the provider it reaches', () => {
+    const bin = installFake();
+    const shell = {
+      PATH: bin,
+      HOME: dir,
+      ANTHROPIC_API_KEY: 'sk-ant-secret',
+      AWS_ACCESS_KEY_ID: 'AKIA',
+      AWS_SECRET_ACCESS_KEY: 'secret',
+    };
+
+    expect(claudeCode.check(dir, shell)).toMatchObject({ ok: true, secrets: ['ANTHROPIC_API_KEY'] });
+    expect(claudeCode.check(dir, { ...shell, ANTHROPIC_API_KEY: ' ' })).toMatchObject({ ok: true, secrets: [] });
+    // Bedrock says it is signed in whatever it has: it names the provider, as a sign-in that isn't checked.
+    const bedrock = claudeCode.check(dir, { ...shell, CLAUDE_CODE_USE_BEDROCK: '1' });
+    expect(bedrock).toMatchObject({ secrets: ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'] });
+    expect(bedrock.ok && bedrock.provider).toBe('Amazon Bedrock');
+    // A gateway signs in for it.
+    expect(
+      claudeCode.check(dir, { ...shell, CLAUDE_CODE_USE_BEDROCK: '1', CLAUDE_CODE_SKIP_BEDROCK_AUTH: 'true' })
+    ).toMatchObject({ ok: true, secrets: [] });
   });
 
   it('says how to install Claude Code when it isn’t there', () => {
@@ -328,6 +351,49 @@ describe('claudeCode.check', () => {
 
   it('doesn’t warn for a project without an allow list of its own', () => {
     expect(untrustedProject(dir, { CLAUDE_CONFIG_DIR: join(dir, 'none') })).toBe(false);
+  });
+});
+
+describe('Claude Code’s settings from the shell', () => {
+  const SHELL = {
+    PATH: '/usr/bin',
+    HOME: '/Users/ada',
+    CLAUDE_CODE_USE_BEDROCK: '1',
+    CLAUDE_CODE_SKIP_BEDROCK_AUTH: '1',
+    AWS_PROFILE: 'work',
+    AWS_REGION: 'us-east-1',
+    ANTHROPIC_BEDROCK_BASE_URL: 'https://bedrock.example',
+    ANTHROPIC_MODEL: 'claude-opus-5-5',
+    ANTHROPIC_DEFAULT_HAIKU_MODEL: 'claude-haiku-5-5',
+    CLAUDE_CODE_SUBAGENT_MODEL: 'claude-sonnet-5-5',
+    VERTEX_REGION_CLAUDE_5_5_OPUS: 'us-east5',
+    CLAUDE_CONFIG_DIR: '/Users/ada/.claude-work',
+    ANTHROPIC_API_KEY: 'sk-ant-secret',
+    ANTHROPIC_AUTH_TOKEN: 'secret',
+    ANTHROPIC_CUSTOM_HEADERS: 'X-Key: secret',
+    ANTHROPIC_FOUNDRY_API_KEY: 'secret',
+    CLAUDE_CODE_OAUTH_TOKEN: 'secret',
+    AWS_ACCESS_KEY_ID: 'AKIA',
+    AWS_SECRET_ACCESS_KEY: 'secret',
+    AWS_SESSION_TOKEN: 'secret',
+    AWS_BEARER_TOKEN_BEDROCK: 'secret',
+    CLAUDE_CODE_SESSION_ID: 'a parent session',
+    CLAUDE_CODE_ENTRYPOINT: 'cli',
+  };
+
+  it('keeps which provider and models it uses, and how it reaches them, never a secret nor a session’s marks', () => {
+    expect(claudeCode.settingsIn(SHELL)).toEqual({
+      CLAUDE_CODE_USE_BEDROCK: '1',
+      CLAUDE_CODE_SKIP_BEDROCK_AUTH: '1',
+      AWS_PROFILE: 'work',
+      AWS_REGION: 'us-east-1',
+      ANTHROPIC_BEDROCK_BASE_URL: 'https://bedrock.example',
+      ANTHROPIC_MODEL: 'claude-opus-5-5',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'claude-haiku-5-5',
+      CLAUDE_CODE_SUBAGENT_MODEL: 'claude-sonnet-5-5',
+      VERTEX_REGION_CLAUDE_5_5_OPUS: 'us-east5',
+      CLAUDE_CONFIG_DIR: '/Users/ada/.claude-work',
+    });
   });
 });
 

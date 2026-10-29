@@ -58,6 +58,51 @@ const PARENT_SESSION_VARIABLES = [
 ];
 
 /**
+ * Claude Code's own settings among the shell's variables (code.claude.com/docs/en/env-vars): which provider it uses
+ * and how it reaches it (`CLAUDE_CODE_USE_BEDROCK`, `AWS_PROFILE`, `CLOUD_ML_REGION`, `ANTHROPIC_BASE_URL`…), which
+ * models, and where its own settings are.
+ */
+const SETTINGS =
+  /^(ANTHROPIC_\w+|CLAUDE_CODE_(USE|SKIP)_\w+|CLAUDE_CODE_SUBAGENT_MODEL|CLAUDE_CONFIG_DIR|CLOUD_ML_REGION|VERTEX_REGION_\w+|AWS_(PROFILE|REGION|DEFAULT_REGION|CONFIG_FILE|SHARED_CREDENTIALS_FILE)|GOOGLE_APPLICATION_CREDENTIALS)$/;
+
+/** A name that says it holds a secret: a key, a token, or headers that carry one. */
+const SECRET = /KEY|TOKEN|SECRET|PASSWORD|PASSPHRASE|HEADERS/;
+
+/** An AWS access key, as the shell gives it to AWS's own sign-in. */
+const AWS_KEYS = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN'];
+
+/**
+ * The providers Claude Code reaches, as `claude auth status` names them: what it signs in to each with from the
+ * shell, instead of a sign-in it keeps or finds itself (code.claude.com/docs/en/env-vars), and the setting that
+ * leaves signing in to a gateway. Only Anthropic's own sign-in is checked; any other provider says it is signed in
+ * whatever it has, so `name` says which one that is.
+ */
+const PROVIDERS: Record<string, { name?: string; secrets: string[]; skip?: string }> = {
+  firstParty: { secrets: ['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'CLAUDE_CODE_OAUTH_TOKEN'] },
+  bedrock: {
+    name: 'Amazon Bedrock',
+    secrets: ['AWS_BEARER_TOKEN_BEDROCK', ...AWS_KEYS],
+    skip: 'CLAUDE_CODE_SKIP_BEDROCK_AUTH',
+  },
+  mantle: {
+    name: 'Amazon Bedrock',
+    secrets: ['AWS_BEARER_TOKEN_BEDROCK', ...AWS_KEYS],
+    skip: 'CLAUDE_CODE_SKIP_MANTLE_AUTH',
+  },
+  anthropicAws: {
+    name: 'Claude Platform on AWS',
+    secrets: ['ANTHROPIC_AWS_API_KEY', ...AWS_KEYS],
+    skip: 'CLAUDE_CODE_SKIP_ANTHROPIC_AWS_AUTH',
+  },
+  foundry: {
+    name: 'Microsoft Foundry',
+    secrets: ['ANTHROPIC_FOUNDRY_API_KEY', 'ANTHROPIC_FOUNDRY_AUTH_TOKEN'],
+    skip: 'CLAUDE_CODE_SKIP_FOUNDRY_AUTH',
+  },
+  vertex: { name: 'Vertex AI', secrets: [] },
+};
+
+/**
  * Claude Code, driven in print mode with stream-json both ways: messages go in on stdin while it works, and
  * everything it does comes out on stdout, one JSON object a line. It is the operator's own `claude`, with
  * their sign-in, settings, plugins and plan; nothing of Claude Code ships with the CLI.
@@ -66,6 +111,12 @@ export const claudeCode: HostAdapter = {
   id: 'claude-code',
   name: 'Claude Code',
   check: checkClaude,
+  settingsIn: (env) =>
+    Object.fromEntries(
+      Object.entries(env).flatMap(([name, value]) =>
+        value && SETTINGS.test(name) && !SECRET.test(name) ? [[name, value]] : []
+      )
+    ),
   open: (options, handlers) => new ClaudeCodeSession(options, handlers),
 };
 
@@ -120,9 +171,13 @@ function checkClaude(project: string, given: NodeJS.ProcessEnv = process.env): H
     };
   }
 
-  if (signedOut(command, env)) {
+  const status = authStatus(command, env);
+  if (status.signedOut) {
     return { ok: false, message: CLAUDE_CODE_SIGNED_OUT_HELP };
   }
+
+  const provider = PROVIDERS[status.provider];
+  const gateway = provider?.skip && /^(1|true|yes|on)$/i.test(env[provider.skip]?.trim() ?? '');
 
   // Kept as found: the native installer's launcher stays the same path while it updates Claude Code.
   return {
@@ -130,21 +185,24 @@ function checkClaude(project: string, given: NodeJS.ProcessEnv = process.env): H
     program: { command, args: [] },
     version: /\d+\.\d+\.\d+/.exec(ran.stdout)?.[0],
     warnings: untrustedProject(project, env) ? [untrustedWarning(project)] : [],
+    secrets: gateway ? [] : (provider?.secrets ?? []).filter((name) => env[name]?.trim()),
+    ...(status.provider === 'firstParty' ? {} : { provider: provider?.name ?? status.provider }),
   };
 }
 
 /**
- * Whether Claude Code says it isn't signed in. Only `loggedIn` is read (the answer also names the account).
- * Bedrock, Vertex and the like sign in their own way, and an answer that can't be read doesn't stop anything.
+ * What `claude auth status` says: whether it isn't signed in, and the provider it reaches. Only `loggedIn` and
+ * `apiProvider` are read (the answer also names the account). An answer that can't be read doesn't stop anything.
  */
-function signedOut(command: string, env: NodeJS.ProcessEnv): boolean {
+function authStatus(command: string, env: NodeJS.ProcessEnv): { signedOut: boolean; provider: string } {
   const ran = spawnSync(command, ['auth', 'status', '--json'], { encoding: 'utf8', timeout: 30_000, env });
   try {
     const status = JSON.parse(ran.stdout) as { loggedIn?: unknown; apiProvider?: unknown };
+    const provider = typeof status.apiProvider === 'string' ? status.apiProvider : 'firstParty';
 
-    return status.loggedIn === false && (status.apiProvider ?? 'firstParty') === 'firstParty';
+    return { signedOut: status.loggedIn === false && provider === 'firstParty', provider };
   } catch {
-    return false;
+    return { signedOut: false, provider: 'firstParty' };
   }
 }
 

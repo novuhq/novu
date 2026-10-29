@@ -35,10 +35,19 @@ import type {
 } from './host-adapter';
 import { hostNameOf } from './hosts';
 import { isOwnReplySubject, repliesIn, waitsForAnswerIn } from './own-replies';
-import { IDS_KEPT, type ListenState, SESSIONS_KEPT, type StateStore, type StopReason } from './state';
+import {
+  IDS_KEPT,
+  type ListenConnection,
+  type ListenState,
+  SESSIONS_KEPT,
+  type StateStore,
+  type StopReason,
+  sameConnection,
+} from './state';
 import { Typing } from './typing';
 import {
   clipCard,
+  connectionChangedMessage,
   hostInstructions,
   hourlyLimitNotice,
   interruptedReply,
@@ -121,6 +130,11 @@ export interface ListenLoopOptions {
   log?: (line: string) => void;
   /** Ends the loop: the background service is being stopped. */
   signal?: AbortSignal;
+  /**
+   * The connection saved on this computer now, or null when it can't be read. The host's own commands use it,
+   * so once this computer is connected anew it stops: they would answer with the new connection.
+   */
+  savedConnection?: () => ListenConnection | null;
 }
 
 export type LoopEnd = { reason: 'signal' } | { reason: StopReason; message: string };
@@ -142,9 +156,11 @@ interface ActiveRun {
   pending: Set<string>;
   /**
    * The host's commands that asked in the conversation and wait for the answer, by tool id: an answer to the host's
-   * own question goes to them while they wait, not into the run.
+   * own question may be for one of them, so it waits until none does.
    */
   waiting: Set<string>;
+  /** An answer is being looked up before it joins: what came after it waits its turn. */
+  lookingUp: boolean;
   /** The conversation's latest message before the host's turn: whatever the agent sent after it is the host's. */
   watermark?: string;
   stopping?: 'stop' | 'limit' | 'paused' | 'shutdown';
@@ -184,6 +200,8 @@ class ListenLoop {
   private readonly abort = new AbortController();
   /** The listener's own questions waiting for an answer, which the messages may bring before a lookup does. */
   private readonly questions = new Map<string, (answer: StreamAnswer) => void>();
+  /** Answers to the host's questions being looked up: whatever else needs one waits for that look. */
+  private readonly lookups = new Map<string, Promise<boolean>>();
   private active?: ActiveRun;
   private activeDone?: Promise<void>;
   private end?: LoopEnd;
@@ -400,6 +418,8 @@ class ListenLoop {
   private async windDown(): Promise<void> {
     await this.stopRun('shutdown');
     await this.activeDone;
+    // What a look found is kept: an answer a command got isn't passed on after a restart.
+    await Promise.allSettled(this.lookups.values());
 
     if (this.end?.reason === 'signal') {
       // Stopped on purpose (`listen stop`, a logout): the dashboard should say so now, not in three minutes.
@@ -451,11 +471,12 @@ class ListenLoop {
 
   private markHandled(message: ListenMessage): void {
     this.state.handled = [...this.state.handled.filter((id) => id !== message.id), message.id].slice(-IDS_KEPT);
+    this.state.lookedUp = this.state.lookedUp?.filter((id) => id !== message.id);
   }
 
   /** Hands the queue on: messages of the running session join it; the next conversation waits its turn. */
   private pump(): void {
-    if (this.end || this.paused) {
+    if (this.end || this.paused || this.connectedAnew()) {
       return;
     }
 
@@ -502,6 +523,21 @@ class ListenLoop {
     this.activeDone = this.startRun(next);
   }
 
+  /**
+   * Whether this computer was connected anew since listening was turned on here, to another agent or with another
+   * key: then it stops for good, run and all. A connection that can't be read just now doesn't stop it.
+   */
+  private connectedAnew(): boolean {
+    const saved = this.options.savedConnection?.();
+    if (!saved || sameConnection(this.state.connection, saved)) {
+      return false;
+    }
+
+    this.stopForGood('connection_changed', connectionChangedMessage(this.state.host));
+
+    return true;
+  }
+
   /** Whether a queued message belongs to the session a run has: the same conversation, in the same round. */
   private belongs(message: ListenMessage, conversationId: string, round: number): boolean {
     return message.conversationId === conversationId && roundOf(message) === round;
@@ -519,29 +555,96 @@ class ListenLoop {
   }
 
   private joinActive(active: ActiveRun): void {
-    if (!active.session || active.closing || active.stopping) {
+    if (!active.session || active.closing || active.stopping || active.lookingUp) {
       return;
     }
 
-    const joining = this.state.queue.filter((message) => this.belongs(message, active.conversationId, active.round));
-    for (const message of joining) {
-      // An answer to the host's own question goes to its command that still waits for one. Any other, such as the
-      // answer to a question asked with --async, or one whose command gave up waiting, joins the run.
-      if (!message.answersMessageId || active.waiting.size === 0) {
-        if (!this.sendInto(active, message)) {
-          // The run is ending: the message waits for the next one.
-          break;
+    let joined = false;
+    for (const message of this.state.queue.filter((queued) =>
+      this.belongs(queued, active.conversationId, active.round)
+    )) {
+      // An answer to the host's own question may be the one a command of it still waits for, which gets it then. It
+      // waits until no command does, and joins unless one of them got it: the answer to a question asked with
+      // --async doesn't go to another command, nor one whose command gave up waiting. What came after it waits too.
+      if (!this.mayJoin(message)) {
+        if (active.waiting.size === 0) {
+          void this.lookUpAnswer(active, message);
         }
-        active.messages.push(message);
-        active.typing.start();
-        this.log(`${message.conversationId}: a new message joined the run.`);
+        break;
       }
+      if (!this.sendInto(active, message)) {
+        // The run is ending: the message waits for the next one.
+        break;
+      }
+      active.messages.push(message);
+      active.typing.start();
+      this.log(`${message.conversationId}: a new message joined the run.`);
       this.state.queue = this.state.queue.filter((queued) => queued.id !== message.id);
       this.markHandled(message);
+      joined = true;
     }
-    if (joining.length > 0) {
+    if (joined) {
       this.save();
     }
+  }
+
+  /** An answer about to join the run: dropped when a command of the host got it already, else it joins. */
+  private async lookUpAnswer(active: ActiveRun, message: ListenMessage): Promise<void> {
+    active.lookingUp = true;
+    try {
+      if (await this.answerGot(message)) {
+        this.state.queue = this.state.queue.filter((queued) => queued.id !== message.id);
+        this.markHandled(message);
+        this.save();
+      }
+    } finally {
+      active.lookingUp = false;
+    }
+    this.joinActive(active);
+  }
+
+  /** Whether a message joins a run as it is: anything but an answer to the host's question, until it was looked up. */
+  private mayJoin(message: ListenMessage): boolean {
+    return (
+      !message.answersMessageId || (Boolean(this.state.lookedUp?.includes(message.id)) && !this.lookups.has(message.id))
+    );
+  }
+
+  /**
+   * Whether a command of the host got this answer already, waiting for it: it asked for the question then. Asking
+   * here hands the answer over too, so each is asked about once, and whatever else needs it meanwhile waits for that
+   * look. When it can't be told, the answer isn't held back: given twice costs less than lost.
+   */
+  private answerGot(message: ListenMessage): Promise<boolean> {
+    let lookup = this.lookups.get(message.id);
+    if (!lookup) {
+      lookup = this.askWhetherGot(message).finally(() => this.lookups.delete(message.id));
+      this.lookups.set(message.id, lookup);
+    }
+
+    return lookup;
+  }
+
+  private async askWhetherGot(message: ListenMessage): Promise<boolean> {
+    // Saved before the look, which reads the answer: one that the program's end cuts off passes the answer on when
+    // it starts again, instead of taking that read for a command's.
+    this.state.lookedUp = [...(this.state.lookedUp ?? []), message.id];
+    this.save();
+
+    let got = false;
+    try {
+      got = Boolean((await getInteraction(this.options.client, message.answersMessageId as string)).answerReadAt);
+    } catch (err) {
+      await this.onErrorDuringRun(err);
+    }
+
+    if (got) {
+      this.log(
+        `${message.conversationId}: the answer to ${message.answersMessageId} went to the command that waited for it.`
+      );
+    }
+
+    return got;
   }
 
   /** Whether another run may start this hour; tells the operator once an hour when not. */
@@ -568,31 +671,51 @@ class ListenLoop {
   private async startRun(first: ListenMessage): Promise<void> {
     const { conversationId } = first;
     const round = roundOf(first);
-    const messages = this.state.queue.filter((message) => this.belongs(message, conversationId, round));
-    this.state.queue = this.state.queue.filter((message) => !messages.includes(message));
-    for (const message of messages) {
-      this.markHandled(message);
-    }
-
     const active: ActiveRun = {
       conversationId,
       round,
       channel: first.channel,
       startedBy: startedBy(first),
-      messages,
+      messages: this.state.queue.filter((message) => this.belongs(message, conversationId, round)),
       pending: new Set(),
       waiting: new Set(),
+      lookingUp: false,
       closing: false,
       failures: [],
       replies: Promise.resolve(),
       typing: this.typingIn(conversationId),
     };
+    // From now on no other run starts, while the answers it was started with are looked up.
     this.active = active;
-    this.state.runs.push(new Date().toISOString());
-    this.state.running = { conversationId, at: new Date().toISOString() };
-    this.save();
 
     try {
+      // An answer that a command of the session's last run got already, waiting for it, isn't given again.
+      for (const message of active.messages) {
+        if (!this.mayJoin(message) && (await this.answerGot(message))) {
+          active.messages = active.messages.filter((kept) => kept !== message);
+          this.state.queue = this.state.queue.filter((queued) => queued !== message);
+          this.markHandled(message);
+        }
+      }
+      if (this.end) {
+        // Ending now: what it was started for waits for the next start.
+        return;
+      }
+
+      this.state.queue = this.state.queue.filter((message) => !active.messages.includes(message));
+      for (const message of active.messages) {
+        this.markHandled(message);
+      }
+      if (active.messages.length === 0) {
+        this.save();
+
+        return;
+      }
+
+      active.startedBy = startedBy(active.messages[0]);
+      this.state.runs.push(new Date().toISOString());
+      this.state.running = { conversationId, at: new Date().toISOString() };
+      this.save();
       // The session goes on in the same round; a resolve since then starts a fresh one.
       const kept = this.state.sessions[conversationId];
       const resume = kept && kept.round === round ? kept.sessionId : undefined;
@@ -622,10 +745,17 @@ class ListenLoop {
   private async runOnce(active: ActiveRun, resume: string | undefined): Promise<RunOutcome> {
     active.pending = new Set();
     active.waiting = new Set();
+    active.lookingUp = false;
     active.closing = false;
     // From the start: the host takes a while to come up, and the person sees it is on its way.
     active.typing.start();
     active.watermark = await this.latestMessageId(active.conversationId);
+    // Connected anew while the run got ready, an answer's lookup say: the host's commands would use the new connection.
+    if (this.connectedAnew()) {
+      active.typing.stop();
+
+      return { kind: 'interrupted' };
+    }
     const finished = new Promise<RunOutcome>((resolve) => {
       active.finish = resolve;
     });
@@ -655,7 +785,12 @@ class ListenLoop {
             active.waiting.add(toolId);
           }
         },
-        toolEnded: (toolId) => active.waiting.delete(toolId),
+        toolEnded: (toolId) => {
+          // Once no command waits, an answer that came meanwhile may join.
+          if (active.waiting.delete(toolId) && active.waiting.size === 0) {
+            this.joinActive(active);
+          }
+        },
         turnEnded: (turn) => this.onTurn(active, session, turn),
         askPermission: (question, signal) =>
           this.withoutTyping(active, () => this.askOperator(active, question, signal)),
@@ -739,6 +874,8 @@ class ListenLoop {
       const outcome: RunOutcome = active.stopping ? { kind: 'interrupted' } : { kind: 'idle' };
       void active.replies.then(() => active.finish?.(outcome));
     }
+    // It goes on with what it was given meanwhile: an answer that waited for its commands may join now.
+    this.joinActive(active);
   }
 
   private async afterRun(active: ActiveRun, outcome: RunOutcome): Promise<void> {
@@ -1125,6 +1262,8 @@ class ListenLoop {
       streamed = answer;
       nudge.abort();
     });
+    // One for the whole wait: each look at the answer waits on it, and adds nothing to the listener's own signal.
+    const woken = anyOf(signal, nudge.signal, this.abort.signal);
 
     try {
       while (Date.now() < deadline) {
@@ -1143,11 +1282,12 @@ class ListenLoop {
         }
 
         const wait = Math.min(this.timing.answerPollMs, Math.max(0, deadline - Date.now()));
-        await waitOrAbort(wait, anyOf(signal, nudge.signal, this.abort.signal));
+        await waitOrAbort(wait, woken.signal);
       }
 
       return signal.aborted ? { status: 'withdrawn' } : { status: 'unanswered' };
     } finally {
+      woken.dispose();
       this.questions.delete(id);
     }
   }
@@ -1183,18 +1323,28 @@ function waitOrAbort(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
-/** Aborted as soon as any of them is (`AbortSignal.any`, which older Node doesn't have). */
-function anyOf(...signals: AbortSignal[]): AbortSignal {
+/**
+ * Aborted as soon as any of them is (`AbortSignal.any`, which older Node doesn't have). `dispose` takes it off
+ * them again: a signal that lasts, such as the listener's own, would otherwise keep every one made from it.
+ */
+export function anyOf(...signals: AbortSignal[]): { signal: AbortSignal; dispose: () => void } {
   const controller = new AbortController();
+  const abort = () => controller.abort();
+  const dispose = () => {
+    for (const signal of signals) {
+      signal.removeEventListener('abort', abort);
+    }
+  };
+
   for (const signal of signals) {
     if (signal.aborted) {
       controller.abort();
       break;
     }
-    signal.addEventListener('abort', () => controller.abort(), { once: true });
+    signal.addEventListener('abort', abort, { once: true });
   }
 
-  return controller.signal;
+  return { signal: controller.signal, dispose };
 }
 
 /** The message's round: how many times its conversation was resolved before it. */
