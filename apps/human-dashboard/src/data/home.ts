@@ -29,6 +29,10 @@ export const HOME_USES = [
     text: 'People email you, or reach you on Slack or Telegram, on an address that is yours.',
   },
   {
+    title: 'Agents as teammates',
+    text: 'Coordinate interview times, follow up on a vendor quote, or ask a teammate for missing information.',
+  },
+  {
     title: 'Product agents',
     text: 'Every user of a product reaches you in one inbox.',
   },

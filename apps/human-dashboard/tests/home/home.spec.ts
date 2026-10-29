@@ -15,6 +15,9 @@ test('home serves readable agent documentation and links to Sapien', async ({ pa
   await expect(page.locator('#quickstart')).toContainText('agentinbox reply conv_123 "On it."');
   await expect(page.locator('#flags')).toContainText('--to <id|email>[,...]');
   await expect(page.locator('#contacts')).toContainText('agentinbox contact list --limit 20 --after <cursor>');
+  await expect(page.locator('#when')).toContainText(
+    'Agents as teammates. Coordinate interview times, follow up on a vendor quote, or ask a teammate for missing information.'
+  );
   await page.getByRole('link', { name: 'agentinbox.md/sapien' }).click();
   await expect(page).toHaveURL(/\/sapien$/);
   await page.getByRole('navigation', { name: 'Header navigation' }).getByRole('link', { name: 'for robots' }).click();
