@@ -406,7 +406,7 @@ function createHttpRequestControlSchema() {
 		responseBodySchema: z
 			.object({
 				properties: z
-					.record(createHttpResponsePropertySchema())
+					.record(z.string(), createHttpResponsePropertySchema())
 					.optional()
 					.describe(
 						'JSON Schema properties keyed by response field name, e.g. { "id": { "type": "string" } }.',

@@ -140,6 +140,18 @@ describe("create_workflow", () => {
 		});
 	});
 
+	it("creates a workflow with no steps", async () => {
+		const api = fakeWorkflowsApi();
+
+		const result = await callTool(await client(), "create_workflow", {
+			name: "Empty",
+			steps: [],
+		});
+
+		expect(result.isError).toBeFalsy();
+		expect(api.requests[0].body).toMatchObject({ steps: [] });
+	});
+
 	it("requires the parents of a required nested property", async () => {
 		const api = fakeWorkflowsApi();
 

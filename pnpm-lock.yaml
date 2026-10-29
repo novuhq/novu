@@ -1530,13 +1530,13 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.0
-        version: 1.32.1(@cfworker/json-schema@4.1.1)(zod@3.25.76)
+        version: 1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7)
       agents:
         specifier: ^0.21.0
-        version: 0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@3.25.76))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@5.20261026.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@3.25.76))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@3.25.76))(chat@4.40.0(ai@7.0.31(zod@3.25.76))(zod@3.25.76))(react@19.2.3)(rolldown@1.2.12)(vite@6.4.4(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))(zod@3.25.76)
+        version: 0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.6.7))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@5.20261026.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.6.7))(chat@4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7))(react@19.2.3)(rolldown@1.2.12)(vite@6.4.4(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))(zod@4.6.7)
       zod:
-        specifier: ^3.25.67
-        version: 3.25.76
+        specifier: ^4.6.6
+        version: 4.6.7
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.2.0
@@ -2661,10 +2661,10 @@ importers:
     dependencies:
       '@novu/thalamus':
         specifier: 0.1.0-alpha.20
-        version: 0.1.0-alpha.20(@anthropic-ai/sdk@0.131.0(zod@4.4.3))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@4.4.3))
+        version: 0.1.0-alpha.20(@anthropic-ai/sdk@0.131.0(zod@4.6.7))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@4.6.7))
       agents:
         specifier: ^0.21.0
-        version: 0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.4.3))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.4.3))(chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(react@19.2.3)(rolldown@1.2.12)(zod@4.4.3)
+        version: 0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.6.7))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.6.7))(chat@4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7))(react@19.2.3)(rolldown@1.2.12)(zod@4.4.3)
       eventsource-parser:
         specifier: ^3.0.8
         version: 3.1.0
@@ -3694,17 +3694,17 @@ importers:
     dependencies:
       '@chat-adapter/shared':
         specifier: 4.40.0
-        version: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+        version: 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.4.3)
       chat:
         specifier: ^4.40.0
-        version: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+        version: 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.4.3)
       react:
         specifier: '>=18.0.0 || >=19.0.0'
         version: 19.2.3
     devDependencies:
       '@chat-adapter/state-memory':
         specifier: 4.40.0
-        version: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+        version: 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.4.3)
       '@novu/agent-event-protocol':
         specifier: workspace:*
         version: link:../agent-event-protocol
@@ -3765,11 +3765,11 @@ importers:
     dependencies:
       '@photon-ai/chat-adapter-imessage':
         specifier: ^3.2.0
-        version: 3.2.0(ai@7.0.31(zod@4.4.3))(chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(typescript@6.0.3)(zod@4.4.3)
+        version: 3.2.0(ai@7.0.31(zod@4.6.7))(chat@4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.4.3))(typescript@6.0.3)(zod@4.6.7)
     devDependencies:
       chat:
         specifier: ^4.40.0
-        version: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+        version: 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.4.3)
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
@@ -4321,10 +4321,10 @@ importers:
         version: 4.1.3(debug@4.4.3)
       '@chat-adapter/slack':
         specifier: 4.40.0
-        version: 4.40.0(ai@7.0.31(zod@4.4.3))(debug@4.4.3)(zod@4.4.3)
+        version: 4.40.0(ai@7.0.31(zod@4.6.7))(debug@4.4.3)(zod@4.6.7)
       '@chat-adapter/teams':
         specifier: 4.40.0
-        version: 4.40.0(ai@7.0.31(zod@4.4.3))(debug@4.4.3)(zod@4.4.3)
+        version: 4.40.0(ai@7.0.31(zod@4.6.7))(debug@4.4.3)(zod@4.6.7)
       '@infobip-api/sdk':
         specifier: ^0.3.2
         version: 0.3.2(debug@4.4.3)
@@ -30700,6 +30700,9 @@ packages:
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
+
   zustand@4.5.5:
     resolution: {integrity: sha512-+0PALYNJNgK6hldkgDq2vLrw5f6g/jCInz52n9RTpropGgeAf/ioFUCdtsjCqu4gNhW9D01rUQBROoRjdzyn2Q==}
     engines: {node: '>=12.7.0'}
@@ -30807,20 +30810,20 @@ snapshots:
       '@vercel/oidc': 3.2.0
       zod: 3.25.20
 
-  '@ai-sdk/gateway@4.0.23(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 4.0.3
-      '@ai-sdk/provider-utils': 5.0.11(zod@3.25.76)
-      '@vercel/oidc': 3.2.0
-      zod: 3.25.76
-    optional: true
-
   '@ai-sdk/gateway@4.0.23(zod@4.4.3)':
     dependencies:
       '@ai-sdk/provider': 4.0.3
       '@ai-sdk/provider-utils': 5.0.11(zod@4.4.3)
       '@vercel/oidc': 3.2.0
       zod: 4.4.3
+
+  '@ai-sdk/gateway@4.0.23(zod@4.6.7)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.3
+      '@ai-sdk/provider-utils': 5.0.11(zod@4.6.7)
+      '@vercel/oidc': 3.2.0
+      zod: 4.6.7
+    optional: true
 
   '@ai-sdk/langchain@2.0.73(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.223.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0))(@langchain/langgraph@1.1.4(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.223.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.12.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod-to-json-schema@3.25.1(zod@3.25.20))(zod@3.25.20))(zod@3.25.20)':
     dependencies:
@@ -30831,20 +30834,20 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
-  '@ai-sdk/mcp@2.0.15(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 4.0.3
-      '@ai-sdk/provider-utils': 5.0.11(zod@3.25.76)
-      pkce-challenge: 5.0.1
-      zod: 3.25.76
-    optional: true
-
   '@ai-sdk/mcp@2.0.15(zod@4.4.3)':
     dependencies:
       '@ai-sdk/provider': 4.0.3
       '@ai-sdk/provider-utils': 5.0.11(zod@4.4.3)
       pkce-challenge: 5.0.1
       zod: 4.4.3
+
+  '@ai-sdk/mcp@2.0.15(zod@4.6.7)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.3
+      '@ai-sdk/provider-utils': 5.0.11(zod@4.6.7)
+      pkce-challenge: 5.0.1
+      zod: 4.6.7
+    optional: true
 
   '@ai-sdk/openai@3.0.10(zod@3.25.20)':
     dependencies:
@@ -30884,15 +30887,6 @@ snapshots:
       eventsource-parser: 3.1.0
       zod: 3.25.20
 
-  '@ai-sdk/provider-utils@5.0.11(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 4.0.3
-      '@standard-schema/spec': 1.1.0
-      '@workflow/serde': 4.1.0
-      eventsource-parser: 3.1.0
-      zod: 3.25.76
-    optional: true
-
   '@ai-sdk/provider-utils@5.0.11(zod@4.4.3)':
     dependencies:
       '@ai-sdk/provider': 4.0.3
@@ -30900,6 +30894,15 @@ snapshots:
       '@workflow/serde': 4.1.0
       eventsource-parser: 3.1.0
       zod: 4.4.3
+
+  '@ai-sdk/provider-utils@5.0.11(zod@4.6.7)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.3
+      '@standard-schema/spec': 1.1.0
+      '@workflow/serde': 4.1.0
+      eventsource-parser: 3.1.0
+      zod: 4.6.7
+    optional: true
 
   '@ai-sdk/provider-utils@5.0.23(zod@4.4.3)':
     dependencies:
@@ -30956,25 +30959,12 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
-  '@ai-sdk/react@4.0.34(react@19.2.3)(zod@3.25.76)':
+  '@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.6.7)':
     dependencies:
-      '@ai-sdk/mcp': 2.0.15(zod@3.25.76)
+      '@ai-sdk/mcp': 2.0.15(zod@4.6.7)
       '@ai-sdk/provider': 4.0.3
-      '@ai-sdk/provider-utils': 5.0.11(zod@3.25.76)
-      ai: 7.0.31(zod@3.25.76)
-      react: 19.2.3
-      swr: 2.5.1(react@19.2.3)
-      throttleit: 2.1.0
-    transitivePeerDependencies:
-      - zod
-    optional: true
-
-  '@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.4.3)':
-    dependencies:
-      '@ai-sdk/mcp': 2.0.15(zod@4.4.3)
-      '@ai-sdk/provider': 4.0.3
-      '@ai-sdk/provider-utils': 5.0.11(zod@4.4.3)
-      ai: 7.0.31(zod@4.4.3)
+      '@ai-sdk/provider-utils': 5.0.11(zod@4.6.7)
+      ai: 7.0.31(zod@4.6.7)
       react: 19.2.3
       swr: 2.5.1(react@19.2.3)
       throttleit: 2.1.0
@@ -31114,12 +31104,12 @@ snapshots:
     optionalDependencies:
       zod: 3.25.20
 
-  '@anthropic-ai/sdk@0.131.0(zod@4.4.3)':
+  '@anthropic-ai/sdk@0.131.0(zod@4.6.7)':
     dependencies:
       json-schema-to-ts: 3.1.1
       standardwebhooks: 1.0.0
     optionalDependencies:
-      zod: 4.4.3
+      zod: 4.6.7
     optional: true
 
   '@anthropic-ai/sdk@0.71.2(zod@3.25.76)':
@@ -35130,9 +35120,17 @@ snapshots:
 
   '@cfworker/json-schema@4.1.1': {}
 
-  '@chat-adapter/shared@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)':
+  '@chat-adapter/shared@4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.4.3)':
     dependencies:
-      chat: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.4.3)
+    transitivePeerDependencies:
+      - ai
+      - workflow
+      - zod
+
+  '@chat-adapter/shared@4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)':
+    dependencies:
+      chat: 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
     transitivePeerDependencies:
       - ai
       - workflow
@@ -35146,12 +35144,12 @@ snapshots:
       - workflow
       - zod
 
-  '@chat-adapter/slack@4.40.0(ai@7.0.31(zod@4.4.3))(debug@4.4.3)(zod@4.4.3)':
+  '@chat-adapter/slack@4.40.0(ai@7.0.31(zod@4.6.7))(debug@4.4.3)(zod@4.6.7)':
     dependencies:
-      '@chat-adapter/shared': 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      '@chat-adapter/shared': 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
       '@slack/socket-mode': 2.0.7(debug@4.4.3)
       '@slack/web-api': 7.17.0(debug@4.4.3)
-      chat: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
     transitivePeerDependencies:
       - ai
       - bufferutil
@@ -35191,14 +35189,22 @@ snapshots:
       - workflow
       - zod
 
-  '@chat-adapter/teams@4.40.0(ai@7.0.31(zod@4.4.3))(debug@4.4.3)(zod@4.4.3)':
+  '@chat-adapter/state-memory@4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.4.3)':
     dependencies:
-      '@chat-adapter/shared': 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.4.3)
+    transitivePeerDependencies:
+      - ai
+      - workflow
+      - zod
+
+  '@chat-adapter/teams@4.40.0(ai@7.0.31(zod@4.6.7))(debug@4.4.3)(zod@4.6.7)':
+    dependencies:
+      '@chat-adapter/shared': 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
       '@microsoft/teams.api': 2.0.16(debug@4.4.3)
       '@microsoft/teams.apps': 2.0.16(debug@4.4.3)
       '@microsoft/teams.cards': 2.0.16
       '@microsoft/teams.graph-endpoints': 2.0.16
-      chat: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
     transitivePeerDependencies:
       - ai
       - debug
@@ -38261,7 +38267,7 @@ snapshots:
     optionalDependencies:
       '@cfworker/json-schema': 4.1.1
 
-  '@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3)':
+  '@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7)':
     dependencies:
       '@hono/node-server': 2.0.11(hono@4.13.13)
       ajv: 8.20.0
@@ -38278,8 +38284,8 @@ snapshots:
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
-      zod: 4.4.3
-      zod-to-json-schema: 3.25.2(zod@4.4.3)
+      zod: 4.6.7
+      zod-to-json-schema: 3.25.2(zod@4.6.7)
     optionalDependencies:
       '@cfworker/json-schema': 4.1.1
 
@@ -38960,7 +38966,7 @@ snapshots:
 
   '@novu/api@3.15.0':
     dependencies:
-      zod: 3.25.76
+      zod: 4.3.5
 
   '@novu/ntfr-client@0.0.5':
     dependencies:
@@ -38980,12 +38986,12 @@ snapshots:
       '@smithy/signature-v4': 5.6.12
       openai: 6.17.0(ws@8.21.0)(zod@3.25.20)
 
-  '@novu/thalamus@0.1.0-alpha.20(@anthropic-ai/sdk@0.131.0(zod@4.4.3))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@4.4.3))':
+  '@novu/thalamus@0.1.0-alpha.20(@anthropic-ai/sdk@0.131.0(zod@4.6.7))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@4.6.7))':
     optionalDependencies:
-      '@anthropic-ai/sdk': 0.131.0(zod@4.4.3)
+      '@anthropic-ai/sdk': 0.131.0(zod@4.6.7)
       '@aws-crypto/sha256-js': 5.2.0
       '@smithy/signature-v4': 5.6.12
-      openai: 6.17.0(ws@8.21.0)(zod@4.4.3)
+      openai: 6.17.0(ws@8.21.0)(zod@4.6.7)
 
   '@nrwl/nx-cloud@19.1.0(debug@4.4.3)':
     dependencies:
@@ -40510,12 +40516,12 @@ snapshots:
       nice-grpc: 2.1.17
       nice-grpc-common: 2.0.4
 
-  '@photon-ai/chat-adapter-imessage@3.2.0(ai@7.0.31(zod@4.4.3))(chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(typescript@6.0.3)(zod@4.4.3)':
+  '@photon-ai/chat-adapter-imessage@3.2.0(ai@7.0.31(zod@4.6.7))(chat@4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.4.3))(typescript@6.0.3)(zod@4.6.7)':
     dependencies:
-      '@chat-adapter/shared': 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      '@chat-adapter/shared': 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
       '@spectrum-ts/core': 10.0.0(typescript@6.0.3)
       '@spectrum-ts/imessage': 10.0.0(@spectrum-ts/core@10.0.0(typescript@6.0.3))(typescript@6.0.3)
-      chat: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.4.3)
       mime-types: 3.0.2
     transitivePeerDependencies:
       - ai
@@ -49885,42 +49891,12 @@ snapshots:
     dependencies:
       humanize-ms: 1.2.1
 
-  agents@0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@3.25.76))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@5.20261026.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@3.25.76))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@3.25.76))(chat@4.40.0(ai@7.0.31(zod@3.25.76))(zod@3.25.76))(react@19.2.3)(rolldown@1.2.12)(vite@6.4.4(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))(zod@3.25.76):
+  agents@0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.6.7))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.6.7))(chat@4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7))(react@19.2.3)(rolldown@1.2.12)(zod@4.4.3):
     dependencies:
       '@babel/plugin-proposal-decorators': 8.0.2(@babel/core@7.29.7)
       '@cfworker/json-schema': 4.1.1
       '@modelcontextprotocol/client': 2.3.1
-      '@modelcontextprotocol/sdk': 1.32.1(@cfworker/json-schema@4.1.1)(zod@3.25.76)
-      '@modelcontextprotocol/server': 2.3.1
-      '@rolldown/plugin-babel': 0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.2.12)(vite@6.4.4(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
-      cron-schedule: 6.0.0
-      esbuild: 0.28.1
-      mimetext: 3.0.28
-      nanoid: 5.1.16
-      partyserver: 0.5.10(@cloudflare/workers-types@5.20261026.1)
-      partysocket: 1.3.0(react@19.2.3)
-      yaml: 2.9.0
-      yargs: 18.1.0
-      zod: 3.25.76
-    optionalDependencies:
-      '@ai-sdk/react': 4.0.34(react@19.2.3)(zod@3.25.76)
-      ai: 7.0.31(zod@3.25.76)
-      chat: 4.40.0(ai@7.0.31(zod@3.25.76))(zod@3.25.76)
-      react: 19.2.3
-      vite: 6.4.4(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)
-    transitivePeerDependencies:
-      - '@babel/core'
-      - '@babel/plugin-transform-runtime'
-      - '@babel/runtime'
-      - '@cloudflare/workers-types'
-      - rolldown
-
-  agents@0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.4.3))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.4.3))(chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(react@19.2.3)(rolldown@1.2.12)(zod@4.4.3):
-    dependencies:
-      '@babel/plugin-proposal-decorators': 8.0.2(@babel/core@7.29.7)
-      '@cfworker/json-schema': 4.1.1
-      '@modelcontextprotocol/client': 2.3.1
-      '@modelcontextprotocol/sdk': 1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3)
+      '@modelcontextprotocol/sdk': 1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7)
       '@modelcontextprotocol/server': 2.3.1
       '@rolldown/plugin-babel': 0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.2.12)(vite@8.3.3(@types/node@22.15.13)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
       cron-schedule: 6.0.0
@@ -49933,10 +49909,40 @@ snapshots:
       yargs: 18.1.0
       zod: 4.4.3
     optionalDependencies:
-      '@ai-sdk/react': 4.0.34(react@19.2.3)(zod@4.4.3)
-      ai: 7.0.31(zod@4.4.3)
-      chat: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      '@ai-sdk/react': 4.0.34(react@19.2.3)(zod@4.6.7)
+      ai: 7.0.31(zod@4.6.7)
+      chat: 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
       react: 19.2.3
+    transitivePeerDependencies:
+      - '@babel/core'
+      - '@babel/plugin-transform-runtime'
+      - '@babel/runtime'
+      - '@cloudflare/workers-types'
+      - rolldown
+
+  agents@0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.6.7))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@5.20261026.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.6.7))(chat@4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7))(react@19.2.3)(rolldown@1.2.12)(vite@6.4.4(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))(zod@4.6.7):
+    dependencies:
+      '@babel/plugin-proposal-decorators': 8.0.2(@babel/core@7.29.7)
+      '@cfworker/json-schema': 4.1.1
+      '@modelcontextprotocol/client': 2.3.1
+      '@modelcontextprotocol/sdk': 1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7)
+      '@modelcontextprotocol/server': 2.3.1
+      '@rolldown/plugin-babel': 0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.2.12)(vite@6.4.4(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
+      cron-schedule: 6.0.0
+      esbuild: 0.28.1
+      mimetext: 3.0.28
+      nanoid: 5.1.16
+      partyserver: 0.5.10(@cloudflare/workers-types@5.20261026.1)
+      partysocket: 1.3.0(react@19.2.3)
+      yaml: 2.9.0
+      yargs: 18.1.0
+      zod: 4.6.7
+    optionalDependencies:
+      '@ai-sdk/react': 4.0.34(react@19.2.3)(zod@4.6.7)
+      ai: 7.0.31(zod@4.6.7)
+      chat: 4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
+      react: 19.2.3
+      vite: 6.4.4(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/plugin-transform-runtime'
@@ -50004,20 +50010,20 @@ snapshots:
       '@ai-sdk/provider-utils': 5.0.11(zod@3.25.20)
       zod: 3.25.20
 
-  ai@7.0.31(zod@3.25.76):
-    dependencies:
-      '@ai-sdk/gateway': 4.0.23(zod@3.25.76)
-      '@ai-sdk/provider': 4.0.3
-      '@ai-sdk/provider-utils': 5.0.11(zod@3.25.76)
-      zod: 3.25.76
-    optional: true
-
   ai@7.0.31(zod@4.4.3):
     dependencies:
       '@ai-sdk/gateway': 4.0.23(zod@4.4.3)
       '@ai-sdk/provider': 4.0.3
       '@ai-sdk/provider-utils': 5.0.11(zod@4.4.3)
       zod: 4.4.3
+
+  ai@7.0.31(zod@4.6.7):
+    dependencies:
+      '@ai-sdk/gateway': 4.0.23(zod@4.6.7)
+      '@ai-sdk/provider': 4.0.3
+      '@ai-sdk/provider-utils': 5.0.11(zod@4.6.7)
+      zod: 4.6.7
+    optional: true
 
   ajv-draft-04@1.0.0(ajv@8.20.0):
     optionalDependencies:
@@ -51236,20 +51242,6 @@ snapshots:
       ai: 7.0.31(zod@3.25.20)
       zod: 3.25.20
 
-  chat@4.40.0(ai@7.0.31(zod@3.25.76))(zod@3.25.76):
-    dependencies:
-      '@workflow/serde': 4.1.0-beta.2
-      mdast-util-to-string: 4.0.0
-      remark-gfm: 4.0.1
-      remark-parse: 11.0.0
-      remark-stringify: 11.0.0
-      remend: 1.3.0
-      unified: 11.0.5
-    optionalDependencies:
-      ai: 7.0.31(zod@3.25.76)
-      zod: 3.25.76
-    optional: true
-
   chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3):
     dependencies:
       '@workflow/serde': 4.1.0-beta.2
@@ -51262,6 +51254,32 @@ snapshots:
     optionalDependencies:
       ai: 7.0.31(zod@4.4.3)
       zod: 4.4.3
+
+  chat@4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.4.3):
+    dependencies:
+      '@workflow/serde': 4.1.0-beta.2
+      mdast-util-to-string: 4.0.0
+      remark-gfm: 4.0.1
+      remark-parse: 11.0.0
+      remark-stringify: 11.0.0
+      remend: 1.3.0
+      unified: 11.0.5
+    optionalDependencies:
+      ai: 7.0.31(zod@4.6.7)
+      zod: 4.4.3
+
+  chat@4.40.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7):
+    dependencies:
+      '@workflow/serde': 4.1.0-beta.2
+      mdast-util-to-string: 4.0.0
+      remark-gfm: 4.0.1
+      remark-parse: 11.0.0
+      remark-stringify: 11.0.0
+      remend: 1.3.0
+      unified: 11.0.5
+    optionalDependencies:
+      ai: 7.0.31(zod@4.6.7)
+      zod: 4.6.7
 
   check-disk-space@3.4.0: {}
 
@@ -59588,6 +59606,12 @@ snapshots:
       zod: 4.4.3
     optional: true
 
+  openai@6.17.0(ws@8.21.0)(zod@4.6.7):
+    optionalDependencies:
+      ws: 8.21.0
+      zod: 4.6.7
+    optional: true
+
   opener@1.5.2: {}
 
   optimism@0.10.3:
@@ -65866,9 +65890,9 @@ snapshots:
     dependencies:
       zod: 3.25.76
 
-  zod-to-json-schema@3.25.2(zod@4.4.3):
+  zod-to-json-schema@3.25.2(zod@4.6.7):
     dependencies:
-      zod: 4.4.3
+      zod: 4.6.7
 
   zod-validation-error@3.3.0(zod@3.25.76):
     dependencies:
@@ -65887,6 +65911,8 @@ snapshots:
   zod@4.3.6: {}
 
   zod@4.4.3: {}
+
+  zod@4.6.7: {}
 
   zustand@4.5.5(@types/react@19.2.8)(immer@10.1.1)(react@18.3.1):
     dependencies:

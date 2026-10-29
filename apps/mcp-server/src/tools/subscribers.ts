@@ -9,7 +9,7 @@ import { ValidationUtils } from "../utils/validation";
 const createSubscriberSchema = z.object({
 	avatar: z.string().optional().describe("Avatar URL or identifier"),
 	data: z
-		.record(z.any())
+		.record(z.string(), z.any())
 		.optional()
 		.describe("Additional custom data associated with the subscriber"),
 	email: z.string().optional().describe("Email address of the subscriber"),
@@ -93,7 +93,7 @@ export function registerSubscriberTools(server: McpServer, accessors: ToolAccess
 		name: "update_subscriber",
 		schema: z.object({
 			avatar: z.string().optional().describe("Updated avatar URL"),
-			data: z.record(z.any()).optional().describe("Updated custom data"),
+			data: z.record(z.string(), z.any()).optional().describe("Updated custom data"),
 			email: z.string().optional().describe("Updated email address"),
 			firstName: z.string().optional().describe("Updated first name"),
 			lastName: z.string().optional().describe("Updated last name"),

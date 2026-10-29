@@ -147,7 +147,7 @@ export const workflowAgentConfigSchema = z.object({
 			"Agent identifier (slug) from get_agents — not the Mongo _id. Required to assign the workflow to that agent.",
 		),
 	providers: z
-		.record(workflowAgentProviderConfigSchema)
+		.record(z.string(), workflowAgentProviderConfigSchema)
 		.optional()
 		.describe(
 			"Optional per-provider overrides keyed by providerId. Today only novu-email-agent.replyTo is used.",
@@ -282,8 +282,9 @@ export const baseWorkflowInputSchema = z.object({
 // Create workflow specific schema
 export const createWorkflowInputSchema = baseWorkflowInputSchema.extend({
 	__source: workflowSourceSchema.optional().describe("Source of workflow creation."),
-	steps: baseWorkflowInputSchema.shape.steps
-		.min(0)
+	// Zod 4 keeps every `.min()` check, so `shape.steps.min(0)` would still require one step.
+	steps: z
+		.array(workflowStepSchema)
 		.optional()
 		.describe(
 			"Steps of the workflow, each discriminated by `type`. Omit to create an empty workflow and add steps later with add_workflow_step. Always use {{payload.variableName}} for dynamic content.",
@@ -344,7 +345,7 @@ export const triggerWorkflowInputSchema = z.object({
 			"Channel-specific overrides to select which integration to use. Use get_integrations to find available integration identifiers.",
 		),
 	payload: z
-		.record(z.any())
+		.record(z.string(), z.any())
 		.describe("The payload data for the workflow (structure obtained from get_workflow)."),
 	subscriberId: z
 		.string()

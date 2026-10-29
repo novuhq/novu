@@ -219,7 +219,7 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 							.optional()
 							.describe("Channel-specific integration overrides"),
 						payload: z
-							.record(z.any())
+							.record(z.string(), z.any())
 							.describe("The payload data for this workflow trigger"),
 						to: z
 							.union([
