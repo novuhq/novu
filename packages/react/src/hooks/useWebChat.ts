@@ -339,7 +339,7 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
 
   const ownedRuntimeRef = useRef<OwnedRuntimeEntry | null>(null);
   // The conversation a new chat created, so a rebuilt runtime (e.g. a new `novu` instance) resumes it instead of starting empty.
-  const createdConversationRef = useRef<{ key: string; conversationId: string } | null>(null);
+  const createdConversationRef = useRef<{ key: string; identity: string; conversationId: string } | null>(null);
   const [managedRuntime, setManagedRuntime] = useState<ManagedRuntimeEntry | null>(null);
   const [createEpoch, setCreateEpoch] = useState(0);
   const managedRuntimeKey = sharedRuntime
@@ -362,6 +362,8 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     }
 
     const key = managedRuntimeKey;
+    // Only a client for the same app, subscriber and context may resume the saved conversation.
+    const identity = `${novu.applicationIdentifier}\0${novu.subscriberId}\0${novu.contextKey}`;
     const current = ownedRuntimeRef.current;
 
     let runtime: AgentConversationRuntime;
@@ -371,7 +373,9 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
       current?.runtime.dispose();
       const resumeConversationId =
         conversationIdProp ??
-        (createdConversationRef.current?.key === key ? createdConversationRef.current.conversationId : undefined);
+        (createdConversationRef.current?.key === key && createdConversationRef.current.identity === identity
+          ? createdConversationRef.current.conversationId
+          : undefined);
       runtime = resumeConversationId
         ? novu.webChat.conversation({ agentId, conversationId: resumeConversationId, agentHash })
         : novu.webChat.conversation({ agentId, agentHash });
@@ -382,7 +386,7 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
 
     return () => {
       const conversationId = ownedRuntimeRef.current?.runtime.getSnapshot().conversationId;
-      if (conversationId) createdConversationRef.current = { key, conversationId };
+      if (conversationId) createdConversationRef.current = { key, identity, conversationId };
       ownedRuntimeRef.current?.runtime.dispose();
       ownedRuntimeRef.current = null;
       setManagedRuntime(null);
