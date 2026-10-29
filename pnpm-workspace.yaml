@@ -212,7 +212,17 @@ overrides:
   # seroval-plugins) onto the 1.6.x patch line. solid-js@1.9.6 depends on
   # `seroval: ^1.1.0` and seroval-plugins@1.2.1 has a `^1.0` peer, both of
   # which stay satisfied on 1.6.x.
-  seroval@<1.6.3: ^1.6.3
+  # GHSA-9wx9-5pv9-3349 (moderate, >=1.5.5 <1.6.10): seroval TypedArray /
+  # DataView length handling allows memory exhaustion in JSON deserialization.
+  # GHSA-f86p-h4j2-7qgj (moderate, >=1.6.0 <1.6.11): regression in the
+  # 1.6.10 TypedArray fix that still enables unchecked allocations. Both are
+  # patched in 1.6.11 (patch bump within the 1.6.x line). Widen the previous
+  # <1.6.3 floor so transitive consumers (apps/dashboard >
+  # @better-auth/sso/better-auth > solid-js > seroval[/-plugins] and the
+  # enterprise auth package) pick up the fix. solid-js@1.9.x depends on
+  # `seroval: ^1.1.0` and seroval-plugins@1.2.1 has a `^1.0` peer, both of
+  # which stay satisfied on 1.6.x.
+  seroval@<1.6.11: ^1.6.11
   h3@<1.15.9: ^1.15.9
   immutable@>=4.0.0 <4.3.8: ^4.3.8
   jws@>=4.0.0 <4.0.1: ^4.0.1

@@ -68,7 +68,7 @@ overrides:
   http-cache-semantics@<4.2.1: ^4.2.1
   axios@>=1.0.0 <1.20.0: ^1.20.0
   '@slack/web-api': 7.17.0
-  seroval@<1.6.3: ^1.6.3
+  seroval@<1.6.11: ^1.6.11
   h3@<1.15.9: ^1.15.9
   immutable@>=4.0.0 <4.3.8: ^4.3.8
   jws@>=4.0.0 <4.0.1: ^4.0.1
@@ -27605,11 +27605,11 @@ packages:
     resolution: {integrity: sha512-H5vs53+39+x4Udwp4J5rNZfgFuA+Lt+uU+09w1gYBVWomtAl98B+E9w7yC05Xc81/HgLvJdlyqJbU0fJCKCmdw==}
     engines: {node: '>=10'}
     peerDependencies:
-      seroval: ^1.6.3
+      seroval: ^1.6.11
 
-  seroval@1.6.8:
-    resolution: {integrity: sha512-HlSgSAkTk4EqHcje1ptJjfZi1YDv5KbhVJ/d3P7T/nAXua2VmDu+AKDX5VTdFfZf48nDkWB2TKYt0DrCSa+3wg==}
-    engines: {node: '>=10'}
+  seroval@1.7.2:
+    resolution: {integrity: sha512-NPOYrDVbvtuTo5m9InqKE7O6wBASON46OabjyqLUGPvoXNDYp0pReuFYkqOQwGsoj1OpZVj6mIdnRRgt5O1/gQ==}
+    engines: {node: '>=20'}
 
   serve-static@1.16.2:
     resolution: {integrity: sha512-VqpjJZKadQB/PEbEwvFdO43Ax5dFBZ2UECszz8bQ7pi7wt//PWe1P6MN7eCnjsatYtBT6EuiClbjSWP2WrIoTw==}
@@ -61775,11 +61775,11 @@ snapshots:
 
   serialize-javascript@7.0.5: {}
 
-  seroval-plugins@1.2.1(seroval@1.6.8):
+  seroval-plugins@1.2.1(seroval@1.7.2):
     dependencies:
-      seroval: 1.6.8
+      seroval: 1.7.2
 
-  seroval@1.6.8: {}
+  seroval@1.7.2: {}
 
   serve-static@1.16.2:
     dependencies:
@@ -62171,8 +62171,8 @@ snapshots:
   solid-js@1.9.6:
     dependencies:
       csstype: 3.2.3
-      seroval: 1.6.8
-      seroval-plugins: 1.2.1(seroval@1.6.8)
+      seroval: 1.7.2
+      seroval-plugins: 1.2.1(seroval@1.7.2)
 
   solid-motionone@1.0.3(solid-js@1.9.6):
     dependencies:
