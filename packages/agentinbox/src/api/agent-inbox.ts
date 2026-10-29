@@ -66,6 +66,11 @@ export interface Interaction {
    * The API calls them threads; the CLI prints them as `conversations`.
    */
   threads?: InteractionConversation[];
+  /**
+   * When the agent first got a person's answer, by asking for the interaction. Not on the read that hands it
+   * over: the listener tells by it whether a command that waited got the answer already.
+   */
+  answerReadAt?: string;
   expiresAt: string;
   createdAt: string;
 }
@@ -152,6 +157,16 @@ export async function createInteraction(client: ApiClient, input: CreateInteract
 export async function getInteraction(client: ApiClient, id: string): Promise<Interaction> {
   const res = await client.axios.get<{ data?: Interaction } | Interaction>(
     `/v1/inbox/messages/${encodeURIComponent(id)}`
+  );
+
+  return unwrap(res.data);
+}
+
+/** Withdraws a question that is still open: it can't be answered any more, and shows as canceled. */
+export async function cancelInteraction(client: ApiClient, id: string): Promise<Interaction> {
+  const res = await client.axios.post<{ data?: Interaction } | Interaction>(
+    `/v1/inbox/messages/${encodeURIComponent(id)}/cancel`,
+    {}
   );
 
   return unwrap(res.data);

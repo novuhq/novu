@@ -2,12 +2,12 @@ import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 
 import { HOST_IDS } from '../../src/lib/host-ids';
-import { SITE_INDEXED } from '../../src/lib/seo';
+import { SITE_INDEXED, SITE_PAGES } from '../../src/lib/seo';
 
 const origin = 'https://www.agentinbox.md';
 test.use({ javaScriptEnabled: false });
 
-/** What search engines are told about the website pages: left out of results until launch (`SITE_INDEXED`). */
+/** What search engines are told about the website pages (`SITE_INDEXED`). */
 const robotsDirective = SITE_INDEXED ? /(^|, )index, follow/ : /noindex, nofollow/;
 
 // Both pages share the agentinbox card of /sapien until the docs page has its own.
@@ -22,13 +22,15 @@ for (const path of ['/', '/sapien']) {
     expect(response?.status()).toBe(200);
     const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
     expect(new URL(canonical!).href).toBe(`${origin}${path}`);
-    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /@agentinbox\/cli/);
+    // Each page's own description, as `SITE_PAGES` writes it.
+    const description = Object.values(SITE_PAGES).find((item) => item.path === path)!.description;
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', description);
     const sharedUrl = await page.locator('meta[property="og:url"]').getAttribute('content');
     expect(new URL(sharedUrl!).href).toBe(`${origin}${path}`);
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', await page.title());
     await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', robotsDirective);
-    if (!SITE_INDEXED) expect(response?.headers()['x-robots-tag']).toBe('noindex, nofollow');
+    expect(response?.headers()['x-robots-tag']).toBe(SITE_INDEXED ? undefined : 'noindex, nofollow');
     const image = new URL((await page.locator('meta[property="og:image"]').first().getAttribute('content'))!);
     expect(image.origin).toBe(origin);
     expect(image.pathname).toBe(sharedImages[path]);
@@ -71,23 +73,26 @@ test('SEO crawler files contain only production canonical pages', async ({ reque
   expect(text).toContain('Allow: /');
   // Crawling stays allowed either way, so search engines read the `noindex`.
   expect(text).not.toContain('Disallow: /');
-  if (SITE_INDEXED) expect(text).toContain(`Sitemap: ${origin}/sitemap.xml`);
-  else expect(text).not.toContain('Sitemap:');
+  expect(text).toContain(`Sitemap: ${origin}/sitemap.xml`);
   const sitemap = await request.get('/sitemap.xml');
   expect(sitemap.status()).toBe(200);
   expect(sitemap.headers()['content-type']).toContain('xml');
-  const locations = [...(await sitemap.text()).matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
+  const body = await sitemap.text();
+  const locations = [...body.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
   expect(locations.sort()).toEqual(
-    SITE_INDEXED ? [`${origin}/`, `${origin}/sapien`, ...HOST_IDS.map((id) => `${origin}/${id}`)].sort() : []
+    [`${origin}/`, `${origin}/sapien`, ...HOST_IDS.map((id) => `${origin}/${id}`)].sort()
   );
+  expect(body).toContain(`<loc>${origin}/sapien</loc>`);
+  expect(body).toContain('<changefreq>weekly</changefreq>');
+  expect(body).toContain('<priority>0.8</priority>');
+  expect(body).toContain(`${origin}/sapien/opengraph-image.jpg`);
 });
 
-test('SEO text versions follow the pages out of search results', async ({ request }) => {
-  test.skip(SITE_INDEXED, 'Only while the website pages are kept out of search results.');
+test('SEO text versions follow whether the website pages are indexed', async ({ request }) => {
   for (const path of ['/index.md', '/llms.txt', '/claude-code', '/claude-code.md', '/claude-code/index.md']) {
     const response = await request.get(path);
     expect(response.status()).toBe(200);
-    expect(response.headers()['x-robots-tag']).toBe('noindex, nofollow');
+    expect(response.headers()['x-robots-tag']).toBe(SITE_INDEXED ? undefined : 'noindex, nofollow');
   }
 });
 
@@ -105,8 +110,8 @@ test('GEO discovery and Markdown expose the same commands without HTML noise', a
   await page.goto('/');
   const commands = await page.locator('.home-command-line code, #flags dt code').allTextContents();
   for (const command of commands) expect(markdown).toContain(command);
-  expect(markdown).toContain('inbox show <conversation>');
-  expect(markdown).toContain('~/.agentinbox/config.json');
+  expect(markdown).toContain('agentinbox contact invite');
+  expect(markdown).not.toContain('~/.agentinbox/config.json');
   expect(markdown).not.toContain('<script');
   expect(markdown).not.toContain('='.repeat(80));
   await expect(page.locator('link[rel="alternate"][type="text/markdown"]')).toHaveAttribute(
@@ -129,6 +134,8 @@ test('SEO page metadata prevents preview indexing and retains production canonic
     index: SITE_INDEXED,
     follow: SITE_INDEXED,
   });
+  // staging.agentinbox.md sets SITE_NOINDEX, which is the third argument here.
+  expect(pageMetadata('home', 'production', true).robots).toMatchObject({ index: false, follow: false });
 });
 
 test('every host has a page and its Markdown, linked from llms.txt', async ({ page, request }) => {
@@ -157,4 +164,36 @@ test('every host has a page and its Markdown, linked from llms.txt', async ({ pa
   for (const path of ['/not-a-host', '/not-a-host.md']) {
     expect((await request.get(path)).status()).toBe(404);
   }
+});
+
+test('a missing page is Markdown when the agent asks for Markdown', async ({ request }) => {
+  for (const path of ['/some-path-that-does-not-exist', '/not-a-host', '/not-a-host.md']) {
+    const response = await request.get(path, {
+      headers: { accept: 'text/markdown' },
+      maxRedirects: 5,
+    });
+    expect(response.status()).toBe(404);
+    expect(response.headers()['content-type']).toContain('text/markdown');
+    const body = await response.text();
+    const explanation = body
+      .replace(/\[[^\]]+\]\([^)]+\)/g, '')
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/[#>*_`-]/g, ' ')
+      .trim();
+    expect(explanation.length).toBeGreaterThanOrEqual(20);
+    expect(body).toContain(`${origin}/llms.txt`);
+    expect(body).toContain(`${origin}/sitemap.xml`);
+    expect(body).toContain(`${origin}/index.md`);
+    expect(body).not.toContain('<html');
+  }
+
+  const browser = await request.get('/some-path-that-does-not-exist', {
+    headers: { accept: 'text/html,application/xhtml+xml' },
+  });
+  expect(browser.status()).toBe(404);
+  expect(browser.headers()['content-type']).toContain('text/html');
+
+  const home = await request.get('/', { headers: { accept: 'text/markdown' } });
+  expect(home.status()).toBe(200);
+  expect(home.headers()['content-type']).toContain('text/html');
 });

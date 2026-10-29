@@ -164,7 +164,7 @@ export async function inviteCommand(contactArg: string, options: InviteOptions):
         : `${who} is ${result.alreadyLinked ? 'already ' : ''}linked on ${formatChannels(result.linkedOn, 'and')}. Address them with:`;
 
     process.stdout.write(
-      `\n${pc.green('✔')} ${lead}\n` + `  ${pc.bold(`${CLI_COMMAND} inbox send ask "…" --to ${result.contactId}`)}\n`
+      `\n${pc.green('✔')} ${lead}\n` + `  ${pc.bold(`${CLI_COMMAND} send ask "…" --to ${result.contactId}`)}\n`
     );
 
     process.exit(0);

@@ -224,7 +224,7 @@ async function confirmLinkedChannel(
   await createInteraction(client, {
     kind: 'tell',
     card: {
-      title: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`npx @agentinbox/cli inbox send approve "Deploy to production?"\`.`,
+      title: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`npx @agentinbox/cli send approve "Deploy to production?"\`.`,
     },
     to: provisioned.subscriberId,
     via: channel,
@@ -232,9 +232,9 @@ async function confirmLinkedChannel(
   });
 
   const examples = [
-    'npx @agentinbox/cli inbox send ask "Which environment should I target?"',
-    'npx @agentinbox/cli inbox send approve "Deploy to production?"',
-    'npx @agentinbox/cli inbox send "Build finished."',
+    'npx @agentinbox/cli send ask "Which environment should I target?"',
+    'npx @agentinbox/cli send approve "Deploy to production?"',
+    'npx @agentinbox/cli send "Build finished."',
   ];
   const screen = openedScreen();
 

@@ -88,9 +88,9 @@ export function Hero() {
                 {HERO_TITLE.accent}
               </span>
             </h1>
-            <p className="text-[15px] leading-[21px] tracking-tight text-sapien-foreground/50 sm:h-[42px] sm:leading-[1.375]">
-              {HERO_DESCRIPTION[0]}
-              <br className="max-sm:hidden" /> {HERO_DESCRIPTION[1]}
+            {/* Grows with its text: the subhead is longer than the two lines Figma sized it for. */}
+            <p className="text-[15px] leading-[21px] tracking-tight text-pretty text-sapien-foreground/50 sm:leading-[1.375]">
+              {HERO_DESCRIPTION}
             </p>
           </div>
           {/* Wraps so a failed prompt copy can show the prompt on a line of its own, under both. */}
@@ -99,7 +99,7 @@ export function Hero() {
               command={SETUP_COMMAND}
               label={HERO_COMMAND_LABEL}
               variant="icon"
-              className="w-full text-left sm:w-[283px]"
+              className="w-full text-left sm:w-[292px]"
             />
             <CopyButton
               text={CLOSING_PROMPT}

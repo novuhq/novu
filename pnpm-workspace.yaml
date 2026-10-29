@@ -37,9 +37,14 @@ packageExtensions:
 
 # Settings migrated from package.json#pnpm (pnpm v11 no longer reads the `pnpm` field).
 overrides:
-  body-parser@<1.20.6: ^1.20.6
+  # GHSA-27r3-jxmh-p828 (high): body-parser DoS via trailing bytes after a
+  # compressed request body. Patched in 1.20.9 (1.x line) and 2.4.0 (2.x line).
+  # Widen the previous <1.20.6 / <2.3.0 floors so transitive consumers across
+  # the api, worker, ws, dashboard, and dev tooling (express, serve-static,
+  # @nestjs/*, verdaccio) pick up the fix.
+  body-parser@<1.20.9: ^1.20.9
   deepmerge-ts@<8.0.0: ^8.0.0
-  body-parser@>=2.0.0 <2.3.0: ^2.3.0
+  body-parser@>=2.0.0 <2.4.0: ^2.4.0
   # GHSA-8r5x-fm3f-whwj (critical): Handlebars JavaScript injection via AST
   # type confusion in compile (bypass of CVE-2026-33937).
   # GHSA-p8wg-vrv2-v86f (critical): Handlebars JavaScript injection via own
@@ -206,7 +211,11 @@ overrides:
   jws@>=4.0.0 <4.0.1: ^4.0.1
   validator@<13.15.22: ^13.15.22
   msgpackr: ^1.10.1
-  multer@<2.4.0: ^2.4.0
+  # GHSA-q7qp-rjg7-q26m (high): multer DoS via a pending asynchronous
+  # fileFilter after request teardown. Patched in 2.5.0 (patch bump within
+  # the 2.x line). Widen the previous <2.4.0 floor so transitive consumers
+  # (@nestjs/platform-express, api/worker upload routes) pick up the fix.
+  multer@<2.5.0: ^2.5.0
   jws@<3.2.3: ^3.2.3
   svgo@>=3.0.0 <3.3.5: ^3.3.5
   flatted@<3.4.2: ^3.4.2
@@ -404,9 +413,16 @@ overrides:
   # scheme/hostname normalization. Patched in 3.1.6.
   # GHSA-qw65-cvwx-89v3: additional host-confusion regression affecting
   # 3.1.6 (and 3.1.6 is separately called out by GHSA-58mr-gqgx-xq4g).
-  # Patched in 3.1.7. Widen the override so the transitive verdaccio > ajv
-  # consumer picks up the fix.
-  fast-uri@<3.1.7: ^3.1.7
+  # Patched in 3.1.7.
+  # GHSA-w74x-v6f9-j3xg (moderate) / GHSA-wjr9-j795-jxcr (moderate) /
+  # GHSA-xhq7-xmqj-769h (low) / GHSA-333x-w4r6-6crp (low): fast-uri URI
+  # scheme spoofing via percent-encoded scheme decoding, host confusion via
+  # unchecked WHATWG host canonicalization, improper path equivalence in
+  # relative reference normalization, and scheme injection via an unescaped
+  # first-segment colon in suffix references. All patched in 3.1.9 (patch
+  # bump within the 3.1.x line). Widen the override so the transitive
+  # verdaccio > ajv consumer picks up the fix.
+  fast-uri@<3.1.9: ^3.1.9
   # GHSA-c83g-rgw3-j3cx / GHSA-73wf-gq98-2v4g: browserslist unbounded memory
   # growth (OOM) via distinct query results and uncaught crash / prototype
   # write via untrusted browserslist-stats.json. Patched in 4.28.7.

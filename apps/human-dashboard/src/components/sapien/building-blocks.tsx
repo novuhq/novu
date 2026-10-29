@@ -66,7 +66,8 @@ export function BuildingBlocks() {
             key={feature.title}
             className={cn(
               'flex min-h-[178.5px] flex-col justify-between gap-6 bg-sapien-background p-[19px]',
-              index === BUILDING_BLOCK_FEATURES.length - 1 && 'sm:col-span-2'
+              // Seven cards: the last fills its row in both the two- and three-column grids.
+              index === BUILDING_BLOCK_FEATURES.length - 1 && 'sm:col-span-2 lg:col-span-3'
             )}
           >
             <Artwork asset={feature.icon} className="size-6" />

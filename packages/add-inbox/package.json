@@ -57,7 +57,7 @@
     "@types/uuid": "^9.0.0",
     "rimraf": "^5.0.10",
     "ts-node": "^10.9.1",
-    "typescript": "^5.0.0",
+    "typescript": "6.0.3",
     "vitest": "^4.1.0"
   }
 }

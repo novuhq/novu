@@ -57,7 +57,7 @@
     "postcss": "^8.5.10",
     "sharp": "^0.35.5",
     "tailwindcss": "4.3.0",
-    "typescript": "5.6.2",
+    "typescript": "6.0.3",
     "vitest": "^4.1.11"
   }
 }

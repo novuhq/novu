@@ -178,6 +178,8 @@ export interface PersistHumanInteractionActivityParams extends ConversationActiv
    * each contact. Row identifiers are unique per environment, so these rows also name their thread.
    */
   inOtherThread?: boolean;
+  /** Set on the answer's row in the first thread when the answer was given in another thread. */
+  answeredElsewhere?: boolean;
 }
 
 export interface PersistToolResultParams extends ConversationActivityContext {

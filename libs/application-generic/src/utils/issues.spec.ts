@@ -4,7 +4,12 @@ import type { PinoLogger } from 'nestjs-pino';
 import { describe, expect, it } from 'vitest';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { chatControlSchema } from '../schemas/control';
-import { ControlIssues, processControlValuesByLiquid, processControlValuesBySchema } from './issues';
+import {
+  ControlIssues,
+  getSchemaValidator,
+  processControlValuesByLiquid,
+  processControlValuesBySchema,
+} from './issues';
 import { dashboardSanitizeControlValues } from './sanitize-control-values';
 
 const logger = { error: () => {} } as unknown as PinoLogger;
@@ -93,6 +98,40 @@ describe('processControlValuesBySchema', () => {
     expect(sanitized).not.toHaveProperty('editorType');
     expect(issues.controls?.editorType).toBeUndefined();
     expect(issues.controls?.body).toBeDefined();
+  });
+});
+
+describe('getSchemaValidator', () => {
+  const schemaWithId = (requiredField: string) => ({
+    $id: 'https://example.com/controls',
+    type: 'object',
+    properties: { [requiredField]: { type: 'string' } },
+    required: [requiredField],
+  });
+
+  it('reuses the compiled validator for a schema with the same content', () => {
+    expect(getSchemaValidator(schemaWithId('subject'))).toBe(getSchemaValidator(schemaWithId('subject')));
+  });
+
+  it('compiles different schemas that declare the same $id', () => {
+    const subjectValidator = getSchemaValidator(schemaWithId('subject'));
+    const bodyValidator = getSchemaValidator(schemaWithId('body'));
+
+    expect(subjectValidator({ subject: 'hi' })).toBe(true);
+    expect(bodyValidator({ subject: 'hi' })).toBe(false);
+    expect(bodyValidator({ body: 'hi' })).toBe(true);
+  });
+
+  it('applies schema defaults only when asked to', () => {
+    const schema = { type: 'object', properties: { name: { type: 'string', default: 'friend' } } };
+    const withDefaults: Record<string, unknown> = {};
+    const withoutDefaults: Record<string, unknown> = {};
+
+    getSchemaValidator(schema, { useDefaults: true })(withDefaults);
+    getSchemaValidator(schema)(withoutDefaults);
+
+    expect(withDefaults).toEqual({ name: 'friend' });
+    expect(withoutDefaults).toEqual({});
   });
 });
 

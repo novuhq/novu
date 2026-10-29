@@ -376,6 +376,32 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
     expect(data.active).to.equal(true);
   });
 
+  it('should not store the Twilio auth token for API key authentication', async () => {
+    const response = await session.testAgent.post('/v1/integrations').send({
+      providerId: SmsProviderIdEnum.Twilio,
+      channel: ChannelTypeEnum.SMS,
+      credentials: {
+        authMethod: 'apiKey',
+        accountSid: 'AC123',
+        token: 'auth-token',
+        apiKey: 'SK123',
+        secretKey: 'api-key-secret',
+        from: '+15550000000',
+      },
+      active: true,
+      check: false,
+    });
+    expect(response.status).to.equal(201);
+
+    const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
+    const { credentials } = integrations.find((integration) => integration._id === response.body.data._id);
+
+    expect(credentials.authMethod).to.equal('apiKey');
+    expect(credentials.apiKey).to.equal('SK123');
+    expect(credentials.secretKey).to.equal('api-key-secret');
+    expect(credentials.token).to.equal(undefined);
+  });
+
   it('should not calculate primary and priority fields when is not active', async () => {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,

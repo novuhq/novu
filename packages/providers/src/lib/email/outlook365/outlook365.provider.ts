@@ -17,11 +17,23 @@ const SMTP_CONNECT_RETRY_DELAY_MS = 200;
 
 const RETRYABLE_HANDSHAKE_MESSAGES = new Set(['Connection timeout', 'Greeting never received']);
 
+/**
+ * Transient SMTP replies Office 365 returns while the session is still opening.
+ * 421 includes `4.3.2 Service not active` on AUTH LOGIN.
+ * 450, 451, 452, and 454 are the other temporary failures seen before MAIL.
+ */
+const RETRYABLE_SMTP_RESPONSE_CODES = new Set([421, 450, 451, 452, 454]);
+
+/** Commands that run before MAIL/DATA, so a retry cannot submit the message twice. */
+const PRE_MESSAGE_SMTP_COMMAND = /^(CONN|EHLO|HELO|LHLO|STARTTLS|AUTH)(\s|$)/;
+
 interface SmtpConnectError {
   code?: string;
   command?: string;
   syscall?: string;
   message?: string;
+  response?: string;
+  responseCode?: number;
 }
 
 function isRetryableOutlookConnectError(error: unknown): boolean {
@@ -29,7 +41,7 @@ function isRetryableOutlookConnectError(error: unknown): boolean {
     return false;
   }
 
-  const { code, syscall, message } = error as SmtpConnectError;
+  const { code, syscall, message, response, responseCode, command } = error as SmtpConnectError;
   const text = typeof message === 'string' ? message : '';
 
   if (syscall === 'connect' || text.startsWith('connect ')) {
@@ -40,11 +52,37 @@ function isRetryableOutlookConnectError(error: unknown): boolean {
     return true;
   }
 
+  if (isRetryablePreMessageSmtpResponse(responseCode, response, command)) {
+    return true;
+  }
+
   return (
     RETRYABLE_HANDSHAKE_MESSAGES.has(text) ||
     text.startsWith('Invalid greeting') ||
     text.startsWith('Error initiating TLS')
   );
+}
+
+function isRetryablePreMessageSmtpResponse(
+  responseCode: number | undefined,
+  response: string | undefined,
+  command: string | undefined
+): boolean {
+  if (typeof command !== 'string' || !PRE_MESSAGE_SMTP_COMMAND.test(command)) {
+    return false;
+  }
+
+  if (typeof responseCode === 'number' && RETRYABLE_SMTP_RESPONSE_CODES.has(responseCode)) {
+    return true;
+  }
+
+  if (typeof response !== 'string') {
+    return false;
+  }
+
+  const leadingCode = Number((response.match(/^(\d{3})(?:\s|-|$)/) || [])[1]);
+
+  return RETRYABLE_SMTP_RESPONSE_CODES.has(leadingCode);
 }
 
 export class Outlook365Provider extends BaseProvider implements IEmailProvider {

@@ -65,7 +65,7 @@
     "run-p": "0.0.0",
     "ts-jest": "^29.1.0",
     "typedoc": "^0.24.0",
-    "typescript": "5.6.2"
+    "typescript": "6.0.3"
   },
   "nx": {
     "tags": [

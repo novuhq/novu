@@ -37,7 +37,7 @@ const to = z
   .union([recipient, z.array(recipient).min(1).max(50)])
   .optional()
   .describe(
-    'Contact id, email address, or up to 50 of them. With inbox_send, omit to reach the account owner. With inbox_reply, these are the only contacts who may answer.'
+    'Contact id, email address, or up to 50 of them. With inbox_send, omit to reach the account owner. With inbox_reply, these are the only contacts who may answer; one who is not in a direct conversation gets it in their own chat too, and the answer comes back to this conversation.'
   );
 
 const waitSeconds = z
@@ -58,7 +58,7 @@ const anyoneMayAnswer = z
 const CHECK_INBOX_HINT =
   ' Before you send, call inbox_list with filter "unread" so you do not miss a conversation a person started.';
 
-/** The kinds that ask something. Without one, a send is a plain message, as `inbox send <text>` is in the CLI. */
+/** The kinds that ask something. Without one, a send is a plain message, as `send <text>` is in the CLI. */
 type QuestionKind = Exclude<InteractionKind, 'tell'>;
 
 const questionKind = z
