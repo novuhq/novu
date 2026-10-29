@@ -387,6 +387,35 @@ describe('HumanListenMessagesService', () => {
     });
   });
 
+  it('gives the answer written in the question’s own conversation by someone it doesn’t listen to, whose message it doesn’t read', async () => {
+    // Carol answers in the group the question was asked in; her own message isn't among the rows it reads.
+    const answerRow = row({
+      type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+      identifier: 'human:hi_env:response',
+      senderId: 'carol',
+      senderName: 'Carol',
+      richContent: {
+        humanInteraction: { interactionIdentifier: 'hi_env', kind: 'ask', status: 'answered', text: 'prod' },
+      },
+    });
+    const { service } = setup({
+      rows: [answerRow],
+      cards: [{ identifier: 'hi_env', kind: HumanInteractionKindEnum.ASK, _conversationId: 'conv1' }],
+    });
+
+    const page = await service.read(scope, agent, listenedTo, { at: now.getTime() - 120_000 }, 20, now);
+
+    expect(page.data).to.have.length(1);
+    expect(page.data[0]).to.deep.include({
+      id: 'human:hi_env:response',
+      conversationId: 'conv_one',
+      from: { id: 'carol', name: 'Carol', isOperator: false },
+      text: 'prod',
+      answersMessageId: 'hi_env',
+      answer: { status: 'answered', text: 'prod' },
+    });
+  });
+
   it('gives a question to the earliest reply that fits, even one an earlier look gave', async () => {
     const first = row({ content: 'yes', createdAt: new Date(now.getTime() - 30_000) });
     const again = row({ content: 'yes', createdAt: new Date(now.getTime() - 28_000) });

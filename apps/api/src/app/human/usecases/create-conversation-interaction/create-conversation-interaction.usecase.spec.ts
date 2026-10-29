@@ -272,16 +272,18 @@ describe('CreateConversationInteraction', () => {
     }));
 
     // Only Carol may answer, and she isn't in this direct conversation: her own chat is her only way in.
-    await usecase.execute({ ...command, kind: HumanInteractionKindEnum.ASK, to: ['carol'] } as any, () => [
-      {
-        subscriberId: 'carol',
-        integrationIdentifier: 'telegram-main',
-        platform: 'telegram',
-        deliver: async () => {
-          throw new Error('Forbidden: bot was blocked by the user');
+    await usecase.execute({ ...command, kind: HumanInteractionKindEnum.ASK, to: ['carol'] } as any, {
+      alsoTo: () => [
+        {
+          subscriberId: 'carol',
+          integrationIdentifier: 'telegram-main',
+          platform: 'telegram',
+          deliver: async () => {
+            throw new Error('Forbidden: bot was blocked by the user');
+          },
         },
-      },
-    ]);
+      ],
+    });
 
     const stamped = humanInteractionRepository.stampDelivery.firstCall.args[2];
     // The card in sub-1's thread is addressed to Carol, never to sub-1, who may not answer and is matched by
@@ -290,6 +292,25 @@ describe('CreateConversationInteraction', () => {
       'carol',
     ]);
     expect(stamped.subscriberIds).to.deep.equal([]);
+  });
+
+  it('says when the post in the conversation went out, and not when only a delivery outside it did', async () => {
+    const { usecase, command, outboundGateway } = setup();
+    const carol = {
+      subscriberId: 'carol',
+      integrationIdentifier: 'telegram-main',
+      platform: 'telegram',
+      deliver: async () => ({ platformMessageId: 'tg-1', platformThreadId: 'telegram:42' }),
+    };
+    const onPosted = sinon.stub();
+
+    await usecase.execute({ ...command, to: ['carol'] } as any, { alsoTo: () => [carol], onPosted });
+    expect(onPosted.calledOnce).to.equal(true);
+
+    onPosted.resetHistory();
+    outboundGateway.deliver.rejects(new Error('channel_not_found'));
+    await usecase.execute({ ...command, to: ['carol'] } as any, { alsoTo: () => [carol], onPosted });
+    expect(onPosted.called).to.equal(false);
   });
 
   it('allows explicit `to` when the conversation has no subscriber participant', async () => {

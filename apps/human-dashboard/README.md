@@ -72,15 +72,20 @@ More hosts connect later from Configure, in "Connect another agent": the same ho
 
 The hosts are one list, `src/lib/hosts.ts`, which the picker and the public host pages (`/claude-code`) are built
 from. A host that runs commands (Claude Code, Codex, OpenCode, Cursor, Hermes, OpenClaw, General) gets the commands
-first, with its own skills line (`npx skills add … --agent claude-code -y`), and its second way in under them: a
-plugin, or the MCP server in its own config. A chat app (Claude, ChatGPT, Grok Bot) only signs in to the MCP server.
+first, with its own skills line (`npx skills add … --agent claude-code -y`), and its second way in: a plugin, or the
+MCP server in its own config. A chat app (Claude, ChatGPT, Grok Bot) only signs in to the MCP server.
 The picker ticks the hosts that connected already; today that's the apps the MCP server tells apart
 (`connectedTools`). `?connect=codex` on `/configure` opens "Connect another agent" on that host, which is where a
 host page's "sign in to get your code" leads.
 
-The connect box shows only the commands for now. It also had a prompt that asked an agent to run them, but an
-agent's own permission checks (Claude Code's auto mode) stop it from saving a key and installing a skill on a
-pasted request, so the operator runs them.
+In the dashboard the box under the picker has a tab for each way a host has (`src/lib/host-ways.ts`), and opens
+on the first: for Claude Code and Codex their plugin (one install brings the skills and the inbox tools), and for
+Cursor and OpenCode the MCP server in their own config, then the commands; for any other host that runs commands, the
+commands (one paste, no sign-in, and the code connects it at once); for Claude and ChatGPT, the server added in the
+app's settings, then a prompt to paste once it's there. Grok Bot adds the server itself when asked, so a prompt is all it gets. A host with one way still has
+its one tab, so every host's box looks the same. Only the chat apps get a prompt: a coding agent's own permission
+checks (Claude Code's auto mode) stop it from saving a key and installing a skill on a pasted request, so the
+operator runs the commands.
 
 ## Develop
 

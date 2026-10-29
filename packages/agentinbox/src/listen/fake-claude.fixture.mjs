@@ -9,12 +9,19 @@
 //   ask:<command>        asks to run <command> and reports what it was told
 //   ask-twice:<command>  asks for <command> twice in one turn; a grant for the session skips the second
 //   sleep:<ms>           works for <ms> (a tool that doesn't ask); messages that come meanwhile join the turn
-//   reply-myself[:<ms>]  asks to run `npx @agentinbox/cli inbox reply <conversation> …`, then replies through the
+//   reply-myself[:<ms>]  asks to run `npx @agentinbox/cli reply <conversation> …`, then replies through the
 //                        fake API, as that command would; with <ms>, works that long more after replying
-//   wait-for:<ms>        runs `npx @agentinbox/cli inbox reply <conversation> ask …`, which its settings allow,
+//   wait-for:<ms>        runs `npx @agentinbox/cli reply <conversation> ask …`, which its settings allow,
 //                        and which waits <ms> for the answer before it ends (a `tool_result`)
+//   ask-and-wait:<ms>    runs `npx @agentinbox/cli reply <conversation> ask "Staging or prod?"` through the
+//                        fake API, as that command would: it waits up to <ms> for the answer, asking for it every
+//                        40 ms; then it works a moment more
+//   ask-async-and-wait:<ms>
+//                        the same, after `… ask "Which region?" --async`, which doesn't wait
+//   ask-async-and-sleep:<ms>
+//                        only `… ask "Which region?" --async`, then works for <ms>
 //   ask-others:<to>[:wait|:<ms>]
-//                        asks to run `npx @agentinbox/cli inbox reply <conversation> approve "Ship it?" --to <to>`,
+//                        asks to run `npx @agentinbox/cli reply <conversation> approve "Ship it?" --to <to>`,
 //                        then sends it through the fake API, as that command would: with `wait`, it waits for the
 //                        answer; else it doesn't (`--async`), and with <ms> works that long more
 //   mcp:<tool> [conv]    asks to use the MCP tool <tool> (`mcp__<server>__<name>`) on <conv>, by default the
@@ -45,9 +52,15 @@ if (argv[0] === '--version') {
 }
 if (argv[0] === 'auth' && argv[1] === 'status') {
   // As Claude Code 2.1.311 does on macOS: it finds its sign-in under the account USER names, and without it says
-  // it isn't signed in (seen 2026-10-27).
-  const loggedIn = process.env.FAKE_CLAUDE_SIGNED_OUT !== '1' && Boolean(process.env.USER);
-  process.stdout.write(`${JSON.stringify({ loggedIn, apiProvider: 'firstParty' })}\n`);
+  // it isn't signed in (seen 2026-10-27). FAKE_CLAUDE_KEY_ONLY: it is signed in only with ANTHROPIC_API_KEY. With
+  // Bedrock it says it is signed in, whatever AWS credentials it has, as 2.1.312 does (seen 2026-10-29).
+  const apiProvider = process.env.CLAUDE_CODE_USE_BEDROCK === '1' ? 'bedrock' : 'firstParty';
+  const loggedIn =
+    apiProvider !== 'firstParty' ||
+    (process.env.FAKE_CLAUDE_SIGNED_OUT !== '1' &&
+      Boolean(process.env.USER) &&
+      (process.env.FAKE_CLAUDE_KEY_ONLY !== '1' || Boolean(process.env.ANTHROPIC_API_KEY)));
+  process.stdout.write(`${JSON.stringify({ loggedIn, apiProvider })}\n`);
   process.exit(0);
 }
 
@@ -175,6 +188,35 @@ function tool(command) {
   });
 }
 
+/**
+ * Runs `reply <conversation> ask "<title>"` as the CLI does, through the fake API: it sends the question and,
+ * unless `async`, asks for its answer every 40 ms for up to `ms`. Ends with the tool's result, which it returns.
+ */
+async function askIn(conversation, title, { async = false, ms = 0 }, interruptible) {
+  const id = `toolu_${randomUUID()}`;
+  const command = `npx @agentinbox/cli reply ${conversation} ask "${title}"${async ? ' --async' : ''}`;
+  out({
+    type: 'assistant',
+    message: { content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] },
+    session_id: sessionId,
+  });
+  const sent = (await api('POST', '/v1/inbox/messages', { kind: 'ask', card: { title }, thread: conversation })).data;
+  let outcome = sent;
+  const deadline = Date.now() + ms;
+  while (!async && outcome.status === 'pending' && Date.now() < deadline) {
+    if ((await interruptible(sleep(40))) === 'aborted') break;
+    outcome = (await api('GET', `/v1/inbox/messages/${sent.id}`)).data;
+  }
+  const result = async ? 'Sent.' : outcome.response?.text ? `Answered: ${outcome.response.text}` : 'No answer yet.';
+  out({
+    type: 'user',
+    message: { content: [{ type: 'tool_result', tool_use_id: id, content: result }] },
+    session_id: sessionId,
+  });
+
+  return result;
+}
+
 /** What it does for the words of a message: its answer, or `error` for a turn that fails. */
 const BEHAVIORS = [
   [
@@ -215,7 +257,7 @@ const BEHAVIORS = [
     'reply-myself',
     async (rest, { interruptible, content }) => {
       const conversation = conversationOf(content);
-      const command = `npx @agentinbox/cli inbox reply ${conversation} "I replied myself; all good."`;
+      const command = `npx @agentinbox/cli reply ${conversation} "I replied myself; all good."`;
       tool(command);
       const decision = await interruptible(permission(command));
       if (decision === 'aborted') return {};
@@ -235,7 +277,7 @@ const BEHAVIORS = [
     'wait-for:',
     async (rest, { interruptible, content }) => {
       const id = `toolu_${randomUUID()}`;
-      const command = `npx @agentinbox/cli inbox reply ${conversationOf(content)} ask "Staging or prod?"`;
+      const command = `npx @agentinbox/cli reply ${conversationOf(content)} ask "Staging or prod?"`;
       out({
         type: 'assistant',
         message: { content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] },
@@ -252,13 +294,43 @@ const BEHAVIORS = [
     },
   ],
   [
+    'ask-and-wait:',
+    async (rest, { interruptible, content }) => {
+      const result = await askIn(conversationOf(content), 'Staging or prod?', { ms: Number(rest) }, interruptible);
+      // The model reads the answer, and works on a moment before its turn ends.
+      await interruptible(sleep(300));
+
+      return { answer: `Asked. ${result}` };
+    },
+  ],
+  [
+    'ask-async-and-wait:',
+    async (rest, { interruptible, content }) => {
+      const conversation = conversationOf(content);
+      await askIn(conversation, 'Which region?', { async: true }, interruptible);
+      const result = await askIn(conversation, 'Staging or prod?', { ms: Number(rest) }, interruptible);
+      await interruptible(sleep(300));
+
+      return { answer: `Asked twice. ${result}` };
+    },
+  ],
+  [
+    'ask-async-and-sleep:',
+    async (rest, { interruptible, content }) => {
+      await askIn(conversationOf(content), 'Which region?', { async: true }, interruptible);
+      await interruptible(sleep(Number(rest)));
+
+      return { answer: 'Asked.' };
+    },
+  ],
+  [
     'ask-others:',
     async (rest, { interruptible, content }) => {
       const [to, then] = rest.trim().split(':');
       const waits = then === 'wait';
       const conversation = conversationOf(content);
       const id = `toolu_${randomUUID()}`;
-      const command = `npx @agentinbox/cli inbox reply ${conversation} approve "Ship it?" --to ${to}${waits ? '' : ' --async'}`;
+      const command = `npx @agentinbox/cli reply ${conversation} approve "Ship it?" --to ${to}${waits ? '' : ' --async'}`;
       out({
         type: 'assistant',
         message: { content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] },

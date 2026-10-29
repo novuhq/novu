@@ -6,6 +6,7 @@ import { connectCommands } from './connect-prompt';
 import { homeMarkdown, llmsIndex } from './home-markdown';
 import { hostMarkdown } from './host-markdown';
 import {
+  type ChatApp,
   type CommandHost,
   cursorInstallLink,
   HOST_IDS,
@@ -80,8 +81,40 @@ describe('the host list', () => {
     expect(HOST_IDS.filter((id) => taken.has(id) || taken.has(`${id}.md`))).toEqual([]);
   });
 
-  it('ticks only the hosts the MCP server tells apart today', () => {
-    expect(HOST_IDS.filter(isToolId)).toEqual(['cursor', 'claude', 'chatgpt']);
+  it('opens each chat app’s desktop app first, with a web page to fall back to', () => {
+    const links = Object.fromEntries(
+      HOSTS.filter((host): host is ChatApp => host.group === 'chat').map((host) => [
+        host.id,
+        {
+          app: [host.desktopUrl, host.appUrl],
+          settings: host.settings && [host.settings.desktopUrl, host.settings.url],
+        },
+      ])
+    );
+
+    expect(links).toEqual({
+      claude: {
+        app: ['claude://claude.ai/new', 'https://claude.ai'],
+        settings: ['claude://claude.ai/settings/connectors', 'https://claude.ai/settings/connectors'],
+      },
+      chatgpt: {
+        app: ['codex://launch', 'https://chatgpt.com'],
+        settings: ['codex://plugins', 'https://chatgpt.com/plugins'],
+      },
+      grok: { app: ['grokbot://', 'https://grok.bot'], settings: undefined },
+    });
+  });
+
+  it('ticks the hosts that sign in through the MCP server on one of their tabs, as soon as they do', () => {
+    expect(HOST_IDS.filter(isToolId)).toEqual([
+      'claude-code',
+      'codex',
+      'opencode',
+      'cursor',
+      'claude',
+      'chatgpt',
+      'grok',
+    ]);
   });
 });
 
@@ -108,7 +141,7 @@ describe('the steps', () => {
     expect(commands).toEqual([
       'npx @agentinbox/cli connect atlas --code BCDF-GHJK --yes --api-url=https://www.agentinbox.md/api',
       'npx skills add agentinboxhq/skills --agent codex -y',
-      'npx @agentinbox/cli inbox list',
+      'npx @agentinbox/cli list',
     ]);
   });
 
@@ -123,14 +156,14 @@ describe('the steps', () => {
     const config = link.searchParams.get('config') ?? '';
 
     expect(link.protocol).toBe('cursor:');
-    expect(link.searchParams.get('name')).toBe('inbox');
+    expect(link.searchParams.get('name')).toBe('AgentInbox');
     expect(JSON.parse(atob(config))).toEqual({ url: 'https://mcp.agentinbox.md' });
   });
 
   it('adds the server to OpenCode as a remote one', () => {
     expect(JSON.parse(opencodeMcpConfig(MCP_URL))).toEqual({
       $schema: 'https://opencode.ai/config.json',
-      mcp: { inbox: { type: 'remote', url: 'https://mcp.agentinbox.md' } },
+      mcp: { AgentInbox: { type: 'remote', url: 'https://mcp.agentinbox.md' } },
     });
   });
 });
@@ -183,9 +216,12 @@ describe('the Markdown for agents', () => {
     expect(markdown).toContain('/plugin install agentinbox@agentinbox');
     expect(markdown).toContain('Never ask for a Telegram bot token or a Slack token');
     expect(hostMarkdown(hostOf('cursor'))).toContain(cursorInstallLink(MCP_URL));
-    expect(hostMarkdown(hostOf('opencode'))).toContain('`opencode mcp auth inbox`');
+    expect(hostMarkdown(hostOf('opencode'))).toContain('opencode mcp add AgentInbox --url https://mcp.agentinbox.md');
+    expect(hostMarkdown(hostOf('opencode'))).toContain('`opencode mcp auth AgentInbox`');
     expect(hostMarkdown(hostOf('codex'))).toContain('codex plugin add agentinbox@agentinbox');
-    expect(hostMarkdown(hostOf('codex'))).toContain('`codex mcp login inbox`');
+    expect(hostMarkdown(hostOf('codex'))).toContain(
+      '`codex mcp login AgentInbox` Then start Codex: it connects to Agent Inbox when a session starts.'
+    );
     expect(hostMarkdown(hostOf('hermes'))).toContain('/reset');
   });
 
@@ -204,7 +240,9 @@ describe('the Markdown for agents', () => {
       expect(markdown).toContain('inbox_setup');
       expect(markdown).not.toContain('npx @agentinbox/cli connect');
     }
-    expect(hostMarkdown(hostOf('grok'))).toContain('Add a custom MCP server called inbox at https://mcp.agentinbox.md');
+    expect(hostMarkdown(hostOf('grok'))).toContain(
+      'Add a custom MCP server called AgentInbox at https://mcp.agentinbox.md'
+    );
   });
 
   it('links every host’s page from /llms.txt and /index.md', () => {
@@ -215,7 +253,7 @@ describe('the Markdown for agents', () => {
       expect(llms).toContain(`(https://www.agentinbox.md/${id}.md)`);
       expect(index).toContain(`(https://www.agentinbox.md/${id}.md)`);
     }
-    expect(index).toContain('agentinbox inbox send "Build finished — 0 failures." --via email');
+    expect(index).toContain('agentinbox send "Build finished — 0 failures." --via email');
     expect(index).toContain('Agent Inbox is an email inbox for AI agents');
     expect(index).not.toContain('What comes back');
     expect(index).toContain('Built by Novu, and open source.');

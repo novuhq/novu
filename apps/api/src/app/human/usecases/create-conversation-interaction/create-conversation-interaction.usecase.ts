@@ -49,13 +49,17 @@ export class CreateConversationInteraction {
   }
 
   /**
-   * `alsoTo` gives the deliveries to people outside the conversation, each in a chat of their own. The question
-   * stays the conversation's, so its answer comes back there.
+   * `outside.alsoTo` gives the deliveries to people outside the conversation, each in a chat of their own. The
+   * question stays the conversation's, so its answer comes back there. With them, the post in the conversation can
+   * fail on its own while theirs go out: `outside.onPosted` is called once it went out.
    */
   @InstrumentUsecase()
   async execute(
     command: CreateConversationInteractionCommand,
-    alsoTo?: (interaction: HumanInteractionEntity) => HumanDeliveryTarget[]
+    outside?: {
+      alsoTo?: (interaction: HumanInteractionEntity) => HumanDeliveryTarget[];
+      onPosted?: () => void;
+    }
   ): Promise<HumanInteractionEntity> {
     const title = command.card.title?.trim();
     if (!title) {
@@ -132,6 +136,7 @@ export class CreateConversationInteraction {
               },
               command.slackNative ? { slackNative: command.slackNative } : undefined
             );
+            outside?.onPosted?.();
 
             return {
               platformMessageId: sent.messageId,
@@ -140,7 +145,7 @@ export class CreateConversationInteraction {
             };
           },
         },
-        ...(alsoTo?.(interaction) ?? []),
+        ...(outside?.alsoTo?.(interaction) ?? []),
       ],
       {
         logMessage: 'Conversation human-interaction delivery failed',

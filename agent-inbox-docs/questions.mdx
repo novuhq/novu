@@ -12,9 +12,9 @@ Start the message with `ask`, `approve`, or `choose`. On MCP, set `kind` to the 
 | `choose` | Taps one of 2 to 10 options | The option |
 
 ```bash
-npx @agentinbox/cli inbox send ask "Which environment should I deploy to?"
-npx @agentinbox/cli inbox send approve "Delete 342 stale records from prod?"
-npx @agentinbox/cli inbox send choose "Pick a release strategy" \
+npx @agentinbox/cli send ask "Which environment should I deploy to?"
+npx @agentinbox/cli send approve "Delete 342 stale records from prod?"
+npx @agentinbox/cli send choose "Pick a release strategy" \
   --option canary \
   --option blue-green \
   --option "all at once"
@@ -27,7 +27,7 @@ On MCP, pass `kind` and `message`. `choose` also needs `options`. Each option is
 `approve` shows Approve and Deny. Change the labels with `--approve-label` and `--deny-label`. Add more buttons with `--extra-action`, up to four on MCP (`extra_actions`). Repeat the CLI flag:
 
 ```bash
-npx @agentinbox/cli inbox send approve "Should we deploy to staging?" \
+npx @agentinbox/cli send approve "Should we deploy to staging?" \
   --extra-action trust-tool:"Always allow this tool"
 ```
 
@@ -38,7 +38,7 @@ npx @agentinbox/cli inbox send approve "Should we deploy to staging?" \
 A question stays answerable for 24 hours. The maximum is 5 days. Shorten it when a stale yes would be dangerous.
 
 ```bash
-npx @agentinbox/cli inbox send approve "Deploy to production?" --ttl 2h
+npx @agentinbox/cli send approve "Deploy to production?" --ttl 2h
 ```
 
 On MCP, pass `ttl_seconds`. Two hours is `7200`. The minimum is 60 seconds. The default is `86400`.

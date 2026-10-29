@@ -56,7 +56,7 @@ export async function connectCommand(agent: string, options: ConnectOptions): Pr
       info(`Messages need --to until the account has you as a contact: run ${pc.bold(`${CLI_COMMAND} setup`)}.`);
     }
 
-    const check = `Check it works: ${pc.bold(`${CLI_COMMAND} inbox list`)}`;
+    const check = `Check it works: ${pc.bold(`${CLI_COMMAND} list`)}`;
     const listen = listenHint(detectHost() ?? result.config.host, handle);
     if (screen) {
       screen.add({ mark: 'next', value: check }, ...(listen ? [{ mark: 'next' as const, value: listen }] : []));

@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 
-import { findNewHost, type HostStatus } from '@/lib/host-status';
-import type { HostVia } from '@/lib/onboarding';
+import { type AgentHost, findNewHost, type HostStatus } from '@/lib/host-status';
 
 /**
  * Tells a host that comes in while a drawer is open (`findNewHost`). The host status is read when `active`
@@ -33,8 +32,8 @@ export function useHostBaseline(readHosts: () => Promise<HostStatus | null>, act
       .catch(() => {});
   }, [active, readHosts]);
 
-  /** The way a new host came in since the drawer opened, or `null`. */
-  const check = useCallback(async (): Promise<HostVia | null> => {
+  /** The host that came in since the drawer opened, with the way it came in, or `null`. */
+  const check = useCallback(async (): Promise<AgentHost | null> => {
     const id = opening.current;
     const status = await readHosts().catch(() => null);
     if (!status || id !== opening.current) {
