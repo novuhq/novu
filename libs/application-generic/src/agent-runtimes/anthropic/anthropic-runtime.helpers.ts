@@ -51,17 +51,24 @@ export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Defensive truncation for upstream-bound string fields. If `value` is longer
- * than `max`, trims it and appends a single-character ellipsis `…` so the
- * caller can see the value was shortened. Returns `value` unchanged otherwise.
- */
 export function truncateWithEllipsis(value: string, max: number): string {
   if (value.length <= max) {
     return value;
   }
 
-  return `${value.slice(0, max - 1)}…`;
+  const ellipsis = '…';
+  const budget = max - ellipsis.length;
+  let end = 0;
+
+  for (const character of value) {
+    if (end + character.length > budget) {
+      break;
+    }
+
+    end += character.length;
+  }
+
+  return `${value.slice(0, end)}${ellipsis}`;
 }
 
 /**

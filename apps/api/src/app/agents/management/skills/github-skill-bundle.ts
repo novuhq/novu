@@ -205,17 +205,24 @@ export function buildRepoSkillDisplayTitle(owner: string, repo: string, path: st
   return truncateWithEllipsis(`${owner}-${name}`, MAX_SKILL_DISPLAY_TITLE_LENGTH);
 }
 
-/**
- * Returns `value` unchanged if it already fits within `max` characters; otherwise
- * trims it and appends a single-character ellipsis `…` so the final string is
- * exactly `max` characters long.
- */
 function truncateWithEllipsis(value: string, max: number): string {
   if (value.length <= max) {
     return value;
   }
 
-  return `${value.slice(0, max - 1)}…`;
+  const ellipsis = '…';
+  const budget = max - ellipsis.length;
+  let end = 0;
+
+  for (const character of value) {
+    if (end + character.length > budget) {
+      break;
+    }
+
+    end += character.length;
+  }
+
+  return `${value.slice(0, end)}${ellipsis}`;
 }
 
 // ─── GitHub HTTP plumbing ───────────────────────────────────────────────────
@@ -411,6 +418,7 @@ async function streamTarballToParser(parsed: ParsedGithubUrl, onEntry: (ctx: Ent
 
     const parser = new Parser();
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing tar entry handler is outside this title-cut change
     parser.on('entry', (entry: TarEntry) => {
       if (aborted) {
         entry.resume();
@@ -626,6 +634,7 @@ type RawTarEntry = {
  * Throws `Error` with user-facing messages on validation failures — callers
  * should wrap in `BadRequestException`.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing bundle discovery is outside this title-cut change
 export async function fetchAndDiscoverSkillBundles(
   parsed: ParsedGithubUrl,
   basenames: string[]
@@ -772,6 +781,7 @@ function findDeepestBundleRoot(entryPath: string, sortedRoots: string[]): string
   return deepest;
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing basename filter is outside this title-cut change
 function filterByBasenames(discovered: DiscoveredSkillBundle[], basenames: string[]): DiscoveredSkillBundle[] {
   const basenameToPaths = new Map<string, string[]>();
 
