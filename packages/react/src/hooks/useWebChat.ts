@@ -159,6 +159,33 @@ type RuntimeActionResult<T> = {
   error?: NovuError | WebChatPlanLimitError;
 };
 
+function notifyErrors(args: {
+  snapshot: AgentConversationSnapshot;
+  propsRef: ReturnType<typeof useDataRef<UseWebChatProps>>;
+  notifiedCatchUpErrorRef: MutableRefObject<NovuError | undefined>;
+  lastReportedErrorKeyRef: MutableRefObject<string | undefined>;
+}): void {
+  const { snapshot, propsRef, notifiedCatchUpErrorRef, lastReportedErrorKeyRef } = args;
+
+  if (snapshot.catchUpError && snapshot.catchUpError !== notifiedCatchUpErrorRef.current) {
+    notifiedCatchUpErrorRef.current = snapshot.catchUpError;
+    propsRef.current.onError?.(snapshot.catchUpError);
+  } else if (!snapshot.catchUpError) {
+    notifiedCatchUpErrorRef.current = undefined;
+  }
+
+  if (snapshot.error) {
+    const originalMessage = 'originalError' in snapshot.error ? (snapshot.error.originalError?.message ?? '') : '';
+    const errorKey = `${snapshot.error.message}:${originalMessage}`;
+    if (lastReportedErrorKeyRef.current !== errorKey) {
+      lastReportedErrorKeyRef.current = errorKey;
+      propsRef.current.onError?.(snapshot.error as NovuError | WebChatPlanLimitError);
+    }
+  } else {
+    lastReportedErrorKeyRef.current = undefined;
+  }
+}
+
 function handlePublicationCallbacks(args: {
   snapshot: AgentConversationSnapshot;
   meta: AgentConversationPublicationMeta | undefined;
@@ -189,23 +216,7 @@ function handlePublicationCallbacks(args: {
     }
   }
 
-  if (snapshot.catchUpError && snapshot.catchUpError !== notifiedCatchUpErrorRef.current) {
-    notifiedCatchUpErrorRef.current = snapshot.catchUpError;
-    propsRef.current.onError?.(snapshot.catchUpError);
-  } else if (!snapshot.catchUpError) {
-    notifiedCatchUpErrorRef.current = undefined;
-  }
-
-  if (snapshot.error) {
-    const originalMessage = 'originalError' in snapshot.error ? (snapshot.error.originalError?.message ?? '') : '';
-    const errorKey = `${snapshot.error.message}:${originalMessage}`;
-    if (lastReportedErrorKeyRef.current !== errorKey) {
-      lastReportedErrorKeyRef.current = errorKey;
-      propsRef.current.onError?.(snapshot.error as NovuError | WebChatPlanLimitError);
-    }
-  } else {
-    lastReportedErrorKeyRef.current = undefined;
-  }
+  notifyErrors({ snapshot, propsRef, notifiedCatchUpErrorRef, lastReportedErrorKeyRef });
 
   const change = meta?.change;
   if (change?.kind === 'live') {
@@ -322,7 +333,7 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
   const isWebChatLoading = loadState.novu !== novu || loadState.status === 'loading';
 
   const sharedRuntime = 'conversation' in props ? props.conversation : undefined;
-  const agentId = sharedRuntime?.agentId ?? props.agentId!;
+  const agentId = props.conversation ? props.conversation.agentId : props.agentId;
   const conversationIdProp = sharedRuntime ? undefined : props.conversationId;
   const agentHash = sharedRuntime ? undefined : props.agentHash;
 
@@ -378,8 +389,7 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     };
   }, [webChatReady, sharedRuntime, novu, agentId, conversationIdProp, agentHash, createEpoch, managedRuntimeKey]);
 
-  const runtime =
-    sharedRuntime ?? (managedRuntime?.key === managedRuntimeKey ? managedRuntime.runtime : null);
+  const runtime = sharedRuntime ?? (managedRuntime?.key === managedRuntimeKey ? managedRuntime.runtime : null);
 
   const loadNotifiedRef = useRef(false);
   const replayedActionsRef = useRef(false);
