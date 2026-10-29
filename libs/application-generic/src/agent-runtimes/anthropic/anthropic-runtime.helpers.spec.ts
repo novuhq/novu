@@ -13,6 +13,7 @@ import {
   MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
   mapToolset,
   SKILL_REQUIRED_BUILTIN_TOOL,
+  truncateWithEllipsis,
 } from './anthropic-runtime.helpers';
 
 describe('mapToolset', () => {
@@ -133,5 +134,37 @@ describe('ensureSkillRequiredTools', () => {
 
   it('returns the input unchanged when skills are absent', () => {
     expect(ensureSkillRequiredTools(['web_search'], false)).to.deep.equal(['web_search']);
+  });
+});
+
+describe('truncateWithEllipsis', () => {
+  it('shortens eighty ASCII characters at 64 to sixty-three characters plus an ellipsis', () => {
+    expect(truncateWithEllipsis('a'.repeat(80), 64)).to.equal(`${'a'.repeat(63)}\u2026`);
+  });
+
+  it('returns a string whose length already equals the limit', () => {
+    expect(truncateWithEllipsis('a'.repeat(64), 64)).to.equal('a'.repeat(64));
+  });
+
+  it('returns a short string unchanged', () => {
+    expect(truncateWithEllipsis('short', 64)).to.equal('short');
+  });
+
+  it('round-trips a cut that lands on an emoji', () => {
+    const result = truncateWithEllipsis(`${'a'.repeat(62)}\u{1F600}extra`, 64);
+    const roundTripped = Buffer.from(result, 'utf8').toString('utf8');
+
+    expect(roundTripped).to.equal(result);
+    expect(result.includes('\uFFFD')).to.equal(false);
+    expect(result.length).to.be.at.most(64);
+    expect(result.endsWith('\u2026')).to.equal(true);
+  });
+
+  it('keeps an emoji that fits before the ellipsis and still round-trips', () => {
+    const result = truncateWithEllipsis(`${'a'.repeat(60)}\u{1F600}xyz`, 64);
+    const roundTripped = Buffer.from(result, 'utf8').toString('utf8');
+
+    expect(result.includes('\u{1F600}')).to.equal(true);
+    expect(roundTripped).to.equal(result);
   });
 });
