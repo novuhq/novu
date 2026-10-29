@@ -71,11 +71,9 @@ describe('CliDeviceSessionService', () => {
 
   describe('human login sessions', () => {
     const originalDashboardUrl = process.env.HUMAN_DASHBOARD_URL;
-    const originalRegion = process.env.NOVU_REGION;
 
     afterEach(() => {
       restoreEnv('HUMAN_DASHBOARD_URL', originalDashboardUrl);
-      restoreEnv('NOVU_REGION', originalRegion);
     });
 
     function restoreEnv(name: string, value: string | undefined) {
@@ -88,7 +86,6 @@ describe('CliDeviceSessionService', () => {
 
     it('send the CLI to the Human dashboard with the code to compare there, and wait as long as novu connect', async () => {
       process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md/';
-      delete process.env.NOVU_REGION;
       const { service, cacheService } = makeService();
 
       const result = await service.create({ name: CLI_DEVICE_SESSION_NAME_HUMAN_CLI });
@@ -348,18 +345,6 @@ describe('CliDeviceSessionService', () => {
       cacheService.eval.resolves('DENIED');
 
       expect(await service.poll('device-code')).to.deep.equal({ status: 'denied' });
-    });
-
-    it('carry the EU region from EU deployments', async () => {
-      process.env.HUMAN_DASHBOARD_URL = 'https://gethuman.md';
-      process.env.NOVU_REGION = 'eu-central-1';
-      const { service } = makeService();
-
-      const result = await service.create({ name: CLI_DEVICE_SESSION_NAME_HUMAN_CLI });
-
-      const params = new URL(result.verificationUrl ?? '').searchParams;
-      expect(params.get('region')).to.equal('eu');
-      expect(params.get('code')).to.equal(result.userCode);
     });
 
     it('have no page to open where the Human dashboard is not configured', async () => {

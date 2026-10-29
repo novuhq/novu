@@ -4,7 +4,6 @@ import { cache } from 'react';
 
 import { type JsonBody, unwrapData } from './api-response';
 import type { HumanAccount } from './human-account';
-import type { HumanRegion } from './human-accounts-api';
 import { type HumanApiRequest, requestWithDashboardSecret, requestWithSecretKey } from './human-api';
 
 type SecretKeyResponse = { environmentId: string; secretKey: string };
@@ -14,8 +13,8 @@ type SecretKeyResponse = { environmentId: string; secretKey: string };
  * once per request. The helpers below call the API with it and return only the answer, so the key stays
  * in this file for every page but Settings, which shows it to the operator (`readApiKey`).
  */
-const loadBackingSecretKey = cache(async (region: HumanRegion, humanUserId: string): Promise<string> => {
-  const body = await requestWithDashboardSecret(region, secretKeyPath(humanUserId));
+const loadBackingSecretKey = cache(async (humanUserId: string): Promise<string> => {
+  const body = await requestWithDashboardSecret(secretKeyPath(humanUserId));
 
   return unwrapData<SecretKeyResponse>(body).secretKey;
 });
@@ -39,14 +38,14 @@ export async function requestPageForAccount<T>(
 }
 
 async function send(account: HumanAccount, path: string, init?: HumanApiRequest): Promise<JsonBody> {
-  const secretKey = await loadBackingSecretKey(account.region, account.humanUserId);
+  const secretKey = await loadBackingSecretKey(account.humanUserId);
 
-  return requestWithSecretKey(account.region, secretKey, path, init);
+  return requestWithSecretKey(secretKey, path, init);
 }
 
 /** The key itself, for the Settings page: the operator copies it into CI, cloud VMs and automations. */
 export function readApiKey(account: HumanAccount): Promise<string> {
-  return loadBackingSecretKey(account.region, account.humanUserId);
+  return loadBackingSecretKey(account.humanUserId);
 }
 
 /**
@@ -54,7 +53,7 @@ export function readApiKey(account: HumanAccount): Promise<string> {
  * and in the copy `login` saved on the operator's computer.
  */
 export async function regenerateApiKey(account: HumanAccount): Promise<string> {
-  const body = await requestWithDashboardSecret(account.region, `${secretKeyPath(account.humanUserId)}/regenerate`, {
+  const body = await requestWithDashboardSecret(`${secretKeyPath(account.humanUserId)}/regenerate`, {
     method: 'POST',
   });
 

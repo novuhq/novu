@@ -559,20 +559,6 @@ describe('the Agent Inbox MCP server', () => {
     expect(calls.filter((call) => call.url.endsWith('/oauth/userinfo'))).toHaveLength(1);
   });
 
-  it('still knows whose token it is from what was remembered before Agent Inbox was US only', async () => {
-    const calls = stubBackends();
-    const { env, ctx, kv } = setup();
-    await worker.fetch(rpc('tools/list', {}), env, ctx);
-    const cacheKey = [...kv.values.keys()].find((key) => key.startsWith('token:')) ?? '';
-    kv.values.set(cacheKey, JSON.stringify({ agentInboxUserId: 'user_1', region: 'eu' }));
-    const before = calls.length;
-
-    const response = await worker.fetch(rpc('tools/list', {}), env, ctx);
-
-    expect(response.status).toBe(200);
-    expect(calls.slice(before).map((call) => call.url)).toEqual([`${NOVU_API}/v1/human/accounts/user_1/secret-key`]);
-  });
-
   it('calls the Dashboard API for every tool, and the Novu API only for the account key', async () => {
     const calls = stubBackends();
     const { env, ctx } = setup();

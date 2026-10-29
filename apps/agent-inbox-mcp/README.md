@@ -40,7 +40,6 @@ Every request stands alone: nothing is kept between calls, so any instance can a
 
 - Every tool calls the Agent Inbox Dashboard API (`AGENT_INBOX_API_URL`, the dashboard's `/api`) with the account's key, as the CLI does: `/v1/setup`, `/v1/inbox-address` and `/v1/agent` for onboarding, `/v1/inbox` and `/v1/inbox/messages` for conversations and messages, `/v1/contacts` for contacts, invites and verifications, and `/v1/operator` for the account's owner. The dashboard forwards each call to the Novu API.
 - Opening an account and reading its key are the calls that go straight to the Novu API (`NOVU_API_URL`), with the dashboard's secret: `POST /v1/human/accounts` when the sign-in has no account yet, then `GET /v1/human/accounts/:id/secret-key`. The Dashboard API doesn't offer either.
-- Agent Inbox lives in the US region only, so there is no EU address to try.
 
 ## Which tools are connected
 
@@ -54,7 +53,7 @@ Cursor's agent runtime is Cursor only by its User-Agent (`Cursor/1.0.0`, with th
 | --- | --- | --- |
 | `CLERK_OAUTH_ISSUER` | variable | Address of the Agent Inbox Clerk app. Its OAuth feature with dynamic client registration must be on. |
 | `AGENT_INBOX_API_URL` | variable | The Agent Inbox Dashboard API, which every tool calls: `https://www.agentinbox.md/api` (staging `https://staging.agentinbox.md/api`, local `http://localhost:4300/api`). Without it the server answers `503`. |
-| `NOVU_API_URL` | variable | The Novu API of the US region, used to open an account and read its key with the dashboard's secret. |
+| `NOVU_API_URL` | variable | The Novu API, used to open an account and read its key with the dashboard's secret. |
 | `DOCS_URL` | variable | Where a person who opens the address in a browser is sent. |
 | `OPENAI_APPS_CHALLENGE` | variable | The token OpenAI gives to verify the domain for the ChatGPT app. The server returns it as plain text at `/.well-known/openai-apps-challenge`, without sign-in. Set on staging and production; without it that address answers `404`. |
 | `AGENT_INBOX_DASHBOARD_API_SECRET` | secret | The secret the Agent Inbox dashboard shares with the Novu API. |

@@ -146,7 +146,7 @@ describe('agentPictureUrl', () => {
     _environmentId: ENV,
     picture: { storageKey: 'key', contentType: 'image/png', version: 'v1' },
   };
-  const names = ['HUMAN_DASHBOARD_URL', 'NOVU_REGION', 'API_ROOT_URL'] as const;
+  const names = ['HUMAN_DASHBOARD_URL', 'API_ROOT_URL'] as const;
   const saved = Object.fromEntries(names.map((name) => [name, process.env[name]]));
 
   afterEach(() => {
@@ -159,22 +159,15 @@ describe('agentPictureUrl', () => {
     }
   });
 
-  it('goes through the Agent Inbox dashboard, whose /api forwards to the US API', () => {
+  it('goes through the Agent Inbox dashboard, whose /api forwards to this API', () => {
     process.env.HUMAN_DASHBOARD_URL = 'https://www.agentinbox.md/';
-    process.env.NOVU_REGION = 'us-east-1';
     process.env.API_ROOT_URL = 'https://api.novu.co';
 
     expect(agentPictureUrl(agent)).to.equal(`https://www.agentinbox.md/api/v1/agent-pictures/${ENV}/${AGENT}/v1`);
   });
 
-  it('keeps the API address in the EU, which the dashboard does not forward to, and without a dashboard', () => {
-    process.env.HUMAN_DASHBOARD_URL = 'https://www.agentinbox.md';
-    process.env.NOVU_REGION = 'eu-west-2';
-    process.env.API_ROOT_URL = 'https://eu.api.novu.co/';
-    expect(agentPictureUrl(agent)).to.equal(`https://eu.api.novu.co/v1/human/agent-pictures/${ENV}/${AGENT}/v1`);
-
+  it('keeps the API address without a dashboard', () => {
     process.env.HUMAN_DASHBOARD_URL = '';
-    process.env.NOVU_REGION = 'us-east-1';
     process.env.API_ROOT_URL = 'https://novu.example.com';
     expect(agentPictureUrl(agent)).to.equal(`https://novu.example.com/v1/human/agent-pictures/${ENV}/${AGENT}/v1`);
   });

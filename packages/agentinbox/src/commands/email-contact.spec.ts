@@ -167,9 +167,9 @@ describe('resolveEmailRecipients', () => {
   });
 
   it('passes a new address through without sending a verification email', async () => {
-    const onApi = { apiUrl: 'https://eu.api.example' } as never;
-
-    await expect(resolveEmailRecipients(onApi, 'human-relay', 'alice@acme.com', false)).resolves.toBe('alice@acme.com');
+    await expect(resolveEmailRecipients(client, 'human-relay', 'alice@acme.com', false)).resolves.toBe(
+      'alice@acme.com'
+    );
     expect(runInvite).not.toHaveBeenCalled();
   });
 

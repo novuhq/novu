@@ -253,10 +253,10 @@ describe('runLogin', () => {
   });
 
   it('logs in to the saved API, and carries nothing over to another API', async () => {
-    loadConfig.mockReturnValue({ ...keylessConfig, apiUrl: 'https://eu.api.novu.co' });
+    loadConfig.mockReturnValue({ ...keylessConfig, apiUrl: 'https://inbox.example.com/api' });
 
     await runLogin({});
-    expect(startLoginRequest).toHaveBeenLastCalledWith('https://eu.api.novu.co', 'adas-macbook-pro');
+    expect(startLoginRequest).toHaveBeenLastCalledWith('https://inbox.example.com/api', 'adas-macbook-pro');
     expect(getKeylessClaimToken).toHaveBeenCalledTimes(1);
 
     getKeylessClaimToken.mockClear();
@@ -580,10 +580,7 @@ describe('loginCommand', () => {
 });
 
 describe('withClaimToken', () => {
-  it('adds the claim token next to the region the API put on the link', () => {
-    expect(withClaimToken('https://agentinbox.md/cli/login?region=eu', 'tok')).toBe(
-      'https://agentinbox.md/cli/login?region=eu&claim=tok'
-    );
+  it('adds the claim token next to the code the API put on the link', () => {
     expect(withClaimToken(LOGIN_URL, 'tok')).toBe(`${LOGIN_URL}&claim=tok`);
     expect(withClaimToken(LOGIN_URL, null)).toBe(LOGIN_URL);
   });

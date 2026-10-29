@@ -320,7 +320,7 @@ function answerEnsureAccount(
 
   accounts.add(humanUserId);
 
-  return reply({ data: { organizationId: 'org_1', userId: 'novu_user_1', environmentId: 'env_1', region: 'us' } });
+  return reply({ data: { organizationId: 'org_1', userId: 'novu_user_1', environmentId: 'env_1' } });
 }
 
 type SetupStubState = {

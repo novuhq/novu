@@ -10,8 +10,8 @@
   },
   // Variables, per environment below:
   //   AGENT_INBOX_API_URL  the Agent Inbox Dashboard API (the dashboard's `/api`); every tool calls it as the account
-  //   NOVU_API_URL         the Novu API (US; Agent Inbox has no EU region), only asked for the account's key with
-  //                        the dashboard secret: the one call the Dashboard API doesn't offer
+  //   NOVU_API_URL         the Novu API, only asked for the account's key with the dashboard secret: the one call
+  //                        the Dashboard API doesn't offer
   //   OPENAI_APPS_CHALLENGE  the token OpenAI gives to verify the domain for the ChatGPT app, served at
   //                          `/.well-known/openai-apps-challenge`; set on staging and production
   // Secrets, set per environment with `wrangler secret put <NAME> --env <env>` (local: `.dev.vars`):
