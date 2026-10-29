@@ -1003,6 +1003,25 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
       expect(logs).toContain('conv_1: stopped (shutdown).');
     });
 
+    it('doesn’t start the host for a run that was getting ready meanwhile', async () => {
+      let saved: ListenConnection | null = CONNECTION;
+      // The wait for messages lasts longer than the lookup: nothing else notices the new connection first.
+      const { api, starts, logs, loop } = await start({ connection: CONNECTION }, { waitSeconds: 5 }, undefined, {
+        savedConnection: () => saved,
+      });
+      api.deliver({ text: 'ask-async-and-sleep:0' });
+      const region = await asked(api, 'Which region?');
+      await eventually(() => expect(logs).toContain('conv_1: done.'));
+
+      api.showDelayMs = 1000;
+      api.answer(region, { status: 'answered', text: 'eu-west' });
+      await eventually(() => expect(api.callsTo('GET', `/v1/inbox/messages/${region}`)).toHaveLength(1));
+      saved = { ...CONNECTION, key: 'fedcba9876543210' };
+
+      expect(await loop).toMatchObject({ reason: 'connection_changed' });
+      expect(starts()).toHaveLength(1);
+    });
+
     it('goes on while the saved connection can’t be read, as while it is being written', async () => {
       const { api } = await start({ connection: CONNECTION }, {}, undefined, { savedConnection: () => null });
 

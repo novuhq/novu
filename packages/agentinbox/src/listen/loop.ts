@@ -750,6 +750,12 @@ class ListenLoop {
     // From the start: the host takes a while to come up, and the person sees it is on its way.
     active.typing.start();
     active.watermark = await this.latestMessageId(active.conversationId);
+    // Connected anew while the run got ready, an answer's lookup say: the host's commands would use the new connection.
+    if (this.connectedAnew()) {
+      active.typing.stop();
+
+      return { kind: 'interrupted' };
+    }
     const finished = new Promise<RunOutcome>((resolve) => {
       active.finish = resolve;
     });
