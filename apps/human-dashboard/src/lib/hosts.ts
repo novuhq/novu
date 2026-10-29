@@ -186,6 +186,11 @@ export function opencodeMcpConfig(mcpUrl: string): string {
   );
 }
 
+/** What goes into `~/.hermes/config.yaml` by hand: the server as a remote one, which Hermes signs in to with OAuth. */
+export function hermesMcpConfig(mcpUrl: string): string {
+  return ['mcp_servers:', `  ${MCP_SERVER_NAME}:`, `    url: ${JSON.stringify(mcpUrl)}`, '    auth: oauth'].join('\n');
+}
+
 /** The MCP server's address, to paste into a chat app. */
 const COPY_MCP_URL = { label: 'Copy the MCP server address', value: (mcpUrl: string) => mcpUrl };
 
@@ -295,6 +300,25 @@ export const HOSTS: readonly Host[] = [
     skillsAgent: 'hermes-agent',
     afterCommands: 'Then start a new Hermes session with /reset, so it loads the skills.',
     docsUrl: 'https://hermes-agent.nousresearch.com/docs/user-guide/features/skills',
+    alternative: {
+      kind: 'mcp-config',
+      title: 'Or add the MCP server to Hermes',
+      // `hermes mcp add` signs in as it first connects, then asks before it enables the tools: one command, run on
+      // its own, since a line pasted after it would be taken as an answer. `hermes mcp login` would sign in again.
+      addCommand: {
+        text: 'Run this on the computer Hermes runs on.',
+        line: (mcpUrl) => `hermes mcp add ${MCP_SERVER_NAME} --url ${mcpUrl} --auth oauth`,
+      },
+      text: `Or add this to ~/.hermes/config.yaml, then run hermes mcp login ${MCP_SERVER_NAME}.`,
+      file: '~/.hermes/config.yaml',
+      config: hermesMcpConfig,
+      signIn: 'Then sign in to Agent Inbox in the browser, and say yes when Hermes asks to enable the tools.',
+      afterSignIn: 'Then start a new Hermes session, or run /reload-mcp in an open one.',
+      agentNotes: [
+        '`hermes mcp add` waits for the sign-in in a browser and asks before it enables the tools, so your operator runs it in their own terminal: give them the command rather than running it yourself.',
+        'Hermes’s own docs for MCP servers: https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp',
+      ],
+    },
   },
   {
     id: 'openclaw',
@@ -467,15 +491,16 @@ export function listenLead(host: CommandHost, handle?: string): string {
 
 /**
  * The hosts that sign in through the hosted MCP server on one of their tabs: the chat apps, and the coding agents
- * through their plugin or MCP config. The server tells each apart by the app that signed in (`hostOfClientName`,
- * and for Grok Bot `signInAppHost`, in `apps/agent-inbox-mcp`). What the dashboard's `connectedTools` lists, and
- * so the hosts the picker can tick as soon as they sign in.
+ * and Hermes through their plugin or MCP config. The server tells each apart by the app that signed in
+ * (`hostOfClientName`, and for Grok Bot `signInAppHost`, in `apps/agent-inbox-mcp`). What the dashboard's
+ * `connectedTools` lists, and so the hosts the picker can tick as soon as they sign in.
  */
 const SIGNED_IN_HOST_IDS = [
   'claude-code',
   'codex',
   'opencode',
   'cursor',
+  'hermes',
   'claude',
   'chatgpt',
   'grok',
