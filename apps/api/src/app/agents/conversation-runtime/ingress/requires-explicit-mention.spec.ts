@@ -442,6 +442,18 @@ describe('messageMentionsAgent', () => {
       )
     ).to.equal(true);
   });
+
+  it('does not treat a bot id after an unclosed fence that is followed by inline code as a mention', () => {
+    expect(
+      messageMentionsAgent({ isMention: false, text: '```x`<@UBOT>`' } as any, AgentPlatformEnum.SLACK, 'UBOT')
+    ).to.equal(false);
+  });
+
+  it('does not join a bot id across an inline code span', () => {
+    expect(
+      messageMentionsAgent({ isMention: false, text: '<@UBOT`x`>' } as any, AgentPlatformEnum.SLACK, 'UBOT')
+    ).to.equal(false);
+  });
 });
 
 describe('detectSmartExclusiveThreadEnded', () => {
