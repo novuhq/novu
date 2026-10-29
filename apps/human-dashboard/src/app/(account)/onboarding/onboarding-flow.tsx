@@ -16,7 +16,7 @@ import { StatusPoll } from '@/components/ui/status-poll';
 import { toast } from '@/components/ui/toast';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { useSwap } from '@/hooks/use-swap';
-import type { HostId } from '@/lib/hosts';
+import { DEFAULT_HOST, type HostId, hostOf } from '@/lib/hosts';
 import type { OnboardingView } from '@/lib/human-onboarding';
 import { addressOf, cardLinkOf, type OnboardingStep, PLACEHOLDER_HANDLE } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
@@ -36,7 +36,7 @@ const HOST_POLL_MS = 3000;
 /** How often each step asks whether something happened outside the page. */
 const POLL_MS: Partial<Record<OnboardingStep, number>> = { address: 3000, test: 4000, connect: HOST_POLL_MS };
 
-/** Quicker while the reply to the test email is on its way. */
+/** Quicker while a message to the inbox is on its way. */
 const REPLY_POLL_MS = 2000;
 
 /** How long a step takes to fade out before the next one rises in. */
@@ -52,7 +52,7 @@ const TOOL_API = { isToolSignedIn: checkOnboardingToolConnectedAction };
  */
 export function OnboardingFlow({ view, initialHost }: OnboardingScreenProps) {
   const router = useRouter();
-  const waitingForReply = view.step === 'test' && Boolean(view.test.sentAt) && !view.test.replyAt;
+  const waitingForReply = view.step === 'test' && !view.test.replyAt;
   const waitingForHostRead =
     view.step === 'reach' && (view.waiting === null || view.waiting > 0) && !view.waitingMessage;
   let pollMs = POLL_MS[view.step];
@@ -100,11 +100,13 @@ export function OnboardingScreen({ view, initialHost }: OnboardingScreenProps) {
   const { step, agent, operator, test, host } = view;
   // Step 1 has no agent yet: its card is drawn from what the operator is typing.
   const [draft, setDraft] = useState<AgentDraft>({ name: '', handle: '' });
+  // The host chosen on step 3, which the agent's card waits for by name.
+  const [connectHost, setConnectHost] = useState<HostId>(initialHost ?? DEFAULT_HOST);
   // The step on show stays a moment longer than the setup does, to fade out before the next one comes.
   // Everything around it (the steps across the top, the agent's card) moves on at once.
   const { shown, leaving } = useSwap(step, SWAP_MS);
   const { ref, height } = useMeasuredHeight();
-  // The reply is in: the test has passed, though the operator is still on its step.
+  // Mail is in: the test has passed, though the operator is still on its step.
   const testPassed = step === 'test' && Boolean(test.replyAt);
 
   return (
@@ -129,6 +131,7 @@ export function OnboardingScreen({ view, initialHost }: OnboardingScreenProps) {
             telegramConnected={view.channels.telegram}
             gotMail={testPassed}
             hostVia={host?.via}
+            waitingFor={hostOf(connectHost)}
             caption={describeFigure(step)}
           />
         }
@@ -159,17 +162,21 @@ export function OnboardingScreen({ view, initialHost }: OnboardingScreenProps) {
                   operatorEmail={operator.email}
                   sentAt={test.sentAt}
                   replyAt={test.replyAt}
+                  inboundFrom={test.from}
+                  inboundSubject={test.subject}
                 />
               )}
               {shown === 'connect' && agent && (
                 <ConnectStep
                   handle={agent.handle}
+                  address={agent.address}
                   apiUrl={view.apiUrl}
                   waiting={view.waiting ?? 0}
                   mcpUrl={view.mcpUrl}
                   connectedHosts={view.connectedTools}
                   api={TOOL_API}
-                  initialHost={initialHost}
+                  host={connectHost}
+                  onHostChange={setConnectHost}
                 />
               )}
               {shown === 'reach' && agent && host && (

@@ -1,13 +1,16 @@
-import { requireRuntimeContext } from '../resources/agent/agent.runtime';
+import { type AgentRuntimeContext, requireRuntimeContext } from '../resources/agent/agent.runtime';
 import type {
   Agent,
   AgentActionContext,
   AgentHandlers,
   AgentMessage,
+  MessageContent,
   ReplyHandle,
+  ReplyStream,
+  ToolApprovalConfig,
 } from '../resources/agent/agent.types';
 import { handleLangChainResult, isLangChainResult } from './reply-mapper';
-import type { LangChainAgentHandlers } from './types';
+import type { LangChainAgentHandlers, LangChainResult } from './types';
 
 type LangChainMessageHandler = LangChainAgentHandlers['onMessage'];
 
@@ -21,6 +24,31 @@ const RESUME_MESSAGE: AgentMessage = {
 
 function isReplyHandle(value: unknown): value is ReplyHandle {
   return typeof value === 'object' && value !== null && 'messageId' in value && 'platformThreadId' in value;
+}
+
+/**
+ * Deliver a handler's return value: a LangChain result is handled for automatic delivery; a
+ * `ReplyHandle` means the handler already replied itself; anything else (`MessageContent`,
+ * `ReplyStream`) is sent via `runtime.reply`. Shared by `onToolApproval`'s direct return and the
+ * resume call that follows it. Returns whether a LangChain result was delivered, so callers can
+ * skip further steps (e.g. auto-resume) exactly as they would for a result returned directly.
+ */
+async function deliverResult(
+  result: MessageContent | ReplyStream | LangChainResult | ReplyHandle | void,
+  runtime: AgentRuntimeContext,
+  config: ToolApprovalConfig | undefined
+): Promise<boolean> {
+  if (isLangChainResult(result)) {
+    await handleLangChainResult(result, runtime, config);
+
+    return true;
+  }
+
+  if (result != null && !isReplyHandle(result)) {
+    await runtime.reply(result);
+  }
+
+  return false;
 }
 
 function normalize(id: string, handlers: LangChainMessageHandler | LangChainAgentHandlers): LangChainAgentHandlers {
@@ -55,9 +83,7 @@ export function agent(id: string, handlers: LangChainMessageHandler | LangChainA
   const resume = async (ctx: AgentActionContext): Promise<void> => {
     const runtime = requireRuntimeContext(ctx);
     const result = await h.onMessage(RESUME_MESSAGE, runtime.asMessageContext());
-    if (isLangChainResult(result)) {
-      await handleLangChainResult(result, runtime, config);
-    }
+    await deliverResult(result, runtime, config);
   };
 
   const wrappedHandlers: AgentHandlers = {
@@ -76,14 +102,8 @@ export function agent(id: string, handlers: LangChainMessageHandler | LangChainA
       const runtime = requireRuntimeContext(ctx);
       if (h.onToolApproval) {
         const result = await h.onToolApproval(decision, ctx);
-        if (isLangChainResult(result)) {
-          await handleLangChainResult(result, runtime, config);
-
+        if (await deliverResult(result, runtime, config)) {
           return;
-        }
-
-        if (result != null && !isReplyHandle(result)) {
-          await runtime.reply(result);
         }
       }
 

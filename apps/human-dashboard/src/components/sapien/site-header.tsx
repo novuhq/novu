@@ -16,9 +16,9 @@ export function SiteHeader() {
       className="section-rails flex min-h-12.5 flex-wrap items-center justify-between gap-3 px-2.5 py-2 sm:p-2"
     >
       <SiteBrand icon={headerAssets.imgLogomarkConcept} />
-      {/* Below sm the links move into the menu (mobile Figma 894:1303). */}
-      <SiteNavigation items={HEADER_NAVIGATION} label={NAVIGATION_LABEL} className="max-sm:hidden" />
-      <SiteMenu label={NAVIGATION_LABEL} className="sm:hidden" />
+      {/* Below md the links move into the menu (mobile Figma 894:1303): five of them no longer fit one row. */}
+      <SiteNavigation items={HEADER_NAVIGATION} label={NAVIGATION_LABEL} className="max-md:hidden" />
+      <SiteMenu label={NAVIGATION_LABEL} className="md:hidden" />
       <SectionDivider />
     </header>
   );

@@ -37,9 +37,14 @@ packageExtensions:
 
 # Settings migrated from package.json#pnpm (pnpm v11 no longer reads the `pnpm` field).
 overrides:
-  body-parser@<1.20.6: ^1.20.6
+  # GHSA-27r3-jxmh-p828 (high): body-parser DoS via trailing bytes after a
+  # compressed request body. Patched in 1.20.9 (1.x line) and 2.4.0 (2.x line).
+  # Widen the previous <1.20.6 / <2.3.0 floors so transitive consumers across
+  # the api, worker, ws, dashboard, and dev tooling (express, serve-static,
+  # @nestjs/*, verdaccio) pick up the fix.
+  body-parser@<1.20.9: ^1.20.9
   deepmerge-ts@<8.0.0: ^8.0.0
-  body-parser@>=2.0.0 <2.3.0: ^2.3.0
+  body-parser@>=2.0.0 <2.4.0: ^2.4.0
   # GHSA-8r5x-fm3f-whwj (critical): Handlebars JavaScript injection via AST
   # type confusion in compile (bypass of CVE-2026-33937).
   # GHSA-p8wg-vrv2-v86f (critical): Handlebars JavaScript injection via own
@@ -77,7 +82,14 @@ overrides:
   # express (verdaccio, @nx/js dev tooling).
   proxy-addr@<2.0.8: ^2.0.8
   semver@>=7.0.0 <7.5.2: ^7.5.2
-  systeminformation@<5.31.7: ^5.31.7
+  # GHSA-3f7j-7jwc-fxfj (high) plus GHSA-7648-jmwf-vw7j (moderate) and
+  # GHSA-4vjg-vx72-qq4g (low): systeminformation command-injection / argument
+  # smuggling in several `getFoo` helpers via shell metacharacters. All three
+  # are patched in 5.33.16 (patch bump within the 5.x line). Widen the previous
+  # <5.31.7 floor so transitive consumers (@opentelemetry/host-metrics,
+  # nestjs-otel, @dotenvx/dotenvx > shadcn) pick up the fix. 5.33.17 and
+  # 5.33.18 land past the 72h minimumReleaseAge gate on the next run.
+  systeminformation@<5.33.16: ^5.33.16
   tar: 7.5.21
   tar-fs: '>=3.1.1'
   tough-cookie@<4.1.3: ^4.1.3
@@ -200,13 +212,27 @@ overrides:
   # seroval-plugins) onto the 1.6.x patch line. solid-js@1.9.6 depends on
   # `seroval: ^1.1.0` and seroval-plugins@1.2.1 has a `^1.0` peer, both of
   # which stay satisfied on 1.6.x.
-  seroval@<1.6.3: ^1.6.3
+  # GHSA-9wx9-5pv9-3349 (moderate, >=1.5.5 <1.6.10): seroval TypedArray /
+  # DataView length handling allows memory exhaustion in JSON deserialization.
+  # GHSA-f86p-h4j2-7qgj (moderate, >=1.6.0 <1.6.11): regression in the
+  # 1.6.10 TypedArray fix that still enables unchecked allocations. Both are
+  # patched in 1.6.11 (patch bump within the 1.6.x line). Widen the previous
+  # <1.6.3 floor so transitive consumers (apps/dashboard >
+  # @better-auth/sso/better-auth > solid-js > seroval[/-plugins] and the
+  # enterprise auth package) pick up the fix. solid-js@1.9.x depends on
+  # `seroval: ^1.1.0` and seroval-plugins@1.2.1 has a `^1.0` peer, both of
+  # which stay satisfied on 1.6.x.
+  seroval@<1.6.11: ^1.6.11
   h3@<1.15.9: ^1.15.9
   immutable@>=4.0.0 <4.3.8: ^4.3.8
   jws@>=4.0.0 <4.0.1: ^4.0.1
   validator@<13.15.22: ^13.15.22
   msgpackr: ^1.10.1
-  multer@<2.4.0: ^2.4.0
+  # GHSA-q7qp-rjg7-q26m (high): multer DoS via a pending asynchronous
+  # fileFilter after request teardown. Patched in 2.5.0 (patch bump within
+  # the 2.x line). Widen the previous <2.4.0 floor so transitive consumers
+  # (@nestjs/platform-express, api/worker upload routes) pick up the fix.
+  multer@<2.5.0: ^2.5.0
   jws@<3.2.3: ^3.2.3
   svgo@>=3.0.0 <3.3.5: ^3.3.5
   flatted@<3.4.2: ^3.4.2
@@ -381,7 +407,15 @@ overrides:
   # CVE-2026-111757: `serveStatic` decodes the request path twice, bypassing
   # middleware on static paths. Patched in 4.13.11.
   hono@<4.13.11: ^4.13.11
-  '@hono/node-server@<2.0.5': ^2.0.5
+  # GHSA-rmxm-3fg6-px4f (moderate): @hono/node-server 1.19.10 - 2.1.2 passes
+  # the full request URL (including query string) to the Node.js HTTP response
+  # body-less code path, enabling response-splitting / request-smuggling-like
+  # confusion when a malicious URL is reflected into the response status line.
+  # Patched in 2.1.3 (patch bump within the 2.x line). Widen the previous
+  # <2.0.5 floor so transitive consumers (apps/api > emulate, apps/agent-inbox-mcp
+  # > @modelcontextprotocol/sdk, playground/web-chat, packages/novu, enterprise
+  # workers) land on the fix.
+  '@hono/node-server@<2.1.3': ^2.1.3
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5': ^3.47.5
   '@clerk/shared@>=4.0.0 <4.12.2': ^4.12.2
@@ -404,9 +438,16 @@ overrides:
   # scheme/hostname normalization. Patched in 3.1.6.
   # GHSA-qw65-cvwx-89v3: additional host-confusion regression affecting
   # 3.1.6 (and 3.1.6 is separately called out by GHSA-58mr-gqgx-xq4g).
-  # Patched in 3.1.7. Widen the override so the transitive verdaccio > ajv
-  # consumer picks up the fix.
-  fast-uri@<3.1.7: ^3.1.7
+  # Patched in 3.1.7.
+  # GHSA-w74x-v6f9-j3xg (moderate) / GHSA-wjr9-j795-jxcr (moderate) /
+  # GHSA-xhq7-xmqj-769h (low) / GHSA-333x-w4r6-6crp (low): fast-uri URI
+  # scheme spoofing via percent-encoded scheme decoding, host confusion via
+  # unchecked WHATWG host canonicalization, improper path equivalence in
+  # relative reference normalization, and scheme injection via an unescaped
+  # first-segment colon in suffix references. All patched in 3.1.9 (patch
+  # bump within the 3.1.x line). Widen the override so the transitive
+  # verdaccio > ajv consumer picks up the fix.
+  fast-uri@<3.1.9: ^3.1.9
   # GHSA-c83g-rgw3-j3cx / GHSA-73wf-gq98-2v4g: browserslist unbounded memory
   # growth (OOM) via distinct query results and uncaught crash / prototype
   # write via untrusted browserslist-stats.json. Patched in 4.28.7.

@@ -1,5 +1,5 @@
 import { HOST_IDS, type HostId } from './host-ids';
-import { AGENT_DOMAIN, INSTALL_SKILLS_COMMAND } from './onboarding';
+import { AGENT_DOMAIN, INSTALL_SKILLS_COMMAND, NPX_CLI } from './onboarding';
 
 export { HOST_IDS, type HostId, isHostId } from './host-ids';
 
@@ -22,15 +22,29 @@ export { HOST_IDS, type HostId, isHostId } from './host-ids';
  */
 export const MCP_URL = 'https://mcp.agentinbox.md';
 
-/** What the MCP server is called in a host's own list of servers. */
-export const MCP_SERVER_NAME = 'inbox';
+/**
+ * What the MCP server is called in a host's own list of servers. Without a space: Claude Code and Codex take
+ * only letters, digits, `-` and `_` in a server's name, which their tools' names are made from.
+ */
+export const MCP_SERVER_NAME = 'AgentInbox';
 
 export type HostGroup = 'commands' | 'chat';
 
-/** The two groups, in the order the picker shows them, with the label above each. */
+/** The two groups, in the order the public pages' picker shows them, with the label above each. */
 export const HOST_GROUPS: ReadonlyArray<{ group: HostGroup; label: string }> = [
   { group: 'commands', label: 'Runs commands' },
   { group: 'chat', label: 'Chat apps' },
+];
+
+/**
+ * The dashboard's picker, in the order of the design's `Platform picker` (`1.4 · Connect · prompt`): the chat
+ * apps, the coding agents, then the agents that keep running on a computer of their own, with General as the
+ * last tile. A hairline stands between each run of tiles and the next.
+ */
+export const PICKER_RUNS: ReadonlyArray<readonly HostId[]> = [
+  ['chatgpt', 'claude', 'grok'],
+  ['claude-code', 'cursor', 'codex', 'opencode'],
+  ['hermes', 'openclaw', 'general'],
 ];
 
 /** One step a chat app's operator takes in the app, numbered. */
@@ -50,6 +64,8 @@ export type HostAlternative = {
   signIn: string;
   /** A command that starts the sign-in, to copy, for a host that has one. */
   signInCommand?: string;
+  /** What comes after the sign-in, for a host that only connects then: Codex connects when a session starts. */
+  afterSignIn?: string;
   /** More for an agent that reads the host's Markdown: how else to add it, how it updates. */
   agentNotes?: readonly string[];
 } & (
@@ -58,6 +74,11 @@ export type HostAlternative = {
       /** Where `lines` are typed: in the host itself (Claude Code's prompt), or in a terminal. */
       typedIn: 'host' | 'terminal';
       lines: readonly string[];
+      /**
+       * The same from a terminal, for a host whose `lines` are typed in it. The dashboard's Plugin tab copies
+       * these in one go: a host's own prompt takes one command at a time.
+       */
+      terminalLines?: readonly string[];
     }
   | {
       kind: 'mcp-config';
@@ -66,6 +87,11 @@ export type HostAlternative = {
       config: (mcpUrl: string) => string;
       /** A link that adds the server in one click, for a host that has one (Cursor's "Add to Cursor"). */
       installLink?: { label: string; href: (mcpUrl: string) => string };
+      /**
+       * A command that adds the server, for a host that has one (`opencode mcp add`). The dashboard's MCP tab gives
+       * it in place of the config, which a copy saves nowhere; elsewhere it comes first, with `text` for the file.
+       */
+      addCommand?: { text: string; line: (mcpUrl: string) => string };
     }
 );
 
@@ -93,16 +119,31 @@ export type CommandHost = HostBase & {
   skillsAgent?: string;
   /** What to do once the commands ran, for a host that needs it: Hermes loads new skills in a new session. */
   afterCommands?: string;
+  /**
+   * `listen` can start it on a computer when a message to the agent comes: the optional last step after its
+   * commands. Claude Code for now; the other hosts that run commands follow.
+   */
+  listenStarts?: true;
   alternative?: HostAlternative;
 };
 
 export type ChatApp = HostBase & {
   group: 'chat';
   steps: readonly HostStep[];
-  /** The page in the app where its steps start, for the button that opens it. */
-  settings?: { url: string; label: string };
-  /** The app itself, to try it once it's connected. */
+  /** What the app calls the server once its steps added it: a custom connector in Claude, a plugin in ChatGPT. */
+  addedAs?: 'connector' | 'plugin';
+  /** The page in the app where its steps start, for the button that opens it, and the page in its desktop app. */
+  settings?: { url: string; label: string; desktopUrl?: string };
+  /**
+   * The app itself, to try it once it's connected: its web app, or for an app without one (Grok Bot) the page
+   * where people get it.
+   */
   appUrl?: string;
+  /**
+   * The link that opens the app's desktop app, which its buttons try before the web page (`openDesktopApp`):
+   * people who have the desktop app expect it to open, not their browser.
+   */
+  desktopUrl?: string;
   /** Something to ask the app to see the inbox at work. */
   example: string;
   /**
@@ -160,6 +201,7 @@ export const HOSTS: readonly Host[] = [
     // Claude's mark, which Claude Code shares, until the Claude Code logo is added.
     icon: '/tools/claude.png',
     skillsAgent: 'claude-code',
+    listenStarts: true,
     docsUrl: 'https://code.claude.com/docs/en/discover-plugins',
     alternative: {
       kind: 'plugin',
@@ -167,9 +209,14 @@ export const HOSTS: readonly Host[] = [
       text: PLUGIN_TEXT,
       typedIn: 'host',
       lines: ['/plugin marketplace add agentinboxhq/skills', '/plugin install agentinbox@agentinbox'],
+      // `claude plugin` takes the same marketplace and plugin from a shell, without a session.
+      terminalLines: [
+        'claude plugin marketplace add agentinboxhq/skills',
+        'claude plugin install agentinbox@agentinbox',
+      ],
       signIn: 'Then run /reload-plugins and /mcp in Claude Code, and sign in to Agent Inbox when the browser opens.',
       agentNotes: [
-        'Without the plugin, `claude mcp add --transport http inbox https://mcp.agentinbox.md` adds the MCP server alone; `/mcp` signs in. Not both: every tool would show up twice.',
+        `Without the plugin, \`claude mcp add --transport http ${MCP_SERVER_NAME} ${MCP_URL}\` adds the MCP server alone; \`/mcp\` signs in. Not both: every tool would show up twice.`,
         'Claude Code updates the plugin with `claude plugin update agentinbox@agentinbox`.',
       ],
     },
@@ -179,7 +226,7 @@ export const HOSTS: readonly Host[] = [
     name: 'Codex',
     group: 'commands',
     runsIn: 'project',
-    icon: null,
+    icon: '/tools/codex.png',
     skillsAgent: 'codex',
     docsUrl: 'https://learn.chatgpt.com/docs/plugins',
     alternative: {
@@ -190,6 +237,7 @@ export const HOSTS: readonly Host[] = [
       lines: ['codex plugin marketplace add agentinboxhq/skills', 'codex plugin add agentinbox@agentinbox'],
       signIn: 'Then sign in to Agent Inbox in the browser:',
       signInCommand: `codex mcp login ${MCP_SERVER_NAME}`,
+      afterSignIn: 'Then start Codex: it connects to Agent Inbox when a session starts.',
       agentNotes: [
         `Without the plugin, \`codex mcp add ${MCP_SERVER_NAME} --url ${MCP_URL}\` adds the MCP server alone; \`codex mcp login ${MCP_SERVER_NAME}\` signs in.`,
         'Plugin updates arrive when Codex starts, or right away with `codex plugin marketplace upgrade agentinbox`.',
@@ -201,13 +249,18 @@ export const HOSTS: readonly Host[] = [
     name: 'OpenCode',
     group: 'commands',
     runsIn: 'project',
-    icon: null,
+    // The dark square logo from opencode.ai/brand, on OpenCode's own dark.
+    icon: '/tools/opencode.svg',
     skillsAgent: 'opencode',
     docsUrl: 'https://opencode.ai/docs/mcp-servers/',
     alternative: {
       kind: 'mcp-config',
       title: 'Or add the MCP server to OpenCode',
-      text: 'Add this to opencode.json in your project, or to ~/.config/opencode/opencode.json for every project.',
+      addCommand: {
+        text: 'Run this in your project, or add --global to add it for every project.',
+        line: (mcpUrl) => `opencode mcp add ${MCP_SERVER_NAME} --url ${mcpUrl}`,
+      },
+      text: 'Or add this to opencode.json in your project, or to ~/.config/opencode/opencode.json for every project.',
       file: 'opencode.json',
       config: opencodeMcpConfig,
       signIn: 'Then sign in to Agent Inbox in the browser. opencode mcp list shows it signed in.',
@@ -229,8 +282,7 @@ export const HOSTS: readonly Host[] = [
       file: '~/.cursor/mcp.json',
       config: cursorMcpConfig,
       installLink: { label: 'Add to Cursor', href: cursorInstallLink },
-      signIn:
-        'Then click Connect next to inbox in Cursor Settings › Tools & MCP. Approve the sign-in and Cursor gets its address.',
+      signIn: `Then click Connect next to ${MCP_SERVER_NAME} in Cursor Settings › Tools & MCP. Approve the sign-in and Cursor gets its address.`,
     },
   },
   {
@@ -238,7 +290,7 @@ export const HOSTS: readonly Host[] = [
     name: 'Hermes',
     group: 'commands',
     runsIn: 'computer',
-    icon: null,
+    icon: '/tools/hermes.png',
     // The skills CLI's name for Hermes Agent. Its skills go to ~/.hermes/skills (`-g`), where every session finds them.
     skillsAgent: 'hermes-agent',
     afterCommands: 'Then start a new Hermes session with /reset, so it loads the skills.',
@@ -249,7 +301,7 @@ export const HOSTS: readonly Host[] = [
     name: 'OpenClaw',
     group: 'commands',
     runsIn: 'computer',
-    icon: null,
+    icon: '/tools/openclaw.png',
     // Its skills go to ~/.openclaw/skills (`-g`), where its agents find them.
     skillsAgent: 'openclaw',
     docsUrl: 'https://docs.openclaw.ai/tools/skills',
@@ -260,10 +312,17 @@ export const HOSTS: readonly Host[] = [
     name: 'Claude',
     group: 'chat',
     icon: '/tools/claude.png',
-    settings: { url: 'https://claude.ai/settings/connectors', label: 'Open Claude settings' },
+    settings: {
+      url: 'https://claude.ai/settings/connectors',
+      label: 'Open Claude settings',
+      desktopUrl: 'claude://claude.ai/settings/connectors',
+    },
     appUrl: 'https://claude.ai',
+    // Claude's desktop app opens a claude.ai page from a `claude://claude.ai/…` link, and a new chat from this one.
+    desktopUrl: 'claude://claude.ai/new',
     docsUrl: 'https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp',
     example: EXAMPLE,
+    addedAs: 'connector',
     steps: [
       {
         title: 'Open your connectors',
@@ -271,7 +330,7 @@ export const HOSTS: readonly Host[] = [
       },
       {
         title: 'Add a custom connector',
-        text: 'Name it Inbox, paste this URL and choose Continue.',
+        text: 'Name it AgentInbox, paste this URL and choose Continue.',
         copy: COPY_MCP_URL,
       },
       {
@@ -285,10 +344,13 @@ export const HOSTS: readonly Host[] = [
     name: 'ChatGPT',
     group: 'chat',
     icon: '/tools/chatgpt.png',
-    settings: { url: 'https://chatgpt.com/plugins', label: 'Open ChatGPT plugins' },
+    settings: { url: 'https://chatgpt.com/plugins', label: 'Open ChatGPT plugins', desktopUrl: 'codex://plugins' },
     appUrl: 'https://chatgpt.com',
+    // ChatGPT's desktop app, which Codex is part of, answers `codex://` links only.
+    desktopUrl: 'codex://launch',
     docsUrl: 'https://developers.openai.com/api/docs/guides/custom-mcp-server',
     example: EXAMPLE,
+    addedAs: 'plugin',
     steps: [
       {
         title: 'Add a custom MCP server',
@@ -296,7 +358,7 @@ export const HOSTS: readonly Host[] = [
       },
       {
         title: 'Create the plugin',
-        text: 'Name it Inbox, paste this URL, choose OAuth and create it as a plugin.',
+        text: 'Name it AgentInbox, paste this URL, choose OAuth and create it as a plugin.',
         copy: COPY_MCP_URL,
       },
       {
@@ -309,7 +371,10 @@ export const HOSTS: readonly Host[] = [
     id: 'grok',
     name: 'Grok Bot',
     group: 'chat',
-    icon: null,
+    icon: '/tools/grok.png',
+    // Grok Bot has no web app: without the desktop app, its own short address leads to xAI's page about it.
+    appUrl: 'https://grok.bot',
+    desktopUrl: 'grokbot://',
     docsUrl: 'https://cursor.com/help/grok-bot/connect-apps',
     example: EXAMPLE,
     addsServerWhenAsked: true,
@@ -340,6 +405,11 @@ export function hostOf(id: HostId): Host {
   }
 
   return host;
+}
+
+/** Something to ask a host to see the inbox at work: a chat app's own question, the same one for the others. */
+export function exampleOf(host: Host): string {
+  return host.group === 'chat' ? host.example : EXAMPLE;
 }
 
 /** The host the picker shows first. */
@@ -383,11 +453,33 @@ export function skillsCommand(host: CommandHost): string {
     : `${INSTALL_SKILLS_COMMAND}${scope} -y`;
 }
 
+/** The command that listens for messages and starts the host (`npx @agentinbox/cli listen claude-code`), when it can. */
+export function listenCommand(host: CommandHost): string | undefined {
+  return host.listenStarts ? `${NPX_CLI} listen ${host.id}` : undefined;
+}
+
+/** What listening does, in a line under the command, for the agent `handle` names when it's known. */
+export function listenLead(host: CommandHost, handle?: string): string {
+  const agent = handle ? handle : 'your agent';
+
+  return `Then a message to ${agent} starts ${host.name} in this project, and it asks you before anything its settings don’t allow. You allow it first, on your channel or in the terminal.`;
+}
+
 /**
- * The hosts the hosted MCP server tells apart today, by the app that signed in (`toolOf` in
- * `apps/agent-inbox-mcp`): what the dashboard's `connectedTools` lists, and so the hosts the picker can tick.
+ * The hosts that sign in through the hosted MCP server on one of their tabs: the chat apps, and the coding agents
+ * through their plugin or MCP config. The server tells each apart by the app that signed in (`hostOfClientName`,
+ * and for Grok Bot `signInAppHost`, in `apps/agent-inbox-mcp`). What the dashboard's `connectedTools` lists, and
+ * so the hosts the picker can tick as soon as they sign in.
  */
-const SIGNED_IN_HOST_IDS = ['cursor', 'claude', 'chatgpt'] as const satisfies readonly HostId[];
+const SIGNED_IN_HOST_IDS = [
+  'claude-code',
+  'codex',
+  'opencode',
+  'cursor',
+  'claude',
+  'chatgpt',
+  'grok',
+] as const satisfies readonly HostId[];
 
 export type ToolId = (typeof SIGNED_IN_HOST_IDS)[number];
 

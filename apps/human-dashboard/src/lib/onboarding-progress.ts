@@ -32,18 +32,62 @@ export function wasMadeInTheSteps(agent: StepAgent, state: OnboardingState): boo
  *
  * An agent the steps never saw being made came from a terminal or the MCP: claimed, or set up there after
  * logging in. It has its address and its host already, so there is nothing to walk its operator through.
+ *
+ * A host has come in once the API saw it (`hostStatus.connected`: it used its code, or checked the inbox), or
+ * once it signed in through the MCP server (`signedIn`), which a chat app or a plugin does before its first check.
  */
-export function resolveStep(agent: StepAgent | null, state: OnboardingState, hostStatus: HostStatus | null): SetupStep {
+export function resolveStep(
+  agent: StepAgent | null,
+  state: OnboardingState,
+  hostStatus: HostStatus | null,
+  signedIn = false
+): SetupStep {
   if (!agent) return 'address';
   if (!wasMadeInTheSteps(agent, state)) return 'done';
   if (state.finishedAt) return 'done';
   if (!state.testLeftAt) return 'test';
-  if (!hostStatus?.connected) return 'connect';
+  if (!hostStatus?.connected && !signedIn) return 'connect';
 
   return 'reach';
+}
+
+/**
+ * Whether an app that last connected through the MCP server at `at` did so since the agent was made. An
+ * account's sign-ins outlive its agent, so one from before it, by an app not used since, isn't its host coming in.
+ */
+export function signedInSince(at: string, agent: StepAgent): boolean {
+  return !agent.createdAt || Date.parse(at) >= Date.parse(agent.createdAt) - CLOCK_SLACK_MS;
 }
 
 /** The agent exists but no host reads its mail yet: what the "setup not finished" banners are about. */
 export function isSetupUnfinished(step: SetupStep): step is 'test' | 'connect' {
   return step === 'test' || step === 'connect';
+}
+
+/**
+ * The operator is still on the test step of an agent this onboarding created. A claimed agent is
+ * not, and neither is anyone who already left that step.
+ */
+export function awaitsTestMail(agent: StepAgent | null, state: OnboardingState): boolean {
+  return Boolean(agent && wasMadeInTheSteps(agent, state) && !state.finishedAt && !state.testLeftAt);
+}
+
+/**
+ * The time a human email arrived. The sender and the subject are not kept: an older build stored them
+ * beside this time, and they are dropped here. The same state comes back when the time is unchanged
+ * and those fields are already gone.
+ */
+export function rememberTestReply(state: OnboardingState, replyAt: string | undefined): OnboardingState {
+  const stored = state as OnboardingState & { testInboundFrom?: string; testInboundSubject?: string };
+  const hasCopy = stored.testInboundFrom != null || stored.testInboundSubject != null;
+  if (state.testReplyAt === replyAt && !hasCopy) {
+    return state;
+  }
+
+  const { testReplyAt: _at, testInboundFrom: _from, testInboundSubject: _subject, ...rest } = stored;
+  if (!replyAt) {
+    return rest;
+  }
+
+  return { ...rest, testReplyAt: replyAt };
 }

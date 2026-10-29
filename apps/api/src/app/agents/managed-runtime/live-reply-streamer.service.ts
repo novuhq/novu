@@ -20,7 +20,7 @@ export function streamsLiveReplies(platform: AgentPlatformEnum): boolean {
 }
 
 /** How long a streamed `message` webhook waits for its live reader to deliver the reply. */
-const READER_DELIVERY_TIMEOUT_MS = 10_000;
+const READER_DELIVERY_TIMEOUT_MS = 2_000;
 const READER_DELIVERY_POLL_MS = 500;
 
 /** Delivers a reply through the normal reply path; with a preview id it edits the preview. */

@@ -51,6 +51,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       headers: Schema.Types.String,
       body: Schema.Types.String,
       routingMode: Schema.Types.String,
+      authMethod: Schema.Types.String,
       requireTls: Schema.Types.Boolean,
       ignoreTls: Schema.Types.Boolean,
       tlsOptions: Schema.Types.Mixed,

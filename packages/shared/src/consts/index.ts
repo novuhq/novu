@@ -25,6 +25,7 @@ export * from './slug-identifier';
 export * from './template-store';
 export * from './topic-subscription';
 export * from './translation';
+export * from './twilio-auth-methods';
 export * from './twilio-sms-regions';
 export * from './upsert-validation-constants';
 export * from './usage-limits';

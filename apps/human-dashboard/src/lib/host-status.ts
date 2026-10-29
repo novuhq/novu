@@ -26,6 +26,37 @@ export function hostName(host: Pick<AgentHost, 'id' | 'via'>): string {
   return isHostId(host.id) ? hostOf(host.id).name : HOST_LABELS[host.via];
 }
 
+/**
+ * Where the agent is listening: the computer whose `agentinbox listen` is ready to start a host when someone the
+ * agent listens to writes. One computer at a time, by a lease its program renews every minute; it lapses three minutes
+ * after the last renewal.
+ */
+export type Listening = {
+  computerId: string;
+  /** What the operator calls the computer: "MacBook". */
+  computerName: string;
+  /** The host it starts there. */
+  host: HostId;
+  /** The folder the host runs in, as the operator reads it: "~/projects/app". */
+  project?: string;
+  since: string;
+  renewedAt: string;
+  /** When the lease lapses unless it is renewed before. */
+  expiresAt: string;
+};
+
+/** The lease while it is live, or `null` once it has lapsed: the page keeps the last one it read, which ages. */
+export function liveListening(listening: Listening | null | undefined, now: number): Listening | null {
+  return listening && Date.parse(listening.expiresAt) > now ? listening : null;
+}
+
+/** "Listening on MacBook (Claude Code)", as the Agent setup row says it. */
+export function describeListening(listening: Pick<Listening, 'computerName' | 'host'>): string {
+  const host = isHostId(listening.host) ? hostOf(listening.host).name : listening.host;
+
+  return `Listening on ${listening.computerName} (${host})`;
+}
+
 export type HostStatus = {
   /** A host used a one-time code, or checked the inbox, at least once. It never goes back to false. */
   connected: boolean;
@@ -40,6 +71,8 @@ export type HostStatus = {
   firstCheckedAt: string | null;
   /** The newest unread conversation the first check found. */
   waitingMessage: { conversationId: string; from: string; subject: string; at: string; seenAt: string } | null;
+  /** Where the agent is listening, or `null` when no computer keeps it listening. Missing from an older API. */
+  listening?: Listening | null;
 };
 
 /** A one-time code for `agentinbox connect <handle> --code <code>`. It works once, for ten minutes. */
@@ -49,6 +82,8 @@ export type ConnectCode = {
   /** The agent it connects to, as the command names it. */
   handle: string;
   expiresAt: string;
+  /** The host the page asked it for (`useHostConnectCode`), so the one that used it can be named. */
+  host?: HostId;
 };
 
 /** What the server answers when asked for a code. `expiresInMs` is measured on the server, against its own clock. */
@@ -144,17 +179,17 @@ export function formatCheckedAgo(iso: string, now: number): string {
 }
 
 /**
- * The way a host came in that came in since `before`, or `null`: a host that wasn't there, or one that had
- * stopped checking (`HOST_STALE_AFTER_MS`) and checked again.
+ * The host that came in since `before`, with the way it came in, or `null`: a host that wasn't there, or one
+ * that had stopped checking (`HOST_STALE_AFTER_MS`) and checked again.
  *
  * The same host on one more computer doesn't show here: it shares its entry with the first one, and a check
  * of the new one looks like a check of the old. The code it used tells that one apart (`useCodeWatch`).
  */
-export function findNewHost(before: HostStatus, after: HostStatus): HostVia | null {
+export function findNewHost(before: HostStatus, after: HostStatus): AgentHost | null {
   for (const host of after.hosts) {
     const known = before.hosts.find((entry) => entryKey(entry) === entryKey(host));
     if (!known || known.connectedAt !== host.connectedAt) {
-      return host.via;
+      return host;
     }
 
     if (host.lastCheckedAt && host.lastCheckedAt !== known.lastCheckedAt) {
@@ -162,7 +197,7 @@ export function findNewHost(before: HostStatus, after: HostStatus): HostVia | nu
       const knownCheckedAt = known.lastCheckedAt ? Date.parse(known.lastCheckedAt) : Number.NaN;
 
       if (Number.isNaN(knownCheckedAt) || checkedAt - knownCheckedAt > HOST_STALE_AFTER_MS) {
-        return host.via;
+        return host;
       }
     }
   }

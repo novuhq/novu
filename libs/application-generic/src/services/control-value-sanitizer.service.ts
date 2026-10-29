@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { actionStepSchemas, channelStepSchemas, parseLiquidControlValue } from '@novu/framework/internal';
 import { ResourceOriginEnum } from '@novu/shared';
-import Ajv, { ErrorObject } from 'ajv';
-import addFormats from 'ajv-formats';
+import { ErrorObject } from 'ajv';
 import { cloneDeep, get, merge, set } from 'es-toolkit/compat';
 import { PinoLogger } from 'nestjs-pino';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
@@ -12,6 +11,7 @@ import { ControlValueProcessingResult, PreviewTemplateData } from '../usecases/p
 import { replaceAll } from '../usecases/preview/utils/variable-helpers';
 import { dashboardSanitizeControlValues, SanitizationType } from '../utils';
 import { buildVariables } from '../utils/build-variables';
+import { getSchemaValidator } from '../utils/issues';
 import { isObjectMailyJSONContent, isStringifiedMailyJSONContent, replaceMailyVariables } from '../utils/maily-utils';
 import { buildLiquidParser } from '../utils/template-parser/liquid-engine';
 import type { Variable } from '../utils/template-parser/types';
@@ -99,9 +99,7 @@ export class ControlValueSanitizerService {
       return controlValues;
     }
 
-    const ajv = new Ajv({ allErrors: true, strict: false });
-    addFormats(ajv);
-    const validate = ajv.compile(outputSchema);
+    const validate = getSchemaValidator(outputSchema);
     const isValid = validate(controlValues);
     const errors = validate.errors as null | ErrorObject[];
 

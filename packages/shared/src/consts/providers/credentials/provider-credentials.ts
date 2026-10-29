@@ -524,8 +524,33 @@ export const twilioConfig: IConfigCredential[] = [
     required: true,
   },
   {
+    key: CredentialsKeyEnum.AuthMethod,
+    displayName: 'Authentication method',
+    description:
+      'Use an API key to avoid sharing your account auth token. The key needs permission to create messages.',
+    type: 'dropdown',
+    required: false,
+    value: null,
+    dropdown: [
+      { name: 'Auth token', value: null },
+      { name: 'API key', value: 'apiKey' },
+    ],
+  },
+  {
     key: CredentialsKeyEnum.Token,
     displayName: 'Auth token',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key SID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'API Key Secret',
     type: 'string',
     required: true,
   },

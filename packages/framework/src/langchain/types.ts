@@ -12,6 +12,7 @@ import type {
   AgentMessageUpdatedContext,
   MessageContent,
   ReplyHandle,
+  ReplyStream,
   ToolApprovalDecision,
 } from '../resources/agent/agent.types';
 import type { Awaitable } from '../types/util.types';
@@ -83,13 +84,17 @@ export type LangChainResult = LangChainAgentConfig | LangChainInvokeResult | Bas
  *
  * Extends {@link AgentHandlers}: same events and config (`toolApproval`, etc.),
  * but `onMessage` and `onToolApproval` may return a {@link LangChainResult} for
- * automatic delivery.
+ * automatic delivery. `onMessage` may also return a {@link ReplyStream} directly,
+ * same as core `agent()` — it is passed through to the reply for streaming.
  */
 export type LangChainAgentHandlers = Omit<
   AgentHandlers,
   'onMessage' | 'onToolApproval' | 'onMessageUpdated' | 'onMessageDeleted'
 > & {
-  onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | LangChainResult | void>;
+  onMessage: (
+    message: AgentMessage,
+    ctx: AgentMessageContext
+  ) => Awaitable<MessageContent | ReplyStream | LangChainResult | void>;
   onMessageUpdated?: (
     message: AgentMessage,
     ctx: AgentMessageUpdatedContext

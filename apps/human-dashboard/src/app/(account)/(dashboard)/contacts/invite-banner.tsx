@@ -13,7 +13,15 @@ import { useSwap } from '@/hooks/use-swap';
 import { cn } from '@/lib/utils';
 import { createInviteAction } from './actions';
 import { DialogMark } from './dialog-mark';
-import { type InviteFieldErrors, parseInviteFields } from './invite-fields';
+import {
+  clearFilledInviteErrors,
+  type InviteDraft,
+  type InviteFieldErrors,
+  initialInviteDraft,
+  inviteDraftFromId,
+  inviteDraftFromName,
+  parseInviteFields,
+} from './invite-fields';
 
 /**
  * The CLI's way of doing what the card does (`$ inbox invite` in the design). It is written as the CLI
@@ -90,8 +98,8 @@ export function InviteBanner({ start }: InviteBannerProps) {
  */
 function InviteDialogContent({ start }: { start?: InviteDialogStart }) {
   const formId = useId();
-  const [contactId, setContactId] = useState(start?.contactId ?? '');
-  const [name, setName] = useState(start?.name ?? '');
+  const [draft, setDraft] = useState<InviteDraft>(() => initialInviteDraft(start));
+  const { contactId, name } = draft;
   const [fieldErrors, setFieldErrors] = useState<InviteFieldErrors>(start?.fieldErrors ?? {});
   const [error, setError] = useState<string | null>(start?.error ?? null);
   const [created, setCreated] = useState<CreatedInvite | null>(start?.created ?? null);
@@ -122,6 +130,18 @@ function InviteDialogContent({ start }: { start?: InviteDialogStart }) {
         </p>
       </DialogContent>
     );
+  }
+
+  function handleNameChange(value: string) {
+    const next = inviteDraftFromName(draft, value);
+    setDraft(next);
+    setFieldErrors((current) => clearFilledInviteErrors(current, next));
+  }
+
+  function handleIdChange(value: string) {
+    const next = inviteDraftFromId(draft, value);
+    setDraft(next);
+    setFieldErrors((current) => clearFilledInviteErrors(current, next));
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -168,30 +188,6 @@ function InviteDialogContent({ start }: { start?: InviteDialogStart }) {
     >
       <form id={formId} noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Field
-          label="ID"
-          required
-          requiredMark="plain"
-          hint="Lowercase, no spaces. Your agent uses it, like agentinbox inbox send Hello --to john."
-          error={fieldErrors.contactId}
-        >
-          {(field) => (
-            <Input
-              {...field}
-              name="contactId"
-              placeholder="john"
-              value={contactId}
-              onChange={(event) => setContactId(event.target.value)}
-              autoCapitalize="none"
-              autoCorrect="off"
-              autoComplete="off"
-              spellCheck={false}
-              maxLength={128}
-              required
-              className={field.invalid ? INVALID_INPUT_CLASS_NAME : INPUT_CLASS_NAME}
-            />
-          )}
-        </Field>
-        <Field
           label="Full name"
           required
           requiredMark="plain"
@@ -204,8 +200,32 @@ function InviteDialogContent({ start }: { start?: InviteDialogStart }) {
               name="name"
               placeholder="John Doe"
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => handleNameChange(event.target.value)}
               autoComplete="off"
+              maxLength={128}
+              required
+              className={field.invalid ? INVALID_INPUT_CLASS_NAME : INPUT_CLASS_NAME}
+            />
+          )}
+        </Field>
+        <Field
+          label="ID"
+          required
+          requiredMark="plain"
+          hint="Lowercase, no spaces. Your agent uses it, like agentinbox send Hello --to john-doe."
+          error={fieldErrors.contactId}
+        >
+          {(field) => (
+            <Input
+              {...field}
+              name="contactId"
+              placeholder="john-doe"
+              value={contactId}
+              onChange={(event) => handleIdChange(event.target.value)}
+              autoCapitalize="none"
+              autoCorrect="off"
+              autoComplete="off"
+              spellCheck={false}
               maxLength={128}
               required
               className={field.invalid ? INVALID_INPUT_CLASS_NAME : INPUT_CLASS_NAME}

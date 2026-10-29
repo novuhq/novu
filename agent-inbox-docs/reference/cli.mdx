@@ -7,7 +7,7 @@ description: "Every command, flag, exit code, and environment variable for npx @
 npx @agentinbox/cli
 ```
 
-Every command is `<command> <action>`: `setup`, `login`, `connect`, `inbox`, `contact`, `channel`.
+The conversation commands stand alone: `list`, `show`, `read`, `resolve`, `send`, and `reply`. `contact` and `channel` take an action, as in `contact list`. The rest are `setup`, `login`, `connect`, and `listen`.
 
 Flags beat environment variables, which beat `~/.agentinbox/config.json`. Environment values are never written back to the config file.
 
@@ -37,12 +37,12 @@ Agents branch on these. Do not parse the prose when a code will do.
 
 ```bash
 docker run -e INBOX_SECRET_KEY=... -e INBOX_TO=alice -e INBOX_VIA=slack agent \
-  npx @agentinbox/cli inbox send approve "Deploy to prod?"
+  npx @agentinbox/cli send approve "Deploy to prod?"
 ```
 
 Durations accept `90s`, `10m`, `2h`, and `1d`.
 
-On a terminal, `setup`, `login`, `connect`, and `channel add` draw one updating screen. Pipes, CI, `NO_COLOR`, `FORCE_COLOR=0`, `TERM=dumb`, and a terminal narrower than 48 columns get the plain transcript. `inbox` and `contact` always print plain text. `AGENTINBOX_NO_ANIMATION=1` holds the screen still.
+On a terminal, `setup`, `login`, `connect`, and `channel add` draw one updating screen. Pipes, CI, `NO_COLOR`, `FORCE_COLOR=0`, `TERM=dumb`, and a terminal narrower than 48 columns get the plain transcript. The conversation commands and `contact` always print plain text. `AGENTINBOX_NO_ANIMATION=1` holds the screen still.
 
 ## setup
 
@@ -80,7 +80,7 @@ npx @agentinbox/cli connect <agent> --code <code>
 
 `<agent>` is the address before the `@`. `--code` is required. The code works once, for 10 minutes. `--yes` replaces a setup already on this computer without asking.
 
-## inbox list
+## list
 
 Open conversations with contacts, newest first, unless you filter.
 
@@ -95,34 +95,34 @@ Open conversations with contacts, newest first, unless you filter.
 | `--after` | Cursor from `next` |
 | `--json` | `{ data, next }` |
 
-## inbox show
+## show
 
 ```bash
-npx @agentinbox/cli inbox show <conversation>
+npx @agentinbox/cli show <conversation>
 ```
 
 Oldest message first. Does not mark the conversation read. `--limit` defaults to 20, max 100. `--before` pages to older messages. `--json` prints `{ conversation, messages, hasMore }`.
 
-## inbox read
+## read
 
 ```bash
-npx @agentinbox/cli inbox read <conversation>
+npx @agentinbox/cli read <conversation>
 ```
 
 Marks it read. Nothing is sent.
 
-## inbox resolve
+## resolve
 
 ```bash
-npx @agentinbox/cli inbox resolve <conversation>
+npx @agentinbox/cli resolve <conversation>
 ```
 
 Marks it finished. Nothing is sent. It opens again when anyone writes.
 
-## inbox send
+## send
 
 ```bash
-npx @agentinbox/cli inbox send <words...>
+npx @agentinbox/cli send <words...>
 ```
 
 A plain message returns when it is delivered. Start the words with `ask`, `approve`, or `choose` to wait for an answer.
@@ -142,10 +142,10 @@ A plain message returns when it is delivered. Start the words with `ask`, `appro
 | `--subtitle`, `--body` | Card text. A plain message becomes a card when one of these, or `--icon`, is set |
 | `--json` | The result as JSON, including the conversation it landed in |
 
-## inbox reply
+## reply
 
 ```bash
-npx @agentinbox/cli inbox reply <conversation> <words...>
+npx @agentinbox/cli reply <conversation> <words...>
 ```
 
 Same message flags as `send`, except `--via`. `--to` limits who may answer. `--anyone` lets anyone in the conversation answer, including a stranger. Not with `--to`.
@@ -192,6 +192,26 @@ npx @agentinbox/cli channel default <telegram|slack|email>
 ```
 
 Sets the channel used when a message goes to you on this computer. Other people keep their own default.
+
+## listen
+
+```bash
+npx @agentinbox/cli listen claude-code
+npx @agentinbox/cli listen status
+npx @agentinbox/cli listen stop
+```
+
+Listens for messages on this computer: one from the operator, or from a contact the agent listens to, starts the host in the folder it runs in. It asks the operator first and takes nothing until they allow it. It needs an Agent Inbox account: on a keyless setup, run `login` first. See [Listen for messages](/listen).
+
+| Flag | What it does |
+| --- | --- |
+| `--foreground` | Listen in this terminal only, instead of in the background |
+| `--timeout <duration>` | When an agent runs it: how long to wait for the operator's Allow. Exits `11` when it runs out |
+| `--runs-per-hour <n>` | How many runs may start in an hour. Default 20 |
+| `--max-run <duration>` | How long one run may go on. Default 30 minutes |
+| `--json` | `listen status` only: print JSON |
+
+Exit codes as for `approve`: `0` allowed, `10` denied, `11` still waiting, `12` the question expired, `1` an error.
 
 ## Errors agents should recognize
 

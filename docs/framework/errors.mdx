@@ -376,6 +376,18 @@ curl -i YOUR_BRIDGE_URL
 
 The status is `200` (or another `2xx`) and the body is not JSON. An HTML login page, a Vercel password-protection page, or an empty body all look like this. The first bytes are usually `<!DOCTYPE html>`. Exclude the bridge path from whatever is writing that page. A health check from the framework is JSON.
 
+### InvalidDiscoverResponse
+
+**Status:** `502`
+
+**Message:** ``Bridge URL response for `<url>` does not contain a workflows list. Check that the URL points at your Novu bridge endpoint.``
+
+```bash
+curl -i YOUR_BRIDGE_URL
+```
+
+The status is `2xx` and the body is valid JSON, but it has no `workflows` array. The URL reached something that answers with JSON — an API health check, a different route of your app, or a service that is not a Novu bridge — but not the route where `@novu/framework` is mounted. This happens during `npx novu@latest sync` and when the Dashboard connects to your bridge. Sync the path where the framework `serve()` handler is mounted, usually ending in `/api/novu`. `novu sync` reports this as `400` with only the message, and it leaves your existing workflows unchanged.
+
 ### UnknownBridgeRequestError
 
 **Status:** `500`
