@@ -183,15 +183,19 @@ function Thread() {
   const messages = chat?.messages ?? [];
   const showThinking = (isBusy || !!chat?.typing) && hasPendingReplyGap(messages);
   const lastMessage = messages[messages.length - 1];
+  // Snapshots are deep-cloned on every update, so scroll on what the newest message shows, not its identity.
+  const tailKey = lastMessage
+    ? `${lastMessage.id}:${lastMessage.status}:${JSON.stringify(lastMessage.parts).length}`
+    : '';
   const pagination = chat?.pagination;
   let userIndex = 0;
 
-  // Keyed on the newest message (a new object on every streamed update), so loading older pages doesn't jump to the bottom.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll on every message update while streaming
+  // Keyed on the newest message's content, so loading older pages keeps the reader's place.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll whenever the newest message changes while streaming
   useEffect(() => {
     const element = scrollRef.current;
     if (element) element.scrollTop = element.scrollHeight;
-  }, [lastMessage, hasRunError, showThinking]);
+  }, [tailKey, hasRunError, showThinking]);
 
   return (
     <div className="relative min-h-0 flex-1">
