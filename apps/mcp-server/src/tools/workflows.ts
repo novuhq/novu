@@ -31,7 +31,7 @@ const STEP_TYPE_GUIDE = [
 	"- sms: body (keep under 160 chars)",
 	"- push: subject + body",
 	"- chat: body",
-	"- delay: discriminated by type — 'regular' (amount + unit) or 'timed' (cron)",
+	"- delay: discriminated by type — 'regular' (amount + unit), 'timed' (cron) or 'dynamic' (dynamicKey)",
 	"- digest: discriminated by type — 'regular' (amount + unit + optional digestKey) or 'timed' (cron + optional digestKey)",
 	"- throttle: discriminated by type — 'fixed' (amount + unit + threshold) or 'dynamic' (dynamicKey + threshold)",
 	"- http_request: method + url + optional headers/body key-value pairs",

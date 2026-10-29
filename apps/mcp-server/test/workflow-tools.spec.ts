@@ -195,6 +195,45 @@ describe("create_workflow", () => {
 		expect(api.requests).toHaveLength(0);
 	});
 
+	it("creates a dynamic delay that reads its wait from the payload", async () => {
+		const api = fakeWorkflowsApi();
+		const delayStep = {
+			controlValues: { dynamicKey: "payload.sendAt", type: "dynamic" },
+			name: "Wait",
+			type: "delay",
+		};
+
+		const result = await callTool(await client(), "create_workflow", {
+			name: "Reminder",
+			payloadProperties: [{ name: "sendAt", type: "string" }],
+			steps: [delayStep, inAppStep],
+		});
+
+		expect(result.isError).toBeFalsy();
+		expect(api.requests[0].body).toMatchObject({
+			steps: [{ controlValues: delayStep.controlValues }, {}],
+		});
+	});
+
+	it("rejects a dynamic delay key missing from the payload schema", async () => {
+		const api = fakeWorkflowsApi();
+
+		const result = await callTool(await client(), "create_workflow", {
+			name: "Reminder",
+			payloadProperties: [{ name: "name", type: "string" }],
+			steps: [
+				{
+					controlValues: { dynamicKey: "payload.sendAt", type: "dynamic" },
+					name: "Wait",
+					type: "delay",
+				},
+			],
+		});
+
+		expect(result.structuredContent).toMatchObject({ error: { status: 400 } });
+		expect(api.requests).toHaveLength(0);
+	});
+
 	it("rejects boolean channel preferences", async () => {
 		fakeWorkflowsApi();
 

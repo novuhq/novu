@@ -10,7 +10,7 @@ import type { WorkflowStep } from "./workflow-schemas";
  *   - Maily document non-emptiness (empty `doc.content` produces an empty
  *     email even though it's structurally valid).
  *   - HTTP request method ↔ body coherence.
- *   - Digest/throttle group key references existing in the payload schema
+ *   - Delay/digest/throttle key references existing in the payload schema
  *     (best-effort, only when `payloadSchema` is provided).
  */
 
@@ -40,6 +40,8 @@ export class WorkflowValidationUtils {
 				return WorkflowValidationUtils.validateEmailStep(step);
 			case "http_request":
 				return WorkflowValidationUtils.validateHttpRequestStep(step);
+			case "delay":
+				return WorkflowValidationUtils.validateDelayStep(step, context);
 			case "digest":
 				return WorkflowValidationUtils.validateDigestStep(step, context);
 			case "throttle":
@@ -78,6 +80,21 @@ export class WorkflowValidationUtils {
 		}
 
 		return null;
+	}
+
+	private static validateDelayStep(
+		step: Extract<WorkflowStep, { type: "delay" }>,
+		context: ValidationContext,
+	): ApiResponse | null {
+		const cv = step.controlValues;
+		if (cv.type !== "dynamic") return null;
+
+		return WorkflowValidationUtils.validateVariableReference({
+			fieldLabel: "dynamicKey",
+			payloadSchema: context.payloadSchema,
+			stepName: step.name,
+			variablePath: cv.dynamicKey,
+		});
 	}
 
 	private static validateDigestStep(

@@ -37,7 +37,7 @@ export type TimeUnit = z.infer<typeof timeUnitSchema>;
 // Throttle windows only accept these units (framework `throttleActionSchemas.output`).
 const throttleUnitSchema = z.enum(["minutes", "hours", "days"]);
 
-export const delayTypeSchema = z.enum(["regular", "timed"]);
+export const delayTypeSchema = z.enum(["regular", "timed", "dynamic"]);
 export type DelayType = z.infer<typeof delayTypeSchema>;
 
 export const digestTypeSchema = z.enum(["regular", "timed"]);
@@ -234,10 +234,34 @@ function createDelayTimedControlSchema() {
 	});
 }
 
+function createDelayDynamicControlSchema() {
+	return z.object({
+		dynamicKey: z
+			.string()
+			.min(1)
+			.describe(
+				"Payload variable path holding an ISO-8601 timestamp or an { amount, unit } duration, e.g. 'payload.sendAt'.",
+			),
+		extendToSchedule: z
+			.boolean()
+			.optional()
+			.describe(
+				"When true, extend the delay to the subscriber's next allowed schedule window.",
+			),
+		skip: createSkipConditionSchema(),
+		type: z
+			.literal("dynamic")
+			.describe(
+				"Dynamic delay type. The wait is read at runtime from the `dynamicKey` variable.",
+			),
+	});
+}
+
 function createDelayControlSchema() {
 	return z.discriminatedUnion("type", [
 		createDelayRegularControlSchema(),
 		createDelayTimedControlSchema(),
+		createDelayDynamicControlSchema(),
 	]);
 }
 
