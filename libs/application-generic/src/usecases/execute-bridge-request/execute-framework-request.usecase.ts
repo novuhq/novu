@@ -1,6 +1,7 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
 import {
+  DiscoverOutput,
   GetActionEnum,
   HttpHeaderKeysEnum,
   HttpQueryKeysEnum,
@@ -119,6 +120,7 @@ export class ExecuteFrameworkRequest {
       command.workflowOrigin === ResourceOriginEnum.EXTERNAL;
     const isNovuHostedBridge = !command.statelessBridgeUrl && command.workflowOrigin === ResourceOriginEnum.NOVU_CLOUD;
 
+    let body: ExecuteBridgeRequestDto<T>;
     try {
       const response = await this.httpClient.request<ExecuteBridgeRequestDto<T>>({
         url,
@@ -151,11 +153,21 @@ export class ExecuteFrameworkRequest {
           }
         },
       });
-
-      return response.body;
+      body = response.body;
     } catch (error) {
-      await this.handleResponseError(error, bridgeUrl, command.processError);
+      return this.handleResponseError(error, bridgeUrl, command.processError);
     }
+
+    if (command.action === GetActionEnum.DISCOVER && !Array.isArray((body as DiscoverOutput | undefined)?.workflows)) {
+      throw new BridgeRequestError({
+        url: bridgeUrl,
+        code: BRIDGE_EXECUTION_ERROR.INVALID_DISCOVER_RESPONSE.code,
+        message: BRIDGE_EXECUTION_ERROR.INVALID_DISCOVER_RESPONSE.message(bridgeUrl),
+        statusCode: HttpStatus.BAD_GATEWAY,
+      });
+    }
+
+    return body;
   }
 
   @Instrument()

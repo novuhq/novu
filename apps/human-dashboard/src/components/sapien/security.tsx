@@ -30,7 +30,13 @@ export function Security() {
           {SECURITY_HEADING.rest}
         </h2>
         <p className="max-w-109 text-lg leading-[23px] tracking-tight text-sapien-foreground/50 md:col-start-2 md:row-span-2 md:row-start-1 md:mt-9.75 md:mr-8 md:-mb-1.25 md:self-start">
-          <span className="text-sapien-foreground">{SECURITY_CAPTION.lead}</span>
+          <span className="text-sapien-foreground">
+            {`${SECURITY_CAPTION.lead} `}
+            <a href={SECURITY_CAPTION.novu.href} className="text-accent hover:underline">
+              {SECURITY_CAPTION.novu.label}
+            </a>
+            ,
+          </span>
           {SECURITY_CAPTION.lines.map((line, index) => (
             <span key={line}>
               {index > 0 && <br className="hidden lg:block" />} {line}

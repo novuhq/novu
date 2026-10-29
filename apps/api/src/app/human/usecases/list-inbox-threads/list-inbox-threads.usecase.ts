@@ -34,7 +34,7 @@ const FILTERS_BY_TAB: Record<InboxTab, Pick<InboxListFilters, 'read' | 'status' 
 /**
  * Lists the relay agent's threads: open ones from contacts unless the filters say otherwise. With
  * `waitSeconds`, holds the request until at least one thread matches or the time is up, so an
- * agent can block on `human inbox list --wait` cheaply.
+ * agent can block on `agentinbox list --wait` cheaply.
  */
 @Injectable()
 export class ListInboxThreads {

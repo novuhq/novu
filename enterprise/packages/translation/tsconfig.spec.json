@@ -2,7 +2,7 @@
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "strictNullChecks": false,
-    "types": ["mocha", "node"],
-    "esModuleInterop": false
+    "customConditions": ["require"],
+    "types": ["mocha", "node"]
   }
 }

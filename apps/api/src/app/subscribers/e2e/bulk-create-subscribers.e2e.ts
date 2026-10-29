@@ -1,9 +1,8 @@
 import { Novu } from '@novu/api';
-import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { SubscriberEntity, SubscriberRepository, Types } from '@novu/dal';
 import { SubscribersService, UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
-import { Types } from 'mongoose';
 import { expectSdkValidationExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Bulk create subscribers - /v1/subscribers/bulk (POST) #novu-v2', () => {

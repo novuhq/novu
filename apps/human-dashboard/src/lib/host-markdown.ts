@@ -1,5 +1,14 @@
 import { connectCommands } from './connect-prompt';
-import { type ChatApp, type CommandHost, type Host, hostPath, MCP_SERVER_NAME, MCP_URL, tellYourAgent } from './hosts';
+import {
+  type ChatApp,
+  type CommandHost,
+  type Host,
+  hostPath,
+  listenCommand,
+  MCP_SERVER_NAME,
+  MCP_URL,
+  tellYourAgent,
+} from './hosts';
 import { AGENT_DOMAIN, INSTALL_SKILLS_COMMAND, NPX_CLI, SKILLS_CLI_AGENTS_URL, SKILLS_REPO } from './onboarding';
 import { SITE_ORIGIN } from './seo';
 
@@ -65,7 +74,21 @@ function commandSections(host: CommandHost): string[] {
       `4. \`${skillsLine}\`, then \`${check.command}\`.${host.afterCommands ? ` ${host.afterCommands}` : ''}`,
     ].join('\n'),
     `Never ask for a Telegram bot token or a Slack token: \`${NPX_CLI} channel add telegram\` (or \`slack\`) prints a link where your operator finishes in their browser. When ${runner} won't let you run a command, for example one that saves a key, tell your operator the exact command and let them run it.`,
+    ...listenSections(host),
     ...(host.alternative ? alternativeSections(host) : []),
+  ];
+}
+
+/** The optional last step, for a host `listen` can start: listening for messages on the computer. */
+function listenSections(host: CommandHost): string[] {
+  const command = listenCommand(host);
+  if (!command) {
+    return [];
+  }
+
+  return [
+    '## Optional: listen for messages',
+    `When your operator wants a message to reach you while nobody runs ${host.name}, run \`${command}\` in the project folder. They get an Allow/Deny message, and nothing starts until they allow it. From then on a message from them, or from a contact the agent listens to, starts ${host.name} there, in the background and after restarts, and anything your settings don't allow asks them first. \`${NPX_CLI} listen status\` shows where you are listening; \`${NPX_CLI} listen stop\` ends it.`,
   ];
 }
 
@@ -76,9 +99,10 @@ function alternativeSections(host: CommandHost): string[] {
   }
 
   const heading = `## ${alternative.title.replace(/^Or /, 'Or: ')}`;
-  const signIn = alternative.signInCommand
-    ? `${alternative.signIn} \`${alternative.signInCommand}\``
-    : alternative.signIn;
+  const signIn = [
+    alternative.signInCommand ? `${alternative.signIn} \`${alternative.signInCommand}\`` : alternative.signIn,
+    ...(alternative.afterSignIn ? [alternative.afterSignIn] : []),
+  ].join(' ');
   const notes = alternative.agentNotes ?? [];
   if (alternative.kind === 'plugin') {
     return [
@@ -92,6 +116,9 @@ function alternativeSections(host: CommandHost): string[] {
 
   return [
     heading,
+    ...(alternative.addCommand
+      ? [alternative.addCommand.text, ['```text', alternative.addCommand.line(MCP_URL), '```'].join('\n')]
+      : []),
     alternative.text,
     ...(alternative.installLink ? [`${alternative.installLink.label}: ${alternative.installLink.href(MCP_URL)}`] : []),
     ['```json', alternative.config(MCP_URL), '```'].join('\n'),

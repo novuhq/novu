@@ -42,13 +42,15 @@ const CLIENT_NAMES: Readonly<Record<string, HostId>> = {
 };
 
 /**
- * Where a name has more to it than the start: Claude's apps say `Anthropic`, sometimes with more after it, and
- * OpenClaw names each of its clients `openclaw-…`. Nothing else is matched by its start: a name like
- * `claude-desktop` that no app is known to send counts as General, not as Claude.
+ * Where a name has more to it than the start: Claude's apps say `Anthropic`, sometimes with more after it,
+ * OpenClaw names each of its clients `openclaw-…`, and ChatGPT's plugins say `openai-mcp (Codex)`. Nothing else
+ * is matched by its start: a name like `claude-desktop` that no app is known to send counts as General, not as
+ * Claude.
  */
 const CLIENT_NAME_STARTS: ReadonlyArray<readonly [start: string, host: HostId]> = [
   ['anthropic', 'claude'],
   ['openclaw', 'openclaw'],
+  ['openai-mcp', 'chatgpt'],
 ];
 
 /** Which host an app is, from the name it gives when it connects, or `null` for one Agent Inbox doesn't know. */
@@ -60,7 +62,8 @@ export function hostOfClientName(clientName: string): HostId | null {
 
 /**
  * The apps that say who they are on every request, as their own code shows it: `claude-code/2.1.309 (cli)`,
- * `codex-mcp-client/0.160.0`, `Cursor/3.25.6 (darwin arm64)`.
+ * `codex-mcp-client/0.160.0`, `Cursor/3.25.6 (darwin arm64)`. Cursor's agent runtime sends `Cursor/1.0.0`, in
+ * the editor and under Grok Bot alike (`signInAppHost` tells them apart).
  */
 const USER_AGENTS: ReadonlyArray<readonly [start: string, host: HostId]> = [
   ['claude-code/', 'claude-code'],

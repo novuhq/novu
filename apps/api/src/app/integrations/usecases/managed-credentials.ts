@@ -1,4 +1,4 @@
-import type { ICredentials } from '@novu/shared';
+import { getUnusedTwilioAuthCredentialKeys, type ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import {
   mergeAgentInboxCredentialsForUpdate,
   sanitizeAgentInboxCredentialsForCreate,
@@ -13,7 +13,7 @@ import { ensureWhatsAppManagedCredentials } from './whatsapp/whatsapp-credential
 export function applyManagedCredentialsOnCreate(providerId: string, credentials: ICredentials): ICredentials {
   const whatsApp = ensureWhatsAppManagedCredentials({ providerId, nextCredentials: credentials });
 
-  return sanitizeAgentInboxCredentialsForCreate(providerId, whatsApp);
+  return dropUnusedTwilioAuthCredentials(providerId, sanitizeAgentInboxCredentialsForCreate(providerId, whatsApp));
 }
 
 export function applyManagedCredentialsOnUpdate(params: {
@@ -30,5 +30,19 @@ export function applyManagedCredentialsOnUpdate(params: {
     allowManagedFlagChange: params.allowNovuManagedWhatsApp,
   });
 
-  return mergeAgentInboxCredentialsForUpdate(params.providerId, whatsApp, params.existingCredentials);
+  return dropUnusedTwilioAuthCredentials(
+    params.providerId,
+    mergeAgentInboxCredentialsForUpdate(params.providerId, whatsApp, params.existingCredentials)
+  );
+}
+
+/** A Twilio integration stores only the credentials of its selected authentication method. */
+function dropUnusedTwilioAuthCredentials(providerId: string, credentials: ICredentials): ICredentials {
+  if (providerId !== SmsProviderIdEnum.Twilio) {
+    return credentials;
+  }
+
+  const unusedKeys: string[] = getUnusedTwilioAuthCredentialKeys(credentials.authMethod);
+
+  return Object.fromEntries(Object.entries(credentials).filter(([key]) => !unusedKeys.includes(key)));
 }

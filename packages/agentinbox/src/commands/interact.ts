@@ -36,7 +36,7 @@ export interface SendOptions {
   extraAction?: string[];
 }
 
-/** The words that turn a send into a question: `inbox send ask "…"`. Without one, it is a plain message. */
+/** The words that turn a send into a question: `send ask "…"`. Without one, it is a plain message. */
 export const SEND_VERBS = ['ask', 'approve', 'choose'] as const;
 type SendVerb = (typeof SEND_VERBS)[number];
 
@@ -52,7 +52,7 @@ function isSendVerb(word: string | undefined): word is SendVerb {
 
 /**
  * `["ask", "Which env?"]` → an ask; `["Deployed."]` → a plain message (`tell`). Unquoted words are
- * joined, so `inbox send ask Which env?` works too. A verb with nothing after it is a mistake, not a message.
+ * joined, so `send ask Which env?` works too. A verb with nothing after it is a mistake, not a message.
  */
 export function parseSendWords(words: string[]): { kind: InteractionKind; text: string } {
   const [first, ...rest] = words;
@@ -60,7 +60,7 @@ export function parseSendWords(words: string[]): { kind: InteractionKind; text: 
   if (isSendVerb(first)) {
     const text = rest.join(' ').trim();
     if (!text) {
-      fail(`\`${first}\` needs the text to send, e.g. ${CLI_COMMAND} inbox send ${first} "${VERB_EXAMPLES[first]}"`);
+      fail(`\`${first}\` needs the text to send, e.g. ${CLI_COMMAND} send ${first} "${VERB_EXAMPLES[first]}"`);
     }
 
     return { kind: first, text };
@@ -68,7 +68,7 @@ export function parseSendWords(words: string[]): { kind: InteractionKind; text: 
 
   const text = words.join(' ').trim();
   if (!text) {
-    fail(`Pass the message to send, e.g. ${CLI_COMMAND} inbox send "Deployed."`);
+    fail(`Pass the message to send, e.g. ${CLI_COMMAND} send "Deployed."`);
   }
 
   return { kind: 'tell', text };
@@ -165,7 +165,7 @@ export function channelDefaultsFor(
 }
 
 /**
- * The engine behind `inbox send` and `inbox reply`. With `conversation`, the message goes into it;
+ * The engine behind `send` and `reply`. With `conversation`, the message goes into it;
  * without, it starts a conversation with `--to` (or the default recipient).
  */
 export async function runSend(words: string[], options: SendOptions, conversation?: string): Promise<never> {
@@ -233,18 +233,18 @@ export function resolveAddress(
   conversation?: string
 ): Pick<CreateInteractionInput, 'to' | 'thread' | 'via' | 'anyoneMayAnswer'> {
   if (options.anyone && conversation === undefined) {
-    fail('`--anyone` only works with `inbox reply`: it is about who may answer in a conversation.');
+    fail('`--anyone` only works with `reply`: it is about who may answer in a conversation.');
   }
 
   if (conversation !== undefined) {
     const id = conversation.trim();
 
     if (!id) {
-      fail(`\`inbox reply\` needs a conversation id. List conversations with: ${CLI_COMMAND} inbox list`);
+      fail(`\`reply\` needs a conversation id. List conversations with: ${CLI_COMMAND} list`);
     }
 
     if (options.via) {
-      fail('`--via` cannot be used with `inbox reply`: a conversation already lives on one channel.');
+      fail('`--via` cannot be used with `reply`: a conversation already lives on one channel.');
     }
 
     if (options.anyone && options.to) {
@@ -319,7 +319,7 @@ export function formatConversationReport(
       const count = conversation.unreadBefore;
       lines.push(
         `warning: this conversation had ${count} unread ${count === 1 ? 'message' : 'messages'}, now marked read. ` +
-          `See ${count === 1 ? 'it' : 'them'} with: ${CLI_COMMAND} inbox show ${conversation.id}`
+          `See ${count === 1 ? 'it' : 'them'} with: ${CLI_COMMAND} show ${conversation.id}`
       );
     }
 

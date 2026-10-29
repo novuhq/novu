@@ -274,7 +274,7 @@ function SignedIn({ email, view }: { email?: string; view: Extract<View, { name:
           mark={<ArrowRight aria-hidden="true" className="h-5 w-[1ch]" strokeWidth={1.5} />}
           markClassName="text-muted"
         >
-          Try: npx @agentinbox/cli inbox send approve &quot;Ship it?&quot;
+          Try: npx @agentinbox/cli send approve &quot;Ship it?&quot;
         </TerminalLine>
       </div>
       <div className="flex flex-wrap gap-2">

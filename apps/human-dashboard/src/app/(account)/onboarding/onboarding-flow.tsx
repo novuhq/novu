@@ -16,7 +16,7 @@ import { StatusPoll } from '@/components/ui/status-poll';
 import { toast } from '@/components/ui/toast';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { useSwap } from '@/hooks/use-swap';
-import type { HostId } from '@/lib/hosts';
+import { DEFAULT_HOST, type HostId, hostOf } from '@/lib/hosts';
 import type { OnboardingView } from '@/lib/human-onboarding';
 import { addressOf, cardLinkOf, type OnboardingStep, PLACEHOLDER_HANDLE } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
@@ -100,6 +100,8 @@ export function OnboardingScreen({ view, initialHost }: OnboardingScreenProps) {
   const { step, agent, operator, test, host } = view;
   // Step 1 has no agent yet: its card is drawn from what the operator is typing.
   const [draft, setDraft] = useState<AgentDraft>({ name: '', handle: '' });
+  // The host chosen on step 3, which the agent's card waits for by name.
+  const [connectHost, setConnectHost] = useState<HostId>(initialHost ?? DEFAULT_HOST);
   // The step on show stays a moment longer than the setup does, to fade out before the next one comes.
   // Everything around it (the steps across the top, the agent's card) moves on at once.
   const { shown, leaving } = useSwap(step, SWAP_MS);
@@ -129,6 +131,7 @@ export function OnboardingScreen({ view, initialHost }: OnboardingScreenProps) {
             telegramConnected={view.channels.telegram}
             gotMail={testPassed}
             hostVia={host?.via}
+            waitingFor={hostOf(connectHost)}
             caption={describeFigure(step)}
           />
         }
@@ -166,12 +169,14 @@ export function OnboardingScreen({ view, initialHost }: OnboardingScreenProps) {
               {shown === 'connect' && agent && (
                 <ConnectStep
                   handle={agent.handle}
+                  address={agent.address}
                   apiUrl={view.apiUrl}
                   waiting={view.waiting ?? 0}
                   mcpUrl={view.mcpUrl}
                   connectedHosts={view.connectedTools}
                   api={TOOL_API}
-                  initialHost={initialHost}
+                  host={connectHost}
+                  onHostChange={setConnectHost}
                 />
               )}
               {shown === 'reach' && agent && host && (

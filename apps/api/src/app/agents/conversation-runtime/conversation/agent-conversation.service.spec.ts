@@ -281,36 +281,6 @@ describe('AgentConversationService', () => {
     ]);
   });
 
-  it('delegates findByPlatformThread to the repository with agent and integration', async () => {
-    const findByPlatformThread = sinon.stub().resolves(null);
-    const conversationRepository = {
-      findByPlatformThread,
-      create: sinon.stub(),
-      updateStatus: sinon.stub(),
-      updateParticipants: sinon.stub(),
-    };
-
-    const service = makeService(conversationRepository);
-
-    await service.findByPlatformThread('e', 'o', 'agent-x', 'int-x', 'thread-z');
-
-    expect(findByPlatformThread.calledOnceWithExactly('e', 'o', 'agent-x', 'int-x', 'thread-z')).to.equal(true);
-  });
-
-  it('delegates countOtherAgentsOnPlatformThread to the repository', async () => {
-    const countOtherAgentsOnPlatformThread = sinon.stub().resolves(1);
-    const conversationRepository = {
-      countOtherAgentsOnPlatformThread,
-    };
-
-    const service = makeService(conversationRepository);
-
-    expect(await service.countOtherAgentsOnPlatformThread('e', 'o', 'slack:C1:root-ts', 'agent-x')).to.equal(1);
-    expect(countOtherAgentsOnPlatformThread.calledOnceWithExactly('e', 'o', 'slack:C1:root-ts', 'agent-x')).to.equal(
-      true
-    );
-  });
-
   it('orchestrates resolveConversation across repository and ledger', async () => {
     const updateStatus = sinon.stub().resolves(undefined);
     const markBillingResolved = sinon.stub().resolves(undefined);

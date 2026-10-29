@@ -103,10 +103,12 @@ export function useHostConnectCode(
 
   // The host the code on screen, or on its way, was asked for.
   const [askedFor, setAskedFor] = useState<HostId | null>(null);
-  const fetchForHost = useCallback(() => {
+  const fetchForHost = useCallback(async () => {
     setAskedFor(codeHost);
+    const result = await fetchCode(codeHost);
 
-    return fetchCode(codeHost);
+    // The code keeps the host it was asked for, so the one that used it can be named.
+    return result.ok ? { ...result, code: { ...result.code, host: codeHost } } : result;
   }, [fetchCode, codeHost]);
   const { state, renew, retry } = useConnectCode(fetchForHost, active);
 
