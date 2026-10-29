@@ -4102,8 +4102,8 @@ importers:
         specifier: workspace:*
         version: link:../framework
       '@novu/ntfr-client':
-        specifier: ^0.0.5
-        version: 0.0.5
+        specifier: ^0.0.6
+        version: 0.0.6
       '@segment/analytics-node':
         specifier: ^1.1.4
         version: 1.1.4
@@ -10047,8 +10047,8 @@ packages:
   '@novu/api@3.15.0':
     resolution: {integrity: sha512-S1fK3S+qxfTe0bbU0NstNR7EZic500j5YcF9Cg8OdTxw+IDzUGZPjBdzE1G1JHZdhfNQBBuplb9w4wCZC7us1Q==}
 
-  '@novu/ntfr-client@0.0.5':
-    resolution: {integrity: sha512-5E8EKp30Ee06FQRpax204nyZOb1uv0kW72VfZXkU/4hG4CcqDsJbfrNnUjB6xIPSvIwAAlwv76MdIAsOflkLXg==}
+  '@novu/ntfr-client@0.0.6':
+    resolution: {integrity: sha512-927VEkngRKgn8YyPXqMCMOm4dnSuY4PGfruY9O0/rdXGNSkGd3N20hqrYRe1sTVomfPVnm6SAkTt1DYHOGHIcQ==}
     engines: {node: '>=18.0.0'}
 
   '@novu/thalamus@0.1.0-alpha.20':
@@ -38527,7 +38527,7 @@ snapshots:
     dependencies:
       zod: 4.3.5
 
-  '@novu/ntfr-client@0.0.5':
+  '@novu/ntfr-client@0.0.6':
     dependencies:
       https: 1.0.0
       node-fetch: 3.3.2
