@@ -13,7 +13,7 @@ export const buildingBlocksAssets = {
     width: 24,
     height: 24,
     nodeId: '724:4930',
-    purpose: 'Reactions feature icon (thumbs-up)',
+    purpose: 'Structured replies block icon (thumbs-up)',
   },
   imgFrame1: {
     src: '/images/sapien/building-blocks/imgFrame1.svg',
@@ -61,17 +61,14 @@ export const buildingBlocksAssets = {
 } satisfies SectionAssets;
 
 export const BUILDING_BLOCKS_HEADING = {
+  index: '02',
+  label: 'Building blocks',
+  // Draft copy — not in Figma
+  description: 'Everything under a conversation, from the first message to the answer your agent acts on.',
   /** Rendered on two lines, in this order. */
   lead: ['The agent', 'communication'],
   accent: 'building blocks',
 } as const;
-
-/** Figma breaks the caption onto these three lines (applied from `lg` up). */
-export const BUILDING_BLOCKS_DESCRIPTION = [
-  'Free-form messages leave agents guessing.',
-  'Agent Inbox turns every human conversation into',
-  'a structured response your agent can trust.',
-] as const;
 
 // Draft copy — not in Figma (accessible name of the tab list)
 export const BUILDING_BLOCKS_TABS_LABEL = 'Message types';
@@ -257,48 +254,90 @@ export const BUILDING_BLOCK_EXAMPLES: readonly BuildingBlockExample[] = [
   },
 ];
 
+// Draft copy — not in Figma. The fourth block, full width under the other three.
+export const STRUCTURED_REPLIES = {
+  title: 'Structured replies',
+  description:
+    'Free-form messages leave agents guessing. Agent Inbox turns every human conversation into a structured response your agent can trust.',
+  icon: buildingBlocksAssets.imgFrame,
+} as const;
+
+/** The small illustration drawn at the top of each feature card. */
+export type BuildingBlockVisual = 'messaging' | 'contacts' | 'history';
+
 export type BuildingBlockFeature = Readonly<{
   title: string;
   description: string;
   icon: DesignAsset;
+  visual: BuildingBlockVisual;
 }>;
 
-// Attachments are out until they can be verified.
+// Draft copy — not in Figma. One idea each: people write back, the agent reaches them, it remembers.
 export const BUILDING_BLOCK_FEATURES: readonly BuildingBlockFeature[] = [
   {
-    title: 'Two-way messaging.',
-    description: 'People can write to your agent first. It can read the message and reply in the same conversation.',
+    title: 'Two-way conversations',
+    description: 'People can write to your agent first, and every reply lands in the same thread, even a day later.',
     icon: buildingBlocksAssets.imgFrame1,
+    visual: 'messaging',
   },
   {
-    title: 'Thread and replies.',
-    description: 'Reply in the right thread with full context, on any channel, through one API.',
-    icon: buildingBlocksAssets.imgThreads,
-  },
-  {
-    title: 'Persistent conversations.',
-    description:
-      'Keep the exchange available across agent runs, so your agent can return to earlier messages and replies.',
-    icon: buildingBlocksAssets.imgPersistent,
-  },
-  {
-    title: 'Conversation History.',
-    description: 'Every message across every channel, merged into one timeline your agent can read.',
-    icon: buildingBlocksAssets.imgFrame4,
-  },
-  {
-    title: 'Contacts.',
-    description: 'Invite the people your agent works with and reach them on their connected channels.',
+    title: 'Your contacts, on their apps',
+    description: 'Invite the people your agent works with. It reaches each of them where they already are.',
     icon: buildingBlocksAssets.imgFrame3,
+    visual: 'contacts',
   },
   {
-    title: 'Shareable contact card.',
-    description: "Give people one place to find your agent's available email and chat identities.",
-    icon: buildingBlocksAssets.imgContactCard,
-  },
-  {
-    title: 'Reactions.',
-    description: 'Read emoji reactions as signals and react back, so a thumbs-up can count as a reply.',
-    icon: buildingBlocksAssets.imgFrame,
+    title: 'One history',
+    description: 'Email, Slack and Telegram in one timeline, so your agent reads the whole story before it answers.',
+    icon: buildingBlocksAssets.imgFrame4,
+    visual: 'history',
   },
 ];
+
+export type ExtraIcon = 'link' | 'users' | 'button' | 'deadline' | 'async' | 'wait' | 'wake' | 'resolve' | 'json';
+
+export type BuildingBlockExtra = Readonly<{
+  title: string;
+  /** The CLI command or flag that does it. */
+  flag: string;
+  icon: ExtraIcon;
+}>;
+
+/**
+ * Draft copy — not in Figma. The smaller blocks, each a real command or flag of the CLI, in three columns
+ * of three under the three cards.
+ */
+export const BUILDING_BLOCK_EXTRAS: readonly (readonly BuildingBlockExtra[])[] = [
+  [
+    { title: 'Invite links', flag: 'contact invite', icon: 'link' },
+    { title: 'Ask a group', flag: '--to a,b,c', icon: 'users' },
+    { title: 'Your own buttons', flag: '--extra-action', icon: 'button' },
+  ],
+  [
+    { title: 'Deadlines', flag: '--ttl 2h', icon: 'deadline' },
+    { title: 'Wait or move on', flag: '--async', icon: 'async' },
+    { title: 'Wait for messages', flag: 'list --wait', icon: 'wait' },
+  ],
+  [
+    { title: 'Wakes your agent', flag: 'listen', icon: 'wake' },
+    { title: 'Resolve and reopen', flag: 'resolve', icon: 'resolve' },
+    { title: 'JSON everywhere', flag: '--json', icon: 'json' },
+  ],
+];
+
+// Draft copy — not in Figma. The example content inside each feature card's illustration.
+export const BUILDING_BLOCK_VISUALS = {
+  messaging: {
+    incoming: { from: 'Jordan Reyes', text: 'Can you resend invoice 4821?' },
+    reply: { from: 'ops-agent', text: 'Sent. It’s in your inbox.' },
+  },
+  history: [
+    { channel: 'email', who: 'Jordan Reyes', text: 'Invoice 4821', time: '9:02' },
+    { channel: 'slack', who: 'Maya Chen', text: 'Approved', time: '9:14' },
+    { channel: 'telegram', who: 'Dan Kim', text: 'Staging is up?', time: '9:20' },
+  ],
+  contacts: ['Maya Chen', 'Jordan Reyes', 'Dan Kim', 'Priya Shah'],
+  contactChannels: ['slack', 'email', 'telegram', 'slack'],
+  contactsMore: '+12',
+  contactsNote: 'each on their own app',
+} as const;

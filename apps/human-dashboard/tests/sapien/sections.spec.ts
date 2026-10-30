@@ -56,29 +56,77 @@ for (const width of [640, 360]) {
   });
 }
 
-test('mobile tab strips scroll instead of wrapping and keep the active tab in view', async ({ page }) => {
+test('the example agents stack as a vertical list on mobile and the message types fit in one row', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/sapien');
-  const strip = (section: string) => page.locator(`#${section} [role="tablist"]`).locator('xpath=..');
-  const inView = async (section: string, name: string) => {
-    const box = (await strip(section).boundingBox())!;
-    const tab = (await page.locator(`#${section}`).getByRole('tab', { name, exact: true }).boundingBox())!;
-    return tab.x >= box.x - 1 && tab.x + tab.width <= box.x + box.width + 1;
-  };
-  for (const tab of await page.locator('#inbox [role="tab"], #building-blocks [role="tab"]').all())
+  const inbox = page.locator('#inbox');
+  await expect(inbox.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+  const tabs = await inbox.getByRole('tab').all();
+  const boxes = await Promise.all(tabs.map(async (tab) => (await tab.boundingBox())!));
+  for (const [index, box] of boxes.entries()) {
+    expect(box.x + box.width).toBeLessThanOrEqual(361);
+    if (index > 0) expect(box.y).toBeGreaterThan(boxes[index - 1].y);
+  }
+  await inbox.getByRole('tab', { name: 'Ops Agent', exact: true }).focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(inbox.getByRole('tab', { name: 'Sales Agent', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(inbox.getByRole('tabpanel')).toContainText('sales-agent@agentinbox.md');
+
+  for (const tab of await page.locator('#building-blocks [role="tab"]').all())
     await expect(tab).toHaveCSS('white-space', 'nowrap');
+  const strip = page.locator('#building-blocks [role="tablist"]').locator('xpath=..');
+  expect(await strip.evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
+});
 
-  // The agent names don't fit at 360px: the strip scrolls, centred on the active tab.
-  await strip('inbox').scrollIntoViewIfNeeded();
-  expect(await strip('inbox').evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true);
-  expect(await inView('inbox', 'Ops Agent')).toBe(true);
-  await page.locator('#inbox').getByRole('tab', { name: 'Ops Agent', exact: true }).focus();
+test('hovering the inbox example reveals the JSON the agent reads', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/sapien');
+  const flow = page.locator('#inbox').getByRole('tabpanel');
+  const stage = flow.locator('[data-open]');
+  await stage.scrollIntoViewIfNeeded();
+  await expect(flow.locator('[data-face="seen"]')).toContainText('Approved. Take the $240 refund');
+  await expect(flow.locator('[data-face="reading"]')).toContainText('conv_8831');
+  await expect(stage).toHaveAttribute('data-open', 'false');
+  await stage.hover();
+  await expect(stage).toHaveAttribute('data-open', 'true');
+  await page.mouse.move(0, 0);
+  await expect(stage).toHaveAttribute('data-open', 'false');
+  await expect(flow.getByRole('button', { name: 'Show agent view' })).toHaveCount(0);
+  await stage.hover();
+  expect(await flow.evaluate((node) => node.getAnimations({ subtree: true }).length)).toBe(0);
+});
+
+test('the use cases carousel moves with its buttons and the arrow keys', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/sapien');
+  const carousel = page.locator('#use-cases').locator('[aria-roledescription="carousel"]');
+  await expect(carousel).toHaveAttribute('aria-label', 'Use cases');
+  const slides = carousel.locator('[aria-roledescription="slide"]');
+  await expect(slides).toHaveCount(5);
+  await expect(slides.first()).toHaveAttribute('aria-label', '1 of 5');
+  await expect(slides.nth(2)).toContainText('Browser agents');
+  const previous = carousel.getByRole('button', { name: 'Previous use case' });
+  const next = carousel.getByRole('button', { name: 'Next use case' });
+  const track = carousel.locator('ul').first();
+  const scrollLeft = () => track.evaluate((node) => node.scrollLeft);
+
+  await carousel.scrollIntoViewIfNeeded();
+  await expect(previous).toBeDisabled();
+  await next.click();
+  await expect.poll(scrollLeft).toBeGreaterThan(0);
+  await expect(previous).toBeEnabled();
+  await previous.click();
+  await expect.poll(scrollLeft).toBe(0);
+
+  await track.focus();
   await page.keyboard.press('ArrowRight');
-  await expect.poll(() => inView('inbox', 'Sales Agent')).toBe(true);
-
-  // The message types are short enough to share the width without scrolling.
-  expect(await strip('building-blocks').evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
+  await expect.poll(scrollLeft).toBeGreaterThan(0);
+  await page.keyboard.press('ArrowLeft');
+  await expect.poll(scrollLeft).toBe(0);
+  for (let press = 0; press < 5; press++) await page.keyboard.press('ArrowRight');
+  await expect(next).toBeDisabled();
 });
 
 for (const width of [1440, 390]) {
@@ -111,7 +159,7 @@ test('copy commands copies the selected snippet without prompts', async ({ page 
   await section.getByRole('tab', { name: 'Cursor', exact: true }).click();
   await section.getByRole('button', { name: 'Copy Config' }).click();
   const copied = await page.evaluate(() => document.documentElement.dataset.copiedText ?? '');
-  expect(JSON.parse(copied)).toHaveProperty('mcpServers.inbox.url', 'https://mcp.agentinbox.md');
+  expect(JSON.parse(copied)).toHaveProperty('mcpServers.AgentInbox.url', 'https://mcp.agentinbox.md');
   await section.getByRole('tab', { name: 'Hermes', exact: true }).click();
   await section.getByRole('button', { name: 'Copy Commands' }).click();
   await expect(page.locator('html')).toHaveAttribute(

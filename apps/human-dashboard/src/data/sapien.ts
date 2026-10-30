@@ -1,5 +1,5 @@
 import { logoAssets } from '@/data/sapien-assets';
-import { BOOK_DEMO_HREF } from '@/data/sapien-security';
+import { BOOK_DEMO_HREF } from '@/data/sapien-scale';
 import { PACKAGE_URL, SOURCE_URL } from '@/lib/seo';
 
 /** The setup command on /sapien. `npx` runs it without a global install. */

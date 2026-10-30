@@ -35,33 +35,40 @@ async function openOnPausedClock(page: Page) {
 test('hero cards rotate every 6 seconds and the caption follows', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await openOnPausedClock(page);
-  await expect(relation(page)).toContainText('presents');
+  await expect(relation(page)).toContainText('hands out');
   await expect(toggle(page)).toHaveAccessibleName('fig. 01 — dithering, Pause animation');
   await page.clock.fastForward(5000);
-  await expect(relation(page)).toContainText('presents');
+  await expect(relation(page)).toContainText('hands out');
   await page.clock.fastForward(1100);
   await expect(relation(page)).toContainText('works for');
   await page.clock.fastForward(6100);
   await expect(relation(page)).toContainText('calls');
   await page.clock.fastForward(6100);
-  await expect(relation(page)).toContainText('presents');
+  await expect(relation(page)).toContainText('hands out');
 });
 
-test('the title word cycles every 3 seconds and pauses with the toggle', async ({ page }) => {
+test('the agent and channel pills swap in place while the title stays put', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await openOnPausedClock(page);
-  const word = page.locator('#hero h1 [data-word]');
   const heading = page.getByRole('heading', { level: 1 });
-  await expect(word).toHaveAttribute('data-word', 'Email');
+  const agent = page.locator('#hero [data-token="agent"]');
+  const channel = page.locator('#hero [data-token="channel"]');
+  const name =
+    'Get your ChatGPT, Grok Bot, Claude or OpenClaw agent on Slack, Telegram or Email with everyone around you.';
+  await expect(heading).toHaveAccessibleName(name);
+  await expect(page.locator('#hero p').first()).toHaveText(
+    'Your team, family and customers write to it. It reads, asks and answers, all from one inbox.'
+  );
+  await expect(agent).toHaveAttribute('data-current', 'ChatGPT');
+  await expect(channel).toHaveAttribute('data-current', 'Slack');
   await page.clock.fastForward(3100);
-  await expect(word).toHaveAttribute('data-word', 'Telegram');
-  await page.clock.fastForward(3000);
-  await expect(word).toHaveAttribute('data-word', 'Slack');
-  await expect(heading).toHaveAccessibleName('The Email inbox for AI agents');
+  await expect(agent).toHaveAttribute('data-current', 'Grok Bot');
+  await expect(channel).toHaveAttribute('data-current', 'Telegram');
+  await expect(heading).toHaveAccessibleName(name);
   await toggle(page).click();
   await page.mouse.move(0, 0);
   await page.clock.fastForward(12000);
-  await expect(word).toHaveAttribute('data-word', 'Slack');
+  await expect(agent).toHaveAttribute('data-current', 'Grok Bot');
 });
 
 test('the caption button pauses and resumes the rotation', async ({ page }) => {
@@ -71,7 +78,7 @@ test('the caption button pauses and resumes the rotation', async ({ page }) => {
   await expect(toggle(page)).toHaveAccessibleName('fig. 01 — paused, Play animation');
   await page.mouse.move(0, 0);
   await page.clock.fastForward(30000);
-  await expect(relation(page)).toContainText('presents');
+  await expect(relation(page)).toContainText('hands out');
   await toggle(page).click();
   await expect(toggle(page)).toHaveAccessibleName('fig. 01 — dithering, Pause animation');
   await page.clock.fastForward(8100);
@@ -83,7 +90,7 @@ test('hovering the stack or focusing hero controls holds the current card', asyn
   await openOnPausedClock(page);
   await page.locator('#hero').getByText('Business Card', { exact: true }).hover();
   await page.clock.fastForward(20000);
-  await expect(relation(page)).toContainText('presents');
+  await expect(relation(page)).toContainText('hands out');
   await page.mouse.move(0, 0);
   await page.clock.fastForward(8100);
   await expect(relation(page)).toContainText('works for');
@@ -98,7 +105,7 @@ test('reduced motion starts on the first card until the visitor presses play', a
   await openOnPausedClock(page);
   await expect(toggle(page)).toHaveAccessibleName('fig. 01 — dithering, Play animation');
   await page.clock.fastForward(30000);
-  await expect(relation(page)).toContainText('presents');
+  await expect(relation(page)).toContainText('hands out');
   await toggle(page).click();
   await page.mouse.move(0, 0);
   await page.clock.fastForward(8100);

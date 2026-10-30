@@ -1,56 +1,97 @@
-import { Tabs, TabsContent } from '@/components/sapien/tabs';
-import { INBOX_AGENTS, INBOX_SECTION } from '@/data/sapien-inbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/sapien/tabs';
+import { INBOX_AGENTS, INBOX_CHANNELS, INBOX_LABELS, INBOX_SECTION } from '@/data/sapien-inbox';
 
-import { InboxDashboard } from './inbox-dashboard';
-import { PillTab, PillTabsList } from './pill-tabs';
+import { AgentLogo, CHANNEL_NAMES, ChannelLogo } from './brand-logo';
+import { InboxFlow } from './inbox-flow';
+import { DisplayAccent, SectionEyebrow } from './section-eyebrow';
 import { SectionFrame } from './section-frame';
 
+/**
+ * The human inbox, with the agent reading underneath. The copy stays short on the left. The right is a normal
+ * mail list until a pointer moves across a row, which opens the fields that agent reads.
+ */
 export function InboxSection() {
   return (
-    <SectionFrame anchor="inbox" className="px-4 pt-24 pb-4 sm:px-[31.5px] sm:pb-8 md:pt-44 md:pb-12.5">
-      <h2 className="text-center text-3xl leading-[1.125] tracking-[-0.04em] text-balance md:text-[40px]">
-        {INBOX_SECTION.title}
-      </h2>
-      <p className="mx-auto mt-4 max-w-140 text-center text-lg leading-5.75 tracking-tight text-pretty text-sapien-foreground/50">
-        {INBOX_SECTION.description}
-      </p>
+    <SectionFrame anchor="inbox" className="px-4 pt-20 pb-14 sm:px-8 md:pt-28 md:pb-24">
+      <Tabs
+        defaultValue={INBOX_SECTION.defaultAgent}
+        orientation="vertical"
+        className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16"
+      >
+        <div className="flex min-w-0 flex-col">
+          <SectionEyebrow index={INBOX_SECTION.index}>{INBOX_SECTION.label}</SectionEyebrow>
+          <h2 className="mt-5 text-[34px] leading-[1.05] font-normal tracking-[-0.04em] text-balance md:text-[44px]">
+            {INBOX_SECTION.title.lead}{' '}
+            <DisplayAccent className="block text-[40px] leading-[1.05] md:text-[54px]">
+              {INBOX_SECTION.title.accent}
+            </DisplayAccent>
+          </h2>
+          <p className="mt-5 max-w-88 text-[17px] leading-[1.45] tracking-tight text-pretty text-sapien-foreground/50">
+            {INBOX_SECTION.description}
+          </p>
 
-      <Tabs defaultValue={INBOX_SECTION.defaultAgent} className="mt-10 md:mt-9">
-        {/* Below sm the strip runs from rail to rail. */}
-        <PillTabsList aria-label={INBOX_SECTION.tabsLabel} className="-mx-4 sm:mx-auto sm:w-full sm:max-w-191.5">
-          {INBOX_AGENTS.map((agent) => (
-            <PillTab key={agent.value} value={agent.value}>
-              {agent.label}
-            </PillTab>
-          ))}
-        </PillTabsList>
-
-        <div className="relative mx-auto mt-6 w-full max-w-224.25 md:mt-6 lg:left-[0.5px]">
-          {/* Below lg the frame grows with its content, so larger text never runs under the badge. */}
-          <div className="relative flex min-h-160 flex-col overflow-clip rounded-[14px] bg-sapien-border sm:min-h-144 lg:block lg:h-140 lg:min-h-0">
-            <div
-              aria-hidden="true"
-              className="absolute inset-x-0 bottom-0 h-69 bg-linear-to-b from-transparent from-14% to-black"
-            />
-            <div className="relative mx-2 mt-2 -mb-2.5 flex flex-1 flex-col overflow-clip rounded-lg bg-black shadow-[0_4px_8px_rgba(0,0,0,0.74)] lg:absolute lg:inset-x-2 lg:top-2 lg:-bottom-2.5 lg:m-0 lg:block">
-              <div className="grid flex-1 grid-cols-1 lg:h-full">
-                {INBOX_AGENTS.map((agent) => (
-                  <TabsContent
-                    key={agent.value}
-                    value={agent.value}
-                    forceMount
-                    className="col-start-1 row-start-1 min-h-0 transition-opacity duration-200 focus-visible:-outline-offset-2 data-[state=inactive]:invisible data-[state=inactive]:opacity-0 data-[state=inactive]:transition-none motion-reduce:transition-none"
-                  >
-                    <InboxDashboard agent={agent} />
-                  </TabsContent>
-                ))}
-              </div>
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 bottom-0 h-62.5 bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.65)_60%,#000_96%)]"
-              />
-            </div>
+          <div className="mt-6 flex items-center gap-3.5">
+            {/* One stack, like a row of avatars: the ring is the page colour, so the overlap disappears into it. */}
+            <ul aria-label={INBOX_LABELS.channels} className="flex items-center">
+              {INBOX_CHANNELS.map((item, index) => (
+                <li
+                  key={item.channel}
+                  className="relative flex rounded-full ring-[3px] ring-black not-first:-ml-3"
+                  style={{ zIndex: INBOX_CHANNELS.length - index }}
+                >
+                  <ChannelLogo
+                    channel={item.channel}
+                    size={32}
+                    className={item.channel === 'slack' ? 'bg-white' : undefined}
+                  />
+                  <span className="sr-only">
+                    {CHANNEL_NAMES[item.channel]}
+                    {item.soon ? ` ${INBOX_LABELS.soon}` : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="font-sapien-mono text-[11px] leading-[1.35] tracking-tight text-sapien-foreground/40">
+              Email, Slack, Telegram
+              <span className="mt-0.5 block text-sapien-foreground/25">WhatsApp and iMessage soon</span>
+            </p>
           </div>
+
+          <TabsList aria-label={INBOX_SECTION.tabsLabel} className="mt-8 flex-col border-t border-sapien-border">
+            {INBOX_AGENTS.map((agent, index) => (
+              <TabsTrigger
+                key={agent.value}
+                value={agent.value}
+                className="group/tab relative flex w-full items-center gap-3 border-b border-sapien-border py-3 pr-2 pl-1 text-left focus-visible:outline-offset-[-2px]"
+              >
+                <span
+                  aria-hidden="true"
+                  className="absolute top-2.5 bottom-2.5 -left-px w-0.5 scale-y-0 bg-accent opacity-0 transition-[opacity,scale] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[state=active]/tab:scale-y-100 group-data-[state=active]/tab:opacity-100 motion-reduce:transition-none"
+                />
+                <span
+                  aria-hidden="true"
+                  className="w-6 shrink-0 pl-2 font-sapien-pixel text-[10px] leading-none text-sapien-foreground/25 group-data-[state=active]/tab:text-sapien-foreground/60"
+                >
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <AgentLogo
+                  agent={agent.host}
+                  className="opacity-50 grayscale transition-[opacity,filter] duration-200 group-hover/tab:opacity-80 group-data-[state=active]/tab:opacity-100 group-data-[state=active]/tab:grayscale-0 motion-reduce:transition-none"
+                />
+                <span className="min-w-0 truncate text-base leading-none tracking-tight text-sapien-foreground/45 transition-colors duration-200 group-hover/tab:text-sapien-foreground/70 group-data-[state=active]/tab:text-sapien-foreground">
+                  {agent.label}
+                </span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+
+        <div className="min-w-0">
+          {INBOX_AGENTS.map((agent) => (
+            <TabsContent key={agent.value} value={agent.value} className="focus-visible:-outline-offset-2">
+              <InboxFlow agent={agent} />
+            </TabsContent>
+          ))}
         </div>
       </Tabs>
     </SectionFrame>

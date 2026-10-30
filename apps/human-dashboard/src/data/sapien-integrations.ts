@@ -12,6 +12,8 @@ export const integrationsAssets = {
 } satisfies SectionAssets;
 
 export const INTEGRATIONS_HEADING = {
+  index: '04',
+  label: 'Integrations',
   lead: 'Works',
   accent: 'everywhere',
   rest: 'your agents are',
