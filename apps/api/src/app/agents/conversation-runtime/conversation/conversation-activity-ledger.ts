@@ -31,6 +31,7 @@ import type {
   PersistMcpConnectionResultParams,
   PersistToolApprovalDecisionParams,
   PersistToolApprovalRequestParams,
+  PersistToolCallParams,
   PersistToolResultParams,
   PersistTriggerSignalParams,
   PersistWorkflowOriginHydrationParams,
@@ -43,6 +44,7 @@ import {
   type PersistRunLifecycleParams,
   runLifecycleIdentifier,
 } from './run-lifecycle-activity';
+import { capToolResultContent } from './tool-result-content';
 
 export interface ListActivityViewParams {
   view: ActivityView;
@@ -476,30 +478,41 @@ export class ConversationActivityLedger {
     );
   }
 
-  async persistToolResult(params: PersistToolResultParams): Promise<void> {
-    const sequence = await this.resolveEventSequence(
-      params.conversationId,
-      params.environmentId,
-      params.organizationId
+  async persistToolCall(params: PersistToolCallParams): Promise<void> {
+    await this.persistAndEmitClientEvent(
+      params,
+      {
+        ...params,
+        identifier: `tool-call:${params.conversationId}:${params.runId}:${params.toolCallId}`,
+        content: `Called ${params.toolName}`,
+        toolData: {
+          toolCallId: params.toolCallId,
+          toolName: params.toolName,
+          ...(params.input ? { input: params.input } : {}),
+          ...(params.mcpServerName ? { mcpServerName: params.mcpServerName } : {}),
+        },
+      },
+      ConversationActivityTypeEnum.TOOL_CALL,
+      'none'
     );
+  }
 
-    const activity = await this.activityRepository.createToolActivity({
-      identifier: `act_${shortId(12)}`,
-      conversationId: params.conversationId,
-      platform: params.channel.platform,
-      integrationId: params.channel._integrationId,
-      platformThreadId: params.channel.platformThreadId,
-      senderType: ConversationActivitySenderTypeEnum.AGENT,
-      senderId: params.agentIdentifier,
-      content: params.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
-      type: ConversationActivityTypeEnum.TOOL_RESULT,
-      toolData: { toolCallId: params.toolCallId, toolName: params.toolName, output: params.output },
-      sequence,
-      environmentId: params.environmentId,
-      organizationId: params.organizationId,
-    });
+  async persistToolResult(params: PersistToolResultParams): Promise<void> {
+    const { content: parts, ...context } = params;
 
-    await this.emitPersistedClientEvent(params, activity);
+    await this.persistAndEmitClientEvent(
+      params,
+      {
+        ...context,
+        identifier: params.runId
+          ? `tool-result:${params.conversationId}:${params.runId}:${params.toolCallId}`
+          : undefined,
+        content: params.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
+        toolData: toolResultData(params, parts),
+      },
+      ConversationActivityTypeEnum.TOOL_RESULT,
+      'none'
+    );
   }
 
   async persistMcpConnectionRequest(params: PersistMcpConnectionRequestParams): Promise<ConversationActivityEntity> {
@@ -837,7 +850,9 @@ export class ConversationActivityLedger {
 
   private async persistAndEmitClientEvent(
     context: ConversationActivityContext,
-    params: PersistAgentActivityParams,
+    params: PersistAgentActivityParams & {
+      toolData?: ConversationActivityToolData;
+    },
     type: ConversationActivityTypeEnum,
     touch: 'activity' | 'preview' | 'none'
   ): Promise<ConversationActivityEntity> {
@@ -1097,6 +1112,21 @@ function humanInteractionActivityIdentifier(
   return params.inOtherThread
     ? `human:${params.interactionIdentifier}:${params.conversationId}:${suffix}`
     : `human:${params.interactionIdentifier}:${suffix}`;
+}
+
+function toolResultData(
+  params: PersistToolResultParams,
+  parts: PersistToolResultParams['content']
+): ConversationActivityToolData {
+  const stored = parts ? capToolResultContent(parts) : undefined;
+
+  return {
+    toolCallId: params.toolCallId,
+    toolName: params.toolName,
+    ...(params.output !== undefined ? { output: params.output } : {}),
+    ...(stored ? { content: stored.content, isError: params.isError === true } : {}),
+    ...(stored?.truncated ? { truncated: true } : {}),
+  };
 }
 
 function humanInteractionActivityContent(
