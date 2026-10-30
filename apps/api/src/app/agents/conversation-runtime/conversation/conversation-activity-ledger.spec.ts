@@ -762,7 +762,7 @@ describe('ConversationActivityLedger', () => {
       expect(row.toolData).to.deep.equal({ toolCallId: 'call_1', toolName: 'lookup_order', output: 'done' });
     });
 
-    it('writes nothing new and emits nothing when the same result is redelivered', async () => {
+    it('does not re-emit a redelivered tool result and looks it up by its run-scoped identifier', async () => {
       const duplicateError = Object.assign(new Error('duplicate key'), { code: 11000 });
       const activityRepository = makeActivityRepository({
         createAgentActivity: sinon.stub().rejects(duplicateError),

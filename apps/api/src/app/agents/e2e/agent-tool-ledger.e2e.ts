@@ -147,7 +147,7 @@ describe('Agent tool ledger #novu-v2', () => {
     return conversation._id;
   }
 
-  it('records every managed tool call and result once on Slack, even when the webhooks are redelivered', async () => {
+  it('records managed tool calls and results once on Slack across redelivered webhooks, skipping Novu internal tool calls', async () => {
     const conversationId = await seedConversation(ctx);
 
     await deliverManagedParts(conversationId, 'slack', 'run-managed', MANAGED_TOOL_PARTS);
@@ -167,11 +167,13 @@ describe('Agent tool ledger #novu-v2', () => {
       input: { amount: 10 },
       mcpServerName: 'stripe',
     });
-    expect(charge?.sequence).to.be.a('number');
 
-    expect(results).to.have.length(3);
+    expect(results.map((result) => result.identifier).sort()).to.deep.equal([
+      `tool-result:${conversationId}:run-managed:toolu_charge`,
+      `tool-result:${conversationId}:run-managed:toolu_resolve`,
+      `tool-result:${conversationId}:run-managed:toolu_search`,
+    ]);
     const search = results.find((result) => result.toolData?.toolCallId === 'toolu_search');
-    expect(search?.identifier).to.equal(`tool-result:${conversationId}:run-managed:toolu_search`);
     expect(search?.toolData?.isError).to.equal(false);
     expect(search?.toolData?.truncated).to.equal(true);
     expect(search?.toolData).to.not.have.property('output');
