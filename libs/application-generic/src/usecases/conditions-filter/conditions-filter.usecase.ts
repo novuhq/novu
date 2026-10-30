@@ -561,8 +561,9 @@ export class ConditionsFilter extends Filter {
           ...variables,
         },
       });
-      // biome-ignore lint/suspicious/noExplicitAny: the catch only forwards the message into an execution detail
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : undefined;
+
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
@@ -571,7 +572,7 @@ export class ConditionsFilter extends Filter {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({ error: e?.message }),
+          raw: JSON.stringify({ error: message }),
         })
       );
     }

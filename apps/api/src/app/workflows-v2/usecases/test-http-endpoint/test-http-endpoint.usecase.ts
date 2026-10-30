@@ -48,66 +48,100 @@ export class TestHttpEndpointUsecase {
   }
 
   @InstrumentUsecase()
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: the HTTP endpoint test flow is unchanged
   async execute(command: TestHttpEndpointCommand): Promise<TestHttpEndpointResponseDto> {
     const { controlValues = {}, previewPayload } = command;
-
     const compileContext = this.buildCompileContext(previewPayload);
+    const compiled = await this.compileControls(controlValues, compileContext);
+    const resolvedUrl = (compiled.url as string) ?? '';
+    const method = (compiled.method as string) ?? 'GET';
+    const compiledHeaders = (compiled.headers as KeyValuePair[]) ?? [];
+    const compiledBody = compiled.body as string | KeyValuePair[] | undefined;
+    const resolvedHeaders: Record<string, string> = Object.fromEntries(
+      compiledHeaders.filter(({ key }) => key).map(({ key, value }) => [key, value])
+    );
+    const startTime = performance.now();
+    const resolvedBody = this.resolveBody(compiledBody, startTime, resolvedUrl, method, resolvedHeaders);
+    if ('statusCode' in resolvedBody) {
+      return resolvedBody;
+    }
 
-    let compiled: typeof controlValues;
+    const hasBody = shouldIncludeBody(resolvedBody.body, method);
+    const blocked = this.blockedUrlResponse(
+      resolvedUrl,
+      startTime,
+      method,
+      resolvedHeaders,
+      resolvedBody.body,
+      hasBody
+    );
+    if (blocked) {
+      return blocked;
+    }
+
+    const secretKey = await this.getDecryptedSecretKey.execute(
+      GetDecryptedSecretKeyCommand.create({ environmentId: command.user.environmentId })
+    );
+    resolvedHeaders['novu-signature'] = buildNovuSignatureHeader(secretKey, hasBody ? resolvedBody.body : {});
+
+    return this.sendTestRequest(resolvedUrl, method, resolvedHeaders, resolvedBody.body, hasBody, startTime);
+  }
+
+  private async compileControls(
+    controlValues: Record<string, unknown>,
+    compileContext: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
     try {
-      compiled = (await this.compileControlValues(controlValues, compileContext)) as typeof controlValues;
+      return (await this.compileControlValues(controlValues, compileContext)) as Record<string, unknown>;
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'Unknown error';
 
       throw new BadRequestException(`HTTP request step template compilation failed: ${message}`);
     }
+  }
 
-    const resolvedUrl = (compiled.url as string) ?? '';
-    const method = (compiled.method as string) ?? 'GET';
-    const compiledHeaders = (compiled.headers as KeyValuePair[]) ?? [];
-    const compiledBody = compiled.body as string | KeyValuePair[] | undefined;
-
-    const resolvedHeaders: Record<string, string> = Object.fromEntries(
-      compiledHeaders.filter(({ key }) => key).map(({ key, value }) => [key, value])
-    );
-
-    const startTime = performance.now();
-
-    let resolvedBody: Record<string, unknown> | unknown[] | undefined;
+  private resolveBody(
+    compiledBody: string | KeyValuePair[] | undefined,
+    startTime: number,
+    resolvedUrl: string,
+    method: string,
+    resolvedHeaders: Record<string, string>
+  ): TestHttpEndpointResponseDto | { body: Record<string, unknown> | unknown[] | undefined } {
     try {
-      // `repairJsonString` throws on bodies it cannot repair, so it has to stay inside this
-      // try/catch to return a 400 with the reason instead of an unhandled 500.
       const resolvedBodyInput =
         typeof compiledBody === 'string' && compiledBody.trim() ? repairJsonString(compiledBody) : compiledBody;
-      resolvedBody = resolveHttpRequestBody(resolvedBodyInput);
+
+      return { body: resolveHttpRequestBody(resolvedBodyInput) };
     } catch (parseError) {
       return {
         statusCode: 400,
         body: buildInvalidJsonBodyDetail(parseError, compiledBody),
         headers: {},
         durationMs: Math.round(performance.now() - startTime),
-        resolvedRequest: {
-          url: resolvedUrl,
-          method,
-          headers: resolvedHeaders,
-        },
+        resolvedRequest: { url: resolvedUrl, method, headers: resolvedHeaders },
       };
     }
+  }
 
-    const hasBody = shouldIncludeBody(resolvedBody, method);
-
+  private blockedUrlResponse(
+    resolvedUrl: string,
+    startTime: number,
+    method: string,
+    resolvedHeaders: Record<string, string>,
+    resolvedBody: Record<string, unknown> | unknown[] | undefined,
+    hasBody: boolean
+  ): TestHttpEndpointResponseDto | undefined {
     try {
       assertSafeOutboundUrl(resolvedUrl);
+
+      return undefined;
     } catch (err) {
-      const durationMs = Math.round(performance.now() - startTime);
       const message = err instanceof SsrfBlockedError ? err.message : String(err);
 
       return {
         statusCode: 400,
         body: { error: message },
         headers: {},
-        durationMs,
+        durationMs: Math.round(performance.now() - startTime),
         resolvedRequest: {
           url: resolvedUrl,
           method,
@@ -116,14 +150,22 @@ export class TestHttpEndpointUsecase {
         },
       };
     }
+  }
 
-    // HMAC is computed only after the URL passes the synchronous SSRF policy.
-    // The connect-time DNS guard and redirect re-validation happen inside
-    // HttpClientService when enforceSsrfProtection is enabled.
-    const secretKey = await this.getDecryptedSecretKey.execute(
-      GetDecryptedSecretKeyCommand.create({ environmentId: command.user.environmentId })
-    );
-    resolvedHeaders['novu-signature'] = buildNovuSignatureHeader(secretKey, hasBody ? resolvedBody : {});
+  private async sendTestRequest(
+    resolvedUrl: string,
+    method: string,
+    resolvedHeaders: Record<string, string>,
+    resolvedBody: Record<string, unknown> | unknown[] | undefined,
+    hasBody: boolean,
+    startTime: number
+  ): Promise<TestHttpEndpointResponseDto> {
+    const resolvedRequest = {
+      url: resolvedUrl,
+      method,
+      headers: resolvedHeaders,
+      ...(hasBody ? { body: resolvedBody } : {}),
+    };
 
     try {
       const response = await this.httpClientService.request<string>({
@@ -135,45 +177,32 @@ export class TestHttpEndpointUsecase {
         responseType: 'text',
         enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
       });
-      const durationMs = Math.round(performance.now() - startTime);
 
       return {
         statusCode: response.statusCode,
         body: tryParseJson(response.body),
         headers: response.headers,
-        durationMs,
-        resolvedRequest: {
-          url: resolvedUrl,
-          method,
-          headers: resolvedHeaders,
-          ...(hasBody ? { body: resolvedBody } : {}),
-        },
+        durationMs: Math.round(performance.now() - startTime),
+        resolvedRequest,
       };
     } catch (error) {
-      const durationMs = Math.round(performance.now() - startTime);
-
-      if (error instanceof HttpClientError) {
-        const statusCode = error.statusCode ?? HTTP_CLIENT_ERROR_STATUS_MAP[error.type] ?? 500;
-
-        return {
-          statusCode,
-          body: error.responseBody ?? {
-            error: error.message,
-            type: error.type,
-            ...(error.networkCode ? { networkCode: error.networkCode } : {}),
-          },
-          headers: {},
-          durationMs,
-          resolvedRequest: {
-            url: resolvedUrl,
-            method,
-            headers: resolvedHeaders,
-            ...(hasBody ? { body: resolvedBody } : {}),
-          },
-        };
+      if (!(error instanceof HttpClientError)) {
+        throw error;
       }
 
-      throw error;
+      const statusCode = error.statusCode ?? HTTP_CLIENT_ERROR_STATUS_MAP[error.type] ?? 500;
+
+      return {
+        statusCode,
+        body: error.responseBody ?? {
+          error: error.message,
+          type: error.type,
+          ...(error.networkCode ? { networkCode: error.networkCode } : {}),
+        },
+        headers: {},
+        durationMs: Math.round(performance.now() - startTime),
+        resolvedRequest,
+      };
     }
   }
 
@@ -199,11 +228,33 @@ export class TestHttpEndpointUsecase {
   }
 }
 
-// biome-ignore lint/plugin: a failed parse returns the original text, which is what the caller displays
-function tryParseJson(text: string): unknown {
+function tryParseJson(text: string): JsonValue {
   try {
-    return JSON.parse(text);
+    const parsed = JSON.parse(text);
+    if (isJsonValue(parsed)) {
+      return parsed;
+    }
+
+    return text;
   } catch {
     return text;
   }
+}
+
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
+function isJsonValue(value: unknown): value is JsonValue {
+  if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return true;
+  }
+
+  if (Array.isArray(value)) {
+    return value.every(isJsonValue);
+  }
+
+  if (typeof value === 'object') {
+    return Object.values(value).every(isJsonValue);
+  }
+
+  return false;
 }

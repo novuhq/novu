@@ -397,8 +397,10 @@ export class McpOAuthCallback {
     plainAuth: ReturnType<typeof this.buildPlainAuth>,
     oauthClient: McpConnectionOAuthClient
   ): Promise<McpOAuthCallbackResult> {
-    // biome-ignore lint/style/noNonNullAssertion: catalog lookup is unchanged; a missing id already throws on the next property read
-    const catalog = MCP_SERVERS.find((entry) => entry.id === stateData.mcpId)!;
+    const catalog = MCP_SERVERS.find((entry) => entry.id === stateData.mcpId);
+    if (!catalog) {
+      throw new BadRequestException(`Unknown MCP "${stateData.mcpId}".`);
+    }
 
     try {
       await this.runPostConnectActions({
@@ -552,11 +554,20 @@ export class McpOAuthCallback {
     }
 
     if (stateData.toolUseId && stateData.conversationId && stateData.platform && stateData.platformThreadId) {
-      await this.resumeSessionAfterConnect(stateData, connection);
+      await this.resumeSessionAfterConnect(stateData, connection, {
+        toolUseId: stateData.toolUseId,
+        conversationId: stateData.conversationId,
+        platform: stateData.platform,
+        platformThreadId: stateData.platformThreadId,
+      });
     }
   }
 
-  private async resumeSessionAfterConnect(stateData: McpOAuthState, connection: McpConnectionEntity): Promise<void> {
+  private async resumeSessionAfterConnect(
+    stateData: McpOAuthState,
+    connection: McpConnectionEntity,
+    session: { toolUseId: string; conversationId: string; platform: string; platformThreadId: string }
+  ): Promise<void> {
     const subscriber = await this.subscriberRepository.findOne(
       { _id: stateData.subscriberId, _environmentId: stateData.environmentId },
       'subscriberId'
@@ -571,21 +582,21 @@ export class McpOAuthCallback {
       return;
     }
 
-    if (stateData.platform === AgentPlatformEnum.WEB_CHAT && stateData.toolUseId && stateData.conversationId) {
+    if (session.platform === AgentPlatformEnum.WEB_CHAT) {
       try {
         const conversation = await this.agentConversationService.getConversation(
-          stateData.conversationId,
+          session.conversationId,
           stateData.environmentId,
           stateData.organizationId
         );
         if (conversation) {
           await this.agentConversationService.persistMcpConnectionResult({
-            conversationId: stateData.conversationId,
+            conversationId: session.conversationId,
             environmentId: stateData.environmentId,
             organizationId: stateData.organizationId,
             agentIdentifier: stateData.agentIdentifier ?? '',
             channel: this.agentConversationService.getPrimaryChannel(conversation),
-            actionId: stateData.toolUseId,
+            actionId: session.toolUseId,
             mcpId: stateData.mcpId,
             status: 'connected',
           });
@@ -599,20 +610,17 @@ export class McpOAuthCallback {
     this.showTypingIndicator(stateData);
 
     await this.managedAgentService.sendToolResult({
-      // biome-ignore lint/style/noNonNullAssertion: connect-card state is unchanged; conversationId is set before this callback
-      conversationId: stateData.conversationId!,
+      conversationId: session.conversationId,
       environmentId: stateData.environmentId,
       organizationId: stateData.organizationId,
       agentIdentifier: stateData.agentIdentifier ?? '',
       integrationIdentifier: stateData.integrationIdentifier ?? '',
       subscriberId: subscriber.subscriberId,
-      // biome-ignore lint/style/noNonNullAssertion: connect-card state is unchanged; toolUseId is set before this callback
-      toolUseId: stateData.toolUseId!,
+      toolUseId: session.toolUseId,
       content: 'OK',
       followUpMessage: `${stateData.mcpId ?? 'Integration'} is now connected and ready. Resume the user's original request. Use the available tools directly. Do not output any preamble or mention the connection — go straight to action.`,
-      platform: stateData.platform as AgentPlatformEnum,
-      // biome-ignore lint/style/noNonNullAssertion: connect-card state is unchanged; platformThreadId is set before this callback
-      platformThreadId: stateData.platformThreadId!,
+      platform: session.platform as AgentPlatformEnum,
+      platformThreadId: session.platformThreadId,
       suppressReply: true,
     });
   }

@@ -79,16 +79,9 @@ export interface SafeOutboundJsonResponse<T = unknown> {
  *
  * Throws {@link SsrfBlockedError} on policy violations.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: the buffered redirect loop is unchanged
 export async function safeOutboundRequest(options: SafeOutboundRequestOptions): Promise<SafeOutboundResponse> {
   const maxRedirects = options.maxRedirects ?? DEFAULT_MAX_REDIRECTS;
-  const initialOriginHost = (() => {
-    try {
-      return new URL(options.url as string | URL).host.toLowerCase();
-    } catch {
-      return null;
-    }
-  })();
+  const initialOriginHost = originHost(options.url);
 
   let currentUrl: string | URL = options.url;
   let currentMethod: SafeOutboundMethod = options.method ?? 'GET';
@@ -98,23 +91,14 @@ export async function safeOutboundRequest(options: SafeOutboundRequestOptions): 
   for (let redirect = 0; redirect <= maxRedirects; redirect += 1) {
     const parsed = assertSafeOutboundUrl(currentUrl);
 
-    // Strip any sensitive headers before crossing an origin boundary on a redirect.
     if (redirect > 0 && initialOriginHost && parsed.host.toLowerCase() !== initialOriginHost) {
       stripSensitiveHeaders(currentHeaders);
       currentBody = undefined;
     }
 
-    const addresses = await resolvePublicAddresses(parsed.hostname);
-    const chosen = addresses[0];
-    if (!chosen) {
-      throw new SsrfBlockedError('DNS_LOOKUP_FAILED', `Unable to resolve hostname "${parsed.hostname}".`, {
-        hostname: parsed.hostname,
-      });
-    }
-
     const response = await performPinnedRequest({
       parsed,
-      address: chosen,
+      address: await resolvePinnedAddress(parsed.hostname),
       method: currentMethod,
       headers: currentHeaders,
       body: currentBody,
@@ -122,7 +106,6 @@ export async function safeOutboundRequest(options: SafeOutboundRequestOptions): 
       maxResponseBytes: options.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES,
       rejectUnauthorized: options.rejectUnauthorized ?? true,
     });
-
     const status = response.statusCode;
 
     if (REDIRECT_STATUS_CODES.has(status) && redirect < maxRedirects) {
@@ -133,25 +116,10 @@ export async function safeOutboundRequest(options: SafeOutboundRequestOptions): 
       }
 
       const nextUrl = new URL(location, parsed.toString());
-
-      // 307 and 308 are method-preserving redirects: the upstream is asking us
-      // to replay the original method+body against the new target. If the new
-      // target is on a different origin, we cannot safely strip the body or
-      // downgrade the method without changing semantics, and silently blanking
-      // the body would mask the cross-origin attempt from the caller. Treat it
-      // as a hard stop so the caller can decide what to do.
-      if ((status === 307 || status === 308) && initialOriginHost && nextUrl.host.toLowerCase() !== initialOriginHost) {
-        throw new SsrfBlockedError(
-          'CROSS_ORIGIN_METHOD_PRESERVING_REDIRECT',
-          `Refusing to follow ${status} redirect from ${parsed.host} to ${nextUrl.host}: method-preserving redirects across origin boundaries are not allowed.`,
-          { hostname: nextUrl.hostname }
-        );
-      }
-
+      assertNoCrossOriginMethodPreservingRedirect(status, parsed, nextUrl, initialOriginHost);
       currentUrl = nextUrl;
 
-      // 303 must rewrite to GET. 301/302 historically also rewrite POST→GET in browsers; we follow that.
-      if (status === 303 || ((status === 301 || status === 302) && currentMethod === 'POST')) {
+      if (redirectsToGet(status, currentMethod)) {
         currentMethod = 'GET';
         currentBody = undefined;
       }

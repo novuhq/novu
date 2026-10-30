@@ -197,6 +197,32 @@ export class BridgeExecutorService {
     this.logger.setContext(this.constructor.name);
   }
 
+  async prepareSignedBridgeRequest(params: AgentExecutionParams): Promise<{
+    bridgeUrl: string;
+    payload: Awaited<ReturnType<BridgeExecutorService['buildPayload']>>;
+    signatureHeader: string;
+  }> {
+    const agentIdentifier = params.config.agentIdentifier;
+    const bridgeUrl = this.resolveBridgeUrl(params.config, agentIdentifier, params.event, params.bridgeUrlOverride);
+    if (!bridgeUrl) {
+      throw new NoBridgeUrlError(agentIdentifier);
+    }
+
+    const secretKey = await this.getDecryptedSecretKey.execute(
+      GetDecryptedSecretKeyCommand.create({
+        environmentId: params.config.environmentId,
+        organizationId: params.config.organizationId,
+      })
+    );
+    const payload = await this.buildPayload(params);
+
+    return {
+      bridgeUrl,
+      payload,
+      signatureHeader: buildNovuSignatureHeader(secretKey, payload),
+    };
+  }
+
   async execute(params: AgentExecutionParams): Promise<void> {
     const agentIdentifier = params.config.agentIdentifier;
 

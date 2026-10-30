@@ -1,48 +1,17 @@
 /**
- * Test-only stub for `BridgeExecutorService.execute` that performs the real
- * outbound bridge call but skips the redundant pre-flight `resolvePublicAddresses`
- * SSRF check.
- *
- * Why bypass the pre-flight: the bridge executor calls `resolvePublicAddresses`
- * directly before `safeOutboundJsonRequest`, but the former does NOT honor the
- * `NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS` allow-list (only the latter does, via its
- * private `resolveWithTestAllowList`). For tests we need the bridge to reach an
- * in-process server bound to `0.0.0.0` / `127.0.0.1`; the actual outbound
- * request via `safeOutboundJsonRequest` is still SSRF-validated against the
- * allow-list, so we keep the same protection in production.
- *
- * This stub intentionally calls into the service's private `resolveBridgeUrl`
- * and `buildPayload` via reflection so the payload shape, signature header,
- * and bridge-URL resolution rules stay in lockstep with production code. If
- * those internals change shape, the stub will fail loudly at compile or runtime
- * and force the test author to revisit it.
+ * Test-only stub for `BridgeExecutorService.execute`. It sends the signed payload
+ * `prepareSignedBridgeRequest` builds, and skips the pre-flight DNS check.
+ * That check does not honor `NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS`. The request
+ * itself still does, so an in-process server on 127.0.0.1 can be reached.
  */
 
-import {
-  buildNovuSignatureHeader,
-  GetDecryptedSecretKey,
-  GetDecryptedSecretKeyCommand,
-} from '@novu/application-generic';
-import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { HttpHeaderKeysEnum } from '@novu/framework/internal';
 import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
 import sinon from 'sinon';
 import {
   AgentExecutionParams,
   BridgeExecutorService,
-  NoBridgeUrlError,
 } from '../../conversation-runtime/runtime/bridge-executor.service';
-
-interface BridgeExecutorInternals {
-  resolveBridgeUrl: (
-    config: AgentExecutionParams['config'],
-    agentIdentifier: string,
-    event: AgentExecutionParams['event'],
-    bridgeUrlOverride?: string
-  ) => string | null;
-  buildPayload: (params: AgentExecutionParams) => Promise<AgentBridgeRequest>;
-  getDecryptedSecretKey: GetDecryptedSecretKey;
-}
 
 export interface BridgeExecutorStubHandle {
   /** Resolves once every dispatched bridge call has settled (success or failure). */
@@ -55,43 +24,19 @@ export function stubBridgeExecutorWithRealHttp(bridgeExecutor: BridgeExecutorSer
   const calls: AgentExecutionParams[] = [];
   const inflight = new Set<Promise<unknown>>();
 
-  // biome-ignore lint/plugin: the stub reaches private bridge helpers so the signed payload stays the production one
-  const internals = bridgeExecutor as unknown as BridgeExecutorInternals;
-
   sinon.stub(bridgeExecutor, 'execute').callsFake(async (params: AgentExecutionParams) => {
     calls.push(params);
 
-    const agentIdentifier = params.config.agentIdentifier;
-    const bridgeUrl = internals.resolveBridgeUrl(
-      params.config,
-      agentIdentifier,
-      params.event,
-      params.bridgeUrlOverride
-    );
-
-    if (!bridgeUrl) {
-      throw new NoBridgeUrlError(agentIdentifier);
-    }
-
-    const secretKey = await internals.getDecryptedSecretKey.execute(
-      GetDecryptedSecretKeyCommand.create({
-        environmentId: params.config.environmentId,
-        organizationId: params.config.organizationId,
-      })
-    );
-
-    const payload = await internals.buildPayload(params);
-    const signatureHeader = buildNovuSignatureHeader(secretKey, payload);
-
+    const prepared = await bridgeExecutor.prepareSignedBridgeRequest(params);
     const work = (async () => {
       const response = await safeOutboundJsonRequest({
-        url: bridgeUrl,
+        url: prepared.bridgeUrl,
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          [HttpHeaderKeysEnum.NOVU_SIGNATURE]: signatureHeader,
+          [HttpHeaderKeysEnum.NOVU_SIGNATURE]: prepared.signatureHeader,
         },
-        body: payload,
+        body: prepared.payload,
       });
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
