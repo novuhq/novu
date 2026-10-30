@@ -19,6 +19,7 @@ import {
   OidcToken,
   Pull,
   PullRequestEvent,
+  PullText,
   TesterArmyCancelled,
   TesterArmyFullStarted,
   type TesterArmyPullRequest,
@@ -206,24 +207,29 @@ async function applyHead(number: number, pull: PullRequestEvent['pull_request'])
         .box(['logs', '--errors', '--tail', '100'])
         .catch((error: unknown) => log(`WARN: the box's logs: ${messageOf(error)}`));
     // A box that's ready stays ready when TesterArmy doesn't start. When it does, its own checks report on the PR.
+    // A re-run replays the event, so the PR's title and description come from the API: edits since then count.
     const testerArmy = problems.length
       ? []
-      : await startTesterArmy(box, {
-          number,
-          title: pull.title,
-          ...(pull.body && { description: pull.body.slice(0, 65_536) }),
-          baseBranch: pull.base.ref,
-          headBranch: pull.head.ref,
-          commitSha: sha,
-        }).then(
-          () => [],
-          (error: unknown) => {
-            log(`WARN: starting TesterArmy: ${messageOf(error)}`);
-            const [first = ''] = messageOf(error).split('\n');
+      : await github(`/repos/${REPO}/pulls/${number}`, PullText)
+          .then(({ title, body }) =>
+            startTesterArmy(box, {
+              number,
+              title,
+              ...(body && { description: body.slice(0, 65_536) }),
+              baseBranch: pull.base.ref,
+              headBranch: pull.head.ref,
+              commitSha: sha,
+            })
+          )
+          .then(
+            () => [],
+            (error: unknown) => {
+              log(`WARN: starting TesterArmy: ${messageOf(error)}`);
+              const [first = ''] = messageOf(error).split('\n');
 
-            return [['TesterArmy', `⚠️ didn't start: ${cell(first.slice(0, 300))}`] as Row];
-          }
-        );
+              return [['TesterArmy', `⚠️ didn't start: ${cell(first.slice(0, 300))}`] as Row];
+            }
+          );
     await comment(
       number,
       card(

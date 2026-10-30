@@ -180,6 +180,7 @@ export const Pull = z.object({
   base: z.object({ ref: z.string() }),
 });
 export type Pull = z.infer<typeof Pull>;
+export const PullText = z.object({ title: z.string(), body: z.string().nullish() });
 export const PullRequestEvent = z.object({
   action: z.string(),
   number: z.number(),
