@@ -4,6 +4,7 @@ import { cache } from 'react';
 
 import { isToolId, type ToolId } from './ai-tools';
 import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
+import { type HostId, isHostId } from './hosts';
 import type { HumanAccount } from './human-account';
 
 /**
@@ -18,9 +19,13 @@ export function readMcpUrl(): string | null {
 /** A slow MCP server must not hold up the Agent page: the tiles then read as not connected yet. */
 const CONNECTIONS_TIMEOUT_MS = 4_000;
 
+/** A host that signed in to the account through the MCP server, and when it last connected. */
+export type SignIn = { id: HostId; at: string };
+
 /**
- * The AI tools that have signed in to the account through the MCP server, which remembers each
- * sign-in. It answers only to the secret this server shares with the Novu API.
+ * The hosts that have signed in to the account through the MCP server, which remembers each sign-in, with
+ * when each last connected: every host it tells apart, whichever of them the dashboard watches for
+ * (`listConnectedTools`). It answers only to the secret this server shares with the Novu API.
  *
  * Nothing reads as connected when the server isn't configured or can't be asked: a tile that says
  * "Connect" for a connected tool is a smaller mistake than one that says "Connected" for none.
@@ -28,7 +33,7 @@ const CONNECTIONS_TIMEOUT_MS = 4_000;
  * The onboarding's progress and the Configure page of one request share a single lookup, so a server
  * that doesn't answer holds the page up once, not twice.
  */
-export const listConnectedTools = cache(async (account: HumanAccount): Promise<ToolId[]> => {
+export const listSignIns = cache(async (account: HumanAccount): Promise<SignIn[]> => {
   const mcpUrl = readMcpUrl();
   const secret = process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
   if (!mcpUrl || !secret) {
@@ -47,8 +52,15 @@ export const listConnectedTools = cache(async (account: HumanAccount): Promise<T
 
     const body = (await response.json()) as { data?: Record<string, unknown> } | null;
 
-    return Object.keys(body?.data ?? {}).filter(isToolId);
+    return Object.entries(body?.data ?? {}).flatMap(([id, at]) =>
+      isHostId(id) && typeof at === 'string' ? [{ id, at }] : []
+    );
   } catch {
     return [];
   }
 });
+
+/** The hosts the dashboard watches for (`isToolId`) that have signed in to the account (`listSignIns`). */
+export async function listConnectedTools(account: HumanAccount): Promise<ToolId[]> {
+  return (await listSignIns(account)).map((signIn) => signIn.id).filter(isToolId);
+}

@@ -55,7 +55,7 @@ const DROPPED_RESPONSE_HEADERS = new Set([
 ]);
 
 /**
- * Forwards a request to its path on the US Novu API (`ROUTES`): `/api/v1/inbox?wait=25` here is
+ * Forwards a request to its path on the Novu API (`ROUTES`): `/api/v1/inbox?wait=25` here is
  * `/v1/human/inbox?wait=25` there. The API's status, headers and body come back as they are, streamed, so a
  * held long-poll and a picture pass through unchanged.
  */
@@ -67,7 +67,7 @@ export async function forwardToNovuApi(request: NextRequest): Promise<Response> 
 
   let response: Response;
   try {
-    response = await fetch(`${resolveNovuApiUrl('us')}${target}`, {
+    response = await fetch(`${resolveNovuApiUrl()}${target}`, {
       method: request.method,
       headers: forwardedHeaders(request),
       body: await readBody(request),

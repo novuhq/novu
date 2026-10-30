@@ -21,6 +21,9 @@ import { HumanKeylessCapService } from '../../services/human-keyless-cap.service
 import { HumanMessageQuotaExceededException } from '../../services/human-message-quota.service';
 import { CreateInteraction } from './create-interaction.usecase';
 
+/** What a send into a thread hands `CreateConversationInteraction`: deliveries outside it, and word of its post. */
+type Outside = { alsoTo?: (row: unknown) => any[]; onPosted?: () => void };
+
 describe('CreateInteraction', () => {
   function setup() {
     const created = {
@@ -105,7 +108,12 @@ describe('CreateInteraction', () => {
     };
     const conversationService = { createOrGetConversation: sinon.stub().resolves(conversation) };
     const createConversationInteraction = {
-      execute: sinon.stub().resolves({ ...created, _conversationId: 'conv1', subscriberIds: ['sub-1', 'sub-2'] }),
+      // The card goes out in the thread.
+      execute: sinon.stub().callsFake(async (_command: unknown, outside?: { onPosted?: () => void }) => {
+        outside?.onPosted?.();
+
+        return { ...created, _conversationId: 'conv1', subscriberIds: ['sub-1', 'sub-2'] };
+      }),
     };
     const keylessEmailGate = { assertAllowed: sinon.stub().resolves() };
     const humanContactRepository = {
@@ -384,8 +392,9 @@ describe('CreateInteraction', () => {
       inbox.outsiders.returns(['sub-9']);
       conversationService.createOrGetConversation.resolves({ _id: 'conv9', identifier: 'conv_carol' });
       const outside: Array<Record<string, unknown>> = [];
-      createConversationInteraction.execute.callsFake(async (_command: unknown, alsoTo?: (row: unknown) => any[]) => {
-        for (const target of alsoTo?.(created) ?? []) {
+      createConversationInteraction.execute.callsFake(async (_command: unknown, also?: Outside) => {
+        also?.onPosted?.();
+        for (const target of also?.alsoTo?.(created) ?? []) {
           outside.push({ subscriberId: target.subscriberId, refs: await target.deliver() });
         }
 
@@ -423,8 +432,9 @@ describe('CreateInteraction', () => {
       agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
       inbox.outsiders.returns(['sub-9']);
       deliveryService.deliver.rejects(new Error('Forbidden: bot was blocked by the user'));
-      createConversationInteraction.execute.callsFake(async (_command: unknown, alsoTo?: (row: unknown) => any[]) => {
-        for (const target of alsoTo?.(created) ?? []) {
+      createConversationInteraction.execute.callsFake(async (_command: unknown, outside?: Outside) => {
+        outside?.onPosted?.();
+        for (const target of outside?.alsoTo?.(created) ?? []) {
           await target.deliver().catch(() => undefined);
         }
 
@@ -436,6 +446,42 @@ describe('CreateInteraction', () => {
       expect(messageQuota.reserveCredits.firstCall.args).to.deep.equal(['org1', 2]);
       expect(messageQuota.messageCredits.accept.firstCall.args).to.deep.equal([1]);
       expect(result.failedTo).to.deep.equal(['sub-9']);
+    });
+
+    it('takes no credit for the people in the thread when only its post failed, says who, and leaves it unread', async () => {
+      const {
+        usecase,
+        command,
+        created,
+        agentRepository,
+        inbox,
+        createConversationInteraction,
+        conversationService,
+        messageQuota,
+        analyticsService,
+      } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      inbox.outsiders.returns(['sub-9']);
+      inbox.markSentInto.resolves(3);
+      conversationService.createOrGetConversation.resolves({ _id: 'conv9', identifier: 'conv_carol' });
+      // The post in the thread fails; the contact outside it gets theirs in their own chat.
+      createConversationInteraction.execute.callsFake(async (_command: unknown, outside?: Outside) => {
+        for (const target of outside?.alsoTo?.(created) ?? []) {
+          await target.deliver();
+        }
+
+        return { ...created, _conversationId: 'conv1', subscriberIds: ['sub-9'] };
+      });
+
+      const result = await usecase.execute({ ...command, to: ['sub-1', 'sub-9'], thread: 'conv_abc' } as any);
+
+      expect(messageQuota.messageCredits.accept.firstCall.args).to.deep.equal([1]);
+      expect(result.failedTo).to.deep.equal(['sub-1']);
+      // Only the contact's own thread, where theirs landed, is marked read.
+      expect(inbox.markSentInto.getCalls().map((call) => call.args[1]._id)).to.deep.equal(['conv9']);
+      expect(result.threads).to.deep.equal([{ id: 'conv_carol', unreadBefore: 3 }]);
+      // Counted once, for the delivery that went out.
+      expect(analyticsService.track.callCount).to.equal(1);
     });
 
     it('refuses a question to someone outside the thread who can’t be reached, before anything is sent', async () => {

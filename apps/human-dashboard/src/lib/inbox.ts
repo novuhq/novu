@@ -50,7 +50,7 @@ export type InboxPerson = {
 export type InboxThreadState = 'unread' | 'waiting_on_person' | 'waiting_on_you' | 'open' | 'resolved';
 
 export type InboxThread = {
-  /** What `agentinbox inbox show` takes. */
+  /** What `agentinbox show` takes. */
   id: string;
   channel: string;
   kind: InboxPersonKind;
@@ -262,14 +262,14 @@ export function initialOf(name: string): string {
 const CLI = 'agentinbox';
 
 /** What a host runs to see the threads that wait for it: the inbox at work. */
-export const INBOX_UNREAD_COMMAND = `${CLI} inbox list --filter unread`;
+export const INBOX_UNREAD_COMMAND = `${CLI} list --filter unread`;
 
 /** What a host runs to wait for the first thread: the empty inbox. */
-export const INBOX_WATCH_COMMAND = `${CLI} inbox list --wait`;
+export const INBOX_WATCH_COMMAND = `${CLI} list --wait`;
 
 /** What a host runs to read one thread, as the drawer shows it. */
 export function inboxShowCommand(threadId: string): string {
-  return `${CLI} inbox show ${threadId}`;
+  return `${CLI} show ${threadId}`;
 }
 
 export const INBOX_PATH = '/inbox';

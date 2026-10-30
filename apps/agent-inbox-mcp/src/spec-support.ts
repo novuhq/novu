@@ -177,8 +177,66 @@ function normalizeOptions(options: StubBackendsOptions | Partial<Interaction>): 
   return { interaction: options };
 }
 
-/** Who each test token belongs to. `user_2` signed in but has no Agent Inbox account. */
-const USERS_BY_TOKEN: Record<string, string> = { 'good-token': 'user_1', 'newcomer-token': 'user_2' };
+/**
+ * Who each test token belongs to. `user_2` signed in but has no Agent Inbox account. `grok-bot-token` and
+ * `cursor-editor-token` are `user_1`'s too, issued to the sign-in apps of `SIGN_IN_APPS`.
+ */
+const USERS_BY_TOKEN: Record<string, string> = {
+  'good-token': 'user_1',
+  'newcomer-token': 'user_2',
+  'grok-bot-token': 'user_1',
+  'cursor-editor-token': 'user_1',
+};
+
+/** The Agent Inbox Clerk app's secret key, which the Clerk Backend API answers to. */
+export const CLERK_SECRET = 'clerk-secret';
+const CLERK_API = 'https://api.clerk.com/v1';
+
+/**
+ * The sign-in app each token was issued to, and where Clerk returns its sign-ins: one made in Cursor's cloud,
+ * as Grok Bot's is, and the Cursor editor's.
+ */
+const SIGN_IN_APPS: Record<string, { clientId: string; redirectUris: string[] }> = {
+  'grok-bot-token': {
+    clientId: 'client_cursor_cloud',
+    redirectUris: ['http://localhost:8787/callback', 'https://www.cursor.com/agents/mcp/oauth/callback'],
+  },
+  'cursor-editor-token': {
+    clientId: 'client_cursor_editor',
+    redirectUris: [
+      'cursor://anysphere.cursor-mcp/oauth/callback',
+      'http://localhost:8787/callback',
+      'https://www.cursor.com/agents/mcp/oauth/callback',
+    ],
+  },
+};
+
+/** The Clerk Backend API: which sign-in app a token was issued to, and an app found by its client id. */
+function answerClerk(url: string, method: string, headers: Headers, body: unknown): Response {
+  if (headers.get('Authorization') !== `Bearer ${CLERK_SECRET}`) {
+    return reply({}, 401);
+  }
+
+  if (url === `${CLERK_API}/oauth_applications/access_tokens/verify` && method === 'POST') {
+    const app = SIGN_IN_APPS[(body as { access_token?: string } | undefined)?.access_token ?? ''];
+
+    return app
+      ? reply({ object: 'clerk_idp_oauth_access_token', client_id: app.clientId, subject: 'user_1' })
+      : reply({ errors: [{ code: 'oauth_access_token_not_found' }] }, 404);
+  }
+
+  if (url.startsWith(`${CLERK_API}/oauth_applications?`) && method === 'GET') {
+    const clientId = new URL(url).searchParams.get('name_query');
+    const apps = Object.values(SIGN_IN_APPS).filter((app) => app.clientId === clientId);
+
+    return reply({
+      data: apps.map((app) => ({ client_id: app.clientId, name: 'Cursor', redirect_uris: app.redirectUris })),
+      total_count: apps.length,
+    });
+  }
+
+  return reply({ message: 'not stubbed' }, 500);
+}
 
 /** A call's path on the Dashboard API without its query, such as `/v1/inbox`, or `null` for a call elsewhere. */
 function dashboardPathOf(url: string): string | null {
@@ -194,6 +252,10 @@ function answerAuth(
   userEmail?: string,
   accountCreateStatus?: number
 ): Response | null {
+  if (url.startsWith(`${CLERK_API}/`)) {
+    return answerClerk(url, method, headers, body);
+  }
+
   if (url === `${ISSUER}/oauth/userinfo`) {
     const user = USERS_BY_TOKEN[headers.get('Authorization')?.replace(/^Bearer /, '') ?? ''];
 
@@ -258,7 +320,7 @@ function answerEnsureAccount(
 
   accounts.add(humanUserId);
 
-  return reply({ data: { organizationId: 'org_1', userId: 'novu_user_1', environmentId: 'env_1', region: 'us' } });
+  return reply({ data: { organizationId: 'org_1', userId: 'novu_user_1', environmentId: 'env_1' } });
 }
 
 type SetupStubState = {
@@ -588,6 +650,14 @@ export function rpc(method: string, params: unknown, token: string | null = 'goo
 export function inSession(request: Request, sessionId: string): Request {
   const headers = new Headers(request.headers);
   headers.set('Mcp-Session-Id', sessionId);
+
+  return new Request(request, { headers });
+}
+
+/** The same request, from an app that names itself in its User-Agent. */
+export function withUserAgent(request: Request, userAgent: string): Request {
+  const headers = new Headers(request.headers);
+  headers.set('User-Agent', userAgent);
 
   return new Request(request, { headers });
 }

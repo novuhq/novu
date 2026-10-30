@@ -72,15 +72,21 @@ More hosts connect later from Configure, in "Connect another agent": the same ho
 
 The hosts are one list, `src/lib/hosts.ts`, which the picker and the public host pages (`/claude-code`) are built
 from. A host that runs commands (Claude Code, Codex, OpenCode, Cursor, Hermes, OpenClaw, General) gets the commands
-first, with its own skills line (`npx skills add … --agent claude-code -y`), and its second way in under them: a
-plugin, or the MCP server in its own config. A chat app (Claude, ChatGPT, Grok Bot) only signs in to the MCP server.
+first, with its own skills line (`npx skills add … --agent claude-code -y`), and its second way in: a plugin, or the
+MCP server in its own config. A chat app (Claude, ChatGPT, Grok Bot) only signs in to the MCP server.
 The picker ticks the hosts that connected already; today that's the apps the MCP server tells apart
 (`connectedTools`). `?connect=codex` on `/configure` opens "Connect another agent" on that host, which is where a
 host page's "sign in to get your code" leads.
 
-The connect box shows only the commands for now. It also had a prompt that asked an agent to run them, but an
-agent's own permission checks (Claude Code's auto mode) stop it from saving a key and installing a skill on a
-pasted request, so the operator runs them.
+In the dashboard the box under the picker has a tab for each way a host has (`src/lib/host-ways.ts`), and opens
+on the first: for Claude Code and Codex their plugin (one install brings the skills and the inbox tools), and for
+Cursor and OpenCode the MCP server in their own config, then the commands; for any other host that runs commands, the
+commands (one paste, no sign-in, and the code connects it at once), then for Hermes the MCP server in its own config
+(it often runs on a server, with no browser there to sign in with); for Claude and ChatGPT, the server added in the
+app's settings, then a prompt to paste once it's there. Grok Bot adds the server itself when asked, so a prompt is all it gets. A host with one way still has
+its one tab, so every host's box looks the same. Only the chat apps get a prompt: a coding agent's own permission
+checks (Claude Code's auto mode) stop it from saving a key and installing a skill on a pasted request, so the
+operator runs the commands.
 
 ## Develop
 
@@ -121,7 +127,7 @@ the last index.
 
 ## Agent Inbox API
 
-`/api` is Agent Inbox's API: each of its paths forwards to one on the US Novu API (`NEXT_PUBLIC_NOVU_API_URL`), such
+`/api` is Agent Inbox's API: each of its paths forwards to one on the Novu API (`NEXT_PUBLIC_NOVU_API_URL`), such
 as `/api/v1/inbox` to `/v1/human/inbox`, and the API's status, headers and body come back as they are
 (`src/app/api/[...path]/route.ts`; the paths are `ROUTES` in `src/lib/api-proxy.ts`, grouped like the CLI's
 commands). The CLI goes to `https://www.agentinbox.md/api` by default, the MCP server calls it for every tool, the
@@ -137,16 +143,13 @@ and the MCP server only speak these paths, so a self-hosted or local setup point
   `Agent-Inbox-Via`. This site's cookies never reach the API, and the API's `Set-Cookie` never reaches the browser.
 - The caller's IP address goes on as `X-Forwarded-For`, taken from the `x-forwarded-for` Vercel sets, so the API's
   per-IP limits (keyless setups, one-time codes) count each caller, not this site.
-- It only reaches the US API: Agent Inbox has no EU region for now. The invite and verify pages show a link the EU API
-  issued (`?region=eu`) as not valid, and send its token nowhere.
 - The longest call is the inbox's long-poll, which the API holds for up to 25 seconds; the route may run for 60.
 
 ## Configuration
 
 | Variable                            | Default                  | Purpose                                                    |
 | ----------------------------------- | ------------------------ | ---------------------------------------------------------- |
-| `NEXT_PUBLIC_NOVU_API_URL`          | `https://api.novu.co`    | US API: where `/api` forwards to, and the server's calls for US accounts. |
-| `NEXT_PUBLIC_NOVU_API_URL_EU`       | `https://eu.api.novu.co` | The server's calls for EU accounts. The pages and `/api` don't use it. |
+| `NEXT_PUBLIC_NOVU_API_URL`          | `https://api.novu.co`    | The Novu API: where `/api` forwards to, and what this site's server calls. |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | —                        | Agent Inbox Clerk app. Only the account pages use it.      |
 | `CLERK_SECRET_KEY`                  | —                        | Agent Inbox Clerk app, server only.                        |
 | `CLERK_WEBHOOK_SIGNING_SECRET`      | —                        | Signs the Agent Inbox Clerk app's webhook (`/api/webhooks/clerk`). Empty turns the webhook off. |
@@ -155,7 +158,7 @@ and the MCP server only speak these paths, so a self-hosted or local setup point
 | `AGENT_INBOX_MCP_URL`               | —                        | The hosted Agent Inbox MCP server the chat apps connect to. Empty links their tiles to the docs instead. Server only. |
 | `NEXT_PUBLIC_MIXPANEL_TOKEN`        | —                        | Novu's Mixpanel project. Counts dashboard page views on the operator's profile; empty sends nothing. |
 
-`NEXT_PUBLIC_` values are inlined at build time. The API URL never comes from a link itself.
+`NEXT_PUBLIC_` values are inlined at build time.
 
 ## Analytics
 

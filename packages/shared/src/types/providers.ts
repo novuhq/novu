@@ -70,6 +70,8 @@ export enum CredentialsKeyEnum {
   RoutingMode = 'routingMode',
   /** Email webhook: how the HMAC secret key value is interpreted when signing webhook calls. */
   HmacSecretKeyEncoding = 'hmacSecretKeyEncoding',
+  /** Twilio: which credentials authenticate requests. */
+  AuthMethod = 'authMethod',
 }
 
 export type ConfigurationKey = keyof IConfigurations;

@@ -1,9 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { decryptChannelEndpoint, InstrumentUsecase } from '@novu/application-generic';
-import type { EnforceEnvOrOrgIds } from '@novu/dal';
-import { ChannelEndpointDBModel, ChannelEndpointEntity, ChannelEndpointRepository } from '@novu/dal';
+import {
+  ChannelEndpointDBModel,
+  ChannelEndpointEntity,
+  ChannelEndpointRepository,
+  type EnforceEnvOrOrgIds,
+  type FilterQuery,
+} from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
 import { ListChannelEndpointsCommand } from './list-channel-endpoints.command';
 
 @Injectable()
@@ -11,6 +15,7 @@ export class ListChannelEndpoints {
   constructor(private readonly channelEndpointRepository: ChannelEndpointRepository) {}
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing cursor-filter assembly is outside this import change
   async execute(command: ListChannelEndpointsCommand) {
     if (command.before && command.after) {
       throw new BadRequestException('Cannot specify both "before" and "after" cursors at the same time.');

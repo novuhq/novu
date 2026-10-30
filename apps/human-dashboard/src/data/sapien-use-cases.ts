@@ -1,3 +1,4 @@
+import type { BrandChannel } from '@/components/sapien/brand-logo';
 import type { SectionAssets } from '@/data/sapien-assets';
 
 export const useCasesAssets = {
@@ -60,39 +61,84 @@ export const useCasesAssets = {
 } satisfies SectionAssets;
 
 export const USE_CASES_SECTION = {
+  index: '03',
+  label: 'Use cases',
   titleStart: 'Built for',
   titleAccent: 'Agents',
   titleEnd: 'that do real work',
   description: 'Connect the agent you already use to the conversations its work depends on.',
 } as const;
 
+// Draft copy — not in Figma
+export const USE_CASES_CAROUSEL = {
+  label: 'Use cases',
+  previous: 'Previous use case',
+  next: 'Next use case',
+  of: 'of',
+  agent: 'Agent',
+  channels: 'Channels',
+} as const;
+
+export type UseCaseMessage = Readonly<{
+  /** Who sent it: the agent, or the person's name. */
+  from: 'agent' | (string & {});
+  text: string;
+}>;
+
 export type UseCase = Readonly<{
   title: string;
   description: string;
+  channels: readonly BrandChannel[];
+  conversation: readonly [UseCaseMessage, UseCaseMessage];
 }>;
 
 export const USE_CASES: readonly UseCase[] = [
   {
+    title: 'Agents as teammates',
+    description: 'Coordinate interview times, follow up on a vendor quote, or ask a teammate for missing information.',
+    channels: ['slack', 'email'],
+    conversation: [
+      { from: 'agent', text: 'Still missing the Q3 numbers for the board deck. Can you share them?' },
+      { from: 'Maya', text: 'Uploaded to the drive just now.' },
+    ],
+  },
+  {
     title: 'Personal assistants',
     description: 'Coordinate with permitted contacts, handle replies, and ask you when a plan needs approval.',
+    channels: ['email', 'telegram'],
+    conversation: [
+      { from: 'agent', text: 'Dr. Lee can do Tue 9:30 or Thu 4:00. Book one?' },
+      { from: 'You', text: 'Thursday works.' },
+    ],
   },
   {
     title: 'Browser agents',
     description: 'Receive verification emails, invoices, receipts, and service updates at your agent’s own address.',
+    channels: ['email'],
+    conversation: [
+      { from: 'Stripe', text: 'Your verification code is 482 913.' },
+      { from: 'agent', text: 'Code entered. The account is set up.' },
+    ],
   },
   {
-    title: 'Agents as teammates',
-    description: 'Coordinate interview times, follow up on a vendor quote, or ask a teammate for missing information.',
-  },
-  {
-    title: 'SaaS Agents',
+    title: 'SaaS agents',
     description:
       'Give every user a way to reach your product’s agent, so actions and questions arrive in one ingestion inbox.',
+    channels: ['email', 'slack', 'telegram'],
+    conversation: [
+      { from: 'Dan', text: 'Can you export last month’s report as CSV?' },
+      { from: 'agent', text: 'Done. It’s attached to this thread.' },
+    ],
   },
   {
     title: 'Support agents',
     description:
       'Answer customers on email, Slack, Telegram, and iMessage from one inbox, and keep context when they switch channels.',
+    channels: ['email', 'slack', 'telegram', 'imessage'],
+    conversation: [
+      { from: 'Priya', text: 'Following up from my email. Any update on the refund?' },
+      { from: 'agent', text: 'Yes, it went out this morning. 3–5 days to land.' },
+    ],
   },
 ];
 

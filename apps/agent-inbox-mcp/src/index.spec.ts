@@ -4,8 +4,10 @@ import { hostOfClientName, hostOfSession, hostOfUserAgent, sessionIdFor } from '
 import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
 import worker from './index';
 import { describeOutcome, type Interaction, sendInteraction, waitForAnswer } from './interactions';
+import { hostOfRedirectUris } from './sign-in-apps';
 import {
   AGENT_INBOX_API,
+  CLERK_SECRET,
   INITIALIZE,
   ISSUER,
   inSession,
@@ -14,7 +16,15 @@ import {
   rpc,
   setup,
   stubBackends,
+  withUserAgent,
 } from './spec-support';
+
+/** An `initialize` from Cursor's agent runtime, which gives the same name and User-Agent in the editor and under Grok Bot. */
+const fromCursorRuntime = (token: string) =>
+  withUserAgent(
+    rpc('initialize', { ...INITIALIZE, clientInfo: { name: 'Cursor', version: '1.0.0' } }, token),
+    'Cursor/1.0.0'
+  );
 
 describe('the Agent Inbox MCP server', () => {
   beforeEach(() => {
@@ -42,6 +52,24 @@ describe('the Agent Inbox MCP server', () => {
     const response = await worker.fetch(new Request(`${ORIGIN}/.well-known/oauth-protected-resource`), env, ctx);
 
     expect(await response.json()).toMatchObject({ resource: ORIGIN, authorization_servers: [ISSUER] });
+  });
+
+  it('shows OpenAI the domain is ours with its token alone, as plain text, to anyone', async () => {
+    const { env, ctx } = setup({ OPENAI_APPS_CHALLENGE: 'openai-token' });
+
+    const response = await worker.fetch(new Request(`${ORIGIN}/.well-known/openai-apps-challenge`), env, ctx);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('text/plain; charset=utf-8');
+    expect(await response.text()).toBe('openai-token');
+  });
+
+  it('has no OpenAI token to show on a domain without one', async () => {
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(new Request(`${ORIGIN}/.well-known/openai-apps-challenge`), env, ctx);
+
+    expect(response.status).toBe(404);
   });
 
   it('turns away a token Clerk does not know', async () => {
@@ -137,6 +165,70 @@ describe('the Agent Inbox MCP server', () => {
     expect(inbox?.headers.get('Agent-Inbox-Host')).toBe('claude-code');
   });
 
+  it('tells Grok Bot from the Cursor editor by the sign-in app, as both connect as Cursor’s agent runtime', async () => {
+    const calls = stubBackends();
+    const { env, ctx, kv, settle } = setup({ CLERK_SECRET_KEY: CLERK_SECRET });
+
+    const grokBot = await worker.fetch(fromCursorRuntime('grok-bot-token'), env, ctx);
+    const editor = await worker.fetch(fromCursorRuntime('cursor-editor-token'), env, ctx);
+    await worker.fetch(fromCursorRuntime('grok-bot-token'), env, ctx);
+    await settle();
+
+    expect(grokBot.headers.get('Mcp-Session-Id')?.startsWith('grok.')).toBe(true);
+    expect(editor.headers.get('Mcp-Session-Id')?.startsWith('cursor.')).toBe(true);
+    expect(kv.values.has('tool:user_1:grok')).toBe(true);
+    expect(kv.values.has('tool:user_1:cursor')).toBe(true);
+    // Where a sign-in app's sign-ins return is asked once for each app, then remembered.
+    expect(calls.filter((call) => call.url.startsWith('https://api.clerk.com/v1/oauth_applications?'))).toHaveLength(2);
+  });
+
+  it('connects Grok Bot when the KV can’t keep its sign-in app’s host', async () => {
+    stubBackends();
+    const { env, ctx, kv, settle } = setup({ CLERK_SECRET_KEY: CLERK_SECRET });
+    const get = kv.get.bind(kv);
+    const put = kv.put.bind(kv);
+    kv.get = async (key, type) =>
+      key.startsWith('sign-in-app:') ? Promise.reject(new Error('KV GET failed')) : get(key, type);
+    kv.put = async (key, value, options) =>
+      key.startsWith('sign-in-app:') ? Promise.reject(new Error('KV PUT failed: 429')) : put(key, value, options);
+
+    const response = await worker.fetch(fromCursorRuntime('grok-bot-token'), env, ctx);
+    await settle();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Mcp-Session-Id')?.startsWith('grok.')).toBe(true);
+    expect(kv.values.has('tool:user_1:grok')).toBe(true);
+  });
+
+  it('reads Cursor’s agent runtime as Cursor without the Clerk app’s secret key', async () => {
+    const calls = stubBackends();
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(fromCursorRuntime('grok-bot-token'), env, ctx);
+
+    expect(response.headers.get('Mcp-Session-Id')?.startsWith('cursor.')).toBe(true);
+    expect(calls.some((call) => call.url.startsWith('https://api.clerk.com/'))).toBe(false);
+  });
+
+  it('asks Clerk nothing about an app that names itself', async () => {
+    const calls = stubBackends();
+    const { env, ctx } = setup({ CLERK_SECRET_KEY: CLERK_SECRET });
+    const editor = withUserAgent(
+      rpc(
+        'initialize',
+        { ...INITIALIZE, clientInfo: { name: 'cursor-vscode', version: '1.0.0' } },
+        'cursor-editor-token'
+      ),
+      'Cursor/3.25.6 (darwin arm64)'
+    );
+
+    const response = await worker.fetch(editor, env, ctx);
+    await worker.fetch(rpc('initialize', INITIALIZE), env, ctx);
+
+    expect(response.headers.get('Mcp-Session-Id')?.startsWith('cursor.')).toBe(true);
+    expect(calls.some((call) => call.url.startsWith('https://api.clerk.com/'))).toBe(false);
+  });
+
   it('lets an app end its session', async () => {
     const { env, ctx } = setup();
     const request = new Request(ORIGIN, {
@@ -167,6 +259,29 @@ describe('the Agent Inbox MCP server', () => {
         'inbox_wait',
       ].sort()
     );
+  });
+
+  it('spells out all three hints on every tool, as OpenAI’s app review requires', async () => {
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(rpc('tools/list', {}), env, ctx);
+    const { result } = (await response.json()) as {
+      result: { tools: Array<{ name: string; annotations?: Record<string, boolean> }> };
+    };
+
+    // The review blocks a tool that leaves one out, even destructiveHint on a tool that only reads.
+    expect(Object.fromEntries(result.tools.map((tool) => [tool.name, tool.annotations]))).toEqual({
+      inbox_setup: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+      inbox_send: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+      inbox_reply: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+      inbox_wait: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
+      contact_invite: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+      contact_list: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      inbox_list: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      inbox_show: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      inbox_read: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+      inbox_resolve: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    });
   });
 
   it('asks the owner of the account for approval through the Dashboard API', async () => {
@@ -314,7 +429,7 @@ describe('the Agent Inbox MCP server', () => {
     });
   });
 
-  it('sends a plain message when the kind is left out, as `inbox send <text>` does in the CLI', async () => {
+  it('sends a plain message when the kind is left out, as `send <text>` does in the CLI', async () => {
     const calls = stubBackends({ status: 'delivered' });
     const { env, ctx } = setup();
 
@@ -465,20 +580,6 @@ describe('the Agent Inbox MCP server', () => {
     await worker.fetch(rpc('tools/list', {}), env, ctx);
 
     expect(calls.filter((call) => call.url.endsWith('/oauth/userinfo'))).toHaveLength(1);
-  });
-
-  it('still knows whose token it is from what was remembered before Agent Inbox was US only', async () => {
-    const calls = stubBackends();
-    const { env, ctx, kv } = setup();
-    await worker.fetch(rpc('tools/list', {}), env, ctx);
-    const cacheKey = [...kv.values.keys()].find((key) => key.startsWith('token:')) ?? '';
-    kv.values.set(cacheKey, JSON.stringify({ agentInboxUserId: 'user_1', region: 'eu' }));
-    const before = calls.length;
-
-    const response = await worker.fetch(rpc('tools/list', {}), env, ctx);
-
-    expect(response.status).toBe(200);
-    expect(calls.slice(before).map((call) => call.url)).toEqual([`${NOVU_API}/v1/human/accounts/user_1/secret-key`]);
   });
 
   it('calls the Dashboard API for every tool, and the Novu API only for the account key', async () => {
@@ -671,6 +772,7 @@ describe('hostOfClientName', () => {
     expect(hostOfClientName('hermes-agent')).toBe('hermes');
     expect(hostOfClientName('openclaw-bundle-mcp')).toBe('openclaw');
     expect(hostOfClientName('openai-mcp')).toBe('chatgpt');
+    expect(hostOfClientName('openai-mcp (Codex)')).toBe('chatgpt');
     expect(hostOfClientName('ChatGPT')).toBe('chatgpt');
   });
 
@@ -680,6 +782,23 @@ describe('hostOfClientName', () => {
     expect(hostOfClientName('claude-desktop')).toBe(null);
     expect(hostOfClientName('claude-code-but-not-really')).toBe(null);
     expect(hostOfClientName('')).toBe(null);
+  });
+});
+
+describe('hostOfRedirectUris', () => {
+  it('knows the Cursor editor by its cursor:// address, and Cursor’s cloud, where Grok Bot runs, by its web one', () => {
+    expect(
+      hostOfRedirectUris([
+        'cursor://anysphere.cursor-mcp/oauth/callback',
+        'http://localhost:8787/callback',
+        'https://www.cursor.com/agents/mcp/oauth/callback',
+      ])
+    ).toBe('cursor');
+    expect(
+      hostOfRedirectUris(['http://localhost:8787/callback', 'https://www.cursor.com/agents/mcp/oauth/callback'])
+    ).toBe('grok');
+    expect(hostOfRedirectUris(['https://chatgpt.com/connector_platform_oauth_redirect'])).toBe(null);
+    expect(hostOfRedirectUris([])).toBe(null);
   });
 });
 

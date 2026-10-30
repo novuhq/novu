@@ -27,7 +27,7 @@ overrides:
   proxy-agent@<6.3.1: ^6.3.1
   proxy-addr@<2.0.8: ^2.0.8
   semver@>=7.0.0 <7.5.2: ^7.5.2
-  systeminformation@<5.31.7: ^5.31.7
+  systeminformation@<5.33.16: ^5.33.16
   tar: 7.5.21
   tar-fs: '>=3.1.1'
   tough-cookie@<4.1.3: ^4.1.3
@@ -68,7 +68,7 @@ overrides:
   http-cache-semantics@<4.2.1: ^4.2.1
   axios@>=1.0.0 <1.20.0: ^1.20.0
   '@slack/web-api': 7.17.0
-  seroval@<1.6.3: ^1.6.3
+  seroval@<1.6.11: ^1.6.11
   h3@<1.15.9: ^1.15.9
   immutable@>=4.0.0 <4.3.8: ^4.3.8
   jws@>=4.0.0 <4.0.1: ^4.0.1
@@ -78,7 +78,7 @@ overrides:
   jws@<3.2.3: ^3.2.3
   svgo@>=3.0.0 <3.3.5: ^3.3.5
   flatted@<3.4.2: ^3.4.2
-  serialize-javascript@<7.0.5: ^7.0.5
+  serialize-javascript@<7.1.3: ^7.1.3
   ejs@<3.1.10: ^3.1.10
   rollup@>=3.0.0 <3.30.0: ^3.30.0
   rollup@<2.80.0: ^2.80.0
@@ -87,7 +87,7 @@ overrides:
   undici@>=6.0.0 <6.29.1: ^6.29.1
   undici@>=8.0.0 <8.12.2: ^8.12.2
   jose@>=3.0.0 <4.15.5: ^4.15.5
-  qs@<6.16.0: ^6.16.0
+  qs@<6.16.1: ^6.16.1
   js-yaml@<3.15.2: ^3.15.2
   js-yaml@>=4.0.0 <4.3.2: ^4.3.2
   js-yaml@>=5.0.0 <5.4.1: ^5.4.1
@@ -152,7 +152,7 @@ overrides:
   esbuild@<0.28.1: ^0.28.1
   follow-redirects@<=1.15.11: ^1.16.0
   hono@<4.13.11: ^4.13.11
-  '@hono/node-server@<2.0.5': ^2.0.5
+  '@hono/node-server@<2.1.3': ^2.1.3
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5': ^3.47.5
   '@clerk/shared@>=4.0.0 <4.12.2': ^4.12.2
@@ -420,20 +420,20 @@ importers:
         specifier: 3.996.0
         version: 3.996.0
       '@chat-adapter/slack':
-        specifier: 4.40.0
-        version: 4.40.0(debug@4.4.3)(zod@3.25.20)
+        specifier: 4.43.0
+        version: 4.43.0(debug@4.4.3)(zod@3.25.20)
       '@chat-adapter/state-ioredis':
-        specifier: 4.40.0
-        version: 4.40.0(zod@3.25.20)
+        specifier: 4.43.0
+        version: 4.43.0(zod@3.25.20)
       '@chat-adapter/teams':
-        specifier: 4.40.0
-        version: 4.40.0(debug@4.4.3)(zod@3.25.20)
+        specifier: 4.43.0
+        version: 4.43.0(debug@4.4.3)(zod@3.25.20)
       '@chat-adapter/telegram':
-        specifier: 4.40.0
-        version: 4.40.0(zod@3.25.20)
+        specifier: 4.43.0
+        version: 4.43.0(zod@3.25.20)
       '@chat-adapter/whatsapp':
-        specifier: 4.40.0
-        version: 4.40.0(zod@3.25.20)
+        specifier: 4.43.0
+        version: 4.43.0(zod@3.25.20)
       '@godaddy/terminus':
         specifier: ^4.12.1
         version: 4.12.1
@@ -567,8 +567,8 @@ importers:
         specifier: ^4.2.1
         version: 4.10.4
       chat:
-        specifier: 4.40.0
-        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: 4.43.0
+        version: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
@@ -2627,7 +2627,7 @@ importers:
         version: 0.1.0-alpha.20(@anthropic-ai/sdk@0.131.0(zod@4.4.3))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.6.12)(openai@6.17.0(ws@8.21.0)(zod@4.4.3))
       agents:
         specifier: ^0.21.0
-        version: 0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.4.3))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.4.3))(chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(react@19.2.3)(rolldown@1.2.12)(zod@4.4.3)
+        version: 0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.4.3))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.4.3))(chat@4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(react@19.2.3)(rolldown@1.2.12)(zod@4.4.3)
       eventsource-parser:
         specifier: ^3.0.8
         version: 3.1.0
@@ -3656,18 +3656,18 @@ importers:
   packages/chat-adapter:
     dependencies:
       '@chat-adapter/shared':
-        specifier: 4.40.0
-        version: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+        specifier: 4.43.0
+        version: 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
       chat:
         specifier: ^4.40.0
-        version: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+        version: 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
       react:
         specifier: '>=18.0.0 || >=19.0.0'
         version: 19.2.3
     devDependencies:
       '@chat-adapter/state-memory':
-        specifier: 4.40.0
-        version: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+        specifier: 4.43.0
+        version: 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
       '@novu/agent-event-protocol':
         specifier: workspace:*
         version: link:../agent-event-protocol
@@ -3709,8 +3709,8 @@ importers:
         specifier: ^19.0.0
         version: 19.2.8
       chat:
-        specifier: ^4.40.0
-        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: ^4.43.0
+        version: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       react:
         specifier: ^19.2.3
         version: 19.2.3
@@ -3728,11 +3728,11 @@ importers:
     dependencies:
       '@photon-ai/chat-adapter-imessage':
         specifier: ^3.2.0
-        version: 3.2.0(ai@7.0.31(zod@4.4.3))(chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(typescript@6.0.3)(zod@4.4.3)
+        version: 3.2.0(ai@7.0.31(zod@4.4.3))(chat@4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(typescript@6.0.3)(zod@4.4.3)
     devDependencies:
       chat:
-        specifier: ^4.40.0
-        version: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+        specifier: ^4.43.0
+        version: 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
@@ -3747,11 +3747,11 @@ importers:
     dependencies:
       chat-adapter-sendblue:
         specifier: ^0.2.0
-        version: 0.2.0(chat@4.40.0(zod@3.25.20))
+        version: 0.2.0(chat@4.43.0(zod@3.25.20))
     devDependencies:
       chat:
-        specifier: ^4.40.0
-        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: ^4.43.0
+        version: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
@@ -3772,8 +3772,8 @@ importers:
         version: 3.3.18
     devDependencies:
       chat:
-        specifier: ^4.40.0
-        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: ^4.43.0
+        version: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
@@ -3802,8 +3802,8 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2
       chat:
-        specifier: 4.40.0
-        version: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: 4.43.0
+        version: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       cross-fetch:
         specifier: ^4.0.0
         version: 4.0.0
@@ -4102,8 +4102,8 @@ importers:
         specifier: workspace:*
         version: link:../framework
       '@novu/ntfr-client':
-        specifier: ^0.0.5
-        version: 0.0.5
+        specifier: ^0.0.6
+        version: 0.0.6
       '@segment/analytics-node':
         specifier: ^1.1.4
         version: 1.1.4
@@ -4283,11 +4283,11 @@ importers:
         specifier: ^4.1.3
         version: 4.1.3(debug@4.4.3)
       '@chat-adapter/slack':
-        specifier: 4.40.0
-        version: 4.40.0(ai@7.0.31(zod@4.4.3))(debug@4.4.3)(zod@4.4.3)
+        specifier: 4.43.0
+        version: 4.43.0(ai@7.0.31(zod@4.4.3))(debug@4.4.3)(zod@4.4.3)
       '@chat-adapter/teams':
-        specifier: 4.40.0
-        version: 4.40.0(ai@7.0.31(zod@4.4.3))(debug@4.4.3)(zod@4.4.3)
+        specifier: 4.43.0
+        version: 4.43.0(ai@7.0.31(zod@4.4.3))(debug@4.4.3)(zod@4.4.3)
       '@infobip-api/sdk':
         specifier: ^0.3.2
         version: 0.3.2(debug@4.4.3)
@@ -4397,8 +4397,8 @@ importers:
         specifier: 1.0.0
         version: 1.0.0
       qs:
-        specifier: ^6.16.0
-        version: 6.16.0
+        specifier: ^6.16.1
+        version: 6.16.1
       resend:
         specifier: ^6.0.3
         version: 6.0.3(@react-email/render@1.4.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))
@@ -4709,8 +4709,8 @@ importers:
         specifier: 4.0.34
         version: 4.0.34(react@18.3.1)(zod@4.4.3)
       '@chat-adapter/state-memory':
-        specifier: 4.40.0
-        version: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+        specifier: 4.43.0
+        version: 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
       '@clerk/react':
         specifier: ^6.6.6
         version: 6.6.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -4823,8 +4823,8 @@ importers:
         specifier: ^6.2.6
         version: 6.2.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       chat:
-        specifier: 4.40.0
-        version: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+        specifier: 4.43.0
+        version: 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -7320,32 +7320,36 @@ packages:
   '@cfworker/json-schema@4.1.1':
     resolution: {integrity: sha512-gAmrUZSGtKc3AiBL71iNWxDsyUC5uMaKKGdvzYsBoTW/xi42JQHl7eKV2OYzCUqvc+D2RCcf7EXY2iCyFIk6og==}
 
-  '@chat-adapter/shared@4.40.0':
-    resolution: {integrity: sha512-uTDl9p+PVkGtAw9dgvRdkydifvYVp98R26vGHhU4V5HuS7DBTedTdb1COUOh6vfP0SrC+xSozp4O/IyfbXZSKw==}
+  '@chat-adapter/catalog@4.43.0':
+    resolution: {integrity: sha512-JRH40HwYIXdIiwSc/gNw65q5T/gaf691n4//2YOhjRE4YO9KzSFJ/N+RrTD3M8iGz2jI4Jg92wb6OAqfYsAkTQ==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/slack@4.40.0':
-    resolution: {integrity: sha512-aEkJ8OdQPZpIICbxHO08TOPrFVnwvy9e1S1J+AIqB9S1Tf5lE5DtF9AZXWCglRVXFoNCeZ8QcdJYIglxgVIaTg==}
+  '@chat-adapter/shared@4.43.0':
+    resolution: {integrity: sha512-uclU9sQLQa5f9pN9xpCHkMC7eypnIvXnZRnpgdAzltL2d0PhrsJlSPkijmc4Q4FzSfof4kh+gE6yAMFp/tNsQQ==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/state-ioredis@4.40.0':
-    resolution: {integrity: sha512-BUqqexoV6i0XLx2mf8E0c7iK6W5AJbbOT7VkpHlNlddtbm6iIHd2GWTPrVjyVVJnKSWSuw5dKfRStcnFRRaaYg==}
+  '@chat-adapter/slack@4.43.0':
+    resolution: {integrity: sha512-OFu6YURQNTKAqijtMddRRT12duYtj3g8j5xaNq2w846+zYnx+Ywjmjoi9iLA51SCoO8zo1nJb34LRTYUbhjkDw==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/state-memory@4.40.0':
-    resolution: {integrity: sha512-NmFFkvUfnDBDS/mkzrtKHdW757EGt0eX3OQH5IPxrKqhjSsNzpqUdkJ/uDB4BP0Rbex4oW/HgwhZ+JGONVbMBQ==}
+  '@chat-adapter/state-ioredis@4.43.0':
+    resolution: {integrity: sha512-9KcoDLH9epbOoK3Olj8dD3rO5wxMmkMvB1OjXL7uDcW8IniTh1eklQcesq2b17PAsq0W2ODu5eM2fvrBGAlAVQ==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/teams@4.40.0':
-    resolution: {integrity: sha512-WNZ2cAtPKCgix3k2caNlojDqF5G/hVyLaqWjZk190NrsRcG1pNnS/TZuZPTCIgi7pbOOc0iZW7zM/gxbJrIHOw==}
+  '@chat-adapter/state-memory@4.43.0':
+    resolution: {integrity: sha512-VG9ZbKAIMPh0tcLN/BM/sJ/DQNiwQJhtwvq0IlHEI32mDfjnrZbXKNI6j8kRB1hbU2Xw6eesLue2N6uNsVm5xg==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/telegram@4.40.0':
-    resolution: {integrity: sha512-SbAjiGIMWEK+nR7tdMenmAvnaUDSNQM8cqXc7zFBSbc5lCWtkcBEDsfpMGueqVR3FSsEnwOpOdWFHCsGgseiCQ==}
+  '@chat-adapter/teams@4.43.0':
+    resolution: {integrity: sha512-+fMTr9ouzS5y9v/HmN+gVGmC3rscSs06rEnoIaYM0btReX1MW09/SLoxROeAU8EAxp/quOddIn4qp4+YQgWpbw==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/whatsapp@4.40.0':
-    resolution: {integrity: sha512-gu8M7klCSNwU/oAGiKio8MokiIFBgZXDMjj5GvKnp5fgaXP/i5vdahru2H4vdE7uWrZf3UEwpBHBTPoxfXm+Lw==}
+  '@chat-adapter/telegram@4.43.0':
+    resolution: {integrity: sha512-tBtRW7QzvF8pI5rrIUwEWesDMZLPaPdyhn9leTrC5J0B8cwb/uXvhgmrtaOQ5GzEQR8AnbIINGHyEY32nMeNLw==}
+    engines: {node: '>=20'}
+
+  '@chat-adapter/whatsapp@4.43.0':
+    resolution: {integrity: sha512-TNyIj02VxqV+5F2xC/+ua9fR5pfCJHBLQsCUUWAQ9n7BQoclItSehJ1obcI9rArKlzXM9Xs+4bgK7LzWuxWMJw==}
     engines: {node: '>=20'}
 
   '@chevrotain/types@11.1.2':
@@ -8525,8 +8529,8 @@ packages:
   '@hapi/topo@6.0.2':
     resolution: {integrity: sha512-KR3rD5inZbGMrHmgPxsJ9dbi6zEK+C3ZwUwTa+eMwWLz7oijWUTWD2pMSNNYJAU6Qq+65NkxXjqHr/7LM2Xkqg==}
 
-  '@hono/node-server@2.0.11':
-    resolution: {integrity: sha512-bjD221KPLoJTWUwso1J6fGKiTXEUFedG/s0visavY4zakFPkeGURMRNly+FhBHs7T8Dz4qHaZIMX9ZoJHSJtKA==}
+  '@hono/node-server@2.1.5':
+    resolution: {integrity: sha512-MgP/I06GdvsilDspMk/qmRzpk8LOUStP6jFAbSRi40W09DhoyUn+Mj7eyKICPqeYKybOjVFLVIAQzvu1bfIa7Q==}
     engines: {node: '>=20'}
     peerDependencies:
       hono: ^4.13.11
@@ -10047,8 +10051,8 @@ packages:
   '@novu/api@3.15.0':
     resolution: {integrity: sha512-S1fK3S+qxfTe0bbU0NstNR7EZic500j5YcF9Cg8OdTxw+IDzUGZPjBdzE1G1JHZdhfNQBBuplb9w4wCZC7us1Q==}
 
-  '@novu/ntfr-client@0.0.5':
-    resolution: {integrity: sha512-5E8EKp30Ee06FQRpax204nyZOb1uv0kW72VfZXkU/4hG4CcqDsJbfrNnUjB6xIPSvIwAAlwv76MdIAsOflkLXg==}
+  '@novu/ntfr-client@0.0.6':
+    resolution: {integrity: sha512-927VEkngRKgn8YyPXqMCMOm4dnSuY4PGfruY9O0/rdXGNSkGd3N20hqrYRe1sTVomfPVnm6SAkTt1DYHOGHIcQ==}
     engines: {node: '>=18.0.0'}
 
   '@novu/thalamus@0.1.0-alpha.20':
@@ -18806,8 +18810,8 @@ packages:
     peerDependencies:
       chat: '>=4.0.0'
 
-  chat@4.40.0:
-    resolution: {integrity: sha512-slu3VDxItlelEZ8A5vqzlmtT2WErqj2YCGuhhcNx+Ev0+wHeBUqUDUA7hXkca+BfFtW1ZX7ECcySCTG2q2gefg==}
+  chat@4.43.0:
+    resolution: {integrity: sha512-9ICxMewK1+4J0pEbR7eMBTh3JCL3NkyDHAgGrU/gblyyw/+QUcwFHCXIoQMt0Xlyup1c5smS0/gYytTt8NVc6w==}
     engines: {node: '>=20'}
     peerDependencies:
       ai: ^6.0.182 || ^7.0.0
@@ -26624,10 +26628,6 @@ packages:
     engines: {node: '>=10.13.0'}
     hasBin: true
 
-  qs@6.16.0:
-    resolution: {integrity: sha512-h6fhOIaRrID2CbEY2fqs+7t+UXZo+MLAnU5gRIq85uFtdiUPCdsApMlHhXogKVM4HM2DVbIjGNTTYH2OcmP1vA==}
-    engines: {node: '>=0.6'}
-
   qs@6.16.1:
     resolution: {integrity: sha512-5Px6J7rfHBAGUhNQ3es4YzcOdBBw0SDcVtThJml4RdnKw4tKs2epA0kPZ+K8X+WiHktT93RHVcQ/3ym5aTCgtg==}
     engines: {node: '>=0.6'}
@@ -27597,19 +27597,19 @@ packages:
   sentence-case@2.1.1:
     resolution: {integrity: sha512-ENl7cYHaK/Ktwk5OTD+aDbQ3uC8IByu/6Bkg+HDv8Mm+XnBnppVNalcfJTNsp1ibstKh030/JKQQWglDvtKwEQ==}
 
-  serialize-javascript@7.0.5:
-    resolution: {integrity: sha512-F4LcB0UqUl1zErq+1nYEEzSHJnIwb3AF2XWB94b+afhrekOUijwooAYqFyRbjYkm2PAKBabx6oYv/xDxNi8IBw==}
+  serialize-javascript@7.1.4:
+    resolution: {integrity: sha512-FqlEuoTq/zRmA4Lg6aOqyH3lCHbUtCB0bmHCeFniX2GBdDqMJM3FwdvEhlE5Pim1dlt2FfBdVPmUNNiGhhKqpw==}
     engines: {node: '>=20.0.0'}
 
   seroval-plugins@1.2.1:
     resolution: {integrity: sha512-H5vs53+39+x4Udwp4J5rNZfgFuA+Lt+uU+09w1gYBVWomtAl98B+E9w7yC05Xc81/HgLvJdlyqJbU0fJCKCmdw==}
     engines: {node: '>=10'}
     peerDependencies:
-      seroval: ^1.6.3
+      seroval: ^1.6.11
 
-  seroval@1.6.8:
-    resolution: {integrity: sha512-HlSgSAkTk4EqHcje1ptJjfZi1YDv5KbhVJ/d3P7T/nAXua2VmDu+AKDX5VTdFfZf48nDkWB2TKYt0DrCSa+3wg==}
-    engines: {node: '>=10'}
+  seroval@1.7.2:
+    resolution: {integrity: sha512-NPOYrDVbvtuTo5m9InqKE7O6wBASON46OabjyqLUGPvoXNDYp0pReuFYkqOQwGsoj1OpZVj6mIdnRRgt5O1/gQ==}
+    engines: {node: '>=20'}
 
   serve-static@1.16.2:
     resolution: {integrity: sha512-VqpjJZKadQB/PEbEwvFdO43Ax5dFBZ2UECszz8bQ7pi7wt//PWe1P6MN7eCnjsatYtBT6EuiClbjSWP2WrIoTw==}
@@ -28489,8 +28489,8 @@ packages:
     resolution: {integrity: sha512-ulAk51I9UVUyJgxlv9M6lFot2WP3e7t8Kz9+IS6D4rVba1tR9kON+Ey69f+1R4Q8cd45Lod6a4IcJIxnzGc/zA==}
     engines: {node: '>=18'}
 
-  systeminformation@5.32.0:
-    resolution: {integrity: sha512-7gfXs43T91miPxxTTtrYitotR/8MPsI2gy3XgUMs6kmOE/JCVqZp6nJpx4XkSutoSqDh6+Y2ovvb2A3RQCR+8w==}
+  systeminformation@5.33.16:
+    resolution: {integrity: sha512-R+Lh69IJXfJj6bfyH1In5cIR9FTr4hBS39YvlZHZjsK1p9cuELPq7hplZZIb56ZESMMb+DzdKqqE6Iomi01Mvg==}
     engines: {node: '>=10.0.0'}
     os: [darwin, linux, win32, freebsd, openbsd, netbsd, sunos, android]
     hasBin: true
@@ -34800,28 +34800,30 @@ snapshots:
 
   '@cfworker/json-schema@4.1.1': {}
 
-  '@chat-adapter/shared@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)':
+  '@chat-adapter/catalog@4.43.0': {}
+
+  '@chat-adapter/shared@4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)':
     dependencies:
-      chat: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
     transitivePeerDependencies:
       - ai
       - workflow
       - zod
 
-  '@chat-adapter/shared@4.40.0(zod@3.25.20)':
+  '@chat-adapter/shared@4.43.0(zod@3.25.20)':
     dependencies:
-      chat: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      chat: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
     transitivePeerDependencies:
       - ai
       - workflow
       - zod
 
-  '@chat-adapter/slack@4.40.0(ai@7.0.31(zod@4.4.3))(debug@4.4.3)(zod@4.4.3)':
+  '@chat-adapter/slack@4.43.0(ai@7.0.31(zod@4.4.3))(debug@4.4.3)(zod@4.4.3)':
     dependencies:
-      '@chat-adapter/shared': 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      '@chat-adapter/shared': 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
       '@slack/socket-mode': 2.0.7(debug@4.4.3)
       '@slack/web-api': 7.17.0(debug@4.4.3)
-      chat: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
     transitivePeerDependencies:
       - ai
       - bufferutil
@@ -34830,12 +34832,12 @@ snapshots:
       - workflow
       - zod
 
-  '@chat-adapter/slack@4.40.0(debug@4.4.3)(zod@3.25.20)':
+  '@chat-adapter/slack@4.43.0(debug@4.4.3)(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.40.0(zod@3.25.20)
+      '@chat-adapter/shared': 4.43.0(zod@3.25.20)
       '@slack/socket-mode': 2.0.7(debug@4.4.3)
       '@slack/web-api': 7.17.0(debug@4.4.3)
-      chat: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      chat: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
     transitivePeerDependencies:
       - ai
       - bufferutil
@@ -34844,64 +34846,66 @@ snapshots:
       - workflow
       - zod
 
-  '@chat-adapter/state-ioredis@4.40.0(zod@3.25.20)':
+  '@chat-adapter/state-ioredis@4.43.0(zod@3.25.20)':
     dependencies:
-      chat: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      chat: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       ioredis: 5.11.1
     transitivePeerDependencies:
       - ai
       - workflow
       - zod
 
-  '@chat-adapter/state-memory@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)':
+  '@chat-adapter/state-memory@4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)':
     dependencies:
-      chat: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
     transitivePeerDependencies:
       - ai
       - workflow
       - zod
 
-  '@chat-adapter/teams@4.40.0(ai@7.0.31(zod@4.4.3))(debug@4.4.3)(zod@4.4.3)':
+  '@chat-adapter/teams@4.43.0(ai@7.0.31(zod@4.4.3))(debug@4.4.3)(zod@4.4.3)':
     dependencies:
-      '@chat-adapter/shared': 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      '@chat-adapter/shared': 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
       '@microsoft/teams.api': 2.0.16(debug@4.4.3)
       '@microsoft/teams.apps': 2.0.16(debug@4.4.3)
       '@microsoft/teams.cards': 2.0.16
+      '@microsoft/teams.graph': 2.0.16(debug@4.4.3)
       '@microsoft/teams.graph-endpoints': 2.0.16
-      chat: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
     transitivePeerDependencies:
       - ai
       - debug
       - workflow
       - zod
 
-  '@chat-adapter/teams@4.40.0(debug@4.4.3)(zod@3.25.20)':
+  '@chat-adapter/teams@4.43.0(debug@4.4.3)(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.40.0(zod@3.25.20)
+      '@chat-adapter/shared': 4.43.0(zod@3.25.20)
       '@microsoft/teams.api': 2.0.16(debug@4.4.3)
       '@microsoft/teams.apps': 2.0.16(debug@4.4.3)
       '@microsoft/teams.cards': 2.0.16
+      '@microsoft/teams.graph': 2.0.16(debug@4.4.3)
       '@microsoft/teams.graph-endpoints': 2.0.16
-      chat: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      chat: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
     transitivePeerDependencies:
       - ai
       - debug
       - workflow
       - zod
 
-  '@chat-adapter/telegram@4.40.0(zod@3.25.20)':
+  '@chat-adapter/telegram@4.43.0(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.40.0(zod@3.25.20)
-      chat: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      '@chat-adapter/shared': 4.43.0(zod@3.25.20)
+      chat: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
     transitivePeerDependencies:
       - ai
       - workflow
       - zod
 
-  '@chat-adapter/whatsapp@4.40.0(zod@3.25.20)':
+  '@chat-adapter/whatsapp@4.43.0(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.40.0(zod@3.25.20)
-      chat: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      '@chat-adapter/shared': 4.43.0(zod@3.25.20)
+      chat: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
     transitivePeerDependencies:
       - ai
       - workflow
@@ -35808,7 +35812,7 @@ snapshots:
       json-stringify-safe: 5.0.1
       mime-types: 2.1.35
       performance-now: 2.1.0
-      qs: 6.16.0
+      qs: 6.16.1
       safe-buffer: 5.2.1
       tough-cookie: 4.1.3
       tunnel-agent: 0.6.0
@@ -35846,7 +35850,7 @@ snapshots:
       object-treeify: 1.1.33
       open: 8.4.2
       picomatch: 4.0.4
-      systeminformation: 5.32.0
+      systeminformation: 5.33.16
       undici: 7.30.1
       which: 4.0.0
       yocto-spinner: 1.2.2
@@ -36443,7 +36447,7 @@ snapshots:
     dependencies:
       '@hapi/hoek': 11.0.7
 
-  '@hono/node-server@2.0.11(hono@4.13.13)':
+  '@hono/node-server@2.1.5(hono@4.13.13)':
     dependencies:
       hono: 4.13.13
 
@@ -37730,7 +37734,7 @@ snapshots:
       '@microsoft/teams.cards': 2.0.16
       '@microsoft/teams.common': 2.0.16(debug@4.4.3)
       jwt-decode: 4.0.0
-      qs: 6.16.0
+      qs: 6.16.1
     transitivePeerDependencies:
       - debug
 
@@ -37762,7 +37766,7 @@ snapshots:
   '@microsoft/teams.graph@2.0.16(debug@4.4.3)':
     dependencies:
       '@microsoft/teams.common': 2.0.16(debug@4.4.3)
-      qs: 6.16.0
+      qs: 6.16.1
     transitivePeerDependencies:
       - debug
 
@@ -37784,7 +37788,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@3.25.20)':
     dependencies:
-      '@hono/node-server': 2.0.11(hono@4.13.13)
+      '@hono/node-server': 2.1.5(hono@4.13.13)
       ajv: 8.20.0
       ajv-formats: 3.0.1
       content-type: 1.0.5
@@ -37806,7 +37810,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@3.25.76)':
     dependencies:
-      '@hono/node-server': 2.0.11(hono@4.13.13)
+      '@hono/node-server': 2.1.5(hono@4.13.13)
       ajv: 8.20.0
       ajv-formats: 3.0.1
       content-type: 1.0.5
@@ -37828,7 +37832,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3)':
     dependencies:
-      '@hono/node-server': 2.0.11(hono@4.13.13)
+      '@hono/node-server': 2.1.5(hono@4.13.13)
       ajv: 8.20.0
       ajv-formats: 3.0.1
       content-type: 1.0.5
@@ -38527,7 +38531,7 @@ snapshots:
     dependencies:
       zod: 4.3.5
 
-  '@novu/ntfr-client@0.0.5':
+  '@novu/ntfr-client@0.0.6':
     dependencies:
       https: 1.0.0
       node-fetch: 3.3.2
@@ -39289,7 +39293,7 @@ snapshots:
   '@opentelemetry/host-metrics@0.35.5(@opentelemetry/api@1.9.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
-      systeminformation: 5.32.0
+      systeminformation: 5.33.16
 
   '@opentelemetry/instrumentation-amqplib@0.70.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -39390,7 +39394,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/instrumentation': 0.223.0(@opentelemetry/api@1.9.0)
-      systeminformation: 5.32.0
+      systeminformation: 5.33.16
 
   '@opentelemetry/instrumentation-http@0.223.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -40075,12 +40079,12 @@ snapshots:
       nice-grpc: 2.1.17
       nice-grpc-common: 2.0.4
 
-  '@photon-ai/chat-adapter-imessage@3.2.0(ai@7.0.31(zod@4.4.3))(chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(typescript@6.0.3)(zod@4.4.3)':
+  '@photon-ai/chat-adapter-imessage@3.2.0(ai@7.0.31(zod@4.4.3))(chat@4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(typescript@6.0.3)(zod@4.4.3)':
     dependencies:
-      '@chat-adapter/shared': 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      '@chat-adapter/shared': 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
       '@spectrum-ts/core': 10.0.0(typescript@6.0.3)
       '@spectrum-ts/imessage': 10.0.0(@spectrum-ts/core@10.0.0(typescript@6.0.3))(typescript@6.0.3)
-      chat: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
       mime-types: 3.0.2
     transitivePeerDependencies:
       - ai
@@ -49429,7 +49433,7 @@ snapshots:
     dependencies:
       humanize-ms: 1.2.1
 
-  agents@0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.4.3))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.4.3))(chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(react@19.2.3)(rolldown@1.2.12)(zod@4.4.3):
+  agents@0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.4.3))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.4.3))(chat@4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3))(react@19.2.3)(rolldown@1.2.12)(zod@4.4.3):
     dependencies:
       '@babel/plugin-proposal-decorators': 8.0.2(@babel/core@7.29.7)
       '@cfworker/json-schema': 4.1.1
@@ -49449,7 +49453,7 @@ snapshots:
     optionalDependencies:
       '@ai-sdk/react': 4.0.34(react@19.2.3)(zod@4.4.3)
       ai: 7.0.31(zod@4.4.3)
-      chat: 4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
+      chat: 4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3)
       react: 19.2.3
     transitivePeerDependencies:
       - '@babel/core'
@@ -50395,7 +50399,7 @@ snapshots:
       http-errors: 2.0.1
       iconv-lite: 0.4.24
       on-finished: 2.4.1
-      qs: 6.16.0
+      qs: 6.16.1
       raw-body: 2.5.3
       type-is: 1.6.18
       unpipe: 1.0.0
@@ -50724,13 +50728,14 @@ snapshots:
 
   chardet@2.2.0: {}
 
-  chat-adapter-sendblue@0.2.0(chat@4.40.0(zod@3.25.20)):
+  chat-adapter-sendblue@0.2.0(chat@4.43.0(zod@3.25.20)):
     dependencies:
-      chat: 4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      chat: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       sendblue: 3.10.1
 
-  chat@4.40.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20):
+  chat@4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20):
     dependencies:
+      '@chat-adapter/catalog': 4.43.0
       '@workflow/serde': 4.1.0-beta.2
       mdast-util-to-string: 4.0.0
       remark-gfm: 4.0.1
@@ -50742,8 +50747,9 @@ snapshots:
       ai: 7.0.31(zod@3.25.20)
       zod: 3.25.20
 
-  chat@4.40.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3):
+  chat@4.43.0(ai@7.0.31(zod@4.4.3))(zod@4.4.3):
     dependencies:
+      '@chat-adapter/catalog': 4.43.0
       '@workflow/serde': 4.1.0-beta.2
       mdast-util-to-string: 4.0.0
       remark-gfm: 4.0.1
@@ -51187,7 +51193,7 @@ snapshots:
   compression-webpack-plugin@10.0.0(webpack@5.105.4):
     dependencies:
       schema-utils: 4.0.0
-      serialize-javascript: 7.0.5
+      serialize-javascript: 7.1.4
       webpack: 5.105.4(@swc/core@1.7.26(@swc/helpers@0.5.23))(esbuild@0.28.1)(uglify-js@3.17.4)(webpack-cli@5.1.4)
 
   compression@1.8.2:
@@ -52401,7 +52407,7 @@ snapshots:
 
   emulate@0.5.0(hono@4.13.13):
     dependencies:
-      '@hono/node-server': 2.0.11(hono@4.13.13)
+      '@hono/node-server': 2.1.5(hono@4.13.13)
       commander: 14.0.3
       picocolors: 1.1.1
       yaml: 2.8.3
@@ -53001,7 +53007,7 @@ snapshots:
       parseurl: 1.3.3
       path-to-regexp: 0.1.13
       proxy-addr: 2.0.8
-      qs: 6.16.0
+      qs: 6.16.1
       range-parser: 1.2.1
       safe-buffer: 5.2.1
       send: 0.19.0
@@ -53035,7 +53041,7 @@ snapshots:
       once: 1.4.0
       parseurl: 1.3.3
       proxy-addr: 2.0.8
-      qs: 6.16.0
+      qs: 6.16.1
       range-parser: 1.2.1
       router: 2.1.0
       safe-buffer: 5.2.1
@@ -53069,7 +53075,7 @@ snapshots:
       once: 1.4.0
       parseurl: 1.3.3
       proxy-addr: 2.0.8
-      qs: 6.16.0
+      qs: 6.16.1
       range-parser: 1.2.1
       router: 2.2.0
       send: 1.2.1
@@ -53501,7 +53507,7 @@ snapshots:
       '@paralleldrive/cuid2': 2.3.1
       dezalgo: 1.0.4
       once: 1.4.0
-      qs: 6.16.0
+      qs: 6.16.1
 
   formidable@3.5.4:
     dependencies:
@@ -54014,7 +54020,7 @@ snapshots:
       extend: 3.0.2
       gaxios: 4.3.3
       google-auth-library: 6.1.6
-      qs: 6.16.0
+      qs: 6.16.1
       url-template: 2.0.8
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -57235,7 +57241,7 @@ snapshots:
     dependencies:
       gaxios: 6.1.1
       isomorphic-unfetch: 4.0.2
-      qs: 6.16.0
+      qs: 6.16.1
     transitivePeerDependencies:
       - encoding
 
@@ -58030,7 +58036,7 @@ snapshots:
       minimatch: 5.1.9
       ms: 2.1.3
       nanoid: 3.3.18
-      serialize-javascript: 7.0.5
+      serialize-javascript: 7.1.4
       strip-json-comments: 3.1.1
       supports-color: 8.1.1
       workerpool: 6.2.1
@@ -58056,7 +58062,7 @@ snapshots:
       minimatch: 3.1.5
       ms: 2.1.3
       nanoid: 3.3.18
-      serialize-javascript: 7.0.5
+      serialize-javascript: 7.1.4
       strip-json-comments: 3.1.1
       supports-color: 8.1.1
       which: 2.0.2
@@ -60445,11 +60451,6 @@ snapshots:
       pngjs: 5.0.0
       yargs: 15.4.1
 
-  qs@6.16.0:
-    dependencies:
-      es-define-property: 1.0.1
-      side-channel: 1.1.1
-
   qs@6.16.1:
     dependencies:
       es-define-property: 1.0.1
@@ -61773,13 +61774,13 @@ snapshots:
       no-case: 2.3.2
       upper-case-first: 1.1.2
 
-  serialize-javascript@7.0.5: {}
+  serialize-javascript@7.1.4: {}
 
-  seroval-plugins@1.2.1(seroval@1.6.8):
+  seroval-plugins@1.2.1(seroval@1.7.2):
     dependencies:
-      seroval: 1.6.8
+      seroval: 1.7.2
 
-  seroval@1.6.8: {}
+  seroval@1.7.2: {}
 
   serve-static@1.16.2:
     dependencies:
@@ -62171,8 +62172,8 @@ snapshots:
   solid-js@1.9.6:
     dependencies:
       csstype: 3.2.3
-      seroval: 1.6.8
-      seroval-plugins: 1.2.1(seroval@1.6.8)
+      seroval: 1.7.2
+      seroval-plugins: 1.2.1(seroval@1.7.2)
 
   solid-motionone@1.0.3(solid-js@1.9.6):
     dependencies:
@@ -62612,7 +62613,7 @@ snapshots:
   stripe@11.18.0:
     dependencies:
       '@types/node': 22.15.13
-      qs: 6.16.0
+      qs: 6.16.1
 
   strnum@2.2.3: {}
 
@@ -62722,7 +62723,7 @@ snapshots:
       formidable: 3.5.4
       methods: 1.1.2
       mime: 2.6.0
-      qs: 6.16.0
+      qs: 6.16.1
 
   superagent@8.1.2:
     dependencies:
@@ -62734,7 +62735,7 @@ snapshots:
       formidable: 2.1.5
       methods: 1.1.2
       mime: 2.6.0
-      qs: 6.16.0
+      qs: 6.16.1
       semver: 7.8.5
 
   superagent@9.0.2:
@@ -62747,7 +62748,7 @@ snapshots:
       formidable: 3.5.4
       methods: 1.1.2
       mime: 2.6.0
-      qs: 6.16.0
+      qs: 6.16.1
 
   supertest@7.0.0:
     dependencies:
@@ -62878,7 +62879,7 @@ snapshots:
 
   system-architecture@0.1.0: {}
 
-  systeminformation@5.32.0: {}
+  systeminformation@5.33.16: {}
 
   table-layout@1.0.2:
     dependencies:
@@ -63025,7 +63026,7 @@ snapshots:
   telnyx@1.23.0:
     dependencies:
       lodash.isplainobject: 4.0.6
-      qs: 6.16.0
+      qs: 6.16.1
       safe-buffer: 5.2.1
       tweetnacl: 1.0.3
       uuid: 11.1.1
@@ -63051,7 +63052,7 @@ snapshots:
       '@jridgewell/trace-mapping': 0.3.25
       jest-worker: 27.5.1
       schema-utils: 3.3.0
-      serialize-javascript: 7.0.5
+      serialize-javascript: 7.1.4
       terser: 5.31.6
       webpack: 5.105.4(@swc/core@1.7.26(@swc/helpers@0.5.23))(esbuild@0.28.1)(uglify-js@3.17.4)(webpack-cli@5.1.4)
     optionalDependencies:
@@ -63654,7 +63655,7 @@ snapshots:
       dayjs: 1.11.9
       https-proxy-agent: 5.0.1
       jsonwebtoken: 9.0.3
-      qs: 6.16.0
+      qs: 6.16.1
       scmp: 2.1.0
       url-parse: 1.5.10
       xmlbuilder: 13.0.2
@@ -63864,7 +63865,7 @@ snapshots:
 
   union@0.5.0:
     dependencies:
-      qs: 6.16.0
+      qs: 6.16.1
 
   unique-string@2.0.0:
     dependencies:

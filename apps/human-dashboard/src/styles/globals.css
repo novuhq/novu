@@ -41,10 +41,12 @@
 
   /*
    * The people page (`/sapien`), from the website's own Figma file: black, its own text, border and surfaces,
-   * set in Inter with IvyPresto for the accent words and its own cut of Geist Mono. It shares the accent.
+   * set in Inter with Redaction 35 for the accent words (in cream), its own cut of Geist Mono and Geist Pixel for
+   * the plate labels. It shares the accent, kept for dots, ticks and the buttons.
    */
   --font-sapien-sans: var(--font-inter), sans-serif;
-  --font-sapien-display: var(--font-ivy-presto), serif;
+  --font-sapien-display: var(--font-redaction), serif;
+  --font-sapien-pixel: var(--font-geist-pixel), ui-monospace, monospace;
   --font-sapien-mono: var(--font-sapien-geist-mono), monospace;
   --color-sapien-background: #000000;
   --color-sapien-foreground: #eee5d8;
@@ -61,6 +63,7 @@
   --animate-drawer-out: drawer-out 220ms cubic-bezier(0.4, 0, 1, 1) forwards;
   --animate-overlay-out: overlay-out 220ms ease-in forwards;
   --animate-rise-in: rise-in 300ms ease-out both;
+  --animate-typing-dot: typing-dot 1.2s ease-in-out infinite;
   --animate-breathe: breathe 4s ease-in-out infinite alternate;
   --animate-draw-around: draw-around 900ms ease-in-out both;
   --animate-grow-down: grow-down 400ms ease-out both;
@@ -68,6 +71,23 @@
   --animate-fold-close: fold-close 300ms ease-in both;
   /* The people page's strip of customer logos, scrolling by. */
   --animate-logo-marquee: logo-marquee 160s linear infinite;
+  /* A one-off entrance: up 8px out of a light blur. Fills backwards only, so nothing lingers once it ends. */
+  --animate-sapien-in: sapien-in 700ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+
+  @keyframes sapien-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+      filter: blur(6px);
+    }
+  }
+
+  /* The agent layer's scanlines drifting down, one 3px line pitch per step of the loop. */
+  @keyframes sapien-scan {
+    to {
+      background-position: 0 30px;
+    }
+  }
 
   @keyframes terminal-cursor {
     50% {
@@ -118,6 +138,19 @@
     from {
       opacity: 0;
       transform: translateY(6px);
+    }
+  }
+
+  @keyframes typing-dot {
+    0%,
+    60%,
+    100% {
+      opacity: 0.3;
+      transform: translateY(0);
+    }
+    30% {
+      opacity: 1;
+      transform: translateY(-2px);
     }
   }
 
@@ -356,6 +389,24 @@
   ::view-transition-new(.inbox-row-enter):only-child,
   ::view-transition-old(.inbox-row-exit):only-child {
     animation: none;
+  }
+}
+
+/* Rises into place as it scrolls into view. Where scroll timelines are missing it simply shows. */
+@keyframes sapien-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .sapien-reveal {
+      animation: sapien-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
   }
 }
 

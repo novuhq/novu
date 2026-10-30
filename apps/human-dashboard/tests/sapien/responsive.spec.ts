@@ -15,17 +15,7 @@ for (const width of [2560, 1920, 1440, 1024, 768, 390, 360, 320]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto('/sapien');
     await page.evaluate(() => document.fonts.ready);
-    for (const id of [
-      'hero',
-      'inbox',
-      'building-blocks',
-      'use-cases',
-      'integrations',
-      'scale',
-      'security',
-      'faq',
-      'get-started',
-    ]) {
+    for (const id of ['hero', 'inbox', 'building-blocks', 'use-cases', 'integrations', 'scale', 'faq', 'get-started']) {
       await page.locator(`#${id}`).scrollIntoViewIfNeeded();
     }
     await expect

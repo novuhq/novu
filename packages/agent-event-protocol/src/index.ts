@@ -43,6 +43,7 @@ export type {
   CardElementSeriesChartDefinition,
   CardElementTableElement,
   CardElementTextElement,
+  CardElementTextInputElement,
 } from './card-element.types';
 export type {
   AgentFileRef,

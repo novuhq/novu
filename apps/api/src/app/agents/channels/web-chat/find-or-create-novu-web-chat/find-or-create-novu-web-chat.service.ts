@@ -3,11 +3,11 @@ import {
   type AgentEntity,
   AgentIntegrationRepository,
   AgentRepository,
+  type ClientSession,
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, providers, slugify } from '@novu/shared';
-import { ClientSession } from 'mongoose';
 import shortid from 'shortid';
 
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
@@ -83,8 +83,7 @@ export class NovuWebChatProvisioningService {
       return existing;
     }
 
-    const displayName =
-      providers.find((p) => p.id === ChatProviderIdEnum.NovuWebChat)?.displayName ?? 'Novu Web Chat';
+    const displayName = providers.find((p) => p.id === ChatProviderIdEnum.NovuWebChat)?.displayName ?? 'Novu Web Chat';
     const identifier = `${slugify(displayName)}-${shortid.generate()}`;
 
     return this.integrationRepository.create(
@@ -98,7 +97,7 @@ export class NovuWebChatProvisioningService {
         active: true,
         _environmentId: environmentId,
         _organizationId: organizationId,
-      } as any,
+      },
       { session }
     );
   }
@@ -120,7 +119,7 @@ export class NovuWebChatProvisioningService {
     const linkedIntegrationIds = links.map((l) => l._integrationId);
     const webChatIntegration = await this.integrationRepository.findOne(
       {
-        _id: { $in: linkedIntegrationIds } as unknown as string,
+        _id: { $in: linkedIntegrationIds },
         _environmentId: environmentId,
         _organizationId: organizationId,
         providerId: ChatProviderIdEnum.NovuWebChat,

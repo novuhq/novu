@@ -1,20 +1,17 @@
 import { expect, type Page, test } from '@playwright/test';
-import sharp from 'sharp';
 
 test('home serves readable agent documentation and links to Sapien', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   const response = await page.goto('/');
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('agentinbox.mdThe inbox API for agents');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('AGENTINBOX.MDThe inbox API for agents');
   await expect(page.locator('#install-panel-cli')).toHaveText('npm install -g @agentinbox/cli');
   await page.getByRole('tab', { name: 'MCP' }).click();
   await expect(page.locator('#install-panel-mcp')).toHaveText('https://mcp.agentinbox.md');
   await expect(page.locator('#install-panel-cli')).toBeHidden();
-  await expect(page.locator('#quickstart')).toContainText(
-    'agentinbox inbox send "Build finished — 0 failures." --via email'
-  );
-  await expect(page.locator('#quickstart')).toContainText('agentinbox inbox reply conv_123 "On it."');
+  await expect(page.locator('#quickstart')).toContainText('agentinbox send "Build finished — 0 failures." --via email');
+  await expect(page.locator('#quickstart')).toContainText('agentinbox reply conv_123 "On it."');
   await expect(page.locator('#flags')).toContainText('--to <id|email>[,...]');
   await expect(page.locator('#contacts')).toContainText('agentinbox contact list --limit 20 --after <cursor>');
   await page.getByRole('link', { name: 'agentinbox.md/sapien' }).click();
@@ -91,11 +88,11 @@ for (const width of [320, 768, 1920]) {
   });
 }
 
-const POSTER_ALT = "Dithered illustration of a robot arm holding an agent's card";
-const SOURCE_IMAGE = /\/media\/home\/agentinbox-dither\.png$/;
+const MASCOT = 'Agent Inbox mascot';
+const MASCOT_IMAGE = /\/illustrations\/mascot-waiting\.svg$/;
 const artworkCanvas = (page: Page) => page.locator('.home-artwork canvas');
 
-/** A hash of the canvas around the orange pin, where the dither animates. */
+/** A hash of the canvas over the face, where the eyes move. */
 function canvasFrame(page: Page) {
   return artworkCanvas(page).evaluate((node: HTMLCanvasElement) => {
     const { data } = node
@@ -112,139 +109,92 @@ function canvasFrame(page: Page) {
   });
 }
 
-test('home artwork animates without playback controls', async ({ page }) => {
+test('the mascot turns toward the pointer and has no playback controls', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');
+  await expect(page.getByRole('figure', { name: MASCOT })).toBeVisible();
   await expect(artworkCanvas(page)).toBeVisible();
-  await expect(page.getByAltText(POSTER_ALT)).toBeHidden();
-  const first = await canvasFrame(page);
-  await expect.poll(() => canvasFrame(page)).not.toBe(first);
+  await expect.poll(() => canvasFrame(page)).not.toBe(0);
+  await page.mouse.move(40, 40);
+  const resting = await canvasFrame(page);
+  await page.mouse.move(1500, 420);
+  await expect.poll(() => canvasFrame(page)).not.toBe(resting);
   await expect(page.locator('.home-artwork button')).toHaveCount(0);
   await page.locator('footer').scrollIntoViewIfNeeded();
   await expect(artworkCanvas(page)).toBeVisible();
-  const scrolled = await canvasFrame(page);
-  await expect.poll(() => canvasFrame(page)).not.toBe(scrolled);
 });
 
 for (const viewport of [
+  { width: 1280, height: 720 },
   { width: 1440, height: 900 },
-  { width: 1440, height: 720 },
   { width: 1920, height: 1080 },
-  { width: 1920, height: 480 },
 ]) {
-  test(`home artwork stays Figma-aligned while fixed at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+  test(`the mascot has a pane of its own at ${viewport.width}x${viewport.height}`, async ({ page }) => {
     await page.setViewportSize(viewport);
-    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
     const artwork = page.locator('.home-artwork');
-    const before = (await artwork.boundingBox())!;
+    const pane = (await artwork.boundingBox())!;
     const document = (await page.locator('main').boundingBox())!;
-    // Figma: the canvas starts right of the document column and overhangs the
-    // right edge by 216/1323 of its width.
-    expect(before.x).toBeGreaterThanOrEqual(document.x + document.width + 12);
-    expect(before.x + before.width - viewport.width).toBeCloseTo((before.width * 216) / 1323, 0);
-    // Its drawing (x 22–79%, from 20.7% of the width below the canvas top to
-    // 61.6%) starts level with the description at y = 348, unless a short
-    // window would cut it off, and stays in view.
-    const drawing = {
-      top: before.y + before.width * 0.207,
-      bottom: before.y + before.width * 0.616,
-      right: before.x + before.width * 0.8,
-    };
-    if (viewport.height >= 720) expect(drawing.top).toBeCloseTo(348, 0);
-    expect(drawing.top).toBeGreaterThanOrEqual(0);
-    expect(drawing.bottom).toBeLessThanOrEqual(viewport.height - 15);
-    expect(drawing.right).toBeLessThanOrEqual(viewport.width);
-    const isFigmaViewport = viewport.width === 1920 && viewport.height === 1080;
-    if (isFigmaViewport) {
-      expect(before.x).toBeCloseTo(813, 0);
-      expect(before.y).toBeCloseTo(74, 0);
-      expect(before.width).toBeCloseTo(1323, 0);
-      expect(before.height).toBeCloseTo(1135, 0);
-      expect(await page.getByAltText(POSTER_ALT).boundingBox()).toEqual(before);
-    }
+    // The pane runs from beside the document to the window's right edge, the window's full height.
+    expect(pane.x).toBeGreaterThanOrEqual(document.x + document.width + 60);
+    expect(pane.x + pane.width).toBeCloseTo(viewport.width, 0);
+    expect(pane.y).toBeCloseTo(0, 0);
+    expect(pane.height).toBeCloseTo(viewport.height, 0);
+    const stage = (await page.locator('.home-artwork-stage').boundingBox())!;
+    expect(Math.abs(stage.x + stage.width / 2 - (pane.x + pane.width / 2))).toBeLessThanOrEqual(1);
+    expect(stage.y + stage.height / 2).toBeCloseTo(viewport.height / 2, 0);
+    const bubble = (await page.locator('.home-bubble').boundingBox())!;
+    expect(bubble.x).toBeGreaterThan(pane.x);
+    expect(bubble.x + bubble.width).toBeLessThan(viewport.width);
+    // It stays put while the document scrolls.
     await page.locator('footer').scrollIntoViewIfNeeded();
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
-    const after = (await artwork.boundingBox())!;
-    expect(after.x).toBeCloseTo(before.x, 0);
-    expect(after.y).toBeCloseTo(before.y, 0);
-    if (isFigmaViewport) {
-      await page.emulateMedia({ reducedMotion: 'no-preference' });
-      await expect(artworkCanvas(page)).toBeVisible();
-      expect(await artworkCanvas(page).boundingBox()).toEqual(after);
-    }
+    expect((await artwork.boundingBox())!.y).toBeCloseTo(0, 0);
   });
 }
 
-for (const background of ['#fbfbfb', '#eef0f2']) {
-  test(`home artwork background matches the page on ${background}`, async ({ page }) => {
-    await page.setViewportSize({ width: 1920, height: 1080 });
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/');
-    await page.addStyleTag({
-      content: `.home-page { --home-background: ${background}; }`,
-    });
-    const bounds = (await page.locator('.home-artwork').boundingBox())!;
-    async function pixel(x: number) {
-      const png = await page.screenshot({
-        clip: { x, y: bounds.y + 8, width: 1, height: 1 },
-      });
-      return Array.from(await sharp(png).removeAlpha().raw().toBuffer());
-    }
-    const paper = await pixel(bounds.x - 8);
-    expect(await pixel(bounds.x + 8)).toEqual(paper);
-    await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await expect(artworkCanvas(page)).toBeVisible();
-    expect(await pixel(bounds.x + 8)).toEqual(paper);
-  });
-}
-
-test('home reduced motion shows the static artwork without loading the effect', async ({ page }) => {
+test('reduced motion keeps the mascot still', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const sources: string[] = [];
-  page.on('request', (request) => {
-    if (SOURCE_IMAGE.test(request.url())) sources.push(request.url());
-  });
-  await page.goto('/');
-  const poster = page.getByAltText(POSTER_ALT);
-  await expect(poster).toBeVisible();
-  await expect(artworkCanvas(page)).toHaveCount(0);
-  expect(sources).toEqual([]);
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await expect(artworkCanvas(page)).toBeVisible();
-  await expect(poster).toBeHidden();
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(poster).toBeVisible();
-  await expect(artworkCanvas(page)).toHaveCount(0);
-});
-
-test('home artwork survives a source image failure', async ({ page }) => {
-  await page.route(SOURCE_IMAGE, (route) => route.abort());
-  await page.goto('/');
-  await expect(page.getByAltText(POSTER_ALT)).toBeVisible();
-  await expect(artworkCanvas(page)).toHaveCount(0);
-  await expect(page.locator('#quickstart')).toContainText('npm install -g @agentinbox/cli');
-});
-
-test('home animation suspends offscreen and resumes on mobile', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await expect(artworkCanvas(page)).toBeVisible();
-  await page.locator('footer').scrollIntoViewIfNeeded();
-  // Offscreen the effect stops painting, so the canvas holds one frame.
+  await expect.poll(() => canvasFrame(page)).not.toBe(0);
+  const still = await canvasFrame(page);
+  await page.mouse.move(20, 20);
+  await page.mouse.move(1400, 400);
   await page.waitForTimeout(300);
-  const held = await canvasFrame(page);
-  await page.waitForTimeout(500);
-  expect(await canvasFrame(page)).toBe(held);
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await expect.poll(() => canvasFrame(page)).not.toBe(held);
+  expect(await canvasFrame(page)).toBe(still);
 });
+
+test('the mascot is drawn for paper, without the dark exported drawing', async ({ page }) => {
+  const requested: string[] = [];
+  page.on('request', (request) => {
+    if (MASCOT_IMAGE.test(request.url())) requested.push(request.url());
+  });
+  await page.goto('/');
+  await expect(artworkCanvas(page)).toBeVisible();
+  await expect.poll(() => canvasFrame(page)).not.toBe(0);
+  expect(requested).toEqual([]);
+});
+
+for (const width of [390, 1024]) {
+  test(`the mascot scrolls away with the hero at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/');
+    const artwork = page.locator('.home-artwork');
+    await expect(artworkCanvas(page)).toBeVisible();
+    const before = (await artwork.boundingBox())!;
+    await page.locator('footer').scrollIntoViewIfNeeded();
+    const after = (await artwork.boundingBox())!;
+    expect(after.y).toBeLessThan(before.y);
+  });
+}
 
 test('home documentation and artwork work without JavaScript', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto('/');
-  await expect(page.getByAltText(POSTER_ALT)).toBeVisible();
+  await expect(page.getByRole('figure', { name: MASCOT })).toBeVisible();
+  await expect(page.locator('.home-artwork img')).toHaveAttribute('src', /\/illustrations\/mascot-paper\.svg$/);
   await expect(page.locator('#contacts')).toContainText('carol@acme.com');
   await page.getByRole('link', { name: 'agentinbox.md/sapien' }).click();
   await expect(page).toHaveURL(/\/sapien$/);

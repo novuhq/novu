@@ -122,9 +122,6 @@ export class HumanVerificationEmailSender {
   }
 }
 
-/** Agent Inbox is US-only, so a verification link never names a region. */
 function buildVerifyUrl(token: string): string {
-  const url = `${resolveHumanDashboardBaseUrl()}/verify/${token}`;
-
-  return url;
+  return `${resolveHumanDashboardBaseUrl()}/verify/${token}`;
 }

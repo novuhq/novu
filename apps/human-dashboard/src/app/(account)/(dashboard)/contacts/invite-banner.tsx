@@ -212,7 +212,7 @@ function InviteDialogContent({ start }: { start?: InviteDialogStart }) {
           label="ID"
           required
           requiredMark="plain"
-          hint="Lowercase, no spaces. Your agent uses it, like agentinbox inbox send Hello --to john-doe."
+          hint="Lowercase, no spaces. Your agent uses it, like agentinbox send Hello --to john-doe."
           error={fieldErrors.contactId}
         >
           {(field) => (

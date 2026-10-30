@@ -84,6 +84,8 @@ export class FakeApi {
   down = false;
   /** The next send goes through, but its answer is lost on the way back, as when the connection drops. */
   loseNextAnswer = false;
+  /** How long an interaction takes to come back once it was asked for: the read it is happens at once. */
+  showDelayMs = 0;
   /** Answers each new question (`approve`, `choose`, `ask`) as it comes, or leaves it pending (undefined). */
   decide: (interaction: FakeInteraction) => FakeDecision | undefined = () => undefined;
   private server?: Server;
@@ -465,13 +467,24 @@ export class FakeApi {
     send(200, { data: this.interactionView(interaction) });
   }
 
-  private showInteraction(id: string, send: Send): void {
+  private async showInteraction(id: string, send: Send): Promise<void> {
     const interaction = this.interactions.find((candidate) => candidate.id === id);
-    // Reading a person's answer hands it to the agent: the listener's wait leaves it out from then on.
-    if (interaction && ['approved', 'denied', 'answered'].includes(interaction.status)) {
+    if (!interaction) {
+      send(404, { message: 'Not found' });
+
+      return;
+    }
+
+    // As it was before this read, which hands a person's answer to the agent: the listener's wait leaves it out from
+    // then on.
+    const view = this.interactionView(interaction);
+    if (['approved', 'denied', 'answered'].includes(interaction.status)) {
       interaction.answerReadAt ??= new Date().toISOString();
     }
-    send(interaction ? 200 : 404, interaction ? { data: this.interactionView(interaction) } : { message: 'Not found' });
+    if (this.showDelayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, this.showDelayMs));
+    }
+    send(200, { data: view });
   }
 
   private listConversations({ query }: FakeCall, send: Send): void {
@@ -522,6 +535,7 @@ export class FakeApi {
       platform: 'telegram',
       expiresAt: interaction.expiresAt,
       createdAt: interaction.createdAt,
+      ...(interaction.answerReadAt ? { answerReadAt: interaction.answerReadAt } : {}),
       ...(conversationId ? { threads: [{ id: conversationId, unreadBefore: 0 }] } : {}),
     };
   }

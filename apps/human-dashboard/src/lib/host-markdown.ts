@@ -99,9 +99,10 @@ function alternativeSections(host: CommandHost): string[] {
   }
 
   const heading = `## ${alternative.title.replace(/^Or /, 'Or: ')}`;
-  const signIn = alternative.signInCommand
-    ? `${alternative.signIn} \`${alternative.signInCommand}\``
-    : alternative.signIn;
+  const signIn = [
+    alternative.signInCommand ? `${alternative.signIn} \`${alternative.signInCommand}\`` : alternative.signIn,
+    ...(alternative.afterSignIn ? [alternative.afterSignIn] : []),
+  ].join(' ');
   const notes = alternative.agentNotes ?? [];
   if (alternative.kind === 'plugin') {
     return [
@@ -113,11 +114,17 @@ function alternativeSections(host: CommandHost): string[] {
     ];
   }
 
+  // Hermes keeps its config in YAML, the others in JSON.
+  const configFence = alternative.file.endsWith('.yaml') ? '```yaml' : '```json';
+
   return [
     heading,
+    ...(alternative.addCommand
+      ? [alternative.addCommand.text, ['```text', alternative.addCommand.line(MCP_URL), '```'].join('\n')]
+      : []),
     alternative.text,
     ...(alternative.installLink ? [`${alternative.installLink.label}: ${alternative.installLink.href(MCP_URL)}`] : []),
-    ['```json', alternative.config(MCP_URL), '```'].join('\n'),
+    [configFence, alternative.config(MCP_URL), '```'].join('\n'),
     signIn,
     ...notes,
   ];

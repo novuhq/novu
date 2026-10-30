@@ -8,9 +8,15 @@ export const CLI_PACKAGE = '@agentinbox/cli';
 export const CLI_BIN = 'agentinbox';
 
 export const HOME_INTRODUCTION = [
-  'You are connected to everything except the humans you work with and for.',
-  'Agent Inbox gives you an E-mail address, a Telegram handle and a Slack app. Humans send you requests there, and you can reach the humans you work with.',
-  'Agent Inbox is an email inbox for AI agents: one address, plus Slack and Telegram, through one CLI. You send, you reply, and you get a structured answer when you ask, approve, or choose.',
+  'You can reach tools. The work is with people.',
+  'Email, Slack and Telegram: an address on each, and one CLI to send, reply, and get an answer.',
+] as const;
+
+/** What lands in the mascot's speech bubble on `/`, one at a time: replies from the humans the agent works with. */
+export const HOME_MASCOT_MESSAGES = [
+  { from: 'maya@acme.com', via: 'email', text: 'Approved. Ship it.' },
+  { from: 'dan', via: 'slack', text: 'Can you move standup to 10?' },
+  { from: 'lena', via: 'telegram', text: 'Dinner Friday at 7 works.' },
 ] as const;
 
 /** Who runs it. "Novu" is the link in the page footer. */
@@ -18,7 +24,12 @@ export const HOME_TRUST_BEFORE = 'Built by ';
 export const HOME_TRUST_AFTER = ', and open source.';
 export const HOME_TRUST = `${HOME_TRUST_BEFORE}Novu${HOME_TRUST_AFTER}`;
 
-/** Jobs this inbox is for. "You" is the agent. */
+/** The first line of the heading on `/` and the title of `/index.md`. */
+export const HOME_WORDMARK = 'AGENTINBOX.MD';
+
+/** The line under the wordmark on `/` and under the title of `/index.md`. */
+export const HOME_TITLE = 'The inbox API for agents';
+
 export const HOME_USES = [
   {
     title: 'Browser agents',
@@ -27,6 +38,10 @@ export const HOME_USES = [
   {
     title: 'Personal assistants',
     text: 'People email you, or reach you on Slack or Telegram, on an address that is yours.',
+  },
+  {
+    title: 'Agents as teammates',
+    text: 'Coordinate with the humans you work alongside: schedule, follow up, and ask for what is missing.',
   },
   {
     title: 'Product agents',
@@ -54,7 +69,9 @@ export const HOME_READY = [
   },
 ] as const;
 
-export const HOME_DEFINITION = HOME_INTRODUCTION[2];
+/** The one-line definition, for the FAQ. The introduction above is the pitch. */
+export const HOME_DEFINITION =
+  'Agent Inbox is an email inbox for AI agents, with Slack and Telegram too: one address, one CLI, and a structured answer when you ask, approve, or choose.';
 
 /** Questions whose answers are on this page, for the home page's FAQ structured data. */
 export const HOME_FAQ = [
@@ -86,22 +103,22 @@ export const HOME_HOW_IT_WORKS: readonly (readonly HomeProsePart[])[] = [
     ' creates your inbox and gives it an email address. It can also connect Telegram and Slack. All three share that one inbox.',
   ],
   [
-    { code: 'agentinbox inbox list', compact: true },
+    { code: 'agentinbox list', compact: true },
     ' shows what arrived, and ',
-    { code: 'agentinbox inbox reply', compact: true },
+    { code: 'agentinbox reply', compact: true },
     ' answers the thread, whichever channel it came from. ',
     { code: 'agentinbox contact invite', compact: true },
     ' makes a person a contact. On a new conversation, pass an email to ',
-    { code: 'agentinbox inbox send', compact: true },
+    { code: 'agentinbox send', compact: true },
     ' with ',
     { code: '--to' },
     ' and they become a contact. A reply still needs one.',
   ],
   [
     'On ',
-    { code: 'agentinbox inbox send', compact: true },
+    { code: 'agentinbox send', compact: true },
     ' and ',
-    { code: 'agentinbox inbox reply,', compact: true },
+    { code: 'agentinbox reply,', compact: true },
     'plain text is a message. Start it with ',
     { code: 'ask,' },
     { code: 'approve,' },
@@ -112,7 +129,7 @@ export const HOME_HOW_IT_WORKS: readonly (readonly HomeProsePart[])[] = [
 ];
 
 export const HOME_CONTACTS_DESCRIPTION =
-  'Contacts are the people you reach often. agentinbox contact list shows them. Invite someone with agentinbox contact invite so they can connect and join that list. On a new conversation, agentinbox inbox send with --to and an email delivers to that address and they become a contact. A reply still needs a contact.';
+  'Contacts are the people you reach often. agentinbox contact list shows them. Invite someone with agentinbox contact invite so they can connect and join that list. On a new conversation, agentinbox send with --to and an email delivers to that address and they become a contact. A reply still needs a contact.';
 
 export type CommandPart = {
   text: string;
@@ -145,8 +162,8 @@ export const INSTALL_OPTIONS: readonly InstallOption[] = [
 ];
 
 /**
- * `agentinbox <command>` and what follows it: `agentinbox` orange, the subcommand purple. `inbox list` and
- * `inbox send` keep the `inbox` group, because that is a command under the binary, not the binary itself.
+ * `agentinbox <command>` and what follows it: `agentinbox` orange, the command purple. `contact invite` keeps the
+ * `contact` group, because that is a command under the binary, not the binary itself.
  * Flags keep the design's colours too: a value's orange, `--name` and `--after` blue, and a switch such as
  * `--json` green. A quoted message is blue, like `--name "Alice Chen"`.
  */
@@ -162,15 +179,15 @@ function quoted(message: string): CommandPart {
 }
 
 /**
- * The first commands, in order. `agentinbox inbox send` starts a conversation (a plain message does not wait);
- * `--via email` delivers that one on email. `agentinbox inbox reply` takes the conversation id from `agentinbox inbox list`.
+ * The first commands, in order. `agentinbox send` starts a conversation (a plain message does not wait);
+ * `--via email` delivers that one on email. `agentinbox reply` takes the conversation id from `agentinbox list`.
  */
 export const HOME_QUICKSTART: readonly HomeCommand[] = [
   { parts: cli('setup'), note: '# once' },
-  { parts: cli('inbox list'), note: '# conversations' },
-  { parts: cli('inbox reply', { text: ' conv_123 ' }, quoted('On it.')), note: '# reply in that conversation' },
+  { parts: cli('list'), note: '# conversations' },
+  { parts: cli('reply', { text: ' conv_123 ' }, quoted('On it.')), note: '# reply in that conversation' },
   {
-    parts: cli('inbox send', SPACE, quoted('Build finished — 0 failures.'), SPACE, {
+    parts: cli('send', SPACE, quoted('Build finished — 0 failures.'), SPACE, {
       text: '--via email',
       color: 'orange',
     }),

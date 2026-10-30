@@ -5,8 +5,8 @@ import {
   ChannelEndpointEntity,
   ChannelEndpointRepository,
   EnforceEnvOrOrgIds,
+  type FilterQuery,
 } from '@novu/dal';
-import { FilterQuery } from 'mongoose';
 import { GetChannelEndpointCommand } from './get-channel-endpoint.command';
 
 @Injectable()

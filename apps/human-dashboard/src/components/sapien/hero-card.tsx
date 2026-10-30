@@ -1,9 +1,11 @@
+import { Phone } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { BUSINESS_CARD, CALL_CARD, heroAssets } from '@/data/sapien-hero';
 
 import { cn } from '@/lib/utils';
 
 import { Artwork } from './artwork';
+import { ChannelLogo } from './brand-logo';
 
 /**
  * Card surfaces. Figma renders the hero cards with a frosted glass highlight that
@@ -122,7 +124,19 @@ export function BusinessCard() {
         <dl className="flex flex-col gap-[13px]">
           {card.rows.map((row) => (
             <div key={row.label} className="flex items-center justify-between">
-              <dt className="text-base leading-[1.2] tracking-[-0.01em] text-sapien-foreground/50">{row.label}</dt>
+              <dt className="flex items-center gap-2 text-base leading-[1.2] tracking-[-0.01em] text-sapien-foreground/50">
+                {row.channel ? (
+                  <ChannelLogo channel={row.channel} size={16} />
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="flex size-4 items-center justify-center rounded-full bg-sapien-raised text-sapien-foreground"
+                  >
+                    <Phone className="size-2.5" strokeWidth={2.25} />
+                  </span>
+                )}
+                {row.label}
+              </dt>
               <dd className="flex items-center gap-1.5 text-base leading-none tracking-tight whitespace-pre text-sapien-foreground">
                 {row.value}
                 <Artwork asset={heroAssets.checkIcon} className="size-5" />

@@ -58,7 +58,7 @@ const anyoneMayAnswer = z
 const CHECK_INBOX_HINT =
   ' Before you send, call inbox_list with filter "unread" so you do not miss a conversation a person started.';
 
-/** The kinds that ask something. Without one, a send is a plain message, as `inbox send <text>` is in the CLI. */
+/** The kinds that ask something. Without one, a send is a plain message, as `send <text>` is in the CLI. */
 type QuestionKind = Exclude<InteractionKind, 'tell'>;
 
 const questionKind = z
@@ -327,7 +327,7 @@ export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEm
         id: z.string().min(1).max(128).describe('The id from the earlier result.'),
         wait_seconds: waitSeconds,
       },
-      annotations: { readOnlyHint: true, openWorldHint: true },
+      annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
     },
     ({ id, wait_seconds }) =>
       run(async () => describeOutcome(await waitForAnswer(api, id, wait_seconds ?? DEFAULT_WAIT_SECONDS)))
@@ -379,7 +379,7 @@ export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEm
           .describe(`Page size (default ${DEFAULT_CONTACTS_LIMIT}).`),
         after: z.string().optional().describe('Cursor from a previous page.'),
       },
-      annotations: { readOnlyHint: true, openWorldHint: false },
+      annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     },
     (input) => run(() => contactListText(api, input))
   );
@@ -415,7 +415,7 @@ export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEm
             `Hold the request up to this many seconds until a conversation matches (max ${INBOX_MAX_WAIT_SECONDS}, default 0).`
           ),
       },
-      annotations: { readOnlyHint: true, openWorldHint: false },
+      annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     },
     (input) =>
       run(async () => {
@@ -443,7 +443,7 @@ export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEm
         limit: z.number().int().min(1).max(100).optional().describe('How many recent messages to return (default 20).'),
         before: z.string().optional().describe('Message id cursor for older pages.'),
       },
-      annotations: { readOnlyHint: true, openWorldHint: false },
+      annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     },
     ({ conversation: id, limit, before }) =>
       run(async () =>

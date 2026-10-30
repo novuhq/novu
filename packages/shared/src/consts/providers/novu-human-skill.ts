@@ -44,5 +44,5 @@ Call \`ctx.ask\`, \`ctx.approve\`, \`ctx.choose\`, or \`ctx.tell\`. The verdict 
 
 ### Unattended (CLI / cron / no live thread)
 
-Use the \`agent-inbox\` skill and the Agent Inbox CLI: \`npx @agentinbox/cli inbox send ask|approve|choose\` to ask, a plain \`inbox send\` to tell, and \`inbox reply <conversation>\` to answer in a conversation.
+Use the \`agent-inbox\` skill and the Agent Inbox CLI: \`npx @agentinbox/cli send ask|approve|choose\` to ask, a plain \`send\` to tell, and \`reply <conversation>\` to answer in a conversation.
 `;

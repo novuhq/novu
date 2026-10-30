@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { Stage } from '@/components/site/stage';
-import { findCliLogin, type HumanRegion, type PendingCliLogin } from '@/lib/human-accounts-api';
+import { findCliLogin, type PendingCliLogin } from '@/lib/human-accounts-api';
 import { HumanApiError } from '@/lib/human-api-error';
 import { isAccountAgentInUse } from '@/lib/human-claim';
 
@@ -18,8 +18,8 @@ export const metadata: Metadata = {
 };
 
 /**
- * Opened by the CLI's `login` (`…/cli/login?code=BCDF-GHJK`, plus `&region=eu` from the EU API). The page shows
- * the code and the computer's name to compare with the terminal, and the signed-in person approves or denies.
+ * Opened by the CLI's `login` (`…/cli/login?code=BCDF-GHJK`). The page shows the code and the computer's name
+ * to compare with the terminal, and the signed-in person approves or denies.
  * The code in the link only says which login this is: opening the page approves nothing, and a code that was
  * denied, used or ran out shows the expired card. Links from older CLIs have no code; it's typed then.
  * When the CLI has a setup made without an account, `claim=…` carries its claim token, so approving also
@@ -30,14 +30,12 @@ export default async function CliLoginPage(props: PageProps<'/cli/login'>) {
   const searchParams = await props.searchParams;
   const linkedCode = typeof searchParams.code === 'string' ? searchParams.code : '';
   const claim = typeof searchParams.claim === 'string' ? searchParams.claim : '';
-  const region: HumanRegion = searchParams.region === 'eu' ? 'eu' : 'us';
 
   const user = await currentUser();
   if (!user) {
     const query = new URLSearchParams({
       ...(linkedCode ? { code: linkedCode } : {}),
       ...(claim ? { claim } : {}),
-      ...(region === 'eu' ? { region } : {}),
     });
     const loginPath = query.size > 0 ? `/cli/login?${query}` : '/cli/login';
 
@@ -47,7 +45,7 @@ export default async function CliLoginPage(props: PageProps<'/cli/login'>) {
 
   // Anything in `code` that isn't a code is never shown or sent on: such a link has nothing to approve.
   const userCode = normalizeUserCode(linkedCode);
-  const login = userCode ? await readLogin(region, userCode) : null;
+  const login = userCode ? await readLogin(userCode) : null;
   const expired = Boolean(linkedCode) && !login;
   const cannotKeepSetup = !expired && Boolean(claim) && (await isAccountAgentInUse(user));
 
@@ -56,7 +54,6 @@ export default async function CliLoginPage(props: PageProps<'/cli/login'>) {
       <CliLogin
         userCode={login?.userCode ?? ''}
         machineName={login?.machineName}
-        region={region}
         claim={cannotKeepSetup ? '' : claim}
         cannotKeepSetup={cannotKeepSetup}
         email={user.primaryEmailAddress?.emailAddress}
@@ -70,9 +67,9 @@ export default async function CliLoginPage(props: PageProps<'/cli/login'>) {
  * The login waiting for the code, or null once nothing waits for it. When the API can't be asked, the card
  * is still shown, without the computer's name: Approve asks again, and says so if the login is gone.
  */
-async function readLogin(region: HumanRegion, userCode: string): Promise<PendingCliLogin | null> {
+async function readLogin(userCode: string): Promise<PendingCliLogin | null> {
   try {
-    return await findCliLogin(region, userCode);
+    return await findCliLogin(userCode);
   } catch (error) {
     if (error instanceof HumanApiError && error.code === 'cli_login_not_found') {
       return null;

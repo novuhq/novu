@@ -99,7 +99,8 @@ exercised as in production.
 
 The bake seeds:
 
-- the seed user `agent@novu.co` (password: the `BOX_SEED_PASSWORD` secret) and its org, on the Team plan;
+- the seed user `agent@novu.co` (password: the `BOX_SEED_PASSWORD` secret) and its org, on the Team plan; Clerk
+  refuses to delete either from the dashboard, so a test that signs in as it can't remove it from every box;
 - Mailpit as the email integration, and SMS, push and chat integrations pointing at the sink, with the seed
   subscriber's phone, push token and chat webhook, so Test Workflow reaches every channel;
 - the bridge app synced to the Development environment, and its agents linked to web chat.

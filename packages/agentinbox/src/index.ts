@@ -17,7 +17,7 @@ program
   .name(CLI_COMMAND)
   .description(
     'An inbox for your agent. People write to it on Telegram, Slack or email; it reads, asks and answers.\n\n' +
-      'Every command is `<command> <action>`: setup, login, connect, inbox, contact, channel, listen.\n\n' +
+      'Conversations: list, show, read, resolve, send, reply. Contacts and channels: `contact <action>`, `channel <action>`. This computer: setup, login, connect, listen.\n\n' +
       'Exit codes: 0 answered/approved · 10 denied · 11 timed out (the answer shows up in the conversation) · 12 expired/canceled · 1 error'
   )
   .version(version);
@@ -61,15 +61,9 @@ const SEND_USAGE =
   '  approve <action>     Approve and Deny buttons\n' +
   '  choose <question>    one of 2-10 options, given with --option';
 
-// --- inbox ---
+// --- conversations ---
 
-const inbox = program
-  .command('inbox')
-  .description(
-    'Your agent’s conversations: read what people wrote, start a conversation or reply in one, and close it'
-  );
-
-inbox
+program
   .command('list')
   .option('--filter <filter>', 'unread, read or all (default: all)')
   .option('--status <status>', 'open, resolved or all (default: open)')
@@ -83,7 +77,7 @@ inbox
   .description('List conversations, newest first. By default: open conversations with contacts, read and unread')
   .action(inboxListCommand);
 
-inbox
+program
   .command('show')
   .argument('<conversation>', 'conversation id (conv_...)')
   .option('--limit <n>', 'max messages (default 20, max 100)')
@@ -93,7 +87,7 @@ inbox
   .description('Show a conversation, oldest message first. Looking does not mark it read')
   .action(inboxShowCommand);
 
-inbox
+program
   .command('read')
   .argument('<conversation>', 'conversation id (conv_...)')
   .option('--json', 'print JSON')
@@ -101,7 +95,7 @@ inbox
   .description('Mark a conversation read when it needs no reply')
   .action(inboxReadCommand);
 
-inbox
+program
   .command('resolve')
   .argument('<conversation>', 'conversation id (conv_...)')
   .option('--json', 'print JSON')
@@ -110,7 +104,7 @@ inbox
   .action(inboxResolveCommand);
 
 withSendOptions(
-  inbox
+  program
     .command('send')
     .argument('<words...>', '[ask|approve|choose] and the text to send')
     .option(
@@ -125,7 +119,7 @@ withSendOptions(
 ).action((words: string[], options) => runSend(words, options));
 
 withSendOptions(
-  inbox
+  program
     .command('reply')
     .argument('<conversation>', 'conversation id (conv_...)')
     .argument('<words...>', '[ask|approve|choose] and the text to send')
