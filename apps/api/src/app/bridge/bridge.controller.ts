@@ -16,14 +16,12 @@ import {
 import { ApiExcludeController } from '@nestjs/swagger';
 import {
   AnalyticsService,
-  assertSafeOutboundUrl,
   ExternalApiAccessible,
   GeneratePreviewResponseDto,
   PreviewStep,
   PreviewStepCommand,
   RequirePermissions,
   SkipPermissionsCheck,
-  SsrfBlockedError,
   UserSession,
   WorkflowResponseDto,
 } from '@novu/application-generic';
@@ -37,6 +35,7 @@ import {
   ResourceTypeEnum,
   UserSessionData,
 } from '@novu/shared';
+import { assertSafeOutboundUrl, SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { CreateBridgeRequestDto } from './dtos/create-bridge-request.dto';
 import { CreateBridgeResponseDto } from './dtos/create-bridge-response.dto';
@@ -82,6 +81,7 @@ export class BridgeController {
   async preview(
     @Param('workflowId') workflowId: string,
     @Param('stepId') stepId: string,
+    // biome-ignore lint/suspicious/noExplicitAny: preview body shape is unchanged
     @Body() data: any,
     @UserSession() user: UserSessionData
   ) {
@@ -207,6 +207,7 @@ export class BridgeController {
     @Param('workflowId') workflowId: string,
     @Param('stepId') stepId: string,
     @UserSession() user: UserSessionData,
+    // biome-ignore lint/suspicious/noExplicitAny: control body shape is unchanged
     @Body() body: any
   ) {
     return this.storeControlValuesUseCase.execute(
@@ -256,6 +257,7 @@ export class BridgeController {
       );
 
       return { isValid: result.status === 'ok' };
+      // biome-ignore lint/suspicious/noExplicitAny: the error message is the only field this response reads
     } catch (err: any) {
       return { isValid: false, error: err.message };
     }
@@ -321,6 +323,8 @@ export class BridgeController {
   ): Promise<GeneratePreviewResponseDto> {
     this.assertSafeStatelessBridgeUrl(body.bridgeUrl);
 
+    // biome-ignore lint/suspicious/noExplicitAny: preview payload is a loose bridge record
+    // biome-ignore lint/plugin: preview payload is a loose bridge record
     const previewPayload = (body.previewPayload ?? {}) as Record<string, any>;
 
     const output = await this.previewStep.execute(
@@ -344,6 +348,7 @@ export class BridgeController {
     return {
       result: {
         preview: (output.outputs ?? {}) as Record<string, unknown>,
+        // biome-ignore lint/plugin: stepType is the bridge enum stored as a string on the request
         type: body.stepType as unknown as ChannelTypeEnum,
       },
       previewPayloadExample: previewPayload,

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  assertSafeOutboundUrl,
   buildInvalidJsonBodyDetail,
   buildNovuSignatureHeader,
   buildWorkflowVariables,
@@ -18,7 +17,6 @@ import {
   InstrumentUsecase,
   PinoLogger,
   resolveHttpRequestBody,
-  SsrfBlockedError,
   shouldIncludeBody,
   toHeadersRecord,
 } from '@novu/application-generic';
@@ -40,6 +38,7 @@ import {
   isOutboundSsrfProtectionEnabled,
   ResourceOriginEnum,
 } from '@novu/shared';
+import { assertSafeOutboundUrl, SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 
 import { ExecuteBridgeJob } from '../execute-bridge-job';

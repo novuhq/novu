@@ -22,10 +22,10 @@ import {
   buildNovuSignatureHeader,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
-  safeOutboundJsonRequest,
 } from '@novu/application-generic';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { HttpHeaderKeysEnum } from '@novu/framework/internal';
+import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
 import sinon from 'sinon';
 import {
   AgentExecutionParams,
@@ -55,6 +55,7 @@ export function stubBridgeExecutorWithRealHttp(bridgeExecutor: BridgeExecutorSer
   const calls: AgentExecutionParams[] = [];
   const inflight = new Set<Promise<unknown>>();
 
+  // biome-ignore lint/plugin: the stub reaches private bridge helpers so the signed payload stays the production one
   const internals = bridgeExecutor as unknown as BridgeExecutorInternals;
 
   sinon.stub(bridgeExecutor, 'execute').callsFake(async (params: AgentExecutionParams) => {

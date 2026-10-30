@@ -25,20 +25,20 @@ import {
   PreviousStepTypeEnum,
   TimeOperatorEnum,
 } from '@novu/shared';
+import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
+import { assertSafeOutboundUrl, SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import { differenceInDays, differenceInHours, differenceInMinutes, parseISO } from 'date-fns';
 import { get as lodashGet } from 'lodash';
 import { decryptApiKey } from '../../encryption';
 import { PinoLogger } from '../../logging';
-import { buildSubscriberKey, CachedResponse, FeatureFlagsService, safeOutboundJsonRequest } from '../../services';
+import { buildSubscriberKey, CachedResponse, FeatureFlagsService } from '../../services';
 import {
-  assertSafeOutboundUrl,
   createHash,
   createWebhookFilterError,
   Filter,
   FilterProcessingDetails,
   IFilterVariables,
   PlatformException,
-  SsrfBlockedError,
   shouldPropagateWebhookFilterFailure,
   WEBHOOK_FILTER_ERROR_CODE,
   WEBHOOK_FILTER_REQUEST_FAILED_DATA,
@@ -561,6 +561,7 @@ export class ConditionsFilter extends Filter {
           ...variables,
         },
       });
+      // biome-ignore lint/suspicious/noExplicitAny: the catch only forwards the message into an execution detail
     } catch (e: any) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

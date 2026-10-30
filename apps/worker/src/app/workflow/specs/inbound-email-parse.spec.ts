@@ -7,12 +7,6 @@ import {
   PinoLogger,
   SendWebhookMessage,
 } from '@novu/application-generic';
-
-// The top-level @novu/application-generic re-exports helpers via Object.defineProperty
-// getters, which sinon cannot replace. Stub the underlying source module instead — the
-// re-export getter delegates to it so backend code picks up the stub.
-const ssrfUrlValidationModule = require('@novu/application-generic/build/main/utils/ssrf-url-validation');
-
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -22,6 +16,7 @@ import {
   JobRepository,
   MessageRepository,
 } from '@novu/dal';
+import * as ssrfUrlValidationModule from '@novu/shared/utils/safe-outbound-http';
 import axios, { AxiosResponse } from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';

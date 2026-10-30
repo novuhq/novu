@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
-  assertSafeOutboundUrl,
   buildInvalidJsonBodyDetail,
   buildNovuSignatureHeader,
   enhanceStepsMap,
@@ -13,11 +12,11 @@ import {
   InstrumentUsecase,
   KeyValuePair,
   resolveHttpRequestBody,
-  SsrfBlockedError,
   shouldIncludeBody,
 } from '@novu/application-generic';
 import { compileJsonControlValues, createLiquidEngine, repairJsonString } from '@novu/framework/internal';
 import { isOutboundSsrfProtectionEnabled } from '@novu/shared';
+import { assertSafeOutboundUrl, SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import { Liquid } from 'liquidjs';
 import { TestHttpEndpointResponseDto } from '../../dtos/test-http-endpoint.dto';
 import { TestHttpEndpointCommand } from './test-http-endpoint.command';
@@ -49,6 +48,7 @@ export class TestHttpEndpointUsecase {
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: the HTTP endpoint test flow is unchanged
   async execute(command: TestHttpEndpointCommand): Promise<TestHttpEndpointResponseDto> {
     const { controlValues = {}, previewPayload } = command;
 
@@ -199,6 +199,7 @@ export class TestHttpEndpointUsecase {
   }
 }
 
+// biome-ignore lint/plugin: a failed parse returns the original text, which is what the caller displays
 function tryParseJson(text: string): unknown {
   try {
     return JSON.parse(text);

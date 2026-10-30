@@ -1,14 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import {
-  AttachmentRehydrator,
-  assertSafeOutboundUrl,
-  CompileTemplate,
-  createHash,
-  getEffectiveJobPayload,
-  normalizeOutboundHttpUrl,
-  SsrfBlockedError,
-  safeOutboundJsonRequest,
-} from '@novu/application-generic';
+import { AttachmentRehydrator, CompileTemplate, createHash, getEffectiveJobPayload } from '@novu/application-generic';
 import {
   JobEntity,
   JobRepository,
@@ -18,6 +9,12 @@ import {
   NotificationTemplateEntity,
 } from '@novu/dal';
 import { InboundEmailAttachment, StepTypeEnum } from '@novu/shared';
+import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
+import {
+  assertSafeOutboundUrl,
+  normalizeOutboundHttpUrl,
+  SsrfBlockedError,
+} from '@novu/shared/utils/ssrf-url-validation';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
 import {
   InboundParseOutcome,

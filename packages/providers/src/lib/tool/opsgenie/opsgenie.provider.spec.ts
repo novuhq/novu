@@ -26,6 +26,7 @@ const mockResponse = (requestId = 'req-1') => ({
   statusMessage: 'Accepted',
   headers: {},
   body: { requestId, result: 'Request will be processed' },
+  isJson: true,
 });
 
 const channelData = (apiKey: string, region: 'us' | 'eu' = 'us'): OpsgenieIntegrationData => ({

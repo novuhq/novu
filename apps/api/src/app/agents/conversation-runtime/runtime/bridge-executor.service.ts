@@ -2,16 +2,11 @@ import { isIP } from 'node:net';
 import type { Readable } from 'node:stream';
 import { Injectable } from '@nestjs/common';
 import {
-  assertSafeOutboundUrl,
   buildNovuSignatureHeader,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   isNovuTlsEnabled,
   PinoLogger,
-  resolvePublicAddresses,
-  type SafeOutboundStreamResponse,
-  SsrfBlockedError,
-  safeOutboundStreamRequest,
 } from '@novu/application-generic';
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
@@ -28,6 +23,12 @@ import type {
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
+import { type SafeOutboundStreamResponse, safeOutboundStreamRequest } from '@novu/shared/utils/safe-outbound-http';
+import {
+  assertSafeOutboundUrl,
+  resolvePublicAddresses,
+  SsrfBlockedError,
+} from '@novu/shared/utils/ssrf-url-validation';
 import type { Message, Root } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';

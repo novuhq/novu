@@ -7,8 +7,6 @@ import {
   type IAgentRuntimeProvider,
   PinoLogger,
   resolveAgentRuntime,
-  SsrfBlockedError,
-  safeOutboundJsonRequest,
   splitOAuthState,
 } from '@novu/application-generic';
 import {
@@ -30,6 +28,8 @@ import {
   type McpTokenEndpointAuthMethod,
   resolvePersistedMcpTokenEndpointAuthMethod,
 } from '@novu/shared';
+import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
+import { SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { AgentConversationService } from '../../../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../../../conversation-runtime/egress/outbound.gateway';
@@ -397,6 +397,7 @@ export class McpOAuthCallback {
     plainAuth: ReturnType<typeof this.buildPlainAuth>,
     oauthClient: McpConnectionOAuthClient
   ): Promise<McpOAuthCallbackResult> {
+    // biome-ignore lint/style/noNonNullAssertion: catalog lookup is unchanged; a missing id already throws on the next property read
     const catalog = MCP_SERVERS.find((entry) => entry.id === stateData.mcpId)!;
 
     try {
@@ -598,16 +599,19 @@ export class McpOAuthCallback {
     this.showTypingIndicator(stateData);
 
     await this.managedAgentService.sendToolResult({
+      // biome-ignore lint/style/noNonNullAssertion: connect-card state is unchanged; conversationId is set before this callback
       conversationId: stateData.conversationId!,
       environmentId: stateData.environmentId,
       organizationId: stateData.organizationId,
       agentIdentifier: stateData.agentIdentifier ?? '',
       integrationIdentifier: stateData.integrationIdentifier ?? '',
       subscriberId: subscriber.subscriberId,
+      // biome-ignore lint/style/noNonNullAssertion: connect-card state is unchanged; toolUseId is set before this callback
       toolUseId: stateData.toolUseId!,
       content: 'OK',
       followUpMessage: `${stateData.mcpId ?? 'Integration'} is now connected and ready. Resume the user's original request. Use the available tools directly. Do not output any preamble or mention the connection — go straight to action.`,
       platform: stateData.platform as AgentPlatformEnum,
+      // biome-ignore lint/style/noNonNullAssertion: connect-card state is unchanged; platformThreadId is set before this callback
       platformThreadId: stateData.platformThreadId!,
       suppressReply: true,
     });
