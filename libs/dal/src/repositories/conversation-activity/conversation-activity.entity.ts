@@ -23,7 +23,13 @@ export enum ConversationActivityTypeEnum {
   TOOL_APPROVAL_REQUEST = 'tool_approval_request',
   /** Human approve/deny verdict for a pending tool approval. Carries `{ approvalId, approved }` in `toolData`. */
   TOOL_APPROVAL_DECISION = 'tool_approval_decision',
-  /** Outcome of an executed (or denied) tool call. Carries `{ toolCallId, toolName, output }` in `toolData`. */
+  /** Tool call with its final input, recorded on `tool-use-done`. Carries `{ toolCallId, toolName, input, mcpServerName? }` in `toolData`. */
+  TOOL_CALL = 'tool_call',
+  /**
+   * Outcome of an executed (or denied) tool call. Carries `{ toolCallId, toolName, output }` in `toolData`,
+   * plus `{ content, isError, truncated? }` when recorded from a protocol `tool-use-result`.
+   * Rows without `output` are record-only: no model reads them back.
+   */
   TOOL_RESULT = 'tool_result',
   /** An MCP OAuth connection is required before the agent can continue. */
   MCP_CONNECTION_REQUEST = 'mcp_connection_request',
@@ -63,6 +69,14 @@ export interface ConversationActivitySignalData {
   payload?: Record<string, unknown>;
 }
 
+/** Stored copy of a protocol `AgentToolResultContent` part. Media parts are kept without `data`. */
+export type ConversationActivityToolResultPart =
+  | { type: 'text'; text: string }
+  | { type: 'citation'; url: string; title?: string; excerpts?: string[] }
+  | { type: 'json'; value: unknown }
+  | { type: 'media'; mediaType: string; name?: string }
+  | { type: 'unknown'; providerType: string; data: Record<string, unknown> };
+
 export interface ConversationActivityToolData {
   /** The tool call this activity relates to (request + result). */
   toolCallId?: string;
@@ -70,7 +84,7 @@ export interface ConversationActivityToolData {
   toolName?: string;
   /** Correlation id linking an approval request to its decision (request + decision). */
   approvalId?: string;
-  /** Tool input arguments (request). */
+  /** Tool input arguments (request + call). */
   input?: Record<string, unknown>;
   /** Approve/deny verdict (decision). */
   approved?: boolean;
@@ -78,6 +92,12 @@ export interface ConversationActivityToolData {
   optionId?: string;
   /** Executed tool output, or the `execution-denied` marker (result). */
   output?: unknown;
+  /** Result parts as the runtime reported them, capped in size (result). */
+  content?: ConversationActivityToolResultPart[];
+  /** Whether the tool failed (result). Set whenever `content` is set. */
+  isError?: boolean;
+  /** `content` was cut to fit the storage cap (result). */
+  truncated?: boolean;
   /** Server-minted action id for approve (request). Echoed by headless / card UIs. */
   approveActionId?: string;
   /** Server-minted action id for deny (request). Echoed by headless / card UIs. */
