@@ -1,40 +1,15 @@
-// IMPORTANT: this file is a hand-maintained mirror of two source modules:
-//   - packages/shared/src/utils/ssrf-url-validation.ts   (URL/IP policy primitives)
-//   - packages/shared/src/utils/safe-outbound-http.ts    (DNS-pinned request runner)
-//
-// Why duplicated rather than re-exported: libs/application-generic ships as
-// CommonJS and its tsconfig uses node10 module resolution, which does not honour
-// the `exports` subpath map that `packages/shared` uses to publish these
-// symbols. Until the lib moves to node16/nodenext resolution, we keep an
-// inlined copy so backend code has a single import path through
-// `@novu/application-generic`.
-//
-// Drift hazard: URL policy, redirect state machine, and DNS handling MUST stay
-// in lockstep between packages/shared and this mirror. Private IP classification
-// is canonical in @novu/shared/utils/private-ip-classification and re-exported here.
-// Runtime require() needs compiled dist output; nx build ordering (^build) builds
-// @novu/shared before application-generic.
-//
-// New code should prefer `safeOutboundRequest` / `safeOutboundJsonRequest`,
-// which enforce the policy at connect time and re-validate every redirect.
-
 import * as dns from 'node:dns';
 import * as http from 'node:http';
 import * as https from 'node:https';
 import { isIP } from 'node:net';
 import { Readable } from 'node:stream';
+import {
+  isAddressAllowedByOutboundAllowList,
+  isHostnameAllowedByOutboundAllowList,
+  isOutboundAddressAllowed,
+} from '@novu/shared/utils/outbound-ssrf-allow-list';
+import { isLinkLocalIp, isPrivateIp, normalizeHostnameForLookup } from '@novu/shared/utils/private-ip-classification';
 import { LRUCache } from 'lru-cache';
-
-type PrivateIpClassificationModule = typeof import('@novu/shared/utils/private-ip-classification');
-type OutboundSsrfAllowListModule = typeof import('@novu/shared/utils/outbound-ssrf-allow-list');
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { isPrivateIp, isLinkLocalIp, normalizeHostnameForLookup } =
-  require('@novu/shared/utils/private-ip-classification') as PrivateIpClassificationModule;
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { isAddressAllowedByOutboundAllowList, isHostnameAllowedByOutboundAllowList, isOutboundAddressAllowed } =
-  require('@novu/shared/utils/outbound-ssrf-allow-list') as OutboundSsrfAllowListModule;
 
 export { isPrivateIp, isLinkLocalIp, normalizeHostnameForLookup };
 

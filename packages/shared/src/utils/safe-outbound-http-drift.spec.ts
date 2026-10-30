@@ -77,14 +77,6 @@ afterAll(() => {
   resetOutboundSsrfAllowListCacheForTests();
 });
 
-/**
- * libs/application-generic carries an inlined copy of the SSRF primitives and
- * the safe outbound HTTP runner because its CommonJS module resolution cannot
- * honour `@novu/shared`'s subpath exports. URL policy and DNS handling MUST stay
- * in lockstep between the two copies. Private IP classification is delegated to
- * `@novu/shared/utils/private-ip-classification` — this suite verifies that wiring
- * and that the remaining mirrored surfaces have not drifted.
- */
 describe('safe outbound HTTP — shared vs application-generic drift check', () => {
   it('application-generic delegates isPrivateIp to shared classification', () => {
     expect(inlinedNormalizeHostnameForLookup('[::1]')).toBe('::1');
@@ -195,7 +187,6 @@ describe('safe outbound HTTP — shared vs application-generic drift check', () 
       const hit = upstreamHits[0];
       expect(hit).toBeDefined();
       if (!hit) {
-
         return;
       }
 

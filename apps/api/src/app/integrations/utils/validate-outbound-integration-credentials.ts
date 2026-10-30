@@ -7,12 +7,7 @@ import {
   PushProviderIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
-
-type ValidateSmtpOutboundTargetModule = typeof import('@novu/shared/utils/validate-smtp-outbound-target');
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { assertSafeSmtpOutboundTargetSync } =
-  require('@novu/shared/utils/validate-smtp-outbound-target') as ValidateSmtpOutboundTargetModule;
+import { assertSafeSmtpOutboundTargetSync } from '@novu/shared/utils/validate-smtp-outbound-target';
 
 export async function validateOutboundIntegrationCredentials(
   providerId: string,
