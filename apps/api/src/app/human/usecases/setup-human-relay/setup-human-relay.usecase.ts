@@ -25,6 +25,7 @@ import type { SetupHumanRelayResponseDto } from '../../dtos/setup-human-relay.dt
 import { trackAgentInboxChannelConnected, trackAgentInboxCreated } from '../../services/agent-inbox-analytics';
 import { HumanAgentIdentityService } from '../../services/human-agent-identity.service';
 import { HumanOperatorService } from '../../services/human-operator.service';
+import { syncSubscriberEmail } from '../../services/sync-subscriber-email';
 import { SetupHumanRelayCommand } from './setup-human-relay.command';
 
 export const DEFAULT_HUMAN_RELAY_IDENTIFIER = 'human-relay';
@@ -313,9 +314,9 @@ export class SetupHumanRelay {
         email?.verified ?? (await this.promoteSignInEmail(command, agentId, subscriberId, address, email?.pending));
 
       if (verified?.address === address) {
-        await this.subscriberRepository.update(
-          { subscriberId, _environmentId: command.environmentId },
-          { $set: { email: address } }
+        await syncSubscriberEmail(
+          { humanContactRepository: this.humanContactRepository, subscriberRepository: this.subscriberRepository },
+          { environmentId: command.environmentId, agentId, subscriberId }
         );
       }
     } catch (err) {
@@ -325,7 +326,7 @@ export class SetupHumanRelay {
 
   /**
    * Null when the address stays declared: a link is on its way to another address, which the operator asked
-   * for and which has to keep working, or another contact uses this one, or a newer request replaced this one.
+   * for and which has to keep working, or another contact uses this one, or the slot changed after it was read.
    */
   private async promoteSignInEmail(
     command: SetupHumanRelayCommand,
@@ -349,31 +350,17 @@ export class SetupHumanRelay {
       return null;
     }
 
-    const slot = { environmentId: command.environmentId, agentId, subscriberId, via: HumanChannelViaEnum.EMAIL };
+    const slot = {
+      environmentId: command.environmentId,
+      agentId,
+      subscriberId,
+      via: HumanChannelViaEnum.EMAIL,
+      address,
+    };
+
     // A link already on its way here keeps its own request, so opening it later reads as used, not superseded.
-    const request =
-      pending ??
-      (await this.humanContactRepository.upsertPendingAddress({
-        ...slot,
-        organizationId: command.organizationId,
-        address,
-      }));
-
-    try {
-      return await this.humanContactRepository.promotePendingAddress({
-        ...slot,
-        address,
-        requestedAt: request.requestedAt,
-      });
-    } catch (err) {
-      // A pending slot says a link went out, and this one never did.
-      if (!pending) {
-        await this.humanContactRepository
-          .restorePendingAddress({ ...slot, replaced: request, pending: null })
-          .catch(() => undefined);
-      }
-
-      throw err;
-    }
+    return pending
+      ? this.humanContactRepository.promotePendingAddress({ ...slot, requestedAt: pending.requestedAt })
+      : this.humanContactRepository.verifyUnclaimedAddress(slot);
   }
 }

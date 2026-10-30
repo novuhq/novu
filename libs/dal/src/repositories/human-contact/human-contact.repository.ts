@@ -305,6 +305,35 @@ export class HumanContactRepository extends BaseRepositoryV2<
     return updated ? verified : null;
   }
 
+  /**
+   * Verifies an address that needs no link, in one write, and only while `via`
+   * has nothing verified and nothing pending. Returns null otherwise, so a link
+   * asked for or used in the meantime is left as it is.
+   */
+  async verifyUnclaimedAddress(params: {
+    environmentId: string;
+    agentId: string;
+    subscriberId: string;
+    via: HumanChannelViaEnum;
+    address: string;
+  }): Promise<HumanContactVerifiedAddress | null> {
+    const verifiedPath = `addresses.${params.via}.verified`;
+    const now = new Date().toISOString();
+    const verified: HumanContactVerifiedAddress = { address: params.address, requestedAt: now, verifiedAt: now };
+    const updated = await this.findOneAndUpdate(
+      {
+        _environmentId: params.environmentId,
+        _agentId: params.agentId,
+        subscriberId: params.subscriberId,
+        [verifiedPath]: { $exists: false },
+        [`addresses.${params.via}.pending`]: { $exists: false },
+      },
+      { $set: { [verifiedPath]: verified } }
+    );
+
+    return updated ? verified : null;
+  }
+
   async findVerifiedAddress(
     environmentId: string,
     agentId: string,

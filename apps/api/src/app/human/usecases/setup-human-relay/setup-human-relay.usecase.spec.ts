@@ -257,11 +257,16 @@ describe('SetupHumanRelay sign-in email', () => {
       }),
       findContact: sinon.stub().callsFake(async () => ({ subscriberId: 'dima', addresses: { email } })),
       findContactsByEmailAddress: sinon.stub().callsFake(async () => [{ subscriberId: 'dima' }, ...otherContacts]),
-      upsertPendingAddress: sinon.stub().callsFake(async (params: { address: string }) => {
-        email.pending = { address: params.address, requestedAt };
+      verifyUnclaimedAddress: sinon.stub().callsFake(async (params: { address: string }) => {
+        if (email.verified || email.pending) {
+          return null;
+        }
 
-        return email.pending;
+        email.verified = { address: params.address, requestedAt, verifiedAt: requestedAt };
+
+        return email.verified;
       }),
+      findVerifiedAddress: sinon.stub().callsFake(async () => email.verified ?? null),
       promotePendingAddress: sinon.stub().callsFake(async (params: { address: string; requestedAt: string }) => {
         if (email.pending?.address !== params.address || email.pending.requestedAt !== params.requestedAt) {
           return null;
@@ -271,11 +276,6 @@ describe('SetupHumanRelay sign-in email', () => {
         delete email.pending;
 
         return email.verified;
-      }),
-      restorePendingAddress: sinon.stub().callsFake(async (params: { replaced: { requestedAt: string } }) => {
-        if (email.pending?.requestedAt === params.replaced.requestedAt) {
-          delete email.pending;
-        }
       }),
     };
     const subscriberRepository = {
@@ -327,7 +327,7 @@ describe('SetupHumanRelay sign-in email', () => {
 
     expect(email.declared?.address).to.equal(address);
     expect(email.verified).to.equal(undefined);
-    expect(humanContactRepository.upsertPendingAddress.called).to.equal(false);
+    expect(humanContactRepository.verifyUnclaimedAddress.called).to.equal(false);
     expect(subscriberRepository.update.called).to.equal(false);
   });
 
@@ -359,7 +359,7 @@ describe('SetupHumanRelay sign-in email', () => {
     await usecase.execute(SetupHumanRelayCommand.create(signUp));
 
     expect(email.verified).to.deep.equal(verified);
-    expect(humanContactRepository.upsertPendingAddress.called).to.equal(false);
+    expect(humanContactRepository.verifyUnclaimedAddress.called).to.equal(false);
     expect(humanContactRepository.promotePendingAddress.called).to.equal(false);
     expect(subscriberRepository.update.called).to.equal(false);
   });
@@ -384,8 +384,7 @@ describe('SetupHumanRelay sign-in email', () => {
 
     expect(email.verified).to.deep.equal(firstRun);
     expect(email.pending).to.equal(undefined);
-    expect(humanContactRepository.upsertPendingAddress.calledOnce).to.equal(true);
-    expect(humanContactRepository.promotePendingAddress.calledOnce).to.equal(true);
+    expect(humanContactRepository.verifyUnclaimedAddress.calledOnce).to.equal(true);
     expect(logger.warn.called).to.equal(false);
   });
 
@@ -411,7 +410,7 @@ describe('SetupHumanRelay sign-in email', () => {
 
     expect(email.verified).to.include({ address, requestedAt: earlier });
     expect(email.pending).to.equal(undefined);
-    expect(humanContactRepository.upsertPendingAddress.called).to.equal(false);
+    expect(humanContactRepository.verifyUnclaimedAddress.called).to.equal(false);
   });
 
   it('leaves a link on its way to another address, which the operator asked for', async () => {
@@ -422,7 +421,7 @@ describe('SetupHumanRelay sign-in email', () => {
 
     expect(email.pending).to.deep.equal(pending);
     expect(email.verified).to.equal(undefined);
-    expect(humanContactRepository.upsertPendingAddress.called).to.equal(false);
+    expect(humanContactRepository.verifyUnclaimedAddress.called).to.equal(false);
     expect(subscriberRepository.update.called).to.equal(false);
   });
 
@@ -437,25 +436,96 @@ describe('SetupHumanRelay sign-in email', () => {
     expect(email.declared?.address).to.equal(address);
     expect(email.verified).to.equal(undefined);
     expect(email.pending).to.equal(undefined);
-    expect(humanContactRepository.upsertPendingAddress.called).to.equal(false);
+    expect(humanContactRepository.verifyUnclaimedAddress.called).to.equal(false);
     expect(subscriberRepository.update.called).to.equal(false);
     expect(logger.warn.calledOnce).to.equal(true);
   });
 
   it('leaves a request that a newer one replaced in the meantime', async () => {
-    const { usecase, humanContactRepository, subscriberRepository, logger } = setup();
+    const { usecase, humanContactRepository, subscriberRepository, logger } = setup({
+      pending: { address, requestedAt: earlier },
+    });
     humanContactRepository.promotePendingAddress.resolves(null);
 
     await usecase.execute(SetupHumanRelayCommand.create(signUp));
 
-    expect(humanContactRepository.restorePendingAddress.called).to.equal(false);
     expect(subscriberRepository.update.called).to.equal(false);
     expect(logger.warn.called).to.equal(false);
   });
 
-  it('still sets up, with nothing pending, when promoting the address fails', async () => {
+  describe('when the contact changes after setup read it', () => {
+    /** Runs `change` in the gap between setup's read of the contact and its write. */
+    function changeAfterTheRead(
+      humanContactRepository: ReturnType<typeof setup>['humanContactRepository'],
+      change: () => void
+    ) {
+      humanContactRepository.findContactsByEmailAddress.callsFake(async () => {
+        change();
+
+        return [{ subscriberId: 'dima' }];
+      });
+    }
+
+    it('leaves a link asked for in that gap', async () => {
+      const pending = { address: 'work@acme.co', requestedAt: earlier };
+      const { usecase, email, humanContactRepository, subscriberRepository, logger } = setup();
+      changeAfterTheRead(humanContactRepository, () => {
+        email.pending = pending;
+      });
+
+      await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+      expect(email.pending).to.deep.equal(pending);
+      expect(email.verified).to.equal(undefined);
+      expect(subscriberRepository.update.called).to.equal(false);
+      expect(logger.warn.called).to.equal(false);
+    });
+
+    it('never replaces an address verified in that gap', async () => {
+      const verified = { address: 'work@acme.co', requestedAt: earlier, verifiedAt: earlier };
+      const { usecase, email, humanContactRepository, subscriberRepository, logger } = setup();
+      changeAfterTheRead(humanContactRepository, () => {
+        email.verified = verified;
+      });
+
+      await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+      expect(email.verified).to.deep.equal(verified);
+      expect(subscriberRepository.update.called).to.equal(false);
+      expect(logger.warn.called).to.equal(false);
+    });
+
+    it('puts the address verified now on the subscriber, not the one it read', async () => {
+      const verified = { address, requestedAt: earlier, verifiedAt: earlier };
+      const { usecase, humanContactRepository, subscriberRepository } = setup({ verified });
+      humanContactRepository.findVerifiedAddress.resolves({ ...verified, address: 'work@acme.co' });
+
+      await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+      expect(subscriberRepository.update.args).to.deep.equal([
+        [{ subscriberId: 'dima', _environmentId: 'env1' }, { $set: { email: 'work@acme.co' } }],
+      ]);
+    });
+
+    it('follows a link confirmed while it wrote, so the subscriber keeps no old address', async () => {
+      const verified = { address, requestedAt: earlier, verifiedAt: earlier };
+      const { usecase, email, subscriberRepository } = setup({ verified });
+      subscriberRepository.update.onFirstCall().callsFake(async () => {
+        email.verified = { ...verified, address: 'work@acme.co' };
+      });
+
+      await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+      expect(subscriberRepository.update.args.map(([, update]) => update)).to.deep.equal([
+        { $set: { email: address } },
+        { $set: { email: 'work@acme.co' } },
+      ]);
+    });
+  });
+
+  it('still sets up, with the address declared, when verifying it fails', async () => {
     const { usecase, email, humanContactRepository, subscriberRepository, logger } = setup();
-    humanContactRepository.promotePendingAddress.rejects(new Error('write failed'));
+    humanContactRepository.verifyUnclaimedAddress.rejects(new Error('write failed'));
 
     const result = await usecase.execute(SetupHumanRelayCommand.create(signUp));
 
@@ -467,18 +537,6 @@ describe('SetupHumanRelay sign-in email', () => {
     expect(logger.warn.calledOnce).to.equal(true);
   });
 
-  it('still sets up, and logs what went wrong first, when the pending slot cannot be cleared either', async () => {
-    const { usecase, humanContactRepository, logger } = setup();
-    humanContactRepository.promotePendingAddress.rejects(new Error('write failed'));
-    humanContactRepository.restorePendingAddress.rejects(new Error('clearing failed too'));
-
-    const result = await usecase.execute(SetupHumanRelayCommand.create(signUp));
-
-    expect(result.subscriberId).to.equal('dima');
-    expect(logger.warn.calledOnce).to.equal(true);
-    expect(logger.warn.firstCall.args[0].err.message).to.equal('write failed');
-  });
-
   it('keeps a link that was already out when promoting it fails', async () => {
     const pending = { address, requestedAt: earlier };
     const { usecase, email, humanContactRepository } = setup({ pending });
@@ -487,13 +545,11 @@ describe('SetupHumanRelay sign-in email', () => {
     await usecase.execute(SetupHumanRelayCommand.create(signUp));
 
     expect(email.pending).to.deep.equal(pending);
-    expect(humanContactRepository.restorePendingAddress.called).to.equal(false);
   });
 
   for (const [what, method] of [
     ['reading the contact', 'findContact'],
     ['looking for another contact with the address', 'findContactsByEmailAddress'],
-    ['writing the pending slot', 'upsertPendingAddress'],
   ] as const) {
     it(`still sets up when ${what} fails`, async () => {
       const { usecase, email, humanContactRepository, logger } = setup();

@@ -10,6 +10,7 @@ import {
 } from '../../services/human-verification-token.service';
 import { maskEmail } from '../../services/mask-email';
 import { type RelaySender, resolveRelaySender } from '../../services/relay-owner-name';
+import { syncSubscriberEmail } from '../../services/sync-subscriber-email';
 import { VerifyAddressCommand } from './verify-address.command';
 
 export type VerifyAddressResult = RelaySender & {
@@ -94,35 +95,16 @@ export class VerifyAddress {
     return null;
   }
 
-  /**
-   * Copies the address that is verified right now onto the subscriber. A late
-   * writer re-reads and follows a newer verification instead of leaving
-   * Subscriber.email pointing at the address it just replaced.
-   */
   private async syncSubscriberEmail(payload: HumanVerificationTokenPayload, fallbackAddress: string): Promise<void> {
     if (payload.via !== HumanChannelViaEnum.EMAIL) {
       return;
     }
 
-    let written: string | undefined;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const current = await this.humanContactRepository.findVerifiedAddress(
-        payload.env,
-        payload.agentId,
-        payload.subscriberId,
-        payload.via
-      );
-      const next = current?.address ?? (written ? undefined : fallbackAddress);
-      if (!next || next === written) {
-        return;
-      }
-
-      await this.subscriberRepository.update(
-        { subscriberId: payload.subscriberId, _environmentId: payload.env },
-        { $set: { email: next } }
-      );
-      written = next;
-    }
+    await syncSubscriberEmail(
+      { humanContactRepository: this.humanContactRepository, subscriberRepository: this.subscriberRepository },
+      { environmentId: payload.env, agentId: payload.agentId, subscriberId: payload.subscriberId },
+      fallbackAddress
+    );
   }
 
   private async verifiedResult(payload: HumanVerificationTokenPayload, address: string): Promise<VerifyAddressResult> {
