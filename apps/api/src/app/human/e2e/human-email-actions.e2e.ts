@@ -57,7 +57,7 @@ describe('Agent Inbox confirmation page #novu-v2', () => {
 
     const page = await session.testAgent.get(PATH).query({ t: token });
 
-    const script = page.text.match(/<script>([\s\S]*)<\/script>/)?.[1] ?? '';
+    const script = page.text.slice(page.text.indexOf('<script>') + '<script>'.length, page.text.indexOf('</script>'));
     const hash = createHash('sha256').update(script).digest('base64');
 
     expect(script).to.include('cancel-button');

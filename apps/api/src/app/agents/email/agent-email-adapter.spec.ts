@@ -179,6 +179,34 @@ describe('agent email adapter', () => {
         expect(state.setIfNotExists.firstCall.args[1]).to.equal('Which time works?');
       });
 
+      it('hands a layout only the links and pictures the default render would keep', async () => {
+        const layout = sinon.stub().resolves({ html: '<p>Laid out</p>', text: 'Laid out' });
+        const { adapter, state } = createOutboundAdapter({ defaultAgentAddress: 'agent@example.com', layout } as never);
+        await adapter.initialize({ getState: () => state, processMessage: sinon.stub() } as never);
+
+        const threadId = await adapter.openDM!('person@example.com');
+        await adapter.postMessage(threadId, {
+          card: {
+            type: 'card',
+            imageUrl: 'data:image/svg+xml,<svg/>',
+            children: [
+              { type: 'link', label: 'Bad', url: 'javascript:alert(1)' },
+              { type: 'link', label: 'Good', url: 'https://agentinbox.md/runs/1' },
+              { type: 'image', url: 'javascript:alert(2)', imageUrl: 'https://agentinbox.md/chart.png' },
+              { type: 'section', children: [{ type: 'link-button', label: 'Open', url: 'data:text/html,hi' }] },
+            ],
+          },
+        } as never);
+
+        const laidOut = layout.firstCall.args[0].card;
+        expect(laidOut.imageUrl).to.equal(undefined);
+        expect(laidOut.children[0].url).to.equal(undefined);
+        expect(laidOut.children[1].url).to.equal('https://agentinbox.md/runs/1');
+        expect(laidOut.children[2].url).to.equal(undefined);
+        expect(laidOut.children[2].imageUrl).to.equal('https://agentinbox.md/chart.png');
+        expect(laidOut.children[3].children[0].url).to.equal(undefined);
+      });
+
       it('hands a plain message to the layout too, with its Markdown rendered', async () => {
         const layout = sinon.stub().resolves({ html: '<p>Laid out</p>', text: 'Laid out' });
         const { adapter, sendEmail, state } = createOutboundAdapter({

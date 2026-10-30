@@ -40,7 +40,7 @@ function pendingInteraction(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function setUp(options: { peek?: unknown; consume?: unknown; interaction?: unknown } = {}) {
+function setUp(options: { peek?: unknown; consume?: unknown; interaction?: unknown; settled?: unknown } = {}) {
   const tokenService = {
     peekActionToken: sinon.stub().resolves('peek' in options ? options.peek : peeked),
     consumeActionToken: sinon.stub().resolves('consume' in options ? options.consume : peeked),
@@ -51,6 +51,9 @@ function setUp(options: { peek?: unknown; consume?: unknown; interaction?: unkno
     findByIdentifier: sinon.stub().resolves('interaction' in options ? options.interaction : pendingInteraction()),
     findByRequestId: sinon.stub().resolves(null),
   };
+  if ('settled' in options) {
+    interactions.findByIdentifier.onSecondCall().resolves(options.settled);
+  }
   const relayEmail = { findParties: sinon.stub().resolves(parties) };
   const logger = { setContext: sinon.stub(), warn: sinon.stub(), error: sinon.stub() };
   const controller = new HumanEmailActionsController(
@@ -94,7 +97,8 @@ describe('HumanEmailActionsController', () => {
 
       await controller.preview('tok', res as never);
 
-      const script = sentHtml(res).match(/<script>([\s\S]*)<\/script>/)?.[1] ?? '';
+      const html = sentHtml(res);
+      const script = html.slice(html.indexOf('<script>') + '<script>'.length, html.indexOf('</script>'));
       const policy = res.setHeader.withArgs('Content-Security-Policy').firstCall?.args[1] as string | undefined;
       const scriptPolicy = policy?.split(';').find((directive) => directive.startsWith('script-src '));
 
@@ -180,6 +184,55 @@ describe('HumanEmailActionsController', () => {
 
       expect(sentHtml(res)).to.include('Picked');
       expect(sentHtml(res)).to.include('Atlas will go with Tue 28 Oct · 10:00.');
+    });
+
+    it('says the link is used when another answer got there first', async () => {
+      const deny = { ...peeked, claims: { ...claims, actionId: 'human:hi_1:deny', label: 'Deny' } };
+      const settled = pendingInteraction({
+        status: HumanInteractionStatusEnum.APPROVED,
+        response: { type: 'option', optionId: 'approve', respondedAt: '2026-10-30T10:00:00.000Z' },
+      });
+      const { controller, res } = setUp({ peek: deny, consume: deny, settled });
+
+      await controller.execute('tok', res as never);
+
+      expect(sentHtml(res)).to.include('This link already did its job');
+      expect(sentHtml(res)).to.not.include('Denied');
+    });
+
+    it('says the link is used when the question closed before the answer landed', async () => {
+      const settled = pendingInteraction({ status: HumanInteractionStatusEnum.EXPIRED });
+      const { controller, res } = setUp({ settled });
+
+      await controller.execute('tok', res as never);
+
+      expect(sentHtml(res)).to.include('This link already did its job');
+    });
+
+    it('confirms an answer that matches the one that counted', async () => {
+      const settled = pendingInteraction({
+        status: HumanInteractionStatusEnum.APPROVED,
+        response: { type: 'option', optionId: 'approve', respondedAt: '2026-10-30T10:00:00.000Z' },
+      });
+      const { controller, res } = setUp({ settled });
+
+      await controller.execute('tok', res as never);
+
+      expect(sentHtml(res)).to.include('Approved');
+    });
+
+    it('confirms a pick between questions, which settles with its text', async () => {
+      const pick = { ...peeked, claims: { ...claims, actionId: 'human:pick:hi_1:a1', label: 'The refund' } };
+      const settled = pendingInteraction({
+        kind: HumanInteractionKindEnum.ASK,
+        status: HumanInteractionStatusEnum.ANSWERED,
+        response: { type: 'text', text: 'Yes', respondedAt: '2026-10-30T10:00:00.000Z' },
+      });
+      const { controller, res } = setUp({ peek: pick, consume: pick, settled });
+
+      await controller.execute('tok', res as never);
+
+      expect(sentHtml(res)).to.not.include('This link already did its job');
     });
 
     it('sends nothing for a question that closed in the meantime', async () => {

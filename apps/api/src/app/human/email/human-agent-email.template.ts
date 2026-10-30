@@ -91,10 +91,9 @@ function isPrimary(node: CardNode): boolean {
   return (node.style ?? node.props?.style) === 'primary';
 }
 
-function buttonsOf(card: CardNode): CardNode[] {
-  return (card.children ?? []).flatMap((child) =>
-    child.type === 'actions' ? (child.children ?? []).filter(isButton) : []
-  );
+/** Every button of a card, however deep it sits. They all go at the end of the card. */
+function buttonsOf(node: CardNode): CardNode[] {
+  return (node.children ?? []).flatMap((child) => (isButton(child) ? [child] : buttonsOf(child)));
 }
 
 /** Two buttons of equal width, as the design has Approve and Deny. */
@@ -162,6 +161,10 @@ function nodeText(node: CardNode): string {
   return (node.content ?? '').trim();
 }
 
+function imageBlock(url: string | undefined, alt = ''): string[] {
+  return url ? [`<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" style="display:block;max-width:100%;" />`] : [];
+}
+
 /** The parts of a card around its buttons, in order: its text, pictures and fields. */
 function cardBlocks(children: CardNode[], renderMarkdown: (markdown: string) => string): string[] {
   return children.flatMap((node) => {
@@ -171,7 +174,7 @@ function cardBlocks(children: CardNode[], renderMarkdown: (markdown: string) => 
       case 'divider':
         return [divider()];
       case 'image':
-        return node.url ? [`<img src="${escapeHtml(node.url)}" alt="" style="display:block;max-width:100%;" />`] : [];
+        return imageBlock(node.url ?? node.imageUrl, node.label);
       case 'section':
       case 'fields':
         return cardBlocks(node.children ?? [], renderMarkdown);
@@ -200,10 +203,8 @@ function plainCardBlocks(card: LayoutCard, renderMarkdown: (markdown: string) =>
   return [
     ...(card.title ? [`<p style="margin:0;${TYPE.actionTitle}">${escapeHtml(card.title)}</p>`] : []),
     ...(card.subtitle ? [`<p style="margin:0;${TYPE.meta}">${escapeHtml(card.subtitle)}</p>`] : []),
-    ...cardBlocks(
-      (card.children ?? []).filter((child) => child.type !== 'actions'),
-      renderMarkdown
-    ),
+    ...imageBlock(card.imageUrl),
+    ...cardBlocks(card.children ?? [], renderMarkdown),
     ...(buttons.length > 0
       ? [
           `<table ${TABLE}><tr>${buttons
@@ -221,18 +222,34 @@ function waitingCardBlocks(
   renderMarkdown: (markdown: string) => string
 ): string[] {
   const hello = `<p style="margin:0;${TYPE.body}">${escapeHtml(greeting(firstName))}</p>`;
-  const intro = cardBlocks(
-    (card.children ?? []).filter((child) => child.type !== 'actions'),
-    renderMarkdown
-  );
+  const intro = [...imageBlock(card.imageUrl), ...cardBlocks(card.children ?? [], renderMarkdown)];
 
   // The greeting and the text around it read as one block, with the design's 10px between paragraphs.
   return [stack([hello, ...intro], 10), actionBox(card, label)];
 }
 
+/** The plain text version of `cardBlocks`. */
+function cardTexts(children: CardNode[]): string[] {
+  return children.flatMap((node) => {
+    switch (node.type) {
+      case 'text':
+        return nodeText(node) ? [nodeText(node)] : [];
+      case 'section':
+      case 'fields':
+        return cardTexts(node.children ?? []);
+      case 'field':
+        return [`${labelOf(node)}: ${node.value ?? ''}`];
+      case 'link':
+        return [`${labelOf(node)}: ${node.url ?? ''}`];
+      default:
+        return [];
+    }
+  });
+}
+
 function cardAsText(card: LayoutCard, firstName: string | undefined): string[] {
   const waiting = card.humanKind && WAITING_KINDS[card.humanKind];
-  const texts = (card.children ?? []).filter((child) => child.type === 'text').map(nodeText);
+  const texts = cardTexts(card.children ?? []);
   const buttons = buttonsOf(card).map((node) => `${labelOf(node)}: ${node.url ?? ''}`);
 
   return [

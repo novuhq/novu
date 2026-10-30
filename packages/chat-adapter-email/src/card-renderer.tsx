@@ -115,13 +115,26 @@ async function resolveActionUrls(card: CardNode, action: ActionContext): Promise
   return new Map(entries);
 }
 
-/** A copy of the card whose action buttons carry their `url`, for a layout that renders the card itself. */
-export async function withActionUrls(card: CardNode, action: ActionContext): Promise<CardNode> {
-  const copy = structuredClone(card);
-  const urls = await resolveActionUrls(copy, action);
+function dropUnsafeUrls(node: CardNode): void {
+  if (node.url) node.url = safeUrl(node.url);
+  if (node.imageUrl) node.imageUrl = safeUrl(node.imageUrl);
+  node.children?.forEach(dropUnsafeUrls);
+}
 
-  for (const [node, url] of urls) {
-    node.url = url;
+/**
+ * A copy of the card for a layout that renders it itself: the links and pictures `renderCard` would refuse are gone,
+ * and action buttons carry their `url`.
+ */
+export async function cardForLayout(card: CardNode, action?: ActionContext): Promise<CardNode> {
+  const copy = structuredClone(card);
+  dropUnsafeUrls(copy);
+
+  if (action) {
+    const urls = await resolveActionUrls(copy, action);
+
+    for (const [node, url] of urls) {
+      node.url = url;
+    }
   }
 
   return copy;

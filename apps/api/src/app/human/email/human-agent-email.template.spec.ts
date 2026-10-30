@@ -141,6 +141,66 @@ describe('buildHumanAgentEmail', () => {
     expect(text).to.include('Sign up free: https://agentinbox.md/claim');
   });
 
+  it('finds buttons wherever the card keeps them, on an approval too', () => {
+    const nested = {
+      type: 'card',
+      humanKind: HumanInteractionKindEnum.APPROVE,
+      title: 'Send the refund?',
+      children: [{ type: 'section', children: [{ type: 'actions', children: [approve] }] }, deny],
+    } as CardNode;
+    const { html, text } = buildHumanAgentEmail({ ...parties, message: message({ card: nested }) });
+
+    expect(html).to.include('>Approve</a>');
+    expect(html).to.include('>Deny</a>');
+    expect(text).to.include('Approve: https://agentinbox.md/email-action?t=a');
+    expect(text).to.include('Deny: https://agentinbox.md/email-action?t=d');
+  });
+
+  it('keeps what sits inside a section in the plain text as well', () => {
+    const card = {
+      type: 'card',
+      children: [
+        { type: 'text', content: 'Before you go on:' },
+        {
+          type: 'section',
+          children: [
+            { type: 'text', content: 'The run finished.' },
+            { type: 'fields', children: [{ type: 'field', label: 'Checks', value: '14 passed' }] },
+            { type: 'link', label: 'See the run', url: 'https://agentinbox.md/runs/1' },
+          ],
+        },
+      ],
+    } as CardNode;
+    const { html, text } = buildHumanAgentEmail({ ...parties, message: message({ card }) });
+
+    for (const part of ['The run finished.', '14 passed', 'See the run']) {
+      expect(html).to.include(part);
+      expect(text).to.include(part);
+    }
+    expect(text).to.include('Checks: 14 passed');
+    expect(text).to.include('See the run: https://agentinbox.md/runs/1');
+  });
+
+  it('shows the picture of a card, and of an image given as imageUrl', () => {
+    const card = {
+      type: 'card',
+      imageUrl: 'https://agentinbox.md/card.png',
+      children: [{ type: 'image', imageUrl: 'https://agentinbox.md/node.png', label: 'The chart' }],
+    } as CardNode;
+    const { html } = buildHumanAgentEmail({ ...parties, message: message({ card }) });
+
+    expect(html).to.include('src="https://agentinbox.md/card.png"');
+    expect(html).to.include('src="https://agentinbox.md/node.png"');
+    expect(html).to.include('alt="The chart"');
+  });
+
+  it('shows the picture of a card that waits for an answer', () => {
+    const card = { ...waitingCard(HumanInteractionKindEnum.ASK, []), imageUrl: 'https://agentinbox.md/card.png' };
+    const { html } = buildHumanAgentEmail({ ...parties, message: message({ card }) });
+
+    expect(html).to.include('src="https://agentinbox.md/card.png"');
+  });
+
   it('shortens a long first line for the subject', () => {
     const { subject } = buildHumanAgentEmail({
       ...parties,

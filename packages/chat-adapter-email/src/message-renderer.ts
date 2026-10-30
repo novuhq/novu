@@ -1,6 +1,6 @@
 import type { Root } from 'chat';
 import type { CardNode } from './card-renderer.js';
-import { extractTextFromCard, renderCard, withActionUrls } from './card-renderer.js';
+import { cardForLayout, extractTextFromCard, renderCard } from './card-renderer.js';
 import { EmailFormatConverter } from './format-converter.js';
 import type { ActionUrlBuilder, EmailMessageLayout } from './types.js';
 
@@ -59,7 +59,7 @@ export async function renderWithLayout(input: LayoutInput): Promise<RenderOutput
 
   if (input.card) {
     const source = input.card.layoutCard ?? input.card;
-    const card = input.actionContext ? await withActionUrls(source, input.actionContext) : source;
+    const card = await cardForLayout(source, input.actionContext);
     const text = extractTextFromCard(source) || input.text || '';
 
     return layout({ threadId, card, text, renderMarkdown });

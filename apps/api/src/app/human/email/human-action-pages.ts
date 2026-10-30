@@ -83,6 +83,7 @@ const PAGE_STYLES = `
   button.primary:disabled { opacity: 0.7; cursor: progress; }
   button.secondary { border: 1px solid ${COLORS.border}; background: ${COLORS.card}; color: ${COLORS.ink}; }
   button.secondary:hover { background: ${COLORS.box}; }
+  button.secondary:disabled { opacity: 0.5; background: ${COLORS.card}; cursor: default; }
   .spinner {
     display: inline-block;
     width: 13px;
@@ -161,6 +162,7 @@ const CONFIRM_PAGE_SCRIPT = `
 
   function setBusy() {
     submit.disabled = true;
+    cancel.disabled = true;
     submit.insertAdjacentHTML('afterbegin', '<span class="spinner" aria-hidden="true"></span>');
   }
 

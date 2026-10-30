@@ -143,6 +143,12 @@ export class HumanEmailActionsController {
       return;
     }
 
+    if (await this.wasOutrun(claims)) {
+      this.sendUnanswerable(res, { state: 'closed', agentName: claims.agentName });
+
+      return;
+    }
+
     const { sender } = await this.humanRelayEmail.findParties({
       environmentId: claims.environmentId,
       organizationId: claims.organizationId,
@@ -151,6 +157,28 @@ export class HumanEmailActionsController {
     });
 
     this.sendHtml(res, HttpStatus.OK, renderHumanDonePage({ sender, outcome: action.outcome, choice: claims.label }));
+  }
+
+  /**
+   * Several people can get one question, and the first answer counts. Two who answer at once both get past `lookUp`,
+   * so what the question settled on says whether this answer is the one that counted. A pick between questions
+   * settles with its text and has no option to compare.
+   */
+  private async wasOutrun(claims: AgentEmailActionClaims): Promise<boolean> {
+    const parsed = parseHumanActionId(claims.actionId);
+    const picked = parsed?.type === 'option' ? parsed.optionId : parsed?.type;
+
+    if (!picked || picked === 'disambiguation-pick') {
+      return false;
+    }
+
+    const interaction = await this.findInteraction(claims, parsed);
+
+    return (
+      !!interaction &&
+      interaction.status !== HumanInteractionStatusEnum.PENDING &&
+      interaction.response?.optionId !== picked
+    );
   }
 
   /** A token of another agent's email gets no further than a used link does. */
