@@ -9,6 +9,7 @@ import {
 } from '../configurations/provider-configuration';
 import {
   anypostConfig,
+  birdEmailConfig,
   brazeEmailConfig,
   emailWebhookConfig,
   infobipEmailConfig,
@@ -187,6 +188,14 @@ export const emailProviders: IProviderConfig[] = [
     credentials: sparkpostConfig,
     docReference: `https://docs.novu.co/platform/integrations/email/sparkpost${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'sparkpost.svg', dark: 'sparkpost.svg' },
+  },
+  {
+    id: EmailProviderIdEnum.Bird,
+    displayName: 'Bird',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: birdEmailConfig,
+    docReference: `https://docs.novu.co/platform/integrations/email/bird${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'bird-email.svg', dark: 'bird-email.svg' },
   },
   {
     id: EmailProviderIdEnum.EmailWebhook,

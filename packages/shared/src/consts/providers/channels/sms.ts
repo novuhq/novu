@@ -5,6 +5,7 @@ import {
   afroSmsConfig,
   azureSmsConfig,
   bandwidthConfig,
+  birdSmsConfig,
   brevoSmsConfig,
   bulkSmsConfig,
   burstSmsConfig,
@@ -358,5 +359,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: ruachSmsConfig,
     docReference: `https://docs.novu.co/platform/integrations/sms/ruach-sms${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'ruach-sms.svg', dark: 'ruach-sms.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.Bird,
+    displayName: 'Bird',
+    channel: ChannelTypeEnum.SMS,
+    credentials: birdSmsConfig,
+    docReference: `https://docs.novu.co/platform/integrations/sms/bird${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'bird-sms.svg', dark: 'bird-sms.svg' },
   },
 ];
