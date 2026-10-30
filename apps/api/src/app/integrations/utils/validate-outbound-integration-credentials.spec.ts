@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { EmailProviderIdEnum, PushProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { validateOutboundIntegrationCredentials } from './validate-outbound-integration-credentials';
@@ -49,6 +50,47 @@ describe('validateOutboundIntegrationCredentials', () => {
       expect(error?.message).to.match(/blocked|not allowed/i);
     });
   }
+
+  it('blocks a private custom SMTP target on Cloud', async () => {
+    let error: Error | undefined;
+
+    try {
+      await validateOutboundIntegrationCredentials(EmailProviderIdEnum.CustomSMTP, {
+        host: '127.0.0.1',
+        port: '587',
+      });
+    } catch (caughtError) {
+      error = caughtError as Error;
+    }
+
+    expect(error).to.be.instanceOf(BadRequestException);
+    expect(error?.message).to.match(/not allowed/i);
+  });
+
+  it('blocks a private custom SMTP target for self-hosted deployments', async () => {
+    process.env.IS_SELF_HOSTED = 'true';
+
+    let error: Error | undefined;
+
+    try {
+      await validateOutboundIntegrationCredentials(EmailProviderIdEnum.CustomSMTP, {
+        host: '10.0.0.1',
+        port: '587',
+      });
+    } catch (caughtError) {
+      error = caughtError as Error;
+    }
+
+    expect(error).to.be.instanceOf(BadRequestException);
+    expect(error?.message).to.match(/not allowed/i);
+  });
+
+  it('allows a public custom SMTP host', async () => {
+    await validateOutboundIntegrationCredentials(EmailProviderIdEnum.CustomSMTP, {
+      host: 'smtp.example.com',
+      port: '587',
+    });
+  });
 
   it('preserves private Kannel targets for self-hosted deployments', async () => {
     process.env.IS_SELF_HOSTED = 'true';
