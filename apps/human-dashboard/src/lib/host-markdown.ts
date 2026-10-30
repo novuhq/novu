@@ -148,6 +148,6 @@ function chatAppSections(host: ChatApp): string[] {
     ...(host.settings ? [`Where to start: ${host.settings.url}`] : []),
     '## Once it’s connected',
     `Your tools are \`inbox_list\`, \`inbox_send\` and the rest. When the account has no agent yet, they say so: call \`inbox_setup\` to create it, after asking your operator what to call the agent, which address it gets and which email to confirm. See [the agentinbox-mcp skill](${SKILL_FOLDER_URL}/agentinbox-mcp/SKILL.md).`,
-    'To add Telegram or Slack, call `channel_add` and give your operator the link it returns. Never ask for a bot token or a Slack token.',
+    'To add Telegram or Slack, call `channel_add` when your operator asks, and show them the link it returns in your chat, never through `inbox_send` or `inbox_reply`. Never ask for a bot token or a Slack token.',
   ];
 }

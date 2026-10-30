@@ -414,7 +414,8 @@ function PasteField({
 
 function TelegramSuccess({ result }: { result: TelegramSetupResult }) {
   const name = result.botUsername ? `@${result.botUsername}` : 'Your bot';
-  const deepLink = result.deepLinkUrl || (result.botUsername ? `https://t.me/${result.botUsername}` : '');
+  // Only this link tells the bot who pressed Start. From the bot's plain address, Start connects nobody.
+  const { deepLinkUrl } = result;
 
   return (
     <>
@@ -423,23 +424,25 @@ function TelegramSuccess({ result }: { result: TelegramSetupResult }) {
         <span className="font-mono text-[22px]">{name}</span> is <Accent>wired up</Accent>
       </h1>
       <CardText>
-        {deepLink ? (
+        {deepLinkUrl ? (
           <>
             One last tap: open the bot in Telegram and press{' '}
             <strong className="font-medium text-foreground">Start</strong> so it knows it&apos;s you. That finishes the
             setup.
           </>
         ) : (
-          'The bot is saved. Open it in Telegram and press Start. That finishes the setup.'
+          'The bot is saved. Go back to your agent or your terminal for the link that connects you.'
         )}
       </CardText>
-      {deepLink && (
-        <a href={deepLink} target="_blank" rel="noreferrer" className={buttonClassName('primary', 'w-full')}>
+      {deepLinkUrl && (
+        <a href={deepLinkUrl} target="_blank" rel="noreferrer" className={buttonClassName('primary', 'w-full')}>
           Connect & test
           <ArrowUpRight aria-hidden="true" className="size-3.5" />
         </a>
       )}
-      <p className="text-xs leading-4 text-muted">After you tap Start you can close this tab.</p>
+      <p className="text-xs leading-4 text-muted">
+        {deepLinkUrl ? 'After you tap Start you can close this tab.' : 'You can close this tab.'}
+      </p>
     </>
   );
 }

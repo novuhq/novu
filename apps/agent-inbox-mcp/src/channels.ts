@@ -49,6 +49,13 @@ const RECHECKS: Record<AddableChannel, number> = { telegram: 1, slack: 3 };
 const LABELS: Record<AddableChannel, string> = { telegram: 'Telegram', slack: 'Slack' };
 
 /**
+ * Whoever opens one of these links becomes the owner on that channel, and a message in the inbox can ask the
+ * model for one. This tells the model where a link may go. It's a rule for the model, not a lock.
+ */
+const WHERE_THE_LINK_GOES =
+  'Whoever opens this link connects as the account owner, so show it only to the user in this chat, never through inbox_send or inbox_reply.';
+
+/**
  * `channel add telegram` and `channel add slack` from the CLI, without the wait: finds how far the channel got
  * and returns the one next step, a link the person finishes in their own browser. Nothing is kept between
  * calls, so the next one picks up from wherever they got to. Bot tokens and App Configuration Tokens never
@@ -61,20 +68,20 @@ export async function channelAdd(
   sleep: Sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 ): Promise<string> {
   const { agent, subscriberId } = await readOwner(api);
-  const linked = await findLinkedIntegration(api, agent.agentIdentifier, channel);
-  const integration = linked ?? (await linkIntegration(api, agent, channel));
+  const linked = await findLinkedIntegrations(api, agent.agentIdentifier, channel);
+  const integrations = linked.length > 0 ? linked : [await linkIntegration(api, agent, channel)];
 
-  if (await hasEndpoint(api, integration.identifier, subscriberId)) {
+  if (await hasEndpoint(api, integrations, subscriberId)) {
     return `${LABELS[channel]} is connected. inbox_send can reach the user there with via: "${channel}".`;
   }
 
   // A setup link needs the integration linked to the agent, so only one that already was can have a page open.
-  const rechecks = linked ? RECHECKS[channel] : 0;
+  const rechecks = linked.length > 0 ? RECHECKS[channel] : 0;
   const whenSaved = <T>(step: () => Promise<T>) => runWhenSaved(step, channel, rechecks, sleep);
 
   return channel === 'telegram'
-    ? nextTelegramStep(api, integration, subscriberId, whenSaved)
-    : nextSlackStep(api, agent.agentIdentifier, integration, subscriberId, whenSaved);
+    ? nextTelegramStep(api, integrations, subscriberId, whenSaved)
+    : nextSlackStep(api, agent.agentIdentifier, integrations, subscriberId, whenSaved);
 }
 
 async function readOwner(api: AgentInboxApi): Promise<{ agent: AgentInfo; subscriberId: string }> {
@@ -93,15 +100,17 @@ async function readOwner(api: AgentInboxApi): Promise<{ agent: AgentInfo; subscr
   return { agent, subscriberId: operator.subscriberId };
 }
 
-async function findLinkedIntegration(
+/** Usually one. Two first calls at once can each link their own, and the person may finish either. */
+async function findLinkedIntegrations(
   api: AgentInboxApi,
   agentIdentifier: string,
   channel: AddableChannel
-): Promise<Integration | null> {
+): Promise<Integration[]> {
   const links = await api.get<Array<{ integration: Integration }>>('/v1/channels', { agentIdentifier, limit: 100 });
-  const link = links.find(({ integration }) => integration.providerId === channel && integration.active !== false);
 
-  return link?.integration ?? null;
+  return links
+    .map(({ integration }) => integration)
+    .filter(({ providerId, active }) => providerId === channel && active !== false);
 }
 
 /** Links one the account already has, or else a new one named after the agent. A 409 means it's linked already. */
@@ -130,10 +139,14 @@ async function linkIntegration(api: AgentInboxApi, agent: AgentInfo, channel: Ad
   return integration;
 }
 
-async function hasEndpoint(api: AgentInboxApi, integrationIdentifier: string, subscriberId: string): Promise<boolean> {
-  const endpoints = await api.get<unknown[]>('/v1/channels/links', { subscriberId, integrationIdentifier, limit: 1 });
+async function hasEndpoint(api: AgentInboxApi, integrations: Integration[], subscriberId: string): Promise<boolean> {
+  const endpoints = await Promise.all(
+    integrations.map(({ identifier }) =>
+      api.get<unknown[]>('/v1/channels/links', { subscriberId, integrationIdentifier: identifier, limit: 1 })
+    )
+  );
 
-  return endpoints.length > 0;
+  return endpoints.some((found) => found.length > 0);
 }
 
 /** The result of a step, or `null` while the person's credentials aren't saved. */
@@ -168,26 +181,28 @@ function isMissingCredentials(error: unknown, channel: AddableChannel): boolean 
 
 async function nextTelegramStep(
   api: AgentInboxApi,
-  integration: Integration,
+  integrations: Integration[],
   subscriberId: string,
   whenSaved: <T>(step: () => Promise<T>) => Promise<T | null>
 ): Promise<string> {
   // Making the `/start` link is also how to tell whether the integration has a bot yet.
-  const start = await whenSaved(() =>
-    api.post<StartLink>('/v1/channels/telegram/link', { integrationIdentifier: integration.identifier, subscriberId })
-  );
-
-  if (start) {
-    const { botUsername, expiresAt } = start.providerMetadata;
-
-    return nextStep(
-      `Telegram has its bot, @${botUsername}. Give the user this link and ask them to tap Start: ${start.url}`,
-      `It works until ${expiresAt}.`
+  for (const { identifier } of integrations) {
+    const start = await whenSaved(() =>
+      api.post<StartLink>('/v1/channels/telegram/link', { integrationIdentifier: identifier, subscriberId })
     );
+
+    if (start) {
+      const { botUsername, expiresAt } = start.providerMetadata;
+
+      return nextStep(
+        `Telegram has its bot, @${botUsername}. Give the user this link and ask them to tap Start: ${start.url}`,
+        `It works until ${expiresAt}.`
+      );
+    }
   }
 
   const setup = await api.post<SetupLink>(
-    `/v1/channels/apps/${encodeURIComponent(integration.identifier)}/telegram-link`,
+    `/v1/channels/apps/${encodeURIComponent(integrations[0].identifier)}/telegram-link`,
     { subscriberId }
   );
 
@@ -200,31 +215,33 @@ async function nextTelegramStep(
 async function nextSlackStep(
   api: AgentInboxApi,
   agentIdentifier: string,
-  integration: Integration,
+  integrations: Integration[],
   subscriberId: string,
   whenSaved: <T>(step: () => Promise<T>) => Promise<T | null>
 ): Promise<string> {
   // Making the install link is also how to tell whether the integration has an app yet. `autoLinkUser` has the
   // install tie the Slack user to this contact, which is who the agent then writes to.
-  const install = await whenSaved(() =>
-    api.post<{ url: string }>('/v1/channels/slack/install-link', {
-      integrationIdentifier: integration.identifier,
-      subscriberId,
-      connectionMode: 'subscriber',
-      autoLinkUser: true,
-    })
-  );
-
-  if (install) {
-    return nextStep(
-      `The Slack app is ready. Give the user this link to add it to their workspace: ${install.url}`,
-      `It works for ${SLACK_INSTALL_LINK_MINUTES} minutes.`
+  for (const { identifier } of integrations) {
+    const install = await whenSaved(() =>
+      api.post<{ url: string }>('/v1/channels/slack/install-link', {
+        integrationIdentifier: identifier,
+        subscriberId,
+        connectionMode: 'subscriber',
+        autoLinkUser: true,
+      })
     );
+
+    if (install) {
+      return nextStep(
+        `The Slack app is ready. Give the user this link to add it to their workspace: ${install.url}`,
+        `It works for ${SLACK_INSTALL_LINK_MINUTES} minutes.`
+      );
+    }
   }
 
   // This route takes the integration's `_id`, where the Telegram one takes its identifier.
   const setup = await api.post<SetupLink>(
-    `/v1/channels/apps/${encodeURIComponent(integration._id)}/slack-setup-link?agentIdentifier=${encodeURIComponent(agentIdentifier)}`,
+    `/v1/channels/apps/${encodeURIComponent(integrations[0]._id)}/slack-setup-link?agentIdentifier=${encodeURIComponent(agentIdentifier)}`,
     { subscriberId }
   );
 
@@ -246,5 +263,5 @@ function setupPageUrl(api: AgentInboxApi, channel: AddableChannel, token: string
 }
 
 function nextStep(step: string, expiry: string): string {
-  return `${step}\n${expiry} After they finish, or if it stops working, call channel_add again.`;
+  return `${step}\n${expiry} After they finish, or if it stops working, call channel_add again.\n${WHERE_THE_LINK_GOES}`;
 }

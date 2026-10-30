@@ -15,7 +15,8 @@ const SLACK_APP: StubChannelApp = { _id: 'app_slack', identifier: 'slack-atlas',
 const EMAIL_LINK = { integration: { providerId: 'agent-email-inbox', sharedInboundAddress: 'atlas@agentinbox.md' } };
 
 const EXPIRES_AT = '2026-10-30T12:15:00.000Z';
-const WHAT_NEXT = 'After they finish, or if it stops working, call channel_add again.';
+const WHAT_NEXT =
+  'After they finish, or if it stops working, call channel_add again.\nWhoever opens this link connects as the account owner, so show it only to the user in this chat, never through inbox_send or inbox_reply.';
 const SLACK_INSTALL_URL = 'https://slack.com/oauth/v2/authorize?client_id=1';
 const CHANNELS_CALLS = `${AGENT_INBOX_API}/v1/channels`;
 
@@ -249,6 +250,61 @@ describe('channel_add', () => {
 
       expect(result.isError).toBe(true);
       expect(result.content[0].text).toBe('Not allowed here.');
+    });
+  });
+
+  describe('with two integrations linked, as after two first calls at once', () => {
+    const OLDER_BOT: StubChannelApp = { ...TELEGRAM_APP, _id: 'app_telegram_older', identifier: 'telegram-older' };
+    const OLDER_APP: StubChannelApp = { ...SLACK_APP, _id: 'app_slack_older', identifier: 'slack-older' };
+    const bothBots = {
+      channels: [{ integration: TELEGRAM_APP }, { integration: OLDER_BOT }],
+      channelApps: [TELEGRAM_APP, OLDER_BOT],
+    };
+    const bothApps = {
+      channels: [{ integration: SLACK_APP }, { integration: OLDER_APP }],
+      channelApps: [SLACK_APP, OLDER_APP],
+    };
+
+    it('says it is connected when the person finished on the other one', async () => {
+      const calls = stubBackends({ ...bothBots, connectedApps: ['telegram-older'] });
+
+      const { text } = await addChannel('telegram');
+
+      expect(text).toBe('Telegram is connected. inbox_send can reach the user there with via: "telegram".');
+      expect(calls.some((call) => call.method === 'POST' && call.url.startsWith(CHANNELS_CALLS))).toBe(false);
+    });
+
+    it('gives the /start link of the one that has a bot, not a new setup page', async () => {
+      const calls = stubBackends({ ...bothBots, appsWithCredentials: ['telegram-older'] });
+
+      const { text } = await addChannel('telegram');
+
+      expect(text).toContain('https://t.me/atlas_bot?start=code_1');
+      expect(calls.filter((call) => call.url === `${CHANNELS_CALLS}/telegram/link`).at(-1)?.body).toEqual({
+        integrationIdentifier: 'telegram-older',
+        subscriberId: 'operator_1',
+      });
+      expect(calls.some((call) => call.url.endsWith('/telegram-link'))).toBe(false);
+    });
+
+    it('gives the install link of the one that has a Slack app, not a new setup page', async () => {
+      const calls = stubBackends({ ...bothApps, appsWithCredentials: ['slack-older'] });
+
+      const { text } = await addChannel('slack');
+
+      expect(text).toContain(SLACK_INSTALL_URL);
+      expect(calls.some((call) => call.url.includes('/slack-setup-link'))).toBe(false);
+    });
+
+    it('gives one setup page when neither got that far', async () => {
+      const calls = stubBackends(bothBots);
+
+      const { text } = await addChannel('telegram');
+
+      expect(text).toContain('/connect#tok_telegram');
+      expect(calls.filter((call) => call.url.endsWith('/telegram-link')).map((call) => call.url)).toEqual([
+        `${CHANNELS_CALLS}/apps/telegram-atlas/telegram-link`,
+      ]);
     });
   });
 

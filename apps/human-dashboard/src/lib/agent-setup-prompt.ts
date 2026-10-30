@@ -14,9 +14,9 @@ export type PromptContext = {
 
 /**
  * What the operator hands their agent in a channel's setup drawer ("Let your agent set this up"): a few
- * sentences that name the CLI commands and leave the steps in Telegram or Slack to the agent and the
- * operator. No API key in it: it ends up in another company's agent and its logs. A computer that isn't
- * logged in yet logs in first, since `channel add`
+ * sentences that name the CLI commands and leave the steps in Telegram or Slack to the operator, on the page
+ * the agent gives them. No API key in it, and no token comes back through the chat: both would end up in
+ * another company's agent and its logs. A computer that isn't logged in yet logs in first, since `channel add`
  * needs the login, and the operator may have set the agent up in the browser or through an MCP host. A host
  * that can't run commands has `channel_add` on the MCP server instead.
  */
@@ -24,11 +24,9 @@ export function buildChannelPrompt(context: PromptContext, via: 'telegram' | 'sl
   const api = apiUrlFlag(context);
   const command = `${CLI} channel add ${via}${api}`;
   const login = `If Agent Inbox isn't logged in on this computer yet, first run ${CLI} login${api} and wait until I approve it in my browser.`;
-  const noCommands = `If you can't run commands but have the channel_add tool, call it and give me the link it returns.`;
+  const [channel, token] = via === 'telegram' ? ['Telegram', 'a bot token'] : ['Slack', 'a Slack token'];
 
-  return via === 'telegram'
-    ? `Set up Telegram for ${handle}. ${login} Then run ${command}, walk me through creating the bot with @BotFather and paste the token back. ${noCommands}`
-    : `Set up Slack for ${handle}. ${login} Then run ${command}, walk me through creating the app from the manifest and installing it. ${noCommands}`;
+  return `Set up ${channel} for ${handle}. ${login} Then run ${command} and give me the link it prints. If you can't run commands but have the channel_add tool, call it and give me the link it returns. I finish on that page, so never ask me for ${token}.`;
 }
 
 /** The API's flag for a command, when the account's API isn't the one the CLI goes to by itself. */
