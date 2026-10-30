@@ -53,7 +53,7 @@ const LABELS: Record<AddableChannel, string> = { telegram: 'Telegram', slack: 'S
  * model for one. This tells the model where a link may go. It's a rule for the model, not a lock.
  */
 const WHERE_THE_LINK_GOES =
-  'Whoever opens this link connects as the account owner, so show it only to the user in this chat, never through inbox_send or inbox_reply.';
+  'Whoever opens this link connects as the account owner. Show it to the user in this chat and nowhere else, never through inbox_send or inbox_reply.';
 
 /**
  * `channel add telegram` and `channel add slack` from the CLI, without the wait: finds how far the channel got

@@ -121,6 +121,9 @@ export class ConfigureTelegramWebhook {
       ? [...TELEGRAM_AGENT_WEBHOOK_ALLOWED_UPDATES]
       : [...TELEGRAM_INTEGRATION_WEBHOOK_ALLOWED_UPDATES];
 
+    // Before the webhook moves, so Telegram refusing the bot here changes nothing.
+    const botUsername = await this.callGetMe(botToken);
+
     await this.callSetWebhook(botToken, webhookUrl, secretToken, allowedUpdates);
 
     // A Human agent speaks as itself, so the bot takes the name and description its operator gave it.
@@ -131,17 +134,15 @@ export class ConfigureTelegramWebhook {
       });
     }
 
-    const [, botUsername] = await Promise.all([
-      this.integrationRepository.update(
-        {
-          _id: integration._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        { $set: { 'credentials.token': encryptSecret(secretToken) } }
-      ),
-      this.callGetMe(botToken),
-    ]);
+    // Last, so a failure anywhere above can't leave a saved secret that belongs to a bot the caller then gives up on.
+    await this.integrationRepository.update(
+      {
+        _id: integration._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      { $set: { 'credentials.token': encryptSecret(secretToken) } }
+    );
 
     return { webhookUrl, configuredAt: new Date().toISOString(), botUsername };
   }

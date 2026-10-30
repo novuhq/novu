@@ -16,7 +16,7 @@ const EMAIL_LINK = { integration: { providerId: 'agent-email-inbox', sharedInbou
 
 const EXPIRES_AT = '2026-10-30T12:15:00.000Z';
 const WHAT_NEXT =
-  'After they finish, or if it stops working, call channel_add again.\nWhoever opens this link connects as the account owner, so show it only to the user in this chat, never through inbox_send or inbox_reply.';
+  'After they finish, or if it stops working, call channel_add again.\nWhoever opens this link connects as the account owner. Show it to the user in this chat and nowhere else, never through inbox_send or inbox_reply.';
 const SLACK_INSTALL_URL = 'https://slack.com/oauth/v2/authorize?client_id=1';
 const CHANNELS_CALLS = `${AGENT_INBOX_API}/v1/channels`;
 
