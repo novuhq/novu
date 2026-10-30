@@ -8,12 +8,11 @@ import { InboxSection } from '@/components/sapien/inbox';
 import { Integrations } from '@/components/sapien/integrations';
 import { LogoCloud } from '@/components/sapien/logo-cloud';
 import { Scale } from '@/components/sapien/scale';
-import { Security } from '@/components/sapien/security';
 import { SiteFooter } from '@/components/sapien/site-footer';
 import { SiteHeader } from '@/components/sapien/site-header';
 import { UseCases } from '@/components/sapien/use-cases';
 import { SiteStructuredData } from '@/components/seo/site-structured-data';
-import { geistMono, inter, ivyPresto } from '@/lib/sapien-fonts';
+import { geistMono, geistPixel, inter, redaction } from '@/lib/sapien-fonts';
 import { pageMetadata } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 
@@ -23,13 +22,14 @@ export const viewport: Viewport = {
   themeColor: '#000000',
 };
 
-/** agentinbox.md for people (agents read `/`), in its own black, Inter, IvyPresto and Geist Mono. */
+/** agentinbox.md for people (agents read `/`), in its own black, Inter, Redaction, Geist Mono and Geist Pixel. */
 export default function SapienPage() {
   return (
     <div
       className={cn(
         inter.variable,
-        ivyPresto.variable,
+        redaction.variable,
+        geistPixel.variable,
         geistMono.variable,
         'sapien-page min-h-dvh overflow-x-clip bg-sapien-background font-sapien-sans text-sapien-foreground'
       )}
@@ -46,7 +46,6 @@ export default function SapienPage() {
           <UseCases />
           <Integrations />
           <Scale />
-          <Security />
           <Faq />
           <Closing />
         </main>

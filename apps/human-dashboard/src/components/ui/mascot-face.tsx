@@ -5,13 +5,17 @@ import { useEffect, useRef, useState } from 'react';
 import { drawMascot, MASCOT_AT_REST, type MascotMood, type MascotPose } from '@/lib/mascot-sphere';
 import { cn } from '@/lib/utils';
 
-/** `idle` is the small mascot of avatars; `waiting` is the large one with its whole halo. */
-export type MascotArt = 'idle' | 'waiting';
+/**
+ * `idle` is the small mascot of avatars; `waiting` is the large one with its whole halo. `poster` is
+ * `waiting` on a finer grid, for a mascot shown hundreds of pixels wide.
+ */
+export type MascotArt = 'idle' | 'waiting' | 'poster';
 
 /** The pixel grid each drawing is made on, and how much of it the sphere takes. */
 const ART: Record<MascotArt, { grid: number; radius: number }> = {
   idle: { grid: 48, radius: 0.406 },
   waiting: { grid: 120, radius: 0.308 },
+  poster: { grid: 200, radius: 0.308 },
 };
 
 /** How far the mascot turns towards the pointer at most, in radians. */
@@ -54,6 +58,9 @@ const EXPORTED: Partial<Record<`${MascotArt}-${MascotMood}`, string>> = {
   'waiting-happy': '/illustrations/mascot-happy.svg',
 };
 
+/** The paper drawing has no dark export. This poster shows until the canvas paints, and without JavaScript. */
+const PAPER_POSTER = '/illustrations/mascot-paper.svg';
+
 type MascotFaceProps = {
   art: MascotArt;
   /**
@@ -71,6 +78,8 @@ type MascotFaceProps = {
    * looking right at the mascot when the page loads.
    */
   drawnOnly?: boolean;
+  /** Drawn for light paper (see `MascotLook.paper`). A paper poster shows until the canvas paints. */
+  paper?: boolean;
   className?: string;
 };
 
@@ -86,6 +95,7 @@ export function MascotFace({
   still = false,
   drawnOnly = false,
   ahead = false,
+  paper = false,
   className,
 }: MascotFaceProps) {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -97,7 +107,8 @@ export function MascotFace({
   const redraw = useRef<(() => void) | null>(null);
   const { grid, radius } = ART[art];
   const asleep = mood === 'asleep';
-  const exported = drawnOnly ? undefined : EXPORTED[`${art}-${mood}`];
+  let exported: string | undefined;
+  if (!drawnOnly) exported = paper ? PAPER_POSTER : EXPORTED[`${art}-${mood}`];
 
   useEffect(() => {
     wanted.current = mood;
@@ -126,7 +137,7 @@ export function MascotFace({
     let blinks = pickBlinks();
 
     const paint = () => {
-      drawMascot(image.data, grid, pose, radius, asleep ? 'asleep' : 'awake', { ahead });
+      drawMascot(image.data, grid, pose, radius, asleep ? 'asleep' : 'awake', { ahead, paper });
       context.putImageData(image, 0, 0);
       drawn = { ...pose };
     };
@@ -248,11 +259,17 @@ export function MascotFace({
       window.removeEventListener('pointermove', follow);
       document.documentElement.removeEventListener('pointerleave', rest);
     };
-  }, [still, asleep, ahead, grid, radius]);
+  }, [still, asleep, ahead, paper, grid, radius]);
 
   return (
     <span aria-hidden="true" className={cn('relative block shrink-0', className)}>
-      {exported && <img src={exported} alt="" className={cn('absolute inset-0 size-full', painted && 'invisible')} />}
+      {exported && (
+        <img
+          src={exported}
+          alt=""
+          className={cn('absolute inset-0 size-full [image-rendering:pixelated]', painted && 'invisible')}
+        />
+      )}
       <canvas
         ref={canvas}
         width={grid}

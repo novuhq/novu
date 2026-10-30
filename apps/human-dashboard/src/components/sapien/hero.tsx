@@ -16,18 +16,15 @@ import {
   HERO_FIGURE_LABEL,
   HERO_FIGURE_STATE,
   HERO_RELATIONS,
-  HERO_TITLE,
-  HERO_TITLE_WORDS,
-  HERO_WORD_INTERVAL,
   heroAssets,
 } from '@/data/sapien-hero';
 
 import { AgentIdCard } from './agent-id-card';
 import { Artwork } from './artwork';
 import { BusinessCard, CallCard } from './hero-card';
+import { HeroHeadline } from './hero-headline';
 import { HeroMotionProvider } from './hero-motion';
 import { HeroStage } from './hero-stage';
-import { HeroTitleLine } from './hero-title';
 import { SectionFrame } from './section-frame';
 
 // Figma interpolates its fades from #0a0a0a to transparent black without
@@ -48,7 +45,7 @@ export function Hero() {
       anchor="hero"
       // --hero-scale shrinks the 960×783 illustration with the section below 546px
       // (0.6227 at the 340px mobile frame); desktop always draws it at 1.
-      className="@container flex flex-col pt-[70px] [--hero-scale:min(1,tan(atan2(100cqw,546px)))] sm:h-[783px] sm:pt-14"
+      className="@container flex flex-col pt-[70px] [--hero-scale:min(1,tan(atan2(100cqw,546px)))] sm:h-[823px] sm:pt-14"
     >
       <HeroMotionProvider>
         <div aria-hidden="true" className="pointer-events-none">
@@ -70,31 +67,17 @@ export function Hero() {
             style={{ backgroundImage: fadeTop }}
           />
         </div>
-        <div className="relative z-10 mx-auto flex w-full max-w-121 flex-col items-center gap-5 px-2.5 text-center sm:px-0">
-          <div className="flex flex-col items-center gap-5 sm:gap-6">
-            {/* Mobile sizes also shrink with the section (cqw) below ~275px so both
-                lines fit, even with the widest pill word (9.08em = the centred
-                Telegram line); the title may still wrap when a visitor enlarges
-                text spacing. */}
-            <h1 className="flex flex-col items-center gap-3 font-normal">
-              <HeroTitleLine
-                lead={HERO_TITLE.lead}
-                words={HERO_TITLE_WORDS}
-                rest={HERO_TITLE.rest}
-                interval={HERO_WORD_INTERVAL}
-                className="min-h-[1.142857em] text-[min(28px,calc((100cqw-20px)/9.08))] leading-[1.125] tracking-[-0.04em] sm:min-h-0 sm:text-[32px]"
-              />{' '}
-              <span className="block min-h-[0.729167em] font-sapien-display text-[min(48px,calc((100cqw-20px)/5))] leading-none tracking-tight text-accent italic [text-box-edge:cap_alphabetic] [text-box-trim:trim-both] sm:h-[42px] sm:min-h-0 sm:text-[58px]">
-                {HERO_TITLE.accent}
-              </span>
-            </h1>
-            {/* Grows with its text: the subhead is longer than the two lines Figma sized it for. */}
-            <p className="text-[15px] leading-[21px] tracking-tight text-pretty text-sapien-foreground/50 sm:leading-[1.375]">
-              {HERO_DESCRIPTION}
+        <div className="@container relative z-10 mx-auto flex w-full max-w-[880px] flex-col items-center gap-5 px-2.5 text-center sm:px-0">
+          <div className="flex w-full flex-col items-center gap-5 sm:gap-6">
+            {/* The title is sized from this column, so both lines stay one line on a phone.
+                It may still wrap when a visitor enlarges text spacing. */}
+            <HeroHeadline />
+            <p className="max-w-110 animate-sapien-in text-[15px] leading-[21px] tracking-tight text-balance text-sapien-foreground/50 [animation-delay:180ms] motion-reduce:animate-none sm:leading-[1.375]">
+              <span className="block">{HERO_DESCRIPTION[0]}</span> <span className="block">{HERO_DESCRIPTION[1]}</span>
             </p>
           </div>
           {/* Wraps so a failed prompt copy can show the prompt on a line of its own, under both. */}
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
+          <div className="flex w-full animate-sapien-in flex-col gap-2 [animation-delay:260ms] motion-reduce:animate-none sm:w-auto sm:flex-row sm:flex-wrap">
             <CopyCommand
               command={SETUP_COMMAND}
               label={HERO_COMMAND_LABEL}
@@ -106,7 +89,7 @@ export function Hero() {
               successMessage={CLOSING_PROMPT_SUCCESS_MESSAGE}
               errorMessage={CLOSING_PROMPT_ERROR_MESSAGE}
               showTextOnError
-              className="h-10 w-full rounded-lg bg-sapien-border px-6 text-[15px] leading-none font-medium tracking-tight text-sapien-foreground hover:bg-sapien-surface sm:w-[139px]"
+              className="h-10 w-full rounded-lg bg-sapien-border px-6 text-[15px] leading-none font-medium tracking-tight text-sapien-foreground transition-[background-color,scale] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-sapien-surface active:scale-[0.97] motion-reduce:transition-none sm:w-[139px]"
             >
               {CLOSING_PROMPT_LABEL}
             </CopyButton>
