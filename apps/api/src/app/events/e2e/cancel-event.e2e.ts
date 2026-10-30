@@ -26,6 +26,27 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', (
     });
   }
 
+  /*
+   * Cancel only affects jobs that are already DELAYED. A digest or delay becomes DELAYED after the
+   * trigger step runs on the standard queue, which the workflow and subscriber queue waits do not cover.
+   */
+  async function waitForDelayedJobs(transactionId: string, type: StepTypeEnum, expectedCount: number) {
+    const jobs = await pollForJobStatusChange({
+      jobRepository,
+      query: {
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        type,
+        transactionId,
+      },
+      findMultiple: true,
+      expectedCount,
+      timeout: 15000,
+    });
+
+    expect(jobs?.map((job) => job.status)).to.eql(Array(expectedCount).fill(JobStatusEnum.DELAYED));
+  }
+
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
@@ -62,8 +83,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', (
 
     const { transactionId } = result;
 
-    await session.waitForWorkflowQueueCompletion();
-    await session.waitForSubscriberQueueCompletion();
+    await waitForDelayedJobs(transactionId!, StepTypeEnum.DIGEST, 1);
 
     await cancelEvent(transactionId!);
 
@@ -109,8 +129,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', (
 
     const { transactionId } = result;
 
-    await session.waitForWorkflowQueueCompletion();
-    await session.waitForSubscriberQueueCompletion();
+    await waitForDelayedJobs(transactionId!, StepTypeEnum.DELAY, 2);
 
     await cancelEvent(transactionId!);
 
