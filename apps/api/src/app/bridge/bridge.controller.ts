@@ -442,11 +442,14 @@ function previewResultType(stepType: StepTypeEnum): GeneratePreviewResponseDto['
       return ActionTypeEnum.DELAY;
     case StepTypeEnum.DIGEST:
       return ActionTypeEnum.DIGEST;
-    case StepTypeEnum.TRIGGER:
     case StepTypeEnum.THROTTLE:
+      return ActionTypeEnum.THROTTLE;
     case StepTypeEnum.CUSTOM:
+      return ActionTypeEnum.CUSTOM;
     case StepTypeEnum.HTTP_REQUEST:
-      throw new BadRequestException(`Step type "${stepType}" cannot be previewed.`);
+      return ActionTypeEnum.HTTP_REQUEST;
+    case StepTypeEnum.TRIGGER:
+      return ActionTypeEnum.TRIGGER;
     default: {
       const unsupported: never = stepType;
 
