@@ -194,9 +194,7 @@ export interface PersistToolCallParams extends ConversationActivityContext {
 export interface PersistToolResultParams extends ConversationActivityContext {
   toolCallId: string;
   toolName?: string;
-  /** Model-facing output, read back on bridge resume. Omitted on record-only (managed) rows. */
   output?: unknown;
-  /** Protocol result parts. Stored capped in size, together with `isError`. */
   content?: AgentToolResultContent[];
   isError?: boolean;
   /** Makes the row identifier deterministic, so a redelivered result writes nothing. */

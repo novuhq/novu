@@ -90,10 +90,6 @@ export function viewFoldsRevisions(view: ActivityView): boolean {
   return view === 'llm_transcript' || view === 'agent_handoff';
 }
 
-/**
- * A tool result with protocol `content` but no model-facing `output` (managed runtime). No model
- * reads it back, so it stays out of the handoff and approval pages, which are capped in size.
- */
 const RECORD_ONLY_TOOL_RESULT_MATCH = {
   'toolData.content': { $exists: true },
   'toolData.output': { $exists: false },

@@ -934,7 +934,6 @@ export class AgentEventSink {
     }
   }
 
-  /** The tool ledger is a record, not delivery: a failed write is reported and the event still runs. */
   private async recordToolActivity(
     context: AgentEventContext,
     runId: string,

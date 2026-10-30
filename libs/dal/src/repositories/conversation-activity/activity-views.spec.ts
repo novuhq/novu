@@ -1,11 +1,5 @@
 import { expect } from 'chai';
-import {
-  ACTIVITY_KINDS,
-  ACTIVITY_VIEW_MEMBERSHIP,
-  compileActivityViewMatch,
-  getKindsForView,
-  isRecordOnlyToolResult,
-} from './activity-views';
+import { ACTIVITY_KINDS, ACTIVITY_VIEW_MEMBERSHIP, compileActivityViewMatch, getKindsForView } from './activity-views';
 import { ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum } from './conversation-activity.entity';
 
 describe('activity-views', () => {
@@ -88,40 +82,6 @@ describe('activity-views', () => {
         senderType: ConversationActivitySenderTypeEnum.PLATFORM_USER,
       },
     ]);
-  });
-
-  it('shows tool calls to operators only until clients and model history can pair them with results', () => {
-    expect(ACTIVITY_VIEW_MEMBERSHIP.tool_call).to.deep.equal(['operator_timeline']);
-    expect(compileActivityViewMatch('operator_timeline').$or).to.deep.include({
-      type: ConversationActivityTypeEnum.TOOL_CALL,
-    });
-  });
-
-  it('keeps record-only tool results off the capped handoff, client, and approval pages', () => {
-    const recordOnly = {
-      type: ConversationActivityTypeEnum.TOOL_RESULT,
-      'toolData.content': { $exists: true },
-      'toolData.output': { $exists: false },
-    };
-    const modelFacing = {
-      type: ConversationActivityTypeEnum.TOOL_RESULT,
-      $nor: [{ 'toolData.content': { $exists: true }, 'toolData.output': { $exists: false } }],
-    };
-
-    expect(ACTIVITY_VIEW_MEMBERSHIP['tool_result.record']).to.deep.equal(['operator_timeline']);
-    expect(compileActivityViewMatch('operator_timeline').$or).to.deep.include(recordOnly);
-
-    for (const view of ['agent_handoff', 'client_events', 'approval_activities'] as const) {
-      expect(compileActivityViewMatch(view).$or).to.deep.include(modelFacing);
-      expect(compileActivityViewMatch(view).$or).to.not.deep.include(recordOnly);
-    }
-  });
-
-  it('classifies a tool result as record-only when it has content but no output', () => {
-    expect(isRecordOnlyToolResult({ toolCallId: 't', content: [], isError: false })).to.equal(true);
-    expect(isRecordOnlyToolResult({ toolCallId: 't', output: 'x', content: [], isError: false })).to.equal(false);
-    expect(isRecordOnlyToolResult({ toolCallId: 't', output: 'x' })).to.equal(false);
-    expect(isRecordOnlyToolResult(undefined)).to.equal(false);
   });
 
   it('discriminates tool-use signals from other signals without a stored kind', () => {

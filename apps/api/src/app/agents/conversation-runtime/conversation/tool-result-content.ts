@@ -1,18 +1,13 @@
 import type { AgentToolResultContent } from '@novu/agent-event-protocol';
 import type { ConversationActivityToolResultPart } from '@novu/dal';
 
-export const TOOL_RESULT_CONTENT_MAX_BYTES = 65536;
+const TOOL_RESULT_CONTENT_MAX_BYTES = 65536;
 
 export interface StoredToolResultContent {
   content: ConversationActivityToolResultPart[];
   truncated: boolean;
 }
 
-/**
- * Keeps parts in order while they fit in `maxBytes` (text counts its UTF-8 bytes, other parts their
- * JSON size). The first text part that does not fit is cut to the space left, and the parts after it
- * are dropped. Media parts never keep their `data`.
- */
 export function capToolResultContent(
   parts: AgentToolResultContent[],
   maxBytes = TOOL_RESULT_CONTENT_MAX_BYTES
@@ -67,14 +62,17 @@ function storedPartBytes(part: ConversationActivityToolResultPart): number {
   return Buffer.byteLength(JSON.stringify(part), 'utf8');
 }
 
-/** `text` is longer than `maxBytes`, so the cut backs off to the start of a split multi-byte character. */
 function truncateUtf8(text: string, maxBytes: number): string {
   const bytes = Buffer.from(text, 'utf8');
   let end = maxBytes;
 
-  while (end > 0 && (bytes[end] & 0xc0) === 0x80) {
+  while (end > 0 && isUtf8ContinuationByte(bytes[end])) {
     end -= 1;
   }
 
   return bytes.subarray(0, end).toString('utf8');
+}
+
+function isUtf8ContinuationByte(byte: number | undefined): boolean {
+  return byte !== undefined && (byte & 0xc0) === 0x80;
 }
