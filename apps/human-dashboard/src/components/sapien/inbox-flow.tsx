@@ -75,24 +75,36 @@ export function InboxFlow({ agent }: { agent: InboxAgent }) {
 
   useEffect(() => () => cancelAnimationFrame(frame.current), []);
 
-  const aim = (event: PointerEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+  const openOn = (index: number, x: number) => {
+    const node = stage.current;
+    if (!node) return;
     const goal = target.current;
-    const index = Math.min(agent.threads.length - 1, Math.max(0, Math.floor(y / ROW)));
-    const width = event.currentTarget.clientWidth;
+    const y = index * ROW + ROW / 2;
     if (goal.h === 0) {
-      // A fresh window opens on the pointer, rather than sliding in from the last spot.
-      Object.assign(now.current, { x, y: index * ROW + ROW / 2, lx: x, ly: index * ROW + ROW / 2 });
+      // A fresh window opens on the row, rather than sliding in from the last spot.
+      Object.assign(now.current, { x, y, lx: x, ly: y });
     }
-    const pad = HOLE.w + 12;
-    goal.x = width <= pad * 2 ? width / 2 : Math.min(Math.max(x, pad), width - pad);
-    goal.y = index * ROW + ROW / 2;
+    goal.x = x;
+    goal.y = y;
     goal.w = HOLE.w;
     goal.h = HOLE.h;
     setRow(index);
     kick();
+  };
+
+  const aim = (event: PointerEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const index = Math.min(agent.threads.length - 1, Math.max(0, Math.floor(y / ROW)));
+    const width = event.currentTarget.clientWidth;
+    const pad = HOLE.w + 12;
+    openOn(index, width <= pad * 2 ? width / 2 : Math.min(Math.max(x, pad), width - pad));
+  };
+
+  const reveal = (index: number) => {
+    const width = stage.current?.clientWidth ?? 0;
+    openOn(index, width / 2);
   };
 
   const leave = () => {
@@ -133,6 +145,11 @@ export function InboxFlow({ agent }: { agent: InboxAgent }) {
         onPointerEnter={aim}
         onPointerMove={aim}
         onPointerLeave={leave}
+        onBlur={(event) => {
+          const next = event.relatedTarget;
+          if (next instanceof Node && event.currentTarget.contains(next)) return;
+          leave();
+        }}
         className="group/stage relative cursor-crosshair touch-pan-y overflow-hidden select-none"
         style={
           {
@@ -147,8 +164,8 @@ export function InboxFlow({ agent }: { agent: InboxAgent }) {
         }
       >
         <ul aria-label={INBOX_LABELS.inbox} data-face="seen">
-          {agent.threads.map((thread) => (
-            <HumanRow key={thread.id} thread={thread} />
+          {agent.threads.map((thread, index) => (
+            <HumanRow key={thread.id} thread={thread} onFocus={() => reveal(index)} />
           ))}
         </ul>
 
@@ -201,39 +218,45 @@ export function InboxFlow({ agent }: { agent: InboxAgent }) {
   );
 }
 
-function HumanRow({ thread }: { thread: InboxThread }) {
+function HumanRow({ thread, onFocus }: { thread: InboxThread; onFocus: () => void }) {
   return (
-    <li className="flex h-15 items-center gap-3 border-b border-sapien-border px-4 last:border-b-0">
-      <span className="relative shrink-0">
-        <PersonFace seed={thread.sender} className="size-8" />
-        <span className="absolute -right-1 -bottom-1 flex rounded-full bg-[#0b0a09] p-px">
-          <ChannelLogo channel={thread.via} size={14} />
-        </span>
-      </span>
-      <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <span className="flex items-baseline gap-2">
-          <span className="truncate text-[13px] leading-none tracking-tight text-sapien-foreground">
-            {thread.sender}
-          </span>
-          <span className={cn(mono, 'shrink-0 text-[10px] text-sapien-foreground/30')}>
-            {CHANNEL_NAMES[thread.via]} · {thread.time}
+    <li className="border-b border-sapien-border last:border-b-0">
+      <button
+        type="button"
+        onFocus={onFocus}
+        className="flex h-15 w-full cursor-crosshair items-center gap-3 bg-transparent px-4 text-left font-inherit focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent"
+      >
+        <span className="relative shrink-0">
+          <PersonFace seed={thread.sender} className="size-8" />
+          <span className="absolute -right-1 -bottom-1 flex rounded-full bg-[#0b0a09] p-px">
+            <ChannelLogo channel={thread.via} size={14} />
           </span>
         </span>
-        <span
-          className={cn(
-            'truncate text-[13px] leading-none tracking-tight',
-            thread.unread ? 'text-sapien-foreground/80' : 'text-sapien-foreground/45'
-          )}
-        >
-          {thread.preview}
+        <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <span className="flex items-baseline gap-2">
+            <span className="truncate text-[13px] leading-none tracking-tight text-sapien-foreground">
+              {thread.sender}
+            </span>
+            <span className={cn(mono, 'shrink-0 text-[10px] text-sapien-foreground/30')}>
+              {CHANNEL_NAMES[thread.via]} · {thread.time}
+            </span>
+          </span>
+          <span
+            className={cn(
+              'truncate text-[13px] leading-none tracking-tight',
+              thread.unread ? 'text-sapien-foreground/80' : 'text-sapien-foreground/45'
+            )}
+          >
+            {thread.preview}
+          </span>
         </span>
-      </span>
-      {thread.unread ? (
-        <>
-          <span className="sr-only">{INBOX_LABELS.unreadThread}</span>
-          <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-accent" />
-        </>
-      ) : null}
+        {thread.unread ? (
+          <>
+            <span className="sr-only">{INBOX_LABELS.unreadThread}</span>
+            <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-accent" />
+          </>
+        ) : null}
+      </button>
     </li>
   );
 }

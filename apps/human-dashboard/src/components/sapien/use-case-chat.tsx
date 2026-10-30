@@ -33,21 +33,43 @@ export function UseCaseChat({
 
   useEffect(() => {
     const element = list.current;
-    if (!element || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!element) return;
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
     let timers: number[] = [];
+    // Crossing below 60% while the card is still on screen is not a new entrance.
+    let entered = false;
     const clear = () => {
       for (const timer of timers) clearTimeout(timer);
       timers = [];
     };
+    const settle = () => {
+      clear();
+      setPhase('done');
+    };
+    if (media.matches) {
+      settle();
+
+      return;
+    }
+    const onMotion = () => {
+      if (media.matches) settle();
+    };
+    media.addEventListener('change', onMotion);
     const observer = new IntersectionObserver(
       ([entry]) => {
-        clear();
-        if (!entry?.isIntersecting) {
-          setPhase('hidden');
+        if (!entry || media.matches) return;
+        if (entry.intersectionRatio >= 0.6 && !entered) {
+          entered = true;
+          clear();
+          timers = PHASE_AT.map(([next, at]) => window.setTimeout(() => setPhase(next), at));
 
           return;
         }
-        timers = PHASE_AT.map(([next, at]) => window.setTimeout(() => setPhase(next), at));
+        if (!entry.isIntersecting) {
+          entered = false;
+          clear();
+          setPhase('hidden');
+        }
       },
       { threshold: 0.6 }
     );
@@ -55,6 +77,7 @@ export function UseCaseChat({
 
     return () => {
       clear();
+      media.removeEventListener('change', onMotion);
       observer.disconnect();
     };
   }, []);

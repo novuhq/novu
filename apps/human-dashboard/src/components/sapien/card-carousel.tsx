@@ -64,23 +64,30 @@ export function CardCarousel({ label, previousLabel, nextLabel, ofLabel, slides,
     };
   }, [update]);
 
-  const scrollToSlide = (index: number) => {
+  // Card starts past the end of the scroll are not places the track can rest, so stepping by the
+  // active index sticks there: the previous card's start is still at or beyond the maximum.
+  const scrollByStep = (direction: -1 | 1) => {
     const element = track.current;
     if (!element) return;
-    const offsets = slideOffsets(element);
-    const left = offsets[Math.max(0, Math.min(index, offsets.length - 1))] ?? 0;
+    const max = Math.max(0, element.scrollWidth - element.clientWidth);
+    const left = element.scrollLeft;
+    const stops = [0, ...slideOffsets(element).filter((offset) => offset > 1 && offset < max - 8), max];
+    const target =
+      direction < 0
+        ? (stops.filter((stop) => stop < left - 1).at(-1) ?? 0)
+        : (stops.find((stop) => stop > left + 1) ?? max);
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    element.scrollTo({ left, behavior: reduce ? 'instant' : 'smooth' });
+    element.scrollTo({ left: target, behavior: reduce ? 'instant' : 'smooth' });
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLUListElement>) => {
     if (event.key === 'ArrowRight') {
       event.preventDefault();
-      scrollToSlide(state.active + 1);
+      scrollByStep(1);
     }
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      scrollToSlide(state.active - 1);
+      scrollByStep(-1);
     }
   };
 
@@ -125,10 +132,10 @@ export function CardCarousel({ label, previousLabel, nextLabel, ofLabel, slides,
           </ol>
         </div>
         <div className="flex gap-2">
-          <CarouselButton label={previousLabel} disabled={state.start} onClick={() => scrollToSlide(state.active - 1)}>
+          <CarouselButton label={previousLabel} disabled={state.start} onClick={() => scrollByStep(-1)}>
             <ArrowLeft className="size-4" strokeWidth={1.75} />
           </CarouselButton>
-          <CarouselButton label={nextLabel} disabled={state.end} onClick={() => scrollToSlide(state.active + 1)}>
+          <CarouselButton label={nextLabel} disabled={state.end} onClick={() => scrollByStep(1)}>
             <ArrowRight className="size-4" strokeWidth={1.75} />
           </CarouselButton>
         </div>

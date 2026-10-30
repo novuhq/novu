@@ -58,6 +58,9 @@ const EXPORTED: Partial<Record<`${MascotArt}-${MascotMood}`, string>> = {
   'waiting-happy': '/illustrations/mascot-happy.svg',
 };
 
+/** The paper drawing has no dark export. This poster shows until the canvas paints, and without JavaScript. */
+const PAPER_POSTER = '/illustrations/mascot-paper.svg';
+
 type MascotFaceProps = {
   art: MascotArt;
   /**
@@ -75,7 +78,7 @@ type MascotFaceProps = {
    * looking right at the mascot when the page loads.
    */
   drawnOnly?: boolean;
-  /** Drawn for light paper (see `MascotLook.paper`). The exported drawings are dark, so none shows first. */
+  /** Drawn for light paper (see `MascotLook.paper`). A paper poster shows until the canvas paints. */
   paper?: boolean;
   className?: string;
 };
@@ -104,7 +107,8 @@ export function MascotFace({
   const redraw = useRef<(() => void) | null>(null);
   const { grid, radius } = ART[art];
   const asleep = mood === 'asleep';
-  const exported = drawnOnly || paper ? undefined : EXPORTED[`${art}-${mood}`];
+  let exported: string | undefined;
+  if (!drawnOnly) exported = paper ? PAPER_POSTER : EXPORTED[`${art}-${mood}`];
 
   useEffect(() => {
     wanted.current = mood;
@@ -259,7 +263,13 @@ export function MascotFace({
 
   return (
     <span aria-hidden="true" className={cn('relative block shrink-0', className)}>
-      {exported && <img src={exported} alt="" className={cn('absolute inset-0 size-full', painted && 'invisible')} />}
+      {exported && (
+        <img
+          src={exported}
+          alt=""
+          className={cn('absolute inset-0 size-full [image-rendering:pixelated]', painted && 'invisible')}
+        />
+      )}
       <canvas
         ref={canvas}
         width={grid}

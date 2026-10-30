@@ -71,6 +71,26 @@ test('the agent and channel pills swap in place while the title stays put', asyn
   await expect(agent).toHaveAttribute('data-current', 'Grok Bot');
 });
 
+for (const width of [390, 1440]) {
+  test(`the headline stays two lines through every pair at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await openOnPausedClock(page);
+    await page.evaluate(() => document.fonts.ready);
+    const lineCount = () =>
+      page
+        .locator('#hero h1')
+        .evaluate((heading) =>
+          [...heading.querySelectorAll(':scope > [aria-hidden="true"]')].map((line) => line.getClientRects().length)
+        );
+
+    for (let step = 0; step < 12; step++) {
+      if (step > 0) await page.clock.fastForward(3100);
+      await expect.poll(lineCount).toEqual([1, 1]);
+    }
+  });
+}
+
 test('the caption button pauses and resumes the rotation', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await openOnPausedClock(page);

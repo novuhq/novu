@@ -194,6 +194,7 @@ test('home documentation and artwork work without JavaScript', async ({ browser 
   const page = await context.newPage();
   await page.goto('/');
   await expect(page.getByRole('figure', { name: MASCOT })).toBeVisible();
+  await expect(page.locator('.home-artwork img')).toHaveAttribute('src', /\/illustrations\/mascot-paper\.svg$/);
   await expect(page.locator('#contacts')).toContainText('carol@acme.com');
   await page.getByRole('link', { name: 'agentinbox.md/sapien' }).click();
   await expect(page).toHaveURL(/\/sapien$/);

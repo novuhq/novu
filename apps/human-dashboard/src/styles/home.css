@@ -330,7 +330,8 @@
  * stage) sits in the middle, its bubble under it.
  */
 .home-artwork {
-  --home-mascot: clamp(240px, 26vw, 440px);
+  /* Short windows would centre a 440px stage and push the reply below the pane. */
+  --home-mascot: min(clamp(240px, 26vw, 440px), 58vh);
   position: fixed;
   top: 0;
   right: 0;
@@ -357,11 +358,7 @@
     20px 20px;
   /* A clear disc behind the mascot and its halo, then the fade at the pane edges. */
   mask-image:
-    radial-gradient(
-      circle at center,
-      transparent calc(var(--home-mascot) * 0.5),
-      #000 calc(var(--home-mascot) * 0.66)
-    ),
+    radial-gradient(circle at center, transparent calc(var(--home-mascot) * 0.5), #000 calc(var(--home-mascot) * 0.66)),
     radial-gradient(closest-side, #000 30%, transparent 100%);
   mask-composite: intersect;
 }
