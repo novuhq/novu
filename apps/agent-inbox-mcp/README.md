@@ -9,6 +9,7 @@ It is a Cloudflare Worker and is for Novu Cloud only: it needs the Agent Inbox C
 | Tool | What it does |
 | --- | --- |
 | `inbox_setup` | Creates the agent and its email inbox, sends the owner's confirmation link, or reports how far setup got. |
+| `channel_add` | Takes the owner's Telegram or Slack to its next step, usually a link they finish in their own browser. |
 | `inbox_send` | Starts a conversation. Without a `kind` it is a plain message; `ask`, `approve` or `choose` waits for the answer. |
 | `inbox_reply` | Sends into an existing conversation, with the same kinds and card options. |
 | `inbox_wait` | Keeps waiting for an answer that had not come yet. |
@@ -19,9 +20,13 @@ It is a Cloudflare Worker and is for Novu Cloud only: it needs the Agent Inbox C
 | `contact_list` | Lists the people that can be reached. |
 | `contact_invite` | Returns a link for another person to connect their chat app. |
 
-Someone who connects the MCP before finishing agentinbox.md uses `inbox_setup`: ask them for an agent name and address, call it with `agent_name` and `handle`, then confirm their email with them and pass `email` so a confirmation link goes out. A later call with no arguments says whether they opened it. Chat channels (Slack, Telegram) are still set up on agentinbox.md or with the CLI.
+Someone who connects the MCP before finishing agentinbox.md uses `inbox_setup`: ask them for an agent name and address, call it with `agent_name` and `handle`, then confirm their email with them and pass `email` so a confirmation link goes out. A later call with no arguments says whether they opened it.
 
-The tools are named after the CLI's commands, the conversation ones with `inbox_` in front (`send` is `inbox_send`, `contact list` is `contact_list`), and say "conversation" as it does. `inbox_wait` is the one the CLI doesn't have: AI tools give up on a call after about a minute, while the CLI waits inside the send. So `inbox_send` and `inbox_reply` wait up to 50 seconds for `ask`, `approve` and `choose`; with no answer by then they return the request's id, and `inbox_wait` picks it up. A plain message returns as soon as delivery is confirmed.
+`channel_add` adds Telegram or Slack the way `channel add` does in the CLI, without the wait: it finds or creates the integration, links it to the agent, returns the one next step and ends. That step is a link: the `/connect` setup page while there is no bot or app, then the bot's `/start` link or Slack's install link. The person finishes it in their own browser, and the next call picks up where things stand. It takes no bot token or App Configuration Token, although the CLI has flags for them: the setup page collects them, so they stay out of chat transcripts and host logs.
+
+The setup page marks its link used before it saves what was pasted, and tells the person it's done only after the save, so a call made after that sees the save at once. A call made while the page's request is still running looks again for a moment (2 seconds for Telegram, 6 for Slack, which covers the 5 seconds the API lets Slack take to create the app) rather than hand out another page. Only a call for an integration that was already linked looks again: a page can't be open for any other.
+
+The tools are named after the CLI's commands, the conversation ones with `inbox_` in front (`send` is `inbox_send`, `contact list` is `contact_list`, `channel add` is `channel_add`), and say "conversation" as it does. `inbox_wait` is the one the CLI doesn't have: AI tools give up on a call after about a minute, while the CLI waits inside the send. So `inbox_send` and `inbox_reply` wait up to 50 seconds for `ask`, `approve` and `choose`; with no answer by then they return the request's id, and `inbox_wait` picks it up. A plain message returns as soon as delivery is confirmed.
 
 A person may message the agent first. Use the conversation id from `inbox_list` with `inbox_reply` to answer in it. Conversations and messages are labelled contact or stranger the same way the CLI does: a contact is someone the operator added; a stranger wrote without being one. Showing a conversation does not mark it read; any reply into it does.
 
@@ -38,7 +43,7 @@ Every request stands alone: nothing is kept between calls, so any instance can a
 
 ## Where calls go
 
-- Every tool calls the Agent Inbox Dashboard API (`AGENT_INBOX_API_URL`, the dashboard's `/api`) with the account's key, as the CLI does: `/v1/setup`, `/v1/inbox-address` and `/v1/agent` for onboarding, `/v1/inbox` and `/v1/inbox/messages` for conversations and messages, `/v1/contacts` for contacts, invites and verifications, and `/v1/operator` for the account's owner. The dashboard forwards each call to the Novu API.
+- Every tool calls the Agent Inbox Dashboard API (`AGENT_INBOX_API_URL`, the dashboard's `/api`) with the account's key, as the CLI does: `/v1/setup`, `/v1/inbox-address` and `/v1/agent` for onboarding, `/v1/channels` for Telegram and Slack, `/v1/inbox` and `/v1/inbox/messages` for conversations and messages, `/v1/contacts` for contacts, invites and verifications, and `/v1/operator` for the account's owner. The dashboard forwards each call to the Novu API.
 - Opening an account and reading its key are the calls that go straight to the Novu API (`NOVU_API_URL`), with the dashboard's secret: `POST /v1/human/accounts` when the sign-in has no account yet, then `GET /v1/human/accounts/:id/secret-key`. The Dashboard API doesn't offer either.
 
 ## Which tools are connected
@@ -52,7 +57,7 @@ Cursor's agent runtime is Cursor only by its User-Agent (`Cursor/1.0.0`, with th
 | Name | Kind | What it is |
 | --- | --- | --- |
 | `CLERK_OAUTH_ISSUER` | variable | Address of the Agent Inbox Clerk app. Its OAuth feature with dynamic client registration must be on. |
-| `AGENT_INBOX_API_URL` | variable | The Agent Inbox Dashboard API, which every tool calls: `https://www.agentinbox.md/api` (staging `https://staging.agentinbox.md/api`, local `http://localhost:4300/api`). Without it the server answers `503`. |
+| `AGENT_INBOX_API_URL` | variable | The Agent Inbox Dashboard API, which every tool calls: `https://www.agentinbox.md/api` (staging `https://staging.agentinbox.md/api`, local `http://localhost:4300/api`). The `/connect` links `channel_add` gives are on the same site, since that page calls the API on its own address. Without it the server answers `503`. |
 | `NOVU_API_URL` | variable | The Novu API, used to open an account and read its key with the dashboard's secret. |
 | `DOCS_URL` | variable | Where a person who opens the address in a browser is sent. |
 | `OPENAI_APPS_CHALLENGE` | variable | The token OpenAI gives to verify the domain for the ChatGPT app. The server returns it as plain text at `/.well-known/openai-apps-challenge`, without sign-in. Set on staging and production; without it that address answers `404`. |

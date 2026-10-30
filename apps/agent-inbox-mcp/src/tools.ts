@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { type AgentInboxApi, AgentInboxApiError } from './agent-inbox-api';
+import { ADDABLE_CHANNELS, channelAdd } from './channels';
 import { contactListText, DEFAULT_CONTACTS_LIMIT, MAX_CONTACTS_LIMIT } from './contacts';
 import {
   getInboxThread,
@@ -264,6 +265,20 @@ export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEm
   );
 
   server.registerTool(
+    'channel_add',
+    {
+      title: 'Add a channel',
+      description:
+        "Connect Telegram or Slack for the account owner. Each call says where things stand and gives the one next step, usually a link they finish in their own browser. It never waits for them: give them the link, then call it again after they finish. Never ask for a bot token or a Slack token; the link collects those. For the owner's email, use inbox_setup. For anyone else, use contact_invite.",
+      inputSchema: {
+        channel: z.enum(ADDABLE_CHANNELS).describe('The channel to connect.'),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    },
+    (input) => run(() => channelAdd(api, input))
+  );
+
+  server.registerTool(
     'inbox_send',
     {
       title: 'Send an inbox message',
@@ -515,6 +530,12 @@ async function run(work: () => Promise<string>): Promise<ToolResult> {
 export function mapSetupHint(error: AgentInboxApiError): string {
   if (error.status === 404 && /no agent yet|relay agent/i.test(error.message)) {
     return NOT_SET_UP_HINT;
+  }
+
+  // The API names the CLI command for this, which an AI tool on this server has no use for.
+  const missingChannel = /^No (telegram|slack) channel is linked to this agent\./.exec(error.message);
+  if (error.status === 404 && missingChannel) {
+    return `${missingChannel[0]} Call channel_add with channel "${missingChannel[1]}" to connect it.`;
   }
 
   return error.message;
