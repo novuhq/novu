@@ -9,6 +9,14 @@ describe('DurationUtils', () => {
       expect(DurationUtils.isISO8601('2025-06-15T08:30:00.12Z')).toBe(true);
       expect(DurationUtils.isISO8601('2025-06-15T08:30:00.1Z')).toBe(true);
       expect(DurationUtils.isISO8601('2025-06-15T08:30:00')).toBe(true);
+      expect(DurationUtils.isISO8601('2025-01-01T00:30:00')).toBe(true);
+      expect(DurationUtils.isISO8601('0099-01-01T00:00:00Z')).toBe(true);
+    });
+
+    it('should accept end-of-day timestamps', () => {
+      expect(DurationUtils.isISO8601('2025-01-01T24:00:00Z')).toBe(true);
+      expect(DurationUtils.isISO8601('2025-01-01T24:00:00')).toBe(true);
+      expect(DurationUtils.isISO8601('2025-01-01T24:00:01Z')).toBe(false);
     });
 
     it('should reject invalid ISO-8601 formats', () => {
@@ -22,6 +30,10 @@ describe('DurationUtils', () => {
 
     it('should reject invalid dates with correct format', () => {
       expect(DurationUtils.isISO8601('2025-02-30T12:00:00Z')).toBe(false);
+      expect(DurationUtils.isISO8601('2025-02-30T24:00:00Z')).toBe(false);
+      expect(DurationUtils.isISO8601('0099-02-30T00:00:00Z')).toBe(false);
+      expect(DurationUtils.isISO8601('2024-02-29T12:00:00Z')).toBe(true);
+      expect(DurationUtils.isISO8601('2025-02-29T12:00:00Z')).toBe(false);
     });
   });
 
