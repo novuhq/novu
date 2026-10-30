@@ -15,6 +15,12 @@ export interface ActivityRetentionRange {
 
 type ActivityRetentionPolicy = { kind: 'unlimited' } | { kind: 'limited'; durationMs: number };
 
+/** A local calendar week is one hour longer across a daylight-saving fallback. */
+const RETENTION_DST_BUFFER_MS = 60 * 60 * 1000;
+
+/** The server clock is later than the client stamp by the time the request arrives. */
+const RETENTION_REQUEST_DELAY_MS = 60 * 1000;
+
 function parseAndValidateDate(dateString: string, parameterName: string): Date {
   const parsedDate = new Date(dateString);
 
@@ -90,8 +96,9 @@ export class ActivityRetentionService {
 
     assertValidChronology(resolvedAfterDate, resolvedBeforeDate);
 
-    const oneHourBufferMs = 60 * 60 * 1000;
-    const bufferedEarliestAllowedDate = new Date(earliestAllowedDate.getTime() - oneHourBufferMs);
+    const bufferedEarliestAllowedDate = new Date(
+      earliestAllowedDate.getTime() - RETENTION_DST_BUFFER_MS - RETENTION_REQUEST_DELAY_MS
+    );
 
     if (
       process.env.NODE_ENV !== 'local' &&
