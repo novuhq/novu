@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { ROUTES } from '@/utils/routes';
+import { AUTOCOMPLETE_PASSWORD_MANAGERS_ON } from '@/utils/constants';
 import { authClient } from '../client';
 import { useAuth } from '../index';
 import { buildSsoSignInPath } from '../sso-redirect';
@@ -149,7 +150,10 @@ export function SignUp() {
             First Name <span className="text-red-600">*</span>
           </label>
           <Input
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             type="text"
+            name="firstName"
+            autoComplete="given-name"
             value={firstName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
             placeholder="John"
@@ -162,7 +166,10 @@ export function SignUp() {
             Last Name
           </label>
           <Input
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             type="text"
+            name="lastName"
+            autoComplete="family-name"
             value={lastName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
             placeholder="Doe"
@@ -174,7 +181,10 @@ export function SignUp() {
             Email <span className="text-red-600">*</span>
           </label>
           <Input
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             type="email"
+            name="email"
+            autoComplete="email"
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="user@example.com"
@@ -187,7 +197,10 @@ export function SignUp() {
             Password <span className="text-red-600">*</span>
           </label>
           <Input
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             type="password"
+            name="password"
+            autoComplete="new-password"
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setIsSubmitted(false);
