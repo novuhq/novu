@@ -16,6 +16,30 @@ const emailOutputSchema = {
     replyTo: { type: 'string' },
     preheader: { type: 'string' },
     useProviderDefaults: { type: 'boolean' },
+    attachments: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          file: {
+            description: 'Buffer or base64 string containing file data',
+          },
+          mime: { type: 'string' },
+          cid: { type: 'string' },
+          disposition: {
+            type: 'string',
+            enum: ['inline', 'attachment'],
+          },
+          channels: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+        },
+        required: ['file', 'mime'],
+        additionalProperties: false,
+      },
+    },
   },
   required: ['subject', 'body'],
   additionalProperties: false,
