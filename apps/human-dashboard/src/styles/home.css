@@ -322,36 +322,167 @@
 }
 
 /*
- * Figma 923:2846 (1920×1080 background frame): the dither canvas is 1323px wide
- * (1187:1018) at y = 74, starts 13px right of the document column and runs
- * 216px past the right edge. The drawing only fills the middle of the canvas
- * (x 22–79%, y 24–72%), so the overhang stays empty; its top (20.7% of the
- * width below the canvas top) lines up with the description at y = 348, and
- * stays there when narrower or shorter windows scale it down. Only when that
- * would cut it off at the bottom does it rise, keeping 16px clear.
+ * The right of the window is a viewer pane beside the document, the full height
+ * of the window, split from it by a hairline, and still while the page scrolls.
+ * Its grid keeps the page's 20px rhythm, with a heavier line every 100px, and
+ * fades out towards the pane's edges. The lines stop before the mascot, so the
+ * halo sits on plain paper. The mascot (its sphere is the middle 62% of the
+ * stage) sits in the middle, its bubble under it.
  */
 .home-artwork {
-  --home-artwork-width: min(
-    1323px,
-    calc((100vw - var(--home-inset) - var(--home-document-width) - 13px) * 1323 / 1107),
-    calc(100svh * 1323 / 1080)
-  );
+  --home-mascot: clamp(240px, 26vw, 440px);
   position: fixed;
-  top: min(
-    calc(74px + (1323px - var(--home-artwork-width)) * 0.207),
-    calc(100svh - 16px - var(--home-artwork-width) * 0.616)
-  );
-  right: calc(var(--home-artwork-width) * -216 / 1323);
-  width: var(--home-artwork-width);
-  aspect-ratio: 1187 / 1018;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: calc(var(--home-inset) + var(--home-document-width) + 64px);
+  border-left: 1px solid rgb(64 59 52 / 8%);
+  color: rgb(64 59 52 / 40%);
   pointer-events: none;
+}
+
+.home-artwork-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgb(64 59 52 / 8%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(64 59 52 / 8%) 1px, transparent 1px),
+    linear-gradient(to right, rgb(64 59 52 / 3.5%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(64 59 52 / 3.5%) 1px, transparent 1px);
+  background-position: center;
+  background-size:
+    100px 100px,
+    100px 100px,
+    20px 20px,
+    20px 20px;
+  /* A clear disc behind the mascot and its halo, then the fade at the pane edges. */
+  mask-image:
+    radial-gradient(
+      circle at center,
+      transparent calc(var(--home-mascot) * 0.5),
+      #000 calc(var(--home-mascot) * 0.66)
+    ),
+    radial-gradient(closest-side, #000 30%, transparent 100%);
+  mask-composite: intersect;
+}
+
+/* Crop marks at the corners of the pane's inner frame, level with the document's top. */
+.home-artwork-marks {
+  position: absolute;
+  inset: var(--home-inset) var(--home-inset) var(--home-inset) 32px;
+  --mark: linear-gradient(currentColor, currentColor);
+  background:
+    var(--mark) top left / 12px 1px no-repeat,
+    var(--mark) top left / 1px 12px no-repeat,
+    var(--mark) top right / 12px 1px no-repeat,
+    var(--mark) top right / 1px 12px no-repeat,
+    var(--mark) bottom left / 12px 1px no-repeat,
+    var(--mark) bottom left / 1px 12px no-repeat,
+    var(--mark) bottom right / 12px 1px no-repeat,
+    var(--mark) bottom right / 1px 12px no-repeat;
+}
+
+.home-artwork-label {
+  position: absolute;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+.home-artwork-label[data-corner="top"] {
+  top: calc(var(--home-inset) + 14px);
+  left: 52px;
+}
+
+.home-artwork-label[data-corner="bottom"] {
+  right: calc(var(--home-inset) + 20px);
+  bottom: calc(var(--home-inset) + 14px);
+}
+
+.home-artwork-stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--home-mascot);
+  height: var(--home-mascot);
+  transform: translate(-50%, -50%);
+}
+
+/* A whisper of cream under the mascot, almost the page white, gone before the grid returns. */
+.home-artwork-stage::before {
+  content: "";
+  position: absolute;
+  inset: -22%;
+  background: radial-gradient(circle, rgb(236 226 210 / 50%) 0%, rgb(236 226 210 / 0%) 70%);
 }
 
 .home-artwork-media {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  mask-image: radial-gradient(closest-side, #000 60%, transparent 100%);
+}
+
+.home-bubble {
+  position: absolute;
+  z-index: 1;
+  top: 87%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--home-foreground);
+  display: flex;
+  width: max-content;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px 9px;
+  border: 1px solid rgb(64 59 52 / 9%);
+  border-radius: 12px;
+  background: var(--home-background);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.home-bubble-from {
+  color: var(--home-muted);
+}
+
+.home-bubble-via {
+  color: #c9c5bf;
+}
+
+.home-bubble-text {
+  min-width: 27ch;
+  white-space: nowrap;
+}
+
+.home-bubble-caret {
+  display: inline-block;
+  width: 0.6em;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: -2px;
+  background: #ff5c30;
+  opacity: 0;
+}
+
+.home-bubble-caret[data-typing] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-bubble-caret {
+    animation: home-caret 1.1s steps(1, end) infinite;
+    opacity: 1;
+  }
+
+  .home-bubble-caret[data-typing] {
+    animation: none;
+  }
+}
+
+@keyframes home-caret {
+  50% {
+    opacity: 0;
+  }
 }
 
 @media (min-width: 1200px) and (max-width: 1599px) {
@@ -365,12 +496,46 @@
     --home-inset: 32px;
   }
 
-  /* The drawing (57% of the canvas width, from 20.7% of it below the top) takes the
-     slot above the description: as wide as min(320px, 60vw), from y = 152. */
+  /* No pane: the mascot and its bubble in a row, in the gap above the description. */
   .home-artwork {
-    --home-artwork-width: calc(min(320px, 60vw) / 0.573);
     position: absolute;
-    top: calc(152px - var(--home-artwork-width) * 0.207);
+    top: 184px;
+    right: auto;
+    bottom: auto;
+    left: calc(var(--home-inset) - 32px);
+    width: calc(100vw - 2 * var(--home-inset) + 32px);
+    height: 180px;
+    border-left: 0;
+  }
+
+  .home-artwork-grid,
+  .home-artwork-marks,
+  .home-artwork-label {
+    display: none;
+  }
+
+  .home-artwork-stage {
+    --home-mascot: 180px;
+    top: 0;
+    left: 0;
+    transform: none;
+  }
+
+  .home-bubble {
+    top: 30%;
+    left: 82%;
+    max-width: calc(100vw - 2 * var(--home-inset) - 128px);
+    border-radius: 4px 12px 12px;
+    transform: none;
+  }
+
+  .home-bubble-from {
+    white-space: nowrap;
+  }
+
+  .home-bubble-text {
+    min-width: 0;
+    white-space: normal;
   }
 
   .home-page .home-description {
@@ -398,13 +563,60 @@
 }
 
 @media (max-width: 479px) {
+  /* A terminal page: the desktop size wraps a command after a few words. */
+  .home-page {
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  .home-page h1,
+  .home-section-title {
+    font-size: 14px;
+    line-height: 18px;
+  }
+
+  .home-page h1 {
+    margin-top: 20px;
+  }
+
+  .home-section-title {
+    min-height: 18px;
+  }
+
+  .home-subsection-title {
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  .home-ascii-rule {
+    height: 18px;
+  }
+
+  .home-inline-code,
+  .home-inline-code-tall {
+    min-height: 18px;
+  }
+
+  .home-page .home-inline-code,
+  .home-prose-word {
+    line-height: 18px;
+  }
+
   .home-document {
-    gap: 48px;
+    gap: 40px;
   }
 
   .home-artwork {
-    --home-artwork-width: calc(240px / 0.573);
-    top: calc(224px - var(--home-artwork-width) * 0.207);
+    top: 196px;
+    height: 160px;
+  }
+
+  .home-bubble-from {
+    white-space: normal;
+  }
+
+  .home-artwork-stage {
+    --home-mascot: 160px;
   }
 
   .home-page .home-description {

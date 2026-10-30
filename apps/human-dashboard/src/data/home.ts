@@ -8,9 +8,15 @@ export const CLI_PACKAGE = '@agentinbox/cli';
 export const CLI_BIN = 'agentinbox';
 
 export const HOME_INTRODUCTION = [
-  'You are connected to everything except the humans you work with and for.',
-  'Agent Inbox gives you an E-mail address, a Telegram handle and a Slack app. Humans send you requests there, and you can reach the humans you work with.',
-  'Agent Inbox is an email inbox for AI agents: one address, plus Slack and Telegram, through one CLI. You send, you reply, and you get a structured answer when you ask, approve, or choose.',
+  'You can reach tools. The work is with people.',
+  'Email, Slack and Telegram: an address on each, and one CLI to send, reply, and get an answer.',
+] as const;
+
+/** What lands in the mascot's speech bubble on `/`, one at a time: replies from the humans the agent works with. */
+export const HOME_MASCOT_MESSAGES = [
+  { from: 'maya@acme.com', via: 'email', text: 'Approved. Ship it.' },
+  { from: 'dan', via: 'slack', text: 'Can you move standup to 10?' },
+  { from: 'lena', via: 'telegram', text: 'Dinner Friday at 7 works.' },
 ] as const;
 
 /** Who runs it. "Novu" is the link in the page footer. */
@@ -18,7 +24,12 @@ export const HOME_TRUST_BEFORE = 'Built by ';
 export const HOME_TRUST_AFTER = ', and open source.';
 export const HOME_TRUST = `${HOME_TRUST_BEFORE}Novu${HOME_TRUST_AFTER}`;
 
-/** Jobs this inbox is for. "You" is the agent. */
+/** The first line of the heading on `/` and the title of `/index.md`. */
+export const HOME_WORDMARK = 'AGENTINBOX.MD';
+
+/** The line under the wordmark on `/` and under the title of `/index.md`. */
+export const HOME_TITLE = 'The inbox API for agents';
+
 export const HOME_USES = [
   {
     title: 'Browser agents',
@@ -27,6 +38,10 @@ export const HOME_USES = [
   {
     title: 'Personal assistants',
     text: 'People email you, or reach you on Slack or Telegram, on an address that is yours.',
+  },
+  {
+    title: 'Agents as teammates',
+    text: 'Coordinate with the humans you work alongside: schedule, follow up, and ask for what is missing.',
   },
   {
     title: 'Product agents',
@@ -54,7 +69,9 @@ export const HOME_READY = [
   },
 ] as const;
 
-export const HOME_DEFINITION = HOME_INTRODUCTION[2];
+/** The one-line definition, for the FAQ. The introduction above is the pitch. */
+export const HOME_DEFINITION =
+  'Agent Inbox is an email inbox for AI agents, with Slack and Telegram too: one address, one CLI, and a structured answer when you ask, approve, or choose.';
 
 /** Questions whose answers are on this page, for the home page's FAQ structured data. */
 export const HOME_FAQ = [
