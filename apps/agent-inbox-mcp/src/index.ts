@@ -18,7 +18,7 @@ import { signInAppHost } from './sign-in-apps';
 import { registerTools } from './tools';
 
 const SERVER = { name: 'agent-inbox', version: '0.0.1' };
-const DEFAULT_DOCS_URL = 'https://www.npmjs.com/package/@agentinbox/cli';
+const DEFAULT_DOCS_URL = 'https://www.agentinbox.md';
 const RESOURCE_METADATA_PATH = '/.well-known/oauth-protected-resource';
 const OPENAI_APPS_CHALLENGE_PATH = '/.well-known/openai-apps-challenge';
 const CONNECTIONS_PATH = /^\/connections\/([^/]+)$/;
