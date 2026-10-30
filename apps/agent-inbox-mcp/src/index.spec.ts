@@ -46,6 +46,24 @@ describe('the Agent Inbox MCP server', () => {
     );
   });
 
+  it('sends a person who opens the address in a browser to the configured site', async () => {
+    const { env, ctx } = setup({ DOCS_URL: 'https://site.example.test' });
+
+    const response = await worker.fetch(new Request(`${ORIGIN}/`, { headers: { Accept: 'text/html' } }), env, ctx);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('Location')).toBe('https://site.example.test/');
+  });
+
+  it('sends that person to the Agent Inbox website when no site is configured', async () => {
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(new Request(`${ORIGIN}/`, { headers: { Accept: 'text/html' } }), env, ctx);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('Location')).toBe('https://www.agentinbox.md/');
+  });
+
   it('names the Agent Inbox Clerk app as the place to sign in', async () => {
     const { env, ctx } = setup();
 

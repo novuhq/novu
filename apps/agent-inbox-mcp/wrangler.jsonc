@@ -28,7 +28,7 @@
         "CLERK_OAUTH_ISSUER": "https://exact-haddock-1045.clerk.accounts.dev",
         "AGENT_INBOX_API_URL": "http://localhost:4300/api",
         "NOVU_API_URL": "http://localhost:3000",
-        "DOCS_URL": "https://www.npmjs.com/package/@agentinbox/cli"
+        "DOCS_URL": "http://localhost:4300"
       },
       // Kept by `wrangler dev` in `.wrangler/state`, never deployed: connected apps show on the local dashboard,
       // and its onboarding moves on when an app signs in.
@@ -47,7 +47,7 @@
         "CLERK_OAUTH_ISSUER": "https://select-foal-365.clerk.accounts.dev",
         "AGENT_INBOX_API_URL": "https://staging.agentinbox.md/api",
         "NOVU_API_URL": "https://api.novu-staging.co",
-        "DOCS_URL": "https://www.npmjs.com/package/@agentinbox/cli",
+        "DOCS_URL": "https://staging.agentinbox.md",
         "OPENAI_APPS_CHALLENGE": "MbIO4yH4tRys5OGhYXborRB1b_Q67jqjOO9lRpXkIVE"
       },
       "kv_namespaces": [
@@ -70,7 +70,7 @@
         "CLERK_OAUTH_ISSUER": "https://clerk.agentinbox.md",
         "AGENT_INBOX_API_URL": "https://www.agentinbox.md/api",
         "NOVU_API_URL": "https://api.novu.co",
-        "DOCS_URL": "https://www.npmjs.com/package/@agentinbox/cli",
+        "DOCS_URL": "https://www.agentinbox.md",
         "OPENAI_APPS_CHALLENGE": "MbIO4yH4tRys5OGhYXborRB1b_Q67jqjOO9lRpXkIVE"
       },
       "kv_namespaces": [
