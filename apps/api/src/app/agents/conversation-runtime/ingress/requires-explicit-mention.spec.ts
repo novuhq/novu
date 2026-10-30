@@ -7,6 +7,7 @@ import {
   countOtherAgentParticipants,
   detectSmartExclusiveThreadEnded,
   followsNestedThreadWithoutMention,
+  messageMentionsAgent,
   messageMentionsOtherHuman,
   requiresExplicitMention,
 } from './requires-explicit-mention';
@@ -350,6 +351,46 @@ describe('messageMentionsOtherHuman', () => {
     ).to.equal(false);
   });
 
+  it('ignores a Slack teammate id written only in inline code when the bot user id is unknown', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: 'see `<@U99>`', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        undefined
+      )
+    ).to.equal(false);
+  });
+
+  it('ignores a Slack teammate id written only in inline code', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: 'see `<@U99>`', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(false);
+  });
+
+  it('ignores a Slack teammate id written only in a fenced code block', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: 'see\n```\n<@U99> take a look\n```\nthanks', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(false);
+  });
+
+  it('still detects a Slack teammate mention when the same id also appears in code', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: '<@U99> see `<@U99>`', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(true);
+  });
+
   it('detects a Teams teammate mention', () => {
     expect(
       messageMentionsOtherHuman(
@@ -361,6 +402,78 @@ describe('messageMentionsOtherHuman', () => {
         AgentPlatformEnum.TEAMS,
         'bot'
       )
+    ).to.equal(true);
+  });
+});
+
+describe('messageMentionsAgent', () => {
+  it('does not treat a Slack bot id written only in inline code as a mention', () => {
+    expect(
+      messageMentionsAgent(
+        { isMention: false, text: 'try `<@UBOT>` in a snippet' } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(false);
+  });
+
+  it('does not treat a Slack bot id written only in a fenced code block as a mention', () => {
+    expect(
+      messageMentionsAgent(
+        { isMention: false, text: 'see\n```\n<@UBOT> help\n```\nthanks' } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(false);
+  });
+
+  it('does not treat a bot id that exists only inside code in the raw event text as a mention', () => {
+    expect(
+      messageMentionsAgent(
+        { isMention: false, raw: { event: { text: '`<@UBOT>`' } } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(false);
+  });
+
+  it('still treats a real Slack mention as a mention when the same id also appears in code', () => {
+    expect(
+      messageMentionsAgent({ isMention: false, text: '<@UBOT> see `<@UBOT>`' } as any, AgentPlatformEnum.SLACK, 'UBOT')
+    ).to.equal(true);
+  });
+
+  it('still treats a real mention in the raw event as a mention when formatted text only has it in code', () => {
+    expect(
+      messageMentionsAgent(
+        { isMention: false, text: '`<@UBOT>`', raw: { event: { text: '<@UBOT> help' } } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(true);
+  });
+
+  it('does not treat a bot id after an unclosed fence that is followed by inline code as a mention', () => {
+    expect(
+      messageMentionsAgent({ isMention: false, text: '```x`<@UBOT>`' } as any, AgentPlatformEnum.SLACK, 'UBOT')
+    ).to.equal(false);
+  });
+
+  it('does not join a bot id across an inline code span', () => {
+    expect(
+      messageMentionsAgent({ isMention: false, text: '<@UBOT`x`>' } as any, AgentPlatformEnum.SLACK, 'UBOT')
+    ).to.equal(false);
+  });
+
+  it('still treats a bot id after an unclosed fence as a mention', () => {
+    expect(
+      messageMentionsAgent({ isMention: false, text: '``` <@UBOT> help' } as any, AgentPlatformEnum.SLACK, 'UBOT')
+    ).to.equal(true);
+  });
+
+  it('still treats a bot id in an inline span that crosses a line as a mention', () => {
+    expect(
+      messageMentionsAgent({ isMention: false, text: '`<@UBOT>\nhelp`' } as any, AgentPlatformEnum.SLACK, 'UBOT')
     ).to.equal(true);
   });
 });
@@ -395,6 +508,17 @@ describe('detectSmartExclusiveThreadEnded', () => {
         message: { isMention: false, text: 'hey <@U99> take a look', author: { userId: 'U1' } } as any,
       })
     ).to.equal('teammate_mention');
+  });
+
+  it('stays quiet when the incumbent only writes a teammate id in code', () => {
+    expect(
+      detectSmartExclusiveThreadEnded({
+        ...base,
+        subscriberId: 'sub1',
+        platformUserId: 'U1',
+        message: { isMention: false, text: 'see `<@U99>`', author: { userId: 'U1' } } as any,
+      })
+    ).to.equal(null);
   });
 
   it('prefers join when a newcomer also mentions a teammate', () => {
