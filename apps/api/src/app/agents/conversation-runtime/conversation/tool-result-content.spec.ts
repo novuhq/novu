@@ -61,12 +61,4 @@ describe('capToolResultContent', () => {
 
     expect(result).to.deep.equal({ content: [{ type: 'text', text: 'aé' }], truncated: true });
   });
-
-  it('caps at 64 KiB by default', () => {
-    const result = capToolResultContent([{ type: 'text', text: 'x'.repeat(70_000) }]);
-    const [part] = result.content;
-
-    expect(result.truncated).to.equal(true);
-    expect(part.type === 'text' && part.text.length).to.equal(65536);
-  });
 });

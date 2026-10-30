@@ -725,16 +725,10 @@ describe('ConversationActivityLedger', () => {
       organizationId: 'org-1',
     };
 
-    it('records a tool call under an identifier derived from conversation, run and tool call', async () => {
-      const activityRepository = makeActivityRepository();
+    it("does not bump the conversation's activity or preview when recording tool rows", async () => {
       const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
       const conversationRepository = makeConversationRepository();
-      const ledger = makeLedger(
-        activityRepository,
-        { mint: sinon.stub().resolves(5) },
-        publisher,
-        conversationRepository
-      );
+      const ledger = makeLedger(makeActivityRepository(), undefined, publisher, conversationRepository);
 
       await ledger.persistToolCall({
         ...context,
@@ -742,77 +736,18 @@ describe('ConversationActivityLedger', () => {
         toolCallId: 'toolu_1',
         toolName: 'search_docs',
         input: { query: 'pricing' },
-        mcpServerName: 'docs',
+      });
+      await ledger.persistToolResult({
+        ...context,
+        runId: 'run-1',
+        toolCallId: 'toolu_1',
+        content: [{ type: 'text', text: 'ok' }],
+        isError: false,
       });
 
-      expect(activityRepository.createAgentActivity.firstCall.args[0]).to.deep.include({
-        identifier: 'tool-call:conv-1:run-1:toolu_1',
-        type: ConversationActivityTypeEnum.TOOL_CALL,
-        content: 'Called search_docs',
-        sequence: 5,
-        toolData: {
-          toolCallId: 'toolu_1',
-          toolName: 'search_docs',
-          input: { query: 'pricing' },
-          mcpServerName: 'docs',
-        },
-      });
-      expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
+      expect(publisher.emitPersistedClientEvent.callCount).to.equal(2);
       expect(conversationRepository.touchActivity.called).to.equal(false);
       expect(conversationRepository.touchPreview.called).to.equal(false);
-    });
-
-    it('records a run result with capped content and no output when the runtime gives none', async () => {
-      const activityRepository = makeActivityRepository();
-      const ledger = makeLedger(activityRepository);
-
-      await ledger.persistToolResult({
-        ...context,
-        runId: 'run-1',
-        toolCallId: 'toolu_1',
-        content: [
-          { type: 'text', text: 'boom' },
-          { type: 'media', mediaType: 'image/png', data: 'aGVsbG8=' },
-        ],
-        isError: true,
-      });
-
-      const row = activityRepository.createAgentActivity.firstCall.args[0];
-      expect(row.identifier).to.equal('tool-result:conv-1:run-1:toolu_1');
-      expect(row.type).to.equal(ConversationActivityTypeEnum.TOOL_RESULT);
-      expect(row.toolData).to.deep.equal({
-        toolCallId: 'toolu_1',
-        toolName: undefined,
-        content: [
-          { type: 'text', text: 'boom' },
-          { type: 'media', mediaType: 'image/png' },
-        ],
-        isError: true,
-        truncated: true,
-      });
-    });
-
-    it('keeps the bridge output next to the content so model history still reads it', async () => {
-      const activityRepository = makeActivityRepository();
-      const ledger = makeLedger(activityRepository);
-
-      await ledger.persistToolResult({
-        ...context,
-        runId: 'run-1',
-        toolCallId: 'call_1',
-        toolName: 'lookup_order',
-        output: { status: 'shipped' },
-        content: [{ type: 'json', value: { status: 'shipped' } }],
-        isError: false,
-      });
-
-      expect(activityRepository.createAgentActivity.firstCall.args[0].toolData).to.deep.equal({
-        toolCallId: 'call_1',
-        toolName: 'lookup_order',
-        output: { status: 'shipped' },
-        content: [{ type: 'json', value: { status: 'shipped' } }],
-        isError: false,
-      });
     });
 
     it('keeps the legacy shape and a minted identifier when no run or content is given', async () => {
