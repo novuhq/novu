@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { encryptSecret, PinoLogger } from '@novu/application-generic';
-import { IntegrationRepository } from '@novu/dal';
+import { type IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { ConfigureTelegramWebhookCommand } from '../configure-telegram-webhook/configure-telegram-webhook.command';
 import { ConfigureTelegramWebhook } from '../configure-telegram-webhook/configure-telegram-webhook.usecase';
@@ -49,7 +49,7 @@ export class ConsumeTelegramMobileLink {
           _environmentId: payload.env,
           _organizationId: payload.org,
         },
-        '_id identifier providerId'
+        '_id identifier providerId credentials'
       );
 
       if (!integration) {
@@ -60,23 +60,31 @@ export class ConsumeTelegramMobileLink {
         throw new BadRequestException('This link is not a Telegram setup link.');
       }
 
+      const savedToken = encryptSecret(command.botToken);
+
       await this.integrationRepository.update(
         {
           _id: integration._id,
           _environmentId: payload.env,
           _organizationId: payload.org,
         },
-        { $set: { 'credentials.apiToken': encryptSecret(command.botToken) } }
+        { $set: { 'credentials.apiToken': savedToken } }
       );
 
-      const result = await this.configureTelegramWebhookUsecase.execute(
-        ConfigureTelegramWebhookCommand.create({
-          userId: 'telegram-mobile-link',
-          environmentId: payload.env,
-          organizationId: payload.org,
-          integrationIdentifier: integration.identifier,
-        })
-      );
+      const result = await this.configureTelegramWebhookUsecase
+        .execute(
+          ConfigureTelegramWebhookCommand.create({
+            userId: 'telegram-mobile-link',
+            environmentId: payload.env,
+            organizationId: payload.org,
+            integrationIdentifier: integration.identifier,
+          })
+        )
+        .catch(async (err: unknown) => {
+          await this.takeBackBotToken(integration, payload, savedToken);
+
+          throw err;
+        });
 
       let deepLinkUrl: string | undefined;
 
@@ -112,6 +120,33 @@ export class ConsumeTelegramMobileLink {
       }
       this.logger.warn(`Telegram mobile setup consume failed: ${(err as Error).message}`);
       throw err;
+    }
+  }
+
+  /**
+   * A bot without its webhook isn't set up, so the token doesn't stay. Left in place it would read as a finished
+   * setup, with a Start link that does nothing and no way back to this page. The match on `savedToken` leaves alone
+   * a token that another setup saved in the meantime.
+   */
+  private async takeBackBotToken(
+    integration: Pick<IntegrationEntity, '_id' | 'credentials'>,
+    payload: TelegramMobileLinkTokenPayload,
+    savedToken: string
+  ): Promise<void> {
+    const previousToken = integration.credentials?.apiToken;
+
+    try {
+      await this.integrationRepository.update(
+        {
+          _id: integration._id,
+          _environmentId: payload.env,
+          _organizationId: payload.org,
+          'credentials.apiToken': savedToken,
+        },
+        previousToken ? { $set: { 'credentials.apiToken': previousToken } } : { $unset: { 'credentials.apiToken': '' } }
+      );
+    } catch (err) {
+      this.logger.error(`Telegram mobile setup bot token rollback failed: ${(err as Error).message}`);
     }
   }
 

@@ -31,6 +31,7 @@ const MCP_PROTOCOL_VERSION = '2025-06-18';
  */
 const MCP_TOOLS = [
   'inbox_setup',
+  'channel_add',
   'inbox_send',
   'inbox_reply',
   'inbox_wait',

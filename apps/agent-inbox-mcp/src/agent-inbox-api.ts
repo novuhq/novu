@@ -33,6 +33,8 @@ export const ANALYTICS_SOURCE_HEADER = 'Novu-Analytics-Source';
 type Query = Record<string, string | number | undefined>;
 
 export type AgentInboxApi = {
+  /** The site this API is served from. Its pages call this same API, so a link for a person starts here. */
+  siteUrl: string;
   /** `timeoutMs` replaces the usual limit on how long the call may take. */
   get<T>(path: string, query?: Query, timeoutMs?: number): Promise<T>;
   /**
@@ -102,6 +104,7 @@ export function createAgentInboxApi(account: Account, host: HostId | null = null
   }
 
   return {
+    siteUrl: account.apiUrl.replace(/\/api$/, ''),
     get: (path, query, timeoutMs) => send('GET', `${path}${toQueryString(query)}`, undefined, timeoutMs, true),
     getRaw: (path, query, timeoutMs) => send('GET', `${path}${toQueryString(query)}`, undefined, timeoutMs, false),
     post: (path, body, timeoutMs) => send('POST', path, body, timeoutMs, true),

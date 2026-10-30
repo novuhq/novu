@@ -95,7 +95,19 @@ export type StubBackendsOptions = {
   replacesVerifiedAddress?: boolean;
   /** POST /v1/human/accounts fails with this status instead of opening the account. */
   accountCreateStatus?: number;
+  /** Override GET /v1/channels/apps. */
+  channelApps?: StubChannelApp[];
+  /** The integrations, by identifier, the operator has a channel endpoint on. */
+  connectedApps?: string[];
+  /** The integrations, by identifier, that have a saved bot token or Slack app. */
+  appsWithCredentials?: string[];
+  /** How many checks still see no credentials, as while the setup page is saving them. */
+  checksBeforeSaved?: number;
+  /** Channel calls that fail, keyed like `POST /v1/channels`. */
+  channelFailures?: Record<string, StubFailure>;
 };
+
+export type StubFailure = { status: number; message: string };
 
 export type StubContact = {
   id: string;
@@ -111,7 +123,22 @@ export type StubAgent = {
 };
 
 export type StubChannelLink = {
-  integration: { providerId: string; sharedInboundAddress?: string };
+  integration: {
+    _id?: string;
+    identifier?: string;
+    providerId: string;
+    active?: boolean;
+    sharedInboundAddress?: string;
+  };
+};
+
+/** An integration, as GET /v1/channels/apps lists it. */
+export type StubChannelApp = {
+  _id: string;
+  identifier: string;
+  providerId: string;
+  channel: string;
+  active?: boolean;
 };
 
 export type StubAddressCheck = {
@@ -165,7 +192,12 @@ function isStubBackendsOptions(options: StubBackendsOptions | Partial<Interactio
     'setupError' in options ||
     'channelsError' in options ||
     'replacesVerifiedAddress' in options ||
-    'accountCreateStatus' in options
+    'accountCreateStatus' in options ||
+    'channelApps' in options ||
+    'connectedApps' in options ||
+    'appsWithCredentials' in options ||
+    'checksBeforeSaved' in options ||
+    'channelFailures' in options
   );
 }
 
@@ -410,6 +442,152 @@ function answerCreateSetup(body: unknown, state: SetupStubState): Response {
   });
 }
 
+type ChannelStubState = {
+  apps: StubChannelApp[];
+  connectedApps: string[];
+  appsWithCredentials: string[];
+  checksBeforeSaved: number;
+  failures: Record<string, StubFailure>;
+};
+
+/** Everything `channel_add` calls beside the agent, the operator and the list of what's linked. */
+function answerChannels(
+  url: string,
+  method: string,
+  body: unknown,
+  setup: SetupStubState,
+  state: ChannelStubState
+): Response | null {
+  const path = dashboardPathOf(url);
+  if (!path?.startsWith('/v1/channels')) {
+    return null;
+  }
+
+  const failure = state.failures[`${method} ${path}`];
+  if (failure) {
+    return reply({ message: failure.message }, failure.status);
+  }
+
+  if (method === 'GET') {
+    return answerChannelReads(url, path, state);
+  }
+
+  return (
+    answerChannelLinking(path, body, setup, state) ??
+    answerSetupLink(path, setup) ??
+    answerConnectLink(path, body, state)
+  );
+}
+
+function answerChannelReads(url: string, path: string, state: ChannelStubState): Response | null {
+  if (path === '/v1/channels/apps') {
+    return reply({ data: state.apps });
+  }
+
+  if (path === '/v1/channels/links') {
+    const identifier = new URL(url).searchParams.get('integrationIdentifier') ?? '';
+
+    return reply({ data: state.connectedApps.includes(identifier) ? [{ identifier: 'endpoint_1' }] : [], next: null });
+  }
+
+  return null;
+}
+
+function answerChannelLinking(
+  path: string,
+  body: unknown,
+  setup: SetupStubState,
+  state: ChannelStubState
+): Response | null {
+  if (path === '/v1/channels/apps') {
+    const { providerId, channel } = body as { providerId: string; channel: string };
+    const created = { _id: 'app_created', identifier: `${providerId}-created`, providerId, channel };
+    state.apps.push(created);
+
+    return reply({ data: created }, 201);
+  }
+
+  if (path === '/v1/channels') {
+    const { integrationIdentifier } = body as { integrationIdentifier: string };
+    const app = state.apps.find((candidate) => candidate.identifier === integrationIdentifier);
+    if (!app) {
+      return reply({ message: `Integration with identifier "${integrationIdentifier}" was not found.` }, 404);
+    }
+
+    setup.channels.push({ integration: app });
+
+    return reply({ data: { integration: app } }, 201);
+  }
+
+  return null;
+}
+
+/** As the API does: Telegram's route finds the integration by its identifier and Slack's by its `_id`, once linked. */
+function answerSetupLink(path: string, setup: SetupStubState): Response | null {
+  const match = /^\/v1\/channels\/apps\/([^/]+)\/(telegram-link|slack-setup-link)$/.exec(path);
+  if (!match) {
+    return null;
+  }
+
+  const [, appId, route] = match;
+  const channel = route === 'telegram-link' ? 'telegram' : 'slack';
+  const linked = setup.channels.some(({ integration }) =>
+    channel === 'telegram' ? integration.identifier === appId : integration._id === appId
+  );
+  if (!linked) {
+    return reply({ message: `Integration ${appId} not found` }, 404);
+  }
+
+  const token = `tok_${channel}`;
+
+  return reply({
+    data: {
+      token,
+      url: `https://dashboard.example.test/agents/${channel}/connect/${token}`,
+      expiresAt: '2026-10-30T12:15:00.000Z',
+    },
+  });
+}
+
+function answerConnectLink(path: string, body: unknown, state: ChannelStubState): Response | null {
+  const { integrationIdentifier } = (body ?? {}) as { integrationIdentifier?: string };
+
+  if (path === '/v1/channels/telegram/link') {
+    return credentialsReadable(integrationIdentifier, state)
+      ? reply({
+          data: {
+            url: 'https://t.me/atlas_bot?start=code_1',
+            providerMetadata: { botUsername: 'atlas_bot', expiresAt: '2026-10-30T12:10:00.000Z' },
+          },
+        })
+      : reply(
+          {
+            message:
+              'Bot Token is missing from integration credentials. Save the Bot Token and re-run the webhook configuration first.',
+          },
+          422
+        );
+  }
+
+  if (path === '/v1/channels/slack/install-link') {
+    return credentialsReadable(integrationIdentifier, state)
+      ? reply({ data: { url: 'https://slack.com/oauth/v2/authorize?client_id=1' } }, 201)
+      : reply({ message: 'Slack integration missing credentials ' }, 404);
+  }
+
+  return null;
+}
+
+function credentialsReadable(identifier: string | undefined, state: ChannelStubState): boolean {
+  if (state.checksBeforeSaved > 0) {
+    state.checksBeforeSaved -= 1;
+
+    return false;
+  }
+
+  return state.appsWithCredentials.includes(identifier ?? '');
+}
+
 function answerInbox(
   url: string,
   method: string,
@@ -600,6 +778,13 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
     channelsError: opts.channelsError,
     contactsById,
   };
+  const channelState = {
+    apps: opts.channelApps ?? [],
+    connectedApps: opts.connectedApps ?? [],
+    appsWithCredentials: opts.appsWithCredentials ?? [],
+    checksBeforeSaved: opts.checksBeforeSaved ?? 0,
+    failures: opts.channelFailures ?? {},
+  };
 
   if (opts.agent !== null && !contactsById.operator_1 && setupState.operator?.subscriberId) {
     contactsById[setupState.operator.subscriberId] = contactsById[setupState.operator.subscriberId] ?? {
@@ -623,6 +808,7 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
       return (
         answerAuth(url, method, headers, body, accounts, opts.userEmail, opts.accountCreateStatus) ??
         answerSetup(url, method, body, setupState) ??
+        answerChannels(url, method, body, setupState, channelState) ??
         answerInbox(url, method, inboxPage, inboxThread, inboxActionThread) ??
         answerContacts(url, method, contactPages, contactsById, body, opts.replacesVerifiedAddress === true) ??
         answerInteractions(url, method, body, interaction, createdInteraction) ??
