@@ -3,7 +3,9 @@ import { AnalyticsService, InstrumentUsecase, isAgentSharedInboxEnabled, PinoLog
 import {
   AgentEntity,
   AgentRepository,
+  type HumanContactPendingAddress,
   HumanContactRepository,
+  type HumanContactVerifiedAddress,
   isDuplicateKeyError,
   SubscriberEntity,
   SubscriberRepository,
@@ -23,6 +25,7 @@ import type { SetupHumanRelayResponseDto } from '../../dtos/setup-human-relay.dt
 import { trackAgentInboxChannelConnected, trackAgentInboxCreated } from '../../services/agent-inbox-analytics';
 import { HumanAgentIdentityService } from '../../services/human-agent-identity.service';
 import { HumanOperatorService } from '../../services/human-operator.service';
+import { syncSubscriberEmail } from '../../services/sync-subscriber-email';
 import { SetupHumanRelayCommand } from './setup-human-relay.command';
 
 export const DEFAULT_HUMAN_RELAY_IDENTIFIER = 'human-relay';
@@ -66,7 +69,10 @@ export class SetupHumanRelay {
     if (inbox.emailAddress) {
       this.trackNewInbox(command, agent);
     }
-    await this.rememberDeclaredEmail(command, agent._id, subscriberId);
+    const email = await this.rememberDeclaredEmail(command, agent._id, subscriberId);
+    if (email && command.operator && command.emailVerified) {
+      await this.verifySignInEmail(command, agent._id, subscriberId, email);
+    }
 
     if (command.defaultVia) {
       await this.humanContactRepository.setDefaultVia({
@@ -143,7 +149,7 @@ export class SetupHumanRelay {
   }
 
   private async ensureSubscriber(command: SetupHumanRelayCommand, subscriberId: string): Promise<void> {
-    // Subscriber.email is written when verification is promoted (`VerifyAddress`).
+    // Subscriber.email is only written once an address is verified (`VerifyAddress`, `verifySignInEmail`).
     const details: ContactDetails = {
       firstName: command.firstName?.trim() || undefined,
       lastName: command.lastName?.trim() || undefined,
@@ -261,20 +267,20 @@ export class SetupHumanRelay {
     });
   }
 
-  /** Stored unverified. Delivery still requires the verified slot. */
+  /** Stored unverified. Delivery still requires the verified slot. Returns the address as it was stored. */
   private async rememberDeclaredEmail(
     command: SetupHumanRelayCommand,
     agentId: string,
     subscriberId: string
-  ): Promise<void> {
+  ): Promise<string | undefined> {
     const raw = command.email?.trim();
     if (!raw) {
-      return;
+      return undefined;
     }
 
     const address = normalizeEmailForLookup(raw);
     if (!isValidEmailForLookup(address)) {
-      return;
+      return undefined;
     }
 
     await this.humanContactRepository.setDeclaredAddress({
@@ -285,5 +291,76 @@ export class SetupHumanRelay {
       via: HumanChannelViaEnum.EMAIL,
       address,
     });
+
+    return address;
+  }
+
+  /**
+   * The dashboard's sign-up: Clerk has proved the address is the operator's, so it skips the confirmation
+   * link and ends up as a used link leaves it: verified, nothing pending, and on the subscriber. A verified
+   * address is never replaced. When it is this one, a repeat call only finishes a subscriber write that failed.
+   * A failure here must not fail `human setup`: the address stays declared and can still get a link.
+   */
+  private async verifySignInEmail(
+    command: SetupHumanRelayCommand,
+    agentId: string,
+    subscriberId: string,
+    address: string
+  ): Promise<void> {
+    try {
+      const contact = await this.humanContactRepository.findContact(command.environmentId, agentId, subscriberId);
+      const email = contact?.addresses?.[HumanChannelViaEnum.EMAIL];
+      const verified =
+        email?.verified ?? (await this.promoteSignInEmail(command, agentId, subscriberId, address, email?.pending));
+
+      if (verified?.address === address) {
+        await syncSubscriberEmail(
+          { humanContactRepository: this.humanContactRepository, subscriberRepository: this.subscriberRepository },
+          { environmentId: command.environmentId, agentId, subscriberId }
+        );
+      }
+    } catch (err) {
+      this.logger.warn({ err, agentId }, 'Failed to mark the sign-in email as verified');
+    }
+  }
+
+  /**
+   * Null when the address stays declared: a link is on its way to another address, which the operator asked
+   * for and which has to keep working, or another contact uses this one, or the slot changed after it was read.
+   */
+  private async promoteSignInEmail(
+    command: SetupHumanRelayCommand,
+    agentId: string,
+    subscriberId: string,
+    address: string,
+    pending: HumanContactPendingAddress | undefined
+  ): Promise<HumanContactVerifiedAddress | null> {
+    if (pending && pending.address !== address) {
+      return null;
+    }
+
+    const contacts = await this.humanContactRepository.findContactsByEmailAddress(
+      command.environmentId,
+      agentId,
+      address
+    );
+    if (contacts.some((contact) => contact.subscriberId !== subscriberId)) {
+      this.logger.warn({ agentId }, 'Another contact uses the sign-in email, so it stays declared');
+
+      return null;
+    }
+
+    const slot = {
+      environmentId: command.environmentId,
+      agentId,
+      subscriberId,
+      via: HumanChannelViaEnum.EMAIL,
+      address,
+    };
+
+    // A link already on its way here keeps its own request, so opening it later reads as used, not superseded.
+    return pending
+      ? this.humanContactRepository.promotePendingAddress({ ...slot, requestedAt: pending.requestedAt })
+      : this.humanContactRepository.verifyUnclaimedAddress(slot);
   }
 }

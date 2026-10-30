@@ -71,8 +71,9 @@ export type InviteChannelDescription = {
 
 /**
  * The channel an interaction goes to when the caller doesn't pass `via`: the
- * human's saved default while it is still connected, otherwise the channel
- * they connected first. Email has no connect time until verified, so it comes last.
+ * human's saved default while it is still connected, otherwise the chat app
+ * they connected first. Email comes last, however early it was verified: someone
+ * who connects a chat app wants to be reached there unless they choose email.
  */
 export function pickDefaultTarget<T extends ReachableHumanTarget>(
   targets: T[],
@@ -80,10 +81,15 @@ export function pickDefaultTarget<T extends ReachableHumanTarget>(
 ): T | undefined {
   const preferred = defaultVia ? targets.find((target) => target.via === defaultVia) : undefined;
 
-  return preferred ?? [...targets].sort(byConnectedAt)[0];
+  return preferred ?? [...targets].sort(byConnection)[0];
 }
 
-function byConnectedAt(a: ReachableHumanTarget, b: ReachableHumanTarget): number {
+function byConnection(a: ReachableHumanTarget, b: ReachableHumanTarget): number {
+  const emailLast = Number(a.via === HumanChannelViaEnum.EMAIL) - Number(b.via === HumanChannelViaEnum.EMAIL);
+  if (emailLast !== 0) {
+    return emailLast;
+  }
+
   if (!a.connectedAt || !b.connectedAt) {
     return Number(!a.connectedAt) - Number(!b.connectedAt);
   }

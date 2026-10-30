@@ -645,6 +645,22 @@ describe('pickDefaultTarget', () => {
     expect(pickDefaultTarget([email, telegram])).to.equal(telegram);
   });
 
+  it('puts email after chat channels even when it was verified first', () => {
+    const verifiedAtSignUp = { ...email, connectedAt: '2026-09-01T10:00:00.000Z' };
+
+    expect(pickDefaultTarget([verifiedAtSignUp, telegram])).to.equal(telegram);
+  });
+
+  it('uses email when nothing else is connected', () => {
+    expect(pickDefaultTarget([email])).to.equal(email);
+  });
+
+  it('falls back on a chat channel when the saved default is gone, whatever email’s date', () => {
+    const verifiedAtSignUp = { ...email, connectedAt: '2026-09-01T10:00:00.000Z' };
+
+    expect(pickDefaultTarget([verifiedAtSignUp, telegram], HumanChannelViaEnum.SLACK)).to.equal(telegram);
+  });
+
   it('uses the saved default even when it is email', () => {
     expect(pickDefaultTarget([email, telegram], HumanChannelViaEnum.EMAIL)).to.equal(email);
   });
