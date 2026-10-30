@@ -34,7 +34,7 @@ export class NexmoSmsProvider extends BaseProvider implements ISmsProvider {
     const response = await this.vonageClient.sms.send(
       this.transform<any>(bridgeProviderData, {
         to: options.to,
-        from: this.config.from,
+        from: options.from || this.config.from,
         text: options.content,
       }).body
     );

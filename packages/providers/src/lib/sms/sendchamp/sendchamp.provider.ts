@@ -39,7 +39,9 @@ export class SendchampSmsProvider extends BaseProvider implements ISmsProvider {
       route: 'international',
     });
 
-    const response = await this.axiosInstance.post(`/sms/send`, payload);
+    const response = await this.axiosInstance.post(`/sms/send`, payload.body, {
+      headers: payload.headers,
+    });
 
     return {
       id: response.data.data.business_id,

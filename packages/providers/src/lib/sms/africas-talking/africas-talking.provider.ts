@@ -36,8 +36,18 @@ export class AfricasTalkingSmsProvider extends BaseProvider implements ISmsProvi
       }).body
     );
 
+    const recipient = response?.SMSMessageData?.Recipients?.[0];
+    // 100 Processed, 101 Sent, 102 Queued are accepted sends; codes >= 400 are rejections.
+    const accepted = recipient?.status === 'Success' || [100, 101, 102].includes(recipient?.statusCode);
+
+    if (!recipient || !accepted) {
+      throw new Error(
+        `Africa's Talking error: ${recipient?.status ?? response?.SMSMessageData?.Message ?? 'no recipients'}`
+      );
+    }
+
     return {
-      id: response?.SMSMessageData?.Recipients[0]?.messageId,
+      id: recipient.messageId,
       date: new Date().toISOString(),
     };
   }

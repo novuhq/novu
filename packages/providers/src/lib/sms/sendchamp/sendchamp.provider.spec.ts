@@ -12,15 +12,17 @@ const mockNovuMessage = {
   content: 'sms content',
 };
 
-test('should trigger sendchamp library correctly', async () => {
-  const { mockPost: spy } = axiosSpy({
+const mockResponse = {
+  data: {
     data: {
-      data: {
-        business_id: '67890-90q8',
-        created_at: new Date().toISOString(),
-      },
+      business_id: '67890-90q8',
+      created_at: new Date().toISOString(),
     },
-  });
+  },
+};
+
+test('should trigger sendchamp library correctly', async () => {
+  const { mockPost: spy } = axiosSpy(mockResponse);
 
   const smsProvider = new SendchampSmsProvider(mockConfig);
 
@@ -28,27 +30,20 @@ test('should trigger sendchamp library correctly', async () => {
 
   expect(spy).toHaveBeenCalled();
 
-  expect(spy).toHaveBeenCalledWith('/sms/send', {
-    body: {
+  expect(spy).toHaveBeenCalledWith(
+    '/sms/send',
+    {
       message: 'sms content',
       route: 'international',
       sender_name: 'sendchamp',
       to: '2348055372961',
     },
-    headers: {},
-    query: {},
-  });
+    { headers: {} }
+  );
 });
 
 test('should trigger sendchamp library correctly with _passthrough', async () => {
-  const { mockPost: spy } = axiosSpy({
-    data: {
-      data: {
-        business_id: '67890-90q8',
-        created_at: new Date().toISOString(),
-      },
-    },
-  });
+  const { mockPost: spy } = axiosSpy(mockResponse);
 
   const smsProvider = new SendchampSmsProvider(mockConfig);
 
@@ -62,14 +57,32 @@ test('should trigger sendchamp library correctly with _passthrough', async () =>
 
   expect(spy).toHaveBeenCalled();
 
-  expect(spy).toHaveBeenCalledWith('/sms/send', {
-    body: {
+  expect(spy).toHaveBeenCalledWith(
+    '/sms/send',
+    {
       message: 'sms content',
       route: 'international',
       sender_name: 'sendchamp',
       to: '3348055372961',
     },
-    headers: {},
-    query: {},
+    { headers: {} }
+  );
+});
+
+test('should send _passthrough headers with the request', async () => {
+  const { mockPost: spy } = axiosSpy(mockResponse);
+
+  const smsProvider = new SendchampSmsProvider(mockConfig);
+
+  await smsProvider.sendMessage(mockNovuMessage, {
+    _passthrough: {
+      headers: {
+        'X-Custom': 'value',
+      },
+    },
+  });
+
+  expect(spy).toHaveBeenCalledWith('/sms/send', expect.any(Object), {
+    headers: { 'X-Custom': 'value' },
   });
 });

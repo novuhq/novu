@@ -59,7 +59,7 @@ export class ISendSmsProvider extends BaseProvider implements ISmsProvider {
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const payload = this.transform(bridgeProviderData, {
-      sender_id: options.from ?? this.config.from,
+      sender_id: options.from || this.config.from,
       recipient: options.to.replace(/^\+|^00/, ''),
       type: this.config.contentType ?? 'unicode',
       message: options.content,

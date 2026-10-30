@@ -91,3 +91,34 @@ test('should trigger nexmo library correctly with _passthrough', async () => {
     to: '+176543',
   });
 });
+
+test('should use the step from override', async () => {
+  const provider = new NexmoSmsProvider({
+    apiKey: '<vonage-api-key>',
+    apiSecret: '<vonage-api-secret>',
+    from: '+112345',
+  });
+
+  const spy = vi
+
+    // @ts-expect-error
+    .spyOn(provider.vonageClient.sms, 'send')
+    .mockImplementation(async () => {
+      return {
+        'message-count': 1,
+        messages: [{ 'message-id': '123' }],
+      } as any;
+    });
+
+  await provider.sendMessage({
+    to: '+176543',
+    content: 'SMS Content',
+    from: '+199999',
+  });
+
+  expect(spy).toHaveBeenCalledWith({
+    from: '+199999',
+    text: 'SMS Content',
+    to: '+176543',
+  });
+});

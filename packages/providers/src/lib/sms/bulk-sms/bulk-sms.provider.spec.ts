@@ -68,3 +68,37 @@ test('should trigger bulk-sms library correctly with _passthrough', async () => 
     }
   );
 });
+
+test('should strip a leading + from an international sender number', async () => {
+  const { mockPost: spy } = axiosSpy({
+    data: [
+      {
+        id: '67890-90q8',
+        date: new Date().toISOString(),
+      },
+    ],
+  });
+  const smsProvider = new BulkSmsProvider(mockConfig);
+
+  await smsProvider.sendMessage({ ...mockBulkSMSMessage, from: '+447700900123' });
+
+  const body = JSON.parse(spy.mock.calls[0][1] as string);
+  expect(body.from).toEqual({ type: 'INTERNATIONAL', address: '447700900123' });
+});
+
+test('should send an alphanumeric sender name', async () => {
+  const { mockPost: spy } = axiosSpy({
+    data: [
+      {
+        id: '67890-90q8',
+        date: new Date().toISOString(),
+      },
+    ],
+  });
+  const smsProvider = new BulkSmsProvider(mockConfig);
+
+  await smsProvider.sendMessage({ ...mockBulkSMSMessage, from: 'Novu' });
+
+  const body = JSON.parse(spy.mock.calls[0][1] as string);
+  expect(body.from).toEqual({ type: 'ALPHANUMERIC', address: 'Novu' });
+});

@@ -56,3 +56,22 @@ test('should trigger iSendPro API correctly with _passthrough', async () => {
   const params = (axios.post as any).mock.calls[0][1] as URLSearchParams;
   expect(params.get('sms')).toBe('Hello iSendPro _passthrough');
 });
+
+test('should use the step from override as emetteur', async () => {
+  (axios.post as any).mockResolvedValueOnce({ data: { id: 'abc123' } });
+
+  const smsProvider = new ISendProSmsProvider(mockConfig);
+  await smsProvider.sendMessage({ ...mockSMSMessage, from: 'OVERRIDE' });
+
+  const params = (axios.post as any).mock.calls[0][1] as URLSearchParams;
+  expect(params.get('emetteur')).toBe('OVERRIDE');
+});
+
+test('should return the Novu message id when iSendPro returns no id', async () => {
+  (axios.post as any).mockResolvedValueOnce({ data: {} });
+
+  const smsProvider = new ISendProSmsProvider(mockConfig);
+  const result = await smsProvider.sendMessage({ ...mockSMSMessage, id: 'novu-message-id' });
+
+  expect(result.id).toBe('novu-message-id');
+});
