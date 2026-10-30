@@ -2,6 +2,7 @@ export * from './africas-talking/africas-talking.provider';
 export * from './afro-sms/afro-sms.provider';
 export * from './azure-sms/azure-sms.provider';
 export * from './bandwidth/bandwidth.provider';
+export * from './bird/bird.provider';
 export * from './brevo-sms/brevo-sms.provider';
 export * from './bulk-sms/bulk-sms.provider';
 export * from './burst-sms/burst-sms.provider';
