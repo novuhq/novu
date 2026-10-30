@@ -165,7 +165,7 @@ export class ClaimKeylessConnect {
 
     throw new ConflictException({
       message:
-        'Verify your email before claiming this setup. Open the verification message and confirm the address, then use this link again.',
+        'Confirm your email before claiming this setup. Open the confirmation email and press Confirm email, then use this link again.',
       code: 'verify_email_before_claim',
     });
   }

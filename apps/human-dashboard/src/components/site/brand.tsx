@@ -4,16 +4,25 @@ import { cn } from '@/lib/utils';
 
 /**
  * The agentinbox.md logo (`App/Logo` in Figma): the 22px mark, drawn from its exported paths, and the wordmark.
- * The one logo of the app: the dashboard, the sign-in and standalone screens, and the invite page.
+ * The one logo of the app: the dashboard, the sign-in and standalone screens, and the invite page. `onLight` is its
+ * smaller version for the light pages people reach from an email.
  */
-export function Brand({ href = '/', className }: { href?: string; className?: string }) {
+export function Brand({
+  href = '/',
+  onLight = false,
+  className,
+}: {
+  href?: string;
+  onLight?: boolean;
+  className?: string;
+}) {
   return (
     <Link
       href={href}
       aria-label="agentinbox.md"
-      className={cn('flex shrink-0 items-center gap-2.5 rounded-sm', className)}
+      className={cn('flex shrink-0 items-center rounded-sm', onLight ? 'gap-2' : 'gap-2.5', className)}
     >
-      <svg aria-hidden="true" viewBox="0 0 22 22" className="size-5.5" fill="none">
+      <svg aria-hidden="true" viewBox="0 0 22 22" className={onLight ? 'size-4.5' : 'size-5.5'} fill="none">
         <path
           className="fill-accent"
           d="M21.083 0c.506 0 .917.41.917.917v13.291c0 .506-.41.917-.917.917h-9.88c-.118 0-.203-.112-.203-.23v-2.978A.917.917 0 0 0 10.083 11H7.104c-.117 0-.229-.085-.229-.202V.917c0-.506.41-.917.917-.917h13.291Z"
@@ -23,7 +32,14 @@ export function Brand({ href = '/', className }: { href?: string; className?: st
           d="M6.188 14.896c0 .506.41.917.916.917h1.604c.506 0 .917.41.917.916v4.354c0 .506-.41.917-.917.917H.917A.917.917 0 0 1 0 21.083v-7.791c0-.506.41-.917.917-.917h4.354c.506 0 .916.41.916.917v1.604Z"
         />
       </svg>
-      <span className="font-mono text-[15px] leading-5 tracking-[-0.3px] text-foreground">
+      <span
+        className={cn(
+          'font-mono',
+          onLight
+            ? 'text-[13px] leading-[17px] text-[#1a1714]'
+            : 'text-[15px] leading-5 tracking-[-0.3px] text-foreground'
+        )}
+      >
         agentinbox<span className="text-accent">.md</span>
       </span>
     </Link>

@@ -21,6 +21,8 @@ export interface CardNode {
   style?: string;
   children?: CardNode[];
   props?: Record<string, unknown>;
+  /** The version of this card to hand to a layout, when an adapter has one. Otherwise never read. */
+  layoutCard?: CardNode;
 }
 
 const SAFE_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
@@ -103,6 +105,7 @@ async function resolveActionUrls(card: CardNode, action: ActionContext): Promise
         value: getNodeValue(node),
         label: getNodeLabel(node),
         style: getNodeStyle(node),
+        cardTitle: card.title,
       });
 
       return [node, url] as const;
@@ -110,6 +113,18 @@ async function resolveActionUrls(card: CardNode, action: ActionContext): Promise
   );
 
   return new Map(entries);
+}
+
+/** A copy of the card whose action buttons carry their `url`, for a layout that renders the card itself. */
+export async function withActionUrls(card: CardNode, action: ActionContext): Promise<CardNode> {
+  const copy = structuredClone(card);
+  const urls = await resolveActionUrls(copy, action);
+
+  for (const [node, url] of urls) {
+    node.url = url;
+  }
+
+  return copy;
 }
 
 function renderChildren(children: CardNode[] | undefined, ctx: RenderContext): React.ReactNode {

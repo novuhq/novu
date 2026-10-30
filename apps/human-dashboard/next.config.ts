@@ -90,6 +90,8 @@ const nextConfig: NextConfig = {
         source: '/v1/agents/email/actions/execute',
         destination: `${novuApiUrl}/v1/agents/email/actions/execute`,
       },
+      // The confirmation page of an agent's email, and the answer it posts back to the same address.
+      { source: '/email-action', destination: `${novuApiUrl}/v1/human/email-actions` },
     ];
   },
   // The routes that draw a share image read these files, which the build can't tell from their code.

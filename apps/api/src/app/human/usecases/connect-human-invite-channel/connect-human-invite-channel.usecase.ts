@@ -79,7 +79,7 @@ export class ConnectHumanInviteChannel {
       if (!command.address?.trim()) {
         throw new BadRequestException({
           code: 'address_required',
-          message: 'Enter an email address to verify.',
+          message: 'Enter an email address to confirm.',
         });
       }
 
@@ -100,7 +100,7 @@ export class ConnectHumanInviteChannel {
         if (err instanceof BadGatewayException) {
           throw new BadGatewayException({
             error: 'delivery_failed',
-            message: 'Could not send the verification email. Try again in a moment.',
+            message: 'Could not send the confirmation email. Try again in a moment.',
           });
         }
 

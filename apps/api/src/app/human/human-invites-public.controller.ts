@@ -80,7 +80,7 @@ export class HumanInvitesPublicController {
 }
 
 /**
- * Public verification endpoint behind the "Verify this email" button.
+ * Public verification endpoint behind the "Confirm email" button.
  * The verification token is the only credential.
  */
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)

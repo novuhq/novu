@@ -2,7 +2,11 @@
 
 import { type ReactNode, useEffect, useState } from 'react';
 
-import { describeSender, InviteRequestError, type VerifyAddressResult, verifyAddress } from '@/lib/invite-api';
+import { Brand } from '@/components/site/brand';
+import { InviteRequestError, type VerifyAddressResult, verifyAddress } from '@/lib/invite-api';
+import { cn } from '@/lib/utils';
+
+const SITE_URL = 'https://agentinbox.md';
 
 type FailedReason = 'expired' | 'used' | 'superseded' | 'invalid';
 
@@ -12,8 +16,8 @@ type VerifyState =
   | { phase: 'failed'; reason: FailedReason };
 
 /**
- * Landing page for the "Verify this email" button. Claims the token once on
- * mount and shows success, expired, superseded, or already-used.
+ * Landing page for the "Confirm email" button: light like the email it came from. Claims the token once on
+ * mount and shows the result. The states are the same size, so one fades into the next without a jump.
  */
 export function VerifyPage({ apiUrl, token }: { apiUrl: string; token: string }) {
   const [state, setState] = useState<VerifyState>({ phase: 'loading' });
@@ -60,47 +64,59 @@ export function VerifyPage({ apiUrl, token }: { apiUrl: string; token: string })
     return () => controller.abort();
   }, [apiUrl, token]);
 
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-[#f5f3ef] px-3 py-4 sm:px-4 sm:py-8">
+      <main className="flex w-full max-w-[416px] flex-col gap-[18px] rounded-2xl border border-[#e7e2da] bg-white p-6 sm:p-8">
+        <Brand href={SITE_URL} onLight />
+        <div
+          key={state.phase === 'failed' ? state.reason : state.phase}
+          className="flex animate-rise-in flex-col gap-[18px] motion-reduce:animate-none"
+        >
+          <StateContent state={state} />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function StateContent({ state }: { state: VerifyState }) {
   if (state.phase === 'loading') {
     return (
-      <VerifyCard>
-        <h1 className="text-base leading-6 font-medium">Confirming your email</h1>
-        <output className="block font-mono text-[13px] leading-4.5 text-secondary">
-          Verifying
-          <span aria-hidden="true" className="ml-0.5 animate-terminal-cursor text-accent">
-            ▍
-          </span>
-        </output>
-      </VerifyCard>
+      <>
+        <Badge tone="neutral">…</Badge>
+        <Title>Confirming your email</Title>
+        <Text>This only takes a moment.</Text>
+      </>
     );
   }
 
   if (state.phase === 'success') {
+    const { agentName, address } = state.result;
+
     return (
-      <VerifyCard>
-        <img src="/illustrations/state-success.svg" alt="" width={120} height={120} className="size-30" />
-        <h1 className="text-2xl leading-7.5 tracking-[-0.02em]">
-          Email <em className="font-display text-[26px] tracking-[-0.75px] text-accent">verified</em>
-        </h1>
-        <p className="text-[13px] leading-4.5 text-secondary">
-          <span className="font-medium text-foreground">{describeSender(state.result)}</span> can now reach you at{' '}
-          <span className="font-mono text-foreground">{state.result.address}</span>. You can close this tab.
-        </p>
-      </VerifyCard>
+      <>
+        <Badge tone="success">
+          {/* The design's check comes from a fallback font, so every device would draw another one. This is its shape. */}
+          <svg viewBox="0 0 36 36" className="size-9" fill="currentColor">
+            <path d="M23.4 12.1 L21.6 12.1 Q19.6 13.4 17.9 15.8 Q16.4 17.8 15.2 20.2 Q14.8 20.9 14.5 20.8 Q14.3 19.4 13.9 19.1 Q13.4 18.8 11.9 19.7 L13.3 24 Q14.2 24.1 15 23.9 Q16.6 21.4 18.8 17.8 Q20.9 14.9 23.4 12.1 Z" />
+          </svg>
+        </Badge>
+        <Title>You’re in</Title>
+        <Text>
+          {agentName ?? 'Your agent'} can reach you at {address} now. It writes like a normal person. Mostly.
+        </Text>
+      </>
     );
   }
 
-  return <FailedVerification reason={state.reason} />;
-}
-
-function FailedVerification({ reason }: { reason: FailedReason }) {
-  const failed = failedCopy(reason);
+  const failed = failedCopy(state.reason);
 
   return (
-    <VerifyCard>
-      <img src="/illustrations/state-error.svg" alt="" width={120} height={120} className="size-30" />
-      <h1 className="text-base leading-6 font-medium">{failed.title}</h1>
-      <p className="text-[13px] leading-4.5 text-secondary">{failed.text}</p>
-    </VerifyCard>
+    <>
+      <Badge tone="neutral">–</Badge>
+      <Title>{failed.title}</Title>
+      <Text>{failed.text}</Text>
+    </>
   );
 }
 
@@ -108,23 +124,23 @@ function failedCopy(reason: FailedReason): { title: string; text: string } {
   switch (reason) {
     case 'expired':
       return {
-        title: 'This link has expired',
-        text: 'Verification links work for 24 hours. Ask whoever invited you to resend one.',
+        title: 'This link timed out',
+        text: 'Confirm links work for 24 hours. Ask for a new one.',
       };
     case 'used':
       return {
-        title: 'Already verified',
-        text: 'This link was already used. You can close this tab.',
+        title: 'This link already did its job',
+        text: 'Each link works once, and this one already confirmed your email. You can close this tab.',
       };
     case 'superseded':
       return {
-        title: 'This link is out of date',
-        text: 'A newer verification was requested for this contact. Use the latest email, or ask for a new one.',
+        title: 'There’s a newer link',
+        text: 'A newer email went out after this one. Use the link in that one.',
       };
     case 'invalid':
       return {
-        title: "This link isn't valid",
-        text: 'It may be incomplete or already replaced. Ask whoever invited you to send a new one.',
+        title: 'This link doesn’t work',
+        text: 'It may be incomplete. Ask for a new one.',
       };
     default: {
       const unreachable: never = reason;
@@ -134,17 +150,24 @@ function failedCopy(reason: FailedReason): { title: string; text: string } {
   }
 }
 
-function VerifyCard({ children }: { children: ReactNode }) {
+function Badge({ tone, children }: { tone: 'success' | 'neutral'; children: ReactNode }) {
   return (
-    <div className="relative isolate w-full max-w-120 overflow-hidden rounded-xl border border-border bg-background">
-      <img
-        src="/illustrations/dither-corner.svg"
-        alt=""
-        width={480}
-        height={320}
-        className="pointer-events-none absolute top-0 right-0 -z-10 h-80 w-120 max-w-none select-none"
-      />
-      <div className="flex flex-col gap-5.5 p-5 sm:p-8">{children}</div>
+    <div
+      aria-hidden="true"
+      className={cn(
+        'flex size-9 items-center justify-center rounded-full text-base leading-[21px] font-medium',
+        tone === 'success' ? 'bg-[#e8f8ee] text-[#1b9955]' : 'bg-[#faf8f5] text-[#8a8279]'
+      )}
+    >
+      {children}
     </div>
   );
+}
+
+function Title({ children }: { children: ReactNode }) {
+  return <h1 className="text-[22px] leading-[27.5px] font-medium tracking-[-0.33px] text-[#1a1714]">{children}</h1>;
+}
+
+function Text({ children }: { children: ReactNode }) {
+  return <p className="text-[15px] leading-6 text-[#4a443d]">{children}</p>;
 }

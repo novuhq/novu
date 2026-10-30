@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AgentRepository, SubscriberRepository } from '@novu/dal';
 import type { HumanInviteStatusResult } from '../../dtos/human-invite.dto';
-import { agentPictureUrl } from '../../services/human-agent-picture.service';
+import { agentPictureUrl } from '../../services/agent-picture-url';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import {
   type ActiveHumanInvite,

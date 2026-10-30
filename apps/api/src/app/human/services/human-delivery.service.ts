@@ -551,12 +551,12 @@ export class HumanDeliveryService {
 
     if (pending) {
       return (
-        `Human "${params.subscriberId}"'s email ${maskEmail(pending.address)} is awaiting verification ` +
+        `Human "${params.subscriberId}"'s email ${maskEmail(pending.address)} is waiting to be confirmed ` +
         `(sent ${relativeAge(pending.requestedAt)}). Re-run \`human contact invite ${params.subscriberId} --via email\` to resend.`
       );
     }
 
-    return `Human "${params.subscriberId}" has no verified email address. Run \`human contact invite ${params.subscriberId} --via email\`.`;
+    return `Human "${params.subscriberId}" has no confirmed email address. Run \`human contact invite ${params.subscriberId} --via email\`.`;
   }
 
   private async findLinkedIntegrations(params: {

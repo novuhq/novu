@@ -589,7 +589,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       });
 
       expect(res.status).to.equal(404);
-      expect(res.body.message).to.match(/no verified email address/i);
+      expect(res.body.message).to.match(/no confirmed email address/i);
     });
 
     it('delivers a typed address without verification and reuses that contact', async () => {

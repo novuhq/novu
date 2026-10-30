@@ -822,7 +822,7 @@ function EmailAddressForm({
 
 function verificationButtonLabel(pending: boolean, cooldownSeconds: number): string {
   if (!pending) {
-    return 'Send verification';
+    return 'Send confirmation';
   }
 
   if (cooldownSeconds > 0) {
@@ -876,7 +876,7 @@ function channelDescription(channel: InviteChannel, telegramBot?: string): strin
       return 'Message it in Slack';
     case 'email':
       if (channel.status === 'pending') {
-        return channel.address ? `Check your inbox at ${channel.address}` : 'Check your inbox for a verification link';
+        return channel.address ? `Check your inbox at ${channel.address}` : 'Check your inbox for a confirmation link';
       }
 
       if (channel.connected && channel.address) {

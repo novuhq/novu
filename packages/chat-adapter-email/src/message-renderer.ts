@@ -1,8 +1,8 @@
 import type { Root } from 'chat';
 import type { CardNode } from './card-renderer.js';
-import { extractTextFromCard, renderCard } from './card-renderer.js';
+import { extractTextFromCard, renderCard, withActionUrls } from './card-renderer.js';
 import { EmailFormatConverter } from './format-converter.js';
-import type { ActionUrlBuilder } from './types.js';
+import type { ActionUrlBuilder, EmailMessageLayout } from './types.js';
 
 interface RenderInput {
   text?: string;
@@ -19,9 +19,16 @@ interface RenderInput {
   };
 }
 
+interface LayoutInput extends RenderInput {
+  threadId: string;
+  layout: EmailMessageLayout;
+  renderMarkdown: (markdown: string) => string;
+}
+
 interface RenderOutput {
   html: string;
   text: string;
+  subject?: string;
 }
 
 const converter = new EmailFormatConverter();
@@ -45,6 +52,22 @@ export async function renderMessage(input: RenderInput): Promise<RenderOutput> {
   const html = `<pre style="font-family:inherit;white-space:pre-wrap;">${escapeHtml(text)}</pre>`;
 
   return { html, text };
+}
+
+export async function renderWithLayout(input: LayoutInput): Promise<RenderOutput> {
+  const { threadId, layout, renderMarkdown } = input;
+
+  if (input.card) {
+    const source = input.card.layoutCard ?? input.card;
+    const card = input.actionContext ? await withActionUrls(source, input.actionContext) : source;
+    const text = extractTextFromCard(source) || input.text || '';
+
+    return layout({ threadId, card, text, renderMarkdown });
+  }
+
+  const { html, text } = await renderMessage(input);
+
+  return layout({ threadId, html, text, renderMarkdown });
 }
 
 function escapeHtml(text: string): string {

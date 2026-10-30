@@ -199,7 +199,7 @@ describe('ConnectHumanInviteChannel', () => {
     expect(err).to.be.instanceOf(BadGatewayException);
     expect((err as BadGatewayException).getResponse()).to.deep.equal({
       error: 'delivery_failed',
-      message: 'Could not send the verification email. Try again in a moment.',
+      message: 'Could not send the confirmation email. Try again in a moment.',
     });
   });
 });

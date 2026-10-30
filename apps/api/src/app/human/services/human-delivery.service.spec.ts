@@ -143,7 +143,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
       expect((err as NotFoundException).message).to.equal(
-        'Human "alice" has no verified email address. Run `human contact invite alice --via email`.'
+        'Human "alice" has no confirmed email address. Run `human contact invite alice --via email`.'
       );
     }
   });
@@ -169,7 +169,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
       expect.fail('should have thrown');
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
-      expect((err as NotFoundException).message).to.include('awaiting verification');
+      expect((err as NotFoundException).message).to.include('waiting to be confirmed');
       expect((err as NotFoundException).message).to.include('a***@example.com');
     }
   });

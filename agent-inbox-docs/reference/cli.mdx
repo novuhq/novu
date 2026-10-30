@@ -169,7 +169,7 @@ npx @agentinbox/cli contact invite <id|email>
 | `--via` | `telegram`, `slack`, or `email`. Skips the invite page. Becomes their default |
 | `--email` | Required for `--via email` when there is no terminal, unless the argument is already an email |
 | `--name` | Display name |
-| `--async` | Print the link, or send the verification email, and exit |
+| `--async` | Print the link, or send the confirmation email, and exit |
 
 The page link works for 3 days. A Telegram or Slack link from `--via` works for minutes.
 
@@ -227,10 +227,6 @@ To keep your channels and continue, run: npx @agentinbox/cli login
 ```text
 Outbound email needs an Agent Inbox account.
 To claim this setup and send email, run: npx @agentinbox/cli login
-```
-
-```text
-Your message was not sent: alice@acme.com is not verified yet. A verification email is on its way; send again once they have clicked it.
 ```
 
 ```text

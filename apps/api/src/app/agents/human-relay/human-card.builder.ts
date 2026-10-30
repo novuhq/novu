@@ -45,6 +45,36 @@ function textChild(content: string): TextElement {
   return { type: 'text', content };
 }
 
+/** A card as an Agent Inbox email shows it. `humanKind` picks the look of the message. */
+export type HumanEmailCard = CardElement & { humanKind?: HumanInteractionKindEnum };
+
+/**
+ * Hands the email layout of an Agent Inbox agent a version of the card made for email: the whole option text on
+ * each button, and none of the chat hints. Only that layout reads `layoutCard`, so chat apps and every other
+ * agent's email get `card` as it is.
+ */
+function withLayoutCard(card: CardElement, layoutCard: HumanEmailCard): CardElement {
+  return { ...card, layoutCard } as CardElement;
+}
+
+function buildEmailCard(
+  kind: HumanInteractionKindEnum,
+  resolved: { title: string; body?: string },
+  subtitle: string | undefined,
+  buttons: ButtonElement[] = []
+): HumanEmailCard {
+  return {
+    type: 'card',
+    humanKind: kind,
+    title: resolved.title,
+    ...(subtitle ? { subtitle } : {}),
+    children: [
+      ...(resolved.body ? [textChild(resolved.body)] : []),
+      ...(buttons.length > 0 ? [{ type: 'actions', children: buttons } satisfies ActionsElement] : []),
+    ],
+  };
+}
+
 /**
  * The portable-card renderer joins title/subtitle/body with a single `\n`
  * (no blank line), which reads as one cramped block. A leading `\n` on the
@@ -139,29 +169,30 @@ export function buildPendingContent(
   switch (interaction.kind) {
     case HumanInteractionKindEnum.APPROVE: {
       const extraActions = 'extraActions' in resolved ? (resolved.extraActions ?? []) : [];
+      const deny = button(
+        buildHumanDenyActionId(actionKey),
+        ('denyLabel' in resolved && resolved.denyLabel) || 'Deny',
+        'default'
+      );
+      const approve = button(
+        buildHumanApproveActionId(actionKey),
+        ('approveLabel' in resolved && resolved.approveLabel) || 'Approve',
+        'primary'
+      );
+      const extras = extraActions.map((action) =>
+        button(buildHumanOptionActionId(actionKey, action.id), action.label, 'default')
+      );
       const card = layoutCard(title, attributionSubtitle, [
         ...(resolved.body ? [bodyText(resolved.body)] : []),
-        {
-          type: 'actions',
-          children: [
-            button(
-              buildHumanDenyActionId(actionKey),
-              ('denyLabel' in resolved && resolved.denyLabel) || 'Deny',
-              'default'
-            ),
-            button(
-              buildHumanApproveActionId(actionKey),
-              ('approveLabel' in resolved && resolved.approveLabel) || 'Approve',
-              'primary'
-            ),
-            ...extraActions.map((action) =>
-              button(buildHumanOptionActionId(actionKey, action.id), action.label, 'default')
-            ),
-          ],
-        } satisfies ActionsElement,
+        { type: 'actions', children: [deny, approve, ...extras] } satisfies ActionsElement,
       ]);
 
-      return { card } as ReplyContentDto;
+      return {
+        card: withLayoutCard(
+          card,
+          buildEmailCard(interaction.kind, resolved, attributionSubtitle, [approve, deny, ...extras])
+        ),
+      } as ReplyContentDto;
     }
 
     case HumanInteractionKindEnum.CHOOSE: {
@@ -176,8 +207,13 @@ export function buildPendingContent(
           ),
         } satisfies ActionsElement,
       ]);
+      const fullLabels = options.map((option) =>
+        button(buildHumanOptionActionId(actionKey, option.id), option.label, 'default')
+      );
 
-      return { card } as ReplyContentDto;
+      return {
+        card: withLayoutCard(card, buildEmailCard(interaction.kind, resolved, attributionSubtitle, fullLabels)),
+      } as ReplyContentDto;
     }
 
     case HumanInteractionKindEnum.ASK: {
@@ -188,7 +224,9 @@ export function buildPendingContent(
         '❓ '
       );
 
-      return { card } as ReplyContentDto;
+      return {
+        card: withLayoutCard(card, buildEmailCard(interaction.kind, resolved, attributionSubtitle)),
+      } as ReplyContentDto;
     }
 
     default:
@@ -232,7 +270,9 @@ export function buildPendingDeliveryContent(
   options?: { actionIdentifier?: string }
 ): ReplyContentDto {
   if (isHumanCardElementContent(interaction.content)) {
-    return { card: interaction.content.card } as ReplyContentDto;
+    const { card } = interaction.content;
+
+    return { card: withLayoutCard(card, { ...card, humanKind: interaction.kind }) } as ReplyContentDto;
   }
 
   return buildPendingContent(interaction, options);
@@ -311,10 +351,12 @@ function resolveStatusLine(interaction: HumanInteractionEntity): string {
  * while several asks are pending. Same letter-button convention as `choose`.
  */
 export function buildDisambiguationCard(pendingAsks: HumanInteractionEntity[], answerId: string): CardElement {
-  return {
+  const title = 'Which question does this answer?';
+  const subtitle = 'You have several pending questions — pick the one your reply belongs to.';
+  const card: CardElement = {
     type: 'card',
-    title: 'Which question does this answer?',
-    subtitle: 'You have several pending questions — pick the one your reply belongs to.',
+    title,
+    subtitle,
     children: [
       buildOptionsListText(pendingAsks.map((ask) => humanInteractionCardTitle(ask))),
       {
@@ -325,6 +367,11 @@ export function buildDisambiguationCard(pendingAsks: HumanInteractionEntity[], a
       } satisfies ActionsElement,
     ],
   };
+  const fullLabels = pendingAsks.map((ask) =>
+    button(buildHumanDisambiguationActionId(ask.identifier, answerId), humanInteractionCardTitle(ask), 'default')
+  );
+
+  return withLayoutCard(card, buildEmailCard(HumanInteractionKindEnum.CHOOSE, { title }, subtitle, fullLabels));
 }
 
 function truncate(text: string, max: number): string {
