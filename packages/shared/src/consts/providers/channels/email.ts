@@ -15,6 +15,7 @@ import {
   mailerSendConfig,
   mailgunConfig,
   mailjetConfig,
+  mailkiteConfig,
   mailtrapConfig,
   mandrillConfig,
   netCoreConfig,
@@ -179,6 +180,14 @@ export const emailProviders: IProviderConfig[] = [
     credentials: plunkConfig,
     docReference: `https://docs.novu.co/platform/integrations/email/plunk${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'plunk.png', dark: 'plunk.png' },
+  },
+  {
+    id: EmailProviderIdEnum.Mailkite,
+    displayName: 'MailKite',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: mailkiteConfig,
+    docReference: 'https://mailkite.dev/docs',
+    logoFileName: { light: 'mailkite.svg', dark: 'mailkite.svg' },
   },
   {
     id: EmailProviderIdEnum.SparkPost,

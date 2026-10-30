@@ -18,6 +18,7 @@ export const emailProviderSchemas = {
   mailersend: genericProviderSchemas,
   mailgun: mailgunProviderSchemas,
   mailjet: mailjetProviderSchemas,
+  mailkite: genericProviderSchemas,
   mailtrap: genericProviderSchemas,
   mandrill: genericProviderSchemas,
   netcore: genericProviderSchemas,
