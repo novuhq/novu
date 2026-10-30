@@ -498,17 +498,15 @@ export class ConversationActivityLedger {
   }
 
   async persistToolResult(params: PersistToolResultParams): Promise<void> {
-    const { content: parts, ...context } = params;
-
     await this.persistAndEmitClientEvent(
       params,
       {
-        ...context,
+        ...params,
         identifier: params.runId
           ? `tool-result:${params.conversationId}:${params.runId}:${params.toolCallId}`
           : undefined,
         content: params.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
-        toolData: toolResultData(params, parts),
+        toolData: toolResultData(params),
       },
       ConversationActivityTypeEnum.TOOL_RESULT,
       'none'
@@ -1114,11 +1112,8 @@ function humanInteractionActivityIdentifier(
     : `human:${params.interactionIdentifier}:${suffix}`;
 }
 
-function toolResultData(
-  params: PersistToolResultParams,
-  parts: PersistToolResultParams['content']
-): ConversationActivityToolData {
-  const stored = parts ? capToolResultContent(parts) : undefined;
+function toolResultData(params: PersistToolResultParams): ConversationActivityToolData {
+  const stored = params.content ? capToolResultContent(params.content) : undefined;
 
   return {
     toolCallId: params.toolCallId,
