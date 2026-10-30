@@ -1,3 +1,4 @@
+import type { HumanContactChannelAddresses } from '@novu/dal';
 import { AGENT_INBOX_EVENTS, HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -231,6 +232,281 @@ describe('SetupHumanRelay', () => {
       restoreEnv('NOVU_AGENT_SHARED_INBOUND_DOMAIN', savedDomain);
     }
   });
+});
+
+describe('SetupHumanRelay sign-in email', () => {
+  const address = 'ada@acme.co';
+  const signUp = {
+    environmentId: 'env1',
+    organizationId: 'org1',
+    userId: 'user1',
+    operator: true,
+    email: 'Ada@Acme.co',
+    emailVerified: true,
+  };
+  const requestedAt = '2026-10-30T10:00:00.000Z';
+  const earlier = '2026-10-29T10:00:00.000Z';
+
+  /** The operator's row, kept the way the repository keeps it, so a test reads what setup leaves behind. */
+  function setup(stored: HumanContactChannelAddresses = {}, otherContacts: Array<{ subscriberId: string }> = []) {
+    const email: HumanContactChannelAddresses = { ...stored };
+    const humanContactRepository = {
+      setDefaultVia: sinon.stub().resolves(),
+      setDeclaredAddress: sinon.stub().callsFake(async (params: { address: string }) => {
+        email.declared = { address: params.address, declaredAt: requestedAt };
+      }),
+      findContact: sinon.stub().callsFake(async () => ({ subscriberId: 'dima', addresses: { email } })),
+      findContactsByEmailAddress: sinon.stub().callsFake(async () => [{ subscriberId: 'dima' }, ...otherContacts]),
+      upsertPendingAddress: sinon.stub().callsFake(async (params: { address: string }) => {
+        email.pending = { address: params.address, requestedAt };
+
+        return email.pending;
+      }),
+      promotePendingAddress: sinon.stub().callsFake(async (params: { address: string; requestedAt: string }) => {
+        if (email.pending?.address !== params.address || email.pending.requestedAt !== params.requestedAt) {
+          return null;
+        }
+
+        email.verified = { ...email.pending, verifiedAt: requestedAt };
+        delete email.pending;
+
+        return email.verified;
+      }),
+      restorePendingAddress: sinon.stub().callsFake(async (params: { replaced: { requestedAt: string } }) => {
+        if (email.pending?.requestedAt === params.replaced.requestedAt) {
+          delete email.pending;
+        }
+      }),
+    };
+    const subscriberRepository = {
+      findOne: sinon.stub().resolves({ subscriberId: 'dima' }),
+      update: sinon.stub().resolves(),
+    };
+    const logger = { setContext: sinon.stub(), warn: sinon.stub() };
+    const usecase = new SetupHumanRelay(
+      {
+        findOne: sinon.stub().resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' }),
+      } as never,
+      subscriberRepository as never,
+      humanContactRepository as never,
+      { resolve: sinon.stub().resolves('dima') } as never,
+      { apply: sinon.stub().callsFake(async (agent: unknown) => agent) } as never,
+      { execute: sinon.stub().resolves({ provisionedNewLink: false }) } as never,
+      logger as never,
+      { track: sinon.stub() } as never
+    );
+
+    return { usecase, email, humanContactRepository, subscriberRepository, logger };
+  }
+
+  it('leaves the address as a used link leaves it: verified, on the subscriber, nothing pending', async () => {
+    const { usecase, email, subscriberRepository } = setup();
+
+    await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+    expect(email.verified).to.include({ address, requestedAt, verifiedAt: requestedAt });
+    expect(email.pending).to.equal(undefined);
+    expect(email.declared?.address).to.equal(address);
+    expect(subscriberRepository.update.args).to.deep.equal([
+      [{ subscriberId: 'dima', _environmentId: 'env1' }, { $set: { email: address } }],
+    ]);
+  });
+
+  it('leaves the default channel alone, as a used link does', async () => {
+    const { usecase, humanContactRepository } = setup();
+
+    await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+    expect(humanContactRepository.setDefaultVia.called).to.equal(false);
+  });
+
+  it('keeps the address declared without the flag', async () => {
+    const { usecase, email, humanContactRepository, subscriberRepository } = setup();
+
+    await usecase.execute(SetupHumanRelayCommand.create({ ...signUp, emailVerified: undefined }));
+
+    expect(email.declared?.address).to.equal(address);
+    expect(email.verified).to.equal(undefined);
+    expect(humanContactRepository.upsertPendingAddress.called).to.equal(false);
+    expect(subscriberRepository.update.called).to.equal(false);
+  });
+
+  it('keeps the address declared for anyone but the operator', async () => {
+    const { usecase, email, humanContactRepository, subscriberRepository } = setup();
+    // Nobody else holds the address, so nothing but the operator rule keeps it declared.
+    humanContactRepository.findContactsByEmailAddress.resolves([{ subscriberId: 'maya' }]);
+
+    await usecase.execute(SetupHumanRelayCommand.create({ ...signUp, operator: undefined, subscriberId: 'maya' }));
+
+    expect(email.declared?.address).to.equal(address);
+    expect(email.verified).to.equal(undefined);
+    expect(subscriberRepository.update.called).to.equal(false);
+  });
+
+  it('ignores the flag when there is no usable address', async () => {
+    const { usecase, email, humanContactRepository } = setup();
+
+    await usecase.execute(SetupHumanRelayCommand.create({ ...signUp, email: 'not an address' }));
+
+    expect(email.verified).to.equal(undefined);
+    expect(humanContactRepository.findContact.called).to.equal(false);
+  });
+
+  it('never replaces a verified address, even a different one', async () => {
+    const verified = { address: 'old@acme.co', requestedAt: earlier, verifiedAt: earlier };
+    const { usecase, email, humanContactRepository, subscriberRepository } = setup({ verified });
+
+    await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+    expect(email.verified).to.deep.equal(verified);
+    expect(humanContactRepository.upsertPendingAddress.called).to.equal(false);
+    expect(humanContactRepository.promotePendingAddress.called).to.equal(false);
+    expect(subscriberRepository.update.called).to.equal(false);
+  });
+
+  it('leaves a new link waiting beside a verified address', async () => {
+    const pending = { address: 'new@acme.co', requestedAt: earlier };
+    const verified = { address: 'old@acme.co', requestedAt: earlier, verifiedAt: earlier };
+    const { usecase, email } = setup({ verified, pending });
+
+    await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+    expect(email.verified).to.deep.equal(verified);
+    expect(email.pending).to.deep.equal(pending);
+  });
+
+  it('is safe to repeat: the address stays verified as the first run left it', async () => {
+    const { usecase, email, humanContactRepository, logger } = setup();
+
+    await usecase.execute(SetupHumanRelayCommand.create(signUp));
+    const firstRun = { ...email.verified };
+    await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+    expect(email.verified).to.deep.equal(firstRun);
+    expect(email.pending).to.equal(undefined);
+    expect(humanContactRepository.upsertPendingAddress.calledOnce).to.equal(true);
+    expect(humanContactRepository.promotePendingAddress.calledOnce).to.equal(true);
+    expect(logger.warn.called).to.equal(false);
+  });
+
+  it('lets a repeat call finish the subscriber write a failed run left undone', async () => {
+    const { usecase, email, subscriberRepository, logger } = setup();
+    subscriberRepository.update.onFirstCall().rejects(new Error('write failed'));
+
+    await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+    expect(email.verified?.address).to.equal(address);
+    expect(logger.warn.calledOnce).to.equal(true);
+
+    await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+    expect(subscriberRepository.update.calledTwice).to.equal(true);
+    expect(subscriberRepository.update.secondCall.args[1]).to.deep.equal({ $set: { email: address } });
+  });
+
+  it('uses up a link already on its way to this address, so that link reads as used', async () => {
+    const { usecase, email, humanContactRepository } = setup({ pending: { address, requestedAt: earlier } });
+
+    await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+    expect(email.verified).to.include({ address, requestedAt: earlier });
+    expect(email.pending).to.equal(undefined);
+    expect(humanContactRepository.upsertPendingAddress.called).to.equal(false);
+  });
+
+  it('leaves a link on its way to another address, which the operator asked for', async () => {
+    const pending = { address: 'work@acme.co', requestedAt: earlier };
+    const { usecase, email, humanContactRepository, subscriberRepository } = setup({ pending });
+
+    await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+    expect(email.pending).to.deep.equal(pending);
+    expect(email.verified).to.equal(undefined);
+    expect(humanContactRepository.upsertPendingAddress.called).to.equal(false);
+    expect(subscriberRepository.update.called).to.equal(false);
+  });
+
+  it('keeps the address declared when another contact uses it, and says so', async () => {
+    const { usecase, email, humanContactRepository, subscriberRepository, logger } = setup({}, [
+      { subscriberId: 'maya' },
+    ]);
+
+    const result = await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+    expect(result.subscriberId).to.equal('dima');
+    expect(email.declared?.address).to.equal(address);
+    expect(email.verified).to.equal(undefined);
+    expect(email.pending).to.equal(undefined);
+    expect(humanContactRepository.upsertPendingAddress.called).to.equal(false);
+    expect(subscriberRepository.update.called).to.equal(false);
+    expect(logger.warn.calledOnce).to.equal(true);
+  });
+
+  it('leaves a request that a newer one replaced in the meantime', async () => {
+    const { usecase, humanContactRepository, subscriberRepository, logger } = setup();
+    humanContactRepository.promotePendingAddress.resolves(null);
+
+    await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+    expect(humanContactRepository.restorePendingAddress.called).to.equal(false);
+    expect(subscriberRepository.update.called).to.equal(false);
+    expect(logger.warn.called).to.equal(false);
+  });
+
+  it('still sets up, with nothing pending, when promoting the address fails', async () => {
+    const { usecase, email, humanContactRepository, subscriberRepository, logger } = setup();
+    humanContactRepository.promotePendingAddress.rejects(new Error('write failed'));
+
+    const result = await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+    expect(result.subscriberId).to.equal('dima');
+    expect(email.declared?.address).to.equal(address);
+    expect(email.verified).to.equal(undefined);
+    expect(email.pending).to.equal(undefined);
+    expect(subscriberRepository.update.called).to.equal(false);
+    expect(logger.warn.calledOnce).to.equal(true);
+  });
+
+  it('still sets up, and logs what went wrong first, when the pending slot cannot be cleared either', async () => {
+    const { usecase, humanContactRepository, logger } = setup();
+    humanContactRepository.promotePendingAddress.rejects(new Error('write failed'));
+    humanContactRepository.restorePendingAddress.rejects(new Error('clearing failed too'));
+
+    const result = await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+    expect(result.subscriberId).to.equal('dima');
+    expect(logger.warn.calledOnce).to.equal(true);
+    expect(logger.warn.firstCall.args[0].err.message).to.equal('write failed');
+  });
+
+  it('keeps a link that was already out when promoting it fails', async () => {
+    const pending = { address, requestedAt: earlier };
+    const { usecase, email, humanContactRepository } = setup({ pending });
+    humanContactRepository.promotePendingAddress.rejects(new Error('write failed'));
+
+    await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+    expect(email.pending).to.deep.equal(pending);
+    expect(humanContactRepository.restorePendingAddress.called).to.equal(false);
+  });
+
+  for (const [what, method] of [
+    ['reading the contact', 'findContact'],
+    ['looking for another contact with the address', 'findContactsByEmailAddress'],
+    ['writing the pending slot', 'upsertPendingAddress'],
+  ] as const) {
+    it(`still sets up when ${what} fails`, async () => {
+      const { usecase, email, humanContactRepository, logger } = setup();
+      humanContactRepository[method].rejects(new Error('database down'));
+
+      const result = await usecase.execute(SetupHumanRelayCommand.create(signUp));
+
+      expect(result.subscriberId).to.equal('dima');
+      expect(email.declared?.address).to.equal(address);
+      expect(email.verified).to.equal(undefined);
+      expect(logger.warn.calledOnce).to.equal(true);
+    });
+  }
 });
 
 describe('SetupHumanRelay analytics', () => {
