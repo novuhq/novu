@@ -112,7 +112,7 @@ export class HumanVerificationRateLimitService {
     return new HttpException(
       {
         code: 'verification_cooldown',
-        message: 'A verification email was just sent. Wait a moment before resending.',
+        message: 'A confirmation email was just sent. Wait a moment before resending.',
         retryAfterSeconds: HUMAN_VERIFICATION_COOLDOWN_SECONDS,
       },
       HttpStatus.TOO_MANY_REQUESTS
@@ -123,7 +123,7 @@ export class HumanVerificationRateLimitService {
     return new HttpException(
       {
         code: 'verification_cap',
-        message: 'Too many verification emails today. Try again tomorrow.',
+        message: 'Too many confirmation emails today. Try again tomorrow.',
         retryAfterSeconds: HUMAN_VERIFICATION_DAILY_WINDOW_SECONDS,
       },
       HttpStatus.TOO_MANY_REQUESTS

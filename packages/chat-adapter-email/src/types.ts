@@ -5,6 +5,7 @@ import type {
   NovuEmailAttachment,
 } from '@novu/shared';
 import type { Adapter } from 'chat';
+import type { CardNode } from './card-renderer.js';
 
 export type { EmailWebhookPayload, NovuEmailAttachment } from '@novu/shared';
 
@@ -27,7 +28,33 @@ export interface NovuEmailAdapterConfig {
    * its explicit URL and is never passed to this builder.
    */
   actionUrlBuilder?: ActionUrlBuilder;
+  /**
+   * Gives an agent's emails a look of their own in place of the default rendering. Without it
+   * the adapter renders every message itself.
+   */
+  layout?: EmailMessageLayout;
 }
+
+export interface EmailLayoutMessage {
+  threadId: string;
+  /** The plain-text version of the message. */
+  text: string;
+  /** The message as HTML. Absent on a card. */
+  html?: string;
+  /** The card to lay out. Its action buttons already carry their `url`. */
+  card?: CardNode;
+  /** Renders a card's Markdown the way a plain message is rendered. */
+  renderMarkdown: (markdown: string) => string;
+}
+
+export interface EmailLayoutResult {
+  html: string;
+  text: string;
+  /** Subject of a new thread. A reply keeps the subject of its thread. */
+  subject?: string;
+}
+
+export type EmailMessageLayout = (message: EmailLayoutMessage) => Promise<EmailLayoutResult>;
 
 export type ActionButtonStyle = 'primary' | 'danger' | 'default';
 
@@ -40,6 +67,8 @@ export type ActionUrlBuilder = (params: {
   /** Echoes the `<Button style="…">` prop so the click-confirmation page can render a
    *  destructive variant (red button + warning copy) when appropriate. */
   style?: ActionButtonStyle;
+  /** Title of the card the button sits on: what the person is answering. */
+  cardTitle?: string;
 }) => Promise<string>;
 
 export type EmailAlternative = IEmailAlternative;

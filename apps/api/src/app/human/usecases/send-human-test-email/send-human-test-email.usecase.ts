@@ -1,11 +1,13 @@
 import { BadGatewayException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase, MailFactory } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import { AgentIntegrationRepository, AgentRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
 import { EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
 import { resolveAgentOutboundEmail } from '../../../agents/email/resolve-agent-outbound-email';
 import { KeylessEmailGateService } from '../../../keyless/keyless-email-gate.service';
 import type { SendHumanTestEmailResponseDto } from '../../dtos/human-agent.dto';
 import { buildHumanTestEmail } from '../../email/human-test-email.template';
+import { HumanOperatorService } from '../../services/human-operator.service';
+import { resolveRelaySender } from '../../services/relay-owner-name';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
 import { SendHumanTestEmailCommand } from './send-human-test-email.command';
 
@@ -19,6 +21,8 @@ export class SendHumanTestEmail {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly operatorService: HumanOperatorService,
     private readonly keylessEmailGate: KeylessEmailGateService
   ) {}
 
@@ -53,7 +57,21 @@ export class SendHumanTestEmail {
       agentIntegrationRepository: this.agentIntegrationRepository,
     });
 
-    const content = buildHumanTestEmail({ agentName: agent.name });
+    const operatorId = await this.operatorService.findForAgent({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      agentId: agent._id,
+    });
+    const operator = operatorId
+      ? await this.subscriberRepository.findOne(
+          { subscriberId: operatorId, _environmentId: command.environmentId },
+          'firstName lastName'
+        )
+      : null;
+    const content = buildHumanTestEmail({
+      sender: resolveRelaySender({ agent, operator }),
+      operatorFirstName: operator?.firstName?.trim() || undefined,
+    });
     const mailOptions: IEmailOptions = {
       to: [command.email],
       subject: content.subject,

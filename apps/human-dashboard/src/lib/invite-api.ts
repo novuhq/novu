@@ -161,7 +161,7 @@ export async function verifyAddress(apiUrl: string, token: string, signal?: Abor
       body: JSON.stringify({ token }),
       signal,
     },
-    'Failed to verify this email'
+    'Failed to confirm this email'
   );
 }
 

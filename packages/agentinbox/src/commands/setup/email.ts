@@ -79,10 +79,10 @@ export async function connectEmail(
     via: 'email',
     address: email,
   });
-  info(`Verification email sent to ${pc.bold(email)} (shown as ${sent.address}).`);
+  info(`Confirmation email sent to ${pc.bold(email)} (shown as ${sent.address}).`);
 
   const stopIndicator = startWaitIndicator(
-    'Waiting for you to verify your email',
+    'Waiting for you to confirm your email',
     'Ctrl-C detaches; resume with: npx @agentinbox/cli setup email'
   );
   try {
@@ -91,7 +91,7 @@ export async function connectEmail(
       subscriberId,
       agentIdentifier,
       sent.requestedAt,
-      'you verify your email',
+      'you confirm your email',
       'Re-run `npx @agentinbox/cli setup email` to resend.'
     );
   } finally {

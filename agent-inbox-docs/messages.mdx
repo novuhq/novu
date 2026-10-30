@@ -26,13 +26,7 @@ A send can land in a conversation that person already opened, and it marks that 
 
 ## An email address
 
-`--to` accepts an email address. A contact who already has that address is used. An address nobody has yet becomes a new contact and gets a verification email. The command exits `1` and does not deliver:
-
-```text
-Your message was not sent: alice@acme.com is not verified yet. A verification email is on its way; send again once they have clicked it.
-```
-
-Send the message again after they verify.
+`--to` accepts an email address. A contact who already has that address is used. On a new conversation, an address nobody has yet gets the message as typed, with no confirmation click. A keyless setup is told to claim an account instead. A reply needs a contact that already confirmed the address.
 
 ## Cards
 

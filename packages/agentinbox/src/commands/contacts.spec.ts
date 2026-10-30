@@ -111,10 +111,10 @@ describe('renderContactsTable', () => {
 
     expect(verified).toContain('relay@x.co');
     expect(verified).not.toContain('shared@x.co');
-    expect(verified).not.toContain('(unverified)');
+    expect(verified).not.toContain('(unconfirmed)');
     expect(missingAddress).not.toContain('shared@x.co');
-    expect(pending).toContain('(pending verification)');
-    expect(unverified).toContain('(unverified)');
+    expect(pending).toContain('(waiting for confirmation)');
+    expect(unverified).toContain('(unconfirmed)');
   });
 });
 

@@ -47,7 +47,6 @@ describe('HumanVerificationEmailSender', () => {
       subscriberId: 'alice',
       address: 'alice@example.com',
       token: 'tok123',
-      expiresAt: '2026-10-02T12:00:00.000Z',
       outbound: {
         senderIntegration: {} as never,
         from: 'relay@agentinbox.md',
@@ -59,6 +58,6 @@ describe('HumanVerificationEmailSender', () => {
     const mail = handlerSend.firstCall.args[0];
 
     expect(mail.html).to.include('https://agentinbox.md/verify/tok123');
-    expect(mail.text).to.include('Verify this email: https://agentinbox.md/verify/tok123');
+    expect(mail.text).to.include('Confirm email: https://agentinbox.md/verify/tok123');
   });
 });

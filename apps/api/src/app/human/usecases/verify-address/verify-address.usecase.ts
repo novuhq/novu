@@ -47,7 +47,7 @@ export class VerifyAddress {
       if (!address) {
         throw new ConflictException({
           code: 'verification_superseded',
-          message: 'This verification link is no longer current. Request a new one from the invite page.',
+          message: 'This confirmation link is no longer current. Request a new one from the invite page.',
         });
       }
 

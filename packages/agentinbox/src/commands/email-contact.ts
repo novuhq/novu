@@ -94,7 +94,7 @@ export async function findContactByEmail(
 
   if (matches.length > 1) {
     throw new Error(
-      `${email} is verified for more than one contact (${matches.map((contact) => contact.id).join(', ')}). Pass the contact id instead.`
+      `${email} is confirmed for more than one contact (${matches.map((contact) => contact.id).join(', ')}). Pass the contact id instead.`
     );
   }
 

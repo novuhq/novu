@@ -304,7 +304,7 @@ describe('without a terminal', () => {
       • Setting up your agent inbox...
       • Your agent inbox is atlas-x1@agentinbox.md.
       • Registering your email address...
-      • Verification email sent to ada@example.com (shown as a***@example.com).
+      • Confirmation email sent to ada@example.com (shown as a***@example.com).
       • Replies go to atlas-x1@agentinbox.md — answering an interaction is just replying to its email.
       • Outbound email starts after you claim this setup — use the link in that email, or run \`npx @agentinbox/cli login\`.
       • Saved config to /home/ada/.agentinbox/config.json.
@@ -313,7 +313,7 @@ describe('without a terminal', () => {
       "
     `);
     expect(output.stderr).toMatchInlineSnapshot(`
-      "Waiting for you to verify your email (Ctrl-C detaches; resume with: npx @agentinbox/cli setup email)
+      "Waiting for you to confirm your email (Ctrl-C detaches; resume with: npx @agentinbox/cli setup email)
       "
     `);
   });
@@ -514,7 +514,7 @@ describe('on a terminal', () => {
     for (const line of linesOf(plain)) {
       expect(screen).toContain(line);
     }
-    expect(shownWhileRunning(shown)).toContain('waiting for you to verify your email');
+    expect(shownWhileRunning(shown)).toContain('waiting for you to confirm your email');
     expect(shownWhileRunning(shown)).toContain('ctrl-c detaches; resume with: npx @agentinbox/cli setup email');
     expect(screen).toContain('fig. agent — happy');
     expect(shown.stderr).toBe('');

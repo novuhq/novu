@@ -34,7 +34,7 @@ export async function resolveOperatorName(
     return undefined;
   }
 
-  info('People your agents contact will see your name on invites and verification emails.');
+  info('People your agents contact will see your name on invites and confirmation emails.');
   const firstName = (await io.prompt('Your first name: ')).trim();
 
   if (!firstName) {
@@ -82,7 +82,7 @@ export async function resolveOperatorEmail(
 
   const question = keyless
     ? 'Your email address (we only reply to mail from this address): '
-    : 'Your email address (optional, prefills verification): ';
+    : 'Your email address (optional, prefills confirmation): ';
 
   for (let attempt = 0; attempt < 5; attempt++) {
     const raw = (await io.prompt(question)).trim();

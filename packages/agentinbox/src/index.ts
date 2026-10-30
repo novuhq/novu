@@ -198,7 +198,7 @@ channel
 
 program
   .command('setup')
-  .argument('[channel]', 'also link telegram or slack, or verify email on an account')
+  .argument('[channel]', 'also link telegram or slack, or confirm email on an account')
   .option('--api-url <url>', 'API URL override')
   .option('--secret-key <key>', 'use an existing Novu environment instead of keyless (self-hosted)')
   .option('--telegram-bot-token <token>', 'BotFather token (skips the paste-or-page prompt)')

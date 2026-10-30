@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fitToWidth, startWaitIndicator } from './spinner';
 
-const MESSAGE = 'Waiting for you to verify your email';
+const MESSAGE = 'Waiting for you to confirm your email';
 const HINT = 'Ctrl-C detaches; resume with: npx @agentinbox/cli setup email';
 
 describe('fitToWidth', () => {
@@ -12,7 +12,7 @@ describe('fitToWidth', () => {
 
   it('drops the hint first, then cuts the message short, so the line never wraps', () => {
     expect(fitToWidth(MESSAGE, '· 3s', HINT, 80)).toEqual({ message: MESSAGE });
-    expect(fitToWidth(MESSAGE, '· 3s', HINT, 30)).toEqual({ message: 'Waiting for you to ve…' });
+    expect(fitToWidth(MESSAGE, '· 3s', HINT, 30)).toEqual({ message: 'Waiting for you to co…' });
   });
 
   it('measures in columns, where a wide character takes two', () => {
