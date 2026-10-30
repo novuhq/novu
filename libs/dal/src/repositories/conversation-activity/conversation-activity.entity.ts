@@ -23,7 +23,7 @@ export enum ConversationActivityTypeEnum {
   TOOL_APPROVAL_REQUEST = 'tool_approval_request',
   /** Human approve/deny verdict for a pending tool approval. Carries `{ approvalId, approved }` in `toolData`. */
   TOOL_APPROVAL_DECISION = 'tool_approval_decision',
-  /** Tool call the agent ran. Carries `{ toolCallId, toolName, input?, mcpServerName? }` in `toolData`. */
+  /** Tool call the agent issued. Carries `{ toolCallId, toolName, input?, mcpServerName? }` in `toolData`. */
   TOOL_CALL = 'tool_call',
   /** Outcome of an executed (or denied) tool call. Carries `{ toolCallId, toolName?, output?, content?, isError?, truncated? }` in `toolData`. */
   TOOL_RESULT = 'tool_result',
@@ -88,7 +88,7 @@ export interface ConversationActivityToolData {
   optionId?: string;
   /** Executed tool output, or the `execution-denied` marker (result). */
   output?: unknown;
-  /** Protocol result parts, size-capped, media without `data` (result). */
+  /** Size-capped protocol result parts (result). */
   content?: ConversationActivityToolResultPart[];
   /** Whether the tool failed (result). */
   isError?: boolean;
