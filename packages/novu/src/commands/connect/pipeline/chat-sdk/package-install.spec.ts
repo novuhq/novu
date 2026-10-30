@@ -22,7 +22,6 @@ function makeTempDir(): string {
 describe('resolveChatSdkPackagesToInstall', () => {
   it('installs only the Novu adapter when chat and a state adapter already exist', () => {
     const dir = makeTempDir();
-    // Older existing project. Connect checks presence and does not read these versions.
     fs.writeFileSync(
       path.join(dir, 'package.json'),
       JSON.stringify({
@@ -41,7 +40,6 @@ describe('resolveChatSdkPackagesToInstall', () => {
 
   it('includes state-memory only when no state adapter is present', () => {
     const dir = makeTempDir();
-    // Older existing project that already has chat. This version stays off the install pin.
     fs.writeFileSync(
       path.join(dir, 'package.json'),
       JSON.stringify({

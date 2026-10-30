@@ -25,7 +25,6 @@ describe('computeChatSdkRequirements', () => {
     fs.writeFileSync(
       path.join(dir, 'package.json'),
       JSON.stringify({
-        // Older existing project. coreReady is presence-only, so this version is not the install pin.
         dependencies: {
           '@novu/chat-sdk-adapter': 'latest',
           chat: '4.40.0',
