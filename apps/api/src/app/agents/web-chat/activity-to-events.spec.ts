@@ -367,4 +367,52 @@ describe('activity-to-events run lifecycle', () => {
       source: undefined,
     });
   });
+
+  it('keeps tool calls and record-only tool results off the client stream', () => {
+    const envelopes = mapNewestFirstEventActivities(
+      [
+        activity({
+          type: ConversationActivityTypeEnum.TOOL_RESULT,
+          identifier: 'tool-result:conv-mongo-id:run-1:toolu_1',
+          sequence: 2,
+          toolData: { toolCallId: 'toolu_1', content: [{ type: 'text', text: 'ok' }], isError: false },
+        }),
+        activity({
+          type: ConversationActivityTypeEnum.TOOL_CALL,
+          identifier: 'tool-call:conv-mongo-id:run-1:toolu_1',
+          sequence: 1,
+          toolData: { toolCallId: 'toolu_1', toolName: 'search_docs', input: { query: 'pricing' } },
+        }),
+      ],
+      context
+    );
+
+    expect(envelopes).to.deep.equal([]);
+  });
+
+  it('maps a bridge tool result that carries content from its output, as before', () => {
+    const envelopes = mapNewestFirstEventActivities(
+      [
+        activity({
+          type: ConversationActivityTypeEnum.TOOL_RESULT,
+          identifier: 'tool-result:conv-mongo-id:run-1:call_1',
+          sequence: 1,
+          content: 'done',
+          toolData: {
+            toolCallId: 'call_1',
+            output: 'done',
+            content: [{ type: 'text', text: 'done' }],
+            isError: false,
+          },
+        }),
+      ],
+      context
+    );
+
+    expect(envelopes[0]?.event).to.deep.equal({
+      type: 'tool-use-result',
+      toolUseId: 'call_1',
+      content: [{ type: 'text', text: 'done' }],
+    });
+  });
 });

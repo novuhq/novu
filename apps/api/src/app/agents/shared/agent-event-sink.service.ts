@@ -5,7 +5,10 @@ import { ConversationActivityEntity, type ConversationChannel, ConversationRepos
 import { isNovuInternalToolName } from '@novu/shared';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
-import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
+import {
+  AgentConversationService,
+  type ConversationActivityContext,
+} from '../conversation-runtime/conversation/agent-conversation.service';
 import { type RunLifecycleEvent } from '../conversation-runtime/conversation/run-lifecycle-activity';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
@@ -172,7 +175,7 @@ export class AgentEventSink {
         return 'accepted';
 
       case 'tool-use-done':
-        await this.handleToolUseDone(event, baseFields, context.sessionId);
+        await this.handleToolUseDone(event, baseFields, context, envelope.runId);
 
         return 'accepted';
 
@@ -644,13 +647,27 @@ export class AgentEventSink {
   private async handleToolUseDone(
     event: Extract<AgentEvent, { type: 'tool-use-done' }>,
     baseFields: BaseCommandFields,
-    sessionId?: string
+    context: AgentEventContext,
+    runId: string
   ): Promise<void> {
-    try {
-      if (this.isInternalTool(event.toolName)) {
-        return;
-      }
+    const { sessionId } = context;
 
+    if (this.isInternalTool(event.toolName)) {
+      return;
+    }
+
+    await this.recordToolActivity(context, runId, 'tool-use-done', (activityContext) =>
+      this.conversationService.persistToolCall({
+        ...activityContext,
+        runId,
+        toolCallId: event.toolUseId,
+        toolName: event.toolName,
+        input: event.input,
+        mcpServerName: this.mcpServerNameOf(event.source),
+      })
+    );
+
+    try {
       if (!event.input || Object.keys(event.input).length === 0) {
         return;
       }
@@ -687,8 +704,10 @@ export class AgentEventSink {
     runId: string
   ): Promise<void> {
     if (context.source === 'bridge') {
+      const toolResult = { ...mapToolUseResultEvent(event), content: event.content, isError: event.isError === true };
+
       await this.dispatchReply(
-        HandleAgentReplyCommand.create({ ...baseFields, toolResults: [mapToolUseResultEvent(event)] }),
+        HandleAgentReplyCommand.create({ ...baseFields, toolResults: [toolResult], runId }),
         context,
         'tool-use-result',
         runId
@@ -696,6 +715,17 @@ export class AgentEventSink {
 
       return;
     }
+
+    // A result carries no tool name, so internal tools are filtered on their TOOL_CALL row only.
+    await this.recordToolActivity(context, runId, 'tool-use-result', (activityContext) =>
+      this.conversationService.persistToolResult({
+        ...activityContext,
+        runId,
+        toolCallId: event.toolUseId,
+        content: event.content,
+        isError: event.isError === true,
+      })
+    );
 
     try {
       await this.handlePlanProgress.execute(
@@ -901,6 +931,41 @@ export class AgentEventSink {
       if (event.type === 'run-start') {
         throw err;
       }
+    }
+  }
+
+  /** The tool ledger is a record, not delivery: a failed write is reported and the event still runs. */
+  private async recordToolActivity(
+    context: AgentEventContext,
+    runId: string,
+    operation: 'tool-use-done' | 'tool-use-result',
+    persist: (activityContext: ConversationActivityContext) => Promise<void>
+  ): Promise<void> {
+    const channel = context.channel;
+    if (!channel) {
+      this.logger.warn(
+        { runId, conversationId: context.conversationId, operation },
+        'Skipping tool activity record: missing channel on AgentEventContext'
+      );
+
+      return;
+    }
+
+    try {
+      await persist({
+        conversationId: context.conversationId,
+        channel,
+        agentIdentifier: context.agentIdentifier,
+        environmentId: context.environmentId,
+        organizationId: context.organizationId,
+      });
+    } catch (err) {
+      this.logger.error(err, `${operation} record failed: run=${runId}`);
+      captureAgentException(err, {
+        component: 'agent-event-sink',
+        operation: `record-${operation}`,
+        sessionId: context.sessionId,
+      });
     }
   }
 

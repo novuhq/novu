@@ -11,6 +11,7 @@ import {
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
+  isRecordOnlyToolResult,
 } from '@novu/dal';
 import {
   mapRunLifecycleActivityToEvent,
@@ -157,9 +158,12 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
       };
     }
 
+    case ConversationActivityTypeEnum.TOOL_CALL:
+      return null;
+
     case ConversationActivityTypeEnum.TOOL_RESULT: {
       const toolData = activity.toolData;
-      if (!toolData?.toolCallId) {
+      if (!toolData?.toolCallId || isRecordOnlyToolResult(toolData)) {
         return null;
       }
 

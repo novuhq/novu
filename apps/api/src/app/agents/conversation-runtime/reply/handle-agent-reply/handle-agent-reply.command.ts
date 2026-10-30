@@ -1,3 +1,4 @@
+import type { AgentToolResultContent } from '@novu/agent-event-protocol';
 import type { Signal, ToolResult } from '@novu/framework/internal';
 import type { PlanModel } from 'chat';
 import { Type } from 'class-transformer';
@@ -17,6 +18,12 @@ export class QuoteReplyContextDto {
   @IsString()
   @IsNotEmpty()
   messageId: string;
+}
+
+/** A tool result from the events ingest, which keeps the protocol parts next to the legacy fields. */
+export interface ToolResultRecord extends ToolResult {
+  content?: AgentToolResultContent[];
+  isError?: boolean;
 }
 
 export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
@@ -71,7 +78,12 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @IsArray()
-  toolResults?: ToolResult[];
+  toolResults?: ToolResultRecord[];
+
+  /** Run that produced `toolResults`. Makes their rows idempotent across redelivery. */
+  @IsOptional()
+  @IsString()
+  runId?: string;
 
   @IsOptional()
   @IsArray()
