@@ -57,7 +57,13 @@ export function IdentityCard(props: IdentityCardProps) {
       aria-label={`${name}’s card`}
       className="w-full max-w-85 shrink-0 overflow-hidden rounded-[14px] border border-border-strong bg-background lg:w-85"
     >
-      <CardPortrait handle={handle} address={address} pictureUrl={props.pictureUrl} state={props.state} />
+      {/* The public card is found through the inbox, so without an address the link would lead nowhere. */}
+      <CardPortrait
+        handle={handle}
+        cardLink={address ? cardLink : null}
+        pictureUrl={props.pictureUrl}
+        state={props.state}
+      />
 
       <CardName name={name} operatorName={operatorName} createdAt={createdAt} />
 

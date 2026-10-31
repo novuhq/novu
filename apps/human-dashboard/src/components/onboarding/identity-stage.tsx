@@ -2,8 +2,8 @@
 
 import { Bot, Pencil, Terminal } from 'lucide-react';
 import type { ReactNode } from 'react';
-import QRCode from 'react-qr-code';
 
+import { CardCode } from '@/components/agent-card/card-code';
 import { ChannelIcon } from '@/components/channels/channel-icon';
 import { HostLogo } from '@/components/connect/host-logo';
 import { CornerTicks } from '@/components/onboarding/onboarding-shell';
@@ -334,23 +334,19 @@ function Portrait({ state, name, address, gotMail, awaited }: PortraitProps) {
           />
         </>
       )}
-      {/* Light on the dark portrait, as in the design: `Icon · 44×44`, 16px from the right, 4px from the bottom. */}
+      {/* It starts an email here, because sending the agent its first mail is what these steps wait for. */}
       {!draft && address && (
-        <QRCode
+        <CardCode
           value={`mailto:${address}`}
-          size={44}
-          level="L"
-          bgColor="transparent"
-          fgColor="#ebe2d6"
-          aria-label={`QR code that starts an email to ${address}`}
-          className="absolute right-4 bottom-1 animate-overlay-in motion-reduce:animate-none"
+          label={`QR code that starts an email to ${address}`}
+          className="absolute right-3 bottom-3 animate-overlay-in motion-reduce:animate-none"
         />
       )}
       {caption && (
         <p
           key={caption}
           className={cn(
-            'absolute bottom-1.5 left-4 animate-overlay-in font-mono text-[10px] leading-3.5 whitespace-pre text-muted motion-reduce:animate-none',
+            'absolute bottom-1.5 left-4 max-w-[calc(100%-7.5rem)] animate-overlay-in overflow-hidden font-mono text-[10px] leading-3.5 text-ellipsis whitespace-pre text-muted motion-reduce:animate-none',
             state === 'connected' && 'uppercase'
           )}
         >
