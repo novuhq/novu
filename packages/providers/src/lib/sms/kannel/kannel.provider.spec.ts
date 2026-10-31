@@ -81,6 +81,8 @@ test.each([
   ['https://kannel.example.com', '8443', 'https://kannel.example.com:8443/cgi-bin/sendsms'],
   ['https://kannel.example.com/', '443', 'https://kannel.example.com/cgi-bin/sendsms'],
   ['https://kannel.example.com:8443', '8443', 'https://kannel.example.com:8443/cgi-bin/sendsms'],
+  ['https://kannel.example.com:443', '8443', 'https://kannel.example.com/cgi-bin/sendsms'],
+  ['http://kannel.example.com:80/', '13013', 'http://kannel.example.com/cgi-bin/sendsms'],
   ['https://gateway.example.com/kannel/', '8443', 'https://gateway.example.com:8443/kannel/cgi-bin/sendsms'],
   ['https://gateway.example.com/cgi-bin', '8443', 'https://gateway.example.com:8443/cgi-bin/sendsms'],
   ['https://gateway.example.com/kannel/cgi-bin/', '8443', 'https://gateway.example.com:8443/kannel/cgi-bin/sendsms'],

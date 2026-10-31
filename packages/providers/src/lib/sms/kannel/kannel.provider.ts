@@ -16,7 +16,11 @@ export function buildKannelBaseUrl(host: string, port: string): string {
   }
 
   const url = new URL(trimmedHost);
-  if (!url.port && trimmedPort) {
+  // URL drops a default port (":443" on https), so check the authority itself
+  // before treating the port as missing.
+  const authority = trimmedHost.replace(/^https?:\/\//i, '').split(/[/?#]/)[0];
+  const hasExplicitPort = /:\d+$/.test(authority);
+  if (!hasExplicitPort && trimmedPort) {
     url.port = trimmedPort;
   }
 
