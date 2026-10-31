@@ -29,8 +29,8 @@ npx @agentinbox/cli contact invite alice --name "Alice Chen"
 npx @agentinbox/cli contact invite bob --via telegram --async
 npx @agentinbox/cli contact invite carol@acme.com          # email: they confirm the address first
 
-# Give your agent a name and a description at setup:
-npx @agentinbox/cli setup telegram --agent-name "Deploy bot" --agent-description "Asks before it ships."
+# Setup asks what your agent is called and offers an address. Or answer with flags (the address can't change later):
+npx @agentinbox/cli setup telegram --agent-name "Deploy bot" --agent-handle deploy-bot --agent-description "Asks before it ships."
 
 # See who agents can reach (`(you)` marks the operator):
 npx @agentinbox/cli contact list

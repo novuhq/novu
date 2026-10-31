@@ -6,7 +6,6 @@ const checkLoginRequest = vi.fn();
 const getKeylessClaimToken = vi.fn();
 const hasSubscriber = vi.fn();
 const findOperator = vi.fn();
-const setupRelay = vi.fn();
 const loadConfig = vi.fn();
 const saveConfig = vi.fn();
 const openInBrowser = vi.fn();
@@ -25,10 +24,6 @@ vi.mock('../api/login', () => ({
   findOperator: (...args: unknown[]) => findOperator(...args),
 }));
 
-vi.mock('../api/agent-inbox', () => ({
-  setupRelay: (...args: unknown[]) => setupRelay(...args),
-}));
-
 vi.mock('../config', async (importOriginal) => {
   const original = await importOriginal<typeof import('../config')>();
 
@@ -43,15 +38,8 @@ vi.mock('../open-browser', () => ({ openInBrowser: (...args: unknown[]) => openI
 vi.mock('../poll', () => ({ sleep: () => Promise.resolve() }));
 vi.mock('../spinner', () => ({ startWaitIndicator: () => () => undefined }));
 
-const {
-  describeNextStep,
-  introduceYourself,
-  LOGIN_DENIED_MESSAGE,
-  LOGIN_UNAVAILABLE_MESSAGE,
-  loginCommand,
-  runLogin,
-  withClaimToken,
-} = await import('./login');
+const { describeNextStep, LOGIN_DENIED_MESSAGE, LOGIN_UNAVAILABLE_MESSAGE, loginCommand, runLogin, withClaimToken } =
+  await import('./login');
 
 const LOGIN_URL = 'https://agentinbox.md/cli/login?code=BCDF-GHJK';
 /** What APIs from before the page showed the code send: the operator types it there. */
@@ -227,21 +215,6 @@ describe('runLogin', () => {
     expect(result.keptSetup).toBe(false);
   });
 
-  it('passes on the name of the Agent Inbox account, for asking who you are', async () => {
-    checkLoginRequest.mockReset().mockResolvedValue({
-      status: 'approved',
-      apiKey: 'sk_account',
-      environmentId: 'dev_env',
-      user: { email: 'ada@example.com', firstName: 'Ada', lastName: 'Lovelace' },
-    });
-    expect((await runLogin({})).name).toEqual({ firstName: 'Ada', lastName: 'Lovelace' });
-
-    checkLoginRequest
-      .mockReset()
-      .mockResolvedValue({ status: 'approved', apiKey: 'sk_account', environmentId: 'dev_env' });
-    expect(await runLogin({})).not.toHaveProperty('name');
-  });
-
   it('keeps the identity when it cannot check it, since the key is only handed over once', async () => {
     loadConfig.mockReturnValue({ ...keylessConfig, auth: { mode: 'apiKey', secretKey: 'sk_old' } });
     hasSubscriber.mockRejectedValue(new Error('network down'));
@@ -335,108 +308,6 @@ describe('runLogin', () => {
   });
 });
 
-describe('introduceYourself', () => {
-  const config: CliConfig = {
-    apiUrl: 'https://www.agentinbox.md/api',
-    auth: { mode: 'apiKey', secretKey: 'sk_account' },
-    relayAgentIdentifier: 'human-relay',
-  };
-  const name = { firstName: 'Ada', lastName: 'Lovelace' };
-  let stdout: MockInstance;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
-    // The account answers with the owner it has on record, here one it already knew.
-    setupRelay.mockReset().mockResolvedValue({
-      agentId: 'agent_1',
-      agentIdentifier: 'human-relay',
-      subscriberId: 'ada_owner',
-    });
-  });
-
-  afterEach(() => {
-    stdout.mockRestore();
-  });
-
-  it('asks who you are, makes you the contact of the account owner and saves it as who agents reach', async () => {
-    const prompt = vi.fn().mockResolvedValue('  Grace   Hopper ');
-
-    const result = await introduceYourself({ config, name }, { isTTY: true, prompt });
-
-    // The name on the Agent Inbox account is offered, so Enter is enough.
-    expect(prompt).toHaveBeenCalledWith('Who are you? Your name, as agents will see it [Ada Lovelace]: ');
-    expect(setupRelay).toHaveBeenCalledWith(expect.anything(), {
-      subscriberId: expect.stringMatching(/^operator_[0-9a-f]{12}$/),
-      operator: true,
-      agentIdentifier: 'human-relay',
-      firstName: 'Grace',
-      lastName: 'Hopper',
-    });
-    // What the API answers is saved: an owner it already knew wins over the id suggested here.
-    expect(saveConfig).toHaveBeenCalledWith({ ...config, subscriberId: 'ada_owner' });
-    expect(result).toEqual({ config: { ...config, subscriberId: 'ada_owner' }, isNewContact: false });
-  });
-
-  it('says when the contact was made just now, with the id it suggested', async () => {
-    setupRelay.mockImplementation(async (_client: unknown, input: { subscriberId: string }) => ({
-      agentId: 'agent_1',
-      agentIdentifier: 'human-relay',
-      subscriberId: input.subscriberId,
-    }));
-
-    const result = await introduceYourself({ config, name }, { isTTY: false, prompt: vi.fn() });
-
-    expect(result.config.subscriberId).toMatch(/^operator_[0-9a-f]{12}$/);
-    expect(result.isNewContact).toBe(true);
-  });
-
-  it('takes the name on the Agent Inbox account when the answer is empty', async () => {
-    await introduceYourself({ config, name }, { isTTY: true, prompt: vi.fn().mockResolvedValue('') });
-
-    expect(setupRelay.mock.calls[0][1]).toMatchObject({ firstName: 'Ada', lastName: 'Lovelace' });
-  });
-
-  it('does not ask without a terminal, and still saves who you are', async () => {
-    const prompt = vi.fn();
-
-    const result = await introduceYourself({ config, name }, { isTTY: false, prompt });
-
-    expect(prompt).not.toHaveBeenCalled();
-    expect(setupRelay.mock.calls[0][1]).toMatchObject({ operator: true, firstName: 'Ada', lastName: 'Lovelace' });
-    expect(result.config.subscriberId).toBe('ada_owner');
-  });
-
-  it('leaves the name out when nobody gave one', async () => {
-    const prompt = vi.fn().mockResolvedValue(' ');
-
-    await introduceYourself({ config }, { isTTY: true, prompt });
-
-    expect(prompt).toHaveBeenCalledWith('Who are you? Your name, as agents will see it (optional): ');
-    expect(setupRelay.mock.calls[0][1]).not.toHaveProperty('firstName');
-  });
-
-  it('uses the id it suggested when an older API sends none back', async () => {
-    setupRelay.mockResolvedValue({ agentId: 'agent_1', agentIdentifier: 'human-relay', subscriberId: '' });
-
-    const result = await introduceYourself({ config }, { isTTY: false, prompt: vi.fn() });
-
-    expect(result.config.subscriberId).toBe(setupRelay.mock.calls[0][1].subscriberId);
-    expect(result.isNewContact).toBe(true);
-  });
-
-  it('leaves the login as it is when the contact cannot be made', async () => {
-    setupRelay.mockRejectedValue(new Error('network down'));
-
-    const result = await introduceYourself({ config, name }, { isTTY: false, prompt: vi.fn() });
-
-    // Logged in either way; `npx @agentinbox/cli setup` makes the contact later.
-    expect(result).toEqual({ config, isNewContact: false });
-    expect(saveConfig).not.toHaveBeenCalled();
-    expect(stdout.mock.calls.map(([text]) => String(text)).join('')).toContain('network down');
-  });
-});
-
 describe('describeNextStep', () => {
   const config: CliConfig = {
     apiUrl: 'https://www.agentinbox.md/api',
@@ -458,18 +329,10 @@ describe('describeNextStep', () => {
   });
 
   it('sends a computer that knows nobody to npx @agentinbox/cli setup', () => {
-    expect(describeNextStep({ config, keptSetup: false })).toContain('Next, connect a channel');
-  });
+    const text = describeNextStep({ config, keptSetup: false });
 
-  it('sends someone whose contact was made just now to npx @agentinbox/cli setup, as it has no channel yet', () => {
-    const text = describeNextStep({
-      config: { ...config, subscriberId: 'ada_new' },
-      keptSetup: false,
-      isNewContact: true,
-    });
-
-    expect(text).toContain('Next, connect a channel');
-    expect(text).not.toContain("your account's channels");
+    expect(text).toContain('Next, name your agent');
+    expect(text).toContain('npx @agentinbox/cli setup');
   });
 });
 
@@ -483,7 +346,6 @@ describe('loginCommand', () => {
     vi.clearAllMocks();
     printed = '';
     delete process.env.INBOX_SECRET_KEY;
-    // No terminal to ask in: who you are comes from the name on the Agent Inbox account.
     Object.defineProperty(process.stdin, 'isTTY', { value: false, configurable: true });
     vi.spyOn(process.stdout, 'write').mockImplementation((chunk: string | Uint8Array) => {
       printed += String(chunk);
@@ -509,11 +371,6 @@ describe('loginCommand', () => {
     });
     hasSubscriber.mockResolvedValue(true);
     findOperator.mockReset().mockResolvedValue(undefined);
-    setupRelay.mockReset().mockImplementation(async (_client: unknown, input: { subscriberId: string }) => ({
-      agentId: 'agent_1',
-      agentIdentifier: 'human-relay',
-      subscriberId: input.subscriberId,
-    }));
   });
 
   afterEach(() => {
@@ -527,54 +384,23 @@ describe('loginCommand', () => {
     }
   });
 
-  it('reaches the contact the account has for its owner, without asking who you are', async () => {
+  it('reaches the contact the account has for its owner', async () => {
     findOperator.mockResolvedValue('ada_owner');
 
     await loginCommand({});
 
-    expect(setupRelay).not.toHaveBeenCalled();
     expect(saveConfig).toHaveBeenLastCalledWith(expect.objectContaining({ subscriberId: 'ada_owner' }));
     expect(printed).toContain('Logged in as');
     expect(printed).toContain("now reach you on your account's channels");
     expect(exit).toHaveBeenCalledWith(0);
   });
 
-  it('makes the contact when the account has none, and sends you on to connect a channel', async () => {
+  it('makes no agent for an account without one, and leaves naming it to setup', async () => {
     await loginCommand({});
 
-    expect(setupRelay.mock.calls[0][1]).toMatchObject({ operator: true, firstName: 'Ada', lastName: 'Lovelace' });
-    expect(saveConfig).toHaveBeenLastCalledWith(
-      expect.objectContaining({ subscriberId: setupRelay.mock.calls[0][1].subscriberId })
-    );
-    // Made a moment ago, so it has no channel yet.
-    expect(printed).toContain('Next, connect a channel');
-    expect(exit).toHaveBeenCalledWith(0);
-  });
-
-  it('does not send you to set up again when the account had your contact after all', async () => {
-    // The first lookup failed, but making the contact answered with the one the account has.
-    findOperator.mockRejectedValue(new Error('network down'));
-    setupRelay.mockResolvedValue({
-      agentId: 'agent_1',
-      agentIdentifier: 'human-relay',
-      subscriberId: 'ada_owner',
-    });
-
-    await loginCommand({});
-
-    expect(saveConfig).toHaveBeenLastCalledWith(expect.objectContaining({ subscriberId: 'ada_owner' }));
-    expect(printed).toContain("now reach you on your account's channels");
-    expect(printed).not.toContain('Next, connect a channel');
-  });
-
-  it('stays logged in and points at npx @agentinbox/cli setup when the contact cannot be made', async () => {
-    setupRelay.mockRejectedValue(new Error('network down'));
-
-    await loginCommand({});
-
-    expect(printed).toContain("Couldn't save who you are just now (network down).");
-    expect(printed).toContain('Next, connect a channel');
     expect(saveConfig).toHaveBeenCalledTimes(1);
+    expect(saveConfig.mock.calls[0][0]).not.toHaveProperty('subscriberId');
+    expect(printed).toContain('Next, name your agent');
     expect(exit).toHaveBeenCalledWith(0);
   });
 });

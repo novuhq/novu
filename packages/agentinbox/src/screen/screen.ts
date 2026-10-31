@@ -1,6 +1,6 @@
 import type { Emotion } from '../mascot/life';
 import { askTerminal } from './ask-terminal';
-import type { ScreenRow, ScreenStatus } from './layout';
+import type { ScreenRow, ScreenStatus, Tone } from './layout';
 import { processHost, startLiveScreen } from './live-screen';
 import { MIN_COLUMNS, screenColors } from './terminal';
 
@@ -19,6 +19,12 @@ export interface ScreenWait {
   said?: string;
 }
 
+/** Words under a question being answered, such as whether an address is free. */
+export interface AskNote {
+  text: string;
+  tone: Extract<Tone, 'success' | 'accent' | 'muted'>;
+}
+
 export interface AskOptions {
   /** The answer isn't shown as it is typed, nor kept: a pasted token. */
   secret?: boolean;
@@ -27,6 +33,19 @@ export interface AskOptions {
    * and the answer, with dots for a secret one; nothing for an empty answer.
    */
   remember?: (answer: string) => ScreenRow | undefined;
+  /** What the answer starts as, for the person to keep or change. */
+  initial?: string;
+  /** Follows the answer without being part of it, such as the domain after an address. */
+  suffix?: string;
+  /** How the answer shows as it is typed, such as the address it will be. */
+  display?: (answer: string) => string;
+  /** Says something about `initial` from the start. */
+  note?: AskNote;
+  /**
+   * Looks at the answer once the person stops typing, for the words under it. A result for an answer changed
+   * since is dropped, and one that fails says nothing: this only helps, so whoever asked checks what comes back.
+   */
+  check?: (answer: string) => Promise<AskNote | undefined>;
 }
 
 /**
@@ -51,9 +70,12 @@ export interface Screen {
   say(message: string): void;
   /** Shows a wait until the function it returns is called, which takes it all away again. */
   wait(wait: ScreenWait): () => void;
-  /** Writes text below the screen as a plain terminal would, such as a menu; it goes once the screen next changes. */
+  /** Shows text with the next question, such as a menu or how to get a token. It goes once that one is answered. */
   print(text: string): void;
-  /** Asks below the screen, with the very words a plain terminal shows, and keeps the answer in the list. */
+  /**
+   * Asks at the end of the list, with the very words a plain terminal shows. The answer is drawn there as it
+   * is typed and stays in the list, and everything else keeps moving meanwhile.
+   */
   ask(question: string, options?: AskOptions): Promise<string>;
   /** Ends the screen on the mascot's own still face for `emotion`, once its eyes have got there. */
   done(emotion: 'happy' | 'asleep'): Promise<void>;

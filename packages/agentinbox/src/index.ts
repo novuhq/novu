@@ -208,7 +208,11 @@ program
     '--name <name>',
     'your first and last name, e.g. "Nikita Grossman" — shown to people you invite (skips the first-run prompt)'
   )
-  .option('--agent-name <name>', 'what your agent is called, as people see it')
+  .option('--agent-name <name>', 'what your agent is called, as people see it. A new agent needs one')
+  .option(
+    '--agent-handle <handle>',
+    "a new agent's address before the @, e.g. atlas (default: from the name). It can't be changed later"
+  )
   .option('--agent-description <text>', 'a line about what your agent does, shown with its name')
   .option('--agent-picture <file-or-url>', 'your agent’s picture: a JPEG or PNG of up to 2 MB (needs `login`)')
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')

@@ -14,16 +14,27 @@ import { VirtualTerminal } from '../screen/virtual-terminal.fixture';
 /** What a person types at the prompts, in turn. */
 const typed = vi.hoisted(() => [] as string[]);
 
-// A terminal's readline: it writes the question and echoes the answer as it is typed.
+// A terminal's readline: it writes the question and echoes the answer as it is typed. An answer can start out
+// filled in, which Enter then takes.
 vi.mock('node:readline', () => {
-  const createInterface = () => ({
-    question: (question: string, answer: (text: string) => void) => {
-      const text = typed.shift() ?? '';
-      process.stdout.write(`${question}${text}\n`);
-      answer(text);
-    },
-    close: () => undefined,
-  });
+  const createInterface = ({ output }: { output: NodeJS.WritableStream }) => {
+    let filledIn = '';
+
+    return {
+      question: (question: string, answer: (text: string) => void) => {
+        queueMicrotask(() => {
+          const text = typed.shift() || filledIn;
+          output.write(`${question}${text}\n`);
+          answer(text);
+        });
+      },
+      write: (text: string) => {
+        filledIn = text;
+      },
+      on: () => undefined,
+      close: () => undefined,
+    };
+  };
 
   return { default: { createInterface }, createInterface };
 });
@@ -64,6 +75,13 @@ vi.mock('../api/agent-inbox', async (importOriginal) => ({
     agentIdentifier: 'human-relay',
     agentName: 'Atlas',
     subscriberId: input.subscriberId,
+  })),
+  // An agent exists once a setup was saved on this computer.
+  findRelayAgent: vi.fn(async () => (loadConfig() ? { agentId: 'agent_1', name: 'Atlas' } : null)),
+  checkInboxAddress: vi.fn(async (_client: unknown, handle: string) => ({
+    handle,
+    available: true,
+    domain: 'agentinbox.md',
   })),
   requestAddressVerification: vi.fn(async () => ({
     address: 'a***@example.com',
@@ -126,12 +144,16 @@ const keylessConfig: CliConfig = {
 const run = {
   keylessSetup: async () => {
     loadConfig.mockReturnValue(null);
+    await setupCommand(undefined, { email: 'ada@example.com', agentName: 'Atlas' });
+  },
+  keylessSetupUnnamed: async () => {
+    loadConfig.mockReturnValue(null);
     await setupCommand(undefined, { email: 'ada@example.com' });
   },
   keylessSetupStops: async () => {
     loadConfig.mockReturnValue(null);
     waitForVerifiedEmail.mockRejectedValue(new Error("We didn't see you confirm your email within 300s."));
-    await setupCommand(undefined, { email: 'ada@example.com' });
+    await setupCommand(undefined, { email: 'ada@example.com', agentName: 'Atlas' });
   },
   keylessSetupPickedUp: async () => {
     loadConfig.mockReturnValue(keylessConfig);
@@ -336,6 +358,14 @@ describe('without a terminal', () => {
       "Waiting for you to confirm your email (Ctrl-C detaches; resume with: npx @agentinbox/cli setup email)
       "
     `);
+  });
+
+  it('refuses to set up a new agent with no name', async () => {
+    const shown = await printed('keylessSetupUnnamed');
+
+    expect(shown.exitCode).toBe(1);
+    expect(shown.stderr).toContain('Pass --agent-name <name>');
+    expect(saveConfig).not.toHaveBeenCalled();
   });
 
   it('keeps the setup of a run that stops while it waits for the email', async () => {
@@ -646,7 +676,7 @@ describe('on a terminal', () => {
     }
   });
 
-  it('asks before replacing a setup, below the screen, and keeps the answer on it', async () => {
+  it('asks before replacing a setup on the screen, and keeps the answer on it', async () => {
     typed.push('y');
     loadConfig.mockReturnValue(accountConfig);
     const shown = await printed('connectOverSetup', 'terminal', { typing: true });
@@ -654,12 +684,13 @@ describe('on a terminal', () => {
 
     expect(shown.exitCode).toBe(0);
     expect(connectWithCode).toHaveBeenCalled();
-    expect(screen).toContain('connecting atlas makes it act as atlas from now on. continue? [y/n] y');
+    expect(screen).toContain('continue? [y/n] y');
     expect(screen).toContain('connected to atlas');
   });
 
-  it('asks who you are during setup, below its screen, and keeps the answers on it', async () => {
-    typed.push('Ada', 'Lovelace');
+  it('asks who you are during setup on its screen, and keeps the answers on it', async () => {
+    // Enter keeps the address offered for the agent.
+    typed.push('Ada', 'Lovelace', '');
     const shown = await printed('keylessSetup', 'terminal', { typing: true });
     const screen = leftOnScreen(shown);
     const { setupRelay } = await import('../api/agent-inbox');
@@ -671,6 +702,20 @@ describe('on a terminal', () => {
     );
     expect(screen).toContain('your first name: ada');
     expect(screen).toContain('your last name (optional): lovelace');
+  });
+
+  it('asks what the agent is called, and offers the address that comes from the name', async () => {
+    typed.push('Ada', 'Lovelace', 'Atlas Prime', '');
+    const shown = await printed('keylessSetupUnnamed', 'terminal', { typing: true });
+    const { setupRelay } = await import('../api/agent-inbox');
+
+    expect(shown.exitCode).toBe(0);
+    expect(vi.mocked(setupRelay)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ agentName: 'Atlas Prime', inboxHandle: 'atlas-prime' })
+    );
+    expect(leftOnScreen(shown)).toContain("your agent's name: atlas prime");
+    expect(leftOnScreen(shown)).toContain("your agent's address: atlas-prime@agentinbox.md");
   });
 
   it('stops where the answer is no, as before', async () => {

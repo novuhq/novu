@@ -3,7 +3,7 @@ title: "Create an inbox"
 description: "Run setup to create a keyless Agent Inbox, print its address, and optionally connect Telegram or Slack."
 ---
 
-`setup` creates an inbox before you have an account. It asks for your first and last name and an email address, creates the agent, and prints its address. It then emails you a confirmation link and waits up to 5 minutes for you to open it.
+`setup` creates an inbox before you have an account. It asks for your first and last name, an email address and the agent's name, offers the agent an address, creates the agent, and prints that address. It then emails you a confirmation link and waits up to 5 minutes for you to open it.
 
 ```bash
 npx @agentinbox/cli setup
@@ -20,9 +20,12 @@ Email can receive as soon as setup finishes. The agent does not send email until
 
 ## Name the agent
 
+Every new agent needs a name. Setup asks for it, then offers the address that comes from it. Keep it, or type another: setup shows whether what you type is free, and offers one close to it when it isn't. The address can't be changed later.
+
 ```bash
 npx @agentinbox/cli setup telegram \
   --agent-name "Deploy bot" \
+  --agent-handle deploy-bot \
   --agent-description "Asks before it ships."
 ```
 
@@ -40,6 +43,8 @@ npx @agentinbox/cli setup \
   --email you@example.com \
   --agent-name "Deploy bot"
 ```
+
+A new agent needs `--agent-name`. Without `--agent-handle`, its address comes from the name, or is a free one close to it.
 
 When an agent runs `setup` or `login`, give it time: `setup` waits up to 5 minutes for the email, and `login` up to an hour for you to approve.
 
