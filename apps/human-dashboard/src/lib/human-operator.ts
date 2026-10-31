@@ -27,7 +27,7 @@ export async function ensureOperatorContact(account: HumanAccount, name: Operato
 
 /** What the onboarding knows when it makes the agent: its name, and where its operator gets mail. */
 type RelayDetails = {
-  /** What the agent is called from now on. Left out, a new agent is called "Human" and an old one keeps its name. */
+  /** What the agent is called from now on. Left out, a new agent is called "Agent" and an old one keeps its name. */
   agentName?: string;
   /** The operator's own address, so mail they send to the agent is recognized as theirs. */
   operatorEmail?: string;

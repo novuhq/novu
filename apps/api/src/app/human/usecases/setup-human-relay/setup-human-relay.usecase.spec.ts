@@ -179,7 +179,7 @@ describe('SetupHumanRelay', () => {
     expect(create.firstCall.args[0]).to.include({ name: 'Deploy bot', description: 'Ships the app.' });
   });
 
-  it('calls a new relay agent "Human" until it is named', async () => {
+  it('calls a new relay agent "Agent" until it is named', async () => {
     const { usecase, agentRepository } = setup();
     agentRepository.findOne.resolves(null);
     const create = sinon.stub().resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' });
@@ -187,7 +187,7 @@ describe('SetupHumanRelay', () => {
 
     await usecase.execute(SetupHumanRelayCommand.create(base));
 
-    expect(create.firstCall.args[0].name).to.equal('Human');
+    expect(create.firstCall.args[0].name).to.equal('Agent');
     expect(create.firstCall.args[0]).to.not.have.property('description');
   });
 

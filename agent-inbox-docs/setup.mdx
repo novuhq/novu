@@ -3,7 +3,7 @@ title: "Create an inbox"
 description: "Run setup to create a keyless Agent Inbox, print its address, and optionally connect Telegram or Slack."
 ---
 
-`setup` creates an inbox before you have an account. It asks for your first and last name and an email address, creates the agent, and prints its address.
+`setup` creates an inbox before you have an account. It asks for your first and last name and an email address, creates the agent, and prints its address. It then emails you a confirmation link and waits up to 5 minutes for you to open it.
 
 ```bash
 npx @agentinbox/cli setup
@@ -32,7 +32,7 @@ On a terminal, setup draws one screen and updates it in place. In a pipe, in CI,
 
 ## Run it again
 
-Running `setup` again resumes whatever step is left. Without a terminal, pass the answers as flags:
+Running `setup` again resumes whatever step is left: it keeps the same inbox, and sends a new confirmation link if you haven't opened one. Without a terminal, pass the answers as flags:
 
 ```bash
 npx @agentinbox/cli setup \
@@ -40,6 +40,8 @@ npx @agentinbox/cli setup \
   --email you@example.com \
   --agent-name "Deploy bot"
 ```
+
+When an agent runs `setup` or `login`, give it time: `setup` waits up to 5 minutes for the email, and `login` up to an hour for you to approve.
 
 `--telegram-bot-token` and `--slack-config-token` skip the prompt. An agent must not ask you for those tokens. Without a terminal it prints a page and waits. Forward that URL and let the person finish it. See [Telegram](/channels/telegram) and [Slack](/channels/slack).
 

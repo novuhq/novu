@@ -69,8 +69,8 @@ function commandSections(host: CommandHost): string[] {
     'Only when your operator asks you to set up Agent Inbox. When they already have an Agent Inbox account, ask them for a one-time code instead.',
     [
       '1. Ask your operator for their first and last name and their email address. Never make them up.',
-      `2. \`${NPX_CLI} setup --email <their email> --name "<their name>"\` creates the inbox without an account: a free demo with a few messages, whose email inbox only receives until your operator claims it. Add \`--agent-name "<name>"\` when they told you what to call you.`,
-      `3. \`${NPX_CLI} login\` prints a link and a code. Give both to your operator: they sign in on ${AGENT_DOMAIN}, check that the code matches and approve. The setup then moves into their account.`,
+      `2. \`${NPX_CLI} setup --email <their email> --name "<their name>"\` creates the inbox without an account: a free demo with a few messages, whose email inbox only receives until your operator claims it. Add \`--agent-name "<name>"\` when they told you what to call you. It emails them a confirmation link and waits up to 5 minutes for them to open it, so tell them to look out for it first, and run it in the background or with a long timeout if ${runner} stops commands sooner. If it stops first, run it again: it keeps the same inbox and sends a new link.`,
+      `3. \`${NPX_CLI} login\` prints a link and a code, then waits up to an hour, so run it the same way. Give both to your operator: they sign in on ${AGENT_DOMAIN}, check that the code matches and approve. The setup then moves into their account. If it stops before they approve, run it again for a new code.`,
       `4. \`${skillsLine}\`, then \`${check.command}\`.${host.afterCommands ? ` ${host.afterCommands}` : ''}`,
     ].join('\n'),
     `Never ask for a Telegram bot token or a Slack token: \`${NPX_CLI} channel add telegram\` (or \`slack\`) prints a link where your operator finishes in their browser. When ${runner} won't let you run a command, for example one that saves a key, tell your operator the exact command and let them run it.`,

@@ -5,7 +5,7 @@ import type { AgentEntity } from '@novu/dal';
  * the agents API, so in practice most carry this placeholder. Invitee-facing
  * copy treats it as "unnamed" and leans on the operator's name instead.
  */
-export const DEFAULT_HUMAN_RELAY_NAME = 'Human';
+export const DEFAULT_HUMAN_RELAY_NAME = 'Agent';
 
 /** Who is asking to reach the invitee, as shown in emails and on the Human website. */
 export interface RelaySender {

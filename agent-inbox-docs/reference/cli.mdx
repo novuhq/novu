@@ -46,7 +46,7 @@ On a terminal, `setup`, `login`, `connect`, and `channel add` draw one updating 
 
 ## setup
 
-Creates a keyless inbox, then optionally connects a channel. See [Create an inbox](/setup).
+Creates a keyless inbox, then optionally connects a channel. A keyless setup waits up to 5 minutes for you to open the confirmation email. Running it again keeps the same inbox. See [Create an inbox](/setup).
 
 ```bash
 npx @agentinbox/cli setup [telegram|slack|email]
@@ -66,7 +66,7 @@ npx @agentinbox/cli setup [telegram|slack|email]
 
 ## login
 
-Opens agentinbox.md. You confirm the code shown in the terminal. A keyless setup on this computer is claimed into the account.
+Opens agentinbox.md. You confirm the code shown in the terminal, within an hour. A keyless setup on this computer is claimed into the account.
 
 ```bash
 npx @agentinbox/cli login

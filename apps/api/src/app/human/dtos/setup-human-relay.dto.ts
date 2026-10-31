@@ -50,7 +50,7 @@ export class SetupHumanRelayRequestDto {
   @ApiPropertyOptional({
     description:
       'What the relay agent is called, as people see it on the invite page, in emails and on its chat bots. ' +
-      'Missing leaves the name it has; a new agent is called "Human".',
+      'Missing leaves the name it has; a new agent is called "Agent".',
     maxLength: AGENT_NAME_MAX_LENGTH,
   })
   @IsOptional()

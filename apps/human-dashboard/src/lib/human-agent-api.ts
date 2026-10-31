@@ -11,7 +11,7 @@ import { requestForAccount } from './human-api-key';
 export const RELAY_AGENT_IDENTIFIER = 'human-relay';
 
 /** The name `setup` and the dashboard give a relay agent until the operator picks one (NV-8914). */
-export const DEFAULT_AGENT_NAME = 'Human';
+export const DEFAULT_AGENT_NAME = 'Agent';
 
 export type RelayAgent = {
   /** The agent's own id, which is different in every account. */

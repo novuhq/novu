@@ -15,7 +15,7 @@ export type Channel = {
   /** The channel's own id, which a few endpoints ask for instead of the identifier. */
   id: string;
   label: string;
-  /** The name the channel was made with, such as "Human". */
+  /** The name the channel was made with, such as "Agent". */
   name?: string;
   active: boolean;
   /** Missing for a provider the relay isn't expected to have. */
@@ -55,7 +55,7 @@ const TELEGRAM_PROVIDER_ID = 'telegram';
 const SLACK_PROVIDER_ID = 'slack';
 
 /** The name a channel gets when the operator doesn't pick one, same as `setup`. */
-const DEFAULT_CHANNEL_NAME = 'Human';
+const DEFAULT_CHANNEL_NAME = 'Agent';
 
 const RETRY_MS = 1000;
 

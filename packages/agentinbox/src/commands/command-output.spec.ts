@@ -30,6 +30,7 @@ vi.mock('node:readline', () => {
 
 const loadConfig = vi.fn();
 const saveConfig = vi.fn();
+const isEmailVerified = vi.fn();
 const waitForVerifiedEmail = vi.fn();
 const waitForEndpoint = vi.fn();
 const startLoginRequest = vi.fn();
@@ -91,6 +92,7 @@ vi.mock('../config', async (importOriginal) => ({
 
 vi.mock('./link-channel', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
+  isEmailVerified: (...args: unknown[]) => isEmailVerified(...args),
   waitForVerifiedEmail: (...args: unknown[]) => waitForVerifiedEmail(...args),
   waitForEndpoint: (...args: unknown[]) => waitForEndpoint(...args),
 }));
@@ -113,10 +115,27 @@ const accountConfig: CliConfig = {
   defaultChannel: 'telegram',
 };
 
+const keylessConfig: CliConfig = {
+  apiUrl: 'https://api.novu.co',
+  auth: { mode: 'keyless', keylessIdentifier: 'pk_keyless_1' },
+  relayAgentIdentifier: 'human-relay',
+  subscriberId: 'ada',
+};
+
 /** The commands as the tests run them, each with the answers its story needs. */
 const run = {
   keylessSetup: async () => {
     loadConfig.mockReturnValue(null);
+    await setupCommand(undefined, { email: 'ada@example.com' });
+  },
+  keylessSetupStops: async () => {
+    loadConfig.mockReturnValue(null);
+    waitForVerifiedEmail.mockRejectedValue(new Error("We didn't see you confirm your email within 300s."));
+    await setupCommand(undefined, { email: 'ada@example.com' });
+  },
+  keylessSetupPickedUp: async () => {
+    loadConfig.mockReturnValue(keylessConfig);
+    isEmailVerified.mockResolvedValue(true);
     await setupCommand(undefined, { email: 'ada@example.com' });
   },
   telegramSetup: async () => {
@@ -215,6 +234,7 @@ async function printed(scenario: keyof typeof run, kind: Streams = 'pipe', size:
   streamsAre(kind, size);
 
   loadConfig.mockReset().mockReturnValue(null);
+  isEmailVerified.mockReset().mockResolvedValue(false);
   waitForVerifiedEmail.mockReset().mockResolvedValue(undefined);
   waitForEndpoint.mockReset().mockResolvedValue(undefined);
   hasChannelEndpoint.mockReset().mockResolvedValue(false);
@@ -316,6 +336,28 @@ describe('without a terminal', () => {
       "Waiting for you to confirm your email (Ctrl-C detaches; resume with: npx @agentinbox/cli setup email)
       "
     `);
+  });
+
+  it('keeps the setup of a run that stops while it waits for the email', async () => {
+    const output = await printed('keylessSetupStops');
+
+    expect(output.exitCode).toBe(1);
+    expect(saveConfig).toHaveBeenCalledOnce();
+    expect(saveConfig).toHaveBeenCalledWith(
+      expect.objectContaining({ auth: keylessConfig.auth, relayAgentIdentifier: 'human-relay' })
+    );
+  });
+
+  it('picks up a stopped setup with the inbox it made, and asks nobody to confirm twice', async () => {
+    const { bootstrapKeylessSession } = await import('../api/setup');
+    const { requestAddressVerification } = await import('../api/agent-inbox');
+    const output = await printed('keylessSetupPickedUp');
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stdout).toContain('Reusing your existing keyless session.');
+    expect(output.stdout).toContain('ada@example.com is already confirmed.');
+    expect(bootstrapKeylessSession).not.toHaveBeenCalled();
+    expect(requestAddressVerification).not.toHaveBeenCalled();
   });
 
   it('keeps a setup that connects Telegram as it was', async () => {

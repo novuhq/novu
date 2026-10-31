@@ -1,4 +1,4 @@
-import { getContact } from '../api/agent-inbox';
+import { getContact, listContacts } from '../api/agent-inbox';
 import { type ApiClient, ApiError } from '../api/client';
 import {
   type AgentIntegrationLink,
@@ -236,6 +236,25 @@ export async function waitForVerifiedChannels(
  * used. A previously verified address stays `verified` while a replacement is
  * pending, and masked addresses can collide, so only the request id is trusted.
  */
+/** Whether this contact already confirmed `email` for this agent, so a setup run again doesn't ask them twice. */
+export async function isEmailVerified(
+  client: ApiClient,
+  subscriberId: string,
+  agentIdentifier: string | undefined,
+  email: string
+): Promise<boolean> {
+  try {
+    // The list names this agent's address in full. A single contact masks it, and its `email` can be another agent's.
+    const { data } = await listContacts(client, { subscriberId, agentIdentifier, limit: 1 });
+    const verification = data.find((contact) => contact.id === subscriberId)?.emailVerification;
+
+    return verification?.status === 'verified' && verification.address.toLowerCase() === email;
+  } catch {
+    // The contact row may not exist until the verification lands.
+    return false;
+  }
+}
+
 export async function waitForVerifiedEmail(
   client: ApiClient,
   subscriberId: string,
