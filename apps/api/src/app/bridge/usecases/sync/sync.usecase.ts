@@ -1,7 +1,6 @@
 import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import {
   AnalyticsService,
-  assertSafeOutboundUrl,
   BuildStepIssuesUsecase,
   BuildVariableSchemaUsecase,
   CreateWorkflowCommandV0,
@@ -13,7 +12,6 @@ import {
   JSONSchema,
   JSONSchemaDto,
   NotificationStep,
-  SsrfBlockedError,
   STEP_CONTROL_LEVELS,
   StepIssuesDto,
   UpdateWorkflowCommandV0,
@@ -37,6 +35,7 @@ import {
   UserSessionData,
   WorkflowCreationSourceEnum,
 } from '@novu/shared';
+import { assertSafeOutboundUrl, SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import { isEqual } from 'es-toolkit';
 import { DeleteWorkflowCommand } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.command';
 import { DeleteWorkflowUseCase } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';

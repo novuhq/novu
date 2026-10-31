@@ -1,4 +1,4 @@
-import * as SsrfModule from '@novu/application-generic/build/main/utils/ssrf-url-validation';
+import * as SsrfModule from '@novu/shared/utils/safe-outbound-http';
 import { expect } from 'chai';
 import sinon from 'sinon';
 

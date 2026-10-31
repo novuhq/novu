@@ -2,7 +2,7 @@ import * as dns from 'node:dns';
 import * as http from 'node:http';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetOutboundSsrfAllowListCacheForTests } from './outbound-ssrf-allow-list';
-import { safeOutboundJsonRequest, safeOutboundRequest } from './safe-outbound-http';
+import { safeOutboundJsonRequest, safeOutboundRequest, safeOutboundStreamRequest } from './safe-outbound-http';
 
 const ORIGINAL_ALLOW = process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
 const ORIGINAL_PRODUCTION_ALLOW = process.env.NOVU_SAFE_OUTBOUND_ALLOW;
@@ -24,6 +24,28 @@ afterAll(() => {
 
   resetOutboundSsrfAllowListCacheForTests();
 });
+
+function expectTraceHeadersStripped(hits: Array<{ headers: http.IncomingHttpHeaders }>) {
+  expect(hits).toHaveLength(1);
+  const hit = hits[0]!;
+
+  expect(hit.headers.traceparent).toBeUndefined();
+  expect(hit.headers.tracestate).toBeUndefined();
+  expect(hit.headers.baggage).toBeUndefined();
+  expect(hit.headers.b3).toBeUndefined();
+  expect(hit.headers['x-b3-traceid']).toBeUndefined();
+  expect(hit.headers['x-b3-spanid']).toBeUndefined();
+  expect(hit.headers['x-b3-parentspanid']).toBeUndefined();
+  expect(hit.headers['x-b3-sampled']).toBeUndefined();
+  expect(hit.headers['x-b3-flags']).toBeUndefined();
+  expect(hit.headers.newrelic).toBeUndefined();
+  expect(hit.headers['x-newrelic-id']).toBeUndefined();
+  expect(hit.headers['x-newrelic-transaction']).toBeUndefined();
+  expect(hit.headers['sentry-trace']).toBeUndefined();
+  expect(hit.headers['x-trace-id']).toBe('application-trace-id');
+  expect(hit.headers['x-request-id']).toBe('application-request-id');
+  expect(hit.headers.authorization).toBe('Bearer application-token');
+}
 
 describe('safe-outbound-http', () => {
   let upstream: http.Server;
@@ -247,50 +269,42 @@ describe('safe-outbound-http', () => {
 
   it('strips observability propagation headers while keeping application headers', async () => {
     dnsLocalhost();
+    const headers = {
+      traceparent: '00-trace-span-01',
+      tracestate: 'vendor=value',
+      baggage: 'tenant=secret',
+      b3: 'trace-span-1',
+      'x-b3-traceid': 'trace',
+      'x-b3-spanid': 'span',
+      'x-b3-parentspanid': 'parent',
+      'x-b3-sampled': '1',
+      'x-b3-flags': '1',
+      newrelic: 'new-relic-payload',
+      'x-newrelic-id': 'legacy-new-relic-id',
+      'x-newrelic-transaction': 'legacy-new-relic-transaction',
+      'sentry-trace': 'sentry-payload',
+      'x-trace-id': 'application-trace-id',
+      'x-request-id': 'application-request-id',
+      authorization: 'Bearer application-token',
+    };
 
     await safeOutboundRequest({
       url: `${upstreamUrl}/webhook`,
       method: 'POST',
-      headers: {
-        traceparent: '00-trace-span-01',
-        tracestate: 'vendor=value',
-        baggage: 'tenant=secret',
-        b3: 'trace-span-1',
-        'x-b3-traceid': 'trace',
-        'x-b3-spanid': 'span',
-        'x-b3-parentspanid': 'parent',
-        'x-b3-sampled': '1',
-        'x-b3-flags': '1',
-        newrelic: 'new-relic-payload',
-        'x-newrelic-id': 'legacy-new-relic-id',
-        'x-newrelic-transaction': 'legacy-new-relic-transaction',
-        'sentry-trace': 'sentry-payload',
-        'x-trace-id': 'application-trace-id',
-        'x-request-id': 'application-request-id',
-        authorization: 'Bearer application-token',
-      },
+      headers,
       body: { ok: true },
     });
+    expectTraceHeadersStripped(upstreamHits);
 
-    expect(upstreamHits).toHaveLength(1);
-    const hit = upstreamHits[0]!;
-
-    expect(hit.headers.traceparent).toBeUndefined();
-    expect(hit.headers.tracestate).toBeUndefined();
-    expect(hit.headers.baggage).toBeUndefined();
-    expect(hit.headers.b3).toBeUndefined();
-    expect(hit.headers['x-b3-traceid']).toBeUndefined();
-    expect(hit.headers['x-b3-spanid']).toBeUndefined();
-    expect(hit.headers['x-b3-parentspanid']).toBeUndefined();
-    expect(hit.headers['x-b3-sampled']).toBeUndefined();
-    expect(hit.headers['x-b3-flags']).toBeUndefined();
-    expect(hit.headers.newrelic).toBeUndefined();
-    expect(hit.headers['x-newrelic-id']).toBeUndefined();
-    expect(hit.headers['x-newrelic-transaction']).toBeUndefined();
-    expect(hit.headers['sentry-trace']).toBeUndefined();
-    expect(hit.headers['x-trace-id']).toBe('application-trace-id');
-    expect(hit.headers['x-request-id']).toBe('application-request-id');
-    expect(hit.headers.authorization).toBe('Bearer application-token');
+    upstreamHits.length = 0;
+    const streamed = await safeOutboundStreamRequest({
+      url: `${upstreamUrl}/webhook`,
+      method: 'POST',
+      headers,
+      body: { ok: true },
+    });
+    streamed.body.resume();
+    expectTraceHeadersStripped(upstreamHits);
   });
 
   describe('redirect handling', () => {
@@ -501,6 +515,75 @@ describe('safe-outbound-http', () => {
         resource: 'https://mcp.example.com/',
         authorization_servers: ['https://auth.example.com'],
       });
+      expect(response.isJson).toBe(true);
+    });
+
+    it('keeps a non-json success body as text', async () => {
+      respond = (_req, res) => {
+        res.writeHead(200, { 'content-type': 'text/plain' });
+        res.end('not-json');
+      };
+      dnsLocalhost();
+
+      const response = await safeOutboundJsonRequest({ url: `${upstreamUrl}/plain` });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.isJson).toBe(false);
+      expect(response.body).toBe('not-json');
+    });
+  });
+
+  describe('safeOutboundStreamRequest', () => {
+    it('follows a redirect without reading the rest of its body', async () => {
+      respond = (req, res) => {
+        if (req.url === '/start') {
+          res.writeHead(302, { location: `${upstreamUrl}/done`, 'content-length': '1000000' });
+          res.write(Buffer.alloc(1024, 1));
+
+          return;
+        }
+
+        res.writeHead(200, { 'content-type': 'text/plain' });
+        res.end('ok');
+      };
+      dnsLocalhost();
+
+      const response = await safeOutboundStreamRequest({
+        url: `${upstreamUrl}/start`,
+        idleTimeoutMs: 500,
+      });
+      const chunks: Buffer[] = [];
+
+      for await (const chunk of response.body) {
+        chunks.push(Buffer.from(chunk));
+      }
+
+      expect(response.statusCode).toBe(200);
+      expect(Buffer.concat(chunks).toString('utf8')).toBe('ok');
+      expect(upstreamHits.map((hit) => hit.url)).toEqual(['/start', '/done']);
+    });
+
+    it('still rejects an oversized redirect body on the buffered client', async () => {
+      respond = (req, res) => {
+        if (req.url === '/start') {
+          res.writeHead(302, { location: `${upstreamUrl}/done` });
+          res.end('0123456789');
+
+          return;
+        }
+
+        res.writeHead(200, { 'content-type': 'text/plain' });
+        res.end('ok');
+      };
+      dnsLocalhost();
+
+      await expect(
+        safeOutboundRequest({
+          url: `${upstreamUrl}/start`,
+          maxResponseBytes: 4,
+        })
+      ).rejects.toThrow(/maximum size/i);
+      expect(upstreamHits.map((hit) => hit.url)).toEqual(['/start']);
     });
   });
 });
