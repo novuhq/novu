@@ -570,7 +570,11 @@ overrides:
   # decoding of malformed percent-encoded input. Pulled transitively via
   # pkg-pr-new > query-registry > query-string. Patched in >=0.4.3, but the
   # only published patched release is 0.5.0.
-  decode-uri-component@<0.5.0: ^0.5.0
+  # GHSA-qr28-fpjm-wq7f (high): decode-uri-component <=0.5.0 DoS via quadratic
+  # replacement of percent-encoded runs. Patched in 0.5.1 (patch bump within
+  # the 0.5.x line). Widen the previous `<0.5.0` floor so transitive consumers
+  # (pkg-pr-new > query-registry > query-string) pick up the fix.
+  decode-uri-component@<0.5.1: ^0.5.1
   # Force single instances of @codemirror/state and @codemirror/autocomplete.
   # Without this, transitive lang-* packages pin to state@6.4.1 while direct
   # dashboard imports resolve against state@6.6.0, producing two virtual peer
