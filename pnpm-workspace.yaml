@@ -151,9 +151,13 @@ overrides:
   # GHSA-q3jh-wrc6-jgq8 (high): follow-redirects array-form headers bypass
   # cross-origin credential stripping. GHSA-8r9p-f939-6h3c (high):
   # sensitiveHeaders regex escaping can expose credential headers. Both are
-  # patched in 1.16.1 (patch bump within the 1.16.x line). Transitive via
-  # axios, nx, probot, and friends across build tooling.
-  follow-redirects@>=1.16.0 <1.16.1: ^1.16.1
+  # patched in 1.16.1 (patch bump within the 1.16.x line).
+  # GHSA-mrwp-f3q8-3g9p (high): cross-realm sensitiveHeaders arrays are
+  # discarded, so custom credential headers follow redirects to a different
+  # origin. Patched in 1.16.2 (patch bump within the 1.16.x line). Widen the
+  # previous `<1.16.1` floor so transitive consumers (axios, nx, probot) pick
+  # up the fix.
+  follow-redirects@>=1.16.0 <1.16.2: ^1.16.2
   # GHSA-86w9-cpqp-85rv (high) RSA PKCS#1 v1.5 signature verification accepts
   # extra nested DigestAlgorithm elements, GHSA-7wch-p9px-956x (high) ReDoS in
   # PEM decoding, GHSA-jc66-7q78-782g (high) PKCS#12 MAC forgery and
