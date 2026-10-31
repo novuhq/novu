@@ -1,12 +1,16 @@
 import { randomUUID } from 'node:crypto';
 
-const API_URL = process.env.NOVU_API_URL ?? 'http://localhost:3000';
+export const API_URL = process.env.NOVU_API_URL ?? 'http://localhost:3000';
 const TURN_TIMEOUT_MS = Number(process.env.TURN_TIMEOUT_MS ?? 300_000);
+
+const SECRET_KEY = process.env.NOVU_SECRET_KEY;
+if (!SECRET_KEY) throw new Error('NOVU_SECRET_KEY is not set');
+
+const HEADERS = { Authorization: `ApiKey ${SECRET_KEY}`, 'Content-Type': 'application/json' };
 
 export type ToolCall = {
   toolName: string;
   input?: unknown;
-  output?: unknown;
   error?: string;
 };
 
@@ -38,21 +42,10 @@ type WorkflowResponse = {
   steps: { type: string; name: string; controlValues?: Record<string, unknown> | null }[];
 };
 
-function secretKey(): string {
-  const key = process.env.NOVU_SECRET_KEY;
-  if (!key) throw new Error('NOVU_SECRET_KEY is not set');
-
-  return key;
-}
-
-function headers(): Record<string, string> {
-  return { Authorization: `ApiKey ${secretKey()}`, 'Content-Type': 'application/json' };
-}
-
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     method,
-    headers: headers(),
+    headers: HEADERS,
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const text = await response.text();
@@ -97,14 +90,6 @@ export async function deleteWorkflow(id: string): Promise<void> {
   await request('DELETE', `/v2/workflows/${encodeURIComponent(id)}`);
 }
 
-/** Direct tools can report a failure as a returned value instead of throwing. */
-function isErrorOutput(output: unknown): boolean {
-  if (!output || typeof output !== 'object') return false;
-  const value = output as Record<string, unknown>;
-
-  return value.isError === true || value.success === false || typeof value.error === 'string';
-}
-
 /**
  * Sends one user message the way the dashboard does and reads the AI SDK UI message stream
  * (SSE `data: {...}` chunks) until it ends.
@@ -112,7 +97,7 @@ function isErrorOutput(output: unknown): boolean {
 export async function sendTurn(chatId: string, text: string): Promise<TurnResult> {
   const response = await fetch(`${API_URL}/v2/ai/chat-stream`, {
     method: 'POST',
-    headers: headers(),
+    headers: HEADERS,
     body: JSON.stringify({
       id: chatId,
       agentType: 'generate-workflow',
@@ -125,7 +110,8 @@ export async function sendTurn(chatId: string, text: string): Promise<TurnResult
     throw new Error(`POST /v2/ai/chat-stream → ${response.status}: ${(await response.text()).slice(0, 500)}`);
   }
 
-  const result: TurnResult = { text: '', toolCalls: [] };
+  let reply = '';
+  let streamError: string | undefined;
   const toolCalls = new Map<string, ToolCall>();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -147,22 +133,16 @@ export async function sendTurn(chatId: string, text: string): Promise<TurnResult
 
     switch (chunk.type) {
       case 'text-delta':
-        result.text += chunk.delta ?? '';
+        reply += chunk.delta ?? '';
         break;
       case 'tool-input-available':
         Object.assign(call(), { toolName: chunk.toolName, input: chunk.input });
         break;
-      case 'tool-output-available': {
-        const toolCall = call();
-        toolCall.output = chunk.output;
-        if (isErrorOutput(chunk.output)) toolCall.error = JSON.stringify(chunk.output).slice(0, 500);
-        break;
-      }
       case 'tool-output-error':
         call().error = chunk.errorText ?? 'tool error';
         break;
       case 'error':
-        result.streamError = chunk.errorText ?? 'stream error';
+        streamError = chunk.errorText ?? 'stream error';
         break;
     }
   };
@@ -175,7 +155,5 @@ export async function sendTurn(chatId: string, text: string): Promise<TurnResult
   }
   handleLine(buffer);
 
-  result.toolCalls = [...toolCalls.values()];
-
-  return result;
+  return { text: reply, toolCalls: [...toolCalls.values()], streamError };
 }

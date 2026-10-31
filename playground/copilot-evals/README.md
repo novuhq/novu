@@ -56,7 +56,8 @@ pnpm eval:direct
 pnpm eval:mcp
 ```
 
-Add `-- --reps 3` to run every example three times; LLM runs vary, so one pass can mislead.
+Add `--reps 3` (`pnpm eval:direct --reps 3`) to run every example three times; LLM runs vary, so one
+pass can mislead.
 
 Then open LangSmith → Datasets & Experiments → `copilot-workflow-tools`, select both experiments
 and click **Compare**.

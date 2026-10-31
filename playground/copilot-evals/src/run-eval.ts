@@ -1,23 +1,30 @@
+import { parseArgs } from 'node:util';
 import { Client } from 'langsmith';
 import { evaluate } from 'langsmith/evaluation';
-import type { ExampleInputs } from './dataset.ts';
+import { DATASET_NAME, type ExampleInputs } from './dataset.ts';
 import { apiTraceMetrics, type TargetOutputs, toolUsage, workflowChecks } from './evaluators.ts';
-import { createChat, deleteWorkflow, getChat, getWorkflow, sendTurn } from './novu.ts';
+import { API_URL, createChat, deleteWorkflow, getChat, getWorkflow, sendTurn } from './novu.ts';
 
-const [variant, ...flags] = process.argv.slice(2);
-const repsFlag = flags.indexOf('--reps');
-const reps = repsFlag === -1 ? 1 : Number(flags[repsFlag + 1]);
-if ((variant !== 'direct' && variant !== 'mcp') || !Number.isInteger(reps) || reps < 1) {
+const { positionals, values } = parseArgs({
+  allowPositionals: true,
+  options: { reps: { type: 'string', default: '1' } },
+});
+const [variant] = positionals;
+const reps = Number(values.reps);
+if (positionals.length !== 1 || (variant !== 'direct' && variant !== 'mcp') || !Number.isInteger(reps) || reps < 1) {
   console.error('Usage: node --env-file=.env src/run-eval.ts <direct|mcp> [--reps N]');
   process.exit(1);
 }
 
-const datasetName = process.env.EVAL_DATASET ?? 'copilot-workflow-tools';
-const apiTraceProject = process.env[`API_TRACE_PROJECT_${variant.toUpperCase()}`] ?? `copilot-${variant}`;
+const apiTraceProject =
+  { direct: process.env.API_TRACE_PROJECT_DIRECT, mcp: process.env.API_TRACE_PROJECT_MCP }[variant] ??
+  `copilot-${variant}`;
 const keepWorkflows = process.env.KEEP_WORKFLOWS === 'true';
 
+const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
 async function runCopilot(inputs: ExampleInputs): Promise<TargetOutputs> {
-  const outputs: TargetOutputs = { workflow: null, turns: [], toolSequence: [], toolCalls: 0, toolErrors: 0 };
+  const outputs: Omit<TargetOutputs, 'toolSequence'> = { workflow: null, turns: [] };
 
   try {
     const chat = await createChat();
@@ -26,47 +33,43 @@ async function runCopilot(inputs: ExampleInputs): Promise<TargetOutputs> {
     for (const prompt of inputs.turns) {
       const startedAt = Date.now();
       const turn = await sendTurn(chat._id, prompt);
-      outputs.turns.push({
-        prompt,
-        text: turn.text,
-        seconds: (Date.now() - startedAt) / 1000,
-        streamError: turn.streamError,
-        // Tool outputs are full workflows; the trace in the API project has them if needed.
-        toolCalls: turn.toolCalls.map(({ toolName, input, error }) => ({ toolName, input, error })),
-      });
-      outputs.toolSequence.push(...turn.toolCalls.map((call) => call.toolName));
-      outputs.toolCalls += turn.toolCalls.length;
-      outputs.toolErrors += turn.toolCalls.filter((call) => call.error).length;
+      outputs.turns.push({ prompt, seconds: (Date.now() - startedAt) / 1000, ...turn });
       if (turn.streamError) break;
     }
-
-    const { resourceId } = await getChat(chat._id);
-    if (resourceId) {
-      outputs.workflow = await getWorkflow(resourceId);
-      if (!keepWorkflows) await deleteWorkflow(outputs.workflow.id);
-    }
   } catch (error) {
-    outputs.error = error instanceof Error ? error.message : String(error);
+    outputs.error = errorMessage(error);
   }
 
-  return outputs;
+  // Runs after a failed turn too: a leftover workflow's tags would reach every later chat's prompt as environment
+  // tags. A failed run still scores as having no workflow.
+  if (outputs.chatId) {
+    try {
+      const { resourceId } = await getChat(outputs.chatId);
+      if (resourceId) {
+        if (!outputs.error) outputs.workflow = await getWorkflow(resourceId);
+        if (!keepWorkflows) await deleteWorkflow(resourceId);
+      }
+    } catch (error) {
+      outputs.error ??= errorMessage(error);
+    }
+  }
+
+  return { ...outputs, toolSequence: outputs.turns.flatMap((turn) => turn.toolCalls.map((call) => call.toolName)) };
 }
 
 const client = new Client();
 
-console.log(
-  `Running "${datasetName}" ×${reps} against the ${variant} tools (API traces: ${apiTraceProject})`
-);
+console.log(`Running "${DATASET_NAME}" ×${reps} against the ${variant} tools (API traces: ${apiTraceProject})`);
 
 const results = await evaluate(runCopilot, {
   client,
-  data: datasetName,
+  data: DATASET_NAME,
   evaluators: [workflowChecks, toolUsage, apiTraceMetrics(client, apiTraceProject, variant)],
   experimentPrefix: `copilot-${variant}`,
   description: `Copilot workflow tools: ${variant}`,
-  metadata: { variant, apiTraceProject, apiUrl: process.env.NOVU_API_URL ?? 'http://localhost:3000' },
+  metadata: { variant, apiTraceProject, apiUrl: API_URL },
   maxConcurrency: Number(process.env.EVAL_CONCURRENCY ?? 1),
   numRepetitions: reps,
 });
 
-console.log(`Done: ${results.experimentName}. Compare it with the other variant in LangSmith → Datasets → ${datasetName}.`);
+console.log(`Done: ${results.experimentName}. Compare it with the other variant in LangSmith → Datasets → ${DATASET_NAME}.`);

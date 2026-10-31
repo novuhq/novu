@@ -3,19 +3,14 @@ import type { Client } from 'langsmith';
 import type { EvaluationResult } from 'langsmith/evaluation';
 import type { Run } from 'langsmith/schemas';
 import type { Expectation, StepCheck } from './dataset.ts';
-import type { ToolCall, WorkflowSummary } from './novu.ts';
-
-// langsmith accepts this shape from evaluators but does not export the type.
-type EvaluationResults = { results: EvaluationResult[] };
+import type { TurnResult, WorkflowSummary } from './novu.ts';
 
 export type TargetOutputs = {
   chatId?: string;
   workflow: WorkflowSummary | null;
-  turns: { prompt: string; text: string; seconds: number; streamError?: string; toolCalls: ToolCall[] }[];
+  turns: (TurnResult & { prompt: string; seconds: number })[];
   /** Tool names in call order across all turns, for eyeballing in the compare view. */
   toolSequence: string[];
-  toolCalls: number;
-  toolErrors: number;
   /** Set when the run itself failed (HTTP error, timeout) rather than Copilot doing the wrong thing. */
   error?: string;
 };
@@ -76,18 +71,20 @@ function stepCheckFailure(workflow: WorkflowSummary, check: StepCheck): string |
  * Checks the workflow Copilot left behind against the example's expectation. Only the
  * expectations an example defines are scored; `task_success` is all of them passing.
  */
-export function workflowChecks({ outputs, referenceOutputs }: EvaluatorArgs): EvaluationResults {
+export function workflowChecks({ outputs, referenceOutputs }: EvaluatorArgs): EvaluationResult[] {
   const { workflow } = outputs as TargetOutputs;
-  const expected = (referenceOutputs ?? {}) as Expectation;
-  const results: EvaluationResult[] = [score('workflow_created', !!workflow, workflow ? undefined : 'no workflow')];
+  if (!workflow) return [score('workflow_created', false, 'no workflow'), score('task_success', false)];
 
-  if (workflow && expected.name) {
+  const expected = (referenceOutputs ?? {}) as Expectation;
+  const results: EvaluationResult[] = [score('workflow_created', true)];
+
+  if (expected.name) {
     results.push(
       score('name_match', workflow.name.trim().toLowerCase() === expected.name.toLowerCase(), `name: ${workflow.name}`)
     );
   }
 
-  if (workflow && expected.stepTypes) {
+  if (expected.stepTypes) {
     const actual = workflow.steps.map((step) => step.type);
     results.push(
       score(
@@ -98,16 +95,16 @@ export function workflowChecks({ outputs, referenceOutputs }: EvaluatorArgs): Ev
     );
   }
 
-  if (workflow && expected.critical !== undefined) {
+  if (expected.critical !== undefined) {
     results.push(score('critical_match', workflow.critical === expected.critical, `critical: ${workflow.critical}`));
   }
 
-  if (workflow && expected.tags) {
+  if (expected.tags) {
     const missing = missingFrom(workflow.tags, expected.tags);
     results.push(score('tags_match', missing.length === 0, missing.length ? `missing: ${missing}` : undefined));
   }
 
-  if (workflow && (expected.payloadKeys || expected.payloadRequired)) {
+  if (expected.payloadKeys || expected.payloadRequired) {
     const missing = [
       ...missingFrom(workflow.payloadKeys, expected.payloadKeys ?? []),
       ...missingFrom(workflow.payloadRequired, expected.payloadRequired ?? []).map((key) => `${key} (required)`),
@@ -115,43 +112,44 @@ export function workflowChecks({ outputs, referenceOutputs }: EvaluatorArgs): Ev
     results.push(score('payload_match', missing.length === 0, missing.length ? `missing: ${missing}` : undefined));
   }
 
-  if (workflow && expected.steps) {
+  if (expected.steps) {
     const failures = expected.steps.map((check) => stepCheckFailure(workflow, check)).filter(Boolean);
     results.push(score('step_details_match', failures.length === 0, failures.join('\n') || undefined));
   }
 
   results.push(score('task_success', results.every((result) => result.score === 1)));
 
-  return { results };
+  return results;
 }
 
 /** Tool-call counts and failures as seen on the chat stream. */
-export function toolUsage({ outputs }: EvaluatorArgs): EvaluationResults {
-  const { toolCalls = 0, toolErrors = 0, turns = [], error } = outputs as TargetOutputs;
+export function toolUsage({ outputs }: EvaluatorArgs): EvaluationResult[] {
+  const { turns = [], error } = outputs as TargetOutputs;
+  const calls = turns.flatMap((turn) => turn.toolCalls);
+  const failed = calls.filter((call) => call.error);
   const streamErrors = turns.filter((turn) => turn.streamError).map((turn) => turn.streamError);
-  const failedTools = turns.flatMap((turn) => turn.toolCalls.filter((call) => call.error));
 
-  return {
-    results: [
-      { key: 'tool_calls', score: toolCalls },
-      {
-        key: 'tool_errors',
-        score: toolErrors,
-        comment: failedTools.map((call) => `${call.toolName}: ${call.error}`).join('\n') || undefined,
-      },
-      score('run_completed', !error && streamErrors.length === 0, error ?? (streamErrors.join('\n') || undefined)),
-    ],
-  };
+  return [
+    { key: 'tool_calls', score: calls.length },
+    {
+      key: 'tool_errors',
+      score: failed.length,
+      comment: failed.map((call) => `${call.toolName}: ${call.error}`).join('\n') || undefined,
+    },
+    score('run_completed', !error && streamErrors.length === 0, error ?? (streamErrors.join('\n') || undefined)),
+  ];
 }
 
 type RunWithCost = Run & { total_cost?: number | string | null };
 
-async function findTurnTraces(client: Client, projectName: string, chatId: string, turns: number) {
-  let roots: RunWithCost[] = [];
+const TRACE_POLL_ATTEMPTS = 10;
+const TRACE_POLL_MS = 3000;
 
+/** The root run of each turn of the chat; `complete` is false when not every turn's run had ended in time. */
+async function findTurnTraces(client: Client, projectName: string, chatId: string, turns: number) {
   // Traces reach LangSmith asynchronously, so wait until every turn's root run has ended.
-  for (let attempt = 0; attempt < 10; attempt++) {
-    roots = [];
+  for (let attempt = 1; ; attempt++) {
+    const roots: RunWithCost[] = [];
     for await (const run of client.listRuns({
       projectName,
       isRoot: true,
@@ -159,11 +157,12 @@ async function findTurnTraces(client: Client, projectName: string, chatId: strin
     })) {
       roots.push(run);
     }
-    if (roots.length >= turns && roots.every((run) => run.end_time)) break;
-    await sleep(3000);
-  }
 
-  return roots;
+    const complete = roots.length >= turns && roots.every((run) => run.end_time);
+    if (complete || attempt === TRACE_POLL_ATTEMPTS) return { roots, complete };
+
+    await sleep(TRACE_POLL_MS);
+  }
 }
 
 /**
@@ -173,14 +172,12 @@ async function findTurnTraces(client: Client, projectName: string, chatId: strin
  * started with the flag you think it was, or fell back to direct tools.
  */
 export function apiTraceMetrics(client: Client, projectName: string, variant: 'direct' | 'mcp') {
-  return async function apiTrace({ outputs }: EvaluatorArgs): Promise<EvaluationResults> {
+  return async function apiTrace({ outputs }: EvaluatorArgs): Promise<EvaluationResult[]> {
     const { chatId, turns = [] } = outputs as TargetOutputs;
-    if (!chatId) return { results: [{ key: 'variant_check', score: 0, comment: 'no chat id' }] };
+    if (!chatId) return [score('variant_check', false, 'no chat id')];
 
-    const roots = await findTurnTraces(client, projectName, chatId, turns.length);
-    if (roots.length === 0) {
-      return { results: [{ key: 'variant_check', score: 0, comment: `no API traces in project ${projectName}` }] };
-    }
+    const { roots, complete } = await findTurnTraces(client, projectName, chatId, turns.length);
+    if (roots.length === 0) return [score('variant_check', false, `no API traces in project ${projectName}`)];
 
     let llmCalls = 0;
     for (const root of roots) {
@@ -188,22 +185,24 @@ export function apiTraceMetrics(client: Client, projectName: string, variant: 'd
     }
 
     const sum = (pick: (run: RunWithCost) => unknown) => roots.reduce((total, run) => total + Number(pick(run) ?? 0), 0);
+    const partial = complete
+      ? undefined
+      : `partial: only ${roots.filter((run) => run.end_time).length} of ${turns.length} turn traces had ended`;
+    const metric = (key: string, value: number): EvaluationResult => ({ key, score: value, comment: partial });
     const expectedTag = `tools:${variant}`;
     const wrongVariant = roots.filter((run) => !run.tags?.includes(expectedTag));
 
-    return {
-      results: [
-        score(
-          'variant_check',
-          wrongVariant.length === 0,
-          wrongVariant.length ? `${wrongVariant.length} turn(s) missing ${expectedTag}: ${wrongVariant[0].tags}` : undefined
-        ),
-        { key: 'llm_calls', score: llmCalls },
-        { key: 'total_tokens', score: sum((run) => run.total_tokens) },
-        { key: 'prompt_tokens', score: sum((run) => run.prompt_tokens) },
-        { key: 'completion_tokens', score: sum((run) => run.completion_tokens) },
-        { key: 'total_cost', score: sum((run) => run.total_cost) },
-      ],
-    };
+    return [
+      score(
+        'variant_check',
+        wrongVariant.length === 0,
+        wrongVariant.length ? `${wrongVariant.length} turn(s) missing ${expectedTag}: ${wrongVariant[0].tags}` : undefined
+      ),
+      metric('llm_calls', llmCalls),
+      metric('total_tokens', sum((run) => run.total_tokens)),
+      metric('prompt_tokens', sum((run) => run.prompt_tokens)),
+      metric('completion_tokens', sum((run) => run.completion_tokens)),
+      metric('total_cost', sum((run) => run.total_cost)),
+    ];
   };
 }

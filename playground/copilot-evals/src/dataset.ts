@@ -1,3 +1,6 @@
+/** The LangSmith dataset the examples are synced to and the experiments run against. */
+export const DATASET_NAME = process.env.EVAL_DATASET ?? 'copilot-workflow-tools';
+
 export type ExampleInputs = {
   /** Sent in order in one fresh chat, so later turns edit the workflow the first turn created. */
   turns: string[];
@@ -42,7 +45,6 @@ const hours = (n: number) => [
   { amount: n * 60, unit: 'minutes' },
 ];
 
-// Workflow names are unique across examples so concurrent runs never edit each other's workflow.
 export const EXAMPLES: EvalExample[] = [
   {
     key: 'create-from-scratch',

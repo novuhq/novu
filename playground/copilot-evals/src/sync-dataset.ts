@@ -1,12 +1,11 @@
 import { Client } from 'langsmith';
-import { EXAMPLES } from './dataset.ts';
+import { DATASET_NAME, EXAMPLES } from './dataset.ts';
 
-const datasetName = process.env.EVAL_DATASET ?? 'copilot-workflow-tools';
 const client = new Client();
 
-const dataset = (await client.hasDataset({ datasetName }))
-  ? await client.readDataset({ datasetName })
-  : await client.createDataset(datasetName, {
+const dataset = (await client.hasDataset({ datasetName: DATASET_NAME }))
+  ? await client.readDataset({ datasetName: DATASET_NAME })
+  : await client.createDataset(DATASET_NAME, {
       description: 'Copilot workflow tasks for comparing the direct tools against the MCP tools',
     });
 
@@ -42,5 +41,5 @@ const stale = [...existing.keys()].filter((key) => !EXAMPLES.some((example) => e
 for (const key of stale) await client.deleteExample(existing.get(key)!);
 
 console.log(
-  `Dataset "${datasetName}": ${toCreate.length} created, ${toUpdate.length} updated, ${stale.length} removed`
+  `Dataset "${DATASET_NAME}": ${toCreate.length} created, ${toUpdate.length} updated, ${stale.length} removed`
 );
