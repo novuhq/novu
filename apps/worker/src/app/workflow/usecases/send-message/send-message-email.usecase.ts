@@ -403,6 +403,8 @@ export class SendMessageEmail extends SendMessageBase {
           transactionId: command.transactionId,
           workflowIdentifier: command.identifier,
           subscriberId: subscriber.subscriberId,
+          // Unlike the message id, the job id is the same on every attempt of this send.
+          jobId: command.jobId,
         },
       },
       overrides || {}
