@@ -1,6 +1,8 @@
 import readline from 'node:readline';
+import { Writable } from 'node:stream';
 import pc from 'picocolors';
 import { openedScreen } from './screen/opened';
+import type { AskOptions } from './screen/screen';
 
 /**
  * A line about what is going on. Where the command has a screen open (a person at a terminal), it joins the
@@ -41,11 +43,11 @@ export function warn(message: string): void {
   info(pc.yellow(message));
 }
 
-/** Asks on the terminal, below the command's screen where it has one. */
-export async function promptLine(question: string): Promise<string> {
+/** Asks on the command's screen where it has one, or else on the terminal. */
+export async function promptLine(question: string, options: AskOptions = {}): Promise<string> {
   const screen = openedScreen();
 
-  return screen ? screen.ask(question) : askLine(question);
+  return screen ? screen.ask(question, options) : askOffering(question, options, askLine);
 }
 
 /**
@@ -56,6 +58,24 @@ export async function promptSecret(question: string): Promise<string> {
   const screen = openedScreen();
 
   return screen ? screen.ask(question, { secret: true }) : askSecret(question);
+}
+
+/**
+ * Asks where an answer can't start out filled in: what is on offer shows in brackets, and Enter takes it.
+ * `ask` does the asking.
+ */
+export async function askOffering(
+  question: string,
+  { initial, suffix = '' }: Pick<AskOptions, 'initial' | 'suffix'>,
+  ask: (question: string) => Promise<string>
+): Promise<string> {
+  if (!initial) {
+    return ask(question);
+  }
+
+  const answer = await ask(`${question.replace(/:\s*$/, '')} [${initial}${suffix}]: `);
+
+  return answer.trim() || initial;
 }
 
 /** Asks on the terminal and gives the answer, whatever is on screen. */
@@ -94,6 +114,63 @@ export async function askSecret(question: string): Promise<string> {
       muted = true;
     });
   } finally {
+    rl.close();
+  }
+}
+
+export interface ReadOptions {
+  /** What the answer starts as. */
+  initial?: string;
+  /** Told the answer, and where the cursor is in it, after every key. */
+  onChange: (answer: string, cursor: number) => void;
+}
+
+/**
+ * Reads an answer for a screen that draws it itself, so nothing is written to the terminal. Readline keeps
+ * line editing (arrows, backspace, paste) working. Ctrl-C ends the command as it does everywhere else, and
+ * so does Ctrl-D on an empty line, which leaves no way to answer.
+ */
+export async function readAnswer(
+  { initial, onChange }: ReadOptions,
+  {
+    input = process.stdin as NodeJS.ReadableStream,
+    interrupt = () => {
+      // With readline gone nothing keeps the process alive, and a signal needs it to be to arrive.
+      setTimeout(() => process.exit(130), 1000);
+      process.kill(process.pid, 'SIGINT');
+    },
+  } = {}
+): Promise<string> {
+  const nowhere = new Writable({ write: (_chunk, _encoding, done) => done() });
+  const rl = readline.createInterface({ input, output: nowhere, terminal: true });
+  let answered = false;
+  // Heard after readline's own listener, so the line already has this key in it.
+  const report = () => {
+    if (!answered) {
+      onChange(rl.line, rl.cursor);
+    }
+  };
+
+  input.on('keypress', report);
+  rl.on('SIGINT', () => rl.close());
+  rl.on('close', () => {
+    if (!answered) {
+      interrupt();
+    }
+  });
+
+  try {
+    return await new Promise<string>((resolve) => {
+      rl.question('', (answer) => {
+        answered = true;
+        resolve(answer);
+      });
+      if (initial) {
+        rl.write(initial);
+      }
+    });
+  } finally {
+    input.off('keypress', report);
     rl.close();
   }
 }

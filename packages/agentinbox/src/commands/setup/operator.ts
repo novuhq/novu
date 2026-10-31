@@ -1,12 +1,14 @@
 import { randomBytes } from 'node:crypto';
 import pc from 'picocolors';
 import { type AgentPictureFile, loadPicture } from '../../agent-picture';
-import { type SetupRelayResult, setRelayAgentPicture, setupRelay } from '../../api/agent-inbox';
+import { type SetupRelayResult, setRelayAgentPicture } from '../../api/agent-inbox';
 import type { ApiClient } from '../../api/client';
 import { info, promptLine } from '../../cli-io';
 import { type CliConfig, DEFAULT_RELAY_AGENT_IDENTIFIER } from '../../config';
 import { splitName } from '../invite';
 import { parseEmailAddress } from '../link-channel';
+import { resolveNewAgent, setUpAgent } from './agent';
+import { defaultSetupIo } from './prompts';
 
 /** What the API calls a relay agent until you name it. The name is the API's, so it is mirrored here as is. */
 const DEFAULT_AGENT_NAME = 'Agent';
@@ -91,7 +93,7 @@ export async function resolveOperatorEmail(
         return undefined;
       }
 
-      process.stdout.write(`${pc.yellow('An email address is required for a setup without an account.')}\n`);
+      defaultSetupIo.write(`${pc.yellow('An email address is required for a setup without an account.')}\n`);
       continue;
     }
 
@@ -100,7 +102,7 @@ export async function resolveOperatorEmail(
       return parsed;
     }
 
-    process.stdout.write(`${pc.yellow('That does not look like an email address.')}\n`);
+    defaultSetupIo.write(`${pc.yellow('That does not look like an email address.')}\n`);
   }
 
   throw new Error(
@@ -155,8 +157,10 @@ export interface SetupOptions {
   /** Your display name; skips the first-run prompt. */
   name?: string;
   agentIdentifier?: string;
-  /** What your agent is called, as people see it. */
+  /** What your agent is called, as people see it. Asked for, or required without a terminal, for a new agent. */
   agentName?: string;
+  /** The address of a new agent, before the `@`. Comes from the name otherwise, and can't be changed later. */
+  agentHandle?: string;
   /** A line about what your agent does, shown with its name. */
   agentDescription?: string;
   /** A JPEG or PNG for your agent: a file on this computer or a web address. */
@@ -208,18 +212,23 @@ export async function provisionOperator(
   const relayIdentifier = options.agentIdentifier ?? existing?.relayAgentIdentifier ?? DEFAULT_RELAY_AGENT_IDENTIFIER;
   const name = await resolveOperatorName(options, Boolean(existing?.subscriberId));
   const operatorEmail = await resolveOperatorEmail(options, client.isKeyless);
+  const newAgent = await resolveNewAgent(client, relayIdentifier, options, operatorEmail);
 
   info('Setting up your agent inbox...');
-  const relay = await setupRelay(client, {
+  const relay = await setUpAgent(client, {
     subscriberId: localSubscriberId,
     operator: true,
     agentIdentifier: relayIdentifier,
     ...agentIdentityOf(options),
+    ...newAgent,
     ...name,
     ...(operatorEmail ? { email: operatorEmail } : {}),
   });
   if (relay.emailHandleAdjusted && relay.emailAddress) {
     info(`Your inbox is ${pc.bold(relay.emailAddress)}.`);
+  }
+  if (options.agentHandle && !relay.emailAddress) {
+    info("Your agent keeps the address it has: an address can't be changed once it's made.");
   }
   await uploadPicture(client, picture, relay.agentIdentifier);
   const subscriberId = relay.subscriberId || localSubscriberId;

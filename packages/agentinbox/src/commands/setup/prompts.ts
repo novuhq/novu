@@ -12,7 +12,7 @@ import { info, promptLine, promptSecret, success } from '../../cli-io';
 import { openInBrowser } from '../../open-browser';
 import { SetupStillPendingError } from '../../output';
 import { renderQR } from '../../qr';
-import { openedScreen, type ScreenRow } from '../../screen/screen';
+import { type AskOptions, openedScreen, type ScreenRow } from '../../screen/screen';
 import { SETUP_PAGE_POLL_TIMEOUT_MS, type SetupPageOutcome } from '../link-channel';
 
 /** Terminal/browser side effects, injectable so the connect flows are unit-testable. */
@@ -20,7 +20,7 @@ export interface SetupIo {
   isTTY: boolean;
   write: (text: string) => void;
   openInBrowser: (url: string) => void;
-  prompt: (question: string) => Promise<string>;
+  prompt: (question: string, options?: AskOptions) => Promise<string>;
   /** Same as `prompt`, but the answer is not echoed — for pasted credentials. */
   promptSecret: (question: string) => Promise<string>;
 }
@@ -42,8 +42,10 @@ export interface SetupPageHandoff {
 }
 
 export const defaultSetupIo: SetupIo = {
-  isTTY: Boolean(process.stdin.isTTY),
-  // Under the command's screen, where it has one, until the screen next changes: menus and how-tos.
+  get isTTY() {
+    return Boolean(process.stdin.isTTY);
+  },
+  // With the next question on the command's screen, where it has one: menus and how-tos.
   write: (text) => {
     const screen = openedScreen();
     if (screen) {

@@ -6,6 +6,7 @@ import { info, promptLine } from '../../cli-io';
 import { startWaitIndicator } from '../../spinner';
 import { isEmailVerified, parseEmailAddress, waitForVerifiedEmail } from '../link-channel';
 import type { SetupOptions } from './operator';
+import { defaultSetupIo } from './prompts';
 
 /**
  * Email needs no linking dance: the relay gets a per-agent Agent Email Inbox
@@ -127,7 +128,7 @@ async function promptForEmail(): Promise<string> {
   for (let attempt = 0; attempt < 5; attempt++) {
     const email = parseEmailAddress(await promptLine('Your email address: '));
     if (email) return email;
-    process.stdout.write(`${pc.yellow('That does not look like an email address.')}\n`);
+    defaultSetupIo.write(`${pc.yellow('That does not look like an email address.')}\n`);
   }
 
   throw new Error('No valid email address provided. Re-run `npx @agentinbox/cli setup email` or pass --email.');

@@ -212,7 +212,9 @@ describe('the Markdown for agents', () => {
 
     expect(markdown).toContain('`npx @agentinbox/cli connect <agent> --code <code> --yes`');
     expect(markdown).toContain('npx skills add agentinboxhq/skills --agent claude-code -y');
-    expect(markdown).toContain('npx @agentinbox/cli setup --email <their email> --name "<their name>"');
+    expect(markdown).toContain(
+      'npx @agentinbox/cli setup --email <their email> --name "<their name>" --agent-name "<what they call you>"'
+    );
     expect(markdown).toContain('`npx @agentinbox/cli login`');
     expect(markdown).toContain('/plugin install agentinbox@agentinbox');
     expect(markdown).toContain('Never ask for a Telegram bot token or a Slack token');

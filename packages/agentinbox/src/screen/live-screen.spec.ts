@@ -1,21 +1,27 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { ReadOptions } from '../cli-io';
 import { type ScreenHost, startLiveScreen } from './live-screen';
 import { setOpenedScreen } from './opened';
 import { BEGIN_FRAME, HIDE_CURSOR, SHOW_CURSOR } from './painter';
+import type { AskNote } from './screen';
 import { VirtualTerminal } from './virtual-terminal.fixture';
+
+const INVERSE = '\x1b[7m';
 
 /** Lets the screen draw what changed, and anything queued after that. */
 const drawnSoon = () => new Promise((resolve) => setImmediate(resolve));
 
 /**
- * A terminal and a clock for the screen to run on. Frames come only when the test calls `tick`; the
- * answers to questions come from `answers`, written as a terminal echoes them.
+ * A terminal and a clock for the screen to run on. Frames come only when the test calls `tick`. An answer
+ * read on the screen comes from `type` and `enter`, as keys do; `answers` are for one asked on a plain
+ * terminal, written as it echoes them.
  */
 function fakeHost({ columns = 80, rows = 40, animate = false, theme = 'dark' as 'dark' | 'light' } = {}) {
   const terminal = new VirtualTerminal(columns, rows);
   const writes: string[] = [];
   const answers: string[] = [];
   const exits: Array<() => void> = [];
+  let reading: { answer: string; onChange: ReadOptions['onChange']; finish: (answer: string) => void } | undefined;
   let frame: (() => void) | undefined;
   let interval = 0;
   let now = 0;
@@ -62,6 +68,10 @@ function fakeHost({ columns = 80, rows = 40, animate = false, theme = 'dark' as 
 
       return answer;
     },
+    read: ({ initial = '', onChange }) =>
+      new Promise((finish) => {
+        reading = { answer: initial, onChange, finish };
+      }),
     beforeExit: (listener) => {
       exits.push(listener);
 
@@ -83,6 +93,20 @@ function fakeHost({ columns = 80, rows = 40, animate = false, theme = 'dark' as 
       now += ms;
       frame?.();
     },
+    /** Keys typed at the end of the answer being read. */
+    type: (text: string) => {
+      if (reading) {
+        reading.answer += text;
+        reading.onChange(reading.answer, reading.answer.length);
+      }
+    },
+    /** Enter, on the answer being read. */
+    enter: () => {
+      reading?.finish(reading.answer);
+      reading = undefined;
+    },
+    /** Whether an answer is being read on the screen. */
+    reading: () => reading !== undefined,
     /** The text on screen, without the blank lines. */
     shown: () => terminal.screen().filter(Boolean),
     /** The lines on screen, trimmed, for what is centred. */
@@ -181,39 +205,291 @@ describe('startLiveScreen', () => {
     expect(fake.shown()).toContain('         •   Open @atlas_bot in Telegram and tap Start.');
   });
 
-  it('asks below the screen, clears the question once answered, and keeps the answer in the list', async () => {
+  it('asks at the end of the list, in its column, and keeps the answer in the same place', async () => {
     const fake = fakeHost();
     const screen = startLiveScreen({ command: 'setup' }, fake.host);
-    fake.answers.push('Ada');
+    screen.add({ mark: 'done', value: 'Creating a keyless inbox' });
     await drawnSoon();
 
     const answer = screen.ask('Your first name: ');
-    // The question is written below the screen, with a blank line between.
-    expect(fake.shown().slice(-1)).toEqual(['Your first name: Ada']);
+    await drawnSoon();
+    fake.type('Ada');
+    await drawnSoon();
+
+    const lines = fake.shown();
+    const done = lines.findIndex((line) => line.includes('Creating a keyless inbox'));
+    expect(lines[done]).toBe('         ✔   Creating a keyless inbox');
+    expect(lines[done + 1]).toBe('         →   Your first name: Ada');
+    expect(lines[done + 2]).toMatch(/^ {8}─+$/);
+
+    fake.enter();
     await expect(answer).resolves.toBe('Ada');
     await drawnSoon();
 
-    expect(fake.centred()).not.toContain('Your first name: Ada');
-    expect(fake.shown().at(-2)).toBe('         ✔   Your first name: Ada');
-    expect(fake.terminal.screen().filter(Boolean).at(-1)).toMatch(/^ {8}─+$/);
+    expect(fake.shown()[done + 1]).toBe('         ✔   Your first name: Ada');
+    expect(fake.shown()[done + 2]).toMatch(/^ {8}─+$/);
   });
 
-  it('shows the cursor while a question waits for its answer, and hides it again after', async () => {
-    const fake = fakeHost();
+  it('keeps the mascot moving while a question waits', async () => {
+    const fake = fakeHost({ animate: true });
     const screen = startLiveScreen({ command: 'setup' }, fake.host);
-    fake.answers.push('Ada');
+    await drawnSoon();
+
+    const answer = screen.ask('Your first name: ');
+    await drawnSoon();
+    const before = fake.writes.length;
+    fake.tick(100);
+    fake.tick(100);
+    const drawn = fake.writes.slice(before).join('');
+
+    expect(fake.interval()).toBeGreaterThan(0);
+    expect(drawn).toMatch(/[\u2800-\u28ff]/u);
+    expect(drawn).not.toContain('Your first name');
+
+    fake.enter();
+    await answer;
+  });
+
+  it('keeps the terminal cursor hidden and blinks a caret of its own, solid while typing', async () => {
+    const fake = fakeHost({ animate: true });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
     await drawnSoon();
     const before = fake.writes.length;
 
-    await screen.ask('Your first name: ');
-    const asked = fake.writes.slice(before).join('');
-    expect(asked.indexOf(SHOW_CURSOR)).toBeGreaterThan(-1);
-    expect(asked.indexOf(SHOW_CURSOR)).toBeLessThan(asked.indexOf('Your first name: '));
+    const answer = screen.ask('Your first name: ');
+    await drawnSoon();
+    expect(fake.writes.slice(before).join('')).not.toContain(SHOW_CURSOR);
+    expect(fake.writes.slice(before).join('')).toContain(INVERSE);
 
+    const blinked = fake.writes.length;
+    fake.tick(600);
+    expect(fake.writes.slice(blinked).join('')).not.toContain(INVERSE);
+
+    fake.type('A');
+    await drawnSoon();
+    expect(fake.writes.at(-1)).toContain(INVERSE);
+
+    fake.enter();
+    await answer;
+  });
+
+  it('starts from what is on offer, and shows what follows it without making it part of the answer', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const answer = screen.ask("Your agent's address: ", {
+      initial: 'atlas',
+      suffix: '@agentinbox.md',
+      note: { text: '✓ atlas is available', tone: 'success' },
+      check: async () => undefined,
+    });
+    await drawnSoon();
+
+    expect(fake.shown().join('\n')).toContain("→   Your agent's address: atlas@agentinbox.md");
+    expect(fake.shown().join('\n')).toContain('✓ atlas is available');
+
+    fake.enter();
+    await expect(answer).resolves.toBe('atlas');
+  });
+
+  it('shows the answer as it is meant, without changing what was typed', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const answer = screen.ask('Address: ', { display: (typed) => typed.toLowerCase().replaceAll(' ', '-') });
+    fake.type('Acme Bot');
+    await drawnSoon();
+    expect(fake.shown().join('\n')).toContain('Address: acme-bot');
+
+    fake.enter();
+    await expect(answer).resolves.toBe('Acme Bot');
+  });
+
+  it('checks the answer once the typing stops, and drops what comes back for an answer changed since', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+    const pending: Array<(note: AskNote) => void> = [];
+    const check = vi.fn(() => new Promise<AskNote>((resolve) => pending.push(resolve)));
+
+    const answer = screen.ask('Address: ', { check });
+    await drawnSoon();
+
+    fake.type('at');
+    await drawnSoon();
+    expect(fake.shown().join('\n')).toContain('checking…');
+    expect(check).not.toHaveBeenCalled();
+
+    fake.type('l');
+    await vi.advanceTimersByTimeAsync(250);
+    expect(check).toHaveBeenCalledOnce();
+    expect(check).toHaveBeenCalledWith('atl');
+
+    fake.type('as');
+    pending[0]({ text: 'atl is taken', tone: 'accent' });
+    await drawnSoon();
+    expect(fake.shown().join('\n')).not.toContain('atl is taken');
+
+    await vi.advanceTimersByTimeAsync(250);
+    pending[1]({ text: '✓ atlas is available', tone: 'success' });
     await drawnSoon();
     await drawnSoon();
-    const after = fake.writes.slice(before).join('');
-    expect(after.lastIndexOf(HIDE_CURSOR)).toBeGreaterThan(after.indexOf('Your first name: '));
+    expect(fake.shown().join('\n')).toContain('✓ atlas is available');
+
+    fake.enter();
+    await answer;
+    vi.useRealTimers();
+  });
+
+  it('says nothing about an answer it could not check', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const answer = screen.ask('Address: ', { check: () => Promise.reject(new Error('network down')) });
+    fake.type('atlas');
+    await vi.advanceTimersByTimeAsync(250);
+    await drawnSoon();
+    await drawnSoon();
+
+    expect(fake.shown().join('\n')).not.toContain('checking…');
+    expect(fake.shown().join('\n')).not.toContain('network down');
+
+    fake.enter();
+    await answer;
+    vi.useRealTimers();
+  });
+
+  it('shows a menu with the question it belongs to, in the list, until that is answered', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    screen.print('\nAlso connect a chat channel? Press Enter to skip.\n  1. Telegram\n  2. Slack\n\n');
+    const answer = screen.ask('Channel [1, 2, or Enter]: ');
+    await drawnSoon();
+
+    const lines = fake.shown();
+    const heading = lines.findIndex((line) => line.includes('Also connect a chat channel?'));
+    expect(lines[heading]).toBe('             Also connect a chat channel? Press Enter to skip.');
+    expect(lines[heading + 1]).toBe('               1. Telegram');
+    expect(lines[heading + 2]).toBe('               2. Slack');
+    expect(lines[heading + 3]).toContain('→   Channel [1, 2, or Enter]:');
+
+    fake.enter();
+    await answer;
+    await drawnSoon();
+    await drawnSoon();
+
+    expect(fake.shown().join('\n')).not.toContain('Telegram');
+  });
+
+  it('keeps a menu up for a question asked again at once, with what was wrong said once', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+    const retry = 'Pick 1 for Telegram, 2 for Slack, or press Enter to skip.\n';
+
+    screen.print('  1. Telegram\n  2. Slack\n');
+    for (const wrong of ['9', '8']) {
+      const answer = screen.ask('Channel: ', { remember: () => undefined });
+      fake.type(wrong);
+      fake.enter();
+      await answer;
+      screen.print(retry);
+    }
+    void screen.ask('Channel: ');
+    await drawnSoon();
+    await drawnSoon();
+
+    const text = fake.shown().join('\n');
+    expect(text).toContain('1. Telegram');
+    expect(text.match(/Pick 1 for Telegram/g)).toHaveLength(1);
+  });
+
+  it('leaves a menu behind for the next question, keeping what was written for that one', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup telegram' }, fake.host);
+    await drawnSoon();
+
+    screen.print('How do you want to connect the Telegram bot?\n  1. Paste the bot token here\n');
+    const choice = screen.ask('Choice [1-2]: ');
+    fake.type('1');
+    fake.enter();
+    await choice;
+    screen.print('Create a Telegram bot:\n');
+    void screen.ask('Telegram bot token: ', { secret: true });
+    await drawnSoon();
+    await drawnSoon();
+
+    const text = fake.shown().join('\n');
+    expect(text).not.toContain('How do you want to connect');
+    expect(text).toContain('Create a Telegram bot:');
+    expect(text).toContain('✔   Choice [1-2]: 1');
+  });
+
+  it('asks a question of several lines on the screen, keeping only its last in the list', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'connect' }, fake.host);
+    await drawnSoon();
+
+    const answer = screen.ask('Connecting atlas replaces this setup.\nContinue? [y/N] ');
+    await drawnSoon();
+    expect(fake.shown().join('\n')).toContain('Connecting atlas replaces this setup.');
+
+    fake.type('y');
+    fake.enter();
+    await answer;
+    await drawnSoon();
+    await drawnSoon();
+
+    expect(fake.shown().join('\n')).toContain('✔   Continue? [y/N] y');
+    expect(fake.shown().join('\n')).not.toContain('Connecting atlas replaces');
+  });
+
+  it('asks on a plain terminal where the screen has no room for the question', async () => {
+    const fake = fakeHost({ rows: 5 });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    fake.answers.push('Ada');
+
+    await expect(screen.ask('Your first name: ')).resolves.toBe('Ada');
+
+    expect(fake.reading()).toBe(false);
+    expect(fake.terminal.text()).toContain('Your first name: Ada');
+  });
+
+  it('asks on a plain terminal where nothing is drawn in place, offering in brackets', async () => {
+    const fake = fakeHost({ rows: 0 });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+
+    await expect(screen.ask("Your agent's address: ", { initial: 'atlas', suffix: '@agentinbox.md' })).resolves.toBe(
+      'atlas'
+    );
+
+    expect(fake.terminal.text()).toContain("Your agent's address [atlas@agentinbox.md]:");
+  });
+
+  it('lists what is written behind its back while a question waits, instead of letting it break the screen', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const answer = screen.ask('Your first name: ');
+    await drawnSoon();
+    fake.out.write('a warning from a dependency\n');
+    await drawnSoon();
+
+    const lines = fake.shown();
+    const warned = lines.findIndex((line) => line.includes('a warning from a dependency'));
+    expect(lines[warned].trim()).toBe('a warning from a dependency');
+    expect(lines[warned + 1]).toContain('→   Your first name:');
+
+    fake.enter();
+    await answer;
   });
 
   it('prints a wait that no longer fits in place, with its link and code, once it stops drawing in place', async () => {
@@ -237,18 +513,32 @@ describe('startLiveScreen', () => {
   it('keeps a secret answer as dots, and only the last answer to a question asked again', async () => {
     const fake = fakeHost();
     const screen = startLiveScreen({ command: 'setup' }, fake.host);
-    fake.answers.push('123456:ABC-secret', 'not a token', 'real');
+    await drawnSoon();
+    const token = 'Telegram bot token: ';
+
+    for (const typed of ['123456:ABC-secret', 'not a token']) {
+      const answer = screen.ask(token, { secret: true });
+      fake.type(typed);
+      await drawnSoon();
+      fake.enter();
+      await answer;
+      screen.print('That does not look like a bot token (expected 123456:ABC-...).\n');
+    }
+    const last = screen.ask(token, { secret: true });
     await drawnSoon();
 
-    await screen.ask('Telegram bot token: ', { secret: true });
-    screen.print('That does not look like a bot token (expected 123456:ABC-...).\n');
-    await screen.ask('Telegram bot token: ', { secret: true });
-    await screen.ask('Telegram bot token: ', { secret: true });
+    expect(fake.shown().join('\n')).toContain('That does not look like a bot token');
+    expect(fake.shown().join('\n')).not.toContain('✔   Telegram bot token');
+
+    fake.type('real');
+    await drawnSoon();
+    expect(fake.shown().join('\n')).toContain('→   Telegram bot token: ••••');
+    fake.enter();
+    await last;
     screen.say('Creating the Slack app...');
     await drawnSoon();
 
     const text = fake.shown().join('\n');
-    expect(text).not.toContain('123456:ABC-secret');
     expect(text).not.toContain('That does not look like');
     expect(text.match(/Telegram bot token: ••••••••/g)).toHaveLength(1);
     expect(fake.writes.join('')).not.toContain('123456:ABC-secret');
