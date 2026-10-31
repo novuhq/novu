@@ -1,14 +1,15 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import QRCode from 'react-qr-code';
 
 import { ShortDate } from '@/app/(account)/(dashboard)/contacts/short-date';
 import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { CopyButton } from '@/components/ui/copy-button';
 import { MascotFace, useBeaming } from '@/components/ui/mascot-face';
-import { type AgentState, qrValueOf } from '@/lib/agent-card';
+import type { AgentState } from '@/lib/agent-card';
 import { cn } from '@/lib/utils';
+
+import { CardCode } from './card-code';
 
 /*
  * The parts of the agent's ID card (`Agent ID card` in the design), shared by the operator's card on the
@@ -26,17 +27,17 @@ const STATE_DOT: Record<AgentState, string> = {
 
 type CardPortraitProps = {
   handle: string;
-  /** The agent's email address, which the code to scan starts an email to. No code without one. */
-  address: string | null;
+  /** The agent's public card, which the code to scan opens. No code without one to open. */
+  cardLink: string | null;
   pictureUrl?: string;
   state: AgentState;
 };
 
 /**
  * The top of the card, laid out like an ID photo: the agent on its dither, the labels around it, and a
- * code to scan that starts an email to it, as on the onboarding's card.
+ * code to scan that opens its public card, where every way to reach it is.
  */
-export function CardPortrait({ handle, address, pictureUrl, state }: CardPortraitProps) {
+export function CardPortrait({ handle, cardLink, pictureUrl, state }: CardPortraitProps) {
   const beaming = useBeaming(state !== 'paused');
 
   return (
@@ -83,16 +84,12 @@ export function CardPortrait({ handle, address, pictureUrl, state }: CardPortrai
       <p className="absolute bottom-2 left-4 max-w-55 truncate font-mono text-[10px] leading-3.5 text-muted">
         fig. {handle}
       </p>
-      {/* Light on the dark portrait, 44px, 16px from the right and 14px from the bottom; only with an address. */}
-      {address && (
-        <QRCode
-          value={qrValueOf(address)}
-          size={44}
-          level="L"
-          bgColor="transparent"
-          fgColor="#ebe2d6"
-          aria-label={`QR code that starts an email to ${address}`}
-          className="absolute right-4 bottom-3.5"
+      {/* In line with the state chip above it, as far from the bottom as that is from the top. */}
+      {cardLink && (
+        <CardCode
+          value={cardLink}
+          label={`QR code that opens ${handle}’s public card`}
+          className="absolute right-3 bottom-3"
         />
       )}
     </div>

@@ -18,7 +18,7 @@ import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { useSwap } from '@/hooks/use-swap';
 import { DEFAULT_HOST, type HostId, hostOf } from '@/lib/hosts';
 import type { OnboardingView } from '@/lib/human-onboarding';
-import { addressOf, cardLinkOf, type OnboardingStep, PLACEHOLDER_HANDLE } from '@/lib/onboarding';
+import { cardAddressOf, cardLinkOf, type OnboardingStep, PLACEHOLDER_HANDLE } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
 import { checkOnboardingToolConnectedAction, readOnboardingStatusAction } from './actions';
@@ -126,7 +126,7 @@ export function OnboardingScreen({ view, initialHost }: OnboardingScreenProps) {
                 'Your agent’s inbox · not created yet'
               )
             }
-            address={agent?.address || (draft.handle ? addressOf(draft.handle, view.mailDomain) : '')}
+            address={cardAddressOf(agent, draft.handle, view.mailDomain)}
             cardLink={agent?.cardLink ?? cardLinkOf(view.origin, draft.handle || PLACEHOLDER_HANDLE)}
             telegramConnected={view.channels.telegram}
             gotMail={testPassed}

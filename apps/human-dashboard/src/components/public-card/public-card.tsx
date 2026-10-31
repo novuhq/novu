@@ -25,7 +25,7 @@ export function PublicCard({ card }: { card: PublicAgentCard }) {
       >
         <CardPortrait
           handle={card.handle}
-          address={card.address}
+          cardLink={card.cardLink}
           pictureUrl={card.pictureUrl ?? undefined}
           state={card.status}
         />
