@@ -51,6 +51,9 @@ export function areActivityDateRangesEqual(left: ActivityDateRange, right: Activ
 
 type ActivityRetentionPolicy = { kind: 'unlimited' } | { kind: 'limited'; durationMs: number };
 
+/** Matches the activity API so a daylight-saving fallback does not lock a calendar preset. */
+export const ACTIVITY_RETENTION_BUFFER_MS = 60 * 60 * 1000;
+
 function getActivityRetentionPolicy({
   organization,
   apiServiceLevel,
@@ -153,7 +156,7 @@ export function buildActivityDateFilters({
     const resolvedRange = resolveActivityDateRange({ kind: 'preset', preset: option.value }, now);
     const startsBeforeRetention =
       retentionStart !== undefined && resolvedRange.after
-        ? new Date(resolvedRange.after).getTime() < retentionStart
+        ? new Date(resolvedRange.after).getTime() < retentionStart - ACTIVITY_RETENTION_BUFFER_MS
         : false;
 
     return {
