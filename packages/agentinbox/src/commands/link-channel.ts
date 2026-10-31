@@ -236,6 +236,25 @@ export async function waitForVerifiedChannels(
  * used. A previously verified address stays `verified` while a replacement is
  * pending, and masked addresses can collide, so only the request id is trusted.
  */
+/** Whether this contact already confirmed `email`, so a setup run again doesn't ask them twice. */
+export async function isEmailVerified(
+  client: ApiClient,
+  subscriberId: string,
+  agentIdentifier: string | undefined,
+  email: string
+): Promise<boolean> {
+  try {
+    const contact = await getContact(client, subscriberId, agentIdentifier);
+    const channel = contact.channels?.find((item) => item.via === 'email');
+
+    // The channel's own address is masked. The contact's email is the confirmed one, in full.
+    return channel?.status === 'verified' && contact.email?.toLowerCase() === email;
+  } catch {
+    // The contact row may not exist until the verification lands.
+    return false;
+  }
+}
+
 export async function waitForVerifiedEmail(
   client: ApiClient,
   subscriberId: string,

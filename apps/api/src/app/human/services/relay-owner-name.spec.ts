@@ -1,7 +1,17 @@
 import { expect } from 'chai';
-import { buildRelayOwnerCardName } from './relay-owner-name';
+import { buildRelayOwnerCardName, resolveRelayAgentName } from './relay-owner-name';
 
 describe('relay owner name', () => {
+  describe('resolveRelayAgentName', () => {
+    it('gives the name the operator chose', () => {
+      expect(resolveRelayAgentName({ name: ' Atlas ' })).to.equal('Atlas');
+    });
+
+    it('treats the default name as no name', () => {
+      expect(resolveRelayAgentName({ name: 'Agent' })).to.equal(undefined);
+    });
+  });
+
   describe('buildRelayOwnerCardName', () => {
     it('names the operator by their first name and the initial of their last name', () => {
       expect(buildRelayOwnerCardName('Ada', 'Lovelace')).to.equal('Ada L.');

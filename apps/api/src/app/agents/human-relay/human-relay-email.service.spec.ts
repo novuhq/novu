@@ -70,7 +70,7 @@ describe('HumanRelayEmailService', () => {
   });
 
   it('leaves out the placeholder name', async () => {
-    const { sender } = await setUp({ agent: { _id: 'agent-1', name: 'Human' } }).findParties(scope);
+    const { sender } = await setUp({ agent: { _id: 'agent-1', name: 'Agent' } }).findParties(scope);
 
     expect(sender).to.not.have.property('agentName');
   });

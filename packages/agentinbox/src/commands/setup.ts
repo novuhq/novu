@@ -59,6 +59,8 @@ async function runSetup(channel: ChannelName | undefined, options: SetupOptions)
     keylessIdentifier: auth.mode === 'keyless' ? auth.keylessIdentifier : undefined,
   });
   const provisioned = await provisionOperator(client, existing, options, picture);
+  // Before anything below waits for a person: a run stopped there leaves a setup the next run picks up.
+  writeSetupConfig(apiUrl, auth, existing, provisioned, undefined);
 
   // The inbox always exists after setup, but only a verified address makes it
   // a channel the person can be reached on. A deployment with email disabled
@@ -183,13 +185,13 @@ export function channelLinkedBySetup(
   return undefined;
 }
 
-function saveSetupConfig(
+function writeSetupConfig(
   apiUrl: string,
   auth: CliConfig['auth'],
   existing: CliConfig | null,
   provisioned: ProvisionedOperator,
   channel: ChannelName | undefined
-): void {
+): CliConfig['defaultChannel'] {
   // A contact switch invalidates the saved default; otherwise keep it and fall
   // back to whatever this run actually linked.
   const keptDefault = provisioned.switchedContact ? undefined : existing?.defaultChannel;
@@ -202,6 +204,18 @@ function saveSetupConfig(
     ...(defaultChannel ? { defaultChannel } : {}),
     ...keptHost(existing, apiUrl),
   });
+
+  return defaultChannel;
+}
+
+function saveSetupConfig(
+  apiUrl: string,
+  auth: CliConfig['auth'],
+  existing: CliConfig | null,
+  provisioned: ProvisionedOperator,
+  channel: ChannelName | undefined
+): void {
+  const defaultChannel = writeSetupConfig(apiUrl, auth, existing, provisioned, channel);
   success(`Saved config to ${configPath()}.`);
 
   if (channel && defaultChannel && defaultChannel !== channel) {

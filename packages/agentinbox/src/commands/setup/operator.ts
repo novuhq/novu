@@ -9,7 +9,7 @@ import { splitName } from '../invite';
 import { parseEmailAddress } from '../link-channel';
 
 /** What the API calls a relay agent until you name it. The name is the API's, so it is mirrored here as is. */
-const DEFAULT_AGENT_NAME = 'Human';
+const DEFAULT_AGENT_NAME = 'Agent';
 
 /**
  * The operator's name is what invitees see ("Nikita Grossman wants to reach

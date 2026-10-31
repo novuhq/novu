@@ -4,7 +4,7 @@ import type { ApiClient } from '../../api/client';
 import { addAgentEmailIntegration } from '../../api/setup';
 import { info, promptLine } from '../../cli-io';
 import { startWaitIndicator } from '../../spinner';
-import { parseEmailAddress, waitForVerifiedEmail } from '../link-channel';
+import { isEmailVerified, parseEmailAddress, waitForVerifiedEmail } from '../link-channel';
 import type { SetupOptions } from './operator';
 
 /**
@@ -72,6 +72,30 @@ export async function connectEmail(
     throw new Error('No valid email address provided. Re-run `npx @agentinbox/cli setup email` or pass --email.');
   }
 
+  if (await isEmailVerified(client, subscriberId, agentIdentifier, email)) {
+    info(`${pc.bold(email)} is already confirmed.`);
+  } else {
+    await confirmEmail(client, agentIdentifier, subscriberId, email);
+  }
+
+  if (inboundAddress) {
+    info(`Replies go to ${pc.bold(inboundAddress)} — answering an interaction is just replying to its email.`);
+  }
+  if (client.isKeyless) {
+    info(
+      'Outbound email starts after you claim this setup — use the link in that email, or run `npx @agentinbox/cli login`.'
+    );
+  }
+
+  return identifier;
+}
+
+async function confirmEmail(
+  client: ApiClient,
+  agentIdentifier: string,
+  subscriberId: string,
+  email: string
+): Promise<void> {
   info('Registering your email address...');
   const sent = await requestAddressVerification(client, {
     subscriberId,
@@ -97,17 +121,6 @@ export async function connectEmail(
   } finally {
     stopIndicator();
   }
-
-  if (inboundAddress) {
-    info(`Replies go to ${pc.bold(inboundAddress)} — answering an interaction is just replying to its email.`);
-  }
-  if (client.isKeyless) {
-    info(
-      'Outbound email starts after you claim this setup — use the link in that email, or run `npx @agentinbox/cli login`.'
-    );
-  }
-
-  return identifier;
 }
 
 async function promptForEmail(): Promise<string> {

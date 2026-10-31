@@ -22,6 +22,7 @@ import {
   CHANNEL_POLL_INTERVAL_MS,
   CHANNEL_POLL_TIMEOUT_MS,
   findLinkedIntegration,
+  isEmailVerified,
   isMissingBotTokenError,
   parseEmailAddress,
   viaForProviderId,
@@ -66,6 +67,39 @@ describe('parseEmailAddress', () => {
   it('accepts a trimmed address and rejects junk', () => {
     expect(parseEmailAddress('  Bob@Acme.com ')).toBe('bob@acme.com');
     expect(parseEmailAddress('not-an-email')).toBeNull();
+  });
+});
+
+describe('isEmailVerified', () => {
+  const answers = (contact: Record<string, unknown>) =>
+    ({ axios: { get: vi.fn(async () => ({ data: { data: contact } })) } }) as never;
+  const confirmed = (email: string) => answers({ email, channels: [{ via: 'email', status: 'verified' }] });
+
+  it('is true for the address this contact confirmed', async () => {
+    await expect(isEmailVerified(confirmed('ada@example.com'), 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(
+      true
+    );
+    await expect(isEmailVerified(confirmed('Ada@Example.com'), 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(
+      true
+    );
+  });
+
+  it('is false for another address, even one that looks the same once masked', async () => {
+    await expect(isEmailVerified(confirmed('adam@example.com'), 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(
+      false
+    );
+  });
+
+  it('is false while the link has not been opened', async () => {
+    const pending = answers({ email: 'ada@example.com', channels: [{ via: 'email', status: 'pending' }] });
+
+    await expect(isEmailVerified(pending, 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(false);
+  });
+
+  it('is false while the contact does not exist', async () => {
+    const missing = { axios: { get: vi.fn().mockRejectedValue(new Error('not found')) } } as never;
+
+    await expect(isEmailVerified(missing, 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(false);
   });
 });
 

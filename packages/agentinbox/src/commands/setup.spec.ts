@@ -29,6 +29,7 @@ vi.mock('../api/agent-inbox', async (importOriginal) => ({
 
 vi.mock('./link-channel', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
+  isEmailVerified: vi.fn(),
   waitForVerifiedEmail: vi.fn(),
 }));
 
@@ -519,6 +520,29 @@ describe('connectEmail', () => {
       .join('\n');
     expect(printed).toContain('box@agent.test');
     expect(printed).toContain('claim this setup');
+  });
+
+  it('sends nothing for an address that is already confirmed', async () => {
+    vi.mocked(humanApi.requestAddressVerification).mockClear();
+    vi.mocked(linkChannel.waitForVerifiedEmail).mockClear();
+    vi.mocked(api.addAgentEmailIntegration).mockResolvedValue({
+      integration: { identifier: 'email-1', providerId: 'agent-email-inbox', sharedInboundAddress: 'box@agent.test' },
+    } as never);
+    vi.mocked(linkChannel.isEmailVerified).mockResolvedValueOnce(true);
+
+    const identifier = await connectEmail({ isKeyless: true } as never, 'human-relay', 'sub-1', {
+      email: 'ada@example.com',
+    });
+
+    expect(identifier).toBe('email-1');
+    expect(linkChannel.isEmailVerified).toHaveBeenCalledWith(
+      expect.anything(),
+      'sub-1',
+      'human-relay',
+      'ada@example.com'
+    );
+    expect(humanApi.requestAddressVerification).not.toHaveBeenCalled();
+    expect(linkChannel.waitForVerifiedEmail).not.toHaveBeenCalled();
   });
 
   it('reports inbox provisioning failures before verification starts', async () => {

@@ -1,6 +1,6 @@
 {
   "name": "@agentinbox/cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Agent Inbox: an inbox for your agent. People write to it on Telegram, Slack or email; it reads, asks and answers, and blocks until someone replies.",
   "main": "dist/src/index.js",
   "publishConfig": {
