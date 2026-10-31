@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { encryptCredentials, PinoLogger } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import { AgentIntegrationRepository, type AgentPicture, AgentRepository, IntegrationRepository } from '@novu/dal';
 import {
   ChatProviderIdEnum,
   SLACK_AGENT_BOT_EVENTS,
@@ -9,6 +9,7 @@ import {
 } from '@novu/shared';
 import axios, { AxiosError } from 'axios';
 import { humanRelayProfile } from '../../../agents/human-relay/human-relay-identity';
+import { agentPictureOrDefaultUrl } from '../../../human/services/agent-picture-url';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../generate-chat-oath-url/chat-oauth.constants';
 import { SlackQuickSetupCommand } from './slack-quick-setup.command';
 
@@ -31,14 +32,23 @@ type SlackManifestCreateResponse = {
   oauth_authorize_url?: string;
 };
 
+type SlackIconSetResponse = {
+  ok: boolean;
+  error?: string;
+};
+
 export type SlackQuickSetupResult = Record<string, never>;
 
 /** The longest short description Slack takes in an app manifest. */
 const SLACK_DESCRIPTION_MAX_LENGTH = 140;
 
+/** A setup waits this long for an app's icon, on top of the wait for the app itself. */
+const SLACK_ICON_TIMEOUT_MS = 3000;
+
 @Injectable()
 export class SlackQuickSetup {
   private readonly SLACK_MANIFEST_CREATE_URL = 'https://slack.com/api/apps.manifest.create';
+  private readonly SLACK_ICON_SET_URL = 'https://slack.com/api/apps.icon.set';
 
   constructor(
     private integrationRepository: IntegrationRepository,
@@ -101,6 +111,10 @@ export class SlackQuickSetup {
 
     this.logger.info(`Slack quick setup: credentials saved for integrationId=${command.integrationId}`);
 
+    if (agent?.runtime === 'human_relay') {
+      await this.setAppIcon(command, slackResponse.app_id, agent.picture);
+    }
+
     return {};
   }
 
@@ -152,10 +166,12 @@ export class SlackQuickSetup {
     return sanitized.length > 0 ? sanitized : fallback;
   }
 
-  private async findAgent(command: SlackQuickSetupCommand): Promise<{ runtime?: string; description?: string } | null> {
+  private async findAgent(
+    command: SlackQuickSetupCommand
+  ): Promise<{ runtime?: string; description?: string; picture?: AgentPicture } | null> {
     return this.agentRepository.findOne(
       { _id: command.agentId, _environmentId: command.environmentId, _organizationId: command.organizationId },
-      ['runtime', 'description']
+      ['runtime', 'description', 'picture']
     );
   }
 
@@ -259,6 +275,36 @@ export class SlackQuickSetup {
     } catch (error) {
       const message = error instanceof AxiosError ? (error.response?.data?.error ?? error.message) : String(error);
       throw new BadRequestException(`Failed to create Slack app: ${message}`);
+    }
+  }
+
+  /**
+   * Gives a Human agent's new app its picture, or the default one. The token that can do this is at hand only
+   * now, so there is one try, and a failure is only logged: the app works without an icon. Slack doesn't say
+   * whether it takes this kind of token here, and a picture under 512px comes back as `invalid_icon_size`.
+   */
+  private async setAppIcon(command: SlackQuickSetupCommand, appId: string, picture?: AgentPicture): Promise<void> {
+    try {
+      const url = agentPictureOrDefaultUrl({ _id: command.agentId, _environmentId: command.environmentId, picture });
+      const params = new URLSearchParams({ token: command.configToken, app_id: appId, url });
+
+      const { data } = await axios.post<SlackIconSetResponse>(this.SLACK_ICON_SET_URL, params.toString(), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: SLACK_ICON_TIMEOUT_MS,
+      });
+
+      if (!data?.ok) {
+        this.logger.warn(
+          { integrationId: command.integrationId, reason: data?.error },
+          'Slack quick setup: Slack refused the app icon.'
+        );
+      }
+    } catch (error) {
+      // The request carries the token, so only the message is logged, never the error itself.
+      this.logger.warn(
+        { integrationId: command.integrationId, reason: error instanceof Error ? error.message : String(error) },
+        'Slack quick setup: could not set the app icon.'
+      );
     }
   }
 

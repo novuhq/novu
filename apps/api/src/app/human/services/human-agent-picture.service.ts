@@ -38,7 +38,8 @@ type AgentScope = { environmentId: string; organizationId: string; agentIdentifi
 
 /**
  * The relay agent's picture: kept in file storage, served from a public address (the invite page is
- * public too), and set on the agent's Telegram bots. A Slack app's icon can only be changed in Slack.
+ * public too), and set on the agent's Telegram bots. A Slack app takes it as its icon when it's created, and
+ * after that the icon can only be changed in Slack.
  */
 @Injectable()
 export class HumanAgentPictureService {

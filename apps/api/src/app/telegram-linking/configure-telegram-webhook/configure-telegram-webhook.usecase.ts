@@ -126,11 +126,11 @@ export class ConfigureTelegramWebhook {
 
     await this.callSetWebhook(botToken, webhookUrl, secretToken, allowedUpdates);
 
-    // A Human agent speaks as itself, so the bot takes the name and description its operator gave it.
+    // A Human agent speaks as itself, so the bot takes the name, description and picture its operator gave it.
     if (agent?.agentRuntime === 'human_relay') {
       await this.botProfile.apply(botToken, {
         ...humanRelayProfile({ name: agent.agentName, description: agent.agentDescription }),
-        ...(agent.agentPicture ? { picture: agent.agentPicture } : {}),
+        picture: agent.agentPicture ?? 'default-if-none',
       });
     }
 

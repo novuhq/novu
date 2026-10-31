@@ -18,7 +18,7 @@ export function agentPictureUrl(agent: Pick<AgentEntity, '_id' | '_environmentId
   return `${(process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '')}/v1/human/agent-pictures/${path}`;
 }
 
-/** The picture an email or its confirmation page shows: an agent with no picture gets the orb from the design. */
+/** The picture an email, its confirmation page or a new Slack app shows: an agent with no picture gets the default. */
 export function agentPictureOrDefaultUrl(agent: Pick<AgentEntity, '_id' | '_environmentId' | 'picture'>): string {
   return agentPictureUrl(agent) ?? `${resolveHumanDashboardBaseUrl()}/brand/agent-avatar.png`;
 }
