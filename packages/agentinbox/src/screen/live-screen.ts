@@ -16,7 +16,7 @@ import {
 import { setOpenedScreen } from './opened';
 import { BEGIN_FRAME, END_FRAME, HIDE_CURSOR, repaint, SHOW_CURSOR } from './painter';
 import type { AskNote, AskOptions, Screen, ScreenOptions, ScreenWait } from './screen';
-import { animationOff, type ColorMode, CSI, stripEscapes, type TerminalStream } from './terminal';
+import { animationOff, type ColorMode, CSI, rowsOf, stripEscapes, type TerminalStream } from './terminal';
 
 /** An output stream the screen draws on, such as `process.stdout`. */
 export interface ScreenStream extends TerminalStream {
@@ -87,6 +87,8 @@ interface Asked {
   /** Keeps a line under the question even while it says nothing, so the screen doesn't jump. */
   noted: boolean;
   note?: AskNote;
+  /** How many rows the answer took when it was last written on a line of its own. */
+  echoedRows: number;
 }
 
 /** The host for a real run: the process's streams and clock, and `readline` to ask. */
@@ -250,11 +252,14 @@ export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, ho
     }
   };
 
-  /** Keeps an answer in sight once nothing is drawn in place: it is written on a line of its own, over itself. */
-  const echoAnswer = ({ prompt, secret, suffix = '', display, answer }: Asked) => {
+  /** Keeps an answer in sight once nothing is drawn in place: it is written over itself, on every row it took. */
+  const echoAnswer = (question: Asked) => {
+    const { prompt, secret, suffix = '', display, answer, echoedRows } = question;
     const shown = secret ? answer && HIDDEN_ANSWER : display ? display(answer) : answer;
+    const text = `${prompt}${shown}${suffix}`;
 
-    writeOut(`\r${CSI}K${prompt}${shown}${suffix}`);
+    writeOut(`${echoedRows > 1 ? `${CSI}${echoedRows - 1}F` : '\r'}${CSI}J${text}`);
+    question.echoedRows = rowsOf(text, columns());
   };
 
   /** Draws the screen as it is now, in place. Gives up drawing in place where it no longer fits. */
@@ -605,6 +610,7 @@ export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, ho
         typedAt: host.now(),
         noted: Boolean(check),
         note,
+        echoedRows: 0,
       };
       let answer: string;
       try {

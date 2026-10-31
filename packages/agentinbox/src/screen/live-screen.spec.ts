@@ -100,6 +100,13 @@ function fakeHost({ columns = 80, rows = 40, animate = false, theme = 'dark' as 
         reading.onChange(reading.answer, reading.answer.length);
       }
     },
+    /** The answer being read, changed all at once, as keys that delete it do. */
+    retype: (text: string) => {
+      if (reading) {
+        reading.answer = text;
+        reading.onChange(text, text.length);
+      }
+    },
     /** Enter, on the answer being read. */
     enter: () => {
       reading?.finish(reading.answer);
@@ -523,6 +530,31 @@ describe('startLiveScreen', () => {
     expect(fake.writes.join('').lastIndexOf(SHOW_CURSOR)).toBeGreaterThan(
       fake.writes.join('').lastIndexOf(HIDE_CURSOR)
     );
+  });
+
+  it('writes a long answer over itself, leaving nothing of it behind as it grows and shrinks', async () => {
+    const fake = fakeHost({ columns: 60, rows: 6 });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const answer = screen.ask("Your agent's name: ");
+    await drawnSoon();
+    const long = 'x'.repeat(70);
+    fake.type(long);
+    await drawnSoon();
+    fake.type('y'.repeat(60));
+
+    expect(fake.terminal.text()).toContain(`Your agent's name: ${long}${'y'.repeat(60)}`);
+    expect(fake.terminal.text().match(/Your agent's name/g)).toHaveLength(1);
+
+    fake.retype('short');
+
+    expect(fake.terminal.text()).toContain("Your agent's name: short");
+    expect(fake.terminal.text().match(/Your agent's name/g)).toHaveLength(1);
+    expect(fake.terminal.text()).not.toContain('xxx');
+
+    fake.enter();
+    await expect(answer).resolves.toBe('short');
   });
 
   it('asks a question of several lines on the screen, keeping only its last in the list', async () => {
