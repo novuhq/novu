@@ -526,6 +526,16 @@ export class AgentConversationService {
     return this.ledger.countAgentMessages(environmentId, conversationId);
   }
 
+  async hasAgentMessageContaining(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    platformThreadId: string;
+    contentIncludes: string;
+  }): Promise<boolean> {
+    return this.ledger.hasAgentMessageContaining(params);
+  }
+
   async findAgentMessageByIdentifier(
     environmentId: string,
     conversationId: string,
