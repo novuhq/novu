@@ -231,11 +231,6 @@ export async function waitForVerifiedChannels(
   return found.via;
 }
 
-/**
- * Polls until the link from the request identified by `requestedAt` has been
- * used. A previously verified address stays `verified` while a replacement is
- * pending, and masked addresses can collide, so only the request id is trusted.
- */
 /** Whether this contact already confirmed `email` for this agent, so a setup run again doesn't ask them twice. */
 export async function isEmailVerified(
   client: ApiClient,
@@ -255,6 +250,11 @@ export async function isEmailVerified(
   }
 }
 
+/**
+ * Polls until the link from the request identified by `requestedAt` has been
+ * used. A previously verified address stays `verified` while a replacement is
+ * pending, and masked addresses can collide, so only the request id is trusted.
+ */
 export async function waitForVerifiedEmail(
   client: ApiClient,
   subscriberId: string,
