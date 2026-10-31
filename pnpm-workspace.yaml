@@ -154,7 +154,23 @@ overrides:
   # patched in 1.16.1 (patch bump within the 1.16.x line). Transitive via
   # axios, nx, probot, and friends across build tooling.
   follow-redirects@>=1.16.0 <1.16.1: ^1.16.1
-  node-forge@<1.4.0: ^1.4.0
+  # GHSA-86w9-cpqp-85rv (high) RSA PKCS#1 v1.5 signature verification accepts
+  # extra nested DigestAlgorithm elements, GHSA-7wch-p9px-956x (high) ReDoS in
+  # PEM decoding, GHSA-jc66-7q78-782g (high) PKCS#12 MAC forgery and
+  # constant-key PBE via zero iteration count, GHSA-8hrf-8g6f-7xwp (high) TLS
+  # record interleaving DoS, GHSA-hqq3-7jhf-c5jx (high) TLS call-stack
+  # exhaustion, GHSA-5x38-2vff-x55p (high) X.509 basicConstraints bypass in
+  # verifyCertificateChain(), GHSA-6wvx-3r32-xmcg (moderate) prototype
+  # pollution in forge.http cookie handling, GHSA-525v-9gp9-w22h (moderate)
+  # TLS client crash when the server sends no certificate, GHSA-5cwg-6vw7-rj6p
+  # (moderate) AES-GCM auth bypass via unvalidated tagLength, plus three low
+  # advisories (GHSA-4642-5mcj-2rqw asn1 oid truncation, GHSA-h6cr-wjv9-3cpp
+  # BigInteger.modInverse infinite loop, GHSA-4487-j8r4-4g2f CA store cert
+  # eviction). All patched in 1.4.1 (patch bump within the 1.x line). Widen
+  # the previous `<1.4.0` floor so transitive consumers (@nestjs/jwt, selfsigned,
+  # webpack-dev-server, verdaccio, @puppeteer/*, msal-node, mongodb-connection-string-url)
+  # pick up the fix.
+  node-forge@<1.4.1: ^1.4.1
   ws@>=8.0.0 <8.21.0: ^8.21.0
   ws@>=7.0.0 <7.5.11: ^7.5.11
   websocket-driver@<0.7.5: ^0.7.5
