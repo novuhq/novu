@@ -1,3 +1,4 @@
+import type { AgentToolResultContent } from '@novu/agent-event-protocol';
 import type { ConversationActivityEntity, ConversationActivitySenderTypeEnum, ConversationChannel } from '@novu/dal';
 import type { TriggerRecipientsPayload } from '@novu/shared';
 
@@ -182,11 +183,22 @@ export interface PersistHumanInteractionActivityParams extends ConversationActiv
   answeredElsewhere?: boolean;
 }
 
+export interface PersistToolCallParams extends ConversationActivityContext {
+  runId: string;
+  toolCallId: string;
+  toolName: string;
+  input?: Record<string, unknown>;
+  mcpServerName?: string;
+}
+
 export interface PersistToolResultParams extends ConversationActivityContext {
   toolCallId: string;
   toolName?: string;
-  /** The tool's output as returned by the model runtime (JSON-serializable). */
-  output: unknown;
+  output?: unknown;
+  content?: AgentToolResultContent[];
+  isError?: boolean;
+  /** Makes the row identifier deterministic, so a redelivered result writes nothing. */
+  runId?: string;
   /** Human-readable preview for the display timeline; defaults to a generic line. */
   preview?: string;
 }

@@ -700,7 +700,7 @@ describe('ConversationActivityLedger', () => {
         output: 'done',
       });
 
-      expect(activityRepository.createToolActivity.firstCall.args[0].sequence).to.equal(4);
+      expect(activityRepository.createAgentActivity.firstCall.args[0].sequence).to.equal(4);
       expect(
         mint.calledOnceWithExactly({
           environmentId: 'env-1',
@@ -709,6 +709,82 @@ describe('ConversationActivityLedger', () => {
         })
       ).to.equal(true);
       expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
+    });
+  });
+
+  describe('tool activities', () => {
+    const context = {
+      conversationId: 'conv-1',
+      channel: {
+        platform: 'slack',
+        _integrationId: 'integration-a',
+        platformThreadId: 'thread-1',
+      },
+      agentIdentifier: 'agent-a',
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+    };
+
+    it("does not bump the conversation's activity or preview when recording tool rows", async () => {
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+      const conversationRepository = makeConversationRepository();
+      const ledger = makeLedger(makeActivityRepository(), undefined, publisher, conversationRepository);
+
+      await ledger.persistToolCall({
+        ...context,
+        runId: 'run-1',
+        toolCallId: 'toolu_1',
+        toolName: 'search_docs',
+        input: { query: 'pricing' },
+      });
+      await ledger.persistToolResult({
+        ...context,
+        runId: 'run-1',
+        toolCallId: 'toolu_1',
+        content: [{ type: 'text', text: 'ok' }],
+        isError: false,
+      });
+
+      expect(publisher.emitPersistedClientEvent.callCount).to.equal(2);
+      expect(conversationRepository.touchActivity.called).to.equal(false);
+      expect(conversationRepository.touchPreview.called).to.equal(false);
+    });
+
+    it('keeps the legacy shape and a minted identifier when no run or content is given', async () => {
+      const activityRepository = makeActivityRepository();
+      const ledger = makeLedger(activityRepository);
+
+      await ledger.persistToolResult({ ...context, toolCallId: 'call_1', toolName: 'lookup_order', output: 'done' });
+
+      const row = activityRepository.createAgentActivity.firstCall.args[0];
+      expect(row.identifier).to.match(/^act_/);
+      expect(row.content).to.equal('Tool result: lookup_order');
+      expect(row.toolData).to.deep.equal({ toolCallId: 'call_1', toolName: 'lookup_order', output: 'done' });
+    });
+
+    it('does not re-emit a redelivered tool result and looks it up by its run-scoped identifier', async () => {
+      const duplicateError = Object.assign(new Error('duplicate key'), { code: 11000 });
+      const activityRepository = makeActivityRepository({
+        createAgentActivity: sinon.stub().rejects(duplicateError),
+        findOne: sinon.stub().resolves({ _id: 'existing', identifier: 'tool-result:conv-1:run-1:toolu_1' }),
+      });
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+      const ledger = makeLedger(activityRepository, undefined, publisher);
+
+      await ledger.persistToolResult({
+        ...context,
+        runId: 'run-1',
+        toolCallId: 'toolu_1',
+        content: [{ type: 'text', text: 'ok' }],
+        isError: false,
+      });
+
+      expect(activityRepository.findOne.firstCall.args[0]).to.deep.equal({
+        _environmentId: 'env-1',
+        _conversationId: 'conv-1',
+        identifier: 'tool-result:conv-1:run-1:toolu_1',
+      });
+      expect(publisher.emitPersistedClientEvent.called).to.equal(false);
     });
   });
 });

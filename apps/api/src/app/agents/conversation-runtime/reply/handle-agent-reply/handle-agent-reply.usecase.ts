@@ -8,7 +8,7 @@ import {
   HumanInteractionEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import type { HumanSignal, SentMessageInfo, ToolResult, TriggerSignal } from '@novu/framework/internal';
+import type { HumanSignal, SentMessageInfo, TriggerSignal } from '@novu/framework/internal';
 import { buildToolApprovalRequestId, FeatureFlagsKeysEnum, HumanInteractionKindEnum } from '@novu/shared';
 import { ParseEventRequest } from '../../../../events/usecases/parse-event-request';
 import { CreateConversationInteractionCommand } from '../../../../human/usecases/create-conversation-interaction/create-conversation-interaction.command';
@@ -39,7 +39,7 @@ import { OutboundGateway } from '../../egress/outbound.gateway';
 import type { SlackNativeDelivery } from '../../egress/slack-native-delivery';
 import { BridgeExecutorService } from '../../runtime/bridge-executor.service';
 import { buildAgentPlatformContext, buildEmailPlatformContext } from '../../runtime/build-platform-context.util';
-import { HandleAgentReplyCommand } from './handle-agent-reply.command';
+import { HandleAgentReplyCommand, type ToolResultRecord } from './handle-agent-reply.command';
 import {
   assertValidReplyCommand,
   collectReplyAnalytics,
@@ -903,7 +903,7 @@ export class HandleAgentReply {
     command: HandleAgentReplyCommand,
     conversation: ConversationEntity,
     channel: ConversationChannel,
-    toolResults: ToolResult[]
+    toolResults: ToolResultRecord[]
   ): Promise<void> {
     for (const toolResult of toolResults) {
       try {
@@ -914,6 +914,9 @@ export class HandleAgentReply {
           toolCallId: toolResult.toolCallId,
           toolName: toolResult.toolName,
           output: toolResult.output,
+          content: toolResult.content,
+          isError: toolResult.isError,
+          runId: command.runId,
           preview: toolResult.preview,
           environmentId: command.environmentId,
           organizationId: command.organizationId,

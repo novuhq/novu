@@ -1,5 +1,5 @@
 import { FilterQuery } from 'mongoose';
-import type { ConversationActivityDBModel } from './conversation-activity.entity';
+import type { ConversationActivityDBModel, ConversationActivityToolData } from './conversation-activity.entity';
 import { ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum } from './conversation-activity.entity';
 
 export const ACTIVITY_VIEWS = [
@@ -30,7 +30,9 @@ export const ACTIVITY_KINDS = [
   'signal.other',
   'tool_approval_request',
   'tool_approval_decision',
+  'tool_call',
   'tool_result',
+  'tool_result.record',
   'mcp_connection_request',
   'mcp_connection_result',
   'human_interaction_request',
@@ -61,7 +63,9 @@ export const ACTIVITY_VIEW_MEMBERSHIP: Record<ActivityKind, readonly ActivityVie
   'signal.other': ['agent_handoff', 'operator_timeline'],
   tool_approval_request: ['agent_handoff', 'client_events', 'operator_timeline', 'approval_activities'],
   tool_approval_decision: ['agent_handoff', 'client_events', 'operator_timeline', 'approval_activities'],
+  tool_call: ['operator_timeline'],
   tool_result: ['agent_handoff', 'client_events', 'approval_activities'],
+  'tool_result.record': ['operator_timeline'],
   mcp_connection_request: ['client_events', 'operator_timeline'],
   mcp_connection_result: ['client_events', 'operator_timeline'],
   human_interaction_request: ['agent_handoff', 'operator_timeline'],
@@ -84,6 +88,15 @@ export function viewUsesSequencePagination(view: ActivityView): boolean {
 /** Model-facing views: fold `edit`/`delete` onto `message` rows at read time. */
 export function viewFoldsRevisions(view: ActivityView): boolean {
   return view === 'llm_transcript' || view === 'agent_handoff';
+}
+
+const RECORD_ONLY_TOOL_RESULT_MATCH = {
+  'toolData.content': { $exists: true },
+  'toolData.output': { $exists: false },
+};
+
+export function isRecordOnlyToolResult(toolData: ConversationActivityToolData | undefined): boolean {
+  return toolData?.content !== undefined && toolData.output === undefined;
 }
 
 function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBModel> {
@@ -139,8 +152,20 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
     case 'tool_approval_decision':
       return { type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION };
 
+    case 'tool_call':
+      return { type: ConversationActivityTypeEnum.TOOL_CALL };
+
     case 'tool_result':
-      return { type: ConversationActivityTypeEnum.TOOL_RESULT };
+      return {
+        type: ConversationActivityTypeEnum.TOOL_RESULT,
+        $nor: [RECORD_ONLY_TOOL_RESULT_MATCH],
+      };
+
+    case 'tool_result.record':
+      return {
+        type: ConversationActivityTypeEnum.TOOL_RESULT,
+        ...RECORD_ONLY_TOOL_RESULT_MATCH,
+      };
 
     case 'mcp_connection_request':
       return { type: ConversationActivityTypeEnum.MCP_CONNECTION_REQUEST };

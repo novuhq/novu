@@ -367,4 +367,38 @@ describe('activity-to-events run lifecycle', () => {
       source: undefined,
     });
   });
+
+  it('maps a model-facing tool result from its output and withholds a record-only one', () => {
+    const envelopes = mapNewestFirstEventActivities(
+      [
+        activity({
+          type: ConversationActivityTypeEnum.TOOL_RESULT,
+          identifier: 'tool-result:conv-mongo-id:run-1:toolu_1',
+          sequence: 2,
+          toolData: { toolCallId: 'toolu_1', content: [{ type: 'text', text: 'record only' }], isError: false },
+        }),
+        activity({
+          type: ConversationActivityTypeEnum.TOOL_RESULT,
+          identifier: 'tool-result:conv-mongo-id:run-1:call_1',
+          sequence: 1,
+          content: 'Tool result: lookup_order',
+          toolData: {
+            toolCallId: 'call_1',
+            output: 'Order is shipped',
+            content: [{ type: 'text', text: 'stored part' }],
+            isError: false,
+          },
+        }),
+      ],
+      context
+    );
+
+    expect(envelopes.map((envelope) => envelope.event)).to.deep.equal([
+      {
+        type: 'tool-use-result',
+        toolUseId: 'call_1',
+        content: [{ type: 'text', text: 'Order is shipped' }],
+      },
+    ]);
+  });
 });

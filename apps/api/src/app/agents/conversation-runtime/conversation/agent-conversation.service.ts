@@ -25,6 +25,7 @@ import type {
   PersistMcpConnectionResultParams,
   PersistToolApprovalDecisionParams,
   PersistToolApprovalRequestParams,
+  PersistToolCallParams,
   PersistToolResultParams,
   PersistTriggerSignalParams,
   PersistWorkflowOriginHydrationParams,
@@ -57,6 +58,7 @@ export type {
   PersistMcpConnectionResultParams,
   PersistToolApprovalDecisionParams,
   PersistToolApprovalRequestParams,
+  PersistToolCallParams,
   PersistToolResultParams,
   PersistTriggerSignalParams,
   PersistWorkflowOriginHydrationParams,
@@ -470,6 +472,10 @@ export class AgentConversationService {
     params: PersistHumanInteractionActivityParams
   ): Promise<ConversationActivityEntity> {
     return this.ledger.persistHumanInteractionResponse(params);
+  }
+
+  async persistToolCall(params: PersistToolCallParams): Promise<void> {
+    return this.ledger.persistToolCall(params);
   }
 
   async persistToolResult(params: PersistToolResultParams): Promise<void> {
