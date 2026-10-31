@@ -287,6 +287,8 @@ export interface Contact {
   firstName?: string;
   lastName?: string;
   email?: string;
+  /** On a contact from the list: their email for this agent, in full, and whether they confirmed it. */
+  emailVerification?: { address: string; status: ContactChannelStatus };
   phone?: string;
   data?: Record<string, unknown>;
   /** Channels the agent can reach the contact on. */

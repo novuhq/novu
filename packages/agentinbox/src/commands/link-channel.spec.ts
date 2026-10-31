@@ -72,8 +72,8 @@ describe('parseEmailAddress', () => {
 
 describe('isEmailVerified', () => {
   const answers = (contact: Record<string, unknown>) =>
-    ({ axios: { get: vi.fn(async () => ({ data: { data: contact } })) } }) as never;
-  const confirmed = (email: string) => answers({ email, channels: [{ via: 'email', status: 'verified' }] });
+    ({ axios: { get: vi.fn(async () => ({ data: { data: [{ id: 'sub-1', ...contact }], next: null } })) } }) as never;
+  const confirmed = (address: string) => answers({ emailVerification: { address, status: 'verified' } });
 
   it('is true for the address this contact confirmed', async () => {
     await expect(isEmailVerified(confirmed('ada@example.com'), 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(
@@ -84,6 +84,26 @@ describe('isEmailVerified', () => {
     );
   });
 
+  it('asks about this contact, for this agent', async () => {
+    const client = confirmed('ada@example.com');
+
+    await isEmailVerified(client, 'sub-1', 'relay', 'ada@example.com');
+
+    expect((client as unknown as { axios: { get: ReturnType<typeof vi.fn> } }).axios.get).toHaveBeenCalledWith(
+      '/v1/contacts',
+      { params: { subscriberId: 'sub-1', agentIdentifier: 'relay', limit: 1 } }
+    );
+  });
+
+  it('is false for an address another agent confirmed, which is the one on the contact', async () => {
+    const sharedContact = answers({
+      email: 'ada@example.com',
+      emailVerification: { address: 'own@example.com', status: 'verified' },
+    });
+
+    await expect(isEmailVerified(sharedContact, 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(false);
+  });
+
   it('is false for another address, even one that looks the same once masked', async () => {
     await expect(isEmailVerified(confirmed('adam@example.com'), 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(
       false
@@ -91,7 +111,7 @@ describe('isEmailVerified', () => {
   });
 
   it('is false while the link has not been opened', async () => {
-    const pending = answers({ email: 'ada@example.com', channels: [{ via: 'email', status: 'pending' }] });
+    const pending = answers({ emailVerification: { address: 'ada@example.com', status: 'pending' } });
 
     await expect(isEmailVerified(pending, 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(false);
   });
