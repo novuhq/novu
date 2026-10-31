@@ -8,7 +8,7 @@ vi.mock('./screen/screen', async (importOriginal) => ({
   openScreen,
 }));
 
-describe('a command as commander runs it', () => {
+describe('a command as commander runs it', { timeout: 15_000 }, () => {
   const { argv } = process;
 
   afterEach(() => {

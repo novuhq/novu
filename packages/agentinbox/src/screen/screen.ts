@@ -37,7 +37,7 @@ export interface AskOptions {
   initial?: string;
   /** Follows the answer without being part of it, such as the domain after an address. */
   suffix?: string;
-  /** How the answer shows as it is typed, character for character: an address has no capitals. */
+  /** How the answer shows as it is typed, such as the address it will be. */
   display?: (answer: string) => string;
   /** Says something about `initial` from the start. */
   note?: AskNote;

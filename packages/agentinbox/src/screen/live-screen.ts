@@ -172,17 +172,19 @@ export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, ho
   const columns = () => out.columns ?? 80;
   const size = () => ({ columns: columns(), rows: out.rows ?? 0, aspect });
 
-  /** A question as rows: its words, the answer as it is typed, and what is said about it. */
+  /** A question as rows: its words, then the answer as it is typed with what is said about it under it. */
   const askedRows = (question: Asked): ScreenRow[] => {
     const caret = !host.animate || Math.floor((host.now() - question.typedAt) / CARET_BLINK_MS) % 2 === 0;
     const { answer, cursor, secret, suffix, display } = question;
-    const typed = typedAnswer(display ? display(answer) : answer, cursor, { secret, suffix, caret, look });
+    const typed = display
+      ? typedAnswer(display(answer), display(answer.slice(0, cursor)).length, { secret, suffix, caret, look })
+      : typedAnswer(answer, cursor, { secret, suffix, caret, look });
     const note = question.note ? paint(question.note.text, question.note.tone, look) : '';
 
     return [
       ...question.above.map((value) => ({ value })),
-      { mark: 'next', value: `${question.prompt}${typed}` },
-      ...(question.noted ? [{ value: note }] : []),
+      // One row, so that folding the list for a small window can't part the answer from its note.
+      { mark: 'next', value: `${question.prompt}${typed}${question.noted ? `\n${note}` : ''}` },
     ];
   };
 
@@ -243,6 +245,16 @@ export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, ho
     painted = [];
     stopDrawingInPlace();
     snapshot();
+    if (asked) {
+      echoAnswer(asked);
+    }
+  };
+
+  /** Keeps an answer in sight once nothing is drawn in place: it is written on a line of its own, over itself. */
+  const echoAnswer = ({ prompt, secret, suffix = '', display, answer }: Asked) => {
+    const shown = secret ? answer && HIDDEN_ANSWER : display ? display(answer) : answer;
+
+    writeOut(`\r${CSI}K${prompt}${shown}${suffix}`);
   };
 
   /** Draws the screen as it is now, in place. Gives up drawing in place where it no longer fits. */
@@ -252,10 +264,7 @@ export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, ho
     const moment = momentNow(now, shown.emotion);
     const fit = fitScreen(shown, size());
     if (!fit) {
-      // The answer is being read whatever is drawn, and a window made this small is likely on its way back.
-      if (!asked) {
-        giveUpDrawing();
-      }
+      giveUpDrawing();
 
       return;
     }
@@ -362,12 +371,19 @@ export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, ho
           if (edited) {
             check();
           }
-          changed();
+          if (live) {
+            changed();
+          } else {
+            echoAnswer(question);
+          }
         },
       });
     } finally {
       clearTimeout(checking);
       asked = null;
+      if (!live) {
+        writeOut('\n');
+      }
     }
   };
 
@@ -618,6 +634,9 @@ export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, ho
       host.later(() => {
         if (!asking && !finished) {
           printed = [];
+          if (lastAsked) {
+            lastAsked.printed = 0;
+          }
           changed();
         }
       });

@@ -432,6 +432,99 @@ describe('startLiveScreen', () => {
     expect(text).toContain('✔   Choice [1-2]: 1');
   });
 
+  it('keeps a menu written after a wait, however long the one before it was', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    screen.print('Also connect a chat channel?\n  1. Telegram\n  2. Slack\n');
+    const channel = screen.ask('Channel: ');
+    fake.type('1');
+    fake.enter();
+    await channel;
+    // What came with the question goes while setup talks to the API, before the next menu is written.
+    await drawnSoon();
+    await drawnSoon();
+
+    screen.print(
+      'How do you want to connect the Telegram bot?\n  1. Paste the bot token here\n  2. Use a setup page\n'
+    );
+    void screen.ask('Choice [1-2]: ');
+    await drawnSoon();
+
+    const text = fake.shown().join('\n');
+    expect(text).toContain('How do you want to connect the Telegram bot?');
+    expect(text).toContain('1. Paste the bot token here');
+    expect(text).toContain('2. Use a setup page');
+  });
+
+  it('keeps a question and what is said about it together when the list folds for a small window', async () => {
+    const fake = fakeHost({ columns: 60, rows: 8 });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    screen.add(...['one', 'two', 'three', 'four', 'five'].map((value) => ({ mark: 'done' as const, value })));
+    await drawnSoon();
+
+    const answer = screen.ask("Your agent's address: ", {
+      initial: 'atlas',
+      note: { text: '✓ atlas is available', tone: 'success' },
+      check: async () => undefined,
+    });
+    await drawnSoon();
+
+    const lines = fake.shown();
+    const question = lines.findIndex((line) => line.includes("Your agent's address: atlas"));
+    expect(question).toBeGreaterThan(-1);
+    expect(lines[question + 1]).toContain('✓ atlas is available');
+    expect(lines.join('\n')).toContain('⋯');
+
+    fake.enter();
+    await answer;
+  });
+
+  it('asks on a plain terminal rather than show what is said about a question without the question', async () => {
+    const fake = fakeHost({ columns: 60, rows: 7 });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    screen.add(...['one', 'two', 'three'].map((value) => ({ mark: 'done' as const, value })));
+    await drawnSoon();
+
+    await screen.ask("Your agent's address: ", {
+      initial: 'atlas',
+      note: { text: '✓ atlas is available', tone: 'success' },
+      check: async () => undefined,
+    });
+
+    expect(fake.reading()).toBe(false);
+    expect(fake.terminal.text()).toContain("Your agent's address [atlas]:");
+  });
+
+  it('keeps an answer in sight once it no longer fits, and carries on from a line of its own', async () => {
+    const fake = fakeHost({ columns: 60, rows: 6 });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const answer = screen.ask("Your agent's name: ");
+    await drawnSoon();
+    expect(fake.shown().join('\n')).toContain("→   Your agent's name:");
+
+    const long = 'x'.repeat(70);
+    fake.type(long);
+    await drawnSoon();
+    expect(fake.terminal.text()).toContain(`Your agent's name: ${long}`);
+
+    fake.type(' more');
+    expect(fake.terminal.text()).toContain(`${long} more`);
+
+    fake.enter();
+    await expect(answer).resolves.toBe(`${long} more`);
+    screen.say('Setting up your agent inbox...');
+    await screen.done('happy');
+
+    expect(fake.terminal.text()).toContain('Setting up your agent inbox');
+    expect(fake.writes.join('').lastIndexOf(SHOW_CURSOR)).toBeGreaterThan(
+      fake.writes.join('').lastIndexOf(HIDE_CURSOR)
+    );
+  });
+
   it('asks a question of several lines on the screen, keeping only its last in the list', async () => {
     const fake = fakeHost();
     const screen = startLiveScreen({ command: 'connect' }, fake.host);

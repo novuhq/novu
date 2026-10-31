@@ -200,9 +200,11 @@ function handleOf(typed: string): string {
   return toHandle(typed.split('@')[0]);
 }
 
-/** What is typed into the address, character for character, shown as what an address can hold. */
+/** What is typed, as the address it will be. A hyphen at the end stays, or "atlas-" could never become "atlas-acme". */
 function asHandle(typed: string): string {
-  return typed.toLowerCase().replace(/[^a-z0-9@.-]/g, '-');
+  const handle = handleOf(typed);
+
+  return handle && /[^\p{L}\p{N}]$/u.test(typed.split('@')[0]) ? `${handle}-` : handle;
 }
 
 function isAvailable(handle: string): AskNote {

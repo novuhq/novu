@@ -212,6 +212,27 @@ describe('resolveNewAgent', () => {
     await expect(check?.('Атлас')).resolves.toEqual({ text: 'a–z and 0–9 only', tone: 'accent' });
   });
 
+  it('shows what is typed as the address it will be, so what is on screen is what gets claimed', async () => {
+    const { io, prompt } = terminal('Atlas', '<enter>');
+    await resolveNewAgent(client, 'human-relay', {}, undefined, io);
+    const display = prompt.mock.calls[1][1]?.display;
+
+    expect(display?.('foo.bar')).toBe('foo-bar');
+    expect(display?.('Acme Bot')).toBe('acme-bot');
+    expect(display?.('orion@agentinbox.md')).toBe('orion');
+    expect(display?.('Zoë')).toBe('zoe');
+    expect(display?.('Атлас')).toBe('');
+  });
+
+  it('keeps a hyphen at the end of what is typed, or nobody could type past it', async () => {
+    const { io, prompt } = terminal('Atlas', '<enter>');
+    await resolveNewAgent(client, 'human-relay', {}, undefined, io);
+    const display = prompt.mock.calls[1][1]?.display;
+
+    expect(display?.('atlas-')).toBe('atlas-');
+    expect(display?.('atlas ')).toBe('atlas-');
+  });
+
   it('leaves the address to the API when it cannot be asked what is free', async () => {
     checkInboxAddress.mockRejectedValue(new Error('network down'));
     const { io, prompt } = terminal('Atlas');
