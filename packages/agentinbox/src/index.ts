@@ -213,7 +213,8 @@ program
   .option('--agent-picture <file-or-url>', 'your agent’s picture: a JPEG or PNG of up to 2 MB (needs `login`)')
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
   .description('Create your agent inbox, then optionally connect Telegram or Slack')
-  .action(setupCommand);
+  // Not `.action(setupCommand)`: commander's own last argument would be taken for the name on the screen.
+  .action((channelArg: string | undefined, options) => setupCommand(channelArg, options));
 
 program
   .command('login')

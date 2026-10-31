@@ -237,14 +237,17 @@ describe('keyless cap errors', () => {
       cap: 5,
       browserLogin: true,
     });
-    expect(text).toContain('5 free messages');
-    expect(text).toContain('run: npx @agentinbox/cli login');
-    expect(text).toContain('https://agentinbox.md/claim?token=t');
+    expect(text).toContain("You've reached the 5-message limit of this free Agent Inbox demo.");
+    expect(text).toContain('To keep your Agent Inbox setup and channels, run: `npx @agentinbox/cli login`');
+    expect(text).toContain(
+      '(Or claim this setup from this link: https://agentinbox.md/claim?token=t, and then run `npx @agentinbox/cli login`)'
+    );
     expect(text).not.toContain('--secret-key');
   });
 
   it('names Agent Inbox when a self-hosted cap has no claim link', () => {
     const text = formatKeylessCapMessage({ browserLogin: false, reason: 'cap' });
+    expect(text).toContain("You've reached the message limit of this free Agent Inbox demo.");
     expect(text).toContain('Sign up for a free Agent Inbox account');
     expect(text).not.toContain('Novu');
   });
@@ -286,8 +289,10 @@ describe('keyless cap errors', () => {
     });
     const text = formatKeylessCapMessage(details!);
     expect(text).toContain('run: npx @agentinbox/cli login');
-    expect(text).toContain('https://agentinbox.md/claim?token=t');
-    expect(text).not.toContain('free messages');
+    expect(text).toContain(
+      '(Or claim this setup from this link: https://agentinbox.md/claim?token=t, and then run `npx @agentinbox/cli login`)'
+    );
+    expect(text).not.toContain('message limit');
   });
 
   it('routes the cap error through fail with the claim link', () => {
