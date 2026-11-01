@@ -192,6 +192,17 @@ test('the example cards are described once to assistive technology', async ({ pa
   expect(tree).not.toContain('Business Card');
 });
 
+test('the header offers the dashboard and the footer keeps npm', async ({ page }) => {
+  await page.goto('/sapien');
+  const header = page.getByRole('navigation', { name: 'Header navigation' });
+  await expect(header.getByRole('link', { name: 'Visit Dashboard' })).toHaveAttribute('href', '/inbox');
+  await expect(header.getByRole('link', { name: 'npm' })).toHaveCount(0);
+  await expect(header.getByRole('link', { name: 'sign in' })).toHaveCount(0);
+  await expect(
+    page.getByRole('navigation', { name: 'Footer navigation' }).getByRole('link', { name: 'npm' })
+  ).toBeVisible();
+});
+
 test('the mobile header menu opens, closes on Escape and restores focus', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto('/sapien');
@@ -202,8 +213,8 @@ test('the mobile header menu opens, closes on Escape and restores focus', async 
   await menu.click();
   await expect(menu).toHaveAttribute('aria-expanded', 'true');
   const nav = page.getByRole('navigation', { name: 'Header navigation' });
-  await expect(nav.getByRole('link', { name: 'npm' })).toBeVisible();
-  await expect(nav.getByRole('link', { name: 'sign in' })).toHaveAttribute('href', '/sign-in');
+  await expect(nav.getByRole('link', { name: 'npm' })).toHaveCount(0);
+  await expect(nav.getByRole('link', { name: 'Visit Dashboard' })).toHaveAttribute('href', '/inbox');
   await expect(nav.getByRole('link', { name: 'book a demo' })).toHaveAttribute(
     'href',
     'https://cal.com/team/novu/novu-meeting'
