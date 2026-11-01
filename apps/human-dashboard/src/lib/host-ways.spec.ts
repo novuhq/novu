@@ -6,6 +6,7 @@ import {
   cliScript,
   connectorSteps,
   copiesAlone,
+  formatScript,
   mcpCaption,
   mcpScript,
   pluginScript,
@@ -72,6 +73,10 @@ describe('the commands', () => {
       ].join('\n')
     );
     expect(script.lines.some((line) => copiesAlone(script, line))).toBe(false);
+    expect(formatScript(script)).toContain('# 1. Connect this machine to atlas');
+    expect(formatScript(script)).toContain(
+      '$ npx @agentinbox/cli connect atlas --code BCDF-GHJK --yes --api-url=https://www.agentinbox.md/api'
+    );
   });
 
   it('says where they run, and what Hermes needs after them', () => {

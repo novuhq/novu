@@ -1,6 +1,7 @@
 'use client';
 
-import { ArrowUpRight, Copy, TriangleAlert } from 'lucide-react';
+import { ArrowUpRight, Copy, LogIn, TriangleAlert } from 'lucide-react';
+import Link from 'next/link';
 import {
   type CSSProperties,
   type KeyboardEvent,
@@ -11,7 +12,7 @@ import {
   useState,
 } from 'react';
 
-import { SwappingCode, WithSlots } from '@/components/connect/connect-prompt-box';
+import { SignInSlot, SwappingCode, WithSlots } from '@/components/connect/connect-prompt-box';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { MorphingText } from '@/components/ui/morphing-text';
@@ -35,7 +36,7 @@ import {
   type Script,
   wayLabel,
 } from '@/lib/host-ways';
-import { type ChatApp, type CommandHost, type Host, type HostId, hostOf } from '@/lib/hosts';
+import { type ChatApp, type CommandHost, type Host, type HostId, hostOf, hostSubject } from '@/lib/hosts';
 import { cn } from '@/lib/utils';
 
 /** How long one view of the box takes to fade out before the next fades in. */
@@ -56,11 +57,16 @@ type HostSetupBoxProps = {
   handle: string;
   /** The agent's address, which the chat apps' prompt names. */
   address?: string | null;
-  /** The API the account lives on. */
-  apiUrl: string;
+  /** The API the account lives on. Left out on a public page, which has no account. */
+  apiUrl?: string;
   /** The one-time code for the host on show, when it runs commands (`useHostConnectCode`). */
-  code: ConnectCodeState;
-  onRetry: () => void;
+  code?: ConnectCodeState;
+  onRetry?: () => void;
+  /**
+   * A public page has no code. The CLI tab shows the same commands, with a sign-in where the agent and the
+   * code go. The other tabs are the same as in the dashboard: they need no code.
+   */
+  signedOut?: { signInHref: string };
   /** The hosted MCP server. Without one, the ways that need it are left out (`waysFor`). */
   mcpUrl: string;
 };
@@ -84,20 +90,31 @@ export function HostSetupBox({
   apiUrl,
   code,
   onRetry,
+  signedOut,
   mcpUrl,
 }: HostSetupBoxProps) {
   const tabsId = useId();
   const way = wayFor(host);
   // Each host's code as it last was, so a host's commands keep theirs while they fade out for the next host's.
-  const codes = useCodesByHost(host, code);
+  const codes = useCodesByHost(host, signedOut ? undefined : code);
 
   const lead = useSwap(host.id, SWAP_MS);
   const leadHost = hostOf(lead.shown);
-  const status = host.group === 'commands' && way === 'cli' ? code.status : 'ready';
+  const cliStatus = signedOut ? 'signed-out' : (code?.status ?? 'loading');
+  const status = host.group === 'commands' && way === 'cli' ? cliStatus : 'ready';
   const body = useSwap(`${host.id}:${way}:${status}`, SWAP_MS);
   const { ref, height } = useMeasuredHeight();
 
-  const details = { handle, address, apiUrl, mcpUrl, codes, onRetry, error: code.status === 'error' ? code.error : '' };
+  const details = {
+    handle,
+    address,
+    apiUrl,
+    mcpUrl,
+    codes,
+    onRetry: onRetry ?? (() => {}),
+    error: code?.status === 'error' ? code.error : '',
+    signInHref: signedOut?.signInHref,
+  };
 
   return (
     <div className="overflow-hidden rounded-[10px] border border-border-strong bg-subtle">
@@ -123,7 +140,7 @@ export function HostSetupBox({
                 idPrefix={tabsId}
               />
             </div>
-            <BoxAction host={host} way={way} code={code} details={details} />
+            <BoxAction host={host} way={way} code={code} details={details} signedOut={signedOut} />
           </div>
 
           <div id={`${tabsId}-panel`} role="tabpanel" aria-labelledby={`${tabsId}-${way}`}>
@@ -147,20 +164,22 @@ export function HostSetupBox({
 type Details = {
   handle: string;
   address?: string | null;
-  apiUrl: string;
+  apiUrl?: string;
   mcpUrl: string;
   /** The code each host that runs commands last had. */
   codes: Partial<Record<HostId, HeldCode>>;
   onRetry: () => void;
   /** Why the code couldn't be had, when it couldn't. */
   error: string;
+  /** Where a public page's CLI tab sends the operator to get a code. */
+  signInHref?: string;
 };
 
 /** The host's code as it last was ready, kept for each host. */
-function useCodesByHost(host: Host, code: ConnectCodeState): Partial<Record<HostId, HeldCode>> {
+function useCodesByHost(host: Host, code: ConnectCodeState | undefined): Partial<Record<HostId, HeldCode>> {
   const [codes, setCodes] = useState<Partial<Record<HostId, HeldCode>>>({});
   // The code belongs to the host on show only while that host runs commands (`useHostConnectCode`).
-  if (host.group === 'commands' && code.status === 'ready' && codes[host.id] !== code.code) {
+  if (code && host.group === 'commands' && code.status === 'ready' && codes[host.id] !== code.code) {
     setCodes({ ...codes, [host.id]: code.code });
   }
 
@@ -173,20 +192,40 @@ function BoxAction({
   way,
   code,
   details,
+  signedOut,
 }: {
   host: Host;
   way: HostWay;
-  code: ConnectCodeState;
+  code?: ConnectCodeState;
   details: Details;
+  signedOut?: { signInHref: string };
 }) {
-  const action = actionOf(host, way, code, details);
+  const action = actionOf(host, way, code, details, signedOut);
   const className = cn(SMALL_BUTTON, 'ml-auto');
 
   if (action.kind === 'link') {
+    const content = (
+      <>
+        {action.icon === 'login' ? (
+          <LogIn aria-hidden="true" className="size-3.5" />
+        ) : (
+          <ArrowUpRight aria-hidden="true" className="size-3.5" />
+        )}
+        <MorphingText text={action.label} />
+      </>
+    );
+
+    if (action.icon === 'login') {
+      return (
+        <Link href={action.href} className={buttonClassName('primary', className)}>
+          {content}
+        </Link>
+      );
+    }
+
     return (
       <a href={action.href} className={buttonClassName('primary', className)}>
-        <ArrowUpRight aria-hidden="true" className="size-3.5" />
-        <MorphingText text={action.label} />
+        {content}
       </a>
     );
   }
@@ -209,11 +248,21 @@ function BoxAction({
 
 type Action =
   | { kind: 'copy'; label: string; copyLabel: string; value: string }
-  | { kind: 'link'; label: string; href: string }
+  | { kind: 'link'; label: string; href: string; icon?: 'login' }
   /** The commands' code isn't there yet: the button waits for it. */
   | { kind: 'waiting'; label: string };
 
-function actionOf(host: Host, way: HostWay, code: ConnectCodeState, details: Details): Action {
+function actionOf(
+  host: Host,
+  way: HostWay,
+  code: ConnectCodeState | undefined,
+  details: Details,
+  signedOut?: { signInHref: string }
+): Action {
+  if (way === 'cli' && host.group === 'commands' && signedOut) {
+    return { kind: 'link', label: 'Sign in', href: signedOut.signInHref, icon: 'login' };
+  }
+
   if (host.group === 'chat') {
     return way === 'prompt'
       ? {
@@ -225,15 +274,17 @@ function actionOf(host: Host, way: HostWay, code: ConnectCodeState, details: Det
       : { kind: 'copy', label: 'Copy URL', copyLabel: 'Copy the MCP server address', value: details.mcpUrl };
   }
 
-  if (way === 'cli') {
-    return code.status === 'ready'
-      ? {
-          kind: 'copy',
-          label: 'Copy commands',
-          copyLabel: 'Copy the commands',
-          value: cliScript(host, codeDetails(details, code.code)).copy,
-        }
-      : { kind: 'waiting', label: 'Copy commands' };
+  if (way === 'cli' && host.group === 'commands') {
+    if (code?.status === 'ready') {
+      return {
+        kind: 'copy',
+        label: 'Copy commands',
+        copyLabel: 'Copy the commands',
+        value: cliScript(host, codeDetails(details, code.code)).copy,
+      };
+    }
+
+    return { kind: 'waiting', label: 'Copy commands' };
   }
 
   if (way === 'plugin') {
@@ -264,7 +315,7 @@ function codeDetails(details: Details, code: HeldCode) {
 
 /** What the box shows for a view, `<host>:<way>:<code status>` as `HostSetupBox` keys it. */
 function BoxBody({ view, details }: { view: string; details: Details }) {
-  const [id, way, status] = view.split(':') as [HostId, HostWay, ConnectCodeState['status']];
+  const [id, way, status] = view.split(':') as [HostId, HostWay, ConnectCodeState['status'] | 'signed-out'];
   const host = hostOf(id);
 
   if (host.group === 'chat') {
@@ -276,6 +327,10 @@ function BoxBody({ view, details }: { view: string; details: Details }) {
   }
 
   if (way === 'cli') {
+    if (status === 'signed-out' && details.signInHref) {
+      return <SignedOutCli host={host} signInHref={details.signInHref} />;
+    }
+
     const code = details.codes[host.id];
     if (status === 'error') {
       return <CodeError error={details.error} onRetry={details.onRetry} />;
@@ -293,6 +348,28 @@ function BoxBody({ view, details }: { view: string; details: Details }) {
   return (
     <Words caption={way === 'plugin' ? pluginCaption(host) : mcpCaption(host)}>
       <ScriptLines script={script} />
+    </Words>
+  );
+}
+
+/** What stands in the commands on a public page. Never valid, so never mistaken for a real agent or code. */
+const PUBLIC_AGENT = '<agent>';
+const PUBLIC_CODE = '<code>';
+
+/** The commands on a public page: the same script, with a sign-in where the agent and the code go. */
+function SignedOutCli({ host, signInHref }: { host: CommandHost; signInHref: string }) {
+  const where =
+    host.runsIn === 'computer' ? `on the computer ${host.name} runs on` : `where ${hostSubject(host)} works`;
+
+  return (
+    <Words caption={`Run it ${where}. Sign in to fill in your agent and a code. It works once and expires in 10 min.`}>
+      <ScriptLines
+        script={cliScript(host, { handle: PUBLIC_AGENT, code: PUBLIC_CODE })}
+        slots={[
+          { text: PUBLIC_AGENT, render: (text) => <span className="text-muted">{text}</span> },
+          { text: PUBLIC_CODE, render: () => <SignInSlot href={signInHref} /> },
+        ]}
+      />
     </Words>
   );
 }
@@ -327,8 +404,12 @@ function ConnectorView({ host, details }: { host: ChatApp; details: Details }) {
 
 /** What to paste into the chat app (`1.4 · Connect · prompt`, without the commands). */
 function PromptView({ host, details }: { host: ChatApp; details: Details }) {
+  const caption = details.signInHref
+    ? `${promptCaption(host)} Replace <agent> with your agent’s name.`
+    : promptCaption(host);
+
   return (
-    <Words caption={promptCaption(host)}>
+    <Words caption={caption}>
       <span className="block text-foreground/60">
         {chatPrompt(host, details).map((line, index) => (
           // The lines of a prompt never reorder, so where a line stands is its key.

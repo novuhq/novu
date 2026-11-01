@@ -6,6 +6,16 @@ import { connectCommands } from './connect-prompt';
 import { homeMarkdown, llmsIndex } from './home-markdown';
 import { hostMarkdown } from './host-markdown';
 import {
+  chatPrompt,
+  cliScript,
+  connectorSteps,
+  formatScript,
+  mcpScript,
+  pluginScript,
+  promptText,
+  waysOf,
+} from './host-ways';
+import {
   type ChatApp,
   type CommandHost,
   cursorInstallLink,
@@ -20,6 +30,25 @@ import {
   skillsCommand,
   tellYourAgent,
 } from './hosts';
+
+function scriptOf(host: CommandHost, way: ReturnType<typeof waysOf>[number]) {
+  switch (way) {
+    case 'cli':
+      return cliScript(host, { handle: '<agent>', code: '<code>' });
+    case 'plugin':
+      return pluginScript(host);
+    case 'mcp':
+      return mcpScript(host, MCP_URL);
+    case 'connector':
+    case 'prompt':
+      return { lines: [], copy: '' };
+    default: {
+      const exhaustive: never = way;
+
+      return exhaustive;
+    }
+  }
+}
 
 const APP = join(__dirname, '..', 'app');
 const PUBLIC = join(__dirname, '..', '..', 'public');
@@ -202,44 +231,61 @@ describe('the Markdown for agents', () => {
       const [title, line] = hostMarkdown(host).split('\n\n');
 
       expect(title).toMatch(/^# Agent Inbox for /);
-      expect(line).toBe(`> ${tellYourAgent(host.id)}`);
-      expect(line).toBe(`> Set up Agent Inbox from agentinbox.md/${host.id}`);
+      expect(line).toBe(`> ${tellYourAgent()}`);
+      expect(line).toBe('> Set up Agent Inbox from https://www.agentinbox.md/agents.md');
     }
   });
 
   it('gives a host that runs commands the code, the self-setup and its second way in', () => {
     const markdown = hostMarkdown(hostOf('claude-code'));
 
-    expect(markdown).toContain('`npx @agentinbox/cli connect <agent> --code <code> --yes`');
+    expect(markdown).toContain('npx @agentinbox/cli connect <agent> --code <code> --yes');
     expect(markdown).toContain('npx skills add agentinboxhq/skills --agent claude-code -y');
     expect(markdown).toContain(
       'npx @agentinbox/cli setup --email <their email> --name "<their name>" --agent-name "<what they call you>"'
     );
     expect(markdown).toContain('`npx @agentinbox/cli login`');
-    expect(markdown).toContain('/plugin install agentinbox@agentinbox');
+    expect(markdown).toContain('claude plugin install agentinbox@agentinbox');
     expect(markdown).toContain('Never ask for a Telegram bot token or a Slack token');
     expect(hostMarkdown(hostOf('cursor'))).toContain(cursorInstallLink(MCP_URL));
+    expect(hostMarkdown(hostOf('cursor'))).toContain('"mcpServers"');
     expect(hostMarkdown(hostOf('opencode'))).toContain('opencode mcp add AgentInbox --url https://mcp.agentinbox.md');
-    expect(hostMarkdown(hostOf('opencode'))).toContain('`opencode mcp auth AgentInbox`');
+    expect(hostMarkdown(hostOf('opencode'))).toContain('$ opencode mcp auth AgentInbox');
     expect(hostMarkdown(hostOf('codex'))).toContain('codex plugin add agentinbox@agentinbox');
+    expect(hostMarkdown(hostOf('codex'))).toContain('$ codex mcp login AgentInbox');
     expect(hostMarkdown(hostOf('codex'))).toContain(
-      '`codex mcp login AgentInbox` Then start Codex: it connects to Agent Inbox when a session starts.'
+      '# 3. Start Codex: it connects to Agent Inbox when a session starts'
     );
     expect(hostMarkdown(hostOf('hermes'))).toContain('/reset');
     expect(hostMarkdown(hostOf('hermes'))).toContain(
-      ['```text', 'hermes mcp add AgentInbox --url https://mcp.agentinbox.md --auth oauth', '```'].join('\n')
+      '$ hermes mcp add AgentInbox --url https://mcp.agentinbox.md --auth oauth'
     );
     expect(hostMarkdown(hostOf('hermes'))).toContain(
-      [
-        '```yaml',
-        'mcp_servers:',
-        '  AgentInbox:',
-        '    url: "https://mcp.agentinbox.md"',
-        '    auth: oauth',
-        '```',
-      ].join('\n')
+      '# 2. Sign in to Agent Inbox in the browser, and say yes when Hermes asks to enable the tools'
     );
-    expect(hostMarkdown(hostOf('cursor'))).toContain('```json');
+  });
+
+  it('prints each way as the dashboard’s setup box does', () => {
+    for (const host of HOSTS) {
+      const markdown = hostMarkdown(host);
+      if (host.group === 'commands') {
+        for (const way of waysOf(host)) {
+          expect(markdown).toContain(formatScript(scriptOf(host, way)));
+        }
+        continue;
+      }
+
+      for (const way of waysOf(host)) {
+        if (way === 'prompt') {
+          expect(markdown).toContain(promptText(chatPrompt(host, { handle: '<agent>', mcpUrl: MCP_URL })));
+        }
+        if (way === 'connector') {
+          for (const step of connectorSteps(host, MCP_URL)) {
+            expect(markdown).toContain(step.text);
+          }
+        }
+      }
+    }
   });
 
   it('tells an agent on General to name itself to the skills CLI, which installs nothing otherwise', () => {

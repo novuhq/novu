@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import type { Mock } from 'vitest';
 import { CacheService } from '../cache.service';
 import { CachedResponse } from './cached-response.decorator';
 
@@ -19,17 +20,17 @@ class TestClass {
 describe('CachedResponse Decorator', () => {
   let testInstance: TestClass;
   let mockCacheService: {
-    cacheEnabled: jest.Mock;
-    get: jest.Mock;
-    set: jest.Mock;
+    cacheEnabled: Mock;
+    get: Mock;
+    set: Mock;
   };
 
   beforeEach(async () => {
     // Create mock for CacheService
     mockCacheService = {
-      cacheEnabled: jest.fn().mockReturnValue(true),
-      get: jest.fn(),
-      set: jest.fn(),
+      cacheEnabled: vi.fn().mockReturnValue(true),
+      get: vi.fn(),
+      set: vi.fn(),
     };
 
     // Create testing module
@@ -50,7 +51,7 @@ describe('CachedResponse Decorator', () => {
   it('should execute original method when cache is disabled', async () => {
     // Arrange
     mockCacheService.cacheEnabled.mockReturnValue(false);
-    const spy = jest.spyOn(testInstance, 'testMethod');
+    const spy = vi.spyOn(testInstance, 'testMethod');
 
     // Act
     const result = await testInstance.testMethod('test');
@@ -63,7 +64,7 @@ describe('CachedResponse Decorator', () => {
 
   it('should skip cache when skipCache condition is met', async () => {
     // Arrange
-    const spy = jest.spyOn(testInstance, 'testMethod');
+    const spy = vi.spyOn(testInstance, 'testMethod');
 
     // Act
     const result = await testInstance.testMethod('skip');
@@ -116,7 +117,7 @@ describe('CachedResponse Decorator', () => {
   it('should handle cache retrieval errors gracefully', async () => {
     // Arrange
     mockCacheService.get.mockRejectedValue(new Error('Cache error'));
-    const spy = jest.spyOn(testInstance, 'testMethod');
+    const spy = vi.spyOn(testInstance, 'testMethod');
 
     // Act
     const result = await testInstance.testMethod('test');
