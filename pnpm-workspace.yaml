@@ -116,10 +116,13 @@ overrides:
   # template target. Patched in 18.2.5 (patch bump within the 18.2.x line).
   # GHSA-wr44-6hxh-3jwq (moderate): joi 18.x prototype replacement through
   # `__proto__` error codes during messages compilation. Patched in 18.2.9
-  # (patch bump within the 18.2.x line). Widen the previous `<18.2.5` floor
-  # so transitive consumers (packages/providers > africastalking, etc.) pick
-  # up the fix.
-  joi@<18.2.9: ^18.2.9
+  # (patch bump within the 18.2.x line).
+  # GHSA-4528-x5fx-h6hg (high): joi quadratic-time split in
+  # `string().email({ multiple: true })` enables denial of service. Patched
+  # in 18.3.1 (patch bump within the 18.3.x line). Widen the previous
+  # `<18.2.9` floor so transitive consumers (packages/providers >
+  # africastalking, plivo) pick up the fix.
+  joi@<18.3.1: ^18.3.1
   prosemirror-model: 1.22.3
   path-to-regexp@<0.1.13: ^0.1.13
   '@swc/core@>=1.0.0 <2.0.0': 1.7.26
