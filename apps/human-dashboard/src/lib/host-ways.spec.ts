@@ -6,6 +6,7 @@ import {
   cliScript,
   connectorSteps,
   copiesAlone,
+  mcpCaption,
   mcpScript,
   pluginScript,
   promptText,
@@ -37,7 +38,7 @@ describe('the ways in', () => {
       codex: ['plugin', 'cli'],
       opencode: ['mcp', 'cli'],
       cursor: ['mcp', 'cli'],
-      hermes: ['cli'],
+      hermes: ['cli', 'mcp'],
       openclaw: ['cli'],
       general: ['cli'],
       claude: ['connector', 'prompt'],
@@ -67,7 +68,7 @@ describe('the commands', () => {
       [
         'npx @agentinbox/cli connect atlas --code BCDF-GHJK --yes --api-url=https://www.agentinbox.md/api',
         'npx skills add agentinboxhq/skills --agent claude-code -y',
-        'npx @agentinbox/cli inbox list',
+        'npx @agentinbox/cli list',
       ].join('\n')
     );
     expect(script.lines.some((line) => copiesAlone(script, line))).toBe(false);
@@ -143,6 +144,23 @@ describe('the MCP server in a host’s config', () => {
       { kind: 'note', text: '1. Run this in your project, or add --global to add it for every project:' },
       { kind: 'note', text: '2. Sign in to Agent Inbox in the browser' },
     ]);
+  });
+
+  it('adds Hermes’s server with one command that also signs in, so the button copies that alone', () => {
+    const script = mcpScript(commandHost('hermes'), MCP_URL);
+
+    // `hermes mcp add` asks as it goes: a line pasted after it would be taken as an answer.
+    expect(script.copy).toBe(`hermes mcp add AgentInbox --url ${MCP_URL} --auth oauth`);
+    expect(script.lines.filter((line) => line.kind === 'note').map((line) => line.text)).toEqual([
+      '1. Run this on the computer Hermes runs on:',
+      '2. Sign in to Agent Inbox in the browser, and say yes when Hermes asks to enable the tools',
+      '3. Start a new Hermes session, or run /reload-mcp in an open one',
+    ]);
+    expect(script.lines.some((line) => copiesAlone(script, line))).toBe(false);
+    expect(mcpCaption(commandHost('hermes'))).toBe(
+      'Run it in a terminal. No code needed: Hermes signs in to Agent Inbox in the browser.'
+    );
+    expect(mcpCaption(commandHost('opencode'))).toMatch(/^Run them in a terminal\. /);
   });
 });
 

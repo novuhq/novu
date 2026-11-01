@@ -12,6 +12,8 @@ export const faqAssets = {
 } satisfies SectionAssets;
 
 export const FAQ_HEADING = {
+  index: '06',
+  label: 'FAQ',
   lead: 'Questions,',
   rest: 'answers',
 } as const;

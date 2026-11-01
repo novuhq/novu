@@ -12,8 +12,8 @@ export type Env = {
   /** The Agent Inbox Dashboard API, which every tool calls as the account: `https://www.agentinbox.md/api`. */
   AGENT_INBOX_API_URL?: string;
   /**
-   * The Novu API (US; Agent Inbox has no EU region). Only asked for the account's key with the dashboard secret,
-   * the one call the Dashboard API doesn't offer.
+   * The Novu API. Only asked for the account's key with the dashboard secret, the one call the Dashboard API
+   * doesn't offer.
    */
   NOVU_API_URL?: string;
   /** Where a person who opens the server's address in a browser is sent. */

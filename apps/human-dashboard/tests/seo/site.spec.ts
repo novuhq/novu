@@ -107,6 +107,8 @@ test('GEO discovery and Markdown expose the same commands without HTML noise', a
   expect(document.headers()['content-type']).toContain('text/markdown');
   expect(document.headers().link).toContain(`<${origin}/>; rel="canonical"`);
   const markdown = await document.text();
+  expect(markdown).toMatch(/^# AGENTINBOX\.MD\n\nThe inbox API for agents\n/);
+  expect(markdown).toContain('- **Agents as teammates.**');
   await page.goto('/');
   const commands = await page.locator('.home-command-line code, #flags dt code').allTextContents();
   for (const command of commands) expect(markdown).toContain(command);

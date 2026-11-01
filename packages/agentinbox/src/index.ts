@@ -198,7 +198,7 @@ channel
 
 program
   .command('setup')
-  .argument('[channel]', 'also link telegram or slack, or verify email on an account')
+  .argument('[channel]', 'also link telegram or slack, or confirm email on an account')
   .option('--api-url <url>', 'API URL override')
   .option('--secret-key <key>', 'use an existing Novu environment instead of keyless (self-hosted)')
   .option('--telegram-bot-token <token>', 'BotFather token (skips the paste-or-page prompt)')
@@ -208,12 +208,17 @@ program
     '--name <name>',
     'your first and last name, e.g. "Nikita Grossman" — shown to people you invite (skips the first-run prompt)'
   )
-  .option('--agent-name <name>', 'what your agent is called, as people see it')
+  .option('--agent-name <name>', 'what your agent is called, as people see it. A new agent needs one')
+  .option(
+    '--agent-handle <handle>',
+    "a new agent's address before the @, e.g. atlas (default: from the name). It can't be changed later"
+  )
   .option('--agent-description <text>', 'a line about what your agent does, shown with its name')
   .option('--agent-picture <file-or-url>', 'your agent’s picture: a JPEG or PNG of up to 2 MB (needs `login`)')
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
   .description('Create your agent inbox, then optionally connect Telegram or Slack')
-  .action(setupCommand);
+  // Not `.action(setupCommand)`: commander's own last argument would be taken for the name on the screen.
+  .action((channelArg: string | undefined, options) => setupCommand(channelArg, options));
 
 program
   .command('login')

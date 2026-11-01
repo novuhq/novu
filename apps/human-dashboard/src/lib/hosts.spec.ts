@@ -56,7 +56,7 @@ describe('the host list', () => {
     }
   });
 
-  it('gives the plugin hosts a plugin, OpenCode and Cursor the MCP server, and Hermes, OpenClaw and General nothing more', () => {
+  it('gives the plugin hosts a plugin, OpenCode, Cursor and Hermes the MCP server, and OpenClaw and General nothing more', () => {
     const second = Object.fromEntries(
       HOSTS.filter((host): host is CommandHost => host.group === 'commands').map((host) => [
         host.id,
@@ -69,7 +69,7 @@ describe('the host list', () => {
       codex: 'plugin',
       opencode: 'mcp-config',
       cursor: 'mcp-config',
-      hermes: null,
+      hermes: 'mcp-config',
       openclaw: null,
       general: null,
     });
@@ -111,6 +111,7 @@ describe('the host list', () => {
       'codex',
       'opencode',
       'cursor',
+      'hermes',
       'claude',
       'chatgpt',
       'grok',
@@ -211,7 +212,9 @@ describe('the Markdown for agents', () => {
 
     expect(markdown).toContain('`npx @agentinbox/cli connect <agent> --code <code> --yes`');
     expect(markdown).toContain('npx skills add agentinboxhq/skills --agent claude-code -y');
-    expect(markdown).toContain('npx @agentinbox/cli setup --email <their email> --name "<their name>"');
+    expect(markdown).toContain(
+      'npx @agentinbox/cli setup --email <their email> --name "<their name>" --agent-name "<what they call you>"'
+    );
     expect(markdown).toContain('`npx @agentinbox/cli login`');
     expect(markdown).toContain('/plugin install agentinbox@agentinbox');
     expect(markdown).toContain('Never ask for a Telegram bot token or a Slack token');
@@ -223,6 +226,20 @@ describe('the Markdown for agents', () => {
       '`codex mcp login AgentInbox` Then start Codex: it connects to Agent Inbox when a session starts.'
     );
     expect(hostMarkdown(hostOf('hermes'))).toContain('/reset');
+    expect(hostMarkdown(hostOf('hermes'))).toContain(
+      ['```text', 'hermes mcp add AgentInbox --url https://mcp.agentinbox.md --auth oauth', '```'].join('\n')
+    );
+    expect(hostMarkdown(hostOf('hermes'))).toContain(
+      [
+        '```yaml',
+        'mcp_servers:',
+        '  AgentInbox:',
+        '    url: "https://mcp.agentinbox.md"',
+        '    auth: oauth',
+        '```',
+      ].join('\n')
+    );
+    expect(hostMarkdown(hostOf('cursor'))).toContain('```json');
   });
 
   it('tells an agent on General to name itself to the skills CLI, which installs nothing otherwise', () => {

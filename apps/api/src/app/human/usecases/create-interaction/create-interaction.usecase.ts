@@ -708,7 +708,7 @@ export class CreateInteraction {
 
     if (subscriberIds.length > 1) {
       throw new ConflictException(
-        `${address} is verified for more than one contact (${subscriberIds.join(', ')}). Pass the contact id instead.`
+        `${address} is confirmed for more than one contact (${subscriberIds.join(', ')}). Pass the contact id instead.`
       );
     }
 

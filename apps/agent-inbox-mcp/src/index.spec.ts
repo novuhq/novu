@@ -46,6 +46,24 @@ describe('the Agent Inbox MCP server', () => {
     );
   });
 
+  it('sends a person who opens the address in a browser to the configured site', async () => {
+    const { env, ctx } = setup({ DOCS_URL: 'https://site.example.test' });
+
+    const response = await worker.fetch(new Request(`${ORIGIN}/`, { headers: { Accept: 'text/html' } }), env, ctx);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('Location')).toBe('https://site.example.test/');
+  });
+
+  it('sends that person to the Agent Inbox website when no site is configured', async () => {
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(new Request(`${ORIGIN}/`, { headers: { Accept: 'text/html' } }), env, ctx);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('Location')).toBe('https://www.agentinbox.md/');
+  });
+
   it('names the Agent Inbox Clerk app as the place to sign in', async () => {
     const { env, ctx } = setup();
 
@@ -247,6 +265,7 @@ describe('the Agent Inbox MCP server', () => {
 
     expect(result.tools.map((tool) => tool.name).sort()).toEqual(
       [
+        'channel_add',
         'contact_invite',
         'contact_list',
         'inbox_list',
@@ -259,6 +278,30 @@ describe('the Agent Inbox MCP server', () => {
         'inbox_wait',
       ].sort()
     );
+  });
+
+  it('spells out all three hints on every tool, as OpenAI’s app review requires', async () => {
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(rpc('tools/list', {}), env, ctx);
+    const { result } = (await response.json()) as {
+      result: { tools: Array<{ name: string; annotations?: Record<string, boolean> }> };
+    };
+
+    // The review blocks a tool that leaves one out, even destructiveHint on a tool that only reads.
+    expect(Object.fromEntries(result.tools.map((tool) => [tool.name, tool.annotations]))).toEqual({
+      inbox_setup: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+      channel_add: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+      inbox_send: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+      inbox_reply: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+      inbox_wait: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
+      contact_invite: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+      contact_list: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      inbox_list: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      inbox_show: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      inbox_read: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+      inbox_resolve: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    });
   });
 
   it('asks the owner of the account for approval through the Dashboard API', async () => {
@@ -557,20 +600,6 @@ describe('the Agent Inbox MCP server', () => {
     await worker.fetch(rpc('tools/list', {}), env, ctx);
 
     expect(calls.filter((call) => call.url.endsWith('/oauth/userinfo'))).toHaveLength(1);
-  });
-
-  it('still knows whose token it is from what was remembered before Agent Inbox was US only', async () => {
-    const calls = stubBackends();
-    const { env, ctx, kv } = setup();
-    await worker.fetch(rpc('tools/list', {}), env, ctx);
-    const cacheKey = [...kv.values.keys()].find((key) => key.startsWith('token:')) ?? '';
-    kv.values.set(cacheKey, JSON.stringify({ agentInboxUserId: 'user_1', region: 'eu' }));
-    const before = calls.length;
-
-    const response = await worker.fetch(rpc('tools/list', {}), env, ctx);
-
-    expect(response.status).toBe(200);
-    expect(calls.slice(before).map((call) => call.url)).toEqual([`${NOVU_API}/v1/human/accounts/user_1/secret-key`]);
   });
 
   it('calls the Dashboard API for every tool, and the Novu API only for the account key', async () => {

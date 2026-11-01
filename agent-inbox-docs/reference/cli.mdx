@@ -46,7 +46,7 @@ On a terminal, `setup`, `login`, `connect`, and `channel add` draw one updating 
 
 ## setup
 
-Creates a keyless inbox, then optionally connects a channel. See [Create an inbox](/setup).
+Creates a keyless inbox, then optionally connects a channel. A keyless setup waits up to 5 minutes for you to open the confirmation email. Running it again keeps the same inbox. See [Create an inbox](/setup).
 
 ```bash
 npx @agentinbox/cli setup [telegram|slack|email]
@@ -56,7 +56,8 @@ npx @agentinbox/cli setup [telegram|slack|email]
 | --- | --- |
 | `--name` | Your first and last name |
 | `--email` | Your email address, for the email channel |
-| `--agent-name` | The name people see |
+| `--agent-name` | The name people see. A new agent needs one |
+| `--agent-handle` | Its address before the `@`. Comes from the name otherwise, and can't be changed later |
 | `--agent-description` | One line about what the agent does |
 | `--agent-picture` | JPEG or PNG, up to 2 MB. Needs `login` |
 | `--telegram-bot-token` | BotFather token. Skips the prompt |
@@ -66,7 +67,7 @@ npx @agentinbox/cli setup [telegram|slack|email]
 
 ## login
 
-Opens agentinbox.md. You confirm the code shown in the terminal. A keyless setup on this computer is claimed into the account.
+Opens agentinbox.md. You confirm the code shown in the terminal, within an hour. A keyless setup on this computer is claimed into the account.
 
 ```bash
 npx @agentinbox/cli login
@@ -169,7 +170,7 @@ npx @agentinbox/cli contact invite <id|email>
 | `--via` | `telegram`, `slack`, or `email`. Skips the invite page. Becomes their default |
 | `--email` | Required for `--via email` when there is no terminal, unless the argument is already an email |
 | `--name` | Display name |
-| `--async` | Print the link, or send the verification email, and exit |
+| `--async` | Print the link, or send the confirmation email, and exit |
 
 The page link works for 3 days. A Telegram or Slack link from `--via` works for minutes.
 
@@ -220,17 +221,13 @@ No inbox set up yet. Ask your operator to run: npx @agentinbox/cli setup (or set
 ```
 
 ```text
-You've used the 5 free messages of this keyless demo.
-To keep your channels and continue, run: npx @agentinbox/cli login
+You've reached the 5-message limit of this free Agent Inbox demo.
+To keep your Agent Inbox setup and channels, run: `npx @agentinbox/cli login`
 ```
 
 ```text
 Outbound email needs an Agent Inbox account.
 To claim this setup and send email, run: npx @agentinbox/cli login
-```
-
-```text
-Your message was not sent: alice@acme.com is not verified yet. A verification email is on its way; send again once they have clicked it.
 ```
 
 ```text

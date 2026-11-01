@@ -12,7 +12,10 @@ test('tab groups are labelled and headings preserve spaces in Chromium', async (
   expect(tablists).toEqual(['Example agents', 'Integrations', 'Message types']);
   expect(nodes.filter((node) => node.role?.value === 'tab')).toHaveLength(15);
   const headings = nodes.filter((node) => node.role?.value === 'heading').map((node) => node.name?.value);
-  expect(headings).toContain('One Inbox. Every channel');
+  expect(headings).toContain(
+    'Get your ChatGPT, Grok Bot, Claude or OpenClaw agent on Slack, Telegram or Email with everyone around you.'
+  );
+  expect(headings).toContain('One inbox. Every channel.');
   expect(headings).toContain('The agent communication building blocks');
   expect(headings).toContain('Works everywhere your agents are');
   expect(headings).toContain('Give your agent an Inbox. Today');

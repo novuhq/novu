@@ -5,14 +5,15 @@ import { AGENT_DOMAIN } from './onboarding';
 /*
  * The ways a host connects in the dashboard's setup box ("Connect another agent" and the onboarding's step 3),
  * one tab each. Only the ways a host really has: the commands for every host that runs them, with its plugin
- * or the MCP server in its own config ahead of them, and for a chat app the server added in the app, then a
+ * or the MCP server in its own config next to them, and for a chat app the server added in the app, then a
  * prompt to paste once it's there. Grok Bot adds the server itself when asked, so the prompt is all it needs.
  *
  * The first way is the one the box opens on. A coding agent with a second way in opens on it, and its sign-in
  * connects it: its plugin (Claude Code, Codex), which brings the skills and the inbox tools in one install, or
  * the MCP server in its own config (Cursor, OpenCode). Any other host that runs commands opens on them: one
- * paste, no sign-in, and the code connects it to this agent straight away. A chat app opens on adding the
- * server, which is how it connects at all.
+ * paste, no sign-in, and the code connects it to this agent straight away. Hermes has the MCP server in its
+ * config after them: it often runs on a server, with no browser there to sign in with. A chat app opens on
+ * adding the server, which is how it connects at all.
  */
 
 export type HostWay = 'cli' | 'plugin' | 'mcp' | 'connector' | 'prompt';
@@ -26,7 +27,10 @@ export function waysOf(host: Host): HostWay[] {
     return ['cli'];
   }
 
-  return [host.alternative.kind === 'plugin' ? 'plugin' : 'mcp', 'cli'];
+  const second = host.alternative.kind === 'plugin' ? 'plugin' : 'mcp';
+
+  // An agent on a computer of its own keeps its commands first: they need no browser there, its sign-in does.
+  return host.runsIn === 'computer' ? ['cli', second] : [second, 'cli'];
 }
 
 /** A way's tab, in the words its host uses: Claude adds a custom connector, ChatGPT a plugin. */
@@ -128,10 +132,10 @@ export function pluginCaption(host: CommandHost): string {
 
 /**
  * The MCP server in the host's own config, then its sign-in. A host with a command that adds the server
- * (OpenCode) gets that in place of the config, and the button copies it with the sign-in command, as a
- * terminal takes them together. With a link that adds the server in one click (Add to Cursor), the button is
- * that link and the config gets its own copy button; otherwise the button copies the config and the sign-in
- * command gets its own.
+ * (OpenCode, Hermes) gets that in place of the config, and the button copies it with the sign-in command where
+ * there is one, as a terminal takes them together. With a link that adds the server in one click (Add to
+ * Cursor), the button is that link and the config gets its own copy button; otherwise the button copies the
+ * config and the sign-in command gets its own.
  */
 export function mcpScript(host: CommandHost, mcpUrl: string): Script {
   const alternative = host.alternative;
@@ -181,9 +185,14 @@ function signInLines({ signIn, signInCommand, afterSignIn }: HostAlternative): S
 }
 
 export function mcpCaption(host: CommandHost): string {
-  const commands = host.alternative?.kind === 'mcp-config' && host.alternative.addCommand !== undefined;
+  const alternative = host.alternative;
+  // OpenCode signs in with a command of its own; Hermes within the one that adds the server.
+  const run =
+    alternative?.kind === 'mcp-config' && alternative.addCommand
+      ? `Run ${alternative.signInCommand ? 'them' : 'it'} in a terminal. `
+      : '';
 
-  return `${commands ? 'Run them in a terminal. ' : ''}No code needed: ${host.name} signs in to Agent Inbox in the browser.`;
+  return `${run}No code needed: ${host.name} signs in to Agent Inbox in the browser.`;
 }
 
 /** A chat app's steps in its settings, with the server's address after the step that pastes it (`1.4c`). */
