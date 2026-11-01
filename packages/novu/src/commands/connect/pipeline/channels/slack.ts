@@ -77,7 +77,7 @@ export async function connectSlackForAgent(
     agent: agent.identifier,
     appCreated,
   });
-  void open(authorizeUrl).catch(() => undefined);
+  void open(authorizeUrl).catch((): undefined => undefined);
   ui.showSlackWaiting({ authorizeUrl });
   const connected = await pollUntil(
     async () => {

@@ -11,7 +11,7 @@ import {
 } from './approve-human-cli-login.usecase';
 
 describe('ApproveHumanCliLogin', () => {
-  const account = { organizationId: 'novu_org', userId: 'novu_user', environmentId: 'dev_env', region: 'us' };
+  const account = { organizationId: 'novu_org', userId: 'novu_user', environmentId: 'dev_env' };
   const hold = { deviceCode: 'device_code', holdId: 'this_approval' };
 
   function setup() {

@@ -37,9 +37,14 @@ packageExtensions:
 
 # Settings migrated from package.json#pnpm (pnpm v11 no longer reads the `pnpm` field).
 overrides:
-  body-parser@<1.20.6: ^1.20.6
+  # GHSA-27r3-jxmh-p828 (high): body-parser DoS via trailing bytes after a
+  # compressed request body. Patched in 1.20.9 (1.x line) and 2.4.0 (2.x line).
+  # Widen the previous <1.20.6 / <2.3.0 floors so transitive consumers across
+  # the api, worker, ws, dashboard, and dev tooling (express, serve-static,
+  # @nestjs/*, verdaccio) pick up the fix.
+  body-parser@<1.20.9: ^1.20.9
   deepmerge-ts@<8.0.0: ^8.0.0
-  body-parser@>=2.0.0 <2.3.0: ^2.3.0
+  body-parser@>=2.0.0 <2.4.0: ^2.4.0
   # GHSA-8r5x-fm3f-whwj (critical): Handlebars JavaScript injection via AST
   # type confusion in compile (bypass of CVE-2026-33937).
   # GHSA-p8wg-vrv2-v86f (critical): Handlebars JavaScript injection via own
@@ -57,11 +62,13 @@ overrides:
   file-type@>=17.0.0 <21.3.4: ^21.3.4
   get-func-name@<2.0.1: ^2.0.1
   glob-parent@<5.1.2: ^5.1.2
-  minimatch@>=3.0.0 <3.1.4: ^3.1.4
-  minimatch@>=5.0.0 <5.1.8: ^5.1.8
-  minimatch@>=7.0.0 <7.4.8: ^7.4.8
-  minimatch@>=8.0.0 <8.0.6: ^8.0.6
-  minimatch@>=9.0.0 <9.0.7: ^9.0.7
+  # GHSA-g3hv-75wg-m249 (moderate): minimatch denial of service via
+  # globparts amplification in the `braceExpand` path. Patched in 11.0.1
+  # (first 11.x line). Supersedes earlier per-major overrides (3.1.4, 5.1.8,
+  # 7.4.8, 8.0.6, 9.0.7) since no fix was backported. Both ESM and CJS
+  # consumers (@nx/jest, jest, verdaccio, eslint, auto-it, @puppeteer/*)
+  # resolve to the dual-published 11.x build.
+  minimatch@<11.0.1: ^11.0.1
   nanoid@>=3.0.0 <3.3.17: ^3.3.17
   nth-check: ^2.1.1
   postcss@<8.5.23: ^8.5.23
@@ -77,7 +84,14 @@ overrides:
   # express (verdaccio, @nx/js dev tooling).
   proxy-addr@<2.0.8: ^2.0.8
   semver@>=7.0.0 <7.5.2: ^7.5.2
-  systeminformation@<5.31.7: ^5.31.7
+  # GHSA-3f7j-7jwc-fxfj (high) plus GHSA-7648-jmwf-vw7j (moderate) and
+  # GHSA-4vjg-vx72-qq4g (low): systeminformation command-injection / argument
+  # smuggling in several `getFoo` helpers via shell metacharacters. All three
+  # are patched in 5.33.16 (patch bump within the 5.x line). Widen the previous
+  # <5.31.7 floor so transitive consumers (@opentelemetry/host-metrics,
+  # nestjs-otel, @dotenvx/dotenvx > shadcn) pick up the fix. 5.33.17 and
+  # 5.33.18 land past the 72h minimumReleaseAge gate on the next run.
+  systeminformation@<5.33.16: ^5.33.16
   tar: 7.5.21
   tar-fs: '>=3.1.1'
   tough-cookie@<4.1.3: ^4.1.3
@@ -104,10 +118,13 @@ overrides:
   # template target. Patched in 18.2.5 (patch bump within the 18.2.x line).
   # GHSA-wr44-6hxh-3jwq (moderate): joi 18.x prototype replacement through
   # `__proto__` error codes during messages compilation. Patched in 18.2.9
-  # (patch bump within the 18.2.x line). Widen the previous `<18.2.5` floor
-  # so transitive consumers (packages/providers > africastalking, etc.) pick
-  # up the fix.
-  joi@<18.2.9: ^18.2.9
+  # (patch bump within the 18.2.x line).
+  # GHSA-4528-x5fx-h6hg (high): joi quadratic-time split in
+  # `string().email({ multiple: true })` enables denial of service. Patched
+  # in 18.3.1 (patch bump within the 18.3.x line). Widen the previous
+  # `<18.2.9` floor so transitive consumers (packages/providers >
+  # africastalking, plivo) pick up the fix.
+  joi@<18.3.1: ^18.3.1
   prosemirror-model: 1.22.3
   path-to-regexp@<0.1.13: ^0.1.13
   '@swc/core@>=1.0.0 <2.0.0': 1.7.26
@@ -139,10 +156,30 @@ overrides:
   # GHSA-q3jh-wrc6-jgq8 (high): follow-redirects array-form headers bypass
   # cross-origin credential stripping. GHSA-8r9p-f939-6h3c (high):
   # sensitiveHeaders regex escaping can expose credential headers. Both are
-  # patched in 1.16.1 (patch bump within the 1.16.x line). Transitive via
-  # axios, nx, probot, and friends across build tooling.
-  follow-redirects@>=1.16.0 <1.16.1: ^1.16.1
-  node-forge@<1.4.0: ^1.4.0
+  # patched in 1.16.1 (patch bump within the 1.16.x line).
+  # GHSA-mrwp-f3q8-3g9p (high): cross-realm sensitiveHeaders arrays are
+  # discarded, so custom credential headers follow redirects to a different
+  # origin. Patched in 1.16.2 (patch bump within the 1.16.x line). Widen the
+  # previous `<1.16.1` floor so transitive consumers (axios, nx, probot) pick
+  # up the fix.
+  follow-redirects@>=1.16.0 <1.16.2: ^1.16.2
+  # GHSA-86w9-cpqp-85rv (high) RSA PKCS#1 v1.5 signature verification accepts
+  # extra nested DigestAlgorithm elements, GHSA-7wch-p9px-956x (high) ReDoS in
+  # PEM decoding, GHSA-jc66-7q78-782g (high) PKCS#12 MAC forgery and
+  # constant-key PBE via zero iteration count, GHSA-8hrf-8g6f-7xwp (high) TLS
+  # record interleaving DoS, GHSA-hqq3-7jhf-c5jx (high) TLS call-stack
+  # exhaustion, GHSA-5x38-2vff-x55p (high) X.509 basicConstraints bypass in
+  # verifyCertificateChain(), GHSA-6wvx-3r32-xmcg (moderate) prototype
+  # pollution in forge.http cookie handling, GHSA-525v-9gp9-w22h (moderate)
+  # TLS client crash when the server sends no certificate, GHSA-5cwg-6vw7-rj6p
+  # (moderate) AES-GCM auth bypass via unvalidated tagLength, plus three low
+  # advisories (GHSA-4642-5mcj-2rqw asn1 oid truncation, GHSA-h6cr-wjv9-3cpp
+  # BigInteger.modInverse infinite loop, GHSA-4487-j8r4-4g2f CA store cert
+  # eviction). All patched in 1.4.1 (patch bump within the 1.x line). Widen
+  # the previous `<1.4.0` floor so transitive consumers (@nestjs/jwt, selfsigned,
+  # webpack-dev-server, verdaccio, @puppeteer/*, msal-node, mongodb-connection-string-url)
+  # pick up the fix.
+  node-forge@<1.4.1: ^1.4.1
   ws@>=8.0.0 <8.21.0: ^8.21.0
   ws@>=7.0.0 <7.5.11: ^7.5.11
   websocket-driver@<0.7.5: ^0.7.5
@@ -200,21 +237,45 @@ overrides:
   # seroval-plugins) onto the 1.6.x patch line. solid-js@1.9.6 depends on
   # `seroval: ^1.1.0` and seroval-plugins@1.2.1 has a `^1.0` peer, both of
   # which stay satisfied on 1.6.x.
-  seroval@<1.6.3: ^1.6.3
+  # GHSA-9wx9-5pv9-3349 (moderate, >=1.5.5 <1.6.10): seroval TypedArray /
+  # DataView length handling allows memory exhaustion in JSON deserialization.
+  # GHSA-f86p-h4j2-7qgj (moderate, >=1.6.0 <1.6.11): regression in the
+  # 1.6.10 TypedArray fix that still enables unchecked allocations. Both are
+  # patched in 1.6.11 (patch bump within the 1.6.x line). Widen the previous
+  # <1.6.3 floor so transitive consumers (apps/dashboard >
+  # @better-auth/sso/better-auth > solid-js > seroval[/-plugins] and the
+  # enterprise auth package) pick up the fix. solid-js@1.9.x depends on
+  # `seroval: ^1.1.0` and seroval-plugins@1.2.1 has a `^1.0` peer, both of
+  # which stay satisfied on 1.6.x.
+  seroval@<1.6.11: ^1.6.11
   h3@<1.15.9: ^1.15.9
   immutable@>=4.0.0 <4.3.8: ^4.3.8
   jws@>=4.0.0 <4.0.1: ^4.0.1
   validator@<13.15.22: ^13.15.22
   msgpackr: ^1.10.1
-  multer@<2.4.0: ^2.4.0
+  # GHSA-q7qp-rjg7-q26m (high): multer DoS via a pending asynchronous
+  # fileFilter after request teardown. Patched in 2.5.0 (patch bump within
+  # the 2.x line). Widen the previous <2.4.0 floor so transitive consumers
+  # (@nestjs/platform-express, api/worker upload routes) pick up the fix.
+  multer@<2.5.0: ^2.5.0
   jws@<3.2.3: ^3.2.3
   svgo@>=3.0.0 <3.3.5: ^3.3.5
   flatted@<3.4.2: ^3.4.2
-  serialize-javascript@<7.0.5: ^7.0.5
+  # GHSA-m5mm-p8h7-m29v (low): serialize-javascript XSS via unsanitized regex
+  # literals when the serialized string is embedded in HTML. Patched in 7.1.3
+  # (patch bump within the 7.x line). Widen the previous `<7.0.5` floor so
+  # mocha transitive consumers across apps/api, worker, ws, inbound-mail, and
+  # webhook test tooling pick up the fix.
+  serialize-javascript@<7.1.3: ^7.1.3
   ejs@<3.1.10: ^3.1.10
   rollup@>=3.0.0 <3.30.0: ^3.30.0
   rollup@<2.80.0: ^2.80.0
-  glob@>=10.2.0 <10.5.0: ^10.5.0
+  # GHSA-3g3m-2fjr-6pw4 (moderate): glob AbortSignal cancellation bypass
+  # allows post-timeout filesystem traversal. Patched in 14.0.2 (patch bump
+  # within the 14.x line). Supersedes the previous `>=10.2.0 <10.5.0` floor
+  # since no fix was backported to 9.x–13.x; glob 14 is dual-published
+  # (ESM/CJS) so transitive consumers (jest, @nx/jest, @auto-it/npm) work.
+  glob@>=9.0.0 <14.0.2: ^14.0.2
   # GHSA-* (undici): several DoS / cache-key / request-smuggling / cookie
   # forwarding issues in undici 6.x, 7.x, and 8.x. Previous rollups patched in
   # 6.28.1 / 7.29.1 / 8.10.2. GHSA-xjj6-f33q-929c (high), GHSA-4qv8-2p9j-2685
@@ -227,7 +288,11 @@ overrides:
   undici@>=6.0.0 <6.29.1: ^6.29.1
   undici@>=8.0.0 <8.12.2: ^8.12.2
   jose@>=3.0.0 <4.15.5: ^4.15.5
-  qs@<6.16.0: ^6.16.0
+  # GHSA-6pq8-jhm2-2vcw (moderate): qs prototype pollution via `__proto__` in
+  # parsed query strings. Patched in 6.16.1 (patch bump within the 6.16.x
+  # line). Widen the previous `<6.16.0` floor so transitive consumers (express
+  # > body-parser, @cypress/request, verdaccio dev tooling) pick up the fix.
+  qs@<6.16.1: ^6.16.1
   js-yaml@<3.15.2: ^3.15.2
   js-yaml@>=4.0.0 <4.3.2: ^4.3.2
   # GHSA-r3ph-w7gj-g6xm (moderate): js-yaml maxTotalMergeKeys does not limit CPU
@@ -381,7 +446,15 @@ overrides:
   # CVE-2026-111757: `serveStatic` decodes the request path twice, bypassing
   # middleware on static paths. Patched in 4.13.11.
   hono@<4.13.11: ^4.13.11
-  '@hono/node-server@<2.0.5': ^2.0.5
+  # GHSA-rmxm-3fg6-px4f (moderate): @hono/node-server 1.19.10 - 2.1.2 passes
+  # the full request URL (including query string) to the Node.js HTTP response
+  # body-less code path, enabling response-splitting / request-smuggling-like
+  # confusion when a malicious URL is reflected into the response status line.
+  # Patched in 2.1.3 (patch bump within the 2.x line). Widen the previous
+  # <2.0.5 floor so transitive consumers (apps/api > emulate, apps/agent-inbox-mcp
+  # > @modelcontextprotocol/sdk, playground/web-chat, packages/novu, enterprise
+  # workers) land on the fix.
+  '@hono/node-server@<2.1.3': ^2.1.3
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5': ^3.47.5
   '@clerk/shared@>=4.0.0 <4.12.2': ^4.12.2
@@ -404,9 +477,16 @@ overrides:
   # scheme/hostname normalization. Patched in 3.1.6.
   # GHSA-qw65-cvwx-89v3: additional host-confusion regression affecting
   # 3.1.6 (and 3.1.6 is separately called out by GHSA-58mr-gqgx-xq4g).
-  # Patched in 3.1.7. Widen the override so the transitive verdaccio > ajv
-  # consumer picks up the fix.
-  fast-uri@<3.1.7: ^3.1.7
+  # Patched in 3.1.7.
+  # GHSA-w74x-v6f9-j3xg (moderate) / GHSA-wjr9-j795-jxcr (moderate) /
+  # GHSA-xhq7-xmqj-769h (low) / GHSA-333x-w4r6-6crp (low): fast-uri URI
+  # scheme spoofing via percent-encoded scheme decoding, host confusion via
+  # unchecked WHATWG host canonicalization, improper path equivalence in
+  # relative reference normalization, and scheme injection via an unescaped
+  # first-segment colon in suffix references. All patched in 3.1.9 (patch
+  # bump within the 3.1.x line). Widen the override so the transitive
+  # verdaccio > ajv consumer picks up the fix.
+  fast-uri@<3.1.9: ^3.1.9
   # GHSA-c83g-rgw3-j3cx / GHSA-73wf-gq98-2v4g: browserslist unbounded memory
   # growth (OOM) via distinct query results and uncaught crash / prototype
   # write via untrusted browserslist-stats.json. Patched in 4.28.7.
@@ -500,7 +580,11 @@ overrides:
   # decoding of malformed percent-encoded input. Pulled transitively via
   # pkg-pr-new > query-registry > query-string. Patched in >=0.4.3, but the
   # only published patched release is 0.5.0.
-  decode-uri-component@<0.5.0: ^0.5.0
+  # GHSA-qr28-fpjm-wq7f (high): decode-uri-component <=0.5.0 DoS via quadratic
+  # replacement of percent-encoded runs. Patched in 0.5.1 (patch bump within
+  # the 0.5.x line). Widen the previous `<0.5.0` floor so transitive consumers
+  # (pkg-pr-new > query-registry > query-string) pick up the fix.
+  decode-uri-component@<0.5.1: ^0.5.1
   # Force single instances of @codemirror/state and @codemirror/autocomplete.
   # Without this, transitive lang-* packages pin to state@6.4.1 while direct
   # dashboard imports resolve against state@6.6.0, producing two virtual peer

@@ -23,11 +23,24 @@ export const geistMono = localFont({
   display: 'swap',
 });
 
-/** Italic display face for the accent words in the headings. */
-export const ivyPresto = localFont({
-  src: '../../public/fonts/ivy-presto-italic.woff2',
+/**
+ * Redaction 35 (OFL, MCKL): a serif worn down to its pixel grid, so the accent words share the dithered art's
+ * texture. Set in the page's cream, never in the accent orange.
+ */
+export const redaction = localFont({
+  src: [
+    { path: '../../public/fonts/redaction-35-regular.woff2', weight: '400', style: 'normal' },
+    { path: '../../public/fonts/redaction-35-italic.woff2', weight: '400', style: 'italic' },
+  ],
+  variable: '--font-redaction',
+  display: 'swap',
+});
+
+/** Geist Pixel Square (OFL) for the plate labels: figure numbers, card numbers and section indexes. */
+export const geistPixel = localFont({
+  src: '../../public/fonts/geist-pixel-square.woff2',
   weight: '400',
-  style: 'italic',
-  variable: '--font-ivy-presto',
+  style: 'normal',
+  variable: '--font-geist-pixel',
   display: 'swap',
 });

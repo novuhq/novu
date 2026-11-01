@@ -22,6 +22,7 @@ import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsap
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
+import { HumanRelayEmailService } from '../../human-relay/human-relay-email.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { esmImport } from '../../shared/util/esm-import';
@@ -169,6 +170,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly webChatPlatformDelivery: WebChatPlatformDeliveryService,
     private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService,
     private readonly webChatAcceptIdempotency: WebChatAcceptIdempotencyService,
+    private readonly humanRelayEmail: HumanRelayEmailService,
     @Inject(forwardRef(() => PlanLimitGateService))
     private readonly planLimitGate: PlanLimitGateService
   ) {
@@ -519,7 +521,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             defaultAgentAddress: this.agentEmailSender.resolveSharedInboxAddress(config),
             sendEmail: this.agentEmailSender.buildSendEmailCallback(config, outboundIntegrationId),
             stripAgentReplyToken,
-            actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style }) => {
+            actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style, cardTitle }) => {
               const userIdentifier = extractRecipientFromThreadId(threadId);
               const { url } = await this.emailActionTokenService.signActionToken({
                 agentId,
@@ -535,10 +537,17 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
                 label,
                 style,
                 userIdentifier,
+                ...(config.isHumanRelay ? { agentInbox: { question: cardTitle } } : {}),
               });
 
               return url;
             },
+            ...(config.isHumanRelay
+              ? {
+                  layout: (message) =>
+                    this.humanRelayEmail.layout(config, extractRecipientFromThreadId(message.threadId), message),
+                }
+              : {}),
           }),
         };
       }

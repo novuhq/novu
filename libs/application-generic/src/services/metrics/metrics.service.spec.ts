@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { metricsServiceList } from './index';
 import { IMetricsService } from './metrics.interface';
-import { MetricsService, NewRelicMetricsService } from './metrics.service';
+import { MetricsService, NewRelicMetricsService, OtelMetricsService } from './metrics.service';
 
 describe('MetricsService', () => {
   let service: MetricsService;
@@ -31,7 +31,7 @@ describe('MetricsService', () => {
       const metricName = 'testMetric';
       const metricValue = 123;
 
-      const spyNewRelic = jest.spyOn(NewRelicMetricsService.prototype, 'recordMetric');
+      const spyNewRelic = vi.spyOn(NewRelicMetricsService.prototype, 'recordMetric');
       service.recordMetric(metricName, metricValue);
 
       expect(spyNewRelic).toHaveBeenCalledWith(metricName, metricValue);
@@ -42,7 +42,7 @@ describe('MetricsService', () => {
     const createServices = async () =>
       (
         (await Test.createTestingModule({
-          providers: [metricsServiceList, MetricsService, NewRelicMetricsService],
+          providers: [metricsServiceList, MetricsService, NewRelicMetricsService, OtelMetricsService],
         }).compile()) as TestingModule
       ).get<IMetricsService[]>('MetricsServices');
 

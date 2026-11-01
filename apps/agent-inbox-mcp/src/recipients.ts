@@ -84,7 +84,7 @@ export async function findContactByEmail(api: AgentInboxApi, email: string): Pro
       if (matches.length > 1) {
         throw new AgentInboxApiError(
           409,
-          `${email} is verified for more than one contact (${matches.map((contact) => contact.id).join(', ')}). Pass a contact id instead.`
+          `${email} is confirmed for more than one contact (${matches.map((contact) => contact.id).join(', ')}). Pass a contact id instead.`
         );
       }
 

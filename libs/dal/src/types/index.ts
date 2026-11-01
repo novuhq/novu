@@ -1,4 +1,4 @@
-export type { FilterQuery } from 'mongoose';
+export type { Connection, Expression, FilterQuery } from 'mongoose';
 export { ClientSession, Schema, Types } from 'mongoose';
 export * from './auth';
 export * from './enforce';

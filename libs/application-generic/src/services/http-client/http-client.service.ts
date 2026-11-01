@@ -225,6 +225,15 @@ export class HttpClientService {
       parsedBody = response.body.toString('utf8');
     } else {
       const jsonResponse = await safeOutboundJsonRequest<T>(safeOptions);
+
+      if (jsonResponse.statusCode < 400 && !jsonResponse.isJson) {
+        throw new HttpClientError({
+          type: HttpClientErrorType.PARSE_ERROR,
+          message: `Response code ${jsonResponse.statusCode}, but the body is not valid JSON`,
+          statusCode: jsonResponse.statusCode,
+        });
+      }
+
       response = {
         statusCode: jsonResponse.statusCode,
         statusMessage: jsonResponse.statusMessage,

@@ -3,30 +3,45 @@ import { buildConnectEmbedPrompt, type ConnectEmbedRuntime, SUBSCRIBER_ID_PLACEH
 import chalk from 'chalk';
 import { resolveConnectApplicationIdentifier } from '../../auth/resolve-connect-application-identifier';
 import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
+import { resolveConnectSubscriberId } from '../../auth/resolve-connect-subscriber-id';
 import type {
-  WebChatConnectOutcome,
-  WebChatSetupMode,
   AgentConnectMode,
   AgentSummary,
-  ConnectWebChatHandoff,
   ConnectCommandOptions,
+  ConnectWebChatHandoff,
+  WebChatConnectOutcome,
+  WebChatSetupMode,
 } from '../../types';
 import { logWebChatEmbedPromptFileHandoffEvent, writeWebChatEmbedPromptHandoffFile } from '../../ui/handoff-events';
 import type { ConnectUI } from '../../ui/ui';
 import {
   type BridgeSetupSnapshot,
-  resolveWebChatProjectWiringState,
   resolveHandlerWired,
+  resolveWebChatProjectWiringState,
 } from './resolve-web-chat-wiring-state';
-import {
-  defaultWebChatScaffoldDirName,
-  detectWebChatProjectKind,
-  scaffoldWebChatProject,
-} from './scaffold-web-chat';
-import { mergeWebChatEnv } from './wire-web-chat-env';
+import { defaultWebChatScaffoldDirName, detectWebChatProjectKind, scaffoldWebChatProject } from './scaffold-web-chat';
+import { mergeWebChatEnv, readWebChatSubscriberId, resolveUnknownSocketHostWarning } from './wire-web-chat-env';
 
 export type { BridgeSetupSnapshot } from './resolve-web-chat-wiring-state';
 export { resolveHandlerWired } from './resolve-web-chat-wiring-state';
+
+function resolveWebChatSubscriber(
+  auth: ResolvedConnectAuth,
+  existingEnvDir: string | undefined
+): { subscriberId: string; isDemo: boolean } {
+  if (auth.user?.id) {
+    return { subscriberId: auth.user.id, isDemo: false };
+  }
+
+  // Re-runs keep the demo subscriber already in env so its conversation history survives.
+  const existingSubscriberId = existingEnvDir ? readWebChatSubscriberId(existingEnvDir) : undefined;
+  const subscriberId =
+    existingSubscriberId && existingSubscriberId !== SUBSCRIBER_ID_PLACEHOLDER
+      ? existingSubscriberId
+      : resolveConnectSubscriberId(auth);
+
+  return { subscriberId, isDemo: true };
+}
 
 export async function runWebChatProjectSetup(input: {
   options: ConnectCommandOptions;
@@ -68,7 +83,8 @@ export async function runWebChatProjectSetup(input: {
   }
 
   const applicationIdentifier = await resolveConnectApplicationIdentifier(input.auth);
-  const subscriberId = input.auth.user?.id ?? SUBSCRIBER_ID_PLACEHOLDER;
+  // A standalone scaffold writes into a new empty directory, so only a bridge merge has env to reuse.
+  const { subscriberId, isDemo } = resolveWebChatSubscriber(input.auth, input.bridgeProjectDir);
 
   if (input.ui.interactive) {
     await input.ui.releaseTerminal();
@@ -96,6 +112,8 @@ export async function runWebChatProjectSetup(input: {
     scaffolded: result.scaffolded,
     mergedIntoBridge: result.mergedIntoBridge,
     chatPath: result.chatPath,
+    demoSubscriberId: isDemo ? subscriberId : undefined,
+    unknownSocketHost: resolveUnknownSocketHostWarning(input.auth.apiUrl, result.projectDir),
   };
 }
 
@@ -113,7 +131,7 @@ async function runWebChatEmbedSetup(
   opts: { alreadyWired: boolean }
 ): Promise<WebChatConnectOutcome> {
   const applicationIdentifier = await resolveConnectApplicationIdentifier(input.auth);
-  const subscriberId = input.auth.user?.id ?? SUBSCRIBER_ID_PLACEHOLDER;
+  const { subscriberId, isDemo } = resolveWebChatSubscriber(input.auth, projectDir);
   const envResult = mergeWebChatEnv({
     projectDir,
     applicationIdentifier,
@@ -148,6 +166,8 @@ async function runWebChatEmbedSetup(
     embedPromptFile,
     envPaths: envResult.envPaths,
     alreadyWired: opts.alreadyWired,
+    demoSubscriberId: isDemo ? subscriberId : undefined,
+    unknownSocketHost: resolveUnknownSocketHostWarning(input.auth.apiUrl, projectDir),
   };
 }
 

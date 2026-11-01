@@ -73,6 +73,9 @@ const humanInteractionSchema = new Schema<HumanInteractionDBModel>(
         { _id: false }
       ),
     },
+    answerReadAt: {
+      type: Schema.Types.String,
+    },
     expiresAt: {
       type: Schema.Types.String,
       required: true,

@@ -253,6 +253,7 @@
                     "importNames": ["validateUrlSsrf"],
                     "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/shared/utils/safe-outbound-http' (or HttpClientService with enforceSsrfProtection: true)."
                   },
+                  "mongoose": "Import mongoose types from '@novu/dal' instead of 'mongoose'. The API and worker do not depend on mongoose, so a direct import fails at runtime in production.",
                   "svix": {
                     "importNames": ["Svix"],
                     "message": "Please use the SvixClient from @novu/application-generic instead"
@@ -288,7 +289,13 @@
                     ],
                     "message": "Use 'Api<Error>Response' from '/shared/framework/response.decorator' instead."
                   }
-                }
+                },
+                "patterns": [
+                  {
+                    "group": ["mongoose/**"],
+                    "message": "Import mongoose types from '@novu/dal' instead of 'mongoose'. The API and worker do not depend on mongoose, so a direct import fails at runtime in production."
+                  }
+                ]
               }
             }
           }
@@ -331,6 +338,7 @@
                     "importNames": ["ConversationActivityRepository"],
                     "message": "Import ConversationActivityRepository only from agents.module.ts, conversation-activity-ledger.service.ts, conversation-event-sequence.service.ts, or test files — see https://novu.atlassian.net/browse/NV-8576"
                   },
+                  "mongoose": "Import mongoose types from '@novu/dal' instead of 'mongoose'. The API and worker do not depend on mongoose, so a direct import fails at runtime in production.",
                   "svix": {
                     "importNames": ["Svix"],
                     "message": "Please use the SvixClient from @novu/application-generic instead"
@@ -377,6 +385,42 @@
                     "group": ["**/conversation-event-sequence.service", "**/conversation-event-sequence.service.ts"],
                     "importNamePattern": "ConversationEventSequenceService",
                     "message": "Import ConversationEventSequenceService only from agents.module.ts, conversation-activity-ledger.service.ts, or test files — see https://novu.atlassian.net/browse/NV-8576"
+                  },
+                  {
+                    "group": ["mongoose/**"],
+                    "message": "Import mongoose types from '@novu/dal' instead of 'mongoose'. The API and worker do not depend on mongoose, so a direct import fails at runtime in production."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/worker/**/*.{ts,tsx,js}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@novu/*/**/*": "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/api';' instead of 'import { Client } from '@novu/api/src';'",
+                  "@novu/shared/utils/ssrf-url-validation": {
+                    "importNames": ["validateUrlSsrf"],
+                    "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/shared/utils/safe-outbound-http' (or HttpClientService with enforceSsrfProtection: true)."
+                  },
+                  "@novu/application-generic": {
+                    "importNames": ["validateUrlSsrf"],
+                    "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/application-generic' (or HttpClientService with enforceSsrfProtection: true) so the connection is pinned to a validated IP and every redirect is re-validated."
+                  },
+                  "mongoose": "Import mongoose types from '@novu/dal' instead of 'mongoose'. The API and worker do not depend on mongoose, so a direct import fails at runtime in production."
+                },
+                "patterns": [
+                  {
+                    "group": ["mongoose/**"],
+                    "message": "Import mongoose types from '@novu/dal' instead of 'mongoose'. The API and worker do not depend on mongoose, so a direct import fails at runtime in production."
                   }
                 ]
               }
