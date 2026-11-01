@@ -147,7 +147,7 @@ describe('Voice bridge (completions ↔ turn) #novu-v2', () => {
 
     const turnPromise = session.testAgent
       .post(`/v1/human/interactions/${seeded.interactionIdentifier}/voice/turn`)
-      .send({ line: 'Can you confirm once more?' });
+      .send({ say: 'Can you confirm once more?' });
     // Superagent does not send until something awaits the request.
     const turnResult = Promise.resolve(turnPromise);
 
@@ -182,6 +182,70 @@ describe('Voice bridge (completions ↔ turn) #novu-v2', () => {
     const payload = turnRes.body.data ?? turnRes.body;
     expect(payload.status).to.equal('utterance');
     expect(payload.utterance).to.equal('confirmed');
+  });
+
+  it('listens without say, then settles with hangup on a clear commitment', async () => {
+    const seeded = await seedLiveCall();
+
+    // Person already answered the opening question before the agent listens.
+    const firstBridge = fetch(`${session.serverUrl}/v1/human/voice/chat/completions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${BRIDGE_SECRET}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: 'assistant', content: 'Approve the deploy?' },
+          { role: 'user', content: 'yeah go ahead' },
+        ],
+        elevenlabs_extra_body: {
+          interactionId: seeded.interactionIdentifier,
+          environmentId: session.environment._id,
+          subscriberId,
+        },
+      }),
+    });
+
+    // Unblock the park so the bridge finishes after recording the utterance.
+    await sleep(300);
+    await postAgentLine(cache(), seeded.elevenLabsConversationId, 'holding', false);
+    expect((await firstBridge).status).to.equal(200);
+
+    const listenRes = await session.testAgent
+      .post(`/v1/human/interactions/${seeded.interactionIdentifier}/voice/turn`)
+      .send({});
+    expect(listenRes.status).to.equal(200, JSON.stringify(listenRes.body));
+    const listenPayload = listenRes.body.data ?? listenRes.body;
+    expect(listenPayload.status).to.equal('utterance');
+    expect(listenPayload.utterance).to.equal('yeah go ahead');
+
+    const settleRes = await session.testAgent
+      .post(`/v1/human/interactions/${seeded.interactionIdentifier}/voice/turn`)
+      .send({
+        say: 'Got it — hanging up. Thanks.',
+        answer: 'yeah go ahead',
+        decision: 'approve',
+      });
+    expect(settleRes.status).to.equal(200, JSON.stringify(settleRes.body));
+    const settlePayload = settleRes.body.data ?? settleRes.body;
+    expect(settlePayload.status).to.equal('settled');
+    expect(settlePayload.interactionStatus).to.equal(HumanInteractionStatusEnum.APPROVED);
+    expect(settlePayload.decision).to.equal('approve');
+    expect(settlePayload.answer).to.equal('yeah go ahead');
+
+    const settled = await humanInteractionRepository.findByIdentifier(
+      session.environment._id,
+      seeded.interactionIdentifier
+    );
+    expect(settled?.status).to.equal(HumanInteractionStatusEnum.APPROVED);
+    expect(settled?.response?.text).to.equal('yeah go ahead');
+    expect(settled?.response?.optionId).to.equal('approve');
+    expect(settled?.response?.respondedBySubscriberId).to.equal(subscriberId);
+
+    const handoff = await readVoiceCallHandoff(cache(), seeded.elevenLabsConversationId);
+    expect(handoff?.pendingAgentLine).to.equal('Got it — hanging up. Thanks.');
+    expect(handoff?.hangupRequested).to.equal(true);
   });
 
   it('expires the interaction when a connected call ends with nobody else live', async () => {
