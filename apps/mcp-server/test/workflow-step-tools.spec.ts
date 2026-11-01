@@ -131,6 +131,42 @@ describe("workflow step tools", () => {
 			});
 		});
 
+		it("saves the sender settings of an email and the data of an in-app step with their content", async () => {
+			const api = fakeWorkflowsApi();
+			const sender = {
+				from: { email: "orders@acme.dev", name: "Acme" },
+				preheader: "Your order is on its way",
+				replyTo: "support@acme.dev",
+				useProviderDefaults: false,
+			};
+			const data = { orderId: "{{payload.orderId}}" };
+
+			await callTool(await client(), "update_workflow_step_content", {
+				content: {
+					controlValues: {
+						body: "<p>Shipped</p>",
+						editorType: "html",
+						subject: "Shipped",
+						...sender,
+					},
+					type: "email",
+				},
+				stepId: "email-step",
+				workflowId: "welcome",
+			});
+			await callTool(await client(), "update_workflow_step_content", {
+				content: {
+					controlValues: { body: "Shipped", data, subject: "Shipped" },
+					type: "in_app",
+				},
+				stepId: "in-app-step",
+				workflowId: "welcome",
+			});
+
+			expect(api.puts[0].body!.steps[1].controlValues).toMatchObject(sender);
+			expect(api.puts[1].body!.steps[0].controlValues.data).toEqual(data);
+		});
+
 		it("refuses to edit a step managed by a step resolver, even under a slugified id", async () => {
 			const workflow = workflowResponseFixture();
 			Object.assign(workflow.steps[0], { stepId: "Send In-App", stepResolverHash: "abc" });

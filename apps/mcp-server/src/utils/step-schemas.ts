@@ -98,6 +98,10 @@ function createInAppControlSchema() {
 				"Avatar image URL for the in-app notification. Must be an absolute https:// URL or a /relative path.",
 			),
 		body: z.string().describe("In-app notification body."),
+		data: z
+			.record(z.string(), z.unknown())
+			.optional()
+			.describe("Custom key-value data the Inbox receives with the notification as `data`."),
 		disableOutputSanitization: z
 			.boolean()
 			.optional()
@@ -154,8 +158,31 @@ function createChatControlSchema() {
 	});
 }
 
+/** The sender, reply-to and preview-text settings both email editors save next to the content. */
+function createEmailSettingsFields() {
+	return {
+		from: z
+			.object({
+				email: z.string().optional().describe("Sender address."),
+				name: z.string().optional().describe("Sender name."),
+			})
+			.optional()
+			.describe("Sender for this step. Omit to send as the email integration's sender."),
+		preheader: z
+			.string()
+			.optional()
+			.describe("Preview text most inboxes show after the subject line."),
+		replyTo: z.string().optional().describe("Reply-to address for this step."),
+		useProviderDefaults: z
+			.boolean()
+			.optional()
+			.describe("true sends as the email integration's default sender and ignores `from`."),
+	};
+}
+
 function createEmailBlockControlSchema() {
 	return z.object({
+		...createEmailSettingsFields(),
 		body: mailyBodySchema.describe("Email body in Maily TipTap JSON format."),
 		disableOutputSanitization: z
 			.boolean()
@@ -176,6 +203,7 @@ function createEmailBlockControlSchema() {
 
 function createEmailHtmlControlSchema() {
 	return z.object({
+		...createEmailSettingsFields(),
 		body: z
 			.string()
 			.describe(

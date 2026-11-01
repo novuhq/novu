@@ -125,7 +125,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 	});
 
 	ToolFactory.createTool(server, accessors, {
-		description: `Replace the content (control values) of one existing step. content.type must match the step's type. The step's name, id and skip conditions are kept; use update_workflow_step_conditions to change conditions. Returns the saved workflow. ${PAYLOAD_SCHEMA_REMINDER}`,
+		description: `Replace the content (control values) of one existing step. content.type must match the step's type. The step's name, id and skip conditions are kept; use update_workflow_step_conditions to change conditions. Any other control value you leave out is cleared, so send the step's current values along with your change. Returns the saved workflow. ${PAYLOAD_SCHEMA_REMINDER}`,
 		handler: async (input, context) =>
 			mutateWorkflow(context, input, (request, workflow) => {
 				const located = locateStep(request, workflow, input.stepId, { editable: true });
