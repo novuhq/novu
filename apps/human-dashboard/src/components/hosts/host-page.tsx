@@ -151,7 +151,7 @@ function PublicHostSetup({ host, signInHref }: { host: Host; signInHref: string 
  * (`4.7`), with the button that copies it.
  */
 function TellYourAgent({ host }: { host: Host }) {
-  const line = tellYourAgent(host.id);
+  const line = tellYourAgent();
   const subject = hostSubject(host);
 
   return (

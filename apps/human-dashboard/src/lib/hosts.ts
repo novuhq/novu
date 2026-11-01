@@ -1,5 +1,6 @@
 import { HOST_IDS, type HostId } from './host-ids';
-import { AGENT_DOMAIN, INSTALL_SKILLS_COMMAND, NPX_CLI } from './onboarding';
+import { INSTALL_SKILLS_COMMAND, NPX_CLI } from './onboarding';
+import { SITE_ORIGIN } from './seo';
 
 export { HOST_IDS, type HostId, isHostId } from './host-ids';
 
@@ -454,9 +455,9 @@ export function hostMarkdownPath(id: HostId): string {
   return `/${id}.md`;
 }
 
-/** What the operator tells their agent, which each host's page opens with: "Set up Agent Inbox from agentinbox.md/codex". */
-export function tellYourAgent(id: HostId): string {
-  return `Set up Agent Inbox from ${AGENT_DOMAIN}${hostPath(id)}`;
+/** What the operator tells their agent, which each host's page opens with and its copy button copies. */
+export function tellYourAgent(): string {
+  return `Set up Agent Inbox from ${SITE_ORIGIN}/agents.md`;
 }
 
 /** The line under the host's name on its page, and its description for search engines. */

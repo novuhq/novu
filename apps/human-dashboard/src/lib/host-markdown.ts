@@ -41,7 +41,7 @@ const SKILL_FOLDER_URL = `https://github.com/${SKILLS_REPO}/blob/main/skills`;
 export function hostMarkdown(host: Host): string {
   const sections = [
     `# Agent Inbox for ${host.id === 'general' ? 'any agent' : host.name}`,
-    `> ${tellYourAgent(host.id)}`,
+    `> ${tellYourAgent()}`,
     `${AGENT_DOMAIN} gives an AI agent an inbox on Telegram, Slack and email. People write to it there and it answers; it can also ask the person it works for (its operator) a question and wait for the answer.`,
     `Human-readable page: ${SITE_ORIGIN}${hostPath(host.id)}`,
     ...(host.group === 'commands' ? commandSections(host) : chatAppSections(host)),

@@ -404,8 +404,12 @@ function ConnectorView({ host, details }: { host: ChatApp; details: Details }) {
 
 /** What to paste into the chat app (`1.4 · Connect · prompt`, without the commands). */
 function PromptView({ host, details }: { host: ChatApp; details: Details }) {
+  const caption = details.signInHref
+    ? `${promptCaption(host)} Replace <agent> with your agent’s name.`
+    : promptCaption(host);
+
   return (
-    <Words caption={promptCaption(host)}>
+    <Words caption={caption}>
       <span className="block text-foreground/60">
         {chatPrompt(host, details).map((line, index) => (
           // The lines of a prompt never reorder, so where a line stands is its key.

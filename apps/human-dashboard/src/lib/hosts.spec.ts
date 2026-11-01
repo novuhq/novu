@@ -231,8 +231,8 @@ describe('the Markdown for agents', () => {
       const [title, line] = hostMarkdown(host).split('\n\n');
 
       expect(title).toMatch(/^# Agent Inbox for /);
-      expect(line).toBe(`> ${tellYourAgent(host.id)}`);
-      expect(line).toBe(`> Set up Agent Inbox from agentinbox.md/${host.id}`);
+      expect(line).toBe(`> ${tellYourAgent()}`);
+      expect(line).toBe('> Set up Agent Inbox from https://www.agentinbox.md/agents.md');
     }
   });
 

@@ -148,7 +148,7 @@ test('every host has a page and its Markdown, linked from llms.txt', async ({ pa
     expect(markdown.status()).toBe(200);
     expect(markdown.headers()['content-type']).toContain('text/markdown');
     expect(markdown.headers().link).toContain(`<${origin}/${id}>; rel="canonical"`);
-    expect(await markdown.text()).toContain(`> Set up Agent Inbox from agentinbox.md/${id}`);
+    expect(await markdown.text()).toContain('> Set up Agent Inbox from https://www.agentinbox.md/agents.md');
   }
 
   const response = await page.goto('/codex');
@@ -160,7 +160,7 @@ test('every host has a page and its Markdown, linked from llms.txt', async ({ pa
     `${origin}/codex.md`
   );
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Agent Inbox for Codex');
-  await expect(page.getByText('Set up Agent Inbox from agentinbox.md/codex')).toBeVisible();
+  await expect(page.getByText('Set up Agent Inbox from https://www.agentinbox.md/agents.md')).toBeVisible();
   await expect(page.getByText('sign in to get your code')).toBeVisible();
 
   for (const path of ['/not-a-host', '/not-a-host.md']) {
