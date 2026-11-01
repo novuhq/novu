@@ -1,8 +1,8 @@
 import { CopyButton } from '@/components/sapien/copy-button';
 import { CopyCommand } from '@/components/sapien/copy-command';
+import { SETUP_COMMAND } from '@/data/sapien';
 import {
   closingAssets as assets,
-  CLOSING_COMMAND,
   CLOSING_COMMAND_LABEL,
   CLOSING_DESCRIPTION,
   CLOSING_HEADING,
@@ -14,6 +14,7 @@ import {
 
 import { AgentIdCard } from './agent-id-card';
 import { Artwork } from './artwork';
+import { DisplayAccent } from './section-eyebrow';
 import { SectionFrame } from './section-frame';
 
 // Figma feathers the card with a blurred 575×360 ellipse; this box is the mask
@@ -35,7 +36,7 @@ export function Closing() {
           {CLOSING_HEADING.lead}
           <br />
           {`${CLOSING_HEADING.rest} `}
-          <em className="font-sapien-display leading-[0] tracking-tight text-accent">{CLOSING_HEADING.accent}</em>
+          <DisplayAccent className="text-[1.2em] leading-[0]">{CLOSING_HEADING.accent}</DisplayAccent>
         </h2>
         <p className="mt-[13px] h-[42px] text-[15px] leading-[1.375] tracking-tight text-sapien-foreground/70 sm:mt-[11px]">
           {CLOSING_DESCRIPTION[0]}
@@ -43,7 +44,7 @@ export function Closing() {
           {CLOSING_DESCRIPTION[1]}
         </p>
         <div className="mt-8 flex flex-col gap-3">
-          <CopyCommand command={CLOSING_COMMAND} label={CLOSING_COMMAND_LABEL} variant="icon" className="w-full" />
+          <CopyCommand command={SETUP_COMMAND} label={CLOSING_COMMAND_LABEL} variant="icon" className="w-full" />
           <div className="flex flex-col">
             <CopyButton
               text={CLOSING_PROMPT}

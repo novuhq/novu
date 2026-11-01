@@ -108,6 +108,9 @@ const humanContactSchema = new Schema<HumanContactDBModel>(
     isOperator: {
       type: Schema.Types.Boolean,
     },
+    listenTo: {
+      type: Schema.Types.Boolean,
+    },
   },
   schemaOptions
 );

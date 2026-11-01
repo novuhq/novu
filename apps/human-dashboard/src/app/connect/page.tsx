@@ -13,8 +13,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * Opened from `channel add telegram` or `channel add slack` when the operator finishes in the
- * browser. The token stays in the fragment, so this server component never sees it.
+ * Opened from `channel add telegram` or `channel add slack`, or the MCP server's `channel_add`, when
+ * the operator finishes in the browser. The token stays in the fragment, so this server component
+ * never sees it.
  */
 export default async function Page(props: PageProps<'/connect'>) {
   const { channel } = await props.searchParams;

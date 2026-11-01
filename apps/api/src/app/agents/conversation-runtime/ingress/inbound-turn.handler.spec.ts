@@ -702,6 +702,75 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
+    it('drops a nested-thread message whose only bot mention is inside code when mention-only is on', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      const unsubscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe: sinon.stub().resolves(undefined),
+        unsubscribe,
+      };
+      const message = {
+        id: 'follow-up',
+        text: 'try `<@UBOT>` in a snippet',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: false,
+        attachments: [],
+      };
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handle(
+        'agent1',
+        mentionOnlyConfig as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(unsubscribe.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundMessage.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('dispatches a mention-only message that names the bot outside code even when the adapter missed the flag', async () => {
+      const { handler, bridgeExecutor } = makeHandler();
+      const unsubscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe: sinon.stub().resolves(undefined),
+        unsubscribe,
+      };
+      const message = {
+        id: 'follow-up',
+        text: '<@UBOT> see `<@UBOT>`',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: false,
+        attachments: [],
+      };
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handle(
+        'agent1',
+        mentionOnlyConfig as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(unsubscribe.called).to.equal(false);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+    });
+
     it('dispatches an unmentioned nested-thread follow-up after the agent has joined', async () => {
       const { handler, conversationService, bridgeExecutor } = makeHandler();
       const unsubscribe = sinon.stub().resolves(undefined);
@@ -1027,6 +1096,28 @@ describe('AgentInboundHandler', () => {
           agentConfigResolver.resolveSlackInstallation.calledOnceWith('env1', 'org1', 'slack-main', undefined)
         ).to.equal(true);
         expect(bridgeExecutor.execute.called).to.equal(false);
+      });
+
+      it('keeps following when the incumbent only writes a teammate id in code', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: 'see `<@U99>`',
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.called).to.equal(false);
+        expect(thread.unsubscribe.called).to.equal(false);
+        expect(conversationService.updateMetadata.called).to.equal(false);
+        expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
       });
 
       it('keeps following when the smart mention-required flag cannot be persisted', async () => {
@@ -2469,24 +2560,6 @@ describe('AgentInboundHandler', () => {
       });
     });
 
-    it('does not mark the integration connected on /start alone for the dashboard test identity', async () => {
-      const connectPayload = { ...matchingStartPayload, subscriberId: 'user-123' };
-      const { handler, agentIntegrationRepository } = makeHandler({
-        linkTelegramExecute: sinon.stub().resolves({
-          created: true,
-          subscriberId: 'user-123',
-          linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
-        }),
-        startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: connectPayload }),
-      });
-      const thread = makeTelegramThread();
-      const message = makeStartMessage('/start dashcode');
-
-      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      expect(agentIntegrationRepository.updateOne.called).to.equal(false);
-    });
-
     it('does not mark connectedAt when the dashboard Web Chat tester identity sends a message', async () => {
       const dashboardSubscriberId = buildDashboardWebChatSubscriberId('user-123');
       const { handler, agentIntegrationRepository } = makeHandler({
@@ -2526,7 +2599,7 @@ describe('AgentInboundHandler', () => {
       expect(update.$set.connectedAt).to.be.instanceOf(Date);
     });
 
-    it('does not mark the integration connected (Layer 2) when a genuine end user links via /start', async () => {
+    it('does not mark the integration connected when a /start code is consumed', async () => {
       const { handler, agentIntegrationRepository } = makeHandler({
         linkTelegramExecute: sinon.stub().resolves({
           created: true,
@@ -2587,20 +2660,7 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
-    it('does not mark connectedAt when a stale code re-tap finds an existing dashboard endpoint', async () => {
-      const { handler, agentIntegrationRepository } = makeHandler({
-        startCodeConsume: sinon.stub().resolves({ status: 'missing' }),
-        findTelegramEndpointByIdentity: sinon.stub().resolves({ subscriberId: 'user-123' }),
-      });
-      const thread = makeTelegramThread();
-      const message = makeStartMessage('/start reused');
-
-      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      expect(agentIntegrationRepository.updateOne.called).to.equal(false);
-    });
-
-    it('does not self-heal connectedAt when the existing endpoint belongs to a genuine end user', async () => {
+    it('does not mark connectedAt when a stale /start code re-tap finds an existing endpoint', async () => {
       const { handler, agentIntegrationRepository } = makeHandler({
         startCodeConsume: sinon.stub().resolves({ status: 'missing' }),
         findTelegramEndpointByIdentity: sinon.stub().resolves({ subscriberId: 'ext-sub-1' }),

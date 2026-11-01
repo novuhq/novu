@@ -111,7 +111,7 @@ export function ConfigureView({
   const hostConnected = hostLiveness(lastCheckedAt, now) === 'live';
   // Paused as the Settings block shows it: as soon as its switch is flipped, and back if saving that fails.
   const [paused, setPaused] = useState(Boolean(settings?.paused));
-  const state: AgentState = !agent.active || paused ? 'paused' : hostConnected ? 'active' : 'waiting';
+  const state = agentCardState(agent.active, paused, hostConnected);
 
   return (
     <>
@@ -150,9 +150,11 @@ export function ConfigureView({
           />
           <AgentSetup
             handle={agent.handle}
+            address={email}
             apiUrl={apiUrl}
             lastCheckedAt={lastCheckedAt}
             hosts={hostStatus?.hosts}
+            listening={hostStatus?.listening ?? null}
             renderedAt={renderedAt}
             docsUrl={docsUrl}
             mcpUrl={mcpUrl}
@@ -188,6 +190,18 @@ export function ConfigureView({
       />
     </>
   );
+}
+
+function agentCardState(active: boolean, paused: boolean, hostConnected: boolean): AgentState {
+  if (!active || paused) {
+    return 'paused';
+  }
+
+  if (hostConnected) {
+    return 'active';
+  }
+
+  return 'waiting';
 }
 
 /** The Slack app's name and the workspace it's in. Either can be missing when Slack couldn't be read just now. */

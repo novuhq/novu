@@ -112,7 +112,7 @@ export class HumanVerificationRateLimitService {
     const message =
       via === HumanChannelViaEnum.VOICE
         ? 'A verification call was just placed. Wait a moment before calling again.'
-        : 'A verification email was just sent. Wait a moment before resending.';
+        : 'A confirmation email was just sent. Wait a moment before resending.';
 
     return new HttpException(
       {
@@ -128,7 +128,7 @@ export class HumanVerificationRateLimitService {
     const message =
       via === HumanChannelViaEnum.VOICE
         ? 'Too many verification calls today. Try again tomorrow.'
-        : 'Too many verification emails today. Try again tomorrow.';
+        : 'Too many confirmation emails today. Try again tomorrow.';
 
     return new HttpException(
       {

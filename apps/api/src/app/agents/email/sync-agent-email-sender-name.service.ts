@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { AgentIntegrationRepository, IntegrationRepository } from '@novu/dal';
+import { AgentIntegrationRepository, type ClientSession, IntegrationRepository } from '@novu/dal';
 import { AGENT_INBOX_PROVIDER_IDS } from '@novu/shared';
-import type { ClientSession } from 'mongoose';
 
 /**
  * An agent's Novu Email integrations keep their own copy of the sender name. This brings that copy in

@@ -61,7 +61,13 @@ import {
 } from './dtos/human-operator-contact.dto';
 import { InteractionResponseDto } from './dtos/interaction-response.dto';
 import type { KeylessClaimTokenResponseDto } from './dtos/keyless-claim-token.dto';
-import { ListContactsQueryDto, ListContactsResponseDto, RemoveContactResponseDto } from './dtos/list-contacts.dto';
+import {
+  ListContactsQueryDto,
+  ListContactsResponseDto,
+  RemoveContactResponseDto,
+  UpdateContactRequestDto,
+  type UpdateContactResponseDto,
+} from './dtos/list-contacts.dto';
 import { ListInteractionsQueryDto } from './dtos/list-interactions-query.dto';
 import {
   HumanOperatorResponseDto,
@@ -70,7 +76,7 @@ import {
 } from './dtos/setup-human-relay.dto';
 import { VoiceTurnRequestDto, type VoiceTurnResponseDto } from './dtos/voice-turn.dto';
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
-import { assertFromHumanDashboard } from './guards/human-dashboard-secret.guard';
+import { assertFromHumanDashboard, carriesHumanDashboardSecret } from './guards/human-dashboard-secret.guard';
 import { readAnalyticsSource } from './services/agent-inbox-analytics';
 import {
   AGENT_PICTURE_FIELD,
@@ -123,6 +129,8 @@ import {
 } from './usecases/request-voice-verification/request-voice-verification.usecase';
 import { SendHumanTestEmailCommand } from './usecases/send-human-test-email/send-human-test-email.command';
 import { SendHumanTestEmail } from './usecases/send-human-test-email/send-human-test-email.usecase';
+import { SetContactListenToCommand } from './usecases/set-contact-listen-to/set-contact-listen-to.command';
+import { SetContactListenTo } from './usecases/set-contact-listen-to/set-contact-listen-to.usecase';
 import { SetOperatorDefaultChannelCommand } from './usecases/set-operator-default-channel/set-operator-default-channel.command';
 import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelayCommand } from './usecases/setup-human-relay/setup-human-relay.command';
@@ -165,7 +173,8 @@ export class HumanInteractionsController {
     private readonly changeOperatorEmailUsecase: ChangeOperatorEmail,
     private readonly sendHumanTestEmailUsecase: SendHumanTestEmail,
     private readonly inboxAddresses: AgentInboxAddressService,
-    private readonly hostStatus: HumanHostStatusService
+    private readonly hostStatus: HumanHostStatusService,
+    private readonly setContactListenToUsecase: SetContactListenTo
   ) {}
 
   @Post('/interactions')
@@ -419,6 +428,35 @@ export class HumanInteractionsController {
     );
   }
 
+  /**
+   * Turns a contact's "Listen to" switch on or off: whether a message from them may start one of the agent's hosts
+   * (`agentinbox listen`). Only the operator, on the dashboard; a host gets 403 `dashboard_only`. The operator
+   * always can, so their own contact is a 400.
+   */
+  @Patch('/contacts/:subscriberId')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  updateContact(
+    @UserSession() user: UserSessionData,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: UpdateContactRequestDto,
+    @Headers() headers: Record<string, unknown>
+  ): Promise<UpdateContactResponseDto> {
+    assertFromHumanDashboard(headers, 'Only the operator can choose whom the agent listens to, on agentinbox.md.');
+
+    return this.setContactListenToUsecase.execute(
+      SetContactListenToCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        subscriberId,
+        listenTo: body.listenTo,
+        agentIdentifier: body.agentIdentifier,
+      })
+    );
+  }
+
   @Post('/verifications')
   @HttpCode(HttpStatus.OK)
   @KeylessAccessible()
@@ -464,6 +502,7 @@ export class HumanInteractionsController {
   async setup(
     @UserSession() user: UserSessionData,
     @Body() body: SetupHumanRelayRequestDto,
+    @Headers() headers: Record<string, unknown>,
     @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string,
     @Headers(AGENT_INBOX_VIA_HEADER) via?: string,
     @Headers(AGENT_INBOX_HOST_HEADER) host?: string
@@ -480,6 +519,8 @@ export class HumanInteractionsController {
         agentDescription: body.agentDescription,
         inboxHandle: body.inboxHandle,
         email: body.email,
+        // Hosts hold the same key, so only the dashboard's server, which read it from Clerk, can vouch for an address.
+        emailVerified: body.emailVerified === true && carriesHumanDashboardSecret(headers),
         firstName: body.firstName,
         lastName: body.lastName,
         defaultVia: body.defaultVia,

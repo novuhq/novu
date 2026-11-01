@@ -274,7 +274,7 @@ function Tabs({ tab, onChange, idPrefix }: TabsProps) {
 }
 
 /** A stretch of a command to show differently: the code, or what a public page leaves open. */
-type Slot = { text: string; render: (text: string) => ReactNode };
+export type Slot = { text: string; render: (text: string) => ReactNode };
 
 /** The commands as they're run, one to a line after the shell's `$`. */
 function CommandLines({ commands, slots }: { commands: string[]; slots: Slot[] }) {
@@ -291,7 +291,7 @@ function CommandLines({ commands, slots }: { commands: string[]; slots: Slot[] }
 }
 
 /** A stretch of text with each slot in it drawn its own way, such as the code, which fades in where the old one was. */
-function WithSlots({ text, slots }: { text: string; slots: Slot[] }): ReactNode {
+export function WithSlots({ text, slots }: { text: string; slots: Slot[] }): ReactNode {
   const found = slots
     .map((slot) => ({ slot, at: slot.text ? text.indexOf(slot.text) : -1 }))
     .filter(({ at }) => at >= 0)
@@ -329,7 +329,8 @@ function Words({ text }: { text: string }) {
   );
 }
 
-function SwappingCode({ code }: { code: string }) {
+/** The one-time code in a command: a new one fades in where the last one was. */
+export function SwappingCode({ code }: { code: string }) {
   const { shown, leaving } = useSwap(code, SWAP_MS);
 
   return (

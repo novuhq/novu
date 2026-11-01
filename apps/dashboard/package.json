@@ -195,7 +195,7 @@
     "postcss": "^8.5.10",
     "rimraf": "^3.0.2",
     "tailwindcss": "^4.3.0",
-    "typescript": "5.6.2",
+    "typescript": "6.0.3",
     "vite": "^8.3.3",
     "vite-plugin-ejs": "^2.0.0",
     "vite-plugin-static-copy": "^4.1.1"

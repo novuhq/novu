@@ -115,7 +115,7 @@ export class CloudflareStepResolverDeployService {
     const formData = new FormData();
     formData.append(
       WORKER_SCRIPT_NAME,
-      new Blob([command.bundleBuffer], { type: 'application/javascript+module' }),
+      new Blob([command.bundleBuffer as Uint8Array<ArrayBuffer>], { type: 'application/javascript+module' }),
       WORKER_SCRIPT_NAME
     );
     formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
@@ -167,16 +167,16 @@ export class CloudflareStepResolverDeployService {
       .filter(([, value]) => !value)
       .map(([name]) => name);
 
-    if (missingVariables.length > 0) {
+    if (!accountId || !apiToken || !dispatchNamespace) {
       throw new ServiceUnavailableException(
         `Step resolver deployment is not configured. Missing: ${missingVariables.join(', ')}`
       );
     }
 
     return {
-      accountId: accountId!,
-      apiToken: apiToken!,
-      dispatchNamespace: dispatchNamespace!,
+      accountId,
+      apiToken,
+      dispatchNamespace,
       compatibilityDate: CF_COMPATIBILITY_DATE,
       placementRegion,
     };

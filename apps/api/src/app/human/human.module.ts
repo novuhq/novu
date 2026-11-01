@@ -36,6 +36,7 @@ import { HumanConnectPublicController, HumanHostsController } from './human-host
 import { HumanInboxController } from './human-inbox.controller';
 import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanInvitesPublicController, HumanVerifyPublicController } from './human-invites-public.controller';
+import { HumanListenController } from './human-listen.controller';
 import { AgentInboxChannelAnalytics } from './services/agent-inbox-channel-analytics.service';
 import { HumanAccountAgentService } from './services/human-account-agent.service';
 import { HumanAgentIdentityService } from './services/human-agent-identity.service';
@@ -47,6 +48,9 @@ import { HumanHostStatusService } from './services/human-host-status.service';
 import { HumanInboxService } from './services/human-inbox.service';
 import { HumanInviteTokenService } from './services/human-invite-token.service';
 import { HumanKeylessCapService } from './services/human-keyless-cap.service';
+import { HumanListenAccessService } from './services/human-listen-access.service';
+import { HumanListenLeaseService } from './services/human-listen-lease.service';
+import { HumanListenMessagesService } from './services/human-listen-messages.service';
 import { HumanMessageQuotaService } from './services/human-message-quota.service';
 import { HumanOperatorService } from './services/human-operator.service';
 import { HumanTelegramBotService } from './services/human-telegram-bot.service';
@@ -79,6 +83,7 @@ import { GetHumanInviteStatus } from './usecases/get-human-invite-status/get-hum
 import { GetInboxThread } from './usecases/get-inbox-thread/get-inbox-thread.usecase';
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
+import { GetListenLease } from './usecases/get-listen-lease/get-listen-lease.usecase';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInboxThreads } from './usecases/list-inbox-threads/list-inbox-threads.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
@@ -86,19 +91,24 @@ import { MarkInboxRead } from './usecases/mark-inbox-read/mark-inbox-read.usecas
 import { RecordVoiceCallEnded } from './usecases/record-voice-call-ended/record-voice-call-ended.usecase';
 import { RecordVoiceCallFailure } from './usecases/record-voice-call-failure/record-voice-call-failure.usecase';
 import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
+import { ReleaseListenLease } from './usecases/release-listen-lease/release-listen-lease.usecase';
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
 import { RemoveVoiceAddress } from './usecases/remove-voice-address/remove-voice-address.usecase';
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
 import { RequestVoiceVerification } from './usecases/request-voice-verification/request-voice-verification.usecase';
 import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbox-thread.usecase';
 import { SendHumanTestEmail } from './usecases/send-human-test-email/send-human-test-email.usecase';
+import { SetContactListenTo } from './usecases/set-contact-listen-to/set-contact-listen-to.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
+import { ShowListenTyping } from './usecases/show-listen-typing/show-listen-typing.usecase';
+import { TakeListenLease } from './usecases/take-listen-lease/take-listen-lease.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 import { VerifyAddress } from './usecases/verify-address/verify-address.usecase';
 import { VoiceBridgeCompletions } from './usecases/voice-bridge-completions/voice-bridge-completions.usecase';
 import { VoiceTurn } from './usecases/voice-turn/voice-turn.usecase';
+import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-for-listen-messages.usecase';
 import { VoiceBridgeController } from './voice-bridge.controller';
 import { VoiceCallWebhookController } from './voice-call-failure.controller';
 
@@ -130,6 +140,7 @@ import { VoiceCallWebhookController } from './voice-call-failure.controller';
     HumanConnectPublicController,
     VoiceCallWebhookController,
     VoiceBridgeController,
+    HumanListenController,
   ],
   providers: [
     HumanInteractionRepository,
@@ -215,6 +226,15 @@ import { VoiceCallWebhookController } from './voice-call-failure.controller';
     GetConnectCodeStatus,
     ConnectHost,
     SendHumanTestEmail,
+    HumanListenLeaseService,
+    HumanListenAccessService,
+    HumanListenMessagesService,
+    TakeListenLease,
+    GetListenLease,
+    ReleaseListenLease,
+    WaitForListenMessages,
+    ShowListenTyping,
+    SetContactListenTo,
   ],
 })
 export class HumanModule {}

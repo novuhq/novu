@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsValidJsonSchema } from '@novu/application-generic';
 import { IsArray, IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
-import { IsValidJsonSchema } from '../../shared/validators/json-schema.validator';
 
 export class PatchWorkflowDto {
   @ApiPropertyOptional({

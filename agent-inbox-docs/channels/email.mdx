@@ -1,6 +1,6 @@
 ---
 title: "Email"
-description: "The agent's address at agentinbox.md, verification, and what a keyless inbox can and cannot send."
+description: "The agent's address at agentinbox.md, confirming an address, and what a keyless inbox can and cannot send."
 ---
 
 The agent's email address is its handle at `agentinbox.md`, such as `atlas@agentinbox.md`. People reply by email. Approvals arrive as emails with buttons. You can also answer a question by replying to that email.
@@ -22,7 +22,7 @@ To claim this setup and send email, run: npx @agentinbox/cli login
 
 ## A new address
 
-Put an email address in `--to` or in MCP `to`. A contact who has it is used. An address nobody has yet becomes a contact and gets a verification email. The message is not delivered. They click **Verify this email**. Send again after that.
+Put an email address in `--to` or in MCP `to`. A contact who has it is used. On a new conversation, an address nobody has yet gets the message as typed. To make someone a contact, invite them. They click **Confirm email** in the email they get.
 
 ```bash
 npx @agentinbox/cli contact invite carol@acme.com --name "Carol Diaz"

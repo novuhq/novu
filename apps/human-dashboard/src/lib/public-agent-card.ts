@@ -83,8 +83,7 @@ export const getPublicAgentCard = cache(async (handle: string): Promise<PublicAg
 
   let found: AgentCardResponse;
   try {
-    // Agent Inbox has no EU region.
-    found = unwrapData<AgentCardResponse>(await requestPublic('us', `/v1/human/agent-cards/${handle}`));
+    found = unwrapData<AgentCardResponse>(await requestPublic(`/v1/human/agent-cards/${handle}`));
   } catch (error) {
     // Every reason there is no card is the same 404.
     if (error instanceof HumanApiError && error.status === 404) {

@@ -189,7 +189,6 @@ describe('Human accounts (private endpoints for the Human dashboard) #novu-v2', 
         organizationId: session.organization._id,
         userId: session.user._id,
         environmentId: session.environment._id,
-        region: 'us',
       };
     }
 

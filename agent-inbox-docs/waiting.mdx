@@ -10,14 +10,14 @@ description: "How the CLI blocks on a question, and how MCP waits again with inb
 The command blocks until the person answers, the question expires, or `--timeout` elapses. Stdout stays the answer. The wait itself is printed on stderr.
 
 ```bash
-npx @agentinbox/cli inbox send approve "Deploy to production?" --timeout 10m
-npx @agentinbox/cli inbox send approve "Deploy to production?" --async
+npx @agentinbox/cli send approve "Deploy to production?" --timeout 10m
+npx @agentinbox/cli send approve "Deploy to production?" --async
 ```
 
-`--timeout 10m` exits `11`. The question stays open until its `--ttl`, and the answer shows up in the conversation (`inbox show`). `--async` returns at once. There is no second command to wait again. Look at the conversation when you are ready.
+`--timeout 10m` exits `11`. The question stays open until its `--ttl`, and the answer shows up in the conversation (`show`). `--async` returns at once. There is no second command to wait again. Look at the conversation when you are ready.
 
 ```bash
-if npx @agentinbox/cli inbox send approve "Deploy to production?"; then
+if npx @agentinbox/cli send approve "Deploy to production?"; then
   echo "approved, proceeding"
 else
   code=$?
@@ -26,7 +26,7 @@ else
 fi
 ```
 
-`inbox list --wait` blocks until a conversation matches the filters. Add `--timeout`. When it runs out, the command prints an empty page and exits `11`. `--wait` alone waits until one matches.
+`list --wait` blocks until a conversation matches the filters. Add `--timeout`. When it runs out, the command prints an empty page and exits `11`. `--wait` alone waits until one matches.
 
 ## MCP
 
@@ -50,7 +50,7 @@ There are no exit codes. Trust the words in the result:
 | Wait on a question | The send blocks | `wait_seconds`, then `inbox_wait` |
 | Give up waiting | `--timeout`, exit `11` | Stop calling `inbox_wait` |
 | Do not wait | `--async` | Leave `kind` unset for a plain message, or `wait_seconds: 0` |
-| Wait for new mail | `inbox list --wait --timeout` | `inbox_list` with `wait_seconds` (max 25) |
+| Wait for new mail | `list --wait --timeout` | `inbox_list` with `wait_seconds` (max 25) |
 | Question lifetime | `--ttl 2h` | `ttl_seconds: 7200` |
 
 Use a short timeout inside a larger job. Use `--async` when there is other work to do. On MCP, loop on `inbox_wait`.

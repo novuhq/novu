@@ -174,20 +174,6 @@ describe('Telegram subscriber start link (cache + inbound) #novu-v2', () => {
     expect(allForChat.length).to.equal(1);
   });
 
-  it('replies with expired-style message when code is unknown and chat has no endpoint', async () => {
-    const inboundHandler = testServer.getService(AgentInboundHandler);
-    const configResolver = testServer.getService(AgentConfigResolver);
-    const config = await configResolver.resolve(agentId, integrationIdentifier, { source: 'webhook_message' });
-
-    const thread = makeTelegramThread();
-    const message = makeStartMessage('/start boguscodeboguscodeboguscodebogus');
-
-    await inboundHandler.handle(agentId, config, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-    expect((thread.post as sinon.SinonStub).calledOnce).to.equal(true);
-    expect(String((thread.post as sinon.SinonStub).firstCall.args[0])).to.match(/expired|valid/i);
-  });
-
   describe('inbound webhook /start delivery (full chat SDK path)', () => {
     const TELEGRAM_CHAT_ID = 777_042;
 

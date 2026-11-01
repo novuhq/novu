@@ -323,8 +323,10 @@ function ReachControl({ labelledBy, value, busy, disabled = false, onChange }: R
 }
 
 type SwitchProps = {
-  labelledBy: string;
-  describedBy: string;
+  /** What names it: the id of a title on the page, or `label` when there's none to point at. */
+  labelledBy?: string;
+  label?: string;
+  describedBy?: string;
   on: boolean;
   busy: boolean;
   /** The setting couldn't be read, so it can't be changed either. */
@@ -334,15 +336,17 @@ type SwitchProps = {
 
 /**
  * The toggle of the design: off, a grey knob on the left of a bordered track; on, a larger dark knob on
- * the right of an orange one. The knob slides and grows, and the track changes colour, together.
+ * the right of an orange one. The knob slides and grows, and the track changes colour, together. The Contacts
+ * page has it too, for whom the agent listens to.
  */
-function Switch({ labelledBy, describedBy, on, busy, disabled = false, onChange }: SwitchProps) {
+export function Switch({ labelledBy, label, describedBy, on, busy, disabled = false, onChange }: SwitchProps) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
       aria-labelledby={labelledBy}
+      aria-label={labelledBy ? undefined : label}
       aria-describedby={describedBy}
       aria-busy={busy || undefined}
       disabled={disabled}

@@ -3,9 +3,9 @@
   "compilerOptions": {
     "strictNullChecks": true,
     "module": "commonjs",
+    "customConditions": ["require"],
     "target": "es6",
     "declaration": true,
-    "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
     "outDir": "./dist",
     "rootDir": "./src",

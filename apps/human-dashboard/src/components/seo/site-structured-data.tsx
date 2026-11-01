@@ -1,4 +1,5 @@
 import { HOME_FAQ } from '@/data/home';
+import { homeStructuredNodes } from '@/lib/home-structured-data';
 import { contentStructuredData, type PageContent, SITE_ORIGIN, type SitePage, siteStructuredData } from '@/lib/seo';
 
 type SiteStructuredDataProps = { page: SitePage; content?: never } | { content: PageContent; page?: never };
@@ -9,7 +10,7 @@ type SiteStructuredDataProps = { page: SitePage; content?: never } | { content: 
  */
 export function SiteStructuredData({ page, content }: SiteStructuredDataProps) {
   const data = page ? siteStructuredData(page) : contentStructuredData(content);
-  const graph = page === 'home' ? [...data['@graph'], homeFaq()] : data['@graph'];
+  const graph = page === 'home' ? [...data['@graph'], homeFaq(), ...homeStructuredNodes()] : data['@graph'];
 
   return (
     <>

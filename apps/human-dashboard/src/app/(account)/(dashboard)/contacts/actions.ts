@@ -10,6 +10,7 @@ import {
   type ContactChannelVia,
   changeOperatorEmail,
   removeContact,
+  setContactListenTo,
   setOperatorDefaultChannel,
 } from '@/lib/human-contacts-api';
 import { createInviteLink } from '@/lib/human-invites-api';
@@ -93,6 +94,37 @@ export async function removeContactAction(contactId: string): Promise<RemoveCont
     console.error('Failed to remove a contact', error);
 
     return { ok: false, error: describeError(error, 'Something went wrong while removing them. Please try again.') };
+  }
+}
+
+/**
+ * Turns a contact's "Listen to" switch on or off: whether a message from them may start one of the agent's hosts.
+ * The agent always listens to the operator, so their own row has no switch to turn.
+ */
+export async function setListenToAction(contactId: string, listenTo: boolean): Promise<ContactCardResult> {
+  const account = await readSignedInAccount();
+  if (!account) {
+    return { ok: false, error: SESSION_ENDED };
+  }
+
+  if (typeof contactId !== 'string' || !contactId || typeof listenTo !== 'boolean') {
+    return { ok: false, error: 'This switch can’t be changed.' };
+  }
+
+  try {
+    if ((await findOperatorContactId(account)) === contactId) {
+      return { ok: false, error: 'Your agent always listens to you.' };
+    }
+
+    await setContactListenTo(account, contactId, listenTo);
+
+    return { ok: true };
+  } catch (error) {
+    console.error('Failed to change whom the agent listens to', error);
+
+    return { ok: false, error: describeError(error, 'Couldn’t save that. Try again.') };
+  } finally {
+    revalidatePath(CONTACTS_PATH);
   }
 }
 

@@ -51,7 +51,13 @@ export interface HumanDeliveryRefs {
 }
 
 export interface HumanDeliveryTarget {
+  /** Who the delivery is addressed to: whose platform identity may answer it. */
   subscriberId: string;
+  /**
+   * Who it reaches, when not `subscriberId` alone: a card posted in a thread reaches the people in it, never a
+   * contact outside it, who has a delivery of their own.
+   */
+  reaches?: string[];
   integrationIdentifier: string;
   platform: string;
   deliver: () => Promise<HumanDeliveryRefs>;
@@ -392,8 +398,9 @@ export async function assertHumanPendingCap(
  * cannot settle, appear in `human list`, or consume pending quota.
  * An unconfirmed dial stays on the row: the phone may still be ringing.
  *
- * In-thread `ctx.*` posts one card and uses `to` only as an allow-list — that
- * path has no failed recipients, so the listed ids are left intact.
+ * In-thread `ctx.*` posts one card and uses `to` only as an allow-list, so the
+ * people in the thread stay listed. Named contacts outside a direct-message
+ * thread get a DM of their own besides, and only those are dropped when it fails.
  *
  * Sends stay serial to avoid bursting a single chat provider.
  */
@@ -414,6 +421,7 @@ export async function deliverToTargets(
   const deliveries: HumanInteractionDelivery[] = [];
   const failedSubscriberIds: string[] = [];
   const unconfirmedSubscriberIds: string[] = [];
+  const reached: string[] = [];
   let lastError: unknown;
   let unconfirmedError: unknown;
   let conversationId: string | undefined;
@@ -428,6 +436,7 @@ export async function deliverToTargets(
         platformMessageId: refs.platformMessageId,
         platformThreadId: refs.platformThreadId,
       });
+      reached.push(...(target.reaches ?? [target.subscriberId]));
       if (!conversationId && refs._conversationId) {
         conversationId = refs._conversationId;
       }
@@ -465,15 +474,20 @@ export async function deliverToTargets(
     );
   }
 
-  const retainedSubscriberIds = [
-    ...new Set([...deliveries.map((delivery) => delivery.subscriberId), ...unconfirmedSubscriberIds]),
-  ];
-  const droppedSubscriberIds = failedSubscriberIds.filter((subscriberId) => {
-    return !unconfirmedSubscriberIds.includes(subscriberId);
+  // Only who got the card nowhere is dropped. A thread card reaches everyone it lists, and an
+  // unconfirmed dial stays: the phone may still be ringing. A connected call is listed first.
+  const unreached = failedSubscriberIds.filter((subscriberId) => {
+    return !reached.includes(subscriberId) && !unconfirmedSubscriberIds.includes(subscriberId);
   });
-  const recipientPatch = droppedSubscriberIds.length > 0 ? { subscriberIds: retainedSubscriberIds } : {};
+  const retainedSubscriberIds = subscriberIdsAfterDelivery(interaction.subscriberIds, {
+    unreached,
+    unconfirmedSubscriberIds,
+    reached,
+    deliveredSubscriberIds: deliveries.map((delivery) => delivery.subscriberId),
+  });
+  const recipientPatch = unreached.length > 0 ? { subscriberIds: retainedSubscriberIds } : {};
 
-  if (droppedSubscriberIds.length > 0) {
+  if (unreached.length > 0) {
     await stampDeliveries(repository, interaction, deliveries, conversationId, {
       subscriberIds: retainedSubscriberIds,
     });
@@ -491,6 +505,27 @@ export async function deliverToTargets(
   }
 
   return { interaction: delivered, failedSubscriberIds, unconfirmedSubscriberIds };
+}
+
+function subscriberIdsAfterDelivery(
+  subscriberIds: string[] | undefined,
+  params: {
+    unreached: string[];
+    unconfirmedSubscriberIds: string[];
+    reached: string[];
+    deliveredSubscriberIds: string[];
+  }
+): string[] {
+  const kept = (subscriberIds ?? []).filter((subscriberId) => !params.unreached.includes(subscriberId));
+  const stillRinging = (subscriberId: string) => {
+    return (
+      params.unconfirmedSubscriberIds.includes(subscriberId) &&
+      !params.reached.includes(subscriberId) &&
+      !params.deliveredSubscriberIds.includes(subscriberId)
+    );
+  };
+
+  return [...kept.filter((subscriberId) => !stillRinging(subscriberId)), ...kept.filter(stillRinging)];
 }
 
 function stampDeliveries(

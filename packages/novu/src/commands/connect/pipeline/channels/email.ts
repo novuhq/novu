@@ -55,7 +55,7 @@ export async function connectEmailForAgent(
     sendFromEmail: opts?.sendFromEmail,
     canGoBack: opts?.canGoBack,
   });
-  void open(mailtoUrl).catch(() => undefined);
+  void open(mailtoUrl).catch((): undefined => undefined);
   ui.showEmailWaiting({ inboundAddress, sendFromEmail: opts?.sendFromEmail });
 
   const connected = await pollForAgentLinkConnected(client, agent.identifier, integration.identifier, {

@@ -63,7 +63,9 @@ describe('CreateConversationInteraction', () => {
     await usecase.execute({ ...command, card } as any);
 
     expect(humanInteractionRepository.create.firstCall.args[0].content).to.deep.equal({ card });
-    expect(outboundGateway.deliver.firstCall.args[1]).to.deep.equal({ card });
+    expect(outboundGateway.deliver.firstCall.args[1]).to.deep.include({
+      card: { ...card, layoutCard: { ...card, humanKind: command.kind } },
+    });
   });
 
   it('returns the inbox cap instead of a gateway error when the thread send is over quota', async () => {
@@ -258,6 +260,60 @@ describe('CreateConversationInteraction', () => {
     expect(humanInteractionRepository.create.firstCall.args[0].subscriberIds).to.deep.equal(['alice', 'bob']);
     expect(outboundGateway.deliver.calledOnce).to.equal(true);
     expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberIds).to.equal(undefined);
+  });
+
+  it('addresses the thread’s card to who may answer, yet drops one reached only in their own chat when that fails', async () => {
+    const { usecase, command, humanInteractionRepository } = setup();
+    humanInteractionRepository.create.callsFake(async (row: { subscriberIds: string[] }) => ({
+      _id: 'hi1',
+      identifier: 'hi_abc',
+      kind: HumanInteractionKindEnum.ASK,
+      status: HumanInteractionStatusEnum.PENDING,
+      _environmentId: 'env1',
+      subscriberIds: row.subscriberIds,
+    }));
+
+    // Only Carol may answer, and she isn't in this direct conversation: her own chat is her only way in.
+    await usecase.execute({ ...command, kind: HumanInteractionKindEnum.ASK, to: ['carol'] } as any, {
+      alsoTo: () => [
+        {
+          subscriberId: 'carol',
+          integrationIdentifier: 'telegram-main',
+          platform: 'telegram',
+          deliver: async () => {
+            throw new Error('Forbidden: bot was blocked by the user');
+          },
+        },
+      ],
+    });
+
+    const stamped = humanInteractionRepository.stampDelivery.lastCall.args[2];
+    // The card in sub-1's thread is addressed to Carol, never to sub-1, who may not answer and is matched by
+    // who a card was addressed to. It didn't reach Carol, so with her own chat failed, nobody's reply counts.
+    // The thread post is stamped first; this last stamp is the allow-list after that outside chat fails.
+    expect(stamped.deliveries.map((delivery: { subscriberId: string }) => delivery.subscriberId)).to.deep.equal([
+      'carol',
+    ]);
+    expect(stamped.subscriberIds).to.deep.equal([]);
+  });
+
+  it('says when the post in the conversation went out, and not when only a delivery outside it did', async () => {
+    const { usecase, command, outboundGateway } = setup();
+    const carol = {
+      subscriberId: 'carol',
+      integrationIdentifier: 'telegram-main',
+      platform: 'telegram',
+      deliver: async () => ({ platformMessageId: 'tg-1', platformThreadId: 'telegram:42' }),
+    };
+    const onPosted = sinon.stub();
+
+    await usecase.execute({ ...command, to: ['carol'] } as any, { alsoTo: () => [carol], onPosted });
+    expect(onPosted.calledOnce).to.equal(true);
+
+    onPosted.resetHistory();
+    outboundGateway.deliver.rejects(new Error('channel_not_found'));
+    await usecase.execute({ ...command, to: ['carol'] } as any, { alsoTo: () => [carol], onPosted });
+    expect(onPosted.called).to.equal(false);
   });
 
   it('allows explicit `to` when the conversation has no subscriber participant', async () => {

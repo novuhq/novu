@@ -70,11 +70,11 @@ function formatEmailColumn(row: ContactRow): string {
       return pc.dim('—');
     }
 
-    return `${row.email} ${pc.dim('(unverified)')}`;
+    return `${row.email} ${pc.dim('(unconfirmed)')}`;
   }
 
   if (emailChannel.status === 'pending') {
-    return `${emailChannel.address ?? '—'} ${pc.yellow('(pending verification)')}`;
+    return `${emailChannel.address ?? '—'} ${pc.yellow('(waiting for confirmation)')}`;
   }
 
   // A listed email channel is this relay's verified address. Subscriber.email can belong to another relay.
@@ -84,7 +84,7 @@ function formatEmailColumn(row: ContactRow): string {
 
   const address = emailChannel.address ?? row.email ?? '—';
 
-  return `${address} ${pc.dim('(unverified)')}`;
+  return `${address} ${pc.dim('(unconfirmed)')}`;
 }
 
 export async function contactsCommand(options: ContactsOptions): Promise<never> {

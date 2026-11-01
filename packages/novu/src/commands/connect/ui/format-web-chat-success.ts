@@ -17,12 +17,14 @@ export type WebChatMergedScaffoldSuccess = {
   editAgentHint?: string;
   devCommand: string;
   skippedInstall: boolean;
+  unknownSocketHost: boolean;
 };
 
 export type WebChatStandaloneScaffoldSuccess = {
   kind: 'standalone-scaffold';
   chatUrl: string;
   devCommand: string;
+  unknownSocketHost: boolean;
 };
 
 export type WebChatEmbedSuccess = {
@@ -32,6 +34,7 @@ export type WebChatEmbedSuccess = {
   connectMode: ReturnType<typeof resolveConnectEmbedRuntime>;
   embedPrompt?: string;
   embedPromptFile?: string;
+  unknownSocketHost: boolean;
 };
 
 export type WebChatGenericLinkedSuccess = {
@@ -114,6 +117,7 @@ export function resolveWebChatSuccessPresentation(result: ConnectSuccessResult):
           : undefined,
       devCommand: `cd ${JSON.stringify(bridgeOutcome.projectDir)} && ${bridgeOutcome.skippedInstall ? 'npm install && ' : ''}npm run dev:novu`,
       skippedInstall: Boolean(bridgeOutcome.skippedInstall),
+      unknownSocketHost: Boolean(result.webChatOutcome.unknownSocketHost),
     };
   }
 
@@ -125,6 +129,7 @@ export function resolveWebChatSuccessPresentation(result: ConnectSuccessResult):
       connectMode: resolveConnectEmbedRuntime(result.connectMode ?? 'ai-sdk'),
       embedPrompt: result.webChatHandoff?.embedPrompt,
       embedPromptFile: result.webChatOutcome.embedPromptFile,
+      unknownSocketHost: Boolean(result.webChatOutcome.unknownSocketHost),
     };
   }
 
@@ -137,6 +142,7 @@ export function resolveWebChatSuccessPresentation(result: ConnectSuccessResult):
       kind: 'standalone-scaffold',
       chatUrl: formatLocalUrl(port, chatPath),
       devCommand: `cd ${JSON.stringify(projectDir)} && npm run dev`,
+      unknownSocketHost: Boolean(result.webChatOutcome.unknownSocketHost),
     };
   }
 
@@ -148,6 +154,18 @@ export function resolveWebChatSuccessPresentation(result: ConnectSuccessResult):
   };
 }
 
+export function formatDemoSubscriberWarning(result: ConnectSuccessResult): string | null {
+  const subscriberId = result.webChatOutcome?.demoSubscriberId;
+  if (!subscriberId) {
+    return null;
+  }
+
+  return `Demo subscriber id "${subscriberId}" (no signed-in user): every visitor shares one conversation. Replace it with your app's signed-in user id before production.`;
+}
+
 export function describeEmbedSuccessNextStep(connectMode: ReturnType<typeof resolveConnectEmbedRuntime>): string {
   return describeConnectEmbedPromptAction(connectMode);
 }
+
+export const UNKNOWN_SOCKET_HOST_WARNING =
+  "Could not infer a socket URL for this API host — set NEXT_PUBLIC_NOVU_SOCKET_URL (and NEXT_PUBLIC_NOVU_SOCKET_TYPE if self-hosted) for your deployment, or Web Chat won't receive live replies.";

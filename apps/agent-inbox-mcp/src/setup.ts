@@ -14,7 +14,7 @@ export type InboxSetupInput = {
   email?: string;
 };
 
-type AgentInfo = {
+export type AgentInfo = {
   agentId: string;
   agentIdentifier: string;
   name: string;
@@ -297,7 +297,7 @@ async function readSetupStatus(api: AgentInboxApi): Promise<SetupStatus> {
  * A missing resource is empty data. Anything else (a timeout, a 500) is the caller's problem to see,
  * so a status report does not pretend the inbox or the owner is simply absent.
  */
-async function readIfMissing<T>(request: Promise<T>, fallback: T): Promise<T> {
+export async function readIfMissing<T>(request: Promise<T>, fallback: T): Promise<T> {
   try {
     return await request;
   } catch (error) {
