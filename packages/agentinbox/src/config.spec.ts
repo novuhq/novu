@@ -158,13 +158,13 @@ describe('resolveConfig', () => {
 
 describe('resolveTargetApiUrl', () => {
   it('prefers --api-url, then INBOX_API_URL, then the API the config belongs to', () => {
-    const eu = { ...base, apiUrl: 'https://eu.api.novu.co' };
+    const selfHosted = { ...base, apiUrl: 'https://inbox.example.com/api' };
 
-    expect(resolveTargetApiUrl('http://localhost:3000/', eu)).toBe('http://localhost:3000');
+    expect(resolveTargetApiUrl('http://localhost:3000/', selfHosted)).toBe('http://localhost:3000');
     process.env.INBOX_API_URL = 'http://127.0.0.1:3000';
-    expect(resolveTargetApiUrl(undefined, eu)).toBe('http://127.0.0.1:3000');
+    expect(resolveTargetApiUrl(undefined, selfHosted)).toBe('http://127.0.0.1:3000');
     delete process.env.INBOX_API_URL;
-    expect(resolveTargetApiUrl(undefined, eu)).toBe('https://eu.api.novu.co');
+    expect(resolveTargetApiUrl(undefined, selfHosted)).toBe('https://inbox.example.com/api');
     expect(resolveTargetApiUrl(undefined, null)).toBe('https://www.agentinbox.md/api');
   });
 

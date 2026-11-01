@@ -4,11 +4,10 @@ import { clerkClient, currentUser, type User } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
 
-import { ensureBackingAccount, type HumanRegion } from './human-accounts-api';
+import { ensureBackingAccount } from './human-accounts-api';
 
 /** Where the operator's backing organization lives, kept in the Human Clerk user's private metadata. */
 export type StoredBackingAccount = {
-  region: HumanRegion;
   organizationId: string;
   userId: string;
 };
@@ -18,9 +17,6 @@ export type HumanAccount = StoredBackingAccount & { humanUserId: string };
 
 const METADATA_KEY = 'novu';
 
-/** A backing organization made by a dashboard visit has no claim link or CLI to take its region from. */
-const DEFAULT_REGION: HumanRegion = 'us';
-
 const loadHumanAccount = cache(async (): Promise<HumanAccount | null> => {
   const user = await currentUser();
   if (!user) {
@@ -28,7 +24,7 @@ const loadHumanAccount = cache(async (): Promise<HumanAccount | null> => {
   }
 
   return {
-    ...(await ensureStoredBackingAccount(user, DEFAULT_REGION)),
+    ...(await ensureStoredBackingAccount(user)),
     humanUserId: user.id,
   };
 });
@@ -42,7 +38,7 @@ export async function ensureAccountForSignUp(humanUserId: string): Promise<void>
   const clerk = await clerkClient();
   const user = await clerk.users.getUser(humanUserId);
 
-  await ensureStoredBackingAccount(user, DEFAULT_REGION);
+  await ensureStoredBackingAccount(user);
 }
 
 /**
@@ -71,12 +67,8 @@ export function readHumanAccount(user: User): HumanAccount | null {
 export function readStoredBackingAccount(user: User): StoredBackingAccount | null {
   const stored = user.privateMetadata?.[METADATA_KEY] as Partial<StoredBackingAccount> | undefined;
 
-  if (
-    (stored?.region === 'us' || stored?.region === 'eu') &&
-    typeof stored.organizationId === 'string' &&
-    typeof stored.userId === 'string'
-  ) {
-    return { region: stored.region, organizationId: stored.organizationId, userId: stored.userId };
+  if (typeof stored?.organizationId === 'string' && typeof stored.userId === 'string') {
+    return { organizationId: stored.organizationId, userId: stored.userId };
   }
 
   return null;
@@ -94,19 +86,18 @@ export function readStoredBackingAccount(user: User): StoredBackingAccount | nul
  *
  * The account starts without an agent. `setup` creates it, or a claim brings its own.
  */
-export async function ensureStoredBackingAccount(user: User, regionForNewAccount: HumanRegion) {
+export async function ensureStoredBackingAccount(user: User) {
   const stored = readStoredBackingAccount(user);
   if (stored) {
     return stored;
   }
 
-  const created = await ensureBackingAccount(regionForNewAccount, {
+  const created = await ensureBackingAccount({
     humanUserId: user.id,
     firstName: user.firstName,
     lastName: user.lastName,
   });
   const account: StoredBackingAccount = {
-    region: regionForNewAccount,
     organizationId: created.organizationId,
     userId: created.userId,
   };

@@ -68,9 +68,9 @@ function commandSections(host: CommandHost): string[] {
     '## No code yet: set yourself up',
     'Only when your operator asks you to set up Agent Inbox. When they already have an Agent Inbox account, ask them for a one-time code instead.',
     [
-      '1. Ask your operator for their first and last name and their email address. Never make them up.',
-      `2. \`${NPX_CLI} setup --email <their email> --name "<their name>"\` creates the inbox without an account: a free demo with a few messages, whose email inbox only receives until your operator claims it. Add \`--agent-name "<name>"\` when they told you what to call you.`,
-      `3. \`${NPX_CLI} login\` prints a link and a code. Give both to your operator: they sign in on ${AGENT_DOMAIN}, check that the code matches and approve. The setup then moves into their account.`,
+      '1. Ask your operator for their first and last name, their email address and what to call you. Never make them up.',
+      `2. \`${NPX_CLI} setup --email <their email> --name "<their name>" --agent-name "<what they call you>"\` creates the inbox without an account: a free demo with a few messages, whose email inbox only receives until your operator claims it. A new agent needs the name. Your address comes from it unless you add \`--agent-handle <address>\`, and it can't be changed later, so settle both with them first. It emails them a confirmation link and waits up to 5 minutes for them to open it, so tell them to look out for it first, and run it in the background or with a long timeout if ${runner} stops commands sooner. If it stops first, run it again: it keeps the same inbox and sends a new link.`,
+      `3. \`${NPX_CLI} login\` prints a link and a code, then waits up to an hour, so run it the same way. Give both to your operator: they sign in on ${AGENT_DOMAIN}, check that the code matches and approve. The setup then moves into their account. If it stops before they approve, run it again for a new code.`,
       `4. \`${skillsLine}\`, then \`${check.command}\`.${host.afterCommands ? ` ${host.afterCommands}` : ''}`,
     ].join('\n'),
     `Never ask for a Telegram bot token or a Slack token: \`${NPX_CLI} channel add telegram\` (or \`slack\`) prints a link where your operator finishes in their browser. When ${runner} won't let you run a command, for example one that saves a key, tell your operator the exact command and let them run it.`,
@@ -99,9 +99,10 @@ function alternativeSections(host: CommandHost): string[] {
   }
 
   const heading = `## ${alternative.title.replace(/^Or /, 'Or: ')}`;
-  const signIn = alternative.signInCommand
-    ? `${alternative.signIn} \`${alternative.signInCommand}\``
-    : alternative.signIn;
+  const signIn = [
+    alternative.signInCommand ? `${alternative.signIn} \`${alternative.signInCommand}\`` : alternative.signIn,
+    ...(alternative.afterSignIn ? [alternative.afterSignIn] : []),
+  ].join(' ');
   const notes = alternative.agentNotes ?? [];
   if (alternative.kind === 'plugin') {
     return [
@@ -113,11 +114,17 @@ function alternativeSections(host: CommandHost): string[] {
     ];
   }
 
+  // Hermes keeps its config in YAML, the others in JSON.
+  const configFence = alternative.file.endsWith('.yaml') ? '```yaml' : '```json';
+
   return [
     heading,
+    ...(alternative.addCommand
+      ? [alternative.addCommand.text, ['```text', alternative.addCommand.line(MCP_URL), '```'].join('\n')]
+      : []),
     alternative.text,
     ...(alternative.installLink ? [`${alternative.installLink.label}: ${alternative.installLink.href(MCP_URL)}`] : []),
-    ['```json', alternative.config(MCP_URL), '```'].join('\n'),
+    [configFence, alternative.config(MCP_URL), '```'].join('\n'),
     signIn,
     ...notes,
   ];
@@ -141,6 +148,6 @@ function chatAppSections(host: ChatApp): string[] {
     ...(host.settings ? [`Where to start: ${host.settings.url}`] : []),
     '## Once it’s connected',
     `Your tools are \`inbox_list\`, \`inbox_send\` and the rest. When the account has no agent yet, they say so: call \`inbox_setup\` to create it, after asking your operator what to call the agent, which address it gets and which email to confirm. See [the agentinbox-mcp skill](${SKILL_FOLDER_URL}/agentinbox-mcp/SKILL.md).`,
-    `Telegram and Slack are set up on ${AGENT_DOMAIN}. Never ask for a bot token or a Slack token.`,
+    'To add Telegram or Slack, call `channel_add` when your operator asks, and show them the link it returns in your chat, never through `inbox_send` or `inbox_reply`. Never ask for a bot token or a Slack token.',
   ];
 }

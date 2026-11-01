@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { claudeCode } from './claude-code';
 import {
   backgroundCommand,
   isUnsupported,
@@ -42,18 +43,27 @@ function recordingRunner(answers: Record<string, { status: number; output: strin
   return { ran, runner };
 }
 
+const SHELL = {
+  PATH: '/opt/node/bin:/usr/bin',
+  INBOX_CONFIG: '/Users/ada/.agentinbox-local/config.json',
+  INBOX_API_URL: 'https://agentinbox.example/api',
+  INBOX_SECRET_KEY: 'sk_never_written',
+  HOME: '/Users/ada',
+  CLAUDE_CONFIG_DIR: '/Users/ada/.claude-work',
+  CLAUDE_CODE_USE_VERTEX: '1',
+  CLOUD_ML_REGION: 'europe-west4',
+  ANTHROPIC_VERTEX_PROJECT_ID: 'ada-ml',
+  ANTHROPIC_API_KEY: 'sk-ant-never-written',
+  CLAUDE_CODE_OAUTH_TOKEN: 'never written',
+  CLAUDE_CODE_SESSION_ID: 'the parent session',
+};
+
 const COMMAND = backgroundCommand({
   script: '/opt/agentinbox/dist/src/index.js',
   nodePath: '/opt/node/bin/node',
   version: '0.1.0',
-  env: {
-    PATH: '/opt/node/bin:/usr/bin',
-    INBOX_CONFIG: '/Users/ada/.agentinbox-local/config.json',
-    INBOX_API_URL: 'https://agentinbox.example/api',
-    INBOX_SECRET_KEY: 'sk_never_written',
-    HOME: '/Users/ada',
-    CLAUDE_CONFIG_DIR: '/Users/ada/.claude-work',
-  },
+  env: SHELL,
+  hostSettings: claudeCode.settingsIn(SHELL),
   project: '/Users/ada/projects/app & co',
   logFile: '/Users/ada/.agentinbox/listen/listen.log',
   description: 'Listens for Agent Inbox messages for Claude Code',
@@ -69,15 +79,35 @@ describe('backgroundCommand', () => {
     expect(COMMAND).toEqual({
       argv: ['/opt/node/bin/node', '/opt/agentinbox/dist/src/index.js', 'listen', 'run'],
       workingDirectory: '/Users/ada/projects/app & co',
-      // Where Claude Code keeps its settings and sign-in, when it isn't its default folder.
+      // Claude Code's own settings come along: where it keeps its settings and sign-in, and the provider it uses.
       env: {
         PATH: '/opt/node/bin:/usr/bin',
         INBOX_CONFIG: '/Users/ada/.agentinbox-local/config.json',
         CLAUDE_CONFIG_DIR: '/Users/ada/.claude-work',
+        CLAUDE_CODE_USE_VERTEX: '1',
+        CLOUD_ML_REGION: 'europe-west4',
+        ANTHROPIC_VERTEX_PROJECT_ID: 'ada-ml',
       },
       logFile: '/Users/ada/.agentinbox/listen/listen.log',
       description: 'Listens for Agent Inbox messages for Claude Code',
     });
+  });
+
+  it('leaves out a value with a line break, which would add a line of its own to the systemd unit', () => {
+    const shell = { PATH: '/usr/bin', ANTHROPIC_MODEL: 'claude-opus-5-5\nExecStartPre=/bin/sh -c "touch /tmp/x"' };
+    const command = backgroundCommand({
+      script: '/opt/agentinbox/dist/src/index.js',
+      nodePath: '/opt/node/bin/node',
+      version: '0.1.0',
+      env: shell,
+      hostSettings: claudeCode.settingsIn(shell),
+      project: '/Users/ada/app',
+      logFile: '/tmp/listen.log',
+      description: 'd',
+    });
+
+    expect(command.env).toEqual({ PATH: '/usr/bin' });
+    expect(systemdUnit(command)).not.toContain('\nExecStartPre=');
   });
 
   it('starts the same version through npx when it runs from npx’s cache, which npm may clean', () => {

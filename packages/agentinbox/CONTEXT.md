@@ -14,6 +14,10 @@ _Avoid_: owner, user, inviter
 Anyone an operator's agents can reach, including the operator.
 _Avoid_: subscriber, recipient
 
+**Confirm**:
+Proving an email address is yours by pressing the button in the email sent to it.
+_Avoid_: verify, opt in
+
 **Stranger**:
 A person or service that writes to an agent without being one of its contacts.
 _Avoid_: unknown sender, guest, anonymous
@@ -86,6 +90,24 @@ _Avoid_: active, in progress
 A conversation the host has declared finished; it becomes open again when anyone says something in it.
 _Avoid_: closed, archived, done
 
+### Messages
+
+**Question**:
+A message from an agent that waits for a person's words; their reply is the answer.
+_Avoid_: prompt, request
+
+**Approval**:
+A message from an agent that waits for a person to approve or deny something; on email only its buttons answer it.
+_Avoid_: permission request, confirmation
+
+**Choice**:
+A message from an agent that waits for a person to pick one option; on email only its buttons answer it.
+_Avoid_: poll, picker
+
+**Confirmation page**:
+The page a person lands on after pressing a button in an agent's email, where one more click sends their answer, so a link scanner can't answer for them.
+_Avoid_: preview page, action page
+
 ### Accounts
 
 **Agent Inbox account**:
@@ -97,7 +119,7 @@ The hidden Novu organization, with its hidden Novu user, behind an Agent Inbox a
 _Avoid_: shadow org, Novu account, workspace
 
 **Keyless setup**:
-What an operator, or an agent for them, builds with the CLI before signing up.
+What an operator, or an agent for them, builds with the CLI before signing up. People see it as a demo setup.
 _Avoid_: demo, demo workspace
 
 **Claim**:

@@ -84,7 +84,7 @@ export function PillTab({
   return (
     <TabsTrigger
       className={cn(
-        'flex h-9 items-center justify-center rounded-lg px-2 text-sm leading-none font-medium tracking-tight whitespace-nowrap text-sapien-foreground focus-visible:outline-offset-[-3px] focus-visible:outline-sapien-foreground data-[state=active]:bg-accent data-[state=active]:text-black data-[state=inactive]:hover:bg-sapien-foreground/5 min-[360px]:px-3.5 sm:h-10 sm:px-6 sm:text-[15px]',
+        'flex h-9 items-center justify-center rounded-lg px-2 text-sm leading-none font-medium tracking-tight whitespace-nowrap text-sapien-foreground focus-visible:outline-offset-[-3px] focus-visible:outline-sapien-foreground data-[state=active]:bg-sapien-foreground data-[state=active]:text-black data-[state=inactive]:hover:bg-sapien-foreground/5 min-[360px]:px-3.5 sm:h-10 sm:px-6 sm:text-[15px]',
         className
       )}
       {...props}

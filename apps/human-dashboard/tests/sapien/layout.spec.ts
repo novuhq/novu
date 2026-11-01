@@ -9,7 +9,7 @@ for (const width of [320, 1024, 1440]) {
       content: '* { line-height: 1.5 !important; letter-spacing: .12em !important; word-spacing: .16em !important; }',
     });
     const issues = await page
-      .locator('#hero, #inbox, #building-blocks, #use-cases, #integrations, #scale, #security, #faq, #get-started')
+      .locator('#hero, #inbox, #building-blocks, #use-cases, #integrations, #scale, #faq, #get-started')
       .evaluateAll((sections) => {
         const issues: string[] = [];
         for (const section of sections) {
@@ -58,6 +58,6 @@ for (const area of ['header', 'footer']) {
     await page.goto('/sapien');
     await page.locator(area).getByRole('link', { name: 'agentinbox' }).click();
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('agentinbox.mdThe inbox API for agents');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('AGENTINBOX.MDThe inbox API for agents');
   });
 }

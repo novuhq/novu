@@ -1,5 +1,6 @@
 'use client';
 
+import { type LucideIcon, Plug, Sparkles, SquareTerminal } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { CopyButton } from '@/components/sapien/copy-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/sapien/tabs';
@@ -11,9 +12,11 @@ import {
   type IntegrationSnippet,
   integrationsAssets,
 } from '@/data/sapien-integrations';
+import type { HostId } from '@/lib/hosts';
 import { cn } from '@/lib/utils';
 
 import { Artwork } from './artwork';
+import { AgentLogo } from './brand-logo';
 
 export function IntegrationsTabs({ items, className }: { items: readonly Integration[]; className?: string }) {
   const [value, setValue] = useState(items[0]?.id ?? '');
@@ -35,9 +38,10 @@ export function IntegrationsTabs({ items, className }: { items: readonly Integra
           <TabsTrigger
             key={item.id}
             value={item.id}
-            className="w-full min-w-0 border-b border-sapien-surface pt-3 pb-2.75 pl-4 text-left text-xl leading-none tracking-[-0.04em] text-sapien-foreground/50 hover:text-sapien-foreground/80 data-[state=active]:text-accent max-md:nth-[4n]:border-b-0 md:text-2xl md:last:border-b-0"
+            className="group/tab flex w-full min-w-0 items-center gap-2 border-b border-sapien-surface pt-3 pb-2.75 pl-1 text-left text-[17px] md:gap-3 leading-none tracking-[-0.04em] text-sapien-foreground/50 hover:text-sapien-foreground/80 data-[state=active]:text-sapien-foreground max-md:nth-[4n]:border-b-0 md:pl-3 md:text-2xl md:last:border-b-0"
           >
-            {item.label}
+            <IntegrationLogo id={item.id} />
+            <span className="truncate">{item.label}</span>
           </TabsTrigger>
         ))}
       </TabsList>
@@ -72,6 +76,32 @@ export function IntegrationsTabs({ items, className }: { items: readonly Integra
         ) : null}
       </div>
     </Tabs>
+  );
+}
+
+/** Agent hosts show their own mark; the CLI, skills and MCP get an icon in a tile of the same size. */
+const INTEGRATION_HOSTS: Partial<Record<string, HostId>> = {
+  'claude-code': 'claude-code',
+  cursor: 'cursor',
+  'grok-bot': 'grok',
+  hermes: 'hermes',
+  openclaw: 'openclaw',
+};
+const INTEGRATION_ICONS: Partial<Record<string, LucideIcon>> = { cli: SquareTerminal, skills: Sparkles, mcp: Plug };
+
+function IntegrationLogo({ id }: { id: string }) {
+  const host = INTEGRATION_HOSTS[id];
+  if (host) return <AgentLogo agent={host} className="opacity-60 group-data-[state=active]/tab:opacity-100" />;
+  const Icon = INTEGRATION_ICONS[id];
+  if (!Icon) return null;
+
+  return (
+    <span
+      aria-hidden="true"
+      className="flex size-6 shrink-0 items-center justify-center rounded-md bg-sapien-surface text-sapien-foreground/60 ring-[0.75px] ring-white/8 ring-inset group-data-[state=active]/tab:bg-accent/15 group-data-[state=active]/tab:text-accent"
+    >
+      <Icon className="size-3.5" strokeWidth={1.75} />
+    </span>
   );
 }
 

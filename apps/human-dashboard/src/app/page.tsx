@@ -20,9 +20,11 @@ import {
   HOME_NOTES,
   HOME_QUICKSTART,
   HOME_READY,
+  HOME_TITLE,
   HOME_TRUST_AFTER,
   HOME_TRUST_BEFORE,
   HOME_USES,
+  HOME_WORDMARK,
   INSTALL_OPTIONS,
 } from '@/data/home';
 import { pageMetadata } from '@/lib/seo';
@@ -82,9 +84,9 @@ export default function HomePage() {
             <AsciiRule />
           </div>
           <h1>
-            agentinbox.md
+            {HOME_WORDMARK}
             <br />
-            The inbox API for agents
+            {HOME_TITLE}
           </h1>
           <p className="home-description">
             {HOME_INTRODUCTION.map((line, index) => (
@@ -124,7 +126,7 @@ export default function HomePage() {
         <DocSection anchor="how-it-works" title="HOW IT WORKS">
           <HowItWorks />
         </DocSection>
-        <DocSection anchor="when" title="WHEN">
+        <DocSection anchor="when" title="FOR">
           <ul className="home-bullets">
             {HOME_USES.map((item) => (
               <li key={item.title}>

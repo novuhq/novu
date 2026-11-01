@@ -1,7 +1,7 @@
 import type { PermissionQuestion } from './host-adapter';
 
 /**
- * The started agent answers people with the CLI (`inbox reply <conversation> …`), or with our MCP server's tools
+ * The started agent answers people with the CLI (`reply <conversation> …`), or with our MCP server's tools
  * when its host has them, and its host asks before running either. Those questions aren't for the operator:
  * the listener allows them by itself, but only the agent's reading and replying in the very conversation it was started for,
  * as plain commands (one, or several joined with `&&`) or one tool call, and only with what keeps them there:
@@ -112,9 +112,9 @@ export function isOwnReplySubject(subject: PermissionQuestion['subject'], conver
 }
 
 /**
- * Our MCP server, by the names hosts give it: `inbox` (`claude mcp add … inbox`, the name our docs use), the
- * agentinbox plugin's `plugin_agentinbox_inbox`, and a claude.ai connector named after Agent Inbox
- * (`claude_ai_Agent_Inbox`).
+ * Our MCP server, by the names hosts give it: `AgentInbox` (`codex mcp add AgentInbox …`, the name our docs use),
+ * the agentinbox plugin's `plugin_agentinbox_AgentInbox`, a claude.ai connector named after Agent Inbox
+ * (`claude_ai_Agent_Inbox`), and `inbox`, the name the docs used before.
  */
 export function isOurMcpServer(server: string): boolean {
   const name = server
@@ -152,7 +152,7 @@ export function isOwnReply(command: string, conversationId: string): boolean {
 }
 
 /**
- * Whether the host is about to answer in `conversationId`: `inbox reply` there, as a command or our MCP server's
+ * Whether the host is about to answer in `conversationId`: `reply` there, as a command or our MCP server's
  * tool. The chat gets the answer then, not "typing…" after it.
  */
 export function repliesIn(subject: PermissionQuestion['subject'], conversationId: string): boolean {
@@ -178,7 +178,7 @@ export function repliesIn(subject: PermissionQuestion['subject'], conversationId
 const ASKING = new Set(['ask', 'approve', 'choose']);
 
 /**
- * Whether the host is about to ask someone in `conversationId` and wait for the answer: `inbox reply` there with
+ * Whether the host is about to ask someone in `conversationId` and wait for the answer: `reply` there with
  * `ask`, `approve` or `choose` and without `--async`, or our MCP server's `inbox_reply` with such a kind, which
  * waits unless `wait_seconds` is 0. Whoever else it asks, the answer comes back to the conversation, and goes to
  * that command while it waits.
@@ -257,14 +257,14 @@ function ownCommand(
     return undefined;
   }
 
-  const start = cliLength(words);
-  const action = words[start + 1] ?? '';
+  const at = cliLength(words);
+  const action = words[at] ?? '';
   const allowed = actions.get(action);
-  if (start === 0 || words[start] !== 'inbox' || !allowed || words[start + 2] !== conversationId) {
+  if (at === 0 || !allowed || words[at + 1] !== conversationId) {
     return undefined;
   }
 
-  const rest = readRest(words.slice(start + 3), allowed);
+  const rest = readRest(words.slice(at + 2), allowed);
 
   return rest ? { action, ...rest } : undefined;
 }

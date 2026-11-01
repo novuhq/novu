@@ -15,6 +15,10 @@ export function CopyCommand({ command, label, variant = 'default', className = '
   const icon = variant === 'icon';
   // Below 360px the 15px command no longer fits beside the icon button, so it
   // drops to 14px instead of wrapping "setup" onto a second line.
+  //
+  // The `$` and the command share a whole-pixel line height: at the inherited 22.5px the box and its text
+  // rounded to the pixel grid apart, which left the text 1px high when the box started on a fractional y, as
+  // the hero's does. `-translate-y-px` stays either way, because lowercase sits low in Geist Mono's line.
   return (
     // biome-ignore lint/a11y/useSemanticElements: a fieldset is for form controls, this names a command and its copy button
     <div role="group" aria-label={label} className={className}>
@@ -26,11 +30,11 @@ export function CopyCommand({ command, label, variant = 'default', className = '
       >
         <span
           aria-hidden="true"
-          className="-translate-y-px font-sapien-mono text-[15px] text-accent max-[359px]:text-sm"
+          className="-translate-y-px font-sapien-mono text-[15px] leading-[22px] text-accent max-[359px]:text-sm"
         >
           $
         </span>
-        <code className="min-w-0 flex-1 -translate-y-px font-sapien-mono text-[15px] tracking-tight [overflow-wrap:anywhere] whitespace-normal select-text max-[359px]:text-sm">
+        <code className="min-w-0 flex-1 -translate-y-px font-sapien-mono text-[15px] leading-[22px] tracking-tight [overflow-wrap:anywhere] whitespace-normal select-text max-[359px]:text-sm">
           {command}
         </code>
         {icon ? (

@@ -38,7 +38,7 @@ It uses the connection saved on this computer by `setup`, `login` or `connect`, 
 
 ## Sessions
 
-Each conversation gets one Claude Code session. The next message in it goes on with the same session, so Claude Code remembers what was said and done. When the conversation is resolved, the session ends, and the next message starts a fresh one. The conversation's history stays readable with `inbox show`.
+Each conversation gets one Claude Code session. The next message in it goes on with the same session, so Claude Code remembers what was said and done. When the conversation is resolved, the session ends, and the next message starts a fresh one. The conversation's history stays readable with `show`.
 
 A message that comes while Claude Code works joins the same run, and so does the answer to a question it asked without waiting (`--async`). An answer comes back to the conversation the question was asked in, also when Claude Code asked someone outside it (`--to`), and whatever their "Listen to" switch says. Once the run is over, it goes on with that conversation's session. Send `/stop` to stop the run in that conversation.
 
@@ -85,6 +85,8 @@ It runs in the background and starts again after a restart:
 | Windows | inside WSL, with systemd on |
 
 `--foreground` listens in that terminal only, until Ctrl-C.
+
+In the background, Claude Code keeps the settings from your shell that pick its provider and models, such as `CLAUDE_CODE_USE_BEDROCK`, `AWS_PROFILE` or `ANTHROPIC_MODEL`, but no secret: anyone on the computer can read the service's file. If Claude Code signs in only with a key from your shell, such as `ANTHROPIC_API_KEY`, `listen` says so before it asks anything: sign Claude Code in another way, or use `--foreground`, which keeps your shell's variables. The same goes for keys it reaches Amazon Bedrock or another cloud provider with, such as `AWS_ACCESS_KEY_ID`: whether it can sign in there without them shows only once it runs, so `listen` stops there too. Unset them when Claude Code can sign in another way, such as with an AWS profile, or use `--foreground`.
 
 One computer keeps an agent listening at a time. Running `listen` on another computer asks to move it there. Running it again on the same computer, for another project or in a terminal, replaces the one running.
 

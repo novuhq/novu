@@ -1,6 +1,7 @@
 import {
   HOME_CONTACTS,
   HOME_CONTACTS_DESCRIPTION,
+  HOME_DEFINITION,
   HOME_FLAGS,
   HOME_HOSTS_DESCRIPTION,
   HOME_HOW_IT_WORKS,
@@ -9,8 +10,10 @@ import {
   HOME_NOTES,
   HOME_QUICKSTART,
   HOME_READY,
+  HOME_TITLE,
   HOME_TRUST,
   HOME_USES,
+  HOME_WORDMARK,
   type HomeCommand,
   INSTALL_OPTIONS,
 } from '@/data/home';
@@ -42,8 +45,9 @@ export function homeMarkdown() {
       .join('')
   );
   const sections = [
-    '# Agent Inbox CLI',
-    '> The email, Slack, and Telegram inbox for AI agents.',
+    `# ${HOME_WORDMARK}`,
+    HOME_TITLE,
+    `> ${HOME_DEFINITION}`,
     HOME_INTRODUCTION.join('\n'),
     [
       `Canonical documentation: ${SITE_ORIGIN}/`,
@@ -58,7 +62,7 @@ export function homeMarkdown() {
     hostList(),
     '## How it works',
     ...explanations.map((line) => `- ${line.trim()}`),
-    '## When',
+    '## For',
     HOME_USES.map((item) => `- **${item.title}.** ${item.text}`).join('\n'),
     '## Security',
     HOME_READY.map((item) => `- **${item.title}.** ${item.text}`).join('\n'),

@@ -77,6 +77,12 @@ export interface ListenState {
   cursor?: string;
   /** Messages that came and aren't handled yet, oldest first. */
   queue: ListenMessage[];
+  /**
+   * The answers to the host's questions among them that the listener looked up, or began to: a look reads the
+   * answer, so another would take that read for a command's. They join a run as they are; one that a command had
+   * got already, the look dropped.
+   */
+  lookedUp?: string[];
   /** The latest handled message ids, so none is handled twice. */
   handled: string[];
   /**

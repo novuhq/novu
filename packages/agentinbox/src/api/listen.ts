@@ -52,7 +52,7 @@ export const INVALID_LISTEN_CURSOR_CODE = 'invalid_listen_cursor';
 export interface ListenMessage {
   /** Stable and unique: a message is handled once, however often it comes back. */
   id: string;
-  /** The id `inbox show` and `inbox reply` take. */
+  /** The id `show` and `reply` take. */
   conversationId: string;
   /** As the inbox shows it: telegram, slack, email… */
   channel: string;
