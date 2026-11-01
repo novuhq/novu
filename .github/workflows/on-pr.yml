@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Find flags
-        uses: launchdarkly/find-code-references-in-pull-request@30f4c4ab2949bbf258b797ced2fbf6dea34df9ce # v2
+        uses: launchdarkly/find-code-references-in-pull-request@beb8579e2a1f27acb9aaffdd73682e3733495cbc # v2.3.4
         id: find-flags
         with:
           project-key: default
