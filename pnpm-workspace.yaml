@@ -62,11 +62,13 @@ overrides:
   file-type@>=17.0.0 <21.3.4: ^21.3.4
   get-func-name@<2.0.1: ^2.0.1
   glob-parent@<5.1.2: ^5.1.2
-  minimatch@>=3.0.0 <3.1.4: ^3.1.4
-  minimatch@>=5.0.0 <5.1.8: ^5.1.8
-  minimatch@>=7.0.0 <7.4.8: ^7.4.8
-  minimatch@>=8.0.0 <8.0.6: ^8.0.6
-  minimatch@>=9.0.0 <9.0.7: ^9.0.7
+  # GHSA-g3hv-75wg-m249 (moderate): minimatch denial of service via
+  # globparts amplification in the `braceExpand` path. Patched in 11.0.1
+  # (first 11.x line). Supersedes earlier per-major overrides (3.1.4, 5.1.8,
+  # 7.4.8, 8.0.6, 9.0.7) since no fix was backported. Both ESM and CJS
+  # consumers (@nx/jest, jest, verdaccio, eslint, auto-it, @puppeteer/*)
+  # resolve to the dual-published 11.x build.
+  minimatch@<11.0.1: ^11.0.1
   nanoid@>=3.0.0 <3.3.17: ^3.3.17
   nth-check: ^2.1.1
   postcss@<8.5.23: ^8.5.23
