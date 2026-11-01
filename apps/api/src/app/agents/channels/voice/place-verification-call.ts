@@ -5,14 +5,10 @@ import { VOICE_DIAL_TIMEOUT_MS } from './place-voice-call';
 import { unconfirmedVoiceDialBody, voiceCallFailure, voiceFailureFromDialError } from './voice-call-failure';
 import { elevenLabsApiBase, readVoiceVerificationConfig } from './voice-config';
 
-/**
- * Room for a 6-digit code, spoken twice, with a break tag between each digit.
- * Slicing inside a tag would be read aloud, so this stays above that line.
- */
+/** Room for a short code spoken twice as words, well above the ~70 characters that takes. */
 const VERIFICATION_LINE_MAX_CHARS = 400;
 
-/** Flash v2 pause. Longer than a comma, short of the point where many breaks destabilize the voice. */
-const DIGIT_BREAK = '<break time="0.7s" />';
+const DIGIT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
 
 export interface PlaceVerificationCallInput {
   toNumber: string;
@@ -31,10 +27,20 @@ interface OutboundCallResponse {
   callSid?: string;
 }
 
-/** Digits spoken one at a time, twice, so a code is not read as a single number. */
+/**
+ * A code spoken as words, one digit at a time, twice.
+ *
+ * Words rather than digits because ElevenLabs asks for numbers written the way they should be
+ * heard; a bare `421903` is read as a quantity. Commas rather than `<break>` tags because a
+ * generation carrying many of them destabilizes the voice: it clips, speeds up and adds
+ * artifacts. That is what a tag between every digit sounded like.
+ */
 export function verificationLineFor(code: string): string {
-  const paced = code.split('').join(`. ${DIGIT_BREAK} `);
-  const line = `Your code is ${paced}. Again. ${DIGIT_BREAK} ${paced}.`;
+  const spoken = code
+    .split('')
+    .map((character) => DIGIT_WORDS[Number(character)] ?? character)
+    .join(', ');
+  const line = `Your code is ${spoken}. Once more: ${spoken}.`;
 
   return line.slice(0, VERIFICATION_LINE_MAX_CHARS);
 }

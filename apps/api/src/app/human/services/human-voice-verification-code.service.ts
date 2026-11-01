@@ -5,7 +5,14 @@ import { CacheService, PinoLogger } from '@novu/application-generic';
 /** How long a spoken code can be typed. A resend replaces it. */
 export const VOICE_VERIFICATION_CODE_TTL_SECONDS = 10 * 60;
 
-export const VOICE_VERIFICATION_CODE_LENGTH = 6;
+/**
+ * Short on purpose: a code is read aloud and typed back from memory. The guess budget below,
+ * not the length, is what makes it hard to brute force.
+ */
+export const VOICE_VERIFICATION_CODE_LENGTH = 4;
+
+/** The one place the spoken length becomes a validation rule, so the two cannot drift. */
+export const VOICE_VERIFICATION_CODE_PATTERN = new RegExp(`^\\d{${VOICE_VERIFICATION_CODE_LENGTH}}$`);
 
 /** Wrong guesses before the code is burned. A new call is the only way back. */
 export const VOICE_VERIFICATION_MAX_ATTEMPTS = 5;

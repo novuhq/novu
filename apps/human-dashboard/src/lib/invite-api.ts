@@ -160,7 +160,7 @@ export async function declineInvite(apiUrl: string, token: string): Promise<{ de
   return postAction(apiUrl, 'decline', { token }, 'Failed to decline the invitation');
 }
 
-/** Confirms the code the verification call read. The invite token scopes the 6-digit code. */
+/** Confirms the code the verification call read. The invite token scopes the 4-digit code. */
 export async function confirmInviteVoiceCode(
   apiUrl: string,
   token: string,

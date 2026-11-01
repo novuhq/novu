@@ -3,6 +3,7 @@ import { FeatureFlagsService, resolvePublishedAgentInboxAddress } from '@novu/ap
 import {
   type AgentEntity,
   AgentIntegrationRepository,
+  AgentRepository,
   ChannelEndpointEntity,
   ChannelEndpointRepository,
   type HumanContactChannelAddresses,
@@ -21,6 +22,7 @@ import {
 import { openingLineFor, PlaceVoiceCall } from '../../agents/channels/voice/place-voice-call';
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card.builder';
+import { humanRelayProfile } from '../../agents/human-relay/human-relay-identity';
 import { assertVoiceEnabled, isVoiceFeatureEnabled } from '../../agents/shared/assert-voice-enabled';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
 import { KeylessEmailGateService } from '../../keyless/keyless-email-gate.service';
@@ -34,6 +36,13 @@ export interface ResolvedHumanTarget {
   platform: string;
   platformUserId: string;
   integrationIdentifier: string;
+}
+
+export interface HumanDeliveryResult {
+  platformMessageId: string;
+  platformThreadId: string;
+  /** Voice only: what the shell actually spoke, so the thread records that line and not a guess at it. */
+  openingLine?: string;
 }
 
 /** A channel the human can receive on right now. */
@@ -156,6 +165,7 @@ function relativeAge(iso: string): string {
 export class HumanDeliveryService {
   constructor(
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
+    private readonly agentRepository: AgentRepository,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly humanContactRepository: HumanContactRepository,
@@ -631,24 +641,43 @@ export class HumanDeliveryService {
     interaction: HumanInteractionEntity,
     target: ResolvedHumanTarget,
     subscriberId: string
-  ): Promise<{ platformMessageId: string; platformThreadId: string }> {
+  ): Promise<HumanDeliveryResult> {
     if (target.platform === HumanChannelViaEnum.VOICE) {
+      const openingLine = openingLineFor(interaction, { agentName: await this.spokenAgentName(interaction) });
       const placed = await this.placeVoiceCall.execute({
         interactionId: interaction.identifier,
         environmentId: String(interaction._environmentId),
         organizationId: String(interaction._organizationId),
         subscriberId,
         toNumber: target.platformUserId,
-        openingLine: openingLineFor(interaction),
+        openingLine,
       });
 
       return {
         platformMessageId: placed.conversationId,
         platformThreadId: placed.callSid ?? placed.conversationId,
+        openingLine,
       };
     }
 
     return this.deliverContent(interaction._agentId, target, buildPendingDeliveryContent(interaction));
+  }
+
+  /**
+   * The name the agent introduces itself with on a call. Undefined while the
+   * relay is unnamed, so the greeting stays "Hi" rather than "Hi, it's Agent".
+   */
+  private async spokenAgentName(interaction: HumanInteractionEntity): Promise<string | undefined> {
+    const agent = await this.agentRepository.findOne(
+      {
+        _id: interaction._agentId,
+        _environmentId: String(interaction._environmentId),
+        _organizationId: String(interaction._organizationId),
+      },
+      { name: 1 }
+    );
+
+    return agent ? humanRelayProfile(agent).name : undefined;
   }
 
   /** One-off DM of arbitrary content (e.g. the keyless sign-up CTA) to an already-resolved target. */

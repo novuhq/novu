@@ -19,7 +19,7 @@ export type ConfirmVoiceVerificationResult = {
 
 /**
  * Promotes the pending phone number when the typed code matches the one the
- * call read. A 6-digit code is not a credential on its own: the public path
+ * call read. A short code is not a credential on its own: the public path
  * also requires the invite token, and the CLI path requires the caller's session.
  */
 @Injectable()

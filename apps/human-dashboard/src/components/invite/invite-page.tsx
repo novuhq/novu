@@ -35,6 +35,9 @@ const APP_LABELS: Record<InviteChannelVia, string> = {
   slack: 'Slack',
 };
 
+/** Matches VOICE_VERIFICATION_CODE_LENGTH on the API, which is what the call reads out. */
+const VOICE_CODE_LENGTH = 4;
+
 type InactiveReason = 'expired' | 'declined' | 'invalid';
 
 /** Which card is on screen: the list of apps, the steps for one app, or the goodbye card. */
@@ -1014,6 +1017,8 @@ function VoicePhoneForm({
               });
             }}
             label="Code from the call"
+            // A spoken code is shorter than an emailed one: it is typed back from memory.
+            length={VOICE_CODE_LENGTH}
             disabled={disabled}
             autoFocus
             invalid={false}

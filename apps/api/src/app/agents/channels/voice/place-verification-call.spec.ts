@@ -46,12 +46,16 @@ describe('PlaceVerificationCall', () => {
     return new PlaceVerificationCall(logger as never);
   }
 
-  it('speaks the code as separate digits with a pause between each', () => {
-    const pause = '<break time="0.7s" />';
-    const paced = ['4', '2', '1', '9', '0', '3'].join(`. ${pause} `);
+  it('speaks the code as digit words, twice, and never as a quantity', () => {
+    const spoken = 'four, two, one, nine';
 
-    expect(verificationLineFor('421903')).to.equal(`Your code is ${paced}. Again. ${pause} ${paced}.`);
-    expect(verificationLineFor('421903')).to.not.include('Novu');
+    expect(verificationLineFor('4219')).to.equal(`Your code is ${spoken}. Once more: ${spoken}.`);
+    expect(verificationLineFor('4219')).to.not.include('Novu');
+  });
+
+  it('carries no break tags, which destabilize the voice when a generation is full of them', () => {
+    expect(verificationLineFor('0000')).to.not.include('<break');
+    expect(verificationLineFor('0000')).to.match(/^Your code is (zero, ){3}zero\./);
   });
 
   it('dials the verification agent and sends no bridge correlation', async () => {
@@ -64,7 +68,7 @@ describe('PlaceVerificationCall', () => {
 
     const placed = await service().execute({
       toNumber: '+15551212',
-      verificationLine: verificationLineFor('421903'),
+      verificationLine: verificationLineFor('4219'),
     });
 
     expect(placed).to.deep.equal({ conversationId: 'conv_v', callSid: 'CA_v' });
@@ -73,7 +77,7 @@ describe('PlaceVerificationCall', () => {
     expect(body.agent_id).to.equal('agent_verify');
     expect(body.agent_id).to.not.equal('agent_live');
     expect(body.conversation_initiation_client_data.dynamic_variables.verification_line).to.equal(
-      verificationLineFor('421903')
+      verificationLineFor('4219')
     );
     expect(body.conversation_initiation_client_data.custom_llm_extra_body).to.equal(undefined);
     expect(body.conversation_initiation_client_data.conversation_config_override).to.equal(undefined);

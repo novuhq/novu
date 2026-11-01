@@ -3,6 +3,10 @@ import { ChannelTypeEnum, ChatProviderIdEnum, HumanChannelViaEnum } from '@novu/
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import {
+  VOICE_VERIFICATION_CODE_LENGTH,
+  VOICE_VERIFICATION_CODE_PATTERN,
+} from '../services/human-voice-verification-code.service';
 
 const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
@@ -109,12 +113,13 @@ describe('Voice phone verification #novu-v2', () => {
     expect(dial.agent_id).to.equal('agent_verify');
     expect(dial.conversation_initiation_client_data.custom_llm_extra_body).to.equal(undefined);
     const spoken = String(dial.conversation_initiation_client_data.dynamic_variables.verification_line);
-    const spokenCode = spoken
-      .replace(/<[^>]+>/g, '')
-      .match(/\d/g)
-      ?.slice(0, 6)
+    const digitWords = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+    // The code is spoken as words, so reading it back is how the caller hears it.
+    const spokenCode = (spoken.match(new RegExp(`\\b(${digitWords.join('|')})\\b`, 'g')) ?? [])
+      .slice(0, VOICE_VERIFICATION_CODE_LENGTH)
+      .map((word) => digitWords.indexOf(word))
       .join('');
-    expect(spokenCode).to.match(/^\d{6}$/);
+    expect(spokenCode).to.match(VOICE_VERIFICATION_CODE_PATTERN);
 
     const pending = await humanContactRepository.findPendingAddress(
       session.environment._id,
@@ -132,7 +137,7 @@ describe('Voice phone verification #novu-v2', () => {
       )
     ).to.equal(null);
 
-    const wrongCode = spokenCode === '000000' ? '000001' : '000000';
+    const wrongCode = spokenCode === '0000' ? '0001' : '0000';
     const wrong = await session.testAgent.post('/v1/human/verifications/voice/confirm').send({
       subscriberId,
       code: wrongCode,

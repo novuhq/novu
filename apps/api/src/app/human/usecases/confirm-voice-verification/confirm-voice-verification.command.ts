@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
+import { VOICE_VERIFICATION_CODE_PATTERN } from '../../services/human-voice-verification-code.service';
 
 export class ConfirmVoiceVerificationCommand extends EnvironmentCommand {
   /** Invite page. The CLI passes `agentIdentifier` instead. */
@@ -16,6 +17,6 @@ export class ConfirmVoiceVerificationCommand extends EnvironmentCommand {
   subscriberId: string;
 
   @IsString()
-  @Matches(/^\d{6}$/)
+  @Matches(VOICE_VERIFICATION_CODE_PATTERN)
   code: string;
 }

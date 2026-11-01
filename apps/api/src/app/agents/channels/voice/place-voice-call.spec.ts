@@ -205,12 +205,42 @@ describe('PlaceVoiceCall', () => {
 });
 
 describe('openingLineFor', () => {
-  it('speaks the title and then the body', () => {
+  it('introduces the agent, then speaks the title and the body', () => {
+    const line = openingLineFor(
+      {
+        kind: HumanInteractionKindEnum.APPROVE,
+        content: { cardChrome: { title: 'Approve the deploy?', body: 'Production, now.' } },
+      },
+      { agentName: 'Scout' }
+    );
+
+    expect(line).to.equal("Hi, it's Scout. Approve the deploy? Production, now.");
+  });
+
+  it('greets without a name when the agent has none', () => {
     const line = openingLineFor({
       kind: HumanInteractionKindEnum.APPROVE,
-      content: { cardChrome: { title: 'Approve the deploy?', body: 'Production, now.' } },
+      content: { cardChrome: { title: 'Approve the deploy?' } },
     });
 
-    expect(line).to.equal('Approve the deploy? Production, now.');
+    expect(line).to.equal('Hi. Approve the deploy?');
+  });
+
+  it('ends an unpunctuated title so it does not run into the body', () => {
+    const line = openingLineFor({
+      kind: HumanInteractionKindEnum.APPROVE,
+      content: { cardChrome: { title: 'Deploy is ready', body: 'Say yes or no' } },
+    });
+
+    expect(line).to.equal('Hi. Deploy is ready. Say yes or no.');
+  });
+
+  it('strips brackets so v4 does not read card text as an audio tag', () => {
+    const line = openingLineFor({
+      kind: HumanInteractionKindEnum.APPROVE,
+      content: { cardChrome: { title: '[URGENT] Deploy failed' } },
+    });
+
+    expect(line).to.equal('Hi. URGENT Deploy failed.');
   });
 });

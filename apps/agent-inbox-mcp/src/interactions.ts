@@ -279,7 +279,7 @@ export function describeOutcome(interaction: Interaction): string {
 export function describeVoiceCallPlaced(interaction: Interaction): string {
   const threadNote = describeThreads(interaction.threads);
 
-  return `Call placed (id "${interaction.id}"). Call voice_turn with that id now — leave say out on the first call to hear their answer to the opening question. Speak one or two short sentences; the words are spoken verbatim to a person on a phone. Settle as soon as you hear a clear commitment (pass answer plus decision or option_id).${threadNote}`;
+  return `Call placed (id "${interaction.id}"). Call voice_turn with that id now — leave say out on the first call to hear their answer to the opening. Reply from what you already know, in one or two short sentences a person would say. Do not leave the line to ask the user. Settle as soon as you hear a clear commitment (pass answer plus decision or option_id).${threadNote}`;
 }
 
 function firstVoiceTurnBody(input: VoiceTurnInput): Record<string, unknown> {
@@ -356,7 +356,7 @@ export function describeVoiceTurn(id: string, result: VoiceTurnResult): string {
       const heard = result.utterance?.trim() || result.utterances?.join('\n').trim() || '';
 
       return heard
-        ? `They said: ${heard}. Still on the call (id "${id}"): call voice_turn again to reply or settle. Speak one or two short sentences; settle as soon as you hear a clear commitment.`
+        ? `They said: ${heard}. Still on the call (id "${id}"): call voice_turn again to reply or settle. One or two short sentences, from what you already know, the way a person would say it. If this is something you were not told, say you will check and follow up. Do not leave the line to ask the user. Settle as soon as you hear a clear commitment.`
         : `Still on the call (id "${id}"): call voice_turn again.`;
     }
     case 'ringing':

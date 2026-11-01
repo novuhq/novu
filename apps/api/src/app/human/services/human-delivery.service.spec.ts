@@ -36,6 +36,11 @@ function unusedPlaceVoiceCall() {
   return { execute: sinon.stub() };
 }
 
+/** The relay agent a voice call introduces itself as. The default name is never spoken. */
+function agentNamed(name = 'Agent') {
+  return { findOne: sinon.stub().resolves({ name }) };
+}
+
 function voiceGate(blocked = false) {
   return {
     isBlocked: sinon.stub().returns(blocked),
@@ -60,6 +65,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
     const keylessEmailGate = emailGate();
     const service = new HumanDeliveryService(
       agentIntegrationRepository as never,
+      agentNamed() as never,
       channelEndpointRepository as never,
       integrationRepository as never,
       humanContactRepository as never,
@@ -653,6 +659,7 @@ describe('HumanDeliveryService keyless email', () => {
     const keylessEmailGate = emailGate(true);
     const service = new HumanDeliveryService(
       agentIntegrationRepository as never,
+      agentNamed() as never,
       channelEndpointRepository as never,
       integrationRepository as never,
       humanContactRepository as never,
@@ -764,6 +771,7 @@ describe('HumanDeliveryService.listInviteChannels', () => {
     };
     const service = new HumanDeliveryService(
       agentIntegrationRepository as never,
+      agentNamed() as never,
       {} as never,
       integrationRepository as never,
       {} as never,
@@ -805,6 +813,7 @@ describe('HumanDeliveryService.listWorkingChannels', () => {
     };
     const service = new HumanDeliveryService(
       agentIntegrationRepository as never,
+      agentNamed() as never,
       channelEndpointRepository as never,
       integrationRepository as never,
       {} as never,
@@ -832,6 +841,7 @@ describe('HumanDeliveryService.deliver', () => {
     };
     const service = new HumanDeliveryService(
       {} as never,
+      agentNamed('Scout') as never,
       {} as never,
       {} as never,
       {} as never,
@@ -855,19 +865,51 @@ describe('HumanDeliveryService.deliver', () => {
       'sub-1'
     );
 
-    expect(sent).to.deep.equal({ platformMessageId: 'conv_1', platformThreadId: 'CA1' });
+    const openingLine = "Hi, it's Scout. Approve the deploy? Now.";
+    expect(sent).to.deep.equal({ platformMessageId: 'conv_1', platformThreadId: 'CA1', openingLine });
     expect(placeVoiceCall.execute.firstCall.args[0]).to.include({
       interactionId: 'hi_1',
       subscriberId: 'sub-1',
       toNumber: '+15551212',
-      openingLine: 'Approve the deploy? Now.',
+      openingLine,
     });
+  });
+
+  it('greets without a name while the relay is still unnamed', async () => {
+    const placeVoiceCall = { execute: sinon.stub().resolves({ conversationId: 'conv_1' }) };
+    const service = new HumanDeliveryService(
+      {} as never,
+      agentNamed() as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      emailGate() as never,
+      voiceFlag() as never,
+      voiceGate() as never,
+      placeVoiceCall as never
+    );
+
+    await service.deliver(
+      {
+        identifier: 'hi_1',
+        _environmentId: 'env1',
+        _organizationId: 'org1',
+        kind: HumanInteractionKindEnum.APPROVE,
+        content: { cardChrome: { title: 'Approve the deploy?' } },
+      } as never,
+      { platform: HumanChannelViaEnum.VOICE, platformUserId: '+15551212', integrationIdentifier: 'voice-main' },
+      'sub-1'
+    );
+
+    expect(placeVoiceCall.execute.firstCall.args[0].openingLine).to.equal('Hi. Approve the deploy?');
   });
 
   it('uses the conversation id as the thread when Twilio does not return a call sid', async () => {
     const placeVoiceCall = { execute: sinon.stub().resolves({ conversationId: 'conv_1' }) };
     const service = new HumanDeliveryService(
       {} as never,
+      agentNamed() as never,
       {} as never,
       {} as never,
       {} as never,

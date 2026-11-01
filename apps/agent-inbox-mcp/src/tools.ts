@@ -295,7 +295,7 @@ export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEm
     'inbox_send',
     {
       title: 'Send an inbox message',
-      description: `Start a conversation with one or more contacts. Leave kind out for a plain message, which returns once it is delivered; ask, approve or choose waits for the answer.${CHECK_INBOX_HINT}`,
+      description: `Start a conversation with one or more contacts. Leave kind out for a plain message, which returns once it is delivered; ask, approve or choose waits for the answer. For via voice, ask the user first for the facts you still need to carry the call, and write message as spoken words after the hello (the system says "Hi, it's {name}.").${CHECK_INBOX_HINT}`,
       inputSchema: {
         kind: questionKind,
         message,
@@ -304,7 +304,7 @@ export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEm
           .enum(['telegram', 'slack', 'email', 'voice'])
           .optional()
           .describe(
-            "Override each contact's default channel. voice places a phone call; then use voice_turn to speak and listen."
+            'Override each contact\'s default channel. voice places a phone call. Before you send, ask the user anything you still need to finish the call without coming back to them. Write message as the words spoken after "Hi, it\'s {name}.", then use voice_turn to speak and listen.'
           ),
         from,
         ttl_seconds: ttlSeconds,
@@ -371,10 +371,17 @@ export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEm
     {
       title: 'Speak or listen on a voice call',
       description:
-        'Hold a live phone call started with inbox_send via voice. Leave say out on the first call (and whenever you only need to listen): the person\'s words come back as text. When you speak, use one or two short sentences — the words are spoken verbatim to a person on a phone. Settle as soon as you hear a clear commitment: pass answer (their own words) plus decision ("approve"/"deny") for approve, or option_id for choose. An answer hangs up. Call again while the result says the call is still open.',
+        'Hold a live phone call started with inbox_send via voice. Leave say out on the first call (and whenever you only need to listen): the person\'s words come back as text. When you speak, use one or two short sentences a person would say, from what you already know — the words are spoken verbatim. Do not read notes aloud. If they ask something you were not told, say you will check and follow up; do not invent it and do not pause the call to ask the user. Settle as soon as you hear a clear commitment: pass answer (their own words) plus decision ("approve"/"deny") for approve, or option_id for choose. An answer hangs up. Call again while the result says the call is still open.',
       inputSchema: {
         id: z.string().min(1).max(128).describe('The interaction id from inbox_send.'),
-        say: z.string().min(1).max(2000).optional().describe('Words spoken verbatim. Omit to listen only.'),
+        say: z
+          .string()
+          .min(1)
+          .max(2000)
+          .optional()
+          .describe(
+            'Words spoken verbatim, one or two sentences a person would say, using what you already know. Omit to listen only.'
+          ),
         answer: z
           .string()
           .min(1)

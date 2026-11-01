@@ -30,6 +30,11 @@ export interface PlaceVoiceCallInput {
   openingLine: string;
 }
 
+/** Only a name the operator chose is spoken. The default stands in for "unnamed". */
+export interface OpeningLineOptions {
+  agentName?: string;
+}
+
 export interface PlacedVoiceCall {
   conversationId: string;
   callSid?: string;
@@ -42,18 +47,41 @@ interface OutboundCallResponse {
   callSid?: string;
 }
 
-/** The card title, then the body. Nothing is wrapped around it, so the spoken line is the one we passed. */
-export function openingLineFor(interaction: Pick<HumanInteractionEntity, 'kind' | 'content'>): string {
+/**
+ * What the person hears when they pick up. Hello and the agent's name (when
+ * the operator chose one) come first. The card is spoken right after, so it
+ * has to be written the way a person would say it, not as a title on a screen.
+ */
+export function openingLineFor(
+  interaction: Pick<HumanInteractionEntity, 'kind' | 'content'>,
+  options: OpeningLineOptions = {}
+): string {
   const card = resolveHumanInteractionCard(interaction);
-  const title = card.title.trim();
-  const body = card.body?.trim();
-  const line = [title, body].filter((part): part is string => Boolean(part)).join(' ');
+  const ask = [spoken(card.title), spoken(card.body)].filter(Boolean).join(' ');
 
-  if (!line) {
+  if (!ask) {
     throw new BadRequestException('A voice call needs an opening line.');
   }
 
-  return line.slice(0, OPENING_LINE_MAX_CHARS);
+  const name = (options.agentName ?? '').replace(/[[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+  const greeting = name ? `Hi, it's ${name}.` : 'Hi.';
+
+  return `${greeting} ${ask.slice(0, OPENING_LINE_MAX_CHARS - greeting.length - 1)}`;
+}
+
+/**
+ * Eleven v4 reads `[...]` as an audio-tag direction, so a card titled
+ * "[URGENT] Deploy failed" would lose the first word. Terminal punctuation is
+ * what makes the voice pause between the title and the body.
+ */
+function spoken(part: string | undefined): string {
+  const plain = (part ?? '').replace(/[[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+
+  if (!plain) {
+    return '';
+  }
+
+  return /[.!?]$/.test(plain) ? plain : `${plain}.`;
 }
 
 /**

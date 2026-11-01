@@ -54,7 +54,7 @@ describe('HumanVoiceVerificationCodeService', () => {
     const { service, cacheStore } = makeService();
     const issued = await service.issue(key, { address: '+1555121212', requestedAt: 't1' });
 
-    expect(issued.code).to.match(/^\d{6}$/);
+    expect(issued.code).to.match(/^\d{4}$/);
     expect([...cacheStore.values()].some((value) => value.includes(issued.code))).to.equal(false);
 
     const wrong = await service.check(key, '000000' === issued.code ? '000001' : '000000');

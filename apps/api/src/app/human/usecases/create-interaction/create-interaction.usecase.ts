@@ -34,7 +34,6 @@ import {
   normalizeHumanTo,
   VOICE_CALL_MAX_MINUTES,
 } from '@novu/shared';
-import { openingLineFor } from '../../../agents/channels/voice/place-voice-call';
 import { isUnconfirmedVoiceDial } from '../../../agents/channels/voice/voice-call-failure';
 import { AgentConversationService } from '../../../agents/conversation-runtime/conversation/agent-conversation.service';
 import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/human-interaction-activity.recorder';
@@ -49,7 +48,11 @@ import {
 } from '../../dtos/interaction-response.dto';
 import { trackAgentInboxCallPlaced, trackAgentInboxMessageSent } from '../../services/agent-inbox-analytics';
 import { contactIdCandidates, explicitEmailAddress } from '../../services/explicit-email-recipient';
-import { HumanDeliveryService, type ResolvedHumanTarget } from '../../services/human-delivery.service';
+import {
+  type HumanDeliveryResult,
+  HumanDeliveryService,
+  type ResolvedHumanTarget,
+} from '../../services/human-delivery.service';
 import { HumanInboxService, type InboxScope } from '../../services/human-inbox.service';
 import {
   assertHumanCardActions,
@@ -562,14 +565,7 @@ export class CreateInteraction {
           const send = () => this.deliveryService.deliver(interaction, target, subscriberId);
           const sent = credits ? await credits.run(send) : await send();
           options.onSent?.(subscriberId, target.platform);
-          const thread = await this.landInThread(
-            scope,
-            interaction,
-            subscriberId,
-            target,
-            sent.platformThreadId,
-            sent.platformMessageId
-          );
+          const thread = await this.landInThread(scope, interaction, subscriberId, target, sent);
 
           if (thread) {
             threads.push({ id: thread.id, unreadBefore: thread.unreadBefore });
@@ -590,9 +586,10 @@ export class CreateInteraction {
     interaction: HumanInteractionEntity,
     subscriberId: string,
     target: ResolvedHumanTarget,
-    platformThreadId: string,
-    platformMessageId?: string
+    sent: HumanDeliveryResult
   ): Promise<{ id: string; conversationId: string; unreadBefore: number } | null> {
+    const { platformThreadId, platformMessageId } = sent;
+
     try {
       const conversation = await this.conversationService.createOrGetConversation({
         ...scope,
@@ -614,8 +611,14 @@ export class CreateInteraction {
         humanInteractionCardTitle({ kind: interaction.kind, content: interaction.content })
       );
 
-      if (target.platform === HumanChannelViaEnum.VOICE) {
-        await this.persistVoiceOpeningLine(scope, conversation, interaction, platformMessageId ?? platformThreadId);
+      if (target.platform === HumanChannelViaEnum.VOICE && sent.openingLine) {
+        await this.persistVoiceOpeningLine(
+          scope,
+          conversation,
+          interaction,
+          platformMessageId ?? platformThreadId,
+          sent.openingLine
+        );
       }
 
       return { id: conversation.identifier, conversationId: conversation._id, unreadBefore };
@@ -639,7 +642,8 @@ export class CreateInteraction {
     scope: InboxScope,
     conversation: ConversationEntity,
     interaction: HumanInteractionEntity,
-    conversationId: string
+    conversationId: string,
+    openingLine: string
   ): Promise<void> {
     const channel = this.inbox.primaryChannel(conversation);
 
@@ -650,7 +654,7 @@ export class CreateInteraction {
         agentIdentifier: String(interaction._agentId),
         environmentId: scope.environmentId,
         organizationId: scope.organizationId,
-        content: openingLineFor(interaction),
+        content: openingLine,
         platformMessageId: `${conversationId}:opening`,
         identifier: `act_voice_opening_${conversationId}`,
       });

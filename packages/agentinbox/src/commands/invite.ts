@@ -650,11 +650,11 @@ async function promptInviteCode(): Promise<string> {
 
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = (await promptLine('Code from the call: ')).trim();
-    if (/^\d{6}$/.test(code)) {
+    if (/^\d{4}$/.test(code)) {
       return code;
     }
 
-    process.stdout.write(`${pc.yellow('The code is 6 digits.')}\n`);
+    process.stdout.write(`${pc.yellow('The code is 4 digits.')}\n`);
   }
 
   throw new Error('No code entered. Re-run to confirm the number.');

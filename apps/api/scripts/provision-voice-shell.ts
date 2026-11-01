@@ -39,12 +39,18 @@
  * ElevenLabs posts `{custom_llm.url}/chat/completions`. The bridge from
  * NV-9171 is that request. The url stored here is `{public}/v1/human/voice`.
  */
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { config } from 'dotenv';
 
 config({ path: resolve(process.cwd(), 'src/.env') });
 
-const PREMADE_VOICE_ID = '21m00Tcm4TlvDq8ikWAM';
+/**
+ * Alexandra, the voice ElevenLabs recommends first for conversational agents.
+ * The 2023 premade set (Rachel and friends) retires on 2026-12-31.
+ */
+const VOICE_ID = 'kdmDKE6EkgrWrrykO9Qt';
+const VOICE_NAME = 'Alexandra';
 
 function env(name: string): string | undefined {
   const value = process.env[name]?.trim();
@@ -89,9 +95,65 @@ async function elFetch<T = Record<string, never>>(path: string, init: RequestIni
   return JSON.parse(text) as T;
 }
 
-function shellPayload(publicApiUrl: string) {
+/**
+ * A library voice has to be in the workspace before an agent may name it, so a
+ * fresh workspace cannot provision the shells without this step.
+ */
+async function ensureVoice(): Promise<void> {
+  const { voices = [] } = await elFetch<{ voices?: { voice_id: string; name: string }[] }>('/voices?page_size=100');
+
+  if (voices.some((voice) => voice.voice_id === VOICE_ID)) {
+    console.log(`Voice ${VOICE_ID} is already in the workspace`);
+
+    return;
+  }
+
+  const { voices: shared = [] } = await elFetch<{ voices?: { voice_id: string; public_owner_id: string }[] }>(
+    `/shared-voices?page_size=100&search=${encodeURIComponent(VOICE_NAME)}`
+  );
+  const match = shared.find((voice) => voice.voice_id === VOICE_ID);
+
+  if (!match) {
+    throw new Error(
+      `Voice ${VOICE_ID} (${VOICE_NAME}) is not in the workspace, and a shared-library search for that name returned ${shared.length} other voices. Add it by hand in the ElevenLabs dashboard.`
+    );
+  }
+
+  console.log(`Adding voice ${VOICE_ID} to the workspace`);
+  await elFetch(`/voices/add/${match.public_owner_id}/${VOICE_ID}`, {
+    method: 'POST',
+    body: JSON.stringify({ new_name: 'Novu voice' }),
+  });
+}
+
+/**
+ * ElevenLabs no longer takes the custom-LLM key inline: it has to be a stored
+ * workspace secret referenced by id. Naming the secret after a digest of its
+ * own value makes the upsert idempotent and makes a rotated bridge secret
+ * store a new one instead of silently leaving the agent on the old value.
+ */
+async function ensureBridgeSecret(bridgeSecret: string): Promise<string> {
+  const name = `novu-voice-bridge-${createHash('sha256').update(bridgeSecret).digest('hex').slice(0, 12)}`;
+  const { secrets = [] } = await elFetch<{ secrets?: { secret_id: string; name: string }[] }>('/convai/secrets');
+  const existing = secrets.find((secret) => secret.name === name);
+
+  if (existing) {
+    console.log(`Reusing bridge secret ${name}`);
+
+    return existing.secret_id;
+  }
+
+  console.log(`Storing bridge secret ${name}`);
+  const created = await elFetch<{ secret_id: string }>('/convai/secrets', {
+    method: 'POST',
+    body: JSON.stringify({ type: 'new', name, value: bridgeSecret }),
+  });
+
+  return created.secret_id;
+}
+
+function shellPayload(publicApiUrl: string, bridgeSecretId: string) {
   const bridge = `${publicApiUrl.replace(/\/$/, '')}/v1/human/voice`;
-  const bridgeSecret = requireEnv('NOVU_VOICE_BRIDGE_SECRET');
 
   return {
     name: 'Novu voice shell',
@@ -115,15 +177,19 @@ function shellPayload(publicApiUrl: string) {
             model_id: 'novu-voice-bridge',
             api_type: 'chat_completions',
             // ElevenLabs sends this as `Authorization: Bearer …` on every bridge request.
-            api_key: bridgeSecret,
+            api_key: { secret_id: bridgeSecretId },
           },
           // Never cascade to a hosted model — invented speech in the customer's agent voice is worse than ending the call.
-          backup_llm_config: { mode: 'disabled' },
+          backup_llm_config: { preference: 'disabled' },
           cascade_timeout_seconds: 15,
           max_tokens: 200,
           tools: [],
           built_in_tools: {
-            end_call: {},
+            end_call: {
+              name: 'end_call',
+              description: 'Hang up once the person has answered and been told the call is done.',
+              params: { system_tool_type: 'end_call' },
+            },
           },
         },
       },
@@ -133,8 +199,14 @@ function shellPayload(publicApiUrl: string) {
         user_input_audio_format: 'pcm_16000',
       },
       tts: {
-        model_id: 'eleven_flash_v2',
-        voice_id: PREMADE_VOICE_ID,
+        // v4 Turbo is the expressive real-time model. The ~25ms it costs over Flash
+        // is nothing beside the bridge park, and Flash v2 is what made her sound read-aloud.
+        model_id: 'eleven_v4_turbo',
+        voice_id: VOICE_ID,
+        // Low stability is what gives a line emotional variation instead of one flat register.
+        stability: 0.35,
+        similarity_boost: 0.75,
+        expressive_mode: true,
       },
       turn: {
         turn_timeout: 7,
@@ -227,8 +299,14 @@ function verificationShellPayload() {
         user_input_audio_format: 'pcm_16000',
       },
       tts: {
+        // Stays on Flash v2 deliberately. The code arrives already written as words, which is
+        // what a small model reads reliably, and a code wants a flat, even delivery rather than
+        // the expressive variation the conversation shell is tuned for.
         model_id: 'eleven_flash_v2',
-        voice_id: PREMADE_VOICE_ID,
+        voice_id: VOICE_ID,
+        // Pacing now comes from the model, not from break tags between the digits.
+        speed: 0.9,
+        stability: 0.8,
       },
       turn: {
         turn_timeout: 3,
@@ -282,7 +360,8 @@ function assertAllowlist(agent: AgentRecord): void {
 }
 
 async function upsertAgent(publicApiUrl: string): Promise<string> {
-  const payload = shellPayload(publicApiUrl);
+  const bridgeSecretId = await ensureBridgeSecret(requireEnv('NOVU_VOICE_BRIDGE_SECRET'));
+  const payload = shellPayload(publicApiUrl, bridgeSecretId);
   const existing = env('NOVU_VOICE_ELEVENLABS_AGENT_ID');
 
   if (existing) {
@@ -501,6 +580,7 @@ async function proveVerificationCall(agentId: string, phoneNumberId: string | un
 
 async function main(): Promise<void> {
   const publicApiUrl = requireEnv('NOVU_VOICE_PUBLIC_API_URL');
+  await ensureVoice();
   const agentId = await upsertAgent(publicApiUrl);
   const stored = await elFetch<AgentRecord>(`/convai/agents/${agentId}`);
   assertAllowlist(stored);
@@ -521,7 +601,7 @@ async function main(): Promise<void> {
   console.log(`NOVU_VOICE_ELEVENLABS_PHONE_NUMBER_ID=${phoneNumberId ?? ''}`);
   console.log(`NOVU_VOICE_ELEVENLABS_AGENT_ID=${agentId}`);
   console.log(`NOVU_VOICE_ELEVENLABS_VERIFY_AGENT_ID=${verifyAgentId}`);
-  console.log(`voice=${PREMADE_VOICE_ID} (premade Rachel)`);
+  console.log(`voice=${VOICE_ID} (Alexandra)`);
 }
 
 main().catch((err: unknown) => {

@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { HumanAddressVerificationStateEnum, HumanChannelViaEnum } from '@novu/shared';
 import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, ValidateIf } from 'class-validator';
 import type { HumanInviteVia } from '../services/human-delivery.service';
+import { VOICE_VERIFICATION_CODE_PATTERN } from '../services/human-voice-verification-code.service';
 
 const INVITE_VIAS: HumanInviteVia[] = [
   HumanChannelViaEnum.TELEGRAM,
@@ -96,9 +97,9 @@ export class HumanInviteConnectRequestDto extends HumanInviteTokenRequestDto {
 }
 
 export class VerifyVoiceCodeRequestDto extends HumanInviteTokenRequestDto {
-  @ApiProperty({ description: 'The 6-digit code the verification call read.' })
+  @ApiProperty({ description: 'The 4-digit code the verification call read.' })
   @IsString()
-  @Matches(/^\d{6}$/)
+  @Matches(VOICE_VERIFICATION_CODE_PATTERN)
   code: string;
 }
 
@@ -109,9 +110,9 @@ export class ConfirmVoiceVerificationRequestDto {
   @MaxLength(128)
   subscriberId: string;
 
-  @ApiProperty({ description: 'The 6-digit code the verification call read.' })
+  @ApiProperty({ description: 'The 4-digit code the verification call read.' })
   @IsString()
-  @Matches(/^\d{6}$/)
+  @Matches(VOICE_VERIFICATION_CODE_PATTERN)
   code: string;
 
   @ApiPropertyOptional({ description: 'Relay agent identifier. Defaults to `human-relay`.' })
