@@ -184,8 +184,6 @@ function quoted(message: string): CommandPart {
  */
 export const HOME_QUICKSTART: readonly HomeCommand[] = [
   { parts: cli('setup'), note: '# once' },
-  { parts: cli('list'), note: '# conversations' },
-  { parts: cli('reply', { text: ' conv_123 ' }, quoted('On it.')), note: '# reply in that conversation' },
   {
     parts: cli('send', SPACE, quoted('Build finished — 0 failures.'), SPACE, {
       text: '--via email',
@@ -193,6 +191,8 @@ export const HOME_QUICKSTART: readonly HomeCommand[] = [
     }),
     note: '# a new email',
   },
+  { parts: cli('reply', { text: ' conv_123 ' }, quoted('On it.')), note: '# reply in that conversation' },
+  { parts: cli('list'), note: '# conversations' },
   { parts: cli('contact invite', { text: ' alice' }), note: '# a new contact' },
 ];
 

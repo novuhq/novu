@@ -148,7 +148,7 @@ test('hero prompt copy uses the shared setup prompt', async ({ page }) => {
   await hero.getByRole('button', { name: 'Copy Prompt' }).click();
   await expect(page.locator('html')).toHaveAttribute(
     'data-copied-text',
-    'Set up an agentinbox inbox for yourself using https://www.agentinbox.md/agents.md'
+    'Set up an Agent Inbox for yourself using https://www.agentinbox.md/agents.md'
   );
   await expect(hero.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
 });

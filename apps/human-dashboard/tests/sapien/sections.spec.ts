@@ -164,7 +164,7 @@ test('copy commands copies the selected snippet without prompts', async ({ page 
   await section.getByRole('button', { name: 'Copy Commands' }).click();
   await expect(page.locator('html')).toHaveAttribute(
     'data-copied-text',
-    ['npx skills add agentinboxhq/skills \\', '    -g --agent hermes-agent -y'].join('\n')
+    ['hermes mcp add AgentInbox \\', '    --url https://mcp.agentinbox.md \\', '    --auth oauth'].join('\n')
   );
   await section.getByRole('tab', { name: 'MCP', exact: true }).click();
   await section.getByRole('button', { name: 'Copy URL' }).click();
@@ -199,7 +199,7 @@ test('closing prompt copy is independent of the setup command', async ({ page })
   await closing.getByRole('button', { name: 'Copy Prompt' }).click();
   await expect(page.locator('html')).toHaveAttribute(
     'data-copied-text',
-    'Set up an agentinbox inbox for yourself using https://www.agentinbox.md/agents.md'
+    'Set up an Agent Inbox for yourself using https://www.agentinbox.md/agents.md'
   );
   await expect(closing.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
   const command = page.getByRole('group', { name: 'Closing setup command' });
