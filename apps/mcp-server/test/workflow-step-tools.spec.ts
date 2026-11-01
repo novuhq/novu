@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { toSavedControlValues } from "../src/tools/index";
 import { fakeWorkflowsApi } from "./fake-api";
 import { dashboardEmailBodies } from "./fixtures/dashboard-email-bodies";
 import { workflowResponseFixture } from "./fixtures/workflow-response";
-import { callTool, connectAllTools, tokenAccessors } from "./support";
+import { callTool, connectAllTools, textOf, tokenAccessors } from "./support";
 
 const smsStep = {
 	controlValues: { body: "Code: {{payload.code}}" },
@@ -401,6 +402,302 @@ describe("workflow step tools", () => {
 			});
 
 			expect(api.puts[0].body!.validatePayload).toBe(false);
+		});
+
+		it("reads a leading payload. as the variable prefix, not as a nested payload object", async () => {
+			const api = fakeWorkflowsApi();
+
+			await callTool(await client(), "update_workflow_payload_schema", {
+				addProperties: [
+					{ isRequired: false, name: "payload.orderId", type: "string" },
+					{ name: "payload.order.total", type: "number" },
+				],
+				removeProperties: ["payload.name"],
+				workflowId: "welcome",
+			});
+
+			const schema = api.puts[0].body!.payloadSchema;
+			expect(Object.keys(schema.properties)).toEqual(["orderId", "order"]);
+			expect(schema.required).toEqual(["order"]);
+			expect(schema.properties.order.properties).toEqual({ total: { type: "number" } });
+		});
+
+		it("strips one payload. only, so payload.payload names a top-level property named payload", async () => {
+			const workflow = workflowResponseFixture();
+			workflow.payloadSchema.properties = {
+				...workflow.payloadSchema.properties,
+				payload: { properties: {}, required: [], type: "object" },
+			} as typeof workflow.payloadSchema.properties;
+			const api = fakeWorkflowsApi(workflow);
+
+			await callTool(await client(), "update_workflow_payload_schema", {
+				removeProperties: ["payload.payload"],
+				workflowId: "welcome",
+			});
+
+			expect(Object.keys(api.puts[0].body!.payloadSchema.properties)).toEqual(["name"]);
+		});
+
+		it.each([
+			[
+				"an empty name",
+				{ addProperties: [{ name: "", type: "string" }] },
+				"addProperties[0].name",
+			],
+			[
+				"a name that is only the payload. prefix",
+				{ addProperties: [{ name: "payload.", type: "string" }] },
+				"addProperties[0].name",
+			],
+			[
+				"a path that ends in a dot",
+				{ addProperties: [{ name: "order.", type: "number" }] },
+				"addProperties[0].name",
+			],
+			[
+				"an array item path with an empty name",
+				{
+					addProperties: [
+						{
+							arrayItemProperties: [{ name: "address..city", type: "string" }],
+							arrayItemsType: "object",
+							name: "orders",
+							type: "array",
+						},
+					],
+				},
+				"addProperties[0].arrayItemProperties[0].name",
+			],
+			["a removal of payload.", { removeProperties: ["payload."] }, "removeProperties[0]"],
+		])("rejects %s before any request", async (_label, args, path) => {
+			const api = fakeWorkflowsApi();
+
+			const result = await callTool(await client(), "update_workflow_payload_schema", {
+				...args,
+				workflowId: "welcome",
+			});
+
+			expect(result.isError).toBe(true);
+			expect(textOf(result)).toContain("Must name a property");
+			expect(textOf(result)).toContain(`at ${path}`);
+			expect(api.requests).toHaveLength(0);
+		});
+
+		it("removes a top-level property named payload", async () => {
+			const workflow = workflowResponseFixture();
+			workflow.payloadSchema.properties = {
+				...workflow.payloadSchema.properties,
+				payload: { properties: {}, required: [], type: "object" },
+			} as typeof workflow.payloadSchema.properties;
+			const api = fakeWorkflowsApi(workflow);
+
+			await callTool(await client(), "update_workflow_payload_schema", {
+				removeProperties: ["payload"],
+				workflowId: "welcome",
+			});
+
+			expect(Object.keys(api.puts[0].body!.payloadSchema.properties)).toEqual(["name"]);
+		});
+	});
+
+	describe("addPayloadProperties", () => {
+		const declared = [
+			{ name: "code", type: "string" },
+			{ isRequired: false, name: "payload.expiresAt", type: "string" },
+		];
+		const declaredSchema = {
+			additionalProperties: false,
+			properties: {
+				code: { type: "string" },
+				expiresAt: { type: "string" },
+				name: { type: "string" },
+			},
+			required: ["name", "code"],
+			type: "object",
+		};
+
+		const unvalidatedFixture = () => {
+			const workflow = workflowResponseFixture();
+			workflow.validatePayload = false;
+
+			return workflow;
+		};
+
+		it.each([
+			["add_workflow_step", { step: smsStep }],
+			["insert_workflow_step", { afterStepId: "in-app-step", step: smsStep }],
+			[
+				"update_workflow_step_content",
+				{
+					content: { controlValues: { body: "{{payload.code}}" }, type: "chat" },
+					stepId: "chat-step",
+				},
+			],
+			[
+				"update_workflow_step_conditions",
+				{ skip: { "==": [{ var: "payload.code" }, "x"] }, stepId: "chat-step" },
+			],
+			["update_workflow_metadata", { name: "Welcome v2" }],
+		])(
+			"%s declares them in the same PUT and turns payload validation on",
+			async (tool, args) => {
+				const api = fakeWorkflowsApi(unvalidatedFixture());
+
+				const result = await callTool(await client(), tool, {
+					...args,
+					addPayloadProperties: declared,
+					workflowId: "welcome",
+				});
+
+				expect(result.isError).toBeFalsy();
+				expect(api.requests.map((r) => r.method)).toEqual(["GET", "PUT"]);
+				expect(api.puts[0].body!.payloadSchema).toEqual(declaredSchema);
+				expect(api.puts[0].body!.validatePayload).toBe(true);
+				expect(textOf(result)).toContain("declared the payload properties code, expiresAt");
+			},
+		);
+
+		it.each([
+			["omitted", undefined],
+			["empty", []],
+		])(
+			"leaves the payload schema and its validation as they are when %s",
+			async (_label, properties) => {
+				const api = fakeWorkflowsApi(unvalidatedFixture());
+
+				await callTool(await client(), "add_workflow_step", {
+					addPayloadProperties: properties,
+					step: smsStep,
+					workflowId: "welcome",
+				});
+
+				expect(api.puts[0].body!.payloadSchema).toEqual(
+					workflowResponseFixture().payloadSchema,
+				);
+				expect(api.puts[0].body!.validatePayload).toBe(false);
+			},
+		);
+
+		it("saves nothing when the step already exists and says the payload properties were not declared", async () => {
+			const api = fakeWorkflowsApi();
+
+			const result = await callTool(await client(), "add_workflow_step", {
+				addPayloadProperties: declared,
+				step: smsStep,
+				stepId: "chat-step",
+				workflowId: "welcome",
+			});
+
+			expect(api.puts).toHaveLength(0);
+			expect(textOf(result)).toContain(
+				'Step "chat-step" already exists, so nothing was saved, including the payload properties code, expiresAt. If this call retries the one that added the step, that call declared them in the same save',
+			);
+		});
+
+		it("keeps the plain message when a step that already exists came without payload properties", async () => {
+			fakeWorkflowsApi();
+
+			const result = await callTool(await client(), "insert_workflow_step", {
+				afterStepId: "in-app-step",
+				step: smsStep,
+				stepId: "chat-step",
+				workflowId: "welcome",
+			});
+
+			expect(textOf(result).split(":\n\n")[0]).toBe('Step "chat-step" already exists');
+		});
+
+		it.each([
+			["add_workflow_step", { step: smsStep }],
+			["update_workflow_metadata", { name: "Welcome v2" }],
+		])(
+			"%s rejects a payload property that names no property, before any request",
+			async (tool, args) => {
+				const api = fakeWorkflowsApi();
+
+				const result = await callTool(await client(), tool, {
+					...args,
+					addPayloadProperties: [{ name: "payload.", type: "string" }],
+					workflowId: "welcome",
+				});
+
+				expect(result.isError).toBe(true);
+				expect(textOf(result)).toContain("at addPayloadProperties[0].name");
+				expect(api.requests).toHaveLength(0);
+			},
+		);
+
+		it("is offered, as an optional field, only by the tools that change steps or metadata", async () => {
+			const { tools } = await (await client()).listTools();
+
+			const offering = tools
+				.filter((tool) => tool.inputSchema.properties?.addPayloadProperties)
+				.map((tool) => tool.name)
+				.sort();
+			expect(offering).toEqual([
+				"add_workflow_step",
+				"insert_workflow_step",
+				"update_workflow_metadata",
+				"update_workflow_step_conditions",
+				"update_workflow_step_content",
+			]);
+			for (const tool of tools) {
+				expect(tool.inputSchema.required ?? []).not.toContain("addPayloadProperties");
+			}
+		});
+	});
+
+	describe("toSavedControlValues", () => {
+		const doc = {
+			content: [
+				{
+					attrs: { showIfKey: null, textAlign: "left" },
+					content: [{ marks: [], text: "Hi {{payload.name}}", type: "text" }],
+					type: "paragraph",
+				},
+			],
+			type: "doc",
+		};
+
+		it("matches the control values the step tools save, key order included", async () => {
+			const api = fakeWorkflowsApi();
+			const inApp = {
+				controlValues: {
+					body: "Body",
+					redirect: { url: "/orders" },
+					subject: "Hi",
+					unknown: "x",
+				},
+				type: "in_app",
+			};
+			const email = {
+				controlValues: { body: doc, editorType: "block", subject: "Hello" },
+				type: "email",
+			};
+
+			await callTool(await client(), "add_workflow_step", {
+				step: { ...inApp, name: "Inbox" },
+				workflowId: "welcome",
+			});
+			await callTool(await client(), "update_workflow_step_content", {
+				content: email,
+				stepId: "email-step",
+				workflowId: "welcome",
+			});
+
+			const added = api.puts[0].body!.steps.at(-1).controlValues;
+			expect(toSavedControlValues(inApp)).toEqual(added);
+			expect(Object.keys(toSavedControlValues(inApp)!)).toEqual(Object.keys(added));
+			expect(Object.keys(added)).toEqual(["body", "redirect", "subject"]);
+			expect(toSavedControlValues(email)).toEqual(api.puts[1].body!.steps[1].controlValues);
+			expect(toSavedControlValues(email)!.body).toBe(JSON.stringify(doc));
+		});
+
+		it("returns undefined for content the step tools reject", () => {
+			expect(
+				toSavedControlValues({ controlValues: { body: 1 }, type: "sms" }),
+			).toBeUndefined();
+			expect(toSavedControlValues({ controlValues: {}, type: "trigger" })).toBeUndefined();
 		});
 	});
 

@@ -167,7 +167,9 @@ function createEmailSettingsFields() {
 				name: z.string().optional().describe("Sender name."),
 			})
 			.optional()
-			.describe("Sender for this step. Omit to send as the email integration's sender."),
+			.describe(
+				"Sender for this step. What you leave out comes from the agent the workflow is assigned to, if any, else from the email integration.",
+			),
 		preheader: z
 			.string()
 			.optional()
@@ -176,7 +178,9 @@ function createEmailSettingsFields() {
 		useProviderDefaults: z
 			.boolean()
 			.optional()
-			.describe("true sends as the email integration's default sender and ignores `from`."),
+			.describe(
+				"true skips the sender of the agent the workflow is assigned to, so the email integration's default sender fills in what `from` leaves out. It does not override `from`: a `from` on the step is still sent, and the dashboard clears `from` when it saves a step with this on, so set either this or a custom `from`, not both.",
+			),
 	};
 }
 

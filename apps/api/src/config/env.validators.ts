@@ -226,6 +226,10 @@ export const envValidators = {
       AI_LLM_MAX_RETRIES: num({ default: 3 }),
       AI_LLM_SERVICE_TIER: str({ choices: ['auto', 'default', 'flex', 'priority'], default: 'priority' }),
       AI_LLM_PROMPT_CACHE_RETENTION: str({ choices: ['in-memory', '24h'], default: '24h' }),
+      AI_LLM_REASONING_EFFORT: str({
+        choices: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'],
+        default: undefined,
+      }),
       // Brand enrichment
       CONTEXT_DEV_API_KEY: str({ default: '' }),
     }),

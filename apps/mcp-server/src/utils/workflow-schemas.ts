@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { toPayloadPropertyPath } from "./payload-schema";
 import { workflowStepSchema } from "./step-schemas";
 
 /**
@@ -156,15 +157,31 @@ export const workflowAgentConfigSchema = z.object({
 
 // --- Payload schema (flat-descriptor alternative) -------------------------
 
+/** Dot-separated names, none of them empty. */
+const PROPERTY_PATH_REGEX = /^[^.]+(?:\.[^.]+)*$/;
+
+/**
+ * A property path in dot notation. A path with an empty name in it (`""`,
+ * `"payload."`, `"order."`) would save a property without a name.
+ */
+export function createPropertyPathSchema() {
+	return z
+		.string()
+		.regex(
+			PROPERTY_PATH_REGEX,
+			'Must name a property: dot-separated names, none of them empty (e.g. "order.total").',
+		);
+}
+
 function createPayloadPropertyBaseSchema() {
 	return z.object({
 		isRequired: z
 			.boolean()
 			.optional()
 			.describe("Whether the property is required in the payload (default: true)."),
-		name: z
-			.string()
-			.describe('Property name. Use dot notation for nested paths, e.g. "order.total".'),
+		name: createPropertyPathSchema().describe(
+			'Property path relative to the payload, without "payload.": "orderId" for {{payload.orderId}}, "order.total" for {{payload.order.total}}.',
+		),
 	});
 }
 
@@ -186,11 +203,9 @@ export const payloadPropertySchema = z.union([
 		arrayItemProperties: z
 			.array(
 				z.object({
-					name: z
-						.string()
-						.describe(
-							'Property name. Use dot notation for nested paths (e.g. "address.city").',
-						),
+					name: createPropertyPathSchema().describe(
+						'Property name. Use dot notation for nested paths (e.g. "address.city").',
+					),
 					type: z.enum(["string", "number", "integer", "boolean"]),
 				}),
 			)
@@ -395,10 +410,17 @@ export function payloadPropertiesToJsonSchema(
 		required: [],
 		type: "object",
 	};
-	const declared = new Map(properties.map((prop) => [prop.name, prop.isRequired !== false]));
+	const declared = new Map(
+		properties.map((prop) => [toPayloadPropertyPath(prop.name), prop.isRequired !== false]),
+	);
 
 	for (const prop of properties) {
-		setNestedProperty(root, prop.name, propertyDescriptorToJsonSchemaNode(prop), declared);
+		setNestedProperty(
+			root,
+			toPayloadPropertyPath(prop.name),
+			propertyDescriptorToJsonSchemaNode(prop),
+			declared,
+		);
 	}
 
 	return root as unknown as Record<string, unknown>;

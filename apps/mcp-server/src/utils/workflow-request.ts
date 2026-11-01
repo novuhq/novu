@@ -12,6 +12,7 @@
  */
 
 import { toSlugIdentifier } from "./slug";
+import { workflowStepContentSchema } from "./step-schemas";
 
 type JsonObject = Record<string, unknown>;
 
@@ -161,4 +162,22 @@ export function normalizeControlValues(
 	}
 
 	return values;
+}
+
+/**
+ * The control values `add_workflow_step`, `insert_workflow_step` and
+ * `update_workflow_step_content` save for new content of a step type: as the
+ * step schema parses them (unknown keys dropped, keys in schema order), email
+ * bodies as strings. `update_workflow_step_content` then puts the step's
+ * current skip condition back. Undefined when the tools would reject the
+ * content.
+ */
+export function toSavedControlValues(content: {
+	type: string;
+	controlValues: JsonObject;
+}): JsonObject | undefined {
+	const parsed = workflowStepContentSchema.safeParse(content);
+	if (!parsed.success) return undefined;
+
+	return normalizeControlValues(parsed.data.type, parsed.data.controlValues);
 }

@@ -1,9 +1,9 @@
 import { parseArgs } from 'node:util';
 import { Client } from 'langsmith';
 import { evaluate } from 'langsmith/evaluation';
-import { DATASET_NAME, type ExampleInputs } from './dataset.ts';
+import { DATASET_NAME, type ExampleInputs, type StepRef, type Turn } from './dataset.ts';
 import { apiTraceMetrics, type TargetOutputs, toolUsage, workflowChecks } from './evaluators.ts';
-import { API_URL, createChat, deleteWorkflow, getChat, getWorkflow, sendTurn } from './novu.ts';
+import { API_KEY_READ_REASON, API_URL, createChat, deleteWorkflow, getChat, getWorkflow, sendTurn } from './novu.ts';
 
 const { positionals, values } = parseArgs({
   allowPositionals: true,
@@ -16,12 +16,27 @@ if (positionals.length !== 1 || (variant !== 'direct' && variant !== 'mcp') || !
   process.exit(1);
 }
 
-const apiTraceProject =
-  { direct: process.env.API_TRACE_PROJECT_DIRECT, mcp: process.env.API_TRACE_PROJECT_MCP }[variant] ??
-  `copilot-${variant}`;
+const apiTraceProjects = [
+  ...new Set([
+    process.env.API_TRACE_PROJECT_DIRECT ?? 'copilot-direct',
+    process.env.API_TRACE_PROJECT_MCP ?? 'copilot-mcp',
+  ]),
+];
 const keepWorkflows = process.env.KEEP_WORKFLOWS === 'true';
 
 const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
+/** The `stepId` a focused turn sends, from the chat's workflow as it is before the turn. */
+async function focusedStepId(chatId: string, { type, nth = 0 }: StepRef): Promise<string> {
+  const { resourceId, identity } = await getChat(chatId);
+  if (!resourceId) throw new Error(`cannot focus ${type}[${nth}]: the chat has no workflow yet`);
+
+  const { steps } = await getWorkflow(resourceId, identity);
+  const step = steps.filter((candidate) => candidate.type === type)[nth];
+  if (!step) throw new Error(`cannot focus ${type}[${nth}]: the workflow has no such step`);
+
+  return step.stepId;
+}
 
 async function runCopilot(inputs: ExampleInputs): Promise<TargetOutputs> {
   const outputs: Omit<TargetOutputs, 'toolSequence'> = { workflow: null, turns: [] };
@@ -30,11 +45,13 @@ async function runCopilot(inputs: ExampleInputs): Promise<TargetOutputs> {
     const chat = await createChat();
     outputs.chatId = chat._id;
 
-    for (const prompt of inputs.turns) {
+    for (const turn of inputs.turns) {
+      const { text, focusStep }: Turn = typeof turn === 'string' ? { text: turn } : turn;
+      const stepId = focusStep && (await focusedStepId(chat._id, focusStep));
       const startedAt = Date.now();
-      const turn = await sendTurn(chat._id, prompt);
-      outputs.turns.push({ prompt, seconds: (Date.now() - startedAt) / 1000, ...turn });
-      if (turn.streamError) break;
+      const result = await sendTurn(chat._id, text, stepId);
+      outputs.turns.push({ prompt: text, focusedStepId: stepId, seconds: (Date.now() - startedAt) / 1000, ...result });
+      if (result.streamError) break;
     }
   } catch (error) {
     outputs.error = errorMessage(error);
@@ -44,10 +61,10 @@ async function runCopilot(inputs: ExampleInputs): Promise<TargetOutputs> {
   // tags. A failed run still scores as having no workflow.
   if (outputs.chatId) {
     try {
-      const { resourceId } = await getChat(outputs.chatId);
+      const { resourceId, identity } = await getChat(outputs.chatId);
       if (resourceId) {
         try {
-          if (!outputs.error) outputs.workflow = await getWorkflow(resourceId);
+          if (!outputs.error) outputs.workflow = await getWorkflow(resourceId, identity);
         } finally {
           if (!keepWorkflows) await deleteWorkflow(resourceId);
         }
@@ -62,15 +79,21 @@ async function runCopilot(inputs: ExampleInputs): Promise<TargetOutputs> {
 
 const client = new Client();
 
-console.log(`Running "${DATASET_NAME}" ×${reps} against the ${variant} tools (API traces: ${apiTraceProject})`);
+const workflowReads = API_KEY_READ_REASON
+  ? `API key because ${API_KEY_READ_REASON}, so critical may be up to 60 s stale`
+  : 'Internal token';
+console.log(
+  `Running "${DATASET_NAME}" ×${reps} against the ${variant} tools ` +
+    `(API traces: ${apiTraceProjects.join(', ')}; workflow reads: ${workflowReads})`
+);
 
 const results = await evaluate(runCopilot, {
   client,
   data: DATASET_NAME,
-  evaluators: [workflowChecks, toolUsage, apiTraceMetrics(client, apiTraceProject, variant)],
+  evaluators: [workflowChecks, toolUsage, apiTraceMetrics(client, apiTraceProjects, variant)],
   experimentPrefix: `copilot-${variant}`,
   description: `Copilot workflow tools: ${variant}`,
-  metadata: { variant, apiTraceProject, apiUrl: API_URL },
+  metadata: { variant, apiTraceProjects, internalReads: !API_KEY_READ_REASON, apiUrl: API_URL },
   maxConcurrency: Number(process.env.EVAL_CONCURRENCY ?? 1),
   numRepetitions: reps,
 });
