@@ -3,7 +3,7 @@ import { createInteraction } from '../api/agent-inbox';
 import { type ApiClient, createApiClient } from '../api/client';
 import { addAgentVoiceIntegration, bootstrapKeylessSession } from '../api/setup';
 import { info, success, warn } from '../cli-io';
-import { type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
+import { CLI_COMMAND, type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
 import { keptHost } from '../host';
 import { openedScreen, openScreen } from '../screen/screen';
 import { failOnScreen } from './failure';
@@ -255,10 +255,12 @@ async function confirmLinkedChannel(
   );
 }
 
-/** Links the shared number. It does not become the default, and nobody can be called until a number is verified. */
+/** Links the shared number. A person is dialed only after they confirm their own number. */
 async function connectVoice(client: ApiClient, agentIdentifier: string): Promise<void> {
   await addAgentVoiceIntegration(client, agentIdentifier);
-  info('Voice is linked to this agent. Phone verification is not available yet, so nobody can be called.');
+  info(
+    `Voice is linked to this agent. People confirm a number with \`${CLI_COMMAND} contact invite <id> --via voice\` before they can be called.`
+  );
 }
 
 async function connectChannel(

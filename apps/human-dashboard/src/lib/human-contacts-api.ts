@@ -32,7 +32,7 @@ export type Contact = {
   updatedAt: string;
 };
 
-export type ContactChannelVia = 'telegram' | 'slack' | 'email';
+export type ContactChannelVia = 'telegram' | 'slack' | 'email' | 'voice';
 
 export type ContactChannel = {
   via: ContactChannelVia;

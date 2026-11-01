@@ -25,9 +25,16 @@
  *   NOVU_VOICE_PROVE_TO                two E.164 numbers, comma-separated
  *
  * Copy the printed ids into NOVU_VOICE_TWILIO_NUMBER,
- * NOVU_VOICE_ELEVENLABS_PHONE_NUMBER_ID, NOVU_VOICE_ELEVENLABS_AGENT_ID, and
- * NOVU_VOICE_ELEVENLABS_API_KEY. Copy the webhook secret into
- * NOVU_VOICE_ELEVENLABS_WEBHOOK_SECRET.
+ * NOVU_VOICE_ELEVENLABS_PHONE_NUMBER_ID, NOVU_VOICE_ELEVENLABS_AGENT_ID,
+ * NOVU_VOICE_ELEVENLABS_VERIFY_AGENT_ID, and NOVU_VOICE_ELEVENLABS_API_KEY.
+ * Copy the webhook secret into NOVU_VOICE_ELEVENLABS_WEBHOOK_SECRET.
+ *
+ * The verification shell is a second agent. It speaks `{{verification_line}}`
+ * and hangs up. It has no custom LLM, so a code call never reaches the bridge
+ * and is not recorded. Updating it is skipped only when the API key is missing.
+ *
+ * Live proof of one verification call, skipped unless a destination is set:
+ *   NOVU_VOICE_PROVE_VERIFY_TO         one E.164 number
  *
  * ElevenLabs posts `{custom_llm.url}/chat/completions`. The bridge from
  * NV-9171 is that request. The url stored here is `{public}/v1/human/voice`.
@@ -179,6 +186,76 @@ interface AgentRecord {
   };
 }
 
+/**
+ * Speaks one line from `{{verification_line}}` and hangs up. A hosted model is
+ * required by ElevenLabs even when we do not want a conversation: its only job
+ * is to call `end_call` after the first message. `max_duration_seconds` is the
+ * backstop if that tool call does not land. Nothing is recorded.
+ */
+function verificationShellPayload() {
+  return {
+    name: 'Novu voice verification',
+    tags: ['novu-voice', 'novu-voice-verification'],
+    conversation_config: {
+      agent: {
+        first_message: '{{verification_line}}',
+        language: 'en',
+        max_conversation_duration_message: 'Goodbye.',
+        dynamic_variables: {
+          dynamic_variable_placeholders: {
+            verification_line: 'Your Novu code is 0, 0, 0, 0, 0, 0.',
+          },
+        },
+        prompt: {
+          prompt:
+            'The verification code was already spoken in the first message. Call the end_call tool immediately. Do not speak. Do not wait for the person. Do not repeat the code.',
+          llm: 'gpt-4o-mini',
+          tools: [],
+          built_in_tools: {
+            end_call: {
+              name: 'end_call',
+              description: 'Hang up after the verification code has been spoken.',
+              params: { system_tool_type: 'end_call' },
+            },
+          },
+        },
+      },
+      asr: {
+        quality: 'high',
+        provider: 'scribe_realtime',
+        user_input_audio_format: 'pcm_16000',
+      },
+      tts: {
+        model_id: 'eleven_flash_v2',
+        voice_id: PREMADE_VOICE_ID,
+      },
+      turn: {
+        turn_timeout: 3,
+        mode: 'turn',
+      },
+      conversation: {
+        // ElevenLabs rejects anything under 60. The prompt still hangs up immediately.
+        max_duration_seconds: 60,
+      },
+    },
+    platform_settings: {
+      overrides: {
+        conversation_config_override: {
+          agent: {
+            first_message: true,
+            language: false,
+            prompt: { prompt: false },
+          },
+        },
+      },
+      privacy: {
+        record_voice: false,
+        retention_days: 0,
+      },
+    },
+  };
+}
+
 function assertAllowlist(agent: AgentRecord): void {
   const overrides = agent.platform_settings?.overrides;
   const agentOverrides = overrides?.conversation_config_override?.agent;
@@ -240,6 +317,30 @@ async function listPhoneNumbers(): Promise<PhoneNumberRecord[]> {
   }
 
   return listed.phone_numbers ?? [];
+}
+
+async function upsertVerificationAgent(): Promise<string> {
+  const payload = verificationShellPayload();
+  const existing = env('NOVU_VOICE_ELEVENLABS_VERIFY_AGENT_ID');
+
+  if (existing) {
+    console.log(`Updating verification agent ${existing}`);
+    await elFetch(`/convai/agents/${existing}`, { method: 'PATCH', body: JSON.stringify(payload) });
+
+    return existing;
+  }
+
+  console.log('Creating verification shell');
+  const created = await elFetch<AgentRecord>('/convai/agents/create', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  const agentId = created.agent_id;
+  if (!agentId) {
+    throw new Error(`Verification create succeeded but no agent_id: ${JSON.stringify(created)}`);
+  }
+
+  return agentId;
 }
 
 async function importPhoneNumber(agentId: string): Promise<string | undefined> {
@@ -362,18 +463,54 @@ async function proveOpeningLines(agentId: string, phoneNumberId: string | undefi
   console.log(JSON.stringify(placed, null, 2));
 }
 
+/**
+ * One call that should speak the code and hang up without a bridge request.
+ * The phone stays assigned to the conversation shell; the dial names this agent.
+ */
+async function proveVerificationCall(agentId: string, phoneNumberId: string | undefined): Promise<void> {
+  const toNumber = env('NOVU_VOICE_PROVE_VERIFY_TO');
+  if (!toNumber) {
+    console.log('Skipping the verification-call proof. Set NOVU_VOICE_PROVE_VERIFY_TO to one E.164 number.');
+
+    return;
+  }
+
+  if (!phoneNumberId) {
+    throw new Error('Cannot prove a verification call without an ElevenLabs phone-number id.');
+  }
+
+  const placed = await elFetch('/convai/twilio/outbound-call', {
+    method: 'POST',
+    body: JSON.stringify({
+      agent_id: agentId,
+      agent_phone_number_id: phoneNumberId,
+      to_number: toNumber,
+      conversation_initiation_client_data: {
+        dynamic_variables: {
+          verification_line: 'Your Novu code is 4, 2, 1, 9, 0, 3. Again, 4, 2, 1, 9, 0, 3.',
+        },
+      },
+    }),
+  });
+
+  console.log('Placed a verification call. Confirm it speaks the code, hangs up, and Novu sees no bridge request:');
+  console.log(JSON.stringify(placed, null, 2));
+}
+
 async function main(): Promise<void> {
   const publicApiUrl = requireEnv('NOVU_VOICE_PUBLIC_API_URL');
   const agentId = await upsertAgent(publicApiUrl);
   const stored = await elFetch<AgentRecord>(`/convai/agents/${agentId}`);
   assertAllowlist(stored);
 
+  const verifyAgentId = await upsertVerificationAgent();
   const phoneNumberId = await importPhoneNumber(agentId);
   if (phoneNumberId) {
     await assignPhoneNumber(agentId, phoneNumberId);
   }
   await registerWebhook();
   await proveOpeningLines(agentId, phoneNumberId);
+  await proveVerificationCall(verifyAgentId, phoneNumberId);
 
   console.log('--- copy into the deployment env ---');
   console.log(`region=${apiBase()}`);
@@ -381,6 +518,7 @@ async function main(): Promise<void> {
   console.log(`NOVU_VOICE_TWILIO_NUMBER=${env('NOVU_VOICE_TWILIO_NUMBER') ?? ''}`);
   console.log(`NOVU_VOICE_ELEVENLABS_PHONE_NUMBER_ID=${phoneNumberId ?? ''}`);
   console.log(`NOVU_VOICE_ELEVENLABS_AGENT_ID=${agentId}`);
+  console.log(`NOVU_VOICE_ELEVENLABS_VERIFY_AGENT_ID=${verifyAgentId}`);
   console.log(`voice=${PREMADE_VOICE_ID} (premade Rachel)`);
 }
 

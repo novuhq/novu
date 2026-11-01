@@ -11,5 +11,10 @@ describe('api proxy routes for MCP setup', () => {
     expect(isProxiedRoute('POST', '/v1/setup')).toBe(true);
     expect(isProxiedRoute('GET', '/v1/operator')).toBe(true);
     expect(isProxiedRoute('POST', '/v1/contacts/verifications')).toBe(true);
+    expect(isProxiedRoute('POST', '/v1/contacts/verifications/voice')).toBe(true);
+    expect(isProxiedRoute('POST', '/v1/contacts/verifications/voice/confirm')).toBe(true);
+    expect(isProxiedRoute('DELETE', '/v1/contacts/:contactId/voice')).toBe(true);
+    expect(isProxiedRoute('POST', '/v1/invites/verify-code')).toBe(true);
+    expect(isProxiedRoute('POST', '/v1/invites/voice/remove')).toBe(true);
   });
 });

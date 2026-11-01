@@ -284,6 +284,13 @@ export enum HumanChannelViaEnum {
 export const VOICE_CALL_MAX_MINUTES = 5;
 
 /**
+ * Minutes reserved for one phone-verification call. The verification shell's
+ * ceiling is 30 seconds, so one minute covers the dial without spending a
+ * full conversation on a code.
+ */
+export const VOICE_VERIFICATION_CALL_MINUTES = 1;
+
+/**
  * Address-channel verification lifecycle surfaced on human contact / invite
  * status DTOs. Chat channels (telegram/slack) only ever report `verified`
  * once a ChannelEndpoint exists — they have no pending state.

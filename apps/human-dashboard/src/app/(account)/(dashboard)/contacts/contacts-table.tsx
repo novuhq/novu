@@ -31,6 +31,7 @@ export const CHANNEL_NAMES: Record<ContactChannelVia, string> = {
   telegram: 'Telegram',
   slack: 'Slack',
   email: 'Email',
+  voice: 'Voice',
 };
 
 /**

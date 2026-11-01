@@ -15,11 +15,17 @@ import {
   RequestAddressVerification,
   type RequestAddressVerificationResult,
 } from '../request-address-verification/request-address-verification.usecase';
+import { RequestVoiceVerificationCommand } from '../request-voice-verification/request-voice-verification.command';
+import {
+  RequestVoiceVerification,
+  type RequestVoiceVerificationResult,
+} from '../request-voice-verification/request-voice-verification.usecase';
 import { ConnectHumanInviteChannelCommand } from './connect-human-invite-channel.command';
 
 export type ConnectHumanInviteChannelResult =
   | { url: string }
-  | (RequestAddressVerificationResult & { via: HumanChannelViaEnum.EMAIL });
+  | (RequestAddressVerificationResult & { via: HumanChannelViaEnum.EMAIL })
+  | (RequestVoiceVerificationResult & { via: HumanChannelViaEnum.VOICE });
 
 /**
  * Mints a fresh connect link for the app the human picked on the invite page —
@@ -35,6 +41,7 @@ export class ConnectHumanInviteChannel {
     private readonly issueTelegramSubscriberLink: IssueTelegramSubscriberLink,
     private readonly generateConnectOauthUrl: GenerateConnectOauthUrl,
     private readonly requestAddressVerification: RequestAddressVerification,
+    private readonly requestVoiceVerification: RequestVoiceVerification,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly analyticsService: AnalyticsService
   ) {}
@@ -106,6 +113,27 @@ export class ConnectHumanInviteChannel {
 
         throw err;
       }
+    }
+
+    if (command.via === HumanChannelViaEnum.VOICE) {
+      if (!command.address?.trim()) {
+        throw new BadRequestException({
+          code: 'address_required',
+          message: 'Enter a phone number to verify.',
+        });
+      }
+
+      const result = await this.requestVoiceVerification.execute(
+        RequestVoiceVerificationCommand.create({
+          environmentId: payload.env,
+          organizationId: payload.org,
+          agentId: payload.agentId,
+          subscriberId: payload.subscriberId,
+          address: command.address,
+        })
+      );
+
+      return { ...result, via: HumanChannelViaEnum.VOICE };
     }
 
     if (command.via === HumanChannelViaEnum.TELEGRAM) {

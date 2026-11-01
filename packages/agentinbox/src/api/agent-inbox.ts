@@ -197,7 +197,7 @@ export async function setupRelay(
     firstName?: string;
     lastName?: string;
     /** The inviter's `--via` pick; becomes the contact's default channel unless they chose one themselves. */
-    defaultVia?: 'telegram' | 'slack' | 'email';
+    defaultVia?: 'telegram' | 'slack' | 'email' | 'voice';
   }
 ): Promise<SetupRelayResult> {
   const res = await client.axios.post<{ data?: SetupRelayResult } | SetupRelayResult>('/v1/setup', input);
@@ -237,7 +237,7 @@ export async function setRelayAgentPicture(
 }
 
 export interface InviteChannel {
-  via: 'telegram' | 'slack' | 'email';
+  via: 'telegram' | 'slack' | 'email' | 'voice';
   integrationIdentifier: string;
   connected: boolean;
 }
@@ -262,7 +262,7 @@ export async function createInvite(
 export type ContactChannelStatus = 'unverified' | 'pending' | 'verified';
 
 export type ContactChannel = {
-  via: 'telegram' | 'slack' | 'email';
+  via: 'telegram' | 'slack' | 'email' | 'voice';
   status: ContactChannelStatus;
   address?: string;
   verifiedAt?: string;
@@ -341,6 +341,35 @@ export async function requestAddressVerification(
     '/v1/contacts/verifications',
     input
   );
+
+  return unwrap(res.data);
+}
+
+export async function requestVoiceVerification(
+  client: ApiClient,
+  input: {
+    subscriberId: string;
+    address: string;
+    agentIdentifier?: string;
+    firstName?: string;
+    lastName?: string;
+  }
+): Promise<AddressVerificationResult> {
+  const res = await client.axios.post<{ data?: AddressVerificationResult } | AddressVerificationResult>(
+    '/v1/contacts/verifications/voice',
+    input
+  );
+
+  return unwrap(res.data);
+}
+
+export async function confirmVoiceVerification(
+  client: ApiClient,
+  input: { subscriberId: string; code: string; agentIdentifier?: string }
+): Promise<{ verified: true; via: 'voice'; address: string }> {
+  const res = await client.axios.post<
+    { data?: { verified: true; via: 'voice'; address: string } } | { verified: true; via: 'voice'; address: string }
+  >('/v1/contacts/verifications/voice/confirm', input);
 
   return unwrap(res.data);
 }

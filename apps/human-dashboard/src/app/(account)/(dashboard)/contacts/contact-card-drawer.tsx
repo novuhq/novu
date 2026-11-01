@@ -30,12 +30,22 @@ import { ContactAvatar } from './contact-avatar';
 import { ShortDate } from './short-date';
 
 /** The order the card lists the channels in, as the design does. */
-const CHANNEL_ORDER: ContactChannelVia[] = ['email', 'telegram', 'slack'];
+const CHANNEL_ORDER: ContactChannelVia[] = ['email', 'telegram', 'slack', 'voice'];
 
-const CHANNEL_NAMES: Record<ContactChannelVia, string> = { email: 'Email', telegram: 'Telegram', slack: 'Slack' };
+const CHANNEL_NAMES: Record<ContactChannelVia, string> = {
+  email: 'Email',
+  telegram: 'Telegram',
+  slack: 'Slack',
+  voice: 'Voice',
+};
 
 /** How the card's sentence names a channel: "Telegram first, then email." */
-const SENTENCE_NAMES: Record<ContactChannelVia, string> = { email: 'email', telegram: 'Telegram', slack: 'Slack' };
+const SENTENCE_NAMES: Record<ContactChannelVia, string> = {
+  email: 'email',
+  telegram: 'Telegram',
+  slack: 'Slack',
+  voice: 'voice',
+};
 
 /** The setup drawers read where they stand themselves when they open; the Contacts page doesn't ask ahead. */
 const UNREAD_TELEGRAM: TelegramSetupState = { step: 'unknown' };
@@ -241,9 +251,15 @@ function ContactCardBody({ contact, agentHandle, signInEmail, start, open, onAdd
   function addChannel(via: ContactChannelVia) {
     if (via === 'email') {
       showEmailForm(true);
-    } else {
-      onAddChat(via);
+
+      return;
     }
+
+    if (via === 'voice') {
+      return;
+    }
+
+    onAddChat(via);
   }
 
   const card = <IdCard contact={contact} agentHandle={agentHandle} connected={connected} defaultVia={defaultVia} />;
@@ -290,11 +306,13 @@ function ContactCardBody({ contact, agentHandle, signInEmail, start, open, onAdd
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              {missing.map((via) => (
-                <DropdownMenuItem key={via} onSelect={() => addChannel(via)}>
-                  {CHANNEL_NAMES[via]}
-                </DropdownMenuItem>
-              ))}
+              {missing
+                .filter((via) => via !== 'voice')
+                .map((via) => (
+                  <DropdownMenuItem key={via} onSelect={() => addChannel(via)}>
+                    {CHANNEL_NAMES[via]}
+                  </DropdownMenuItem>
+                ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -377,8 +395,8 @@ function IdCard({ contact, agentHandle, connected, defaultVia }: IdCardProps) {
             <Fold open appear={appearing.has(via)}>
               <ChannelLine
                 via={via}
-                value={via === 'email' ? (email?.address ?? CHANNEL_NAMES.email) : chatValue(via, contact.channels)}
-                copyLabel={via === 'email' ? `Copy ${contact.name}'s email` : undefined}
+                value={channelLineValue(via, contact, email?.address)}
+                copyLabel={copyLabelFor(via, contact)}
                 isDefault={via === defaultVia}
                 status={via === 'email' ? email?.status : undefined}
               />
@@ -456,6 +474,32 @@ function ChannelLine({ via, value, copyLabel, isDefault, status }: ChannelLinePr
  * What a chat line says: how the person shows on the app (`@dima`, `dima · acme.slack.com`), or the app's name
  * until the agent has learned it.
  */
+function copyLabelFor(via: ContactChannelVia, contact: Contact): string | undefined {
+  if (via === 'email') {
+    return `Copy ${contact.name}'s email`;
+  }
+
+  if (via === 'voice' && contact.phone) {
+    return `Copy ${contact.name}'s phone number`;
+  }
+
+  return undefined;
+}
+
+function channelLineValue(via: ContactChannelVia, contact: Contact, emailAddress?: string): string {
+  if (via === 'email') {
+    return emailAddress ?? CHANNEL_NAMES.email;
+  }
+
+  if (via === 'voice') {
+    const channel = contact.channels.find((candidate) => candidate.via === 'voice');
+
+    return channel?.handle ?? contact.phone ?? CHANNEL_NAMES.voice;
+  }
+
+  return chatValue(via, contact.channels);
+}
+
 function chatValue(via: 'telegram' | 'slack', channels: ContactChannel[]): string {
   const channel = channels.find((candidate) => candidate.via === via);
   if (!channel?.handle) {
