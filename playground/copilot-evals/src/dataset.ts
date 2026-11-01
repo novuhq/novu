@@ -45,6 +45,9 @@ const hours = (n: number) => [
   { amount: n * 60, unit: 'minutes' },
 ];
 
+/** Over the 256-character workflow description limit, so the first create is rejected. */
+const OVER_LIMIT_DESCRIPTION = 'x'.repeat(300);
+
 export const EXAMPLES: EvalExample[] = [
   {
     key: 'create-from-scratch',
@@ -129,13 +132,14 @@ export const EXAMPLES: EvalExample[] = [
       turns: [
         'Create a workflow "Comment digest" that collects comments for 30 minutes per subscriber, then sends one email listing them all. The payload has commentText and authorName.',
         'Change the digest window to 1 hour.',
+        'Key the digest by the variable path payload.orderId.',
       ],
     },
     outputs: {
       name: 'Comment digest',
       stepTypes: ['digest', 'email'],
       payloadKeys: ['commentText', 'authorName'],
-      steps: [{ type: 'digest', controls: hours(1) }],
+      steps: [{ type: 'digest', controls: hours(1), includes: ['payload.orderId'] }],
     },
   },
   {
@@ -200,9 +204,10 @@ export const EXAMPLES: EvalExample[] = [
       turns: [
         'Create a workflow called "Account locked" with an email step telling the user their account was locked.',
         'Make this workflow critical so it is delivered regardless of subscriber preferences.',
+        'Rename it to "Account locked v2".',
       ],
     },
-    outputs: { name: 'Account locked', stepTypes: ['email'], critical: true },
+    outputs: { name: 'Account locked v2', stepTypes: ['email'], critical: true },
   },
   {
     key: 'create-with-tags',
@@ -210,5 +215,80 @@ export const EXAMPLES: EvalExample[] = [
       turns: ['Create a workflow called "Security alert" with a push step and an SMS step, tagged "security".'],
     },
     outputs: { name: 'Security alert', stepTypes: ['push', 'sms'], tags: ['security'] },
+  },
+  {
+    // A subject-only edit must keep the sender settings. Layout is not asserted: layoutId has to reference a real layout.
+    key: 'edit-email-keeps-settings',
+    inputs: {
+      turns: [
+        'Create a workflow called "Order shipped email" with a single email step. Subject "Order update", preheader "Your package left the warehouse", from name "Acme Orders", from email "orders@acme.dev", reply-to "support@acme.dev". Body: a short line that the order shipped.',
+        'Change the email subject to "Your order shipped". Leave the preheader, from, reply-to and body as they are.',
+      ],
+    },
+    outputs: {
+      name: 'Order shipped email',
+      stepTypes: ['email'],
+      steps: [
+        {
+          type: 'email',
+          includes: [
+            'Your order shipped',
+            'Your package left the warehouse',
+            'orders@acme.dev',
+            'Acme Orders',
+            'support@acme.dev',
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // Renaming the button must keep its redirect and the custom data.
+    key: 'edit-in-app-keeps-data',
+    inputs: {
+      turns: [
+        'Create a workflow called "Order shipped in-app" with a single in-app step. Title "Shipped", body "Your order is on the way", a primary button labeled "View shipment" that links to https://example.com/track, and custom data orderId set to {{payload.orderId}}.',
+        'Rename the button to "Track order". Leave the link and the custom data as they are.',
+      ],
+    },
+    outputs: {
+      name: 'Order shipped in-app',
+      stepTypes: ['in_app'],
+      steps: [
+        {
+          type: 'in_app',
+          includes: ['Track order', 'https://example.com/track', 'orderId', 'payload.orderId'],
+        },
+      ],
+    },
+  },
+  {
+    // The response schema is what later steps read as the HTTP step's id and status.
+    key: 'http-request-step',
+    inputs: {
+      turns: [
+        'Create a workflow called "Order lookup" with a single HTTP request step that GETs https://example.com and declares a response schema with string properties id and status.',
+      ],
+    },
+    outputs: {
+      name: 'Order lookup',
+      stepTypes: ['http_request'],
+      steps: [{ type: 'http_request', includes: ['https://example.com', '"id"', '"status"'] }],
+    },
+  },
+  {
+    // The 300-character description is over the limit. The next turn in the same chat must still create the workflow.
+    key: 'failed-create-then-retry',
+    inputs: {
+      turns: [
+        `Create a workflow called "Broken ticket" with a single in-app step. Set the description to exactly these 300 characters and do not shorten it: ${OVER_LIMIT_DESCRIPTION}`,
+        'Create a workflow called "Ticket opened" with a single in-app step whose body is "Your ticket was opened".',
+      ],
+    },
+    outputs: {
+      name: 'Ticket opened',
+      stepTypes: ['in_app'],
+      steps: [{ type: 'in_app', includes: ['Your ticket was opened'] }],
+    },
   },
 ];
