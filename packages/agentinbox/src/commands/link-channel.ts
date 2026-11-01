@@ -8,7 +8,6 @@ import {
   hasChannelEndpoint,
   issueTelegramSubscriberLink,
 } from '../api/setup';
-import { DEFAULT_API_URL, SETUP_PAGE_ORIGIN } from '../config';
 import { pollUntil, sleep } from '../poll';
 
 export const CHANNEL_NAMES = ['telegram', 'slack', 'email'] as const;
@@ -92,29 +91,17 @@ export function isMissingBotTokenError(err: unknown): boolean {
 }
 
 /**
- * Where to send the person to paste credentials.
- *
- * Against Novu Cloud we use the agentinbox.md `/connect` page with the token in the
- * URL fragment (never sent to the server, so it stays out of access logs and
- * Referer headers). Any other API URL means self-hosted or local dev, where the
- * agentinbox.md page could not use the token anyway (it calls Novu Cloud's API
- * through its own `/api`), so we hand back the URL the server minted — that
- * deployment's own dashboard page.
+ * Where to send the person to paste credentials: the `/connect` page of the site
+ * this CLI talks to, which calls the API on its own address, so it has to be the
+ * site that issued the token. The API's own `url` is no use here: it points at
+ * the Novu dashboard. The token stays in the URL fragment (never sent to the
+ * server, so it stays out of access logs and Referer headers).
  */
-export function buildSetupPageUrl(
-  apiUrl: string,
-  channel: Exclude<ChannelName, 'email'>,
-  token: string,
-  fallbackUrl: string
-): string {
-  const normalizedApiUrl = apiUrl.replace(/\/$/, '');
-  if (normalizedApiUrl !== DEFAULT_API_URL) {
-    return fallbackUrl;
-  }
-
+export function buildSetupPageUrl(apiUrl: string, channel: ChatChannel, token: string): string {
+  const siteUrl = apiUrl.replace(/\/$/, '').replace(/\/api$/, '');
   const query = channel === 'telegram' ? '' : `?channel=${channel}`;
 
-  return `${SETUP_PAGE_ORIGIN}/connect${query}#${token}`;
+  return `${siteUrl}/connect${query}#${token}`;
 }
 
 type SetupLinkStatus = { valid: boolean; reason?: 'expired' | 'used' | 'invalid' };

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api/client';
-import { DEFAULT_API_URL, SETUP_PAGE_ORIGIN } from '../config';
+import { DEFAULT_API_URL } from '../config';
 import { SetupStillPendingError } from '../output';
 
 vi.mock('../api/setup', () => ({
@@ -179,7 +179,7 @@ describe('connectTelegram', () => {
 
     await expect(connectTelegram(makeClient(), 'human-relay', 'sub_1', {}, io)).resolves.toBe('tg');
 
-    const setupUrl = `${SETUP_PAGE_ORIGIN}/connect#${mobileLink.token}`;
+    const setupUrl = `https://www.agentinbox.md/connect#${mobileLink.token}`;
     expect(mocked.issueTelegramMobileLink).toHaveBeenCalledWith(expect.anything(), 'tg', 'sub_1');
     expect(io.openInBrowser).toHaveBeenCalledWith(setupUrl);
     expect(output()).toContain(setupUrl);
@@ -200,21 +200,22 @@ describe('connectTelegram', () => {
     await connectTelegram(makeClient(), 'human-relay', 'sub_1', {}, io);
 
     expect(io.openInBrowser).not.toHaveBeenCalled();
-    expect(output()).toContain(`${SETUP_PAGE_ORIGIN}/connect#${mobileLink.token}`);
+    expect(output()).toContain(`https://www.agentinbox.md/connect#${mobileLink.token}`);
     expect(output()).not.toContain('<QR');
   });
 
-  it('uses the server-minted dashboard URL for self-hosted APIs', async () => {
+  it('stays on the site it talks to, not the Novu dashboard link the API returns', async () => {
     mocked.hasChannelEndpoint.mockResolvedValueOnce(false).mockResolvedValue(true);
     mocked.issueTelegramSubscriberLink.mockRejectedValueOnce(missingBotToken).mockResolvedValue(deepLink);
     mocked.getTelegramMobileLinkStatus.mockResolvedValue({ valid: false, reason: 'used' });
     const { io, output } = makeIo(true, ['page']);
 
-    await connectTelegram(makeClient('http://localhost:3000'), 'human-relay', 'sub_1', {}, io);
+    await connectTelegram(makeClient('http://localhost:4300/api'), 'human-relay', 'sub_1', {}, io);
 
-    expect(output()).toContain(mobileLink.url);
-    expect(output()).not.toContain(SETUP_PAGE_ORIGIN);
-    expect(io.openInBrowser).toHaveBeenCalledWith(mobileLink.url);
+    const setupUrl = `http://localhost:4300/connect#${mobileLink.token}`;
+    expect(output()).toContain(setupUrl);
+    expect(output()).not.toContain(mobileLink.url);
+    expect(io.openInBrowser).toHaveBeenCalledWith(setupUrl);
   });
 
   it('saves a bot token pasted in the terminal when that is the chosen path', async () => {
@@ -403,7 +404,7 @@ describe('connectSlack', () => {
 
     await expect(connectSlack(makeClient(), 'agent_1', 'human-relay', 'sub_1', {}, io)).resolves.toBe('sl');
 
-    const setupUrl = `${SETUP_PAGE_ORIGIN}/connect?channel=slack#${slackSetupLink.token}`;
+    const setupUrl = `https://www.agentinbox.md/connect?channel=slack#${slackSetupLink.token}`;
     expect(mocked.issueSlackSetupLink).toHaveBeenCalledWith(expect.anything(), 'human-relay', 'int_slack', 'sub_1');
     expect(io.openInBrowser).toHaveBeenCalledTimes(2);
     expect(io.openInBrowser).toHaveBeenNthCalledWith(1, setupUrl);
@@ -416,6 +417,20 @@ describe('connectSlack', () => {
     expect(output()).not.toContain(`<QR ${authorizeUrl}>`);
   });
 
+  it('stays on the site it talks to, not the Novu dashboard link the API returns', async () => {
+    mocked.hasChannelEndpoint.mockResolvedValueOnce(false).mockResolvedValue(true);
+    mocked.generateConnectOauthUrl.mockRejectedValueOnce(missingSlackCredentials).mockResolvedValue(authorizeUrl);
+    mocked.getSlackSetupLinkStatus.mockResolvedValue({ valid: false, reason: 'used' });
+    const { io, output } = makeIo(true, ['page']);
+
+    await connectSlack(makeClient('http://localhost:4300/api'), 'agent_1', 'human-relay', 'sub_1', {}, io);
+
+    const setupUrl = `http://localhost:4300/connect?channel=slack#${slackSetupLink.token}`;
+    expect(output()).toContain(setupUrl);
+    expect(output()).not.toContain(slackSetupLink.url);
+    expect(io.openInBrowser).toHaveBeenNthCalledWith(1, setupUrl);
+  });
+
   it('prints only the URLs and never opens a browser or draws a QR without a TTY', async () => {
     mocked.hasChannelEndpoint.mockResolvedValueOnce(false).mockResolvedValue(true);
     mocked.generateConnectOauthUrl.mockRejectedValueOnce(missingSlackCredentials).mockResolvedValue(authorizeUrl);
@@ -425,7 +440,7 @@ describe('connectSlack', () => {
     await connectSlack(makeClient(), 'agent_1', 'human-relay', 'sub_1', {}, io);
 
     expect(io.openInBrowser).not.toHaveBeenCalled();
-    expect(output()).toContain(`${SETUP_PAGE_ORIGIN}/connect?channel=slack#${slackSetupLink.token}`);
+    expect(output()).toContain(`https://www.agentinbox.md/connect?channel=slack#${slackSetupLink.token}`);
     expect(output()).toContain(authorizeUrl);
     expect(output()).not.toContain('<QR');
   });
@@ -442,7 +457,7 @@ describe('connectSlack', () => {
     await vi.advanceTimersByTimeAsync(31 * 60_000);
 
     await assertion;
-    expect(output()).toContain(`${SETUP_PAGE_ORIGIN}/connect?channel=slack#${slackSetupLink.token}`);
+    expect(output()).toContain(`https://www.agentinbox.md/connect?channel=slack#${slackSetupLink.token}`);
     expect(output()).not.toContain('<QR');
     vi.useRealTimers();
   });

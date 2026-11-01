@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type ApiClient, ApiError } from '../api/client';
 import type { AgentIntegrationLink } from '../api/setup';
-import { DEFAULT_API_URL, SETUP_PAGE_ORIGIN } from '../config';
+import { DEFAULT_API_URL } from '../config';
 
 const { getSlackSetupLinkStatus, getTelegramMobileLinkStatus, hasChannelEndpoint } = vi.hoisted(() => ({
   getSlackSetupLinkStatus: vi.fn(),
@@ -133,27 +133,25 @@ describe('isMissingBotTokenError', () => {
 });
 
 describe('buildSetupPageUrl', () => {
-  it('puts the token in the fragment of the person.md page for Novu Cloud', () => {
-    expect(buildSetupPageUrl(DEFAULT_API_URL, 'telegram', 'tok_123', 'https://dash/fallback')).toBe(
-      `${SETUP_PAGE_ORIGIN}/connect#tok_123`
-    );
-    expect(buildSetupPageUrl(`${DEFAULT_API_URL}/`, 'telegram', 'tok_123', 'https://dash/fallback')).toBe(
-      `${SETUP_PAGE_ORIGIN}/connect#tok_123`
+  it('puts the token in the fragment of the agentinbox.md page', () => {
+    expect(buildSetupPageUrl(DEFAULT_API_URL, 'telegram', 'tok_123')).toBe('https://www.agentinbox.md/connect#tok_123');
+    expect(buildSetupPageUrl(`${DEFAULT_API_URL}/`, 'telegram', 'tok_123')).toBe(
+      'https://www.agentinbox.md/connect#tok_123'
     );
   });
 
   it('selects the channel with a query parameter so the token stays in the fragment', () => {
-    expect(buildSetupPageUrl(DEFAULT_API_URL, 'slack', 'tok_123', 'https://dash/fallback')).toBe(
-      `${SETUP_PAGE_ORIGIN}/connect?channel=slack#tok_123`
+    expect(buildSetupPageUrl(DEFAULT_API_URL, 'slack', 'tok_123')).toBe(
+      'https://www.agentinbox.md/connect?channel=slack#tok_123'
     );
   });
 
-  it('falls back to the server-minted dashboard URL for self-hosted or local APIs', () => {
-    expect(buildSetupPageUrl('http://localhost:3000', 'slack', 'tok_123', 'https://dash/fallback')).toBe(
-      'https://dash/fallback'
+  it('stays on the local or self-hosted site the CLI talks to', () => {
+    expect(buildSetupPageUrl('http://localhost:4300/api', 'slack', 'tok_123')).toBe(
+      'http://localhost:4300/connect?channel=slack#tok_123'
     );
-    expect(buildSetupPageUrl('https://api.novu.example.com', 'telegram', 'tok_123', 'https://dash/fallback')).toBe(
-      'https://dash/fallback'
+    expect(buildSetupPageUrl('https://your-dashboard.example/api', 'telegram', 'tok_123')).toBe(
+      'https://your-dashboard.example/connect#tok_123'
     );
   });
 });
