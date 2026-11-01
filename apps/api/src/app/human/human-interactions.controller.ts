@@ -261,6 +261,7 @@ export class HumanInteractionsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
+  @UseGuards(HumanAgentPausedGuard)
   async getVoiceRecording(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,

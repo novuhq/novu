@@ -765,7 +765,7 @@ export class CreateInteraction {
                     staysInThread: true,
                     onSent: (subscriberId, platform) => {
                       reached.add(subscriberId);
-                      this.trackMessageSent(command, agent, platform, interaction.identifier);
+                      this.trackMessageSent(command, agent, platform, created.identifier);
                     },
                   })
               : undefined,

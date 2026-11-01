@@ -156,6 +156,7 @@ export class HumanInteractionSettlementService {
     await this.releaseVoiceReservation(settled);
     await this.editDeliveredMessage(settled);
     await this.resumeAfterSettlement(settled);
+    await this.trackVoiceSettled(settled, status);
 
     return settled;
   }

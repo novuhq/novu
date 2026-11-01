@@ -417,13 +417,15 @@ function Details({ details, thread }: { details: InboxThreadDetails; thread: Inb
             {(shown, className) => <span className={className}>{shown}</span>}
           </CrossFade>
         </Detail>
-        {voiceCall ? <VoiceCallDetails call={voiceCall} /> : null}
+        {voiceCall ? <VoiceCallDetails key={voiceCall.interactionId} call={voiceCall} /> : null}
       </dl>
     </section>
   );
 }
 
 function VoiceCallDetails({ call }: { call: InboxVoiceCall }) {
+  const [recordingGone, setRecordingGone] = useState(false);
+
   return (
     <>
       {call.durationSeconds !== undefined ? (
@@ -436,16 +438,23 @@ function VoiceCallDetails({ call }: { call: InboxVoiceCall }) {
       )}
       {call.hasRecording ? (
         <Detail label="Recording" wide>
-          {/* The spoken turns listed under this call are the transcript. */}
-          {/* biome-ignore lint/a11y/useMediaCaption: no separate caption file; the thread is the transcript */}
-          <audio
-            controls
-            preload="none"
-            src={`/api/recordings/${encodeURIComponent(call.interactionId)}`}
-            className="mt-1 h-8 w-full max-w-full"
-          >
-            Your browser does not play audio.
-          </audio>
+          {recordingGone ? (
+            <span className="text-muted">Recording unavailable</span>
+          ) : (
+            <>
+              {/* The spoken turns listed under this call are the transcript. */}
+              {/* biome-ignore lint/a11y/useMediaCaption: no separate caption file; the thread is the transcript */}
+              <audio
+                controls
+                preload="none"
+                src={`/api/recordings/${encodeURIComponent(call.interactionId)}`}
+                className="mt-1 h-8 w-full max-w-full"
+                onError={() => setRecordingGone(true)}
+              >
+                Your browser does not play audio.
+              </audio>
+            </>
+          )}
         </Detail>
       ) : null}
     </>
