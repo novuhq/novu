@@ -32,15 +32,31 @@ export function wasMadeInTheSteps(agent: StepAgent, state: OnboardingState): boo
  *
  * An agent the steps never saw being made came from a terminal or the MCP: claimed, or set up there after
  * logging in. It has its address and its host already, so there is nothing to walk its operator through.
+ *
+ * A host has come in once the API saw it (`hostStatus.connected`: it used its code, or checked the inbox), or
+ * once it signed in through the MCP server (`signedIn`), which a chat app or a plugin does before its first check.
  */
-export function resolveStep(agent: StepAgent | null, state: OnboardingState, hostStatus: HostStatus | null): SetupStep {
+export function resolveStep(
+  agent: StepAgent | null,
+  state: OnboardingState,
+  hostStatus: HostStatus | null,
+  signedIn = false
+): SetupStep {
   if (!agent) return 'address';
   if (!wasMadeInTheSteps(agent, state)) return 'done';
   if (state.finishedAt) return 'done';
   if (!state.testLeftAt) return 'test';
-  if (!hostStatus?.connected) return 'connect';
+  if (!hostStatus?.connected && !signedIn) return 'connect';
 
   return 'reach';
+}
+
+/**
+ * Whether an app that last connected through the MCP server at `at` did so since the agent was made. An
+ * account's sign-ins outlive its agent, so one from before it, by an app not used since, isn't its host coming in.
+ */
+export function signedInSince(at: string, agent: StepAgent): boolean {
+  return !agent.createdAt || Date.parse(at) >= Date.parse(agent.createdAt) - CLOCK_SLACK_MS;
 }
 
 /** The agent exists but no host reads its mail yet: what the "setup not finished" banners are about. */

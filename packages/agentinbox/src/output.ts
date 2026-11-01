@@ -8,7 +8,7 @@ import { CLI_COMMAND } from './config';
  *   0  answered / approved / chosen / delivered
  *   1  error (transport, auth, validation, or a voice call that never connected)
  *  10  denied
- *  11  timed out waiting — still pending; the answer shows up in the conversation (`inbox show <id>`)
+ *  11  timed out waiting — still pending; the answer shows up in the conversation (`show <id>`)
  *  12  expired or canceled
  */
 export const EXIT_OK = 0;
@@ -91,10 +91,10 @@ export function answerHint(interaction: Pick<Interaction, 'threads'>): string {
   const ids = (interaction.threads ?? []).map((conversation) => conversation.id);
 
   if (ids.length === 0) {
-    return `the answer shows up in its conversation: ${pc.bold(`${CLI_COMMAND} inbox list`)}`;
+    return `the answer shows up in its conversation: ${pc.bold(`${CLI_COMMAND} list`)}`;
   }
 
-  return `the answer shows up in: ${ids.map((id) => pc.bold(`${CLI_COMMAND} inbox show ${id}`)).join(', ')}`;
+  return `the answer shows up in: ${ids.map((id) => pc.bold(`${CLI_COMMAND} show ${id}`)).join(', ')}`;
 }
 
 /** The interaction as hosts see it: the API's `threads` are printed as `conversations`. */
@@ -115,13 +115,13 @@ export function emitResult(interaction: Interaction, asJson: boolean): number {
   return exitCodeFor(interaction);
 }
 
-/** Voice send: the dial was accepted — exit 0 and point the agent at `inbox voice-turn`. */
+/** Voice send: the dial was accepted — exit 0 and point the agent at `voice-turn`. */
 export function emitVoiceCallPlaced(interaction: Interaction, asJson: boolean): number {
   if (asJson) {
     process.stdout.write(`${JSON.stringify(interactionJson(interaction), null, 2)}\n`);
   } else {
     process.stdout.write(
-      `${pc.green('Call placed')} (${interaction.id}). Drive it with: ${CLI_COMMAND} inbox voice-turn ${interaction.id}\n` +
+      `${pc.green('Call placed')} (${interaction.id}). Drive it with: ${CLI_COMMAND} voice-turn ${interaction.id}\n` +
         `Leave --say out on the first turn to hear their answer. Settle with --answer and --approve/--deny or --option.\n`
     );
   }
@@ -233,7 +233,7 @@ export function formatConversationView(view: ConversationView): string {
   const { conversation } = view;
   const header = `${pc.bold(conversation.id)}  ${conversation.channel}  ${conversationPeople(conversation)}  ${pc.dim(conversation.status)}`;
   const older = view.hasMore
-    ? [pc.dim(`(older messages: ${CLI_COMMAND} inbox show ${conversation.id} --before ${view.messages[0]?.id})`)]
+    ? [pc.dim(`(older messages: ${CLI_COMMAND} show ${conversation.id} --before ${view.messages[0]?.id})`)]
     : [];
   const body = view.messages.length ? view.messages.map(formatInboxMessage) : [pc.dim('(no messages)')];
 

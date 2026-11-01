@@ -50,7 +50,7 @@ export interface SendOptions {
   extraAction?: string[];
 }
 
-/** The words that turn a send into a question: `inbox send ask "…"`. Without one, it is a plain message. */
+/** The words that turn a send into a question: `send ask "…"`. Without one, it is a plain message. */
 export const SEND_VERBS = ['ask', 'approve', 'choose'] as const;
 type SendVerb = (typeof SEND_VERBS)[number];
 
@@ -66,7 +66,7 @@ function isSendVerb(word: string | undefined): word is SendVerb {
 
 /**
  * `["ask", "Which env?"]` → an ask; `["Deployed."]` → a plain message (`tell`). Unquoted words are
- * joined, so `inbox send ask Which env?` works too. A verb with nothing after it is a mistake, not a message.
+ * joined, so `send ask Which env?` works too. A verb with nothing after it is a mistake, not a message.
  */
 export function parseSendWords(words: string[]): { kind: InteractionKind; text: string } {
   const [first, ...rest] = words;
@@ -74,7 +74,7 @@ export function parseSendWords(words: string[]): { kind: InteractionKind; text: 
   if (isSendVerb(first)) {
     const text = rest.join(' ').trim();
     if (!text) {
-      fail(`\`${first}\` needs the text to send, e.g. ${CLI_COMMAND} inbox send ${first} "${VERB_EXAMPLES[first]}"`);
+      fail(`\`${first}\` needs the text to send, e.g. ${CLI_COMMAND} send ${first} "${VERB_EXAMPLES[first]}"`);
     }
 
     return { kind: first, text };
@@ -82,7 +82,7 @@ export function parseSendWords(words: string[]): { kind: InteractionKind; text: 
 
   const text = words.join(' ').trim();
   if (!text) {
-    fail(`Pass the message to send, e.g. ${CLI_COMMAND} inbox send "Deployed."`);
+    fail(`Pass the message to send, e.g. ${CLI_COMMAND} send "Deployed."`);
   }
 
   return { kind: 'tell', text };
@@ -179,7 +179,7 @@ export function channelDefaultsFor(
 }
 
 /**
- * The engine behind `inbox send` and `inbox reply`. With `conversation`, the message goes into it;
+ * The engine behind `send` and `reply`. With `conversation`, the message goes into it;
  * without, it starts a conversation with `--to` (or the default recipient).
  */
 export async function runSend(words: string[], options: SendOptions, conversation?: string): Promise<never> {
@@ -258,18 +258,18 @@ export function resolveAddress(
   conversation?: string
 ): Pick<CreateInteractionInput, 'to' | 'thread' | 'via' | 'anyoneMayAnswer'> {
   if (options.anyone && conversation === undefined) {
-    fail('`--anyone` only works with `inbox reply`: it is about who may answer in a conversation.');
+    fail('`--anyone` only works with `reply`: it is about who may answer in a conversation.');
   }
 
   if (conversation !== undefined) {
     const id = conversation.trim();
 
     if (!id) {
-      fail(`\`inbox reply\` needs a conversation id. List conversations with: ${CLI_COMMAND} inbox list`);
+      fail(`\`reply\` needs a conversation id. List conversations with: ${CLI_COMMAND} list`);
     }
 
     if (options.via) {
-      fail('`--via` cannot be used with `inbox reply`: a conversation already lives on one channel.');
+      fail('`--via` cannot be used with `reply`: a conversation already lives on one channel.');
     }
 
     if (options.anyone && options.to) {
@@ -344,7 +344,7 @@ export function formatConversationReport(
       const count = conversation.unreadBefore;
       lines.push(
         `warning: this conversation had ${count} unread ${count === 1 ? 'message' : 'messages'}, now marked read. ` +
-          `See ${count === 1 ? 'it' : 'them'} with: ${CLI_COMMAND} inbox show ${conversation.id}`
+          `See ${count === 1 ? 'it' : 'them'} with: ${CLI_COMMAND} show ${conversation.id}`
       );
     }
 
@@ -368,7 +368,7 @@ export async function waitForResolution(
       process.stdout.write(`${JSON.stringify(interactionJson(interaction), null, 2)}\n`);
     } else {
       process.stdout.write(
-        `This is a live phone call, not a text wait. Drive it with: ${CLI_COMMAND} inbox voice-turn ${interaction.id}\n`
+        `This is a live phone call, not a text wait. Drive it with: ${CLI_COMMAND} voice-turn ${interaction.id}\n`
       );
     }
 
@@ -527,16 +527,14 @@ export function formatKeylessCapMessage(details: KeylessCapDetails): string {
     return formatKeylessEmailMessage(details);
   }
 
-  const count = details.cap ? `${details.cap} free messages` : 'free messages';
-  const lines = [`You've used the ${count} of this keyless demo.`];
+  const count = details.cap ? `${details.cap}-message` : 'message';
+  const lines = [`You've reached the ${count} limit of this free Agent Inbox demo.`];
 
   if (details.browserLogin) {
-    lines.push(`To keep your channels and continue, run: ${CLI_COMMAND} login`);
+    lines.push(`To keep your Agent Inbox setup and channels, run: \`${CLI_COMMAND} login\``);
 
     if (details.claimUrl) {
-      lines.push(
-        `(Or sign up from this link, which we also sent to your linked channel, then run \`${CLI_COMMAND} login\`: ${details.claimUrl})`
-      );
+      lines.push(`(Or claim this setup from this link: ${details.claimUrl}, and then run \`${CLI_COMMAND} login\`)`);
     }
 
     return lines.join('\n');
@@ -562,7 +560,7 @@ function formatKeylessEmailMessage(details: KeylessCapDetails): string {
     ];
 
     if (details.claimUrl) {
-      lines.push(`(Or sign up from this link, then run \`${CLI_COMMAND} login\`: ${details.claimUrl})`);
+      lines.push(`(Or claim this setup from this link: ${details.claimUrl}, and then run \`${CLI_COMMAND} login\`)`);
     }
 
     return lines.join('\n');
@@ -600,7 +598,7 @@ export async function runVoiceTurn(id: string, options: VoiceTurnOptions): Promi
   try {
     const interactionId = id.trim();
     if (!interactionId) {
-      fail(`\`inbox voice-turn\` needs an interaction id from \`inbox send --via voice\`.`);
+      fail(`\`voice-turn\` needs an interaction id from \`send --via voice\`.`);
     }
 
     if (options.approve && options.deny) {
@@ -695,13 +693,13 @@ function describeVoiceTurn(id: string, result: VoiceTurnResult): string {
       const heard = result.utterance?.trim() || result.utterances?.join('\n').trim() || '';
 
       return heard
-        ? `${heard}\n(Still on the call — run \`${CLI_COMMAND} inbox voice-turn ${id}\` again to reply or settle.)`
-        : `(Still on the call — run \`${CLI_COMMAND} inbox voice-turn ${id}\` again.)`;
+        ? `${heard}\n(Still on the call — run \`${CLI_COMMAND} voice-turn ${id}\` again to reply or settle.)`
+        : `(Still on the call — run \`${CLI_COMMAND} voice-turn ${id}\` again.)`;
     }
     case 'ringing':
-      return `Phone still ringing (${id}). Run \`${CLI_COMMAND} inbox voice-turn ${id}\` again.`;
+      return `Phone still ringing (${id}). Run \`${CLI_COMMAND} voice-turn ${id}\` again.`;
     case 'timeout':
-      return `(No new words yet — still on the call. Run \`${CLI_COMMAND} inbox voice-turn ${id}\` again to keep listening.)`;
+      return `(No new words yet — still on the call. Run \`${CLI_COMMAND} voice-turn ${id}\` again to keep listening.)`;
     case 'ended':
       return `Call ended (${result.endReason ?? 'call_ended'}${
         result.interactionStatus ? `, ${result.interactionStatus}` : ''

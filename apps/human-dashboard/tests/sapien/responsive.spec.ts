@@ -15,17 +15,7 @@ for (const width of [2560, 1920, 1440, 1024, 768, 390, 360, 320]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto('/sapien');
     await page.evaluate(() => document.fonts.ready);
-    for (const id of [
-      'hero',
-      'inbox',
-      'building-blocks',
-      'use-cases',
-      'integrations',
-      'scale',
-      'security',
-      'faq',
-      'get-started',
-    ]) {
+    for (const id of ['hero', 'inbox', 'building-blocks', 'use-cases', 'integrations', 'scale', 'faq', 'get-started']) {
       await page.locator(`#${id}`).scrollIntoViewIfNeeded();
     }
     await expect
@@ -95,10 +85,12 @@ for (const width of [2560, 1920, 1440, 1024, 768, 390, 360, 320]) {
       )
       .toBe(true);
     await page.locator('#building-blocks').getByRole('tab', { name: 'Choose', exact: true }).click();
-    await expect(page.locator('#building-blocks').getByRole('tabpanel')).toContainText('How should I resolve Acme?');
+    await expect(page.locator('#building-blocks').getByRole('tabpanel')).toContainText(
+      'Which release strategy should I use?'
+    );
     await page.getByRole('group', { name: 'Closing setup command' }).scrollIntoViewIfNeeded();
     await expect(page.getByRole('group', { name: 'Closing setup command' }).locator('code')).toHaveText(
-      'agentinbox setup'
+      'npx @agentinbox/cli setup'
     );
     expect(failures).toEqual([]);
   });

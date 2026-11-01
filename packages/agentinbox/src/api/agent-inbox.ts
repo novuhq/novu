@@ -1,4 +1,4 @@
-import { ApiClient, unwrap } from './client';
+import { ApiClient, ApiError, unwrap } from './client';
 
 export type InteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
 
@@ -76,6 +76,11 @@ export interface Interaction {
    * The API calls them threads; the CLI prints them as `conversations`.
    */
   threads?: InteractionConversation[];
+  /**
+   * When the agent first got a person's answer, by asking for the interaction. Not on the read that hands it
+   * over: the listener tells by it whether a command that waited got the answer already.
+   */
+  answerReadAt?: string;
   expiresAt: string;
   createdAt: string;
 }
@@ -197,6 +202,16 @@ export async function voiceTurn(client: ApiClient, id: string, input: VoiceTurnI
   return unwrap(res.data);
 }
 
+/** Withdraws a question that is still open: it can't be answered any more, and shows as canceled. */
+export async function cancelInteraction(client: ApiClient, id: string): Promise<Interaction> {
+  const res = await client.axios.post<{ data?: Interaction } | Interaction>(
+    `/v1/inbox/messages/${encodeURIComponent(id)}/cancel`,
+    {}
+  );
+
+  return unwrap(res.data);
+}
+
 export interface SetupRelayResult {
   agentId: string;
   agentIdentifier: string;
@@ -221,13 +236,15 @@ export async function setupRelay(
     agentIdentifier?: string;
     /** What the relay agent is called from now on. Missing leaves the name it has. */
     agentName?: string;
+    /** The address before the `@` of a new inbox. Missing works one out from the name. */
+    inboxHandle?: string;
     /** A line about what the relay agent does. An empty one clears it. */
     agentDescription?: string;
     email?: string;
     firstName?: string;
     lastName?: string;
     /** The inviter's `--via` pick; becomes the contact's default channel unless they chose one themselves. */
-    defaultVia?: 'telegram' | 'slack' | 'email';
+    defaultVia?: 'telegram' | 'slack' | 'email' | 'voice';
   }
 ): Promise<SetupRelayResult> {
   const res = await client.axios.post<{ data?: SetupRelayResult } | SetupRelayResult>('/v1/setup', input);
@@ -249,6 +266,46 @@ function agentParams(agentIdentifier: string | undefined): { params?: { agentIde
   return agentIdentifier ? { params: { agentIdentifier } } : {};
 }
 
+/** The relay agent, or `null` before it has been set up. */
+export async function findRelayAgent(client: ApiClient, agentIdentifier?: string): Promise<RelayAgent | null> {
+  try {
+    const res = await client.axios.get<{ data?: RelayAgent } | RelayAgent>('/v1/agent', agentParams(agentIdentifier));
+
+    return unwrap(res.data);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      return null;
+    }
+
+    throw err;
+  }
+}
+
+export interface InboxAddressCheck {
+  handle: string;
+  available: boolean;
+  /** A free address close to a taken one, when there is one. */
+  suggestion?: string;
+  /** The mailbox domain this deployment publishes. */
+  domain: string;
+}
+
+/**
+ * Whether an address is free. `operatorEmail` only shapes the free one suggested for a taken address, and
+ * without a handle the answer is only the mailbox domain.
+ */
+export async function checkInboxAddress(
+  client: ApiClient,
+  handle: string | undefined,
+  operatorEmail: string | undefined
+): Promise<InboxAddressCheck> {
+  const res = await client.axios.get<{ data?: InboxAddressCheck } | InboxAddressCheck>('/v1/inbox-address', {
+    params: { ...(handle ? { handle } : {}), ...(operatorEmail ? { email: operatorEmail } : {}) },
+  });
+
+  return unwrap(res.data);
+}
+
 /** Uploads the relay agent's picture: a JPEG or PNG of up to 2 MB. Needs an account (`login`). */
 export async function setRelayAgentPicture(
   client: ApiClient,
@@ -267,7 +324,7 @@ export async function setRelayAgentPicture(
 }
 
 export interface InviteChannel {
-  via: 'telegram' | 'slack' | 'email';
+  via: 'telegram' | 'slack' | 'email' | 'voice';
   integrationIdentifier: string;
   connected: boolean;
 }
@@ -292,7 +349,7 @@ export async function createInvite(
 export type ContactChannelStatus = 'unverified' | 'pending' | 'verified';
 
 export type ContactChannel = {
-  via: 'telegram' | 'slack' | 'email';
+  via: 'telegram' | 'slack' | 'email' | 'voice';
   status: ContactChannelStatus;
   address?: string;
   verifiedAt?: string;
@@ -312,6 +369,8 @@ export interface Contact {
   firstName?: string;
   lastName?: string;
   email?: string;
+  /** On a contact from the list: their email for this agent, in full, and whether they confirmed it. */
+  emailVerification?: { address: string; status: ContactChannelStatus };
   phone?: string;
   data?: Record<string, unknown>;
   /** Channels the agent can reach the contact on. */
@@ -371,6 +430,35 @@ export async function requestAddressVerification(
     '/v1/contacts/verifications',
     input
   );
+
+  return unwrap(res.data);
+}
+
+export async function requestVoiceVerification(
+  client: ApiClient,
+  input: {
+    subscriberId: string;
+    address: string;
+    agentIdentifier?: string;
+    firstName?: string;
+    lastName?: string;
+  }
+): Promise<AddressVerificationResult> {
+  const res = await client.axios.post<{ data?: AddressVerificationResult } | AddressVerificationResult>(
+    '/v1/contacts/verifications/voice',
+    input
+  );
+
+  return unwrap(res.data);
+}
+
+export async function confirmVoiceVerification(
+  client: ApiClient,
+  input: { subscriberId: string; code: string; agentIdentifier?: string }
+): Promise<{ verified: true; via: 'voice'; address: string }> {
+  const res = await client.axios.post<
+    { data?: { verified: true; via: 'voice'; address: string } } | { verified: true; via: 'voice'; address: string }
+  >('/v1/contacts/verifications/voice/confirm', input);
 
   return unwrap(res.data);
 }

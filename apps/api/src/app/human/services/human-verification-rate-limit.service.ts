@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
-import type { HumanChannelViaEnum } from '@novu/shared';
+import { HumanChannelViaEnum } from '@novu/shared';
 
 /** Minimum gap between verification emails for one human × channel. */
 export const HUMAN_VERIFICATION_COOLDOWN_SECONDS = 60;
@@ -64,7 +64,7 @@ export class HumanVerificationRateLimitService {
       return { retryAfterSeconds: HUMAN_VERIFICATION_COOLDOWN_SECONDS, reservation };
     }
     if (reserved === null) {
-      throw this.cooldownException();
+      throw this.cooldownException(params.via);
     }
 
     const dailyKey = this.dailyKey(params);
@@ -72,7 +72,7 @@ export class HumanVerificationRateLimitService {
     const dailyCount = dailyRaw ? Number.parseInt(dailyRaw, 10) : 0;
     if (Number.isFinite(dailyCount) && dailyCount >= HUMAN_VERIFICATION_DAILY_CAP) {
       await this.releaseCooldown(cooldownKey, reservation);
-      throw this.capException();
+      throw this.capException(params.via);
     }
 
     if (!dailyRaw) {
@@ -108,22 +108,32 @@ export class HumanVerificationRateLimitService {
     await this.cacheService.eval(RELEASE_OWNED_COOLDOWN_SCRIPT, [cooldownKey], [reservation]);
   }
 
-  private cooldownException(): HttpException {
+  private cooldownException(via: HumanChannelViaEnum): HttpException {
+    const message =
+      via === HumanChannelViaEnum.VOICE
+        ? 'A verification call was just placed. Wait a moment before calling again.'
+        : 'A confirmation email was just sent. Wait a moment before resending.';
+
     return new HttpException(
       {
         code: 'verification_cooldown',
-        message: 'A verification email was just sent. Wait a moment before resending.',
+        message,
         retryAfterSeconds: HUMAN_VERIFICATION_COOLDOWN_SECONDS,
       },
       HttpStatus.TOO_MANY_REQUESTS
     );
   }
 
-  private capException(): HttpException {
+  private capException(via: HumanChannelViaEnum): HttpException {
+    const message =
+      via === HumanChannelViaEnum.VOICE
+        ? 'Too many verification calls today. Try again tomorrow.'
+        : 'Too many confirmation emails today. Try again tomorrow.';
+
     return new HttpException(
       {
         code: 'verification_cap',
-        message: 'Too many verification emails today. Try again tomorrow.',
+        message,
         retryAfterSeconds: HUMAN_VERIFICATION_DAILY_WINDOW_SECONDS,
       },
       HttpStatus.TOO_MANY_REQUESTS

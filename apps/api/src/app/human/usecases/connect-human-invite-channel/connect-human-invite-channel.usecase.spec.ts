@@ -33,12 +33,22 @@ describe('ConnectHumanInviteChannel', () => {
     };
     const environmentRepository = { findOne: sinon.stub().resolves({ apiKeys: [{ _userId: 'owner1' }] }) };
     const analyticsService = { track: sinon.stub() };
+    const requestVoiceVerification = {
+      execute: sinon.stub().resolves({
+        address: '+***0123',
+        requestedAt: '2026-10-01T10:00:00.000Z',
+        expiresAt: '2026-10-01T10:10:00.000Z',
+        retryAfterSeconds: 60,
+        replacesVerifiedAddress: false,
+      }),
+    };
     const usecase = new ConnectHumanInviteChannel(
       inviteTokens as never,
       deliveryService as never,
       issueTelegramSubscriberLink as never,
       generateConnectOauthUrl as never,
       requestAddressVerification as never,
+      requestVoiceVerification as never,
       environmentRepository as never,
       analyticsService as never
     );
@@ -48,6 +58,7 @@ describe('ConnectHumanInviteChannel', () => {
       issueTelegramSubscriberLink,
       generateConnectOauthUrl,
       requestAddressVerification,
+      requestVoiceVerification,
       environmentRepository,
       analyticsService,
     };
@@ -175,6 +186,32 @@ describe('ConnectHumanInviteChannel', () => {
     });
   });
 
+  it('starts voice verification instead of minting a URL', async () => {
+    const { usecase, requestVoiceVerification } = setup([
+      { via: HumanChannelViaEnum.VOICE, integrationIdentifier: 'voice-1', connected: false },
+    ]);
+
+    const result = await usecase.execute(
+      ConnectHumanInviteChannelCommand.create({
+        token: 'T'.repeat(32),
+        via: HumanChannelViaEnum.VOICE,
+        address: '+14155550123',
+      })
+    );
+
+    expect(result).to.include({
+      via: HumanChannelViaEnum.VOICE,
+      address: '+***0123',
+    });
+    expect(requestVoiceVerification.execute.firstCall.args[0]).to.include({
+      environmentId: 'env1',
+      organizationId: 'org1',
+      agentId: 'relay1',
+      subscriberId: 'alice',
+      address: '+14155550123',
+    });
+  });
+
   it('hides mail-provider errors from the public invite connect path', async () => {
     const { usecase, requestAddressVerification } = setup([
       { via: HumanChannelViaEnum.EMAIL, integrationIdentifier: 'email-1', connected: false },
@@ -199,7 +236,7 @@ describe('ConnectHumanInviteChannel', () => {
     expect(err).to.be.instanceOf(BadGatewayException);
     expect((err as BadGatewayException).getResponse()).to.deep.equal({
       error: 'delivery_failed',
-      message: 'Could not send the verification email. Try again in a moment.',
+      message: 'Could not send the confirmation email. Try again in a moment.',
     });
   });
 });

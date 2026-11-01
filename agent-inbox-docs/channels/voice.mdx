@@ -41,17 +41,17 @@ Call `voice_turn` again while the result says the call is still open (no new wor
 ## CLI
 
 ```bash
-npx @agentinbox/cli inbox send approve "Approve the deploy to production?" --via voice --to alice
+npx @agentinbox/cli send approve "Approve the deploy to production?" --via voice --to alice
 ```
 
-Exit `0` means the call was placed. Drive it with `inbox voice-turn`:
+Exit `0` means the call was placed. Drive it with `voice-turn`:
 
 ```bash
 id=hi_…
 # Listen for their answer to the opening question
-npx @agentinbox/cli inbox voice-turn "$id"
+npx @agentinbox/cli voice-turn "$id"
 # Speak and settle
-npx @agentinbox/cli inbox voice-turn "$id" \
+npx @agentinbox/cli voice-turn "$id" \
   --say "Got it — hanging up. Thanks." \
   --answer "yeah, go ahead" \
   --approve
@@ -70,8 +70,8 @@ Exit codes match the rest of the CLI:
 Listen, then settle only when the words are a clear yes or no. Keep listening when they are not, and stop on an error or a call that already ended:
 
 ```bash
-id=$(npx @agentinbox/cli inbox send approve "Ship it?" --via voice --to alice --json | jq -r .id)
-npx @agentinbox/cli inbox voice-turn "$id" --json > turn.json
+id=$(npx @agentinbox/cli send approve "Ship it?" --via voice --to alice --json | jq -r .id)
+npx @agentinbox/cli voice-turn "$id" --json > turn.json
 code=$?
 if [ "$code" -ne 11 ]; then
   exit "$code"
@@ -80,19 +80,19 @@ fi
 utterance=$(jq -r '.utterance // empty' turn.json)
 case "$utterance" in
   [Yy]es*)
-    npx @agentinbox/cli inbox voice-turn "$id" \
+    npx @agentinbox/cli voice-turn "$id" \
       --say "Got it — hanging up. Thanks." \
       --answer "$utterance" \
       --approve
     ;;
   [Nn]o*)
-    npx @agentinbox/cli inbox voice-turn "$id" \
+    npx @agentinbox/cli voice-turn "$id" \
       --say "Understood — I won't ship it." \
       --answer "$utterance" \
       --deny
     ;;
   *)
-    npx @agentinbox/cli inbox voice-turn "$id"
+    npx @agentinbox/cli voice-turn "$id"
     ;;
 esac
 ```
@@ -104,7 +104,7 @@ Exit `11` means still on the call (heard something, still ringing, or nothing ne
 - One or two short sentences per turn. The words are spoken verbatim.
 - Leave `say` / `--say` out when you only need to listen.
 - Settle as soon as you hear a clear commitment. Do not keep chatting.
-- Never use `inbox_wait` on a voice interaction — use `voice_turn` / `inbox voice-turn`.
+- Never use `inbox_wait` on a voice interaction — use `voice_turn` / `voice-turn`.
 - Replies cannot pick `--via voice`: a call is not a thread you reply into later.
 
 See [Waiting for an answer](/waiting) for how text channels wait instead.

@@ -138,7 +138,7 @@
     "ts-jest": "29.4.1",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "5.6.2",
+    "typescript": "6.0.3",
     "wait-port": "^0.3.0",
     "yargs": "^17.7.2"
   },

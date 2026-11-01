@@ -56,12 +56,33 @@ For more detailed instructions, follow one of their many [Tutorials](https://www
 1. Go to your [Console](https://console.twilio.com/) on Twilio and access the Account Info section
 2. Enter your:
    - `Account SID`
+   - `Authentication method` — keep **Auth token**, or select **API key** to [use a Twilio API key](#authenticate-with-an-api-key)
    - `Auth Token`
    - `Twilio Phone Number`
    - `Data residency region` (optional) — leave as **US (default)** unless your Twilio account uses EU data residency
 3. Click on the **Save** button
 </Step>
 </Steps>
+
+## Authenticate with an API key
+
+Use a Twilio API key instead of your account Auth Token when you do not want to share the Auth Token with Novu. You can revoke an API key at any time without affecting other apps that use your Twilio account.
+
+<Steps>
+<Step title="Create an API key in Twilio">
+In the Twilio Console, go to **Account** > **API keys & tokens** and create an API key. A **Restricted** key needs only permission to create messages. Copy the key's **SID** (starts with `SK`) and **Secret**. Twilio shows the secret only once.
+</Step>
+
+<Step title="Select API key in Novu">
+In your Twilio integration, set **Authentication method** to **API key**, then enter your `Account SID`, `API Key SID`, and `API Key Secret`. Novu removes the stored Auth Token when you save.
+</Step>
+</Steps>
+
+<Note>
+  API keys belong to a Twilio region. If you use **EU (Ireland)** as the data residency region, create the API key in the IE1 region.
+</Note>
+
+To configure API key authentication through the Novu API, set `authMethod` to `apiKey` and send the key in `apiKey` (API Key SID) and `secretKey` (API Key Secret) inside `credentials`. Novu does not store `token` in this mode. To use the Auth Token, leave `authMethod` out.
 
 ## Multi-region data residency
 

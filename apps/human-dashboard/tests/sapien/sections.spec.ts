@@ -24,11 +24,11 @@ test('each tab group changes only its own panel', async ({ page }) => {
   await inbox.getByRole('tab', { name: 'Personal Assistant' }).click();
   await expect(inbox.getByRole('tabpanel')).toContainText('assistant@agentinbox.md');
   await blocks.getByRole('tab', { name: 'Ask', exact: true }).click();
-  await expect(blocks.getByRole('tabpanel')).toContainText('Where should I ship the order?');
+  await expect(blocks.getByRole('tabpanel')).toContainText('Which environment should I deploy to?');
   await blocks.getByRole('tab', { name: 'Choose', exact: true }).click();
-  await expect(blocks.getByRole('tabpanel')).toContainText('How should I resolve Acme?');
+  await expect(blocks.getByRole('tabpanel')).toContainText('Which release strategy should I use?');
   await blocks.getByRole('tab', { name: 'Tell', exact: true }).click();
-  await expect(blocks.getByRole('tabpanel')).toContainText('Refund sent to Acme Corp');
+  await expect(blocks.getByRole('tabpanel')).toContainText('The staging checks passed.');
   await expect(inbox.getByRole('tab', { name: 'Personal Assistant' })).toHaveAttribute('aria-selected', 'true');
 });
 
@@ -56,29 +56,77 @@ for (const width of [640, 360]) {
   });
 }
 
-test('mobile tab strips scroll instead of wrapping and keep the active tab in view', async ({ page }) => {
+test('the example agents stack as a vertical list on mobile and the message types fit in one row', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/sapien');
-  const strip = (section: string) => page.locator(`#${section} [role="tablist"]`).locator('xpath=..');
-  const inView = async (section: string, name: string) => {
-    const box = (await strip(section).boundingBox())!;
-    const tab = (await page.locator(`#${section}`).getByRole('tab', { name, exact: true }).boundingBox())!;
-    return tab.x >= box.x - 1 && tab.x + tab.width <= box.x + box.width + 1;
-  };
-  for (const tab of await page.locator('#inbox [role="tab"], #building-blocks [role="tab"]').all())
+  const inbox = page.locator('#inbox');
+  await expect(inbox.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical');
+  const tabs = await inbox.getByRole('tab').all();
+  const boxes = await Promise.all(tabs.map(async (tab) => (await tab.boundingBox())!));
+  for (const [index, box] of boxes.entries()) {
+    expect(box.x + box.width).toBeLessThanOrEqual(361);
+    if (index > 0) expect(box.y).toBeGreaterThan(boxes[index - 1].y);
+  }
+  await inbox.getByRole('tab', { name: 'Ops Agent', exact: true }).focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(inbox.getByRole('tab', { name: 'Sales Agent', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(inbox.getByRole('tabpanel')).toContainText('sales-agent@agentinbox.md');
+
+  for (const tab of await page.locator('#building-blocks [role="tab"]').all())
     await expect(tab).toHaveCSS('white-space', 'nowrap');
+  const strip = page.locator('#building-blocks [role="tablist"]').locator('xpath=..');
+  expect(await strip.evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
+});
 
-  // The agent names don't fit at 360px: the strip scrolls, centred on the active tab.
-  await strip('inbox').scrollIntoViewIfNeeded();
-  expect(await strip('inbox').evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true);
-  expect(await inView('inbox', 'Ops Agent')).toBe(true);
-  await page.locator('#inbox').getByRole('tab', { name: 'Ops Agent', exact: true }).focus();
+test('hovering the inbox example reveals the JSON the agent reads', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/sapien');
+  const flow = page.locator('#inbox').getByRole('tabpanel');
+  const stage = flow.locator('[data-open]');
+  await stage.scrollIntoViewIfNeeded();
+  await expect(flow.locator('[data-face="seen"]')).toContainText('Approved. Take the $240 refund');
+  await expect(flow.locator('[data-face="reading"]')).toContainText('conv_8831');
+  await expect(stage).toHaveAttribute('data-open', 'false');
+  await stage.hover();
+  await expect(stage).toHaveAttribute('data-open', 'true');
+  await page.mouse.move(0, 0);
+  await expect(stage).toHaveAttribute('data-open', 'false');
+  await expect(flow.getByRole('button', { name: 'Show agent view' })).toHaveCount(0);
+  await stage.hover();
+  expect(await flow.evaluate((node) => node.getAnimations({ subtree: true }).length)).toBe(0);
+});
+
+test('the use cases carousel moves with its buttons and the arrow keys', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/sapien');
+  const carousel = page.locator('#use-cases').locator('[aria-roledescription="carousel"]');
+  await expect(carousel).toHaveAttribute('aria-label', 'Use cases');
+  const slides = carousel.locator('[aria-roledescription="slide"]');
+  await expect(slides).toHaveCount(5);
+  await expect(slides.first()).toHaveAttribute('aria-label', '1 of 5');
+  await expect(slides.nth(2)).toContainText('Browser agents');
+  const previous = carousel.getByRole('button', { name: 'Previous use case' });
+  const next = carousel.getByRole('button', { name: 'Next use case' });
+  const track = carousel.locator('ul').first();
+  const scrollLeft = () => track.evaluate((node) => node.scrollLeft);
+
+  await carousel.scrollIntoViewIfNeeded();
+  await expect(previous).toBeDisabled();
+  await next.click();
+  await expect.poll(scrollLeft).toBeGreaterThan(0);
+  await expect(previous).toBeEnabled();
+  await previous.click();
+  await expect.poll(scrollLeft).toBe(0);
+
+  await track.focus();
   await page.keyboard.press('ArrowRight');
-  await expect.poll(() => inView('inbox', 'Sales Agent')).toBe(true);
-
-  // The message types are short enough to share the width without scrolling.
-  expect(await strip('building-blocks').evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
+  await expect.poll(scrollLeft).toBeGreaterThan(0);
+  await page.keyboard.press('ArrowLeft');
+  await expect.poll(scrollLeft).toBe(0);
+  for (let press = 0; press < 5; press++) await page.keyboard.press('ArrowRight');
+  await expect(next).toBeDisabled();
 });
 
 for (const width of [1440, 390]) {
@@ -92,7 +140,7 @@ for (const width of [1440, 390]) {
     const cli = section.getByRole('tab', { name: 'CLI', exact: true });
     await cli.focus();
     await page.keyboard.press('ArrowDown');
-    const claude = section.getByRole('tab', { name: 'Claude', exact: true });
+    const claude = section.getByRole('tab', { name: 'Skills', exact: true });
     await expect(claude).toBeFocused();
     await expect(claude).toHaveAttribute('aria-selected', 'true');
     await expect(claude).toHaveCSS('transition-duration', '0s');
@@ -106,22 +154,21 @@ test('copy commands copies the selected snippet without prompts', async ({ page 
   await page.goto('/sapien');
   const section = page.locator('#integrations');
   await section.getByRole('button', { name: 'Copy Commands' }).click();
-  await expect(page.locator('html')).toHaveAttribute(
-    'data-copied-text',
-    [
-      'agentinbox setup',
-      '',
-      'agentinbox channel add telegram',
-      'agentinbox inbox list --filter unread',
-      'agentinbox inbox send approve \\',
-      "    'Refund $240?'",
-    ].join('\n')
-  );
+  await expect(page.locator('html')).toHaveAttribute('data-copied-text', 'npx @agentinbox/cli setup');
   await expect(section.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
   await section.getByRole('tab', { name: 'Cursor', exact: true }).click();
   await section.getByRole('button', { name: 'Copy Config' }).click();
   const copied = await page.evaluate(() => document.documentElement.dataset.copiedText ?? '');
-  expect(JSON.parse(copied)).toHaveProperty('mcpServers.inbox.url', 'https://mcp.agentinbox.md');
+  expect(JSON.parse(copied)).toHaveProperty('mcpServers.AgentInbox.url', 'https://mcp.agentinbox.md');
+  await section.getByRole('tab', { name: 'Hermes', exact: true }).click();
+  await section.getByRole('button', { name: 'Copy Commands' }).click();
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-copied-text',
+    ['hermes mcp add AgentInbox \\', '    --url https://mcp.agentinbox.md \\', '    --auth oauth'].join('\n')
+  );
+  await section.getByRole('tab', { name: 'MCP', exact: true }).click();
+  await section.getByRole('button', { name: 'Copy URL' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-copied-text', 'https://mcp.agentinbox.md');
 });
 
 test('FAQ starts with the first answer open and toggles from the keyboard', async ({ page }) => {
@@ -131,7 +178,7 @@ test('FAQ starts with the first answer open and toggles from the keyboard', asyn
   const second = faq.locator('details').nth(1);
   const last = faq.locator('details').last();
   await expect(first).toHaveAttribute('open');
-  await expect(first).toContainText('its own inbox');
+  await expect(first).toContainText('its own email address');
   await expect(second).not.toHaveAttribute('open');
   await second.locator('summary').focus();
   await page.keyboard.press('Enter');
@@ -139,7 +186,7 @@ test('FAQ starts with the first answer open and toggles from the keyboard', asyn
   await last.locator('summary').click();
   await expect(last).toHaveAttribute('open');
   await expect(first).toHaveAttribute('open');
-  await expect(last).toContainText('100 conversations a month');
+  await expect(last).toContainText('contacts only');
   await first.locator('summary').focus();
   await page.keyboard.press('Enter');
   await expect(first).not.toHaveAttribute('open');
@@ -150,7 +197,10 @@ test('closing prompt copy is independent of the setup command', async ({ page })
   await page.goto('/sapien');
   const closing = page.locator('#get-started');
   await closing.getByRole('button', { name: 'Copy Prompt' }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-copied-text', /agentinbox setup/);
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-copied-text',
+    'Set up an Agent Inbox for yourself using https://www.agentinbox.md/agents.md'
+  );
   await expect(closing.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
   const command = page.getByRole('group', { name: 'Closing setup command' });
   await expect(command.getByRole('status')).toHaveText('');

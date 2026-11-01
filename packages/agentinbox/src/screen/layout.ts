@@ -78,8 +78,6 @@ export interface LayoutOptions {
   hiddenRows?: number;
   /** Ends with a blank line, as the screen is left once the command is done. */
   final?: boolean;
-  /** Ends with a blank line, to keep a question written below apart from it. */
-  gap?: boolean;
 }
 
 export type Tone = 'foreground' | 'default' | 'secondary' | 'muted' | 'rule' | 'accent' | 'success';
@@ -125,6 +123,13 @@ const MARKS: Record<RowMark, { char: string; tone: Tone }> = {
 const BOLD = `${CSI}1m`;
 const NOT_BOLD = `${CSI}22m`;
 const DEFAULT_COLOR = `${CSI}39m`;
+const INVERSE = `${CSI}7m`;
+const NOT_INVERSE = `${CSI}27m`;
+
+/** Stands in where the caret has no character to sit on. Unlike a space, it stays where a line breaks. */
+const EMPTY_CELL = '\u00a0';
+/** A pasted token can be far longer than a line, and how long it is is nobody's business. */
+const MAX_SECRET_DOTS = 24;
 
 /** `text` in `tone`. Wherever `text` turns its own colour off, `tone` comes back. */
 export function paint(text: string, tone: Tone, { colors, theme }: Look): string {
@@ -136,6 +141,41 @@ export function paint(text: string, tone: Tone, { colors, theme }: Look): string
   const color = foreground(rgb, colors);
 
   return `${color}${text.replace(/\x1b\[(?:0|39)?m/g, (reset) => `${reset}${color}`)}${DEFAULT_COLOR}`;
+}
+
+/**
+ * An answer as it is typed, with the caret on the character it is at. After the last one it sits on the
+ * first of `suffix`, muted words that follow the answer without being part of it, or on an empty cell. With
+ * `caret` off, as it blinks, the answer takes the same room. A secret shows as dots, with the caret after them.
+ */
+export function typedAnswer(
+  answer: string,
+  cursor: number,
+  { secret, suffix = '', caret, look }: { secret: boolean; suffix?: string; caret: boolean; look: Look }
+): string {
+  const inverted = (char: string) => paint(`${INVERSE}${char}${NOT_INVERSE}`, 'accent', look);
+  const muted = (text: string) => (text ? paint(text, 'muted', look) : '');
+
+  if (secret) {
+    return `${'•'.repeat(Math.min([...answer].length, MAX_SECRET_DOTS))}${caret ? inverted(EMPTY_CELL) : EMPTY_CELL}`;
+  }
+
+  const before = printable(answer.slice(0, cursor)).join('');
+  const [under, ...after] = printable(answer.slice(cursor));
+  if (under === undefined) {
+    const [first = EMPTY_CELL, ...rest] = suffix;
+
+    return `${before}${caret ? inverted(first) : muted(first)}${muted(rest.join(''))}`;
+  }
+
+  const atCaret = under === ' ' ? EMPTY_CELL : under;
+
+  return `${before}${caret ? inverted(atCaret) : atCaret}${after.join('')}${muted(suffix)}`;
+}
+
+/** The characters of what was typed, with a tab or anything else that would move the cursor as a space. */
+function printable(text: string): string[] {
+  return [...text.replace(/\p{Cc}/gu, ' ')];
 }
 
 /** The mascot's cells as lines in their colours, centred on a terminal `columns` wide. */
@@ -169,7 +209,7 @@ export function paintMascot(
 
 /** The screen as lines, none wider than the terminal except a {@link ScreenRow.whole} row. */
 export function layoutScreen(view: ScreenView, options: LayoutOptions): string[] {
-  const { columns, look, mascot, compact = false, final = false, gap = false } = options;
+  const { columns, look, mascot, compact = false, final = false } = options;
   const column = Math.min(MAX_COLUMN, columns - 4);
   const indent = ' '.repeat(Math.max(0, Math.floor((columns - column) / 2)));
   const tone = (text: string, name: Tone) => paint(text, name, look);
@@ -208,7 +248,7 @@ export function layoutScreen(view: ScreenView, options: LayoutOptions): string[]
   if (view.status) {
     lines.push(...layoutStatus(view.status, options, column, indent));
   }
-  if (final || gap) {
+  if (final) {
     lines.push('');
   }
 
@@ -228,22 +268,16 @@ export interface ScreenFit {
 }
 
 /**
- * The fullest way to show `view` in `rows` lines, keeping `reserve` of them free below it (for a question):
- * the largest mascot that fits; then no mascot, the rest staying as it is; then the blank lines dropped;
- * and at last the oldest rows of the list folded away. `null` when even that doesn't fit. The screen sits
- * above the line the cursor is on, which is why one line is always kept.
+ * The fullest way to show `view` in `rows` lines: the largest mascot that fits; then no mascot, the rest
+ * staying as it is; then the blank lines dropped; and at last the oldest rows of the list folded away. `null`
+ * when even that doesn't fit. The screen sits above the line the cursor is on, which is why one line is
+ * always kept.
  */
 export function fitScreen(
   view: ScreenView,
-  {
-    columns,
-    rows,
-    aspect,
-    reserve = 0,
-    final = false,
-  }: { columns: number; rows: number; aspect: number; reserve?: number; final?: boolean }
+  { columns, rows, aspect, final = false }: { columns: number; rows: number; aspect: number; final?: boolean }
 ): ScreenFit | null {
-  const limit = rows - 1 - reserve;
+  const limit = rows - 1;
   const fits = ({ mascotWidth, compact, hiddenRows }: ScreenFit) => {
     const mascot = mascotWidth ? new Array<string>(mascotLines(mascotWidth, aspect)).fill('') : undefined;
     const lines = layoutScreen(view, { columns, look: MEASURING, spinner: ' ', mascot, compact, hiddenRows, final });

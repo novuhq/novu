@@ -1,7 +1,7 @@
 import {
-  HOME_AUTH,
   HOME_CONTACTS,
   HOME_CONTACTS_DESCRIPTION,
+  HOME_DEFINITION,
   HOME_FLAGS,
   HOME_HOSTS_DESCRIPTION,
   HOME_HOW_IT_WORKS,
@@ -10,12 +10,15 @@ import {
   HOME_NOTES,
   HOME_QUICKSTART,
   HOME_READY,
+  HOME_TITLE,
   HOME_TRUST,
   HOME_USES,
+  HOME_WORDMARK,
   type HomeCommand,
   INSTALL_OPTIONS,
 } from '@/data/home';
 
+import { ARD_HREF } from './ard-catalog';
 import { HOSTS, type Host, hostMarkdownPath } from './hosts';
 import { PACKAGE_URL, SITE_ORIGIN, SOURCE_URL } from './seo';
 
@@ -41,10 +44,10 @@ export function homeMarkdown() {
       })
       .join('')
   );
-  const [firstCommand, secondCommand, thirdCommand] = HOME_AUTH.commands;
   const sections = [
-    '# Agent Inbox CLI',
-    '> The email, Slack, and Telegram inbox for AI agents.',
+    `# ${HOME_WORDMARK}`,
+    HOME_TITLE,
+    `> ${HOME_DEFINITION}`,
     HOME_INTRODUCTION.join('\n'),
     [
       `Canonical documentation: ${SITE_ORIGIN}/`,
@@ -59,7 +62,7 @@ export function homeMarkdown() {
     hostList(),
     '## How it works',
     ...explanations.map((line) => `- ${line.trim()}`),
-    '## When',
+    '## For',
     HOME_USES.map((item) => `- **${item.title}.** ${item.text}`).join('\n'),
     '## Security',
     HOME_READY.map((item) => `- **${item.title}.** ${item.text}`).join('\n'),
@@ -76,8 +79,6 @@ export function homeMarkdown() {
     commandBlock(HOME_CONTACTS),
     '### Invite',
     commandBlock(HOME_INVITES),
-    '## Authentication',
-    `\`${firstCommand}\`, \`${secondCommand}\` and \`${thirdCommand}\` store credentials in \`${HOME_AUTH.file}\`. ${HOME_AUTH.alternative}`,
     '## Sources',
     `- [CLI source and official README](${SOURCE_URL})\n- [npm package](${PACKAGE_URL})\n- [Built by Novu](https://novu.co/)`,
     HOME_TRUST,
@@ -96,9 +97,10 @@ The website's command examples are available as clean Markdown. Consult the offi
 
 ## Documentation
 
-- [Agent Inbox CLI documentation](${SITE_ORIGIN}/index.md): Installation, setup, commands, when to use it, security, flags, contacts, and authentication.
+- [Agent Inbox CLI documentation](${SITE_ORIGIN}/index.md): Installation, setup, commands, when to use it, security, flags, and contacts.
 - [Instructions for agents](${SITE_ORIGIN}/agents.md): Connecting with a one-time code from agentinbox.md, or setting yourself up without one, then how to use the inbox.
 - [Official CLI README](https://raw.githubusercontent.com/novuhq/novu/next/packages/agentinbox/README.md): Current package documentation maintained with the CLI source.
+- [Agentic resources](${ARD_HREF}): The MCP server and the Agent Skills index, for a client discovering what this domain offers.
 
 ## Hosts
 

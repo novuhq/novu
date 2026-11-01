@@ -22,8 +22,8 @@ export function HelpTopBarField() {
         className="hidden h-7 items-center gap-1.5 rounded-8 border border-stroke-soft bg-bg-weak pl-2 pr-1 text-left outline-none transition-colors hover:border-stroke-sub focus-visible:border-stroke-sub focus-visible:ring-2 focus-visible:ring-ring aria-expanded:border-stroke-sub aria-expanded:bg-bg-white md:flex"
       >
         <CircleHelp aria-hidden strokeWidth={2} className="size-4 shrink-0 text-text-sub" />
-        <span className="whitespace-nowrap text-[13px] font-medium leading-none text-text-soft">Need a hand</span>
-        <Kbd variant="flat" className="border-stroke-soft/60 bg-bg-weak text-text-soft">
+        <span className="whitespace-nowrap text-[13px] font-medium leading-none text-text-sub">Need a hand</span>
+        <Kbd variant="flat" className="border-stroke-soft/60 bg-bg-weak">
           {HELP_PANEL_SHORTCUT_LABEL}
         </Kbd>
       </button>

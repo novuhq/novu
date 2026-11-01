@@ -8,7 +8,6 @@ import { DASHBOARD_HOME, DOCS_URL } from '@/components/dashboard/nav';
 import { Stage, StageCard } from '@/components/site/stage';
 import { buttonClassName } from '@/components/ui/button';
 import { readHumanAccount } from '@/lib/human-account';
-import type { HumanRegion } from '@/lib/human-accounts-api';
 import { DEFAULT_AGENT_NAME, getRelayAgent } from '@/lib/human-agent-api';
 import { isAccountAgentInUse } from '@/lib/human-claim';
 
@@ -23,18 +22,17 @@ export const metadata: Metadata = {
 
 /**
  * Opened from the link an agent gets once its keyless setup runs out of free messages
- * (`…/claim?token=…`, plus `&region=eu` from the EU API). Signing up comes first. An account whose
- * agent is already in use can't take another setup in, so it's told so instead of being offered the move.
+ * (`…/claim?token=…`). Signing up comes first. An account whose agent is already in use can't take
+ * another setup in, so it's told so instead of being offered the move.
  * Once the claim went through, the action sends the operator back here with `?claimed=1`.
  */
 export default async function ClaimPage(props: PageProps<'/claim'>) {
   const searchParams = await props.searchParams;
   const token = typeof searchParams.token === 'string' ? searchParams.token : '';
-  const region: HumanRegion = searchParams.region === 'eu' ? 'eu' : 'us';
 
   const user = await currentUser();
   if (!user && token) {
-    const claimPath = `/claim?${new URLSearchParams({ token, ...(region === 'eu' ? { region } : {}) })}`;
+    const claimPath = `/claim?${new URLSearchParams({ token })}`;
     redirect(`/sign-up?${new URLSearchParams({ redirect_url: claimPath })}`);
   }
 
@@ -122,7 +120,7 @@ export default async function ClaimPage(props: PageProps<'/claim'>) {
         }
         description="Its threads and contacts come with it, into your Agent Inbox account."
       >
-        <ClaimForm token={token} region={region} />
+        <ClaimForm token={token} />
       </StageCard>
     </Stage>
   );

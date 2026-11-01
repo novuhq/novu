@@ -17,7 +17,7 @@ program
   .name(CLI_COMMAND)
   .description(
     'An inbox for your agent. People write to it on Telegram, Slack or email; it reads, asks and answers.\n\n' +
-      'Every command is `<command> <action>`: setup, login, connect, inbox, contact, channel.\n\n' +
+      'Conversations: list, show, read, resolve, send, reply. Contacts and channels: `contact <action>`, `channel <action>`. This computer: setup, login, connect, listen.\n\n' +
       'Exit codes: 0 answered/approved · 10 denied · 11 timed out (the answer shows up in the conversation) · 12 expired/canceled · 1 error'
   )
   .version(version);
@@ -61,15 +61,9 @@ const SEND_USAGE =
   '  approve <action>     Approve and Deny buttons\n' +
   '  choose <question>    one of 2-10 options, given with --option';
 
-// --- inbox ---
+// --- conversations ---
 
-const inbox = program
-  .command('inbox')
-  .description(
-    'Your agent’s conversations: read what people wrote, start a conversation or reply in one, and close it'
-  );
-
-inbox
+program
   .command('list')
   .option('--filter <filter>', 'unread, read or all (default: all)')
   .option('--status <status>', 'open, resolved or all (default: open)')
@@ -83,7 +77,7 @@ inbox
   .description('List conversations, newest first. By default: open conversations with contacts, read and unread')
   .action(inboxListCommand);
 
-inbox
+program
   .command('show')
   .argument('<conversation>', 'conversation id (conv_...)')
   .option('--limit <n>', 'max messages (default 20, max 100)')
@@ -93,7 +87,7 @@ inbox
   .description('Show a conversation, oldest message first. Looking does not mark it read')
   .action(inboxShowCommand);
 
-inbox
+program
   .command('read')
   .argument('<conversation>', 'conversation id (conv_...)')
   .option('--json', 'print JSON')
@@ -101,7 +95,7 @@ inbox
   .description('Mark a conversation read when it needs no reply')
   .action(inboxReadCommand);
 
-inbox
+program
   .command('resolve')
   .argument('<conversation>', 'conversation id (conv_...)')
   .option('--json', 'print JSON')
@@ -110,7 +104,7 @@ inbox
   .action(inboxResolveCommand);
 
 withSendOptions(
-  inbox
+  program
     .command('send')
     .argument('<words...>', '[ask|approve|choose] and the text to send')
     .option(
@@ -125,11 +119,14 @@ withSendOptions(
 ).action((words: string[], options) => runSend(words, options));
 
 withSendOptions(
-  inbox
+  program
     .command('reply')
     .argument('<conversation>', 'conversation id (conv_...)')
     .argument('<words...>', '[ask|approve|choose] and the text to send')
-    .option('--to <id|email>', 'only these contacts may answer (default: the contact the conversation belongs to)')
+    .option(
+      '--to <id|email>',
+      'only these contacts may answer (default: the contact the conversation belongs to). One who is not in a direct conversation gets it in their own chat too; the answer comes back here'
+    )
     .option(
       '--anyone',
       'let anyone in the conversation answer, strangers included. The way to ask a stranger. Not with --to'
@@ -137,9 +134,9 @@ withSendOptions(
     .description(`Send into an existing conversation. ${SEND_USAGE}`)
 ).action((conversation: string, words: string[], options) => runSend(words, options, conversation));
 
-inbox
+program
   .command('voice-turn')
-  .argument('<id>', 'interaction id from `inbox send --via voice`')
+  .argument('<id>', 'interaction id from `send --via voice`')
   .option('--say <text>', 'words spoken verbatim to the person; omit to listen only')
   .option('--answer <text>', "the person's own words that commit to the answer (required when settling)")
   .option('--approve', 'settle an approve interaction as approved (needs --answer)')
@@ -174,14 +171,15 @@ contact
   )
   .option(
     '--via <channel>',
-    'skip the invite page and link them on one channel (telegram, slack, email); it becomes their default'
+    'skip the invite page and link them on one channel (telegram, slack, email, voice); it becomes their default'
   )
   .option('--email <address>', 'their email address (required for --via email when not a TTY)')
+  .option('--phone <number>', 'their phone number, like +14155550123 (required for --via voice when not a TTY)')
   .option('--name <name>', 'their display name, e.g. "Alice Chen" (shown in `contact list`)')
   .option('--async', 'print the link and exit instead of waiting for them to connect')
   .option('--api-url <url>', 'API URL override')
   .description(
-    'Get a link to share with a new contact: they connect Telegram, Slack or email on a page and pick their default'
+    'Get a link to share with a new contact: they connect Telegram, Slack, email or a phone number on a page and pick their default'
   )
   .action(inviteCommand);
 
@@ -217,7 +215,7 @@ channel
 
 program
   .command('setup')
-  .argument('[channel]', 'also link telegram or slack, or verify email on an account')
+  .argument('[channel]', 'also link telegram or slack, or confirm email on an account')
   .option('--api-url <url>', 'API URL override')
   .option('--secret-key <key>', 'use an existing Novu environment instead of keyless (self-hosted)')
   .option('--telegram-bot-token <token>', 'BotFather token (skips the paste-or-page prompt)')
@@ -227,12 +225,17 @@ program
     '--name <name>',
     'your first and last name, e.g. "Nikita Grossman" — shown to people you invite (skips the first-run prompt)'
   )
-  .option('--agent-name <name>', 'what your agent is called, as people see it')
+  .option('--agent-name <name>', 'what your agent is called, as people see it. A new agent needs one')
+  .option(
+    '--agent-handle <handle>',
+    "a new agent's address before the @, e.g. atlas (default: from the name). It can't be changed later"
+  )
   .option('--agent-description <text>', 'a line about what your agent does, shown with its name')
   .option('--agent-picture <file-or-url>', 'your agent’s picture: a JPEG or PNG of up to 2 MB (needs `login`)')
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
   .description('Create your agent inbox, then optionally connect Telegram or Slack')
-  .action(setupCommand);
+  // Not `.action(setupCommand)`: commander's own last argument would be taken for the name on the screen.
+  .action((channelArg: string | undefined, options) => setupCommand(channelArg, options));
 
 program
   .command('login')
@@ -250,5 +253,24 @@ program
   .option('--api-url <url>', 'API URL override')
   .description('Connect this computer to an agent with a one-time code from agentinbox.md')
   .action(connectCommand);
+
+// --- listen ---
+
+program
+  .command('listen')
+  .argument('<host|status|stop>', 'the host a message starts on this computer (claude-code), or status, or stop')
+  .option('--foreground', 'listen in this terminal only, instead of in the background')
+  .option(
+    '--timeout <duration>',
+    'when an agent runs this: how long to wait for your operator to allow it (default: until the question expires, in 1h)'
+  )
+  .option('--runs-per-hour <n>', 'how many runs may start in an hour (default 20)')
+  .option('--max-run <duration>', 'how long one run may go on (e.g. 30m, 2h; default 30m)')
+  .option('--json', 'status: print JSON')
+  .description(
+    'Listen for messages: one from you, or from a contact the agent listens to, starts a host on this computer, in this folder. Asks you first'
+  )
+  // Loaded only when it runs, with the hosts it starts, so the other commands stay as light.
+  .action(async (what: string, options) => (await import('./commands/listen')).listenCommand(what, options));
 
 program.parse(process.argv);

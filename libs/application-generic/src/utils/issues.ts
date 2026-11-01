@@ -1,8 +1,10 @@
+import { createHash } from 'node:crypto';
 import { parseLiquidControlValue } from '@novu/framework/internal';
 import { ContentIssueEnum, RuntimeIssue, StepTypeEnum } from '@novu/shared';
-import Ajv, { type AnySchema, ErrorObject } from 'ajv';
+import Ajv, { type AnySchema, ErrorObject, type ValidateFunction } from 'ajv';
 import Ajv2020 from 'ajv/dist/2020';
 import addFormats from 'ajv-formats';
+import { LRUCache } from 'lru-cache';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { capitalize } from '../services/helper-service';
 import { buildVariables } from './build-variables';
@@ -112,23 +114,55 @@ function usesDraft2020Schema(schema: AnySchema): boolean {
   return schemaId === DRAFT_2020_12_SCHEMA_ID || schemaId?.includes('2020-12') === true;
 }
 
-/** Single AJV configuration for every control-value schema check, so issues stay consistent. */
+interface SchemaValidationOptions {
+  verbose?: boolean;
+  /** Fill in schema `default`s on the validated value, mutating it. */
+  useDefaults?: boolean;
+}
+
+/** Single AJV configuration for every JSON schema check, so issues stay consistent. */
 export const createSchemaValidationAjv = ({
   verbose = false,
+  useDefaults = false,
   schema,
-}: {
-  verbose?: boolean;
-  schema?: AnySchema;
-} = {}): Ajv => {
-  const ajv =
-    schema && usesDraft2020Schema(schema)
-      ? new Ajv2020({ allErrors: true, strict: false, verbose })
-      : new Ajv({ allErrors: true, strict: false, verbose });
+}: SchemaValidationOptions & { schema?: AnySchema } = {}): Ajv => {
+  const options = { allErrors: true, strict: false, verbose, useDefaults };
+  const ajv = schema && usesDraft2020Schema(schema) ? new Ajv2020(options) : new Ajv(options);
 
   addFormats(ajv);
 
   return ajv;
 };
+
+const compiledSchemaValidators = new LRUCache<string, ValidateFunction>({ max: 5000 });
+
+/**
+ * Returns a compiled validator for `schema`, reusing the one compiled earlier for the same schema
+ * content. Compiling is expensive, so call this instead of compiling per validation.
+ *
+ * Every schema gets its own AJV instance: a shared instance keeps every schema it has compiled
+ * in memory and refuses a second schema that declares an `$id` it has already seen.
+ */
+export const getSchemaValidator = (
+  schema: AnySchema,
+  { useDefaults = false }: Pick<SchemaValidationOptions, 'useDefaults'> = {}
+): ValidateFunction => {
+  const key = createHash('sha256')
+    .update(JSON.stringify([useDefaults, schema]))
+    .digest('hex');
+  let validate = compiledSchemaValidators.get(key);
+
+  if (!validate) {
+    validate = createSchemaValidationAjv({ useDefaults, schema }).compile(schema);
+    compiledSchemaValidators.set(key, validate);
+  }
+
+  return validate;
+};
+
+/** Validator for a workflow `payloadSchema`, shared by save-time checks and trigger-time validation. */
+export const getPayloadSchemaValidator = (schema: AnySchema): ValidateFunction =>
+  getSchemaValidator(schema, { useDefaults: true });
 
 const joinIssuePath = (pathPrefix: string | undefined, errorPath: string | undefined): string | undefined => {
   const segments = [pathPrefix, errorPath].filter((segment): segment is string => Boolean(segment?.trim()));
@@ -214,7 +248,7 @@ export const processControlValuesBySchema = ({
     return {};
   }
 
-  const validate = createSchemaValidationAjv({ schema: controlSchema }).compile(controlSchema);
+  const validate = getSchemaValidator(controlSchema);
   const isValid = validate(controlValues);
   const errors = validate.errors as null | ErrorObject[];
 

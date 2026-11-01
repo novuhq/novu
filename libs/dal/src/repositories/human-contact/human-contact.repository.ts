@@ -85,6 +85,45 @@ export class HumanContactRepository extends BaseRepositoryV2<
     return params.subscriberId;
   }
 
+  /** Turns a contact's "Listen to" switch on or off for one relay agent, making their row when they have none yet. */
+  async setListenTo(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    subscriberId: string;
+    listenTo: boolean;
+  }): Promise<void> {
+    const filter = {
+      _environmentId: params.environmentId,
+      _agentId: params.agentId,
+      subscriberId: params.subscriberId,
+    };
+
+    try {
+      await this.findOneAndUpdate(
+        filter,
+        { $set: { listenTo: params.listenTo }, $setOnInsert: { _organizationId: params.organizationId } },
+        { upsert: true }
+      );
+    } catch (err) {
+      // A first-time write raced this one on the unique index, so the row exists now.
+      if (!isDuplicateKeyError(err)) {
+        throw err;
+      }
+
+      await this.findOneAndUpdate(filter, { $set: { listenTo: params.listenTo } });
+    }
+  }
+
+  /** The contacts of a relay agent whose "Listen to" switch is on, by subscriberId. */
+  async findListenToSubscriberIds(environmentId: string, agentId: string): Promise<string[]> {
+    const rows = await this.find({ _environmentId: environmentId, _agentId: agentId, listenTo: true }, [
+      'subscriberId',
+    ]);
+
+    return rows.map((row) => row.subscriberId);
+  }
+
   /**
    * Saves the human's default channel. An inviter's pick (`human contact invite --via`)
    * never replaces a default the person chose themselves on the invite page.
@@ -266,6 +305,35 @@ export class HumanContactRepository extends BaseRepositoryV2<
     return updated ? verified : null;
   }
 
+  /**
+   * Verifies an address that needs no link, in one write, and only while `via`
+   * has nothing verified and nothing pending. Returns null otherwise, so a link
+   * asked for or used in the meantime is left as it is.
+   */
+  async verifyUnclaimedAddress(params: {
+    environmentId: string;
+    agentId: string;
+    subscriberId: string;
+    via: HumanChannelViaEnum;
+    address: string;
+  }): Promise<HumanContactVerifiedAddress | null> {
+    const verifiedPath = `addresses.${params.via}.verified`;
+    const now = new Date().toISOString();
+    const verified: HumanContactVerifiedAddress = { address: params.address, requestedAt: now, verifiedAt: now };
+    const updated = await this.findOneAndUpdate(
+      {
+        _environmentId: params.environmentId,
+        _agentId: params.agentId,
+        subscriberId: params.subscriberId,
+        [verifiedPath]: { $exists: false },
+        [`addresses.${params.via}.pending`]: { $exists: false },
+      },
+      { $set: { [verifiedPath]: verified } }
+    );
+
+    return updated ? verified : null;
+  }
+
   async findVerifiedAddress(
     environmentId: string,
     agentId: string,
@@ -374,6 +442,32 @@ export class HumanContactRepository extends BaseRepositoryV2<
     }
 
     return declared;
+  }
+
+  /**
+   * Drops the verified and pending slots for `via`. A code still in flight can
+   * no longer promote. When this channel was the default, the default goes too,
+   * so delivery falls back to the contact's other channels immediately.
+   */
+  async clearVerifiedAddress(params: {
+    environmentId: string;
+    agentId: string;
+    subscriberId: string;
+    via: HumanChannelViaEnum;
+  }): Promise<void> {
+    const filter = {
+      _environmentId: params.environmentId,
+      _agentId: params.agentId,
+      subscriberId: params.subscriberId,
+    };
+
+    await this.update(filter, {
+      $unset: {
+        [`addresses.${params.via}.verified`]: '',
+        [`addresses.${params.via}.pending`]: '',
+      },
+    });
+    await this.update({ ...filter, defaultVia: params.via }, { $unset: { defaultVia: '', defaultSetBy: '' } });
   }
 
   /** Drops a declared address this request just stored, when another contact already owns it. */

@@ -132,7 +132,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         const headers: Record<string, string> = {
           ...actionResponse.headers,
           [HttpHeaderKeysEnum.CONTENT_TYPE]: 'text/event-stream',
-          [HttpHeaderKeysEnum.CACHE_CONTROL]: 'no-cache',
+          // no-transform: compression (e.g. Next.js Pages Router, `compression` middleware) would buffer the stream.
+          [HttpHeaderKeysEnum.CACHE_CONTROL]: 'no-cache, no-transform',
         };
         // Only Novu reads live replies, server to server; no browser origin may read them.
         delete headers[HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_ORIGIN];

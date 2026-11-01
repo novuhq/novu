@@ -11,14 +11,21 @@ import {
   type RequestAddressVerificationResponseDto,
   VerifyAddressRequestDto,
   type VerifyAddressResponseDto,
+  VerifyVoiceCodeRequestDto,
 } from './dtos/human-invite.dto';
 import type { HumanInviteVia } from './services/human-delivery.service';
+import {
+  ConfirmVoiceVerification,
+  type ConfirmVoiceVerificationResult,
+} from './usecases/confirm-voice-verification/confirm-voice-verification.usecase';
 import { ConnectHumanInviteChannelCommand } from './usecases/connect-human-invite-channel/connect-human-invite-channel.command';
 import { ConnectHumanInviteChannel } from './usecases/connect-human-invite-channel/connect-human-invite-channel.usecase';
 import { DeclineHumanInviteCommand } from './usecases/decline-human-invite/decline-human-invite.command';
 import { DeclineHumanInvite } from './usecases/decline-human-invite/decline-human-invite.usecase';
 import { GetHumanInviteStatusCommand } from './usecases/get-human-invite-status/get-human-invite-status.command';
 import { GetHumanInviteStatus } from './usecases/get-human-invite-status/get-human-invite-status.usecase';
+import { RemoveVoiceAddress } from './usecases/remove-voice-address/remove-voice-address.usecase';
+import { type RequestVoiceVerificationResult } from './usecases/request-voice-verification/request-voice-verification.usecase';
 import { SetHumanInviteDefaultCommand } from './usecases/set-human-invite-default/set-human-invite-default.command';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { VerifyAddressCommand } from './usecases/verify-address/verify-address.command';
@@ -37,7 +44,9 @@ export class HumanInvitesPublicController {
     private readonly getHumanInviteStatusUsecase: GetHumanInviteStatus,
     private readonly connectHumanInviteChannelUsecase: ConnectHumanInviteChannel,
     private readonly setHumanInviteDefaultUsecase: SetHumanInviteDefault,
-    private readonly declineHumanInviteUsecase: DeclineHumanInvite
+    private readonly declineHumanInviteUsecase: DeclineHumanInvite,
+    private readonly confirmVoiceVerificationUsecase: ConfirmVoiceVerification,
+    private readonly removeVoiceAddressUsecase: RemoveVoiceAddress
   ) {}
 
   @Get('/status')
@@ -52,7 +61,11 @@ export class HumanInvitesPublicController {
   @ApiOperation({ summary: 'Mint a fresh connect link (or start email verification) for one of the invite’s apps' })
   connect(
     @Body() body: HumanInviteConnectRequestDto
-  ): Promise<{ url: string } | (RequestAddressVerificationResponseDto & { via: HumanChannelViaEnum.EMAIL })> {
+  ): Promise<
+    | { url: string }
+    | (RequestAddressVerificationResponseDto & { via: HumanChannelViaEnum.EMAIL })
+    | (RequestVoiceVerificationResult & { via: HumanChannelViaEnum.VOICE })
+  > {
     return this.connectHumanInviteChannelUsecase.execute(
       ConnectHumanInviteChannelCommand.create({
         token: body.token,
@@ -71,6 +84,20 @@ export class HumanInvitesPublicController {
     );
   }
 
+  @Post('/verify-code')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Confirm a phone number with the code the verification call read' })
+  verifyCode(@Body() body: VerifyVoiceCodeRequestDto): Promise<ConfirmVoiceVerificationResult> {
+    return this.confirmVoiceVerificationUsecase.executeFromInvite(body.token, body.code);
+  }
+
+  @Post('/voice/remove')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Remove a phone number from the invited contact' })
+  removeVoice(@Body() body: HumanInviteTokenRequestDto): Promise<{ removed: true }> {
+    return this.removeVoiceAddressUsecase.executeFromInvite(body.token);
+  }
+
   @Post('/decline')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Decline the invite before connecting anything' })
@@ -80,7 +107,7 @@ export class HumanInvitesPublicController {
 }
 
 /**
- * Public verification endpoint behind the "Verify this email" button.
+ * Public verification endpoint behind the "Confirm email" button.
  * The verification token is the only credential.
  */
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)

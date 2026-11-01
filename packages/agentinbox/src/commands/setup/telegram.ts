@@ -174,7 +174,7 @@ async function handOffToTelegramSetupPage(
   io: SetupIo
 ): Promise<void> {
   const mobileLink = await issueTelegramMobileLink(client, integrationIdentifier, subscriberId);
-  const setupUrl = buildSetupPageUrl(client.apiUrl, 'telegram', mobileLink.token, mobileLink.url);
+  const setupUrl = buildSetupPageUrl(client.apiUrl, 'telegram', mobileLink.token);
 
   await handOffToSetupPage({
     channelLabel: 'Telegram',

@@ -27,7 +27,7 @@ export const readSiteOrigin = cache(async (): Promise<string> => {
 
 /**
  * The API the setup prompts tell an agent's CLI to use: this site's Agent Inbox API, such as
- * `https://www.agentinbox.md/api`, which forwards to the US Novu API. Agent Inbox has no EU region.
+ * `https://www.agentinbox.md/api`, which forwards to the Novu API.
  */
 export async function readApiUrl(): Promise<string> {
   return `${await readSiteOrigin()}${API_PROXY_PATH}`;

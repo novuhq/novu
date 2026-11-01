@@ -2,6 +2,7 @@ import {
   buildingBlocksAssets as assets,
   type BuildingBlockExample,
   type NotificationCard,
+  SEND_REPORT,
   type TerminalLine,
   type TerminalTone,
 } from '@/data/sapien-building-blocks';
@@ -78,11 +79,17 @@ export function BuildingBlocksPanel({ example }: { example: BuildingBlockExample
   return (
     <div className="grid gap-2 overflow-hidden rounded-[14px] bg-sapien-border/50 p-2 lg:h-88 lg:grid-cols-[minmax(0,1fr)_440px]">
       <div className="flex min-h-63 min-w-0 flex-col justify-between gap-8 p-4 sm:p-6 lg:min-h-0">
-        <pre
-          className={cn(scroller, 'font-sapien-mono text-sm leading-[22px] tracking-[-0.01em] text-sapien-foreground')}
-        >
-          <TerminalText lines={example.command} />
-        </pre>
+        <div className="flex flex-col gap-5">
+          <p className="text-[15px] leading-[1.375] tracking-tight text-sapien-foreground/70">{example.description}</p>
+          <pre
+            className={cn(
+              scroller,
+              'font-sapien-mono text-sm leading-[22px] tracking-[-0.01em] text-sapien-foreground'
+            )}
+          >
+            <TerminalText lines={example.command} />
+          </pre>
+        </div>
         <div className="border-t border-sapien-foreground/9 pt-4">
           <pre
             className={cn(
@@ -90,7 +97,7 @@ export function BuildingBlocksPanel({ example }: { example: BuildingBlockExample
               'font-sapien-mono text-[13px] leading-[18px] tracking-[-0.03em] text-sapien-foreground/50'
             )}
           >
-            <TerminalText lines={[example.result]} />
+            <TerminalText lines={[SEND_REPORT, example.result]} />
           </pre>
         </div>
       </div>

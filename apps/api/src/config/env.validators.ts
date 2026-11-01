@@ -191,6 +191,11 @@ export const envValidators = {
   NOVU_VOICE_ELEVENLABS_PHONE_NUMBER_ID: str({ default: undefined }),
   /** ElevenLabs shell agent id. It speaks only the lines Novu supplies. */
   NOVU_VOICE_ELEVENLABS_AGENT_ID: str({ default: undefined }),
+  /**
+   * ElevenLabs agent that speaks a verification code and hangs up.
+   * Separate from the conversation shell so a code call never hits the bridge.
+   */
+  NOVU_VOICE_ELEVENLABS_VERIFY_AGENT_ID: str({ default: undefined }),
   /** ElevenLabs API key for the shared shell. Not a per-account credential. */
   NOVU_VOICE_ELEVENLABS_API_KEY: str({ default: undefined }),
   /** ElevenLabs API host. Defaults to the global host. Must match the number's region. */

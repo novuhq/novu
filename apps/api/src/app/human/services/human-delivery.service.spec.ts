@@ -165,7 +165,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
       expect((err as NotFoundException).message).to.equal(
-        'Human "alice" has no verified email address. Run `human contact invite alice --via email`.'
+        'Human "alice" has no confirmed email address. Run `human contact invite alice --via email`.'
       );
     }
   });
@@ -191,7 +191,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
       expect.fail('should have thrown');
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
-      expect((err as NotFoundException).message).to.include('awaiting verification');
+      expect((err as NotFoundException).message).to.include('waiting to be confirmed');
       expect((err as NotFoundException).message).to.include('a***@example.com');
     }
   });
@@ -914,11 +914,40 @@ describe('pickDefaultTarget', () => {
     expect(pickDefaultTarget([email, telegram])).to.equal(telegram);
   });
 
+  it('puts email after chat channels even when it was verified first', () => {
+    const verifiedAtSignUp = { ...email, connectedAt: '2026-09-01T10:00:00.000Z' };
+
+    expect(pickDefaultTarget([verifiedAtSignUp, telegram])).to.equal(telegram);
+  });
+
+  it('uses email when nothing else is connected', () => {
+    expect(pickDefaultTarget([email])).to.equal(email);
+  });
+
+  it('falls back on a chat channel when the saved default is gone, whatever email’s date', () => {
+    const verifiedAtSignUp = { ...email, connectedAt: '2026-09-01T10:00:00.000Z' };
+
+    expect(pickDefaultTarget([verifiedAtSignUp, telegram], HumanChannelViaEnum.SLACK)).to.equal(telegram);
+  });
+
   it('uses the saved default even when it is email', () => {
     expect(pickDefaultTarget([email, telegram], HumanChannelViaEnum.EMAIL)).to.equal(email);
   });
 
   it('returns undefined when the human is not reachable', () => {
     expect(pickDefaultTarget([])).to.equal(undefined);
+  });
+
+  it('does not fall back to voice when another channel is connected', () => {
+    const voice: ReachableHumanTarget = {
+      via: HumanChannelViaEnum.VOICE,
+      platform: 'voice',
+      platformUserId: '+15551212',
+      integrationIdentifier: 'voice-main',
+      connectedAt: '2026-01-01T00:00:00.000Z',
+    };
+
+    expect(pickDefaultTarget([voice, telegram])).to.equal(telegram);
+    expect(pickDefaultTarget([voice, telegram], HumanChannelViaEnum.VOICE)).to.equal(voice);
   });
 });

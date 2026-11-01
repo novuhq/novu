@@ -14,6 +14,10 @@ _Avoid_: owner, user, inviter
 Anyone an operator's agents can reach, including the operator.
 _Avoid_: subscriber, recipient
 
+**Confirm**:
+Proving an email address is yours by pressing the button in the email sent to it.
+_Avoid_: verify, opt in
+
 **Stranger**:
 A person or service that writes to an agent without being one of its contacts.
 _Avoid_: unknown sender, guest, anonymous
@@ -44,16 +48,24 @@ _Avoid_: pairing code, token, user code
 When a host last read the agent's inbox, and whether through the CLI or MCP; it is how the dashboard tells whether a host is still there.
 _Avoid_: last seen, heartbeat, last active
 
-**Wake**:
-Starting a host because the operator, or a contact they allowed, wrote to its agent, instead of a person starting it by hand; a stranger never wakes a host.
-_Avoid_: trigger, invoke, activate
+**Listen**:
+Keeping one computer ready to start a host when the operator, or a contact the agent listens to, writes to the agent, instead of a person starting it by hand; a stranger's message never starts a host.
+_Avoid_: wake, trigger, invoke, activate
 
-**Awake**:
-An agent is awake while one computer is ready to wake a host for it; only one computer keeps an agent awake at a time.
-_Avoid_: online, listening, claimed
+**Listening**:
+An agent is listening while one computer is ready to start a host for it; only one computer keeps an agent listening at a time.
+_Avoid_: awake, online, claimed
+
+**Listen to**:
+Whose messages start a host: the operator's always, a contact's once the operator turns it on, a stranger's never.
+_Avoid_: can wake, allowed, trusted
+
+**Run**:
+One start of a host for the messages of one conversation, until it has answered them.
+_Avoid_: wake, invocation, job
 
 **Session**:
-A host's working memory of one conversation, kept between wakes until the conversation is resolved.
+A host's working memory of one conversation, kept between runs until the conversation is resolved.
 _Avoid_: thread, context, chat
 
 ### Inbox
@@ -78,6 +90,24 @@ _Avoid_: active, in progress
 A conversation the host has declared finished; it becomes open again when anyone says something in it.
 _Avoid_: closed, archived, done
 
+### Messages
+
+**Question**:
+A message from an agent that waits for a person's words; their reply is the answer.
+_Avoid_: prompt, request
+
+**Approval**:
+A message from an agent that waits for a person to approve or deny something; on email only its buttons answer it.
+_Avoid_: permission request, confirmation
+
+**Choice**:
+A message from an agent that waits for a person to pick one option; on email only its buttons answer it.
+_Avoid_: poll, picker
+
+**Confirmation page**:
+The page a person lands on after pressing a button in an agent's email, where one more click sends their answer, so a link scanner can't answer for them.
+_Avoid_: preview page, action page
+
 ### Accounts
 
 **Agent Inbox account**:
@@ -89,7 +119,7 @@ The hidden Novu organization, with its hidden Novu user, behind an Agent Inbox a
 _Avoid_: shadow org, Novu account, workspace
 
 **Keyless setup**:
-What an operator, or an agent for them, builds with the CLI before signing up.
+What an operator, or an agent for them, builds with the CLI before signing up. People see it as a demo setup.
 _Avoid_: demo, demo workspace
 
 **Claim**:

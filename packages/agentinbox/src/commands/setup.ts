@@ -3,7 +3,7 @@ import { createInteraction } from '../api/agent-inbox';
 import { type ApiClient, createApiClient } from '../api/client';
 import { addAgentVoiceIntegration, bootstrapKeylessSession } from '../api/setup';
 import { info, success, warn } from '../cli-io';
-import { type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
+import { CLI_COMMAND, type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
 import { keptHost } from '../host';
 import { openedScreen, openScreen } from '../screen/screen';
 import { failOnScreen } from './failure';
@@ -59,6 +59,8 @@ async function runSetup(channel: ChannelName | undefined, options: SetupOptions)
     keylessIdentifier: auth.mode === 'keyless' ? auth.keylessIdentifier : undefined,
   });
   const provisioned = await provisionOperator(client, existing, options, picture);
+  // Before anything below waits for a person: a run stopped there leaves a setup the next run picks up.
+  writeSetupConfig(apiUrl, auth, existing, provisioned, undefined);
 
   // The inbox always exists after setup, but only a verified address makes it
   // a channel the person can be reached on. A deployment with email disabled
@@ -186,13 +188,13 @@ export function channelLinkedBySetup(
   return undefined;
 }
 
-function saveSetupConfig(
+function writeSetupConfig(
   apiUrl: string,
   auth: CliConfig['auth'],
   existing: CliConfig | null,
   provisioned: ProvisionedOperator,
   channel: ChannelName | undefined
-): void {
+): CliConfig['defaultChannel'] {
   // A contact switch invalidates the saved default; otherwise keep it and fall
   // back to whatever this run actually linked.
   const keptDefault = provisioned.switchedContact ? undefined : existing?.defaultChannel;
@@ -205,6 +207,18 @@ function saveSetupConfig(
     ...(defaultChannel ? { defaultChannel } : {}),
     ...keptHost(existing, apiUrl),
   });
+
+  return defaultChannel;
+}
+
+function saveSetupConfig(
+  apiUrl: string,
+  auth: CliConfig['auth'],
+  existing: CliConfig | null,
+  provisioned: ProvisionedOperator,
+  channel: ChannelName | undefined
+): void {
+  const defaultChannel = writeSetupConfig(apiUrl, auth, existing, provisioned, channel);
   success(`Saved config to ${configPath()}.`);
 
   if (channel && defaultChannel && defaultChannel !== channel) {
@@ -227,7 +241,7 @@ async function confirmLinkedChannel(
   await createInteraction(client, {
     kind: 'tell',
     card: {
-      title: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`npx @agentinbox/cli inbox send approve "Deploy to production?"\`.`,
+      title: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`npx @agentinbox/cli send approve "Deploy to production?"\`.`,
     },
     to: provisioned.subscriberId,
     via: channel,
@@ -235,9 +249,9 @@ async function confirmLinkedChannel(
   });
 
   const examples = [
-    'npx @agentinbox/cli inbox send ask "Which environment should I target?"',
-    'npx @agentinbox/cli inbox send approve "Deploy to production?"',
-    'npx @agentinbox/cli inbox send "Build finished."',
+    'npx @agentinbox/cli send ask "Which environment should I target?"',
+    'npx @agentinbox/cli send approve "Deploy to production?"',
+    'npx @agentinbox/cli send "Build finished."',
   ];
   const screen = openedScreen();
 
@@ -255,10 +269,12 @@ async function confirmLinkedChannel(
   );
 }
 
-/** Links the shared number. It does not become the default, and nobody can be called until a number is verified. */
+/** Links the shared number. A person is dialed only after they confirm their own number. */
 async function connectVoice(client: ApiClient, agentIdentifier: string): Promise<void> {
   await addAgentVoiceIntegration(client, agentIdentifier);
-  info('Voice is linked to this agent. Phone verification is not available yet, so nobody can be called.');
+  info(
+    `Voice is linked to this agent. People confirm a number with \`${CLI_COMMAND} contact invite <id> --via voice\` before they can be called.`
+  );
 }
 
 async function connectChannel(

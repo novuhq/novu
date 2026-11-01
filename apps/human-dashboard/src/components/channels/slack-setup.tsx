@@ -43,7 +43,7 @@ import {
 import { cn } from '@/lib/utils';
 
 /** The name `channel add slack` gives the app, for an agent that has no name of its own to lend it. */
-const DEFAULT_APP_NAME = 'Human';
+const DEFAULT_APP_NAME = 'Agent';
 const PERMISSION_COUNT = `${SLACK_APP_PERMISSIONS.length} permissions`;
 /** One of the two round badges above "Install … in Slack". */
 const BADGE = 'flex size-15 items-center justify-center rounded-full border border-border-strong bg-subtle';

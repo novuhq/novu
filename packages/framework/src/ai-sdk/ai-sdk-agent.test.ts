@@ -187,6 +187,21 @@ describe('ai-sdk agent adapter', () => {
       expect(ctx.reply).toHaveBeenCalledWith('done');
     });
 
+    it('passes a returned ReplyStream (async iterable) through unchanged for dispatch to stream', async () => {
+      async function* streamReply() {
+        yield 'one ';
+        yield 'two';
+      }
+      const stream = streamReply();
+      const supportAgent = agent('support', async () => stream);
+      const ctx = fakeMessageCtx();
+
+      const result = await supportAgent.handlers.onMessage({} as never, ctx);
+
+      expect(result).toBe(stream);
+      expect(ctx.reply).not.toHaveBeenCalled();
+    });
+
     it('posts an approval card when the model returns a gated tool (no text reply)', async () => {
       const supportAgent = agent('support', async () =>
         streamTextMock('', {
@@ -234,6 +249,28 @@ describe('ai-sdk agent adapter', () => {
       expect(historySnapshots.at(-1)).toEqual(history);
       expect(ctx.history).toHaveLength(2);
       expect(ctx.sent).toHaveBeenCalledWith('done');
+    });
+
+    it('delivers a plain MessageContent returned by the resumed onMessage', async () => {
+      const billingAgent = agent('billing', async () => 'resumed reply');
+      const ctx = fakeActionCtx({ history: approvedCycleHistory() });
+
+      await invokeToolApproval(billingAgent, ctx);
+
+      expect(ctx.sent).toHaveBeenCalledWith('resumed reply');
+    });
+
+    it('delivers a ReplyStream returned by the resumed onMessage', async () => {
+      async function* streamReply() {
+        yield 'resumed ';
+        yield 'stream';
+      }
+      const billingAgent = agent('billing', async () => streamReply());
+      const ctx = fakeActionCtx({ history: approvedCycleHistory() });
+
+      await invokeToolApproval(billingAgent, ctx);
+
+      expect(ctx.sent).toHaveBeenCalledWith('resumed stream');
     });
 
     it('posts string returns from onToolApproval, then auto-resumes', async () => {

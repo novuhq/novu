@@ -311,7 +311,7 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
     expect(messages.some((message) => message.interaction?.id === interactionId)).to.equal(true);
   });
 
-  it('shows a send to two contacts in both threads, and the answer in the thread of whoever gave it', async () => {
+  it('shows a send to two contacts in both threads, and stores the answer where it was given and in the question’s own', async () => {
     const bobSubscriberId = `${subscriberId}-bob`;
     await subscriberRepository.create({
       subscriberId: bobSubscriberId,
@@ -373,7 +373,8 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
     expect(adaMessages.map((message) => message.text)).to.not.include('eu-west');
     expect(questionsIn(adaMessages)).to.have.length(1);
 
-    // Behind it: the question stored in each thread, and the answer once, in Bob's thread.
+    // Behind it: the question stored in each thread, and the answer in Bob's thread, where it was given, and in
+    // Ada's, the question's own, where it comes back. Each thread shows it on its card.
     const [adaConversationId, bobConversationId] = await Promise.all(
       threadIds.map(async (identifier) => {
         const conversation = await conversationRepository.findOne(
@@ -409,9 +410,14 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
         conversationId: bobConversationId,
         type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
       },
+      {
+        identifier: `human:${interactionId}:response`,
+        conversationId: adaConversationId,
+        type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+      },
     ]);
-    const answer = rows.find((row) => row.type === ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE);
-    expect(answer?.senderId).to.equal(bobSubscriberId);
+    const answers = rows.filter((row) => row.type === ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE);
+    expect(answers.map((row) => row.senderId)).to.deep.equal([bobSubscriberId, bobSubscriberId]);
   });
 
   it('shows a question once when the thread is read one message per page', async () => {
@@ -555,7 +561,7 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
     });
   });
 
-  it('refuses a question in a direct-message thread addressed to a contact who is not in it', async () => {
+  it('refuses a question in a direct-message thread for a contact outside it who can’t be reached, before it is sent', async () => {
     await sendMessageToRelay('need a decision');
     const threadId = await soleThreadId();
     const other = `other-${Date.now()}`;
@@ -566,8 +572,14 @@ describe('Human inbox (list → show → send → resolve) #novu-v2', () => {
       .post('/v1/human/interactions')
       .send({ kind: 'ask', card: { title: 'Which environment?' }, thread: threadId, to: other });
 
-    expect(res.status).to.equal(400, JSON.stringify(res.body));
-    expect(res.body.message).to.contain('not in this thread');
+    // Outside the thread, the question goes to them in their own chat as well, and they have none.
+    expect(res.status).to.equal(404, JSON.stringify(res.body));
+    expect(res.body.message).to.contain('has no linked channel');
+    const thread = await session.testAgent.get(`/v1/human/inbox/${threadId}`);
+    expect(thread.status).to.equal(200, JSON.stringify(thread.body));
+    expect(thread.body.data.messages.map((message: { text: string }) => message.text)).to.not.include(
+      'Which environment?'
+    );
   });
 
   it('resolves a thread, hides it by default, and reopens it on a new message', async () => {

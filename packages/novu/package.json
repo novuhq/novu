@@ -68,7 +68,7 @@
     "ncp": "^2.0.0",
     "nodemon": "^3.0.1",
     "ts-node": "~10.9.1",
-    "typescript": "5.6.2",
+    "typescript": "6.0.3",
     "vitest": "^4.1.0"
   },
   "dependencies": {
@@ -76,7 +76,7 @@
     "@babel/parser": "^7.29.0",
     "@inkjs/ui": "2.0.0",
     "@novu/framework": "workspace:*",
-    "@novu/ntfr-client": "^0.0.5",
+    "@novu/ntfr-client": "^0.0.6",
     "@segment/analytics-node": "^1.1.4",
     "async-sema": "3.0.1",
     "axios": "^1.18.1",

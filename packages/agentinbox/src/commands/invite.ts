@@ -1,5 +1,12 @@
 import pc from 'picocolors';
-import { createInvite, getContact, requestAddressVerification, setupRelay } from '../api/agent-inbox';
+import {
+  confirmVoiceVerification,
+  createInvite,
+  getContact,
+  requestAddressVerification,
+  requestVoiceVerification,
+  setupRelay,
+} from '../api/agent-inbox';
 import { type ApiClient } from '../api/client';
 import { type AgentIntegrationLink, hasChannelEndpoint, listAgentIntegrations } from '../api/setup';
 import { info, promptLine } from '../cli-io';
@@ -24,6 +31,8 @@ import {
 export interface InviteOptions {
   via?: string;
   email?: string;
+  /** Phone number in international format, for `--via voice`. */
+  phone?: string;
   /** Display name, e.g. "Alice Chen" — split into firstName/lastName on the subscriber. */
   name?: string;
   async?: boolean;
@@ -31,7 +40,7 @@ export interface InviteOptions {
 }
 
 /** Channels the invite page can offer when the relay has them linked. */
-const INVITE_PAGE_CHANNELS: readonly ChannelName[] = ['telegram', 'slack', 'email'];
+const INVITE_PAGE_CHANNELS: readonly ChannelName[] = ['telegram', 'slack', 'email', 'voice'];
 
 /**
  * `--name "Alice Chen"` → `{ firstName: 'Alice', lastName: 'Chen' }`; a single
@@ -146,7 +155,8 @@ export async function runInvite(contactArg: string, inviteOptions: InviteOptions
       result = await inviteSlack(client, contactId, agentIdentifier, linked.integration.identifier, options);
       break;
     case 'voice':
-      throw new Error('Voice cannot be connected from an invite yet. Phone verification is not available.');
+      result = await inviteVoice(client, contactId, agentIdentifier, options);
+      break;
     default: {
       const exhaustive: never = via;
       throw new Error(`Unhandled channel: ${exhaustive}`);
@@ -166,12 +176,34 @@ export async function inviteCommand(contactArg: string, options: InviteOptions):
         : `${who} is ${result.alreadyLinked ? 'already ' : ''}linked on ${formatChannels(result.linkedOn, 'and')}. Address them with:`;
 
     process.stdout.write(
-      `\n${pc.green('✔')} ${lead}\n` + `  ${pc.bold(`${CLI_COMMAND} inbox send ask "…" --to ${result.contactId}`)}\n`
+      `\n${pc.green('✔')} ${lead}\n` + `  ${pc.bold(`${CLI_COMMAND} send ask "…" --to ${result.contactId}`)}\n`
     );
 
     process.exit(0);
   } catch (err) {
     handleError(err);
+  }
+}
+
+async function isChannelAlreadyLinked(
+  client: ApiClient,
+  contactId: string,
+  agentIdentifier: string,
+  channel: { via: ChannelName; integrationIdentifier: string }
+): Promise<boolean> {
+  switch (channel.via) {
+    case 'email':
+      return isEmailVerified(client, contactId, agentIdentifier);
+    case 'voice':
+      return isVoiceVerified(client, contactId, agentIdentifier);
+    case 'telegram':
+    case 'slack':
+      return hasChannelEndpoint(client, channel.integrationIdentifier, contactId);
+    default: {
+      const unreachable: never = channel.via;
+
+      return unreachable;
+    }
   }
 }
 
@@ -193,16 +225,14 @@ async function inviteViaPage(
   });
 
   if (offeredChannels.length === 0) {
-    throw new Error(`No Telegram, Slack, or Email channel is connected yet. Run \`${CLI_COMMAND} setup\` first.`);
+    throw new Error(
+      `No Telegram, Slack, Email, or Voice channel is connected yet. Run \`${CLI_COMMAND} setup\` first.`
+    );
   }
 
   const alreadyLinked: ChannelName[] = [];
   for (const channel of offeredChannels) {
-    if (channel.via === 'email') {
-      if (await isEmailVerified(client, contactId, agentIdentifier)) {
-        alreadyLinked.push('email');
-      }
-    } else if (await hasChannelEndpoint(client, channel.integrationIdentifier, contactId)) {
+    if (await isChannelAlreadyLinked(client, contactId, agentIdentifier, channel)) {
       alreadyLinked.push(channel.via);
     }
   }
@@ -364,7 +394,7 @@ async function inviteEmail(
       : false;
 
   if (verified && (!options.email || sameAddress)) {
-    info(`${contactId} is already verified on email (${emailChannel?.address ?? contact?.email}).`);
+    info(`${contactId} is already confirmed on email (${emailChannel?.address ?? contact?.email}).`);
 
     await setupRelay(client, {
       subscriberId: contactId,
@@ -386,12 +416,12 @@ async function inviteEmail(
     ...name,
   });
 
-  info(`Verification email sent to ${pc.bold(email)} (shown as ${sent.address}).`);
+  info(`Confirmation email sent to ${pc.bold(email)} (shown as ${sent.address}).`);
   if (sent.replacesVerifiedAddress) {
-    info(`A different address is already verified for ${contactId}; it stays reachable until ${email} is verified.`);
+    info(`A different address is already confirmed for ${contactId}; it stays reachable until ${email} is confirmed.`);
   }
   if (inboundAddress) {
-    info(`Once verified, replies go to ${pc.bold(inboundAddress)}.`);
+    info(`Once confirmed, replies go to ${pc.bold(inboundAddress)}.`);
   }
 
   if (options.async) {
@@ -401,6 +431,80 @@ async function inviteEmail(
   await waitForEmailVerification(client, contactId, agentIdentifier, sent.requestedAt);
 
   return { contactId, linkedOn: ['email'], alreadyLinked: false };
+}
+
+async function inviteVoice(
+  client: ApiClient,
+  contactId: string,
+  agentIdentifier: string,
+  options: InviteOptions
+): Promise<InviteResult> {
+  const name = splitName(options.name);
+  const contact = await getContact(client, contactId, agentIdentifier).catch(() => null);
+  const voiceChannel = contact?.channels?.find((channel) => channel.via === 'voice');
+
+  if (voiceChannel?.status === 'verified') {
+    info(`${contactId} is already verified on voice (${voiceChannel.address ?? contact?.phone}).`);
+
+    await setupRelay(client, {
+      subscriberId: contactId,
+      agentIdentifier,
+      ...name,
+      defaultVia: 'voice',
+    });
+
+    return { contactId, linkedOn: ['voice'], alreadyLinked: true };
+  }
+
+  const phone = options.phone ? requirePhone(options.phone) : await promptInvitePhone();
+  const sent = await requestVoiceVerification(client, {
+    subscriberId: contactId,
+    agentIdentifier,
+    address: phone,
+    ...name,
+  });
+
+  info(`Calling ${pc.bold(phone)} (shown as ${sent.address}). Answer and note the code.`);
+  if (sent.replacesVerifiedAddress) {
+    info(`A different number is already verified for ${contactId}; it stays reachable until ${phone} is verified.`);
+  }
+
+  await setupRelay(client, {
+    subscriberId: contactId,
+    agentIdentifier,
+    ...name,
+    defaultVia: 'voice',
+  });
+
+  if (options.async) {
+    const invite = await createInvite(client, {
+      subscriberId: contactId,
+      agentIdentifier,
+      ...name,
+    });
+    printInviteUrl(contactId, 'voice', invite.url, 'they type the code from the call on this page');
+
+    return { contactId, linkedOn: [], alreadyLinked: false, url: invite.url, expiresAt: invite.expiresAt };
+  }
+
+  const code = await promptInviteCode();
+  await confirmVoiceVerification(client, {
+    subscriberId: contactId,
+    agentIdentifier,
+    code,
+  });
+
+  return { contactId, linkedOn: ['voice'], alreadyLinked: false };
+}
+
+async function isVoiceVerified(client: ApiClient, contactId: string, agentIdentifier: string): Promise<boolean> {
+  try {
+    const contact = await getContact(client, contactId, agentIdentifier);
+
+    return contact.channels?.some((channel) => channel.via === 'voice' && channel.status === 'verified') ?? false;
+  } catch {
+    return false;
+  }
 }
 
 async function isEmailVerified(client: ApiClient, contactId: string, agentIdentifier: string): Promise<boolean> {
@@ -420,7 +524,7 @@ async function waitForEmailVerification(
   requestedAt: string
 ): Promise<void> {
   const stopIndicator = startWaitIndicator(
-    `Waiting for ${contactId} to verify their email`,
+    `Waiting for ${contactId} to confirm their email`,
     `Ctrl-C detaches; resume with: ${CLI_COMMAND} contact invite ${contactId} --via email`
   );
 
@@ -430,7 +534,7 @@ async function waitForEmailVerification(
       contactId,
       agentIdentifier,
       requestedAt,
-      `${contactId} verify their email`,
+      `${contactId} confirm their email`,
       `Re-run \`${CLI_COMMAND} contact invite ${contactId} --via email\` to resend.`
     );
   } finally {
@@ -496,6 +600,64 @@ function formatExpiry(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+const E164 = /^\+[1-9]\d{7,14}$/;
+
+function parsePhone(value: string): string | null {
+  const compact = value.trim().replace(/[\s()-]/g, '');
+  if (!E164.test(compact)) {
+    return null;
+  }
+
+  return compact;
+}
+
+function requirePhone(value: string): string {
+  const phone = parsePhone(value);
+  if (!phone) {
+    throw new Error('Pass a phone number in international format with --phone, like +14155550123.');
+  }
+
+  return phone;
+}
+
+async function promptInvitePhone(): Promise<string> {
+  if (!process.stdin.isTTY) {
+    throw new Error(
+      `Pass --phone <number> when running \`${CLI_COMMAND} contact invite --via voice\` non-interactively.`
+    );
+  }
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const phone = parsePhone(await promptLine('Their phone number (with country code): '));
+    if (phone) {
+      return phone;
+    }
+
+    process.stdout.write(`${pc.yellow('Enter a number like +14155550123.')}\n`);
+  }
+
+  throw new Error('No valid phone number provided. Re-run with --phone <number>.');
+}
+
+async function promptInviteCode(): Promise<string> {
+  if (!process.stdin.isTTY) {
+    throw new Error(
+      `The verification call was placed. Re-run \`${CLI_COMMAND} contact invite --via voice\` from a terminal to type the code, or pass --async and confirm it on the invite page.`
+    );
+  }
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = (await promptLine('Code from the call: ')).trim();
+    if (/^\d{6}$/.test(code)) {
+      return code;
+    }
+
+    process.stdout.write(`${pc.yellow('The code is 6 digits.')}\n`);
+  }
+
+  throw new Error('No code entered. Re-run to confirm the number.');
 }
 
 function requireEmail(value: string): string {

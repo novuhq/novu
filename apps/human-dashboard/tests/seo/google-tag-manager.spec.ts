@@ -22,8 +22,13 @@ for (const path of ['/', '/sapien']) {
     expect(head).toContain(`'${GTM_ID}'`);
 
     const bodyOpenEnd = html!.indexOf('>', bodyStart);
-    const afterBody = html!.slice(bodyOpenEnd + 1).trimStart();
-    expect(afterBody.startsWith('<noscript>')).toBe(true);
-    expect(afterBody).toContain(`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`);
+    const afterBody = html!.slice(bodyOpenEnd + 1);
+    const noscriptAt = afterBody.indexOf('<noscript>');
+    expect(noscriptAt).toBeGreaterThan(-1);
+    // Next writes this empty marker before the layout's children.
+    const beforeNoscript = afterBody.slice(0, noscriptAt).trim();
+    const nextMarker = '<div hidden=""><!--$--><!--/$--></div>';
+    expect(beforeNoscript === '' || beforeNoscript === nextMarker).toBe(true);
+    expect(afterBody.slice(noscriptAt)).toContain(`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`);
   });
 }

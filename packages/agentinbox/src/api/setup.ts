@@ -137,7 +137,6 @@ export async function addAgentEmailIntegration(
 
 export interface TelegramMobileLink {
   token: string;
-  url: string;
   expiresAt: string;
 }
 
@@ -255,9 +254,9 @@ export async function issueSlackSetupLink(
   agentIdentifier: string,
   integrationId: string,
   subscriberId?: string
-): Promise<{ token: string; url: string; expiresAt: string }> {
+): Promise<{ token: string; expiresAt: string }> {
   const res = await client.axios.post<
-    { data?: { token: string; url: string; expiresAt: string } } | { token: string; url: string; expiresAt: string }
+    { data?: { token: string; expiresAt: string } } | { token: string; expiresAt: string }
   >(`/v1/channels/apps/${encodeURIComponent(integrationId)}/slack-setup-link`, subscriberId ? { subscriberId } : {}, {
     params: { agentIdentifier },
   });

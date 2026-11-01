@@ -22,6 +22,7 @@ import { ChannelList } from './channel-list';
 import { EmailDrawer } from './email-drawer';
 import { useLastHostCheck } from './host-check-poll';
 import { type AgentState, IdentityCard } from './identity-card';
+import { VoiceDrawer } from './voice-drawer';
 
 export type ConfigureAgent = {
   name: string;
@@ -100,6 +101,8 @@ export function ConfigureView({
   // The address the email channel really has. `agent.address` falls back to one made from the handle, which
   // nothing receives when the inbox couldn't be set up, so it's never shown, copied or put in the QR code.
   const email = channels.find((channel) => channel.via === 'email' && channel.connected)?.handles[0]?.value ?? null;
+  const voiceNumber =
+    channels.find((channel) => channel.via === 'voice' && channel.connected)?.handles[0]?.value ?? null;
   const telegramBot = connected('telegram') && 'botUsername' in telegramSetup ? telegramSetup.botUsername : '';
   const slack = connected('slack') ? describeSlack(slackSetup) : null;
   // A host reads its mail while one checked the inbox within the last day.
@@ -108,7 +111,7 @@ export function ConfigureView({
   const hostConnected = hostLiveness(lastCheckedAt, now) === 'live';
   // Paused as the Settings block shows it: as soon as its switch is flipped, and back if saving that fails.
   const [paused, setPaused] = useState(Boolean(settings?.paused));
-  const state: AgentState = !agent.active || paused ? 'paused' : hostConnected ? 'active' : 'waiting';
+  const state = agentCardState(agent.active, paused, hostConnected);
 
   return (
     <>
@@ -147,9 +150,11 @@ export function ConfigureView({
           />
           <AgentSetup
             handle={agent.handle}
+            address={email}
             apiUrl={apiUrl}
             lastCheckedAt={lastCheckedAt}
             hosts={hostStatus?.hosts}
+            listening={hostStatus?.listening ?? null}
             renderedAt={renderedAt}
             docsUrl={docsUrl}
             mcpUrl={mcpUrl}
@@ -161,6 +166,7 @@ export function ConfigureView({
       </div>
 
       <EmailDrawer handle={agent.handle} address={email} {...drawerProps('email')} />
+      <VoiceDrawer handle={agent.handle} linked={connected('voice')} number={voiceNumber} {...drawerProps('voice')} />
       <TelegramSetup
         setup={telegramSetup}
         handle={agent.handle}
@@ -184,6 +190,18 @@ export function ConfigureView({
       />
     </>
   );
+}
+
+function agentCardState(active: boolean, paused: boolean, hostConnected: boolean): AgentState {
+  if (!active || paused) {
+    return 'paused';
+  }
+
+  if (hostConnected) {
+    return 'active';
+  }
+
+  return 'waiting';
 }
 
 /** The Slack app's name and the workspace it's in. Either can be missing when Slack couldn't be read just now. */

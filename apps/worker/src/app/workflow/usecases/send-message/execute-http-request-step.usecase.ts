@@ -7,13 +7,13 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   CreateStepConditionEvaluationDetail,
-  createSchemaValidationAjv,
   DetailEnum,
   dashboardSanitizeControlValues,
   evaluateRules,
   extractRuleVariables,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
+  getSchemaValidator,
   HttpClientService,
   InstrumentUsecase,
   PinoLogger,
@@ -348,7 +348,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     schema: Record<string, unknown>
   ): { isValid: true; errors?: undefined } | { isValid: false; errors: { path: string; message: string }[] } {
     try {
-      const validate = createSchemaValidationAjv({ schema }).compile(schema);
+      const validate = getSchemaValidator(schema);
       const valid = validate(responseBody);
 
       if (valid) {

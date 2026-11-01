@@ -28,6 +28,7 @@ type ChannelLabels = Pick<ChannelRow, 'via' | 'name'>;
 const EMAIL: ChannelLabels = { via: 'email', name: 'Email' };
 const TELEGRAM: ChannelLabels = { via: 'telegram', name: 'Telegram' };
 const SLACK: ChannelLabels = { via: 'slack', name: 'Slack' };
+const VOICE: ChannelLabels = { via: 'voice', name: 'Voice' };
 
 export type ChannelsOverview = {
   rows: ChannelRow[];
@@ -36,7 +37,7 @@ export type ChannelsOverview = {
 };
 
 /**
- * Email, Telegram and Slack, in that order, whether or not the agent has them yet. The Telegram and
+ * Email, Telegram, Slack and Voice, in that order, whether or not the agent has them yet. The Telegram and
  * Slack setups are read here too, so their drawers open without asking the API again.
  */
 export async function loadChannelsOverview(account: HumanAccount): Promise<ChannelsOverview> {
@@ -46,6 +47,7 @@ export async function loadChannelsOverview(account: HumanAccount): Promise<Chann
   const email = channelOf('email');
   const telegram = channelOf('telegram');
   const slack = channelOf('slack');
+  const voice = channelOf('voice');
   const telegramConnected = telegram?.connected === true;
   const slackConnected = slack?.connected === true;
   const [telegramSetup, slackSetup] = await Promise.all([
@@ -77,6 +79,11 @@ export async function loadChannelsOverview(account: HumanAccount): Promise<Chann
           ]
         : [],
       connected: slackConnected,
+    },
+    {
+      ...VOICE,
+      handles: voice?.address ? [{ value: voice.address, label: 'phone number' }] : [],
+      connected: Boolean(voice),
     },
   ];
 
