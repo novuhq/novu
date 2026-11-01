@@ -276,6 +276,7 @@ describe('the Agent Inbox MCP server', () => {
         'inbox_setup',
         'inbox_show',
         'inbox_wait',
+        'voice_turn',
       ].sort()
     );
   });

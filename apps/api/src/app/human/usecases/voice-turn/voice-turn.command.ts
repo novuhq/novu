@@ -1,4 +1,4 @@
-import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDefined, IsIn, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class VoiceTurnCommand extends EnvironmentWithUserCommand {
@@ -6,9 +6,21 @@ export class VoiceTurnCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   identifier: string;
 
+  @IsOptional()
   @IsString()
-  @IsDefined()
-  line: string;
+  say?: string;
+
+  @IsOptional()
+  @IsString()
+  answer?: string;
+
+  @IsOptional()
+  @IsIn(['approve', 'deny'])
+  decision?: 'approve' | 'deny';
+
+  @IsOptional()
+  @IsString()
+  optionId?: string;
 
   @IsOptional()
   @IsBoolean()
