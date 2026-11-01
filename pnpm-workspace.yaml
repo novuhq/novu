@@ -270,7 +270,12 @@ overrides:
   ejs@<3.1.10: ^3.1.10
   rollup@>=3.0.0 <3.30.0: ^3.30.0
   rollup@<2.80.0: ^2.80.0
-  glob@>=10.2.0 <10.5.0: ^10.5.0
+  # GHSA-3g3m-2fjr-6pw4 (moderate): glob AbortSignal cancellation bypass
+  # allows post-timeout filesystem traversal. Patched in 14.0.2 (patch bump
+  # within the 14.x line). Supersedes the previous `>=10.2.0 <10.5.0` floor
+  # since no fix was backported to 9.x–13.x; glob 14 is dual-published
+  # (ESM/CJS) so transitive consumers (jest, @nx/jest, @auto-it/npm) work.
+  glob@>=9.0.0 <14.0.2: ^14.0.2
   # GHSA-* (undici): several DoS / cache-key / request-smuggling / cookie
   # forwarding issues in undici 6.x, 7.x, and 8.x. Previous rollups patched in
   # 6.28.1 / 7.29.1 / 8.10.2. GHSA-xjj6-f33q-929c (high), GHSA-4qv8-2p9j-2685
