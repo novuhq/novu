@@ -16,6 +16,9 @@ export const PROXY_ROUTES: readonly ProxyRoute[] = [
   ['GET', '/v1/contacts/:contactId', '/v1/human/contacts/:contactId'],
   ['POST', '/v1/contacts/invites', '/v1/human/invites'],
   ['POST', '/v1/contacts/verifications', '/v1/human/verifications'],
+  ['POST', '/v1/contacts/verifications/voice', '/v1/human/verifications/voice'],
+  ['POST', '/v1/contacts/verifications/voice/confirm', '/v1/human/verifications/voice/confirm'],
+  ['DELETE', '/v1/contacts/:contactId/voice', '/v1/human/contacts/:contactId/voice'],
 
   ['GET', '/v1/channels', '/v1/agents/:agentIdentifier/integrations'],
   ['POST', '/v1/channels', '/v1/agents/:agentIdentifier/integrations'],
@@ -51,6 +54,8 @@ export const PROXY_ROUTES: readonly ProxyRoute[] = [
   ['POST', '/v1/invites/connect', '/v1/human/invites/connect'],
   ['POST', '/v1/invites/default', '/v1/human/invites/default'],
   ['POST', '/v1/invites/decline', '/v1/human/invites/decline'],
+  ['POST', '/v1/invites/verify-code', '/v1/human/invites/verify-code'],
+  ['POST', '/v1/invites/voice/remove', '/v1/human/invites/voice/remove'],
   ['POST', '/v1/verify', '/v1/human/verify'],
   [
     'GET',

@@ -5,6 +5,11 @@ export type VoiceChannelConfig = {
   elevenLabsApiKey: string;
 };
 
+/** Shared number plus the shell that speaks a verification code and hangs up. */
+export type VoiceVerificationConfig = VoiceChannelConfig & {
+  elevenLabsVerifyAgentId: string;
+};
+
 /**
  * The one shared number for the deployment. Returns null unless every value is
  * set, so a half-configured environment cannot provision the channel.
@@ -21,6 +26,22 @@ export function readVoiceChannelConfig(): VoiceChannelConfig | null {
   }
 
   return { twilioNumber, elevenLabsPhoneNumberId, elevenLabsAgentId, elevenLabsApiKey };
+}
+
+/**
+ * Config for a phone-verification call. Null unless the shared number and the
+ * dedicated verification agent are both set, so a half-configured deployment
+ * cannot dial a code.
+ */
+export function readVoiceVerificationConfig(): VoiceVerificationConfig | null {
+  const shared = readVoiceChannelConfig();
+  const elevenLabsVerifyAgentId = process.env.NOVU_VOICE_ELEVENLABS_VERIFY_AGENT_ID?.trim();
+
+  if (!shared || !elevenLabsVerifyAgentId) {
+    return null;
+  }
+
+  return { ...shared, elevenLabsVerifyAgentId };
 }
 
 /** Global host unless the deployment pinned a residency region. */

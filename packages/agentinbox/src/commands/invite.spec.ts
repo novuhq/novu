@@ -10,6 +10,8 @@ const createInvite = vi.fn();
 const getContact = vi.fn();
 const listContacts = vi.fn();
 const requestAddressVerification = vi.fn();
+const requestVoiceVerification = vi.fn();
+const confirmVoiceVerification = vi.fn();
 const saveConfig = vi.fn();
 const clientFromConfig = vi.fn();
 
@@ -26,6 +28,8 @@ vi.mock('../api/agent-inbox', () => ({
   getContact: (...args: unknown[]) => getContact(...args),
   listContacts: async (...args: unknown[]) => (await listContacts(...args)) ?? { data: [], next: null },
   requestAddressVerification: (...args: unknown[]) => requestAddressVerification(...args),
+  requestVoiceVerification: (...args: unknown[]) => requestVoiceVerification(...args),
+  confirmVoiceVerification: (...args: unknown[]) => confirmVoiceVerification(...args),
 }));
 
 vi.mock('../config', async (importOriginal) => {
@@ -101,6 +105,8 @@ function resetMocks() {
   getContact.mockReset();
   listContacts.mockReset();
   requestAddressVerification.mockReset();
+  requestVoiceVerification.mockReset();
+  confirmVoiceVerification.mockReset();
   saveConfig.mockReset();
   clientFromConfig.mockReset();
   clientFromConfig.mockReturnValue({
@@ -400,6 +406,75 @@ describe('runInvite with --via', () => {
       'Run `npx @agentinbox/cli channel add slack` first'
     );
   });
+
+  it('places a verification call and confirms the code for --via voice', async () => {
+    listAgentIntegrations.mockResolvedValue([
+      { integration: { identifier: 'voice-1', providerId: 'agent-voice-call', active: true } },
+    ]);
+    getContact.mockRejectedValue(new Error('not found'));
+    requestVoiceVerification.mockResolvedValue({
+      address: '+***0123',
+      requestedAt: REQUESTED_AT,
+      expiresAt: '2026-10-02T12:00:00.000Z',
+      retryAfterSeconds: 60,
+      replacesVerifiedAddress: false,
+    });
+    confirmVoiceVerification.mockResolvedValue({ verified: true, via: 'voice', address: '+***0123' });
+    const previousTty = process.stdin.isTTY;
+    Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
+    const prompt = vi.spyOn(await import('../cli-io'), 'promptLine').mockResolvedValue('421903');
+
+    const result = await runInvite('alice', { via: 'voice', phone: '+1 (415) 555-0123' });
+    Object.defineProperty(process.stdin, 'isTTY', { value: previousTty, configurable: true });
+
+    expect(result).toEqual({ contactId: 'alice', linkedOn: ['voice'], alreadyLinked: false });
+    expect(requestVoiceVerification).toHaveBeenCalledWith(expect.anything(), {
+      subscriberId: 'alice',
+      agentIdentifier: 'human-relay',
+      address: '+14155550123',
+    });
+    prompt.mockRestore();
+    expect(confirmVoiceVerification).toHaveBeenCalledWith(expect.anything(), {
+      subscriberId: 'alice',
+      agentIdentifier: 'human-relay',
+      code: '421903',
+    });
+    expect(setupRelay).toHaveBeenCalledWith(expect.anything(), {
+      subscriberId: 'alice',
+      agentIdentifier: 'human-relay',
+      defaultVia: 'voice',
+    });
+  });
+
+  it('does not wait for the code when --via voice is --async', async () => {
+    listAgentIntegrations.mockResolvedValue([
+      { integration: { identifier: 'voice-1', providerId: 'agent-voice-call', active: true } },
+    ]);
+    requestVoiceVerification.mockResolvedValue({
+      address: '+***0123',
+      requestedAt: REQUESTED_AT,
+      expiresAt: '2026-10-02T12:00:00.000Z',
+      retryAfterSeconds: 60,
+      replacesVerifiedAddress: false,
+    });
+    createInvite.mockResolvedValue({
+      url: 'https://inbox.human.test/invite/voice',
+      expiresAt: '2026-10-02T12:00:00.000Z',
+      channels: [],
+    });
+
+    const result = await runInvite('alice', { via: 'voice', phone: '+14155550123', async: true });
+
+    expect(result).toEqual({
+      contactId: 'alice',
+      linkedOn: [],
+      alreadyLinked: false,
+      url: 'https://inbox.human.test/invite/voice',
+      expiresAt: '2026-10-02T12:00:00.000Z',
+    });
+    expect(confirmVoiceVerification).not.toHaveBeenCalled();
+    expect(stdoutText()).toContain('https://inbox.human.test/invite/voice');
+  });
 });
 
 describe('runInvite without --via (invite page)', () => {
@@ -534,7 +609,7 @@ describe('runInvite without --via (invite page)', () => {
     listAgentIntegrations.mockResolvedValue([]);
 
     await expect(runInvite('alice', {})).rejects.toThrow(
-      'No Telegram, Slack, or Email channel is connected yet. Run `npx @agentinbox/cli setup` first.'
+      'No Telegram, Slack, Email, or Voice channel is connected yet. Run `npx @agentinbox/cli setup` first.'
     );
     expect(createInvite).not.toHaveBeenCalled();
   });

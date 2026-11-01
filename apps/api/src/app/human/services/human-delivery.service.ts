@@ -28,6 +28,7 @@ import { KeylessVoiceGateService } from '../../keyless/keyless-voice-gate.servic
 import { type ContactHandle, describeContactHandle, readContactHandle } from './contact-handle';
 import { VIA_PROVIDER_IDS, viaForProviderId } from './human-channel-via';
 import { maskEmail } from './mask-email';
+import { maskPhone } from './normalize-phone';
 
 export interface ResolvedHumanTarget {
   platform: string;
@@ -44,7 +45,7 @@ export interface ReachableHumanTarget extends ResolvedHumanTarget {
   handle?: ContactHandle;
 }
 
-/** Apps a human can connect themselves from the invite page. Voice is listed, and unavailable, until phone verification exists. */
+/** Apps a human can connect themselves from the invite page. */
 export type HumanInviteVia =
   | HumanChannelViaEnum.TELEGRAM
   | HumanChannelViaEnum.SLACK
@@ -90,8 +91,11 @@ export function pickDefaultTarget<T extends ReachableHumanTarget>(
   defaultVia?: HumanChannelViaEnum
 ): T | undefined {
   const preferred = defaultVia ? targets.find((target) => target.via === defaultVia) : undefined;
+  if (preferred) {
+    return preferred;
+  }
 
-  return preferred ?? [...targets].sort(byConnectedAt)[0];
+  return [...targets].filter((target) => target.via !== HumanChannelViaEnum.VOICE).sort(byConnectedAt)[0];
 }
 
 function byConnectedAt(a: ReachableHumanTarget, b: ReachableHumanTarget): number {
@@ -255,9 +259,7 @@ export class HumanDeliveryService {
     }
 
     if (params.via === HumanChannelViaEnum.VOICE) {
-      throw new NotFoundException(
-        `Human "${params.subscriberId}" has no verified phone number. Voice verification is not available yet.`
-      );
+      throw new NotFoundException(await this.voiceUnreachableMessage(params));
     }
 
     const inviteHint = params.via
@@ -367,27 +369,37 @@ export class HumanDeliveryService {
     agentId: string;
     subscriberId: string;
   }): Promise<InviteChannelDescription[]> {
-    const [channels, { targets, defaultVia }, contact] = await Promise.all([
+    const [channels, { targets, defaultVia }, contact, voiceEnabled] = await Promise.all([
       this.listInviteChannels(params),
       this.describeReachability(params),
       this.humanContactRepository.findContact(params.environmentId, params.agentId, params.subscriberId),
+      isVoiceFeatureEnabled(this.featureFlagsService, params.organizationId, params.environmentId),
     ]);
+    const voiceBlocked = this.keylessVoiceGate.isBlocked(params.organizationId);
 
     return channels.map((channel) => {
       if (channel.via === HumanChannelViaEnum.VOICE) {
-        return {
-          ...channel,
-          connected: false,
-          isDefault: false,
-          available: false,
-          status: HumanAddressVerificationStateEnum.UNVERIFIED,
-        };
+        const described = describeAddressInviteChannel(
+          channel,
+          describeStoredAddress(contact?.addresses?.[HumanChannelViaEnum.VOICE], maskPhone),
+          defaultVia
+        );
+        if (!voiceEnabled || voiceBlocked) {
+          return {
+            ...described,
+            connected: false,
+            isDefault: false,
+            available: false,
+          };
+        }
+
+        return described;
       }
 
       if (channel.via === HumanChannelViaEnum.EMAIL) {
-        const described = describeEmailInviteChannel(
+        const described = describeAddressInviteChannel(
           channel,
-          describeStoredEmail(contact?.addresses?.[HumanChannelViaEnum.EMAIL]),
+          describeStoredAddress(contact?.addresses?.[HumanChannelViaEnum.EMAIL], maskEmail),
           defaultVia
         );
 
@@ -430,9 +442,7 @@ export class HumanDeliveryService {
     subscriberId: string;
   }): Promise<HumanContactChannelStatus[]> {
     const channels = await this.describeInviteChannels(params);
-    const statuses = channels
-      .filter((channel) => channel.via !== HumanChannelViaEnum.VOICE || channel.available)
-      .map(toContactChannelStatus);
+    const statuses = channels.map(toContactChannelStatus);
 
     if (statuses.some((channel) => channel.via === HumanChannelViaEnum.EMAIL)) {
       return statuses;
@@ -443,7 +453,7 @@ export class HumanDeliveryService {
       params.agentId,
       params.subscriberId
     );
-    const email = describeStoredEmail(contact?.addresses?.[HumanChannelViaEnum.EMAIL]);
+    const email = describeStoredAddress(contact?.addresses?.[HumanChannelViaEnum.EMAIL], maskEmail);
     if (!email.address) {
       return statuses;
     }
@@ -475,13 +485,7 @@ export class HumanDeliveryService {
       params.subscriberId
     );
     const voiceOn = await isVoiceFeatureEnabled(this.featureFlagsService, params.organizationId, params.environmentId);
-    const eligible = targets.filter((target) => {
-      if (target.via !== HumanChannelViaEnum.VOICE) {
-        return true;
-      }
-
-      return voiceOn && contact?.defaultVia === HumanChannelViaEnum.VOICE;
-    });
+    const eligible = targets.filter((target) => target.via !== HumanChannelViaEnum.VOICE || voiceOn);
 
     return { targets: eligible, defaultVia: pickDefaultTarget(eligible, contact?.defaultVia)?.via };
   }
@@ -560,14 +564,12 @@ export class HumanDeliveryService {
     );
 
     for (const subscriber of params.subscribers) {
-      const defaultVia = savedDefaults.get(subscriber.subscriberId);
-      const voiceEligible = voiceEnabled && defaultVia === HumanChannelViaEnum.VOICE;
       const targets = this.reachableTargetsOf(
         subscriber.subscriberId,
         integrations,
         endpoints,
         verifiedEmails.get(subscriber.subscriberId),
-        voiceEligible ? verifiedVoices.get(subscriber.subscriberId) : undefined
+        voiceEnabled ? verifiedVoices.get(subscriber.subscriberId) : undefined
       );
 
       result.set(subscriber.subscriberId, {
@@ -679,6 +681,28 @@ export class HumanDeliveryService {
     }
 
     return `Human "${params.subscriberId}" has no verified email address. Run \`human contact invite ${params.subscriberId} --via email\`.`;
+  }
+
+  private async voiceUnreachableMessage(params: {
+    environmentId: string;
+    agentId: string;
+    subscriberId: string;
+  }): Promise<string> {
+    const pending = await this.humanContactRepository.findPendingAddress(
+      params.environmentId,
+      params.agentId,
+      params.subscriberId,
+      HumanChannelViaEnum.VOICE
+    );
+
+    if (pending) {
+      return (
+        `Human "${params.subscriberId}"'s phone ${maskPhone(pending.address)} is awaiting verification ` +
+        `(sent ${relativeAge(pending.requestedAt)}). Re-run \`human contact invite ${params.subscriberId} --via voice\` to resend.`
+      );
+    }
+
+    return `Human "${params.subscriberId}" has no verified phone number. Run \`human contact invite ${params.subscriberId} --via voice\`.`;
   }
 
   private async findLinkedIntegrations(params: {
@@ -799,25 +823,28 @@ export class HumanDeliveryService {
   }
 }
 
-function describeEmailInviteChannel(
+function describeAddressInviteChannel(
   channel: { via: HumanInviteVia; integrationIdentifier: string },
-  email: ReturnType<typeof describeStoredEmail>,
+  stored: ReturnType<typeof describeStoredAddress>,
   defaultVia: HumanChannelViaEnum | undefined
 ): InviteChannelDescription {
   return {
     ...channel,
-    connected: email.connected,
-    isDefault: email.connected && defaultVia === channel.via,
-    status: email.status,
+    connected: stored.connected,
+    isDefault: stored.connected && defaultVia === channel.via,
+    status: stored.status,
     available: true,
-    ...(email.address ? { address: email.address } : {}),
-    ...(email.verifiedAt ? { verifiedAt: email.verifiedAt } : {}),
-    ...(email.verifiedRequestedAt ? { verifiedRequestedAt: email.verifiedRequestedAt } : {}),
-    ...(email.requestedAt ? { requestedAt: email.requestedAt } : {}),
+    ...(stored.address ? { address: stored.address } : {}),
+    ...(stored.verifiedAt ? { verifiedAt: stored.verifiedAt } : {}),
+    ...(stored.verifiedRequestedAt ? { verifiedRequestedAt: stored.verifiedRequestedAt } : {}),
+    ...(stored.requestedAt ? { requestedAt: stored.requestedAt } : {}),
   };
 }
 
-function describeStoredEmail(slot: HumanContactChannelAddresses | undefined): {
+function describeStoredAddress(
+  slot: HumanContactChannelAddresses | undefined,
+  mask: (address: string) => string
+): {
   connected: boolean;
   status: HumanAddressVerificationStateEnum;
   address?: string;
@@ -839,7 +866,7 @@ function describeStoredEmail(slot: HumanContactChannelAddresses | undefined): {
   return {
     connected: Boolean(verified),
     status,
-    ...(rawAddress ? { address: maskEmail(rawAddress) } : {}),
+    ...(rawAddress ? { address: mask(rawAddress) } : {}),
     ...(verified?.verifiedAt ? { verifiedAt: verified.verifiedAt } : {}),
     ...(verified?.requestedAt ? { verifiedRequestedAt: verified.requestedAt } : {}),
     ...(pending?.requestedAt ? { requestedAt: pending.requestedAt } : {}),

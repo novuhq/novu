@@ -194,7 +194,9 @@ function toChannels(targets: ReachableHumanTarget[], defaultVia?: HumanChannelVi
     channels.push({
       via: target.via,
       ...(target.connectedAt ? { connectedAt: target.connectedAt } : {}),
-      ...(target.via === HumanChannelViaEnum.EMAIL ? { address: target.platformUserId } : {}),
+      ...(target.via === HumanChannelViaEnum.EMAIL || target.via === HumanChannelViaEnum.VOICE
+        ? { address: target.platformUserId }
+        : {}),
       ...describeContactHandle(target.via, target.handle),
       isDefault: target.via === defaultVia,
     });

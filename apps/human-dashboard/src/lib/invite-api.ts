@@ -69,6 +69,10 @@ export type InviteErrorCode =
   | 'verification_cap'
   | 'verification_superseded'
   | 'verification_used'
+  | 'verification_code_invalid'
+  | 'verification_code_locked'
+  | 'verification_code_expired'
+  | 'delivery_failed'
   | 'unknown';
 
 export type VerifyAddressResult = InviteSender & {
@@ -79,7 +83,8 @@ export type VerifyAddressResult = InviteSender & {
 
 export type ConnectInviteResult =
   | { url: string }
-  | { via: 'email'; address: string; expiresAt: string; retryAfterSeconds: number };
+  | { via: 'email'; address: string; expiresAt: string; retryAfterSeconds: number }
+  | { via: 'voice'; address: string; expiresAt: string; retryAfterSeconds: number };
 
 const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<InviteErrorCode>([
   'token_invalid',
@@ -94,6 +99,10 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<InviteErrorCode>([
   'verification_cap',
   'verification_superseded',
   'verification_used',
+  'verification_code_invalid',
+  'verification_code_locked',
+  'verification_code_expired',
+  'delivery_failed',
 ]);
 
 export class InviteRequestError extends Error {
@@ -149,6 +158,36 @@ export async function setInviteDefaultChannel(
 
 export async function declineInvite(apiUrl: string, token: string): Promise<{ declined: true }> {
   return postAction(apiUrl, 'decline', { token }, 'Failed to decline the invitation');
+}
+
+/** Confirms the code the verification call read. The invite token scopes the 6-digit code. */
+export async function confirmInviteVoiceCode(
+  apiUrl: string,
+  token: string,
+  code: string
+): Promise<VerifyAddressResult> {
+  return request<VerifyAddressResult>(
+    `${apiUrl}/v1/invites/verify-code`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, code }),
+    },
+    'Failed to confirm the code'
+  );
+}
+
+/** Drops a pending or verified phone number so voice stops being reachable. */
+export async function removeInviteVoice(apiUrl: string, token: string): Promise<{ removed: true }> {
+  return request<{ removed: true }>(
+    `${apiUrl}/v1/invites/voice/remove`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    },
+    'Failed to remove the phone number'
+  );
 }
 
 /** Claims a verification token from the email link. */

@@ -921,4 +921,17 @@ describe('pickDefaultTarget', () => {
   it('returns undefined when the human is not reachable', () => {
     expect(pickDefaultTarget([])).to.equal(undefined);
   });
+
+  it('does not fall back to voice when another channel is connected', () => {
+    const voice: ReachableHumanTarget = {
+      via: HumanChannelViaEnum.VOICE,
+      platform: 'voice',
+      platformUserId: '+15551212',
+      integrationIdentifier: 'voice-main',
+      connectedAt: '2026-01-01T00:00:00.000Z',
+    };
+
+    expect(pickDefaultTarget([voice, telegram])).to.equal(telegram);
+    expect(pickDefaultTarget([voice, telegram], HumanChannelViaEnum.VOICE)).to.equal(voice);
+  });
 });

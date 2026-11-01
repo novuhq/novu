@@ -14,6 +14,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { AgentsModule } from '../agents/agents.module';
+import { PlaceVerificationCall } from '../agents/channels/voice/place-verification-call';
 import { PlaceVoiceCall } from '../agents/channels/voice/place-voice-call';
 import { AuthModule } from '../auth/auth.module';
 import { CliAuthModule } from '../cli-auth/cli-auth.module';
@@ -52,10 +53,12 @@ import { HumanTelegramBotService } from './services/human-telegram-bot.service';
 import { HumanVerificationRateLimitService } from './services/human-verification-rate-limit.service';
 import { HumanVerificationTokenService } from './services/human-verification-token.service';
 import { HumanVoiceMinuteQuotaService } from './services/human-voice-minute-quota.service';
+import { HumanVoiceVerificationCodeService } from './services/human-voice-verification-code.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { ChangeOperatorEmail } from './usecases/change-operator-email/change-operator-email.usecase';
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
+import { ConfirmVoiceVerification } from './usecases/confirm-voice-verification/confirm-voice-verification.usecase';
 import { ConnectHost } from './usecases/connect-host/connect-host.usecase';
 import { ConnectHumanInviteChannel } from './usecases/connect-human-invite-channel/connect-human-invite-channel.usecase';
 import { CountInboxThreads } from './usecases/count-inbox-threads/count-inbox-threads.usecase';
@@ -84,7 +87,9 @@ import { RecordVoiceCallEnded } from './usecases/record-voice-call-ended/record-
 import { RecordVoiceCallFailure } from './usecases/record-voice-call-failure/record-voice-call-failure.usecase';
 import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
+import { RemoveVoiceAddress } from './usecases/remove-voice-address/remove-voice-address.usecase';
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
+import { RequestVoiceVerification } from './usecases/request-voice-verification/request-voice-verification.usecase';
 import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbox-thread.usecase';
 import { SendHumanTestEmail } from './usecases/send-human-test-email/send-human-test-email.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
@@ -142,6 +147,7 @@ import { VoiceCallWebhookController } from './voice-call-failure.controller';
     AgentInboxChannelAnalytics,
     HumanDeliveryService,
     PlaceVoiceCall,
+    PlaceVerificationCall,
     RecordVoiceCallFailure,
     RecordVoiceCallEnded,
     VoiceBridgeCompletions,
@@ -165,8 +171,12 @@ import { VoiceCallWebhookController } from './voice-call-failure.controller';
     HumanInviteTokenService,
     HumanVerificationTokenService,
     HumanVerificationRateLimitService,
+    HumanVoiceVerificationCodeService,
     HumanVerificationEmailSender,
     RequestAddressVerification,
+    RequestVoiceVerification,
+    ConfirmVoiceVerification,
+    RemoveVoiceAddress,
     VerifyAddress,
     HumanOperatorService,
     HumanAgentIdentityService,

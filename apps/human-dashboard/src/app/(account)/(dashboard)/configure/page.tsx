@@ -106,6 +106,10 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
 }
 
 /** The channel whose drawer a link asked for, when it names one this page has a drawer for. */
-function readDrawerParam(value: string | string[] | undefined): 'email' | 'telegram' | 'slack' | null {
-  return value === 'email' || value === 'telegram' || value === 'slack' ? value : null;
+function readDrawerParam(value: string | string[] | undefined): 'email' | 'telegram' | 'slack' | 'voice' | null {
+  if (value === 'email' || value === 'telegram' || value === 'slack' || value === 'voice') {
+    return value;
+  }
+
+  return null;
 }

@@ -7,6 +7,7 @@ import QRCode from 'react-qr-code';
 import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
+import { CodeInput } from '@/components/ui/code-input';
 import { Field, Input } from '@/components/ui/input';
 import { MascotFace } from '@/components/ui/mascot-face';
 import { useInviteStatus } from '@/hooks/use-invite-status';
@@ -14,11 +15,13 @@ import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import {
   type ActiveInviteStatus,
   type ConnectInviteResult,
+  confirmInviteVoiceCode,
   connectInviteChannel,
   declineInvite,
   type InviteChannel,
   type InviteChannelVia,
   InviteRequestError,
+  removeInviteVoice,
   setInviteDefaultChannel,
 } from '@/lib/invite-api';
 import { cn } from '@/lib/utils';
@@ -98,11 +101,18 @@ function followConnectResult(
     stillHere: () => boolean;
     tab: Window | null;
     onEmailSent: (retryAfterSeconds: number) => void;
+    onVoiceCalled: (retryAfterSeconds: number) => void;
     onTelegram: (url: string) => void;
   }
 ): void {
   if ('via' in result && result.via === 'email') {
     actions.onEmailSent(result.retryAfterSeconds);
+
+    return;
+  }
+
+  if ('via' in result && result.via === 'voice') {
+    actions.onVoiceCalled(result.retryAfterSeconds);
 
     return;
   }
@@ -147,6 +157,9 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
   // Whether they pressed "Continue with Slack": before that there is nothing to wait for.
   const [slackStarted, setSlackStarted] = useState(false);
   const [emailCooldownUntil, setEmailCooldownUntil] = useState<number | null>(null);
+  const [voiceCooldownUntil, setVoiceCooldownUntil] = useState<number | null>(null);
+  const [voiceCallPlaced, setVoiceCallPlaced] = useState(false);
+  const [confirmingCode, setConfirmingCode] = useState(false);
   // Counts the times they chose to go back, so a request from before that can tell it's stale.
   const navigations = useRef(0);
 
@@ -220,6 +233,11 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
           setEmailCooldownUntil(Date.now() + retryAfterSeconds * 1000);
           onChanged();
         },
+        onVoiceCalled: (retryAfterSeconds) => {
+          setVoiceCallPlaced(true);
+          setVoiceCooldownUntil(Date.now() + retryAfterSeconds * 1000);
+          onChanged();
+        },
         onTelegram: (url) => {
           setTelegramLink(url);
           setView('telegram');
@@ -259,13 +277,44 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
     }
   };
 
+  const handleConfirmVoice = async (code: string): Promise<boolean> => {
+    setErrorMessage(null);
+    setConfirmingCode(true);
+    try {
+      await confirmInviteVoiceCode(apiUrl, token, code);
+      onChanged();
+
+      return true;
+    } catch (error) {
+      handleError(error);
+
+      return false;
+    } finally {
+      setConfirmingCode(false);
+    }
+  };
+
+  const handleRemoveVoice = async () => {
+    setErrorMessage(null);
+    setConfirmingCode(true);
+    try {
+      await removeInviteVoice(apiUrl, token);
+      setVoiceCallPlaced(false);
+      onChanged();
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setConfirmingCode(false);
+    }
+  };
+
   const showChannels = () => {
     navigations.current += 1;
     setErrorMessage(null);
     setView('channels');
   };
 
-  const busy = connectingVia !== null || defaultingVia !== null || declining;
+  const busy = connectingVia !== null || defaultingVia !== null || declining || confirmingCode;
   const connectedChannels = status.channels.filter((channel) => channel.connected);
   const anyConnected = connectedChannels.length > 0;
   const telegramBot = telegramLink ? telegramBotUsername(telegramLink) : undefined;
@@ -300,9 +349,14 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
     busy,
     slackStarted,
     emailCooldownUntil,
+    voiceCooldownUntil,
     connectingVia,
+    voiceCallPlaced,
+    confirmingCode,
     error,
     onConnect: (via, address) => void handleConnect(via, address),
+    onConfirmVoice: handleConfirmVoice,
+    onRemoveVoice: () => void handleRemoveVoice(),
     onBack: showChannels,
   });
 
@@ -347,6 +401,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
                 }
               }}
               onMakeDefault={() => void handleMakeDefault(channel.via)}
+              onRemove={channel.via === 'voice' && channel.connected ? () => void handleRemoveVoice() : undefined}
             />
           ))}
         </ul>
@@ -395,9 +450,14 @@ function connectingStep({
   busy,
   slackStarted,
   emailCooldownUntil,
+  voiceCooldownUntil,
   connectingVia,
+  voiceCallPlaced,
+  confirmingCode,
   error,
   onConnect,
+  onConfirmVoice,
+  onRemoveVoice,
   onBack,
 }: {
   status: ActiveInviteStatus;
@@ -407,9 +467,14 @@ function connectingStep({
   busy: boolean;
   slackStarted: boolean;
   emailCooldownUntil: number | null;
+  voiceCooldownUntil: number | null;
   connectingVia: InviteChannelVia | null;
+  voiceCallPlaced: boolean;
+  confirmingCode: boolean;
   error: ReactNode;
   onConnect: (via: InviteChannelVia, address?: string) => void;
+  onConfirmVoice: (code: string) => Promise<boolean>;
+  onRemoveVoice: () => void;
   onBack: () => void;
 }): ReactNode {
   if (stepsFor === 'telegram' && telegramLink) {
@@ -507,6 +572,36 @@ function connectingStep({
     );
   }
 
+  const voiceChannel = status.channels.find((channel) => channel.via === 'voice');
+
+  if (stepsFor === 'voice' && voiceChannel) {
+    return (
+      <InviteCard step="voice">
+        <InviterLine name={status.inviterName} agentPictureUrl={status.agentPictureUrl} />
+        <AppIcon via="voice" size="large" />
+        <StepTitle>Confirm your phone number</StepTitle>
+        <CardText>
+          {status.agentName} calls you and reads a code. It can call that number only after you type the code.
+        </CardText>
+        <VoicePhoneForm
+          channel={voiceChannel}
+          callPlaced={voiceCallPlaced}
+          connecting={connectingVia === 'voice'}
+          confirming={confirmingCode}
+          disabled={busy}
+          cooldownUntil={voiceCooldownUntil}
+          onSend={(address) => onConnect('voice', address)}
+          onConfirm={onConfirmVoice}
+          onRemove={onRemoveVoice}
+        />
+        {error}
+        <Button variant="secondary" className={cn(SMALL_BUTTON, 'self-start')} onClick={onBack}>
+          Choose another way
+        </Button>
+      </InviteCard>
+    );
+  }
+
   return null;
 }
 
@@ -518,6 +613,7 @@ type ChannelRowProps = {
   disabled: boolean;
   onConnect: () => void;
   onMakeDefault: () => void;
+  onRemove?: () => void;
 };
 
 function ChannelRow({
@@ -528,6 +624,7 @@ function ChannelRow({
   disabled,
   onConnect,
   onMakeDefault,
+  onRemove,
 }: ChannelRowProps) {
   const label = APP_LABELS[channel.via];
 
@@ -555,6 +652,18 @@ function ChannelRow({
             aria-label={`Make ${label} your default`}
           >
             Make default
+          </Button>
+        )}
+
+        {channel.connected && onRemove && (
+          <Button
+            variant="quiet"
+            className={SMALL_BUTTON}
+            disabled={disabled}
+            onClick={onRemove}
+            aria-label={`Remove ${label}`}
+          >
+            Remove
           </Button>
         )}
 
@@ -831,6 +940,122 @@ function EmailAddressForm({
       </Button>
     </form>
   );
+}
+
+function VoicePhoneForm({
+  channel,
+  callPlaced,
+  connecting,
+  confirming,
+  disabled,
+  cooldownUntil,
+  onSend,
+  onConfirm,
+  onRemove,
+}: {
+  channel: InviteChannel;
+  callPlaced: boolean;
+  connecting: boolean;
+  confirming: boolean;
+  disabled: boolean;
+  cooldownUntil: number | null;
+  onSend: (address: string) => void;
+  onConfirm: (code: string) => Promise<boolean>;
+  onRemove: () => void;
+}) {
+  const [address, setAddress] = useState('');
+  const [code, setCode] = useState('');
+  const cooldownSeconds = useCooldownSeconds(cooldownUntil);
+  const awaitingCode = callPlaced || channel.status === 'pending';
+  const value = address.trim();
+
+  return (
+    <div className="flex flex-col gap-4">
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!value || cooldownSeconds > 0) {
+            return;
+          }
+
+          setCode('');
+          onSend(value);
+        }}
+      >
+        <Field
+          label="Phone number"
+          hint={
+            awaitingCode
+              ? `Answer the call${channel.address ? ` to ${channel.address}` : ''}, then type the code it reads.`
+              : 'Include the country code, like +1 415 555 0123.'
+          }
+        >
+          {(props) => (
+            <Input
+              {...props}
+              type="tel"
+              name="tel"
+              autoComplete="tel"
+              inputMode="tel"
+              value={address}
+              disabled={disabled}
+              onChange={(event) => setAddress(event.target.value)}
+            />
+          )}
+        </Field>
+        <Button
+          type="submit"
+          className="self-start"
+          pending={connecting}
+          disabled={disabled || cooldownSeconds > 0 || !value}
+        >
+          {voiceButtonLabel(awaitingCode, cooldownSeconds)}
+        </Button>
+      </form>
+      {awaitingCode && (
+        <div className="flex flex-col gap-3">
+          <CodeInput
+            value={code}
+            onChange={setCode}
+            onComplete={(next) => {
+              void onConfirm(next).then((accepted) => {
+                if (!accepted) {
+                  setCode('');
+                }
+              });
+            }}
+            label="Code from the call"
+            disabled={disabled}
+            autoFocus
+            invalid={false}
+          />
+          <Button
+            type="button"
+            variant="quiet"
+            className={cn(SMALL_BUTTON, 'self-start')}
+            pending={confirming}
+            disabled={disabled}
+            onClick={onRemove}
+          >
+            Use a different number
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function voiceButtonLabel(awaitingCode: boolean, cooldownSeconds: number): string {
+  if (cooldownSeconds > 0) {
+    return `Call again in ${cooldownSeconds}s`;
+  }
+
+  if (awaitingCode) {
+    return 'Call again';
+  }
+
+  return 'Call me';
 }
 
 function verificationButtonLabel(pending: boolean, cooldownSeconds: number): string {

@@ -158,14 +158,15 @@ contact
   )
   .option(
     '--via <channel>',
-    'skip the invite page and link them on one channel (telegram, slack, email); it becomes their default'
+    'skip the invite page and link them on one channel (telegram, slack, email, voice); it becomes their default'
   )
   .option('--email <address>', 'their email address (required for --via email when not a TTY)')
+  .option('--phone <number>', 'their phone number, like +14155550123 (required for --via voice when not a TTY)')
   .option('--name <name>', 'their display name, e.g. "Alice Chen" (shown in `contact list`)')
   .option('--async', 'print the link and exit instead of waiting for them to connect')
   .option('--api-url <url>', 'API URL override')
   .description(
-    'Get a link to share with a new contact: they connect Telegram, Slack or email on a page and pick their default'
+    'Get a link to share with a new contact: they connect Telegram, Slack, email or a phone number on a page and pick their default'
   )
   .action(inviteCommand);
 
