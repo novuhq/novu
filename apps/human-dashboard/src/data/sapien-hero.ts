@@ -1,6 +1,5 @@
 import type { BrandChannel } from '@/components/sapien/brand-logo';
 import type { SectionAssets } from '@/data/sapien-assets';
-import type { HostId } from '@/lib/hosts';
 
 export const heroAssets = {
   light: {
@@ -69,21 +68,19 @@ export const heroAssets = {
 } satisfies SectionAssets;
 
 /**
- * One sentence on two lines: "Get your [agent] agent on [channel]" in the sans, each name in the original
+ * One sentence on two lines: "Get your AI agent on [channel]" in the sans, the channel in the original
  * title's pill with its logo, then `accent` in orange Redaction italic.
  */
 export const HERO_TITLE = {
-  lead: 'Get your',
-  middle: 'agent on',
+  lead: 'Get your AI agent on',
   accent: 'with everyone around you',
 } as const;
 
-export const HERO_AGENTS = ['chatgpt', 'grok', 'claude', 'openclaw'] as const satisfies readonly HostId[];
+/** Email first, then the same cycle the title used to run (Slack, Telegram, and back). */
+export const HERO_CHANNELS = ['email', 'slack', 'telegram'] as const satisfies readonly BrandChannel[];
 
-export const HERO_CHANNELS = ['slack', 'telegram', 'email'] as const satisfies readonly BrandChannel[];
-
-/** The agent and the channel move on together, each through its own list. */
-export const HERO_SWAP_INTERVAL = 3000;
+/** How long each channel stays before the next one replaces it. */
+export const HERO_SWAP_INTERVAL = 5000;
 
 // Draft copy — not in Figma. The CLI's own summary: people write in, the agent works it from one inbox.
 export const HERO_DESCRIPTION = [

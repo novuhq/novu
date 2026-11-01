@@ -1,59 +1,71 @@
 import { Test } from '@nestjs/testing';
-import { SubscriberRepository } from '@novu/dal';
-import { SubscribersService, UserSession } from '@novu/testing';
+import { DalService, IntegrationRepository, SubscriberRepository } from '@novu/dal';
 import {
+  AnalyticsService,
   CacheInMemoryProviderService,
   CacheService,
-  InMemoryProviderEnum,
+  FeatureFlagsService,
   InvalidateCacheService,
 } from '../../services';
+import { UpdateSubscriberChannel } from '../subscribers/update-subscriber-channel';
 import { UpdateSubscriberCommand } from './update-subscriber.command';
 import { UpdateSubscriber } from './update-subscriber.usecase';
 
-const cacheInMemoryProviderService = {
-  provide: CacheInMemoryProviderService,
-  useFactory: async (): Promise<CacheInMemoryProviderService> => {
-    const cacheInMemoryProvider = new CacheInMemoryProviderService();
-
-    return cacheInMemoryProvider;
-  },
-};
-
-const cacheService = {
-  provide: CacheService,
-  useFactory: async () => {
-    const factoryInMemoryProviderService = await cacheInMemoryProviderService.useFactory();
-
-    return new CacheService(factoryInMemoryProviderService);
-  },
-};
-
 describe('Update Subscriber', () => {
-  let updateUsecase: UpdateSubscriber;
-  let session: UserSession;
+  const dalService = new DalService();
+  const cacheInMemoryProviderService = new CacheInMemoryProviderService();
   const subscriberRepository = new SubscriberRepository();
-  beforeEach(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [SubscriberRepository, InvalidateCacheService],
-      providers: [UpdateSubscriber, cacheInMemoryProviderService, cacheService],
-    }).compile();
+  let updateUsecase: UpdateSubscriber;
 
-    session = new UserSession();
-    await session.initialize();
+  beforeAll(async () => {
+    await dalService.connect(process.env.MONGO_URL as string);
+  });
+
+  afterAll(async () => {
+    await cacheInMemoryProviderService.shutdown();
+    await dalService.disconnect();
+  });
+
+  beforeEach(async () => {
+    const cacheService = new CacheService(cacheInMemoryProviderService);
+    await cacheService.initialize();
+
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        UpdateSubscriber,
+        UpdateSubscriberChannel,
+        SubscriberRepository,
+        IntegrationRepository,
+        InvalidateCacheService,
+        { provide: CacheService, useValue: cacheService },
+        { provide: AnalyticsService, useValue: new AnalyticsService() },
+        {
+          provide: FeatureFlagsService,
+          useValue: { getFlag: vi.fn(async ({ defaultValue }) => defaultValue) },
+        },
+      ],
+    }).compile();
 
     updateUsecase = moduleRef.get<UpdateSubscriber>(UpdateSubscriber);
   });
 
   it('should update subscribers name', async () => {
-    const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
-    const subscriber = await subscriberService.createSubscriber();
+    const subscriber = await subscriberRepository.create({
+      _organizationId: SubscriberRepository.createObjectId(),
+      _environmentId: SubscriberRepository.createObjectId(),
+      subscriberId: SubscriberRepository.createObjectId(),
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+    });
+
     await updateUsecase.execute(
       UpdateSubscriberCommand.create({
         organizationId: subscriber._organizationId,
+        environmentId: subscriber._environmentId,
         subscriberId: subscriber.subscriberId,
         lastName: 'Test Last Name',
         locale: 'sv',
-        environmentId: session.environment._id,
       })
     );
 
@@ -61,9 +73,9 @@ describe('Update Subscriber', () => {
       _id: subscriber._id,
       _environmentId: subscriber._environmentId,
     });
-    expect(updatedSubscriber.lastName).toEqual('Test Last Name');
-    expect(updatedSubscriber.firstName).toEqual(subscriber.firstName);
-    expect(updatedSubscriber.email).toEqual(subscriber.email);
-    expect(updatedSubscriber.locale).toEqual('sv');
+    expect(updatedSubscriber?.lastName).toEqual('Test Last Name');
+    expect(updatedSubscriber?.firstName).toEqual(subscriber.firstName);
+    expect(updatedSubscriber?.email).toEqual(subscriber.email);
+    expect(updatedSubscriber?.locale).toEqual('sv');
   });
 });
