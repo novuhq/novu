@@ -33,6 +33,7 @@ function createMailyLinkMarkSchema() {
 				.describe(
 					"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
 				),
+			class: z.string().nullable().optional(),
 			href: z
 				.string()
 				.describe(
@@ -147,6 +148,7 @@ function createMailyInlineContentSchema() {
 		createMailyVariableNodeSchema(),
 		createMailyHardBreakSchema(),
 		createMailyButtonSchema(),
+		createMailyInlineImageSchema(),
 	]);
 }
 
@@ -158,7 +160,7 @@ function createMailyParagraphSchema() {
 				textAlign: z.enum(["left", "center", "right"]).nullable(),
 			})
 			.nullable(),
-		content: z.array(createMailyInlineContentSchema()).nullable(),
+		content: z.array(createMailyInlineContentSchema()).nullable().optional(),
 		type: z.enum(["paragraph"]),
 	});
 }
@@ -172,7 +174,7 @@ function createMailyHeadingSchema() {
 			showIfKey: z.string().nullable(),
 			textAlign: z.enum(["left", "center", "right"]).nullable(),
 		}),
-		content: z.array(createMailyInlineContentSchema()).nullable(),
+		content: z.array(createMailyInlineContentSchema()).nullable().optional(),
 		type: z.enum(["heading"]),
 	});
 }
@@ -193,7 +195,7 @@ function createMailyDividerSchema() {
 			.object({
 				marginBottom: z.number().nullable(),
 				marginTop: z.number().nullable(),
-				showIfKey: z.string().nullable(),
+				showIfKey: z.string().nullable().optional(),
 			})
 			.nullable(),
 		type: z.enum(["horizontalRule"]),
@@ -211,6 +213,7 @@ function createMailyImageSchema() {
 				),
 			alignment: z.enum(["left", "center", "right"]).nullable(),
 			alt: z.string().nullable().describe("Alt text for accessibility"),
+			aspectRatio: z.union([z.number(), z.string()]).nullable().optional(),
 			borderRadius: z.number().nullable(),
 			externalLink: z
 				.string()
@@ -218,7 +221,10 @@ function createMailyImageSchema() {
 				.describe(
 					"Optional link when image is clicked. When isExternalLinkVariable is true, must be a bare variable name without curly braces",
 				),
-			height: z.union([z.number(), z.enum(["auto"])]).nullable(),
+			height: z
+				.union([z.number(), z.string()])
+				.nullable()
+				.describe('Height in pixels, or "auto"'),
 			isExternalLinkVariable: z
 				.boolean()
 				.nullable()
@@ -231,6 +237,7 @@ function createMailyImageSchema() {
 				.describe(
 					'Set true when "src" is a variable reference. The "src" value must then be a bare variable name without {{ }}',
 				),
+			lockAspectRatio: z.boolean().nullable().optional(),
 			showIfKey: z.string().nullable(),
 			src: z
 				.string()
@@ -238,7 +245,10 @@ function createMailyImageSchema() {
 					'Image source URL. When isSrcVariable is true, must be a bare variable name without curly braces, e.g. "payload.imageUrl"',
 				),
 			title: z.string().nullable(),
-			width: z.union([z.number(), z.enum(["auto"])]).nullable(),
+			width: z
+				.union([z.number(), z.string()])
+				.nullable()
+				.describe('Width in pixels, or "auto"'),
 		}),
 		type: z.enum(["image"]),
 	});
@@ -273,7 +283,7 @@ function createMailyInlineImageSchema() {
 				.describe(
 					'Set true when "src" is a variable reference. The "src" value must then be a bare variable name without {{ }}',
 				),
-			showIfKey: z.string().nullable(),
+			showIfKey: z.string().nullable().optional(),
 			src: z
 				.string()
 				.describe(
@@ -314,11 +324,12 @@ function createMailyFooterSchema() {
 	return z.object({
 		attrs: z
 			.object({
-				showIfKey: z.string().nullable(),
+				"maily-component": z.string().nullable().optional(),
+				showIfKey: z.string().nullable().optional(),
 				textAlign: z.enum(["left", "center", "right"]).nullable(),
 			})
 			.nullable(),
-		content: z.array(createMailyInlineContentSchema()).nullable(),
+		content: z.array(createMailyInlineContentSchema()).nullable().optional(),
 		type: z.enum(["footer"]),
 	});
 }
@@ -384,11 +395,11 @@ function createMailySectionAttrsSchema() {
 	return z
 		.object({
 			align: z.enum(["left", "center", "right"]).nullable(),
-			background: z.string().nullable(),
+			background: z.string().nullable().optional(),
 			backgroundColor: z.string().nullable(),
 			borderColor: z.string().nullable(),
 			borderRadius: z.number().nullable(),
-			borderStyle: z.enum(["solid", "dashed", "dotted"]).nullable(),
+			borderStyle: z.enum(["solid", "dashed", "dotted"]).nullable().optional(),
 			borderWidth: z.number().nullable(),
 			marginBottom: z.number().nullable(),
 			marginLeft: z.number().nullable(),
@@ -399,7 +410,7 @@ function createMailySectionAttrsSchema() {
 			paddingRight: z.number().nullable(),
 			paddingTop: z.number().nullable(),
 			showIfKey: z.string().nullable(),
-			textAlign: z.enum(["left", "center", "right"]).nullable(),
+			textAlign: z.enum(["left", "center", "right"]).nullable().optional(),
 		})
 		.nullable();
 }
@@ -423,6 +434,47 @@ function createMailyRepeatSchema() {
 	});
 }
 
+function createMailyColumnSchema() {
+	return z.object({
+		attrs: z
+			.object({
+				columnId: z.string().nullable(),
+				verticalAlign: z.enum(["top", "middle", "bottom"]).nullable(),
+				width: z
+					.union([z.number(), z.string()])
+					.nullable()
+					.describe('Width in percent of the row, or "auto" to share the row equally'),
+			})
+			.nullable(),
+		content: z.array(createMailyLeafNodeSchema()).nullable(),
+		type: z.enum(["column"]),
+	});
+}
+
+/** A row of columns side by side; each column holds the blocks a repeat holds. */
+function createMailyColumnsSchema() {
+	return z.object({
+		attrs: z
+			.object({
+				gap: z.number().nullable().describe("Space between the columns in pixels"),
+				marginBottom: z.number().nullable(),
+				showIfKey: z.string().nullable(),
+			})
+			.nullable(),
+		content: z.array(createMailyColumnSchema()).describe("The columns, left to right"),
+		type: z.enum(["columns"]),
+	});
+}
+
+/** A section inside a section, as the dashboard's card blocks nest them. */
+function createMailyInnerSectionSchema() {
+	return z.object({
+		attrs: createMailySectionAttrsSchema(),
+		content: z.array(createMailyLeafNodeSchema()).nullable(),
+		type: z.enum(["section"]),
+	});
+}
+
 function createMailySectionContentSchema() {
 	return z.discriminatedUnion("type", [
 		createMailyParagraphSchema(),
@@ -434,7 +486,10 @@ function createMailySectionContentSchema() {
 		createMailyInlineImageSchema(),
 		createMailyLogoSchema(),
 		createMailyLinkCardSchema(),
+		createMailyFooterSchema(),
 		createMailyRepeatSchema(),
+		createMailyColumnsSchema(),
+		createMailyInnerSectionSchema(),
 	]);
 }
 
@@ -469,6 +524,7 @@ function createMailyNodeSchema() {
 		createMailyOrderedListSchema(),
 		createMailyBulletListSchema(),
 		createMailySectionSchema(),
+		createMailyColumnsSchema(),
 		createMailyRepeatSchema(),
 	]);
 }

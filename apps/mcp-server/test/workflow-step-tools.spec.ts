@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fakeWorkflowsApi } from "./fake-api";
+import { dashboardEmailBodies } from "./fixtures/dashboard-email-bodies";
 import { workflowResponseFixture } from "./fixtures/workflow-response";
 import { callTool, connectAllTools, tokenAccessors } from "./support";
 
@@ -166,6 +167,25 @@ describe("workflow step tools", () => {
 			expect(api.puts[0].body!.steps[1].controlValues).toMatchObject(sender);
 			expect(api.puts[1].body!.steps[0].controlValues.data).toEqual(data);
 		});
+
+		it.each(Object.entries(dashboardEmailBodies))(
+			"keeps a %s exactly as the dashboard's editor saved it",
+			async (_name, body) => {
+				const api = fakeWorkflowsApi();
+
+				const result = await callTool(await client(), "update_workflow_step_content", {
+					content: {
+						controlValues: { body, editorType: "block", subject: "Hello" },
+						type: "email",
+					},
+					stepId: "email-step",
+					workflowId: "welcome",
+				});
+
+				expect(result.isError).toBeFalsy();
+				expect(JSON.parse(api.puts[0].body!.steps[1].controlValues.body)).toEqual(body);
+			},
+		);
 
 		it("refuses to edit a step managed by a step resolver, even under a slugified id", async () => {
 			const workflow = workflowResponseFixture();
