@@ -991,11 +991,9 @@ function VoicePhoneForm({
               : 'Include the country code, like +1 415 555 0123.'
           }
         >
-          {({ className, id, invalid }) => (
+          {(props) => (
             <Input
-              id={id}
-              className={className}
-              aria-invalid={invalid || undefined}
+              {...props}
               type="tel"
               name="tel"
               autoComplete="tel"
