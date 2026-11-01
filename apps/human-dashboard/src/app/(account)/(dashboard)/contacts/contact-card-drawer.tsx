@@ -200,6 +200,7 @@ function ContactCardBody({ contact, agentHandle, signInEmail, start, open, onAdd
   const email = contact.emailVerification;
   const connected = CHANNEL_ORDER.filter((via) => contact.channels.some((channel) => channel.via === via));
   const missing = CHANNEL_ORDER.filter((via) => (via === 'email' ? !email : !connected.includes(via)));
+  const addable = missing.filter((via) => via !== 'voice');
   // The pick being saved shows at once; the page brings the saved one when the server is done.
   const defaultVia = savingDefault ?? contact.defaultVia;
 
@@ -299,20 +300,18 @@ function ContactCardBody({ contact, agentHandle, signInEmail, start, open, onAdd
             Change email
           </Button>
           <DropdownMenu defaultOpen={start?.menu === 'add'}>
-            <DropdownMenuTrigger asChild disabled={missing.length === 0}>
+            <DropdownMenuTrigger asChild disabled={addable.length === 0}>
               <Button variant="quiet" className={SMALL_BUTTON}>
                 <Plus aria-hidden="true" className="size-3.5 text-foreground" />
                 Add a channel
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              {missing
-                .filter((via) => via !== 'voice')
-                .map((via) => (
-                  <DropdownMenuItem key={via} onSelect={() => addChannel(via)}>
-                    {CHANNEL_NAMES[via]}
-                  </DropdownMenuItem>
-                ))}
+              {addable.map((via) => (
+                <DropdownMenuItem key={via} onSelect={() => addChannel(via)}>
+                  {CHANNEL_NAMES[via]}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -479,7 +478,7 @@ function copyLabelFor(via: ContactChannelVia, contact: Contact): string | undefi
     return `Copy ${contact.name}'s email`;
   }
 
-  if (via === 'voice' && contact.phone) {
+  if (via === 'voice' && contact.channels.some((channel) => channel.via === 'voice' && channel.address)) {
     return `Copy ${contact.name}'s phone number`;
   }
 
@@ -494,7 +493,7 @@ function channelLineValue(via: ContactChannelVia, contact: Contact, emailAddress
   if (via === 'voice') {
     const channel = contact.channels.find((candidate) => candidate.via === 'voice');
 
-    return channel?.handle ?? contact.phone ?? CHANNEL_NAMES.voice;
+    return channel?.address ?? CHANNEL_NAMES.voice;
   }
 
   return chatValue(via, contact.channels);

@@ -439,6 +439,11 @@ describe('runInvite with --via', () => {
       agentIdentifier: 'human-relay',
       code: '421903',
     });
+    expect(setupRelay).toHaveBeenCalledWith(expect.anything(), {
+      subscriberId: 'alice',
+      agentIdentifier: 'human-relay',
+      defaultVia: 'voice',
+    });
   });
 
   it('does not wait for the code when --via voice is --async', async () => {
@@ -452,11 +457,23 @@ describe('runInvite with --via', () => {
       retryAfterSeconds: 60,
       replacesVerifiedAddress: false,
     });
+    createInvite.mockResolvedValue({
+      url: 'https://inbox.human.test/invite/voice',
+      expiresAt: '2026-10-02T12:00:00.000Z',
+      channels: [],
+    });
 
     const result = await runInvite('alice', { via: 'voice', phone: '+14155550123', async: true });
 
-    expect(result).toEqual({ contactId: 'alice', linkedOn: [], alreadyLinked: false });
+    expect(result).toEqual({
+      contactId: 'alice',
+      linkedOn: [],
+      alreadyLinked: false,
+      url: 'https://inbox.human.test/invite/voice',
+      expiresAt: '2026-10-02T12:00:00.000Z',
+    });
     expect(confirmVoiceVerification).not.toHaveBeenCalled();
+    expect(stdoutText()).toContain('https://inbox.human.test/invite/voice');
   });
 });
 

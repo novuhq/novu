@@ -62,7 +62,7 @@ export class ConfirmVoiceVerification {
       );
       const already = verified?.address === checked.address && verified.requestedAt === checked.requestedAt;
       if (!already) {
-        await this.codes.clear(key).catch(() => undefined);
+        await this.codes.clearIfCurrent(key, checked.requestedAt).catch(() => undefined);
 
         throw new ConflictException({
           code: 'verification_superseded',
@@ -71,7 +71,7 @@ export class ConfirmVoiceVerification {
       }
     }
 
-    await this.codes.clear(key);
+    await this.codes.clearIfCurrent(key, checked.requestedAt);
 
     return {
       verified: true,

@@ -284,9 +284,10 @@ export enum HumanChannelViaEnum {
 export const VOICE_CALL_MAX_MINUTES = 5;
 
 /**
- * Minutes reserved for one phone-verification call. The verification shell's
- * ceiling is 30 seconds, so one minute covers the dial without spending a
- * full conversation on a code.
+ * Minutes held while a phone-verification dial is in flight. The verification
+ * shell's ceiling is 60 seconds. The hold is returned when the dial request
+ * finishes: a verification call has no interaction to settle, and keeping the
+ * minute would block the one conversation the daily cap allows.
  */
 export const VOICE_VERIFICATION_CALL_MINUTES = 1;
 

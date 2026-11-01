@@ -95,7 +95,7 @@ describe('Voice phone verification #novu-v2', () => {
       .filter((call) => String(call.args[0]).includes('elevenlabs.io'));
   }
 
-  it('places a call, rejects a wrong code, and never dials an unverified or removed number', async () => {
+  it('places a call, confirms the spoken code, and never dials an unverified or removed number', async () => {
     const requested = await session.testAgent.post('/v1/human/verifications/voice').send({
       subscriberId,
       address: '+1 (415) 555-0123',
@@ -108,6 +108,9 @@ describe('Voice phone verification #novu-v2', () => {
     const dial = JSON.parse(String(dials()[0].args[1].body));
     expect(dial.agent_id).to.equal('agent_verify');
     expect(dial.conversation_initiation_client_data.custom_llm_extra_body).to.equal(undefined);
+    const spoken = String(dial.conversation_initiation_client_data.dynamic_variables.verification_line);
+    const spokenCode = spoken.match(/(\d(?:, \d){5})/)?.[1].replace(/, /g, '');
+    expect(spokenCode).to.match(/^\d{6}$/);
 
     const pending = await humanContactRepository.findPendingAddress(
       session.environment._id,
@@ -125,22 +128,13 @@ describe('Voice phone verification #novu-v2', () => {
       )
     ).to.equal(null);
 
+    const wrongCode = spokenCode === '000000' ? '000001' : '000000';
     const wrong = await session.testAgent.post('/v1/human/verifications/voice/confirm').send({
       subscriberId,
-      code: '000000',
+      code: wrongCode,
     });
     expect(wrong.status).to.equal(400, JSON.stringify(wrong.body));
     expect(wrong.body.code).to.equal('verification_code_invalid');
-
-    let locked = wrong;
-    for (let attempt = 0; attempt < 4; attempt += 1) {
-      locked = await session.testAgent.post('/v1/human/verifications/voice/confirm').send({
-        subscriberId,
-        code: '000000',
-      });
-    }
-    expect(locked.status).to.equal(400, JSON.stringify(locked.body));
-    expect(locked.body.code).to.equal('verification_code_locked');
 
     const again = await session.testAgent.post('/v1/human/verifications/voice').send({
       subscriberId,
@@ -158,6 +152,20 @@ describe('Voice phone verification #novu-v2', () => {
     expect(unverified.status).to.equal(404, JSON.stringify(unverified.body));
     expect(String(unverified.body.message)).to.match(/awaiting verification|no verified phone number/i);
     expect(dials()).to.have.length(1);
+
+    const confirmed = await session.testAgent.post('/v1/human/verifications/voice/confirm').send({
+      subscriberId,
+      code: spokenCode,
+    });
+    expect(confirmed.status).to.equal(200, JSON.stringify(confirmed.body));
+    expect(
+      await humanContactRepository.findVerifiedAddress(
+        session.environment._id,
+        relayAgentId,
+        subscriberId,
+        HumanChannelViaEnum.VOICE
+      )
+    ).to.include({ address: '+14155550123' });
 
     const removed = await session.testAgent.delete(`/v1/human/contacts/${subscriberId}/voice`);
     expect(removed.status).to.equal(200, JSON.stringify(removed.body));

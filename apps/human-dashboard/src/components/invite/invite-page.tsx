@@ -157,6 +157,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
   // Whether they pressed "Continue with Slack": before that there is nothing to wait for.
   const [slackStarted, setSlackStarted] = useState(false);
   const [emailCooldownUntil, setEmailCooldownUntil] = useState<number | null>(null);
+  const [voiceCooldownUntil, setVoiceCooldownUntil] = useState<number | null>(null);
   const [voiceCallPlaced, setVoiceCallPlaced] = useState(false);
   const [confirmingCode, setConfirmingCode] = useState(false);
   // Counts the times they chose to go back, so a request from before that can tell it's stale.
@@ -234,7 +235,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
         },
         onVoiceCalled: (retryAfterSeconds) => {
           setVoiceCallPlaced(true);
-          setEmailCooldownUntil(Date.now() + retryAfterSeconds * 1000);
+          setVoiceCooldownUntil(Date.now() + retryAfterSeconds * 1000);
           onChanged();
         },
         onTelegram: (url) => {
@@ -276,14 +277,18 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
     }
   };
 
-  const handleConfirmVoice = async (code: string) => {
+  const handleConfirmVoice = async (code: string): Promise<boolean> => {
     setErrorMessage(null);
     setConfirmingCode(true);
     try {
       await confirmInviteVoiceCode(apiUrl, token, code);
       onChanged();
+
+      return true;
     } catch (error) {
       handleError(error);
+
+      return false;
     } finally {
       setConfirmingCode(false);
     }
@@ -344,12 +349,13 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
     busy,
     slackStarted,
     emailCooldownUntil,
+    voiceCooldownUntil,
     connectingVia,
     voiceCallPlaced,
     confirmingCode,
     error,
     onConnect: (via, address) => void handleConnect(via, address),
-    onConfirmVoice: (code) => void handleConfirmVoice(code),
+    onConfirmVoice: handleConfirmVoice,
     onRemoveVoice: () => void handleRemoveVoice(),
     onBack: showChannels,
   });
@@ -395,6 +401,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
                 }
               }}
               onMakeDefault={() => void handleMakeDefault(channel.via)}
+              onRemove={channel.via === 'voice' && channel.connected ? () => void handleRemoveVoice() : undefined}
             />
           ))}
         </ul>
@@ -443,6 +450,7 @@ function connectingStep({
   busy,
   slackStarted,
   emailCooldownUntil,
+  voiceCooldownUntil,
   connectingVia,
   voiceCallPlaced,
   confirmingCode,
@@ -459,12 +467,13 @@ function connectingStep({
   busy: boolean;
   slackStarted: boolean;
   emailCooldownUntil: number | null;
+  voiceCooldownUntil: number | null;
   connectingVia: InviteChannelVia | null;
   voiceCallPlaced: boolean;
   confirmingCode: boolean;
   error: ReactNode;
   onConnect: (via: InviteChannelVia, address?: string) => void;
-  onConfirmVoice: (code: string) => void;
+  onConfirmVoice: (code: string) => Promise<boolean>;
   onRemoveVoice: () => void;
   onBack: () => void;
 }): ReactNode {
@@ -580,7 +589,7 @@ function connectingStep({
           connecting={connectingVia === 'voice'}
           confirming={confirmingCode}
           disabled={busy}
-          cooldownUntil={emailCooldownUntil}
+          cooldownUntil={voiceCooldownUntil}
           onSend={(address) => onConnect('voice', address)}
           onConfirm={onConfirmVoice}
           onRemove={onRemoveVoice}
@@ -604,6 +613,7 @@ type ChannelRowProps = {
   disabled: boolean;
   onConnect: () => void;
   onMakeDefault: () => void;
+  onRemove?: () => void;
 };
 
 function ChannelRow({
@@ -614,6 +624,7 @@ function ChannelRow({
   disabled,
   onConnect,
   onMakeDefault,
+  onRemove,
 }: ChannelRowProps) {
   const label = APP_LABELS[channel.via];
 
@@ -641,6 +652,18 @@ function ChannelRow({
             aria-label={`Make ${label} your default`}
           >
             Make default
+          </Button>
+        )}
+
+        {channel.connected && onRemove && (
+          <Button
+            variant="quiet"
+            className={SMALL_BUTTON}
+            disabled={disabled}
+            onClick={onRemove}
+            aria-label={`Remove ${label}`}
+          >
+            Remove
           </Button>
         )}
 
@@ -937,7 +960,7 @@ function VoicePhoneForm({
   disabled: boolean;
   cooldownUntil: number | null;
   onSend: (address: string) => void;
-  onConfirm: (code: string) => void;
+  onConfirm: (code: string) => Promise<boolean>;
   onRemove: () => void;
 }) {
   const [address, setAddress] = useState('');
@@ -997,7 +1020,13 @@ function VoicePhoneForm({
           <CodeInput
             value={code}
             onChange={setCode}
-            onComplete={onConfirm}
+            onComplete={(next) => {
+              void onConfirm(next).then((accepted) => {
+                if (!accepted) {
+                  setCode('');
+                }
+              });
+            }}
             label="Code from the call"
             disabled={disabled}
             autoFocus

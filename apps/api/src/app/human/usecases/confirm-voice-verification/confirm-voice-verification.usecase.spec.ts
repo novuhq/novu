@@ -9,7 +9,7 @@ describe('ConfirmVoiceVerification', () => {
   function setup(check: unknown) {
     const codes = {
       check: sinon.stub().resolves(check),
-      clear: sinon.stub().resolves(),
+      clearIfCurrent: sinon.stub().resolves(),
     };
     const humanContactRepository = {
       promotePendingAddress: sinon.stub().resolves({
@@ -57,7 +57,7 @@ describe('ConfirmVoiceVerification', () => {
       address: '+14155550123',
       requestedAt: 't1',
     });
-    expect(codes.clear.calledOnce).to.equal(true);
+    expect(codes.clearIfCurrent.calledOnceWith(sinon.match({ subscriberId: 'alice' }), 't1')).to.equal(true);
   });
 
   it('rejects a wrong code and keeps it for another try', async () => {
@@ -74,7 +74,7 @@ describe('ConfirmVoiceVerification', () => {
       });
     }
 
-    expect(codes.clear.called).to.equal(false);
+    expect(codes.clearIfCurrent.called).to.equal(false);
   });
 
   it('reports a burned code', async () => {
@@ -105,6 +105,6 @@ describe('ConfirmVoiceVerification', () => {
       expect((err as ConflictException).getResponse()).to.include({ code: 'verification_superseded' });
     }
 
-    expect(codes.clear.calledOnce).to.equal(true);
+    expect(codes.clearIfCurrent.calledOnceWith(sinon.match({ subscriberId: 'alice' }), 't1')).to.equal(true);
   });
 });

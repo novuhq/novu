@@ -469,8 +469,22 @@ async function inviteVoice(
     info(`A different number is already verified for ${contactId}; it stays reachable until ${phone} is verified.`);
   }
 
+  await setupRelay(client, {
+    subscriberId: contactId,
+    agentIdentifier,
+    ...name,
+    defaultVia: 'voice',
+  });
+
   if (options.async) {
-    return { contactId, linkedOn: [], alreadyLinked: false };
+    const invite = await createInvite(client, {
+      subscriberId: contactId,
+      agentIdentifier,
+      ...name,
+    });
+    printInviteUrl(contactId, 'voice', invite.url, 'they type the code from the call on this page');
+
+    return { contactId, linkedOn: [], alreadyLinked: false, url: invite.url, expiresAt: invite.expiresAt };
   }
 
   const code = await promptInviteCode();

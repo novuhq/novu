@@ -3,12 +3,16 @@ import { FeatureFlagsService, InstrumentUsecase } from '@novu/application-generi
 import { type HumanContactPendingAddress, HumanContactRepository } from '@novu/dal';
 import { HumanChannelViaEnum, VOICE_VERIFICATION_CALL_MINUTES } from '@novu/shared';
 import { PlaceVerificationCall, verificationLineFor } from '../../../agents/channels/voice/place-verification-call';
+import { isUnconfirmedVoiceDial } from '../../../agents/channels/voice/voice-call-failure';
 import { readVoiceVerificationConfig } from '../../../agents/channels/voice/voice-config';
 import { assertVoiceEnabledForConnect } from '../../../agents/shared/assert-voice-enabled';
 import { KeylessVoiceGateService } from '../../../keyless/keyless-voice-gate.service';
 import { HumanVerificationRateLimitService } from '../../services/human-verification-rate-limit.service';
 import { HumanVoiceMinuteQuotaService } from '../../services/human-voice-minute-quota.service';
-import { HumanVoiceVerificationCodeService } from '../../services/human-voice-verification-code.service';
+import {
+  HumanVoiceVerificationCodeService,
+  type StoredVoiceCode,
+} from '../../services/human-voice-verification-code.service';
 import { maskPhone, normalizeE164 } from '../../services/normalize-phone';
 import { SetupHumanRelayCommand } from '../setup-human-relay/setup-human-relay.command';
 import { SetupHumanRelay } from '../setup-human-relay/setup-human-relay.usecase';
@@ -121,60 +125,68 @@ export class RequestVoiceVerification {
 
     let written: HumanContactPendingAddress | undefined;
     let issued = false;
+    let previousCode: StoredVoiceCode | null = null;
     const codeKey = {
       environmentId: params.environmentId,
       agentId: params.agentId,
       subscriberId: params.subscriberId,
     };
+    const credits = await this.voiceMinuteQuota.reserveMinutes(params.organizationId, VOICE_VERIFICATION_CALL_MINUTES);
 
     try {
-      const credits = await this.voiceMinuteQuota.reserveMinutes(
-        params.organizationId,
-        VOICE_VERIFICATION_CALL_MINUTES
-      );
+      written = await this.humanContactRepository.upsertPendingAddress({
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        agentId: params.agentId,
+        subscriberId: params.subscriberId,
+        via: HumanChannelViaEnum.VOICE,
+        address: params.address,
+      });
 
-      try {
-        written = await this.humanContactRepository.upsertPendingAddress({
-          environmentId: params.environmentId,
-          organizationId: params.organizationId,
-          agentId: params.agentId,
-          subscriberId: params.subscriberId,
-          via: HumanChannelViaEnum.VOICE,
-          address: params.address,
-        });
+      const code = await this.codes.issue(codeKey, {
+        address: params.address,
+        requestedAt: written.requestedAt,
+      });
+      issued = true;
+      previousCode = code.previous;
 
-        const code = await this.codes.issue(codeKey, {
-          address: params.address,
-          requestedAt: written.requestedAt,
-        });
-        issued = true;
+      await this.placeVerificationCall.execute({
+        toNumber: params.address,
+        verificationLine: verificationLineFor(code.code),
+      });
 
-        await this.placeVerificationCall.execute({
-          toNumber: params.address,
-          verificationLine: verificationLineFor(code.code),
-        });
-        credits.accept();
-
-        return {
-          address: maskPhone(params.address),
-          requestedAt: written.requestedAt,
-          expiresAt: code.expiresAt,
-          retryAfterSeconds,
-          replacesVerifiedAddress: Boolean(verified && verified.address !== params.address),
-        };
-      } catch (err) {
-        await credits.release();
-
-        throw err;
-      }
+      return {
+        address: maskPhone(params.address),
+        requestedAt: written.requestedAt,
+        expiresAt: code.expiresAt,
+        retryAfterSeconds,
+        replacesVerifiedAddress: Boolean(verified && verified.address !== params.address),
+      };
     } catch (err) {
-      if (issued) {
-        await this.codes.clear(codeKey).catch(() => undefined);
+      if (!isUnconfirmedVoiceDial(err)) {
+        if (issued) {
+          await this.restoreOrClearCode(codeKey, previousCode);
+        }
+        await this.compensateFailedSend({ ...params, reservation }, written, previousPending);
       }
-      await this.compensateFailedSend({ ...params, reservation }, written, previousPending);
 
       throw err;
+    } finally {
+      await credits.release();
     }
+  }
+
+  private async restoreOrClearCode(
+    key: { environmentId: string; agentId: string; subscriberId: string },
+    previousCode: StoredVoiceCode | null
+  ): Promise<void> {
+    if (previousCode) {
+      await this.codes.restore(key, previousCode).catch(() => undefined);
+
+      return;
+    }
+
+    await this.codes.clear(key).catch(() => undefined);
   }
 
   /**

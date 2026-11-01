@@ -91,8 +91,11 @@ export function pickDefaultTarget<T extends ReachableHumanTarget>(
   defaultVia?: HumanChannelViaEnum
 ): T | undefined {
   const preferred = defaultVia ? targets.find((target) => target.via === defaultVia) : undefined;
+  if (preferred) {
+    return preferred;
+  }
 
-  return preferred ?? [...targets].sort(byConnectedAt)[0];
+  return [...targets].filter((target) => target.via !== HumanChannelViaEnum.VOICE).sort(byConnectedAt)[0];
 }
 
 function byConnectedAt(a: ReachableHumanTarget, b: ReachableHumanTarget): number {
@@ -482,13 +485,7 @@ export class HumanDeliveryService {
       params.subscriberId
     );
     const voiceOn = await isVoiceFeatureEnabled(this.featureFlagsService, params.organizationId, params.environmentId);
-    const eligible = targets.filter((target) => {
-      if (target.via !== HumanChannelViaEnum.VOICE) {
-        return true;
-      }
-
-      return voiceOn && contact?.defaultVia === HumanChannelViaEnum.VOICE;
-    });
+    const eligible = targets.filter((target) => target.via !== HumanChannelViaEnum.VOICE || voiceOn);
 
     return { targets: eligible, defaultVia: pickDefaultTarget(eligible, contact?.defaultVia)?.via };
   }
@@ -567,14 +564,12 @@ export class HumanDeliveryService {
     );
 
     for (const subscriber of params.subscribers) {
-      const defaultVia = savedDefaults.get(subscriber.subscriberId);
-      const voiceEligible = voiceEnabled && defaultVia === HumanChannelViaEnum.VOICE;
       const targets = this.reachableTargetsOf(
         subscriber.subscriberId,
         integrations,
         endpoints,
         verifiedEmails.get(subscriber.subscriberId),
-        voiceEligible ? verifiedVoices.get(subscriber.subscriberId) : undefined
+        voiceEnabled ? verifiedVoices.get(subscriber.subscriberId) : undefined
       );
 
       result.set(subscriber.subscriberId, {
