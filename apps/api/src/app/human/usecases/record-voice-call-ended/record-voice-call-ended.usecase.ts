@@ -1,6 +1,11 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { CacheService, PinoLogger } from '@novu/application-generic';
-import { HumanInteractionEntity, HumanInteractionRepository, type VoiceCallEnded } from '@novu/dal';
+import { AnalyticsService, CacheService, PinoLogger } from '@novu/application-generic';
+import {
+  EnvironmentRepository,
+  HumanInteractionEntity,
+  HumanInteractionRepository,
+  type VoiceCallEnded,
+} from '@novu/dal';
 import { HumanChannelViaEnum, HumanInteractionStatusEnum, VoiceCallEndReasonEnum } from '@novu/shared';
 import { endReasonFromTermination } from '../../../agents/channels/voice/voice-call-end-reason';
 import { endVoiceCallHandoff, readVoiceCallHandoff } from '../../../agents/channels/voice/voice-call-handoff';
@@ -9,6 +14,7 @@ import {
   HumanInteractionSettlementService,
   voiceCallCanStillBeAnswered,
 } from '../../../agents/human-relay/human-interaction-settlement.service';
+import { findAgentInboxOwner, trackAgentInboxCallEndedWithoutAnswer } from '../../services/agent-inbox-analytics';
 
 export type PostCallTranscriptionEvent = {
   type: 'post_call_transcription';
@@ -33,6 +39,8 @@ export class RecordVoiceCallEnded {
     private readonly cacheService: CacheService,
     private readonly humanInteractionRepository: HumanInteractionRepository,
     private readonly settlement: HumanInteractionSettlementService,
+    private readonly environmentRepository: EnvironmentRepository,
+    private readonly analyticsService: AnalyticsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -123,9 +131,45 @@ export class RecordVoiceCallEnded {
         { conversationId: elevenLabsConversationId, interactionId: interaction.identifier },
         'Voice call ended but the interaction was no longer pending'
       );
+    } else {
+      await this.trackEndedWithoutAnswer(expired, endReason, durationSeconds);
     }
 
     return expired ?? current;
+  }
+
+  private async trackEndedWithoutAnswer(
+    interaction: HumanInteractionEntity,
+    endReason: VoiceCallEndReasonEnum,
+    durationSeconds?: number
+  ): Promise<void> {
+    try {
+      const owner = await findAgentInboxOwner(this.environmentRepository, {
+        environmentId: String(interaction._environmentId),
+        organizationId: String(interaction._organizationId),
+      });
+      if (!owner) {
+        return;
+      }
+
+      const turnCount = interaction._conversationId
+        ? await this.settlement.countVoiceTurns(
+            String(interaction._environmentId),
+            String(interaction._organizationId),
+            String(interaction._conversationId)
+          )
+        : undefined;
+
+      trackAgentInboxCallEndedWithoutAnswer(this.analyticsService, owner, {
+        agentId: String(interaction._agentId),
+        interactionId: interaction.identifier,
+        endReason,
+        ...(durationSeconds !== undefined ? { durationSeconds } : {}),
+        ...(turnCount !== undefined ? { turnCount } : {}),
+      });
+    } catch (err) {
+      this.logger.warn({ err, interactionId: interaction.identifier }, 'Failed to track Call Ended Without Answer');
+    }
   }
 
   /**

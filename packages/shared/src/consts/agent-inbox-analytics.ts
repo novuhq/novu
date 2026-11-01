@@ -6,6 +6,7 @@
  * Sign-up: Signed Up → Inbox Created → Channel Connected
  * Invites: Contact Invited → Invite Accepted
  * Activity: Message Sent, Inbox Listed, Inbox Item Read
+ * Voice: Call Placed → Call Answered → Call Settled | Call Ended Without Answer
  */
 export const AGENT_INBOX_EVENTS = {
   SIGNED_UP: 'Signed Up - [Agent Inbox]',
@@ -16,4 +17,8 @@ export const AGENT_INBOX_EVENTS = {
   MESSAGE_SENT: 'Message Sent - [Agent Inbox]',
   INBOX_LISTED: 'Inbox Listed - [Agent Inbox]',
   INBOX_ITEM_READ: 'Inbox Item Read - [Agent Inbox]',
+  CALL_PLACED: 'Call Placed - [Agent Inbox]',
+  CALL_ANSWERED: 'Call Answered - [Agent Inbox]',
+  CALL_SETTLED: 'Call Settled - [Agent Inbox]',
+  CALL_ENDED_WITHOUT_ANSWER: 'Call Ended Without Answer - [Agent Inbox]',
 } as const;

@@ -45,12 +45,15 @@ describe('RecordVoiceCallEnded', () => {
     };
     const settlement = {
       settle: sinon.stub().resolves({ ...interaction, status: HumanInteractionStatusEnum.EXPIRED }),
+      countVoiceTurns: sinon.stub().resolves(0),
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
     const usecase = new RecordVoiceCallEnded(
       cacheService as never,
       humanInteractionRepository as never,
       settlement as never,
+      { findOne: sinon.stub().resolves(null) } as never,
+      { track: sinon.stub() } as never,
       logger as never
     );
 

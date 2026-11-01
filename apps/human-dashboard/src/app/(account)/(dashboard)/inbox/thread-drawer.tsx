@@ -11,6 +11,7 @@ import {
   type InboxThread,
   type InboxThreadDetails,
   type InboxThreadView,
+  type InboxVoiceCall,
   inboxShowCommand,
   threadSubject,
 } from '@/lib/inbox';
@@ -381,6 +382,7 @@ function useAfter(on: boolean, ms: number): boolean {
 function Details({ details, thread }: { details: InboxThreadDetails; thread: InboxThread }) {
   const status = describeState(details.status, thread.waitingOn);
   const contact = details.contact;
+  const voiceCall = details.voiceCall;
   const titleId = useId();
 
   return (
@@ -415,9 +417,51 @@ function Details({ details, thread }: { details: InboxThreadDetails; thread: Inb
             {(shown, className) => <span className={className}>{shown}</span>}
           </CrossFade>
         </Detail>
+        {voiceCall ? <VoiceCallDetails call={voiceCall} /> : null}
       </dl>
     </section>
   );
+}
+
+function VoiceCallDetails({ call }: { call: InboxVoiceCall }) {
+  return (
+    <>
+      {call.durationSeconds !== undefined ? (
+        <Detail label="Duration">{formatCallDuration(call.durationSeconds)}</Detail>
+      ) : null}
+      {call.endReason ? (
+        <Detail label="Ended">{call.endReason}</Detail>
+      ) : (
+        <Detail label="Ended">Still on the call</Detail>
+      )}
+      {call.hasRecording ? (
+        <Detail label="Recording" wide>
+          {/* The spoken turns listed under this call are the transcript. */}
+          {/* biome-ignore lint/a11y/useMediaCaption: no separate caption file; the thread is the transcript */}
+          <audio
+            controls
+            preload="none"
+            src={`/api/recordings/${encodeURIComponent(call.interactionId)}`}
+            className="mt-1 h-8 w-full max-w-full"
+          >
+            Your browser does not play audio.
+          </audio>
+        </Detail>
+      ) : null}
+    </>
+  );
+}
+
+function formatCallDuration(seconds: number): string {
+  const whole = Math.max(0, Math.round(seconds));
+  const minutes = Math.floor(whole / 60);
+  const remainder = whole % 60;
+
+  if (minutes === 0) {
+    return `${remainder}s`;
+  }
+
+  return `${minutes}m ${remainder.toString().padStart(2, '0')}s`;
 }
 
 /** "Maya Levi · verified" once the agent can reach them on the thread's channel; a stranger says so. */

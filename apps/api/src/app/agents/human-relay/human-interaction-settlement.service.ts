@@ -1,6 +1,11 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
-import { ConversationEntity, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import {
+  ConversationEntity,
+  EnvironmentRepository,
+  HumanInteractionEntity,
+  HumanInteractionRepository,
+} from '@novu/dal';
 import {
   HumanChannelViaEnum,
   HumanInteractionKindEnum,
@@ -9,13 +14,21 @@ import {
   parseToolApprovalRequestId,
   type VoiceCallFailure,
 } from '@novu/shared';
+import { findAgentInboxOwner, trackAgentInboxCallSettled } from '../../human/services/agent-inbox-analytics';
 import { HumanVoiceMinuteQuotaService } from '../../human/services/human-voice-minute-quota.service';
+import { ConversationActivityLedger } from '../conversation-runtime/conversation/conversation-activity-ledger';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { ResumeManagedHuman } from '../managed-runtime/novu-human/resume-managed-human.usecase';
 import { editDeliveredHumanCards } from './edit-delivered-card';
 import { buildResolvedContent } from './human-card.builder';
 import { HumanInteractionActivityRecorder } from './human-interaction-activity.recorder';
 import { ResumeToolApprovalFromHitl } from './resume-tool-approval-from-hitl.usecase';
+
+const PERSON_SETTLED: readonly HumanInteractionStatusEnum[] = [
+  HumanInteractionStatusEnum.ANSWERED,
+  HumanInteractionStatusEnum.APPROVED,
+  HumanInteractionStatusEnum.DENIED,
+];
 
 /**
  * Owns the terminal transition of a human interaction: the atomic
@@ -34,7 +47,10 @@ export class HumanInteractionSettlementService {
     private readonly resumeToolApprovalFromHitl: ResumeToolApprovalFromHitl,
     private readonly logger: PinoLogger,
     private readonly activityRecorder: HumanInteractionActivityRecorder,
-    private readonly voiceMinuteQuota: HumanVoiceMinuteQuotaService
+    private readonly voiceMinuteQuota: HumanVoiceMinuteQuotaService,
+    private readonly analyticsService: AnalyticsService,
+    private readonly environmentRepository: EnvironmentRepository,
+    private readonly activityLedger: ConversationActivityLedger
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -60,11 +76,62 @@ export class HumanInteractionSettlementService {
       await this.releaseVoiceReservation(settled);
       await this.editDeliveredMessage(settled);
       await this.resumeAfterSettlement(settled, answeredIn);
+      await this.trackVoiceSettled(settled, status);
     } else {
       await this.expireIfOverdue(interaction);
     }
 
     return settled;
+  }
+
+  private async trackVoiceSettled(
+    interaction: HumanInteractionEntity,
+    status: HumanInteractionStatusEnum
+  ): Promise<void> {
+    if (!PERSON_SETTLED.includes(status)) {
+      return;
+    }
+
+    const voiceDelivery = (interaction.deliveries ?? []).find(
+      (delivery) => delivery.platform === HumanChannelViaEnum.VOICE && !delivery.voiceFailure
+    );
+    if (!voiceDelivery) {
+      return;
+    }
+
+    try {
+      const owner = await findAgentInboxOwner(this.environmentRepository, {
+        environmentId: String(interaction._environmentId),
+        organizationId: String(interaction._organizationId),
+      });
+      if (!owner) {
+        return;
+      }
+
+      const turnCount = interaction._conversationId
+        ? await this.activityLedger.countVoiceTurns(
+            String(interaction._environmentId),
+            String(interaction._organizationId),
+            String(interaction._conversationId)
+          )
+        : undefined;
+
+      trackAgentInboxCallSettled(this.analyticsService, owner, {
+        agentId: String(interaction._agentId),
+        interactionId: interaction.identifier,
+        status,
+        ...(voiceDelivery.voiceCallEnded?.durationSeconds !== undefined
+          ? { durationSeconds: voiceDelivery.voiceCallEnded.durationSeconds }
+          : {}),
+        ...(turnCount !== undefined ? { turnCount } : {}),
+      });
+    } catch (err) {
+      this.logger.warn({ err, interactionId: interaction.identifier }, 'Failed to track Call Settled');
+    }
+  }
+
+  countVoiceTurns(environmentId: string, organizationId: string, conversationId: string): Promise<number> {
+    return this.activityLedger.countVoiceTurns(environmentId, organizationId, conversationId);
   }
 
   /**

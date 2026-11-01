@@ -42,7 +42,10 @@ describe('HumanInteractionSettlementService', () => {
       { execute: sinon.stub().resolves(undefined) } as any,
       logger as any,
       { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved: sinon.stub().resolves() } as any
+      { releaseReserved: sinon.stub().resolves() } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
 
     await service.settle(
@@ -77,7 +80,10 @@ describe('HumanInteractionSettlementService', () => {
       { execute: sinon.stub().resolves(undefined) } as any,
       logger as any,
       { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved: sinon.stub().resolves() } as any
+      { releaseReserved: sinon.stub().resolves() } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
 
     await service.settle(
@@ -111,7 +117,10 @@ describe('HumanInteractionSettlementService', () => {
       resumeToolApprovalFromHitl as any,
       logger as any,
       { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved: sinon.stub().resolves() } as any
+      { releaseReserved: sinon.stub().resolves() } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
 
     await service.settle({ _id: 'hi1', _environmentId: 'env1' } as any, HumanInteractionStatusEnum.APPROVED);
@@ -144,7 +153,10 @@ describe('HumanInteractionSettlementService', () => {
       resumeToolApprovalFromHitl as any,
       logger as any,
       { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved: sinon.stub().resolves() } as any
+      { releaseReserved: sinon.stub().resolves() } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
 
     await service.expireIfOverdue(pending as any);
@@ -191,7 +203,10 @@ describe('HumanInteractionSettlementService', () => {
       { execute: sinon.stub().resolves() } as any,
       { setContext: sinon.stub(), warn: sinon.stub() } as any,
       { recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved } as any
+      { releaseReserved } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
     const pending = {
       _id: 'hi1',
@@ -249,7 +264,10 @@ describe('HumanInteractionSettlementService', () => {
       { execute: sinon.stub().resolves() } as any,
       { setContext: sinon.stub(), warn: sinon.stub() } as any,
       { recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved } as any
+      { releaseReserved } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
 
     await service.failVoiceCall(
@@ -310,7 +328,10 @@ describe('HumanInteractionSettlementService', () => {
       { execute: sinon.stub().resolves() } as any,
       { setContext: sinon.stub(), warn: sinon.stub() } as any,
       { recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved } as any
+      { releaseReserved } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
     const pending = {
       _id: 'hi1',
@@ -358,7 +379,10 @@ describe('HumanInteractionSettlementService', () => {
       { execute: sinon.stub().resolves() } as any,
       { setContext: sinon.stub(), warn: sinon.stub() } as any,
       { recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved } as any
+      { releaseReserved } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
 
     await service.failVoiceCall(
