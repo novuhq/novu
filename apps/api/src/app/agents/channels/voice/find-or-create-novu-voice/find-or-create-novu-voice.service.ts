@@ -3,12 +3,12 @@ import {
   type AgentEntity,
   AgentIntegrationRepository,
   AgentRepository,
+  type ClientSession,
   IntegrationEntity,
   type IntegrationQuery,
   IntegrationRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, providers, slugify } from '@novu/shared';
-import { ClientSession } from 'mongoose';
 import shortid from 'shortid';
 
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';

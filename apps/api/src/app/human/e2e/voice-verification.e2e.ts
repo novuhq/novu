@@ -8,6 +8,18 @@ import {
   VOICE_VERIFICATION_CODE_PATTERN,
 } from '../services/human-voice-verification-code.service';
 
+function isElevenLabsRequest(input: RequestInfo | URL): boolean {
+  const raw = input instanceof Request ? input.url : String(input);
+
+  try {
+    const { hostname } = new URL(raw);
+
+    return hostname === 'elevenlabs.io' || hostname.endsWith('.elevenlabs.io');
+  } catch {
+    return false;
+  }
+}
+
 const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
 const humanContactRepository = new HumanContactRepository();
@@ -44,8 +56,7 @@ describe('Voice phone verification #novu-v2', () => {
 
     const realFetch = globalThis.fetch.bind(globalThis);
     sinon.stub(globalThis, 'fetch').callsFake((input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      if (url.includes('elevenlabs.io')) {
+      if (isElevenLabsRequest(input)) {
         return Promise.resolve(
           new Response(JSON.stringify({ success: true, conversation_id: 'conv_verify', callSid: 'CA_verify' }), {
             status: 200,
@@ -96,7 +107,7 @@ describe('Voice phone verification #novu-v2', () => {
   function dials(): sinon.SinonSpyCall[] {
     return (globalThis.fetch as unknown as sinon.SinonStub)
       .getCalls()
-      .filter((call) => String(call.args[0]).includes('elevenlabs.io'));
+      .filter((call) => isElevenLabsRequest(call.args[0] as RequestInfo | URL));
   }
 
   it('places a call, confirms the spoken code, and never dials an unverified or removed number', async () => {
