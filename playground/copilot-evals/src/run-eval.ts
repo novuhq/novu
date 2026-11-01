@@ -46,8 +46,11 @@ async function runCopilot(inputs: ExampleInputs): Promise<TargetOutputs> {
     try {
       const { resourceId } = await getChat(outputs.chatId);
       if (resourceId) {
-        if (!outputs.error) outputs.workflow = await getWorkflow(resourceId);
-        if (!keepWorkflows) await deleteWorkflow(resourceId);
+        try {
+          if (!outputs.error) outputs.workflow = await getWorkflow(resourceId);
+        } finally {
+          if (!keepWorkflows) await deleteWorkflow(resourceId);
+        }
       }
     } catch (error) {
       outputs.error ??= errorMessage(error);
