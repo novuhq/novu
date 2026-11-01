@@ -27,10 +27,11 @@ await step.email('follow-up', async () => {
 
 ## Delay Step Output
 
-| Property | Type                                                               | Required | Description                          |
-| -------- | ------------------------------------------------------------------ | -------- | ------------------------------------ |
-| amount   | number                                                             | Yes      | The number of time units to delay    |
-| unit     | 'seconds' \| 'minutes' \| 'hours' \| 'days' \| 'weeks' \| 'months' | Yes      | The time unit for the delay duration |
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| amount | number | Yes | The number of time units to delay |
+| unit | 'seconds' \| 'minutes' \| 'hours' \| 'days' \| 'weeks' \| 'months' | Yes | The time unit for the delay duration |
+| extendToSchedule | boolean | No | When `true`, a delay that ends outside the subscriber’s [schedule](/platform/inbox/features/schedule) waits until the next open window. See [Extend to subscriber’s schedule](/platform/workflow/add-and-configure-steps/configure-action-steps/delay#extend-to-subscribers-schedule). |
 
 ## Delay Step Result
 

@@ -1,0 +1,46 @@
+---
+title: "Send a message"
+description: "Start a conversation with send in the CLI, or inbox_send over MCP. A plain message returns as soon as it is delivered."
+---
+
+`send` starts a conversation. A plain message does not wait.
+
+<Tabs>
+  <Tab title="CLI">
+```bash
+npx @agentinbox/cli send "Nightly build finished — 0 failures."
+```
+  </Tab>
+  <Tab title="MCP">
+Call `inbox_send` with `message` and no `kind`. It returns once delivery is confirmed.
+  </Tab>
+</Tabs>
+
+Leave out a recipient and the message goes to you, or to `INBOX_TO` when that is set. `--to alice` starts a conversation with that contact. `--to alice,bob` reaches each of them (max 50). On a question, the first valid answer wins.
+
+Every send prints the conversation it landed in. Continue there with [reply](/conversations).
+
+<Warning>
+A send can land in a conversation that person already opened, and it marks that conversation read. The command warns you when it had unread messages. Read it with `show` before you continue.
+</Warning>
+
+## An email address
+
+`--to` accepts an email address. A contact who already has that address is used. On a new conversation, an address nobody has yet gets the message as typed, with no confirmation click. A keyless setup is told to claim an account instead. A reply needs a contact that already confirmed the address.
+
+## Cards
+
+A plain message arrives as text. Pass `--subtitle`, `--body`, or `--icon` and it becomes a card. `--icon` is Slack-only: an MCP catalog id such as `stripe`, or an https URL. Other channels ignore it.
+
+```bash
+npx @agentinbox/cli send "Refund issued" \
+  --subtitle "ORD-42" \
+  --body "Refund $25.00" \
+  --from "deploy-bot"
+```
+
+`--from` is the label the person sees, such as `deploy-bot`. `--via telegram`, `--via slack`, or `--via email` delivers on that channel instead of the person's default. `--via` exists on send only.
+
+On MCP, the same fields are `subtitle`, `body`, `icon`, `from`, and `via`.
+
+`ask`, `approve`, and `choose` are the next page. They start a conversation the same way, and they wait.

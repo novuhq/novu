@@ -93,13 +93,11 @@ During **workflow triggers**, existing context `data` is **upserted** when you i
 
 ### In workflows and templates
 
-Context data is available in every template editor through the `{{context}}` helper:
+Context data is available in every template editor through the `{{context}}` helper. The same paths work in [step conditions](/platform/workflow/add-and-configure-steps/step-conditions).
 
 ```liquid
 Welcome to {{context.tenant.data.name}}! Your {{context.tenant.data.plan}} plan is active.
 ```
-
-You can also use context in [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) to control which steps run.
 
 ### In the Inbox
 

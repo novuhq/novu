@@ -108,7 +108,7 @@ export function channelAddCommand(channelArg: string, options: ChannelAddOptions
 
   const channel = parseChannel(channelArg);
 
-  return setupCommand(channel, { ...options, skill: false }, `channel add ${channel}`);
+  return setupCommand(channel, { ...options, showSkills: false }, `channel add ${channel}`);
 }
 
 export async function channelDefaultCommand(channelArg: string, options: { json?: boolean }): Promise<never> {

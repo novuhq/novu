@@ -42,11 +42,11 @@ afterEach(() => {
 
 describe('describeFailure', () => {
   const failures: Array<[string, unknown]> = [
-    ['an API error', new ApiError('This code expired.', 410, 'POST /v1/human/connect', {})],
+    ['an API error', new ApiError('This code expired.', 410, 'POST /v1/connect', {})],
     ['an API error without a status', new ApiError('Network down', 0, 'GET /v1/x', {})],
     [
       'the keyless demo running out',
-      new ApiError('Keyless demo cap reached', 429, 'POST /v1/human/interactions', {
+      new ApiError('Keyless demo cap reached', 429, 'POST /v1/inbox/messages', {
         code: 'KEYLESS_HUMAN_CAP_REACHED',
         cap: 25,
         browserLogin: true,

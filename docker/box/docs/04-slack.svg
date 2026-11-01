@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg style="min-width: 1280px" viewBox="0 0 1280 864" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="slack-router-title slack-router-desc" id="d-04-slack-root">
+        <title id="slack-router-title">Slack: one message, there and back</title>
+        <desc id="slack-router-desc">A Slack message to Novu Box goes to the Router, which checks Slack's signature, acks within 3 seconds, picks the box and agent, wakes the box if it is asleep, and delivers the event re-signed with the box's made-up secret; the box's API runs the agent and sends the reply to the Router with a made-up token, and the Router checks it and calls Slack with the real bot token.</desc>
+        <defs>
+      <style>#d-04-slack-root { --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace; }
+      #d-04-slack-root { font-family: var(--font-sans); color: var(--color-ink); }
+      #d-04-slack-root .diagram-container { width: 100%; overflow-x: auto; }
+      #d-04-slack-root .subtitle { font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--color-muted);
+      max-width: 78ch;
+      margin-bottom: 1.5rem; }
+      #d-04-slack-root .diagram-container { overflow-x: visible; }
+      #d-04-slack-root .diagram-container { overflow-x: visible; }
+      #d-04-slack-root nav { margin: 0 0 3rem; display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; }
+      #d-04-slack-root nav a { color: var(--color-muted); text-decoration: none; border-bottom: 1px solid rgba(45,49,66,0.2); }
+      #d-04-slack-root nav a:hover { color: var(--color-accent); border-color: var(--color-accent); }
+      #d-04-slack-root section { padding: 3rem 0 4rem; border-top: 1px solid rgba(45,49,66,0.12); }
+      #d-04-slack-root section:first-of-type { border-top: 0; padding-top: 0; }</style>
+          <marker id="d-04-slack-slack-router-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="d-04-slack-slack-router-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
+          <marker id="d-04-slack-slack-router-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- Lifelines: Person 160 · Slack 400 · Router 640 · Box 880 · API 1120 -->
+        <line x1="160" y1="104" x2="160" y2="780" stroke="#2d3142" stroke-width="1" stroke-dasharray="3,3" stroke-opacity="0.20"/>
+        <line x1="400" y1="104" x2="400" y2="780" stroke="#2d3142" stroke-width="1" stroke-dasharray="3,3" stroke-opacity="0.20"/>
+        <line x1="640" y1="104" x2="640" y2="780" stroke="#2d3142" stroke-width="1" stroke-dasharray="3,3" stroke-opacity="0.20"/>
+        <line x1="880" y1="104" x2="880" y2="780" stroke="#2d3142" stroke-width="1" stroke-dasharray="3,3" stroke-opacity="0.20"/>
+        <line x1="1120" y1="104" x2="1120" y2="780" stroke="#2d3142" stroke-width="1" stroke-dasharray="3,3" stroke-opacity="0.20"/>
+
+        <!-- OPT fragment: Slack · Router · Box, only when the box is asleep -->
+        <rect x="368" y="304" width="544" height="124" rx="4" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.02" stroke-opacity="0.22"/>
+        <rect x="368" y="304" width="40" height="16" rx="2" fill="#f5f5f5" stroke="#2d3142" stroke-width="1" stroke-opacity="0.22"/>
+        <text x="388" y="316" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">OPT</text>
+        <text x="420" y="316" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">[if asleep]</text>
+
+        <!-- Activation bars -->
+        <rect x="636" y="180" width="8" height="108" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.06"/>
+        <rect x="636" y="356" width="8" height="60" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.06"/>
+        <rect x="636" y="448" width="8" height="20" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.06"/>
+        <rect x="636" y="588" width="8" height="124" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.06"/>
+        <rect x="876" y="400" width="8" height="16" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.06"/>
+        <rect x="876" y="456" width="8" height="56" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.06"/>
+        <rect x="1116" y="496" width="8" height="108" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.06"/>
+
+        <!-- 1 Person → Slack -->
+        <line x1="160" y1="152" x2="400" y2="152" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-04-slack-slack-router-arrow)"/>
+        <rect x="240" y="132" width="80" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="280" y="141" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MENTION OR DM</text>
+
+        <!-- 2 Slack → Router -->
+        <line x1="400" y1="184" x2="636" y2="184" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-04-slack-slack-router-arrow-link)"/>
+        <rect x="484" y="164" width="68" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="518" y="173" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POST /SLACK</text>
+
+        <!-- 3 Router checks and picks (self) -->
+        <path d="M644 224 H668 A8 8 0 0 1 676 232 V240 A8 8 0 0 1 668 248 H648" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-04-slack-slack-router-arrow)"/>
+        <rect x="684" y="230" width="72" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="720" y="239" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CHECK · PICK</text>
+
+        <!-- 4 Router → Slack ack -->
+        <line x1="636" y1="284" x2="400" y2="284" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#d-04-slack-slack-router-arrow)"/>
+        <rect x="488" y="264" width="60" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="518" y="273" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ACK &lt; 3 S</text>
+
+        <!-- 5 Router → Slack waking notice -->
+        <line x1="636" y1="368" x2="400" y2="368" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-04-slack-slack-router-arrow-link)"/>
+        <rect x="478" y="348" width="80" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="518" y="357" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WAKING NOTICE</text>
+
+        <!-- 6 Router → Box wake -->
+        <line x1="644" y1="408" x2="876" y2="408" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-04-slack-slack-router-arrow)"/>
+        <rect x="722" y="388" width="76" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="760" y="397" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WAKE · RETRY</text>
+
+        <!-- 7 Router → Box signed event -->
+        <line x1="644" y1="460" x2="876" y2="460" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-04-slack-slack-router-arrow)"/>
+        <rect x="722" y="440" width="76" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="760" y="449" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SIGNED EVENT</text>
+
+        <!-- 8 Box → API webhook -->
+        <line x1="884" y1="500" x2="1116" y2="500" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-04-slack-slack-router-arrow)"/>
+        <rect x="962" y="480" width="76" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="1000" y="489" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POST WEBHOOK</text>
+
+        <!-- 9 agent runs (note beside the API's activation bar) -->
+        <text x="1132" y="556" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">AGENT RUNS</text>
+
+        <!-- 10 API → Router, straight from the container -->
+        <line x1="1116" y1="592" x2="644" y2="592" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-04-slack-slack-router-arrow-link)"/>
+        <rect x="960" y="572" width="80" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="1000" y="581" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SLACK_API_URL</text>
+
+        <!-- 11 Router checks and swaps the token (self) -->
+        <path d="M644 644 H668 A8 8 0 0 1 676 652 V660 A8 8 0 0 1 668 668 H648" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-04-slack-slack-router-arrow)"/>
+        <rect x="684" y="650" width="72" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="720" y="659" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CHECK · SWAP</text>
+
+        <!-- 12 Router → Slack with the real token (headline) -->
+        <line x1="636" y1="708" x2="400" y2="708" stroke="#bf4520" stroke-width="1.4" marker-end="url(#d-04-slack-slack-router-arrow-accent)"/>
+        <rect x="476" y="688" width="84" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="518" y="697" fill="#bf4520" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REAL BOT TOKEN</text>
+
+        <!-- 13 Slack → Person -->
+        <line x1="400" y1="748" x2="160" y2="748" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-04-slack-slack-router-arrow)"/>
+        <rect x="260" y="728" width="40" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="280" y="737" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REPLY</text>
+
+        <!-- Actors (drawn after arrows) -->
+        <rect x="72" y="40" width="176" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="72" y="40" width="176" height="64" rx="6" fill="#4f5d75" stroke="#5a6580" stroke-width="1" fill-opacity="0.10"/>
+        <rect x="80" y="46" width="32" height="12" rx="2" fill="none" stroke="#5a6580" stroke-width="0.8" stroke-opacity="0.40"/>
+        <text x="96" y="55" fill="#5a6580" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">USER</text>
+        <text x="160" y="76" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Person in Slack</text>
+        <text x="160" y="92" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">#novu-box or a DM</text>
+
+        <rect x="312" y="40" width="176" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="312" y="40" width="176" height="64" rx="6" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <rect x="320" y="46" width="28" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.30"/>
+        <text x="334" y="55" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+        <text x="400" y="76" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Slack</text>
+        <text x="400" y="92" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Novu Box app</text>
+
+        <rect x="552" y="40" width="176" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="552" y="40" width="176" height="64" rx="6" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+        <rect x="560" y="46" width="24" height="12" rx="2" fill="none" stroke="#bf4520" stroke-width="0.8" stroke-opacity="0.50"/>
+        <text x="572" y="55" fill="#bf4520" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DO</text>
+        <text x="640" y="76" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Router</text>
+        <text x="640" y="92" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">has the real token</text>
+
+        <rect x="792" y="40" width="176" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="792" y="40" width="176" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="800" y="46" width="24" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.30"/>
+        <text x="812" y="55" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DO</text>
+        <text x="880" y="76" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Box pr-123</text>
+        <text x="880" y="92" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">wakes the container</text>
+
+        <rect x="1032" y="40" width="176" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="1032" y="40" width="176" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="1040" y="46" width="56" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.30"/>
+        <text x="1068" y="55" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CONTAINER</text>
+        <text x="1120" y="76" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">apps/api + agent</text>
+        <text x="1120" y="92" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">made-up token</text>
+
+        <!-- Legend -->
+        <line x1="40" y1="800" x2="1240" y2="800" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.10"/>
+        <text x="40" y="820" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+        <rect x="40" y="835" width="14" height="10" rx="2" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+        <text x="60" y="843" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Holds the real Slack secrets</text>
+
+        <line x1="232" y1="840" x2="260" y2="840" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-04-slack-slack-router-arrow-link)"/>
+        <text x="268" y="843" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">HTTPS request</text>
+
+        <line x1="372" y1="840" x2="400" y2="840" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-04-slack-slack-router-arrow)"/>
+        <text x="408" y="843" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Message or call</text>
+
+        <line x1="520" y1="840" x2="548" y2="840" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#d-04-slack-slack-router-arrow)"/>
+        <text x="556" y="843" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Answer</text>
+
+        <line x1="628" y1="840" x2="656" y2="840" stroke="#bf4520" stroke-width="1.4" marker-end="url(#d-04-slack-slack-router-arrow-accent)"/>
+        <text x="664" y="843" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Uses the real bot token</text>
+
+        <rect x="800" y="832" width="28" height="16" rx="2" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.02" stroke-opacity="0.22"/>
+        <text x="806" y="843" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace">OPT</text>
+        <text x="836" y="843" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Only sometimes</text>
+
+        <rect x="944" y="836" width="8" height="10" fill="#2d3142" stroke="#4f5d75" stroke-width="0.8" fill-opacity="0.06"/>
+        <text x="960" y="843" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Busy with this message</text>
+      </svg>

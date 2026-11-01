@@ -7,9 +7,16 @@ Triggering a workflow starts the execution of a notification pipeline in Novu. A
 
 When a workflow is triggered, Novu resolves the target subscribers, evaluates workflow logic, and executes each configured step to deliver notifications across the selected channels. Trigger requests can include payload data, context, or target a topic, allowing you to control both who receives the notification and what data is available during execution.
 
-<Note>
-  You can test a workflow directly from the workflow editor in the Novu dashboard before triggering it from your application. This allows you to validate step configuration and notification content for a specific subscriber.
-</Note>
+## Test with a real subscriber
+
+A real subscriber already exists in the same environment, with the `subscriberId` your app uses and the channel fields the workflow needs, such as `email`.
+
+1. Create the subscriber on the [Subscribers](https://dashboard.novu.co/subscribers) page, or pass their profile on the trigger.
+2. Open the workflow and click **Test workflow**.
+3. Select that subscriber, fill the payload, and send.
+4. Open the [Activity Feed](/platform/workflow/monitor-and-debug-workflow) and filter by that subscriber ID.
+
+The [demo email integration](/platform/integrations/demo-integration) only delivers to the email address on your Novu account. To reach a subscriber’s own address, connect your email provider and store that address on the subscriber. An Inbox test needs the `<Inbox />` component initialized with the same application identifier and `subscriberId`.
 
 <Prompt description="Integrate a workflow trigger in my app" icon="zap" actions={["copy", "cursor"]}>
 You are an AI agent specialized in integrating Novu workflow triggers into applications. Your primary goal is to seamlessly embed workflow trigger calls into existing codebases while maintaining the host application's design patterns and architecture.
@@ -75,7 +82,9 @@ See https://docs.novu.co/platform/sdks/server/typescript for SDK installation an
 
 ## Trigger Event API
 
-Workflows in Novu are triggered by sending events to the Event API. An event represents an action in your system, for example, an order created or a comment added and is mapped to a workflow using the workflow’s trigger identifier.
+Trigger a workflow from your backend by sending an event to the Novu API. An event represents an action in your system, for example, an order created or a comment added, and is mapped to a workflow using the workflow’s trigger identifier.
+
+Call `POST https://api.novu.co/v1/events/trigger` with the environment secret key. Never put that key in frontend code. The REST field for the workflow identifier is `name`. The server SDKs call it `workflowId`. A workflow must be [published](/platform/developer/environments#publish-changes-to-other-environments) before a Production trigger can run it. If the subscriber does not exist yet, passing `to` as an object [creates them on that trigger](/platform/concepts/subscribers#just-in-time).
 
 When you trigger an event, you specify:
 

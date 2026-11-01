@@ -8,7 +8,7 @@ import { agentDisplayName } from '@/lib/human-agent-api';
 import { listChannels } from '@/lib/human-channels-api';
 import { type Contact, listContactsPage } from '@/lib/human-contacts-api';
 import { handleOf, requireSetUpAgent } from '@/lib/human-onboarding';
-import { resolveNovuApiUrl } from '@/lib/novu-api';
+import { readApiUrl } from '@/lib/site-origin';
 
 import { ContactsTable } from './contacts-table';
 import { InviteBanner } from './invite-banner';
@@ -50,7 +50,7 @@ export default async function ContactsPage(props: PageProps<'/contacts'>) {
     redirect(pageHref(cursors.slice(0, -1)));
   }
 
-  const prompts = { apiUrl: resolveNovuApiUrl(account.region) };
+  const prompts = { apiUrl: await readApiUrl() };
 
   return (
     <>

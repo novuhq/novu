@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { type JsonBody, readErrorCode, readErrorMessage, safeJson } from './api-response';
-import type { HumanRegion } from './human-accounts-api';
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER, NOVU_ANALYTICS_SOURCE_HEADER } from './constants';
 import { HumanApiError, toHumanApiError } from './human-api-error';
 import { resolveNovuApiUrl } from './novu-api';
 
@@ -15,12 +15,8 @@ export type HumanApiRequest = {
  * The private `/v1/human/accounts*` endpoints. They trust the secret shared with the Novu API,
  * so only this server may call them; the browser never sees the secret or the keys they return.
  */
-export function requestWithDashboardSecret(
-  region: HumanRegion,
-  path: string,
-  init?: HumanApiRequest
-): Promise<JsonBody> {
-  return send(region, path, dashboardSecretHeader(), init);
+export function requestWithDashboardSecret(path: string, init?: HumanApiRequest): Promise<JsonBody> {
+  return send(path, dashboardSecretHeader(), init);
 }
 
 /**
@@ -28,17 +24,17 @@ export function requestWithDashboardSecret(
  * plus the dashboard's secret: the key alone can't tell the operator from a host, and a paused agent's
  * hosts can't read its inbox while the operator still can.
  */
-export function requestWithSecretKey(
-  region: HumanRegion,
-  secretKey: string,
-  path: string,
-  init?: HumanApiRequest
-): Promise<JsonBody> {
-  return send(region, path, { Authorization: `ApiKey ${secretKey}`, ...dashboardSecretHeader() }, init);
+export function requestWithSecretKey(secretKey: string, path: string, init?: HumanApiRequest): Promise<JsonBody> {
+  return send(path, { Authorization: `ApiKey ${secretKey}`, ...dashboardSecretHeader() }, init);
+}
+
+/** An endpoint anyone may call, such as an agent's public card: neither a key nor the secret goes along. */
+export function requestPublic(path: string, init?: HumanApiRequest): Promise<JsonBody> {
+  return send(path, {}, init);
 }
 
 function dashboardSecretHeader(): Record<string, string> {
-  return { 'x-human-dashboard-secret': process.env.AGENT_INBOX_DASHBOARD_API_SECRET ?? '' };
+  return { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: process.env.AGENT_INBOX_DASHBOARD_API_SECRET ?? '' };
 }
 
 /** For what the API can't do yet, so the pages can be built against the final function names. */
@@ -48,7 +44,6 @@ export function notAvailableYet(what: string): never {
 
 /** Returns the body as the API sent it; callers unwrap `{ data }` or read a page's `next` themselves. */
 async function send(
-  region: HumanRegion,
   path: string,
   authHeaders: Record<string, string>,
   { method = 'GET', query, body }: HumanApiRequest = {}
@@ -57,9 +52,9 @@ async function send(
   let response: Response;
 
   try {
-    response = await fetch(`${resolveNovuApiUrl(region)}${path}${toQueryString(query)}`, {
+    response = await fetch(`${resolveNovuApiUrl()}${path}${toQueryString(query)}`, {
       method,
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      headers: { 'Content-Type': 'application/json', [NOVU_ANALYTICS_SOURCE_HEADER]: 'dashboard', ...authHeaders },
       body: body ? JSON.stringify(body) : undefined,
       cache: 'no-store',
     });

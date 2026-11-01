@@ -1,12 +1,15 @@
 import { BadGatewayException, BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { AnalyticsService } from '@novu/application-generic';
+import { EnvironmentRepository } from '@novu/dal';
 import { HumanChannelViaEnum } from '@novu/shared';
 import { GenerateConnectOauthUrlCommand } from '../../../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.command';
 import { GenerateConnectOauthUrl } from '../../../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.usecase';
 import { IssueTelegramSubscriberLinkCommand } from '../../../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.command';
 import { IssueTelegramSubscriberLink } from '../../../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import { HUMAN_INVITE_APP_NAMES } from '../../dtos/human-invite.dto';
+import { findAgentInboxOwner, trackAgentInboxInviteAccepted } from '../../services/agent-inbox-analytics';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
-import { HumanInviteTokenService } from '../../services/human-invite-token.service';
+import { type HumanInviteTokenPayload, HumanInviteTokenService } from '../../services/human-invite-token.service';
 import { RequestAddressVerificationCommand } from '../request-address-verification/request-address-verification.command';
 import {
   RequestAddressVerification,
@@ -31,11 +34,23 @@ export class ConnectHumanInviteChannel {
     private readonly deliveryService: HumanDeliveryService,
     private readonly issueTelegramSubscriberLink: IssueTelegramSubscriberLink,
     private readonly generateConnectOauthUrl: GenerateConnectOauthUrl,
-    private readonly requestAddressVerification: RequestAddressVerification
+    private readonly requestAddressVerification: RequestAddressVerification,
+    private readonly environmentRepository: EnvironmentRepository,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   async execute(command: ConnectHumanInviteChannelCommand): Promise<ConnectHumanInviteChannelResult> {
     const { payload } = await this.inviteTokens.requireActive(command.token);
+    const result = await this.connect(command, payload);
+    this.trackAccepted(payload, command.via);
+
+    return result;
+  }
+
+  private async connect(
+    command: ConnectHumanInviteChannelCommand,
+    payload: HumanInviteTokenPayload
+  ): Promise<ConnectHumanInviteChannelResult> {
     const appName = HUMAN_INVITE_APP_NAMES[command.via];
 
     const channels = await this.deliveryService.describeInviteChannels({
@@ -64,7 +79,7 @@ export class ConnectHumanInviteChannel {
       if (!command.address?.trim()) {
         throw new BadRequestException({
           code: 'address_required',
-          message: 'Enter an email address to verify.',
+          message: 'Enter an email address to confirm.',
         });
       }
 
@@ -85,7 +100,7 @@ export class ConnectHumanInviteChannel {
         if (err instanceof BadGatewayException) {
           throw new BadGatewayException({
             error: 'delivery_failed',
-            message: 'Could not send the verification email. Try again in a moment.',
+            message: 'Could not send the confirmation email. Try again in a moment.',
           });
         }
 
@@ -118,5 +133,19 @@ export class ConnectHumanInviteChannel {
     );
 
     return { url };
+  }
+
+  /**
+   * Counts the accepted invite for the agent's owner. The invite page has no session, so the owner is found by
+   * the invite's environment. In the background, so it never slows or fails the invite page.
+   */
+  private trackAccepted(payload: HumanInviteTokenPayload, channel: HumanChannelViaEnum): void {
+    findAgentInboxOwner(this.environmentRepository, { environmentId: payload.env, organizationId: payload.org })
+      .then((owner) => {
+        if (owner) {
+          trackAgentInboxInviteAccepted(this.analyticsService, owner, { agentId: payload.agentId, channel });
+        }
+      })
+      .catch(() => undefined);
   }
 }

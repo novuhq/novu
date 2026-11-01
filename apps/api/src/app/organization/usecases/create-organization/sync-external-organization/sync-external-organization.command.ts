@@ -11,5 +11,5 @@ export class SyncExternalOrganizationCommand extends AuthenticatedCommand {
   email: string;
 
   @IsOptional()
-  headers: Record<string, string>;
+  headers?: Record<string, string>;
 }

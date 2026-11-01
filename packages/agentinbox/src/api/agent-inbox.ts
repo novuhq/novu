@@ -1,4 +1,4 @@
-import { ApiClient, unwrap } from './client';
+import { ApiClient, ApiError, unwrap } from './client';
 
 export type InteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
 
@@ -66,6 +66,11 @@ export interface Interaction {
    * The API calls them threads; the CLI prints them as `conversations`.
    */
   threads?: InteractionConversation[];
+  /**
+   * When the agent first got a person's answer, by asking for the interaction. Not on the read that hands it
+   * over: the listener tells by it whether a command that waited got the answer already.
+   */
+  answerReadAt?: string;
   expiresAt: string;
   createdAt: string;
 }
@@ -144,14 +149,24 @@ export interface CreateInteractionInput {
 }
 
 export async function createInteraction(client: ApiClient, input: CreateInteractionInput): Promise<Interaction> {
-  const res = await client.axios.post<{ data?: Interaction } | Interaction>('/v1/human/interactions', input);
+  const res = await client.axios.post<{ data?: Interaction } | Interaction>('/v1/inbox/messages', input);
 
   return unwrap(res.data);
 }
 
 export async function getInteraction(client: ApiClient, id: string): Promise<Interaction> {
   const res = await client.axios.get<{ data?: Interaction } | Interaction>(
-    `/v1/human/interactions/${encodeURIComponent(id)}`
+    `/v1/inbox/messages/${encodeURIComponent(id)}`
+  );
+
+  return unwrap(res.data);
+}
+
+/** Withdraws a question that is still open: it can't be answered any more, and shows as canceled. */
+export async function cancelInteraction(client: ApiClient, id: string): Promise<Interaction> {
+  const res = await client.axios.post<{ data?: Interaction } | Interaction>(
+    `/v1/inbox/messages/${encodeURIComponent(id)}/cancel`,
+    {}
   );
 
   return unwrap(res.data);
@@ -181,6 +196,8 @@ export async function setupRelay(
     agentIdentifier?: string;
     /** What the relay agent is called from now on. Missing leaves the name it has. */
     agentName?: string;
+    /** The address before the `@` of a new inbox. Missing works one out from the name. */
+    inboxHandle?: string;
     /** A line about what the relay agent does. An empty one clears it. */
     agentDescription?: string;
     email?: string;
@@ -190,7 +207,7 @@ export async function setupRelay(
     defaultVia?: 'telegram' | 'slack' | 'email';
   }
 ): Promise<SetupRelayResult> {
-  const res = await client.axios.post<{ data?: SetupRelayResult } | SetupRelayResult>('/v1/human/setup', input);
+  const res = await client.axios.post<{ data?: SetupRelayResult } | SetupRelayResult>('/v1/setup', input);
 
   return unwrap(res.data);
 }
@@ -209,6 +226,46 @@ function agentParams(agentIdentifier: string | undefined): { params?: { agentIde
   return agentIdentifier ? { params: { agentIdentifier } } : {};
 }
 
+/** The relay agent, or `null` before it has been set up. */
+export async function findRelayAgent(client: ApiClient, agentIdentifier?: string): Promise<RelayAgent | null> {
+  try {
+    const res = await client.axios.get<{ data?: RelayAgent } | RelayAgent>('/v1/agent', agentParams(agentIdentifier));
+
+    return unwrap(res.data);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      return null;
+    }
+
+    throw err;
+  }
+}
+
+export interface InboxAddressCheck {
+  handle: string;
+  available: boolean;
+  /** A free address close to a taken one, when there is one. */
+  suggestion?: string;
+  /** The mailbox domain this deployment publishes. */
+  domain: string;
+}
+
+/**
+ * Whether an address is free. `operatorEmail` only shapes the free one suggested for a taken address, and
+ * without a handle the answer is only the mailbox domain.
+ */
+export async function checkInboxAddress(
+  client: ApiClient,
+  handle: string | undefined,
+  operatorEmail: string | undefined
+): Promise<InboxAddressCheck> {
+  const res = await client.axios.get<{ data?: InboxAddressCheck } | InboxAddressCheck>('/v1/inbox-address', {
+    params: { ...(handle ? { handle } : {}), ...(operatorEmail ? { email: operatorEmail } : {}) },
+  });
+
+  return unwrap(res.data);
+}
+
 /** Uploads the relay agent's picture: a JPEG or PNG of up to 2 MB. Needs an account (`login`). */
 export async function setRelayAgentPicture(
   client: ApiClient,
@@ -218,7 +275,7 @@ export async function setRelayAgentPicture(
   const form = new FormData();
   form.append('picture', new Blob([new Uint8Array(picture.file)], { type: picture.contentType }), 'picture');
   const res = await client.axios.put<{ data?: RelayAgent } | RelayAgent>(
-    '/v1/human/agent/picture',
+    '/v1/agent/picture',
     form,
     agentParams(agentIdentifier)
   );
@@ -244,7 +301,7 @@ export async function createInvite(
   client: ApiClient,
   input: { subscriberId: string; agentIdentifier?: string; firstName?: string; lastName?: string }
 ): Promise<Invite> {
-  const res = await client.axios.post<{ data?: Invite } | Invite>('/v1/human/invites', input);
+  const res = await client.axios.post<{ data?: Invite } | Invite>('/v1/contacts/invites', input);
 
   return unwrap(res.data);
 }
@@ -272,6 +329,8 @@ export interface Contact {
   firstName?: string;
   lastName?: string;
   email?: string;
+  /** On a contact from the list: their email for this agent, in full, and whether they confirmed it. */
+  emailVerification?: { address: string; status: ContactChannelStatus };
   phone?: string;
   data?: Record<string, unknown>;
   /** Channels the agent can reach the contact on. */
@@ -291,17 +350,16 @@ export async function listContacts(
   client: ApiClient,
   params: { limit?: number; after?: string; subscriberId?: string; agentIdentifier?: string } = {}
 ): Promise<ContactsPage> {
-  const res = await client.axios.get<{ data?: Contact[]; next?: string | null }>('/v1/human/contacts', { params });
+  const res = await client.axios.get<{ data?: Contact[]; next?: string | null }>('/v1/contacts', { params });
   const body = res.data;
 
   return { data: Array.isArray(body?.data) ? body.data : [], next: body?.next ?? null };
 }
 
 export async function getContact(client: ApiClient, subscriberId: string, agentIdentifier?: string): Promise<Contact> {
-  const res = await client.axios.get<{ data?: Contact } | Contact>(
-    `/v1/human/contacts/${encodeURIComponent(subscriberId)}`,
-    { params: agentIdentifier ? { agentIdentifier } : undefined }
-  );
+  const res = await client.axios.get<{ data?: Contact } | Contact>(`/v1/contacts/${encodeURIComponent(subscriberId)}`, {
+    params: agentIdentifier ? { agentIdentifier } : undefined,
+  });
 
   // Explicit type arg: `Contact.data` would otherwise make `unwrap` infer the wrong envelope.
   return unwrap<Contact>(res.data);
@@ -329,7 +387,7 @@ export async function requestAddressVerification(
   }
 ): Promise<AddressVerificationResult> {
   const res = await client.axios.post<{ data?: AddressVerificationResult } | AddressVerificationResult>(
-    '/v1/human/verifications',
+    '/v1/contacts/verifications',
     input
   );
 

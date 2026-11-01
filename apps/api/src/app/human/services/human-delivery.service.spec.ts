@@ -143,7 +143,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
       expect((err as NotFoundException).message).to.equal(
-        'Human "alice" has no verified email address. Run `human contact invite alice --via email`.'
+        'Human "alice" has no confirmed email address. Run `human contact invite alice --via email`.'
       );
     }
   });
@@ -169,7 +169,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
       expect.fail('should have thrown');
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
-      expect((err as NotFoundException).message).to.include('awaiting verification');
+      expect((err as NotFoundException).message).to.include('waiting to be confirmed');
       expect((err as NotFoundException).message).to.include('a***@example.com');
     }
   });
@@ -198,6 +198,57 @@ describe('HumanDeliveryService.resolveChannel', () => {
       platformUserId: 'alice@example.com',
       integrationIdentifier: 'email-main',
     });
+  });
+
+  it('delivers a typed address without reading the verified slot', async () => {
+    const { service, agentIntegrationRepository, integrationRepository, humanContactRepository } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'int1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'int1',
+        identifier: 'email-main',
+        providerId: 'agent-email-inbox',
+        channel: ChannelTypeEnum.EMAIL,
+      },
+    ]);
+    humanContactRepository.findVerifiedAddress.resolves({
+      address: 'old@example.com',
+      requestedAt: '2026-09-01T10:00:00.000Z',
+      verifiedAt: '2026-09-01T10:05:00.000Z',
+    });
+
+    const target = await service.resolveChannel({
+      ...params,
+      via: HumanChannelViaEnum.EMAIL,
+      explicitEmail: 'new@example.com',
+    });
+
+    expect(target).to.deep.equal({
+      platform: 'email',
+      platformUserId: 'new@example.com',
+      integrationIdentifier: 'email-main',
+    });
+    expect(humanContactRepository.findVerifiedAddress.called).to.equal(false);
+  });
+
+  it('refuses a typed address for a keyless org before choosing an integration', async () => {
+    const { service, agentIntegrationRepository, keylessEmailGate } = setup();
+    keylessEmailGate.isBlocked.returns(true);
+    keylessEmailGate.assertAllowed.rejects(
+      new ForbiddenException({
+        code: KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE,
+        message: 'Outbound email needs a Human account.',
+      })
+    );
+
+    try {
+      await service.resolveChannel({ ...params, explicitEmail: 'ada@acme.com' });
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(ForbiddenException);
+    }
+
+    expect(agentIntegrationRepository.find.called).to.equal(false);
   });
 
   it('keeps a verified email deliverable while a newer pending address is outstanding', async () => {
@@ -537,6 +588,44 @@ describe('HumanDeliveryService.listInviteChannels', () => {
   });
 });
 
+describe('HumanDeliveryService.listWorkingChannels', () => {
+  it('lists email once the agent has its address, and Telegram or Slack once someone linked a chat', async () => {
+    const agentIntegrationRepository = {
+      find: sinon.stub().resolves([1, 2, 3].map((n) => ({ _integrationId: `int${n}` }))),
+    };
+    const integrationRepository = {
+      find: sinon.stub().resolves([
+        { identifier: 'email-main', providerId: 'agent-email-inbox', channel: ChannelTypeEnum.EMAIL, credentials: {} },
+        { identifier: 'slack-main', providerId: ChatProviderIdEnum.Slack, channel: ChannelTypeEnum.CHAT },
+        { identifier: 'tg-main', providerId: ChatProviderIdEnum.Telegram, channel: ChannelTypeEnum.CHAT },
+      ]),
+    };
+    const channelEndpointRepository = {
+      findOne: sinon
+        .stub()
+        .callsFake(async ({ integrationIdentifier }) =>
+          integrationIdentifier === 'tg-main' ? { _id: 'chat1' } : null
+        ),
+    };
+    const service = new HumanDeliveryService(
+      agentIntegrationRepository as never,
+      channelEndpointRepository as never,
+      integrationRepository as never,
+      {} as never,
+      {} as never,
+      emailGate() as never
+    );
+
+    const channels = await service.listWorkingChannels({
+      environmentId: 'env1',
+      organizationId: 'org1',
+      agent: { _id: 'a1', identifier: 'human-relay', name: 'Human' },
+    });
+
+    expect(channels).to.deep.equal([HumanChannelViaEnum.TELEGRAM]);
+  });
+});
+
 describe('pickDefaultTarget', () => {
   const telegram: ReachableHumanTarget = {
     via: HumanChannelViaEnum.TELEGRAM,
@@ -554,6 +643,22 @@ describe('pickDefaultTarget', () => {
 
   it('puts email, which has no connect time, after chat channels', () => {
     expect(pickDefaultTarget([email, telegram])).to.equal(telegram);
+  });
+
+  it('puts email after chat channels even when it was verified first', () => {
+    const verifiedAtSignUp = { ...email, connectedAt: '2026-09-01T10:00:00.000Z' };
+
+    expect(pickDefaultTarget([verifiedAtSignUp, telegram])).to.equal(telegram);
+  });
+
+  it('uses email when nothing else is connected', () => {
+    expect(pickDefaultTarget([email])).to.equal(email);
+  });
+
+  it('falls back on a chat channel when the saved default is gone, whatever email’s date', () => {
+    const verifiedAtSignUp = { ...email, connectedAt: '2026-09-01T10:00:00.000Z' };
+
+    expect(pickDefaultTarget([verifiedAtSignUp, telegram], HumanChannelViaEnum.SLACK)).to.equal(telegram);
   });
 
   it('uses the saved default even when it is email', () => {

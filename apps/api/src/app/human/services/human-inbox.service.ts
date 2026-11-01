@@ -1129,7 +1129,8 @@ function readHumanInteraction(activity: ConversationActivityEntity): InboxMessag
   return { id: raw.interactionIdentifier, kind: raw.kind, ...(raw.status ? { status: raw.status } : {}) };
 }
 
-function readAttachments(activity: ConversationActivityEntity): InboxAttachmentDto[] {
+/** What came with a message, as the inbox shows it: each file's type, name, kind and size. */
+export function readAttachments(activity: ConversationActivityEntity): InboxAttachmentDto[] {
   const raw = activity.richContent?.attachments;
   if (!Array.isArray(raw)) {
     return [];

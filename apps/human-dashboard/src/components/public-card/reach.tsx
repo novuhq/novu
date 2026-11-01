@@ -7,7 +7,7 @@ import QRCode from 'react-qr-code';
 import { buttonClassName } from '@/components/ui/button';
 import { COPIED_MS, CopyButton } from '@/components/ui/copy-button';
 import { toast } from '@/components/ui/toast';
-import { qrValueOf } from '@/lib/agent-card';
+import { QR_COLORS } from '@/lib/agent-card';
 import type { ChannelVia } from '@/lib/human-channels-api';
 import type { PublicAgentCard } from '@/lib/public-agent-card';
 import { cn } from '@/lib/utils';
@@ -31,7 +31,6 @@ type Way = {
  */
 export function Reach({ card }: { card: PublicAgentCard }) {
   const titleId = useId();
-  const operatorFirstName = card.operatorName.split(' ')[0] ?? '';
 
   return (
     <section
@@ -63,7 +62,7 @@ export function Reach({ card }: { card: PublicAgentCard }) {
         <p className="mt-4 flex items-center gap-2 text-xs leading-4 text-muted">
           <ShieldCheck aria-hidden="true" className="size-3.25 shrink-0" />
           {/* Not in the design without an operator: "the owner" stands in for their name. */}
-          <span>Someone new? {operatorFirstName || 'The owner'} approves your first message.</span>
+          <span>Someone new? {card.operatorFirstName || 'The owner'} approves your first message.</span>
         </p>
       )}
 
@@ -77,7 +76,7 @@ export function Reach({ card }: { card: PublicAgentCard }) {
         >
           Copy link
         </CopyButton>
-        <SaveQrButton handle={card.handle} address={card.address} />
+        <SaveQrButton handle={card.handle} cardLink={card.cardLink} />
       </div>
     </section>
   );
@@ -142,15 +141,15 @@ function WayRow({ way }: { way: Way }) {
 const ACTION = 'h-4 gap-1.5 rounded-sm px-0 text-xs leading-4 font-normal text-secondary hover:bg-transparent';
 
 /** How the saved code is drawn: 512px square, dark on white, with the 4 modules of white scanners need around it. */
-const QR_IMAGE = { size: 512, quietModules: 4, dark: '#0a0908', light: '#ffffff' } as const;
+const QR_IMAGE = { size: 512, quietModules: 4 } as const;
 
 type SaveStep = 'idle' | 'saving' | 'saved';
 
 /**
- * Save QR: saves the card's code to scan, which starts an email to the agent, as `atlas-qr.png`. The image is
- * drawn in the browser from a copy of the code kept out of sight.
+ * Save QR: saves the card's code to scan, which opens this public card, as `atlas-qr.png`. The image is drawn
+ * in the browser from a copy of the code kept out of sight.
  */
-function SaveQrButton({ handle, address }: { handle: string; address: string }) {
+function SaveQrButton({ handle, cardLink }: { handle: string; cardLink: string }) {
   const code = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState<SaveStep>('idle');
 
@@ -199,10 +198,10 @@ function SaveQrButton({ handle, address }: { handle: string; address: string }) 
       </button>
       <div ref={code} hidden>
         <QRCode
-          value={qrValueOf(address)}
+          value={cardLink}
           level="L"
-          bgColor={QR_IMAGE.light}
-          fgColor={QR_IMAGE.dark}
+          bgColor={QR_COLORS.light}
+          fgColor={QR_COLORS.dark}
           shapeRendering="crispEdges"
         />
       </div>
@@ -251,7 +250,7 @@ async function drawQrImage(svg: SVGSVGElement): Promise<Blob> {
     throw new Error('The browser gave no canvas to draw the code on');
   }
 
-  context.fillStyle = QR_IMAGE.light;
+  context.fillStyle = QR_COLORS.light;
   context.fillRect(0, 0, QR_IMAGE.size, QR_IMAGE.size);
   context.drawImage(image, offset, offset, codeSize, codeSize);
 

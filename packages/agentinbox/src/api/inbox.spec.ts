@@ -10,7 +10,7 @@ describe('getConversation', () => {
     const view = await getConversation({ axios: { get } } as unknown as ApiClient, 'conv_1', { limit: 5 });
 
     expect(view).toEqual({ conversation, messages: [], hasMore: false });
-    expect(get).toHaveBeenCalledWith('/v1/human/inbox/conv_1', { params: { limit: 5 } });
+    expect(get).toHaveBeenCalledWith('/v1/inbox/conv_1', { params: { limit: 5 } });
   });
 
   it('names the details block by conversation too', async () => {

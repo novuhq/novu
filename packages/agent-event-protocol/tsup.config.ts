@@ -4,7 +4,8 @@ const baseConfig: Options = {
   entry: ['src/index.ts'],
   sourcemap: false,
   clean: true,
-  dts: true,
+  // tsup 8 injects the deprecated `baseUrl` option into the dts build
+  dts: { compilerOptions: { ignoreDeprecations: '6.0' } },
   minify: false,
 };
 

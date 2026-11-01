@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -17,6 +18,8 @@ import { ProductFeature, RequirePermissions } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
   DirectionEnum,
+  isAgentAnalyticsSource,
+  NOVU_ANALYTICS_SOURCE_HEADER,
   PermissionsEnum,
   ProductFeatureKeyEnum,
   UserSessionData,
@@ -169,7 +172,8 @@ export class AgentIntegrationsController {
   addAgentIntegration(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
-    @Body() body: AddAgentIntegrationRequestDto
+    @Body() body: AddAgentIntegrationRequestDto,
+    @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string
   ): Promise<AgentIntegrationResponseDto> {
     return this.addAgentIntegrationUsecase.execute(
       AddAgentIntegrationCommand.create({
@@ -179,6 +183,7 @@ export class AgentIntegrationsController {
         agentIdentifier: identifier,
         integrationIdentifier: body.integrationIdentifier,
         providerId: body.providerId,
+        analyticsSource: isAgentAnalyticsSource(analyticsSource) ? analyticsSource : undefined,
       })
     );
   }

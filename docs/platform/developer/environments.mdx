@@ -9,9 +9,9 @@ Novu uses environments to separate your workflows and its data. This lets you sa
 
 When you create a Novu account, you are provided with a development and production environment by default. On certain plans, you can also create custom environments to match your team’s workflow.
 
-- **Development environment**: Use the development environment to build and test new workflows, layouts, translations, and experiment with different configurations before publishing to other environments.
-- **Production environment**: The production environment is used to send notifications to your subscribers. To ensure stability and prevent unintended changes, this environment is view-only for workflows, layouts, and translations. Changes are not made here directly, they are made from other environment and then published to this production environment.
-- **Custom environment**: Custom environments are only available on [Team and Enterprise plans](https://novu.co/pricing). You can use them to reflect your release process, for example, staging or QA.
+- **Development environment**: Use the development environment to build and test new workflows, layouts, and translations, and experiment with different configurations before publishing to other environments. Triggers here use the Development secret key. A workflow that exists only in Development does not run when you call the API with the Production secret key.
+- **Production environment**: The production environment is used to send notifications to your subscribers. To ensure stability and prevent unintended changes, this environment is view-only for workflows, layouts, and translations. Changes are not made here directly. They are made in Development and then published.
+- **Custom environment**: Custom environments are only available on [Team and Enterprise plans](https://novu.co/pricing). The Free plan includes Development and Production only. Use a custom environment to match your release process, for example staging or QA.
 
 ## Create a custom environment
 

@@ -3,7 +3,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
-import type { Adapter, AdapterPostableMessage, CardElement, EmojiValue, PlanModel, Thread } from 'chat';
+import type { Adapter, AdapterPostableMessage, CardElement, EmojiValue, PlanModel, RawMessage, Thread } from 'chat';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -39,6 +39,9 @@ export type { SlackNativeDelivery } from './slack-native-delivery';
 /** The subset of the resolved config that drives outbound watermarking. */
 type OutboundBrandingContext = Pick<ResolvedAgentConfig, 'removeNovuBranding' | 'agentIdentifier' | 'platform'>;
 
+/** What the chat SDK's own thread passes to `adapter.stream`; the adapter alone defaults to 1000ms. */
+const SLACK_STREAM_UPDATE_INTERVAL_MS = 500;
+
 export interface ConversationTarget {
   agentId: string;
   integrationIdentifier: string;
@@ -50,6 +53,11 @@ export interface ConversationTarget {
    * an extra conversation lookup. Falls back to a lookup, then to the first installed workspace.
    */
   workspaceId?: string;
+  /**
+   * Platform identity of the user this delivery answers (a Slack `userId`). Slack streams
+   * natively in a channel only when it is told who the stream is for.
+   */
+  recipientPlatformUserId?: string;
 }
 
 export interface OutboundPersistContext {
@@ -428,10 +436,55 @@ export class OutboundGateway {
       target.agentId,
       target.platformThreadId,
       target.workspaceId,
-      () => thread.post(chunks)
+      async (resolvedWorkspaceId) =>
+        (await this.streamSlackPreview(chat, config, target, resolvedWorkspaceId, chunks)) ?? thread.post(chunks)
     ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
+  }
+
+  /**
+   * Slack streams natively only when it knows who the stream is for: in a channel that means the
+   * recipient's user id plus the workspace id (in a DM it infers both). The chat SDK takes those
+   * from the inbound message of the thread it is handling, which a preview — posted by a reader
+   * running outside the inbound turn — has none of, so pass them explicitly.
+   *
+   * Returns null when the preview cannot stream natively; the caller then posts the stream through
+   * the SDK, which renders it as throttled post-and-edit.
+   */
+  private async streamSlackPreview(
+    chat: ChatWithAdapters,
+    config: ResolvedAgentConfig,
+    target: ConversationTarget,
+    workspaceId: string | undefined,
+    chunks: AsyncIterable<string>
+  ): Promise<RawMessage | null> {
+    if (config.platform !== AgentPlatformEnum.SLACK) {
+      return null;
+    }
+
+    if (!target.recipientPlatformUserId || !workspaceId) {
+      // Both renderings look alike downstream, so say which input was missing.
+      this.logger.warn(
+        {
+          agentId: target.agentId,
+          platformThreadId: target.platformThreadId,
+          hasRecipientPlatformUserId: Boolean(target.recipientPlatformUserId),
+          hasWorkspaceId: Boolean(workspaceId),
+        },
+        'Slack preview cannot stream natively; falling back to post-and-edit'
+      );
+
+      return null;
+    }
+
+    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK);
+
+    return adapter.stream(target.platformThreadId, chunks, {
+      recipientUserId: target.recipientPlatformUserId,
+      recipientTeamId: workspaceId,
+      updateIntervalMs: SLACK_STREAM_UPDATE_INTERVAL_MS,
+    });
   }
 
   async setThreadSubscribed(
@@ -949,7 +1002,7 @@ export class OutboundGateway {
     agentId: string,
     platformThreadId: string,
     workspaceId: string | undefined,
-    fn: () => Promise<T>
+    fn: (resolvedWorkspaceId?: string) => Promise<T>
   ): Promise<T> {
     if (config.platform !== AgentPlatformEnum.SLACK) {
       return fn();
@@ -966,10 +1019,10 @@ export class OutboundGateway {
     const adapter = chat.getAdapter(AgentPlatformEnum.SLACK);
 
     if (!token || typeof adapter?.withBotToken !== 'function') {
-      return fn();
+      return fn(resolvedWorkspaceId);
     }
 
-    return adapter.withBotToken(token, fn);
+    return adapter.withBotToken(token, () => fn(resolvedWorkspaceId));
   }
 
   /**

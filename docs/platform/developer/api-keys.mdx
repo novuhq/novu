@@ -19,15 +19,15 @@ Follow these steps to find your environment-specific API keys:
 
 ## Application identifier
 
-The Application Identifier is a unique identifier for your application within Novu. It is considered a public key and is safe to expose in client-side code.
+The application identifier is the public key for one environment. It initializes the [`<Inbox />`](/platform/inbox) component and other client SDKs so the browser can load that subscriber’s notifications. It is safe to expose in client-side code.
 
-The application identifier is used to initialize the [`<Inbox />`](/platform/inbox) component.
+It does not authorize server API calls. Those need the secret key. Development and Production each have their own application identifier, so an Inbox pointed at the Development identifier does not show Production notifications.
 
 ## Secret key
 
-The Secret Key is a private token used to authenticate and authorize requests sent to the API service. It proves that your application is allowed to access resources.
+The secret key is the private token your backend uses to call `https://api.novu.co`. That includes triggering workflows, creating subscribers, and every other API request. Pass it as `Authorization: ApiKey <SECRET_KEY>`, or as `secretKey` when you construct `@novu/api` or another Novu server SDK.
 
-This key grants full administrative access to your account. It should never be used in publicly accessible code, such as frontend applications or public repositories (GitHub, GitLab).
+The key is scoped to one environment. A Development key only reads and writes Development. It grants full access to that environment and should never be used in publicly accessible code, such as frontend applications, mobile apps, or public repositories (GitHub, GitLab). The Inbox does not use the secret key.
 
 <Warning>
   Keep your secret key private.

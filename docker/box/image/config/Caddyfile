@@ -1,0 +1,53 @@
+{
+	admin off
+	auto_https off
+	persist_config off
+}
+
+# Everything the browser reaches, on the box's two addresses (<box> and <box>-api under box.novu-staging.co), routed
+# by path: either host reaches any of it.
+:18080 {
+	@api path /v1/* /v2/* /.well-known/*
+	handle @api {
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	@socket path /ws /ws/*
+	handle @socket {
+		uri strip_prefix /ws
+		reverse_proxy 127.0.0.1:8887
+	}
+
+	# The bucket's own path, unchanged: presigned URLs sign the path and the host, which Caddy passes through.
+	@s3 path /{$S3_BUCKET_NAME} /{$S3_BUCKET_NAME}/*
+	handle @s3 {
+		reverse_proxy 127.0.0.1:4566
+	}
+
+	# Mailpit runs with --webroot /mail.
+	@mail path /mail /mail/*
+	handle @mail {
+		reverse_proxy 127.0.0.1:8025
+	}
+
+	encode gzip
+	header X-XSS-Protection "1; mode=block"
+	header Referrer-Policy "no-referrer-when-downgrade"
+	header X-Content-Type-Options "nosniff"
+
+	# Stands in for the CDN (CDN_URL) in front of the uploads bucket; versitygw stores objects as plain files.
+	handle_path /cdn/* {
+		root * /data/s3/{$S3_BUCKET_NAME}
+		file_server
+	}
+
+	handle {
+		root * /data/run/dashboard
+		header /assets/* Cache-Control "public, max-age=31536000, immutable"
+		header /auth/* Cache-Control "private, no-cache, no-store, must-revalidate"
+		@app not path /assets/* /auth/*
+		header @app Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}

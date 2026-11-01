@@ -8,6 +8,8 @@ require('ts-node').register({
     module: 'commonjs',
     target: 'es5',
     esModuleInterop: false,
+    // TypeScript 6 deprecates both options above; keep them so this test loader compiles exactly as before.
+    ignoreDeprecations: '6.0',
   },
 });
 

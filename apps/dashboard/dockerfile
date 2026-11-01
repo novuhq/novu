@@ -1,4 +1,4 @@
-FROM node:22.23-alpine3.23 AS builder
+FROM node:22.23.4-alpine3.23 AS builder
 RUN apk add --no-cache g++ make py3-pip bash
 ENV NX_DAEMON=false
 
@@ -31,9 +31,18 @@ ENV VITE_NOVU_ENTERPRISE=${VITE_NOVU_ENTERPRISE}
 
 RUN CI='' pnpm build:dashboard --skip-nx-cache
 
-FROM node:22.23-alpine3.23 AS prod
+FROM node:22.23.4-alpine3.23 AS prod
 
 ENV CI=true
+
+# Repeated here because build args do not cross stages. The entrypoint needs the
+# edition at runtime to gate NOVU_TLS_ENABLED, and these names are deliberately
+# not VITE_-prefixed so they stay out of the browser's window._env_.
+ARG VITE_SELF_HOSTED=true
+ARG VITE_NOVU_ENTERPRISE=false
+
+ENV NOVU_DASHBOARD_SELF_HOSTED=${VITE_SELF_HOSTED}
+ENV NOVU_DASHBOARD_ENTERPRISE=${VITE_NOVU_ENTERPRISE}
 
 RUN apk upgrade --no-cache && \
     # Manually upgrade packages from edge/main to patch CVEs

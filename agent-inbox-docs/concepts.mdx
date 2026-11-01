@@ -1,0 +1,66 @@
+---
+title: "Concepts"
+description: "The words Agent Inbox uses: operator, contact, stranger, agent, host, inbox, and conversation."
+---
+
+These are the words the rest of the docs use. Later pages link here instead of defining them again.
+
+## People
+
+**Operator.** The person who sets Agent Inbox up and signs in at agentinbox.md.
+
+**Contact.** Anyone the operator's agent can reach, including the operator.
+
+**Stranger.** A person or service that writes to an agent without being one of its contacts.
+
+## Agent and host
+
+**Agent.** The identity contacts see and talk to: one name, one picture, one presence on each channel.
+
+**Host.** A program that acts as an agent, such as Claude Code, Cursor, or a scheduled routine. An agent can have several hosts. Each one reaches it through the CLI or through MCP.
+
+**Connect.** Letting a host act as an agent. In a terminal that is a one-time code. In a chat app it is signing in to the hosted MCP server.
+
+**One-time code.** The code an operator gets on agentinbox.md to connect one more host. It works once, for 10 minutes.
+
+**Last check.** When a host last read the agent's inbox, and whether that was through the CLI or MCP. The dashboard uses it to show whether a host is still there.
+
+## Inbox
+
+**Inbox.** All the conversations of one agent.
+
+**Conversation.** Everything said between an agent and the people in one place on one channel. A conversation can hold several contacts and strangers.
+
+**Unread.** Someone said something that did not answer a question from the agent, and the agent has not responded since. Looking at a conversation is not a response.
+
+**Open.** The current matter is not finished, whether or not the conversation is unread.
+
+**Resolved.** The host has declared the conversation finished. It becomes open again when anyone says something in it.
+
+A plain message does not wait. `ask`, `approve`, and `choose` wait for an answer. See [Ask, approve, and choose](/questions).
+
+## Account
+
+**Agent Inbox account.** The operator's sign-in on agentinbox.md.
+
+**Keyless setup.** What an operator builds with the CLI before signing up.
+
+**Claim.** Moving a keyless setup into the operator's account. Channels keep working. See [Account and claim](/account).
+
+## Say this
+
+| Say | Do not say |
+| --- | --- |
+| Operator | Owner, user, inviter |
+| Contact | Subscriber, recipient |
+| Stranger | Unknown sender, guest, anonymous |
+| Agent | Relay, bot |
+| Host | Caller, client |
+| Connect | Pair, link |
+| One-time code | Pairing code, token |
+| Inbox | Mailbox, queue |
+| Conversation | Thread, chat, ticket |
+| Unread, open, resolved | New, active, closed, archived |
+| Agent Inbox account | Human account |
+| Keyless setup | Demo workspace |
+| Claim | Transfer, migrate |

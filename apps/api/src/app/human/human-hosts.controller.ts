@@ -3,6 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Post,
@@ -31,7 +32,7 @@ import {
   CreateConnectCodeRequestDto,
   type HumanHostStatusResponseDto,
 } from './dtos/human-host.dto';
-import { HumanHostStatusService } from './services/human-host-status.service';
+import { AGENT_INBOX_HOST_HEADER, HumanHostStatusService, readHostId } from './services/human-host-status.service';
 import { HumanInboxService } from './services/human-inbox.service';
 import { ConnectHostCommand } from './usecases/connect-host/connect-host.command';
 import { ConnectHost } from './usecases/connect-host/connect-host.usecase';
@@ -76,6 +77,7 @@ export class HumanHostsController {
         userId: user._id,
         agentIdentifier: body.agentIdentifier,
         handle: body.handle,
+        host: body.host,
       })
     );
   }
@@ -135,9 +137,18 @@ export class HumanConnectPublicController {
   @Post('/')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Connect a host to an agent with a one-time code from agentinbox.md' })
-  connect(@Body() body: ConnectHostRequestDto, @Req() request: Request): Promise<ConnectHostResponseDto> {
+  connect(
+    @Body() body: ConnectHostRequestDto,
+    @Req() request: Request,
+    @Headers(AGENT_INBOX_HOST_HEADER) host?: string
+  ): Promise<ConnectHostResponseDto> {
     return this.connectHostUsecase.execute(
-      ConnectHostCommand.create({ agent: body.agent, code: body.code, clientIp: getClientIp(request) ?? undefined })
+      ConnectHostCommand.create({
+        agent: body.agent,
+        code: body.code,
+        clientIp: getClientIp(request) ?? undefined,
+        host: readHostId(host),
+      })
     );
   }
 }

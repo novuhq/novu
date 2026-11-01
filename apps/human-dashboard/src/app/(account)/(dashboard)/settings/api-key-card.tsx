@@ -14,7 +14,7 @@ import { regenerateApiKeyAction } from './actions';
 import { CardHeading, SettingsCard } from './settings-card';
 
 /** The variable the `human` CLI reads the key from. */
-const KEY_VARIABLE = 'NOVU_SECRET_KEY';
+const KEY_VARIABLE = 'INBOX_SECRET_KEY';
 
 const MASK = '•'.repeat(24);
 const SHOWN_CHARACTERS = 4;

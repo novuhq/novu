@@ -16,6 +16,7 @@ import { isKeylessOrganization } from '../../keyless/keyless-organization.helper
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { captureAgentWarning } from '../shared/errors/capture-agent-sentry';
 import { toDeliveryError } from '../shared/util/delivery-error.util';
+import { resolveAgentEmailIpPoolName } from './agent-email-ip-pool';
 
 const EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS = new Set<string>([
   EmailProviderIdEnum.CustomSMTP,
@@ -290,7 +291,7 @@ export class AgentEmailSender {
         apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
         from,
         senderName,
-        ipPoolName: 'Demo',
+        ipPoolName: resolveAgentEmailIpPoolName(config.providerId),
       },
     };
 

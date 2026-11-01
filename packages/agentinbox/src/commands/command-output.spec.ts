@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { ApiError } from '../api/client';
 import type { CliConfig } from '../config';
+import { HOST_MARKER_VARIABLES } from '../host';
 import { setOpenedScreen } from '../screen/opened';
 import { stripEscapes } from '../screen/terminal';
 import { VirtualTerminal } from '../screen/virtual-terminal.fixture';
@@ -13,22 +14,34 @@ import { VirtualTerminal } from '../screen/virtual-terminal.fixture';
 /** What a person types at the prompts, in turn. */
 const typed = vi.hoisted(() => [] as string[]);
 
-// A terminal's readline: it writes the question and echoes the answer as it is typed.
+// A terminal's readline: it writes the question and echoes the answer as it is typed. An answer can start out
+// filled in, which Enter then takes.
 vi.mock('node:readline', () => {
-  const createInterface = () => ({
-    question: (question: string, answer: (text: string) => void) => {
-      const text = typed.shift() ?? '';
-      process.stdout.write(`${question}${text}\n`);
-      answer(text);
-    },
-    close: () => undefined,
-  });
+  const createInterface = ({ output }: { output: NodeJS.WritableStream }) => {
+    let filledIn = '';
+
+    return {
+      question: (question: string, answer: (text: string) => void) => {
+        queueMicrotask(() => {
+          const text = typed.shift() || filledIn;
+          output.write(`${question}${text}\n`);
+          answer(text);
+        });
+      },
+      write: (text: string) => {
+        filledIn = text;
+      },
+      on: () => undefined,
+      close: () => undefined,
+    };
+  };
 
   return { default: { createInterface }, createInterface };
 });
 
 const loadConfig = vi.fn();
 const saveConfig = vi.fn();
+const isEmailVerified = vi.fn();
 const waitForVerifiedEmail = vi.fn();
 const waitForEndpoint = vi.fn();
 const startLoginRequest = vi.fn();
@@ -63,6 +76,13 @@ vi.mock('../api/agent-inbox', async (importOriginal) => ({
     agentName: 'Atlas',
     subscriberId: input.subscriberId,
   })),
+  // An agent exists once a setup was saved on this computer.
+  findRelayAgent: vi.fn(async () => (loadConfig() ? { agentId: 'agent_1', name: 'Atlas' } : null)),
+  checkInboxAddress: vi.fn(async (_client: unknown, handle: string) => ({
+    handle,
+    available: true,
+    domain: 'agentinbox.md',
+  })),
   requestAddressVerification: vi.fn(async () => ({
     address: 'a***@example.com',
     requestedAt: '2026-10-16T10:00:00.000Z',
@@ -90,6 +110,7 @@ vi.mock('../config', async (importOriginal) => ({
 
 vi.mock('./link-channel', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
+  isEmailVerified: (...args: unknown[]) => isEmailVerified(...args),
   waitForVerifiedEmail: (...args: unknown[]) => waitForVerifiedEmail(...args),
   waitForEndpoint: (...args: unknown[]) => waitForEndpoint(...args),
 }));
@@ -112,27 +133,48 @@ const accountConfig: CliConfig = {
   defaultChannel: 'telegram',
 };
 
+const keylessConfig: CliConfig = {
+  apiUrl: 'https://api.novu.co',
+  auth: { mode: 'keyless', keylessIdentifier: 'pk_keyless_1' },
+  relayAgentIdentifier: 'human-relay',
+  subscriberId: 'ada',
+};
+
 /** The commands as the tests run them, each with the answers its story needs. */
 const run = {
   keylessSetup: async () => {
     loadConfig.mockReturnValue(null);
-    await setupCommand(undefined, { email: 'ada@example.com', skill: false });
+    await setupCommand(undefined, { email: 'ada@example.com', agentName: 'Atlas' });
+  },
+  keylessSetupUnnamed: async () => {
+    loadConfig.mockReturnValue(null);
+    await setupCommand(undefined, { email: 'ada@example.com' });
+  },
+  keylessSetupStops: async () => {
+    loadConfig.mockReturnValue(null);
+    waitForVerifiedEmail.mockRejectedValue(new Error("We didn't see you confirm your email within 300s."));
+    await setupCommand(undefined, { email: 'ada@example.com', agentName: 'Atlas' });
+  },
+  keylessSetupPickedUp: async () => {
+    loadConfig.mockReturnValue(keylessConfig);
+    isEmailVerified.mockResolvedValue(true);
+    await setupCommand(undefined, { email: 'ada@example.com' });
   },
   telegramSetup: async () => {
     loadConfig.mockReturnValue(accountConfig);
-    await setupCommand('telegram', { skill: false });
+    await setupCommand('telegram', {});
   },
   telegramSetupTimesOut: async () => {
     loadConfig.mockReturnValue(accountConfig);
     waitForEndpoint.mockRejectedValue(
       new Error("We didn't see your /start on @atlas_bot within 300s. Re-run `npx @agentinbox/cli setup` to continue.")
     );
-    await setupCommand('telegram', { skill: false });
+    await setupCommand('telegram', {});
   },
   telegramConnectedAlready: async () => {
     loadConfig.mockReturnValue(accountConfig);
     hasChannelEndpoint.mockResolvedValue(true);
-    await setupCommand('telegram', { skill: false });
+    await setupCommand('telegram', {});
   },
   login: async () => {
     findOperator.mockResolvedValue('ada_owner');
@@ -151,7 +193,7 @@ const run = {
   },
   expiredCode: async () => {
     connectWithCode.mockRejectedValue(
-      new ApiError('This code expired.', 410, 'POST /v1/human/connect', { code: 'connect_code_expired' })
+      new ApiError('This code expired.', 410, 'POST /v1/connect', { code: 'connect_code_expired' })
     );
     await connectCommand('atlas', { code: 'BCDF-GHJK' });
   },
@@ -169,6 +211,8 @@ const ENV_KEYS = [
   'INBOX_SECRET_KEY',
   'AGENTINBOX_NO_ANIMATION',
   'AGENTINBOX_MASCOT_ASPECT',
+  // Which host runs the CLI: `connect` offers keeping Claude Code listening.
+  ...HOST_MARKER_VARIABLES,
 ];
 const STREAM_PROPERTIES = ['isTTY', 'columns', 'rows'] as const;
 
@@ -212,6 +256,7 @@ async function printed(scenario: keyof typeof run, kind: Streams = 'pipe', size:
   streamsAre(kind, size);
 
   loadConfig.mockReset().mockReturnValue(null);
+  isEmailVerified.mockReset().mockResolvedValue(false);
   waitForVerifiedEmail.mockReset().mockResolvedValue(undefined);
   waitForEndpoint.mockReset().mockResolvedValue(undefined);
   hasChannelEndpoint.mockReset().mockResolvedValue(false);
@@ -301,17 +346,48 @@ describe('without a terminal', () => {
       • Setting up your agent inbox...
       • Your agent inbox is atlas-x1@agentinbox.md.
       • Registering your email address...
-      • Verification email sent to ada@example.com (shown as a***@example.com).
+      • Confirmation email sent to ada@example.com (shown as a***@example.com).
       • Replies go to atlas-x1@agentinbox.md — answering an interaction is just replying to its email.
       • Outbound email starts after you claim this setup — use the link in that email, or run \`npx @agentinbox/cli login\`.
       • Saved config to /home/ada/.agentinbox/config.json.
       • This is a free demo without an account. Run npx @agentinbox/cli login anytime to keep it in a Agent Inbox account.
+      • Teach your coding agent to use the inbox: npx skills add agentinboxhq/skills
       "
     `);
     expect(output.stderr).toMatchInlineSnapshot(`
-      "Waiting for you to verify your email (Ctrl-C detaches; resume with: npx @agentinbox/cli setup email)
+      "Waiting for you to confirm your email (Ctrl-C detaches; resume with: npx @agentinbox/cli setup email)
       "
     `);
+  });
+
+  it('refuses to set up a new agent with no name', async () => {
+    const shown = await printed('keylessSetupUnnamed');
+
+    expect(shown.exitCode).toBe(1);
+    expect(shown.stderr).toContain('Pass --agent-name <name>');
+    expect(saveConfig).not.toHaveBeenCalled();
+  });
+
+  it('keeps the setup of a run that stops while it waits for the email', async () => {
+    const output = await printed('keylessSetupStops');
+
+    expect(output.exitCode).toBe(1);
+    expect(saveConfig).toHaveBeenCalledOnce();
+    expect(saveConfig).toHaveBeenCalledWith(
+      expect.objectContaining({ auth: keylessConfig.auth, relayAgentIdentifier: 'human-relay' })
+    );
+  });
+
+  it('picks up a stopped setup with the inbox it made, and asks nobody to confirm twice', async () => {
+    const { bootstrapKeylessSession } = await import('../api/setup');
+    const { requestAddressVerification } = await import('../api/agent-inbox');
+    const output = await printed('keylessSetupPickedUp');
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stdout).toContain('Reusing your existing keyless session.');
+    expect(output.stdout).toContain('ada@example.com is already confirmed.');
+    expect(bootstrapKeylessSession).not.toHaveBeenCalled();
+    expect(requestAddressVerification).not.toHaveBeenCalled();
   });
 
   it('keeps a setup that connects Telegram as it was', async () => {
@@ -331,9 +407,10 @@ describe('without a terminal', () => {
       • Saved config to /home/ada/.agentinbox/config.json.
 
       ✔ telegram connected. Agents on this machine can now run:
-        npx @agentinbox/cli inbox send ask "Which environment should I target?"
-        npx @agentinbox/cli inbox send approve "Deploy to production?"
-        npx @agentinbox/cli inbox send "Build finished."
+        npx @agentinbox/cli send ask "Which environment should I target?"
+        npx @agentinbox/cli send approve "Deploy to production?"
+        npx @agentinbox/cli send "Build finished."
+      • Teach your coding agent to use the inbox: npx skills add agentinboxhq/skills
       "
     `);
     expect(output.stderr).toMatchInlineSnapshot(`""`);
@@ -371,9 +448,10 @@ describe('without a terminal', () => {
       • Saved config to /home/ada/.agentinbox/config.json.
 
       ✔ telegram connected. Agents on this machine can now run:
-        npx @agentinbox/cli inbox send ask "Which environment should I target?"
-        npx @agentinbox/cli inbox send approve "Deploy to production?"
-        npx @agentinbox/cli inbox send "Build finished."
+        npx @agentinbox/cli send ask "Which environment should I target?"
+        npx @agentinbox/cli send approve "Deploy to production?"
+        npx @agentinbox/cli send "Build finished."
+      • Teach your coding agent to use the inbox: npx skills add agentinboxhq/skills
       "
     `);
   });
@@ -431,10 +509,25 @@ describe('without a terminal', () => {
       "
       ✔ Connected to atlas.
       • Saved to /home/ada/.agentinbox/config.json.
-      Check it works: npx @agentinbox/cli inbox list
+      Check it works: npx @agentinbox/cli list
       "
     `);
     expect(output.stderr).toMatchInlineSnapshot(`""`);
+  });
+
+  it('offers keeping Claude Code listening when Claude Code connects', async () => {
+    process.env.AI_AGENT = 'claude-code_2-1-310_agent';
+    const output = await printed('connect');
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stdout).toMatchInlineSnapshot(`
+      "
+      ✔ Connected to atlas.
+      • Saved to /home/ada/.agentinbox/config.json.
+      Check it works: npx @agentinbox/cli list
+      Optional: keep Claude Code listening, so a message to atlas starts it in this folder: npx @agentinbox/cli listen claude-code
+      "
+    `);
   });
 
   it('keeps a code that expired as it was', async () => {
@@ -493,7 +586,7 @@ describe('on a terminal', () => {
     for (const line of linesOf(plain)) {
       expect(screen).toContain(line);
     }
-    expect(shownWhileRunning(shown)).toContain('waiting for you to verify your email');
+    expect(shownWhileRunning(shown)).toContain('waiting for you to confirm your email');
     expect(shownWhileRunning(shown)).toContain('ctrl-c detaches; resume with: npx @agentinbox/cli setup email');
     expect(screen).toContain('fig. agent — happy');
     expect(shown.stderr).toBe('');
@@ -583,7 +676,7 @@ describe('on a terminal', () => {
     }
   });
 
-  it('asks before replacing a setup, below the screen, and keeps the answer on it', async () => {
+  it('asks before replacing a setup on the screen, and keeps the answer on it', async () => {
     typed.push('y');
     loadConfig.mockReturnValue(accountConfig);
     const shown = await printed('connectOverSetup', 'terminal', { typing: true });
@@ -591,12 +684,13 @@ describe('on a terminal', () => {
 
     expect(shown.exitCode).toBe(0);
     expect(connectWithCode).toHaveBeenCalled();
-    expect(screen).toContain('connecting atlas makes it act as atlas from now on. continue? [y/n] y');
+    expect(screen).toContain('continue? [y/n] y');
     expect(screen).toContain('connected to atlas');
   });
 
-  it('asks who you are during setup, below its screen, and keeps the answers on it', async () => {
-    typed.push('Ada', 'Lovelace');
+  it('asks who you are during setup on its screen, and keeps the answers on it', async () => {
+    // Enter keeps the address offered for the agent.
+    typed.push('Ada', 'Lovelace', '');
     const shown = await printed('keylessSetup', 'terminal', { typing: true });
     const screen = leftOnScreen(shown);
     const { setupRelay } = await import('../api/agent-inbox');
@@ -608,6 +702,20 @@ describe('on a terminal', () => {
     );
     expect(screen).toContain('your first name: ada');
     expect(screen).toContain('your last name (optional): lovelace');
+  });
+
+  it('asks what the agent is called, and offers the address that comes from the name', async () => {
+    typed.push('Ada', 'Lovelace', 'Atlas Prime', '');
+    const shown = await printed('keylessSetupUnnamed', 'terminal', { typing: true });
+    const { setupRelay } = await import('../api/agent-inbox');
+
+    expect(shown.exitCode).toBe(0);
+    expect(vi.mocked(setupRelay)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ agentName: 'Atlas Prime', inboxHandle: 'atlas-prime' })
+    );
+    expect(leftOnScreen(shown)).toContain("your agent's name: atlas prime");
+    expect(leftOnScreen(shown)).toContain("your agent's address: atlas-prime@agentinbox.md");
   });
 
   it('stops where the answer is no, as before', async () => {

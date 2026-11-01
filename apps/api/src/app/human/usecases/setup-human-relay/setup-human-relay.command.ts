@@ -1,5 +1,5 @@
-import { HumanChannelViaEnum } from '@novu/shared';
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
+import { AGENT_ANALYTICS_SOURCES, type AgentAnalyticsSource, HumanChannelViaEnum } from '@novu/shared';
+import { IsBoolean, IsEnum, IsIn, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
@@ -38,6 +38,11 @@ export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
   @IsString()
   email?: string;
 
+  /** Sign-in has proved `email` is the operator's. The controller only sets this for the dashboard's server. */
+  @IsOptional()
+  @IsBoolean()
+  emailVerified?: boolean;
+
   @IsOptional()
   @IsString()
   firstName?: string;
@@ -49,4 +54,9 @@ export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsEnum(HumanChannelViaEnum)
   defaultVia?: HumanChannelViaEnum;
+
+  /** The app that asked, for analytics. */
+  @IsOptional()
+  @IsIn(AGENT_ANALYTICS_SOURCES)
+  analyticsSource?: AgentAnalyticsSource;
 }

@@ -25,8 +25,8 @@ import { isIP } from 'node:net';
 import { Readable } from 'node:stream';
 import { LRUCache } from 'lru-cache';
 
-type PrivateIpClassificationModule = typeof import('@novu/shared/dist/cjs/utils/private-ip-classification');
-type OutboundSsrfAllowListModule = typeof import('@novu/shared/dist/cjs/utils/outbound-ssrf-allow-list');
+type PrivateIpClassificationModule = typeof import('@novu/shared/utils/private-ip-classification');
+type OutboundSsrfAllowListModule = typeof import('@novu/shared/utils/outbound-ssrf-allow-list');
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { isPrivateIp, isLinkLocalIp, normalizeHostnameForLookup } =
@@ -280,6 +280,8 @@ export interface SafeOutboundJsonResponse<T = unknown> {
   statusMessage: string;
   headers: http.IncomingHttpHeaders;
   body: T;
+  /** False when a non-blank body could not be parsed as JSON, in which case `body` is the raw text. */
+  isJson: boolean;
 }
 
 const SENSITIVE_HEADER_PATTERNS = [
@@ -627,22 +629,24 @@ export async function safeOutboundJsonRequest<T = unknown>(
   const response = await safeOutboundRequest({ ...options, headers, body });
 
   const contentType = headerString(response.headers['content-type']) ?? '';
-  let parsed: unknown = response.body.toString('utf8');
+  const text = response.body.toString('utf8');
+  const trimmed = text.trim();
+  let parsed: unknown = text;
+  let isJson = trimmed.length === 0;
 
   if (contentType.includes('application/json') || contentType.includes('+json')) {
     try {
-      parsed = response.body.length === 0 ? undefined : JSON.parse(response.body.toString('utf8'));
+      parsed = response.body.length === 0 ? undefined : JSON.parse(text);
+      isJson = true;
     } catch {
       // Leave parsed as string if JSON parsing fails.
     }
-  } else if (typeof parsed === 'string') {
-    const trimmed = parsed.trim();
-    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-      try {
-        parsed = JSON.parse(trimmed);
-      } catch {
-        // Leave parsed as string if JSON parsing fails.
-      }
+  } else if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      parsed = JSON.parse(trimmed);
+      isJson = true;
+    } catch {
+      // Leave parsed as string if JSON parsing fails.
     }
   }
 
@@ -651,5 +655,6 @@ export async function safeOutboundJsonRequest<T = unknown>(
     statusMessage: response.statusMessage,
     headers: response.headers,
     body: parsed as T,
+    isJson,
   };
 }

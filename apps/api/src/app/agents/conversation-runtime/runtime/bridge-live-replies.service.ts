@@ -2,18 +2,20 @@ import type { Readable } from 'node:stream';
 import { Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { type AgentEventEnvelope, isAgentEventEnvelope } from '@novu/agent-event-protocol';
 import { PinoLogger } from '@novu/application-generic';
-import type { ConversationEntity } from '@novu/dal';
 import type { LiveReply } from '@novu/thalamus/durable';
 import { createParser } from 'eventsource-parser';
-import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { streamsLiveReplies } from '../../managed-runtime/live-reply-streamer.service';
 import { type AgentEventContext, AgentEventSink } from '../../shared/agent-event-sink.service';
 import { resolveLifecycleChannel } from '../conversation/run-lifecycle-activity';
+import type { ConversationTurn } from './conversation-turn';
 
 /** A bridge controls this stream, so neither a frame nor the replies it opens may grow without bound. */
 const MAX_FRAME_CHARS = 1024 * 1024;
 const MAX_OPEN_REPLIES = 8;
 const MAX_QUEUED_CHARS = 1024 * 1024;
+
+/** What a live reply needs from the turn it answers. */
+type LiveReplyTurn = Pick<ConversationTurn, 'config' | 'conversation' | 'platformThreadId' | 'platformUserId'>;
 
 /** Streams the replies a bridge writes to its SSE response into the conversation's channel. */
 @Injectable()
@@ -33,32 +35,24 @@ export class BridgeLiveReplies implements OnApplicationShutdown {
   }
 
   /** Set only when the channel streams; the bridge is then asked for SSE and its body handed to the reader. */
-  readerFor(
-    config: ResolvedAgentConfig,
-    conversation: ConversationEntity,
-    platformThreadId?: string
-  ): ((body: Readable) => void) | undefined {
-    if (!streamsLiveReplies(config.platform)) {
+  readerFor(turn: LiveReplyTurn): ((body: Readable) => void) | undefined {
+    if (!streamsLiveReplies(turn.config.platform)) {
       return undefined;
     }
 
     return (body) => {
       this.bodies.add(body);
       body.once('close', () => this.bodies.delete(body));
-      this.read(body, config, conversation, platformThreadId).catch((err) => {
+      this.read(body, turn).catch((err) => {
         body.destroy();
-        this.logger.warn(err, `[agent:${config.agentIdentifier}] Bridge live reply stream ended early`);
+        this.logger.warn(err, `[agent:${turn.config.agentIdentifier}] Bridge live reply stream ended early`);
       });
     };
   }
 
-  private async read(
-    body: Readable,
-    config: ResolvedAgentConfig,
-    conversation: ConversationEntity,
-    platformThreadId?: string
-  ): Promise<void> {
-    const channel = resolveLifecycleChannel(conversation, platformThreadId);
+  private async read(body: Readable, turn: LiveReplyTurn): Promise<void> {
+    const { config, conversation } = turn;
+    const channel = resolveLifecycleChannel(conversation, turn.platformThreadId);
     const context: AgentEventContext = {
       userId: config.organizationId,
       environmentId: config.environmentId,
@@ -69,6 +63,7 @@ export class BridgeLiveReplies implements OnApplicationShutdown {
       agentId: config.agentId,
       platform: config.platform,
       platformThreadId: channel.platformThreadId,
+      platformUserId: turn.platformUserId,
       channel,
       source: 'bridge',
     };

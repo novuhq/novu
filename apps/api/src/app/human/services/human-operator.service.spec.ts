@@ -65,3 +65,51 @@ describe('HumanOperatorService.require', () => {
     expect(await notFoundCode(service.require(scope))).to.equal('operator_not_found');
   });
 });
+
+describe('HumanOperatorService.cardNameFor', () => {
+  const scope = { environmentId: 'env1', organizationId: 'org1', agentId: 'relay1' };
+
+  function setup(operator: { subscriberId: string } | null, names: { firstName?: string; lastName?: string } = {}) {
+    const subscriberRepository = { find: sinon.stub().resolves([]), findOne: sinon.stub().resolves(names) };
+    const humanContactRepository = {
+      findOperator: sinon.stub().resolves(operator),
+      findOperatorInEnvironment: sinon.stub().resolves(null),
+    };
+    const service = new HumanOperatorService(
+      {} as never,
+      subscriberRepository as never,
+      humanContactRepository as never
+    );
+
+    return { service, subscriberRepository };
+  }
+
+  it('names the operator by their first name and the initial of their last name', async () => {
+    const { service, subscriberRepository } = setup(
+      { subscriberId: 'ada' },
+      { firstName: 'Ada', lastName: 'Lovelace' }
+    );
+
+    expect(await service.cardNameFor(scope)).to.deep.equal({ operatorName: 'Ada L.', operatorFirstName: 'Ada' });
+    expect(subscriberRepository.findOne.firstCall.args[0]).to.deep.equal({
+      _environmentId: 'env1',
+      subscriberId: 'ada',
+    });
+  });
+
+  it('keeps a first name of several words whole', async () => {
+    const { service } = setup({ subscriberId: 'mj' }, { firstName: ' Mary Jane ', lastName: 'Watson' });
+
+    expect(await service.cardNameFor(scope)).to.deep.equal({
+      operatorName: 'Mary Jane W.',
+      operatorFirstName: 'Mary Jane',
+    });
+  });
+
+  it('names nobody while nobody is set up as the operator', async () => {
+    const { service, subscriberRepository } = setup(null);
+
+    expect(await service.cardNameFor(scope)).to.equal(undefined);
+    expect(subscriberRepository.findOne.called).to.equal(false);
+  });
+});

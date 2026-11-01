@@ -21,7 +21,7 @@ Every agent conversation follows the same state machine, regardless of agent typ
 
 ## What the dashboard shows
 
-Navigate to your agent's detail page to see all conversations, their status, and a complete timeline of activity.
+View an agent conversation history from the agent's detail page, or from the Activity Feed by switching to the **Agent Conversations** tab. The list shows status, the last message, the message count, and the last activity time. Open a row for the full timeline.
 
 <video autoPlay loop muted playsInline src="/images/agents/conversations/manage-agent-conversations.mp4" />
 
@@ -53,3 +53,11 @@ Both managed agents and custom code agents support the same live channels. Capab
 <Note>
   Platform capabilities vary. For example, typing indicators and message edits are unavailable on email, and outbound file attachments are supported on Slack and Microsoft Teams only today.
 </Note>
+
+## Across providers
+
+Agent conversations stay on the provider thread where they started. A Slack thread, an email thread, and a Web Chat thread are separate conversations, even when they belong to the same agent.
+
+Novu can resolve a Slack user and an email sender to the same subscriber, so your agent sees one person. That does not merge the threads. History, status, and replies stay on the thread where the message arrived. The same handler receives events from every provider you have linked.
+
+To connect the agent to Slack, follow [Slack](/agents/channels/slack).

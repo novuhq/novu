@@ -55,6 +55,8 @@ export interface AgentEventContext {
   subscriberId?: string;
   platform?: AgentPlatformEnum;
   platformThreadId?: string;
+  /** The acting user's platform identity (Slack userId, Telegram chatId) for the turn being answered. */
+  platformUserId?: string;
   /** Conversation channel for durable activity persist (web-chat lifecycle, tool ledger, etc.). */
   channel?: ConversationChannel;
   sessionId?: string;
@@ -761,7 +763,7 @@ export class AgentEventSink {
     runId: string
   ): Promise<void> {
     const baseFields = this.buildBaseFields(context);
-    const { platform, platformThreadId, sessionId, subscriberId } = context;
+    const { platform, platformThreadId, platformUserId, sessionId, subscriberId } = context;
     const approvals = event.approvals ?? [];
 
     if (!platform || !platformThreadId || !sessionId) {
@@ -799,6 +801,7 @@ export class AgentEventSink {
           subscriberId,
           platform,
           platformThreadId,
+          platformUserId,
           sessionId,
           response,
         })

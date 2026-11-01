@@ -1,0 +1,4 @@
+node_modules/
+.wrangler/
+.wrangler.box-image.json
+!package-lock.json

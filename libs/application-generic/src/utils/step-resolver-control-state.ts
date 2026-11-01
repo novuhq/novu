@@ -1,6 +1,6 @@
 import { ErrorObject } from 'ajv';
 import { cloneDeep } from 'es-toolkit/compat';
-import { createSchemaValidationAjv } from './issues';
+import { getSchemaValidator } from './issues';
 
 export const FRAMEWORK_EMPTY_STEP_RESOLVER_SCHEMA = {
   type: 'object',
@@ -45,7 +45,7 @@ export function reconcileStepResolverControlValues(
   controlValues: Record<string, unknown> | null | undefined,
   controlSchema: Record<string, unknown>
 ): Record<string, unknown> {
-  const validate = createSchemaValidationAjv({ schema: controlSchema }).compile(controlSchema);
+  const validate = getSchemaValidator(controlSchema);
   let reconciledControlValues = cloneDeep(isPlainObject(controlValues) ? controlValues : {});
 
   while (true) {

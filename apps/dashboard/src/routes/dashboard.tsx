@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { CommandPalette } from '@/components/command-palette';
 import { CommandPaletteProvider } from '@/components/command-palette/command-palette-provider';
-import { SupportDrawerProvider } from '@/components/header-navigation/support-drawer';
+import { HelpPanelProvider } from '@/components/help-panel';
 import { Toaster } from '@/components/primitives/sonner';
 import { useAuth } from '@/context/auth/hooks';
 import { LocalModeProvider } from '@/context/local-mode';
@@ -28,13 +28,13 @@ export const DashboardRoute = () => {
       <DashboardProvisioningDismiss />
       <OptInProvider>
         <LocalModeProvider>
-          <SupportDrawerProvider>
+          <HelpPanelProvider>
             <CommandPaletteProvider>
               <Outlet />
               <CommandPalette />
               <Toaster />
             </CommandPaletteProvider>
-          </SupportDrawerProvider>
+          </HelpPanelProvider>
         </LocalModeProvider>
       </OptInProvider>
     </ProtectedRoute>

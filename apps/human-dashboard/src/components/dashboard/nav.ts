@@ -26,6 +26,17 @@ export function configureChannelPath(via: 'email' | 'telegram' | 'slack'): strin
   return `${CONFIGURE_PATH}?${CONFIGURE_DRAWER_PARAM}=${via}`;
 }
 
+/** The query parameter that opens "Connect another agent" on the Configure page, on the host it names. */
+export const CONFIGURE_CONNECT_PARAM = 'connect';
+
+/**
+ * The Configure page with "Connect another agent" open on a host, where a public host page's "sign in to get
+ * your code" leads: signed out, the operator signs in first and comes back here.
+ */
+export function configureConnectPath(host: string): string {
+  return `${CONFIGURE_PATH}?${CONFIGURE_CONNECT_PARAM}=${host}`;
+}
+
 /** The pages of the dashboard, in sidebar order. */
 export const MAIN_NAV: NavItem[] = [
   { href: DASHBOARD_HOME, label: 'Inbox', icon: Inbox },

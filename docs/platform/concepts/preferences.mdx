@@ -107,6 +107,8 @@ Examples:
 2. If the subscriber disabled `email` globally but enabled `email` for this specific workflow, they will receive email notifications for this workflow. The per-workflow preference is more specific than the global one.
 3. If the `in-app` channel is enabled in workflow channel preferences and the workflow is marked as critical, subscribers cannot change their preferences and will always receive in-app notifications.
 
+Preferences are stored per environment. When the Inbox is initialized with a [tenant context](/platform/concepts/tenants), they are stored for that subscriber and tenant together, so the same person can opt in for one tenant and opt out for another.
+
 <Note>
   Only channels that exist as active steps in the workflow are considered. A channel that the workflow does not use is never resolved, whatever the subscriber set for it globally.
 </Note>

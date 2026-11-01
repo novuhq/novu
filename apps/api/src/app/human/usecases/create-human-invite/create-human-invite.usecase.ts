@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
 import { buildHumanDashboardUrl } from '../../../shared/helpers/resolve-human-dashboard-base-url';
 import type { CreateHumanInviteResponseDto } from '../../dtos/human-invite.dto';
+import { trackAgentInboxContactInvited } from '../../services/agent-inbox-analytics';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import { HumanInviteTokenService, toHttpError } from '../../services/human-invite-token.service';
 import { SetupHumanRelayCommand } from '../setup-human-relay/setup-human-relay.command';
@@ -18,7 +19,8 @@ export class CreateHumanInvite {
   constructor(
     private readonly setupHumanRelay: SetupHumanRelay,
     private readonly deliveryService: HumanDeliveryService,
-    private readonly inviteTokens: HumanInviteTokenService
+    private readonly inviteTokens: HumanInviteTokenService,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   @InstrumentUsecase()
@@ -32,6 +34,7 @@ export class CreateHumanInvite {
         agentIdentifier: command.agentIdentifier,
         firstName: command.firstName,
         lastName: command.lastName,
+        analyticsSource: command.analyticsSource,
       })
     );
 
@@ -59,6 +62,12 @@ export class CreateHumanInvite {
     } catch (err) {
       throw toHttpError(err);
     }
+
+    trackAgentInboxContactInvited(
+      this.analyticsService,
+      { userId: command.userId, organizationId: command.organizationId },
+      { agentId: relay.agentId, source: command.analyticsSource }
+    );
 
     return {
       url: buildHumanDashboardUrl(`/invite/${issued.token}`),

@@ -43,7 +43,7 @@ import {
 import { cn } from '@/lib/utils';
 
 /** The name `channel add slack` gives the app, for an agent that has no name of its own to lend it. */
-const DEFAULT_APP_NAME = 'Human';
+const DEFAULT_APP_NAME = 'Agent';
 const PERMISSION_COUNT = `${SLACK_APP_PERMISSIONS.length} permissions`;
 /** One of the two round badges above "Install … in Slack". */
 const BADGE = 'flex size-15 items-center justify-center rounded-full border border-border-strong bg-subtle';
@@ -65,7 +65,10 @@ type SlackSetupProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-/** The drawer that walks through giving the agent a Slack app. The Configure page's channels open it. */
+/**
+ * The drawer that walks through giving the agent a Slack app. The Configure page's channels open it, and so
+ * does the last step of the onboarding.
+ */
 export function SlackSetup({ setup, agentName, handle, prompt, open, onOpenChange }: SlackSetupProps) {
   const router = useRouter();
   const [step, setStep] = useState<SetupStep>(stepOf(setup));
@@ -462,7 +465,7 @@ function InstallStep({
           <ChannelIcon via="slack" className="size-5.5" />
         </span>
         <span className={cn(BADGE, 'relative -ml-3')}>
-          {/* The human.md mark, from the paths the design exports. */}
+          {/* The agentinbox.md mark, from the paths the design exports. */}
           <svg viewBox="0 0 22 22" className="size-6.5" fill="none">
             <path
               className="fill-accent"

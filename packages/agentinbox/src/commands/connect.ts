@@ -4,6 +4,7 @@ import { type ConnectedAgent, connectWithCode } from '../api/connect';
 import { findOperator } from '../api/login';
 import { info, promptLine, success } from '../cli-io';
 import { CLI_COMMAND, type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
+import { detectHost, type HostId, isHostId } from '../host';
 import { openedScreen, openScreen } from '../screen/screen';
 import { failOnScreen } from './failure';
 import { handleError } from './interact';
@@ -55,11 +56,12 @@ export async function connectCommand(agent: string, options: ConnectOptions): Pr
       info(`Messages need --to until the account has you as a contact: run ${pc.bold(`${CLI_COMMAND} setup`)}.`);
     }
 
-    const check = `Check it works: ${pc.bold(`${CLI_COMMAND} inbox list`)}`;
+    const check = `Check it works: ${pc.bold(`${CLI_COMMAND} list`)}`;
+    const listen = listenHint(detectHost() ?? result.config.host, handle);
     if (screen) {
-      screen.add({ mark: 'next', value: check });
+      screen.add({ mark: 'next', value: check }, ...(listen ? [{ mark: 'next' as const, value: listen }] : []));
     } else {
-      process.stdout.write(`${check}\n`);
+      process.stdout.write(`${check}\n${listen ? `${listen}\n` : ''}`);
     }
 
     if (process.env.INBOX_SECRET_KEY?.trim()) {
@@ -113,6 +115,7 @@ export async function runConnect(
     () => undefined
   );
   const keptSetup = Boolean(savedId) && (!operatorId || operatorId === savedId);
+  const host = hostToKeep(connected.host);
 
   const config: CliConfig = {
     apiUrl,
@@ -120,10 +123,36 @@ export async function runConnect(
     relayAgentIdentifier: connected.agent.identifier,
     ...(keptSetup ? { subscriberId: savedId, defaultChannel: current?.defaultChannel } : {}),
     ...(operatorId && !keptSetup ? { subscriberId: operatorId } : {}),
+    ...(host ? { host } : {}),
   };
   saveConfig(config);
 
   return { config, agent: connected.agent, keptSetup };
+}
+
+/**
+ * The optional last step, for a host `listen` can start (Claude Code for now): listening for messages, so one
+ * to the agent starts it on this computer. Undefined for every other host.
+ */
+export function listenHint(host: HostId | undefined, handle: string): string | undefined {
+  if (host !== 'claude-code') {
+    return undefined;
+  }
+
+  return `Optional: keep Claude Code listening, so a message to ${handle} starts it in this folder: ${pc.bold(`${CLI_COMMAND} listen claude-code`)}`;
+}
+
+/**
+ * The host to remember for this computer: the one the code was made for, which the API answers with when
+ * the shell didn't say which host runs the CLI. A shell that says it is asked again on every command, and
+ * `general` says nothing the API wouldn't assume anyway.
+ */
+function hostToKeep(answered: string | undefined): HostId | undefined {
+  if (detectHost() || !isHostId(answered) || answered === 'general') {
+    return undefined;
+  }
+
+  return answered;
 }
 
 /** `atlas`, `Atlas` and `atlas@agentinbox.md` all name the agent `atlas`. */

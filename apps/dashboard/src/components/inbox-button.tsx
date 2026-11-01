@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/compon
 import { APP_ID, IS_SELF_HOSTED, SOCKET_OPTIONS } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useDashboardInboxHashes } from '@/hooks/use-dashboard-inbox-hashes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useWorkflowEditorPage } from '@/hooks/use-workflow-editor-page';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
@@ -96,43 +97,63 @@ const InboxInner = ({
   );
 };
 
-export const InboxButton = ({
-  align,
-  side,
-}: {
+type InboxButtonProps = {
   align?: 'start' | 'center' | 'end';
   side?: 'top' | 'bottom' | 'left' | 'right';
-}) => {
+};
+
+const HOSTED_LOCALIZATION = {
+  'inbox.filters.labels.default': 'Inbox',
+  'inbox.filters.labels.unread': 'Unread',
+  'inbox.filters.labels.archived': 'Archived',
+  'preferences.title': 'Preferences',
+  'notifications.emptyNotice': 'No notifications',
+};
+
+const TEST_LOCALIZATION = {
+  'inbox.filters.labels.default': 'Inbox (Test)',
+  'inbox.filters.labels.unread': 'Unread (Test)',
+  'inbox.filters.labels.archived': 'Archived (Test)',
+  'preferences.title': 'Preferences (Test)',
+  'notifications.emptyNotice': 'This is a test inbox. Send a notification to preview it in real-time.',
+};
+
+function useInboxSubscriber() {
   const { user } = useUser();
+
+  return useMemo(
+    () =>
+      user?.externalId
+        ? {
+            subscriberId: user.externalId,
+            email: user.primaryEmailAddress?.emailAddress ?? user.emailAddresses?.[0]?.emailAddress ?? '',
+            firstName: user.firstName ?? '',
+            lastName: user.lastName ?? '',
+          }
+        : undefined,
+    [user?.externalId, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses, user?.firstName, user?.lastName]
+  );
+}
+
+/**
+ * The dashboard's own Inbox, served by Novu's production account with the shared APP_ID and the
+ * `<userId>` subscriber. If that production integration has HMAC enabled, the session must carry a
+ * server-minted subscriberHash (+ tenant context/contextHash), so we mint it the same way the
+ * NovuCopilot connect flow does.
+ */
+function HostedInboxButton({ align, side }: InboxButtonProps) {
+  const subscriber = useInboxSubscriber();
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
-  const { isWorkflowEditorPage: isTestPage } = useWorkflowEditorPage();
   const { currentOrganization } = useAuth();
   const isNovuCopilotSlackEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NOVU_COPILOT_SLACK_ENABLED, false);
 
-  const appId = isTestPage ? currentEnvironment?.identifier : APP_ID;
-  const localizationTestSuffix = isTestPage ? ' (Test)' : '';
   const isNovuProductionDashboard = window.location.hostname.includes('dashboard.novu.co');
   const isNovuStagingEnvironment = apiHostnameManager.getHostname() === 'https://api.novu-staging.co';
-  const shouldUseProductionApi = (isNovuProductionDashboard || isNovuStagingEnvironment) && !isTestPage;
+  const shouldUseProductionApi = isNovuProductionDashboard || isNovuStagingEnvironment;
 
-  const subscriber = useMemo(
-    () => ({
-      subscriberId: user?.externalId ?? '',
-      email: user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? '',
-      firstName: user?.firstName ?? '',
-      lastName: user?.lastName ?? '',
-    }),
-    [user?.externalId, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses, user?.firstName, user?.lastName]
-  );
-
-  // On the (non-test) dashboard Inbox we authenticate against Novu's own production account with the
-  // shared APP_ID and the `<userId>` subscriber. If that production integration has HMAC enabled,
-  // the session must carry a server-minted subscriberHash (+ tenant context/contextHash), so we mint
-  // it the same way the NovuCopilot connect flow does. The test page talks to the customer's own
-  // environment where none of this applies, hence it stays disabled there.
   const { data: connectContext } = useQuery({
-    queryKey: ['novu-context', currentEnvironment?._id, subscriber.subscriberId],
+    queryKey: ['novu-context', currentEnvironment?._id, subscriber?.subscriberId],
     queryFn: ({ signal }) => {
       if (!currentEnvironment) {
         throw new Error('No environment selected');
@@ -142,47 +163,65 @@ export const InboxButton = ({
     },
     enabled:
       isNovuCopilotSlackEnabled &&
-      !isTestPage &&
       !IS_SELF_HOSTED &&
       !!currentEnvironment?._id &&
       !!currentOrganization?._id &&
-      !!user?.externalId,
+      !!subscriber,
     staleTime: 5 * 60 * 1000,
   });
 
-  const localization = useMemo(
-    () => ({
-      'inbox.filters.labels.default': `Inbox${localizationTestSuffix}`,
-      'inbox.filters.labels.unread': `Unread${localizationTestSuffix}`,
-      'inbox.filters.labels.archived': `Archived${localizationTestSuffix}`,
-      'preferences.title': `Preferences${localizationTestSuffix}`,
-      'notifications.emptyNotice': `${isTestPage ? 'This is a test inbox. Send a notification to preview it in real-time.' : 'No notifications'}`,
-    }),
-    [isTestPage, localizationTestSuffix]
-  );
-
-  if (!user?.externalId || !currentEnvironment || !currentOrganization) {
-    return null;
-  }
-
-  if (!isTestPage && IS_SELF_HOSTED) {
+  if (IS_SELF_HOSTED || !subscriber || !currentEnvironment || !currentOrganization) {
     return null;
   }
 
   return (
     <Inbox
       subscriber={subscriber}
-      applicationIdentifier={appId}
+      applicationIdentifier={APP_ID}
       backendUrl={shouldUseProductionApi ? 'https://api.novu.co' : apiHostnameManager.getHostname()}
       socketUrl={shouldUseProductionApi ? 'https://ws.novu.co' : apiHostnameManager.getWebSocketHostname()}
       socketOptions={shouldUseProductionApi ? undefined : SOCKET_OPTIONS}
-      subscriberHash={isTestPage ? undefined : connectContext?.subscriberHash}
-      context={isTestPage ? undefined : connectContext?.context}
-      contextHash={isTestPage ? undefined : connectContext?.contextHash}
-      localization={localization}
+      subscriberHash={connectContext?.subscriberHash}
+      context={connectContext?.context}
+      contextHash={connectContext?.contextHash}
+      localization={HOSTED_LOCALIZATION}
       routerPush={(path: string) => navigate(path)}
     >
       <InboxInner align={align} side={side} />
     </Inbox>
   );
+}
+
+/** The workflow editor's test Inbox, opened in the customer's own environment. */
+function TestInboxButton({ align, side }: InboxButtonProps) {
+  const subscriber = useInboxSubscriber();
+  const navigate = useNavigate();
+  const { currentEnvironment } = useEnvironment();
+  const { currentOrganization } = useAuth();
+  const { subscriberHash, isSettled: isHashSettled } = useDashboardInboxHashes();
+
+  if (!subscriber || !currentEnvironment || !currentOrganization || !isHashSettled) {
+    return null;
+  }
+
+  return (
+    <Inbox
+      subscriber={subscriber}
+      applicationIdentifier={currentEnvironment.identifier}
+      backendUrl={apiHostnameManager.getHostname()}
+      socketUrl={apiHostnameManager.getWebSocketHostname()}
+      socketOptions={SOCKET_OPTIONS}
+      subscriberHash={subscriberHash}
+      localization={TEST_LOCALIZATION}
+      routerPush={(path: string) => navigate(path)}
+    >
+      <InboxInner align={align} side={side} />
+    </Inbox>
+  );
+}
+
+export const InboxButton = (props: InboxButtonProps) => {
+  const { isWorkflowEditorPage } = useWorkflowEditorPage();
+
+  return isWorkflowEditorPage ? <TestInboxButton {...props} /> : <HostedInboxButton {...props} />;
 };

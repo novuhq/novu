@@ -3,7 +3,7 @@ title: 'Demo Integrations'
 description: "Learn how Novu's default demo Email and SMS providers work, their sending limits, and when to replace them with your own production integrations."
 ---
 
-Demo integrations are built-in, sandboxed providers for the email and SMS channels. Their purpose is to allow you to test your notification workflows immediately, without needing to sign up for or connect a real third-party provider.
+Demo integrations are built-in, sandboxed providers for the email and SMS channels. Use them to test a workflow without configuring a provider such as SendGrid or Twilio.
 
 When you create a Novu account, your environments come pre-configured with two demo email integrations and two demo SMS integrations. All demo integrations are active by default, and you can set any of them as the primary integration for their channel at any time from the **Integration Store**.
 
@@ -18,7 +18,7 @@ Demo integrations are intended strictly for testing and development. To ensure t
 - Both the demo email and demo SMS integrations are limited to 300 notifications per month each.
 - The demo Email integration can only send emails to the address associated with your logged-in Novu account. It does not deliver messages to any other email address.
 
-## How test using a demo integration
+## Test without configuring a provider
 
 Demo integrations are active by default, so you can start testing in just a few steps.
 
@@ -34,7 +34,9 @@ The demo integrations are set as primary by default in new Novu environments.
 6. Verify the notification. There are two ways to confirm that your test was successful:
     - Check the activity feed or event logs to confirm if the notification was successfully sent to the various channels.
       ![Event logs](/images/channels-and-providers/event-logs.png)
-    - Check the inbox of the email address and phone number you use for your Novu account. You should receive a real email and SMS from the demo integration.
+    - Check the inbox of the email address and phone number you use for your Novu account. You should receive a real email and SMS from the demo integration. You can also confirm the run in the [Activity Feed](/platform/workflow/monitor-and-debug-workflow).
+
+Replace the demo integrations with your own provider before you send production traffic.
 
 ## Next step
 

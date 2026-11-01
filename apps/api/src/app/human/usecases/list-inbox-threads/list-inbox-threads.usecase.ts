@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
 import { ConversationStatusEnum } from '@novu/dal';
 import type { InboxStatusFilter, InboxTab, ListInboxResponseDto } from '../../dtos/human-inbox.dto';
+import { trackAgentInboxListed } from '../../services/agent-inbox-analytics';
 import { HumanHostStatusService } from '../../services/human-host-status.service';
 import {
   HumanInboxService,
@@ -33,13 +34,14 @@ const FILTERS_BY_TAB: Record<InboxTab, Pick<InboxListFilters, 'read' | 'status' 
 /**
  * Lists the relay agent's threads: open ones from contacts unless the filters say otherwise. With
  * `waitSeconds`, holds the request until at least one thread matches or the time is up, so an
- * agent can block on `human inbox list --wait` cheaply.
+ * agent can block on `agentinbox list --wait` cheaply.
  */
 @Injectable()
 export class ListInboxThreads {
   constructor(
     private readonly inbox: HumanInboxService,
-    private readonly hostStatus: HumanHostStatusService
+    private readonly hostStatus: HumanHostStatusService,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   @InstrumentUsecase()
@@ -73,8 +75,14 @@ export class ListInboxThreads {
     }
 
     if (command.hostVia) {
-      await this.hostStatus.recordCheck(scope, agent, command.hostVia, page.data);
+      await this.hostStatus.recordCheck(scope, agent, { via: command.hostVia, id: command.hostId }, page.data);
     }
+
+    trackAgentInboxListed(
+      this.analyticsService,
+      { userId: command.userId, organizationId: command.organizationId },
+      { agentId: agent._id, source: command.analyticsSource }
+    );
 
     return page;
   }

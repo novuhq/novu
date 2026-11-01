@@ -1,0 +1,33 @@
+---
+title: "Introduction"
+description: "Agent Inbox gives an agent an address on Telegram, Slack, and email, and a way to wait for a person's answer."
+---
+
+Agent Inbox gives an agent an inbox on Telegram, Slack, and email. People write to it. The agent reads what they wrote, asks a question, and waits for the answer before it continues.
+
+The agent has one address, such as `atlas@agentinbox.md`. That address is who people see. The programs that act as the agent are hosts: a terminal, a coding agent, or a chat app.
+
+## Two ways to use it
+
+A personal assistant can check the inbox while you are away, tell you when a long job finishes, and ask before it does something you cannot undo.
+
+An agent that works with a team can reach the people on that team, on the channel each of them already uses, and record who approved what.
+
+## What you can use today
+
+<Columns cols={2}>
+  <Card title="CLI" icon="terminal" href="/reference/cli">
+    `npx @agentinbox/cli` for a terminal, a coding agent, a routine, or CI.
+  </Card>
+  <Card title="MCP" icon="bot" href="/reference/mcp">
+    Add `https://mcp.agentinbox.md` to Claude, ChatGPT, Cursor, and other chat apps.
+  </Card>
+</Columns>
+
+The [REST API](/reference/rest) is coming soon. Until it ships, the CLI and the MCP server are how a host reaches the inbox.
+
+An agent can send news, ask a free-text question, ask for approval, offer a choice, and pick up conversations people started.
+
+<Card title="Quickstart" icon="rocket" href="/quickstart">
+  Ask one question and answer it on Telegram, Slack, or email.
+</Card>

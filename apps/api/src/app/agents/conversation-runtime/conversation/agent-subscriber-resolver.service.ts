@@ -6,7 +6,14 @@ import {
   CreateOrUpdateSubscriberUseCase,
   PinoLogger,
 } from '@novu/application-generic';
-import { ChannelEndpointRepository, isDuplicateKeyError, SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import {
+  AgentRepository,
+  ChannelEndpointRepository,
+  HumanContactRepository,
+  isDuplicateKeyError,
+  SubscriberEntity,
+  SubscriberRepository,
+} from '@novu/dal';
 import {
   AGENT_PLATFORM_PROVISION_SOURCE,
   AGENT_PROVISION_DATA_KEYS,
@@ -40,6 +47,8 @@ export interface ResolveSubscriberParams {
   platform: AgentPlatformEnum;
   platformUserId: string;
   integrationIdentifier: string;
+  /** Set on inbound turns so a typed, still-unverified address resolves to its contact. */
+  agentIdentifier?: string;
 }
 
 export interface ResolveOrProvisionParams extends ResolveSubscriberParams {
@@ -99,7 +108,9 @@ export class AgentSubscriberResolver {
     private readonly createChannelEndpoint: CreateChannelEndpoint,
     private readonly analyticsService: AnalyticsService,
     private readonly adoptionService: AgentSubscriberAdoptionService,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly humanContactRepository: HumanContactRepository,
+    private readonly agentRepository: AgentRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -137,6 +148,7 @@ export class AgentSubscriberResolver {
         environmentId,
         organizationId,
         platformUserId,
+        agentIdentifier: params.agentIdentifier,
       });
     }
 
@@ -556,10 +568,57 @@ export class AgentSubscriberResolver {
     return null;
   }
 
+  /**
+   * A claimed org can mail an address it has only declared. That contact has no
+   * `Subscriber.email`, so an authenticated reply has to resolve through the
+   * contact or it lands on a different person and the question never settles.
+   */
+  private async resolveHumanContactEmail(params: {
+    environmentId: string;
+    organizationId: string;
+    agentIdentifier?: string;
+    email: string;
+  }): Promise<string | null> {
+    if (!params.agentIdentifier) {
+      return null;
+    }
+
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: params.agentIdentifier,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+      },
+      ['_id']
+    );
+    if (!agent) {
+      return null;
+    }
+
+    const matches = await this.humanContactRepository.findContactsByEmailAddress(
+      params.environmentId,
+      agent._id,
+      params.email
+    );
+    const subscriberIds = [...new Set(matches.map((match) => match.subscriberId))];
+    if (subscriberIds.length !== 1) {
+      if (subscriberIds.length > 1) {
+        this.logger.warn(
+          `Email ${params.email} is stored for more than one human contact in environment ${params.environmentId} — not resolving a reply to it`
+        );
+      }
+
+      return null;
+    }
+
+    return subscriberIds[0];
+  }
+
   private async resolveEmailSubscriber(params: {
     environmentId: string;
     organizationId: string;
     platformUserId: string;
+    agentIdentifier?: string;
   }): Promise<SubscriberResolution> {
     const { environmentId, organizationId, platformUserId } = params;
     const email = normalizeEmailForLookup(platformUserId);
@@ -573,6 +632,18 @@ export class AgentSubscriberResolver {
     const matches = await this.subscriberRepository.findByEmail(environmentId, organizationId, email);
 
     if (matches.length === 0) {
+      const contactId = await this.resolveHumanContactEmail({
+        environmentId,
+        organizationId,
+        agentIdentifier: params.agentIdentifier,
+        email,
+      });
+      if (contactId) {
+        this.logger.debug(`Resolved email ${email} → human contact ${contactId}`);
+
+        return { outcome: 'resolved', subscriberId: contactId };
+      }
+
       this.logger.debug(`No subscriber found for email ${email}`);
 
       return { outcome: 'not_found' };

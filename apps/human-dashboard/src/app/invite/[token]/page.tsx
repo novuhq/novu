@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 import { InviteFrame } from '@/components/invite/invite-frame';
 import { InvitePage } from '@/components/invite/invite-page';
-import { resolveNovuApiUrl } from '@/lib/novu-api';
+import { API_PROXY_PATH } from '@/lib/novu-api';
 
 export const metadata: Metadata = {
   title: 'Invitation',
@@ -13,11 +13,10 @@ export const metadata: Metadata = {
 
 export default async function Page(props: PageProps<'/invite/[token]'>) {
   const { token } = await props.params;
-  const { region } = await props.searchParams;
 
   return (
     <InviteFrame>
-      <InvitePage apiUrl={resolveNovuApiUrl(region)} token={token} />
+      <InvitePage apiUrl={API_PROXY_PATH} token={token} />
     </InviteFrame>
   );
 }

@@ -4,7 +4,7 @@
  * same measures. Keep the two in step: when a shape or a measure changes there, change it here too.
  *
  * What differs is made for a terminal:
- * - The dots are those of gethuman.md's sapien page: a dot is lit where the shade beats an 8x8 Bayer
+ * - The dots are those of the agentinbox.md landing page: a dot is lit where the shade beats an 8x8 Bayer
  *   threshold, and takes the orange of its shade. The sphere is kept nearly solid, so its colour carries the
  *   light; only the halo thins out into loose dots.
  * - The face always looks straight ahead, so there is no turning (no yaw or pitch), and each eye keeps one
@@ -133,7 +133,7 @@ const HAPPY_EYE_LID = 0.1;
 const HAPPY_EYE_CUT_BELOW = 1 + HAPPY_EYE_CUT.height;
 
 /**
- * The sapien page's 8x8 Bayer matrix, as thresholds between 0 and 1: a dot is lit where its shade beats the
+ * The landing page's 8x8 Bayer matrix, as thresholds between 0 and 1: a dot is lit where its shade beats the
  * threshold at its place, so a brighter shade lights more dots.
  */
 const BAYER = [
@@ -201,7 +201,7 @@ export function drawMascot(width: number, face: MascotFace, options: DrawOptions
 
     return { ...eye, x: eye.x + shift.dx, y: eye.y + shift.dy, halfWidth: eye.halfWidth * shift.scale };
   });
-  // The shimmer is two slow waves across the dots, as on the sapien page.
+  // The shimmer is two slow waves across the dots, as on the landing page.
   const across = time * 0.00012 * 9;
   const down = time * 0.00009 * 7;
   const levels = new Uint8Array(width * height);

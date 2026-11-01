@@ -35,8 +35,9 @@ export class HumanInteractionActivityRecorder {
   }
 
   /**
-   * `answeredIn` is the conversation of the message or button press that carried the answer, and the
-   * answer is recorded there. An expiry or a cancel has none, and stays in the first thread.
+   * `answeredIn` is the conversation of the message or button press that carried the answer. The answer is
+   * recorded in the first thread, the question's own, and in `answeredIn` too when that is another of the
+   * agent's threads. An expiry or a cancel has none, and stays in the first thread.
    */
   async recordResponse(interaction: HumanInteractionEntity, answeredIn?: ConversationEntity): Promise<void> {
     await this.record(interaction, 'response', answeredIn);
@@ -106,17 +107,29 @@ export class HumanInteractionActivityRecorder {
       const respondedBy = interaction.response?.respondedBy?.trim();
       const respondedBySubscriberId = interaction.response?.respondedBySubscriberId;
       const isHuman = Boolean(respondedBySubscriberId || respondedBy);
-      const thread = answeredThread(interaction, first, answeredIn);
+      const answered = answeredThread(interaction, first, answeredIn);
+      const persistResponse = (thread: InteractionThread, answeredElsewhere?: true) =>
+        this.conversationService.persistHumanInteractionResponse({
+          ...contextIn(thread),
+          ...(answeredElsewhere ? { answeredElsewhere } : {}),
+          status: interaction.status,
+          optionId: interaction.response?.optionId,
+          text: interaction.response?.text,
+          actorType: isHuman
+            ? ConversationActivitySenderTypeEnum.SUBSCRIBER
+            : ConversationActivitySenderTypeEnum.SYSTEM,
+          actorId: respondedBySubscriberId ?? agentIdentifier,
+          actorName: respondedBy || (isHuman ? respondedBySubscriberId : 'System'),
+        });
 
-      await this.conversationService.persistHumanInteractionResponse({
-        ...contextIn(thread),
-        status: interaction.status,
-        optionId: interaction.response?.optionId,
-        text: interaction.response?.text,
-        actorType: isHuman ? ConversationActivitySenderTypeEnum.SUBSCRIBER : ConversationActivitySenderTypeEnum.SYSTEM,
-        actorId: respondedBySubscriberId ?? agentIdentifier,
-        actorName: respondedBy || (isHuman ? respondedBySubscriberId : 'System'),
-      });
+      // The answer comes back to the thread the question was asked in, whoever gave it and wherever. Given in
+      // another thread, it is recorded there as well, and the question's own row says so.
+      if (answered === first) {
+        await persistResponse(first);
+      } else {
+        await persistResponse(first, true);
+        await persistResponse(answered);
+      }
     } catch (err) {
       this.logger.warn(
         { err, interactionIdentifier: interaction.identifier, suffix },

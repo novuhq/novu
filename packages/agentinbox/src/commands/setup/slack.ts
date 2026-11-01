@@ -165,7 +165,7 @@ async function runSlackQuickSetup(
       return false;
     case 'page': {
       const setupLink = await issueSlackSetupLink(client, agentIdentifier, integration._id, subscriberId);
-      const setupUrl = buildSetupPageUrl(client.apiUrl, 'slack', setupLink.token, setupLink.url);
+      const setupUrl = buildSetupPageUrl(client.apiUrl, 'slack', setupLink.token);
 
       await handOffToSetupPage({
         channelLabel: 'Slack',

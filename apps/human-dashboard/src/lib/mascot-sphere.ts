@@ -34,6 +34,11 @@ export type MascotLook = {
    * has to face ahead: the happy drawing does, and the eyes would step sideways with every change.
    */
   ahead?: boolean;
+  /**
+   * Drawn for light paper: the shadow side stays orange instead of going near black, and the halo is a
+   * sparse scatter of pale dots instead of a dark ring.
+   */
+  paper?: boolean;
 };
 
 /** From the halo's darkest dot to the highlight. Level 0 is nothing at all. */
@@ -46,7 +51,21 @@ const PALETTE = [
   [0xff, 0x8a, 0x5e],
 ];
 
+const PAPER_PALETTE = [
+  [0xe4, 0x6e, 0x4c],
+  [0xee, 0x76, 0x52],
+  [0xf6, 0x7e, 0x58],
+  [0xfb, 0x8c, 0x66],
+  [0xfd, 0xa6, 0x88],
+  [0xff, 0xcc, 0xb8],
+];
+
 const EYE_COLOR = [0xee, 0xe5, 0xd8];
+const PAPER_EYE_COLOR = [0xff, 0xf8, 0xf1];
+
+/** On paper the halo is one pale dot colour, thinned to this share of its dark-mode strength. */
+const PAPER_HALO_COLOR = [0xf8, 0xc6, 0xb4];
+const PAPER_HALO_STRENGTH = 0.24;
 
 /** A 4x4 Bayer matrix: which pixels of a shade in between two levels take the brighter one. */
 const BAYER = [
@@ -138,28 +157,45 @@ export function drawMascot(
     for (let column = 0; column < size; column += 1) {
       const x = (column + 0.5 - centerX) / radius;
       const y = (row + 0.5 - centerY) / radius;
-      const distanceSquared = x * x + y * y;
       const offset = (row * size + column) * 4;
+      const color = colorAt(x, y, (BAYER[row & 3][column & 3] + 0.5) / 16, eyes, light, look.paper ?? false);
 
-      if (distanceSquared <= 1 && eyes.some((eye) => eye && isInEye(eye, x, y))) {
-        paint(pixels, offset, EYE_COLOR);
-        continue;
-      }
-
-      const shade =
-        distanceSquared <= 1
-          ? shadeOfSphere(x, y, Math.sqrt(1 - distanceSquared), light)
-          : shadeOfHalo(x, y, Math.sqrt(distanceSquared), light);
-      const threshold = (BAYER[row & 3][column & 3] + 0.5) / 16;
-      const level = Math.min(PALETTE.length, Math.floor(shade) + (shade - Math.floor(shade) > threshold ? 1 : 0));
-
-      if (level <= 0) {
-        pixels[offset + 3] = 0;
+      if (color) {
+        paint(pixels, offset, color);
       } else {
-        paint(pixels, offset, PALETTE[level - 1]);
+        pixels[offset + 3] = 0;
       }
     }
   }
+}
+
+/** The colour of the pixel at `x`, `y` (in sphere radii from the middle), or `null` where nothing is drawn. */
+function colorAt(
+  x: number,
+  y: number,
+  threshold: number,
+  eyes: Array<Eye | null>,
+  light: { x: number; y: number; z: number },
+  paper: boolean
+): number[] | null {
+  const distanceSquared = x * x + y * y;
+  const onSphere = distanceSquared <= 1;
+
+  if (onSphere && eyes.some((eye) => eye && isInEye(eye, x, y))) {
+    return paper ? PAPER_EYE_COLOR : EYE_COLOR;
+  }
+
+  const shade = onSphere
+    ? shadeOfSphere(x, y, Math.sqrt(1 - distanceSquared), light)
+    : shadeOfHalo(x, y, Math.sqrt(distanceSquared), light) * (paper ? PAPER_HALO_STRENGTH : 1);
+  const palette = paper ? PAPER_PALETTE : PALETTE;
+  const level = Math.min(palette.length, Math.floor(shade) + (shade - Math.floor(shade) > threshold ? 1 : 0));
+
+  if (level <= 0) {
+    return null;
+  }
+
+  return paper && !onSphere ? PAPER_HALO_COLOR : palette[level - 1];
 }
 
 function paint(pixels: Uint8ClampedArray, offset: number, color: number[]) {

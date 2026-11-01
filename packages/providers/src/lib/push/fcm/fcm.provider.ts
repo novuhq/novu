@@ -1,5 +1,5 @@
 import { FCM_ROUTING_KEYS, PushProviderIdEnum, resolveExclusiveRoutingKeys } from '@novu/shared';
-import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
+import { IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
 import crypto from 'crypto';
 import { cert, deleteApp, getApp, initializeApp } from 'firebase-admin/app';
 import {
@@ -10,8 +10,9 @@ import {
   TokenMessage,
   TopicMessage,
 } from 'firebase-admin/messaging';
-import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+import { PushBaseProvider } from '../push.base-provider';
 
 type FcmRouting = {
   token?: string;
@@ -24,9 +25,8 @@ type FcmSingleTarget = Pick<TokenMessage, 'token'> | Pick<TopicMessage, 'topic'>
 
 type FcmSendPlan = { kind: 'single'; target: FcmSingleTarget } | { kind: 'multicast'; tokens: string[] };
 
-export class FcmPushProvider extends BaseProvider implements IPushProvider {
+export class FcmPushProvider extends PushBaseProvider implements IPushProvider {
   id = PushProviderIdEnum.FCM;
-  channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
   protected casing: CasingEnum = CasingEnum.NONE;
 
   private readonly INVALID_TOKEN_ERRORS = ['Requested entity was not found'];

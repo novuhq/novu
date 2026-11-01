@@ -3,22 +3,22 @@ import { ApiAuthSchemeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AGENT_PAUSED, HumanAgentPausedGuard } from './human-agent-paused.guard';
-import { HUMAN_DASHBOARD_SECRET_HEADER } from './human-dashboard-secret.guard';
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './human-dashboard-secret.guard';
 
 describe('HumanAgentPausedGuard', () => {
   const SECRET = 'unit-human-dashboard-secret';
-  const originalSecret = process.env.HUMAN_DASHBOARD_API_SECRET;
+  const originalSecret = process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
   const PAUSED_AT = '2026-10-15T08:00:00.000Z';
 
   beforeEach(() => {
-    process.env.HUMAN_DASHBOARD_API_SECRET = SECRET;
+    process.env.AGENT_INBOX_DASHBOARD_API_SECRET = SECRET;
   });
 
   afterEach(() => {
     if (originalSecret === undefined) {
-      delete process.env.HUMAN_DASHBOARD_API_SECRET;
+      delete process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
     } else {
-      process.env.HUMAN_DASHBOARD_API_SECRET = originalSecret;
+      process.env.AGENT_INBOX_DASHBOARD_API_SECRET = originalSecret;
     }
   });
 
@@ -89,7 +89,7 @@ describe('HumanAgentPausedGuard', () => {
     const { guard, agentRepository } = setup();
 
     const allowed = await guard.canActivate(
-      contextOf(hostRequest({ headers: { [HUMAN_DASHBOARD_SECRET_HEADER]: SECRET } }))
+      contextOf(hostRequest({ headers: { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: SECRET } }))
     );
 
     expect(allowed).to.equal(true);
@@ -97,7 +97,7 @@ describe('HumanAgentPausedGuard', () => {
   });
 
   it('treats a wrong dashboard secret as a host', async () => {
-    const error = await refusal(hostRequest({ headers: { [HUMAN_DASHBOARD_SECRET_HEADER]: 'guess' } }));
+    const error = await refusal(hostRequest({ headers: { [AGENT_INBOX_DASHBOARD_SECRET_HEADER]: 'guess' } }));
 
     expect((error as HttpException).getStatus()).to.equal(403);
   });

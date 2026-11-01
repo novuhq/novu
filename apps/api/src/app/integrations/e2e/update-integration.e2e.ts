@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { decryptCredentials } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   ControlValuesRepository,
@@ -14,6 +15,7 @@ import {
   InAppProviderIdEnum,
   ITenantFilterPart,
   PushProviderIdEnum,
+  SmsProviderIdEnum,
   StepTypeEnum,
   ToolProviderIdEnum,
   WorkflowCreationSourceEnum,
@@ -416,6 +418,98 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
       updatedNodeMailerProviderPayload.credentials.tlsOptions
     );
     expect(nodeMailerIntegration?.active).to.equal(true);
+  });
+
+  describe('Twilio authentication method', () => {
+    async function createTwilioIntegration() {
+      const response = await session.testAgent.post('/v1/integrations').send({
+        providerId: SmsProviderIdEnum.Twilio,
+        channel: ChannelTypeEnum.SMS,
+        credentials: { accountSid: 'AC123', token: 'auth-token', from: '+15550000000' },
+        active: true,
+        check: false,
+      });
+      expect(response.status).to.equal(201);
+
+      return response.body.data._id as string;
+    }
+
+    async function findTwilioCredentials(integrationId: string) {
+      const integrations = await integrationRepository.findByEnvironmentId(session.environment._id);
+
+      const credentials = integrations.find((integration) => integration._id === integrationId)?.credentials;
+
+      return credentials ? decryptCredentials(credentials) : undefined;
+    }
+
+    it('should store only the API key when switching to API key authentication', async () => {
+      const integrationId = await createTwilioIntegration();
+
+      const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: {
+          authMethod: 'apiKey',
+          accountSid: 'AC123',
+          token: 'auth-token',
+          apiKey: 'SK123',
+          secretKey: 'api-key-secret',
+          from: '+15550000000',
+        },
+        check: false,
+      });
+      expect(response.status).to.equal(200);
+
+      const credentials = await findTwilioCredentials(integrationId);
+      expect(credentials?.authMethod).to.equal('apiKey');
+      expect(credentials?.apiKey).to.equal('SK123');
+      expect(credentials?.secretKey).to.equal('api-key-secret');
+      expect(credentials?.token).to.equal(undefined);
+    });
+
+    it('should store only the auth token when no authentication method is set', async () => {
+      const integrationId = await createTwilioIntegration();
+
+      const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: {
+          accountSid: 'AC123',
+          token: 'auth-token',
+          apiKey: 'SK123',
+          secretKey: 'api-key-secret',
+          from: '+15550000000',
+        },
+        check: false,
+      });
+      expect(response.status).to.equal(200);
+
+      const credentials = await findTwilioCredentials(integrationId);
+      expect(credentials?.authMethod).to.equal(undefined);
+      expect(credentials?.token).to.equal('auth-token');
+      expect(credentials?.apiKey).to.equal(undefined);
+      expect(credentials?.secretKey).to.equal(undefined);
+    });
+
+    it('should reject authMethod values other than apiKey', async () => {
+      const integrationId = await createTwilioIntegration();
+
+      const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: { authMethod: 'authToken', accountSid: 'AC123', token: 'auth-token' },
+        check: false,
+      });
+
+      expect(response.status).to.equal(422);
+      expect(JSON.stringify(response.body)).to.contain('credentials.authMethod must be one of the following values');
+    });
+
+    it('should reject API key authentication without the API key secret', async () => {
+      const integrationId = await createTwilioIntegration();
+
+      const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: { authMethod: 'apiKey', accountSid: 'AC123', apiKey: 'SK123' },
+        check: false,
+      });
+
+      expect(response.status).to.equal(400);
+      expect(response.body.message).to.contain('requires apiKey (API Key SID) and secretKey (API Key Secret)');
+    });
   });
 
   it('should not calculate primary and priority if active is not defined', async () => {

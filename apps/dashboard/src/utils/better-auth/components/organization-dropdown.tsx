@@ -13,6 +13,7 @@ import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { useAuth, useClerk, useOrganization, useOrganizationList } from '../index';
+import { useCanCreateOrganization } from '../use-auth-config';
 
 const SCROLL_THRESHOLD = 100;
 
@@ -52,8 +53,10 @@ function OrganizationAvatar({ imageUrl, name, size = 'sm', showShimmer = false }
   );
 }
 
+type OrganizationMembership = ReturnType<typeof useOrganizationList>['userMemberships']['data'][number];
+
 type OrganizationListItemProps = {
-  membership: any;
+  membership: OrganizationMembership;
   onSwitch: (id: string) => void;
   isSwitching: boolean;
   switchingToId: string | null;
@@ -93,6 +96,7 @@ export function OrganizationDropdown() {
   const { orgId } = useAuth();
   const clerk = useClerk();
   const navigate = useNavigate();
+  const { canCreateOrganization } = useCanCreateOrganization();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
@@ -150,7 +154,7 @@ export function OrganizationDropdown() {
   }, [userMemberships]);
 
   const filterMemberships = useCallback(
-    (membership: any) => {
+    (membership: OrganizationMembership) => {
       return membership.organization.id !== orgId;
     },
     [orgId]
@@ -220,18 +224,20 @@ export function OrganizationDropdown() {
           )}
         </div>
 
-        <DropdownMenuItem
-          className={cn(
-            'flex h-9 cursor-pointer items-center gap-2 rounded-none border-t border-stroke-100 px-2 text-sm transition-shadow focus:bg-accent hover:bg-accent',
-            isScrolled && 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'
-          )}
-          onSelect={() => {
-            navigate(ROUTES.SIGNUP_ORGANIZATION_LIST);
-          }}
-        >
-          <RiAddCircleLine className="size-4 text-text-sub" />
-          <span className="text-text-sub">Create organization</span>
-        </DropdownMenuItem>
+        {canCreateOrganization && (
+          <DropdownMenuItem
+            className={cn(
+              'flex h-9 cursor-pointer items-center gap-2 rounded-none border-t border-stroke-100 px-2 text-sm transition-shadow focus:bg-accent hover:bg-accent',
+              isScrolled && 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'
+            )}
+            onSelect={() => {
+              navigate(ROUTES.SIGNUP_ORGANIZATION_LIST);
+            }}
+          >
+            <RiAddCircleLine className="size-4 text-text-sub" />
+            <span className="text-text-sub">Create organization</span>
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

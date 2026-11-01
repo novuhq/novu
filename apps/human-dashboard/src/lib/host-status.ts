@@ -1,5 +1,6 @@
 import type { ToolId } from './ai-tools';
-import type { HostVia } from './onboarding';
+import { type HostId, hostOf, isHostId } from './hosts';
+import { HOST_LABELS, type HostVia } from './onboarding';
 
 /*
  * The hosts of the operator's agent, as `GET /v1/human/agent/hosts` describes them, and the one-time codes
@@ -8,14 +9,53 @@ import type { HostVia } from './onboarding';
  * is what the pages work out from them, in the browser as well.
  */
 
-/** One way hosts came in: the `agentinbox` CLI, or the hosted MCP server the chat apps connect through. */
+/** A host of the agent: one entry however many computers run it, and whichever way it came in. */
 export type AgentHost = {
+  /** Missing from an API from before hosts were told apart, which had one entry for each way in. */
+  id?: HostId;
+  /** The way it came in last: the `agentinbox` CLI, or the hosted MCP server. */
   via: HostVia;
-  /** When a host first came in this way: it used a code, or checked the inbox. */
+  /** When it first came in, on any computer: it used a code, or checked the inbox. */
   connectedAt: string;
-  /** When a host last checked the inbox this way. */
+  /** When it last checked the inbox. */
   lastCheckedAt: string | null;
 };
+
+/** What the dashboard calls a host: its name in the host list, or the way it came in when the API didn't say. */
+export function hostName(host: Pick<AgentHost, 'id' | 'via'>): string {
+  return isHostId(host.id) ? hostOf(host.id).name : HOST_LABELS[host.via];
+}
+
+/**
+ * Where the agent is listening: the computer whose `agentinbox listen` is ready to start a host when someone the
+ * agent listens to writes. One computer at a time, by a lease its program renews every minute; it lapses three minutes
+ * after the last renewal.
+ */
+export type Listening = {
+  computerId: string;
+  /** What the operator calls the computer: "MacBook". */
+  computerName: string;
+  /** The host it starts there. */
+  host: HostId;
+  /** The folder the host runs in, as the operator reads it: "~/projects/app". */
+  project?: string;
+  since: string;
+  renewedAt: string;
+  /** When the lease lapses unless it is renewed before. */
+  expiresAt: string;
+};
+
+/** The lease while it is live, or `null` once it has lapsed: the page keeps the last one it read, which ages. */
+export function liveListening(listening: Listening | null | undefined, now: number): Listening | null {
+  return listening && Date.parse(listening.expiresAt) > now ? listening : null;
+}
+
+/** "Listening on MacBook (Claude Code)", as the Agent setup row says it. */
+export function describeListening(listening: Pick<Listening, 'computerName' | 'host'>): string {
+  const host = isHostId(listening.host) ? hostOf(listening.host).name : listening.host;
+
+  return `Listening on ${listening.computerName} (${host})`;
+}
 
 export type HostStatus = {
   /** A host used a one-time code, or checked the inbox, at least once. It never goes back to false. */
@@ -23,12 +63,16 @@ export type HostStatus = {
   /** The last time any host checked the inbox. */
   lastCheckedAt: string | null;
   lastCheckedVia: HostVia | null;
-  /** One entry for each way hosts came in, last checked first. */
+  /** The host of that check. Missing from an API from before hosts were told apart. */
+  lastCheckedHost?: HostId | null;
+  /** One entry for each host, last checked first. */
   hosts: AgentHost[];
   /** The first time any host checked the inbox. */
   firstCheckedAt: string | null;
   /** The newest unread conversation the first check found. */
   waitingMessage: { conversationId: string; from: string; subject: string; at: string; seenAt: string } | null;
+  /** Where the agent is listening, or `null` when no computer keeps it listening. Missing from an older API. */
+  listening?: Listening | null;
 };
 
 /** A one-time code for `agentinbox connect <handle> --code <code>`. It works once, for ten minutes. */
@@ -38,6 +82,8 @@ export type ConnectCode = {
   /** The agent it connects to, as the command names it. */
   handle: string;
   expiresAt: string;
+  /** The host the page asked it for (`useHostConnectCode`), so the one that used it can be named. */
+  host?: HostId;
 };
 
 /** What the server answers when asked for a code. `expiresInMs` is measured on the server, against its own clock. */
@@ -69,8 +115,11 @@ export type CodeStatusResult = ConnectCodeStatus | 'unknown' | null;
  * a page with other ones (the onboarding) can hand them its own.
  */
 export type ConnectApi = {
-  /** A one-time code for the agent `handle` names. */
-  createCode: (handle: string) => Promise<ConnectCodeResult>;
+  /**
+   * A one-time code for the agent `handle` names, made for the host picker's tab it shows on (`host`): a host
+   * that uses it without saying which host it is counts as that one. Each host gets a code of its own.
+   */
+  createCode: (handle: string, host?: HostId) => Promise<ConnectCodeResult>;
   /** What became of a code the drawer showed for the agent `handle` names (`useCodeWatch`). */
   readCodeStatus: (handle: string, code: string) => Promise<CodeStatusResult>;
   /** The host status, or `null` when it can't be read just now. */
@@ -130,18 +179,17 @@ export function formatCheckedAgo(iso: string, now: number): string {
 }
 
 /**
- * The way a host came in since `before`, or `null`: a way no host had used, or one whose hosts had stopped
- * checking (`HOST_STALE_AFTER_MS`) and checked again.
+ * The host that came in since `before`, with the way it came in, or `null`: a host that wasn't there, or one
+ * that had stopped checking (`HOST_STALE_AFTER_MS`) and checked again.
  *
- * Another host on a way that is already in use doesn't show here: the API keeps when the first one came
- * in, and a check of the new one looks like a check of the old. The code it used tells that one apart
- * (`useCodeWatch`).
+ * The same host on one more computer doesn't show here: it shares its entry with the first one, and a check
+ * of the new one looks like a check of the old. The code it used tells that one apart (`useCodeWatch`).
  */
-export function findNewHost(before: HostStatus, after: HostStatus): HostVia | null {
+export function findNewHost(before: HostStatus, after: HostStatus): AgentHost | null {
   for (const host of after.hosts) {
-    const known = before.hosts.find((entry) => entry.via === host.via);
+    const known = before.hosts.find((entry) => entryKey(entry) === entryKey(host));
     if (!known || known.connectedAt !== host.connectedAt) {
-      return host.via;
+      return host;
     }
 
     if (host.lastCheckedAt && host.lastCheckedAt !== known.lastCheckedAt) {
@@ -149,10 +197,36 @@ export function findNewHost(before: HostStatus, after: HostStatus): HostVia | nu
       const knownCheckedAt = known.lastCheckedAt ? Date.parse(known.lastCheckedAt) : Number.NaN;
 
       if (Number.isNaN(knownCheckedAt) || checkedAt - knownCheckedAt > HOST_STALE_AFTER_MS) {
-        return host.via;
+        return host;
       }
     }
   }
 
   return null;
+}
+
+/** One host's entry, or one way's from an API that didn't tell hosts apart. */
+function entryKey(host: AgentHost): string {
+  return host.id ?? host.via;
+}
+
+/**
+ * The hosts that count as connected now, for the host picker's check marks: each of `hosts` (`HostStatus.hosts`)
+ * that checked the inbox within the last day (`HOST_STALE_AFTER_MS`), or connected within it and hasn't checked
+ * since, and each chat app that signed in through the MCP server (`signedIn`, as `listConnectedTools` reads them).
+ */
+export function connectedHostIds(
+  hosts: readonly AgentHost[] | null | undefined,
+  now: number,
+  signedIn: readonly string[] = []
+): ReadonlySet<HostId> {
+  const ids = new Set<HostId>(signedIn.filter(isHostId));
+
+  for (const host of hosts ?? []) {
+    if (isHostId(host.id) && hostLiveness(host.lastCheckedAt ?? host.connectedAt, now) === 'live') {
+      ids.add(host.id);
+    }
+  }
+
+  return ids;
 }

@@ -82,6 +82,21 @@ export const goalReminderInAppAfterDelay = workflow(
   existing pending delayed notification content.
 </Warning>
 
+## Extend to subscriber’s schedule
+
+Set `extendToSchedule` to `true` to hold the workflow when the delay ends outside the subscriber’s [delivery schedule](/platform/inbox/features/schedule). Novu waits once, until the start of the next open window. The configured delay duration still follows your [plan limit](/platform/developer/limits). The wait until that window is separate. Examples are on the [Delay step](/platform/workflow/add-and-configure-steps/configure-action-steps/delay#how-long-novu-waits) page.
+
+```tsx
+await step.delay('delay', () => {
+  return {
+    type: 'regular',
+    unit: 'hours',
+    amount: 1,
+    extendToSchedule: true,
+  };
+});
+```
+
 ## Frequently Asked Questions
 
 <AccordionGroup>

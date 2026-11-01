@@ -87,6 +87,14 @@ export function recall(ctx: AgentMessageContext) {
   return `You asked me to remember: ${ctx.metadata.get('note') ?? 'nothing'}`;
 }
 
+export function history(ctx: AgentMessageContext) {
+  const lines = ctx.history
+    .filter((entry) => entry.type === 'message')
+    .map((entry) => `- ${entry.role}: ${entry.content}`);
+
+  return ['So far:', ...lines].join('\n');
+}
+
 export function notify(ctx: AgentMessageContext, name: string) {
   ctx.trigger('all-channels-workflow', { payload: { name: name || 'Agent', skipPush: true } });
 

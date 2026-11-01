@@ -22,26 +22,28 @@ export function toWebRequest(req: ExpressRequest): Request {
     }
   }
 
-  let body: BodyInit | undefined;
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
-    const rawBody = (req as ExpressRequest & { rawBody?: Buffer }).rawBody;
-    if (rawBody) {
-      body = rawBody;
-    } else if (Buffer.isBuffer(req.body) || typeof req.body === 'string') {
-      body = req.body;
-    } else if (req.body !== undefined) {
-      body = JSON.stringify(req.body);
-      if (!headers.has('content-type')) {
-        headers.set('content-type', 'application/json');
-      }
-    }
-  }
-
   return new Request(url, {
     method: req.method,
     headers,
-    body,
+    body: toWebRequestBody(req, headers),
   });
+}
+
+function toWebRequestBody(req: ExpressRequest, headers: Headers): BodyInit | undefined {
+  if (req.method === 'GET' || req.method === 'HEAD') return undefined;
+
+  const rawBody = (req as ExpressRequest & { rawBody?: Buffer }).rawBody;
+  if (rawBody) return rawBody as Uint8Array<ArrayBuffer>;
+
+  if (Buffer.isBuffer(req.body) || typeof req.body === 'string') return req.body as string | Uint8Array<ArrayBuffer>;
+
+  if (req.body === undefined) return undefined;
+
+  if (!headers.has('content-type')) {
+    headers.set('content-type', 'application/json');
+  }
+
+  return JSON.stringify(req.body);
 }
 
 /**

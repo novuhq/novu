@@ -3,17 +3,16 @@
 import { currentUser } from '@clerk/nextjs/server';
 
 import { readStoredBackingAccount, type StoredBackingAccount, storeBackingAccount } from '@/lib/human-account';
-import { approveCliLogin, denyCliLogin, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
+import { approveCliLogin, denyCliLogin } from '@/lib/human-accounts-api';
 import { HumanApiError } from '@/lib/human-api-error';
 import { claimPastSignUp } from '@/lib/human-claim';
-import { noteAgentClaimed, noteHostConnected } from '@/lib/human-onboarding';
+import { noteAgentClaimed } from '@/lib/human-onboarding';
 
 import { normalizeUserCode } from './user-code';
 
 export type CliLoginRequest = {
   /** The code from the link, or what was typed when the link had none. */
   userCode: string;
-  region: HumanRegion;
   /** Claim token of the setup made without an account, when logging in should move it into the account. */
   claim?: string;
 };
@@ -72,21 +71,13 @@ export async function approveCliLoginAction(request: CliLoginRequest): Promise<A
     return { status: 'error', message: 'This link isn’t valid. Run npx @agentinbox/cli login again for a new one.' };
   }
 
-  const region: HumanRegion = request.region === 'eu' ? 'eu' : 'us';
   const stored = readStoredBackingAccount(user);
-  if (stored && stored.region !== region) {
-    return {
-      status: 'error',
-      message: `Your Agent Inbox CLI uses the ${REGION_NAMES[region]} region, but your Agent Inbox account is in the ${REGION_NAMES[stored.region]} region. Point the CLI at the ${REGION_NAMES[stored.region]} API and run npx @agentinbox/cli login again.`,
-    };
-  }
 
   let account: Awaited<ReturnType<typeof approveCliLogin>>;
   try {
     // A refused claim leaves the login waiting, so trying again is safe.
     account = await claimPastSignUp(user, () =>
       approveCliLogin(
-        region,
         {
           humanUserId: user.id,
           firstName: user.firstName,
@@ -102,14 +93,16 @@ export async function approveCliLoginAction(request: CliLoginRequest): Promise<A
     return describeApproveError(error);
   }
 
-  // A terminal that was let into the account is a host of its agent. One that brought its setup along
-  // brought the agent too, and that operator has no steps left to go through.
-  await (account.keptSetup ? noteAgentClaimed(user) : noteHostConnected(user, 'cli'));
+  // A terminal that brought its setup along brought the agent too, so its operator has no onboarding
+  // steps left. A plain login counts as a host only once the API sees it read the inbox.
+  if (account.keptSetup) {
+    await noteAgentClaimed(user);
+  }
 
   // The CLI is logged in at this point, so a failed write here must not read as a failed login.
   const remembered =
     Boolean(stored) ||
-    (await rememberBackingAccount(user.id, { region, organizationId: account.organizationId, userId: account.userId }));
+    (await rememberBackingAccount(user.id, { organizationId: account.organizationId, userId: account.userId }));
 
   return { status: 'approved', keptSetup: account.keptSetup, accountPageBehind: !remembered };
 }
@@ -133,7 +126,7 @@ export async function denyCliLoginAction(request: Omit<CliLoginRequest, 'claim'>
 
   let denied: boolean;
   try {
-    ({ denied } = await denyCliLogin(request.region === 'eu' ? 'eu' : 'us', userCode));
+    ({ denied } = await denyCliLogin(userCode));
   } catch (error) {
     console.error('Failed to deny the CLI login', error);
 

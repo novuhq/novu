@@ -48,12 +48,75 @@ export interface AgentPicture {
 /** How a host reaches an Agent Inbox agent: the `agentinbox` CLI, or the hosted MCP server. */
 export type AgentHostVia = 'cli' | 'mcp';
 
-/** The hosts that came in one way. Every time is an ISO timestamp. */
+export const AGENT_HOST_VIAS: readonly AgentHostVia[] = ['cli', 'mcp'];
+
+/**
+ * The hosts Agent Inbox tells apart, by the id the CLI, the MCP server and the dashboard share. `general` is
+ * any other host, and any host that didn't say which one it is.
+ */
+export const AGENT_HOST_IDS = [
+  'claude-code',
+  'codex',
+  'opencode',
+  'cursor',
+  'hermes',
+  'openclaw',
+  'general',
+  'claude',
+  'chatgpt',
+  'grok',
+] as const;
+
+export type AgentHostId = (typeof AGENT_HOST_IDS)[number];
+
+/**
+ * The hosts `agentinbox listen` can start on a computer. Chat apps and `general` run nowhere a program on the
+ * operator's computer can start them, so they are never started there.
+ */
+export const LISTEN_HOST_IDS = [
+  'claude-code',
+  'codex',
+  'opencode',
+  'cursor',
+  'hermes',
+  'openclaw',
+] as const satisfies readonly AgentHostId[];
+
+export type ListenHostId = (typeof LISTEN_HOST_IDS)[number];
+
+/**
+ * Where an Agent Inbox agent is listening: the one computer whose `agentinbox listen` is ready to start a host for it.
+ * It is a lease that program renews; once `expiresAt` has passed it counts as no lease at all. The holder is the
+ * computer and the host together: the same computer starting another host is another holder. Every time is an ISO
+ * timestamp.
+ */
+export interface AgentListening {
+  /** The computer holding the lease: a random id its CLI made, of `[A-Za-z0-9_-]`. */
+  computerId: string;
+  /** What the operator calls that computer, e.g. "MacBook". */
+  computerName: string;
+  /** The host it starts there. */
+  host: ListenHostId;
+  /** The folder the host runs in, as the operator reads it, e.g. "~/projects/app". */
+  project?: string;
+  /** When this computer took it. Renewing keeps it; taking it again after it lapsed, or over, starts it anew. */
+  since: string;
+  renewedAt: string;
+  expiresAt: string;
+}
+
+/** When a host, or the hosts that came in one way, connected and last checked. Every time is an ISO timestamp. */
 export interface AgentHostEntry {
-  /** The first time a host came in this way: it used a one-time code, or checked the inbox. */
+  /** The first time it came in: it used a one-time code, or checked the inbox. */
   connectedAt?: string;
-  /** The last time a host checked the inbox this way. */
+  /** The last time it checked the inbox. */
   lastCheckedAt?: string;
+}
+
+/** One host, on every computer it runs on, whichever way it came in. */
+export interface AgentNamedHostEntry extends AgentHostEntry {
+  /** The way it came in last: when it connected, or when it last checked the inbox. */
+  via?: AgentHostVia;
 }
 
 /** The newest unread conversation a host found the first time any host checked the inbox. */
@@ -75,6 +138,12 @@ export type AgentInboxReach = (typeof AGENT_INBOX_REACHES)[number];
 
 /** Which hosts act as an Agent Inbox agent, and when they last checked its inbox. */
 export interface AgentHosts {
+  /** Each host by its id. Two computers with the same host, or one host that came in both ways, share an entry. */
+  byId?: Partial<Record<AgentHostId, AgentNamedHostEntry>>;
+  /**
+   * The hosts that came in through the CLI, and through MCP, from before hosts were told apart: one entry for
+   * each way in, whichever host it was. Only read now, for agents whose hosts haven't come in again since.
+   */
   cli?: AgentHostEntry;
   mcp?: AgentHostEntry;
   /** The first time any host checked the inbox. */
@@ -97,6 +166,12 @@ export class AgentEntity {
 
   /** Set for Human relay agents only, once a host has connected or checked the inbox. */
   hosts?: AgentHosts;
+
+  /**
+   * Set for Human relay agents only, once a computer has kept the agent listening (`agentinbox listen`). It stays
+   * after it lapses, and reads as no lease then.
+   */
+  listening?: AgentListening;
 
   /** Set for Human relay agents only, once the operator chose on the dashboard. Missing reads as `anyone`. */
   reach?: AgentInboxReach;

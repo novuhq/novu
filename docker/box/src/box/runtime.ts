@@ -1,0 +1,83 @@
+import fs from 'node:fs';
+import * as z from 'zod';
+import { log } from '../node/main.ts';
+import { poll } from '../node/poll.ts';
+import * as proc from '../node/process.ts';
+import { decode } from '../shared/contracts.ts';
+import { parseEnvFile } from '../shared/env-file.ts';
+import { BOX, BULLMQ_PRO, DATA, REPO } from './paths.ts';
+
+export const vars: Record<string, string> = loadEnv();
+
+function loadEnv(): Record<string, string> {
+  const defaults = parseEnvFile(fs.readFileSync(`${BOX}/config/box.env`, 'utf8'));
+  if (fs.existsSync(`${BULLMQ_PRO}/node_modules/@taskforcesh/bullmq-pro`)) defaults.NOVU_MANAGED_SERVICE = 'true';
+  const inherited = Object.entries(process.env).filter(
+    (entry): entry is [string, string] => entry[0] !== 'GITHUB_TOKEN' && entry[1] !== undefined
+  );
+
+  const env: Record<string, string> = { ...defaults, ...Object.fromEntries(inherited) };
+  // The token is read-only: nx reads CI's remote cache, and what it builds never reaches it.
+  if (!env.NX_CLOUD_ACCESS_TOKEN) env.NX_NO_CLOUD = 'true';
+
+  return env;
+}
+
+const inBox = (options: proc.RunOptions = {}): proc.RunOptions => ({ cwd: REPO, env: vars, ...options });
+export const run = (cmd: string, args: ReadonlyArray<string>, options?: proc.RunOptions) =>
+  proc.run(cmd, args, inBox(options));
+export const exitCode = (cmd: string, args: ReadonlyArray<string>, options?: proc.RunOptions) =>
+  proc.exitCode(cmd, args, inBox(options));
+export const capture = (cmd: string, args: ReadonlyArray<string>, options?: proc.RunOptions) =>
+  proc.capture(cmd, args, inBox(options));
+export const output = (cmd: string, args: ReadonlyArray<string>, options?: proc.RunOptions) =>
+  proc.output(cmd, args, inBox(options));
+
+// Waits for all of them, so that none still runs when the first failure throws.
+export async function allSettled(work: ReadonlyArray<Promise<unknown>>): Promise<void> {
+  const failed = (await Promise.allSettled(work)).find((result) => result.status === 'rejected');
+  if (failed) throw failed.reason;
+}
+
+export async function step<T>(name: string, work: () => Promise<T>): Promise<T> {
+  const started = Date.now();
+  log(`${name}...`);
+  const result = await work();
+  const seconds = (Date.now() - started) / 1000;
+  appendTiming(name, seconds);
+  log(`${name} done in ${seconds.toFixed(1)}s`);
+
+  return result;
+}
+
+export function appendTiming(step: string, seconds: number, command = process.argv[2]): void {
+  fs.mkdirSync(`${DATA}/logs`, { recursive: true });
+  fs.appendFileSync(
+    `${DATA}/logs/timings.jsonl`,
+    `${JSON.stringify({ at: new Date().toISOString(), command, step, seconds })}\n`
+  );
+}
+
+export async function httpStatus(url: string): Promise<number> {
+  try {
+    return (await fetch(url, { signal: AbortSignal.timeout(5000) })).status;
+  } catch {
+    return 0;
+  }
+}
+
+export async function waitForHttp(url: string, seconds: number, signal?: AbortSignal): Promise<void> {
+  await poll(
+    async () => {
+      const status = await httpStatus(url);
+
+      return status >= 200 && status < 300;
+    },
+    { timeoutMs: seconds * 1000, everyMs: 250, what: `${url} not healthy`, signal }
+  );
+}
+
+export function readJson<T>(file: string, schema: z.ZodType<T>): T | null {
+  if (!fs.existsSync(file)) return null;
+  return decode(schema, fs.readFileSync(file, 'utf8'), `${file} isn't what the box expects`);
+}

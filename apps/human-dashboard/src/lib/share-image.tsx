@@ -25,7 +25,7 @@ export type ShareImageCard = {
   cardLink: string;
   pictureUrl?: string;
   createdAt?: string;
-  /** The operator's full name, or empty when there is none. */
+  /** Who runs the agent, as the card names them: "Ada L.". Empty when there is no name to show. */
   operatorName: string;
   /** The operator's first name, for "Dima’s agent". Without one that line is left out. */
   operatorFirstName: string;
@@ -179,9 +179,9 @@ function MiniCard({ card, assets, picture }: ShareImageProps) {
   const issued = card.createdAt ? formatIssuedDate(card.createdAt, 'UTC') : null;
   // The Configure page's card has every line, set up or not; the public card only those that work.
   const everyLine = card.host !== undefined;
-  const byline = [card.operatorName ? `Run by ${card.operatorName}` : 'Your agent', issued && `issued ${issued}`]
-    .filter(Boolean)
-    .join(' · ');
+  // Without the operator's name, as `CardName` writes it: "Your agent" to the operator, "An agent" to anyone.
+  const runBy = card.operatorName ? `Run by ${card.operatorName}` : everyLine ? 'Your agent' : 'An agent';
+  const byline = [runBy, issued && `issued ${issued}`].filter(Boolean).join(' · ');
 
   return (
     <div

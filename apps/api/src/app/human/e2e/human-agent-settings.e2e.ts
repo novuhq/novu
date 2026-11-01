@@ -16,7 +16,7 @@ import { AgentInboundHandler } from '../../agents/conversation-runtime/ingress/i
 import { startTelegramApiStub, type TelegramApiStub } from '../../agents/e2e/helpers/telegram-api-stub';
 import { AgentEventEnum } from '../../agents/shared/enums/agent-event.enum';
 import { AGENT_PAUSED } from '../guards/human-agent-paused.guard';
-import { DASHBOARD_ONLY, HUMAN_DASHBOARD_SECRET_HEADER } from '../guards/human-dashboard-secret.guard';
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER, DASHBOARD_ONLY } from '../guards/human-dashboard-secret.guard';
 import { AGENT_INBOX_VIA_HEADER } from '../services/human-host-status.service';
 import { CONNECT_AGENT_GONE } from '../usecases/connect-host/connect-host.usecase';
 
@@ -36,7 +36,7 @@ const DASHBOARD_SECRET = 'e2e-agent-settings-dashboard-secret';
  * own secret. Only the dashboard may change these.
  */
 describe('Agent Inbox agent settings (who can reach, pause, delete) #novu-v2', () => {
-  const originalSecret = process.env.HUMAN_DASHBOARD_API_SECRET;
+  const originalSecret = process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
   let session: UserSession;
   let telegramApiStub: TelegramApiStub;
   let operatorId: string;
@@ -50,7 +50,7 @@ describe('Agent Inbox agent settings (who can reach, pause, delete) #novu-v2', (
   });
 
   beforeEach(async () => {
-    process.env.HUMAN_DASHBOARD_API_SECRET = DASHBOARD_SECRET;
+    process.env.AGENT_INBOX_DASHBOARD_API_SECRET = DASHBOARD_SECRET;
     session = new UserSession();
     await session.initialize();
     telegramApiStub.reset();
@@ -104,9 +104,9 @@ describe('Agent Inbox agent settings (who can reach, pause, delete) #novu-v2', (
 
   afterEach(async () => {
     if (originalSecret === undefined) {
-      delete process.env.HUMAN_DASHBOARD_API_SECRET;
+      delete process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
     } else {
-      process.env.HUMAN_DASHBOARD_API_SECRET = originalSecret;
+      process.env.AGENT_INBOX_DASHBOARD_API_SECRET = originalSecret;
     }
 
     await testServer.getService(ChatInstanceRegistry).onModuleDestroy();
@@ -123,7 +123,7 @@ describe('Agent Inbox agent settings (who can reach, pause, delete) #novu-v2', (
   function asDashboard(method: 'get' | 'post' | 'patch' | 'delete', path: string) {
     return session.testAgent[method](path)
       .set('Authorization', `ApiKey ${session.apiKey}`)
-      .set(HUMAN_DASHBOARD_SECRET_HEADER, DASHBOARD_SECRET);
+      .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, DASHBOARD_SECRET);
   }
 
   async function updateAgent(body: Record<string, unknown>): Promise<Record<string, any>> {
@@ -316,7 +316,7 @@ describe('Agent Inbox agent settings (who can reach, pause, delete) #novu-v2', (
       const res = await session.testAgent
         .delete('/v1/human/agent')
         .set('Authorization', `ApiKey ${session.apiKey}`)
-        .set(HUMAN_DASHBOARD_SECRET_HEADER, 'guess');
+        .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, 'guess');
 
       expectDashboardOnly(res);
     });

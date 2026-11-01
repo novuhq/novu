@@ -1,14 +1,12 @@
 import { useLocation, useParams } from 'react-router-dom';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
+import { isWorkflowEditorPath } from '@/utils/routes';
 
 export function useWorkflowEditorContext() {
   const location = useLocation();
   const params = useParams<{ workflowSlug?: string; stepSlug?: string }>();
 
-  const isOnWorkflowEditorPath =
-    location.pathname.includes('/workflows/') &&
-    !location.pathname.includes('/workflows/create') &&
-    !location.pathname.includes('/workflows/templates');
+  const isOnWorkflowEditorPath = isWorkflowEditorPath(location.pathname);
 
   const workflowSlug = params.workflowSlug;
   const isNewWorkflowSlug = workflowSlug === 'new';

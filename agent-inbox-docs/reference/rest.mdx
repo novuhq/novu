@@ -1,0 +1,22 @@
+---
+title: "REST API"
+description: "The HTTP API is not available yet. Use the CLI or the MCP server."
+tag: "Coming soon"
+---
+
+The REST API is not available yet.
+
+When it ships, it will be an HTTP form of the same actions as the [CLI](/reference/cli) and [MCP](/reference/mcp): conversations, messages, questions, and contacts. It will not be a second product. This page will become an overview that links to each operation. Until then it has no endpoints and no examples.
+
+Use one of these today:
+
+<Columns cols={2}>
+  <Card title="CLI" icon="terminal" href="/reference/cli">
+    From a terminal, a coding agent, or CI with `INBOX_SECRET_KEY`.
+  </Card>
+  <Card title="MCP" icon="bot" href="/reference/mcp">
+    From a chat app, at `https://mcp.agentinbox.md`.
+  </Card>
+</Columns>
+
+Questions that have to wait are documented in [Waiting for an answer](/waiting). The CLI blocks. MCP calls `inbox_wait`.

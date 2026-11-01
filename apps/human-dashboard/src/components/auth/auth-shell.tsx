@@ -12,6 +12,10 @@ import { cn } from '@/lib/utils';
  *
  * Both halves sit in one column as wide as the design (1728px), centered on wider screens, so they stay
  * next to each other instead of drifting apart. The two halves are always the same width.
+ *
+ * The browser draws a page while its HTML is still coming in, and the form and the panel are centered in
+ * their columns: every part that came in would push them up. So the screen stays hidden until its last
+ * element (`data-shell-end`) is in, and then fades in whole. A page that arrives at once shows as before.
  */
 type AuthShellProps = {
   /** Signing up from a claim link: the panel is about the agent that's waiting to be claimed. */
@@ -21,7 +25,7 @@ type AuthShellProps = {
 
 export function AuthShell({ claiming = false, children }: AuthShellProps) {
   return (
-    <div className="flex min-h-dvh justify-center overflow-x-clip">
+    <div className="flex min-h-dvh justify-center overflow-x-clip transition-[opacity,visibility] duration-200 ease-out motion-reduce:transition-none [&:not(:has(>[data-shell-end]))]:invisible [&:not(:has(>[data-shell-end]))]:opacity-0">
       <div className="flex w-full max-w-432">
         <BrandPanel claiming={claiming} />
         <main className="flex min-w-0 flex-1 flex-col">
@@ -31,6 +35,7 @@ export function AuthShell({ claiming = false, children }: AuthShellProps) {
           <div className="flex flex-1 flex-col items-center justify-center px-4 pt-4 pb-16 xl:py-9">{children}</div>
         </main>
       </div>
+      <span data-shell-end hidden />
     </div>
   );
 }

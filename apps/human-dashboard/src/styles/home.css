@@ -1,0 +1,643 @@
+.home-page {
+  /* The artwork's canvas overhangs the right edge (its drawing doesn't). */
+  overflow-x: clip;
+  --home-background: #fbfbfb;
+  --home-foreground: #403b34;
+  --home-muted: #8c8985;
+  --home-document-width: 744px;
+  --home-inset: 56px;
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  padding: var(--home-inset);
+  background: var(--home-background);
+  color: var(--home-foreground);
+  font-family: var(--font-home-regular), var(--font-geist-mono), monospace;
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: -0.02em;
+  color-scheme: light;
+}
+
+.home-document {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(100%, var(--home-document-width));
+  flex-direction: column;
+  gap: 60px;
+}
+
+.home-page p,
+.home-page h1,
+.home-page h2,
+.home-page h3,
+.home-page dl,
+.home-page dd,
+.home-page figure {
+  margin: 0;
+}
+
+.home-page code {
+  font: inherit;
+  overflow-wrap: anywhere;
+}
+
+.home-page h1,
+.home-section-title {
+  font-family: var(--font-home-semibold), var(--font-geist-mono), monospace;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 22.5px;
+  letter-spacing: -0.02em;
+}
+
+.home-page h1 {
+  margin-top: 28px;
+  line-height: 23px;
+  text-transform: uppercase;
+}
+
+.home-page a {
+  text-underline-offset: 3px;
+}
+
+.home-page a:hover {
+  color: #ff5c30;
+}
+
+.home-ascii-rule {
+  height: 20px;
+  overflow: hidden;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.home-human-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home-human-banner > p {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) 10px;
+  gap: 20px;
+}
+
+.home-human-banner a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.home-page .home-description {
+  margin-top: 156px;
+  margin-bottom: 28px;
+}
+
+.home-section {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.home-subsection {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.home-subsection-title {
+  font-family: var(--font-home-semibold), var(--font-geist-mono), monospace;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: -0.02em;
+}
+
+.home-section-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  min-height: 23px;
+}
+
+.home-comment {
+  color: var(--home-muted);
+}
+
+.home-command-list {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-command-line {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.home-command-line code {
+  min-width: 0;
+  white-space: pre-wrap;
+}
+
+.home-command-line .home-comment {
+  flex-shrink: 0;
+}
+
+.home-install {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.home-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.home-tabs > span {
+  display: inline-flex;
+  gap: 20px;
+}
+
+.home-tab {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--home-muted);
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.home-tab[aria-selected="true"] {
+  color: var(--home-foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.home-tab:hover {
+  color: #ff5c30;
+}
+
+.home-page [data-color="orange"] {
+  color: #ff5c30;
+}
+
+.home-page [data-color="purple"] {
+  color: #8458d0;
+}
+
+.home-page [data-color="blue"] {
+  color: #426ce0;
+}
+
+.home-page [data-color="green"] {
+  color: #2d8665;
+}
+
+.home-inline-code {
+  display: inline-block;
+  min-height: 20px;
+  max-width: 100%;
+  padding-inline: 4px;
+  border-radius: 4px;
+  background: #f9f5f1;
+  box-shadow:
+    0 0 0 0.5px #eee5d8,
+    inset 0 0 0 0.5px #eee5d8;
+  word-spacing: -0.33em;
+  white-space: nowrap;
+  vertical-align: top;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.home-inline-code-tall {
+  min-height: 22px;
+  border: 1px solid #eee5d8;
+  box-shadow: none;
+}
+
+.home-page .home-inline-code,
+.home-prose-word {
+  line-height: 20px;
+}
+
+.home-prose-word {
+  min-width: var(--home-word-width);
+  max-width: 100%;
+  display: inline-block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+
+.home-inline-code .home-prose-word {
+  word-spacing: normal;
+}
+
+.home-bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-bullets > li {
+  display: grid;
+  grid-template-columns: 1em minmax(0, 1fr);
+  column-gap: 0.4em;
+}
+
+.home-bullets > li::before {
+  content: "–";
+}
+
+.home-use-title {
+  font-family: var(--font-home-semibold), var(--font-geist-mono), monospace;
+  font-weight: 600;
+}
+
+.home-definitions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-definitions > div {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.home-flags > div {
+  grid-template-columns: 156px minmax(0, 1fr);
+}
+
+.home-flags dd {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  white-space: pre-line;
+}
+
+.home-flags [data-color="orange"] {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+#links.home-section {
+  gap: 16px;
+}
+
+.home-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.home-links > span {
+  display: inline-flex;
+  gap: 20px;
+}
+
+.home-links a {
+  text-decoration: underline;
+}
+
+.home-link-divider {
+  width: 10px;
+}
+
+/*
+ * The right of the window is a viewer pane beside the document, the full height
+ * of the window, split from it by a hairline, and still while the page scrolls.
+ * Its grid keeps the page's 20px rhythm, with a heavier line every 100px, and
+ * fades out towards the pane's edges. The lines stop before the mascot, so the
+ * halo sits on plain paper. The mascot (its sphere is the middle 62% of the
+ * stage) sits in the middle, its bubble under it.
+ */
+.home-artwork {
+  /* Short windows would centre a 440px stage and push the reply below the pane. */
+  --home-mascot: min(clamp(240px, 26vw, 440px), 58vh);
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: calc(var(--home-inset) + var(--home-document-width) + 64px);
+  border-left: 1px solid rgb(64 59 52 / 8%);
+  color: rgb(64 59 52 / 40%);
+  pointer-events: none;
+}
+
+.home-artwork-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgb(64 59 52 / 8%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(64 59 52 / 8%) 1px, transparent 1px),
+    linear-gradient(to right, rgb(64 59 52 / 3.5%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(64 59 52 / 3.5%) 1px, transparent 1px);
+  background-position: center;
+  background-size:
+    100px 100px,
+    100px 100px,
+    20px 20px,
+    20px 20px;
+  /* A clear disc behind the mascot and its halo, then the fade at the pane edges. */
+  mask-image:
+    radial-gradient(circle at center, transparent calc(var(--home-mascot) * 0.5), #000 calc(var(--home-mascot) * 0.66)),
+    radial-gradient(closest-side, #000 30%, transparent 100%);
+  mask-composite: intersect;
+}
+
+/* Crop marks at the corners of the pane's inner frame, level with the document's top. */
+.home-artwork-marks {
+  position: absolute;
+  inset: var(--home-inset) var(--home-inset) var(--home-inset) 32px;
+  --mark: linear-gradient(currentColor, currentColor);
+  background:
+    var(--mark) top left / 12px 1px no-repeat,
+    var(--mark) top left / 1px 12px no-repeat,
+    var(--mark) top right / 12px 1px no-repeat,
+    var(--mark) top right / 1px 12px no-repeat,
+    var(--mark) bottom left / 12px 1px no-repeat,
+    var(--mark) bottom left / 1px 12px no-repeat,
+    var(--mark) bottom right / 12px 1px no-repeat,
+    var(--mark) bottom right / 1px 12px no-repeat;
+}
+
+.home-artwork-label {
+  position: absolute;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+.home-artwork-label[data-corner="top"] {
+  top: calc(var(--home-inset) + 14px);
+  left: 52px;
+}
+
+.home-artwork-label[data-corner="bottom"] {
+  right: calc(var(--home-inset) + 20px);
+  bottom: calc(var(--home-inset) + 14px);
+}
+
+.home-artwork-stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--home-mascot);
+  height: var(--home-mascot);
+  transform: translate(-50%, -50%);
+}
+
+/* A whisper of cream under the mascot, almost the page white, gone before the grid returns. */
+.home-artwork-stage::before {
+  content: "";
+  position: absolute;
+  inset: -22%;
+  background: radial-gradient(circle, rgb(236 226 210 / 50%) 0%, rgb(236 226 210 / 0%) 70%);
+}
+
+.home-artwork-media {
+  position: absolute;
+  inset: 0;
+  mask-image: radial-gradient(closest-side, #000 60%, transparent 100%);
+}
+
+.home-bubble {
+  position: absolute;
+  z-index: 1;
+  top: 87%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--home-foreground);
+  display: flex;
+  width: max-content;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px 9px;
+  border: 1px solid rgb(64 59 52 / 9%);
+  border-radius: 12px;
+  background: var(--home-background);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.home-bubble-from {
+  color: var(--home-muted);
+}
+
+.home-bubble-via {
+  color: #c9c5bf;
+}
+
+.home-bubble-text {
+  min-width: 27ch;
+  white-space: nowrap;
+}
+
+.home-bubble-caret {
+  display: inline-block;
+  width: 0.6em;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: -2px;
+  background: #ff5c30;
+  opacity: 0;
+}
+
+.home-bubble-caret[data-typing] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-bubble-caret {
+    animation: home-caret 1.1s steps(1, end) infinite;
+    opacity: 1;
+  }
+
+  .home-bubble-caret[data-typing] {
+    animation: none;
+  }
+}
+
+@keyframes home-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1599px) {
+  .home-page {
+    --home-document-width: min(744px, 52vw);
+  }
+}
+
+@media (max-width: 1199px) {
+  .home-page {
+    --home-inset: 32px;
+  }
+
+  /* No pane: the mascot and its bubble in a row, in the gap above the description. */
+  .home-artwork {
+    position: absolute;
+    top: 184px;
+    right: auto;
+    bottom: auto;
+    left: calc(var(--home-inset) - 32px);
+    width: calc(100vw - 2 * var(--home-inset) + 32px);
+    height: 180px;
+    border-left: 0;
+  }
+
+  .home-artwork-grid,
+  .home-artwork-marks,
+  .home-artwork-label {
+    display: none;
+  }
+
+  .home-artwork-stage {
+    --home-mascot: 180px;
+    top: 0;
+    left: 0;
+    transform: none;
+  }
+
+  .home-bubble {
+    top: 30%;
+    left: 82%;
+    max-width: calc(100vw - 2 * var(--home-inset) - 128px);
+    border-radius: 4px 12px 12px;
+    transform: none;
+  }
+
+  .home-bubble-from {
+    white-space: nowrap;
+  }
+
+  .home-bubble-text {
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .home-page .home-description {
+    margin-top: 212px;
+  }
+}
+
+@media (max-width: 799px) {
+  .home-page {
+    --home-inset: 24px;
+  }
+
+  .home-command-line {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .home-command-line .home-comment {
+    padding-left: 2ch;
+  }
+
+  .home-flags > div {
+    grid-template-columns: 140px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 479px) {
+  /* A terminal page: the desktop size wraps a command after a few words. */
+  .home-page {
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  .home-page h1,
+  .home-section-title {
+    font-size: 14px;
+    line-height: 18px;
+  }
+
+  .home-page h1 {
+    margin-top: 20px;
+  }
+
+  .home-section-title {
+    min-height: 18px;
+  }
+
+  .home-subsection-title {
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  .home-ascii-rule {
+    height: 18px;
+  }
+
+  .home-inline-code,
+  .home-inline-code-tall {
+    min-height: 18px;
+  }
+
+  .home-page .home-inline-code,
+  .home-prose-word {
+    line-height: 18px;
+  }
+
+  .home-document {
+    gap: 40px;
+  }
+
+  .home-artwork {
+    top: 196px;
+    height: 160px;
+  }
+
+  .home-bubble-from {
+    white-space: normal;
+  }
+
+  .home-artwork-stage {
+    --home-mascot: 160px;
+  }
+
+  .home-page .home-description {
+    margin-top: 216px;
+  }
+
+  .home-human-banner > p {
+    gap: 10px;
+  }
+
+  .home-flags > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .home-flags dd {
+    padding-left: 2ch;
+  }
+
+  .home-inline-code {
+    white-space: normal;
+  }
+
+  .home-inline-code .home-prose-word {
+    min-width: 0;
+  }
+}

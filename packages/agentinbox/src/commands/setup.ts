@@ -2,10 +2,10 @@ import pc from 'picocolors';
 import { createInteraction } from '../api/agent-inbox';
 import { type ApiClient, createApiClient } from '../api/client';
 import { bootstrapKeylessSession } from '../api/setup';
-import { info, promptLine, success, warn } from '../cli-io';
+import { info, success, warn } from '../cli-io';
 import { type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
+import { keptHost } from '../host';
 import { openedScreen, openScreen } from '../screen/screen';
-import { installSkill, resolveSkillHosts } from '../skills/install-skills';
 import { failOnScreen } from './failure';
 import { handleError } from './interact';
 import { CHANNEL_NAMES, type ChannelName, type ChatChannel } from './link-channel';
@@ -24,6 +24,9 @@ import { connectTelegram } from './setup/telegram';
 
 export type { SetupOptions } from './setup/operator';
 export { reusableAuth } from './setup/operator';
+
+/** The Agent Inbox skills live in their own repository, agentinboxhq/skills, and install with the skills CLI. */
+const SKILLS_COMMAND = 'npx skills add agentinboxhq/skills';
 
 /** `command` is how the screen names it: `setup`, `setup telegram`, or `channel add slack` when that runs it. */
 export async function setupCommand(
@@ -56,6 +59,8 @@ async function runSetup(channel: ChannelName | undefined, options: SetupOptions)
     keylessIdentifier: auth.mode === 'keyless' ? auth.keylessIdentifier : undefined,
   });
   const provisioned = await provisionOperator(client, existing, options, picture);
+  // Before anything below waits for a person: a run stopped there leaves a setup the next run picks up.
+  writeSetupConfig(apiUrl, auth, existing, provisioned, undefined);
 
   // The inbox always exists after setup, but only a verified address makes it
   // a channel the person can be reached on. A deployment with email disabled
@@ -88,7 +93,10 @@ async function runSetup(channel: ChannelName | undefined, options: SetupOptions)
     );
   }
 
-  await maybeInstallSkill(options);
+  // Only shown: which skills to install, and for which coding agents, is the person's call.
+  if (options.showSkills !== false) {
+    info(`Teach your coding agent to use the inbox: ${pc.bold(SKILLS_COMMAND)}`);
+  }
 }
 
 async function resolveSetupAuth(
@@ -177,13 +185,13 @@ export function channelLinkedBySetup(
   return undefined;
 }
 
-function saveSetupConfig(
+function writeSetupConfig(
   apiUrl: string,
   auth: CliConfig['auth'],
   existing: CliConfig | null,
   provisioned: ProvisionedOperator,
   channel: ChannelName | undefined
-): void {
+): CliConfig['defaultChannel'] {
   // A contact switch invalidates the saved default; otherwise keep it and fall
   // back to whatever this run actually linked.
   const keptDefault = provisioned.switchedContact ? undefined : existing?.defaultChannel;
@@ -194,7 +202,20 @@ function saveSetupConfig(
     relayAgentIdentifier: provisioned.relay.agentIdentifier,
     subscriberId: provisioned.subscriberId,
     ...(defaultChannel ? { defaultChannel } : {}),
+    ...keptHost(existing, apiUrl),
   });
+
+  return defaultChannel;
+}
+
+function saveSetupConfig(
+  apiUrl: string,
+  auth: CliConfig['auth'],
+  existing: CliConfig | null,
+  provisioned: ProvisionedOperator,
+  channel: ChannelName | undefined
+): void {
+  const defaultChannel = writeSetupConfig(apiUrl, auth, existing, provisioned, channel);
   success(`Saved config to ${configPath()}.`);
 
   if (channel && defaultChannel && defaultChannel !== channel) {
@@ -217,7 +238,7 @@ async function confirmLinkedChannel(
   await createInteraction(client, {
     kind: 'tell',
     card: {
-      title: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`npx @agentinbox/cli inbox send approve "Deploy to production?"\`.`,
+      title: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`npx @agentinbox/cli send approve "Deploy to production?"\`.`,
     },
     to: provisioned.subscriberId,
     via: channel,
@@ -225,9 +246,9 @@ async function confirmLinkedChannel(
   });
 
   const examples = [
-    'npx @agentinbox/cli inbox send ask "Which environment should I target?"',
-    'npx @agentinbox/cli inbox send approve "Deploy to production?"',
-    'npx @agentinbox/cli inbox send "Build finished."',
+    'npx @agentinbox/cli send ask "Which environment should I target?"',
+    'npx @agentinbox/cli send approve "Deploy to production?"',
+    'npx @agentinbox/cli send "Build finished."',
   ];
   const screen = openedScreen();
 
@@ -243,47 +264,6 @@ async function confirmLinkedChannel(
     `\n${pc.green('✔')} ${channel} connected. Agents on this machine can now run:\n` +
       examples.map((example) => `  ${pc.bold(example)}\n`).join('')
   );
-}
-
-/**
- * Offers to teach the coding agent running in this project (Claude Code,
- * Cursor, ...) when to reach for the inbox. Explicit `--skill`/`--no-skill`
- * always wins; otherwise this prompts on a TTY and stays silent (no install)
- * in headless runs, since dropping files into a CI checkout is a surprise.
- */
-async function maybeInstallSkill(options: SetupOptions): Promise<void> {
-  if (options.skill === false) {
-    return;
-  }
-
-  if (options.skill !== true) {
-    if (!process.stdin.isTTY) {
-      return;
-    }
-
-    const answer = (await promptLine('\nTeach your coding agent how to use the inbox? [Y/n] ')).trim().toLowerCase();
-    if (answer === 'n' || answer === 'no') {
-      return;
-    }
-  }
-
-  try {
-    const installed = installSkill(process.cwd(), resolveSkillHosts(process.cwd()));
-    if (installed.length === 0) {
-      return;
-    }
-
-    success(`Installed the agent-inbox skill: ${installed.map((entry) => entry.destination).join(', ')}`);
-  } catch (err) {
-    // Non-fatal — setup itself already succeeded.
-    const message = `Could not install the coding-agent skill (${err instanceof Error ? err.message : String(err)}). Run \`npx @agentinbox/cli skill install\` later.`;
-    const screen = openedScreen();
-    if (screen) {
-      screen.add({ mark: 'failed', value: message });
-    } else {
-      process.stdout.write(`${pc.yellow('•')} ${message}\n`);
-    }
-  }
 }
 
 async function connectChannel(

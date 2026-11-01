@@ -43,6 +43,9 @@ test('should trigger pusher-beams library correctly', async () => {
         },
         sound: 'custom_sound',
       },
+      data: {
+        custom_payload_1: 'custom_payload_1',
+      },
     },
     fcm: {
       notification: {
@@ -117,6 +120,9 @@ test('should trigger pusher-beams library correctly with _passthrough', async ()
           body: 'Hello, world!',
         },
         sound: 'custom_sound',
+      },
+      data: {
+        custom_payload_1: 'custom_payload_1',
       },
     },
     fcm: {

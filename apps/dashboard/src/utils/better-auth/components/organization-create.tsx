@@ -1,3 +1,4 @@
+import type { ClerkAppearanceTheme } from '@clerk/shared/types';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
@@ -8,7 +9,9 @@ import { ROUTES } from '@/utils/routes';
 import { useTelemetry } from '../../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../../utils/telemetry';
 import { authClient } from '../client';
-import { useOrganization } from '../index';
+import { useAuth, useOrganization } from '../index';
+import { getCreateOrganizationErrorMessage } from '../organization-errors';
+import { useCanCreateOrganization } from '../use-auth-config';
 
 const ILLUSTRATION_CONFIG = {
   src: '/images/auth/ui-org.svg',
@@ -86,7 +89,7 @@ function CreateOrganizationForm({ onSuccess }: { onSuccess: () => void }) {
       });
 
       if (createError) {
-        throw new Error(createError.message || 'Failed to create organization');
+        throw new Error(getCreateOrganizationErrorMessage(createError));
       }
 
       if (data?.id) {
@@ -95,8 +98,8 @@ function CreateOrganizationForm({ onSuccess }: { onSuccess: () => void }) {
         });
         onSuccess();
       }
-    } catch (e: any) {
-      setError(e.message || 'An unexpected error occurred');
+    } catch (e) {
+      setError(e instanceof Error && e.message ? e.message : 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -132,6 +135,25 @@ function CreateOrganizationForm({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
+function OrganizationAccessRequired() {
+  const { signOut } = useAuth();
+
+  return (
+    <div className="space-y-4 text-center">
+      <div className="space-y-1.5">
+        <h2 className="text-lg font-medium text-foreground-950">You are not part of an organization yet</h2>
+        <p className="text-sm text-foreground-600">
+          Only administrators can create organizations on this instance. Ask your administrator to invite you, and the
+          invitation will arrive by email.
+        </p>
+      </div>
+      <Button type="button" onClick={() => signOut()} variant="secondary" mode="outline" className="w-full">
+        Sign out
+      </Button>
+    </div>
+  );
+}
+
 function OrganizationListContent({
   afterCreateOrganizationUrl,
   afterSelectOrganizationUrl,
@@ -139,6 +161,7 @@ function OrganizationListContent({
   afterCreateOrganizationUrl?: string;
   afterSelectOrganizationUrl?: string;
 }) {
+  const { canCreateOrganization, isLoading: isCreationAccessLoading } = useCanCreateOrganization();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSelecting, setIsSelecting] = useState(false);
@@ -149,7 +172,7 @@ function OrganizationListContent({
       try {
         const { data } = await authClient.organization.list();
         setOrganizations(data || []);
-      } catch (e: any) {
+      } catch (e) {
         console.error('Failed to load organizations:', e);
       } finally {
         setIsLoading(false);
@@ -166,7 +189,7 @@ function OrganizationListContent({
         organizationId,
       });
       window.location.href = afterSelectOrganizationUrl || ROUTES.ENV;
-    } catch (e: any) {
+    } catch (e) {
       console.error('Failed to set active organization:', e);
       setIsSelecting(false);
     }
@@ -176,7 +199,7 @@ function OrganizationListContent({
     window.location.href = afterCreateOrganizationUrl || ROUTES.USECASE_SELECT;
   };
 
-  if (isLoading) {
+  if (isLoading || isCreationAccessLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <RiLoader4Line className="size-6 animate-spin text-foreground-600" />
@@ -184,9 +207,15 @@ function OrganizationListContent({
     );
   }
 
+  if (!canCreateOrganization && organizations.length === 0) {
+    return <OrganizationAccessRequired />;
+  }
+
+  const isCreateFormOpen = canCreateOrganization && showCreateForm;
+
   return (
     <div className="space-y-6">
-      {organizations.length > 0 && !showCreateForm && (
+      {organizations.length > 0 && !isCreateFormOpen && (
         <>
           <div className="space-y-3">
             <AnimatePresence>
@@ -201,31 +230,35 @@ function OrganizationListContent({
             </AnimatePresence>
           </div>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-neutral-200" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-white px-2 text-foreground-600">or</span>
-            </div>
-          </div>
+          {canCreateOrganization && (
+            <>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-neutral-200" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-white px-2 text-foreground-600">or</span>
+                </div>
+              </div>
 
-          <Button
-            type="button"
-            onClick={() => setShowCreateForm(true)}
-            variant="secondary"
-            mode="outline"
-            className="w-full"
-          >
-            Create a new organization
-          </Button>
+              <Button
+                type="button"
+                onClick={() => setShowCreateForm(true)}
+                variant="secondary"
+                mode="outline"
+                className="w-full"
+              >
+                Create a new organization
+              </Button>
+            </>
+          )}
         </>
       )}
 
-      {(showCreateForm || organizations.length === 0) && (
+      {canCreateOrganization && (isCreateFormOpen || organizations.length === 0) && (
         <>
           <CreateOrganizationForm onSuccess={handleCreateSuccess} />
-          {organizations.length > 0 && showCreateForm && (
+          {organizations.length > 0 && isCreateFormOpen && (
             <Button
               type="button"
               onClick={() => setShowCreateForm(false)}
@@ -353,7 +386,7 @@ function PlatformOrganizationCreate(props?: {
 }
 
 export function OrganizationCreate(props?: {
-  appearance?: any;
+  appearance?: ClerkAppearanceTheme;
   hidePersonal?: boolean;
   skipInvitationScreen?: boolean;
   afterSelectOrganizationUrl?: string;
