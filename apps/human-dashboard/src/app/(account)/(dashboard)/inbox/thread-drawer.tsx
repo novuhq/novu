@@ -425,6 +425,12 @@ function Details({ details, thread }: { details: InboxThreadDetails; thread: Inb
 
 function VoiceCallDetails({ call }: { call: InboxVoiceCall }) {
   const [recordingGone, setRecordingGone] = useState(false);
+  const ended = Boolean(call.endReason);
+
+  // A play attempt before the recording exists must not hide it once the call ends.
+  useEffect(() => {
+    setRecordingGone(false);
+  }, [ended]);
 
   return (
     <>
@@ -439,7 +445,16 @@ function VoiceCallDetails({ call }: { call: InboxVoiceCall }) {
       {call.hasRecording ? (
         <Detail label="Recording" wide>
           {recordingGone ? (
-            <span className="text-muted">Recording unavailable</span>
+            <span className="inline-flex items-center gap-2 text-muted">
+              Recording unavailable
+              <button
+                type="button"
+                className="text-foreground underline-offset-2 hover:underline"
+                onClick={() => setRecordingGone(false)}
+              >
+                Try again
+              </button>
+            </span>
           ) : (
             <>
               {/* The spoken turns listed under this call are the transcript. */}
