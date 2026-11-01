@@ -5,7 +5,14 @@ import { VOICE_DIAL_TIMEOUT_MS } from './place-voice-call';
 import { unconfirmedVoiceDialBody, voiceCallFailure, voiceFailureFromDialError } from './voice-call-failure';
 import { elevenLabsApiBase, readVoiceVerificationConfig } from './voice-config';
 
-const VERIFICATION_LINE_MAX_CHARS = 300;
+/**
+ * Room for a 6-digit code, spoken twice, with a break tag between each digit.
+ * Slicing inside a tag would be read aloud, so this stays above that line.
+ */
+const VERIFICATION_LINE_MAX_CHARS = 400;
+
+/** Flash v2 pause. Longer than a comma, short of the point where many breaks destabilize the voice. */
+const DIGIT_BREAK = '<break time="0.7s" />';
 
 export interface PlaceVerificationCallInput {
   toNumber: string;
@@ -26,8 +33,8 @@ interface OutboundCallResponse {
 
 /** Digits spoken one at a time, twice, so a code is not read as a single number. */
 export function verificationLineFor(code: string): string {
-  const spaced = code.split('').join(', ');
-  const line = `Your Novu code is ${spaced}. Again, ${spaced}.`;
+  const paced = code.split('').join(`. ${DIGIT_BREAK} `);
+  const line = `Your code is ${paced}. Again. ${DIGIT_BREAK} ${paced}.`;
 
   return line.slice(0, VERIFICATION_LINE_MAX_CHARS);
 }

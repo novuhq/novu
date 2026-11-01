@@ -46,8 +46,12 @@ describe('PlaceVerificationCall', () => {
     return new PlaceVerificationCall(logger as never);
   }
 
-  it('speaks the code as separate digits', () => {
-    expect(verificationLineFor('421903')).to.equal('Your Novu code is 4, 2, 1, 9, 0, 3. Again, 4, 2, 1, 9, 0, 3.');
+  it('speaks the code as separate digits with a pause between each', () => {
+    const pause = '<break time="0.7s" />';
+    const paced = ['4', '2', '1', '9', '0', '3'].join(`. ${pause} `);
+
+    expect(verificationLineFor('421903')).to.equal(`Your code is ${paced}. Again. ${pause} ${paced}.`);
+    expect(verificationLineFor('421903')).to.not.include('Novu');
   });
 
   it('dials the verification agent and sends no bridge correlation', async () => {
@@ -68,7 +72,9 @@ describe('PlaceVerificationCall', () => {
     const body = JSON.parse(String((fetchStub.firstCall.args[1] as RequestInit).body));
     expect(body.agent_id).to.equal('agent_verify');
     expect(body.agent_id).to.not.equal('agent_live');
-    expect(body.conversation_initiation_client_data.dynamic_variables.verification_line).to.include('4, 2, 1, 9, 0, 3');
+    expect(body.conversation_initiation_client_data.dynamic_variables.verification_line).to.equal(
+      verificationLineFor('421903')
+    );
     expect(body.conversation_initiation_client_data.custom_llm_extra_body).to.equal(undefined);
     expect(body.conversation_initiation_client_data.conversation_config_override).to.equal(undefined);
   });

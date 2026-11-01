@@ -109,7 +109,11 @@ describe('Voice phone verification #novu-v2', () => {
     expect(dial.agent_id).to.equal('agent_verify');
     expect(dial.conversation_initiation_client_data.custom_llm_extra_body).to.equal(undefined);
     const spoken = String(dial.conversation_initiation_client_data.dynamic_variables.verification_line);
-    const spokenCode = spoken.match(/(\d(?:, \d){5})/)?.[1].replace(/, /g, '');
+    const spokenCode = spoken
+      .replace(/<[^>]+>/g, '')
+      .match(/\d/g)
+      ?.slice(0, 6)
+      .join('');
     expect(spokenCode).to.match(/^\d{6}$/);
 
     const pending = await humanContactRepository.findPendingAddress(

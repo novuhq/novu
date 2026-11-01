@@ -203,7 +203,8 @@ function verificationShellPayload() {
         max_conversation_duration_message: 'Goodbye.',
         dynamic_variables: {
           dynamic_variable_placeholders: {
-            verification_line: 'Your Novu code is 0, 0, 0, 0, 0, 0.',
+            verification_line:
+              'Your code is 0. <break time="0.7s" /> 0. <break time="0.7s" /> 0. <break time="0.7s" /> 0. <break time="0.7s" /> 0. <break time="0.7s" /> 0.',
           },
         },
         prompt: {
@@ -487,7 +488,8 @@ async function proveVerificationCall(agentId: string, phoneNumberId: string | un
       to_number: toNumber,
       conversation_initiation_client_data: {
         dynamic_variables: {
-          verification_line: 'Your Novu code is 4, 2, 1, 9, 0, 3. Again, 4, 2, 1, 9, 0, 3.',
+          verification_line:
+            'Your code is 4. <break time="0.7s" /> 2. <break time="0.7s" /> 1. <break time="0.7s" /> 9. <break time="0.7s" /> 0. <break time="0.7s" /> 3. Again. <break time="0.7s" /> 4. <break time="0.7s" /> 2. <break time="0.7s" /> 1. <break time="0.7s" /> 9. <break time="0.7s" /> 0. <break time="0.7s" /> 3.',
         },
       },
     }),
