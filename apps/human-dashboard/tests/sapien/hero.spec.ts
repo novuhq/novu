@@ -47,28 +47,29 @@ test('hero cards rotate every 6 seconds and the caption follows', async ({ page 
   await expect(relation(page)).toContainText('hands out');
 });
 
-test('the agent and channel pills swap in place while the title stays put', async ({ page }) => {
+test('the channel pill swaps in place while the title stays put', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await openOnPausedClock(page);
   const heading = page.getByRole('heading', { level: 1 });
-  const agent = page.locator('#hero [data-token="agent"]');
   const channel = page.locator('#hero [data-token="channel"]');
-  const name =
-    'Get your ChatGPT, Grok Bot, Claude or OpenClaw agent on Slack, Telegram or Email with everyone around you.';
+  const name = 'Get your AI agent on Email, Slack or Telegram with everyone around you.';
   await expect(heading).toHaveAccessibleName(name);
+  await expect(page.locator('#hero [data-token="agent"]')).toHaveCount(0);
   await expect(page.locator('#hero p').first()).toHaveText(
     'Your team, family and customers write to it. It reads, asks and answers, all from one inbox.'
   );
-  await expect(agent).toHaveAttribute('data-current', 'ChatGPT');
+  await expect(channel).toHaveAttribute('data-current', 'Email');
+  await page.clock.fastForward(4900);
+  await expect(channel).toHaveAttribute('data-current', 'Email');
+  await page.clock.fastForward(200);
   await expect(channel).toHaveAttribute('data-current', 'Slack');
-  await page.clock.fastForward(3100);
-  await expect(agent).toHaveAttribute('data-current', 'Grok Bot');
+  await page.clock.fastForward(5100);
   await expect(channel).toHaveAttribute('data-current', 'Telegram');
   await expect(heading).toHaveAccessibleName(name);
   await toggle(page).click();
   await page.mouse.move(0, 0);
-  await page.clock.fastForward(12000);
-  await expect(agent).toHaveAttribute('data-current', 'Grok Bot');
+  await page.clock.fastForward(20000);
+  await expect(channel).toHaveAttribute('data-current', 'Telegram');
 });
 
 for (const width of [390, 1440]) {
@@ -85,7 +86,7 @@ for (const width of [390, 1440]) {
         );
 
     for (let step = 0; step < 12; step++) {
-      if (step > 0) await page.clock.fastForward(3100);
+      if (step > 0) await page.clock.fastForward(5100);
       await expect.poll(lineCount).toEqual([1, 1]);
     }
   });
