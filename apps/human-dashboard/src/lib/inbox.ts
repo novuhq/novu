@@ -16,11 +16,16 @@ export const INBOX_TAB_LABELS: Record<InboxTab, string> = {
 };
 
 /** The channels the filter offers, in its order. */
-export const INBOX_CHANNELS = ['email', 'telegram', 'slack'] as const;
+export const INBOX_CHANNELS = ['email', 'telegram', 'slack', 'voice'] as const;
 
 export type InboxChannel = (typeof INBOX_CHANNELS)[number];
 
-const CHANNEL_NAMES: Record<InboxChannel, string> = { email: 'Email', telegram: 'Telegram', slack: 'Slack' };
+const CHANNEL_NAMES: Record<InboxChannel, string> = {
+  email: 'Email',
+  telegram: 'Telegram',
+  slack: 'Slack',
+  voice: 'Voice',
+};
 
 /** What the page lists: one tab, optionally narrowed to a channel and a search. */
 export type InboxView = {
@@ -159,6 +164,17 @@ export type InboxMessage = {
   at: string;
 };
 
+/** A voice call on this thread: duration, why it ended, and whether audio can be played. */
+export type InboxVoiceCall = {
+  interactionId: string;
+  subscriberId?: string;
+  durationSeconds?: number;
+  endReason?: string;
+  endReasonCode?: string;
+  endedAt?: string;
+  hasRecording: boolean;
+};
+
 export type InboxThreadDetails = {
   threadId: string;
   channel: string;
@@ -170,6 +186,8 @@ export type InboxThreadDetails = {
   /** The agent whose inbox this is. */
   agent: { identifier: string; name: string };
   messageCount: number;
+  /** Set when the thread's channel is voice and a call was placed on it. */
+  voiceCall?: InboxVoiceCall;
 };
 
 export type InboxThreadView = {

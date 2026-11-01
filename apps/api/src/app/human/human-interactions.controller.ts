@@ -14,6 +14,7 @@ import {
   Post,
   Put,
   Query,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -29,6 +30,7 @@ import {
   PermissionsEnum,
   UserSessionData,
 } from '@novu/shared';
+import type { Response } from 'express';
 import { AgentInboxAddressService } from '../agents/email/novu-email/agent-inbox-address.service';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -112,6 +114,8 @@ import { GetInteractionCommand } from './usecases/get-interaction/get-interactio
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { GetKeylessClaimTokenCommand } from './usecases/get-keyless-claim-token/get-keyless-claim-token.command';
 import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
+import { GetVoiceRecordingCommand } from './usecases/get-voice-recording/get-voice-recording.command';
+import { GetVoiceRecording } from './usecases/get-voice-recording/get-voice-recording.usecase';
 import { ListContactsCommand } from './usecases/list-contacts/list-contacts.command';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInteractionsCommand } from './usecases/list-interactions/list-interactions.command';
@@ -152,6 +156,7 @@ export class HumanInteractionsController {
   constructor(
     private readonly createInteractionUsecase: CreateInteraction,
     private readonly getInteractionUsecase: GetInteraction,
+    private readonly getVoiceRecordingUsecase: GetVoiceRecording,
     private readonly listInteractionsUsecase: ListInteractions,
     private readonly cancelInteractionUsecase: CancelInteraction,
     private readonly voiceTurnUsecase: VoiceTurn,
@@ -246,6 +251,39 @@ export class HumanInteractionsController {
         identifier,
       })
     );
+  }
+
+  /**
+   * Proxies the ElevenLabs call recording behind our own authorization, so no
+   * ElevenLabs key reaches the browser.
+   */
+  @Get('/interactions/:identifier/voice/recording')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  @UseGuards(HumanAgentPausedGuard)
+  async getVoiceRecording(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Res() res: Response
+  ): Promise<void> {
+    const recording = await this.getVoiceRecordingUsecase.execute(
+      GetVoiceRecordingCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        identifier,
+      })
+    );
+
+    res
+      .status(200)
+      .set({
+        'Content-Type': recording.contentType,
+        'Cache-Control': 'private, max-age=3600',
+        'X-Content-Type-Options': 'nosniff',
+      })
+      .send(recording.body);
   }
 
   /**

@@ -138,6 +138,10 @@ describe('Voice bridge (completions ↔ turn) #novu-v2', () => {
 
     const inbound = activities.filter((row) => row.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER);
     const outbound = activities.filter((row) => row.senderType === ConversationActivitySenderTypeEnum.AGENT);
+    expect(outbound.map((row) => row.content)).to.include('Approve the deploy?');
+    expect(outbound.some((row) => row.platformMessageId === `${seeded.elevenLabsConversationId}:opening`)).to.equal(
+      true
+    );
     expect(inbound.map((row) => row.content)).to.include('yeah go ahead after the demo');
     expect(outbound.map((row) => row.content)).to.include('Got it, after the demo.');
   });
@@ -263,7 +267,10 @@ describe('Voice bridge (completions ↔ turn) #novu-v2', () => {
         settle: async (row, status) => {
           return humanInteractionRepository.settleIfPending(row._environmentId, row._id, status);
         },
+        countVoiceTurns: async () => 0,
       } as never,
+      {} as never,
+      { track: () => undefined } as never,
       { setContext: () => undefined, warn: () => undefined } as never
     );
 
@@ -283,6 +290,18 @@ describe('Voice bridge (completions ↔ turn) #novu-v2', () => {
       reason: VoiceCallEndReasonEnum.PERSON_HANGUP,
       durationSeconds: 42,
     });
+
+    const threadRes = await session.testAgent.get(`/v1/human/inbox/${seeded.conversationIdentifier}`);
+    expect(threadRes.status).to.equal(200, JSON.stringify(threadRes.body));
+    const details = threadRes.body.data?.details ?? threadRes.body.details;
+    expect(details.voiceCall).to.include({
+      interactionId: seeded.interactionIdentifier,
+      durationSeconds: 42,
+      endReasonCode: VoiceCallEndReasonEnum.PERSON_HANGUP,
+      endReason: 'They hung up',
+      hasRecording: true,
+    });
+    expect(details.voiceCall.subscriberId).to.equal(subscriberId);
   });
 
   async function waitUntilPending(conversationId: string, line: string): Promise<void> {
@@ -374,10 +393,25 @@ describe('Voice bridge (completions ↔ turn) #novu-v2', () => {
       _organizationId: session.organization._id,
     });
 
+    // Same shape create-interaction writes for the spoken opening line.
+    await conversationActivityRepository.createAgentActivity({
+      identifier: `act_voice_opening_${elevenLabsConversationId}`,
+      conversationId: conversation._id,
+      platform: HumanChannelViaEnum.VOICE,
+      integrationId,
+      platformThreadId: callSid,
+      platformMessageId: `${elevenLabsConversationId}:opening`,
+      agentId: relayAgentId,
+      content: 'Approve the deploy?',
+      environmentId: session.environment._id,
+      organizationId: session.organization._id,
+    });
+
     return {
       interactionIdentifier,
       conversationId: conversation._id,
       elevenLabsConversationId,
+      conversationIdentifier: conversation.identifier,
     };
   }
 });

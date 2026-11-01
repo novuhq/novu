@@ -1,4 +1,9 @@
-import { HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
+import {
+  AGENT_INBOX_EVENTS,
+  HumanChannelViaEnum,
+  HumanInteractionKindEnum,
+  HumanInteractionStatusEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { HumanInteractionSettlementService } from './human-interaction-settlement.service';
@@ -42,7 +47,10 @@ describe('HumanInteractionSettlementService', () => {
       { execute: sinon.stub().resolves(undefined) } as any,
       logger as any,
       { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved: sinon.stub().resolves() } as any
+      { releaseReserved: sinon.stub().resolves() } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
 
     await service.settle(
@@ -77,7 +85,10 @@ describe('HumanInteractionSettlementService', () => {
       { execute: sinon.stub().resolves(undefined) } as any,
       logger as any,
       { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved: sinon.stub().resolves() } as any
+      { releaseReserved: sinon.stub().resolves() } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
 
     await service.settle(
@@ -111,7 +122,10 @@ describe('HumanInteractionSettlementService', () => {
       resumeToolApprovalFromHitl as any,
       logger as any,
       { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved: sinon.stub().resolves() } as any
+      { releaseReserved: sinon.stub().resolves() } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
 
     await service.settle({ _id: 'hi1', _environmentId: 'env1' } as any, HumanInteractionStatusEnum.APPROVED);
@@ -144,7 +158,10 @@ describe('HumanInteractionSettlementService', () => {
       resumeToolApprovalFromHitl as any,
       logger as any,
       { recordRequest: sinon.stub().resolves(), recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved: sinon.stub().resolves() } as any
+      { releaseReserved: sinon.stub().resolves() } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
 
     await service.expireIfOverdue(pending as any);
@@ -191,7 +208,10 @@ describe('HumanInteractionSettlementService', () => {
       { execute: sinon.stub().resolves() } as any,
       { setContext: sinon.stub(), warn: sinon.stub() } as any,
       { recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved } as any
+      { releaseReserved } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
     const pending = {
       _id: 'hi1',
@@ -249,7 +269,10 @@ describe('HumanInteractionSettlementService', () => {
       { execute: sinon.stub().resolves() } as any,
       { setContext: sinon.stub(), warn: sinon.stub() } as any,
       { recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved } as any
+      { releaseReserved } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
 
     await service.failVoiceCall(
@@ -310,7 +333,10 @@ describe('HumanInteractionSettlementService', () => {
       { execute: sinon.stub().resolves() } as any,
       { setContext: sinon.stub(), warn: sinon.stub() } as any,
       { recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved } as any
+      { releaseReserved } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
     const pending = {
       _id: 'hi1',
@@ -358,7 +384,10 @@ describe('HumanInteractionSettlementService', () => {
       { execute: sinon.stub().resolves() } as any,
       { setContext: sinon.stub(), warn: sinon.stub() } as any,
       { recordResponse: sinon.stub().resolves() } as any,
-      { releaseReserved } as any
+      { releaseReserved } as any,
+      { track: sinon.stub() } as any,
+      {} as any,
+      { countVoiceTurns: sinon.stub().resolves(0) } as any
     );
 
     await service.failVoiceCall(
@@ -379,5 +408,57 @@ describe('HumanInteractionSettlementService', () => {
       HumanInteractionStatusEnum.DELIVERED,
     ]);
     expect(releaseReserved.called).to.equal(false);
+  });
+
+  it('counts a recovered answer on a call that already ended', async () => {
+    const analytics = { track: sinon.stub() };
+    const humanInteractionRepository = {
+      settleIfExpired: sinon.stub().callsFake(async (_env, _id, status, response) => ({
+        _id: 'hi1',
+        identifier: 'hi_1',
+        _environmentId: 'env1',
+        _organizationId: 'org1',
+        _agentId: 'agent1',
+        _conversationId: 'conv1',
+        kind: HumanInteractionKindEnum.APPROVE,
+        status,
+        response,
+        deliveries: [
+          {
+            platform: HumanChannelViaEnum.VOICE,
+            platformMessageId: 'el_1',
+            voiceCallEnded: { durationSeconds: 18 },
+          },
+        ],
+      })),
+    };
+    const service = new HumanInteractionSettlementService(
+      humanInteractionRepository as any,
+      { editInConversation: sinon.stub().resolves(undefined) } as any,
+      { execute: sinon.stub().resolves(undefined) } as any,
+      { execute: sinon.stub().resolves(undefined) } as any,
+      { setContext: sinon.stub(), warn: sinon.stub() } as any,
+      { recordResponse: sinon.stub().resolves() } as any,
+      { releaseReserved: sinon.stub().resolves() } as any,
+      analytics as any,
+      { findOne: sinon.stub().resolves({ apiKeys: [{ _userId: 'user-1' }] }) } as any,
+      { countVoiceTurns: sinon.stub().resolves(3) } as any
+    );
+
+    await service.settleExpiredVoice(
+      { _id: 'hi1', _environmentId: 'env1', identifier: 'hi_1' } as any,
+      HumanInteractionStatusEnum.APPROVED,
+      { type: 'option', optionId: 'approve', respondedAt: '2026-01-01T00:00:00.000Z' }
+    );
+
+    expect(analytics.track.calledOnce).to.equal(true);
+    expect(analytics.track.firstCall.args[0]).to.equal(AGENT_INBOX_EVENTS.CALL_SETTLED);
+    expect(analytics.track.firstCall.args[1]).to.equal('user-1');
+    expect(analytics.track.firstCall.args[2]).to.include({
+      interactionId: 'hi_1',
+      status: HumanInteractionStatusEnum.APPROVED,
+      durationSeconds: 18,
+      turnCount: 3,
+    });
   });
 });

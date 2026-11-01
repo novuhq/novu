@@ -84,6 +84,7 @@ import { GetInboxThread } from './usecases/get-inbox-thread/get-inbox-thread.use
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
 import { GetListenLease } from './usecases/get-listen-lease/get-listen-lease.usecase';
+import { GetVoiceRecording } from './usecases/get-voice-recording/get-voice-recording.usecase';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInboxThreads } from './usecases/list-inbox-threads/list-inbox-threads.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
@@ -168,6 +169,7 @@ import { VoiceCallWebhookController } from './voice-call-failure.controller';
     HumanVoiceMinuteQuotaService,
     CreateInteraction,
     GetInteraction,
+    GetVoiceRecording,
     ListInteractions,
     CancelInteraction,
     SetupHumanRelay,

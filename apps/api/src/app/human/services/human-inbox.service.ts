@@ -23,6 +23,8 @@ import {
   isHumanCardElementContent,
   mintHumanOptions,
   resolveHumanInteractionCard,
+  VoiceCallEndReasonEnum,
+  VoiceCallFailureCodeEnum,
 } from '@novu/shared';
 import { isAgentProvisionedSubscriber } from '../../agents/conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { parseEmailThreadAddress } from '../../agents/conversation-runtime/ingress/email-thread-id';
@@ -43,6 +45,7 @@ import type {
   InboxThreadDetailsDto,
   InboxThreadDto,
   InboxThreadState,
+  InboxVoiceCallDto,
 } from '../dtos/human-inbox.dto';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../usecases/setup-human-relay/setup-human-relay.usecase';
 import { HumanDeliveryService } from './human-delivery.service';
@@ -469,9 +472,12 @@ export class HumanInboxService {
     thread: InboxThreadDto
   ): Promise<InboxThreadDetailsDto> {
     const person = thread.people.find((candidate) => candidate.kind === 'contact') ?? thread.people[0];
-    const [messageCount, verified] = await Promise.all([
+    const [messageCount, verified, voiceCall] = await Promise.all([
       this.activityRepository.countInboxMessages({ ...scope, conversationId: conversation._id }),
       person?.kind === 'contact' ? this.isVerifiedOn(scope, agent, person.id, thread.channel) : false,
+      thread.channel === HumanChannelViaEnum.VOICE
+        ? this.voiceCallOf(scope, conversation._id)
+        : Promise.resolve(undefined),
     ]);
 
     return {
@@ -483,6 +489,53 @@ export class HumanInboxService {
       lastReadAt: thread.lastReadAt,
       agent: { identifier: agent.identifier, name: agent.name },
       messageCount,
+      ...(voiceCall ? { voiceCall } : {}),
+    };
+  }
+
+  /**
+   * The latest voice delivery on this conversation: duration, why it ended, and
+   * whether a recording may still be fetched. Absent until a call was placed.
+   */
+  private async voiceCallOf(scope: InboxScope, conversationId: string): Promise<InboxVoiceCallDto | undefined> {
+    const [interaction] = await this.humanInteractionRepository.find(
+      {
+        _environmentId: scope.environmentId,
+        _organizationId: scope.organizationId,
+        _conversationId: conversationId,
+        'deliveries.platform': HumanChannelViaEnum.VOICE,
+      },
+      '*',
+      { sort: { createdAt: -1 }, limit: 1 }
+    );
+
+    if (!interaction) {
+      return undefined;
+    }
+
+    const delivery = interaction.deliveries?.find((candidate) => candidate.platform === HumanChannelViaEnum.VOICE);
+    if (!delivery) {
+      return undefined;
+    }
+
+    const ended = delivery.voiceCallEnded;
+    const failure = delivery.voiceFailure ?? interaction.voiceFailure;
+    const connected = Boolean(ended) || (!failure && interaction.status !== HumanInteractionStatusEnum.FAILED);
+    const endReasonCode = ended?.reason ?? failure?.code;
+    const endReason = ended
+      ? voiceCallEndReasonLabel(ended.reason)
+      : failure
+        ? failure.message || voiceCallFailureLabel(failure.code)
+        : undefined;
+
+    return {
+      interactionId: interaction.identifier,
+      ...(delivery.subscriberId ? { subscriberId: delivery.subscriberId } : {}),
+      ...(ended?.durationSeconds !== undefined ? { durationSeconds: ended.durationSeconds } : {}),
+      ...(endReason ? { endReason } : {}),
+      ...(endReasonCode ? { endReasonCode } : {}),
+      ...(ended?.endedAt ? { endedAt: ended.endedAt } : {}),
+      hasRecording: connected,
     };
   }
 
@@ -1148,4 +1201,44 @@ export function readAttachments(activity: ConversationActivityEntity): InboxAtta
     ...(attachment.mimeType ? { mimeType: attachment.mimeType } : {}),
     ...(typeof attachment.size === 'number' ? { size: attachment.size } : {}),
   }));
+}
+
+function voiceCallEndReasonLabel(reason: VoiceCallEndReasonEnum): string {
+  switch (reason) {
+    case VoiceCallEndReasonEnum.AGENT_HANGUP:
+      return 'The agent hung up';
+    case VoiceCallEndReasonEnum.PERSON_HANGUP:
+      return 'They hung up';
+    case VoiceCallEndReasonEnum.MAX_DURATION:
+      return 'The call reached its time limit';
+    case VoiceCallEndReasonEnum.STALE:
+      return 'The call went quiet and was closed';
+    case VoiceCallEndReasonEnum.OTHER:
+      return 'The call ended';
+    default: {
+      const _exhaustive: never = reason;
+
+      return _exhaustive;
+    }
+  }
+}
+
+function voiceCallFailureLabel(code: VoiceCallFailureCodeEnum): string {
+  switch (code) {
+    case VoiceCallFailureCodeEnum.BUSY:
+      return 'The line was busy';
+    case VoiceCallFailureCodeEnum.NO_ANSWER:
+      return 'Nobody answered';
+    case VoiceCallFailureCodeEnum.REJECTED:
+      return 'The call was rejected';
+    case VoiceCallFailureCodeEnum.INVALID_NUMBER:
+      return 'The number could not be dialed';
+    case VoiceCallFailureCodeEnum.CARRIER_FAILURE:
+      return 'The call failed';
+    default: {
+      const _exhaustive: never = code;
+
+      return _exhaustive;
+    }
+  }
 }

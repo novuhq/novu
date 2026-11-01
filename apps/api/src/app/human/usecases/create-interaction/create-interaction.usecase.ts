@@ -34,6 +34,7 @@ import {
   normalizeHumanTo,
   VOICE_CALL_MAX_MINUTES,
 } from '@novu/shared';
+import { openingLineFor } from '../../../agents/channels/voice/place-voice-call';
 import { isUnconfirmedVoiceDial } from '../../../agents/channels/voice/voice-call-failure';
 import { AgentConversationService } from '../../../agents/conversation-runtime/conversation/agent-conversation.service';
 import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/human-interaction-activity.recorder';
@@ -46,7 +47,7 @@ import {
   type InteractionThreadDto,
   toInteractionResponse,
 } from '../../dtos/interaction-response.dto';
-import { trackAgentInboxMessageSent } from '../../services/agent-inbox-analytics';
+import { trackAgentInboxCallPlaced, trackAgentInboxMessageSent } from '../../services/agent-inbox-analytics';
 import { contactIdCandidates, explicitEmailAddress } from '../../services/explicit-email-recipient';
 import { HumanDeliveryService, type ResolvedHumanTarget } from '../../services/human-delivery.service';
 import { HumanInboxService, type InboxScope } from '../../services/human-inbox.service';
@@ -287,7 +288,7 @@ export class CreateInteraction {
 
       // Each contact gets the message in a thread of their own, so each delivery is one message sent.
       for (const { platform } of deliveredInteraction.deliveries ?? []) {
-        this.trackMessageSent(command, agent, platform);
+        this.trackMessageSent(command, agent, platform, deliveredInteraction.identifier);
       }
 
       if (deliveredInteraction.status === HumanInteractionStatusEnum.DELIVERED) {
@@ -561,7 +562,14 @@ export class CreateInteraction {
           const send = () => this.deliveryService.deliver(interaction, target, subscriberId);
           const sent = credits ? await credits.run(send) : await send();
           options.onSent?.(subscriberId, target.platform);
-          const thread = await this.landInThread(scope, interaction, subscriberId, target, sent.platformThreadId);
+          const thread = await this.landInThread(
+            scope,
+            interaction,
+            subscriberId,
+            target,
+            sent.platformThreadId,
+            sent.platformMessageId
+          );
 
           if (thread) {
             threads.push({ id: thread.id, unreadBefore: thread.unreadBefore });
@@ -582,7 +590,8 @@ export class CreateInteraction {
     interaction: HumanInteractionEntity,
     subscriberId: string,
     target: ResolvedHumanTarget,
-    platformThreadId: string
+    platformThreadId: string,
+    platformMessageId?: string
   ): Promise<{ id: string; conversationId: string; unreadBefore: number } | null> {
     try {
       const conversation = await this.conversationService.createOrGetConversation({
@@ -605,6 +614,10 @@ export class CreateInteraction {
         humanInteractionCardTitle({ kind: interaction.kind, content: interaction.content })
       );
 
+      if (target.platform === HumanChannelViaEnum.VOICE) {
+        await this.persistVoiceOpeningLine(scope, conversation, interaction, platformMessageId ?? platformThreadId);
+      }
+
       return { id: conversation.identifier, conversationId: conversation._id, unreadBefore };
     } catch (err) {
       this.logger.warn(
@@ -613,6 +626,39 @@ export class CreateInteraction {
       );
 
       return null;
+    }
+  }
+
+  /**
+   * The shell speaks the opening line before the bridge starts, so nothing else records it.
+   * Uses a platformMessageId distinct from the ElevenLabs conversation id: the interaction
+   * request row already carries that id, and withoutInteractionCardCopies would drop this
+   * MESSAGE if they matched.
+   */
+  private async persistVoiceOpeningLine(
+    scope: InboxScope,
+    conversation: ConversationEntity,
+    interaction: HumanInteractionEntity,
+    conversationId: string
+  ): Promise<void> {
+    const channel = this.inbox.primaryChannel(conversation);
+
+    try {
+      await this.conversationService.persistAgentMessage({
+        conversationId: conversation._id,
+        channel,
+        agentIdentifier: String(interaction._agentId),
+        environmentId: scope.environmentId,
+        organizationId: scope.organizationId,
+        content: openingLineFor(interaction),
+        platformMessageId: `${conversationId}:opening`,
+        identifier: `act_voice_opening_${conversationId}`,
+      });
+    } catch (err) {
+      this.logger.warn(
+        { err, interactionIdentifier: interaction.identifier, conversationId: conversation._id },
+        'Failed to persist the voice call opening line on the thread'
+      );
     }
   }
 
@@ -719,7 +765,7 @@ export class CreateInteraction {
                     staysInThread: true,
                     onSent: (subscriberId, platform) => {
                       reached.add(subscriberId);
-                      this.trackMessageSent(command, agent, platform);
+                      this.trackMessageSent(command, agent, platform, created.identifier);
                     },
                   })
               : undefined,
@@ -743,7 +789,7 @@ export class CreateInteraction {
     // Nothing landed in the thread when its post failed: it isn't marked read, and isn't reported as sent into.
     const intoThread: InteractionThreadDto[] = [];
     if (postedInThread) {
-      this.trackMessageSent(command, agent, channel.platform);
+      this.trackMessageSent(command, agent, channel.platform, interaction.identifier);
       intoThread.push({
         id: conversation.identifier,
         unreadBefore: await this.inbox.markSentInto(scope, conversation),
@@ -911,12 +957,27 @@ export class CreateInteraction {
     return subscriberId;
   }
 
-  private trackMessageSent(command: CreateInteractionCommand, agent: AgentEntity, channel: string): void {
-    trackAgentInboxMessageSent(
-      this.analyticsService,
-      { userId: command.userId, organizationId: command.organizationId },
-      { agentId: agent._id, type: command.kind, channel, source: command.analyticsSource }
-    );
+  private trackMessageSent(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    channel: string,
+    interactionId: string
+  ): void {
+    const owner = { userId: command.userId, organizationId: command.organizationId };
+    trackAgentInboxMessageSent(this.analyticsService, owner, {
+      agentId: agent._id,
+      type: command.kind,
+      channel,
+      source: command.analyticsSource,
+    });
+
+    if (channel === HumanChannelViaEnum.VOICE) {
+      trackAgentInboxCallPlaced(this.analyticsService, owner, {
+        agentId: agent._id,
+        interactionId,
+        source: command.analyticsSource,
+      });
+    }
   }
 
   /**

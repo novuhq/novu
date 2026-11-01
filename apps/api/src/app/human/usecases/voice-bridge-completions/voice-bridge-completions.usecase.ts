@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { CacheService, PinoLogger, shortId } from '@novu/application-generic';
+import { AnalyticsService, CacheService, PinoLogger, shortId } from '@novu/application-generic';
 import {
   ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
   ConversationEntity,
   ConversationRepository,
+  EnvironmentRepository,
   HumanInteractionDelivery,
   HumanInteractionEntity,
   HumanInteractionRepository,
@@ -31,6 +32,7 @@ import {
   readVoiceCallHandoff,
   recordInboundUtterances,
 } from '../../../agents/channels/voice/voice-call-handoff';
+import { findAgentInboxOwner, trackAgentInboxCallAnswered } from '../../services/agent-inbox-analytics';
 
 export type VoiceBridgeCorrelation = {
   interactionId: string;
@@ -55,7 +57,9 @@ export class VoiceBridgeCompletions {
     private readonly humanInteractionRepository: HumanInteractionRepository,
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationActivityRepository: ConversationActivityRepository,
+    private readonly environmentRepository: EnvironmentRepository,
     private readonly cacheService: CacheService,
+    private readonly analyticsService: AnalyticsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -88,6 +92,7 @@ export class VoiceBridgeCompletions {
     }
 
     await this.appendInboundUtterances(resolved, recorded.appended);
+    await this.trackFirstAnswer(resolved, recorded.appended.length, recorded.handoff.inboundSeq);
 
     const claimed = await this.parkForAgentLine({
       conversationId: resolved.delivery.platformMessageId,
@@ -274,6 +279,34 @@ export class VoiceBridgeCompletions {
       environmentId: String(resolved.conversation._environmentId),
       organizationId: String(resolved.conversation._organizationId),
     });
+  }
+
+  /** The first person utterance on a call is the answer; later turns are just conversation. */
+  private async trackFirstAnswer(
+    resolved: ResolvedVoiceCall,
+    appendedCount: number,
+    inboundSeq: number
+  ): Promise<void> {
+    if (appendedCount <= 0 || inboundSeq !== appendedCount) {
+      return;
+    }
+
+    try {
+      const owner = await findAgentInboxOwner(this.environmentRepository, {
+        environmentId: String(resolved.interaction._environmentId),
+        organizationId: String(resolved.interaction._organizationId),
+      });
+      if (!owner) {
+        return;
+      }
+
+      trackAgentInboxCallAnswered(this.analyticsService, owner, {
+        agentId: String(resolved.interaction._agentId),
+        interactionId: resolved.interaction.identifier,
+      });
+    } catch (err) {
+      this.logger.warn({ err, interactionId: resolved.interaction.identifier }, 'Failed to track Call Answered');
+    }
   }
 
   private async parkForAgentLine(params: {

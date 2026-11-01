@@ -13,6 +13,7 @@ import {
   resolveCurrentMessage as foldCurrentMessage,
   isDuplicateKeyError,
 } from '@novu/dal';
+import { HumanChannelViaEnum } from '@novu/shared';
 import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
 import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activity.publisher';
 import { AGENT_HISTORY_LIMIT, getInboundActivityPreview } from './agent-conversation.helpers';
@@ -80,6 +81,17 @@ export class ConversationActivityLedger {
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
+  }
+
+  /** Spoken turns stored for one voice call. Used when a call settles or ends. */
+  countVoiceTurns(environmentId: string, organizationId: string, conversationId: string): Promise<number> {
+    return this.activityRepository.count({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      _conversationId: conversationId,
+      type: ConversationActivityTypeEnum.MESSAGE,
+      platform: HumanChannelViaEnum.VOICE,
+    });
   }
 
   async listForView(params: ListActivityViewParams): Promise<{ data: ConversationActivityEntity[]; hasMore: boolean }> {
