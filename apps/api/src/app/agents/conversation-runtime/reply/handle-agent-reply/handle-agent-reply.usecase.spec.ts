@@ -159,6 +159,20 @@ describe('HandleAgentReply - active-conversation counting', () => {
     }
   });
 
+  it('fails a run-scoped tool result write so it is retried, but keeps a legacy reply going', async () => {
+    const { usecase, baseCommand, outboundGateway, conversationService } = setup();
+    Object.assign(conversationService, { persistToolResult: sinon.stub().rejects(new Error('mongo unavailable')) });
+    const toolResults = [{ toolCallId: 'call_1', output: 'done' }];
+
+    const runScoped = await usecase
+      .execute({ ...baseCommand, toolResults, runId: 'run-1' } as any)
+      .catch((caught: unknown) => caught);
+    expect((runScoped as Error).message).to.equal('mongo unavailable');
+
+    await usecase.execute({ ...baseCommand, toolResults, reply: { markdown: 'hi' } } as any);
+    expect(outboundGateway.deliver.calledOnce).to.equal(true);
+  });
+
   it('deletes platform messages for a deleteMessages-only request', async () => {
     const { usecase, baseCommand, outboundGateway, conversationActivation } = setup();
 

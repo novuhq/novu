@@ -942,10 +942,13 @@ export class AgentEventSink {
   ): Promise<void> {
     const channel = context.channel;
     if (!channel) {
-      this.logger.warn(
-        { runId, conversationId: context.conversationId, operation },
-        'Skipping tool activity record: missing channel on AgentEventContext'
-      );
+      const message = `${operation} record skipped: missing channel on AgentEventContext`;
+      this.logger.error({ runId, conversationId: context.conversationId }, message);
+      captureAgentException(new Error(message), {
+        component: 'agent-event-sink',
+        operation: `record-${operation}`,
+        sessionId: context.sessionId,
+      });
 
       return;
     }

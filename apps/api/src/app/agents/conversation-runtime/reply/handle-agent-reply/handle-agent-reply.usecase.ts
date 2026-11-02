@@ -906,20 +906,32 @@ export class HandleAgentReply {
     toolResults: ToolResultRecord[]
   ): Promise<void> {
     for (const toolResult of toolResults) {
-      await this.conversationService.persistToolResult({
-        conversationId: conversation._id,
-        channel,
-        agentIdentifier: command.agentIdentifier,
-        toolCallId: toolResult.toolCallId,
-        toolName: toolResult.toolName,
-        output: toolResult.output,
-        content: toolResult.content,
-        isError: toolResult.isError,
-        runId: command.runId,
-        preview: toolResult.preview,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-      });
+      try {
+        await this.conversationService.persistToolResult({
+          conversationId: conversation._id,
+          channel,
+          agentIdentifier: command.agentIdentifier,
+          toolCallId: toolResult.toolCallId,
+          toolName: toolResult.toolName,
+          output: toolResult.output,
+          content: toolResult.content,
+          isError: toolResult.isError,
+          runId: command.runId,
+          preview: toolResult.preview,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        });
+      } catch (err) {
+        // Without a run id the identifier is random, so a retried request would duplicate the rows already written.
+        if (command.runId) {
+          throw err;
+        }
+
+        this.logger.warn(
+          { err, agentIdentifier: command.agentIdentifier, toolCallId: toolResult.toolCallId },
+          `[agent:${command.agentIdentifier}] Failed to persist tool-result activity for ${toolResult.toolCallId}`
+        );
+      }
     }
   }
 
