@@ -656,15 +656,20 @@ export class AgentEventSink {
       return;
     }
 
-    await this.recordToolActivity(context, runId, 'tool-use-done', (activityContext) =>
-      this.conversationService.persistToolCall({
-        ...activityContext,
-        runId,
-        toolCallId: event.toolUseId,
-        toolName: event.toolName,
-        input: event.input,
-        mcpServerName: this.mcpServerNameOf(event.source),
-      })
+    await this.persistActivity(
+      context,
+      runId,
+      'record-tool-use-done',
+      (activityContext) =>
+        this.conversationService.persistToolCall({
+          ...activityContext,
+          runId,
+          toolCallId: event.toolUseId,
+          toolName: event.toolName,
+          input: event.input,
+          mcpServerName: this.mcpServerNameOf(event.source),
+        }),
+      { rethrow: true }
     );
 
     try {
@@ -704,7 +709,7 @@ export class AgentEventSink {
     runId: string
   ): Promise<void> {
     if (context.source === 'bridge') {
-      const toolResult = { ...mapToolUseResultEvent(event), content: event.content, isError: event.isError === true };
+      const toolResult = { ...mapToolUseResultEvent(event), content: event.content, isError: event.isError };
 
       await this.dispatchReply(
         HandleAgentReplyCommand.create({ ...baseFields, toolResults: [toolResult], runId }),
@@ -716,21 +721,27 @@ export class AgentEventSink {
       return;
     }
 
-    await this.recordToolActivity(context, runId, 'tool-use-result', async (activityContext) => {
-      const toolCallId = event.toolUseId;
-      // A result carries no tool name. An internal tool's result is recognised by its call row never being written.
-      if (!(await this.conversationService.hasToolCall({ ...activityContext, runId, toolCallId }))) {
-        return;
-      }
+    await this.persistActivity(
+      context,
+      runId,
+      'record-tool-use-result',
+      async (activityContext) => {
+        const toolCallId = event.toolUseId;
+        // A result carries no tool name. An internal tool's result is recognised by its call row never being written.
+        if (!(await this.conversationService.hasToolCall({ ...activityContext, runId, toolCallId }))) {
+          return;
+        }
 
-      await this.conversationService.persistToolResult({
-        ...activityContext,
-        runId,
-        toolCallId,
-        content: event.content,
-        isError: event.isError === true,
-      });
-    });
+        await this.conversationService.persistToolResult({
+          ...activityContext,
+          runId,
+          toolCallId,
+          content: event.content,
+          isError: event.isError,
+        });
+      },
+      { rethrow: true }
+    );
 
     try {
       await this.handlePlanProgress.execute(
@@ -902,56 +913,29 @@ export class AgentEventSink {
     runId: string,
     event: RunLifecycleEvent
   ): Promise<void> {
-    const channel = context.channel;
-    if (!channel) {
-      const message = 'run lifecycle persist skipped: missing channel on AgentEventContext';
-      this.logger.error({ runId, conversationId: context.conversationId }, message);
-      captureAgentException(new Error(message), {
-        component: 'agent-event-sink',
-        operation: 'persist-run-lifecycle',
-        sessionId: context.sessionId,
-      });
-
-      return;
-    }
-
-    try {
-      await this.conversationService.persistRunLifecycle({
-        conversationId: context.conversationId,
-        channel,
-        agentIdentifier: context.agentIdentifier,
-        environmentId: context.environmentId,
-        organizationId: context.organizationId,
-        runId,
-        event,
-      });
-    } catch (err) {
-      this.logger.error(err, `run lifecycle persist failed: run=${runId}`);
-      captureAgentException(err, {
-        component: 'agent-event-sink',
-        operation: 'persist-run-lifecycle',
-        sessionId: context.sessionId,
-      });
-
-      if (event.type === 'run-start') {
-        throw err;
-      }
-    }
+    await this.persistActivity(
+      context,
+      runId,
+      'persist-run-lifecycle',
+      (activityContext) => this.conversationService.persistRunLifecycle({ ...activityContext, runId, event }),
+      { rethrow: event.type === 'run-start' }
+    );
   }
 
-  private async recordToolActivity(
+  private async persistActivity(
     context: AgentEventContext,
     runId: string,
-    operation: 'tool-use-done' | 'tool-use-result',
-    persist: (activityContext: ConversationActivityContext) => Promise<void>
+    operation: string,
+    persist: (activityContext: ConversationActivityContext) => Promise<unknown>,
+    { rethrow }: { rethrow: boolean }
   ): Promise<void> {
     const channel = context.channel;
     if (!channel) {
-      const message = `${operation} record skipped: missing channel on AgentEventContext`;
+      const message = `${operation} skipped: missing channel on AgentEventContext`;
       this.logger.error({ runId, conversationId: context.conversationId }, message);
       captureAgentException(new Error(message), {
         component: 'agent-event-sink',
-        operation: `record-${operation}`,
+        operation,
         sessionId: context.sessionId,
       });
 
@@ -967,13 +951,16 @@ export class AgentEventSink {
         organizationId: context.organizationId,
       });
     } catch (err) {
-      this.logger.error(err, `${operation} record failed: run=${runId}`);
+      this.logger.error(err, `${operation} failed: run=${runId}`);
       captureAgentException(err, {
         component: 'agent-event-sink',
-        operation: `record-${operation}`,
+        operation,
         sessionId: context.sessionId,
       });
-      throw err;
+
+      if (rethrow) {
+        throw err;
+      }
     }
   }
 
