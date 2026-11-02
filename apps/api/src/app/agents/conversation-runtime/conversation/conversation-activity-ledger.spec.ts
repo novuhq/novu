@@ -711,4 +711,49 @@ describe('ConversationActivityLedger', () => {
       expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
     });
   });
+
+  describe('hasAgentMessageContaining', () => {
+    it('looks up an agent message in this thread whose text contains the needle', async () => {
+      const activityRepository = makeActivityRepository({
+        findOne: sinon.stub().resolves({ _id: 'activity-1' }),
+      });
+      const ledger = makeLedger(activityRepository);
+
+      const found = await ledger.hasAgentMessageContaining({
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        conversationId: 'conv-1',
+        platformThreadId: 'email:thread:1',
+        contentIncludes: "We couldn't verify that this email really came from",
+      });
+
+      expect(found).to.equal(true);
+      expect(activityRepository.findOne.calledOnce).to.equal(true);
+      expect(activityRepository.findOne.firstCall.args[0]).to.deep.equal({
+        _environmentId: 'env-1',
+        _organizationId: 'org-1',
+        _conversationId: 'conv-1',
+        platformThreadId: 'email:thread:1',
+        type: ConversationActivityTypeEnum.MESSAGE,
+        senderType: ConversationActivitySenderTypeEnum.AGENT,
+        content: { $regex: "We couldn't verify that this email really came from" },
+      });
+    });
+
+    it('returns false without querying when the needle is blank', async () => {
+      const activityRepository = makeActivityRepository();
+      const ledger = makeLedger(activityRepository);
+
+      const found = await ledger.hasAgentMessageContaining({
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        conversationId: 'conv-1',
+        platformThreadId: 'email:thread:1',
+        contentIncludes: '   ',
+      });
+
+      expect(found).to.equal(false);
+      expect(activityRepository.findOne.called).to.equal(false);
+    });
+  });
 });
