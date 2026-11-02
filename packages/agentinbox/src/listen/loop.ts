@@ -577,7 +577,7 @@ class ListenLoop {
         break;
       }
       active.messages.push(message);
-      active.typing.start();
+      this.startTypingFor(active, message);
       this.log(`${message.conversationId}: a new message joined the run.`);
       this.state.queue = this.state.queue.filter((queued) => queued.id !== message.id);
       this.markHandled(message);
@@ -747,8 +747,9 @@ class ListenLoop {
     active.waiting = new Set();
     active.lookingUp = false;
     active.closing = false;
-    // From the start: the host takes a while to come up, and the person sees it is on its way.
-    active.typing.start();
+    for (const message of active.messages) {
+      this.startTypingFor(active, message);
+    }
     active.watermark = await this.latestMessageId(active.conversationId);
     // Connected anew while the run got ready, an answer's lookup say: the host's commands would use the new connection.
     if (this.connectedAnew()) {
@@ -820,6 +821,18 @@ class ListenLoop {
       active.typing.stop();
       await session.close();
     }
+  }
+
+  /**
+   * Typing while the host works on an answer the person is waiting for. An inbound Agent Inbox
+   * message is answered later, from the inbox, so it does not show typing.
+   */
+  private startTypingFor(active: ActiveRun, message: ListenMessage): void {
+    if (isAgentInboxInbound(message)) {
+      return;
+    }
+
+    active.typing.start();
   }
 
   /** "Typing…" in a conversation, as long as the host works there. */
@@ -1350,6 +1363,15 @@ export function anyOf(...signals: AbortSignal[]): { signal: AbortSignal; dispose
 /** The message's round: how many times its conversation was resolved before it. */
 function roundOf(message: ListenMessage): number {
   return typeof message.round === 'number' ? message.round : 0;
+}
+
+/**
+ * Someone wrote to the agent. The reply goes out later, from the inbox, so the chat does not
+ * show typing as if a live answer were on its way. An answer to a question the agent asked is
+ * the person waiting on that turn.
+ */
+function isAgentInboxInbound(message: ListenMessage): boolean {
+  return !message.answersMessageId;
 }
 
 /** "/stop" (any case, nothing else) stops the run of the conversation it is sent in. */

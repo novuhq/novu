@@ -373,31 +373,18 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
   });
 
-  it('shows typing in the conversation while the host works, from waking it until its answer goes out', async () => {
+  it('does not show typing while the host works on an inbound message', async () => {
     const { api } = await start({}, { typingMs: 100 });
 
-    api.deliver({ text: 'sleep:800' });
+    api.deliver({ text: 'sleep:400' });
 
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Done sleeping.'));
-    const shown = api.typing.filter((typing) => typing.conversationId === 'conv_1').length;
-    expect(shown).toBeGreaterThanOrEqual(4);
-    await pause(400);
-    expect(api.typing).toHaveLength(shown);
+    await pause(300);
+    expect(api.callsTo('POST', '/v1/listen/typing')).toHaveLength(0);
+    expect(api.typing).toHaveLength(0);
   });
 
-  it('stops typing once the agent starts its own reply, even while it works on after it', async () => {
-    const { api } = await start({}, { typingMs: 100 });
-
-    api.deliver({ text: 'reply-myself:800' });
-
-    await eventually(() => expect(api.sentInto('conv_1')).toContain('I replied myself; all good.'));
-    const shown = api.typing.length;
-    expect(shown).toBeGreaterThan(0);
-    await pause(500);
-    expect(api.typing).toHaveLength(shown);
-  });
-
-  it('holds typing while the operator is asked, and goes on once they answer', async () => {
+  it('does not show typing for an inbound message while the operator is asked, or after they allow it', async () => {
     const { api } = await start({}, { typingMs: 100 });
 
     api.deliver({ text: 'ask:npm publish' });
@@ -405,23 +392,47 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     await eventually(() =>
       expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(1)
     );
-    const asked = api.typing.length;
-    await pause(400);
-    expect(api.typing).toHaveLength(asked);
+    await pause(300);
+    expect(api.typing).toHaveLength(0);
 
     const question = api.interactions.find((interaction) => interaction.kind === 'approve');
     api.answer(question?.id as string, 'approved');
 
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm publish.'));
-    expect(api.typing.length).toBeGreaterThan(asked);
+    await pause(300);
+    expect(api.callsTo('POST', '/v1/listen/typing')).toHaveLength(0);
   });
 
-  it('asks only once in a conversation whose chat has no typing, such as email', async () => {
+  it('shows typing when an answer the person is waiting for joins the run', async () => {
     const { api } = await start({}, { typingMs: 100 });
 
-    api.deliver({ text: 'sleep:500', conversationId: 'conv_mail', channel: 'email' });
+    api.deliver({ text: 'sleep:800' });
+    await eventually(() => expect(api.callsTo('POST', '/v1/listen/typing')).toHaveLength(0));
 
-    await eventually(() => expect(api.sentInto('conv_mail')).toContain('Done sleeping.'));
+    api.deliver({
+      text: 'Production',
+      answersMessageId: 'int_asked_with_async',
+      answer: { status: 'answered', text: 'Production' },
+    });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Done sleeping. Also: Production'));
+    expect(api.typing.filter((typing) => typing.conversationId === 'conv_1').length).toBeGreaterThan(0);
+  });
+
+  it('asks only once when an answer joins a chat with no typing, such as email', async () => {
+    const { api, starts } = await start({}, { typingMs: 100 });
+
+    api.deliver({ text: 'sleep:800', conversationId: 'conv_mail', channel: 'email' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    api.deliver({
+      text: 'yes',
+      conversationId: 'conv_mail',
+      channel: 'email',
+      answersMessageId: 'hi_mail',
+      answer: { status: 'answered', text: 'yes' },
+    });
+
+    await eventually(() => expect(api.sentInto('conv_mail')).toContain('Done sleeping. Also: yes'));
     expect(api.callsTo('POST', '/v1/listen/typing')).toHaveLength(1);
     expect(api.typing).toHaveLength(0);
   });
