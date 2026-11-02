@@ -196,6 +196,14 @@ export const HOME_QUICKSTART: readonly HomeCommand[] = [
   { parts: cli('contact invite', { text: ' alice' }), note: '# a new contact' },
 ];
 
+/** Under QUICKSTART on `/`, before the install tabs: agents set up via `/agents.md` instead of the CLI block. */
+export const HOME_QUICKSTART_AGENT_NOTE = {
+  beforeLink: 'If you are an agent visiting this page, follow the instructions on ',
+  linkLabel: 'this page',
+  linkHref: '/agents.md',
+  afterLink: ' to create an inbox. No signup or credit card required.',
+} as const;
+
 /** Each host's page of steps, as the robots page lists them: by the address they live at. */
 export const HOME_HOSTS = HOSTS.map((host) => ({ label: host.id, href: hostPath(host.id), name: host.name }));
 
