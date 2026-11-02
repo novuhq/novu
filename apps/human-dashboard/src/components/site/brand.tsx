@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { ComponentProps } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -11,14 +12,17 @@ export function Brand({
   href = '/',
   onLight = false,
   className,
+  onNavigate,
 }: {
   href?: string;
   onLight?: boolean;
   className?: string;
+  onNavigate?: ComponentProps<typeof Link>['onNavigate'];
 }) {
   return (
     <Link
       href={href}
+      onNavigate={onNavigate}
       aria-label="agentinbox.md"
       className={cn('flex shrink-0 items-center rounded-sm', onLight ? 'gap-2' : 'gap-2.5', className)}
     >
