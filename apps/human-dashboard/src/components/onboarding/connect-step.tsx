@@ -1,13 +1,13 @@
 'use client';
 
-import { ArrowRight } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useTransition } from 'react';
 
-import { createOnboardingConnectCodeAction } from '@/app/(account)/onboarding/actions';
+import { createOnboardingConnectCodeAction, leaveConnectAction } from '@/app/(account)/onboarding/actions';
 import { HostPicker } from '@/components/connect/host-picker';
 import { HostPanel } from '@/components/connect/host-steps';
 import { DOCS_URL } from '@/components/dashboard/nav';
 import { Eyebrow, StepLead, StepTitle } from '@/components/onboarding/onboarding-shell';
+import { Button } from '@/components/ui/button';
 import { useHostConnectCode } from '@/hooks/use-connect-code';
 import type { ConnectApi } from '@/lib/host-status';
 import type { HostId } from '@/lib/hosts';
@@ -51,6 +51,7 @@ export function ConnectStep({
   const createCode = useCallback((forHost: HostId) => createOnboardingConnectCodeAction(handle, forHost), [handle]);
   const { state: code, retry } = useHostConnectCode(createCode, host, true);
   const connected = useMemo(() => new Set<HostId>(connectedHosts), [connectedHosts]);
+  const [leaving, startLeaving] = useTransition();
 
   return (
     <>
@@ -84,16 +85,14 @@ export function ConnectStep({
         showSignedIn={false}
       />
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs leading-4 text-default">
-        <a
-          href={DOCS_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-1 rounded-sm hover:text-foreground"
-        >
-          Building your own? SDK and API
-          <ArrowRight aria-hidden="true" className="size-3" strokeWidth={1.5} />
-        </a>
+      <div
+        className={
+          leaving ? 'pointer-events-none opacity-60 transition-opacity duration-200 motion-reduce:transition-none' : ''
+        }
+      >
+        <Button variant="quiet" pending={leaving} onClick={() => startLeaving(() => leaveConnectAction())}>
+          Skip and setup later
+        </Button>
       </div>
     </>
   );
