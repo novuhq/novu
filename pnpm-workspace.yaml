@@ -62,11 +62,13 @@ overrides:
   file-type@>=17.0.0 <21.3.4: ^21.3.4
   get-func-name@<2.0.1: ^2.0.1
   glob-parent@<5.1.2: ^5.1.2
-  minimatch@>=3.0.0 <3.1.4: ^3.1.4
-  minimatch@>=5.0.0 <5.1.8: ^5.1.8
-  minimatch@>=7.0.0 <7.4.8: ^7.4.8
-  minimatch@>=8.0.0 <8.0.6: ^8.0.6
-  minimatch@>=9.0.0 <9.0.7: ^9.0.7
+  # GHSA-g3hv-75wg-m249 (moderate): minimatch denial of service via
+  # globparts amplification in the `braceExpand` path. Patched in 11.0.1
+  # (first 11.x line). Supersedes earlier per-major overrides (3.1.4, 5.1.8,
+  # 7.4.8, 8.0.6, 9.0.7) since no fix was backported. Both ESM and CJS
+  # consumers (@nx/jest, jest, verdaccio, eslint, auto-it, @puppeteer/*)
+  # resolve to the dual-published 11.x build.
+  minimatch@<11.0.1: ^11.0.1
   nanoid@>=3.0.0 <3.3.17: ^3.3.17
   nth-check: ^2.1.1
   postcss@<8.5.23: ^8.5.23
@@ -116,10 +118,13 @@ overrides:
   # template target. Patched in 18.2.5 (patch bump within the 18.2.x line).
   # GHSA-wr44-6hxh-3jwq (moderate): joi 18.x prototype replacement through
   # `__proto__` error codes during messages compilation. Patched in 18.2.9
-  # (patch bump within the 18.2.x line). Widen the previous `<18.2.5` floor
-  # so transitive consumers (packages/providers > africastalking, etc.) pick
-  # up the fix.
-  joi@<18.2.9: ^18.2.9
+  # (patch bump within the 18.2.x line).
+  # GHSA-4528-x5fx-h6hg (high): joi quadratic-time split in
+  # `string().email({ multiple: true })` enables denial of service. Patched
+  # in 18.3.1 (patch bump within the 18.3.x line). Widen the previous
+  # `<18.2.9` floor so transitive consumers (packages/providers >
+  # africastalking, plivo) pick up the fix.
+  joi@<18.3.1: ^18.3.1
   prosemirror-model: 1.22.3
   path-to-regexp@<0.1.13: ^0.1.13
   '@swc/core@>=1.0.0 <2.0.0': 1.7.26
@@ -265,7 +270,12 @@ overrides:
   ejs@<3.1.10: ^3.1.10
   rollup@>=3.0.0 <3.30.0: ^3.30.0
   rollup@<2.80.0: ^2.80.0
-  glob@>=10.2.0 <10.5.0: ^10.5.0
+  # GHSA-3g3m-2fjr-6pw4 (moderate): glob AbortSignal cancellation bypass
+  # allows post-timeout filesystem traversal. Patched in 14.0.2 (patch bump
+  # within the 14.x line). Supersedes the previous `>=10.2.0 <10.5.0` floor
+  # since no fix was backported to 9.x–13.x; glob 14 is dual-published
+  # (ESM/CJS) so transitive consumers (jest, @nx/jest, @auto-it/npm) work.
+  glob@>=9.0.0 <14.0.2: ^14.0.2
   # GHSA-* (undici): several DoS / cache-key / request-smuggling / cookie
   # forwarding issues in undici 6.x, 7.x, and 8.x. Previous rollups patched in
   # 6.28.1 / 7.29.1 / 8.10.2. GHSA-xjj6-f33q-929c (high), GHSA-4qv8-2p9j-2685

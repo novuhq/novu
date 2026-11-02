@@ -3,7 +3,6 @@ import { BadRequestException, Injectable, UnprocessableEntityException } from '@
 import { ModuleRef } from '@nestjs/core';
 import type { EventType, RequestTraceInput } from '@novu/application-generic';
 import {
-  assertSafeOutboundUrl,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
   ExecuteBridgeRequestDto,
@@ -16,7 +15,6 @@ import {
   LogRepository,
   mapEventTypeToTitle,
   PinoLogger,
-  SsrfBlockedError,
   StorageHelperService,
   TraceLogRepository,
   WorkflowQueueService,
@@ -37,6 +35,7 @@ import {
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
 } from '@novu/shared';
+import { assertSafeOutboundUrl, SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import { generateTransactionId } from '../../../shared/helpers/generate-transaction-id';
 import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
 import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';

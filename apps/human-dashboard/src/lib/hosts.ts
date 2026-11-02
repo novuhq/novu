@@ -1,5 +1,6 @@
 import { HOST_IDS, type HostId } from './host-ids';
-import { AGENT_DOMAIN, INSTALL_SKILLS_COMMAND, NPX_CLI } from './onboarding';
+import { INSTALL_SKILLS_COMMAND, NPX_CLI } from './onboarding';
+import { SITE_ORIGIN } from './seo';
 
 export { HOST_IDS, type HostId, isHostId } from './host-ids';
 
@@ -8,9 +9,10 @@ export { HOST_IDS, type HostId, isHostId } from './host-ids';
  * and the onboarding's step 3) and the public page of each host (`/claude-code`, `/claude-code.md`) are
  * built from.
  *
- * A host that runs commands connects with the commands first, with the one-time code in them, and may have a
- * second way in under them: a plugin, or the MCP server in its own config. A chat app can't run commands, so
- * it only signs in to the hosted MCP server.
+ * A host that runs commands connects with the CLI, and may also connect through a plugin or the MCP server in
+ * its own config. The setup box opens on that second way when signing in there connects the host (a plugin, or
+ * the MCP server); Hermes and the hosts with only the CLI open on the commands. A chat app can't run commands,
+ * so it only signs in to the hosted MCP server.
  *
  * The steps follow each host's own docs as of October 2026 (`docsUrl`). Hosts rename their settings often:
  * check a host's steps against its docs when someone says they don't match.
@@ -75,8 +77,8 @@ export type HostAlternative = {
       typedIn: 'host' | 'terminal';
       lines: readonly string[];
       /**
-       * The same from a terminal, for a host whose `lines` are typed in it. The dashboard's Plugin tab copies
-       * these in one go: a host's own prompt takes one command at a time.
+       * The same from a terminal, for a host whose `lines` are typed in it. The setup box copies these in one go:
+       * a host's own prompt takes one command at a time.
        */
       terminalLines?: readonly string[];
     }
@@ -88,8 +90,8 @@ export type HostAlternative = {
       /** A link that adds the server in one click, for a host that has one (Cursor's "Add to Cursor"). */
       installLink?: { label: string; href: (mcpUrl: string) => string };
       /**
-       * A command that adds the server, for a host that has one (`opencode mcp add`). The dashboard's MCP tab gives
-       * it in place of the config, which a copy saves nowhere; elsewhere it comes first, with `text` for the file.
+       * A command that adds the server, for a host that has one (`opencode mcp add`). The setup box gives it in
+       * place of the config, which a copy saves nowhere.
        */
       addCommand?: { text: string; line: (mcpUrl: string) => string };
     }
@@ -453,9 +455,9 @@ export function hostMarkdownPath(id: HostId): string {
   return `/${id}.md`;
 }
 
-/** What the operator tells their agent, which each host's page opens with: "Set up Agent Inbox from agentinbox.md/codex". */
-export function tellYourAgent(id: HostId): string {
-  return `Set up Agent Inbox from ${AGENT_DOMAIN}${hostPath(id)}`;
+/** What the operator tells their agent, which each host's page opens with and its copy button copies. */
+export function tellYourAgent(): string {
+  return `Set up Agent Inbox from ${SITE_ORIGIN}/agents.md`;
 }
 
 /** The line under the host's name on its page, and its description for search engines. */

@@ -138,7 +138,7 @@ function ChatMessage({
         >
           {fromAgent ? agentLabel : message.from}
         </p>
-        <p className="mt-1.5 text-[15px] leading-[1.35] tracking-[-0.01em] text-pretty">{message.text}</p>
+        <p className="mt-1 text-[13px] leading-[1.4] tracking-[-0.01em] text-pretty">{message.text}</p>
       </div>
       <span
         aria-hidden="true"

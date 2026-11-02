@@ -318,7 +318,10 @@ describe('MergePreferences', () => {
         .map((subset) => [...new Set([...required, ...subset])]);
     }
 
-    const allTypes = Object.values(PreferencesTypeEnum);
+    // Subscription-scoped preferences are resolved outside PreferenceSet, so MergePreferences never receives them.
+    const allTypes = Object.values(PreferencesTypeEnum).filter(
+      (type) => type !== PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW
+    );
     const requiredTypes = [PreferencesTypeEnum.WORKFLOW_RESOURCE];
 
     const allCombinations = generateSubsets(allTypes, requiredTypes).filter((subset) => subset.length > 0);
