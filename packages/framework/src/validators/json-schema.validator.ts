@@ -7,6 +7,22 @@ import type { ValidateResult, Validator } from '../types/validator.types';
 import { cloneData } from '../utils/clone.utils';
 import { checkDependencies } from '../utils/import.utils';
 
+const MAX_COMPILED_SCHEMAS = 1000;
+
+const createAjv = () => {
+  const ajv = new Ajv({
+    // https://ajv.js.org/options.html#usedefaults
+    useDefaults: true,
+    // https://ajv.js.org/options.html#removeadditional
+    removeAdditional: 'failing',
+    // https://ajv.js.org/options.html#strict
+    strict: false,
+  });
+  addFormats(ajv);
+
+  return ajv;
+};
+
 export class JsonSchemaValidator implements Validator<JsonSchema> {
   /**
    * Json schema validation has no required dependencies as they are included in
@@ -14,28 +30,9 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
    */
   readonly requiredImports: readonly ImportRequirement[] = [];
 
-  private readonly ajv: Ajv;
+  private ajv = createAjv();
 
-  /**
-   * Cache of compiled schemas.
-   *
-   * Schema compilation into ajv validator is costly, so we cache the compiled schemas
-   * to avoid recompiling the same schema multiple times.
-   */
-  private readonly compiledSchemas: Map<JsonSchema, AjvValidateFunction>;
-
-  constructor() {
-    this.ajv = new Ajv({
-      // https://ajv.js.org/options.html#usedefaults
-      useDefaults: true,
-      // https://ajv.js.org/options.html#removeadditional
-      removeAdditional: 'failing',
-      // https://ajv.js.org/options.html#strict
-      strict: false,
-    });
-    addFormats(this.ajv);
-    this.compiledSchemas = new Map();
-  }
+  private readonly compiledSchemas = new Map<string, AjvValidateFunction>();
 
   async canHandle(schema: Schema): Promise<boolean> {
     const canHandle =
@@ -56,19 +53,14 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
     T_Unvalidated = FromSchemaUnvalidated<T_Schema>,
     T_Validated = FromSchema<T_Schema>,
   >(data: T_Unvalidated, schema: T_Schema): Promise<ValidateResult<T_Validated>> {
-    let validateFn = this.compiledSchemas.get(schema);
-
-    if (!validateFn) {
-      validateFn = this.ajv.compile(schema);
-      this.compiledSchemas.set(schema, validateFn);
-    }
+    const validateFn = this.getValidateFn(schema) as AjvValidateFunction<T_Validated>;
     // ajv mutates the data, so we need to clone it to avoid side effects
     const clonedData = cloneData(data);
 
     const valid = validateFn(clonedData);
 
     if (valid) {
-      return { success: true, data: clonedData as unknown as T_Validated };
+      return { success: true, data: clonedData };
     } else {
       return {
         success: false,
@@ -78,6 +70,24 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
         })),
       };
     }
+  }
+
+  private getValidateFn(schema: JsonSchema): AjvValidateFunction {
+    const key = JSON.stringify(schema);
+    let validateFn = this.compiledSchemas.get(key);
+
+    if (!validateFn) {
+      if (this.compiledSchemas.size >= MAX_COMPILED_SCHEMAS) {
+        // Ajv retains every compiled schema for the lifetime of its instance, even after
+        // `removeSchema`, so replacing the instance is the only way to release them.
+        this.ajv = createAjv();
+        this.compiledSchemas.clear();
+      }
+      validateFn = this.ajv.compile(schema);
+      this.compiledSchemas.set(key, validateFn);
+    }
+
+    return validateFn;
   }
 
   async transformToJsonSchema(schema: JsonSchema): Promise<JsonSchema> {
