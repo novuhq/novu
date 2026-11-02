@@ -9,6 +9,7 @@ import {
   HumanInteractionDelivery,
   HumanInteractionEntity,
   HumanInteractionRepository,
+  isDuplicateKeyError,
 } from '@novu/dal';
 import { HUMAN_INTERACTION_TERMINAL_STATUSES, HumanChannelViaEnum, HumanInteractionStatusEnum } from '@novu/shared';
 import type { Response } from 'express';
@@ -31,6 +32,7 @@ import {
   noteVoiceBridgeAlive,
   readVoiceCallHandoff,
   recordInboundUtterances,
+  rewindInboundUtterances,
 } from '../../../agents/channels/voice/voice-call-handoff';
 import { findAgentInboxOwner, trackAgentInboxCallAnswered } from '../../services/agent-inbox-analytics';
 
@@ -91,7 +93,7 @@ export class VoiceBridgeCompletions {
       throw new BadRequestException('This voice call has already ended.');
     }
 
-    await this.appendInboundUtterances(resolved, recorded.appended);
+    await this.appendInboundUtterances(resolved, recorded.appended, recorded.handoff.inboundSeq);
     await this.trackFirstAnswer(resolved, recorded.appended.length, recorded.handoff.inboundSeq);
 
     const claimed = await this.parkForAgentLine({
@@ -158,7 +160,7 @@ export class VoiceBridgeCompletions {
         userUtteranceTexts(params.body.messages)
       );
       if (recorded) {
-        await this.appendInboundUtterances(resolved, recorded.appended);
+        await this.appendInboundUtterances(resolved, recorded.appended, recorded.handoff.inboundSeq);
       }
     }
 
@@ -226,29 +228,64 @@ export class VoiceBridgeCompletions {
     return { interaction, delivery, conversation };
   }
 
-  private async appendInboundUtterances(resolved: ResolvedVoiceCall, utterances: string[]): Promise<void> {
+  private async appendInboundUtterances(
+    resolved: ResolvedVoiceCall,
+    utterances: string[],
+    inboundSeq: number
+  ): Promise<void> {
     if (utterances.length === 0) {
       return;
     }
 
+    try {
+      await this.writeInboundUtterances(resolved, utterances, inboundSeq);
+    } catch (err) {
+      await rewindInboundUtterances(
+        this.cacheService,
+        resolved.delivery.platformMessageId,
+        utterances,
+        inboundSeq
+      ).catch(() => undefined);
+
+      throw err;
+    }
+  }
+
+  /**
+   * Identifiers are the call plus the utterance index, so a retry after a failed
+   * write stores the same lines instead of skipping them or duplicating them.
+   */
+  private async writeInboundUtterances(
+    resolved: ResolvedVoiceCall,
+    utterances: string[],
+    inboundSeq: number
+  ): Promise<void> {
     const channel = resolved.conversation.channels[0];
     if (!channel) {
       return;
     }
 
-    for (const text of utterances) {
-      await this.conversationActivityRepository.createUserActivity({
-        identifier: `act_${shortId(12)}`,
-        conversationId: resolved.conversation._id,
-        platform: HumanChannelViaEnum.VOICE,
-        integrationId: String(channel._integrationId),
-        platformThreadId: channel.platformThreadId,
-        senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
-        senderId: resolved.delivery.subscriberId,
-        content: text,
-        environmentId: String(resolved.conversation._environmentId),
-        organizationId: String(resolved.conversation._organizationId),
-      });
+    const firstSeq = inboundSeq - utterances.length + 1;
+    for (let index = 0; index < utterances.length; index += 1) {
+      const text = utterances[index];
+      try {
+        await this.conversationActivityRepository.createUserActivity({
+          identifier: `act_vin_${resolved.delivery.platformMessageId}_${firstSeq + index}`,
+          conversationId: resolved.conversation._id,
+          platform: HumanChannelViaEnum.VOICE,
+          integrationId: String(channel._integrationId),
+          platformThreadId: channel.platformThreadId,
+          senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+          senderId: resolved.delivery.subscriberId,
+          content: text,
+          environmentId: String(resolved.conversation._environmentId),
+          organizationId: String(resolved.conversation._organizationId),
+        });
+      } catch (err) {
+        if (!isDuplicateKeyError(err)) {
+          throw err;
+        }
+      }
     }
 
     const nowIso = new Date().toISOString();

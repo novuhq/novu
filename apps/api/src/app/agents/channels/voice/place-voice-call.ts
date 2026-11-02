@@ -57,7 +57,11 @@ export function openingLineFor(
   options: OpeningLineOptions = {}
 ): string {
   const card = resolveHumanInteractionCard(interaction);
-  const ask = [spoken(card.title), spoken(card.body)].filter(Boolean).join(' ');
+  const choices = 'options' in card ? card.options.map((option) => option.label) : [];
+  const ask = [card.title, card.subtitle, card.body, ...choices]
+    .map((part) => spoken(part))
+    .filter(Boolean)
+    .join(' ');
 
   if (!ask) {
     throw new BadRequestException('A voice call needs an opening line.');

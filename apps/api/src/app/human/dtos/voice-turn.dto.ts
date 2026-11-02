@@ -1,5 +1,16 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsOptional, IsString, MaxLength, MinLength, ValidateIf } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+  ValidateIf,
+} from 'class-validator';
 
 /**
  * Agent-facing turn body. `say` is spoken verbatim to the person on the phone.
@@ -52,6 +63,17 @@ export class VoiceTurnRequestDto {
   @IsOptional()
   @IsBoolean()
   hangup?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'How long to listen on this turn, in seconds. The server never waits longer than 25.',
+    minimum: 0,
+    maximum: 25,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(25)
+  waitSeconds?: number;
 }
 
 export type VoiceTurnResponseDto = {

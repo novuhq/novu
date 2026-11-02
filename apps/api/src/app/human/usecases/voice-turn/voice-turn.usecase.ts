@@ -88,30 +88,12 @@ export class VoiceTurn {
     }
 
     if (interaction.status === HumanInteractionStatusEnum.EXPIRED) {
-      if (!settleIntent || !canRecoverExpiredVoice(interaction)) {
-        if (settleIntent) {
-          throw new BadRequestException(
-            `Interaction ${command.identifier} is already expired; it cannot be settled again.`
-          );
-        }
-
-        return {
-          status: 'ended',
-          interactionStatus: interaction.status,
-          endReason: interaction.voiceFailure?.code,
-        };
-      }
-
-      return this.settleWithoutCall(interaction, settleIntent, voiceSubscriberId);
+      return this.turnOnExpired(command, interaction, settleIntent, voiceSubscriberId);
     }
 
     const delivery = openVoiceDelivery(interaction);
     if (!delivery) {
-      if (settleIntent) {
-        return this.settleWithoutCall(interaction, settleIntent, voiceSubscriberId);
-      }
-
-      return endedResponse(interaction);
+      return this.turnWithoutDelivery(interaction, settleIntent, voiceSubscriberId);
     }
 
     if (settleIntent) {
@@ -131,6 +113,46 @@ export class VoiceTurn {
       say,
       hangup: Boolean(command.hangup),
     });
+  }
+
+  private async turnOnExpired(
+    command: VoiceTurnCommand,
+    interaction: HumanInteractionEntity,
+    settleIntent: SettleIntent | null,
+    voiceSubscriberId: string
+  ): Promise<VoiceTurnResponseDto> {
+    if (settleIntent && canRecoverExpiredVoice(interaction)) {
+      return this.settleWithoutCall(interaction, settleIntent, voiceSubscriberId);
+    }
+
+    if (!settleIntent) {
+      const heard = await this.takeHeard(interaction);
+      if (heard) {
+        return heard;
+      }
+
+      return {
+        status: 'ended',
+        interactionStatus: interaction.status,
+        endReason: interaction.voiceFailure?.code,
+      };
+    }
+
+    throw new BadRequestException(`Interaction ${command.identifier} is already expired; it cannot be settled again.`);
+  }
+
+  private async turnWithoutDelivery(
+    interaction: HumanInteractionEntity,
+    settleIntent: SettleIntent | null,
+    voiceSubscriberId: string
+  ): Promise<VoiceTurnResponseDto> {
+    if (!settleIntent) {
+      const heard = await this.takeHeard(interaction);
+
+      return heard ?? endedResponse(interaction);
+    }
+
+    return this.settleWithoutCall(interaction, settleIntent, voiceSubscriberId);
   }
 
   private resolveSettleIntent(command: VoiceTurnCommand): SettleIntent | null {
@@ -244,13 +266,13 @@ export class VoiceTurn {
   }): Promise<VoiceTurnResponseDto> {
     const { command, interaction, delivery, say } = params;
     const handoff = await readVoiceCallHandoff(this.cacheService, delivery.platformMessageId);
+    this.assertRecordedSpeech(handoff);
     const subscriberId = handoff?.subscriberId || delivery.subscriberId;
     const respondedBy = await this.resolveResponderName(command.environmentId, subscriberId);
     const settlePlan = this.buildSettlePlan(interaction, params.settleIntent, respondedBy, subscriberId);
 
     // An answer always hangs up, including when the agent has no goodbye to speak.
-    // A line queued while still dialing is spoken once the bridge promotes the call.
-    if (handoff && (handoff.status === 'live' || handoff.status === 'dialing')) {
+    if (handoff?.status === 'live') {
       await postAgentLine(this.cacheService, delivery.platformMessageId, say ?? '', true);
     }
 
@@ -277,6 +299,11 @@ export class VoiceTurn {
     settleIntent: SettleIntent,
     subscriberId: string
   ): Promise<VoiceTurnResponseDto> {
+    const delivery = (interaction.deliveries ?? []).find(
+      (item) => item.platform === HumanChannelViaEnum.VOICE && item.platformMessageId
+    );
+    const handoff = delivery ? await readVoiceCallHandoff(this.cacheService, delivery.platformMessageId) : null;
+    this.assertRecordedSpeech(handoff);
     const respondedBy = await this.resolveResponderName(interaction._environmentId, subscriberId);
     const settlePlan = this.buildSettlePlan(interaction, settleIntent, respondedBy, subscriberId);
 
@@ -306,7 +333,7 @@ export class VoiceTurn {
     hangup: boolean;
   }): Promise<VoiceTurnResponseDto> {
     const { interaction, delivery } = params;
-    const deadline = Date.now() + VOICE_TURN_MAX_WAIT_SECONDS * 1000;
+    const deadline = Date.now() + this.listenWaitMs(params.command);
     const state = { linePosted: false, sawDialing: false };
 
     while (Date.now() < deadline) {
@@ -340,8 +367,14 @@ export class VoiceTurn {
     }
 
     switch (handoff.status) {
-      case 'ended':
+      case 'ended': {
+        const heard = await this.takeHeardFrom(delivery.platformMessageId);
+        if (heard) {
+          return heard;
+        }
+
         return this.currentEndedTurn(command, interaction, delivery.platformMessageId);
+      }
       case 'dialing': {
         state.sawDialing = true;
         const queued = await this.ensureLinePosted(delivery.platformMessageId, params.say, params.hangup, state);
@@ -439,6 +472,47 @@ export class VoiceTurn {
     }
 
     return { status: 'timeout' };
+  }
+
+  private listenWaitMs(command: VoiceTurnCommand): number {
+    const requested = command.waitSeconds ?? VOICE_TURN_MAX_WAIT_SECONDS;
+    const seconds = Math.min(VOICE_TURN_MAX_WAIT_SECONDS, Math.max(0, requested));
+
+    return seconds * 1000;
+  }
+
+  /** A settle is the person's commitment only after the bridge has stored their words. */
+  private assertRecordedSpeech(handoff: { status: string; utterances: string[] } | null): void {
+    if (handoff?.status === 'dialing') {
+      throw new BadRequestException('The call is still ringing, so it cannot be settled yet.');
+    }
+
+    const spoken = handoff?.utterances.some((line) => line.trim().length > 0) ?? false;
+    if (!spoken) {
+      throw new BadRequestException('Settle only after the person has spoken. This call has no recorded answer.');
+    }
+  }
+
+  private async takeHeard(interaction: HumanInteractionEntity): Promise<VoiceTurnResponseDto | undefined> {
+    const delivery = (interaction.deliveries ?? []).find((item) => item.platform === HumanChannelViaEnum.VOICE);
+    if (!delivery?.platformMessageId) {
+      return undefined;
+    }
+
+    return this.takeHeardFrom(delivery.platformMessageId);
+  }
+
+  private async takeHeardFrom(platformMessageId: string): Promise<VoiceTurnResponseDto | undefined> {
+    const taken = await takeUtterances(this.cacheService, platformMessageId);
+    if (!taken || taken.utterances.length === 0) {
+      return undefined;
+    }
+
+    return {
+      status: 'utterance',
+      utterance: taken.utterances.join('\n'),
+      utterances: taken.utterances,
+    };
   }
 
   private async resolveResponderName(environmentId: string, subscriberId: string): Promise<string | undefined> {

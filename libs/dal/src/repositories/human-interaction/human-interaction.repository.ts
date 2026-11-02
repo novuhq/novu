@@ -25,7 +25,7 @@ import { HumanInteraction } from './human-interaction.schema';
 function deliveriesKeepingStoredFailures(deliveries: HumanInteractionDelivery[]): Record<string, unknown> {
   return {
     $map: {
-      input: deliveries,
+      input: { $literal: deliveries },
       as: 'next',
       in: {
         $let: {
@@ -283,7 +283,8 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     };
     // Pipeline updates skip Mongoose casts. This field is stored as an ObjectId.
     if (delivery._conversationId) $set._conversationId = new Types.ObjectId(delivery._conversationId);
-    if (delivery.subscriberIds) $set.subscriberIds = delivery.subscriberIds;
+    // A contact id can start with `$`. In a pipeline update that is a field path.
+    if (delivery.subscriberIds) $set.subscriberIds = { $literal: delivery.subscriberIds };
 
     await this.update({ _id: id, _environmentId: environmentId }, [{ $set }] as never);
   }
@@ -451,8 +452,9 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
   }
 
   /**
-   * A connected call ended without a commitment. Releases the live-call lock
-   * for this recipient without marking the dial as a failure.
+   * A connected call ended. Settlement often lands first and must keep its
+   * answer; this still records duration and why the call ended. Releases the
+   * live-call lock for this recipient without marking the dial as a failure.
    */
   async markVoiceDeliveryEnded(
     environmentId: string,
@@ -465,7 +467,6 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       {
         _id: id,
         _environmentId: environmentId,
-        status: HumanInteractionStatusEnum.PENDING,
         deliveries: {
           $elemMatch: {
             platformMessageId,

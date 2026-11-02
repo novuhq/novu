@@ -1,4 +1,11 @@
-import { BadGatewayException, BadRequestException, ForbiddenException, GatewayTimeoutException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  ForbiddenException,
+  GatewayTimeoutException,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { HumanChannelViaEnum, VOICE_VERIFICATION_CALL_MINUTES } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -49,7 +56,7 @@ describe('RequestVoiceVerification', () => {
       release: sinon.stub().resolves(),
     };
     const codes = {
-      issue: sinon.stub().resolves({ code: '421903', expiresAt: '2026-10-01T12:15:00.000Z', previous: null }),
+      issue: sinon.stub().resolves({ code: '4219', expiresAt: '2026-10-01T12:15:00.000Z', previous: null }),
       clear: sinon.stub().resolves(),
       restore: sinon.stub().resolves(),
     };
@@ -103,10 +110,28 @@ describe('RequestVoiceVerification', () => {
       address: '+14155550123',
       requestedAt: writtenPending.requestedAt,
     });
-    expect(placeVerificationCall.execute.firstCall.args[0].verificationLine).to.include('4, 2, 1, 9, 0, 3');
+    expect(placeVerificationCall.execute.firstCall.args[0].verificationLine).to.include('four, two, one, nine');
     expect(placeVerificationCall.execute.firstCall.args[0].toNumber).to.equal('+14155550123');
     expect(credits.accept.called).to.equal(false);
     expect(credits.release.calledOnce).to.equal(true);
+  });
+
+  it('gives the verification allowance back when the minute hold is refused', async () => {
+    const { usecase, voiceMinuteQuota, rateLimit, placeVerificationCall, humanContactRepository } = setup();
+    voiceMinuteQuota.reserveMinutes.rejects(
+      new HttpException({ code: 'voice_minutes_daily_cap' }, HttpStatus.TOO_MANY_REQUESTS)
+    );
+
+    try {
+      await usecase.execute(command());
+      expect.fail('expected the minute cap');
+    } catch (err) {
+      expect(err).to.be.instanceOf(HttpException);
+    }
+
+    expect(rateLimit.release.calledOnce).to.equal(true);
+    expect(placeVerificationCall.execute.called).to.equal(false);
+    expect(humanContactRepository.upsertPendingAddress.called).to.equal(false);
   });
 
   it('puts the previous pending number back when the dial fails', async () => {
@@ -156,7 +181,7 @@ describe('RequestVoiceVerification', () => {
       expiresAt: '2026-10-01T12:10:00.000Z',
     };
     const { usecase, placeVerificationCall, codes, humanContactRepository } = setup();
-    codes.issue.resolves({ code: '421903', expiresAt: '2026-10-01T12:15:00.000Z', previous: previousCode });
+    codes.issue.resolves({ code: '4219', expiresAt: '2026-10-01T12:15:00.000Z', previous: previousCode });
     placeVerificationCall.execute.rejects(new BadGatewayException({ code: 'voice_invalid_number' }));
 
     try {

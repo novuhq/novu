@@ -46,6 +46,7 @@ describe('RecordVoiceCallEnded', () => {
     const settlement = {
       settle: sinon.stub().resolves({ ...interaction, status: HumanInteractionStatusEnum.EXPIRED }),
       countVoiceTurns: sinon.stub().resolves(0),
+      abandonUnconfirmedVoiceHold: sinon.stub().resolves(null),
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
     const usecase = new RecordVoiceCallEnded(
@@ -100,6 +101,46 @@ describe('RecordVoiceCallEnded', () => {
     await usecase.execute(event);
 
     expect(settlement.settle.called).to.equal(false);
+  });
+
+  it('releases a timed-out dial that never received a call id', async () => {
+    const { usecase, settlement } = setup();
+    const abandoned = {
+      _id: 'row1',
+      _environmentId: 'env1',
+      identifier: 'hi_1',
+      status: HumanInteractionStatusEnum.PENDING,
+      deliveries: [],
+      voiceSubscriberIds: ['sub-1'],
+      voiceMinutesReserved: 5,
+      voiceMinutesReservedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
+      createdAt: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
+    };
+    settlement.abandonUnconfirmedVoiceHold.resolves(abandoned);
+
+    const result = await usecase.expireIfStale(abandoned as never);
+
+    expect(settlement.abandonUnconfirmedVoiceHold.calledOnce).to.equal(true);
+    expect(result).to.equal(abandoned);
+  });
+
+  it('keeps a recent unconfirmed dial until a call could still be ringing', async () => {
+    const { usecase, settlement } = setup();
+    const fresh = {
+      _id: 'row1',
+      _environmentId: 'env1',
+      identifier: 'hi_1',
+      status: HumanInteractionStatusEnum.PENDING,
+      deliveries: [],
+      voiceSubscriberIds: ['sub-1'],
+      voiceMinutesReservedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+
+    const result = await usecase.expireIfStale(fresh as never);
+
+    expect(settlement.abandonUnconfirmedVoiceHold.called).to.equal(false);
+    expect(result).to.equal(fresh);
   });
 
   it('asks the provider to retry when the dial is known but not stored yet', async () => {

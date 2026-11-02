@@ -10,6 +10,7 @@ import {
   type AgentEmailInboxCredits,
   AgentEmailInboxQuotaService,
   AnalyticsService,
+  CacheService,
   InstrumentUsecase,
   isAgentEmailInboxQuotaExceeded,
   PinoLogger,
@@ -55,6 +56,7 @@ import {
 } from '../../services/human-delivery.service';
 import { HumanInboxService, type InboxScope } from '../../services/human-inbox.service';
 import {
+  acquireVoiceLiveLocks,
   assertHumanCardActions,
   assertHumanPendingCap,
   assertNoLiveVoiceCall,
@@ -146,7 +148,8 @@ export class CreateInteraction {
     private readonly analyticsService: AnalyticsService,
     private readonly voiceMinuteQuota: HumanVoiceMinuteQuotaService,
     private readonly settlement: HumanInteractionSettlementService,
-    private readonly recordVoiceCallEnded: RecordVoiceCallEnded
+    private readonly recordVoiceCallEnded: RecordVoiceCallEnded,
+    private readonly cacheService: CacheService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -235,6 +238,7 @@ export class CreateInteraction {
     let emailCapError: HttpException | undefined;
     let createdInteraction: HumanInteractionEntity | undefined;
     let voiceHoldRecorded = false;
+    let releaseLiveLocks = async () => undefined;
 
     try {
       ({ credits, emailCapError } = await this.reserveEmailCredits(
@@ -252,6 +256,7 @@ export class CreateInteraction {
 
       const voiceHold = await this.reserveVoiceHold(command.environmentId, command.organizationId, voiceTargets);
       voiceCredits = voiceHold.credits;
+      releaseLiveLocks = voiceHold.releaseLiveLocks;
       const interaction = await this.humanInteractionRepository.create(
         buildPendingHumanInteraction({
           kind: command.kind,
@@ -266,6 +271,7 @@ export class CreateInteraction {
         })
       );
       createdInteraction = interaction;
+      await releaseLiveLocks();
 
       const threads: InteractionThreadDto[] = [];
       const targets = this.contactTargets(scope, interaction, resolved, threads, {
@@ -300,6 +306,7 @@ export class CreateInteraction {
 
       return toInteractionResponse(deliveredInteraction, delivered.failedSubscriberIds, threads);
     } catch (err) {
+      await releaseLiveLocks();
       if (isUnconfirmedVoiceDial(err)) {
         // A failed reload must not refund a call that may still be ringing.
         const kept = await this.voiceMinutesStillHeld(createdInteraction).catch(() => undefined);
@@ -347,18 +354,31 @@ export class CreateInteraction {
     environmentId: string,
     organizationId: string,
     voiceTargets: Array<{ subscriberId: string }>
-  ): Promise<{ credits?: HumanVoiceMinuteCredits; minutes: number; subscriberIds: string[] }> {
+  ): Promise<{
+    credits?: HumanVoiceMinuteCredits;
+    minutes: number;
+    subscriberIds: string[];
+    releaseLiveLocks: () => Promise<void>;
+  }> {
     const subscriberIds = voiceTargets.map((item) => item.subscriberId);
     if (subscriberIds.length === 0) {
-      return { minutes: 0, subscriberIds };
+      return { minutes: 0, subscriberIds, releaseLiveLocks: async () => undefined };
     }
 
     await this.expirePendingVoice(environmentId, subscriberIds);
-    await assertNoLiveVoiceCall(this.humanInteractionRepository, { environmentId, subscriberIds });
-    const minutes = subscriberIds.length * VOICE_CALL_MAX_MINUTES;
-    const credits = await this.voiceMinuteQuota.reserveMinutes(organizationId, minutes);
+    const releaseLiveLocks = await acquireVoiceLiveLocks(this.cacheService, environmentId, subscriberIds);
 
-    return { credits, minutes, subscriberIds };
+    try {
+      await assertNoLiveVoiceCall(this.humanInteractionRepository, { environmentId, subscriberIds });
+      const minutes = subscriberIds.length * VOICE_CALL_MAX_MINUTES;
+      const credits = await this.voiceMinuteQuota.reserveMinutes(organizationId, minutes);
+
+      return { credits, minutes, subscriberIds, releaseLiveLocks };
+    } catch (err) {
+      await releaseLiveLocks();
+
+      throw err;
+    }
   }
 
   /**
@@ -709,6 +729,7 @@ export class CreateInteraction {
       agent,
       outsiders.map((subscriberId) => ({ subscriberId }))
     );
+    this.assertThreadReplyCanDial(outside);
 
     await this.keylessCap.assertWithinCap({ ...scope, agentId: agent._id, subscriberIds: recipients });
 
@@ -827,6 +848,18 @@ export class CreateInteraction {
     }
 
     return { recipients: [contact], anyoneMayAnswer: false };
+  }
+
+  /** A thread reply must not place a call. Voice starts with `via: voice` on its own send. */
+  private assertThreadReplyCanDial(outside: ResolvedRecipient[]): void {
+    const voiceTarget = outside.find((item) => item.target.platform === HumanChannelViaEnum.VOICE);
+    if (!voiceTarget) {
+      return;
+    }
+
+    throw new BadRequestException(
+      `Human "${voiceTarget.subscriberId}" is reached by phone. Start a voice call with \`via: voice\` instead of a reply in another thread.`
+    );
   }
 
   /** `to` with `thread` names who may answer: contacts only. */

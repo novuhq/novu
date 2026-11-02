@@ -177,17 +177,22 @@ describe('VoiceTurn', () => {
     expect(cacheService.eval.firstCall.args[2][2]).to.equal('1');
   });
 
-  it('settles even when the call already dropped', async () => {
+  it('does not settle a dropped call that has no recorded speech', async () => {
     const { usecase, settlement } = setup({ handoff: null, deliveryEnded: true });
 
-    const result = await usecase.execute({
-      ...command,
-      answer: 'yeah go ahead',
-      decision: 'approve',
-    } as never);
+    try {
+      await usecase.execute({
+        ...command,
+        answer: 'yeah go ahead',
+        decision: 'approve',
+      } as never);
+      expect.fail('expected rejection');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadRequestException);
+      expect((err as Error).message).to.match(/no recorded answer/i);
+    }
 
-    expect(result.status).to.equal('settled');
-    expect(settlement.settle.calledOnce).to.equal(true);
+    expect(settlement.settle.called).to.equal(false);
   });
 
   it('hangs up when settling without a spoken line', async () => {
@@ -224,9 +229,9 @@ describe('VoiceTurn', () => {
   it('records a voice answer after the call-end expiry', async () => {
     const { usecase, settlement } = setup({
       status: HumanInteractionStatusEnum.EXPIRED,
-      handoff: null,
       deliveryEnded: true,
       expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      handoff: { status: 'ended', inboundSeq: 1, agentSeq: 1, utterances: ['yeah go ahead'] },
     });
     settlement.settle.resolves(null);
     settlement.settleExpiredVoice.callsFake(async (row: object, status: string, response: unknown) => ({
@@ -312,6 +317,40 @@ describe('VoiceTurn', () => {
       expect(err).to.be.instanceOf(BadRequestException);
       expect((err as BadRequestException).message).to.match(/unknown option/i);
     }
+  });
+
+  it('does not settle while the phone is still ringing', async () => {
+    const { usecase, settlement } = setup({
+      handoff: { status: 'dialing', inboundSeq: 0, agentSeq: 0, utterances: [] },
+    });
+
+    try {
+      await usecase.execute({
+        ...command,
+        answer: 'yeah go ahead',
+        decision: 'approve',
+      } as never);
+      expect.fail('expected rejection');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadRequestException);
+      expect((err as Error).message).to.match(/ringing/i);
+    }
+
+    expect(settlement.settle.called).to.equal(false);
+  });
+
+  it('returns words still unread after the call has ended', async () => {
+    const { usecase } = setup({
+      handoff: { status: 'ended', inboundSeq: 1, agentSeq: 0, utterances: ['yeah go ahead'] },
+    });
+
+    const result = await usecase.execute({ ...command } as never);
+
+    expect(result).to.deep.equal({
+      status: 'utterance',
+      utterance: 'yeah go ahead',
+      utterances: ['yeah go ahead'],
+    });
   });
 
   it('queues a line while the call is still dialing', async () => {

@@ -25,11 +25,25 @@ describe('HumanVoiceVerificationCodeService', () => {
       }),
       eval: sinon.stub().callsFake(async (script: string, keys: string[], args: Array<string | number>) => {
         if (script.includes('INCR')) {
-          const attemptsKey = keys[0];
+          const raw = cacheStore.get(keys[0]);
+          if (!raw) {
+            return null;
+          }
+          if (raw === 'locked') {
+            return 'locked';
+          }
+
+          const attemptsKey = keys[1];
           const next = Number(cacheStore.get(attemptsKey) ?? '0') + 1;
           cacheStore.set(attemptsKey, String(next));
+          if (next > Number(args[1])) {
+            cacheStore.set(keys[0], 'locked');
+            cacheStore.delete(attemptsKey);
 
-          return next;
+            return 'locked';
+          }
+
+          return JSON.stringify({ attempts: next, raw });
         }
 
         const raw = cacheStore.get(keys[0]);
@@ -86,6 +100,18 @@ describe('HumanVoiceVerificationCodeService', () => {
 
     const after = await service.check(key, issued.code);
     expect(after).to.deep.equal({ ok: false, reason: 'locked' });
+  });
+
+  it('burns the code after the budget even when a later guess is correct', async () => {
+    const { service } = makeService();
+    const issued = await service.issue(key, { address: '+1555121212', requestedAt: 't1' });
+
+    for (let attempt = 0; attempt < VOICE_VERIFICATION_MAX_ATTEMPTS; attempt += 1) {
+      const result = await service.check(key, issued.code);
+      expect(result.ok).to.equal(true);
+    }
+
+    expect(await service.check(key, issued.code)).to.deep.equal({ ok: false, reason: 'locked' });
   });
 
   it('counts overlapping wrong guesses separately', async () => {

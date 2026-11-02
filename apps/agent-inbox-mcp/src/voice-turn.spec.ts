@@ -73,8 +73,9 @@ describe('voice turn helpers', () => {
 
     expect(result).toEqual({ status: 'utterance', utterance: 'yeah' });
     expect(api.post).toHaveBeenCalledTimes(2);
-    expect(api.post.mock.calls[0][1]).toEqual({ say: 'Can you confirm?' });
-    expect(api.post.mock.calls[1][1]).toEqual({});
+    expect(api.post.mock.calls[0][1]).toEqual({ say: 'Can you confirm?', waitSeconds: 25 });
+    expect(api.post.mock.calls[1][1]).toEqual({ waitSeconds: 25 });
+    expect(api.post.mock.calls[0][2]).toBe(30_000);
     expect(sleep).toHaveBeenCalled();
   });
 
@@ -96,7 +97,7 @@ describe('voice turn helpers', () => {
     );
 
     expect(result).toEqual({ status: 'utterance', utterance: 'hello' });
-    expect(api.post.mock.calls[1][1]).toEqual({ say: 'Hello there' });
+    expect(api.post.mock.calls[1][1]).toEqual({ say: 'Hello there', waitSeconds: 25 });
   });
 
   it('returns the last listening state when another full wait will not fit', async () => {
@@ -117,7 +118,10 @@ describe('voice turn helpers', () => {
       const result = await voiceTurn(api, { id: 'hi_1', waitSeconds: 45 }, async () => undefined, start);
 
       expect(result).toEqual({ status: 'timeout' });
-      expect(api.post).toHaveBeenCalledTimes(1);
+      expect(api.post).toHaveBeenCalledTimes(2);
+      expect(api.post.mock.calls[0][1]).toEqual({ waitSeconds: 25 });
+      expect(api.post.mock.calls[1][1]).toEqual({ waitSeconds: 20 });
+      expect(api.post.mock.calls[1][2]).toBe(25_000);
     } finally {
       vi.restoreAllMocks();
     }

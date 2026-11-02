@@ -231,7 +231,7 @@ export type TakenUtterances = {
 /**
  * Hands every utterance past `agentSeq` to the calling agent and advances the
  * cursor in one Redis script, so two overlapping turns cannot both claim the
- * same words. Null when the call is unknown or already ended.
+ * same words. Null when the call is unknown, or it has ended and nothing is unread.
  */
 export async function takeUtterances(cache: CacheService, conversationId: string): Promise<TakenUtterances | null> {
   const raw = await cache.eval<unknown>(
@@ -275,6 +275,29 @@ export async function noteVoiceBridgeAlive(cache: CacheService, conversationId: 
     [voiceCallRegistryKey(conversationId)],
     [String(VOICE_CALL_REGISTRY_TTL_SECONDS), new Date().toISOString()]
   );
+}
+
+/**
+ * Puts a batch back when the transcript write failed, and only when that batch
+ * is still the tail. A later turn is left alone. Returns whether it rewound.
+ */
+export async function rewindInboundUtterances(
+  cache: CacheService,
+  conversationId: string,
+  utterances: string[],
+  inboundSeq: number
+): Promise<boolean> {
+  if (utterances.length === 0) {
+    return false;
+  }
+
+  const result = await cache.eval<unknown>(
+    REWIND_INBOUND_SCRIPT,
+    [voiceCallRegistryKey(conversationId)],
+    [String(VOICE_CALL_REGISTRY_TTL_SECONDS), JSON.stringify(utterances), String(inboundSeq)]
+  );
+
+  return Number(result) === 1;
 }
 
 export async function endVoiceCallHandoff(cache: CacheService, conversationId: string): Promise<void> {
@@ -388,9 +411,6 @@ return 1
 
 const TAKE_UTTERANCES_SCRIPT = `
 ${LOAD_HANDOFF}
-if data.status == 'ended' then
-  return nil
-end
 local list = {}
 if type(data.utterancesJson) == 'string' and data.utterancesJson ~= '' then
   local decodedOk, decoded = pcall(cjson.decode, data.utterancesJson)
@@ -400,6 +420,9 @@ if type(data.utterancesJson) == 'string' and data.utterancesJson ~= '' then
 end
 local agentSeq = tonumber(data.agentSeq) or 0
 local inboundSeq = tonumber(data.inboundSeq) or 0
+if data.status == 'ended' and inboundSeq <= agentSeq then
+  return nil
+end
 local taken = {}
 for i = agentSeq + 1, #list do
   local text = list[i]
@@ -414,6 +437,44 @@ elseif type(data.agentSeq) ~= 'number' then
 end
 ${SAVE_HANDOFF}
 return cjson.encode({ handoffJson = cjson.encode(data), takenJson = cjson.encode(taken) })
+`;
+
+const REWIND_INBOUND_SCRIPT = `
+${LOAD_HANDOFF}
+if data.status == 'ended' then
+  return 0
+end
+local expected = tonumber(ARGV[3])
+local inbound = tonumber(data.inboundSeq) or 0
+if inbound ~= expected then
+  return 0
+end
+local rollback = cjson.decode(ARGV[2])
+if type(rollback) ~= 'table' or #rollback == 0 then
+  return 0
+end
+local list = {}
+if type(data.utterancesJson) == 'string' and data.utterancesJson ~= '' then
+  local decodedOk, decoded = pcall(cjson.decode, data.utterancesJson)
+  if decodedOk and type(decoded) == 'table' then
+    list = decoded
+  end
+end
+if #list < #rollback then
+  return 0
+end
+for i = 1, #rollback do
+  if list[#list - #rollback + i] ~= rollback[i] then
+    return 0
+  end
+end
+for i = 1, #rollback do
+  table.remove(list)
+end
+data.utterancesJson = cjson.encode(list)
+data.inboundSeq = inbound - #rollback
+${SAVE_HANDOFF}
+return 1
 `;
 
 const END_CALL_SCRIPT = `

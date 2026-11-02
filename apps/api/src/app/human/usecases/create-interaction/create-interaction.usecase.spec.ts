@@ -151,6 +151,10 @@ describe('CreateInteraction', () => {
     const recordVoiceCallEnded = {
       expireIfStale: sinon.stub().callsFake(async (interaction) => interaction),
     };
+    const cacheService = {
+      setIfNotExist: sinon.stub().resolves('OK'),
+      del: sinon.stub().resolves(1),
+    };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
@@ -175,7 +179,8 @@ describe('CreateInteraction', () => {
       analyticsService as any,
       voiceMinuteQuota as any,
       settlement as any,
-      recordVoiceCallEnded as any
+      recordVoiceCallEnded as any,
+      cacheService as any
     );
     const command = {
       userId: 'user1',
@@ -207,10 +212,32 @@ describe('CreateInteraction', () => {
       settlement,
       recordVoiceCallEnded,
       voiceCredits,
+      cacheService,
     };
   }
 
   describe('voice', () => {
+    it('rejects a second call that arrives before either row is stored', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanInteractionRepository, cacheService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'voice-main',
+        platform: HumanChannelViaEnum.VOICE,
+        platformUserId: '+15551212',
+      });
+      cacheService.setIfNotExist.resolves(null);
+
+      try {
+        await usecase.execute(command as any);
+        expect.fail('expected the live-call lock');
+      } catch (err) {
+        expect(err).to.be.instanceOf(HttpException);
+        expect((err as HttpException).getResponse()).to.include({ code: 'voice_live_call' });
+      }
+
+      expect(humanInteractionRepository.create.called).to.equal(false);
+    });
+
     it('rejects a second call while one is still pending', async () => {
       const { usecase, command, agentRepository, deliveryService, humanInteractionRepository } = setup();
       agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
@@ -721,6 +748,28 @@ describe('CreateInteraction', () => {
           expect(err).to.be.instanceOf(BadRequestException);
         }
       }
+      expect(createConversationInteraction.execute.called).to.equal(false);
+      expect(deliveryService.deliver.called).to.equal(false);
+    });
+
+    it('does not dial a contact outside the thread whose channel is voice', async () => {
+      const { usecase, command, agentRepository, deliveryService, createConversationInteraction, inbox } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay', name: 'Human' });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'voice-1',
+        platform: HumanChannelViaEnum.VOICE,
+        platformUserId: '+14155550123',
+      });
+      inbox.outsiders.returns(['sub-9']);
+
+      try {
+        await usecase.execute({ ...command, to: ['sub-1', 'sub-9'], thread: 'conv_abc' } as any);
+        expect.fail('expected voice to be refused');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as Error).message).to.contain('via: voice');
+      }
+
       expect(createConversationInteraction.execute.called).to.equal(false);
       expect(deliveryService.deliver.called).to.equal(false);
     });

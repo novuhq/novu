@@ -1,4 +1,4 @@
-import { IsBoolean, IsDefined, IsIn, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDefined, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class VoiceTurnCommand extends EnvironmentWithUserCommand {
@@ -25,4 +25,11 @@ export class VoiceTurnCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsBoolean()
   hangup?: boolean;
+
+  /** How long this turn listens, in seconds. Capped at the server's own bound. */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(25)
+  waitSeconds?: number;
 }

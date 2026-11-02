@@ -422,7 +422,7 @@ describe('runInvite with --via', () => {
     confirmVoiceVerification.mockResolvedValue({ verified: true, via: 'voice', address: '+***0123' });
     const previousTty = process.stdin.isTTY;
     Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
-    const prompt = vi.spyOn(await import('../cli-io'), 'promptLine').mockResolvedValue('421903');
+    const prompt = vi.spyOn(await import('../cli-io'), 'promptLine').mockResolvedValue('4219');
 
     const result = await runInvite('alice', { via: 'voice', phone: '+1 (415) 555-0123' });
     Object.defineProperty(process.stdin, 'isTTY', { value: previousTty, configurable: true });
@@ -437,7 +437,7 @@ describe('runInvite with --via', () => {
     expect(confirmVoiceVerification).toHaveBeenCalledWith(expect.anything(), {
       subscriberId: 'alice',
       agentIdentifier: 'human-relay',
-      code: '421903',
+      code: '4219',
     });
     expect(setupRelay).toHaveBeenCalledWith(expect.anything(), {
       subscriberId: 'alice',

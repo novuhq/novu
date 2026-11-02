@@ -292,10 +292,17 @@ function firstVoiceTurnBody(input: VoiceTurnInput): Record<string, unknown> {
   };
 }
 
-function voiceTurnRequestTimeout(remainingMs: number): number {
-  const budget = remainingMs > 0 ? remainingMs : VOICE_TURN_API_WAIT_MS;
+/** How long one API voice_turn parks (matches the API's VOICE_TURN_MAX_WAIT_SECONDS). */
+const VOICE_TURN_API_WAIT_MS = 25_000;
 
-  return Math.max(SHORTEST_CHECK_MS, Math.min(budget, VOICE_TURN_API_WAIT_MS + 5_000));
+/** Seconds the API should listen. Shorter than its cap when the caller's budget is. */
+function serverWaitSeconds(remainingMs: number): number {
+  return Math.min(VOICE_TURN_API_WAIT_MS / 1000, Math.max(1, Math.floor(remainingMs / 1000)));
+}
+
+/** Stays above the server's listen so the response arrives before the client aborts. */
+function voiceTurnRequestTimeout(waitSeconds: number): number {
+  return waitSeconds * 1000 + 5_000;
 }
 
 function voiceTurnStillListening(status: VoiceTurnResult['status']): boolean {
@@ -320,14 +327,18 @@ export async function voiceTurn(
 
   while (true) {
     const remainingMs = deadline - Date.now();
-    if (lastListening && remainingMs < VOICE_TURN_API_WAIT_MS) {
-      return lastListening;
+    if (remainingMs < SHORTEST_CHECK_MS) {
+      return lastListening ?? { status: 'timeout' };
     }
 
+    const waitSeconds = serverWaitSeconds(remainingMs);
     const result = await api.post<VoiceTurnResult>(
       path,
-      sendBody ? firstVoiceTurnBody(input) : {},
-      voiceTurnRequestTimeout(remainingMs)
+      {
+        ...(sendBody ? firstVoiceTurnBody(input) : {}),
+        waitSeconds,
+      },
+      voiceTurnRequestTimeout(waitSeconds)
     );
 
     if (!voiceTurnStillListening(result.status)) {
@@ -346,9 +357,6 @@ export async function voiceTurn(
     await sleep(wait);
   }
 }
-
-/** How long one API voice_turn parks (matches the API's VOICE_TURN_MAX_WAIT_SECONDS). */
-const VOICE_TURN_API_WAIT_MS = 25_000;
 
 export function describeVoiceTurn(id: string, result: VoiceTurnResult): string {
   switch (result.status) {

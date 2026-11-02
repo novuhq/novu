@@ -6,7 +6,12 @@ import {
   HumanInteractionRepository,
   type VoiceCallEnded,
 } from '@novu/dal';
-import { HumanChannelViaEnum, HumanInteractionStatusEnum, VoiceCallEndReasonEnum } from '@novu/shared';
+import {
+  HumanChannelViaEnum,
+  HumanInteractionStatusEnum,
+  VOICE_CALL_MAX_MINUTES,
+  VoiceCallEndReasonEnum,
+} from '@novu/shared';
 import { endReasonFromTermination } from '../../../agents/channels/voice/voice-call-end-reason';
 import { endVoiceCallHandoff, readVoiceCallHandoff } from '../../../agents/channels/voice/voice-call-handoff';
 import { isVoiceCallStale } from '../../../agents/channels/voice/voice-call-staleness';
@@ -187,7 +192,7 @@ export class RecordVoiceCallEnded {
         delivery.platform === HumanChannelViaEnum.VOICE && !delivery.voiceFailure && !delivery.voiceCallEnded
     );
     if (liveDeliveries.length === 0) {
-      return interaction;
+      return (await this.abandonUnconfirmedIfDue(interaction)) ?? interaction;
     }
 
     let closed = false;
@@ -218,5 +223,31 @@ export class RecordVoiceCallEnded {
       (await this.humanInteractionRepository.findByIdentifier(interaction._environmentId, interaction.identifier)) ??
       interaction
     );
+  }
+
+  /**
+   * A timed-out dial keeps a pending row and its minutes, with no call id for
+   * the post-call webhook to close. After the longest a call can last, drop it.
+   */
+  private async abandonUnconfirmedIfDue(interaction: HumanInteractionEntity): Promise<HumanInteractionEntity | null> {
+    const held = (interaction.voiceSubscriberIds?.length ?? 0) > 0 || (interaction.voiceMinutesReserved ?? 0) > 0;
+    const hasVoiceDelivery = (interaction.deliveries ?? []).some(
+      (delivery) => delivery.platform === HumanChannelViaEnum.VOICE
+    );
+    if (!held || hasVoiceDelivery) {
+      return null;
+    }
+
+    const stamp = interaction.voiceMinutesReservedAt ?? interaction.createdAt;
+    const reservedAt = Date.parse(stamp);
+    if (!Number.isFinite(reservedAt)) {
+      return null;
+    }
+
+    if (Date.now() - reservedAt < VOICE_CALL_MAX_MINUTES * 60 * 1000) {
+      return null;
+    }
+
+    return this.settlement.abandonUnconfirmedVoiceHold(interaction);
   }
 }

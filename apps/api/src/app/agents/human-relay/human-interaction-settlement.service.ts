@@ -13,6 +13,7 @@ import {
   HumanInteractionStatusEnum,
   parseToolApprovalRequestId,
   type VoiceCallFailure,
+  VoiceCallFailureCodeEnum,
 } from '@novu/shared';
 import { findAgentInboxOwner, trackAgentInboxCallSettled } from '../../human/services/agent-inbox-analytics';
 import { HumanVoiceMinuteQuotaService } from '../../human/services/human-voice-minute-quota.service';
@@ -289,6 +290,28 @@ export class HumanInteractionSettlementService {
     }
 
     await this.resumeAfterSettlement(failed);
+
+    return failed;
+  }
+
+  /**
+   * A dial that never received a call id is not a live call forever. Fails the
+   * pending row and returns any minutes still held.
+   */
+  async abandonUnconfirmedVoiceHold(interaction: HumanInteractionEntity): Promise<HumanInteractionEntity | null> {
+    const failed = await this.humanInteractionRepository.failVoiceIfPending(
+      interaction._environmentId,
+      interaction._id,
+      {
+        code: VoiceCallFailureCodeEnum.CARRIER_FAILURE,
+        message: 'The call was not confirmed in time. It is no longer blocking another call.',
+      }
+    );
+    if (!failed) {
+      return null;
+    }
+
+    await this.releaseVoiceReservation(failed);
 
     return failed;
   }

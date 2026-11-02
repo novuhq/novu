@@ -8,7 +8,10 @@ import { readVoiceVerificationConfig } from '../../../agents/channels/voice/voic
 import { assertVoiceEnabledForConnect } from '../../../agents/shared/assert-voice-enabled';
 import { KeylessVoiceGateService } from '../../../keyless/keyless-voice-gate.service';
 import { HumanVerificationRateLimitService } from '../../services/human-verification-rate-limit.service';
-import { HumanVoiceMinuteQuotaService } from '../../services/human-voice-minute-quota.service';
+import {
+  type HumanVoiceMinuteCredits,
+  HumanVoiceMinuteQuotaService,
+} from '../../services/human-voice-minute-quota.service';
 import {
   HumanVoiceVerificationCodeService,
   type StoredVoiceCode,
@@ -126,14 +129,15 @@ export class RequestVoiceVerification {
     let written: HumanContactPendingAddress | undefined;
     let issued = false;
     let previousCode: StoredVoiceCode | null = null;
+    let credits: HumanVoiceMinuteCredits | undefined;
     const codeKey = {
       environmentId: params.environmentId,
       agentId: params.agentId,
       subscriberId: params.subscriberId,
     };
-    const credits = await this.voiceMinuteQuota.reserveMinutes(params.organizationId, VOICE_VERIFICATION_CALL_MINUTES);
 
     try {
+      credits = await this.voiceMinuteQuota.reserveMinutes(params.organizationId, VOICE_VERIFICATION_CALL_MINUTES);
       written = await this.humanContactRepository.upsertPendingAddress({
         environmentId: params.environmentId,
         organizationId: params.organizationId,
@@ -172,7 +176,7 @@ export class RequestVoiceVerification {
 
       throw err;
     } finally {
-      await credits.release();
+      await credits?.release();
     }
   }
 

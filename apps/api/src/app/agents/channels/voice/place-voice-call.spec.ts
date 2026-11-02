@@ -235,6 +235,17 @@ describe('openingLineFor', () => {
     expect(line).to.equal('Hi. Deploy is ready. Say yes or no.');
   });
 
+  it('speaks the subtitle and each choice', () => {
+    const line = openingLineFor({
+      kind: HumanInteractionKindEnum.CHOOSE,
+      content: {
+        cardChrome: { title: 'Which region?', subtitle: 'Production', options: ['US', 'EU'] },
+      },
+    });
+
+    expect(line).to.equal('Hi. Which region? Production. US. EU.');
+  });
+
   it('strips brackets so v4 does not read card text as an audio tag', () => {
     const line = openingLineFor({
       kind: HumanInteractionKindEnum.APPROVE,

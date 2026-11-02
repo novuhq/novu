@@ -314,6 +314,7 @@ export class HumanInteractionsController {
         decision: body.decision,
         optionId: body.optionId,
         hangup: body.hangup,
+        waitSeconds: body.waitSeconds,
       })
     );
   }

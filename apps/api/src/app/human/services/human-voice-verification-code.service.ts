@@ -18,15 +18,32 @@ export const VOICE_VERIFICATION_CODE_PATTERN = new RegExp(`^\\d{${VOICE_VERIFICA
 export const VOICE_VERIFICATION_MAX_ATTEMPTS = 5;
 
 /**
- * One INCR per wrong guess. The first increment arms the TTL, so overlapping
- * guesses cannot read the same count and overwrite each other.
+ * Takes one guess, including a correct one, before the code is compared.
+ * Overlapping requests cannot all read the same count and then succeed.
+ * A count past the budget burns the code inside this script.
  */
-const SPEND_ATTEMPT_SCRIPT = `
-local next = redis.call('INCR', KEYS[1])
-if next == 1 then
-  redis.call('EXPIRE', KEYS[1], ARGV[1])
+const RESERVE_ATTEMPT_SCRIPT = `
+local raw = redis.call('GET', KEYS[1])
+if not raw then
+  return nil
 end
-return next
+if raw == 'locked' then
+  return 'locked'
+end
+local ttl = redis.call('TTL', KEYS[1])
+if ttl < 1 then
+  ttl = tonumber(ARGV[1])
+end
+local next = redis.call('INCR', KEYS[2])
+if next == 1 then
+  redis.call('EXPIRE', KEYS[2], ttl)
+end
+if next > tonumber(ARGV[2]) then
+  redis.call('SET', KEYS[1], 'locked', 'EX', ttl)
+  redis.call('DEL', KEYS[2])
+  return 'locked'
+end
+return cjson.encode({ attempts = next, raw = raw })
 `;
 
 /** Deletes the code only when it is still the request this confirmation checked. */
@@ -73,8 +90,9 @@ export type VoiceCodeCheck =
 
 /**
  * The code a verification call reads. Stored hashed, keyed by the contact,
- * with a wrong-guess counter. The plaintext exists only in the return value
- * of {@link HumanVoiceVerificationCodeService.issue}, which is spoken and not saved.
+ * with a guess counter that moves before the comparison. The plaintext exists
+ * only in the return value of {@link HumanVoiceVerificationCodeService.issue},
+ * which is spoken and not saved.
  */
 @Injectable()
 export class HumanVoiceVerificationCodeService {
@@ -114,25 +132,38 @@ export class HumanVoiceVerificationCodeService {
   }
 
   async check(key: VoiceVerificationCodeKey, code: string): Promise<VoiceCodeCheck> {
-    const stored = await this.read(key);
-    if (!stored) {
+    const reserved = await this.reserveAttempt(key);
+    if (reserved === 'missing') {
       return { ok: false, reason: 'missing' };
     }
-
-    if (stored.attempts >= VOICE_VERIFICATION_MAX_ATTEMPTS) {
+    if (reserved === 'locked') {
       return { ok: false, reason: 'locked' };
     }
 
+    const stored = reserved.stored;
     if (!codesMatch(stored, code)) {
-      const attempts = await this.spendAttempt(key, stored.expiresAt);
-      if (attempts >= VOICE_VERIFICATION_MAX_ATTEMPTS) {
+      if (reserved.attempts >= VOICE_VERIFICATION_MAX_ATTEMPTS) {
+        await this.markLocked(key);
+
         return { ok: false, reason: 'locked' };
       }
 
-      return { ok: false, reason: 'mismatch', attemptsRemaining: VOICE_VERIFICATION_MAX_ATTEMPTS - attempts };
+      return {
+        ok: false,
+        reason: 'mismatch',
+        attemptsRemaining: VOICE_VERIFICATION_MAX_ATTEMPTS - reserved.attempts,
+      };
     }
 
     return { ok: true, address: stored.address, requestedAt: stored.requestedAt };
+  }
+
+  /** Keeps later guesses on "locked" until a new call replaces the code. */
+  private async markLocked(key: VoiceVerificationCodeKey): Promise<void> {
+    await this.cacheService.set(this.storageKey(key), 'locked', {
+      ttl: VOICE_VERIFICATION_CODE_TTL_SECONDS,
+    });
+    await this.cacheService.del(this.attemptsKey(key));
   }
 
   async clear(key: VoiceVerificationCodeKey): Promise<void> {
@@ -198,14 +229,50 @@ export class HumanVoiceVerificationCodeService {
     }
   }
 
-  private async spendAttempt(key: VoiceVerificationCodeKey, expiresAt: string): Promise<number> {
-    const ttl = Math.max(1, Math.ceil((Date.parse(expiresAt) - Date.now()) / 1000));
-    const spent = await this.cacheService.eval<number>(SPEND_ATTEMPT_SCRIPT, [this.attemptsKey(key)], [ttl]);
-    if (spent === undefined || spent === null) {
-      return VOICE_VERIFICATION_MAX_ATTEMPTS;
+  /**
+   * One slot, then the code that slot was taken against. Cache down fails closed:
+   * a guess that was not counted must not promote the number.
+   */
+  private async reserveAttempt(
+    key: VoiceVerificationCodeKey
+  ): Promise<{ attempts: number; stored: StoredVoiceCode } | 'missing' | 'locked'> {
+    const result = await this.cacheService.eval<string | null>(
+      RESERVE_ATTEMPT_SCRIPT,
+      [this.storageKey(key), this.attemptsKey(key)],
+      [VOICE_VERIFICATION_CODE_TTL_SECONDS, VOICE_VERIFICATION_MAX_ATTEMPTS]
+    );
+    if (result === undefined || result === 'locked') {
+      return 'locked';
+    }
+    if (result === null) {
+      return 'missing';
     }
 
-    return Number(spent);
+    let parsed: { attempts?: unknown; raw?: unknown };
+    try {
+      parsed = JSON.parse(result) as { attempts?: unknown; raw?: unknown };
+    } catch {
+      return 'locked';
+    }
+
+    if (typeof parsed.raw !== 'string' || typeof parsed.attempts !== 'number') {
+      return 'locked';
+    }
+
+    let stored: StoredVoiceCode;
+    try {
+      stored = JSON.parse(parsed.raw) as StoredVoiceCode;
+    } catch {
+      return 'missing';
+    }
+
+    if (!stored.expiresAt || Date.parse(stored.expiresAt) <= Date.now()) {
+      await this.clear(key);
+
+      return 'missing';
+    }
+
+    return { attempts: parsed.attempts, stored };
   }
 
   private storageKey(key: VoiceVerificationCodeKey): string {

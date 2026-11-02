@@ -35,7 +35,7 @@ describe('ConfirmVoiceVerification', () => {
       organizationId: 'org1',
       agentId: 'agent1',
       subscriberId: 'alice',
-      code: '421903',
+      code: '4219',
     });
 
   it('promotes the pending number and forgets the code', async () => {

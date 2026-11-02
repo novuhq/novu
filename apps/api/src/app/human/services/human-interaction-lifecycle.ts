@@ -1,5 +1,5 @@
 import { BadGatewayException, BadRequestException, HttpException } from '@nestjs/common';
-import { isAgentEmailInboxQuotaExceeded, type PinoLogger, shortId } from '@novu/application-generic';
+import { type CacheService, isAgentEmailInboxQuotaExceeded, type PinoLogger, shortId } from '@novu/application-generic';
 import { HumanInteractionDelivery, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
 import {
   type CardChrome,
@@ -335,6 +335,61 @@ export function buildPendingHumanInteraction(input: PendingHumanInteractionInput
     ...(input.voiceMinutesReservedAt ? { voiceMinutesReservedAt: input.voiceMinutesReservedAt } : {}),
     ...(input.voiceSubscriberIds?.length ? { voiceSubscriberIds: input.voiceSubscriberIds } : {}),
   };
+}
+
+/** Long enough to cover the check-then-insert window. The pending row is the lock after that. */
+const VOICE_LIVE_LOCK_SECONDS = 30;
+
+/**
+ * Closes the gap where two sends both count zero pending calls, then both insert.
+ * Cache down fails open and leaves the count as the only check. The returned
+ * function drops the lock; call it once the pending row exists, or on failure.
+ */
+export async function acquireVoiceLiveLocks(
+  cache: CacheService,
+  environmentId: string,
+  subscriberIds: string[]
+): Promise<() => Promise<void>> {
+  const acquired: string[] = [];
+  let released = false;
+  const release = async () => {
+    if (released) {
+      return;
+    }
+
+    released = true;
+    if (acquired.length === 0) {
+      return;
+    }
+
+    await cache.del(acquired).catch(() => undefined);
+  };
+
+  for (const subscriberId of [...new Set(subscriberIds)]) {
+    const key = `human_voice_live_lock:{${environmentId}}:${subscriberId}`;
+    const result = await cache.setIfNotExist(key, '1', { ttl: VOICE_LIVE_LOCK_SECONDS, jitter: false });
+    if (result === undefined) {
+      await release();
+
+      return async () => undefined;
+    }
+
+    if (result === null) {
+      await release();
+
+      throw new HttpException(
+        {
+          code: 'voice_live_call',
+          message: `Human "${subscriberId}" is already on a call. Wait for it to finish before calling again.`,
+        },
+        429
+      );
+    }
+
+    acquired.push(key);
+  }
+
+  return release;
 }
 
 /** One live call per contact. A second voice send is rejected until the first settles. */
