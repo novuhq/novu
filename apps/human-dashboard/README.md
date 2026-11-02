@@ -164,7 +164,7 @@ and the MCP server only speak these paths, so a self-hosted or local setup point
 
 Agent Inbox events go to Novu's Mixpanel project, named `… - [Agent Inbox]` (`AGENT_INBOX_EVENTS` in
 `@novu/shared`). The API sends what agents and operators do; this app only adds `Page Viewed - [Agent Inbox]`
-for each dashboard page (`components/analytics`) and records Mixpanel session replays when a token is set. Both use the id of the account's backing user, so
+for each dashboard page (`components/analytics`). Mixpanel session replays start only after sign-up or sign-in, not on the sign-in or sign-up pages. Both use the id of the account's backing user, so
 one operator is one profile. The page sends a page's path only, never its query, which can hold a one-time
 token, and nothing about the operator besides that id. Its calls to the API say `Novu-Analytics-Source: dashboard`.
 

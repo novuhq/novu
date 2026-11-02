@@ -12,13 +12,32 @@ const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
 const PAGE_VIEWED = 'Page Viewed - [Agent Inbox]';
 
 let started = false;
+let sessionRecordingStarted = false;
 
 function getSessionReplayProperties(): Record<string, unknown> {
+  if (!sessionRecordingStarted) {
+    return {};
+  }
+
   try {
     // @ts-expect-error missing from @types/mixpanel-browser
     return mixpanel.get_session_recording_properties() ?? {};
   } catch {
     return {};
+  }
+}
+
+function ensureSessionRecording(): void {
+  if (!startMixpanel() || sessionRecordingStarted) {
+    return;
+  }
+
+  try {
+    // @ts-expect-error missing from @types/mixpanel-browser
+    mixpanel.start_session_recording();
+    sessionRecordingStarted = true;
+  } catch (error) {
+    console.error(error);
   }
 }
 
@@ -36,17 +55,7 @@ function startMixpanel(): boolean {
     mixpanel.init(MIXPANEL_TOKEN, {
       save_referrer: false,
       property_blacklist: ['$current_url', '$referrer'],
-      // @ts-expect-error missing from @types/mixpanel-browser
-      record_sessions_percent: 100,
     });
-
-    try {
-      // @ts-expect-error missing from @types/mixpanel-browser
-      mixpanel.start_session_recording();
-    } catch (error) {
-      console.error(error);
-    }
-
     started = true;
   }
 
@@ -77,6 +86,22 @@ export function Analytics({ userId }: { userId: string | null }) {
 }
 
 /**
+ * Starts Mixpanel session replays once an operator is signed in, including onboarding after sign-up.
+ * Sign-in and sign-up pages stay off the record. Renders nothing.
+ */
+export function RecordSignedInOperatorSessions() {
+  const { isLoaded, isSignedIn } = useAuth();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      ensureSessionRecording();
+    }
+  }, [isLoaded, isSignedIn]);
+
+  return null;
+}
+
+/**
  * Forgets the operator once nobody is signed in, so whoever uses this browser next starts out as someone new.
  * It sits on every account page: it runs as the operator signs out, or on the sign-in page at the latest,
  * before anyone else signs in. Renders nothing.
@@ -87,6 +112,7 @@ export function ForgetSignedOutOperator() {
   useEffect(() => {
     if (isLoaded && !isSignedIn && startMixpanel() && mixpanel.get_property('$user_id')) {
       mixpanel.reset();
+      sessionRecordingStarted = false;
     }
   }, [isLoaded, isSignedIn]);
 
