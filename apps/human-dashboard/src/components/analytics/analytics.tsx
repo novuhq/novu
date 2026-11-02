@@ -13,6 +13,15 @@ const PAGE_VIEWED = 'Page Viewed - [Agent Inbox]';
 
 let started = false;
 
+function getSessionReplayProperties(): Record<string, unknown> {
+  try {
+    // @ts-expect-error missing from @types/mixpanel-browser
+    return mixpanel.get_session_recording_properties() ?? {};
+  } catch {
+    return {};
+  }
+}
+
 /**
  * Starts Mixpanel the first time it's needed, and says whether it runs. A link into the dashboard can carry a
  * one-time token in its query (a claim, a CLI login), so a full address is never sent: a page view has its
@@ -24,7 +33,20 @@ function startMixpanel(): boolean {
   }
 
   if (!started) {
-    mixpanel.init(MIXPANEL_TOKEN, { save_referrer: false, property_blacklist: ['$current_url', '$referrer'] });
+    mixpanel.init(MIXPANEL_TOKEN, {
+      save_referrer: false,
+      property_blacklist: ['$current_url', '$referrer'],
+      // @ts-expect-error missing from @types/mixpanel-browser
+      record_sessions_percent: 100,
+    });
+
+    try {
+      // @ts-expect-error missing from @types/mixpanel-browser
+      mixpanel.start_session_recording();
+    } catch (error) {
+      console.error(error);
+    }
+
     started = true;
   }
 
@@ -47,7 +69,7 @@ export function Analytics({ userId }: { userId: string | null }) {
 
   useEffect(() => {
     if (startMixpanel()) {
-      mixpanel.track(PAGE_VIEWED, { path: pathname });
+      mixpanel.track(PAGE_VIEWED, { path: pathname, ...getSessionReplayProperties() });
     }
   }, [pathname]);
 

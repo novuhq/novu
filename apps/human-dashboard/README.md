@@ -156,7 +156,7 @@ and the MCP server only speak these paths, so a self-hosted or local setup point
 | `AGENT_INBOX_DASHBOARD_API_SECRET`  | —                        | The API's `AGENT_INBOX_DASHBOARD_API_SECRET`, for `/v1/human/accounts` and the MCP server's connections. Server only. |
 | `AGENT_INBOX_DASHBOARD_URL`         | the page's address       | Where this site is served, the API's `HUMAN_DASHBOARD_URL`. Public card links and the prompts' `/api` use it. Server only. |
 | `AGENT_INBOX_MCP_URL`               | —                        | The hosted Agent Inbox MCP server the chat apps connect to. Empty links their tiles to the docs instead. Server only. |
-| `NEXT_PUBLIC_MIXPANEL_TOKEN`        | —                        | Novu's Mixpanel project. Counts dashboard page views on the operator's profile; empty sends nothing. |
+| `NEXT_PUBLIC_MIXPANEL_TOKEN`        | —                        | Novu's Mixpanel project. Counts dashboard page views on the operator's profile, records session replays, and sends nothing when empty. |
 
 `NEXT_PUBLIC_` values are inlined at build time.
 
@@ -164,7 +164,7 @@ and the MCP server only speak these paths, so a self-hosted or local setup point
 
 Agent Inbox events go to Novu's Mixpanel project, named `… - [Agent Inbox]` (`AGENT_INBOX_EVENTS` in
 `@novu/shared`). The API sends what agents and operators do; this app only adds `Page Viewed - [Agent Inbox]`
-for each dashboard page (`components/analytics`). Both use the id of the account's backing user, so
+for each dashboard page (`components/analytics`) and records Mixpanel session replays when a token is set. Both use the id of the account's backing user, so
 one operator is one profile. The page sends a page's path only, never its query, which can hold a one-time
 token, and nothing about the operator besides that id. Its calls to the API say `Novu-Analytics-Source: dashboard`.
 
