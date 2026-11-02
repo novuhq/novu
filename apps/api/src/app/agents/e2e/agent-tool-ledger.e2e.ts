@@ -183,7 +183,7 @@ describe('Agent tool ledger #novu-v2', () => {
     expect(search?.toolData?.truncated).to.equal(true);
     expect(search?.toolData).to.not.have.property('output');
     const [searchPart] = search?.toolData?.content ?? [];
-    expect(searchPart?.type === 'text' && searchPart.text.length).to.equal(65536);
+    expect(searchPart?.type === 'text' && searchPart.text.length).to.be.within(65_000, 65_536);
 
     const failed = results.find((result) => result.toolData?.toolCallId === 'toolu_charge');
     expect(failed?.toolData?.isError).to.equal(true);

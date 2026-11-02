@@ -1,6 +1,9 @@
 import { expect } from 'chai';
 import { capToolResultContent } from './tool-result-content';
 
+/** Stored size of an empty text part: `{"type":"text","text":""}`. */
+const TEXT_PART_BYTES = 25;
+
 describe('capToolResultContent', () => {
   it('keeps parts that fit unchanged', () => {
     const parts = [
@@ -31,7 +34,7 @@ describe('capToolResultContent', () => {
         { type: 'text', text: 'efghij' },
         { type: 'json', value: { dropped: true } },
       ],
-      7
+      TEXT_PART_BYTES * 2 + 7
     );
 
     expect(result).to.deep.equal({
@@ -57,8 +60,17 @@ describe('capToolResultContent', () => {
   });
 
   it('never splits a multi-byte character', () => {
-    const result = capToolResultContent([{ type: 'text', text: 'aé€' }], 4);
+    const result = capToolResultContent([{ type: 'text', text: 'aé€' }], TEXT_PART_BYTES + 4);
 
     expect(result).to.deep.equal({ content: [{ type: 'text', text: 'aé' }], truncated: true });
+  });
+
+  it('counts every part toward the cap, so many empty parts cannot exceed it', () => {
+    const parts = Array.from({ length: 1000 }, () => ({ type: 'text' as const, text: '' }));
+
+    const result = capToolResultContent(parts, TEXT_PART_BYTES * 40);
+
+    expect(result.content).to.have.length(40);
+    expect(result.truncated).to.equal(true);
   });
 });

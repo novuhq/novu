@@ -2,6 +2,7 @@ import type { AgentToolResultContent } from '@novu/agent-event-protocol';
 import type { ConversationActivityToolResultPart } from '@novu/dal';
 
 const TOOL_RESULT_CONTENT_MAX_BYTES = 65536;
+const TEXT_PART_OVERHEAD_BYTES = Buffer.byteLength(JSON.stringify({ type: 'text', text: '' }), 'utf8');
 
 export interface StoredToolResultContent {
   content: ConversationActivityToolResultPart[];
@@ -33,7 +34,7 @@ export function capToolResultContent(
     truncated = true;
 
     if (stored.type === 'text') {
-      const text = truncateUtf8(stored.text, remaining);
+      const text = truncateUtf8(stored.text, remaining - TEXT_PART_OVERHEAD_BYTES);
 
       if (text) {
         content.push({ type: 'text', text });
@@ -56,7 +57,7 @@ function toStoredPart(part: AgentToolResultContent): ConversationActivityToolRes
 
 function storedPartBytes(part: ConversationActivityToolResultPart): number {
   if (part.type === 'text') {
-    return Buffer.byteLength(part.text, 'utf8');
+    return TEXT_PART_OVERHEAD_BYTES + Buffer.byteLength(part.text, 'utf8');
   }
 
   return Buffer.byteLength(JSON.stringify(part), 'utf8');
@@ -64,7 +65,7 @@ function storedPartBytes(part: ConversationActivityToolResultPart): number {
 
 function truncateUtf8(text: string, maxBytes: number): string {
   const bytes = Buffer.from(text, 'utf8');
-  let end = maxBytes;
+  let end = Math.max(0, maxBytes);
 
   while (end > 0 && isUtf8ContinuationByte(bytes[end])) {
     end -= 1;
