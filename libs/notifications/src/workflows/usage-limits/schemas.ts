@@ -30,6 +30,8 @@ export const usageLimitsPayloadSchema = z.object({
   allowance: z.number().min(0),
   planName: z.string(),
   alertState: usageLimitsAlertStateSchema,
+  /** The organization is on a trial, capped at `allowance` runs per billing period. Optional so in-flight jobs without it validate. */
+  isTrial: z.boolean().optional(),
   usageLimits: z.object({
     /** Included workflow runs of a plan that bills on-demand runs past them; null on Free and trials. */
     includedEvents: z.number().min(0).nullable(),

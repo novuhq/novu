@@ -8,7 +8,8 @@ import {
 
 export type WorkflowRunsUsageState = 'within_included' | 'billed_on_demand' | 'paused';
 
-export type PausedUsagePlan = 'free' | 'paid';
+/** `trial` hard-stops at the included runs like `free`, but has no overages and cannot edit limits. */
+export type PausedUsagePlan = 'free' | 'trial' | 'paid';
 
 export type WorkflowRunsUsage = {
   /** Measured against the usage-alert allowance override while it is set, like `max`. */
@@ -48,7 +49,7 @@ export type UsageLimitsPlan = {
   billingInterval: 'month' | 'year';
 };
 
-type SubscriptionUsage = Pick<GetSubscriptionDto, 'apiServiceLevel' | 'events'>;
+type SubscriptionUsage = Pick<GetSubscriptionDto, 'apiServiceLevel' | 'events' | 'trial' | 'usageLimits'>;
 
 /** Unmetered or still-loading subscriptions have no `included`, so fall back to the plan's tier allowance for display. */
 export function getIncludedWorkflowRuns(subscription: SubscriptionUsage | undefined): number {
@@ -124,9 +125,26 @@ export function isNearingOverageLimit(view: Pick<UsageLimitsView, 'usage' | 'set
   return usage.current - usage.included >= onDemandLimit * OVERAGE_WARNING_RATIO;
 }
 
-function getPausedUsagePlan({ apiServiceLevel, events }: SubscriptionUsage): PausedUsagePlan | null {
+function getPausedUsagePlan({
+  apiServiceLevel,
+  events,
+  trial,
+  usageLimits,
+}: SubscriptionUsage): PausedUsagePlan | null {
   if (!events.isPaused) {
     return null;
+  }
+
+  if (trial.isActive && apiServiceLevel !== ApiServiceLevelEnum.FREE) {
+    return 'trial';
+  }
+
+  // Only trials pause a Pro or Team organization without letting it configure limits, which covers a trial the
+  // subscription does not report yet, while the Stripe webhook lags.
+  const isPaidTier = apiServiceLevel === ApiServiceLevelEnum.PRO || apiServiceLevel === ApiServiceLevelEnum.BUSINESS;
+
+  if (isPaidTier && usageLimits?.isConfigurable === false) {
+    return 'trial';
   }
 
   switch (apiServiceLevel) {

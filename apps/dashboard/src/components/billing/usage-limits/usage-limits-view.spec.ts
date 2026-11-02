@@ -266,4 +266,74 @@ describe('getUsageLimitsView', () => {
         ?.pausedPlan
     ).toBeNull();
   });
+
+  it('pauses a trial like a hard stop, and only while paused', () => {
+    const paused = { isPaused: true };
+
+    for (const apiServiceLevel of [ApiServiceLevelEnum.PRO, ApiServiceLevelEnum.BUSINESS]) {
+      expect(
+        getUsageLimitsView(buildSubscription({ apiServiceLevel, isOnTrial: true, events: paused }), true)?.pausedPlan
+      ).toBe('trial');
+      expect(getUsageLimitsView(buildSubscription({ apiServiceLevel, isOnTrial: true }), true)?.pausedPlan).toBeNull();
+    }
+
+    expect(
+      getUsageLimitsView(buildSubscription({ apiServiceLevel: ApiServiceLevelEnum.PRO, events: paused }), true)
+        ?.pausedPlan
+    ).toBe('paid');
+  });
+
+  it('pauses a Pro or Team organization that cannot configure limits as a trial, before the subscription reports it', () => {
+    const paused = { isPaused: true };
+    const notConfigurable = { isConfigurable: false, onDemandPricePer1k: null };
+
+    for (const apiServiceLevel of [ApiServiceLevelEnum.PRO, ApiServiceLevelEnum.BUSINESS]) {
+      expect(
+        getUsageLimitsView(buildSubscription({ apiServiceLevel, events: paused, usageLimits: notConfigurable }), true)
+          ?.pausedPlan
+      ).toBe('trial');
+    }
+
+    expect(
+      getUsageLimitsView(
+        buildSubscription({ apiServiceLevel: ApiServiceLevelEnum.FREE, events: paused, usageLimits: notConfigurable }),
+        true
+      )?.pausedPlan
+    ).toBe('free');
+  });
+
+  it('measures a trial against its trial cap', () => {
+    const view = requireView(
+      getUsageLimitsView(
+        buildSubscription({
+          apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+          isOnTrial: true,
+          events: { current: 12_000, included: 250_000, limit: 30_000 },
+          usageLimits: { isConfigurable: false, onDemandPricePer1k: null },
+        }),
+        true
+      )
+    );
+
+    expect(view.usage.max).toBe(30_000);
+    expect(view.usage.state).toBe('within_included');
+  });
+
+  it('measures a Team trial against its own trial cap', () => {
+    const view = requireView(
+      getUsageLimitsView(
+        buildSubscription({
+          apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+          isOnTrial: true,
+          events: { current: 100_000, included: 250_000, limit: 250_000 },
+          usageLimits: { isConfigurable: false, onDemandPricePer1k: null },
+        }),
+        true
+      )
+    );
+
+    expect(view.usage.max).toBe(250_000);
+    expect(view.canEdit).toBe(false);
+    expect(view.plan.isOnTrial).toBe(true);
+  });
 });

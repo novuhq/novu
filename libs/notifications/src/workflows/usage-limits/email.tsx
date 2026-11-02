@@ -8,6 +8,9 @@ type UsageLimitsAlertCase =
   | 'free_75'
   | 'free_90'
   | 'free_paused'
+  | 'trial_75'
+  | 'trial_90'
+  | 'trial_paused'
   | 'usage_update'
   | 'included_used'
   | 'included_used_will_pause'
@@ -126,6 +129,56 @@ const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) =
     inApp: {
       subject: 'Notifications are paused',
       body: `${organizationName} has reached its ${formatCount(limit)}-event monthly limit. Upgrade to resume now, or wait until the next billing period.`,
+    },
+    button: UPGRADE_PLAN_BUTTON,
+  }),
+  trial_75: ({ organizationName, planName, usage, limit, remaining }) => {
+    const subject = 'You are approaching your trial workflow run limit';
+    const usedPercent = limit === 0 ? 0 : Math.floor((usage / limit) * 100);
+    const remainBeforePause = `${formatCountPhrase(remaining, 'workflow run remains', 'workflow runs remain')} before new runs pause.`;
+
+    return {
+      email: {
+        subject,
+        preview: `${organizationName} has used ${usedPercent}% of its trial workflow runs. ${remainBeforePause}`,
+        heading: 'Your trial usage is growing',
+        summary: `${organizationName} has used ${formatCount(usage)} of the ${formatCount(limit)} workflow runs included each billing period in your ${planName}.`,
+        message: `At ${formatCount(limit)} workflow runs, new workflow runs pause until you upgrade. Upgrade to a paid plan to keep sending.`,
+        note: `Your ${planName} includes ${formatCount(limit)} workflow runs per billing period.`,
+      },
+      inApp: {
+        subject,
+        body: `${organizationName} has used ${usedPercent}% of its ${formatCount(limit)} trial workflow runs. At ${formatCount(limit)}, new workflow runs pause until you upgrade.`,
+      },
+      button: UPGRADE_PLAN_BUTTON,
+    };
+  },
+  trial_90: (figures) => {
+    const copy = USAGE_LIMITS_COPY.trial_75(figures);
+    const subject = 'You are close to your trial workflow run limit';
+
+    return {
+      ...copy,
+      email: {
+        ...copy.email,
+        subject,
+        preview: `${formatCountPhrase(figures.remaining, 'workflow run remains', 'workflow runs remain')} before new runs pause.`,
+        heading: 'Almost at your trial limit',
+      },
+      inApp: { ...copy.inApp, subject },
+    };
+  },
+  trial_paused: ({ organizationName, planName, limit }) => ({
+    email: {
+      subject: PAUSED_BLOCKED_EMAIL_SUBJECT,
+      preview: `${organizationName} has used all ${formatCount(limit)} trial workflow runs.`,
+      heading: 'Workflow runs are paused',
+      summary: `${organizationName} has used all ${formatCount(limit)} workflow runs included each billing period in your ${planName}.`,
+      message: 'New workflow runs are paused. Upgrade to a paid plan to keep sending.',
+    },
+    inApp: {
+      subject: 'Workflow runs are paused',
+      body: `${organizationName} has used all ${formatCount(limit)} trial workflow runs. New workflow runs are paused. Upgrade to keep sending.`,
     },
     button: UPGRADE_PLAN_BUTTON,
   }),
@@ -298,35 +351,65 @@ const USAGE_LIMITS_COPY: Record<UsageLimitsAlertCase, (figures: IUsageFigures) =
   },
 };
 
-// Only Free pauses at its limit without a set limit, and only trials reach an alert level without included events.
-function resolveAlertCase({ alertState, percentage, usageLimits }: UsageLimitsPayload): UsageLimitsAlertCase {
-  const { isLimitSet, pausesAtLimit } = usageLimits;
+function resolveAlertLevelCase(percentage: number): UsageLimitsAlertCase {
+  if (percentage >= 100) {
+    return 'limit_reached';
+  }
+
+  return percentage >= 90 ? 'limit_90' : 'limit_75';
+}
+
+function resolveApproachingCase({ percentage, usageLimits, isTrial }: UsageLimitsPayload): UsageLimitsAlertCase {
+  const isNinety = percentage >= 90;
+
+  if (usageLimits.isLimitSet) {
+    return isNinety ? 'pause_90' : 'pause_75';
+  }
+
+  if (isTrial) {
+    return isNinety ? 'trial_90' : 'trial_75';
+  }
+
+  return isNinety ? 'free_90' : 'free_75';
+}
+
+function resolveBlockedCase({ usageLimits, isTrial }: UsageLimitsPayload): UsageLimitsAlertCase {
+  if (usageLimits.isLimitSet) {
+    return 'limit_paused';
+  }
+
+  return isTrial ? 'trial_paused' : 'free_paused';
+}
+
+function resolveAlertLevelReachedCase({ percentage, usageLimits, isTrial }: UsageLimitsPayload): UsageLimitsAlertCase {
+  if (usageLimits.isLimitSet) {
+    return resolveAlertLevelCase(percentage);
+  }
+
+  if (isTrial) {
+    if (percentage >= 100) {
+      return 'trial_paused';
+    }
+
+    return percentage >= 90 ? 'trial_90' : 'trial_75';
+  }
+
+  return 'usage_update';
+}
+
+// Only Free and trials pause at their limit without a set limit, and trials are told apart by `isTrial`.
+function resolveAlertCase(payload: UsageLimitsPayload): UsageLimitsAlertCase {
+  const { alertState, usageLimits } = payload;
 
   switch (alertState) {
     case 'included_exhausted':
-      return pausesAtLimit ? 'included_used_will_pause' : 'included_used';
+      return usageLimits.pausesAtLimit ? 'included_used_will_pause' : 'included_used';
     case 'approaching_limit':
-      if (isLimitSet) {
-        return percentage >= 90 ? 'pause_90' : 'pause_75';
-      }
-
-      return percentage >= 90 ? 'free_90' : 'free_75';
+      return resolveApproachingCase(payload);
     case 'blocked':
-      return isLimitSet ? 'limit_paused' : 'free_paused';
+      return resolveBlockedCase(payload);
     case 'alert_level_reached':
-      if (!isLimitSet) {
-        return 'usage_update';
-      }
-
-      if (percentage >= 100) {
-        return 'limit_reached';
-      }
-
-      if (percentage >= 90) {
-        return 'limit_90';
-      }
-
-      return 'limit_75';
+      return resolveAlertLevelReachedCase(payload);
     default: {
       const unhandled: never = alertState;
 
