@@ -41,14 +41,24 @@
   ],
   "exports": {
     ".": {
-      "require": "./dist/cjs/index.js",
-      "import": "./dist/esm/index.js",
-      "types": "./dist/esm/index.d.js"
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      },
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
     },
     "./utils": {
-      "require": "./dist/cjs/utils/index.js",
-      "import": "./dist/esm/utils/index.js",
-      "types": "./dist/esm/utils/index.d.js"
+      "require": {
+        "types": "./dist/cjs/utils/index.d.ts",
+        "default": "./dist/cjs/utils/index.js"
+      },
+      "import": {
+        "types": "./dist/esm/utils/index.d.ts",
+        "default": "./dist/esm/utils/index.js"
+      }
     },
     "./utils/private-ip-classification": {
       "require": "./dist/cjs/utils/private-ip-classification.js",
@@ -76,24 +86,44 @@
       "types": "./dist/esm/utils/validate-smtp-outbound-target.d.ts"
     },
     "./provider-overrides/slack": {
-      "types": "./dist/esm/consts/providers/provider-overrides/slack/index.d.ts",
-      "require": "./dist/cjs/consts/providers/provider-overrides/slack/index.js",
-      "import": "./dist/esm/consts/providers/provider-overrides/slack/index.js"
+      "require": {
+        "types": "./dist/cjs/consts/providers/provider-overrides/slack/index.d.ts",
+        "default": "./dist/cjs/consts/providers/provider-overrides/slack/index.js"
+      },
+      "import": {
+        "types": "./dist/esm/consts/providers/provider-overrides/slack/index.d.ts",
+        "default": "./dist/esm/consts/providers/provider-overrides/slack/index.js"
+      }
     },
     "./provider-overrides/telegram": {
-      "types": "./dist/esm/consts/providers/provider-overrides/telegram/index.d.ts",
-      "require": "./dist/cjs/consts/providers/provider-overrides/telegram/index.js",
-      "import": "./dist/esm/consts/providers/provider-overrides/telegram/index.js"
+      "require": {
+        "types": "./dist/cjs/consts/providers/provider-overrides/telegram/index.d.ts",
+        "default": "./dist/cjs/consts/providers/provider-overrides/telegram/index.js"
+      },
+      "import": {
+        "types": "./dist/esm/consts/providers/provider-overrides/telegram/index.d.ts",
+        "default": "./dist/esm/consts/providers/provider-overrides/telegram/index.js"
+      }
     },
     "./provider-overrides/whatsapp": {
-      "types": "./dist/esm/consts/providers/provider-overrides/whatsapp/index.d.ts",
-      "require": "./dist/cjs/consts/providers/provider-overrides/whatsapp/index.js",
-      "import": "./dist/esm/consts/providers/provider-overrides/whatsapp/index.js"
+      "require": {
+        "types": "./dist/cjs/consts/providers/provider-overrides/whatsapp/index.d.ts",
+        "default": "./dist/cjs/consts/providers/provider-overrides/whatsapp/index.js"
+      },
+      "import": {
+        "types": "./dist/esm/consts/providers/provider-overrides/whatsapp/index.d.ts",
+        "default": "./dist/esm/consts/providers/provider-overrides/whatsapp/index.js"
+      }
     },
     "./provider-overrides/fcm": {
-      "types": "./dist/esm/consts/providers/provider-overrides/fcm/index.d.ts",
-      "require": "./dist/cjs/consts/providers/provider-overrides/fcm/index.js",
-      "import": "./dist/esm/consts/providers/provider-overrides/fcm/index.js"
+      "require": {
+        "types": "./dist/cjs/consts/providers/provider-overrides/fcm/index.d.ts",
+        "default": "./dist/cjs/consts/providers/provider-overrides/fcm/index.js"
+      },
+      "import": {
+        "types": "./dist/esm/consts/providers/provider-overrides/fcm/index.d.ts",
+        "default": "./dist/esm/consts/providers/provider-overrides/fcm/index.js"
+      }
     },
     "./docs/agent-onboarding.md": "./docs/agent-onboarding.md"
   },
