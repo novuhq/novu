@@ -295,9 +295,9 @@ function firstVoiceTurnBody(input: VoiceTurnInput): Record<string, unknown> {
 /** How long one API voice_turn parks (matches the API's VOICE_TURN_MAX_WAIT_SECONDS). */
 const VOICE_TURN_API_WAIT_MS = 25_000;
 
-/** Seconds the API should listen. Shorter than its cap when the caller's budget is. */
+/** Seconds the API should listen. Shorter than its cap when the caller's budget is. Zero is a real wait. */
 function serverWaitSeconds(remainingMs: number): number {
-  return Math.min(VOICE_TURN_API_WAIT_MS / 1000, Math.max(1, Math.floor(remainingMs / 1000)));
+  return Math.min(VOICE_TURN_API_WAIT_MS / 1000, Math.max(0, Math.floor(remainingMs / 1000)));
 }
 
 /** Stays above the server's listen so the response arrives before the client aborts. */
@@ -323,15 +323,17 @@ export async function voiceTurn(
   const deadline = since + Math.min(Math.max(seconds, 0), MAX_WAIT_SECONDS) * 1000;
   const path = `/v1/inbox/messages/${encodeURIComponent(input.id)}/voice/turn`;
   let sendBody = true;
+  let posted = false;
   let lastListening: VoiceTurnResult | undefined;
 
   while (true) {
     const remainingMs = deadline - Date.now();
-    if (remainingMs < SHORTEST_CHECK_MS) {
+    // The first post carries say, hangup, or the settle. A zero wait still has to send it.
+    if (posted && remainingMs < SHORTEST_CHECK_MS) {
       return lastListening ?? { status: 'timeout' };
     }
 
-    const waitSeconds = serverWaitSeconds(remainingMs);
+    const waitSeconds = serverWaitSeconds(Math.max(0, remainingMs));
     const result = await api.post<VoiceTurnResult>(
       path,
       {
@@ -341,6 +343,7 @@ export async function voiceTurn(
       voiceTurnRequestTimeout(waitSeconds)
     );
 
+    posted = true;
     if (!voiceTurnStillListening(result.status)) {
       return result;
     }

@@ -127,6 +127,30 @@ describe('voice turn helpers', () => {
     }
   });
 
+  it('sends a settle even when there is no time left to listen', async () => {
+    const api = {
+      get: vi.fn(),
+      getRaw: vi.fn(),
+      post: vi.fn().mockResolvedValue({ status: 'settled', decision: 'approve', answer: 'yes' }),
+    } satisfies AgentInboxApi;
+
+    const result = await voiceTurn(
+      api,
+      { id: 'hi_1', say: 'Thanks', answer: 'yes', decision: 'approve', waitSeconds: 0 },
+      async () => undefined,
+      Date.now()
+    );
+
+    expect(result).toEqual({ status: 'settled', decision: 'approve', answer: 'yes' });
+    expect(api.post).toHaveBeenCalledTimes(1);
+    expect(api.post.mock.calls[0][1]).toEqual({
+      say: 'Thanks',
+      answer: 'yes',
+      decision: 'approve',
+      waitSeconds: 0,
+    });
+  });
+
   it('describes a settled approve turn', () => {
     expect(
       describeVoiceTurn('hi_1', {

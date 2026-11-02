@@ -238,7 +238,9 @@ export class CreateInteraction {
     let emailCapError: HttpException | undefined;
     let createdInteraction: HumanInteractionEntity | undefined;
     let voiceHoldRecorded = false;
-    let releaseLiveLocks = async () => undefined;
+    let releaseLiveLocks: () => Promise<void> = async () => {
+      return;
+    };
 
     try {
       ({ credits, emailCapError } = await this.reserveEmailCredits(

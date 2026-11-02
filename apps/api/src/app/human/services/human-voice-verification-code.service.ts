@@ -46,6 +46,27 @@ end
 return cjson.encode({ attempts = next, raw = raw })
 `;
 
+/**
+ * Burns the code this guess used. A resend that already stored a new code is left alone.
+ */
+const LOCK_IF_CURRENT_SCRIPT = `
+local raw = redis.call('GET', KEYS[1])
+if not raw or raw == 'locked' then
+  return raw == 'locked' and 1 or 0
+end
+local requested = string.match(raw, '"requestedAt":"([^"]+)"')
+if requested ~= ARGV[1] then
+  return 0
+end
+local ttl = redis.call('TTL', KEYS[1])
+if ttl < 1 then
+  ttl = tonumber(ARGV[2])
+end
+redis.call('SET', KEYS[1], 'locked', 'EX', ttl)
+redis.call('DEL', KEYS[2])
+return 1
+`;
+
 /** Deletes the code only when it is still the request this confirmation checked. */
 const CLEAR_IF_CURRENT_SCRIPT = `
 local raw = redis.call('GET', KEYS[1])
@@ -143,7 +164,7 @@ export class HumanVoiceVerificationCodeService {
     const stored = reserved.stored;
     if (!codesMatch(stored, code)) {
       if (reserved.attempts >= VOICE_VERIFICATION_MAX_ATTEMPTS) {
-        await this.markLocked(key);
+        await this.markLocked(key, stored.requestedAt);
 
         return { ok: false, reason: 'locked' };
       }
@@ -158,12 +179,13 @@ export class HumanVoiceVerificationCodeService {
     return { ok: true, address: stored.address, requestedAt: stored.requestedAt };
   }
 
-  /** Keeps later guesses on "locked" until a new call replaces the code. */
-  private async markLocked(key: VoiceVerificationCodeKey): Promise<void> {
-    await this.cacheService.set(this.storageKey(key), 'locked', {
-      ttl: VOICE_VERIFICATION_CODE_TTL_SECONDS,
-    });
-    await this.cacheService.del(this.attemptsKey(key));
+  /** Keeps later guesses on "locked" until a new call replaces this exact code. */
+  private async markLocked(key: VoiceVerificationCodeKey, requestedAt: string): Promise<void> {
+    await this.cacheService.eval(
+      LOCK_IF_CURRENT_SCRIPT,
+      [this.storageKey(key), this.attemptsKey(key)],
+      [requestedAt, VOICE_VERIFICATION_CODE_TTL_SECONDS]
+    );
   }
 
   async clear(key: VoiceVerificationCodeKey): Promise<void> {

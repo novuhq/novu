@@ -336,7 +336,8 @@ export class VoiceTurn {
     const deadline = Date.now() + this.listenWaitMs(params.command);
     const state = { linePosted: false, sawDialing: false };
 
-    while (Date.now() < deadline) {
+    // One poll always runs, so waitSeconds 0 still speaks, hangs up, or returns words already stored.
+    while (true) {
       const response = await this.pollListenTurn({ ...params, state });
       if (response) {
         return response;

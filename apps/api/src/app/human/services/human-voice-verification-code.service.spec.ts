@@ -9,7 +9,7 @@ import {
 const key = { environmentId: 'env1', agentId: 'agent1', subscriberId: 'alice' };
 
 describe('HumanVoiceVerificationCodeService', () => {
-  function makeService() {
+  function makeService(hooks?: { afterReserve?: (attempts: number, keys: string[]) => void }) {
     const cacheStore = new Map<string, string>();
     const cacheService = {
       get: sinon.stub().callsFake(async (storageKey: string) => cacheStore.get(storageKey) ?? null),
@@ -43,7 +43,29 @@ describe('HumanVoiceVerificationCodeService', () => {
             return 'locked';
           }
 
+          hooks?.afterReserve?.(next, keys);
+
           return JSON.stringify({ attempts: next, raw });
+        }
+
+        if (script.includes("'locked'")) {
+          const stored = cacheStore.get(keys[0]);
+          if (!stored) {
+            return 0;
+          }
+          if (stored === 'locked') {
+            return 1;
+          }
+
+          const requested = stored.match(/"requestedAt":"([^"]+)"/)?.[1];
+          if (requested !== String(args[0])) {
+            return 0;
+          }
+
+          cacheStore.set(keys[0], 'locked');
+          cacheStore.delete(keys[1]);
+
+          return 1;
         }
 
         const raw = cacheStore.get(keys[0]);
@@ -112,6 +134,34 @@ describe('HumanVoiceVerificationCodeService', () => {
     }
 
     expect(await service.check(key, issued.code)).to.deep.equal({ ok: false, reason: 'locked' });
+  });
+
+  it('does not lock a code a resend already replaced', async () => {
+    const { service, cacheStore } = makeService({
+      afterReserve(attempts, keys) {
+        if (attempts !== VOICE_VERIFICATION_MAX_ATTEMPTS) {
+          return;
+        }
+
+        const current = cacheStore.get(keys[0]);
+        if (!current) {
+          return;
+        }
+
+        const stored = JSON.parse(current) as { requestedAt: string };
+        cacheStore.set(keys[0], JSON.stringify({ ...stored, requestedAt: 't2', hash: 'replaced' }));
+      },
+    });
+    const issued = await service.issue(key, { address: '+1555121212', requestedAt: 't1' });
+    const wrong = issued.code === '1111' ? '2222' : '1111';
+
+    for (let attempt = 0; attempt < VOICE_VERIFICATION_MAX_ATTEMPTS - 1; attempt += 1) {
+      await service.check(key, wrong);
+    }
+
+    expect(await service.check(key, wrong)).to.deep.equal({ ok: false, reason: 'locked' });
+    expect([...cacheStore.values()].some((value) => value.includes('"requestedAt":"t2"'))).to.equal(true);
+    expect([...cacheStore.values()].includes('locked')).to.equal(false);
   });
 
   it('counts overlapping wrong guesses separately', async () => {

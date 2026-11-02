@@ -353,6 +353,17 @@ describe('VoiceTurn', () => {
     });
   });
 
+  it('speaks a line even when the turn is not willing to wait', async () => {
+    const { usecase, cacheService } = setup({
+      handoff: { status: 'dialing', inboundSeq: 0, agentSeq: 0, utterances: [] },
+    });
+
+    const result = await usecase.execute({ ...command, say: 'Hello there', waitSeconds: 0 } as never);
+
+    expect(result.status).to.equal('ringing');
+    expect(cacheService.eval.firstCall.args[2][1]).to.equal('Hello there');
+  });
+
   it('queues a line while the call is still dialing', async () => {
     const { usecase, cacheService } = setup({
       handoff: { status: 'dialing', inboundSeq: 0, agentSeq: 0, utterances: [] },
