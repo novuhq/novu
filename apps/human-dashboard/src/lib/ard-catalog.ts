@@ -71,6 +71,12 @@ export type McpServerCard = {
     url: string;
     supportedProtocolVersions: string[];
   }>;
+  icons: Array<{
+    src: string;
+    mimeType: string;
+    sizes: string[];
+    theme: 'light' | 'dark';
+  }>;
 };
 
 type ArdEntryBase = {
@@ -164,6 +170,14 @@ export function mcpServerCard(): McpServerCard {
         type: 'streamable-http',
         url: MCP_URL,
         supportedProtocolVersions: [MCP_PROTOCOL_VERSION],
+      },
+    ],
+    icons: [
+      {
+        src: `${MCP_URL}/icon.png`,
+        mimeType: 'image/png',
+        sizes: ['128x128'],
+        theme: 'dark',
       },
     ],
   };

@@ -45,6 +45,14 @@ describe('ardCatalog', () => {
         supportedProtocolVersions: ['2025-06-18'],
       },
     ]);
+    expect(mcp.data?.icons).toEqual([
+      {
+        src: `${MCP_URL}/icon.png`,
+        mimeType: 'image/png',
+        sizes: ['128x128'],
+        theme: 'dark',
+      },
+    ]);
     expect(mcp.capabilities).toContain('inbox_send');
     expect(mcp.capabilities).toContain('inbox_setup');
     expect(skills.url).toBe(`${SITE_ORIGIN}/.well-known/agent-skills/index.json`);

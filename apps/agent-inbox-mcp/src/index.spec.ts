@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AgentInboxApiError } from './agent-inbox-api';
 import { hostOfClientName, hostOfSession, hostOfUserAgent, sessionIdFor } from './connections';
 import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
+import { ICON_PNG } from './icon';
 import worker from './index';
 import { describeOutcome, type Interaction, sendInteraction, waitForAnswer } from './interactions';
 import { hostOfRedirectUris } from './sign-in-apps';
@@ -64,6 +65,25 @@ describe('the Agent Inbox MCP server', () => {
     expect(response.headers.get('Location')).toBe('https://www.agentinbox.md/');
   });
 
+  it('serves the mascot icon without a token, so a host can show it before sign-in', async () => {
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(new Request(`${ORIGIN}/icon.png`), env, ctx);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('image/png');
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(ICON_PNG);
+  });
+
+  it('serves that same icon as the favicon', async () => {
+    const { env, ctx } = setup();
+
+    const response = await worker.fetch(new Request(`${ORIGIN}/favicon.ico`), env, ctx);
+
+    expect(response.status).toBe(200);
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(ICON_PNG);
+  });
+
   it('names the Agent Inbox Clerk app as the place to sign in', async () => {
     const { env, ctx } = setup();
 
@@ -105,9 +125,12 @@ describe('the Agent Inbox MCP server', () => {
     await settle();
 
     expect(response.status).toBe(200);
-    expect(((await response.json()) as { result: { serverInfo: { name: string } } }).result.serverInfo.name).toBe(
-      'agent-inbox'
-    );
+    const body = (await response.json()) as { result: { serverInfo: Record<string, unknown> } };
+    expect(body.result.serverInfo).toMatchObject({
+      name: 'agent-inbox',
+      title: 'Agent Inbox',
+      icons: [{ src: `${ORIGIN}/icon.png`, mimeType: 'image/png', sizes: ['128x128'], theme: 'dark' }],
+    });
     expect(kv.values.has('tool:user_1:claude-chat')).toBe(true);
   });
 
