@@ -338,6 +338,25 @@ overrides:
   # teams.apps does not use. msal-node 7 requires Node >= 20, which is
   # satisfied by the repo-wide engines pin.
   '@azure/msal-node@>=5.0.0-beta.0 <7.1.0': ^7.1.0
+  # GHSA-965c-763c-88jm (critical): better-auth OAuth state can be used as a
+  # Magic Link to sign in as another user. GHSA-r4xp-prcw-77qf (high): OAuth
+  # Proxy lets an attacker sign in as another user. GHSA-q84f-53jg-9ppm (high):
+  # Device login approval does not show the requesting client or permissions.
+  # Plus the matching low advisory on @better-auth/drizzle-adapter and
+  # @better-auth/kysely-adapter (concurrent requests can exceed PostgreSQL
+  # rate limits). All patched in 1.7.7 (and 1.7.0 for the device-login
+  # advisory); pin the whole 1.6.x line to 1.7.14, the latest 1.7.x release
+  # that is already past the 72h minimumReleaseAge gate. better-auth pins its
+  # sibling adapters (@better-auth/core, kysely-adapter, drizzle-adapter,
+  # memory-adapter, mongo-adapter, prisma-adapter, telemetry) to the exact
+  # same version, so overriding the two direct deps (better-auth and
+  # @better-auth/sso in apps/dashboard and enterprise/packages/auth) is
+  # enough to cascade. The direct deps already declare `^1.6.23`, which
+  # semver-allows 1.7.x.
+  'better-auth@<1.7.7': ^1.7.14
+  '@better-auth/sso@<1.7.14': ^1.7.14
+  '@better-auth/kysely-adapter@>=1.6.17 <1.7.0': ^1.7.14
+  '@better-auth/drizzle-adapter@>=1.6.17 <1.7.7': ^1.7.14
   altcha-lib@<1.4.1: ^1.4.1
   lodash-es@<=4.17.23: ^4.18.0
   lodash@<=4.17.23: ^4.18.0
@@ -527,8 +546,6 @@ overrides:
   # `meta http-equiv=refresh` URLs. Patched in 2.18.0.
   sanitize-html@<2.18.0: ^2.18.0
   samlify@<2.13.0: ^2.13.0
-  better-auth@<1.6.13: ^1.6.23
-  '@better-auth/sso@<1.6.13': ^1.6.23
   # GHSA-2x7j-588g-ccc2 (high) and the related moderate advisories
   # GHSA-8m3c-c648-2xjj, GHSA-wmmp-3585-3rmp, GHSA-cc9r-2j5m-2m83 are all
   # patched in nodemailer 9.1.0. GHSA-prgh-xp8r-p3m5 (high, 9.1.0-10.0.4)
