@@ -478,6 +478,12 @@ export class AgentConversationService {
     return this.ledger.persistToolCall(params);
   }
 
+  async hasToolCall(
+    params: Pick<PersistToolCallParams, 'environmentId' | 'conversationId' | 'runId' | 'toolCallId'>
+  ): Promise<boolean> {
+    return this.ledger.hasToolCall(params);
+  }
+
   async persistToolResult(params: PersistToolResultParams): Promise<void> {
     return this.ledger.persistToolResult(params);
   }

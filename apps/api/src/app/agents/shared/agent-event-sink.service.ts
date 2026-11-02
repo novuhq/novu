@@ -716,16 +716,21 @@ export class AgentEventSink {
       return;
     }
 
-    // A result carries no tool name, so internal tools are filtered on their TOOL_CALL row only.
-    await this.recordToolActivity(context, runId, 'tool-use-result', (activityContext) =>
-      this.conversationService.persistToolResult({
+    await this.recordToolActivity(context, runId, 'tool-use-result', async (activityContext) => {
+      const toolCallId = event.toolUseId;
+      // A result carries no tool name. An internal tool's result is recognised by its call row never being written.
+      if (!(await this.conversationService.hasToolCall({ ...activityContext, runId, toolCallId }))) {
+        return;
+      }
+
+      await this.conversationService.persistToolResult({
         ...activityContext,
         runId,
-        toolCallId: event.toolUseId,
+        toolCallId,
         content: event.content,
         isError: event.isError === true,
-      })
-    );
+      });
+    });
 
     try {
       await this.handlePlanProgress.execute(

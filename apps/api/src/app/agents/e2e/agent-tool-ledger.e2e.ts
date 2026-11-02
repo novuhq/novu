@@ -152,7 +152,7 @@ describe('Agent tool ledger #novu-v2', () => {
     return conversation._id;
   }
 
-  it('records managed tool calls and results once on Slack across redelivered webhooks, skipping Novu internal tool calls', async () => {
+  it('records managed tool calls and results once on Slack across redelivered webhooks, skipping Novu internal tools', async () => {
     const conversationId = await seedConversation(ctx);
 
     await deliverManagedParts(conversationId, 'slack', 'run-managed', MANAGED_TOOL_PARTS);
@@ -175,7 +175,6 @@ describe('Agent tool ledger #novu-v2', () => {
 
     expect(results.map((result) => result.identifier).sort()).to.deep.equal([
       `tool-result:${conversationId}:run-managed:toolu_charge`,
-      `tool-result:${conversationId}:run-managed:toolu_resolve`,
       `tool-result:${conversationId}:run-managed:toolu_search`,
     ]);
     const search = results.find((result) => result.toolData?.toolCallId === 'toolu_search');
@@ -207,7 +206,7 @@ describe('Agent tool ledger #novu-v2', () => {
 
     const { calls, results } = await toolRows(conversationId);
     expect(calls).to.have.length(2);
-    expect(results).to.have.length(3);
+    expect(results).to.have.length(2);
 
     const live = liveEventTypes();
     expect(live).to.include('run-start');

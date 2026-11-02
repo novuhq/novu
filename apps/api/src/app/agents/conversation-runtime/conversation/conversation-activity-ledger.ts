@@ -483,7 +483,7 @@ export class ConversationActivityLedger {
       params,
       {
         ...params,
-        identifier: `tool-call:${params.conversationId}:${params.runId}:${params.toolCallId}`,
+        identifier: toolCallIdentifier(params),
         content: `Called ${params.toolName}`,
         toolData: {
           toolCallId: params.toolCallId,
@@ -495,6 +495,21 @@ export class ConversationActivityLedger {
       ConversationActivityTypeEnum.TOOL_CALL,
       'none'
     );
+  }
+
+  async hasToolCall(
+    params: Pick<PersistToolCallParams, 'environmentId' | 'conversationId' | 'runId' | 'toolCallId'>
+  ): Promise<boolean> {
+    const call = await this.activityRepository.findOne(
+      {
+        _environmentId: params.environmentId,
+        _conversationId: params.conversationId,
+        identifier: toolCallIdentifier(params),
+      },
+      ['_id']
+    );
+
+    return call !== null;
   }
 
   async persistToolResult(params: PersistToolResultParams): Promise<void> {
@@ -1110,6 +1125,10 @@ function humanInteractionActivityIdentifier(
   return params.inOtherThread
     ? `human:${params.interactionIdentifier}:${params.conversationId}:${suffix}`
     : `human:${params.interactionIdentifier}:${suffix}`;
+}
+
+function toolCallIdentifier(params: Pick<PersistToolCallParams, 'conversationId' | 'runId' | 'toolCallId'>): string {
+  return `tool-call:${params.conversationId}:${params.runId}:${params.toolCallId}`;
 }
 
 function toolResultData(params: PersistToolResultParams): ConversationActivityToolData {
