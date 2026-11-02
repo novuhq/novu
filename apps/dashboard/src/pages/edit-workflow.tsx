@@ -12,6 +12,7 @@ import { FullPageLayout } from '@/components/full-page-layout';
 import { EditorBreadcrumbs } from '@/components/workflow-editor/editor-breadcrumbs';
 import { WorkflowProvider } from '@/components/workflow-editor/workflow-provider';
 import { WorkflowTabs } from '@/components/workflow-editor/workflow-tabs';
+import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getIdFromSlug, WORKFLOW_DIVIDER } from '@/utils/id-utils';
 import { ROUTES } from '@/utils/routes';
@@ -67,6 +68,7 @@ function CopilotWebChatMount() {
 
 export const EditWorkflowPage = () => {
   const { currentEnvironment } = useEnvironment();
+  const { currentUser } = useAuth();
   // useCopilotWebChatEnabled already excludes self-hosted (IS_AI_FEATURES_ENABLED === IS_CLOUD).
   const isCopilotWebChatEnabled = useCopilotWebChatEnabled() && currentEnvironment?.type === EnvironmentTypeEnum.DEV;
 
@@ -100,8 +102,8 @@ export const EditWorkflowPage = () => {
     <CopilotWebChatProvider
       enabled={isCopilotWebChatEnabled}
       conversationScope={
-        currentEnvironment?._id && !isNewWorkflowSlug
-          ? `${currentEnvironment._id}:${getIdFromSlug({ slug: workflowSlug, divider: WORKFLOW_DIVIDER })}`
+        currentUser?._id && currentEnvironment?._id && !isNewWorkflowSlug
+          ? `${currentUser._id}:${currentEnvironment._id}:${getIdFromSlug({ slug: workflowSlug, divider: WORKFLOW_DIVIDER })}`
           : undefined
       }
     >

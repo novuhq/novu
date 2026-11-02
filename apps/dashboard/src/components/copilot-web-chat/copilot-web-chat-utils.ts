@@ -48,7 +48,7 @@ export function buildCopilotMetadata(
 
 const CONVERSATION_STORAGE_PREFIX = 'novu-copilot-conversation:';
 
-/** Last Copilot conversation for a scope (environment + workflow), so a reload resumes it. */
+/** Last Copilot conversation for a scope (account + environment + workflow), so a reload resumes it. */
 export function readStoredConversationId(scope: string | undefined): string | undefined {
   if (!scope) return undefined;
 

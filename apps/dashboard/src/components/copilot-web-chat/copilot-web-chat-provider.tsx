@@ -93,7 +93,7 @@ export function CopilotWebChatProvider({
 }: {
   children: ReactNode;
   enabled?: boolean;
-  /** Environment + workflow the thread belongs to; it is resumed after a reload and reset when the scope changes. */
+  /** Account, environment, and workflow the thread belongs to; it is resumed after a reload and reset when the scope changes. */
   conversationScope?: string;
 }) {
   const shell = useShellState();
