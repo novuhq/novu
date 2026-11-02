@@ -1,10 +1,10 @@
 ---
 title: "Who can reach the agent"
-description: "Choose Anyone or Contacts, and pause the agent. Hosts cannot change these."
+description: "Choose Anyone or Contacts, acknowledge incoming messages, and pause the agent. Hosts cannot change these."
 sidebarTitle: "Who can reach"
 ---
 
-Configure on agentinbox.md has two settings a host cannot change. There is no CLI flag for either. The API rejects the same change from a host.
+Configure on agentinbox.md has three settings a host cannot change. There is no CLI flag for any of them. The API rejects the same change from a host.
 
 ## Who can reach
 
@@ -17,6 +17,16 @@ Use Contacts once the agent has the people it should talk to. Leave Anyone while
 `--senders all` and `reply --anyone` only apply to conversations that were allowed to arrive.
 
 While Who can reach is Contacts, the public card is not shown to anyone else. That page is not documented here yet.
+
+## Acknowledge incoming messages
+
+Off by default. Turn it on and people see that their message arrived, before anyone answers it:
+
+- **Telegram** shows the agent typing for a few seconds.
+- **Slack** shows it in a thread. A message outside a thread shows nothing.
+- **Email** has no typing. The first email of a conversation sent from Gmail gets an 👀 reaction.
+
+It is off while the agent is paused, because a paused agent sends nothing. This setting is separate from [listening](/listen), which shows typing while a host works on a message.
 
 ## Pause
 

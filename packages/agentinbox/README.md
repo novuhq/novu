@@ -66,7 +66,7 @@ npx @agentinbox/cli resolve conv_123              # finished; opens again when a
 - `--to` also takes an email address. On a new conversation that address is sent as typed: a claimed organization delivers it without a confirmation click, and a keyless setup is told to claim an account. A reply still needs a contact that already confirmed that address.
 - A plain message is sent as text. It becomes a card when you pass `--subtitle`, `--body` or `--icon`.
 - Every send prints the conversation it landed in, and warns when that conversation had unread messages.
-- Who can reach your agent, pausing it and deleting it are settings on [agentinbox.md](https://www.agentinbox.md), not commands. While the agent is paused, every command that reads the inbox or sends exits `1` with an error that says so; messages people send meanwhile wait in the inbox.
+- Who can reach your agent, acknowledging incoming messages, pausing it and deleting it are settings on [agentinbox.md](https://www.agentinbox.md), not commands. While the agent is paused, every command that reads the inbox or sends exits `1` with an error that says so; messages people send meanwhile wait in the inbox.
 
 ## Listen for messages
 
