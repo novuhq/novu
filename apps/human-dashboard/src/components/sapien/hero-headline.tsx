@@ -3,8 +3,7 @@
 import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 
 import { CHANNEL_NAMES, ChannelTile } from '@/components/sapien/brand-logo';
-import { HERO_AGENTS, HERO_CHANNELS, HERO_SWAP_INTERVAL, HERO_TITLE } from '@/data/sapien-hero';
-import { hostOf } from '@/lib/hosts';
+import { HERO_CHANNELS, HERO_SWAP_INTERVAL, HERO_TITLE } from '@/data/sapien-hero';
 import { cn } from '@/lib/utils';
 
 import { useHeroMotion, useHeroTimer } from './hero-motion';
@@ -29,8 +28,6 @@ const RISE_OFFSET = '0.875em';
 const REVEAL_DELAY_MS = 130;
 const REVEAL_MS = 400;
 const REVEAL_BLUR_PX = 2;
-/** The channel pill follows the agent pill by a beat, so the line never swaps as one block. */
-const CHANNEL_DELAY_MS = 140;
 
 /** Pill height and offset from the original title: 37px at y 1 around the 32px word. */
 const pillBox = 'top-[0.03125em] h-[1.15625em] rounded-[0.3125em]';
@@ -38,22 +35,6 @@ const pillBox = 'top-[0.03125em] h-[1.15625em] rounded-[0.3125em]';
 const logoFrame = 'mr-[0.25em] shrink-0 [zoom:0.65625] sm:[zoom:0.75]';
 /** Trims the word to its caps and baseline, so the pill centres logo and word on the same line. */
 const capBox = 'leading-none [text-box-edge:cap_alphabetic] [text-box-trim:trim-both]';
-const tile = 'relative block size-8 overflow-hidden rounded-[7px]';
-const tileEdge = 'absolute inset-0 rounded-[inherit] ring-1 ring-white/10 ring-inset';
-
-const agentTokens: Token[] = HERO_AGENTS.map((id) => {
-  const host = hostOf(id);
-
-  return {
-    name: host.name,
-    logo: (
-      <span className={tile}>
-        <img src={host.icon ?? ''} alt="" className="size-full" />
-        <span className={tileEdge} />
-      </span>
-    ),
-  };
-});
 
 const channelTokens: Token[] = HERO_CHANNELS.map((channel) => ({
   name: CHANNEL_NAMES[channel],
@@ -66,10 +47,7 @@ const listOf = (tokens: Token[]) => {
   return `${names.slice(0, -1).join(', ')} or ${names.at(-1)}`;
 };
 
-const HEADLINE_LABEL = `${HERO_TITLE.lead} ${listOf(agentTokens)} ${HERO_TITLE.middle} ${listOf(channelTokens)} ${HERO_TITLE.accent}.`;
-
-/** The words between the names: quieter, so a skim reads agent, channel, then the accent. */
-const connector = 'text-sapien-foreground/55';
+const HEADLINE_LABEL = `${HERO_TITLE.lead} ${listOf(channelTokens)} ${HERO_TITLE.accent}.`;
 
 function HeroPill({ kind, tokens, step, delay = 0 }: { kind: string; tokens: Token[]; step: number; delay?: number }) {
   const { reducedMotion } = useHeroMotion();
@@ -167,16 +145,13 @@ export function HeroHeadline() {
 
   return (
     <h1 aria-label={HEADLINE_LABEL} className="flex w-full min-w-0 flex-col items-center gap-3 font-normal sm:gap-3.5">
-      {/* Widest pair is about 18.6em, the accent about 10.4em. Both are sized from the column so they
-          stay one line, and about the same width, down to a phone. */}
+      {/* Sized from the column so the channel line stays one line, about as wide as the accent, down to a phone. */}
       <span
         aria-hidden="true"
-        className="block animate-sapien-in text-center text-[min(36px,calc(100cqw/20.5))] leading-[1.2] tracking-[-0.04em] text-sapien-foreground motion-reduce:animate-none"
+        className="block animate-sapien-in text-center text-[min(40px,calc(100cqw/17.5))] leading-[1.2] tracking-[-0.04em] text-sapien-foreground motion-reduce:animate-none"
       >
-        <span className={connector}>{`${HERO_TITLE.lead} `}</span>
-        <HeroPill kind="agent" tokens={agentTokens} step={step} />
-        <span className={connector}>{` ${HERO_TITLE.middle} `}</span>
-        <HeroPill kind="channel" tokens={channelTokens} step={step} delay={CHANNEL_DELAY_MS} />
+        {`${HERO_TITLE.lead} `}
+        <HeroPill kind="channel" tokens={channelTokens} step={step} />
       </span>
       <span
         aria-hidden="true"

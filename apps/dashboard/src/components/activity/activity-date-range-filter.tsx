@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import {
   ACTIVITY_DATE_RANGE_OPTIONS,
+  ACTIVITY_RETENTION_BUFFER_MS,
   type ActivityDateRange,
   type ActivityDateRangePreset,
   resolveActivityDateRange,
@@ -126,7 +127,9 @@ export function ActivityDateRangeFilter({
   const selectedEnd = draftRange?.to ? applyTime(draftRange.to, endTime) : undefined;
   /** The end input has minute precision, so the inclusive upper bound has to cover the whole selected minute. */
   const before = selectedEnd ? endOfMinute(selectedEnd) : undefined;
-  const bufferedRetentionStart = retentionStart ? new Date(retentionStart.getTime() - 60 * 60 * 1000) : undefined;
+  const bufferedRetentionStart = retentionStart
+    ? new Date(retentionStart.getTime() - ACTIVITY_RETENTION_BUFFER_MS)
+    : undefined;
   const isRangeValid =
     after !== undefined &&
     before !== undefined &&

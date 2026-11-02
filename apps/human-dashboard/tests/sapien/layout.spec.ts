@@ -58,6 +58,6 @@ for (const area of ['header', 'footer']) {
     await page.goto('/sapien');
     await page.locator(area).getByRole('link', { name: 'agentinbox' }).click();
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('AGENTINBOX.MDThe inbox API for agents');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('AGENTINBOX.MDThe inbox for agents');
   });
 }

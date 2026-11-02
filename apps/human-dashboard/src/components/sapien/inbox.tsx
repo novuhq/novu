@@ -7,8 +7,8 @@ import { DisplayAccent, SectionEyebrow } from './section-eyebrow';
 import { SectionFrame } from './section-frame';
 
 /**
- * The human inbox, with the agent reading underneath. The copy stays short on the left. The right is a normal
- * mail list until a pointer moves across a row, which opens the fields that agent reads.
+ * The human inbox, with the agent reading underneath. The copy stays short on the left. On the right, a window
+ * moves down the list on its own, and follows the pointer while one is there.
  */
 export function InboxSection() {
   return (
@@ -70,7 +70,7 @@ export function InboxSection() {
                 />
                 <span
                   aria-hidden="true"
-                  className="w-6 shrink-0 pl-2 font-sapien-pixel text-[10px] leading-none text-sapien-foreground/25 group-data-[state=active]/tab:text-sapien-foreground/60"
+                  className="w-6 shrink-0 pl-2 font-sapien-mono text-[10px] leading-none text-sapien-foreground/25 group-data-[state=active]/tab:text-sapien-foreground/60"
                 >
                   {String(index + 1).padStart(2, '0')}
                 </span>

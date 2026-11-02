@@ -1,5 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
-import { assertSafeOutboundUrl, resolvePublicAddresses, SsrfBlockedError } from '@novu/application-generic';
+import {
+  assertSafeOutboundUrl,
+  resolvePublicAddresses,
+  SsrfBlockedError,
+} from '@novu/shared/utils/ssrf-url-validation';
 
 /**
  * A context `bridgeUrl` is `fetch()`ed from inside the API process on every inbound agent turn whose
