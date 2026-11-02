@@ -82,10 +82,14 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
 
   function buildCommand({
     bridgeBody,
+    bridgeAttachments,
+    triggerAttachments,
     templateContent = '',
     templateSubject = 'Welcome {{payload.name}}!',
   }: {
     bridgeBody?: string;
+    bridgeAttachments?: any[];
+    triggerAttachments?: any[];
     templateContent?: string;
     templateSubject?: string;
   }) {
@@ -94,7 +98,7 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
       organizationId: 'org_1',
       userId: 'user_1',
       identifier: 'wf-identifier',
-      payload: { name: 'Ada' },
+      payload: { name: 'Ada', ...(triggerAttachments ? { attachments: triggerAttachments } : {}) },
       overrides: {},
       transactionId: 'txn_1',
       notificationId: 'notif_1',
@@ -107,11 +111,12 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
       compileContext: {
         subscriber: { subscriberId: 'sub_1', email: 'subscriber@test.com', locale: 'en' },
       } as never,
-      bridgeData: bridgeBody
+      bridgeData: bridgeBody || bridgeAttachments
         ? ({
             outputs: {
               subject: 'Welcome Ada!',
-              body: bridgeBody,
+              body: bridgeBody || '',
+              ...(bridgeAttachments ? { attachments: bridgeAttachments } : {}),
             },
           } as never)
         : null,
@@ -208,6 +213,59 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
     expect(mailData.payloadDetails.subject).to.equal('Welcome Ada!');
     expect(command.step?.template?.content).to.equal('');
   });
+
+  it('should wire bridgeData output attachments into mailData while preserving trigger payload attachments', async () => {
+    const { usecase } = buildUsecase();
+    const bridgeInlineAttachment = {
+      name: 'logo.png',
+      file: Buffer.from('fake-logo'),
+      mime: 'image/png',
+      cid: 'logo_cid',
+      disposition: 'inline',
+    };
+    const triggerFileAttachment = {
+      name: 'invoice.pdf',
+      file: Buffer.from('fake-pdf'),
+      mime: 'application/pdf',
+      disposition: 'attachment',
+    };
+
+    const command = buildCommand({
+      bridgeBody: renderedEmailBody,
+      bridgeAttachments: [bridgeInlineAttachment],
+      triggerAttachments: [triggerFileAttachment],
+    });
+    const sendStub = sinon.stub().resolves({ id: 'msg_attachments_1' });
+
+    sinon.stub(MailFactory.prototype, 'getHandler').returns({
+      send: sendStub,
+    } as never);
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    expect(sendStub.calledOnce).to.equal(true);
+
+    const mailData = sendStub.firstCall.args[0];
+    expect(mailData.attachments).to.have.length(2);
+    expect(mailData.attachments[0]).to.deep.equal({
+      file: triggerFileAttachment.file,
+      mime: triggerFileAttachment.mime,
+      name: triggerFileAttachment.name,
+      channels: undefined,
+      cid: undefined,
+      disposition: triggerFileAttachment.disposition,
+    });
+    expect(mailData.attachments[1]).to.deep.equal({
+      file: bridgeInlineAttachment.file,
+      mime: bridgeInlineAttachment.mime,
+      name: bridgeInlineAttachment.name,
+      channels: undefined,
+      cid: bridgeInlineAttachment.cid,
+      disposition: bridgeInlineAttachment.disposition,
+    });
+  });
+
 
   it('should preserve legacy payloadDetails content for v0 workflows without bridge output', async () => {
     const templateContent = 'Hello {{payload.name}}';
