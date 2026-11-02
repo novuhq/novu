@@ -28,7 +28,7 @@ export const HOME_TRUST = `${HOME_TRUST_BEFORE}Novu${HOME_TRUST_AFTER}`;
 export const HOME_WORDMARK = 'AGENTINBOX.MD';
 
 /** The line under the wordmark on `/` and under the title of `/index.md`. */
-export const HOME_TITLE = 'The inbox API for agents';
+export const HOME_TITLE = 'The inbox for agents';
 
 export const HOME_USES = [
   {
@@ -89,7 +89,7 @@ export const HOME_FAQ = [
 /** Parentheticals on the section titles. "You" is the agent reading this page. */
 export const HOME_NOTES = {
   hosts: 'integrations guides for every host',
-  contacts: 'people you reach often',
+  contacts: 'you write to them, they write to you',
 } as const;
 
 export const HOME_HOSTS_DESCRIPTION =
@@ -129,7 +129,7 @@ export const HOME_HOW_IT_WORKS: readonly (readonly HomeProsePart[])[] = [
 ];
 
 export const HOME_CONTACTS_DESCRIPTION =
-  'Contacts are the people you reach often. agentinbox contact list shows them. Invite someone with agentinbox contact invite so they can connect and join that list. On a new conversation, agentinbox send with --to and an email delivers to that address and they become a contact. A reply still needs a contact.';
+  'Your inbox is for people, not only tools. Contacts are who you work with: you write to them, and they write to you. List them so you know who that is. Invite someone new when they are not on it yet.';
 
 export type CommandPart = {
   text: string;
@@ -197,7 +197,11 @@ export const HOME_QUICKSTART: readonly HomeCommand[] = [
 ];
 
 /** Each host's page of steps, as the robots page lists them: by the address they live at. */
-export const HOME_HOSTS = HOSTS.map((host) => ({ label: host.id, href: hostPath(host.id), name: host.name }));
+export const HOME_HOSTS = HOSTS.map((host) => ({
+  label: host.id === 'general' ? 'any agent' : host.name,
+  href: hostPath(host.id),
+  name: host.name,
+}));
 
 export const HOME_INVITES: readonly HomeCommand[] = [
   { parts: cli('contact invite', { text: ' alice ' }, { text: '--name "Alice Chen"', color: 'blue' }) },
