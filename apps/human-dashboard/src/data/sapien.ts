@@ -1,5 +1,4 @@
 import { logoAssets } from '@/data/sapien-assets';
-import { BOOK_DEMO_HREF } from '@/data/sapien-scale';
 import { PACKAGE_URL, SOURCE_URL } from '@/lib/seo';
 
 /** The setup command on /sapien. `npx` runs it without a global install. */
@@ -11,7 +10,7 @@ export type NavigationItem = {
   variant?: 'outline';
 };
 export const NAVIGATION: readonly NavigationItem[] = [
-  { label: 'for robots', href: '/', variant: 'outline' },
+  { label: 'for agents', href: '/', variant: 'outline' },
   { label: 'npm', href: PACKAGE_URL },
   {
     label: 'github',
@@ -19,10 +18,13 @@ export const NAVIGATION: readonly NavigationItem[] = [
   },
 ];
 
-/** The header's links and its small-screen menu: the footer's, a demo booking, then the way into the dashboard. */
+/** The header's links and its small-screen menu: shared footer links except npm, then sign in. */
 export const HEADER_NAVIGATION: readonly NavigationItem[] = [
-  ...NAVIGATION,
-  { label: 'book a demo', href: BOOK_DEMO_HREF },
+  { label: 'for agents', href: '/', variant: 'outline' },
+  {
+    label: 'github',
+    href: SOURCE_URL,
+  },
   { label: 'sign in', href: '/sign-in' },
 ];
 
