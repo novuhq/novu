@@ -1,4 +1,3 @@
-import type { AgentToolResultContent } from '@novu/agent-event-protocol';
 import type { Signal, ToolResult } from '@novu/framework/internal';
 import type { PlanModel } from 'chat';
 import { Type } from 'class-transformer';
@@ -18,11 +17,6 @@ export class QuoteReplyContextDto {
   @IsString()
   @IsNotEmpty()
   messageId: string;
-}
-
-export interface ToolResultRecord extends ToolResult {
-  content?: AgentToolResultContent[];
-  isError?: boolean;
 }
 
 export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
@@ -77,11 +71,7 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @IsArray()
-  toolResults?: ToolResultRecord[];
-
-  @IsOptional()
-  @IsString()
-  runId?: string;
+  toolResults?: ToolResult[];
 
   @IsOptional()
   @IsArray()

@@ -178,11 +178,14 @@ describe('Agent tool ledger #novu-v2', () => {
       `tool-result:${conversationId}:run-managed:toolu_search`,
     ]);
     const search = results.find((result) => result.toolData?.toolCallId === 'toolu_search');
+    expect(search?.content).to.equal('Tool result: search_docs');
+    expect(search?.toolData?.toolName).to.equal('search_docs');
+    expect(search?.toolData?.recordOnly).to.equal(true);
     expect(search?.toolData?.isError).to.equal(false);
     expect(search?.toolData?.truncated).to.equal(true);
     expect(search?.toolData).to.not.have.property('output');
     const [searchPart] = search?.toolData?.content ?? [];
-    expect(searchPart?.type === 'text' && searchPart.text.length).to.be.within(65_000, 65_536);
+    expect(searchPart?.type === 'text' && searchPart.text).to.have.length(65_536 - 25);
 
     const failed = results.find((result) => result.toolData?.toolCallId === 'toolu_charge');
     expect(failed?.toolData?.isError).to.equal(true);
@@ -197,6 +200,27 @@ describe('Agent tool ledger #novu-v2', () => {
         view
       );
     }
+  });
+
+  it('records the result of an approval-gated tool that Thalamus resumes in a new run', async () => {
+    const conversationId = await seedConversation(ctx);
+
+    await deliverManagedParts(conversationId, 'slack', 'run-paused', [
+      { type: 'run-start' },
+      { type: 'tool-use-done', toolUseId: 'toolu_refund', toolName: 'issue_refund', input: { amount: 25 } },
+    ]);
+    await deliverManagedParts(conversationId, 'slack', 'run-resumed', [
+      { type: 'run-start' },
+      { type: 'tool-use-result', toolUseId: 'toolu_refund', content: [{ type: 'text', text: 'refund issued' }] },
+    ]);
+
+    const { calls, results } = await toolRows(conversationId);
+    expect(calls.map((call) => call.identifier)).to.deep.equal([`tool-call:${conversationId}:run-paused:toolu_refund`]);
+    expect(results.map((result) => result.identifier)).to.deep.equal([
+      `tool-result:${conversationId}:run-resumed:toolu_refund`,
+    ]);
+    expect(results[0].content).to.equal('Tool result: issue_refund');
+    expect(results[0].toolData).to.deep.include({ toolName: 'issue_refund', recordOnly: true });
   });
 
   it('records managed tool rows on web chat without sending them to the browser', async () => {

@@ -13,6 +13,7 @@ import { getConversationTitle } from './agent-conversation.helpers';
 import type {
   ConversationActivityContext,
   DeleteInboundMessageParams,
+  FindToolCallParams,
   ImportInboundMessage,
   ImportInboundMessagesParams,
   PersistAgentActivityParams,
@@ -29,6 +30,7 @@ import type {
   PersistToolResultParams,
   PersistTriggerSignalParams,
   PersistWorkflowOriginHydrationParams,
+  RecordToolResultParams,
   ResolveConversationParams,
   UpdateInboundMessageParams,
   UpdateMetadataParams,
@@ -58,7 +60,6 @@ export type {
   PersistMcpConnectionResultParams,
   PersistToolApprovalDecisionParams,
   PersistToolApprovalRequestParams,
-  PersistToolCallParams,
   PersistToolResultParams,
   PersistTriggerSignalParams,
   PersistWorkflowOriginHydrationParams,
@@ -478,10 +479,12 @@ export class AgentConversationService {
     return this.ledger.persistToolCall(params);
   }
 
-  async hasToolCall(
-    params: Pick<PersistToolCallParams, 'environmentId' | 'conversationId' | 'runId' | 'toolCallId'>
-  ): Promise<boolean> {
-    return this.ledger.hasToolCall(params);
+  async findToolCallName(params: FindToolCallParams): Promise<string | undefined> {
+    return this.ledger.findToolCallName(params);
+  }
+
+  async recordToolResult(params: RecordToolResultParams): Promise<void> {
+    return this.ledger.recordToolResult(params);
   }
 
   async persistToolResult(params: PersistToolResultParams): Promise<void> {

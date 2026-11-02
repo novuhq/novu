@@ -1,3 +1,4 @@
+import type { AgentToolResultContent } from '@novu/agent-event-protocol';
 import { expect } from 'chai';
 import { capToolResultContent } from './tool-result-content';
 
@@ -63,6 +64,22 @@ describe('capToolResultContent', () => {
     const result = capToolResultContent([{ type: 'text', text: 'aé€' }], TEXT_PART_BYTES + 4);
 
     expect(result).to.deep.equal({ content: [{ type: 'text', text: 'aé' }], truncated: true });
+  });
+
+  it('stores only the known fields of each part and skips text that is not a string', () => {
+    const parts = [
+      { type: 'text', text: 'ok', padding: 'x'.repeat(5000) },
+      { type: 'text', text: 42 },
+      { type: 'citation', url: 'https://example.com', padding: 'x'.repeat(5000) },
+    ] as unknown as AgentToolResultContent[];
+
+    expect(capToolResultContent(parts, 1024)).to.deep.equal({
+      content: [
+        { type: 'text', text: 'ok' },
+        { type: 'citation', url: 'https://example.com' },
+      ],
+      truncated: true,
+    });
   });
 
   it('counts every part toward the cap, so many empty parts cannot exceed it', () => {

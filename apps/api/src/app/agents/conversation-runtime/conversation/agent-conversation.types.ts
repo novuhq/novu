@@ -191,16 +191,28 @@ export interface PersistToolCallParams extends ConversationActivityContext {
   mcpServerName?: string;
 }
 
+export interface FindToolCallParams extends Pick<ConversationActivityContext, 'environmentId' | 'conversationId'> {
+  toolCallId: string;
+}
+
 export interface PersistToolResultParams extends ConversationActivityContext {
   toolCallId: string;
   toolName?: string;
-  output?: unknown;
-  content?: AgentToolResultContent[];
-  isError?: boolean;
-  /** Makes the row identifier deterministic, so a redelivered result writes nothing. */
-  runId?: string;
+  /** The tool's output as returned by the model runtime (JSON-serializable). */
+  output: unknown;
   /** Human-readable preview for the display timeline; defaults to a generic line. */
   preview?: string;
+}
+
+/** A tool result from the AgentEvent protocol. Its run-scoped identifier makes a redelivered result write nothing. */
+export interface RecordToolResultParams extends ConversationActivityContext {
+  runId: string;
+  toolCallId: string;
+  toolName?: string;
+  content: AgentToolResultContent[];
+  isError?: boolean;
+  /** What the model saw. Without it the result is kept for the record only. */
+  modelFacing?: { output: unknown; preview?: string };
 }
 
 export interface PersistMcpConnectionRequestParams extends ConversationActivityContext {

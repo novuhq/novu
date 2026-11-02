@@ -1,5 +1,6 @@
 import type { AgentToolResultContent } from '@novu/agent-event-protocol';
-import type { ConversationActivityToolResultPart } from '@novu/dal';
+import type { ConversationActivityToolData, ConversationActivityToolResultPart } from '@novu/dal';
+import type { RecordToolResultParams } from './agent-conversation.types';
 
 const TOOL_RESULT_CONTENT_MAX_BYTES = 65536;
 const TEXT_PART_OVERHEAD_BYTES = Buffer.byteLength(JSON.stringify({ type: 'text', text: '' }), 'utf8');
@@ -7,6 +8,19 @@ const TEXT_PART_OVERHEAD_BYTES = Buffer.byteLength(JSON.stringify({ type: 'text'
 export interface StoredToolResultContent {
   content: ConversationActivityToolResultPart[];
   truncated: boolean;
+}
+
+export function toolResultData(params: RecordToolResultParams): ConversationActivityToolData {
+  const stored = capToolResultContent(params.content);
+
+  return {
+    toolCallId: params.toolCallId,
+    ...(params.toolName ? { toolName: params.toolName } : {}),
+    ...(params.modelFacing ? { output: params.modelFacing.output } : { recordOnly: true }),
+    content: stored.content,
+    isError: params.isError === true,
+    ...(stored.truncated ? { truncated: true } : {}),
+  };
 }
 
 export function capToolResultContent(
@@ -23,6 +37,11 @@ export function capToolResultContent(
     }
 
     const stored = toStoredPart(part);
+    if (!stored) {
+      truncated = true;
+      continue;
+    }
+
     const size = storedPartBytes(stored);
 
     if (size <= remaining) {
@@ -47,12 +66,27 @@ export function capToolResultContent(
   return { content, truncated };
 }
 
-function toStoredPart(part: AgentToolResultContent): ConversationActivityToolResultPart {
-  if (part.type === 'media') {
-    return { type: 'media', mediaType: part.mediaType, ...(part.name ? { name: part.name } : {}) };
+/** Bridge parts reach here unvalidated, so each one is rebuilt from its known fields. */
+function toStoredPart(part: AgentToolResultContent): ConversationActivityToolResultPart | undefined {
+  switch (part.type) {
+    case 'text':
+      return typeof part.text === 'string' ? { type: 'text', text: part.text } : undefined;
+    case 'citation':
+      return {
+        type: 'citation',
+        url: part.url,
+        ...(part.title ? { title: part.title } : {}),
+        ...(part.excerpts ? { excerpts: part.excerpts } : {}),
+      };
+    case 'json':
+      return { type: 'json', value: part.value };
+    case 'media':
+      return { type: 'media', mediaType: part.mediaType, ...(part.name ? { name: part.name } : {}) };
+    case 'unknown':
+      return { type: 'unknown', providerType: part.providerType, data: part.data };
+    default:
+      return undefined;
   }
-
-  return part;
 }
 
 function storedPartBytes(part: ConversationActivityToolResultPart): number {

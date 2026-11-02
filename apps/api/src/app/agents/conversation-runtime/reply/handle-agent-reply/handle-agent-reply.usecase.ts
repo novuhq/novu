@@ -8,7 +8,7 @@ import {
   HumanInteractionEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import type { HumanSignal, SentMessageInfo, TriggerSignal } from '@novu/framework/internal';
+import type { HumanSignal, SentMessageInfo, ToolResult, TriggerSignal } from '@novu/framework/internal';
 import { buildToolApprovalRequestId, FeatureFlagsKeysEnum, HumanInteractionKindEnum } from '@novu/shared';
 import { ParseEventRequest } from '../../../../events/usecases/parse-event-request';
 import { CreateConversationInteractionCommand } from '../../../../human/usecases/create-conversation-interaction/create-conversation-interaction.command';
@@ -39,7 +39,7 @@ import { OutboundGateway } from '../../egress/outbound.gateway';
 import type { SlackNativeDelivery } from '../../egress/slack-native-delivery';
 import { BridgeExecutorService } from '../../runtime/bridge-executor.service';
 import { buildAgentPlatformContext, buildEmailPlatformContext } from '../../runtime/build-platform-context.util';
-import { HandleAgentReplyCommand, type ToolResultRecord } from './handle-agent-reply.command';
+import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 import {
   assertValidReplyCommand,
   collectReplyAnalytics,
@@ -903,7 +903,7 @@ export class HandleAgentReply {
     command: HandleAgentReplyCommand,
     conversation: ConversationEntity,
     channel: ConversationChannel,
-    toolResults: ToolResultRecord[]
+    toolResults: ToolResult[]
   ): Promise<void> {
     for (const toolResult of toolResults) {
       try {
@@ -914,19 +914,11 @@ export class HandleAgentReply {
           toolCallId: toolResult.toolCallId,
           toolName: toolResult.toolName,
           output: toolResult.output,
-          content: toolResult.content,
-          isError: toolResult.isError,
-          runId: command.runId,
           preview: toolResult.preview,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
         });
       } catch (err) {
-        // Without a run id the identifier is random, so a retried request would duplicate the rows already written.
-        if (command.runId) {
-          throw err;
-        }
-
         this.logger.warn(
           { err, agentIdentifier: command.agentIdentifier, toolCallId: toolResult.toolCallId },
           `[agent:${command.agentIdentifier}] Failed to persist tool-result activity for ${toolResult.toolCallId}`

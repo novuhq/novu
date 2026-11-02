@@ -25,7 +25,7 @@ export enum ConversationActivityTypeEnum {
   TOOL_APPROVAL_DECISION = 'tool_approval_decision',
   /** Tool call the agent issued. Carries `{ toolCallId, toolName, input?, mcpServerName? }` in `toolData`. */
   TOOL_CALL = 'tool_call',
-  /** Outcome of an executed (or denied) tool call. Carries `{ toolCallId, toolName?, output?, content?, isError?, truncated? }` in `toolData`. */
+  /** Outcome of an executed (or denied) tool call. Carries `{ toolCallId, toolName?, output?, content?, isError?, truncated?, recordOnly? }` in `toolData`. */
   TOOL_RESULT = 'tool_result',
   /** An MCP OAuth connection is required before the agent can continue. */
   MCP_CONNECTION_REQUEST = 'mcp_connection_request',
@@ -94,6 +94,8 @@ export interface ConversationActivityToolData {
   isError?: boolean;
   /** `content` lost data: parts were cut or dropped for the size cap, or media `data` was removed (result). */
   truncated?: boolean;
+  /** The result was never shown to the model, so it stays out of the handoff and web chat (result). */
+  recordOnly?: boolean;
   /** Server-minted action id for approve (request). Echoed by headless / card UIs. */
   approveActionId?: string;
   /** Server-minted action id for deny (request). Echoed by headless / card UIs. */

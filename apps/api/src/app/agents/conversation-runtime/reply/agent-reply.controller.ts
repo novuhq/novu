@@ -142,9 +142,7 @@ export class AgentReplyController {
         edit: body.edit,
         resolve: body.resolve,
         signals: body.signals as Signal[],
-        toolResults: body.toolResults?.map(
-          ({ toolCallId, toolName, output, preview }): ToolResult => ({ toolCallId, toolName, output, preview })
-        ),
+        toolResults: body.toolResults as ToolResult[],
         addReactions: body.addReactions,
         deleteMessages: body.deleteMessages,
         typing: body.typing,

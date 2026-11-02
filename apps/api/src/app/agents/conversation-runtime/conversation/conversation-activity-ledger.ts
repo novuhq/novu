@@ -19,6 +19,7 @@ import { AGENT_HISTORY_LIMIT, getInboundActivityPreview } from './agent-conversa
 import type {
   ConversationActivityContext,
   DeleteInboundMessageParams,
+  FindToolCallParams,
   ImportInboundMessage,
   ImportInboundMessagesParams,
   PersistAgentActivityParams,
@@ -35,6 +36,7 @@ import type {
   PersistToolResultParams,
   PersistTriggerSignalParams,
   PersistWorkflowOriginHydrationParams,
+  RecordToolResultParams,
   UpdateInboundMessageParams,
 } from './agent-conversation.types';
 // biome-ignore lint/style/noRestrictedImports: sequence minting is owned by this ledger
@@ -44,7 +46,7 @@ import {
   type PersistRunLifecycleParams,
   runLifecycleIdentifier,
 } from './run-lifecycle-activity';
-import { capToolResultContent } from './tool-result-content';
+import { toolResultData } from './tool-result-content';
 
 export interface ListActivityViewParams {
   view: ActivityView;
@@ -483,7 +485,7 @@ export class ConversationActivityLedger {
       params,
       {
         ...params,
-        identifier: toolCallIdentifier(params),
+        identifier: `tool-call:${params.conversationId}:${params.runId}:${params.toolCallId}`,
         content: `Called ${params.toolName}`,
         toolData: {
           toolCallId: params.toolCallId,
@@ -497,35 +499,62 @@ export class ConversationActivityLedger {
     );
   }
 
-  async hasToolCall(
-    params: Pick<PersistToolCallParams, 'environmentId' | 'conversationId' | 'runId' | 'toolCallId'>
-  ): Promise<boolean> {
+  /**
+   * Looks across runs: a managed tool that needed approval is called in one run and returns its result
+   * in the run Thalamus starts after the approval.
+   */
+  async findToolCallName(params: FindToolCallParams): Promise<string | undefined> {
     const call = await this.activityRepository.findOne(
       {
         _environmentId: params.environmentId,
         _conversationId: params.conversationId,
-        identifier: toolCallIdentifier(params),
+        type: ConversationActivityTypeEnum.TOOL_CALL,
+        'toolData.toolCallId': params.toolCallId,
       },
-      ['_id']
+      ['toolData']
     );
 
-    return call !== null;
+    return call?.toolData?.toolName;
   }
 
-  async persistToolResult(params: PersistToolResultParams): Promise<void> {
+  async recordToolResult(params: RecordToolResultParams): Promise<void> {
     await this.persistAndEmitClientEvent(
       params,
       {
         ...params,
-        identifier: params.runId
-          ? `tool-result:${params.conversationId}:${params.runId}:${params.toolCallId}`
-          : undefined,
-        content: params.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
+        identifier: `tool-result:${params.conversationId}:${params.runId}:${params.toolCallId}`,
+        content: params.modelFacing?.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
         toolData: toolResultData(params),
       },
       ConversationActivityTypeEnum.TOOL_RESULT,
       'none'
     );
+  }
+
+  async persistToolResult(params: PersistToolResultParams): Promise<void> {
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId
+    );
+
+    const activity = await this.activityRepository.createToolActivity({
+      identifier: `act_${shortId(12)}`,
+      conversationId: params.conversationId,
+      platform: params.channel.platform,
+      integrationId: params.channel._integrationId,
+      platformThreadId: params.channel.platformThreadId,
+      senderType: ConversationActivitySenderTypeEnum.AGENT,
+      senderId: params.agentIdentifier,
+      content: params.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
+      type: ConversationActivityTypeEnum.TOOL_RESULT,
+      toolData: { toolCallId: params.toolCallId, toolName: params.toolName, output: params.output },
+      sequence,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
+
+    await this.emitPersistedClientEvent(params, activity);
   }
 
   async persistMcpConnectionRequest(params: PersistMcpConnectionRequestParams): Promise<ConversationActivityEntity> {
@@ -1125,22 +1154,6 @@ function humanInteractionActivityIdentifier(
   return params.inOtherThread
     ? `human:${params.interactionIdentifier}:${params.conversationId}:${suffix}`
     : `human:${params.interactionIdentifier}:${suffix}`;
-}
-
-function toolCallIdentifier(params: Pick<PersistToolCallParams, 'conversationId' | 'runId' | 'toolCallId'>): string {
-  return `tool-call:${params.conversationId}:${params.runId}:${params.toolCallId}`;
-}
-
-function toolResultData(params: PersistToolResultParams): ConversationActivityToolData {
-  const stored = params.content ? capToolResultContent(params.content) : undefined;
-
-  return {
-    toolCallId: params.toolCallId,
-    toolName: params.toolName,
-    ...(params.output !== undefined ? { output: params.output } : {}),
-    ...(stored ? { content: stored.content, isError: params.isError === true } : {}),
-    ...(stored?.truncated ? { truncated: true } : {}),
-  };
 }
 
 function humanInteractionActivityContent(

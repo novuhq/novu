@@ -1,5 +1,5 @@
 import { FilterQuery } from 'mongoose';
-import type { ConversationActivityDBModel, ConversationActivityToolData } from './conversation-activity.entity';
+import type { ConversationActivityDBModel } from './conversation-activity.entity';
 import { ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum } from './conversation-activity.entity';
 
 export const ACTIVITY_VIEWS = [
@@ -90,15 +90,6 @@ export function viewFoldsRevisions(view: ActivityView): boolean {
   return view === 'llm_transcript' || view === 'agent_handoff';
 }
 
-const RECORD_ONLY_TOOL_RESULT_MATCH = {
-  'toolData.content': { $exists: true },
-  'toolData.output': { $exists: false },
-};
-
-export function isRecordOnlyToolResult(toolData: ConversationActivityToolData | undefined): boolean {
-  return toolData?.content !== undefined && toolData.output === undefined;
-}
-
 function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBModel> {
   switch (kind) {
     case 'message.subscriber':
@@ -156,16 +147,10 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
       return { type: ConversationActivityTypeEnum.TOOL_CALL };
 
     case 'tool_result':
-      return {
-        type: ConversationActivityTypeEnum.TOOL_RESULT,
-        $nor: [RECORD_ONLY_TOOL_RESULT_MATCH],
-      };
+      return { type: ConversationActivityTypeEnum.TOOL_RESULT, 'toolData.recordOnly': { $ne: true } };
 
     case 'tool_result.record':
-      return {
-        type: ConversationActivityTypeEnum.TOOL_RESULT,
-        ...RECORD_ONLY_TOOL_RESULT_MATCH,
-      };
+      return { type: ConversationActivityTypeEnum.TOOL_RESULT, 'toolData.recordOnly': true };
 
     case 'mcp_connection_request':
       return { type: ConversationActivityTypeEnum.MCP_CONNECTION_REQUEST };

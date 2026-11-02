@@ -708,14 +708,25 @@ export class AgentEventSink {
     context: AgentEventContext,
     runId: string
   ): Promise<void> {
-    if (context.source === 'bridge') {
-      const toolResult = { ...mapToolUseResultEvent(event), content: event.content, isError: event.isError };
+    const toolCallId = event.toolUseId;
 
-      await this.dispatchReply(
-        HandleAgentReplyCommand.create({ ...baseFields, toolResults: [toolResult], runId }),
+    if (context.source === 'bridge') {
+      await this.persistActivity(
         context,
-        'tool-use-result',
-        runId
+        runId,
+        'record-tool-use-result',
+        async (activityContext) => {
+          const { output, preview } = mapToolUseResultEvent(event);
+          await this.conversationService.recordToolResult({
+            ...activityContext,
+            runId,
+            toolCallId,
+            content: event.content,
+            isError: event.isError,
+            modelFacing: { output, preview },
+          });
+        },
+        { rethrow: true }
       );
 
       return;
@@ -726,16 +737,17 @@ export class AgentEventSink {
       runId,
       'record-tool-use-result',
       async (activityContext) => {
-        const toolCallId = event.toolUseId;
-        // A result carries no tool name. An internal tool's result is recognised by its call row never being written.
-        if (!(await this.conversationService.hasToolCall({ ...activityContext, runId, toolCallId }))) {
+        // A result carries no tool name. An internal tool never gets a call row, so its result is skipped too.
+        const toolName = await this.conversationService.findToolCallName({ ...activityContext, toolCallId });
+        if (!toolName) {
           return;
         }
 
-        await this.conversationService.persistToolResult({
+        await this.conversationService.recordToolResult({
           ...activityContext,
           runId,
           toolCallId,
+          toolName,
           content: event.content,
           isError: event.isError,
         });
