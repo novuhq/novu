@@ -7,7 +7,7 @@ import type { ValidateResult, Validator } from '../types/validator.types';
 import { cloneData } from '../utils/clone.utils';
 import { checkDependencies } from '../utils/import.utils';
 
-const MAX_COMPILED_SCHEMAS = 1000;
+const MAX_COMPILED_SCHEMAS = 5000;
 
 const createAjv = () => {
   const ajv = new Ajv({
