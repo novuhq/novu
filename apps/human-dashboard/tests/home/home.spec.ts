@@ -5,7 +5,7 @@ test('home serves readable agent documentation and links to Sapien', async ({ pa
   page.on('pageerror', (error) => errors.push(error.message));
   const response = await page.goto('/');
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('AGENTINBOX.MDThe inbox API for agents');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('AGENTINBOX.MDThe inbox for agents');
   await expect(page.locator('#install-panel-cli')).toHaveText('npm install -g @agentinbox/cli');
   await page.getByRole('tab', { name: 'MCP' }).click();
   await expect(page.locator('#install-panel-mcp')).toHaveText('https://mcp.agentinbox.md');

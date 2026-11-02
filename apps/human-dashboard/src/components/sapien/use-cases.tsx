@@ -71,7 +71,7 @@ function UseCaseCard({ useCase, index }: { useCase: UseCase; index: number }) {
           </ul>
           <span
             aria-hidden="true"
-            className="shrink-0 pt-2 font-sapien-pixel whitespace-nowrap text-[10px] leading-none tracking-[0.08em] text-sapien-foreground/30"
+            className="shrink-0 pt-2 font-sapien-mono whitespace-nowrap text-[10px] leading-none tracking-[0.08em] text-sapien-foreground/30"
           >
             U-{String(index + 1).padStart(2, '0')}
           </span>

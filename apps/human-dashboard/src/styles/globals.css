@@ -41,12 +41,11 @@
 
   /*
    * The people page (`/sapien`), from the website's own Figma file: black, its own text, border and surfaces,
-   * set in Inter with Redaction 35 for the accent words (in cream), its own cut of Geist Mono and Geist Pixel for
-   * the plate labels. It shares the accent, kept for dots, ticks and the buttons.
+   * set in Inter, with Redaction italic for the accent lines and Geist Mono for the plate labels.
+   * It shares the accent, kept for dots, ticks and the buttons.
    */
   --font-sapien-sans: var(--font-inter), sans-serif;
   --font-sapien-display: var(--font-redaction), serif;
-  --font-sapien-pixel: var(--font-geist-pixel), ui-monospace, monospace;
   --font-sapien-mono: var(--font-sapien-geist-mono), monospace;
   --color-sapien-background: #000000;
   --color-sapien-foreground: #eee5d8;

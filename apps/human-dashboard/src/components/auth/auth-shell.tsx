@@ -46,7 +46,7 @@ function BrandPanel({ claiming }: { claiming: boolean }) {
     <aside className="relative hidden w-1/2 shrink-0 flex-col justify-between border-r border-border bg-subtle px-12 py-9 before:absolute before:inset-y-0 before:right-full before:w-screen before:bg-subtle xl:flex">
       <Brand className="w-fit" />
       <div className="flex flex-col items-center gap-5.5">
-        {!claiming && <p className="font-mono text-[11px] leading-4 text-accent">the inbox API for agents</p>}
+        {!claiming && <p className="font-mono text-[11px] leading-4 text-accent">the inbox for agents</p>}
         <h2 className="text-center text-[30px] leading-9.5 tracking-[-0.75px] text-foreground">
           {claiming ? (
             <>
