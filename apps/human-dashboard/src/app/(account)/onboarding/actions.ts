@@ -202,6 +202,17 @@ export async function leaveTestAction(how: 'connect' | 'skip' | 'later'): Promis
   refresh();
 }
 
+/** Leaves step 3 for the dashboard while setup is still unfinished. */
+export async function leaveConnectAction(): Promise<void> {
+  const now = new Date().toISOString();
+  await updateOnboardingState((state) => ({
+    ...state,
+    skippedAt: state.skippedAt ?? now,
+  }));
+
+  redirect(DASHBOARD_HOME);
+}
+
 /** Leaves step 4, and with it the onboarding, for a page of the dashboard. */
 export async function finishOnboardingAction(destination: Destination): Promise<void> {
   const now = new Date().toISOString();
